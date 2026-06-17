@@ -271,6 +271,83 @@ describe('heartbeat signal (channel-push entities have no daemon lastSeen)', () 
     });
 });
 
+describe('callback-active gate (no callback registered → cannot reply)', () => {
+    // Build an app where getChannelAccountById returns a controllable account so we
+    // can simulate (a) callback registered and (b) callback NULL for the same entity.
+    function buildAppWithAccount(account) {
+        mockPool = makeMockPool();
+        logCalls = [];
+        passiveHealth.init({
+            pool: mockPool,
+            devices: freshDevices(),
+            entityStatus: {
+                logOperation: (...args) => { logCalls.push(args); return Promise.resolve(); },
+            },
+            feedbackModule: {
+                saveFeedback: jest.fn().mockResolvedValue({ id: 'fb-1' }),
+                getFeedbackById: jest.fn().mockResolvedValue(null),
+                createGithubIssue: jest.fn().mockResolvedValue(null),
+            },
+            deriveChannelProvider: () => 'openclaw',
+            getChannelAccountById: jest.fn().mockResolvedValue(account),
+            isReady: () => true,
+            selfBaseUrl: 'http://localhost:3999',
+        });
+        const a = express();
+        a.use('/api/channel/passive-health', passiveHealth.channelRouter);
+        return a;
+    }
+
+    it('entity with callback_url=null → readiness:no_callback, canReply:false, callbackActive:false, NOT healthy', async () => {
+        const a = buildAppWithAccount({ id: 10, callback_url: null });
+        const res = await request(a)
+            .get('/api/channel/passive-health/2')
+            .query({ deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
+        expect(res.status).toBe(200);
+        expect(res.body.eligible).toBe(true);
+        expect(res.body.healthy).toBe(false);          // no longer a misleading green
+        expect(res.body.canReply).toBe(false);
+        expect(res.body.callbackActive).toBe(false);
+        expect(res.body.readiness).toBe('no_callback');
+        expect(res.body.failingSignals).toContain('no_callback');
+        expect(res.body.signals.callbackActive).toBe(false);
+    });
+
+    it('entity with callback_url set → unaffected (healthy, canReply:true, readiness:healthy)', async () => {
+        // No /health probe fetch in this path would resolve to callbackHealthy:false;
+        // stub global fetch to a 200 so the callback probe does not flip the verdict.
+        const origFetch = global.fetch;
+        global.fetch = jest.fn().mockResolvedValue({ ok: true });
+        try {
+            const a = buildAppWithAccount({ id: 10, callback_url: 'https://cb.example.com/hook' });
+            const res = await request(a)
+                .get('/api/channel/passive-health/2')
+                .query({ deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
+            expect(res.status).toBe(200);
+            expect(res.body.eligible).toBe(true);
+            expect(res.body.healthy).toBe(true);
+            expect(res.body.canReply).toBe(true);
+            expect(res.body.callbackActive).toBe(true);
+            expect(res.body.readiness).toBe('healthy');
+            expect(res.body.failingSignals).not.toContain('no_callback');
+        } finally {
+            global.fetch = origFetch;
+        }
+    });
+
+    it('no account record → callbackActive stays null (unknown), does not falsely fail', async () => {
+        const a = buildAppWithAccount(null);
+        const res = await request(a)
+            .get('/api/channel/passive-health/2')
+            .query({ deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
+        expect(res.status).toBe(200);
+        expect(res.body.callbackActive).toBeNull();
+        expect(res.body.canReply).toBe(true);           // unknown ≠ cannot-reply
+        expect(res.body.readiness).toBe('healthy');     // no failing signals
+        expect(res.body.failingSignals).not.toContain('no_callback');
+    });
+});
+
 describe('exports surface', () => {
     it('exposes scheduler + compute functions', () => {
         expect(typeof passiveHealth.startScheduler).toBe('function');

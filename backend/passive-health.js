@@ -237,13 +237,22 @@ function collectHeartbeatSignal(entity, nowMs) {
 }
 
 async function resolveChannel(entity) {
-    const out = { provider: null, callbackHealthy: null };
+    // callbackActive distinguishes "this entity literally cannot be reached/reply"
+    // (no callback_url registered on its channel account) from "callback is set but
+    // unhealthy" (callbackHealthy:false). A live daemon with no callback registered
+    // is the #6-Codex failure mode: the process is up so liveness looks green, yet
+    // EClaw has nowhere to push a message, so the entity can never receive/reply.
+    // null = unknown (no account record / lookup failed); we don't assert either way.
+    const out = { provider: null, callbackHealthy: null, callbackActive: null };
     if (!entity || !entity.channelAccountId || !getChannelAccount) return out;
     let account = null;
     try {
         account = await getChannelAccount(entity.channelAccountId);
     } catch { /* ignore — treat as unknown */ }
-    if (!account || !account.callback_url) return out;
+    if (!account) return out; // no account record → unknown, leave callbackActive null
+    // Account record exists → we CAN assert callback registration state.
+    out.callbackActive = !!account.callback_url;
+    if (!account.callback_url) return out; // registered=false; no provider, no probe
     out.provider = deriveProvider ? deriveProvider(account.callback_url) : null;
     // Optional cheap GET to the callback host's /health. Best-effort: a failure
     // here is one signal among several, never the sole verdict.
@@ -292,10 +301,36 @@ async function computePassiveHealth(deviceId, entityId) {
         failing.push('callback_unhealthy');
     }
 
+    // No callback registered = the entity CANNOT receive a push or reply, even
+    // though its daemon process may be perfectly alive. This is a hard not-ready
+    // condition (distinct from a transient unhealthy signal): a self-repair won't
+    // fix it — the callback must be re-bound. Surface it as its own failing signal
+    // AND a top-level callbackActive flag so the UI can render "無法回覆" / amber
+    // instead of a misleading green "healthy".
+    const noCallback = channel.callbackActive === false;
+    if (noCallback) {
+        failing.push('no_callback');
+    }
+
+    const healthy = failing.length === 0;
+    // readiness is the user-facing verdict the dashboard light keys off:
+    //   'no_callback'  → live process but unreachable (can't reply) → amber 無法回覆
+    //   'unhealthy'    → has a callback but failing other signals    → red
+    //   'healthy'      → reachable + no failing signals              → green
+    let readiness;
+    if (noCallback) readiness = 'no_callback';
+    else if (!healthy) readiness = 'unhealthy';
+    else readiness = 'healthy';
+
     return {
         eligible: true,
         entityId,
-        healthy: failing.length === 0,
+        healthy,
+        // canReply is false whenever there is no registered callback — the single
+        // boolean a caller needs to decide "is this entity actually answerable?".
+        canReply: !noCallback,
+        callbackActive: channel.callbackActive,
+        readiness,
         failingSignals: failing,
         provider: channel.provider,
         signals: {
@@ -306,6 +341,7 @@ async function computePassiveHealth(deviceId, entityId) {
             heartbeatKnown: heartbeat.heartbeatKnown,
             heartbeatStale: heartbeat.heartbeatStale,
             callbackHealthy: channel.callbackHealthy,
+            callbackActive: channel.callbackActive,
         },
         checkedAt: new Date(nowMs).toISOString(),
     };
@@ -414,12 +450,26 @@ async function runEntity(deviceId, deviceSecret, entityId, settings) {
             return { entityId, eligible: false, reason: health.reason };
         }
 
+        const noCallback = health.callbackActive === false;
         await logEvent(deviceId, entityId, 'passive_health',
-            health.healthy ? 'Passive health: healthy' : `Passive health: unhealthy (${health.failingSignals.join(', ')})`,
-            { healthy: health.healthy, failingSignals: health.failingSignals, provider: health.provider, signals: health.signals });
+            health.healthy ? 'Passive health: healthy'
+                : noCallback ? 'Passive health: no callback registered — entity cannot reply (re-bind required)'
+                : `Passive health: unhealthy (${health.failingSignals.join(', ')})`,
+            { healthy: health.healthy, readiness: health.readiness, canReply: health.canReply, callbackActive: health.callbackActive, failingSignals: health.failingSignals, provider: health.provider, signals: health.signals });
 
         if (health.healthy || !settings.autoRepair) {
-            return { entityId, eligible: true, healthy: health.healthy, repaired: false, failingSignals: health.failingSignals };
+            return { entityId, eligible: true, healthy: health.healthy, readiness: health.readiness, canReply: health.canReply, callbackActive: health.callbackActive, repaired: false, failingSignals: health.failingSignals };
+        }
+
+        // No callback registered is NOT self-repairable — the callback must be
+        // re-bound at the container/channel-account level. Skip the (futile) repair
+        // attempts and file a bug directly so a human gets the re-bind signal.
+        if (noCallback) {
+            const bug = await fileBugIssue(deviceId, deviceSecret, entityId, health.provider, health.failingSignals);
+            await logEvent(deviceId, entityId, 'self_repair',
+                bug.filed ? `No-callback bug filed (feedback #${bug.feedbackId}) — re-bind required, not self-repairable` : `No-callback bug filing failed: ${bug.reason}`,
+                { filed: bug.filed, feedbackId: bug.feedbackId, issueUrl: bug.issueUrl, reason: 'no_callback', failingSignals: health.failingSignals });
+            return { entityId, eligible: true, healthy: false, readiness: health.readiness, canReply: false, callbackActive: false, repaired: false, bugFiled: bug.filed, feedbackId: bug.feedbackId, failingSignals: health.failingSignals };
         }
 
         // Unhealthy + autoRepair → up to 3 repair attempts, spaced past the cooldown.
