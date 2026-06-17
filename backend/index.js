@@ -22645,14 +22645,28 @@ const mediaUpload = multer({
     limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max
     fileFilter: (req, file, cb) => {
         const imageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-        const audioTypes = ['audio/webm', 'audio/ogg', 'audio/mp4', 'audio/aac', 'audio/mpeg'];
+        // Bug #160 (GH#2861): browser/WebView MediaRecorder tags the blob with a
+        // codec-suffixed mime (e.g. "audio/webm;codecs=opus", "audio/ogg;codecs=opus")
+        // and Android MediaRecorder can emit audio/3gpp / audio/amr / audio/x-m4a.
+        // The old list only had bare base types, so codec-suffixed/Android voices
+        // were rejected by multer -> the error escaped to Express's default HTML
+        // 500 handler (no JSON), and the app showed an opaque "語音訊息發送失敗".
+        // Normalize by stripping codec/charset params before comparing, and widen
+        // the accepted audio set to cover real Android + WebView recorders.
+        const audioTypes = [
+            'audio/webm', 'audio/ogg', 'audio/mp4', 'audio/aac', 'audio/mpeg',
+            'audio/wav', 'audio/x-wav', 'audio/opus', 'audio/3gpp', 'audio/3gpp2',
+            'audio/amr', 'audio/x-m4a', 'audio/mp4a-latm', 'audio/flac',
+        ];
         const videoTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-matroska'];
         const mediaType = (req.body && req.body.mediaType) || '';
-        if (mediaType === 'photo' && !imageTypes.includes(file.mimetype)) {
+        // "audio/webm;codecs=opus" -> "audio/webm"
+        const baseMime = String(file.mimetype || '').split(';')[0].trim().toLowerCase();
+        if (mediaType === 'photo' && !imageTypes.includes(baseMime)) {
             cb(new Error('Unsupported image type: ' + file.mimetype));
-        } else if (mediaType === 'voice' && !audioTypes.includes(file.mimetype)) {
+        } else if (mediaType === 'voice' && !audioTypes.includes(baseMime)) {
             cb(new Error('Unsupported audio type: ' + file.mimetype));
-        } else if (mediaType === 'video' && !videoTypes.includes(file.mimetype)) {
+        } else if (mediaType === 'video' && !videoTypes.includes(baseMime)) {
             cb(new Error('Unsupported video type: ' + file.mimetype));
         } else {
             cb(null, true); // "file" type accepts anything
@@ -22878,7 +22892,28 @@ app.get('/api/chat/file/:id', async (req, res) => {
  * Body (multipart): file, deviceId, deviceSecret, mediaType ("photo" | "voice" | "file")
  * Max file size: 100MB
  */
-app.post('/api/chat/upload-media', mediaUpload.single('file'), async (req, res) => {
+// Bug #160 (GH#2861): wrap multer so a fileFilter rejection or size-limit error
+// returns a clean { success:false } JSON body (+ diagnostic server log) instead of
+// escaping to Express's default HTML 500 handler. The Android app parses the JSON
+// body to surface the failure reason; a non-JSON 500 became an opaque "發送失敗"
+// with no diagnostic on the server side (matching the issue's empty error logs).
+function mediaUploadSingle(req, res, next) {
+    mediaUpload.single('file')(req, res, (err) => {
+        if (!err) return next();
+        const isMulterErr = err instanceof multer.MulterError;
+        const mediaType = (req.body && req.body.mediaType) || 'unknown';
+        const status = (isMulterErr && err.code === 'LIMIT_FILE_SIZE') ? 413 : 400;
+        console.error(`[Upload] Rejected ${mediaType} upload: ${err.code || ''} ${err.message}`);
+        return res.status(status).json({
+            success: false,
+            error: 'upload_rejected',
+            code: isMulterErr ? err.code : 'UNSUPPORTED_MEDIA',
+            message: err.message,
+        });
+    });
+}
+
+app.post('/api/chat/upload-media', mediaUploadSingle, async (req, res) => {
     const { deviceId, deviceSecret, mediaType } = req.body;
 
     if (!deviceId || !deviceSecret) {
