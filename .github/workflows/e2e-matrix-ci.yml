@@ -59,12 +59,16 @@ jobs:
         env:
           MATRIX_BASE: ${{ vars.MATRIX_BASE || 'https://eclawbot.com' }}
           MATRIX_ARTIFACT_DIR: ${{ github.workspace }}/matrix-artifacts
-          # BROADCAST_TEST throwaway creds for write-flow drivers (kanban_lifecycle,
-          # message_send). Set these repo secrets to activate those cells; absent →
-          # those drivers fail fast (loud), read-only cells (redirect) still run.
+          # BROADCAST_TEST throwaway creds for the two secret-bound drivers
+          # (kanban_lifecycle = write+self-clean, agent_reply_visibility = self-seed).
+          # Set these repo secrets to activate those cells; absent → they fail fast
+          # (loud). The 9 auth-light cells (login_refresh, redirect, message_send ×
+          # 3 surfaces) run regardless. See tests/e2e/matrix/BASELINE.md.
           MATRIX_TEST_DEVICE_ID: ${{ secrets.MATRIX_TEST_DEVICE_ID }}
           MATRIX_TEST_DEVICE_SECRET: ${{ secrets.MATRIX_TEST_DEVICE_SECRET }}
           MATRIX_TEST_ENTITY_ID: ${{ vars.MATRIX_TEST_ENTITY_ID || '1' }}
+          # speakTo target publicCode for the self-seeded agent_reply_visibility flow.
+          MATRIX_TEST_ENTITY_PUBLIC_CODE: ${{ vars.MATRIX_TEST_ENTITY_PUBLIC_CODE || 'ldsntq' }}
 
       - name: Upload matrix artifacts
         if: always()

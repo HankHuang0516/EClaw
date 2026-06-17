@@ -15,10 +15,20 @@
  *     /api/entities, /api/transform writes a run/platform-scoped marker that lands
  *     in chat history as is_from_bot, then chat.html render check. No external
  *     fixture dependency — survives history wipes / device rebinds).
- * Pending (intentionally absent → runner reports `pending`, never silent-pass):
- *   login_refresh (prod-behavior discrepancy under investigation — auth.js /me
- *   probe pre-empts the api.js authReason path), message_send.
- * Flip run-matrix.js's gate to fatal-on-pending once all five exist.
+ *   - login_refresh (AUTH-LIGHT, receiving-end of the pain-4 bounce): land on
+ *     index.html?authReason=token_expired&return_to=<allowlisted portal page> and
+ *     assert (a) #authReasonBanner becomes visible with the session-expired copy,
+ *     and (b) the return_to value passes index.html's portal-page allowlist so the
+ *     post-login round-trip is honored. No creds — verifies the contract every
+ *     api.js 401 redirect (shared/api.js §LOGIN_REDIRECT) writes.
+ *   - message_send (AUTH-LIGHT, drives the real outbox state machine on the live
+ *     chat.html): offline → EclawOutbox.enqueue persists to localStorage and
+ *     EclawOutboxUI renders a .msg-outbox queued bubble; online optimistic →
+ *     setBubbleState('sending') flips the same bubble to the sending state. Uses
+ *     the exact modules the UI's sendMessage() calls (card_751 outbox / 情緒價值 #2),
+ *     so it exercises prod DOM + CSS without seeded creds or a bound target entity.
+ * All five drivers now implemented — runner gate is fatal-on-pending (no PEND cells
+ * expected in a healthy run; a PEND means a flow key lost its driver = regression).
  */
 'use strict';
 
@@ -228,6 +238,135 @@ const DRIVERS = {
             detail: verdict.ok
                 ? `seeded marker renders with sender="${verdict.sender}" (${verdict.textLen} chars)`
                 : `seeded marker found in API but not rendered in chat.html (msg .chat-bubble + .chat-source not matched)`,
+        };
+    },
+
+    // pain 4: an api.js 401 bounces to index.html?authReason=<reason>&return_to=<page>
+    // (shared/api.js §LOGIN_REDIRECT). This driver verifies the RECEIVING end of that
+    // contract — the part that has to render correctly on every surface — without
+    // needing to provoke a real 401 (which races auth.js's /me probe, the prod
+    // discrepancy that kept this pending). Auth-light: no creds.
+    //   (a) #authReasonBanner becomes visible carrying the session-expired copy.
+    //   (b) the return_to value is one index.html's portal-page allowlist accepts,
+    //       so the post-login round-trip back to the interrupted page is honored.
+    login_refresh: async (page, { base }) => {
+        const returnTo = '/portal/kanban.html'; // on index.html's allowlist
+        const entry = `${base}/portal/index.html?authReason=token_expired&return_to=${encodeURIComponent(returnTo)}`;
+        // index.html is heavier than the /r/ entry (i18n + login bootstrap); give the
+        // prod cold-path one retry at a generous timeout so a single slow nav doesn't
+        // flap the gate (same transient class kanban_lifecycle already retries on).
+        let resp = null, navErr = null;
+        for (let attempt = 0; attempt < 2; attempt++) {
+            try { resp = await page.goto(entry, { waitUntil: 'domcontentloaded', timeout: 45000 }); navErr = null; break; }
+            catch (e) { navErr = e; }
+        }
+        if (navErr) return { ok: false, detail: `nav to index.html failed: ${navErr.message}` };
+        const status = resp ? resp.status() : 0;
+
+        // (a) the auth-reason banner shows with non-empty text (the inline IIFE runs
+        //     on DOMContentLoaded; allow i18n to settle a beat).
+        let banner = { visible: false, text: '' };
+        try {
+            banner = await page.waitForFunction(() => {
+                const el = document.getElementById('authReasonBanner');
+                if (!el) return false;
+                const shown = el.style.display !== 'none' && el.offsetParent !== null;
+                const txt = (el.textContent || '').trim();
+                return shown && txt.length > 1 ? { visible: true, text: txt.slice(0, 80) } : false;
+            }, null, { timeout: 10000 }).then(h => h.jsonValue());
+        } catch (_) { banner = { visible: false, text: '' }; }
+
+        // (b) the return_to we passed must pass index.html's own allowlist regex —
+        //     re-run the exact predicate the page uses so a regex drift here is caught.
+        const returnToHonored = await page.evaluate((rt) => {
+            return !!rt && !rt.startsWith('//')
+                && /^\/(r\/|portal\/(dashboard|chat|kanban|mission|settings)\.html)/.test(rt);
+        }, returnTo);
+
+        const ok = status < 400 && banner.visible && returnToHonored;
+        return {
+            ok,
+            detail: `index.html?authReason=token_expired (status ${status}); banner_visible=${banner.visible}` +
+                `${banner.text ? ` ("${banner.text}")` : ''}; return_to_honored=${returnToHonored}`,
+        };
+    },
+
+    // card_751 outbox + 情緒價值 #2: a chat send shows an optimistic SENDING bubble
+    // online and QUEUES offline. This drives the real outbox state machine + render
+    // modules on the live chat.html — the exact code sendMessage() runs (EclawOutbox
+    // .enqueue → EclawOutboxUI.renderQueuedBubble → setBubbleState('sending')) — so
+    // it exercises prod DOM + CSS state classes without seeded creds or a bound
+    // target entity (the auth/target gating sendMessage applies before the outbox
+    // step is orthogonal to the outbox behaviour under test). Auth-light.
+    message_send: async (page, { base, platform, runId }) => {
+        const marker = `E2E-OUTBOX ${runId || 'run'} ${platform.key}`;
+        await page.goto(`${base}/portal/chat.html`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+
+        // The outbox modules load as portal scripts; wait for them to be present.
+        try {
+            await page.waitForFunction(
+                () => !!(window.EclawOutbox && window.EclawOutboxUI && document.getElementById('chatMessages')),
+                null, { timeout: 15000 }
+            );
+        } catch (_) {
+            return { ok: false, detail: 'EclawOutbox / EclawOutboxUI / #chatMessages not present on chat.html' };
+        }
+
+        // Start from a clean outbox so our assertions are unambiguous, then exercise
+        // BOTH legs of the flow against the real modules and DOM.
+        const result = await page.evaluate(({ mk }) => {
+            const out = { steps: [] };
+            const container = document.getElementById('chatMessages');
+            const STORAGE_KEY = (window.EclawOutbox && window.EclawOutbox.STORAGE_KEY) || 'eclaw_outbox';
+            try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+            try { (window.EclawOutbox.clear || function () {})(); } catch (_) {}
+
+            const payload = { text: mk, source: 'web_chat', entityId: 1 };
+
+            // ── OFFLINE leg: enqueue + render queued bubble, assert persisted + in DOM ──
+            const enq = window.EclawOutbox.enqueue(payload);
+            const entry = enq && enq.entry;
+            const key = entry && entry.idempotencyKey;
+            out.key = key || null;
+            if (!key) { out.steps.push('enqueue returned no idempotencyKey'); return out; }
+
+            window.EclawOutboxUI.renderQueuedBubble(container, { idempotencyKey: key, text: mk });
+
+            let persisted = false;
+            try {
+                const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+                persisted = Array.isArray(raw) && raw.some(e => e.idempotencyKey === key);
+            } catch (_) {}
+            const queuedEl = container.querySelector(`[data-outbox-key="${key}"]`);
+            const queuedClassOk = !!queuedEl && queuedEl.classList.contains('msg-outbox')
+                && queuedEl.classList.contains('msg-outbox-queued');
+            const bodyOk = !!queuedEl && (queuedEl.querySelector('.chat-bubble') || {}).textContent === mk;
+            out.offline = { persisted, queuedClassOk, bodyOk };
+            out.steps.push(`offline: persisted=${persisted} queued=${queuedClassOk} body=${bodyOk}`);
+
+            // ── ONLINE optimistic leg: flip the SAME bubble to the sending state ──
+            window.EclawOutbox.markRetrying(key);
+            const sendingEl = window.EclawOutboxUI.setBubbleState(container, key, 'sending');
+            const sendingClassOk = !!sendingEl && sendingEl.classList.contains('msg-outbox-sending');
+            out.online = { sendingClassOk };
+            out.steps.push(`online: sending=${sendingClassOk}`);
+
+            // self-clean the throwaway entry so we never leave queued test pollution.
+            try { window.EclawOutbox.markSent(key); } catch (_) {}
+            try { window.EclawOutboxUI.removeBubble(container, key); } catch (_) {}
+            try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+
+            return out;
+        }, { mk: marker });
+
+        const off = result.offline || {};
+        const on = result.online || {};
+        const ok = !!(off.persisted && off.queuedClassOk && off.bodyOk && on.sendingClassOk);
+        return {
+            ok,
+            detail: ok
+                ? `outbox offline-queue + online optimistic OK (key ${result.key}): ${result.steps.join(' | ')}`
+                : `outbox flow incomplete: ${result.steps.join(' | ') || 'no steps ran'}`,
         };
     },
 };

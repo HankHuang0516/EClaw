@@ -80,7 +80,7 @@ function summarize(results) {
     }
     if (counts.pending) {
         lines.push('');
-        lines.push(`NOTE: ${counts.pending} cell(s) PENDING (driver not implemented) — NOT counted as pass. Implement remaining drivers in drivers.js.`);
+        lines.push(`NOTE: ${counts.pending} cell(s) PENDING — all 5 drivers are supposed to exist, so a PENDING cell means a flow key lost its driver in drivers.js (regression / bad merge). This FAILS the gate. Restore the missing driver.`);
     }
     return { counts, text: lines.join('\n') };
 }
@@ -91,9 +91,10 @@ run().then((results) => {
     fs.writeFileSync(path.join(ARTIFACT_DIR, 'summary.txt'), text + '\n');
     process.stdout.write(text + '\n');
     process.stdout.write(`\nArtifacts: ${ARTIFACT_DIR}\n`);
-    // CI gate: fail the run only on a real failing cell. Pending is loud but non-fatal
-    // until its driver lands (tracked on the card); flip to fatal once all 5 are implemented.
-    process.exit(counts.fail > 0 ? 1 : 0);
+    // CI gate: all 5 flow drivers are now implemented, so PENDING is no longer an
+    // expected transient state — a pending cell means a flow key lost its driver
+    // (regression / bad merge) and MUST fail the gate, same as a real failing cell.
+    process.exit((counts.fail > 0 || counts.pending > 0) ? 1 : 0);
 }).catch((e) => {
     process.stderr.write('matrix runner crashed: ' + (e && e.stack || e) + '\n');
     process.exit(2);
