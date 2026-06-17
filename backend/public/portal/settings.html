@@ -1345,15 +1345,23 @@
             </div>
         </div>
 
-        <!-- Usage Warning Settings (card_9cd84ee7d830b2f76c595f6c) -->
+        <!-- Usage Warning Settings (card_9cd84ee7d830b2f76c595f6c) — collapsible (card_ae3a7bdc) -->
         <div class="card" id="usage-warning-card">
-            <div class="card-title" style="display:flex;align-items:center;gap:8px;">
-                <span>⚠️ <span data-i18n="usage_warning_title">Usage Warning</span></span>
-                <button type="button" id="usageWarningHelpBtn"
-                        onclick="showUsageWarningHelp()"
-                        aria-label="Usage warning help"
-                        style="background:transparent;border:1px solid var(--card-border);color:var(--text-secondary);width:24px;height:24px;border-radius:50%;font-size:13px;cursor:pointer;padding:0;line-height:1;">?</button>
+            <div class="notif-header" role="button" tabindex="0" aria-expanded="false"
+                 aria-controls="usageWarningContent" id="usageWarningHeader"
+                 onclick="toggleUsageWarningSection()"
+                 onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleUsageWarningSection();}">
+                <div class="card-title" style="margin-bottom:0;display:flex;align-items:center;gap:8px;">
+                    <span>⚠️ <span data-i18n="usage_warning_title">Usage Warning</span></span>
+                    <button type="button" id="usageWarningHelpBtn"
+                            onclick="event.stopPropagation();showUsageWarningHelp()"
+                            aria-label="Usage warning help"
+                            style="background:transparent;border:1px solid var(--card-border);color:var(--text-secondary);width:24px;height:24px;border-radius:50%;font-size:13px;cursor:pointer;padding:0;line-height:1;">?</button>
+                </div>
+                <span class="expand-arrow" id="usageWarningArrow">&#9662;</span>
             </div>
+
+            <div class="notif-content" id="usageWarningContent">
             <p class="section-desc" data-i18n="usage_warning_desc">When triggered, the Agent prepends a system warning to every outgoing message so the recipient knows quota is tight.</p>
 
             <div id="usageWarningStaleNotice"
@@ -1402,6 +1410,7 @@
                        onchange="saveUsageWarningConfig()"
                        style="width:100%;">
             </div>
+            </div><!-- /.notif-content #usageWarningContent -->
         </div>
 
         <!-- Usage Warning Help Modal -->
@@ -1721,6 +1730,7 @@
             loadOwnerRoster(user).catch(e => console.warn('[Roster] initial load failed:', e));
             loadPromptPolicy(user);
             initKanbanNudgeCollapse();
+            initUsageWarningCollapse();
             updatePushToggle();
 
             document.getElementById('pageContent').style.display = '';
@@ -2519,6 +2529,32 @@
                 document.getElementById('kanbanNudgeContent').classList.add('visible');
                 document.getElementById('kanbanNudgeArrow').classList.add('expanded');
                 const header = document.getElementById('kanbanNudgeHeader');
+                if (header) header.setAttribute('aria-expanded', 'true');
+            }
+        }
+
+        // Usage Warning collapsible (card_ae3a7bdc) — reuses the same
+        // notif-header / expand-arrow / notif-content pattern + localStorage
+        // convention as the Kanban Nudge section above.
+        const USAGE_WARNING_COLLAPSE_KEY = 'settings_usage_warning_collapsed';
+        function toggleUsageWarningSection() {
+            const content = document.getElementById('usageWarningContent');
+            const arrow = document.getElementById('usageWarningArrow');
+            const header = document.getElementById('usageWarningHeader');
+            const expanded = !content.classList.contains('visible');
+            content.classList.toggle('visible', expanded);
+            arrow.classList.toggle('expanded', expanded);
+            if (header) header.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            try { localStorage.setItem(USAGE_WARNING_COLLAPSE_KEY, expanded ? '0' : '1'); } catch (_) { }
+        }
+        function initUsageWarningCollapse() {
+            // Default collapsed. Only expand if user explicitly opened it previously.
+            let collapsed = '1';
+            try { collapsed = localStorage.getItem(USAGE_WARNING_COLLAPSE_KEY) || '1'; } catch (_) { }
+            if (collapsed === '0') {
+                document.getElementById('usageWarningContent').classList.add('visible');
+                document.getElementById('usageWarningArrow').classList.add('expanded');
+                const header = document.getElementById('usageWarningHeader');
                 if (header) header.setAttribute('aria-expanded', 'true');
             }
         }
