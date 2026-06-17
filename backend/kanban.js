@@ -375,8 +375,19 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         const device = devices[deviceId];
         if (!device) return null;
         const entity = (device.entities || {})[entityId];
-        if (!entity || !safeEqual(entity.botSecret, botSecret)) return null;
-        return entity;
+        if (entity && safeEqual(entity.botSecret, botSecret)) return entity;
+        // Fallback: entityId missing/0/mismatched, but botSecret is per-entity
+        // unique — authenticate as the entity that actually owns this secret.
+        // Fixes "[Kanban] Auth failed: { entityId: undefined }" for callers that
+        // send a valid botSecret without populating entityId. botSecret stays the
+        // source of truth, so this grants access only to the secret's true owner
+        // (no privilege escalation — you become whoever the secret belongs to).
+        if (botSecret) {
+            for (const e of Object.values(device.entities || {})) {
+                if (e && safeEqual(e.botSecret, botSecret)) return e;
+            }
+        }
+        return null;
     }
 
     function findDeviceByCredentials(deviceId, deviceSecret) {
