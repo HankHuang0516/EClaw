@@ -12758,7 +12758,7 @@ app.post('/api/entity/cross-speak', async (req, res) => {
  * Look up entity info by public code (non-sensitive data only).
  * Query: ?code=abc123  (also accepts ?publicCode=abc123)
  */
-app.get('/api/entity/lookup', (req, res) => {
+app.get('/api/entity/lookup', async (req, res) => {
     const code = req.query.code || req.query.publicCode;
     if (!code) {
         return res.status(400).json({ success: false, message: "code query parameter required" });
@@ -12797,6 +12797,23 @@ app.get('/api/entity/lookup', (req, res) => {
         };
     }
 
+    // Petdx 夥伴 avatar enrichment (audit P3, card_8512e936d13662c0dc1495bf).
+    // share-chat.html is a PUBLIC cross-device page: the viewer looks up
+    // someone else's bot by public code, so the client-side AvatarPetdx
+    // descriptor cache (keyed on the VIEWER's own device entities) can't
+    // resolve this entity's companion — passing its entityId would mis-render
+    // against the viewer's own slot. Instead surface the OWNER's currently
+    // selected companion avatar URL (the same device-safe image path the
+    // plaza/marketplace use via petdxAvatarUrl), so the canonical 夥伴
+    // appearance shows. Falls back to entity.avatar (emoji/upload) when the
+    // owner has no companion selected — never a yellow box.
+    let petdxAvatarUrl = null;
+    try {
+        const petdxMap = await getPetdxEntityEnrichmentMap(target.deviceId);
+        const enr = petdxMap.get(Number(target.entityId));
+        if (enr && enr.petdxAvatarUrl) petdxAvatarUrl = enr.petdxAvatarUrl;
+    } catch (_) { /* graceful: keep emoji/upload fallback */ }
+
     res.json({
         success: true,
         entity: {
@@ -12805,6 +12822,7 @@ app.get('/api/entity/lookup', (req, res) => {
             character: entity.character,
             state: entity.state,
             avatar: entity.avatar,
+            petdxAvatarUrl,
             level: entity.level,
             agentCard: entity.agentCard || null,
             capabilitiesStatus,
@@ -14098,6 +14116,47 @@ function enrichCardHolderEntry(c) {
     return { ...c, online: false };
 }
 
+/**
+ * Async batch variant of enrichCardHolderEntry — also surfaces each owner's
+ * currently selected petdx 夥伴 companion avatar URL (audit P3,
+ * card_8512e936d13662c0dc1495bf). card-holder.html lists contacts that mostly
+ * belong to OTHER devices, so the client-side AvatarPetdx canvas can't resolve
+ * them (descriptor cache is keyed on the viewer's own device entities). Mirror
+ * the plaza/marketplace approach: enrich the row with petdxAvatarUrl — the
+ * device-safe image of the owner's selected companion — so the card-holder
+ * renders the canonical 夥伴 appearance instead of the static emoji. Own-device
+ * cards keep their entityId and still mount the animated chibi canvas.
+ *
+ * Batches one petdx lookup per distinct owner device, so a 50-row mixed list
+ * costs at most a handful of queries. Falls back to emoji/upload on any miss.
+ */
+async function enrichCardHolderEntriesWithPetdx(list) {
+    const arr = (list || []).map(enrichCardHolderEntry);
+    // Group live entries by owner device so we run getPetdxEntityEnrichmentMap
+    // once per device rather than once per row.
+    const deviceMaps = new Map();   // deviceId -> Map<entityId, {petdxAvatarUrl}>
+    const deviceIds = new Set();
+    for (const c of arr) {
+        const live = publicCodeIndex[c.publicCode];
+        if (live && live.deviceId) deviceIds.add(live.deviceId);
+    }
+    await Promise.all(Array.from(deviceIds).map(async (did) => {
+        try {
+            deviceMaps.set(did, await getPetdxEntityEnrichmentMap(did));
+        } catch (_) { /* graceful: leave emoji/upload fallback for this device */ }
+    }));
+    return arr.map((c) => {
+        const live = publicCodeIndex[c.publicCode];
+        if (!live) return c;
+        const m = deviceMaps.get(live.deviceId);
+        const enr = m && m.get(Number(live.entityId));
+        if (enr && enr.petdxAvatarUrl) {
+            return { ...c, petdxAvatarUrl: enr.petdxAvatarUrl };
+        }
+        return c;
+    });
+}
+
 /** Helper: resolve owner/session auth for card-holder read APIs */
 function resolveCardHolderReadAuth(req) {
     let deviceId = req.query.deviceId;
@@ -14134,7 +14193,7 @@ app.get('/api/contacts', async (req, res) => {
     if (req.query.offset) opts.offset = parseInt(req.query.offset) || 0;
 
     const cards = await db.getCardHolder(deviceId, opts);
-    const enriched = cards.map(enrichCardHolderEntry);
+    const enriched = await enrichCardHolderEntriesWithPetdx(cards);
     res.json({ success: true, contacts: enriched });
 });
 
@@ -14268,7 +14327,7 @@ app.get('/api/contacts/recent', async (req, res) => {
 
     const limit = Math.min(parseInt(req.query.limit) || 20, 100);
     const cards = await db.getRecentInteractions(deviceId, limit);
-    const enriched = cards.map(enrichCardHolderEntry);
+    const enriched = await enrichCardHolderEntriesWithPetdx(cards);
     res.json({ success: true, contacts: enriched });
 });
 
@@ -14287,7 +14346,7 @@ app.get('/api/contacts/search', async (req, res) => {
     if (q.length > 100) return res.status(400).json({ success: false, error: 'Query too long' });
 
     const cards = await db.searchCards(deviceId, q);
-    const enriched = cards.map(enrichCardHolderEntry);
+    const enriched = await enrichCardHolderEntriesWithPetdx(cards);
 
     // If query looks like a publicCode (3-8 alphanumeric), also search externally
     let external = [];
@@ -14301,11 +14360,22 @@ app.get('/api/contacts/search', async (req, res) => {
                 const dev = devices[live.deviceId];
                 const ent = dev?.entities?.[live.entityId];
                 if (ent && ent.isBound) {
+                    // Surface the owner's selected petdx companion avatar (audit
+                    // P3) so the external search hit shows the 夥伴 appearance,
+                    // matching saved/recent rows. Cross-device → URL image, not
+                    // a client canvas. Falls back to ent.avatar on no companion.
+                    let petdxAvatarUrl = null;
+                    try {
+                        const m = await getPetdxEntityEnrichmentMap(live.deviceId);
+                        const enr = m.get(Number(live.entityId));
+                        if (enr && enr.petdxAvatarUrl) petdxAvatarUrl = enr.petdxAvatarUrl;
+                    } catch (_) { /* graceful */ }
                     external.push({
                         publicCode: code,
                         name: ent.name || null,
                         character: ent.character || null,
                         avatar: ent.avatar || null,
+                        petdxAvatarUrl,
                         agentCard: ent.agentCard || null,
                         online: true
                     });
@@ -14361,14 +14431,30 @@ app.get('/api/contacts/friend-requests', async (req, res) => {
     const status = req.query.status || null;
     const requests = await db.getFriendRequests(deviceId, direction, status);
 
-    // Enrich with live entity data
+    // Enrich with live entity data + petdx 夥伴 companion avatar (audit P3).
+    // Cross-device requesters → surface the owner's companion avatar URL so the
+    // request card shows the 夥伴 appearance, not the static emoji. Batched one
+    // petdx lookup per distinct owner device.
+    const reqDeviceIds = new Set();
+    for (const r of requests) {
+        const code = direction === 'received' ? r.fromPublicCode : r.toPublicCode;
+        const live = publicCodeIndex[code];
+        if (live && live.deviceId) reqDeviceIds.add(live.deviceId);
+    }
+    const reqPetdxMaps = new Map();
+    await Promise.all(Array.from(reqDeviceIds).map(async (did) => {
+        try { reqPetdxMaps.set(did, await getPetdxEntityEnrichmentMap(did)); }
+        catch (_) { /* graceful */ }
+    }));
     const enriched = requests.map(r => {
         const code = direction === 'received' ? r.fromPublicCode : r.toPublicCode;
         const live = publicCodeIndex[code];
         if (live) {
             const dev = devices[live.deviceId];
             const ent = dev?.entities?.[live.entityId];
-            return { ...r, name: ent?.name || null, character: ent?.character || null, avatar: ent?.avatar || null, online: true };
+            const m = reqPetdxMaps.get(live.deviceId);
+            const enr = m && m.get(Number(live.entityId));
+            return { ...r, name: ent?.name || null, character: ent?.character || null, avatar: ent?.avatar || null, petdxAvatarUrl: (enr && enr.petdxAvatarUrl) || null, online: true };
         }
         return { ...r, name: null, character: null, avatar: null, online: false };
     });
@@ -14395,7 +14481,7 @@ app.get('/api/contacts/friends', async (req, res) => {
     }
 
     const friends = await db.getFriends(deviceId);
-    const enriched = friends.map(enrichCardHolderEntry);
+    const enriched = await enrichCardHolderEntriesWithPetdx(friends);
     res.json({ success: true, friends: enriched });
 });
 

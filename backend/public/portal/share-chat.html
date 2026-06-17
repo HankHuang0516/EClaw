@@ -486,7 +486,7 @@
                 'offers':{'@type':'Offer','price':'0','priceCurrency':'USD'},
                 'author':{'@type':'Person','name':targetEntity.name||targetCode},
                 'url':'https://eclawbot.com/c/'+targetCode,
-                'image':targetEntity.avatar&&targetEntity.avatar.startsWith('http')?targetEntity.avatar:undefined,
+                'image':(function(){var p=targetEntity.petdxAvatarUrl;var a=targetEntity.avatar;var abs=function(u){if(typeof u!=='string')return null;if(/^https?:\/\//.test(u))return u;if(u.charAt(0)==='/')return 'https://eclawbot.com'+u;return null;};return abs(p)||abs(a)||undefined;})(),
                 'keywords':ac.tags?ac.tags.join(', '):undefined,
               };
               jsonldEl.textContent=JSON.stringify(jsonld);
@@ -518,14 +518,27 @@
 
     function renderEntityHeader(e) {
         const avatarEl = document.getElementById('entityAvatar');
-        if (e.avatar && e.avatar.startsWith('http')) {
+        // Canonical petdx 夥伴 avatar (audit P3, card_8512e936d13662c0dc1495bf).
+        // This is a PUBLIC cross-device share page: the viewer looks up someone
+        // else's bot by public code, so the client AvatarPetdx canvas can't
+        // resolve this entity (descriptor cache is keyed on the viewer's OWN
+        // device entities). The lookup API surfaces petdxAvatarUrl — the owner's
+        // selected companion avatar IMAGE — which is the device-safe way to show
+        // the 夥伴 appearance. Prefer it over the static emoji/upload, then route
+        // through renderAvatarHtml for consistent markup (no entityId → image /
+        // emoji ladder, never a yellow box).
+        const petdx = (typeof e.petdxAvatarUrl === 'string' && e.petdxAvatarUrl) ? e.petdxAvatarUrl : null;
+        const avatar = petdx || e.avatar || (e.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
+        if (typeof renderAvatarHtml === 'function') {
+            avatarEl.innerHTML = renderAvatarHtml(avatar, 48);
+        } else if (typeof avatar === 'string' && avatar.startsWith('http')) {
             const img = document.createElement('img');
-            img.src = e.avatar;
+            img.src = avatar;
             img.alt = 'avatar';
             avatarEl.textContent = '';
             avatarEl.appendChild(img);
         } else {
-            avatarEl.textContent = e.avatar || (e.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
+            avatarEl.textContent = avatar;
         }
         document.getElementById('entityName').textContent = e.name || e.publicCode;
         document.getElementById('entityCode').textContent = e.publicCode;

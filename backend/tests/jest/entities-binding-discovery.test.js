@@ -100,7 +100,10 @@ describe('/api/entities response shape', () => {
 });
 
 describe('/api/entity/lookup response shape (public)', () => {
-    const handler = slice("app.get('/api/entity/lookup'", 2500);
+    // Widened span: the lookup handler now also computes the petdx 夥伴 avatar
+    // enrichment (audit P3, card_8512e936d13662c0dc1495bf) before the response,
+    // which pushes the response-shape fields further down the function body.
+    const handler = slice("app.get('/api/entity/lookup'", 4200);
 
     it('exposes bindingType (coarse binding class)', () => {
         expect(handler).toMatch(/bindingType:\s*entity\.bindingType/);

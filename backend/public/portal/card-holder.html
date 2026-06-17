@@ -928,6 +928,22 @@
             container.innerHTML = html;
         }
 
+        // Petdx 夥伴 avatar resolution for CROSS-DEVICE contact rows (audit P3,
+        // card_8512e936d13662c0dc1495bf). Recent/Collected/Search/Friend rows
+        // belong to OTHER devices, so the client AvatarPetdx descriptor cache
+        // (keyed on the viewer's OWN entities) can't resolve them — passing
+        // their entityId would mis-render against the viewer's own slot. The
+        // server enriches each row with petdxAvatarUrl (the owner's selected
+        // companion avatar image); prefer it over the static emoji/upload so
+        // the 夥伴 appearance shows. Falls back to emoji — never a yellow box.
+        // (My-cards stay on the entityId canvas path — own device, animatable.)
+        function chCrossDeviceAvatar(row) {
+            if (row && typeof row.petdxAvatarUrl === 'string' && row.petdxAvatarUrl) {
+                return row.petdxAvatarUrl;
+            }
+            return null;
+        }
+
         // ── My Card rendering ──
         function renderMyCardHtml(c) {
             const avatar = c.avatar || '\u{1F99E}';
@@ -958,7 +974,7 @@
 
         // ── Friend request rendering ──
         function renderFriendRequestHtml(r) {
-            const avatar = r.avatar || '\u{1F99E}';
+            const avatar = chCrossDeviceAvatar(r) || r.avatar || '\u{1F99E}';
             return `<div class="friend-req-card">
                 <div class="card-row">
                     <span class="agent-avatar">${renderAvatarHtml(avatar, 42)}</span>
@@ -978,7 +994,7 @@
 
         // ── Recent rendering ──
         function renderRecentHtml(c) {
-            const avatar = c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
+            const avatar = chCrossDeviceAvatar(c) || c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
             const snap = c.cardSnapshot || {};
             const friendLabel = c.isFriend ? `<span class="friend-badge">${t('cardholder_friend', 'Friend')}</span>` : '';
             let html = `<div class="card-item" onclick="openDetail('${escapeAttr(c.publicCode)}')">
@@ -1005,7 +1021,7 @@
 
         // ── Collected rendering ──
         function renderCollectedHtml(c) {
-            const avatar = c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
+            const avatar = chCrossDeviceAvatar(c) || c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
             const snap = c.cardSnapshot || {};
             const friendLabel = c.isFriend ? `<span class="friend-badge">${t('cardholder_friend', 'Friend')}</span>` : '';
             let html = `<div class="card-item ${c.pinned ? 'pinned' : ''} ${c.blocked ? 'blocked' : ''}" onclick="openDetail('${escapeAttr(c.publicCode)}')">
@@ -1065,7 +1081,7 @@
             if (searchExternal.length > 0) {
                 html += `<div class="search-results-title">${t('cardholder_search_external', 'Online Agents')}</div>`;
                 html += searchExternal.map(c => {
-                    const avatar = c.avatar || '\u{1F99E}';
+                    const avatar = chCrossDeviceAvatar(c) || c.avatar || '\u{1F99E}';
                     const snap = c.agentCard || {};
                     return `<div class="card-item">
                         <div class="card-row">
@@ -1200,7 +1216,7 @@
             if (!card) return;
 
             const snap = card.cardSnapshot || {};
-            const avatar = card.avatar || (card.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
+            const avatar = chCrossDeviceAvatar(card) || card.avatar || (card.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
             const caps = snap.capabilities || [];
             const tags = snap.tags || [];
             const protocols = snap.protocols || [];
