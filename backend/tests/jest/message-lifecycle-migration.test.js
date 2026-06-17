@@ -153,7 +153,8 @@ describe('20260614_message_lifecycle migration', () => {
     });
 
     describe('rollback (down.sql)', () => {
-        test('drops both tables', () => {
+        test('drops all lifecycle tables', () => {
+            expect(down).toMatch(/DROP TABLE IF EXISTS lifecycle_divergence_log/);
             expect(down).toMatch(/DROP TABLE IF EXISTS lifecycle_event_log/);
             expect(down).toMatch(/DROP TABLE IF EXISTS message_lifecycle/);
         });
@@ -167,11 +168,12 @@ describe('20260614_message_lifecycle migration', () => {
         });
 
         test('uses IF EXISTS to be idempotent on a clean DB', () => {
-            // Counting: 2 tables + however many indexes are in up.sql.
+            // Counting: 3 tables (message_lifecycle, lifecycle_event_log,
+            // lifecycle_divergence_log) + however many indexes are in up.sql.
             const dropTables = (down.match(/DROP TABLE IF EXISTS/g) || []).length;
             const dropIndexes = (down.match(/DROP INDEX IF EXISTS/g) || []).length;
-            expect(dropTables).toBe(2);
-            expect(dropIndexes).toBeGreaterThanOrEqual(3);
+            expect(dropTables).toBe(3);
+            expect(dropIndexes).toBeGreaterThanOrEqual(4);
         });
     });
 
