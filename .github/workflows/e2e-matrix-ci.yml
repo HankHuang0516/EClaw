@@ -4,8 +4,11 @@ name: Cross-surface E2E Matrix
 # top user flows × {desktop, mobile, webview}. Runs against the live target
 # (MATRIX_BASE, default prod). Fails the job on any IMPLEMENTED cell that fails;
 # PENDING cells (driver not yet written) are reported but non-fatal until all
-# five drivers land. To make this a REQUIRED merge check, add "Cross-surface E2E
-# Matrix / matrix" to the branch-protection rules for main (repo setting).
+# five drivers land. This job ("Cross-surface E2E Matrix / matrix") is made a
+# REQUIRED merge check via the PR CI Hard Gate aggregator (pr-ci-hard-gate.yml),
+# NOT by adding it directly to branch protection — a path-filtered job added
+# directly would deadlock PRs that correctly skip this workflow. See
+# docs/ops/e2e-matrix-required-check.md and CONTRIBUTING.md "CI Requirements".
 
 on:
   push:
@@ -17,6 +20,7 @@ on:
       - 'backend/redirect-router.js'
       - 'backend/tests/e2e/matrix/**'
       - '.github/workflows/e2e-matrix-ci.yml'
+      - '.github/workflows/pr-ci-hard-gate.yml'
   pull_request:
     branches: [main]
     paths:
@@ -26,6 +30,7 @@ on:
       - 'backend/redirect-router.js'
       - 'backend/tests/e2e/matrix/**'
       - '.github/workflows/e2e-matrix-ci.yml'
+      - '.github/workflows/pr-ci-hard-gate.yml'
 
 jobs:
   matrix:

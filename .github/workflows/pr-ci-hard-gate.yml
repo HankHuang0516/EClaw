@@ -66,6 +66,24 @@ jobs:
                 checks: ['Critical portal pages']
               },
               {
+                label: 'Cross-surface E2E Matrix CI',
+                // Mirrors the path filter in .github/workflows/e2e-matrix-ci.yml so the
+                // hard gate only waits for the matrix job when files it covers change.
+                // This makes "Cross-surface E2E Matrix / matrix" effectively required
+                // without adding a path-filtered job directly to branch protection
+                // (which would deadlock PRs that correctly skip the matrix workflow).
+                when: path =>
+                  path.startsWith('backend/public/portal/') ||
+                  path.startsWith('backend/public/shared/') ||
+                  path.startsWith('backend/tests/e2e/matrix/') ||
+                  [
+                    'backend/shared/route-registry.js',
+                    'backend/redirect-router.js',
+                    '.github/workflows/e2e-matrix-ci.yml'
+                  ].includes(path),
+                checks: ['matrix']
+              },
+              {
                 label: 'Android CI',
                 when: path =>
                   path.startsWith('app/') ||

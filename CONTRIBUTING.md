@@ -69,6 +69,24 @@ PR CI Hard Gate / Required PR CI gate
 
 The individual path-scoped workflow jobs should stay optional in branch protection. Requiring them directly can leave PRs blocked when a workflow is correctly skipped because its files were not touched.
 
+### Cross-surface E2E Matrix (effectively required)
+
+The `Cross-surface E2E Matrix / matrix` job is enforced **through** the hard gate, not as a separate branch-protection context. When a PR touches the portal/shared frontend, the route registry/redirect router, the matrix drivers, or the matrix/hard-gate workflows, the hard gate waits for the `matrix` check and fails if it fails. This keeps the anti-deadlock property: PRs that do not touch those paths skip the matrix entirely and are not blocked.
+
+If your PR is blocked by a matrix failure (the hard gate reports `Required CI failed: matrix (failure) <url>`):
+
+1. Open the failing run logs at the URL shown in the hard-gate output (Actions → "Cross-surface E2E Matrix" → the run on your PR's head SHA).
+2. Reproduce locally:
+
+   ```bash
+   cd backend/tests/e2e/matrix
+   MATRIX_TEST_DEVICE_ID=YOUR_DEVICE_ID MATRIX_TEST_DEVICE_SECRET=YOUR_BOT_SECRET node run-matrix.js
+   ```
+
+3. Fix the failing flow and push; the matrix re-runs and the hard gate unblocks once it is green.
+
+See [`docs/ops/e2e-matrix-required-check.md`](docs/ops/e2e-matrix-required-check.md) for the full rationale and the (rarely needed) procedure to add the check directly to branch protection.
+
 ## Secrets
 
 Never include device secrets, API tokens, private keys, database URLs, or production credentials in commits, PR bodies, logs, screenshots, or review comments. Use redacted examples such as `YOUR_DEVICE_ID` and `YOUR_BOT_SECRET`.
