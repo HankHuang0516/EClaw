@@ -158,6 +158,16 @@ const FEATURES = [
         minAppVersion: { android: '0.0.0', ios: '0.0.0' },
     },
     {
+        key: 'passive_health',
+        name: 'Passive Health-Check',
+        enabled: true,
+        // Web-only today: settings.html section wired to /api/passive-health.
+        // native:false → app surfaces it via WebView focus=passive_health until a
+        // native screen ships (card_a346b317920f6daf017c83e7).
+        native: { android: false, ios: false },
+        minAppVersion: { android: '0.0.0', ios: '0.0.0' },
+    },
+    {
         key: 'wallet',
         name: 'Wallet',
         enabled: true,
