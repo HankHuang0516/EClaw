@@ -3532,6 +3532,10 @@
     </div>
 
     <script src="shared/api.js"></script>
+    <!-- SmartRouter: split-mode "在看板中開啟" must route into the existing kanban
+         pane, not window.open a 2nd pane / redirect chat (card_2d5fbe88). -->
+    <script src="/shared-core/route-registry.js"></script>
+    <script src="shared/smart-router.js"></script>
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
     <!-- Phase 2 #5 offline delivery queue: load before sendMessage runs. -->
@@ -9054,8 +9058,30 @@
 
         function openKanbanCard(cardId, event) {
             if (event && typeof event.preventDefault === 'function') event.preventDefault();
-            if (eclawNavigateMissionCard(cardId)) return;
-            const url = getKanbanCardUrl(cardId);
+            const id = String(cardId || '').trim();
+            if (!id) return;
+
+            // SmartRouter (route-registry + smart-router.js) resolves the right
+            // target per nav mode (card_2d5fbe88):
+            //   • split → posts split_navigate to the workspace host, which loads
+            //     the card into the EXISTING kanban pane (no 2nd pane, chat pane
+            //     untouched). Degrades to single full-page only if the host never acks.
+            //   • app   → native tab bridge (targetTab:'mission').
+            //   • single→ full-page navigate to kanban.html?card=…#… in this tab.
+            const SR = window.SmartRouter;
+            if (SR && typeof SR.navigate === 'function' && SR.mode && SR.mode !== 'single') {
+                if (SR.navigate('card', { cardId: id }) !== false) return;
+            }
+
+            // Native bridge fallback (older WebViews without SmartRouter app mode).
+            if (eclawNavigateMissionCard(id)) return;
+
+            // Single / standalone page: SmartRouter same-tab navigate when present,
+            // else the legacy new-tab open so standalone users keep that affordance.
+            if (SR && typeof SR.navigate === 'function' && SR.mode === 'single') {
+                if (SR.navigate('card', { cardId: id }) !== false) return;
+            }
+            const url = getKanbanCardUrl(id);
             const opened = window.open(url, '_blank', 'noopener');
             if (!opened) window.location.href = url;
         }
@@ -9089,7 +9115,7 @@
             const kanbanUrl = getKanbanCardUrl(c.id || cardId);
 
             let html = `<div class="entity-card-actions">
-                <a class="entity-open-kanban" href="${escapeHtml(kanbanUrl)}" target="_blank" rel="noopener" onclick="openKanbanCard('${escapeJs(c.id || cardId)}', event)">📋 ${escapeHtml(openKanbanLabel)}</a>
+                <a class="entity-open-kanban" href="${escapeHtml(kanbanUrl)}" rel="noopener" onclick="openKanbanCard('${escapeJs(c.id || cardId)}', event)">📋 ${escapeHtml(openKanbanLabel)}</a>
             </div>`;
 
             html += `<div class="entity-meta">
