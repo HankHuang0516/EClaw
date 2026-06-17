@@ -29,6 +29,26 @@ The runner exits non-zero on **any** `fail` **or** `pending` cell. `pending` is 
 longer an expected state (all 5 drivers exist) — a pending cell means a flow key
 lost its driver in `drivers.js` (regression / bad merge) and fails the gate.
 
+### Transient-503 hardening (does NOT red the gate)
+
+The two secret-bound drivers (`kanban_lifecycle`, `agent_reply_visibility`) hit
+**live prod**, which can intermittently throw HTTP 503/429 or a cold-path timeout.
+Every prod call in those drivers now goes through `fetchWithRetry` (in `drivers.js`):
+classifier `TRANSIENT_ERROR_RE` + status≥500/429 → retry up to 5× with backoff
+(`min(30s, 2s × attempt)`, ≈20s window). This mirrors the canonical retry pattern
+in `openclaw-channel-eclaw/src/client.ts` ("retry transient message delivery
+failures", 21989abc).
+
+If a 503/429 **still** survives that retry window, the driver returns
+`{ transient: true }` and the runner marks the cell **`TRNS`** — reported loudly in
+`summary.txt` but **not counted as a fail** (it does not exit non-zero). Rationale:
+a sustained prod infra blip is not a product regression and must not red a required
+merge gate. `agent_reply_visibility` additionally **polls** chat history (8 × 3s)
+for the seeded marker instead of a single fixed 3s wait — this was the root cause of
+the desktop-flaps / mobile+webview-pass flake (the first surface tested raced the
+async `transform→chat_messages` write). Expected healthy baseline is still
+**15 pass / 0 fail / 0 transient**; a `transient` cell is the safety net, not the norm.
+
 ### Local dry-run without secrets (auth-light subset)
 
 ```
