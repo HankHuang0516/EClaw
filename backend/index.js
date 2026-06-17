@@ -20764,12 +20764,17 @@ app.get('/sw.js', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/sw.js'));
 });
 
-app.get('/api/push/vapid-public-key', (req, res) => {
+function handleVapidPublicKey(req, res) {
     if (!process.env.VAPID_PUBLIC_KEY) {
         return res.status(503).json({ success: false, error: 'Web Push not configured' });
     }
     res.json({ success: true, publicKey: process.env.VAPID_PUBLIC_KEY });
-});
+}
+app.get('/api/push/vapid-public-key', handleVapidPublicKey);
+// Cross-platform parity alias (GH#3286): mobile/web audit clients probe the
+// notifications-namespaced path. Forward to the same handler so any client
+// path resolves identically.
+app.get('/api/notifications/vapid-key', handleVapidPublicKey);
 
 app.post('/api/push/subscribe', async (req, res) => {
     const deviceId = authDevice(req);
@@ -21957,7 +21962,7 @@ app.post('/api/portal/beacons', express.json({ limit: '64kb' }), beaconLimiter, 
 });
 
 // GET /api/device-telemetry — Read telemetry for debugging
-app.get('/api/device-telemetry', async (req, res) => {
+async function handleDeviceTelemetryRead(req, res) {
     const { deviceId, deviceSecret, type, page, action, since, until, limit } = req.query;
     if (!deviceId || !deviceSecret) {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
@@ -21968,7 +21973,11 @@ app.get('/api/device-telemetry', async (req, res) => {
     }
     const entries = await telemetry.getEntries(chatPool, deviceId, { type, page, action, since, until, limit });
     res.json({ success: true, count: entries.length, entries });
-});
+}
+app.get('/api/device-telemetry', handleDeviceTelemetryRead);
+// Cross-platform parity alias (GH#3286): audit clients probe the short
+// `/api/telemetry` path. Forward to the same device-scoped handler.
+app.get('/api/telemetry', handleDeviceTelemetryRead);
 
 // GET /api/device-telemetry/summary — Quick overview of a device's buffer
 app.get('/api/device-telemetry/summary', async (req, res) => {
