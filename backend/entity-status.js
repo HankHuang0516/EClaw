@@ -13,6 +13,7 @@
 
 const express = require('express');
 const safeEqual = require('./safe-equal');
+const { entityGitEmail } = require('./scripts/entity-git-author');
 
 const CANONICAL_AXES = [
     'chat_no_reply',
@@ -535,6 +536,54 @@ function normalizePrKey(raw) {
     return num ? `#${num[0]}` : null;
 }
 
+// Per-entity git author identity → prs_merged author-source (Tier 1).
+// Spec: docs/specs/per-entity-git-author-spec.md (§6). The author-source counts
+// distinct PRs whose commits are authored/co-authored by entity-<N>@bots.eclaw,
+// UNION'd + deduped with the kanban-evidence path. Production wires this to a
+// read-only GitHub query using the EXISTING GITHUB_TOKEN; tests inject a mock.
+// Default is null (no author-source) so DB-only environments degrade silently to
+// the evidence path. Set via setPrAuthorSource().
+let _prAuthorSource = null;
+
+// resolver: async (entityEmail, { deviceId, entityId }) => Array<{ prKey?, owner?, repo?, number?, lastEventAt? }>
+// Each item must yield a normalized `owner/repo#N` (or `#N`) key — same key space
+// as extractPrKeys/normalizePrKey so cross-source duplicates collapse.
+function setPrAuthorSource(resolver) {
+    _prAuthorSource = (typeof resolver === 'function') ? resolver : null;
+}
+
+// Best-effort: never throws. Returns [] on ANY failure (no resolver injected,
+// GITHUB_TOKEN absent, GH unreachable/non-200, malformed payload, exception).
+// Items are normalized to { key, lastEventAt }.
+async function fetchAuthoredPrKeys(deviceId, entityId) {
+    if (!_prAuthorSource) return [];
+    try {
+        const email = entityGitEmail(entityId);
+        if (!email) return [];
+        const raw = await _prAuthorSource(email, { deviceId, entityId: Number(entityId) });
+        if (!Array.isArray(raw)) return [];
+        const out = [];
+        for (const item of raw) {
+            if (!item) continue;
+            let key = null;
+            if (item.prKey) {
+                key = String(item.prKey).toLowerCase();
+            } else if (item.owner && item.repo && item.number != null) {
+                key = `${String(item.owner).toLowerCase()}/${String(item.repo).toLowerCase()}#${item.number}`;
+            } else if (item.number != null) {
+                key = normalizePrKey(item.number);
+            }
+            if (key) out.push({ key, lastEventAt: item.lastEventAt || null });
+        }
+        return out;
+    } catch (err) {
+        // Graceful degrade — author-source contributes nothing, evidence path stands.
+        console.warn('[Achievements] prs_merged author-source failed (degrading to evidence path):',
+            err && err.message);
+        return [];
+    }
+}
+
 async function getAchievements(deviceId, entityId) {
     if (!pool) return [];
     const eid = Number(entityId);
@@ -643,6 +692,14 @@ async function getAchievements(deviceId, entityId) {
                 for (const row of rw.rows) {
                     const k = normalizePrKey(row.pr);
                     if (k) { seen.add(k); noteLast(row.updated_at); }
+                }
+                // 3) Author-source (Tier 1, spec §6): distinct PRs authored/co-
+                //    authored by entity-<N>@bots.eclaw. Best-effort — degrades to
+                //    [] on any failure, so the evidence path above always stands.
+                const authored = await fetchAuthoredPrKeys(deviceId, eid);
+                for (const a of authored) {
+                    seen.add(a.key);
+                    noteLast(a.lastEventAt);
                 }
                 count = seen.size;
                 lastEventAt = last;
@@ -1105,4 +1162,5 @@ module.exports = {
     CANONICAL_ACHIEVEMENTS,
     getAchievements,
     getAchievementEvents,
+    setPrAuthorSource,
 };
