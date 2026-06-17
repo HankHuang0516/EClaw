@@ -250,6 +250,38 @@
         const OWNER_COLOR = '#fbbf24';
         const CHAT_COLOR = '#34d399';
 
+        // ── Owner avatar cache ───────────────────────────────────────────────
+        // Owner/center nodes paint the entity's avatar (大頭貼) instead of the
+        // plain yellow square. node.avatar is resolved server-side via the
+        // entity record (entity-utils chain: explicit URL/emoji → petdx → …).
+        // URL avatars are loaded once into an Image and drawn clipped to a
+        // circle; emoji avatars are drawn as a glyph; missing avatars fall back
+        // to a deterministic initial badge — never a bare yellow square.
+        const _ownerImgCache = new Map(); // url -> { img, loaded }
+        function _ownerAvatarImg(url) {
+            let entry = _ownerImgCache.get(url);
+            if (entry) return entry;
+            entry = { img: new Image(), loaded: false };
+            entry.img.crossOrigin = 'anonymous';
+            entry.img.onload = () => {
+                entry.loaded = true;
+                // Repaint so the freshly-decoded avatar shows without a click.
+                try { if (fg) fg.refresh && fg.refresh(); } catch (_) {}
+            };
+            entry.img.onerror = () => { entry.failed = true; };
+            entry.img.src = url;
+            _ownerImgCache.set(url, entry);
+            return entry;
+        }
+        function _isAvatarUrl(v) {
+            return typeof v === 'string' && /^(https?:\/\/|\/)/.test(v);
+        }
+        function _ownerInitial(node) {
+            const s = node.label || node.character || '';
+            const ch = String(s).trim().charAt(0);
+            return ch ? ch.toUpperCase() : '#';
+        }
+
         const EDGE_COLOR = {
             parent: 'rgba(160, 174, 192, 0.55)',
             blocks: 'rgba(248, 113, 113, 0.75)',
@@ -598,14 +630,74 @@
             return '#888';
         }
 
+        // Owner/center node: paint the entity avatar inside a circle.
+        // Replaces the legacy yellow-square placeholder so the center node
+        // shows the bound entity's 大頭貼 + real display name.
+        function drawOwnerNode(node, ctx, r, isSel, scale) {
+            const cx = node.x, cy = node.y;
+            const av = node.avatar;
+            ctx.save();
+            // Clip to a circle so URL/emoji avatars sit in a round headshot.
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2, false);
+            ctx.closePath();
+            let painted = false;
+            if (_isAvatarUrl(av)) {
+                const entry = _ownerAvatarImg(av);
+                if (entry.loaded && !entry.failed) {
+                    ctx.save();
+                    ctx.clip();
+                    try {
+                        ctx.drawImage(entry.img, cx - r, cy - r, r * 2, r * 2);
+                        painted = true;
+                    } catch (_) {}
+                    ctx.restore();
+                }
+            }
+            if (!painted) {
+                // Backdrop disc (entity owner accent) for emoji / initial fallback.
+                ctx.fillStyle = OWNER_COLOR;
+                ctx.globalAlpha = node.archived ? 0.45 : 1;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                if (typeof av === 'string' && av && !_isAvatarUrl(av)) {
+                    // Emoji avatar glyph.
+                    ctx.fillStyle = '#1a1a1a';
+                    ctx.font = (r * 1.3) + 'px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(av, cx, cy + r * 0.04);
+                } else {
+                    // Deterministic initial badge (no avatar at all).
+                    ctx.fillStyle = '#1a1a1a';
+                    ctx.font = '600 ' + (r * 1.1) + 'px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(_ownerInitial(node), cx, cy + r * 0.04);
+                }
+            }
+            // Ring: selection highlight, else a subtle owner-accent border so the
+            // avatar reads as the center/owner node.
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2, false);
+            ctx.strokeStyle = isSel ? '#fff' : OWNER_COLOR;
+            ctx.lineWidth = (isSel ? 2 : 1.4) / scale;
+            ctx.stroke();
+            ctx.restore();
+        }
+
         function drawNode(node, ctx, scale) {
             const r = Math.max(3, Math.sqrt(Number(node.val) || 4) * 2.2);
             const isSel = node.id === selectedId;
-            ctx.beginPath();
             if (node.type === 'owner') {
-                // Owner: square
-                ctx.rect(node.x - r, node.y - r, r * 2, r * 2);
-            } else if (node.type === 'chat') {
+                // Owner: avatar headshot (大頭貼) in a circle.
+                drawOwnerNode(node, ctx, r, isSel, scale);
+                // Label still painted by the shared label block below.
+                drawNodeLabel(node, ctx, scale, r);
+                return;
+            }
+            ctx.beginPath();
+            if (node.type === 'chat') {
                 // Chat: diamond
                 ctx.moveTo(node.x, node.y - r);
                 ctx.lineTo(node.x + r, node.y);
@@ -639,19 +731,27 @@
             }
             ctx.globalAlpha = 1;
 
-            // Label only when zoomed in enough.
-            // Large graphs (>250 nodes): require deeper zoom so text-shaping
-            // doesn't dominate the frame budget on WebView-class GPUs.
-            const labelGate = GRAPH.nodes.length > LABEL_LARGE_GRAPH_THRESHOLD
-                ? LABEL_ZOOM_GATE_LARGE : LABEL_ZOOM_GATE_SMALL;
-            if (scale > labelGate && node.label) {
-                ctx.font = (11 / scale) + 'px sans-serif';
-                ctx.fillStyle = 'rgba(255,255,255,0.85)';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'top';
-                const label = node.label.length > 28 ? node.label.slice(0, 27) + '…' : node.label;
-                ctx.fillText(label, node.x, node.y + r + 2);
+            drawNodeLabel(node, ctx, scale, r);
+        }
+
+        // Shared label painter. Owner/center nodes always show their name (it's
+        // the identity of the map); other nodes gate the label behind a zoom
+        // threshold so text-shaping doesn't dominate the frame budget on large
+        // graphs / WebView-class GPUs.
+        function drawNodeLabel(node, ctx, scale, r) {
+            if (!node.label) return;
+            if (node.type !== 'owner') {
+                const labelGate = GRAPH.nodes.length > LABEL_LARGE_GRAPH_THRESHOLD
+                    ? LABEL_ZOOM_GATE_LARGE : LABEL_ZOOM_GATE_SMALL;
+                if (scale <= labelGate) return;
             }
+            const isOwner = node.type === 'owner';
+            ctx.font = (isOwner ? '600 ' : '') + ((isOwner ? 12 : 11) / scale) + 'px sans-serif';
+            ctx.fillStyle = isOwner ? '#fff' : 'rgba(255,255,255,0.85)';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            const label = node.label.length > 28 ? node.label.slice(0, 27) + '…' : node.label;
+            ctx.fillText(label, node.x, node.y + r + 2);
         }
 
         // ── Click → preview ──────────────────────────────────────────────────

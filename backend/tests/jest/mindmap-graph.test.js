@@ -118,14 +118,24 @@ describe('mindmap-graph-projection — pure helpers', () => {
         expect(stringOwner.ownerEntityId).toBeNull();
     });
 
-    test('buildOwnerNode uses entity record character name when available', () => {
-        const node = projection.buildOwnerNode(2, { character: 'LOBSTER', avatar: 'http://a.png' });
-        expect(node.id).toBe('owner:2');
-        expect(node.label).toBe('LOBSTER');
-        expect(node.avatar).toBe('http://a.png');
-        expect(node.type).toBe('owner');
+    test('buildOwnerNode prefers display name over codename, carries avatar + character', () => {
+        // Server display name wins over the raw codename character.
+        const named = projection.buildOwnerNode(2, { name: 'Lobster Boss', character: 'LOBSTER', avatar: 'http://a.png' });
+        expect(named.id).toBe('owner:2');
+        expect(named.label).toBe('Lobster Boss');
+        expect(named.avatar).toBe('http://a.png');
+        expect(named.character).toBe('LOBSTER');
+        expect(named.type).toBe('owner');
+
+        // No display name → title-cased codename (LOBSTER → Lobster), never raw.
+        const codenameOnly = projection.buildOwnerNode(2, { character: 'LOBSTER', avatar: 'http://a.png' });
+        expect(codenameOnly.label).toBe('Lobster');
+        expect(codenameOnly.character).toBe('LOBSTER');
+
+        // No record at all → numeric fallback.
         const fallback = projection.buildOwnerNode(99, undefined);
         expect(fallback.label).toBe('Entity 99');
+        expect(fallback.avatar).toBeNull();
     });
 
     test('buildChatNode produces chat:<id> with deep link', () => {
