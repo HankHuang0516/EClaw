@@ -1,6 +1,9 @@
 -- Down: 20260614_message_lifecycle
 -- Drop the lifecycle schema in reverse order.
 
+DROP INDEX IF EXISTS idx_ldl_window;
+DROP TABLE IF EXISTS lifecycle_divergence_log;
+
 DROP INDEX IF EXISTS idx_lel_message;
 DROP TABLE IF EXISTS lifecycle_event_log;
 

@@ -118,3 +118,30 @@ COMMENT ON TABLE lifecycle_event_log IS
     'rejected_late, or rejected_unknown_message (spec §2.4). NEVER mutated after insert; '
     'this is the structural enforcement of constraint #1 (no rollback). Read by the debug '
     'endpoint GET /api/debug/message-lifecycle/:messageId (Step 5) for the per-message timeline.';
+
+-- ============================================
+-- lifecycle_divergence_log: dual-write divergence detector (Phase 2 Step 6)
+-- Spec §6.5 (Phase 3 cutover gate) + §9.10 acceptance.
+-- Added in Step 3 (card_1b1c1322) alongside the dual-write paths.
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS lifecycle_divergence_log (
+    id              BIGSERIAL PRIMARY KEY,
+    message_id      TEXT,
+    device_id       VARCHAR(64),
+    entity_id       INTEGER,
+    legacy_counter  TEXT NOT NULL,   -- 'chat_no_reply' | 'delivery_alert' | 'system_msg_no_reply'
+    direction       TEXT NOT NULL,   -- 'legacy_skipped' | 'lifecycle_skipped'
+    reason          TEXT,
+    occurred_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_ldl_window
+    ON lifecycle_divergence_log (occurred_at DESC);
+
+COMMENT ON TABLE lifecycle_divergence_log IS
+    'Dual-write divergence detector (spec §6.5 / §9.10). When a legacy counter '
+    'site increments but its paired lifecycle.transition() was skipped (or vice '
+    'versa), one row is recorded here. The Phase 3 cutover gate (new_alert_volume '
+    '/ legacy_alert_volume within +-10%) reads this so divergence surfaces rather '
+    'than silently passing.';

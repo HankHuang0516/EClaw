@@ -36,6 +36,28 @@ const CANONICAL_ACHIEVEMENTS = [
 
 let pool = null;
 let devicesRef = null;
+// MessageLifecycle dual-write (spec §7, card_1b1c1322). Lazily required to
+// avoid a require cycle at module-load. Every legacy counter site below ALSO
+// calls into this so the new state machine runs in parallel. Lifecycle writes
+// are best-effort: a failure here NEVER blocks the legacy counter path (legacy
+// stays authoritative for reads during parallel run).
+let _lifecycle = null;
+function lifecycle() {
+    if (_lifecycle === null) {
+        try { _lifecycle = require('./lib/message-lifecycle'); }
+        catch (_) { _lifecycle = false; }
+    }
+    return _lifecycle || null;
+}
+// Synthesize a stable lifecycle message_id from the legacy tracking tuple when
+// the real chat message_id is not threaded through this path. Deterministic so
+// trackOutbound + markReplyReceived + the sweeper converge on the SAME row.
+function synthMessageId(deviceId, recipientEntityId, axis, dispatchedAtMs) {
+    // Round dispatched time to the second so the inbound + its bot_acked +
+    // its stuck-tick all resolve to one lifecycle row.
+    const bucket = Math.floor((dispatchedAtMs || Date.now()) / 1000);
+    return `lc:${deviceId}:${recipientEntityId}:${axis}:${bucket}`;
+}
 // Shared with index.js so we verify cookies against the same secret. Set via
 // bindJwtSecret() at bootstrap. Falling back to process.env.JWT_SECRET works
 // only when that env var is present (i.e. when the secret survives restarts);
@@ -143,6 +165,29 @@ async function trackOutbound(deviceId, senderEntityId, recipientEntityId, eventT
     } catch (err) {
         console.error('[EntityStatus] trackOutbound error:', err.message);
     }
+
+    // Dual-write (spec §7): a message was routed to recipientEntityId who now
+    // owes a reply — that is the inbound_seen of the recipient's lifecycle. We
+    // only dual-write the chat axis (chat_no_reply replacement, spec §6.5); the
+    // a2a / system axes get their own lifecycle direction in a later phase.
+    if (axis === 'chat_no_reply') {
+        const lc = lifecycle();
+        if (lc) {
+            const messageId = synthMessageId(deviceId, recipientEntityId, axis, Date.now());
+            Promise.resolve(lc.transition({
+                messageId,
+                targetState: 'inbound_seen',
+                eventAt: new Date(),
+                source: 'trackOutbound',
+                create: {
+                    deviceId,
+                    entityId: Number(recipientEntityId),
+                    tenantId: String(deviceId),
+                    direction: 'inbound',
+                },
+            })).catch(err => console.error('[lifecycle] trackOutbound dual-write failed:', err.message));
+        }
+    }
 }
 
 // Called when an incoming transform/speak from `senderEntityId` arrives. Match
@@ -169,9 +214,30 @@ async function markReplyReceived(deviceId, replyFromEntityId, eventType) {
                    ${extra}
                  ORDER BY dispatched_at ASC
                  LIMIT 1
-              )`,
+              )
+              RETURNING recipient_entity_id, axis, dispatched_at`,
             params
         );
+
+        // Dual-write (spec §7): the recipient produced a reply → bot_acked for
+        // the inbound it answered. Reconstruct the same synthesized message_id
+        // trackOutbound used so the transition lands on the right row. Only the
+        // chat axis is dual-written (chat_no_reply replacement, spec §6.5).
+        const matched = result.rows && result.rows[0];
+        if (matched && matched.axis === 'chat_no_reply') {
+            const lc = lifecycle();
+            if (lc) {
+                const dispatchedMs = matched.dispatched_at
+                    ? new Date(matched.dispatched_at).getTime() : Date.now();
+                const messageId = synthMessageId(deviceId, matched.recipient_entity_id, matched.axis, dispatchedMs);
+                Promise.resolve(lc.transition({
+                    messageId,
+                    targetState: 'bot_acked',
+                    eventAt: new Date(),
+                    source: 'markReplyReceived',
+                })).catch(err => console.error('[lifecycle] markReplyReceived dual-write failed:', err.message));
+            }
+        }
         return result.rowCount || 0;
     } catch (err) {
         console.error('[EntityStatus] markReplyReceived error:', err.message);
@@ -203,6 +269,42 @@ async function sweepExpired() {
                         last_event_at = NOW(),
                         updated_at = NOW()
                 `, [row.device_id, row.recipient_entity_id, row.axis]);
+
+                // Dual-write divergence guard (spec §6.5 / §9.10): the legacy
+                // chat_no_reply counter just ticked because the bot stayed
+                // silent past its grace window. The matching lifecycle row
+                // should still be at inbound_seen (never advanced to bot_acked).
+                // If there is NO lifecycle row at all, dual-write was skipped on
+                // the inbound path — record a divergence so the Phase 3 cutover
+                // gate surfaces it rather than silently passing.
+                if (row.axis === 'chat_no_reply') {
+                    const lc = lifecycle();
+                    if (lc) {
+                        Promise.resolve((async () => {
+                            // We cannot reconstruct the exact dispatched-second
+                            // bucket here (the pending row is being deleted), so
+                            // we check for ANY recent inbound_seen lifecycle row
+                            // for this (device, entity) that is still stuck.
+                            const probe = await pool.query(
+                                `SELECT message_id FROM message_lifecycle
+                                  WHERE device_id = $1 AND entity_id = $2
+                                    AND state = 'inbound_seen'
+                                    AND inbound_seen_at > NOW() - INTERVAL '1 hour'
+                                  LIMIT 1`,
+                                [row.device_id, row.recipient_entity_id]
+                            ).catch(() => ({ rows: [] }));
+                            if (!probe.rows.length) {
+                                await lc.recordDivergence({
+                                    deviceId: row.device_id,
+                                    entityId: row.recipient_entity_id,
+                                    legacyCounter: 'chat_no_reply',
+                                    direction: 'lifecycle_skipped',
+                                    reason: 'legacy counter ticked but no stuck inbound_seen lifecycle row found',
+                                });
+                            }
+                        })()).catch(() => {});
+                    }
+                }
             } catch (err) {
                 console.error('[EntityStatus] sweepExpired upsert error:', err.message);
             }

@@ -2296,6 +2296,34 @@ const hermesOrgToken = require('./hermes-org-token');
 hermesOrgToken.bindDevicesRef(devices);
 app.use('/api/hermes', hermesOrgToken.router);
 
+// MessageLifecycle debug endpoint (spec §9 acceptance B5, card_1b1c1322).
+// GET /api/debug/message-lifecycle/:messageId → the materialized lifecycle row
+// + the last 20 lifecycle_event_log audit entries. Read-only; no auth beyond
+// the same surface the other /api/debug/* routes use (these are diagnostic).
+app.get('/api/debug/message-lifecycle/:messageId', async (req, res) => {
+    try {
+        const ml = require('./lib/message-lifecycle');
+        const messageId = req.params.messageId;
+        const row = await ml.getLifecycle(messageId);
+        const eventLog = await ml.getEventLog(messageId, 20);
+        if (!row && (!eventLog || eventLog.length === 0)) {
+            return res.status(404).json({
+                success: false,
+                message: 'no lifecycle row or audit entries for this message_id',
+                messageId,
+            });
+        }
+        return res.json({
+            success: true,
+            messageId,
+            lifecycle: row || null,
+            eventLog: eventLog || [],
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
+    }
+});
+
 // ENTITY GH-STATS — merged-PR count + smart-link widget on entity cards
 // (card_8a25cadcc9fc88f153fa1316). Endpoint is registered later (~line 8067)
 // next to /api/entities so it sits alongside its peers; the module itself is
@@ -19731,6 +19759,50 @@ entityStatus.initTable(chatPool)
     .catch(err => console.error('[EntityStatus] initTable error:', err.message));
 hermesOrgToken.initTable(chatPool)
     .catch(err => console.error('[HermesOrgToken] initTable error:', err.message));
+
+// MessageLifecycle Phase 2 Step 3 (card_1b1c1322) — DB store + deadline wheel
+// + sweeper boot. Runs in parallel with the legacy entity-status counters
+// (dual-write, spec §7). Redis is optional: without REDIS_URL the wheel is a
+// disabled no-op and transitions still persist to PG (the source of truth);
+// stuck-alert auto-arming is then deferred to the cold-start scan on next boot.
+const messageLifecycle = require('./lib/message-lifecycle');
+messageLifecycle.initTable(chatPool)
+    .then(() => {
+        const lcWheel = messageLifecycle.createWheel({
+            redisClient: (typeof globalThis.__eclawRedisClient === 'object' && globalThis.__eclawRedisClient) || null,
+        });
+        messageLifecycle.setWheel(lcWheel);
+        if (lcWheel.enabled) {
+            // Re-arm the deadline wheel from the DB on boot (spec §4.4 / §9.9).
+            messageLifecycle.runColdStart({ wheel: lcWheel, pool: chatPool })
+                .catch(err => console.error('[lifecycle] cold-start error:', err.message));
+            const lcSweeper = messageLifecycle.createSweeper({
+                wheel: lcWheel,
+                onDue: async (messageId) => {
+                    // Stuck-alert policy: re-check DB, alert if still stuck past
+                    // cooldown, then requeue past the cooldown (spec §4.3 / §9.6).
+                    const row = await messageLifecycle.getLifecycle(messageId).catch(() => null);
+                    if (!row || row.state === 'user_seen') return;
+                    const cooldownMs = 60_000;
+                    const now = Date.now();
+                    const alertedAt = row.alerted_at ? new Date(row.alerted_at).getTime() : 0;
+                    if (!alertedAt || (now - alertedAt) > cooldownMs) {
+                        // push_delivered never pages on its own (spec §6.4).
+                        if (row.state !== 'push_delivered') {
+                            console.warn(`[lifecycle][stuck] message=${messageId} state=${row.state} device=${row.device_id} entity=${row.entity_id} replaces_legacy=${row.state === 'inbound_seen' || row.state === 'bot_acked' ? 'chat_no_reply' : 'delivery_alert'}`);
+                        }
+                        await chatPool.query(
+                            `UPDATE message_lifecycle SET alerted_at = NOW() WHERE message_id = $1`,
+                            [messageId]
+                        ).catch(() => {});
+                    }
+                    await lcWheel.requeue(messageId, now + cooldownMs).catch(() => {});
+                },
+            });
+            lcSweeper.start();
+        }
+    })
+    .catch(err => console.error('[lifecycle] initTable error:', err.message));
 redirectRouter.init({ chatPool, devices, jwtSecret: JWT_SECRET_FALLBACK });
 agentImprovement.initTable(chatPool)
     .catch(err => console.error('[AgentImprovement] initTable error:', err.message));
