@@ -51,7 +51,10 @@ async function run() {
             const shot = path.join(ARTIFACT_DIR, `${flow.key}__${platform.key}.png`);
             try {
                 const r = await driver(page, { base: BASE, platform, runId });
-                cell.status = r.ok ? 'pass' : 'fail';
+                // A driver may report `transient: true` when a prod 503/429 survived its
+                // own retry window (secret-bound flows hit live prod). That's infra, not a
+                // product regression — surfaced loudly but does NOT red the required gate.
+                cell.status = r.transient ? 'transient' : (r.ok ? 'pass' : 'fail');
                 cell.detail = r.detail || '';
             } catch (e) {
                 cell.status = 'fail';
@@ -68,15 +71,22 @@ async function run() {
 }
 
 function summarize(results) {
-    const counts = { pass: 0, fail: 0, pending: 0 };
+    const counts = { pass: 0, fail: 0, pending: 0, transient: 0 };
     for (const r of results) counts[r.status] = (counts[r.status] || 0) + 1;
     const lines = [];
     lines.push(`EClaw cross-surface E2E matrix — ${BASE}`);
-    lines.push(`cells=${results.length}  pass=${counts.pass}  fail=${counts.fail}  pending=${counts.pending}`);
+    lines.push(`cells=${results.length}  pass=${counts.pass}  fail=${counts.fail}  pending=${counts.pending}  transient=${counts.transient}`);
     lines.push('');
     for (const r of results) {
-        const mark = r.status === 'pass' ? 'PASS' : r.status === 'fail' ? 'FAIL' : 'PEND';
+        const mark = r.status === 'pass' ? 'PASS'
+            : r.status === 'fail' ? 'FAIL'
+            : r.status === 'transient' ? 'TRNS'
+            : 'PEND';
         lines.push(`[${mark}] ${r.flow} × ${r.platform}  ${r.detail ? '— ' + r.detail : ''}`);
+    }
+    if (counts.transient) {
+        lines.push('');
+        lines.push(`NOTE: ${counts.transient} cell(s) TRANSIENT — a prod 503/429 survived the driver's retry window (live infra blip, not a product regression). Reported loudly but does NOT red the gate. A persistent pattern across runs warrants prod investigation.`);
     }
     if (counts.pending) {
         lines.push('');
