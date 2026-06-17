@@ -27,12 +27,49 @@ function sanitizeForLog(value) {
         .replace(/(https?:\/\/)[^@\s]+@/gi, '$1[redacted]@')
         .replace(/\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{20,}\b/g, '[redacted]')
         .replace(/\bgithub_pat_[A-Za-z0-9_]{20,}\b/g, '[redacted]')
-        .replace(/\bx-access-token:[^@\s]+@/gi, 'x-access-token:[redacted]@');
+        .replace(/\bx-access-token:[^@\s]+@/gi, 'x-access-token:[redacted]@')
+        // Connection strings (e.g. DATABASE_URL): scheme://user:pass@host -> scheme://[redacted]@host
+        .replace(/\b([a-z][a-z0-9+.-]*:\/\/)[^@\s/]+:[^@\s/]+@/gi, '$1[redacted]@')
+        // key=value style secrets (botSecret/token/secret/password/api_key/database_url)
+        .replace(/\b(bot_?secret|device_?secret|secret|token|password|passwd|api[_-]?key|database_?url)\s*[=:]\s*['"]?[^\s'"&]+/gi, '$1=[redacted]');
 }
 
 function clip(value, max = MAX_ERROR_CHARS) {
     const s = sanitizeForLog(value).replace(/\s+/g, ' ').trim();
     return s.length > max ? s.slice(0, max - 3) + '...' : s;
+}
+
+const HERMES_LOG_LEVELS = new Set(['debug', 'info', 'warn', 'error']);
+
+// Build a single structured log record. Pure (testable) — no I/O, no clock unless
+// caller omits `now`. Always returns the canonical field set so Railway log-drain →
+// Loki can rely on a stable schema. Secrets are stripped from `event`/`error`.
+function formatHermesLog(level, event, fields = {}, now = () => Date.now()) {
+    const { duration_ms, error, ...rest } = fields || {};
+    const record = {
+        timestamp: new Date(now()).toISOString(),
+        level: HERMES_LOG_LEVELS.has(level) ? level : 'info',
+        service: 'hermes',
+        event: clip(event || 'unknown', 120),
+        duration_ms: Number.isFinite(duration_ms) ? Math.round(duration_ms) : null,
+        error: error == null ? null : clip(error, MAX_ERROR_CHARS),
+    };
+    // Merge any extra structured metadata, sanitizing string values; never let a
+    // caller-supplied field clobber the canonical ones above.
+    for (const [k, v] of Object.entries(rest)) {
+        if (k in record) continue;
+        record[k] = typeof v === 'string' ? clip(v, MAX_ERROR_CHARS) : v;
+    }
+    return record;
+}
+
+// Emit one JSON object per line on stdout (warn/error → stderr) for Railway drain.
+function hermesLog(level, event, fields = {}, { now, out = process.stdout, err = process.stderr } = {}) {
+    const record = formatHermesLog(level, event, fields, now);
+    const line = JSON.stringify(record) + '\n';
+    const sink = (record.level === 'warn' || record.level === 'error') ? err : out;
+    sink.write(line);
+    return record;
 }
 
 function loadConfig(env = process.env) {
@@ -174,6 +211,9 @@ function createHermesHealthMonitor({
     execFile = defaultExecFile,
     notifyDevice = null,
     audit = () => {},
+    // Structured JSON sink (stdout) consumed by Railway log-drain → Loki.
+    // Injectable for tests; defaults to the real stdout/stderr emitter.
+    jsonLog = (level, event, fields) => hermesLog(level, event, fields, { now }),
     now = () => Date.now(),
 } = {}) {
     const state = initialState();
@@ -262,6 +302,9 @@ function createHermesHealthMonitor({
                 result: 'skipped',
                 metadata: { reason, skipReason: config.skipReason },
             });
+            jsonLog('info', 'hermes_health_check', {
+                result: 'skipped', reason, skip_reason: config.skipReason, duration_ms: 0,
+            });
             return { ok: null, skipped: true, reason: config.skipReason };
         }
 
@@ -282,6 +325,9 @@ function createHermesHealthMonitor({
                 action: 'hermes_health_check',
                 result: 'ok',
                 metadata: { reason, durationMs: probe.durationMs, branch: probe.branch, remote: probe.remote },
+            });
+            jsonLog('info', 'hermes_health_check', {
+                result: 'ok', reason, duration_ms: probe.durationMs, branch: probe.branch, remote: probe.remote,
             });
             return { ...probe, skipped: false };
         } catch (err) {
@@ -304,6 +350,11 @@ function createHermesHealthMonitor({
                     durationMs: state.lastDurationMs,
                 },
             });
+            jsonLog('error', 'hermes_health_check', {
+                result: 'failed', reason, error,
+                duration_ms: state.lastDurationMs,
+                consecutive_failures: state.consecutiveFailures,
+            });
 
             let alert = null;
             if (state.consecutiveFailures >= ALERT_FAILURE_THRESHOLD
@@ -324,11 +375,11 @@ function createHermesHealthMonitor({
     function startCron({ nodeCron } = {}) {
         const config = loadConfig(env);
         if (!config.enabled) {
-            console.log('[HermesHealth] disabled via HERMES_HEALTHCHECK_ENABLED=0');
+            hermesLog('info', 'hermes_health_cron_disabled', { reason: 'HERMES_HEALTHCHECK_ENABLED=0' });
             return () => {};
         }
         if (!config.configured) {
-            console.log(`[HermesHealth] cron not scheduled: ${config.skipReason}`);
+            hermesLog('info', 'hermes_health_cron_not_scheduled', { reason: config.skipReason });
             return () => {};
         }
         if (!nodeCron || typeof nodeCron.schedule !== 'function') {
@@ -337,7 +388,7 @@ function createHermesHealthMonitor({
 
         const task = nodeCron.schedule(config.cron, () => {
             runOnce('cron').catch(err => {
-                console.error('[HermesHealth] cron tick error:', err && err.message);
+                hermesLog('error', 'hermes_health_cron_tick_error', { error: err && err.message });
             });
         }, { timezone: config.timezone });
         audit('info', 'hermes_health', `[HermesHealth] scheduled ${config.cron} ${config.timezone}`, {
@@ -364,6 +415,8 @@ module.exports = {
     loadConfig,
     sanitizeForLog,
     computeSla,
+    formatHermesLog,
+    hermesLog,
     ALERT_FAILURE_THRESHOLD,
     DEFAULT_CRON,
     DEFAULT_TIMEOUT_MS,
