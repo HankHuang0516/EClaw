@@ -26,6 +26,11 @@
  *           optional: skip files that don't match. Returns true to KEEP.
  * @property {string[]} [allowFiles]    substrings — file paths containing any
  *                                       of these are ALWAYS exempt (tests, etc.)
+ * @property {string[]} [falseHits]     lowercased literals that match `pattern`
+ *                                       by shape but are known non-violations
+ *                                       (e.g. 'base64' for the publicCode rule);
+ *                                       a line whose match equals one of these
+ *                                       is suppressed.
  */
 
 const TEST_PATH_HINTS = Object.freeze([
@@ -77,6 +82,11 @@ const RULES = [
         // long hashes (the earlier `[a-z0-9]*\d[a-z0-9]*` matched all of those).
         pattern: /['"`](?=[a-z0-9]{6}['"`])(?=[a-z0-9]*[a-z])(?=[a-z0-9]*\d)[a-z0-9]{6}['"`]/,
         filePathFilter: (p) => /\.(js|ts)$/.test(p) && !/\.test\./.test(p),
+        // Words with the publicCode shape (6 alnum, letter+digit) that are NOT
+        // publicCodes — encodings, hash algos, mime fragments. Without this
+        // blocklist, `base64`/`sha256` flooded the report with 42 false hits and
+        // ~0 true positives on the live tree (see PR scope notes).
+        falseHits: Object.freeze(['base64', 'sha256', 'sha224', 'sha384', 'sha512', 'md5sum', 'ripemd', 'crc32c']),
         allowFiles: TEST_PATH_HINTS.concat(['/migrations/', '/api-docs', 'api_refs']),
     },
     {
@@ -106,6 +116,17 @@ const RULES = [
         pattern: /(alert|confirm|throw\s+new\s+Error)\s*\(\s*['"`][一-鿿]/,
         filePathFilter: (p) => /\.(js|html)$/.test(p),
         allowFiles: TEST_PATH_HINTS.concat(['/i18n', '/docs/', 'memory/']),
+    },
+    {
+        id: 'owner-only-user-query-assumption',
+        dimension: 'compliance',
+        severity: 'P1',
+        title: 'API query assumes the owner is the only user (LIMIT 1 / first row)',
+        rationale: 'An endpoint that fetches "the device row" with no user/entity key and then `rows[0]` / `LIMIT 1` assumes a single account per device. On a multi-user device it silently serves the wrong user. Scope the query by the caller, not "the first row".',
+        // SELECT ... FROM <table> WHERE device_id = $n   LIMIT 1   (no entity/user key)
+        pattern: /FROM\s+\w+\s+WHERE\s+device_id\s*=\s*\$\d+\s+LIMIT\s+1\b/i,
+        filePathFilter: (p) => /\.(js|sql)$/.test(p) && !/\.test\./.test(p),
+        allowFiles: TEST_PATH_HINTS.concat(['/devices', '/auth', '/migrations/']),
     },
 
     // ── Dimension B: multi-tenant perspective ──────────────────────────
@@ -158,6 +179,53 @@ const RULES = [
         filePathFilter: (p) => /\.(js)$/.test(p) && !/\.test\./.test(p),
         allowFiles: TEST_PATH_HINTS.slice(),
     },
+    {
+        id: 'entity-id-from-body-unverified',
+        dimension: 'multi_tenant',
+        severity: 'P0',
+        title: 'entityId read from request body without a caller check',
+        rationale: 'Trusting `req.body.entityId` to scope a query lets any caller act AS another entity on the same device (IDOR). The handler must validate it against the authenticated caller (callerEntityId / session) before using it in a WHERE.',
+        // `const entityId = req.body.entityId`  /  `req.body.entityId`  /  `body.entityId`
+        // The matcher line-context heuristic below would over-fire; keep the pattern
+        // tight to the body-read assignment shape.
+        pattern: /\b(?:const|let|var)\s+entityId\s*=\s*(?:req\.)?body\.entityId\b/,
+        filePathFilter: (p) => /\.(js)$/.test(p) && !/\.test\./.test(p),
+        allowFiles: TEST_PATH_HINTS.slice(),
+    },
+    {
+        id: 'cross-entity-read-modify-write-race',
+        dimension: 'multi_tenant',
+        severity: 'P1',
+        title: 'Non-atomic read-modify-write on a shared counter/column',
+        rationale: 'Two entities acting on the same card/message/counter in parallel can lost-update when the code does `SELECT ... ; <compute> ; UPDATE ... SET col = <newValue>`. Use an atomic `SET col = col + 1` / `ON CONFLICT` / row lock instead of a JS round-trip.',
+        // SET <col> = <number literal> on a counter-shaped column name — the tell of
+        // "I computed the new value in JS and wrote it back" rather than `col = col + N`.
+        pattern: /\bSET\s+(?:\w+_)?(?:count|counter|total|seq|version|balance)\s*=\s*\$?\d/i,
+        filePathFilter: (p) => /\.(js|sql)$/.test(p) && !/\.test\./.test(p),
+        allowFiles: TEST_PATH_HINTS.concat(['/migrations/']),
+    },
+    {
+        id: 'push-fanout-without-dedupe',
+        dimension: 'multi_tenant',
+        severity: 'P2',
+        title: 'Push fan-out loops tokens without a per-recipient dedupe set',
+        rationale: 'When multiple entities share a device, the same push token can appear more than once in the recipient list; sending in a bare `for (token of tokens)` loop double-notifies. Dedupe tokens (new Set(...)) before fan-out.',
+        // for (... of tokens) / forEach over a *tokens variable, used as the send loop.
+        pattern: /for\s*\(\s*(?:const|let|var)\s+\w+\s+of\s+\w*[Tt]okens\s*\)/,
+        filePathFilter: (p) => /\.(js)$/.test(p) && !/\.test\./.test(p),
+        allowFiles: TEST_PATH_HINTS.slice(),
+    },
+    {
+        id: 'upload-path-collides-across-users',
+        dimension: 'multi_tenant',
+        severity: 'P1',
+        title: 'R2 / file upload key built from filename without a per-user namespace',
+        rationale: 'An object key like `uploads/${filename}` or `${req.file.originalname}` collides when two users upload the same filename — one overwrites the other. Namespace the key by deviceId/entityId/uuid.',
+        // putObject/upload Key built directly from a *name var with no id segment.
+        pattern: /[Kk]ey:\s*[`'"](?:uploads?\/|files?\/)?\$\{(?:filename|originalname|req\.file\.originalname|name)\}/,
+        filePathFilter: (p) => /\.(js)$/.test(p) && !/\.test\./.test(p),
+        allowFiles: TEST_PATH_HINTS.slice(),
+    },
 ];
 
 const DIMENSIONS = Object.freeze(['compliance', 'multi_tenant']);
@@ -197,6 +265,13 @@ function scanText(filePath, text) {
             re.lastIndex = 0;
             const m = re.exec(line);
             if (m) {
+                // Suppress known false positives that match by shape (e.g. the
+                // publicCode rule firing on 'base64'). Compare the matched text
+                // stripped of surrounding quotes, case-insensitively.
+                if (rule.falseHits && rule.falseHits.length) {
+                    const matched = m[0].replace(/^['"`]|['"`]$/g, '').toLowerCase();
+                    if (rule.falseHits.includes(matched)) continue;
+                }
                 findings.push({
                     ruleId: rule.id,
                     dimension: rule.dimension,

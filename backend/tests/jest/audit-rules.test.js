@@ -78,6 +78,62 @@ describe('audit-rules — scanText matcher (deterministic input → finding shap
     });
 });
 
+describe('audit-rules — extended catalog (card rule list A/B coverage)', () => {
+    test('owner-only LIMIT 1 device query flagged P1 compliance', () => {
+        const f = audit.scanText('backend/api_profile.js',
+            'const r = await db.query("SELECT name FROM profiles WHERE device_id = $1 LIMIT 1", [d]);');
+        const hit = f.find(r => r.ruleId === 'owner-only-user-query-assumption');
+        expect(hit).toBeTruthy();
+        expect(hit.dimension).toBe('compliance');
+        expect(hit.severity).toBe('P1');
+    });
+
+    test('entityId read from req.body without caller check flagged P0 multi_tenant', () => {
+        const f = audit.scanText('backend/api_handler.js', 'const entityId = req.body.entityId;');
+        const hit = f.find(r => r.ruleId === 'entity-id-from-body-unverified');
+        expect(hit).toBeTruthy();
+        expect(hit.dimension).toBe('multi_tenant');
+        expect(hit.severity).toBe('P0');
+    });
+
+    test('non-atomic counter write-back flagged (cross-entity race)', () => {
+        const f = audit.scanText('backend/api_card.js',
+            'await db.query("UPDATE cards SET comment_count = $2 WHERE id = $1", [id, n]);');
+        expect(f.some(r => r.ruleId === 'cross-entity-read-modify-write-race')).toBe(true);
+    });
+
+    test('atomic increment (col = col + 1) is NOT flagged (no false positive)', () => {
+        const f = audit.scanText('backend/api_card.js',
+            'await db.query("UPDATE cards SET comment_count = comment_count + 1 WHERE id = $1", [id]);');
+        expect(f.some(r => r.ruleId === 'cross-entity-read-modify-write-race')).toBe(false);
+    });
+
+    test('bare token fan-out loop flagged (no dedupe)', () => {
+        const f = audit.scanText('backend/push.js', 'for (const tok of pushTokens) { send(tok); }');
+        expect(f.some(r => r.ruleId === 'push-fanout-without-dedupe')).toBe(true);
+    });
+
+    test('upload key built from filename without namespace flagged P1', () => {
+        const f = audit.scanText('backend/upload.js', 'await r2.put({ Key: `uploads/${filename}`, Body: buf });');
+        const hit = f.find(r => r.ruleId === 'upload-path-collides-across-users');
+        expect(hit).toBeTruthy();
+        expect(hit.severity).toBe('P1');
+    });
+});
+
+describe('audit-rules — falseHits suppression', () => {
+    test("publicCode rule does NOT flag 'base64' / 'sha256'", () => {
+        const text = "const enc = 'base64'; const algo = 'sha256';";
+        const f = audit.scanText('backend/crypto.js', text);
+        expect(f.some(r => r.ruleId === 'hardcoded-public-code-literal')).toBe(false);
+    });
+
+    test('publicCode rule STILL flags a real code-shaped literal', () => {
+        const f = audit.scanText('backend/routing.js', "const code = 'tbwb9e';");
+        expect(f.some(r => r.ruleId === 'hardcoded-public-code-literal')).toBe(true);
+    });
+});
+
 describe('audit-rules — file exemptions', () => {
     test('test paths exempt the Hank-UUID rule', () => {
         const text = "const d = '480def4c-2183-4d8e-afd0-b131ae89adcc';";
