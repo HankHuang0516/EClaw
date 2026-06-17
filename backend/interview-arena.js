@@ -227,6 +227,13 @@ let VISION_IMAGES = [
     // Hard tier
     { file: null, description: 'A Kubernetes deployment YAML snippet showing apiVersion: apps/v1 with spec.replicas: 3, container resource limits of 200m CPU and 256Mi memory, and a readinessProbe on path /health port 8080 — two red ❌ validation error markers appear beside the resources.limits block', keywords: ['kubernetes', 'deployment', 'three', 'replicas', '200m', '256Mi', 'readinessProbe', 'error'] },
     { file: null, description: 'A 5×6 heatmap grid where cell color ranges from white (0) to dark red (100) — three cells stand out as darkest: row 2 col 4 shows 97, row 4 col 1 shows 94, row 5 col 6 shows 89; row 2\'s average is annotated as 42.3 on the right margin', keywords: ['heatmap', 'five', 'six', 'grid', 'row', 'col', '97', '94', 'average', '42.3'] },
+    // ── Daily pool update: added 2026-06-17 ──
+    // Medium tier
+    { file: null, description: 'A customer review panel showing an average rating of 4.2 out of 5 stars from 1,847 reviews — the 5-star row bar represents 58% and is the longest, followed by 4-star at 22%, 3-star at 10%, 2-star at 6%, and 1-star at 4%', keywords: ['rating', '4.2', '1847', 'five', 'star', '58', '22', '10', '4'] },
+    { file: null, description: 'A live stock ticker showing three rows on a dark blue background: AAPL $192.74 with a green ▲1.3%, MSFT $415.80 with a red ▼0.8%, and NVDA $895.10 with a green ▲2.9%', keywords: ['stock', 'AAPL', 'MSFT', 'NVDA', 'three', '192', '415', '895', 'green', 'red'] },
+    // Hard tier
+    { file: null, description: 'An API reference page for GET /api/v2/users — three required query parameters highlighted in yellow (page, limit, sort), a 200 OK response schema showing four top-level fields (data, meta, links, errors), and a red "Rate Limited: 100 req/min" badge in the top-right corner', keywords: ['API', 'GET', 'users', 'three', 'parameters', '200', 'rate', 'limited', 'four', 'fields'] },
+    { file: null, description: 'A three-column income statement for years 2022, 2023, and 2024 — Revenue rows show $4.2M, $5.8M, $7.1M; Net Income rows show $0.3M, $0.8M, $1.4M — the 2024 Net Income cell is highlighted in green with a "+75% YoY" growth annotation', keywords: ['income', 'statement', 'three', 'years', 'revenue', '4.2', '7.1', 'net', '1.4', '75', 'YoY'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -455,6 +462,13 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[1,2,3]', expected: '[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]' },{ input: '[1]', expected: '[[1]]' },{ input: '[1,2]', expected: '[[1,2],[2,1]]' }] },
     { title: 'Regular Expression Matching', description: 'Write `solve(s, p)` — implement basic regex matching where "." matches any single character and "*" matches zero or more of the preceding element. Return true if the full string s matches pattern p.',
       testCases: [{ input: '"aa", "a"', expected: 'false' },{ input: '"aa", "a*"', expected: 'true' },{ input: '"ab", ".*"', expected: 'true' },{ input: '"aab", "c*a*b"', expected: 'true' },{ input: '"mississippi", "mis*is*p*."', expected: 'false' }] },
+    // ── Daily pool update: added 2026-06-17 ──
+    { title: 'Counting Bits', description: 'Write `solve(n)` — return an array of length n+1 where each element at index i equals the number of 1-bits in the binary representation of i.',
+      testCases: [{ input: '2', expected: '[0,1,1]' },{ input: '5', expected: '[0,1,1,2,1,2]' },{ input: '0', expected: '[0]' },{ input: '8', expected: '[0,1,1,2,1,2,2,3,1]' }] },
+    { title: 'Product Except Self', description: 'Write `solve(nums)` — return an array where output[i] equals the product of every element in nums except nums[i]. You must not use division.',
+      testCases: [{ input: '[1,2,3,4]', expected: '[24,12,8,6]' },{ input: '[2,3,4,5]', expected: '[60,40,30,24]' },{ input: '[1,1]', expected: '[1,1]' },{ input: '[-1,1,0,-3,3]', expected: '[0,0,9,0,0]' }] },
+    { title: 'Longest Increasing Subsequence', description: 'Write `solve(nums)` — return the length of the longest strictly increasing subsequence.',
+      testCases: [{ input: '[10,9,2,5,3,7,101,18]', expected: '4' },{ input: '[0,1,0,3,2,3]', expected: '4' },{ input: '[7,7,7,7,7]', expected: '1' },{ input: '[1,3,6,7,9,4,10,5,6]', expected: '6' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -539,6 +553,16 @@ let RESPONSE_QUESTIONS = [
     // Hard tier
     { question: 'A pool has two inlet pipes (A fills in 10 h, B fills in 15 h) and one outlet pipe (drains in 30 h). If all three run simultaneously from empty, how many hours does it take to fill the pool?', expectedKeywords: ['7.5', '15/2'] },
     { question: 'A staircase has 7 steps. You can climb 1, 2, or 3 steps at a time. How many distinct ways can you climb to the top?', expectedKeywords: ['44'] },
+    // ── Daily pool update: added 2026-06-17 ──
+    // Easy tier
+    { question: 'How many minutes are in a full day (24 hours)?', expectedKeywords: ['1440'] },
+    { question: 'What is 15% of 200?', expectedKeywords: ['30'] },
+    // Medium tier
+    { question: 'A school bus holds 42 students. If 268 students need transport, what is the minimum number of buses needed?', expectedKeywords: ['7'] },
+    { question: 'What is the units digit of 7 raised to the power of 25?', expectedKeywords: ['7'] },
+    { question: 'A 10-meter ladder leans against a vertical wall with its base 6 m from the wall. The top of the ladder slides down 2 m. How many meters does the base of the ladder move away from the wall?', expectedKeywords: ['2'] },
+    // Hard tier
+    { question: 'Alice can paint a room in 6 hours, Bob in 4 hours, and Charlie in 12 hours. Working together simultaneously, how many hours does it take them to paint the room?', expectedKeywords: ['2'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -644,6 +668,14 @@ let TTS_PHRASES = [
     // Hard tier
     { text: 'The S&P 500 closed at five thousand two hundred seventy-eight point five one — three hundred twenty-six issues advanced and one hundred sixty-seven declined giving a breadth ratio of 1.95 to 1', keywords: ['S&P', '5278', '326', 'advanced', '167', 'declined', 'breadth', '1.95'] },
     { text: 'SWIFT code DEUTDEDB for Deutsche Bank Frankfurt sort code 20030000 account number 1234567890 for incoming SEPA credit transfers only', keywords: ['SWIFT', 'DEUTDEDB', 'Deutsche', 'Frankfurt', '20030000', '1234567890', 'SEPA'] },
+    // ── Daily pool update: added 2026-06-17 ──
+    // Easy tier
+    { text: 'Thank you for calling — your estimated wait time is twelve minutes and we appreciate your patience', keywords: ['thank', 'calling', 'twelve', 'minutes', 'patience'] },
+    // Medium tier
+    { text: 'Please confirm order number 7J-2024-9981: three units of SKU-A049 at one hundred twenty-nine dollars and ninety-nine cents each — total four hundred eight dollars and forty-seven cents including shipping', keywords: ['order', '7J', '2024', 'three', 'units', '129', '408', 'shipping'] },
+    { text: 'The Q1 fiscal year 2025 earnings call begins at 2:00 PM Eastern time on Tuesday April twenty-second — participant passcode is 8 8 3 9 4 pound', keywords: ['earnings', 'Q1', 'fiscal', '2025', '2:00', 'Eastern', 'April', '88394'] },
+    // Hard tier
+    { text: 'Per IEEE 802.11ax section 2.4.1: maximum OFDM subcarrier spacing is 78.125 kilohertz with 256 subcarriers per 20-megahertz channel and guard interval of 0.8 microseconds', keywords: ['IEEE', '802.11ax', 'OFDM', '78.125', 'kilohertz', '256', 'megahertz', '0.8'] },
 ];
 
 // ============================================
