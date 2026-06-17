@@ -509,6 +509,32 @@ async function getCounterEvents(deviceId, entityId, axis, limit) {
 // + i18n keys ship in a follow-up PR.
 // ────────────────────────────────────────────────────────────────────────────
 
+// GitHub PR URL → canonical dedupe key. Same PR number in different repos must
+// not collapse, so the key is `owner/repo#N` (lowercased). Returns distinct keys
+// found in a free-text comment body. card_13405b3448d89931665c1670.
+const PR_URL_RE = /github\.com\/([\w.-]+)\/([\w.-]+)\/pull\/(\d+)/gi;
+function extractPrKeys(text) {
+    const keys = new Set();
+    let m;
+    PR_URL_RE.lastIndex = 0;
+    while ((m = PR_URL_RE.exec(String(text || ''))) !== null) {
+        keys.add(`${m[1].toLowerCase()}/${m[2].toLowerCase()}#${m[3]}`);
+    }
+    return Array.from(keys);
+}
+
+// rework_pr_number is VARCHAR — may hold a bare number ("123"), "#123", or a
+// full PR URL. Normalize to the same key space as extractPrKeys so UNION dedups.
+function normalizePrKey(raw) {
+    if (raw == null) return null;
+    const s = String(raw).trim();
+    if (!s) return null;
+    const fromUrl = extractPrKeys(s);
+    if (fromUrl.length) return fromUrl[0];
+    const num = s.match(/\d+/);
+    return num ? `#${num[0]}` : null;
+}
+
 async function getAchievements(deviceId, entityId) {
     if (!pool) return [];
     const eid = Number(entityId);
@@ -569,9 +595,58 @@ async function getAchievements(deviceId, entityId) {
                 );
                 count = Number(r.rows[0]?.c || 0);
                 lastEventAt = r.rows[0]?.ts || null;
+            } else if (axis === 'prs_merged') {
+                // v2 (card_13405b3448d89931665c1670): the only on-device PR
+                // signal is GitHub PR URLs that bots paste into kanban evidence
+                // comments. Pull this entity's comments that reference a PR URL,
+                // regex-extract + dedupe PR numbers in JS, then UNION any
+                // rework_pr_number on cards this entity owns/reviews.
+                const seen = new Set();
+                let last = null;
+                const noteLast = (ts) => {
+                    if (ts && (!last || new Date(ts) > new Date(last))) last = ts;
+                };
+                // 1) PR URLs in this entity's evidence comments.
+                const cm = await pool.query(
+                    `SELECT text, created_at
+                       FROM kanban_comments
+                      WHERE device_id = $1 AND from_entity_id = $2
+                        AND text ~* 'github\\.com/[^/[:space:]]+/[^/[:space:]]+/pull/[0-9]+'`,
+                    [deviceId, eid]
+                );
+                // Prefer comments that also signal a merge; fall back to ALL
+                // referenced PRs if the merge-signalled set is empty (never show
+                // 0 when PRs are clearly referenced — that was the bug).
+                const mergeRe = /merg|squash|✅|rebased/i;
+                const collect = (preferMerged) => {
+                    for (const row of cm.rows) {
+                        const text = String(row.text || '');
+                        if (preferMerged && !mergeRe.test(text)) continue;
+                        const nums = extractPrKeys(text);
+                        if (!nums.length) continue;
+                        for (const k of nums) seen.add(k);
+                        noteLast(row.created_at);
+                    }
+                };
+                collect(true);
+                if (seen.size === 0) { last = null; collect(false); }
+                // 2) UNION rework_pr_number on cards assigned to / reviewed by
+                //    this entity (a non-null rework PR is a merged-PR artifact).
+                const rw = await pool.query(
+                    `SELECT rework_pr_number AS pr, updated_at
+                       FROM kanban_cards
+                      WHERE device_id = $1
+                        AND rework_pr_number IS NOT NULL
+                        AND (assigned_bots @> to_jsonb($2::int) OR reviewer_entity_id = $2)`,
+                    [deviceId, eid]
+                );
+                for (const row of rw.rows) {
+                    const k = normalizePrKey(row.pr);
+                    if (k) { seen.add(k); noteLast(row.updated_at); }
+                }
+                count = seen.size;
+                lastEventAt = last;
             }
-            // prs_merged: skipped in backend (would need GH API or per-entity
-            // commit-author mapping that we don't store); always 0 until v2.
         } catch (err) {
             // Per-axis failure isolated: log + treat as 0 so one missing
             // table (e.g. mission_notes on a fresh device) doesn't abort all axes.
@@ -649,7 +724,44 @@ async function getAchievementEvents(deviceId, entityId, axis, limit) {
                 chip: { kind: 'note', noteId: row.id, label: row.title },
             }));
         }
-        // prs_merged: empty until v2 (see getAchievements comment)
+        if (axis === 'prs_merged') {
+            // Distinct referenced PRs from this entity's evidence comments,
+            // newest first. Same dedupe key space as getAchievements so the
+            // event count tracks the badge count. card_13405b3448d89931665c1670.
+            const r = await pool.query(
+                `SELECT text, created_at
+                   FROM kanban_comments
+                  WHERE device_id = $1 AND from_entity_id = $2
+                    AND text ~* 'github\\.com/[^/[:space:]]+/[^/[:space:]]+/pull/[0-9]+'
+                  ORDER BY created_at DESC`,
+                [deviceId, eid]
+            );
+            const seen = new Set();
+            const events = [];
+            for (const row of r.rows) {
+                const text = String(row.text || '');
+                PR_URL_RE.lastIndex = 0;
+                let m;
+                while ((m = PR_URL_RE.exec(text)) !== null) {
+                    const owner = m[1], repo = m[2], n = m[3];
+                    const key = `${owner.toLowerCase()}/${repo.toLowerCase()}#${n}`;
+                    if (seen.has(key)) continue;
+                    seen.add(key);
+                    events.push({
+                        ts: row.created_at ? new Date(row.created_at).toISOString() : null,
+                        chip: {
+                            kind: 'pr',
+                            prNumber: Number(n),
+                            url: `https://github.com/${owner}/${repo}/pull/${n}`,
+                            excerpt: text.slice(0, 60),
+                        },
+                    });
+                    if (events.length >= lim) break;
+                }
+                if (events.length >= lim) break;
+            }
+            return events;
+        }
         return [];
     } catch (err) {
         console.warn(`[Achievements] events axis=${axis} failed:`, err && err.message);
