@@ -840,7 +840,16 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     router.post('/card', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] POST /card called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, title, description, priority, status, assignedBots, entityId, reviewerEntityId, isAutomation, schedule, requiresScreenshotReview, chatAnchorMessageId, chatAnchorCoord, dispatchMode } = req.body;
+        // Source fields from query+body merge (matches authenticate() + sibling handlers).
+        // Bug fix: authenticate() accepts creds in the query string, but reading deviceId
+        // from req.body alone meant a query-cred caller (deviceId not in body) passed auth
+        // then bound NULL device_id into the INSERT → "null value in column device_id ...
+        // violates not-null constraint" 500 on card create.
+        const { deviceId, title, description, priority, status, assignedBots, entityId, reviewerEntityId, isAutomation, schedule, requiresScreenshotReview, chatAnchorMessageId, chatAnchorCoord, dispatchMode } = { ...req.query, ...req.body };
+
+        if (!deviceId) {
+            return res.status(400).json({ success: false, error: 'Missing deviceId' });
+        }
 
         if (!title || !title.trim()) {
             return res.status(400).json({ success: false, error: 'Missing title' });
