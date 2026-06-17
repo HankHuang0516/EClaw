@@ -186,6 +186,12 @@
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
     <script src="shared/footer.js"></script>
+    <!-- petdx 夥伴 renderer: the owner/center node paints the live companion
+         chibi sprite (立繪) via PetdxRenderer, matching chat/dashboard/card-holder
+         avatars. Descriptors are resolved per owner entity the same way
+         avatar-petdx.js does (GET /api/companion/current by entityId). -->
+    <script src="../shared/petdx-renderer.js"></script>
+    <script src="../shared/avatar-petdx.js"></script>
     <!-- jsdelivr (not unpkg) — prod CSP allowlists jsdelivr only -->
     <script src="https://cdn.jsdelivr.net/npm/force-graph@1.43.4/dist/force-graph.min.js"></script>
 
@@ -250,29 +256,119 @@
         const OWNER_COLOR = '#fbbf24';
         const CHAT_COLOR = '#34d399';
 
-        // ── Owner avatar cache ───────────────────────────────────────────────
-        // Owner/center nodes paint the entity's avatar (大頭貼) instead of the
-        // plain yellow square. node.avatar is resolved server-side via the
-        // entity record (entity-utils chain: explicit URL/emoji → petdx → …).
-        // URL avatars are loaded once into an Image and drawn clipped to a
-        // circle; emoji avatars are drawn as a glyph; missing avatars fall back
-        // to a deterministic initial badge — never a bare yellow square.
-        const _ownerImgCache = new Map(); // url -> { img, loaded }
-        function _ownerAvatarImg(url) {
-            let entry = _ownerImgCache.get(url);
-            if (entry) return entry;
-            entry = { img: new Image(), loaded: false };
-            entry.img.crossOrigin = 'anonymous';
-            entry.img.onload = () => {
-                entry.loaded = true;
-                // Repaint so the freshly-decoded avatar shows without a click.
-                try { if (fg) fg.refresh && fg.refresh(); } catch (_) {}
-            };
-            entry.img.onerror = () => { entry.failed = true; };
-            entry.img.src = url;
-            _ownerImgCache.set(url, entry);
-            return entry;
+        // ── Owner / center node = petdx 夥伴 companion 立繪 ────────────────────
+        // The center/owner node renders the device owner's bound petdx companion
+        // (full chibi sprite, animated IDLE frame) — the SAME 夥伴 render the
+        // platform shows on chat / dashboard / card-holder / settings, NOT a
+        // flat circular headshot and NEVER a yellow disc.
+        //
+        // The mind-map is a single imperative <canvas> draw loop, so we can't
+        // drop a `<canvas data-petdx-entity-id>` placeholder into it. Instead
+        // each owner entity gets ONE offscreen canvas that PetdxRenderer
+        // animates continuously; drawOwnerNode() ctx.drawImage()s the current
+        // frame into the node every force-graph tick, so it tracks pan/zoom and
+        // the node radius automatically. Descriptors are resolved per entityId
+        // exactly the way avatar-petdx.js does (GET /api/companion/current).
+        //
+        // Fallback ladder (no petdx companion bound / sprite fails to load):
+        //   emoji avatar (node.avatarEmoji) → deterministic initial badge.
+        //   Never the bare yellow disc, never the codename.
+        const OWNER_SPRITE_PX = 208;                 // offscreen render size (matches petdx frame height)
+        const _ownerPetdx = new Map();               // entityId -> { canvas, controller, ready }
+        const _ownerPetdxPending = new Set();        // entityId currently being resolved
+
+        function _ownerEntityId(node) {
+            const eid = Number(node && node.ownerEntityId);
+            return Number.isFinite(eid) ? eid : null;
         }
+
+        // Build a spritesheet renderer-descriptor from a /api/companion/current
+        // payload. Mirrors avatar-petdx.js effectiveRendererDescriptor() — the
+        // API hoists asset/supportedStates to the wrapper for spritesheets, but
+        // procedural cards keep them under `.descriptor`.
+        function _resolveCompanionDescriptor(companion) {
+            if (!companion || typeof companion !== 'object') return null;
+            const nested = companion.descriptor;
+            if (nested && typeof nested === 'object' && nested.assetType) return nested;
+            if (companion.assetType) return companion;
+            return null;
+        }
+
+        // Start (idempotently) a petdx companion render for an owner entity.
+        // Resolves the descriptor via /api/companion/current using the same
+        // device/bot auth the page already holds, then animates an offscreen
+        // canvas. Silent on any failure — drawOwnerNode falls back to emoji/badge.
+        function _ensureOwnerPetdx(entityId) {
+            if (entityId == null) return;
+            if (_ownerPetdx.has(entityId) || _ownerPetdxPending.has(entityId)) return;
+            if (typeof window === 'undefined' || !window.PetdxRenderer || !MM_USER) return;
+            _ownerPetdxPending.add(entityId);
+
+            const params = new URLSearchParams({ deviceId: MM_USER.deviceId || '', entityId: String(entityId) });
+            if (MM_USER.deviceSecret) params.set('deviceSecret', MM_USER.deviceSecret);
+            else if (MM_USER.botSecret) params.set('botSecret', MM_USER.botSecret);
+
+            fetch('/api/companion/current?' + params.toString(), { credentials: 'same-origin' })
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    _ownerPetdxPending.delete(entityId);
+                    const companion = data && data.selection && data.selection.companion;
+                    const descriptor = _resolveCompanionDescriptor(companion);
+                    if (!descriptor) { _ownerPetdx.set(entityId, null); return; }
+                    // Warm the spritesheet image through PetdxRenderer's own
+                    // loader (NO crossOrigin → no canvas-taint console errors;
+                    // we only drawImage, never read pixels).
+                    try {
+                        if (typeof window.PetdxRenderer.prefetchSpritesheet === 'function'
+                            && descriptor.asset && descriptor.asset.url) {
+                            window.PetdxRenderer.prefetchSpritesheet(descriptor.asset.url);
+                        }
+                    } catch (_) {}
+                    const canvas = document.createElement('canvas');
+                    canvas.width = OWNER_SPRITE_PX;
+                    canvas.height = OWNER_SPRITE_PX;
+                    let controller;
+                    try {
+                        controller = window.PetdxRenderer.createRenderer({
+                            canvas, descriptor, state: 'IDLE',
+                            onError: () => {},
+                        });
+                        controller.start();
+                    } catch (err) {
+                        _ownerPetdx.set(entityId, null);
+                        return;
+                    }
+                    _ownerPetdx.set(entityId, { canvas, controller, ready: true });
+                    // Keep repainting the mind-map so the animation is visible
+                    // (force-graph only refreshes on interaction once the sim cools).
+                    _startOwnerPetdxTicker();
+                })
+                .catch(() => {
+                    _ownerPetdxPending.delete(entityId);
+                    _ownerPetdx.set(entityId, null);
+                });
+        }
+
+        // While any owner companion is animating, nudge force-graph to repaint
+        // each frame so the chibi立繪 actually moves. Throttled to ~20fps to keep
+        // WebView-class GPUs honest; stops itself when no companions are live.
+        let _ownerTickerRaf = 0;
+        let _ownerTickerLast = 0;
+        function _startOwnerPetdxTicker() {
+            if (_ownerTickerRaf) return;
+            const loop = (now) => {
+                let anyLive = false;
+                for (const v of _ownerPetdx.values()) { if (v && v.ready) { anyLive = true; break; } }
+                if (!anyLive) { _ownerTickerRaf = 0; return; }
+                if (now - _ownerTickerLast >= 50) {
+                    _ownerTickerLast = now;
+                    try { if (fg && fg.refresh) fg.refresh(); } catch (_) {}
+                }
+                _ownerTickerRaf = requestAnimationFrame(loop);
+            };
+            _ownerTickerRaf = requestAnimationFrame(loop);
+        }
+
         function _isAvatarUrl(v) {
             return typeof v === 'string' && /^(https?:\/\/|\/)/.test(v);
         }
@@ -630,59 +726,86 @@
             return '#888';
         }
 
-        // Owner/center node: paint the entity avatar inside a circle.
-        // Replaces the legacy yellow-square placeholder so the center node
-        // shows the bound entity's 大頭貼 + real display name.
+        // Owner/center node: paint the entity's petdx 夥伴 companion 立繪
+        // (full chibi sprite, current IDLE frame) — the platform-canonical
+        // companion render, NOT a flat circular headshot and NEVER a yellow disc.
+        // The sprite is drawn larger than the node disc (a 立繪 reads as a body,
+        // not a dot) with its aspect ratio preserved. Fallback ladder when the
+        // entity has no bound companion: emoji avatar → deterministic initial.
         function drawOwnerNode(node, ctx, r, isSel, scale) {
             const cx = node.x, cy = node.y;
-            const av = node.avatar;
+            const entityId = _ownerEntityId(node);
+
+            // Kick off / reuse this owner's petdx companion render.
+            _ensureOwnerPetdx(entityId);
+            const petdx = entityId != null ? _ownerPetdx.get(entityId) : null;
+
             ctx.save();
-            // Clip to a circle so URL/emoji avatars sit in a round headshot.
-            ctx.beginPath();
-            ctx.arc(cx, cy, r, 0, Math.PI * 2, false);
-            ctx.closePath();
+            ctx.globalAlpha = node.archived ? 0.5 : 1;
+
             let painted = false;
-            if (_isAvatarUrl(av)) {
-                const entry = _ownerAvatarImg(av);
-                if (entry.loaded && !entry.failed) {
+            if (petdx && petdx.ready && petdx.canvas && petdx.canvas.width) {
+                // Render the companion 立繪 at ~3.4× the node radius so it reads as
+                // a character standing at the centre, like the 夥伴 elsewhere.
+                const sw = petdx.canvas.width, sh = petdx.canvas.height;
+                const target = r * 3.4;
+                const sc = Math.min(target / sw, target / sh);
+                const dw = sw * sc, dh = sh * sc;
+                // Anchor feet near the node centre so the figure sits on the graph.
+                const dx = cx - dw / 2;
+                const dy = cy - dh * 0.82;
+                try {
+                    // Soft contact-shadow ellipse under the companion's feet.
                     ctx.save();
-                    ctx.clip();
-                    try {
-                        ctx.drawImage(entry.img, cx - r, cy - r, r * 2, r * 2);
-                        painted = true;
-                    } catch (_) {}
+                    ctx.globalAlpha *= 0.35;
+                    ctx.fillStyle = '#000';
+                    ctx.beginPath();
+                    ctx.ellipse(cx, cy + r * 0.18, r * 0.85, r * 0.32, 0, 0, Math.PI * 2);
+                    ctx.fill();
                     ctx.restore();
+
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.drawImage(petdx.canvas, dx, dy, dw, dh);
+                    painted = true;
+                } catch (_) { painted = false; }
+
+                // Selection ring around the companion's footprint (no yellow disc).
+                if (isSel) {
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, r * 1.15, 0, Math.PI * 2, false);
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2 / scale;
+                    ctx.stroke();
                 }
             }
+
             if (!painted) {
-                // Backdrop disc (entity owner accent) for emoji / initial fallback.
+                // No companion bound (or still loading): disc + emoji / initial.
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2, false);
+                ctx.closePath();
                 ctx.fillStyle = OWNER_COLOR;
-                ctx.globalAlpha = node.archived ? 0.45 : 1;
                 ctx.fill();
-                ctx.globalAlpha = 1;
-                if (typeof av === 'string' && av && !_isAvatarUrl(av)) {
-                    // Emoji avatar glyph.
-                    ctx.fillStyle = '#1a1a1a';
+                const emoji = (typeof node.avatarEmoji === 'string' && node.avatarEmoji
+                    && !_isAvatarUrl(node.avatarEmoji)) ? node.avatarEmoji
+                    : ((typeof node.avatar === 'string' && node.avatar && !_isAvatarUrl(node.avatar)) ? node.avatar : null);
+                ctx.fillStyle = '#1a1a1a';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                if (emoji) {
                     ctx.font = (r * 1.3) + 'px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(av, cx, cy + r * 0.04);
+                    ctx.fillText(emoji, cx, cy + r * 0.04);
                 } else {
-                    // Deterministic initial badge (no avatar at all).
-                    ctx.fillStyle = '#1a1a1a';
                     ctx.font = '600 ' + (r * 1.1) + 'px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
                     ctx.fillText(_ownerInitial(node), cx, cy + r * 0.04);
                 }
+                // Owner-accent ring (matches legend) so the centre still reads as owner.
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2, false);
+                ctx.strokeStyle = isSel ? '#fff' : OWNER_COLOR;
+                ctx.lineWidth = (isSel ? 2 : 1.4) / scale;
+                ctx.stroke();
             }
-            // Ring: selection highlight, else a subtle owner-accent border so the
-            // avatar reads as the center/owner node.
-            ctx.beginPath();
-            ctx.arc(cx, cy, r, 0, Math.PI * 2, false);
-            ctx.strokeStyle = isSel ? '#fff' : OWNER_COLOR;
-            ctx.lineWidth = (isSel ? 2 : 1.4) / scale;
-            ctx.stroke();
             ctx.restore();
         }
 
