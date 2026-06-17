@@ -3572,7 +3572,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                                     SELECT COUNT(*) as active_count
                                     FROM kanban_cards
                                     WHERE device_id = $1
-                                      AND $2 = ANY(assigned_bots::integer[])
+                                      AND assigned_bots @> to_jsonb($2::int)
                                       AND archived = false
                                       AND status IN ('scheduled', 'todo', 'in_progress', 'review')
                                 `, [card.device_id, botId]);
@@ -3805,7 +3805,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                             SELECT COUNT(*) as active_count
                             FROM kanban_cards
                             WHERE device_id = $1
-                              AND $2 = ANY(assigned_bots::integer[])
+                              AND assigned_bots @> to_jsonb($2::int)
                               AND archived = false
                               AND status IN ('scheduled', 'todo', 'in_progress', 'review')
                         `, [card.device_id, botId]);
