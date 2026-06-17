@@ -8016,6 +8016,7 @@
         // ── Voice Recording ──
         let mediaRecorder = null;
         let audioChunks = [];
+        let recordedMimeType = ''; // Bug #160: actual MediaRecorder mime (may be mp4/ogg, not webm)
         let recordingStartTime = 0;
         let recordingTimer = null;
         const MAX_RECORD_SECONDS = 180;
@@ -8072,6 +8073,11 @@
 
                 mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
                 audioChunks = [];
+                // Bug #160: remember the mime the recorder actually used. On Android
+                // WebView audio/webm is often unsupported and it falls back to
+                // audio/mp4 / audio/ogg. The old code hardcoded audio/webm on the
+                // upload blob, mislabeling the bytes; upload then failed.
+                recordedMimeType = mediaRecorder.mimeType || mimeType || 'audio/webm';
 
                 mediaRecorder.ondataavailable = (e) => {
                     if (e.data.size > 0) audioChunks.push(e.data);
@@ -8173,7 +8179,10 @@
 
             mediaRecorder.onstop = async () => {
                 mediaRecorder.stream.getTracks().forEach(t => t.stop());
-                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                // Bug #160: use the recorder's real mime so the blob bytes and the
+                // Content-Type the browser sends to /api/chat/upload-media agree.
+                const blobType = recordedMimeType || mediaRecorder.mimeType || 'audio/webm';
+                const audioBlob = new Blob(audioChunks, { type: blobType });
                 mediaRecorder = null;
                 await uploadVoice(audioBlob, durationSec);
             };
@@ -8192,18 +8201,37 @@
             btn.disabled = true;
 
             try {
+                // Bug #160: derive the filename extension from the actual blob mime
+                // so the uploaded file isn't always mislabeled "voice.webm".
+                const mimeBase = String(blob.type || '').split(';')[0].trim().toLowerCase();
+                const extByMime = {
+                    'audio/webm': 'webm', 'audio/ogg': 'ogg', 'audio/mp4': 'm4a',
+                    'audio/aac': 'aac', 'audio/mpeg': 'mp3', 'audio/wav': 'wav',
+                    'audio/3gpp': '3gp', 'audio/amr': 'amr',
+                };
+                const voiceName = 'voice.' + (extByMime[mimeBase] || 'webm');
+
                 const formData = new FormData();
-                formData.append('file', blob, 'voice.webm');
+                // multer reads req.body.mediaType inside fileFilter, so send the text
+                // fields BEFORE the file part to guarantee mediaType is parsed first.
                 formData.append('deviceId', currentUser.deviceId);
                 formData.append('deviceSecret', currentUser.deviceSecret);
                 formData.append('mediaType', 'voice');
+                formData.append('file', blob, voiceName);
 
                 const uploadRes = await fetch(API_BASE + '/api/chat/upload-media', {
                     method: 'POST',
                     body: formData
                 });
-                const uploadData = await uploadRes.json();
-                if (!uploadData.success) throw new Error(uploadData.error || 'Upload failed');
+                // Bug #160: tolerate a non-JSON body (e.g. proxy/gateway HTML error)
+                // so the user gets a real status code instead of an opaque parse crash.
+                let uploadData;
+                try {
+                    uploadData = await uploadRes.json();
+                } catch {
+                    throw new Error('HTTP ' + uploadRes.status + ' (invalid response)');
+                }
+                if (!uploadData.success) throw new Error(uploadData.message || uploadData.error || ('HTTP ' + uploadRes.status));
 
                 // ── Local broadcast ──
                 if (targets.local.length > 0) {
