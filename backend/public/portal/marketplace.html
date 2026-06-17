@@ -143,6 +143,118 @@
             width: 96px;
         }
 
+        /* ── Dual-thumb 費率 range slider ───────────────────────────── */
+        .mp-rate-range {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 180px;
+            padding: 2px 4px;
+        }
+
+        .mp-rate-range-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.2;
+        }
+
+        .mp-rate-range-value {
+            color: var(--text);
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
+        /* The two range inputs are stacked on a shared track. Their native
+           tracks are made transparent; a .mp-rate-track element draws the
+           rail and the active fill between the two thumbs. */
+        .mp-rate-slider {
+            position: relative;
+            height: 28px;
+        }
+
+        .mp-rate-track {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 4px;
+            border-radius: var(--radius-pill);
+            background: var(--card-border);
+            pointer-events: none;
+        }
+
+        .mp-rate-fill {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            border-radius: var(--radius-pill);
+            background: var(--primary);
+            pointer-events: none;
+        }
+
+        .mp-rate-slider input[type="range"] {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            width: 100%;
+            height: 28px;
+            margin: 0;
+            background: none;
+            -webkit-appearance: none;
+            appearance: none;
+            pointer-events: none;
+            /* both inputs overlap; only the thumbs accept pointer events */
+        }
+
+        .mp-rate-slider input[type="range"]::-webkit-slider-runnable-track {
+            background: transparent;
+            border: none;
+            height: 28px;
+        }
+
+        .mp-rate-slider input[type="range"]::-moz-range-track {
+            background: transparent;
+            border: none;
+            height: 28px;
+        }
+
+        .mp-rate-slider input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            pointer-events: auto;
+            width: 16px;
+            height: 16px;
+            margin-top: 6px;
+            border-radius: 50%;
+            background: var(--text);
+            border: 2px solid var(--primary);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+        }
+
+        .mp-rate-slider input[type="range"]::-moz-range-thumb {
+            pointer-events: auto;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--text);
+            border: 2px solid var(--primary);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+        }
+
+        .mp-rate-slider input[type="range"]:focus-visible::-webkit-slider-thumb {
+            outline: 2px solid var(--success);
+            outline-offset: 2px;
+        }
+
         .mp-stats {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -488,8 +600,17 @@
                 <option value="reasoning">Reasoning</option>
                 <option value="coding">Coding</option>
             </select>
-            <input class="mp-field mp-rate-field" id="minRateInput" type="number" min="0" step="1" placeholder="Min e/1K" data-i18n-placeholder="mp_rate_min_placeholder" aria-label="Minimum e-coin per 1000 tokens">
-            <input class="mp-field mp-rate-field" id="maxRateInput" type="number" min="0" step="1" placeholder="Max e/1K" data-i18n-placeholder="mp_rate_max_placeholder" aria-label="Maximum e-coin per 1000 tokens">
+            <div class="mp-rate-range">
+                <div class="mp-rate-range-label">
+                    <span data-i18n="mp_rate_range_label">Rate (e-coin / 1K)</span>
+                    <span class="mp-rate-range-value" id="rateRangeValue">1-50</span>
+                </div>
+                <div class="mp-rate-slider">
+                    <div class="mp-rate-track"><div class="mp-rate-fill" id="rateRangeFill"></div></div>
+                    <input id="minRateInput" type="range" min="1" max="50" step="1" value="1" aria-label="Minimum e-coin per 1000 tokens">
+                    <input id="maxRateInput" type="range" min="1" max="50" step="1" value="50" aria-label="Maximum e-coin per 1000 tokens">
+                </div>
+            </div>
         </section>
 
         <section class="mp-stats" aria-label="Marketplace statistics">
@@ -530,6 +651,9 @@
     <script src="shared/auth.js"></script>
     <script src="shared/footer.js"></script>
     <script src="../shared/telemetry.js"></script>
+    <script src="../shared/petdx-renderer.js"></script>
+    <script src="../shared/avatar-petdx.js"></script>
+    <script src="shared/entity-utils.js"></script>
     <script>
         const state = {
             listings: [],
@@ -538,6 +662,41 @@
             debounce: null,
             detail: null,
         };
+
+        // Dual-thumb 費率 range slider bounds (e-coin / 1K tokens).
+        const RATE_MIN = 1;
+        const RATE_MAX = 50;
+
+        // Keep the two range thumbs from crossing, paint the active-range fill
+        // between them, and update the live "min-max" value label. Bound to the
+        // 'input' event so the display follows the thumb in real time; the
+        // 'change' event (wired in bindControls) re-queries the marketplace.
+        function syncRateSlider(changed) {
+            const minEl = document.getElementById('minRateInput');
+            const maxEl = document.getElementById('maxRateInput');
+            const fill = document.getElementById('rateRangeFill');
+            const valueEl = document.getElementById('rateRangeValue');
+            if (!minEl || !maxEl) return;
+            let lo = Number(minEl.value);
+            let hi = Number(maxEl.value);
+            // Prevent the thumbs from crossing: nudge whichever one the user is
+            // currently dragging so min never exceeds max.
+            if (lo > hi) {
+                if (changed === 'max') { lo = hi; minEl.value = String(lo); }
+                else { hi = lo; maxEl.value = String(hi); }
+            }
+            if (fill) {
+                const span = RATE_MAX - RATE_MIN || 1;
+                const leftPct = ((lo - RATE_MIN) / span) * 100;
+                const rightPct = ((hi - RATE_MIN) / span) * 100;
+                fill.style.left = leftPct + '%';
+                fill.style.width = Math.max(0, rightPct - leftPct) + '%';
+            }
+            if (valueEl) {
+                const hiLabel = hi >= RATE_MAX ? (RATE_MAX + '+') : String(hi);
+                valueEl.textContent = lo + '-' + hiLabel;
+            }
+        }
 
         function tt(key, fallback) {
             if (window.i18n && typeof window.i18n.t === 'function') {
@@ -600,11 +759,14 @@
                 limit: '80',
             });
             const cap = document.getElementById('capabilitySelect').value;
-            const min = Number(document.getElementById('minRateInput').value || 0);
-            const max = Number(document.getElementById('maxRateInput').value || 0);
+            const min = Number(document.getElementById('minRateInput').value || RATE_MIN);
+            const max = Number(document.getElementById('maxRateInput').value || RATE_MAX);
             if (cap) params.set('capability', cap);
-            if (Number.isFinite(min) && min > 0) params.set('minRateMli', String(Math.round(min * 1000)));
-            if (Number.isFinite(max) && max > 0) params.set('maxRateMli', String(Math.round(max * 1000)));
+            // Only send a rate bound when the user has narrowed it from the full
+            // [RATE_MIN, RATE_MAX] range, so the default slider position means
+            // "no rate filter" rather than excluding the rail endpoints.
+            if (Number.isFinite(min) && min > RATE_MIN) params.set('minRateMli', String(Math.round(min * 1000)));
+            if (Number.isFinite(max) && max < RATE_MAX) params.set('maxRateMli', String(Math.round(max * 1000)));
             return params;
         }
 
@@ -618,6 +780,7 @@
                     caps: supportedCaps(listing.capabilities),
                 }));
                 filterLocal();
+                preloadListingAvatars();
             } catch (err) {
                 renderState(tt('mp_load_error', 'Failed to load'));
                 console.error('[Marketplace] load failed:', err);
@@ -673,15 +836,62 @@
             }
             panel.style.display = 'none';
             grid.innerHTML = state.filtered.map(renderCard).join('');
+            // Animate any companion-chibi placeholder canvases just emitted.
+            if (window.AvatarPetdx) window.AvatarPetdx.mount(grid);
         }
 
         function renderAvatar(listing) {
-            const avatar = listing.avatar_url || '';
+            // Canonical platform avatar path: petdx 夥伴 chibi via the shared
+            // renderAvatarHtml() in entity-utils.js. When the listing's owner
+            // entity has a selected companion that is LOCALLY resolvable
+            // (preloaded into AvatarPetdx's descriptor cache below), this emits
+            // a <canvas data-petdx-entity-id> placeholder that autoMount()
+            // animates. Otherwise the fallback ladder degrades gracefully:
+            //   1. companion chibi canvas (own-device entity w/ companion)
+            //   2. avatar_url / petdx_avatar_url image
+            //   3. title-initial letter (emoji-span branch) — never a yellow box
+            // Cross-device caveat: marketplace lists bots from OTHER devices,
+            // and companion descriptors only resolve for the viewer's OWN
+            // device entities, so cross-device listings land on the image /
+            // initial fallback. That is by design — see PR notes.
+            const initial = String(listing.title || 'Bot').trim().slice(0, 1).toUpperCase() || 'B';
+            const avatar = listing.avatar_url || listing.petdx_avatar_url || initial;
+            if (typeof renderAvatarHtml === 'function') {
+                return renderAvatarHtml(avatar, 48, listing.owner_entity_id);
+            }
+            // Defensive fallback if entity-utils.js failed to load.
             if (/^https?:\/\//.test(avatar)) {
                 return `<img src="${esc(avatar)}" alt="">`;
             }
-            const title = String(listing.title || 'Bot').trim();
-            return esc(title.slice(0, 1).toUpperCase() || 'B');
+            return esc(initial);
+        }
+
+        // Preload companion descriptors for every listing whose owner entity is
+        // resolvable on the viewer's device, then animate the placeholder
+        // canvases. Best-effort + non-blocking: any failure (no session,
+        // cross-device entity, API hiccup) simply leaves the image/initial
+        // fallback in place. Mirrors kanban.html's init pattern.
+        async function preloadListingAvatars() {
+            if (!window.AvatarPetdx) return;
+            try {
+                const user = await getRentalUser();
+                const deviceId = user?.deviceId || user?.device_id
+                    || localStorage.getItem('deviceId')
+                    || localStorage.getItem('eclaw_device_id');
+                const deviceSecret = user?.deviceSecret || user?.device_secret
+                    || localStorage.getItem('deviceSecret')
+                    || localStorage.getItem('eclaw_device_secret');
+                if (!deviceId || !deviceSecret) return;
+                const entityIds = Array.from(new Set(
+                    state.listings.map((l) => Number(l.owner_entity_id)).filter(Number.isFinite)
+                ));
+                if (!entityIds.length) return;
+                await window.AvatarPetdx.preload({ deviceId, deviceSecret, entityIds });
+                // Re-render so cards whose descriptor just resolved emit the
+                // <canvas> placeholder, then autoMount animates them.
+                renderGrid();
+                window.AvatarPetdx.autoMount();
+            } catch (_) { /* graceful: keep image/initial fallback */ }
         }
 
         function renderCard(listing) {
@@ -823,6 +1033,12 @@
             ['sortSelect', 'capabilitySelect', 'minRateInput', 'maxRateInput'].forEach((id) => {
                 document.getElementById(id).addEventListener('change', loadMarketplace);
             });
+            // Live display sync for the dual-thumb rate slider (fill + label +
+            // anti-cross clamp) on every drag tick; the 'change' listener above
+            // re-queries once the drag settles.
+            document.getElementById('minRateInput').addEventListener('input', () => syncRateSlider('min'));
+            document.getElementById('maxRateInput').addEventListener('input', () => syncRateSlider('max'));
+            syncRateSlider();
             document.getElementById('searchInput').addEventListener('input', () => {
                 clearTimeout(state.debounce);
                 state.debounce = setTimeout(filterLocal, 150);

@@ -2431,7 +2431,19 @@ module.exports = function rentalFactory({ authMiddleware, softAuthMiddleware, ad
             const devicesMap = _interviewDeps?.devices;
             const enriched = filtered.map((l) => {
                 const ent = devicesMap?.[l.owner_device_id]?.entities?.[l.owner_entity_id];
-                return ent?.publicCode ? { ...l, owner_public_code: ent.publicCode } : l;
+                // Surface owner_entity_id explicitly so the marketplace frontend
+                // can render the canonical petdx 夥伴 chibi avatar via
+                // renderAvatarHtml(avatar, 48, owner_entity_id) — consistent with
+                // every other portal surface. The deduped SELECT already carries
+                // owner_entity_id + petdx_avatar_url, but pin them here so the
+                // public API contract no longer depends on `SELECT *` column order.
+                const out = {
+                    ...l,
+                    owner_entity_id: l.owner_entity_id != null ? Number(l.owner_entity_id) : null,
+                    petdx_avatar_url: l.petdx_avatar_url || null,
+                };
+                if (ent?.publicCode) out.owner_public_code = ent.publicCode;
+                return out;
             });
             res.json({ success: true, listings: enriched });
         } catch (err) {
