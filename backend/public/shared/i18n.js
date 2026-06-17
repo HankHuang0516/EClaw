@@ -650320,6 +650320,9 @@ const TRANSLATIONS = {
         "rm_oodar_live_from_kanban": "items live from kanban",
         "rm_oodar_live_degraded": "Showing last-known plan status (kanban unreachable).",
         "rm_oodar_live_unavailable": "Live status unavailable — see the 4-phase plan below.",
+        "pubpage_invite_cta_title": "Want your own AI bot?",
+        "pubpage_invite_cta_desc": "Create yours on EClawbot and you both earn 500 e-coins.",
+        "pubpage_invite_cta_button": "Get started — claim 500 e-coins",
 },
 
 
@@ -1235106,6 +1235109,9 @@ const TRANSLATIONS = {
         "rm_oodar_live_from_kanban": "個項目為看板即時狀態",
         "rm_oodar_live_degraded": "顯示最後已知的計畫狀態（看板暫時無法連線）。",
         "rm_oodar_live_unavailable": "即時狀態暫時無法取得 — 請參考下方四階段計畫。",
+        "pubpage_invite_cta_title": "想要自己的 bot？",
+        "pubpage_invite_cta_desc": "到 EClawbot 打造你的專屬 bot，雙方各得 500 e幣。",
+        "pubpage_invite_cta_button": "立即開始 · 領 500 e幣",
 },
 
 
@@ -2944452,6 +2944458,10 @@ const TRANSLATIONS = {
         "notif_pref_rich_card_help": "當智能體在訊息中附上可點擊按鈕請你選擇選項時推播通知，就像 Claude Code 詢問權限那樣 — 智能體正在等你決定，所以會喚醒裝置。預設開啟；若聊天裡沒有智能體送出互動卡片，即使開啟也不會收到通知。",
         "notif_rich_card_question_title_suffix": "需要你的選擇",
 
+
+        "pubpage_invite_cta_title": "想要自己的 bot？",
+        "pubpage_invite_cta_desc": "到 EClawbot 打造你的專屬 bot，雙方各得 500 e幣。",
+        "pubpage_invite_cta_button": "立即開始 · 領 500 e幣",
 },
 
 

@@ -1946,6 +1946,43 @@ function trackPageView(req, deviceId, publicCode, noteId) {
     } catch (_) {}
 }
 
+// Look up the public-page owner's active (non-redeemed) invite code without
+// minting one — a public GET must stay cheap/idempotent, so we never write on
+// render. Returns the code string or null. Best-effort: a DB hiccup just hides
+// the personalised code and the CTA falls back to the generic invite page.
+async function getOwnerInviteCode(pgPool, ownerDeviceId) {
+    if (!pgPool || !ownerDeviceId) return null;
+    try {
+        const r = await pgPool.query(
+            'SELECT code FROM invite_codes WHERE owner_device_id = $1 AND used_by_device_id IS NULL ORDER BY created_at ASC LIMIT 1',
+            [ownerDeviceId]
+        );
+        return r.rows[0]?.code || null;
+    } catch (err) {
+        console.warn('[PublicPage] invite-code lookup failed:', err.message);
+        return null;
+    }
+}
+
+// "Want your own bot?" growth CTA for the public profile page. Strings are
+// i18n keys (en/zh/zh-TW) applied client-side by /shared/i18n.js — the shell
+// loads it when opts.inviteCta is set. The link is the canonical invite
+// deeplink with a source=profile marker; when the owner has an active code we
+// use /invite/:CODE (logged + redeemed at signup), otherwise the generic
+// invite page. Both carry source=profile for funnel attribution.
+function buildPublicPageInviteCta(ownerCode) {
+    const href = ownerCode
+        ? `/invite/${encodeURIComponent(ownerCode)}?source=profile`
+        : `/portal/invite.html?source=profile`;
+    return `
+        <div style="margin:40px auto 0;max-width:560px;background:linear-gradient(135deg,rgba(124,106,239,0.14),rgba(124,106,239,0.04));border:1px solid var(--accent);border-radius:14px;padding:24px;text-align:center;">
+            <div style="font-size:32px;margin-bottom:8px;">🦞</div>
+            <h3 style="font-size:18px;margin:0 0 6px;color:var(--text);" data-i18n="pubpage_invite_cta_title">Want your own AI bot?</h3>
+            <p style="color:var(--text-muted);font-size:14px;margin:0 auto 16px;max-width:420px;" data-i18n="pubpage_invite_cta_desc">Create yours on EClawbot and you both earn 500 e-coins.</p>
+            <a href="${href}" style="display:inline-block;background:var(--accent);color:#fff;font-size:14px;font-weight:600;text-decoration:none;padding:10px 22px;border-radius:9px;" data-i18n="pubpage_invite_cta_button">Get started — claim 500 e-coins</a>
+        </div>`;
+}
+
 // ============================================
 // PUBLIC ENTITY HOME: /p/<publicCode>
 // ============================================
@@ -2005,6 +2042,16 @@ app.get('/p/:code', async (req, res) => {
             : '<span style="font-size:48px;">🦞</span>';
         const descHtml = (entityDesc || (agentCard && agentCard.description) || '').replace(/</g, '&lt;');
 
+        // Growth: "Want your own bot?" invite CTA, visible to logged-out
+        // visitors. Links to the canonical invite deeplink (/invite/:CODE)
+        // carrying the page owner's invite code + source=profile event marker,
+        // which the /invite/:code landing already logs via db.logInviteClick.
+        // Falls back to the plain invite page (still source-tagged) when the
+        // owner has no active code yet. Incentive: both sides get 500 e幣.
+        const inviteCtaHtml = buildPublicPageInviteCta(
+            await getOwnerInviteCode(pgPool, target.deviceId)
+        );
+
         const content = `
             <div style="text-align:center;margin-bottom:24px;">
                 <div style="margin-bottom:12px;">${avatarHtml}</div>
@@ -2014,9 +2061,10 @@ app.get('/p/:code', async (req, res) => {
             </div>
             <h2 style="font-size:18px;margin-bottom:4px;">Public Pages</h2>
             <p style="color:var(--text-muted);font-size:13px;">${result.rows.length} page${result.rows.length !== 1 ? 's' : ''}</p>
-            ${cardsHtml}`;
+            ${cardsHtml}
+            ${inviteCtaHtml}`;
 
-        res.send(renderPublicPageShell(entityName + ' — Pages', content, { entityName, publicCode: code }));
+        res.send(renderPublicPageShell(entityName + ' — Pages', content, { entityName, publicCode: code, inviteCta: true }));
     } catch (error) {
         console.error('[PublicPage] Error serving entity home:', error);
         res.status(500).send(renderPublicPageShell('Error', '<p>Something went wrong.</p>'));
@@ -2157,7 +2205,7 @@ function hasBlockedScripts(content) {
 }
 
 function renderPublicPageShell(title, content, opts = {}) {
-    const { entityName, publicCode, noteId, updatedAt, siblingPages, scriptDescription } = opts;
+    const { entityName, publicCode, noteId, updatedAt, siblingPages, scriptDescription, inviteCta } = opts;
     const safeTitle = (title || '').replace(/</g, '&lt;').replace(/"/g, '&quot;');
     const footerInfo = entityName
         ? `<div class="page-footer">
@@ -2254,6 +2302,7 @@ function renderPublicPageShell(title, content, opts = {}) {
         </div>
     </div>
     <script>function activateBlockedScripts(){var el=document.getElementById('eclaw-blocked-scripts');if(!el)return;try{var b=atob(el.dataset.scripts);var bytes=new Uint8Array(b.length);for(var i=0;i<b.length;i++)bytes[i]=b.charCodeAt(i);var scripts=JSON.parse(new TextDecoder().decode(bytes));var loaded=0,total=scripts.length;function next(){if(loaded>=total){document.getElementById('scriptConsent').remove();window.dispatchEvent(new Event('DOMContentLoaded', {bubbles:true,cancelable:true}));document.dispatchEvent(new Event('DOMContentLoaded', {bubbles:true,cancelable:true}));return}var s=scripts[loaded++];var tag=document.createElement('script');if(s.src){tag.src=s.src;tag.onload=tag.onerror=next;document.body.appendChild(tag)}else{tag.textContent=s.inline;document.body.appendChild(tag);next()}}next()}catch(e){console.error('[EClawbot] Script activation error:',e);document.getElementById('scriptConsent').remove()}}<\/script>` : ''}
+    ${inviteCta ? `<script src="/shared/i18n.js?v=${SCRIPT_VERSION}"><\/script>` : ''}
 </body>
 </html>`;
 }
