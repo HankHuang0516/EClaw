@@ -19,6 +19,7 @@ const feedbackModule = require('./device-feedback');
 const chatIntegrity = require('./chat-integrity');
 const communitySsr = require('./community-ssr');
 const { isLowSignalFwd } = require('./org-fwd-filter');
+const orgFwdEscalation = require('./org-fwd-escalation');
 const { buildOrgEntitySessionKey, isOrgEntitySessionKey } = require('./session-scope');
 const { assignDefaultCompanionIfMissing } = require('./petdx-phase0-hook');
 // JWT secret: fail-safe random per process if env var is missing (tokens signed in one process won't verify in another)
@@ -9999,9 +10000,13 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
                     viaChannel
                 });
 
-                // Org chart: auto-forward incoming speakTo message to superior (same-device only, fire-and-forget)
+                // Org chart: escalate incoming speakTo message to superior only if
+                // the target stays silent past the threshold (same-device only,
+                // fire-and-forget). inbound:true gates this as a "緊迫盯人"
+                // escalation so the superior never 搶答 a message addressed to the
+                // target (card_184f2a25c1f1a13ebae5ec3e).
                 if (!isCrossDevice && toEntity.isBound) {
-                    orgChartForward(toEntity, target.deviceId, deliveryText, { fromEntityId: eId }).catch(() => {});
+                    orgChartForward(toEntity, target.deviceId, deliveryText, { fromEntityId: eId, inbound: true, inboundAt: Date.now() }).catch(() => {});
                 }
 
                 // Notify both devices
@@ -12363,9 +12368,12 @@ app.post('/api/entity/speak-to', async (req, res) => {
         }
     }
 
-    // Org chart: auto-forward incoming message to superior for target entity with incomplete tasks (fire-and-forget)
+    // Org chart: escalate incoming message to superior only if the target stays
+    // silent past the threshold (fire-and-forget). inbound:true gates this as a
+    // "緊迫盯人" escalation so the superior never 搶答 a message addressed to the
+    // target (card_184f2a25c1f1a13ebae5ec3e).
     if (toEntity && toEntity.isBound) {
-        orgChartForward(toEntity, deviceId, speakToText, { fromEntityId: fromId }).catch(() => {});
+        orgChartForward(toEntity, deviceId, speakToText, { fromEntityId: fromId, inbound: true, inboundAt: Date.now() }).catch(() => {});
     }
 
     const speakToResponse = {
@@ -19045,6 +19053,44 @@ async function orgChartForward(entity, deviceId, message, opts = {}) {
     if (!message || message.startsWith(ORG_TASK_FWD_PREFIX) || message.startsWith(ORG_FWD_PREFIX)) return;
     if (isLowSignalFwd(message)) {
         serverLog('info', 'org_forward_skip', `#${entity.entityId} suppressed low-signal fwd: "${String(message).trim().slice(0, 60)}"`, { deviceId, entityId: entity.entityId });
+        return;
+    }
+
+    // ── "緊迫盯人" supervisor escalation gate (card_184f2a25c1f1a13ebae5ec3e) ──
+    // opts.inbound = true means `message` is an INBOUND message addressed to
+    // `entity` (the target/subordinate), NOT the entity's own response. Relaying
+    // an inbound-to-#1 message to its superior #2 *immediately* makes #2 "搶答"
+    // a message that was addressed to #1 while #1 is still handling it. Inbound
+    // forwarding is an ESCALATION — defer it past a silence window and only fire
+    // if the target stays silent (never produces a response). The legitimate
+    // response-forward path (a bot's own output → superior) is unaffected.
+    if (opts.inbound) {
+        const inboundAt = Number.isFinite(opts.inboundAt) ? opts.inboundAt : Date.now();
+        const silenceMs = orgFwdEscalation.DEFAULT_ESCALATE_SILENCE_MS;
+        const targetEntityId = entity.entityId;
+        const escalateTimer = setTimeout(() => {
+            try {
+                const dev = devices[deviceId];
+                const liveTarget = dev && dev.entities ? dev.entities[targetEntityId] : null;
+                if (!liveTarget) return;
+                const decision = orgFwdEscalation.shouldEscalateInbound({
+                    targetLastReplyAt: liveTarget.lastUpdated,
+                    inboundAt,
+                    silenceMs,
+                });
+                if (!decision.escalate) {
+                    serverLog('info', 'org_escalate_skip', `#${targetEntityId} inbound not escalated: ${decision.reason}`, { deviceId, entityId: targetEntityId });
+                    return;
+                }
+                serverLog('info', 'org_escalate', `#${targetEntityId} silent past ${Math.round(silenceMs / 60000)}min — escalating inbound to superior`, { deviceId, entityId: targetEntityId });
+                // Re-enter with inbound cleared so the standard forward path runs.
+                orgChartForward(liveTarget, deviceId, message, { fromEntityId: opts.fromEntityId }).catch(() => {});
+            } catch (err) {
+                console.error('[OrgChart] inbound escalation tick error:', err.message);
+            }
+        }, silenceMs);
+        // Don't let the pending escalation timer keep the process alive.
+        if (typeof escalateTimer.unref === 'function') escalateTimer.unref();
         return;
     }
 
