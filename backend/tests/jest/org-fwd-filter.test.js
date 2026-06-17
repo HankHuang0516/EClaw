@@ -5,6 +5,7 @@
  */
 
 const { isLowSignalFwd, ORG_FWD_MIN_BODY_LEN } = require('../../org-fwd-filter');
+const { tKanban, statusLabel, TRANSLATIONS } = require('../../i18n/kanban-notifications');
 
 describe('isLowSignalFwd()', () => {
     describe('falsy / trivial bodies', () => {
@@ -103,6 +104,60 @@ describe('isLowSignalFwd()', () => {
 
         it('does NOT suppress an ack that carries real status', () => {
             expect(isLowSignalFwd('ack — PR #3015 merged, deploying to prod now')).toBe(false);
+        });
+    });
+
+    describe('system / automation / kanban notification echoes (card_ef4f729385089025431ea8f1)', () => {
+        // Repro: a kanban status-change notice pushed to the assigned bot (#1),
+        // echoed by the bot, was org-forwarded up to the supervisor (#2),
+        // flooding the supervisor with status noise. These verbatim system
+        // strings must be suppressed before the upward forward.
+        it('suppresses statusChanged echoes (todo→in_progress, in_progress→done)', () => {
+            const m1 = tKanban('zh', 'statusChanged', { direction: '➡️', title: 'Hygiene Audit', from: statusLabel('zh', 'todo'), to: statusLabel('zh', 'in_progress') });
+            const m2 = tKanban('zh', 'statusChanged', { direction: '➡️', title: 'Hygiene Audit', from: statusLabel('zh', 'in_progress'), to: statusLabel('zh', 'done') });
+            expect(isLowSignalFwd(m1)).toBe(true);
+            expect(isLowSignalFwd(m2)).toBe(true);
+        });
+
+        it('suppresses the in-card "📌 狀態更新" system-comment echo', () => {
+            expect(isLowSignalFwd('📌 狀態更新：待辦 → 進行中，指派給: #1')).toBe(true);
+        });
+
+        it('suppresses cardCreated / automationTrigger / schedule / staleNudge / reviewer notices', () => {
+            expect(isLowSignalFwd(tKanban('zh', 'cardCreated', { priorityIcon: '🔴', priority: 'P0', title: 'T', status: '待辦' }))).toBe(true);
+            expect(isLowSignalFwd(tKanban('zh', 'automationTrigger', { title: 'T', childTitle: 'C' }))).toBe(true);
+            expect(isLowSignalFwd(tKanban('zh', 'scheduleOnce', { title: 'T' }))).toBe(true);
+            expect(isLowSignalFwd(tKanban('zh', 'staleNudge', { title: 'T', status: '進行中', hours: 6 }))).toBe(true);
+            expect(isLowSignalFwd(tKanban('zh', 'reviewerNotify', { title: 'T', entityId: 1, reply: '\ndone' }))).toBe(true);
+            expect(isLowSignalFwd(tKanban('zh', 'reviewerMovedToReview', { title: 'T', from: '進行中' }))).toBe(true);
+        });
+
+        it('suppresses card-reopened + screenshot-gate hold echoes', () => {
+            expect(isLowSignalFwd('♻️ Card reopened: Hygiene Audit\nDone → In Progress')).toBe(true);
+            expect(isLowSignalFwd('⏸️ Bot #1 已回報完成，但此卡開啟「截圖審查」且尚無完成截圖 — 不自動結案。')).toBe(true);
+        });
+
+        it('suppresses model-health FWD echoes (background traffic)', () => {
+            expect(isLowSignalFwd('[📢 FWD from #1] MODEL_HEALTH/ACK ok')).toBe(true);
+            expect(isLowSignalFwd('[📢 FWD from #3] ACK <nonce>')).toBe(true);
+        });
+
+        it('Globe-user: suppresses system notices across ALL locales (no carveouts)', () => {
+            const keys = ['statusChanged', 'cardCreated', 'automationTrigger', 'scheduleOnce', 'scheduleRecurring', 'staleNudge', 'reviewerNotify', 'reviewerMovedToReview'];
+            for (const lang of Object.keys(TRANSLATIONS)) {
+                for (const key of keys) {
+                    const msg = tKanban(lang, key, { direction: '➡️', title: 'T', from: 'A', to: 'B', priorityIcon: '🔴', priority: 'P0', status: 'S', childTitle: 'C', hours: 6, entityId: 1, reply: 'r' });
+                    expect(isLowSignalFwd(msg)).toBe(true);
+                }
+            }
+        });
+
+        it('does NOT suppress a bot\'s OWN free-text status report (no emoji template prefix)', () => {
+            // Critical false-positive guard: only the verbatim system-template
+            // strings are dropped — a bot describing its own progress forwards.
+            expect(isLowSignalFwd('Card 7a03c4 moved to in_progress, ETA 2h')).toBe(false);
+            expect(isLowSignalFwd('Task status changed for my card — I will start now')).toBe(false);
+            expect(isLowSignalFwd('狀態更新一下：我已開始處理這張卡，30 分鐘後回報')).toBe(false);
         });
     });
 
