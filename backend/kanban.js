@@ -233,6 +233,8 @@ async function mapCardFileRow(r) {
 // Valid statuses + labels — imported from public/shared/kanban-status.js so
 // server, kanban UI, settings UI, chat smart-chip, and nudge all share one enum.
 const KanbanStatus = require('./public/shared/kanban-status.js');
+// OODA-R Phase 4 #9: public roadmap tracker manifest + payload builder.
+const { ROADMAP_ITEMS, buildTrackerPayload } = require('./agent-improvement/roadmap-manifest.js');
 const STATUSES = KanbanStatus.STATUSES;
 const STATUS_LABELS = KanbanStatus.STATUS_LABELS_EN;
 const PRIORITIES = ['P0', 'P1', 'P2', 'P3'];
@@ -999,6 +1001,46 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         } catch (err) {
             console.error('[Kanban] Create card error:', err);
             res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ============================================
+    // GET /roadmap-status — PUBLIC OODA-R roadmap tracker (no auth, no secrets)
+    // ============================================
+    // OODA-R Phase 4 #9 (card_5ac74610cbf1f89440427809). Powers the LIVE status
+    // badges on /portal/roadmap.html. The old badges were hard-coded; this
+    // endpoint joins the editorial manifest (agent-improvement/roadmap-manifest)
+    // against kanban_cards.status so the public page reflects real progress.
+    //
+    // Public by design: it exposes ONLY the curated 9 OODA-R item card IDs +
+    // their status + updated_at + the PR links that already appear on the page.
+    // No botSecret/deviceSecret required (the page is public). The canonical
+    // board is the first ADMIN_DEVICE_IDS entry — the platform team's own board.
+    router.get('/roadmap-status', async (req, res) => {
+        try {
+            const adminDeviceId = (process.env.ADMIN_DEVICE_IDS || '')
+                .split(',').map(s => s.trim()).filter(Boolean)[0];
+            const cardStatusById = {};
+            if (adminDeviceId) {
+                const ids = ROADMAP_ITEMS.map(it => it.cardId);
+                const result = await pool.query(
+                    `SELECT id, status, updated_at FROM kanban_cards
+                     WHERE device_id = $1 AND id = ANY($2::text[])`,
+                    [adminDeviceId, ids]
+                );
+                for (const row of result.rows) {
+                    cardStatusById[row.id] = { status: row.status, updatedAt: row.updated_at };
+                }
+            }
+            const payload = buildTrackerPayload(cardStatusById);
+            // Short cache: the page polls at load; 60s is plenty and shields the DB.
+            res.set('Cache-Control', 'public, max-age=60');
+            res.json({ success: true, ...payload });
+        } catch (err) {
+            console.error('[Kanban] roadmap-status error:', err);
+            // Degrade gracefully — return manifest fallbacks so the page renders.
+            const payload = buildTrackerPayload({});
+            res.json({ success: true, degraded: true, ...payload });
         }
     });
 
