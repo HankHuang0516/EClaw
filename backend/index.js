@@ -6657,7 +6657,7 @@ app.get('/api/invite/stats', async (req, res) => {
             pg.query('SELECT bonus_messages, total_invited, milestones_claimed FROM invite_rewards WHERE device_id = $1', [deviceId]),
             pg.query('SELECT message_count FROM usage_tracking WHERE device_id = $1 AND date = CURRENT_DATE', [deviceId]),
             pg.query(
-                `SELECT COALESCE(SUM(balance_delta), 0) as total_earned_mli
+                `SELECT COALESCE(SUM(delta_mli), 0) as total_earned_mli
                  FROM wallet_ledger wl
                  JOIN user_accounts ua ON ua.id = wl.user_id
                  WHERE ua.device_id = $1
