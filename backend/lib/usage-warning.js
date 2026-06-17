@@ -10,9 +10,19 @@
  *
  * Trigger:  (5h_remaining ≤ threshold_5h_pct) OR (7d_remaining ≤ threshold_7d_pct)
  * Stale:    captured_at older than 6h → skip (no false-positive warnings)
+ * Cooldown: once attached, suppress re-attachment for COOLDOWN window per device
+ *           (card_a69e8ffa — without this the prefix rode EVERY message ≤ threshold,
+ *           so it read as a repeated standalone conversational line rather than a
+ *           one-off piggyback on a content push).
  */
 
 const STALE_THRESHOLD_MS = 6 * 60 * 60 * 1000;  // 6 hours
+const DEFAULT_COOLDOWN_MS = 30 * 60 * 1000;     // 30 min — one warning per device per window
+
+// Per-device last-attached timestamp (ms epoch). In-memory is sufficient: a missed
+// cooldown across a process restart at most lets one extra warning through, which is
+// harmless. Keyed by deviceId.
+const _lastWarnedAt = new Map();
 
 const WARNING_TEMPLATES = {
     'zh': '⚠️ 系統訊息：本 Agent 5h 剩餘 {five}% / 7d 剩餘 {seven}%。已達警戒閾值。',
@@ -101,9 +111,31 @@ function formatWarningText(lang, fiveRem, sevenRem) {
 }
 
 /**
+ * Pure cooldown check. Returns true when a prior warning at `lastMs` is still
+ * inside the `cooldownMs` window relative to `nowMs` (so a new one should be
+ * suppressed). lastMs == null/undefined → never warned → not within cooldown.
+ */
+function withinCooldown(lastMs, nowMs, cooldownMs = DEFAULT_COOLDOWN_MS) {
+    if (lastMs == null || !Number.isFinite(lastMs)) return false;
+    return (nowMs - lastMs) < cooldownMs;
+}
+
+/**
+ * Resolve the per-device cooldown window from config (cooldown_min minutes),
+ * falling back to the 30-min default. 0/negative disables the cooldown.
+ */
+function resolveCooldownMs(config) {
+    const m = config && config.cooldown_min;
+    if (Number.isFinite(m)) return Math.max(0, m * 60 * 1000);
+    return DEFAULT_COOLDOWN_MS;
+}
+
+/**
  * Convenience wrapper: query the latest snapshot, decide, format.
  * Returns the warning prefix string, or null if no warning should be attached.
- * Never throws — quota warnings must not break the message-send path.
+ * Applies a per-device cooldown so the prefix piggybacks at most once per window
+ * instead of riding every message (card_a69e8ffa). Never throws — quota warnings
+ * must not break the message-send path.
  */
 async function getWarningPrefix(pool, deviceId, config, lang, nowMs = Date.now()) {
     if (!pool || !deviceId) return null;
@@ -125,6 +157,12 @@ async function getWarningPrefix(pool, deviceId, config, lang, nowMs = Date.now()
         } : null;
         const decision = shouldWarnNow(snapshot, config, nowMs);
         if (!decision.warn) return null;
+        // Cooldown: suppress if we already attached a warning for this device
+        // inside the window — keeps it a one-off piggyback, not a per-message echo.
+        if (withinCooldown(_lastWarnedAt.get(deviceId), nowMs, resolveCooldownMs(config))) {
+            return null;
+        }
+        _lastWarnedAt.set(deviceId, nowMs);
         return formatWarningText(lang, decision.five_hour_remaining_pct, decision.seven_day_remaining_pct);
     } catch (err) {
         // Quota warnings are advisory — swallow errors so we never block delivery.
@@ -137,9 +175,14 @@ async function getWarningPrefix(pool, deviceId, config, lang, nowMs = Date.now()
 
 module.exports = {
     STALE_THRESHOLD_MS,
+    DEFAULT_COOLDOWN_MS,
     WARNING_TEMPLATES,
     pickClaudeLivePct,
     shouldWarnNow,
     formatWarningText,
+    withinCooldown,
+    resolveCooldownMs,
     getWarningPrefix,
+    // Test/ops hook: clear the in-memory per-device cooldown state.
+    _resetCooldownState: () => _lastWarnedAt.clear(),
 };

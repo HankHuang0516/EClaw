@@ -9356,12 +9356,18 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
         broadcast = false;
         routingResolvedVia = null;
     }
-    // Usage warning prefix (card_9cd84ee7d830b2f76c595f6c).
+    // Usage warning prefix (card_9cd84ee7d830b2f76c595f6c; card_a69e8ffa refinement).
     // When the device opted in and the latest usage_snapshots row shows
     // Claude 5h/7d remaining ≤ thresholds, prepend a system warning so the
-    // dialog partner knows quota is tight. Best-effort: any failure here
-    // (no snapshot / stale / DB hiccup) silently skips — never blocks delivery.
-    if (typeof finalMessage === 'string' && finalMessage && !isSuppressedMessage) {
+    // user knows quota is tight. Best-effort: any failure here (no snapshot /
+    // stale / DB hiccup) silently skips — never blocks delivery.
+    // Gate to USER-FACING pushes only: skip bot-to-bot directed messages
+    // (speakTo targets another entity). Riding bot-to-bot acks made the warning
+    // surface via org-chart-forward as a standalone conversational line to the
+    // user (card_a69e8ffa). The per-device cooldown in usage-warning.js further
+    // ensures it piggybacks at most once per window rather than on every message.
+    const _isBotToBot = Array.isArray(speakTo) && speakTo.length > 0;
+    if (typeof finalMessage === 'string' && finalMessage && !isSuppressedMessage && !_isBotToBot) {
         try {
             const _prefs = await devicePrefs.getPrefs(deviceId);
             const _cfg = _prefs && _prefs.usage_warning_config;
