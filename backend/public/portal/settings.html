@@ -876,32 +876,6 @@
             </div>
         </div>
 
-        <!-- Invite Code Card -->
-        <div class="card" id="inviteCard">
-            <div class="card-title">
-                <span>🎁 <span data-i18n="settings_invite_title">Invite &amp; Earn</span></span>
-            </div>
-            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;" data-i18n="settings_invite_desc">
-                Share your invite code. You get +50 bonus messages per referral; they get +300.
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-                <code id="inviteCode" style="flex:1;background:var(--card-bg);border:1px solid var(--card-border);border-radius:6px;padding:8px 12px;font-size:16px;letter-spacing:3px;color:#f6c90e;font-family:monospace;text-align:center;">——</code>
-                <button class="btn btn-outline btn-sm" onclick="copyInviteCode()" id="inviteCopyBtn" style="white-space:nowrap;" data-i18n="common_copy">📋 Copy</button>
-            </div>
-            <div style="display:flex;gap:16px;font-size:13px;color:var(--text-secondary);">
-                <span>👥 <span data-i18n="settings_invited">Invited</span>: <strong id="inviteTotalInvited">—</strong></span>
-                <span>🎁 <span data-i18n="settings_bonus_remaining">Bonus remaining</span>: <strong id="inviteBonusMessages">—</strong></span>
-            </div>
-            <div style="margin-top:14px;border-top:1px solid var(--card-border);padding-top:14px;">
-                <div style="font-size:13px;font-weight:600;margin-bottom:8px;" data-i18n="settings_redeem_title">Redeem an invite code</div>
-                <div style="display:flex;gap:8px;">
-                    <input type="text" id="redeemCodeInput" maxlength="12" placeholder="XXXXXXXX" style="flex:1;background:var(--card-bg);border:1px solid var(--card-border);border-radius:6px;padding:8px 12px;font-size:14px;color:var(--text);font-family:monospace;letter-spacing:2px;text-transform:uppercase;">
-                    <button class="btn btn-primary btn-sm" onclick="redeemInviteCode()" id="redeemBtn" data-i18n="common_redeem">Redeem</button>
-                </div>
-                <div id="redeemMsg" style="margin-top:8px;font-size:13px;display:none;"></div>
-            </div>
-        </div>
-
         <!-- Language Card -->
         <div class="card">
             <div class="card-title">
@@ -1779,7 +1753,6 @@
             populateAccountInfo(user);
             populateChannelApi(user);
             await loadSubscriptionStatus();
-            loadInviteStats(user);
             loadLanguagePreference();
             loadViewModePreference();
             loadNotifPreferences();
@@ -2203,66 +2176,6 @@
 
         // ============================================
         // Subscription
-        // ============================================
-        // Invite Code
-        // ============================================
-        async function loadInviteStats(user) {
-            if (!user) return;
-            try {
-                const data = await apiCall('GET', `/api/invite/my-code?deviceId=${encodeURIComponent(user.deviceId)}&deviceSecret=${encodeURIComponent(user.deviceSecret)}`);
-                if (data.success) {
-                    document.getElementById('inviteCode').textContent = data.code;
-                    document.getElementById('inviteTotalInvited').textContent = data.total_invited;
-                    document.getElementById('inviteBonusMessages').textContent = data.bonus_messages;
-                }
-            } catch (e) { /* non-critical */ }
-        }
-
-        function copyInviteCode() {
-            const code = document.getElementById('inviteCode').textContent;
-            if (code === '——') return;
-            navigator.clipboard.writeText(code).then(() => {
-                const btn = document.getElementById('inviteCopyBtn');
-                btn.textContent = '✅ Copied';
-                setTimeout(() => { btn.textContent = '📋 Copy'; }, 2000);
-            });
-        }
-
-        async function redeemInviteCode() {
-            const code = document.getElementById('redeemCodeInput').value.trim().toUpperCase();
-            const msg = document.getElementById('redeemMsg');
-            const btn = document.getElementById('redeemBtn');
-            if (!code || code.length < 6) { showRedeemMsg('Please enter a valid code', 'error'); return; }
-
-            btn.disabled = true;
-            btn.textContent = '...';
-            try {
-                const data = await apiCall('POST', '/api/invite/redeem', {
-                    deviceId: currentUser.deviceId,
-                    deviceSecret: currentUser.deviceSecret,
-                    code
-                });
-                if (data.success) {
-                    showRedeemMsg(`🎉 ${data.message}`, 'success');
-                    loadInviteStats(currentUser);
-                } else {
-                    showRedeemMsg(data.error || 'Failed to redeem', 'error');
-                }
-            } catch (e) {
-                showRedeemMsg('Network error, please try again', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Redeem';
-            }
-        }
-
-        function showRedeemMsg(text, type) {
-            const el = document.getElementById('redeemMsg');
-            el.textContent = text;
-            el.style.color = type === 'success' ? 'var(--success)' : 'var(--danger)';
-            el.style.display = '';
-        }
-
         // ============================================
         async function loadSubscriptionStatus() {
             try {
