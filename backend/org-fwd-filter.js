@@ -25,6 +25,33 @@ const ORG_FWD_NOISE_PATTERNS = [
     // ACK / FWD-ACK nonce responses — these are no-op acknowledgements
     /^\s*ACK\s+<\/?nonce>\s*$/i,
     /^\s*\[📢\s*FWD\s+from\s+#\d+\]\s+ACK\s+<\/?nonce>\s*$/i,
+
+    // ── System / automation / kanban notification echoes (card_ef4f729385089025431ea8f1) ──
+    // The kanban notify path (backend/kanban.js notifyEntities) pushes
+    // platform-generated status/automation notices to the *assigned* bot. When
+    // that bot's agent echoes / acks the notice back, the echo travels up the
+    // org chart (index.js:9807 orgChartForward) and floods the supervisor.
+    // These are NOT decision-needing content — they're system status noise, so
+    // suppress them before the upward forward. Matched by the stable
+    // leading-emoji + template markers used across every locale in
+    // backend/i18n/kanban-notifications.js (statusChanged / cardCreated /
+    // automationTrigger / scheduleOnce / scheduleRecurring / staleNudge /
+    // reviewerNotify / reviewerMovedToReview) plus the in-card system comment
+    // prefix (📌 狀態更新) and the model-health FWD echo line.
+    //
+    // Anchored to the leading icon so a bot's *own* free-text status report
+    // ("Card 7a03c4 moved to in_progress, ETA 2h") still forwards normally —
+    // only the verbatim system-template strings are dropped.
+    /^\s*📌\s*狀態更新/,                       // in-card system comment echo (kanban.js:2170)
+    /^\s*(?:➡️?|⬅️?)️?\s/u,             // statusChanged: leading "{➡️|⬅️} Task status changed …"
+    /^\s*📋\s/,                               // cardCreated  ("📋 New task assigned / 新任務指派 / …")
+    /^\s*🗓️?\s/u,                       // schedule*/automationTrigger ("🗓️ Schedule/Automation triggered …")
+    /^\s*⏰\s/,                               // staleNudge   ("⏰ Task nudge / 任務催促 / …")
+    /^\s*🔍\s/,                               // reviewerNotify / reviewerMovedToReview ("🔍 …")
+    /^\s*⏸️?\s/u,                        // screenshot-gate auto-close hold notice (kanban.js:3996/4001)
+    /^\s*♻️?\s*Card reopened/iu,         // card reopened echo (kanban.js:2405/2408)
+    // model-health FWD echoes (background traffic, by design): "[📢 FWD … MODEL_HEALTH/ACK]"
+    /^\s*\[📢\s*FWD\b.*\b(MODEL_HEALTH|ACK)\b/i,
 ];
 
 const ORG_FWD_MIN_BODY_LEN = 12;
