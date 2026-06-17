@@ -7025,6 +7025,23 @@ app.get('/api/version', (req, res) => {
     res.json(response);
 });
 
+// Settings auto-sync seam (Stage 1). Pure capability descriptor — no user data,
+// so no auth needed (mirrors /api/version's public-GET access pattern). Apps
+// query this at launch and surface each enabled Settings feature natively (if
+// their version qualifies) or via the webFallback WebView. See
+// docs/specs/settings-manifest-spec.md and backend/lib/settings-manifest.js.
+const { buildSettingsManifest } = require('./lib/settings-manifest');
+app.get('/api/settings-manifest', (req, res) => {
+    try {
+        const { appVersion, platform } = req.query;
+        const manifest = buildSettingsManifest(appVersion, platform);
+        res.json({ success: true, manifest });
+    } catch (err) {
+        console.error('[settings-manifest] build failed:', err);
+        res.status(500).json({ success: false, error: 'manifest_build_failed' });
+    }
+});
+
 // ============================================
 // LINK PREVIEW (Open Graph metadata extraction)
 // ============================================
