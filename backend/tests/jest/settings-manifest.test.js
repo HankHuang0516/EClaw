@@ -50,9 +50,9 @@ describe('buildSettingsManifest() — structure', () => {
         const expected = [
             'account_identity', 'channel_api', 'subscription', 'invite', 'language',
             'display', 'chat_prefs', 'rental_management', 'notifications',
-            'developer_broadcast', 'agent_policy', 'kanban_nudge', 'wallet',
-            'my_rentals', 'files', 'companion_petdx', 'feedback', 'rotate_secret',
-            'switch_device', 'logout',
+            'developer_broadcast', 'agent_policy', 'kanban_nudge', 'passive_health',
+            'wallet', 'my_rentals', 'files', 'companion_petdx', 'feedback',
+            'rotate_secret', 'switch_device', 'logout',
         ];
         for (const k of expected) expect(keys).toContain(k);
         expect(keys.length).toBe(expected.length);
@@ -97,7 +97,7 @@ describe('buildSettingsManifest() — platform handling', () => {
 
 describe('drift list — HIGH/MED features are web-only on both platforms', () => {
     for (const platform of SUPPORTED_PLATFORMS) {
-        for (const key of ['rotate_secret', 'switch_device', 'rental_management', 'agent_policy', 'kanban_nudge']) {
+        for (const key of ['rotate_secret', 'switch_device', 'rental_management', 'agent_policy', 'kanban_nudge', 'passive_health']) {
             it(`${key} is native:false on ${platform}`, () => {
                 const f = buildSettingsManifest('1.0.0', platform).features.find((x) => x.key === key);
                 expect(f.native).toBe(false);

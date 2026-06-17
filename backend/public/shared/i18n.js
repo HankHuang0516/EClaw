@@ -650343,6 +650343,16 @@ const TRANSLATIONS = {
 
         "org_options_title": "Hierarchy behavior",
         "org_routing_escalation_help": "In the org hierarchy, a message addressed to a subordinate entity is NOT answered immediately by the supervisor. Only if the subordinate stays silent past a timeout (default ~30 min) does it escalate to the superior to take over. Broadcasts or messages that @-mention the supervisor directly are exempt.",
+
+        "passive_health_title": "Passive Health-Check",
+        "passive_health_desc": "Passive health-check periodically inspects your agents' health on the interval you set, with optional auto-repair; off by default.",
+        "passive_health_section_help": "Passive health-check periodically inspects your agents' health on the interval you set, with optional auto-repair; off by default.",
+        "passive_health_enable_label": "Enable passive health-check",
+        "passive_health_enable_help": "When on, the backend inspects each channel-bound agent's health on your chosen interval using signals it already has — no chat message is sent and no model turn is used.",
+        "passive_health_interval_label": "Check interval (hours)",
+        "passive_health_interval_help": "How often the passive sweep runs, in hours (1–168). Only takes effect when passive health-check is enabled.",
+        "passive_health_auto_repair_label": "Auto-repair",
+        "passive_health_auto_repair_help": "When an agent is found unhealthy, automatically run the existing self-repair flow (up to 3 attempts) before filing a bug. Only takes effect when passive health-check is enabled.",
 },
 
 
@@ -1235147,6 +1235157,16 @@ const TRANSLATIONS = {
 
         "org_options_title": "层级行为",
         "org_routing_escalation_help": "组织阶层中,发给子实体的讯息,主管不会即时抢答;只有子实体逾时静默(预设约 30 分钟)未回应时,才会升级给上层主管接手。broadcast 或直接 @主管 的讯息不受此限。",
+
+        "passive_health_title": "被動健檢",
+        "passive_health_desc": "被動健檢會依設定週期自動檢查智能體健康狀態,可選擇自動修復;預設關閉。",
+        "passive_health_section_help": "被動健檢會依設定週期自動檢查智能體健康狀態,可選擇自動修復;預設關閉。",
+        "passive_health_enable_label": "啟用被動健檢",
+        "passive_health_enable_help": "開啟後,後端會依你設定的週期,用既有的訊號檢查每個頻道綁定智能體的健康狀態 — 不會送出聊天訊息,也不會消耗模型回合。",
+        "passive_health_interval_label": "健檢週期(小時)",
+        "passive_health_interval_help": "被動健檢執行的頻率,以小時計(1–168)。僅在啟用被動健檢後才會生效。",
+        "passive_health_auto_repair_label": "自動修復",
+        "passive_health_auto_repair_help": "當偵測到智能體不健康時,自動執行既有的自我修復流程(最多 3 次),仍失敗才回報問題。僅在啟用被動健檢後才會生效。",
 },
 
 

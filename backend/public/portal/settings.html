@@ -1432,6 +1432,65 @@
             </div>
         </div>
 
+        <!-- Passive Health-Check Card (card_a346b317920f6daf017c83e7) -->
+        <div class="card" id="passive-health-card">
+            <div class="notif-header" role="button" tabindex="0" aria-expanded="false"
+                 aria-controls="passiveHealthContent" id="passiveHealthHeader"
+                 onclick="togglePassiveHealthSection()"
+                 onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();togglePassiveHealthSection();}">
+                <div class="card-title" style="margin-bottom:0;display:flex;align-items:center;gap:8px;">
+                    <span>🩺 <span data-i18n="passive_health_title">Passive Health-Check</span></span>
+                    <span class="help-icon" data-help-content-key="passive_health_section_help"></span>
+                </div>
+                <span class="expand-arrow" id="passiveHealthArrow">&#9662;</span>
+            </div>
+
+            <div class="notif-content" id="passiveHealthContent">
+            <p class="section-desc" data-i18n="passive_health_desc">Passive health-check periodically inspects your agents' health on the interval you set, with optional auto-repair; off by default.</p>
+
+            <!-- HELP-KEY: passive_health_enable_help -->
+            <div class="setting-row" style="margin-top:8px;">
+                <span class="setting-row-label">
+                    <span data-i18n="passive_health_enable_label">Enable passive health-check</span>
+                    <span class="help-icon" data-help-content-key="passive_health_enable_help"></span>
+                </span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="togglePassiveHealth" aria-label="Enable passive health-check"
+                           onchange="onPassiveHealthEnabledChange(this.checked)">
+                    <span class="toggle-slider" aria-hidden="true"></span>
+                </label>
+            </div>
+
+            <!-- HELP-KEY: passive_health_interval_help -->
+            <div class="setting-row" id="passiveHealthIntervalRow" style="flex-direction:column;align-items:stretch;gap:6px;">
+                <span class="setting-row-label" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span>
+                        <span data-i18n="passive_health_interval_label">Check interval (hours)</span>
+                        <span class="help-icon" data-help-content-key="passive_health_interval_help"></span>
+                    </span>
+                    <span id="passiveHealthIntervalValue" style="font-variant-numeric:tabular-nums;color:var(--text-secondary);">6h</span>
+                </span>
+                <input type="range" id="passiveHealthIntervalSlider" aria-label="Passive health-check interval in hours" min="1" max="168" step="1" value="6"
+                       oninput="onPassiveHealthIntervalInput(this.value)"
+                       onchange="savePassiveHealthSettings()"
+                       style="width:100%;">
+            </div>
+
+            <!-- HELP-KEY: passive_health_auto_repair_help -->
+            <div class="setting-row" id="passiveHealthAutoRepairRow">
+                <span class="setting-row-label">
+                    <span data-i18n="passive_health_auto_repair_label">Auto-repair</span>
+                    <span class="help-icon" data-help-content-key="passive_health_auto_repair_help"></span>
+                </span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="togglePassiveHealthAutoRepair" aria-label="Enable auto-repair"
+                           onchange="savePassiveHealthSettings()">
+                    <span class="toggle-slider" aria-hidden="true"></span>
+                </label>
+            </div>
+            </div><!-- /.notif-content #passiveHealthContent -->
+        </div>
+
         <!-- Wallet Card -->
         <div class="card" style="cursor:pointer;" onclick="(window.SmartRouter&&window.SmartRouter.navigate('wallet'))||(window.location.href='wallet.html')">
             <div class="card-title">
@@ -1731,6 +1790,8 @@
             loadPromptPolicy(user);
             initKanbanNudgeCollapse();
             initUsageWarningCollapse();
+            initPassiveHealthCollapse();
+            loadPassiveHealthSettings();
             updatePushToggle();
 
             document.getElementById('pageContent').style.display = '';
@@ -2805,6 +2866,146 @@
                 // /api/usage/snapshot may 401 on app webview without device-login —
                 // treat as "unknown" and stay hidden rather than false-alarming.
                 notice.style.display = 'none';
+            }
+        }
+
+        // ============================================
+        // PASSIVE HEALTH-CHECK (card_a346b317920f6daf017c83e7)
+        // Wired to the existing /api/passive-health/settings GET/PUT.
+        // Auth = deviceId + deviceSecret query params (authDevice on the API),
+        // not the cookie auth that apiCall uses — so we fetch directly with the
+        // current user's device credentials (same pattern as AvatarPetdx).
+        // ============================================
+        const PASSIVE_HEALTH_DEFAULTS = { enabled: false, intervalHours: 6, autoRepair: true };
+        // Snapshot of the last-known full settings so a partial PUT never
+        // clobbers a sibling field (the API does a partial patch, but sending
+        // the full current object is the simplest partial-safe contract).
+        let _passiveHealthSettings = { ...PASSIVE_HEALTH_DEFAULTS };
+
+        const PASSIVE_HEALTH_COLLAPSE_KEY = 'settings_passive_health_collapsed';
+        function togglePassiveHealthSection() {
+            const content = document.getElementById('passiveHealthContent');
+            const arrow = document.getElementById('passiveHealthArrow');
+            const header = document.getElementById('passiveHealthHeader');
+            const expanded = !content.classList.contains('visible');
+            content.classList.toggle('visible', expanded);
+            arrow.classList.toggle('expanded', expanded);
+            if (header) header.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            try { localStorage.setItem(PASSIVE_HEALTH_COLLAPSE_KEY, expanded ? '0' : '1'); } catch (_) { }
+        }
+        function initPassiveHealthCollapse() {
+            // Default collapsed. Only expand if user explicitly opened it before.
+            let collapsed = '1';
+            try { collapsed = localStorage.getItem(PASSIVE_HEALTH_COLLAPSE_KEY) || '1'; } catch (_) { }
+            if (collapsed === '0') {
+                document.getElementById('passiveHealthContent').classList.add('visible');
+                document.getElementById('passiveHealthArrow').classList.add('expanded');
+                const header = document.getElementById('passiveHealthHeader');
+                if (header) header.setAttribute('aria-expanded', 'true');
+            }
+        }
+
+        function passiveHealthAuthQuery() {
+            const u = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : {};
+            const deviceId = u.deviceId || '';
+            const deviceSecret = u.deviceSecret || '';
+            return 'deviceId=' + encodeURIComponent(deviceId) + '&deviceSecret=' + encodeURIComponent(deviceSecret);
+        }
+
+        // Grey out / disable the interval + auto-repair controls when the
+        // feature is OFF, so it's clear they have no effect until enabled.
+        function applyPassiveHealthEnabledUI(enabled) {
+            const slider = document.getElementById('passiveHealthIntervalSlider');
+            const autoRepair = document.getElementById('togglePassiveHealthAutoRepair');
+            const intervalRow = document.getElementById('passiveHealthIntervalRow');
+            const autoRow = document.getElementById('passiveHealthAutoRepairRow');
+            if (slider) slider.disabled = !enabled;
+            if (autoRepair) autoRepair.disabled = !enabled;
+            [intervalRow, autoRow].forEach((row) => {
+                if (row) row.style.opacity = enabled ? '1' : '0.5';
+            });
+        }
+
+        function applyPassiveHealthSettings(s) {
+            const settings = { ...PASSIVE_HEALTH_DEFAULTS, ...(s || {}) };
+            _passiveHealthSettings = {
+                enabled: settings.enabled !== false ? !!settings.enabled : false,
+                intervalHours: Math.max(1, Math.min(168, Math.round(Number(settings.intervalHours)) || PASSIVE_HEALTH_DEFAULTS.intervalHours)),
+                autoRepair: settings.autoRepair !== false,
+            };
+            const toggle = document.getElementById('togglePassiveHealth');
+            const slider = document.getElementById('passiveHealthIntervalSlider');
+            const value = document.getElementById('passiveHealthIntervalValue');
+            const autoRepair = document.getElementById('togglePassiveHealthAutoRepair');
+            if (toggle) toggle.checked = _passiveHealthSettings.enabled;
+            if (slider) slider.value = _passiveHealthSettings.intervalHours;
+            if (value) value.textContent = _passiveHealthSettings.intervalHours + 'h';
+            if (autoRepair) autoRepair.checked = _passiveHealthSettings.autoRepair;
+            applyPassiveHealthEnabledUI(_passiveHealthSettings.enabled);
+        }
+
+        async function loadPassiveHealthSettings() {
+            try {
+                const resp = await fetch(API_BASE + '/api/passive-health/settings?' + passiveHealthAuthQuery(), {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+                const data = await resp.json().catch(() => ({}));
+                if (resp.ok && data && data.success && data.settings) {
+                    applyPassiveHealthSettings(data.settings);
+                } else {
+                    applyPassiveHealthSettings(PASSIVE_HEALTH_DEFAULTS);
+                }
+            } catch (e) {
+                // Non-fatal: show defaults so the controls still render.
+                applyPassiveHealthSettings(PASSIVE_HEALTH_DEFAULTS);
+            }
+        }
+
+        function getPassiveHealthSettingsFromUI() {
+            const enabled = document.getElementById('togglePassiveHealth')?.checked === true;
+            const iv = parseInt(document.getElementById('passiveHealthIntervalSlider')?.value, 10);
+            const autoRepair = document.getElementById('togglePassiveHealthAutoRepair')?.checked === true;
+            return {
+                enabled,
+                intervalHours: Number.isFinite(iv) ? Math.max(1, Math.min(168, iv)) : _passiveHealthSettings.intervalHours,
+                autoRepair,
+            };
+        }
+
+        function onPassiveHealthIntervalInput(value) {
+            const el = document.getElementById('passiveHealthIntervalValue');
+            if (el) el.textContent = value + 'h';
+        }
+
+        async function onPassiveHealthEnabledChange(checked) {
+            // Reflect the disabled-state of dependent controls immediately, then persist.
+            applyPassiveHealthEnabledUI(checked);
+            await savePassiveHealthSettings();
+        }
+
+        async function savePassiveHealthSettings() {
+            // Send the FULL current {enabled,intervalHours,autoRepair} so a change
+            // to one control never clobbers the siblings (partial-safe).
+            const body = getPassiveHealthSettingsFromUI();
+            try {
+                const resp = await fetch(API_BASE + '/api/passive-health/settings?' + passiveHealthAuthQuery(), {
+                    method: 'PUT',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+                const data = await resp.json().catch(() => ({}));
+                if (resp.ok && data && data.success && data.settings) {
+                    applyPassiveHealthSettings(data.settings);
+                    if (typeof showToast === 'function') showToast(i18n.t('common_saved') || 'Saved', 'success');
+                } else {
+                    throw new Error((data && data.error) || ('HTTP ' + resp.status));
+                }
+            } catch (e) {
+                if (typeof showToast === 'function') showToast(i18n.t('toast_preference_update_failed') || 'Update failed', 'error');
+                // Re-sync UI back to the last-known-good settings on failure.
+                applyPassiveHealthSettings(_passiveHealthSettings);
             }
         }
 
