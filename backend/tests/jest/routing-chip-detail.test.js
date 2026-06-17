@@ -108,7 +108,11 @@ describe('routing chip click affordance (chat.html)', () => {
         // positive. The helper interpolates onclick=openRoutingChipDetail.
         const fnStart = chatSrc.indexOf('function renderRoutingChip(msg)');
         expect(fnStart).toBeGreaterThan(-1);
-        const body = chatSrc.slice(fnStart, fnStart + 7000);
+        // card_e53b0908: window must cover the full function (it grew with the
+        // sender-floor resolution) so the 4th (positive-branch) call site is
+        // still in range. Slice to the next top-level function declaration.
+        const fnEnd = chatSrc.indexOf('function isIncomingCrossDevice', fnStart);
+        const body = chatSrc.slice(fnStart, fnEnd > fnStart ? fnEnd : fnStart + 9000);
         // The declaration line uses `chipClickAttrs = (` (with a space before
         // the paren), so `chipClickAttrs\(` only matches the 4 call sites.
         const callSites = (body.match(/chipClickAttrs\(/g) || []).length;
@@ -224,6 +228,74 @@ describe('routing-detail modal i18n', () => {
         const occurrences = (i18nSrc.match(new RegExp(`"${key}"\\s*:`, 'g')) || []).length;
         // At least EN + ZH (zh-TW + zh-CN both count, so threshold = 3 covers
         // PR pre-flight gate "EN+ZH same PR").
+        expect(occurrences).toBeGreaterThanOrEqual(3);
+    });
+});
+
+// ── 5. Sender always resolves on null/degraded routing_meta ───────────────
+// card_e53b09082f4d66b8125cccca — legacy null routing_meta rows rendered the
+// routing-detail modal as 「Unspecified → Unspecified」/undefined on BOTH sides.
+// The SENDER is always knowable from the chat row's own entity_id, so every
+// chip stub must carry a sender floor (from_entity_id + resolved from_name) and
+// the modal's from-pill must never degrade to the generic "Unspecified" label
+// nor stringify a JS `undefined`.
+describe('sender-floor resolution (chat.html) — never Unspecified/undefined on from-side', () => {
+    const chipFn = (() => {
+        const i = chatSrc.indexOf('function renderRoutingChip(msg)');
+        const j = chatSrc.indexOf('function isIncomingCrossDevice', i);
+        return chatSrc.slice(i, j > i ? j : i + 9000);
+    })();
+    const detailFn = (() => {
+        const i = chatSrc.indexOf('function renderRoutingChipDetailBody(bodyEl, payload');
+        return chatSrc.slice(i, i + 9000);
+    })();
+
+    test('renderRoutingChip computes a sender floor from msg.entity_id', () => {
+        expect(chipFn).toMatch(/senderFloorId\s*=/);
+        expect(chipFn).toMatch(/msg\.entity_id/);
+        expect(chipFn).toMatch(/getEntityDisplayName/);
+    });
+
+    test('unconfirmed stub carries from_entity_id floor + from_name (cross-device too)', () => {
+        // The unconfirmed branch must fall back to the row sender when the parsed
+        // source has no fromEntityId (e.g. cross-device publicCode-only), and
+        // carry from_name + from_public_code so the modal can label it.
+        expect(chipFn).toMatch(/from_entity_id:\s*\(routed\.fromEntityId\s*!=\s*null\s*\?\s*routed\.fromEntityId\s*:\s*senderFloorId\)/);
+        expect(chipFn).toMatch(/from_name:\s*senderFloorName/);
+        expect(chipFn).toMatch(/from_public_code/);
+    });
+
+    test('degraded-client stub carries from_name', () => {
+        const degraded = chipFn.split('msg.is_from_bot && msg.entity_id != null').pop() || '';
+        expect(degraded).toMatch(/from_name:\s*senderFloorName/);
+    });
+
+    test('backend degraded/failed meta is floored with the row sender', () => {
+        expect(chipFn).toMatch(/degradedPayload\s*=\s*Object\.assign\(\{\},\s*rm,/);
+        expect(chipFn).toMatch(/from_entity_id:\s*\(rm\.from_entity_id\s*!=\s*null\s*\?\s*rm\.from_entity_id\s*:\s*senderFloorId\)/);
+    });
+
+    test('renderPill guards against a literal "undefined" fallbackName', () => {
+        expect(detailFn).toMatch(/String\(fallbackName\)\s*!==\s*'undefined'/);
+        expect(detailFn).toMatch(/safeFallbackName/);
+    });
+
+    test('from-pill uses a sender-specific neutral label, not the shared Unspecified', () => {
+        // The from-side must land on chat_routing_sender, never chat_routing_unspecified.
+        expect(detailFn).toMatch(/which\s*===\s*'from'/);
+        expect(detailFn).toMatch(/chat_routing_sender/);
+    });
+
+    test('renderPill accepts a publicCode fallback and both call sites pass it', () => {
+        expect(detailFn).toMatch(/renderPill\s*=\s*\(which,\s*sum,\s*fallbackId,\s*fallbackName,\s*fallbackCode\)/);
+        expect(detailFn).toMatch(/renderPill\('from',\s*fromSum,\s*payload\.from_entity_id,\s*payload\.from_name,\s*payload\.from_public_code\)/);
+        expect(detailFn).toMatch(/renderPill\('to',\s*toSum,[\s\S]*?payload\.to_public_code\)/);
+    });
+
+    test('chat_routing_sender key ships in EN + ZH (>=3 locales)', () => {
+        const i18nPath = path.join(backendDir, 'public', 'shared', 'i18n.js');
+        const i18nSrc = fs.readFileSync(i18nPath, 'utf8');
+        const occurrences = (i18nSrc.match(/"chat_routing_sender"\s*:/g) || []).length;
         expect(occurrences).toBeGreaterThanOrEqual(3);
     });
 });
