@@ -948,12 +948,16 @@
         </div>
 
         <!-- Owner Rental Roster Card -->
+        <!-- Rental Management — merges the former 出租管理 (owner roster) and
+             我的租賃 (My Rentals) cards into ONE section fed by real rental APIs
+             (/api/rental/my-listings + /api/rental/my-contracts). -->
         <div class="card" id="ownerRosterCard">
             <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-                <span>🧑‍💼 <span data-i18n="settings_roster_section_title">Rental Management — my listings and rentals</span></span>
+                <span>🤝 <span data-i18n="settings_roster_section_title">Rental Management — my listings and rentals</span>
+                    <span class="help-icon" data-help-content-key="settings_roster_section_help" tabindex="0"></span></span>
                 <button class="btn btn-outline btn-sm" onclick="loadOwnerRoster()" data-i18n="common_refresh">Refresh</button>
             </div>
-            <p class="section-desc" data-i18n="settings_roster_section_desc">Manual owner controls for listing pause/resume, rebind, and rental history. Backend actions are enabled as rental subsystem endpoints land.</p>
+            <p class="section-desc" data-i18n="settings_roster_section_desc">Your live listings, the bots you are renting, and rental history — pulled from real rental data. Use the full management page for contracts, reviews, and disputes.</p>
             <div class="roster-tabs" role="tablist">
                 <button class="roster-tab active" id="rosterTabListings" onclick="switchRosterTab('listings')" data-i18n="settings_roster_tab_my_listings">My listings</button>
                 <button class="roster-tab" id="rosterTabRentals" onclick="switchRosterTab('rentals')" data-i18n="settings_roster_tab_rented_bots">Rented bots</button>
@@ -963,6 +967,11 @@
             <div class="roster-panel" id="rosterPanelRentals"></div>
             <div class="roster-panel" id="rosterPanelHistory"></div>
             <div class="roster-note" id="rosterStatusNote"></div>
+            <div class="roster-footer" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--card-border);">
+                <a class="btn btn-outline btn-sm" href="my-rentals.html"
+                   onclick="(window.SmartRouter&&window.SmartRouter.navigate('my-rentals'))&&event.preventDefault()"
+                   data-i18n="settings_roster_manage_all">🤝 Contracts, reviews &amp; disputes</a>
+            </div>
         </div>
 
         <!-- Notifications Card -->
@@ -1357,12 +1366,10 @@
                     <span data-i18n="usage_warning_enable_label">Enable usage warning</span>
                     <span class="help-icon" data-help-content-key="usage_warning_enable_help"></span>
                 </span>
-                <label class="switch" style="position:relative;display:inline-block;width:44px;height:24px;">
+                <label class="toggle-switch">
                     <input type="checkbox" id="toggleUsageWarning" aria-label="Enable usage warnings"
-                           onchange="onUsageWarningEnabledChange(this.checked)"
-                           style="opacity:0;width:0;height:0;">
-                    <span aria-hidden="true"
-                          style="position:absolute;inset:0;background:var(--card-border);border-radius:24px;transition:.2s;cursor:pointer;"></span>
+                           onchange="onUsageWarningEnabledChange(this.checked)">
+                    <span class="toggle-slider" aria-hidden="true"></span>
                 </label>
             </div>
 
@@ -1424,13 +1431,10 @@
             <p class="section-desc" data-i18n="settings_wallet_desc">Manage e-coin balance, top up, and view transaction history</p>
         </div>
 
-        <!-- My Rentals Card -->
-        <div class="card" style="cursor:pointer;" onclick="(window.SmartRouter&&window.SmartRouter.navigate('my-rentals'))||(window.location.href='my-rentals.html')">
-            <div class="card-title">
-                <span>🤝 <span data-i18n="nav_my_rentals">My Rentals</span></span>
-            </div>
-            <p class="section-desc" data-i18n="settings_rentals_desc">View contracts, submit reviews, file disputes</p>
-        </div>
+        <!-- My Rentals link card removed — merged into the Rental Management
+             (ownerRosterCard) section above, which now shows real listings +
+             rentals and deep-links to my-rentals.html for contracts/reviews/disputes
+             (card_411522dac74b0e193bd306d3). -->
 
         <!-- Invite Card -->
         <div class="card" style="cursor:pointer;" onclick="(window.SmartRouter&&window.SmartRouter.navigate('invite'))||(window.location.href='invite.html')">
@@ -3012,63 +3016,78 @@
             return `<span class="roster-status ${raw}">● ${escapeHtml(raw)}</span>`;
         }
 
-        function rosterMockData() {
-            return {
-                mock: true,
-                listings: [
-                    { listingId:'mock_listing_active', botName:'Support Bot', status:'active', health:'ok', activeRentals:2 },
-                    { listingId:'mock_listing_paused', botName:'Research Bot', status:'soft_paused', health:'degraded', activeRentals:3 },
-                    { listingId:'mock_listing_archived', botName:'Legacy Bot', status:'archived', health:'down', activeRentals:0 },
-                ],
-                rentals: [
-                    { rentalId:'mock_rental_1', botName:'Designer Bot', status:'active', remaining:'3h 20m', health:'ok' },
-                    { rentalId:'mock_rental_2', botName:'Coder Bot', status:'degraded', remaining:'51m', health:'degraded' },
-                ],
-                history: [
-                    { ts:Date.now() - 3600000, kind:'soft_pause', listing:'Research Bot', refund:'0 mli', detail:'health degraded' },
-                    { ts:Date.now() - 7200000, kind:'resume', listing:'Support Bot', refund:'0 mli', detail:'manual owner override' },
-                    { ts:Date.now() - 10800000, kind:'refund_terminate', listing:'Legacy Bot', refund:'18.4 mli', detail:'rebind cascade' },
-                ]
-            };
+        // Guided empty state with a canonical ? help-icon (data-help-content-key →
+        // help-popover.js) so every Globe-user / visiting agent learns how to
+        // list or rent a bot without leaving the page.
+        function rosterEmptyState(msgKey, msgFallback, helpKey) {
+            return `<div class="roster-empty">${escapeHtml(rosterT(msgKey, msgFallback))}`
+                + ` <span class="help-icon" data-help-content-key="${helpKey}" tabindex="0"></span>`
+                + ` <a class="roster-empty-cta" href="my-rentals.html" onclick="(window.SmartRouter&&window.SmartRouter.navigate('my-rentals'))&&event.preventDefault()">${escapeHtml(rosterT('settings_roster_empty_cta', 'Manage rentals'))}</a></div>`;
         }
 
         async function loadOwnerRoster(user = currentUser) {
-            const ownerEntityId = ownerRosterId(user);
             const note = document.getElementById('rosterStatusNote');
             if (note) note.textContent = rosterT('settings_roster_loading', 'Loading roster…');
 
-            // The owner-roster UI is currently a preview surface. Production does not
-            // expose /api/owner/roster/* routes yet, so calling them on every settings
-            // load creates user-visible 404 noise in Network/console. Keep the panel
-            // useful with preview data until the backend explicitly opts in.
-            if (!window.__ownerRosterApiEnabled) {
-                ownerRosterState = rosterMockData();
-                if (note) note.textContent = rosterT('settings_roster_mock_note', 'Preview mode: backend roster endpoints are not available yet; showing mock data.');
-                renderOwnerRoster();
-                return;
-            }
-
+            // Real rental data sources (same endpoints my-rentals.html uses):
+            //   my listings        → GET /api/rental/my-listings        → { listings: [...] }
+            //   bots I'm renting   → GET /api/rental/my-contracts?role=renter → { contracts: [...] }
+            //   rentals on my bots → GET /api/rental/my-contracts?role=owner  → { contracts: [...] } (history)
             try {
                 const [listingsResp, rentalsResp, historyResp] = await Promise.all([
-                    apiCall('GET', `/api/owner/roster/listings?ownerEntityId=${encodeURIComponent(ownerEntityId)}`).catch(e => ({ error:e })),
-                    apiCall('GET', `/api/owner/roster/rentals?ownerEntityId=${encodeURIComponent(ownerEntityId)}`).catch(e => ({ error:e })),
-                    apiCall('GET', `/api/owner/roster/history?ownerEntityId=${encodeURIComponent(ownerEntityId)}&limit=50`).catch(e => ({ error:e })),
+                    apiCall('GET', '/api/rental/my-listings', null, { skip401Redirect: true }).catch(e => ({ error:e })),
+                    apiCall('GET', '/api/rental/my-contracts?role=renter&limit=50', null, { skip401Redirect: true }).catch(e => ({ error:e })),
+                    apiCall('GET', '/api/rental/my-contracts?role=owner&limit=50', null, { skip401Redirect: true }).catch(e => ({ error:e })),
                 ]);
                 if (listingsResp.error && rentalsResp.error && historyResp.error) throw listingsResp.error;
                 ownerRosterState = {
                     mock: false,
-                    listings: listingsResp.listings || listingsResp.data || [],
-                    rentals: rentalsResp.rentals || rentalsResp.data || [],
-                    history: historyResp.history || historyResp.events || historyResp.data || [],
+                    listings: (listingsResp.listings || listingsResp.data || []).map(mapListingRow),
+                    rentals: (rentalsResp.contracts || rentalsResp.data || []).map(mapRenterContractRow),
+                    history: (historyResp.contracts || historyResp.data || []).map(mapOwnerContractRow),
                 };
             } catch (e) {
-                ownerRosterState = rosterMockData();
-                if (note) note.textContent = rosterT('settings_roster_mock_note', 'Preview mode: backend roster endpoints are not available yet; showing mock data.');
-                renderOwnerRoster();
-                return;
+                console.warn('[Roster] real rental endpoints failed:', e);
+                ownerRosterState = { mock: false, listings: [], rentals: [], history: [] };
             }
-            if (note) note.textContent = ownerRosterState.mock ? rosterT('settings_roster_mock_note', 'Preview mode: backend roster endpoints are not available yet; showing mock data.') : '';
+            if (note) note.textContent = '';
             renderOwnerRoster();
+        }
+
+        // ── Map real rental API rows to the roster table shape ──
+        function mapListingRow(r) {
+            return {
+                listingId: r.id || r.listingId,
+                botName: r.entity_name || r.title || r.botName || r.id,
+                status: r.is_soft_paused ? 'soft_paused' : (r.status || 'unknown'),
+                health: r.is_soft_paused ? 'degraded' : 'ok',
+                activeRentals: r.total_rentals ?? r.activeRentals ?? 0,
+            };
+        }
+        function mapRenterContractRow(c) {
+            return {
+                rentalId: c.id || c.rentalId,
+                botName: c.listing_title || c.botName || c.id,
+                status: c.status || 'unknown',
+                remaining: rosterRemaining(c.ends_at),
+                health: /^ended/.test(String(c.status)) ? 'down' : 'ok',
+            };
+        }
+        function mapOwnerContractRow(c) {
+            return {
+                ts: c.ended_at || c.actual_ended_at || c.created_at || c.started_at,
+                kind: c.status || c.end_reason || 'rental',
+                listing: c.listing_title || c.listingId || c.id,
+                refund: (c.ecoin_charged_mli != null ? c.ecoin_charged_mli + ' mli' : '0'),
+                detail: c.renter_user_id ? rosterT('settings_roster_renter_label', 'Renter') + ': ' + String(c.renter_user_id) : '',
+            };
+        }
+        function rosterRemaining(endsAt) {
+            if (!endsAt) return '-';
+            const ms = new Date(endsAt).getTime() - Date.now();
+            if (!Number.isFinite(ms) || ms <= 0) return rosterT('settings_roster_ended', 'ended');
+            const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
+            return (h > 0 ? h + 'h ' : '') + m + 'm';
         }
 
         function renderOwnerRoster() {
@@ -3081,7 +3100,7 @@
             const rows = ownerRosterState.listings || [];
             const el = document.getElementById('rosterPanelListings');
             if (!el) return;
-            if (!rows.length) { el.innerHTML = `<div class="roster-empty">${escapeHtml(rosterT('settings_roster_empty_state_listings', 'No listings yet.'))}</div>`; return; }
+            if (!rows.length) { el.innerHTML = rosterEmptyState('settings_roster_empty_state_listings', 'No listings yet.', 'settings_roster_empty_listings_help'); return; }
             el.innerHTML = `<div class="roster-table-wrap"><table class="roster-table"><thead><tr><th>${rosterT('settings_roster_col_bot','Bot')}</th><th>${rosterT('settings_roster_col_status','Status')}</th><th>${rosterT('settings_roster_col_health','Health')}</th><th>${rosterT('settings_roster_col_active_rentals','Active rentals')}</th><th>${rosterT('settings_roster_col_action','Action')}</th></tr></thead><tbody>` + rows.map(item => {
                 const id = item.listingId || item.id;
                 const activeCount = item.activeRentals ?? item.active_rentals ?? item.rentalCount ?? 0;
@@ -3093,7 +3112,7 @@
             const rows = ownerRosterState.rentals || [];
             const el = document.getElementById('rosterPanelRentals');
             if (!el) return;
-            if (!rows.length) { el.innerHTML = `<div class="roster-empty">${escapeHtml(rosterT('settings_roster_empty_state_rentals', 'No rented bots yet.'))}</div>`; return; }
+            if (!rows.length) { el.innerHTML = rosterEmptyState('settings_roster_empty_state_rentals', 'No rented bots yet.', 'settings_roster_empty_rentals_help'); return; }
             el.innerHTML = `<div class="roster-table-wrap"><table class="roster-table"><thead><tr><th>${rosterT('settings_roster_col_bot','Bot')}</th><th>${rosterT('settings_roster_col_rental_status','Rental status')}</th><th>${rosterT('settings_roster_col_remaining','Remaining')}</th><th>${rosterT('settings_roster_col_health','Health')}</th><th>${rosterT('settings_roster_col_action','Action')}</th></tr></thead><tbody>` + rows.map(item => {
                 const id = item.rentalId || item.id;
                 return `<tr><td data-label="${rosterT('settings_roster_col_bot','Bot')}">${escapeHtml(item.botName || item.bot_name || item.title || id || '-')}</td><td data-label="${rosterT('settings_roster_col_rental_status','Rental status')}">${rosterStatusPill(item.status)}</td><td data-label="${rosterT('settings_roster_col_remaining','Remaining')}">${escapeHtml(String(item.remaining || item.remainingTime || '-'))}</td><td data-label="${rosterT('settings_roster_col_health','Health')}">${rosterStatusPill(item.health || item.healthStatus || 'unknown')}</td><td data-label="${rosterT('settings_roster_col_action','Action')}"><select class="roster-action" aria-label="${rosterT('settings_roster_col_action','Action')}" onchange="onRosterAction(this, 'rental', ${rosterJsArg(id)}, 0)"><option value="">${rosterT('settings_roster_action_choose','Choose action')}</option><option value="details">${rosterT('settings_roster_action_view_details','View rental details')}</option><option value="report_issue">${rosterT('settings_roster_action_report_issue','Report issue')}</option></select></td></tr>`;
@@ -3104,7 +3123,7 @@
             const rows = ownerRosterState.history || [];
             const el = document.getElementById('rosterPanelHistory');
             if (!el) return;
-            if (!rows.length) { el.innerHTML = `<div class="roster-empty">${escapeHtml(rosterT('settings_roster_empty_state_history', 'No rental events yet.'))}</div>`; return; }
+            if (!rows.length) { el.innerHTML = rosterEmptyState('settings_roster_empty_state_history', 'No rental events yet.', 'settings_roster_empty_history_help'); return; }
             el.innerHTML = `<div class="roster-table-wrap"><table class="roster-table"><thead><tr><th>${rosterT('settings_roster_col_time','Time')}</th><th>${rosterT('settings_roster_col_event','Event')}</th><th>${rosterT('settings_roster_col_listing','Listing')}</th><th>${rosterT('settings_roster_col_refund','Refund')}</th><th>${rosterT('settings_roster_col_details','Details')}</th></tr></thead><tbody>` + rows.map(item => `<tr><td data-label="${rosterT('settings_roster_col_time','Time')}">${escapeHtml(new Date(item.ts || item.createdAt || Date.now()).toLocaleString())}</td><td data-label="${rosterT('settings_roster_col_event','Event')}">${escapeHtml(item.kind || item.type || '-')}</td><td data-label="${rosterT('settings_roster_col_listing','Listing')}">${escapeHtml(item.listing || item.listingTitle || item.listingId || '-')}</td><td data-label="${rosterT('settings_roster_col_refund','Refund')}">${escapeHtml(String(item.refund || item.refundAmount || '0'))}</td><td data-label="${rosterT('settings_roster_col_details','Details')}">${escapeHtml(item.detail || item.details || '')}</td></tr>`).join('') + `</tbody></table></div>`;
         }
 
@@ -3127,12 +3146,31 @@
             const ok = await showConfirm({ title: rosterT('settings_roster_confirm_title', 'Confirm roster action'), message: msg, danger: ['archive','manual_rebind'].includes(action) });
             if (!ok) return;
             try {
-                if (ownerRosterState.mock) throw new Error('mock-mode');
-                await apiCall('POST', '/api/owner/roster/manual-action', { action, reason: 'owner_manual_settings', [targetType === 'listing' ? 'listingId' : 'rentalId']: targetId });
+                if (targetType === 'listing') {
+                    // Real listing controls (same endpoints as my-rentals.html).
+                    if (action === 'soft_pause' || action === 'archive') {
+                        await apiCall('POST', `/api/rental/listing/${encodeURIComponent(targetId)}/pause`, null, { skip401Redirect: true });
+                    } else if (action === 'resume') {
+                        await apiCall('POST', `/api/rental/listing/${encodeURIComponent(targetId)}/publish`, null, { skip401Redirect: true });
+                    } else {
+                        // manual_rebind / unsupported here → deep-link to full management page.
+                        if (!(window.SmartRouter && window.SmartRouter.navigate('my-rentals', { listingId: targetId }))) {
+                            window.location.href = `my-rentals.html?listingId=${encodeURIComponent(targetId)}`;
+                        }
+                        return;
+                    }
+                } else {
+                    if (action === 'report_issue') {
+                        if (!(window.SmartRouter && window.SmartRouter.navigate('my-rentals', { rentalId: targetId }))) {
+                            window.location.href = `my-rentals.html?rentalId=${encodeURIComponent(targetId)}`;
+                        }
+                        return;
+                    }
+                }
                 showToast(rosterT('settings_roster_action_success', 'Action queued'), 'success');
                 loadOwnerRoster();
             } catch (e) {
-                showToast(ownerRosterState.mock ? rosterT('settings_roster_mock_action', 'Preview only — backend action not available yet.') : (e.message || 'Action failed'), ownerRosterState.mock ? 'info' : 'error');
+                showToast(e.message || rosterT('settings_roster_action_failed', 'Action failed'), 'error');
             }
         }
 
