@@ -45,6 +45,19 @@ describe('portal static HTML IDs', () => {
     expect(html).toContain('renterDeviceId');
   });
 
+  test('settings has a single invite entry that routes to the invite page', () => {
+    const settingsPath = path.join(__dirname, '../../public/portal/settings.html');
+    const html = fs.readFileSync(settingsPath, 'utf8');
+
+    expect(html).not.toContain('id="inviteCard"');
+    expect(html).not.toContain('id="inviteCode"');
+    expect(html).not.toContain('function loadInviteStats');
+    expect(html).not.toContain('function redeemInviteCode');
+    expect(html.match(/window\.location\.href='invite\.html'/g)).toHaveLength(1);
+    expect(html).toContain('data-i18n="nav_invite"');
+    expect(html).toContain('data-i18n="settings_invite_desc"');
+  });
+
   test('visible portal controls expose accessible names', () => {
     const communityPath = path.join(__dirname, '../../public/portal/community.html');
     const community = fs.readFileSync(communityPath, 'utf8');
