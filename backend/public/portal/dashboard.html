@@ -2201,6 +2201,10 @@
                     <button onclick="resetOrgChart()" data-i18n="org_reset">Reset to Default</button>
                 </div>
                 <!-- Behavior Options (single-select) -->
+                <div class="org-options-header" style="display:flex;align-items:center;gap:4px;margin:14px 0 6px;font-weight:600;">
+                    <span data-i18n="org_options_title">Hierarchy behavior</span>
+                    <span class="help-icon" data-help-content-key="org_routing_escalation_help" tabindex="0" role="button" aria-label="Help"></span>
+                </div>
                 <div class="org-options">
                     <label class="org-option-card">
                         <input type="radio" name="orgMode" value="none" onchange="saveOrgOptions()" aria-label="Org mode: None">
@@ -2698,6 +2702,7 @@
     <script src="../shared/avatar-petdx.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
+    <script src="../shared/help-popover.js"></script>
     <script src="../shared/transition-overlay.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>

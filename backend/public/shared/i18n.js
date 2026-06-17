@@ -650340,6 +650340,9 @@ const TRANSLATIONS = {
         "settings_roster_renter_label": "Renter",
         "settings_roster_ended": "ended",
         "settings_roster_action_failed": "Action failed",
+
+        "org_options_title": "Hierarchy behavior",
+        "org_routing_escalation_help": "In the org hierarchy, a message addressed to a subordinate entity is NOT answered immediately by the supervisor. Only if the subordinate stays silent past a timeout (default ~30 min) does it escalate to the superior to take over. Broadcasts or messages that @-mention the supervisor directly are exempt.",
 },
 
 
@@ -1235141,6 +1235144,9 @@ const TRANSLATIONS = {
         "settings_roster_renter_label": "承租者",
         "settings_roster_ended": "已結束",
         "settings_roster_action_failed": "操作失敗",
+
+        "org_options_title": "层级行为",
+        "org_routing_escalation_help": "组织阶层中,发给子实体的讯息,主管不会即时抢答;只有子实体逾时静默(预设约 30 分钟)未回应时,才会升级给上层主管接手。broadcast 或直接 @主管 的讯息不受此限。",
 },
 
 
@@ -2412537,6 +2412543,9 @@ const TRANSLATIONS = {
         "settings_roster_renter_label": "借り手",
         "settings_roster_ended": "終了",
         "settings_roster_action_failed": "操作に失敗しました",
+
+        "org_options_title": "階層の動作",
+        "org_routing_escalation_help": "組織階層では、子エンティティ宛のメッセージに上司がすぐ割り込んで回答することはありません。子エンティティが一定時間(デフォルト約30分)沈黙して応答しない場合にのみ、上位の上司へエスカレーションされて引き継がれます。ブロードキャストや上司を直接 @メンション したメッセージはこの制限の対象外です。",
 },
 
 
@@ -2942883,6 +2942892,9 @@ const TRANSLATIONS = {
         "settings_roster_renter_label": "임차인",
         "settings_roster_ended": "종료됨",
         "settings_roster_action_failed": "작업 실패",
+
+        "org_options_title": "계층 동작",
+        "org_routing_escalation_help": "조직 계층에서 하위 엔티티에게 보낸 메시지에 상급자가 즉시 가로채 답하지 않습니다. 하위 엔티티가 일정 시간(기본 약 30분) 동안 침묵하며 응답하지 않을 때만 상급자에게 에스컬레이션되어 인계됩니다. 브로드캐스트나 상급자를 직접 @멘션한 메시지는 이 제한을 받지 않습니다.",
 },
 
 
@@ -3471351,6 +3471363,9 @@ const TRANSLATIONS = {
         "settings_roster_renter_label": "ผู้เช่า",
         "settings_roster_ended": "สิ้นสุดแล้ว",
         "settings_roster_action_failed": "การดำเนินการล้มเหลว",
+
+        "org_options_title": "พฤติกรรมลำดับชั้น",
+        "org_routing_escalation_help": "ในลำดับชั้นองค์กร ข้อความที่ส่งถึงเอนทิตีลูกจะไม่ถูกหัวหน้าตอบแทนทันที เฉพาะเมื่อเอนทิตีลูกเงียบเกินเวลาที่กำหนด (ค่าเริ่มต้นประมาณ 30 นาที) โดยไม่ตอบกลับ จึงจะยกระดับให้หัวหน้าระดับบนเข้ามารับช่วงต่อ ข้อความแบบบรอดแคสต์หรือที่ @ ถึงหัวหน้าโดยตรงไม่อยู่ภายใต้ข้อจำกัดนี้",
 },
 
 
@@ -3998257,6 +3998272,9 @@ const TRANSLATIONS = {
         "settings_roster_renter_label": "Người thuê",
         "settings_roster_ended": "đã kết thúc",
         "settings_roster_action_failed": "Thao tác thất bại",
+
+        "org_options_title": "Hành vi phân cấp",
+        "org_routing_escalation_help": "Trong hệ thống phân cấp tổ chức, tin nhắn gửi đến một thực thể cấp dưới sẽ KHÔNG được cấp trên trả lời ngay. Chỉ khi thực thể cấp dưới im lặng quá thời gian chờ (mặc định khoảng 30 phút) mà không phản hồi, tin nhắn mới được chuyển lên cấp trên tiếp quản. Tin nhắn quảng bá hoặc tin nhắn @nhắc trực tiếp cấp trên không thuộc giới hạn này.",
 },
 
 
@@ -4524779,6 +4524797,9 @@ const TRANSLATIONS = {
         "settings_roster_renter_label": "Penyewa",
         "settings_roster_ended": "selesai",
         "settings_roster_action_failed": "Tindakan gagal",
+
+        "org_options_title": "Perilaku hierarki",
+        "org_routing_escalation_help": "Dalam hierarki organisasi, pesan yang ditujukan kepada entitas bawahan TIDAK langsung dijawab oleh atasan. Hanya jika entitas bawahan diam melewati batas waktu (default sekitar 30 menit) tanpa merespons, pesan baru dieskalasi ke atasan untuk ditangani. Siaran (broadcast) atau pesan yang me-@mention atasan secara langsung dikecualikan.",
 },
 
 
@@ -5049944,6 +5049965,9 @@ const TRANSLATIONS = {
         "settings_roster_renter_label": "Locataire",
         "settings_roster_ended": "terminé",
         "settings_roster_action_failed": "Échec de l'action",
+
+        "org_options_title": "Comportement hiérarchique",
+        "org_routing_escalation_help": "Dans la hiérarchie de l'organisation, un message adressé à une entité subordonnée n'est PAS répondu immédiatement par le supérieur. Ce n'est que si la subordonnée reste silencieuse au-delà d'un délai (par défaut ~30 min) sans répondre que le message est escaladé au supérieur qui prend le relais. Les diffusions ou les messages qui @mentionnent directement le supérieur sont exemptés.",
 },
 
 
@@ -5567660,6 +5567684,9 @@ const TRANSLATIONS = {
         "settings_roster_renter_label": "Arrendatario",
         "settings_roster_ended": "finalizado",
         "settings_roster_action_failed": "La acción falló",
+
+        "org_options_title": "Comportamiento jerárquico",
+        "org_routing_escalation_help": "En la jerarquía de la organización, un mensaje dirigido a una entidad subordinada NO es respondido de inmediato por el superior. Solo si la subordinada permanece en silencio más allá de un tiempo de espera (por defecto ~30 min) sin responder, el mensaje se escala al superior para que lo asuma. Las difusiones o los mensajes que @mencionan directamente al superior están exentos.",
 },
 
 
@@ -6104619,6 +6104646,9 @@ const TRANSLATIONS = {
         "settings_roster_renter_label": "Mieter",
         "settings_roster_ended": "beendet",
         "settings_roster_action_failed": "Aktion fehlgeschlagen",
+
+        "org_options_title": "Hierarchieverhalten",
+        "org_routing_escalation_help": "In der Organisationshierarchie wird eine an eine untergeordnete Entität gerichtete Nachricht NICHT sofort von der vorgesetzten Entität beantwortet. Nur wenn die untergeordnete Entität über eine Zeitüberschreitung hinaus (standardmäßig ca. 30 Min.) stumm bleibt und nicht antwortet, wird die Nachricht an die vorgesetzte Entität eskaliert, die übernimmt. Broadcasts oder Nachrichten, die die vorgesetzte Entität direkt per @ erwähnen, sind ausgenommen.",
 },
     pt: {
         "transition_loading": "A carregar…",
@@ -6110090,6 +6110120,9 @@ const TRANSLATIONS = {
         "settings_roster_renter_label": "Locatário",
         "settings_roster_ended": "encerrado",
         "settings_roster_action_failed": "A ação falhou",
+
+        "org_options_title": "Comportamento hierárquico",
+        "org_routing_escalation_help": "Na hierarquia da organização, uma mensagem dirigida a uma entidade subordinada NÃO é respondida imediatamente pelo superior. Somente se a subordinada permanecer em silêncio além de um tempo limite (padrão ~30 min) sem responder, a mensagem é escalada ao superior para assumir. Transmissões (broadcast) ou mensagens que @mencionam o superior diretamente são isentas.",
 },
 
 
@@ -6638918,6 +6638951,9 @@ const TRANSLATIONS = {
         "settings_roster_renter_label": "Penyewa",
         "settings_roster_ended": "tamat",
         "settings_roster_action_failed": "Tindakan gagal",
+
+        "org_options_title": "Tingkah laku hierarki",
+        "org_routing_escalation_help": "Dalam hierarki organisasi, mesej yang ditujukan kepada entiti bawahan TIDAK dijawab serta-merta oleh penyelia. Hanya jika entiti bawahan terus senyap melebihi tamat masa (lalai ~30 min) tanpa membalas, barulah mesej dinaikkan kepada penyelia untuk diambil alih. Siaran (broadcast) atau mesej yang @sebut penyelia secara langsung dikecualikan.",
 },
 
 
@@ -7198203,6 +7198239,9 @@ const TRANSLATIONS = {
         "settings_roster_renter_label": "किराएदार",
         "settings_roster_ended": "समाप्त",
         "settings_roster_action_failed": "क्रिया विफल",
+
+        "org_options_title": "पदानुक्रम व्यवहार",
+        "org_routing_escalation_help": "संगठन पदानुक्रम में, किसी अधीनस्थ इकाई को भेजे गए संदेश का उत्तर वरिष्ठ तुरंत नहीं देता। केवल तभी जब अधीनस्थ इकाई समय-सीमा (डिफ़ॉल्ट लगभग 30 मिनट) से अधिक चुप रहकर उत्तर नहीं देती, संदेश को वरिष्ठ के पास संभालने हेतु एस्केलेट किया जाता है। ब्रॉडकास्ट या वरिष्ठ को सीधे @उल्लेख करने वाले संदेश इस सीमा से मुक्त हैं।",
 },
 
 
@@ -7746614,6 +7746653,9 @@ const TRANSLATIONS = {
         "settings_roster_renter_label": "المستأجر",
         "settings_roster_ended": "منتهٍ",
         "settings_roster_action_failed": "فشل الإجراء",
+
+        "org_options_title": "سلوك التسلسل الهرمي",
+        "org_routing_escalation_help": "في التسلسل الهرمي للمؤسسة، لا يردّ المشرف فورًا على الرسالة الموجهة إلى كيان تابع. ولا تتم إحالتها إلى المشرف الأعلى ليتولاها إلا إذا بقي الكيان التابع صامتًا دون ردّ بعد انقضاء المهلة (الافتراضية نحو 30 دقيقة). أما الرسائل العامة (البث) أو الرسائل التي تذكر المشرف مباشرةً عبر @ فهي مستثناة من هذا القيد.",
 }
 
 
