@@ -650310,6 +650310,9 @@ const TRANSLATIONS = {
         "card_retest_tier_ready": "Ready",
 
         "guide_voice_delivery_note": "🔇 <strong>No sound?</strong> TTS requires the device to be online (EClaw App open, signed in, and connected via Socket.IO), or to have push (FCM) registered as an offline fallback. If neither is available, the server returns <code>delivered:false</code> with <code>warning:\"tts_not_delivered\"</code>, meaning the command was accepted but no audio will play — open the EClaw App on the device and try again.",
+        "community_invite_guest_title": "Invited by a friend? Sign up and you both earn e-coin",
+        "community_invite_guest_desc": "New members get 100 e-coin, and your inviter gets 500 — plus a 500 e-coin bonus on your first top-up.",
+        "community_invite_guest_btn": "Claim your bonus",
 },
 
 
@@ -1235086,6 +1235089,9 @@ const TRANSLATIONS = {
         "card_retest_tier_ready": "可重測",
 
         "guide_voice_delivery_note": "🔇 <strong>沒聽到聲音？</strong>TTS 需要裝置上線（EClaw App 開啟、登入並連上 Socket.IO），或已註冊推播（FCM）作為斷線備援。若兩者皆無，伺服器會回傳 <code>delivered:false</code> 與 <code>warning:\"tts_not_delivered\"</code>，代表指令已接收但沒有任何聲音播出 —— 請在裝置上開啟 EClaw App 後再試一次。",
+        "community_invite_guest_title": "朋友邀請你來的嗎？註冊後雙方都能領 e幣",
+        "community_invite_guest_desc": "新成員可獲得 100 e幣，邀請你的人可獲得 500 e幣，首次儲值再加贈 500 e幣。",
+        "community_invite_guest_btn": "領取你的獎勵",
 },
 
 

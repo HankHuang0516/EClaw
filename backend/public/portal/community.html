@@ -953,6 +953,20 @@
             </div>
         </div>
 
+        <!-- ── Guest Invite CTA (visible to logged-out visitors; long-line growth) ── -->
+        <div id="inviteCtaGuest" class="invite-cta-banner invite-cta-guest" aria-label="Invite incentive">
+            <div class="invite-cta-inner">
+                <div class="invite-cta-icon">🎁</div>
+                <div class="invite-cta-body">
+                    <div class="invite-cta-title" data-i18n="community_invite_guest_title">Invited by a friend? Sign up and you both earn e-coin</div>
+                    <div class="invite-cta-desc" data-i18n="community_invite_guest_desc">New members get 100 e-coin, and your inviter gets 500 — plus a 500 e-coin bonus on your first top-up.</div>
+                </div>
+                <div class="invite-cta-actions">
+                    <a class="invite-cta-share-btn" href="/r/invite" onclick="if (typeof beaconCta === 'function') beaconCta('plaza-guest-invite-cta');" data-i18n="community_invite_guest_btn">Claim your bonus</a>
+                </div>
+            </div>
+        </div>
+
         <!-- Featured this week — rotates weekly from featured-bot/rotation.json -->
         <section class="featured-week" id="featuredWeek" hidden>
             <div class="featured-week-head">
@@ -1127,16 +1141,24 @@
     let _inviteCode = null;
 
     async function loadInviteCode() {
+        const guestCta = document.getElementById('inviteCtaGuest');
         try {
             const data = await apiFetch('/api/invite/my-code');
-            if (!data || !data.success || !data.code) return;
+            if (!data || !data.success || !data.code) {
+                // Authenticated check failed gracefully → treat as guest.
+                if (guestCta) guestCta.classList.add('visible');
+                return;
+            }
             _inviteCode = data.code;
             document.getElementById('inviteCtaCode').textContent = data.code;
             const banner = document.getElementById('inviteCtaBanner');
             if (banner) banner.classList.add('visible');
+            // Authenticated owner sees the personal-code banner, not the guest CTA.
+            if (guestCta) guestCta.classList.remove('visible');
         } catch (e) {
-            // 401 or network error — hide banner silently (user not logged in)
+            // 401 or network error — user is logged out: show the guest invite CTA.
             _inviteCode = null;
+            if (guestCta) guestCta.classList.add('visible');
         }
     }
 
