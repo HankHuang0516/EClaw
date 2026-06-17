@@ -2287,6 +2287,15 @@ entityStatus.bindDevicesRef(devices);
 entityStatus.bindJwtSecret(JWT_SECRET_FALLBACK);
 app.use('/api/entity-status', entityStatus.router);
 
+// HERMES ORG-TOKEN — per-org credential scope (card_1242aaa56221c42a1fe5ef87).
+// GET /api/hermes/org-token?orgLogin=X — grant-checks entity_org_grants and
+// returns a SCOPED GitHub App installation token (never the master PAT); orgs
+// not granted to the calling entity → 403 + audit log. Pool wired below with
+// the other initTable calls.
+const hermesOrgToken = require('./hermes-org-token');
+hermesOrgToken.bindDevicesRef(devices);
+app.use('/api/hermes', hermesOrgToken.router);
+
 // ENTITY GH-STATS — merged-PR count + smart-link widget on entity cards
 // (card_8a25cadcc9fc88f153fa1316). Endpoint is registered later (~line 8067)
 // next to /api/entities so it sits alongside its peers; the module itself is
@@ -19720,6 +19729,8 @@ devicePrefs.initTable(chatPool);
 entityStatus.initTable(chatPool)
     .then(() => entityStatus.startSweeper(60_000))
     .catch(err => console.error('[EntityStatus] initTable error:', err.message));
+hermesOrgToken.initTable(chatPool)
+    .catch(err => console.error('[HermesOrgToken] initTable error:', err.message));
 redirectRouter.init({ chatPool, devices, jwtSecret: JWT_SECRET_FALLBACK });
 agentImprovement.initTable(chatPool)
     .catch(err => console.error('[AgentImprovement] initTable error:', err.message));
