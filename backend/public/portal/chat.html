@@ -8788,7 +8788,7 @@
             }
 
             // Help line (? icon UX equivalent: explain what to do next)
-            html += `<div class="rd-helpline">${esc(tt('chat_routing_detail_helpline', 'Why this matters: org-hierarchy + smart routing decides where every message lands. Edit your org chart from Settings → Org Chart to change defaults.'))}</div>`;
+            html += `<div class="rd-helpline">${esc(tt('chat_routing_detail_helpline', "Why this matters: the org hierarchy and smart routing automatically decide where every message lands — the system resolves each route from your org chart, you don't set it per message. To change how messages route, edit your hierarchy in Dashboard → Org Chart."))}</div>`;
 
             bodyEl.innerHTML = html;
         }
