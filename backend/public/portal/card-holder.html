@@ -1146,6 +1146,7 @@
                 var chEditor = new AgentCardEditor('aceEditorCH', {
                     entityId: card.entityId,
                     deviceId: currentUser?.deviceId || currentUser?.device_id || '',
+                    deviceSecret: currentUser?.deviceSecret,
                     publicCode: card.publicCode,
                     identity: card.identity || {},
                     agentCard: ac,
