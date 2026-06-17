@@ -20731,6 +20731,19 @@ app.post('/api/device/tts', async (req, res) => {
         metadata: { lang: ttsLang, speed: ttsSpeed, pitch: ttsPitch, textLen: text.length }
     });
 
+    // Bug #161 (GH #2862): TTS was fire-and-forget — it emitted to the
+    // Socket.IO room and called sendFcm() without ever checking whether
+    // EITHER channel could actually reach the device, yet always returned
+    // success:true. When the device was offline AND had no fcmToken
+    // (log: "fcm_send: skip: no fcmToken for device"), the audio silently
+    // vanished but the bot was told it succeeded and told the user
+    // "語音已發送!". Make delivery observable so the caller knows the truth.
+    let socketsOnline = 0;
+    try {
+        const sockets = await io.in(`device:${deviceId}`).fetchSockets();
+        socketsOnline = sockets.length;
+    } catch (_) { /* fetchSockets unavailable (e.g. tests) → treat as offline */ }
+
     // Emit via Socket.IO to the device
     io.to(`device:${deviceId}`).emit('device:tts', {
         text,
@@ -20742,16 +20755,47 @@ app.post('/api/device/tts', async (req, res) => {
     });
 
     // Also send FCM data message as fallback (in case Socket.IO is disconnected)
+    let fcmDelivered = false;
     if (typeof sendFcm === 'function') {
-        sendFcm(deviceId, {
-            title: entityName,
-            body: text,
-            category: 'tts',
-            link: ''
-        }).catch(() => {});
+        try {
+            fcmDelivered = await sendFcm(deviceId, {
+                title: entityName,
+                body: text,
+                category: 'tts',
+                link: ''
+            });
+        } catch (_) { fcmDelivered = false; }
     }
 
-    res.json({ success: true, message: `TTS command sent to device`, lang: ttsLang, speed: ttsSpeed, pitch: ttsPitch });
+    const channels = [];
+    if (socketsOnline > 0) channels.push('socket');
+    if (fcmDelivered) channels.push('fcm');
+    const delivered = channels.length > 0;
+
+    if (!delivered) {
+        // No viable delivery channel — surface it instead of a false success
+        // so the bot does not tell the user the voice was sent.
+        serverLog('warn', 'tts', 'no delivery channel: device offline and no FCM fallback', {
+            deviceId, entityId: eId,
+            metadata: { socketsOnline, fcmDelivered, hasFcmToken: !!device.fcmToken }
+        });
+        return res.json({
+            success: true,
+            delivered: false,
+            via: channels,
+            warning: 'tts_not_delivered',
+            message: 'TTS command accepted but the device is offline and has no push fallback — no audio will play. Open the EClaw app on the device.',
+            lang: ttsLang, speed: ttsSpeed, pitch: ttsPitch
+        });
+    }
+
+    res.json({
+        success: true,
+        delivered: true,
+        via: channels,
+        message: `TTS command sent to device`,
+        lang: ttsLang, speed: ttsSpeed, pitch: ttsPitch
+    });
 });
 
 // Prune old notifications daily
@@ -20918,13 +20962,13 @@ try {
 async function sendFcm(deviceId, notif) {
     if (!firebaseAdmin) {
         serverLog('warn', 'fcm_send', 'skip: firebaseAdmin not initialized', { deviceId, metadata: { category: notif?.category } });
-        return;
+        return false;
     }
     const device = devices[deviceId];
     const token = device?.fcmToken;
     if (!token) {
         serverLog('warn', 'fcm_send', 'skip: no fcmToken for device', { deviceId, metadata: { deviceExists: !!device, category: notif?.category } });
-        return;
+        return false;
     }
     const tokenPrefix = token.slice(0, 12);
     // Silent categories handled by the app's FCM service (start TtsService,
@@ -20947,12 +20991,14 @@ async function sendFcm(deviceId, notif) {
     try {
         const resp = await firebaseAdmin.messaging().send(fcmMessage);
         serverLog('info', 'fcm_send', 'sent OK', { deviceId, metadata: { tokenPrefix, category: notif?.category, messageId: resp } });
+        return true;
     } catch (e) {
         if (e.code === 'messaging/registration-token-not-registered') {
             delete devices[deviceId]?.fcmToken;
             chatPool.query('UPDATE devices SET fcm_token = NULL WHERE device_id = $1', [deviceId]).catch(() => {});
         }
         serverLog('error', 'fcm_send', `send failed: ${e.message}`, { deviceId, metadata: { tokenPrefix, code: e.code } });
+        return false;
     }
 }
 
