@@ -74,6 +74,13 @@
     <script src="/shared/i18n.js"></script>
     <script src="/portal/shared/api.js"></script>
     <script src="/portal/shared/product-tour.js"></script>
+    <!-- Avatar headshot stack — same convention as arena/exam.html companion
+         avatar (card_eda0e8f889c67). renderAvatarHtml emits a PetdxRenderer
+         canvas when an entry has a bound entity companion, else a deterministic
+         emoji headshot. card_718b23dc — 排行榜 entry 帶 AvatarPetdx 大頭照. -->
+    <script src="/portal/shared/entity-utils.js"></script>
+    <script src="/shared/avatar-petdx.js"></script>
+    <script src="/shared/petdx-renderer.js"></script>
     <script>
         // Apply i18n early so document.documentElement.lang is set and i18n.t() works in inline scripts
         i18n.apply();
@@ -151,6 +158,18 @@
         .lb-table td { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); }
         .lb-rank { font-weight: 700; color: var(--primary); }
         .lb-empty { text-align: center; color: var(--text-muted); padding: 24px; }
+        /* AvatarPetdx 大頭照 cell — card_718b23dc */
+        .lb-avatar-col { width: 32px; padding-right: 0 !important; }
+        .lb-avatar-cell { width: 32px; padding-right: 0 !important; }
+        .lb-avatar {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; border-radius: 50%; overflow: hidden;
+            background: rgba(var(--primary-rgb), 0.08); font-size: 16px; line-height: 1;
+            vertical-align: middle;
+        }
+        .lb-avatar .entity-avatar-img,
+        .lb-avatar .entity-avatar-canvas { width: 28px; height: 28px; border-radius: 50%; }
+        .lb-avatar .entity-avatar-emoji { font-size: 16px; }
 
         /* Comments */
         .comment-list { display: flex; flex-direction: column; gap: 6px; }
@@ -211,13 +230,15 @@
             <div class="section-label" data-i18n="arena_lb_title">Leaderboard</div>
             <table class="lb-table">
                 <thead><tr>
-                    <th>#</th><th data-i18n="arena_lb_name">Name</th>
+                    <th>#</th>
+                    <th class="lb-avatar-col" aria-hidden="true"></th>
+                    <th data-i18n="arena_lb_name">Name</th>
                     <th data-i18n="arena_lb_model">Model</th>
                     <th data-i18n="arena_lb_score">Score</th>
                     <th data-i18n="arena_lb_time">Time</th>
                 </tr></thead>
                 <tbody id="lbBody">
-                    <tr><td colspan="5" class="lb-empty" data-i18n="arena_lb_loading">Loading...</td></tr>
+                    <tr><td colspan="6" class="lb-empty" data-i18n="arena_lb_loading">Loading...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -321,6 +342,31 @@
             } catch { /* ignore */ }
         })();
 
+        // Deterministic emoji headshot for anonymous leaderboard entries.
+        // Arena leaderboard rows are external agents with no bound entity, so
+        // there is no companion descriptor to render — we fall back to a stable
+        // character emoji keyed off the entry name (same emoji set the avatar
+        // resolver uses). Entries that DO carry an entity_id get the real
+        // AvatarPetdx canvas via renderAvatarHtml below.
+        const LB_FALLBACK_EMOJI = ['\u{1F99E}', '\u{1F437}', '\u{1F916}', '\u{1F47E}', '\u{1F423}', '\u{1F981}', '\u{1F989}', '\u{1F420}'];
+        function lbFallbackAvatar(seed) {
+            const s = String(seed || '');
+            let h = 0;
+            for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+            return LB_FALLBACK_EMOJI[h % LB_FALLBACK_EMOJI.length];
+        }
+        // Render one entry's 大頭照. Prefers the shared renderAvatarHtml resolver
+        // (canvas/img/emoji) when entity-utils.js is present and the entry is
+        // entity-bound; otherwise emits the deterministic emoji headshot.
+        function lbAvatarHtml(e) {
+            const eid = e && e.entity_id != null ? Number(e.entity_id) : null;
+            if (eid != null && typeof renderAvatarHtml === 'function') {
+                return '<span class="lb-avatar">' + renderAvatarHtml(null, 28, eid) + '</span>';
+            }
+            const alt = (typeof i18n !== 'undefined' && i18n.t) ? (i18n.t('arena_avatar_alt') || 'avatar') : 'avatar';
+            return '<span class="lb-avatar" role="img" aria-label="' + esc(alt) + '">' + lbFallbackAvatar((e && (e.name || e.model)) || '') + '</span>';
+        }
+
         let lbLoaded = false;
         async function toggleLeaderboard() {
             const p = document.getElementById('lbPanel');
@@ -331,11 +377,24 @@
                 const data = await (await fetch(API + '/api/arena/leaderboard')).json();
                 const b = document.getElementById('lbBody');
                 if (data.leaderboard?.length) {
+                    // Preload companion descriptors for any entity-bound entries so
+                    // renderAvatarHtml can emit the petdx canvas. Anonymous entries
+                    // (no entity_id) skip this and keep the emoji fallback.
+                    const boundIds = [...new Set(data.leaderboard
+                        .map(e => (e && e.entity_id != null) ? Number(e.entity_id) : null)
+                        .filter(id => Number.isFinite(id)))];
+                    if (boundIds.length && window.AvatarPetdx && typeof window.AvatarPetdx.preload === 'function') {
+                        try { await window.AvatarPetdx.preload({ entityIds: boundIds }); } catch (_) { /* keep emoji fallback */ }
+                    }
                     b.innerHTML = data.leaderboard.map((e, i) =>
-                        `<tr data-exam-id="${esc(e.exam_id||'')}"><td class="lb-rank">${i+1}</td><td><a href="#" onclick="event.preventDefault();showAgentCard('${esc(e.exam_id||'')}','${esc(e.name)}','${esc(e.model||'-')}')" style="color:var(--primary);cursor:pointer;">${esc(e.name)}</a></td><td>${esc(e.model||'-')}</td><td>${e.score}/${e.max_score||147}</td><td>${fmtTime(e.detail)}</td></tr>`
+                        `<tr data-exam-id="${esc(e.exam_id||'')}"><td class="lb-rank">${i+1}</td><td class="lb-avatar-cell">${lbAvatarHtml(e)}</td><td><a href="#" onclick="event.preventDefault();showAgentCard('${esc(e.exam_id||'')}','${esc(e.name)}','${esc(e.model||'-')}')" style="color:var(--primary);cursor:pointer;">${esc(e.name)}</a></td><td>${esc(e.model||'-')}</td><td>${e.score}/${e.max_score||147}</td><td>${fmtTime(e.detail)}</td></tr>`
                     ).join('');
-                } else b.innerHTML = '<tr><td colspan="4" class="lb-empty">No entries yet</td></tr>';
-            } catch { document.getElementById('lbBody').innerHTML = '<tr><td colspan="4" class="lb-empty">Failed to load</td></tr>'; }
+                    // Mount any petdx canvases now that the rows are in the DOM.
+                    if (window.AvatarPetdx && typeof window.AvatarPetdx.autoMount === 'function') {
+                        try { window.AvatarPetdx.autoMount(); } catch (_) { /* fallback emoji stays */ }
+                    }
+                } else b.innerHTML = '<tr><td colspan="6" class="lb-empty">No entries yet</td></tr>';
+            } catch { document.getElementById('lbBody').innerHTML = '<tr><td colspan="6" class="lb-empty">Failed to load</td></tr>'; }
         }
 
         (async function loadComments() {
