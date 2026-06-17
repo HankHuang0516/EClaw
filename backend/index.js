@@ -9574,7 +9574,13 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
         // Skip saving to owner's chat when entity is leased_out — rental mirror handles renter's copy
         const isLeasedOut = entity.rental_status === 'leased_out';
         if (!hasDelivery && !isLeasedOut) {
-            await saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments, viaChannel);
+            // card_ecda7243: resolve a real routing_meta for this self-reply so
+            // the chat UI never renders a bare 「？」 routing pointer. The target
+            // is the org-chart parent when this reply auto-forwards upward, else
+            // the device owner (User). Falls back to null on hard error (client
+            // still renders a ?-free degraded chip).
+            const selfReplyRoutingMeta = await resolveSelfReplyRoutingMeta(entity, deviceId, eId, finalMessage);
+            await saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments, viaChannel, selfReplyRoutingMeta);
         }
         if (!isLeasedOut) markMessagesAsRead(deviceId, eId);
         if (pendingA2A) {
@@ -19094,6 +19100,89 @@ async function orgChartForward(entity, deviceId, message, opts = {}) {
         }
     } catch (err) {
         console.error('[OrgChart] orgChartForward error:', err.message);
+    }
+}
+
+/**
+ * Resolve the routing_meta for a bot's self-reply to the user (no speakTo /
+ * broadcast). card_ecda7243: such a reply row used to be saved with
+ * routing_meta=null, so the chat UI's renderRoutingChip fell through to a
+ * degraded "#N → ?" chip — a bare 「？」 routing pointer.
+ *
+ * Mirrors the orgChartForward() decision so the pointer reflects what actually
+ * happens to the message:
+ *   - If org auto-forward (allForward OR taskForward-with-tasks) WILL forward
+ *     this reply upward to the entity's superior → target = that PARENT entity
+ *     (mode 'org_upward'). This is the card's repro: subordinate → User no
+ *     speakTo → auto-routes to org upper-level.
+ *   - Otherwise the reply is a true direct-to-user message → target = USER
+ *     (mode 'toUser', to_entity_id null but to_name a clear "User" label).
+ *
+ * Globe-user: derives the parent purely from the device's org-chart hierarchy
+ * (getSuperior), never a hardcoded entity id. Returns null only on hard error,
+ * in which case the caller saves with routing_meta=null and the client falls
+ * back to its (now ?-free) degraded chip.
+ */
+async function resolveSelfReplyRoutingMeta(entity, deviceId, eId, message) {
+    try {
+        const orgData = await orgChartModule.getOrgChart(deviceId);
+        const hierarchy = orgData && orgData.hierarchy;
+        const options = (orgData && orgData.options) || {};
+        const device = devices[deviceId];
+
+        if (hierarchy && device) {
+            const superiorId = orgChartModule.getSuperior(hierarchy, eId);
+            // A real entity superior (not USER, not orphan) AND auto-forward
+            // configured means the reply genuinely routes upward.
+            if (superiorId != null && superiorId !== 'USER') {
+                const superiorEntity = device.entities?.[superiorId];
+                if (superiorEntity && superiorEntity.isBound) {
+                    let willForward = !!options.allForward;
+                    if (!willForward && options.taskForward && chatPool) {
+                        try {
+                            const taskCheck = await chatPool.query(
+                                `SELECT 1 FROM kanban_cards WHERE device_id = $1 AND assigned_bots @> $2::jsonb AND status IN ('todo', 'in_progress') LIMIT 1`,
+                                [deviceId, JSON.stringify([eId])]
+                            );
+                            willForward = taskCheck.rows.length > 0;
+                        } catch (_) { /* fall through to toUser */ }
+                    }
+                    // Suppress low-signal fwds the same way orgChartForward does,
+                    // so the pointer doesn't claim an upward route that never fires.
+                    if (willForward && typeof isLowSignalFwd === 'function' && isLowSignalFwd(message)) {
+                        willForward = false;
+                    }
+                    if (willForward) {
+                        return buildRoutingMeta({
+                            mode: 'org_upward',
+                            fromEntity: entity, fromId: eId,
+                            toEntity: superiorEntity, toId: superiorId,
+                            status: 'sent'
+                        });
+                    }
+                }
+            }
+        }
+
+        // True direct-to-user reply: resolved target is the device owner (USER),
+        // never a bare '?'. to_entity_id stays null (USER is not an entity) but
+        // to_name carries an explicit "User" so the client renders "#N → User".
+        const meta = buildRoutingMeta({
+            mode: 'toUser',
+            fromEntity: entity, fromId: eId,
+            toEntity: null, toId: null,
+            status: 'sent'
+        });
+        meta.to_name = 'User';
+        meta.to_is_user = true;
+        // USER is the device owner, not a levelled entity — drop to_lv so the
+        // client's Number.isFinite(to_lv) gate hides the LV badge (null coerces
+        // to 0 via Number(), which would wrongly render "LV0").
+        delete meta.to_lv;
+        return meta;
+    } catch (err) {
+        console.error('[OrgChart] resolveSelfReplyRoutingMeta error:', err.message);
+        return null;
     }
 }
 

@@ -117,6 +117,23 @@ describe('card_1f8 — frontend: sender-fallback chip when source unparseable', 
         expect(body).toMatch(/rc-unconfirmed/);
     });
 
+    // card_ecda7243: the degraded branch no longer emits a bare 「？」 target.
+    // It resolves the org-chart commander (upper-level entity) when known,
+    // else labels the target as the User — never '?'.
+    test('degraded branch resolves a real target — never a bare "→ ?"', () => {
+        // Scope to the null/unparseable-meta fallback block (before "// Positive:").
+        const head = (fn ? fn[0] : '').split('// Positive:')[0] || '';
+        // No literal "→ ?" anywhere in the fallback block.
+        expect(head).not.toMatch(/→\s*\?/);
+        expect(head).not.toMatch(/to_entity_id\s*:\s*null\s*\}.*→ \?/);
+        // The degraded chip consults the cached org-chart commander as the
+        // upper-level fallback target.
+        const degradedBlock = head.split('msg.is_from_bot && msg.entity_id != null').pop() || '';
+        expect(degradedBlock).toMatch(/orgChartCommanderId/);
+        // and falls back to a localized User label, not '?'.
+        expect(degradedBlock).toMatch(/chat_routing_to_user/);
+    });
+
     test('i18n key chat_routing_client_derived defined in en + zh + zh-TW', () => {
         // sanity: same loose match the i18n-check script uses for parity
         expect(i18nJs.match(/"chat_routing_client_derived"\s*:\s*"[^"]+"/g) || []).toHaveLength(3);

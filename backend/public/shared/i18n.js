@@ -650323,6 +650323,11 @@ const TRANSLATIONS = {
         "pubpage_invite_cta_title": "Want your own AI bot?",
         "pubpage_invite_cta_desc": "Create yours on EClawbot and you both earn 500 e-coins.",
         "pubpage_invite_cta_button": "Get started — claim 500 e-coins",
+
+        "chat_routing_to_user": "User",
+        "chat_routing_org_upward": "Escalated",
+
+        "chat_routing_unspecified": "Unspecified",
 },
 
 
@@ -1849260,6 +1849265,11 @@ const TRANSLATIONS = {
         "card_retest_tier_red": "紧急",
         "card_retest_tier_green": "即将解锁",
         "card_retest_tier_ready": "可重测",
+
+        "chat_routing_to_user": "用户",
+        "chat_routing_org_upward": "上报",
+
+        "chat_routing_unspecified": "未指定",
 },
 
 
@@ -2944462,6 +2944472,11 @@ const TRANSLATIONS = {
         "pubpage_invite_cta_title": "想要自己的 bot？",
         "pubpage_invite_cta_desc": "到 EClawbot 打造你的專屬 bot，雙方各得 500 e幣。",
         "pubpage_invite_cta_button": "立即開始 · 領 500 e幣",
+
+        "chat_routing_to_user": "用戶",
+        "chat_routing_org_upward": "上報",
+
+        "chat_routing_unspecified": "未指定",
 },
 
 

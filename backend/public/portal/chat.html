@@ -6103,11 +6103,20 @@
                 // card_1f8 fallback: source unparseable but row is a bot reply with a
                 // known sender — render a degraded sender-only chip so the user at
                 // least sees who said it (instead of an empty meta row).
+                // card_ecda7243: NEVER render a bare 「？」 on the target side. Backend
+                // now stamps a real routing_meta on self-replies, so this branch only
+                // fires for legacy/null-meta rows. Resolve the target the same way the
+                // positive branch does — org-chart commander (the upper-level entity)
+                // when known, else label it clearly as the User (the only other place a
+                // no-speakTo bot reply can land). No '?' in any case.
                 if (msg && msg.is_from_bot && msg.entity_id != null) {
                     const senderLabel = '#' + msg.entity_id;
-                    const title = `${tt('chat_routing_label','路由')}: ${senderLabel} → ? · ${tt('chat_routing_client_derived','client-derived')}`;
-                    const stub = { status: 'degraded', from_entity_id: msg.entity_id, to_entity_id: null };
-                    return `<span class="routing-chip rc-degraded"${chipClickAttrs('degraded-client', stub)} title="${escapeHtml(title)}"><span class="rc-route">${escapeHtml(senderLabel)} → ?</span></span>`;
+                    const targetLabel = (orgChartCommanderId != null && orgChartCommanderId !== Number(msg.entity_id))
+                        ? ('#' + orgChartCommanderId)
+                        : (tt('chat_routing_to_user', 'User'));
+                    const title = `${tt('chat_routing_label','路由')}: ${senderLabel} → ${targetLabel} · ${tt('chat_routing_client_derived','client-derived')}`;
+                    const stub = { status: 'degraded', from_entity_id: msg.entity_id, to_entity_id: (orgChartCommanderId != null && orgChartCommanderId !== Number(msg.entity_id)) ? orgChartCommanderId : null, to_is_user: !(orgChartCommanderId != null && orgChartCommanderId !== Number(msg.entity_id)) };
+                    return `<span class="routing-chip rc-degraded"${chipClickAttrs('degraded-client', stub)} title="${escapeHtml(title)}"><span class="rc-route">${escapeHtml(senderLabel)} → ${escapeHtml(targetLabel)}</span></span>`;
                 }
                 return '';
             }
@@ -6126,13 +6135,19 @@
             const seg = routingLvSegment(rm.to_lv);
             const fallback = (orgChartCommanderId != null) ? ('#' + orgChartCommanderId) : null;
             const from = rm.from_name || (rm.from_entity_id != null ? '#' + rm.from_entity_id : fallback);
-            const to = rm.to_name || (rm.to_entity_id != null ? '#' + rm.to_entity_id : fallback);
+            // card_ecda7243: a self-reply to the device owner carries to_is_user
+            // (mode 'toUser') with to_entity_id null — render the localized "User"
+            // label, never the raw to_name or a '?' fallback.
+            const to = rm.to_is_user
+                ? tt('chat_routing_to_user', 'User')
+                : (rm.to_name || (rm.to_entity_id != null ? '#' + rm.to_entity_id : fallback));
             if (!from || !to) return '';
             const lvNum = Number(rm.to_lv);
             const hasLv = Number.isFinite(lvNum);
             let modeTag = '';
             if (rm.mode === 'broadcast') modeTag = `<span class="rc-mode">${escapeHtml(tt('chat_routing_broadcast','廣播'))}</span>`;
             else if (rm.mode === 'xdevice') modeTag = `<span class="rc-mode">${escapeHtml(tt('chat_routing_xdevice','跨裝置'))}</span>`;
+            else if (rm.mode === 'org_upward') modeTag = `<span class="rc-mode">${escapeHtml(tt('chat_routing_org_upward','上報'))}</span>`;
             const lvHtml = hasLv ? `<span class="rc-lv">LV${lvNum}</span>` : '';
             const lvTitle = hasLv ? ` · LV${lvNum}` : '';
             const title = `${tt('chat_routing_label','路由')}: ${from} → ${to}${lvTitle}`;
@@ -8676,7 +8691,10 @@
             const toSum = (detail && detail.toEntity) || (payload.to_entity_id != null ? summariesById.get(payload.to_entity_id) : null);
 
             const renderPill = (which, sum, fallbackId, fallbackName) => {
-                const label = (sum && (sum.name || sum.character)) || fallbackName || (fallbackId != null ? '#' + fallbackId : '?');
+                // card_ecda7243: never fall through to a bare '?'. When neither a
+                // summary nor an explicit name/id resolve, show a clearly-labeled
+                // "unspecified" state instead of a naked question mark.
+                const label = (sum && (sum.name || sum.character)) || fallbackName || (fallbackId != null ? '#' + fallbackId : tt('chat_routing_unspecified', 'Unspecified'));
                 const code = sum && sum.publicCode ? '#' + sum.publicCode : '';
                 const lv = sum && sum.level != null ? `LV${sum.level}` : '';
                 const initials = String(label).slice(0, 2);
@@ -8690,9 +8708,11 @@
                 ? tt('chat_routing_broadcast', '廣播')
                 : payload.mode === 'xdevice'
                     ? tt('chat_routing_xdevice', '跨裝置')
-                    : payload.mode === 'speakTo' || payload.mode === 'speakto'
-                        ? tt('chat_routing_speakto', 'speakTo')
-                        : null;
+                    : payload.mode === 'org_upward'
+                        ? tt('chat_routing_org_upward', '上報')
+                        : payload.mode === 'speakTo' || payload.mode === 'speakto'
+                            ? tt('chat_routing_speakto', 'speakTo')
+                            : null;
             const statusKey = payload.status || (kind === 'unconfirmed' ? 'unconfirmed' : kind === 'failed' ? 'failed' : kind === 'degraded' ? 'degraded' : 'sent');
             const statusLabel = ({
                 sent: tt('chat_routing_status_sent', 'Sent'),
@@ -8715,7 +8735,9 @@
             html += '<div class="rd-route-line">';
             html += renderPill('from', fromSum, payload.from_entity_id, payload.from_name);
             html += '<span class="rd-arrow">→</span>';
-            html += renderPill('to', toSum, payload.to_entity_id, payload.to_name);
+            // card_ecda7243: a self-reply to the device owner targets USER (to_is_user),
+            // not an entity — show the localized "User" label instead of a bare '?'.
+            html += renderPill('to', toSum, payload.to_entity_id, payload.to_is_user ? tt('chat_routing_to_user', 'User') : payload.to_name);
             if (modeLabel) html += `<span class="rd-mode-pill">${esc(modeLabel)}</span>`;
             html += `<span class="rd-status-pill rd-status-${esc(statusKey)}">${esc(statusLabel)}</span>`;
             html += '</div>';
