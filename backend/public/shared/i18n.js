@@ -650313,6 +650313,13 @@ const TRANSLATIONS = {
         "community_invite_guest_title": "Invited by a friend? Sign up and you both earn e-coin",
         "community_invite_guest_desc": "New members get 100 e-coin, and your inviter gets 500 — plus a 500 e-coin bonus on your first top-up.",
         "community_invite_guest_btn": "Claim your bonus",
+        "rm_oodar_live_title": "Live status tracker",
+        "rm_oodar_live_help": "Status, last-update time and PR links are pulled live from the team kanban board via /api/mission/roadmap-status. No login needed; if the board is unreachable the page shows the last known plan status.",
+        "rm_oodar_live_loading": "Loading live status…",
+        "rm_oodar_live_nojs": "Enable JavaScript to see live kanban-backed status. The static 4-phase plan below is always available.",
+        "rm_oodar_live_from_kanban": "items live from kanban",
+        "rm_oodar_live_degraded": "Showing last-known plan status (kanban unreachable).",
+        "rm_oodar_live_unavailable": "Live status unavailable — see the 4-phase plan below.",
 },
 
 
@@ -1235092,6 +1235099,13 @@ const TRANSLATIONS = {
         "community_invite_guest_title": "朋友邀請你來的嗎？註冊後雙方都能領 e幣",
         "community_invite_guest_desc": "新成員可獲得 100 e幣，邀請你的人可獲得 500 e幣，首次儲值再加贈 500 e幣。",
         "community_invite_guest_btn": "領取你的獎勵",
+        "rm_oodar_live_title": "即時狀態追蹤",
+        "rm_oodar_live_help": "狀態、最後更新時間與 PR 連結皆透過 /api/mission/roadmap-status 從團隊看板即時拉取，無需登入；若看板暫時無法連線，頁面會顯示最後已知的計畫狀態。",
+        "rm_oodar_live_loading": "正在載入即時狀態…",
+        "rm_oodar_live_nojs": "請啟用 JavaScript 以檢視看板即時狀態；下方的四階段計畫一律可見。",
+        "rm_oodar_live_from_kanban": "個項目為看板即時狀態",
+        "rm_oodar_live_degraded": "顯示最後已知的計畫狀態（看板暫時無法連線）。",
+        "rm_oodar_live_unavailable": "即時狀態暫時無法取得 — 請參考下方四階段計畫。",
 },
 
 

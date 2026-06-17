@@ -365,6 +365,39 @@
                 <li><strong>Feedback bridge</strong>: Hank's chat corrections, kanban comments, review feedback all funnel into the episode store automatically — no more human-cached reminders</li>
             </ol>
 
+            <!-- ───────────────────────────────────────────────────────────
+                 LIVE roadmap tracker (Phase 4 #9, card_5ac74610cbf1f89440427809).
+                 Status is pulled at runtime from /api/mission/roadmap-status
+                 (kanban-backed) — NOT hard-coded. Falls back to manifest status
+                 if the endpoint is unreachable so the page always renders.
+                 ─────────────────────────────────────────────────────────── -->
+            <h3 style="font-size:14px;font-weight:700;margin:18px 0 8px;display:flex;align-items:center;gap:8px;">
+                📡 <span data-i18n="rm_oodar_live_title">Live status tracker</span>
+                <span class="rm-oodar-help" tabindex="0" role="button"
+                      aria-label="How live status works"
+                      data-i18n-title="rm_oodar_live_help"
+                      title="Status, last-update time and PR links are pulled live from the team kanban board via /api/mission/roadmap-status. No login needed; if the board is unreachable the page shows the last known plan status."
+                      style="cursor:help;font-size:12px;color:var(--text-secondary);border:1px solid var(--card-border);border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">?</span>
+            </h3>
+            <div id="rmOodarLiveMeta" style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;" data-i18n="rm_oodar_live_loading">Loading live status…</div>
+            <div id="rmOodarLive" class="rm-oodar-live" aria-live="polite">
+                <!-- rows injected by JS; static markup below is the no-JS fallback -->
+                <noscript><div style="font-size:12px;color:var(--text-secondary);" data-i18n="rm_oodar_live_nojs">Enable JavaScript to see live kanban-backed status. The static 4-phase plan below is always available.</div></noscript>
+            </div>
+            <style>
+                .rm-oodar-live { display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
+                .rm-oodar-row { display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--card-border); border-radius:var(--radius-sm); background:var(--input-bg); font-size:13px; }
+                .rm-oodar-row .rm-oodar-num { flex:0 0 auto; width:22px; height:22px; border-radius:50%; background:var(--card); border:1px solid var(--card-border); display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; }
+                .rm-oodar-row .rm-oodar-title { flex:1 1 auto; min-width:0; }
+                .rm-oodar-row .rm-oodar-when { flex:0 0 auto; font-size:10px; color:var(--text-secondary); }
+                .rm-oodar-badge { flex:0 0 auto; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; }
+                .rm-oodar-badge.shipped { background:#10b981; color:#fff; }
+                .rm-oodar-badge.in_progress { background:#f59e0b; color:#000; }
+                .rm-oodar-badge.todo { background:var(--card); color:var(--text-secondary); border:1px solid var(--card-border); }
+                .rm-oodar-row a.rm-oodar-pr { flex:0 0 auto; font-size:11px; color:var(--primary); text-decoration:none; }
+                .rm-oodar-live-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981; margin-right:4px; vertical-align:middle; }
+            </style>
+
             <h3 style="font-size:14px;font-weight:700;margin:14px 0 8px;">🗺️ 9-item delivery roadmap (4 phases)</h3>
             <div style="font-size:13px;line-height:1.65;">
                 <div style="margin-bottom:14px;">
@@ -951,7 +984,81 @@
             if (typeof renderFooter === 'function') renderFooter();
             if (typeof i18n !== 'undefined') i18n.apply();
             try { await injectLiveCardStatus(); } catch (e) { console.warn('[roadmap] live status injection failed:', e?.message || e); }
+            try { await loadOodarLiveStatus(); } catch (e) { console.warn('[roadmap] OODA-R live tracker failed:', e?.message || e); }
         });
+
+        // OODA-R Phase 4 #9 (card_5ac74610cbf1f89440427809):
+        // render the LIVE, kanban-backed status of the 9 self-improvement items.
+        // Unlike injectLiveCardStatus() (which needs admin deviceSecret and is a
+        // no-op for public visitors), this hits the PUBLIC /roadmap-status
+        // endpoint so anonymous visitors also see real status, not hard-coded.
+        async function loadOodarLiveStatus() {
+            const host = document.getElementById('rmOodarLive');
+            const meta = document.getElementById('rmOodarLiveMeta');
+            if (!host) return;
+            const STATUS_LABEL = { shipped: 'Shipped', in_progress: 'In Progress', todo: 'Planned' };
+            const tr = (k, fb) => (typeof i18n !== 'undefined' && i18n.t) ? (i18n.t(k) || fb) : fb;
+            const fmtWhen = (iso) => {
+                if (!iso) return '';
+                const d = new Date(iso);
+                return isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
+            };
+            try {
+                const res = await fetch('/api/mission/roadmap-status', { credentials: 'omit' });
+                if (!res.ok) throw new Error('http ' + res.status);
+                const data = await res.json();
+                const items = (data && data.items) || [];
+                if (!items.length) throw new Error('empty');
+                host.innerHTML = '';
+                for (const it of items) {
+                    const row = document.createElement('div');
+                    row.className = 'rm-oodar-row';
+                    const num = document.createElement('span');
+                    num.className = 'rm-oodar-num';
+                    num.textContent = it.num;
+                    const title = document.createElement('span');
+                    title.className = 'rm-oodar-title';
+                    title.textContent = it.title;
+                    const badge = document.createElement('span');
+                    badge.className = 'rm-oodar-badge ' + (it.status || 'todo');
+                    if (it.live) {
+                        const dot = document.createElement('span');
+                        dot.className = 'rm-oodar-live-dot';
+                        dot.title = 'live from kanban';
+                        badge.appendChild(dot);
+                    }
+                    badge.appendChild(document.createTextNode(STATUS_LABEL[it.status] || it.status || ''));
+                    row.appendChild(num);
+                    row.appendChild(title);
+                    if (it.updatedAt) {
+                        const when = document.createElement('span');
+                        when.className = 'rm-oodar-when';
+                        when.textContent = fmtWhen(it.updatedAt);
+                        row.appendChild(when);
+                    }
+                    row.appendChild(badge);
+                    if (it.pr) {
+                        const pr = document.createElement('a');
+                        pr.className = 'rm-oodar-pr';
+                        pr.href = it.pr;
+                        pr.target = '_blank';
+                        pr.rel = 'noopener';
+                        pr.textContent = 'PR ↗';
+                        row.appendChild(pr);
+                    }
+                    host.appendChild(row);
+                }
+                if (meta) {
+                    const liveCount = items.filter(i => i.live).length;
+                    const gen = fmtWhen(data.generatedAt) || new Date().toISOString().slice(0, 10);
+                    meta.textContent = (data.degraded
+                        ? tr('rm_oodar_live_degraded', 'Showing last-known plan status (kanban unreachable).')
+                        : `${liveCount}/${items.length} ${tr('rm_oodar_live_from_kanban', 'items live from kanban')}`) + ' · ' + gen;
+                }
+            } catch (e) {
+                if (meta) meta.textContent = tr('rm_oodar_live_unavailable', 'Live status unavailable — see the 4-phase plan below.');
+            }
+        }
 
         // ── Live status from kanban ───────────────────────────────────────
         // Reads /api/mission/cards, walks every [data-card-id] element, and
