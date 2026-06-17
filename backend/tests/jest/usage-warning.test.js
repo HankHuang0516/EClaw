@@ -12,9 +12,12 @@
 
 const {
     STALE_THRESHOLD_MS,
+    DEFAULT_COOLDOWN_MS,
     shouldWarnNow,
     formatWarningText,
     pickClaudeLivePct,
+    withinCooldown,
+    resolveCooldownMs,
 } = require('../../lib/usage-warning');
 
 const DEFAULT_CFG = { enabled: true, threshold_5h_pct: 15, threshold_7d_pct: 5 };
@@ -128,6 +131,31 @@ describe('shouldWarnNow — custom thresholds', () => {
         // 7d_remaining=10, threshold=5 → 10 ≤ 5 false → no breach either
         const out = shouldWarnNow(mkSnap({ five: 90, seven: 90 }), cfg, NOW);
         expect(out.warn).toBe(false);
+    });
+});
+
+describe('withinCooldown / resolveCooldownMs (card_a69e8ffa)', () => {
+    test('never-warned (null last) → not within cooldown', () => {
+        expect(withinCooldown(null, NOW)).toBe(false);
+        expect(withinCooldown(undefined, NOW)).toBe(false);
+    });
+    test('inside the window → within cooldown (suppress)', () => {
+        expect(withinCooldown(NOW - 5 * 60 * 1000, NOW, DEFAULT_COOLDOWN_MS)).toBe(true);
+    });
+    test('past the window → not within cooldown (allow)', () => {
+        expect(withinCooldown(NOW - 31 * 60 * 1000, NOW, DEFAULT_COOLDOWN_MS)).toBe(false);
+    });
+    test('exactly at the boundary → not within cooldown (allow)', () => {
+        expect(withinCooldown(NOW - DEFAULT_COOLDOWN_MS, NOW, DEFAULT_COOLDOWN_MS)).toBe(false);
+    });
+    test('resolveCooldownMs reads config.cooldown_min (minutes → ms)', () => {
+        expect(resolveCooldownMs({ cooldown_min: 10 })).toBe(10 * 60 * 1000);
+        expect(resolveCooldownMs({ cooldown_min: 0 })).toBe(0);     // disables cooldown
+        expect(resolveCooldownMs({})).toBe(DEFAULT_COOLDOWN_MS);    // default
+        expect(resolveCooldownMs(null)).toBe(DEFAULT_COOLDOWN_MS);
+    });
+    test('cooldown_min: 0 → every breach allowed (no suppression)', () => {
+        expect(withinCooldown(NOW - 1, NOW, resolveCooldownMs({ cooldown_min: 0 }))).toBe(false);
     });
 });
 
