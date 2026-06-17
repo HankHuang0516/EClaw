@@ -45,6 +45,7 @@ const { newCardId } = require('./entity-id');
 const { tKanban, statusLabel } = require('./i18n/kanban-notifications');
 const devicePrefs = require('./device-preferences');
 const { emit: emitKanbanEvent } = require('./lib/kanban-events');
+const { resolveEntityHostDevice } = require('./lib/per-device-cron');
 
 // Cache device→language to avoid repeated lookups
 const deviceLangCache = new Map();
@@ -440,7 +441,12 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
     // ── Helper: push notification to entity via channel callback + save to chat ──
     async function notifyEntities(deviceId, entityIds, message, options = {}) {
-        const { description, cardId } = options;
+        // perDeviceCron: when true (cron dispatch path), resolve which registered
+        // device actually HOSTS each assigned entity and push there, instead of
+        // assuming the card's own device hosts it. Default false keeps every other
+        // caller (once-triggers, manual notifies) on the legacy local-only path.
+        // See backend/lib/per-device-cron.js + card_1ce50de359411f0d0947399f.
+        const { description, cardId, perDeviceCron = false } = options;
         if (!pushToChannelCallback && !pushToEntity && !pushToBot) {
             console.warn('[Kanban] No push callback available — notifications will not be delivered');
             return;
@@ -451,10 +457,32 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
         for (const eid of entityIds) {
             try {
-                const device = devices[deviceId];
-                const entity = device?.entities?.[eid];
+                // ── Per-device host resolution ──
+                // Default: push to the card's own device (legacy single-device).
+                // When perDeviceCron is on, redirect the push to the device that
+                // actually hosts a reachable copy of this entity (matched by
+                // stable publicCode). No host → log a clear reason and fall back
+                // to the local binding (never a silent drop, never a hard fail).
+                let pushDeviceId = deviceId;
+                let pushEid = eid;
+                if (perDeviceCron && devices) {
+                    const hostDecision = resolveEntityHostDevice({ device_id: deviceId }, eid, devices);
+                    if (hostDecision.shouldDispatch) {
+                        if (hostDecision.resolution === 'cross_device') {
+                            console.log(`[Kanban][per-device-cron] Entity ${eid} (publicCode=${hostDecision.publicCode}) hosted on device ${hostDecision.hostDeviceId} as entity ${hostDecision.hostEntityId} — redirecting cron dispatch there (card device ${deviceId})`);
+                            pushDeviceId = hostDecision.hostDeviceId;
+                            pushEid = hostDecision.hostEntityId;
+                        }
+                        // resolution === 'local' → no change, legacy path.
+                    } else {
+                        console.warn(`[Kanban][per-device-cron] No registered/active host device for entity ${eid} on card device ${deviceId} (reason=${hostDecision.reason}) — falling back to card-device local binding`);
+                    }
+                }
+
+                const device = devices[pushDeviceId];
+                const entity = device?.entities?.[pushEid];
                 if (!entity) {
-                    console.warn(`[Kanban] Entity ${eid} not found on device ${deviceId}`);
+                    console.warn(`[Kanban] Entity ${pushEid} not found on device ${pushDeviceId}`);
                     continue;
                 }
 
@@ -486,8 +514,10 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 // Note: getMissionApiHints already embeds [AVAILABLE TOOLS — Kanban Board]
                 // (read/move/comment/disable schedule/enable schedule), so we no longer
                 // append a second Kanban Board block here.
+                // Hints must carry the HOST device's credentials so the receiving
+                // entity authenticates against the card via its own binding.
                 const kanbanHints = getMissionApiHints
-                    ? getMissionApiHints(API_BASE, deviceId, eid, entity.botSecret)
+                    ? getMissionApiHints(API_BASE, pushDeviceId, pushEid, entity.botSecret)
                     : '';
 
                 // ── 3. Build full message with description ──
@@ -497,7 +527,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
                 // ── 4. Push to bot (channel or webhook, with standard hints) ──
                 if (entity.bindingType === 'channel' && pushToChannelCallback) {
-                    const result = await pushToChannelCallback(deviceId, eid, {
+                    const result = await pushToChannelCallback(pushDeviceId, pushEid, {
                         event: 'kanban_notification',
                         from: 'kanban',
                         text: message + descBlock,
@@ -507,7 +537,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                             missionHints: kanbanHints,
                         }
                     }, entity.channelAccountId);
-                    console.log(`[Kanban] Channel push to entity ${eid}: ${result.pushed ? 'OK' : result.reason}`);
+                    console.log(`[Kanban] Channel push to entity ${pushEid}@${pushDeviceId}: ${result.pushed ? 'OK' : result.reason}`);
 
                 } else if (entity.webhook && pushToBot) {
                     // Non-channel: build full push message with standard hints (same as speak-to webhook path)
@@ -518,20 +548,20 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                         kanbanHints,
                     ].filter(Boolean).join('\n');
 
-                    const pushResult = await pushToBot(entity, deviceId, 'kanban_notification', { message: pushMsg });
-                    console.log(`[Kanban] Webhook push to entity ${eid}: ${pushResult.pushed ? 'OK' : pushResult.reason}`);
+                    const pushResult = await pushToBot(entity, pushDeviceId, 'kanban_notification', { message: pushMsg });
+                    console.log(`[Kanban] Webhook push to entity ${pushEid}@${pushDeviceId}: ${pushResult.pushed ? 'OK' : pushResult.reason}`);
 
                     // Mark delivered if push succeeded
                     if (pushResult.pushed && chatMsgId) {
                         // No markChatMessageDelivered reference here — just log
-                        console.log(`[Kanban] Webhook delivered to entity ${eid}, chatMsgId=${chatMsgId}`);
+                        console.log(`[Kanban] Webhook delivered to entity ${pushEid}@${pushDeviceId}, chatMsgId=${chatMsgId}`);
                     }
 
                 } else if (pushToEntity) {
                     // Legacy fallback
                     const pushMsg = `[KANBAN NOTIFICATION] ${message}${descBlock}${kanbanHints}`;
-                    await pushToEntity(deviceId, eid, pushMsg);
-                    console.log(`[Kanban] Legacy push to entity ${eid}`);
+                    await pushToEntity(pushDeviceId, pushEid, pushMsg);
+                    console.log(`[Kanban] Legacy push to entity ${pushEid}@${pushDeviceId}`);
                 }
 
             } catch (e) {
@@ -3495,7 +3525,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     if (bots.length > 0) {
                         const lang = await getDeviceLanguage(card.device_id);
                         const msg = tKanban(lang, 'scheduleOnce', { title: card.title });
-                        notifyEntities(card.device_id, bots, msg, { description: card.description, cardId: card.id });
+                        notifyEntities(card.device_id, bots, msg, { description: card.description, cardId: card.id, perDeviceCron: true });
                     }
 
                     try { await bumpVersion(card.device_id); } catch (e) { /* ignore */ }
@@ -3683,7 +3713,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                                     await enqueuePendingNotify(card.device_id, botId, childCard.id, msg, payload);
                                     console.log(`[Kanban] Smart-queue: enqueued notify for bot #${botId} card ${childCard.id} (hasPending=${hasPending}, workload=${workload}, backpressure=${backpressure})`);
                                 } else {
-                                    await notifyEntities(card.device_id, [botId], msg, payload);
+                                    await notifyEntities(card.device_id, [botId], msg, { ...payload, perDeviceCron: true });
                                     console.log(`[Kanban] Smart-queue: pushed immediate notify for bot #${botId} card ${childCard.id} (workload=${workload})`);
                                 }
                             } catch (notifyErr) {
@@ -3732,7 +3762,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                                 to: statusLabel(lang, newStatus)
                             })
                             : tKanban(lang, 'scheduleRecurring', { title: card.title });
-                        notifyEntities(card.device_id, bots, msg, { description: card.description, cardId: card.id });
+                        notifyEntities(card.device_id, bots, msg, { description: card.description, cardId: card.id, perDeviceCron: true });
                     }
 
                     try { await bumpVersion(card.device_id); } catch (e) { /* ignore */ }
@@ -3844,7 +3874,8 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                         notifyEntities(card.device_id, bots, msg, {
                             description: card.description,
                             cardId: childCard.id,
-                            parentCardId: card.id
+                            parentCardId: card.id,
+                            perDeviceCron: true
                         });
                     }
 
