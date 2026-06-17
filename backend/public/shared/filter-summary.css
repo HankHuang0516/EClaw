@@ -131,6 +131,47 @@
   margin-top: 10px;
 }
 
+/* ── Entity chip row inside the filter panel — split-view clip fix ──
+ * card_f66d3265b16bf8f95349e1cf: in workspace.html split panes chat.html is
+ * loaded in a narrow iframe. The host page's `.chip-group` desktop branch
+ * (overflow:hidden; max-height:34px + JS toggle) wraps overflowing entity chips
+ * to a hidden second row, and the toggle that reveals them is unreliable inside
+ * the popover/iframe — so entities beyond row 1 (Hermes / PetDX / 我的訊息 …)
+ * became unreachable.
+ *
+ * Inside this panel we don't need the collapse-to-one-row affordance (the panel
+ * is purpose-built for filtering), so make the entity row a single horizontal
+ * momentum-scroll strip with NO height clip. Every entity is reachable by scroll
+ * regardless of pane width / viewport media-query. Scoped to the panel so the
+ * host page's standalone (non-split) chat header keeps its wrap+toggle behavior. */
+.eclaw-filter-summary__panel .chip-group {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-height: none;
+  -webkit-overflow-scrolling: touch;   /* momentum scroll on iOS WebView */
+  scrollbar-width: thin;               /* Firefox: keep a slim scroll affordance */
+  padding-bottom: 2px;
+}
+
+/* The host JS expand/collapse toggle is meaningless once the row scrolls. */
+.eclaw-filter-summary__panel .filter-chip-toggle {
+  display: none !important;
+}
+
+/* Chips must not shrink — keep them tappable while the row scrolls. */
+.eclaw-filter-summary__panel .filter-chip {
+  flex-shrink: 0;
+}
+
+/* Keep the popover itself within the split pane so it can never be clipped by
+ * the iframe edge: cap its width to the viewport (pane) and let it scroll if a
+ * narrow pane can't fit the default min-width. */
+.eclaw-filter-summary__panel:not(.is-mobile) {
+  max-width: min(480px, calc(100vw - 24px));
+  overflow: auto;
+}
+
 /* Respect reduced motion: no slide-in animation. (Default has none; this is a
  * future guard if we add one.) */
 @media (prefers-reduced-motion: reduce) {
