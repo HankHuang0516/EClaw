@@ -39,7 +39,7 @@ const compression = require('compression');
 
 const safeEqual = require('./safe-equal');
 const { safeUpdatedAtToISO } = require('./safe-date');
-const { createHermesHealthMonitor } = require('./hermes-health-check');
+const { createHermesHealthMonitor, hermesLog } = require('./hermes-health-check');
 const { createSettingsHelpInvariantCron } = require('./settings-help-invariant-cron');
 
 // ============================================
@@ -21170,7 +21170,7 @@ if (process.env.NODE_ENV !== 'test') {
     try {
         hermesHealthMonitor.startCron({ nodeCron });
     } catch (err) {
-        console.error('[HermesHealth] failed to schedule cron:', err && err.message);
+        hermesLog('error', 'hermes_health_cron_schedule_failed', { error: err && err.message });
         serverLog('error', 'hermes_health', `[HermesHealth] failed to schedule cron: ${err && err.message}`, {
             action: 'hermes_health_check',
             result: 'schedule_failed',
