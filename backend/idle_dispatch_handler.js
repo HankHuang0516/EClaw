@@ -17,7 +17,7 @@ async function isBotBusy(deviceId, botEntityId) {
         SELECT COUNT(*) as active_count
         FROM kanban_cards
         WHERE device_id = $1
-        AND $2 = ANY(assigned_bots)
+        AND assigned_bots @> to_jsonb($2::int)
         AND status IN ('todo', 'in_progress')
         AND archived = FALSE
     `, [deviceId, botEntityId]);
@@ -65,7 +65,7 @@ async function smartDispatch(deviceId, cardId, assignedBots) {
                 SELECT COUNT(*) as queued_count
                 FROM kanban_cards
                 WHERE device_id = $1
-                AND $2 = ANY(assigned_bots)
+                AND assigned_bots @> to_jsonb($2::int)
                 AND pending_dispatch = TRUE
                 AND archived = FALSE
             `, [deviceId, primaryBot]);
@@ -115,7 +115,7 @@ async function drainBotQueue(deviceId, botEntityId) {
             SELECT id, title, assigned_bots
             FROM kanban_cards
             WHERE device_id = $1
-            AND $2 = ANY(assigned_bots)
+            AND assigned_bots @> to_jsonb($2::int)
             AND pending_dispatch = TRUE
             AND archived = FALSE
             ORDER BY created_at ASC

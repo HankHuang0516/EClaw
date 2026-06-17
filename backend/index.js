@@ -13957,7 +13957,7 @@ app.get('/api/entity/:entityId/workload', async (req, res) => {
                 COUNT(*) as count
             FROM kanban_cards
             WHERE device_id = $1
-              AND $2 = ANY(assigned_bots::integer[])
+              AND assigned_bots @> to_jsonb($2::int)
               AND archived = false
               AND status IN ('scheduled', 'todo', 'in_progress', 'review')
             GROUP BY status
