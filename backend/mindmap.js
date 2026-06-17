@@ -1037,6 +1037,40 @@ function createMindmapModule(devices) {
             // Sort cards before projection so cap-truncation prefers active P0 work.
             graphProjection.sortCardsForCap(cards);
 
+            // Enrich the entity map with the live petdx companion sprite URL so
+            // owner/center nodes paint a real avatar (大頭貼) headshot instead of
+            // the bare yellow-square placeholder. Mirrors the /api/entities
+            // enrichment (latest companion_select_log row per entity JOIN
+            // companions); falls back silently to the emoji avatar on any error.
+            const baseEntities = (devices && devices[deviceId] && devices[deviceId].entities) || {};
+            let entityMap = baseEntities;
+            try {
+                const petdxRes = await pool.query(
+                    `SELECT DISTINCT ON (l.entity_id)
+                            l.entity_id, l.companion_id, l.origin, c.avatar_url
+                       FROM companion_select_log l
+                       LEFT JOIN companions c ON c.id = l.companion_id
+                      WHERE l.device_id = $1 AND l.entity_id IS NOT NULL
+                      ORDER BY l.entity_id, l.selected_at DESC, l.id DESC`,
+                    [deviceId]
+                );
+                if (petdxRes.rows.length) {
+                    entityMap = {};
+                    for (const [k, v] of Object.entries(baseEntities)) entityMap[k] = { ...v };
+                    for (const r of petdxRes.rows) {
+                        if (r.origin === 'unbind-cleared') continue;
+                        const eid = Number(r.entity_id);
+                        if (!Number.isFinite(eid) || !r.companion_id) continue;
+                        const url = (typeof r.avatar_url === 'string' && r.avatar_url.trim())
+                            ? r.avatar_url
+                            : `/static/companions/${r.companion_id}/avatar.png`;
+                        entityMap[eid] = { ...(entityMap[eid] || {}), petdxAvatarUrl: url };
+                    }
+                }
+            } catch (petdxErr) {
+                console.warn('[Mindmap] petdx avatar enrichment failed:', petdxErr.message);
+            }
+
             const projection = graphProjection.projectGraph({
                 cards,
                 initialCardIds,
@@ -1048,7 +1082,7 @@ function createMindmapModule(devices) {
                 noteCounts: noteCounts.rows,
                 notes,
                 anchorRows: anchorsResult.rows,
-                entityMap: (devices && devices[deviceId] && devices[deviceId].entities) || {},
+                entityMap,
                 options,
             });
 

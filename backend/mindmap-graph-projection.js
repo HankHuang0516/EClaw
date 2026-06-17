@@ -120,8 +120,35 @@ function buildNoteNode(note) {
     };
 }
 
+// Resolve an entity's human display name. Mirrors entity-utils.js
+// getEntityDisplayName priority: server-set display `name` first, then a
+// title-cased `character` codename (LOBSTER -> Lobster), then a numeric
+// fallback. Keeps the owner/center node label off the raw codename so the
+// mind-map center matches the rest of the surfaces (kanban/arena avatars).
+function ownerDisplayName(entityId, entityRecord) {
+    const name = entityRecord && entityRecord.name;
+    if (name && String(name).trim()) return String(name).trim();
+    const character = entityRecord && entityRecord.character;
+    if (character && String(character).trim()) {
+        const c = String(character).trim();
+        return c.charAt(0) + c.slice(1).toLowerCase();
+    }
+    return `Entity ${entityId}`;
+}
+
+// Resolve the avatar to paint for an owner node. Prefer a real image (the
+// live petdx companion sprite URL) over the emoji avatar so the center node
+// shows an actual headshot; fall back to the emoji, then null (frontend then
+// draws a deterministic initial badge — never a bare yellow square).
+function ownerAvatar(entityRecord) {
+    if (!entityRecord) return null;
+    const petdx = entityRecord.petdxAvatarUrl;
+    if (petdx && String(petdx).trim()) return String(petdx).trim();
+    return entityRecord.avatar || null;
+}
+
 function buildOwnerNode(entityId, entityRecord) {
-    const label = (entityRecord && (entityRecord.character || entityRecord.name)) || `Entity ${entityId}`;
+    const label = ownerDisplayName(entityId, entityRecord);
     return {
         id: `owner:${entityId}`,
         sourceId: String(entityId),
@@ -129,7 +156,15 @@ function buildOwnerNode(entityId, entityRecord) {
         fullTitle: clip(label, TITLE_MAX),
         type: 'owner',
         ownerEntityId: entityId,
-        avatar: (entityRecord && entityRecord.avatar) || null,
+        // Avatar rides along so the canvas renderer can paint a real headshot
+        // (大頭貼) in place of the yellow square. Prefer the live petdx sprite
+        // URL (a real image) over the emoji avatar, matching the entity-utils
+        // resolution chain; the frontend draws URLs as a clipped image and
+        // emoji as a glyph, falling back to a deterministic initial badge.
+        avatar: ownerAvatar(entityRecord),
+        // emoji avatar kept as a secondary fast-paint / fallback hint.
+        avatarEmoji: (entityRecord && entityRecord.avatar) || null,
+        character: (entityRecord && entityRecord.character) || null,
         colorKey: 'owner',
         val: 6,
     };
