@@ -2203,28 +2203,28 @@
                 <!-- Behavior Options (single-select) -->
                 <div class="org-options">
                     <label class="org-option-card">
-                        <input type="radio" name="orgMode" value="none" onchange="saveOrgOptions()">
+                        <input type="radio" name="orgMode" value="none" onchange="saveOrgOptions()" aria-label="Org mode: None">
                         <div class="org-opt-text">
                             <strong data-i18n="org_opt_none_title">None</strong>
                             <span data-i18n="org_opt_none_desc">No hierarchy behavior enabled</span>
                         </div>
                     </label>
                     <label class="org-option-card">
-                        <input type="radio" name="orgMode" value="low" onchange="saveOrgOptions()">
+                        <input type="radio" name="orgMode" value="low" onchange="saveOrgOptions()" aria-label="Org mode: Low Interference">
                         <div class="org-opt-text">
                             <strong data-i18n="org_opt1_title">Low Interference</strong>
                             <span data-i18n="org_opt1_desc">Superior becomes default kanban task reviewer</span>
                         </div>
                     </label>
                     <label class="org-option-card">
-                        <input type="radio" name="orgMode" value="recommended" onchange="saveOrgOptions()">
+                        <input type="radio" name="orgMode" value="recommended" onchange="saveOrgOptions()" aria-label="Org mode: Recommended">
                         <div class="org-opt-text">
                             <strong data-i18n="org_opt2_title">Recommended</strong>
                             <span data-i18n="org_opt2_desc">Auto-route messages to superior when kanban tasks incomplete</span>
                         </div>
                     </label>
                     <label class="org-option-card">
-                        <input type="radio" name="orgMode" value="strict" onchange="saveOrgOptions()">
+                        <input type="radio" name="orgMode" value="strict" onchange="saveOrgOptions()" aria-label="Org mode: Close Supervision">
                         <div class="org-opt-text">
                             <strong data-i18n="org_opt3_title">Close Supervision</strong>
                             <span data-i18n="org_opt3_desc">Superior becomes kanban reviewer + all messages auto-routed to superior</span>

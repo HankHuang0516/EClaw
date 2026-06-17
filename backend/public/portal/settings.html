@@ -1027,7 +1027,7 @@
                     <div class="setting-row">
                         <span class="setting-row-label" data-i18n="broadcast_pref_recipient_info">Show recipient list in broadcasts</span>
                         <label class="toggle-switch">
-                            <input type="checkbox" id="toggleBroadcastRecipientInfo" onchange="toggleDevicePref('broadcast_recipient_info', this.checked)">
+                            <input type="checkbox" id="toggleBroadcastRecipientInfo" aria-label="Include recipient info in broadcasts" onchange="toggleDevicePref('broadcast_recipient_info', this.checked)">
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -1058,12 +1058,12 @@
                                     <span data-i18n="prompt_policy_entity_label">Entity #</span>
                                     <span class="help-icon" data-help-content-key="prompt_policy_entity_help"></span>
                                 </span>
-                                <input type="number" id="promptPolicyEntityId" min="0" step="1" value="0" class="policy-input" onchange="onPromptPolicyEntityChange()">
+                                <input type="number" id="promptPolicyEntityId" aria-label="Prompt policy entity ID" min="0" step="1" value="0" class="policy-input" onchange="onPromptPolicyEntityChange()">
                             </label>
                         </div>
 
                         <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
-                            <input type="checkbox" id="promptPolicyEnabled">
+                            <input type="checkbox" id="promptPolicyEnabled" aria-label="Enable device prompt policy">
                             <!-- HELP-KEY: prompt_policy_enabled_help -->
                             <span id="promptPolicyEnabledLabel" data-i18n="prompt_policy_enabled_label">Enable device prompt policy</span>
                             <span class="help-icon" data-help-content-key="prompt_policy_enabled_help"></span>
@@ -1080,13 +1080,13 @@
 
                         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
                             <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
-                                <input type="checkbox" id="promptPolicyRequirePlan">
+                                <input type="checkbox" id="promptPolicyRequirePlan" aria-label="Require test plan">
                                 <!-- HELP-KEY: prompt_policy_require_plan_help -->
                                 <span data-i18n="prompt_policy_require_plan_label">Require test plan</span>
                                 <span class="help-icon" data-help-content-key="prompt_policy_require_plan_help"></span>
                             </label>
                             <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
-                                <input type="checkbox" id="promptPolicyRequireMilestones">
+                                <input type="checkbox" id="promptPolicyRequireMilestones" aria-label="Require milestone updates">
                                 <!-- HELP-KEY: prompt_policy_require_milestones_help -->
                                 <span data-i18n="prompt_policy_require_milestones_label">Require milestone updates</span>
                                 <span class="help-icon" data-help-content-key="prompt_policy_require_milestones_help"></span>
@@ -1095,7 +1095,7 @@
                                 <!-- HELP-KEY: prompt_policy_heartbeat_help -->
                                 <span data-i18n="prompt_policy_heartbeat_label">Heartbeat min</span>
                                 <span class="help-icon" data-help-content-key="prompt_policy_heartbeat_help"></span>
-                                <input type="number" id="promptPolicyHeartbeatMinutes" min="1" max="30" step="1"
+                                <input type="number" id="promptPolicyHeartbeatMinutes" aria-label="Prompt policy heartbeat minutes" min="1" max="30" step="1"
                                        style="width:70px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);text-align:right;">
                             </label>
                         </div>
@@ -1132,7 +1132,7 @@
                             <button class="btn btn-outline btn-sm" onclick="loadPromptPolicy()" data-i18n="common_refresh">Refresh</button>
                             <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);">
                                 Preview entity #
-                                <input type="number" id="promptPolicyPreviewEntity" min="0" step="1" value="0" class="policy-input" style="width:64px;text-align:right;">
+                                <input type="number" id="promptPolicyPreviewEntity" aria-label="Prompt policy preview entity" min="0" step="1" value="0" class="policy-input" style="width:64px;text-align:right;">
                             </span>
                             <select id="promptPolicyPreviewChannel" class="policy-select" style="width:auto;">
                                 <option value="codex">codex</option>
@@ -1168,7 +1168,7 @@
                         <span data-i18n="kanban_nudge_batch_label">Cards per cycle</span>
                         <span class="help-icon" data-help-content-key="kanban_nudge_batch_help"></span>
                     </span>
-                    <input type="number" id="kanbanNudgeBatchSize" min="1" max="20" step="1"
+                    <input type="number" id="kanbanNudgeBatchSize" aria-label="Kanban nudge batch size" min="1" max="20" step="1"
                            style="width:72px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);text-align:right;"
                            onchange="saveKanbanNudgePref('kanban_nudge_batch_size', Math.max(1, Math.min(20, parseInt(this.value)||1)))">
                 </div>
@@ -1180,15 +1180,15 @@
                         <span class="help-icon" data-help-content-key="kanban_nudge_priority_help"></span>
                     </span>
                     <label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;cursor:pointer;">
-                        <input type="radio" name="kanbanNudgePriorityMode" value="priority_first" onchange="saveKanbanNudgePref('kanban_nudge_priority_mode', this.value)">
+                        <input type="radio" name="kanbanNudgePriorityMode" value="priority_first" aria-label="Nudge order: level-first" onchange="saveKanbanNudgePref('kanban_nudge_priority_mode', this.value)">
                         <span data-i18n="kanban_nudge_priority_mode_level">Level-first (P0 &gt; P1 &gt; P2)</span>
                     </label>
                     <label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;cursor:pointer;">
-                        <input type="radio" name="kanbanNudgePriorityMode" value="column_first" onchange="saveKanbanNudgePref('kanban_nudge_priority_mode', this.value)">
+                        <input type="radio" name="kanbanNudgePriorityMode" value="column_first" aria-label="Nudge order: column-first" onchange="saveKanbanNudgePref('kanban_nudge_priority_mode', this.value)">
                         <span data-i18n="kanban_nudge_priority_mode_column">Column-first (Review &gt; In Progress &gt; Todo)</span>
                     </label>
                     <label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;cursor:pointer;">
-                        <input type="radio" name="kanbanNudgePriorityMode" value="column_level" onchange="saveKanbanNudgePref('kanban_nudge_priority_mode', this.value)">
+                        <input type="radio" name="kanbanNudgePriorityMode" value="column_level" aria-label="Nudge order: column plus level" onchange="saveKanbanNudgePref('kanban_nudge_priority_mode', this.value)">
                         <span data-i18n="kanban_nudge_priority_mode_both">Column + level (Review P2 &gt; In Progress P1 &gt; Todo P0)</span>
                     </label>
                 </div>
@@ -1210,10 +1210,10 @@
                         Per Hank 2026-06-01 16:57 TW directive.
                     -->
                     <div style="display:flex;flex-wrap:wrap;gap:8px;">
-                        <label class="nudge-status-chip"><input type="checkbox" value="backlog" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_backlog">Backlog</span></label>
-                        <label class="nudge-status-chip"><input type="checkbox" value="todo" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_todo">Todo</span></label>
-                        <label class="nudge-status-chip"><input type="checkbox" value="in_progress" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_in_progress">In Progress</span></label>
-                        <label class="nudge-status-chip"><input type="checkbox" value="review" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_review">Review</span></label>
+                        <label class="nudge-status-chip"><input type="checkbox" value="backlog" onchange="saveKanbanNudgeStatuses()" aria-label="Notify status: backlog"><span data-i18n="kanban_status_backlog">Backlog</span></label>
+                        <label class="nudge-status-chip"><input type="checkbox" value="todo" onchange="saveKanbanNudgeStatuses()" aria-label="Notify status: todo"><span data-i18n="kanban_status_todo">Todo</span></label>
+                        <label class="nudge-status-chip"><input type="checkbox" value="in_progress" onchange="saveKanbanNudgeStatuses()" aria-label="Notify status: in progress"><span data-i18n="kanban_status_in_progress">In Progress</span></label>
+                        <label class="nudge-status-chip"><input type="checkbox" value="review" onchange="saveKanbanNudgeStatuses()" aria-label="Notify status: review"><span data-i18n="kanban_status_review">Review</span></label>
                     </div>
                 </div>
 
@@ -1224,11 +1224,11 @@
                         <span class="help-icon" data-help-content-key="kanban_nudge_interval_help"></span>
                     </span>
                     <span style="display:flex;align-items:center;gap:4px;">
-                        <input type="number" id="kanbanNudgeIntervalHours" min="0" max="24" step="1"
+                        <input type="number" id="kanbanNudgeIntervalHours" aria-label="Nudge interval hours" min="0" max="24" step="1"
                                style="width:56px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);text-align:right;"
                                onchange="saveKanbanNudgeInterval()">
                         <span style="font-size:13px;" data-i18n="kanban_nudge_interval_hour">h</span>
-                        <input type="number" id="kanbanNudgeIntervalMinutes" min="0" max="59" step="1"
+                        <input type="number" id="kanbanNudgeIntervalMinutes" aria-label="Nudge interval minutes" min="0" max="59" step="1"
                                style="width:56px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);text-align:right;"
                                onchange="saveKanbanNudgeInterval()">
                         <span style="font-size:13px;" data-i18n="kanban_nudge_interval_min">m</span>
@@ -1243,14 +1243,14 @@
                     </span>
                     <p class="section-desc" style="margin:0 0 6px 0;font-size:12px;" data-i18n="kanban_nudge_advanced_desc">🅰️ stale-card nudge vs 🅱️ cron-schedule trigger — separate switches.</p>
                     <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
-                        <input type="checkbox" id="kanbanNudgePerEntityThrottle"
+                        <input type="checkbox" id="kanbanNudgePerEntityThrottle" aria-label="Per-entity nudge throttle"
                                onchange="saveKanbanNudgePref('kanban_nudge_per_entity_throttle', this.checked)">
                         <!-- HELP-KEY: kanban_nudge_per_entity_throttle_help -->
                         <span data-i18n="kanban_nudge_per_entity_throttle_label">🅰️ Stale-card: cap each entity at 1 nudge per interval</span>
                         <span class="help-icon" data-help-content-key="kanban_nudge_per_entity_throttle_help"></span>
                     </label>
                     <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
-                        <input type="checkbox" id="kanbanCronRecurringNotify"
+                        <input type="checkbox" id="kanbanCronRecurringNotify" aria-label="Recurring cron notify"
                                onchange="saveKanbanNudgePref('kanban_cron_recurring_notify', this.checked)">
                         <!-- HELP-KEY: kanban_cron_recurring_notify_help -->
                         <span data-i18n="kanban_cron_recurring_notify_label">🅱️ Cron母卡 self-recurring (no child): notify on each fire</span>
@@ -1287,7 +1287,7 @@
                         </p>
 
                         <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:6px 8px;border:1px solid rgba(251,191,36,0.35);border-radius:8px;background:rgba(251,191,36,0.08);">
-                            <input type="checkbox" id="kanbanNudgeEntStopMode"
+                            <input type="checkbox" id="kanbanNudgeEntStopMode" aria-label="Entity nudge stop mode"
                                    onchange="onKanbanNudgeEntityOverrideToggle('kanban_nudge_stop_mode', this.checked)">
                             <!-- HELP-KEY: kanban_nudge_per_entity_stop_mode_help -->
                             <span data-i18n="kanban_nudge_per_entity_stop_mode">Stop-mode: pause stale-card reminders for this entity</span>
@@ -1297,18 +1297,18 @@
                         <!-- Override row: interval -->
                         <div style="display:flex;flex-direction:column;gap:6px;">
                             <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
-                                <input type="checkbox" id="kanbanNudgeEntOverrideInterval"
+                                <input type="checkbox" id="kanbanNudgeEntOverrideInterval" aria-label="Override entity nudge interval"
                                        onchange="onKanbanNudgeEntityOverrideToggle('kanban_nudge_interval_minutes', this.checked)">
                                 <!-- HELP-KEY: kanban_nudge_per_entity_override_interval_help -->
                                 <span data-i18n="kanban_nudge_per_entity_override_interval">Override interval</span>
                                 <span class="help-icon" data-help-content-key="kanban_nudge_per_entity_override_interval_help"></span>
                             </label>
                             <span style="display:flex;align-items:center;gap:4px;padding-left:24px;">
-                                <input type="number" id="kanbanNudgeEntIntervalHours" min="0" max="24" step="1" disabled
+                                <input type="number" id="kanbanNudgeEntIntervalHours" aria-label="Entity nudge interval hours" min="0" max="24" step="1" disabled
                                        style="width:56px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);text-align:right;"
                                        onchange="saveKanbanNudgeEntityInterval()">
                                 <span style="font-size:13px;" data-i18n="kanban_nudge_interval_hour">h</span>
-                                <input type="number" id="kanbanNudgeEntIntervalMinutes" min="0" max="59" step="1" disabled
+                                <input type="number" id="kanbanNudgeEntIntervalMinutes" aria-label="Entity nudge interval minutes" min="0" max="59" step="1" disabled
                                        style="width:56px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);text-align:right;"
                                        onchange="saveKanbanNudgeEntityInterval()">
                                 <span style="font-size:13px;" data-i18n="kanban_nudge_interval_min">m</span>
@@ -1318,7 +1318,7 @@
                         <!-- Override row: statuses -->
                         <div style="display:flex;flex-direction:column;gap:6px;">
                             <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
-                                <input type="checkbox" id="kanbanNudgeEntOverrideStatuses"
+                                <input type="checkbox" id="kanbanNudgeEntOverrideStatuses" aria-label="Override entity nudge statuses"
                                        onchange="onKanbanNudgeEntityOverrideToggle('kanban_nudge_statuses', this.checked)">
                                 <!-- HELP-KEY: kanban_nudge_per_entity_override_statuses_help -->
                                 <span data-i18n="kanban_nudge_per_entity_override_statuses">Override columns</span>
@@ -1326,24 +1326,24 @@
                             </label>
                             <!-- 'blocked' omitted; see device-wide chip block above. -->
                             <div id="kanbanNudgeEntStatusChips" style="display:flex;flex-wrap:wrap;gap:8px;padding-left:24px;opacity:0.5;">
-                                <label class="nudge-status-chip"><input type="checkbox" value="backlog" data-ent-status onchange="saveKanbanNudgeEntityStatuses()"><span data-i18n="kanban_status_backlog">Backlog</span></label>
-                                <label class="nudge-status-chip"><input type="checkbox" value="todo" data-ent-status onchange="saveKanbanNudgeEntityStatuses()"><span data-i18n="kanban_status_todo">Todo</span></label>
-                                <label class="nudge-status-chip"><input type="checkbox" value="in_progress" data-ent-status onchange="saveKanbanNudgeEntityStatuses()"><span data-i18n="kanban_status_in_progress">In Progress</span></label>
-                                <label class="nudge-status-chip"><input type="checkbox" value="review" data-ent-status onchange="saveKanbanNudgeEntityStatuses()"><span data-i18n="kanban_status_review">Review</span></label>
+                                <label class="nudge-status-chip"><input type="checkbox" value="backlog" data-ent-status aria-label="Entity notify status: backlog" onchange="saveKanbanNudgeEntityStatuses()"><span data-i18n="kanban_status_backlog">Backlog</span></label>
+                                <label class="nudge-status-chip"><input type="checkbox" value="todo" data-ent-status aria-label="Entity notify status: todo" onchange="saveKanbanNudgeEntityStatuses()"><span data-i18n="kanban_status_todo">Todo</span></label>
+                                <label class="nudge-status-chip"><input type="checkbox" value="in_progress" data-ent-status aria-label="Entity notify status: in progress" onchange="saveKanbanNudgeEntityStatuses()"><span data-i18n="kanban_status_in_progress">In Progress</span></label>
+                                <label class="nudge-status-chip"><input type="checkbox" value="review" data-ent-status aria-label="Entity notify status: review" onchange="saveKanbanNudgeEntityStatuses()"><span data-i18n="kanban_status_review">Review</span></label>
                             </div>
                         </div>
 
                         <!-- Override row: throttle -->
                         <div style="display:flex;flex-direction:column;gap:6px;">
                             <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
-                                <input type="checkbox" id="kanbanNudgeEntOverrideThrottle"
+                                <input type="checkbox" id="kanbanNudgeEntOverrideThrottle" aria-label="Override entity nudge throttle"
                                        onchange="onKanbanNudgeEntityOverrideToggle('kanban_nudge_per_entity_throttle', this.checked)">
                                 <!-- HELP-KEY: kanban_nudge_per_entity_override_throttle_help -->
                                 <span data-i18n="kanban_nudge_per_entity_override_throttle">Override throttle</span>
                                 <span class="help-icon" data-help-content-key="kanban_nudge_per_entity_override_throttle_help"></span>
                             </label>
                             <label style="display:flex;align-items:center;gap:8px;font-size:13px;padding-left:24px;cursor:pointer;">
-                                <input type="checkbox" id="kanbanNudgeEntThrottleVal" disabled
+                                <input type="checkbox" id="kanbanNudgeEntThrottleVal" aria-label="Entity nudge throttle value" disabled
                                        onchange="saveKanbanNudgeEntityThrottle()">
                                 <!-- HELP-KEY: kanban_nudge_per_entity_throttle_short_help -->
                                 <span data-i18n="kanban_nudge_per_entity_throttle_short">Cap this entity at 1 nudge per interval</span>
@@ -1377,7 +1377,7 @@
                     <span class="help-icon" data-help-content-key="usage_warning_enable_help"></span>
                 </span>
                 <label class="switch" style="position:relative;display:inline-block;width:44px;height:24px;">
-                    <input type="checkbox" id="toggleUsageWarning"
+                    <input type="checkbox" id="toggleUsageWarning" aria-label="Enable usage warnings"
                            onchange="onUsageWarningEnabledChange(this.checked)"
                            style="opacity:0;width:0;height:0;">
                     <span aria-hidden="true"
@@ -1394,7 +1394,7 @@
                     </span>
                     <span id="usageWarning5hValue" style="font-variant-numeric:tabular-nums;color:var(--text-secondary);">15%</span>
                 </span>
-                <input type="range" id="usageWarning5hSlider" min="0" max="100" step="1" value="15"
+                <input type="range" id="usageWarning5hSlider" aria-label="5-hour usage warning threshold" min="0" max="100" step="1" value="15"
                        oninput="onUsageWarningSliderInput('5h', this.value)"
                        onchange="saveUsageWarningConfig()"
                        style="width:100%;">
@@ -1409,7 +1409,7 @@
                     </span>
                     <span id="usageWarning7dValue" style="font-variant-numeric:tabular-nums;color:var(--text-secondary);">5%</span>
                 </span>
-                <input type="range" id="usageWarning7dSlider" min="0" max="100" step="1" value="5"
+                <input type="range" id="usageWarning7dSlider" aria-label="7-day usage warning threshold" min="0" max="100" step="1" value="5"
                        oninput="onUsageWarningSliderInput('7d', this.value)"
                        onchange="saveUsageWarningConfig()"
                        style="width:100%;">
@@ -1656,7 +1656,7 @@
                     <span data-i18n="feedback_photo_label">Attach Photos (Optional)</span>
                     <span class="help-icon" data-help-content-key="feedback_photo_help"></span>
                 </div>
-                <input type="file" id="fbPhotoInput" accept="image/jpeg,image/png,image/webp,image/gif" multiple style="display:none" onchange="onFeedbackPhotosSelected(event)">
+                <input type="file" id="fbPhotoInput" aria-label="Attach photos" accept="image/jpeg,image/png,image/webp,image/gif" multiple style="display:none" onchange="onFeedbackPhotosSelected(event)">
                 <button type="button" class="fb-photo-btn" id="fbPhotoAddBtn" onclick="document.getElementById('fbPhotoInput').click()">
                     📷 <span data-i18n="feedback_photo_add">Add Photos</span>
                 </button>

@@ -3299,7 +3299,7 @@
                 <div class="target-bar-row" id="targetBarRow">
                     <span class="target-label" data-i18n="chat_send_to">Send to:</span>
                     <label class="target-check" id="targetAll" style="display:none;">
-                        <input type="checkbox" checked onchange="toggleTargetAll(this)">
+                        <input type="checkbox" checked onchange="toggleTargetAll(this)" aria-label="Send to all">
                         <span data-i18n="chat_filter_all">All</span>
                     </label>
                 </div>
@@ -3374,7 +3374,7 @@
             <div class="r2-modal-footer">
                 <label class="r2-upload-label">
                     &#x2B06; 上傳到檔案庫
-                    <input type="file" id="r2UploadInput" style="display:none" multiple onchange="uploadToR2(this)">
+                    <input type="file" id="r2UploadInput" style="display:none" multiple onchange="uploadToR2(this)" aria-label="Upload files to library">
                 </label>
                 <button class="btn btn-outline" onclick="closeR2FilesPanel()" style="padding:8px 16px;font-size:14px;">關閉</button>
             </div>

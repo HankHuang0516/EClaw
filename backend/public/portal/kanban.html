@@ -774,15 +774,15 @@
             <div class="kb-search-scope" id="kbSearchScope" style="display:flex; gap:4px; align-items:center;">
                 <span style="font-size:12px; color:#888;" data-i18n="kb_search_scope_label">Scope:</span>
                 <label class="kb-scope-chip active" data-scope="title">
-                    <input type="checkbox" value="title" checked onchange="onSearchScopeChange()">
+                    <input type="checkbox" value="title" checked onchange="onSearchScopeChange()" aria-label="Search scope: title">
                     <span data-i18n="kb_search_scope_title">Title</span>
                 </label>
                 <label class="kb-scope-chip" data-scope="comments">
-                    <input type="checkbox" value="comments" onchange="onSearchScopeChange()">
+                    <input type="checkbox" value="comments" onchange="onSearchScopeChange()" aria-label="Search scope: comments">
                     <span data-i18n="kb_search_scope_comments">Comments</span>
                 </label>
                 <label class="kb-scope-chip" data-scope="subcards">
-                    <input type="checkbox" value="subcards" onchange="onSearchScopeChange()">
+                    <input type="checkbox" value="subcards" onchange="onSearchScopeChange()" aria-label="Search scope: sub-cards">
                     <span data-i18n="kb_search_scope_subcards">Sub-cards</span>
                 </label>
             </div>
@@ -808,11 +808,11 @@
                    oninput="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px; min-width:120px;" data-i18n-aria-label="a11y_kanban_filter_tag" aria-label="Filter by tag">
             <label style="font-size:13px; color:#666;">
                 <span data-i18n="kb_funnel_since">Since</span>:
-                <input type="date" id="funnelSince" onchange="onFunnelChange()" style="padding:4px 6px; border:1px solid #ccc; border-radius:6px;">
+                <input type="date" id="funnelSince" onchange="onFunnelChange()" style="padding:4px 6px; border:1px solid #ccc; border-radius:6px;" aria-label="Filter since date">
             </label>
             <label style="font-size:13px; color:#666;">
                 <span data-i18n="kb_funnel_until">Until</span>:
-                <input type="date" id="funnelUntil" onchange="onFunnelChange()" style="padding:4px 6px; border:1px solid #ccc; border-radius:6px;">
+                <input type="date" id="funnelUntil" onchange="onFunnelChange()" style="padding:4px 6px; border:1px solid #ccc; border-radius:6px;" aria-label="Filter until date">
             </label>
             <button class="btn btn-ghost" onclick="resetFunnel()" data-i18n="kb_funnel_reset" style="font-size:13px;">Reset</button>
         </div>
@@ -979,19 +979,19 @@
             </div>
             <div class="kb-form-group">
                 <div class="kb-auto-toggle-row">
-                    <label class="kb-auto-toggle-label"><input type="checkbox" id="newRequiresScreenshot" checked> 📸 <span data-i18n="kb_label_requires_screenshot">需截圖審查（完成時附截圖才可推進 review/done）</span></label>
+                    <label class="kb-auto-toggle-label"><input type="checkbox" id="newRequiresScreenshot" checked aria-label="Requires screenshot review"> 📸 <span data-i18n="kb_label_requires_screenshot">需截圖審查（完成時附截圖才可推進 review/done）</span></label>
                 </div>
             </div>
             <div class="kb-form-group">
                 <div class="kb-auto-toggle-row">
-                    <label class="kb-auto-toggle-label"><input type="checkbox" id="newGated" onchange="document.getElementById('newGateReason').style.display=this.checked?'block':'none'"> 🔒 <span data-i18n="kb_label_gated">Launch-gate（暫停 L1/L2/L3 自動升級；移出 backlog 時自動關閉）</span></label>
+                    <label class="kb-auto-toggle-label"><input type="checkbox" id="newGated" onchange="document.getElementById('newGateReason').style.display=this.checked?'block':'none'" aria-label="Launch-gate this card"> 🔒 <span data-i18n="kb_label_gated">Launch-gate（暫停 L1/L2/L3 自動升級；移出 backlog 時自動關閉）</span></label>
                 </div>
                 <input type="text" id="newGateReason" class="kb-form-input" placeholder="原因（選填，例：等發版）" maxlength="255" style="display:none;margin-top:6px;" aria-label="Gate reason">
                 <div class="kb-gate-hint" data-i18n="kb_gate_backlog_only_hint" style="display:none;font-size:11px;color:#9ca3af;margin-top:4px;">Launch-gate 只在 backlog 卡可用</div>
             </div>
             <div class="kb-form-group">
                 <div class="kb-auto-toggle-row">
-                    <label class="kb-auto-toggle-label"><input type="checkbox" id="newIsAutomation" onchange="toggleAutoFields()"> ⚡ <span data-i18n="kb_label_automation">Set as Automation</span></label>
+                    <label class="kb-auto-toggle-label"><input type="checkbox" id="newIsAutomation" onchange="toggleAutoFields()" aria-label="Set as automation"> ⚡ <span data-i18n="kb_label_automation">Set as Automation</span></label>
                 </div>
                 <div class="kb-auto-fields" id="autoFields">
                     <label class="kb-form-label" data-i18n="kb_label_schedule">Schedule</label>
@@ -1031,18 +1031,18 @@
             </div>
             <div class="kb-form-group">
                 <div class="kb-auto-toggle-row">
-                    <label class="kb-auto-toggle-label"><input type="checkbox" id="editRequiresScreenshot"> 📸 <span data-i18n="kb_label_requires_screenshot">需截圖審查（完成時附截圖才可推進 review/done）</span></label>
+                    <label class="kb-auto-toggle-label"><input type="checkbox" id="editRequiresScreenshot" aria-label="Requires screenshot review"> 📸 <span data-i18n="kb_label_requires_screenshot">需截圖審查（完成時附截圖才可推進 review/done）</span></label>
                 </div>
             </div>
             <div class="kb-form-group">
                 <div class="kb-auto-toggle-row">
-                    <label class="kb-auto-toggle-label"><input type="checkbox" id="editGated"> 🔒 <span data-i18n="kb_label_gated">Launch-gate（暫停 L1/L2/L3 自動升級；移出 backlog 時自動關閉）</span></label>
+                    <label class="kb-auto-toggle-label"><input type="checkbox" id="editGated" aria-label="Launch-gate this card"> 🔒 <span data-i18n="kb_label_gated">Launch-gate（暫停 L1/L2/L3 自動升級；移出 backlog 時自動關閉）</span></label>
                 </div>
                 <input type="text" id="editGateReason" class="kb-form-input" placeholder="原因（選填，例：等發版）" maxlength="255" style="margin-top:6px;" aria-label="Gate reason">
             </div>
             <div class="kb-form-group" id="editReworkGroup" style="display:none">
                 <div class="kb-auto-toggle-row">
-                    <label class="kb-auto-toggle-label"><input type="checkbox" id="editRequiresPrRework"> 🔁 Requires PR rework before Done</label>
+                    <label class="kb-auto-toggle-label"><input type="checkbox" id="editRequiresPrRework" aria-label="Requires PR rework before done"> 🔁 Requires PR rework before Done</label>
                 </div>
                 <input class="kb-form-input" id="editReworkPrNumber" placeholder="New PR number or URL" aria-label="PR number or URL">
                 <div style="font-size:12px;color:var(--text-secondary);margin-top:6px">Reopened PR-linked cards cannot return to Done until a follow-up PR number is recorded.</div>
