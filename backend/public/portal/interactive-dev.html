@@ -112,17 +112,17 @@
                 <p class="id-import-lede" data-i18n="interactive_dev_import_lede">Pick what the toolbar edits.</p>
                 <fieldset class="id-import-fieldset">
                     <label class="id-import-option">
-                        <input type="radio" name="kind" value="this-page" checked>
+                        <input type="radio" name="kind" value="this-page" checked aria-label="Import source: this page (sandbox)">
                         <span><strong data-i18n="interactive_dev_import_this_page">This page (sandbox)</strong><br>
                         <small data-i18n="interactive_dev_import_this_page_hint">Default. Edit the existing Point-and-Edit testbed below.</small></span>
                     </label>
                     <label class="id-import-option">
-                        <input type="radio" name="kind" value="selector">
+                        <input type="radio" name="kind" value="selector" aria-label="Import source: specific element">
                         <span><strong data-i18n="interactive_dev_import_selector">Specific element</strong><br>
                         <input type="text" name="selector" placeholder="CSS selector, e.g. .my-card" class="id-import-input"></span>
                     </label>
                     <label class="id-import-option">
-                        <input type="radio" name="kind" value="url">
+                        <input type="radio" name="kind" value="url" aria-label="Import source: URL">
                         <span><strong data-i18n="interactive_dev_import_url">URL</strong><br>
                         <input type="url" name="url" placeholder="https://eclawbot.com/portal/info.html" class="id-import-input">
                         <small data-i18n="interactive_dev_import_url_hint">Deny-on-miss allowlist. eclawbot.com domains + example.com allowed in v1.</small></span>
