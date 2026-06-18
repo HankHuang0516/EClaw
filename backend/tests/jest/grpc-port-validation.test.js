@@ -6,8 +6,10 @@ const path = require('path');
 const indexSrc = fs.readFileSync(path.join(__dirname, '..', '..', 'index.js'), 'utf8');
 
 describe('gRPC port validation — guard against bad GRPC_PORT env (card_e0a7e1ca)', () => {
-    test('grpcPort fallback variable is computed once as port+1', () => {
-        expect(indexSrc).toMatch(/const fallbackPort = port \+ 1;/);
+    test('grpcPort fallback is port+1 with PORT coerced to int (prod sends PORT as string)', () => {
+        // Must parseInt(port) before +1, else "8080"+1 string-concats to "80801" (>65535)
+        // and crashes gRPC bind. See fix/grpc-port-string-coercion.
+        expect(indexSrc).toMatch(/const fallbackPort = parseInt\(port, 10\) \+ 1;/);
     });
 
     test('parseInt receives explicit radix 10 (defensive against leading-zero / octal)', () => {
