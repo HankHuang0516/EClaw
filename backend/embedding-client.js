@@ -1,23 +1,68 @@
 /**
- * Embedding client — thin wrapper around OpenAI / Voyage embedding APIs.
+ * Embedding client — thin wrapper around OpenAI / Voyage / local embedding backends.
  *
  * Design goals:
  *   1. Fail gracefully when no API key is configured — caller handles null return
  *   2. Support BYO (bring-your-own) key via device-vars (same pattern as Track 4
  *      Claude channel binding); fall back to server env var
- *   3. Provider-agnostic: OpenAI text-embedding-3-small (1536 dim) is the default;
- *      Voyage-3 (1024 dim) is selectable via CHAT_EMBEDDING_PROVIDER env var, but
- *      the chat_messages.embedding column is fixed at vector(1536) so Voyage
- *      requires schema re-provisioning — handled by failing loudly at embed time.
+ *   3. Provider-agnostic via CHAT_EMBEDDING_PROVIDER:
+ *        - 'openai' (default): text-embedding-3-small, 1536 dim — needs OPENAI_API_KEY
+ *        - 'voyage': voyage-3, 1024 dim — needs VOYAGE_API_KEY
+ *        - 'local': @xenova/transformers ONNX, multilingual-e5-small, 384 dim —
+ *          ZERO API key, runs in-process. Model weights auto-download once then
+ *          run offline. Picked for keyless multilingual (Globe-user) deployments.
+ *      The chat_messages.embedding column is provisioned to vector(DEFAULT_DIM);
+ *      chat-embedding.js#normalizeEmbeddingColumn auto-migrates + rebuilds the HNSW
+ *      index + clears mismatched vectors when the active provider's dim changes.
  */
 
-const DEFAULT_MODEL = 'text-embedding-3-small';
-const DEFAULT_DIM = 1536;
-
+// ---- provider + dimension resolution (read once at module load; env is set at boot)
 function pickProvider() {
     const p = String(process.env.CHAT_EMBEDDING_PROVIDER || 'openai').toLowerCase();
+    if (p === 'local') return 'local';
     if (p === 'voyage') return 'voyage';
     return 'openai';
+}
+
+// Local model is configurable but defaults to the lightweight multilingual e5.
+const LOCAL_MODEL = process.env.LOCAL_EMBEDDING_MODEL || 'Xenova/multilingual-e5-small';
+const LOCAL_DIM = parseInt(process.env.LOCAL_EMBEDDING_DIM, 10) || 384;
+
+const DIM_BY_PROVIDER = { openai: 1536, voyage: 1024, local: LOCAL_DIM };
+
+const DEFAULT_MODEL = 'text-embedding-3-small';
+// DEFAULT_DIM tracks the ACTIVE provider so the schema/guards in chat-embedding.js
+// provision the matching vector(N) column. Changing CHAT_EMBEDDING_PROVIDER and
+// rebooting triggers an automatic column migration + HNSW rebuild + backfill.
+const DEFAULT_DIM = DIM_BY_PROVIDER[pickProvider()] || 1536;
+
+// ---- local ONNX backend (lazy: pipeline + weights load only on first embed) ----
+let _localPipelinePromise = null;
+function getLocalPipeline() {
+    if (!_localPipelinePromise) {
+        _localPipelinePromise = (async () => {
+            // dynamic import: @xenova/transformers is ESM-only
+            const { pipeline, env } = await import('@xenova/transformers');
+            // Allow remote weight download (first run) + on-disk cache for reuse.
+            env.allowRemoteModels = true;
+            return pipeline('feature-extraction', LOCAL_MODEL);
+        })().catch((err) => {
+            // Reset so a transient failure (e.g. download hiccup) can retry next call.
+            _localPipelinePromise = null;
+            throw err;
+        });
+    }
+    return _localPipelinePromise;
+}
+
+async function embedLocal(text, role) {
+    const pipe = await getLocalPipeline();
+    // e5 family expects an asymmetric "query: " / "passage: " prefix. Stored
+    // messages are passages; search inputs are queries. Default to query.
+    const prefix = role === 'passage' ? 'passage: ' : 'query: ';
+    const input = /^(query|passage):\s/.test(text) ? text : prefix + text;
+    const output = await pipe(input, { pooling: 'mean', normalize: true });
+    return Array.from(output.data);
 }
 
 async function resolveApiKey(deviceId, provider, getDeviceVar) {
@@ -79,6 +124,15 @@ async function generateEmbedding(text, opts = {}) {
     if (!text || typeof text !== 'string' || text.trim().length === 0) return null;
     const clipped = text.length > 8000 ? text.slice(0, 8000) : text;
     const provider = pickProvider();
+    // Local backend needs no API key — runs the ONNX model in-process.
+    if (provider === 'local') {
+        try {
+            return await embedLocal(clipped, opts.role);
+        } catch (err) {
+            console.warn('[Embedding] local generateEmbedding failed:', err.message);
+            return null;
+        }
+    }
     const apiKey = await resolveApiKey(opts.deviceId, provider, opts.getDeviceVar);
     if (!apiKey) return null;
     try {
@@ -102,6 +156,7 @@ function toPgVectorLiteral(vec) {
 
 function isConfigured() {
     const provider = pickProvider();
+    if (provider === 'local') return true; // no key required — model runs in-process
     return !!(provider === 'voyage' ? process.env.VOYAGE_API_KEY : process.env.OPENAI_API_KEY);
 }
 
