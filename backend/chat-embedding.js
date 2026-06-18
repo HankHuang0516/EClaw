@@ -94,7 +94,9 @@ function embedMessageAsync(messageId, text, opts = {}) {
     if (!vectorEnabled || !messageId || !text) return;
     setImmediate(async () => {
         try {
-            const vec = await generateEmbedding(text, opts);
+            // Stored chat messages are "passages" for asymmetric (e5-style) local
+            // models; the role hint is ignored by symmetric providers (openai/voyage).
+            const vec = await generateEmbedding(text, { ...opts, role: 'passage' });
             if (!vec) return;
             if (!hasExpectedDim(vec)) {
                 console.warn(`[ChatEmbedding] skip embedding write for ${messageId}: dim=${vectorDim(vec)} expected=${DEFAULT_DIM}`);
