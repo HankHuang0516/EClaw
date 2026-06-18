@@ -362,7 +362,7 @@ fn os_delete(_: &str) -> Result<bool, String> {
 // ---------------------------------------------------------------------------
 
 #[command]
-pub fn health_check() -> HealthStatus {
+fn health_check() -> HealthStatus {
     let rust_ver = std::process::Command::new("rustc")
         .arg("--version")
         .output()
@@ -380,7 +380,7 @@ pub fn health_check() -> HealthStatus {
 // ---------------------------------------------------------------------------
 
 #[command]
-pub fn credential_store(
+fn credential_store(
     refresh_token: String,
     id_token: String,
     expires_at: i64,
@@ -398,7 +398,7 @@ pub fn credential_store(
 }
 
 #[command]
-pub fn credential_update_access_token(
+fn credential_update_access_token(
     access_token: String,
     expires_at: i64,
 ) -> Result<(), String> {
@@ -410,7 +410,7 @@ pub fn credential_update_access_token(
 }
 
 #[command]
-pub fn credential_get() -> Result<Option<RendererCredential>, String> {
+fn credential_get() -> Result<Option<RendererCredential>, String> {
     let install_id = ensure_config_exists()?;
     match os_get(&install_id)? {
         Some(envelope) => Ok(Some(RendererCredential {
@@ -422,19 +422,19 @@ pub fn credential_get() -> Result<Option<RendererCredential>, String> {
 }
 
 #[command]
-pub fn credential_get_full() -> Result<Option<CredentialEnvelope>, String> {
+fn credential_get_full() -> Result<Option<CredentialEnvelope>, String> {
     let install_id = ensure_config_exists()?;
     os_get(&install_id)
 }
 
 #[command]
-pub fn credential_delete() -> Result<bool, String> {
+fn credential_delete() -> Result<bool, String> {
     let install_id = ensure_config_exists()?;
     os_delete(&install_id)
 }
 
 #[command]
-pub fn install_id_get() -> Result<String, String> {
+fn install_id_get() -> Result<String, String> {
     ensure_config_exists()
 }
 
@@ -495,7 +495,7 @@ fn clear_oauth_state() {
 }
 
 #[command]
-pub fn oauth_start() -> Result<OAuthStartResult, String> {
+fn oauth_start() -> Result<OAuthStartResult, String> {
     let client_id = std::env::var("GOOGLE_CLIENT_ID")
         .map_err(|_| "GOOGLE_CLIENT_ID environment variable not set".to_string())?;
     let (code_verifier, code_challenge) = generate_pkce_pair();
@@ -713,13 +713,13 @@ async fn exchange_code_for_tokens_internal(
 }
 
 #[command]
-pub fn oauth_cancel() -> Result<(), String> {
+fn oauth_cancel() -> Result<(), String> {
     clear_oauth_state();
     Ok(())
 }
 
 #[command]
-pub fn oauth_get_port() -> Result<Option<u16>, String> {
+fn oauth_get_port() -> Result<Option<u16>, String> {
     let lock = OAUTH_STATE.lock();
     Ok(lock.as_ref().map(|s| s.port))
 }
@@ -848,7 +848,7 @@ fn deduplicate_agents(mut agents: Vec<AgentInfo>) -> Vec<AgentInfo> {
 }
 
 #[command]
-pub async fn agent_probe() -> Result<Vec<AgentInfo>, String> {
+async fn agent_probe() -> Result<Vec<AgentInfo>, String> {
     let config_path = get_config_path();
     let config_content =
         fs::read_to_string(&config_path).map_err(|e| format!("read config: {}", e))?;
@@ -940,7 +940,7 @@ pub async fn agent_probe() -> Result<Vec<AgentInfo>, String> {
 }
 
 #[command]
-pub async fn agent_probe_single(
+async fn agent_probe_single(
     agent_type: String,
     url: Option<String>,
     command: Option<String>,
@@ -970,7 +970,7 @@ pub async fn agent_probe_single(
 }
 
 #[command]
-pub fn agent_config_get() -> Result<Vec<AgentEndpointConfig>, String> {
+fn agent_config_get() -> Result<Vec<AgentEndpointConfig>, String> {
     let config_path = get_config_path();
     let config_content =
         fs::read_to_string(&config_path).map_err(|e| format!("read config: {}", e))?;
@@ -1004,7 +1004,7 @@ pub fn agent_config_get() -> Result<Vec<AgentEndpointConfig>, String> {
 }
 
 #[command]
-pub fn agent_config_set(endpoints: Vec<AgentEndpointConfig>) -> Result<(), String> {
+fn agent_config_set(endpoints: Vec<AgentEndpointConfig>) -> Result<(), String> {
     let config_path = get_config_path();
     let mut config: Value = if config_path.exists() {
         let content =
