@@ -395,7 +395,18 @@ const DRIVERS = {
     // step is orthogonal to the outbox behaviour under test). Auth-light.
     message_send: async (page, { base, platform, runId }) => {
         const marker = `E2E-OUTBOX ${runId || 'run'} ${platform.key}`;
-        await page.goto(`${base}/portal/chat.html`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+        // Seed auth before navigating: chat.html's shared/auth.js redirects
+        // unauth users to index.html, racing with outbox.js / outbox-ui.js
+        // attaching their window globals. Forward MATRIX_TEST_DEVICE_* via URL
+        // params (auth.js line 59-60 reads them) so checkAuth resolves without
+        // a redirect and EclawOutbox / EclawOutboxUI stay on window.
+        const testDeviceId = process.env.MATRIX_TEST_DEVICE_ID;
+        const testDeviceSecret = process.env.MATRIX_TEST_DEVICE_SECRET;
+        if (!testDeviceId || !testDeviceSecret) {
+            return { ok: false, detail: 'MATRIX_TEST_DEVICE_ID / MATRIX_TEST_DEVICE_SECRET env unset; cannot seed auth for chat.html' };
+        }
+        const seededUrl = `${base}/portal/chat.html?deviceId=${encodeURIComponent(testDeviceId)}&deviceSecret=${encodeURIComponent(testDeviceSecret)}`;
+        await page.goto(seededUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
 
         // The outbox modules load as portal scripts; wait for them to be present.
         try {
