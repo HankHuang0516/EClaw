@@ -23,6 +23,16 @@ jest.mock('pg', () => {
     return { Pool, __mockQuery: mockQuery };
 });
 
+// Phase 6 store-on-create avatar derive constructs an S3 client inline. Mock the
+// SDK so tests drive the R2 round-trip deterministically via __setS3Send().
+let mockS3SendImpl = async () => { throw new Error('s3 not stubbed'); };
+jest.mock('@aws-sdk/client-s3', () => ({
+    S3Client: jest.fn().mockImplementation(() => ({ send: (...a) => mockS3SendImpl(...a) })),
+    GetObjectCommand: jest.fn(function (input) { this.input = input; this._type = 'get'; }),
+    PutObjectCommand: jest.fn(function (input) { this.input = input; this._type = 'put'; }),
+}));
+function __setS3Send(fn) { mockS3SendImpl = fn; }
+
 const express = require('express');
 const request = require('supertest');
 const { __mockQuery } = require('pg');
@@ -896,6 +906,100 @@ describe('companion-api: POST /submit', () => {
             .send({ ...body, id: 'petdx-mybot-extra', descriptor: { id: 'petdx-mybot-extra' } });
         expect(r6.status).toBe(429);
         expect(r6.body.error).toBe('rate_limit_exceeded');
+    });
+});
+
+describe('companion-api: Phase 6 store-on-create avatar derive', () => {
+    const sharp = require('sharp');
+    const { petdxSlugFromUrl, deriveSpriteAvatarUrl } = companionFactory._test;
+    let spriteBytes;
+
+    beforeAll(async () => {
+        // A real (tiny) WebP so extractFrameZero's sharp pipeline runs for real.
+        spriteBytes = await sharp({
+            create: { width: 64, height: 64, channels: 3, background: { r: 12, g: 34, b: 56 } },
+        }).webp().toBuffer();
+    });
+    beforeEach(() => { __mockQuery.mockReset(); __setS3Send(async () => { throw new Error('s3 not stubbed'); }); });
+
+    // Permissive auth so each test can use a FRESH entityId — the submit
+    // rate-limiter is keyed by entityId in module state and ENTITY=7 is already
+    // exhausted by the prior /submit describe.
+    const freeApp = () => makeApp({
+        authenticateDeviceOrBot: ({ deviceId, botSecret }) => deviceId === DEVICE && botSecret === SECRET,
+    });
+
+    const spriteBody = (over = {}) => ({
+        id: 'petdx-zoro', name: 'Zoro', version: '1.0.0',
+        descriptor: { id: 'petdx-zoro', description: 'a sprite bot', asset: { frameWidth: 64, frameHeight: 64 } },
+        assetType: 'spritesheet', supportedStates: ['IDLE'],
+        license: 'CC0', assetUrl: '/api/petdx/petdx-zoro/sprite.webp', ...over,
+    });
+
+    test('petdxSlugFromUrl extracts slug from sprite proxy URL', () => {
+        expect(petdxSlugFromUrl('/api/petdx/petdx-zoro/sprite.webp')).toBe('petdx-zoro');
+        expect(petdxSlugFromUrl('https://eclawbot.com/api/petdx/abc-123/sprite.webp')).toBe('abc-123');
+        expect(petdxSlugFromUrl('/api/petdx/x/avatar.webp')).toBeNull(); // not a sprite url
+        expect(petdxSlugFromUrl(null)).toBeNull();
+    });
+
+    test('deriveSpriteAvatarUrl returns null (never throws) when R2 GET fails', async () => {
+        __setS3Send(async () => { throw new Error('NoSuchKey'); });
+        const { S3Client, GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
+        const out = await deriveSpriteAvatarUrl({
+            r2: new S3Client({}), GetObjectCommand, PutObjectCommand, bucket: 'eclaw-files',
+            slug: 'petdx-zoro', descriptor: {}, log: () => {},
+        });
+        expect(out).toBeNull();
+    });
+
+    test('spritesheet submit stores derived avatar.webp URL on R2 success', async () => {
+        __setS3Send(async (cmd) => {
+            if (cmd._type === 'get') return { Body: { transformToByteArray: async () => spriteBytes } };
+            return {}; // put ok
+        });
+        __mockQuery
+            .mockResolvedValueOnce({ rowCount: 0, rows: [] })   // exists check
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] });  // INSERT
+        const res = await request(freeApp())
+            .post('/api/companion/submit')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: 901 })
+            .send(spriteBody());
+        expect(res.status).toBe(201);
+        const insertParams = __mockQuery.mock.calls[1][1];
+        // INSERT param order: ...assetType[6], asset_url[7], avatar_url[8], thumbnail_url[9]...
+        // asset_url keeps the sprite sheet; avatar_url is the DERIVED single frame.
+        expect(insertParams[7]).toBe('/api/petdx/petdx-zoro/sprite.webp');
+        expect(insertParams[8]).toBe('/api/petdx/petdx-zoro/avatar.webp');
+    });
+
+    test('spritesheet submit still succeeds + keeps client avatar when derive fails', async () => {
+        __setS3Send(async () => { throw new Error('R2 down'); });
+        __mockQuery
+            .mockResolvedValueOnce({ rowCount: 0, rows: [] })
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] });
+        const res = await request(freeApp())
+            .post('/api/companion/submit')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: 902 })
+            .send(spriteBody({ avatarUrl: '/api/petdx/petdx-zoro/sprite.webp' }));
+        expect(res.status).toBe(201); // avatar work never fails the submit
+        const insertParams = __mockQuery.mock.calls[1][1];
+        // Fallback: keep the client-supplied URL; backfill cron + frontend crop are the safety nets.
+        expect(insertParams).toContain('/api/petdx/petdx-zoro/sprite.webp');
+    });
+
+    test('procedural submit never touches R2 (no derive)', async () => {
+        const send = jest.fn(async () => ({}));
+        __setS3Send(send);
+        __mockQuery
+            .mockResolvedValueOnce({ rowCount: 0, rows: [] })
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] });
+        const res = await request(freeApp())
+            .post('/api/companion/submit')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: 903 })
+            .send({ ...spriteBody(), assetType: 'procedural', assetUrl: undefined });
+        expect(res.status).toBe(201);
+        expect(send).not.toHaveBeenCalled();
     });
 });
 

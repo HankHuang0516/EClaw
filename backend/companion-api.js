@@ -18,11 +18,66 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
-const { syncPetdexCatalog } = require('./petdex-bridge');
+const { syncPetdexCatalog, R2_KEY_PREFIX, PROXY_PATH_PREFIX } = require('./petdex-bridge');
+const { extractFrameZero } = require('./companion-avatar-util');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
 });
+
+// ── Plaza Plan-3 Phase 6: store-on-create single-frame avatar ──────────
+// Spec: docs/specs/companion-avatar-url-store-on-create.md §2.2/§2.3
+//
+// A spritesheet companion whose avatar_url points at the raw sprite sheet makes
+// the plaza shrink the whole 8×9 grid into the avatar box → all poses at once
+// (the P0 "大頭貼 mismatched" bug). On submit we best-effort crop frame 0 of the
+// sprite to avatar.webp and point avatar_url at it, so the clean frame is stored
+// at the source. The frontend frame-0 CSS crop and the Phase-5 backfill cron are
+// the safety nets, so avatar derivation NEVER fails a submit.
+const PETDX_SPRITE_URL_RE = /\/api\/petdx\/([a-z0-9][a-z0-9-]{0,128})\/sprite\.webp/i;
+function petdxSlugFromUrl(url) {
+    if (typeof url !== 'string') return null;
+    const m = url.match(PETDX_SPRITE_URL_RE);
+    return m ? m[1] : null;
+}
+
+async function r2BodyToBuffer(body) {
+    // AWS SDK v3 stream: prefer transformToByteArray, fall back to async iter.
+    if (body && typeof body.transformToByteArray === 'function') {
+        return Buffer.from(await body.transformToByteArray());
+    }
+    const chunks = [];
+    for await (const c of body) chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c));
+    return Buffer.concat(chunks);
+}
+
+// Fetch the slug's sprite sheet from R2, crop frame 0, upload it as avatar.webp,
+// and return the proxy URL to store. Returns null (never throws) when the sprite
+// bytes aren't in R2 yet or any step fails — the caller then keeps the client
+// value and the backfill cron repoints it later.
+async function deriveSpriteAvatarUrl({ r2, GetObjectCommand, PutObjectCommand, bucket, slug, descriptor, log }) {
+    if (!slug || !r2) return null;
+    const spriteKey = `${R2_KEY_PREFIX}/${slug}/sprite.webp`;
+    const avatarKey = `${R2_KEY_PREFIX}/${slug}/avatar.webp`;
+    try {
+        const obj = await r2.send(new GetObjectCommand({ Bucket: bucket, Key: spriteKey }));
+        const spriteBuf = await r2BodyToBuffer(obj.Body);
+        let desc = descriptor;
+        if (typeof desc === 'string') { try { desc = JSON.parse(desc); } catch (_) { desc = {}; } }
+        const { buffer } = await extractFrameZero(spriteBuf, desc || {});
+        await r2.send(new PutObjectCommand({
+            Bucket: bucket,
+            Key: avatarKey,
+            Body: buffer,
+            ContentType: 'image/webp',
+            CacheControl: 'public, max-age=31536000, immutable',
+        }));
+        return `${PROXY_PATH_PREFIX}/${slug}/avatar.webp`;
+    } catch (e) {
+        if (log) log('warn', 'companion', `[Companion] avatar derive skipped (${slug}): ${e.message}`);
+        return null;
+    }
+}
 
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 30;
@@ -900,6 +955,32 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
             if (exists.rowCount > 0) {
                 return res.status(409).json({ success: false, error: 'companion_id_exists' });
             }
+
+            // Phase 6: for spritesheet companions, best-effort derive a single-frame
+            // avatar.webp from the sprite and store that as avatar_url. Falls back to
+            // the client value on any failure (see deriveSpriteAvatarUrl).
+            let avatarUrlToStore = body.avatarUrl || null;
+            if (body.assetType === 'spritesheet') {
+                const slug = petdxSlugFromUrl(body.avatarUrl) || petdxSlugFromUrl(body.assetUrl);
+                if (slug) {
+                    const { S3Client, GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
+                    const r2 = new S3Client({
+                        region: 'auto',
+                        endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+                        credentials: {
+                            accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+                            secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+                        },
+                    });
+                    const bucket = process.env.R2_BUCKET_NAME || 'eclaw-files';
+                    const derived = await deriveSpriteAvatarUrl({
+                        r2, GetObjectCommand, PutObjectCommand, bucket,
+                        slug, descriptor: body.descriptor, log,
+                    });
+                    if (derived) avatarUrlToStore = derived;
+                }
+            }
+
             const now = Date.now();
             await pool.query(
                 `INSERT INTO companions
@@ -916,7 +997,7 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
                 [
                     id, name, version, req.botAuth.entityId, req.botAuth.deviceId,
                     body.descriptor,
-                    body.assetType, body.assetUrl || null, body.avatarUrl || null, body.thumbnailUrl || null,
+                    body.assetType, body.assetUrl || null, avatarUrlToStore, body.thumbnailUrl || null,
                     JSON.stringify(supportedStates), license,
                     body.category || null, body.mood || null, body.color || null,
                     JSON.stringify(tags), body.i18nData || null,
@@ -1157,7 +1238,6 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
     const {
         fetchAndUploadSprite,
         spriteProxyUrl,
-        R2_KEY_PREFIX,
         PROXY_PATH_PREFIX,
     } = require('./petdex-bridge');
 
@@ -1262,4 +1342,5 @@ module.exports.initCompanionDatabase = initCompanionDatabase;
 module.exports._test = {
     parseTags, parsePositiveInt, rowToCompanionCard, rowToCompanionDetail,
     validateSubmittedDescriptor,
+    petdxSlugFromUrl, deriveSpriteAvatarUrl, r2BodyToBuffer,
 };
