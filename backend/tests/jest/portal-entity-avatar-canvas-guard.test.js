@@ -125,3 +125,59 @@ describe('renderAvatarHtml — canvas-vs-URL guard (Phase 0 dashboard bug fix)',
         expect(html).toContain('data-petdx-entity-id="1"');
     });
 });
+
+// Regression: cross-device petdx bots (marketplace / arena / share-chat) arrive
+// with avatar_url = /api/petdx/<slug>/sprite.webp and NO cached descriptor, so the
+// canvas path is skipped. Before this fix renderAvatarHtml emitted a raw <img src=
+// sprite.webp> → the whole 8×9 sheet shrank into the box (the "大頭貼 mismatched" P0,
+// previously only fixed in community.html). Now it crops frame 0 at the shared layer.
+describe('renderAvatarHtml — petdx sprite frame-0 crop (cross-device, no descriptor)', () => {
+    const SPRITE = '/api/petdx/zoro/sprite.webp';
+
+    test('isPetdxSprite matches sprite proxy URLs only', () => {
+        const ctx = loadResolver();
+        expect(ctx.isPetdxSprite('/api/petdx/zoro/sprite.webp')).toBe(true);
+        expect(ctx.isPetdxSprite('https://eclawbot.com/api/petdx/a-b/sprite.png')).toBe(true);
+        expect(ctx.isPetdxSprite('/api/petdx/zoro/avatar.webp')).toBe(false); // derived single frame
+        expect(ctx.isPetdxSprite('/static/x.png')).toBe(false);
+        expect(ctx.isPetdxSprite(null)).toBeFalsy();
+    });
+
+    test('sprite URL with no AvatarPetdx → frame-0 crop div, NOT raw sheet img', () => {
+        const ctx = loadResolver();
+        const html = ctx.renderAvatarHtml(SPRITE, 48, 7);
+        expect(html).toContain('background-size:800% 900%');
+        expect(html).toContain('background-position:0 0');
+        expect(html).toContain('url(' + SPRITE + ')');
+        expect(html).toContain('data-entity-id="7"');
+        expect(html).not.toContain('<img'); // never the raw shrunk sheet
+        expect(html).not.toContain('<canvas');
+    });
+
+    test('sprite URL when descriptor cache lacks this entity → still cropped', () => {
+        const ctx = loadResolver();
+        ctx.window.AvatarPetdx = { hasDescriptor: () => false, getDescriptor: () => null };
+        const html = ctx.renderAvatarHtml(SPRITE, 56);
+        expect(html).toContain('background-size:800% 900%');
+        expect(html).not.toContain('<img');
+    });
+
+    test('derived avatar.webp (post-backfill) renders as plain img, NOT cropped', () => {
+        const ctx = loadResolver();
+        const html = ctx.renderAvatarHtml('/api/petdx/zoro/avatar.webp', 48, 7);
+        expect(html).toContain('<img src="/api/petdx/zoro/avatar.webp"');
+        expect(html).not.toContain('background-size:800% 900%');
+    });
+
+    test('own-device animated canvas still wins over crop when descriptor present', () => {
+        const ctx = loadResolver();
+        ctx.window.AvatarPetdx = {
+            hasDescriptor: (id) => id === 3,
+            getDescriptor: () => ({ assetType: 'spritesheet', descriptor: { assetType: 'spritesheet', asset: { url: SPRITE } } }),
+            descriptorAvatarUrl: () => SPRITE,
+        };
+        const html = ctx.renderAvatarHtml(SPRITE, 48, 3);
+        expect(html).toContain('<canvas');
+        expect(html).not.toContain('background-size:800% 900%');
+    });
+});

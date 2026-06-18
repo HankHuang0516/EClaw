@@ -137,6 +137,16 @@ function isAvatarUrl(avatar) {
     return avatar && typeof avatar === 'string' && /^(https?:\/\/|\/)/.test(avatar);
 }
 
+// A PETDX sprite-sheet proxy URL (/api/petdx/<slug>/sprite.webp). Cross-device
+// plaza/marketplace/arena bots arrive with this as their avatar_url and have no
+// cached AvatarPetdx descriptor (the canvas path), so a raw <img src> would
+// shrink the whole 8×9 sheet into the avatar box — the "大頭貼 mismatched" P0.
+// renderAvatarHtml crops frame 0 instead. (community.html had its own copy of
+// this; this is the shared fix so every surface is covered.)
+function isPetdxSprite(u) {
+    return typeof u === 'string' && /\/api\/petdx\/[^/]+\/sprite\.(webp|png)(\?|$)/i.test(u);
+}
+
 /**
  * Render an avatar as HTML. Returns an <img> tag for URLs, or emoji text for emoji avatars.
  *
@@ -217,6 +227,16 @@ function renderAvatarHtml(avatar, size, entityId, opts) {
             + ' style="width:' + size + 'px;height:' + size + 'px;'
             + 'image-rendering:pixelated;border-radius:50%;vertical-align:middle;"'
             + ' aria-label="entity avatar"></canvas>';
+    } else if (isPetdxSprite(avatar)) {
+        // Cross-device petdx bot with no cached descriptor: crop frame 0 (top-left
+        // cell of the 8×9 grid) via background-size 800% 900% instead of rendering
+        // the raw sheet. Fixes marketplace/arena/share-chat (community.html already
+        // had this). One day the Phase-5 backfill repoints avatar_url → avatar.webp
+        // and this branch stops matching, falling through to the plain <img> below.
+        inner = '<div role="img" aria-label="avatar" class="entity-avatar-img"' + eidAttr
+            + ' style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;'
+            + 'background-image:url(' + _escAttr(avatar) + ');background-repeat:no-repeat;'
+            + 'background-size:800% 900%;background-position:0 0;"></div>';
     } else if (isAvatarUrl(avatar)) {
         inner = '<img src="' + avatar + '" class="entity-avatar-img"' + eidAttr +
             ' style="width:' + size + 'px;height:' + size + 'px;" alt="avatar" loading="lazy">';
