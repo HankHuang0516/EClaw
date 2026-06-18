@@ -2768,6 +2768,10 @@
         async function refreshUsageWarningStaleNotice() {
             const notice = document.getElementById('usageWarningStaleNotice');
             if (!notice) return;
+            // Skip when not authenticated: /api/usage/snapshot needs a session, so
+            // calling it pre-login returns a misleading 400 (missing-creds) in the
+            // console for no benefit — the stale notice is irrelevant when logged out.
+            if (typeof currentUser === 'undefined' || !currentUser) { notice.style.display = 'none'; return; }
             try {
                 const data = await apiCall('GET', '/api/usage/snapshot');
                 const cap = data && data.latest && data.latest.captured_at;
