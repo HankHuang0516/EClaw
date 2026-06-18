@@ -267,20 +267,20 @@ fn credmgr_store(envelope: &CredentialEnvelope) -> Result<(), String> {
         use windows::Win32::Security::Credentials::{
             CredWriteW, CREDENTIALW, CRED_TYPE_GENERIC, CRED_PERSIST_LOCAL_MACHINE,
         };
-        use windows::core::{PCWSTR, PWSTR};
+        use windows::core::PWSTR;
         let cred = CREDENTIALW {
             Flags: Default::default(),
             Type: CRED_TYPE_GENERIC,
             TargetName: PWSTR(wide_target.as_ptr() as *mut u16),
-            Comment: PCWSTR::null(),
+            Comment: PWSTR::null(),
             LastWritten: Default::default(),
             CredentialBlobSize: (wide_password.len() * 2) as u32,
             CredentialBlob: wide_password.as_ptr() as *mut u8,
             Persist: CRED_PERSIST_LOCAL_MACHINE,
             AttributeCount: 0,
             Attributes: ptr::null_mut(),
-            TargetAlias: PCWSTR::null(),
-            UserName: PCWSTR::null(),
+            TargetAlias: PWSTR::null(),
+            UserName: PWSTR::null(),
         };
         CredWriteW(&cred, 0).map_err(|e| format!("CredWriteW: {}", e))
     }
@@ -511,7 +511,7 @@ pub fn oauth_start() -> Result<OAuthStartResult, String> {
             port,
             state: state.clone(),
             code_verifier: code_verifier.clone(),
-            nonce,
+            nonce: nonce.clone(),
             completed: false,
         });
     }
@@ -859,7 +859,11 @@ pub async fn agent_probe() -> Result<Vec<AgentInfo>, String> {
         .and_then(|v| v.as_array())
         .cloned()
         .unwrap_or_default();
-    let mut handles = Vec::new();
+    // Each `async move {}` block is its own anonymous type, so they can't share
+    // a `Vec<{async block}>`. Box::pin them into trait objects with a common type.
+    let mut handles: Vec<
+        std::pin::Pin<Box<dyn std::future::Future<Output = Option<AgentInfo>> + Send>>,
+    > = Vec::new();
     for ep in endpoints {
         let agent_type = ep.get("agent_type").and_then(|v| v.as_str()).unwrap_or("");
         let enabled = ep.get("enabled").and_then(|v| v.as_bool()).unwrap_or(false);
@@ -870,13 +874,13 @@ pub async fn agent_probe() -> Result<Vec<AgentInfo>, String> {
             "hermes" => {
                 if let Some(url) = ep.get("url").and_then(|v| v.as_str()) {
                     let url = url.to_string();
-                    handles.push(async move { probe_hermes(&url, None).await.ok() });
+                    handles.push(Box::pin(async move { probe_hermes(&url, None).await.ok() }));
                 }
             }
             "codex" => {
                 if let Some(cmd) = ep.get("command").and_then(|v| v.as_str()) {
                     let cmd = cmd.to_string();
-                    handles.push(async move { probe_codex(&cmd).await.ok() });
+                    handles.push(Box::pin(async move { probe_codex(&cmd).await.ok() }));
                 }
             }
             "http" => {
@@ -885,9 +889,9 @@ pub async fn agent_probe() -> Result<Vec<AgentInfo>, String> {
                     ep.get("port").and_then(|v| v.as_u64()),
                 ) {
                     let host = host.to_string();
-                    handles.push(async move {
+                    handles.push(Box::pin(async move {
                         probe_http_agent(&host, port as u16).await.ok()
-                    });
+                    }));
                 }
             }
             "subprocess" => {
@@ -901,9 +905,9 @@ pub async fn agent_probe() -> Result<Vec<AgentInfo>, String> {
                 ) {
                     let cmd = cmd.to_string();
                     let argv = argv.clone();
-                    handles.push(async move {
+                    handles.push(Box::pin(async move {
                         probe_subprocess(&cmd, &argv).await.ok()
-                    });
+                    }));
                 }
             }
             _ => {}
