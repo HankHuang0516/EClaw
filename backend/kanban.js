@@ -3974,13 +3974,13 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                         aboutCardId = unique[0];
                         console.log(`[Kanban] autoReviewOnTransform inferred aboutCardId=${aboutCardId} from entity ${entityId} message text`);
                     } else {
-                        console.warn(`[Kanban] autoReviewOnTransform skipped: entity ${entityId} mentioned ${unique.length} distinct card_ids in message but no explicit aboutCardId — pass {aboutCardId:"card_..."} to disambiguate`);
+                        console.debug(`[Kanban] autoReviewOnTransform skipped: entity ${entityId} mentioned ${unique.length} distinct card_ids in message but no explicit aboutCardId — pass {aboutCardId:"card_..."} to disambiguate`);
                         return;
                     }
                 }
             }
             if (!aboutCardId) {
-                console.warn(`[Kanban] autoReviewOnTransform skipped: no aboutCardId provided by entity ${entityId} — pass {aboutCardId:"card_..."} in transform body to auto-close a specific card`);
+                console.debug(`[Kanban] autoReviewOnTransform skipped: no aboutCardId provided by entity ${entityId} — pass {aboutCardId:"card_..."} in transform body to auto-close a specific card`);
                 return;
             }
             // Find active card assigned to this entity that is in todo/in_progress.
