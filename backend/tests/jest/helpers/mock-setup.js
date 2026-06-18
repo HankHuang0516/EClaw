@@ -186,6 +186,8 @@ jest.mock('../../../notifications', () => {
         isRichCardQuestion: actual.isRichCardQuestion,
         buildRichCardNotification: actual.buildRichCardNotification,
         createRichCardNotifLimiter: actual.createRichCardNotifLimiter,
+        // FCM data builder — pure, mirrors prod so sendFcm() resolves it in tests.
+        buildFcmNotificationData: actual.buildFcmNotificationData,
         // Save/save-misc no-ops so notifyDevice() doesn't blow up if reached.
         saveNotification: jest.fn().mockResolvedValue(null),
         getNotifications: jest.fn().mockResolvedValue([]),
