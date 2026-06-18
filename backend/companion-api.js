@@ -956,9 +956,9 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
                 return res.status(409).json({ success: false, error: 'companion_id_exists' });
             }
 
-            // Phase 6: for spritesheet companions, best-effort derive a single-frame
-            // avatar.webp from the sprite and store that as avatar_url. Falls back to
-            // the client value on any failure (see deriveSpriteAvatarUrl).
+            // Phase 6 (spec §2.1/§2.2): store a single-frame avatar so the plaza never
+            // renders a raw sprite sheet (the P0 "大頭貼 mismatched" bug). For spritesheet
+            // assets, best-effort crop frame 0 → avatar.webp and point avatar_url at it.
             let avatarUrlToStore = body.avatarUrl || null;
             if (body.assetType === 'spritesheet') {
                 const slug = petdxSlugFromUrl(body.avatarUrl) || petdxSlugFromUrl(body.assetUrl);
@@ -977,8 +977,23 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
                         r2, GetObjectCommand, PutObjectCommand, bucket,
                         slug, descriptor: body.descriptor, log,
                     });
-                    if (derived) avatarUrlToStore = derived;
+                    if (derived) {
+                        avatarUrlToStore = derived;
+                    } else if (avatarUrlToStore && avatarUrlToStore === body.assetUrl) {
+                        // Derive unavailable (sprite not in R2 yet) AND the client value is
+                        // the sprite sheet itself — never persist a sheet as the avatar.
+                        // Null it: the Phase-5 backfill cron repoints once the sprite lands,
+                        // and the frontend frame-0 crop renders correctly in the meantime.
+                        avatarUrlToStore = null;
+                    }
                 }
+            }
+
+            // Spec §2.1 invariant: avatar_url must NEVER equal a (multi-frame / source)
+            // asset_url. After any derivation, reject an avatar still identical to it —
+            // catches vector/procedural submits that pass avatarUrl === assetUrl.
+            if (avatarUrlToStore && body.assetUrl && avatarUrlToStore === body.assetUrl) {
+                return res.status(400).json({ success: false, error: 'avatar_url_must_differ_from_asset_url' });
             }
 
             const now = Date.now();

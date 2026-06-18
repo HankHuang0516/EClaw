@@ -973,7 +973,7 @@ describe('companion-api: Phase 6 store-on-create avatar derive', () => {
         expect(insertParams[8]).toBe('/api/petdx/petdx-zoro/avatar.webp');
     });
 
-    test('spritesheet submit still succeeds + keeps client avatar when derive fails', async () => {
+    test('spritesheet submit still succeeds (201) when derive fails; sprite-as-avatar is nulled', async () => {
         __setS3Send(async () => { throw new Error('R2 down'); });
         __mockQuery
             .mockResolvedValueOnce({ rowCount: 0, rows: [] })
@@ -984,8 +984,43 @@ describe('companion-api: Phase 6 store-on-create avatar derive', () => {
             .send(spriteBody({ avatarUrl: '/api/petdx/petdx-zoro/sprite.webp' }));
         expect(res.status).toBe(201); // avatar work never fails the submit
         const insertParams = __mockQuery.mock.calls[1][1];
-        // Fallback: keep the client-supplied URL; backfill cron + frontend crop are the safety nets.
-        expect(insertParams).toContain('/api/petdx/petdx-zoro/sprite.webp');
+        // §2.1 invariant: never persist a sprite sheet as the avatar. Derive failed and the
+        // client avatar == asset_url (sprite) → avatar_url nulled; backfill cron repoints later.
+        expect(insertParams[7]).toBe('/api/petdx/petdx-zoro/sprite.webp'); // asset_url kept
+        expect(insertParams[8]).toBeNull(); // avatar_url nulled, NOT the sprite
+    });
+
+    test('400 when avatarUrl === assetUrl (vector) — §2.1 invariant', async () => {
+        __mockQuery.mockResolvedValueOnce({ rowCount: 0, rows: [] }); // exists check (before guard)
+        const res = await request(freeApp())
+            .post('/api/companion/submit')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: 904 })
+            .send({
+                id: 'vec-bot', name: 'Vec', version: '1.0.0',
+                descriptor: { id: 'vec-bot' }, assetType: 'vector', supportedStates: ['IDLE'],
+                license: 'CC0', assetUrl: '/assets/vec.svg', avatarUrl: '/assets/vec.svg',
+            });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('avatar_url_must_differ_from_asset_url');
+    });
+
+    test('vector submit with a distinct avatarUrl stores it as-is (no derive, no R2)', async () => {
+        const send = jest.fn(async () => ({}));
+        __setS3Send(send);
+        __mockQuery
+            .mockResolvedValueOnce({ rowCount: 0, rows: [] })
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] });
+        const res = await request(freeApp())
+            .post('/api/companion/submit')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: 905 })
+            .send({
+                id: 'vec-bot2', name: 'Vec2', version: '1.0.0',
+                descriptor: { id: 'vec-bot2' }, assetType: 'vector', supportedStates: ['IDLE'],
+                license: 'CC0', assetUrl: '/assets/v2.svg', avatarUrl: '/assets/v2-avatar.png',
+            });
+        expect(res.status).toBe(201);
+        expect(send).not.toHaveBeenCalled(); // non-spritesheet never derives
+        expect(__mockQuery.mock.calls[1][1][8]).toBe('/assets/v2-avatar.png');
     });
 
     test('procedural submit never touches R2 (no derive)', async () => {
