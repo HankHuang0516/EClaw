@@ -227,6 +227,16 @@ let VISION_IMAGES = [
     // Hard tier
     { file: null, description: 'A Kubernetes deployment YAML snippet showing apiVersion: apps/v1 with spec.replicas: 3, container resource limits of 200m CPU and 256Mi memory, and a readinessProbe on path /health port 8080 — two red ❌ validation error markers appear beside the resources.limits block', keywords: ['kubernetes', 'deployment', 'three', 'replicas', '200m', '256Mi', 'readinessProbe', 'error'] },
     { file: null, description: 'A 5×6 heatmap grid where cell color ranges from white (0) to dark red (100) — three cells stand out as darkest: row 2 col 4 shows 97, row 4 col 1 shows 94, row 5 col 6 shows 89; row 2\'s average is annotated as 42.3 on the right margin', keywords: ['heatmap', 'five', 'six', 'grid', 'row', 'col', '97', '94', 'average', '42.3'] },
+    // ── Daily pool update: added 2026-06-18 ──
+    // Easy tier
+    { file: null, description: 'A loading progress bar at 73% completion — blue fill on a white rounded track with a "73%" percentage label centered inside the bar', keywords: ['progress', 'bar', '73', 'blue', 'loading'] },
+    // Medium tier
+    { file: null, description: 'A digital restaurant menu listing five dishes: Caesar Salad $12.95, Grilled Salmon $28.00, Margherita Pizza $15.50, Beef Burger $16.75, Tiramisu $8.00 — the Grilled Salmon entry has a gold star "Chef\'s Special" badge in the upper right corner', keywords: ['menu', 'five', 'dishes', 'salmon', '28', 'chef', 'special', 'badge'] },
+    { file: null, description: 'A student grade report showing four subjects in a table: Mathematics 92/100, English 78/100, Physics 85/100, History 70/100 — the overall GPA calculated at the bottom reads 3.41 on a 4.0 scale', keywords: ['grade', 'four', 'mathematics', '92', 'english', '78', 'GPA', '3.41'] },
+    { file: null, description: 'A two-factor authentication setup screen showing a QR code on the left and a six-digit OTP entry field on the right — a countdown timer above the field reads 28 seconds remaining and a "Resend Code" link is greyed out', keywords: ['two-factor', 'QR', 'code', 'six', 'digit', 'OTP', '28', 'seconds', 'resend'] },
+    // Hard tier
+    { file: null, description: 'A GitHub pull request diff view showing 3 files changed: auth.js has 12 insertions in green and 4 deletions in red, config.json has 2 insertions and 0 deletions, README.md has 1 insertion and 3 deletions — a blue comment bubble icon appears on line 47 of auth.js', keywords: ['pull request', 'three', 'files', 'auth', '12', '4', 'deletions', 'line', '47', 'comment'] },
+    { file: null, description: 'A Prometheus metrics dashboard showing request rates for three endpoints: /api/login at 142 req/s, /api/data at 893 req/s, /api/upload at 23 req/s — two red alert badges are visible: /api/upload shows latency_p99 = 8.3s and /api/login shows error_rate = 12%', keywords: ['prometheus', 'three', 'endpoints', 'login', '142', 'data', '893', 'upload', '8.3', 'error', '12'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -455,6 +465,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[1,2,3]', expected: '[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]' },{ input: '[1]', expected: '[[1]]' },{ input: '[1,2]', expected: '[[1,2],[2,1]]' }] },
     { title: 'Regular Expression Matching', description: 'Write `solve(s, p)` — implement basic regex matching where "." matches any single character and "*" matches zero or more of the preceding element. Return true if the full string s matches pattern p.',
       testCases: [{ input: '"aa", "a"', expected: 'false' },{ input: '"aa", "a*"', expected: 'true' },{ input: '"ab", ".*"', expected: 'true' },{ input: '"aab", "c*a*b"', expected: 'true' },{ input: '"mississippi", "mis*is*p*."', expected: 'false' }] },
+    // ── Daily pool update: added 2026-06-18 ──
+    { title: 'Rotate Array', description: 'Write `solve(nums, k)` — rotate the array to the right by k steps (k may be larger than the array length). Return the resulting array.',
+      testCases: [{ input: '[1,2,3,4,5], 2', expected: '[4,5,1,2,3]' },{ input: '[1,2,3], 4', expected: '[3,1,2]' },{ input: '[1], 100', expected: '[1]' },{ input: '[1,2,3,4,5,6,7], 3', expected: '[5,6,7,1,2,3,4]' }] },
+    { title: 'Next Greater Element', description: 'Write `solve(nums)` — for each element in the array, return the first element to its right that is strictly greater, or -1 if no such element exists.',
+      testCases: [{ input: '[4,1,2]', expected: '[-1,2,-1]' },{ input: '[1,2,3,4]', expected: '[2,3,4,-1]' },{ input: '[4,3,2,1]', expected: '[-1,-1,-1,-1]' },{ input: '[2,1,2,4,3,5]', expected: '[4,2,4,5,5,-1]' }] },
+    { title: 'Sliding Window Maximum', description: 'Write `solve(nums, k)` — given an integer array and a sliding window of size k, return an array of the maximum value in each window position.',
+      testCases: [{ input: '[1,3,-1,-3,5,3,6,7], 3', expected: '[3,3,5,5,6,7]' },{ input: '[1], 1', expected: '[1]' },{ input: '[1,2], 2', expected: '[2]' },{ input: '[2,3,4,1,5], 3', expected: '[4,4,5]' }] },
+    { title: 'Longest Increasing Subsequence', description: 'Write `solve(nums)` — return the length of the longest strictly increasing subsequence (elements do not need to be contiguous).',
+      testCases: [{ input: '[10,9,2,5,3,7,101,18]', expected: '4' },{ input: '[0,1,0,3,2,3]', expected: '4' },{ input: '[7,7,7,7,7]', expected: '1' },{ input: '[]', expected: '0' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -539,6 +558,19 @@ let RESPONSE_QUESTIONS = [
     // Hard tier
     { question: 'A pool has two inlet pipes (A fills in 10 h, B fills in 15 h) and one outlet pipe (drains in 30 h). If all three run simultaneously from empty, how many hours does it take to fill the pool?', expectedKeywords: ['7.5', '15/2'] },
     { question: 'A staircase has 7 steps. You can climb 1, 2, or 3 steps at a time. How many distinct ways can you climb to the top?', expectedKeywords: ['44'] },
+    // ── Daily pool update: added 2026-06-18 ──
+    // Easy tier
+    { question: 'What is 9 squared?', expectedKeywords: ['81'] },
+    { question: 'How many minutes are in 3 hours and 45 minutes?', expectedKeywords: ['225'] },
+    // Medium tier
+    { question: 'Two dice are rolled. What is the probability that their sum is greater than 9? Express as a simplified fraction.', expectedKeywords: ['1/6'] },
+    { question: 'A car travels 300 km on 25 liters of fuel. What is the car\'s fuel efficiency in km per liter?', expectedKeywords: ['12'] },
+    { question: 'A 5-meter ladder leans against a wall. The base of the ladder is 3 meters from the wall. How high up the wall does the ladder reach in meters?', expectedKeywords: ['4'] },
+    { question: 'A shopkeeper bought an item for $150 and sold it at a 30% profit. What was the selling price?', expectedKeywords: ['195', '$195'] },
+    // Hard tier
+    { question: 'A cube is painted on all six faces and then cut into 27 smaller equal cubes (3×3×3). How many of the small cubes have exactly two faces painted?', expectedKeywords: ['12', 'twelve'] },
+    { question: 'How many three-digit positive integers are divisible by both 4 and 6?', expectedKeywords: ['75'] },
+    { question: 'A gear with 12 teeth meshes with a gear with 36 teeth. If the smaller gear rotates at 120 RPM, at what RPM does the larger gear rotate?', expectedKeywords: ['40'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -644,6 +676,18 @@ let TTS_PHRASES = [
     // Hard tier
     { text: 'The S&P 500 closed at five thousand two hundred seventy-eight point five one — three hundred twenty-six issues advanced and one hundred sixty-seven declined giving a breadth ratio of 1.95 to 1', keywords: ['S&P', '5278', '326', 'advanced', '167', 'declined', 'breadth', '1.95'] },
     { text: 'SWIFT code DEUTDEDB for Deutsche Bank Frankfurt sort code 20030000 account number 1234567890 for incoming SEPA credit transfers only', keywords: ['SWIFT', 'DEUTDEDB', 'Deutsche', 'Frankfurt', '20030000', '1234567890', 'SEPA'] },
+    // ── Daily pool update: added 2026-06-18 ──
+    // Easy tier
+    { text: 'Please confirm your booking by clicking the link sent to your email address', keywords: ['confirm', 'booking', 'clicking', 'link', 'email'] },
+    { text: 'The office will be closed on Monday for the public holiday', keywords: ['office', 'closed', 'monday', 'public', 'holiday'] },
+    // Medium tier
+    { text: 'Gate B twenty-two for flight QR five-seventeen to Doha is now boarding zones three and four — please have your boarding pass and passport ready', keywords: ['gate', 'B22', 'QR517', 'Doha', 'boarding', 'zones', 'three', 'four'] },
+    { text: 'The data center maintains ninety-six rack units across eight server cabinets each equipped with a redundant power supply unit rated at two-point-four kilowatts', keywords: ['data', 'center', '96', 'eight', 'cabinets', 'redundant', 'power', '2.4', 'kilowatts'] },
+    { text: 'Your wire transfer of fourteen thousand three hundred fifty-two dollars and seventy-five cents to account ending 8831 has been initiated and will settle in two business days', keywords: ['wire', 'transfer', '14352', 'seventy-five', '8831', 'two', 'business'] },
+    // Hard tier
+    { text: 'CUSIP five nine four nine one eight one zero four represents Microsoft Corporation listed on NASDAQ under ticker MSFT with approximately seven point four billion shares outstanding', keywords: ['CUSIP', '594918104', 'Microsoft', 'NASDAQ', 'MSFT', 'seven', 'billion', 'shares'] },
+    { text: 'The integral from zero to pi of sine x d x equals negative cosine of pi minus negative cosine of zero which simplifies to one plus one equals two', keywords: ['integral', 'zero', 'pi', 'sine', 'cosine', 'simplifies', 'two'] },
+    { text: 'The multivariate normal distribution N of mu and sigma squared describes a family of Gaussian distributions parameterized by mean mu and variance sigma squared — in one dimension the PDF is one over sigma root two pi times e to the power of negative one half x minus mu over sigma squared', keywords: ['multivariate', 'normal', 'gaussian', 'sigma', 'variance', 'PDF', 'e', 'power'] },
 ];
 
 // ============================================
