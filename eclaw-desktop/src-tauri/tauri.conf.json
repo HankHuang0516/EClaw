@@ -11,6 +11,7 @@
   "app": {
     "withGlobalTauri": false,
     "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://eclawbot.com https://eclaw.up.railway.app",
       "assetProtocol": {
         "enable": false
       }
