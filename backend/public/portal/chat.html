@@ -7746,25 +7746,27 @@
             let vars;
             try { vars = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { vars = {}; }
 
-            // Sync from server so WebView / new sessions pick up vars set elsewhere
+            // Sync from server so WebView / new sessions pick up vars set elsewhere.
+            // GET first to obtain updatedAt, then POST WITH expectedUpdatedAt so this
+            // background merge can't clobber concurrent edits (optimistic lock) and
+            // doesn't trip the server's "POST without expectedUpdatedAt" warn.
             try {
+                const serverData = await apiCall('GET', `/api/device-vars?deviceId=${deviceId}&deviceSecret=${deviceSecret}`);
+                const serverUpdatedAt = serverData && serverData.updatedAt;
                 if (Object.keys(vars).length > 0) {
-                    const data = await apiCall('POST', '/api/device-vars', {
-                        deviceId, deviceSecret, vars, source: 'web'
-                    });
+                    const body = { deviceId, deviceSecret, vars, source: 'web' };
+                    if (serverUpdatedAt) body.expectedUpdatedAt = serverUpdatedAt;
+                    const data = await apiCall('POST', '/api/device-vars', body);
                     if (data && data.mergedVars) {
                         vars = data.mergedVars;
                         localStorage.setItem(storageKey, JSON.stringify(vars));
                     }
-                } else {
-                    // Fresh session — fetch server-side vars instead of POSTing empty
-                    const data = await apiCall('GET', `/api/device-vars?deviceId=${deviceId}&deviceSecret=${deviceSecret}`);
-                    if (data && data.vars) {
-                        vars = data.vars;
-                        localStorage.setItem(storageKey, JSON.stringify(vars));
-                    }
+                } else if (serverData && serverData.vars) {
+                    // Fresh session — adopt server-side vars (no POST of an empty set)
+                    vars = serverData.vars;
+                    localStorage.setItem(storageKey, JSON.stringify(vars));
                 }
-            } catch { /* non-critical — fall back to local */ }
+            } catch { /* non-critical — fall back to local; 409 on concurrent edit is fine */ }
 
             const keys = Object.keys(vars);
             if (!keys.length) return;
