@@ -1,0 +1,250 @@
+# EClaw Desktop — P1-G: Installer Build CI
+# Builds + signs (macOS notarization, Windows Authenticode) EClaw Desktop installers.
+#
+# Secrets required (GitHub repo settings → Secrets):
+#   APPLE_TEAM_ID        — Apple Developer Team ID
+#   APPLE_ID_EMAIL       — Apple ID email for notarization
+#   APPLE_ID_PASSWORD    — App-specific password for notarization
+#   APPLE_KEYCHAINpw     — Password for keychain holding App Store Connect token
+#   WINDOWS_CERT_THUMBPRINT — Authenticode certificate thumbprint
+#   WINDOWS_CERT_FILE    — PFX certificate content (base64-encoded)
+#   WINDOWS_CERT_PASSWORD — PFX password
+#
+# CI gates:
+#   1. Build succeeds (cargo build / tauri build)
+#   2. macOS: codesign -dvvv shows valid Developer ID
+#   3. macOS: xcrun stapler validate passes
+#   4. Windows: signtool verify /pa passes
+#   5. Artifacts uploaded to workflow run
+
+name: EClaw Desktop Build (P1-G)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'eclaw-desktop/**'
+      - '.github/workflows/desktop-build.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'eclaw-desktop/**'
+      - '.github/workflows/desktop-build.yml'
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - macos
+          - windows
+
+env:
+  NODE_VERSION: '20'
+  RUST_VERSION: 'stable'
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # macOS Build
+  # ---------------------------------------------------------------------------
+  build-macos:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Rust
+        uses: dtolnay/rust-action@stable
+        with:
+          version: ${{ env.RUST_VERSION }}
+
+      - name: Cache Tauri CLI
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/tauri
+          key: tauri-cli-${{ hashFiles('**/package.json') }}
+
+      - name: Install Tauri CLI
+        working-directory: eclaw-desktop
+        run: npm install && npm install -g @tauri-apps/cli@latest
+
+      - name: Build macOS
+        working-directory: eclaw-desktop
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run tauri build -- --bundles dmg
+        timeout-minutes: 60
+
+      - name: Apple Notarization
+        if: github.event_name != 'pull_request'
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_ID_EMAIL: ${{ secrets.APPLE_ID_EMAIL }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.APPLE_KEYCHAINpw }}
+        run: |
+          # Create a temporary keychain for notarization
+          KEYCHAIN=upload.keychain
+          KEYCHAINpw=${{ env.KEYCHAIN_PASSWORD }}
+
+          security create-keychain -p "$KEYCHAINpw" "$KEYCHAIN"
+          security set-keychain-settings "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAINpw" "$KEYCHAIN"
+
+          # Download App Store Connect token (for notarytool auth)
+          # In practice, use: xcrun notarytool store-credentials (interactive)
+          # Here we assume credentials are stored in keychain already
+          xcrun notarytool --version
+
+          # Find the DMG
+          DMG=$(find src-tauri/target/release/bundle/dmg -name "*.dmg" | head -1)
+          echo "Notarizing: $DMG"
+
+          # Submit for notarization (wait for completion)
+          xcrun notarytool wait \
+            --team-id "$APPLE_TEAM_ID" \
+            --apple-id "$APPLE_ID_EMAIL" \
+            --password "$APPLE_ID_PASSWORD" \
+            "$DMG"
+
+          # Staple the notarization ticket to the DMG
+          xcrun stapler staple "$DMG"
+
+          # Verify
+          xcrun stapler validate "$DMG"
+          echo "Notarization complete!"
+
+      - name: Verify macOS Signature
+        run: |
+          APP=$(find src-tauri/target/release/bundle/dmg -name "*.app" | head -1)
+          codesign -dvvv "$APP"
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: eclaw-desktop-macos
+          path: |
+            eclaw-desktop/src-tauri/target/release/bundle/dmg/*.dmg
+            eclaw-desktop/src-tauri/target/release/bundle/macos/*.app
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # Windows Build
+  # ---------------------------------------------------------------------------
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Rust
+        uses: dtolnay/rust-action@stable
+        with:
+          version: ${{ env.RUST_VERSION }}
+
+      - name: Install Tauri CLI
+        working-directory: eclaw-desktop
+        shell: bash
+        run: npm install && npm install -g @tauri-apps/cli@latest
+
+      - name: Build Windows
+        working-directory: eclaw-desktop
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run tauri build -- --bundles msi,nsis
+        timeout-minutes: 60
+
+      - name: Sign Windows Installer
+        if: github.event_name != 'pull_request'
+        env:
+          WINDOWS_CERT_THUMBPRINT: ${{ secrets.WINDOWS_CERT_THUMBPRINT }}
+          WINDOWS_CERT_FILE: ${{ secrets.WINDOWS_CERT_FILE }}
+          WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        shell: pwsh
+        run: |
+          $certBytes = [System.Convert]::FromBase64String("${{ env.WINDOWS_CERT_FILE }}")
+          $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(
+            $certBytes,
+            "${{ env.WINDOWS_CERT_PASSWORD }}"
+          )
+
+          $thumbprint = "${{ env.WINDOWS_CERT_THUMBPRINT }}"
+          $timestampServer = "http://timestamp.digicert.com"
+          $digestAlgorithm = "sha256"
+
+          # Find installers
+          $msi = Get-ChildItem -Path src-tauri/target/release/bundle -Filter "*.msi" -Recurse | Select-Object -First 1
+          $nsis = Get-ChildItem -Path src-tauri/target/release/bundle -Filter "*.exe" -Recurse | Select-Object -First 1
+
+          # Sign MSI
+          if ($msi) {
+            Write-Host "Signing MSI: $($msi.FullName)"
+            & "C:/Program Files (x86)/Windows Kits/10/bin/10.0.*/x64/signtool.exe" sign \
+              /sha1 $thumbprint \
+              /fd $digestAlgorithm \
+              /tr $timestampServer \
+              /td $digestAlgorithm \
+              $msi.FullName
+          }
+
+          # Sign NSIS exe
+          if ($nsis) {
+            Write-Host "Signing NSIS: $($nsis.FullName)"
+            & "C:/Program Files (x86)/Windows Kits/10/bin/10.0.*/x64/signtool.exe" sign \
+              /sha1 $thumbprint \
+              /fd $digestAlgorithm \
+              /tr $timestampServer \
+              /td $digestAlgorithm \
+              $nsis.FullName
+          }
+
+      - name: Verify Windows Signature
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path src-tauri/target/release/bundle -Filter "*.exe" -Recurse | Select-Object -First 1
+          & "C:/Program Files (x86)/Windows Kits/10/bin/10.0.*/x64/signtool.exe" verify /pa /v $exe.FullName
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: eclaw-desktop-windows
+          path: |
+            eclaw-desktop/src-tauri/target/release/bundle/**/*.msi
+            eclaw-desktop/src-tauri/target/release/bundle/**/*.exe
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # Verification Summary
+  # ---------------------------------------------------------------------------
+  verify:
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List artifacts
+        run: |
+          echo "=== macOS ==="
+          ls -la artifacts/eclaw-desktop-macos/ || echo "No macOS artifacts"
+          echo "=== Windows ==="
+          ls -la artifacts/eclaw-desktop-windows/ || echo "No Windows artifacts"

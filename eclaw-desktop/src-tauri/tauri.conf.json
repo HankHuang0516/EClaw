@@ -34,7 +34,29 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["dmg", "msi", "nsis"],
+    "category": "public.app-category.productivity",
+    "copyright": "Copyright © 2026 EClaw",
+    "shortDescription": "One-click agent binding in 30 seconds",
+    "longDescription": "EClaw Desktop provides a native desktop app for automated agent binding and configuration management.",
+    "macOS": {
+      "minimumSystemVersion": "12.0",
+      "frameworks": [],
+      "signingIdentity": "-",
+      "notary": {
+        "teamId": "${APPLE_TEAM_ID}",
+        "appleId": "${APPLE_ID_EMAIL}",
+        "password": "@keychain:APPLE_ID_PASSWORD"
+      }
+    },
+    "windows": {
+      "certificateThumbprint": "${WINDOWS_CERT_THUMBPRINT}",
+      "timestampUrl": "http://timestamp.digicert.com",
+      "digestAlgorithm": "sha256",
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      }
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
