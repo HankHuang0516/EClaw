@@ -15,7 +15,7 @@ tokio = { version = "1", features = ["full", "net"] }
 # OAuth (P1-B)
 rand = "0.8"
 sha2 = "0.10"
-base64 = "0.13"
+base64 = "0.22"
 reqwest = { version = "0.12", features = ["json"] }
 urlencoding = "2"
 

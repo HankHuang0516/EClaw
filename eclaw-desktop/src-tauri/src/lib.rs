@@ -267,15 +267,15 @@ fn credmgr_store(envelope: &CredentialEnvelope) -> Result<(), String> {
         use windows::Win32::Security::Credentials::{
             CredWriteW, CREDENTIALW, CRED_TYPE_GENERIC, CRED_PERSIST_LOCAL_MACHINE,
         };
-        use windows::core::PCWSTR;
+        use windows::core::{PCWSTR, PWSTR};
         let cred = CREDENTIALW {
             Flags: Default::default(),
             Type: CRED_TYPE_GENERIC,
-            TargetName: PCWSTR(wide_target.as_ptr()),
+            TargetName: PWSTR(wide_target.as_ptr() as *mut u16),
             Comment: PCWSTR::null(),
             LastWritten: Default::default(),
             CredentialBlobSize: (wide_password.len() * 2) as u32,
-            CredentialBlob: PCWSTR(wide_password.as_ptr()) as *mut u8,
+            CredentialBlob: wide_password.as_ptr() as *mut u8,
             Persist: CRED_PERSIST_LOCAL_MACHINE,
             AttributeCount: 0,
             Attributes: ptr::null_mut(),
@@ -523,7 +523,7 @@ pub fn oauth_start() -> Result<OAuthStartResult, String> {
         port,
         state,
         code_verifier,
-        nonce,
+        nonce: nonce.clone(),
     })
 }
 
@@ -537,17 +537,29 @@ fn run_loopback_server(port: u16, expected_state: String, code_verifier: String)
             return;
         }
     };
-    listener
-        .set_read_timeout(Some(std::time::Duration::from_secs(60)))
-        .ok();
-    let mut stream = match listener.accept() {
-        Ok((s, _)) => s,
-        Err(e) => {
-            eprintln!("oauth_start: accept failed (timeout?): {}", e);
+    listener.set_nonblocking(true).ok();
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(60);
+    let mut stream = loop {
+        if std::time::Instant::now() > deadline {
+            eprintln!("oauth_start: accept timeout");
             clear_oauth_state();
             return;
         }
+        match listener.accept() {
+            Ok((s, _)) => break s,
+            Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                std::thread::sleep(std::time::Duration::from_millis(50));
+            }
+            Err(e) => {
+                eprintln!("oauth_start: accept failed: {}", e);
+                clear_oauth_state();
+                return;
+            }
+        }
     };
+    stream
+        .set_read_timeout(Some(std::time::Duration::from_secs(30)))
+        .ok();
     let mut buffer = [0u8; 4096];
     let n = match stream.read(&mut buffer) {
         Ok(n) => n,
@@ -901,7 +913,7 @@ pub async fn agent_probe() -> Result<Vec<AgentInfo>, String> {
         vec![]
     } else {
         match timeout(Duration::from_secs(10), async {
-            let mut results = Vec::new();
+            let mut results: Vec<Option<AgentInfo>> = Vec::new();
             for handle in handles {
                 results.push(handle.await);
             }
