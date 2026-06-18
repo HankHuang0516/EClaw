@@ -3,20 +3,28 @@ name = "eclaw-desktop"
 version = "0.1.0"
 edition = "2021"
 
+# Canonical Tauri 2 desktop+mobile layout: main.rs (bin) calls
+# eclaw_desktop_lib::run() from this lib. Without an explicit [lib] name the
+# auto lib is `eclaw_desktop`, so main.rs fails to link AND the command macros
+# get compiled twice (E0255 `__cmd__*` defined multiple times). This section is
+# what `tauri init` generates; its absence was the root cause.
+[lib]
+name = "eclaw_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full", "net"] }
-rustc-version = "0.4"
-
 # OAuth (P1-B)
 rand = "0.8"
 sha2 = "0.10"
-base64 = "0.13"
+base64 = "0.22"
 reqwest = { version = "0.12", features = ["json"] }
 urlencoding = "2"
 

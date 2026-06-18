@@ -4,7 +4,6 @@
   "version": "0.1.0",
   "identifier": "com.eclaw.desktop",
   "build": {
-    "devtools": true,
     "beforeBuildCommand": "",
     "beforeDevCommand": ""
   },
@@ -42,17 +41,9 @@
     "macOS": {
       "minimumSystemVersion": "12.0",
       "frameworks": [],
-      "signingIdentity": "-",
-      "notary": {
-        "teamId": "${APPLE_TEAM_ID}",
-        "appleId": "${APPLE_ID_EMAIL}",
-        "password": "@keychain:APPLE_ID_PASSWORD"
-      }
+      "signingIdentity": "-"
     },
     "windows": {
-      "certificateThumbprint": "${WINDOWS_CERT_THUMBPRINT}",
-      "timestampUrl": "http://timestamp.digicert.com",
-      "digestAlgorithm": "sha256",
       "webviewInstallMode": {
         "type": "downloadBootstrapper"
       }
