@@ -182,3 +182,54 @@ describe('GET /api/device/fcm-status', () => {
         expect(typeof res.body.firebaseAdminInitialized).toBe('boolean');
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// buildFcmNotificationData — FCM `data` payload builder
+// Regression guard: sendFcm() calls notifModule.buildFcmNotificationData(notif)
+// on EVERY Android push. It was called but never defined/exported, so every
+// FCM send threw a TypeError that a silent .catch(()=>{}) swallowed — Android
+// "task done" notifications died silently for weeks. These tests fail loudly if
+// the export is ever dropped again or returns a non-string value (FCM rejects
+// non-string data fields).
+// ════════════════════════════════════════════════════════════════
+describe('buildFcmNotificationData', () => {
+    const notifications = require('../../notifications');
+
+    it('is exported as a function', () => {
+        expect(typeof notifications.buildFcmNotificationData).toBe('function');
+    });
+
+    it('maps a kanban_done notification to an all-string FCM data payload', () => {
+        const data = notifications.buildFcmNotificationData({
+            id: 42,
+            type: 'kanban',
+            category: 'kanban_done',
+            title: '✅ 任務完成',
+            body: 'Ship the thing',
+            link: '/portal/kanban.html?card=abc',
+            metadata: { cardId: 'abc', isAuto: false }
+        });
+        // FCM requires every data value to be a string
+        for (const [k, v] of Object.entries(data)) {
+            expect(typeof v).toBe('string');
+        }
+        expect(data.category).toBe('kanban_done');
+        expect(data.title).toBe('✅ 任務完成');
+        expect(data.link).toBe('/portal/kanban.html?card=abc');
+        expect(data.notifId).toBe('42');
+        expect(JSON.parse(data.metadata)).toEqual({ cardId: 'abc', isAuto: false });
+    });
+
+    it('never throws on missing/empty fields (returns empty strings)', () => {
+        const data = notifications.buildFcmNotificationData({});
+        expect(typeof data.title).toBe('string');
+        expect(data.title).toBe('');
+        expect(data.body).toBe('');
+        expect(data.category).toBe('');
+    });
+
+    it('passes through an already-stringified metadata unchanged', () => {
+        const data = notifications.buildFcmNotificationData({ metadata: '{"x":1}' });
+        expect(data.metadata).toBe('{"x":1}');
+    });
+});

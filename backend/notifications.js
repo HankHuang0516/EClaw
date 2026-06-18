@@ -491,6 +491,27 @@ async function getPushSubscriptions(deviceId) {
     }
 }
 
+// Build the FCM `data` payload from a saved notification row.
+// FCM requires every `data` value to be a string, so coerce all fields and
+// JSON-encode the metadata object. The Android app reads these to route/display
+// the notification (e.g. navigate to `link`).
+function buildFcmNotificationData(notif) {
+    const data = {
+        title: String(notif.title || ''),
+        body: String(notif.body || ''),
+        category: String(notif.category || ''),
+        type: String(notif.type || ''),
+        link: String(notif.link || '')
+    };
+    if (notif.id != null) data.notifId = String(notif.id);
+    if (notif.metadata != null) {
+        data.metadata = typeof notif.metadata === 'string'
+            ? notif.metadata
+            : JSON.stringify(notif.metadata);
+    }
+    return data;
+}
+
 module.exports = {
     DEFAULT_PREFS,
     initNotificationTables,
@@ -513,5 +534,6 @@ module.exports = {
     truncateUtf8,
     createRichCardNotifLimiter,
     isRichCardQuestion,
-    buildRichCardNotification
+    buildRichCardNotification,
+    buildFcmNotificationData
 };

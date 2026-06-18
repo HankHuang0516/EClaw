@@ -20387,13 +20387,21 @@ async function notifyDevice(deviceId, notification) {
         });
 
         // Web Push (Phase 3 — enabled when VAPID keys are configured)
+        // Log dispatch failures instead of swallowing them — a silent
+        // .catch(()=>{}) here previously hid a hard TypeError (missing
+        // buildFcmNotificationData) so FCM died silently. Every push surfaces
+        // its own error now.
         if (typeof sendWebPush === 'function') {
-            sendWebPush(deviceId, notif).catch(() => {});
+            sendWebPush(deviceId, notif).catch((e) => {
+                serverLog('error', 'web_push', `dispatch failed: ${e.message}`, { deviceId, metadata: { category: notif?.category } });
+            });
         }
 
         // FCM (Phase 5 — enabled when firebase-admin is configured)
         if (typeof sendFcm === 'function') {
-            sendFcm(deviceId, notif).catch(() => {});
+            sendFcm(deviceId, notif).catch((e) => {
+                serverLog('error', 'fcm_dispatch', `dispatch failed: ${e.message}`, { deviceId, metadata: { category: notif?.category } });
+            });
         }
     } catch (err) {
         console.warn('[Notify] Failed:', err.message);
