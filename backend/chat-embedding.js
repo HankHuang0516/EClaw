@@ -10,6 +10,42 @@ const { generateEmbedding, toPgVectorLiteral, DEFAULT_DIM } = require('./embeddi
 
 let vectorEnabled = false;  // set true after successful schema init
 let poolRef = null;
+const EXPECTED_VECTOR_TYPE = `vector(${DEFAULT_DIM})`;
+
+function vectorDim(vec) {
+    return Array.isArray(vec) ? vec.length : null;
+}
+
+function hasExpectedDim(vec) {
+    return vectorDim(vec) === DEFAULT_DIM;
+}
+
+async function normalizeEmbeddingColumn(pool) {
+    const typeResult = await pool.query(`
+        SELECT pg_catalog.format_type(a.atttypid, a.atttypmod) AS column_type
+        FROM pg_catalog.pg_attribute a
+        WHERE a.attrelid = 'chat_messages'::regclass
+          AND a.attname = 'embedding'
+          AND NOT a.attisdropped
+        LIMIT 1
+    `);
+    const columnType = typeResult.rows?.[0]?.column_type;
+    if (!columnType || columnType === EXPECTED_VECTOR_TYPE) return;
+
+    console.warn(`[ChatEmbedding] normalizing embedding column ${columnType} -> ${EXPECTED_VECTOR_TYPE}`);
+    await pool.query('DROP INDEX IF EXISTS idx_chat_embedding_hnsw');
+    await pool.query(`
+        UPDATE chat_messages
+        SET embedding = NULL, embedded_at = NULL
+        WHERE embedding IS NOT NULL
+          AND vector_dims(embedding) <> ${DEFAULT_DIM}
+    `);
+    await pool.query(`
+        ALTER TABLE chat_messages
+        ALTER COLUMN embedding TYPE vector(${DEFAULT_DIM})
+        USING embedding::vector(${DEFAULT_DIM})
+    `);
+}
 
 async function initSchema(pool) {
     poolRef = pool;
@@ -29,6 +65,7 @@ async function initSchema(pool) {
     try {
         await pool.query(`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS embedding vector(${DEFAULT_DIM})`);
         await pool.query(`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS embedded_at TIMESTAMP WITH TIME ZONE`);
+        await normalizeEmbeddingColumn(pool);
     } catch (err) {
         console.warn('[ChatEmbedding] embedding column migration failed:', err.message);
         vectorEnabled = false;
@@ -59,6 +96,10 @@ function embedMessageAsync(messageId, text, opts = {}) {
         try {
             const vec = await generateEmbedding(text, opts);
             if (!vec) return;
+            if (!hasExpectedDim(vec)) {
+                console.warn(`[ChatEmbedding] skip embedding write for ${messageId}: dim=${vectorDim(vec)} expected=${DEFAULT_DIM}`);
+                return;
+            }
             const literal = toPgVectorLiteral(vec);
             if (!literal) return;
             await poolRef.query(
@@ -80,6 +121,10 @@ function embedMessageAsync(messageId, text, opts = {}) {
  */
 async function searchBySemantic(deviceId, queryEmbedding, opts = {}) {
     if (!vectorEnabled || !queryEmbedding) return [];
+    if (!hasExpectedDim(queryEmbedding)) {
+        console.warn(`[ChatEmbedding] skip semantic search: query dim=${vectorDim(queryEmbedding)} expected=${DEFAULT_DIM}`);
+        return [];
+    }
     const literal = toPgVectorLiteral(queryEmbedding);
     if (!literal) return [];
     const limit = Math.min(Math.max(parseInt(opts.limit, 10) || 5, 1), 50);
