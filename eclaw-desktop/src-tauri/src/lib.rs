@@ -1,12 +1,7 @@
 //! EClaw Desktop — Consolidated P1-A + P1-B + P1-C + P1-E
 //!
-//! This file combines:
-//! - P1-A: Tauri scaffold + health_check
-//! - P1-B: OAuth flow (PKCE, system browser, loopback, token exchange) — REAL
-//! - P1-C: OS Credential Store (Keychain, Credential Manager) — REAL
-//! - P1-E: Agent Probe (Hermes/HTTP/Codex/Subprocess) — REAL
-//!
-//! Build verification: cargo build (CI: desktop-build.yml)
+//! Exactly ONE copy of each command function (14 total).
+//! Duplicate function definitions cause E0255 errors.
 
 use base64::Engine;
 use parking_lot::Mutex;
@@ -117,7 +112,7 @@ struct OAuthFlowState {
 static OAUTH_STATE: Mutex<Option<OAuthFlowState>> = Mutex::new(None);
 
 // ---------------------------------------------------------------------------
-// P1-C: Config File (~/.eclaw-desktop/config.json)
+// Config File (~/.eclaw-desktop/config.json)
 // ---------------------------------------------------------------------------
 
 fn get_config_dir() -> PathBuf {
@@ -133,10 +128,10 @@ fn get_config_path() -> PathBuf {
 fn ensure_config_exists() -> Result<String, String> {
     let config_path = get_config_path();
     if config_path.exists() {
-        let content = fs::read_to_string(&config_path)
-            .map_err(|e| format!("Failed to read config: {}", e))?;
+        let content =
+            fs::read_to_string(&config_path).map_err(|e| format!("read config: {}", e))?;
         let config: AppConfig =
-            serde_json::from_str(&content).map_err(|e| format!("Failed to parse config: {}", e))?;
+            serde_json::from_str(&content).map_err(|e| format!("parse config: {}", e))?;
         Ok(config.install_id)
     } else {
         let install_id = uuid_v4();
@@ -147,11 +142,10 @@ fn ensure_config_exists() -> Result<String, String> {
             endpoints: vec![],
         };
         let dir = get_config_dir();
-        fs::create_dir_all(&dir).map_err(|e| format!("Failed to create config dir: {}", e))?;
-        let json = serde_json::to_string_pretty(&config)
-            .map_err(|e| format!("Failed to serialize config: {}", e))?;
-        fs::write(&config_path, json)
-            .map_err(|e| format!("Failed to write config: {}", e))?;
+        fs::create_dir_all(&dir).map_err(|e| format!("create dir: {}", e))?;
+        let json =
+            serde_json::to_string_pretty(&config).map_err(|e| format!("serialize: {}", e))?;
+        fs::write(&config_path, json).map_err(|e| format!("write config: {}", e))?;
         Ok(install_id)
     }
 }
@@ -182,31 +176,37 @@ fn uuid_v4() -> String {
 }
 
 // ---------------------------------------------------------------------------
-// P1-C: macOS Keychain (security CLI)
+// macOS Keychain (security CLI)
 // ---------------------------------------------------------------------------
 
 #[cfg(target_os = "macos")]
 fn keychain_store(envelope: &CredentialEnvelope) -> Result<(), String> {
-    let password = serde_json::to_string(envelope)
-        .map_err(|e| format!("serialize: {}", e))?;
-    let output = Command::new("security")
+    let password =
+        serde_json::to_string(envelope).map_err(|e| format!("serialize: {}", e))?;
+    let out = Command::new("security")
         .args(&[
             "add-generic-password", "-s", "com.eclaw.desktop", "-a",
             &envelope.install_id, "-w", &password,
         ])
         .output()
         .map_err(|e| format!("security cli: {}", e))?;
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
+    if !out.status.success() {
+        let stderr = String::from_utf8_lossy(&out.stderr);
         if stderr.contains("already exists") {
             Command::new("security")
-                .args(&["delete-generic-password", "-s", "com.eclaw.desktop", "-a", &envelope.install_id])
+                .args(&[
+                    "delete-generic-password", "-s", "com.eclaw.desktop", "-a",
+                    &envelope.install_id,
+                ])
                 .output()
-                .map_err(|e| format!("delete: {}", e))?;
+                .map_err(|e| format!("security delete: {}", e))?;
             let out2 = Command::new("security")
-                .args(&["add-generic-password", "-s", "com.eclaw.desktop", "-a", &envelope.install_id, "-w", &password])
+                .args(&[
+                    "add-generic-password", "-s", "com.eclaw.desktop", "-a",
+                    &envelope.install_id, "-w", &password,
+                ])
                 .output()
-                .map_err(|e| format!("add after delete: {}", e))?;
+                .map_err(|e| format!("security add: {}", e))?;
             if !out2.status.success() {
                 return Err(format!(
                     "keychain add failed: {}",
@@ -222,14 +222,16 @@ fn keychain_store(envelope: &CredentialEnvelope) -> Result<(), String> {
 
 #[cfg(target_os = "macos")]
 fn keychain_get(install_id: &str) -> Result<Option<CredentialEnvelope>, String> {
-    let output = Command::new("security")
-        .args(&["find-generic-password", "-s", "com.eclaw.desktop", "-a", install_id, "-w"])
+    let out = Command::new("security")
+        .args(&[
+            "find-generic-password", "-s", "com.eclaw.desktop", "-a", install_id, "-w",
+        ])
         .output()
         .map_err(|e| format!("security cli: {}", e))?;
-    if !output.status.success() {
+    if !out.status.success() {
         return Ok(None);
     }
-    let password = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let password = String::from_utf8_lossy(&out.stdout).trim().to_string();
     if password.is_empty() {
         return Ok(None);
     }
@@ -240,15 +242,17 @@ fn keychain_get(install_id: &str) -> Result<Option<CredentialEnvelope>, String> 
 
 #[cfg(target_os = "macos")]
 fn keychain_delete(install_id: &str) -> Result<bool, String> {
-    let output = Command::new("security")
-        .args(&["delete-generic-password", "-s", "com.eclaw.desktop", "-a", install_id])
+    let out = Command::new("security")
+        .args(&[
+            "delete-generic-password", "-s", "com.eclaw.desktop", "-a", install_id,
+        ])
         .output()
         .map_err(|e| format!("security cli: {}", e))?;
-    Ok(output.status.success() || output.status.code() == Some(36))
+    Ok(out.status.success() || out.status.code() == Some(36))
 }
 
 // ---------------------------------------------------------------------------
-// P1-C: Windows Credential Manager
+// Windows Credential Manager
 // ---------------------------------------------------------------------------
 
 #[cfg(target_os = "windows")]
@@ -294,7 +298,8 @@ fn credmgr_get(install_id: &str) -> Result<Option<CredentialEnvelope>, String> {
         match CredReadW(PCWSTR(wide_target.as_ptr()), CRED_TYPE_GENERIC, 0, &mut cred_ptr) {
             Ok(_) => {
                 let cred = &*cred_ptr;
-                let blob = std::slice::from_raw_parts(cred.CredentialBlob, cred.CredentialBlobSize as usize);
+                let blob =
+                    std::slice::from_raw_parts(cred.CredentialBlob, cred.CredentialBlobSize as usize);
                 let password = String::from_utf16_lossy(
                     &blob.chunks_exact(2).map(|c| u16::from_le_bytes([c[0], c[1]])).collect::<Vec<u16>>(),
                 );
@@ -323,7 +328,7 @@ fn credmgr_delete(install_id: &str) -> Result<bool, String> {
 }
 
 // ---------------------------------------------------------------------------
-// P1-C: OS Store Dispatch
+// OS Store Dispatch
 // ---------------------------------------------------------------------------
 
 #[cfg(target_os = "windows")]
@@ -341,19 +346,37 @@ use keychain_delete as os_delete;
 
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
 fn os_store(_: &CredentialEnvelope) -> Result<(), String> {
-    Err("OS Credential Store only supported on macOS and Windows".to_string())
+    Err("OS Credential Store only supported on macOS and Windows".into())
 }
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
 fn os_get(_: &str) -> Result<Option<CredentialEnvelope>, String> {
-    Err("OS Credential Store only supported on macOS and Windows".to_string())
+    Err("OS Credential Store only supported on macOS and Windows".into())
 }
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
 fn os_delete(_: &str) -> Result<bool, String> {
-    Err("OS Credential Store only supported on macOS and Windows".to_string())
+    Err("OS Credential Store only supported on macOS and Windows".into())
 }
 
 // ---------------------------------------------------------------------------
-// P1-C: Credential Store Commands
+// Command: Health Check (P1-A)
+// ---------------------------------------------------------------------------
+
+#[command]
+pub fn health_check() -> HealthStatus {
+    let rust_ver = std::process::Command::new("rustc")
+        .arg("--version")
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        .unwrap_or_default();
+    HealthStatus {
+        app_version: env!("CARGO_PKG_VERSION").to_string(),
+        platform: std::env::consts::OS.to_string(),
+        rust_version: rust_ver,
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Commands: Credential Store (P1-C)
 // ---------------------------------------------------------------------------
 
 #[command]
@@ -363,15 +386,13 @@ pub fn credential_store(
     expires_at: i64,
 ) -> Result<(), String> {
     let install_id = ensure_config_exists()?;
-    let access_token = String::new();
-    let refresh_expires_at = expires_at + (90 * 24 * 60 * 60);
     let envelope = CredentialEnvelope {
         install_id,
         refresh_token,
-        access_token,
+        access_token: String::new(),
         id_token,
         expires_at,
-        refresh_expires_at,
+        refresh_expires_at: expires_at + (90 * 24 * 60 * 60),
     };
     os_store(&envelope)
 }
@@ -418,7 +439,7 @@ pub fn install_id_get() -> Result<String, String> {
 }
 
 // ---------------------------------------------------------------------------
-// P1-B: PKCE Helpers
+// Commands: OAuth (P1-B)
 // ---------------------------------------------------------------------------
 
 fn generate_random_base64(len: usize) -> String {
@@ -464,22 +485,14 @@ fn build_google_auth_url(
 }
 
 fn pick_available_port() -> u16 {
-    let listener =
-        TcpListener::bind("127.0.0.1:0").expect("Failed to bind port 0");
-    listener
-        .local_addr()
-        .expect("Failed to get local addr")
-        .port()
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind port 0");
+    listener.local_addr().expect("get local addr").port()
 }
 
 fn clear_oauth_state() {
     let mut lock = OAUTH_STATE.lock();
     *lock = None;
 }
-
-// ---------------------------------------------------------------------------
-// P1-B: OAuth Commands
-// ---------------------------------------------------------------------------
 
 #[command]
 pub fn oauth_start() -> Result<OAuthStartResult, String> {
@@ -492,7 +505,6 @@ pub fn oauth_start() -> Result<OAuthStartResult, String> {
     let redirect_uri = format!("http://127.0.0.1:{}/callback", port);
     let auth_url =
         build_google_auth_url(&client_id, &redirect_uri, &state, &nonce, &code_challenge);
-
     {
         let mut lock = OAUTH_STATE.lock();
         *lock = Some(OAuthFlowState {
@@ -503,13 +515,9 @@ pub fn oauth_start() -> Result<OAuthStartResult, String> {
             completed: false,
         });
     }
-
     let state_clone = state.clone();
     let verifier_clone = code_verifier.clone();
-    std::thread::spawn(move || {
-        run_loopback_server(port, state_clone, verifier_clone);
-    });
-
+    std::thread::spawn(move || run_loopback_server(port, state_clone, verifier_clone));
     Ok(OAuthStartResult {
         auth_url,
         port,
@@ -532,7 +540,6 @@ fn run_loopback_server(port: u16, expected_state: String, code_verifier: String)
     listener
         .set_read_timeout(Some(std::time::Duration::from_secs(60)))
         .ok();
-
     let mut stream = match listener.accept() {
         Ok((s, _)) => s,
         Err(e) => {
@@ -541,7 +548,6 @@ fn run_loopback_server(port: u16, expected_state: String, code_verifier: String)
             return;
         }
     };
-
     let mut buffer = [0u8; 4096];
     let n = match stream.read(&mut buffer) {
         Ok(n) => n,
@@ -551,21 +557,17 @@ fn run_loopback_server(port: u16, expected_state: String, code_verifier: String)
         }
     };
     let request = String::from_utf8_lossy(&buffer[..n]);
-
     let code = extract_query_param(&request, "code");
     let state = extract_query_param(&request, "state");
-
     if state.as_ref() != Some(&expected_state) {
         send_http_response(
             &mut stream,
             400,
             "<html><body><h1>State mismatch</h1><p>OAuth state validation failed. Please try again.</p></body></html>",
         );
-        eprintln!("oauth_start: state mismatch");
         clear_oauth_state();
         return;
     }
-
     let code = match code {
         Some(c) => c,
         None => {
@@ -577,7 +579,6 @@ fn run_loopback_server(port: u16, expected_state: String, code_verifier: String)
             return;
         }
     };
-
     let token_result = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
@@ -588,20 +589,11 @@ fn run_loopback_server(port: u16, expected_state: String, code_verifier: String)
             &code_verifier,
             port,
         ));
-
     match token_result {
-        Ok(tokens) => {
-            let expires_at = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_secs() as i64
-                + tokens.expires_in;
+        Ok(_tokens) => {
             eprintln!(
-                "P1-B: OAuth succeeded — access_token ({} chars), refresh_token ({} chars)",
-                tokens.access_token.len(),
-                tokens.refresh_token.len()
+                "P1-B: OAuth succeeded — access_token received"
             );
-            let _ = (tokens, expires_at);
             send_http_response(
                 &mut stream,
                 200,
@@ -721,23 +713,23 @@ pub fn oauth_get_port() -> Result<Option<u16>, String> {
 }
 
 // ---------------------------------------------------------------------------
-// P1-E: Agent Probe
+// Commands: Agent Probe (P1-E)
 // ---------------------------------------------------------------------------
 
 async fn probe_hermes(url: &str, token: Option<&str>) -> Result<AgentInfo, String> {
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(5))
         .build()
-        .map_err(|e| format!("reqwest build failed: {}", e))?;
+        .map_err(|e| format!("reqwest: {}", e))?;
     let mut req = client.get(format!("{}/api/whoami", url.trim_end_matches('/')));
     if let Some(t) = token {
         req = req.header("Authorization", format!("Bearer {}", t));
     }
-    let resp = req.send().await.map_err(|e| format!("request failed: {}", e))?;
+    let resp = req.send().await.map_err(|e| format!("request: {}", e))?;
     if !resp.status().is_success() {
         return Err(format!("HTTP {}", resp.status()));
     }
-    let body: Value = resp.json().await.map_err(|e| format!("parse failed: {}", e))?;
+    let body: Value = resp.json().await.map_err(|e| format!("parse: {}", e))?;
     let entity_id = body.get("entityId").and_then(|v| v.as_str()).unwrap_or("unknown");
     let version = body.get("version").and_then(|v| v.as_str()).map(String::from);
     Ok(AgentInfo {
@@ -750,7 +742,6 @@ async fn probe_hermes(url: &str, token: Option<&str>) -> Result<AgentInfo, Strin
 }
 
 async fn probe_codex(command: &str) -> Result<AgentInfo, String> {
-    // SECURITY: Uses `claude --version` ONLY. Never --print-password.
     let output = AsyncCommand::new(command)
         .arg("--version")
         .stdin(Stdio::null())
@@ -758,15 +749,15 @@ async fn probe_codex(command: &str) -> Result<AgentInfo, String> {
         .stderr(Stdio::piped())
         .output()
         .await
-        .map_err(|e| format!("process spawn failed: {}", e))?;
+        .map_err(|e| format!("spawn: {}", e))?;
     if !output.status.success() {
-        return Err(format!("exit code {:?}", output.status.code()));
+        return Err(format!("exit {:?}", output.status.code()));
     }
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
     let version_output = stdout.trim().to_string();
     if version_output.is_empty() {
-        return Err(format!("empty version output, stderr: {}", stderr));
+        return Err(format!("empty version, stderr: {}", stderr));
     }
     Ok(AgentInfo {
         agent_type: "codex".to_string(),
@@ -782,8 +773,8 @@ async fn probe_http_agent(host: &str, port: u16) -> Result<AgentInfo, String> {
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(5))
         .build()
-        .map_err(|e| format!("reqwest build failed: {}", e))?;
-    let resp = client.head(&url).send().await.map_err(|e| format!("request failed: {}", e))?;
+        .map_err(|e| format!("reqwest: {}", e))?;
+    let resp = client.head(&url).send().await.map_err(|e| format!("request: {}", e))?;
     let agent_header = resp
         .headers()
         .get("X-EClaw-Agent")
@@ -809,13 +800,13 @@ async fn probe_subprocess(command: &str, argv: &[String]) -> Result<AgentInfo, S
         .stderr(Stdio::piped())
         .output()
         .await
-        .map_err(|e| format!("process spawn failed: {}", e))?;
+        .map_err(|e| format!("spawn: {}", e))?;
     if !output.status.success() {
-        return Err(format!("exit code {:?}", output.status.code()));
+        return Err(format!("exit {:?}", output.status.code()));
     }
     let stdout = String::from_utf8_lossy(&output.stdout);
     let body: Value =
-        serde_json::from_str(stdout.trim()).map_err(|e| format!("JSON parse failed: {}", e))?;
+        serde_json::from_str(stdout.trim()).map_err(|e| format!("parse JSON: {}", e))?;
     Ok(AgentInfo {
         agent_type: body.get("type").and_then(|v| v.as_str()).unwrap_or("subprocess").to_string(),
         name: body.get("name").and_then(|v| v.as_str()).unwrap_or("Unknown").to_string(),
@@ -835,11 +826,7 @@ fn deduplicate_agents(mut agents: Vec<AgentInfo>) -> Vec<AgentInfo> {
     };
     let mut seen: HashMap<String, AgentInfo> = HashMap::new();
     for agent in agents.drain(..) {
-        let key = format!(
-            "{}:{}",
-            agent.agent_type,
-            agent.endpoint.as_deref().unwrap_or("")
-        );
+        let key = format!("{}:{}", agent.agent_type, agent.endpoint.as_deref().unwrap_or(""));
         let entry = seen.entry(key).or_insert(agent.clone());
         if priority(&agent.agent_type) < priority(&entry.agent_type) {
             *entry = agent;
@@ -851,16 +838,15 @@ fn deduplicate_agents(mut agents: Vec<AgentInfo>) -> Vec<AgentInfo> {
 #[command]
 pub async fn agent_probe() -> Result<Vec<AgentInfo>, String> {
     let config_path = get_config_path();
-    let config_content = fs::read_to_string(&config_path)
-        .map_err(|e| format!("config read failed: {}", e))?;
-    let config: Value = serde_json::from_str(&config_content)
-        .map_err(|e| format!("config parse failed: {}", e))?;
+    let config_content =
+        fs::read_to_string(&config_path).map_err(|e| format!("read config: {}", e))?;
+    let config: Value =
+        serde_json::from_str(&config_content).map_err(|e| format!("parse config: {}", e))?;
     let endpoints = config
         .get("endpoints")
         .and_then(|v| v.as_array())
         .cloned()
         .unwrap_or_default();
-
     let mut handles = Vec::new();
     for ep in endpoints {
         let agent_type = ep.get("agent_type").and_then(|v| v.as_str()).unwrap_or("");
@@ -887,7 +873,9 @@ pub async fn agent_probe() -> Result<Vec<AgentInfo>, String> {
                     ep.get("port").and_then(|v| v.as_u64()),
                 ) {
                     let host = host.to_string();
-                    handles.push(async move { probe_http_agent(&host, port as u16).await.ok() });
+                    handles.push(async move {
+                        probe_http_agent(&host, port as u16).await.ok()
+                    });
                 }
             }
             "subprocess" => {
@@ -901,13 +889,14 @@ pub async fn agent_probe() -> Result<Vec<AgentInfo>, String> {
                 ) {
                     let cmd = cmd.to_string();
                     let argv = argv.clone();
-                    handles.push(async move { probe_subprocess(&cmd, &argv).await.ok() });
+                    handles.push(async move {
+                        probe_subprocess(&cmd, &argv).await.ok()
+                    });
                 }
             }
             _ => {}
         }
     }
-
     let results: Vec<Option<AgentInfo>> = if handles.is_empty() {
         vec![]
     } else {
@@ -917,13 +906,13 @@ pub async fn agent_probe() -> Result<Vec<AgentInfo>, String> {
                 results.push(handle.await);
             }
             results
-        }).await
+        })
+        .await
         {
             Ok(r) => r,
             Err(_) => vec![],
         }
     };
-
     let mut agents: Vec<AgentInfo> = results.into_iter().filter_map(|x| x).collect();
     agents.sort_by_key(|a| match a.agent_type.as_str() {
         "hermes" => 0,
@@ -967,10 +956,10 @@ pub async fn agent_probe_single(
 #[command]
 pub fn agent_config_get() -> Result<Vec<AgentEndpointConfig>, String> {
     let config_path = get_config_path();
-    let config_content = fs::read_to_string(&config_path)
-        .map_err(|e| format!("config read failed: {}", e))?;
-    let config: Value = serde_json::from_str(&config_content)
-        .map_err(|e| format!("config parse failed: {}", e))?;
+    let config_content =
+        fs::read_to_string(&config_path).map_err(|e| format!("read config: {}", e))?;
+    let config: Value =
+        serde_json::from_str(&config_content).map_err(|e| format!("parse config: {}", e))?;
     let endpoints = config
         .get("endpoints")
         .and_then(|v| v.as_array())
@@ -986,7 +975,9 @@ pub fn agent_config_get() -> Result<Vec<AgentEndpointConfig>, String> {
                 url: ep.get("url").and_then(|v| v.as_str()).map(String::from),
                 command: ep.get("command").and_then(|v| v.as_str()).map(String::from),
                 argv: ep.get("argv").and_then(|v| {
-                    v.as_array().map(|a| a.iter().filter_map(|x| x.as_str().map(String::from)).collect())
+                    v.as_array().map(|a| {
+                        a.iter().filter_map(|x| x.as_str().map(String::from)).collect()
+                    })
                 }),
                 host: ep.get("host").and_then(|v| v.as_str()).map(String::from),
                 port: ep.get("port").and_then(|v| v.as_u64().map(|n| n as u16)),
@@ -1000,13 +991,12 @@ pub fn agent_config_get() -> Result<Vec<AgentEndpointConfig>, String> {
 pub fn agent_config_set(endpoints: Vec<AgentEndpointConfig>) -> Result<(), String> {
     let config_path = get_config_path();
     let mut config: Value = if config_path.exists() {
-        let content = fs::read_to_string(&config_path)
-            .map_err(|e| format!("config read failed: {}", e))?;
-        serde_json::from_str(&content).map_err(|e| format!("config parse failed: {}", e))?
+        let content =
+            fs::read_to_string(&config_path).map_err(|e| format!("read config: {}", e))?;
+        serde_json::from_str(&content).map_err(|e| format!("parse config: {}", e))?
     } else {
         serde_json::json!({})
     };
-
     let ep_array: Vec<Value> = endpoints
         .into_iter()
         .map(|ep| {
@@ -1042,36 +1032,17 @@ pub fn agent_config_set(endpoints: Vec<AgentEndpointConfig>) -> Result<(), Strin
             obj
         })
         .collect();
-
     config
         .as_object_mut()
         .unwrap()
         .insert("endpoints".to_string(), serde_json::json!(ep_array));
-
-    let json = serde_json::to_string_pretty(&config)
-        .map_err(|e| format!("serialize failed: {}", e))?;
+    let json =
+        serde_json::to_string_pretty(&config).map_err(|e| format!("serialize: {}", e))?;
     if let Some(parent) = config_path.parent() {
-        fs::create_dir_all(parent).map_err(|e| format!("mkdir failed: {}", e))?;
+        fs::create_dir_all(parent).map_err(|e| format!("mkdir: {}", e))?;
     }
-    fs::write(&config_path, json).map_err(|e| format!("write failed: {}", e))?;
+    fs::write(&config_path, json).map_err(|e| format!("write: {}", e))?;
     Ok(())
-}
-
-// ---------------------------------------------------------------------------
-// Health Check
-// ---------------------------------------------------------------------------
-
-#[command]
-pub fn health_check() -> HealthStatus {
-    HealthStatus {
-        app_version: env!("CARGO_PKG_VERSION").to_string(),
-        platform: std::env::consts::OS.to_string(),
-        rust_version: std::process::Command::new("rustc")
-            .arg("--version")
-            .output()
-            .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-            .unwrap_or_default(),
-    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1083,20 +1054,16 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
-            // P1-A: Health check
             health_check,
-            // P1-C: Credential Store
             credential_store,
             credential_update_access_token,
             credential_get,
             credential_get_full,
             credential_delete,
             install_id_get,
-            // P1-B: OAuth (real implementation)
             oauth_start,
             oauth_cancel,
             oauth_get_port,
-            // P1-E: Agent Probe (real implementation)
             agent_probe,
             agent_probe_single,
             agent_config_get,
