@@ -134,6 +134,11 @@ function doLogout() { logout(); }
 // (e.g. user has no wallet yet).
 async function _loadNavEcoinBadge() {
     try {
+        // Guard: only fetch the wallet balance when authenticated. On public /
+        // unauthenticated pages window.currentUser is unset (auth.js populates it
+        // after /me succeeds); skipping here avoids a 401 console error on every
+        // public page view. See issue #3513.
+        if (!window.currentUser) return;
         const badge = document.getElementById('ecoinBadge');
         const amountEl = document.getElementById('ecoinAmount');
         if (!badge || !amountEl) return;
