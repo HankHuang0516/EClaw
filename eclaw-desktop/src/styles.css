@@ -324,3 +324,56 @@ button:disabled {
   word-break: break-all;
   text-align: left;
 }
+
+/* Help button + tooltip */
+.screen-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  position: relative;
+}
+
+.btn-help {
+  position: relative;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.btn-help:hover {
+  background: var(--bg);
+}
+
+.tooltip {
+  display: none;
+  position: absolute;
+  top: 36px;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--text);
+  width: 220px;
+  text-align: left;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  line-height: 1.4;
+}
+
+.tooltip b {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--text);
+}

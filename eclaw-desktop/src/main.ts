@@ -88,7 +88,12 @@ function showError(msg: string): void {
 function renderWelcome(container: HTMLElement): void {
   container.innerHTML = `
     <div class="screen screen-welcome">
-      <div class="hero-icon">🌐</div>
+      <div class="screen-header">
+        <div class="hero-icon">🌐</div>
+        <button id="btn-help" class="btn-help" aria-label="說明">?
+          <span class="tooltip" id="help-tooltip">為什麼需要 Google 登入？EClaw 使用您的 Google 帳號來驗證身份，不會讀取您的 Gmail 或 Google Drive 資料。</span>
+        </button>
+      </div>
       <h1>Welcome to EClaw Desktop</h1>
       <p class="subtitle">安全、快速的 AI 桌面伴侶</p>
       <button id="btn-signin" class="btn-primary btn-google">
@@ -107,6 +112,12 @@ function renderWelcome(container: HTMLElement): void {
 
   const btn = document.getElementById("btn-signin")!;
   btn.addEventListener("click", () => startOAuthFlow());
+
+  const btnHelp = document.getElementById("btn-help")!;
+  btnHelp.addEventListener("click", () => {
+    const tooltip = document.getElementById("help-tooltip")!;
+    tooltip.style.display = tooltip.style.display === "block" ? "none" : "block";
+  });
 }
 
 let pollInterval: ReturnType<typeof setInterval> | null = null;
@@ -175,7 +186,15 @@ async function startOAuthFlow(): Promise<void> {
 async function renderSetup(container: HTMLElement, _data: { agents?: AgentInfo[] }): Promise<void> {
   container.innerHTML = `
     <div class="screen screen-setup">
-      <div class="hero-icon">⚙️</div>
+      <div class="screen-header">
+        <div class="hero-icon">⚙️</div>
+        <button id="btn-help-setup" class="btn-help" aria-label="說明">?
+          <span class="tooltip" id="help-tooltip-setup">
+            <b>資料存在哪裡？</b><br>您的登入憑證會加密保存在電腦的 Keychain（macOS）或 Credential Manager（Windows），不會上傳到任何伺服器。<br><br>
+            <b>什麼是 Agent 探測？</b><br>EClaw 會掃描本機，找出已安裝的 EClaw AI 夥伴程式。
+          </span>
+        </button>
+      </div>
       <h1>Setting up...</h1>
       <p class="subtitle">正在探測本機 AI agents</p>
       <div id="probe-results" class="agent-list">
@@ -194,6 +213,12 @@ async function renderSetup(container: HTMLElement, _data: { agents?: AgentInfo[]
 
   document.getElementById("btn-continue")!.addEventListener("click", () => {
     showScreen("ready");
+  });
+
+  const btnHelpSetup = document.getElementById("btn-help-setup")!;
+  btnHelpSetup.addEventListener("click", () => {
+    const tooltip = document.getElementById("help-tooltip-setup")!;
+    tooltip.style.display = tooltip.style.display === "block" ? "none" : "block";
   });
 
   // Auto-probe agents
@@ -232,7 +257,12 @@ async function renderSetup(container: HTMLElement, _data: { agents?: AgentInfo[]
 function renderReady(container: HTMLElement): void {
   container.innerHTML = `
     <div class="screen screen-ready">
-      <div class="hero-icon">✅</div>
+      <div class="screen-header">
+        <div class="hero-icon">✅</div>
+        <button id="btn-help-ready" class="btn-help" aria-label="說明">?
+          <span class="tooltip" id="help-tooltip-ready"><b>登出會怎樣？</b><br>您的凭据会被清除，可随时重新登录。</span>
+        </button>
+      </div>
       <h1>You're all set!</h1>
       <p class="subtitle">EClaw Desktop 已就緒</p>
       <div class="status-badge"><span class="dot"></span>就緒</div>
@@ -248,6 +278,14 @@ function renderReady(container: HTMLElement): void {
       showScreen("welcome");
     }
   });
+
+  const btnHelpReady = document.getElementById("btn-help-ready");
+  if (btnHelpReady) {
+    btnHelpReady.addEventListener("click", () => {
+      const tooltip = document.getElementById("help-tooltip-ready")!;
+      tooltip.style.display = tooltip.style.display === "block" ? "none" : "block";
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------
