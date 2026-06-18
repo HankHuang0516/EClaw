@@ -49,8 +49,10 @@ describe('autoReviewOnTransform — aboutCardId inference from transformMessage 
     });
 
     test('legacy "skip when nothing extractable" guard still runs as the second gate', () => {
-        // After inference attempt, if aboutCardId still undefined → skip
-        expect(body).toMatch(/if\s*\(\s*!\s*aboutCardId\s*\)\s*{\s*console\.warn\([^)]*no aboutCardId provided[\s\S]*?return\s*;?\s*}/);
+        // After inference attempt, if aboutCardId still undefined → skip.
+        // Log level is warn|debug (PR #3499 downgraded to debug for log hygiene);
+        // the gate's behavior — advise + return — is what matters here.
+        expect(body).toMatch(/if\s*\(\s*!\s*aboutCardId\s*\)\s*{\s*console\.(?:warn|debug)\([^)]*no aboutCardId provided[\s\S]*?return\s*;?\s*}/);
     });
 });
 
