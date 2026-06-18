@@ -12,8 +12,9 @@
  *   --device all devices
  *   --dry-run skip UPDATE, just print what would change
  *
- * Safe to re-run: only touches rows where embedding IS NULL. Rate-limited via
- * the OpenAI API server-side; if you hit rate limits, lower --batch.
+ * Safe to re-run: first ensures the pgvector schema matches DEFAULT_DIM, then
+ * only touches rows where embedding IS NULL. Rate-limited via the OpenAI API
+ * server-side; if you hit rate limits, lower --batch.
  *
  * The script exits with a non-zero code only on fatal errors (db connect
  * failure, missing env). Individual embedding failures are skipped with a
@@ -23,6 +24,7 @@
 require('dotenv').config();
 const { Pool } = require('pg');
 const embeddingClient = require('../embedding-client');
+const chatEmbedding = require('../chat-embedding');
 const { DEFAULT_DIM } = embeddingClient;
 
 function parseArgs(argv) {
@@ -53,14 +55,19 @@ async function main() {
         ssl: process.env.PG_SSL === 'false' ? false : { rejectUnauthorized: false }
     });
 
-    console.log(`[backfill] provider=${embeddingClient.pickProvider()} batch=${opts.batch} max=${opts.max} device=${opts.device || 'ALL'} dryRun=${opts.dryRun}`);
+    console.log(`[backfill] provider=${embeddingClient.pickProvider()} expectedDim=${DEFAULT_DIM} batch=${opts.batch} max=${opts.max} device=${opts.device || 'ALL'} dryRun=${opts.dryRun}`);
 
-    // Ensure the column exists before we try to query it; if pgvector is not
-    // installed this will fail loudly, which is the right thing here.
+    // Ensure the runtime schema exists and matches the selected default
+    // dimension before querying rows. This also resets incompatible legacy
+    // vectors to NULL so the loop below can recompute them.
     try {
+        const schemaReady = await chatEmbedding.initSchema(pool);
+        if (!schemaReady) {
+            throw new Error('chat embedding schema init returned false');
+        }
         await pool.query(`SELECT embedding FROM chat_messages WHERE embedding IS NULL LIMIT 0`);
     } catch (err) {
-        console.error('[backfill] chat_messages.embedding column not available — run the server once to trigger the migration, or install pgvector extension:', err.message);
+        console.error('[backfill] chat_messages.embedding column not available — install pgvector extension and ensure chat_messages exists:', err.message);
         await pool.end();
         process.exit(2);
     }
