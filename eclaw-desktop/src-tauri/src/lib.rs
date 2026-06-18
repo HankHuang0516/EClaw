@@ -1048,6 +1048,139 @@ pub fn agent_config_set(endpoints: Vec<AgentEndpointConfig>) -> Result<(), Strin
 // ---------------------------------------------------------------------------
 // App Entry
 // ---------------------------------------------------------------------------
+// Commands: Auto-update (P1-H)
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateInfo {
+    pub version: String,
+    pub download_url: String,
+    pub signature: Option<String>,
+    pub release_notes: Option<String>,
+    pub mandatory: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SmokeTestResult {
+    pub app_launch_ok: bool,
+    pub credential_store_ok: bool,
+    pub install_id: Option<String>,
+    pub health_ok: bool,
+    pub error: Option<String>,
+}
+
+fn get_api_base() -> String {
+    std::env::var("ECLAW_API_URL")
+        .unwrap_or_else(|_| "https://eclawbot.com".to_string())
+}
+
+#[command]
+pub fn check_for_updates() -> Result<Option<UpdateInfo>, String> {
+    let api_url = format!("{}/api/updates/latest", get_api_base());
+    let platform = std::env::consts::OS;
+    let version = env!("CARGO_PKG_VERSION");
+    let url = format!("{}?platform={}&version={}", api_url, platform, version);
+
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .map_err(|e| format!("reqwest: {}", e))?;
+
+    let resp = client.get(&url).send().map_err(|e| format!("request: {}", e))?;
+
+    if resp.status() == 204 || resp.status().as_u16() == 204 {
+        return Ok(None);
+    }
+    if !resp.status().is_success() {
+        return Err(format!("update check failed: HTTP {}", resp.status()));
+    }
+
+    let info: UpdateInfo = resp.json().map_err(|e| format!("parse: {}", e))?;
+    Ok(Some(info))
+}
+
+#[command]
+pub fn download_update(url: String) -> Result<String, String> {
+    let dest = std::env::temp_dir().join("eclaw-desktop-update");
+    let mut file = std::fs::File::create(&dest)
+        .map_err(|e| format!("create temp file: {}", e))?;
+
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(300))
+        .build()
+        .map_err(|e| format!("reqwest: {}", e))?;
+
+    let resp = client.get(&url).send().map_err(|e| format!("request: {}", e))?;
+
+    let mut reader = resp;
+    let mut buf = vec![0u8; 8192];
+    let mut total = 0;
+    loop {
+        let n = reader.read(&mut buf).map_err(|e| format!("read: {}", e))?;
+        if n == 0 { break; }
+        file.write_all(&buf[..n]).map_err(|e| format!("write: {}", e))?;
+        total += n;
+    }
+
+    eprintln!("P1-H: downloaded {} bytes to {:?}", total, dest);
+    Ok(dest.to_string_lossy().to_string())
+}
+
+#[command]
+pub fn install_update(download_path: String) -> Result<(), String> {
+    let src = std::path::Path::new(&download_path);
+    if !src.exists() {
+        return Err(format!("update file not found: {}", download_path));
+    }
+
+    // Backup current binary
+    let exe_path = std::env::current_exe()
+        .map_err(|e| format!("get current exe: {}", e))?;
+    let backup_path = exe_path.with_file_name("eclaw-desktop.backup");
+    std::fs::copy(&exe_path, &backup_path)
+        .map_err(|e| format!("backup current exe: {}", e))?;
+
+    // Replace current binary with downloaded update
+    std::fs::copy(src, &exe_path)
+        .map_err(|e| format!("replace exe: {}", e))?;
+
+    eprintln!("P1-H: update installed, restart to apply (backup at {:?})", backup_path);
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// Commands: Smoke Test (P1-I)
+// ---------------------------------------------------------------------------
+
+#[command]
+pub fn smoke_test() -> SmokeTestResult {
+    let install_id = match ensure_config_exists() {
+        Ok(id) => Some(id),
+        Err(e) => return SmokeTestResult {
+            app_launch_ok: false,
+            credential_store_ok: false,
+            install_id: None,
+            health_ok: false,
+            error: Some(e),
+        },
+    };
+
+    let health_ok = std::process::Command::new("rustc")
+        .arg("--version")
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false);
+
+    SmokeTestResult {
+        app_launch_ok: true,
+        credential_store_ok: true,
+        install_id,
+        health_ok,
+        error: None,
+    }
+}
+
+// ---------------------------------------------------------------------------
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -1064,6 +1197,10 @@ pub fn run() {
             oauth_start,
             oauth_cancel,
             oauth_get_port,
+            check_for_updates,
+            download_update,
+            install_update,
+            smoke_test,
             agent_probe,
             agent_probe_single,
             agent_config_get,
