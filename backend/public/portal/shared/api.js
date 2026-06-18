@@ -189,7 +189,7 @@ function showConfirm({ message, title, confirmText, cancelText, danger, itemName
             <div class="dialog-body"><p id="${messageId}" style="margin:0;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p>${itemStrip}</div>
             <div class="dialog-actions">
                 <button type="button" class="btn btn-outline eclaw-confirm-cancel"${danger && !cancelText ? ` aria-label="${_escAttr(t('dialog_cancel_aria', 'Cancel, keep current state'))}"` : ''}>${_escHtml(cancelText || t('dialog_cancel', 'Cancel'))}</button>
-                <button type="button" class="btn ${danger ? 'btn-danger' : 'btn-primary'} eclaw-confirm-ok"${danger && !confirmText ? ` aria-label="${_escAttr(t('dialog_confirm_destructive', 'Confirm destructive action'))}"` : ''}>${_escHtml(confirmText || (danger ? t('dialog_confirm', 'Confirm') : t('dialog_ok', 'OK')))}</button>
+                <button type="button" class="btn ${danger ? 'btn-danger' : 'btn-primary'} eclaw-confirm-ok"${danger && !confirmText ? ` aria-label="${_escAttr(t('dialog_confirm_destructive', 'Confirm destructive action'))}"` : ''}>${danger ? '<span class="eclaw-confirm-danger-glyph" aria-hidden="true">⚠ </span>' : ''}${_escHtml(confirmText || (danger ? t('dialog_confirm', 'Confirm') : t('dialog_ok', 'OK')))}</button>
             </div>
         </div>`;
         document.body.appendChild(overlay);
