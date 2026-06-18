@@ -1066,7 +1066,11 @@ pub fn health_check() -> HealthStatus {
     HealthStatus {
         app_version: env!("CARGO_PKG_VERSION").to_string(),
         platform: std::env::consts::OS.to_string(),
-        rust_version: rustc_version::VERSION.to_string(),
+        rust_version: std::process::Command::new("rustc")
+            .arg("--version")
+            .output()
+            .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+            .unwrap_or_default(),
     }
 }
 

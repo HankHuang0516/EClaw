@@ -11,8 +11,6 @@ tauri = { version = "2", features = [] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full", "net"] }
-rustc-version = "0.4"
-
 # OAuth (P1-B)
 rand = "0.8"
 sha2 = "0.10"
