@@ -23622,7 +23622,10 @@ if (require.main === module) {
         // Start gRPC server on PORT+1
         try {
             const grpcModule = require('./grpc-server')(devices, { serverLog });
-            const fallbackPort = port + 1;
+            // `port` is `process.env.PORT || 3000` — a STRING in prod (Railway), so
+            // `port + 1` would string-concat ("8080"+1="80801" > 65535) and crash
+            // gRPC bind with "options.port should be >= 0 and < 65536". Coerce first.
+            const fallbackPort = parseInt(port, 10) + 1;
             let grpcPort = parseInt(process.env.GRPC_PORT || fallbackPort, 10);
             if (!Number.isInteger(grpcPort) || grpcPort < 0 || grpcPort >= 65536) {
                 console.warn(`[gRPC] Invalid GRPC_PORT="${process.env.GRPC_PORT}" (out of 0-65535) — falling back to PORT+1=${fallbackPort}`);
