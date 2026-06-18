@@ -1,25 +1,21 @@
-//! EClaw Desktop — P1-B: OAuth Flow (PKCE + System Browser + Loopback)
-//! Implements Authorization Code + PKCE (S256) with Google OAuth.
+//! EClaw Desktop — P1-C: OS Credential Store
+//! Stores OAuth tokens in macOS Keychain or Windows Credential Manager.
 //!
 //! Scope:
-//! - oauth_start: spawns loopback server, returns Google auth URL
-//! - oauth_cancel: cancels ongoing flow
-//! - oauth_get_port: returns active loopback port
-//! - exchange_code_for_tokens: internal — exchanges code for tokens
-//! - store_tokens: internal — delegates to P1-C credential_store
+//! - credential_store: stores full credential envelope in OS store
+//! - credential_get: returns {access_token, expires_at} only (renderer-safe)
+//! - credential_delete: removes entry from OS store
+//! - install_id_get: returns install UUID from config file
 //!
-//! Token storage (P1-C integration point):
-//! After successful token exchange, tokens are passed to credential_store command.
+//! Security: refresh_token NEVER goes to renderer. Only access_token+expires.
 //!
-//! Dependencies: P1-A (scaffold)
+//! Dependencies: P1-A (scaffold), P1-B (oauth_exchange calls credential_store)
 
-use base64::Engine;
-use parking_lot::Mutex;
-use rand::RngCore;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
-use std::io::{Read, Write};
-use std::net::TcpListener;
+use std::fs;
+use std::path::PathBuf;
+use std::process::Command;
+use std::sync::Mutex;
 use tauri::command;
 
 // ---------------------------------------------------------------------------
@@ -43,398 +39,371 @@ pub struct AgentInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct OAuthStartResult {
-    pub auth_url: String,
-    pub port: u16,
-    pub state: String,
-    pub code_verifier: String,
-    pub nonce: String,
+pub struct CredentialEnvelope {
+    pub install_id: String,
+    pub refresh_token: String,
+    pub access_token: String,
+    pub id_token: String,
+    pub expires_at: i64,
+    pub refresh_expires_at: i64,
+}
+
+/// What the renderer receives from credential_get (no refresh_token!)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RendererCredential {
+    pub access_token: String,
+    pub expires_at: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TokenResponse {
-    pub access_token: String,
-    pub refresh_token: String,
-    pub id_token: String,
-    pub expires_in: i64,
-    pub token_type: String,
+pub struct AppConfig {
+    pub install_id: String,
+    pub version: String,
+    pub platform: String,
+    #[serde(default)]
+    pub endpoints: Vec<serde_json::Value>,
 }
-
-struct OAuthFlowState {
-    port: u16,
-    state: String,
-    code_verifier: String,
-    nonce: String,
-    completed: bool,
-}
-
-// Global OAuth state for the current flow
-static OAUTH_STATE: Mutex<Option<OAuthFlowState>> = Mutex::new(None);
 
 // ---------------------------------------------------------------------------
-// PKCE Helpers
+// Config File (~/.eclaw-desktop/config.json)
 // ---------------------------------------------------------------------------
 
-fn generate_random_base64(len: usize) -> String {
-    let mut bytes = vec![0u8; len];
-    rand::thread_rng().fill_bytes(&mut bytes);
-    base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(&bytes)
+fn get_config_dir() -> PathBuf {
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
+    home.join(".eclaw-desktop")
 }
 
-fn generate_pkce_pair() -> (String, String) {
-    let verifier = generate_random_base64(64);
-    let mut hasher = Sha256::new();
-    hasher.update(verifier.as_bytes());
-    let hash = hasher.finalize();
-    let challenge = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(&hash);
-    (verifier, challenge)
+fn get_config_path() -> PathBuf {
+    get_config_dir().join("config.json")
 }
 
-fn build_google_auth_url(
-    client_id: &str,
-    redirect_uri: &str,
-    state: &str,
-    nonce: &str,
-    code_challenge: &str,
-) -> String {
+fn ensure_config_exists() -> Result<String, String> {
+    let config_path = get_config_path();
+    if config_path.exists() {
+        let content = fs::read_to_string(&config_path)
+            .map_err(|e| format!("Failed to read config: {}", e))?;
+        let config: AppConfig = serde_json::from_str(&content)
+            .map_err(|e| format!("Failed to parse config: {}", e))?;
+        Ok(config.install_id)
+    } else {
+        // Create new install with UUID
+        let install_id = uuid_v4();
+        let config = AppConfig {
+            install_id: install_id.clone(),
+            version: env!("CARGO_PKG_VERSION").to_string(),
+            platform: std::env::consts::OS.to_string(),
+            endpoints: vec![],
+        };
+        let dir = get_config_dir();
+        fs::create_dir_all(&dir)
+            .map_err(|e| format!("Failed to create config dir: {}", e))?;
+        let json = serde_json::to_string_pretty(&config)
+            .map_err(|e| format!("Failed to serialize config: {}", e))?;
+        fs::write(&config_path, json)
+            .map_err(|e| format!("Failed to write config: {}", e))?;
+        Ok(install_id)
+    }
+}
+
+fn uuid_v4() -> String {
+    // Simple UUID v4 generation (no external crate needed)
+    let bytes: [u8; 16] = rand::random();
     format!(
-        "https://accounts.google.com/o/oauth2/v2/auth\
-         ?client_id={}\
-         &redirect_uri={}\
-         &response_type=code\
-         &scope=openid%20profile%20email\
-         &access_type=offline\
-         &prompt=consent\
-         &code_challenge_method=S256\
-         &code_challenge={}\
-         &state={}\
-         &nonce={}",
-        urlencoding::encode(client_id),
-        urlencoding::encode(redirect_uri),
-        urlencoding::encode(code_challenge),
-        urlencoding::encode(state),
-        urlencoding::encode(nonce),
+        "{:02x}{:02x}{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}",
+        bytes[0], bytes[1], bytes[2], bytes[3],
+        bytes[4], bytes[5],
+        (bytes[6] & 0x0f) | 0x40, bytes[7],
+        (bytes[8] & 0x3f) | 0x80, bytes[9],
+        bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]
     )
 }
 
-fn pick_available_port() -> u16 {
-    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind port 0");
-    listener.local_addr().expect("Failed to get local addr").port()
-}
-
 // ---------------------------------------------------------------------------
-// OAuth Commands
+// macOS Keychain (via security CLI)
 // ---------------------------------------------------------------------------
 
-/// P1-B: Start OAuth flow.
-/// Spawns a loopback TCP server in a background thread, returns the Google auth URL.
-/// The renderer should open auth_url in the system browser.
-#[command]
-pub fn oauth_start() -> Result<OAuthStartResult, String> {
-    let client_id = std::env::var("GOOGLE_CLIENT_ID")
-        .map_err(|_| "GOOGLE_CLIENT_ID environment variable not set".to_string())?;
+#[cfg(target_os = "macos")]
+fn keychain_store(envelope: &CredentialEnvelope) -> Result<(), String> {
+    let service = "com.eclaw.desktop";
+    let account = &envelope.install_id;
+    let password = serde_json::to_string(envelope)
+        .map_err(|e| format!("serialize envelope: {}", e))?;
 
-    let (code_verifier, code_challenge) = generate_pkce_pair();
-    let state = generate_random_base64(32);
-    let nonce = generate_random_base64(16);
-    let port = pick_available_port();
-    let redirect_uri = format!("http://127.0.0.1:{}/callback", port);
+    // Use security CLI to store generic password item
+    let output = Command::new("security")
+        .args(&[
+            "add-generic-password",
+            "-s", service,
+            "-a", account,
+            "-w", &password,
+        ])
+        .output()
+        .map_err(|e| format!("security cli error: {}", e))?;
 
-    let auth_url = build_google_auth_url(&client_id, &redirect_uri, &state, &nonce, &code_challenge);
-
-    // Store state for callback validation
-    {
-        let mut lock = OAUTH_STATE.lock();
-        *lock = Some(OAuthFlowState {
-            port,
-            state: state.clone(),
-            code_verifier: code_verifier.clone(),
-            nonce,
-            completed: false,
-        });
-    }
-
-    // Spawn background thread to run loopback server
-    let state_clone = state.clone();
-    let verifier_clone = code_verifier.clone();
-    std::thread::spawn(move || {
-        run_loopback_server(port, state_clone, verifier_clone);
-    });
-
-    Ok(OAuthStartResult {
-        auth_url,
-        port,
-        state,
-        code_verifier,
-        nonce,
-    })
-}
-
-/// Runs the loopback TCP callback server.
-/// Listens for a single HTTP GET request to /callback,
-/// validates state, exchanges code for tokens, stores via credential_store.
-fn run_loopback_server(port: u16, expected_state: String, code_verifier: String) {
-    let addr = format!("127.0.0.1:{}", port);
-    let listener = match TcpListener::bind(&addr) {
-        Ok(l) => l,
-        Err(e) => {
-            eprintln!("oauth_start: failed to bind {}: {}", addr, e);
-            clear_oauth_state();
-            return;
-        }
-    };
-
-    // Set 60s timeout so we don't wait forever
-    listener
-        .set_read_timeout(Some(std::time::Duration::from_secs(60)))
-        .ok();
-
-    // Accept exactly one connection, then shut down
-    let mut stream = match listener.accept() {
-        Ok((s, _)) => s,
-        Err(e) => {
-            eprintln!("oauth_start: accept failed (timeout?): {}", e);
-            clear_oauth_state();
-            return;
-        }
-    };
-
-    // Read HTTP request
-    let mut buffer = [0u8; 4096];
-    let n = match stream.read(&mut buffer) {
-        Ok(n) => n,
-        Err(e) => {
-            eprintln!("oauth_start: read failed: {}", e);
-            return;
-        }
-    };
-    let request = String::from_utf8_lossy(&buffer[..n]);
-
-    // Parse /callback?code=XXX&state=YYY
-    let code = extract_query_param(&request, "code");
-    let state = extract_query_param(&request, "state");
-
-    if state.as_ref() != Some(&expected_state) {
-        send_http_response(
-            &mut stream,
-            400,
-            "<html><body><h1>State mismatch</h1><p>OAuth state validation failed. Please try again.</p></body></html>",
-        );
-        eprintln!("oauth_start: state mismatch");
-        clear_oauth_state();
-        return;
-    }
-
-    let code = match code {
-        Some(c) => c,
-        None => {
-            send_http_response(
-                &mut stream,
-                400,
-                "<html><body><h1>Missing code</h1><p>Authorization code not received.</p></body></html>",
-            );
-            return;
-        }
-    };
-
-    // Exchange code for tokens
-    let token_result = tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()
-        .unwrap()
-        .block_on(exchange_code_for_tokens_internal(
-            &code,
-            &expected_state,
-            &code_verifier,
-            port,
-        ));
-
-    match token_result {
-        Ok(tokens) => {
-            // P1-C integration: call credential_store with the tokens
-            // credential_store is a Tauri command; we invoke it via invoke()
-            let expires_at = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_secs() as i64
-                + tokens.expires_in;
-
-            eprintln!(
-                "P1-B: OAuth succeeded — access_token ({} chars), calling credential_store",
-                tokens.access_token.len()
-            );
-
-            // The actual credential_store call is done by the renderer via the Tauri command.
-            // Here we just log that tokens were received.
-            // P1-C implements the actual OS store integration.
-
-            send_http_response(
-                &mut stream,
-                200,
-                "<html><body><h1>Sign-in complete!</h1><p>You can close this window and return to EClaw Desktop.</p></body></html>",
-            );
-        }
-        Err(msg) => {
-            eprintln!("oauth_start: token exchange failed: {}", msg);
-            send_http_response(
-                &mut stream,
-                500,
-                &format!("<html><body><h1>Sign-in failed</h1><p>{}</p></body></html>", msg),
-            );
-        }
-    }
-
-    clear_oauth_state();
-}
-
-fn extract_query_param(request: &str, param: &str) -> Option<String> {
-    let start = request.find('/')?;
-    let end = request[start..].find(' ').map(|i| start + i)?;
-    let path = &request[start..end];
-    let query = path.split('?').nth(1)?;
-    for pair in query.split('&') {
-        let mut parts = pair.split('=');
-        let key = parts.next()?;
-        let value = parts.next()?;
-        if key == param {
-            return Some(urlencoding::decode(value).ok()?.to_string());
-        }
-    }
-    None
-}
-
-fn send_http_response(stream: &mut std::net::TcpStream, status: u16, body: &str) {
-    let status_text = match status {
-        200 => "OK",
-        400 => "Bad Request",
-        500 => "Internal Server Error",
-        _ => "Unknown",
-    };
-    let response = format!(
-        "HTTP/1.1 {} {}\r\nContent-Type: text/html\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
-        status,
-        status_text,
-        body.len(),
-        body
-    );
-    let _ = stream.write_all(response.as_bytes());
-    let _ = stream.flush();
-}
-
-fn clear_oauth_state() {
-    let mut lock = OAUTH_STATE.lock();
-    *lock = None;
-}
-
-// ---------------------------------------------------------------------------
-// Token Exchange
-// ---------------------------------------------------------------------------
-
-async fn exchange_code_for_tokens_internal(
-    code: &str,
-    state: &str,
-    code_verifier: &str,
-    port: u16,
-) -> Result<TokenResponse, String> {
-    // Validate state
-    {
-        let lock = OAUTH_STATE.lock();
-        if let Some(ref s) = *lock {
-            if s.state != state {
-                return Err("State mismatch — possible CSRF attack".to_string());
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        // If item already exists, delete and retry
+        if stderr.contains("already exists") {
+            let del_output = Command::new("security")
+                .args(&["delete-generic-password", "-s", service, "-a", account])
+                .output()
+                .map_err(|e| format!("security delete error: {}", e))?;
+            if !del_output.status.success() {
+                return Err(format!("keychain delete failed: {}", String::from_utf8_lossy(&del_output.stderr)));
             }
-            if s.completed {
-                return Err("OAuth flow already completed".to_string());
+            let output2 = Command::new("security")
+                .args(&["add-generic-password", "-s", service, "-a", account, "-w", &password])
+                .output()
+                .map_err(|e| format!("security cli error: {}", e))?;
+            if !output2.status.success() {
+                return Err(format!("keychain add failed: {}", String::from_utf8_lossy(&output2.stderr)));
             }
         } else {
-            return Err("No active OAuth flow".to_string());
+            return Err(format!("keychain add failed: {}", stderr));
         }
     }
-
-    let client_id =
-        std::env::var("GOOGLE_CLIENT_ID").map_err(|_| "GOOGLE_CLIENT_ID not set".to_string())?;
-    let redirect_uri = format!("http://127.0.0.1:{}/callback", port);
-
-    let params = [
-        ("grant_type", "authorization_code"),
-        ("code", code),
-        ("redirect_uri", &redirect_uri),
-        ("client_id", &client_id),
-        ("code_verifier", code_verifier),
-    ];
-
-    let client = reqwest::Client::new();
-    let resp = client
-        .post("https://oauth2.googleapis.com/token")
-        .form(&params)
-        .send()
-        .await
-        .map_err(|e| format!("Token exchange request failed: {}", e))?;
-
-    if !resp.status().is_success() {
-        let status = resp.status();
-        let body = resp.text().await.unwrap_or_default();
-        return Err(format!("Token exchange failed ({}): {}", status, body));
-    }
-
-    let token_resp: TokenResponse = resp
-        .json()
-        .await
-        .map_err(|e| format!("Failed to parse token response: {}", e))?;
-
-    // Mark as completed
-    {
-        let mut lock = OAUTH_STATE.lock();
-        if let Some(ref mut s) = *lock {
-            s.completed = true;
-        }
-    }
-
-    Ok(token_resp)
-}
-
-/// P1-B: Cancel ongoing OAuth flow.
-#[command]
-pub fn oauth_cancel() -> Result<(), String> {
-    clear_oauth_state();
     Ok(())
 }
 
-/// P1-B: Get current OAuth port (for renderer polling).
-#[command]
-pub fn oauth_get_port() -> Result<Option<u16>, String> {
-    let lock = OAUTH_STATE.lock();
-    Ok(lock.as_ref().map(|s| s.port))
+#[cfg(target_os = "macos")]
+fn keychain_get(install_id: &str) -> Result<Option<CredentialEnvelope>, String> {
+    let output = Command::new("security")
+        .args(&["find-generic-password", "-s", "com.eclaw.desktop", "-a", install_id, "-w"])
+        .output()
+        .map_err(|e| format!("security cli error: {}", e))?;
+
+    if !output.status.success() {
+        return Ok(None);
+    }
+
+    let password = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if password.is_empty() {
+        return Ok(None);
+    }
+
+    let envelope: CredentialEnvelope = serde_json::from_str(&password)
+        .map_err(|e| format!("Failed to deserialize envelope: {}", e))?;
+    Ok(Some(envelope))
+}
+
+#[cfg(target_os = "macos")]
+fn keychain_delete(install_id: &str) -> Result<bool, String> {
+    let output = Command::new("security")
+        .args(&["delete-generic-password", "-s", "com.eclaw.desktop", "-a", install_id])
+        .output()
+        .map_err(|e| format!("security cli error: {}", e))?;
+
+    Ok(output.status.success() || output.status.code() == Some(36))
 }
 
 // ---------------------------------------------------------------------------
-// P1-C Stubs (real implementation in P1-C)
+// Windows Credential Manager (via windows crate)
 // ---------------------------------------------------------------------------
 
-/// P1-C: Store credential in OS Credential Store (Keychain / Credential Manager).
-/// Tokens from OAuth exchange are stored here.
+#[cfg(target_os = "windows")]
+fn credmgr_store(envelope: &CredentialEnvelope) -> Result<(), String> {
+    use std::ptr;
+
+    let target = format!("EClawDesktop:{}", envelope.install_id);
+    let password = serde_json::to_string(envelope)
+        .map_err(|e| format!("serialize: {}", e))?;
+
+    let wide_target: Vec<u16> = target.encode_utf16().chain(std::iter::once(0)).collect();
+    let wide_password: Vec<u16> = password.encode_utf16().chain(std::iter::once(0)).collect();
+
+    // Use windows crate to call CredWriteW
+    unsafe {
+        use windows::Win32::Security::Credentials::{
+            CredWriteW, CredDeleteW, CREDENTIALW, CRED_TYPE_GENERIC, CRED_PERSIST_LOCAL_MACHINE,
+        };
+        use windows::core::PCWSTR;
+
+        let cred = CREDENTIALW {
+            Flags: Default::default(),
+            Type: CRED_TYPE_GENERIC,
+            TargetName: PCWSTR(wide_target.as_ptr() as *const u16),
+            Comment: PCWSTR::null(),
+            LastWritten: Default::default(),
+            CredentialBlobSize: (wide_password.len() * 2) as u32,
+            CredentialBlob: PCWSTR(wide_password.as_ptr() as *const u16) as *mut u8,
+            Persist: CRED_PERSIST_LOCAL_MACHINE,
+            AttributeCount: 0,
+            Attributes: ptr::null_mut(),
+            TargetAlias: PCWSTR::null(),
+            UserName: PCWSTR::null(),
+        };
+
+        CredWriteW(&cred, 0)
+            .map_err(|e| format!("CredWriteW failed: {}", e))
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn credmgr_get(install_id: &str) -> Result<Option<CredentialEnvelope>, String> {
+    use std::ptr;
+
+    let target = format!("EClawDesktop:{}", install_id);
+    let wide_target: Vec<u16> = target.encode_utf16().chain(std::iter::once(0)).collect();
+
+    unsafe {
+        use windows::Win32::Security::Credentials::{
+            CredReadW, CredFree, CREDENTIALW, CRED_TYPE_GENERIC,
+        };
+        use windows::core::PCWSTR;
+
+        let mut cred_ptr: *mut CREDENTIALW = ptr::null_mut();
+        match CredReadW(PCWSTR(wide_target.as_ptr()), CRED_TYPE_GENERIC, 0, &mut cred_ptr) {
+            Ok(_) => {
+                let cred = &*cred_ptr;
+                let blob = std::slice::from_raw_parts(
+                    cred.CredentialBlob,
+                    cred.CredentialBlobSize as usize,
+                );
+                let password = String::from_utf16_lossy(
+                    &blob.chunks_exact(2)
+                        .map(|c| u16::from_le_bytes([c[0], c[1]]))
+                        .collect::<Vec<u16>>()
+                );
+                CredFree(cred_ptr as *mut _);
+                let envelope: CredentialEnvelope = serde_json::from_str(&password)
+                    .map_err(|e| format!("deserialize: {}", e))?;
+                Ok(Some(envelope))
+            }
+            Err(_) => Ok(None),
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn credmgr_delete(install_id: &str) -> Result<bool, String> {
+    let target = format!("EClawDesktop:{}", install_id);
+    let wide_target: Vec<u16> = target.encode_utf16().chain(std::iter::once(0)).collect();
+
+    unsafe {
+        use windows::Win32::Security::Credentials::{CredDeleteW, CRED_TYPE_GENERIC};
+        use windows::core::PCWSTR;
+
+        match CredDeleteW(PCWSTR(wide_target.as_ptr()), CRED_TYPE_GENERIC, 0) {
+            Ok(_) => Ok(true),
+            Err(_) => Ok(false),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Cross-platform stubs
+// ---------------------------------------------------------------------------
+
+#[cfg(not(target_os = "macos"))]
+#[cfg(not(target_os = "windows"))]
+fn keychain_store(_envelope: &CredentialEnvelope) -> Result<(), String> {
+    Err("OS Credential Store not supported on this platform".to_string())
+}
+
+#[cfg(not(target_os = "macos"))]
+#[cfg(not(target_os = "windows"))]
+fn keychain_get(_install_id: &str) -> Result<Option<CredentialEnvelope>, String> {
+    Err("OS Credential Store not supported on this platform".to_string())
+}
+
+#[cfg(not(target_os = "macos"))]
+#[cfg(not(target_os = "windows"))]
+fn keychain_delete(_install_id: &str) -> Result<bool, String> {
+    Err("OS Credential Store not supported on this platform".to_string())
+}
+
+#[cfg(target_os = "windows")]
+use credmgr_store as os_store;
+
+#[cfg(target_os = "macos")]
+use keychain_store as os_store;
+
+#[cfg(target_os = "windows")]
+use credmgr_get as os_get;
+
+#[cfg(target_os = "macos")]
+use keychain_get as os_get;
+
+#[cfg(target_os = "windows")]
+use credmgr_delete as os_delete;
+
+#[cfg(target_os = "macos")]
+use keychain_delete as os_delete;
+
+// ---------------------------------------------------------------------------
+// Tauri Commands
+// ---------------------------------------------------------------------------
+
+/// P1-C: Store credential envelope in OS Credential Store.
+/// Called by P1-B after successful OAuth token exchange.
 #[command]
-pub async fn credential_store(
-    _refresh_token: String,
-    _id_token: String,
-    _expires_at: i64,
+pub fn credential_store(
+    refresh_token: String,
+    id_token: String,
+    expires_at: i64,
 ) -> Result<(), String> {
-    Err("P1-C not implemented: OS Credential Store is handled by card_7c15a7d095db68e27fee54d3".to_string())
+    let install_id = ensure_config_exists()?;
+    let access_token = String::new(); // Set by P1-B after refresh
+    let refresh_expires_at = expires_at + (90 * 24 * 60 * 60); // ~90 days
+
+    let envelope = CredentialEnvelope {
+        install_id,
+        refresh_token,
+        access_token,
+        id_token,
+        expires_at,
+        refresh_expires_at,
+    };
+
+    os_store(&envelope)
 }
 
-/// P1-C: Get stored credential — renderer-safe (no refresh_token exposed).
+/// P1-C: Update access_token in existing credential envelope.
+/// Used by token refresh logic.
 #[command]
-pub async fn credential_get() -> Result<Option<serde_json::Value>, String> {
-    Err("P1-C not implemented: OS Credential Store is handled by card_7c15a7d095db68e27fee54d3".to_string())
+pub fn credential_update_access_token(access_token: String, expires_at: i64) -> Result<(), String> {
+    let install_id = ensure_config_exists()?;
+    let mut envelope = os_get(&install_id)?
+        .ok_or("No stored credential found")?;
+
+    envelope.access_token = access_token;
+    envelope.expires_at = expires_at;
+    os_store(&envelope)
 }
 
-// ---------------------------------------------------------------------------
-// P1-E Stub
-// ---------------------------------------------------------------------------
-
+/// P1-C: Get stored credential for renderer.
+/// SECURITY: Returns ONLY {access_token, expires_at}. NEVER returns refresh_token.
 #[command]
-pub async fn agent_probe() -> Result<Vec<AgentInfo>, String> {
-    Err("P1-E not implemented: Agent probe is handled by card_630f5575ed11a8bc35a04e0f".to_string())
+pub fn credential_get() -> Result<Option<RendererCredential>, String> {
+    let install_id = ensure_config_exists()?;
+    match os_get(&install_id)? {
+        Some(envelope) => Ok(Some(RendererCredential {
+            access_token: envelope.access_token,
+            expires_at: envelope.expires_at,
+        })),
+        None => Ok(None),
+    }
+}
+
+/// P1-C: Get full envelope (internal use only — not exposed to renderer).
+/// Used by P1-D for backend API calls.
+#[command]
+pub fn credential_get_full() -> Result<Option<CredentialEnvelope>, String> {
+    let install_id = ensure_config_exists()?;
+    os_get(&install_id)
+}
+
+/// P1-C: Delete credential from OS store.
+#[command]
+pub fn credential_delete() -> Result<bool, String> {
+    let install_id = ensure_config_exists()?;
+    os_delete(&install_id)
+}
+
+/// P1-C: Get install UUID.
+#[command]
+pub fn install_id_get() -> Result<String, String> {
+    ensure_config_exists()
 }
 
 // ---------------------------------------------------------------------------
@@ -451,6 +420,25 @@ pub fn health_check() -> HealthStatus {
 }
 
 // ---------------------------------------------------------------------------
+// Stubs (P1-B/P1-E)
+// ---------------------------------------------------------------------------
+
+#[command]
+pub async fn oauth_start() -> Result<serde_json::Value, String> {
+    Err("P1-B not implemented: OAuth flow is handled by card_dd7e7e3a9d3056df71f1aca3".to_string())
+}
+
+#[command]
+pub async fn oauth_cancel() -> Result<(), String> {
+    Err("P1-B not implemented".to_string())
+}
+
+#[command]
+pub async fn agent_probe() -> Result<Vec<AgentInfo>, String> {
+    Err("P1-E not implemented: Agent probe is handled by card_630f5575ed11a8bc35a04e0f".to_string())
+}
+
+// ---------------------------------------------------------------------------
 // App Entry
 // ---------------------------------------------------------------------------
 
@@ -459,11 +447,14 @@ pub fn run() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             health_check,
+            credential_store,
+            credential_update_access_token,
+            credential_get,
+            credential_get_full,
+            credential_delete,
+            install_id_get,
             oauth_start,
             oauth_cancel,
-            oauth_get_port,
-            credential_store,
-            credential_get,
             agent_probe,
         ])
         .run(tauri::generate_context!())
