@@ -137,3 +137,31 @@ h1 {
   font-size: 0.875rem;
   margin-bottom: 0.5rem;
 }
+
+.oauth-status {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.oauth-loading {
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+.oauth-success {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.oauth-error {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

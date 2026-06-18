@@ -10,8 +10,18 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["full", "net"] }
 rustc-version = "0.4"
+
+# OAuth / PKCE
+rand = "0.8"
+sha2 = "0.10"
+base64 = "0.13"
+reqwest = { version = "0.12", features = ["json"] }
+urlencoding = "2"
+
+# Global mutable state
+parking_lot = "0.12"
 
 [profile.release]
 strip = true
