@@ -54,6 +54,10 @@ jobs:
   # ---------------------------------------------------------------------------
   build-macos:
     runs-on: macos-14
+    # Job-level env so signing steps can gate on secret presence (secrets are
+    # not readable in `if:` directly; a job-level env from a secret is).
+    env:
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -65,8 +69,6 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
-        with:
-          version: ${{ env.RUST_VERSION }}
 
       - name: Cache Tauri CLI
         uses: actions/cache@v4
@@ -86,7 +88,7 @@ jobs:
         timeout-minutes: 60
 
       - name: Apple Notarization
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && env.APPLE_TEAM_ID != ''
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_ID_EMAIL: ${{ secrets.APPLE_ID_EMAIL }}
@@ -124,9 +126,14 @@ jobs:
           xcrun stapler validate "$DMG"
           echo "Notarization complete!"
 
+      # Only meaningful once a Developer ID signature has been applied
+      # (notarization step). Without Apple secrets the .app is ad-hoc signed,
+      # so skip this gate. .app lives in bundle/macos, not bundle/dmg.
       - name: Verify macOS Signature
+        if: github.event_name != 'pull_request' && env.APPLE_TEAM_ID != ''
+        working-directory: eclaw-desktop
         run: |
-          APP=$(find src-tauri/target/release/bundle/dmg -name "*.app" | head -1)
+          APP=$(find src-tauri/target/release/bundle/macos -name "*.app" | head -1)
           codesign -dvvv "$APP"
 
       - name: Upload macOS Artifact
@@ -143,6 +150,9 @@ jobs:
   # ---------------------------------------------------------------------------
   build-windows:
     runs-on: windows-latest
+    # Job-level env so signing steps can gate on secret presence.
+    env:
+      WINDOWS_CERT_THUMBPRINT: ${{ secrets.WINDOWS_CERT_THUMBPRINT }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -154,8 +164,6 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
-        with:
-          version: ${{ env.RUST_VERSION }}
 
       - name: Install Tauri CLI
         working-directory: eclaw-desktop
@@ -171,9 +179,8 @@ jobs:
         timeout-minutes: 60
 
       - name: Sign Windows Installer
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && env.WINDOWS_CERT_THUMBPRINT != ''
         env:
-          WINDOWS_CERT_THUMBPRINT: ${{ secrets.WINDOWS_CERT_THUMBPRINT }}
           WINDOWS_CERT_FILE: ${{ secrets.WINDOWS_CERT_FILE }}
           WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
         shell: pwsh
@@ -215,6 +222,7 @@ jobs:
           }
 
       - name: Verify Windows Signature
+        if: github.event_name != 'pull_request' && env.WINDOWS_CERT_THUMBPRINT != ''
         shell: pwsh
         run: |
           $exe = Get-ChildItem -Path src-tauri/target/release/bundle -Filter "*.exe" -Recurse | Select-Object -First 1

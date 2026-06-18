@@ -44,9 +44,6 @@
       "signingIdentity": "-"
     },
     "windows": {
-      "certificateThumbprint": "${WINDOWS_CERT_THUMBPRINT}",
-      "timestampUrl": "http://timestamp.digicert.com",
-      "digestAlgorithm": "sha256",
       "webviewInstallMode": {
         "type": "downloadBootstrapper"
       }
