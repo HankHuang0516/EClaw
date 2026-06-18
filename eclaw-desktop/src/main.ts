@@ -6,6 +6,14 @@ interface HealthStatus {
   rust_version: string;
 }
 
+interface OAuthStartResult {
+  auth_url: string;
+  port: number;
+  state: string;
+  code_verifier: string;
+  nonce: string;
+}
+
 interface TauriError {
   message: string;
 }
@@ -33,9 +41,7 @@ async function init(): Promise<void> {
         <div class="actions">
           <button id="btn-setup" class="btn-primary">開始設定</button>
         </div>
-        <div id="oauth-placeholder" class="oauth-placeholder" style="display:none">
-          <p>連接中，請在瀏覽器完成驗證...</p>
-        </div>
+        <div id="oauth-status" class="oauth-status" style="display:none"></div>
       </main>
       <footer class="footer">
         <p>您的認證資料只存在本機，不会上传到服务器</p>
@@ -44,20 +50,7 @@ async function init(): Promise<void> {
 
     const btnSetup = document.getElementById("btn-setup");
     btnSetup?.addEventListener("click", async () => {
-      const oauthPlaceholder = document.getElementById("oauth-placeholder");
-      if (oauthPlaceholder) {
-        oauthPlaceholder.style.display = "block";
-      }
-      try {
-        const result = await window.__TAURI__.core.invoke<string>("oauth_start");
-        console.log("oauth_start:", result);
-      } catch (e) {
-        const err = e as TauriError;
-        if (err.message?.includes("P1-B not implemented")) {
-          oauthPlaceholder!.innerHTML =
-            "<p>設定功能即將推出，請稍候。</p>";
-        }
-      }
+      await startOAuthFlow();
     });
   } catch (e) {
     const err = e as TauriError;
@@ -66,6 +59,64 @@ async function init(): Promise<void> {
       <p class="error">連接失敗：${err.message ?? e}</p>
       <p>請確認 EClaw Desktop 已正確啟動。</p>
     `;
+  }
+}
+
+async function startOAuthFlow(): Promise<void> {
+  const statusEl = document.getElementById("oauth-status")!;
+  const btnSetup = document.getElementById("btn-setup")!;
+
+  btnSetup.disabled = true;
+  statusEl.className = "oauth-status oauth-loading";
+  statusEl.style.display = "block";
+  statusEl.innerHTML = `<p>正在連接到 Google...</p>`;
+
+  try {
+    // Start OAuth flow — spawns loopback server, returns Google auth URL
+    const { auth_url, port, state } = await window.__TAURI__.core.invoke<OAuthStartResult>("oauth_start");
+
+    // Store state for polling
+    sessionStorage.setItem("oauth_state", state);
+    sessionStorage.setItem("oauth_port", String(port));
+
+    // Open system browser for Google sign-in
+    await window.__TAURI__.shell.open(auth_url);
+
+    statusEl.innerHTML = `<p>請在瀏覽器中完成 Google 登入...</p>`;
+
+    // Poll oauth_get_port to detect when callback is received (port goes None = flow done)
+    const pollInterval = setInterval(async () => {
+      try {
+        const currentPort = await window.__TAURI__.core.invoke<number | null>("oauth_get_port");
+        if (currentPort === null) {
+          clearInterval(pollInterval);
+          statusEl.className = "oauth-status oauth-success";
+          statusEl.innerHTML = `<p>✅ Google 登入完成！</p>`;
+          setTimeout(() => {
+            statusEl.style.display = "none";
+            btnSetup.disabled = false;
+            init();
+          }, 2000);
+        }
+      } catch {
+        // Ignore polling errors
+      }
+    }, 1000);
+
+    // 5 minute timeout
+    setTimeout(() => {
+      clearInterval(pollInterval);
+      if (statusEl.style.display !== "none") {
+        statusEl.className = "oauth-status oauth-error";
+        statusEl.innerHTML = `<p>登入逾時，請重試。</p>`;
+        btnSetup.disabled = false;
+      }
+    }, 5 * 60 * 1000);
+  } catch (e) {
+    const err = e as TauriError;
+    statusEl.className = "oauth-status oauth-error";
+    statusEl.innerHTML = `<p>連接失敗：${err.message ?? e}</p>`;
+    btnSetup.disabled = false;
   }
 }
 
