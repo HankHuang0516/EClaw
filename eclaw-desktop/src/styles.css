@@ -165,3 +165,162 @@ button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* --------------------------------------------------------------------------- */
+/* Three-stage onboarding screens                                               */
+/* --------------------------------------------------------------------------- */
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.hero-icon {
+  font-size: 4rem;
+  line-height: 1;
+}
+
+.screen-welcome h1,
+.screen-setup h1,
+.screen-ready h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+  margin-top: -0.5rem;
+}
+
+/* Google sign-in button */
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: #ffffff;
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.btn-google:hover {
+  background: #f8f8f8;
+}
+
+.google-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.privacy-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+
+/* Spinner */
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 1rem auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Agent list */
+.agent-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  text-align: left;
+}
+
+.agent-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+}
+
+.agent-type {
+  font-weight: 600;
+  color: var(--primary);
+  min-width: 60px;
+}
+
+.agent-name {
+  flex: 1;
+  color: var(--text);
+}
+
+.agent-version {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.agent-health {
+  font-size: 1rem;
+}
+
+.probe-status {
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.probe-ok { color: #059669; }
+.probe-warn { color: #d97706; }
+.probe-error { color: #dc2626; }
+.probe-none { color: var(--text-muted); font-size: 0.875rem; }
+
+/* Secondary button */
+.btn-secondary {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.15s;
+}
+
+.btn-secondary:hover {
+  background: var(--bg);
+}
+
+.btn-signout {
+  margin-top: 1rem;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.btn-signout:hover {
+  background: #fef2f2;
+}
+
+.error-msg {
+  color: #dc2626;
+  background: #fef2f2;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  word-break: break-all;
+  text-align: left;
+}
