@@ -21,7 +21,7 @@ function hasExpectedDim(vec) {
 }
 
 async function normalizeEmbeddingColumn(pool) {
-    const typeResult = await pool.query(`
+    const result = await pool.query(`
         SELECT pg_catalog.format_type(a.atttypid, a.atttypmod) AS column_type
         FROM pg_catalog.pg_attribute a
         WHERE a.attrelid = 'chat_messages'::regclass
@@ -29,7 +29,7 @@ async function normalizeEmbeddingColumn(pool) {
           AND NOT a.attisdropped
         LIMIT 1
     `);
-    const columnType = typeResult.rows?.[0]?.column_type;
+    const columnType = result.rows?.[0]?.column_type;
     if (!columnType || columnType === EXPECTED_VECTOR_TYPE) return;
 
     console.warn(`[ChatEmbedding] normalizing embedding column ${columnType} -> ${EXPECTED_VECTOR_TYPE}`);

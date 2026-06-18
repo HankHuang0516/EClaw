@@ -1,3 +1,5 @@
+'use strict';
+
 function createPool(columnType = 'vector(1536)') {
     const pool = {
         queries: [],
@@ -8,7 +10,7 @@ function createPool(columnType = 'vector(1536)') {
                 return { rows: [{ column_type: columnType }] };
             }
             return { rows: [] };
-        }
+        },
     };
     return pool;
 }
@@ -30,7 +32,7 @@ describe('chat-embedding schema normalization', () => {
         jest.dontMock('../../embedding-client');
     });
 
-    it('repairs a legacy unbounded pgvector column before creating HNSW index', async () => {
+    it('repairs a legacy unbounded pgvector column before creating the HNSW index', async () => {
         const chatEmbedding = require('../../chat-embedding');
         const pool = createPool('vector');
 
@@ -41,6 +43,18 @@ describe('chat-embedding schema normalization', () => {
         expect(queryIndex(pool, 'ALTER COLUMN embedding TYPE vector(1536)')).toBeGreaterThan(-1);
         expect(queryIndex(pool, 'ALTER COLUMN embedding TYPE vector(1536)'))
             .toBeLessThan(queryIndex(pool, 'CREATE INDEX IF NOT EXISTS idx_chat_embedding_hnsw'));
+    });
+
+    it('repairs a legacy fixed-dimension vector column before creating the HNSW index', async () => {
+        const chatEmbedding = require('../../chat-embedding');
+        const pool = createPool('vector(384)');
+
+        await chatEmbedding.initSchema(pool);
+
+        expect(queryIndex(pool, 'DROP INDEX IF EXISTS idx_chat_embedding_hnsw')).toBeGreaterThan(-1);
+        expect(queryIndex(pool, 'vector_dims(embedding) <> 1536')).toBeGreaterThan(-1);
+        expect(queryIndex(pool, 'ALTER COLUMN embedding TYPE vector(1536)')).toBeGreaterThan(-1);
+        expect(queryIndex(pool, 'CREATE INDEX IF NOT EXISTS idx_chat_embedding_hnsw')).toBeGreaterThan(-1);
     });
 
     it('does not rewrite an already dimensioned vector(1536) column', async () => {
@@ -74,7 +88,7 @@ describe('chat-embedding dimension guards', () => {
         await chatEmbedding.initSchema(pool);
         const queryCount = pool.queries.length;
 
-        const rows = await chatEmbedding.searchBySemantic('device-a', [0.1, 0.2, 0.3]);
+        const rows = await chatEmbedding.searchBySemantic('device-a', Array(1024).fill(0.1));
 
         expect(rows).toEqual([]);
         expect(pool.queries).toHaveLength(queryCount);
@@ -83,8 +97,8 @@ describe('chat-embedding dimension guards', () => {
     it('skips embedding writes when the generated vector has the wrong dimension', async () => {
         jest.doMock('../../embedding-client', () => ({
             DEFAULT_DIM: 1536,
-            generateEmbedding: jest.fn().mockResolvedValue([0.1, 0.2, 0.3]),
-            toPgVectorLiteral: jest.fn(() => '[0.100000,0.200000,0.300000]')
+            generateEmbedding: jest.fn().mockResolvedValue(Array(1024).fill(0.1)),
+            toPgVectorLiteral: jest.fn(() => '[0.100000]'),
         }));
         const chatEmbedding = require('../../chat-embedding');
         const pool = createPool();
