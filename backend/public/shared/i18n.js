@@ -2944746,11 +2944746,6 @@ const TRANSLATIONS = {
         "chat_routing_org_upward": "上報",
 
         "chat_routing_unspecified": "未指定",
-
-        "wallet_no_account": "登入 email 帳號後即可使用 e-coin 錢包。",
-        "wallet_no_account_help": "e-coin 錢包（餘額、儲值、紀錄）綁定於使用者帳號。僅綁定裝置的工作階段尚無錢包 — 請至設定登入或建立帳號以啟用。",
-        "mr_no_account": "登入 email 帳號後即可管理租賃。",
-        "mr_no_account_help": "租賃刊登與合約綁定於使用者帳號。僅綁定裝置的工作階段尚無帳號 — 請至設定登入或建立帳號以開始使用。",
 },
 
 
