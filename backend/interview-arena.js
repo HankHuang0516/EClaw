@@ -147,9 +147,9 @@ function weightedPick(items, keyFn, weights) {
 
 let VISION_IMAGES = [
     // img-f3a1.svg retired (pass rate 100%) — replaced below
+    // img-d4e9.svg retired (basic shape, too easy) — replaced below
+    // img-a2f5.svg retired (basic shape, too easy) — replaced below
     { file: null, description: 'A system monitoring dashboard showing CPU at 87%, RAM usage 11.2 GB of 16 GB, disk I/O at 340 MB/s, and 3 active processes flagged in red', keywords: ['CPU', '87', 'RAM', 'disk', 'three', 'red'] },
-    { file: 'img-d4e9.svg', keywords: ['green', 'triangle'] },
-    { file: 'img-a2f5.svg', keywords: ['yellow', 'star'] },
     { file: 'img-c8b3.svg', keywords: ['cat', 'orange'] },
     // ── Easy tier (20%) — basic shape/object recognition ──
     { file: null, description: 'A red heart shape centered on a white background', keywords: ['heart', 'red'] },
@@ -237,6 +237,13 @@ let VISION_IMAGES = [
     // Hard tier
     { file: null, description: 'A GitHub pull request diff view showing 3 files changed: auth.js has 12 insertions in green and 4 deletions in red, config.json has 2 insertions and 0 deletions, README.md has 1 insertion and 3 deletions — a blue comment bubble icon appears on line 47 of auth.js', keywords: ['pull request', 'three', 'files', 'auth', '12', '4', 'deletions', 'line', '47', 'comment'] },
     { file: null, description: 'A Prometheus metrics dashboard showing request rates for three endpoints: /api/login at 142 req/s, /api/data at 893 req/s, /api/upload at 23 req/s — two red alert badges are visible: /api/upload shows latency_p99 = 8.3s and /api/login shows error_rate = 12%', keywords: ['prometheus', 'three', 'endpoints', 'login', '142', 'data', '893', 'upload', '8.3', 'error', '12'] },
+    // ── Daily pool update: added 2026-06-19 ──
+    // Hard tier — replacing retired basic SVGs with architectural diagrams
+    { file: null, description: 'A Docker Compose YAML snippet showing three services: web (image nginx:alpine, port 80:80), api (image node:18-alpine, port 3000:3000, depends_on db), and db (image postgres:15, environment POSTGRES_DB=appdb) — a depends_on arrow links api to db', keywords: ['docker', 'three', 'services', 'nginx', 'api', 'node', 'postgres', 'depends_on', 'appdb'] },
+    { file: null, description: 'An AWS architecture diagram showing a VPC with two availability zones — each zone contains a public subnet with one EC2 t3.medium instance and a private subnet with one RDS db.t3.large instance; an Application Load Balancer spans both zones at the top; total of 2 EC2 instances and 2 RDS instances visible', keywords: ['AWS', 'VPC', 'two', 'availability', 'zones', 'EC2', 't3', 'RDS', 'Load Balancer'] },
+    // Medium tier
+    { file: null, description: 'A mobile payment confirmation screen: payment of $34.99 to "Coffee Republic" — a green animated checkmark dominates the center, card last-4 digits shown as ****8521, and a timestamp of 10:23 AM Oct 3 appears below the merchant name', keywords: ['payment', '34.99', 'Coffee Republic', '8521', '10:23', 'checkmark', 'green'] },
+    { file: null, description: 'An infrastructure cost report table with five columns (Service, Region, vCPUs, Monthly Cost, Status) and eight data rows — the grand total row reads $8,234.50; the most expensive row is EC2 r6i.4xlarge in us-east-1 at $2,340 per month marked "Running"', keywords: ['infrastructure', 'cost', 'eight', 'rows', '8234', 'EC2', 'r6i', '2340', 'Running'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -474,6 +481,13 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[1,3,-1,-3,5,3,6,7], 3', expected: '[3,3,5,5,6,7]' },{ input: '[1], 1', expected: '[1]' },{ input: '[1,2], 2', expected: '[2]' },{ input: '[2,3,4,1,5], 3', expected: '[4,4,5]' }] },
     { title: 'Longest Increasing Subsequence', description: 'Write `solve(nums)` — return the length of the longest strictly increasing subsequence (elements do not need to be contiguous).',
       testCases: [{ input: '[10,9,2,5,3,7,101,18]', expected: '4' },{ input: '[0,1,0,3,2,3]', expected: '4' },{ input: '[7,7,7,7,7]', expected: '1' },{ input: '[]', expected: '0' }] },
+    // ── Daily pool update: added 2026-06-19 ──
+    { title: 'Top K Frequent Elements', description: 'Write `solve(nums, k)` — return the k most frequent elements sorted in ascending order. Break frequency ties by choosing elements with smaller values.',
+      testCases: [{ input: '[1,1,1,2,2,3], 2', expected: '[1,2]' },{ input: '[3,3,2,1,1], 2', expected: '[1,3]' },{ input: '[5,5,4,4,3], 2', expected: '[4,5]' },{ input: '[1], 1', expected: '[1]' }] },
+    { title: 'Container With Most Water', description: 'Write `solve(height)` — given an array of non-negative integers where height[i] is the height of a vertical bar at index i, find two bars that form a container holding the most water. Return the maximum water volume (area = min height × distance between bars).',
+      testCases: [{ input: '[1,8,6,2,5,4,8,3,7]', expected: '49' },{ input: '[1,1]', expected: '1' },{ input: '[4,3,2,1,4]', expected: '16' },{ input: '[1,2,4,3]', expected: '4' }] },
+    { title: 'Search a 2D Matrix', description: 'Write `solve(matrix, target)` — search for a target in an m×n integer matrix where (1) each row is sorted left-to-right and (2) the first element of each row is strictly greater than the last element of the previous row. Return true if the target exists.',
+      testCases: [{ input: '[[1,3,5,7],[10,11,16,20],[23,30,34,60]], 3', expected: 'true' },{ input: '[[1,3,5,7],[10,11,16,20],[23,30,34,60]], 13', expected: 'false' },{ input: '[[1]], 1', expected: 'true' },{ input: '[[1,3],[5,7]], 6', expected: 'false' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -571,6 +585,15 @@ let RESPONSE_QUESTIONS = [
     { question: 'A cube is painted on all six faces and then cut into 27 smaller equal cubes (3×3×3). How many of the small cubes have exactly two faces painted?', expectedKeywords: ['12', 'twelve'] },
     { question: 'How many three-digit positive integers are divisible by both 4 and 6?', expectedKeywords: ['75'] },
     { question: 'A gear with 12 teeth meshes with a gear with 36 teeth. If the smaller gear rotates at 120 RPM, at what RPM does the larger gear rotate?', expectedKeywords: ['40'] },
+    // ── Daily pool update: added 2026-06-19 ──
+    // Medium tier
+    { question: 'A shopkeeper marks a product 40% above its cost price and then offers a 20% discount on the marked price. What is the percentage profit on the original cost price?', expectedKeywords: ['12', '12%'] },
+    { question: 'A 20-liter mixture of milk and water is in the ratio 3:1. How many liters of water must be added to make the ratio 3:2?', expectedKeywords: ['5'] },
+    { question: 'In a group of 60 people, 30 speak English, 20 speak French, and 10 speak both languages. How many people speak neither English nor French?', expectedKeywords: ['20', 'twenty'] },
+    // Hard tier
+    { question: 'A rectangular swimming pool is 25 m long, 10 m wide, and filled to a depth of 1.5 m. How many kiloliters of water does it hold?', expectedKeywords: ['375'] },
+    { question: 'A sum of money doubles itself in 5 years under simple interest. What is the annual interest rate as a percentage?', expectedKeywords: ['20', '20%'] },
+    { question: 'You roll two fair six-sided dice. What is the probability that the product of the two numbers shown is even? Express as a simplified fraction.', expectedKeywords: ['3/4'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -688,6 +711,13 @@ let TTS_PHRASES = [
     { text: 'CUSIP five nine four nine one eight one zero four represents Microsoft Corporation listed on NASDAQ under ticker MSFT with approximately seven point four billion shares outstanding', keywords: ['CUSIP', '594918104', 'Microsoft', 'NASDAQ', 'MSFT', 'seven', 'billion', 'shares'] },
     { text: 'The integral from zero to pi of sine x d x equals negative cosine of pi minus negative cosine of zero which simplifies to one plus one equals two', keywords: ['integral', 'zero', 'pi', 'sine', 'cosine', 'simplifies', 'two'] },
     { text: 'The multivariate normal distribution N of mu and sigma squared describes a family of Gaussian distributions parameterized by mean mu and variance sigma squared — in one dimension the PDF is one over sigma root two pi times e to the power of negative one half x minus mu over sigma squared', keywords: ['multivariate', 'normal', 'gaussian', 'sigma', 'variance', 'PDF', 'e', 'power'] },
+    // ── Daily pool update: added 2026-06-19 ──
+    // Medium tier
+    { text: 'Support ticket SRQ-2024-48821 has been escalated to severity 1 and the on-call engineer was paged at 03:47 UTC — expected resolution time is four hours', keywords: ['support', 'SRQ', '2024', '48821', 'severity', '1', '03:47', 'UTC', 'four'] },
+    { text: 'Please be advised that your appointment with Dr Patel has been moved from Thursday at 9:30 AM to Friday the 20th at 2:15 PM in the outpatient clinic on floor 4 wing B', keywords: ['Patel', 'thursday', '9:30', 'friday', '20', '2:15', 'outpatient', 'floor', '4', 'wing'] },
+    // Hard tier
+    { text: 'Kubernetes cluster status: 3 of 3 control plane nodes ready, 47 worker nodes scheduled, 231 pods running, 0 pods in CrashLoopBackOff — CPU utilization 62 percent, memory utilization 71 percent', keywords: ['kubernetes', 'three', 'control', 'plane', '47', 'workers', '231', 'pods', 'CPU', '62', 'memory', '71'] },
+    { text: 'XGBoost hyperparameter grid search evaluated 1296 combinations across max depth 3 to 6, learning rate 0.01 to 0.3, n estimators 100 to 500, and subsample 0.6 to 0.9 — best validation AUC of 0.9417 achieved at max depth 5 and learning rate 0.1', keywords: ['XGBoost', '1296', 'learning', 'rate', 'AUC', '0.9417', 'depth', '5'] },
 ];
 
 // ============================================
