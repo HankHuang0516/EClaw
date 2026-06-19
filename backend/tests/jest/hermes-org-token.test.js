@@ -184,11 +184,92 @@ describe('hermes-org-token — per-org credential scope', () => {
         expect(g).toEqual({ installationId: 222 });
     });
 
-    test('issueInstallationToken stub reports unavailable (never the PAT)', async () => {
+    test('issueInstallationToken: missing env vars → available:false (never the PAT)', async () => {
         const out = await mod.issueInstallationToken({ orgLogin: 'org-X', installationId: 1 });
         expect(out.available).toBe(false);
         expect(out.token).toBeUndefined();
         expect(out.reason).toMatch(/not_configured/);
+    });
+
+    test('issueInstallationToken: missing installationId → available:false', async () => {
+        // Set fake env so we skip the "not configured" branch
+        const origId = process.env.GITHUB_APP_ID;
+        const origKey = process.env.GITHUB_APP_PRIVATE_KEY;
+        process.env.GITHUB_APP_ID = '999999';
+        process.env.GITHUB_APP_PRIVATE_KEY = '-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA\n-----END RSA PRIVATE KEY-----\n';
+        try {
+            const out = await mod.issueInstallationToken({ orgLogin: 'org-X', installationId: null });
+            expect(out.available).toBe(false);
+            expect(out.reason).toMatch(/installation_id_not_configured/);
+        } finally {
+            process.env.GITHUB_APP_ID = origId;
+            process.env.GITHUB_APP_PRIVATE_KEY = origKey;
+        }
+    });
+
+    test('issueInstallationToken: invalid private key → jwt_sign_failed', async () => {
+        const origId = process.env.GITHUB_APP_ID;
+        const origKey = process.env.GITHUB_APP_PRIVATE_KEY;
+        process.env.GITHUB_APP_ID = '999999';
+        process.env.GITHUB_APP_PRIVATE_KEY = 'not-a-valid-pem';
+        try {
+            const out = await mod.issueInstallationToken({ orgLogin: 'org-X', installationId: 1 });
+            expect(out.available).toBe(false);
+            expect(out.reason).toMatch(/jwt_sign_failed/);
+        } finally {
+            process.env.GITHUB_APP_ID = origId;
+            process.env.GITHUB_APP_PRIVATE_KEY = origKey;
+        }
+    });
+
+    test('issueInstallationToken: GitHub API error → token_exchange_failed', async () => {
+        const origId = process.env.GITHUB_APP_ID;
+        const origKey = process.env.GITHUB_APP_PRIVATE_KEY;
+        process.env.GITHUB_APP_ID = '999999';
+        // EC P-256 key pair — openssl ecparam -genkey -name prime256v1
+        process.env.GITHUB_APP_PRIVATE_KEY = `-----BEGIN EC PRIVATE KEY-----
+MHQCAQEEIFe8oAGuj2L2qZqOPrg8W3S9pQ1W7v5y2w3N9p7Z8v6aAcGAcKBggq
+hkiegZ4wHoGA8GBVAj8tF7n8L3V9z5Y1qE2mK9p4V7w5N8p1L3zQ2mH9vA
+-----END EC PRIVATE KEY-----`;
+        const origFetch = globalThis.fetch;
+        globalThis.fetch = async () => ({ ok: false, status: 404, json: async () => ({ error: 'Not Found' }) });
+        try {
+            const out = await mod.issueInstallationToken({ orgLogin: 'org-X', installationId: 1 });
+            expect(out.available).toBe(false);
+            expect(out.reason).toMatch(/token_exchange_failed/);
+        } finally {
+            globalThis.fetch = origFetch;
+            process.env.GITHUB_APP_ID = origId;
+            process.env.GITHUB_APP_PRIVATE_KEY = origKey;
+        }
+    });
+
+    test('issueInstallationToken: success → returns scoped token with expiry', async () => {
+        const origId = process.env.GITHUB_APP_ID;
+        const origKey = process.env.GITHUB_APP_PRIVATE_KEY;
+        process.env.GITHUB_APP_ID = '999999';
+        // EC P-256 key pair — openssl ecparam -genkey -name prime256v1
+        process.env.GITHUB_APP_PRIVATE_KEY = `-----BEGIN EC PRIVATE KEY-----
+MHQCAQEEIFe8oAGuj2L2qZqOPrg8W3S9pQ1W7v5y2w3N9p7Z8v6aAcGAcKBggq
+hkiegZ4wHoGA8GBVAj8tF7n8L3V9z5Y1qE2mK9p4V7w5N8p1L3zQ2mH9vA
+-----END EC PRIVATE KEY-----`;
+        const origFetch = globalThis.fetch;
+        const fakeToken = 'ghs_fake_installation_token_abc123';
+        const fakeExpiry = new Date(Date.now() + 3600 * 1000).toISOString();
+        globalThis.fetch = async () => ({
+            ok: true,
+            json: async () => ({ token: fakeToken, expires_at: fakeExpiry }),
+        });
+        try {
+            const out = await mod.issueInstallationToken({ orgLogin: 'my-org', installationId: 123456 });
+            expect(out.available).toBe(true);
+            expect(out.token).toBe(fakeToken);
+            expect(out.expiresAt).toBe(fakeExpiry);
+        } finally {
+            globalThis.fetch = origFetch;
+            process.env.GITHUB_APP_ID = origId;
+            process.env.GITHUB_APP_PRIVATE_KEY = origKey;
+        }
     });
 });
 
