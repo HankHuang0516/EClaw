@@ -305,6 +305,7 @@ describe('Play Integrity bridge', () => {
             bindingMatches: true,
             fresh: true,
             appRecognized: true,
+            appLicensed: true,
             deviceMeetsIntegrity: true,
             certificateDigestMatches: true,
         });
@@ -374,6 +375,7 @@ describe('Play Integrity bridge', () => {
             bindingMatches: true,
             fresh: true,
             appRecognized: true,
+            appLicensed: true,
             deviceMeetsIntegrity: true,
             certificateDigestMatches: true,
         });
@@ -441,6 +443,9 @@ describe('Play Integrity bridge', () => {
                     versionCode: '100',
                     certificateSha256Digest: ['outtVd3fHJ1oLrVnHBrljAEGy6Kik13bztKr4ub3dts'],
                 },
+                accountDetails: {
+                    appLicensingVerdict: 'LICENSED',
+                },
                 deviceIntegrity: {
                     deviceRecognitionVerdict: ['MEETS_DEVICE_INTEGRITY'],
                 },
@@ -480,6 +485,9 @@ describe('Play Integrity bridge', () => {
                     versionCode: '100',
                     certificateSha256Digest: ['AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'],
                 },
+                accountDetails: {
+                    appLicensingVerdict: 'LICENSED',
+                },
                 deviceIntegrity: {
                     deviceRecognitionVerdict: ['MEETS_DEVICE_INTEGRITY'],
                 },
@@ -500,6 +508,47 @@ describe('Play Integrity bridge', () => {
         expect(res.body.status).toBe('verification_failed');
         expect(res.body.integrity.verified).toBe(false);
         expect(res.body.integrity.checks.certificateDigestMatches).toBe(false);
+    });
+
+    test('verdict endpoint rejects unlicensed Play account entitlement', async () => {
+        process.env.PLAY_INTEGRITY_SERVICE_ACCOUNT_JSON = '{"type":"service_account"}';
+        const nonce = playIntegrity._internal.makeNonce({ deviceId: DEVICE_ID, action: 'startup' });
+        const decodeIntegrityToken = jest.fn(async () => ({
+            tokenPayloadExternal: {
+                requestDetails: {
+                    requestPackageName: 'com.hank.clawlive',
+                    nonce,
+                    timestampMillis: String(Date.now()),
+                },
+                appIntegrity: {
+                    appRecognitionVerdict: 'PLAY_RECOGNIZED',
+                    packageName: 'com.hank.clawlive',
+                    versionCode: '100',
+                    certificateSha256Digest: ['outtVd3fHJ1oLrVnHBrljAEGy6Kik13bztKr4ub3dts'],
+                },
+                accountDetails: {
+                    appLicensingVerdict: 'UNLICENSED',
+                },
+                deviceIntegrity: {
+                    deviceRecognitionVerdict: ['MEETS_DEVICE_INTEGRITY'],
+                },
+            },
+        }));
+
+        const res = await request(makeApp({ decodeIntegrityToken }))
+            .post('/api/play-integrity/verdict')
+            .send({
+                deviceId: DEVICE_ID,
+                deviceSecret: DEVICE_SECRET,
+                action: 'startup',
+                nonce,
+                integrityToken: 'l'.repeat(100),
+            });
+
+        expect(res.status).toBe(200);
+        expect(res.body.status).toBe('verification_failed');
+        expect(res.body.integrity.verified).toBe(false);
+        expect(res.body.integrity.checks.appLicensed).toBe(false);
     });
 
     test('verdict endpoint surfaces failed integrity checks without accepting the action', async () => {

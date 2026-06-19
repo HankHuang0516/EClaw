@@ -475,6 +475,12 @@ async function run(options) {
                 && playIntegrityBackend.includes('expectedCertificateDigests')
                 && playIntegrityBackend.includes('PLAY_INTEGRITY_EXPECTED_CERT_SHA256_DIGESTS')
         );
+        addCheck(
+            checks,
+            'backend.playIntegrityLicensingCheck',
+            playIntegrityBackend.includes('appLicensed')
+                && playIntegrityBackend.includes("appLicensingVerdict === 'LICENSED'")
+        );
     }
 
     if (options.deviceId && options.deviceSecret) {

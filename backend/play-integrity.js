@@ -307,6 +307,7 @@ function evaluatePayload(decoded, {
     const environmentDetails = payload.environmentDetails || {};
     const recentDeviceActivity = deviceIntegrity.recentDeviceActivity || payload.recentDeviceActivity || null;
     const appRecognitionVerdict = appIntegrity.appRecognitionVerdict || 'UNKNOWN';
+    const appLicensingVerdict = accountDetails.appLicensingVerdict || null;
     const appPackageName = appIntegrity.packageName || null;
     const certificateSha256Digest = Array.isArray(appIntegrity.certificateSha256Digest)
         ? appIntegrity.certificateSha256Digest
@@ -328,6 +329,7 @@ function evaluatePayload(decoded, {
         bindingMatches: requestMode === 'standard' ? requestHashMatches : nonceMatches,
         fresh: Number.isFinite(timestampMillis) && Math.abs(now - timestampMillis) <= VERDICT_FRESHNESS_MS,
         appRecognized: appRecognitionVerdict === 'PLAY_RECOGNIZED',
+        appLicensed: appLicensingVerdict === 'LICENSED',
         deviceMeetsIntegrity: deviceRecognitionVerdict.includes('MEETS_DEVICE_INTEGRITY'),
         certificateDigestMatches: normalizedCertificateDigests.some(digest => expectedDigestSet.has(digest)),
     };
@@ -335,6 +337,7 @@ function evaluatePayload(decoded, {
         && checks.bindingMatches
         && checks.fresh
         && checks.appRecognized
+        && checks.appLicensed
         && checks.appPackageNameMatches
         && checks.certificateDigestMatches
         && checks.deviceMeetsIntegrity;
@@ -345,7 +348,7 @@ function evaluatePayload(decoded, {
         verdict: {
             appRecognitionVerdict,
             deviceRecognitionVerdict,
-            appLicensingVerdict: accountDetails.appLicensingVerdict || null,
+            appLicensingVerdict,
             appAccessRiskVerdict: environmentDetails.appAccessRiskVerdict || null,
             playProtectVerdict: environmentDetails.playProtectVerdict || null,
             recentDeviceActivity,
