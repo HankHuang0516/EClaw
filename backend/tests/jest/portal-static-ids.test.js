@@ -90,8 +90,14 @@ describe('portal static HTML IDs', () => {
     const kanban = fs.readFileSync(path.join(__dirname, '../../public/portal/kanban.html'), 'utf8');
     const community = fs.readFileSync(path.join(__dirname, '../../public/portal/community.html'), 'utf8');
     const envVars = fs.readFileSync(path.join(__dirname, '../../public/portal/env-vars.html'), 'utf8');
+    // The k-Value Tracker widget originally lived on dashboard.html but moved
+    // to invite.html (card_8ff516c15600aa1b55c7cabe) — it is invite-funnel
+    // analytics, not an entity-binding metric. Lock the deviceSecret auth
+    // shape on its new home.
+    const invite = fs.readFileSync(path.join(__dirname, '../../public/portal/invite.html'), 'utf8');
 
-    expect(dashboard).toContain("deviceSecret: user.deviceSecret");
+    expect(invite).toContain("deviceSecret: user.deviceSecret");
+    expect(invite).not.toContain("botSecret: user.deviceSecret");
     expect(dashboard).not.toContain("botSecret: user.deviceSecret");
 
     expect(settings).toContain("const qs = new URLSearchParams({");

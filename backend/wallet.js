@@ -1041,10 +1041,36 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
     }
 
     // GET /api/wallet/balance
-    router.get('/balance', authMiddleware, walletRoute(async (req, res) => {
-        const data = await getBalance(req.user.userId);
-        res.json({ success: true, wallet: data });
-    }));
+    //
+    // Tolerance for device-only / globe-user sessions (card_01417648): the
+    // authMiddleware succeeded (valid JWT, real device), but the session has
+    // no user account so req.user.userId is null. In that case the wallet
+    // simply doesn't exist yet — returning 401 here is wrong (the caller IS
+    // authenticated; they just have no wallet scope). Return 200 with an
+    // empty payload so the frontend can render a "set up wallet" empty-state
+    // instead of treating this as an auth failure.
+    router.get('/balance', authMiddleware, async (req, res) => {
+        try {
+            if (!req.user) {
+                return res.status(401).json({ success: false, error: 'unauthenticated' });
+            }
+            if (!req.user.userId) {
+                // globe-user devices have no wallet scope by default; empty
+                // payload signals 'set up wallet' rather than 'login required'.
+                return res.json({
+                    success: true,
+                    wallet: { balance_ecoin: 0, currency: 'eCoin' },
+                    empty: true,
+                    reason: 'no_wallet_scope',
+                });
+            }
+            const data = await getBalance(req.user.userId);
+            res.json({ success: true, wallet: data });
+        } catch (err) {
+            console.error('[Wallet] /balance handler error:', err);
+            res.status(500).json({ success: false, error: 'internal_error' });
+        }
+    });
 
     // GET /api/wallet/history?limit=&offset=&type=
     router.get('/history', authMiddleware, walletRoute(async (req, res) => {
