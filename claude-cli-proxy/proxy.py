@@ -656,7 +656,7 @@ Rules:
 
 
 # ── Repo Clone & Sync ────────────────────────
-def _vault_fetch(device_id: str, bot_secret: str, entity_id_or_org, org: str, keys) -> tuple[Optional[str], Optional[str]]:
+def _vault_fetch(device_id: str, bot_secret: str, entity_id_or_org, org_or_keys, keys=None) -> tuple[Optional[str], Optional[str]]:
     """Pull a GitHub PAT from either /api/hermes/org-token (per-org grant-check) or
     /api/device-vars (legacy device-wide vault).
 
@@ -671,16 +671,18 @@ def _vault_fetch(device_id: str, bot_secret: str, entity_id_or_org, org: str, ke
 
     Returns (token, used_key_name) or (None, None).
     """
-    # Detect org-token path: entity_id is a positive int
+    # Support both callback signatures used by repo_auth:
+    #   legacy:    (device_id, bot_secret, org, keys)
+    #   org-token: (device_id, bot_secret, entity_id, org, keys)
     entity_id: Optional[int] = None
-    legacy_org: str = ""
-    if isinstance(entity_id_or_org, int) and entity_id_or_org > 0:
+    if keys is None:
+        org = str(entity_id_or_org)
+        keys = org_or_keys
+    elif isinstance(entity_id_or_org, int) and entity_id_or_org > 0:
         entity_id = entity_id_or_org
-        legacy_org = org  # org param still used for scope validation in legacy path
-    elif isinstance(entity_id_or_org, str) and entity_id_or_org:
-        legacy_org = entity_id_or_org
+        org = str(org_or_keys)
     else:
-        legacy_org = org
+        org = str(org_or_keys)
 
     if entity_id is not None and entity_id > 0:
         # Per-org org-token path — grant-check + scoped installation token
@@ -719,8 +721,6 @@ def _vault_fetch(device_id: str, bot_secret: str, entity_id_or_org, org: str, ke
         return None, None
 
     # Legacy device-vault path
-    if legacy_org:
-        org = legacy_org
     qs = urllib.parse.urlencode({"deviceId": device_id, "botSecret": bot_secret})
     url = f"{EVAULT_API_BASE}/api/device-vars?{qs}"
     try:

@@ -138,6 +138,69 @@ class MultiTenantResolveTests(unittest.TestCase):
         self.assertEqual(resolved.token, "vault-tok",
                          "caller's per-request vault token must beat env fallback")
 
+    def test_entity_scoped_org_token_uses_entity_id_and_org(self):
+        calls: list = []
+
+        def fetcher(device_id, bot_secret, entity_id, org, keys):
+            calls.append({
+                "device_id": device_id,
+                "bot_secret": bot_secret,
+                "entity_id": entity_id,
+                "org": org,
+                "keys": tuple(keys),
+            })
+            return "installation-token", "installation"
+
+        resolved = resolve_per_request_auth(
+            repo_host_path=self.HOST_PATH, allowed_orgs=self.ALLOWED,
+            caller_device_id="device-hank", caller_bot_secret="s",
+            caller_entity_id=6,
+            vault_key="", allow_global_vault=True, require_auth=False,
+            env_token="env-pat-XYZ", vault_fetcher=fetcher,
+        )
+
+        self.assertEqual(resolved.token, "installation-token")
+        self.assertEqual(resolved.source, "org-token:installation")
+        self.assertEqual(calls, [{
+            "device_id": "device-hank",
+            "bot_secret": "s",
+            "entity_id": 6,
+            "org": "HankHuang0516",
+            "keys": (),
+        }])
+
+    def test_entity_scoped_org_token_denial_does_not_fallback_to_env(self):
+        calls: list = []
+
+        def fetcher(*args):
+            calls.append(args)
+            return None, None
+
+        resolved = resolve_per_request_auth(
+            repo_host_path=self.HOST_PATH, allowed_orgs=self.ALLOWED,
+            caller_device_id="device-hank", caller_bot_secret="s",
+            caller_entity_id=6,
+            vault_key="", allow_global_vault=True, require_auth=False,
+            env_token="env-pat-XYZ", vault_fetcher=fetcher,
+        )
+
+        self.assertIsNone(resolved.token)
+        self.assertEqual(resolved.source, "anonymous")
+        self.assertEqual(len(calls), 1)
+
+    def test_entity_scoped_org_token_denial_raises_when_auth_required(self):
+        def fetcher(*args):
+            return None, None
+
+        with self.assertRaises(RepoAuthError):
+            resolve_per_request_auth(
+                repo_host_path=self.HOST_PATH, allowed_orgs=self.ALLOWED,
+                caller_device_id="device-hank", caller_bot_secret="s",
+                caller_entity_id=6,
+                vault_key="", allow_global_vault=True, require_auth=True,
+                env_token="env-pat-XYZ", vault_fetcher=fetcher,
+            )
+
     def test_anonymous_when_no_token_and_auth_not_required(self):
         resolved = resolve_per_request_auth(
             repo_host_path=self.HOST_PATH, allowed_orgs=self.ALLOWED,

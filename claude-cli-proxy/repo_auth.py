@@ -170,7 +170,7 @@ def resolve_per_request_auth(
     allowed_orgs: str,
     caller_device_id: Optional[str],
     caller_bot_secret: Optional[str],
-    caller_entity_id: Optional[int],
+    caller_entity_id: Optional[int] = None,
     vault_key: str,
     allow_global_vault: bool,
     require_auth: bool,
@@ -182,7 +182,9 @@ def resolve_per_request_auth(
     Resolution order when caller_entity_id is set:
       1. Per-org org-token endpoint — caller_entity_id + deviceId/botSecret +
          org → grant-check + scoped GitHub App installation token
-      2. Env token — legacy GITHUB_TOKEN fallback
+      2. Anonymous or RepoAuthError. This path intentionally does not fall
+         back to legacy device-wide or env tokens because that would bypass the
+         per-org grant check.
 
     Resolution order when caller_entity_id is absent (legacy path):
       1. Per-request vault — caller's deviceId/botSecret + their vault_key
@@ -195,18 +197,28 @@ def resolve_per_request_auth(
     scope = validate_repo_scope(repo_host_path, allowed_orgs)
     caller_id = caller_id_for(caller_device_id, scope.host_path)
 
-    # When caller_entity_id is set, use the per-org org-token endpoint which
-    # performs a grant-check against entity_org_grants.  Falls back to env_token.
-    if caller_entity_id and caller_device_id and caller_bot_secret and vault_fetcher is not None:
-        token, used_key = vault_fetcher(
-            caller_device_id, caller_bot_secret, caller_entity_id, scope.org, (),
-        )
-        if token:
-            return ResolvedRepoAuth(
-                scope=scope, url=scope.url, token=token,
-                source=f"org-token:{used_key or 'hermes'}",
-                caller_id=caller_id,
+    # When caller_entity_id is set, use only the per-org org-token endpoint.
+    # Falling through to legacy/env tokens would bypass the entity/org grant.
+    if caller_entity_id:
+        if caller_device_id and caller_bot_secret and vault_fetcher is not None:
+            token, used_key = vault_fetcher(
+                caller_device_id, caller_bot_secret, caller_entity_id, scope.org, (),
             )
+            if token:
+                return ResolvedRepoAuth(
+                    scope=scope, url=scope.url, token=token,
+                    source=f"org-token:{used_key or 'hermes'}",
+                    caller_id=caller_id,
+                )
+        if require_auth:
+            raise RepoAuthError(
+                f"repo auth required for {scope.org}/{scope.repo}, "
+                "but no entity-scoped org token"
+            )
+        return ResolvedRepoAuth(
+            scope=scope, url=scope.url, token=None,
+            source="anonymous", caller_id=caller_id,
+        )
 
     # Legacy path: per-request vault (deviceId+botSecret → vault key lookup).
     if caller_device_id and caller_bot_secret and vault_fetcher is not None:
