@@ -462,6 +462,12 @@ async function run(options) {
             playIntegrityBackend.includes('integrityToken')
                 && !playIntegrityBackend.includes('integrity_token: integrityToken')
         );
+        addCheck(
+            checks,
+            'backend.playIntegrityAppPackageCheck',
+            playIntegrityBackend.includes('appPackageNameMatches')
+                && playIntegrityBackend.includes('appPackageNameMatches: appPackageName === PACKAGE_NAME')
+        );
     }
 
     if (options.deviceId && options.deviceSecret) {

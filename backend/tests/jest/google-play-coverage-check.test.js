@@ -173,6 +173,57 @@ describe('Google Play coverage check script helpers', () => {
         `)).toBe(false);
     });
 
+    test('coverage check requires backend app integrity package verification', async () => {
+        const playIntegrityBackendPath = '/tmp/play-integrity-package-check.js';
+        const originalExistsSync = jest.spyOn(require('fs'), 'existsSync');
+        const originalReadFileSync = jest.spyOn(require('fs'), 'readFileSync');
+
+        originalExistsSync.mockImplementation(filePath => filePath === playIntegrityBackendPath);
+        originalReadFileSync.mockImplementation(filePath => {
+            if (filePath !== playIntegrityBackendPath) return '';
+            return `
+                const checks = {
+                    appPackageNameMatches: appPackageName === PACKAGE_NAME,
+                };
+                JSON.stringify({ integrityToken });
+            `;
+        });
+
+        try {
+            const summary = await checker.run({
+                baseUrl: 'https://unused.invalid',
+                assetlinksUrl: 'data:application/json,[]',
+                expectedFingerprints: [],
+                minVersionCode: null,
+                expectedVersionName: null,
+                appGradlePath: '/tmp/missing.gradle',
+                applicationPath: '/tmp/missing-application.kt',
+                androidManifestPath: '/tmp/missing-manifest.xml',
+                billingManagerPath: '/tmp/missing-billing.kt',
+                playIntegrityReporterPath: '/tmp/missing-integrity.kt',
+                playIntegrityBackendPath,
+                versionCatalogPath: '/tmp/missing-catalog.toml',
+                backendIndexPath: '/tmp/missing-index.js',
+                deviceId: '',
+                deviceSecret: '',
+                expectedVerdictAction: null,
+                expectedVerdictVersionCode: null,
+                requirePlayIntegrity: false,
+                requireVerifiedVerdict: false,
+            });
+
+            expect(summary.checks).toEqual(expect.arrayContaining([
+                expect.objectContaining({
+                    name: 'backend.playIntegrityAppPackageCheck',
+                    ok: true,
+                }),
+            ]));
+        } finally {
+            originalExistsSync.mockRestore();
+            originalReadFileSync.mockRestore();
+        }
+    });
+
     test('recognizes release startup Play Integrity reporting', () => {
         expect(checker.applicationReportsPlayIntegrityStartup(`
             private fun reportPlayIntegrityStartup() {

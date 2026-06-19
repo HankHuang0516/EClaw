@@ -259,6 +259,7 @@ describe('Play Integrity bridge', () => {
                     appRecognitionVerdict: 'PLAY_RECOGNIZED',
                     packageName: 'com.hank.clawlive',
                     versionCode: '100',
+                    certificateSha256Digest: ['A2:EB:6D:55'],
                 },
                 deviceIntegrity: {
                     deviceRecognitionVerdict: ['MEETS_DEVICE_INTEGRITY'],
@@ -286,6 +287,7 @@ describe('Play Integrity bridge', () => {
         expect(res.body.integrity.verified).toBe(true);
         expect(res.body.integrity.checks).toEqual({
             packageNameMatches: true,
+            appPackageNameMatches: true,
             nonceMatches: true,
             requestHashMatches: false,
             bindingMatches: true,
@@ -294,6 +296,7 @@ describe('Play Integrity bridge', () => {
             deviceMeetsIntegrity: true,
         });
         expect(res.body.integrity.verdict.appRecognitionVerdict).toBe('PLAY_RECOGNIZED');
+        expect(res.body.integrity.verdict.certificateSha256Digest).toEqual(['A2:EB:6D:55']);
         expect(JSON.stringify(res.body)).not.toContain(token);
     });
 
@@ -313,6 +316,7 @@ describe('Play Integrity bridge', () => {
                     appRecognitionVerdict: 'PLAY_RECOGNIZED',
                     packageName: 'com.hank.clawlive',
                     versionCode: '100',
+                    certificateSha256Digest: ['A2:EB:6D:55'],
                 },
                 deviceIntegrity: {
                     deviceRecognitionVerdict: ['MEETS_DEVICE_INTEGRITY'],
@@ -350,6 +354,7 @@ describe('Play Integrity bridge', () => {
         expect(res.body.integrity.requestMode).toBe('standard');
         expect(res.body.integrity.checks).toEqual({
             packageNameMatches: true,
+            appPackageNameMatches: true,
             nonceMatches: false,
             requestHashMatches: true,
             bindingMatches: true,
@@ -384,6 +389,7 @@ describe('Play Integrity bridge', () => {
                     value: 'PLAY_RECOGNIZED',
                     packageName: 'com.hank.clawlive',
                     versionCode: '100',
+                    certificateSha256Digest: ['A2:EB:6D:55'],
                 },
                 deviceIntegrity: { observed: true, values: ['MEETS_DEVICE_INTEGRITY'] },
                 virtualIntegrity: { observed: false, values: [] },
@@ -402,6 +408,44 @@ describe('Play Integrity bridge', () => {
         expect(debugJson).not.toContain(requestHash);
         expect(debugJson).not.toContain(DEVICE_SECRET);
         expect(JSON.stringify(res.body)).not.toContain(token);
+    });
+
+    test('verdict endpoint rejects mismatched app integrity package even when request details match', async () => {
+        process.env.PLAY_INTEGRITY_SERVICE_ACCOUNT_JSON = '{"type":"service_account"}';
+        const nonce = playIntegrity._internal.makeNonce({ deviceId: DEVICE_ID, action: 'startup' });
+        const decodeIntegrityToken = jest.fn(async () => ({
+            tokenPayloadExternal: {
+                requestDetails: {
+                    requestPackageName: 'com.hank.clawlive',
+                    nonce,
+                    timestampMillis: String(Date.now()),
+                },
+                appIntegrity: {
+                    appRecognitionVerdict: 'PLAY_RECOGNIZED',
+                    packageName: 'com.example.spoofed',
+                    versionCode: '100',
+                },
+                deviceIntegrity: {
+                    deviceRecognitionVerdict: ['MEETS_DEVICE_INTEGRITY'],
+                },
+            },
+        }));
+
+        const res = await request(makeApp({ decodeIntegrityToken }))
+            .post('/api/play-integrity/verdict')
+            .send({
+                deviceId: DEVICE_ID,
+                deviceSecret: DEVICE_SECRET,
+                action: 'startup',
+                nonce,
+                integrityToken: 'p'.repeat(100),
+            });
+
+        expect(res.status).toBe(200);
+        expect(res.body.status).toBe('verification_failed');
+        expect(res.body.integrity.verified).toBe(false);
+        expect(res.body.integrity.checks.packageNameMatches).toBe(true);
+        expect(res.body.integrity.checks.appPackageNameMatches).toBe(false);
     });
 
     test('verdict endpoint surfaces failed integrity checks without accepting the action', async () => {

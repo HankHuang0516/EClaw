@@ -194,6 +194,9 @@ function summarizeConsoleSignals(verdict) {
             value: verdict.appRecognitionVerdict || null,
             packageName: verdict.packageName || null,
             versionCode: verdict.versionCode || null,
+            certificateSha256Digest: Array.isArray(verdict.certificateSha256Digest)
+                ? verdict.certificateSha256Digest
+                : [],
         },
         deviceIntegrity: {
             observed: deviceLabels.length > 0,
@@ -280,6 +283,10 @@ function evaluatePayload(decoded, {
     const environmentDetails = payload.environmentDetails || {};
     const recentDeviceActivity = deviceIntegrity.recentDeviceActivity || payload.recentDeviceActivity || null;
     const appRecognitionVerdict = appIntegrity.appRecognitionVerdict || 'UNKNOWN';
+    const appPackageName = appIntegrity.packageName || null;
+    const certificateSha256Digest = Array.isArray(appIntegrity.certificateSha256Digest)
+        ? appIntegrity.certificateSha256Digest
+        : [];
     const deviceRecognitionVerdict = Array.isArray(deviceIntegrity.deviceRecognitionVerdict)
         ? deviceIntegrity.deviceRecognitionVerdict
         : [];
@@ -288,6 +295,7 @@ function evaluatePayload(decoded, {
 
     const checks = {
         packageNameMatches: requestPackageName === PACKAGE_NAME,
+        appPackageNameMatches: appPackageName === PACKAGE_NAME,
         nonceMatches,
         requestHashMatches,
         bindingMatches: requestMode === 'standard' ? requestHashMatches : nonceMatches,
@@ -299,6 +307,7 @@ function evaluatePayload(decoded, {
         && checks.bindingMatches
         && checks.fresh
         && checks.appRecognized
+        && checks.appPackageNameMatches
         && checks.deviceMeetsIntegrity;
     return {
         verified,
@@ -311,8 +320,9 @@ function evaluatePayload(decoded, {
             appAccessRiskVerdict: environmentDetails.appAccessRiskVerdict || null,
             playProtectVerdict: environmentDetails.playProtectVerdict || null,
             recentDeviceActivity,
-            packageName: appIntegrity.packageName || null,
+            packageName: appPackageName,
             versionCode: appIntegrity.versionCode || null,
+            certificateSha256Digest,
         },
     };
 }

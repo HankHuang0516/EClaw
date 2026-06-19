@@ -89,6 +89,10 @@ This verifier checks both remote production state and the local release branch:
 - `backend/play-integrity.js` posts Google decode requests with the official
   camelCase `integrityToken` request field from the Play Integrity v1 discovery
   contract.
+- `backend/play-integrity.js` verifies both `requestDetails.requestPackageName`
+  and `appIntegrity.packageName` against `com.hank.clawlive`, and preserves the
+  safe `certificateSha256Digest` value in the debug summary for release
+  evidence.
 
 Before PR #3545 deploys this command is expected to fail
 `assetlinks.fingerprints` because production is still missing the Play App
@@ -215,6 +219,9 @@ dependency, modern Billing Library version, auto-reconnecting Billing client,
 Standard Integrity provider refresh path, or backend verifier route that the
 Console signal depends on. Also stop if the backend Google decode request body
 uses `integrity_token`; the Play Integrity v1 API expects `integrityToken`.
+Stop as well if backend verification no longer checks `appIntegrity.packageName`
+because `requestDetails.requestPackageName` alone is not enough app-integrity
+evidence.
 
 ## Play Integrity Signals
 
