@@ -62,6 +62,10 @@ pub struct CredentialEnvelope {
     pub id_token: String,
     pub expires_at: i64,
     pub refresh_expires_at: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub device_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub device_secret: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -90,6 +94,12 @@ pub struct OAuthStartResult {
     pub state: String,
     pub code_verifier: String,
     pub nonce: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeviceBindResult {
+    pub device_id: String,
+    pub expires_at: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -393,6 +403,8 @@ fn credential_store(
         id_token,
         expires_at,
         refresh_expires_at: expires_at + (90 * 24 * 60 * 60),
+        device_id: None,
+        device_secret: None,
     };
     os_store(&envelope)
 }
@@ -722,6 +734,96 @@ fn oauth_cancel() -> Result<(), String> {
 fn oauth_get_port() -> Result<Option<u16>, String> {
     let lock = OAUTH_STATE.lock();
     Ok(lock.as_ref().map(|s| s.port))
+}
+
+// ---------------------------------------------------------------------------
+// Commands: Device Binding (P1-D)
+// ---------------------------------------------------------------------------
+
+fn get_api_base() -> String {
+    std::env::var("ECLAW_API_URL")
+        .unwrap_or_else(|_| "https://eclawbot.com".to_string())
+}
+
+#[command]
+async fn device_bind(id_token: String, install_id: String) -> Result<DeviceBindResult, String> {
+    let api_url = format!("{}/api/device/bind", get_api_base());
+    let platform = std::env::consts::OS;
+    let version = env!("CARGO_PKG_VERSION").to_string();
+    let hostname_str = hostname::get()
+        .map(|h| h.to_string_lossy().to_string())
+        .unwrap_or_else(|_| "unknown".to_string());
+    let display_name = format!("EClaw Desktop on {}", hostname_str);
+
+    #[derive(Serialize)]
+    struct BindRequest<'a> {
+        install_id: &'a str,
+        platform: &'a str,
+        version: &'a str,
+        display_name: &'a str,
+    }
+    #[derive(Deserialize)]
+    struct BindResponse {
+        device_id: String,
+        device_secret: Option<String>,
+        expires_at: Option<i64>,
+    }
+
+    let client = reqwest::Client::new();
+    let resp = client
+        .post(&api_url)
+        .header("Authorization", format!("Bearer {}", id_token))
+        .json(&BindRequest {
+            install_id: &install_id,
+            platform,
+            version: &version,
+            display_name: &display_name,
+        })
+        .send()
+        .await
+        .map_err(|e| format!("request failed: {}", e))?;
+
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body = resp.text().await.unwrap_or_default();
+        return Err(format!("device_bind failed ({}): {}", status, body));
+    }
+
+    let bind_resp: BindResponse = resp
+        .json()
+        .await
+        .map_err(|e| format!("parse response: {}", e))?;
+
+    if let Some(device_secret) = bind_resp.device_secret {
+        let install_id = ensure_config_exists()?;
+        let mut envelope = os_get(&install_id)?.unwrap_or_else(|| CredentialEnvelope {
+            install_id: install_id.clone(),
+            refresh_token: String::new(),
+            access_token: String::new(),
+            id_token: String::new(),
+            expires_at: 0,
+            refresh_expires_at: 0,
+            device_id: None,
+            device_secret: None,
+        });
+        envelope.device_id = Some(bind_resp.device_id.clone());
+        envelope.device_secret = Some(device_secret);
+        os_store(&envelope)?;
+    }
+
+    Ok(DeviceBindResult {
+        device_id: bind_resp.device_id,
+        expires_at: bind_resp.expires_at,
+    })
+}
+
+#[command]
+fn device_id_get() -> Result<Option<String>, String> {
+    let install_id = ensure_config_exists()?;
+    match os_get(&install_id)? {
+        Some(envelope) => Ok(envelope.device_id),
+        None => Ok(None),
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1080,6 +1182,8 @@ pub fn run() {
             oauth_start,
             oauth_cancel,
             oauth_get_port,
+            device_bind,
+            device_id_get,
             agent_probe,
             agent_probe_single,
             agent_config_get,
