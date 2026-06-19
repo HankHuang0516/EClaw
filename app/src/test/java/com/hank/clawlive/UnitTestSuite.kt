@@ -1,5 +1,6 @@
 package com.hank.clawlive
 
+import com.hank.clawlive.settings.NotificationPreferenceCatalogTest
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
 
@@ -14,6 +15,7 @@ import org.junit.runners.Suite
 @RunWith(Suite::class)
 @Suite.SuiteClasses(
     MessageRequestFormatTest::class,
-    ChatEchoSuppressionTest::class
+    ChatEchoSuppressionTest::class,
+    NotificationPreferenceCatalogTest::class
 )
 class UnitTestSuite
