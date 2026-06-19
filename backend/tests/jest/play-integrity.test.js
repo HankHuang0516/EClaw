@@ -97,6 +97,42 @@ describe('Play Integrity bridge', () => {
         expect(JSON.stringify(res.body)).not.toContain(token);
     });
 
+    test('debug endpoint reports last unverified verdict without token or nonce material', async () => {
+        const nonce = playIntegrity._internal.makeNonce({ deviceId: DEVICE_ID, action: 'startup' });
+        const token = 'u'.repeat(100);
+        const app = makeApp();
+        const verdict = await request(app)
+            .post('/api/play-integrity/verdict')
+            .send({
+                deviceId: DEVICE_ID,
+                deviceSecret: DEVICE_SECRET,
+                action: 'startup',
+                nonce,
+                integrityToken: token,
+            });
+        const debug = await request(app)
+            .get('/api/play-integrity/debug')
+            .query({ deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
+
+        expect(verdict.status).toBe(200);
+        expect(debug.status).toBe(200);
+        expect(debug.body.diagnostics.lastVerdict).toMatchObject({
+            packageName: 'com.hank.clawlive',
+            action: 'startup',
+            status: 'received_unverified',
+            requestMode: 'classic',
+            verificationConfigured: false,
+            checks: null,
+            consoleSignals: null,
+            decodeErrorCode: null,
+        });
+        expect(debug.body.diagnostics.lastVerdict.checkedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+        const debugJson = JSON.stringify(debug.body);
+        expect(debugJson).not.toContain(token);
+        expect(debugJson).not.toContain(nonce);
+        expect(debugJson).not.toContain(DEVICE_SECRET);
+    });
+
     test('verdict endpoint accepts standard requestHash challenge without credentials', async () => {
         const nonce = playIntegrity._internal.makeNonce({ deviceId: DEVICE_ID, action: 'startup' });
         const requestHash = playIntegrity._internal.makeRequestHash(nonce);
@@ -220,7 +256,8 @@ describe('Play Integrity bridge', () => {
             },
         }));
 
-        const res = await request(makeApp({ decodeIntegrityToken }))
+        const app = makeApp({ decodeIntegrityToken });
+        const res = await request(app)
             .post('/api/play-integrity/verdict')
             .send({
                 deviceId: DEVICE_ID,
@@ -266,6 +303,9 @@ describe('Play Integrity bridge', () => {
                 },
                 deviceIntegrity: {
                     deviceRecognitionVerdict: ['MEETS_DEVICE_INTEGRITY'],
+                    recentDeviceActivity: {
+                        deviceActivityLevel: 'LEVEL_1',
+                    },
                 },
                 accountDetails: {
                     appLicensingVerdict: 'LICENSED',
@@ -274,13 +314,11 @@ describe('Play Integrity bridge', () => {
                     appAccessRiskVerdict: { appsDetected: ['KNOWN_INSTALLED'] },
                     playProtectVerdict: 'NO_ISSUES',
                 },
-                recentDeviceActivity: {
-                    deviceActivityLevel: 'LEVEL_1',
-                },
             },
         }));
 
-        const res = await request(makeApp({ decodeIntegrityToken }))
+        const app = makeApp({ decodeIntegrityToken });
+        const res = await request(app)
             .post('/api/play-integrity/verdict')
             .send({
                 deviceId: DEVICE_ID,
@@ -309,6 +347,47 @@ describe('Play Integrity bridge', () => {
         expect(res.body.integrity.verdict.appAccessRiskVerdict).toEqual({ appsDetected: ['KNOWN_INSTALLED'] });
         expect(res.body.integrity.verdict.playProtectVerdict).toBe('NO_ISSUES');
         expect(res.body.integrity.verdict.recentDeviceActivity).toEqual({ deviceActivityLevel: 'LEVEL_1' });
+        const debug = await request(app)
+            .get('/api/play-integrity/debug')
+            .query({ deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
+        expect(debug.status).toBe(200);
+        expect(debug.body.diagnostics.lastVerdict).toMatchObject({
+            action: 'startup',
+            status: 'verified',
+            requestMode: 'standard',
+            verificationConfigured: true,
+            checks: {
+                packageNameMatches: true,
+                requestHashMatches: true,
+                bindingMatches: true,
+                fresh: true,
+                appRecognized: true,
+                deviceMeetsIntegrity: true,
+            },
+            consoleSignals: {
+                playLicensing: { observed: true, value: 'LICENSED' },
+                appIntegrity: {
+                    observed: true,
+                    value: 'PLAY_RECOGNIZED',
+                    packageName: 'com.hank.clawlive',
+                    versionCode: '100',
+                },
+                deviceIntegrity: { observed: true, values: ['MEETS_DEVICE_INTEGRITY'] },
+                virtualIntegrity: { observed: false, values: [] },
+                recentDeviceActivity: { observed: true, value: 'LEVEL_1' },
+                playProtect: { observed: true, value: 'NO_ISSUES' },
+                appAccessRisk: {
+                    observed: true,
+                    values: ['KNOWN_INSTALLED'],
+                    hasCaptureOrControlRisk: false,
+                },
+            },
+        });
+        const debugJson = JSON.stringify(debug.body);
+        expect(debugJson).not.toContain(token);
+        expect(debugJson).not.toContain(nonce);
+        expect(debugJson).not.toContain(requestHash);
+        expect(debugJson).not.toContain(DEVICE_SECRET);
         expect(JSON.stringify(res.body)).not.toContain(token);
     });
 

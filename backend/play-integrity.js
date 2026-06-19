@@ -15,9 +15,11 @@ const PROCESS_LOCAL_NONCE_SECRET = crypto.randomBytes(32).toString('hex');
 const PLAY_INTEGRITY_SCOPE = 'https://www.googleapis.com/auth/playintegrity';
 const PLAY_INTEGRITY_DECODE_URL = `https://playintegrity.googleapis.com/v1/${PACKAGE_NAME}:decodeIntegrityToken`;
 const REQUEST_MODES = new Set(['classic', 'standard']);
+const LAST_VERDICT_DEVICE_LIMIT = 500;
 
 let cachedAuthClient = null;
 const usedNonceHashes = new Map();
+const lastVerdictSummariesByDevice = new Map();
 
 function base64UrlEncode(input) {
     return Buffer.from(input).toString('base64')
@@ -166,6 +168,96 @@ function extractPayload(decoded) {
     return decoded?.tokenPayloadExternal || decoded?.payload || decoded || {};
 }
 
+function appAccessRiskApps(appAccessRiskVerdict) {
+    return Array.isArray(appAccessRiskVerdict?.appsDetected)
+        ? appAccessRiskVerdict.appsDetected
+        : [];
+}
+
+function summarizeConsoleSignals(verdict) {
+    const appAccessApps = appAccessRiskApps(verdict.appAccessRiskVerdict);
+    const deviceLabels = Array.isArray(verdict.deviceRecognitionVerdict)
+        ? verdict.deviceRecognitionVerdict
+        : [];
+    const recentDeviceActivityLevel = verdict.recentDeviceActivity?.deviceActivityLevel || null;
+    return {
+        playLicensing: {
+            observed: Boolean(verdict.appLicensingVerdict),
+            value: verdict.appLicensingVerdict || null,
+        },
+        appIntegrity: {
+            observed: Boolean(verdict.appRecognitionVerdict && verdict.appRecognitionVerdict !== 'UNKNOWN'),
+            value: verdict.appRecognitionVerdict || null,
+            packageName: verdict.packageName || null,
+            versionCode: verdict.versionCode || null,
+        },
+        deviceIntegrity: {
+            observed: deviceLabels.length > 0,
+            values: deviceLabels,
+        },
+        virtualIntegrity: {
+            observed: deviceLabels.includes('MEETS_VIRTUAL_INTEGRITY'),
+            values: deviceLabels.filter(v => v === 'MEETS_VIRTUAL_INTEGRITY'),
+        },
+        recentDeviceActivity: {
+            observed: Boolean(verdict.recentDeviceActivity),
+            value: recentDeviceActivityLevel,
+        },
+        playProtect: {
+            observed: Boolean(verdict.playProtectVerdict),
+            value: verdict.playProtectVerdict || null,
+        },
+        appAccessRisk: {
+            observed: Boolean(verdict.appAccessRiskVerdict),
+            values: appAccessApps,
+            hasCaptureOrControlRisk: appAccessApps.some(v => /CAPTURING|CONTROLLING|OVERLAYS/.test(v)),
+        },
+    };
+}
+
+function rememberVerdictSummary(deviceId, summary, audit = () => {}) {
+    const safeSummary = {
+        checkedAt: new Date().toISOString(),
+        packageName: PACKAGE_NAME,
+        action: summary.action,
+        status: summary.status,
+        requestMode: summary.requestMode,
+        verificationConfigured: Boolean(summary.verificationConfigured),
+        checks: summary.checks || null,
+        consoleSignals: summary.verdict ? summarizeConsoleSignals(summary.verdict) : null,
+        decodeErrorCode: summary.decodeErrorCode || null,
+    };
+    lastVerdictSummariesByDevice.delete(deviceId);
+    lastVerdictSummariesByDevice.set(deviceId, safeSummary);
+    while (lastVerdictSummariesByDevice.size > LAST_VERDICT_DEVICE_LIMIT) {
+        const oldest = lastVerdictSummariesByDevice.keys().next().value;
+        lastVerdictSummariesByDevice.delete(oldest);
+    }
+    try {
+        audit(
+            safeSummary.status === 'verified' ? 'info' : 'warn',
+            'play_integrity',
+            `Play Integrity verdict ${safeSummary.status} action=${safeSummary.action}`,
+            {
+                deviceId,
+                action: 'play_integrity_verdict',
+                resource: PACKAGE_NAME,
+                result: safeSummary.status,
+                metadata: {
+                    requestMode: safeSummary.requestMode,
+                    verificationConfigured: safeSummary.verificationConfigured,
+                    checks: safeSummary.checks,
+                    consoleSignals: safeSummary.consoleSignals,
+                    decodeErrorCode: safeSummary.decodeErrorCode,
+                },
+            }
+        );
+    } catch (_err) {
+        // Audit logging must never affect the user-facing verdict flow.
+    }
+    return safeSummary;
+}
+
 function evaluatePayload(decoded, {
     nonce,
     requestHash,
@@ -182,7 +274,7 @@ function evaluatePayload(decoded, {
     const deviceIntegrity = payload.deviceIntegrity || {};
     const accountDetails = payload.accountDetails || {};
     const environmentDetails = payload.environmentDetails || {};
-    const recentDeviceActivity = payload.recentDeviceActivity || null;
+    const recentDeviceActivity = deviceIntegrity.recentDeviceActivity || payload.recentDeviceActivity || null;
     const appRecognitionVerdict = appIntegrity.appRecognitionVerdict || 'UNKNOWN';
     const deviceRecognitionVerdict = Array.isArray(deviceIntegrity.deviceRecognitionVerdict)
         ? deviceIntegrity.deviceRecognitionVerdict
@@ -231,7 +323,7 @@ function authenticateDevice(devices, req) {
     return { deviceId };
 }
 
-function createRouter({ devices, decodeIntegrityToken = decodeIntegrityTokenWithGoogle } = {}) {
+function createRouter({ devices, decodeIntegrityToken = decodeIntegrityTokenWithGoogle, audit = () => {} } = {}) {
     const router = express.Router();
     router.use(express.json({ limit: '32kb' }));
 
@@ -295,9 +387,18 @@ function createRouter({ devices, decodeIntegrityToken = decodeIntegrityTokenWith
             try {
                 const decoded = await decodeIntegrityToken(integrityToken);
                 const evaluation = evaluatePayload(decoded, { nonce, requestHash, requestMode });
+                const status = evaluation.verified ? 'verified' : 'verification_failed';
+                rememberVerdictSummary(auth.deviceId, {
+                    action,
+                    status,
+                    requestMode,
+                    verificationConfigured: true,
+                    checks: evaluation.checks,
+                    verdict: evaluation.verdict,
+                }, audit);
                 return res.json({
                     success: true,
-                    status: evaluation.verified ? 'verified' : 'verification_failed',
+                    status,
                     verificationConfigured: true,
                     packageName: PACKAGE_NAME,
                     action,
@@ -306,6 +407,13 @@ function createRouter({ devices, decodeIntegrityToken = decodeIntegrityTokenWith
                 });
             } catch (err) {
                 console.warn('[PlayIntegrity] decode failed:', err.code || err.message, err.status || '');
+                rememberVerdictSummary(auth.deviceId, {
+                    action,
+                    status: 'decode_failed',
+                    requestMode,
+                    verificationConfigured: true,
+                    decodeErrorCode: err.code || 'DECODE_FAILED',
+                }, audit);
                 return res.status(502).json({
                     success: false,
                     error: 'play_integrity_decode_failed',
@@ -315,6 +423,12 @@ function createRouter({ devices, decodeIntegrityToken = decodeIntegrityTokenWith
             }
         }
 
+        rememberVerdictSummary(auth.deviceId, {
+            action,
+            status: 'received_unverified',
+            requestMode,
+            verificationConfigured: false,
+        }, audit);
         return res.json({
             success: true,
             status: 'received_unverified',
@@ -346,6 +460,7 @@ function createRouter({ devices, decodeIntegrityToken = decodeIntegrityTokenWith
                 },
                 requestModes: ['standard', 'classic'],
                 actions: ['startup', 'billing_topup', 'borrow_subscription'],
+                lastVerdict: lastVerdictSummariesByDevice.get(auth.deviceId) || null,
             },
             timestamp: new Date().toISOString(),
         });
@@ -366,8 +481,11 @@ module.exports = {
         verificationConfigured,
         standardIntegrityCloudProjectNumber,
         decodeIntegrityTokenWithGoogle,
+        rememberVerdictSummary,
+        summarizeConsoleSignals,
         _resetForTests: () => {
             usedNonceHashes.clear();
+            lastVerdictSummariesByDevice.clear();
             cachedAuthClient = null;
         },
         PACKAGE_NAME,

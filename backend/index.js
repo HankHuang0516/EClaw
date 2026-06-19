@@ -2438,7 +2438,7 @@ app.use('/api/bot', botTools.router);
 // server-side decode is gated on service-account configuration.
 // ============================================
 const playIntegrity = require('./play-integrity');
-app.use('/api/play-integrity', playIntegrity.createRouter({ devices }));
+app.use('/api/play-integrity', playIntegrity.createRouter({ devices, audit: serverLog }));
 
 // ============================================
 // COMPANION (Petdx 伙伴瀏覽器 / 社群伙伴貢獻系統)

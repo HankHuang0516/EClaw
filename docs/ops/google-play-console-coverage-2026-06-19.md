@@ -93,6 +93,10 @@ The response should show:
 - `verificationConfigured: true`
 - `standardRequestConfigured: true`
 - `cloudProjectNumberConfigured: true`
+- `lastVerdict` remains `null` until a Play-distributed Android build submits
+  a verdict. After the first release-build report, `lastVerdict` must show the
+  latest action/status/checks and `consoleSignals` without echoing a token,
+  nonce, request hash, device secret, or service-account value.
 
 Then upload a new Android release so Play Console can observe real integrity
 traffic from the Play-distributed build.
@@ -118,6 +122,9 @@ Expected backend behavior after server credentials are configured:
   return `status: "verified"`.
 - Failed checks return `status: "verification_failed"` and include the failed
   check booleans.
+- `GET /api/play-integrity/debug` returns the latest safe `lastVerdict`
+  summary for that device so release verification does not depend only on
+  external Play Console refresh timing.
 - Tokens are never echoed in responses or logs.
 
 ## Store Safeguard Manual Setting
@@ -149,4 +156,5 @@ following are true:
 - Production `/api/play-integrity/debug` reports verifier and standard request
   configuration present without exposing any secret values.
 - A Play-distributed Android build containing PR #3546 has sent at least one
-  Play Integrity verdict to production.
+  Play Integrity verdict to production, and `/api/play-integrity/debug`
+  reports a `lastVerdict.status` of `verified` for that device.
