@@ -224,6 +224,13 @@ window.AgentCardEditor = (function() {
         // Owner-only: see comment block above.
         if (!this.isOwner) return;
         if (typeof apiCall !== 'function') return;
+        // Account-scoped: /api/rental/my-listings is gated by rentalRoute, which
+        // 401s ('unauthenticated') unless the session carries a userId. Entity
+        // ownership (isOwner) is NOT the same as having a user account — a
+        // device-only / globe-user session owns its entities but has
+        // currentUser.id === null. Skip the fetch to avoid a 401 console error
+        // per card render. card_01417648.
+        if (typeof window === 'undefined' || !window.currentUser || !window.currentUser.id) return;
 
         function mount(deadlineMs) {
             if (!Number.isFinite(deadlineMs)) return;

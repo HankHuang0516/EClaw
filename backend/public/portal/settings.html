@@ -3205,6 +3205,20 @@
 
         async function loadOwnerRoster(user = currentUser) {
             const note = document.getElementById('rosterStatusNote');
+
+            // Device-only / globe-user sessions (bound device, no email account)
+            // resolve to a truthy currentUser whose `id` is null. The rental
+            // endpoints below are account-scoped and 401 ('unauthenticated')
+            // without a userId — calling them just floods the console. Render the
+            // existing roster empty-state (which carries the ? help-icon) and
+            // skip the calls entirely. card_01417648.
+            if (!user || !user.id) {
+                ownerRosterState = { mock: false, listings: [], rentals: [], history: [] };
+                if (note) note.textContent = rosterT('settings_roster_no_account', 'Sign in with an email account to manage rentals.');
+                renderOwnerRoster();
+                return;
+            }
+
             if (note) note.textContent = rosterT('settings_roster_loading', 'Loading roster…');
 
             // Real rental data sources (same endpoints my-rentals.html uses):

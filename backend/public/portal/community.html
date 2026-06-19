@@ -1623,7 +1623,13 @@
                 (l.owner_device_id && l.owner_device_id === (meData.user.deviceId || meData.user.device_id))
             ));
             _rentalWalletBalance = null;
-            if (meData?.user && !isSelfOwned) {
+            // meData.user.id is null for a device-only / globe-user session (no
+            // email account). /api/wallet/balance is account-scoped (walletRoute
+            // → 401 without a userId), so only fetch the balance estimate when a
+            // real account is signed in — otherwise the rental-detail modal logs
+            // a 401. The estimate just stays unset, which is the correct UX for a
+            // not-signed-in viewer. card_01417648.
+            if (meData?.user && meData.user.id && !isSelfOwned) {
                 apiFetch('/api/wallet/balance?deviceId=' + encodeURIComponent(meData.user.deviceId || meData.user.device_id))
                     .then(wb => { const w = wb.wallet || wb; _rentalWalletBalance = parseInt(w.balance_mli, 10) || 0; updateRentalEstimate(rateMli, depositEcoin); })
                     .catch(() => {});
