@@ -308,6 +308,7 @@ EClaw/
 | `/api/schedules` | _(deprecated, returns 410)_ | Legacy task scheduling (removed) |
 | `/api/notifications/*` | notifications.js | Push notification management |
 | `/api/device-telemetry` | device-telemetry.js | AI debug buffer |
+| `/api/play-integrity/*` | play-integrity.js | Google Play Integrity bridge (standard requestHash + classic nonce + verifier configuration diagnostics; full verdict decode gated on service-account config) |
 | `/api/device-vars` | index.js | Environment variable management (POST merge/replace, DELETE wipe w/ `confirm:"YES_DELETE_ALL_VAULT"`, DELETE single key) |
 | `/api/device-vars/audit` | index.js | Owner-auth audit trail: every POST/DELETE leaves a row; never stores values, only key names + caller IP/UA + before/after counts |
 | `/api/logs` | index.js | Server log querying |

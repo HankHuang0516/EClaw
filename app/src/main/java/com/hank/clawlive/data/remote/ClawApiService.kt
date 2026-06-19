@@ -35,6 +35,12 @@ interface ClawApiService {
     @POST("api/device/register")
     suspend fun registerDevice(@Body request: RegisterRequest): RegisterResponse
 
+    @POST("api/play-integrity/nonce")
+    suspend fun createPlayIntegrityNonce(@Body body: Map<String, String>): PlayIntegrityNonceResponse
+
+    @POST("api/play-integrity/verdict")
+    suspend fun submitPlayIntegrityVerdict(@Body body: Map<String, String>): PlayIntegrityVerdictResponse
+
     // Device status - using deviceId + secret
     @POST("api/device/status")
     suspend fun getDeviceStatus(@Body request: DeviceStatusRequest): AgentStatus

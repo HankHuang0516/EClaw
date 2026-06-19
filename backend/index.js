@@ -2433,6 +2433,14 @@ const botTools = require('./bot-tools');
 app.use('/api/bot', botTools.router);
 
 // ============================================
+// GOOGLE PLAY INTEGRITY — Android anti-abuse signal bridge.
+// Client can request a signed nonce and submit an Integrity token. Full Google
+// server-side decode is gated on service-account configuration.
+// ============================================
+const playIntegrity = require('./play-integrity');
+app.use('/api/play-integrity', playIntegrity.createRouter({ devices }));
+
+// ============================================
 // COMPANION (Petdx 伙伴瀏覽器 / 社群伙伴貢獻系統)
 // ============================================
 const companionModule = require('./companion-api')({
