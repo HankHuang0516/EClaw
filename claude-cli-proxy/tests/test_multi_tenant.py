@@ -74,12 +74,14 @@ class MultiTenantResolveTests(unittest.TestCase):
         hank = resolve_per_request_auth(
             repo_host_path=self.HOST_PATH, allowed_orgs=self.ALLOWED,
             caller_device_id="device-hank", caller_bot_secret="s1",
+            caller_entity_id=None,
             vault_key="", allow_global_vault=True, require_auth=False,
             env_token=None, vault_fetcher=fetcher,
         )
         alice = resolve_per_request_auth(
             repo_host_path=self.HOST_PATH, allowed_orgs=self.ALLOWED,
             caller_device_id="device-alice", caller_bot_secret="s2",
+            caller_entity_id=None,
             vault_key="", allow_global_vault=True, require_auth=False,
             env_token=None, vault_fetcher=fetcher,
         )
@@ -94,6 +96,7 @@ class MultiTenantResolveTests(unittest.TestCase):
         resolve_per_request_auth(
             repo_host_path=self.HOST_PATH, allowed_orgs=self.ALLOWED,
             caller_device_id="device-hank", caller_bot_secret="caller-secret",
+            caller_entity_id=None,
             vault_key="", allow_global_vault=True, require_auth=False,
             env_token=None, vault_fetcher=fetcher,
         )
@@ -111,6 +114,7 @@ class MultiTenantResolveTests(unittest.TestCase):
         resolved = resolve_per_request_auth(
             repo_host_path=self.HOST_PATH, allowed_orgs=self.ALLOWED,
             caller_device_id="device-hank", caller_bot_secret="s",
+            caller_entity_id=None,
             vault_key="MY_CUSTOM_PAT", allow_global_vault=True, require_auth=False,
             env_token=None, vault_fetcher=fetcher,
         )
@@ -121,6 +125,7 @@ class MultiTenantResolveTests(unittest.TestCase):
         resolved = resolve_per_request_auth(
             repo_host_path=self.HOST_PATH, allowed_orgs=self.ALLOWED,
             caller_device_id=None, caller_bot_secret=None,
+            caller_entity_id=None,
             vault_key="", allow_global_vault=True, require_auth=False,
             env_token="env-pat-XYZ", vault_fetcher=None,
         )
@@ -132,6 +137,7 @@ class MultiTenantResolveTests(unittest.TestCase):
         resolved = resolve_per_request_auth(
             repo_host_path=self.HOST_PATH, allowed_orgs=self.ALLOWED,
             caller_device_id="device-hank", caller_bot_secret="s",
+            caller_entity_id=None,
             vault_key="", allow_global_vault=True, require_auth=False,
             env_token="env-pat-XYZ", vault_fetcher=fetcher,
         )
@@ -205,6 +211,7 @@ class MultiTenantResolveTests(unittest.TestCase):
         resolved = resolve_per_request_auth(
             repo_host_path=self.HOST_PATH, allowed_orgs=self.ALLOWED,
             caller_device_id=None, caller_bot_secret=None,
+            caller_entity_id=None,
             vault_key="", allow_global_vault=True, require_auth=False,
             env_token=None, vault_fetcher=None,
         )
@@ -216,6 +223,7 @@ class MultiTenantResolveTests(unittest.TestCase):
             resolve_per_request_auth(
                 repo_host_path=self.HOST_PATH, allowed_orgs=self.ALLOWED,
                 caller_device_id=None, caller_bot_secret=None,
+                caller_entity_id=None,
                 vault_key="", allow_global_vault=True, require_auth=True,
                 env_token=None, vault_fetcher=None,
             )
@@ -227,6 +235,7 @@ class MultiTenantResolveTests(unittest.TestCase):
                 repo_host_path="github.com/EvilOrg/private.git",
                 allowed_orgs="HankHuang0516",
                 caller_device_id="device-mallory", caller_bot_secret="s",
+                caller_entity_id=None,
                 vault_key="", allow_global_vault=True, require_auth=False,
                 env_token=None, vault_fetcher=fetcher,
             )
@@ -238,12 +247,14 @@ class MultiTenantResolveTests(unittest.TestCase):
         hank = resolve_per_request_auth(
             repo_host_path=self.HOST_PATH, allowed_orgs=self.ALLOWED,
             caller_device_id="device-hank", caller_bot_secret="s1",
+            caller_entity_id=None,
             vault_key="", allow_global_vault=True, require_auth=False,
             env_token=None, vault_fetcher=fetcher,
         )
         alice = resolve_per_request_auth(
             repo_host_path=self.HOST_PATH, allowed_orgs=self.ALLOWED,
             caller_device_id="device-alice", caller_bot_secret="s2",
+            caller_entity_id=None,
             vault_key="", allow_global_vault=True, require_auth=False,
             env_token=None, vault_fetcher=fetcher,
         )
