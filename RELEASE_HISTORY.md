@@ -5,6 +5,8 @@ Track git commits for each release to enable changelog generation via `git diff`
 ---
 
 ## Latest
+v1.0.93 | pending | 2026-06-19 | versionCode 101 | Prepared 🚧 (requires #3545/#3547 merge, production deploy, and Google Play upload) | **Google Play Console coverage rollup**: Android App Links release readiness for `/r/` plus Play Integrity API startup and billing-action reporting, Billing Library 9.1.0, server-side Play Integrity decode/verification gates, safe debug diagnostics, and a coverage verifier for Play Console deep links, Play Integrity, licensing, app certificate, billing, and optional risk signals.
+
 v1.0.92 | f9851ca4 | 2026-06-14 | versionCode 100 | Production ✅ (Play API `completed`, uploaded 2026-06-14 20:43 TW) | **Health-checking animation parity + portal/backend reliability rollup**: Android wallpaper/entity cards and iOS entity cards now render the backend `healthChecking` state with visible animation; passive health/self-repair and message-lifecycle backend flow is included; Petdx pagination, entity PR widgets, roadmap live kanban status, chat routing fallback, env-var vault save/delete fixes, avatar Petdx rendering, portal accessibility/parity, rental bind/retirement, redirect/i18n/API error, Plaza, chat, arena, and release/CI reliability fixes are bundled.
 
 v1.0.91 | fc3b1477 | 2026-06-13 | versionCode 99 | Production ✅ (Play API `completed`, live on 2026-06-14 check) | **Play review compliance hotfix**: removed broad Android media/storage permissions (`READ_MEDIA_IMAGES`, `READ_EXTERNAL_STORAGE`, related legacy storage declarations), added manifest permission regression coverage, fixed release lintVital manifest resource issues, and cleared the prior Google Play photo/video permission blocker.

@@ -97,6 +97,8 @@ describe('Google Play coverage check script helpers', () => {
         expect(defaults.expectedAppLinkHost).toBe(checker.DEFAULT_EXPECTED_APP_LINK_HOST);
         expect(defaults.expectedAppLinkPathPrefix).toBe(checker.DEFAULT_EXPECTED_APP_LINK_PATH_PREFIX);
         expect(defaults.minBillingLibraryVersion).toBe(checker.DEFAULT_MIN_BILLING_LIBRARY_VERSION);
+        expect(defaults.minVersionCode).toBe(checker.DEFAULT_MIN_VERSION_CODE);
+        expect(defaults.expectedVersionName).toBe(checker.DEFAULT_EXPECTED_VERSION_NAME);
         expect(overridden.expectedFingerprints).toEqual(['AA:BB']);
         expect(overridden.expectedPackageName).toBe('com.example.app');
         expect(overridden.expectedAppLinkHost).toBe('example.com');

@@ -9,6 +9,8 @@ const DEFAULT_EXPECTED_PACKAGE_NAME = 'com.hank.clawlive';
 const DEFAULT_EXPECTED_APP_LINK_HOST = 'eclawbot.com';
 const DEFAULT_EXPECTED_APP_LINK_PATH_PREFIX = '/r/';
 const DEFAULT_MIN_BILLING_LIBRARY_VERSION = '8.0.0';
+const DEFAULT_MIN_VERSION_CODE = 101;
+const DEFAULT_EXPECTED_VERSION_NAME = '1.0.93';
 const DEFAULT_EXPECTED_FINGERPRINTS = [
     // Play App Signing certificate fingerprint.
     'A2:EB:6D:55:DD:DF:1C:9D:68:2E:B5:67:1C:1A:E5:8C:01:06:CB:A2:A2:93:5D:DB:CE:D2:AB:E2:E6:F7:76:DB',
@@ -29,8 +31,8 @@ function parseArgs(argv = process.argv.slice(2), cwd = process.cwd()) {
         expectedAppLinkHost: DEFAULT_EXPECTED_APP_LINK_HOST,
         expectedAppLinkPathPrefix: DEFAULT_EXPECTED_APP_LINK_PATH_PREFIX,
         minBillingLibraryVersion: DEFAULT_MIN_BILLING_LIBRARY_VERSION,
-        minVersionCode: null,
-        expectedVersionName: null,
+        minVersionCode: DEFAULT_MIN_VERSION_CODE,
+        expectedVersionName: DEFAULT_EXPECTED_VERSION_NAME,
         appGradlePath: path.join(cwd, 'app', 'build.gradle.kts'),
         applicationPath: path.join(cwd, 'app', 'src', 'main', 'java', 'com', 'hank', 'clawlive', 'ClawApplication.kt'),
         androidManifestPath: path.join(cwd, 'app', 'src', 'main', 'AndroidManifest.xml'),
@@ -587,6 +589,8 @@ module.exports = {
     DEFAULT_EXPECTED_APP_LINK_HOST,
     DEFAULT_EXPECTED_APP_LINK_PATH_PREFIX,
     DEFAULT_MIN_BILLING_LIBRARY_VERSION,
+    DEFAULT_MIN_VERSION_CODE,
+    DEFAULT_EXPECTED_VERSION_NAME,
     normalizeFingerprint,
     parseArgs,
     parseAndroidConfig,
