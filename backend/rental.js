@@ -2129,7 +2129,21 @@ module.exports = function rentalFactory({ authMiddleware, softAuthMiddleware, ad
     });
 
     // GET /api/rental/my-listings — owner's own listings
-    router.get('/my-listings', authMiddleware, rentalRoute(async (req, res) => {
+    //
+    // Tolerance for device-only / globe-user sessions (card_01417648): the
+    // authMiddleware succeeded but the session has no user account
+    // (req.user.userId === null). The user simply has no rental scope yet —
+    // returning 401 here is wrong (the caller IS authenticated). Return 200
+    // with empty listings so the frontend can render the "set up rental"
+    // empty-state instead of treating this as an auth failure.
+    router.get('/my-listings', authMiddleware, async (req, res, next) => {
+        if (req.user && !req.user.userId) {
+            // globe-user devices have no rental scope by default; empty
+            // payload signals 'set up rental' rather than 'login required'.
+            return res.json({ success: true, listings: [], empty: true, reason: 'no_rental_scope' });
+        }
+        return next();
+    }, rentalRoute(async (req, res) => {
         const listings = await listMyListings(req.user.userId);
         // Enrich with current entity display info (name/character/avatar) so
         // the portal "我的上架" tab can show the bot the listing currently
@@ -2403,7 +2417,16 @@ module.exports = function rentalFactory({ authMiddleware, softAuthMiddleware, ad
     }));
 
     // GET /api/rental/my-contracts?role=renter|owner
-    router.get('/my-contracts', authMiddleware, rentalRoute(async (req, res) => {
+    //
+    // Tolerance for device-only / globe-user sessions (card_01417648): see
+    // /my-listings above. globe-user devices have no rental scope by default;
+    // empty payload signals 'set up rental' rather than 'login required'.
+    router.get('/my-contracts', authMiddleware, async (req, res, next) => {
+        if (req.user && !req.user.userId) {
+            return res.json({ success: true, contracts: [], empty: true, reason: 'no_rental_scope' });
+        }
+        return next();
+    }, rentalRoute(async (req, res) => {
         const role = req.query.role || null;
         const contracts = await getMyContracts(req.user.userId, {
             role,

@@ -1485,11 +1485,24 @@
         </div>
 
         <!-- Wallet Card -->
-        <div class="card" style="cursor:pointer;" onclick="(window.SmartRouter&&window.SmartRouter.navigate('wallet'))||(window.location.href='wallet.html')">
-            <div class="card-title">
+        <!-- card_01417648: explicit empty-state with ? icon explains why the wallet
+             row can look empty for a globe-user device (no account yet). The
+             help-icon click/hover surfaces the concrete next step. -->
+        <div class="card" id="walletCard" style="cursor:pointer;" onclick="(window.SmartRouter&&window.SmartRouter.navigate('wallet'))||(window.location.href='wallet.html')">
+            <div class="card-title" style="display:flex;align-items:center;gap:8px;">
                 <span>💎 <span data-i18n="nav_wallet">Wallet</span></span>
+                <span class="help-icon" data-help-content-key="settings_wallet_section_help" tabindex="0" onclick="event.stopPropagation();"></span>
             </div>
             <p class="section-desc" data-i18n="settings_wallet_desc">Manage e-coin balance, top up, and view transaction history</p>
+            <!-- globe-user empty-state row (populated by JS when currentUser.id is null) -->
+            <div id="walletEmptyState" style="display:none;margin-top:8px;padding:10px 12px;border:1px dashed var(--card-border);border-radius:8px;background:var(--bg-tertiary,rgba(127,127,127,0.06));font-size:13px;line-height:1.5;color:var(--text-secondary);">
+                <span data-i18n="settings_wallet_empty_state">Wallet not set up. You can browse without a wallet; set one up if you want to buy or sell bots.</span>
+                <a href="wallet.html"
+                   onclick="event.stopPropagation();(window.SmartRouter&&window.SmartRouter.navigate('wallet'))&&event.preventDefault();"
+                   class="btn btn-outline btn-sm"
+                   style="margin-left:8px;"
+                   data-i18n="settings_wallet_setup_cta">Set up wallet</a>
+            </div>
         </div>
 
         <!-- My Rentals link card removed — merged into the Rental Management
@@ -1779,6 +1792,14 @@
             loadUserDisplayName();
             populateKanbanNudgeEntityPicker();
             loadOwnerRoster(user).catch(e => console.warn('[Roster] initial load failed:', e));
+            // card_01417648: surface the wallet empty-state row when the
+            // session has no user account (globe-user / device-only).
+            try {
+                const walletEmpty = document.getElementById('walletEmptyState');
+                if (walletEmpty) {
+                    walletEmpty.style.display = (user && user.id) ? 'none' : '';
+                }
+            } catch (_) { /* DOM not ready — empty-state stays hidden, which is safe */ }
             loadPromptPolicy(user);
             initKanbanNudgeCollapse();
             initUsageWarningCollapse();
@@ -3205,6 +3226,36 @@
 
         async function loadOwnerRoster(user = currentUser) {
             const note = document.getElementById('rosterStatusNote');
+
+            // Device-only / globe-user sessions (bound device, no email account)
+            // resolve to a truthy currentUser whose `id` is null. The rental
+            // endpoints below are account-scoped and 401 ('unauthenticated')
+            // without a userId — calling them just floods the console. Render the
+            // existing roster empty-state (which carries the ? help-icon) and
+            // skip the calls entirely. card_01417648.
+            if (!user || !user.id) {
+                ownerRosterState = { mock: false, listings: [], rentals: [], history: [] };
+                if (note) {
+                    // card_01417648: rich empty-state with ? icon + CTA replaces
+                    // the bare-text "sign in" hint. globe-users browse without a
+                    // rental account; the ? popover explains what it is, the
+                    // CTA links to plaza.html so they can create one.
+                    const hint = rosterT('settings_rental_empty_state',
+                        'Rental not set up. Globe-users browse without a rental account; create one if you want to rent bots.');
+                    const help = rosterT('settings_rental_empty_state_help',
+                        'The rental marketplace (listings, contracts, history) is account-scoped. Sign in with an email account or open the Plaza to start renting or listing a bot.');
+                    note.innerHTML = `${escapeHtml(hint)} `
+                        + `<span tabindex="0" role="button" title="${escapeHtml(help)}" aria-label="${escapeHtml(help)}" `
+                        + `style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-left:6px;`
+                        + `border-radius:50%;background:var(--bg-tertiary,rgba(127,127,127,0.15));font-size:12px;cursor:help;vertical-align:middle;">?</span> `
+                        + `<a class="btn btn-outline btn-sm" href="plaza.html" style="margin-left:8px;" `
+                        + `onclick="(window.SmartRouter&&window.SmartRouter.navigate('plaza'))&&event.preventDefault()">`
+                        + `${escapeHtml(rosterT('settings_rental_setup_cta', 'Set up rental'))}</a>`;
+                }
+                renderOwnerRoster();
+                return;
+            }
+
             if (note) note.textContent = rosterT('settings_roster_loading', 'Loading roster…');
 
             // Real rental data sources (same endpoints my-rentals.html uses):

@@ -111,6 +111,168 @@
         .inv-tier-row-req { font-size: 11px; color: var(--text-secondary); }
         .inv-tier-row-bonus { font-weight: 700; color: #10b981; font-variant-numeric: tabular-nums; }
         .inv-tier-row.unlocked .inv-tier-row-bonus { color: #d97706; }
+
+        /* ── K-Value Tracker (§7 k-Value Metric) ── */
+        .kvalue-widget { margin-bottom: 20px; }
+        .kvalue-widget-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .kvalue-widget-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text, #fff);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .kvalue-help-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            min-width: 22px;
+            border-radius: 50%;
+            border: 1px solid var(--card-border, #333);
+            background: var(--input-bg, #252540);
+            color: var(--text-secondary, #aaa);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            position: relative;
+        }
+        .kvalue-help-btn::after {
+            content: '';
+            position: absolute;
+            inset: -7px;
+        }
+        .kvalue-help-btn:hover,
+        .kvalue-help-btn:focus { color: var(--primary, #6C63FF); border-color: var(--primary, #6C63FF); outline: none; }
+        .kvalue-help-popover {
+            margin-top: 10px;
+            padding: 12px 14px;
+            border: 1px solid var(--card-border, #333);
+            border-radius: 8px;
+            background: var(--input-bg, #1a1a2e);
+            color: var(--text-secondary, #aaa);
+            font-size: 12px;
+            line-height: 1.55;
+        }
+        .kvalue-help-popover[hidden] { display: none; }
+        .kvalue-help-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 8px;
+            border: none;
+            background: transparent;
+            padding: 0;
+            color: var(--primary, #6C63FF);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .kvalue-help-cta:hover { text-decoration: underline; }
+        .kvalue-date-picker {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-secondary, #aaa);
+        }
+        .kvalue-date-picker input[type=date] {
+            padding: 5px 8px;
+            border: 1px solid var(--card-border, #333);
+            border-radius: 6px;
+            background: var(--input-bg, #252540);
+            color: var(--text, #fff);
+            font-size: 13px;
+            font-family: inherit;
+        }
+        .kvalue-refresh-btn {
+            padding: 5px 12px;
+            border: 1px solid var(--card-border, #333);
+            border-radius: 6px;
+            background: var(--input-bg, #252540);
+            color: var(--text, #fff);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .kvalue-refresh-btn:hover { border-color: var(--primary, #6C63FF); color: var(--primary, #6C63FF); }
+        .kvalue-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .kvalue-kpi-card {
+            padding: 12px 10px;
+            border: 1px solid var(--card-border, #333);
+            border-radius: 10px;
+            background: var(--input-bg, #1a1a2e);
+            text-align: center;
+        }
+        .kvalue-kpi-value {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--primary, #6C63FF);
+            font-variant-numeric: tabular-nums;
+            line-height: 1.2;
+        }
+        .kvalue-kpi-label {
+            font-size: 11px;
+            color: var(--text-secondary, #aaa);
+            margin-top: 4px;
+        }
+        .kvalue-kpi-card.k-value .kvalue-kpi-value { color: #10b981; }
+        .kvalue-kpi-card.k-value .kvalue-kpi-value.overunity { color: #f59e0b; }
+        .kvalue-funnel {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+            gap: 6px;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-secondary, #aaa);
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .kvalue-funnel-step { text-align: center; }
+        .kvalue-funnel-value { font-size: 18px; font-weight: 700; color: var(--text, #fff); font-variant-numeric: tabular-nums; }
+        .kvalue-funnel-label { font-size: 10px; margin-top: 2px; color: var(--text-muted, #888); }
+        .kvalue-funnel-arrow { font-size: 14px; color: var(--card-border, #333); }
+        .kvalue-k-model-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: rgba(16,185,129,0.12);
+            border: 1px solid rgba(16,185,129,0.3);
+            font-size: 12px;
+            color: #10b981;
+            font-weight: 600;
+        }
+        .kvalue-k-model-badge.overunity {
+            background: rgba(245,158,11,0.12);
+            border-color: rgba(245,158,11,0.3);
+            color: #f59e0b;
+        }
+        .kvalue-k-model-badge.legacy {
+            background: rgba(148,163,184,0.12);
+            border-color: rgba(148,163,184,0.3);
+            color: #94a3b8;
+        }
+        .kvalue-loading { color: var(--text-secondary, #aaa); font-size: 13px; text-align: center; padding: 20px 0; }
+        .kvalue-empty { color: var(--text-muted, #888); font-size: 12px; text-align: center; padding: 16px 0; }
+        .kvalue-error { color: #ef4444; font-size: 12px; text-align: center; padding: 12px 0; }
     </style>
 </head>
 <body>
@@ -189,6 +351,45 @@
                 </div>
             </div>
         </details>
+
+        <!-- ── K-Value Tracker (§7 k-Value Metric) ── -->
+        <section class="inv-section kvalue-widget" id="kvalueWidget" aria-labelledby="kvalueWidgetTitle" style="display:none;">
+            <div class="kvalue-widget-header">
+                <div class="kvalue-widget-title" id="kvalueWidgetTitle">
+                    <span aria-hidden="true">📈</span>
+                    <span data-i18n="kvalue_widget_title">Invite k-Value Tracker</span>
+                    <button type="button"
+                            id="kvalueHelpBtn"
+                            class="kvalue-help-btn"
+                            aria-expanded="false"
+                            aria-controls="kvalueHelpPopover"
+                            data-i18n-title="kvalue_help_aria"
+                            data-i18n-aria-label="kvalue_help_aria"
+                            title="What is k-value?"
+                            aria-label="What is k-value?">?</button>
+                </div>
+                <div class="kvalue-date-picker">
+                    <label for="kvalueDateInput" data-i18n="kvalue_date_label">Date:</label>
+                    <input type="date" id="kvalueDateInput">
+                    <button class="kvalue-refresh-btn" type="button" onclick="refreshKValue()" data-i18n="kvalue_refresh">Refresh</button>
+                </div>
+            </div>
+            <div class="kvalue-help-popover" id="kvalueHelpPopover" role="region" aria-label="k-value help" hidden>
+                <span data-i18n="kvalue_help_text">k-value is the average number of new signups each inviter brings in. Needs: (1) you've generated at least 1 invite code; (2) someone clicked or registered in the last 24h. If empty, first generate a code below.</span>
+                <button type="button" id="kvalueHelpCta" class="kvalue-help-cta">
+                    <span aria-hidden="true">↓</span>
+                    <span data-i18n="kvalue_help_cta">Go to invite code</span>
+                </button>
+            </div>
+            <div id="kvalueLoading" class="kvalue-loading" data-i18n="kvalue_loading">Loading k-value data...</div>
+            <div id="kvalueContent" style="display:none;">
+                <div class="kvalue-kpi-grid" id="kvalueKpiGrid"></div>
+                <div class="kvalue-funnel" id="kvalueFunnel"></div>
+                <div id="kvalueKModel"></div>
+            </div>
+            <div id="kvalueEmpty" class="kvalue-empty" style="display:none;" data-i18n="kvalue_empty">No invite activity yet for this date. Share your code above to start tracking your viral funnel.</div>
+            <div id="kvalueError" class="kvalue-error" style="display:none;"></div>
+        </section>
 
         <!-- Rewards info -->
         <div class="inv-section">
@@ -529,6 +730,246 @@
             } catch (err) { showToast(err.message || 'Failed', 'error'); }
         }
 
+        /* ── K-Value Tracker (§7 k-Value Metric) ── */
+        // Reads GET /api/growth/daily?date=YYYY-MM-DD with owner device credentials.
+        // Renders invite_k: shares/clicks/redeemed/activated + k_observed + k_model.
+        // Requires owner/admin credentials — hides quietly otherwise.
+        function localTodayYYYYMMDD() {
+            const d = new Date();
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
+        async function loadKValue(dateStr) {
+            const widget = document.getElementById('kvalueWidget');
+            const loading = document.getElementById('kvalueLoading');
+            const content = document.getElementById('kvalueContent');
+            const empty = document.getElementById('kvalueEmpty');
+            const error = document.getElementById('kvalueError');
+            if (!widget) return;
+
+            // Owner/admin credentials required; hide silently otherwise.
+            const user = window.currentUser;
+            if (!user || !user.deviceId || !user.deviceSecret) {
+                widget.style.display = 'none';
+                return;
+            }
+
+            widget.style.display = '';
+            loading.style.display = 'block';
+            content.style.display = 'none';
+            empty.style.display = 'none';
+            error.style.display = 'none';
+
+            try {
+                const params = new URLSearchParams({
+                    deviceId: user.deviceId,
+                    deviceSecret: user.deviceSecret,
+                    date: dateStr
+                });
+                const r = await fetch('/api/growth/daily?' + params.toString(), { credentials: 'include' });
+                const data = await r.json();
+                if (!data || !data.success) {
+                    throw new Error(data?.error || tt('kvalue_load_failed', 'Failed to load k-value data'));
+                }
+                renderKValue(data);
+            } catch (err) {
+                error.textContent = err.message || tt('kvalue_load_failed', 'Failed to load k-value data');
+                error.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function renderKValue(data) {
+            const loading = document.getElementById('kvalueLoading');
+            const content = document.getElementById('kvalueContent');
+            const empty = document.getElementById('kvalueEmpty');
+            if (!content) return;
+
+            // The invite_k object is embedded in the daily response by PR2 backend.
+            // Legacy fallback is cumulative and cannot produce a valid same-day k value.
+            const inviteK = data.invite_k || null;
+            const inviteConversion = data.invite_conversion || {};
+            const inviteClicks = data.invite_clicks || [];
+            const metricValue = (...values) => {
+                for (const value of values) {
+                    if (value === null || value === undefined || value === '') continue;
+                    const n = Number(value);
+                    if (Number.isFinite(n)) return n;
+                }
+                return 0;
+            };
+            const nullableMetric = value => {
+                if (value === null || value === undefined || value === '') return null;
+                const n = Number(value);
+                return Number.isFinite(n) ? n : null;
+            };
+            const fmt = n => n == null ? '—' : Number(n).toLocaleString();
+
+            let shares = 0, clicks = 0, redeemed = 0, activated = 0;
+            let kObserved = null, kModel = null;
+            let legacyFallback = false;
+
+            const hasInviteKContract = inviteK && (
+                Object.prototype.hasOwnProperty.call(inviteK, 'share_events') ||
+                Object.prototype.hasOwnProperty.call(inviteK, 'unique_clicks') ||
+                Object.prototype.hasOwnProperty.call(inviteK, 'k_observed') ||
+                Object.prototype.hasOwnProperty.call(inviteK, 'activated_invitees')
+            );
+
+            if (hasInviteKContract) {
+                shares = metricValue(inviteK.share_events, inviteK.shares);
+                clicks = metricValue(inviteK.unique_clicks, inviteK.clicks);
+                redeemed = metricValue(inviteK.redeemed);
+                activated = metricValue(inviteK.activated_invitees, inviteK.activated);
+                kObserved = nullableMetric(inviteK.k_observed);
+                kModel = nullableMetric(inviteK.k_model);
+            } else {
+                legacyFallback = true;
+                shares = metricValue(inviteConversion.total_codes);
+                redeemed = metricValue(inviteK?.total_redemptions, inviteConversion.redeemed_codes);
+                clicks = Array.isArray(inviteClicks) ? inviteClicks.reduce((s, r) => s + (Number(r.clicks) || 0), 0) : 0;
+            }
+
+            // Show actionable empty state if no funnel activity yet.
+            if (shares === 0 && clicks === 0 && redeemed === 0) {
+                content.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+
+            loading.style.display = 'none';
+            content.style.display = 'block';
+
+            // KPI grid
+            const kpiGrid = document.getElementById('kvalueKpiGrid');
+            if (kpiGrid) {
+                kpiGrid.innerHTML = `
+                    <div class="kvalue-kpi-card">
+                        <div class="kvalue-kpi-value">${fmt(shares)}</div>
+                        <div class="kvalue-kpi-label">${tt('kvalue_label_shares', 'Shares')}</div>
+                    </div>
+                    <div class="kvalue-kpi-card">
+                        <div class="kvalue-kpi-value">${fmt(clicks)}</div>
+                        <div class="kvalue-kpi-label">${tt('kvalue_label_clicks', 'Clicks')}</div>
+                    </div>
+                    <div class="kvalue-kpi-card">
+                        <div class="kvalue-kpi-value">${fmt(redeemed)}</div>
+                        <div class="kvalue-kpi-label">${tt('kvalue_label_redeemed', 'Redeemed')}</div>
+                    </div>
+                    <div class="kvalue-kpi-card">
+                        <div class="kvalue-kpi-value">${legacyFallback ? '—' : fmt(activated)}</div>
+                        <div class="kvalue-kpi-label">${tt('kvalue_label_activated', 'Activated (P1)')}</div>
+                    </div>
+                    <div class="kvalue-kpi-card k-value ${kObserved != null && kObserved >= 1 ? 'overunity' : ''}">
+                        <div class="kvalue-kpi-value">${kObserved != null ? kObserved.toFixed(3) : '—'}</div>
+                        <div class="kvalue-kpi-label">${tt('kvalue_label_k_observed', 'k observed')}</div>
+                    </div>
+                    <div class="kvalue-kpi-card k-value">
+                        <div class="kvalue-kpi-value">${kModel != null ? kModel.toFixed(3) : '—'}</div>
+                        <div class="kvalue-kpi-label">${tt('kvalue_label_k_model', 'k model')}</div>
+                    </div>`;
+            }
+
+            // Funnel
+            const funnel = document.getElementById('kvalueFunnel');
+            if (funnel) {
+                const pct = (a, b) => b > 0 ? Math.min(100, Math.round((a / b) * 100)) : 0;
+                const sharesLabel = tt('kvalue_funnel_shares', 'shares');
+                const clicksLabel = tt('kvalue_funnel_clicks', 'clicks');
+                const redeemedLabel = tt('kvalue_funnel_redeemed', 'redeemed');
+                const activatedLabel = tt('kvalue_funnel_activated', 'activated');
+                funnel.innerHTML = `
+                    <div class="kvalue-funnel-step">
+                        <div class="kvalue-funnel-value">${fmt(shares)}</div>
+                        <div class="kvalue-funnel-label">${sharesLabel}</div>
+                    </div>
+                    <div class="kvalue-funnel-arrow">→</div>
+                    <div class="kvalue-funnel-step">
+                        <div class="kvalue-funnel-value">${fmt(clicks)}</div>
+                        <div class="kvalue-funnel-label">${clicksLabel} (${pct(clicks, shares)}%)</div>
+                    </div>
+                    <div class="kvalue-funnel-arrow">→</div>
+                    <div class="kvalue-funnel-step">
+                        <div class="kvalue-funnel-value">${fmt(redeemed)}</div>
+                        <div class="kvalue-funnel-label">${redeemedLabel} (${pct(redeemed, clicks)}%)</div>
+                    </div>
+                    <div class="kvalue-funnel-arrow">→</div>
+                    <div class="kvalue-funnel-step">
+                        <div class="kvalue-funnel-value">${legacyFallback ? '—' : fmt(activated)}</div>
+                        <div class="kvalue-funnel-label">${activatedLabel} (${pct(activated, redeemed)}%)</div>
+                    </div>`;
+            }
+
+            // k-model badge
+            const kModelEl = document.getElementById('kvalueKModel');
+            if (kModelEl && kObserved != null) {
+                const overunity = kObserved >= 1;
+                const statusLabel = overunity
+                    ? tt('kvalue_badge_viral', 'Viral ✓')
+                    : tt('kvalue_badge_below_threshold', 'Below threshold');
+                kModelEl.innerHTML = `
+                    <div class="kvalue-k-model-badge ${overunity ? 'overunity' : ''}">
+                        ${overunity ? '🔥' : '❄️'} k = ${kObserved.toFixed(3)}
+                        ${kModel != null ? `(${tt('kvalue_badge_model_prefix', 'model')}: ${kModel.toFixed(3)})` : ''}
+                        <span style="font-weight:400;opacity:0.8;font-size:11px;">
+                            ${statusLabel}
+                        </span>
+                    </div>`;
+            } else if (kModelEl && legacyFallback) {
+                kModelEl.innerHTML = `
+                    <div class="kvalue-k-model-badge legacy">
+                        ${tt('kvalue_badge_legacy', 'Legacy cumulative fallback — k unavailable')}
+                    </div>`;
+            } else if (kModelEl) {
+                kModelEl.innerHTML = '';
+            }
+        }
+
+        async function refreshKValue() {
+            const dateInput = document.getElementById('kvalueDateInput');
+            const dateStr = dateInput ? (dateInput.value || localTodayYYYYMMDD()) : localTodayYYYYMMDD();
+            await loadKValue(dateStr);
+        }
+
+        window.refreshKValue = refreshKValue;
+
+        function initKValueWidget() {
+            const dateInput = document.getElementById('kvalueDateInput');
+            // Default the date picker to today in the user's local timezone.
+            if (dateInput && !dateInput.value) dateInput.value = localTodayYYYYMMDD();
+
+            // ? icon: toggle help popover.
+            const helpBtn = document.getElementById('kvalueHelpBtn');
+            const popover = document.getElementById('kvalueHelpPopover');
+            if (helpBtn && popover) {
+                helpBtn.addEventListener('click', () => {
+                    const hidden = popover.hasAttribute('hidden');
+                    if (hidden) {
+                        popover.removeAttribute('hidden');
+                        helpBtn.setAttribute('aria-expanded', 'true');
+                    } else {
+                        popover.setAttribute('hidden', '');
+                        helpBtn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
+
+            // ↓ CTA scrolls to invite-code generator above.
+            const helpCta = document.getElementById('kvalueHelpCta');
+            if (helpCta) {
+                helpCta.addEventListener('click', () => {
+                    const target = document.getElementById('invCode');
+                    if (target && typeof target.scrollIntoView === 'function') {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', async () => {
             const _params = new URLSearchParams(window.location.search);
             const _isEmbed = _params.get('embed') === '1' || window.self !== window.top;
@@ -549,11 +990,13 @@
                 e.stopPropagation();
                 loadStats();
             });
+            initKValueWidget();
             const user = await checkAuth();
             if (!user) return;
             initPortalSocket();
             loadCode();
             loadStats();
+            loadKValue(localTodayYYYYMMDD());
         });
     </script>
 </body>

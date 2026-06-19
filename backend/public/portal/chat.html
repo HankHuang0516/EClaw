@@ -9252,8 +9252,13 @@
         }
 
         async function fetchContractData(auth, contractId) {
+            // Account-scoped guard (card_01417648): /api/rental/my-contracts
+            // requires a userId — a device-only / globe-user session would 401.
+            // silentFetch swallows the 401 and returns null so the chip modal
+            // shows "Not found" instead of throwing into the console.
+            if (!window.currentUser || !window.currentUser.id) return null;
             // Contracts endpoint returns list — filter by ID
-            const resp = await apiCall('GET', `/api/rental/my-contracts?${auth}`, null, { skip401Redirect: true });
+            const resp = await silentFetch('GET', `/api/rental/my-contracts?${auth}`);
             if (!resp || !resp.contracts) return null;
             const c = resp.contracts.find(x => x.id === contractId || x.id.startsWith(contractId));
             if (!c) return null;
