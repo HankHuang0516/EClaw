@@ -250,7 +250,7 @@ services:
 | `Play 授權檢查功能` | `accountDetails.appLicensingVerdict` |
 | `應用程式完整性檢查功能` | `appIntegrity.appRecognitionVerdict`, `packageName`, `versionCode` |
 | `裝置完整性檢查功能` | `deviceIntegrity.deviceRecognitionVerdict` |
-| `虛擬完整性檢查功能` | `deviceIntegrity.deviceRecognitionVerdict` values returned by Google |
+| `虛擬完整性檢查功能` | `deviceIntegrity.deviceRecognitionVerdict` values returned by Google, summarized as `lastVerdict.consoleSignals.virtualIntegrity` |
 | `近期裝置活動功能` | `recentDeviceActivity` |
 | `Play 安全防護狀態` | `environmentDetails.playProtectVerdict` |
 | `應用程式存取風險功能` | `environmentDetails.appAccessRiskVerdict` |
@@ -265,6 +265,10 @@ Expected backend behavior after server credentials are configured:
 - `GET /api/play-integrity/debug` returns the latest safe `lastVerdict`
   summary for that device so release verification does not depend only on
   external Play Console refresh timing.
+- If Google returns `MEETS_VIRTUAL_INTEGRITY`, the debug summary records it
+  under `lastVerdict.consoleSignals.virtualIntegrity`. The verified decision
+  still requires `MEETS_DEVICE_INTEGRITY`; virtual integrity reporting is
+  coverage evidence, not a policy relaxation.
 - Tokens are never echoed in responses or logs.
 
 ## Store Safeguard Manual Setting

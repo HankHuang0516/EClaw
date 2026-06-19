@@ -350,6 +350,14 @@ function billingReportsPlayIntegrityActions(text) {
         && requiredActions.every(action => new RegExp(`reportPlayIntegrityAction\\([\\s\\S]{0,240}${action}`).test(source));
 }
 
+function backendReportsVirtualIntegritySignal(text) {
+    const source = String(text || '');
+    return source.includes('virtualIntegrityObserved')
+        && source.includes('MEETS_VIRTUAL_INTEGRITY')
+        && source.includes('virtualIntegrity')
+        && source.includes('summarizeConsoleSignals');
+}
+
 function addCheck(checks, name, ok, details = {}) {
     checks.push({ name, ok: Boolean(ok), ...details });
 }
@@ -498,6 +506,11 @@ async function run(options) {
                 && playIntegrityBackend.includes('playProtectMeetsPolicy')
                 && playIntegrityBackend.includes('recentDeviceActivityAcceptable')
         );
+        addCheck(
+            checks,
+            'backend.playIntegrityVirtualIntegritySignal',
+            backendReportsVirtualIntegritySignal(playIntegrityBackend)
+        );
     }
 
     if (options.deviceId && options.deviceSecret) {
@@ -613,6 +626,7 @@ module.exports = {
     backendHasPlayIntegrityRouter,
     applicationReportsPlayIntegrityStartup,
     billingReportsPlayIntegrityActions,
+    backendReportsVirtualIntegritySignal,
     extractLastVerdictVersionCode,
     debugUrlLabel,
     run,

@@ -436,6 +436,72 @@ describe('Play Integrity bridge', () => {
         expect(JSON.stringify(res.body)).not.toContain(token);
     });
 
+    test('debug summary records virtual integrity labels when Google returns them', async () => {
+        process.env.PLAY_INTEGRITY_SERVICE_ACCOUNT_JSON = '{"type":"service_account"}';
+        const nonce = playIntegrity._internal.makeNonce({ deviceId: DEVICE_ID, action: 'startup' });
+        const requestHash = playIntegrity._internal.makeRequestHash(nonce);
+        const token = 'v'.repeat(100);
+        const decodeIntegrityToken = jest.fn(async () => ({
+            tokenPayloadExternal: {
+                requestDetails: {
+                    requestPackageName: 'com.hank.clawlive',
+                    requestHash,
+                    timestampMillis: String(Date.now()),
+                },
+                appIntegrity: {
+                    appRecognitionVerdict: 'PLAY_RECOGNIZED',
+                    packageName: 'com.hank.clawlive',
+                    versionCode: '101',
+                    certificateSha256Digest: ['outtVd3fHJ1oLrVnHBrljAEGy6Kik13bztKr4ub3dts'],
+                },
+                deviceIntegrity: {
+                    deviceRecognitionVerdict: ['MEETS_DEVICE_INTEGRITY', 'MEETS_VIRTUAL_INTEGRITY'],
+                    recentDeviceActivity: {
+                        deviceActivityLevel: 'LEVEL_1',
+                    },
+                },
+                accountDetails: {
+                    appLicensingVerdict: 'LICENSED',
+                },
+                environmentDetails: {
+                    appAccessRiskVerdict: { appsDetected: ['KNOWN_INSTALLED'] },
+                    playProtectVerdict: 'NO_ISSUES',
+                },
+            },
+        }));
+
+        const app = makeApp({ decodeIntegrityToken });
+        const res = await request(app)
+            .post('/api/play-integrity/verdict')
+            .send({
+                deviceId: DEVICE_ID,
+                deviceSecret: DEVICE_SECRET,
+                action: 'startup',
+                nonce,
+                requestHash,
+                requestMode: 'standard',
+                integrityToken: token,
+            });
+        const debug = await request(app)
+            .get('/api/play-integrity/debug')
+            .query({ deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
+
+        expect(res.status).toBe(200);
+        expect(res.body.status).toBe('verified');
+        expect(playIntegrity._internal.virtualIntegrityObserved(['MEETS_VIRTUAL_INTEGRITY'])).toBe(true);
+        expect(playIntegrity._internal.virtualIntegrityObserved(['MEETS_DEVICE_INTEGRITY'])).toBe(false);
+        expect(debug.status).toBe(200);
+        expect(debug.body.diagnostics.lastVerdict.consoleSignals.virtualIntegrity).toEqual({
+            observed: true,
+            values: ['MEETS_VIRTUAL_INTEGRITY'],
+        });
+        expect(debug.body.diagnostics.lastVerdict.consoleSignals.deviceIntegrity).toEqual({
+            observed: true,
+            values: ['MEETS_DEVICE_INTEGRITY', 'MEETS_VIRTUAL_INTEGRITY'],
+        });
+        expect(JSON.stringify(debug.body)).not.toContain(token);
+    });
+
     test('verdict endpoint rejects mismatched app integrity package even when request details match', async () => {
         process.env.PLAY_INTEGRITY_SERVICE_ACCOUNT_JSON = '{"type":"service_account"}';
         const nonce = playIntegrity._internal.makeNonce({ deviceId: DEVICE_ID, action: 'startup' });

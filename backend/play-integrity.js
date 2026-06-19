@@ -216,6 +216,11 @@ function recentDeviceActivityAcceptable(recentDeviceActivity) {
     return !level || level !== 'LEVEL_4';
 }
 
+function virtualIntegrityObserved(deviceRecognitionVerdict) {
+    return Array.isArray(deviceRecognitionVerdict)
+        && deviceRecognitionVerdict.includes('MEETS_VIRTUAL_INTEGRITY');
+}
+
 function summarizeConsoleSignals(verdict) {
     const appAccessApps = appAccessRiskApps(verdict.appAccessRiskVerdict);
     const deviceLabels = Array.isArray(verdict.deviceRecognitionVerdict)
@@ -241,7 +246,7 @@ function summarizeConsoleSignals(verdict) {
             values: deviceLabels,
         },
         virtualIntegrity: {
-            observed: deviceLabels.includes('MEETS_VIRTUAL_INTEGRITY'),
+            observed: virtualIntegrityObserved(deviceLabels),
             values: deviceLabels.filter(v => v === 'MEETS_VIRTUAL_INTEGRITY'),
         },
         recentDeviceActivity: {
@@ -555,6 +560,7 @@ module.exports = {
         appAccessRiskHasCaptureOrControl,
         playProtectMeetsPolicy,
         recentDeviceActivityAcceptable,
+        virtualIntegrityObserved,
         rememberVerdictSummary,
         summarizeConsoleSignals,
         _resetForTests: () => {

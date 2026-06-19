@@ -204,6 +204,16 @@ describe('Google Play coverage check script helpers', () => {
                     playProtectMeetsPolicy: playProtectMeetsPolicy(playProtectVerdict),
                     recentDeviceActivityAcceptable: recentDeviceActivityAcceptable(recentDeviceActivity),
                 };
+                function summarizeConsoleSignals(verdict) {
+                    return {
+                        virtualIntegrity: {
+                            observed: virtualIntegrityObserved(verdict.deviceRecognitionVerdict),
+                        },
+                    };
+                }
+                function virtualIntegrityObserved(labels) {
+                    return labels.includes('MEETS_VIRTUAL_INTEGRITY');
+                }
                 const raw = process.env.PLAY_INTEGRITY_EXPECTED_CERT_SHA256_DIGESTS;
                 function expectedCertificateDigests() { return raw ? raw.split(',') : []; }
                 function appAccessRiskHasCaptureOrControl() { return false; }
@@ -251,6 +261,10 @@ describe('Google Play coverage check script helpers', () => {
                 }),
                 expect.objectContaining({
                     name: 'backend.playIntegrityOptionalSignalChecks',
+                    ok: true,
+                }),
+                expect.objectContaining({
+                    name: 'backend.playIntegrityVirtualIntegritySignal',
                     ok: true,
                 }),
             ]));
