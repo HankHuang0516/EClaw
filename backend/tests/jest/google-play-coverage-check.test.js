@@ -46,6 +46,18 @@ describe('Google Play coverage check script helpers', () => {
         expect(checker.compareSemver('7.1.1', '8.0.0')).toBeLessThan(0);
     });
 
+    test('recognizes release signing fallback for keystore-less build validation', () => {
+        expect(checker.releaseSigningHasFallback(`
+            val hasReleaseSigning = true
+            val keystorePropertiesFile = rootProject.file("keystore.properties")
+            signingConfig = signingConfigs.getByName(if (hasReleaseSigning) "release" else "debug")
+        `)).toBe(true);
+
+        expect(checker.releaseSigningHasFallback(`
+            signingConfig = signingConfigs.getByName("release")
+        `)).toBe(false);
+    });
+
     test('extracts and normalizes assetlinks fingerprints', () => {
         const fingerprints = checker.extractAssetlinksFingerprints([
             {

@@ -227,6 +227,13 @@ function hasGradleDependency(text, candidates) {
     return candidates.some(candidate => text.includes(candidate));
 }
 
+function releaseSigningHasFallback(text) {
+    const source = String(text || '');
+    return source.includes('keystore.properties')
+        && source.includes('hasReleaseSigning')
+        && source.includes('signingConfigs.getByName(if (hasReleaseSigning) "release" else "debug")');
+}
+
 function escapeRegExp(value) {
     return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -389,6 +396,7 @@ async function run(options) {
             'libs.play.integrity',
             'com.google.android.play:integrity',
         ]));
+        addCheck(checks, 'android.releaseSigningFallback', releaseSigningHasFallback(appGradle));
         if (options.minVersionCode) {
             addCheck(checks, 'android.versionCode', appVersion.versionCode >= options.minVersionCode, {
                 actual: appVersion.versionCode,
@@ -598,6 +606,7 @@ module.exports = {
     parseBackendLatestVersion,
     parseVersionCatalogVersion,
     compareSemver,
+    releaseSigningHasFallback,
     extractAssetlinksFingerprints,
     evaluateAssetlinks,
     evaluateManifestAppLink,

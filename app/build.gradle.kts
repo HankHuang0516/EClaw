@@ -25,12 +25,17 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    val keystorePropertiesFile = rootProject.file("keystore.properties")
+    val keystoreProperties = Properties()
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    }
+    val hasReleaseSigning = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+        .all { key -> (keystoreProperties[key] as? String)?.isNotBlank() == true }
+
     signingConfigs {
         create("release") {
-            val keystorePropertiesFile = rootProject.file("keystore.properties")
-            val keystoreProperties = Properties()
-            if (keystorePropertiesFile.exists()) {
-                keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+            if (hasReleaseSigning) {
                 storeFile = file(keystoreProperties["storeFile"] as String)
                 storePassword = keystoreProperties["storePassword"] as String
                 keyAlias = keystoreProperties["keyAlias"] as String
@@ -43,7 +48,10 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("release")
+            // CI/fork builds do not have the upload keystore. Use debug signing
+            // there so release compilation is still testable; Play upload must
+            // run on a machine with keystore.properties.
+            signingConfig = signingConfigs.getByName(if (hasReleaseSigning) "release" else "debug")
         }
     }
 
