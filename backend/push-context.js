@@ -139,8 +139,9 @@ function materializeChannelText(payload, ctx = {}) {
     // Header: prefix + quota grouped into a single section so they sit on
     // adjacent lines (matches the legacy openclaw-channel-eclaw format).
     if ((event === 'entity_message' || event === 'broadcast') && payload.fromEntityId != null) {
-        const sender = payload.fromCharacter
-            ? `Entity ${payload.fromEntityId} (${payload.fromCharacter})`
+        const senderLabel = payload.fromName || payload.fromCharacter;
+        const sender = senderLabel
+            ? `Entity ${payload.fromEntityId} (${senderLabel})`
             : `Entity ${payload.fromEntityId}`;
         const headerLines = [event === 'broadcast'
             ? `[Broadcast from ${sender}]`

@@ -1366,6 +1366,7 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
                 isBroadcast: payload.isBroadcast || false,
                 broadcastRecipients: payload.broadcastRecipients || null,
                 fromEntityId: payload.fromEntityId,
+                fromName: payload.fromName,
                 fromCharacter: payload.fromCharacter,
                 fromPublicCode: payload.fromPublicCode,
                 eclaw_context: enrichedCtx,
