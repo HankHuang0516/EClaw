@@ -8,7 +8,7 @@
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
 - **Current version**: 1.1185.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
-- **Android app version**: 1.0.91 (versionCode 99); `LATEST_APP_VERSION` constant in `backend/index.js`
+- **Android app version**: 1.0.93 (versionCode 101); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
 ---
@@ -1193,11 +1193,31 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Plaza vs Rental Naming Clarity (v1.1189)**: AGENT_CARD_INCOMPLETE + Plaza vs Rental naming clarity (#3366)
 - **Interview Arena Mobile Layout Fix (v1.1189)**: Mobile 390x844 layout for Interview Arena leaderboard slide (#3365)
 
+### Recent Features (v1.1190.x+)
+
+- **Desktop App (Tauri 2)**: Full desktop application scaffold with OAuth PKCE flow, OS credential store (Keychain/Credential Manager), device binding, 30s onboarding wizard, auto-update + rollback, installer CI workflow (#3511-#3538)
+- **PetDX Companion Avatar System (Plan-3)**: 6-phase companion avatar implementation — store-on-create contract, sharp dependency, frame-extract util, R2 avatar.webp route, backfill migration, single-frame store on create (#3527-#3535)
+- **FCM Push Fix (P1)**: Define missing `buildFcmNotificationData` — Android push was silently dead (#3530)
+- **Message Lifecycle Engine**: Phase 2 Step 3 — state-machine transition engine + DB store + dual-write + debug endpoint + divergence detector (#3450)
+- **Per-Device Cron Scheduling**: Devices run their own assigned crons instead of global schedule (#3458)
+- **Settings Manifest**: `/api/settings-manifest` auto-sync seam for structured device settings (Stage 1 backend) (#3464)
+- **Hermes Per-Org Credential Scope**: Entity org grants for multi-tenant Hermes credential isolation (#3445)
+- **OODA-R Rule Promotion Engine**: Rule promotion from episode-derived lessons to production rules + public roadmap live tracker (#3449)
+- **Per-Entity Git Author**: Tier 1 per-entity git author identity + prs_merged author-source (#3476)
+- **E2E Matrix Complete**: Cross-surface E2E matrix with login_refresh + message_send drivers (5/5) + hard CI gate (#3439, #3447, #3454)
+- **Admin Self-Improvement Hub**: Admin hub loop for continuous improvement feedback (#3543)
+- **Companion API Enhancements**: Additional companion management endpoints (#3559)
+- **Transform Entity ID Fix**: Quiet default entityId zero correction for edge cases (#3561)
+- **OpenAPI /api/version Update**: Document `appVersion` query param + update object response (#2962)
+- **Android Notification Settings Sync**: Sync notification preferences with web portal (#3555)
+- **Portal 401 Graceful Guard**: Authenticated UIUX sweep — graceful degradation on expired sessions (#3554)
+- **App Version**: Updated to 1.0.93 (versionCode 101)
+
 ---
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~4729 test cases across 338 Jest files + 79 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~4821 test cases across 343 Jest files + 79 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
