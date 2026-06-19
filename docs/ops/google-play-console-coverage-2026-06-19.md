@@ -101,6 +101,36 @@ The response should show:
 Then upload a new Android release so Play Console can observe real integrity
 traffic from the Play-distributed build.
 
+## Android Release Build Requirements
+
+The Play Integrity bridge is only observable by Google Play Console after it is
+included in a Play-distributed Android build. The current production baseline is
+`versionName "1.0.92"` / `versionCode 100`, so the follow-up Android release
+must use a new, unused version code.
+
+For the first release after this bridge merges, unless another Android release
+lands first, use:
+
+- `app/build.gradle.kts`: `versionCode = 101`
+- `app/build.gradle.kts`: `versionName = "1.0.93"`
+- `backend/index.js`: `LATEST_APP_VERSION = "1.0.93"`
+- `RELEASE_HISTORY.md`: add the v1.0.93 row with the Play Integrity bridge,
+  Android App Links verification fix, and Play Console coverage purpose.
+
+Release checklist:
+
+1. Branch from `main` after PR #3545 and the Play Integrity bridge PR are both
+   merged and production deploys are healthy.
+2. Bump `versionCode` and `versionName`; never reuse `100`.
+3. Sync `LATEST_APP_VERSION` so Android clients and backend update prompts agree.
+4. Build the signed release bundle with `./gradlew :app:bundleRelease`.
+5. Upload to internal testing first with `node scripts/upload_to_play.js`.
+6. Install or launch the Play-distributed build and verify
+   `GET /api/play-integrity/debug` records `lastVerdict.status: "verified"` for
+   the test device.
+7. Promote to production only after the debug endpoint and Play Console signals
+   prove the release is reporting integrity verdicts.
+
 ## Play Integrity Signals
 
 The Protect with Play page currently lists these seven disabled Play Integrity
@@ -155,6 +185,9 @@ following are true:
 - `Protect with Play -> Play Billing safeguards` is `4/4`.
 - Production `/api/play-integrity/debug` reports verifier and standard request
   configuration present without exposing any secret values.
+- The Android release containing the bridge uses a new Play version code
+  greater than `100`, and `backend/index.js` `LATEST_APP_VERSION` matches the
+  shipped `versionName`.
 - A Play-distributed Android build containing the Play Integrity bridge has sent at least one
   Play Integrity verdict to production, and `/api/play-integrity/debug`
   reports a `lastVerdict.status` of `verified` for that device.
