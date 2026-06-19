@@ -881,6 +881,9 @@ a:hover { text-decoration: underline; }
 }
 
 .chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 6px 14px;
     min-height: 28px;
     border-radius: 20px;
@@ -1308,10 +1311,13 @@ a:hover { text-decoration: underline; }
 }
 
 .footer-link {
-    display: block;
+    display: inline-flex;
+    align-items: center;
     font-size: 13px;
     color: var(--text-muted);
-    padding: 3px 0;
+    min-width: 28px;
+    min-height: 28px;
+    padding: 4px 0;
     transition: color 0.2s;
     text-decoration: none;
 }

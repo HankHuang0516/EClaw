@@ -58,6 +58,8 @@
         display: flex; flex-wrap: wrap; gap: 6px; padding-top: 8px;
     }
     .chip {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-height: 28px;
         background: var(--panel); border: 1px solid var(--border);
         color: var(--text); padding: 4px 10px; border-radius: 999px;
         font-size: 12px; cursor: pointer;
@@ -67,6 +69,7 @@
     .chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
     .chip-group { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
     .chip-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0 4px; }
+    .login-warn a { display: inline-flex; align-items: center; min-height: 28px; }
     main {
         max-width: 1280px; margin: 0 auto; padding: 16px;
     }
