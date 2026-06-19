@@ -650373,6 +650373,11 @@ const TRANSLATIONS = {
         "passive_health_interval_help": "How often the passive sweep runs, in hours (1–168). Only takes effect when passive health-check is enabled.",
         "passive_health_auto_repair_label": "Auto-repair",
         "passive_health_auto_repair_help": "When an agent is found unhealthy, automatically run the existing self-repair flow (up to 3 attempts) before filing a bug. Only takes effect when passive health-check is enabled.",
+
+        "wallet_no_account": "Sign in with an email account to use your e-coin wallet.",
+        "wallet_no_account_help": "The e-coin wallet (balance, top-up, history) is tied to a user account. A device-only session has no wallet yet — sign in or create an account from Settings to enable it.",
+        "mr_no_account": "Sign in with an email account to manage rentals.",
+        "mr_no_account_help": "Rental listings and contracts are tied to a user account. A device-only session has none yet — sign in or create an account from Settings to get started.",
 },
 
 
@@ -1235207,6 +1235212,11 @@ const TRANSLATIONS = {
         "passive_health_interval_help": "被動健檢執行的頻率,以小時計(1–168)。僅在啟用被動健檢後才會生效。",
         "passive_health_auto_repair_label": "自動修復",
         "passive_health_auto_repair_help": "當偵測到智能體不健康時,自動執行既有的自我修復流程(最多 3 次),仍失敗才回報問題。僅在啟用被動健檢後才會生效。",
+
+        "wallet_no_account": "登入 email 帳號後即可使用 e-coin 錢包。",
+        "wallet_no_account_help": "e-coin 錢包（餘額、儲值、紀錄）綁定於使用者帳號。僅綁定裝置的工作階段尚無錢包 — 請至設定登入或建立帳號以啟用。",
+        "mr_no_account": "登入 email 帳號後即可管理租賃。",
+        "mr_no_account_help": "租賃刊登與合約綁定於使用者帳號。僅綁定裝置的工作階段尚無帳號 — 請至設定登入或建立帳號以開始使用。",
 },
 
 
@@ -1849382,6 +1849392,11 @@ const TRANSLATIONS = {
         "chat_routing_unspecified": "未指定",
 
         "chat_routing_sender": "发送者",
+
+        "wallet_no_account": "登录 email 账号后即可使用 e-coin 钱包。",
+        "wallet_no_account_help": "e-coin 钱包（余额、充值、记录）绑定于用户账号。仅绑定设备的会话尚无钱包 — 请至设置登录或创建账号以启用。",
+        "mr_no_account": "登录 email 账号后即可管理租赁。",
+        "mr_no_account_help": "租赁刊登与合约绑定于用户账号。仅绑定设备的会话尚无账号 — 请至设置登录或创建账号以开始使用。",
 },
 
 
@@ -2944615,6 +2944630,11 @@ const TRANSLATIONS = {
         "chat_routing_org_upward": "上報",
 
         "chat_routing_unspecified": "未指定",
+
+        "wallet_no_account": "登入 email 帳號後即可使用 e-coin 錢包。",
+        "wallet_no_account_help": "e-coin 錢包（餘額、儲值、紀錄）綁定於使用者帳號。僅綁定裝置的工作階段尚無錢包 — 請至設定登入或建立帳號以啟用。",
+        "mr_no_account": "登入 email 帳號後即可管理租賃。",
+        "mr_no_account_help": "租賃刊登與合約綁定於使用者帳號。僅綁定裝置的工作階段尚無帳號 — 請至設定登入或建立帳號以開始使用。",
 },
 
 
