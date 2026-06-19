@@ -81,6 +81,10 @@ pub struct AppConfig {
     pub platform: String,
     #[serde(default)]
     pub endpoints: Vec<Value>,
+    #[serde(default)]
+    pub bound_entity_id: Option<u8>,
+    #[serde(default)]
+    pub last_bind_at: Option<i64>,
 }
 
 // ---------------------------------------------------------------------------
@@ -97,9 +101,47 @@ pub struct OAuthStartResult {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeviceRegisterResult {
+    pub success: bool,
+    pub device_id: String,
+    pub entity_id: u8,
+    pub binding_code: String,
+    pub expires_in: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeviceBindResult {
     pub device_id: String,
-    pub expires_at: Option<i64>,
+    pub entity_id: u8,
+    pub bot_secret: String,
+    pub public_code: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WhoamiResult {
+    pub success: bool,
+    pub entity_id: u8,
+    pub device_id: String,
+    pub name: Option<String>,
+    pub state: String,
+    pub level: u32,
+    pub xp: u64,
+    pub public_code: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UnbindResult {
+    pub success: bool,
+    pub message: String,
+}
+
+// Internal response types
+#[derive(Deserialize)]
+struct BindApiResponse {
+    device_id: String,
+    entity_id: u8,
+    bot_secret: String,
+    public_code: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -150,6 +192,8 @@ fn ensure_config_exists() -> Result<String, String> {
             version: env!("CARGO_PKG_VERSION").to_string(),
             platform: std::env::consts::OS.to_string(),
             endpoints: vec![],
+            bound_entity_id: None,
+            last_bind_at: None,
         };
         let dir = get_config_dir();
         fs::create_dir_all(&dir).map_err(|e| format!("create dir: {}", e))?;
@@ -183,6 +227,28 @@ fn uuid_v4() -> String {
         bytes[14],
         bytes[15]
     )
+}
+
+/// Persist bound entity ID to config.json (no secrets written here).
+fn save_bound_state(bound_entity_id: Option<u8>) -> Result<(), String> {
+    let config_path = get_config_path();
+    let content =
+        fs::read_to_string(&config_path).map_err(|e| format!("read config: {}", e))?;
+    let mut config: AppConfig =
+        serde_json::from_str(&content).map_err(|e| format!("parse config: {}", e))?;
+    config.bound_entity_id = bound_entity_id;
+    config.last_bind_at = Some(chrono_timestamp_ms());
+    let json =
+        serde_json::to_string_pretty(&config).map_err(|e| format!("serialize: {}", e))?;
+    fs::write(&config_path, json).map_err(|e| format!("write config: {}", e))?;
+    Ok(())
+}
+
+fn chrono_timestamp_ms() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0)
 }
 
 // ---------------------------------------------------------------------------
@@ -726,90 +792,183 @@ pub fn oauth_get_port() -> Result<Option<u16>, String> {
 // Commands: Device Binding (P1-D)
 // ---------------------------------------------------------------------------
 
-fn get_api_base() -> String {
-    std::env::var("ECLAW_API_URL")
-        .unwrap_or_else(|_| "https://eclawbot.com".to_string())
-}
-
+/// Step 1: Register this device with the backend and get a binding code.
+/// POST /api/device/register
+/// Returns the binding code needed for Step 2 (device_bind_with_code).
 #[command]
-pub async fn device_bind(id_token: String, install_id: String) -> Result<DeviceBindResult, String> {
-    let api_url = format!("{}/api/device/bind", get_api_base());
-    let platform = std::env::consts::OS;
-    let version = env!("CARGO_PKG_VERSION").to_string();
-    let hostname_str = hostname::get()
-        .map(|h| h.to_string_lossy().to_string())
-        .unwrap_or_else(|_| "unknown".to_string());
-    let display_name = format!("EClaw Desktop on {}", hostname_str);
-
-    #[derive(Serialize)]
-    struct BindRequest<'a> {
-        install_id: &'a str,
-        platform: &'a str,
-        version: &'a str,
-        display_name: &'a str,
-    }
-    #[derive(Deserialize)]
-    struct BindResponse {
-        device_id: String,
-        device_secret: Option<String>,
-        expires_at: Option<i64>,
-    }
-
+pub async fn device_register(
+    device_id: String,
+    device_secret: String,
+    app_version: Option<String>,
+) -> Result<DeviceRegisterResult, String> {
+    let api_base = get_api_base();
     let client = reqwest::Client::new();
+    let body = serde_json::json!({
+        "deviceId": device_id,
+        "deviceSecret": device_secret,
+        "appVersion": app_version.unwrap_or_else(|| env!("CARGO_PKG_VERSION").to_string()),
+    });
     let resp = client
-        .post(&api_url)
-        .header("Authorization", format!("Bearer {}", id_token))
-        .json(&BindRequest {
-            install_id: &install_id,
-            platform,
-            version: &version,
-            display_name: &display_name,
-        })
+        .post(&format!("{}/api/device/register", api_base))
+        .header("Content-Type", "application/json")
+        .json(&body)
         .send()
         .await
-        .map_err(|e| format!("request failed: {}", e))?;
-
+        .map_err(|e| format!("network error: {}", e))?;
     if !resp.status().is_success() {
         let status = resp.status();
-        let body = resp.text().await.unwrap_or_default();
-        return Err(format!("device_bind failed ({}): {}", status, body));
+        let body_text = resp.text().await.unwrap_or_default();
+        return Err(format!("device_register failed ({}): {}", status, body_text));
     }
+    let result: DeviceRegisterResult = resp
+        .json()
+        .await
+        .map_err(|e| format!("parse response: {}", e))?;
+    Ok(result)
+}
 
-    let bind_resp: BindResponse = resp
+/// Step 2: Exchange a binding code (from device_register) for a botSecret.
+/// POST /api/bind
+/// Stores the returned botSecret in the OS credential store.
+#[command]
+pub async fn device_bind_with_code(
+    code: String,
+    bot_name: Option<String>,
+) -> Result<DeviceBindResult, String> {
+    let api_base = get_api_base();
+    let client = reqwest::Client::new();
+    let mut body = serde_json::json!({ "code": code });
+    if let Some(n) = bot_name {
+        body.as_object_mut()
+            .unwrap()
+            .insert("name".to_string(), serde_json::json!(n));
+    }
+    let resp = client
+        .post(&format!("{}/api/bind", api_base))
+        .header("Content-Type", "application/json")
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| format!("network error: {}", e))?;
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body_text = resp.text().await.unwrap_or_default();
+        return Err(format!("device_bind_with_code failed ({}): {}", status, body_text));
+    }
+    let bind_resp: BindApiResponse = resp
         .json()
         .await
         .map_err(|e| format!("parse response: {}", e))?;
 
-    if let Some(device_secret) = bind_resp.device_secret {
-        let install_id = ensure_config_exists()?;
-        let mut envelope = os_get(&install_id)?.unwrap_or_else(|| CredentialEnvelope {
-            install_id: install_id.clone(),
-            refresh_token: String::new(),
-            access_token: String::new(),
-            id_token: String::new(),
-            expires_at: 0,
-            refresh_expires_at: 0,
-            device_id: None,
-            device_secret: None,
-        });
-        envelope.device_id = Some(bind_resp.device_id.clone());
-        envelope.device_secret = Some(device_secret);
-        os_store(&envelope)?;
+    // Store botSecret + deviceId in OS credential store
+    let install_id = ensure_config_exists()?;
+    let mut envelope = os_get(&install_id)?.unwrap_or_else(|| CredentialEnvelope {
+        install_id: install_id.clone(),
+        refresh_token: String::new(),
+        access_token: String::new(),
+        id_token: String::new(),
+        expires_at: 0,
+        refresh_expires_at: 0,
+        device_id: None,
+        device_secret: None,
+    });
+    envelope.device_id = Some(bind_resp.device_id.clone());
+    // botSecret is stored separately via credential_store; here we track device-level info
+    os_store(&envelope)?;
+
+    // Persist bound entity ID to config.json (no secret)
+    if let Err(e) = save_bound_state(Some(bind_resp.entity_id)) {
+        eprintln!("[device_bind_with_code] save_bound_state failed: {}", e);
     }
 
     Ok(DeviceBindResult {
         device_id: bind_resp.device_id,
-        expires_at: bind_resp.expires_at,
+        entity_id: bind_resp.entity_id,
+        bot_secret: bind_resp.bot_secret,
+        public_code: bind_resp.public_code,
     })
 }
 
+/// Step 3: Validate the current session is still valid.
+/// GET /api/whoami
+/// Returns entity info on success. Returns "SESSION_EXPIRED" error on 401.
 #[command]
-pub fn device_id_get() -> Result<Option<String>, String> {
-    let install_id = ensure_config_exists()?;
-    match os_get(&install_id)? {
-        Some(envelope) => Ok(envelope.device_id),
-        None => Ok(None),
+pub async fn session_validate(
+    device_id: String,
+    entity_id: u8,
+    bot_secret: String,
+) -> Result<WhoamiResult, String> {
+    let api_base = get_api_base();
+    let client = reqwest::Client::new();
+    let resp = client
+        .get(&format!("{}/api/whoami", api_base))
+        .query(&[
+            ("deviceId", device_id.as_str()),
+            ("entityId", &entity_id.to_string()),
+            ("botSecret", bot_secret.as_str()),
+        ])
+        .send()
+        .await
+        .map_err(|e| format!("network error: {}", e))?;
+    if resp.status() == reqwest::StatusCode::UNAUTHORIZED {
+        return Err("SESSION_EXPIRED".to_string());
     }
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body_text = resp.text().await.unwrap_or_default();
+        return Err(format!("session_validate failed ({}): {}", status, body_text));
+    }
+    let result: WhoamiResult = resp
+        .json()
+        .await
+        .map_err(|e| format!("parse response: {}", e))?;
+    Ok(result)
+}
+
+/// Step 4: Unbind this device's entity (owner-only).
+/// DELETE /api/device/entity
+/// Clears botSecret from credential store and bound state from config.json.
+#[command]
+pub async fn device_unbind(
+    device_id: String,
+    device_secret: String,
+    entity_id: u8,
+) -> Result<UnbindResult, String> {
+    let api_base = get_api_base();
+    let client = reqwest::Client::new();
+    let body = serde_json::json!({
+        "deviceId": device_id,
+        "deviceSecret": device_secret,
+        "entityId": entity_id,
+    });
+    let resp = client
+        .delete(&format!("{}/api/device/entity", api_base))
+        .header("Content-Type", "application/json")
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| format!("network error: {}", e))?;
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body_text = resp.text().await.unwrap_or_default();
+        return Err(format!("device_unbind failed ({}): {}", status, body_text));
+    }
+    let result: UnbindResult = resp
+        .json()
+        .await
+        .map_err(|e| format!("parse response: {}", e))?;
+
+    // Clear bound state from config.json
+    if let Err(e) = save_bound_state(None) {
+        eprintln!("[device_unbind] save_bound_state failed: {}", e);
+    }
+
+    Ok(result)
+}
+
+fn get_api_base() -> String {
+    std::env::var("ECLAW_API_URL")
+        .unwrap_or_else(|_| "https://eclawbot.com".to_string())
 }
 
 // ---------------------------------------------------------------------------
@@ -1164,8 +1323,10 @@ pub fn run() {
             oauth_start,
             oauth_cancel,
             oauth_get_port,
-            device_bind,
-            device_id_get,
+            device_register,
+            device_bind_with_code,
+            session_validate,
+            device_unbind,
             agent_probe,
             agent_probe_single,
             agent_config_get,
