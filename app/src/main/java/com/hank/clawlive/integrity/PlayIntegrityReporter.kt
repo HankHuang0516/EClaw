@@ -9,6 +9,8 @@ import com.google.android.play.core.integrity.StandardIntegrityManager.PrepareIn
 import com.google.android.play.core.integrity.StandardIntegrityManager.StandardIntegrityToken
 import com.google.android.play.core.integrity.StandardIntegrityManager.StandardIntegrityTokenProvider
 import com.google.android.play.core.integrity.StandardIntegrityManager.StandardIntegrityTokenRequest
+import com.google.android.play.core.integrity.StandardIntegrityException
+import com.google.android.play.core.integrity.model.StandardIntegrityErrorCode
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.model.PlayIntegrityNonceResponse
 import com.hank.clawlive.data.remote.NetworkModule
@@ -107,6 +109,20 @@ class PlayIntegrityReporter private constructor(context: Context) {
                     requestHash = requestHash
                 )
             } catch (e: Exception) {
+                if (isProviderInvalid(e)) {
+                    standardTokenProvider = null
+                    preparedCloudProjectNumber = null
+                    try {
+                        val token = requestStandardIntegrityToken(cloudProjectNumber, requestHash).token()
+                        return IntegrityTokenResult(
+                            token = token,
+                            requestMode = MODE_STANDARD,
+                            requestHash = requestHash
+                        )
+                    } catch (retryError: Exception) {
+                        Timber.tag(TAG).w(retryError, "Standard integrity provider refresh failed; falling back to classic")
+                    }
+                }
                 Timber.tag(TAG).w(e, "Standard integrity request failed; falling back to classic")
             }
         }
@@ -173,6 +189,10 @@ class PlayIntegrityReporter private constructor(context: Context) {
                 if (cont.isActive) cont.resumeWithException(error)
             }
         }
+
+    private fun isProviderInvalid(error: Exception): Boolean =
+        error is StandardIntegrityException &&
+            error.errorCode == StandardIntegrityErrorCode.INTEGRITY_TOKEN_PROVIDER_INVALID
 
     companion object {
         private const val TAG = "PlayIntegrity"

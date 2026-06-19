@@ -86,6 +86,7 @@ describe('Google Play coverage check script helpers', () => {
             '--expected-verdict-version-code=101',
             '--android-manifest=/tmp/AndroidManifest.xml',
             '--billing-manager=/tmp/BillingManager.kt',
+            '--play-integrity-reporter=/tmp/PlayIntegrityReporter.kt',
             '--version-catalog=/tmp/libs.versions.toml',
         ], '/tmp/eclaw');
 
@@ -103,6 +104,7 @@ describe('Google Play coverage check script helpers', () => {
         expect(overridden.expectedVerdictVersionCode).toBe(101);
         expect(overridden.androidManifestPath).toBe('/tmp/AndroidManifest.xml');
         expect(overridden.billingManagerPath).toBe('/tmp/BillingManager.kt');
+        expect(overridden.playIntegrityReporterPath).toBe('/tmp/PlayIntegrityReporter.kt');
         expect(overridden.versionCatalogPath).toBe('/tmp/libs.versions.toml');
     });
 

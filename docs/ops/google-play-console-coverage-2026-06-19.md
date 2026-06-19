@@ -77,6 +77,10 @@ This verifier checks both remote production state and the local release branch:
 - `BillingManager.kt` enables Billing Library automatic service reconnection.
 - `AndroidManifest.xml` exposes `com.hank.clawlive.MainActivity` as an
   `android:autoVerify="true"` HTTPS App Link for `eclawbot.com` `/r/`.
+- `PlayIntegrityReporter.kt` refreshes the Standard Integrity token provider
+  and retries once when Google returns `INTEGRITY_TOKEN_PROVIDER_INVALID`, so
+  the release does not silently fall back to Classic-only signals after the
+  provider expires or Play Store data is cleared.
 - `backend/index.js` mounts the Play Integrity router at `/api/play-integrity`.
 
 Before PR #3545 deploys this command is expected to fail
@@ -201,7 +205,8 @@ If any local branch check fails before upload, stop the release and fix the
 branch first. Play Console cannot mark the related feature covered if the
 artifact no longer declares the App Link, Billing dependency, Play Integrity
 dependency, modern Billing Library version, auto-reconnecting Billing client,
-or backend verifier route that the Console signal depends on.
+Standard Integrity provider refresh path, or backend verifier route that the
+Console signal depends on.
 
 ## Play Integrity Signals
 

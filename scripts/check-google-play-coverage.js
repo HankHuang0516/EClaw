@@ -34,6 +34,7 @@ function parseArgs(argv = process.argv.slice(2), cwd = process.cwd()) {
         appGradlePath: path.join(cwd, 'app', 'build.gradle.kts'),
         androidManifestPath: path.join(cwd, 'app', 'src', 'main', 'AndroidManifest.xml'),
         billingManagerPath: path.join(cwd, 'app', 'src', 'main', 'java', 'com', 'hank', 'clawlive', 'billing', 'BillingManager.kt'),
+        playIntegrityReporterPath: path.join(cwd, 'app', 'src', 'main', 'java', 'com', 'hank', 'clawlive', 'integrity', 'PlayIntegrityReporter.kt'),
         versionCatalogPath: path.join(cwd, 'gradle', 'libs.versions.toml'),
         backendIndexPath: path.join(cwd, 'backend', 'index.js'),
         deviceId: process.env.DEVICE_ID || '',
@@ -87,6 +88,8 @@ function parseArgs(argv = process.argv.slice(2), cwd = process.cwd()) {
             options.androidManifestPath = arg.slice('--android-manifest='.length);
         } else if (arg.startsWith('--billing-manager=')) {
             options.billingManagerPath = arg.slice('--billing-manager='.length);
+        } else if (arg.startsWith('--play-integrity-reporter=')) {
+            options.playIntegrityReporterPath = arg.slice('--play-integrity-reporter='.length);
         } else if (arg.startsWith('--version-catalog=')) {
             options.versionCatalogPath = arg.slice('--version-catalog='.length);
         } else if (arg.startsWith('--backend-index=')) {
@@ -121,6 +124,7 @@ function usage() {
         '  --expected-verdict-version-code=101  Verify debug lastVerdict appIntegrity.versionCode.',
         '  --android-manifest=app/src/main/AndroidManifest.xml',
         '  --billing-manager=app/src/main/java/com/hank/clawlive/billing/BillingManager.kt',
+        '  --play-integrity-reporter=app/src/main/java/com/hank/clawlive/integrity/PlayIntegrityReporter.kt',
         '  --version-catalog=gradle/libs.versions.toml',
         '  --device-id=ID                  Or DEVICE_ID env var.',
         '  --device-secret=SECRET          Or DEVICE_SECRET env var. Never printed.',
@@ -390,6 +394,17 @@ async function run(options) {
     const billingManager = safeRead(options.billingManagerPath);
     if (billingManager) {
         addCheck(checks, 'android.billingAutoReconnect', billingManager.includes('enableAutoServiceReconnection()'));
+    }
+
+    const playIntegrityReporter = safeRead(options.playIntegrityReporterPath);
+    if (playIntegrityReporter) {
+        addCheck(
+            checks,
+            'android.playIntegrityProviderInvalidRetry',
+            playIntegrityReporter.includes('INTEGRITY_TOKEN_PROVIDER_INVALID')
+                && playIntegrityReporter.includes('standardTokenProvider = null')
+                && playIntegrityReporter.includes('preparedCloudProjectNumber = null')
+        );
     }
 
     const backendIndex = safeRead(options.backendIndexPath);
