@@ -59,6 +59,16 @@ Expected state:
 - Path prefix: `/r/`.
 - Status no longer says `未通過網域檢查`.
 
+Read-only verifier:
+
+```sh
+node scripts/check-google-play-coverage.js
+```
+
+Before PR #3545 deploys this command is expected to fail
+`assetlinks.fingerprints` because production is still missing the Play App
+Signing fingerprint. After deploy, it must pass that check.
+
 ## Play Integrity Activation
 
 The Play Integrity bridge PR adds:
@@ -130,6 +140,21 @@ Release checklist:
    the test device.
 7. Promote to production only after the debug endpoint and Play Console signals
    prove the release is reporting integrity verdicts.
+
+Release verifier after the Play-distributed build reports at least one verdict:
+
+```sh
+DEVICE_ID=... DEVICE_SECRET=... \
+node scripts/check-google-play-coverage.js \
+  --min-version-code=101 \
+  --expected-version-name=1.0.93 \
+  --require-play-integrity \
+  --require-verified-verdict
+```
+
+The script prints only check names, booleans, missing fingerprints, and safe
+verdict status. It must not print `DEVICE_SECRET`, integrity tokens, nonces,
+request hashes, or service-account values.
 
 ## Play Integrity Signals
 
