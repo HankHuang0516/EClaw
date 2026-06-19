@@ -8,6 +8,7 @@ const DEFAULT_BASE_URL = 'https://eclawbot.com';
 const DEFAULT_EXPECTED_PACKAGE_NAME = 'com.hank.clawlive';
 const DEFAULT_EXPECTED_APP_LINK_HOST = 'eclawbot.com';
 const DEFAULT_EXPECTED_APP_LINK_PATH_PREFIX = '/r/';
+const DEFAULT_MIN_BILLING_LIBRARY_VERSION = '8.0.0';
 const DEFAULT_EXPECTED_FINGERPRINTS = [
     // Play App Signing certificate fingerprint.
     'A2:EB:6D:55:DD:DF:1C:9D:68:2E:B5:67:1C:1A:E5:8C:01:06:CB:A2:A2:93:5D:DB:CE:D2:AB:E2:E6:F7:76:DB',
@@ -27,10 +28,13 @@ function parseArgs(argv = process.argv.slice(2), cwd = process.cwd()) {
         expectedPackageName: DEFAULT_EXPECTED_PACKAGE_NAME,
         expectedAppLinkHost: DEFAULT_EXPECTED_APP_LINK_HOST,
         expectedAppLinkPathPrefix: DEFAULT_EXPECTED_APP_LINK_PATH_PREFIX,
+        minBillingLibraryVersion: DEFAULT_MIN_BILLING_LIBRARY_VERSION,
         minVersionCode: null,
         expectedVersionName: null,
         appGradlePath: path.join(cwd, 'app', 'build.gradle.kts'),
         androidManifestPath: path.join(cwd, 'app', 'src', 'main', 'AndroidManifest.xml'),
+        billingManagerPath: path.join(cwd, 'app', 'src', 'main', 'java', 'com', 'hank', 'clawlive', 'billing', 'BillingManager.kt'),
+        versionCatalogPath: path.join(cwd, 'gradle', 'libs.versions.toml'),
         backendIndexPath: path.join(cwd, 'backend', 'index.js'),
         deviceId: process.env.DEVICE_ID || '',
         deviceSecret: process.env.DEVICE_SECRET || '',
@@ -67,6 +71,8 @@ function parseArgs(argv = process.argv.slice(2), cwd = process.cwd()) {
             options.expectedAppLinkHost = arg.slice('--expected-applink-host='.length);
         } else if (arg.startsWith('--expected-applink-prefix=')) {
             options.expectedAppLinkPathPrefix = arg.slice('--expected-applink-prefix='.length);
+        } else if (arg.startsWith('--min-billing-library-version=')) {
+            options.minBillingLibraryVersion = arg.slice('--min-billing-library-version='.length);
         } else if (arg.startsWith('--min-version-code=')) {
             options.minVersionCode = Number(arg.slice('--min-version-code='.length));
         } else if (arg.startsWith('--expected-version-name=')) {
@@ -79,6 +85,10 @@ function parseArgs(argv = process.argv.slice(2), cwd = process.cwd()) {
             options.appGradlePath = arg.slice('--app-gradle='.length);
         } else if (arg.startsWith('--android-manifest=')) {
             options.androidManifestPath = arg.slice('--android-manifest='.length);
+        } else if (arg.startsWith('--billing-manager=')) {
+            options.billingManagerPath = arg.slice('--billing-manager='.length);
+        } else if (arg.startsWith('--version-catalog=')) {
+            options.versionCatalogPath = arg.slice('--version-catalog='.length);
         } else if (arg.startsWith('--backend-index=')) {
             options.backendIndexPath = arg.slice('--backend-index='.length);
         } else if (arg.startsWith('--device-id=')) {
@@ -104,11 +114,14 @@ function usage() {
         '  --expected-package=com.hank.clawlive',
         '  --expected-applink-host=eclawbot.com',
         '  --expected-applink-prefix=/r/',
+        '  --min-billing-library-version=8.0.0',
         '  --min-version-code=101          Verify app/build.gradle.kts versionCode.',
         '  --expected-version-name=1.0.93  Verify app versionName and backend LATEST_APP_VERSION.',
         '  --expected-verdict-action=billing_topup  Verify debug lastVerdict.action.',
         '  --expected-verdict-version-code=101  Verify debug lastVerdict appIntegrity.versionCode.',
         '  --android-manifest=app/src/main/AndroidManifest.xml',
+        '  --billing-manager=app/src/main/java/com/hank/clawlive/billing/BillingManager.kt',
+        '  --version-catalog=gradle/libs.versions.toml',
         '  --device-id=ID                  Or DEVICE_ID env var.',
         '  --device-secret=SECRET          Or DEVICE_SECRET env var. Never printed.',
         '  --require-play-integrity        Require debug endpoint verifier + standard config.',
@@ -143,6 +156,24 @@ function parseAndroidVersion(text) {
 
 function parseBackendLatestVersion(text) {
     return (text.match(/LATEST_APP_VERSION\s*=\s*["']([^"']+)["']/) || [])[1] || null;
+}
+
+function parseVersionCatalogVersion(text, key) {
+    const match = String(text || '').match(new RegExp(`^\\s*${escapeRegExp(key)}\\s*=\\s*"([^"]+)"`, 'm'));
+    return match ? match[1] : null;
+}
+
+function compareSemver(a, b) {
+    const left = String(a || '').split(/[.-]/).map(part => Number.parseInt(part, 10));
+    const right = String(b || '').split(/[.-]/).map(part => Number.parseInt(part, 10));
+    const length = Math.max(left.length, right.length, 3);
+    for (let i = 0; i < length; i += 1) {
+        const av = Number.isFinite(left[i]) ? left[i] : 0;
+        const bv = Number.isFinite(right[i]) ? right[i] : 0;
+        if (av > bv) return 1;
+        if (av < bv) return -1;
+    }
+    return 0;
 }
 
 function extractAssetlinksFingerprints(assetlinksJson) {
@@ -347,6 +378,20 @@ async function run(options) {
         addCheck(checks, 'android.applinkManifest', appLink.ok, appLink);
     }
 
+    const versionCatalog = safeRead(options.versionCatalogPath);
+    if (versionCatalog && options.minBillingLibraryVersion) {
+        const billingVersion = parseVersionCatalogVersion(versionCatalog, 'billing');
+        addCheck(checks, 'android.billingLibraryVersion', compareSemver(billingVersion, options.minBillingLibraryVersion) >= 0, {
+            actual: billingVersion,
+            minimum: options.minBillingLibraryVersion,
+        });
+    }
+
+    const billingManager = safeRead(options.billingManagerPath);
+    if (billingManager) {
+        addCheck(checks, 'android.billingAutoReconnect', billingManager.includes('enableAutoServiceReconnection()'));
+    }
+
     const backendIndex = safeRead(options.backendIndexPath);
     if (backendIndex) {
         addCheck(checks, 'backend.playIntegrityRouterMounted', backendHasPlayIntegrityRouter(backendIndex));
@@ -455,11 +500,14 @@ module.exports = {
     DEFAULT_EXPECTED_PACKAGE_NAME,
     DEFAULT_EXPECTED_APP_LINK_HOST,
     DEFAULT_EXPECTED_APP_LINK_PATH_PREFIX,
+    DEFAULT_MIN_BILLING_LIBRARY_VERSION,
     normalizeFingerprint,
     parseArgs,
     parseAndroidConfig,
     parseAndroidVersion,
     parseBackendLatestVersion,
+    parseVersionCatalogVersion,
+    compareSemver,
     extractAssetlinksFingerprints,
     evaluateAssetlinks,
     evaluateManifestAppLink,

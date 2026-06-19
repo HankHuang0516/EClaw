@@ -73,7 +73,12 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
 
     private var billingClient: BillingClient = BillingClient.newBuilder(context)
         .setListener(this)
-        .enablePendingPurchases()
+        .enablePendingPurchases(
+            PendingPurchasesParams.newBuilder()
+                .enableOneTimeProducts()
+                .build()
+        )
+        .enableAutoServiceReconnection()
         .build()
 
     private var productDetails: ProductDetails? = null
@@ -192,8 +197,9 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
                 .setProductList(productList)
                 .build()
 
-            billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
+            billingClient.queryProductDetailsAsync(params) { billingResult, queryProductDetailsResult ->
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    val productDetailsList = queryProductDetailsResult.productDetailsList
                     productDetails = productDetailsList.firstOrNull { it.productId == SUBSCRIPTION_ID }
                     borrowProductDetails = productDetailsList.firstOrNull { it.productId == BORROW_SUBSCRIPTION_ID }
                     subStarterDetails = productDetailsList.firstOrNull { it.productId == SUB_STARTER_ID }
@@ -269,10 +275,10 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
                 .setProductList(productList)
                 .build()
 
-            billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
+            billingClient.queryProductDetailsAsync(params) { billingResult, queryProductDetailsResult ->
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                     topupDetailsMap.clear()
-                    productDetailsList.forEach { details ->
+                    queryProductDetailsResult.productDetailsList.forEach { details ->
                         topupDetailsMap[details.productId] = details
                     }
                     Timber.tag(TAG).d("Top-up product details loaded: ${topupDetailsMap.keys}")

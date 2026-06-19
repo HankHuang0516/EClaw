@@ -34,6 +34,18 @@ describe('Google Play coverage check script helpers', () => {
         expect(checker.parseBackendLatestVersion("const LATEST_APP_VERSION = '1.0.94';")).toBe('1.0.94');
     });
 
+    test('extracts and compares version catalog versions', () => {
+        expect(checker.parseVersionCatalogVersion(`
+            [versions]
+            billing = "9.1.0"
+            playIntegrity = "1.6.0"
+        `, 'billing')).toBe('9.1.0');
+
+        expect(checker.compareSemver('9.1.0', '8.0.0')).toBeGreaterThan(0);
+        expect(checker.compareSemver('8.0.0', '8.0.0')).toBe(0);
+        expect(checker.compareSemver('7.1.1', '8.0.0')).toBeLessThan(0);
+    });
+
     test('extracts and normalizes assetlinks fingerprints', () => {
         const fingerprints = checker.extractAssetlinksFingerprints([
             {
@@ -69,22 +81,29 @@ describe('Google Play coverage check script helpers', () => {
             '--expected-package=com.example.app',
             '--expected-applink-host=example.com',
             '--expected-applink-prefix=/invite/',
+            '--min-billing-library-version=9.0.0',
             '--expected-verdict-action=billing_topup',
             '--expected-verdict-version-code=101',
             '--android-manifest=/tmp/AndroidManifest.xml',
+            '--billing-manager=/tmp/BillingManager.kt',
+            '--version-catalog=/tmp/libs.versions.toml',
         ], '/tmp/eclaw');
 
         expect(defaults.expectedFingerprints).toEqual(checker.DEFAULT_EXPECTED_FINGERPRINTS);
         expect(defaults.expectedPackageName).toBe(checker.DEFAULT_EXPECTED_PACKAGE_NAME);
         expect(defaults.expectedAppLinkHost).toBe(checker.DEFAULT_EXPECTED_APP_LINK_HOST);
         expect(defaults.expectedAppLinkPathPrefix).toBe(checker.DEFAULT_EXPECTED_APP_LINK_PATH_PREFIX);
+        expect(defaults.minBillingLibraryVersion).toBe(checker.DEFAULT_MIN_BILLING_LIBRARY_VERSION);
         expect(overridden.expectedFingerprints).toEqual(['AA:BB']);
         expect(overridden.expectedPackageName).toBe('com.example.app');
         expect(overridden.expectedAppLinkHost).toBe('example.com');
         expect(overridden.expectedAppLinkPathPrefix).toBe('/invite/');
+        expect(overridden.minBillingLibraryVersion).toBe('9.0.0');
         expect(overridden.expectedVerdictAction).toBe('billing_topup');
         expect(overridden.expectedVerdictVersionCode).toBe(101);
         expect(overridden.androidManifestPath).toBe('/tmp/AndroidManifest.xml');
+        expect(overridden.billingManagerPath).toBe('/tmp/BillingManager.kt');
+        expect(overridden.versionCatalogPath).toBe('/tmp/libs.versions.toml');
     });
 
     test('recognizes the Android App Links manifest entry Play Console validates', () => {

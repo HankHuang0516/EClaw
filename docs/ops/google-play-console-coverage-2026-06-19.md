@@ -71,6 +71,10 @@ This verifier checks both remote production state and the local release branch:
   upload fingerprints.
 - `app/build.gradle.kts` keeps `applicationId = "com.hank.clawlive"` and still
   includes Google Play Billing plus Play Integrity dependencies.
+- `gradle/libs.versions.toml` keeps Google Play Billing Library at `8.0.0` or
+  newer; this branch uses `9.1.0` so future Play updates do not hit the
+  2026-08-31 Billing Library 8+ requirement.
+- `BillingManager.kt` enables Billing Library automatic service reconnection.
 - `AndroidManifest.xml` exposes `com.hank.clawlive.MainActivity` as an
   `android:autoVerify="true"` HTTPS App Link for `eclawbot.com` `/r/`.
 - `backend/index.js` mounts the Play Integrity router at `/api/play-integrity`.
@@ -196,7 +200,8 @@ tokens, nonces, request hashes, or service-account values.
 If any local branch check fails before upload, stop the release and fix the
 branch first. Play Console cannot mark the related feature covered if the
 artifact no longer declares the App Link, Billing dependency, Play Integrity
-dependency, or backend verifier route that the Console signal depends on.
+dependency, modern Billing Library version, auto-reconnecting Billing client,
+or backend verifier route that the Console signal depends on.
 
 ## Play Integrity Signals
 
