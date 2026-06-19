@@ -9179,7 +9179,7 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
 
     // Resolve entityId and verify auth
     let eId;
-    let entityIdCorrected = false;
+    let entityIdCorrectionWarning = null;
     if (channelAuthResult) {
         // Channel key path: entityId already validated and entity confirmed in ACL
         eId = parseInt(entityId);
@@ -9211,7 +9211,8 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
                 return res.status(403).json({ success: false, message: "Invalid botSecret — no matching entity found" });
             }
         } else {
-            const requestedId = parseInt(entityId) || 0;
+            const rawRequestedEntityId = entityId;
+            const requestedId = parseInt(rawRequestedEntityId, 10) || 0;
             const requestedEntity = device.entities[requestedId];
             if (requestedEntity && requestedEntity.isBound && requestedEntity.botSecret && safeEqual(requestedEntity.botSecret, botSecret)) {
                 eId = requestedId;
@@ -9222,8 +9223,15 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
                     return res.status(403).json({ success: false, message: "Invalid botSecret" });
                 }
                 eId = correctId;
-                entityIdCorrected = true;
-                console.warn(`[Transform] Device ${deviceId}: entityId=${requestedId} doesn't match botSecret, auto-corrected to ${correctId}`);
+
+                // `entityId: "0"` is a common legacy/default transform caller value.
+                // Treat it like omitted entityId: auto-detect from botSecret without
+                // emitting the high-signal mismatch warning used for genuine wrong IDs.
+                const isDefaultEntityIdFallback = String(rawRequestedEntityId).trim() === '0';
+                if (!isDefaultEntityIdFallback) {
+                    entityIdCorrectionWarning = `entityId mismatch: you provided ${requestedId} but your botSecret belongs to entity ${correctId}. Auto-corrected to ${correctId}.`;
+                    console.warn(`[Transform] Device ${deviceId}: entityId=${requestedId} doesn't match botSecret, auto-corrected to ${correctId}`);
+                }
             }
         }
     }
@@ -9814,9 +9822,7 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
     }
 
     // ── speakTo / broadcast delivery ──
-    const warnings = entityIdCorrected
-        ? [`entityId mismatch: you provided ${parseInt(entityId) || 0} but your botSecret belongs to entity ${eId}. Auto-corrected to ${eId}.`]
-        : [];
+    const warnings = entityIdCorrectionWarning ? [entityIdCorrectionWarning] : [];
     let deliveryResults = null;
     // Tracks whether the delivery path actually persisted a chat row. If
     // hasDelivery was true but every target fell through (all speakTo codes
