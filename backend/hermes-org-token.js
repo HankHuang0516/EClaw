@@ -38,8 +38,9 @@ let devicesRef = null;
 // GitHub App credentials — set GITHUB_APP_ID (numeric) and
 // GITHUB_APP_PRIVATE_KEY (PEM) via environment.  Both are required for real
 // token issuance.  When either is missing the stub is used (501).
-const APP_ID = parseInt(process.env.GITHUB_APP_ID || '0', 10) || 0;
-const PRIVATE_KEY = process.env.GITHUB_APP_PRIVATE_KEY || '';
+// Credentials are read lazily inside issueInstallationToken() (not snapshotted
+// at module load) so runtime env changes — and tests that set GITHUB_APP_* per
+// case — see the current values rather than a stale load-time snapshot.
 
 function githubApiFetch(path, method, body, token) {
     const url = `https://api.github.com${path}`;
@@ -173,7 +174,7 @@ async function writeAudit(entityId, deviceId, orgLogin, outcome, detail) {
 // Token issuance — GitHub App JWT → per-org installation token.
 //
 // Implements the GitHub App installation flow:
-//   1. Sign a JWT with the App private key (RS256, 10-min expiry).
+//   1. Sign a JWT with the App private key (ES256, 10-min expiry).
 //   2. POST /app/installations/:installation_id/access_tokens to mint an
 //      installation access token scoped to that installation only.
 //   3. Return the token + expiry to the caller.
@@ -184,6 +185,8 @@ async function writeAudit(entityId, deviceId, orgLogin, outcome, detail) {
 // Returns: { available, token?, expiresAt?, reason? }
 // ---------------------------------------------------------------------------
 async function issueInstallationToken({ orgLogin, installationId }) {
+    const APP_ID = parseInt(process.env.GITHUB_APP_ID || '0', 10) || 0;
+    const PRIVATE_KEY = process.env.GITHUB_APP_PRIVATE_KEY || '';
     if (!APP_ID || !PRIVATE_KEY) {
         return {
             available: false,
@@ -208,7 +211,7 @@ async function issueInstallationToken({ orgLogin, installationId }) {
                 iss: String(APP_ID),
             },
             PRIVATE_KEY,
-            { algorithm: 'RS256' }
+            { algorithm: 'ES256' }
         );
     } catch (err) {
         return { available: false, reason: `jwt_sign_failed: ${err.message}` };
