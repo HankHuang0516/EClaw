@@ -19082,10 +19082,6 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
             return { pushed: false, reason: `http_${response.status}`, error: errorText, debug: { url, tokenLength: token.length, status: response.status, hint: debugHint.trim() } };
         }
     } catch (err) {
-        console.error(`[Push] ✗ Device ${deviceId} Entity ${entity.entityId}: Push error:`, err.message);
-        console.error(`[Push] Full error:`, err);
-        serverLog('error', 'push_error', `Entity ${entity.entityId} push exception: ${err.message}`, { deviceId, entityId: entity.entityId });
-
         // AbortError / TimeoutError: gateway didn't ack within 15s but the bot may
         // still be processing and reply async via /api/transform. Don't pollute
         // entity.message with diagnostic text (push_status carries the signal).
@@ -19094,6 +19090,19 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
         // transform overwrites → user/client polling between the two sees noise.
         const isAbort = err.name === 'AbortError' || err.name === 'TimeoutError'
             || /aborted|timeout/i.test(err.message || '');
+
+        // Log severity must match reality (no "benign error"): a gateway timeout is a
+        // known async-uncertain state (bot may still reply via /api/transform), so it is
+        // a WARN, not an ERROR. Reserve console.error + serverLog('error') for hard
+        // failures (ENOTFOUND / ECONNREFUSED / TLS / non-2xx). This stops benign
+        // push-timeout noise (esp. to offline/test devices) from paging as ERROR.
+        if (isAbort) {
+            console.warn(`[Push] ⏳ Device ${deviceId} Entity ${entity.entityId}: push gateway timeout (no 15s ack) — bot may reply async via /api/transform: ${err.message}`);
+        } else {
+            console.error(`[Push] ✗ Device ${deviceId} Entity ${entity.entityId}: Push error:`, err.message);
+            console.error(`[Push] Full error:`, err);
+            serverLog('error', 'push_error', `Entity ${entity.entityId} push exception: ${err.message}`, { deviceId, entityId: entity.entityId });
+        }
 
         if (!isAbort) {
             // Hard connection failure (ENOTFOUND / ECONNREFUSED / TLS / etc.) — surface to UI.
