@@ -1110,11 +1110,21 @@
     let loadBotsRequestSeq = 0;
 
     /* ══════ Avatar resolution ══════ */
-    // Plaza bots belong to OTHER users, so we can't rely on the per-entity
-    // AvatarPetdx descriptor cache (keyed on the current user's deviceId).
-    // Instead, the server enriches each row with petdxAvatarUrl — the bot
-    // owner's currently selected companion's avatar URL — and we prefer it
-    // over the legacy entities.avatar emoji/upload.
+    // Plaza bots are a MIX of (a) other users' bots — for which we can't
+    // resolve the live AvatarPetdx descriptor cache (keyed on the current
+    // viewer's deviceId), and (b) the viewer's OWN published bots when they
+    // surface in the plaza listing. The server enriches every row with
+    // petdxAvatarUrl — the bot owner's currently selected companion's
+    // avatar URL — and we prefer it over the legacy entities.avatar
+    // emoji/upload as a fast-paint fallback.
+    //
+    // Canonical companion path (own-device rows): after rendering, we
+    // resolve the row's publicCode → entityId via the viewer's bound
+    // entities, then AvatarPetdx.preload(...) caches the live spritesheet
+    // descriptor and re-renders so renderAvatarHtml emits a <canvas>
+    // placeholder instead of a static <img>. autoMount() animates it. This
+    // matches the integration pattern shared with chat.html / dashboard.html
+    // / marketplace.html / mission.html / files.html / card-holder.html.
     function resolveBotAvatar(row) {
         if (!row) return '\u{1F916}';
         if (typeof row.petdxAvatarUrl === 'string' && row.petdxAvatarUrl) {
@@ -1124,32 +1134,64 @@
     }
     // PETDX spritesheets are an 8×9 grid (192×208 per frame). A raw <img src=sprite.webp>
     // shrinks the WHOLE sheet into the avatar box → all poses visible at once (the P0
-    // "大頭貼 mismatched" bug). Crop to frame 0 (idle, top-left) via background-size:
-    // 800% 900% (8 cols × 9 rows → one frame == box) + position 0 0. Interim render fix;
-    // the data-layer fix (store single-frame avatar.webp on companion create, Plan 3) is
-    // tracked separately on card_3144 / the store-on-create chain.
-    function isPetdxSprite(u) {
-        return typeof u === 'string' && /\/api\/petdx\/[^/]+\/sprite\.(webp|png)(\?|$)/i.test(u);
-    }
-    function petdxFrame0Html(url, size) {
-        const s = size || 48;
-        return '<div role="img" aria-label="bot avatar" style="width:' + s + 'px;height:' + s +
-            'px;border-radius:50%;background-image:url(' + esc(url) +
-            ');background-repeat:no-repeat;background-size:800% 900%;background-position:0 0;"></div>';
-    }
-    function botAvatarHtml(avatar, size) {
-        // Single-frame crop for PETDX spritesheet URLs (covers petdxAvatarUrl = sprite.webp).
-        if (isPetdxSprite(avatar)) {
-            return petdxFrame0Html(avatar, size || 48);
-        }
+    // "大頭貼 mismatched" bug). The shared renderAvatarHtml() in entity-utils.js detects
+    // sprite URLs and crops to frame 0 via background-size:800% 900% + position 0 0 (the
+    // isPetdxSprite branch added in PR #3527's shared-fix follow-up). When the entity has
+    // a cached AvatarPetdx descriptor (own-device rows after preload), it instead emits
+    // a <canvas data-petdx-entity-id> placeholder for autoMount() to animate.
+    function botAvatarHtml(avatar, size, entityId) {
         if (typeof renderAvatarHtml === 'function') {
-            return renderAvatarHtml(avatar, size || 48);
+            return renderAvatarHtml(avatar, size || 48, entityId);
         }
         // Fallback if entity-utils.js failed to load (CDN miss, etc.)
         if (typeof avatar === 'string' && /^(https?:\/\/|\/)/.test(avatar)) {
             return '<img src="' + esc(avatar) + '" style="width:' + (size || 48) + 'px;height:' + (size || 48) + 'px;border-radius:50%;object-fit:cover;" alt="">';
         }
         return avatar || '\u{1F916}';
+    }
+
+    // publicCode → entityId map for the viewer's own bound entities. Populated
+    // by preloadOwnEntityAvatars() once per session and used by botAvatarHtml
+    // call sites that have a row.publicCode to thread an entityId into the
+    // shared renderAvatarHtml() so the AvatarPetdx canvas branch can fire.
+    let _ownPublicCodeToEntityId = {};
+    function entityIdForPublicCode(publicCode) {
+        if (!publicCode) return undefined;
+        return _ownPublicCodeToEntityId[publicCode];
+    }
+
+    // Preload AvatarPetdx descriptors for the viewer's own bound entities so
+    // own-device bots that surface in the plaza render the live companion
+    // chibi (canvas) instead of the static sprite-frame fallback. Best-effort
+    // + non-blocking — any failure (no session, no companion, API hiccup)
+    // leaves the petdxAvatarUrl frame-0 crop in place. Mirrors the init
+    // pattern in marketplace.html / kanban.html.
+    async function preloadOwnEntityAvatars() {
+        if (typeof window === 'undefined' || !window.AvatarPetdx) return;
+        try {
+            const user = window.currentUser || null;
+            const deviceId = user?.deviceId
+                || localStorage.getItem('deviceId')
+                || localStorage.getItem('eclaw_device_id');
+            const deviceSecret = user?.deviceSecret
+                || localStorage.getItem('deviceSecret')
+                || localStorage.getItem('eclaw_device_secret');
+            if (!deviceId || !deviceSecret) return;
+            const r = await fetch('/api/entities?deviceId=' + encodeURIComponent(deviceId), { credentials: 'include' });
+            if (!r.ok) return;
+            const data = await r.json();
+            const entities = (data.entities || []).filter(e => e.isBound);
+            if (typeof updateEntityMaps === 'function') updateEntityMaps(entities);
+            _ownPublicCodeToEntityId = {};
+            entities.forEach(e => { if (e.publicCode) _ownPublicCodeToEntityId[e.publicCode] = e.entityId; });
+            const entityIds = entities.map(e => e.entityId).filter(Boolean);
+            if (!entityIds.length) return;
+            await window.AvatarPetdx.preload({ deviceId, deviceSecret, entityIds });
+            // Re-render so own-device cards whose descriptor just resolved
+            // emit the <canvas> placeholder, then autoMount() animates them.
+            if (Array.isArray(allBots) && allBots.length) renderGrid(allBots);
+            window.AvatarPetdx.autoMount();
+        } catch (_) { /* graceful: keep petdxAvatarUrl frame-0 fallback */ }
     }
 
     /* ══════ API ══════ */
@@ -1357,6 +1399,13 @@
         empty.style.display = 'none';
         document.getElementById('resultCount').textContent = bots.length;
         grid.innerHTML = bots.map(bot => bot.isRental ? renderRentalCard(bot) : renderCommunityCard(bot)).join('');
+        // Animate any AvatarPetdx canvas placeholders just emitted for
+        // own-device bots whose companion descriptor has been preloaded.
+        // Cross-device bots fall through to the petdxAvatarUrl frame-0 crop
+        // and don't need a mount step. Best-effort + non-blocking.
+        if (typeof window !== 'undefined' && window.AvatarPetdx && typeof window.AvatarPetdx.mount === 'function') {
+            try { window.AvatarPetdx.mount(grid); } catch (_) { /* no-op */ }
+        }
     }
     function renderCommunityCard(bot) {
         // Arena verified score chip (card_ad404375). Number-only fields, so
@@ -1376,11 +1425,12 @@
                 + (pass ? '✓ ' : '• ') + 'Arena ' + bot.arenaScore + '/' + bot.arenaMaxScore + ' (' + pct + '%)'
                 + `</span>`;
         }
+        const eid = entityIdForPublicCode(bot.publicCode);
         return `<div class="bot-card" onclick="openDetail('${bot.publicCode}')">
             <span class="bot-card-level ${lvClass(bot.level)}">Lv.${bot.level}</span>
             <div class="bot-card-header">
                 <div class="bot-card-avatar">
-                    ${botAvatarHtml(bot.avatar, 56)}
+                    ${botAvatarHtml(bot.avatar, 56, eid)}
                 </div>
                 <div class="bot-card-info"><div class="bot-card-name">${esc(bot.name)}${arenaChip}</div></div>
             </div>
@@ -1413,7 +1463,7 @@
         return `<div class="${isRented ? 'bot-card rented' : 'bot-card'}" onclick="${isRented ? '' : "openRentalDetail('" + bot.listingId + "')"}" style="border-left:3px solid ${borderColor};">
             <span class="bot-card-level" style="background:${borderColor};color:#fff;">${isRented ? tt('mp_status_rented','\u5df2\u51fa\u79df') : tt('community_filter_rental','\u51fa\u79df')}</span>
             <div class="bot-card-header">
-                <div class="bot-card-avatar">${botAvatarHtml(bot.avatar, 40)}</div>
+                <div class="bot-card-avatar">${botAvatarHtml(bot.avatar, 40, entityIdForPublicCode(bot.publicCode))}</div>
                 <div class="bot-card-info">
                     <div class="bot-card-name">${esc(bot.name)}</div>
                     ${bot.modelDetected ? `<div style="font-size:11px;color:var(--text-secondary);">\ud83e\udd16 ${esc(bot.modelDetected)}</div>` : ''}
@@ -1500,7 +1550,7 @@
             content.innerHTML = `
                 <button class="modal-close" onclick="closeDetail()">✕</button>
                 <div class="detail-header">
-                    <div class="detail-avatar">${botAvatarHtml(resolveBotAvatar(bot), 72)}</div>
+                    <div class="detail-avatar">${botAvatarHtml(resolveBotAvatar(bot), 72, entityIdForPublicCode(bot.publicCode))}</div>
                     <div class="detail-name">${esc(bot.name)}</div>
                     <div class="detail-code" onclick="navigator.clipboard.writeText('${bot.publicCode}')" title="Copy">${bot.publicCode}</div>
                     <div class="detail-desc">${esc(desc)}</div>
@@ -1649,7 +1699,7 @@
             content.innerHTML = `
                 <button class="modal-close" onclick="closeDetail()">\u2715</button>
                 <div class="detail-header">
-                    <div class="detail-avatar">${botAvatarHtml(resolveBotAvatar({ petdxAvatarUrl: l.petdx_avatar_url, avatar: l.avatar_url }), 72)}</div>
+                    <div class="detail-avatar">${botAvatarHtml(resolveBotAvatar({ petdxAvatarUrl: l.petdx_avatar_url, avatar: l.avatar_url }), 72, l.owner_entity_id)}</div>
                     <div class="detail-name">${esc(l.title)}</div>
                     ${l.model_detected ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">\ud83e\udd16 ${esc(l.model_detected)}</div>` : ''}
                     <div class="detail-level-xp"><span style="color:#f59e0b;">${stars} (${l.total_rentals || 0} ${ttt('mp_d_rentals','rentals')})</span></div>
@@ -1876,6 +1926,14 @@
         loadBots();
         autoFocusBotFromQuery();
     }
+
+    // Wire the AvatarPetdx companion system (parity with chat / dashboard /
+    // marketplace / mission / files / card-holder). For the viewer's own
+    // bound entities that surface in the plaza, this resolves the live
+    // companion descriptor and animates a <canvas> placeholder via
+    // autoMount(). Cross-device rows keep the petdxAvatarUrl frame-0 crop
+    // path. Non-blocking and idempotent — safe to fire alongside loadBots().
+    preloadOwnEntityAvatars();
 
     // Load invite code non-blocking (hides banner if unauthenticated)
     loadInviteCode();

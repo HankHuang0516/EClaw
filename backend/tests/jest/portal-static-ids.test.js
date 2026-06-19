@@ -157,4 +157,61 @@ describe('portal static HTML IDs', () => {
     expect(setup).toContain("btn.setAttribute('title', label)");
   });
 
+  test('community plaza wires the AvatarPetdx companion system (card_3144142e)', () => {
+    // Locks the integration shipped with the card_3144142e fix so the Bot
+    // Plaza can never silently regress back to "miss AvatarPetdx" again.
+    // Mirrors the chat / dashboard / marketplace / mission / files /
+    // card-holder pages that all wire the shared companion system.
+    const communityPath = path.join(__dirname, '../../public/portal/community.html');
+    const community = fs.readFileSync(communityPath, 'utf8');
+
+    // 1. The shared AvatarPetdx renderer is loaded on the page.
+    expect(community).toContain('<script src="../shared/avatar-petdx.js"></script>');
+
+    // 2. Plaza no longer ships its private isPetdxSprite/petdxFrame0Html
+    //    fork — those duplicated the shared renderAvatarHtml() sprite branch
+    //    in entity-utils.js. The shared path is the only sprite-crop today.
+    expect(community).not.toMatch(/function\s+isPetdxSprite\s*\(/);
+    expect(community).not.toMatch(/function\s+petdxFrame0Html\s*\(/);
+
+    // 3. botAvatarHtml threads entityId into the shared renderAvatarHtml so
+    //    own-device rows can hit the AvatarPetdx canvas branch instead of
+    //    the static <img>.
+    expect(community).toMatch(
+      /function\s+botAvatarHtml\s*\(\s*avatar\s*,\s*size\s*,\s*entityId\s*\)/
+    );
+    expect(community).toContain('renderAvatarHtml(avatar, size || 48, entityId)');
+
+    // 4. The viewer's bound entities are preloaded so descriptor lookups
+    //    succeed before the cards render. The publicCode → entityId map
+    //    feeds the call sites.
+    expect(community).toContain('async function preloadOwnEntityAvatars()');
+    expect(community).toContain('window.AvatarPetdx.preload({');
+    expect(community).toContain('window.AvatarPetdx.autoMount();');
+    expect(community).toContain('_ownPublicCodeToEntityId');
+    expect(community).toContain('function entityIdForPublicCode(publicCode)');
+
+    // 5. renderGrid mounts any AvatarPetdx canvas placeholders just emitted
+    //    so the companion animates.
+    expect(community).toMatch(/window\.AvatarPetdx\.mount\s*\(\s*grid\s*\)/);
+
+    // 6. Card render call sites pass entityId so own-device rows can win
+    //    the canvas branch in shared renderAvatarHtml. Each list of three
+    //    locks the community card, rental card, community detail modal,
+    //    and rental detail modal.
+    expect(community).toContain('botAvatarHtml(bot.avatar, 56, eid)');
+    expect(community).toContain(
+      'botAvatarHtml(bot.avatar, 40, entityIdForPublicCode(bot.publicCode))'
+    );
+    expect(community).toContain(
+      'botAvatarHtml(resolveBotAvatar(bot), 72, entityIdForPublicCode(bot.publicCode))'
+    );
+    expect(community).toContain(
+      "botAvatarHtml(resolveBotAvatar({ petdxAvatarUrl: l.petdx_avatar_url, avatar: l.avatar_url }), 72, l.owner_entity_id)"
+    );
+
+    // 7. preloadOwnEntityAvatars is actually invoked on page init.
+    expect(community).toMatch(/^\s*preloadOwnEntityAvatars\(\);\s*$/m);
+  });
+
 });
