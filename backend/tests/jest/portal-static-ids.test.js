@@ -86,10 +86,15 @@ describe('portal static HTML IDs', () => {
     const dashboard = fs.readFileSync(path.join(__dirname, '../../public/portal/dashboard.html'), 'utf8');
     const settings = fs.readFileSync(path.join(__dirname, '../../public/portal/settings.html'), 'utf8');
     const sharedStyle = fs.readFileSync(path.join(__dirname, '../../public/portal/shared/style.css'), 'utf8');
+    const infoStyle = fs.readFileSync(path.join(__dirname, '../../public/portal/shared/info.css'), 'utf8');
     const refsStyle = fs.readFileSync(path.join(__dirname, '../../public/shared/refs-popover.css'), 'utf8');
     const kanban = fs.readFileSync(path.join(__dirname, '../../public/portal/kanban.html'), 'utf8');
     const community = fs.readFileSync(path.join(__dirname, '../../public/portal/community.html'), 'utf8');
     const envVars = fs.readFileSync(path.join(__dirname, '../../public/portal/env-vars.html'), 'utf8');
+    const chat = fs.readFileSync(path.join(__dirname, '../../public/portal/chat.html'), 'utf8');
+    const mission = fs.readFileSync(path.join(__dirname, '../../public/portal/mission.html'), 'utf8');
+    const petdxBrowser = fs.readFileSync(path.join(__dirname, '../../public/portal/petdx-browser.html'), 'utf8');
+    const telemetry = fs.readFileSync(path.join(__dirname, '../../public/portal/telemetry.html'), 'utf8');
     // The k-Value Tracker widget originally lived on dashboard.html but moved
     // to invite.html (card_8ff516c15600aa1b55c7cabe) — it is invite-funnel
     // analytics, not an entity-binding metric. Lock the deviceSecret auth
@@ -107,11 +112,24 @@ describe('portal static HTML IDs', () => {
     expect(sharedStyle).toMatch(/\.ecoin-badge\s*\{[\s\S]*min-height:\s*28px/);
     expect(sharedStyle).toMatch(/\.btn-sm\s*\{[^}]*min-height:\s*28px/);
     expect(sharedStyle).toMatch(/\.chip\s*\{[\s\S]*min-height:\s*28px/);
+    expect(sharedStyle).toMatch(/\.footer-link\s*\{[\s\S]*min-width:\s*28px;[\s\S]*min-height:\s*28px/);
     expect(sharedStyle).toMatch(/\.help-icon\s*\{[\s\S]*width:\s*28px;[\s\S]*height:\s*28px/);
+    expect(infoStyle).toMatch(/\.qs-promo-link\s*\{[\s\S]*min-height:\s*28px/);
+    expect(infoStyle).toMatch(/\.ped-agent-action\s*\{[\s\S]*min-width:\s*28px;[\s\S]*min-height:\s*28px/);
     expect(refsStyle).toMatch(/\.eclaw-refs-icon\s*\{[\s\S]*width:\s*28px;[\s\S]*height:\s*28px/);
     expect(kanban).toMatch(/\.kb-chip\s*\{[^}]*min-height:28px/);
+    expect(chat).toMatch(/\.density-switcher button\s*\{[\s\S]*min-width:\s*28px;[\s\S]*min-height:\s*28px/);
+    expect(chat).toMatch(/\.btn-add-contact\s*\{[\s\S]*min-height:\s*28px/);
     expect(community).toMatch(/\.invite-cta-copy-btn\s*\{[\s\S]*min-width:\s*28px;[\s\S]*min-height:\s*28px/);
+    expect(community).toMatch(/\.plaza-view-btn\s*\{[\s\S]*min-width:\s*28px;[\s\S]*min-height:\s*28px/);
+    expect(community).toMatch(/\.cap-filter-chip\s*\{[\s\S]*min-height:\s*28px/);
+    expect(mission).toMatch(/\.add-cat-btn\s*\{[\s\S]*min-height:\s*28px/);
     expect(envVars).toMatch(/id="btnRevealCurlId"[\s\S]*min-width:28px;min-height:28px/);
+    expect(envVars).toMatch(/\.lock-btn\s*\{[\s\S]*min-height:\s*28px/);
+    expect(settings).toMatch(/\.feedback-history-link\s*\{[\s\S]*min-height:\s*28px/);
+    expect(settings).toMatch(/\.btn-ask-ai\s*\{[\s\S]*min-height:\s*28px/);
+    expect(petdxBrowser).toMatch(/\.login-warn a\s*\{[\s\S]*min-height:\s*28px/);
+    expect(telemetry).toMatch(/\.tel-btn\s*\{[\s\S]*min-height:\s*28px/);
   });
 
   test('publisher secret visibility toggles expose accessible names and tooltips', () => {

@@ -827,7 +827,9 @@
     border: 0;
 }
 .qs-promo-link {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
     margin-top: 12px;
     font-size: 0.9rem;
     color: var(--text-secondary);
@@ -1740,6 +1742,11 @@
     gap: 6px;
 }
 .ped-agent-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    min-height: 28px;
     background: rgba(124, 58, 237, 0.18);
     border: 1px solid rgba(124, 58, 237, 0.4);
     color: #ddd6fe;
@@ -1772,6 +1779,10 @@
     font-weight: 600;
 }
 .ped-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
     background: transparent;
     color: #94a3b8;
     border: 1px solid rgba(148, 163, 184, 0.3);
