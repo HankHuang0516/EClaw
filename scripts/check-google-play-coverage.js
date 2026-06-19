@@ -27,6 +27,7 @@ function parseArgs(argv = process.argv.slice(2), cwd = process.cwd()) {
         backendIndexPath: path.join(cwd, 'backend', 'index.js'),
         deviceId: process.env.DEVICE_ID || '',
         deviceSecret: process.env.DEVICE_SECRET || '',
+        expectedVerdictVersionCode: null,
         requirePlayIntegrity: false,
         requireVerifiedVerdict: false,
         json: false,
@@ -56,6 +57,8 @@ function parseArgs(argv = process.argv.slice(2), cwd = process.cwd()) {
             options.minVersionCode = Number(arg.slice('--min-version-code='.length));
         } else if (arg.startsWith('--expected-version-name=')) {
             options.expectedVersionName = arg.slice('--expected-version-name='.length);
+        } else if (arg.startsWith('--expected-verdict-version-code=')) {
+            options.expectedVerdictVersionCode = Number(arg.slice('--expected-verdict-version-code='.length));
         } else if (arg.startsWith('--app-gradle=')) {
             options.appGradlePath = arg.slice('--app-gradle='.length);
         } else if (arg.startsWith('--backend-index=')) {
@@ -82,6 +85,7 @@ function usage() {
         '  --expected-fingerprint=SHA256   Repeatable; defaults to Play App Signing + upload cert.',
         '  --min-version-code=101          Verify app/build.gradle.kts versionCode.',
         '  --expected-version-name=1.0.93  Verify app versionName and backend LATEST_APP_VERSION.',
+        '  --expected-verdict-version-code=101  Verify debug lastVerdict appIntegrity.versionCode.',
         '  --device-id=ID                  Or DEVICE_ID env var.',
         '  --device-secret=SECRET          Or DEVICE_SECRET env var. Never printed.',
         '  --require-play-integrity        Require debug endpoint verifier + standard config.',
@@ -130,6 +134,13 @@ function evaluateAssetlinks(actualFingerprints, expectedFingerprints) {
         missing: expected.filter(fp => !actualSet.has(fp)),
         actual: Array.from(actualSet),
     };
+}
+
+function extractLastVerdictVersionCode(lastVerdict) {
+    const raw = lastVerdict?.consoleSignals?.appIntegrity?.versionCode;
+    if (raw === null || raw === undefined || raw === '') return null;
+    const versionCode = Number(raw);
+    return Number.isFinite(versionCode) ? versionCode : null;
 }
 
 function safeRead(filePath) {
@@ -207,7 +218,14 @@ async function run(options) {
                 actual: diagnostics.lastVerdict?.status || null,
             });
         }
-    } else if (options.requirePlayIntegrity || options.requireVerifiedVerdict) {
+        if (options.expectedVerdictVersionCode) {
+            const actualVersionCode = extractLastVerdictVersionCode(diagnostics.lastVerdict);
+            addCheck(checks, 'playIntegrity.lastVerdictVersionCode', actualVersionCode === options.expectedVerdictVersionCode, {
+                actual: actualVersionCode,
+                expected: options.expectedVerdictVersionCode,
+            });
+        }
+    } else if (options.requirePlayIntegrity || options.requireVerifiedVerdict || options.expectedVerdictVersionCode) {
         addCheck(checks, 'playIntegrity.deviceAuthPresent', false, {
             message: 'Pass --device-id and --device-secret or set DEVICE_ID/DEVICE_SECRET.',
         });
@@ -274,6 +292,7 @@ module.exports = {
     parseBackendLatestVersion,
     extractAssetlinksFingerprints,
     evaluateAssetlinks,
+    extractLastVerdictVersionCode,
     debugUrlLabel,
     run,
 };

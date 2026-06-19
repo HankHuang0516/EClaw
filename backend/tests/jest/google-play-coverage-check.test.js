@@ -52,10 +52,31 @@ describe('Google Play coverage check script helpers', () => {
 
     test('parseArgs keeps default fingerprints unless explicitly overridden', () => {
         const defaults = checker.parseArgs([], '/tmp/eclaw');
-        const overridden = checker.parseArgs(['--expected-fingerprint=aa:bb'], '/tmp/eclaw');
+        const overridden = checker.parseArgs([
+            '--expected-fingerprint=aa:bb',
+            '--expected-verdict-version-code=101',
+        ], '/tmp/eclaw');
 
         expect(defaults.expectedFingerprints).toEqual(checker.DEFAULT_EXPECTED_FINGERPRINTS);
         expect(overridden.expectedFingerprints).toEqual(['AA:BB']);
+        expect(overridden.expectedVerdictVersionCode).toBe(101);
+    });
+
+    test('extracts Play Integrity last verdict version code from debug diagnostics', () => {
+        expect(checker.extractLastVerdictVersionCode({
+            consoleSignals: {
+                appIntegrity: {
+                    versionCode: '101',
+                },
+            },
+        })).toBe(101);
+        expect(checker.extractLastVerdictVersionCode({
+            consoleSignals: {
+                appIntegrity: {
+                    versionCode: null,
+                },
+            },
+        })).toBeNull();
     });
 
     test('redacts device secret from debug endpoint labels', () => {

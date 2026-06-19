@@ -137,7 +137,8 @@ Release checklist:
 5. Upload to internal testing first with `node scripts/upload_to_play.js`.
 6. Install or launch the Play-distributed build and verify
    `GET /api/play-integrity/debug` records `lastVerdict.status: "verified"` for
-   the test device.
+   the test device and that `lastVerdict.consoleSignals.appIntegrity.versionCode`
+   matches the newly uploaded Play version code.
 7. Promote to production only after the debug endpoint and Play Console signals
    prove the release is reporting integrity verdicts.
 
@@ -148,13 +149,14 @@ DEVICE_ID=... DEVICE_SECRET=... \
 node scripts/check-google-play-coverage.js \
   --min-version-code=101 \
   --expected-version-name=1.0.93 \
+  --expected-verdict-version-code=101 \
   --require-play-integrity \
   --require-verified-verdict
 ```
 
 The script prints only check names, booleans, missing fingerprints, and safe
-verdict status. It must not print `DEVICE_SECRET`, integrity tokens, nonces,
-request hashes, or service-account values.
+verdict status/version metadata. It must not print `DEVICE_SECRET`, integrity
+tokens, nonces, request hashes, or service-account values.
 
 ## Play Integrity Signals
 
