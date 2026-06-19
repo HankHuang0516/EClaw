@@ -35,6 +35,7 @@ function parseArgs(argv = process.argv.slice(2), cwd = process.cwd()) {
         androidManifestPath: path.join(cwd, 'app', 'src', 'main', 'AndroidManifest.xml'),
         billingManagerPath: path.join(cwd, 'app', 'src', 'main', 'java', 'com', 'hank', 'clawlive', 'billing', 'BillingManager.kt'),
         playIntegrityReporterPath: path.join(cwd, 'app', 'src', 'main', 'java', 'com', 'hank', 'clawlive', 'integrity', 'PlayIntegrityReporter.kt'),
+        playIntegrityBackendPath: path.join(cwd, 'backend', 'play-integrity.js'),
         versionCatalogPath: path.join(cwd, 'gradle', 'libs.versions.toml'),
         backendIndexPath: path.join(cwd, 'backend', 'index.js'),
         deviceId: process.env.DEVICE_ID || '',
@@ -90,6 +91,8 @@ function parseArgs(argv = process.argv.slice(2), cwd = process.cwd()) {
             options.billingManagerPath = arg.slice('--billing-manager='.length);
         } else if (arg.startsWith('--play-integrity-reporter=')) {
             options.playIntegrityReporterPath = arg.slice('--play-integrity-reporter='.length);
+        } else if (arg.startsWith('--play-integrity-backend=')) {
+            options.playIntegrityBackendPath = arg.slice('--play-integrity-backend='.length);
         } else if (arg.startsWith('--version-catalog=')) {
             options.versionCatalogPath = arg.slice('--version-catalog='.length);
         } else if (arg.startsWith('--backend-index=')) {
@@ -125,6 +128,7 @@ function usage() {
         '  --android-manifest=app/src/main/AndroidManifest.xml',
         '  --billing-manager=app/src/main/java/com/hank/clawlive/billing/BillingManager.kt',
         '  --play-integrity-reporter=app/src/main/java/com/hank/clawlive/integrity/PlayIntegrityReporter.kt',
+        '  --play-integrity-backend=backend/play-integrity.js',
         '  --version-catalog=gradle/libs.versions.toml',
         '  --device-id=ID                  Or DEVICE_ID env var.',
         '  --device-secret=SECRET          Or DEVICE_SECRET env var. Never printed.',
@@ -417,6 +421,16 @@ async function run(options) {
                 expected: options.expectedVersionName,
             });
         }
+    }
+
+    const playIntegrityBackend = safeRead(options.playIntegrityBackendPath);
+    if (playIntegrityBackend) {
+        addCheck(
+            checks,
+            'backend.playIntegrityDecodeBody',
+            playIntegrityBackend.includes('integrityToken')
+                && !playIntegrityBackend.includes('integrity_token: integrityToken')
+        );
     }
 
     if (options.deviceId && options.deviceSecret) {

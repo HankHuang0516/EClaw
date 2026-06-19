@@ -87,6 +87,7 @@ describe('Google Play coverage check script helpers', () => {
             '--android-manifest=/tmp/AndroidManifest.xml',
             '--billing-manager=/tmp/BillingManager.kt',
             '--play-integrity-reporter=/tmp/PlayIntegrityReporter.kt',
+            '--play-integrity-backend=/tmp/play-integrity.js',
             '--version-catalog=/tmp/libs.versions.toml',
         ], '/tmp/eclaw');
 
@@ -105,6 +106,7 @@ describe('Google Play coverage check script helpers', () => {
         expect(overridden.androidManifestPath).toBe('/tmp/AndroidManifest.xml');
         expect(overridden.billingManagerPath).toBe('/tmp/BillingManager.kt');
         expect(overridden.playIntegrityReporterPath).toBe('/tmp/PlayIntegrityReporter.kt');
+        expect(overridden.playIntegrityBackendPath).toBe('/tmp/play-integrity.js');
         expect(overridden.versionCatalogPath).toBe('/tmp/libs.versions.toml');
     });
 

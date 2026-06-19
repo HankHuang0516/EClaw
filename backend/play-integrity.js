@@ -151,7 +151,7 @@ async function decodeIntegrityTokenWithGoogle(integrityToken) {
             Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ integrity_token: integrityToken }),
+        body: JSON.stringify(googleDecodeRequestBody(integrityToken)),
     });
     if (!response.ok) {
         const body = await response.text().catch(() => '');
@@ -162,6 +162,10 @@ async function decodeIntegrityTokenWithGoogle(integrityToken) {
         throw err;
     }
     return response.json();
+}
+
+function googleDecodeRequestBody(integrityToken) {
+    return { integrityToken };
 }
 
 function extractPayload(decoded) {
@@ -481,6 +485,7 @@ module.exports = {
         verificationConfigured,
         standardIntegrityCloudProjectNumber,
         decodeIntegrityTokenWithGoogle,
+        googleDecodeRequestBody,
         rememberVerdictSummary,
         summarizeConsoleSignals,
         _resetForTests: () => {

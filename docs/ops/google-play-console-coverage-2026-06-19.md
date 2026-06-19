@@ -82,6 +82,9 @@ This verifier checks both remote production state and the local release branch:
   the release does not silently fall back to Classic-only signals after the
   provider expires or Play Store data is cleared.
 - `backend/index.js` mounts the Play Integrity router at `/api/play-integrity`.
+- `backend/play-integrity.js` posts Google decode requests with the official
+  camelCase `integrityToken` request field from the Play Integrity v1 discovery
+  contract.
 
 Before PR #3545 deploys this command is expected to fail
 `assetlinks.fingerprints` because production is still missing the Play App
@@ -206,7 +209,8 @@ branch first. Play Console cannot mark the related feature covered if the
 artifact no longer declares the App Link, Billing dependency, Play Integrity
 dependency, modern Billing Library version, auto-reconnecting Billing client,
 Standard Integrity provider refresh path, or backend verifier route that the
-Console signal depends on.
+Console signal depends on. Also stop if the backend Google decode request body
+uses `integrity_token`; the Play Integrity v1 API expects `integrityToken`.
 
 ## Play Integrity Signals
 

@@ -237,6 +237,13 @@ describe('Play Integrity bridge', () => {
         expect(JSON.stringify(res.body)).not.toContain('123456789012');
     });
 
+    test('Google decode request uses the official camelCase integrityToken field', () => {
+        const body = playIntegrity._internal.googleDecodeRequestBody('token-value');
+
+        expect(body).toEqual({ integrityToken: 'token-value' });
+        expect(body).not.toHaveProperty('integrity_token');
+    });
+
     test('verdict endpoint decodes and evaluates Google payload when credentials are configured', async () => {
         process.env.PLAY_INTEGRITY_SERVICE_ACCOUNT_JSON = '{"type":"service_account"}';
         const nonce = playIntegrity._internal.makeNonce({ deviceId: DEVICE_ID, action: 'startup' });
