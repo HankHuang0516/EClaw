@@ -18,10 +18,21 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const express = require('express');
 const request = require('supertest');
 
 const mod = require('../../hermes-org-token');
+
+// A REAL EC P-256 private key, generated fresh per run. The App JWT is signed
+// with ES256 (ECDSA P-256), so the happy-path / API-error tests need a valid
+// key or jwt.sign throws jwt_sign_failed before the token-exchange step is
+// ever reached. (The invalid-key test below deliberately uses a bad PEM.)
+const TEST_EC_PRIVATE_KEY = crypto.generateKeyPairSync('ec', {
+    namedCurve: 'prime256v1',
+    privateKeyEncoding: { type: 'sec1', format: 'pem' },
+    publicKeyEncoding: { type: 'spki', format: 'pem' },
+}).privateKey;
 
 // --- in-memory pool mock ---------------------------------------------------
 // Stores grants + audit rows and answers the two queries the module runs:
@@ -226,11 +237,7 @@ describe('hermes-org-token — per-org credential scope', () => {
         const origId = process.env.GITHUB_APP_ID;
         const origKey = process.env.GITHUB_APP_PRIVATE_KEY;
         process.env.GITHUB_APP_ID = '999999';
-        // EC P-256 key pair — openssl ecparam -genkey -name prime256v1
-        process.env.GITHUB_APP_PRIVATE_KEY = `-----BEGIN EC PRIVATE KEY-----
-MHQCAQEEIFe8oAGuj2L2qZqOPrg8W3S9pQ1W7v5y2w3N9p7Z8v6aAcGAcKBggq
-hkiegZ4wHoGA8GBVAj8tF7n8L3V9z5Y1qE2mK9p4V7w5N8p1L3zQ2mH9vA
------END EC PRIVATE KEY-----`;
+        process.env.GITHUB_APP_PRIVATE_KEY = TEST_EC_PRIVATE_KEY;
         const origFetch = globalThis.fetch;
         globalThis.fetch = async () => ({ ok: false, status: 404, json: async () => ({ error: 'Not Found' }) });
         try {
@@ -248,11 +255,7 @@ hkiegZ4wHoGA8GBVAj8tF7n8L3V9z5Y1qE2mK9p4V7w5N8p1L3zQ2mH9vA
         const origId = process.env.GITHUB_APP_ID;
         const origKey = process.env.GITHUB_APP_PRIVATE_KEY;
         process.env.GITHUB_APP_ID = '999999';
-        // EC P-256 key pair — openssl ecparam -genkey -name prime256v1
-        process.env.GITHUB_APP_PRIVATE_KEY = `-----BEGIN EC PRIVATE KEY-----
-MHQCAQEEIFe8oAGuj2L2qZqOPrg8W3S9pQ1W7v5y2w3N9p7Z8v6aAcGAcKBggq
-hkiegZ4wHoGA8GBVAj8tF7n8L3V9z5Y1qE2mK9p4V7w5N8p1L3zQ2mH9vA
------END EC PRIVATE KEY-----`;
+        process.env.GITHUB_APP_PRIVATE_KEY = TEST_EC_PRIVATE_KEY;
         const origFetch = globalThis.fetch;
         const fakeToken = 'ghs_fake_installation_token_abc123';
         const fakeExpiry = new Date(Date.now() + 3600 * 1000).toISOString();
