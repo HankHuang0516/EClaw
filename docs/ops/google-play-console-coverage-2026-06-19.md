@@ -155,10 +155,28 @@ DEVICE_ID=... DEVICE_SECRET=... \
 node scripts/check-google-play-coverage.js \
   --min-version-code=101 \
   --expected-version-name=1.0.93 \
+  --expected-verdict-action=startup \
   --expected-verdict-version-code=101 \
   --require-play-integrity \
   --require-verified-verdict
 ```
+
+After exercising a Google Play Billing success path from the Play-distributed
+build, run the verifier again with the expected action from that path:
+
+```sh
+DEVICE_ID=... DEVICE_SECRET=... \
+node scripts/check-google-play-coverage.js \
+  --min-version-code=101 \
+  --expected-version-name=1.0.93 \
+  --expected-verdict-action=billing_topup \
+  --expected-verdict-version-code=101 \
+  --require-play-integrity \
+  --require-verified-verdict
+```
+
+Use `subscription_purchase` or `borrow_subscription` instead of
+`billing_topup` when the exercised purchase path is a subscription path.
 
 The script prints only check names, booleans, missing fingerprints, and safe
 verdict status/version metadata. It must not print `DEVICE_SECRET`, integrity

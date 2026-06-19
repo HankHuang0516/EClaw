@@ -27,6 +27,7 @@ function parseArgs(argv = process.argv.slice(2), cwd = process.cwd()) {
         backendIndexPath: path.join(cwd, 'backend', 'index.js'),
         deviceId: process.env.DEVICE_ID || '',
         deviceSecret: process.env.DEVICE_SECRET || '',
+        expectedVerdictAction: null,
         expectedVerdictVersionCode: null,
         requirePlayIntegrity: false,
         requireVerifiedVerdict: false,
@@ -57,6 +58,8 @@ function parseArgs(argv = process.argv.slice(2), cwd = process.cwd()) {
             options.minVersionCode = Number(arg.slice('--min-version-code='.length));
         } else if (arg.startsWith('--expected-version-name=')) {
             options.expectedVersionName = arg.slice('--expected-version-name='.length);
+        } else if (arg.startsWith('--expected-verdict-action=')) {
+            options.expectedVerdictAction = arg.slice('--expected-verdict-action='.length);
         } else if (arg.startsWith('--expected-verdict-version-code=')) {
             options.expectedVerdictVersionCode = Number(arg.slice('--expected-verdict-version-code='.length));
         } else if (arg.startsWith('--app-gradle=')) {
@@ -85,6 +88,7 @@ function usage() {
         '  --expected-fingerprint=SHA256   Repeatable; defaults to Play App Signing + upload cert.',
         '  --min-version-code=101          Verify app/build.gradle.kts versionCode.',
         '  --expected-version-name=1.0.93  Verify app versionName and backend LATEST_APP_VERSION.',
+        '  --expected-verdict-action=billing_topup  Verify debug lastVerdict.action.',
         '  --expected-verdict-version-code=101  Verify debug lastVerdict appIntegrity.versionCode.',
         '  --device-id=ID                  Or DEVICE_ID env var.',
         '  --device-secret=SECRET          Or DEVICE_SECRET env var. Never printed.',
@@ -218,6 +222,12 @@ async function run(options) {
                 actual: diagnostics.lastVerdict?.status || null,
             });
         }
+        if (options.expectedVerdictAction) {
+            addCheck(checks, 'playIntegrity.lastVerdictAction', diagnostics.lastVerdict?.action === options.expectedVerdictAction, {
+                actual: diagnostics.lastVerdict?.action || null,
+                expected: options.expectedVerdictAction,
+            });
+        }
         if (options.expectedVerdictVersionCode) {
             const actualVersionCode = extractLastVerdictVersionCode(diagnostics.lastVerdict);
             addCheck(checks, 'playIntegrity.lastVerdictVersionCode', actualVersionCode === options.expectedVerdictVersionCode, {
@@ -225,7 +235,12 @@ async function run(options) {
                 expected: options.expectedVerdictVersionCode,
             });
         }
-    } else if (options.requirePlayIntegrity || options.requireVerifiedVerdict || options.expectedVerdictVersionCode) {
+    } else if (
+        options.requirePlayIntegrity
+        || options.requireVerifiedVerdict
+        || options.expectedVerdictAction
+        || options.expectedVerdictVersionCode
+    ) {
         addCheck(checks, 'playIntegrity.deviceAuthPresent', false, {
             message: 'Pass --device-id and --device-secret or set DEVICE_ID/DEVICE_SECRET.',
         });

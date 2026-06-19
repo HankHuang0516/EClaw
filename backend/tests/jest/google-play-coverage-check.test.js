@@ -54,12 +54,40 @@ describe('Google Play coverage check script helpers', () => {
         const defaults = checker.parseArgs([], '/tmp/eclaw');
         const overridden = checker.parseArgs([
             '--expected-fingerprint=aa:bb',
+            '--expected-verdict-action=billing_topup',
             '--expected-verdict-version-code=101',
         ], '/tmp/eclaw');
 
         expect(defaults.expectedFingerprints).toEqual(checker.DEFAULT_EXPECTED_FINGERPRINTS);
         expect(overridden.expectedFingerprints).toEqual(['AA:BB']);
+        expect(overridden.expectedVerdictAction).toBe('billing_topup');
         expect(overridden.expectedVerdictVersionCode).toBe(101);
+    });
+
+    test('requires device auth when checking expected verdict action', async () => {
+        const summary = await checker.run({
+            baseUrl: 'https://unused.invalid',
+            assetlinksUrl: 'data:application/json,[]',
+            expectedFingerprints: [],
+            minVersionCode: null,
+            expectedVersionName: null,
+            appGradlePath: '/tmp/missing.gradle',
+            backendIndexPath: '/tmp/missing-index.js',
+            deviceId: '',
+            deviceSecret: '',
+            expectedVerdictAction: 'billing_topup',
+            expectedVerdictVersionCode: null,
+            requirePlayIntegrity: false,
+            requireVerifiedVerdict: false,
+        });
+
+        expect(summary.ok).toBe(false);
+        expect(summary.checks).toEqual(expect.arrayContaining([
+            expect.objectContaining({
+                name: 'playIntegrity.deviceAuthPresent',
+                ok: false,
+            }),
+        ]));
     });
 
     test('extracts Play Integrity last verdict version code from debug diagnostics', () => {
