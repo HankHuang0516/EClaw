@@ -173,7 +173,7 @@ async function writeAudit(entityId, deviceId, orgLogin, outcome, detail) {
 // Token issuance — GitHub App JWT → per-org installation token.
 //
 // Implements the GitHub App installation flow:
-//   1. Sign a JWT with the App private key (RS256, 10-min expiry).
+//   1. Sign a JWT with the App private key (ES256, 10-min expiry).
 //   2. POST /app/installations/:installation_id/access_tokens to mint an
 //      installation access token scoped to that installation only.
 //   3. Return the token + expiry to the caller.
@@ -212,7 +212,7 @@ async function issueInstallationToken({ orgLogin, installationId }) {
                 iss: String(appId),
             },
             privateKey,
-            { algorithm: 'RS256' }
+            { algorithm: 'ES256' }
         );
     } catch (err) {
         return { available: false, reason: `jwt_sign_failed: ${err.message}` };
