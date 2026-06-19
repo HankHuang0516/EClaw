@@ -12,9 +12,8 @@
  * This module tightens that to per-org scope:
  *   - entity_org_grants maps (entity_id, org_login) → an org that entity may use.
  *   - GET /api/hermes/org-token?orgLogin=X reads the authenticated entity from
- *     the request, checks entity_org_grants, and (when issuance infra is wired)
- *     returns a SCOPED GitHub App installation token for that org — NEVER the
- *     master PAT.
+ *     the request, checks entity_org_grants, and returns a SCOPED GitHub App
+ *     installation token for that org — NEVER the master PAT.
  *   - Orgs not granted to the entity → 403 + an entity_org_token_audit row.
  *
  * SECURITY: this module never returns or logs the master PAT. The only token it
@@ -30,10 +29,35 @@
  */
 
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const safeEqual = require('./safe-equal');
 
 let pool = null;
 let devicesRef = null;
+
+// GitHub App credentials — set GITHUB_APP_ID (numeric) and
+// GITHUB_APP_PRIVATE_KEY (PEM) via environment.  Both are required for real
+// token issuance.  When either is missing the stub is used (501).
+// Credentials are read lazily inside issueInstallationToken() (not snapshotted
+// at module load) so runtime env changes — and tests that set GITHUB_APP_* per
+// case — see the current values rather than a stale load-time snapshot.
+
+function githubApiFetch(path, method, body, token) {
+    const url = `https://api.github.com${path}`;
+    const headers = {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': `Bearer ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28',
+    };
+    if (body) {
+        headers['Content-Type'] = 'application/json';
+    }
+    return fetch(url, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+    });
+}
 
 function bindDevicesRef(devices) {
     devicesRef = devices;
@@ -147,29 +171,85 @@ async function writeAudit(entityId, deviceId, orgLogin, outcome, detail) {
 }
 
 // ---------------------------------------------------------------------------
-// Token issuance interface (STUB).
+// Token issuance — GitHub App JWT → per-org installation token.
 //
-// This is the only place a token is ever produced. It must issue a GitHub App
-// INSTALLATION token scoped to the single org's installation — never the master
-// PAT. Wire-up (Phase, tracked separately): create a GitHub App, install it per
-// org (HankHuang0516 is already connected — extend that pattern), store the
-// installation_id on the grant row, then exchange App JWT → installation token
-// via POST /app/installations/:installation_id/access_tokens.
+// Implements the GitHub App installation flow:
+//   1. Sign a JWT with the App private key (ES256, 10-min expiry).
+//   2. POST /app/installations/:installation_id/access_tokens to mint an
+//      installation access token scoped to that installation only.
+//   3. Return the token + expiry to the caller.
 //
-// Until that infra exists this returns { available:false } and the route
-// answers 501. The grant-check + 403 path above does NOT depend on this.
+// The installation_id is stored on the entity_org_grants row when the grant
+// is provisioned.  The App must be installed on the target org first.
 //
 // Returns: { available, token?, expiresAt?, reason? }
 // ---------------------------------------------------------------------------
 async function issueInstallationToken({ orgLogin, installationId }) {
-    // TODO(card_1242aaa5 follow-up): implement GitHub App installation-token
-    // exchange. Requires GITHUB_APP_ID + GITHUB_APP_PRIVATE_KEY env + a per-org
-    // installation_id. Must scope the token to this installation only.
-    void orgLogin;
-    void installationId;
+    const APP_ID = parseInt(process.env.GITHUB_APP_ID || '0', 10) || 0;
+    const PRIVATE_KEY = process.env.GITHUB_APP_PRIVATE_KEY || '';
+    if (!APP_ID || !PRIVATE_KEY) {
+        return {
+            available: false,
+            reason: 'github_app_not_configured',
+        };
+    }
+    if (!installationId) {
+        return {
+            available: false,
+            reason: 'installation_id_not_configured_on_grant',
+        };
+    }
+
+    // --- Step 1: mint a short-lived App JWT ---------------------------------
+    const now = Math.floor(Date.now() / 1000);
+    let appJwt;
+    try {
+        appJwt = jwt.sign(
+            {
+                iat: now,
+                exp: now + 600, // 10 minutes, GitHub rejects > 10 min for App JWTs
+                iss: String(APP_ID),
+            },
+            PRIVATE_KEY,
+            { algorithm: 'ES256' }
+        );
+    } catch (err) {
+        return { available: false, reason: `jwt_sign_failed: ${err.message}` };
+    }
+
+    // --- Step 2: exchange JWT → installation access token --------------------
+    let response;
+    try {
+        response = await githubApiFetch(
+            `/app/installations/${installationId}/access_tokens`,
+            'POST',
+            { permissions: { contents: 'write', pull_requests: 'write' } },
+            appJwt
+        );
+    } catch (err) {
+        return { available: false, reason: `api_request_failed: ${err.message}` };
+    }
+
+    if (!response.ok) {
+        let detail = `HTTP ${response.status}`;
+        try {
+            const body = await response.json();
+            detail = body.error || body.message || detail;
+        } catch (_) {}
+        return { available: false, reason: `token_exchange_failed: ${detail}` };
+    }
+
+    let tokenData;
+    try {
+        tokenData = await response.json();
+    } catch (err) {
+        return { available: false, reason: `invalid_json_response: ${err.message}` };
+    }
+
     return {
-        available: false,
-        reason: 'github_app_installation_token_issuance_not_configured',
+        available: true,
+        token: tokenData.token,
+        expiresAt: tokenData.expires_at ? new Date(tokenData.expires_at).toISOString() : null,
     };
 }
 
@@ -260,4 +340,5 @@ module.exports = {
     issueInstallationToken,
     _setPoolForTest(p) { pool = p; },
     _setDevicesForTest(d) { devicesRef = d; },
+    _githubApiFetch: githubApiFetch,
 };

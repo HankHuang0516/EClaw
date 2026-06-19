@@ -82,6 +82,56 @@ describe('portal static HTML IDs', () => {
     expect(settings.match(/class="roster-action" aria-label="\$\{rosterT\('settings_roster_col_action','Action'\)\}"/g)).toHaveLength(2);
   });
 
+  test('authenticated QA/UIUX sweep regressions stay fixed', () => {
+    const dashboard = fs.readFileSync(path.join(__dirname, '../../public/portal/dashboard.html'), 'utf8');
+    const settings = fs.readFileSync(path.join(__dirname, '../../public/portal/settings.html'), 'utf8');
+    const sharedStyle = fs.readFileSync(path.join(__dirname, '../../public/portal/shared/style.css'), 'utf8');
+    const infoStyle = fs.readFileSync(path.join(__dirname, '../../public/portal/shared/info.css'), 'utf8');
+    const refsStyle = fs.readFileSync(path.join(__dirname, '../../public/shared/refs-popover.css'), 'utf8');
+    const kanban = fs.readFileSync(path.join(__dirname, '../../public/portal/kanban.html'), 'utf8');
+    const community = fs.readFileSync(path.join(__dirname, '../../public/portal/community.html'), 'utf8');
+    const envVars = fs.readFileSync(path.join(__dirname, '../../public/portal/env-vars.html'), 'utf8');
+    const chat = fs.readFileSync(path.join(__dirname, '../../public/portal/chat.html'), 'utf8');
+    const mission = fs.readFileSync(path.join(__dirname, '../../public/portal/mission.html'), 'utf8');
+    const petdxBrowser = fs.readFileSync(path.join(__dirname, '../../public/portal/petdx-browser.html'), 'utf8');
+    const telemetry = fs.readFileSync(path.join(__dirname, '../../public/portal/telemetry.html'), 'utf8');
+    // The k-Value Tracker widget originally lived on dashboard.html but moved
+    // to invite.html (card_8ff516c15600aa1b55c7cabe) — it is invite-funnel
+    // analytics, not an entity-binding metric. Lock the deviceSecret auth
+    // shape on its new home.
+    const invite = fs.readFileSync(path.join(__dirname, '../../public/portal/invite.html'), 'utf8');
+
+    expect(invite).toContain("deviceSecret: user.deviceSecret");
+    expect(invite).not.toContain("botSecret: user.deviceSecret");
+    expect(dashboard).not.toContain("botSecret: user.deviceSecret");
+
+    expect(settings).toContain("const qs = new URLSearchParams({");
+    expect(settings).toContain("deviceSecret: user.deviceSecret");
+    expect(settings).toContain("'/api/usage/snapshot?' + qs.toString()");
+
+    expect(sharedStyle).toMatch(/\.ecoin-badge\s*\{[\s\S]*min-height:\s*28px/);
+    expect(sharedStyle).toMatch(/\.btn-sm\s*\{[^}]*min-height:\s*28px/);
+    expect(sharedStyle).toMatch(/\.chip\s*\{[\s\S]*min-height:\s*28px/);
+    expect(sharedStyle).toMatch(/\.footer-link\s*\{[\s\S]*min-width:\s*28px;[\s\S]*min-height:\s*28px/);
+    expect(sharedStyle).toMatch(/\.help-icon\s*\{[\s\S]*width:\s*28px;[\s\S]*height:\s*28px/);
+    expect(infoStyle).toMatch(/\.qs-promo-link\s*\{[\s\S]*min-height:\s*28px/);
+    expect(infoStyle).toMatch(/\.ped-agent-action\s*\{[\s\S]*min-width:\s*28px;[\s\S]*min-height:\s*28px/);
+    expect(refsStyle).toMatch(/\.eclaw-refs-icon\s*\{[\s\S]*width:\s*28px;[\s\S]*height:\s*28px/);
+    expect(kanban).toMatch(/\.kb-chip\s*\{[^}]*min-height:28px/);
+    expect(chat).toMatch(/\.density-switcher button\s*\{[\s\S]*min-width:\s*28px;[\s\S]*min-height:\s*28px/);
+    expect(chat).toMatch(/\.btn-add-contact\s*\{[\s\S]*min-height:\s*28px/);
+    expect(community).toMatch(/\.invite-cta-copy-btn\s*\{[\s\S]*min-width:\s*28px;[\s\S]*min-height:\s*28px/);
+    expect(community).toMatch(/\.plaza-view-btn\s*\{[\s\S]*min-width:\s*28px;[\s\S]*min-height:\s*28px/);
+    expect(community).toMatch(/\.cap-filter-chip\s*\{[\s\S]*min-height:\s*28px/);
+    expect(mission).toMatch(/\.add-cat-btn\s*\{[\s\S]*min-height:\s*28px/);
+    expect(envVars).toMatch(/id="btnRevealCurlId"[\s\S]*min-width:28px;min-height:28px/);
+    expect(envVars).toMatch(/\.lock-btn\s*\{[\s\S]*min-height:\s*28px/);
+    expect(settings).toMatch(/\.feedback-history-link\s*\{[\s\S]*min-height:\s*28px/);
+    expect(settings).toMatch(/\.btn-ask-ai\s*\{[\s\S]*min-height:\s*28px/);
+    expect(petdxBrowser).toMatch(/\.login-warn a\s*\{[\s\S]*min-height:\s*28px/);
+    expect(telemetry).toMatch(/\.tel-btn\s*\{[\s\S]*min-height:\s*28px/);
+  });
+
   test('publisher secret visibility toggles expose accessible names and tooltips', () => {
     const publisherPath = path.join(__dirname, '../../public/portal/publisher.html');
     const publisher = fs.readFileSync(publisherPath, 'utf8');
@@ -105,6 +155,63 @@ describe('portal static HTML IDs', () => {
     });
     expect(setup).toContain("btn.setAttribute('aria-label', label)");
     expect(setup).toContain("btn.setAttribute('title', label)");
+  });
+
+  test('community plaza wires the AvatarPetdx companion system (card_3144142e)', () => {
+    // Locks the integration shipped with the card_3144142e fix so the Bot
+    // Plaza can never silently regress back to "miss AvatarPetdx" again.
+    // Mirrors the chat / dashboard / marketplace / mission / files /
+    // card-holder pages that all wire the shared companion system.
+    const communityPath = path.join(__dirname, '../../public/portal/community.html');
+    const community = fs.readFileSync(communityPath, 'utf8');
+
+    // 1. The shared AvatarPetdx renderer is loaded on the page.
+    expect(community).toContain('<script src="../shared/avatar-petdx.js"></script>');
+
+    // 2. Plaza no longer ships its private isPetdxSprite/petdxFrame0Html
+    //    fork — those duplicated the shared renderAvatarHtml() sprite branch
+    //    in entity-utils.js. The shared path is the only sprite-crop today.
+    expect(community).not.toMatch(/function\s+isPetdxSprite\s*\(/);
+    expect(community).not.toMatch(/function\s+petdxFrame0Html\s*\(/);
+
+    // 3. botAvatarHtml threads entityId into the shared renderAvatarHtml so
+    //    own-device rows can hit the AvatarPetdx canvas branch instead of
+    //    the static <img>.
+    expect(community).toMatch(
+      /function\s+botAvatarHtml\s*\(\s*avatar\s*,\s*size\s*,\s*entityId\s*\)/
+    );
+    expect(community).toContain('renderAvatarHtml(avatar, size || 48, entityId)');
+
+    // 4. The viewer's bound entities are preloaded so descriptor lookups
+    //    succeed before the cards render. The publicCode → entityId map
+    //    feeds the call sites.
+    expect(community).toContain('async function preloadOwnEntityAvatars()');
+    expect(community).toContain('window.AvatarPetdx.preload({');
+    expect(community).toContain('window.AvatarPetdx.autoMount();');
+    expect(community).toContain('_ownPublicCodeToEntityId');
+    expect(community).toContain('function entityIdForPublicCode(publicCode)');
+
+    // 5. renderGrid mounts any AvatarPetdx canvas placeholders just emitted
+    //    so the companion animates.
+    expect(community).toMatch(/window\.AvatarPetdx\.mount\s*\(\s*grid\s*\)/);
+
+    // 6. Card render call sites pass entityId so own-device rows can win
+    //    the canvas branch in shared renderAvatarHtml. Each list of three
+    //    locks the community card, rental card, community detail modal,
+    //    and rental detail modal.
+    expect(community).toContain('botAvatarHtml(bot.avatar, 56, eid)');
+    expect(community).toContain(
+      'botAvatarHtml(bot.avatar, 40, entityIdForPublicCode(bot.publicCode))'
+    );
+    expect(community).toContain(
+      'botAvatarHtml(resolveBotAvatar(bot), 72, entityIdForPublicCode(bot.publicCode))'
+    );
+    expect(community).toContain(
+      "botAvatarHtml(resolveBotAvatar({ petdxAvatarUrl: l.petdx_avatar_url, avatar: l.avatar_url }), 72, l.owner_entity_id)"
+    );
+
+    // 7. preloadOwnEntityAvatars is actually invoked on page init.
+    expect(community).toMatch(/^\s*preloadOwnEntityAvatars\(\);\s*$/m);
   });
 
 });

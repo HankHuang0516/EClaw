@@ -183,6 +183,7 @@
 
         .filter-chip {
             padding: 5px 14px;
+            min-height: 28px;
             border-radius: 20px;
             font-size: 12px;
             cursor: pointer;
@@ -207,6 +208,7 @@
 
         .filter-chip-toggle {
             padding: 5px 10px;
+            min-height: 28px;
             border-radius: 20px;
             font-size: 12px;
             cursor: pointer;
@@ -329,6 +331,8 @@
             border: 1px solid var(--card-border);
         }
         .density-switcher button {
+            min-width: 28px;
+            min-height: 28px;
             background: transparent;
             border: 0;
             color: var(--text-muted);
@@ -487,10 +491,14 @@
             text-transform: lowercase;
         }
         .code-copy-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 28px;
             background: none;
             border: 1px solid rgba(255,255,255,0.12);
             color: var(--text-muted, #8b949e);
-            padding: 2px 8px;
+            padding: 4px 8px;
             border-radius: 4px;
             font-size: 11px;
             cursor: pointer;
@@ -807,6 +815,10 @@
             flex-shrink: 0;
         }
         .btn-add-contact {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 28px;
             font-size: 13px;
             padding: 2px 8px;
             border-radius: 12px;
@@ -9246,8 +9258,13 @@
         }
 
         async function fetchContractData(auth, contractId) {
+            // Account-scoped guard (card_01417648): /api/rental/my-contracts
+            // requires a userId — a device-only / globe-user session would 401.
+            // silentFetch swallows the 401 and returns null so the chip modal
+            // shows "Not found" instead of throwing into the console.
+            if (!window.currentUser || !window.currentUser.id) return null;
             // Contracts endpoint returns list — filter by ID
-            const resp = await apiCall('GET', `/api/rental/my-contracts?${auth}`, null, { skip401Redirect: true });
+            const resp = await silentFetch('GET', `/api/rental/my-contracts?${auth}`);
             if (!resp || !resp.contracts) return null;
             const c = resp.contracts.find(x => x.id === contractId || x.id.startsWith(contractId));
             if (!c) return null;

@@ -7,7 +7,8 @@
  *   GET /daily — today's aggregate growth metrics
  *
  * Auth chain (all must pass):
- *   1. botSecret matches devices[deviceId].entities[entityId].botSecret
+ *   1. deviceSecret matches devices[deviceId].deviceSecret, OR
+ *      botSecret matches devices[deviceId].entities[entityId].botSecret
  *   2. user_accounts.is_admin = TRUE for the user owning that deviceId
  *   3. Per-bot rate limit: 60 requests / hour
  *
@@ -46,6 +47,29 @@ function findEntity(devices, deviceId, entityId, botSecret) {
     const entity = (device.entities || {})[entityId];
     if (!entity || !safeEqual(entity.botSecret, botSecret)) return null;
     return entity;
+}
+
+function authenticateMetrics(devices, { deviceId, deviceSecret, botSecret, entityId }) {
+    if (!deviceId) {
+        return { ok: false, status: 400, error: 'Missing deviceId' };
+    }
+    const device = devices[deviceId];
+    if (!device) {
+        return { ok: false, status: 401, error: 'Invalid credentials' };
+    }
+    if (deviceSecret && device.deviceSecret && safeEqual(device.deviceSecret, deviceSecret)) {
+        return { ok: true, rateKey: `device:${deviceId}`, entityId: null };
+    }
+    if (botSecret && entityId !== undefined && entityId !== null && entityId !== '') {
+        const parsedEntityId = parseInt(entityId, 10);
+        if (findEntity(devices, deviceId, parsedEntityId, botSecret)) {
+            return { ok: true, rateKey: `bot:${botSecret}`, entityId: parsedEntityId };
+        }
+    }
+    if (!deviceSecret && (!botSecret || entityId === undefined || entityId === null || entityId === '')) {
+        return { ok: false, status: 400, error: 'Missing deviceSecret or botSecret + entityId' };
+    }
+    return { ok: false, status: 401, error: 'Invalid credentials' };
 }
 
 async function isOwnerAdmin(deviceId) {
@@ -229,14 +253,15 @@ async function fetchPortalFunnel(since, until) {
     // Aggregate into: { action -> { total, by_source: [{source, channel, count}] }
     const funnel = {};
     for (const row of r.rows) {
+        const count = Number(row.event_count) || 0;
         if (!funnel[row.action]) {
             funnel[row.action] = { total: 0, by_source: [] };
         }
-        funnel[row.action].total += row.event_count;
+        funnel[row.action].total += count;
         funnel[row.action].by_source.push({
             source: row.source,
             channel: row.channel,
-            count: row.event_count
+            count
         });
     }
     return funnel;
@@ -247,11 +272,7 @@ module.exports = function(devices) {
     const router = express.Router();
 
     router.get('/daily', async (req, res) => {
-        const { deviceId, botSecret, entityId, date } = req.query;
-
-        if (!deviceId || !botSecret || !entityId) {
-            return res.status(400).json({ success: false, error: 'Missing deviceId, botSecret, or entityId' });
-        }
+        const { deviceId, deviceSecret, botSecret, entityId, date } = req.query;
 
         let anchorDate;
         if (date === undefined || date === '') {
@@ -262,12 +283,12 @@ module.exports = function(devices) {
             return res.status(400).json({ success: false, error: 'Invalid date — expected YYYY-MM-DD' });
         }
 
-        const entity = findEntity(devices, deviceId, parseInt(entityId), botSecret);
-        if (!entity) {
-            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        const auth = authenticateMetrics(devices, { deviceId, deviceSecret, botSecret, entityId });
+        if (!auth.ok) {
+            return res.status(auth.status).json({ success: false, error: auth.error });
         }
 
-        if (!checkRate(botSecret)) {
+        if (!checkRate(auth.rateKey)) {
             return res.status(429).json({ success: false, error: 'Rate limit exceeded (60/hour)' });
         }
 
@@ -311,11 +332,7 @@ module.exports = function(devices) {
 
     // GET /api/growth/funnel — portal beacon funnel counts by action × source × channel
     router.get('/funnel', async (req, res) => {
-        const { deviceId, botSecret, entityId, since, until } = req.query;
-
-        if (!deviceId || !botSecret || !entityId) {
-            return res.status(400).json({ success: false, error: 'Missing deviceId, botSecret, or entityId' });
-        }
+        const { deviceId, deviceSecret, botSecret, entityId, since, until } = req.query;
         if (!since || !until) {
             return res.status(400).json({ success: false, error: 'since and until (YYYY-MM-DD) are required' });
         }
@@ -323,12 +340,23 @@ module.exports = function(devices) {
             return res.status(400).json({ success: false, error: 'Invalid date — expected YYYY-MM-DD' });
         }
 
-        const entity = findEntity(devices, deviceId, parseInt(entityId), botSecret);
-        if (!entity) {
-            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        const auth = authenticateMetrics(devices, { deviceId, deviceSecret, botSecret, entityId });
+        if (!auth.ok) {
+            return res.status(auth.status).json({ success: false, error: auth.error });
         }
-        if (!checkRate(botSecret)) {
+        if (!checkRate(auth.rateKey)) {
             return res.status(429).json({ success: false, error: 'Rate limit exceeded (60/hour)' });
+        }
+
+        let admin;
+        try {
+            admin = await isOwnerAdmin(deviceId);
+        } catch (err) {
+            console.error('[Growth] funnel admin check error:', err);
+            return res.status(500).json({ success: false, error: 'Internal error' });
+        }
+        if (!admin) {
+            return res.status(403).json({ success: false, error: 'Owner is not admin' });
         }
 
         try {
@@ -342,6 +370,6 @@ module.exports = function(devices) {
 
     return {
         router,
-        _internal: { checkRate, findEntity, isOwnerAdmin, fetchSignupsForDate, fetchSignupSourceForDate, fetchRetention7dForDate, fetchPlazaNewListedForDate, fetchInviteConversion, fetchInviteClicksForDate, fetchInviteKForDate, fetchPortalFunnel, isValidDateStr, taipeiTodayISO, rateBuckets }
+        _internal: { checkRate, findEntity, authenticateMetrics, isOwnerAdmin, fetchSignupsForDate, fetchSignupSourceForDate, fetchRetention7dForDate, fetchPlazaNewListedForDate, fetchInviteConversion, fetchInviteClicksForDate, fetchInviteKForDate, fetchPortalFunnel, isValidDateStr, taipeiTodayISO, rateBuckets }
     };
 };

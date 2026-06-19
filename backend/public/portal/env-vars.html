@@ -74,7 +74,9 @@
         .lock-btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
+            min-height: 28px;
             padding: 6px 14px;
             border-radius: var(--radius-pill);
             font-size: 13px;
@@ -356,7 +358,7 @@
                         載入中...
                     </div>
                     <button id="btnRevealCurlId" onclick="toggleCurlHintReveal()"
-                        style="position:absolute;top:4px;right:6px;background:none;border:none;cursor:pointer;font-size:13px;padding:2px;opacity:0.55;"
+                        style="position:absolute;top:4px;right:6px;background:none;border:none;cursor:pointer;font-size:13px;padding:0;opacity:0.68;min-width:28px;min-height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;"
                         data-i18n-title="env_toggle_device_id" title="Show/Hide Device ID">👁</button>
                 </div>
             </div>

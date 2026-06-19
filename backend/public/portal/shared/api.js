@@ -71,6 +71,42 @@ async function apiCall(method, path, body = null, opts = {}) {
     return data;
 }
 
+/**
+ * silentFetch — fail-safe wrapper around apiCall() for fail-safe scope-gated calls.
+ *
+ * Returns null on 401/403 (auth/scope mismatch) and on any thrown error, instead
+ * of letting the error propagate and littering the console with red errors for
+ * device-only / globe-user sessions whose account-scoped endpoints (wallet,
+ * rental) legitimately have nothing to return.
+ *
+ * Always passes { skip401Redirect: true } so the page never kicks the user back
+ * to login for a fail-safe probe.
+ *
+ * Use for "render-empty-if-not-set-up" probes (wallet balance, rental listings,
+ * rental contracts). Do NOT use for primary CRUD calls — those still need the
+ * caller to surface meaningful errors. See card_01417648.
+ *
+ * @param {string} method  — HTTP method (usually 'GET')
+ * @param {string} path    — API path (e.g. '/api/wallet/balance')
+ * @param {object} [body]  — request body
+ * @param {object} [opts]  — extra opts merged on top of { skip401Redirect: true }
+ * @returns {Promise<object|null>} — response JSON, or null on 401/403/error
+ */
+async function silentFetch(method, path, body = null, opts = {}) {
+    try {
+        const merged = Object.assign({ skip401Redirect: true }, opts);
+        const data = await apiCall(method, path, body, merged);
+        return data || null;
+    } catch (err) {
+        if (err && (err.status === 401 || err.status === 403)) return null;
+        // Non-auth errors: also swallow but log for diagnostics. The caller
+        // gets null and renders the empty state, which is the desired fail-safe
+        // behavior for these probes.
+        try { console.debug('[silentFetch] swallowed error:', path, err && err.message); } catch (_) {}
+        return null;
+    }
+}
+
 // Toast notifications
 function showToast(message, type = 'info') {
     const existing = document.querySelector('.toast');

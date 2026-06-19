@@ -27,6 +27,7 @@ import shutil
 import sys
 import time
 import urllib.parse
+import urllib.error
 import urllib.request
 import uuid
 from collections import deque
@@ -655,13 +656,71 @@ Rules:
 
 
 # ── Repo Clone & Sync ────────────────────────
-def _vault_fetch(device_id: str, bot_secret: str, org: str, keys) -> tuple[Optional[str], Optional[str]]:
-    """Pull a GitHub PAT from /api/device-vars using caller-supplied creds.
+def _vault_fetch(device_id: str, bot_secret: str, entity_id_or_org, org_or_keys, keys=None) -> tuple[Optional[str], Optional[str]]:
+    """Pull a GitHub PAT from either /api/hermes/org-token (per-org grant-check) or
+    /api/device-vars (legacy device-wide vault).
 
-    This is the per-request vault fetcher: it never reads module-level
-    EVAULT_DEVICE_ID/EVAULT_BOT_SECRET so different callers stay isolated.
+    When entity_id_or_org is a positive int, the proxy calls:
+      GET /api/hermes/org-token?orgLogin=X&deviceId=Y&botSecret=Z&entityId=W
+    This performs a grant-check against entity_org_grants and returns a scoped
+    GitHub App installation token — Hermes cannot access orgs it was not granted.
+
+    Otherwise (entity_id_or_org is a str or non-positive int), falls back to the
+    legacy /api/device-vars vault path with the same (deviceId, botSecret, org, keys)
+    signature as before.
+
     Returns (token, used_key_name) or (None, None).
     """
+    # Support both callback signatures used by repo_auth:
+    #   legacy:    (device_id, bot_secret, org, keys)
+    #   org-token: (device_id, bot_secret, entity_id, org, keys)
+    entity_id: Optional[int] = None
+    if keys is None:
+        org = str(entity_id_or_org)
+        keys = org_or_keys
+    elif isinstance(entity_id_or_org, int) and entity_id_or_org > 0:
+        entity_id = entity_id_or_org
+        org = str(org_or_keys)
+    else:
+        org = str(org_or_keys)
+
+    if entity_id is not None and entity_id > 0:
+        # Per-org org-token path — grant-check + scoped installation token
+        qs = urllib.parse.urlencode({
+            "deviceId": device_id,
+            "botSecret": bot_secret,
+            "entityId": entity_id,
+            "orgLogin": org,
+        })
+        url = f"{EVAULT_API_BASE}/api/hermes/org-token?{qs}"
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "claude-cli-proxy/2.0"})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                body = json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            if e.code in (403, 404):
+                log.warning(f"[Vault] org-token {org} denied for entity={entity_id}: HTTP {e.code}")
+                return None, None
+            log.warning(f"[Vault] org-token HTTP error for entity={entity_id}: {str(e)[:200]}")
+            return None, None
+        except Exception as e:
+            log.warning(f"[Vault] org-token fetch failed for entity={entity_id}: {str(e)[:200]}")
+            return None, None
+        if not body.get("success"):
+            reason = body.get("error", "unknown")
+            granted = body.get("granted", False)
+            if not granted:
+                log.warning(f"[Vault] org-token denied for entity={entity_id} org={org}: {reason}")
+            else:
+                log.warning(f"[Vault] org-token issuance unavailable for entity={entity_id} org={org}: {reason}")
+            return None, None
+        token = body.get("token")
+        if token:
+            log.info(f"[Vault] org-token org={org} entity={entity_id} (granted)")
+            return token, "installation"
+        return None, None
+
+    # Legacy device-vault path
     qs = urllib.parse.urlencode({"deviceId": device_id, "botSecret": bot_secret})
     url = f"{EVAULT_API_BASE}/api/device-vars?{qs}"
     try:
@@ -687,15 +746,19 @@ def _resolve_repo_auth_for_request(
     *,
     caller_device_id: Optional[str] = None,
     caller_bot_secret: Optional[str] = None,
+    caller_entity_id: Optional[int] = None,
     repo_host_path: str = "",
     vault_key: str = "",
     allowed_orgs: str = "",
 ) -> ResolvedRepoAuth:
     """Per-request auth entry. Falls back to module env when caller omits creds.
 
-    This is the only path /chat and /analyze should use. Module-level
-    REPO_SCOPE / EVAULT_DEVICE_ID are consulted ONLY as defaults when the
-    request itself doesn't carry the corresponding field.
+    When caller_entity_id is set, the proxy uses the per-org org-token endpoint
+    (/api/hermes/org-token) which performs a grant-check against entity_org_grants.
+    Without caller_entity_id, uses the legacy device-vault path (/api/device-vars).
+
+    Module-level REPO_SCOPE / EVAULT_DEVICE_ID are consulted ONLY as defaults when
+    the request itself doesn't carry the corresponding field.
     """
     effective_host_path = repo_host_path or REPO_GIT_HOST_PATH
     effective_orgs = allowed_orgs or REPO_ALLOWED_ORGS
@@ -706,6 +769,7 @@ def _resolve_repo_auth_for_request(
         allowed_orgs=effective_orgs,
         caller_device_id=caller_device_id,
         caller_bot_secret=caller_bot_secret,
+        caller_entity_id=caller_entity_id,
         vault_key=effective_key,
         allow_global_vault=EVAULT_ALLOW_GLOBAL_GITHUB_TOKEN,
         require_auth=REPO_REQUIRE_AUTH,
@@ -972,9 +1036,13 @@ class ChatRequest(BaseModel):
     # Per-request multi-tenant auth (H3). When set, the proxy uses these
     # caller-supplied creds to fetch the caller's own GitHub PAT from their
     # own vault — different device-owners on the same proxy never share a
-    # token or a clone directory.
+    # token or a clone directory.  When caller_entity_id is set, the proxy
+    # calls the per-org token endpoint (/api/hermes/org-token) which performs
+    # a grant-check against entity_org_grants and returns a scoped GitHub App
+    # installation token instead of the device-wide vault PAT.
     caller_device_id: Optional[str] = None
     caller_bot_secret: Optional[str] = None
+    caller_entity_id: Optional[int] = None  # entity doing the call; drives org-token grant-check
     repo_host_path: Optional[str] = None  # defaults to module REPO_GIT_HOST_PATH
     vault_key: Optional[str] = None       # defaults to module EVAULT_GITHUB_TOKEN_KEY
     allowed_orgs: Optional[str] = None    # defaults to module REPO_ALLOWED_ORGS
@@ -1096,12 +1164,14 @@ async def chat(req: ChatRequest, request: Request):
     # Per-request auth resolution + lazy tenant clone (H3 multi-tenant).
     # Falls back to env defaults when caller_device_id is absent so the
     # legacy single-tenant deploy keeps working through the transition.
+    # When caller_entity_id is set, uses the per-org org-token endpoint.
     resolved_auth: Optional[ResolvedRepoAuth] = None
     tenant_repo_dir: Optional[Path] = None
     try:
         resolved_auth = _resolve_repo_auth_for_request(
             caller_device_id=req.caller_device_id,
             caller_bot_secret=req.caller_bot_secret,
+            caller_entity_id=req.caller_entity_id,
             repo_host_path=req.repo_host_path or "",
             vault_key=req.vault_key or "",
             allowed_orgs=req.allowed_orgs or "",

@@ -487,10 +487,12 @@
     <string name="notif_pref_bot_reply">机器人回复</string>
     <string name="notif_pref_broadcast">广播消息</string>
     <string name="notif_pref_feedback">用户反馈</string>
+    <string name="notif_pref_rich_card">互动卡片提问</string>
     <string name="notif_pref_scheduled">定时任务</string>
     <string name="notif_pref_speak_to">私聊消息</string>
     <string name="notif_pref_title">通知设置</string>
     <string name="notif_pref_todo">待办提醒</string>
+    <string name="notif_pref_user_mention">@提及提醒</string>
     <string name="notif_prefs_error">加载失败</string>
     <string name="notif_prefs_loading">正在加载…</string>
     <string name="notification_sent">通知已发送</string>

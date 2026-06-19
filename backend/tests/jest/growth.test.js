@@ -60,6 +60,7 @@ beforeEach(() => {
 });
 
 const get = (qs) => request(app).get('/api/growth/daily' + qs);
+const getFunnel = (qs) => request(app).get('/api/growth/funnel' + qs);
 
 function setupAdminQueries({
     signups = 5, cohort = 10, active = 4, plaza = 2,
@@ -81,6 +82,15 @@ function setupAdminQueries({
         .mockResolvedValueOnce({ rows: finalInviteClicksRows })
         .mockResolvedValueOnce({ rows: finalSourceRows })
         .mockResolvedValueOnce({ rows: [finalInviteKRow] });
+}
+
+function setupFunnelQueries({
+    isAdmin = true,
+    rows = [{ action: 'signup_started', source: 'web_portal', channel: 'portal', event_count: '3' }],
+} = {}) {
+    mockQuery
+        .mockResolvedValueOnce({ rows: [{ is_admin: isAdmin }] })
+        .mockResolvedValueOnce({ rows });
 }
 
 describe('Growth /daily auth', () => {
@@ -109,6 +119,14 @@ describe('Growth /daily auth', () => {
         mockQuery.mockResolvedValueOnce({ rows: [] });
         const res = await get('?deviceId=unknown-dev&botSecret=orphan-bot-sec&entityId=2');
         expect(res.status).toBe(403);
+    });
+
+    it('accepts owner deviceSecret without requiring an entity botSecret', async () => {
+        setupAdminQueries({ signups: 4 });
+        const res = await get('?deviceId=admin-dev&deviceSecret=sec');
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.today_signups).toBe(4);
     });
 });
 
@@ -301,6 +319,34 @@ describe('Growth /daily rate limit', () => {
         const res = await get('?deviceId=user-dev&botSecret=user-bot-sec&entityId=2');
         expect(res.status).toBe(200);
     }, 30000);
+});
+
+describe('Growth /funnel auth', () => {
+    const range = '&since=2026-06-01&until=2026-06-19';
+
+    it('accepts owner deviceSecret only for admin owners', async () => {
+        setupFunnelQueries();
+        const res = await getFunnel('?deviceId=admin-dev&deviceSecret=sec' + range);
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.funnel.signup_started).toEqual({
+            total: 3,
+            by_source: [{ source: 'web_portal', channel: 'portal', count: 3 }],
+        });
+    });
+
+    it('rejects non-admin owners after metric auth', async () => {
+        setupFunnelQueries({ isAdmin: false });
+        const res = await getFunnel('?deviceId=user-dev&deviceSecret=sec2' + range);
+        expect(res.status).toBe(403);
+        expect(res.body.error).toMatch(/admin/i);
+    });
+
+    it('returns 500 on db error in funnel admin check', async () => {
+        mockQuery.mockRejectedValueOnce(new Error('funnel admin check failed'));
+        const res = await getFunnel('?deviceId=admin-dev&deviceSecret=sec' + range);
+        expect(res.status).toBe(500);
+    });
 });
 
 describe('Growth signup_source schema contract', () => {

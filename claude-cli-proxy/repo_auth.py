@@ -158,7 +158,10 @@ def caller_id_for(device_id: Optional[str], host_path: str) -> str:
 
 # Type alias for the vault-fetch callback so resolve_per_request_auth stays
 # dependency-free (the real fetcher lives in proxy.py with urllib).
-VaultFetcher = Callable[[str, str, str, Sequence[str]], "tuple[Optional[str], Optional[str]]"]
+# The callback receives (device_id, bot_secret, org, keys) when entity_id is
+# absent (legacy vault path), or (device_id, bot_secret, entity_id, org, keys)
+# when entity_id is set (org-token path with grant-check).
+VaultFetcher = Callable[..., "tuple[Optional[str], Optional[str]]"]
 
 
 def resolve_per_request_auth(
@@ -167,6 +170,7 @@ def resolve_per_request_auth(
     allowed_orgs: str,
     caller_device_id: Optional[str],
     caller_bot_secret: Optional[str],
+    caller_entity_id: Optional[int] = None,
     vault_key: str,
     allow_global_vault: bool,
     require_auth: bool,
@@ -175,9 +179,16 @@ def resolve_per_request_auth(
 ) -> ResolvedRepoAuth:
     """Resolve auth for a single request without touching module globals.
 
-    Resolution order:
+    Resolution order when caller_entity_id is set:
+      1. Per-org org-token endpoint — caller_entity_id + deviceId/botSecret +
+         org → grant-check + scoped GitHub App installation token
+      2. Anonymous or RepoAuthError. This path intentionally does not fall
+         back to legacy device-wide or env tokens because that would bypass the
+         per-org grant check.
+
+    Resolution order when caller_entity_id is absent (legacy path):
       1. Per-request vault — caller's deviceId/botSecret + their vault_key
-      2. Env token — legacy GITHUB_TOKEN fallback (only if no caller creds)
+      2. Env token — legacy GITHUB_TOKEN fallback
       3. Anonymous — only if require_auth is False
 
     Raises RepoScopeError on out-of-scope repo, RepoAuthError when require_auth
@@ -186,6 +197,30 @@ def resolve_per_request_auth(
     scope = validate_repo_scope(repo_host_path, allowed_orgs)
     caller_id = caller_id_for(caller_device_id, scope.host_path)
 
+    # When caller_entity_id is set, use only the per-org org-token endpoint.
+    # Falling through to legacy/env tokens would bypass the entity/org grant.
+    if caller_entity_id:
+        if caller_device_id and caller_bot_secret and vault_fetcher is not None:
+            token, used_key = vault_fetcher(
+                caller_device_id, caller_bot_secret, caller_entity_id, scope.org, (),
+            )
+            if token:
+                return ResolvedRepoAuth(
+                    scope=scope, url=scope.url, token=token,
+                    source=f"org-token:{used_key or 'hermes'}",
+                    caller_id=caller_id,
+                )
+        if require_auth:
+            raise RepoAuthError(
+                f"repo auth required for {scope.org}/{scope.repo}, "
+                "but no entity-scoped org token"
+            )
+        return ResolvedRepoAuth(
+            scope=scope, url=scope.url, token=None,
+            source="anonymous", caller_id=caller_id,
+        )
+
+    # Legacy path: per-request vault (deviceId+botSecret → vault key lookup).
     if caller_device_id and caller_bot_secret and vault_fetcher is not None:
         keys = token_key_candidates(scope.org, explicit_key=vault_key, allow_global=allow_global_vault)
         token, used_key = vault_fetcher(caller_device_id, caller_bot_secret, scope.org, keys)

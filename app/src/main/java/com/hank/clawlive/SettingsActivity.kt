@@ -47,6 +47,8 @@ import com.facebook.FacebookCallback
 import com.facebook.FacebookException
 import com.facebook.login.LoginManager
 import com.facebook.login.LoginResult
+import com.hank.clawlive.settings.NotificationPreferenceCatalog
+import com.hank.clawlive.settings.NotificationPreferenceCategory
 import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.EntityChipHelper
@@ -1027,22 +1029,6 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    private data class NotifPrefCategory(
-        val key: String,
-        val labelResId: Int
-    )
-
-    private val notifCategories = listOf(
-        NotifPrefCategory("bot_reply", R.string.notif_pref_bot_reply),
-        NotifPrefCategory("broadcast", R.string.notif_pref_broadcast),
-        NotifPrefCategory("speak_to", R.string.notif_pref_speak_to),
-        NotifPrefCategory("feedback_resolved", R.string.notif_pref_feedback),
-        NotifPrefCategory("todo_done", R.string.notif_pref_todo),
-        NotifPrefCategory("kanban_done", R.string.notif_pref_kanban_done),
-        NotifPrefCategory("kanban_done_auto", R.string.notif_pref_kanban_done_auto),
-        NotifPrefCategory("scheduled", R.string.notif_pref_scheduled)
-    )
-
     private fun loadNotificationPreferences() {
         // Show loading state
         notifPrefsContainer.removeAllViews()
@@ -1074,7 +1060,7 @@ class SettingsActivity : AppCompatActivity() {
     private fun buildNotifPrefToggles(prefs: Map<String, Boolean>) {
         notifPrefsContainer.removeAllViews()
 
-        for (category in notifCategories) {
+        for (category in NotificationPreferenceCatalog.categories) {
             val enabled = prefs[category.key] ?: true
 
             val row = LinearLayout(this).apply {
@@ -1099,7 +1085,7 @@ class SettingsActivity : AppCompatActivity() {
             val toggle = MaterialSwitch(this).apply {
                 isChecked = enabled
                 setOnCheckedChangeListener { _, isChecked ->
-                    updateNotifPref(category.key, isChecked)
+                    updateNotifPref(category, isChecked)
                 }
             }
 
@@ -1109,13 +1095,13 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateNotifPref(category: String, enabled: Boolean) {
+    private fun updateNotifPref(category: NotificationPreferenceCategory, enabled: Boolean) {
         lifecycleScope.launch {
             try {
                 val body = mapOf<String, Any>(
                     "deviceId" to deviceManager.deviceId,
                     "deviceSecret" to deviceManager.deviceSecret,
-                    "prefs" to mapOf(category to enabled)
+                    "prefs" to category.updatePayload(enabled)
                 )
                 val response = NetworkModule.api.updateNotificationPreferences(body)
                 if (!response.success) {
@@ -1123,7 +1109,7 @@ class SettingsActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to update notification preference")
-                TelemetryHelper.trackError(e, mapOf("action" to "update_notif_pref", "category" to category))
+                TelemetryHelper.trackError(e, mapOf("action" to "update_notif_pref", "category" to category.key))
             }
         }
     }
