@@ -86,6 +86,7 @@ dependencies {
 
     // Google Play Billing for subscriptions
     implementation(libs.billing)
+    implementation(libs.play.integrity)
 
     // Room Database for chat history
     implementation(libs.room.runtime)

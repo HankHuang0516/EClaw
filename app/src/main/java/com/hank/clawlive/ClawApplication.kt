@@ -8,6 +8,7 @@ import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.debug.CrashLogManager
 import com.hank.clawlive.debug.FileTimberTree
+import com.hank.clawlive.integrity.PlayIntegrityReporter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -60,7 +61,21 @@ class ClawApplication : Application() {
         // and POSTing it unconditionally fixes that class of silent failures.
         refreshAndRegisterFcmToken()
 
+        // 7. Report a Play Integrity startup signal in release builds so Play
+        // Console can monitor genuine installs without adding user-visible work.
+        reportPlayIntegrityStartup()
+
         Timber.i("ClawApplication initialized")
+    }
+
+    private fun reportPlayIntegrityStartup() {
+        if (BuildConfig.DEBUG) {
+            Timber.d("[PlayIntegrity] Skipping startup report in debug build")
+            return
+        }
+        CoroutineScope(Dispatchers.IO).launch {
+            PlayIntegrityReporter.getInstance(this@ClawApplication).reportStartup()
+        }
     }
 
     private fun refreshAndRegisterFcmToken() {
