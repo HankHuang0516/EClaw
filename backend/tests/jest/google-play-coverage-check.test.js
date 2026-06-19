@@ -6,12 +6,24 @@ describe('Google Play coverage check script helpers', () => {
     test('extracts Android versionCode and versionName from Gradle file text', () => {
         const parsed = checker.parseAndroidVersion(`
             defaultConfig {
+                applicationId = "com.hank.clawlive"
                 versionCode = 101
                 versionName = "1.0.93"
             }
         `);
 
         expect(parsed).toEqual({
+            versionCode: 101,
+            versionName: '1.0.93',
+        });
+        expect(checker.parseAndroidConfig(`
+            defaultConfig {
+                applicationId = "com.hank.clawlive"
+                versionCode = 101
+                versionName = "1.0.93"
+            }
+        `)).toEqual({
+            applicationId: 'com.hank.clawlive',
             versionCode: 101,
             versionName: '1.0.93',
         });
@@ -54,14 +66,86 @@ describe('Google Play coverage check script helpers', () => {
         const defaults = checker.parseArgs([], '/tmp/eclaw');
         const overridden = checker.parseArgs([
             '--expected-fingerprint=aa:bb',
+            '--expected-package=com.example.app',
+            '--expected-applink-host=example.com',
+            '--expected-applink-prefix=/invite/',
             '--expected-verdict-action=billing_topup',
             '--expected-verdict-version-code=101',
+            '--android-manifest=/tmp/AndroidManifest.xml',
         ], '/tmp/eclaw');
 
         expect(defaults.expectedFingerprints).toEqual(checker.DEFAULT_EXPECTED_FINGERPRINTS);
+        expect(defaults.expectedPackageName).toBe(checker.DEFAULT_EXPECTED_PACKAGE_NAME);
+        expect(defaults.expectedAppLinkHost).toBe(checker.DEFAULT_EXPECTED_APP_LINK_HOST);
+        expect(defaults.expectedAppLinkPathPrefix).toBe(checker.DEFAULT_EXPECTED_APP_LINK_PATH_PREFIX);
         expect(overridden.expectedFingerprints).toEqual(['AA:BB']);
+        expect(overridden.expectedPackageName).toBe('com.example.app');
+        expect(overridden.expectedAppLinkHost).toBe('example.com');
+        expect(overridden.expectedAppLinkPathPrefix).toBe('/invite/');
         expect(overridden.expectedVerdictAction).toBe('billing_topup');
         expect(overridden.expectedVerdictVersionCode).toBe(101);
+        expect(overridden.androidManifestPath).toBe('/tmp/AndroidManifest.xml');
+    });
+
+    test('recognizes the Android App Links manifest entry Play Console validates', () => {
+        const manifest = `
+            <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <application>
+                <activity android:name=".MainActivity" android:exported="true">
+                  <intent-filter android:autoVerify="true">
+                    <action android:name="android.intent.action.VIEW" />
+                    <category android:name="android.intent.category.DEFAULT" />
+                    <category android:name="android.intent.category.BROWSABLE" />
+                    <data
+                      android:scheme="https"
+                      android:host="eclawbot.com"
+                      android:pathPrefix="/r/" />
+                  </intent-filter>
+                </activity>
+              </application>
+            </manifest>
+        `;
+
+        expect(checker.evaluateManifestAppLink(manifest)).toMatchObject({
+            ok: true,
+            activityFound: true,
+            autoVerify: true,
+            viewAction: true,
+            defaultCategory: true,
+            browsableCategory: true,
+            dataMatches: true,
+        });
+    });
+
+    test('rejects App Links manifest entries that are not auto verified', () => {
+        const manifest = `
+            <activity android:name="com.hank.clawlive.MainActivity">
+              <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="eclawbot.com" android:pathPrefix="/r/" />
+              </intent-filter>
+            </activity>
+        `;
+
+        expect(checker.evaluateManifestAppLink(manifest)).toMatchObject({
+            ok: false,
+            activityFound: true,
+            autoVerify: false,
+            dataMatches: true,
+        });
+    });
+
+    test('recognizes backend Play Integrity router mounting', () => {
+        expect(checker.backendHasPlayIntegrityRouter(`
+            const playIntegrity = require('./play-integrity');
+            app.use('/api/play-integrity', playIntegrity.createRouter({ devices }));
+        `)).toBe(true);
+
+        expect(checker.backendHasPlayIntegrityRouter(`
+            const playIntegrity = require('./play-integrity');
+        `)).toBe(false);
     });
 
     test('requires device auth when checking expected verdict action', async () => {

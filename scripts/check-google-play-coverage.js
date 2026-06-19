@@ -5,6 +5,9 @@ const fs = require('fs');
 const path = require('path');
 
 const DEFAULT_BASE_URL = 'https://eclawbot.com';
+const DEFAULT_EXPECTED_PACKAGE_NAME = 'com.hank.clawlive';
+const DEFAULT_EXPECTED_APP_LINK_HOST = 'eclawbot.com';
+const DEFAULT_EXPECTED_APP_LINK_PATH_PREFIX = '/r/';
 const DEFAULT_EXPECTED_FINGERPRINTS = [
     // Play App Signing certificate fingerprint.
     'A2:EB:6D:55:DD:DF:1C:9D:68:2E:B5:67:1C:1A:E5:8C:01:06:CB:A2:A2:93:5D:DB:CE:D2:AB:E2:E6:F7:76:DB',
@@ -21,9 +24,13 @@ function parseArgs(argv = process.argv.slice(2), cwd = process.cwd()) {
         baseUrl: DEFAULT_BASE_URL,
         assetlinksUrl: null,
         expectedFingerprints: DEFAULT_EXPECTED_FINGERPRINTS.slice(),
+        expectedPackageName: DEFAULT_EXPECTED_PACKAGE_NAME,
+        expectedAppLinkHost: DEFAULT_EXPECTED_APP_LINK_HOST,
+        expectedAppLinkPathPrefix: DEFAULT_EXPECTED_APP_LINK_PATH_PREFIX,
         minVersionCode: null,
         expectedVersionName: null,
         appGradlePath: path.join(cwd, 'app', 'build.gradle.kts'),
+        androidManifestPath: path.join(cwd, 'app', 'src', 'main', 'AndroidManifest.xml'),
         backendIndexPath: path.join(cwd, 'backend', 'index.js'),
         deviceId: process.env.DEVICE_ID || '',
         deviceSecret: process.env.DEVICE_SECRET || '',
@@ -54,6 +61,12 @@ function parseArgs(argv = process.argv.slice(2), cwd = process.cwd()) {
                 customFingerprints = true;
             }
             options.expectedFingerprints.push(normalizeFingerprint(arg.slice('--expected-fingerprint='.length)));
+        } else if (arg.startsWith('--expected-package=')) {
+            options.expectedPackageName = arg.slice('--expected-package='.length);
+        } else if (arg.startsWith('--expected-applink-host=')) {
+            options.expectedAppLinkHost = arg.slice('--expected-applink-host='.length);
+        } else if (arg.startsWith('--expected-applink-prefix=')) {
+            options.expectedAppLinkPathPrefix = arg.slice('--expected-applink-prefix='.length);
         } else if (arg.startsWith('--min-version-code=')) {
             options.minVersionCode = Number(arg.slice('--min-version-code='.length));
         } else if (arg.startsWith('--expected-version-name=')) {
@@ -64,6 +77,8 @@ function parseArgs(argv = process.argv.slice(2), cwd = process.cwd()) {
             options.expectedVerdictVersionCode = Number(arg.slice('--expected-verdict-version-code='.length));
         } else if (arg.startsWith('--app-gradle=')) {
             options.appGradlePath = arg.slice('--app-gradle='.length);
+        } else if (arg.startsWith('--android-manifest=')) {
+            options.androidManifestPath = arg.slice('--android-manifest='.length);
         } else if (arg.startsWith('--backend-index=')) {
             options.backendIndexPath = arg.slice('--backend-index='.length);
         } else if (arg.startsWith('--device-id=')) {
@@ -86,10 +101,14 @@ function usage() {
         '  --base-url=https://eclawbot.com',
         '  --assetlinks-url=https://eclawbot.com/.well-known/assetlinks.json',
         '  --expected-fingerprint=SHA256   Repeatable; defaults to Play App Signing + upload cert.',
+        '  --expected-package=com.hank.clawlive',
+        '  --expected-applink-host=eclawbot.com',
+        '  --expected-applink-prefix=/r/',
         '  --min-version-code=101          Verify app/build.gradle.kts versionCode.',
         '  --expected-version-name=1.0.93  Verify app versionName and backend LATEST_APP_VERSION.',
         '  --expected-verdict-action=billing_topup  Verify debug lastVerdict.action.',
         '  --expected-verdict-version-code=101  Verify debug lastVerdict appIntegrity.versionCode.',
+        '  --android-manifest=app/src/main/AndroidManifest.xml',
         '  --device-id=ID                  Or DEVICE_ID env var.',
         '  --device-secret=SECRET          Or DEVICE_SECRET env var. Never printed.',
         '  --require-play-integrity        Require debug endpoint verifier + standard config.',
@@ -106,13 +125,20 @@ async function fetchJson(url, label = url) {
     return response.json();
 }
 
-function parseAndroidVersion(text) {
+function parseAndroidConfig(text) {
     const versionCode = Number((text.match(/versionCode\s*=\s*(\d+)/) || [])[1]);
     const versionName = (text.match(/versionName\s*=\s*"([^"]+)"/) || [])[1] || null;
+    const applicationId = (text.match(/applicationId\s*=\s*"([^"]+)"/) || [])[1] || null;
     return {
         versionCode: Number.isFinite(versionCode) ? versionCode : null,
         versionName,
+        applicationId,
     };
+}
+
+function parseAndroidVersion(text) {
+    const { versionCode, versionName } = parseAndroidConfig(text);
+    return { versionCode, versionName };
 }
 
 function parseBackendLatestVersion(text) {
@@ -148,7 +174,107 @@ function extractLastVerdictVersionCode(lastVerdict) {
 }
 
 function safeRead(filePath) {
+    if (!filePath) return null;
     return fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : null;
+}
+
+function hasGradleDependency(text, candidates) {
+    return candidates.some(candidate => text.includes(candidate));
+}
+
+function escapeRegExp(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function readXmlAttribute(text, name) {
+    const match = String(text || '').match(new RegExp(`${escapeRegExp(name)}\\s*=\\s*"([^"]*)"`));
+    return match ? match[1] : null;
+}
+
+function resolveAndroidClassName(name, packageName) {
+    if (!name) return null;
+    if (name.startsWith('.')) return `${packageName}${name}`;
+    return name.includes('.') ? name : `${packageName}.${name}`;
+}
+
+function hasNamedElement(text, elementName, androidName) {
+    return new RegExp(`<${elementName}\\b[^>]*android:name\\s*=\\s*"${escapeRegExp(androidName)}"`, 'm')
+        .test(text);
+}
+
+function dataValues(intentBody, attributeName) {
+    const values = [];
+    const dataRe = /<data\b([^>]*)\/?>/gm;
+    let match;
+    while ((match = dataRe.exec(intentBody)) !== null) {
+        const value = readXmlAttribute(match[1], attributeName);
+        if (value) values.push(value);
+    }
+    return values;
+}
+
+function evaluateManifestAppLink(manifestText, {
+    expectedPackageName = DEFAULT_EXPECTED_PACKAGE_NAME,
+    expectedHost = DEFAULT_EXPECTED_APP_LINK_HOST,
+    expectedPathPrefix = DEFAULT_EXPECTED_APP_LINK_PATH_PREFIX,
+} = {}) {
+    const expectedActivity = `${expectedPackageName}.MainActivity`;
+    const result = {
+        activityFound: false,
+        autoVerify: false,
+        viewAction: false,
+        defaultCategory: false,
+        browsableCategory: false,
+        dataMatches: false,
+    };
+    const activityRe = /<activity\b([^>]*)>([\s\S]*?)<\/activity>/gm;
+    let activity;
+    while ((activity = activityRe.exec(manifestText)) !== null) {
+        const activityName = resolveAndroidClassName(readXmlAttribute(activity[1], 'android:name'), expectedPackageName);
+        if (activityName !== expectedActivity) continue;
+        result.activityFound = true;
+
+        const filterRe = /<intent-filter\b([^>]*)>([\s\S]*?)<\/intent-filter>/gm;
+        let filter;
+        while ((filter = filterRe.exec(activity[2])) !== null) {
+            const attrs = filter[1];
+            const body = filter[2];
+            const autoVerify = readXmlAttribute(attrs, 'android:autoVerify') === 'true';
+            const viewAction = hasNamedElement(body, 'action', 'android.intent.action.VIEW');
+            const defaultCategory = hasNamedElement(body, 'category', 'android.intent.category.DEFAULT');
+            const browsableCategory = hasNamedElement(body, 'category', 'android.intent.category.BROWSABLE');
+            const schemes = dataValues(body, 'android:scheme');
+            const hosts = dataValues(body, 'android:host');
+            const pathPrefixes = dataValues(body, 'android:pathPrefix');
+            const dataMatches = schemes.includes('https')
+                && hosts.includes(expectedHost)
+                && pathPrefixes.includes(expectedPathPrefix);
+
+            result.autoVerify ||= autoVerify;
+            result.viewAction ||= viewAction;
+            result.defaultCategory ||= defaultCategory;
+            result.browsableCategory ||= browsableCategory;
+            result.dataMatches ||= dataMatches;
+
+            if (autoVerify && viewAction && defaultCategory && browsableCategory && dataMatches) {
+                return { ...result, ok: true };
+            }
+        }
+    }
+    return {
+        ...result,
+        ok: result.activityFound
+            && result.autoVerify
+            && result.viewAction
+            && result.defaultCategory
+            && result.browsableCategory
+            && result.dataMatches,
+    };
+}
+
+function backendHasPlayIntegrityRouter(text) {
+    return /require\(['"]\.\/play-integrity['"]\)/.test(text)
+        && /app\.use\(['"]\/api\/play-integrity['"]/.test(text);
 }
 
 function addCheck(checks, name, ok, details = {}) {
@@ -183,8 +309,20 @@ async function run(options) {
     });
 
     const appGradle = safeRead(options.appGradlePath);
-    if (appGradle && (options.minVersionCode || options.expectedVersionName)) {
-        const appVersion = parseAndroidVersion(appGradle);
+    if (appGradle) {
+        const appVersion = parseAndroidConfig(appGradle);
+        addCheck(checks, 'android.applicationId', appVersion.applicationId === options.expectedPackageName, {
+            actual: appVersion.applicationId,
+            expected: options.expectedPackageName,
+        });
+        addCheck(checks, 'android.billingDependency', hasGradleDependency(appGradle, [
+            'libs.billing',
+            'com.android.billingclient:billing',
+        ]));
+        addCheck(checks, 'android.playIntegrityDependency', hasGradleDependency(appGradle, [
+            'libs.play.integrity',
+            'com.google.android.play:integrity',
+        ]));
         if (options.minVersionCode) {
             addCheck(checks, 'android.versionCode', appVersion.versionCode >= options.minVersionCode, {
                 actual: appVersion.versionCode,
@@ -199,13 +337,26 @@ async function run(options) {
         }
     }
 
-    const backendIndex = safeRead(options.backendIndexPath);
-    if (backendIndex && options.expectedVersionName) {
-        const latest = parseBackendLatestVersion(backendIndex);
-        addCheck(checks, 'backend.LATEST_APP_VERSION', latest === options.expectedVersionName, {
-            actual: latest,
-            expected: options.expectedVersionName,
+    const androidManifest = safeRead(options.androidManifestPath);
+    if (androidManifest) {
+        const appLink = evaluateManifestAppLink(androidManifest, {
+            expectedPackageName: options.expectedPackageName,
+            expectedHost: options.expectedAppLinkHost,
+            expectedPathPrefix: options.expectedAppLinkPathPrefix,
         });
+        addCheck(checks, 'android.applinkManifest', appLink.ok, appLink);
+    }
+
+    const backendIndex = safeRead(options.backendIndexPath);
+    if (backendIndex) {
+        addCheck(checks, 'backend.playIntegrityRouterMounted', backendHasPlayIntegrityRouter(backendIndex));
+        if (options.expectedVersionName) {
+            const latest = parseBackendLatestVersion(backendIndex);
+            addCheck(checks, 'backend.LATEST_APP_VERSION', latest === options.expectedVersionName, {
+                actual: latest,
+                expected: options.expectedVersionName,
+            });
+        }
     }
 
     if (options.deviceId && options.deviceSecret) {
@@ -301,12 +452,18 @@ if (require.main === module) {
 
 module.exports = {
     DEFAULT_EXPECTED_FINGERPRINTS,
+    DEFAULT_EXPECTED_PACKAGE_NAME,
+    DEFAULT_EXPECTED_APP_LINK_HOST,
+    DEFAULT_EXPECTED_APP_LINK_PATH_PREFIX,
     normalizeFingerprint,
     parseArgs,
+    parseAndroidConfig,
     parseAndroidVersion,
     parseBackendLatestVersion,
     extractAssetlinksFingerprints,
     evaluateAssetlinks,
+    evaluateManifestAppLink,
+    backendHasPlayIntegrityRouter,
     extractLastVerdictVersionCode,
     debugUrlLabel,
     run,

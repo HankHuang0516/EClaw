@@ -65,9 +65,20 @@ Read-only verifier:
 node scripts/check-google-play-coverage.js
 ```
 
+This verifier checks both remote production state and the local release branch:
+
+- Production `/.well-known/assetlinks.json` includes the Play App Signing and
+  upload fingerprints.
+- `app/build.gradle.kts` keeps `applicationId = "com.hank.clawlive"` and still
+  includes Google Play Billing plus Play Integrity dependencies.
+- `AndroidManifest.xml` exposes `com.hank.clawlive.MainActivity` as an
+  `android:autoVerify="true"` HTTPS App Link for `eclawbot.com` `/r/`.
+- `backend/index.js` mounts the Play Integrity router at `/api/play-integrity`.
+
 Before PR #3545 deploys this command is expected to fail
 `assetlinks.fingerprints` because production is still missing the Play App
-Signing fingerprint. After deploy, it must pass that check.
+Signing fingerprint. After deploy, it must pass that check along with the local
+Android/backend coverage checks.
 
 ## Play Integrity Activation
 
@@ -181,6 +192,11 @@ Use `subscription_purchase` or `borrow_subscription` instead of
 The script prints only check names, booleans, missing fingerprints, and safe
 verdict status/version metadata. It must not print `DEVICE_SECRET`, integrity
 tokens, nonces, request hashes, or service-account values.
+
+If any local branch check fails before upload, stop the release and fix the
+branch first. Play Console cannot mark the related feature covered if the
+artifact no longer declares the App Link, Billing dependency, Play Integrity
+dependency, or backend verifier route that the Console signal depends on.
 
 ## Play Integrity Signals
 
