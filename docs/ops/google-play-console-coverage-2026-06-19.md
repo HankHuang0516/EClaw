@@ -1,0 +1,152 @@
+# Google Play Console Coverage Runbook - 2026-06-19
+
+This runbook captures the live Google Play Console gaps for `EClawbot (OpenClaw)`
+package `com.hank.clawlive` and the exact completion path. Do not paste secrets
+into this file, PR comments, logs, or issue comments.
+
+## Live State
+
+Observed in Google Play Console on 2026-06-19 10:12 CST:
+
+| Surface | Current state | Remaining blocker |
+| --- | --- | --- |
+| Deep links, version `100 (1.0.92)` | `/r/` on `eclawbot.com` shows `未通過網域檢查` | Production `/.well-known/assetlinks.json` still publishes only the upload certificate. PR #3545 must be reviewed, merged, and deployed so the Play App Signing certificate is served. |
+| Protect with Play: Auto protection | `1/1` enabled | None. |
+| Protect with Play: Play Integrity API | `0/7` enabled, `尚未整合 Play Integrity API` | PR #3546 must be reviewed, merged, deployed, configured with Google credentials, and shipped in a new Android release. |
+| Protect with Play: Play Store safeguards | `6/7` enabled | `商店資訊檢查功能` is off for `禁止在高風險裝置上安裝應用程式`; this is a Play Console setting reached via `管理商店顯示設定`. |
+| Protect with Play: Play Billing safeguards | `4/4` enabled | None. |
+
+## Required PR Order
+
+1. Review and merge PR #3545: Android App Links domain verification.
+2. Let Railway production deploy `main`.
+3. Verify production serves both Android App Links fingerprints:
+   - Play App Signing certificate fingerprint.
+   - Upload certificate fingerprint.
+4. Re-check Play Console deep links for version `100 (1.0.92)` and confirm `/r/`
+   on `eclawbot.com` no longer reports `未通過網域檢查`.
+5. Review and merge PR #3546: Play Integrity standard bridge.
+6. Let Railway production deploy `main`.
+7. Configure Play Integrity server verification in Railway and Google Play
+   Console.
+8. Build and upload a new Android release containing the Play Integrity client
+   integration.
+
+Do not merge to `main` or trigger production deploy from an automation thread
+unless the user explicitly asks for that exact action.
+
+## Deep Link Verification
+
+Before PR #3545 deploys, production currently returns only the upload
+certificate:
+
+```sh
+curl -fsSL https://eclawbot.com/.well-known/assetlinks.json \
+  | jq -r '.[0].target.sha256_cert_fingerprints[]'
+```
+
+After PR #3545 deploys, this command must include both the Play App Signing
+certificate and the upload certificate. If Play Console still shows the domain
+as failed after production is correct, wait for Play revalidation and then
+reopen:
+
+`Google Play Console -> EClawbot (OpenClaw) -> 開發更多使用者 -> 深層連結`
+
+Expected state:
+
+- Version selector: `100 (1.0.92)` or the latest shipped Android version.
+- Domain: `eclawbot.com`.
+- Path prefix: `/r/`.
+- Status no longer says `未通過網域檢查`.
+
+## Play Integrity Activation
+
+PR #3546 adds:
+
+- Android dependency on Google Play Integrity.
+- Release-build startup reporting through `PlayIntegrityReporter`.
+- Server nonce and verdict endpoints under `/api/play-integrity/*`.
+- Standard API `requestHash` support when `PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER`
+  is configured.
+- Classic nonce fallback when standard requests are not configured.
+- Device-auth debug endpoint at `GET /api/play-integrity/debug`.
+
+Set configuration through the production secret manager only:
+
+| Variable | Purpose |
+| --- | --- |
+| `PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER` | Enables Standard Integrity API requests from Android. |
+| `PLAY_INTEGRITY_SERVICE_ACCOUNT_JSON` | Enables backend decode through the Play Integrity API. |
+| `GOOGLE_APPLICATION_CREDENTIALS_JSON` or `GOOGLE_APPLICATION_CREDENTIALS` | Alternate credential sources for backend decode. |
+| `PLAY_INTEGRITY_NONCE_SECRET` | Optional dedicated nonce signing secret; defaults to `JWT_SECRET` if unset. |
+
+Never print or commit the values. Only report whether each variable is present.
+
+After deploy, verify configuration with a device-authenticated request:
+
+```sh
+curl -fsS 'https://eclawbot.com/api/play-integrity/debug?deviceId=...&deviceSecret=...'
+```
+
+The response should show:
+
+- `verificationConfigured: true`
+- `standardRequestConfigured: true`
+- `cloudProjectNumberConfigured: true`
+
+Then upload a new Android release so Play Console can observe real integrity
+traffic from the Play-distributed build.
+
+## Play Integrity Signals
+
+The Protect with Play page currently lists these seven disabled Play Integrity
+services:
+
+| Console label | Signal surfaced by PR #3546 |
+| --- | --- |
+| `Play 授權檢查功能` | `accountDetails.appLicensingVerdict` |
+| `應用程式完整性檢查功能` | `appIntegrity.appRecognitionVerdict`, `packageName`, `versionCode` |
+| `裝置完整性檢查功能` | `deviceIntegrity.deviceRecognitionVerdict` |
+| `虛擬完整性檢查功能` | `deviceIntegrity.deviceRecognitionVerdict` values returned by Google |
+| `近期裝置活動功能` | `recentDeviceActivity` |
+| `Play 安全防護狀態` | `environmentDetails.playProtectVerdict` |
+| `應用程式存取風險功能` | `environmentDetails.appAccessRiskVerdict` |
+
+Expected backend behavior after server credentials are configured:
+
+- Valid package, binding, freshness, app recognition, and device integrity
+  return `status: "verified"`.
+- Failed checks return `status: "verification_failed"` and include the failed
+  check booleans.
+- Tokens are never echoed in responses or logs.
+
+## Store Safeguard Manual Setting
+
+The remaining `Play 商店防護措施` item is not a repository change.
+
+Manual path:
+
+1. Open `Google Play Console -> EClawbot (OpenClaw) -> 由 Google Play 保護`.
+2. Expand `Play 商店防護措施`.
+3. On `禁止在高風險裝置上安裝應用程式`, click `管理商店顯示設定`.
+4. Enable `商店資訊檢查功能` if the business decision is to block high-risk
+   device installs through the store listing check.
+5. Return to `由 Google Play 保護` and verify `Play 商店防護措施` is `7/7`.
+
+This setting changes Google Play distribution behavior, so do it only after the
+user explicitly approves that Console-side change.
+
+## Completion Evidence
+
+Do not call the Android/Play Console coverage work complete until all of the
+following are true:
+
+- Play Console deep links show no `未通過網域檢查` issue for `eclawbot.com` `/r/`.
+- `Protect with Play -> Auto protection` is `1/1`.
+- `Protect with Play -> Play Integrity API` is `7/7`.
+- `Protect with Play -> Play Store safeguards` is `7/7`.
+- `Protect with Play -> Play Billing safeguards` is `4/4`.
+- Production `/api/play-integrity/debug` reports verifier and standard request
+  configuration present without exposing any secret values.
+- A Play-distributed Android build containing PR #3546 has sent at least one
+  Play Integrity verdict to production.
