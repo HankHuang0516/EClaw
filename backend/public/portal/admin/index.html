@@ -20,6 +20,17 @@
         .ah-card-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
         .ah-card-desc { font-size: 12px; color: var(--text-secondary); }
         .ah-card-soon { font-size: 10px; color: #f59e0b; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+        .ah-card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .ah-action { border: 1px solid var(--card-border); background: var(--input-bg); color: var(--text); border-radius: var(--radius-sm); padding: 7px 10px; font-size: 12px; text-decoration: none; cursor: pointer; }
+        .ah-action:hover { border-color: var(--primary); }
+        .ah-action.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .ah-self-card { border-color: rgba(108, 99, 255, 0.45); }
+        .ah-help-btn { margin-left: auto; width: 22px; height: 22px; border-radius: 999px; border: 1px solid var(--card-border); background: var(--input-bg); color: var(--text-secondary); cursor: pointer; font-size: 12px; font-weight: 700; }
+        .ah-help-btn:hover { color: var(--primary); border-color: var(--primary); }
+        .ah-help-panel { display: none; margin-top: 10px; border: 1px dashed var(--card-border); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 12px; color: var(--text-secondary); line-height: 1.55; background: rgba(108, 99, 255, 0.06); }
+        .ah-help-panel.open { display: block; }
+        .ah-mini-list { margin: 6px 0 0 18px; padding: 0; }
+        .ah-status-note { font-size: 11px; color: var(--text-secondary); min-height: 16px; margin-top: 6px; }
 
         .ah-section-title { font-size: 13px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin: 18px 0 10px 0; }
         .ah-footnote { font-size: 11px; color: var(--text-secondary); margin-top: 24px; text-align: center; opacity: 0.7; }
@@ -42,6 +53,36 @@
                 <div class="ah-card-title">🩺 <span data-i18n="admin_hub_card_rental_monitor">Rental Health Monitor</span></div>
                 <div class="ah-card-desc" data-i18n="admin_hub_card_rental_monitor_desc">DB latency, tombstone growth, publisher integration status, fleet counts.</div>
             </a>
+        </div>
+
+        <h3 class="ah-section-title" data-i18n="admin_hub_section_self_improvement">Self improvement</h3>
+        <div class="ah-grid">
+            <div class="ah-card ah-self-card" id="adminSelfImprovementCard">
+                <div class="ah-card-title">
+                    🧭 <span data-i18n="admin_hub_card_self_improvement">Admin self-improvement loop</span>
+                    <button class="ah-help-btn" type="button" aria-expanded="false" aria-controls="adminSelfHelp" onclick="toggleAdminSelfHelp(this)">?</button>
+                </div>
+                <div class="ah-card-desc" data-i18n="admin_hub_card_self_improvement_desc">Capture admin-page friction, empty states, and failed actions into an OODA-R brief that can become a card or note.</div>
+                <div class="ah-card-actions">
+                    <a class="ah-action primary" href="/portal/kanban.html?q=admin%20self%20improvement" data-i18n="admin_hub_self_open_kanban">Open Kanban</a>
+                    <a class="ah-action" href="/portal/feedback.html" data-i18n="admin_hub_self_open_feedback">Feedback history</a>
+                    <button class="ah-action" type="button" onclick="copyAdminSelfImprovementBrief()" data-i18n="admin_hub_self_copy_brief">Copy OODA-R brief</button>
+                </div>
+                <div id="adminSelfHelp" class="ah-help-panel" aria-live="polite">
+                    <strong data-i18n="admin_hub_self_help_what_label">What:</strong>
+                    <span data-i18n="admin_hub_self_help_what">Use this when an admin page is confusing, empty, blocked, or repeatedly needs manual follow-up.</span><br>
+                    <strong data-i18n="admin_hub_self_help_needs_label">Needs:</strong>
+                    <span data-i18n="admin_hub_self_help_needs">Admin access plus an actionable observation; no secrets, tokens, or private device credentials.</span><br>
+                    <strong data-i18n="admin_hub_self_help_next_label">Next step:</strong>
+                    <span data-i18n="admin_hub_self_help_next">Open Kanban or copy the brief, then attach screenshots and the smallest reproducible admin-page path.</span>
+                    <ul class="ah-mini-list">
+                        <li data-i18n="admin_hub_self_help_globe">Globe-user: describe the user/device capability, not a single local account.</li>
+                        <li data-i18n="admin_hub_self_help_setup">Setup: name required permissions, API availability, and graceful degradation.</li>
+                        <li data-i18n="admin_hub_self_help_empty">Empty state: include what it means, what is needed, and the next action.</li>
+                    </ul>
+                </div>
+                <div id="adminSelfStatus" class="ah-status-note" aria-live="polite"></div>
+            </div>
         </div>
 
         <h3 class="ah-section-title" data-i18n="admin_hub_section_future">Planned</h3>
@@ -85,6 +126,59 @@
 
     <script>
         function tt(k, fb) { return (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb; }
+
+        function setAdminSelfStatus(messageKey, fallback) {
+            const el = document.getElementById('adminSelfStatus');
+            if (el) el.textContent = tt(messageKey, fallback);
+        }
+
+        function toggleAdminSelfHelp(btn) {
+            const panel = document.getElementById('adminSelfHelp');
+            if (!panel) return;
+            const open = !panel.classList.contains('open');
+            panel.classList.toggle('open', open);
+            if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            setAdminSelfStatus(
+                open ? 'admin_hub_self_status_help_open' : 'admin_hub_self_status_help_closed',
+                open ? 'Help opened — capture What, Needs, Next step.' : ''
+            );
+        }
+
+        function buildAdminSelfImprovementBrief() {
+            const path = window.location.pathname || '/portal/admin/';
+            return [
+                '[Admin Self-improvement OODA-R]',
+                'Page: ' + path,
+                'Observation: <describe the admin-page friction, empty state, or failed action>',
+                'Globe-user: <which role/capability is affected globally; no hardcoded device/entity/user>',
+                'Setup: <required admin permission/API/runtime condition; graceful degradation if missing>',
+                '? icon UX: <What this state means / Needs / Next step>',
+                'Evidence: <attach screenshot or reproducible path>',
+                'Next card/note: <smallest shippable improvement>'
+            ].join('\n');
+        }
+
+        async function copyAdminSelfImprovementBrief() {
+            const brief = buildAdminSelfImprovementBrief();
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(brief);
+                } else {
+                    const ta = document.createElement('textarea');
+                    ta.value = brief;
+                    ta.setAttribute('readonly', '');
+                    ta.style.position = 'fixed';
+                    ta.style.left = '-9999px';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    ta.remove();
+                }
+                setAdminSelfStatus('admin_hub_self_status_copied', 'OODA-R brief copied. Paste it into a Kanban card or mission note.');
+            } catch (err) {
+                setAdminSelfStatus('admin_hub_self_status_copy_failed', 'Copy failed — open Kanban and paste the brief manually.');
+            }
+        }
 
         function getAuthQuery() {
             const u = window.currentUser || {};

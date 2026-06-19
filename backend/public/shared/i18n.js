@@ -579190,6 +579190,26 @@ const TRANSLATIONS = {
 
 
         "admin_hub_section_monitoring": "Monitoring",
+        "admin_hub_section_self_improvement": "Self improvement",
+        "admin_hub_card_self_improvement": "Admin self-improvement loop",
+        "admin_hub_card_self_improvement_desc": "Capture admin-page friction, empty states, and failed actions into an OODA-R brief that can become a card or note.",
+        "admin_hub_self_open_kanban": "Open Kanban",
+        "admin_hub_self_open_feedback": "Feedback history",
+        "admin_hub_self_copy_brief": "Copy OODA-R brief",
+        "admin_hub_self_help_what_label": "What:",
+        "admin_hub_self_help_what": "Use this when an admin page is confusing, empty, blocked, or repeatedly needs manual follow-up.",
+        "admin_hub_self_help_needs_label": "Needs:",
+        "admin_hub_self_help_needs": "Admin access plus an actionable observation; no secrets, tokens, or private device credentials.",
+        "admin_hub_self_help_next_label": "Next step:",
+        "admin_hub_self_help_next": "Open Kanban or copy the brief, then attach screenshots and the smallest reproducible admin-page path.",
+        "admin_hub_self_help_globe": "Globe-user: describe the user/device capability, not a single local account.",
+        "admin_hub_self_help_setup": "Setup: name required permissions, API availability, and graceful degradation.",
+        "admin_hub_self_help_empty": "Empty state: include what it means, what is needed, and the next action.",
+        "admin_hub_self_status_help_open": "Help opened — capture What, Needs, Next step.",
+        "admin_hub_self_status_help_closed": "",
+        "admin_hub_self_status_copied": "OODA-R brief copied. Paste it into a Kanban card or mission note.",
+        "admin_hub_self_status_copy_failed": "Copy failed — open Kanban and paste the brief manually.",
+
 
 
 
@@ -1187263,6 +1187283,26 @@ const TRANSLATIONS = {
 
 
         "admin_hub_section_monitoring": "監控",
+        "admin_hub_section_self_improvement": "自我改善",
+        "admin_hub_card_self_improvement": "管理頁面自我改善迴路",
+        "admin_hub_card_self_improvement_desc": "把管理頁面的痛點、空狀態與失敗操作整理成 OODA-R 摘要，可貼到卡片或 note。",
+        "admin_hub_self_open_kanban": "開啟 Kanban",
+        "admin_hub_self_open_feedback": "Feedback 歷史",
+        "admin_hub_self_copy_brief": "複製 OODA-R 摘要",
+        "admin_hub_self_help_what_label": "What：",
+        "admin_hub_self_help_what": "當管理頁面讓人困惑、空白、被阻擋，或反覆需要人工追蹤時使用。",
+        "admin_hub_self_help_needs_label": "Needs：",
+        "admin_hub_self_help_needs": "需要管理員權限與可行觀察；不要放入 secret、token 或私人裝置憑證。",
+        "admin_hub_self_help_next_label": "Next step：",
+        "admin_hub_self_help_next": "開啟 Kanban 或複製摘要，並附上截圖與最小可重現的管理頁路徑。",
+        "admin_hub_self_help_globe": "Globe-user：描述全域角色/裝置能力，不要綁定單一本機帳號。",
+        "admin_hub_self_help_setup": "Setup：列出所需權限、API 可用性與降級行為。",
+        "admin_hub_self_help_empty": "Empty state：包含它代表什麼、需要什麼、下一步動作。",
+        "admin_hub_self_status_help_open": "已開啟說明 — 請整理 What、Needs、Next step。",
+        "admin_hub_self_status_help_closed": "",
+        "admin_hub_self_status_copied": "已複製 OODA-R 摘要，可貼到 Kanban 卡片或 mission note。",
+        "admin_hub_self_status_copy_failed": "複製失敗 — 請開啟 Kanban 後手動貼上摘要。",
+
 
 
 
@@ -1246562,6 +1246602,26 @@ const TRANSLATIONS = {
 
 
         "admin_hub_section_monitoring": "監控",
+        "admin_hub_section_self_improvement": "自我改善",
+        "admin_hub_card_self_improvement": "管理页面自我改善回路",
+        "admin_hub_card_self_improvement_desc": "把管理页面的痛点、空状态与失败操作整理成 OODA-R 摘要，可贴到卡片或 note。",
+        "admin_hub_self_open_kanban": "开启 Kanban",
+        "admin_hub_self_open_feedback": "Feedback 历史",
+        "admin_hub_self_copy_brief": "复制 OODA-R 摘要",
+        "admin_hub_self_help_what_label": "What：",
+        "admin_hub_self_help_what": "当管理页面让人困惑、空白、被阻挡，或反复需要人工追踪时使用。",
+        "admin_hub_self_help_needs_label": "Needs：",
+        "admin_hub_self_help_needs": "需要管理员权限与可行观察；不要放入 secret、token 或私人设备凭证。",
+        "admin_hub_self_help_next_label": "Next step：",
+        "admin_hub_self_help_next": "开启 Kanban 或复制摘要，并附上截图与最小可重现的管理页路径。",
+        "admin_hub_self_help_globe": "Globe-user：描述全域角色/设备能力，不要绑定单一本机账号。",
+        "admin_hub_self_help_setup": "Setup：列出所需权限、API 可用性与降级行为。",
+        "admin_hub_self_help_empty": "Empty state：包含它代表什么、需要什么、下一步动作。",
+        "admin_hub_self_status_help_open": "已开启说明 — 请整理 What、Needs、Next step。",
+        "admin_hub_self_status_help_closed": "",
+        "admin_hub_self_status_copied": "已复制 OODA-R 摘要，可贴到 Kanban 卡片或 mission note。",
+        "admin_hub_self_status_copy_failed": "复制失败 — 请开启 Kanban 后手动贴上摘要。",
+
 
 
 
