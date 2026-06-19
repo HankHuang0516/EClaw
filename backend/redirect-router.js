@@ -208,17 +208,28 @@ setTimeout(function () {
 }
 
 // ── Android App Links verification (Phase B) ─────────────────────────────
-// Digital Asset Links statement for com.hank.clawlive. Fingerprints come from
-// ASSETLINKS_FINGERPRINTS (comma-separated SHA-256 cert digests) so the Play
-// App Signing certificate can be added without a deploy-time code change; the
-// committed default is the local release-key (upload) certificate.
+// Digital Asset Links statement for com.hank.clawlive. Defaults include both
+// certificates visible on Play Console's app-signing page: the Play App Signing
+// key (what Google Play installs) and the upload key (local release builds).
+// ASSETLINKS_FINGERPRINTS appends any future rotation fingerprints.
 const ANDROID_PACKAGE = 'com.hank.clawlive';
+const ANDROID_APP_LINK_HOST = 'eclawbot.com';
+const ANDROID_APP_LINK_PATH_PREFIX = '/r/';
+const PLAY_APP_SIGNING_CERT_SHA256 = 'A2:EB:6D:55:DD:DF:1C:9D:68:2E:B5:67:1C:1A:E5:8C:01:06:CB:A2:A2:93:5D:DB:CE:D2:AB:E2:E6:F7:76:DB';
 const UPLOAD_CERT_SHA256 = '0D:F0:18:33:A4:41:C4:02:74:9C:CF:4A:5A:59:F2:0C:62:00:3D:59:91:86:36:98:17:D5:89:50:47:DB:E8:10';
+const DEFAULT_ASSETLINKS_FINGERPRINTS = [PLAY_APP_SIGNING_CERT_SHA256, UPLOAD_CERT_SHA256];
+const CERT_FINGERPRINT_RE = /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/;
 
 function assetlinksFingerprints() {
-    const fromEnv = String(process.env.ASSETLINKS_FINGERPRINTS || '')
-        .split(',').map(s => s.trim()).filter(Boolean);
-    return fromEnv.length ? fromEnv : [UPLOAD_CERT_SHA256];
+    const seen = new Set();
+    return DEFAULT_ASSETLINKS_FINGERPRINTS
+        .concat(String(process.env.ASSETLINKS_FINGERPRINTS || '').split(','))
+        .map(s => String(s || '').trim().toUpperCase())
+        .filter(fp => {
+            if (!CERT_FINGERPRINT_RE.test(fp) || seen.has(fp)) return false;
+            seen.add(fp);
+            return true;
+        });
 }
 
 router.get('/.well-known/assetlinks.json', (req, res) => {
@@ -231,6 +242,33 @@ router.get('/.well-known/assetlinks.json', (req, res) => {
             sha256_cert_fingerprints: assetlinksFingerprints(),
         },
     }]);
+});
+
+router.get('/api/debug/android-app-links', (req, res) => {
+    const auth = authDeviceOrBot(req);
+    if (!auth) return res.status(403).json({ success: false, error: 'Invalid credentials' });
+
+    const fingerprints = assetlinksFingerprints();
+    return res.json({
+        success: true,
+        bug: 'android-app-links',
+        diagnostics: {
+            packageName: ANDROID_PACKAGE,
+            host: ANDROID_APP_LINK_HOST,
+            scheme: 'https',
+            pathPrefix: ANDROID_APP_LINK_PATH_PREFIX,
+            assetlinksUrl: `https://${ANDROID_APP_LINK_HOST}/.well-known/assetlinks.json`,
+            relation: 'delegate_permission/common.handle_all_urls',
+            fingerprintCount: fingerprints.length,
+            fingerprints,
+            playAppSigningCertFingerprint: PLAY_APP_SIGNING_CERT_SHA256,
+            uploadCertFingerprint: UPLOAD_CERT_SHA256,
+            hasAdditionalFingerprints: fingerprints.length > 1,
+            envVariable: 'ASSETLINKS_FINGERPRINTS',
+            expectedPlayConsoleSource: 'Google Play Console > Protect with Play > Play Store safeguards > Manage Play app signing > App signing key certificate > SHA-256 certificate fingerprint',
+        },
+        timestamp: new Date().toISOString(),
+    });
 });
 
 // ── iOS Universal Links AASA (Phase C) ───────────────────────────────────
