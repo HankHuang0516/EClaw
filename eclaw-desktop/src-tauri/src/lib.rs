@@ -403,6 +403,8 @@ fn credential_store(
         id_token,
         expires_at,
         refresh_expires_at: expires_at + (90 * 24 * 60 * 60),
+        device_id: None,
+        device_secret: None,
     };
     os_store(&envelope)
 }
@@ -744,7 +746,7 @@ fn get_api_base() -> String {
 }
 
 #[command]
-pub async fn device_bind(id_token: String, install_id: String) -> Result<DeviceBindResult, String> {
+async fn device_bind(id_token: String, install_id: String) -> Result<DeviceBindResult, String> {
     let api_url = format!("{}/api/device/bind", get_api_base());
     let platform = std::env::consts::OS;
     let version = env!("CARGO_PKG_VERSION").to_string();
@@ -816,7 +818,7 @@ pub async fn device_bind(id_token: String, install_id: String) -> Result<DeviceB
 }
 
 #[command]
-pub fn device_id_get() -> Result<Option<String>, String> {
+fn device_id_get() -> Result<Option<String>, String> {
     let install_id = ensure_config_exists()?;
     match os_get(&install_id)? {
         Some(envelope) => Ok(envelope.device_id),
