@@ -35,11 +35,11 @@ const safeEqual = require('./safe-equal');
 let pool = null;
 let devicesRef = null;
 
-// GitHub App credentials — set GITHUB_APP_ID (numeric) and
+// GitHub App credentials — read lazily inside issueInstallationToken() at call
+// time so that test suites can set/unset process.env between calls without
+// module-level caching interfering.  Set GITHUB_APP_ID (numeric) and
 // GITHUB_APP_PRIVATE_KEY (PEM) via environment.  Both are required for real
-// token issuance.  When either is missing the stub is used (501).
-const APP_ID = parseInt(process.env.GITHUB_APP_ID || '0', 10) || 0;
-const PRIVATE_KEY = process.env.GITHUB_APP_PRIVATE_KEY || '';
+// token issuance; when either is missing the stub is used (501).
 
 function githubApiFetch(path, method, body, token) {
     const url = `https://api.github.com${path}`;
@@ -184,7 +184,11 @@ async function writeAudit(entityId, deviceId, orgLogin, outcome, detail) {
 // Returns: { available, token?, expiresAt?, reason? }
 // ---------------------------------------------------------------------------
 async function issueInstallationToken({ orgLogin, installationId }) {
-    if (!APP_ID || !PRIVATE_KEY) {
+    // Read env at call time — not module-load time — so tests can set/unset
+    // process.env between invocations without caching interfering.
+    const appId = parseInt(process.env.GITHUB_APP_ID || '0', 10) || 0;
+    const privateKey = process.env.GITHUB_APP_PRIVATE_KEY || '';
+    if (!appId || !privateKey) {
         return {
             available: false,
             reason: 'github_app_not_configured',
@@ -205,9 +209,9 @@ async function issueInstallationToken({ orgLogin, installationId }) {
             {
                 iat: now,
                 exp: now + 600, // 10 minutes, GitHub rejects > 10 min for App JWTs
-                iss: String(APP_ID),
+                iss: String(appId),
             },
-            PRIVATE_KEY,
+            privateKey,
             { algorithm: 'RS256' }
         );
     } catch (err) {
