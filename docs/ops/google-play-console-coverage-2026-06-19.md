@@ -99,6 +99,11 @@ This verifier checks both remote production state and the local release branch:
   app signing keys.
 - `backend/play-integrity.js` verifies `accountDetails.appLicensingVerdict` is
   `LICENSED`, so the Play Licensing signal is enforced instead of only logged.
+- `backend/play-integrity.js` turns optional Play Console response signals into
+  explicit checks when present: App Access Risk must not report capture/control
+  or overlay risk, Play Protect must be `NO_ISSUES`, and Recent Device Activity
+  must not be `LEVEL_4`. Missing optional verdicts remain non-fatal until the
+  Console response settings are enabled.
 
 Before PR #3545 deploys this command is expected to fail
 `assetlinks.fingerprints` because production is still missing the Play App
@@ -231,7 +236,9 @@ because `requestDetails.requestPackageName` alone is not enough app-integrity
 evidence, or if it no longer checks `certificateSha256Digest` against the
 expected app signing digest set. Do not mark Play Licensing covered if
 `appLicensingVerdict` is only displayed in debug output and not part of the
-server-side verified decision.
+server-side verified decision. Optional response signals must also remain
+visible in server checks, so high-risk App Access Risk, Play Protect, or Recent
+Device Activity verdicts cannot be mistaken for a clean verified result.
 
 ## Play Integrity Signals
 
@@ -250,9 +257,9 @@ services:
 
 Expected backend behavior after server credentials are configured:
 
-- Valid package, binding, freshness, app recognition, and device integrity
-  plus Play account licensing and app certificate digest checks return
-  `status: "verified"`.
+- Valid package, binding, freshness, app recognition, device integrity, Play
+  account licensing, app certificate digest, and clean optional risk signals
+  return `status: "verified"`.
 - Failed checks return `status: "verification_failed"` and include the failed
   check booleans.
 - `GET /api/play-integrity/debug` returns the latest safe `lastVerdict`

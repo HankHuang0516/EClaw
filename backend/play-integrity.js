@@ -202,6 +202,20 @@ function appAccessRiskApps(appAccessRiskVerdict) {
         : [];
 }
 
+function appAccessRiskHasCaptureOrControl(appAccessRiskVerdict) {
+    return appAccessRiskApps(appAccessRiskVerdict)
+        .some(v => /CAPTURING|CONTROLLING|OVERLAY/.test(String(v)));
+}
+
+function playProtectMeetsPolicy(playProtectVerdict) {
+    return !playProtectVerdict || playProtectVerdict === 'NO_ISSUES';
+}
+
+function recentDeviceActivityAcceptable(recentDeviceActivity) {
+    const level = recentDeviceActivity?.deviceActivityLevel || null;
+    return !level || level !== 'LEVEL_4';
+}
+
 function summarizeConsoleSignals(verdict) {
     const appAccessApps = appAccessRiskApps(verdict.appAccessRiskVerdict);
     const deviceLabels = Array.isArray(verdict.deviceRecognitionVerdict)
@@ -241,7 +255,7 @@ function summarizeConsoleSignals(verdict) {
         appAccessRisk: {
             observed: Boolean(verdict.appAccessRiskVerdict),
             values: appAccessApps,
-            hasCaptureOrControlRisk: appAccessApps.some(v => /CAPTURING|CONTROLLING|OVERLAYS/.test(v)),
+            hasCaptureOrControlRisk: appAccessRiskHasCaptureOrControl(verdict.appAccessRiskVerdict),
         },
     };
 }
@@ -306,6 +320,8 @@ function evaluatePayload(decoded, {
     const accountDetails = payload.accountDetails || {};
     const environmentDetails = payload.environmentDetails || {};
     const recentDeviceActivity = deviceIntegrity.recentDeviceActivity || payload.recentDeviceActivity || null;
+    const appAccessRiskVerdict = environmentDetails.appAccessRiskVerdict || null;
+    const playProtectVerdict = environmentDetails.playProtectVerdict || null;
     const appRecognitionVerdict = appIntegrity.appRecognitionVerdict || 'UNKNOWN';
     const appLicensingVerdict = accountDetails.appLicensingVerdict || null;
     const appPackageName = appIntegrity.packageName || null;
@@ -332,6 +348,9 @@ function evaluatePayload(decoded, {
         appLicensed: appLicensingVerdict === 'LICENSED',
         deviceMeetsIntegrity: deviceRecognitionVerdict.includes('MEETS_DEVICE_INTEGRITY'),
         certificateDigestMatches: normalizedCertificateDigests.some(digest => expectedDigestSet.has(digest)),
+        appAccessRiskClean: !appAccessRiskHasCaptureOrControl(appAccessRiskVerdict),
+        playProtectMeetsPolicy: playProtectMeetsPolicy(playProtectVerdict),
+        recentDeviceActivityAcceptable: recentDeviceActivityAcceptable(recentDeviceActivity),
     };
     const verified = checks.packageNameMatches
         && checks.bindingMatches
@@ -340,7 +359,10 @@ function evaluatePayload(decoded, {
         && checks.appLicensed
         && checks.appPackageNameMatches
         && checks.certificateDigestMatches
-        && checks.deviceMeetsIntegrity;
+        && checks.deviceMeetsIntegrity
+        && checks.appAccessRiskClean
+        && checks.playProtectMeetsPolicy
+        && checks.recentDeviceActivityAcceptable;
     return {
         verified,
         requestMode,
@@ -349,8 +371,8 @@ function evaluatePayload(decoded, {
             appRecognitionVerdict,
             deviceRecognitionVerdict,
             appLicensingVerdict,
-            appAccessRiskVerdict: environmentDetails.appAccessRiskVerdict || null,
-            playProtectVerdict: environmentDetails.playProtectVerdict || null,
+            appAccessRiskVerdict,
+            playProtectVerdict,
             recentDeviceActivity,
             packageName: appPackageName,
             versionCode: appIntegrity.versionCode || null,
@@ -530,6 +552,9 @@ module.exports = {
         googleDecodeRequestBody,
         normalizeCertificateDigest,
         expectedCertificateDigests,
+        appAccessRiskHasCaptureOrControl,
+        playProtectMeetsPolicy,
+        recentDeviceActivityAcceptable,
         rememberVerdictSummary,
         summarizeConsoleSignals,
         _resetForTests: () => {

@@ -481,6 +481,13 @@ async function run(options) {
             playIntegrityBackend.includes('appLicensed')
                 && playIntegrityBackend.includes("appLicensingVerdict === 'LICENSED'")
         );
+        addCheck(
+            checks,
+            'backend.playIntegrityOptionalSignalChecks',
+            playIntegrityBackend.includes('appAccessRiskClean')
+                && playIntegrityBackend.includes('playProtectMeetsPolicy')
+                && playIntegrityBackend.includes('recentDeviceActivityAcceptable')
+        );
     }
 
     if (options.deviceId && options.deviceSecret) {

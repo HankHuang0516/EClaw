@@ -308,6 +308,9 @@ describe('Play Integrity bridge', () => {
             appLicensed: true,
             deviceMeetsIntegrity: true,
             certificateDigestMatches: true,
+            appAccessRiskClean: true,
+            playProtectMeetsPolicy: true,
+            recentDeviceActivityAcceptable: true,
         });
         expect(res.body.integrity.verdict.appRecognitionVerdict).toBe('PLAY_RECOGNIZED');
         expect(res.body.integrity.verdict.certificateSha256Digest)
@@ -378,6 +381,9 @@ describe('Play Integrity bridge', () => {
             appLicensed: true,
             deviceMeetsIntegrity: true,
             certificateDigestMatches: true,
+            appAccessRiskClean: true,
+            playProtectMeetsPolicy: true,
+            recentDeviceActivityAcceptable: true,
         });
         expect(res.body.integrity.verdict.appAccessRiskVerdict).toEqual({ appsDetected: ['KNOWN_INSTALLED'] });
         expect(res.body.integrity.verdict.playProtectVerdict).toBe('NO_ISSUES');
@@ -397,6 +403,9 @@ describe('Play Integrity bridge', () => {
                 bindingMatches: true,
                 fresh: true,
                 appRecognized: true,
+                appAccessRiskClean: true,
+                playProtectMeetsPolicy: true,
+                recentDeviceActivityAcceptable: true,
                 deviceMeetsIntegrity: true,
             },
             consoleSignals: {
@@ -549,6 +558,56 @@ describe('Play Integrity bridge', () => {
         expect(res.body.status).toBe('verification_failed');
         expect(res.body.integrity.verified).toBe(false);
         expect(res.body.integrity.checks.appLicensed).toBe(false);
+    });
+
+    test('verdict endpoint rejects high-risk optional Play Integrity signals when present', async () => {
+        process.env.PLAY_INTEGRITY_SERVICE_ACCOUNT_JSON = '{"type":"service_account"}';
+        const nonce = playIntegrity._internal.makeNonce({ deviceId: DEVICE_ID, action: 'startup' });
+        const decodeIntegrityToken = jest.fn(async () => ({
+            tokenPayloadExternal: {
+                requestDetails: {
+                    requestPackageName: 'com.hank.clawlive',
+                    nonce,
+                    timestampMillis: String(Date.now()),
+                },
+                appIntegrity: {
+                    appRecognitionVerdict: 'PLAY_RECOGNIZED',
+                    packageName: 'com.hank.clawlive',
+                    versionCode: '100',
+                    certificateSha256Digest: ['outtVd3fHJ1oLrVnHBrljAEGy6Kik13bztKr4ub3dts'],
+                },
+                accountDetails: {
+                    appLicensingVerdict: 'LICENSED',
+                },
+                deviceIntegrity: {
+                    deviceRecognitionVerdict: ['MEETS_DEVICE_INTEGRITY'],
+                    recentDeviceActivity: {
+                        deviceActivityLevel: 'LEVEL_4',
+                    },
+                },
+                environmentDetails: {
+                    appAccessRiskVerdict: { appsDetected: ['UNKNOWN_CAPTURING'] },
+                    playProtectVerdict: 'MEDIUM_RISK',
+                },
+            },
+        }));
+
+        const res = await request(makeApp({ decodeIntegrityToken }))
+            .post('/api/play-integrity/verdict')
+            .send({
+                deviceId: DEVICE_ID,
+                deviceSecret: DEVICE_SECRET,
+                action: 'startup',
+                nonce,
+                integrityToken: 'o'.repeat(100),
+            });
+
+        expect(res.status).toBe(200);
+        expect(res.body.status).toBe('verification_failed');
+        expect(res.body.integrity.verified).toBe(false);
+        expect(res.body.integrity.checks.appAccessRiskClean).toBe(false);
+        expect(res.body.integrity.checks.playProtectMeetsPolicy).toBe(false);
+        expect(res.body.integrity.checks.recentDeviceActivityAcceptable).toBe(false);
     });
 
     test('verdict endpoint surfaces failed integrity checks without accepting the action', async () => {
