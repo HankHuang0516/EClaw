@@ -435,6 +435,7 @@ EClaw/
    |-----|----------|---------|--------|
    | Interview start fails with owner_device_not_found | `GET /api/rental/debug/interview-start-fail?deviceId=X&deviceSecret=Y` | 2026-04-12 | Active |
 | Rental contract start returns internal_error during rent/borrow E2E (#2283) | `GET /api/rental/debug/contract-start-fail?deviceId=X&deviceSecret=Y&listingId=Y&renterDeviceId=Z&durationMinutes=30` | 2026-05-01 | Active |
+   | Android App Links domain verification fails for eclawbot.com | `GET /api/debug/android-app-links?deviceId=X&deviceSecret=Y` | 2026-06-19 | Active |
    | Chat first render delayed by cross-device label resolution | `GET /api/debug/chat-render-load-order?deviceId=X&deviceSecret=Y` | 2026-05-01 | Active |
    | Kanban nudges ignored by Codex channel bridge | `GET /api/mission/debug/kanban-codex-nudge?deviceId=X&deviceSecret=Y` | 2026-05-01 | Active |
    | Info public pages: roadmap redirects unauthenticated visitors + release notes show raw Markdown links | `GET /api/debug/info-public-pages?deviceId=X&deviceSecret=Y` | 2026-05-04 | Active |
