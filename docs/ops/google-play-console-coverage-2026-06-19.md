@@ -79,6 +79,8 @@ The Play Integrity bridge PR adds:
 - Standard API `requestHash` support when `PLAY_INTEGRITY_CLOUD_PROJECT_NUMBER`
   is configured.
 - Classic nonce fallback when standard requests are not configured.
+- Release-build purchase-success reporting for `billing_topup`,
+  `subscription_purchase`, and `borrow_subscription`.
 - Device-auth debug endpoint at `GET /api/play-integrity/debug`.
 
 Set configuration through the production secret manager only:
@@ -139,7 +141,11 @@ Release checklist:
    `GET /api/play-integrity/debug` records `lastVerdict.status: "verified"` for
    the test device and that `lastVerdict.consoleSignals.appIntegrity.versionCode`
    matches the newly uploaded Play version code.
-7. Promote to production only after the debug endpoint and Play Console signals
+7. Exercise at least one Google Play Billing success path from the
+   Play-distributed build when release testing allows it. Top-ups should report
+   `billing_topup`, normal subscriptions should report `subscription_purchase`,
+   and borrow subscriptions should report `borrow_subscription`.
+8. Promote to production only after the debug endpoint and Play Console signals
    prove the release is reporting integrity verdicts.
 
 Release verifier after the Play-distributed build reports at least one verdict:

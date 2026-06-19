@@ -3,11 +3,13 @@ package com.hank.clawlive.billing
 import android.app.Activity
 import android.content.Context
 import com.android.billingclient.api.*
+import com.hank.clawlive.BuildConfig
 import com.hank.clawlive.R
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.local.UsageManager
 import com.hank.clawlive.data.remote.NetworkModule
+import com.hank.clawlive.integrity.PlayIntegrityReporter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,6 +49,9 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
             .filter { it.isNotEmpty() }
 
         private const val TAG = "BillingManager"
+        private const val ACTION_BILLING_TOPUP = "billing_topup"
+        private const val ACTION_SUBSCRIPTION_PURCHASE = "subscription_purchase"
+        private const val ACTION_BORROW_SUBSCRIPTION = "borrow_subscription"
 
         @Volatile
         private var instance: BillingManager? = null
@@ -381,6 +386,7 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
 
                         // Top-up consumable: consume + verify with server
                         if (productId in TOPUP_PRODUCT_IDS) {
+                            reportPlayIntegrityAction(ACTION_BILLING_TOPUP)
                             consumeAndVerifyTopup(purchase, productId)
                             return@forEach
                         }
@@ -392,6 +398,13 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
 
                         val activeSubId = purchase.products.firstOrNull { it in ALL_SUB_IDS }
                         if (activeSubId != null) {
+                            reportPlayIntegrityAction(
+                                if (activeSubId == BORROW_SUBSCRIPTION_ID) {
+                                    ACTION_BORROW_SUBSCRIPTION
+                                } else {
+                                    ACTION_SUBSCRIPTION_PURCHASE
+                                }
+                            )
                             usageManager.isPremium = true
                             syncPremiumWithServer(purchase.purchaseToken, activeSubId)
                             refreshEntityLimitFromServer()
@@ -420,6 +433,13 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
             else -> {
                 Timber.tag(TAG).e("Purchase failed: ${billingResult.debugMessage}")
             }
+        }
+    }
+
+    private fun reportPlayIntegrityAction(action: String) {
+        if (BuildConfig.DEBUG) return
+        scope.launch(Dispatchers.IO) {
+            PlayIntegrityReporter.getInstance(context).reportAction(action)
         }
     }
 

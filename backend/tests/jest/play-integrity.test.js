@@ -215,6 +215,12 @@ describe('Play Integrity bridge', () => {
         expect(res.body.diagnostics.standardRequestConfigured).toBe(false);
         expect(res.body.diagnostics.verifierCredentialSources.playIntegrityServiceAccountJson).toBe(true);
         expect(res.body.diagnostics.requestModes).toEqual(['standard', 'classic']);
+        expect(res.body.diagnostics.actions).toEqual([
+            'startup',
+            'billing_topup',
+            'subscription_purchase',
+            'borrow_subscription',
+        ]);
         expect(JSON.stringify(res.body)).not.toContain('service_account');
         expect(JSON.stringify(res.body)).not.toContain(DEVICE_SECRET);
     });

@@ -459,7 +459,7 @@ function createRouter({ devices, decodeIntegrityToken = decodeIntegrityTokenWith
                     googleApplicationCredentialsJson: Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON),
                 },
                 requestModes: ['standard', 'classic'],
-                actions: ['startup', 'billing_topup', 'borrow_subscription'],
+                actions: ['startup', 'billing_topup', 'subscription_purchase', 'borrow_subscription'],
                 lastVerdict: lastVerdictSummariesByDevice.get(auth.deviceId) || null,
             },
             timestamp: new Date().toISOString(),
