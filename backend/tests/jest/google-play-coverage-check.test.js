@@ -84,6 +84,7 @@ describe('Google Play coverage check script helpers', () => {
             '--min-billing-library-version=9.0.0',
             '--expected-verdict-action=billing_topup',
             '--expected-verdict-version-code=101',
+            '--application=/tmp/ClawApplication.kt',
             '--android-manifest=/tmp/AndroidManifest.xml',
             '--billing-manager=/tmp/BillingManager.kt',
             '--play-integrity-reporter=/tmp/PlayIntegrityReporter.kt',
@@ -103,6 +104,7 @@ describe('Google Play coverage check script helpers', () => {
         expect(overridden.minBillingLibraryVersion).toBe('9.0.0');
         expect(overridden.expectedVerdictAction).toBe('billing_topup');
         expect(overridden.expectedVerdictVersionCode).toBe(101);
+        expect(overridden.applicationPath).toBe('/tmp/ClawApplication.kt');
         expect(overridden.androidManifestPath).toBe('/tmp/AndroidManifest.xml');
         expect(overridden.billingManagerPath).toBe('/tmp/BillingManager.kt');
         expect(overridden.playIntegrityReporterPath).toBe('/tmp/PlayIntegrityReporter.kt');
@@ -168,6 +170,55 @@ describe('Google Play coverage check script helpers', () => {
 
         expect(checker.backendHasPlayIntegrityRouter(`
             const playIntegrity = require('./play-integrity');
+        `)).toBe(false);
+    });
+
+    test('recognizes release startup Play Integrity reporting', () => {
+        expect(checker.applicationReportsPlayIntegrityStartup(`
+            private fun reportPlayIntegrityStartup() {
+                if (BuildConfig.DEBUG) return
+                PlayIntegrityReporter.getInstance(this).reportStartup()
+            }
+
+            override fun onCreate() {
+                reportPlayIntegrityStartup()
+            }
+        `)).toBe(true);
+
+        expect(checker.applicationReportsPlayIntegrityStartup(`
+            override fun onCreate() {
+                Timber.i("startup")
+            }
+        `)).toBe(false);
+    });
+
+    test('recognizes Play Integrity actions on billing success paths', () => {
+        expect(checker.billingReportsPlayIntegrityActions(`
+            private const val ACTION_BILLING_TOPUP = "billing_topup"
+            private const val ACTION_SUBSCRIPTION_PURCHASE = "subscription_purchase"
+            private const val ACTION_BORROW_SUBSCRIPTION = "borrow_subscription"
+
+            fun onPurchase(productId: String) {
+                reportPlayIntegrityAction(ACTION_BILLING_TOPUP)
+                reportPlayIntegrityAction(
+                    if (productId == BORROW_SUBSCRIPTION_ID) {
+                        ACTION_BORROW_SUBSCRIPTION
+                    } else {
+                        ACTION_SUBSCRIPTION_PURCHASE
+                    }
+                )
+            }
+
+            private fun reportPlayIntegrityAction(action: String) {
+                if (BuildConfig.DEBUG) return
+            }
+        `)).toBe(true);
+
+        expect(checker.billingReportsPlayIntegrityActions(`
+            private const val ACTION_BILLING_TOPUP = "billing_topup"
+            private fun onPurchase() {
+                reportPlayIntegrityAction(ACTION_BILLING_TOPUP)
+            }
         `)).toBe(false);
     });
 

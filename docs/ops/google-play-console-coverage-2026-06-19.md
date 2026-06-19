@@ -77,6 +77,10 @@ This verifier checks both remote production state and the local release branch:
 - `BillingManager.kt` enables Billing Library automatic service reconnection.
 - `AndroidManifest.xml` exposes `com.hank.clawlive.MainActivity` as an
   `android:autoVerify="true"` HTTPS App Link for `eclawbot.com` `/r/`.
+- `ClawApplication.kt` sends a non-debug startup Play Integrity report from
+  release builds so Play Console can observe baseline install/session traffic.
+- `BillingManager.kt` sends Play Integrity reports on successful top-up,
+  subscription, and borrow-subscription purchase paths.
 - `PlayIntegrityReporter.kt` refreshes the Standard Integrity token provider
   and retries once when Google returns `INTEGRITY_TOKEN_PROVIDER_INVALID`, so
   the release does not silently fall back to Classic-only signals after the

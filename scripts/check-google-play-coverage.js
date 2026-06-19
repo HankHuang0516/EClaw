@@ -32,6 +32,7 @@ function parseArgs(argv = process.argv.slice(2), cwd = process.cwd()) {
         minVersionCode: null,
         expectedVersionName: null,
         appGradlePath: path.join(cwd, 'app', 'build.gradle.kts'),
+        applicationPath: path.join(cwd, 'app', 'src', 'main', 'java', 'com', 'hank', 'clawlive', 'ClawApplication.kt'),
         androidManifestPath: path.join(cwd, 'app', 'src', 'main', 'AndroidManifest.xml'),
         billingManagerPath: path.join(cwd, 'app', 'src', 'main', 'java', 'com', 'hank', 'clawlive', 'billing', 'BillingManager.kt'),
         playIntegrityReporterPath: path.join(cwd, 'app', 'src', 'main', 'java', 'com', 'hank', 'clawlive', 'integrity', 'PlayIntegrityReporter.kt'),
@@ -83,6 +84,8 @@ function parseArgs(argv = process.argv.slice(2), cwd = process.cwd()) {
             options.expectedVerdictAction = arg.slice('--expected-verdict-action='.length);
         } else if (arg.startsWith('--expected-verdict-version-code=')) {
             options.expectedVerdictVersionCode = Number(arg.slice('--expected-verdict-version-code='.length));
+        } else if (arg.startsWith('--application=')) {
+            options.applicationPath = arg.slice('--application='.length);
         } else if (arg.startsWith('--app-gradle=')) {
             options.appGradlePath = arg.slice('--app-gradle='.length);
         } else if (arg.startsWith('--android-manifest=')) {
@@ -125,6 +128,7 @@ function usage() {
         '  --expected-version-name=1.0.93  Verify app versionName and backend LATEST_APP_VERSION.',
         '  --expected-verdict-action=billing_topup  Verify debug lastVerdict.action.',
         '  --expected-verdict-version-code=101  Verify debug lastVerdict appIntegrity.versionCode.',
+        '  --application=app/src/main/java/com/hank/clawlive/ClawApplication.kt',
         '  --android-manifest=app/src/main/AndroidManifest.xml',
         '  --billing-manager=app/src/main/java/com/hank/clawlive/billing/BillingManager.kt',
         '  --play-integrity-reporter=app/src/main/java/com/hank/clawlive/integrity/PlayIntegrityReporter.kt',
@@ -316,6 +320,27 @@ function backendHasPlayIntegrityRouter(text) {
         && /app\.use\(['"]\/api\/play-integrity['"]/.test(text);
 }
 
+function applicationReportsPlayIntegrityStartup(text) {
+    const source = String(text || '');
+    return source.includes('reportPlayIntegrityStartup()')
+        && source.includes('BuildConfig.DEBUG')
+        && source.includes('PlayIntegrityReporter.getInstance')
+        && source.includes('.reportStartup()');
+}
+
+function billingReportsPlayIntegrityActions(text) {
+    const source = String(text || '');
+    const requiredActions = [
+        'ACTION_BILLING_TOPUP',
+        'ACTION_SUBSCRIPTION_PURCHASE',
+        'ACTION_BORROW_SUBSCRIPTION',
+    ];
+    return source.includes('reportPlayIntegrityAction')
+        && source.includes('BuildConfig.DEBUG')
+        && requiredActions.every(action => source.includes(action))
+        && requiredActions.every(action => new RegExp(`reportPlayIntegrityAction\\([\\s\\S]{0,240}${action}`).test(source));
+}
+
 function addCheck(checks, name, ok, details = {}) {
     checks.push({ name, ok: Boolean(ok), ...details });
 }
@@ -386,6 +411,11 @@ async function run(options) {
         addCheck(checks, 'android.applinkManifest', appLink.ok, appLink);
     }
 
+    const application = safeRead(options.applicationPath);
+    if (application) {
+        addCheck(checks, 'android.playIntegrityStartupReport', applicationReportsPlayIntegrityStartup(application));
+    }
+
     const versionCatalog = safeRead(options.versionCatalogPath);
     if (versionCatalog && options.minBillingLibraryVersion) {
         const billingVersion = parseVersionCatalogVersion(versionCatalog, 'billing');
@@ -398,6 +428,7 @@ async function run(options) {
     const billingManager = safeRead(options.billingManagerPath);
     if (billingManager) {
         addCheck(checks, 'android.billingAutoReconnect', billingManager.includes('enableAutoServiceReconnection()'));
+        addCheck(checks, 'android.billingIntegrityActions', billingReportsPlayIntegrityActions(billingManager));
     }
 
     const playIntegrityReporter = safeRead(options.playIntegrityReporterPath);
@@ -541,6 +572,8 @@ module.exports = {
     evaluateAssetlinks,
     evaluateManifestAppLink,
     backendHasPlayIntegrityRouter,
+    applicationReportsPlayIntegrityStartup,
+    billingReportsPlayIntegrityActions,
     extractLastVerdictVersionCode,
     debugUrlLabel,
     run,
