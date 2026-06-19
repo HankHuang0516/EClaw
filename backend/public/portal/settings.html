@@ -54,6 +54,27 @@
             min-width: 0;
             justify-content: flex-end;
         }
+        .settings-icon-btn {
+            min-width: 28px;
+            min-height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0;
+            opacity: 0.68;
+            line-height: 1;
+            flex-shrink: 0;
+            border-radius: 6px;
+        }
+        .settings-icon-btn:hover,
+        .settings-icon-btn:focus-visible {
+            opacity: 1;
+            background: var(--input-bg);
+        }
 
         /* ── Subscription ── */
         .subscription-header {
@@ -745,8 +766,7 @@
                 <span class="info-label" data-i18n="settings_device_id">Device ID</span>
                 <span class="info-value-mono-group">
                     <span class="info-value mono" id="accountDeviceId">--</span>
-                    <button onclick="copyDeviceId()"
-                        style="background:none;border:none;cursor:pointer;font-size:14px;padding:0 2px;opacity:0.6;line-height:1;flex-shrink:0;"
+                    <button class="settings-icon-btn" onclick="copyDeviceId()"
                         data-i18n-title="common_copy" title="複製">📋</button>
                 </span>
             </div>
@@ -754,8 +774,7 @@
                 <span class="info-label" data-i18n="settings_device_secret">Device Secret</span>
                 <span class="info-value-mono-group">
                     <span class="info-value mono" id="accountDeviceSecret">--</span>
-                    <button onclick="copyDeviceSecret()"
-                        style="background:none;border:none;cursor:pointer;font-size:14px;padding:0 2px;opacity:0.6;line-height:1;flex-shrink:0;"
+                    <button class="settings-icon-btn" onclick="copyDeviceSecret()"
                         data-i18n-title="common_copy" title="複製">📋</button>
                 </span>
             </div>
@@ -2771,9 +2790,14 @@
             // Skip when not authenticated: /api/usage/snapshot needs a session, so
             // calling it pre-login returns a misleading 400 (missing-creds) in the
             // console for no benefit — the stale notice is irrelevant when logged out.
-            if (typeof currentUser === 'undefined' || !currentUser) { notice.style.display = 'none'; return; }
+            const user = (typeof window !== 'undefined' && window.currentUser) || (typeof currentUser !== 'undefined' ? currentUser : null);
+            if (!user || !user.deviceId || !user.deviceSecret) { notice.style.display = 'none'; return; }
             try {
-                const data = await apiCall('GET', '/api/usage/snapshot');
+                const qs = new URLSearchParams({
+                    deviceId: user.deviceId,
+                    deviceSecret: user.deviceSecret
+                });
+                const data = await apiCall('GET', '/api/usage/snapshot?' + qs.toString());
                 const cap = data && data.latest && data.latest.captured_at;
                 const t = cap ? Date.parse(cap) : NaN;
                 const STALE_MS = 6 * 60 * 60 * 1000;

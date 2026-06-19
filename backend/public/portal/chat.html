@@ -183,6 +183,7 @@
 
         .filter-chip {
             padding: 5px 14px;
+            min-height: 28px;
             border-radius: 20px;
             font-size: 12px;
             cursor: pointer;
@@ -207,6 +208,7 @@
 
         .filter-chip-toggle {
             padding: 5px 10px;
+            min-height: 28px;
             border-radius: 20px;
             font-size: 12px;
             cursor: pointer;
@@ -487,10 +489,14 @@
             text-transform: lowercase;
         }
         .code-copy-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 28px;
             background: none;
             border: 1px solid rgba(255,255,255,0.12);
             color: var(--text-muted, #8b949e);
-            padding: 2px 8px;
+            padding: 4px 8px;
             border-radius: 4px;
             font-size: 11px;
             cursor: pointer;

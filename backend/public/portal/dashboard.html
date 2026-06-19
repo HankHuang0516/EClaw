@@ -6506,7 +6506,7 @@
         })();
 
         /* ── K-Value Tracker (§7 k-Value Metric) ── */
-        // Reads GET /api/growth/daily?date=YYYY-MM-DD with device credentials.
+        // Reads GET /api/growth/daily?date=YYYY-MM-DD with owner device credentials.
         // Renders invite_k: shares/clicks/redeemed/activated + k_observed + k_model.
         // Requires owner/admin credentials.
         async function loadKValue(dateStr) {
@@ -6531,11 +6531,9 @@
             error.style.display = 'none';
 
             try {
-                const entityId = parseInt(new URLSearchParams(window.location.search).get('entity') || '0', 10);
                 const params = new URLSearchParams({
                     deviceId: user.deviceId,
-                    botSecret: user.deviceSecret,
-                    entityId: entityId,
+                    deviceSecret: user.deviceSecret,
                     date: dateStr
                 });
                 const r = await fetch('/api/growth/daily?' + params.toString(), { credentials: 'include' });

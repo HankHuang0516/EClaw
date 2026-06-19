@@ -82,6 +82,32 @@ describe('portal static HTML IDs', () => {
     expect(settings.match(/class="roster-action" aria-label="\$\{rosterT\('settings_roster_col_action','Action'\)\}"/g)).toHaveLength(2);
   });
 
+  test('authenticated QA/UIUX sweep regressions stay fixed', () => {
+    const dashboard = fs.readFileSync(path.join(__dirname, '../../public/portal/dashboard.html'), 'utf8');
+    const settings = fs.readFileSync(path.join(__dirname, '../../public/portal/settings.html'), 'utf8');
+    const sharedStyle = fs.readFileSync(path.join(__dirname, '../../public/portal/shared/style.css'), 'utf8');
+    const refsStyle = fs.readFileSync(path.join(__dirname, '../../public/shared/refs-popover.css'), 'utf8');
+    const kanban = fs.readFileSync(path.join(__dirname, '../../public/portal/kanban.html'), 'utf8');
+    const community = fs.readFileSync(path.join(__dirname, '../../public/portal/community.html'), 'utf8');
+    const envVars = fs.readFileSync(path.join(__dirname, '../../public/portal/env-vars.html'), 'utf8');
+
+    expect(dashboard).toContain("deviceSecret: user.deviceSecret");
+    expect(dashboard).not.toContain("botSecret: user.deviceSecret");
+
+    expect(settings).toContain("const qs = new URLSearchParams({");
+    expect(settings).toContain("deviceSecret: user.deviceSecret");
+    expect(settings).toContain("'/api/usage/snapshot?' + qs.toString()");
+
+    expect(sharedStyle).toMatch(/\.ecoin-badge\s*\{[\s\S]*min-height:\s*28px/);
+    expect(sharedStyle).toMatch(/\.btn-sm\s*\{[^}]*min-height:\s*28px/);
+    expect(sharedStyle).toMatch(/\.chip\s*\{[\s\S]*min-height:\s*28px/);
+    expect(sharedStyle).toMatch(/\.help-icon\s*\{[\s\S]*width:\s*28px;[\s\S]*height:\s*28px/);
+    expect(refsStyle).toMatch(/\.eclaw-refs-icon\s*\{[\s\S]*width:\s*28px;[\s\S]*height:\s*28px/);
+    expect(kanban).toMatch(/\.kb-chip\s*\{[^}]*min-height:28px/);
+    expect(community).toMatch(/\.invite-cta-copy-btn\s*\{[\s\S]*min-width:\s*28px;[\s\S]*min-height:\s*28px/);
+    expect(envVars).toMatch(/id="btnRevealCurlId"[\s\S]*min-width:28px;min-height:28px/);
+  });
+
   test('publisher secret visibility toggles expose accessible names and tooltips', () => {
     const publisherPath = path.join(__dirname, '../../public/portal/publisher.html');
     const publisher = fs.readFileSync(publisherPath, 'utf8');
