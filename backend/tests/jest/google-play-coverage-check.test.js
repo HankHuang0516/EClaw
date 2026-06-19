@@ -184,7 +184,10 @@ describe('Google Play coverage check script helpers', () => {
             return `
                 const checks = {
                     appPackageNameMatches: appPackageName === PACKAGE_NAME,
+                    certificateDigestMatches: expectedCertificateDigests().includes(digest),
                 };
+                const raw = process.env.PLAY_INTEGRITY_EXPECTED_CERT_SHA256_DIGESTS;
+                function expectedCertificateDigests() { return raw ? raw.split(',') : []; }
                 JSON.stringify({ integrityToken });
             `;
         });
@@ -215,6 +218,10 @@ describe('Google Play coverage check script helpers', () => {
             expect(summary.checks).toEqual(expect.arrayContaining([
                 expect.objectContaining({
                     name: 'backend.playIntegrityAppPackageCheck',
+                    ok: true,
+                }),
+                expect.objectContaining({
+                    name: 'backend.playIntegrityCertificateDigestCheck',
                     ok: true,
                 }),
             ]));

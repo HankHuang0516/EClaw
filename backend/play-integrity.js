@@ -16,6 +16,12 @@ const PLAY_INTEGRITY_SCOPE = 'https://www.googleapis.com/auth/playintegrity';
 const PLAY_INTEGRITY_DECODE_URL = `https://playintegrity.googleapis.com/v1/${PACKAGE_NAME}:decodeIntegrityToken`;
 const REQUEST_MODES = new Set(['classic', 'standard']);
 const LAST_VERDICT_DEVICE_LIMIT = 500;
+const DEFAULT_CERTIFICATE_SHA256_DIGESTS = [
+    // Play App Signing certificate fingerprint, base64url encoded for Play Integrity.
+    'outtVd3fHJ1oLrVnHBrljAEGy6Kik13bztKr4ub3dts',
+    // Upload certificate fingerprint retained for internal/sideload-adjacent diagnostics.
+    'DfAYM6RBxAJ0nM9KWlnyDGIAPVmRhjaYF9WJUEfb6BA',
+];
 
 let cachedAuthClient = null;
 const usedNonceHashes = new Map();
@@ -168,6 +174,24 @@ function googleDecodeRequestBody(integrityToken) {
     return { integrityToken };
 }
 
+function normalizeCertificateDigest(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    const hex = raw.replace(/:/g, '');
+    if (/^[0-9a-fA-F]{64}$/.test(hex)) {
+        return Buffer.from(hex, 'hex').toString('base64url');
+    }
+    return raw.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function expectedCertificateDigests() {
+    const raw = String(process.env.PLAY_INTEGRITY_EXPECTED_CERT_SHA256_DIGESTS || '').trim();
+    if (!raw) return DEFAULT_CERTIFICATE_SHA256_DIGESTS;
+    return raw.split(/[,\s]+/)
+        .map(normalizeCertificateDigest)
+        .filter(Boolean);
+}
+
 function extractPayload(decoded) {
     return decoded?.tokenPayloadExternal || decoded?.payload || decoded || {};
 }
@@ -287,6 +311,9 @@ function evaluatePayload(decoded, {
     const certificateSha256Digest = Array.isArray(appIntegrity.certificateSha256Digest)
         ? appIntegrity.certificateSha256Digest
         : [];
+    const normalizedCertificateDigests = certificateSha256Digest.map(normalizeCertificateDigest).filter(Boolean);
+    const expectedDigests = expectedCertificateDigests();
+    const expectedDigestSet = new Set(expectedDigests);
     const deviceRecognitionVerdict = Array.isArray(deviceIntegrity.deviceRecognitionVerdict)
         ? deviceIntegrity.deviceRecognitionVerdict
         : [];
@@ -302,12 +329,14 @@ function evaluatePayload(decoded, {
         fresh: Number.isFinite(timestampMillis) && Math.abs(now - timestampMillis) <= VERDICT_FRESHNESS_MS,
         appRecognized: appRecognitionVerdict === 'PLAY_RECOGNIZED',
         deviceMeetsIntegrity: deviceRecognitionVerdict.includes('MEETS_DEVICE_INTEGRITY'),
+        certificateDigestMatches: normalizedCertificateDigests.some(digest => expectedDigestSet.has(digest)),
     };
     const verified = checks.packageNameMatches
         && checks.bindingMatches
         && checks.fresh
         && checks.appRecognized
         && checks.appPackageNameMatches
+        && checks.certificateDigestMatches
         && checks.deviceMeetsIntegrity;
     return {
         verified,
@@ -496,6 +525,8 @@ module.exports = {
         standardIntegrityCloudProjectNumber,
         decodeIntegrityTokenWithGoogle,
         googleDecodeRequestBody,
+        normalizeCertificateDigest,
+        expectedCertificateDigests,
         rememberVerdictSummary,
         summarizeConsoleSignals,
         _resetForTests: () => {

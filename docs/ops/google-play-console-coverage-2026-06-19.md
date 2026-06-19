@@ -93,6 +93,10 @@ This verifier checks both remote production state and the local release branch:
   and `appIntegrity.packageName` against `com.hank.clawlive`, and preserves the
   safe `certificateSha256Digest` value in the debug summary for release
   evidence.
+- `backend/play-integrity.js` verifies `appIntegrity.certificateSha256Digest`
+  against the known Play App Signing and upload certificate digests. Override
+  only through `PLAY_INTEGRITY_EXPECTED_CERT_SHA256_DIGESTS` if Google rotates
+  app signing keys.
 
 Before PR #3545 deploys this command is expected to fail
 `assetlinks.fingerprints` because production is still missing the Play App
@@ -121,6 +125,7 @@ Set configuration through the production secret manager only:
 | `PLAY_INTEGRITY_SERVICE_ACCOUNT_JSON` | Enables backend decode through the Play Integrity API. |
 | `GOOGLE_APPLICATION_CREDENTIALS_JSON` or `GOOGLE_APPLICATION_CREDENTIALS` | Alternate credential sources for backend decode. |
 | `PLAY_INTEGRITY_NONCE_SECRET` | Optional dedicated nonce signing secret; defaults to `JWT_SECRET` if unset. |
+| `PLAY_INTEGRITY_EXPECTED_CERT_SHA256_DIGESTS` | Optional comma/space-separated override for expected app certificate digests; accepts Play Integrity base64url digests or colon-style SHA-256 fingerprints. Leave unset unless Play signing keys rotate. |
 
 Never print or commit the values. Only report whether each variable is present.
 
@@ -221,7 +226,8 @@ Console signal depends on. Also stop if the backend Google decode request body
 uses `integrity_token`; the Play Integrity v1 API expects `integrityToken`.
 Stop as well if backend verification no longer checks `appIntegrity.packageName`
 because `requestDetails.requestPackageName` alone is not enough app-integrity
-evidence.
+evidence, or if it no longer checks `certificateSha256Digest` against the
+expected app signing digest set.
 
 ## Play Integrity Signals
 

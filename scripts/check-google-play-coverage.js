@@ -468,6 +468,13 @@ async function run(options) {
             playIntegrityBackend.includes('appPackageNameMatches')
                 && playIntegrityBackend.includes('appPackageNameMatches: appPackageName === PACKAGE_NAME')
         );
+        addCheck(
+            checks,
+            'backend.playIntegrityCertificateDigestCheck',
+            playIntegrityBackend.includes('certificateDigestMatches')
+                && playIntegrityBackend.includes('expectedCertificateDigests')
+                && playIntegrityBackend.includes('PLAY_INTEGRITY_EXPECTED_CERT_SHA256_DIGESTS')
+        );
     }
 
     if (options.deviceId && options.deviceSecret) {
