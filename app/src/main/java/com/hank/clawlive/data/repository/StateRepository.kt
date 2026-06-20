@@ -4,6 +4,7 @@ import android.content.Context
 import com.hank.clawlive.R
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.LayoutPreferences
+import com.hank.clawlive.data.local.WallpaperEntitySnapshotCache
 import com.hank.clawlive.data.model.AgentStatus
 import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
@@ -20,6 +21,7 @@ class StateRepository(
     private val context: Context
 ) {
     private val layoutPrefs = LayoutPreferences.getInstance(context)
+    private val wallpaperSnapshotCache = WallpaperEntitySnapshotCache.getInstance(context)
     private val deviceManager = DeviceManager.getInstance(context)
     private val chatRepository = ChatRepository.getInstance(context)
 
@@ -123,24 +125,40 @@ class StateRepository(
 
                 // Persist server-provided entity limit for EntityChipHelper
                 layoutPrefs.serverEntityLimit = response.totalSlots
+                wallpaperSnapshotCache.saveEntities(filteredEntities, response.totalSlots)
 
                 emit(filteredResponse)
                 Timber.d("Multi-entity status: ${filteredEntities.size} entities for device ${deviceManager.deviceId}")
             } catch (e: Exception) {
                 Timber.e(e, "Error fetching multi-entity status")
-                // Fallback to single error entity
-                emit(
-                    MultiEntityResponse(
-                        entities = listOf(
-                            EntityStatus(
-                                entityId = 0,
-                                message = "Connection error: ${e.message}",
-                                state = CharacterState.SLEEPING
-                            )
-                        ),
-                        activeCount = 1
+                val cached = if (layoutPrefs.wallpaperOfflineEntityCacheEnabled) {
+                    wallpaperSnapshotCache.loadEntities()
+                } else {
+                    null
+                }
+                if (cached != null && cached.entities.isNotEmpty()) {
+                    emit(
+                        MultiEntityResponse(
+                            entities = cached.entities,
+                            activeCount = cached.entities.size,
+                            totalSlots = cached.totalSlots,
+                            serverReady = false,
+                            fromOfflineCache = true,
+                            offlineReason = e.javaClass.simpleName,
+                            cachedAt = cached.cachedAt
+                        )
                     )
-                )
+                    Timber.w("Using wallpaper offline entity cache: count=${cached.entities.size}, cachedAt=${cached.cachedAt}")
+                } else {
+                    emit(
+                        MultiEntityResponse(
+                            entities = emptyList(),
+                            activeCount = 0,
+                            serverReady = false,
+                            offlineReason = e.javaClass.simpleName
+                        )
+                    )
+                }
             }
             delay(intervalMs)
         }

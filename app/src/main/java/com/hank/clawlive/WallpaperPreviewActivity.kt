@@ -52,6 +52,7 @@ class WallpaperPreviewActivity : AppCompatActivity() {
     private lateinit var checkReset5h: CheckBox
     private lateinit var checkResetWeekly: CheckBox
     private lateinit var btnSelectPhoto: MaterialButton
+    private lateinit var btnMoreWallpaperSettings: MaterialButton
     private lateinit var btnReset: MaterialButton
     private lateinit var btnSetWallpaper: MaterialButton
     private lateinit var btnBack: ImageButton
@@ -146,6 +147,7 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         checkReset5h = findViewById(R.id.checkReset5h)
         checkResetWeekly = findViewById(R.id.checkResetWeekly)
         btnSelectPhoto = findViewById(R.id.btnSelectPhoto)
+        btnMoreWallpaperSettings = findViewById(R.id.btnMoreWallpaperSettings)
         btnReset = findViewById(R.id.btnReset)
         btnSetWallpaper = findViewById(R.id.btnSetWallpaper)
         btnBack = findViewById(R.id.btnBack)
@@ -237,6 +239,10 @@ class WallpaperPreviewActivity : AppCompatActivity() {
 
         btnSelectPhoto.setOnClickListener {
             openPhotoPicker()
+        }
+
+        btnMoreWallpaperSettings.setOnClickListener {
+            startActivity(Intent(this, WallpaperMoreSettingsActivity::class.java))
         }
 
         switchCustomLayout.setOnCheckedChangeListener { _, isChecked ->

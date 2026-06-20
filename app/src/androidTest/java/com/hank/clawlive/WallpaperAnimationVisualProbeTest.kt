@@ -31,6 +31,13 @@ class WallpaperAnimationVisualProbeTest {
         prefs.clearAllEntityScales()
         prefs.useCustomLayout = true
         prefs.wallpaperWalkingEnabled = true
+        prefs.wallpaperSpeechBubblesEnabled = true
+        prefs.wallpaperBubblePulseEnabled = true
+        prefs.wallpaperBubbleOverlayAvoidanceEnabled = true
+        prefs.wallpaperStateAuraEnabled = true
+        prefs.wallpaperGroundShadowEnabled = true
+        prefs.wallpaperAdaptiveEffectsEnabled = true
+        prefs.wallpaperOfflineEntityCacheEnabled = true
         prefs.usageOverlayEnabled = true
         prefs.clearUsageOverlayTransform()
         prefs.setEntityScale(0, 0.72f)
@@ -75,6 +82,13 @@ class WallpaperAnimationVisualProbeTest {
         prefs.clearAllEntityScales()
         prefs.useCustomLayout = true
         prefs.wallpaperWalkingEnabled = true
+        prefs.wallpaperSpeechBubblesEnabled = true
+        prefs.wallpaperBubblePulseEnabled = true
+        prefs.wallpaperBubbleOverlayAvoidanceEnabled = true
+        prefs.wallpaperStateAuraEnabled = true
+        prefs.wallpaperGroundShadowEnabled = true
+        prefs.wallpaperAdaptiveEffectsEnabled = true
+        prefs.wallpaperOfflineEntityCacheEnabled = true
         prefs.setCustomPosition(0, 0.72f, 0.46f)
 
         ActivityScenario.launch(WallpaperPreviewActivity::class.java).use { scenario ->

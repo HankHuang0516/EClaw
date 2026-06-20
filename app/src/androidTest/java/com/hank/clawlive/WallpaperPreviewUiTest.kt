@@ -163,6 +163,18 @@ class WallpaperPreviewUiTest {
     }
 
     @Test
+    fun testMoreWallpaperSettingsButtonIsClickable() {
+        ActivityScenario.launch(WallpaperPreviewActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val button = activity.findViewById<View>(R.id.btnMoreWallpaperSettings)
+                assertNotNull("More wallpaper settings button should exist", button)
+                assertTrue("More wallpaper settings button should be clickable", button.isClickable)
+                assertTrue("More wallpaper settings button should be visible", button.visibility == View.VISIBLE)
+            }
+        }
+    }
+
+    @Test
     fun testPreviewViewIsFullScreen() {
         ActivityScenario.launch(WallpaperPreviewActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->

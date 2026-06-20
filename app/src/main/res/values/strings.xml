@@ -125,6 +125,22 @@
     <string name="wallpaper_settings_expand_action">Expand settings panel</string>
     <string name="wallpaper_settings_collapse_caret_down">▼</string>
     <string name="wallpaper_settings_collapse_caret_up">▲</string>
+    <string name="wallpaper_more_settings">More wallpaper settings</string>
+    <string name="wallpaper_more_settings_desc">Advanced wallpaper animation and offline behavior. New enhancements are enabled by default.</string>
+    <string name="wallpaper_setting_speech_bubbles">Message bubbles</string>
+    <string name="wallpaper_setting_speech_bubbles_desc">Show entity status and recent messages near each companion.</string>
+    <string name="wallpaper_setting_bubble_pulse">Bubble pulse</string>
+    <string name="wallpaper_setting_bubble_pulse_desc">Briefly highlight a companion when its bubble changes.</string>
+    <string name="wallpaper_setting_bubble_avoidance">Smart bubble avoidance</string>
+    <string name="wallpaper_setting_bubble_avoidance_desc">Keep bubbles away from usage panels and status labels.</string>
+    <string name="wallpaper_setting_state_aura">State aura</string>
+    <string name="wallpaper_setting_state_aura_desc">Use color glows to show the companion state at a glance.</string>
+    <string name="wallpaper_setting_ground_shadow">Ground shadow</string>
+    <string name="wallpaper_setting_ground_shadow_desc">Draw depth under companions so movement feels anchored.</string>
+    <string name="wallpaper_setting_adaptive_effects">Adaptive effects</string>
+    <string name="wallpaper_setting_adaptive_effects_desc">Automatically reduce expensive effects when rendering is unstable.</string>
+    <string name="wallpaper_setting_offline_cache">Offline appearance cache</string>
+    <string name="wallpaper_setting_offline_cache_desc">Keep the last real companion appearance during network outages instead of falling back to defaults.</string>
     <string name="back">Back</string>
     
     <!-- Layout Editor -->

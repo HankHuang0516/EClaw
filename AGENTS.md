@@ -382,6 +382,7 @@ EClaw/
 - Push: Firebase Cloud Messaging (`ClawFcmService.kt`)
 - Live Wallpaper: Custom `ClawRenderer` engine
 - Live Wallpaper companion animation: `WallpaperWanderController` owns walking positions/state, `SpeechBubbleController` owns message bubble TTL/anchor/fade math, and `WallpaperRenderDiagnostics` owns in-memory render self-adjustment counters. Keep these pure/testable and do not store message text, secrets, device IDs, or asset URLs in diagnostics.
+- Android emulator validation for wallpaper/companion/admin-sensitive flows must first log in with the user's admin account through a secure local source (for example Keychain or instrumentation args). Never print or commit the password/device secret. After login, run the relevant `connectedDebugAndroidTest` probes against the emulator and state that the emulator was admin-authenticated.
 - Billing: Google Play Billing (`BillingManager.kt`)
 - AI Chat: `AiChatViewModel.kt` manages state (fixes message loss, typing race condition)
 - Bottom nav: FILES tab renamed to CARDS (Card Holder); Files link moved to Settings
@@ -1149,6 +1150,14 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | R2 Files | `node backend/tests/test-r2-files.js` | Device ID + Secret | R2 file storage CRUD validation |
 | R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
 | Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
+
+### Android Instrumentation Tests
+
+| Test | Command | Credentials | Description |
+|------|---------|-------------|-------------|
+| Admin emulator login probe | `ANDROID_HOME="$HOME/Library/Android/sdk" ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.hank.clawlive.AdminAccountLoginProbeTest -Pandroid.testInstrumentationRunnerArguments.adminEmail="$ADMIN_EMAIL" -Pandroid.testInstrumentationRunnerArguments.adminPassword="$ADMIN_PASSWORD"` | Admin email/password from secure local source; never print values | Live probe: logs the emulator app into the admin account, stores returned device credentials, and verifies admin/developer role before wallpaper validation |
+| Wallpaper advanced settings/offline cache | `ANDROID_HOME="$HOME/Library/Android/sdk" ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.hank.clawlive.WallpaperOfflineEntityCacheTest,com.hank.clawlive.WallpaperMoreSettingsUiTest,com.hank.clawlive.WallpaperPreviewUiTest#testMoreWallpaperSettingsButtonIsClickable` | Emulator already logged into admin account for end-to-end wallpaper work; no credentials for pure cache/UI cases | Regression: advanced wallpaper switches default on and persist, more-settings entry remains visible/clickable, offline entity cache strips secrets/messages, and spritesheet disk cache survives memory loss |
+| Wallpaper animation visual probes | `ANDROID_HOME="$HOME/Library/Android/sdk" ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.hank.clawlive.WallpaperAnimationVisualProbeTest` | Emulator already logged into admin account | Visual regression: message bubbles, aura, shadow, overlay avoidance, and rendered hit-target alignment remain active with the new default-on controls |
 
 ### Jest Unit Tests (CI-run, `npm test`, 116 files)
 

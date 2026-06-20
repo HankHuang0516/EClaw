@@ -504,16 +504,26 @@ class ClawRenderer(
         )
         val baseScale = getScaleFactor(entities.size)
         val nowMs = System.currentTimeMillis()
-        syncSpeechBubbles(entities, nowMs)
-        renderDiagnostics.recordFrame(
-            walkingEntityCount = entities.count { wanderController.isWalking(it.entityId) },
-            activeBubbleCount = speechBubbleController.activeCount(nowMs)
-        )
-        val bubbleAvoidBounds = usageOverlayRenderer.getBounds(
-            canvas.width,
-            canvas.height,
-            usageSnapshot
-        )
+        if (layoutPrefs.wallpaperSpeechBubblesEnabled) {
+            syncSpeechBubbles(entities, nowMs)
+        } else {
+            clearSpeechBubbles()
+        }
+        if (layoutPrefs.wallpaperAdaptiveEffectsEnabled) {
+            renderDiagnostics.recordFrame(
+                walkingEntityCount = entities.count { wanderController.isWalking(it.entityId) },
+                activeBubbleCount = speechBubbleController.activeCount(nowMs)
+            )
+        }
+        val bubbleAvoidBounds = if (layoutPrefs.wallpaperBubbleOverlayAvoidanceEnabled) {
+            usageOverlayRenderer.getBounds(
+                canvas.width,
+                canvas.height,
+                usageSnapshot
+            )
+        } else {
+            null
+        }
 
         entities.forEachIndexed { index, entity ->
             if (index < positions.size) {
@@ -565,6 +575,12 @@ class ClawRenderer(
         }
     }
 
+    private fun clearSpeechBubbles() {
+        lastBubbleMessageByEntity.keys.toList().forEach { speechBubbleController.clear(it) }
+        lastBubbleMessageByEntity.clear()
+        bubblePulseStartedByEntity.clear()
+    }
+
     /**
      * Draw a single entity at the specified position with scale.
      */
@@ -590,10 +606,13 @@ class ClawRenderer(
 
         val charY = centerY + bobOffset
         val radius = 150f * scale
-        val quietEffects = renderDiagnostics.shouldReduceEffects(entity.entityId)
+        val quietEffects = layoutPrefs.wallpaperAdaptiveEffectsEnabled &&
+            renderDiagnostics.shouldReduceEffects(entity.entityId)
 
-        drawGroundShadow(canvas, centerX, charY, radius, scale, time)
-        if (!quietEffects) {
+        if (layoutPrefs.wallpaperGroundShadowEnabled) {
+            drawGroundShadow(canvas, centerX, charY, radius, scale, time)
+        }
+        if (layoutPrefs.wallpaperStateAuraEnabled && !quietEffects) {
             drawStateAura(canvas, entity, centerX, charY, radius, scale, time)
         }
 
@@ -626,7 +645,7 @@ class ClawRenderer(
                 scale
             ) ?: SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED
         } else SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED
-        if (attemptedSpritesheet) {
+        if (attemptedSpritesheet && layoutPrefs.wallpaperAdaptiveEffectsEnabled) {
             renderDiagnostics.recordCompanionDraw(entity.entityId, drawResult.toDiagnosticsOutcome())
         }
 
@@ -638,13 +657,17 @@ class ClawRenderer(
                 drawLobsterAtPosition(canvas, centerX, charY, entity, scale, companion)
         }
 
-        val bubblePlacement = speechBubbleController.placementFor(
-            entityId = entity.entityId,
-            entityXPct = (centerX / canvas.width.toFloat()).coerceIn(0f, 1f),
-            entityYPct = (charY / canvas.height.toFloat()).coerceIn(0f, 1f),
-            spriteHeightPct = ((radius * 2f) / canvas.height.toFloat()).coerceIn(0.02f, 0.9f),
-            nowMs = nowMs
-        )
+        val bubblePlacement = if (layoutPrefs.wallpaperSpeechBubblesEnabled) {
+            speechBubbleController.placementFor(
+                entityId = entity.entityId,
+                entityXPct = (centerX / canvas.width.toFloat()).coerceIn(0f, 1f),
+                entityYPct = (charY / canvas.height.toFloat()).coerceIn(0f, 1f),
+                spriteHeightPct = ((radius * 2f) / canvas.height.toFloat()).coerceIn(0.02f, 0.9f),
+                nowMs = nowMs
+            )
+        } else {
+            null
+        }
         if (bubblePlacement != null) {
             val renderBubblePlacement = if (bubblePlacement.flippedBelow && !isAmbient) {
                 val labelClearancePct = ((88f * scale) / canvas.height.toFloat()).coerceIn(0f, 0.12f)
@@ -655,7 +678,9 @@ class ClawRenderer(
                 bubblePlacement
             }
             val pulseAgeMs = bubblePulseStartedByEntity[entity.entityId]?.let { nowMs - it } ?: Long.MAX_VALUE
-            drawBubblePulse(canvas, entity, centerX, charY, radius, scale, pulseAgeMs, renderBubblePlacement.alpha)
+            if (layoutPrefs.wallpaperBubblePulseEnabled) {
+                drawBubblePulse(canvas, entity, centerX, charY, radius, scale, pulseAgeMs, renderBubblePlacement.alpha)
+            }
             drawMessageBubble(canvas, entity, renderBubblePlacement, scale, screenWidth, bubbleAvoidBounds)
         }
 
