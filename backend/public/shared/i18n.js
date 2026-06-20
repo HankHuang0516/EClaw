@@ -337750,6 +337750,31 @@ const TRANSLATIONS = {
 
 
         "invite_qr_toast_copy_failed": "Copy failed — use Download",
+        "invite_qr_status_ready": "Ready",
+        "invite_qr_status_rendering": "Rendering preview",
+        "invite_qr_status_rendering_code": "Building the QR image for this invite link.",
+        "invite_qr_status_rendering_empty": "Building a placeholder preview until a code is available.",
+        "invite_qr_status_qr_fallback": "QR fallback drawn",
+        "invite_qr_status_qr_fallback_detail": "The QR library did not load, but the poster can still be downloaded.",
+        "invite_qr_status_ready_detail": "Preview is current. Download or copy the PNG when you are ready.",
+        "invite_qr_status_placeholder": "Placeholder preview",
+        "invite_qr_status_placeholder_detail": "Enter an invite code to replace the placeholder link.",
+        "invite_qr_status_failed": "Preview failed",
+        "invite_qr_status_failed_detail": "Try another image size or reload the page.",
+        "invite_qr_status_downloaded": "Downloaded",
+        "invite_qr_btn_downloaded": "Downloaded",
+        "invite_qr_status_copy_unavailable": "Clipboard unavailable",
+        "invite_qr_status_copied": "Copied",
+        "invite_qr_btn_copied": "Copied",
+        "invite_qr_status_copy_failed": "Copy failed",
+        "invite_qr_status_loading_code": "Checking account code",
+        "invite_qr_status_loading_code_detail": "If this browser is not signed in, you can type a code manually.",
+        "invite_qr_helper_loaded": "Loaded your account invite code.",
+        "invite_qr_status_manual": "Manual code entry",
+        "invite_qr_status_manual_detail": "No account code loaded here. Type or paste one to personalize the image.",
+        "invite_qr_helper_sanitized": "Only letters and numbers are kept.",
+        "invite_qr_helper_ready": "Preview updates automatically as the code changes.",
+        "invite_qr_helper_empty": "Letters and numbers only. The preview uses a placeholder until a code is available.",
 
 
 
