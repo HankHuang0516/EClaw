@@ -286,6 +286,18 @@ class LayoutPreferences private constructor(context: Context) {
             prefs.edit().putInt(KEY_SERVER_ENTITY_LIMIT, value.coerceIn(4, 8)).apply()
         }
 
+    /**
+     * Device-level wallpaper walking toggle. This intentionally lives in the
+     * wallpaper/layout preference file rather than per-entity state: one device
+     * can choose whether its wallpaper entities wander without changing server
+     * or entity settings for other devices.
+     */
+    var wallpaperWalkingEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_WALKING_ENABLED, false)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_WALKING_ENABLED, value).apply()
+        }
+
     var usageOverlayEnabled: Boolean
         get() = prefs.getBoolean(KEY_USAGE_OVERLAY_ENABLED, true)
         set(value) {
@@ -433,6 +445,7 @@ class LayoutPreferences private constructor(context: Context) {
         private const val KEY_BACKGROUND_URI = "background_image_uri"
         private const val KEY_DEBUG_ENTITY_LIMIT = "debug_entity_limit"
         private const val KEY_SERVER_ENTITY_LIMIT = "server_entity_limit"
+        private const val KEY_WALLPAPER_WALKING_ENABLED = "wallpaper_walking_enabled"
         private const val KEY_USAGE_OVERLAY_ENABLED = "usage_overlay_enabled"
         private const val KEY_USAGE_OVERLAY_POSITION = "usage_overlay_position"
         private const val KEY_USAGE_OVERLAY_CENTER = "usage_overlay_center"
