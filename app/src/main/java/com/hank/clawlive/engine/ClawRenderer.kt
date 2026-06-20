@@ -36,6 +36,7 @@ class ClawRenderer(
     private val speechBubbleController = SpeechBubbleController()
     private val renderDiagnostics = WallpaperRenderDiagnostics()
     private val lastBubbleMessageByEntity = mutableMapOf<Int, String>()
+    private val lastBubbleDurationByEntity = mutableMapOf<Int, Long>()
     private val bubblePulseStartedByEntity = mutableMapOf<Int, Long>()
 
     // Background image cache
@@ -556,21 +557,34 @@ class ClawRenderer(
         val staleEntityIds = lastBubbleMessageByEntity.keys - liveEntityIds
         staleEntityIds.forEach { speechBubbleController.clear(it) }
         lastBubbleMessageByEntity.keys.retainAll(liveEntityIds)
+        lastBubbleDurationByEntity.keys.retainAll(liveEntityIds)
         bubblePulseStartedByEntity.keys.retainAll(liveEntityIds)
+        val preferredTtlMs = layoutPrefs.wallpaperBubbleDurationMs
 
         entities.forEach { entity ->
             val displayText = if (isAmbient) getStateEmoji(entity.state) else entity.message.trim()
             if (displayText.isBlank()) {
                 lastBubbleMessageByEntity.remove(entity.entityId)
+                lastBubbleDurationByEntity.remove(entity.entityId)
                 bubblePulseStartedByEntity.remove(entity.entityId)
                 speechBubbleController.clear(entity.entityId)
                 return@forEach
             }
 
-            if (lastBubbleMessageByEntity[entity.entityId] != displayText) {
-                speechBubbleController.show(entity.entityId, displayText, nowMs)
+            val messageChanged = lastBubbleMessageByEntity[entity.entityId] != displayText
+            val durationChanged = lastBubbleDurationByEntity[entity.entityId] != preferredTtlMs
+            if (messageChanged || durationChanged) {
+                speechBubbleController.show(
+                    entity.entityId,
+                    displayText,
+                    nowMs,
+                    preferredTtlMs = preferredTtlMs
+                )
                 lastBubbleMessageByEntity[entity.entityId] = displayText
-                bubblePulseStartedByEntity[entity.entityId] = nowMs
+                lastBubbleDurationByEntity[entity.entityId] = preferredTtlMs
+                if (messageChanged) {
+                    bubblePulseStartedByEntity[entity.entityId] = nowMs
+                }
             }
         }
     }
@@ -578,6 +592,7 @@ class ClawRenderer(
     private fun clearSpeechBubbles() {
         lastBubbleMessageByEntity.keys.toList().forEach { speechBubbleController.clear(it) }
         lastBubbleMessageByEntity.clear()
+        lastBubbleDurationByEntity.clear()
         bubblePulseStartedByEntity.clear()
     }
 
