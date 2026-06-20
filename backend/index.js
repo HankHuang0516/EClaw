@@ -20117,7 +20117,7 @@ agentImprovement.initTable(chatPool)
 
 // OODA-R Phase 1 #4 — anti-laziness heartbeat sweeper.
 // in_progress >2h with no new comment → post a "what's next?" prompt;
-// in_progress >24h → move to blocked. Dedupes so it doesn't spam.
+// P0/P1 in_progress >24h → move to blocked. Dedupes so it doesn't spam.
 const heartbeat = require('./agent-improvement/heartbeat');
 heartbeat.startSweeper({
     pool: chatPool,
