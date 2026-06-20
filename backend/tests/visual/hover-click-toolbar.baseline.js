@@ -1,10 +1,10 @@
 /**
  * Layout baseline for the hover-click toolbar (slice 3/4).
  *
- * Captured 2026-06-03 from `node backend/tests/visual/hover-click-toolbar.spec.js`
- * against the merged impl (PR #3107 + #3109 + #3110). If a future change
- * shifts these numbers, the spec test will fail loudly — pick: update
- * baseline + add a comment explaining the intent, or revert the change.
+ * Captured 2026-06-20 from `node backend/tests/visual/hover-click-toolbar.spec.js`
+ * after the toolbar expanded to 11 chips. If a future change shifts these
+ * numbers, the spec test will fail loudly — pick: update baseline + add a
+ * comment explaining the intent, or revert the change.
  *
  * Values use a small tolerance (3-4px) for desktop horizontal/vertical
  * positions to absorb sub-pixel rounding in Chromium across runs. Mobile
@@ -15,24 +15,18 @@
 
 module.exports = {
     desktop: {
-        chipCount: 7,
-        // max-width is 480px per spec §3.1; default box-sizing is content-box
-        // so padding (8+8) and border (1+1) add ~18px → outer width up to
-        // ~498. Locked here so a future box-sizing/padding change is
-        // visible. If we switch to box-sizing: border-box, tighten this.
-        toolbarWidth: { min: 360, max: 510 },
-        // Toolbar should anchor close under the bounding box (spec §3.3
-        // "directly below the selected element's bounding box"). 8px is
-        // the gap in code; allow ±4px for layout differences.
-        toolbarTopVsButton: { min: 4, max: 16 },
+        chipCount: 11,
+        // Desktop is intentionally docked near the viewport top-right so it
+        // does not cover the selected element. The shell uses border-box
+        // sizing and a 480px cap.
+        toolbarWidth: { min: 430, max: 490 },
+        toolbarTop: { min: 12, max: 20 },
+        toolbarRightGap: { min: 12, max: 20 },
     },
     mobile: {
-        // Full-viewport width on bottom-sheet variant. Same content-box
-        // padding-overflow issue → outer width = viewport + padding + border.
-        // Viewport 390 + (12+12) padding + ~2px border ≈ 416.
-        width: { min: 410, max: 422 },
-        // Vertical span of the chip list — last chip's offsetTop. With
-        // 7 chips × ~46px spacing observed in baseline (move=12, last≈288).
-        chipsVerticalSpan: { min: 240, max: 360 },
+        // Full-viewport width on bottom-sheet variant with border-box sizing.
+        width: { min: 386, max: 394 },
+        // Two-column grid keeps the expanded 11-chip set compact.
+        chipsVerticalSpan: { min: 220, max: 360 },
     },
 };

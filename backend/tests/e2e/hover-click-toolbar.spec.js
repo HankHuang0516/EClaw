@@ -5,8 +5,8 @@
  * - Hover any DOM element shows preview ring; click commits selection
  *   and opens the toolbar.
  * - Esc / outside-click dismisses; ring + toolbar gone.
- * - Mobile viewport: bottom-sheet variant slides up; vertical chip list.
- * - Desktop viewport: popover variant anchored under the element.
+ * - Mobile viewport: bottom-sheet variant slides up; two-column chip grid.
+ * - Desktop viewport: docked top-right toolbar stays capped and wrapped.
  *
  * Card: card_af967715a0ab1724da98dcc2 (Test/P2) — slice 2/4.
  *
@@ -149,14 +149,19 @@ async function runTests() {
         const toolbarVisible = await pageD.evaluate(() => !document.querySelector('.eclaw-hover-click-toolbar').hidden);
         check('click → toolbar visible (not hidden)', toolbarVisible);
 
-        // 4. Toolbar has all 7 chips
+        // 4. Toolbar has the expanded 11-chip action set
         const chipCount = await pageD.evaluate(() =>
             document.querySelectorAll('.eclaw-hover-click-toolbar__chip').length);
-        check('toolbar has 7 action chips', chipCount === 7, `got ${chipCount}`);
+        check('toolbar has 11 action chips', chipCount === 11, `got ${chipCount}`);
 
-        // 5. First chip (Move) auto-focused per #6 Q1
+        // 5. Move auto-focused per #6 Q1; Undo/Redo are disabled until history exists
         const focusedChip = await pageD.evaluate(() => document.activeElement && document.activeElement.getAttribute('data-chip'));
         check('first chip (Move) auto-focused per #6 Q1', focusedChip === 'move', `got "${focusedChip}"`);
+        const historyDisabled = await pageD.evaluate(() => ({
+            undo: document.querySelector('[data-chip="undo"]').disabled,
+            redo: document.querySelector('[data-chip="redo"]').disabled,
+        }));
+        check('empty history disables Undo/Redo', historyDisabled.undo && historyDisabled.redo);
 
         // 6. Esc dismisses
         await pageD.keyboard.press('Escape');
@@ -219,14 +224,14 @@ async function runTests() {
         check('mobile: fixed bottom anchoring',
             sheetState.position === 'fixed' && sheetState.bottom === '0px');
 
-        // Vertical chip layout (per #6 Q6) — first chip's offsetTop differs from second
+        // Compact grid layout — first two chips share a row, third wraps below.
         const chipOffsets = await pageM.evaluate(() => {
             const chips = Array.from(document.querySelectorAll('.eclaw-hover-click-toolbar__chip'));
             return chips.map((c) => ({ id: c.dataset.chip, top: c.offsetTop }));
         });
-        const vertical = chipOffsets[0].top !== chipOffsets[1].top;
-        check('mobile: chips stack vertically per #6 Q6',
-            vertical, `offsets ${JSON.stringify(chipOffsets.slice(0, 3))}`);
+        const grid = chipOffsets[0].top === chipOffsets[1].top && chipOffsets[2].top > chipOffsets[1].top;
+        check('mobile: chips use two-column grid',
+            grid, `offsets ${JSON.stringify(chipOffsets.slice(0, 4))}`);
 
         await ctxM.close();
     } finally {
