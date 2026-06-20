@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.hank.clawlive.data.local.DeviceManager
+import com.hank.clawlive.data.local.WallpaperEntitySnapshotCache
+import com.hank.clawlive.data.local.WallpaperSpritesheetDiskCache
 import com.hank.clawlive.data.model.CompanionDetail
 import com.hank.clawlive.data.remote.ClawApiService
 import com.hank.clawlive.data.remote.NetworkModule
@@ -40,9 +42,15 @@ class CompanionRepository(
     private val context: Context
 ) {
     private val deviceManager = DeviceManager.getInstance(context)
+    private val snapshotCache = WallpaperEntitySnapshotCache.getInstance(context)
+    private val diskSheetCache = WallpaperSpritesheetDiskCache.getInstance(context)
     private val descriptorCache = ConcurrentHashMap<Int, CompanionDetail>()
     private val sheetCache = SheetBitmapCache(maxEntries = 8)
     private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    init {
+        descriptorCache.putAll(snapshotCache.loadCompanionMap())
+    }
 
     /** Returns the cached companion for an entity, or null until a fetch lands. */
     fun cached(entityId: Int): CompanionDetail? = descriptorCache[entityId]
@@ -57,10 +65,10 @@ class CompanionRepository(
         if (url.isNullOrBlank()) return null
         sheetCache.peek(url)?.let { return it }
         if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
-            ioScope.launch { sheetCache.getOrLoad(url) { fetchBitmap(url) } }
+            ioScope.launch { sheetCache.getOrLoad(url) { loadBitmap(url) } }
             return null
         }
-        return sheetCache.getOrLoad(url) { fetchBitmap(url) }
+        return sheetCache.getOrLoad(url) { loadBitmap(url) }
     }
 
     /**
@@ -95,7 +103,7 @@ class CompanionRepository(
                             true // descriptor is malformed; let renderer's UNSUPPORTED path handle it
                         } else {
                             withContext(Dispatchers.IO) {
-                                sheetCache.getOrLoad(sheetUrl) { fetchBitmap(sheetUrl) } != null
+                                sheetCache.getOrLoad(sheetUrl) { loadBitmap(sheetUrl) } != null
                             }
                         }
                     } else {
@@ -103,6 +111,7 @@ class CompanionRepository(
                     }
                     if (sheetReady) {
                         descriptorCache[entityId] = companion
+                        snapshotCache.saveCompanion(entityId, companion)
                         Timber.d("Companion fetched for entity $entityId: ${companion.id} (${companion.assetType})")
                     } else {
                         Timber.w("Spritesheet preload failed for entity $entityId (${companion.spritesheetUrl()}); keeping previous companion to avoid default-lobster flicker")
@@ -123,6 +132,11 @@ class CompanionRepository(
         sheetCache.clear()
     }
 
+    private fun loadBitmap(url: String): Bitmap? {
+        diskSheetCache.load(url)?.let { return it }
+        return fetchBitmap(url)
+    }
+
     private fun fetchBitmap(url: String): Bitmap? {
         return try {
             val client = NetworkModule.okHttpClient
@@ -136,7 +150,9 @@ class CompanionRepository(
                 val opts = BitmapFactory.Options().apply {
                     inPreferredConfig = Bitmap.Config.ARGB_8888
                 }
-                BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
+                BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)?.also {
+                    diskSheetCache.save(url, bytes)
+                }
             }
         } catch (e: Exception) {
             Timber.e(e, "Spritesheet decode failed for $url")

@@ -308,6 +308,14 @@
 
         </LinearLayout>
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnMoreWallpaperSettings"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:text="@string/wallpaper_more_settings" />
+
         <!-- Select Photo Button (only visible when background enabled) -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSelectPhoto"

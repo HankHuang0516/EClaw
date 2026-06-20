@@ -903,6 +903,22 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="wallpaper_settings_expand_action">展开设置面板</string>
     <string name="wallpaper_settings_collapse_action">收起设置面板</string>
     <string name="wallpaper_settings_collapse_caret_up">▲</string>
+    <string name="wallpaper_more_settings">更多壁纸设置</string>
+    <string name="wallpaper_more_settings_desc">进阶壁纸动画与断网行为。新的增强功能默认全部启用。</string>
+    <string name="wallpaper_setting_speech_bubbles">消息气泡</string>
+    <string name="wallpaper_setting_speech_bubbles_desc">在伙伴旁显示实体状态与最近消息。</string>
+    <string name="wallpaper_setting_bubble_pulse">气泡脉冲</string>
+    <string name="wallpaper_setting_bubble_pulse_desc">气泡内容更新时短暂高亮伙伴。</string>
+    <string name="wallpaper_setting_bubble_avoidance">智能气泡避让</string>
+    <string name="wallpaper_setting_bubble_avoidance_desc">让气泡避开用量面板与状态标签。</string>
+    <string name="wallpaper_setting_state_aura">状态光晕</string>
+    <string name="wallpaper_setting_state_aura_desc">用色彩光晕快速识别伙伴状态。</string>
+    <string name="wallpaper_setting_ground_shadow">地面阴影</string>
+    <string name="wallpaper_setting_ground_shadow_desc">在伙伴下方绘制深度，让移动更稳定。</string>
+    <string name="wallpaper_setting_adaptive_effects">自适应特效</string>
+    <string name="wallpaper_setting_adaptive_effects_desc">渲染不稳定时自动降低高成本特效。</string>
+    <string name="wallpaper_setting_offline_cache">断网外观缓存</string>
+    <string name="wallpaper_setting_offline_cache_desc">网络中断时保留最后一次真实伙伴外观，不退回默认外观。</string>
     <!-- Health-checking status shown on entity avatar while passive health-check runs -->
     <string name="health_checking">健检中</string>
 </resources>

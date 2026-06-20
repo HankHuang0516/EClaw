@@ -300,6 +300,48 @@ class LayoutPreferences private constructor(context: Context) {
             prefs.edit().putBoolean(KEY_WALLPAPER_WALKING_ENABLED, value).apply()
         }
 
+    var wallpaperSpeechBubblesEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_SPEECH_BUBBLES_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_SPEECH_BUBBLES_ENABLED, value).apply()
+        }
+
+    var wallpaperBubblePulseEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_BUBBLE_PULSE_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_BUBBLE_PULSE_ENABLED, value).apply()
+        }
+
+    var wallpaperBubbleOverlayAvoidanceEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_BUBBLE_OVERLAY_AVOIDANCE_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_BUBBLE_OVERLAY_AVOIDANCE_ENABLED, value).apply()
+        }
+
+    var wallpaperStateAuraEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_STATE_AURA_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_STATE_AURA_ENABLED, value).apply()
+        }
+
+    var wallpaperGroundShadowEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_GROUND_SHADOW_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_GROUND_SHADOW_ENABLED, value).apply()
+        }
+
+    var wallpaperAdaptiveEffectsEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_ADAPTIVE_EFFECTS_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_ADAPTIVE_EFFECTS_ENABLED, value).apply()
+        }
+
+    var wallpaperOfflineEntityCacheEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_OFFLINE_ENTITY_CACHE_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_OFFLINE_ENTITY_CACHE_ENABLED, value).apply()
+        }
+
     var usageOverlayEnabled: Boolean
         get() = prefs.getBoolean(KEY_USAGE_OVERLAY_ENABLED, true)
         set(value) {
@@ -460,6 +502,13 @@ class LayoutPreferences private constructor(context: Context) {
         private const val KEY_DEBUG_ENTITY_LIMIT = "debug_entity_limit"
         private const val KEY_SERVER_ENTITY_LIMIT = "server_entity_limit"
         private const val KEY_WALLPAPER_WALKING_ENABLED = "wallpaper_walking_enabled"
+        private const val KEY_WALLPAPER_SPEECH_BUBBLES_ENABLED = "wallpaper_speech_bubbles_enabled"
+        private const val KEY_WALLPAPER_BUBBLE_PULSE_ENABLED = "wallpaper_bubble_pulse_enabled"
+        private const val KEY_WALLPAPER_BUBBLE_OVERLAY_AVOIDANCE_ENABLED = "wallpaper_bubble_overlay_avoidance_enabled"
+        private const val KEY_WALLPAPER_STATE_AURA_ENABLED = "wallpaper_state_aura_enabled"
+        private const val KEY_WALLPAPER_GROUND_SHADOW_ENABLED = "wallpaper_ground_shadow_enabled"
+        private const val KEY_WALLPAPER_ADAPTIVE_EFFECTS_ENABLED = "wallpaper_adaptive_effects_enabled"
+        private const val KEY_WALLPAPER_OFFLINE_ENTITY_CACHE_ENABLED = "wallpaper_offline_entity_cache_enabled"
         private const val KEY_USAGE_OVERLAY_ENABLED = "usage_overlay_enabled"
         private const val KEY_USAGE_OVERLAY_POSITION = "usage_overlay_position"
         private const val KEY_USAGE_OVERLAY_CENTER = "usage_overlay_center"
