@@ -10,12 +10,12 @@
  * regression-locks the QUANTITATIVE LAYOUT INVARIANTS the screenshots
  * in PR #3107 captured:
  *
- *   - desktop popover anchors under the selected element, within the
- *     viewport
+ *   - desktop toolbar docks at the viewport top-right without covering the
+ *     selected element
  *   - desktop toolbar width is capped per spec §3.1 (max 480px)
  *   - mobile bottom-sheet pins to viewport bottom (top edge in
  *     bottom half of screen)
- *   - mobile chip-list height grows linearly with chip count
+ *   - mobile chip grid stays compact as the action set grows
  *   - selected element gets the ring class
  *
  * A future PR can add full pixelmatch-baseline regression on top of
@@ -112,7 +112,8 @@ async function runTests() {
                 ringSelected: btn.classList.contains('eclaw-dom-select__ring-selected'),
                 toolbarVisible: !tb.hidden,
                 toolbarWidth: Math.round(tbR.width),
-                toolbarTopVsButton: Math.round(tbR.top - btnR.bottom),
+                toolbarTop: Math.round(tbR.top),
+                toolbarRightGap: Math.round(1280 - tbR.right),
                 toolbarLeftInViewport: tbR.left >= 0 && tbR.right <= 1280,
                 chipCount: tb.querySelectorAll('.eclaw-hover-click-toolbar__chip').length,
             };
@@ -123,8 +124,10 @@ async function runTests() {
         check('desktop: chip count', desktop.chipCount, BASELINE.desktop.chipCount, results);
         check('desktop: toolbar width ≤ spec cap',
             desktop.toolbarWidth, BASELINE.desktop.toolbarWidth, results);
-        check('desktop: toolbar anchors under button',
-            desktop.toolbarTopVsButton, BASELINE.desktop.toolbarTopVsButton, results);
+        check('desktop: toolbar docks at viewport top',
+            desktop.toolbarTop, BASELINE.desktop.toolbarTop, results);
+        check('desktop: toolbar docks at viewport right',
+            desktop.toolbarRightGap, BASELINE.desktop.toolbarRightGap, results);
         check('desktop: toolbar within viewport horizontally',
             desktop.toolbarLeftInViewport ? 1 : 0, 1, results);
 
@@ -164,7 +167,7 @@ async function runTests() {
         check('mobile: full-viewport width', mobile.width, BASELINE.mobile.width, results);
         check('mobile: top edge in bottom half of viewport',
             mobile.topInBottomHalf ? 1 : 0, 1, results);
-        check('mobile: chips span vertically (offsetTop grows)',
+        check('mobile: chips stay compact in grid',
             mobile.chipsVerticalSpan, BASELINE.mobile.chipsVerticalSpan, results);
 
         await ctxM.close();

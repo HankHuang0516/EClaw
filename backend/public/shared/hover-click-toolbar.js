@@ -2,11 +2,11 @@
  * hover-click-toolbar.js — IDE-style floating toolbar primitive
  * Spec: docs/specs/a-hover-click-dom-interaction.md §3
  *
- * Anchors to the selected DOM element. Desktop = popover under the bbox,
- * mobile = bottom sheet (per filter-summary primitive convention).
+ * Desktop = docked toolbar near the viewport top-right, mobile = bottom
+ * sheet (per filter-summary primitive convention).
  *
- * Action chips (canonical order): Move / Resize / Style / Duplicate /
- * Delete / Inspect / Info. First chip auto-focuses (per #6 review Q1).
+ * Action chips group by purpose: history, transform, structure, inspect,
+ * reset/share. Move auto-focuses on open because history is initially empty.
  *
  * Dependencies (loaded by host page):
  *   - shared/i18n.js (window.i18n.t)
@@ -137,7 +137,6 @@
     row.appendChild(labelEl);
 
     const chipEls = {};
-    let firstChipFocused = false;
     CHIP_DEFS.forEach((def, idx) => {
       if (def.divider) {
         const div = document.createElement('span');
@@ -150,8 +149,7 @@
       b.type = 'button';
       b.className = 'eclaw-hover-click-toolbar__chip';
       b.setAttribute('data-chip', def.id);
-      b.setAttribute('tabindex', firstChipFocused ? '-1' : '0');
-      firstChipFocused = true;
+      b.setAttribute('tabindex', '0');
       const labelTxt = t(def.i18n, def.fallback);
       b.innerHTML = `<span class="eclaw-hover-click-toolbar__chip-icon" aria-hidden="true">${def.icon}</span><span class="eclaw-hover-click-toolbar__chip-label">${labelTxt}</span>`;
       b.addEventListener('click', () => activateChip(def.id));
@@ -338,9 +336,11 @@
       // Reset chip can revert to it.
       initialOuterHTML = el.outerHTML;
       openFlag = true;
-      // First chip focused per #6 review Q1.
+      updateHistoryButtons();
+      // Primary action focused per #6 review Q1; history chips are disabled
+      // until a mutation exists, so they should not be the initial stop.
       requestAnimationFrame(() => {
-        const focusTarget = chipEls.undo || chipEls.move;
+        const focusTarget = chipEls.move || Array.from(shell.querySelectorAll('button:not([disabled])'))[0];
         if (focusTarget) focusTarget.focus();
       });
     }
@@ -408,6 +408,18 @@
     //     beforeHTML, afterHTML }  // for diff-format spec §6 outerHTML diff
     const history = [];
     let historyCursor = 0; // points one past the last applied entry
+    function updateHistoryButtons() {
+      const states = {
+        undo: historyCursor > 0,
+        redo: historyCursor < history.length,
+      };
+      Object.entries(states).forEach(([id, enabled]) => {
+        const chip = chipEls[id];
+        if (!chip) return;
+        chip.disabled = !enabled;
+        chip.setAttribute('aria-disabled', String(!enabled));
+      });
+    }
     function recordMutation(mut, undoFn, redoFn) {
       // Drop redo tail if we recorded a new mutation after some undos.
       if (historyCursor < history.length) history.length = historyCursor;
@@ -423,6 +435,7 @@
       history.push(entry);
       historyCursor = history.length;
       mutations.push(mut);
+      updateHistoryButtons();
       if (onMutation) onMutation(mut);
     }
     function snapshotBefore(el) {
@@ -433,12 +446,14 @@
       const entry = history[historyCursor - 1];
       if (entry.undo) entry.undo();
       historyCursor -= 1;
+      updateHistoryButtons();
     }
     function doRedo() {
       if (historyCursor >= history.length) return;
       const entry = history[historyCursor];
       if (entry.redo) entry.redo();
       historyCursor += 1;
+      updateHistoryButtons();
     }
 
     let dragging = null;
