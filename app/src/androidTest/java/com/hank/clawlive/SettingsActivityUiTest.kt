@@ -94,6 +94,28 @@ class SettingsActivityUiTest {
     }
 
     @Test
+    fun testWallpaperEntryIsSingleSettingsSurface() {
+        ActivityScenario.launch(SettingsActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val setWallpaperButton = activity.findViewById<View>(R.id.btnSetWallpaper)
+                assertNotNull("Settings should keep the wallpaper entry point", setWallpaperButton)
+                assertTrue("Wallpaper entry point should remain clickable", setWallpaperButton.isClickable)
+
+                assertEquals(
+                    "Settings should not expose a duplicate wallpaper walking switch",
+                    0,
+                    activity.resources.getIdentifier("switchWallpaperWalking", "id", activity.packageName)
+                )
+                assertEquals(
+                    "Settings should not expose duplicate wallpaper walking help",
+                    0,
+                    activity.resources.getIdentifier("btnWallpaperWalkingHelp", "id", activity.packageName)
+                )
+            }
+        }
+    }
+
+    @Test
     fun testSafeInsetsAppliedCorrectly() {
         ActivityScenario.launch(SettingsActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
