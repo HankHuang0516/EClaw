@@ -19,6 +19,15 @@ function createPool(columnType = EXPECTED_TYPE) {
             }
             return { rows: [] };
         },
+        // HNSW index build runs on a dedicated client (SET max_parallel_maintenance_workers=0
+        // applies to the same session). Route the client's queries into the same recorder so
+        // ordering assertions still see the CREATE INDEX.
+        async connect() {
+            return {
+                query: (sql) => pool.query(sql),
+                release: () => {},
+            };
+        },
     };
     return pool;
 }
@@ -74,6 +83,23 @@ describe('chat-embedding schema normalization', () => {
         expect(queryIndex(pool, 'DROP INDEX IF EXISTS idx_chat_embedding_hnsw')).toBe(-1);
         expect(queryIndex(pool, `ALTER COLUMN embedding TYPE ${EXPECTED_TYPE}`)).toBe(-1);
         expect(queryIndex(pool, 'CREATE INDEX IF NOT EXISTS idx_chat_embedding_hnsw')).toBeGreaterThan(-1);
+    });
+
+    it('builds the HNSW index single-threaded to avoid /dev/shm exhaustion', async () => {
+        // Parallel index build allocates a ~60MB DSM segment in the container's /dev/shm,
+        // which fails on hosted PG (Railway ~64MB): "could not resize shared memory segment
+        // ... No space left on device". The build must SET max_parallel_maintenance_workers=0
+        // on the same connection BEFORE CREATE INDEX. (card_cff46d3 HNSW fix)
+        const chatEmbedding = require('../../chat-embedding');
+        const pool = createPool(EXPECTED_TYPE);
+
+        await chatEmbedding.initSchema(pool);
+
+        const setIdx = queryIndex(pool, 'SET max_parallel_maintenance_workers = 0');
+        const createIdx = queryIndex(pool, 'CREATE INDEX IF NOT EXISTS idx_chat_embedding_hnsw');
+        expect(setIdx).toBeGreaterThan(-1);
+        expect(createIdx).toBeGreaterThan(-1);
+        expect(setIdx).toBeLessThan(createIdx);
     });
 });
 
