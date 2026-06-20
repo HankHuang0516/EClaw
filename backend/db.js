@@ -290,6 +290,21 @@ async function createTables() {
         `);
         console.log('[DynamicEntity] DB migration: next_entity_id column ensured on devices table');
 
+        // Push tokens (card_caa6307 follow-up): fcm_token (Android) + apns_token (iOS).
+        // Previously these were created lazily at runtime in index.js only when the FIRST
+        // token of each platform was registered (ALTER ... ADD COLUMN IF NOT EXISTS with a
+        // swallowed .catch). On a fresh DB (e.g. the 2026-04 pgvector migration) any query
+        // referencing apns_token before an iOS device ever registered errored with
+        // "column apns_token does not exist". Ensure both columns exist at startup so the
+        // schema never drifts regardless of registration traffic.
+        await client.query(`
+            ALTER TABLE devices ADD COLUMN IF NOT EXISTS fcm_token TEXT
+        `);
+        await client.query(`
+            ALTER TABLE devices ADD COLUMN IF NOT EXISTS apns_token TEXT
+        `);
+        console.log('[Push] DB migration: fcm_token + apns_token columns ensured on devices table');
+
         // Official bot bindings (free bot multi-device tracking)
         await client.query(`
             CREATE TABLE IF NOT EXISTS official_bot_bindings (
