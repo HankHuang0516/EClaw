@@ -3025,7 +3025,15 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
      * #1701: Three escalation levels:
      *   1. Nudge (>staleThreshold, default 3h) — system comment + notification
      *   2. Escalate (>6h) — auto-upgrade priority (P2→P1) + notify reviewer
+     *      Severity gate (card_22ab8c3b path #2, follow-up to PR #3564): a P3
+     *      card in `backlog` is a design-first draft awaiting launch — do NOT
+     *      auto-upgrade it to P2 just because it has been sitting. Returns
+     *      false so the card falls through to the L1 nudge path instead.
      *   3. Block (>12h) — move to blocked status + system comment
+     *      Severity gate (same card): a P0 card means "fix now, supervisor's
+     *      attention" — silently moving it to `blocked` hides it from the
+     *      active board. Instead fire a heightened L1 nudge with a P0-stalled
+     *      prefix + supervisor notification; state stays in_progress.
      * Also checks for orphaned rental bot assignments.
      */
     // Sort stale cards by user-chosen priority mode (see device_preferences.kanban_nudge_priority_mode).
@@ -3380,6 +3388,28 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     async function fireBlockEscalation(card, recipientIds = null) {
         const elapsedHrs = Math.round((Date.now() - new Date(card.status_changed_at).getTime()) / 3600000 * 10) / 10;
         const recipients = Array.isArray(recipientIds) ? recipientIds : buildEscalationRecipients(card);
+        // Severity gate (card_22ab8c3b path #2, sibling of PR #3564):
+        // P0 cards are "fix now, supervisor's attention". Auto-moving them to
+        // `blocked` hides them from the active board and clears the in_progress
+        // queue, which is the opposite of what a P0 stall calls for. Instead
+        // fire a heightened L1 nudge with a P0-stalled prefix and notify the
+        // recipient set (including the supervisor reviewer). State is NOT
+        // changed; the card stays in its current column so it remains visible.
+        if (card.priority === 'P0') {
+            await addSystemComment(card.id, card.device_id,
+                `🚨 P0 stalled — 卡片已停滯 ${elapsedHrs} 小時，主管請介入（未自動 blocked，保留 in_progress 可視性）`);
+            await pool.query(
+                `UPDATE kanban_cards SET last_stale_nudge_at = NOW(), updated_at = NOW() WHERE id = $1`,
+                [card.id]
+            );
+            if (recipients.length > 0) {
+                notifyEntities(card.device_id, recipients,
+                    `🚨 P0 stalled 卡片「${card.title}」停滯 ${elapsedHrs}h，主管請介入`,
+                    { cardId: card.id });
+            }
+            if (serverLog) serverLog('warn', 'kanban', `[Stale] P0 card ${card.id} stalled ${elapsedHrs}h — heightened L1 (no auto-block)`, { deviceId: card.device_id });
+            return;
+        }
         await pool.query(
             `UPDATE kanban_cards SET status = 'blocked', status_changed_at = NOW(), last_stale_nudge_at = NOW(), updated_at = NOW() WHERE id = $1`,
             [card.id]
@@ -3397,6 +3427,11 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     async function fireLevelTwoEscalation(card, recipientIds = null) {
         const elapsedHrs = Math.round((Date.now() - new Date(card.status_changed_at).getTime()) / 3600000 * 10) / 10;
         const recipients = Array.isArray(recipientIds) ? recipientIds : buildEscalationRecipients(card);
+        // Severity gate (card_22ab8c3b path #2): P3 cards in `backlog` are
+        // design-first drafts awaiting launch — they sit there on purpose and
+        // must NOT be silently bumped to P2 by clock alone. Skip L2; the L1
+        // nudge cadence still applies if the device opts backlog into nudges.
+        if (card.priority === 'P3' && card.status === 'backlog') return false;
         const PRIORITY_UPGRADE = { P3: 'P2', P2: 'P1', P1: 'P0', P0: 'P0' };
         const newPriority = PRIORITY_UPGRADE[card.priority] || card.priority;
         if (newPriority === card.priority) return false;
