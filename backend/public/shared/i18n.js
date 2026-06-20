@@ -258809,6 +258809,12 @@ const TRANSLATIONS = {
 
 
         "settings_usage_limit": "{used} sent today",
+        "usage_warning_enable_label": "Enable usage warnings",
+        "usage_warning_enable_help": "Show warnings when AI token usage approaches limits",
+        "usage_warning_5h_label": "5-hour warning",
+        "usage_warning_5h_help": "Show a warning when 5-hour usage exceeds this percentage",
+        "usage_warning_7d_label": "7-day warning",
+        "usage_warning_7d_help": "Show a warning when 7-day usage exceeds this percentage",
 
 
 
@@ -896110,6 +896116,12 @@ const TRANSLATIONS = {
 
 
         "settings_usage_limit": "今日已送 {used} 則",
+        "usage_warning_enable_label": "啟用使用量警告",
+        "usage_warning_enable_help": "當AI token用量接近限制時顯示警告",
+        "usage_warning_5h_label": "5小時警告",
+        "usage_warning_5h_help": "當5小時用量超過此百分比時顯示警告",
+        "usage_warning_7d_label": "7天警告",
+        "usage_warning_7d_help": "當7天用量超過此百分比時顯示警告",
 
 
 
@@ -1781979,6 +1781991,12 @@ const TRANSLATIONS = {
 
 
         "settings_usage_limit": "今日已送 {used} 則",
+        "usage_warning_enable_label": "启用使用量警告",
+        "usage_warning_enable_help": "当AI token用量接近限制时显示警告",
+        "usage_warning_5h_label": "5小时警告",
+        "usage_warning_5h_help": "当5小时用量超过此百分比时显示警告",
+        "usage_warning_7d_label": "7天警告",
+        "usage_warning_7d_help": "当7天用量超过此百分比时显示警告",
 
 
 
@@ -2072615,6 +2072633,12 @@ const TRANSLATIONS = {
 
 
         "settings_usage_limit": "今日 {used} 通送信",
+        "usage_warning_enable_label": "使用量警告を有効にする",
+        "usage_warning_enable_help": "AIトークン使用量が制限に近づくと警告を表示",
+        "usage_warning_5h_label": "5時間警告",
+        "usage_warning_5h_help": "5時間使用量がこの百分比を超えると警告を表示",
+        "usage_warning_7d_label": "7日間警告",
+        "usage_warning_7d_help": "7日間使用量がこの百分比を超えると警告を表示",
 
 
 
@@ -2635721,6 +2635745,12 @@ const TRANSLATIONS = {
 
 
         "settings_usage_limit": "오늘 {used}개 발송",
+        "usage_warning_enable_label": "사용량 경고 활성화",
+        "usage_warning_enable_help": "AI 토큰 사용량이 제한에 가까워지면 경고 표시",
+        "usage_warning_5h_label": "5시간 경고",
+        "usage_warning_5h_help": "5시간 사용량이 이 비율을 초과하면 경고 표시",
+        "usage_warning_7d_label": "7일 경고",
+        "usage_warning_7d_help": "7일 사용량이 이 비율을 초과하면 경고 표시",
 
 
 
@@ -3168501,6 +3168531,12 @@ const TRANSLATIONS = {
 
 
         "settings_usage_limit": "ส่งแล้ว {used} วันนี้",
+        "usage_warning_enable_label": "เปิดใช้งานการแจ้งเตือนการใช้งาน",
+        "usage_warning_enable_help": "แสดงการแจ้งเตือนเมื่อการใช้งานโทเค็น AI ใกล้ถึงขีดจำกัด",
+        "usage_warning_5h_label": "การแจ้งเตือน 5 ชั่วโมง",
+        "usage_warning_5h_help": "แสดงการแจ้งเตือนเมื่อการใช้งาน 5 ชั่วโมงเกินเปอร์เซ็นต์นี้",
+        "usage_warning_7d_label": "การแจ้งเตือน 7 วัน",
+        "usage_warning_7d_help": "แสดงการแจ้งเตือนเมื่อการใช้งาน 7 วันเกินเปอร์เซ็นต์นี้",
 
 
 
@@ -3697657,6 +3697693,12 @@ const TRANSLATIONS = {
 
 
         "settings_usage_limit": "Đã gửi {used} hôm nay",
+        "usage_warning_enable_label": "Bật cảnh báo sử dụng",
+        "usage_warning_enable_help": "Hiển thị cảnh báo khi việc sử dụng token AI tiếp cận giới hạn",
+        "usage_warning_5h_label": "Cảnh báo 5 giờ",
+        "usage_warning_5h_help": "Hiển thị cảnh báo khi việc sử dụng trong 5 giờ vượt quá tỷ lệ phần trăm này",
+        "usage_warning_7d_label": "Cảnh báo 7 ngày",
+        "usage_warning_7d_help": "Hiển thị cảnh báo khi việc sử dụng trong 7 ngày vượt quá tỷ lệ phần trăm này",
 
 
 
@@ -4224253,6 +4224295,12 @@ const TRANSLATIONS = {
 
 
         "settings_usage_limit": "{used} terkirim hari ini",
+        "usage_warning_enable_label": "Aktifkan peringatan penggunaan",
+        "usage_warning_enable_help": "Tampilkan peringatan ketika penggunaan token AI mendekati batas",
+        "usage_warning_5h_label": "Peringatan 5 jam",
+        "usage_warning_5h_help": "Tampilkan peringatan ketika penggunaan 5 jam melebihi persentase ini",
+        "usage_warning_7d_label": "Peringatan 7 hari",
+        "usage_warning_7d_help": "Tampilkan peringatan ketika penggunaan 7 hari melebihi persentase ini",
 
 
 
@@ -4750593,6 +4750641,12 @@ const TRANSLATIONS = {
 
 
         "settings_usage_limit": "{used} envoyés aujourd'hui",
+        "usage_warning_enable_label": "Activer les avertissements d'utilisation",
+        "usage_warning_enable_help": "Afficher des avertissements lorsque l'utilisation des jetons IA approche des limites",
+        "usage_warning_5h_label": "Avertissement 5 heures",
+        "usage_warning_5h_help": "Afficher un avertissement lorsque l'utilisation sur 5 heures dépasse ce pourcentage",
+        "usage_warning_7d_label": "Avertissement 7 jours",
+        "usage_warning_7d_help": "Afficher un avertissement lorsque l'utilisation sur 7 jours dépasse ce pourcentage",
 
 
 
@@ -5274097,6 +5274151,12 @@ const TRANSLATIONS = {
 
 
         "settings_usage_limit": "{used} enviados hoy...",
+        "usage_warning_enable_label": "Activar advertencias de uso",
+        "usage_warning_enable_help": "Mostrar advertencias cuando el uso de tokens de IA se acerque a los límites",
+        "usage_warning_5h_label": "Advertencia de 5 horas",
+        "usage_warning_5h_help": "Mostrar una advertencia cuando el uso en 5 horas supere este porcentaje",
+        "usage_warning_7d_label": "Advertencia de 7 días",
+        "usage_warning_7d_help": "Mostrar una advertencia cuando el uso semanal en 7 días supere este porcentaje",
 
 
 
@@ -5792669,6 +5792729,12 @@ const TRANSLATIONS = {
 
 
         "settings_usage_limit": "{used} heute gesendet",
+        "usage_warning_enable_label": "Nutzungswarnungen aktivieren",
+        "usage_warning_enable_help": "Warnungen anzeigen, wenn die AI-Token-Nutzung Limits nähert",
+        "usage_warning_5h_label": "5-Stunden-Warnung",
+        "usage_warning_5h_help": "Warnung anzeigen, wenn die 5-Stunden-Nutzung diesen Prozentsatz überschreitet",
+        "usage_warning_7d_label": "7-Tage-Warnung",
+        "usage_warning_7d_help": "Warnung anzeigen, wenn die 7-Tage-Nutzung diesen Prozentsatz überschreitet",
 
 
 
@@ -6329700,6 +6329766,12 @@ const TRANSLATIONS = {
 
 
         "settings_usage_limit": "{used} dihantar hari ini",
+        "usage_warning_enable_label": "Aktifkan amaran penggunaan",
+        "usage_warning_enable_help": "Paparkan amaran apabila penggunaan token AI menghampiri had",
+        "usage_warning_5h_label": "Amaran 5 jam",
+        "usage_warning_5h_help": "Paparkan amaran apabila penggunaan 5 jam melebihi peratus ini",
+        "usage_warning_7d_label": "Amaran 7 hari",
+        "usage_warning_7d_help": "Paparkan amaran apabila penggunaan 7 hari melebihi peratus ini",
 
 
 
@@ -6919221,6 +6919293,12 @@ const TRANSLATIONS = {
 
 
         "settings_usage_limit": "आज {used} भेजे गए",
+        "usage_warning_enable_label": "उपयोग चेतावनियां सक्षम करें",
+        "usage_warning_enable_help": "AI टोकन उपयोग के सीमाओं के करीब पहुंचने पर चेतावनियां दिखाएं",
+        "usage_warning_5h_label": "5 घंटे की चेतावनी",
+        "usage_warning_5h_help": "5 घंटे के उपयोग के इस प्रतिशत से अधिक होने पर चेतावनी दिखाएं",
+        "usage_warning_7d_label": "7 दिन की चेतावनी",
+        "usage_warning_7d_help": "7 दिन के उपयोग के इस प्रतिशत से अधिक होने पर चेतावनी दिखाएं",
 
 
 
@@ -7417610,6 +7417688,12 @@ const TRANSLATIONS = {
 
 
         "settings_usage_limit": "{used} أُرسلت اليوم",
+        "usage_warning_enable_label": "تفعيل تنبيه الاستخدام",
+        "usage_warning_enable_help": "عرض تنبيهات عندما يقترب استخدام رموز الذكاء الاصطناعي من الحدود",
+        "usage_warning_5h_label": "تحذير 5 ساعات",
+        "usage_warning_5h_help": "عرض تحذير عندما تتجاوز الاستخدام خلال 5 ساعات هذه النسبة المئوية",
+        "usage_warning_7d_label": "تحذير 7 أيام",
+        "usage_warning_7d_help": "عرض تحذير عندما تتجاوز الاستخدام الأسبوعي خلال 7 أيام هذه النسبة المئوية",
 
 
 
