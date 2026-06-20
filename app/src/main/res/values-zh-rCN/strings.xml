@@ -847,6 +847,13 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="ecoin_unit">e币</string>
     <string name="org_chart_sheet_title">组织图</string>
     <string name="settings_delete_account">删除账户</string>
+    <!-- 设置自动同步（manifest 第二阶段） -->
+    <string name="settings_more_section_title">更多设置</string>
+    <string name="settings_open_on_web">在网页打开</string>
+    <string name="settings_feature_help_title">关于此设置</string>
+    <string name="settings_feature_web_help">此设置会在网页视图中打开，因为此 App 版本尚未内置原生界面。更新 App 即可获得原生界面，或现在直接在网页中使用。</string>
+    <string name="settings_feature_gated_help">此设置的原生版本需要较新的 App 版本。更新 App 即可获得原生界面，或现在直接在网页中打开。</string>
+    <string name="settings_feature_gated_badge">更新 App 以使用原生版</string>
     <string name="settings_invite">邀请好友</string>
     <string name="settings_my_rentals">我的租借</string>
     <string name="settings_wallet">钱包</string>

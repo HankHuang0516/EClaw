@@ -49,6 +49,8 @@ import com.facebook.login.LoginManager
 import com.facebook.login.LoginResult
 import com.hank.clawlive.settings.NotificationPreferenceCatalog
 import com.hank.clawlive.settings.NotificationPreferenceCategory
+import com.hank.clawlive.settings.DynamicSettingsRow
+import com.hank.clawlive.settings.SettingsManifestSync
 import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.EntityChipHelper
@@ -179,6 +181,7 @@ class SettingsActivity : AppCompatActivity() {
         setupRemoteControlCollapsible()
         setupLangCollapsible()
         setupChannelApiCollapsible()
+        loadSettingsManifest()
     }
 
     private fun setupEdgeToEdgeInsets() {
@@ -1012,6 +1015,137 @@ class SettingsActivity : AppCompatActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    // ============================================
+    // SETTINGS AUTO-SYNC (manifest Stage 2)
+    // ============================================
+
+    /**
+     * Fetch GET /api/settings-manifest at launch and surface any settings feature
+     * that this binary does NOT already render natively — opening its web fallback in
+     * a WebView. This is the zero-rebuild auto-sync seam (docs/specs/settings-manifest-spec.md):
+     * a NEW web-only settings feature appears here on day one; a native feature gated
+     * out by the running app version shows a "?" help row pointing at the web.
+     *
+     * Graceful degradation: any failure (offline / 5xx / parse) is logged and the
+     * static settings screen is left exactly as-is — never crash, never blank.
+     */
+    private fun loadSettingsManifest() {
+        val appVersion = runCatching {
+            packageManager.getPackageInfo(packageName, 0).versionName
+        }.getOrNull()
+
+        lifecycleScope.launch {
+            val resp = runCatching {
+                NetworkModule.api.getSettingsManifest(appVersion = appVersion, platform = "android")
+            }.getOrElse { e ->
+                Timber.w(e, "[SettingsManifest] fetch failed — keeping static settings screen")
+                return@launch
+            }
+
+            if (!resp.success || resp.manifest == null) {
+                Timber.w("[SettingsManifest] non-success response (error=${resp.error}) — keeping static screen")
+                return@launch
+            }
+
+            val rows = runCatching {
+                SettingsManifestSync.planDynamicRows(resp.manifest, appVersion)
+            }.getOrElse { e ->
+                Timber.w(e, "[SettingsManifest] plan failed — keeping static screen")
+                return@launch
+            }
+
+            renderManifestExtraRows(rows)
+        }
+    }
+
+    private fun renderManifestExtraRows(rows: List<DynamicSettingsRow>) {
+        val container = findViewById<LinearLayout>(R.id.settingsManifestExtraContainer)
+        container.removeAllViews()
+        if (rows.isEmpty()) {
+            container.visibility = View.GONE
+            return
+        }
+        container.visibility = View.VISIBLE
+
+        // Section header so the synced rows are visually grouped.
+        container.addView(TextView(this).apply {
+            text = getString(R.string.settings_more_section_title)
+            setTextColor(getColor(R.color.text_white_50))
+            textSize = 13f
+            val vpad = dpToPx(8)
+            setPadding(0, vpad * 2, 0, vpad)
+        })
+
+        rows.forEach { row -> container.addView(buildManifestRow(row)) }
+        TelemetryHelper.trackAction("settings_manifest_extra_rows_${rows.size}")
+    }
+
+    /** Build one tappable row for a manifest feature that opens its web fallback. */
+    private fun buildManifestRow(row: DynamicSettingsRow): View {
+        val rowLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            val vpad = dpToPx(12)
+            setPadding(0, vpad, 0, vpad)
+            isClickable = true
+            setOnClickListener { openManifestWebFallback(row) }
+        }
+
+        val label = TextView(this).apply {
+            text = row.name
+            setTextColor(getColor(android.R.color.white))
+            textSize = 16f
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        rowLayout.addView(label)
+
+        if (row.gated) {
+            // Gated state: badge + "?" help (what / needs / next step), per spec §4.
+            label.append("  ⓘ")
+            val badge = TextView(this).apply {
+                text = getString(R.string.settings_feature_gated_badge)
+                setTextColor(getColor(R.color.text_white_50))
+                textSize = 11f
+                setPadding(dpToPx(8), 0, dpToPx(8), 0)
+            }
+            rowLayout.addView(badge)
+        }
+
+        val help = ImageView(this).apply {
+            setImageResource(android.R.drawable.ic_menu_help)
+            setColorFilter(getColor(R.color.text_white_50))
+            val sz = dpToPx(20)
+            layoutParams = LinearLayout.LayoutParams(sz, sz).apply {
+                marginStart = dpToPx(8)
+            }
+            isClickable = true
+            setOnClickListener { showManifestRowHelp(row) }
+        }
+        rowLayout.addView(help)
+
+        return rowLayout
+    }
+
+    /** "?" affordance: what this setting is, what it needs, and the next step. */
+    private fun showManifestRowHelp(row: DynamicSettingsRow) {
+        val msg = if (row.gated) {
+            getString(R.string.settings_feature_gated_help)
+        } else {
+            getString(R.string.settings_feature_web_help)
+        }
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.settings_feature_help_title))
+            .setMessage(msg)
+            .setPositiveButton(R.string.settings_open_on_web) { _, _ -> openManifestWebFallback(row) }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun openManifestWebFallback(row: DynamicSettingsRow) {
+        TelemetryHelper.trackAction("settings_manifest_web_${row.key}")
+        WebViewActivity.launch(this, row.webFallback, row.name)
     }
 
     // ============================================

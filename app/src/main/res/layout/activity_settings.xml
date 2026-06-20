@@ -1338,6 +1338,16 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Settings auto-sync extra rows (manifest Stage 2): web-fallback /
+                 version-gated features with no native static row are appended here
+                 at launch. Empty + GONE until the manifest fetch succeeds. -->
+            <LinearLayout
+                android:id="@+id/settingsManifestExtraContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"/>
+
             <!-- App Version -->
             <TextView
                 android:id="@+id/tvAppVersion"
