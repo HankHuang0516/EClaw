@@ -11,6 +11,7 @@ import com.hank.clawlive.data.model.CrossSpeakResponse
 import com.hank.clawlive.data.model.ScheduleListResponse
 import com.hank.clawlive.data.model.ScheduleCreateResponse
 import com.hank.clawlive.data.model.ScheduleDeleteResponse
+import com.hank.clawlive.settings.SettingsManifestResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.http.*
@@ -30,6 +31,17 @@ interface ClawApiService {
         @Query("entityId") entityId: Int = 0,
         @Query("appVersion") appVersion: String? = null
     ): AgentStatus
+
+    // Settings auto-sync seam (Stage 2): fetched at launch so the app surfaces
+    // each enabled settings feature natively or via WebView per `native`.
+    // Public GET — no auth (pure capability descriptor). Sending appVersion +
+    // platform lets the backend apply the minAppVersion version gate.
+    // See backend/lib/settings-manifest.js + docs/specs/settings-manifest-spec.md.
+    @GET("api/settings-manifest")
+    suspend fun getSettingsManifest(
+        @Query("appVersion") appVersion: String? = null,
+        @Query("platform") platform: String = "android"
+    ): SettingsManifestResponse
 
     // Device registration - get binding code
     @POST("api/device/register")

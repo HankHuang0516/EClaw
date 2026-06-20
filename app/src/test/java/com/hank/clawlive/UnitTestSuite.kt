@@ -1,6 +1,7 @@
 package com.hank.clawlive
 
 import com.hank.clawlive.settings.NotificationPreferenceCatalogTest
+import com.hank.clawlive.settings.SettingsManifestResolverTest
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
 
@@ -18,6 +19,7 @@ import org.junit.runners.Suite
     ChatEchoSuppressionTest::class,
     WallpaperWanderControllerTest::class,
     CompanionDescriptorAnimationTest::class,
-    NotificationPreferenceCatalogTest::class
+    NotificationPreferenceCatalogTest::class,
+    SettingsManifestResolverTest::class
 )
 class UnitTestSuite
