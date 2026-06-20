@@ -669,6 +669,11 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
         try {
             const { channel_api_key, deviceId, entityId, botSecret, message, state, mediaType, mediaUrl, targetDeviceId, card, senderHint, aboutCardId } = req.body;
             let { speakTo, broadcast } = req.body;
+            // Snapshot original request routing values BEFORE @-mention / senderHint
+            // auto-fill mutates speakTo/broadcast. Used by the [Routing] audit log
+            // below to disambiguate chosenPath (card_488f05 — speakTo routing audit).
+            const _origSpeakTo = Array.isArray(speakTo) ? speakTo.slice() : (speakTo || null);
+            const _origBroadcast = !!broadcast;
             const suppressA2AForward = shouldSuppressA2A(req.body || {}, message);
 
             if (process.env.DEBUG === 'true') serverLog('info', 'client_push', `[PUSH] /channel/message called, state=${state}, hasMsg=${!!message}`, { deviceId, entityId: entityId !== undefined ? parseInt(entityId) : 'auto' });
@@ -977,6 +982,27 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
                 if (speakTo && broadcast) {
                     warnings.push('Both speakTo and broadcast provided — broadcast takes priority, speakTo ignored.');
                 }
+
+                // ── [Routing] audit log (card_488f05) ──
+                // Single structured line per /channel/message delivery so we can grep
+                // production logs to reproduce the speakTo mis-routing bug. Captures
+                // the precedence branch that won (explicit body → text @-mention →
+                // senderHint fallback → broadcast). DO NOT add to inner per-target loops.
+                const _hadOrigSpeakTo = Array.isArray(_origSpeakTo) && _origSpeakTo.length > 0;
+                const _textMentionCount = transformMentionContext
+                    ? ((transformMentionContext.mentions && transformMentionContext.mentions.length) || 0) + (transformMentionContext.hasAll ? 1 : 0)
+                    : 0;
+                let _chosenPath;
+                if (_hadOrigSpeakTo) _chosenPath = 'explicit-speakTo';
+                else if (_origBroadcast) _chosenPath = 'broadcast';
+                else if (_textMentionCount > 0 && (broadcast || (Array.isArray(speakTo) && speakTo.length > 0))) _chosenPath = 'text-mention';
+                else if (senderHintResolution && (senderHintResolution.applied === 'speakTo' || senderHintResolution.applied === 'broadcast')) _chosenPath = 'senderHint-fallback';
+                else _chosenPath = broadcast ? 'broadcast' : 'explicit-speakTo';
+                const _finalRecipients = broadcast
+                    ? 'broadcast'
+                    : (Array.isArray(speakTo) ? speakTo.join(',') : String(speakTo || ''));
+                const _senderHintKind = senderHint && senderHint.kind ? senderHint.kind : 'none';
+                console.log(`[Routing] device=${String(deviceId || '').slice(0, 8)} entity=${eId} req.speakTo=${JSON.stringify(_origSpeakTo)} req.broadcast=${_origBroadcast} textMentions=${_textMentionCount} senderHint=${_senderHintKind} chosenPath=${_chosenPath} finalRecipients=${_finalRecipients}`);
 
                 const gkResult = gatekeeperCheckText ? gatekeeperCheckText(deviceId, eId, message, entity.botSecret) : { text: message };
                 const deliveryText = gkResult.text;
