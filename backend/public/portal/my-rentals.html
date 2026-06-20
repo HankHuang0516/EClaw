@@ -214,6 +214,20 @@
 
         async function loadTab() {
             const wrap = document.getElementById('mrContent');
+            // Device-only / globe-user sessions (bound device, no email account)
+            // resolve to a truthy currentUser whose `id` is null. Rental endpoints
+            // (my-listings / my-contracts / my-disputes) are account-scoped and
+            // 401 ('unauthenticated') without a userId — calling them just spams
+            // the console. Show a no-account empty-state instead. card_01417648.
+            if (!window.currentUser || !window.currentUser.id) {
+                const hint = tt('mr_no_account', 'Sign in with an email account to manage rentals.');
+                const help = tt('mr_no_account_help', 'Rental listings and contracts are tied to a user account. A device-only session has none yet — sign in or create an account from Settings to get started.');
+                wrap.innerHTML = `<div class="mr-empty">${esc(hint)} `
+                    + `<span tabindex="0" role="button" title="${esc(help)}" aria-label="${esc(help)}" `
+                    + `style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-left:6px;`
+                    + `border-radius:50%;background:var(--bg-tertiary,rgba(127,127,127,0.2));font-size:12px;cursor:help;vertical-align:middle;">?</span></div>`;
+                return;
+            }
             wrap.innerHTML = `<div class="mr-empty">${tt('mr_loading', 'Loading...')}</div>`;
             try {
                 if (currentTab === 'disputes') {
