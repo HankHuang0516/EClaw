@@ -300,6 +300,7 @@ describe('heartbeat — classifyCard', () => {
     test('escalate_due at >24h', () => {
         const v = classifyCard({
             status: 'in_progress',
+            priority: 'P1',
             statusChangedAt: new Date(now - 25 * 60 * 60 * 1000).toISOString(),
             lastNonSystemCommentAt: null,
             lastEscalateAt: null,
@@ -307,9 +308,22 @@ describe('heartbeat — classifyCard', () => {
         expect(v).toBe('escalate_due');
     });
 
+    test('escalation severity gate keeps P2 stale cards in prompt path', () => {
+        const v = classifyCard({
+            status: 'in_progress',
+            priority: 'P2',
+            statusChangedAt: new Date(now - 25 * 60 * 60 * 1000).toISOString(),
+            lastNonSystemCommentAt: null,
+            lastHeartbeatPromptAt: null,
+            lastEscalateAt: null,
+        }, now);
+        expect(v).toBe('prompt_due');
+    });
+
     test('escalate suppressed if already escalated within 12h', () => {
         const v = classifyCard({
             status: 'in_progress',
+            priority: 'P1',
             statusChangedAt: new Date(now - 25 * 60 * 60 * 1000).toISOString(),
             lastNonSystemCommentAt: null,
             lastEscalateAt: new Date(now - 6 * 60 * 60 * 1000).toISOString(),
@@ -340,7 +354,7 @@ describe('heartbeat — classifyBatch', () => {
             { status: 'todo' },
             { status: 'in_progress', statusChangedAt: new Date(now - 30 * 60 * 1000).toISOString() }, // fresh
             { status: 'in_progress', statusChangedAt: new Date(now - 3 * 60 * 60 * 1000).toISOString() }, // prompt
-            { status: 'in_progress', statusChangedAt: new Date(now - 26 * 60 * 60 * 1000).toISOString() }, // escalate
+            { status: 'in_progress', priority: 'P1', statusChangedAt: new Date(now - 26 * 60 * 60 * 1000).toISOString() }, // escalate
         ];
         const { prompt, escalate } = classifyBatch(cards, now);
         expect(prompt.length).toBe(1);
