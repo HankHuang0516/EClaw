@@ -21251,9 +21251,21 @@ app.delete('/api/push/unsubscribe', async (req, res) => {
 
 // Send Web Push to all subscriptions for a device
 async function sendWebPush(deviceId, notif) {
-    if (!process.env.VAPID_PUBLIC_KEY) return;
+    if (!process.env.VAPID_PUBLIC_KEY) {
+        serverLog('warn', 'web_push', 'skip: VAPID not configured', { deviceId, metadata: { category: notif?.category } });
+        return;
+    }
     try {
         const subs = await notifModule.getPushSubscriptions(deviceId);
+        // A device with zero subscriptions silently produced no push and no
+        // log — the exact failure mode behind "手機通知沒收到". Record it so
+        // the owner can be told their phone never registered a subscription.
+        if (!subs.length) {
+            serverLog('warn', 'web_push', 'skip: no push subscriptions for device', { deviceId, metadata: { category: notif?.category } });
+            return;
+        }
+        let sent = 0;
+        let removed = 0;
         for (const sub of subs) {
             try {
                 await webpush.sendNotification(
@@ -21265,14 +21277,20 @@ async function sendWebPush(deviceId, notif) {
                         category: notif.category
                     })
                 );
+                sent++;
             } catch (e) {
                 if (e.statusCode === 410 || e.statusCode === 404) {
                     await notifModule.removePushSubscription(sub.endpoint);
+                    removed++;
+                } else {
+                    serverLog('error', 'web_push', `send failed: ${e.message}`, { deviceId, metadata: { category: notif?.category, statusCode: e.statusCode } });
                 }
             }
         }
+        serverLog('info', 'web_push', 'dispatch complete', { deviceId, metadata: { category: notif?.category, subs: subs.length, sent, removedStale: removed } });
     } catch (err) {
         console.warn('[WebPush] Send failed:', err.message);
+        serverLog('error', 'web_push', `dispatch error: ${err.message}`, { deviceId, metadata: { category: notif?.category } });
     }
 }
 
@@ -21348,9 +21366,16 @@ try {
             credential: firebaseAdmin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT))
         });
         serverLog('info', 'fcm_init', 'Firebase Admin initialized');
+        // Mirror to stdout so boot-log inspection (Railway) can confirm FCM is
+        // live. serverLog only writes to the server_logs DB table, so its
+        // absence from stdout was misread as "FCM never initialized".
+        console.log('[FCM] Firebase Admin initialized');
+    } else {
+        console.log('[FCM] FIREBASE_SERVICE_ACCOUNT not set — Android push disabled');
     }
 } catch (e) {
     serverLog('warn', 'fcm_init', `Firebase Admin init skipped: ${e.message}`);
+    console.warn('[FCM] Firebase Admin init FAILED:', e.message);
 }
 
 async function sendFcm(deviceId, notif) {
