@@ -306,6 +306,27 @@ class LayoutPreferences private constructor(context: Context) {
             prefs.edit().putBoolean(KEY_WALLPAPER_SPEECH_BUBBLES_ENABLED, value).apply()
         }
 
+    var wallpaperBubbleDurationSeconds: Int
+        get() = prefs.getInt(
+            KEY_WALLPAPER_BUBBLE_DURATION_SECONDS,
+            WALLPAPER_BUBBLE_DURATION_DEFAULT_SECONDS
+        ).coerceIn(
+            WALLPAPER_BUBBLE_DURATION_MIN_SECONDS,
+            WALLPAPER_BUBBLE_DURATION_MAX_SECONDS
+        )
+        set(value) {
+            prefs.edit().putInt(
+                KEY_WALLPAPER_BUBBLE_DURATION_SECONDS,
+                value.coerceIn(
+                    WALLPAPER_BUBBLE_DURATION_MIN_SECONDS,
+                    WALLPAPER_BUBBLE_DURATION_MAX_SECONDS
+                )
+            ).apply()
+        }
+
+    val wallpaperBubbleDurationMs: Long
+        get() = wallpaperBubbleDurationSeconds * 1_000L
+
     var wallpaperBubblePulseEnabled: Boolean
         get() = prefs.getBoolean(KEY_WALLPAPER_BUBBLE_PULSE_ENABLED, true)
         set(value) {
@@ -503,6 +524,7 @@ class LayoutPreferences private constructor(context: Context) {
         private const val KEY_SERVER_ENTITY_LIMIT = "server_entity_limit"
         private const val KEY_WALLPAPER_WALKING_ENABLED = "wallpaper_walking_enabled"
         private const val KEY_WALLPAPER_SPEECH_BUBBLES_ENABLED = "wallpaper_speech_bubbles_enabled"
+        private const val KEY_WALLPAPER_BUBBLE_DURATION_SECONDS = "wallpaper_bubble_duration_seconds"
         private const val KEY_WALLPAPER_BUBBLE_PULSE_ENABLED = "wallpaper_bubble_pulse_enabled"
         private const val KEY_WALLPAPER_BUBBLE_OVERLAY_AVOIDANCE_ENABLED = "wallpaper_bubble_overlay_avoidance_enabled"
         private const val KEY_WALLPAPER_STATE_AURA_ENABLED = "wallpaper_state_aura_enabled"
@@ -525,6 +547,10 @@ class LayoutPreferences private constructor(context: Context) {
         const val RESET_WINDOW_5H = "5h"
         const val RESET_WINDOW_WEEKLY = "weekly"
         const val RESET_WINDOW_5H_WEEKLY = "5h_weekly"
+
+        const val WALLPAPER_BUBBLE_DURATION_MIN_SECONDS = 3
+        const val WALLPAPER_BUBBLE_DURATION_MAX_SECONDS = 30
+        const val WALLPAPER_BUBBLE_DURATION_DEFAULT_SECONDS = 12
 
         // Display mode constants
         const val MODE_SINGLE = 1

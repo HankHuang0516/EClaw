@@ -907,6 +907,9 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="wallpaper_more_settings_desc">进阶壁纸动画与断网行为。新的增强功能默认全部启用。</string>
     <string name="wallpaper_setting_speech_bubbles">消息气泡</string>
     <string name="wallpaper_setting_speech_bubbles_desc">在伙伴旁显示实体状态与最近消息。</string>
+    <string name="wallpaper_setting_bubble_duration">消息气泡停留时间</string>
+    <string name="wallpaper_setting_bubble_duration_desc">调整壁纸气泡存在时间；长消息会自动延长，但最多 30 秒。</string>
+    <string name="wallpaper_setting_bubble_duration_value">%1$d 秒</string>
     <string name="wallpaper_setting_bubble_pulse">气泡脉冲</string>
     <string name="wallpaper_setting_bubble_pulse_desc">气泡内容更新时短暂高亮伙伴。</string>
     <string name="wallpaper_setting_bubble_avoidance">智能气泡避让</string>
