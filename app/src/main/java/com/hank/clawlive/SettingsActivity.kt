@@ -1032,9 +1032,11 @@ class SettingsActivity : AppCompatActivity() {
      * static settings screen is left exactly as-is — never crash, never blank.
      */
     private fun loadSettingsManifest() {
-        val appVersion = runCatching {
-            packageManager.getPackageInfo(packageName, 0).versionName
-        }.getOrNull()
+        // Spec §4 / Stage-2 requirement: send the REAL installed version so the
+        // backend's minAppVersion gate is correct. BuildConfig.VERSION_NAME is the
+        // compile-time-pinned gradle versionName and is always present; it can't throw
+        // the way packageManager.getPackageInfo can on edge devices.
+        val appVersion = BuildConfig.VERSION_NAME.takeIf { it.isNotBlank() }
 
         lifecycleScope.launch {
             val resp = runCatching {
