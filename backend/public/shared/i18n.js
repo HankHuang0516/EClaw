@@ -650407,6 +650407,19 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "The rental marketplace (listings, contracts, history) is account-scoped. Sign in with an email account or open the Plaza to start renting or listing a bot.",
         "settings_rental_setup_cta": "Set up rental",
         "rental_needs_account": "Sign in with an email account to manage rentals.",
+
+        "chat_user_filter_default_name": "Me",
+        "chat_user_filter_chip_title": "Show only messages you sent",
+        "chat_user_filter_help_aria": "About the @user filter",
+        "chat_user_filter_help_title": "The @user filter",
+        "chat_user_filter_help_what_label": "What:",
+        "chat_user_filter_help_what": "Tap to show only the messages you (the user) personally sent, hiding entity-bot replies.",
+        "chat_user_filter_help_needs_label": "Needs:",
+        "chat_user_filter_help_needs": "Set your display name in Settings (if unset, the chip shows “@Me”).",
+        "chat_user_filter_help_next_label": "Next step:",
+        "chat_user_filter_help_next": "Use the button below to set your name in Settings, or just tap @user to see it in action.",
+        "chat_user_filter_help_goto_settings": "Go to Settings",
+        "chat_user_filter_help_close": "Close",
 },
 
 
@@ -1235275,6 +1235288,19 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "租賃市集(上架、合約、歷史)綁定使用者帳號。請登入電子郵件帳號,或前往機器人廣場開始承租或上架。",
         "settings_rental_setup_cta": "設定租賃",
         "rental_needs_account": "請登入電子郵件帳號以管理租賃。",
+
+        "chat_user_filter_default_name": "我",
+        "chat_user_filter_chip_title": "只顯示你發送的訊息",
+        "chat_user_filter_help_aria": "關於 @user 篩選",
+        "chat_user_filter_help_title": "@user 篩選",
+        "chat_user_filter_help_what_label": "用途：",
+        "chat_user_filter_help_what": "按下後只顯示你（使用者）親自發送的訊息，過濾掉智能體的回應。",
+        "chat_user_filter_help_needs_label": "需要：",
+        "chat_user_filter_help_needs": "在個人設定中設定你的顯示名稱（若未設定，晶片會顯示「@我」）。",
+        "chat_user_filter_help_next_label": "下一步：",
+        "chat_user_filter_help_next": "按下方按鈕到個人設定頁面設定你的名稱，或直接按 @user 看效果。",
+        "chat_user_filter_help_goto_settings": "前往設定",
+        "chat_user_filter_help_close": "關閉",
 },
 
 
@@ -1849455,6 +1849481,19 @@ const TRANSLATIONS = {
         "wallet_no_account_help": "e-coin 钱包（余额、充值、记录）绑定于用户账号。仅绑定设备的会话尚无钱包 — 请至设置登录或创建账号以启用。",
         "mr_no_account": "登录 email 账号后即可管理租赁。",
         "mr_no_account_help": "租赁刊登与合约绑定于用户账号。仅绑定设备的会话尚无账号 — 请至设置登录或创建账号以开始使用。",
+
+        "chat_user_filter_default_name": "我",
+        "chat_user_filter_chip_title": "只显示你发送的消息",
+        "chat_user_filter_help_aria": "关于 @user 过滤",
+        "chat_user_filter_help_title": "@user 过滤",
+        "chat_user_filter_help_what_label": "用途：",
+        "chat_user_filter_help_what": "按下后只显示你（用户）亲自发送的消息，过滤掉智能体的回复。",
+        "chat_user_filter_help_needs_label": "需要：",
+        "chat_user_filter_help_needs": "在个人设置中设定你的显示名称（若未设定，晶片会显示「@我」）。",
+        "chat_user_filter_help_next_label": "下一步：",
+        "chat_user_filter_help_next": "点下方按钮到个人设置页面设定你的名称，或直接按 @user 看效果。",
+        "chat_user_filter_help_goto_settings": "前往设置",
+        "chat_user_filter_help_close": "关闭",
 },
 
 
