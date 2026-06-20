@@ -46,6 +46,13 @@
     <string name="settings_my_rentals">My Rentals</string>
     <string name="settings_invite">Invite Friends</string>
     <string name="settings_delete_account">Delete Account</string>
+    <!-- Settings auto-sync (manifest Stage 2) -->
+    <string name="settings_more_section_title">More Settings</string>
+    <string name="settings_open_on_web">Open on web</string>
+    <string name="settings_feature_help_title">About this setting</string>
+    <string name="settings_feature_web_help">This setting opens in a web view because a native screen isn\'t in this app version yet. Update the app to get the native screen, or use it on the web now.</string>
+    <string name="settings_feature_gated_help">A native version of this setting needs a newer app version. Update the app to get the native screen, or open it on the web now.</string>
+    <string name="settings_feature_gated_badge">Update app for native</string>
     <string name="usage_title">Today\'s Usage</string>
     <string name="premium_badge">PREMIUM</string>
     <string name="sends_today">sends today</string>
