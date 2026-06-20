@@ -134,11 +134,14 @@ function doLogout() { logout(); }
 // (e.g. user has no wallet yet).
 async function _loadNavEcoinBadge() {
     try {
-        // Guard: only fetch the wallet balance when authenticated. On public /
-        // unauthenticated pages window.currentUser is unset (auth.js populates it
-        // after /me succeeds); skipping here avoids a 401 console error on every
-        // public page view. See issue #3513.
-        if (!window.currentUser) return;
+        // Guard: only fetch the wallet balance when there is a real user
+        // ACCOUNT. auth.js populates window.currentUser after /me succeeds, but a
+        // device-only session (bound device, no email account) still resolves to
+        // a truthy currentUser with `id: null`. /api/wallet/balance requires a
+        // userId (walletRoute → 401 'unauthenticated' when absent), so gating on
+        // currentUser alone still 401s for device-only / globe-user sessions.
+        // Require currentUser.id to avoid a 401 console error. See #3513 + card_01417648.
+        if (!window.currentUser || !window.currentUser.id) return;
         const badge = document.getElementById('ecoinBadge');
         const amountEl = document.getElementById('ecoinAmount');
         if (!badge || !amountEl) return;

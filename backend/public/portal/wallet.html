@@ -340,6 +340,25 @@
             }
         }
 
+        // No-account empty-state: a device-only / globe-user session has no
+        // e-coin wallet (wallet is keyed by user account). Render a neutral
+        // empty-state instead of firing account-scoped calls that would 401.
+        // The (?) explains what is needed + the concrete next step. card_01417648.
+        function renderWalletNoAccount() {
+            const dash = '—';
+            ['balanceEcoin', 'balanceUsd', 'heldEcoin', 'lifetimeEarned', 'lifetimeSpent']
+                .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = dash; });
+            const wrap = document.getElementById('ledgerWrap');
+            if (wrap) {
+                const hint = tt('wallet_no_account', 'Sign in with an email account to use your e-coin wallet.');
+                const help = tt('wallet_no_account_help', 'The e-coin wallet (balance, top-up, history) is tied to a user account. A device-only session has no wallet yet — sign in or create an account from Settings to enable it.');
+                wrap.innerHTML = `<div class="empty-state">${escapeHtml(hint)} `
+                    + `<span tabindex="0" role="button" title="${escapeHtml(help)}" aria-label="${escapeHtml(help)}" `
+                    + `style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-left:6px;`
+                    + `border-radius:50%;background:rgba(255,255,255,0.15);font-size:12px;cursor:help;vertical-align:middle;">?</span></div>`;
+            }
+        }
+
         async function loadTiers() {
             try {
                 const data = await apiCall('GET', '/api/wallet/topup/tiers', null, { skip401Redirect: true });
@@ -472,6 +491,19 @@
             const user = await checkAuth();
             if (!user) return;
             initPortalSocket();
+
+            // Device-only / globe-user sessions (a bound device with no email
+            // account) resolve to a truthy user whose `id` is null. The e-coin
+            // wallet is account-scoped: /api/wallet/balance + /history require a
+            // userId (walletRoute → 401 'unauthenticated'), so calling them here
+            // just floods the console with 401s. Show the no-account empty-state
+            // and load only the public top-up catalog. card_01417648.
+            if (!user.id) {
+                renderWalletNoAccount();
+                loadTiers();
+                initTourTrack2Step4();
+                return;
+            }
 
             await Promise.all([loadBalance(), loadTiers(), loadHistory()]);
             initTourTrack2Step4();
