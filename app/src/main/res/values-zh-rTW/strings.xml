@@ -692,6 +692,13 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="settings_my_rentals">我的租借</string>
     <string name="settings_invite">邀請好友</string>
     <string name="settings_delete_account">刪除帳戶</string>
+    <!-- 設定自動同步（manifest 第二階段） -->
+    <string name="settings_more_section_title">更多設定</string>
+    <string name="settings_open_on_web">在網頁開啟</string>
+    <string name="settings_feature_help_title">關於此設定</string>
+    <string name="settings_feature_web_help">此設定會在網頁檢視中開啟，因為此 App 版本尚未內建原生畫面。更新 App 即可取得原生畫面，或現在直接在網頁中使用。</string>
+    <string name="settings_feature_gated_help">此設定的原生版本需要較新的 App 版本。更新 App 即可取得原生畫面，或現在直接在網頁中開啟。</string>
+    <string name="settings_feature_gated_badge">更新 App 以使用原生版</string>
     <string name="show_label">顯示</string>
     <string name="sign_in_facebook">使用 Facebook 登入</string>
     <string name="sign_in_google">使用 Google 登入</string>
