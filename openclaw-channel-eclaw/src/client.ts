@@ -6,6 +6,23 @@ import type {
   HeartbeatResponse,
 } from './types.js';
 
+const MESSAGE_RETRY_DELAYS_MS = [250, 750, 1500];
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isTransientMessageFailure(status: number, data: { success?: boolean; message?: string; error?: string }): boolean {
+  if (status === 429 || status >= 500) return true;
+  const reason = String(data.message || data.error || '').toLowerCase();
+  return data.success === false && (
+    reason.includes('server starting up')
+    || reason.includes('retry')
+    || reason.includes('timeout')
+    || reason.includes('temporar')
+  );
+}
+
 /**
  * HTTP client for E-Claw Channel API.
  * Handles all communication between the OpenClaw plugin and the E-Claw backend.
@@ -107,24 +124,45 @@ export class EClawClient {
       throw new Error('Not bound — call bindEntity() first');
     }
 
-    const res = await fetch(`${this.apiBase}/api/channel/message`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        channel_api_key: this.apiKey,
-        deviceId: this.deviceId,
-        entityId: this.entityId,
-        botSecret: this.botSecret,
-        message,
-        state,
-        ...(opts?.mediaType && { mediaType: opts.mediaType }),
-        ...(opts?.mediaUrl && { mediaUrl: opts.mediaUrl }),
-        ...(opts?.speakTo && { speakTo: opts.speakTo.map(String) }),
-        ...(opts?.broadcast && { broadcast: true }),
-      }),
-    });
+    const body = {
+      channel_api_key: this.apiKey,
+      deviceId: this.deviceId,
+      entityId: this.entityId,
+      botSecret: this.botSecret,
+      message,
+      state,
+      ...(opts?.mediaType && { mediaType: opts.mediaType }),
+      ...(opts?.mediaUrl && { mediaUrl: opts.mediaUrl }),
+      ...(opts?.speakTo && { speakTo: opts.speakTo.map(String) }),
+      ...(opts?.broadcast && { broadcast: true }),
+    };
 
-    return await res.json() as MessageResponse;
+    let lastNetworkError: unknown;
+    for (let attempt = 0; attempt <= MESSAGE_RETRY_DELAYS_MS.length; attempt += 1) {
+      try {
+        const res = await fetch(`${this.apiBase}/api/channel/message`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+
+        const data = await res.json() as MessageResponse & { message?: string; error?: string };
+        if (
+          attempt < MESSAGE_RETRY_DELAYS_MS.length
+          && isTransientMessageFailure(res.status, data)
+        ) {
+          await sleep(MESSAGE_RETRY_DELAYS_MS[attempt]);
+          continue;
+        }
+        return data;
+      } catch (err) {
+        lastNetworkError = err;
+        if (attempt >= MESSAGE_RETRY_DELAYS_MS.length) break;
+        await sleep(MESSAGE_RETRY_DELAYS_MS[attempt]);
+      }
+    }
+
+    throw lastNetworkError instanceof Error ? lastNetworkError : new Error('message delivery failed');
   }
 
   /** Record this bound entity daemon as alive. */

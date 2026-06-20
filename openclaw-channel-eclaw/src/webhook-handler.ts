@@ -85,6 +85,10 @@ export function createWebhookHandler(
       const directAck = String(msg.text || '').match(/^ECLAW_HEALTHCHECK\s+([A-Za-z0-9_-]+)(?=\s|$)/m);
       if (directAck) {
         if (client) {
+          // /api/client/speak writes a "Received" echo around webhook delivery.
+          // A short delay keeps the synthetic ACK as the final visible state
+          // without occupying the model reply path.
+          await new Promise((resolve) => setTimeout(resolve, 3000));
           await client.sendMessage(`ACK ${directAck[1]}`, 'IDLE');
         }
         return;

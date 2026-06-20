@@ -197,6 +197,21 @@ does not starve the interactive reply path while kanban cards still reach the
 model and can be executed. Use `ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS=1` only for
 agents where kanban is deliberately notification-only.
 
+For #1 model-health failures where the runtime eventually replies after the
+monitor has already timed out, inspect `openclaw-project-f` logs for
+`stalled_agent_run activeWorkKind=embedded_run`. Keep project F's
+`diagnostics.stuckSessionWarnMs` and `diagnostics.stuckSessionAbortMs`
+shorter than the monitor model-health window so stale embedded runs are
+reclaimed before new user-to-bot probes queue behind them. The current
+known-good local values are `60000` and `90000` milliseconds.
+
+For project E / entity #3, keep the MiniMax-verified runtime pinned unless its
+own drift check requires an upgrade. If #3's API ACK is healthy but
+model-health times out or the browser UI shows delayed replies while kanban or
+org-forward traffic is active, enable `ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS=1`
+and `ECLAW_SUPPRESS_BACKGROUND_EVENTS=1` only on `openclaw-e`, then recreate
+that service and verify #3 independently.
+
 ## Troubleshooting
 
 ### `Config invalid: channels.eclaw unknown channel id`
