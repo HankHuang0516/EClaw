@@ -1849521,6 +1849521,13 @@ const TRANSLATIONS = {
         "chat_user_filter_help_next": "点下方按钮到个人设置页面设定你的名称，或直接按 @user 看效果。",
         "chat_user_filter_help_goto_settings": "前往设置",
         "chat_user_filter_help_close": "关闭",
+
+        "usage_warning_enable_label": "启用使用量警告",
+        "usage_warning_enable_help": "主开关。开启时，每次出站 /api/transform 消息在超过阈值时立即添加系统警告前缀。关闭时，即使配额耗尽也不会添加任何警告。",
+        "usage_warning_5h_label": "5小时预算阈值（剩余量 ≤ 此值时警告）",
+        "usage_warning_5h_help": "当剩余 5 小时配额 ≤ 此值时触发。默认 15% — 约在耗尽前 45 分钟。如需更早警告可调高；设为 0 可在不关闭开关的情况下禁用 5 小时轴。",
+        "usage_warning_7d_label": "7天每周阈值（剩余量 ≤ 此值时警告）",
+        "usage_warning_7d_help": "当剩余 7 天每周配额 ≤ 此值时触发。默认 5% — 约在耗尽前 8 小时。设为 0 可在不关闭开关的情况下禁用 7 天轴。",
 },
 
 
@@ -2412794,6 +2412801,13 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "レンタル市場(出品・契約・履歴)はアカウントに紐付きます。メールアカウントでサインインするか、Plaza でレンタル/出品を開始してください。",
         "settings_rental_setup_cta": "レンタルを設定",
         "rental_needs_account": "レンタルを管理するにはメールアカウントでサインインしてください。",
+
+        "usage_warning_enable_label": "使用警告を有効にする",
+        "usage_warning_enable_help": "マスタースイッチ。ON の場合、閾値を超えた時点で送信 /api/transform メッセージすべてにシステム警告プレフィックスが付加されます。OFF の場合、クォータが消耗しても警告は付加されません。",
+        "usage_warning_5h_label": "5時間予算閾値（残り ≦ この値の場合に警告）",
+        "usage_warning_5h_help": "残り 5 時間クォータ ≦ この値になった時点でトリガー。デフォルト 15% — 消耗の約 45 分前です。高くするとより早く警告します。0 に設定すると、トグルを無効にせず 5h 軸を無効化できます。",
+        "usage_warning_7d_label": "7日間週間閾値（残り ≦ この値の場合に警告）",
+        "usage_warning_7d_help": "残り 7 日間週クォータ ≦ この値になった時点でトリガー。デフォルト 5% — 消耗の約 8 時間前です。0 に設定すると、トグルを無効にせず 7d 軸を無効化できます。",
 },
 
 
@@ -2943172,6 +2943186,13 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "대여 마켓(목록·계약·이력)은 계정에 연결됩니다. 이메일 계정으로 로그인하거나 Plaza에서 대여/등록을 시작하세요.",
         "settings_rental_setup_cta": "대여 설정",
         "rental_needs_account": "대여를 관리하려면 이메일 계정으로 로그인하세요.",
+
+        "usage_warning_enable_label": "사용량 경고 활성화",
+        "usage_warning_enable_help": "마스터 스위치. ON이면 모든 발신 /api/transform 메시지는 임계값에 도달하는 즉시 시스템 경고 접두사를 받습니다. OFF이면 할당량이 소진되어도 경고가 추가되지 않습니다.",
+        "usage_warning_5h_label": "5시간 예산 임계값 (남은량 ≦ 이 값일 때 경고)",
+        "usage_warning_5h_help": "남은 5시간 할당량 ≦ 이 값이 되면 트리거됩니다. 기본값 15% — 소진 약 45분 전. 더 일찍 경고하려면 값을 높이세요. 0으로 설정하면 토글을 비활성화하지 않고 5h 축을 비활성화할 수 있습니다.",
+        "usage_warning_7d_label": "7일 주간 임계값 (남은량 ≦ 이 값일 때 경고)",
+        "usage_warning_7d_help": "남은 7일 주간 할당량 ≦ 이 값이 되면 트리거됩니다. 기본값 5% — 소진 약 8시간 전. 0으로 설정하면 토글을 비활성화하지 않고 7d 축을 비활성화할 수 있습니다.",
 },
 
 
@@ -3471672,6 +3471693,13 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "ตลาดเช่า (รายการ สัญญา ประวัติ) ผูกกับบัญชี โปรดเข้าสู่ระบบด้วยบัญชีอีเมล หรือเปิด Plaza เพื่อเริ่มเช่าหรือลงรายการบอท",
         "settings_rental_setup_cta": "ตั้งค่าการเช่า",
         "rental_needs_account": "โปรดเข้าสู่ระบบด้วยบัญชีอีเมลเพื่อจัดการการเช่า",
+
+        "usage_warning_enable_label": "เปิดใช้งานการแจ้งเตือนการใช้งาน",
+        "usage_warning_enable_help": "สวิตช์หลัก เมื่อเปิด ทุกข้อความ /api/transform ขาออกจะได้รับคำนำหน้าการแจ้งเตือนระบบทันทีที่เกณฑ์ถูกข้าม เมื่อปิด จะไม่มีการเพิ่มการแจ้งเตือนแม้ว่าโควต้าจะหมด",
+        "usage_warning_5h_label": "เกณฑ์งบประมาณ 5 ชม. (เตือนเมื่อคงเหลือ ≤ ค่านี้)",
+        "usage_warning_5h_help": "ทริกเกอร์เมื่อโควต้า 5 ชม. ที่เหลือ ≤ ค่านี้ ค่าเริ่มต้น 15% — ประมาณ 45 นาทีก่อนหมด เพิ่มขึ้นเพื่อเตือนก่อน ตั้งค่าเป็น 0 เพื่อปิดใช้งานแกน 5 ชม. โดยไม่ปิดสวิตช์",
+        "usage_warning_7d_label": "เกณฑ์รายสัปดาห์ 7 วัน (เตือนเมื่อคงเหลือ ≤ ค่านี้)",
+        "usage_warning_7d_help": "ทริกเกอร์เมื่อโควต้ารายสัปดาห์ 7 วันที่เหลือ ≤ ค่านี้ ค่าเริ่มต้น 5% — ประมาณ 8 ชม. ก่อนหมด ตั้งค่าเป็น 0 เพื่อปิดใช้งานแกน 7 วัน โดยไม่ปิดสวิตช์",
 },
 
 
@@ -3998610,6 +3998638,13 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "Chợ cho thuê (danh sách, hợp đồng, lịch sử) gắn với tài khoản. Đăng nhập bằng tài khoản email hoặc mở Plaza để bắt đầu thuê hoặc đăng bot.",
         "settings_rental_setup_cta": "Thiết lập cho thuê",
         "rental_needs_account": "Đăng nhập bằng tài khoản email để quản lý cho thuê.",
+
+        "usage_warning_enable_label": "Bật cảnh báo sử dụng",
+        "usage_warning_enable_help": "Công tắc chính. Khi BẬT, mỗi tin nhắn /api/transform gửi đi sẽ nhận tiền tố cảnh báo hệ thống ngay khi ngưỡng bị vượt qua. Khi TẮT, không có cảnh báo nào được thêm ngay cả khi hạn ngạch đã hết.",
+        "usage_warning_5h_label": "Ngưỡng ngân sách 5 giờ (cảnh báo khi còn lại ≤ giá trị này)",
+        "usage_warning_5h_help": "Kích hoạt khi hạn ngạch 5 giờ còn lại ≤ giá trị này. Mặc định 15% — khoảng 45 phút trước khi hết. Tăng lên để cảnh báo sớm hơn; đặt thành 0 để tắt trục 5 giờ mà không tắt công tắc.",
+        "usage_warning_7d_label": "Ngưỡng hàng tuần 7 ngày (cảnh báo khi còn lại ≤ giá trị này)",
+        "usage_warning_7d_help": "Kích hoạt khi hạn ngạch hàng tuần 7 ngày còn lại ≤ giá trị này. Mặc định 5% — khoảng 8 giờ trước khi hết. Đặt thành 0 để tắt trục 7 ngày mà không tắt công tắc.",
 },
 
 
@@ -4525164,6 +4525199,13 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "Pasar sewa (daftar, kontrak, riwayat) terikat pada akun. Masuk dengan akun email atau buka Plaza untuk mulai menyewa atau mendaftarkan bot.",
         "settings_rental_setup_cta": "Siapkan sewa",
         "rental_needs_account": "Masuk dengan akun email untuk mengelola sewa.",
+
+        "usage_warning_enable_label": "Aktifkan peringatan penggunaan",
+        "usage_warning_enable_help": "Saklar utama. Saat AKTIF, setiap pesan /api/transform keluar menerima awalan peringatan sistem segera setelah ambang batas terlampaui. Saat NONAKTIF, tidak ada peringatan ditambahkan bahkan jika kuota habis.",
+        "usage_warning_5h_label": "Ambang batas anggaran 5 jam (peringatkan bila tersisa ≤ nilai ini)",
+        "usage_warning_5h_help": "Pemicu saat kuota 5 jam tersisa ≤ nilai ini. Default 15% — sekitar 45 menit sebelum habis. Naikkan untuk peringatan lebih awal; tetapkan ke 0 untuk menonaktifkan sumbu 5 jam tanpa menonaktifkan saklar.",
+        "usage_warning_7d_label": "Ambang batas mingguan 7 hari (peringatkan bila tersisa ≤ nilai ini)",
+        "usage_warning_7d_help": "Pemicu saat kuota mingguan 7 hari tersisa ≤ nilai ini. Default 5% — sekitar 8 jam sebelum habis. Tetapkan ke 0 untuk menonaktifkan sumbu 7 hari tanpa menonaktifkan saklar.",
 },
 
 
@@ -5050361,6 +5050403,13 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "Le marché de location (annonces, contrats, historique) est lié à un compte. Connectez-vous avec un compte e-mail ou ouvrez le Plaza pour commencer à louer ou à publier un bot.",
         "settings_rental_setup_cta": "Configurer la location",
         "rental_needs_account": "Connectez-vous avec un compte e-mail pour gérer les locations.",
+
+        "usage_warning_enable_label": "Activer l'avertissement d'utilisation",
+        "usage_warning_enable_help": "Interrupteur principal. Quand il est ACTIVÉ, chaque message /api/transform sortant reçoit un préfixe d'avertissement système dès que le seuil est dépassé. Quand il est DÉSACTIVÉ, aucun avertissement n'est ajouté même si le quota est épuisé.",
+        "usage_warning_5h_label": "Seuil budget 5h (avertir quand restant ≤ cette valeur)",
+        "usage_warning_5h_help": "Se déclenche quand le quota restant de 5h ≤ cette valeur. Par défaut 15% — environ 45min avant épuisement. Augmenter pour être averti plus tôt ; mettre à 0 pour désactiver l'axe 5h sans désactiver l'interrupteur.",
+        "usage_warning_7d_label": "Seuil hebdomadaire 7j (avertir quand restant ≤ cette valeur)",
+        "usage_warning_7d_help": "Se déclenche quand le quota hebdomadaire restant de 7j ≤ cette valeur. Par défaut 5% — environ 8h avant épuisement. Mettre à 0 pour désactiver l'axe 7j sans désactiver l'interrupteur.",
 },
 
 
@@ -5568109,6 +5568158,13 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "El mercado de alquiler (anuncios, contratos, historial) está vinculado a una cuenta. Inicie sesión con una cuenta de correo o abra Plaza para empezar a alquilar o publicar un bot.",
         "settings_rental_setup_cta": "Configurar alquiler",
         "rental_needs_account": "Inicie sesión con una cuenta de correo para gestionar alquileres.",
+
+        "usage_warning_enable_label": "Activar advertencia de uso",
+        "usage_warning_enable_help": "Interruptor principal. Cuando está ACTIVADO, cada mensaje /api/transform saliente recibe un prefijo de advertencia del sistema inmediatamente al cruzar el umbral. Cuando está DESACTIVADO, no se añade ninguna advertencia aunque se agote la cuota.",
+        "usage_warning_5h_label": "Umbral de presupuesto de 5h (advertir cuando restante ≤ este valor)",
+        "usage_warning_5h_help": "Dispara cuando la cuota restante de 5h ≤ este valor. Por defecto 15% — unos 45 min antes del agotamiento. Auméntalo para advertír antes; ponlo en 0 para desactivar el eje de 5h sin desactivar el interruptor.",
+        "usage_warning_7d_label": "Umbral semanal de 7 días (advertir cuando restante ≤ este valor)",
+        "usage_warning_7d_help": "Dispara cuando la cuota semanal restante de 7 días ≤ este valor. Por defecto 5% — unos 8h antes del agotamiento. Ponlo en 0 para desactivar el eje de 7 días sin desactivar el interruptor.",
 },
 
 
@@ -6105100,6 +6105156,13 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "Der Vermietungs-Marktplatz (Angebote, Verträge, Verlauf) ist kontogebunden. Melden Sie sich mit einem E-Mail-Konto an oder öffnen Sie Plaza, um zu mieten oder einen Bot einzustellen.",
         "settings_rental_setup_cta": "Vermietung einrichten",
         "rental_needs_account": "Melden Sie sich mit einem E-Mail-Konto an, um Vermietungen zu verwalten.",
+
+        "usage_warning_enable_label": "Nutzungswarnung aktivieren",
+        "usage_warning_enable_help": "Hauptschalter. Wenn AN, erhält jede ausgehende /api/transform-Nachricht sofort ein Systemwarnungs-Präfix, sobald der Schwellenwert überschritten wird. Wenn AUS, wird keine Warnung hinzugefügt, selbst wenn das Kontingent erschöpft ist.",
+        "usage_warning_5h_label": "5-Stunden-Budgetschwelle (warnen, wenn verbleibend ≤ diesem Wert)",
+        "usage_warning_5h_help": "Auslösen, wenn das verbleibende 5-Stunden-Kontingent ≤ diesem Wert liegt. Standard 15% — ca. 45 Min. vor Erschöpfung. Erhöhen für frühere Warnung; auf 0 setzen, um die 5-Stunden-Achse zu deaktivieren, ohne den Schalter zu deaktivieren.",
+        "usage_warning_7d_label": "7-Tage-Wochenschwelle (warnen, wenn verbleibend ≤ diesem)",
+        "usage_warning_7d_help": "Auslösen, wenn das verbleibende wöchentliche 7-Tage-Kontingent ≤ diesem Wert liegt. Standard 5% — ca. 8 Std. vor Erschöpfung. Auf 0 setzen, um die 7-Tage-Achse zu deaktivieren, ohne den Schalter zu deaktivieren.",
 },
     pt: {
         "transition_loading": "A carregar…",
@@ -6639463,6 +6639526,13 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "Pasar sewa (senarai, kontrak, sejarah) terikat kepada akaun. Log masuk dengan akaun emel atau buka Plaza untuk mula menyewa atau menyenaraikan bot.",
         "settings_rental_setup_cta": "Sediakan sewa",
         "rental_needs_account": "Log masuk dengan akaun emel untuk mengurus sewa.",
+
+        "usage_warning_enable_label": "Aktifkan amaran penggunaan",
+        "usage_warning_enable_help": "Suis utama. Apabila AKTIF, setiap mesej /api/transform keluar menerima awalan amaran sistem serta-merta setelah ambang dilalui. Apabila NONAKTIF, tiada amaran ditambah walaupun kuota habis.",
+        "usage_warning_5h_label": "Ambang bajet 5 jam (peringatkan apabila berbaki ≤ nilai ini)",
+        "usage_warning_5h_help": "Picu apabila kuota 5 jam berbaki ≤ nilai ini. Lalai 15% — kira-kira 45 minit sebelum habis. Naikkan untuk amaran lebih awal; tetapkan kepada 0 untuk melumpuhkan paksi 5 jam tanpa melumpuhkan suis.",
+        "usage_warning_7d_label": "Ambang mingguan 7 hari (peringatkan apabila berbaki ≤ nilai ini)",
+        "usage_warning_7d_help": "Picu apabila kuota mingguan 7 hari berbaki ≤ nilai ini. Lalai 5% — kira-kira 8 jam sebelum habis. Tetapkan kepada 0 untuk melumpuhkan paksi 7 hari tanpa melumpuhkan suis.",
 },
 
 
@@ -7198780,6 +7198850,13 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "किराया बाज़ार (लिस्टिंग, अनुबंध, इतिहास) खाते से जुड़ा है। ईमेल खाते के साथ साइन इन करें या किराया लेना या बॉट सूचीबद्ध करना शुरू करने के लिए Plaza खोलें।",
         "settings_rental_setup_cta": "किराया सेट अप करें",
         "rental_needs_account": "किराया प्रबंधित करने के लिए ईमेल खाते से साइन इन करें।",
+
+        "usage_warning_enable_label": "उपयोग चेतावनी सक्षम करें",
+        "usage_warning_enable_help": "मास्टर स्विच। जब चालू होता है, तो हर आउटबाउंड /api/transform संदेश को सीमा पार करते ही सिस्टम-चेतावनी उपसर्ग मिलता है। जब बंद होता है, तो कोटा समाप्त होने पर भी कोई चेतावनी नहीं जोड़ी जाती।",
+        "usage_warning_5h_label": "5 घंटे बजट सीमा (शेष ≤ इस मान पर चेतावनी)",
+        "usage_warning_5h_help": "जब शेष 5 घंटे कोटा ≤ इस मान हो तब ट्रिगर। डिफ़ॉल्ट 15% — लगभग समाप्ति से 45 मिनट पहले। जल्दी चेतावनी के लिए इसे बढ़ाएं; 5 घंटे अक्ष को बिना स्विच बंद किए अक्षम करने के लिए 0 पर सेट करें।",
+        "usage_warning_7d_label": "7 दिन साप्ताहिक सीमा (शेष ≤ इस मान पर चेतावनी)",
+        "usage_warning_7d_help": "जब शेष 7 दिन साप्ताहिक कोटा ≤ इस मान हो तब ट्रिगर। डिफ़ॉल्ट 5% — लगभग समाप्ति से 8 घंटे पहले। 7 दिन अक्ष को बिना स्विच बंद किए अक्षम करने के लिए 0 पर सेट करें।",
 },
 
 
@@ -7747223,6 +7747300,13 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "سوق الإيجار (القوائم، العقود، السجل) مرتبط بحساب. سجل الدخول بحساب بريد إلكتروني أو افتح Plaza لبدء الاستئجار أو إدراج بوت.",
         "settings_rental_setup_cta": "إعداد الإيجار",
         "rental_needs_account": "سجل الدخول بحساب بريد إلكتروني لإدارة عمليات الإيجار.",
+
+        "usage_warning_enable_label": "تفعيل تنبيه الاستخدام",
+        "usage_warning_enable_help": "مفتاح رئيسي. عند التشغيل، كل رسالة صادرة عبر /api/transform تحصل على بادئة تحذير نظام فورًا عند تجاوز الحد. عند الإغلاق، لا يُضاف أي تحذير حتى لو استُنزفت الحصة.",
+        "usage_warning_5h_label": "عتبة ميزانية 5 ساعات (تحذير عند الباقي ≤ هذه القيمة)",
+        "usage_warning_5h_help": "يُطلق عندما تبلغ الحصة المتبقية لمدة 5 ساعات ≤ هذه القيمة. الافتراضي 15% — نحو 45 دقيقة قبل الاستنزاف. ارفعها للتحذير المبكر؛ اضبطها على 0 لتعطيل محور 5 ساعات دون تعطيل المفتاح.",
+        "usage_warning_7d_label": "عتبة أسبوعية لمدة 7 أيام (تحذير عند الباقي ≤ هذه القيمة)",
+        "usage_warning_7d_help": "يُطلق عندما تبلغ الحصة الأسبوعية المتبقية لمدة 7 أيام ≤ هذه القيمة. الافتراضي 5% — نحو 8 ساعات قبل الاستنزاف. اضبطها على 0 لتعطيل محور 7 أيام دون تعطيل المفتاح.",
 }
 
 
