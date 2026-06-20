@@ -3326,6 +3326,18 @@
             }
         }
 
+        // Footer/link label for the PR modal. Author-attribution (option B) has no
+        // single gh_login, so prefer the entity label / canonical author email;
+        // login-attribution keeps the @login form.
+        function prAttributionLabel(data) {
+            if (data && data.attribution === 'author') {
+                return data.entity_label
+                    || (data.author_emails && data.author_emails[0])
+                    || (i18n.t('dash_pr_by_author') || 'by commit author');
+            }
+            return '@' + ((data && data.gh_login) || '');
+        }
+
         function paintPrWidget(el, data) {
             const countEl = el.querySelector('.pr-count');
             const linkEl = el.querySelector('.pr-link');
@@ -3388,7 +3400,7 @@
                 body = '<div class="pr-empty">' + i18n.t('dash_pr_none') + '</div>';
                 if (data.actions_url) {
                     foot = '<a href="' + escapeHtml(data.actions_url) + '" target="_blank" rel="noopener noreferrer">'
-                        + escapeHtml('@' + (data.gh_login || '')) + ' · ' + i18n.t('dash_pr_view_all') + ' &#x2197;</a>';
+                        + escapeHtml(prAttributionLabel(data)) + ' · ' + i18n.t('dash_pr_view_all') + ' &#x2197;</a>';
                 }
             } else {
                 body = data.recent_prs.map(pr => {
@@ -3402,7 +3414,7 @@
                         + '</div></a>';
                 }).join('');
                 foot = '<a href="' + escapeHtml(data.actions_url) + '" target="_blank" rel="noopener noreferrer">'
-                    + escapeHtml('@' + data.gh_login) + ' · ' + i18n.t('dash_pr_view_all') + ' &#x2197;</a>';
+                    + escapeHtml(prAttributionLabel(data)) + ' · ' + i18n.t('dash_pr_view_all') + ' &#x2197;</a>';
             }
 
             overlay.innerHTML =
