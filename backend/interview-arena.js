@@ -1788,7 +1788,11 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
             let interviewSync = null;
             try {
                 const examRow = await pool.query(
-                    'SELECT listing_id, model FROM arena_exams WHERE id = $1',
+                    `SELECT e.id, e.listing_id, e.model, e.total_score, e.max_score, e.completed_at,
+                            l.owner_device_id, l.owner_entity_id
+                     FROM arena_exams e
+                     LEFT JOIN bot_listings l ON l.id = e.listing_id
+                     WHERE e.id = $1`,
                     [req.params.examId]
                 );
                 const examData = examRow.rows[0];
@@ -1836,6 +1840,55 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
                         capabilities: mapped.capabilities,
                     };
                     audit('info', 'arena', `exam ${req.params.examId} synced to listing ${examData.listing_id}: passed=${mapped.passed} score=${mapped.normalizedScore}%`);
+
+                    // ── Arena → entity namecard sync (card_2fd3bac5) ──
+                    // Write the verified score back to entity.identity.interviewCapabilities
+                    // so the bot's namecard Capabilities section + plaza tile populate
+                    // automatically on exam completion. Previously this only happened in
+                    // the OPTIONAL, credential-gated POST /api/arena/leaderboard path
+                    // (entity-bound submit). An exam could complete — updating
+                    // bot_listings.last_interview_at so the retest countdown chip shows —
+                    // yet leave identity.interviewCapabilities empty, so the namecard
+                    // rendered "尚無 Arena 評測結果" (dash_caps_none) despite a real
+                    // completed result. The finalize handler already verifies the
+                    // exam→listing→owner linkage server-side, so this write is
+                    // authoritative and needs no botSecret. Non-blocking: identity
+                    // failures must never fail the exam finalize (same posture as the
+                    // bot_listings sync above).
+                    try {
+                        const ownerDeviceId = examData.owner_device_id;
+                        const ownerEntityId = examData.owner_entity_id;
+                        const device = ownerDeviceId ? deviceRegistry[ownerDeviceId] : null;
+                        const entity = (device && ownerEntityId != null)
+                            ? device.entities?.[ownerEntityId]
+                            : null;
+                        if (entity) {
+                            const patch = buildInterviewIdentityPatch(
+                                {
+                                    id: examData.id,
+                                    model: examData.model,
+                                    total_score: examData.total_score != null ? examData.total_score : totalScore,
+                                    max_score: examData.max_score != null ? examData.max_score : MAX_TOTAL_SCORE,
+                                    completed_at: examData.completed_at,
+                                },
+                                mapped
+                            );
+                            if (patch) {
+                                if (!entity.identity) entity.identity = {};
+                                // Latest-wins: overwrite any prior interviewCapabilities block.
+                                entity.identity.interviewCapabilities = patch.interviewCapabilities;
+                                entity.identity.lastInterviewAt = patch.lastInterviewAt;
+                                entity.lastUpdated = Date.now();
+                                if (saveDeviceData) {
+                                    Promise.resolve(saveDeviceData(ownerDeviceId, device))
+                                        .catch(err => audit('warn', 'arena', `finalize identity sync save failed for ${ownerDeviceId}:${ownerEntityId}: ${err.message}`));
+                                }
+                                audit('info', 'arena', `exam ${req.params.examId} synced to entity ${ownerDeviceId}:${ownerEntityId} namecard score=${patch.interviewCapabilities.normalized}%`);
+                            }
+                        }
+                    } catch (idErr) {
+                        console.warn('[Arena] entity identity sync error (non-blocking):', idErr.message);
+                    }
                 }
             } catch (syncErr) {
                 console.warn('[Arena] Rental sync error (non-blocking):', syncErr.message);
