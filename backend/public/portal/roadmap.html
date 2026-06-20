@@ -762,7 +762,7 @@
                 <div class="rm-phase-desc" data-i18n="rm_h3_desc">Hermes can operate on private repositories. Aligned with <a href="info.html#guide/card_f531861e" style="color:var(--primary);">card_f531861e</a> (claude-cli-proxy vault integration). Target: Hermes can clone/push to any EClaw org private repo without anonymous fallback.</div>
                 <ul class="rm-tasks">
                     <li class="done" data-i18n="rm_h3_t1">claude-cli-proxy reads GIT_HUB2 from vault (card_f531861e ✅ done; backend/hermes-org-token.js shipped) — Hermes git operations use authenticated context instead of anonymous fallback</li>
-                    <li class="todo" data-i18n="rm_h3_t2">Per-org credential scope: Hermes receives org-specific token; cannot access repos outside assigned orgs</li>
+                    <li class="done" data-i18n="rm_h3_t2">Per-org credential scope: Hermes receives org-specific token; cannot access repos outside assigned orgs (card_1242aaa5 ✅ done; backend/hermes-org-token.js + claude-cli-proxy org-token path shipped)</li>
                     <li class="partial" data-i18n="rm_h3_t3">Hermes tested against a private test repo — clone, branch, commit, push, PR all succeed</li>
                 </ul>
             </div>
