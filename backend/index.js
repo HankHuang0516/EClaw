@@ -2433,6 +2433,12 @@ const botTools = require('./bot-tools');
 app.use('/api/bot', botTools.router);
 
 // ============================================
+// GOOGLE PLAY INTEGRITY — Android anti-abuse signal bridge
+// ============================================
+const playIntegrity = require('./play-integrity');
+app.use('/api/play-integrity', playIntegrity.createRouter({ devices, audit: serverLog }));
+
+// ============================================
 // COMPANION (Petdx 伙伴瀏覽器 / 社群伙伴貢獻系統)
 // ============================================
 const companionModule = require('./companion-api')({

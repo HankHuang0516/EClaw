@@ -12,7 +12,7 @@ appcompat = "1.6.1"
 material = "1.11.0"
 securityCrypto = "1.1.0-alpha06"
 activityKtx = "1.8.2"
-billing = "7.0.0"
+billing = "9.1.0"
 room = "2.7.0"
 glide = "4.16.0"
 markwon = "4.6.2"
@@ -22,6 +22,7 @@ credentialManager = "1.5.0-beta01"
 googleId = "1.1.1"
 facebookSdk = "17.0.0"
 playServicesLocation = "21.3.0"
+playIntegrity = "1.6.0"
 
 [libraries]
 billing = { group = "com.android.billingclient", name = "billing-ktx", version.ref = "billing" }
@@ -71,6 +72,9 @@ facebook-login = { group = "com.facebook.android", name = "facebook-login", vers
 
 # Google Play Services Location
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+
+# Google Play Integrity
+play-integrity = { group = "com.google.android.play", name = "integrity", version.ref = "playIntegrity" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
