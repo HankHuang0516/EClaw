@@ -214,4 +214,21 @@ describe('portal static HTML IDs', () => {
     expect(community).toMatch(/^\s*preloadOwnEntityAvatars\(\);\s*$/m);
   });
 
+  test('about founder page keeps public nav, product visual, and share status shell', () => {
+    const aboutFounderPath = path.join(__dirname, '../../public/portal/about-founder.html');
+    const aboutFounder = fs.readFileSync(aboutFounderPath, 'utf8');
+
+    expect(aboutFounder).toContain('<script src="shared/public-nav.js"></script>');
+    expect(aboutFounder).toContain('<script src="shared/footer.js"></script>');
+    expect(aboutFounder).toContain("renderPublicNav('info')");
+    expect(aboutFounder).toContain("if (typeof renderFooter === 'function') renderFooter();");
+    expect(aboutFounder).toContain('src="/assets/eclaw-kanban-demo.png"');
+    expect(aboutFounder).toContain('class="af-content"');
+    expect(aboutFounder).toMatch(/\.af-content\s*\{[\s\S]*grid-template-columns:\s*220px minmax\(0,\s*760px\)/);
+    expect(aboutFounder).toMatch(/@media \(max-width:\s*920px\)[\s\S]*\.af-content\s*\{[\s\S]*grid-template-columns:\s*1fr/);
+    expect(aboutFounder).toContain('id="afCopyLink" aria-describedby="afShareStatus"');
+    expect(aboutFounder).toContain('id="afShareStatus" data-state="idle" role="status" aria-live="polite"');
+    expect(aboutFounder).toContain("status.dataset.state = state || 'idle'");
+  });
+
 });

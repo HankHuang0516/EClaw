@@ -529,6 +529,8 @@ EClaw/
    - 引用 UX 使用現有回覆列（reply bar）`setReplyContext()`，顯示 `📌 source: title: excerpt` 的摘要格式
    - 所有 `message` 事件監聽器**必須**驗證 `e.origin === window.location.origin`，`postMessage` 目標**必須**指定 `window.location.origin`（不可用 `'*'`）
 
+13b. **Public Article Page Shell** — 公開文章型頁面（例如 `/portal/about-founder.html`）應接共享 `public-nav.js` + `footer.js`、使用真產品視覺資產，不要只剩純文字；若新增分享/copy 狀態或 responsive shell，至少用 static Jest guard 鎖住 nav/footer、主要視覺、狀態 region、桌機/手機/窄 pane 版面。
+
 13. **UI/UX I18n Audit** — 任何與 UI/UX 相關的改動，除了執行 `simplify` skill 外，還**必須**確認 i18n 做確實：
     - 所有使用者可見的文字（按鈕、標題、提示、錯誤訊息、placeholder）都使用 `data-i18n` 屬性或 `i18n.t()` 呼叫
     - 新增的 i18n key 必須同步加入所有語言檔案（Web `i18n.js`、Android `strings.xml`、iOS `i18n/`）
