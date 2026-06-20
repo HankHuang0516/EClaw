@@ -6458,7 +6458,6 @@ app.post('/api/invite/redeem', async (req, res) => {
         return res.status(400).json({ success: false, error: 'code required' });
     }
 
-    const pg = authModule.pool;
     const wallet = walletModule;
     const INVITER_REWARD_MLI = 500 * 1000; // 500 ecoin in mLI
     const INVITEE_REWARD_MLI = 100 * 1000; // 100 ecoin in mLI

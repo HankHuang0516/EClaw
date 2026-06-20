@@ -18,7 +18,7 @@
 ```
 EClaw/
 ├── backend/                  # Node.js Express server (deployed to Railway)
-│   ├── index.js              # Main server (~23,940 lines) — all API routes
+│   ├── index.js              # Main server (~24,001 lines) — all API routes
 │   ├── db.js                 # PostgreSQL connection pool + schema creation
 │   ├── auth.js               # Auth module (JWT, OAuth, OIDC, RBAC)
 │   ├── mission.js            # Mission Control dashboard system
@@ -241,7 +241,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~23,940 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~24,001 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -1213,11 +1213,32 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Portal 401 Graceful Guard**: Authenticated UIUX sweep — graceful degradation on expired sessions (#3554)
 - **App Version**: Updated to 1.0.93 (versionCode 101)
 
+### Recent Features (v1.1190.x+, 2026-06-08 – 2026-06-21)
+
+- **Vault Optimistic Concurrency (P0 hotfix)**: `expectedUpdatedAt` ETag on `POST /api/device-vars` prevents lost-update races; `409 Conflict` on stale writes; strict-mode no-etag guard prevents zombification by legacy clients; defensive `new Date()` fix for fatal restart loop incident (#3422-#3427, #3432)
+- **Interview Arena Scoring Integration**: Bind interview score to entity, display on namecard + plaza (#3435); stage-by-stage exam animations with entity avatar (#3431); interview retest countdown + 5-tier color severity on namecard (#3436)
+- **Entity Mention Push Notifications**: `@<username>` entity mention triggers APP + Web push + setting toggle (#3430); rich-card UX question triggers push + setting toggle (#3437)
+- **Chat Routing Chip Org Modal**: Click routing chip opens org structure + hierarchy modal (#3434); routing chip fallback to org-chart commander or hide when route unknown (#3377)
+- **User Display Name**: `user_display_name` column on user accounts + portal settings UI (#3429)
+- **Usage Warning Toggle**: Usage-remaining warning toggle + per-message system warning in settings (#3414)
+- **Safety Hardening (06/16 RCA)**: Extract `safeUpdatedAtToISO` helper + global `unhandledRejection` guard + CI ban on bare `new Date(val)` (#3433)
+- **PetDX Companion Refactor**: Companion selection SoT migrated from vault keys to DB (`companion_select_log`); one-time vault cleanup for residual `PETDX_*` keys (#3410-#3412)
+- **Bridge-Watcher Cron**: 5-minute cron for elicitation detection + auto-GC (#3396); silent close path + AE pre-flight + per-osascript timeout (#3413)
+- **Merged-PR Count Widget**: Merged-PR count + smart-link widget on entity cards (#3394)
+- **Message Lifecycle Engine Phase 2**: DB schema + `lifecycle_event_log` (Step 1, #3385); Redis deadline wheel + sweeper + cold-start scan (Step 2, #3388)
+- **Roadmap Live Status**: `roadmap.html` reads live status from kanban cards (Phase 4 #9 Part A, #3384)
+- **Redirect Phase D**: Migrate 15 router-eligible legacy nav hops to `buildWebUrl` (#3373)
+- **Portal A11y Labels**: Add accessible labels to visible form controls (#3386)
+- **Kanban Auto-Review Inference**: Infer `autoReviewOnTransform aboutCardId` from `card_<hex>` mention in message text (#3425)
+- **DB pgcrypto Bootstrap**: Bootstrap pgcrypto extension so `gen_random_bytes()` works for id DEFAULTs (#3428)
+- **SpeakTo Routing Audit Log**: Add audit log for speakTo routing decisions (card_488f05)
+- **Heartbeat Severity Gate**: Auto-block restricted to P0/P1 stale in_progress cards only (#3564)
+
 ---
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~4821 test cases across 343 Jest files + 79 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~4960 test cases across 352 Jest files + 79 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
