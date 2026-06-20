@@ -345,8 +345,11 @@ describe('mindmap-graph-projection — pure helpers', () => {
     });
 
     test('projectGraph emits chat_anchor edges (amendment A)', () => {
+        // Real chat anchors are canonical UUIDs (chat_messages.id).
+        const MSG_PINNED = '11111111-1111-1111-1111-111111111111';
+        const MSG_MIRROR = '22222222-2222-2222-2222-222222222222';
         const cards = [
-            { id: 'card_a', title: 'pinned to chat', description: '', priority: 'P1', status: 'todo', parent_card_id: null, is_automation: false, assigned_bots: [2], created_by: 1, reviewer_entity_id: null, chat_anchor_message_id: 'msg-pinned', archived: false, updated_at: null },
+            { id: 'card_a', title: 'pinned to chat', description: '', priority: 'P1', status: 'todo', parent_card_id: null, is_automation: false, assigned_bots: [2], created_by: 1, reviewer_entity_id: null, chat_anchor_message_id: MSG_PINNED, archived: false, updated_at: null },
         ];
         const result = projection.projectGraph({
             cards,
@@ -358,9 +361,9 @@ describe('mindmap-graph-projection — pure helpers', () => {
                 { id: 'note_a', title: 'cross-linked note', content: '', category: 'general', created_by: '2', updated_at: null },
             ],
             anchorRows: [
-                // mindmap_node that bridges note_a + chat msg-mirror + card_a
+                // mindmap_node that bridges note_a + chat MSG_MIRROR + card_a
                 { node_id: 'mm-1', anchor_type: 'note',          anchor_ref: 'note_a',     display_label: null },
-                { node_id: 'mm-1', anchor_type: 'chat_message', anchor_ref: 'msg-mirror', display_label: null },
+                { node_id: 'mm-1', anchor_type: 'chat_message', anchor_ref: MSG_MIRROR,   display_label: null },
                 { node_id: 'mm-1', anchor_type: 'kanban_card',  anchor_ref: 'card_a',     display_label: null },
             ],
             entityMap: { 2: { character: 'LOBSTER' }, 1: { character: 'Mac_F' } },
@@ -371,16 +374,16 @@ describe('mindmap-graph-projection — pure helpers', () => {
         });
 
         const chatNodes = result.nodes.filter(n => n.type === 'chat').map(n => n.id).sort();
-        expect(chatNodes).toEqual(['chat:msg-mirror', 'chat:msg-pinned']);
+        expect(chatNodes).toEqual([`chat:${MSG_MIRROR}`, `chat:${MSG_PINNED}`].sort());
 
         const chatEdges = result.links.filter(l => l.type === 'chat_anchor');
-        // Expect: task:card_a → chat:msg-pinned (direct field)
-        //          task:card_a → chat:msg-mirror (anchor cross-correlation)
-        //          note:note_a → chat:msg-mirror (anchor cross-correlation)
+        // Expect: task:card_a → chat:MSG_PINNED (direct field)
+        //          task:card_a → chat:MSG_MIRROR (anchor cross-correlation)
+        //          note:note_a → chat:MSG_MIRROR (anchor cross-correlation)
         const pairs = new Set(chatEdges.map(e => `${e.source}->${e.target}`));
-        expect(pairs.has('task:card_a->chat:msg-pinned')).toBe(true);
-        expect(pairs.has('task:card_a->chat:msg-mirror')).toBe(true);
-        expect(pairs.has('note:note_a->chat:msg-mirror')).toBe(true);
+        expect(pairs.has(`task:card_a->chat:${MSG_PINNED}`)).toBe(true);
+        expect(pairs.has(`task:card_a->chat:${MSG_MIRROR}`)).toBe(true);
+        expect(pairs.has(`note:note_a->chat:${MSG_MIRROR}`)).toBe(true);
         expect(result.stats.edgeCounts.chat_anchor).toBe(3);
 
         // And the mindmap_node also bridges note_a ↔ card_a — note_on_card edge.
@@ -388,6 +391,53 @@ describe('mindmap-graph-projection — pure helpers', () => {
         expect(noteOnCard).toBeTruthy();
         expect(noteOnCard.source).toBe('note:note_a');
         expect(noteOnCard.target).toBe('task:card_a');
+    });
+
+    test('projectGraph ignores non-UUID chat_anchor placeholders (no bogus chat hub node) — card_1356eaf3', () => {
+        // Regression: the automated ErrLog/cron card creator wrote literal placeholder
+        // strings into chat_anchor_message_id. Several cards shared "cron-auto", which
+        // the projection used to collapse into one synthetic green "chat #cron-auto" hub.
+        // A valid UUID anchor must still produce exactly one chat node + edge.
+        const VALID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+        const cards = [
+            // Two cards sharing a literal "cron-auto" placeholder → MUST NOT cluster.
+            { id: 'card_x', title: 'cron x', description: '', priority: 'P2', status: 'todo', parent_card_id: null, is_automation: true, assigned_bots: [], created_by: 0, reviewer_entity_id: null, chat_anchor_message_id: 'cron-auto', archived: false, updated_at: null },
+            { id: 'card_y', title: 'cron y', description: '', priority: 'P2', status: 'todo', parent_card_id: null, is_automation: true, assigned_bots: [], created_by: 0, reviewer_entity_id: null, chat_anchor_message_id: 'cron-auto', archived: false, updated_at: null },
+            // Other historical non-UUID placeholders also seen in prod.
+            { id: 'card_z', title: 'phase4', description: '', priority: 'P2', status: 'todo', parent_card_id: null, is_automation: false, assigned_bots: [], created_by: 1, reviewer_entity_id: null, chat_anchor_message_id: 'phase4-read-followup', archived: false, updated_at: null },
+            { id: 'card_w', title: 'speakto', description: '', priority: 'P2', status: 'todo', parent_card_id: null, is_automation: false, assigned_bots: [], created_by: 1, reviewer_entity_id: null, chat_anchor_message_id: 'speakto-routing-investigation', archived: false, updated_at: null },
+            // A real chat-anchored card → still produces its chat node + edge.
+            { id: 'card_ok', title: 'real anchor', description: '', priority: 'P1', status: 'todo', parent_card_id: null, is_automation: false, assigned_bots: [2], created_by: 1, reviewer_entity_id: null, chat_anchor_message_id: VALID, archived: false, updated_at: null },
+        ];
+        const result = projection.projectGraph({
+            cards,
+            initialCardIds: new Set(['card_x', 'card_y', 'card_z', 'card_w', 'card_ok']),
+            depRows: [],
+            commentCounts: [],
+            noteCounts: [],
+            notes: [],
+            anchorRows: [],
+            entityMap: { 2: { character: 'LOBSTER' }, 1: { character: 'Mac_F' } },
+            options: projection.parseGraphOptions({}, { isDeviceAuth: true, callerEntityId: null }),
+        });
+
+        // Only the valid UUID becomes a chat node — no "chat:cron-auto" hub, no strays.
+        const chatNodes = result.nodes.filter(n => n.type === 'chat').map(n => n.id);
+        expect(chatNodes).toEqual([`chat:${VALID}`]);
+        expect(chatNodes).not.toContain('chat:cron-auto');
+
+        // Exactly one chat_anchor edge — from the real card to the real chat node.
+        const chatEdges = result.links.filter(l => l.type === 'chat_anchor');
+        expect(chatEdges).toHaveLength(1);
+        expect(chatEdges[0].source).toBe('task:card_ok');
+        expect(chatEdges[0].target).toBe(`chat:${VALID}`);
+        expect(result.stats.edgeCounts.chat_anchor).toBe(1);
+
+        // And no chat node/edge references any of the placeholder values.
+        for (const ph of ['cron-auto', 'phase4-read-followup', 'speakto-routing-investigation']) {
+            expect(result.nodes.some(n => n.id === `chat:${ph}`)).toBe(false);
+            expect(result.links.some(l => l.target === `chat:${ph}`)).toBe(false);
+        }
     });
 
     test('projectGraph respects limitNodes by dropping trailing nodes + orphans', () => {
@@ -551,6 +601,7 @@ describe('GET /api/mindmap/graph — HTTP', () => {
     });
 
     test('chat_anchor edge surfaces when card has chat_anchor_message_id', async () => {
+        const MSG = '33333333-4444-5555-6666-777777777777'; // real chat_messages UUID
         mockQuery.mockReset();
         mockQuery
             .mockResolvedValueOnce({
@@ -558,7 +609,7 @@ describe('GET /api/mindmap/graph — HTTP', () => {
                     id: 'card_a', title: 'pinned', description: '', priority: 'P1', status: 'todo',
                     parent_card_id: null, is_automation: false,
                     assigned_bots: [], created_by: 0, reviewer_entity_id: null,
-                    chat_anchor_message_id: 'msg-xyz', archived: false, updated_at: null,
+                    chat_anchor_message_id: MSG, archived: false, updated_at: null,
                 }],
             })
             .mockResolvedValueOnce({ rows: [] }) // deps
@@ -571,13 +622,39 @@ describe('GET /api/mindmap/graph — HTTP', () => {
 
         const res = await request(app).get('/api/mindmap/graph' + AUTH);
         expect(res.status).toBe(200);
-        const chatNode = res.body.graph.nodes.find(n => n.id === 'chat:msg-xyz');
+        const chatNode = res.body.graph.nodes.find(n => n.id === `chat:${MSG}`);
         expect(chatNode).toBeTruthy();
         const chatEdge = res.body.graph.links.find(l => l.type === 'chat_anchor');
         expect(chatEdge).toBeTruthy();
         expect(chatEdge.source).toBe('task:card_a');
-        expect(chatEdge.target).toBe('chat:msg-xyz');
+        expect(chatEdge.target).toBe(`chat:${MSG}`);
         expect(chatEdge.evidence).toBe('kanban_cards.chat_anchor_message_id');
+    });
+
+    test('non-UUID chat_anchor placeholder produces NO chat node/edge over HTTP — card_1356eaf3', async () => {
+        mockQuery.mockReset();
+        mockQuery
+            .mockResolvedValueOnce({
+                rows: [{
+                    id: 'card_cron', title: '[Auto] cron card', description: '', priority: 'P2', status: 'todo',
+                    parent_card_id: null, is_automation: true,
+                    assigned_bots: [], created_by: 0, reviewer_entity_id: null,
+                    chat_anchor_message_id: 'cron-auto', archived: false, updated_at: null,
+                }],
+            })
+            .mockResolvedValueOnce({ rows: [] }) // deps
+            .mockResolvedValueOnce({ rows: [] }) // explicit card links
+            .mockResolvedValueOnce({ rows: [] }) // comment counts
+            .mockResolvedValueOnce({ rows: [] }) // note counts
+            .mockResolvedValueOnce({ rows: [] }) // mission notes
+            .mockResolvedValueOnce({ rows: [] }) // explicit note/card links
+            .mockResolvedValueOnce({ rows: [] }); // anchors
+
+        const res = await request(app).get('/api/mindmap/graph' + AUTH);
+        expect(res.status).toBe(200);
+        expect(res.body.graph.nodes.some(n => n.type === 'chat')).toBe(false);
+        expect(res.body.graph.nodes.some(n => n.id === 'chat:cron-auto')).toBe(false);
+        expect(res.body.graph.links.some(l => l.type === 'chat_anchor')).toBe(false);
     });
 
     test('explicit card links are projected into force-graph edges', async () => {

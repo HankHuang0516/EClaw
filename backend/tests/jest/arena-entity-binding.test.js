@@ -219,6 +219,120 @@ describe('extractArenaFieldsFromIdentity', () => {
     });
 });
 
+describe('finalize → entity namecard sync (card_2fd3bac5)', () => {
+    // The bug: an exam could complete (finalize updates bot_listings.last_interview_at,
+    // so the namecard retest-countdown chip shows) yet leave
+    // entity.identity.interviewCapabilities empty — because the identity write only
+    // happened in the OPTIONAL, credential-gated POST /api/arena/leaderboard path.
+    // The namecard then rendered "尚無 Arena 評測結果" despite a real completed result.
+    // The fix writes the verified capabilities to the owner entity's identity during
+    // finalize, server-side, via the already-known exam→listing→owner linkage.
+
+    const EXAM_ID = 'exam_test123';
+    const DEVICE_ID = 'dev-finalize-1';
+    const ENTITY_ID = 1;
+
+    function buildMockPool() {
+        return {
+            query: jest.fn(async (sql) => {
+                const norm = sql.replace(/\s+/g, ' ').trim();
+                // sessions for the exam — one completed session worth points
+                if (/FROM arena_sessions WHERE exam_id/i.test(norm)) {
+                    return {
+                        rows: [{
+                            id: 'sess-1', exam_id: EXAM_ID, test_type: 'arena_memory',
+                            test_index: 0, status: 'completed', score: 91, max_score: 147,
+                            challenge_config: {}, actions_log: [],
+                        }],
+                        rowCount: 1,
+                    };
+                }
+                if (/UPDATE arena_exams/i.test(norm)) return { rows: [], rowCount: 1 };
+                // exam → listing → owner join (the new query the fix added)
+                if (/FROM arena_exams e LEFT JOIN bot_listings l/i.test(norm)) {
+                    return {
+                        rows: [{
+                            id: EXAM_ID, listing_id: 'listing-1', model: 'claude-opus-4',
+                            total_score: 91, max_score: 147, completed_at: new Date('2026-06-13T07:43:07Z'),
+                            owner_device_id: DEVICE_ID, owner_entity_id: ENTITY_ID,
+                        }],
+                        rowCount: 1,
+                    };
+                }
+                if (/UPDATE bot_listings/i.test(norm)) return { rows: [], rowCount: 1 };
+                if (/INSERT INTO bot_interviews/i.test(norm)) return { rows: [], rowCount: 1 };
+                return { rows: [], rowCount: 0 };
+            }),
+        };
+    }
+
+    function findFinalizeRoute(router) {
+        return router.stack.find(layer =>
+            layer.route &&
+            /\/exam\/:examId\/finalize/.test(layer.route.path) &&
+            layer.route.methods.post
+        ).route.stack[0].handle;
+    }
+
+    async function invoke(handler, devices, saveDeviceData) {
+        const req = { params: { examId: EXAM_ID }, body: {} };
+        let payload = null;
+        const res = {
+            json: (p) => { payload = p; return res; },
+            status: () => res,
+        };
+        // Allow the fire-and-forget saveDeviceData promise to settle.
+        await handler(req, res);
+        await new Promise(r => setImmediate(r));
+        return payload;
+    }
+
+    test('writes interviewCapabilities to the owner entity identity on completion', async () => {
+        jest.resetModules();
+        const mockPool = buildMockPool();
+        jest.doMock('pg', () => ({ Pool: jest.fn(() => mockPool), connect: jest.fn() }));
+        const arenaFactory = require('../../interview-arena');
+
+        const entity = { isBound: true, identity: {} };
+        const devices = { [DEVICE_ID]: { entities: { [ENTITY_ID]: entity } } };
+        const saveDeviceData = jest.fn().mockResolvedValue(true);
+
+        const mod = arenaFactory({ serverLog: () => {}, io: null, devices, saveDeviceData });
+        const handler = findFinalizeRoute(mod.router);
+        const payload = await invoke(handler, devices, saveDeviceData);
+
+        expect(payload.success).toBe(true);
+        // The entity namecard data is now populated — root-cause fix.
+        expect(entity.identity.interviewCapabilities).toMatchObject({
+            score: 91, maxScore: 147, normalized: 62, source: 'arena', examId: EXAM_ID,
+        });
+        expect(entity.identity.public.capabilities.reasoning).toMatchObject({
+            supported: true,
+        });
+        expect(typeof entity.identity.lastInterviewAt).toBe('number');
+        expect(saveDeviceData).toHaveBeenCalledWith(DEVICE_ID, devices[DEVICE_ID]);
+        jest.dontMock('pg');
+    });
+
+    test('does not throw when owner entity is not in the device registry', async () => {
+        jest.resetModules();
+        const mockPool = buildMockPool();
+        jest.doMock('pg', () => ({ Pool: jest.fn(() => mockPool), connect: jest.fn() }));
+        const arenaFactory = require('../../interview-arena');
+
+        // Empty registry — finalize must still succeed (non-blocking identity sync).
+        const devices = {};
+        const saveDeviceData = jest.fn();
+        const mod = arenaFactory({ serverLog: () => {}, io: null, devices, saveDeviceData });
+        const handler = findFinalizeRoute(mod.router);
+        const payload = await invoke(handler, devices, saveDeviceData);
+
+        expect(payload.success).toBe(true);
+        expect(saveDeviceData).not.toHaveBeenCalled();
+        jest.dontMock('pg');
+    });
+});
+
 describe('binding integrity: identity patch never leaks secrets', () => {
     test('patch keys are score-shaped only — no botSecret/deviceSecret/identity-internal', () => {
         const patch = buildInterviewIdentityPatch(

@@ -958,8 +958,18 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         // Chat-anchor: pin originating chat message + mind-map coord (Phase 1 — persist
         // only; UI picker + validator enforcement land in follow-up PRs). Auto-cards leave
         // both NULL so the UI renders N/A.
-        const anchorMsgId = (typeof chatAnchorMessageId === 'string' && chatAnchorMessageId.trim())
-            ? chatAnchorMessageId.trim().slice(0, 128)
+        //
+        // The anchor MUST be a real chat_messages UUID (or NULL). Automated card
+        // creators (ErrLog/cron, loop-directive, phase4, speakto, …) previously
+        // POSTed literal placeholder strings such as "cron-auto" / "cron-auto-generated"
+        // here; the mind-map graph projection then grouped every card sharing that
+        // value into one bogus "chat #cron-auto" hub node and non-UUID values raised
+        // "invalid input syntax for type uuid" on chat joins. Reject non-UUID anchors
+        // at the write boundary (store NULL) so the placeholder pollution can't recur.
+        const CHAT_ANCHOR_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const anchorMsgId = (typeof chatAnchorMessageId === 'string'
+            && CHAT_ANCHOR_UUID_RE.test(chatAnchorMessageId.trim()))
+            ? chatAnchorMessageId.trim()
             : null;
         let anchorCoord = null;
         if (chatAnchorCoord && typeof chatAnchorCoord === 'object') {
