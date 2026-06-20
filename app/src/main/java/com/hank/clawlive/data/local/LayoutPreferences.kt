@@ -2,6 +2,7 @@ package com.hank.clawlive.data.local
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.provider.Settings
 
 /**
  * Entity Layout Types for wallpaper positioning
@@ -29,6 +30,7 @@ enum class UsageOverlayPosition {
  */
 class LayoutPreferences private constructor(context: Context) {
 
+    private val appContext: Context = context.applicationContext
     private val prefs: SharedPreferences = context.getSharedPreferences(
         PREFS_NAME, Context.MODE_PRIVATE
     )
@@ -286,6 +288,18 @@ class LayoutPreferences private constructor(context: Context) {
             prefs.edit().putInt(KEY_SERVER_ENTITY_LIMIT, value.coerceIn(4, 8)).apply()
         }
 
+    /**
+     * Device-level wallpaper walking toggle. This intentionally lives in the
+     * wallpaper/layout preference file rather than per-entity state: one device
+     * can choose whether its wallpaper entities wander without changing server
+     * or entity settings for other devices.
+     */
+    var wallpaperWalkingEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_WALKING_ENABLED, true) && !isAnimatorDurationDisabled()
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_WALKING_ENABLED, value).apply()
+        }
+
     var usageOverlayEnabled: Boolean
         get() = prefs.getBoolean(KEY_USAGE_OVERLAY_ENABLED, true)
         set(value) {
@@ -419,6 +433,18 @@ class LayoutPreferences private constructor(context: Context) {
         }
     }
 
+    private fun isAnimatorDurationDisabled(): Boolean {
+        return try {
+            Settings.Global.getFloat(
+                appContext.contentResolver,
+                Settings.Global.ANIMATOR_DURATION_SCALE,
+                1f
+            ) == 0f
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     companion object {
         private const val PREFS_NAME = "entity_layout_prefs"
         private const val KEY_LAYOUT = "layout_type"
@@ -433,6 +459,7 @@ class LayoutPreferences private constructor(context: Context) {
         private const val KEY_BACKGROUND_URI = "background_image_uri"
         private const val KEY_DEBUG_ENTITY_LIMIT = "debug_entity_limit"
         private const val KEY_SERVER_ENTITY_LIMIT = "server_entity_limit"
+        private const val KEY_WALLPAPER_WALKING_ENABLED = "wallpaper_walking_enabled"
         private const val KEY_USAGE_OVERLAY_ENABLED = "usage_overlay_enabled"
         private const val KEY_USAGE_OVERLAY_POSITION = "usage_overlay_position"
         private const val KEY_USAGE_OVERLAY_CENTER = "usage_overlay_center"

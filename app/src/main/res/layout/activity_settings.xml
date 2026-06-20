@@ -1008,6 +1008,77 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Wallpaper walking toggle -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/surface_input"
+                app:strokeColor="@color/text_dark"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="12dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_wallpaper"
+                        android:contentDescription="@string/nav_wallpaper"
+                        app:tint="@color/text_white_80"/>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="16dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/wallpaper_walking_title"
+                            android:textSize="14sp"
+                            android:textColor="@color/text_white_80"/>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="@string/wallpaper_walking_settings_desc"
+                            android:textSize="12sp"
+                            android:textColor="@color/text_white_60"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/btnWallpaperWalkingHelp"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/wallpaper_walking_help_button"
+                        android:gravity="center"
+                        android:minWidth="40dp"
+                        android:minHeight="40dp"
+                        android:text="?"
+                        android:textColor="@color/text_white_80"
+                        android:textSize="18sp"
+                        android:textStyle="bold"/>
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/switchWallpaperWalking"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- Set Wallpaper Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSetWallpaper"

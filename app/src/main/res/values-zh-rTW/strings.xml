@@ -497,10 +497,12 @@
     <string name="notif_pref_feedback">使用者回饋</string>
     <string name="notif_pref_kanban_done">看板任務完成</string>
     <string name="notif_pref_kanban_done_auto">看板自動化任務完成</string>
+    <string name="notif_pref_rich_card">互動卡片提問</string>
     <string name="notif_pref_scheduled">定時任務</string>
     <string name="notif_pref_speak_to">私聊訊息</string>
     <string name="notif_pref_title">通知設定</string>
     <string name="notif_pref_todo">待辦提醒</string>
+    <string name="notif_pref_user_mention">@提及提醒</string>
     <string name="notif_prefs_error">載入失敗</string>
     <string name="notif_prefs_loading">正在載入…</string>
     <string name="notification_sent">通知已發送</string>
@@ -778,6 +780,12 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="wallpaper_usage_engine_claude">Claude</string>
     <string name="wallpaper_usage_engine_codex">Codex</string>
     <string name="wallpaper_usage_items">顯示項目</string>
+    <string name="wallpaper_walking_title">行走功能</string>
+    <string name="wallpaper_walking_settings_desc">讓桌布實體慢慢隨機走動</string>
+    <string name="wallpaper_walking_help_button">關於桌布行走功能</string>
+    <string name="wallpaper_walking_help">說明：桌布上的實體會像寵物一樣四處慢慢走動。後續訊息互動階段會讓你或其他實體傳訊息時，他們跑到對方旁邊。\n\n需要：已開啟基本桌布、至少一個已綁定的實體、行走動畫已下載。\n\n測試：開啟此功能後，按下方桌布預覽並停留 30 秒，觀察所有實體走一輪。</string>
+    <string name="wallpaper_walking_enabled">行走功能已開啟</string>
+    <string name="wallpaper_walking_disabled">行走功能已關閉</string>
     <string name="wallpaper_usage_overlay">用量顯示</string>
     <string name="wallpaper_usage_overlay_syncing">用量同步中...</string>
     <string name="wallpaper_usage_overlay_title">用量</string>

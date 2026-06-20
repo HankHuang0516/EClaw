@@ -47,6 +47,8 @@ import com.facebook.FacebookCallback
 import com.facebook.FacebookException
 import com.facebook.login.LoginManager
 import com.facebook.login.LoginResult
+import com.hank.clawlive.settings.NotificationPreferenceCatalog
+import com.hank.clawlive.settings.NotificationPreferenceCategory
 import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.EntityChipHelper
@@ -100,6 +102,8 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var chipLangTh: Chip
     private lateinit var chipLangVi: Chip
     private lateinit var chipLangId: Chip
+    private lateinit var switchWallpaperWalking: MaterialSwitch
+    private lateinit var btnWallpaperWalkingHelp: TextView
     private lateinit var btnSetWallpaper: MaterialButton
     private lateinit var btnDebugEntityLimit: MaterialButton
     private lateinit var topBar: LinearLayout
@@ -140,6 +144,7 @@ class SettingsActivity : AppCompatActivity() {
     private var isChannelApiExpanded = false
     private var channelApiSecretVisible = false
     private var cachedChannelSecret: String? = null
+    private var syncingWallpaperWalkingSwitch = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -205,6 +210,7 @@ class SettingsActivity : AppCompatActivity() {
         updateEntityCount()
         loadAccountStatus()
         updateCrashLogBadge()
+        updateWallpaperWalkingSwitch()
     }
 
     override fun onPause() {
@@ -232,6 +238,9 @@ class SettingsActivity : AppCompatActivity() {
         chipLangTh = findViewById(R.id.chipLangTh)
         chipLangVi = findViewById(R.id.chipLangVi)
         chipLangId = findViewById(R.id.chipLangId)
+        switchWallpaperWalking = findViewById(R.id.switchWallpaperWalking)
+        btnWallpaperWalkingHelp = findViewById(R.id.btnWallpaperWalkingHelp)
+        switchWallpaperWalking.isChecked = layoutPrefs.wallpaperWalkingEnabled
         topBar = findViewById(R.id.topBar)
         btnSetWallpaper = findViewById(R.id.btnSetWallpaper)
         tvEntityCount = findViewById(R.id.tvEntityCount)
@@ -327,6 +336,24 @@ class SettingsActivity : AppCompatActivity() {
 
         btnSetWallpaper.setOnClickListener {
             startActivity(Intent(this, WallpaperPreviewActivity::class.java))
+        }
+
+        switchWallpaperWalking.setOnCheckedChangeListener { _, isChecked ->
+            if (syncingWallpaperWalkingSwitch) return@setOnCheckedChangeListener
+            layoutPrefs.wallpaperWalkingEnabled = isChecked
+            Toast.makeText(
+                this,
+                getString(if (isChecked) R.string.wallpaper_walking_enabled else R.string.wallpaper_walking_disabled),
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+
+        btnWallpaperWalkingHelp.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle(R.string.wallpaper_walking_title)
+                .setMessage(R.string.wallpaper_walking_help)
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
         }
 
         findViewById<MaterialButton>(R.id.btnBrowseCompanions).setOnClickListener {
@@ -528,6 +555,14 @@ class SettingsActivity : AppCompatActivity() {
     private fun updateDebugEntityLimitButton() {
         val limit = layoutPrefs.debugEntityLimit
         btnDebugEntityLimit.text = "[DEBUG] Entity Limit: $limit"
+    }
+
+    private fun updateWallpaperWalkingSwitch() {
+        if (::switchWallpaperWalking.isInitialized) {
+            syncingWallpaperWalkingSwitch = true
+            switchWallpaperWalking.isChecked = layoutPrefs.wallpaperWalkingEnabled
+            syncingWallpaperWalkingSwitch = false
+        }
     }
 
     private fun updateEntityCount() {
@@ -1027,22 +1062,6 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    private data class NotifPrefCategory(
-        val key: String,
-        val labelResId: Int
-    )
-
-    private val notifCategories = listOf(
-        NotifPrefCategory("bot_reply", R.string.notif_pref_bot_reply),
-        NotifPrefCategory("broadcast", R.string.notif_pref_broadcast),
-        NotifPrefCategory("speak_to", R.string.notif_pref_speak_to),
-        NotifPrefCategory("feedback_resolved", R.string.notif_pref_feedback),
-        NotifPrefCategory("todo_done", R.string.notif_pref_todo),
-        NotifPrefCategory("kanban_done", R.string.notif_pref_kanban_done),
-        NotifPrefCategory("kanban_done_auto", R.string.notif_pref_kanban_done_auto),
-        NotifPrefCategory("scheduled", R.string.notif_pref_scheduled)
-    )
-
     private fun loadNotificationPreferences() {
         // Show loading state
         notifPrefsContainer.removeAllViews()
@@ -1074,7 +1093,7 @@ class SettingsActivity : AppCompatActivity() {
     private fun buildNotifPrefToggles(prefs: Map<String, Boolean>) {
         notifPrefsContainer.removeAllViews()
 
-        for (category in notifCategories) {
+        for (category in NotificationPreferenceCatalog.categories) {
             val enabled = prefs[category.key] ?: true
 
             val row = LinearLayout(this).apply {
@@ -1099,7 +1118,7 @@ class SettingsActivity : AppCompatActivity() {
             val toggle = MaterialSwitch(this).apply {
                 isChecked = enabled
                 setOnCheckedChangeListener { _, isChecked ->
-                    updateNotifPref(category.key, isChecked)
+                    updateNotifPref(category, isChecked)
                 }
             }
 
@@ -1109,13 +1128,13 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateNotifPref(category: String, enabled: Boolean) {
+    private fun updateNotifPref(category: NotificationPreferenceCategory, enabled: Boolean) {
         lifecycleScope.launch {
             try {
                 val body = mapOf<String, Any>(
                     "deviceId" to deviceManager.deviceId,
                     "deviceSecret" to deviceManager.deviceSecret,
-                    "prefs" to mapOf(category to enabled)
+                    "prefs" to category.updatePayload(enabled)
                 )
                 val response = NetworkModule.api.updateNotificationPreferences(body)
                 if (!response.success) {
@@ -1123,7 +1142,7 @@ class SettingsActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to update notification preference")
-                TelemetryHelper.trackError(e, mapOf("action" to "update_notif_pref", "category" to category))
+                TelemetryHelper.trackError(e, mapOf("action" to "update_notif_pref", "category" to category.key))
             }
         }
     }

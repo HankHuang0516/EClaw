@@ -85,6 +85,12 @@
     <string name="browse_companions">Browse Companions</string>
     <string name="drag_to_position">Drag entities to position them</string>
     <string name="pinch_to_resize">Drag to move; pinch entities or usage to resize</string>
+    <string name="wallpaper_walking_title">Walking Feature</string>
+    <string name="wallpaper_walking_settings_desc">Slow random wander for wallpaper entities</string>
+    <string name="wallpaper_walking_help_button">About wallpaper walking</string>
+    <string name="wallpaper_walking_help">What: wallpaper entities slowly wander like pets. Later message-aware phases will make them move toward each other when you or another entity sends a message.\n\nNeeds: basic wallpaper enabled, at least one bound entity, and the walking animation downloaded.\n\nTest: turn this on, open the wallpaper preview below, and leave it open for 30 seconds to watch every entity walk.</string>
+    <string name="wallpaper_walking_enabled">Walking feature enabled</string>
+    <string name="wallpaper_walking_disabled">Walking feature disabled</string>
     <string name="wallpaper_usage_overlay">Usage Overlay</string>
     <string name="wallpaper_usage_overlay_title">Usage</string>
     <string name="wallpaper_usage_overlay_syncing">Usage syncing...</string>
@@ -715,10 +721,12 @@ If you have any questions, please contact us via our official email.
     <string name="notif_pref_bot_reply">Bot Replies</string>
     <string name="notif_pref_broadcast">Broadcasts</string>
     <string name="notif_pref_speak_to">Entity Messages</string>
+    <string name="notif_pref_user_mention">@Mention Pings</string>
     <string name="notif_pref_feedback">Feedback Updates</string>
     <string name="notif_pref_todo">TODO Completed</string>
     <string name="notif_pref_kanban_done">Kanban Card Completed</string>
     <string name="notif_pref_kanban_done_auto">Kanban Automation Completed</string>
+    <string name="notif_pref_rich_card">Rich-card Questions</string>
     <string name="notif_pref_scheduled">Scheduled Messages</string>
     <string name="notif_prefs_loading">Loading preferences…</string>
     <string name="notif_prefs_error">Failed to load notification preferences</string>

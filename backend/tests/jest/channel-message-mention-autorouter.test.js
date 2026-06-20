@@ -102,13 +102,16 @@ describe('POST /api/channel/message — @-mention auto-router (#2300)', () => {
         expect(entity1Code).toBeTruthy();
     });
 
-    it('@#N in text, no explicit speakTo → auto-fills speakTo and routes to N', async () => {
+    it('@#N at start of text, no explicit speakTo → auto-fills speakTo and routes to N', async () => {
+        // card_488f05: first-token-only rule — mention must lead the message
+        // for auto-promote to fire. Routing-intent messages from LLM bridges
+        // conventionally lead with the target (`@#1 hi entity 1`).
         const tag = `CHMSG-AT-${Date.now()}`;
         const res = await post('/api/channel/message').send({
             channel_api_key: apiKey,
             deviceId, entityId: 2, botSecret: botSecret2,
             state: 'IDLE',
-            message: `${tag} @#1 hi entity 1`,
+            message: `@#1 ${tag} hi entity 1`,
         });
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
@@ -122,13 +125,13 @@ describe('POST /api/channel/message — @-mention auto-router (#2300)', () => {
         expect(rows[0].source).toMatch(/entity:2:[A-Z]+->1$/);
     });
 
-    it('<@publicCode> token in text → auto-fills speakTo with publicCode', async () => {
+    it('<@publicCode> at start of text → auto-fills speakTo with publicCode', async () => {
         const tag = `CHMSG-PC-${Date.now()}`;
         const res = await post('/api/channel/message').send({
             channel_api_key: apiKey,
             deviceId, entityId: 2, botSecret: botSecret2,
             state: 'IDLE',
-            message: `${tag} <@${entity1Code}> via publicCode form`,
+            message: `<@${entity1Code}> ${tag} via publicCode form`,
         });
         expect(res.status).toBe(200);
         expect(res.body.delivery?.results?.[0]?.entityId).toBe(1);
@@ -149,7 +152,9 @@ describe('POST /api/channel/message — @-mention auto-router (#2300)', () => {
         expect(res.body.mentions?.hasAll).toBe(true);
     });
 
-    it('explicit speakTo wins over in-text @-mention', async () => {
+    it('explicit speakTo wins over in-text @-mention (regardless of position)', async () => {
+        // Explicit body.speakTo bypasses the first-token-only rule entirely —
+        // it sets the precedence rule directly.
         const tag = `CHMSG-EXPLICIT-${Date.now()}`;
         const res = await post('/api/channel/message').send({
             channel_api_key: apiKey,
@@ -164,13 +169,14 @@ describe('POST /api/channel/message — @-mention auto-router (#2300)', () => {
         expect(res.body.mentions?.mentions?.[0]?.entityId).toBe(1);
     });
 
-    it('senderHint is lower precedence than in-text @-mention', async () => {
+    it('senderHint is lower precedence than in-text @-mention at start', async () => {
+        // Mention at start qualifies for auto-promote and wins over senderHint.
         const tag = `CHMSG-PREC-${Date.now()}`;
         const res = await post('/api/channel/message').send({
             channel_api_key: apiKey,
             deviceId, entityId: 2, botSecret: botSecret2,
             state: 'IDLE',
-            message: `${tag} @#1 in-text wins`,
+            message: `@#1 ${tag} in-text wins`,
             senderHint: { kind: 'broadcast' }, // would otherwise broadcast
         });
         expect(res.status).toBe(200);

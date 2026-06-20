@@ -359,10 +359,11 @@ describe('Transform entityId auto-detect', () => {
     const deviceId = 'transform-autoid-test';
     const deviceSecret = `secret-${deviceId}`;
     let botSecret0;
+    let botSecret1;
 
     beforeAll(async () => {
         botSecret0 = await bindEntity(deviceId, deviceSecret, 0);
-        await bindEntity(deviceId, deviceSecret, 1);
+        botSecret1 = await bindEntity(deviceId, deviceSecret, 1);
     });
 
     it('works without entityId (auto-detect from botSecret)', async () => {
@@ -392,6 +393,29 @@ describe('Transform entityId auto-detect', () => {
         expect(res.body.entityId).toBe(0); // corrected
         expect(res.body.warnings).toBeDefined();
         expect(res.body.warnings.some(w => w.includes('Auto-corrected'))).toBe(true);
+    });
+
+    it('silently auto-corrects legacy entityId zero default', async () => {
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        try {
+            const res = await post('/api/transform')
+                .send({
+                    deviceId,
+                    entityId: '0',  // legacy/default caller value — botSecret belongs to entity 1
+                    botSecret: botSecret1,
+                    message: 'Legacy zero default test',
+                    state: 'IDLE'
+                });
+            expect(res.status).toBe(200);
+            expect(res.body.success).toBe(true);
+            expect(res.body.entityId).toBe(1); // corrected from botSecret
+            expect(res.body.warnings || []).not.toEqual(expect.arrayContaining([
+                expect.stringContaining('entityId mismatch')
+            ]));
+            expect(warnSpy.mock.calls.some(args => String(args[0]).includes('[Transform] Device'))).toBe(false);
+        } finally {
+            warnSpy.mockRestore();
+        }
     });
 
     it('rejects invalid botSecret', async () => {

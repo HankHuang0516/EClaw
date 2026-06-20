@@ -8,6 +8,8 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -19,6 +21,7 @@ import com.hank.clawlive.data.model.UsageSnapshotLatest
 import com.hank.clawlive.engine.ProceduralCreatureDrawer
 import com.hank.clawlive.engine.SpritesheetCompanionDrawer
 import com.hank.clawlive.engine.UsageOverlayRenderer
+import com.hank.clawlive.engine.WallpaperWanderController
 import com.hank.clawlive.data.repository.CompanionRepository
 import kotlin.math.ceil
 import kotlin.math.sqrt
@@ -41,6 +44,16 @@ class WallpaperPreviewView @JvmOverloads constructor(
 
     private val layoutPrefs = LayoutPreferences.getInstance(context)
     private val usageOverlayRenderer = UsageOverlayRenderer(context, layoutPrefs)
+    private val wanderController = WallpaperWanderController()
+    private val animationHandler = Handler(Looper.getMainLooper())
+    private val animationRunnable = object : Runnable {
+        override fun run() {
+            if (layoutPrefs.wallpaperWalkingEnabled && isAttachedToWindow) {
+                invalidate()
+                animationHandler.postDelayed(this, WALKING_PREVIEW_FRAME_MS)
+            }
+        }
+    }
     private var companionRepository: CompanionRepository? = null
     private var spritesheetDrawer: SpritesheetCompanionDrawer? = null
 
@@ -117,6 +130,27 @@ class WallpaperPreviewView @JvmOverloads constructor(
     
     init {
         setWillNotDraw(false)
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        updateWalkingAnimationLoop()
+    }
+
+    fun setWalkingEnabled(enabled: Boolean) {
+        layoutPrefs.wallpaperWalkingEnabled = enabled
+        if (!enabled) {
+            wanderController.reset()
+        }
+        invalidate()
+        updateWalkingAnimationLoop()
+    }
+
+    private fun updateWalkingAnimationLoop() {
+        animationHandler.removeCallbacks(animationRunnable)
+        if (layoutPrefs.wallpaperWalkingEnabled && isAttachedToWindow) {
+            animationHandler.postDelayed(animationRunnable, WALKING_PREVIEW_FRAME_MS)
+        }
     }
 
     /**
@@ -241,11 +275,21 @@ class WallpaperPreviewView @JvmOverloads constructor(
         // Draw grid lines for reference
         drawGridLines(canvas)
 
+        val basePositions = entities.map { entity ->
+            val pos = entityPositions[entity.entityId] ?: Pair(0.5f, 0.5f)
+            pos.first * width to pos.second * height
+        }
+        val renderPositions = wanderController.positionsFor(
+            basePositions = basePositions,
+            entities = entities,
+            width = width.toFloat(),
+            height = height.toFloat(),
+            enabled = layoutPrefs.wallpaperWalkingEnabled
+        )
+
         // Draw each entity with per-entity scale
         entities.forEachIndexed { index, entity ->
-            val pos = entityPositions[entity.entityId] ?: Pair(0.5f, 0.5f)
-            val x = pos.first * width
-            val y = pos.second * height
+            val (x, y) = renderPositions.getOrNull(index) ?: basePositions.getOrNull(index) ?: (width / 2f to height / 2f)
             
             // Get per-entity scale
             val entityScale = entityScales[entity.entityId] ?: 1.0f
@@ -274,7 +318,14 @@ class WallpaperPreviewView @JvmOverloads constructor(
             canvas.drawCircle(x, y, indicatorRadius, indicatorPaint)
 
             // Draw entity preview with per-entity scale
-            drawEntityPreview(canvas, entity, x, y, entityScale)
+            drawEntityPreview(
+                canvas,
+                entity,
+                x,
+                y,
+                entityScale,
+                walking = wanderController.isWalking(entity.entityId)
+            )
 
             // Draw entity name label
             labelPaint.textSize = 32f * entityScale.coerceAtLeast(0.7f)
@@ -457,14 +508,21 @@ class WallpaperPreviewView @JvmOverloads constructor(
     /**
      * Draw entity preview (simplified lobster shape)
      */
-    private fun drawEntityPreview(canvas: Canvas, entity: EntityStatus, cx: Float, cy: Float, scale: Float) {
+    private fun drawEntityPreview(
+        canvas: Canvas,
+        entity: EntityStatus,
+        cx: Float,
+        cy: Float,
+        scale: Float,
+        walking: Boolean = false
+    ) {
         val companion = companionRepository?.cached(entity.entityId) ?: companionsByEntity[entity.entityId]
         if (companion?.assetType == "spritesheet") {
             val result = spritesheetDrawer?.draw(
                 canvas,
                 companion,
                 entity.entityId,
-                entity.state.toString(),
+                if (walking) WallpaperWanderController.WALKING_STATE_ASSET else entity.state.toString(),
                 cx,
                 cy,
                 scale * 1.2f
@@ -894,8 +952,13 @@ class WallpaperPreviewView @JvmOverloads constructor(
     }
 
     override fun onDetachedFromWindow() {
+        animationHandler.removeCallbacks(animationRunnable)
         super.onDetachedFromWindow()
         cachedBackgroundBitmap?.recycle()
         cachedBackgroundBitmap = null
+    }
+
+    companion object {
+        private const val WALKING_PREVIEW_FRAME_MS = 100L
     }
 }

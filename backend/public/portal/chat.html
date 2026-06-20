@@ -226,6 +226,28 @@
             color: var(--primary);
         }
 
+        /* ── @user filter help (?) icon (card_cb3e56b1) ── */
+        .filter-chip-help {
+            width: 20px;
+            height: 20px;
+            min-height: 20px;
+            align-self: center;
+            border-radius: 50%;
+            border: 1px solid var(--card-border);
+            background: var(--card);
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1;
+            cursor: pointer;
+            flex-shrink: 0;
+            padding: 0;
+            transition: all 0.2s;
+        }
+        .filter-chip-help:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
         /* ── System-message smart filter chips ── */
         .chip-group-wrapper-sys {
             margin-top: 6px;
@@ -331,6 +353,8 @@
             border: 1px solid var(--card-border);
         }
         .density-switcher button {
+            min-width: 28px;
+            min-height: 28px;
             background: transparent;
             border: 0;
             color: var(--text-muted);
@@ -813,6 +837,10 @@
             flex-shrink: 0;
         }
         .btn-add-contact {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 28px;
             font-size: 13px;
             padding: 2px 8px;
             border-radius: 12px;
@@ -3245,6 +3273,10 @@
                         <button class="filter-chip active" data-filter="all" onclick="setFilter('all')" data-i18n="chat_filter_all">All</button>
                         <!-- Entity chips injected dynamically -->
                         <button class="filter-chip" data-filter="my" onclick="setFilter('my')" data-i18n="chat_filter_my">My Messages</button>
+                        <!-- @user smart-name filter (card_cb3e56b1): label resolves to the device owner's
+                             configured display name (@<name>) or @我 fallback; filters to user-sent messages. -->
+                        <button class="filter-chip filter-chip-user" data-filter="user" onclick="setFilter('user')" id="userFilterChip" title="">@user</button>
+                        <button class="filter-chip-help" type="button" id="userFilterHelp" onclick="openUserFilterHelp(event)" aria-label="About the @user filter" data-i18n-title="chat_user_filter_help_aria" title="About the @user filter">?</button>
                     </div>
                     <span class="filter-chip-toggle" id="filterToggle" onclick="toggleFilterExpand()" style="display:none;"></span>
                 </div>
@@ -3416,6 +3448,26 @@
             </div>
             <div class="modal-actions">
                 <button class="btn" onclick="closeWebhookTroubleModal()" data-i18n="chat_webhook_close">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- @user Filter Help Modal (card_cb3e56b1) -->
+    <div class="modal-overlay" id="userFilterHelpModal" onclick="if(event.target===this)closeModal('userFilterHelpModal')">
+        <div class="modal-box">
+            <div class="modal-icon">&#x1F464;</div>
+            <div class="modal-title" data-i18n="chat_user_filter_help_title">The @user filter</div>
+            <div class="modal-message">
+                <p><strong data-i18n="chat_user_filter_help_what_label">What:</strong>
+                   <span data-i18n="chat_user_filter_help_what">Tap to show only the messages you (the user) personally sent, hiding entity-bot replies.</span></p>
+                <p><strong data-i18n="chat_user_filter_help_needs_label">Needs:</strong>
+                   <span data-i18n="chat_user_filter_help_needs">Set your display name in Settings (if unset, the chip shows “@我”).</span></p>
+                <p><strong data-i18n="chat_user_filter_help_next_label">Next step:</strong>
+                   <span data-i18n="chat_user_filter_help_next">Use the button below to set your name in Settings, or just tap @user to see it in action.</span></p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" onclick="window.location.href='/portal/settings.html'" data-i18n="chat_user_filter_help_goto_settings">Go to Settings</button>
+                <button class="btn btn-outline" onclick="closeModal('userFilterHelpModal')" data-i18n="chat_user_filter_help_close">Close</button>
             </div>
         </div>
     </div>
@@ -3738,6 +3790,50 @@
         // org-chart resolves; if it never does, the chip is hidden.
         // card_29eed229d389e53bfae7d954.
         let orgChartCommanderId = null;
+
+        // ── @user smart-name filter (card_cb3e56b1) ──
+        // The device owner's configured display name. Resolved at boot from
+        // /api/device/user-profile; null until loaded → chip falls back to @我.
+        let userDisplayName = null;
+
+        function getUserFilterLabel() {
+            const name = (userDisplayName || '').trim();
+            return '@' + (name || (i18n.t('chat_user_filter_default_name') || '我'));
+        }
+
+        // Refresh the @user chip's visible label + tooltip from the resolved name.
+        function updateUserFilterChipLabel() {
+            const chip = document.getElementById('userFilterChip');
+            if (!chip) return;
+            const label = getUserFilterLabel();
+            chip.textContent = label;
+            chip.title = (i18n.t('chat_user_filter_chip_title') || 'Show only messages you sent') + ' — ' + label;
+        }
+
+        async function loadUserDisplayName() {
+            if (!currentUser?.deviceId || !currentUser?.deviceSecret) { updateUserFilterChipLabel(); return; }
+            try {
+                const data = await apiCall('GET', `/api/device/user-profile?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+                userDisplayName = (data && data.profile && data.profile.userDisplayName) || null;
+            } catch (_) {
+                // Chip simply shows the @我 fallback — never block chat load.
+            }
+            updateUserFilterChipLabel();
+        }
+
+        function openUserFilterHelp(event) {
+            if (event) event.stopPropagation();
+            openModal('userFilterHelpModal');
+        }
+
+        // Live update: backend emits device:user-profile when the owner changes
+        // their display name in Settings (shared/socket.js dispatches here).
+        function onSocketUserProfile(data) {
+            if (data && data.profile && Object.prototype.hasOwnProperty.call(data.profile, 'userDisplayName')) {
+                userDisplayName = data.profile.userDisplayName || null;
+                updateUserFilterChipLabel();
+            }
+        }
 
         async function loadOrgChartCommander() {
             if (!currentUser?.deviceId || !currentUser?.deviceSecret) return;
@@ -4173,6 +4269,8 @@
             await loadBoundEntities();
             // Fire-and-forget: chip falls back to commander once this resolves.
             loadOrgChartCommander();
+            // Fire-and-forget: @user chip shows @我 until the real name resolves.
+            loadUserDisplayName();
             await loadRentalHealthStatus();
             if (!_rentalHealthPollTimer) _rentalHealthPollTimer = setInterval(loadRentalHealthStatus, 60000);
             console.log('[CHAT_DEBUG] loadBoundEntities done, loading messages...');
@@ -5328,8 +5426,11 @@
         function getFilteredMessages() {
             if (currentFilter === 'all') return allMessages;
 
-            if (currentFilter === 'my') {
-                // "My messages" shows only messages I originated, not received cross-device ones
+            if (currentFilter === 'my' || currentFilter === 'user') {
+                // "My messages" / "@user" both show only messages the user
+                // personally originated (is_from_user), excluding received
+                // cross-device messages and entity-bot replies. The @user chip
+                // (card_cb3e56b1) is the smart-named variant of this filter.
                 return allMessages.filter(m => m.is_from_user && !isIncomingCrossDevice(m));
             }
 
@@ -9252,8 +9353,13 @@
         }
 
         async function fetchContractData(auth, contractId) {
+            // Account-scoped guard (card_01417648): /api/rental/my-contracts
+            // requires a userId — a device-only / globe-user session would 401.
+            // silentFetch swallows the 401 and returns null so the chip modal
+            // shows "Not found" instead of throwing into the console.
+            if (!window.currentUser || !window.currentUser.id) return null;
             // Contracts endpoint returns list — filter by ID
-            const resp = await apiCall('GET', `/api/rental/my-contracts?${auth}`, null, { skip401Redirect: true });
+            const resp = await silentFetch('GET', `/api/rental/my-contracts?${auth}`);
             if (!resp || !resp.contracts) return null;
             const c = resp.contracts.find(x => x.id === contractId || x.id.startsWith(contractId));
             if (!c) return null;

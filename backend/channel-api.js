@@ -73,6 +73,36 @@ function isTruthyFlag(value) {
     return ['true', '1', 'yes', 'on'].includes(value.trim().toLowerCase());
 }
 
+// ── First-token mention detector (card_488f05280caf518bba74144d) ──
+// Returns true when the message's first non-whitespace, non-emoji-prefix
+// token is an @-mention. Used to gate auto-promotion of text @-mentions into
+// `speakTo`: only routing-intent messages (which conventionally lead with the
+// target's handle) trigger auto-promote; casual mid-body references like
+// "ask @xx for opinion" no longer mis-route into the referenced entity.
+//
+// Recognised mention shapes at the start (matches mention-parser.js):
+//   @xxxxxx (6-char publicCode)
+//   <@xxxxxx>  /  <@N>     (bracketed)
+//   @#N        (hash-prefixed entityId)
+//   @N         (bare entityId)
+//   @<display-name>        (covered by `@` literal start)
+// Emoji prefix is stripped before the check so messages like "👋 @xx hi"
+// still count as start-anchored.
+function messageStartsWithMention(message) {
+    if (!message || typeof message !== 'string') return false;
+    // Strip leading whitespace + a single optional emoji/symbol-pictographic
+    // glyph (and trailing whitespace from that glyph) so messages that lead
+    // with a friendly emoji prefix still qualify.
+    const stripped = message
+        .replace(/^\s+/, '')
+        .replace(/^\p{Extended_Pictographic}[️‍\p{Extended_Pictographic}]*\s*/u, '');
+    if (!stripped) return false;
+    // Quick reject: must lead with '@' or '<@' to be a mention shape.
+    if (stripped.startsWith('<@')) return true;
+    if (stripped.startsWith('@')) return true;
+    return false;
+}
+
 function isOperationalChannelMessage(message) {
     if (!message || typeof message !== 'string') return false;
     const text = message.trim();
@@ -669,6 +699,11 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
         try {
             const { channel_api_key, deviceId, entityId, botSecret, message, state, mediaType, mediaUrl, targetDeviceId, card, senderHint, aboutCardId } = req.body;
             let { speakTo, broadcast } = req.body;
+            // Snapshot original request routing values BEFORE @-mention / senderHint
+            // auto-fill mutates speakTo/broadcast. Used by the [Routing] audit log
+            // below to disambiguate chosenPath (card_488f05 — speakTo routing audit).
+            const _origSpeakTo = Array.isArray(speakTo) ? speakTo.slice() : (speakTo || null);
+            const _origBroadcast = !!broadcast;
             const suppressA2AForward = shouldSuppressA2A(req.body || {}, message);
 
             if (process.env.DEBUG === 'true') serverLog('info', 'client_push', `[PUSH] /channel/message called, state=${state}, hasMsg=${!!message}`, { deviceId, entityId: entityId !== undefined ? parseInt(entityId) : 'auto' });
@@ -789,6 +824,17 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
             //
             // Same precedence as /api/transform: explicit speakTo / broadcast
             // wins, in-text @-mention fills next, senderHint is last.
+            //
+            // ── First-token-only guard (card_488f05280caf518bba74144d) ──
+            // Hank's web_chat messages like "this is broken, ask @xx for opinion"
+            // are casual references, NOT routing intent. Auto-promoting every
+            // mid-body @-mention to speakTo mis-routes those messages into the
+            // referenced entity's chat history, polluting their context window
+            // in real time. Restrict auto-promote to messages whose FIRST
+            // non-whitespace, non-emoji token is the @-mention itself.
+            // `@all` broadcast detection is intentionally NOT subject to this
+            // rule — preserves Hank's pre-existing `@all` convention anywhere
+            // in the message.
             let transformMentionContext = null;
             if (message) {
                 const tParse = mentionParser.parseMentions(message, {
@@ -800,7 +846,7 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
                 if (transformMentionContext) {
                     if (tParse.hasAll && !broadcast && !(speakTo && speakTo.length > 0)) {
                         broadcast = true;
-                    } else if (tParse.mentions.length > 0 && !broadcast && !(speakTo && speakTo.length > 0)) {
+                    } else if (tParse.mentions.length > 0 && !broadcast && !(speakTo && speakTo.length > 0) && messageStartsWithMention(message)) {
                         speakTo = tParse.mentions.map(m => m.publicCode);
                     }
                 }
@@ -977,6 +1023,27 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
                 if (speakTo && broadcast) {
                     warnings.push('Both speakTo and broadcast provided — broadcast takes priority, speakTo ignored.');
                 }
+
+                // ── [Routing] audit log (card_488f05) ──
+                // Single structured line per /channel/message delivery so we can grep
+                // production logs to reproduce the speakTo mis-routing bug. Captures
+                // the precedence branch that won (explicit body → text @-mention →
+                // senderHint fallback → broadcast). DO NOT add to inner per-target loops.
+                const _hadOrigSpeakTo = Array.isArray(_origSpeakTo) && _origSpeakTo.length > 0;
+                const _textMentionCount = transformMentionContext
+                    ? ((transformMentionContext.mentions && transformMentionContext.mentions.length) || 0) + (transformMentionContext.hasAll ? 1 : 0)
+                    : 0;
+                let _chosenPath;
+                if (_hadOrigSpeakTo) _chosenPath = 'explicit-speakTo';
+                else if (_origBroadcast) _chosenPath = 'broadcast';
+                else if (_textMentionCount > 0 && (broadcast || (Array.isArray(speakTo) && speakTo.length > 0))) _chosenPath = 'text-mention';
+                else if (senderHintResolution && (senderHintResolution.applied === 'speakTo' || senderHintResolution.applied === 'broadcast')) _chosenPath = 'senderHint-fallback';
+                else _chosenPath = broadcast ? 'broadcast' : 'explicit-speakTo';
+                const _finalRecipients = broadcast
+                    ? 'broadcast'
+                    : (Array.isArray(speakTo) ? speakTo.join(',') : String(speakTo || ''));
+                const _senderHintKind = senderHint && senderHint.kind ? senderHint.kind : 'none';
+                console.log(`[Routing] device=${String(deviceId || '').slice(0, 8)} entity=${eId} req.speakTo=${JSON.stringify(_origSpeakTo)} req.broadcast=${_origBroadcast} textMentions=${_textMentionCount} senderHint=${_senderHintKind} chosenPath=${_chosenPath} finalRecipients=${_finalRecipients}`);
 
                 const gkResult = gatekeeperCheckText ? gatekeeperCheckText(deviceId, eId, message, entity.botSecret) : { text: message };
                 const deliveryText = gkResult.text;
@@ -1366,6 +1433,7 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
                 isBroadcast: payload.isBroadcast || false,
                 broadcastRecipients: payload.broadcastRecipients || null,
                 fromEntityId: payload.fromEntityId,
+                fromName: payload.fromName,
                 fromCharacter: payload.fromCharacter,
                 fromPublicCode: payload.fromPublicCode,
                 eclaw_context: enrichedCtx,
@@ -1703,5 +1771,6 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
 
 channelApiModule.isOperationalChannelMessage = isOperationalChannelMessage;
 channelApiModule.shouldSuppressA2A = shouldSuppressA2A;
+channelApiModule.messageStartsWithMention = messageStartsWithMention;
 
 module.exports = channelApiModule;
