@@ -768,6 +768,12 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="wallpaper_usage_engine_claude">Claude</string>
     <string name="wallpaper_usage_engine_codex">Codex</string>
     <string name="wallpaper_usage_items">显示项目</string>
+    <string name="wallpaper_walking_title">行走功能</string>
+    <string name="wallpaper_walking_settings_desc">让壁纸实体慢慢随机走动</string>
+    <string name="wallpaper_walking_help_button">关于壁纸行走功能</string>
+    <string name="wallpaper_walking_help">说明：壁纸上的实体会像宠物一样四处慢慢走动。后续消息互动阶段会让你或其他实体发消息时，它们跑到对方旁边。\n\n需要：已开启基本壁纸、至少一个已绑定的实体、行走动画已下载。\n\n测试：开启此功能后，按下方壁纸预览并停留 30 秒，观察所有实体走一轮。</string>
+    <string name="wallpaper_walking_enabled">行走功能已开启</string>
+    <string name="wallpaper_walking_disabled">行走功能已关闭</string>
     <string name="wallpaper_usage_overlay">用量显示</string>
     <string name="wallpaper_usage_overlay_syncing">用量同步中...</string>
     <string name="wallpaper_usage_overlay_title">用量</string>

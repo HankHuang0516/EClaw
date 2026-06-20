@@ -66,11 +66,13 @@ class SpritesheetCompanionDrawer(
         val supported = companion.supportedStates
         val effectiveState = if (currentState in supported) currentState else "IDLE"
         val hint = companion.stateAsset(effectiveState) ?: return DrawResult.UNSUPPORTED
+        val animation = companion.spritesheetAnimation(effectiveState)
 
         // Row defaults to position in supportedStates if descriptor doesn't pin one.
-        val row = if (hint.row > 0) hint.row else supported.indexOf(effectiveState).coerceAtLeast(0)
-        val frames = hint.frames.coerceAtLeast(1)
-        val fps = hint.fps.coerceAtLeast(1)
+        val row = animation?.row ?: if (hint.row > 0) hint.row else supported.indexOf(effectiveState).coerceAtLeast(0)
+        val frameDurations = animation?.frameDurationsMs?.takeIf { it.isNotEmpty() }
+            ?: List(hint.frames.coerceAtLeast(1)) { (1000 / hint.fps.coerceAtLeast(1)).coerceAtLeast(1) }
+        val frames = frameDurations.size
 
         // Reset frame timing on state change so non-looping animations replay.
         val now = System.currentTimeMillis()
@@ -80,8 +82,7 @@ class SpritesheetCompanionDrawer(
         }
 
         val elapsed = now - stateStart
-        val rawIndex = (elapsed * fps / 1000L).toInt()
-        val frameIndex = if (hint.loop) rawIndex % frames else rawIndex.coerceAtMost(frames - 1)
+        val frameIndex = computeFrameIndex(elapsed, frameDurations, hint.loop)
 
         val srcX = (frameIndex * frameW).coerceAtMost(sheet.width - frameW).coerceAtLeast(0)
         val srcY = (row * frameH).coerceAtMost(sheet.height - frameH).coerceAtLeast(0)
@@ -102,6 +103,22 @@ class SpritesheetCompanionDrawer(
         )
         canvas.drawBitmap(sheet, src, dst, paint)
         return DrawResult.DRAWN
+    }
+
+    private fun computeFrameIndex(elapsedMs: Long, frameDurationsMs: List<Int>, loop: Boolean): Int {
+        val total = frameDurationsMs.sum().coerceAtLeast(1)
+        val t = if (loop) {
+            ((elapsedMs % total) + total) % total
+        } else {
+            elapsedMs.coerceAtMost(total.toLong())
+        }.toInt()
+
+        var acc = 0
+        for (i in frameDurationsMs.indices) {
+            acc += frameDurationsMs[i].coerceAtLeast(1)
+            if (t < acc) return i
+        }
+        return frameDurationsMs.lastIndex.coerceAtLeast(0)
     }
 }
 

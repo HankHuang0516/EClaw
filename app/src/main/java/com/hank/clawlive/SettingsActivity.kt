@@ -102,6 +102,8 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var chipLangTh: Chip
     private lateinit var chipLangVi: Chip
     private lateinit var chipLangId: Chip
+    private lateinit var switchWallpaperWalking: MaterialSwitch
+    private lateinit var btnWallpaperWalkingHelp: TextView
     private lateinit var btnSetWallpaper: MaterialButton
     private lateinit var btnDebugEntityLimit: MaterialButton
     private lateinit var topBar: LinearLayout
@@ -142,6 +144,7 @@ class SettingsActivity : AppCompatActivity() {
     private var isChannelApiExpanded = false
     private var channelApiSecretVisible = false
     private var cachedChannelSecret: String? = null
+    private var syncingWallpaperWalkingSwitch = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -207,6 +210,7 @@ class SettingsActivity : AppCompatActivity() {
         updateEntityCount()
         loadAccountStatus()
         updateCrashLogBadge()
+        updateWallpaperWalkingSwitch()
     }
 
     override fun onPause() {
@@ -234,6 +238,9 @@ class SettingsActivity : AppCompatActivity() {
         chipLangTh = findViewById(R.id.chipLangTh)
         chipLangVi = findViewById(R.id.chipLangVi)
         chipLangId = findViewById(R.id.chipLangId)
+        switchWallpaperWalking = findViewById(R.id.switchWallpaperWalking)
+        btnWallpaperWalkingHelp = findViewById(R.id.btnWallpaperWalkingHelp)
+        switchWallpaperWalking.isChecked = layoutPrefs.wallpaperWalkingEnabled
         topBar = findViewById(R.id.topBar)
         btnSetWallpaper = findViewById(R.id.btnSetWallpaper)
         tvEntityCount = findViewById(R.id.tvEntityCount)
@@ -329,6 +336,24 @@ class SettingsActivity : AppCompatActivity() {
 
         btnSetWallpaper.setOnClickListener {
             startActivity(Intent(this, WallpaperPreviewActivity::class.java))
+        }
+
+        switchWallpaperWalking.setOnCheckedChangeListener { _, isChecked ->
+            if (syncingWallpaperWalkingSwitch) return@setOnCheckedChangeListener
+            layoutPrefs.wallpaperWalkingEnabled = isChecked
+            Toast.makeText(
+                this,
+                getString(if (isChecked) R.string.wallpaper_walking_enabled else R.string.wallpaper_walking_disabled),
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+
+        btnWallpaperWalkingHelp.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle(R.string.wallpaper_walking_title)
+                .setMessage(R.string.wallpaper_walking_help)
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
         }
 
         findViewById<MaterialButton>(R.id.btnBrowseCompanions).setOnClickListener {
@@ -530,6 +555,14 @@ class SettingsActivity : AppCompatActivity() {
     private fun updateDebugEntityLimitButton() {
         val limit = layoutPrefs.debugEntityLimit
         btnDebugEntityLimit.text = "[DEBUG] Entity Limit: $limit"
+    }
+
+    private fun updateWallpaperWalkingSwitch() {
+        if (::switchWallpaperWalking.isInitialized) {
+            syncingWallpaperWalkingSwitch = true
+            switchWallpaperWalking.isChecked = layoutPrefs.wallpaperWalkingEnabled
+            syncingWallpaperWalkingSwitch = false
+        }
     }
 
     private fun updateEntityCount() {

@@ -31,6 +31,7 @@ class ClawRenderer(
     private val layoutPrefs = LayoutPreferences.getInstance(context)
     private val spritesheetDrawer = companionRepository?.let { SpritesheetCompanionDrawer(it) }
     private val usageOverlayRenderer = UsageOverlayRenderer(context, layoutPrefs)
+    private val wanderController = WallpaperWanderController()
 
     // Background image cache
     private var cachedBackgroundBitmap: Bitmap? = null
@@ -470,7 +471,15 @@ class ClawRenderer(
             return
         }
 
-        val positions = calculateEntityPositions(width, height, entities.size, entities)
+        val basePositions = calculateEntityPositions(width, height, entities.size, entities)
+        val walkingEnabled = layoutPrefs.wallpaperWalkingEnabled
+        val positions = wanderController.positionsFor(
+            basePositions = basePositions,
+            entities = entities,
+            width = width,
+            height = height,
+            enabled = walkingEnabled
+        )
         val baseScale = getScaleFactor(entities.size)
 
         entities.forEachIndexed { index, entity ->
@@ -479,7 +488,10 @@ class ClawRenderer(
                 // Apply per-entity scale multiplier on top of base scale
                 val entityScale = layoutPrefs.getEntityScale(entity.entityId)
                 val finalScale = baseScale * entityScale
-                drawSingleEntityAt(canvas, entity, cx, cy, finalScale, width)
+                val motionStateOverride = if (wanderController.isWalking(entity.entityId)) {
+                    WallpaperWanderController.WALKING_STATE_ASSET
+                } else null
+                drawSingleEntityAt(canvas, entity, cx, cy, finalScale, width, motionStateOverride)
             }
         }
 
@@ -495,7 +507,8 @@ class ClawRenderer(
         centerX: Float,
         centerY: Float,
         scale: Float,
-        screenWidth: Float
+        screenWidth: Float,
+        motionStateOverride: String? = null
     ) {
         // Calculate Animation (Bobbing)
         val time = System.currentTimeMillis() - startTime
@@ -528,7 +541,13 @@ class ClawRenderer(
         val companion = companionRepository?.cached(entity.entityId)
         val drawResult = if (companion != null && companion.assetType == "spritesheet") {
             spritesheetDrawer?.draw(
-                canvas, companion, entity.entityId, entity.state.toString(), centerX, charY, scale
+                canvas,
+                companion,
+                entity.entityId,
+                motionStateOverride ?: entity.state.toString(),
+                centerX,
+                charY,
+                scale
             ) ?: SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED
         } else SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED
 

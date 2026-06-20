@@ -16,6 +16,8 @@ import org.junit.runners.Suite
 @Suite.SuiteClasses(
     MessageRequestFormatTest::class,
     ChatEchoSuppressionTest::class,
+    WallpaperWanderControllerTest::class,
+    CompanionDescriptorAnimationTest::class,
     NotificationPreferenceCatalogTest::class
 )
 class UnitTestSuite

@@ -18,6 +18,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.LayoutPreferences
@@ -41,6 +42,8 @@ class WallpaperPreviewActivity : AppCompatActivity() {
     private lateinit var previewView: WallpaperPreviewView
     private lateinit var switchCustomLayout: MaterialSwitch
     private lateinit var switchBackground: MaterialSwitch
+    private lateinit var switchWalking: MaterialSwitch
+    private lateinit var btnWalkingHelp: TextView
     private lateinit var switchUsageOverlay: MaterialSwitch
     private lateinit var checkUsageClaude: CheckBox
     private lateinit var checkUsageCodex: CheckBox
@@ -133,6 +136,8 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         previewView = findViewById(R.id.wallpaperPreviewView)
         switchCustomLayout = findViewById(R.id.switchCustomLayout)
         switchBackground = findViewById(R.id.switchBackground)
+        switchWalking = findViewById(R.id.switchWalking)
+        btnWalkingHelp = findViewById(R.id.btnWalkingHelp)
         switchUsageOverlay = findViewById(R.id.switchUsageOverlay)
         checkUsageClaude = findViewById(R.id.checkUsageClaude)
         checkUsageCodex = findViewById(R.id.checkUsageCodex)
@@ -159,6 +164,7 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         }
         switchCustomLayout.isChecked = layoutPrefs.useCustomLayout
         switchBackground.isChecked = layoutPrefs.useBackgroundImage
+        switchWalking.isChecked = layoutPrefs.wallpaperWalkingEnabled
         switchUsageOverlay.isChecked = layoutPrefs.usageOverlayEnabled
         checkUsageClaude.isChecked = layoutPrefs.usageOverlayShowClaude
         checkUsageCodex.isChecked = layoutPrefs.usageOverlayShowCodex
@@ -247,6 +253,23 @@ class WallpaperPreviewActivity : AppCompatActivity() {
             if (!isChecked) {
                 Toast.makeText(this, getString(R.string.background_disabled), Toast.LENGTH_SHORT).show()
             }
+        }
+
+        switchWalking.setOnCheckedChangeListener { _, isChecked ->
+            previewView.setWalkingEnabled(isChecked)
+            val message = getString(
+                if (isChecked) R.string.wallpaper_walking_enabled
+                else R.string.wallpaper_walking_disabled
+            )
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        }
+
+        btnWalkingHelp.setOnClickListener {
+            MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.wallpaper_walking_title)
+                .setMessage(R.string.wallpaper_walking_help)
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
         }
 
         switchUsageOverlay.setOnCheckedChangeListener { _, isChecked ->
