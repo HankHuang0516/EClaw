@@ -1811,6 +1811,7 @@
             initPassiveHealthCollapse();
             loadPassiveHealthSettings();
             updatePushToggle();
+            autoEnableWebPush(); // default-on: silently subscribe if permission already granted
 
             document.getElementById('pageContent').style.display = '';
             if (typeof window.applyDeepLinkFocus === 'function') window.applyDeepLinkFocus();
@@ -3762,6 +3763,37 @@
             } finally {
                 btn.disabled = false;
                 updatePushToggle();
+            }
+        }
+
+        // Auto-enable web push when the user has ALREADY granted notification
+        // permission but has no active subscription yet (granted on a prior
+        // visit / PWA install, or subscription dropped). This is the "default-on"
+        // behaviour: the notification section stays collapsed, but eligible users
+        // get subscribed without hunting for the toggle — the root cause of 0
+        // push_subscriptions was a working flow buried behind a collapsed manual
+        // toggle nobody opened. Browsers FORBID requesting permission without a
+        // user gesture, so we never auto-prompt: permission === 'default'/'denied'
+        // is left to the manual toggle (which keeps its gesture). Best-effort and
+        // fully silent — any failure leaves the manual toggle intact.
+        async function autoEnableWebPush() {
+            try {
+                if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+                if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+                const reg = await navigator.serviceWorker.register('/sw.js');
+                const existing = await reg.pushManager.getSubscription();
+                if (existing) return; // already subscribed — nothing to do
+                const vapidRes = await apiCall('GET', '/api/push/vapid-public-key');
+                if (!vapidRes || !vapidRes.publicKey) return;
+                const sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(vapidRes.publicKey)
+                });
+                await apiCall('POST', '/api/push/subscribe', { subscription: sub.toJSON() });
+                updatePushToggle();
+            } catch (e) {
+                // Non-fatal: auto-enable is best-effort. Manual toggle still works.
+                if (typeof console !== 'undefined') console.debug('[webpush] auto-enable skipped:', e && e.message);
             }
         }
 
