@@ -1228,9 +1228,11 @@ function buildInterviewIdentityPatch(exam, mapped, nowMs) {
     const max = Math.max(1, Math.round(maxScore));
     const normalized = Math.round((score / max) * 100);
     const passed = !!mapped.passed;
-    const completedAtMs = exam.completed_at
+    const fallbackNow = typeof nowMs === 'number' ? nowMs : Date.now();
+    const rawCompletedAtMs = exam.completed_at
         ? new Date(exam.completed_at).getTime()
-        : (typeof nowMs === 'number' ? nowMs : Date.now());
+        : fallbackNow;
+    const completedAtMs = Number.isFinite(rawCompletedAtMs) ? rawCompletedAtMs : fallbackNow;
 
     return {
         interviewCapabilities: {
@@ -1243,7 +1245,106 @@ function buildInterviewIdentityPatch(exam, mapped, nowMs) {
             completedAt: completedAtMs,
             source: 'arena',
         },
-        lastInterviewAt: typeof nowMs === 'number' ? nowMs : Date.now(),
+        lastInterviewAt: fallbackNow,
+    };
+}
+
+function parseJsonObject(raw) {
+    if (!raw) return null;
+    if (typeof raw === 'object' && !Array.isArray(raw)) return raw;
+    if (typeof raw !== 'string') return null;
+    try {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+    } catch (_) {
+        return null;
+    }
+}
+
+function buildMappedArenaResultForIdentity(report, row = {}) {
+    const reportObj = parseJsonObject(report) || report || {};
+    const mapped = mapArenaResultToCapabilities(reportObj);
+    const listingCaps = parseJsonObject(row.capabilities);
+    const benchmarkScore = parseJsonObject(row.benchmark_score);
+
+    if ((!mapped.capabilities || Object.keys(mapped.capabilities).length === 0) && listingCaps) {
+        mapped.capabilities = listingCaps;
+    }
+    if ((!mapped.benchmarkScore || Object.keys(mapped.benchmarkScore).length === 0) && benchmarkScore) {
+        mapped.benchmarkScore = benchmarkScore;
+    }
+    if (row.interview_passed !== undefined && row.interview_passed !== null) {
+        mapped.passed = !!row.interview_passed;
+    }
+    if (typeof mapped.normalizedScore !== 'number' && benchmarkScore && typeof benchmarkScore.normalizedScore === 'number') {
+        mapped.normalizedScore = benchmarkScore.normalizedScore;
+    }
+    return mapped;
+}
+
+function hasCapabilityMap(capabilities) {
+    return !!(capabilities
+        && typeof capabilities === 'object'
+        && !Array.isArray(capabilities)
+        && Object.keys(capabilities).length > 0);
+}
+
+/**
+ * Apply a verified Arena result to the entity identity/namecard surfaces that
+ * the dashboard and plaza render. The numeric score lives in
+ * identity.interviewCapabilities; the per-capability badge map lives in
+ * identity.public.capabilities / agentCard.capabilities. Keeping those shapes
+ * separate prevents the namecard from treating score fields as capability rows.
+ */
+function applyArenaIdentityPatchToEntity(entity, patch, mapped, options = {}) {
+    if (!entity || !patch || !patch.interviewCapabilities) return null;
+    const capabilities = mapped && mapped.capabilities;
+    if (!hasCapabilityMap(capabilities)) return null;
+
+    const existingCompletedAt = Number(entity.identity?.interviewCapabilities?.completedAt);
+    const nextCompletedAt = Number(patch.interviewCapabilities.completedAt);
+    if (options.skipIfExistingNewer
+        && Number.isFinite(existingCompletedAt)
+        && Number.isFinite(nextCompletedAt)
+        && existingCompletedAt > nextCompletedAt) {
+        return { skipped: 'existing_newer' };
+    }
+
+    if (!entity.identity || typeof entity.identity !== 'object') entity.identity = {};
+    const existingPublic = (entity.identity.public && typeof entity.identity.public === 'object' && !Array.isArray(entity.identity.public))
+        ? entity.identity.public
+        : {};
+    const existingCard = (entity.agentCard && typeof entity.agentCard === 'object' && !Array.isArray(entity.agentCard))
+        ? entity.agentCard
+        : {};
+    const publicCard = {
+        description: '',
+        ...existingCard,
+        ...existingPublic,
+        capabilities,
+        capabilitiesInterviewPassedAt: new Date(patch.interviewCapabilities.completedAt).toISOString(),
+        capabilitiesBenchmarkScore: {
+            score: patch.interviewCapabilities.score,
+            rawScore: patch.interviewCapabilities.score,
+            maxScore: patch.interviewCapabilities.maxScore,
+            normalized: patch.interviewCapabilities.normalized,
+            source: 'arena',
+        },
+    };
+
+    entity.identity.interviewCapabilities = patch.interviewCapabilities;
+    entity.identity.lastInterviewAt = patch.lastInterviewAt;
+    entity.identity.public = publicCard;
+    entity.agentCard = publicCard;
+    entity.lastUpdated = options.nowMs || Date.now();
+
+    return {
+        entityId: options.entityId ?? null,
+        score: patch.interviewCapabilities.score,
+        maxScore: patch.interviewCapabilities.maxScore,
+        normalized: patch.interviewCapabilities.normalized,
+        passed: patch.interviewCapabilities.passed,
+        capabilityCount: Object.keys(capabilities).length,
     };
 }
 
@@ -1781,14 +1882,16 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
                 [req.params.examId, totalScore, JSON.stringify(report)]
             );
 
-            // ── Arena → Rental interview sync ──
-            // If this exam is linked to a listing, auto-qualify it for
-            // the rental marketplace. The Arena's public nature is
-            // unchanged — this just bridges the result.
+            // ── Arena → Rental + entity/namecard sync ──
+            // If this exam is linked to a listing, auto-qualify it for the
+            // rental marketplace AND mirror the verified Arena result onto the
+            // owner entity identity/namecard. Without this second write, a
+            // completed linked exam can show the rental cooldown/proof while
+            // the namecard still renders the empty Arena state.
             let interviewSync = null;
             try {
                 const examRow = await pool.query(
-                    `SELECT e.id, e.listing_id, e.model, e.total_score, e.max_score, e.completed_at,
+                    `SELECT e.id, e.listing_id, e.model, e.total_score, e.max_score, e.report, e.completed_at,
                             l.owner_device_id, l.owner_entity_id
                      FROM arena_exams e
                      LEFT JOIN bot_listings l ON l.id = e.listing_id
@@ -1833,65 +1936,41 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
                             mapped.passed ? null : `Arena score ${mapped.normalizedScore}% < ${Math.round(ARENA_PASS_THRESHOLD * 100)}% threshold`,
                         ]
                     );
+
+                    let entityBinding = null;
+                    const ownerDeviceId = examData.owner_device_id;
+                    const ownerEntityId = Number(examData.owner_entity_id);
+                    const ownerDevice = ownerDeviceId ? deviceRegistry[ownerDeviceId] : null;
+                    const ownerEntity = (ownerDevice && Number.isInteger(ownerEntityId))
+                        ? ownerDevice.entities?.[ownerEntityId]
+                        : null;
+                    const patch = buildInterviewIdentityPatch({
+                        id: examData.id || req.params.examId,
+                        model: examData.model || null,
+                        total_score: totalScore,
+                        max_score: MAX_TOTAL_SCORE,
+                        completed_at: examData.completed_at,
+                    }, mapped);
+                    if (ownerEntity && ownerEntity.isBound && patch) {
+                        entityBinding = applyArenaIdentityPatchToEntity(ownerEntity, patch, mapped, { entityId: ownerEntityId });
+                        if (entityBinding && !entityBinding.skipped && saveDeviceData) {
+                            await Promise.resolve(saveDeviceData(ownerDeviceId, ownerDevice));
+                        }
+                    } else if (ownerDeviceId || examData.owner_entity_id !== undefined) {
+                        audit('warn', 'arena', `exam ${req.params.examId} linked listing ${examData.listing_id} could not bind namecard: owner entity missing/unbound`);
+                    }
+
                     interviewSync = {
                         listingId: examData.listing_id,
                         passed: mapped.passed,
                         normalizedScore: mapped.normalizedScore,
                         capabilities: mapped.capabilities,
+                        entityBinding,
                     };
-                    audit('info', 'arena', `exam ${req.params.examId} synced to listing ${examData.listing_id}: passed=${mapped.passed} score=${mapped.normalizedScore}%`);
-
-                    // ── Arena → entity namecard sync (card_2fd3bac5) ──
-                    // Write the verified score back to entity.identity.interviewCapabilities
-                    // so the bot's namecard Capabilities section + plaza tile populate
-                    // automatically on exam completion. Previously this only happened in
-                    // the OPTIONAL, credential-gated POST /api/arena/leaderboard path
-                    // (entity-bound submit). An exam could complete — updating
-                    // bot_listings.last_interview_at so the retest countdown chip shows —
-                    // yet leave identity.interviewCapabilities empty, so the namecard
-                    // rendered "尚無 Arena 評測結果" (dash_caps_none) despite a real
-                    // completed result. The finalize handler already verifies the
-                    // exam→listing→owner linkage server-side, so this write is
-                    // authoritative and needs no botSecret. Non-blocking: identity
-                    // failures must never fail the exam finalize (same posture as the
-                    // bot_listings sync above).
-                    try {
-                        const ownerDeviceId = examData.owner_device_id;
-                        const ownerEntityId = examData.owner_entity_id;
-                        const device = ownerDeviceId ? deviceRegistry[ownerDeviceId] : null;
-                        const entity = (device && ownerEntityId != null)
-                            ? device.entities?.[ownerEntityId]
-                            : null;
-                        if (entity) {
-                            const patch = buildInterviewIdentityPatch(
-                                {
-                                    id: examData.id,
-                                    model: examData.model,
-                                    total_score: examData.total_score != null ? examData.total_score : totalScore,
-                                    max_score: examData.max_score != null ? examData.max_score : MAX_TOTAL_SCORE,
-                                    completed_at: examData.completed_at,
-                                },
-                                mapped
-                            );
-                            if (patch) {
-                                if (!entity.identity) entity.identity = {};
-                                // Latest-wins: overwrite any prior interviewCapabilities block.
-                                entity.identity.interviewCapabilities = patch.interviewCapabilities;
-                                entity.identity.lastInterviewAt = patch.lastInterviewAt;
-                                entity.lastUpdated = Date.now();
-                                if (saveDeviceData) {
-                                    Promise.resolve(saveDeviceData(ownerDeviceId, device))
-                                        .catch(err => audit('warn', 'arena', `finalize identity sync save failed for ${ownerDeviceId}:${ownerEntityId}: ${err.message}`));
-                                }
-                                audit('info', 'arena', `exam ${req.params.examId} synced to entity ${ownerDeviceId}:${ownerEntityId} namecard score=${patch.interviewCapabilities.normalized}%`);
-                            }
-                        }
-                    } catch (idErr) {
-                        console.warn('[Arena] entity identity sync error (non-blocking):', idErr.message);
-                    }
+                    audit('info', 'arena', `exam ${req.params.examId} synced to listing ${examData.listing_id}: passed=${mapped.passed} score=${mapped.normalizedScore}% namecard=${entityBinding && !entityBinding.skipped ? 'synced' : 'not_synced'}`);
                 }
             } catch (syncErr) {
-                console.warn('[Arena] Rental sync error (non-blocking):', syncErr.message);
+                console.warn('[Arena] Rental/namecard sync error (non-blocking):', syncErr.message);
             }
 
             if (io) {
@@ -2197,6 +2276,72 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
         return false;
     }
 
+    /**
+     * Safe startup/on-demand repair for legacy linked Arena exams that were
+     * completed before finalize wrote identity/namecard fields. Uses only
+     * completed exams linked to listings and only touches in-memory owner
+     * entities present on this server. Latest completed exam wins; existing
+     * newer identity bindings are preserved.
+     */
+    async function backfillArenaEntityBindings() {
+        let scanned = 0;
+        let updated = 0;
+        let skipped = 0;
+        try {
+            const rows = await pool.query(
+                `SELECT DISTINCT ON (l.owner_device_id, l.owner_entity_id)
+                        e.id, e.model, e.total_score, e.max_score, e.report, e.completed_at,
+                        l.id AS listing_id, l.owner_device_id, l.owner_entity_id,
+                        l.capabilities, l.benchmark_score, l.interview_passed
+                 FROM arena_exams e
+                 JOIN bot_listings l ON l.id = e.listing_id
+                 WHERE e.status = 'completed'
+                   AND e.total_score IS NOT NULL
+                   AND e.max_score IS NOT NULL
+                   AND l.owner_device_id IS NOT NULL
+                   AND l.owner_entity_id IS NOT NULL
+                 ORDER BY l.owner_device_id, l.owner_entity_id, e.completed_at DESC NULLS LAST, e.created_at DESC
+                 LIMIT 1000`
+            );
+
+            for (const row of rows.rows || []) {
+                scanned++;
+                const ownerDevice = deviceRegistry[row.owner_device_id];
+                const ownerEntityId = Number(row.owner_entity_id);
+                const ownerEntity = (ownerDevice && Number.isInteger(ownerEntityId))
+                    ? ownerDevice.entities?.[ownerEntityId]
+                    : null;
+                if (!ownerEntity || !ownerEntity.isBound) {
+                    skipped++;
+                    continue;
+                }
+
+                const mapped = buildMappedArenaResultForIdentity(row.report, row);
+                const patch = buildInterviewIdentityPatch(row, mapped);
+                const result = applyArenaIdentityPatchToEntity(ownerEntity, patch, mapped, {
+                    entityId: ownerEntityId,
+                    skipIfExistingNewer: true,
+                });
+                if (!result || result.skipped) {
+                    skipped++;
+                    continue;
+                }
+                if (saveDeviceData) {
+                    await Promise.resolve(saveDeviceData(row.owner_device_id, ownerDevice));
+                }
+                updated++;
+            }
+            if (scanned > 0) {
+                audit('info', 'arena', `arena entity binding backfill scanned=${scanned} updated=${updated} skipped=${skipped}`);
+            }
+            return { scanned, updated, skipped };
+        } catch (err) {
+            console.warn('[Arena] entity binding backfill failed:', err.message);
+            audit('warn', 'arena', `arena entity binding backfill failed: ${err.message}`);
+            return { scanned, updated, skipped, error: err.message };
+        }
+    }
+
     // GET /api/arena/admin/pool-status — current pool sizes + last update info
     router.get('/admin/pool-status', (req, res) => {
         if (!checkAdminAuth(req)) return res.status(403).json({ success: false, error: 'forbidden' });
@@ -2278,6 +2423,7 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
     return {
         router,
         initArenaDatabase,
+        backfillArenaEntityBindings,
         setAutoPushDeps,
         TEST_TYPES,
         MAX_TOTAL_SCORE,
@@ -2303,6 +2449,8 @@ module.exports.TEST_TYPES = TEST_TYPES;
 module.exports.MAX_TOTAL_SCORE = MAX_TOTAL_SCORE;
 module.exports.mapArenaResultToCapabilities = mapArenaResultToCapabilities;
 module.exports.buildInterviewIdentityPatch = buildInterviewIdentityPatch;
+module.exports.applyArenaIdentityPatchToEntity = applyArenaIdentityPatchToEntity;
+module.exports.buildMappedArenaResultForIdentity = buildMappedArenaResultForIdentity;
 module.exports.ARENA_PASS_THRESHOLD = ARENA_PASS_THRESHOLD;
 module.exports.ARENA_TO_CAPABILITY_MAP = ARENA_TO_CAPABILITY_MAP;
 module.exports.SCORING_ENGINES = SCORING_ENGINES;

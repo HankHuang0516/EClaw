@@ -33,6 +33,37 @@ window.AgentCardEditor = (function() {
         return d.innerHTML;
     }
 
+    function isArenaCapabilityMap(value) {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+        var keys = Object.keys(value);
+        if (keys.length === 0) return false;
+        return keys.some(function(key) {
+            var row = value[key];
+            return row && typeof row === 'object' && (
+                typeof row.supported === 'boolean' ||
+                Array.isArray(row.probes) ||
+                typeof row.totalScore === 'number' ||
+                typeof row.maxScore === 'number'
+            );
+        });
+    }
+
+    function selectArenaCapabilities(identity, agentCard) {
+        var id = identity || {};
+        var ac = agentCard || {};
+        var pub = id.public && typeof id.public === 'object' ? id.public : {};
+        var candidates = [
+            ac.capabilities,
+            pub.capabilities,
+            ac.interviewCapabilities,
+            id.arenaCapabilities
+        ];
+        for (var i = 0; i < candidates.length; i++) {
+            if (isArenaCapabilityMap(candidates[i])) return candidates[i];
+        }
+        return null;
+    }
+
     /**
      * @param {string} containerId — DOM element ID to render into
      * @param {Object} opts
@@ -64,6 +95,9 @@ window.AgentCardEditor = (function() {
         this._stopRetestCountdown = null;
     }
 
+    AgentCardEditor._selectArenaCapabilities = selectArenaCapabilities;
+    AgentCardEditor._isArenaCapabilityMap = isArenaCapabilityMap;
+
     AgentCardEditor.prototype.render = function() {
         var container = document.getElementById(this.containerId);
         if (!container) return;
@@ -72,10 +106,12 @@ window.AgentCardEditor = (function() {
         var self = this;
         var uid = this.entityId || Math.random().toString(36).slice(2, 6);
 
-        // Determine Arena capabilities (read-only)
-        var arenaCaps = this.identity.interviewCapabilities
-            || ac.interviewCapabilities
-            || (ac.capabilities && !Array.isArray(ac.capabilities) ? ac.capabilities : null);
+        // Determine Arena capabilities (read-only). The per-capability badge
+        // map is deliberately separate from identity.interviewCapabilities,
+        // which is the numeric verified-score block. Treating the score block
+        // as a capability map caused completed linked interviews to render
+        // bogus/empty Arena state on namecards.
+        var arenaCaps = selectArenaCapabilities(this.identity, ac);
 
         // Arena verified-score binding (card_ad404375). interviewCapabilities
         // here is the IDENTITY-level numeric score block written by the

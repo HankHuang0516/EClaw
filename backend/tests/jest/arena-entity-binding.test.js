@@ -17,7 +17,7 @@
 // test file doesn't try to open a connection.
 jest.mock('pg', () => ({ Pool: jest.fn(() => ({ query: jest.fn(), connect: jest.fn() })) }));
 
-const { buildInterviewIdentityPatch } = require('../../interview-arena');
+const { buildInterviewIdentityPatch, applyArenaIdentityPatchToEntity, buildMappedArenaResultForIdentity } = require('../../interview-arena');
 const { extractArenaFieldsFromIdentity } = require('../../db');
 
 describe('buildInterviewIdentityPatch', () => {
@@ -103,6 +103,63 @@ describe('buildInterviewIdentityPatch', () => {
     });
 });
 
+
+describe('applyArenaIdentityPatchToEntity', () => {
+    const patch = buildInterviewIdentityPatch(
+        { id: 'exam-linked', model: 'minimax-portal/MiniMax-M2.7', total_score: 142, max_score: 147, completed_at: new Date('2026-04-13T01:36:18Z') },
+        { passed: true },
+        1700000000000
+    );
+    const mapped = {
+        passed: true,
+        capabilities: {
+            reasoning: { supported: true, probes: [{ id: 'arena_memory', score: 10, maxScore: 10 }] },
+            file_io: { supported: true, probes: [{ id: 'arena_file_mgmt', score: 12, maxScore: 12 }] },
+        },
+    };
+
+    test('writes numeric score and capability map to separate namecard fields', () => {
+        const entity = {
+            isBound: true,
+            identity: { public: { description: 'Existing card', tags: ['mac'] } },
+            agentCard: { description: 'Existing card', tags: ['mac'] },
+        };
+        const result = applyArenaIdentityPatchToEntity(entity, patch, mapped, { entityId: 1, nowMs: 1800000000000 });
+        expect(result).toMatchObject({ entityId: 1, score: 142, maxScore: 147, normalized: 97, passed: true, capabilityCount: 2 });
+        expect(entity.identity.interviewCapabilities).toMatchObject({ score: 142, maxScore: 147, source: 'arena' });
+        expect(entity.identity.public.capabilities).toEqual(mapped.capabilities);
+        expect(entity.agentCard.capabilities).toEqual(mapped.capabilities);
+        expect(entity.identity.public.description).toBe('Existing card');
+        expect(entity.lastUpdated).toBe(1800000000000);
+    });
+
+    test('refuses to write when capability map is absent (prevents bogus score-as-caps)', () => {
+        const entity = { isBound: true, identity: {}, agentCard: null };
+        expect(applyArenaIdentityPatchToEntity(entity, patch, { passed: true, capabilities: {} })).toBeNull();
+        expect(entity.identity.interviewCapabilities).toBeUndefined();
+    });
+
+    test('safe backfill preserves newer existing Arena binding', () => {
+        const entity = {
+            isBound: true,
+            identity: { interviewCapabilities: { completedAt: patch.interviewCapabilities.completedAt + 1000 } },
+        };
+        const result = applyArenaIdentityPatchToEntity(entity, patch, mapped, { skipIfExistingNewer: true });
+        expect(result).toEqual({ skipped: 'existing_newer' });
+        expect(entity.agentCard).toBeUndefined();
+    });
+
+    test('fallback mapped result can reuse listing capabilities and benchmark score', () => {
+        const mappedFromListing = buildMappedArenaResultForIdentity({}, {
+            capabilities: JSON.stringify(mapped.capabilities),
+            benchmark_score: JSON.stringify({ normalizedScore: 97 }),
+            interview_passed: true,
+        });
+        expect(mappedFromListing.capabilities).toEqual(mapped.capabilities);
+        expect(mappedFromListing.passed).toBe(true);
+    });
+});
+
 describe('extractArenaFieldsFromIdentity', () => {
     test('returns null fields when identity is null/undefined', () => {
         expect(extractArenaFieldsFromIdentity(null)).toEqual({
@@ -183,7 +240,7 @@ describe('finalize → entity namecard sync (card_2fd3bac5)', () => {
                 if (/FROM arena_sessions WHERE exam_id/i.test(norm)) {
                     return {
                         rows: [{
-                            id: 'sess-1', exam_id: EXAM_ID, test_type: 'tool_use',
+                            id: 'sess-1', exam_id: EXAM_ID, test_type: 'arena_memory',
                             test_index: 0, status: 'completed', score: 91, max_score: 147,
                             challenge_config: {}, actions_log: [],
                         }],
@@ -248,6 +305,9 @@ describe('finalize → entity namecard sync (card_2fd3bac5)', () => {
         // The entity namecard data is now populated — root-cause fix.
         expect(entity.identity.interviewCapabilities).toMatchObject({
             score: 91, maxScore: 147, normalized: 62, source: 'arena', examId: EXAM_ID,
+        });
+        expect(entity.identity.public.capabilities.reasoning).toMatchObject({
+            supported: true,
         });
         expect(typeof entity.identity.lastInterviewAt).toBe('number');
         expect(saveDeviceData).toHaveBeenCalledWith(DEVICE_ID, devices[DEVICE_ID]);

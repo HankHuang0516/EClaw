@@ -3886,7 +3886,12 @@ app.get('/arena/:sessionToken', async (req, res) => {
     }
 });
 if (process.env.NODE_ENV !== 'test') {
-    setTimeout(() => arenaModule.initArenaDatabase(), 4000);
+    setTimeout(async () => {
+        await arenaModule.initArenaDatabase();
+        if (typeof arenaModule.backfillArenaEntityBindings === 'function') {
+            await arenaModule.backfillArenaEntityBindings();
+        }
+    }, 4000);
 }
 
 // Daily arena question pool update — 03:00 UTC
