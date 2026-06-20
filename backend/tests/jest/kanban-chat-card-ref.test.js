@@ -76,7 +76,7 @@ describe('notifyEntities → saveChatMessage kanban_ref card arg', () => {
 
         const res = await request(app).post('/api/mission/card').send({
             ...AUTH, title: 'Hello', assignedBots: [0], status: 'todo',
-            chatAnchorMessageId: 'msg-test-anchor',
+            chatAnchorMessageId: 'aaaaaaaa-1111-2222-3333-444444444444',
         });
 
         expect(res.status).toBe(200);

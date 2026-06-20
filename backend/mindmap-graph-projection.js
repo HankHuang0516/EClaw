@@ -41,6 +41,21 @@ function clip(s, max) {
     return str.length > max ? str.slice(0, max) : str;
 }
 
+// Chat-anchor pollution guard. The automated ErrLog/cron card creator (and a
+// handful of loop-directive / phase4 / speakto card creators) historically wrote
+// literal placeholder strings — "cron-auto", "cron-auto-generated", "his_...",
+// "phase4-read-followup", "speakto-routing-investigation", etc. — into
+// kanban_cards.chat_anchor_message_id instead of a real chat_messages UUID (or
+// NULL). The graph projection then grouped every card sharing such a value into
+// one synthetic chat node (e.g. the bogus green "chat #cron-auto" hub), and the
+// stray 1-card placeholders also triggered "invalid input syntax for type uuid"
+// when joined as UUIDs. Only treat a value as a real chat anchor when it is a
+// canonical UUID; anything else is ignored (no chat node, no chat_anchor edge).
+const CHAT_ANCHOR_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidChatAnchorId(v) {
+    return typeof v === 'string' && CHAT_ANCHOR_UUID_RE.test(v);
+}
+
 function parseBoolFlag(raw, def) {
     if (raw === undefined || raw === null || raw === '') return def;
     const s = String(raw).toLowerCase();
@@ -389,7 +404,9 @@ function projectGraph({
     //           note↔chat or card↔chat anchors).
     const chatMsgIds = new Set();
     for (const c of cards) {
-        if (c.chat_anchor_message_id) chatMsgIds.add(c.chat_anchor_message_id);
+        // Ignore non-UUID placeholder anchors (see isValidChatAnchorId) so a bogus
+        // shared value like "cron-auto" never collapses into one synthetic chat hub.
+        if (isValidChatAnchorId(c.chat_anchor_message_id)) chatMsgIds.add(c.chat_anchor_message_id);
     }
     for (const [, anchors] of anchorsByNode) {
         const chatAnchors = anchors.filter(a => a.anchor_type === 'chat_message');
@@ -399,7 +416,9 @@ function projectGraph({
             (a.anchor_type === 'note' && noteIds.has(a.anchor_ref))
         );
         if (!hasIncluded) continue;
-        for (const ca of chatAnchors) chatMsgIds.add(ca.anchor_ref);
+        for (const ca of chatAnchors) {
+            if (isValidChatAnchorId(ca.anchor_ref)) chatMsgIds.add(ca.anchor_ref);
+        }
     }
     for (const msgId of chatMsgIds) {
         const id = `chat:${msgId}`;
@@ -578,7 +597,7 @@ function projectGraph({
     //    6a) kanban_cards.chat_anchor_message_id direct field
     for (const c of cards) {
         const mid = c.chat_anchor_message_id;
-        if (!mid || !nodeIdSet.has(`chat:${mid}`)) continue;
+        if (!isValidChatAnchorId(mid) || !nodeIdSet.has(`chat:${mid}`)) continue;
         links.push(buildLink({
             id: `chat_anchor:task:${c.id}:${mid}`,
             source: `task:${c.id}`,
