@@ -188,6 +188,35 @@ function _eclawUnlockBodyScroll() {
     }
 }
 const _ECLAW_DIALOG_SHADOW_STYLE = 'style="box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);"';
+
+// ─── Entrance animation (card_e5c460fb) ───
+// Inject a one-time <style> that gives the shared destructive-confirm modal a
+// subtle mount entrance: a backdrop fade on `.eclaw-confirm-overlay` and an
+// opacity+scale rise on `.eclaw-confirm-dialog`. Scoped to the eclaw-confirm-*
+// classes so the shared base `.dialog` (used by other modals) is untouched.
+//
+// Both animations are gated behind `@media (prefers-reduced-motion: reduce)`
+// → `animation: none` so users who opt out get the prior instant render with
+// zero motion. The keyframes start at opacity:1 / scale:1 only as a no-op
+// fallback; the `animation` shorthand drives the 0→1 / 0.96→1 transition.
+const _ECLAW_DIALOG_ANIM_STYLE_ID = 'eclaw-confirm-anim-style';
+function _eclawEnsureDialogAnimStyle() {
+    if (typeof document === 'undefined' || !document.head) return;
+    if (document.getElementById(_ECLAW_DIALOG_ANIM_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = _ECLAW_DIALOG_ANIM_STYLE_ID;
+    style.textContent = `
+@keyframes eclawConfirmOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes eclawConfirmDialogIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+.eclaw-confirm-overlay { animation: eclawConfirmOverlayIn 160ms ease-out both; }
+.eclaw-confirm-dialog { animation: eclawConfirmDialogIn 160ms ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+    .eclaw-confirm-overlay,
+    .eclaw-confirm-dialog { animation: none; }
+}`;
+    document.head.appendChild(style);
+}
+
 function showConfirm({ message, title, confirmText, cancelText, danger, itemName } = {}) {
     // Dev-time hint: destructive confirms should name the item so a fast-clicking user can
     // verify what's about to be destroyed. Localhost / dev hosts only; silent in production.
@@ -228,6 +257,7 @@ function showConfirm({ message, title, confirmText, cancelText, danger, itemName
                 <button type="button" class="btn ${danger ? 'btn-danger' : 'btn-primary'} eclaw-confirm-ok"${danger && !confirmText ? ` aria-label="${_escAttr(t('dialog_confirm_destructive', 'Confirm destructive action'))}"` : ''}>${danger ? '<span class="eclaw-confirm-danger-glyph" aria-hidden="true">⚠ </span>' : ''}${_escHtml(confirmText || (danger ? t('dialog_confirm', 'Confirm') : t('dialog_ok', 'OK')))}</button>
             </div>
         </div>`;
+        _eclawEnsureDialogAnimStyle();
         document.body.appendChild(overlay);
         _eclawLockBodyScroll();
         const cleanup = (result) => { document.removeEventListener('keydown', _keyHandler, true); overlay.remove(); _eclawUnlockBodyScroll(); resolve(result); };
@@ -306,6 +336,7 @@ function showPrompt({ message, title, defaultValue, placeholder, confirmText, ca
                 <button type="button" class="btn btn-primary eclaw-confirm-ok">${_escHtml(confirmText || t('dialog_ok', 'OK'))}</button>
             </div>
         </div>`;
+        _eclawEnsureDialogAnimStyle();
         document.body.appendChild(overlay);
         _eclawLockBodyScroll();
         const input = overlay.querySelector('.eclaw-prompt-input');
