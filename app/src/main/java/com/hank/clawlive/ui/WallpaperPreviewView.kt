@@ -70,6 +70,7 @@ class WallpaperPreviewView @JvmOverloads constructor(
 
     // Custom positions (percentage 0.0-1.0)
     private val entityPositions = mutableMapOf<Int, Pair<Float, Float>>()
+    private val lastRenderPositionsByEntity = mutableMapOf<Int, Pair<Float, Float>>()
     
     // Per-entity scales
     private val entityScales = mutableMapOf<Int, Float>()
@@ -260,6 +261,7 @@ class WallpaperPreviewView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        lastRenderPositionsByEntity.clear()
 
         // Draw background (custom image or black)
         drawBackground(canvas)
@@ -290,6 +292,7 @@ class WallpaperPreviewView @JvmOverloads constructor(
         // Draw each entity with per-entity scale
         entities.forEachIndexed { index, entity ->
             val (x, y) = renderPositions.getOrNull(index) ?: basePositions.getOrNull(index) ?: (width / 2f to height / 2f)
+            lastRenderPositionsByEntity[entity.entityId] = x to y
             
             // Get per-entity scale
             val entityScale = entityScales[entity.entityId] ?: 1.0f
@@ -661,8 +664,10 @@ class WallpaperPreviewView @JvmOverloads constructor(
                     lockEntity(draggingEntityIndex)
                     val entity = entities[draggingEntityIndex]
                     val pos = entityPositions[entity.entityId] ?: Pair(0.5f, 0.5f)
-                    dragOffsetX = pos.first * width - x
-                    dragOffsetY = pos.second * height - y
+                    val renderPos = lastRenderPositionsByEntity[entity.entityId]
+                        ?: (pos.first * width to pos.second * height)
+                    dragOffsetX = renderPos.first - x
+                    dragOffsetY = renderPos.second - y
                     invalidate()
                     return true
                 }
@@ -853,9 +858,10 @@ class WallpaperPreviewView @JvmOverloads constructor(
     private fun findEntityAtPosition(touchX: Float, touchY: Float): Int {
         for (index in entities.indices.reversed()) {
             val entity = entities[index]
-            val pos = entityPositions[entity.entityId] ?: continue
-            val entityX = pos.first * width
-            val entityY = pos.second * height
+            val rendered = lastRenderPositionsByEntity[entity.entityId]
+            val pos = entityPositions[entity.entityId]
+            val entityX = rendered?.first ?: pos?.let { it.first * width } ?: continue
+            val entityY = rendered?.second ?: pos?.let { it.second * height } ?: continue
             
             // Scale hit radius with entity scale
             val entityScale = entityScales[entity.entityId] ?: 1.0f
@@ -949,6 +955,15 @@ class WallpaperPreviewView @JvmOverloads constructor(
 
     fun getEntityScaleForTest(entityId: Int): Float {
         return entityScales[entityId] ?: 1.0f
+    }
+
+    fun getEntityCenterForTest(entityId: Int): Pair<Float, Float>? {
+        return lastRenderPositionsByEntity[entityId]
+            ?: entityPositions[entityId]?.let { it.first * width to it.second * height }
+    }
+
+    fun setRenderedEntityCenterForTest(entityId: Int, x: Float, y: Float) {
+        lastRenderPositionsByEntity[entityId] = x to y
     }
 
     override fun onDetachedFromWindow() {
