@@ -2292,14 +2292,23 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             // chatty cron/auto-generated children without losing manual closures.
             if (newStatus === 'done' && typeof notifyDevice === 'function') {
                 const isAuto = !!card.is_auto_generated;
+                const doneCategory = isAuto ? 'kanban_done_auto' : 'kanban_done';
+                // Stdout breadcrumb so "手機通知沒收到" can be diagnosed from
+                // Railway logs: confirms the device-push dispatch path was
+                // entered for this owner device + category. The downstream
+                // sendWebPush/sendFcm outcomes log to server_logs (DB), so this
+                // line is the only stdout evidence that the chain even fired.
+                console.log(`[Kanban] move→done device-push dispatch: device=${deviceId} card=${cardId} category=${doneCategory}`);
                 notifyDevice(deviceId, {
                     type: 'kanban',
-                    category: isAuto ? 'kanban_done_auto' : 'kanban_done',
+                    category: doneCategory,
                     title: isAuto ? '✅ 自動任務完成' : '✅ 任務完成',
                     body: card.title,
                     link: `/portal/kanban.html?card=${cardId}`,
                     metadata: { cardId, isAuto, fromStatus: oldStatus }
-                }).catch(() => {});
+                }).catch((e) => {
+                    console.error(`[Kanban] move→done device-push dispatch failed: device=${deviceId} card=${cardId}:`, e.message);
+                });
             }
 
             // If this is an auto-generated child card moving to Done → update parent
@@ -4080,6 +4089,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 // Always classified as kanban_done_auto since this branch only
                 // runs for bot-reported IDLE auto-completions.
                 if (typeof notifyDevice === 'function') {
+                    console.log(`[Kanban] auto-done device-push dispatch: device=${deviceId} card=${card.id} category=kanban_done_auto closedBy=${entityId}`);
                     notifyDevice(deviceId, {
                         type: 'kanban',
                         category: 'kanban_done_auto',
@@ -4087,7 +4097,9 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                         body: card.title,
                         link: `/portal/kanban.html?card=${card.id}`,
                         metadata: { cardId: card.id, isAuto: true, autoClosedBy: entityId }
-                    }).catch(() => {});
+                    }).catch((e) => {
+                        console.error(`[Kanban] auto-done device-push dispatch failed: device=${deviceId} card=${card.id}:`, e.message);
+                    });
                 }
 
                 // Award XP for completing task
