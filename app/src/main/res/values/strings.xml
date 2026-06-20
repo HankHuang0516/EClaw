@@ -129,6 +129,9 @@
     <string name="wallpaper_more_settings_desc">Advanced wallpaper animation and offline behavior. New enhancements are enabled by default.</string>
     <string name="wallpaper_setting_speech_bubbles">Message bubbles</string>
     <string name="wallpaper_setting_speech_bubbles_desc">Show entity status and recent messages near each companion.</string>
+    <string name="wallpaper_setting_bubble_duration">Message bubble duration</string>
+    <string name="wallpaper_setting_bubble_duration_desc">Controls how long wallpaper bubbles stay visible; long messages automatically get more time.</string>
+    <string name="wallpaper_setting_bubble_duration_value">%1$d sec</string>
     <string name="wallpaper_setting_bubble_pulse">Bubble pulse</string>
     <string name="wallpaper_setting_bubble_pulse_desc">Briefly highlight a companion when its bubble changes.</string>
     <string name="wallpaper_setting_bubble_avoidance">Smart bubble avoidance</string>

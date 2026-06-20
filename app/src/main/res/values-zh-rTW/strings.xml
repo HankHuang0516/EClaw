@@ -821,6 +821,9 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="wallpaper_more_settings_desc">進階桌布動畫與斷線行為。新的加強功能預設全部啟用。</string>
     <string name="wallpaper_setting_speech_bubbles">訊息泡泡</string>
     <string name="wallpaper_setting_speech_bubbles_desc">在夥伴旁顯示實體狀態與最近訊息。</string>
+    <string name="wallpaper_setting_bubble_duration">訊息泡泡停留時間</string>
+    <string name="wallpaper_setting_bubble_duration_desc">調整桌布泡泡存在時間；長訊息會自動延長，但最多 30 秒。</string>
+    <string name="wallpaper_setting_bubble_duration_value">%1$d 秒</string>
     <string name="wallpaper_setting_bubble_pulse">泡泡脈衝</string>
     <string name="wallpaper_setting_bubble_pulse_desc">泡泡內容更新時短暫高亮夥伴。</string>
     <string name="wallpaper_setting_bubble_avoidance">智慧泡泡避讓</string>

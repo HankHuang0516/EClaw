@@ -3,7 +3,9 @@ package com.hank.clawlive
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.android.material.slider.Slider
 import com.hank.clawlive.data.local.LayoutPreferences
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -26,8 +28,10 @@ class WallpaperMoreSettingsUiTest {
 
                 val root = activity.window.decorView
                 val switches = mutableListOf<MaterialSwitch>()
+                val sliders = mutableListOf<Slider>()
                 fun collect(view: android.view.View) {
                     if (view is MaterialSwitch) switches.add(view)
+                    if (view is Slider) sliders.add(view)
                     if (view is android.view.ViewGroup) {
                         for (i in 0 until view.childCount) collect(view.getChildAt(i))
                     }
@@ -35,10 +39,15 @@ class WallpaperMoreSettingsUiTest {
                 collect(root)
                 assertTrue("Expected advanced wallpaper switches", switches.size >= 7)
                 switches.forEach { assertTrue("Default-on switch should start checked", it.isChecked) }
+                assertTrue("Expected bubble duration slider", sliders.isNotEmpty())
 
                 switches.first().isChecked = false
                 assertFalse(prefs.wallpaperSpeechBubblesEnabled)
                 prefs.wallpaperSpeechBubblesEnabled = true
+
+                sliders.first().value = 18f
+                assertEquals(18, prefs.wallpaperBubbleDurationSeconds)
+                prefs.wallpaperBubbleDurationSeconds = LayoutPreferences.WALLPAPER_BUBBLE_DURATION_DEFAULT_SECONDS
             }
         }
     }

@@ -70,8 +70,9 @@ class SpeechBubbleController(
     fun reset() = bubbles.clear()
 
     /**
-     * Show (or refresh) a bubble for [entityId]. TTL scales with message length
-     * per §5.3: max(2s, 0.06s * chars) capped at 8s, unless [ttlMsOverride] is given.
+     * Show (or refresh) a bubble for [entityId]. TTL starts from the preferred
+     * user duration, then extends for long text at 0.06s/char and caps at 30s.
+     * [ttlMsOverride] remains an exact escape hatch for deterministic tests.
      * A new message resets the TTL (rapid-fire chat, open question O-7).
      * Blank text clears any existing bubble.
      */
@@ -79,13 +80,14 @@ class SpeechBubbleController(
         entityId: Int,
         text: String,
         nowMs: Long,
-        ttlMsOverride: Long? = null
+        ttlMsOverride: Long? = null,
+        preferredTtlMs: Long? = null
     ) {
         if (text.isBlank()) {
             bubbles.remove(entityId)
             return
         }
-        val ttl = ttlMsOverride ?: ttlForText(text)
+        val ttl = ttlMsOverride ?: ttlForText(text, preferredTtlMs ?: defaultTtlMs)
         bubbles[entityId] = Bubble(
             text = text,
             shownAtMs = nowMs,
@@ -153,9 +155,10 @@ class SpeechBubbleController(
         return (remaining.toFloat() / fadeOutMs.toFloat()).coerceIn(0f, 1f)
     }
 
-    private fun ttlForText(text: String): Long {
-        val scaled = (PER_CHAR_MS * text.length)
-        return scaled.coerceIn(MIN_TTL_MS, defaultTtlMs)
+    private fun ttlForText(text: String, preferredTtlMs: Long): Long {
+        val preferred = preferredTtlMs.coerceIn(MIN_TTL_MS, MAX_TTL_MS)
+        val scaled = (PER_CHAR_MS * text.length).coerceAtLeast(MIN_TTL_MS)
+        return maxOf(preferred, scaled).coerceAtMost(MAX_TTL_MS)
     }
 
     private fun prune(nowMs: Long) {
@@ -164,10 +167,12 @@ class SpeechBubbleController(
     }
 
     companion object {
-        /** Default / max TTL cap (§5.3). */
-        const val DEFAULT_TTL_MS = 8_000L
+        /** Default preferred TTL for short wallpaper bubbles. */
+        const val DEFAULT_TTL_MS = 12_000L
         /** Floor for any message bubble (§5.3). */
-        const val MIN_TTL_MS = 2_000L
+        const val MIN_TTL_MS = 3_000L
+        /** Smart cap for long messages, regardless of text length. */
+        const val MAX_TTL_MS = 30_000L
         /** Per-character contribution to TTL (§5.3: 0.06s/char). */
         const val PER_CHAR_MS = 60L
         /** Fade-out ramp window at the end of life. */

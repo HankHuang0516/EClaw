@@ -6,9 +6,15 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.android.material.slider.Slider
 import com.hank.clawlive.data.local.LayoutPreferences
+import kotlin.math.roundToInt
 
 class WallpaperMoreSettingsActivity : AppCompatActivity() {
     private val layoutPrefs by lazy { LayoutPreferences.getInstance(this) }
@@ -16,6 +22,7 @@ class WallpaperMoreSettingsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         title = getString(R.string.wallpaper_more_settings)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         val density = resources.displayMetrics.density
         fun dp(value: Int): Int = (value * density).toInt()
@@ -32,6 +39,17 @@ class WallpaperMoreSettingsActivity : AppCompatActivity() {
             setNavigationOnClickListener { finish() }
         }
         root.addView(toolbar, LinearLayout.LayoutParams.MATCH_PARENT, dp(56))
+        ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
+            val systemBars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            )
+            toolbar.updatePadding(top = systemBars.top)
+            toolbar.layoutParams = toolbar.layoutParams.apply {
+                height = dp(56) + systemBars.top
+            }
+            root.updatePadding(bottom = systemBars.bottom)
+            insets
+        }
 
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -45,6 +63,7 @@ class WallpaperMoreSettingsActivity : AppCompatActivity() {
             description = getString(R.string.wallpaper_setting_speech_bubbles_desc),
             checked = layoutPrefs.wallpaperSpeechBubblesEnabled
         ) { layoutPrefs.wallpaperSpeechBubblesEnabled = it }
+        addDurationSlider(content)
         addSwitch(
             content,
             title = getString(R.string.wallpaper_setting_bubble_pulse),
@@ -95,6 +114,57 @@ class WallpaperMoreSettingsActivity : AppCompatActivity() {
             setTextColor(0xB3FFFFFF.toInt())
             textSize = 14f
         })
+    }
+
+    private fun addDurationSlider(parent: LinearLayout) {
+        val density = resources.displayMetrics.density
+        fun dp(value: Int): Int = (value * density).toInt()
+
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, dp(10), 0, dp(14))
+        }
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        header.addView(TextView(this).apply {
+            text = getString(R.string.wallpaper_setting_bubble_duration)
+            setTextColor(0xFFFFFFFF.toInt())
+            textSize = 16f
+        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+
+        val valueLabel = TextView(this).apply {
+            text = bubbleDurationLabel(layoutPrefs.wallpaperBubbleDurationSeconds)
+            setTextColor(0xB3FFFFFF.toInt())
+            textSize = 14f
+            gravity = Gravity.END
+        }
+        header.addView(valueLabel)
+        container.addView(header)
+        container.addView(TextView(this).apply {
+            text = getString(R.string.wallpaper_setting_bubble_duration_desc)
+            setTextColor(0x99FFFFFF.toInt())
+            textSize = 12f
+            setPadding(0, dp(4), 0, dp(6))
+        })
+        container.addView(Slider(this).apply {
+            valueFrom = LayoutPreferences.WALLPAPER_BUBBLE_DURATION_MIN_SECONDS.toFloat()
+            valueTo = LayoutPreferences.WALLPAPER_BUBBLE_DURATION_MAX_SECONDS.toFloat()
+            stepSize = 1f
+            value = layoutPrefs.wallpaperBubbleDurationSeconds.toFloat()
+            contentDescription = getString(R.string.wallpaper_setting_bubble_duration)
+            addOnChangeListener { _, sliderValue, _ ->
+                val seconds = sliderValue.roundToInt()
+                layoutPrefs.wallpaperBubbleDurationSeconds = seconds
+                valueLabel.text = bubbleDurationLabel(seconds)
+            }
+        })
+        parent.addView(container)
+    }
+
+    private fun bubbleDurationLabel(seconds: Int): String {
+        return getString(R.string.wallpaper_setting_bubble_duration_value, seconds)
     }
 
     private fun addSwitch(
