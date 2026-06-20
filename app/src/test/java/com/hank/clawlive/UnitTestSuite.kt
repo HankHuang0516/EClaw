@@ -1,5 +1,6 @@
 package com.hank.clawlive
 
+import com.hank.clawlive.fcm.FcmChannelCreationTest
 import com.hank.clawlive.settings.NotificationPreferenceCatalogTest
 import com.hank.clawlive.settings.SettingsManifestResolverTest
 import org.junit.runner.RunWith
@@ -20,6 +21,7 @@ import org.junit.runners.Suite
     WallpaperWanderControllerTest::class,
     CompanionDescriptorAnimationTest::class,
     NotificationPreferenceCatalogTest::class,
-    SettingsManifestResolverTest::class
+    SettingsManifestResolverTest::class,
+    FcmChannelCreationTest::class
 )
 class UnitTestSuite
