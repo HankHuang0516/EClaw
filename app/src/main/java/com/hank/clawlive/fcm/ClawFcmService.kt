@@ -93,8 +93,17 @@ class ClawFcmService : FirebaseMessagingService() {
             return  // Don't show a notification for TTS
         }
 
+        // Keep the foreground channel consistent with the channel the backend
+        // names in its android.notification block (sendFcm hardcodes
+        // channelId="eclaw_chat" for every non-silent category). Routing
+        // kanban_done/kanban_done_auto here to CHANNEL_SYSTEM previously meant
+        // a foreground "task completed" landed on eclaw_system while the same
+        // event in the background landed on eclaw_chat — two different user
+        // toggles / importances for one event. Use CHANNEL_CHAT for these so
+        // foreground and background display identically (card_caa6307).
         val channelId = when (category) {
-            "bot_reply", "broadcast", "speak_to" -> CHANNEL_CHAT
+            "bot_reply", "broadcast", "speak_to",
+            "kanban_done", "kanban_done_auto", "scheduled" -> CHANNEL_CHAT
             "feedback_reply", "feedback_resolved" -> CHANNEL_FEEDBACK
             else -> CHANNEL_SYSTEM
         }

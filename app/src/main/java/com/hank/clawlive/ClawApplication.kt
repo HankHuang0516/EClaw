@@ -7,6 +7,7 @@ import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.debug.CrashLogManager
+import com.hank.clawlive.fcm.ClawFcmService
 import com.hank.clawlive.debug.FileTimberTree
 import com.hank.clawlive.integrity.PlayIntegrityReporter
 import kotlinx.coroutines.CoroutineScope
@@ -53,6 +54,22 @@ class ClawApplication : Application() {
 
         // 5. Upload any pending crash logs from previous session
         uploadPendingCrashLogs()
+
+        // 5b. Create notification channels at process startup (card_caa6307).
+        // CRITICAL for "task completed" pushes: the backend sends a HYBRID FCM
+        // message (android.notification block + data block) with
+        // channelId="eclaw_chat". When the app is backgrounded or killed, the
+        // Android system tray auto-displays the android.notification block
+        // WITHOUT calling ClawFcmService.onMessageReceived(). On Android O+,
+        // posting to a channel that does NOT exist at delivery time is silently
+        // dropped — no error, no display. An FCM push can cold-start the app
+        // process (which is why the token re-registers below), running
+        // Application.onCreate but NOT MainActivity.onCreate, where channels
+        // used to be created exclusively. That left "eclaw_chat" missing on the
+        // exact code path the system uses to display the notification → silent.
+        // createNotificationChannel is idempotent, so MainActivity's call (kept
+        // for safety) is a harmless no-op once this has run.
+        ClawFcmService.createChannels(this)
 
         // 6. Self-heal FCM token registration on every launch.
         // onNewToken() only fires when the token changes (install / clear-data / reinstall).
