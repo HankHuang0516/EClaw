@@ -2,6 +2,7 @@ package com.hank.clawlive.data.local
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.provider.Settings
 
 /**
  * Entity Layout Types for wallpaper positioning
@@ -29,6 +30,7 @@ enum class UsageOverlayPosition {
  */
 class LayoutPreferences private constructor(context: Context) {
 
+    private val appContext: Context = context.applicationContext
     private val prefs: SharedPreferences = context.getSharedPreferences(
         PREFS_NAME, Context.MODE_PRIVATE
     )
@@ -293,7 +295,7 @@ class LayoutPreferences private constructor(context: Context) {
      * or entity settings for other devices.
      */
     var wallpaperWalkingEnabled: Boolean
-        get() = prefs.getBoolean(KEY_WALLPAPER_WALKING_ENABLED, false)
+        get() = prefs.getBoolean(KEY_WALLPAPER_WALKING_ENABLED, true) && !isAnimatorDurationDisabled()
         set(value) {
             prefs.edit().putBoolean(KEY_WALLPAPER_WALKING_ENABLED, value).apply()
         }
@@ -428,6 +430,18 @@ class LayoutPreferences private constructor(context: Context) {
             showFiveHour -> RESET_WINDOW_5H
             showWeekly -> RESET_WINDOW_WEEKLY
             else -> RESET_WINDOW_OFF
+        }
+    }
+
+    private fun isAnimatorDurationDisabled(): Boolean {
+        return try {
+            Settings.Global.getFloat(
+                appContext.contentResolver,
+                Settings.Global.ANIMATOR_DURATION_SCALE,
+                1f
+            ) == 0f
+        } catch (e: Exception) {
+            false
         }
     }
 

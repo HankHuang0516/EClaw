@@ -2,6 +2,7 @@ package com.hank.clawlive
 
 import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
+import com.hank.clawlive.engine.MotionState
 import com.hank.clawlive.engine.WallpaperWanderController
 import kotlin.random.Random
 import org.junit.Assert.assertEquals
@@ -68,5 +69,50 @@ class WallpaperWanderControllerTest {
     @Test
     fun walkingStateConstantMatchesPetdxDescriptorStateName() {
         assertEquals("WALKING", WallpaperWanderController.WALKING_STATE_ASSET)
+    }
+
+    @Test
+    fun motionControllerTargetMovesInScreenPercentAndStopsOnArrival() {
+        val controller = WallpaperWanderController(random = Random(31))
+        val entity = EntityStatus(entityId = 5, state = CharacterState.IDLE)
+        val base = listOf(500f to 500f)
+        var arrived = false
+
+        controller.positionsFor(base, listOf(entity), 1000f, 1000f, enabled = true, nowMs = 0L)
+        controller.setTarget(5, 0.8f, 0.5f) { arrived = true }
+
+        var positions = base
+        repeat(4) { step ->
+            positions = controller.positionsFor(
+                base,
+                listOf(entity),
+                1000f,
+                1000f,
+                enabled = true,
+                nowMs = (step + 1) * 1000L
+            )
+        }
+
+        assertTrue(arrived)
+        assertEquals(MotionState.STOPPED, controller.motionState(5))
+        assertEquals(800f, positions[0].first, 0.001f)
+        assertEquals(500f, positions[0].second, 0.001f)
+    }
+
+    @Test
+    fun stopAndResumeExposeMotionStateForFollowOnCards() {
+        val controller = WallpaperWanderController(random = Random(37))
+        val entity = EntityStatus(entityId = 6, state = CharacterState.IDLE)
+        val base = listOf(500f to 500f)
+
+        controller.positionsFor(base, listOf(entity), 1000f, 1000f, enabled = true, nowMs = 0L)
+        controller.stop(6)
+
+        assertEquals(MotionState.STOPPED, controller.motionState(6))
+        assertFalse(controller.isWalking(6))
+
+        controller.resumeWander(6)
+
+        assertEquals(MotionState.WANDERING, controller.motionState(6))
     }
 }

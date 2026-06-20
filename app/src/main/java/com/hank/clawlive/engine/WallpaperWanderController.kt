@@ -1,32 +1,53 @@
 package com.hank.clawlive.engine
 
+import android.graphics.PointF
 import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
 import kotlin.math.hypot
+import kotlin.math.min
 import kotlin.random.Random
+
+interface MotionController {
+    fun position(entityId: Int): PointF
+    fun motionState(entityId: Int): MotionState
+    fun setTarget(entityId: Int, xPct: Float, yPct: Float, onArrive: (() -> Unit)? = null)
+    fun stop(entityId: Int)
+    fun clearStop(entityId: Int)
+    fun resumeWander(entityId: Int)
+}
+
+enum class MotionState {
+    WANDERING,
+    MOVING_TO_TARGET,
+    STOPPED,
+    SLEEPING
+}
 
 /**
  * Lightweight per-device wallpaper wander engine.
  *
- * The controller keeps only in-memory pixel positions/targets; the persisted
+ * The controller keeps only in-memory screen-percent positions/targets; the persisted
  * switch lives in LayoutPreferences so the feature remains device-level, not
  * per-entity. It is deterministic enough for tests via injectable time/random,
  * but cheap enough for the wallpaper draw loop (O(entityCount), no allocations
  * beyond the returned position list).
  */
 class WallpaperWanderController(
-    private val speedPxPerSecond: Float = DEFAULT_SPEED_PX_PER_SECOND,
+    private val wanderSpeedPctPerSecond: Float = DEFAULT_WANDER_SPEED_PCT_PER_SECOND,
+    private val targetSpeedPctPerSecond: Float = DEFAULT_TARGET_SPEED_PCT_PER_SECOND,
     private val random: Random = Random.Default
-) {
+) : MotionController {
     private data class WanderState(
-        var x: Float,
-        var y: Float,
-        var targetX: Float,
-        var targetY: Float,
+        var xPct: Float,
+        var yPct: Float,
+        var targetXPct: Float,
+        var targetYPct: Float,
         var lastUpdateMs: Long,
         var idleUntilMs: Long,
         var retargetAtMs: Long,
-        var moving: Boolean
+        var moving: Boolean,
+        var motionState: MotionState,
+        var onArrive: (() -> Unit)? = null
     )
 
     private val states = mutableMapOf<Int, WanderState>()
@@ -36,6 +57,47 @@ class WallpaperWanderController(
     }
 
     fun isWalking(entityId: Int): Boolean = states[entityId]?.moving == true
+
+    override fun position(entityId: Int): PointF {
+        val state = states[entityId] ?: return PointF(0.5f, 0.5f)
+        return PointF(state.xPct, state.yPct)
+    }
+
+    override fun motionState(entityId: Int): MotionState {
+        return states[entityId]?.motionState ?: MotionState.STOPPED
+    }
+
+    override fun setTarget(entityId: Int, xPct: Float, yPct: Float, onArrive: (() -> Unit)?) {
+        val state = commandState(entityId)
+        state.targetXPct = xPct.coerceIn(MIN_X_PCT, MAX_X_PCT)
+        state.targetYPct = yPct.coerceIn(MIN_Y_PCT, MAX_Y_PCT)
+        state.motionState = MotionState.MOVING_TO_TARGET
+        state.moving = false
+        state.onArrive = onArrive
+    }
+
+    override fun stop(entityId: Int) {
+        val state = commandState(entityId)
+        state.motionState = MotionState.STOPPED
+        state.moving = false
+        state.onArrive = null
+    }
+
+    override fun clearStop(entityId: Int) {
+        val state = states[entityId] ?: return
+        if (state.motionState == MotionState.STOPPED) {
+            state.motionState = MotionState.WANDERING
+            state.idleUntilMs = 0L
+        }
+    }
+
+    override fun resumeWander(entityId: Int) {
+        val state = commandState(entityId)
+        state.motionState = MotionState.WANDERING
+        state.moving = false
+        state.idleUntilMs = 0L
+        state.onArrive = null
+    }
 
     fun positionsFor(
         basePositions: List<Pair<Float, Float>>,
@@ -57,8 +119,9 @@ class WallpaperWanderController(
             val base = basePositions.getOrNull(index) ?: (width / 2f to height / 2f)
             if (entity.state == CharacterState.SLEEPING) {
                 val state = stateFor(entity.entityId, base, width, height, nowMs)
+                state.motionState = MotionState.SLEEPING
                 state.moving = false
-                state.x to state.y
+                state.xPct * width to state.yPct * height
             } else {
                 advance(entity.entityId, base, width, height, nowMs)
             }
@@ -73,38 +136,50 @@ class WallpaperWanderController(
         nowMs: Long
     ): Pair<Float, Float> {
         val state = stateFor(entityId, base, width, height, nowMs)
+        if (state.motionState == MotionState.SLEEPING) {
+            state.motionState = MotionState.WANDERING
+            state.idleUntilMs = 0L
+        }
+
         val dtSeconds = ((nowMs - state.lastUpdateMs).coerceIn(0L, 1000L)) / 1000f
         state.lastUpdateMs = nowMs
 
+        when (state.motionState) {
+            MotionState.STOPPED,
+            MotionState.SLEEPING -> {
+                state.moving = false
+                return state.xPct * width to state.yPct * height
+            }
+            MotionState.MOVING_TO_TARGET -> {
+                val arrived = moveTowardTarget(state, width, height, targetSpeedPctPerSecond, dtSeconds)
+                if (arrived) {
+                    state.motionState = MotionState.STOPPED
+                    val callback = state.onArrive
+                    state.onArrive = null
+                    callback?.invoke()
+                }
+                return state.xPct * width to state.yPct * height
+            }
+            MotionState.WANDERING -> Unit
+        }
+
         if (nowMs < state.idleUntilMs) {
             state.moving = false
-            return state.x to state.y
+            return state.xPct * width to state.yPct * height
         }
 
         if (nowMs >= state.retargetAtMs) {
-            retarget(state, width, height, nowMs)
+            retarget(state, nowMs)
         }
 
-        val dx = state.targetX - state.x
-        val dy = state.targetY - state.y
-        val distance = hypot(dx, dy)
-        val step = speedPxPerSecond * dtSeconds
-
-        if (distance <= step || distance < ARRIVAL_EPSILON_PX) {
-            state.x = state.targetX
-            state.y = state.targetY
+        if (moveTowardTarget(state, width, height, wanderSpeedPctPerSecond, dtSeconds)) {
             state.moving = false
             state.idleUntilMs = nowMs + randomLong(0L, MAX_IDLE_MS)
-            retarget(state, width, height, state.idleUntilMs)
-        } else if (step > 0f) {
-            state.x += dx / distance * step
-            state.y += dy / distance * step
-            state.moving = true
+            retarget(state, state.idleUntilMs)
         }
 
-        state.x = state.x.coerceIn(minX(width), maxX(width))
-        state.y = state.y.coerceIn(minY(height), maxY(height))
-        return state.x to state.y
+        coerceToSafeBounds(state)
+        return state.xPct * width to state.yPct * height
     }
 
     private fun stateFor(
@@ -114,32 +189,80 @@ class WallpaperWanderController(
         height: Float,
         nowMs: Long
     ): WanderState {
-        return states.getOrPut(entityId) {
-            val x = base.first.coerceIn(minX(width), maxX(width))
-            val y = base.second.coerceIn(minY(height), maxY(height))
-            val target = randomTarget(width, height)
+        val state = states.getOrPut(entityId) {
+            val x = (base.first / width).coerceIn(MIN_X_PCT, MAX_X_PCT)
+            val y = (base.second / height).coerceIn(MIN_Y_PCT, MAX_Y_PCT)
+            val target = randomTarget()
             WanderState(
-                x = x,
-                y = y,
-                targetX = target.first,
-                targetY = target.second,
+                xPct = x,
+                yPct = y,
+                targetXPct = target.first,
+                targetYPct = target.second,
                 lastUpdateMs = nowMs,
                 idleUntilMs = nowMs + randomLong(0L, MAX_IDLE_MS),
                 retargetAtMs = nowMs + randomLong(MIN_RETARGET_MS, MAX_RETARGET_MS),
-                moving = false
+                moving = false,
+                motionState = MotionState.WANDERING
+            )
+        }
+        coerceToSafeBounds(state)
+        return state
+    }
+
+    private fun commandState(entityId: Int): WanderState {
+        return states.getOrPut(entityId) {
+            WanderState(
+                xPct = 0.5f,
+                yPct = 0.5f,
+                targetXPct = 0.5f,
+                targetYPct = 0.5f,
+                lastUpdateMs = 0L,
+                idleUntilMs = 0L,
+                retargetAtMs = 0L,
+                moving = false,
+                motionState = MotionState.STOPPED
             )
         }
     }
 
-    private fun retarget(state: WanderState, width: Float, height: Float, fromMs: Long) {
-        val target = randomTarget(width, height)
-        state.targetX = target.first
-        state.targetY = target.second
+    private fun moveTowardTarget(
+        state: WanderState,
+        width: Float,
+        height: Float,
+        speedPctPerSecond: Float,
+        dtSeconds: Float
+    ): Boolean {
+        val dxPx = (state.targetXPct - state.xPct) * width
+        val dyPx = (state.targetYPct - state.yPct) * height
+        val distancePx = hypot(dxPx, dyPx)
+        val stepPx = speedPctPerSecond * min(width, height) * dtSeconds
+
+        if (distancePx <= stepPx || distancePx < ARRIVAL_EPSILON_PX) {
+            state.xPct = state.targetXPct
+            state.yPct = state.targetYPct
+            state.moving = false
+            return true
+        }
+
+        if (stepPx > 0f) {
+            val fraction = (stepPx / distancePx).coerceAtMost(1f)
+            state.xPct += (state.targetXPct - state.xPct) * fraction
+            state.yPct += (state.targetYPct - state.yPct) * fraction
+            state.moving = true
+        }
+        coerceToSafeBounds(state)
+        return false
+    }
+
+    private fun retarget(state: WanderState, fromMs: Long) {
+        val target = randomTarget()
+        state.targetXPct = target.first
+        state.targetYPct = target.second
         state.retargetAtMs = fromMs + randomLong(MIN_RETARGET_MS, MAX_RETARGET_MS)
     }
 
-    private fun randomTarget(width: Float, height: Float): Pair<Float, Float> {
-        return randomFloat(minX(width), maxX(width)) to randomFloat(minY(height), maxY(height))
+    private fun randomTarget(): Pair<Float, Float> {
+        return randomFloat(MIN_X_PCT, MAX_X_PCT) to randomFloat(MIN_Y_PCT, MAX_Y_PCT)
     }
 
     private fun randomFloat(min: Float, max: Float): Float {
@@ -152,17 +275,22 @@ class WallpaperWanderController(
         return min + random.nextLong(max - min + 1)
     }
 
-    private fun minX(width: Float): Float = width * 0.08f
-    private fun maxX(width: Float): Float = width * 0.92f
-    private fun minY(height: Float): Float = height * 0.12f
-    private fun maxY(height: Float): Float = height * 0.82f
+    private fun coerceToSafeBounds(state: WanderState) {
+        state.xPct = state.xPct.coerceIn(MIN_X_PCT, MAX_X_PCT)
+        state.yPct = state.yPct.coerceIn(MIN_Y_PCT, MAX_Y_PCT)
+    }
 
     companion object {
-        const val DEFAULT_SPEED_PX_PER_SECOND = 10f
+        const val DEFAULT_WANDER_SPEED_PCT_PER_SECOND = 0.04f
+        const val DEFAULT_TARGET_SPEED_PCT_PER_SECOND = 0.12f
         private const val ARRIVAL_EPSILON_PX = 1f
         private const val MAX_IDLE_MS = 3000L
         private const val MIN_RETARGET_MS = 3000L
         private const val MAX_RETARGET_MS = 8000L
+        private const val MIN_X_PCT = 0.08f
+        private const val MAX_X_PCT = 0.92f
+        private const val MIN_Y_PCT = 0.12f
+        private const val MAX_Y_PCT = 0.82f
         const val WALKING_STATE_ASSET = "WALKING"
     }
 }
