@@ -26,8 +26,28 @@
  * automatically (native if its version qualifies, else WebView fallback) with
  * no app store release.
  *
- * Stage 2 (apps consume this manifest — needs a build) and Stage 3 (full
- * dynamic schema registry incl. field-level declarations) are follow-ups.
+ * Stage 2 (apps consume this manifest — needs a build) is a follow-up.
+ *
+ * STAGE 3 (this slice — backend only, NO app build): the JSON-schema-lite
+ * FIELD REGISTRY. Each feature may declare a `fields` array (order-preserving)
+ * of field descriptors so an app can render the *contents* of a settings screen
+ * — not just whether it is native — directly from the manifest. Each field is:
+ *   {
+ *     key,                    // stable per-feature field id, never renamed
+ *     type,                   // boolean | string | number | enum | multi_enum | action
+ *     control,                // UI hint: switch | slider | text | select | multiselect | button
+ *     label: {fallback, i18nKey},   // Globe-user: i18nKey is canonical, fallback is the EN default
+ *     help:  {fallback, i18nKey},   // optional, same shape
+ *     scope,                  // device | entity | user — what the value is keyed to
+ *     default,                // default value (omit for type:'action')
+ *     validation,             // type-specific: number {min,max,step,unit};
+ *                             //   enum/multi_enum {options:[{value,label}]}; string {maxLength};
+ *                             //   any {required}
+ *   }
+ * Each feature that ships a field registry also carries `schemaVersion` (int)
+ * so consumers can detect breaking field-format changes independently of the
+ * feature set. `fields` is version-gated exactly like the rest of the manifest
+ * (it is emitted verbatim; the version downgrade only touches `native`).
  *
  * Pure function: no I/O, no globals, no device/entity/locale hardcoding.
  */
@@ -65,6 +85,10 @@ function portalFocus(key) {
  *         channel_api (Android read-only → "partial"), notifications
  *         (iOS fewer categories → "partial").
  */
+// JSON-schema-lite field-registry version. Bump on any breaking change to the
+// `fields` descriptor format (not on simply adding/removing a field).
+const FIELD_SCHEMA_VERSION = 1;
+
 const FEATURES = [
     {
         key: 'account_identity',
@@ -72,6 +96,22 @@ const FEATURES = [
         enabled: true,
         native: { android: true, ios: true },
         minAppVersion: { android: '1.0.0', ios: '1.0.0' },
+        schemaVersion: FIELD_SCHEMA_VERSION,
+        fields: [
+            {
+                key: 'user_display_name',
+                type: 'string',
+                control: 'text',
+                label: { fallback: 'My Display Name', i18nKey: 'settings_user_display_name_title' },
+                help: {
+                    fallback: 'The name shown in chat headers in place of "Device Owner". Leave blank to use the default.',
+                    i18nKey: 'settings_user_display_name_desc',
+                },
+                scope: 'user',
+                default: '',
+                validation: { required: false, maxLength: 64 },
+            },
+        ],
     },
     {
         key: 'channel_api',
@@ -116,6 +156,29 @@ const FEATURES = [
         enabled: true,
         native: { android: true, ios: true },
         minAppVersion: { android: '1.0.0', ios: '1.0.0' },
+        schemaVersion: FIELD_SCHEMA_VERSION,
+        fields: [
+            {
+                key: 'avatar_size',
+                type: 'enum',
+                control: 'select',
+                label: { fallback: 'Avatar Size', i18nKey: 'settings_chat_avatar_size' },
+                help: {
+                    fallback: 'Applies to chat list, chat header, and message avatars',
+                    i18nKey: 'settings_chat_avatar_size_desc',
+                },
+                scope: 'device',
+                default: 'medium',
+                validation: {
+                    required: true,
+                    options: [
+                        { value: 'small', label: { fallback: 'Small', i18nKey: 'settings_chat_avatar_size_small' } },
+                        { value: 'medium', label: { fallback: 'Medium', i18nKey: 'settings_chat_avatar_size_medium' } },
+                        { value: 'large', label: { fallback: 'Large', i18nKey: 'settings_chat_avatar_size_large' } },
+                    ],
+                },
+            },
+        ],
     },
     {
         key: 'rental_management',
@@ -133,6 +196,91 @@ const FEATURES = [
         // "partial"; Android has the full set.
         native: { android: true, ios: 'partial' },
         minAppVersion: { android: '1.0.0', ios: '1.0.0' },
+        schemaVersion: FIELD_SCHEMA_VERSION,
+        // Per-category notification preference toggles (settings.html notification
+        // prefs section, persisted per-device). Each maps to a real notif_pref_* key.
+        fields: [
+            {
+                key: 'bot_reply',
+                type: 'boolean',
+                control: 'switch',
+                label: { fallback: 'Bot Replies', i18nKey: 'notif_pref_bot_reply' },
+                scope: 'device',
+                default: true,
+                validation: { required: false },
+            },
+            {
+                key: 'broadcast',
+                type: 'boolean',
+                control: 'switch',
+                label: { fallback: 'Broadcasts', i18nKey: 'notif_pref_broadcast' },
+                scope: 'device',
+                default: true,
+                validation: { required: false },
+            },
+            {
+                key: 'speak_to',
+                type: 'boolean',
+                control: 'switch',
+                label: { fallback: 'Entity Messages', i18nKey: 'notif_pref_speak_to' },
+                scope: 'device',
+                default: true,
+                validation: { required: false },
+            },
+            {
+                key: 'feedback',
+                type: 'boolean',
+                control: 'switch',
+                label: { fallback: 'Feedback Updates', i18nKey: 'notif_pref_feedback' },
+                scope: 'device',
+                default: true,
+                validation: { required: false },
+            },
+            {
+                key: 'todo',
+                type: 'boolean',
+                control: 'switch',
+                label: { fallback: 'TODO Completed', i18nKey: 'notif_pref_todo' },
+                scope: 'device',
+                default: true,
+                validation: { required: false },
+            },
+            {
+                key: 'scheduled',
+                type: 'boolean',
+                control: 'switch',
+                label: { fallback: 'Scheduled Messages', i18nKey: 'notif_pref_scheduled' },
+                scope: 'device',
+                default: true,
+                validation: { required: false },
+            },
+            {
+                key: 'user_mention',
+                type: 'boolean',
+                control: 'switch',
+                label: { fallback: '@Mention pings', i18nKey: 'notif_pref_user_mention' },
+                help: {
+                    fallback: 'Get pinged when someone @-mentions you in chat.',
+                    i18nKey: 'notif_pref_user_mention_help',
+                },
+                scope: 'device',
+                default: true,
+                validation: { required: false },
+            },
+            {
+                key: 'rich_card',
+                type: 'boolean',
+                control: 'switch',
+                label: { fallback: 'Rich-card questions', i18nKey: 'notif_pref_rich_card' },
+                help: {
+                    fallback: 'Notify when a bot asks a question via an interactive rich card.',
+                    i18nKey: 'notif_pref_rich_card_help',
+                },
+                scope: 'device',
+                default: true,
+                validation: { required: false },
+            },
+        ],
     },
     {
         key: 'developer_broadcast',
@@ -156,6 +304,37 @@ const FEATURES = [
         // Web-only configuration surface today.
         native: { android: false, ios: false },
         minAppVersion: { android: '0.0.0', ios: '0.0.0' },
+        schemaVersion: FIELD_SCHEMA_VERSION,
+        // Real number settings (settings.html: <input type="number"> with
+        // min/max/step). batch_size is device-wide; interval is stored in minutes.
+        fields: [
+            {
+                key: 'kanban_nudge_batch_size',
+                type: 'number',
+                control: 'slider',
+                label: { fallback: 'Cards per cycle', i18nKey: 'kanban_nudge_batch_label' },
+                help: {
+                    fallback: 'Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity.',
+                    i18nKey: 'kanban_nudge_batch_help',
+                },
+                scope: 'device',
+                default: 5,
+                validation: { required: false, min: 1, max: 20, step: 1, unit: 'cards' },
+            },
+            {
+                key: 'kanban_nudge_interval_minutes',
+                type: 'number',
+                control: 'slider',
+                label: { fallback: 'Interval', i18nKey: 'kanban_nudge_interval_label' },
+                help: {
+                    fallback: 'Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set.',
+                    i18nKey: 'kanban_nudge_interval_help',
+                },
+                scope: 'device',
+                default: 180,
+                validation: { required: false, min: 0, max: 1440, step: 1, unit: 'minutes' },
+            },
+        ],
     },
     {
         key: 'passive_health',
@@ -209,6 +388,23 @@ const FEATURES = [
         // HIGH drift: missing from BOTH native apps → web fallback only.
         native: { android: false, ios: false },
         minAppVersion: { android: '0.0.0', ios: '0.0.0' },
+        schemaVersion: FIELD_SCHEMA_VERSION,
+        // No stored value — a single destructive action that mints a new device
+        // secret. type:'action' fields carry no `default`.
+        fields: [
+            {
+                key: 'rotate_device_secret',
+                type: 'action',
+                control: 'button',
+                label: { fallback: 'Rotate Device Secret', i18nKey: 'settings_rotate_device_secret' },
+                help: {
+                    fallback: 'Generate a new Device Secret if the current one has leaked. Other sessions will need the new value to sign in.',
+                    i18nKey: 'settings_rotate_device_secret_hint',
+                },
+                scope: 'device',
+                validation: { confirm: true },
+            },
+        ],
     },
     {
         key: 'switch_device',
@@ -217,6 +413,40 @@ const FEATURES = [
         // HIGH drift: missing from BOTH native apps → web fallback only.
         native: { android: false, ios: false },
         minAppVersion: { android: '0.0.0', ios: '0.0.0' },
+        schemaVersion: FIELD_SCHEMA_VERSION,
+        // Two text inputs (the new credentials) + a confirm action.
+        fields: [
+            {
+                key: 'device_id',
+                type: 'string',
+                control: 'text',
+                label: { fallback: 'Device ID', i18nKey: 'settings_device_id' },
+                scope: 'device',
+                default: '',
+                validation: { required: true },
+            },
+            {
+                key: 'device_secret',
+                type: 'string',
+                control: 'text',
+                label: { fallback: 'Device Secret', i18nKey: 'settings_device_secret' },
+                scope: 'device',
+                default: '',
+                validation: { required: true },
+            },
+            {
+                key: 'switch_device',
+                type: 'action',
+                control: 'button',
+                label: { fallback: 'Switch', i18nKey: 'settings_switch_device_confirm' },
+                help: {
+                    fallback: 'Sign this browser into a different Device ID. Useful if you have a second admin account with its own entities.',
+                    i18nKey: 'settings_switch_device_hint',
+                },
+                scope: 'device',
+                validation: { confirm: true },
+            },
+        ],
     },
     {
         key: 'logout',
@@ -281,7 +511,7 @@ function buildSettingsManifest(appVersion, platform) {
 
     const features = FEATURES.map((f) => {
         const native = resolveNative(f, appVersion, plat);
-        return {
+        const entry = {
             key: f.key,
             name: f.name,
             enabled: f.enabled,
@@ -291,13 +521,24 @@ function buildSettingsManifest(appVersion, platform) {
             webFallback: portalFocus(f.key),
             minAppVersion: (f.minAppVersion && f.minAppVersion[plat]) || '0.0.0',
         };
+        // Stage-3 JSON-schema-lite field registry. Emitted verbatim (not affected
+        // by the native version gate). `fields` is always an array (empty for
+        // features that have no settable fields yet) and `schemaVersion` is always
+        // present so consumers can rely on a uniform shape.
+        entry.schemaVersion = f.schemaVersion || FIELD_SCHEMA_VERSION;
+        entry.fields = Array.isArray(f.fields) ? f.fields : [];
+        return entry;
     });
 
     return {
         platform: plat,
         appVersion: appVersion || null,
         generatedAt: new Date().toISOString(),
+        // `stage` stays 1 for backward compatibility (Stage-2 apps key off it).
+        // The field-registry layer advertises itself via `schemaVersion` so a
+        // consumer can detect the Stage-3 field format independently.
         stage: 1,
+        schemaVersion: FIELD_SCHEMA_VERSION,
         features,
     };
 }
@@ -307,6 +548,7 @@ module.exports = {
     // exported for tests / Stage-2 reuse
     FEATURES,
     SUPPORTED_PLATFORMS,
+    FIELD_SCHEMA_VERSION,
     compareVersions,
     portalFocus,
 };

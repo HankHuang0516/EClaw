@@ -162,10 +162,67 @@ Feature `companion_petdx` declared `native:{android:true}`, `minAppVersion:{andr
 - **Stage 2 (needs an app build):** Android `SettingsActivity.kt` and the iOS
   settings screen **consume** `/api/settings-manifest` at launch and render entries
   from it (native vs WebView per `native`). Tracked as a follow-up card.
-- **Stage 3 (needs a build):** Native implementation of the HIGH-drift features
-  `rotate_secret` + `switch_device`, plus a **full dynamic schema registry**
-  (field-level declarations, so even the contents of a native screen are
-  manifest-driven). Tracked as a follow-up card.
+- **Stage 3 — field registry (backend-only slice, SHIPPED, no app build):** a
+  **JSON-schema-lite field registry** embedded in the same `FEATURES` table and
+  returned by the existing `GET /api/settings-manifest` (no separate
+  `/api/settings-schema` endpoint — the manifest stays the single source of
+  truth). Each feature carries `schemaVersion` (int) and an order-preserving
+  `fields` array; the envelope carries a top-level `schemaVersion` too. See §6.
+- **Stage 3 — native (needs a build):** Native implementation of the HIGH-drift
+  features `rotate_secret` + `switch_device`, plus apps rendering native screen
+  *contents* from the field registry above. Tracked as a follow-up card.
 
 `/api/version`'s hardcoded feature lists should eventually be derived from this
 manifest (out of scope for Stage 1).
+
+---
+
+## 6. Field registry (Stage-3 backend slice)
+
+Each feature MAY declare an order-preserving `fields` array so an app can render
+the *contents* of its settings screen from the manifest, not just whether it is
+native. Every feature also carries `schemaVersion` (int), and the manifest
+envelope carries a top-level `schemaVersion` (`FIELD_SCHEMA_VERSION`, currently
+`1`). `fields` is emitted verbatim on every platform — it is NOT affected by the
+`native` version-downgrade gate.
+
+### 6.1 Field descriptor shape
+
+```jsonc
+{
+  "key": "kanban_nudge_batch_size",   // stable per-feature field id, never renamed
+  "type": "number",                    // boolean | string | number | enum | multi_enum | action
+  "control": "slider",                 // switch | slider | text | select | multiselect | button
+  "label": { "fallback": "Cards per cycle", "i18nKey": "kanban_nudge_batch_label" },
+  "help":  { "fallback": "...", "i18nKey": "kanban_nudge_batch_help" }, // optional, same shape
+  "scope": "device",                   // device | entity | user
+  "default": 5,                        // default value — OMITTED for type:"action"
+  "validation": { "min": 1, "max": 20, "step": 1, "unit": "cards" }
+}
+```
+
+- **label / help** are always `{fallback, i18nKey}` (Globe-user): `i18nKey` is the
+  canonical key into `backend/public/shared/i18n.js`, `fallback` is the EN default
+  an app shows if the key is missing. Reuse existing i18n keys.
+- **validation** is type-specific:
+  - `number` → `{min, max, step, unit}` (+ optional `required`).
+  - `enum` / `multi_enum` → `{options:[{value, label:{fallback,i18nKey}}]}`.
+  - `string` → `{maxLength}` (+ optional `required`).
+  - `action` → no `default`; may carry `{confirm:true}` for destructive ops.
+  - any → `{required}`.
+
+### 6.2 Features with a field registry today
+
+| Feature | Fields | Notes |
+|---------|--------|-------|
+| `account_identity` | `user_display_name` (string, user scope, maxLength 64) | |
+| `chat_prefs` | `avatar_size` (enum: small/medium/large) | |
+| `notifications` | 8 boolean switches (`bot_reply`…`rich_card`) | per-category toggles |
+| `kanban_nudge` | `kanban_nudge_batch_size`, `kanban_nudge_interval_minutes` (number) | min/max/step/unit |
+| `rotate_secret` | `rotate_device_secret` (action, confirm) | HIGH-drift |
+| `switch_device` | `device_id`, `device_secret` (string, required) + `switch_device` (action) | HIGH-drift |
+
+Features with no settable fields yet still emit `fields: []` + `schemaVersion` for
+a uniform shape. Adding a field = one targeted edit to the `FEATURES` entry; reuse
+an existing i18n key or add new EN+zh-TW+zh-CN keys via
+`backend/scripts/i18n-insert-locale-keys.js`.
