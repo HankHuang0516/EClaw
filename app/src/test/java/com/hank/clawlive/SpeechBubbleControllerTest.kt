@@ -97,6 +97,23 @@ class SpeechBubbleControllerTest {
         assertTrue("flipped bubble sits below the sprite center", placement.anchorYPct > 0.02f)
     }
 
+    @Test
+    fun bubbleFlipsBeforeItGetsPinnedToTopGutter() {
+        val controller = SpeechBubbleController()
+        controller.show(entityId = 15, text = "top gutter", nowMs = 0L)
+
+        val placement = controller.placementFor(
+            entityId = 15,
+            entityXPct = 0.35f,
+            entityYPct = 0.14f,
+            spriteHeightPct = 0.10f,
+            nowMs = 0L
+        )!!
+
+        assertTrue("top gutter should flip before layout pins bubble to screen edge", placement.flippedBelow)
+        assertTrue(placement.anchorYPct > 0.14f)
+    }
+
     /** §5.3 — TTL scales with message length, capped at the default max. */
     @Test
     fun ttlScalesWithMessageLengthAndCaps() {

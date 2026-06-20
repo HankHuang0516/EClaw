@@ -127,7 +127,7 @@ class SpeechBubbleController(
         val halfSprite = spriteHeightPct * 0.5f
         // §5.1 anchor: above the sprite top by `gap`. §5.4: flip below if too near top.
         val topAnchorY = entityYPct - halfSprite - gapPctOfHeight
-        val flippedBelow = topAnchorY < gapPctOfHeight
+        val flippedBelow = topAnchorY < TOP_EDGE_FLIP_THRESHOLD_PCT
         val anchorY = if (flippedBelow) {
             entityYPct + halfSprite + gapPctOfHeight
         } else {
@@ -174,5 +174,7 @@ class SpeechBubbleController(
         const val DEFAULT_FADE_OUT_MS = 600L
         /** Gap above the sprite, ~ default 8dp expressed as a small fraction of height. */
         const val DEFAULT_GAP_PCT_OF_HEIGHT = 0.02f
+        /** Practical top gutter: flip before the bubble gets pinned to the top edge. */
+        const val TOP_EDGE_FLIP_THRESHOLD_PCT = 0.08f
     }
 }

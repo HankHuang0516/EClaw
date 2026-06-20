@@ -372,6 +372,32 @@ class WallpaperPreviewUiTest {
     }
 
     @Test
+    fun testEntityTapUsesRenderedWalkingPositionForHitTarget() {
+        ActivityScenario.launch(WallpaperPreviewActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val prefs = LayoutPreferences.getInstance(activity)
+                prefs.clearAllCustomPositions()
+                prefs.clearAllEntityScales()
+
+                val preview = activity.findViewById<WallpaperPreviewView>(R.id.wallpaperPreviewView)
+                preview.setEntities(
+                    listOf(
+                        EntityStatus(entityId = 0, name = "Walker", isBound = true)
+                    )
+                )
+
+                val renderedX = preview.width * 0.72f
+                val renderedY = preview.height * 0.46f
+                preview.setRenderedEntityCenterForTest(0, renderedX, renderedY)
+
+                dispatchTap(preview, renderedX, renderedY)
+
+                assertEquals("entity:0", preview.getLockedTargetForTest())
+            }
+        }
+    }
+
+    @Test
     fun testSafeInsetsAppliedCorrectly() {
         ActivityScenario.launch(WallpaperPreviewActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
