@@ -189,6 +189,35 @@ docker compose up -d --no-deps openclaw-f
 docker exec openclaw-project-f openclaw --version
 ```
 
+Known-good recovery for project E / entity #3 after version drift:
+
+```bash
+cd /Users/hank/Desktop/Project/openclaw-docker
+# project E intentionally reuses the same verified runtime image as project F;
+# its MiniMax default model remains controlled by project-e's mounted config.
+docker compose up -d --no-deps --force-recreate openclaw-e
+docker exec openclaw-project-e openclaw --version
+docker exec openclaw-project-e openclaw plugins list --json
+```
+
+Expected post-upgrade state for #3:
+
+- `openclaw --version` reports `OpenClaw 2026.6.1`.
+- The loaded `openclaw-channel` plugin reports version `1.3.1` and is sourced
+  from `/home/node/.openclaw/npm/projects/.../@eclaw/openclaw-channel`.
+- `session.reset` is set to an idle reset window so six-hour fleet monitors do
+  not reuse a stale, task-heavy MiniMax conversation indefinitely.
+- API ACK, model-backed reply-path, and browser UI ACK all pass for entity #3.
+
+If #3 has an older untracked side-loaded extension, `openclaw plugins update`
+will report no install record. Install the tracked npm package instead:
+
+```bash
+docker exec openclaw-project-e \
+  openclaw plugins install @eclaw/openclaw-channel@1.3.1
+docker restart openclaw-project-e
+```
+
 After the recreate, verify startup logs show the intended runtime model, for
 example `agent model: openai-codex/gpt-5.5 (thinking=xhigh, ...)`, then test
 the E-Claw browser chat UI with a fresh nonce. For #1/#3, keep
@@ -196,6 +225,13 @@ the E-Claw browser chat UI with a fresh nonce. For #1/#3, keep
 does not starve the interactive reply path while kanban cards still reach the
 model and can be executed. Use `ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS=1` only for
 agents where kanban is deliberately notification-only.
+
+API `/api/client/speak` health probes may set `from` to a source label such as
+`targeted-model-health`; the channel must not treat that label as the
+message-tool reply target. Current channel builds route replies through the
+stable E-Claw conversation id (`deviceId:entityId`) and declare an E-Claw target
+resolver so OpenClaw's `message` tool can send the reply instead of failing with
+`Unknown target`.
 
 For #1 model-health failures where the runtime eventually replies after the
 monitor has already timed out, inspect `openclaw-project-f` logs for

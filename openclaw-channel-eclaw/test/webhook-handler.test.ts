@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createWebhookHandler } from '../src/webhook-handler.js';
+import { eclawChannel } from '../src/channel.js';
 import { setPluginRuntime } from '../src/runtime.js';
 import { setClient } from '../src/outbound.js';
 
@@ -173,6 +174,56 @@ describe('createWebhookHandler', () => {
     expect(res.end).toHaveBeenCalledWith(JSON.stringify({ ok: true }));
     expect(finalizeInboundContext).toHaveBeenCalled();
     expect(dispatchReplyWithBufferedBlockDispatcher).toHaveBeenCalled();
+  });
+
+  it('uses a stable E-Claw conversation id as the reply target instead of the webhook source label', async () => {
+    const dispatchReplyWithBufferedBlockDispatcher = vi.fn().mockResolvedValue(undefined);
+    const finalizeInboundContext = vi.fn((ctx) => ctx);
+    setPluginRuntime({
+      channel: {
+        reply: {
+          finalizeInboundContext,
+          dispatchReplyWithBufferedBlockDispatcher,
+        },
+      },
+    });
+
+    const client = {
+      sendMessage: vi.fn().mockResolvedValue({ success: true }),
+    };
+    setClient('default', client as any);
+
+    const handler = createWebhookHandler('token', 'default', {});
+    const res = {
+      writeHead: vi.fn(),
+      end: vi.fn(),
+    };
+
+    await handler({
+      method: 'POST',
+      body: {
+        deviceId: 'device-1',
+        entityId: 1,
+        event: 'message',
+        from: 'targeted-doctor-model-health-1',
+        text: 'hello',
+      },
+    }, res);
+
+    expect(finalizeInboundContext).toHaveBeenCalled();
+    expect(finalizeInboundContext.mock.calls[0]?.[0]).toMatchObject({
+      From: 'device-1:1',
+      To: 'device-1:1',
+      OriginatingTo: 'device-1:1',
+      SenderName: 'targeted-doctor-model-health-1',
+      SessionKey: 'device-1:1',
+    });
+  });
+
+  it('declares an E-Claw target resolver for source labels and conversation ids', () => {
+    expect(eclawChannel.messaging.targetResolver.looksLikeId('targeted-doctor-model-health-1')).toBe(true);
+    expect(eclawChannel.messaging.targetResolver.looksLikeId('device-1:1')).toBe(true);
+    expect(eclawChannel.messaging.normalizeTarget('  device-1:1  ')).toBe('device-1:1');
   });
 
   it('continues dispatching kanban notifications when suppression is disabled', async () => {
