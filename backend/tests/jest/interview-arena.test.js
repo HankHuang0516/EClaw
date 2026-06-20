@@ -4,7 +4,7 @@
 
 // Mock pg before requiring the module
 jest.mock('pg', () => {
-    const state = { exams: [], sessions: [], leaderboard: [], feedback: [] };
+    const state = { exams: [], sessions: [], leaderboard: [], feedback: [], listings: [], interviews: [] };
     globalThis.__arenaState = state;
 
     function runQuery(sql, params = []) {
@@ -15,9 +15,13 @@ jest.mock('pg', () => {
         // INSERT exam
         if (/INSERT INTO arena_exams/i.test(norm)) {
             const row = {
-                id: 'exam-' + (state.exams.length + 1),
-                exam_token: params[0], status: 'waiting',
-                created_at: new Date(), expires_at: params[1],
+                id: params[0] || ('exam-' + (state.exams.length + 1)),
+                exam_token: params[1] || params[0],
+                listing_id: params[2] || null,
+                status: params[3] || 'waiting',
+                max_score: params[4] || 147,
+                model: null,
+                created_at: new Date(), expires_at: null,
             };
             state.exams.push(row);
             return { rows: [row], rowCount: 1 };
@@ -53,12 +57,58 @@ jest.mock('pg', () => {
         }
         // UPDATE exam
         if (/UPDATE arena_exams/i.test(norm)) {
-            return { rows: [], rowCount: 1 };
+            const e = state.exams.find(e => e.id === params[0]);
+            if (e) {
+                if (/SET status = 'completed'/i.test(norm) || /SET status = 'completed'/i.test(norm)) {
+                    e.status = 'completed';
+                    e.total_score = params[1];
+                    e.report = typeof params[2] === 'string' ? JSON.parse(params[2]) : params[2];
+                    e.completed_at = e.completed_at || new Date('2026-04-13T01:36:18Z');
+                } else if (/SET status = \$2/i.test(norm)) {
+                    e.status = params[1];
+                }
+            }
+            return { rows: [], rowCount: e ? 1 : 0 };
+        }
+        // SELECT linked exam + listing for finalize sync
+        if (/FROM arena_exams e\s+LEFT JOIN bot_listings l/i.test(norm)) {
+            const e = state.exams.find(e => e.id === params[0]);
+            if (!e) return { rows: [], rowCount: 0 };
+            const l = state.listings.find(l => l.id === e.listing_id) || {};
+            return { rows: [{ ...e, ...l, id: e.id, listing_id: e.listing_id }], rowCount: 1 };
+        }
+        // SELECT latest completed linked exam + listing for backfill
+        if (/FROM arena_exams e\s+JOIN bot_listings l/i.test(norm)) {
+            const rows = state.exams
+                .filter(e => e.status === 'completed' && e.listing_id)
+                .map(e => {
+                    const l = state.listings.find(l => l.id === e.listing_id);
+                    return l ? { ...e, ...l, id: e.id, listing_id: e.listing_id } : null;
+                })
+                .filter(Boolean);
+            return { rows, rowCount: rows.length };
         }
         // SELECT exam
         if (/FROM arena_exams WHERE id/i.test(norm)) {
             const e = state.exams.find(e => e.id === params[0]);
             return { rows: e ? [e] : [], rowCount: e ? 1 : 0 };
+        }
+        // UPDATE bot_listings from finalize sync
+        if (/UPDATE bot_listings SET/i.test(norm)) {
+            const l = state.listings.find(l => l.id === params[0]);
+            if (l) {
+                l.interview_passed = params[1];
+                l.capabilities = typeof params[2] === 'string' ? JSON.parse(params[2]) : params[2];
+                l.benchmark_score = typeof params[3] === 'string' ? JSON.parse(params[3]) : params[3];
+                l.model_detected = params[4] || l.model_detected;
+                l.last_interview_at = new Date('2026-04-13T01:36:18Z');
+            }
+            return { rows: [], rowCount: l ? 1 : 0 };
+        }
+        // INSERT bot interview audit row
+        if (/INSERT INTO bot_interviews/i.test(norm)) {
+            state.interviews.push({ listing_id: params[0], passed: params[3], score: params[4] });
+            return { rows: [], rowCount: 1 };
         }
         // SELECT sessions for exam
         if (/FROM arena_sessions WHERE exam_id/i.test(norm)) {
@@ -394,7 +444,8 @@ describe('interview-arena: API endpoints', () => {
             },
         },
     };
-    const arenaModule = arenaFactory({ serverLog: () => {}, io: null, devices: fakeDevices });
+    const saveDeviceData = jest.fn(async () => {});
+    const arenaModule = arenaFactory({ serverLog: () => {}, io: null, devices: fakeDevices, saveDeviceData });
     const app = express();
     app.use(express.json());
     app.use('/api/arena', arenaModule.router);
@@ -404,6 +455,10 @@ describe('interview-arena: API endpoints', () => {
         globalThis.__arenaState.sessions = [];
         globalThis.__arenaState.leaderboard = [];
         globalThis.__arenaState.feedback = [];
+        globalThis.__arenaState.listings = [];
+        globalThis.__arenaState.interviews = [];
+        fakeDevices['dev-alpha'].entities[1] = { isBound: true, botSecret: 'bot-secret-macf', identity: { public: { description: 'Mac_F' } }, agentCard: { description: 'Mac_F' } };
+        saveDeviceData.mockClear();
     });
 
     test('POST /api/arena/exam creates exam with 12 sessions', async () => {
@@ -412,6 +467,76 @@ describe('interview-arena: API endpoints', () => {
         expect(res.body.success).toBe(true);
         expect(res.body.exam.examToken).toBeTruthy();
         expect(res.body.sessions).toHaveLength(12);
+    });
+
+    test('POST /api/arena/exam/:id/finalize syncs linked listing result to owner namecard without leaderboard submit', async () => {
+        globalThis.__arenaState.listings.push({
+            id: 'listing-macf',
+            owner_device_id: 'dev-alpha',
+            owner_entity_id: 1,
+            interview_passed: false,
+        });
+        globalThis.__arenaState.exams.push({
+            id: 'exam-linked',
+            listing_id: 'listing-macf',
+            model: 'minimax-portal/MiniMax-M2.7',
+            status: 'active',
+            max_score: MAX_TOTAL_SCORE,
+            created_at: new Date('2026-04-13T01:30:00Z'),
+        });
+        globalThis.__arenaState.sessions = TEST_TYPES.map((t, idx) => ({
+            id: `sess-linked-${idx}`,
+            exam_id: 'exam-linked',
+            test_type: t.id,
+            test_index: idx,
+            status: 'completed',
+            score: t.weight,
+            max_score: t.weight,
+            actions_log: [],
+        }));
+
+        const res = await request(app).post('/api/arena/exam/exam-linked/finalize');
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.interviewSync.entityBinding).toMatchObject({ entityId: 1, score: MAX_TOTAL_SCORE, maxScore: MAX_TOTAL_SCORE, normalized: 100, passed: true });
+
+        const entity = fakeDevices['dev-alpha'].entities[1];
+        expect(entity.identity.interviewCapabilities).toMatchObject({ score: MAX_TOTAL_SCORE, maxScore: MAX_TOTAL_SCORE, source: 'arena', examId: 'exam-linked' });
+        expect(entity.identity.public.capabilities).toBeTruthy();
+        expect(entity.identity.public.capabilities.reasoning.supported).toBe(true);
+        expect(entity.agentCard.capabilities).toEqual(entity.identity.public.capabilities);
+        expect(saveDeviceData).toHaveBeenCalledWith('dev-alpha', fakeDevices['dev-alpha']);
+        expect(globalThis.__arenaState.leaderboard).toHaveLength(0);
+    });
+
+    test('backfillArenaEntityBindings repairs already-completed linked exams', async () => {
+        const capMap = { reasoning: { supported: true, probes: [{ id: 'arena_memory', score: 10, maxScore: 10 }] } };
+        globalThis.__arenaState.listings.push({
+            id: 'listing-old',
+            owner_device_id: 'dev-alpha',
+            owner_entity_id: 1,
+            interview_passed: true,
+            capabilities: capMap,
+            benchmark_score: { normalizedScore: 97 },
+        });
+        globalThis.__arenaState.exams.push({
+            id: 'exam-old',
+            listing_id: 'listing-old',
+            model: 'minimax-portal/MiniMax-M2.7',
+            status: 'completed',
+            total_score: 142,
+            max_score: 147,
+            report: {},
+            completed_at: new Date('2026-04-13T01:36:18Z'),
+            created_at: new Date('2026-04-13T01:30:00Z'),
+        });
+
+        const result = await arenaModule.backfillArenaEntityBindings();
+        expect(result).toMatchObject({ scanned: 1, updated: 1, skipped: 0 });
+        const entity = fakeDevices['dev-alpha'].entities[1];
+        expect(entity.identity.interviewCapabilities).toMatchObject({ score: 142, maxScore: 147, normalized: 97, source: 'arena' });
+        expect(entity.identity.public.capabilities).toEqual(capMap);
+        expect(saveDeviceData).toHaveBeenCalledTimes(1);
     });
 
     test('POST /api/arena/feedback stores feedback', async () => {
