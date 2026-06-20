@@ -6650,29 +6650,39 @@
         }
 
         // ── Slash Commands Autocomplete ──
-        const SLASH_COMMANDS = [
-            { command: '/help',       key: 'slash_cmd_help' },
-            { command: '/status',     key: 'slash_cmd_status' },
-            { command: '/reset',      key: 'slash_cmd_reset' },
-            { command: '/activation', key: 'slash_cmd_activation' },
-            { command: '/pair',       key: 'slash_cmd_pair' },
-            { command: '/reasoning',  key: 'slash_cmd_reasoning' },
-            { command: '/config',     key: 'slash_cmd_config' },
-            { command: '/broadcast',  key: 'slash_cmd_broadcast' },
-            { command: '/model',      key: 'slash_cmd_model' },
-            { command: '/auto_approve', key: 'slash_cmd_auto_approve' },
+        const SLASH_COMMAND_FALLBACKS = [
+            { command: '/help',       key: 'slash_cmd_help', provider: 'eclaw', source: 'portal-fallback' },
+            { command: '/status',     key: 'slash_cmd_status', provider: 'eclaw', source: 'portal-fallback' },
+            { command: '/reset',      key: 'slash_cmd_reset', provider: 'eclaw', source: 'portal-fallback' },
+            { command: '/activation', key: 'slash_cmd_activation', provider: 'eclaw', source: 'portal-fallback' },
+            { command: '/pair',       key: 'slash_cmd_pair', provider: 'eclaw', source: 'portal-fallback' },
+            { command: '/reasoning',  key: 'slash_cmd_reasoning', provider: 'eclaw', source: 'portal-fallback' },
+            { command: '/config',     key: 'slash_cmd_config', provider: 'eclaw', source: 'portal-fallback' },
+            { command: '/broadcast',  key: 'slash_cmd_broadcast', provider: 'eclaw', source: 'portal-fallback' },
+            { command: '/model',      key: 'slash_cmd_model', provider: 'eclaw', source: 'portal-fallback' },
+            { command: '/auto_approve', key: 'slash_cmd_auto_approve', provider: 'eclaw', source: 'portal-fallback' },
+            { command: '/target', description: 'Attach a target context block for Codex.', provider: 'codex', source: 'portal-fallback' },
         ];
+        const SLASH_COMMAND_SYNC_ENDPOINTS = [
+            'http://127.0.0.1:18801/commands?refresh=1',
+            'http://localhost:18801/commands?refresh=1',
+            'http://127.0.0.1:18800/commands?refresh=1',
+            'http://localhost:18800/commands?refresh=1',
+        ];
+        let slashCommands = normalizeSlashCommands(SLASH_COMMAND_FALLBACKS);
+        let slashCommandSyncStarted = false;
 
         function renderSlashSuggestions(text) {
             const el = document.getElementById('slashSuggestions');
             if (!text.startsWith('/')) { el.classList.remove('visible'); return; }
+            syncSlashCommandsFromBridge();
             const q = text.toLowerCase();
-            const filtered = SLASH_COMMANDS.filter(c => c.command.startsWith(q));
+            const filtered = slashCommands.filter(c => c.command.toLowerCase().startsWith(q)).slice(0, 36);
             if (filtered.length === 0) { el.classList.remove('visible'); return; }
             el.innerHTML = filtered.map(c =>
-                `<div class="slash-suggestion-item" onmousedown="pickSlashCommand('${c.command}')">
-                    <span class="slash-suggestion-cmd">${c.command}</span>
-                    <span class="slash-suggestion-desc">${i18n.t(c.key)}</span>
+                `<div class="slash-suggestion-item" data-command="${escapeHtml(c.command)}" onmousedown="pickSlashCommand(this.dataset.command)">
+                    <span class="slash-suggestion-cmd">${escapeHtml(c.command)}</span>
+                    <span class="slash-suggestion-desc">${escapeHtml(slashCommandDescription(c))}</span>
                 </div>`
             ).join('');
             el.classList.add('visible');
@@ -6683,6 +6693,84 @@
             input.value = command + ' ';
             input.focus();
             document.getElementById('slashSuggestions').classList.remove('visible');
+        }
+
+        function slashCommandDescription(command) {
+            const desc = command.key ? i18n.t(command.key) : command.description;
+            const provider = command.provider && command.provider !== 'eclaw' ? `[${command.provider}] ` : '';
+            return provider + (desc || command.source || '');
+        }
+
+        function normalizeSlashCommands(commands) {
+            const byCommand = new Map();
+            const add = (entry, commandText, aliasOf) => {
+                if (!commandText || !commandText.startsWith('/')) return;
+                const normalized = {
+                    command: commandText,
+                    key: entry.key,
+                    description: aliasOf ? `${entry.description || ''} Alias for ${aliasOf}.`.trim() : entry.description,
+                    provider: entry.provider || 'eclaw',
+                    source: entry.source || 'unknown',
+                    execution: entry.execution || 'prompt',
+                };
+                const existing = byCommand.get(commandText.toLowerCase());
+                if (!existing || sourceRankForSlash(normalized.source) < sourceRankForSlash(existing.source)) {
+                    byCommand.set(commandText.toLowerCase(), normalized);
+                }
+            };
+
+            commands.forEach(entry => {
+                add(entry, entry.command);
+                (entry.aliases || []).forEach(alias => add(entry, alias, entry.command));
+            });
+
+            return Array.from(byCommand.values()).sort((a, b) => a.command.localeCompare(b.command));
+        }
+
+        function sourceRankForSlash(source) {
+            if (source === 'bridge') return 0;
+            if (source && String(source).includes('live')) return 1;
+            if (source && String(source).includes('custom')) return 2;
+            if (source === 'portal-fallback') return 9;
+            return 5;
+        }
+
+        async function syncSlashCommandsFromBridge() {
+            if (slashCommandSyncStarted) return;
+            slashCommandSyncStarted = true;
+            for (const endpoint of SLASH_COMMAND_SYNC_ENDPOINTS) {
+                try {
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), 2500);
+                    const res = await fetch(endpoint, { signal: controller.signal, headers: { Accept: 'application/json' } });
+                    clearTimeout(timer);
+                    if (!res.ok) continue;
+                    const data = await res.json();
+                    if (!data || !Array.isArray(data.commands) || data.commands.length === 0) continue;
+                    slashCommands = normalizeSlashCommands([...SLASH_COMMAND_FALLBACKS, ...data.commands]);
+                    const input = document.getElementById('messageInput');
+                    if (input && input.value.startsWith('/')) renderSlashSuggestions(input.value);
+                    return;
+                } catch (_) {}
+            }
+        }
+
+        function normalizeTargetSlashForSend(text) {
+            const trimmed = (text || '').trim();
+            const match = trimmed.match(/^\/target(?:\s+([\s\S]*))?$/i);
+            if (!match) return text;
+            const targetText = (match[1] || '').trim();
+            const firstLine = (targetText.split(/\r?\n/)[0] || 'manual-target').trim();
+            const targetId = firstLine
+                .toLowerCase()
+                .replace(/[^a-z0-9._:-]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                .slice(0, 80) || 'manual-target';
+            return [
+                `<target mode="eclaw" targetId="${escapeHtml(targetId)}" confidence="1.00">`,
+                targetText || 'User selected an EClaw target but did not provide details.',
+                '</target>',
+            ].join('\n');
         }
 
         // ── Slash Command Confirmation State ──
@@ -7023,6 +7111,7 @@
                 finalText = text ? `${quotePrefix}\n\n${text}` : quotePrefix;
                 clearReplyContext();
             }
+            finalText = normalizeTargetSlashForSend(finalText);
             // Structured attachments (fileId-based) — the signed URL intentionally
             // stays out of finalText. speakBody / crossSpeakSafe pick this up below.
             const r2Attachments = hasR2Refs
