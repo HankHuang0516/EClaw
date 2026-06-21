@@ -8,7 +8,7 @@
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
 - **Current version**: 1.1185.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
-- **Android app version**: 1.0.93 (versionCode 101); `LATEST_APP_VERSION` constant in `backend/index.js`
+- **Android app version**: 1.0.96 (versionCode 104); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
 ---
@@ -178,7 +178,7 @@ EClaw/
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
 │   ├── tests/                # Regression + integration tests (59 files)
-│   ├── tests/jest/           # Jest unit tests (285 files, CI-run via `npm test`)
+│   ├── tests/jest/           # Jest unit tests (358 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -1213,6 +1213,19 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Portal 401 Graceful Guard**: Authenticated UIUX sweep — graceful degradation on expired sessions (#3554)
 - **App Version**: Updated to 1.0.93 (versionCode 101)
 
+### Recent Features (v1.1190.x+, 2026-06-22+)
+
+- **Reconnect Overlay (Portal + Android)**: Portal keeps session on transport disconnect + shows reconnect overlay (#3618); Android WebViewClient transport-error overlay (#3630)
+- **Chat SendTo Picker**: Multi-select send-to picker with smart-filter UX (#3632); partner avatars + a11y aria-label (#3637); PetDX avatar sprite over emoji fallback (#3642)
+- **Cron Usage-Threshold Skip**: Skip dispatch when entity usage exceeds threshold (#3626); schedule editor usage-threshold sliders (#3625); `cron_skip_*` i18n keys for 15 locales (#3634)
+- **Push Health Check**: Round-trip push health check + dead-subscription cleanup (#3628)
+- **Web Push Auto-Enable**: Global autoEnable on dashboard/index/chat (#3616)
+- **Wallpaper Kanban v2**: Kanban v2 assets — Caveat font + whiteboard + layout settings (#3627); wallpaper polish + walking motion + interactions (#3612, #3615, #3617, #3620, #3635, #3636, #3638)
+- **Kanban Stale Escalation Fix**: Exempt single-shot future-runAt cards from stale escalation (#3611)
+- **Routing Chip Fix**: Fix routing-chip detail modal rendering "undefined" (#3631)
+- **i18n Expansion**: 6 `usage_warning` keys for 14 locales (#3608)
+- **App Version**: Updated to 1.0.96 (versionCode 104)
+
 ### Recent Features (v1.1190.x+, 2026-06-08 – 2026-06-21)
 
 - **Vault Optimistic Concurrency (P0 hotfix)**: `expectedUpdatedAt` ETag on `POST /api/device-vars` prevents lost-update races; `409 Conflict` on stale writes; strict-mode no-etag guard prevents zombification by legacy clients; defensive `new Date()` fix for fatal restart loop incident (#3422-#3427, #3432)
@@ -1238,7 +1251,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~4960 test cases across 352 Jest files + 79 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~5100 test cases across 358 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1331,7 +1344,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
 | Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
 
-### Jest Unit Tests (CI-run, `npm test`, 285 files)
+### Jest Unit Tests (CI-run, `npm test`, 358 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -1414,7 +1427,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (285 files)
+cd backend && npm test                  # Jest unit tests (358 files)
 cd backend && npm run lint              # ESLint
 ```
 
