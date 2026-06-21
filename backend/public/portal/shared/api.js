@@ -15,7 +15,23 @@ async function apiCall(method, path, body = null, opts = {}) {
     }
 
     const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
-    const response = await fetch(url, options);
+    let response;
+    try {
+        response = await fetch(url, options);
+    } catch (fetchErr) {
+        // Transport-level failure (offline, DNS, server unreachable) — NOT auth.
+        // Tag the error so callers (auth.js, reconnect-overlay.js) can distinguish
+        // transport-disconnect from session-expired and avoid redirecting to login.
+        const netErr = new Error(fetchErr && fetchErr.message || 'Network unavailable');
+        netErr.networkError = true;
+        netErr.cause = fetchErr;
+        try {
+            if (typeof window !== 'undefined' && window.__reconnectOverlay && typeof window.__reconnectOverlay.show === 'function') {
+                window.__reconnectOverlay.show();
+            }
+        } catch (_) { /* overlay optional */ }
+        throw netErr;
+    }
 
     // Guard against non-JSON responses (e.g. HTML error pages)
     const contentType = response.headers.get('content-type') || '';

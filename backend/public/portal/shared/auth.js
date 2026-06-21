@@ -177,6 +177,19 @@ async function checkAuth() {
             console.error('[Auth] iOS WebView device-login failed:', iosErr);
         }
 
+        // Distinguish transport-level disconnect from auth-level failure.
+        // api.js tags fetch-throw with `networkError:true`; do NOT force logout
+        // on transport blips — show the reconnect overlay and keep session state.
+        if (e && (e.networkError || e.name === 'TypeError'
+            || (typeof navigator !== 'undefined' && navigator.onLine === false))) {
+            console.warn('[Auth] checkAuth transport failure (network) — keeping session, showing reconnect overlay:', e.message || e);
+            try {
+                if (window.__reconnectOverlay && typeof window.__reconnectOverlay.show === 'function') {
+                    window.__reconnectOverlay.show();
+                }
+            } catch (_) { /* overlay optional */ }
+            return null;
+        }
         console.error('[Auth] checkAuth failed, redirecting to login:', e.message || e);
         window.location.href = 'index.html';
         return null;
