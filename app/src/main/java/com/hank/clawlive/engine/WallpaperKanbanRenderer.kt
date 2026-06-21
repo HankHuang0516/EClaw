@@ -16,7 +16,6 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.PI
 import kotlin.math.abs
-import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
 
@@ -43,12 +42,29 @@ class WallpaperKanbanRenderer(
             get() = archived || actualStatus == "done" || actualStatus == "archived"
     }
 
+    private data class AutomationBoardSpec(
+        val base: Pair<Float, Float>,
+        val unit: Float,
+        val cards: List<VisualCardState>,
+        val height: Float,
+        val rowHeight: Float,
+        val top: Float,
+        var width: Float,
+        var left: Float
+    )
+
     private val states = mutableMapOf<String, VisualCardState>()
     private val boardPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val boardStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 2.5f
         color = Color.argb(155, 30, 41, 59)
+    }
+    private val standPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 4f
+        strokeCap = Paint.Cap.ROUND
+        color = Color.argb(165, 51, 65, 85)
     }
     private val folderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val folderStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -162,14 +178,20 @@ class WallpaperKanbanRenderer(
         }.toMap()
 
         if (layoutPrefs.wallpaperKanbanAutomationBoardEnabled) {
-            baseById.forEach { (entityId, base) ->
+            val boardSpecs = baseById.mapNotNull { (entityId, base) ->
                 val unit = 300f * baseScale * layoutPrefs.getEntityScale(entityId)
                 val automations = states.values
                     .filter { it.isAutomation && !it.terminal && entityId in it.assignedBots }
                     .sortedBy { it.schedule?.nextRunAt ?: Long.MAX_VALUE }
-                if (automations.isNotEmpty()) {
-                    drawAutomationBoard(canvas, base, unit, automations, nowMs)
+                if (automations.isEmpty()) {
+                    null
+                } else {
+                    createAutomationBoardSpec(canvas, base, unit, automations)
                 }
+            }
+            layoutAutomationBoards(canvas, boardSpecs)
+            boardSpecs.forEach { spec ->
+                drawAutomationBoard(canvas, spec)
             }
         }
 
@@ -180,29 +202,95 @@ class WallpaperKanbanRenderer(
                     .filter { !it.isAutomation && entityId in it.assignedBots }
                     .sortedWith(compareBy<VisualCardState> { it.terminal }.thenBy { it.priority }.thenByDescending { it.updatedAt ?: 0L })
                 tasks.forEachIndexed { index, state ->
-                    drawTaskFolder(canvas, base, unit, index, state, nowMs)
+                    drawTaskFolder(canvas, base, unit, index, tasks.size, state, nowMs)
                 }
             }
         }
     }
 
-    private fun drawAutomationBoard(
+    private fun createAutomationBoardSpec(
         canvas: Canvas,
         base: Pair<Float, Float>,
         unit: Float,
-        cards: List<VisualCardState>,
-        nowMs: Long
-    ) {
-        val width = (unit * 1.85f).coerceAtLeast(160f)
+        cards: List<VisualCardState>
+    ): AutomationBoardSpec {
         val rowHeight = (unit * 0.13f).coerceIn(18f, 30f)
         val height = (unit * 0.5f + rowHeight * cards.take(MAX_BOARD_ROWS).size).coerceIn(unit * 0.62f, unit * 1.05f)
-        val left = (base.first - width / 2f).coerceIn(12f, canvas.width - width - 12f)
+        val width = preferredBoardWidth(unit, cards)
+        val left = clampedBoardLeft(canvas, base.first, width)
         val top = (base.second - unit * 1.75f - height / 2f).coerceIn(18f, canvas.height - height - 18f)
-        val rect = RectF(left, top, left + width, top + height)
+        return AutomationBoardSpec(
+            base = base,
+            unit = unit,
+            cards = cards,
+            height = height,
+            rowHeight = rowHeight,
+            top = top,
+            width = width,
+            left = left
+        )
+    }
+
+    private fun layoutAutomationBoards(canvas: Canvas, specs: List<AutomationBoardSpec>) {
+        if (specs.isEmpty()) return
+        val availableWidth = (canvas.width - BOARD_MARGIN * 2f - BOARD_GAP * (specs.size - 1))
+            .coerceAtLeast(BOARD_MIN_WIDTH)
+        val maxWidthForCount = (availableWidth / specs.size).coerceAtLeast(BOARD_MIN_WIDTH)
+
+        specs.forEach { spec ->
+            spec.width = spec.width.coerceIn(BOARD_MIN_WIDTH, maxWidthForCount)
+            spec.left = clampedBoardLeft(canvas, spec.base.first, spec.width)
+        }
+
+        val sorted = specs.sortedBy { it.left + it.width / 2f }
+        for (i in 1 until sorted.size) {
+            val previous = sorted[i - 1]
+            val current = sorted[i]
+            val minLeft = previous.left + previous.width + BOARD_GAP
+            if (current.left < minLeft) current.left = minLeft
+        }
+
+        val overflow = sorted.last().left + sorted.last().width + BOARD_MARGIN - canvas.width
+        if (overflow > 0f) {
+            sorted.forEach { it.left -= overflow }
+        }
+        if (sorted.first().left < BOARD_MARGIN) {
+            val shift = BOARD_MARGIN - sorted.first().left
+            sorted.forEach { it.left += shift }
+        }
+    }
+
+    private fun clampedBoardLeft(canvas: Canvas, centerX: Float, width: Float): Float {
+        val maxLeft = (canvas.width - width - BOARD_MARGIN).coerceAtLeast(BOARD_MARGIN)
+        return (centerX - width / 2f).coerceIn(BOARD_MARGIN, maxLeft)
+    }
+
+    private fun drawAutomationBoard(
+        canvas: Canvas,
+        spec: AutomationBoardSpec
+    ) {
+        val unit = spec.unit
+        val left = spec.left
+        val top = spec.top
+        val rect = RectF(left, top, left + spec.width, top + spec.height)
+
+        drawWhiteboardStand(canvas, rect, unit)
 
         boardPaint.color = Color.argb(205, 248, 250, 252)
         canvas.drawRoundRect(rect, 8f, 8f, boardPaint)
         canvas.drawRoundRect(rect, 8f, 8f, boardStrokePaint)
+        accentPaint.color = Color.argb(125, 148, 163, 184)
+        canvas.drawRoundRect(
+            RectF(
+                rect.left + unit * 0.08f,
+                rect.bottom - unit * 0.045f,
+                rect.right - unit * 0.08f,
+                rect.bottom - unit * 0.025f
+            ),
+            4f,
+            4f,
+            accentPaint
+        )
 
         textPaint.textSize = (unit * 0.09f).coerceIn(13f, 18f)
         textPaint.isFakeBoldText = true
@@ -211,17 +299,20 @@ class WallpaperKanbanRenderer(
         textPaint.isFakeBoldText = false
         textPaint.textSize = (unit * 0.075f).coerceIn(11f, 15f)
 
-        cards.take(MAX_BOARD_ROWS).forEachIndexed { index, card ->
-            val y = top + unit * 0.28f + rowHeight * (index + 1)
+        val titleLeft = left + unit * 0.14f
+        val dateRight = rect.right - unit * 0.08f
+        val titleMaxWidth = (dateRight - titleLeft - unit * 0.36f).coerceAtLeast(unit * 0.45f)
+        spec.cards.take(MAX_BOARD_ROWS).forEachIndexed { index, card ->
+            val y = top + unit * 0.28f + spec.rowHeight * (index + 1)
             accentPaint.color = colorForStatus(card.displayStatus, card.priority, 210)
             canvas.drawCircle(left + unit * 0.09f, y - textPaint.textSize * 0.3f, unit * 0.022f, accentPaint)
             textPaint.color = Color.argb(220, 15, 23, 42)
             val title = if (layoutPrefs.wallpaperKanbanPrivacyModeEnabled) {
                 "Task ${index + 1}"
             } else {
-                card.title.take(BOARD_TITLE_MAX_CHARS)
+                ellipsizeToWidth(card.title, titleMaxWidth, textPaint)
             }
-            canvas.drawText(title, left + unit * 0.14f, y, textPaint)
+            canvas.drawText(title, titleLeft, y, textPaint)
             val next = if (layoutPrefs.wallpaperKanbanPrivacyModeEnabled) {
                 "hidden"
             } else {
@@ -229,9 +320,23 @@ class WallpaperKanbanRenderer(
             }
             textPaint.color = Color.argb(165, 71, 85, 105)
             textPaint.textAlign = Paint.Align.RIGHT
-            canvas.drawText(next, rect.right - unit * 0.08f, y, textPaint)
+            canvas.drawText(ellipsizeToWidth(next, unit * 0.34f, textPaint), dateRight, y, textPaint)
             textPaint.textAlign = Paint.Align.LEFT
         }
+    }
+
+    private fun drawWhiteboardStand(canvas: Canvas, rect: RectF, unit: Float) {
+        standPaint.strokeWidth = (unit * 0.014f).coerceIn(2.5f, 5.5f)
+        standPaint.color = Color.argb(150, 51, 65, 85)
+        val legTopY = rect.bottom - unit * 0.03f
+        val legBottomY = rect.bottom + (unit * 0.34f).coerceIn(34f, 72f)
+        val leftLegX = rect.left + rect.width() * 0.22f
+        val rightLegX = rect.right - rect.width() * 0.22f
+        canvas.drawLine(leftLegX, legTopY, leftLegX - unit * 0.08f, legBottomY, standPaint)
+        canvas.drawLine(rightLegX, legTopY, rightLegX + unit * 0.08f, legBottomY, standPaint)
+        canvas.drawLine(leftLegX + unit * 0.04f, legTopY, rightLegX - unit * 0.04f, legTopY, standPaint)
+        canvas.drawLine(leftLegX - unit * 0.17f, legBottomY, leftLegX + unit * 0.06f, legBottomY, standPaint)
+        canvas.drawLine(rightLegX - unit * 0.06f, legBottomY, rightLegX + unit * 0.17f, legBottomY, standPaint)
     }
 
     private fun drawTaskFolder(
@@ -239,19 +344,27 @@ class WallpaperKanbanRenderer(
         base: Pair<Float, Float>,
         unit: Float,
         index: Int,
+        totalCount: Int,
         state: VisualCardState,
         nowMs: Long
     ) {
         val removalProgress = removalProgress(state, nowMs)
         if (state.terminal && removalProgress >= 1f) return
         val seed = abs(state.id.hashCode())
-        val angle = ((seed % 360) / 180f) * PI.toFloat()
-        val ring = 0.45f + (index % 4) * 0.12f
-        val naturalJitterX = (((seed / 7) % 9) - 4) * unit * 0.015f
-        val naturalJitterY = (((seed / 13) % 7) - 3) * unit * 0.015f
-        val cx = base.first + cos(angle) * unit * ring + naturalJitterX
-        val cy = base.second + unit * (0.34f + (index % 3) * 0.08f) + sin(angle) * unit * 0.18f + naturalJitterY
-        val scale = (0.74f + ((seed % 5) * 0.035f)).coerceIn(0.72f, 0.9f)
+        val maxColumns = min(totalCount.coerceAtLeast(1), 4)
+        val row = index / maxColumns
+        val col = index % maxColumns
+        val visibleColumns = min(maxColumns, (totalCount - row * maxColumns).coerceAtLeast(1))
+        val colOffset = col - (visibleColumns - 1) / 2f
+        val rowDepth = row.coerceAtMost(5)
+        val naturalJitterX = (((seed / 7) % 7) - 3) * unit * 0.008f
+        val naturalJitterY = (((seed / 13) % 5) - 2) * unit * 0.007f
+        val pileLean = if ((seed and 1) == 0) -1f else 1f
+        val cx = (base.first + colOffset * unit * 0.115f + pileLean * rowDepth * unit * 0.018f + naturalJitterX)
+            .coerceIn(unit * 0.18f, canvas.width - unit * 0.18f)
+        val cy = (base.second + unit * 0.35f + rowDepth * unit * 0.035f - abs(colOffset) * unit * 0.018f + naturalJitterY)
+            .coerceIn(unit * 0.25f, canvas.height - unit * 0.08f)
+        val scale = (0.8f - rowDepth * 0.018f + ((seed % 5) * 0.018f)).coerceIn(0.68f, 0.86f)
         val width = unit * 0.38f * scale
         val height = unit * 0.27f * scale
         val alpha = if (state.terminal) ((1f - removalProgress) * 230).toInt() else 230
@@ -262,7 +375,7 @@ class WallpaperKanbanRenderer(
         val bottom = top + height
 
         canvas.save()
-        canvas.rotate((((seed % 11) - 5) * 1.6f), cx, cy)
+        canvas.rotate((((seed % 9) - 4) * 1.1f), cx, cy)
         drawFolderShape(canvas, RectF(left, top, right, bottom), state, alpha)
         if (!layoutPrefs.wallpaperKanbanPrivacyModeEnabled && !state.terminal && index < 4) {
             textPaint.textSize = (unit * 0.045f).coerceIn(8f, 12f)
@@ -363,6 +476,41 @@ class WallpaperKanbanRenderer(
         return Color.argb(alpha.coerceIn(0, 255), Color.red(base), Color.green(base), Color.blue(base))
     }
 
+    private fun preferredBoardWidth(unit: Float, cards: List<VisualCardState>): Float {
+        textPaint.textSize = (unit * 0.075f).coerceIn(11f, 15f)
+        val titleWidth = cards.take(MAX_BOARD_ROWS)
+            .maxOfOrNull {
+                val title = if (layoutPrefs.wallpaperKanbanPrivacyModeEnabled) "Task 1" else it.title
+                textPaint.measureText(title)
+            } ?: 0f
+        val dateWidth = cards.take(MAX_BOARD_ROWS)
+            .maxOfOrNull {
+                val next = if (layoutPrefs.wallpaperKanbanPrivacyModeEnabled) "hidden" else formatNext(it.schedule)
+                textPaint.measureText(next)
+            } ?: 0f
+        return (titleWidth + dateWidth + unit * 0.52f)
+            .coerceIn(unit * 1.25f, unit * 2.15f)
+            .coerceAtLeast(BOARD_MIN_WIDTH)
+    }
+
+    private fun ellipsizeToWidth(text: String, maxWidth: Float, paint: Paint): String {
+        if (paint.measureText(text) <= maxWidth) return text
+        val ellipsis = "..."
+        val ellipsisWidth = paint.measureText(ellipsis)
+        if (maxWidth <= ellipsisWidth) return ellipsis
+        var low = 0
+        var high = text.length
+        while (low < high) {
+            val mid = (low + high + 1) / 2
+            if (paint.measureText(text.substring(0, mid)) + ellipsisWidth <= maxWidth) {
+                low = mid
+            } else {
+                high = mid - 1
+            }
+        }
+        return text.take(low).trimEnd() + ellipsis
+    }
+
     private fun lighten(color: Int, factor: Float, alpha: Int): Int {
         return Color.argb(
             alpha.coerceIn(0, 255),
@@ -381,7 +529,9 @@ class WallpaperKanbanRenderer(
         private const val REVIEW_DELAY_MS = 1_400L
         private const val REMOVAL_ANIMATION_MS = 1_600L
         private const val MAX_BOARD_ROWS = 5
-        private const val BOARD_TITLE_MAX_CHARS = 14
+        private const val BOARD_MARGIN = 12f
+        private const val BOARD_GAP = 10f
+        private const val BOARD_MIN_WIDTH = 148f
         private const val FOLDER_TITLE_MAX_CHARS = 10
     }
 }
