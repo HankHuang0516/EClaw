@@ -788,9 +788,9 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="wallpaper_usage_engine_codex">Codex</string>
     <string name="wallpaper_usage_items">顯示項目</string>
     <string name="wallpaper_walking_title">行走功能</string>
-    <string name="wallpaper_walking_settings_desc">讓桌布實體慢慢隨機走動</string>
+    <string name="wallpaper_walking_settings_desc">讓桌布實體慢慢依目標走動</string>
     <string name="wallpaper_walking_help_button">關於桌布行走功能</string>
-    <string name="wallpaper_walking_help">說明：桌布上的實體會像寵物一樣四處慢慢走動。後續訊息互動階段會讓你或其他實體傳訊息時，他們跑到對方旁邊。\n\n需要：已開啟基本桌布、至少一個已綁定的實體、行走動畫已下載。\n\n測試：開啟此功能後，按下方桌布預覽並停留 30 秒，觀察所有實體走一輪。</string>
+    <string name="wallpaper_walking_help">說明：桌布上的實體會像寵物一樣慢慢走動。開啟「有目的的走路」時，待機夥伴會選擇拜訪同伴、巡邏、回到自己活動區等環境目標。訊息互動仍會讓你或其他實體傳訊息時，他們跑到對方旁邊。\n\n需要：已開啟基本桌布、至少一個已綁定的實體、行走動畫已下載。\n\n測試：開啟此功能後，按下方桌布預覽並停留 30 秒，觀察所有實體走一輪。</string>
     <string name="wallpaper_walking_enabled">行走功能已開啟</string>
     <string name="wallpaper_walking_disabled">行走功能已關閉</string>
     <string name="wallpaper_usage_overlay">用量顯示</string>
@@ -824,6 +824,8 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="wallpaper_setting_bubble_duration">訊息泡泡停留時間</string>
     <string name="wallpaper_setting_bubble_duration_desc">調整桌布泡泡存在時間；長訊息會自動延長，但最多 30 秒。</string>
     <string name="wallpaper_setting_bubble_duration_value">%1$d 秒</string>
+    <string name="wallpaper_setting_purposeful_walking">有目的的走路</string>
+    <string name="wallpaper_setting_purposeful_walking_desc">讓待機夥伴會拜訪同伴、巡邏、回到自己的活動區。</string>
     <string name="wallpaper_setting_bubble_pulse">泡泡脈衝</string>
     <string name="wallpaper_setting_bubble_pulse_desc">泡泡內容更新時短暫高亮夥伴。</string>
     <string name="wallpaper_setting_bubble_avoidance">智慧泡泡避讓</string>

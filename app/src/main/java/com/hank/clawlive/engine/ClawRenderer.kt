@@ -501,7 +501,8 @@ class ClawRenderer(
             entities = entities,
             width = width,
             height = height,
-            enabled = walkingEnabled
+            enabled = walkingEnabled,
+            purposeful = layoutPrefs.wallpaperPurposefulWalkingEnabled
         )
         val baseScale = getScaleFactor(entities.size)
         val nowMs = System.currentTimeMillis()

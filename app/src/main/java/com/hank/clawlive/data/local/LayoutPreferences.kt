@@ -300,6 +300,12 @@ class LayoutPreferences private constructor(context: Context) {
             prefs.edit().putBoolean(KEY_WALLPAPER_WALKING_ENABLED, value).apply()
         }
 
+    var wallpaperPurposefulWalkingEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_PURPOSEFUL_WALKING_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_PURPOSEFUL_WALKING_ENABLED, value).apply()
+        }
+
     var wallpaperSpeechBubblesEnabled: Boolean
         get() = prefs.getBoolean(KEY_WALLPAPER_SPEECH_BUBBLES_ENABLED, true)
         set(value) {
@@ -523,6 +529,7 @@ class LayoutPreferences private constructor(context: Context) {
         private const val KEY_DEBUG_ENTITY_LIMIT = "debug_entity_limit"
         private const val KEY_SERVER_ENTITY_LIMIT = "server_entity_limit"
         private const val KEY_WALLPAPER_WALKING_ENABLED = "wallpaper_walking_enabled"
+        private const val KEY_WALLPAPER_PURPOSEFUL_WALKING_ENABLED = "wallpaper_purposeful_walking_enabled"
         private const val KEY_WALLPAPER_SPEECH_BUBBLES_ENABLED = "wallpaper_speech_bubbles_enabled"
         private const val KEY_WALLPAPER_BUBBLE_DURATION_SECONDS = "wallpaper_bubble_duration_seconds"
         private const val KEY_WALLPAPER_BUBBLE_PULSE_ENABLED = "wallpaper_bubble_pulse_enabled"

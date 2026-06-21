@@ -54,12 +54,21 @@ class SleepGateController(
         width: Float,
         height: Float,
         enabled: Boolean,
+        purposeful: Boolean = true,
         nowMs: Long = System.currentTimeMillis()
     ): List<Pair<Float, Float>> {
         val activeIds = entities.map { it.entityId }.toSet()
         sleeping.keys.toList().forEach { id -> if (id !in activeIds) sleeping.remove(id) }
         entities.forEach { sleeping[it.entityId] = it.state == CharacterState.SLEEPING }
-        return delegate.positionsFor(basePositions, entities, width, height, enabled, nowMs)
+        return delegate.positionsFor(
+            basePositions = basePositions,
+            entities = entities,
+            width = width,
+            height = height,
+            enabled = enabled,
+            purposeful = purposeful,
+            nowMs = nowMs
+        )
     }
 
     /** Current motion state for the entity (delegates to the wander engine). */
