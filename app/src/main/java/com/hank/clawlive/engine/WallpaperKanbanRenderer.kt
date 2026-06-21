@@ -84,6 +84,13 @@ class WallpaperKanbanRenderer(
         val removalProgress: Float
     )
 
+    private data class TaskOrbitSlot(
+        val offsetX: Float,
+        val offsetY: Float,
+        val scale: Float,
+        val rotationBias: Float
+    )
+
     private val states = mutableMapOf<String, VisualCardState>()
     private val handwritingTypeface: Typeface? = ResourcesCompat.getFont(context, R.font.caveat_regular)
     private val whiteboardAsset: Drawable? = ContextCompat.getDrawable(context, R.drawable.wallpaper_whiteboard_asset)?.mutate()
@@ -326,24 +333,50 @@ class WallpaperKanbanRenderer(
             drawFallbackWhiteboardSurface(canvas, rect, unit)
         }
 
-        textPaint.textSize = (unit * 0.09f).coerceIn(13f, 18f)
         textPaint.isFakeBoldText = true
         textPaint.color = Color.argb(225, 15, 23, 42)
         val previousTypeface = textPaint.typeface
         if (layoutPrefs.wallpaperKanbanHandwrittenBoardTextEnabled && handwritingTypeface != null) {
             textPaint.typeface = handwritingTypeface
         }
+        textPaint.textSize = fitTextSizeToWidth(
+            texts = listOf("Automation"),
+            maxWidth = rect.width() - unit * 0.16f,
+            preferredSize = (unit * 0.09f).coerceIn(13f, 18f),
+            minSize = 10f,
+            paint = textPaint
+        )
         canvas.drawText("Automation", left + unit * 0.08f, top + unit * 0.16f, textPaint)
         textPaint.isFakeBoldText = false
-        textPaint.textSize = (unit * 0.075f).coerceIn(11f, 15f)
 
         val titleLeft = left + unit * 0.14f
         val dateRight = rect.right - unit * 0.08f
-        val titleMaxWidth = (dateRight - titleLeft - unit * 0.36f).coerceAtLeast(unit * 0.45f)
+        val rowAvailableWidth = (dateRight - titleLeft).coerceAtLeast(unit * 0.28f)
+        val showDate = rowAvailableWidth > unit * 0.52f
+        val dateMaxWidth = if (showDate) {
+            min(unit * 0.34f, rowAvailableWidth * 0.32f)
+        } else {
+            0f
+        }
+        val titleMaxWidth = (rowAvailableWidth - dateMaxWidth - if (showDate) unit * 0.07f else 0f)
+            .coerceAtLeast(1f)
+        val visibleCards = spec.cards.take(MAX_BOARD_ROWS)
+        val rowPreferredSize = (unit * 0.075f).coerceIn(10f, 15f)
+        val titleSamples = visibleCards.mapIndexed { index, card ->
+            if (layoutPrefs.wallpaperKanbanPrivacyModeEnabled) "Task ${index + 1}" else card.title
+        }
+        val dateSamples = visibleCards.map { card ->
+            if (layoutPrefs.wallpaperKanbanPrivacyModeEnabled) "hidden" else formatNext(card.schedule)
+        }
+        val rowTextSize = min(
+            fitTextSizeToWidth(titleSamples, titleMaxWidth, rowPreferredSize, 8f, textPaint),
+            if (showDate) fitTextSizeToWidth(dateSamples, dateMaxWidth, rowPreferredSize, 8f, textPaint) else rowPreferredSize
+        )
         spec.cards.take(MAX_BOARD_ROWS).forEachIndexed { index, card ->
             val y = top + unit * 0.28f + spec.rowHeight * (index + 1)
             accentPaint.color = colorForStatus(card.displayStatus, card.priority, 210)
-            canvas.drawCircle(left + unit * 0.09f, y - textPaint.textSize * 0.3f, unit * 0.022f, accentPaint)
+            textPaint.textSize = rowTextSize
+            canvas.drawCircle(left + unit * 0.09f, y - rowTextSize * 0.3f, unit * 0.018f, accentPaint)
             textPaint.color = Color.argb(220, 15, 23, 42)
             val title = if (layoutPrefs.wallpaperKanbanPrivacyModeEnabled) {
                 "Task ${index + 1}"
@@ -351,15 +384,17 @@ class WallpaperKanbanRenderer(
                 ellipsizeToWidth(card.title, titleMaxWidth, textPaint)
             }
             canvas.drawText(title, titleLeft, y, textPaint)
-            val next = if (layoutPrefs.wallpaperKanbanPrivacyModeEnabled) {
-                "hidden"
-            } else {
-                formatNext(card.schedule)
+            if (showDate) {
+                val next = if (layoutPrefs.wallpaperKanbanPrivacyModeEnabled) {
+                    "hidden"
+                } else {
+                    formatNext(card.schedule)
+                }
+                textPaint.color = Color.argb(165, 71, 85, 105)
+                textPaint.textAlign = Paint.Align.RIGHT
+                canvas.drawText(ellipsizeToWidth(next, dateMaxWidth, textPaint), dateRight, y, textPaint)
+                textPaint.textAlign = Paint.Align.LEFT
             }
-            textPaint.color = Color.argb(165, 71, 85, 105)
-            textPaint.textAlign = Paint.Align.RIGHT
-            canvas.drawText(ellipsizeToWidth(next, unit * 0.34f, textPaint), dateRight, y, textPaint)
-            textPaint.textAlign = Paint.Align.LEFT
         }
         textPaint.typeface = previousTypeface
     }
@@ -431,22 +466,24 @@ class WallpaperKanbanRenderer(
         nowMs: Long
     ) {
         if (tasks.isEmpty()) return
-        val stackSide = taskStackSide(canvas, entityId, base)
+        val clusterCount = tasks.size.coerceIn(1, MAX_TASK_ORBIT_CLUSTERS)
         val placements = tasks.mapIndexedNotNull { index, state ->
-            createTaskObjectPlacement(canvas, base, unit, stackSide, index, tasks.size, state, nowMs)
+            createTaskObjectPlacement(canvas, entityId, base, unit, clusterCount, index, state, nowMs)
         }
         if (placements.isEmpty()) return
 
-        val minLeft = placements.minOf { it.rect.left }
-        val maxRight = placements.maxOf { it.rect.right }
-        val maxBottom = placements.maxOf { it.rect.bottom }
-        shadowPaint.color = Color.argb(58, 0, 0, 0)
-        canvas.drawOval(
-            RectF(minLeft - unit * 0.05f, maxBottom - unit * 0.03f, maxRight + unit * 0.05f, maxBottom + unit * 0.075f),
-            shadowPaint
-        )
+        placements.groupBy { it.column }.values.forEach { clusterPlacements ->
+            val minLeft = clusterPlacements.minOf { it.rect.left }
+            val maxRight = clusterPlacements.maxOf { it.rect.right }
+            val maxBottom = clusterPlacements.maxOf { it.rect.bottom }
+            shadowPaint.color = Color.argb(50, 0, 0, 0)
+            canvas.drawOval(
+                RectF(minLeft - unit * 0.035f, maxBottom - unit * 0.025f, maxRight + unit * 0.035f, maxBottom + unit * 0.055f),
+                shadowPaint
+            )
+        }
 
-        placements.forEach { placement ->
+        placements.sortedWith(compareBy<TaskObjectPlacement> { it.centerY }.thenBy { it.layer }).forEach { placement ->
             drawTaskObjectPlacement(canvas, placement, unit)
         }
 
@@ -461,11 +498,11 @@ class WallpaperKanbanRenderer(
 
     private fun createTaskObjectPlacement(
         canvas: Canvas,
+        entityId: Int,
         base: Pair<Float, Float>,
         unit: Float,
-        stackSide: Float,
+        clusterCount: Int,
         index: Int,
-        totalCount: Int,
         state: VisualCardState,
         nowMs: Long
     ): TaskObjectPlacement? {
@@ -473,12 +510,10 @@ class WallpaperKanbanRenderer(
         if (state.terminal && removalProgress >= 1f) return null
         val seed = abs(state.id.hashCode())
         val kind = resolveTaskObjectKind(state)
-        val maxLayers = MAX_TASK_STACK_LAYERS
-        val columnCount = ((totalCount + maxLayers - 1) / maxLayers).coerceIn(1, 3)
-        val column = (index / maxLayers).coerceAtMost(columnCount - 1)
-        val layer = index % maxLayers
-        val columnOffset = column - (columnCount - 1) / 2f
-        val size = taskObjectSize(kind, unit, seed)
+        val column = index % clusterCount
+        val layer = index / clusterCount
+        val slot = taskOrbitSlot(canvas, entityId, base, column)
+        val size = taskObjectSize(kind, unit * slot.scale, seed)
         val width = size.first
         val height = size.second
         val layerRise = when (kind) {
@@ -497,18 +532,17 @@ class WallpaperKanbanRenderer(
         }
         val removalLift = if (state.terminal) removalProgress * unit * 0.13f else 0f
         val stackLean = (((seed / 19) % 3) - 1) * unit * 0.007f * layer
-        val stackAnchorX = base.first + stackSide * unit * 0.66f
-        val centerX = (stackAnchorX + stackSide * columnOffset * unit * 0.62f + stackLean + naturalJitterX)
+        val centerX = (base.first + slot.offsetX * unit + stackLean + naturalJitterX)
             .coerceIn(width * 0.62f, canvas.width - width * 0.62f)
-        val centerY = (base.second + unit * 0.54f - layer * layerRise + column * unit * 0.035f + naturalJitterY - lift - removalLift)
+        val centerY = (base.second + unit * slot.offsetY - layer * layerRise + naturalJitterY - lift - removalLift)
             .coerceIn(height * 0.65f, canvas.height - unit * 0.06f)
         val rect = RectF(centerX - width / 2f, centerY - height / 2f, centerX + width / 2f, centerY + height / 2f)
         val alpha = if (state.terminal) ((1f - removalProgress) * 230).toInt() else 230
         val rotation = when (kind) {
-            TaskObjectKind.BOOK -> (((seed % 5) - 2) * 0.85f)
-            TaskObjectKind.CLIPBOARD -> (((seed % 7) - 3) * 1.1f)
-            TaskObjectKind.STICKY_CARD -> (((seed % 9) - 4) * 1.8f)
-            else -> (((seed % 7) - 3) * 0.9f)
+            TaskObjectKind.BOOK -> slot.rotationBias + (((seed % 5) - 2) * 0.85f)
+            TaskObjectKind.CLIPBOARD -> slot.rotationBias + (((seed % 7) - 3) * 1.1f)
+            TaskObjectKind.STICKY_CARD -> slot.rotationBias + (((seed % 9) - 4) * 1.8f)
+            else -> slot.rotationBias + (((seed % 7) - 3) * 0.9f)
         }
         return TaskObjectPlacement(
             state = state,
@@ -525,14 +559,37 @@ class WallpaperKanbanRenderer(
         )
     }
 
-    private fun taskStackSide(canvas: Canvas, entityId: Int, base: Pair<Float, Float>): Float {
-        val stableId = entityId
-        return when {
-            base.first < canvas.width * 0.58f -> -1f
-            base.first > canvas.width * 0.58f -> 1f
-            stableId % 2 == 0 -> 1f
-            else -> -1f
+    private fun taskOrbitSlot(canvas: Canvas, entityId: Int, base: Pair<Float, Float>, cluster: Int): TaskOrbitSlot {
+        val defaultSlots = arrayOf(
+            TaskOrbitSlot(-0.52f, 0.42f, 1.03f, -2.6f),
+            TaskOrbitSlot(0.52f, 0.42f, 1.03f, 2.4f),
+            TaskOrbitSlot(-0.36f, 0.18f, 0.9f, -1.2f),
+            TaskOrbitSlot(0.36f, 0.18f, 0.9f, 1.2f),
+            TaskOrbitSlot(0f, 0.58f, 1.08f, if (entityId % 2 == 0) 1.6f else -1.6f),
+            TaskOrbitSlot(0f, 0.08f, 0.84f, if (entityId % 2 == 0) -0.8f else 0.8f)
+        )
+        val leftEdgeSlots = arrayOf(
+            TaskOrbitSlot(0.46f, 0.42f, 1.03f, 2.2f),
+            TaskOrbitSlot(0.30f, 0.18f, 0.9f, 0.8f),
+            TaskOrbitSlot(0.66f, 0.30f, 0.98f, 3.0f),
+            TaskOrbitSlot(0.20f, 0.58f, 1.08f, -1.4f),
+            TaskOrbitSlot(0.52f, 0.08f, 0.84f, 1.0f),
+            TaskOrbitSlot(0.78f, 0.52f, 1f, 2.8f)
+        )
+        val rightEdgeSlots = arrayOf(
+            TaskOrbitSlot(-0.46f, 0.42f, 1.03f, -2.2f),
+            TaskOrbitSlot(-0.30f, 0.18f, 0.9f, -0.8f),
+            TaskOrbitSlot(-0.66f, 0.30f, 0.98f, -3.0f),
+            TaskOrbitSlot(-0.20f, 0.58f, 1.08f, 1.4f),
+            TaskOrbitSlot(-0.52f, 0.08f, 0.84f, -1.0f),
+            TaskOrbitSlot(-0.78f, 0.52f, 1f, -2.8f)
+        )
+        val slots = when {
+            base.first < canvas.width * 0.28f -> leftEdgeSlots
+            base.first > canvas.width * 0.72f -> rightEdgeSlots
+            else -> defaultSlots
         }
+        return slots[cluster % slots.size]
     }
 
     private fun resolveTaskObjectKind(state: VisualCardState): TaskObjectKind {
@@ -881,6 +938,23 @@ class WallpaperKanbanRenderer(
         return text.take(low).trimEnd() + ellipsis
     }
 
+    private fun fitTextSizeToWidth(
+        texts: List<String>,
+        maxWidth: Float,
+        preferredSize: Float,
+        minSize: Float,
+        paint: Paint
+    ): Float {
+        if (texts.isEmpty() || maxWidth <= 0f) return minSize
+        var size = preferredSize.coerceAtLeast(minSize)
+        paint.textSize = size
+        while (size > minSize && texts.any { paint.measureText(it) > maxWidth }) {
+            size -= 0.75f
+            paint.textSize = size
+        }
+        return size.coerceAtLeast(minSize)
+    }
+
     private fun lighten(color: Int, factor: Float, alpha: Int): Int {
         return Color.argb(
             alpha.coerceIn(0, 255),
@@ -912,6 +986,7 @@ class WallpaperKanbanRenderer(
         private const val BOARD_GAP = 10f
         private const val BOARD_MIN_WIDTH = 148f
         private const val MAX_TASK_STACK_LAYERS = 9
+        private const val MAX_TASK_ORBIT_CLUSTERS = 6
         private const val FOLDER_TITLE_MAX_CHARS = 10
     }
 }
