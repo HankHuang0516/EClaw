@@ -650353,6 +650353,12 @@ const TRANSLATIONS = {
         "passive_health_interval_help": "How often the passive sweep runs, in hours (1–168). Only takes effect when passive health-check is enabled.",
         "passive_health_auto_repair_label": "Auto-repair",
         "passive_health_auto_repair_help": "When an agent is found unhealthy, automatically run the existing self-repair flow (up to 3 attempts) before filing a bug. Only takes effect when passive health-check is enabled.",
+
+        "cron_skip_5h_label": "Skip if 5h usage > X%",
+        "cron_skip_7d_label": "Skip if 7d usage > X%",
+        "cron_skip_help_text": "This schedule skips dispatch when entity 5h usage exceeds threshold or 7d usage exceeds threshold. Defaults (85%/95%) protect high-load entities from extra cron burden. Adjustable 50%-99%. Skipped crons auto-retry next tick, not lost.",
+        "cron_current_usage_label": "Current: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "skipped: usage exceeds threshold",
 },
 
 
@@ -1235167,6 +1235173,12 @@ const TRANSLATIONS = {
         "passive_health_interval_help": "被動健檢執行的頻率,以小時計(1–168)。僅在啟用被動健檢後才會生效。",
         "passive_health_auto_repair_label": "自動修復",
         "passive_health_auto_repair_help": "當偵測到智能體不健康時,自動執行既有的自我修復流程(最多 3 次),仍失敗才回報問題。僅在啟用被動健檢後才會生效。",
+
+        "cron_skip_5h_label": "5小時用量超過 X% 跳過",
+        "cron_skip_7d_label": "週用量超過 Y% 跳過",
+        "cron_skip_help_text": "此排程在 entity 5 小時用量超過 X% 或 7 天用量超過 Y% 時會跳過。預設值保護高負載 entity 不被 cron 額外加負擔。可調範圍 50%-99%。跳過的 cron 下次 tick 自動重試，不會 lost。",
+        "cron_current_usage_label": "目前 5h: N% / 7d: M%",
+        "cron_skip_dispatch_reason": "跳過：用量超過閾值",
 },
 
 
@@ -1849322,6 +1849334,12 @@ const TRANSLATIONS = {
         "chat_routing_unspecified": "未指定",
 
         "chat_routing_sender": "发送者",
+
+        "cron_skip_5h_label": "5小时用量超过 X% 跳过",
+        "cron_skip_7d_label": "周用量超过 Y% 跳过",
+        "cron_skip_help_text": "此排程在 entity 5 小时用量超过 X% 或 7 天用量超过 Y% 时会跳过。预设值保护高负载 entity 不被 cron 额外加负担。可调范围 50%-99%。跳过的 cron 下次 tick 自动重试，不会 lost。",
+        "cron_current_usage_label": "目前 5h: N% / 7d: M%",
+        "cron_skip_dispatch_reason": "跳过：用量超过阈值",
 },
 
 
@@ -2412566,6 +2412584,12 @@ const TRANSLATIONS = {
 
         "org_options_title": "階層の動作",
         "org_routing_escalation_help": "組織階層では、子エンティティ宛のメッセージに上司がすぐ割り込んで回答することはありません。子エンティティが一定時間(デフォルト約30分)沈黙して応答しない場合にのみ、上位の上司へエスカレーションされて引き継がれます。ブロードキャストや上司を直接 @メンション したメッセージはこの制限の対象外です。",
+
+        "cron_skip_5h_label": "5時間用量が X% を超えたらスキップ",
+        "cron_skip_7d_label": "週用量 Y% を超えたらスキップ",
+        "cron_skip_help_text": "Entity の5時間用量 X% または7日用量 Y% を超えるとスキップ。デフォルト（85%/95%）はiamentity を保護。調整可能 50%-99%。スキップされた cron は次の tick で自動再試行、lost しない。",
+        "cron_current_usage_label": "現在: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "スキップ: 用量超過",
 },
 
 
@@ -2942915,6 +2942939,12 @@ const TRANSLATIONS = {
 
         "org_options_title": "계층 동작",
         "org_routing_escalation_help": "조직 계층에서 하위 엔티티에게 보낸 메시지에 상급자가 즉시 가로채 답하지 않습니다. 하위 엔티티가 일정 시간(기본 약 30분) 동안 침묵하며 응답하지 않을 때만 상급자에게 에스컬레이션되어 인계됩니다. 브로드캐스트나 상급자를 직접 @멘션한 메시지는 이 제한을 받지 않습니다.",
+
+        "cron_skip_5h_label": "5시간用量가 X% 초과 시 건너뛰기",
+        "cron_skip_7d_label": "주用量 Y% 초과 시 건너뛰기",
+        "cron_skip_help_text": "Entity 5시간用量 X% 또는 7일用量 Y% 초과 시スキップ。デフォルト（85%/95%）は高音entity保護。調整可能 50%-99%。スキップ된 cronは次のtickで自動再試行、lostしない。",
+        "cron_current_usage_label": "현재: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "건너뛰기:用量초과",
 },
 
 
@@ -2944555,6 +2944585,12 @@ const TRANSLATIONS = {
         "chat_routing_org_upward": "上報",
 
         "chat_routing_unspecified": "未指定",
+
+        "cron_skip_5h_label": "5小時用量超過 X% 跳過",
+        "cron_skip_7d_label": "週用量超過 Y% 跳過",
+        "cron_skip_help_text": "此排程在 entity 5 小時用量超過 X% 或 7 天用量超過 Y% 時會跳過。預設值保護高負載 entity 不被 cron 額外加負擔。可調範圍 50%-99%。跳過的 cron 下次 tick 自動重試，不會 lost。",
+        "cron_current_usage_label": "目前 5h: N% / 7d: M%",
+        "cron_skip_dispatch_reason": "跳過：用量超過閾值",
 },
 
 
@@ -3471386,6 +3471422,12 @@ const TRANSLATIONS = {
 
         "org_options_title": "พฤติกรรมลำดับชั้น",
         "org_routing_escalation_help": "ในลำดับชั้นองค์กร ข้อความที่ส่งถึงเอนทิตีลูกจะไม่ถูกหัวหน้าตอบแทนทันที เฉพาะเมื่อเอนทิตีลูกเงียบเกินเวลาที่กำหนด (ค่าเริ่มต้นประมาณ 30 นาที) โดยไม่ตอบกลับ จึงจะยกระดับให้หัวหน้าระดับบนเข้ามารับช่วงต่อ ข้อความแบบบรอดแคสต์หรือที่ @ ถึงหัวหน้าโดยตรงไม่อยู่ภายใต้ข้อจำกัดนี้",
+
+        "cron_skip_5h_label": "ข้ามถ้า 5h มากกว่า X%",
+        "cron_skip_7d_label": "ข้ามถ้า 7d มากกว่า Y%",
+        "cron_skip_help_text": "ตารางนี้ข้าม dispatch เมื่อ entity 5h เกิน X% หรือ 7d เกิน Y% ค่าเริ่มต้น (85%/95%) ป้องกัน entity ที่มีภาระสูง ปรับได้ 50%-99% cron ที่ข้ามจะลองใหม่อัตโนมัติ tick ถัดไป",
+        "cron_current_usage_label": "ปัจจุบัน: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "ข้าม: 用量เกิน",
 },
 
 
@@ -3998295,6 +3998337,12 @@ const TRANSLATIONS = {
 
         "org_options_title": "Hành vi phân cấp",
         "org_routing_escalation_help": "Trong hệ thống phân cấp tổ chức, tin nhắn gửi đến một thực thể cấp dưới sẽ KHÔNG được cấp trên trả lời ngay. Chỉ khi thực thể cấp dưới im lặng quá thời gian chờ (mặc định khoảng 30 phút) mà không phản hồi, tin nhắn mới được chuyển lên cấp trên tiếp quản. Tin nhắn quảng bá hoặc tin nhắn @nhắc trực tiếp cấp trên không thuộc giới hạn này.",
+
+        "cron_skip_5h_label": "Bỏ qua nếu 5h > X%",
+        "cron_skip_7d_label": "Bỏ qua nếu 7d > Y%",
+        "cron_skip_help_text": "Lịch này bỏ qua dispatch khi entity 5h vượt X% hoặc 7d vượt Y%. Mặc định (85%/95%) bảo vệ entity tải cao. Điều chỉnh 50%-99%. Cron bị bỏ qua sẽ tự động thử lại tick tiếp theo.",
+        "cron_current_usage_label": "Hiện tại: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "bỏ qua: 用量vượt",
 },
 
 
@@ -4524820,6 +4524868,12 @@ const TRANSLATIONS = {
 
         "org_options_title": "Perilaku hierarki",
         "org_routing_escalation_help": "Dalam hierarki organisasi, pesan yang ditujukan kepada entitas bawahan TIDAK langsung dijawab oleh atasan. Hanya jika entitas bawahan diam melewati batas waktu (default sekitar 30 menit) tanpa merespons, pesan baru dieskalasi ke atasan untuk ditangani. Siaran (broadcast) atau pesan yang me-@mention atasan secara langsung dikecualikan.",
+
+        "cron_skip_5h_label": "Lewati jika 5h > X%",
+        "cron_skip_7d_label": "Lewati jika 7d > Y%",
+        "cron_skip_help_text": "Jadwal ini melewati dispatch saat entity 5h melebihi X% atau 7d melebihi Y%. Default (85%/95%) melindungi entity beban tinggi. Adjustable 50%-99%. Cron yang dilewati akan retry otomatis tick berikutnya.",
+        "cron_current_usage_label": "Saat ini: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "dilewati: 用量melebihi",
 },
 
 
@@ -5049988,6 +5050042,12 @@ const TRANSLATIONS = {
 
         "org_options_title": "Comportement hiérarchique",
         "org_routing_escalation_help": "Dans la hiérarchie de l'organisation, un message adressé à une entité subordonnée n'est PAS répondu immédiatement par le supérieur. Ce n'est que si la subordonnée reste silencieuse au-delà d'un délai (par défaut ~30 min) sans répondre que le message est escaladé au supérieur qui prend le relais. Les diffusions ou les messages qui @mentionnent directement le supérieur sont exemptés.",
+
+        "cron_skip_5h_label": "Ignorer si 5h > X%",
+        "cron_skip_7d_label": "Ignorer si 7d > Y%",
+        "cron_skip_help_text": "Cette planification ignore le dispatch lorsque l'usage 5h de l'entity dépasse X% ou l'usage 7d dépasse Y%. Défauts (85%/95%) protègent les entities à charge élevée. Ajustable 50%-99%. Les crons ignorés réessayeront automatiquement au prochain tick.",
+        "cron_current_usage_label": "Actuel: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "ignoré: usage dépasse",
 },
 
 
@@ -5567707,6 +5567767,12 @@ const TRANSLATIONS = {
 
         "org_options_title": "Comportamiento jerárquico",
         "org_routing_escalation_help": "En la jerarquía de la organización, un mensaje dirigido a una entidad subordinada NO es respondido de inmediato por el superior. Solo si la subordinada permanece en silencio más allá de un tiempo de espera (por defecto ~30 min) sin responder, el mensaje se escala al superior para que lo asuma. Las difusiones o los mensajes que @mencionan directamente al superior están exentos.",
+
+        "cron_skip_5h_label": "Omitir si 5h > X%",
+        "cron_skip_7d_label": "Omitir si 7d > Y%",
+        "cron_skip_help_text": "Este horario omite dispatch cuando el entity 5h excede X% o 7d excede Y%. Predeterminados (85%/95%) protegen entitys de alta carga. Ajustable 50%-99%. Los crons omitidos reintentarán automáticamente en el próximo tick.",
+        "cron_current_usage_label": "Actual: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "omitido: uso excede",
 },
 
 
@@ -6104669,6 +6104735,12 @@ const TRANSLATIONS = {
 
         "org_options_title": "Hierarchieverhalten",
         "org_routing_escalation_help": "In der Organisationshierarchie wird eine an eine untergeordnete Entität gerichtete Nachricht NICHT sofort von der vorgesetzten Entität beantwortet. Nur wenn die untergeordnete Entität über eine Zeitüberschreitung hinaus (standardmäßig ca. 30 Min.) stumm bleibt und nicht antwortet, wird die Nachricht an die vorgesetzte Entität eskaliert, die übernimmt. Broadcasts oder Nachrichten, die die vorgesetzte Entität direkt per @ erwähnen, sind ausgenommen.",
+
+        "cron_skip_5h_label": "Überspringen wenn 5h > X%",
+        "cron_skip_7d_label": "Überspringen wenn 7d > Y%",
+        "cron_skip_help_text": "Dieser Zeitplan überspringt Dispatch, wenn die Entity 5h Nutzung X% oder 7d Nutzung Y% überschreitet. Standard (85%/95%) schützt hochbelastete Entities. Anpassbar 50%-99%. Übersprungene Crons werden automatisch im nächsten Tick wiederholt.",
+        "cron_current_usage_label": "Aktuell: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "übersprungen: Nutzung überschreitet",
 },
     pt: {
         "transition_loading": "A carregar…",
@@ -6638974,6 +6639046,12 @@ const TRANSLATIONS = {
 
         "org_options_title": "Tingkah laku hierarki",
         "org_routing_escalation_help": "Dalam hierarki organisasi, mesej yang ditujukan kepada entiti bawahan TIDAK dijawab serta-merta oleh penyelia. Hanya jika entiti bawahan terus senyap melebihi tamat masa (lalai ~30 min) tanpa membalas, barulah mesej dinaikkan kepada penyelia untuk diambil alih. Siaran (broadcast) atau mesej yang @sebut penyelia secara langsung dikecualikan.",
+
+        "cron_skip_5h_label": "Langkau jika 5h > X%",
+        "cron_skip_7d_label": "Langkau jika 7d > Y%",
+        "cron_skip_help_text": "Jadual ini melangkaui dispatch apabila entity 5h melebihi X% atau 7d melebihi Y%. Lalai (85%/95%) melindungi entity ber beban tinggi. Bolehh ubah 50%-99%. Cron yang dilangkaui akan cuba lagi automatik pada tick seterusnya.",
+        "cron_current_usage_label": "Semasa: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "dilangkaui: 用量melebihi",
 },
 
 
@@ -7198262,6 +7198340,12 @@ const TRANSLATIONS = {
 
         "org_options_title": "पदानुक्रम व्यवहार",
         "org_routing_escalation_help": "संगठन पदानुक्रम में, किसी अधीनस्थ इकाई को भेजे गए संदेश का उत्तर वरिष्ठ तुरंत नहीं देता। केवल तभी जब अधीनस्थ इकाई समय-सीमा (डिफ़ॉल्ट लगभग 30 मिनट) से अधिक चुप रहकर उत्तर नहीं देती, संदेश को वरिष्ठ के पास संभालने हेतु एस्केलेट किया जाता है। ब्रॉडकास्ट या वरिष्ठ को सीधे @उल्लेख करने वाले संदेश इस सीमा से मुक्त हैं।",
+
+        "cron_skip_5h_label": "छोड़ें अगर 5h > X%",
+        "cron_skip_7d_label": "छोड़ें अगर 7d > Y%",
+        "cron_skip_help_text": "यह शेड्यूल तब dispatch को छोड़ देता है जब entity 5h उपयोग X% से अधिक या 7d उपयोग Y% से अधिक हो। डिफ़ॉल्ट (85%/95%) उच्च-लोड entity की रक्षा करते हैं। समायोज्य 50%-99%। छोड़े गए cron अगले tick पर स्वचालित रूप से पुनः प्रयास करेंगे।",
+        "cron_current_usage_label": "वर्तमान: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "छोड़ा गया: उपयोग सीमा से अधिक",
 },
 
 
@@ -7746676,6 +7746760,12 @@ const TRANSLATIONS = {
 
         "org_options_title": "سلوك التسلسل الهرمي",
         "org_routing_escalation_help": "في التسلسل الهرمي للمؤسسة، لا يردّ المشرف فورًا على الرسالة الموجهة إلى كيان تابع. ولا تتم إحالتها إلى المشرف الأعلى ليتولاها إلا إذا بقي الكيان التابع صامتًا دون ردّ بعد انقضاء المهلة (الافتراضية نحو 30 دقيقة). أما الرسائل العامة (البث) أو الرسائل التي تذكر المشرف مباشرةً عبر @ فهي مستثناة من هذا القيد.",
+
+        "cron_skip_5h_label": "تخطي إذا 5h > X%",
+        "cron_skip_7d_label": "تخطي إذا 7d > Y%",
+        "cron_skip_help_text": "يتخطى هذا الجدول dispatch عندما تتجاوز 5h للentity X% أو 7d تتجاوز Y%. الافتراضي (85%/95%) يحمي entitys الأحمال العالية. قابل للتعديل 50%-99%. ستعيد cron التي تم تخطيها المحاولة تلقائيًا في tick التالي.",
+        "cron_current_usage_label": "الحالي: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "تم التخطي: الاستخدام يتجاوز",
 }
 
 
