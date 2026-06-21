@@ -331,6 +331,14 @@ function attachAvatarClickHandler(container, onClick) {
         // the wrapping label (.target-entity-check) and bare checkbox / label
         // hits to be defensive against similar checkbox-styled rows added later.
         if (e.target.closest('.target-entity-check')) return;
+        // Chat "Select recipients" picker dialog (.sendto-picker-overlay) — the
+        // newer recipient selector that supersedes the inline .target-entity-check
+        // row. Each row is a <label data-entity-id> wrapping a checkbox, so without
+        // this guard a click both opens the status drawer AND preventDefault()s the
+        // checkbox toggle, so the row never selects ("選擇傳送對象 點名字→轉到狀態列表
+        // / 按錯" — card_1ee3bd9f). It carries data-entity-id, so it must be skipped
+        // here just like .target-entity-check.
+        if (e.target.closest('.sendto-picker-overlay')) return;
         if (e.target.matches && e.target.matches('input[type="checkbox"], input[type="radio"]')) return;
         const el = e.target.closest('[data-entity-id]');
         if (!el || !container.contains(el)) return;

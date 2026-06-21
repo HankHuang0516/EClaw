@@ -3627,6 +3627,7 @@
                 <div class="sendto-picker-overlay"
                      id="sendtoPickerOverlay"
                      hidden
+                     data-no-avatar-click
                      onclick="if(event.target===this)cancelSendtoPicker()">
                     <div class="sendto-picker-dialog"
                          id="sendtoPickerDialog"
@@ -7471,7 +7472,11 @@
                     const avatar = (typeof getAvatarForEntity === 'function') ? getAvatarForEntity(eid) : '';
                     const name = (typeof getEntityDisplayName === 'function') ? getEntityDisplayName(eid) : ('#' + eid);
                     const pubCode = (e && e.publicCode) ? String(e.publicCode) : '';
-                    const avatarHtml = (typeof renderAvatarHtml === 'function') ? renderAvatarHtml(avatar, 28) : '';
+                    // Pass eid (3rd arg) so a live Pet/Dex companion descriptor renders
+                    // its animated canvas — matching the collapsed sendto button
+                    // (renderAvatarHtml(avatar, 20, entityId)); without it the picker row
+                    // silently dropped to the static URL/emoji path. (card_1ee3bd9f)
+                    const avatarHtml = (typeof renderAvatarHtml === 'function') ? renderAvatarHtml(avatar, 28, eid) : '';
 
                     const row = document.createElement('label');
                     row.className = 'sendto-picker-row-item';
