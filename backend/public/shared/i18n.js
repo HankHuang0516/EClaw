@@ -650468,6 +650468,8 @@ const TRANSLATIONS = {
         "chat_sendto_picker_cancel": "Cancel",
 
         "cron_current_usage_label": "Current: 5h N% / 7d M%",
+
+        "chat_sendto_button_label_many_more": "+{count} more",
 },
 
 
@@ -1235373,6 +1235375,8 @@ const TRANSLATIONS = {
 
         "cron_current_usage_label": "目前 5h: N% / 7d: M%",
         "cron_skip_dispatch_reason": "跳過：用量超過閾值",
+
+        "chat_sendto_button_label_many_more": "+{count} 位",
 },
 
 
