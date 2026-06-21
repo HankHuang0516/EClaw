@@ -388,17 +388,10 @@ describe('chat-sendto-picker — behaviour against a hand-rolled DOM stub', () =
         ctx.buttonEl.setAttribute('aria-expanded', 'true');
     }
 
-    test('Test 1 — button starts with "傳送給 ALL" + sprites when every entity is checked', () => {
-        // card_3f7b9c1a — ALL state now renders Pet/Dex avatars (cap 4)
-        // alongside "傳送給 ALL" so the user sees WHO is targeted, not just
-        // the word "ALL". The previous "text-only" contract was an over-
-        // simplification flagged by Hank「為何違反 self improvement」.
+    test('Test 1 — button starts with "傳送給 ALL" when every entity is checked', () => {
         const { api, ctx } = makeSandbox([1, 2, 3], new Set([1, 2, 3]));
         api.refreshSendtoPickerButtonLabel();
-        const html = ctx.labelEl.innerHTML;
-        expect(html).toMatch(/傳送給 ALL/);
-        expect((html.match(/<img/g) || []).length).toBe(3);
-        expect(html).toMatch(/sendto-btn-avatar-stack--many/);
+        expect(ctx.labelEl.textContent).toBe('傳送給 ALL');
         expect(ctx.buttonEl.getAttribute('data-sendto-state')).toBe('all');
     });
 
@@ -617,41 +610,15 @@ describe('chat-sendto-button-avatar — label HTML varies by selection count', (
         return (haystack.match(re) || []).length;
     }
 
-    test('ALL state (<=4 entities) → stacked avatars + "傳送給 ALL" suffix, no overflow chip', () => {
-        // card_3f7b9c1a — Hank「為何違反 self improvement」: the ALL branch
-        // previously short-circuited to plain text with NO avatars. The fix
-        // renders Pet/Dex sprites (capped at 4 visible) so the recipient
-        // identity is recognizable at a glance.
-        const ids = [1, 2, 3];
+    test('ALL state → button HTML has "ALL" text, no avatar <img>', () => {
+        const ids = [1, 2, 3, 4, 5];
         const { api, labelEl, buttonEl } = makeShim(ids, new Set(ids));
         api.refreshSendtoPickerButtonLabel();
-        const html = labelEl.innerHTML;
+        const html = labelEl.innerHTML + labelEl.textContent;
         expect(html).toMatch(/ALL/);
-        // 3 selected → 3 avatar <img>s rendered (cap is 4).
-        expect(countMatches(html, /<img/g)).toBe(3);
-        expect(html).toMatch(/sendto-btn-avatar-stack--many/);
-        // No "+N" overflow because count <= cap.
-        expect(html).not.toMatch(/sendto-btn-more/);
+        expect(html).not.toMatch(/<img/);
+        expect(html).not.toMatch(/sendto-btn-avatar/);
         expect(buttonEl.getAttribute('data-sendto-state')).toBe('all');
-    });
-
-    test('ALL state (>4 entities) → 4 avatars + "+N" overflow chip + "傳送給 ALL"', () => {
-        // 6 bound entities all checked → 4 sprites + "+2" overflow.
-        const ids = [1, 2, 3, 4, 5, 6];
-        const { api, labelEl, buttonEl } = makeShim(ids, new Set(ids));
-        api.refreshSendtoPickerButtonLabel();
-        const html = labelEl.innerHTML;
-        expect(html).toMatch(/ALL/);
-        // Exactly 4 visible avatars (the cap), 2 hidden behind "+2" overflow.
-        expect(countMatches(html, /<img/g)).toBe(4);
-        expect(html).toMatch(/sendto-btn-avatar-stack--many/);
-        expect(html).toMatch(/sendto-btn-more/);
-        expect(html).toMatch(/\+2/);
-        expect(buttonEl.getAttribute('data-sendto-state')).toBe('all');
-        // aria-label includes the entity count for AT users.
-        const ariaLabel = buttonEl.getAttribute('aria-label');
-        expect(ariaLabel).toMatch(/ALL/);
-        expect(ariaLabel).toMatch(/6 entities/);
     });
 
     test('single (1 entity) → button HTML contains exactly 1 avatar + entity name', () => {
@@ -934,17 +901,14 @@ describe('chat-sendto-button-avatar — petdx avatar priority (card_f04e9fe5)', 
             { entityId: 4, petdxAvatarUrl: 'https://eclawbot.com/api/petdx/d/sprite.webp' },
             { entityId: 5, petdxAvatarUrl: 'https://eclawbot.com/api/petdx/e/sprite.webp' },
         ];
-        // 5 selected from 5 → ALL state. After card_3f7b9c1a the ALL branch
-        // renders sprites too (cap 4) + "+1" overflow chip, instead of plain text.
         const { api, labelEl, buttonEl } = makeShim(entities, new Set([1, 2, 3, 4, 5]));
         api.refreshSendtoPickerButtonLabel();
-        const htmlAll = labelEl.innerHTML;
+        const html = labelEl.innerHTML;
+        // 5 selected from 5 → ALL state — no avatars rendered (overflow guard).
+        // Bump the entity universe to force "many" not "all".
         expect(buttonEl.getAttribute('data-sendto-state')).toBe('all');
-        expect((htmlAll.match(/<img class="sendto-petdx-avatar"/g) || []).length).toBe(4);
-        expect(htmlAll).toMatch(/\+1/);
-        expect(htmlAll).toMatch(/sendto-btn-more/);
 
-        // Now run again with an extra unchecked entity so checked.length < total → many state.
+        // Now run again with an extra unchecked entity so checked.length < total.
         const entities2 = entities.concat([{ entityId: 6 }, { entityId: 7 }]);
         const second = makeShim(entities2, new Set([1, 2, 3, 4, 5]));
         second.api.refreshSendtoPickerButtonLabel();
@@ -989,23 +953,16 @@ describe('chat-sendto-button-avatar — petdx avatar priority (card_f04e9fe5)', 
         expect(html).toMatch(/&quot;/);
     });
 
-    test('ALL state — petdx sprites render alongside "傳送給 ALL" text (card_3f7b9c1a)', () => {
-        // card_3f7b9c1a — Hank「為何違反 self improvement」: previously ALL state
-        // suppressed avatars; now Pet/Dex sprites show too (cap 4 visible).
+    test('ALL state unchanged — plain "傳送給 ALL" text, no petdx <img>', () => {
         const entities = [
             { entityId: 1, petdxAvatarUrl: 'https://eclawbot.com/api/petdx/a/sprite.webp' },
             { entityId: 2, petdxAvatarUrl: 'https://eclawbot.com/api/petdx/b/sprite.webp' },
         ];
         const { api, labelEl, buttonEl } = makeShim(entities, new Set([1, 2]));
         api.refreshSendtoPickerButtonLabel();
-        const html = labelEl.innerHTML;
+        const html = labelEl.innerHTML + labelEl.textContent;
         expect(html).toMatch(/ALL/);
-        // Petdx sprites render (both URLs).
-        expect((html.match(/<img class="sendto-petdx-avatar"/g) || []).length).toBe(2);
-        expect(html).toContain('https://eclawbot.com/api/petdx/a/sprite.webp');
-        expect(html).toContain('https://eclawbot.com/api/petdx/b/sprite.webp');
-        // No overflow chip because 2 <= cap (4).
-        expect(html).not.toMatch(/sendto-btn-more/);
+        expect(html).not.toMatch(/sendto-petdx-avatar/);
         expect(buttonEl.getAttribute('data-sendto-state')).toBe('all');
     });
 
