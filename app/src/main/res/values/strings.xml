@@ -95,10 +95,16 @@
     <string name="wallpaper_walking_title">Walking Feature</string>
     <string name="wallpaper_walking_settings_desc">Slow goal-based movement for wallpaper entities</string>
     <string name="wallpaper_walking_help_button">About wallpaper walking</string>
-    <string name="wallpaper_walking_help">What: wallpaper entities slowly move like pets. When Purposeful walking is enabled, idle companions choose ambient goals such as visiting peers, patrolling, and returning to their home area. Message-aware movement still makes them move toward each other when you or another entity sends a message.\n\nNeeds: basic wallpaper enabled, at least one bound entity, and the walking animation downloaded.\n\nTest: turn this on, open the wallpaper preview below, and leave it open for 30 seconds to watch every entity walk.</string>
+    <string name="wallpaper_walking_help">What: wallpaper entities stay at their home positions until a speak-to, @all, or broadcast conversation happens. The sender and receivers gather at the center with one-entity spacing, then return home when the message bubble TTL ends.\n\nNeeds: live wallpaper enabled, at least one bound entity, and directional walking animation available.\n\nTest: send a speak-to or broadcast message between entities, then watch the sender and receivers gather and return.</string>
+    <string name="wallpaper_custom_layout_help_button">About custom layout</string>
+    <string name="wallpaper_custom_layout_help">Lets you drag entities to persistent wallpaper home positions. Conscious walking and kanban task objects use these home positions as their source of truth.</string>
+    <string name="wallpaper_background_help_button">About custom background</string>
+    <string name="wallpaper_background_help">Uses a selected local photo as the live wallpaper background. The app keeps read permission so the wallpaper can restore the image after restart.</string>
     <string name="wallpaper_walking_enabled">Walking feature enabled</string>
     <string name="wallpaper_walking_disabled">Walking feature disabled</string>
     <string name="wallpaper_usage_overlay">Usage Overlay</string>
+    <string name="wallpaper_usage_overlay_help_button">About usage overlay</string>
+    <string name="wallpaper_usage_overlay_help">Shows the latest Claude/Codex usage snapshot on the wallpaper. The item and window checkboxes control which usage counters are visible.</string>
     <string name="wallpaper_usage_overlay_title">Usage</string>
     <string name="wallpaper_usage_overlay_syncing">Usage syncing...</string>
     <string name="wallpaper_usage_position">Position</string>
@@ -130,14 +136,18 @@
     <string name="wallpaper_setting_speech_bubbles">Message bubbles</string>
     <string name="wallpaper_setting_speech_bubbles_desc">Show entity status and recent messages near each companion.</string>
     <string name="wallpaper_setting_bubble_duration">Message bubble duration</string>
-    <string name="wallpaper_setting_bubble_duration_desc">Controls how long wallpaper bubbles stay visible, from 5 seconds to 5 minutes; long messages automatically get more time.</string>
+    <string name="wallpaper_setting_bubble_duration_desc">Controls how long wallpaper bubbles stay visible, from 1 to 20 seconds. Conversation walking returns home when this TTL ends.</string>
     <string name="wallpaper_setting_bubble_duration_value">%1$d sec</string>
     <string name="wallpaper_setting_bubble_duration_minutes_value">%1$d min</string>
     <string name="wallpaper_setting_bubble_duration_minutes_seconds_value">%1$d min %2$d sec</string>
     <string name="wallpaper_setting_purposeful_walking">Purposeful walking</string>
     <string name="wallpaper_setting_purposeful_walking_desc">Give idle companions goals like visiting peers, patrolling, and returning home.</string>
+    <string name="wallpaper_setting_conscious_walking">Conscious walking</string>
+    <string name="wallpaper_setting_conscious_walking_desc">Only move entities for speak-to, @all, and broadcast conversations. The sender and receivers gather at the center with one-entity spacing, then return home when the bubble TTL ends.</string>
     <string name="wallpaper_setting_entity_interactions">Entity interactions</string>
-    <string name="wallpaper_setting_entity_interactions_desc">Let companions react when they bump into each other, with tiny greetings and bounce-away moments.</string>
+    <string name="wallpaper_setting_entity_interactions_desc">Let companions react when they bump into each other. Both entities play the same random action: wave, jump, fail, or review.</string>
+    <string name="wallpaper_setting_collision_duration">Collision action duration</string>
+    <string name="wallpaper_setting_collision_duration_desc">Controls how long the shared collision animation lasts, from 1 to 20 seconds.</string>
     <string name="wallpaper_setting_bubble_pulse">Bubble pulse</string>
     <string name="wallpaper_setting_bubble_pulse_desc">Briefly highlight a companion when its bubble changes.</string>
     <string name="wallpaper_setting_bubble_avoidance">Smart bubble avoidance</string>
@@ -150,6 +160,13 @@
     <string name="wallpaper_setting_adaptive_effects_desc">Automatically reduce expensive effects when rendering is unstable.</string>
     <string name="wallpaper_setting_offline_cache">Offline appearance cache</string>
     <string name="wallpaper_setting_offline_cache_desc">Keep the last real companion appearance during network outages instead of falling back to defaults.</string>
+    <string name="wallpaper_setting_kanban_tasks">Kanban task objects</string>
+    <string name="wallpaper_setting_kanban_tasks_desc">Show active assigned kanban tasks as folder objects around each entity home. Done and archived cards only play the completion/removal animation, then disappear.</string>
+    <string name="wallpaper_setting_kanban_automation_board">Automation whiteboards</string>
+    <string name="wallpaper_setting_kanban_automation_board_desc">Show automation cards on a background whiteboard above the assigned entity, ordered by nearest next trigger time.</string>
+    <string name="wallpaper_setting_kanban_privacy">Kanban privacy mode</string>
+    <string name="wallpaper_setting_kanban_privacy_desc">Hide task names and sensitive schedule details on the wallpaper. Folder states and animations remain visible.</string>
+    <string name="wallpaper_setting_help_content_description">%1$s details</string>
     <string name="back">Back</string>
     
     <!-- Layout Editor -->

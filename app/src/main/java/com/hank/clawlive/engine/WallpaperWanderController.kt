@@ -137,7 +137,9 @@ class WallpaperWanderController(
         height: Float,
         enabled: Boolean,
         purposeful: Boolean = true,
-        nowMs: Long = System.currentTimeMillis()
+        nowMs: Long = System.currentTimeMillis(),
+        conversationEntityIds: Set<Int> = emptySet(),
+        entityUnitPx: Float = min(width, height) * DEFAULT_GATHER_SPACING_PCT
     ): List<Pair<Float, Float>> {
         if (!enabled || width <= 0f || height <= 0f) {
             states.clear()
@@ -146,17 +148,11 @@ class WallpaperWanderController(
 
         val activeIds = entities.map { it.entityId }.toSet()
         states.keys.toList().forEach { id -> if (id !in activeIds) states.remove(id) }
-        val ambientPeers = entities.mapIndexedNotNull { index, entity ->
-            if (entity.state.pausesAmbientWander) return@mapIndexedNotNull null
-            val base = basePositions.getOrNull(index) ?: (width / 2f to height / 2f)
-            val baseX = (base.first / width).coerceIn(MIN_X_PCT, MAX_X_PCT)
-            val baseY = (base.second / height).coerceIn(MIN_Y_PCT, MAX_Y_PCT)
-            val state = states[entity.entityId]
-            AmbientPeer(
-                entityId = entity.entityId,
-                xPct = state?.xPct ?: baseX,
-                yPct = state?.yPct ?: baseY
-            )
+        val gatheringIds = conversationEntityIds.intersect(activeIds)
+        val gatherTargets = if (gatheringIds.isNotEmpty()) {
+            gatherTargetsFor(gatheringIds, width, height, entityUnitPx)
+        } else {
+            emptyMap()
         }
 
         return entities.mapIndexed { index, entity ->
@@ -166,10 +162,104 @@ class WallpaperWanderController(
                 state.motionState = MotionState.SLEEPING
                 state.moving = false
                 state.xPct * width to state.yPct * height
+            } else if (gatherTargets.isNotEmpty()) {
+                advanceConversationTarget(entity, base, width, height, nowMs, gatherTargets[entity.entityId])
             } else {
-                advance(entity, base, width, height, nowMs, purposeful, ambientPeers)
+                advanceHome(entity, base, width, height, nowMs)
             }
         }
+    }
+
+    private fun advanceConversationTarget(
+        entity: EntityStatus,
+        base: Pair<Float, Float>,
+        width: Float,
+        height: Float,
+        nowMs: Long,
+        gatherTarget: Pair<Float, Float>?
+    ): Pair<Float, Float> {
+        val state = stateFor(entity.entityId, base, width, height, nowMs)
+        state.homeXPct = (base.first / width).coerceIn(MIN_X_PCT, MAX_X_PCT)
+        state.homeYPct = (base.second / height).coerceIn(MIN_Y_PCT, MAX_Y_PCT)
+        if (state.motionState == MotionState.SLEEPING) {
+            state.motionState = MotionState.STOPPED
+        }
+        val target = gatherTarget ?: (state.homeXPct to state.homeYPct)
+        return advanceTowardExplicitTarget(state, target.first, target.second, width, height, nowMs)
+    }
+
+    private fun advanceHome(
+        entity: EntityStatus,
+        base: Pair<Float, Float>,
+        width: Float,
+        height: Float,
+        nowMs: Long
+    ): Pair<Float, Float> {
+        val state = stateFor(entity.entityId, base, width, height, nowMs)
+        state.homeXPct = (base.first / width).coerceIn(MIN_X_PCT, MAX_X_PCT)
+        state.homeYPct = (base.second / height).coerceIn(MIN_Y_PCT, MAX_Y_PCT)
+        if (state.motionState == MotionState.SLEEPING) {
+            state.motionState = MotionState.STOPPED
+        }
+        return advanceTowardExplicitTarget(state, state.homeXPct, state.homeYPct, width, height, nowMs)
+    }
+
+    private fun advanceTowardExplicitTarget(
+        state: WanderState,
+        targetXPct: Float,
+        targetYPct: Float,
+        width: Float,
+        height: Float,
+        nowMs: Long
+    ): Pair<Float, Float> {
+        val targetX = targetXPct.coerceIn(MIN_X_PCT, MAX_X_PCT)
+        val targetY = targetYPct.coerceIn(MIN_Y_PCT, MAX_Y_PCT)
+        val dtSeconds = ((nowMs - state.lastUpdateMs).coerceIn(0L, 1000L)) / 1000f
+        state.lastUpdateMs = nowMs
+        state.targetXPct = targetX
+        state.targetYPct = targetY
+        state.motionState = if (
+            abs(state.xPct - targetX) * width < ARRIVAL_EPSILON_PX &&
+            abs(state.yPct - targetY) * height < ARRIVAL_EPSILON_PX
+        ) {
+            MotionState.STOPPED
+        } else {
+            MotionState.MOVING_TO_TARGET
+        }
+        val arrived = moveTowardTarget(state, width, height, targetSpeedPctPerSecond, dtSeconds)
+        if (arrived) {
+            state.motionState = MotionState.STOPPED
+            val callback = state.onArrive
+            state.onArrive = null
+            callback?.invoke()
+        }
+        return state.xPct * width to state.yPct * height
+    }
+
+    private fun gatherTargetsFor(
+        entityIds: Set<Int>,
+        width: Float,
+        height: Float,
+        entityUnitPx: Float
+    ): Map<Int, Pair<Float, Float>> {
+        val ids = entityIds.sorted()
+        if (ids.isEmpty()) return emptyMap()
+        val spacingX = (entityUnitPx / width).coerceAtLeast(DEFAULT_GATHER_SPACING_PCT)
+        val spacingY = (entityUnitPx / height).coerceAtLeast(DEFAULT_GATHER_SPACING_PCT)
+        val columns = kotlin.math.ceil(kotlin.math.sqrt(ids.size.toDouble())).toInt().coerceAtLeast(1)
+        val rows = kotlin.math.ceil(ids.size.toDouble() / columns.toDouble()).toInt().coerceAtLeast(1)
+        val startX = 0.5f - ((columns - 1) * spacingX) / 2f
+        val startY = 0.5f - ((rows - 1) * spacingY) / 2f
+        return ids.mapIndexed { index, id ->
+            val row = index / columns
+            val col = index % columns
+            val rowCount = if (row == rows - 1) ids.size - row * columns else columns
+            val rowStartX = 0.5f - ((rowCount - 1) * spacingX) / 2f
+            id to safeTarget(
+                rowStartX + col * spacingX,
+                startY + row * spacingY
+            )
+        }.toMap()
     }
 
     private fun advance(
@@ -416,6 +506,7 @@ class WallpaperWanderController(
     companion object {
         const val DEFAULT_WANDER_SPEED_PCT_PER_SECOND = 0.04f
         const val DEFAULT_TARGET_SPEED_PCT_PER_SECOND = 0.12f
+        const val DEFAULT_GATHER_SPACING_PCT = 0.18f
         private const val ARRIVAL_EPSILON_PX = 1f
         private const val FACING_EPSILON_PX = 0.5f
         private const val MAX_IDLE_MS = 3000L

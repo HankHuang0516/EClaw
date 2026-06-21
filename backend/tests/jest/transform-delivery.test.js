@@ -99,6 +99,31 @@ describe('Transform + speakTo', () => {
         expect(res.body.delivery.results[0].success).toBe(true);
     });
 
+    it('exposes speakTo routing metadata for wallpaper motion', async () => {
+        const message = 'Wallpaper speakTo route metadata';
+        const res = await post('/api/transform')
+            .send({
+                deviceId,
+                entityId: 0,
+                botSecret: botSecret0,
+                message,
+                state: 'IDLE',
+                speakTo: [code1]
+            });
+        expect(res.status).toBe(200);
+
+        const entRes = await request(app).get('/api/entities')
+            .query({ deviceId, deviceSecret })
+            .set('Host', 'localhost')
+            .set('Accept-Encoding', 'identity');
+        const target = (entRes.body.entities || []).find(e => e.entityId === 1);
+        const queued = (target.messageQueue || []).find(m => m.text === message);
+        expect(queued).toBeDefined();
+        expect(queued.routingMode).toBe('speakTo');
+        expect(queued.routingEventId).toEqual(expect.any(String));
+        expect(queued.broadcastTargetIds).toBeNull();
+    });
+
     it('returns per-target error for invalid publicCode', async () => {
         const res = await post('/api/transform')
             .send({
@@ -182,6 +207,31 @@ describe('Transform + broadcast', () => {
         expect(res.body.delivery.broadcast).toBe(true);
         expect(res.body.delivery.sentCount).toBe(2); // entities 1 and 2
         expect(res.body.delivery.targets).toHaveLength(2);
+    });
+
+    it('exposes broadcast routing metadata for wallpaper motion', async () => {
+        const message = 'Wallpaper broadcast route metadata';
+        const res = await post('/api/transform')
+            .send({
+                deviceId,
+                entityId: 0,
+                botSecret: botSecret0,
+                message,
+                state: 'IDLE',
+                broadcast: true
+            });
+        expect(res.status).toBe(200);
+
+        const entRes = await request(app).get('/api/entities')
+            .query({ deviceId, deviceSecret })
+            .set('Host', 'localhost')
+            .set('Accept-Encoding', 'identity');
+        const target = (entRes.body.entities || []).find(e => e.entityId === 1);
+        const queued = (target.messageQueue || []).find(m => m.text === message);
+        expect(queued).toBeDefined();
+        expect(queued.routingMode).toBe('broadcast');
+        expect(queued.routingEventId).toEqual(expect.any(String));
+        expect(queued.broadcastTargetIds).toEqual(expect.arrayContaining([1, 2]));
     });
 });
 

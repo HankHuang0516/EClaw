@@ -78,5 +78,8 @@ data class MessageQueueItem(
     val fromCharacter: String,
     val timestamp: Long,
     val read: Boolean = false,
-    val delivered: Boolean = false
+    val delivered: Boolean = false,
+    val routingMode: String? = null,
+    val routingEventId: String? = null,
+    val broadcastTargetIds: List<Int>? = null
 )
