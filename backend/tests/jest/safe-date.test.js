@@ -90,6 +90,35 @@ describe('safeUpdatedAtToISO', () => {
         });
     });
 
+    describe('BIGINT epoch-millis returned as a STRING (card_38b6f514)', () => {
+        // device_vars.updated_at is BIGINT epoch-millis; node-postgres returns
+        // BIGINT (int8) as a STRING (no int8 type-parser is configured). Before
+        // the coercion fix, new Date("1750000000000") was an Invalid Date so the
+        // helper returned null — which made GET /api/device-vars emit
+        // updatedAt:null for every row, so clients could never echo the
+        // optimistic-lock token and every non-empty-row vault POST tripped the
+        // "[Vars] POST without expectedUpdatedAt" warn. The 409 stale-write
+        // check was dead for the same reason.
+
+        test('all-digit string (pg int8 shape) parses as epoch-millis, NOT null', () => {
+            const out = safeUpdatedAtToISO({ updated_at: '1750000000000' });
+            expect(out).toBe(new Date(1750000000000).toISOString());
+            expect(out).not.toBeNull();
+        });
+
+        test('string and number forms produce the same ISO', () => {
+            const ms = 1782084491324;
+            expect(safeUpdatedAtToISO({ updated_at: String(ms) }))
+                .toBe(safeUpdatedAtToISO({ updated_at: ms }));
+        });
+
+        test('non-digit (ISO) strings still parse and are NOT coerced to a number', () => {
+            // Guard the coercion is digit-only: ISO strings must keep working.
+            expect(safeUpdatedAtToISO({ updated_at: '2026-06-16T14:00:00Z' }))
+                .toBe('2026-06-16T14:00:00.000Z');
+        });
+    });
+
     describe('incident-class regression coverage', () => {
         // These mirror the actual shapes the pg driver was returning when the
         // 06-16 incidents fired. If any of these throw, the server is back in
