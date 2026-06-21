@@ -33,6 +33,7 @@ class ClawRenderer(
     private val spritesheetDrawer = companionRepository?.let { SpritesheetCompanionDrawer(it) }
     private val usageOverlayRenderer = UsageOverlayRenderer(context, layoutPrefs)
     private val wanderController = WallpaperWanderController()
+    private val interactionController = WallpaperInteractionController()
     private val speechBubbleController = SpeechBubbleController()
     private val renderDiagnostics = WallpaperRenderDiagnostics()
     private val lastBubbleMessageByEntity = mutableMapOf<Int, String>()
@@ -127,6 +128,13 @@ class ClawRenderer(
         style = Paint.Style.STROKE
         isAntiAlias = true
         strokeCap = Paint.Cap.ROUND
+    }
+
+    private val interactionTextPaint = TextPaint().apply {
+        color = Color.WHITE
+        textAlign = Paint.Align.CENTER
+        isAntiAlias = true
+        isFakeBoldText = true
     }
 
     // Animation state
@@ -506,6 +514,14 @@ class ClawRenderer(
         )
         val baseScale = getScaleFactor(entities.size)
         val nowMs = System.currentTimeMillis()
+        val interactionState = interactionController.apply(
+            positions = positions,
+            entities = entities,
+            width = width,
+            height = height,
+            enabled = layoutPrefs.wallpaperEntityInteractionsEnabled,
+            nowMs = nowMs
+        )
         if (layoutPrefs.wallpaperSpeechBubblesEnabled) {
             syncSpeechBubbles(entities, nowMs)
         } else {
@@ -528,14 +544,15 @@ class ClawRenderer(
         }
 
         entities.forEachIndexed { index, entity ->
-            if (index < positions.size) {
-                val (cx, cy) = positions[index]
+            if (index < interactionState.positions.size) {
+                val (cx, cy) = interactionState.positions[index]
                 // Apply per-entity scale multiplier on top of base scale
                 val entityScale = layoutPrefs.getEntityScale(entity.entityId)
                 val finalScale = baseScale * entityScale
                 val motionStateOverride = if (wanderController.isWalking(entity.entityId)) {
                     WallpaperWanderController.WALKING_STATE_ASSET
                 } else null
+                val facingDirection = wanderController.facingDirection(entity.entityId)
                 drawSingleEntityAt(
                     canvas,
                     entity,
@@ -545,9 +562,14 @@ class ClawRenderer(
                     width,
                     motionStateOverride,
                     nowMs,
-                    bubbleAvoidBounds
+                    bubbleAvoidBounds,
+                    facingDirection
                 )
             }
+        }
+
+        interactionState.effects.forEach { effect ->
+            drawInteractionEffect(canvas, effect, baseScale, nowMs)
         }
 
         usageOverlayRenderer.draw(canvas, usageSnapshot)
@@ -609,7 +631,8 @@ class ClawRenderer(
         screenWidth: Float,
         motionStateOverride: String? = null,
         nowMs: Long = System.currentTimeMillis(),
-        bubbleAvoidBounds: RectF? = null
+        bubbleAvoidBounds: RectF? = null,
+        facingDirection: WalkFacingDirection = WalkFacingDirection.RIGHT
     ) {
         // Calculate Animation (Bobbing)
         val time = nowMs - startTime
@@ -658,7 +681,8 @@ class ClawRenderer(
                 motionStateOverride ?: entity.state.toString(),
                 centerX,
                 charY,
-                scale
+                scale,
+                facingDirection
             ) ?: SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED
         } else SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED
         if (attemptedSpritesheet && layoutPrefs.wallpaperAdaptiveEffectsEnabled) {
@@ -670,7 +694,7 @@ class ClawRenderer(
             SpritesheetCompanionDrawer.DrawResult.LOADING -> Unit
             SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED,
             SpritesheetCompanionDrawer.DrawResult.ERROR ->
-                drawLobsterAtPosition(canvas, centerX, charY, entity, scale, companion)
+                drawLobsterAtPosition(canvas, centerX, charY, entity, scale, companion, facingDirection)
         }
 
         val bubblePlacement = if (layoutPrefs.wallpaperSpeechBubblesEnabled) {
@@ -788,6 +812,26 @@ class ClawRenderer(
             shadowPaint
         )
         shadowPaint.alpha = 255
+    }
+
+    private fun drawInteractionEffect(
+        canvas: Canvas,
+        effect: WallpaperInteractionController.InteractionEffect,
+        scale: Float,
+        nowMs: Long
+    ) {
+        if (isAmbient) return
+        val alpha = effect.alpha(nowMs)
+        if (alpha <= 0f) return
+        interactionTextPaint.textSize = (30f * scale * effect.scale(nowMs)).coerceIn(18f, 46f)
+        interactionTextPaint.alpha = (alpha * 210f).toInt().coerceIn(0, 230)
+        interactionTextPaint.color = when (effect.kind) {
+            WallpaperInteractionController.InteractionKind.GREETING -> Color.rgb(96, 165, 250)
+            WallpaperInteractionController.InteractionKind.SPARK -> Color.rgb(250, 204, 21)
+            WallpaperInteractionController.InteractionKind.BUMP -> Color.rgb(45, 212, 191)
+        }
+        canvas.drawText(effect.label, effect.centerX, effect.centerY, interactionTextPaint)
+        interactionTextPaint.alpha = 255
     }
 
     private fun drawStateAura(
@@ -1081,13 +1125,18 @@ class ClawRenderer(
         cy: Float,
         entity: EntityStatus,
         scale: Float,
-        companion: CompanionDetail? = null
+        companion: CompanionDetail? = null,
+        facingDirection: WalkFacingDirection = WalkFacingDirection.RIGHT
     ) {
         // SVG scale (original is 4x, now multiply by entity scale)
         val svgScale = 4f * scale
 
         canvas.save()
-        canvas.translate(cx - (60 * svgScale), cy - (60 * svgScale))
+        canvas.translate(cx, cy)
+        if (facingDirection == WalkFacingDirection.LEFT) {
+            canvas.scale(-1f, 1f)
+        }
+        canvas.translate(-(60 * svgScale), -(60 * svgScale))
         canvas.scale(svgScale, svgScale)
 
         // Colors

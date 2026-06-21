@@ -71,7 +71,7 @@ class SpeechBubbleController(
 
     /**
      * Show (or refresh) a bubble for [entityId]. TTL starts from the preferred
-     * user duration, then extends for long text at 0.06s/char and caps at 30s.
+     * user duration, then extends for long text at 0.06s/char and caps at 5m.
      * [ttlMsOverride] remains an exact escape hatch for deterministic tests.
      * A new message resets the TTL (rapid-fire chat, open question O-7).
      * Blank text clears any existing bubble.
@@ -170,9 +170,9 @@ class SpeechBubbleController(
         /** Default preferred TTL for short wallpaper bubbles. */
         const val DEFAULT_TTL_MS = 12_000L
         /** Floor for any message bubble (§5.3). */
-        const val MIN_TTL_MS = 3_000L
+        const val MIN_TTL_MS = 5_000L
         /** Smart cap for long messages, regardless of text length. */
-        const val MAX_TTL_MS = 30_000L
+        const val MAX_TTL_MS = 300_000L
         /** Per-character contribution to TTL (§5.3: 0.06s/char). */
         const val PER_CHAR_MS = 60L
         /** Fade-out ramp window at the end of life. */
