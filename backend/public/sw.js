@@ -1,7 +1,48 @@
 // E-Claw Service Worker — Web Push Notifications
 
+// Round-trip push health ack (card_0a5d4a97). The push-health-check cron
+// fires a silent push (TTL=60, urgency=very-low) with a per-subscription
+// nonce. We POST it back to /api/push/ack and DO NOT show a notification,
+// so the user never sees the probe. The server uses the ack window to
+// compute real end-to-end delivery rate and mark dead subscriptions.
+async function ackHealthPush(payload) {
+    try {
+        // subscriptionId is best-effort: webpush-auto.js stashes the row id
+        // in a cache after subscribe; a fresh tab may not have it yet, in
+        // which case the server matches on nonce alone.
+        let subscriptionId = null;
+        try {
+            const cache = await caches.open('webpush-meta-v1');
+            const match = await cache.match('/__webpush-subscription-id');
+            if (match) {
+                const txt = await match.text();
+                const n = Number(txt);
+                if (Number.isInteger(n) && n > 0) subscriptionId = n;
+            }
+        } catch (_) { /* cache may be empty */ }
+        await fetch('/api/push/ack', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                nonce: payload && payload.nonce,
+                runId: payload && payload.runId,
+                subscriptionId
+            })
+        });
+    } catch (_) { /* network error — server treats as failure */ }
+}
+
 self.addEventListener('push', (event) => {
     const data = event.data ? event.data.json() : {};
+
+    // Health probe — ack silently and exit. NEVER call showNotification for
+    // this branch; the user must not see the round-trip probe.
+    if (data && data.type === 'health') {
+        event.waitUntil(ackHealthPush(data));
+        return;
+    }
+
     const { title, body, link, category } = data;
 
     const urlMap = {

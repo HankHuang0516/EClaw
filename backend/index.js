@@ -42,6 +42,7 @@ const safeEqual = require('./safe-equal');
 const { safeUpdatedAtToISO } = require('./safe-date');
 const { createHermesHealthMonitor, hermesLog } = require('./hermes-health-check');
 const { createSettingsHelpInvariantCron } = require('./settings-help-invariant-cron');
+const { createPushHealthCheckCron } = require('./push-health-check-cron');
 
 // ============================================
 // ADMIN DEVICE GATE
@@ -2487,6 +2488,34 @@ const hermesHealthMonitor = createHermesHealthMonitor({
 });
 const settingsHelpInvariantCron = createSettingsHelpInvariantCron({
     getPool: () => db._getPool(),
+    audit: serverLog,
+});
+
+// Push round-trip health-check cron (card_0a5d4a97). chatPool is created
+// later in this file (~line 19979); we pass a getPool closure so the cron
+// resolves the real pool only at tick time. sendNotification +
+// reportFakechat are wired to live values via factories so the same
+// closures work whether boot order changes or the test harness mocks them.
+// (Late binding also matters because notifyDevice + chatPool are forward
+// references at this point.)
+const pushHealthCheckCron = createPushHealthCheckCron({
+    getPool: () => chatPool,
+    // web-push instance + reportFakechat are wired after chatPool exists,
+    // via pushHealthCheckCron._state below. We do it via closure rebinding
+    // (setSendNotification / setReportFakechat) to keep the test contract
+    // (sendNotification/wait/reportFakechat as constructor args) simple.
+    sendNotification: (subscription, payload, opts) =>
+        webpush.sendNotification(subscription, payload, opts),
+    reportFakechat: async (line) => {
+        // Lightweight fakechat report — uses the same log channel as the
+        // other cron modules so we don't multiply infra. The fakechat dispatch
+        // proper happens via the bot reply loop reading server_logs; the
+        // serverLog write here is enough to surface the run.
+        serverLog('info', 'push_health_check_report', line, {
+            action: 'push_health_check_report',
+            result: 'reported',
+        });
+    },
     audit: serverLog,
 });
 
@@ -17921,7 +17950,7 @@ app.delete('/api/bot/register', (req, res) => {
  * Bot checks if its push notifications are still healthy.
  * Query: ?deviceId=xxx&entityId=0&botSecret=xxx
  */
-app.get('/api/bot/push-status', (req, res) => {
+app.get('/api/bot/push-status', async (req, res) => {
     const { deviceId, entityId, botSecret } = req.query;
 
     if (!deviceId) {
@@ -17958,6 +17987,28 @@ app.get('/api/bot/push-status', (req, res) => {
 
     if (entity.pushStatus && !entity.pushStatus.ok) {
         result.action_required = "Push is failing. Re-register webhook via POST /api/bot/register to restore push notifications.";
+    }
+
+    // Round-trip push-health cron snapshot (card_0a5d4a97). Always present
+    // (even if cron disabled) so clients have a stable field shape; values
+    // are null when no run has happened yet.
+    if (pushHealthCheckCron) {
+        const cronStatus = pushHealthCheckCron.getStatus();
+        const counts = await pushHealthCheckCron.getDbCounts();
+        result.lastHealthCronAt = cronStatus.lastRunAt || null;
+        result.lastHealthCronOk = cronStatus.lastOkAt
+            && cronStatus.lastFailureAt
+                ? cronStatus.lastOkAt >= cronStatus.lastFailureAt
+                : !!cronStatus.lastOkAt;
+        result.activeSubscriptions = counts.activeSubscriptions;
+        result.deadSubscriptions = counts.deadSubscriptions;
+        result.last60sAckRate = cronStatus.lastAckRate;   // 0..1 or null
+    } else {
+        result.lastHealthCronAt = null;
+        result.lastHealthCronOk = null;
+        result.activeSubscriptions = null;
+        result.deadSubscriptions = null;
+        result.last60sAckRate = null;
     }
 
     res.json(result);
@@ -21250,8 +21301,11 @@ app.post('/api/push/subscribe', async (req, res) => {
         return res.status(400).json({ success: false, error: 'subscription with endpoint and keys required' });
     }
 
-    const ok = await notifModule.savePushSubscription(deviceId, subscription, req.headers['user-agent']);
-    res.json({ success: ok });
+    const saved = await notifModule.savePushSubscription(deviceId, subscription, req.headers['user-agent']);
+    // saved is either truthy boolean (legacy/mock path) or {ok,id} (live).
+    const ok = !!saved;
+    const subscriptionId = (saved && typeof saved === 'object' && saved.id) ? saved.id : null;
+    res.json({ success: ok, subscriptionId });
 });
 
 app.delete('/api/push/unsubscribe', async (req, res) => {
@@ -21263,6 +21317,64 @@ app.delete('/api/push/unsubscribe', async (req, res) => {
 
     await notifModule.removePushSubscription(endpoint);
     res.json({ success: true });
+});
+
+// ── Round-trip push health ack (card_0a5d4a97) ─────────────────────────
+// The service worker (backend/public/sw.js) POSTs this endpoint when it
+// receives a `{type:'health',nonce,runId,...}` push. We record the ack so
+// the push-health-check cron can confirm real end-to-end delivery (not
+// just "VAPID-sign+ship" success).
+//
+// Auth model: NOT device-secret-gated. The service worker has no access to
+// deviceSecret; instead, the nonce IS the unguessable token (16 bytes of
+// crypto.randomBytes emitted to exactly one push endpoint). To prevent an
+// attacker from flooding the table with arbitrary nonces, we verify
+// runId belongs to a real recent push_health_run row before inserting.
+// Replays of the same (nonce, subscriptionId) collapse via UNIQUE INDEX.
+app.post('/api/push/ack', async (req, res) => {
+    const body = req.body || {};
+    const nonce = typeof body.nonce === 'string' ? body.nonce.trim() : '';
+    const runIdRaw = typeof body.runId === 'string' ? body.runId.trim() : '';
+    if (!nonce || nonce.length > 64) {
+        return res.status(400).json({ success: false, error: 'nonce required (<=64 chars)' });
+    }
+    // runId is optional but recommended. If absent we still record the nonce
+    // (run-attribution will be NULL and the ack won't count toward a run's
+    // delivery rate, but it's visible in audit).
+    const runId = runIdRaw && runIdRaw.length <= 48 ? runIdRaw : null;
+    // subscriptionId is optional — older SWs (or ones racing a re-subscribe)
+    // may not have it cached. Coerce to int or NULL; never trust client text.
+    let subscriptionId = null;
+    if (body.subscriptionId != null && body.subscriptionId !== '') {
+        const n = Number(body.subscriptionId);
+        if (Number.isInteger(n) && n > 0) subscriptionId = n;
+    }
+    try {
+        // Verify runId exists (within last 24h) before trusting it. If the
+        // client sent a bogus runId we drop it but still log the bare nonce.
+        let resolvedRunId = null;
+        if (runId) {
+            const check = await chatPool.query(
+                `SELECT run_id FROM push_health_run
+                  WHERE run_id = $1
+                    AND started_at > NOW() - INTERVAL '24 hours'`,
+                [runId]
+            );
+            if (check.rowCount > 0) resolvedRunId = runId;
+        }
+        await chatPool.query(
+            `INSERT INTO push_ack_log (nonce, subscription_id, run_id, acked_at)
+             VALUES ($1, $2, $3, NOW())
+             ON CONFLICT DO NOTHING`,
+            [nonce, subscriptionId, resolvedRunId]
+        );
+        return res.json({ success: true });
+    } catch (err) {
+        serverLog('warn', 'push_health_check', `[PushHealth] ack insert failed: ${err && err.message}`, {
+            metadata: { nonce: nonce.slice(0, 8) + '...', subscriptionId },
+        });
+        return res.status(500).json({ success: false, error: 'ack_insert_failed' });
+    }
 });
 
 // Send Web Push to all subscriptions for a device
@@ -21679,6 +21791,15 @@ if (process.env.NODE_ENV !== 'test') {
         console.error('[SettingsHelpInvariant] failed to schedule cron:', err && err.message);
         serverLog('error', 'settings_help_invariant', `[SettingsHelpInvariant] failed to schedule cron: ${err && err.message}`, {
             action: 'settings_help_invariant',
+            result: 'schedule_failed',
+        });
+    }
+    try {
+        pushHealthCheckCron.startCron({ nodeCron });
+    } catch (err) {
+        console.error('[PushHealth] failed to schedule cron:', err && err.message);
+        serverLog('error', 'push_health_check', `[PushHealth] failed to schedule cron: ${err && err.message}`, {
+            action: 'push_health_check',
             result: 'schedule_failed',
         });
     }
@@ -23990,6 +24111,7 @@ module.exports._ENTITY_HEARTBEAT_STALE_MS = ENTITY_HEARTBEAT_STALE_MS;
 module.exports._getEntityDaemonStatus = getEntityDaemonStatus;
 module.exports._hermesHealthMonitor = hermesHealthMonitor;
 module.exports._settingsHelpInvariantCron = settingsHelpInvariantCron;
+module.exports._pushHealthCheckCron = pushHealthCheckCron;
 module.exports._chatPool = chatPool;
 module.exports._pointEditResolver = pointEditResolver;
 module.exports._ACK_DEFAULT_DEADLINE_MS = ACK_DEFAULT_DEADLINE_MS;
