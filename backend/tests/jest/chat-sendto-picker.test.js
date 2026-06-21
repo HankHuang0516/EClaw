@@ -719,3 +719,289 @@ describe('chat-sendto-button-avatar — label HTML varies by selection count', (
         expect(chatHtml).not.toMatch(/class="current-target[^"]*"/);
     });
 });
+
+// =====================================================================
+// petdx avatar priority on the sendto picker button (card_f04e9fe5).
+//
+// /api/entities returns a `petdxAvatarUrl` for every bound entity — the
+// owner's currently selected Pet/Dex companion sprite. Before this fix
+// the button rendered the static `entity.avatar` emoji (🐻/🐱/🐶) because
+// _entityAvatarMap's §0.4 invariant only filters 🦞/🐷 as "default" —
+// any other explicit avatar emoji shadows the petdx URL inside
+// getAvatarForEntity. The fix short-circuits that path inside
+// _sendtoBtnAvatarHtml so the real companion sprite wins on the button.
+// =====================================================================
+describe('chat-sendto-button-avatar — petdx avatar priority (card_f04e9fe5)', () => {
+    function extractFunction(name) {
+        const re = new RegExp(`function\\s+${name}\\s*\\([^)]*\\)\\s*\\{`, 'g');
+        const m = re.exec(chatHtml);
+        if (!m) throw new Error(`function ${name} not found`);
+        let depth = 1;
+        let i = m.index + m[0].length;
+        while (i < chatHtml.length && depth > 0) {
+            const ch = chatHtml[i];
+            if (ch === '{') depth++;
+            else if (ch === '}') depth--;
+            i++;
+        }
+        return chatHtml.slice(m.index, i);
+    }
+
+    function makeLabelEl() {
+        return {
+            _text: '',
+            _html: '',
+            set textContent(v) { this._text = String(v); this._html = ''; },
+            get textContent() { return this._text || this._html; },
+            set innerHTML(v) { this._html = String(v); this._text = ''; },
+            get innerHTML() { return this._html; },
+        };
+    }
+
+    function makeButtonEl() {
+        return {
+            __attrs: { 'aria-expanded': 'false' },
+            setAttribute(k, v) { this.__attrs[k] = v; },
+            getAttribute(k) { return this.__attrs[k]; },
+        };
+    }
+
+    // entities: array of { entityId, petdxAvatarUrl?, avatar? }
+    // checkedIds: Set<number> of the entity IDs whose underlying checkbox is on.
+    function makeShim(entities, checkedIds, opts = {}) {
+        const underlyings = entities.map(e => ({
+            type: 'checkbox',
+            checked: checkedIds.has(e.entityId),
+            dataset: { entity: String(e.entityId) },
+        }));
+        const labelEl = makeLabelEl();
+        const buttonEl = makeButtonEl();
+        const document = {
+            getElementById(id) {
+                if (id === 'sendtoPickerBtn') return buttonEl;
+                if (id === 'sendtoPickerBtnLabel') return labelEl;
+                return null;
+            },
+            querySelectorAll(sel) {
+                if (sel === '.target-entity-check input[type="checkbox"]') return underlyings;
+                return [];
+            },
+        };
+        const nameByEid = opts.names || {};
+        // Simulate the production behavior: getAvatarForEntity returns the
+        // explicit entity.avatar (emoji) when present — exactly the bug
+        // condition the petdx priority is meant to bypass.
+        const avatarByEid = {};
+        entities.forEach(e => { if (e.avatar) avatarByEid[e.entityId] = e.avatar; });
+        const sandbox = {
+            document,
+            // boundEntities is the load-bearing input for the new priority chain.
+            boundEntities: entities,
+            i18n: {
+                t(k, params) {
+                    const tpls = {
+                        chat_sendto_button_label_all: '傳送給 ALL',
+                        chat_sendto_button_label_single: '傳送給 {target}',
+                        chat_sendto_button_label_multi: '傳送給 {count} entities',
+                        chat_sendto_button_label_many_more: '+{count} 位',
+                    };
+                    let s = tpls[k] || k;
+                    if (params) {
+                        Object.keys(params).forEach(p => {
+                            s = s.replace(new RegExp('\\{' + p + '\\}', 'g'), params[p]);
+                        });
+                    }
+                    return s;
+                },
+            },
+            getAvatarForEntity: (id) => avatarByEid[id] || '\u{1F99E}',
+            getEntityDisplayName: (id) => nameByEid[id] || ('Entity#' + id),
+            // Stand-in renderAvatarHtml: emits an <img> with src=avatar when
+            // avatar looks like a URL, else a <span class="entity-avatar-emoji">.
+            // Used ONLY by the FALLBACK path (the petdx priority short-circuits
+            // before reaching it), so it lets us tell the two paths apart in
+            // assertions by checking for `class="sendto-petdx-avatar"`.
+            renderAvatarHtml: (a, size, eid) => {
+                if (typeof a === 'string' && /^https?:\/\//.test(a)) {
+                    return '<img class="entity-avatar-img" data-entity-id="' + eid
+                        + '" src="' + a + '" alt="avatar">';
+                }
+                return '<span class="entity-avatar-emoji" data-entity-id="' + eid + '">'
+                    + (a || '\u{1F99E}') + '</span>';
+            },
+            escapeHtml: (s) => String(s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+            })[c]),
+        };
+        const body =
+            extractFunction('getSendtoUnderlyingChecks') + '\n' +
+            extractFunction('_sendtoBtnAvatarHtml') + '\n' +
+            extractFunction('refreshSendtoPickerButtonLabel') + '\n';
+        const fn = new Function(
+            'document', 'i18n', 'boundEntities',
+            'getAvatarForEntity', 'getEntityDisplayName', 'renderAvatarHtml', 'escapeHtml',
+            `${body}\nreturn { refreshSendtoPickerButtonLabel, _sendtoBtnAvatarHtml };`
+        );
+        const api = fn(
+            sandbox.document, sandbox.i18n, sandbox.boundEntities,
+            sandbox.getAvatarForEntity, sandbox.getEntityDisplayName,
+            sandbox.renderAvatarHtml, sandbox.escapeHtml,
+        );
+        return { api, labelEl, buttonEl };
+    }
+
+    test('single → petdxAvatarUrl wins over explicit emoji avatar (real sprite renders)', () => {
+        // Entity #1 has BOTH a non-default emoji (🐻) and a petdx sprite URL.
+        // Before the fix the button rendered 🐻 (because _entityAvatarMap
+        // §0.4 only filters 🦞/🐷). After the fix the sprite URL wins.
+        const url = 'https://eclawbot.com/api/petdx/zoro/sprite.webp';
+        const entities = [
+            { entityId: 1, avatar: '\u{1F43B}', petdxAvatarUrl: url },
+            { entityId: 2, petdxAvatarUrl: 'https://eclawbot.com/api/petdx/luffy/sprite.webp' },
+            { entityId: 3 },
+        ];
+        const { api, labelEl } = makeShim(entities, new Set([1]), {
+            names: { 1: 'Mac_F' },
+        });
+        api.refreshSendtoPickerButtonLabel();
+        const html = labelEl.innerHTML;
+        // The petdx <img> renders with the dedicated class and the exact URL.
+        expect(html).toMatch(/<img class="sendto-petdx-avatar"/);
+        expect(html).toContain(url);
+        // The 🐻 fallback emoji must NOT appear.
+        expect(html).not.toMatch(/\u{1F43B}/u);
+        // Name + wrapper still present (existing contract).
+        expect(html).toMatch(/sendto-btn-name/);
+        expect(html).toMatch(/Mac_F/);
+    });
+
+    test('single → entity with petdxAvatarUrl=null but avatar="🐱" → button shows 🐱', () => {
+        // Fallback path: missing petdx URL → use existing emoji renderer.
+        const entities = [
+            { entityId: 7, avatar: '\u{1F431}', petdxAvatarUrl: null },
+            { entityId: 8 },
+        ];
+        const { api, labelEl } = makeShim(entities, new Set([7]), {
+            names: { 7: 'Cat_Bot' },
+        });
+        api.refreshSendtoPickerButtonLabel();
+        const html = labelEl.innerHTML;
+        // Petdx class must NOT appear (no URL to render).
+        expect(html).not.toMatch(/sendto-petdx-avatar/);
+        // The 🐱 emoji renders via the legacy renderAvatarHtml emoji branch.
+        expect(html).toMatch(/\u{1F431}/u);
+        expect(html).toMatch(/sendto-btn-name/);
+    });
+
+    test('many (5 entities all with petdx) → 2 sprite <img>s + "+3 more" pill', () => {
+        const entities = [
+            { entityId: 1, petdxAvatarUrl: 'https://eclawbot.com/api/petdx/a/sprite.webp' },
+            { entityId: 2, petdxAvatarUrl: 'https://eclawbot.com/api/petdx/b/sprite.webp' },
+            { entityId: 3, petdxAvatarUrl: 'https://eclawbot.com/api/petdx/c/sprite.webp' },
+            { entityId: 4, petdxAvatarUrl: 'https://eclawbot.com/api/petdx/d/sprite.webp' },
+            { entityId: 5, petdxAvatarUrl: 'https://eclawbot.com/api/petdx/e/sprite.webp' },
+        ];
+        const { api, labelEl, buttonEl } = makeShim(entities, new Set([1, 2, 3, 4, 5]));
+        api.refreshSendtoPickerButtonLabel();
+        const html = labelEl.innerHTML;
+        // 5 selected from 5 → ALL state — no avatars rendered (overflow guard).
+        // Bump the entity universe to force "many" not "all".
+        expect(buttonEl.getAttribute('data-sendto-state')).toBe('all');
+
+        // Now run again with an extra unchecked entity so checked.length < total.
+        const entities2 = entities.concat([{ entityId: 6 }, { entityId: 7 }]);
+        const second = makeShim(entities2, new Set([1, 2, 3, 4, 5]));
+        second.api.refreshSendtoPickerButtonLabel();
+        const html2 = second.labelEl.innerHTML;
+        // many state: only the first 2 selected avatars render + the overflow pill.
+        expect((html2.match(/<img class="sendto-petdx-avatar"/g) || []).length).toBe(2);
+        expect(html2).toMatch(/\+3/);
+        expect(html2).toMatch(/sendto-btn-more/);
+        expect(second.buttonEl.getAttribute('data-sendto-state')).toBe('many');
+    });
+
+    test('img alt attribute = entity displayName (a11y for screen readers)', () => {
+        const entities = [
+            { entityId: 9, petdxAvatarUrl: 'https://eclawbot.com/api/petdx/zoro/sprite.webp' },
+            { entityId: 10 },
+        ];
+        const { api, labelEl } = makeShim(entities, new Set([9]), {
+            names: { 9: 'Mac_F' },
+        });
+        api.refreshSendtoPickerButtonLabel();
+        const html = labelEl.innerHTML;
+        // alt attribute carries the displayName, not generic "avatar".
+        expect(html).toMatch(/<img class="sendto-petdx-avatar"[^>]*alt="Mac_F"/);
+    });
+
+    test('petdxAvatarUrl is escaped (XSS prevention)', () => {
+        // A hostile URL must be escaped before interpolation. boundEntities is
+        // server-supplied today but the helper should still escapeHtml the URL
+        // so a future malicious source can't inject markup.
+        const evil = 'https://x.test/"><script>alert(1)</script>';
+        const entities = [
+            { entityId: 1, petdxAvatarUrl: evil },
+            { entityId: 2 },
+        ];
+        const { api, labelEl } = makeShim(entities, new Set([1]), {
+            names: { 1: 'A' },
+        });
+        api.refreshSendtoPickerButtonLabel();
+        const html = labelEl.innerHTML;
+        // Raw <script> must NOT appear; the quote must be HTML-escaped.
+        expect(html).not.toMatch(/<script>/);
+        expect(html).toMatch(/&quot;/);
+    });
+
+    test('ALL state unchanged — plain "傳送給 ALL" text, no petdx <img>', () => {
+        const entities = [
+            { entityId: 1, petdxAvatarUrl: 'https://eclawbot.com/api/petdx/a/sprite.webp' },
+            { entityId: 2, petdxAvatarUrl: 'https://eclawbot.com/api/petdx/b/sprite.webp' },
+        ];
+        const { api, labelEl, buttonEl } = makeShim(entities, new Set([1, 2]));
+        api.refreshSendtoPickerButtonLabel();
+        const html = labelEl.innerHTML + labelEl.textContent;
+        expect(html).toMatch(/ALL/);
+        expect(html).not.toMatch(/sendto-petdx-avatar/);
+        expect(buttonEl.getAttribute('data-sendto-state')).toBe('all');
+    });
+
+    test('entity without petdxAvatarUrl AND default avatar → falls back to renderAvatarHtml emoji', () => {
+        // Pure fallback: no petdx URL, no explicit emoji avatar → the legacy
+        // path runs and emits the default 🦞 emoji via renderAvatarHtml.
+        const entities = [
+            { entityId: 11 },
+            { entityId: 12 },
+        ];
+        const { api, labelEl } = makeShim(entities, new Set([11]), {
+            names: { 11: 'Default_Bot' },
+        });
+        api.refreshSendtoPickerButtonLabel();
+        const html = labelEl.innerHTML;
+        expect(html).not.toMatch(/sendto-petdx-avatar/);
+        // The default 🦞 lobster from getAvatarForEntity fallback.
+        expect(html).toMatch(/\u{1F99E}/u);
+    });
+});
+
+// =====================================================================
+// CSS contract — .sendto-petdx-avatar must size as a 20px circle so it
+// matches the existing .sendto-btn-avatar wrapper geometry and the
+// stacked overlap rule (-8px sibling margin) keeps working.
+// =====================================================================
+describe('chat-sendto-button-avatar — .sendto-petdx-avatar CSS (card_f04e9fe5)', () => {
+    test('CSS rule for .sendto-petdx-avatar exists with 20px circular sizing', () => {
+        // The rule lives under .sendto-btn-avatar > .sendto-petdx-avatar so
+        // it only applies inside the picker-button wrapper, never bleeding
+        // into other surfaces (chat bubble, etc.).
+        expect(chatHtml).toMatch(/\.sendto-btn-avatar\s*>\s*\.sendto-petdx-avatar/);
+        // Extract just that block so the size assertions stay scoped.
+        const m = chatHtml.match(/\.sendto-btn-avatar\s*>\s*\.sendto-petdx-avatar\s*\{[\s\S]*?\}/);
+        expect(m).not.toBeNull();
+        const block = m[0];
+        expect(block).toMatch(/width:\s*20px/);
+        expect(block).toMatch(/height:\s*20px/);
+        expect(block).toMatch(/border-radius:\s*50%/);
+        expect(block).toMatch(/object-fit:\s*cover/);
+    });
+});
