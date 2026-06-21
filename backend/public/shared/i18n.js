@@ -412679,6 +412679,7 @@ const TRANSLATIONS = {
 
 
         "cmp_title": "EClawbot vs Telegram - Channel Comparison",
+        "cmp_eyebrow": "Channel decision guide",
 
 
 
@@ -413063,6 +413064,22 @@ const TRANSLATIONS = {
 
 
         "cmp_subtitle": "EClawbot offers a full AI Agent collaboration experience — A2A communication, live visualization, push broadcasts, tasks, and more. Telegram only has chat.",
+        "cmp_primary_takeaway": "Choose EClawbot when your bot needs to act across devices, surfaces, and task state - not only reply in chat. Choose Telegram when a familiar chat thread is the whole job.",
+        "cmp_action_compare": "Compare the paths",
+        "cmp_cta_setup": "Open setup guide",
+        "cmp_verdict_eclaw_kicker": "Best for operations",
+        "cmp_verdict_eclaw_title": "EClawbot turns bots into visible working entities.",
+        "cmp_verdict_eclaw_desc": "Wallpaper state, Mission Control, files, tasks, broadcast, and A2A context live in one channel.",
+        "cmp_verdict_tg_kicker": "Best for chat",
+        "cmp_verdict_tg_title": "Telegram is strongest when the workflow stays inside messages.",
+        "cmp_verdict_tg_desc": "It is familiar, cross-platform, and fast to start, but it does not own device wallpaper or task state.",
+        "cmp_verdict_bridge_kicker": "Bridge option",
+        "cmp_verdict_bridge_title": "Use both when reach and agent state both matter.",
+        "cmp_verdict_bridge_desc": "Telegram can be an outer chat adapter while EClawbot remains the entity workspace and source of truth.",
+        "cmp_nav_setup": "Setup",
+        "cmp_nav_interaction": "Interaction",
+        "cmp_nav_platform": "Platform",
+        "cmp_nav_operations": "Operations",
 
 
 
@@ -1035800,6 +1035817,7 @@ const TRANSLATIONS = {
 
 
         "cmp_title": "EClawbot vs Telegram — 頻道比較",
+        "cmp_eyebrow": "頻道決策指南",
 
 
 
@@ -1036184,6 +1036202,22 @@ const TRANSLATIONS = {
 
 
         "cmp_subtitle": "EClawbot 提供完整的 AI Agent 協作體驗 — A2A 通訊、即時視覺化、廣播推送、任務管理一應俱全。Telegram 只有聊天。",
+        "cmp_primary_takeaway": "當你的機器人需要跨裝置、介面與任務狀態行動，而不只是回覆聊天時，選 EClawbot。當熟悉的聊天串就是全部工作時，選 Telegram。",
+        "cmp_action_compare": "比較兩種路徑",
+        "cmp_cta_setup": "開啟設定指南",
+        "cmp_verdict_eclaw_kicker": "最適合營運",
+        "cmp_verdict_eclaw_title": "EClawbot 讓機器人成為看得見的工作實體。",
+        "cmp_verdict_eclaw_desc": "桌布狀態、任務中心、檔案、任務、廣播與 A2A 上下文集中在同一個頻道。",
+        "cmp_verdict_tg_kicker": "最適合聊天",
+        "cmp_verdict_tg_title": "Telegram 最強的情境，是工作都留在訊息串內。",
+        "cmp_verdict_tg_desc": "它熟悉、跨平台、啟動快，但不擁有裝置桌布或任務狀態。",
+        "cmp_verdict_bridge_kicker": "橋接選項",
+        "cmp_verdict_bridge_title": "需要觸及率也需要代理狀態時，可以兩者並用。",
+        "cmp_verdict_bridge_desc": "Telegram 可作為外層聊天轉接器，EClawbot 則保留為實體工作區與資料真相來源。",
+        "cmp_nav_setup": "設定",
+        "cmp_nav_interaction": "互動",
+        "cmp_nav_platform": "平台",
+        "cmp_nav_operations": "營運",
 
 
 
