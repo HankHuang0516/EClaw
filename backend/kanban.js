@@ -85,6 +85,149 @@ try {
 const SCHEDULE_LATE_FIRE_GRACE_MS = 5 * 60 * 1000;
 const SCHEDULE_STALE_EPSILON_MS = 1000;
 
+// Per-card usage-threshold cron skip (card_c2635849, parent card_ad507345).
+// Recurring schedules can skip child-card dispatch when ANY assigned entity's
+// rolling 5h / 7d usage% strictly exceeds the configured cap. Defaults match
+// the standard "quota almost full" markers on the dashboard widget so cards
+// created before this column gain a sensible guard automatically.
+const SCHEDULE_USAGE_THRESHOLD_MIN = 50;
+const SCHEDULE_USAGE_THRESHOLD_MAX = 99;
+const DEFAULT_SKIP_5H_PCT = 85;
+const DEFAULT_SKIP_7D_PCT = 95;
+
+function clampUsageThreshold(value, fallback) {
+    if (value === undefined || value === null || value === '') return fallback;
+    const n = Number(value);
+    if (!Number.isFinite(n)) return fallback;
+    const i = Math.trunc(n);
+    if (i < SCHEDULE_USAGE_THRESHOLD_MIN || i > SCHEDULE_USAGE_THRESHOLD_MAX) return fallback;
+    return i;
+}
+
+function isValidUsageThreshold(value) {
+    // Returns true iff value is a JS number integer in [50, 99]. Used at the
+    // API write boundary so bad input rejects HTTP 400 rather than silently
+    // clamping. Strings (even numeric-looking ones like "85"), booleans,
+    // decimals, NaN, Infinity all reject — clients must send actual integers
+    // so a typo in JSON isn't normalized to a working request.
+    if (typeof value !== 'number') return false;
+    if (!Number.isFinite(value)) return false;
+    if (!Number.isInteger(value)) return false;
+    return value >= SCHEDULE_USAGE_THRESHOLD_MIN && value <= SCHEDULE_USAGE_THRESHOLD_MAX;
+}
+
+/**
+ * Pull the highest "currently used%" signal out of a usage_snapshots row for
+ * one engine + window. The Claude statusLine hook writes the nested shape
+ * `live.rate_limits.{five_hour,seven_day}.used_percentage`, but earlier
+ * callers also produced flat `live.five_hour_pct` (see usage-api.js
+ * `pickClaudeLivePct`). Codex daemon writes the flat shape under
+ * `rate_limits.{five_hour_pct, seven_day_pct}`. Returns null if no signal
+ * is present (caller treats null as 0% to preserve dispatch).
+ */
+function readClaudeLivePct(claudeJson, key) {
+    const live = (claudeJson && claudeJson.live) || null;
+    if (!live) return null;
+    const flatKey = key + '_pct';
+    if (typeof live[flatKey] === 'number') return live[flatKey];
+    const nested = live.rate_limits && live.rate_limits[key];
+    if (nested && typeof nested.used_percentage === 'number') return nested.used_percentage;
+    return null;
+}
+
+function readCodexLivePct(codexJson, key) {
+    const rl = (codexJson && codexJson.rate_limits) || null;
+    if (!rl) return null;
+    const flatKey = key + '_pct';
+    if (typeof rl[flatKey] === 'number') return rl[flatKey];
+    return null;
+}
+
+/**
+ * Look up the latest usage snapshot for a (deviceId, entityId) pair and
+ * extract the 5h / 7d usage% across both Claude + Codex engines. Returns
+ * { five: number|null, seven: number|null } where each is the MAX of the
+ * two engines' current %, or null if nothing is recorded for that window.
+ *
+ * The query prefers the entity-scoped row (entity_id = $2) when present,
+ * but falls back to the device-scoped row (entity_id IS NULL) because the
+ * mac-daemon historically pushed unscoped rows before per-entity routing
+ * landed. This keeps the guard working on legacy devices without forcing
+ * a daemon upgrade.
+ */
+async function getEntityUsagePct(deviceId, entityId) {
+    if (!deviceId) return { five: null, seven: null };
+    try {
+        const eid = Number(entityId);
+        const useEid = Number.isFinite(eid);
+        const sql = useEid
+            ? `SELECT claude_json, codex_json
+                 FROM usage_snapshots
+                 WHERE device_id = $1 AND (entity_id = $2 OR entity_id IS NULL)
+                 ORDER BY (entity_id = $2) DESC, captured_at DESC
+                 LIMIT 1`
+            : `SELECT claude_json, codex_json
+                 FROM usage_snapshots
+                 WHERE device_id = $1
+                 ORDER BY captured_at DESC
+                 LIMIT 1`;
+        const params = useEid ? [deviceId, eid] : [deviceId];
+        const r = await pool.query(sql, params);
+        if (!r.rows.length) return { five: null, seven: null };
+        const row = r.rows[0];
+        const claudeJson = row.claude_json || null;
+        const codexJson = row.codex_json || null;
+        const claude5 = readClaudeLivePct(claudeJson, 'five_hour');
+        const codex5 = readCodexLivePct(codexJson, 'five_hour');
+        const claude7 = readClaudeLivePct(claudeJson, 'seven_day');
+        const codex7 = readCodexLivePct(codexJson, 'seven_day');
+        // Take the worst-case (max) across engines so a saturated Claude
+        // session still trips the guard even when Codex is idle.
+        const maxOrNull = (a, b) => {
+            if (a == null && b == null) return null;
+            if (a == null) return b;
+            if (b == null) return a;
+            return a > b ? a : b;
+        };
+        return { five: maxOrNull(claude5, codex5), seven: maxOrNull(claude7, codex7) };
+    } catch (err) {
+        // Don't block dispatch on infra failures — preserve current behavior
+        // (Mac daemon down, table missing on staging, etc.).
+        console.warn('[Kanban] getEntityUsagePct failed:', err.message);
+        return { five: null, seven: null };
+    }
+}
+
+/**
+ * Decide whether a recurring schedule fire should be skipped due to any
+ * assigned entity exceeding the per-card usage threshold. Returns
+ *   { skip: boolean, reason?: string, entityId?: number, window?: '5h'|'7d',
+ *     pct?: number, limit?: number }
+ * where `skip=true` carries the first offending entity for log/comment text.
+ *
+ * Null usage% is treated as 0% (do NOT skip) so the guard never blocks a
+ * card whose entity simply doesn't have a daemon push yet — preserves the
+ * pre-card_c2635849 dispatch behavior.
+ */
+async function evaluateUsageSkipDecision(card, bots, usageLookup) {
+    const limit5 = clampUsageThreshold(card.schedule_skip_if_5h_pct_over, DEFAULT_SKIP_5H_PCT);
+    const limit7 = clampUsageThreshold(card.schedule_skip_if_7d_pct_over, DEFAULT_SKIP_7D_PCT);
+    const ids = Array.isArray(bots) ? bots : [];
+    // Injectable usage lookup so tests can avoid hitting the real DB; in prod
+    // calls into the entity-scoped usage_snapshots query.
+    const lookup = typeof usageLookup === 'function' ? usageLookup : getEntityUsagePct;
+    for (const botId of ids) {
+        const usage = await lookup(card.device_id, botId);
+        if (usage && usage.five != null && usage.five > limit5) {
+            return { skip: true, entityId: botId, window: '5h', pct: usage.five, limit: limit5 };
+        }
+        if (usage && usage.seven != null && usage.seven > limit7) {
+            return { skip: true, entityId: botId, window: '7d', pct: usage.seven, limit: limit7 };
+        }
+    }
+    return { skip: false };
+}
+
 function asValidDate(value) {
     const date = value instanceof Date ? value : new Date(value);
     return Number.isNaN(date.getTime()) ? null : date;
@@ -794,6 +937,9 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             timezone: row.schedule_timezone || 'Asia/Taipei',
             lastRunAt: row.schedule_last_run_at ? new Date(row.schedule_last_run_at).getTime() : null,
             nextRunAt: row.schedule_next_run_at ? new Date(row.schedule_next_run_at).getTime() : null,
+            // card_c2635849: per-card usage-quota cron skip thresholds.
+            skipIf5hUsagePctOver: clampUsageThreshold(row.schedule_skip_if_5h_pct_over, DEFAULT_SKIP_5H_PCT),
+            skipIf7dUsagePctOver: clampUsageThreshold(row.schedule_skip_if_7d_pct_over, DEFAULT_SKIP_7D_PCT),
         } : null;
 
         // Automation fields
@@ -915,6 +1061,12 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         // Inline automation + schedule support
         const wantAutomation = !!isAutomation;
         let schedEnabled = false, schedType = null, schedCron = null, schedRunAt = null, schedTz = 'Asia/Taipei', schedNextRunAt = null;
+        // card_c2635849 per-card usage-skip thresholds. Default to column-level
+        // defaults so cards filed without explicit thresholds still gain the
+        // standard 85/95 guard. Validated here so bad input rejects 400 instead
+        // of silently clamping (matches the PUT /schedule write boundary).
+        let schedSkip5h = DEFAULT_SKIP_5H_PCT;
+        let schedSkip7d = DEFAULT_SKIP_7D_PCT;
 
         if (schedule && typeof schedule === 'object') {
             schedType = (schedule.type === 'once' || schedule.type === 'recurring') ? schedule.type : null;
@@ -941,6 +1093,26 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 if (!schedNextRunAt) {
                     return res.status(400).json({ success: false, error: 'Invalid cron expression' });
                 }
+            }
+
+            // Optional per-card usage-skip thresholds (50–99 inclusive).
+            if (schedule.skipIf5hUsagePctOver !== undefined) {
+                if (!isValidUsageThreshold(schedule.skipIf5hUsagePctOver)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'schedule.skipIf5hUsagePctOver must be an integer in [50, 99]'
+                    });
+                }
+                schedSkip5h = Number(schedule.skipIf5hUsagePctOver);
+            }
+            if (schedule.skipIf7dUsagePctOver !== undefined) {
+                if (!isValidUsageThreshold(schedule.skipIf7dUsagePctOver)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'schedule.skipIf7dUsagePctOver must be an integer in [50, 99]'
+                    });
+                }
+                schedSkip7d = Number(schedule.skipIf7dUsagePctOver);
             }
         }
 
@@ -1005,14 +1177,17 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             const result = await pool.query(
                 `INSERT INTO kanban_cards (id, device_id, title, description, priority, status, assigned_bots, created_by, reviewer_entity_id, status_changed_at,
                     is_automation, schedule_enabled, schedule_type, schedule_cron, schedule_run_at, schedule_timezone, schedule_next_run_at, requires_screenshot_review,
-                    chat_anchor_message_id, chat_anchor_coord, dispatch_mode)
+                    chat_anchor_message_id, chat_anchor_coord, dispatch_mode,
+                    schedule_skip_if_5h_pct_over, schedule_skip_if_7d_pct_over)
                  VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, NOW(),
                     $10, $11, $12, $13, $14, $15, $16, $17,
-                    $18, $19::jsonb, $20)
+                    $18, $19::jsonb, $20,
+                    $21, $22)
                  RETURNING *`,
                 [newCardId(), deviceId, title.trim(), finalDescription, cardPriority, cardStatus, JSON.stringify(bots), createdBy, reviewer,
                     finalAutomation, schedEnabled, schedType, schedCron, schedRunAt, schedTz, schedNextRunAt, finalRequiresScreenshot,
-                    anchorMsgId, anchorCoord ? JSON.stringify(anchorCoord) : null, finalDispatchMode]
+                    anchorMsgId, anchorCoord ? JSON.stringify(anchorCoord) : null, finalDispatchMode,
+                    schedSkip5h, schedSkip7d]
             );
 
             const card = serializeCard(result.rows[0]);
@@ -2825,7 +3000,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     router.put('/card/:id/schedule', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] PUT /card/:id/schedule called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, enabled, type, cronExpression, runAt, timezone } = req.body;
+        const { deviceId, enabled, type, cronExpression, runAt, timezone, skipIf5hUsagePctOver, skipIf7dUsagePctOver } = req.body;
         const cardId = req.params.id;
 
         try {
@@ -2868,6 +3043,31 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 }
             }
 
+            // card_c2635849: per-card usage-quota thresholds. Validate at the
+            // write boundary so bad input rejects HTTP 400 instead of silently
+            // clamping. Omitted fields keep the existing column value (NULL →
+            // falls back to default at fire time via clampUsageThreshold).
+            let newSkip5h = existing.rows[0].schedule_skip_if_5h_pct_over;
+            let newSkip7d = existing.rows[0].schedule_skip_if_7d_pct_over;
+            if (skipIf5hUsagePctOver !== undefined) {
+                if (!isValidUsageThreshold(skipIf5hUsagePctOver)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'skipIf5hUsagePctOver must be an integer in [50, 99]'
+                    });
+                }
+                newSkip5h = Number(skipIf5hUsagePctOver);
+            }
+            if (skipIf7dUsagePctOver !== undefined) {
+                if (!isValidUsageThreshold(skipIf7dUsagePctOver)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'skipIf7dUsagePctOver must be an integer in [50, 99]'
+                    });
+                }
+                newSkip7d = Number(skipIf7dUsagePctOver);
+            }
+
             // recurring schedule → auto-promote to automation card
             const autoPromote = schedEnabled && schedType === 'recurring';
 
@@ -2879,9 +3079,11 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     schedule_run_at = $4,
                     schedule_timezone = $5,
                     schedule_next_run_at = $6,
+                    schedule_skip_if_5h_pct_over = $7,
+                    schedule_skip_if_7d_pct_over = $8,
                     ${autoPromote ? 'is_automation = TRUE,' : ''}
                     updated_at = NOW()
-                 WHERE id = $7 AND device_id = $8
+                 WHERE id = $9 AND device_id = $10
                  RETURNING *`,
                 [
                     schedEnabled,
@@ -2890,6 +3092,8 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     schedType === 'once' ? nextRunAt : null,
                     tz,
                     nextRunAt,
+                    newSkip5h,
+                    newSkip7d,
                     cardId,
                     deviceId
                 ]
@@ -3644,6 +3848,28 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                         }
                     }
 
+                    // card_c2635849 (parent card_ad507345): per-card usage-quota
+                    // guard. If ANY assigned entity's rolling 5h / 7d usage% is
+                    // above the per-card threshold, skip child dispatch this
+                    // tick. We advance schedule_next_run_at to the next cron
+                    // slot (so the row doesn't fire-spin every poll loop —
+                    // the scheduler scans WHERE next_run_at <= NOW()) but do
+                    // NOT bump schedule_last_run_at — the audit trail should
+                    // show the last *successful* dispatch, not the skip.
+                    const usageBots = card.assigned_bots || [];
+                    const usageDecision = await evaluateUsageSkipDecision(card, usageBots);
+                    if (usageDecision.skip) {
+                        const nextRun = computeNextRun(card.schedule_cron, card.schedule_timezone);
+                        await pool.query(
+                            `UPDATE kanban_cards SET schedule_next_run_at = $1, updated_at = NOW() WHERE id = $2`,
+                            [nextRun, card.id]
+                        );
+                        await addSystemComment(card.id, card.device_id,
+                            `⏭️ 排程觸發跳過 — Entity #${usageDecision.entityId} ${usageDecision.window} 用量 ${usageDecision.pct}% > ${usageDecision.limit}%（下次嘗試: ${nextRun ? nextRun.toISOString() : '未知'}）`);
+                        console.log(`[CronSkip] card_${card.id} entity_${usageDecision.entityId} usage_${usageDecision.window}=${usageDecision.pct}% > ${usageDecision.limit}% — child dispatch skipped`);
+                        continue;
+                    }
+
                     // Check idle dispatch mode before creating child card
                     const dispatchMode = card.dispatch_mode || 'immediate';
                     if (dispatchMode === 'idle_only') {
@@ -4290,4 +4516,14 @@ module.exports._private = {
     computeCronPreviousRun,
     getRecurringScheduleFireDecision,
     SCHEDULE_LATE_FIRE_GRACE_MS,
+    // card_c2635849 cron usage-threshold skip
+    isValidUsageThreshold,
+    clampUsageThreshold,
+    readClaudeLivePct,
+    readCodexLivePct,
+    evaluateUsageSkipDecision,
+    SCHEDULE_USAGE_THRESHOLD_MIN,
+    SCHEDULE_USAGE_THRESHOLD_MAX,
+    DEFAULT_SKIP_5H_PCT,
+    DEFAULT_SKIP_7D_PCT,
 };

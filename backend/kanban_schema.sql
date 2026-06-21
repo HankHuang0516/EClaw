@@ -38,6 +38,13 @@ ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS schedule_timezone VARCHAR(64) 
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS schedule_last_run_at TIMESTAMPTZ DEFAULT NULL;
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS schedule_next_run_at TIMESTAMPTZ DEFAULT NULL;
 
+-- Per-card usage-quota guard for recurring cron schedules (card_c2635849,
+-- parent card_ad507345). When a scheduled card fires, the scheduler skips
+-- child-card dispatch if ANY assigned entity's rolling 5h or 7d usage%
+-- strictly exceeds these thresholds. Range [50, 99]; defaults 85 / 95.
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS schedule_skip_if_5h_pct_over SMALLINT DEFAULT 85;
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS schedule_skip_if_7d_pct_over SMALLINT DEFAULT 95;
+
 CREATE INDEX IF NOT EXISTS idx_kanban_cards_schedule ON kanban_cards(schedule_enabled, schedule_next_run_at)
     WHERE schedule_enabled = true;
 
