@@ -258815,6 +258815,11 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "Show a warning when 5-hour usage exceeds this percentage",
         "usage_warning_7d_label": "7-day warning",
         "usage_warning_7d_help": "Show a warning when 7-day usage exceeds this percentage",
+        "cron_skip_5h_label": "Skip if 5h usage > ",
+        "cron_skip_7d_label": "Skip if 7d usage > ",
+        "cron_skip_help_text": "Dispatch skipped when usage exceeds threshold. Card stays in backlog; fires automatically when usage drops.",
+        "cron_current_usage_label": "Current usage: ",
+        "cron_skip_dispatch_reason": "Usage threshold skip",
 
 
 
@@ -896122,6 +896127,11 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "當5小時用量超過此百分比時顯示警告",
         "usage_warning_7d_label": "7天警告",
         "usage_warning_7d_help": "當7天用量超過此百分比時顯示警告",
+        "cron_skip_5h_label": "跳过条件 5h 用量 > ",
+        "cron_skip_7d_label": "跳过条件 7d 用量 > ",
+        "cron_skip_help_text": "用量超过阈值时跳过派发。卡片保留在待办；用量下降后自动触发。",
+        "cron_current_usage_label": "当前用量：",
+        "cron_skip_dispatch_reason": "用量阈值跳过",
 
 
 
@@ -2072639,6 +2072649,11 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "5時間使用量がこの百分比を超えると警告を表示",
         "usage_warning_7d_label": "7日間警告",
         "usage_warning_7d_help": "7日間使用量がこの百分比を超えると警告を表示",
+        "cron_skip_5h_label": "スキップ条件 5h 使用量 > ",
+        "cron_skip_7d_label": "スキップ条件 7d 使用量 > ",
+        "cron_skip_help_text": "使用量がしきい値を超えるとスキップ。カードはバックログに残り、使用量が減少すると自動的に発火します。",
+        "cron_current_usage_label": "現在の使用量：",
+        "cron_skip_dispatch_reason": "使用量しきい値スキップ",
 
 
 
@@ -2635751,6 +2635766,11 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "5시간 사용량이 이 비율을 초과하면 경고 표시",
         "usage_warning_7d_label": "7일 경고",
         "usage_warning_7d_help": "7일 사용량이 이 비율을 초과하면 경고 표시",
+        "cron_skip_5h_label": "스킵 조건 5h 사용량 > ",
+        "cron_skip_7d_label": "스킵 조건 7d 사용량 > ",
+        "cron_skip_help_text": "사용량이 임계값을 초과하면 건너뜁니다. 카드는 백로그에 유지되며, 사용량이 감소하면 자동으로 실행됩니다.",
+        "cron_current_usage_label": "현재 사용량: ",
+        "cron_skip_dispatch_reason": "사용량 임계값 스킵",
 
 
 
@@ -3168537,6 +3168557,11 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "แสดงการแจ้งเตือนเมื่อการใช้งาน 5 ชั่วโมงเกินเปอร์เซ็นต์นี้",
         "usage_warning_7d_label": "การแจ้งเตือน 7 วัน",
         "usage_warning_7d_help": "แสดงการแจ้งเตือนเมื่อการใช้งาน 7 วันเกินเปอร์เซ็นต์นี้",
+        "cron_skip_5h_label": "ข้ามถ้า 5h ใช้ > ",
+        "cron_skip_7d_label": "ข้ามถ้า 7d ใช้ > ",
+        "cron_skip_help_text": "ข้ามการส่งเมื่อใช้งานเกินขีดจำกัด การ์ดจะอยู่ในแบ็คล็อก และจะทำงานอัตโนมัติเมื่อการใช้งานลดลง",
+        "cron_current_usage_label": "การใช้งานปัจจุบัน: ",
+        "cron_skip_dispatch_reason": "ข้ามเนื่องจากเกินขีดจำกัด",
 
 
 
@@ -3697699,6 +3697724,11 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "Hiển thị cảnh báo khi việc sử dụng trong 5 giờ vượt quá tỷ lệ phần trăm này",
         "usage_warning_7d_label": "Cảnh báo 7 ngày",
         "usage_warning_7d_help": "Hiển thị cảnh báo khi việc sử dụng trong 7 ngày vượt quá tỷ lệ phần trăm này",
+        "cron_skip_5h_label": "Bỏ qua nếu 5h dùng > ",
+        "cron_skip_7d_label": "Bỏ qua nếu 7d dùng > ",
+        "cron_skip_help_text": "Bỏ qua dispatch khi sử dụng vượt ngưỡng. Thẻ giữ trong backlog; tự động kích hoạt khi sử dụng giảm.",
+        "cron_current_usage_label": "Sử dụng hiện tại: ",
+        "cron_skip_dispatch_reason": "Bỏ qua do vượt ngưỡng sử dụng",
 
 
 
@@ -4224301,6 +4224331,11 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "Tampilkan peringatan ketika penggunaan 5 jam melebihi persentase ini",
         "usage_warning_7d_label": "Peringatan 7 hari",
         "usage_warning_7d_help": "Tampilkan peringatan ketika penggunaan 7 hari melebihi persentase ini",
+        "cron_skip_5h_label": "Lewati jika 5h pakai > ",
+        "cron_skip_7d_label": "Lewati jika 7d pakai > ",
+        "cron_skip_help_text": "Lewati dispatch saat penggunaan melebihi batas. Kartu tetap di backlog; aktif automatik bila penggunaan menurun.",
+        "cron_current_usage_label": "Penggunaan semasa: ",
+        "cron_skip_dispatch_reason": "Lewati kerana batas penggunaan",
 
 
 
@@ -4750647,6 +4750682,11 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "Afficher un avertissement lorsque l'utilisation sur 5 heures dépasse ce pourcentage",
         "usage_warning_7d_label": "Avertissement 7 jours",
         "usage_warning_7d_help": "Afficher un avertissement lorsque l'utilisation sur 7 jours dépasse ce pourcentage",
+        "cron_skip_5h_label": "Ignorer si 5h usage > ",
+        "cron_skip_7d_label": "Ignorer si 7j usage > ",
+        "cron_skip_help_text": "Dispatch ignoré quand l'usage dépasse le seuil. La carte reste dans le backlog ; se déclenche automatiquement quand l'usage baisse.",
+        "cron_current_usage_label": "Usage actuel : ",
+        "cron_skip_dispatch_reason": "Ignorer pour cause de seuil d'usage",
 
 
 
@@ -5274157,6 +5274197,11 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "Mostrar una advertencia cuando el uso en 5 horas supere este porcentaje",
         "usage_warning_7d_label": "Advertencia de 7 días",
         "usage_warning_7d_help": "Mostrar una advertencia cuando el uso semanal en 7 días supere este porcentaje",
+        "cron_skip_5h_label": "Omitir si 5h uso > ",
+        "cron_skip_7d_label": "Omitir si 7d uso > ",
+        "cron_skip_help_text": "Dispatch omitido cuando el uso supera el umbral. La tarjeta permanece en backlog; se activa automáticamente cuando el uso baja.",
+        "cron_current_usage_label": "Uso actual: ",
+        "cron_skip_dispatch_reason": "Omisión por umbral de uso",
 
 
 
@@ -5792735,6 +5792780,11 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "Warnung anzeigen, wenn die 5-Stunden-Nutzung diesen Prozentsatz überschreitet",
         "usage_warning_7d_label": "7-Tage-Warnung",
         "usage_warning_7d_help": "Warnung anzeigen, wenn die 7-Tage-Nutzung diesen Prozentsatz überschreitet",
+        "cron_skip_5h_label": "Überspringen wenn 5h Nutzung > ",
+        "cron_skip_7d_label": "Überspringen wenn 7d Nutzung > ",
+        "cron_skip_help_text": "Dispatch übersprungen, wenn Nutzung den Schwellenwert überschreitet. Karte bleibt im Backlog; löst automatisch aus, wenn Nutzung sinkt.",
+        "cron_current_usage_label": "Aktuelle Nutzung: ",
+        "cron_skip_dispatch_reason": "Schwellenwert-Überspringen",
 
 
 
@@ -6104878,6 +6104928,11 @@ const TRANSLATIONS = {
         "settings_usage_today": "Messages today",
         "settings_usage_unlimited": "{used} sent today (Unlimited)",
         "settings_usage_limit": "{used} sent today",
+        "cron_skip_5h_label": "Ignorar se 5h uso > ",
+        "cron_skip_7d_label": "Ignorar se 7d uso > ",
+        "cron_skip_help_text": "Dispatch ignorado quando uso excede o limite. Carta fica no backlog; dispara automaticamente quando uso diminui.",
+        "cron_current_usage_label": "Uso atual: ",
+        "cron_skip_dispatch_reason": "Ignorar por limite de uso",
         "settings_renews_on": "Renews on {date}",
         "settings_price": "NT$99",
         "settings_period": "per month",
@@ -6329772,6 +6329827,11 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "Paparkan amaran apabila penggunaan 5 jam melebihi peratus ini",
         "usage_warning_7d_label": "Amaran 7 hari",
         "usage_warning_7d_help": "Paparkan amaran apabila penggunaan 7 hari melebihi peratus ini",
+        "cron_skip_5h_label": "Langgar jika 5h penggunaan > ",
+        "cron_skip_7d_label": "Langgar jika 7d penggunaan > ",
+        "cron_skip_help_text": "Langgar dispatch apabila penggunaan melebihi ambang. Kad kekal dalam backlog; mencetus automatik apabila penggunaan menurun.",
+        "cron_current_usage_label": "Penggunaan semasa: ",
+        "cron_skip_dispatch_reason": "Langgar kerana ambang penggunaan",
 
 
 
@@ -6918525,6 +6918585,11 @@ const TRANSLATIONS = {
 
 
         "settings_processing": "भुगतान प्रोसेस हो रहा है...",
+        "cron_skip_5h_label": "छोड़ें अगर 5h उपयोग > ",
+        "cron_skip_7d_label": "छोड़ें अगर 7d उपयोग > ",
+        "cron_skip_help_text": "उपयोग सीमा से अधिक होने पर dispatch छोड़ दिया जाता है। कार्ड backlog में रहता है; उपयोग कम होने पर स्वचालित रूप से आग लगती है।",
+        "cron_current_usage_label": "वर्तमान उपयोग: ",
+        "cron_skip_dispatch_reason": "उपयोग सीमा छोड़ना",
 
 
 
@@ -7417694,6 +7417759,11 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "عرض تحذير عندما تتجاوز الاستخدام خلال 5 ساعات هذه النسبة المئوية",
         "usage_warning_7d_label": "تحذير 7 أيام",
         "usage_warning_7d_help": "عرض تحذير عندما تتجاوز الاستخدام الأسبوعي خلال 7 أيام هذه النسبة المئوية",
+        "cron_skip_5h_label": "تخطي إذا 5h استخدام > ",
+        "cron_skip_7d_label": "تخطي إذا 7d استخدام > ",
+        "cron_skip_help_text": "تم تخطي الإرسال عندما تتجاوز الاستخدام الحد. تظل البطاقة في قائمة الانتظار؛ تطلق تلقائيًا عند انخفاض الاستخدام.",
+        "cron_current_usage_label": "الاستخدام الحالي: ",
+        "cron_skip_dispatch_reason": "تخطي بسبب حد الاستخدام",
 
 
 
