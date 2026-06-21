@@ -650458,6 +650458,14 @@ const TRANSLATIONS = {
         "cron_skip_help_text": "Slider range 50–99. When the assigned entity's current usage exceeds the threshold, this cron tick is skipped to protect the high-load entity; the next scheduled tick auto-retries.",
 
         "chat_routing_supervisor": "Supervisor",
+
+        "chat_sendto_button_label_all": "Send to ALL",
+        "chat_sendto_button_label_single": "Send to {target}",
+        "chat_sendto_button_label_multi": "Send to {count} entities",
+        "chat_sendto_picker_title": "Select recipients",
+        "chat_sendto_picker_select_all": "Select all",
+        "chat_sendto_picker_confirm": "Confirm",
+        "chat_sendto_picker_cancel": "Cancel",
 },
 
 
@@ -1235352,6 +1235360,14 @@ const TRANSLATIONS = {
         "cron_skip_help_text": "拉桿範圍 50–99。當指派智能體目前用量超過門檻時，這次 cron 觸發會跳過以保護高負載智能體；下個排程觸發會自動重試。",
 
         "chat_routing_supervisor": "主管",
+
+        "chat_sendto_button_label_all": "傳送給 ALL",
+        "chat_sendto_button_label_single": "傳送給 {target}",
+        "chat_sendto_button_label_multi": "傳送給 {count} entities",
+        "chat_sendto_picker_title": "選擇傳送對象",
+        "chat_sendto_picker_select_all": "全選",
+        "chat_sendto_picker_confirm": "確認",
+        "chat_sendto_picker_cancel": "取消",
 },
 
 
