@@ -3081,6 +3081,14 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             // moves (cron creates child cards instead), so they would always look stale
             // and get escalated to P0 every staleThresholdMs window. Mirrors the same
             // filter used in checkDoneAutoArchive below.
+            // Also skip single-shot (type='once') scheduled cards whose run_at is still
+            // in the future: those cards are deliberately parked in todo waiting for the
+            // scheduled fire time, not stalled. Without this guard, a card scheduled for
+            // tomorrow 10:00 starts firing 🚨 P0 stalled the moment status_changed_at
+            // crosses stale_threshold_ms (typical 3h), 14h before its actual run time.
+            // Once run_at passes (timer fires or window elapses without fire), the card
+            // falls back into stale eligibility — preserves L1/L2/L3 safety rails for
+            // actually-stuck post-runAt cards.
             // gated=true only suppresses L1/L2/L3 for backlog cards (launch-pending
             // drafts). Active-status cards (todo/in_progress/review) keep escalating
             // even if a stale gated flag is left over — defense-in-depth alongside
@@ -3091,6 +3099,12 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                   AND status IN ('backlog', 'todo', 'in_progress', 'review')
                   AND EXTRACT(EPOCH FROM (NOW() - status_changed_at)) * 1000 > stale_threshold_ms
                   AND (schedule_enabled = false OR schedule_type != 'recurring' OR schedule_enabled IS NULL)
+                  AND NOT (
+                    schedule_enabled = true
+                    AND schedule_type = 'once'
+                    AND schedule_run_at IS NOT NULL
+                    AND schedule_run_at > NOW()
+                  )
                   AND (status != 'backlog' OR COALESCE(gated, false) = false)
             `);
 
