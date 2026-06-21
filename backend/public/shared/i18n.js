@@ -650452,6 +650452,10 @@ const TRANSLATIONS = {
         "chat_user_filter_help_next": "Use the button below to set your name in Settings, or just tap @user to see it in action.",
         "chat_user_filter_help_goto_settings": "Go to Settings",
         "chat_user_filter_help_close": "Close",
+
+        "cron_skip_5h_label": "Skip if 5h usage > X%",
+        "cron_skip_7d_label": "Skip if 7d usage > Y%",
+        "cron_skip_help_text": "Slider range 50–99. When the assigned entity's current usage exceeds the threshold, this cron tick is skipped to protect the high-load entity; the next scheduled tick auto-retries.",
 },
 
 
@@ -1235340,6 +1235344,10 @@ const TRANSLATIONS = {
         "chat_user_filter_help_next": "按下方按鈕到個人設定頁面設定你的名稱，或直接按 @user 看效果。",
         "chat_user_filter_help_goto_settings": "前往設定",
         "chat_user_filter_help_close": "關閉",
+
+        "cron_skip_5h_label": "5小時用量超過 X% 跳過",
+        "cron_skip_7d_label": "週用量超過 Y% 跳過",
+        "cron_skip_help_text": "拉桿範圍 50–99。當指派智能體目前用量超過門檻時，這次 cron 觸發會跳過以保護高負載智能體；下個排程觸發會自動重試。",
 },
 
 
