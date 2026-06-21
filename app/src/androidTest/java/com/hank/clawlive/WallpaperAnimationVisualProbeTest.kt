@@ -11,6 +11,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.hank.clawlive.data.local.LayoutPreferences
+import com.hank.clawlive.data.local.WallpaperKanbanObjectStyle
 import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.model.WallpaperKanbanCard
@@ -245,6 +246,50 @@ class WallpaperAnimationVisualProbeTest {
         )
 
         val file = saveBitmap("wallpaper-kanban-whiteboard-text-fit.png", bitmap)
+        assertTrue(file.length() > 0)
+    }
+
+    @Test
+    fun captureKanbanFolderGroundPileProbe() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val prefs = LayoutPreferences.getInstance(context)
+        prefs.clearAllCustomPositions()
+        prefs.clearAllEntityScales()
+        prefs.useCustomLayout = true
+        prefs.wallpaperWalkingEnabled = false
+        prefs.wallpaperSpeechBubblesEnabled = false
+        prefs.wallpaperKanbanTasksEnabled = true
+        prefs.wallpaperKanbanAutomationBoardEnabled = false
+        prefs.wallpaperKanbanPrivacyModeEnabled = true
+        prefs.wallpaperKanbanObjectStyle = WallpaperKanbanObjectStyle.FOLDER
+        prefs.usageOverlayEnabled = false
+        prefs.setEntityScale(2, 0.58f)
+        prefs.setCustomPosition(2, 0.5f, 0.42f)
+
+        val now = System.currentTimeMillis()
+        val statuses = listOf("todo", "in_progress", "review", "blocked")
+        val cards = (0 until 12).map { index ->
+            WallpaperKanbanCard(
+                id = "folder-depth-$index",
+                title = "Folder depth probe $index",
+                priority = if (index % 5 == 0) "P0" else "P2",
+                status = statuses[index % statuses.size],
+                assignedBots = listOf(2),
+                updatedAt = now - index * 30_000L
+            )
+        }
+        val bitmap = Bitmap.createBitmap(1080, 1920, Bitmap.Config.ARGB_8888)
+        val renderer = ClawRenderer(context)
+        renderer.drawMultiEntity(
+            Canvas(bitmap),
+            listOf(
+                EntityStatus(entityId = 2, name = "Mac_ClaudeAce主管", state = CharacterState.IDLE, isBound = true)
+            ),
+            loading = false,
+            kanbanCards = cards
+        )
+
+        val file = saveBitmap("wallpaper-kanban-folder-ground-pile.png", bitmap)
         assertTrue(file.length() > 0)
     }
 
