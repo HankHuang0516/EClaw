@@ -276,20 +276,32 @@ describe('sender-floor resolution (chat.html) — never Unspecified/undefined on
     });
 
     test('renderPill guards against a literal "undefined" fallbackName', () => {
-        expect(detailFn).toMatch(/String\(fallbackName\)\s*!==\s*'undefined'/);
-        expect(detailFn).toMatch(/safeFallbackName/);
+        // card_816c435e: guard moved into the shared resolveEntityLabel helper
+        // (lives above renderRoutingChipDetailBody). Both 'undefined' and the
+        // '?' / '？' sentinels are rejected via the isBadName predicate.
+        const resolverStart = chatSrc.indexOf('function resolveEntityLabel(');
+        expect(resolverStart).toBeGreaterThan(-1);
+        const resolver = chatSrc.slice(resolverStart, resolverStart + 4000);
+        expect(resolver).toMatch(/s\s*===\s*'undefined'/);
+        expect(resolver).toMatch(/isBadName/);
     });
 
     test('from-pill uses a sender-specific neutral label, not the shared Unspecified', () => {
         // The from-side must land on chat_routing_sender, never chat_routing_unspecified.
-        expect(detailFn).toMatch(/which\s*===\s*'from'/);
-        expect(detailFn).toMatch(/chat_routing_sender/);
+        // card_816c435e: neutral selection moved into resolveEntityLabel.
+        const resolverStart = chatSrc.indexOf('function resolveEntityLabel(');
+        const resolver = chatSrc.slice(resolverStart, resolverStart + 4000);
+        expect(resolver).toMatch(/which\s*===\s*'from'/);
+        expect(resolver).toMatch(/chat_routing_sender/);
     });
 
     test('renderPill accepts a publicCode fallback and both call sites pass it', () => {
-        expect(detailFn).toMatch(/renderPill\s*=\s*\(which,\s*sum,\s*fallbackId,\s*fallbackName,\s*fallbackCode\)/);
-        expect(detailFn).toMatch(/renderPill\('from',\s*fromSum,\s*payload\.from_entity_id,\s*payload\.from_name,\s*payload\.from_public_code\)/);
-        expect(detailFn).toMatch(/renderPill\('to',\s*toSum,[\s\S]*?payload\.to_public_code\)/);
+        // card_816c435e: renderPill grew an `isUser` 6th arg so the to_is_user
+        // flag flows through the shared resolver instead of being inlined as a
+        // tt('chat_routing_to_user',...) label at the call site.
+        expect(detailFn).toMatch(/renderPill\s*=\s*\(which,\s*sum,\s*fallbackId,\s*fallbackName,\s*fallbackCode,\s*isUser\)/);
+        expect(detailFn).toMatch(/renderPill\('from',\s*fromSum,\s*payload\.from_entity_id,\s*payload\.from_name,\s*payload\.from_public_code,\s*false\)/);
+        expect(detailFn).toMatch(/renderPill\('to',\s*toSum,[\s\S]*?payload\.to_public_code,\s*!!payload\.to_is_user\)/);
     });
 
     test('chat_routing_sender key ships in EN + ZH (>=3 locales)', () => {
