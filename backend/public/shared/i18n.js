@@ -546358,6 +546358,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Showing Bot Plaza results",
+        "community_result_detail_default": "Use search, filters, capabilities, or rate to narrow the list.",
+        "community_result_clear_filters": "Clear filters",
+        "community_result_filter_search": "search \"{query}\"",
+        "community_result_filter_category": "category {category}",
+        "community_result_filter_capabilities": "capabilities {capabilities}",
+        "community_result_filter_rate": "rate {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} bot",
+        "community_result_count_many": "{count} bots",
+        "community_result_count_unknown": "Bot Plaza results",
+        "community_result_summary_filtered": "Showing {count} matching {filters}",
+        "community_result_summary_default_count": "Showing {count} from Bot Plaza",
+        "community_result_detail_filtered": "Sorted by {sort}. Clear filters to return to the full plaza.",
+        "community_result_detail_default_sorted": "Sorted by {sort}. Use search, filters, capabilities, or rate to narrow the list.",
+        "community_error_title": "Unable to load Bot Plaza",
+        "community_error_desc": "Check your connection and try again.",
 
 
 
@@ -1165905,6 +1165922,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 出租",
+        "community_result_summary_default": "顯示 Bot 廣場結果",
+        "community_result_detail_default": "使用搜尋、篩選、能力或費率縮小列表。",
+        "community_result_clear_filters": "清除篩選",
+        "community_result_filter_search": "搜尋「{query}」",
+        "community_result_filter_category": "分類 {category}",
+        "community_result_filter_capabilities": "能力 {capabilities}",
+        "community_result_filter_rate": "費率 {min}-{max} e幣/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} 個 Bot",
+        "community_result_count_many": "{count} 個 Bot",
+        "community_result_count_unknown": "Bot 廣場結果",
+        "community_result_summary_filtered": "顯示 {count}，符合 {filters}",
+        "community_result_summary_default_count": "顯示 Bot 廣場中的 {count}",
+        "community_result_detail_filtered": "依{sort}排序。清除篩選即可回到完整廣場。",
+        "community_result_detail_default_sorted": "依{sort}排序。使用搜尋、篩選、能力或費率縮小列表。",
+        "community_error_title": "無法載入 Bot 廣場",
+        "community_error_desc": "請檢查連線後再試一次。",
 
 
 
@@ -1318457,6 +1318491,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 出租",
+        "community_result_summary_default": "显示 Bot 广场结果",
+        "community_result_detail_default": "使用搜索、筛选、能力或费率缩小列表。",
+        "community_result_clear_filters": "清除筛选",
+        "community_result_filter_search": "搜索“{query}”",
+        "community_result_filter_category": "分类 {category}",
+        "community_result_filter_capabilities": "能力 {capabilities}",
+        "community_result_filter_rate": "费率 {min}-{max} e币/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} 个 Bot",
+        "community_result_count_many": "{count} 个 Bot",
+        "community_result_count_unknown": "Bot 广场结果",
+        "community_result_summary_filtered": "显示 {count}，符合 {filters}",
+        "community_result_summary_default_count": "显示 Bot 广场中的 {count}",
+        "community_result_detail_filtered": "按{sort}排序。清除筛选即可返回完整广场。",
+        "community_result_detail_default_sorted": "按{sort}排序。使用搜索、筛选、能力或费率缩小列表。",
+        "community_error_title": "无法加载 Bot 广场",
+        "community_error_desc": "请检查连接后重试。",
 
 
 
@@ -2347711,6 +2347762,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Bot Plaza の結果を表示しています",
+        "community_result_detail_default": "検索、フィルター、機能、料金で一覧を絞り込めます。",
+        "community_result_clear_filters": "フィルターをクリア",
+        "community_result_filter_search": "検索「{query}」",
+        "community_result_filter_category": "カテゴリ {category}",
+        "community_result_filter_capabilities": "機能 {capabilities}",
+        "community_result_filter_rate": "料金 {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} Bot",
+        "community_result_count_many": "{count} Bot",
+        "community_result_count_unknown": "Bot Plaza の結果",
+        "community_result_summary_filtered": "{filters} に一致する {count} を表示しています",
+        "community_result_summary_default_count": "Bot Plaza から {count} を表示しています",
+        "community_result_detail_filtered": "{sort}順で並べ替え。フィルターをクリアすると Plaza 全体に戻ります。",
+        "community_result_detail_default_sorted": "{sort}順で並べ替え。検索、フィルター、機能、料金で一覧を絞り込めます。",
+        "community_error_title": "Bot Plaza を読み込めません",
+        "community_error_desc": "接続を確認してからもう一度お試しください。",
 
 
 
@@ -2896493,6 +2896561,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Bot Plaza 결과 표시 중",
+        "community_result_detail_default": "검색, 필터, 기능 또는 요금으로 목록을 좁혀보세요.",
+        "community_result_clear_filters": "필터 지우기",
+        "community_result_filter_search": "검색 \"{query}\"",
+        "community_result_filter_category": "카테고리 {category}",
+        "community_result_filter_capabilities": "기능 {capabilities}",
+        "community_result_filter_rate": "요금 {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count}개 Bot",
+        "community_result_count_many": "{count}개 Bot",
+        "community_result_count_unknown": "Bot Plaza 결과",
+        "community_result_summary_filtered": "{filters}와 일치하는 {count} 표시 중",
+        "community_result_summary_default_count": "Bot Plaza에서 {count} 표시 중",
+        "community_result_detail_filtered": "{sort}순 정렬. 필터를 지우면 전체 Plaza로 돌아갑니다.",
+        "community_result_detail_default_sorted": "{sort}순 정렬. 검색, 필터, 기능 또는 요금으로 목록을 좁혀보세요.",
+        "community_error_title": "Bot Plaza를 불러올 수 없습니다",
+        "community_error_desc": "연결을 확인한 뒤 다시 시도하세요.",
 
 
 
@@ -2944930,6 +2945015,23 @@ const TRANSLATIONS = {
         "cron_skip_help_text": "此排程在 entity 5 小時用量超過 X% 或 7 天用量超過 Y% 時會跳過。預設值保護高負載 entity 不被 cron 額外加負擔。可調範圍 50%-99%。跳過的 cron 下次 tick 自動重試，不會 lost。",
         "cron_current_usage_label": "目前 5h: N% / 7d: M%",
         "cron_skip_dispatch_reason": "跳過：用量超過閾值",
+        "community_result_summary_default": "顯示 Bot 廣場結果",
+        "community_result_detail_default": "使用搜尋、篩選、能力或費率縮小列表。",
+        "community_result_clear_filters": "清除篩選",
+        "community_result_filter_search": "搜尋「{query}」",
+        "community_result_filter_category": "分類 {category}",
+        "community_result_filter_capabilities": "能力 {capabilities}",
+        "community_result_filter_rate": "費率 {min}-{max} e幣/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} 個 Bot",
+        "community_result_count_many": "{count} 個 Bot",
+        "community_result_count_unknown": "Bot 廣場結果",
+        "community_result_summary_filtered": "顯示 {count}，符合 {filters}",
+        "community_result_summary_default_count": "顯示 Bot 廣場中的 {count}",
+        "community_result_detail_filtered": "依{sort}排序。清除篩選即可回到完整廣場。",
+        "community_result_detail_default_sorted": "依{sort}排序。使用搜尋、篩選、能力或費率縮小列表。",
+        "community_error_title": "無法載入 Bot 廣場",
+        "community_error_desc": "請檢查連線後再試一次。",
 },
 
 
@@ -3416998,6 +3417100,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "กำลังแสดงผลลัพธ์ Bot Plaza",
+        "community_result_detail_default": "ใช้การค้นหา ตัวกรอง ความสามารถ หรือราคาเพื่อจำกัดรายการ",
+        "community_result_clear_filters": "ล้างตัวกรอง",
+        "community_result_filter_search": "ค้นหา \"{query}\"",
+        "community_result_filter_category": "หมวดหมู่ {category}",
+        "community_result_filter_capabilities": "ความสามารถ {capabilities}",
+        "community_result_filter_rate": "ราคา {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} บอต",
+        "community_result_count_many": "{count} บอต",
+        "community_result_count_unknown": "ผลลัพธ์ Bot Plaza",
+        "community_result_summary_filtered": "กำลังแสดง {count} ที่ตรงกับ {filters}",
+        "community_result_summary_default_count": "กำลังแสดง {count} จาก Bot Plaza",
+        "community_result_detail_filtered": "เรียงตาม {sort} ล้างตัวกรองเพื่อกลับไปยัง Plaza ทั้งหมด",
+        "community_result_detail_default_sorted": "เรียงตาม {sort} ใช้การค้นหา ตัวกรอง ความสามารถ หรือราคาเพื่อจำกัดรายการ",
+        "community_error_title": "โหลด Bot Plaza ไม่ได้",
+        "community_error_desc": "ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง",
 
 
 
@@ -3946304,6 +3946423,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Đang hiển thị kết quả Bot Plaza",
+        "community_result_detail_default": "Dùng tìm kiếm, bộ lọc, năng lực hoặc mức phí để thu hẹp danh sách.",
+        "community_result_clear_filters": "Xóa bộ lọc",
+        "community_result_filter_search": "tìm kiếm \"{query}\"",
+        "community_result_filter_category": "danh mục {category}",
+        "community_result_filter_capabilities": "năng lực {capabilities}",
+        "community_result_filter_rate": "mức phí {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} bot",
+        "community_result_count_many": "{count} bot",
+        "community_result_count_unknown": "kết quả Bot Plaza",
+        "community_result_summary_filtered": "Đang hiển thị {count} khớp với {filters}",
+        "community_result_summary_default_count": "Đang hiển thị {count} từ Bot Plaza",
+        "community_result_detail_filtered": "Sắp xếp theo {sort}. Xóa bộ lọc để quay lại toàn bộ Plaza.",
+        "community_result_detail_default_sorted": "Sắp xếp theo {sort}. Dùng tìm kiếm, bộ lọc, năng lực hoặc mức phí để thu hẹp danh sách.",
+        "community_error_title": "Không thể tải Bot Plaza",
+        "community_error_desc": "Kiểm tra kết nối rồi thử lại.",
 
 
 
@@ -4474023,6 +4474159,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Menampilkan hasil Bot Plaza",
+        "community_result_detail_default": "Gunakan pencarian, filter, kemampuan, atau tarif untuk mempersempit daftar.",
+        "community_result_clear_filters": "Hapus filter",
+        "community_result_filter_search": "pencarian \"{query}\"",
+        "community_result_filter_category": "kategori {category}",
+        "community_result_filter_capabilities": "kemampuan {capabilities}",
+        "community_result_filter_rate": "tarif {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} bot",
+        "community_result_count_many": "{count} bot",
+        "community_result_count_unknown": "hasil Bot Plaza",
+        "community_result_summary_filtered": "Menampilkan {count} yang cocok dengan {filters}",
+        "community_result_summary_default_count": "Menampilkan {count} dari Bot Plaza",
+        "community_result_detail_filtered": "Diurutkan menurut {sort}. Hapus filter untuk kembali ke Plaza penuh.",
+        "community_result_detail_default_sorted": "Diurutkan menurut {sort}. Gunakan pencarian, filter, kemampuan, atau tarif untuk mempersempit daftar.",
+        "community_error_title": "Tidak dapat memuat Bot Plaza",
+        "community_error_desc": "Periksa koneksi lalu coba lagi.",
 
 
 
@@ -5012246,6 +5012399,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Résultats Bot Plaza affichés",
+        "community_result_detail_default": "Utilisez la recherche, les filtres, les capacités ou le tarif pour réduire la liste.",
+        "community_result_clear_filters": "Effacer les filtres",
+        "community_result_filter_search": "recherche « {query} »",
+        "community_result_filter_category": "catégorie {category}",
+        "community_result_filter_capabilities": "capacités {capabilities}",
+        "community_result_filter_rate": "tarif {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} bot",
+        "community_result_count_many": "{count} bots",
+        "community_result_count_unknown": "résultats Bot Plaza",
+        "community_result_summary_filtered": "Affichage de {count} correspondant à {filters}",
+        "community_result_summary_default_count": "Affichage de {count} depuis Bot Plaza",
+        "community_result_detail_filtered": "Trié par {sort}. Effacez les filtres pour revenir à tout le Plaza.",
+        "community_result_detail_default_sorted": "Trié par {sort}. Utilisez la recherche, les filtres, les capacités ou le tarif pour réduire la liste.",
+        "community_error_title": "Impossible de charger Bot Plaza",
+        "community_error_desc": "Vérifiez votre connexion puis réessayez.",
 
 
 
@@ -5531148,6 +5531318,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Mostrando resultados de Bot Plaza",
+        "community_result_detail_default": "Usa búsqueda, filtros, capacidades o tarifa para acotar la lista.",
+        "community_result_clear_filters": "Borrar filtros",
+        "community_result_filter_search": "búsqueda \"{query}\"",
+        "community_result_filter_category": "categoría {category}",
+        "community_result_filter_capabilities": "capacidades {capabilities}",
+        "community_result_filter_rate": "tarifa {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} bot",
+        "community_result_count_many": "{count} bots",
+        "community_result_count_unknown": "resultados de Bot Plaza",
+        "community_result_summary_filtered": "Mostrando {count} que coinciden con {filters}",
+        "community_result_summary_default_count": "Mostrando {count} de Bot Plaza",
+        "community_result_detail_filtered": "Ordenado por {sort}. Borra los filtros para volver a todo el Plaza.",
+        "community_result_detail_default_sorted": "Ordenado por {sort}. Usa búsqueda, filtros, capacidades o tarifa para acotar la lista.",
+        "community_error_title": "No se puede cargar Bot Plaza",
+        "community_error_desc": "Comprueba tu conexión e inténtalo de nuevo.",
 
 
 
@@ -6054315,6 +6054502,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Bot Plaza-Ergebnisse werden angezeigt",
+        "community_result_detail_default": "Nutze Suche, Filter, Fähigkeiten oder Tarif, um die Liste einzugrenzen.",
+        "community_result_clear_filters": "Filter löschen",
+        "community_result_filter_search": "Suche \"{query}\"",
+        "community_result_filter_category": "Kategorie {category}",
+        "community_result_filter_capabilities": "Fähigkeiten {capabilities}",
+        "community_result_filter_rate": "Tarif {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} Bot",
+        "community_result_count_many": "{count} Bots",
+        "community_result_count_unknown": "Bot Plaza-Ergebnisse",
+        "community_result_summary_filtered": "{count} passend zu {filters} werden angezeigt",
+        "community_result_summary_default_count": "{count} aus Bot Plaza werden angezeigt",
+        "community_result_detail_filtered": "Sortiert nach {sort}. Lösche Filter, um zum gesamten Plaza zurückzukehren.",
+        "community_result_detail_default_sorted": "Sortiert nach {sort}. Nutze Suche, Filter, Fähigkeiten oder Tarif, um die Liste einzugrenzen.",
+        "community_error_title": "Bot Plaza kann nicht geladen werden",
+        "community_error_desc": "Prüfe deine Verbindung und versuche es erneut.",
 
 
 
@@ -6109809,6 +6110013,23 @@ const TRANSLATIONS = {
         "community_filter_creative": "🎨 Creative",
         "community_filter_a2a": "🤝 A2A",
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "A mostrar resultados do Bot Plaza",
+        "community_result_detail_default": "Use pesquisa, filtros, capacidades ou tarifa para reduzir a lista.",
+        "community_result_clear_filters": "Limpar filtros",
+        "community_result_filter_search": "pesquisa \"{query}\"",
+        "community_result_filter_category": "categoria {category}",
+        "community_result_filter_capabilities": "capacidades {capabilities}",
+        "community_result_filter_rate": "tarifa {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} bot",
+        "community_result_count_many": "{count} bots",
+        "community_result_count_unknown": "resultados do Bot Plaza",
+        "community_result_summary_filtered": "A mostrar {count} correspondente a {filters}",
+        "community_result_summary_default_count": "A mostrar {count} do Bot Plaza",
+        "community_result_detail_filtered": "Ordenado por {sort}. Limpe os filtros para voltar ao Plaza completo.",
+        "community_result_detail_default_sorted": "Ordenado por {sort}. Use pesquisa, filtros, capacidades ou tarifa para reduzir a lista.",
+        "community_error_title": "Não foi possível carregar o Bot Plaza",
+        "community_error_desc": "Verifique a ligação e tente novamente.",
         "community_bots_found": "Bots",
         "community_loading": "Loading...",
         "community_empty_title": "No matching Bots found",
@@ -6547763,6 +6547984,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Memaparkan hasil Bot Plaza",
+        "community_result_detail_default": "Gunakan carian, penapis, keupayaan atau kadar untuk mengecilkan senarai.",
+        "community_result_clear_filters": "Kosongkan penapis",
+        "community_result_filter_search": "carian \"{query}\"",
+        "community_result_filter_category": "kategori {category}",
+        "community_result_filter_capabilities": "keupayaan {capabilities}",
+        "community_result_filter_rate": "kadar {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} bot",
+        "community_result_count_many": "{count} bot",
+        "community_result_count_unknown": "hasil Bot Plaza",
+        "community_result_summary_filtered": "Memaparkan {count} yang sepadan dengan {filters}",
+        "community_result_summary_default_count": "Memaparkan {count} daripada Bot Plaza",
+        "community_result_detail_filtered": "Diisih mengikut {sort}. Kosongkan penapis untuk kembali ke Plaza penuh.",
+        "community_result_detail_default_sorted": "Diisih mengikut {sort}. Gunakan carian, penapis, keupayaan atau kadar untuk mengecilkan senarai.",
+        "community_error_title": "Tidak dapat memuatkan Bot Plaza",
+        "community_error_desc": "Semak sambungan anda dan cuba lagi.",
 
 
 
@@ -7114396,6 +7114634,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Bot Plaza परिणाम दिखाए जा रहे हैं",
+        "community_result_detail_default": "सूची को छोटा करने के लिए खोज, फ़िल्टर, क्षमताएँ या दर इस्तेमाल करें।",
+        "community_result_clear_filters": "फ़िल्टर साफ़ करें",
+        "community_result_filter_search": "खोज \"{query}\"",
+        "community_result_filter_category": "श्रेणी {category}",
+        "community_result_filter_capabilities": "क्षमताएँ {capabilities}",
+        "community_result_filter_rate": "दर {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} bot",
+        "community_result_count_many": "{count} bot",
+        "community_result_count_unknown": "Bot Plaza परिणाम",
+        "community_result_summary_filtered": "{filters} से मेल खाते {count} दिखाए जा रहे हैं",
+        "community_result_summary_default_count": "Bot Plaza से {count} दिखाए जा रहे हैं",
+        "community_result_detail_filtered": "{sort} से क्रमबद्ध। पूरे Plaza पर लौटने के लिए फ़िल्टर साफ़ करें।",
+        "community_result_detail_default_sorted": "{sort} से क्रमबद्ध। सूची को छोटा करने के लिए खोज, फ़िल्टर, क्षमताएँ या दर इस्तेमाल करें।",
+        "community_error_title": "Bot Plaza लोड नहीं हो सका",
+        "community_error_desc": "अपना कनेक्शन जाँचें और फिर कोशिश करें।",
 
 
 
@@ -7636126,6 +7636381,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 تأجير",
+        "community_result_summary_default": "يتم عرض نتائج Bot Plaza",
+        "community_result_detail_default": "استخدم البحث أو الفلاتر أو القدرات أو السعر لتضييق القائمة.",
+        "community_result_clear_filters": "مسح الفلاتر",
+        "community_result_filter_search": "بحث \"{query}\"",
+        "community_result_filter_category": "الفئة {category}",
+        "community_result_filter_capabilities": "القدرات {capabilities}",
+        "community_result_filter_rate": "السعر {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} بوت",
+        "community_result_count_many": "{count} بوتات",
+        "community_result_count_unknown": "نتائج Bot Plaza",
+        "community_result_summary_filtered": "عرض {count} مطابق لـ {filters}",
+        "community_result_summary_default_count": "عرض {count} من Bot Plaza",
+        "community_result_detail_filtered": "مرتبة حسب {sort}. امسح الفلاتر للعودة إلى Plaza بالكامل.",
+        "community_result_detail_default_sorted": "مرتبة حسب {sort}. استخدم البحث أو الفلاتر أو القدرات أو السعر لتضييق القائمة.",
+        "community_error_title": "تعذر تحميل Bot Plaza",
+        "community_error_desc": "تحقق من اتصالك ثم حاول مرة أخرى.",
 
 
 

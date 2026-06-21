@@ -1095,10 +1095,10 @@
         <!-- Result context -->
         <div class="plaza-result-panel" id="resultPanel" role="status" aria-live="polite">
             <div class="plaza-result-copy">
-                <div class="plaza-result-label" id="resultSummary">Showing Bot Plaza results</div>
-                <div class="plaza-result-detail" id="resultDetail">Use search, filters, capabilities, or rate to narrow the list.</div>
+                <div class="plaza-result-label" id="resultSummary" data-i18n="community_result_summary_default">Showing Bot Plaza results</div>
+                <div class="plaza-result-detail" id="resultDetail" data-i18n="community_result_detail_default">Use search, filters, capabilities, or rate to narrow the list.</div>
             </div>
-            <button class="plaza-clear-filters" id="clearAllFilters" type="button" onclick="clearAllFilters()" disabled>Clear filters</button>
+            <button class="plaza-clear-filters" id="clearAllFilters" type="button" onclick="clearAllFilters()" data-i18n="community_result_clear_filters" disabled>Clear filters</button>
         </div>
 
         <!-- Stats -->
@@ -1180,9 +1180,17 @@
             .trim();
     }
 
+    function tr(key, params = {}) {
+        if (typeof i18n !== 'undefined' && typeof i18n.t === 'function') {
+            return i18n.t(key, params);
+        }
+        return key;
+    }
+
     function currentFilterLabel() {
         const active = document.querySelector('.plaza-chip.active');
-        return compactControlText(active ? active.textContent : 'All') || 'All';
+        const fallback = tr('community_filter_all');
+        return compactControlText(active ? active.textContent : fallback) || fallback;
     }
 
     function currentSortLabel() {
@@ -1190,29 +1198,40 @@
         return compactControlText(selected ? selected.textContent : currentSort) || currentSort;
     }
 
-    function updateResultPanel(resultCount) {
+    function formatBotCount(resultCount) {
+        if (typeof resultCount !== 'number') return tr('community_result_count_unknown');
+        return tr(resultCount === 1 ? 'community_result_count_one' : 'community_result_count_many', { count: resultCount });
+    }
+
+    function updateResultPanel(resultCount, options = {}) {
         const summary = document.getElementById('resultSummary');
         const detail = document.getElementById('resultDetail');
         const clearBtn = document.getElementById('clearAllFilters');
         if (!summary || !detail || !clearBtn) return;
 
         const activeParts = [];
-        if (searchQuery) activeParts.push('search "' + searchQuery + '"');
-        if (currentFilter !== 'all') activeParts.push('category ' + currentFilterLabel());
-        if (selectedCaps.size) activeParts.push('capabilities ' + Array.from(selectedCaps).join(', '));
-        if (rateMin > 1 || rateMax < 50) activeParts.push('rate ' + rateMin + '-' + rateMax + ' ecoin/1K');
+        if (searchQuery) activeParts.push(tr('community_result_filter_search', { query: searchQuery }));
+        if (currentFilter !== 'all') activeParts.push(tr('community_result_filter_category', { category: currentFilterLabel() }));
+        if (selectedCaps.size) activeParts.push(tr('community_result_filter_capabilities', { capabilities: Array.from(selectedCaps).join(', ') }));
+        if (rateMin > 1 || rateMax < 50) activeParts.push(tr('community_result_filter_rate', { min: rateMin, max: rateMax }));
 
-        const countText = typeof resultCount === 'number'
-            ? resultCount + ' bot' + (resultCount === 1 ? '' : 's')
-            : 'Bot Plaza results';
         const hasActive = activeParts.length > 0;
-        summary.textContent = hasActive
-            ? 'Showing ' + countText + ' matching ' + activeParts.join(' · ')
-            : 'Showing ' + countText + ' from Bot Plaza';
-        detail.textContent = 'Sorted by ' + currentSortLabel() + (hasActive
-            ? '. Clear filters to return to the full plaza.'
-            : '. Use search, filters, capabilities, or rate to narrow the list.');
         clearBtn.disabled = !hasActive;
+        if (options.error) {
+            summary.textContent = tr('community_error_title');
+            detail.textContent = tr('community_error_desc');
+            return;
+        }
+
+        const hasCount = typeof resultCount === 'number';
+        const countText = formatBotCount(resultCount);
+        const separator = tr('community_result_filter_separator');
+        summary.textContent = hasActive
+            ? tr('community_result_summary_filtered', { count: countText, filters: activeParts.join(separator) })
+            : (hasCount ? tr('community_result_summary_default_count', { count: countText }) : tr('community_result_summary_default'));
+        detail.textContent = tr(hasActive ? 'community_result_detail_filtered' : 'community_result_detail_default_sorted', {
+            sort: currentSortLabel()
+        });
     }
 
     /* ══════ Avatar resolution ══════ */
@@ -1489,7 +1508,7 @@
             if (requestSeq !== loadBotsRequestSeq) return;
             console.error('loadBots:', e);
             allBots = [];
-            renderGrid([]);
+            renderGrid([], { error: true });
         } finally {
             if (requestSeq === loadBotsRequestSeq) {
                 document.getElementById('loading').style.display = 'none';
@@ -1498,18 +1517,29 @@
     }
 
     /* ══════ Render ══════ */
-    function renderGrid(bots) {
+    function setEmptyStateMode(mode) {
+        const title = document.querySelector('#emptyState .title');
+        const desc = document.querySelector('#emptyState .desc');
+        const titleKey = mode === 'error' ? 'community_error_title' : 'community_empty_title';
+        const descKey = mode === 'error' ? 'community_error_desc' : 'community_empty_desc';
+        if (title) { title.dataset.i18n = titleKey; title.textContent = tr(titleKey); }
+        if (desc) { desc.dataset.i18n = descKey; desc.textContent = tr(descKey); }
+    }
+
+    function renderGrid(bots, options = {}) {
         const grid = document.getElementById('botGrid');
         const empty = document.getElementById('emptyState');
         document.getElementById('loadMore').style.display = 'none';
         if (!bots.length) {
             grid.innerHTML = '';
             empty.style.display = 'block';
+            setEmptyStateMode(options.error ? 'error' : 'empty');
             document.getElementById('resultCount').textContent = '0';
-            updateResultPanel(0);
+            updateResultPanel(0, { error: options.error });
             return;
         }
         empty.style.display = 'none';
+        setEmptyStateMode('empty');
         document.getElementById('resultCount').textContent = bots.length;
         updateResultPanel(bots.length);
         grid.innerHTML = bots.map(bot => bot.isRental ? renderRentalCard(bot) : renderCommunityCard(bot)).join('');
@@ -2043,6 +2073,9 @@
     });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
     function checkModalScroll() { const mc = document.getElementById('detailContent'); if (mc && mc.scrollHeight > mc.clientHeight) mc.classList.add('has-scroll'); }
+
+    const sortSelect = document.getElementById('sortSelect');
+    if (sortSelect) sortSelect.value = currentSort;
 
     // Apply i18n translations to static data-i18n elements
     if (typeof i18n !== 'undefined') i18n.apply();
