@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -30,6 +31,8 @@ import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.NavItem
 import com.hank.clawlive.ui.RecordingIndicatorHelper
+import com.hank.clawlive.ui.reconnect.ReconnectBackoff
+import com.hank.clawlive.ui.reconnect.ReconnectOverlayController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -46,6 +49,7 @@ class MainActivity : AppCompatActivity() {
 
     private val deviceManager: DeviceManager by lazy { DeviceManager.getInstance(this) }
     private var webView: WebView? = null
+    private var reconnectOverlay: ReconnectOverlayController? = null
 
     private val notifPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -249,6 +253,21 @@ class MainActivity : AppCompatActivity() {
                     super.onPageFinished(view, url)
                     Timber.d("[Home] WebView page loaded: $url")
                     injectCredentials(view)
+                    reconnectOverlay?.onPageFinished()
+                }
+
+                override fun onReceivedError(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                    error: WebResourceError?
+                ) {
+                    super.onReceivedError(view, request, error)
+                    if (request?.isForMainFrame != true) return
+                    val code = error?.errorCode ?: WebViewClient.ERROR_UNKNOWN
+                    if (!ReconnectBackoff.isTransportError(code)) return
+                    val failingUrl = request.url?.toString()
+                    Timber.w("[Home] main-frame transport error code=$code url=$failingUrl — showing reconnect overlay")
+                    reconnectOverlay?.onTransportError(failingUrl)
                 }
             }
             webChromeClient = WebChromeClient()
@@ -256,6 +275,7 @@ class MainActivity : AppCompatActivity() {
 
         container.addView(wv)
         webView = wv
+        reconnectOverlay = ReconnectOverlayController(this, container, wv, tag = "Home")
 
         // DeviceManager auto-generates these on first access — they are never null.
         // registerDeviceThenLoadWebView() already inserted them into the backend's
@@ -318,6 +338,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        reconnectOverlay?.destroy()
+        reconnectOverlay = null
         webView?.destroy()
         webView = null
         Timber.d("[Home] onDestroy: WebView cleaned up")
