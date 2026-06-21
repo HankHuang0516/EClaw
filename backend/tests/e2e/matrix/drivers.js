@@ -167,17 +167,32 @@ const DRIVERS = {
             await page.addInitScript(([d, sec]) => {
                 try { localStorage.setItem('deviceId', d); localStorage.setItem('deviceSecret', sec); } catch (_) {}
             }, [deviceId, deviceSecret]);
-            await page.goto(`${base}/portal/kanban.html`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            // kanban.html cold bootstrap (DOMContentLoaded → checkAuth → loadCards →
+            // renderBoard) plus async move-write propagation can outlast a single
+            // waitForFunction window — the residual render-side flake that flaps the
+            // webview cell (rendered_in_kanban=false), the LAST surface the
+            // platform-outer matrix loop creates. Mirror the proven reload-retry that
+            // agent_reply_visibility ships (commit 87de8714): reload kanban.html up to
+            // 3× (a fresh goto re-fetches the cards API) with a 20s window each, so a
+            // slow first bootstrap doesn't red the cell. move done-status is already
+            // API-asserted above, so this only waits out client render latency — zero
+            // false-pass risk. (card_65ac0ecb; kanban_lifecycle, added in e523b29f,
+            // never got the hardening agent_reply_visibility did.)
             // Use textContent (not innerText) so cards in a collapsed/hidden column
             // — e.g. the mobile single-column kanban layout — still count as rendered.
             let rendered = false;
-            try {
-                await page.waitForFunction(
-                    (mk) => document.body && (document.body.textContent || '').includes(mk),
-                    marker, { timeout: 15000 }
-                );
-                rendered = true;
-            } catch (_) { rendered = false; }
+            const RENDER_ATTEMPTS = 3;
+            for (let attempt = 1; attempt <= RENDER_ATTEMPTS; attempt++) {
+                await page.goto(`${base}/portal/kanban.html`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+                try {
+                    await page.waitForFunction(
+                        (mk) => document.body && (document.body.textContent || '').includes(mk),
+                        marker, { timeout: 20000 }
+                    );
+                    rendered = true;
+                } catch (_) { rendered = false; }
+                if (rendered) break;
+            }
 
             return {
                 ok: rendered,
