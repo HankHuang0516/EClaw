@@ -23,6 +23,7 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.floor
 import kotlin.math.min
 import kotlin.math.sin
 
@@ -122,6 +123,7 @@ class WallpaperKanbanRenderer(
     }
     private val accentPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val dateFormat = SimpleDateFormat("MM/dd HH:mm", Locale.getDefault())
+    private val compactDateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
     fun update(cards: List<WallpaperKanbanCard>, nowMs: Long): Map<Int, CharacterState> {
         val reviewActions = mutableMapOf<Int, CharacterState>()
@@ -257,8 +259,10 @@ class WallpaperKanbanRenderer(
         unit: Float,
         cards: List<VisualCardState>
     ): AutomationBoardSpec {
-        val rowHeight = (unit * 0.13f).coerceIn(18f, 30f)
-        val height = (unit * 0.44f + rowHeight * cards.take(MAX_BOARD_ROWS).size).coerceIn(unit * 0.62f, unit * 0.96f)
+        val rowHeight = (unit * 0.105f).coerceIn(14f, 22f)
+        val targetSurfaceHeight = unit * 0.18f + rowHeight * cards.take(MAX_BOARD_ROWS).size
+        val height = (targetSurfaceHeight / BOARD_ASSET_WRITING_HEIGHT_FRACTION)
+            .coerceIn(unit * 0.82f, unit * 1.12f)
         val width = preferredBoardWidth(unit, cards)
         val left = clampedBoardLeft(canvas, base.first, width)
         val top = (base.second - unit * 1.55f - height / 2f).coerceIn(18f, canvas.height - height - 18f)
@@ -323,80 +327,113 @@ class WallpaperKanbanRenderer(
         val unit = spec.unit
         val left = spec.left
         val top = spec.top
-        val rect = RectF(left, top, left + spec.width, top + spec.height)
+        val frameRect = RectF(left, top, left + spec.width, top + spec.height)
+        val writingRect = boardWritingRect(frameRect)
 
-        drawBoardOwnerAnchor(canvas, spec, rect)
+        drawBoardOwnerAnchor(canvas, spec, frameRect)
         if (layoutPrefs.wallpaperKanbanAssetWhiteboardEnabled && whiteboardAsset != null) {
-            drawWhiteboardAsset(canvas, rect, unit)
+            drawWhiteboardAsset(canvas, frameRect)
         } else {
-            drawWhiteboardStand(canvas, rect, unit)
-            drawFallbackWhiteboardSurface(canvas, rect, unit)
+            drawWhiteboardStand(canvas, frameRect, unit)
+            drawFallbackWhiteboardSurface(canvas, frameRect, unit)
         }
 
+        canvas.save()
+        canvas.clipRect(writingRect)
         textPaint.isFakeBoldText = true
         textPaint.color = Color.argb(225, 15, 23, 42)
         val previousTypeface = textPaint.typeface
         if (layoutPrefs.wallpaperKanbanHandwrittenBoardTextEnabled && handwritingTypeface != null) {
             textPaint.typeface = handwritingTypeface
         }
+        textPaint.textAlign = Paint.Align.LEFT
+        val headerLabel = if (writingRect.width() < unit * 0.62f) "Auto" else "Automation"
         textPaint.textSize = fitTextSizeToWidth(
-            texts = listOf("Automation"),
-            maxWidth = rect.width() - unit * 0.16f,
+            texts = listOf(headerLabel),
+            maxWidth = writingRect.width(),
             preferredSize = (unit * 0.09f).coerceIn(13f, 18f),
             minSize = 10f,
             paint = textPaint
         )
-        canvas.drawText("Automation", left + unit * 0.08f, top + unit * 0.16f, textPaint)
+        val headerMetrics = textPaint.fontMetrics
+        val headerBaseline = writingRect.top - headerMetrics.ascent
+        canvas.drawText(headerLabel, writingRect.left, headerBaseline, textPaint)
         textPaint.isFakeBoldText = false
 
-        val titleLeft = left + unit * 0.14f
-        val dateRight = rect.right - unit * 0.08f
-        val rowAvailableWidth = (dateRight - titleLeft).coerceAtLeast(unit * 0.28f)
-        val showDate = rowAvailableWidth > unit * 0.52f
-        val dateMaxWidth = if (showDate) {
-            min(unit * 0.34f, rowAvailableWidth * 0.32f)
-        } else {
-            0f
-        }
-        val titleMaxWidth = (rowAvailableWidth - dateMaxWidth - if (showDate) unit * 0.07f else 0f)
-            .coerceAtLeast(1f)
+        val rowsTop = headerBaseline + headerMetrics.descent + writingRect.height() * 0.08f
+        val rowsHeight = (writingRect.bottom - rowsTop).coerceAtLeast(0f)
         val visibleCards = spec.cards.take(MAX_BOARD_ROWS)
-        val rowPreferredSize = (unit * 0.075f).coerceIn(10f, 15f)
-        val titleSamples = visibleCards.mapIndexed { index, card ->
-            if (layoutPrefs.wallpaperKanbanPrivacyModeEnabled) "Task ${index + 1}" else card.title
-        }
-        val dateSamples = visibleCards.map { card ->
-            if (layoutPrefs.wallpaperKanbanPrivacyModeEnabled) "hidden" else formatNext(card.schedule)
-        }
-        val rowTextSize = min(
-            fitTextSizeToWidth(titleSamples, titleMaxWidth, rowPreferredSize, 8f, textPaint),
-            if (showDate) fitTextSizeToWidth(dateSamples, dateMaxWidth, rowPreferredSize, 8f, textPaint) else rowPreferredSize
-        )
-        spec.cards.take(MAX_BOARD_ROWS).forEachIndexed { index, card ->
-            val y = top + unit * 0.28f + spec.rowHeight * (index + 1)
-            accentPaint.color = colorForStatus(card.displayStatus, card.priority, 210)
-            textPaint.textSize = rowTextSize
-            canvas.drawCircle(left + unit * 0.09f, y - rowTextSize * 0.3f, unit * 0.018f, accentPaint)
-            textPaint.color = Color.argb(220, 15, 23, 42)
-            val title = if (layoutPrefs.wallpaperKanbanPrivacyModeEnabled) {
-                "Task ${index + 1}"
-            } else {
-                ellipsizeToWidth(card.title, titleMaxWidth, textPaint)
+        val maxRowsByHeight = floor(rowsHeight / BOARD_MIN_ROW_HEIGHT).toInt().coerceAtLeast(0)
+        val rows = visibleCards.take(maxRowsByHeight.coerceAtMost(MAX_BOARD_ROWS))
+        if (rows.isNotEmpty()) {
+            val bulletRadius = (unit * 0.012f).coerceIn(1.8f, 3.2f)
+            val titleLeft = writingRect.left + bulletRadius * 3.3f
+            val dateRight = writingRect.right
+            val rowLineHeight = rowsHeight / rows.size
+            val rowAvailableWidth = (dateRight - titleLeft).coerceAtLeast(1f)
+            val fullDateSamples = rows.map { card ->
+                if (layoutPrefs.wallpaperKanbanPrivacyModeEnabled) "hidden" else formatNext(card.schedule)
             }
-            canvas.drawText(title, titleLeft, y, textPaint)
-            if (showDate) {
-                val next = if (layoutPrefs.wallpaperKanbanPrivacyModeEnabled) {
-                    "hidden"
+            val compactDateSamples = rows.map { card ->
+                if (layoutPrefs.wallpaperKanbanPrivacyModeEnabled) "hidden" else formatNextCompact(card.schedule)
+            }
+            val showFullDate = rowAvailableWidth > unit * 0.72f
+            val showCompactDate = !showFullDate && rowAvailableWidth > unit * 0.42f
+            val dateSamples = when {
+                showFullDate -> fullDateSamples
+                showCompactDate -> compactDateSamples
+                else -> emptyList()
+            }
+            val dateMaxWidth = when {
+                showFullDate -> min(unit * 0.34f, rowAvailableWidth * 0.34f)
+                showCompactDate -> min(unit * 0.22f, rowAvailableWidth * 0.27f)
+                else -> 0f
+            }
+            val dateGap = if (dateSamples.isNotEmpty()) unit * 0.035f else 0f
+            val titleMaxWidth = (rowAvailableWidth - dateMaxWidth - dateGap).coerceAtLeast(1f)
+            val rowPreferredSize = min((unit * 0.068f).coerceIn(8.5f, 13f), rowLineHeight * 0.72f)
+            rows.forEachIndexed { index, card ->
+                val rawTitle = if (layoutPrefs.wallpaperKanbanPrivacyModeEnabled) {
+                    "Task ${index + 1}"
                 } else {
-                    formatNext(card.schedule)
+                    card.title
                 }
-                textPaint.color = Color.argb(165, 71, 85, 105)
-                textPaint.textAlign = Paint.Align.RIGHT
-                canvas.drawText(ellipsizeToWidth(next, dateMaxWidth, textPaint), dateRight, y, textPaint)
+                val rawDate = when {
+                    layoutPrefs.wallpaperKanbanPrivacyModeEnabled -> "hidden"
+                    showFullDate -> formatNext(card.schedule)
+                    showCompactDate -> formatNextCompact(card.schedule)
+                    else -> ""
+                }
+                val rowTextSize = min(
+                    fitTextSizeToWidth(listOf(rawTitle), titleMaxWidth, rowPreferredSize, 6.5f, textPaint),
+                    if (dateSamples.isNotEmpty()) {
+                        fitTextSizeToWidth(listOf(rawDate), dateMaxWidth, rowPreferredSize, 6.5f, textPaint)
+                    } else {
+                        rowPreferredSize
+                    }
+                )
+                textPaint.textSize = rowTextSize
+                val rowMetrics = textPaint.fontMetrics
+                val rowTextHeight = rowMetrics.descent - rowMetrics.ascent
+                val rowTop = rowsTop + rowLineHeight * index
+                val y = rowTop + (rowLineHeight - rowTextHeight) / 2f - rowMetrics.ascent
+                accentPaint.color = colorForStatus(card.displayStatus, card.priority, 210)
+                canvas.drawCircle(writingRect.left + bulletRadius, y - rowTextSize * 0.32f, bulletRadius, accentPaint)
+                textPaint.color = Color.argb(220, 15, 23, 42)
                 textPaint.textAlign = Paint.Align.LEFT
+                val title = ellipsizeToWidth(rawTitle, titleMaxWidth, textPaint)
+                canvas.drawText(title, titleLeft, y, textPaint)
+                if (dateSamples.isNotEmpty()) {
+                    textPaint.color = Color.argb(165, 71, 85, 105)
+                    textPaint.textAlign = Paint.Align.RIGHT
+                    canvas.drawText(ellipsizeToWidth(rawDate, dateMaxWidth, textPaint), dateRight, y, textPaint)
+                    textPaint.textAlign = Paint.Align.LEFT
+                }
             }
         }
+        textPaint.textAlign = Paint.Align.LEFT
         textPaint.typeface = previousTypeface
+        canvas.restore()
     }
 
     private fun drawBoardOwnerAnchor(canvas: Canvas, spec: AutomationBoardSpec, rect: RectF) {
@@ -411,14 +448,30 @@ class WallpaperKanbanRenderer(
         canvas.drawCircle(anchorX, endY, (spec.unit * 0.018f).coerceIn(2.5f, 5.5f), accentPaint)
     }
 
-    private fun drawWhiteboardAsset(canvas: Canvas, rect: RectF, unit: Float) {
-        val standBottom = rect.bottom + (unit * 0.36f).coerceIn(42f, 86f)
+    private fun boardWritingRect(frameRect: RectF): RectF {
+        if (!layoutPrefs.wallpaperKanbanAssetWhiteboardEnabled || whiteboardAsset == null) {
+            return RectF(
+                frameRect.left + frameRect.width() * 0.1f,
+                frameRect.top + frameRect.height() * 0.1f,
+                frameRect.right - frameRect.width() * 0.1f,
+                frameRect.bottom - frameRect.height() * 0.28f
+            )
+        }
+        return RectF(
+            frameRect.left + frameRect.width() * BOARD_ASSET_WRITING_LEFT,
+            frameRect.top + frameRect.height() * BOARD_ASSET_WRITING_TOP,
+            frameRect.left + frameRect.width() * BOARD_ASSET_WRITING_RIGHT,
+            frameRect.top + frameRect.height() * BOARD_ASSET_WRITING_BOTTOM
+        )
+    }
+
+    private fun drawWhiteboardAsset(canvas: Canvas, rect: RectF) {
         whiteboardAsset?.let { drawable ->
             drawable.setBounds(
-                (rect.left - unit * 0.05f).toInt(),
-                (rect.top - unit * 0.05f).toInt(),
-                (rect.right + unit * 0.05f).toInt(),
-                standBottom.toInt()
+                rect.left.toInt(),
+                rect.top.toInt(),
+                rect.right.toInt(),
+                rect.bottom.toInt()
             )
             drawable.alpha = 245
             drawable.draw(canvas)
@@ -426,16 +479,22 @@ class WallpaperKanbanRenderer(
     }
 
     private fun drawFallbackWhiteboardSurface(canvas: Canvas, rect: RectF, unit: Float) {
+        val panel = RectF(
+            rect.left + rect.width() * 0.08f,
+            rect.top + rect.height() * 0.12f,
+            rect.right - rect.width() * 0.08f,
+            rect.bottom - rect.height() * 0.28f
+        )
         boardPaint.color = Color.argb(205, 248, 250, 252)
-        canvas.drawRoundRect(rect, 8f, 8f, boardPaint)
-        canvas.drawRoundRect(rect, 8f, 8f, boardStrokePaint)
+        canvas.drawRoundRect(panel, 8f, 8f, boardPaint)
+        canvas.drawRoundRect(panel, 8f, 8f, boardStrokePaint)
         accentPaint.color = Color.argb(125, 148, 163, 184)
         canvas.drawRoundRect(
             RectF(
-                rect.left + unit * 0.08f,
-                rect.bottom - unit * 0.045f,
-                rect.right - unit * 0.08f,
-                rect.bottom - unit * 0.025f
+                panel.left + unit * 0.08f,
+                panel.bottom - unit * 0.045f,
+                panel.right - unit * 0.08f,
+                panel.bottom - unit * 0.025f
             ),
             4f,
             4f,
@@ -446,10 +505,11 @@ class WallpaperKanbanRenderer(
     private fun drawWhiteboardStand(canvas: Canvas, rect: RectF, unit: Float) {
         standPaint.strokeWidth = (unit * 0.014f).coerceIn(2.5f, 5.5f)
         standPaint.color = Color.argb(150, 51, 65, 85)
-        val legTopY = rect.bottom - unit * 0.03f
-        val legBottomY = rect.bottom + (unit * 0.34f).coerceIn(34f, 72f)
-        val leftLegX = rect.left + rect.width() * 0.22f
-        val rightLegX = rect.right - rect.width() * 0.22f
+        val panelBottom = rect.top + rect.height() * 0.68f
+        val legTopY = panelBottom - unit * 0.03f
+        val legBottomY = rect.bottom - rect.height() * 0.04f
+        val leftLegX = rect.left + rect.width() * 0.34f
+        val rightLegX = rect.right - rect.width() * 0.34f
         canvas.drawLine(leftLegX, legTopY, leftLegX - unit * 0.08f, legBottomY, standPaint)
         canvas.drawLine(rightLegX, legTopY, rightLegX + unit * 0.08f, legBottomY, standPaint)
         canvas.drawLine(leftLegX + unit * 0.04f, legTopY, rightLegX - unit * 0.04f, legTopY, standPaint)
@@ -912,11 +972,12 @@ class WallpaperKanbanRenderer(
             } ?: 0f
         val dateWidth = cards.take(MAX_BOARD_ROWS)
             .maxOfOrNull {
-                val next = if (layoutPrefs.wallpaperKanbanPrivacyModeEnabled) "hidden" else formatNext(it.schedule)
+                val next = if (layoutPrefs.wallpaperKanbanPrivacyModeEnabled) "hidden" else formatNextCompact(it.schedule)
                 textPaint.measureText(next)
             } ?: 0f
-        return (titleWidth + dateWidth + unit * 0.52f)
-            .coerceIn(unit * 1.18f, unit * 1.9f)
+        val desiredWritingWidth = titleWidth + dateWidth + unit * 0.26f
+        return (desiredWritingWidth / BOARD_ASSET_WRITING_WIDTH_FRACTION)
+            .coerceIn(unit * 1.18f, unit * 2.05f)
             .coerceAtLeast(BOARD_MIN_WIDTH)
     }
 
@@ -978,6 +1039,11 @@ class WallpaperKanbanRenderer(
         return dateFormat.format(Date(nextRunAt))
     }
 
+    private fun formatNextCompact(schedule: WallpaperKanbanSchedule?): String {
+        val nextRunAt = schedule?.nextRunAt ?: return "--"
+        return compactDateFormat.format(Date(nextRunAt))
+    }
+
     companion object {
         private const val REVIEW_DELAY_MS = 1_400L
         private const val REMOVAL_ANIMATION_MS = 1_600L
@@ -985,6 +1051,13 @@ class WallpaperKanbanRenderer(
         private const val BOARD_MARGIN = 12f
         private const val BOARD_GAP = 10f
         private const val BOARD_MIN_WIDTH = 148f
+        private const val BOARD_MIN_ROW_HEIGHT = 9f
+        private const val BOARD_ASSET_WRITING_LEFT = 0.24f
+        private const val BOARD_ASSET_WRITING_TOP = 0.24f
+        private const val BOARD_ASSET_WRITING_RIGHT = 0.76f
+        private const val BOARD_ASSET_WRITING_BOTTOM = 0.58f
+        private const val BOARD_ASSET_WRITING_WIDTH_FRACTION = BOARD_ASSET_WRITING_RIGHT - BOARD_ASSET_WRITING_LEFT
+        private const val BOARD_ASSET_WRITING_HEIGHT_FRACTION = BOARD_ASSET_WRITING_BOTTOM - BOARD_ASSET_WRITING_TOP
         private const val MAX_TASK_STACK_LAYERS = 9
         private const val MAX_TASK_ORBIT_CLUSTERS = 6
         private const val FOLDER_TITLE_MAX_CHARS = 10
