@@ -7412,7 +7412,13 @@
             // a11y contract. We do this even in ALL/none states so AT users
             // hear the same intent the visible text conveys.
             function ariaLabelFor(state, selectedIds) {
-                if (state === 'all') return allText;
+                if (state === 'all') {
+                    // Card_3f7b9c1a — Hank「為何違反 self improvement」: ALL state now
+                    // renders avatars so the recipient identity is recognizable at
+                    // a glance, not just the word "ALL". The aria-label keeps the
+                    // entity count for AT users so they hear "傳送給 ALL (N entities)".
+                    return allText + ' (' + selectedIds.length + ' entities)';
+                }
                 if (state === 'none') return t('chat_sendto_button_label_multi', { count: 0 }) || '傳送給 0 entities';
                 const names = selectedIds.map(id => {
                     return (typeof getEntityDisplayName === 'function') ? getEntityDisplayName(id) : ('#' + id);
@@ -7423,7 +7429,8 @@
                 return PREFIX_ZH + names.join(', ');
             }
 
-            // No bound entities yet (boot before /api/entities resolves) → keep "ALL" affordance.
+            // No bound entities yet (boot before /api/entities resolves) → keep
+            // "ALL" affordance — pure text, no avatars to render yet.
             if (checks.length === 0) {
                 label.textContent = allText;
                 btn.setAttribute('data-sendto-state', 'all');
@@ -7437,8 +7444,21 @@
                 .filter(n => Number.isFinite(n));
 
             if (checked.length === total) {
-                // All state — text only, no avatars (14-bot overflow guard).
-                label.textContent = allText;
+                // ALL state (card_3f7b9c1a — Hank「為何違反 self improvement」):
+                // Pet/Dex sprites stacked + "+N" overflow + "傳送給 ALL" suffix
+                // so the user sees WHO is targeted, not just the word "ALL".
+                // Cap at 4 visible avatars to prevent overflow on wide fleets.
+                const ALL_VISIBLE_CAP = 4;
+                const visibleIds = checkedIds.slice(0, ALL_VISIBLE_CAP);
+                const overflow = checkedIds.length - visibleIds.length;
+                const stack = visibleIds.map(_sendtoBtnAvatarHtml).join('');
+                const overflowChip = overflow > 0
+                    ? '<span class="sendto-btn-more">' + safe('+' + overflow) + '</span>'
+                    : '';
+                label.innerHTML =
+                    '<span class="sendto-btn-avatar-stack sendto-btn-avatar-stack--many">' + stack + '</span>'
+                    + overflowChip
+                    + '<span class="sendto-btn-prefix">' + safe(' ' + allText) + '</span>';
                 btn.setAttribute('data-sendto-state', 'all');
                 btn.setAttribute('aria-label', ariaLabelFor('all', checkedIds));
             } else if (checked.length === 0) {
