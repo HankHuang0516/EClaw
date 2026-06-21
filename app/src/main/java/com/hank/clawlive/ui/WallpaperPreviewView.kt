@@ -15,6 +15,7 @@ import android.view.MotionEvent
 import android.view.View
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.R
+import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.CompanionDetail
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.model.UsageSnapshotLatest
@@ -553,7 +554,10 @@ class WallpaperPreviewView @JvmOverloads constructor(
         val companion = companionRepository?.cached(entity.entityId) ?: companionsByEntity[entity.entityId]
         if (companion?.assetType == "spritesheet") {
             val spritesheetState = if (walking && entity.state.canUseAmbientWalkingAnimation) {
-                WallpaperWanderController.WALKING_STATE_ASSET
+                when (facingDirection) {
+                    WalkFacingDirection.LEFT -> CharacterState.RUNNING_LEFT.wallpaperActionKey
+                    WalkFacingDirection.RIGHT -> CharacterState.RUNNING_RIGHT.wallpaperActionKey
+                }
             } else {
                 entity.state.wallpaperActionKey
             }

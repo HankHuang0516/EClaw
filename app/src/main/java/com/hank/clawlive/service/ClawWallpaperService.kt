@@ -11,6 +11,7 @@ import com.hank.clawlive.data.model.AgentStatus
 import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.model.UsageSnapshotLatest
+import com.hank.clawlive.data.model.WallpaperKanbanCard
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.cancel
 
@@ -62,6 +63,7 @@ class ClawWallpaperService : WallpaperService() {
         private var currentEntities: List<EntityStatus> = emptyList()
 
         private var currentUsageSnapshot: UsageSnapshotLatest? = null
+        private var currentKanbanCards: List<WallpaperKanbanCard> = emptyList()
 
         // Tracks whether observeStatus has received its first response. Until
         // then, draw() shows "Loading entities…" instead of the permanent
@@ -78,6 +80,7 @@ class ClawWallpaperService : WallpaperService() {
             setTouchEventsEnabled(true)
             observeStatus()
             observeUsage()
+            observeKanban()
         }
 
         // Tracks which entityIds already have a companion-poller flow running so
@@ -91,6 +94,7 @@ class ClawWallpaperService : WallpaperService() {
         // every 5s × 6 entities → 72 calls/min → CF rate limit 429 storms.
         private var statusJob: kotlinx.coroutines.Job? = null
         private var usageJob: kotlinx.coroutines.Job? = null
+        private var kanbanJob: kotlinx.coroutines.Job? = null
 
         private fun observeStatus() {
             statusJob?.cancel()
@@ -132,11 +136,24 @@ class ClawWallpaperService : WallpaperService() {
             }
         }
 
+        private fun observeKanban() {
+            kanbanJob?.cancel()
+            kanbanJob = engineScope.launch {
+                repository.getWallpaperKanbanCardsFlow(intervalMs = 60000)
+                    .collect { cards ->
+                        currentKanbanCards = cards
+                        if (visible) draw()
+                    }
+            }
+        }
+
         private fun cancelAllPollers() {
             statusJob?.cancel()
             statusJob = null
             usageJob?.cancel()
             usageJob = null
+            kanbanJob?.cancel()
+            kanbanJob = null
             companionJobs.values.forEach { it.cancel() }
             companionJobs.clear()
         }
@@ -173,6 +190,7 @@ class ClawWallpaperService : WallpaperService() {
                 // card_a7baa3b0b1151099d4523428 close-out.
                 if (statusJob?.isActive != true) observeStatus()
                 if (usageJob?.isActive != true) observeUsage()
+                if (kanbanJob?.isActive != true) observeKanban()
                 draw()
             } else {
                 // Stop hitting /api/status while the wallpaper isn't on
@@ -255,7 +273,8 @@ class ClawWallpaperService : WallpaperService() {
                             canvas,
                             currentEntities,
                             loading = !hasFirstResponse,
-                            usageSnapshot = currentUsageSnapshot
+                            usageSnapshot = currentUsageSnapshot,
+                            kanbanCards = currentKanbanCards
                         )
                     } else {
                         renderer.draw(canvas, currentStatus)

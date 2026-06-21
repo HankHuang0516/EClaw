@@ -12,7 +12,7 @@ class WallpaperInteractionControllerTest {
     fun collisionTriggersEffectAndBounceAway() {
         val controller = WallpaperInteractionController(
             collisionDistancePct = 0.2f,
-            cooldownMs = 1_000L,
+            cooldownMs = 10_000L,
             effectDurationMs = 1_000L
         )
         val entities = listOf(
@@ -30,6 +30,13 @@ class WallpaperInteractionControllerTest {
             nowMs = 0L
         )
         assertEquals(1, triggered.effects.size)
+        assertTrue(triggered.actionStatesByEntity[1] in setOf(
+            CharacterState.WAVING,
+            CharacterState.JUMPING,
+            CharacterState.FAILED,
+            CharacterState.REVIEW
+        ))
+        assertEquals(triggered.actionStatesByEntity[1], triggered.actionStatesByEntity[2])
 
         val bounced = controller.apply(
             positions = positions,
@@ -37,12 +44,36 @@ class WallpaperInteractionControllerTest {
             width = 1000f,
             height = 1000f,
             enabled = true,
-            nowMs = 250L
+            nowMs = 250L,
+            reactionDurationMs = 5_000L
         )
         assertEquals(1, bounced.effects.size)
         assertTrue("first entity should bounce left", bounced.positions[0].first < positions[0].first)
         assertTrue("second entity should bounce right", bounced.positions[1].first > positions[1].first)
         assertTrue("effect should be visible mid-pulse", bounced.effects.first().alpha(250L) > 0f)
+        assertEquals(bounced.actionStatesByEntity[1], bounced.actionStatesByEntity[2])
+        assertTrue("action should still be active for configured duration", bounced.actionStatesByEntity.containsKey(1))
+    }
+
+    @Test
+    fun collisionActionExpiresAfterConfiguredDuration() {
+        val controller = WallpaperInteractionController(
+            collisionDistancePct = 0.2f,
+            cooldownMs = 10_000L,
+            effectDurationMs = 1_000L
+        )
+        val entities = listOf(
+            EntityStatus(entityId = 1, state = CharacterState.IDLE),
+            EntityStatus(entityId = 2, state = CharacterState.IDLE)
+        )
+        val positions = listOf(500f to 500f, 540f to 500f)
+
+        controller.apply(positions, entities, 1000f, 1000f, enabled = true, nowMs = 0L, reactionDurationMs = 2_000L)
+        val active = controller.apply(positions, entities, 1000f, 1000f, enabled = true, nowMs = 1_999L, reactionDurationMs = 2_000L)
+        assertTrue(active.actionStatesByEntity.containsKey(1))
+
+        val expired = controller.apply(positions, entities, 1000f, 1000f, enabled = true, nowMs = 2_001L, reactionDurationMs = 2_000L)
+        assertTrue(expired.actionStatesByEntity.isEmpty())
     }
 
     @Test

@@ -17,6 +17,7 @@ import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.CompanionDetail
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.model.UsageSnapshotLatest
+import com.hank.clawlive.data.model.WallpaperKanbanCard
 import com.hank.clawlive.data.repository.CompanionRepository
 import timber.log.Timber
 import kotlin.math.abs
@@ -32,6 +33,7 @@ class ClawRenderer(
     private val layoutPrefs = LayoutPreferences.getInstance(context)
     private val spritesheetDrawer = companionRepository?.let { SpritesheetCompanionDrawer(it) }
     private val usageOverlayRenderer = UsageOverlayRenderer(context, layoutPrefs)
+    private val kanbanRenderer = WallpaperKanbanRenderer(layoutPrefs)
     private val wanderController = WallpaperWanderController()
     private val interactionController = WallpaperInteractionController()
     private val speechBubbleController = SpeechBubbleController()
@@ -39,6 +41,32 @@ class ClawRenderer(
     private val lastBubbleMessageByEntity = mutableMapOf<Int, String>()
     private val lastBubbleDurationByEntity = mutableMapOf<Int, Long>()
     private val bubblePulseStartedByEntity = mutableMapOf<Int, Long>()
+
+    private data class BubbleDrawTarget(
+        val entity: EntityStatus,
+        val centerX: Float,
+        val centerY: Float,
+        val scale: Float
+    )
+
+    private data class RoutingCandidate(
+        val receiverEntityId: Int,
+        val fromEntityId: Int,
+        val text: String,
+        val timestamp: Long,
+        val routingMode: String?,
+        val routingEventId: String?,
+        val broadcastTargetIds: List<Int>
+    )
+
+    private data class ActiveConversationGroup(
+        val key: String,
+        val entityIds: Set<Int>,
+        val expiresAtMs: Long
+    )
+
+    private val activeConversationGroups = mutableMapOf<String, ActiveConversationGroup>()
+    private val seenConversationKeys = linkedSetOf<String>()
 
     // Background image cache
     private var cachedBackgroundBitmap: Bitmap? = null
@@ -460,7 +488,8 @@ class ClawRenderer(
         canvas: Canvas,
         entities: List<EntityStatus>,
         loading: Boolean = false,
-        usageSnapshot: UsageSnapshotLatest? = null
+        usageSnapshot: UsageSnapshotLatest? = null,
+        kanbanCards: List<WallpaperKanbanCard> = emptyList()
     ) {
         multiDrawCount++
         val width = canvas.width.toFloat()
@@ -503,30 +532,52 @@ class ClawRenderer(
         }
 
         val basePositions = calculateEntityPositions(width, height, entities.size, entities)
+        val baseScale = getScaleFactor(entities.size)
+        val nowMs = System.currentTimeMillis()
+        if (layoutPrefs.wallpaperSpeechBubblesEnabled) {
+            syncSpeechBubbles(entities, nowMs)
+        } else {
+            clearSpeechBubbles()
+        }
+        val conversationEntityIds = refreshConversationGroups(entities, nowMs)
+        val kanbanActionStates = if (
+            layoutPrefs.wallpaperKanbanTasksEnabled ||
+            layoutPrefs.wallpaperKanbanAutomationBoardEnabled
+        ) {
+            kanbanRenderer.update(kanbanCards, nowMs)
+        } else {
+            kanbanRenderer.update(emptyList(), nowMs)
+            emptyMap()
+        }
         val walkingEnabled = layoutPrefs.wallpaperWalkingEnabled
+        val maxEntityScale = entities.maxOfOrNull { layoutPrefs.getEntityScale(it.entityId).toDouble() }?.toFloat() ?: 1f
         val positions = wanderController.positionsFor(
             basePositions = basePositions,
             entities = entities,
             width = width,
             height = height,
             enabled = walkingEnabled,
-            purposeful = layoutPrefs.wallpaperPurposefulWalkingEnabled
+            purposeful = layoutPrefs.wallpaperPurposefulWalkingEnabled,
+            nowMs = nowMs,
+            conversationEntityIds = conversationEntityIds,
+            entityUnitPx = 300f * baseScale * maxEntityScale
         )
-        val baseScale = getScaleFactor(entities.size)
-        val nowMs = System.currentTimeMillis()
         val interactionState = interactionController.apply(
             positions = positions,
             entities = entities,
             width = width,
             height = height,
             enabled = layoutPrefs.wallpaperEntityInteractionsEnabled,
+            nowMs = nowMs,
+            reactionDurationMs = layoutPrefs.wallpaperCollisionReactionDurationMs
+        )
+        kanbanRenderer.drawBackground(
+            canvas = canvas,
+            entities = entities,
+            basePositions = basePositions,
+            baseScale = baseScale,
             nowMs = nowMs
         )
-        if (layoutPrefs.wallpaperSpeechBubblesEnabled) {
-            syncSpeechBubbles(entities, nowMs)
-        } else {
-            clearSpeechBubbles()
-        }
         if (layoutPrefs.wallpaperAdaptiveEffectsEnabled) {
             renderDiagnostics.recordFrame(
                 walkingEntityCount = entities.count { wanderController.isWalking(it.entityId) },
@@ -543,6 +594,7 @@ class ClawRenderer(
             null
         }
 
+        val bubbleDrawTargets = mutableListOf<BubbleDrawTarget>()
         entities.forEachIndexed { index, entity ->
             if (index < interactionState.positions.size) {
                 val (cx, cy) = interactionState.positions[index]
@@ -551,29 +603,31 @@ class ClawRenderer(
                 // Apply per-entity scale multiplier on top of base scale
                 val entityScale = layoutPrefs.getEntityScale(entity.entityId)
                 val finalScale = baseScale * entityScale
-                val spritesheetState = if (
-                    wanderController.isWalking(entity.entityId) &&
-                    entity.state.canUseAmbientWalkingAnimation
-                ) {
-                    WallpaperWanderController.WALKING_STATE_ASSET
-                } else {
-                    entity.state.wallpaperActionKey
-                }
                 val facingDirection = interactionPose?.facingDirection
                     ?: wanderController.facingDirection(entity.entityId)
+                val actionState = kanbanActionStates[entity.entityId]
+                    ?: interactionState.actionStatesByEntity[entity.entityId]
+                val effectiveState = actionState ?: entity.state
+                val spritesheetState = if (
+                    wanderController.isWalking(entity.entityId) &&
+                    effectiveState.canUseAmbientWalkingAnimation
+                ) {
+                    walkingSpritesheetStateFor(facingDirection)
+                } else {
+                    effectiveState.wallpaperActionKey
+                }
                 drawSingleEntityAt(
                     canvas,
                     entity,
                     cx,
                     drawCy,
                     finalScale,
-                    width,
                     spritesheetState,
                     nowMs,
-                    bubbleAvoidBounds,
                     facingDirection,
                     shouldMirrorSpritesheetForFacing(spritesheetState)
                 )
+                bubbleDrawTargets.add(BubbleDrawTarget(entity, cx, drawCy, finalScale))
             }
         }
 
@@ -582,6 +636,19 @@ class ClawRenderer(
         }
 
         usageOverlayRenderer.draw(canvas, usageSnapshot)
+
+        bubbleDrawTargets.forEach { target ->
+            drawSpeechBubbleForEntity(
+                canvas = canvas,
+                entity = target.entity,
+                centerX = target.centerX,
+                centerY = target.centerY,
+                scale = target.scale,
+                screenWidth = width,
+                nowMs = nowMs,
+                avoidBounds = bubbleAvoidBounds
+            )
+        }
     }
 
     private fun syncSpeechBubbles(entities: List<EntityStatus>, nowMs: Long) {
@@ -628,9 +695,145 @@ class ClawRenderer(
         bubblePulseStartedByEntity.clear()
     }
 
+    private fun refreshConversationGroups(entities: List<EntityStatus>, nowMs: Long): Set<Int> {
+        activeConversationGroups.keys.toList().forEach { key ->
+            if ((activeConversationGroups[key]?.expiresAtMs ?: 0L) <= nowMs) {
+                activeConversationGroups.remove(key)
+            }
+        }
+        if (!layoutPrefs.wallpaperPurposefulWalkingEnabled || !layoutPrefs.wallpaperSpeechBubblesEnabled) {
+            activeConversationGroups.clear()
+            return emptySet()
+        }
+
+        val entityIds = entities.map { it.entityId }.toSet()
+        val candidates = entities.flatMap { entity ->
+            entity.messageQueue.orEmpty().mapNotNull { queueItem ->
+                val text = queueItem.text?.trim().orEmpty()
+                if (text.isBlank()) return@mapNotNull null
+                if (queueItem.fromCharacter.isBlank()) return@mapNotNull null
+                if (queueItem.fromEntityId !in entityIds) return@mapNotNull null
+                if (queueItem.fromEntityId == entity.entityId && queueItem.routingMode != "broadcast") {
+                    return@mapNotNull null
+                }
+                val timestamp = queueItem.timestamp.takeIf { it > 0L } ?: nowMs
+                if (nowMs - timestamp > CONVERSATION_EVENT_STALE_MS) return@mapNotNull null
+                RoutingCandidate(
+                    receiverEntityId = entity.entityId,
+                    fromEntityId = queueItem.fromEntityId,
+                    text = text,
+                    timestamp = timestamp,
+                    routingMode = queueItem.routingMode,
+                    routingEventId = queueItem.routingEventId,
+                    broadcastTargetIds = queueItem.broadcastTargetIds.orEmpty()
+                )
+            }
+        }
+        candidates
+            .groupBy { it.routingEventId ?: fallbackConversationKey(it) }
+            .forEach { (key, group) ->
+                if (key in seenConversationKeys || group.isEmpty()) return@forEach
+                val groupEntityIds = buildSet {
+                    group.forEach { candidate ->
+                        add(candidate.fromEntityId)
+                        add(candidate.receiverEntityId)
+                        candidate.broadcastTargetIds.filter { it in entityIds }.forEach { add(it) }
+                    }
+                }.intersect(entityIds)
+                if (groupEntityIds.size < 2) return@forEach
+                val expiresAt = group.maxOfOrNull {
+                    speechBubbleController.expiresAt(it.receiverEntityId, nowMs) ?: (nowMs + layoutPrefs.wallpaperBubbleDurationMs)
+                } ?: (nowMs + layoutPrefs.wallpaperBubbleDurationMs)
+                activeConversationGroups[key] = ActiveConversationGroup(
+                    key = key,
+                    entityIds = groupEntityIds,
+                    expiresAtMs = expiresAt
+                )
+                rememberConversationKey(key)
+            }
+
+        return activeConversationGroups.values
+            .filter { it.expiresAtMs > nowMs }
+            .flatMap { it.entityIds }
+            .toSet()
+    }
+
+    private fun fallbackConversationKey(candidate: RoutingCandidate): String {
+        val bucket = candidate.timestamp / CONVERSATION_GROUP_WINDOW_MS
+        return "${candidate.fromEntityId}:${candidate.text.hashCode()}:$bucket:${candidate.routingMode.orEmpty()}"
+    }
+
+    private fun rememberConversationKey(key: String) {
+        seenConversationKeys.add(key)
+        while (seenConversationKeys.size > MAX_SEEN_CONVERSATIONS) {
+            val iterator = seenConversationKeys.iterator()
+            if (!iterator.hasNext()) return
+            iterator.next()
+            iterator.remove()
+        }
+    }
+
     private fun shouldMirrorSpritesheetForFacing(spritesheetState: String): Boolean {
         return spritesheetState != CharacterState.RUNNING_LEFT.wallpaperActionKey &&
             spritesheetState != CharacterState.RUNNING_RIGHT.wallpaperActionKey
+    }
+
+    private fun walkingSpritesheetStateFor(facingDirection: WalkFacingDirection): String {
+        return when (facingDirection) {
+            WalkFacingDirection.LEFT -> CharacterState.RUNNING_LEFT.wallpaperActionKey
+            WalkFacingDirection.RIGHT -> CharacterState.RUNNING_RIGHT.wallpaperActionKey
+        }
+    }
+
+    private fun characterDrawY(
+        entity: EntityStatus,
+        centerY: Float,
+        scale: Float,
+        nowMs: Long
+    ): Float {
+        val time = nowMs - startTime
+        val bobOffset = if (entity.state.pausesAmbientWander) {
+            0f
+        } else {
+            val speed = if (entity.state.busyLike) 0.01f else 0.003f
+            (sin(time * speed) * 30 * scale).toFloat()
+        }
+        return centerY + bobOffset
+    }
+
+    private fun drawSpeechBubbleForEntity(
+        canvas: Canvas,
+        entity: EntityStatus,
+        centerX: Float,
+        centerY: Float,
+        scale: Float,
+        screenWidth: Float,
+        nowMs: Long,
+        avoidBounds: RectF? = null
+    ) {
+        if (!layoutPrefs.wallpaperSpeechBubblesEnabled) return
+        val charY = characterDrawY(entity, centerY, scale, nowMs)
+        val radius = 150f * scale
+        val bubblePlacement = speechBubbleController.placementFor(
+            entityId = entity.entityId,
+            entityXPct = (centerX / canvas.width.toFloat()).coerceIn(0f, 1f),
+            entityYPct = (charY / canvas.height.toFloat()).coerceIn(0f, 1f),
+            spriteHeightPct = ((radius * 2f) / canvas.height.toFloat()).coerceIn(0.02f, 0.9f),
+            nowMs = nowMs
+        ) ?: return
+        val renderBubblePlacement = if (bubblePlacement.flippedBelow && !isAmbient) {
+            val labelClearancePct = ((88f * scale) / canvas.height.toFloat()).coerceIn(0f, 0.12f)
+            bubblePlacement.copy(
+                anchorYPct = (bubblePlacement.anchorYPct + labelClearancePct).coerceIn(0f, 1f)
+            )
+        } else {
+            bubblePlacement
+        }
+        val pulseAgeMs = bubblePulseStartedByEntity[entity.entityId]?.let { nowMs - it } ?: Long.MAX_VALUE
+        if (layoutPrefs.wallpaperBubblePulseEnabled) {
+            drawBubblePulse(canvas, entity, centerX, charY, radius, scale, pulseAgeMs, renderBubblePlacement.alpha)
+        }
+        drawMessageBubble(canvas, entity, renderBubblePlacement, scale, screenWidth, avoidBounds)
     }
 
     /**
@@ -642,23 +845,13 @@ class ClawRenderer(
         centerX: Float,
         centerY: Float,
         scale: Float,
-        screenWidth: Float,
         spritesheetState: String = entity.state.wallpaperActionKey,
         nowMs: Long = System.currentTimeMillis(),
-        bubbleAvoidBounds: RectF? = null,
         facingDirection: WalkFacingDirection = WalkFacingDirection.RIGHT,
         mirrorSpritesheetForFacing: Boolean = true
     ) {
-        // Calculate Animation (Bobbing)
         val time = nowMs - startTime
-        val bobOffset = if (entity.state.pausesAmbientWander) {
-            0f
-        } else {
-            val speed = if (entity.state.busyLike) 0.01f else 0.003f
-            (sin(time * speed) * 30 * scale).toFloat()
-        }
-
-        val charY = centerY + bobOffset
+        val charY = characterDrawY(entity, centerY, scale, nowMs)
         val radius = 150f * scale
         val quietEffects = layoutPrefs.wallpaperAdaptiveEffectsEnabled &&
             renderDiagnostics.shouldReduceEffects(entity.entityId)
@@ -711,33 +904,6 @@ class ClawRenderer(
             SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED,
             SpritesheetCompanionDrawer.DrawResult.ERROR ->
                 drawLobsterAtPosition(canvas, centerX, charY, entity, scale, companion, facingDirection)
-        }
-
-        val bubblePlacement = if (layoutPrefs.wallpaperSpeechBubblesEnabled) {
-            speechBubbleController.placementFor(
-                entityId = entity.entityId,
-                entityXPct = (centerX / canvas.width.toFloat()).coerceIn(0f, 1f),
-                entityYPct = (charY / canvas.height.toFloat()).coerceIn(0f, 1f),
-                spriteHeightPct = ((radius * 2f) / canvas.height.toFloat()).coerceIn(0.02f, 0.9f),
-                nowMs = nowMs
-            )
-        } else {
-            null
-        }
-        if (bubblePlacement != null) {
-            val renderBubblePlacement = if (bubblePlacement.flippedBelow && !isAmbient) {
-                val labelClearancePct = ((88f * scale) / canvas.height.toFloat()).coerceIn(0f, 0.12f)
-                bubblePlacement.copy(
-                    anchorYPct = (bubblePlacement.anchorYPct + labelClearancePct).coerceIn(0f, 1f)
-                )
-            } else {
-                bubblePlacement
-            }
-            val pulseAgeMs = bubblePulseStartedByEntity[entity.entityId]?.let { nowMs - it } ?: Long.MAX_VALUE
-            if (layoutPrefs.wallpaperBubblePulseEnabled) {
-                drawBubblePulse(canvas, entity, centerX, charY, radius, scale, pulseAgeMs, renderBubblePlacement.alpha)
-            }
-            drawMessageBubble(canvas, entity, renderBubblePlacement, scale, screenWidth, bubbleAvoidBounds)
         }
 
         // Draw Name and Status Group BELOW the entity
@@ -1403,5 +1569,8 @@ class ClawRenderer(
 
     companion object {
         private const val BUBBLE_PULSE_MS = 720L
+        private const val CONVERSATION_GROUP_WINDOW_MS = 2_000L
+        private const val CONVERSATION_EVENT_STALE_MS = 120_000L
+        private const val MAX_SEEN_CONVERSATIONS = 128
     }
 }

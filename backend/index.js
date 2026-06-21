@@ -8140,7 +8140,10 @@ app.get('/api/entities', async (req, res) => {
                         fromCharacter: m.fromCharacter,
                         timestamp: m.timestamp,
                         read: m.read || false,
-                        delivered: m.delivered || false
+                        delivered: m.delivered || false,
+                        routingMode: m.routingMode || null,
+                        routingEventId: m.routingEventId || null,
+                        broadcastTargetIds: Array.isArray(m.broadcastTargetIds) ? m.broadcastTargetIds : null
                     }))
                 };
                 if (includeBotSecret && entity.botSecret) {
@@ -8780,6 +8783,7 @@ async function deliverToEntity(opts) {
         isBroadcast = false,
         broadcastTargetIds,
         broadcastChatMsgId,
+        routingEventId,
         showRecipientInfo = false,
         isCrossDevice = false,
         card = null,
@@ -8806,7 +8810,12 @@ async function deliverToEntity(opts) {
         timestamp: Date.now(),
         read: false,
         mediaType: mediaType || null,
-        mediaUrl: mediaUrl || null
+        mediaUrl: mediaUrl || null,
+        routingMode: isBroadcast ? 'broadcast' : (isCrossDevice ? 'xdevice' : 'speakTo'),
+        routingEventId: routingEventId || broadcastChatMsgId || null,
+        broadcastTargetIds: isBroadcast && Array.isArray(broadcastTargetIds)
+            ? broadcastTargetIds
+            : null
     };
     if (isCrossDevice) {
         messageObj.fromPublicCode = fromEntity.publicCode;
@@ -9841,6 +9850,7 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
     // data loss. We flip this flag only when a save happens, then use it below
     // to run a sender-side fallback save.
     let deliverySaved = false;
+    const wallpaperRoutingEventId = `wallpaper_route_${Date.now()}_${deviceId}_${eId}`;
 
     if ((speakTo || broadcast) && finalMessage && !isSuppressedMessage) {
         // If both provided, broadcast takes priority
@@ -9908,6 +9918,7 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
                                     text: deliveryText, mediaType: null, mediaUrl: null,
                                     expectsReply: true, isBroadcast: true,
                                     broadcastTargetIds: targetIds, broadcastChatMsgId,
+                                    routingEventId: broadcastChatMsgId || wallpaperRoutingEventId,
                                     showRecipientInfo,
                                     isCrossDevice: broadcastDeviceId !== deviceId,
                                     card: validatedCard,
@@ -10017,6 +10028,7 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
                     targetDeviceId: target.deviceId, toId: target.entityId, toEntity,
                     text: deliveryText, mediaType: null, mediaUrl: null,
                     expectsReply: true, isBroadcast: false,
+                    routingEventId: wallpaperRoutingEventId,
                     isCrossDevice,
                     card: validatedCard,
                     viaChannel

@@ -10,6 +10,7 @@ import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.model.MultiEntityResponse
 import com.hank.clawlive.data.model.UsageSnapshotLatest
+import com.hank.clawlive.data.model.WallpaperKanbanCard
 import com.hank.clawlive.data.remote.ClawApiService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -194,6 +195,39 @@ class StateRepository(
             } catch (e: Exception) {
                 Timber.e(e, "Error fetching usage snapshot")
                 emit(lastSnapshot)
+            }
+            delay(intervalMs)
+        }
+    }
+
+    fun getWallpaperKanbanCardsFlow(intervalMs: Long = 60_000): Flow<List<WallpaperKanbanCard>> = flow {
+        var lastCards: List<WallpaperKanbanCard> = emptyList()
+        while (true) {
+            if (!layoutPrefs.wallpaperKanbanTasksEnabled && !layoutPrefs.wallpaperKanbanAutomationBoardEnabled) {
+                lastCards = emptyList()
+                emit(lastCards)
+                delay(intervalMs)
+                continue
+            }
+
+            try {
+                val response = api.getWallpaperKanbanCards(
+                    deviceId = deviceManager.deviceId,
+                    deviceSecret = deviceManager.deviceSecret ?: "",
+                    automation = "all",
+                    includeArchived = false
+                )
+                if (response.success) {
+                    lastCards = response.cards
+                    emit(lastCards)
+                    Timber.d("Wallpaper kanban cards fetched: ${lastCards.size}")
+                } else {
+                    emit(lastCards)
+                    Timber.w("Wallpaper kanban cards unavailable")
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Error fetching wallpaper kanban cards")
+                emit(lastCards)
             }
             delay(intervalMs)
         }

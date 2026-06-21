@@ -1,5 +1,6 @@
 package com.hank.clawlive.engine
 
+import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
 import kotlin.math.PI
 import kotlin.math.hypot
@@ -50,7 +51,8 @@ class WallpaperInteractionController(
     data class RenderState(
         val positions: List<Pair<Float, Float>>,
         val effects: List<InteractionEffect>,
-        val posesByEntity: Map<Int, InteractionPose> = emptyMap()
+        val posesByEntity: Map<Int, InteractionPose> = emptyMap(),
+        val actionStatesByEntity: Map<Int, CharacterState> = emptyMap()
     )
 
     data class InteractionPose(
@@ -69,6 +71,7 @@ class WallpaperInteractionController(
     private data class ActiveInteraction(
         val key: PairKey,
         val kind: InteractionKind,
+        val actionState: CharacterState,
         val unitX: Float,
         val unitY: Float,
         val startedAtMs: Long,
@@ -89,7 +92,8 @@ class WallpaperInteractionController(
         width: Float,
         height: Float,
         enabled: Boolean,
-        nowMs: Long
+        nowMs: Long,
+        reactionDurationMs: Long = effectDurationMs
     ): RenderState {
         if (!enabled || width <= 0f || height <= 0f || positions.size < 2 || entities.size < 2) {
             active.clear()
@@ -105,11 +109,12 @@ class WallpaperInteractionController(
             if (expired || missing || sleeping) active.remove(key)
         }
 
-        detectCollisions(positions, entities, width, height, nowMs, sleepingIds)
+        detectCollisions(positions, entities, width, height, nowMs, sleepingIds, reactionDurationMs)
 
         val indexById = entities.mapIndexed { index, entity -> entity.entityId to index }.toMap()
         val adjusted = positions.toMutableList()
         val posesByEntity = mutableMapOf<Int, InteractionPose>()
+        val actionStatesByEntity = mutableMapOf<Int, CharacterState>()
         active.values.forEach { interaction ->
             val firstIndex = indexById[interaction.key.first] ?: return@forEach
             val secondIndex = indexById[interaction.key.second] ?: return@forEach
@@ -138,6 +143,8 @@ class WallpaperInteractionController(
             posesByEntity[interaction.key.second] = posesByEntity[interaction.key.second].merge(
                 InteractionPose(liftPx = hopPx, facingDirection = secondFacing)
             )
+            actionStatesByEntity[interaction.key.first] = interaction.actionState
+            actionStatesByEntity[interaction.key.second] = interaction.actionState
         }
 
         val effects = active.values.mapNotNull { interaction ->
@@ -156,7 +163,7 @@ class WallpaperInteractionController(
             )
         }
 
-        return RenderState(adjusted, effects, posesByEntity)
+        return RenderState(adjusted, effects, posesByEntity, actionStatesByEntity)
     }
 
     private fun detectCollisions(
@@ -165,9 +172,11 @@ class WallpaperInteractionController(
         width: Float,
         height: Float,
         nowMs: Long,
-        sleepingIds: Set<Int>
+        sleepingIds: Set<Int>,
+        reactionDurationMs: Long
     ) {
         val collisionDistancePx = min(width, height) * collisionDistancePct
+        val durationMs = reactionDurationMs.coerceIn(MIN_REACTION_DURATION_MS, MAX_REACTION_DURATION_MS)
         for (i in 0 until minOf(entities.size, positions.size)) {
             val first = entities[i]
             if (first.entityId in sleepingIds) continue
@@ -196,10 +205,11 @@ class WallpaperInteractionController(
                 val interaction = ActiveInteraction(
                     key = key,
                     kind = kindFor(key, nowMs),
+                    actionState = actionFor(key, nowMs),
                     unitX = unitX,
                     unitY = unitY,
                     startedAtMs = nowMs,
-                    expiresAtMs = nowMs + effectDurationMs
+                    expiresAtMs = nowMs + durationMs
                 )
                 active[key] = interaction
                 lastTriggeredAt[key] = nowMs
@@ -213,6 +223,12 @@ class WallpaperInteractionController(
             1 -> InteractionKind.SPARK
             else -> InteractionKind.BUMP
         }
+    }
+
+    private fun actionFor(key: PairKey, nowMs: Long): CharacterState {
+        val index = (((key.first * 37) + (key.second * 19) + (nowMs / cooldownMs).toInt()) %
+            REACTION_ACTIONS.size).let { if (it < 0) it + REACTION_ACTIONS.size else it }
+        return REACTION_ACTIONS[index]
     }
 
     private fun interactionProgress(interaction: ActiveInteraction, nowMs: Long): Float {
@@ -239,5 +255,13 @@ class WallpaperInteractionController(
         private const val BOUNCE_DISTANCE_PCT = 0.035f
         private const val HOP_DISTANCE_PCT = 0.025f
         private const val EFFECT_FLOAT_PCT = 0.06f
+        private const val MIN_REACTION_DURATION_MS = 1_000L
+        private const val MAX_REACTION_DURATION_MS = 20_000L
+        private val REACTION_ACTIONS = listOf(
+            CharacterState.WAVING,
+            CharacterState.JUMPING,
+            CharacterState.FAILED,
+            CharacterState.REVIEW
+        )
     }
 }
