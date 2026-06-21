@@ -2028,10 +2028,78 @@
             text-overflow: ellipsis;
             white-space: nowrap;
             max-width: 240px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            min-height: 22px;
         }
         .sendto-picker-btn-caret {
             font-size: 10px;
             opacity: 0.7;
+            flex-shrink: 0;
+        }
+        /* Avatar visuals inside the picker-button label.
+           - Single: avatar + name (gap 4px).
+           - Few (2-4): stacked overlap, -8px between siblings.
+           - Many (5+): first two avatars + "+N 位" pill.
+           Avatar size = 20px so the button still matches `.sys-chip` height
+           (4px padding + ~14-18px content + 4px padding ≈ 22-26px). The
+           wrapper sets `min-height: 22px` so single-row layout stays stable
+           when the label flips between text-only and avatar-bearing states. */
+        .sendto-btn-prefix {
+            flex-shrink: 0;
+        }
+        .sendto-btn-avatar-stack {
+            display: inline-flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .sendto-btn-avatar-stack--single {
+            margin-right: 2px;
+        }
+        .sendto-btn-avatar-stack--few .sendto-btn-avatar + .sendto-btn-avatar,
+        .sendto-btn-avatar-stack--many .sendto-btn-avatar + .sendto-btn-avatar {
+            margin-left: -8px;
+        }
+        .sendto-btn-avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: var(--card);
+            border: 1.5px solid var(--card);
+            font-size: 14px;
+            line-height: 1;
+            box-sizing: content-box;
+        }
+        .sendto-picker-btn[aria-expanded="true"] .sendto-btn-avatar {
+            border-color: var(--primary);
+        }
+        .sendto-btn-avatar > img,
+        .sendto-btn-avatar > .entity-avatar-img,
+        .sendto-btn-avatar > canvas,
+        .sendto-btn-avatar > .entity-avatar-emoji {
+            width: 20px !important;
+            height: 20px !important;
+            border-radius: 50%;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .sendto-btn-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 140px;
+        }
+        .sendto-btn-more {
+            font-size: 11px;
+            padding: 1px 6px;
+            border-radius: 9px;
+            background: var(--card-border);
+            color: var(--text-secondary);
             flex-shrink: 0;
         }
         .sendto-picker-overlay {
@@ -7253,41 +7321,116 @@
             return Array.from(document.querySelectorAll('.target-entity-check input[type="checkbox"]'));
         }
 
+        // Render a tiny avatar element for the picker-button summary. The
+        // existing renderAvatarHtml is reused so emoji / image URL / petdx
+        // sprite all keep their already-tested rendering paths. Falls back
+        // to the 🦞 emoji when getAvatarForEntity returns nothing (matches
+        // the global default at chat.html:3867 + entity-utils.js).
+        function _sendtoBtnAvatarHtml(entityId) {
+            const name = (typeof getEntityDisplayName === 'function')
+                ? getEntityDisplayName(entityId)
+                : ('Entity #' + entityId);
+            const raw = (typeof getAvatarForEntity === 'function')
+                ? getAvatarForEntity(entityId)
+                : '';
+            const avatar = raw || '\u{1F99E}';
+            const inner = (typeof renderAvatarHtml === 'function')
+                ? renderAvatarHtml(avatar, 20, entityId)
+                : ('<span>' + (avatar) + '</span>');
+            // Wrap so we can give every avatar a tooltip/alt + a stacking
+            // class without touching renderAvatarHtml's output. The wrapping
+            // span carries title for hover-readability AT; renderAvatarHtml
+            // also emits alt="avatar" inside <img>, which we replace by
+            // injecting the entity name via aria-label on the wrapper.
+            const safeName = (typeof escapeHtml === 'function') ? escapeHtml(name) : name;
+            return '<span class="sendto-btn-avatar" role="img" aria-label="' + safeName
+                + '" title="' + safeName + '">' + inner + '</span>';
+        }
+
         function refreshSendtoPickerButtonLabel() {
             const btn = document.getElementById('sendtoPickerBtn');
             const label = document.getElementById('sendtoPickerBtnLabel');
             if (!btn || !label) return;
             const checks = getSendtoUnderlyingChecks();
+            const PREFIX_ZH = '傳送給 ';
+            const t = (k, p) => ((typeof i18n !== 'undefined' && i18n && i18n.t) ? i18n.t(k, p) : null);
+            // Static prefix used regardless of locale string — kept verbatim
+            // before the avatar stack so the visual reads "傳送給 [avatars]".
+            // The i18n strings still own the all/single/multi WORDS; here we
+            // build the HTML so we can splice avatars in.
+            const allText = t('chat_sendto_button_label_all') || '傳送給 ALL';
+            const safe = (s) => (typeof escapeHtml === 'function') ? escapeHtml(String(s)) : String(s);
+
+            // Helper: build aria-label that lists all selected entity names —
+            // a11y contract. We do this even in ALL/none states so AT users
+            // hear the same intent the visible text conveys.
+            function ariaLabelFor(state, selectedIds) {
+                if (state === 'all') return allText;
+                if (state === 'none') return t('chat_sendto_button_label_multi', { count: 0 }) || '傳送給 0 entities';
+                const names = selectedIds.map(id => {
+                    return (typeof getEntityDisplayName === 'function') ? getEntityDisplayName(id) : ('#' + id);
+                });
+                if (state === 'single') return (t('chat_sendto_button_label_single', { target: names[0] })) || (PREFIX_ZH + names[0]);
+                // few/many → "傳送給 Name1, Name2, Name3" so screen-readers
+                // hear the full recipient list instead of "+N more".
+                return PREFIX_ZH + names.join(', ');
+            }
+
             // No bound entities yet (boot before /api/entities resolves) → keep "ALL" affordance.
             if (checks.length === 0) {
-                label.textContent = (i18n && i18n.t) ? i18n.t('chat_sendto_button_label_all') : '傳送給 ALL';
+                label.textContent = allText;
                 btn.setAttribute('data-sendto-state', 'all');
+                btn.setAttribute('aria-label', allText);
                 return;
             }
             const checked = checks.filter(cb => cb.checked);
             const total = checks.length;
+            const checkedIds = checked
+                .map(cb => Number(cb.dataset.entity))
+                .filter(n => Number.isFinite(n));
+
             if (checked.length === total) {
-                label.textContent = (i18n && i18n.t) ? i18n.t('chat_sendto_button_label_all') : '傳送給 ALL';
+                // All state — text only, no avatars (14-bot overflow guard).
+                label.textContent = allText;
                 btn.setAttribute('data-sendto-state', 'all');
-            } else if (checked.length === 1) {
-                const eid = Number(checked[0].dataset.entity);
-                const target = '#' + eid;
-                label.textContent = (i18n && i18n.t)
-                    ? i18n.t('chat_sendto_button_label_single', { target })
-                    : ('傳送給 ' + target);
-                btn.setAttribute('data-sendto-state', 'single');
+                btn.setAttribute('aria-label', ariaLabelFor('all', checkedIds));
             } else if (checked.length === 0) {
                 // Zero recipients is a real (unsendable) state — show count
                 // so users understand why the send button errors.
-                label.textContent = (i18n && i18n.t)
-                    ? i18n.t('chat_sendto_button_label_multi', { count: 0 })
-                    : '傳送給 0 entities';
+                label.textContent = t('chat_sendto_button_label_multi', { count: 0 }) || '傳送給 0 entities';
                 btn.setAttribute('data-sendto-state', 'none');
+                btn.setAttribute('aria-label', ariaLabelFor('none', []));
+            } else if (checked.length === 1) {
+                // Single: 「傳送給 [avatar] Name」 — avatar + name.
+                const eid = checkedIds[0];
+                const name = (typeof getEntityDisplayName === 'function') ? getEntityDisplayName(eid) : ('#' + eid);
+                const avatarHtml = _sendtoBtnAvatarHtml(eid);
+                label.innerHTML =
+                    '<span class="sendto-btn-prefix">' + safe(PREFIX_ZH) + '</span>'
+                    + '<span class="sendto-btn-avatar-stack sendto-btn-avatar-stack--single">' + avatarHtml + '</span>'
+                    + '<span class="sendto-btn-name">' + safe(name) + '</span>';
+                btn.setAttribute('data-sendto-state', 'single');
+                btn.setAttribute('aria-label', ariaLabelFor('single', checkedIds));
+            } else if (checked.length <= 4) {
+                // Few (2-4): stacked overlap, no name.
+                const stack = checkedIds.map(_sendtoBtnAvatarHtml).join('');
+                label.innerHTML =
+                    '<span class="sendto-btn-prefix">' + safe(PREFIX_ZH) + '</span>'
+                    + '<span class="sendto-btn-avatar-stack sendto-btn-avatar-stack--few">' + stack + '</span>';
+                btn.setAttribute('data-sendto-state', 'few');
+                btn.setAttribute('aria-label', ariaLabelFor('few', checkedIds));
             } else {
-                label.textContent = (i18n && i18n.t)
-                    ? i18n.t('chat_sendto_button_label_multi', { count: checked.length })
-                    : ('傳送給 ' + checked.length + ' entities');
-                btn.setAttribute('data-sendto-state', 'multi');
+                // Many (5+): first 2 avatars + "+N more" pill.
+                const first = checkedIds.slice(0, 2).map(_sendtoBtnAvatarHtml).join('');
+                const moreCount = checkedIds.length - 2;
+                const moreText = t('chat_sendto_button_label_many_more', { count: moreCount })
+                    || ('+' + moreCount + ' more');
+                label.innerHTML =
+                    '<span class="sendto-btn-prefix">' + safe(PREFIX_ZH) + '</span>'
+                    + '<span class="sendto-btn-avatar-stack sendto-btn-avatar-stack--many">' + first + '</span>'
+                    + '<span class="sendto-btn-more">' + safe(moreText) + '</span>';
+                btn.setAttribute('data-sendto-state', 'many');
+                btn.setAttribute('aria-label', ariaLabelFor('many', checkedIds));
             }
         }
 
