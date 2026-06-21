@@ -26,6 +26,18 @@ enum class UsageOverlayPosition {
 }
 
 /**
+ * How kanban cards are materialized as wallpaper objects.
+ */
+enum class WallpaperKanbanObjectStyle {
+    SMART_MIX,
+    FOLDER,
+    BOOK_NOTEBOOK,
+    CLIPBOARD,
+    STORAGE_BOX,
+    STICKY_CARD
+}
+
+/**
  * Manages entity layout preferences
  */
 class LayoutPreferences private constructor(context: Context) {
@@ -414,6 +426,31 @@ class LayoutPreferences private constructor(context: Context) {
             prefs.edit().putBoolean(KEY_WALLPAPER_KANBAN_PRIVACY_MODE_ENABLED, value).apply()
         }
 
+    var wallpaperKanbanObjectStyle: WallpaperKanbanObjectStyle
+        get() {
+            val name = prefs.getString(KEY_WALLPAPER_KANBAN_OBJECT_STYLE, WallpaperKanbanObjectStyle.SMART_MIX.name)
+            return try {
+                WallpaperKanbanObjectStyle.valueOf(name ?: WallpaperKanbanObjectStyle.SMART_MIX.name)
+            } catch (e: Exception) {
+                WallpaperKanbanObjectStyle.SMART_MIX
+            }
+        }
+        set(value) {
+            prefs.edit().putString(KEY_WALLPAPER_KANBAN_OBJECT_STYLE, value.name).apply()
+        }
+
+    var wallpaperKanbanAssetWhiteboardEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_KANBAN_ASSET_WHITEBOARD_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_KANBAN_ASSET_WHITEBOARD_ENABLED, value).apply()
+        }
+
+    var wallpaperKanbanHandwrittenBoardTextEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_KANBAN_HANDWRITTEN_BOARD_TEXT_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_KANBAN_HANDWRITTEN_BOARD_TEXT_ENABLED, value).apply()
+        }
+
     var usageOverlayEnabled: Boolean
         get() = prefs.getBoolean(KEY_USAGE_OVERLAY_ENABLED, true)
         set(value) {
@@ -588,6 +625,9 @@ class LayoutPreferences private constructor(context: Context) {
         private const val KEY_WALLPAPER_KANBAN_TASKS_ENABLED = "wallpaper_kanban_tasks_enabled"
         private const val KEY_WALLPAPER_KANBAN_AUTOMATION_BOARD_ENABLED = "wallpaper_kanban_automation_board_enabled"
         private const val KEY_WALLPAPER_KANBAN_PRIVACY_MODE_ENABLED = "wallpaper_kanban_privacy_mode_enabled"
+        private const val KEY_WALLPAPER_KANBAN_OBJECT_STYLE = "wallpaper_kanban_object_style"
+        private const val KEY_WALLPAPER_KANBAN_ASSET_WHITEBOARD_ENABLED = "wallpaper_kanban_asset_whiteboard_enabled"
+        private const val KEY_WALLPAPER_KANBAN_HANDWRITTEN_BOARD_TEXT_ENABLED = "wallpaper_kanban_handwritten_board_text_enabled"
         private const val KEY_USAGE_OVERLAY_ENABLED = "usage_overlay_enabled"
         private const val KEY_USAGE_OVERLAY_POSITION = "usage_overlay_position"
         private const val KEY_USAGE_OVERLAY_CENTER = "usage_overlay_center"

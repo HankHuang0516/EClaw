@@ -1,12 +1,19 @@
 package com.hank.clawlive.engine
 
+import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
+import android.graphics.Typeface
+import android.graphics.drawable.Drawable
 import android.text.TextPaint
+import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
+import com.hank.clawlive.R
 import com.hank.clawlive.data.local.LayoutPreferences
+import com.hank.clawlive.data.local.WallpaperKanbanObjectStyle
 import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.model.WallpaperKanbanCard
@@ -20,6 +27,7 @@ import kotlin.math.min
 import kotlin.math.sin
 
 class WallpaperKanbanRenderer(
+    context: Context,
     private val layoutPrefs: LayoutPreferences
 ) {
     private data class VisualCardState(
@@ -43,6 +51,7 @@ class WallpaperKanbanRenderer(
     }
 
     private data class AutomationBoardSpec(
+        val entityId: Int,
         val base: Pair<Float, Float>,
         val unit: Float,
         val cards: List<VisualCardState>,
@@ -53,7 +62,31 @@ class WallpaperKanbanRenderer(
         var left: Float
     )
 
+    private enum class TaskObjectKind {
+        FOLDER,
+        BOOK,
+        CLIPBOARD,
+        STORAGE_BOX,
+        STICKY_CARD
+    }
+
+    private data class TaskObjectPlacement(
+        val state: VisualCardState,
+        val kind: TaskObjectKind,
+        val rect: RectF,
+        val centerX: Float,
+        val centerY: Float,
+        val rotation: Float,
+        val alpha: Int,
+        val column: Int,
+        val layer: Int,
+        val displayIndex: Int,
+        val removalProgress: Float
+    )
+
     private val states = mutableMapOf<String, VisualCardState>()
+    private val handwritingTypeface: Typeface? = ResourcesCompat.getFont(context, R.font.caveat_regular)
+    private val whiteboardAsset: Drawable? = ContextCompat.getDrawable(context, R.drawable.wallpaper_whiteboard_asset)?.mutate()
     private val boardPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val boardStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -71,6 +104,10 @@ class WallpaperKanbanRenderer(
         style = Paint.Style.STROKE
         strokeWidth = 2.2f
         color = Color.argb(190, 15, 23, 42)
+    }
+    private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = Color.argb(72, 0, 0, 0)
     }
     private val textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.argb(220, 15, 23, 42)
@@ -186,7 +223,7 @@ class WallpaperKanbanRenderer(
                 if (automations.isEmpty()) {
                     null
                 } else {
-                    createAutomationBoardSpec(canvas, base, unit, automations)
+                    createAutomationBoardSpec(canvas, entityId, base, unit, automations)
                 }
             }
             layoutAutomationBoards(canvas, boardSpecs)
@@ -201,25 +238,25 @@ class WallpaperKanbanRenderer(
                 val tasks = states.values
                     .filter { !it.isAutomation && entityId in it.assignedBots }
                     .sortedWith(compareBy<VisualCardState> { it.terminal }.thenBy { it.priority }.thenByDescending { it.updatedAt ?: 0L })
-                tasks.forEachIndexed { index, state ->
-                    drawTaskFolder(canvas, base, unit, index, tasks.size, state, nowMs)
-                }
+                drawTaskObjectStack(canvas, entityId, base, unit, tasks, nowMs)
             }
         }
     }
 
     private fun createAutomationBoardSpec(
         canvas: Canvas,
+        entityId: Int,
         base: Pair<Float, Float>,
         unit: Float,
         cards: List<VisualCardState>
     ): AutomationBoardSpec {
         val rowHeight = (unit * 0.13f).coerceIn(18f, 30f)
-        val height = (unit * 0.5f + rowHeight * cards.take(MAX_BOARD_ROWS).size).coerceIn(unit * 0.62f, unit * 1.05f)
+        val height = (unit * 0.44f + rowHeight * cards.take(MAX_BOARD_ROWS).size).coerceIn(unit * 0.62f, unit * 0.96f)
         val width = preferredBoardWidth(unit, cards)
         val left = clampedBoardLeft(canvas, base.first, width)
-        val top = (base.second - unit * 1.75f - height / 2f).coerceIn(18f, canvas.height - height - 18f)
+        val top = (base.second - unit * 1.55f - height / 2f).coerceIn(18f, canvas.height - height - 18f)
         return AutomationBoardSpec(
+            entityId = entityId,
             base = base,
             unit = unit,
             cards = cards,
@@ -258,6 +295,13 @@ class WallpaperKanbanRenderer(
             val shift = BOARD_MARGIN - sorted.first().left
             sorted.forEach { it.left += shift }
         }
+        sorted.forEach { spec ->
+            val anchorOutside = spec.base.first < spec.left || spec.base.first > spec.left + spec.width
+            if (anchorOutside && spec.width > BOARD_MIN_WIDTH) {
+                spec.width = (spec.width * 0.88f).coerceAtLeast(BOARD_MIN_WIDTH)
+                spec.left = clampedBoardLeft(canvas, spec.base.first, spec.width)
+            }
+        }
     }
 
     private fun clampedBoardLeft(canvas: Canvas, centerX: Float, width: Float): Float {
@@ -274,27 +318,21 @@ class WallpaperKanbanRenderer(
         val top = spec.top
         val rect = RectF(left, top, left + spec.width, top + spec.height)
 
-        drawWhiteboardStand(canvas, rect, unit)
-
-        boardPaint.color = Color.argb(205, 248, 250, 252)
-        canvas.drawRoundRect(rect, 8f, 8f, boardPaint)
-        canvas.drawRoundRect(rect, 8f, 8f, boardStrokePaint)
-        accentPaint.color = Color.argb(125, 148, 163, 184)
-        canvas.drawRoundRect(
-            RectF(
-                rect.left + unit * 0.08f,
-                rect.bottom - unit * 0.045f,
-                rect.right - unit * 0.08f,
-                rect.bottom - unit * 0.025f
-            ),
-            4f,
-            4f,
-            accentPaint
-        )
+        drawBoardOwnerAnchor(canvas, spec, rect)
+        if (layoutPrefs.wallpaperKanbanAssetWhiteboardEnabled && whiteboardAsset != null) {
+            drawWhiteboardAsset(canvas, rect, unit)
+        } else {
+            drawWhiteboardStand(canvas, rect, unit)
+            drawFallbackWhiteboardSurface(canvas, rect, unit)
+        }
 
         textPaint.textSize = (unit * 0.09f).coerceIn(13f, 18f)
         textPaint.isFakeBoldText = true
         textPaint.color = Color.argb(225, 15, 23, 42)
+        val previousTypeface = textPaint.typeface
+        if (layoutPrefs.wallpaperKanbanHandwrittenBoardTextEnabled && handwritingTypeface != null) {
+            textPaint.typeface = handwritingTypeface
+        }
         canvas.drawText("Automation", left + unit * 0.08f, top + unit * 0.16f, textPaint)
         textPaint.isFakeBoldText = false
         textPaint.textSize = (unit * 0.075f).coerceIn(11f, 15f)
@@ -323,6 +361,51 @@ class WallpaperKanbanRenderer(
             canvas.drawText(ellipsizeToWidth(next, unit * 0.34f, textPaint), dateRight, y, textPaint)
             textPaint.textAlign = Paint.Align.LEFT
         }
+        textPaint.typeface = previousTypeface
+    }
+
+    private fun drawBoardOwnerAnchor(canvas: Canvas, spec: AutomationBoardSpec, rect: RectF) {
+        val anchorX = spec.base.first
+        val boardX = anchorX.coerceIn(rect.left + spec.unit * 0.12f, rect.right - spec.unit * 0.12f)
+        val startY = rect.bottom + spec.unit * 0.08f
+        val endY = (spec.base.second - spec.unit * 0.58f).coerceAtLeast(startY + spec.unit * 0.08f)
+        standPaint.strokeWidth = (spec.unit * 0.006f).coerceIn(1.2f, 2.6f)
+        standPaint.color = Color.argb(68, 148, 163, 184)
+        canvas.drawLine(boardX, startY, anchorX, endY, standPaint)
+        accentPaint.color = Color.argb(100, 148, 163, 184)
+        canvas.drawCircle(anchorX, endY, (spec.unit * 0.018f).coerceIn(2.5f, 5.5f), accentPaint)
+    }
+
+    private fun drawWhiteboardAsset(canvas: Canvas, rect: RectF, unit: Float) {
+        val standBottom = rect.bottom + (unit * 0.36f).coerceIn(42f, 86f)
+        whiteboardAsset?.let { drawable ->
+            drawable.setBounds(
+                (rect.left - unit * 0.05f).toInt(),
+                (rect.top - unit * 0.05f).toInt(),
+                (rect.right + unit * 0.05f).toInt(),
+                standBottom.toInt()
+            )
+            drawable.alpha = 245
+            drawable.draw(canvas)
+        }
+    }
+
+    private fun drawFallbackWhiteboardSurface(canvas: Canvas, rect: RectF, unit: Float) {
+        boardPaint.color = Color.argb(205, 248, 250, 252)
+        canvas.drawRoundRect(rect, 8f, 8f, boardPaint)
+        canvas.drawRoundRect(rect, 8f, 8f, boardStrokePaint)
+        accentPaint.color = Color.argb(125, 148, 163, 184)
+        canvas.drawRoundRect(
+            RectF(
+                rect.left + unit * 0.08f,
+                rect.bottom - unit * 0.045f,
+                rect.right - unit * 0.08f,
+                rect.bottom - unit * 0.025f
+            ),
+            4f,
+            4f,
+            accentPaint
+        )
     }
 
     private fun drawWhiteboardStand(canvas: Canvas, rect: RectF, unit: Float) {
@@ -337,6 +420,173 @@ class WallpaperKanbanRenderer(
         canvas.drawLine(leftLegX + unit * 0.04f, legTopY, rightLegX - unit * 0.04f, legTopY, standPaint)
         canvas.drawLine(leftLegX - unit * 0.17f, legBottomY, leftLegX + unit * 0.06f, legBottomY, standPaint)
         canvas.drawLine(rightLegX - unit * 0.06f, legBottomY, rightLegX + unit * 0.17f, legBottomY, standPaint)
+    }
+
+    private fun drawTaskObjectStack(
+        canvas: Canvas,
+        entityId: Int,
+        base: Pair<Float, Float>,
+        unit: Float,
+        tasks: List<VisualCardState>,
+        nowMs: Long
+    ) {
+        if (tasks.isEmpty()) return
+        val stackSide = taskStackSide(canvas, entityId, base)
+        val placements = tasks.mapIndexedNotNull { index, state ->
+            createTaskObjectPlacement(canvas, base, unit, stackSide, index, tasks.size, state, nowMs)
+        }
+        if (placements.isEmpty()) return
+
+        val minLeft = placements.minOf { it.rect.left }
+        val maxRight = placements.maxOf { it.rect.right }
+        val maxBottom = placements.maxOf { it.rect.bottom }
+        shadowPaint.color = Color.argb(58, 0, 0, 0)
+        canvas.drawOval(
+            RectF(minLeft - unit * 0.05f, maxBottom - unit * 0.03f, maxRight + unit * 0.05f, maxBottom + unit * 0.075f),
+            shadowPaint
+        )
+
+        placements.forEach { placement ->
+            drawTaskObjectPlacement(canvas, placement, unit)
+        }
+
+        if (!layoutPrefs.wallpaperKanbanPrivacyModeEnabled) {
+            placements.groupBy { it.column }
+                .values
+                .mapNotNull { columnPlacements -> columnPlacements.maxByOrNull { it.layer } }
+                .take(3)
+                .forEach { drawTaskObjectTitle(canvas, it, unit) }
+        }
+    }
+
+    private fun createTaskObjectPlacement(
+        canvas: Canvas,
+        base: Pair<Float, Float>,
+        unit: Float,
+        stackSide: Float,
+        index: Int,
+        totalCount: Int,
+        state: VisualCardState,
+        nowMs: Long
+    ): TaskObjectPlacement? {
+        val removalProgress = removalProgress(state, nowMs)
+        if (state.terminal && removalProgress >= 1f) return null
+        val seed = abs(state.id.hashCode())
+        val kind = resolveTaskObjectKind(state)
+        val maxLayers = MAX_TASK_STACK_LAYERS
+        val columnCount = ((totalCount + maxLayers - 1) / maxLayers).coerceIn(1, 3)
+        val column = (index / maxLayers).coerceAtMost(columnCount - 1)
+        val layer = index % maxLayers
+        val columnOffset = column - (columnCount - 1) / 2f
+        val size = taskObjectSize(kind, unit, seed)
+        val width = size.first
+        val height = size.second
+        val layerRise = when (kind) {
+            TaskObjectKind.BOOK -> height * 0.46f
+            TaskObjectKind.STORAGE_BOX -> height * 0.34f
+            TaskObjectKind.CLIPBOARD -> height * 0.18f
+            TaskObjectKind.STICKY_CARD -> height * 0.24f
+            TaskObjectKind.FOLDER -> height * 0.32f
+        }
+        val naturalJitterX = (((seed / 7) % 5) - 2) * unit * 0.006f
+        val naturalJitterY = (((seed / 13) % 5) - 2) * unit * 0.004f
+        val lift = if (state.reviewUntilMs > nowMs) {
+            sin(((state.reviewUntilMs - nowMs) / REVIEW_DELAY_MS.toFloat()) * PI).toFloat() * unit * 0.035f
+        } else {
+            0f
+        }
+        val removalLift = if (state.terminal) removalProgress * unit * 0.13f else 0f
+        val stackLean = (((seed / 19) % 3) - 1) * unit * 0.007f * layer
+        val stackAnchorX = base.first + stackSide * unit * 0.66f
+        val centerX = (stackAnchorX + stackSide * columnOffset * unit * 0.62f + stackLean + naturalJitterX)
+            .coerceIn(width * 0.62f, canvas.width - width * 0.62f)
+        val centerY = (base.second + unit * 0.54f - layer * layerRise + column * unit * 0.035f + naturalJitterY - lift - removalLift)
+            .coerceIn(height * 0.65f, canvas.height - unit * 0.06f)
+        val rect = RectF(centerX - width / 2f, centerY - height / 2f, centerX + width / 2f, centerY + height / 2f)
+        val alpha = if (state.terminal) ((1f - removalProgress) * 230).toInt() else 230
+        val rotation = when (kind) {
+            TaskObjectKind.BOOK -> (((seed % 5) - 2) * 0.85f)
+            TaskObjectKind.CLIPBOARD -> (((seed % 7) - 3) * 1.1f)
+            TaskObjectKind.STICKY_CARD -> (((seed % 9) - 4) * 1.8f)
+            else -> (((seed % 7) - 3) * 0.9f)
+        }
+        return TaskObjectPlacement(
+            state = state,
+            kind = kind,
+            rect = rect,
+            centerX = centerX,
+            centerY = centerY,
+            rotation = rotation,
+            alpha = alpha.coerceIn(0, 230),
+            column = column,
+            layer = layer,
+            displayIndex = index,
+            removalProgress = removalProgress
+        )
+    }
+
+    private fun taskStackSide(canvas: Canvas, entityId: Int, base: Pair<Float, Float>): Float {
+        val stableId = entityId
+        return when {
+            base.first < canvas.width * 0.58f -> -1f
+            base.first > canvas.width * 0.58f -> 1f
+            stableId % 2 == 0 -> 1f
+            else -> -1f
+        }
+    }
+
+    private fun resolveTaskObjectKind(state: VisualCardState): TaskObjectKind {
+        return when (layoutPrefs.wallpaperKanbanObjectStyle) {
+            WallpaperKanbanObjectStyle.FOLDER -> TaskObjectKind.FOLDER
+            WallpaperKanbanObjectStyle.BOOK_NOTEBOOK -> TaskObjectKind.BOOK
+            WallpaperKanbanObjectStyle.CLIPBOARD -> TaskObjectKind.CLIPBOARD
+            WallpaperKanbanObjectStyle.STORAGE_BOX -> TaskObjectKind.STORAGE_BOX
+            WallpaperKanbanObjectStyle.STICKY_CARD -> TaskObjectKind.STICKY_CARD
+            WallpaperKanbanObjectStyle.SMART_MIX -> when (state.displayStatus) {
+                "todo" -> TaskObjectKind.FOLDER
+                "in_progress" -> TaskObjectKind.BOOK
+                "review" -> TaskObjectKind.CLIPBOARD
+                "blocked" -> TaskObjectKind.STORAGE_BOX
+                else -> TaskObjectKind.STICKY_CARD
+            }
+        }
+    }
+
+    private fun taskObjectSize(kind: TaskObjectKind, unit: Float, seed: Int): Pair<Float, Float> {
+        val variance = ((seed % 5) - 2) * 0.012f
+        return when (kind) {
+            TaskObjectKind.BOOK -> unit * (0.55f + variance) to unit * (0.16f + variance * 0.35f)
+            TaskObjectKind.FOLDER -> unit * (0.42f + variance) to unit * (0.25f + variance * 0.4f)
+            TaskObjectKind.CLIPBOARD -> unit * (0.34f + variance) to unit * (0.43f + variance)
+            TaskObjectKind.STORAGE_BOX -> unit * (0.42f + variance) to unit * (0.31f + variance * 0.6f)
+            TaskObjectKind.STICKY_CARD -> unit * (0.34f + variance) to unit * (0.25f + variance * 0.4f)
+        }
+    }
+
+    private fun drawTaskObjectPlacement(canvas: Canvas, placement: TaskObjectPlacement, unit: Float) {
+        canvas.save()
+        canvas.rotate(placement.rotation, placement.centerX, placement.centerY)
+        when (placement.kind) {
+            TaskObjectKind.FOLDER -> drawFolderShape(canvas, placement.rect, placement.state, placement.alpha)
+            TaskObjectKind.BOOK -> drawBookShape(canvas, placement.rect, placement.state, placement.alpha, placement.layer)
+            TaskObjectKind.CLIPBOARD -> drawClipboardShape(canvas, placement.rect, placement.state, placement.alpha)
+            TaskObjectKind.STORAGE_BOX -> drawStorageBoxShape(canvas, placement.rect, placement.state, placement.alpha)
+            TaskObjectKind.STICKY_CARD -> drawStickyCardShape(canvas, placement.rect, placement.state, placement.alpha)
+        }
+        if (placement.state.terminal) {
+            drawRemovalSpark(canvas, placement.centerX, placement.rect.top, unit, placement.removalProgress, placement.alpha)
+        }
+        canvas.restore()
+    }
+
+    private fun drawTaskObjectTitle(canvas: Canvas, placement: TaskObjectPlacement, unit: Float) {
+        if (placement.state.terminal) return
+        textPaint.textSize = (unit * 0.043f).coerceIn(8f, 12f)
+        textPaint.color = Color.argb((placement.alpha * 0.76f).toInt().coerceIn(0, 220), 15, 23, 42)
+        textPaint.textAlign = Paint.Align.CENTER
+        val title = ellipsizeToWidth(placement.state.title, placement.rect.width() * 0.9f, textPaint)
+        canvas.drawText(title, placement.centerX, placement.rect.bottom + unit * 0.055f, textPaint)
+        textPaint.textAlign = Paint.Align.LEFT
     }
 
     private fun drawTaskFolder(
@@ -388,6 +638,126 @@ class WallpaperKanbanRenderer(
             drawRemovalSpark(canvas, cx, top, unit, removalProgress, alpha)
         }
         canvas.restore()
+    }
+
+    private fun drawBookShape(canvas: Canvas, rect: RectF, state: VisualCardState, alpha: Int, layer: Int) {
+        val coverColor = colorForStatus(state.displayStatus, state.priority, alpha)
+        val pageAlpha = (alpha * 0.9f).toInt().coerceIn(0, 230)
+        val pageEdge = rect.height() * 0.38f
+        val cover = RectF(rect.left, rect.top, rect.right, rect.bottom - pageEdge * 0.25f)
+        val pages = RectF(rect.left + rect.width() * 0.04f, rect.bottom - pageEdge, rect.right - rect.width() * 0.13f, rect.bottom)
+        val spine = RectF(rect.right - rect.width() * 0.16f, rect.top + rect.height() * 0.06f, rect.right, rect.bottom - rect.height() * 0.05f)
+
+        shadowPaint.color = Color.argb((alpha * 0.18f).toInt().coerceIn(0, 70), 0, 0, 0)
+        canvas.drawRoundRect(RectF(rect.left, rect.bottom - rect.height() * 0.22f, rect.right, rect.bottom + rect.height() * 0.18f), 7f, 7f, shadowPaint)
+
+        folderPaint.color = Color.argb(pageAlpha, 252, 240, 202)
+        canvas.drawRoundRect(pages, 5f, 5f, folderPaint)
+        accentPaint.color = Color.argb((alpha * 0.32f).toInt().coerceIn(0, 95), 146, 64, 14)
+        accentPaint.strokeWidth = 1.1f
+        accentPaint.style = Paint.Style.STROKE
+        val pageLines = 3
+        repeat(pageLines) { i ->
+            val y = pages.top + pages.height() * (i + 1) / (pageLines + 1)
+            canvas.drawLine(pages.left + 5f, y, pages.right - 4f, y, accentPaint)
+        }
+        accentPaint.style = Paint.Style.FILL
+
+        folderPaint.color = coverColor
+        canvas.drawRoundRect(cover, 8f, 8f, folderPaint)
+        folderPaint.color = darken(coverColor, 0.72f, alpha)
+        canvas.drawRoundRect(spine, 8f, 8f, folderPaint)
+        accentPaint.color = Color.argb((alpha * 0.75f).toInt().coerceIn(0, 210), 250, 204, 21)
+        val lineX = spine.left + spine.width() * 0.35f
+        canvas.drawRoundRect(RectF(lineX, spine.top + 4f, lineX + 1.8f, spine.bottom - 4f), 2f, 2f, accentPaint)
+        if (layer % 3 == 0) {
+            val lineX2 = spine.left + spine.width() * 0.62f
+            canvas.drawRoundRect(RectF(lineX2, spine.top + 6f, lineX2 + 1.4f, spine.bottom - 6f), 2f, 2f, accentPaint)
+        }
+        drawStatusMark(canvas, RectF(rect.left + rect.width() * 0.62f, cover.top, cover.right, cover.bottom), state.displayStatus, alpha)
+    }
+
+    private fun drawClipboardShape(canvas: Canvas, rect: RectF, state: VisualCardState, alpha: Int) {
+        val statusColor = colorForStatus(state.displayStatus, state.priority, alpha)
+        val boardColor = darken(statusColor, 0.78f, alpha)
+        folderPaint.color = boardColor
+        canvas.drawRoundRect(rect, 9f, 9f, folderPaint)
+        folderStrokePaint.alpha = (alpha * 0.62f).toInt().coerceIn(0, 170)
+        canvas.drawRoundRect(rect, 9f, 9f, folderStrokePaint)
+        folderStrokePaint.alpha = 255
+
+        val paper = RectF(
+            rect.left + rect.width() * 0.11f,
+            rect.top + rect.height() * 0.18f,
+            rect.right - rect.width() * 0.11f,
+            rect.bottom - rect.height() * 0.08f
+        )
+        folderPaint.color = Color.argb((alpha * 0.94f).toInt().coerceIn(0, 240), 248, 250, 252)
+        canvas.drawRoundRect(paper, 6f, 6f, folderPaint)
+
+        accentPaint.color = Color.argb((alpha * 0.85f).toInt().coerceIn(0, 220), 100, 116, 139)
+        canvas.drawRoundRect(
+            RectF(rect.centerX() - rect.width() * 0.18f, rect.top + rect.height() * 0.04f, rect.centerX() + rect.width() * 0.18f, rect.top + rect.height() * 0.18f),
+            5f,
+            5f,
+            accentPaint
+        )
+        drawStatusMark(canvas, paper, state.displayStatus, alpha)
+    }
+
+    private fun drawStorageBoxShape(canvas: Canvas, rect: RectF, state: VisualCardState, alpha: Int) {
+        val color = colorForStatus(state.displayStatus, state.priority, alpha)
+        val topFace = Path().apply {
+            moveTo(rect.left + rect.width() * 0.12f, rect.top)
+            lineTo(rect.right - rect.width() * 0.08f, rect.top + rect.height() * 0.08f)
+            lineTo(rect.right, rect.top + rect.height() * 0.32f)
+            lineTo(rect.left + rect.width() * 0.04f, rect.top + rect.height() * 0.25f)
+            close()
+        }
+        val front = RectF(rect.left + rect.width() * 0.04f, rect.top + rect.height() * 0.25f, rect.right, rect.bottom)
+        val side = Path().apply {
+            moveTo(rect.right - rect.width() * 0.08f, rect.top + rect.height() * 0.08f)
+            lineTo(rect.right, rect.top + rect.height() * 0.32f)
+            lineTo(rect.right, rect.bottom)
+            lineTo(rect.right - rect.width() * 0.12f, rect.bottom - rect.height() * 0.12f)
+            close()
+        }
+        folderPaint.color = lighten(color, 1.18f, alpha)
+        canvas.drawPath(topFace, folderPaint)
+        folderPaint.color = color
+        canvas.drawRoundRect(front, 7f, 7f, folderPaint)
+        folderPaint.color = darken(color, 0.72f, alpha)
+        canvas.drawPath(side, folderPaint)
+        accentPaint.color = Color.argb((alpha * 0.3f).toInt().coerceIn(0, 90), 120, 53, 15)
+        canvas.drawRect(rect.left + rect.width() * 0.14f, rect.top + rect.height() * 0.46f, rect.right - rect.width() * 0.2f, rect.top + rect.height() * 0.52f, accentPaint)
+        drawStatusMark(canvas, front, state.displayStatus, alpha)
+    }
+
+    private fun drawStickyCardShape(canvas: Canvas, rect: RectF, state: VisualCardState, alpha: Int) {
+        val color = lighten(colorForStatus(state.displayStatus, state.priority, alpha), 1.22f, alpha)
+        val corner = rect.width() * 0.18f
+        val card = Path().apply {
+            moveTo(rect.left, rect.top)
+            lineTo(rect.right - corner, rect.top)
+            lineTo(rect.right, rect.top + corner)
+            lineTo(rect.right, rect.bottom)
+            lineTo(rect.left, rect.bottom)
+            close()
+        }
+        folderPaint.color = color
+        canvas.drawPath(card, folderPaint)
+        folderPaint.color = darken(color, 0.84f, alpha)
+        val fold = Path().apply {
+            moveTo(rect.right - corner, rect.top)
+            lineTo(rect.right, rect.top + corner)
+            lineTo(rect.right - corner, rect.top + corner)
+            close()
+        }
+        canvas.drawPath(fold, folderPaint)
+        folderStrokePaint.alpha = (alpha * 0.52f).toInt().coerceIn(0, 160)
+        canvas.drawRoundRect(rect, 4f, 4f, folderStrokePaint)
+        folderStrokePaint.alpha = 255
+        drawStatusMark(canvas, rect, state.displayStatus, alpha)
     }
 
     private fun drawFolderShape(canvas: Canvas, rect: RectF, state: VisualCardState, alpha: Int) {
@@ -489,7 +859,7 @@ class WallpaperKanbanRenderer(
                 textPaint.measureText(next)
             } ?: 0f
         return (titleWidth + dateWidth + unit * 0.52f)
-            .coerceIn(unit * 1.25f, unit * 2.15f)
+            .coerceIn(unit * 1.18f, unit * 1.9f)
             .coerceAtLeast(BOARD_MIN_WIDTH)
     }
 
@@ -520,6 +890,15 @@ class WallpaperKanbanRenderer(
         )
     }
 
+    private fun darken(color: Int, factor: Float, alpha: Int): Int {
+        return Color.argb(
+            alpha.coerceIn(0, 255),
+            (Color.red(color) * factor).toInt().coerceIn(0, 255),
+            (Color.green(color) * factor).toInt().coerceIn(0, 255),
+            (Color.blue(color) * factor).toInt().coerceIn(0, 255)
+        )
+    }
+
     private fun formatNext(schedule: WallpaperKanbanSchedule?): String {
         val nextRunAt = schedule?.nextRunAt ?: return "--"
         return dateFormat.format(Date(nextRunAt))
@@ -532,6 +911,7 @@ class WallpaperKanbanRenderer(
         private const val BOARD_MARGIN = 12f
         private const val BOARD_GAP = 10f
         private const val BOARD_MIN_WIDTH = 148f
+        private const val MAX_TASK_STACK_LAYERS = 9
         private const val FOLDER_TITLE_MAX_CHARS = 10
     }
 }
