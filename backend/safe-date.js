@@ -27,7 +27,20 @@
 function safeUpdatedAtToISO(row) {
     if (!row || row.updated_at === null || row.updated_at === undefined) return null;
     try {
-        const d = new Date(row.updated_at);
+        let v = row.updated_at;
+        // device_vars.updated_at is BIGINT epoch-millis, and node-postgres
+        // returns BIGINT (int8) as a STRING. `new Date("1782084491324")` is an
+        // Invalid Date — JS treats only a *number* as epoch-millis, not an
+        // all-digit string. Coerce an all-digit string to Number so it parses
+        // as epoch-millis. Without this, GET /api/device-vars returned
+        // updatedAt:null for EVERY row, so clients could never echo the
+        // optimistic-lock token and every non-empty-row vault POST tripped the
+        // "[Vars] POST without expectedUpdatedAt" warn (card_38b6f514); the 409
+        // stale-write check (index.js) was dead for the same reason. ISO /
+        // Date-string values (other tables' TIMESTAMPTZ) contain non-digits, so
+        // they skip coercion and parse exactly as before.
+        if (typeof v === 'string' && /^\d+$/.test(v)) v = Number(v);
+        const d = new Date(v);
         if (Number.isNaN(d.getTime())) return null;
         return d.toISOString();
     } catch (_) {
