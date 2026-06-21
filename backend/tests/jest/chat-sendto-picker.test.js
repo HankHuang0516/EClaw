@@ -1,0 +1,472 @@
+/**
+ * chat-sendto-picker — UI polish that swaps the inline recipient checkbox
+ * row for a button styled like the smart-filter button. Clicking it opens
+ * a scrollable multi-select sheet (bottom-sheet on touch, dropdown on
+ * desktop) with checkmarks; Confirm writes the choices back to the
+ * underlying `.target-entity-check input[type="checkbox"]` source-of-truth
+ * so every downstream consumer (sendMessage, applyAutoToggleReceivers,
+ * persistTargetSelection) keeps working without modification.
+ *
+ * Card: card_91d5c93ba31bda385881ad59.
+ *
+ * jest.config.js uses testEnvironment:'node' with no jsdom. We mirror the
+ * pattern from chat-quote-smart-receiver.test.js: lock the surface with
+ * regex contracts and exercise the label / confirm / cancel logic by
+ * extracting the function bodies and running them inside a tiny document
+ * shim.
+ */
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+
+const chatHtml = fs.readFileSync(
+    path.join(__dirname, '..', '..', 'public', 'portal', 'chat.html'),
+    'utf8'
+);
+
+describe('chat-sendto-picker — chat.html static surface', () => {
+    test('picker button exists with smart-filter-mirroring aria + classes', () => {
+        // The button must declare itself as a listbox opener and own the
+        // overlay it controls so assistive tech can announce the relationship.
+        expect(chatHtml).toMatch(/id="sendtoPickerBtn"/);
+        expect(chatHtml).toMatch(/class="sendto-picker-btn"/);
+        expect(chatHtml).toMatch(/aria-haspopup="listbox"/);
+        expect(chatHtml).toMatch(/aria-expanded="false"/);
+        expect(chatHtml).toMatch(/aria-controls="sendtoPickerDialog"/);
+    });
+
+    test('picker overlay declares role="dialog" + aria-modal="true"', () => {
+        // role=dialog + aria-modal=true so screen readers treat the overlay
+        // as a modal; matches the destructive-confirm a11y contract.
+        expect(chatHtml).toMatch(/id="sendtoPickerDialog"/);
+        expect(chatHtml).toMatch(/role="dialog"/);
+        expect(chatHtml).toMatch(/aria-modal="true"/);
+        // The list itself is a listbox so AT can announce items.
+        expect(chatHtml).toMatch(/role="listbox"/);
+        expect(chatHtml).toMatch(/aria-multiselectable="true"/);
+    });
+
+    test('click-outside-overlay triggers cancelSendtoPicker (same as Cancel)', () => {
+        // Overlay click handler — clicking on the overlay backdrop (event.target
+        // === overlay element itself, not the dialog) cancels. This is the
+        // load-bearing contract for "click outside = cancel without saving".
+        expect(chatHtml).toMatch(/onclick="if\(event\.target===this\)cancelSendtoPicker\(\)"/);
+    });
+
+    test('Select all toggle + Confirm + Cancel buttons present', () => {
+        expect(chatHtml).toMatch(/id="sendtoPickerSelectAll"/);
+        expect(chatHtml).toMatch(/onchange="toggleSendtoPickerSelectAll\(this\)"/);
+        expect(chatHtml).toMatch(/onclick="confirmSendtoPicker\(\)"/);
+        // Cancel reachable from header X + footer button.
+        const cancelCalls = chatHtml.match(/onclick="cancelSendtoPicker\(\)"/g) || [];
+        expect(cancelCalls.length).toBeGreaterThanOrEqual(2);
+    });
+
+    test('underlying #targetBarRow checkbox source-of-truth is preserved (hidden, not removed)', () => {
+        // Downstream code (sendMessage / persistTargetSelection /
+        // applyAutoToggleReceivers / getSelectedTargets) reads the underlying
+        // .target-entity-check inputs. Removing them would break every
+        // consumer; we hide them and let the picker overlay edit them.
+        expect(chatHtml).toMatch(/id="targetBarRow"[^>]*hidden/);
+        expect(chatHtml).toMatch(/aria-hidden="true"/);
+        // The query downstream code uses must still be findable in source.
+        expect(chatHtml).toMatch(/\.target-entity-check input\[type="checkbox"\]/);
+    });
+
+    test('updateTargetAll now refreshes the picker button label', () => {
+        // The visible button summary must track underlying state, otherwise
+        // a quote-auto-select or manual toggle leaves the button stale.
+        const fnMatch = chatHtml.match(/function\s+updateTargetAll\s*\(\s*opts\s*\)\s*\{[\s\S]*?\n        \}/);
+        expect(fnMatch).not.toBeNull();
+        expect(fnMatch[0]).toMatch(/refreshSendtoPickerButtonLabel/);
+    });
+
+    test('confirmSendtoPicker routes through persistTargetSelection + updateTargetAll', () => {
+        // The picker must NOT bypass the existing persistence pipeline,
+        // otherwise localStorage drifts from DOM and a refresh restores the
+        // wrong recipients.
+        const fnMatch = chatHtml.match(/function\s+confirmSendtoPicker\s*\(\s*\)\s*\{[\s\S]*?\n        \}/);
+        expect(fnMatch).not.toBeNull();
+        const body = fnMatch[0];
+        expect(body).toMatch(/persistTargetSelection\(\)/);
+        expect(body).toMatch(/updateTargetAll\(\)/);
+        // It must also clear the auto-receiver hint when the user un-checks
+        // an entity that was previously auto-toggled (card_3462... contract).
+        expect(body).toMatch(/clearReceiverHintForEntity/);
+    });
+
+    test('three i18n keys for the button label exist', () => {
+        // The summary label is one of three strings — ALL, single (one
+        // {target}), or multi ({count} entities). The picker chooses based
+        // on how many entities are checked.
+        expect(chatHtml).toMatch(/chat_sendto_button_label_all/);
+        expect(chatHtml).toMatch(/chat_sendto_button_label_single/);
+        expect(chatHtml).toMatch(/chat_sendto_button_label_multi/);
+    });
+
+    test('overlay uses bottom-sheet on @media (pointer:coarse)', () => {
+        // Mobile bottom-sheet contract: docked to the bottom, max-height
+        // 70vh so the chat input is still reachable above. Desktop hover
+        // devices keep the centered dialog (60vh).
+        expect(chatHtml).toMatch(/@media\s*\(\s*pointer:\s*coarse\s*\)/);
+        expect(chatHtml).toMatch(/max-height:\s*70vh/);
+        expect(chatHtml).toMatch(/max-height:\s*60vh/);
+    });
+});
+
+describe('chat-sendto-picker — i18n parity (en + zh)', () => {
+    const i18nJs = fs.readFileSync(
+        path.join(__dirname, '..', '..', 'public', 'shared', 'i18n.js'),
+        'utf8'
+    );
+    // Locate locale blocks by their opener (matches the pattern other
+    // tests use — bare-identifier `en: {` / `zh: {` at column 4).
+    const LOCALE_RE = /^(\s*)(en|zh|zh-TW|ja|ko|th|vi|id|fr|es|de|pt|ms|hi|ar):\s*\{\s*$/gm;
+    const openers = [];
+    let m;
+    while ((m = LOCALE_RE.exec(i18nJs)) !== null) {
+        openers.push({ name: m[2], start: m.index });
+    }
+    openers.sort((a, b) => a.start - b.start);
+    const blocks = {};
+    openers.forEach((entry, i) => {
+        const end = i + 1 < openers.length ? openers[i + 1].start : i18nJs.length;
+        blocks[entry.name] = i18nJs.slice(entry.start, end);
+    });
+
+    const EXPECT = {
+        en: {
+            chat_sendto_button_label_all: 'Send to ALL',
+            chat_sendto_button_label_single: 'Send to {target}',
+            chat_sendto_button_label_multi: 'Send to {count} entities',
+            chat_sendto_picker_title: 'Select recipients',
+            chat_sendto_picker_select_all: 'Select all',
+            chat_sendto_picker_confirm: 'Confirm',
+            chat_sendto_picker_cancel: 'Cancel',
+        },
+        zh: {
+            chat_sendto_button_label_all: '傳送給 ALL',
+            chat_sendto_button_label_single: '傳送給 {target}',
+            chat_sendto_button_label_multi: '傳送給 {count} entities',
+            chat_sendto_picker_title: '選擇傳送對象',
+            chat_sendto_picker_select_all: '全選',
+            chat_sendto_picker_confirm: '確認',
+            chat_sendto_picker_cancel: '取消',
+        },
+    };
+
+    Object.entries(EXPECT).forEach(([locale, kv]) => {
+        Object.entries(kv).forEach(([key, val]) => {
+            test(`${locale} → ${key}`, () => {
+                const block = blocks[locale];
+                expect(block).toBeDefined();
+                const re = new RegExp(
+                    '"' + key + '"\\s*:\\s*"' + val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '"'
+                );
+                expect(block).toMatch(re);
+            });
+        });
+    });
+});
+
+describe('chat-sendto-picker — behaviour against a hand-rolled DOM stub', () => {
+    // Minimal DOM shim that mirrors only what the picker functions touch:
+    //   - underlying .target-entity-check input checkboxes (hidden row)
+    //   - dialog row checkboxes ([data-picker-entity])
+    //   - the button label span (id="sendtoPickerBtnLabel")
+    //   - the overlay container + dialog (for hidden/aria-expanded toggles)
+    //   - getEntityDisplayName / getAvatarForEntity / renderAvatarHtml /
+    //     escapeHtml / boundEntities (consulted while rendering rows)
+
+    function extractFunction(name) {
+        const re = new RegExp(`function\\s+${name}\\s*\\([^)]*\\)\\s*\\{`, 'g');
+        const m = re.exec(chatHtml);
+        if (!m) throw new Error(`function ${name} not found`);
+        let depth = 1;
+        let i = m.index + m[0].length;
+        while (i < chatHtml.length && depth > 0) {
+            const ch = chatHtml[i];
+            if (ch === '{') depth++;
+            else if (ch === '}') depth--;
+            i++;
+        }
+        return chatHtml.slice(m.index, i);
+    }
+
+    function makeDoc(entityIds, initiallyChecked) {
+        // Hidden source-of-truth checkboxes.
+        const underlyings = entityIds.map(eid => ({
+            type: 'checkbox',
+            checked: initiallyChecked.has(eid),
+            dataset: { entity: String(eid) },
+            __role: 'underlying',
+        }));
+        // Dialog row checkboxes — created at openSendtoPicker time. Start
+        // empty so a "picker not open" state still works.
+        const dialogRows = [];
+        // Visible elements: button label span + button + overlay + select-all + dialog list.
+        const labelEl = { textContent: '' };
+        const buttonEl = {
+            __attrs: { 'aria-expanded': 'false' },
+            setAttribute(k, v) { this.__attrs[k] = v; },
+            getAttribute(k) { return this.__attrs[k]; },
+        };
+        const overlayEl = {
+            hidden: true,
+            dataset: {},
+        };
+        const dialogEl = {
+            setAttribute() {},
+            focus() {},
+        };
+        const selectAllEl = {
+            type: 'checkbox',
+            checked: false,
+            indeterminate: false,
+        };
+        const listEl = {
+            innerHTML: '',
+            __children: [],
+            appendChild(node) {
+                this.__children.push(node);
+                if (node && node.__type === 'pickerRow' && node.__input) {
+                    dialogRows.push(node.__input);
+                }
+            },
+        };
+
+        const elementById = {
+            sendtoPickerBtn: buttonEl,
+            sendtoPickerBtnLabel: labelEl,
+            sendtoPickerOverlay: overlayEl,
+            sendtoPickerDialog: dialogEl,
+            sendtoPickerSelectAll: selectAllEl,
+            sendtoPickerList: listEl,
+        };
+
+        const document = {
+            getElementById(id) { return elementById[id] || null; },
+            querySelector(sel) {
+                // Underlying by data-entity="N".
+                const m = sel.match(/\.target-entity-check input\[type="checkbox"\]\[data-entity="(\d+)"\]/);
+                if (m) return underlyings.find(u => u.dataset.entity === m[1]) || null;
+                return null;
+            },
+            querySelectorAll(sel) {
+                if (sel === '.target-entity-check input[type="checkbox"]') return underlyings;
+                if (sel === '#sendtoPickerList input[data-picker-entity]') return dialogRows;
+                return [];
+            },
+            createElement(tag) {
+                const el = {
+                    tagName: tag.toUpperCase(),
+                    className: '',
+                    dataset: {},
+                    innerHTML: '',
+                };
+                return el;
+            },
+            addEventListener() {},
+            removeEventListener() {},
+        };
+
+        return { document, underlyings, dialogRows, labelEl, buttonEl, overlayEl, selectAllEl, listEl };
+    }
+
+    function makeSandbox(entityIds, initiallyChecked, opts = {}) {
+        const ctx = makeDoc(entityIds, initiallyChecked);
+        const sandbox = {
+            document: ctx.document,
+            i18n: {
+                t(k, params) {
+                    const tpls = {
+                        chat_sendto_button_label_all: '傳送給 ALL',
+                        chat_sendto_button_label_single: '傳送給 {target}',
+                        chat_sendto_button_label_multi: '傳送給 {count} entities',
+                        chat_loading_entities: 'Loading…',
+                    };
+                    let s = tpls[k] || k;
+                    if (params) {
+                        Object.keys(params).forEach(p => {
+                            s = s.replace(new RegExp('\\{' + p + '\\}', 'g'), params[p]);
+                        });
+                    }
+                    return s;
+                },
+            },
+            boundEntities: entityIds.map(eid => ({
+                entityId: eid,
+                publicCode: 'pc' + eid,
+            })),
+            persistTargetSelection: () => { sandbox._persisted = (sandbox._persisted || 0) + 1; },
+            clearReceiverHintForEntity: () => { sandbox._hintClears = (sandbox._hintClears || 0) + 1; },
+            updateTargetAll: function () { /* picker-confirm calls this; no-op for the test */ },
+            requestAnimationFrame: (fn) => fn(),
+            getAvatarForEntity: () => '\u{1F99E}',
+            getEntityDisplayName: (id) => 'Entity#' + id,
+            renderAvatarHtml: () => '<i></i>',
+            escapeHtml: (s) => String(s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+            })[c]),
+        };
+
+        const body =
+            extractFunction('getSendtoUnderlyingChecks') + '\n' +
+            extractFunction('refreshSendtoPickerButtonLabel') + '\n' +
+            extractFunction('openSendtoPicker') + '\n' +
+            extractFunction('cancelSendtoPicker') + '\n' +
+            extractFunction('closeSendtoPickerOverlay') + '\n' +
+            extractFunction('confirmSendtoPicker') + '\n' +
+            extractFunction('toggleSendtoPickerSelectAll') + '\n' +
+            extractFunction('onSendtoPickerRowChange') + '\n' +
+            extractFunction('syncSendtoPickerSelectAllState') + '\n' +
+            extractFunction('sendtoPickerKeydown') + '\n';
+
+        const fn = new Function(
+            'document', 'i18n', 'boundEntities',
+            'persistTargetSelection', 'updateTargetAll', 'clearReceiverHintForEntity',
+            'requestAnimationFrame',
+            'getAvatarForEntity', 'getEntityDisplayName', 'renderAvatarHtml', 'escapeHtml',
+            `${body}\nreturn {
+                getSendtoUnderlyingChecks,
+                refreshSendtoPickerButtonLabel,
+                openSendtoPicker,
+                cancelSendtoPicker,
+                closeSendtoPickerOverlay,
+                confirmSendtoPicker,
+                toggleSendtoPickerSelectAll,
+                syncSendtoPickerSelectAllState,
+            };`
+        );
+        const api = fn(
+            sandbox.document, sandbox.i18n, sandbox.boundEntities,
+            sandbox.persistTargetSelection, sandbox.updateTargetAll, sandbox.clearReceiverHintForEntity,
+            sandbox.requestAnimationFrame,
+            sandbox.getAvatarForEntity, sandbox.getEntityDisplayName, sandbox.renderAvatarHtml, sandbox.escapeHtml,
+        );
+        return { sandbox, api, ctx };
+    }
+
+    // Helper: simulate openSendtoPicker by populating dialog rows manually
+    // (the live openSendtoPicker uses .innerHTML which our shim doesn't parse,
+    // so we instead push checkbox stubs into ctx.dialogRows).
+    function simulateOpen(ctx, initiallyCheckedSet) {
+        // Mirror what openSendtoPicker would produce: one row checkbox per
+        // boundEntity, pre-checked from the underlying state.
+        ctx.dialogRows.length = 0;
+        ctx.underlyings.forEach(u => {
+            ctx.dialogRows.push({
+                type: 'checkbox',
+                checked: !!initiallyCheckedSet.has(Number(u.dataset.entity)),
+                dataset: { pickerEntity: u.dataset.entity },
+            });
+        });
+        // Also stash snapshot like the real fn would.
+        const snapshot = {};
+        ctx.underlyings.forEach(u => { snapshot[u.dataset.entity] = !!u.checked; });
+        ctx.overlayEl.dataset.snapshot = JSON.stringify(snapshot);
+        ctx.overlayEl.hidden = false;
+        ctx.buttonEl.setAttribute('aria-expanded', 'true');
+    }
+
+    test('Test 1 — button starts with "傳送給 ALL" when every entity is checked', () => {
+        const { api, ctx } = makeSandbox([1, 2, 3], new Set([1, 2, 3]));
+        api.refreshSendtoPickerButtonLabel();
+        expect(ctx.labelEl.textContent).toBe('傳送給 ALL');
+        expect(ctx.buttonEl.getAttribute('data-sendto-state')).toBe('all');
+    });
+
+    test('Test 2 — openSendtoPicker shows the overlay (hidden=false) and flips aria-expanded', () => {
+        const { api, ctx } = makeSandbox([1, 2, 3], new Set([1, 2, 3]));
+        // openSendtoPicker uses innerHTML which the shim doesn't render, but
+        // it still toggles overlay.hidden + button aria-expanded which is the
+        // load-bearing visibility contract for role="dialog".
+        api.openSendtoPicker();
+        expect(ctx.overlayEl.hidden).toBe(false);
+        expect(ctx.buttonEl.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    test('Test 3 — confirm with 2 of 3 entities → label becomes multi ("傳送給 2 entities")', () => {
+        const { api, ctx } = makeSandbox([1, 2, 3], new Set([1, 2, 3]));
+        simulateOpen(ctx, new Set([1, 2, 3]));
+        // User unchecks #3 inside the dialog.
+        ctx.dialogRows.find(r => r.dataset.pickerEntity === '3').checked = false;
+        api.confirmSendtoPicker();
+        // Underlying state flushed to the source-of-truth checkboxes.
+        expect(ctx.underlyings.find(u => u.dataset.entity === '1').checked).toBe(true);
+        expect(ctx.underlyings.find(u => u.dataset.entity === '2').checked).toBe(true);
+        expect(ctx.underlyings.find(u => u.dataset.entity === '3').checked).toBe(false);
+        // Visible label reflects the multi-recipient summary.
+        expect(ctx.labelEl.textContent).toBe('傳送給 2 entities');
+        expect(ctx.buttonEl.getAttribute('data-sendto-state')).toBe('multi');
+        // Overlay closes on Confirm.
+        expect(ctx.overlayEl.hidden).toBe(true);
+        expect(ctx.buttonEl.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    test('Test 4 — uncheck all but one → label becomes single ("傳送給 #1")', () => {
+        const { api, ctx } = makeSandbox([1, 2, 3], new Set([1, 2, 3]));
+        simulateOpen(ctx, new Set([1, 2, 3]));
+        ctx.dialogRows.find(r => r.dataset.pickerEntity === '2').checked = false;
+        ctx.dialogRows.find(r => r.dataset.pickerEntity === '3').checked = false;
+        api.confirmSendtoPicker();
+        expect(ctx.underlyings.find(u => u.dataset.entity === '1').checked).toBe(true);
+        expect(ctx.underlyings.find(u => u.dataset.entity === '2').checked).toBe(false);
+        expect(ctx.underlyings.find(u => u.dataset.entity === '3').checked).toBe(false);
+        expect(ctx.labelEl.textContent).toBe('傳送給 #1');
+        expect(ctx.buttonEl.getAttribute('data-sendto-state')).toBe('single');
+    });
+
+    test('Test 5 — cancel does NOT modify underlying state', () => {
+        const { api, ctx } = makeSandbox([1, 2, 3], new Set([1, 2, 3]));
+        simulateOpen(ctx, new Set([1, 2, 3]));
+        // User toggles every dialog row off, but then hits Cancel.
+        ctx.dialogRows.forEach(r => { r.checked = false; });
+        api.cancelSendtoPicker();
+        // Underlying still all true.
+        expect(ctx.underlyings.every(u => u.checked === true)).toBe(true);
+        expect(ctx.overlayEl.hidden).toBe(true);
+        expect(ctx.buttonEl.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    test('Test 6 — click-outside closes overlay without saving (same as Cancel)', () => {
+        // The HTML inline handler is `if(event.target===this)cancelSendtoPicker()`,
+        // so a backdrop click routes through cancelSendtoPicker. We assert
+        // that behavior by invoking cancelSendtoPicker directly after a
+        // dialog-row mutation and confirming no state change leaks out.
+        const { api, ctx } = makeSandbox([1, 2, 3], new Set([1, 2, 3]));
+        simulateOpen(ctx, new Set([1, 2, 3]));
+        ctx.dialogRows.find(r => r.dataset.pickerEntity === '1').checked = false;
+        // Simulate the backdrop click → cancelSendtoPicker.
+        api.cancelSendtoPicker();
+        expect(ctx.underlyings.find(u => u.dataset.entity === '1').checked).toBe(true);
+        expect(ctx.overlayEl.hidden).toBe(true);
+    });
+
+    test('select-all toggle flips every dialog row + reflects in state sync', () => {
+        const { api, ctx } = makeSandbox([1, 2, 3], new Set([1]));
+        simulateOpen(ctx, new Set([1]));
+        // Programmatically check the select-all box + call its handler.
+        ctx.selectAllEl.checked = true;
+        api.toggleSendtoPickerSelectAll(ctx.selectAllEl);
+        expect(ctx.dialogRows.every(r => r.checked)).toBe(true);
+        // Sync helper detects "all checked" → indeterminate cleared.
+        api.syncSendtoPickerSelectAllState();
+        expect(ctx.selectAllEl.checked).toBe(true);
+        expect(ctx.selectAllEl.indeterminate).toBe(false);
+
+        // Partial uncheck → indeterminate true.
+        ctx.dialogRows[1].checked = false;
+        api.syncSendtoPickerSelectAllState();
+        expect(ctx.selectAllEl.indeterminate).toBe(true);
+        expect(ctx.selectAllEl.checked).toBe(false);
+    });
+
+    test('zero entities checked → label shows "傳送給 0 entities" (sendable-state-honest)', () => {
+        const { api, ctx } = makeSandbox([1, 2], new Set());
+        api.refreshSendtoPickerButtonLabel();
+        expect(ctx.labelEl.textContent).toBe('傳送給 0 entities');
+        expect(ctx.buttonEl.getAttribute('data-sendto-state')).toBe('none');
+    });
+});
