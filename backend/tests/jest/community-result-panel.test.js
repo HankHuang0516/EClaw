@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 
 const html = fs.readFileSync(
     path.join(__dirname, '../../public/portal/community.html'),
@@ -9,6 +10,49 @@ const i18n = fs.readFileSync(
     path.join(__dirname, '../../public/shared/i18n.js'),
     'utf8',
 );
+
+const RESULT_I18N_KEYS = [
+    'community_result_summary_default',
+    'community_result_detail_default',
+    'community_result_clear_filters',
+    'community_result_filter_search',
+    'community_result_filter_category',
+    'community_result_filter_capabilities',
+    'community_result_filter_rate',
+    'community_result_filter_separator',
+    'community_result_count_one',
+    'community_result_count_many',
+    'community_result_count_unknown',
+    'community_result_summary_filtered',
+    'community_result_summary_default_count',
+    'community_result_detail_filtered',
+    'community_result_detail_default_sorted',
+];
+
+const ERROR_I18N_KEYS = [
+    'community_error_title',
+    'community_error_desc',
+];
+
+function loadTranslations() {
+    const noop = () => {};
+    const sandbox = {
+        _result: null,
+        localStorage: { getItem: () => null, setItem: noop },
+        navigator: { language: 'en' },
+        document: { querySelectorAll: () => [], documentElement: { lang: 'en' }, addEventListener: noop, getElementById: () => null },
+        window: { location: { search: '' } },
+        setTimeout: noop,
+        console: { log: noop, warn: noop, error: noop },
+    };
+    vm.createContext(sandbox);
+    vm.runInContext(i18n + '\n_result = TRANSLATIONS;', sandbox, { timeout: 5000 });
+    return sandbox._result;
+}
+
+function hasKey(dict, key) {
+    return Object.prototype.hasOwnProperty.call(dict, key);
+}
 
 describe('community.html result context controls', () => {
     test('renders a live result summary between filters and stats', () => {
@@ -62,27 +106,25 @@ describe('community.html result context controls', () => {
     });
 
     test('defines result panel i18n keys across supported locales', () => {
-        [
-            'community_result_summary_default',
-            'community_result_detail_default',
-            'community_result_clear_filters',
-            'community_result_filter_search',
-            'community_result_filter_category',
-            'community_result_filter_capabilities',
-            'community_result_filter_rate',
-            'community_result_filter_separator',
-            'community_result_count_one',
-            'community_result_count_many',
-            'community_result_count_unknown',
-            'community_result_summary_filtered',
-            'community_result_summary_default_count',
-            'community_result_detail_filtered',
-            'community_result_detail_default_sorted',
-            'community_error_title',
-            'community_error_desc',
-        ].forEach(key => {
-            const occurrences = (i18n.match(new RegExp(`"${key}"`, 'g')) || []).length;
-            expect(occurrences).toBeGreaterThanOrEqual(16);
+        const translations = loadTranslations();
+        const localeEntries = Object.entries(translations).filter(([, dict]) => dict && typeof dict === 'object');
+        const nonZhTwLocales = localeEntries.filter(([locale]) => locale !== 'zh-TW');
+
+        RESULT_I18N_KEYS.forEach(key => {
+            expect(hasKey(translations.zh, key)).toBe(true);
+            expect(hasKey(translations['zh-TW'], key)).toBe(false);
+
+            const missingLocales = nonZhTwLocales
+                .filter(([, dict]) => !hasKey(dict, key))
+                .map(([locale]) => locale);
+            expect(missingLocales).toEqual([]);
+        });
+
+        ERROR_I18N_KEYS.forEach(key => {
+            const missingLocales = localeEntries
+                .filter(([, dict]) => !hasKey(dict, key))
+                .map(([locale]) => locale);
+            expect(missingLocales).toEqual([]);
         });
     });
 });
