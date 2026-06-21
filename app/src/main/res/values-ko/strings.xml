@@ -745,6 +745,10 @@ GPS: 온디맨드만, 백그라운드 추적 없음, 서버 재시작 시 데이
     <string name="update_later">나중에</string>
     <string name="update_message">새 버전 (v%s)이 출시되었습니다. 최상의 경험을 위해 업데이트하세요!</string>
     <string name="update_now">지금 업데이트</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">이 업데이트 정보</string>
+    <string name="update_help_body">현재 버전 %1$s → 최신 %2$s. "지금 업데이트"를 누르면 앱을 벗어나지 않고 바로 업데이트됩니다(약 30초). 앱 내 업데이트를 사용할 수 없으면 Play 스토어가 열립니다.</string>
+    <string name="update_store_unavailable">업데이트를 위해 스토어를 열 수 없습니다. Google Play에서 업데이트해 주세요.</string>
     <string name="update_title">업데이트 가능</string>
     <string name="upload">업로드</string>
     <string name="upload_error">업로드 실패</string>

@@ -813,6 +813,10 @@ GPS: केवल अनुरोध पर, कोई बैकग्राउ�
     <string name="update_title">अपडेट उपलब्ध</string>
     <string name="update_message">एक नया वर्शन (v%s) उपलब्ध है। सर्वोत्तम अनुभव के लिए अपडेट करें!</string>
     <string name="update_now">अभी अपडेट करें</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">इस अपडेट के बारे में</string>
+    <string name="update_help_body">आपका वर्शन %1$s → नवीनतम %2$s. ऐप के अंदर ही अपडेट करने के लिए "अभी अपडेट करें" पर टैप करें (लगभग 30 सेकंड, ऐप छोड़ने की ज़रूरत नहीं)। अगर इन-ऐप अपडेट उपलब्ध नहीं है, तो Play Store खुलेगा।</string>
+    <string name="update_store_unavailable">अपडेट के लिए स्टोर नहीं खोल सके। कृपया Google Play से अपडेट करें।</string>
     <string name="update_later">बाद में</string>
 
     <!-- Card Holder -->    <string name="card_holder_capabilities">क्षमताएं</string>

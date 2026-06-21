@@ -1285,7 +1285,41 @@
                 android:gravity="center"
                 android:textColor="@color/text_white_50"
                 android:textSize="12sp"
-                android:layout_marginBottom="16dp"/>
+                android:layout_marginBottom="8dp"/>
+
+            <!-- Update-available chip (card_28a8290a). GONE until /api/version
+                 reports a newer build; tapping it runs the Play Core In-App Update
+                 IMMEDIATE flow (background download + restart, ~30s, stays in-app),
+                 falling back to the Play Store. The "?" icon explains what/needs/next. -->
+            <LinearLayout
+                android:id="@+id/updateChipRow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp"
+                android:visibility="gone">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipUpdateAvailable"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/update_now"
+                    app:chipIcon="@android:drawable/stat_sys_download"
+                    style="@style/Widget.Material3.Chip.Assist"/>
+
+                <ImageButton
+                    android:id="@+id/btnUpdateHelp"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="4dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/update_help_title"
+                    android:src="@android:drawable/ic_menu_help"
+                    app:tint="@color/text_white_50"/>
+
+            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>

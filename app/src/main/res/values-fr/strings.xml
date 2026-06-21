@@ -805,6 +805,10 @@ Si vous avez des questions, contactez-nous via notre e-mail officiel.
     <string name="update_title">Mise à jour disponible</string>
     <string name="update_message">Une nouvelle version (v%s) est disponible. Mettez à jour pour la meilleure expérience !</string>
     <string name="update_now">Mettre à jour</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">À propos de cette mise à jour</string>
+    <string name="update_help_body">Votre version %1$s → dernière %2$s. Appuyez sur « Mettre à jour » pour mettre à jour directement dans l\'application (environ 30 secondes, sans la quitter). Si la mise à jour intégrée n\'est pas disponible, le Play Store s\'ouvre.</string>
+    <string name="update_store_unavailable">Impossible d\'ouvrir le store pour la mise à jour. Veuillez mettre à jour depuis Google Play.</string>
     <string name="update_later">Plus tard</string>
 
     <!-- Card Holder -->    <string name="card_holder_capabilities">Capacités</string>

@@ -763,6 +763,10 @@ Tu suscripción permanece activa y puedes reenlazar en cualquier momento (sujeto
     <string name="update_later">Más Tarde</string>
     <string name="update_message">Una nueva versión (v%s) está disponible. ¡Actualiza para la mejor experiencia!</string>
     <string name="update_now">Actualizar Ahora</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">Acerca de esta actualización</string>
+    <string name="update_help_body">Tu versión %1$s → última %2$s. Toca «Actualizar Ahora» para actualizar dentro de la app (unos 30 segundos, sin salir). Si la actualización en la app no está disponible, se abrirá Play Store.</string>
+    <string name="update_store_unavailable">No se pudo abrir la tienda para actualizar. Actualiza desde Google Play.</string>
     <string name="update_title">Actualización Disponible</string>
     <string name="upload">Subir</string>
     <string name="upload_error">Error al subir</string>

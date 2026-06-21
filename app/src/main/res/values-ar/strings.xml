@@ -806,6 +806,10 @@ GPS: عند الطلب فقط، بلا تتبع في الخلفية، تُفقد
     <string name="update_title">تحديث متاح</string>
     <string name="update_message">إصدار جديد (v%s) متاح. حدّث للحصول على أفضل تجربة!</string>
     <string name="update_now">تحديث الآن</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">حول هذا التحديث</string>
+    <string name="update_help_body">إصدارك %1$s ← الأحدث %2$s. اضغط "تحديث الآن" للتحديث داخل التطبيق مباشرةً (حوالي 30 ثانية، دون مغادرة التطبيق). إذا لم يتوفر التحديث داخل التطبيق، فسيُفتح متجر Play.</string>
+    <string name="update_store_unavailable">تعذّر فتح المتجر للتحديث. يُرجى التحديث من Google Play.</string>
     <string name="update_later">لاحقًا</string>
 
     <!-- Card Holder -->    <string name="card_holder_capabilities">القدرات</string>

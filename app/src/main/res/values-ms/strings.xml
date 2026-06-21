@@ -813,6 +813,10 @@ Jika anda mempunyai sebarang soalan, sila hubungi kami melalui e-mel rasmi kami.
     <string name="update_title">Kemas Kini Tersedia</string>
     <string name="update_message">Versi baharu (v%s) tersedia. Kemas kini untuk pengalaman terbaik!</string>
     <string name="update_now">Kemas Kini Sekarang</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">Tentang kemas kini ini</string>
+    <string name="update_help_body">Versi anda %1$s → terkini %2$s. Ketik "Kemas Kini Sekarang" untuk mengemas kini terus dalam apl (kira-kira 30 saat, tanpa keluar apl). Jika kemas kini dalam apl tiada, Gedung Play akan dibuka.</string>
+    <string name="update_store_unavailable">Tidak dapat membuka gedung untuk mengemas kini. Sila kemas kini dari Google Play.</string>
     <string name="update_later">Kemudian</string>
 
     <!-- Card Holder -->    <string name="card_holder_capabilities">Keupayaan</string>

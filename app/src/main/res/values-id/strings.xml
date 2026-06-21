@@ -772,6 +772,10 @@
     <string name="update_later">Nanti</string>
     <string name="update_message">Versi baru (v%s) sudah tersedia. Perbarui untuk pengalaman terbaik!</string>
     <string name="update_now">Perbarui Sekarang</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">Tentang pembaruan ini</string>
+    <string name="update_help_body">Versi Anda %1$s → terbaru %2$s. Ketuk "Perbarui Sekarang" untuk memperbarui langsung di dalam aplikasi (sekitar 30 detik, tanpa keluar aplikasi). Jika pembaruan dalam aplikasi tidak tersedia, Play Store akan terbuka.</string>
+    <string name="update_store_unavailable">Tidak dapat membuka toko untuk memperbarui. Silakan perbarui dari Google Play.</string>
     <string name="update_title">Pembaruan Tersedia</string>
     <string name="upgrade_plan">Upgrade Paket</string>
     <string name="upload">Unggah</string>

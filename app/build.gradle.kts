@@ -96,6 +96,10 @@ dependencies {
     implementation(libs.billing)
     implementation(libs.play.integrity)
 
+    // Google Play Core In-App Update (Settings update-available chip — card_28a8290a)
+    implementation(libs.play.app.update)
+    implementation(libs.play.app.update.ktx)
+
     // Room Database for chat history
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
