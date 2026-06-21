@@ -30,6 +30,9 @@ describe('onboarding quick-win demo structure', () => {
     test('offers exactly the 3 approved prebuilt workflow templates', () => {
         const templates = [...html.matchAll(/data-ob-template="([^"]+)"/g)].map(m => m[1]);
         expect(templates).toEqual(['content', 'code', 'translate']);
+        expect(html).toMatch(/data-ob-template="content" aria-pressed="true"/);
+        expect(html).toMatch(/data-ob-template="code" aria-pressed="false"/);
+        expect(html).toMatch(/data-ob-template="translate" aria-pressed="false"/);
         expect(html).toMatch(/data-i18n="onboarding_template_content_title"/);
         expect(html).toMatch(/data-i18n="onboarding_template_code_title"/);
         expect(html).toMatch(/data-i18n="onboarding_template_translate_title"/);
@@ -42,10 +45,31 @@ describe('onboarding quick-win demo structure', () => {
         expect(html).toMatch(/data-i18n="onboarding_progress_step4"/);
     });
 
+    test('keeps the preview status visible and accessible', () => {
+        expect(html).toMatch(/id="ob-demo-panel" data-state="ready"/);
+        expect(html).toMatch(/id="ob-demo-status" role="status" aria-live="polite"/);
+        expect(html).toMatch(/aria-describedby="ob-demo-status"/);
+        expect(html).toMatch(/function prefersZhStatus\(\)/);
+        expect(html).toMatch(/function statusText\(value\)/);
+        expect(html).toMatch(/function setDemoStatus\(message, state\)/);
+        expect(html).toMatch(/setDemoStatus\(statusText\(config\.runningStatus\), 'running'\)/);
+        expect(html).toMatch(/Preview complete\. Continue in chat to use this workflow\./);
+        expect(html).toMatch(/預覽完成。可帶到聊天繼續使用這個工作流。/);
+    });
+
+    test('has split-pane and mobile responsive rules for dense quick-win controls', () => {
+        expect(html).toMatch(/@media \(max-width: 720px\)/);
+        expect(html).toMatch(/\.ob-progress,\s*\.ob-demo-flow\s*\{[\s\S]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+        expect(html).toMatch(/@media \(max-width: 540px\)/);
+        expect(html).toMatch(/\.ob-quickwin-actions\s*\{[\s\S]*flex-direction: column/);
+        expect(html).toMatch(/\.ob-primary-btn\s*\{[\s\S]*width: 100%/);
+    });
+
     test('wires template selection, demo progress, and chat continuation state', () => {
         expect(html).toMatch(/const quickWinTemplates = \{/);
         expect(html).toMatch(/selectQuickWinTemplate\(btn\.getAttribute\('data-ob-template'\), 2\)/);
         expect(html).toMatch(/setQuickWinProgress\(4\)/);
+        expect(html).toMatch(/btn\.setAttribute\('aria-pressed', String\(isActive\)\)/);
         expect(html).toMatch(/eclaw_onboarding_quickwin_template/);
         expect(html).toMatch(/\/portal\/chat\.html\?quickWin=/);
         expect(html).toMatch(/\/portal\/onboarding\/onboarding\.js/);
