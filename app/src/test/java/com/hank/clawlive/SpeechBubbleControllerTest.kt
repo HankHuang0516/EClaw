@@ -123,11 +123,11 @@ class SpeechBubbleControllerTest {
         assertTrue(controller.isVisible(16, nowMs = 14_999L))
         assertFalse(controller.isVisible(16, nowMs = 15_001L))
 
-        // 6000-char message -> would be 360s, capped to the smart 5m max.
+        // 6000-char message -> would be 360s, capped to the smart 20s max.
         val long = "a".repeat(6000)
         controller.show(entityId = 6, text = long, nowMs = 0L)
-        assertTrue(controller.isVisible(6, nowMs = 299_999L))
-        assertFalse(controller.isVisible(6, nowMs = 300_001L))
+        assertTrue(controller.isVisible(6, nowMs = 19_999L))
+        assertFalse(controller.isVisible(6, nowMs = 20_001L))
     }
 
     /** §5.3 / O-7 — a new message resets the TTL rather than letting the old one expire. */
@@ -142,6 +142,15 @@ class SpeechBubbleControllerTest {
         assertTrue(controller.isVisible(7, nowMs = 9_000L))
         val placement = controller.placementFor(7, 0.5f, 0.5f, 0.1f, nowMs = 9_000L)!!
         assertEquals("second", placement.text)
+    }
+
+    @Test
+    fun expiresAtReportsLiveBubbleTtlForConversationMotion() {
+        val controller = SpeechBubbleController(defaultTtlMs = 5_000L)
+        controller.show(entityId = 17, text = "route", nowMs = 1_000L)
+
+        assertEquals(6_000L, controller.expiresAt(17, nowMs = 1_000L))
+        assertNull(controller.expiresAt(17, nowMs = 6_001L))
     }
 
     /** Fade alpha ramps from 1.0 to 0.0 across the fade-out window. */

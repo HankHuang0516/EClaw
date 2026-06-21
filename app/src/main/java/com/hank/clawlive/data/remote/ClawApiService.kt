@@ -77,6 +77,14 @@ interface ClawApiService {
         @Query("deviceSecret") deviceSecret: String
     ): MultiEntityResponse
 
+    @GET("api/mission/cards")
+    suspend fun getWallpaperKanbanCards(
+        @Query("deviceId") deviceId: String,
+        @Query("deviceSecret") deviceSecret: String,
+        @Query("automation") automation: String = "all",
+        @Query("includeArchived") includeArchived: Boolean = false
+    ): WallpaperKanbanCardsResponse
+
     // Add a new entity slot to the device
     @POST("api/device/add-entity")
     suspend fun addEntity(@Body body: Map<String, String>): retrofit2.Response<com.google.gson.JsonObject>

@@ -11,6 +11,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.slider.Slider
 import com.hank.clawlive.data.local.LayoutPreferences
@@ -63,11 +64,11 @@ class WallpaperMoreSettingsActivity : AppCompatActivity() {
             description = getString(R.string.wallpaper_setting_speech_bubbles_desc),
             checked = layoutPrefs.wallpaperSpeechBubblesEnabled
         ) { layoutPrefs.wallpaperSpeechBubblesEnabled = it }
-        addDurationSlider(content)
+        addBubbleDurationSlider(content)
         addSwitch(
             content,
-            title = getString(R.string.wallpaper_setting_purposeful_walking),
-            description = getString(R.string.wallpaper_setting_purposeful_walking_desc),
+            title = getString(R.string.wallpaper_setting_conscious_walking),
+            description = getString(R.string.wallpaper_setting_conscious_walking_desc),
             checked = layoutPrefs.wallpaperPurposefulWalkingEnabled
         ) { layoutPrefs.wallpaperPurposefulWalkingEnabled = it }
         addSwitch(
@@ -76,6 +77,7 @@ class WallpaperMoreSettingsActivity : AppCompatActivity() {
             description = getString(R.string.wallpaper_setting_entity_interactions_desc),
             checked = layoutPrefs.wallpaperEntityInteractionsEnabled
         ) { layoutPrefs.wallpaperEntityInteractionsEnabled = it }
+        addCollisionDurationSlider(content)
         addSwitch(
             content,
             title = getString(R.string.wallpaper_setting_bubble_pulse),
@@ -112,6 +114,24 @@ class WallpaperMoreSettingsActivity : AppCompatActivity() {
             description = getString(R.string.wallpaper_setting_offline_cache_desc),
             checked = layoutPrefs.wallpaperOfflineEntityCacheEnabled
         ) { layoutPrefs.wallpaperOfflineEntityCacheEnabled = it }
+        addSwitch(
+            content,
+            title = getString(R.string.wallpaper_setting_kanban_tasks),
+            description = getString(R.string.wallpaper_setting_kanban_tasks_desc),
+            checked = layoutPrefs.wallpaperKanbanTasksEnabled
+        ) { layoutPrefs.wallpaperKanbanTasksEnabled = it }
+        addSwitch(
+            content,
+            title = getString(R.string.wallpaper_setting_kanban_automation_board),
+            description = getString(R.string.wallpaper_setting_kanban_automation_board_desc),
+            checked = layoutPrefs.wallpaperKanbanAutomationBoardEnabled
+        ) { layoutPrefs.wallpaperKanbanAutomationBoardEnabled = it }
+        addSwitch(
+            content,
+            title = getString(R.string.wallpaper_setting_kanban_privacy),
+            description = getString(R.string.wallpaper_setting_kanban_privacy_desc),
+            checked = layoutPrefs.wallpaperKanbanPrivacyModeEnabled
+        ) { layoutPrefs.wallpaperKanbanPrivacyModeEnabled = it }
 
         root.addView(
             ScrollView(this).apply { addView(content) },
@@ -128,7 +148,37 @@ class WallpaperMoreSettingsActivity : AppCompatActivity() {
         })
     }
 
-    private fun addDurationSlider(parent: LinearLayout) {
+    private fun addBubbleDurationSlider(parent: LinearLayout) {
+        addSecondsSlider(
+            parent = parent,
+            title = getString(R.string.wallpaper_setting_bubble_duration),
+            description = getString(R.string.wallpaper_setting_bubble_duration_desc),
+            minSeconds = LayoutPreferences.WALLPAPER_BUBBLE_DURATION_MIN_SECONDS,
+            maxSeconds = LayoutPreferences.WALLPAPER_BUBBLE_DURATION_MAX_SECONDS,
+            currentSeconds = layoutPrefs.wallpaperBubbleDurationSeconds
+        ) { layoutPrefs.wallpaperBubbleDurationSeconds = it }
+    }
+
+    private fun addCollisionDurationSlider(parent: LinearLayout) {
+        addSecondsSlider(
+            parent = parent,
+            title = getString(R.string.wallpaper_setting_collision_duration),
+            description = getString(R.string.wallpaper_setting_collision_duration_desc),
+            minSeconds = LayoutPreferences.WALLPAPER_COLLISION_REACTION_DURATION_MIN_SECONDS,
+            maxSeconds = LayoutPreferences.WALLPAPER_COLLISION_REACTION_DURATION_MAX_SECONDS,
+            currentSeconds = layoutPrefs.wallpaperCollisionReactionDurationSeconds
+        ) { layoutPrefs.wallpaperCollisionReactionDurationSeconds = it }
+    }
+
+    private fun addSecondsSlider(
+        parent: LinearLayout,
+        title: String,
+        description: String,
+        minSeconds: Int,
+        maxSeconds: Int,
+        currentSeconds: Int,
+        onChanged: (Int) -> Unit
+    ) {
         val density = resources.displayMetrics.density
         fun dp(value: Int): Int = (value * density).toInt()
 
@@ -141,41 +191,36 @@ class WallpaperMoreSettingsActivity : AppCompatActivity() {
             gravity = Gravity.CENTER_VERTICAL
         }
         header.addView(TextView(this).apply {
-            text = getString(R.string.wallpaper_setting_bubble_duration)
+            text = title
             setTextColor(0xFFFFFFFF.toInt())
             textSize = 16f
         }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        header.addView(helpButton(title, description), LinearLayout.LayoutParams(dp(32), dp(32)))
 
         val valueLabel = TextView(this).apply {
-            text = bubbleDurationLabel(layoutPrefs.wallpaperBubbleDurationSeconds)
+            text = secondsLabel(currentSeconds)
             setTextColor(0xB3FFFFFF.toInt())
             textSize = 14f
             gravity = Gravity.END
         }
         header.addView(valueLabel)
         container.addView(header)
-        container.addView(TextView(this).apply {
-            text = getString(R.string.wallpaper_setting_bubble_duration_desc)
-            setTextColor(0x99FFFFFF.toInt())
-            textSize = 12f
-            setPadding(0, dp(4), 0, dp(6))
-        })
         container.addView(Slider(this).apply {
-            valueFrom = LayoutPreferences.WALLPAPER_BUBBLE_DURATION_MIN_SECONDS.toFloat()
-            valueTo = LayoutPreferences.WALLPAPER_BUBBLE_DURATION_MAX_SECONDS.toFloat()
+            valueFrom = minSeconds.toFloat()
+            valueTo = maxSeconds.toFloat()
             stepSize = 1f
-            value = layoutPrefs.wallpaperBubbleDurationSeconds.toFloat()
-            contentDescription = getString(R.string.wallpaper_setting_bubble_duration)
+            value = currentSeconds.toFloat()
+            contentDescription = title
             addOnChangeListener { _, sliderValue, _ ->
                 val seconds = sliderValue.roundToInt()
-                layoutPrefs.wallpaperBubbleDurationSeconds = seconds
-                valueLabel.text = bubbleDurationLabel(seconds)
+                onChanged(seconds)
+                valueLabel.text = secondsLabel(seconds)
             }
         })
         parent.addView(container)
     }
 
-    private fun bubbleDurationLabel(seconds: Int): String {
+    private fun secondsLabel(seconds: Int): String {
         val minutes = seconds / 60
         val remainingSeconds = seconds % 60
         return when {
@@ -208,23 +253,39 @@ class WallpaperMoreSettingsActivity : AppCompatActivity() {
             setPadding(0, dp(18), 0, dp(10))
         }
         val labels = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
         }
         labels.addView(TextView(this).apply {
             text = title
             setTextColor(0xFFFFFFFF.toInt())
             textSize = 16f
-        })
-        labels.addView(TextView(this).apply {
-            text = description
-            setTextColor(0x99FFFFFF.toInt())
-            textSize = 12f
-        })
+        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        labels.addView(helpButton(title, description), LinearLayout.LayoutParams(dp(32), dp(32)))
         row.addView(labels, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         row.addView(MaterialSwitch(this).apply {
             isChecked = checked
             setOnCheckedChangeListener { _, isChecked -> onChanged(isChecked) }
         })
         parent.addView(row)
+    }
+
+    private fun helpButton(title: String, description: String): TextView {
+        return TextView(this).apply {
+            text = "?"
+            setTextColor(0xFFFFFFFF.toInt())
+            textSize = 14f
+            gravity = Gravity.CENTER
+            isClickable = true
+            isFocusable = true
+            contentDescription = getString(R.string.wallpaper_setting_help_content_description, title)
+            setOnClickListener {
+                MaterialAlertDialogBuilder(this@WallpaperMoreSettingsActivity)
+                    .setTitle(title)
+                    .setMessage(description)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show()
+            }
+        }
     }
 }

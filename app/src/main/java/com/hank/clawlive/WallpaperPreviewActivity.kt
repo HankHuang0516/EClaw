@@ -43,8 +43,11 @@ class WallpaperPreviewActivity : AppCompatActivity() {
     private lateinit var switchCustomLayout: MaterialSwitch
     private lateinit var switchBackground: MaterialSwitch
     private lateinit var switchWalking: MaterialSwitch
+    private lateinit var btnCustomLayoutHelp: TextView
+    private lateinit var btnBackgroundHelp: TextView
     private lateinit var btnWalkingHelp: TextView
     private lateinit var switchUsageOverlay: MaterialSwitch
+    private lateinit var btnUsageOverlayHelp: TextView
     private lateinit var checkUsageClaude: CheckBox
     private lateinit var checkUsageCodex: CheckBox
     private lateinit var checkUsageSession: CheckBox
@@ -138,8 +141,11 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         switchCustomLayout = findViewById(R.id.switchCustomLayout)
         switchBackground = findViewById(R.id.switchBackground)
         switchWalking = findViewById(R.id.switchWalking)
+        btnCustomLayoutHelp = findViewById(R.id.btnCustomLayoutHelp)
+        btnBackgroundHelp = findViewById(R.id.btnBackgroundHelp)
         btnWalkingHelp = findViewById(R.id.btnWalkingHelp)
         switchUsageOverlay = findViewById(R.id.switchUsageOverlay)
+        btnUsageOverlayHelp = findViewById(R.id.btnUsageOverlayHelp)
         checkUsageClaude = findViewById(R.id.checkUsageClaude)
         checkUsageCodex = findViewById(R.id.checkUsageCodex)
         checkUsageSession = findViewById(R.id.checkUsageSession)
@@ -245,6 +251,20 @@ class WallpaperPreviewActivity : AppCompatActivity() {
             startActivity(Intent(this, WallpaperMoreSettingsActivity::class.java))
         }
 
+        btnCustomLayoutHelp.setOnClickListener {
+            showSettingHelp(
+                getString(R.string.use_custom_layout),
+                getString(R.string.wallpaper_custom_layout_help)
+            )
+        }
+
+        btnBackgroundHelp.setOnClickListener {
+            showSettingHelp(
+                getString(R.string.custom_background),
+                getString(R.string.wallpaper_background_help)
+            )
+        }
+
         switchCustomLayout.setOnCheckedChangeListener { _, isChecked ->
             layoutPrefs.useCustomLayout = isChecked
             val message = getString(if (isChecked) R.string.custom_layout_enabled else R.string.custom_layout_using_preset)
@@ -271,11 +291,17 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         }
 
         btnWalkingHelp.setOnClickListener {
-            MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.wallpaper_walking_title)
-                .setMessage(R.string.wallpaper_walking_help)
-                .setPositiveButton(android.R.string.ok, null)
-                .show()
+            showSettingHelp(
+                getString(R.string.wallpaper_walking_title),
+                getString(R.string.wallpaper_walking_help)
+            )
+        }
+
+        btnUsageOverlayHelp.setOnClickListener {
+            showSettingHelp(
+                getString(R.string.wallpaper_usage_overlay),
+                getString(R.string.wallpaper_usage_overlay_help)
+            )
         }
 
         switchUsageOverlay.setOnCheckedChangeListener { _, isChecked ->
@@ -311,6 +337,14 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         settingsCollapseHandle.setOnClickListener {
             setSettingsCollapsed(!settingsCollapsed)
         }
+    }
+
+    private fun showSettingHelp(title: String, message: String) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
     private fun setSettingsCollapsed(collapsed: Boolean) {

@@ -339,6 +339,27 @@ class LayoutPreferences private constructor(context: Context) {
     val wallpaperBubbleDurationMs: Long
         get() = wallpaperBubbleDurationSeconds * 1_000L
 
+    var wallpaperCollisionReactionDurationSeconds: Int
+        get() = prefs.getInt(
+            KEY_WALLPAPER_COLLISION_REACTION_DURATION_SECONDS,
+            WALLPAPER_COLLISION_REACTION_DURATION_DEFAULT_SECONDS
+        ).coerceIn(
+            WALLPAPER_COLLISION_REACTION_DURATION_MIN_SECONDS,
+            WALLPAPER_COLLISION_REACTION_DURATION_MAX_SECONDS
+        )
+        set(value) {
+            prefs.edit().putInt(
+                KEY_WALLPAPER_COLLISION_REACTION_DURATION_SECONDS,
+                value.coerceIn(
+                    WALLPAPER_COLLISION_REACTION_DURATION_MIN_SECONDS,
+                    WALLPAPER_COLLISION_REACTION_DURATION_MAX_SECONDS
+                )
+            ).apply()
+        }
+
+    val wallpaperCollisionReactionDurationMs: Long
+        get() = wallpaperCollisionReactionDurationSeconds * 1_000L
+
     var wallpaperBubblePulseEnabled: Boolean
         get() = prefs.getBoolean(KEY_WALLPAPER_BUBBLE_PULSE_ENABLED, true)
         set(value) {
@@ -373,6 +394,24 @@ class LayoutPreferences private constructor(context: Context) {
         get() = prefs.getBoolean(KEY_WALLPAPER_OFFLINE_ENTITY_CACHE_ENABLED, true)
         set(value) {
             prefs.edit().putBoolean(KEY_WALLPAPER_OFFLINE_ENTITY_CACHE_ENABLED, value).apply()
+        }
+
+    var wallpaperKanbanTasksEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_KANBAN_TASKS_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_KANBAN_TASKS_ENABLED, value).apply()
+        }
+
+    var wallpaperKanbanAutomationBoardEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_KANBAN_AUTOMATION_BOARD_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_KANBAN_AUTOMATION_BOARD_ENABLED, value).apply()
+        }
+
+    var wallpaperKanbanPrivacyModeEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_KANBAN_PRIVACY_MODE_ENABLED, false)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_KANBAN_PRIVACY_MODE_ENABLED, value).apply()
         }
 
     var usageOverlayEnabled: Boolean
@@ -539,12 +578,16 @@ class LayoutPreferences private constructor(context: Context) {
         private const val KEY_WALLPAPER_ENTITY_INTERACTIONS_ENABLED = "wallpaper_entity_interactions_enabled"
         private const val KEY_WALLPAPER_SPEECH_BUBBLES_ENABLED = "wallpaper_speech_bubbles_enabled"
         private const val KEY_WALLPAPER_BUBBLE_DURATION_SECONDS = "wallpaper_bubble_duration_seconds"
+        private const val KEY_WALLPAPER_COLLISION_REACTION_DURATION_SECONDS = "wallpaper_collision_reaction_duration_seconds"
         private const val KEY_WALLPAPER_BUBBLE_PULSE_ENABLED = "wallpaper_bubble_pulse_enabled"
         private const val KEY_WALLPAPER_BUBBLE_OVERLAY_AVOIDANCE_ENABLED = "wallpaper_bubble_overlay_avoidance_enabled"
         private const val KEY_WALLPAPER_STATE_AURA_ENABLED = "wallpaper_state_aura_enabled"
         private const val KEY_WALLPAPER_GROUND_SHADOW_ENABLED = "wallpaper_ground_shadow_enabled"
         private const val KEY_WALLPAPER_ADAPTIVE_EFFECTS_ENABLED = "wallpaper_adaptive_effects_enabled"
         private const val KEY_WALLPAPER_OFFLINE_ENTITY_CACHE_ENABLED = "wallpaper_offline_entity_cache_enabled"
+        private const val KEY_WALLPAPER_KANBAN_TASKS_ENABLED = "wallpaper_kanban_tasks_enabled"
+        private const val KEY_WALLPAPER_KANBAN_AUTOMATION_BOARD_ENABLED = "wallpaper_kanban_automation_board_enabled"
+        private const val KEY_WALLPAPER_KANBAN_PRIVACY_MODE_ENABLED = "wallpaper_kanban_privacy_mode_enabled"
         private const val KEY_USAGE_OVERLAY_ENABLED = "usage_overlay_enabled"
         private const val KEY_USAGE_OVERLAY_POSITION = "usage_overlay_position"
         private const val KEY_USAGE_OVERLAY_CENTER = "usage_overlay_center"
@@ -562,9 +605,12 @@ class LayoutPreferences private constructor(context: Context) {
         const val RESET_WINDOW_WEEKLY = "weekly"
         const val RESET_WINDOW_5H_WEEKLY = "5h_weekly"
 
-        const val WALLPAPER_BUBBLE_DURATION_MIN_SECONDS = 5
-        const val WALLPAPER_BUBBLE_DURATION_MAX_SECONDS = 300
-        const val WALLPAPER_BUBBLE_DURATION_DEFAULT_SECONDS = 12
+        const val WALLPAPER_BUBBLE_DURATION_MIN_SECONDS = 1
+        const val WALLPAPER_BUBBLE_DURATION_MAX_SECONDS = 20
+        const val WALLPAPER_BUBBLE_DURATION_DEFAULT_SECONDS = 5
+        const val WALLPAPER_COLLISION_REACTION_DURATION_MIN_SECONDS = 1
+        const val WALLPAPER_COLLISION_REACTION_DURATION_MAX_SECONDS = 20
+        const val WALLPAPER_COLLISION_REACTION_DURATION_DEFAULT_SECONDS = 5
 
         // Display mode constants
         const val MODE_SINGLE = 1

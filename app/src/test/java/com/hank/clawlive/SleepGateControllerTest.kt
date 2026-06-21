@@ -52,7 +52,7 @@ class SleepGateControllerTest {
     }
 
     @Test
-    fun wakeResumesMovement() {
+    fun wakeReturnsToHomeWithoutAmbientWander() {
         val gate = controller(23)
         val sleepingEntity = EntityStatus(entityId = 3, state = CharacterState.SLEEPING)
         val base = listOf(500f to 500f)
@@ -63,15 +63,15 @@ class SleepGateControllerTest {
         assertEquals(asleepA, asleepB)
         assertTrue(gate.isSleeping(3))
 
-        // Wake: same entityId now IDLE. Should re-enter wander and move.
+        // Wake: same entityId now IDLE. Conscious walking keeps it at home until a message route arrives.
         val awakeEntity = EntityStatus(entityId = 3, state = CharacterState.IDLE)
         gate.tick(base, listOf(awakeEntity), 1000f, 1000f, enabled = true, nowMs = 4000L)
-        val moved = gate.tick(base, listOf(awakeEntity), 1000f, 1000f, enabled = true, nowMs = 8000L)
+        val afterWake = gate.tick(base, listOf(awakeEntity), 1000f, 1000f, enabled = true, nowMs = 8000L)
 
         assertFalse(gate.isSleeping(3))
-        val movedFromFrozen =
-            moved[0].first != asleepB[0].first || moved[0].second != asleepB[0].second
-        assertTrue("woke entity resumes wander movement", movedFromFrozen)
+        assertEquals("woke entity holds its home x", base[0].first, afterWake[0].first)
+        assertEquals("woke entity holds its home y", base[0].second, afterWake[0].second)
+        assertEquals(MotionState.STOPPED, gate.motionState(3))
     }
 
     @Test
