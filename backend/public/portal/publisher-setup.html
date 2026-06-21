@@ -290,12 +290,17 @@
             try {
                 // POST /api/device-vars with source=web performs a merge that preserves
                 // existing keys from other sources (APP) while updating our 4 X keys.
-                const result = await apiCall('POST', '/api/device-vars', {
-                    deviceId: window.currentUser.deviceId,
-                    deviceSecret: window.currentUser.deviceSecret,
-                    vars,
-                    source: 'web'
-                });
+                // GET first to obtain updatedAt, then POST WITH expectedUpdatedAt so this
+                // save can't clobber a concurrent edit (optimistic lock) and doesn't trip
+                // the server's "POST without expectedUpdatedAt" warn (card_9bd4b4c0).
+                const _did = window.currentUser.deviceId;
+                const _dsec = window.currentUser.deviceSecret;
+                const body = { deviceId: _did, deviceSecret: _dsec, vars, source: 'web' };
+                try {
+                    const serverData = await apiCall('GET', `/api/device-vars?deviceId=${_did}&deviceSecret=${_dsec}`);
+                    if (serverData && serverData.updatedAt) body.expectedUpdatedAt = serverData.updatedAt;
+                } catch (_) { /* non-fatal — first-time save has no server row yet */ }
+                const result = await apiCall('POST', '/api/device-vars', body);
 
                 if (result && result.success) {
                     showResult(
