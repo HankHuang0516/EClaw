@@ -2942940,11 +2942940,11 @@ const TRANSLATIONS = {
         "org_options_title": "계층 동작",
         "org_routing_escalation_help": "조직 계층에서 하위 엔티티에게 보낸 메시지에 상급자가 즉시 가로채 답하지 않습니다. 하위 엔티티가 일정 시간(기본 약 30분) 동안 침묵하며 응답하지 않을 때만 상급자에게 에스컬레이션되어 인계됩니다. 브로드캐스트나 상급자를 직접 @멘션한 메시지는 이 제한을 받지 않습니다.",
 
-        "cron_skip_5h_label": "5시간用量가 X% 초과 시 건너뛰기",
-        "cron_skip_7d_label": "주用量 Y% 초과 시 건너뛰기",
-        "cron_skip_help_text": "Entity 5시간用量 X% 또는 7일用量 Y% 초과 시スキップ。デフォルト（85%/95%）は高音entity保護。調整可能 50%-99%。スキップ된 cronは次のtickで自動再試行、lostしない。",
+        "cron_skip_5h_label": "5시간 사용량 X% 초과 시 건너뛰기",
+        "cron_skip_7d_label": "주 사용량 Y% 초과 시 건너뛰기",
+        "cron_skip_help_text": "Entity 5시간 사용량 X% 또는 7일 사용량 Y% 초과 시 건너뛰기. 기본값(85%/95%)은 고부하 entity 보호. 조정 가능 50%-99%. 건너뛴 cron은 다음 tick에서 자동 재시도.",
         "cron_current_usage_label": "현재: 5h N% / 7d M%",
-        "cron_skip_dispatch_reason": "건너뛰기:用量초과",
+        "cron_skip_dispatch_reason": "건너뛰기: 사용량 초과",
 },
 
 
@@ -3471427,7 +3471427,7 @@ const TRANSLATIONS = {
         "cron_skip_7d_label": "ข้ามถ้า 7d มากกว่า Y%",
         "cron_skip_help_text": "ตารางนี้ข้าม dispatch เมื่อ entity 5h เกิน X% หรือ 7d เกิน Y% ค่าเริ่มต้น (85%/95%) ป้องกัน entity ที่มีภาระสูง ปรับได้ 50%-99% cron ที่ข้ามจะลองใหม่อัตโนมัติ tick ถัดไป",
         "cron_current_usage_label": "ปัจจุบัน: 5h N% / 7d M%",
-        "cron_skip_dispatch_reason": "ข้าม: 用量เกิน",
+        "cron_skip_dispatch_reason": "ข้าม: เกินเกณฑ์",
 },
 
 
@@ -3998342,7 +3998342,7 @@ const TRANSLATIONS = {
         "cron_skip_7d_label": "Bỏ qua nếu 7d > Y%",
         "cron_skip_help_text": "Lịch này bỏ qua dispatch khi entity 5h vượt X% hoặc 7d vượt Y%. Mặc định (85%/95%) bảo vệ entity tải cao. Điều chỉnh 50%-99%. Cron bị bỏ qua sẽ tự động thử lại tick tiếp theo.",
         "cron_current_usage_label": "Hiện tại: 5h N% / 7d M%",
-        "cron_skip_dispatch_reason": "bỏ qua: 用量vượt",
+        "cron_skip_dispatch_reason": "bỏ qua: vượt ngưỡng",
 },
 
 
@@ -4524873,7 +4524873,7 @@ const TRANSLATIONS = {
         "cron_skip_7d_label": "Lewati jika 7d > Y%",
         "cron_skip_help_text": "Jadwal ini melewati dispatch saat entity 5h melebihi X% atau 7d melebihi Y%. Default (85%/95%) melindungi entity beban tinggi. Adjustable 50%-99%. Cron yang dilewati akan retry otomatis tick berikutnya.",
         "cron_current_usage_label": "Saat ini: 5h N% / 7d M%",
-        "cron_skip_dispatch_reason": "dilewati: 用量melebihi",
+        "cron_skip_dispatch_reason": "dilewati: melebihi ambang",
 },
 
 
@@ -6639051,7 +6639051,7 @@ const TRANSLATIONS = {
         "cron_skip_7d_label": "Langkau jika 7d > Y%",
         "cron_skip_help_text": "Jadual ini melangkaui dispatch apabila entity 5h melebihi X% atau 7d melebihi Y%. Lalai (85%/95%) melindungi entity ber beban tinggi. Bolehh ubah 50%-99%. Cron yang dilangkaui akan cuba lagi automatik pada tick seterusnya.",
         "cron_current_usage_label": "Semasa: 5h N% / 7d M%",
-        "cron_skip_dispatch_reason": "dilangkaui: 用量melebihi",
+        "cron_skip_dispatch_reason": "dilangkaui: melebihi ambang",
 },
 
 
