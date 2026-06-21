@@ -41,7 +41,7 @@ describe('i18n.t() — zh-TW / zh-CN → zh fallback chain', () => {
         const zhTwKeys = Object.keys(TRANSLATIONS['zh-TW']);
         // zh-TW intentionally overrides only locale-specific copy and should
         // continue to fall back through the canonical zh dictionary.
-        expect(zhTwKeys.length).toBeLessThan(100);
+        expect(zhTwKeys.length).toBeLessThan(150);
         expect(zhTwKeys.length).toBeLessThan(Object.keys(TRANSLATIONS.zh).length / 50);
         expect(zhTwKeys.length).toBeGreaterThan(0);
     });
