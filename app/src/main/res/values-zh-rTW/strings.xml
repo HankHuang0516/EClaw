@@ -853,9 +853,21 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="wallpaper_setting_offline_cache">斷線外觀快取</string>
     <string name="wallpaper_setting_offline_cache_desc">網路中斷時保留最後一次真實夥伴外觀，不退回預設外觀。</string>
     <string name="wallpaper_setting_kanban_tasks">看板任務物件</string>
-    <string name="wallpaper_setting_kanban_tasks_desc">將指派中的看板任務以資料夾物件顯示在對應實體原位附近；done 與 archived 只播放完成/移除動畫後消失。</string>
+    <string name="wallpaper_setting_kanban_tasks_desc">將指派中的看板任務以真正的桌面物件顯示在對應實體原位附近；done 與 archived 只播放完成/移除動畫後消失。</string>
+    <string name="wallpaper_setting_kanban_object_style">任務物件樣式</string>
+    <string name="wallpaper_setting_kanban_object_style_desc">選擇桌布上任務要呈現成哪種物件。智慧混合是唯一會依看板狀態自動切換物件類型的模式。</string>
+    <string name="wallpaper_kanban_object_style_smart_mix">智慧混合</string>
+    <string name="wallpaper_kanban_object_style_folder">資料夾</string>
+    <string name="wallpaper_kanban_object_style_book_notebook">書本 / 筆記本</string>
+    <string name="wallpaper_kanban_object_style_clipboard">剪貼板</string>
+    <string name="wallpaper_kanban_object_style_storage_box">紙箱 / 收納盒</string>
+    <string name="wallpaper_kanban_object_style_sticky_card">便利貼 / 卡片</string>
     <string name="wallpaper_setting_kanban_automation_board">自動化白板</string>
     <string name="wallpaper_setting_kanban_automation_board_desc">將自動化卡片顯示在對應實體上方的底層白板，依下一次觸發時間由近到遠排序。</string>
+    <string name="wallpaper_setting_kanban_asset_whiteboard">素材白板</string>
+    <string name="wallpaper_setting_kanban_asset_whiteboard_desc">使用 bundled 白板素材與實體支架；即使白板為了避免碰撞而微調，也會維持對應到被指派的實體。</string>
+    <string name="wallpaper_setting_kanban_handwritten_board_text">白板手寫字體</string>
+    <string name="wallpaper_setting_kanban_handwritten_board_text_desc">自動化白板文字使用 bundled Caveat 手寫字體。隱私模式仍會隱藏任務名稱與排程細節。</string>
     <string name="wallpaper_setting_kanban_privacy">看板隱私模式</string>
     <string name="wallpaper_setting_kanban_privacy_desc">隱藏桌布上的任務名稱與敏感排程細節；資料夾狀態與動畫仍會顯示。</string>
     <string name="wallpaper_setting_help_content_description">%1$s 詳情</string>
@@ -945,4 +957,10 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="webview_title_eclawbot_portal">EClawbot 入口網站</string>
     <!-- Health-checking status shown on entity avatar while passive health-check runs -->
     <string name="health_checking">健檢中</string>
+
+    <!-- Native WebView reconnect-overlay banner (card_323b95f2 / parent card_93d56b5d).
+         Shown when the WebView main frame fails to load due to transient transport
+         errors (ERR_INTERNET_DISCONNECTED etc.). Web layer counterpart shipped in PR #3618. -->
+    <string name="reconnect_banner_title">重新連線中…</string>
+    <string name="reconnect_banner_subtitle">連線恢復後自動繼續，不需重新登入</string>
 </resources>

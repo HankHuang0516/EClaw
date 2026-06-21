@@ -33,7 +33,7 @@ class ClawRenderer(
     private val layoutPrefs = LayoutPreferences.getInstance(context)
     private val spritesheetDrawer = companionRepository?.let { SpritesheetCompanionDrawer(it) }
     private val usageOverlayRenderer = UsageOverlayRenderer(context, layoutPrefs)
-    private val kanbanRenderer = WallpaperKanbanRenderer(layoutPrefs)
+    private val kanbanRenderer = WallpaperKanbanRenderer(context, layoutPrefs)
     private val wanderController = WallpaperWanderController()
     private val interactionController = WallpaperInteractionController()
     private val speechBubbleController = SpeechBubbleController()

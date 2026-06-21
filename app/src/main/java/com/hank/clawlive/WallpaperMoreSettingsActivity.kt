@@ -15,6 +15,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.slider.Slider
 import com.hank.clawlive.data.local.LayoutPreferences
+import com.hank.clawlive.data.local.WallpaperKanbanObjectStyle
 import kotlin.math.roundToInt
 
 class WallpaperMoreSettingsActivity : AppCompatActivity() {
@@ -120,12 +121,25 @@ class WallpaperMoreSettingsActivity : AppCompatActivity() {
             description = getString(R.string.wallpaper_setting_kanban_tasks_desc),
             checked = layoutPrefs.wallpaperKanbanTasksEnabled
         ) { layoutPrefs.wallpaperKanbanTasksEnabled = it }
+        addKanbanObjectStyleChoice(content)
         addSwitch(
             content,
             title = getString(R.string.wallpaper_setting_kanban_automation_board),
             description = getString(R.string.wallpaper_setting_kanban_automation_board_desc),
             checked = layoutPrefs.wallpaperKanbanAutomationBoardEnabled
         ) { layoutPrefs.wallpaperKanbanAutomationBoardEnabled = it }
+        addSwitch(
+            content,
+            title = getString(R.string.wallpaper_setting_kanban_asset_whiteboard),
+            description = getString(R.string.wallpaper_setting_kanban_asset_whiteboard_desc),
+            checked = layoutPrefs.wallpaperKanbanAssetWhiteboardEnabled
+        ) { layoutPrefs.wallpaperKanbanAssetWhiteboardEnabled = it }
+        addSwitch(
+            content,
+            title = getString(R.string.wallpaper_setting_kanban_handwritten_board_text),
+            description = getString(R.string.wallpaper_setting_kanban_handwritten_board_text_desc),
+            checked = layoutPrefs.wallpaperKanbanHandwrittenBoardTextEnabled
+        ) { layoutPrefs.wallpaperKanbanHandwrittenBoardTextEnabled = it }
         addSwitch(
             content,
             title = getString(R.string.wallpaper_setting_kanban_privacy),
@@ -168,6 +182,33 @@ class WallpaperMoreSettingsActivity : AppCompatActivity() {
             maxSeconds = LayoutPreferences.WALLPAPER_COLLISION_REACTION_DURATION_MAX_SECONDS,
             currentSeconds = layoutPrefs.wallpaperCollisionReactionDurationSeconds
         ) { layoutPrefs.wallpaperCollisionReactionDurationSeconds = it }
+    }
+
+    private fun addKanbanObjectStyleChoice(parent: LinearLayout) {
+        val styles = WallpaperKanbanObjectStyle.values()
+        addChoice(
+            parent = parent,
+            title = getString(R.string.wallpaper_setting_kanban_object_style),
+            description = getString(R.string.wallpaper_setting_kanban_object_style_desc),
+            currentLabel = objectStyleLabel(layoutPrefs.wallpaperKanbanObjectStyle),
+            choices = styles.map(::objectStyleLabel).toTypedArray(),
+            checkedIndex = styles.indexOf(layoutPrefs.wallpaperKanbanObjectStyle)
+        ) { selectedIndex, valueLabel ->
+            val selected = styles[selectedIndex]
+            layoutPrefs.wallpaperKanbanObjectStyle = selected
+            valueLabel.text = objectStyleLabel(selected)
+        }
+    }
+
+    private fun objectStyleLabel(style: WallpaperKanbanObjectStyle): String {
+        return when (style) {
+            WallpaperKanbanObjectStyle.SMART_MIX -> getString(R.string.wallpaper_kanban_object_style_smart_mix)
+            WallpaperKanbanObjectStyle.FOLDER -> getString(R.string.wallpaper_kanban_object_style_folder)
+            WallpaperKanbanObjectStyle.BOOK_NOTEBOOK -> getString(R.string.wallpaper_kanban_object_style_book_notebook)
+            WallpaperKanbanObjectStyle.CLIPBOARD -> getString(R.string.wallpaper_kanban_object_style_clipboard)
+            WallpaperKanbanObjectStyle.STORAGE_BOX -> getString(R.string.wallpaper_kanban_object_style_storage_box)
+            WallpaperKanbanObjectStyle.STICKY_CARD -> getString(R.string.wallpaper_kanban_object_style_sticky_card)
+        }
     }
 
     private fun addSecondsSlider(
@@ -267,6 +308,57 @@ class WallpaperMoreSettingsActivity : AppCompatActivity() {
             isChecked = checked
             setOnCheckedChangeListener { _, isChecked -> onChanged(isChecked) }
         })
+        parent.addView(row)
+    }
+
+    private fun addChoice(
+        parent: LinearLayout,
+        title: String,
+        description: String,
+        currentLabel: String,
+        choices: Array<String>,
+        checkedIndex: Int,
+        onSelected: (Int, TextView) -> Unit
+    ) {
+        val density = resources.displayMetrics.density
+        fun dp(value: Int): Int = (value * density).toInt()
+
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, dp(18), 0, dp(10))
+            isClickable = true
+            isFocusable = true
+        }
+        val labels = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        labels.addView(TextView(this).apply {
+            text = title
+            setTextColor(0xFFFFFFFF.toInt())
+            textSize = 16f
+        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        labels.addView(helpButton(title, description), LinearLayout.LayoutParams(dp(32), dp(32)))
+        row.addView(labels, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+
+        val valueLabel = TextView(this).apply {
+            text = currentLabel
+            setTextColor(0xB3FFFFFF.toInt())
+            textSize = 14f
+            gravity = Gravity.END
+            maxLines = 2
+        }
+        row.addView(valueLabel, LinearLayout.LayoutParams(dp(132), LinearLayout.LayoutParams.WRAP_CONTENT))
+        row.setOnClickListener {
+            MaterialAlertDialogBuilder(this)
+                .setTitle(title)
+                .setSingleChoiceItems(choices, checkedIndex) { dialog, which ->
+                    onSelected(which, valueLabel)
+                    dialog.dismiss()
+                }
+                .show()
+        }
         parent.addView(row)
     }
 

@@ -1989,6 +1989,271 @@
             color: #fff;
         }
 
+        /* ── Sendto picker (card_91d5c93b) — matches .sys-chip / .filter-chip
+           tactile style and opens a scrollable multi-select sheet / popover. */
+        .sendto-picker-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 34px;
+        }
+        .sendto-picker-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            line-height: 1.4;
+            cursor: pointer;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            white-space: nowrap;
+            user-select: none;
+            transition: all 0.15s;
+            max-width: 100%;
+        }
+        .sendto-picker-btn:hover {
+            border-color: var(--primary);
+            color: var(--text-primary);
+        }
+        .sendto-picker-btn[aria-expanded="true"] {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--text);
+        }
+        .sendto-picker-btn-label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 240px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            min-height: 22px;
+        }
+        .sendto-picker-btn-caret {
+            font-size: 10px;
+            opacity: 0.7;
+            flex-shrink: 0;
+        }
+        /* Avatar visuals inside the picker-button label.
+           - Single: avatar + name (gap 4px).
+           - Few (2-4): stacked overlap, -8px between siblings.
+           - Many (5+): first two avatars + "+N 位" pill.
+           Avatar size = 20px so the button still matches `.sys-chip` height
+           (4px padding + ~14-18px content + 4px padding ≈ 22-26px). The
+           wrapper sets `min-height: 22px` so single-row layout stays stable
+           when the label flips between text-only and avatar-bearing states. */
+        .sendto-btn-prefix {
+            flex-shrink: 0;
+        }
+        .sendto-btn-avatar-stack {
+            display: inline-flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .sendto-btn-avatar-stack--single {
+            margin-right: 2px;
+        }
+        .sendto-btn-avatar-stack--few .sendto-btn-avatar + .sendto-btn-avatar,
+        .sendto-btn-avatar-stack--many .sendto-btn-avatar + .sendto-btn-avatar {
+            margin-left: -8px;
+        }
+        .sendto-btn-avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: var(--card);
+            border: 1.5px solid var(--card);
+            font-size: 14px;
+            line-height: 1;
+            box-sizing: content-box;
+        }
+        .sendto-picker-btn[aria-expanded="true"] .sendto-btn-avatar {
+            border-color: var(--primary);
+        }
+        .sendto-btn-avatar > img,
+        .sendto-btn-avatar > .entity-avatar-img,
+        .sendto-btn-avatar > canvas,
+        .sendto-btn-avatar > .entity-avatar-emoji {
+            width: 20px !important;
+            height: 20px !important;
+            border-radius: 50%;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .sendto-btn-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 140px;
+        }
+        .sendto-btn-more {
+            font-size: 11px;
+            padding: 1px 6px;
+            border-radius: 9px;
+            background: var(--card-border);
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+        .sendto-picker-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.32);
+            z-index: 1200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sendto-picker-overlay[hidden] {
+            display: none !important;
+        }
+        .sendto-picker-dialog {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            width: min(420px, calc(100% - 32px));
+            max-height: 60vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 12px 36px rgba(0,0,0,0.32);
+            overflow: hidden;
+        }
+        .sendto-picker-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--card-border);
+            flex-shrink: 0;
+        }
+        .sendto-picker-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text);
+        }
+        .sendto-picker-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            line-height: 1;
+        }
+        .sendto-picker-close:hover {
+            background: var(--input-bg);
+            color: var(--text);
+        }
+        .sendto-picker-selectall {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--card-border);
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            user-select: none;
+            flex-shrink: 0;
+        }
+        .sendto-picker-selectall input[type="checkbox"] {
+            accent-color: var(--primary);
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        .sendto-picker-list {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+        .sendto-picker-row-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            cursor: pointer;
+            user-select: none;
+            font-size: 14px;
+            color: var(--text);
+            border-bottom: 1px solid transparent;
+        }
+        .sendto-picker-row-item:hover {
+            background: var(--input-bg);
+        }
+        .sendto-picker-row-avatar {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sendto-picker-row-meta {
+            flex: 1 1 auto;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .sendto-picker-row-name {
+            font-weight: 500;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .sendto-picker-row-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .sendto-picker-row-item input[type="checkbox"] {
+            accent-color: var(--primary);
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+        .sendto-picker-empty {
+            padding: 24px 16px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+        .sendto-picker-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 12px 16px;
+            border-top: 1px solid var(--card-border);
+            background: var(--input-bg);
+            flex-shrink: 0;
+        }
+        /* Bottom-sheet on touch devices (mobile + tablet). */
+        @media (pointer: coarse) {
+            .sendto-picker-overlay {
+                align-items: flex-end;
+            }
+            .sendto-picker-dialog {
+                width: 100%;
+                max-width: 100%;
+                max-height: 70vh;
+                border-radius: 16px 16px 0 0;
+                border-bottom: none;
+            }
+        }
+
         /* ── Reduced Motion ── */
         @media (prefers-reduced-motion: reduce) {
             .scroll-nav { transition: none; }
@@ -3331,15 +3596,57 @@
                 </button>
             </div>
 
-            <!-- Target Bar (checkboxes) -->
+            <!-- Target Bar — sendto picker button + hidden checkbox source-of-truth
+                 (card_91d5c93ba31bda385881ad59 — match smart-filter button UX).
+                 The .target-bar-row hosts the *underlying* checkboxes used by
+                 downstream code (sendMessage, applyAutoToggleReceivers,
+                 persistTargetSelection). The picker button + overlay below are
+                 the visible UI; the overlay just reads/writes those inputs. -->
             <div class="target-bar" id="targetBar">
                 <div class="target-bar-overflow" id="targetBarOverflow"></div>
-                <div class="target-bar-row" id="targetBarRow">
+                <div class="target-bar-row" id="targetBarRow" hidden aria-hidden="true">
                     <span class="target-label" data-i18n="chat_send_to">Send to:</span>
                     <label class="target-check" id="targetAll" style="display:none;">
                         <input type="checkbox" checked onchange="toggleTargetAll(this)" aria-label="Send to all">
                         <span data-i18n="chat_filter_all">All</span>
                     </label>
+                </div>
+                <div class="sendto-picker-row" id="sendtoPickerRow">
+                    <button type="button"
+                            class="sendto-picker-btn"
+                            id="sendtoPickerBtn"
+                            aria-haspopup="listbox"
+                            aria-expanded="false"
+                            aria-controls="sendtoPickerDialog"
+                            data-i18n-title="chat_sendto_picker_title"
+                            title="Select recipients"
+                            onclick="openSendtoPicker()"><span class="sendto-picker-btn-label" id="sendtoPickerBtnLabel" data-i18n="chat_sendto_button_label_all">傳送給 ALL</span><span class="sendto-picker-btn-caret" aria-hidden="true">▾</span></button>
+                </div>
+                <!-- Picker overlay: dropdown on desktop, bottom-sheet on touch.
+                     Hidden by default; openSendtoPicker() unhides + populates. -->
+                <div class="sendto-picker-overlay"
+                     id="sendtoPickerOverlay"
+                     hidden
+                     onclick="if(event.target===this)cancelSendtoPicker()">
+                    <div class="sendto-picker-dialog"
+                         id="sendtoPickerDialog"
+                         role="dialog"
+                         aria-modal="true"
+                         aria-labelledby="sendtoPickerTitle">
+                        <div class="sendto-picker-header">
+                            <h3 class="sendto-picker-title" id="sendtoPickerTitle" data-i18n="chat_sendto_picker_title">Select recipients</h3>
+                            <button type="button" class="sendto-picker-close" onclick="cancelSendtoPicker()" aria-label="Close" data-i18n-title="chat_sendto_picker_cancel" title="Cancel">&#x2715;</button>
+                        </div>
+                        <label class="sendto-picker-selectall">
+                            <input type="checkbox" id="sendtoPickerSelectAll" onchange="toggleSendtoPickerSelectAll(this)">
+                            <span data-i18n="chat_sendto_picker_select_all">Select all</span>
+                        </label>
+                        <div class="sendto-picker-list" id="sendtoPickerList" role="listbox" aria-multiselectable="true"></div>
+                        <div class="sendto-picker-footer">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="cancelSendtoPicker()" data-i18n="chat_sendto_picker_cancel">Cancel</button>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="confirmSendtoPicker()" data-i18n="chat_sendto_picker_confirm">Confirm</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -4867,7 +5174,12 @@
         function updateTargetAll(opts) {
             const allCb = document.querySelector('#targetAll input');
             const entityCbs = document.querySelectorAll('.target-entity-check input[type="checkbox"]');
-            if (entityCbs.length === 0) return;
+            if (entityCbs.length === 0) {
+                // Even with no checks present yet (boot race), keep the
+                // picker button label in a sane state.
+                if (typeof refreshSendtoPickerButtonLabel === 'function') refreshSendtoPickerButtonLabel();
+                return;
+            }
             const allChecked = Array.from(entityCbs).every(cb => cb.checked);
             allCb.checked = allChecked;
             // Manual uncheck revokes that receiver's auto-select hint — keep
@@ -4883,6 +5195,8 @@
                 });
             }
             persistTargetSelection();
+            // Keep the visible "傳送給 …" button label in sync (card_91d5c93b).
+            if (typeof refreshSendtoPickerButtonLabel === 'function') refreshSendtoPickerButtonLabel();
         }
 
         // Persist current target selection to localStorage. Called on every toggle
@@ -6990,6 +7304,282 @@
             autoToggledReceiverEntities.clear();
         }
 
+        // ── Sendto picker (card_91d5c93ba31bda385881ad59) ──
+        // The visible UI for choosing recipients. The underlying source-of-
+        // truth checkboxes live in #targetBarRow (hidden); this picker reads
+        // their state to render its summary label and the dialog rows, and
+        // writes back to them on Confirm. This preserves every downstream
+        // contract: sendMessage() / persistTargetSelection() / getSelectedTargets()
+        // / applyAutoToggleReceivers() (card_3462... exclusive auto-select).
+        //
+        // Cancel + click-outside discard changes; Confirm applies them. The
+        // overlay is a <dialog>-shaped div (role="dialog" + aria-modal) and
+        // each row is a <label>-as-row so clicking anywhere on the row toggles
+        // the embedded checkbox.
+
+        function getSendtoUnderlyingChecks() {
+            return Array.from(document.querySelectorAll('.target-entity-check input[type="checkbox"]'));
+        }
+
+        // Render a tiny avatar element for the picker-button summary. The
+        // existing renderAvatarHtml is reused so emoji / image URL / petdx
+        // sprite all keep their already-tested rendering paths. Falls back
+        // to the 🦞 emoji when getAvatarForEntity returns nothing (matches
+        // the global default at chat.html:3867 + entity-utils.js).
+        function _sendtoBtnAvatarHtml(entityId) {
+            const name = (typeof getEntityDisplayName === 'function')
+                ? getEntityDisplayName(entityId)
+                : ('Entity #' + entityId);
+            const raw = (typeof getAvatarForEntity === 'function')
+                ? getAvatarForEntity(entityId)
+                : '';
+            const avatar = raw || '\u{1F99E}';
+            const inner = (typeof renderAvatarHtml === 'function')
+                ? renderAvatarHtml(avatar, 20, entityId)
+                : ('<span>' + (avatar) + '</span>');
+            // Wrap so we can give every avatar a tooltip/alt + a stacking
+            // class without touching renderAvatarHtml's output. The wrapping
+            // span carries title for hover-readability AT; renderAvatarHtml
+            // also emits alt="avatar" inside <img>, which we replace by
+            // injecting the entity name via aria-label on the wrapper.
+            const safeName = (typeof escapeHtml === 'function') ? escapeHtml(name) : name;
+            return '<span class="sendto-btn-avatar" role="img" aria-label="' + safeName
+                + '" title="' + safeName + '">' + inner + '</span>';
+        }
+
+        function refreshSendtoPickerButtonLabel() {
+            const btn = document.getElementById('sendtoPickerBtn');
+            const label = document.getElementById('sendtoPickerBtnLabel');
+            if (!btn || !label) return;
+            const checks = getSendtoUnderlyingChecks();
+            const PREFIX_ZH = '傳送給 ';
+            const t = (k, p) => ((typeof i18n !== 'undefined' && i18n && i18n.t) ? i18n.t(k, p) : null);
+            // Static prefix used regardless of locale string — kept verbatim
+            // before the avatar stack so the visual reads "傳送給 [avatars]".
+            // The i18n strings still own the all/single/multi WORDS; here we
+            // build the HTML so we can splice avatars in.
+            const allText = t('chat_sendto_button_label_all') || '傳送給 ALL';
+            const safe = (s) => (typeof escapeHtml === 'function') ? escapeHtml(String(s)) : String(s);
+
+            // Helper: build aria-label that lists all selected entity names —
+            // a11y contract. We do this even in ALL/none states so AT users
+            // hear the same intent the visible text conveys.
+            function ariaLabelFor(state, selectedIds) {
+                if (state === 'all') return allText;
+                if (state === 'none') return t('chat_sendto_button_label_multi', { count: 0 }) || '傳送給 0 entities';
+                const names = selectedIds.map(id => {
+                    return (typeof getEntityDisplayName === 'function') ? getEntityDisplayName(id) : ('#' + id);
+                });
+                if (state === 'single') return (t('chat_sendto_button_label_single', { target: names[0] })) || (PREFIX_ZH + names[0]);
+                // few/many → "傳送給 Name1, Name2, Name3" so screen-readers
+                // hear the full recipient list instead of "+N more".
+                return PREFIX_ZH + names.join(', ');
+            }
+
+            // No bound entities yet (boot before /api/entities resolves) → keep "ALL" affordance.
+            if (checks.length === 0) {
+                label.textContent = allText;
+                btn.setAttribute('data-sendto-state', 'all');
+                btn.setAttribute('aria-label', allText);
+                return;
+            }
+            const checked = checks.filter(cb => cb.checked);
+            const total = checks.length;
+            const checkedIds = checked
+                .map(cb => Number(cb.dataset.entity))
+                .filter(n => Number.isFinite(n));
+
+            if (checked.length === total) {
+                // All state — text only, no avatars (14-bot overflow guard).
+                label.textContent = allText;
+                btn.setAttribute('data-sendto-state', 'all');
+                btn.setAttribute('aria-label', ariaLabelFor('all', checkedIds));
+            } else if (checked.length === 0) {
+                // Zero recipients is a real (unsendable) state — show count
+                // so users understand why the send button errors.
+                label.textContent = t('chat_sendto_button_label_multi', { count: 0 }) || '傳送給 0 entities';
+                btn.setAttribute('data-sendto-state', 'none');
+                btn.setAttribute('aria-label', ariaLabelFor('none', []));
+            } else if (checked.length === 1) {
+                // Single: 「傳送給 [avatar] Name」 — avatar + name.
+                const eid = checkedIds[0];
+                const name = (typeof getEntityDisplayName === 'function') ? getEntityDisplayName(eid) : ('#' + eid);
+                const avatarHtml = _sendtoBtnAvatarHtml(eid);
+                label.innerHTML =
+                    '<span class="sendto-btn-prefix">' + safe(PREFIX_ZH) + '</span>'
+                    + '<span class="sendto-btn-avatar-stack sendto-btn-avatar-stack--single">' + avatarHtml + '</span>'
+                    + '<span class="sendto-btn-name">' + safe(name) + '</span>';
+                btn.setAttribute('data-sendto-state', 'single');
+                btn.setAttribute('aria-label', ariaLabelFor('single', checkedIds));
+            } else if (checked.length <= 4) {
+                // Few (2-4): stacked overlap, no name.
+                const stack = checkedIds.map(_sendtoBtnAvatarHtml).join('');
+                label.innerHTML =
+                    '<span class="sendto-btn-prefix">' + safe(PREFIX_ZH) + '</span>'
+                    + '<span class="sendto-btn-avatar-stack sendto-btn-avatar-stack--few">' + stack + '</span>';
+                btn.setAttribute('data-sendto-state', 'few');
+                btn.setAttribute('aria-label', ariaLabelFor('few', checkedIds));
+            } else {
+                // Many (5+): first 2 avatars + "+N more" pill.
+                const first = checkedIds.slice(0, 2).map(_sendtoBtnAvatarHtml).join('');
+                const moreCount = checkedIds.length - 2;
+                const moreText = t('chat_sendto_button_label_many_more', { count: moreCount })
+                    || ('+' + moreCount + ' more');
+                label.innerHTML =
+                    '<span class="sendto-btn-prefix">' + safe(PREFIX_ZH) + '</span>'
+                    + '<span class="sendto-btn-avatar-stack sendto-btn-avatar-stack--many">' + first + '</span>'
+                    + '<span class="sendto-btn-more">' + safe(moreText) + '</span>';
+                btn.setAttribute('data-sendto-state', 'many');
+                btn.setAttribute('aria-label', ariaLabelFor('many', checkedIds));
+            }
+        }
+
+        function openSendtoPicker() {
+            const overlay = document.getElementById('sendtoPickerOverlay');
+            const list = document.getElementById('sendtoPickerList');
+            const btn = document.getElementById('sendtoPickerBtn');
+            const selectAll = document.getElementById('sendtoPickerSelectAll');
+            if (!overlay || !list) return;
+
+            // Snapshot current selection (so Cancel can restore).
+            const snapshot = {};
+            getSendtoUnderlyingChecks().forEach(cb => {
+                snapshot[String(cb.dataset.entity)] = !!cb.checked;
+            });
+            overlay.dataset.snapshot = JSON.stringify(snapshot);
+
+            // Render rows from the live boundEntities list (so the picker
+            // reflects whatever `loadBoundEntities` last resolved). We fall
+            // back to the in-DOM underlying checkboxes if boundEntities is
+            // empty for some reason (defensive).
+            list.innerHTML = '';
+            const entitiesToRender = (Array.isArray(boundEntities) && boundEntities.length > 0)
+                ? boundEntities
+                : getSendtoUnderlyingChecks().map(cb => ({ entityId: Number(cb.dataset.entity) }));
+
+            if (entitiesToRender.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'sendto-picker-empty';
+                empty.textContent = (i18n && i18n.t) ? i18n.t('chat_loading_entities') : 'Loading…';
+                list.appendChild(empty);
+            } else {
+                entitiesToRender.forEach(e => {
+                    const eid = Number(e.entityId);
+                    if (!Number.isFinite(eid)) return;
+                    const underlying = document.querySelector('.target-entity-check input[type="checkbox"][data-entity="' + eid + '"]');
+                    const isChecked = !!(underlying && underlying.checked);
+                    const avatar = (typeof getAvatarForEntity === 'function') ? getAvatarForEntity(eid) : '';
+                    const name = (typeof getEntityDisplayName === 'function') ? getEntityDisplayName(eid) : ('#' + eid);
+                    const pubCode = (e && e.publicCode) ? String(e.publicCode) : '';
+                    const avatarHtml = (typeof renderAvatarHtml === 'function') ? renderAvatarHtml(avatar, 28) : '';
+
+                    const row = document.createElement('label');
+                    row.className = 'sendto-picker-row-item';
+                    row.dataset.entityId = String(eid);
+                    row.innerHTML = `
+                        <span class="sendto-picker-row-avatar">${avatarHtml}</span>
+                        <span class="sendto-picker-row-meta">
+                            <span class="sendto-picker-row-name">${escapeHtml(name)}</span>
+                            <span class="sendto-picker-row-sub">
+                                <span>#${eid}</span>
+                                ${pubCode ? `<span>${escapeHtml(pubCode)}</span>` : ''}
+                            </span>
+                        </span>
+                        <input type="checkbox" data-picker-entity="${eid}" ${isChecked ? 'checked' : ''} onchange="onSendtoPickerRowChange()" aria-label="${escapeHtml(name)}">
+                    `;
+                    list.appendChild(row);
+                });
+            }
+
+            // Reflect select-all state from current row checkboxes.
+            syncSendtoPickerSelectAllState();
+
+            overlay.hidden = false;
+            if (btn) btn.setAttribute('aria-expanded', 'true');
+            // Focus the dialog for AT, after the next paint.
+            requestAnimationFrame(() => {
+                const dlg = document.getElementById('sendtoPickerDialog');
+                if (dlg && typeof dlg.focus === 'function') {
+                    dlg.setAttribute('tabindex', '-1');
+                    dlg.focus();
+                }
+            });
+            document.addEventListener('keydown', sendtoPickerKeydown);
+        }
+
+        function sendtoPickerKeydown(ev) {
+            if (ev.key === 'Escape') {
+                ev.preventDefault();
+                cancelSendtoPicker();
+            }
+        }
+
+        function closeSendtoPickerOverlay() {
+            const overlay = document.getElementById('sendtoPickerOverlay');
+            const btn = document.getElementById('sendtoPickerBtn');
+            if (overlay) overlay.hidden = true;
+            if (btn) btn.setAttribute('aria-expanded', 'false');
+            document.removeEventListener('keydown', sendtoPickerKeydown);
+        }
+
+        function cancelSendtoPicker() {
+            // No state change — just close. Underlying checkboxes were never
+            // touched (the dialog only edits its own row inputs); we discard
+            // the snapshot.
+            const overlay = document.getElementById('sendtoPickerOverlay');
+            if (overlay) delete overlay.dataset.snapshot;
+            closeSendtoPickerOverlay();
+        }
+
+        function confirmSendtoPicker() {
+            // Apply dialog row state → underlying entity checkboxes, then
+            // route through the existing updateTargetAll/persistTargetSelection
+            // pipeline so downstream code sees the same transition it would
+            // from a direct checkbox click.
+            const rows = document.querySelectorAll('#sendtoPickerList input[data-picker-entity]');
+            rows.forEach(rowCb => {
+                const eid = rowCb.dataset.pickerEntity;
+                const underlying = document.querySelector('.target-entity-check input[type="checkbox"][data-entity="' + eid + '"]');
+                if (!underlying) return;
+                if (underlying.checked !== rowCb.checked) {
+                    underlying.checked = rowCb.checked;
+                    // Manual change revokes the auto-receiver hint for that
+                    // entity (same semantics as toggling the inline checkbox).
+                    if (!rowCb.checked && typeof clearReceiverHintForEntity === 'function') {
+                        clearReceiverHintForEntity(Number(eid));
+                    }
+                }
+            });
+            if (typeof persistTargetSelection === 'function') persistTargetSelection();
+            if (typeof updateTargetAll === 'function') updateTargetAll();
+            refreshSendtoPickerButtonLabel();
+            closeSendtoPickerOverlay();
+        }
+
+        function toggleSendtoPickerSelectAll(checkbox) {
+            const rows = document.querySelectorAll('#sendtoPickerList input[data-picker-entity]');
+            rows.forEach(cb => { cb.checked = !!checkbox.checked; });
+        }
+
+        function onSendtoPickerRowChange() {
+            syncSendtoPickerSelectAllState();
+        }
+
+        function syncSendtoPickerSelectAllState() {
+            const rows = Array.from(document.querySelectorAll('#sendtoPickerList input[data-picker-entity]'));
+            const selectAll = document.getElementById('sendtoPickerSelectAll');
+            if (!selectAll || rows.length === 0) {
+                if (selectAll) {
+                    selectAll.checked = false;
+                    selectAll.indeterminate = false;
+                }
+                return;
+            }
+            const checkedCount = rows.filter(cb => cb.checked).length;
+            selectAll.checked = checkedCount === rows.length;
+            selectAll.indeterminate = checkedCount > 0 && checkedCount < rows.length;
+        }
+
         function fileMsgText(index, file, text) {
             if (index === 0 && text) return text;
             if (file.type === 'photo') return '[Photo]';
@@ -8898,9 +9488,99 @@
             renderRoutingChipDetailBody(bodyEl, payload, kind, detail || null);
         }
 
+        // card_816c435e: shared label resolver used by every render site in the
+        // routing-detail modal. Coalesces sum/name/id/publicCode → never lets
+        // `undefined`/`null`/`'?'`/empty/literal-"undefined" string reach the
+        // DOM. Mirrors the chip-path priority chain so the modal label matches
+        // what the chip itself shows (chip uses orgChartCommanderId as the
+        // last-resort floor too).
+        //
+        //   opts.which       'from' | 'to'  (controls neutral fallback label)
+        //   opts.isUser      bool — to-side self-reply (toUser) → "User" label
+        //   opts.tt          (k, fb) => string  (i18n resolver)
+        //
+        // Returns: { label, code, lv, avatar, initials } — caller composes HTML.
+        function resolveEntityLabel(sum, fallbackId, fallbackName, fallbackCode, opts) {
+            const tt = (opts && opts.tt) || ((k, fb) => fb);
+            const which = (opts && opts.which) || 'to';
+
+            // Reject the literal string 'undefined'/'null'/'?' too — backends
+            // (and prior buggy frontends) have been observed stringifying a
+            // JS undefined into the wire payload, and a trimmed '?' is the
+            // exact bug card_29eed229 chased out of the chip path.
+            const isBadName = (v) => {
+                if (v == null) return true;
+                const s = String(v).trim();
+                if (s === '' || s === 'undefined' || s === 'null' || s === '?' || s === '？') return true;
+                return false;
+            };
+
+            const sumName = (sum && !isBadName(sum.name)) ? sum.name
+                : (sum && !isBadName(sum.character)) ? sum.character : null;
+            const safeFallbackName = !isBadName(fallbackName) ? fallbackName : null;
+
+            // to-side self-reply → "User" wins over a missing entity name.
+            if (opts && opts.isUser) {
+                const userLabel = tt('chat_routing_to_user', 'User');
+                return {
+                    label: userLabel,
+                    code: '',
+                    lv: '',
+                    initials: String(userLabel).slice(0, 2),
+                    avatar: (sum && sum.avatar) || null,
+                };
+            }
+
+            // Floor: org-chart commander id (chip-path floor — chat-html cache).
+            const commanderFloor = (typeof orgChartCommanderId !== 'undefined'
+                && orgChartCommanderId != null
+                && (fallbackId == null || Number(orgChartCommanderId) !== Number(fallbackId)))
+                ? ('#' + orgChartCommanderId) : null;
+
+            // Neutral last resort: a sender-side label distinct from the
+            // generic "Unspecified" so we never paint the same word on BOTH
+            // pills (the original symptom card_e53b0908 was hunting).
+            const neutral = which === 'from'
+                ? tt('chat_routing_sender', 'Sender')
+                : tt('chat_routing_supervisor', '主管');
+
+            const label = sumName
+                || safeFallbackName
+                || (fallbackId != null && Number.isFinite(Number(fallbackId)) ? '#' + fallbackId : null)
+                || (!isBadName(fallbackCode) ? '#' + fallbackCode : null)
+                || commanderFloor
+                || neutral;
+
+            const code = (sum && !isBadName(sum.publicCode)) ? '#' + sum.publicCode
+                : (!sum && !isBadName(fallbackCode) ? '#' + fallbackCode : '');
+            const lv = (sum && sum.level != null) ? `LV${sum.level}` : '';
+            const initials = String(label).slice(0, 2);
+            return { label, code, lv, initials, avatar: (sum && sum.avatar) || null };
+        }
+
+        // card_816c435e: normalize a routing payload BEFORE any label render —
+        // coerce undefined/null/'undefined' name fields once so every render
+        // site can rely on a known shape. Returns a SHALLOW COPY (mutation-safe).
+        function normalizeRoutingPayload(payload) {
+            const p = Object.assign({}, payload || {});
+            const isBad = (v) => v == null || (typeof v === 'string' && (v.trim() === '' || v.trim() === 'undefined' || v.trim() === 'null'));
+            if (isBad(p.from_name)) p.from_name = null;
+            if (isBad(p.to_name)) p.to_name = null;
+            if (isBad(p.from_public_code)) p.from_public_code = null;
+            if (isBad(p.to_public_code)) p.to_public_code = null;
+            // Coerce entity ids: keep null if not finite-numeric.
+            if (p.from_entity_id != null && !Number.isFinite(Number(p.from_entity_id))) p.from_entity_id = null;
+            if (p.to_entity_id != null && !Number.isFinite(Number(p.to_entity_id))) p.to_entity_id = null;
+            return p;
+        }
+
         function renderRoutingChipDetailBody(bodyEl, payload, kind, detail) {
             const tt = (k, fb) => (typeof i18n !== 'undefined' && i18n.t && i18n.t(k)) || fb;
             const esc = (v) => escapeHtml(v == null ? '' : String(v));
+
+            // card_816c435e: coerce undefined/null/'undefined' fields ONCE up
+            // front so every render site below works off a known-clean shape.
+            payload = normalizeRoutingPayload(payload);
 
             // Build entity lookup map from server response (preferred) so the
             // tree can label nodes; falls back to local boundEntities.
@@ -8910,36 +9590,17 @@
             const fromSum = (detail && detail.fromEntity) || (payload.from_entity_id != null ? summariesById.get(payload.from_entity_id) : null);
             const toSum = (detail && detail.toEntity) || (payload.to_entity_id != null ? summariesById.get(payload.to_entity_id) : null);
 
-            // card_e53b0908: a chat row ALWAYS knows its sender (entity_id), so
-            // the from-pill must never degrade to 「Unspecified」/undefined. Build
-            // the from-side fallback chain from the payload's sender floor
-            // (id / name / publicCode), only landing on a neutral label as the
-            // last resort — and a sender-specific one ("Sender") so we never
-            // emit the same generic "Unspecified" on BOTH sides.
-            const renderPill = (which, sum, fallbackId, fallbackName, fallbackCode) => {
-                // card_ecda7243: never fall through to a bare '?'. When neither a
-                // summary nor an explicit name/id resolve, show a clearly-labeled
-                // state instead of a naked question mark or a literal "undefined".
-                // Guard: a `undefined`/null fallbackName must NOT be stringified
-                // into the template — coalesce through the whole chain first.
-                const safeFallbackName = (fallbackName != null && String(fallbackName).trim() !== '' && String(fallbackName) !== 'undefined')
-                    ? fallbackName : null;
-                const neutral = which === 'from'
-                    ? tt('chat_routing_sender', 'Sender')
-                    : tt('chat_routing_unspecified', 'Unspecified');
-                const label = (sum && (sum.name || sum.character))
-                    || safeFallbackName
-                    || (fallbackId != null ? '#' + fallbackId : null)
-                    || (fallbackCode ? '#' + fallbackCode : null)
-                    || neutral;
-                const code = sum && sum.publicCode ? '#' + sum.publicCode
-                    : (!sum && fallbackCode ? '#' + fallbackCode : '');
-                const lv = sum && sum.level != null ? `LV${sum.level}` : '';
-                const initials = String(label).slice(0, 2);
-                const avatar = sum && sum.avatar
-                    ? `<img class="rd-avatar" src="${esc(sum.avatar)}" alt="" onerror="this.outerHTML='<span class=\\'rd-avatar-fb\\'>${esc(initials)}</span>'">`
-                    : `<span class="rd-avatar-fb">${esc(initials)}</span>`;
-                return `<span class="rd-entity-pill rd-pill-${which}">${avatar}<span>${esc(label)}</span>${code ? `<span style="opacity:0.55;font-size:11px;">${esc(code)}</span>` : ''}${lv ? `<span class="rd-lv">${esc(lv)}</span>` : ''}</span>`;
+            // card_e53b0908 + card_816c435e: a chat row ALWAYS knows its sender
+            // (entity_id), so the from-pill must never degrade to
+            // 「Unspecified」/undefined. resolveEntityLabel coalesces the whole
+            // chain (sum → fallbackName → fallbackId → fallbackCode →
+            // orgChartCommanderId → neutral) so no '?'/'undefined' can leak.
+            const renderPill = (which, sum, fallbackId, fallbackName, fallbackCode, isUser) => {
+                const r = resolveEntityLabel(sum, fallbackId, fallbackName, fallbackCode, { which, isUser, tt });
+                const avatar = r.avatar
+                    ? `<img class="rd-avatar" src="${esc(r.avatar)}" alt="" onerror="this.outerHTML='<span class=\\'rd-avatar-fb\\'>${esc(r.initials)}</span>'">`
+                    : `<span class="rd-avatar-fb">${esc(r.initials)}</span>`;
+                return `<span class="rd-entity-pill rd-pill-${which}">${avatar}<span>${esc(r.label)}</span>${r.code ? `<span style="opacity:0.55;font-size:11px;">${esc(r.code)}</span>` : ''}${r.lv ? `<span class="rd-lv">${esc(r.lv)}</span>` : ''}</span>`;
             };
 
             const modeLabel = payload.mode === 'broadcast'
@@ -8971,11 +9632,14 @@
             let html = '<div class="rd-section">';
             html += `<div class="rd-section-title">${esc(tt('chat_routing_detail_section_route', 'This message route'))}</div>`;
             html += '<div class="rd-route-line">';
-            html += renderPill('from', fromSum, payload.from_entity_id, payload.from_name, payload.from_public_code);
+            html += renderPill('from', fromSum, payload.from_entity_id, payload.from_name, payload.from_public_code, false);
             html += '<span class="rd-arrow">→</span>';
-            // card_ecda7243: a self-reply to the device owner targets USER (to_is_user),
-            // not an entity — show the localized "User" label instead of a bare '?'.
-            html += renderPill('to', toSum, payload.to_entity_id, payload.to_is_user ? tt('chat_routing_to_user', 'User') : payload.to_name, payload.to_public_code);
+            // card_ecda7243 + card_816c435e: a self-reply to the device owner
+            // targets USER (to_is_user) — pass through the isUser flag so the
+            // shared resolver returns the localized "User" label; never let
+            // payload.to_name (which may be `undefined` on legacy rows) reach
+            // the DOM.
+            html += renderPill('to', toSum, payload.to_entity_id, payload.to_name, payload.to_public_code, !!payload.to_is_user);
             if (modeLabel) html += `<span class="rd-mode-pill">${esc(modeLabel)}</span>`;
             html += `<span class="rd-status-pill rd-status-${esc(statusKey)}">${esc(statusLabel)}</span>`;
             html += '</div>';
@@ -9004,6 +9668,8 @@
             html += '</div>';
 
             // Section 4: smart hierarchy chain (superior + peers)
+            // card_816c435e: every label uses resolveEntityLabel so a missing
+            // summary.name / entityId cannot stringify into '#undefined'.
             if (detail && detail.chain) {
                 const c = detail.chain;
                 html += '<div class="rd-section">';
@@ -9011,15 +9677,15 @@
                 if (c.superior) {
                     const sname = c.superior.kind === 'USER'
                         ? tt('chat_routing_superior_user', 'USER (device owner)')
-                        : (c.superior.summary && (c.superior.summary.name || c.superior.summary.character)) || ('#' + c.superior.entityId);
+                        : resolveEntityLabel(c.superior.summary, c.superior.entityId, null, null, { which: 'to', tt }).label;
                     html += `<div>${esc(tt('chat_routing_chain_superior', 'Superior'))}: ${esc(sname)}</div>`;
                 }
                 if (Array.isArray(c.subordinates) && c.subordinates.length > 0) {
-                    const subNames = c.subordinates.map(s => (s.summary && (s.summary.name || s.summary.character)) || ('#' + s.entityId)).join(', ');
+                    const subNames = c.subordinates.map(s => resolveEntityLabel(s.summary, s.entityId, null, null, { which: 'to', tt }).label).join(', ');
                     html += `<div>${esc(tt('chat_routing_chain_subordinates', 'Subordinates'))}: ${esc(subNames)}</div>`;
                 }
                 if (Array.isArray(c.peers) && c.peers.length > 0) {
-                    const peerNames = c.peers.map(p => (p.summary && (p.summary.name || p.summary.character)) || ('#' + p.entityId)).join(', ');
+                    const peerNames = c.peers.map(p => resolveEntityLabel(p.summary, p.entityId, null, null, { which: 'to', tt }).label).join(', ');
                     html += `<div>${esc(tt('chat_routing_chain_peers', 'Peers'))}: ${esc(peerNames)}</div>`;
                 }
                 html += '</div>';
@@ -9036,10 +9702,14 @@
         function renderOrgTreeHtml(hierarchy, summariesById, currentToId, currentFromId, esc) {
             // Defensive: hierarchy could be malformed. Walk only known keys.
             if (!hierarchy || typeof hierarchy !== 'object') return '';
+            const tt = (k, fb) => (typeof i18n !== 'undefined' && i18n.t && i18n.t(k)) || fb;
+            // card_816c435e: route every label through the shared resolver so a
+            // missing summary AND a missing/non-finite id can't paint
+            // '#undefined' into the tree. resolveEntityLabel returns the
+            // commander/supervisor floor as a last resort.
             const labelFor = (id) => {
                 const s = summariesById.get(id);
-                if (!s) return '#' + id;
-                return (s.name || s.character || ('#' + id));
+                return resolveEntityLabel(s, id, null, null, { which: 'to', tt }).label;
             };
             const roleFor = (id) => {
                 const s = summariesById.get(id);

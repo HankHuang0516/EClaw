@@ -52,6 +52,53 @@ const put = (path) => request(app).put(path);
 
 const AUTH = { deviceId: 'test-dev', deviceSecret: 'test-secret' };
 
+/**
+ * Given an INSERT SQL string + column name, return the 0-based index into
+ * the params array. The column list and VALUES placeholder list can drift
+ * (some columns use NOW() / DEFAULT and don't consume a $N slot), so we
+ * count $N references in VALUES rather than naively zipping the lists.
+ * Adding columns at the end (like card_c2635849's schedule_skip_* pair)
+ * does not shift earlier assertions.
+ */
+function columnParamIndex(sql, columnName) {
+    // Extract balanced parenthesis groups — the VALUES clause may contain
+    // nested parens (NOW(), $7::jsonb, etc.) so a lazy regex on `)` matches
+    // too early. Walk the string tracking depth.
+    function takeBalanced(src, startIdx) {
+        let depth = 0;
+        let start = -1;
+        for (let i = startIdx; i < src.length; i++) {
+            if (src[i] === '(') {
+                if (depth === 0) start = i + 1;
+                depth++;
+            } else if (src[i] === ')') {
+                depth--;
+                if (depth === 0) return { body: src.slice(start, i), end: i };
+            }
+        }
+        return null;
+    }
+    const colKeyword = sql.indexOf('INSERT INTO kanban_cards');
+    if (colKeyword < 0) return -1;
+    const colGroup = takeBalanced(sql, colKeyword);
+    if (!colGroup) return -1;
+    const valKeyword = sql.indexOf('VALUES', colGroup.end);
+    if (valKeyword < 0) return -1;
+    const valGroup = takeBalanced(sql, valKeyword);
+    if (!valGroup) return -1;
+    const cols = colGroup.body.split(',').map(s => s.trim());
+    const values = valGroup.body.split(',').map(s => s.trim());
+    if (cols.length !== values.length) return -1;
+    for (let i = 0; i < cols.length; i++) {
+        if (cols[i] === columnName) {
+            const m = values[i].match(/^\$(\d+)/);
+            if (!m) return -1;  // column uses NOW()/DEFAULT, no param
+            return parseInt(m[1], 10) - 1;
+        }
+    }
+    return -1;
+}
+
 // ════════════════════════════════════════════════════════════════
 // POST /card — Create card requires assignedBots
 // ════════════════════════════════════════════════════════════════
@@ -120,9 +167,15 @@ describe('POST /card — assignedBots validation', () => {
         expect(res.status).not.toBe(400);
         const insertCall = mockQuery.mock.calls.find(c => /INSERT INTO kanban_cards/.test(c[0]));
         expect(insertCall).toBeTruthy();
-        // chat_anchor_message_id is the 3rd-from-last INSERT param (… anchor, coord, dispatch_mode).
+        // chat_anchor_message_id index: build a (column → $N) map from the
+        // SQL, then convert $N to a params array index. This is robust to
+        // adding new columns / SQL-literal placeholders like NOW() that
+        // don't consume a param slot.
+        const sql = insertCall[0];
         const params = insertCall[1];
-        expect(params[params.length - 3]).toBe(null);
+        const idx = columnParamIndex(sql, 'chat_anchor_message_id');
+        expect(idx).toBeGreaterThanOrEqual(0);
+        expect(params[idx]).toBe(null);
     });
 
     it('allows bot-filed card (entityId > 0) without chatAnchorMessageId', async () => {
@@ -255,10 +308,17 @@ describe('POST /card — assignedBots validation', () => {
         });
         expect(res.status).not.toBe(400);
         const insertCall = mockQuery.mock.calls.find(c => /INSERT INTO kanban_cards/.test(c[0]));
+        const sql = insertCall[0];
         const params = insertCall[1];
-        // The coord param immediately precedes dispatch_mode; null when invalid.
-        expect(params[params.length - 2]).toBe(null);
-        expect(params[params.length - 1]).toBe('immediate');
+        // Map column→$N→params index so adding columns (e.g.
+        // schedule_skip_if_*_pct_over) or NOW()-literal columns don't shift
+        // these assertions.
+        const coordIdx = columnParamIndex(sql, 'chat_anchor_coord');
+        const dispatchIdx = columnParamIndex(sql, 'dispatch_mode');
+        expect(coordIdx).toBeGreaterThanOrEqual(0);
+        expect(dispatchIdx).toBeGreaterThanOrEqual(0);
+        expect(params[coordIdx]).toBe(null);
+        expect(params[dispatchIdx]).toBe('immediate');
     });
 });
 

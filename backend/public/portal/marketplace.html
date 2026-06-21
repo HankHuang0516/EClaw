@@ -117,6 +117,42 @@
             margin-bottom: 14px;
         }
 
+        .mp-results-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 50px;
+            margin-bottom: 14px;
+            padding: 10px 12px;
+            border: 1px solid rgba(51, 51, 85, 0.8);
+            border-radius: var(--radius-sm);
+            background: rgba(37, 37, 64, 0.42);
+        }
+
+        .mp-results-copy {
+            min-width: 0;
+        }
+
+        .mp-results-title {
+            display: block;
+            font-size: 13px;
+            font-weight: 740;
+            line-height: 1.35;
+        }
+
+        .mp-results-muted {
+            display: block;
+            margin-top: 2px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .mp-clear-btn {
+            flex: 0 0 auto;
+        }
+
         .mp-field,
         .mp-select {
             min-height: 40px;
@@ -431,6 +467,21 @@
             padding: 24px;
         }
 
+        .mp-state-stack {
+            max-width: 420px;
+        }
+
+        .mp-state-stack strong,
+        .mp-state-stack span {
+            display: block;
+        }
+
+        .mp-state-stack span {
+            margin-top: 6px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
         .mp-modal {
             position: fixed;
             inset: 0;
@@ -534,6 +585,15 @@
                 grid-column: 1 / -1;
             }
 
+            .mp-results-bar {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .mp-clear-btn {
+                width: 100%;
+            }
+
             .mp-stats {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
@@ -611,6 +671,14 @@
                     <input id="maxRateInput" type="range" min="1" max="50" step="1" value="50" aria-label="Maximum e-coin per 1000 tokens">
                 </div>
             </div>
+        </section>
+
+        <section class="mp-results-bar" aria-live="polite" aria-atomic="true" aria-label="Marketplace result summary">
+            <div class="mp-results-copy">
+                <strong class="mp-results-title" id="resultSummary">Loading marketplace listings...</strong>
+                <span class="mp-results-muted" id="filterSummary">Use search, capabilities, and rate range to narrow the list.</span>
+            </div>
+            <button class="mp-btn mp-clear-btn" id="clearFiltersButton" type="button" disabled>Clear filters</button>
         </section>
 
         <section class="mp-stats" aria-label="Marketplace statistics">
@@ -770,6 +838,58 @@
             return params;
         }
 
+        function hasActiveMarketplaceFilters() {
+            const query = document.getElementById('searchInput')?.value.trim();
+            const cap = document.getElementById('capabilitySelect')?.value;
+            const min = Number(document.getElementById('minRateInput')?.value || RATE_MIN);
+            const max = Number(document.getElementById('maxRateInput')?.value || RATE_MAX);
+            return !!query || !!cap || min > RATE_MIN || max < RATE_MAX;
+        }
+
+        function activeFilterLabels() {
+            const labels = [];
+            const search = document.getElementById('searchInput')?.value.trim();
+            const capSelect = document.getElementById('capabilitySelect');
+            const min = Number(document.getElementById('minRateInput')?.value || RATE_MIN);
+            const max = Number(document.getElementById('maxRateInput')?.value || RATE_MAX);
+            if (search) labels.push(`Search: "${search}"`);
+            if (capSelect?.value) labels.push(`Capability: ${capSelect.options[capSelect.selectedIndex]?.text || capSelect.value}`);
+            if (min > RATE_MIN || max < RATE_MAX) {
+                const hiLabel = max >= RATE_MAX ? `${RATE_MAX}+` : String(max);
+                labels.push(`Rate: ${min}-${hiLabel} e / 1K`);
+            }
+            return labels;
+        }
+
+        function updateFilterSummary() {
+            const resultEl = document.getElementById('resultSummary');
+            const filterEl = document.getElementById('filterSummary');
+            const clearBtn = document.getElementById('clearFiltersButton');
+            if (!resultEl || !filterEl || !clearBtn) return;
+            const active = hasActiveMarketplaceFilters();
+            const count = state.filtered.length;
+            const noun = count === 1 ? 'listing' : 'listings';
+            resultEl.textContent = state.loading
+                ? 'Loading marketplace listings...'
+                : active
+                    ? `Showing ${count} matching ${noun}`
+                    : `Showing ${count} marketplace ${noun}`;
+            filterEl.textContent = active
+                ? activeFilterLabels().join(' | ')
+                : 'Use search, capabilities, and rate range to narrow the list.';
+            clearBtn.disabled = !active;
+            clearBtn.setAttribute('aria-disabled', String(!active));
+        }
+
+        function resetMarketplaceFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('capabilitySelect').value = '';
+            document.getElementById('minRateInput').value = String(RATE_MIN);
+            document.getElementById('maxRateInput').value = String(RATE_MAX);
+            syncRateSlider();
+            loadMarketplace();
+        }
+
         async function loadMarketplace() {
             state.loading = true;
             renderState(tt('mp_loading', 'Loading...'));
@@ -786,6 +906,7 @@
                 console.error('[Marketplace] load failed:', err);
             } finally {
                 state.loading = false;
+                updateFilterSummary();
             }
         }
 
@@ -802,6 +923,7 @@
                 return haystack.includes(query);
             });
             renderStats();
+            updateFilterSummary();
             renderGrid();
         }
 
@@ -818,20 +940,27 @@
             document.getElementById('statRented').textContent = String(state.filtered.filter((listing) => listing.has_active_contract).length);
         }
 
-        function renderState(message) {
+        function renderState(message, detail) {
             const panel = document.getElementById('statePanel');
             const grid = document.getElementById('listingGrid');
             panel.className = message && message === tt('mp_loading', 'Loading...') ? 'mp-loading' : 'mp-empty';
-            panel.textContent = message;
+            panel.innerHTML = message
+                ? `<div class="mp-state-stack"><strong>${esc(message)}</strong>${detail ? `<span>${esc(detail)}</span>` : ''}</div>`
+                : '';
             panel.style.display = message ? 'grid' : 'none';
             grid.innerHTML = '';
+            updateFilterSummary();
         }
 
         function renderGrid() {
             const panel = document.getElementById('statePanel');
             const grid = document.getElementById('listingGrid');
             if (!state.filtered.length) {
-                renderState(tt('mp_no_results', 'No bots available yet. Check back later!'));
+                const hasFilters = hasActiveMarketplaceFilters();
+                renderState(
+                    hasFilters ? 'No matching bots for current filters.' : tt('mp_no_results', 'No bots available yet. Check back later!'),
+                    hasFilters ? tt('community_empty_desc', 'Try different keywords or filters') : 'Publish a bot from Card Holder to make the marketplace useful for the next renter.'
+                );
                 return;
             }
             panel.style.display = 'none';
@@ -1043,6 +1172,7 @@
                 clearTimeout(state.debounce);
                 state.debounce = setTimeout(filterLocal, 150);
             });
+            document.getElementById('clearFiltersButton').addEventListener('click', resetMarketplaceFilters);
             document.addEventListener('keydown', (event) => {
                 if (event.key === 'Escape') closeDetail();
             });

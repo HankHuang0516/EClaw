@@ -11,8 +11,11 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.hank.clawlive.data.local.LayoutPreferences
+import com.hank.clawlive.data.local.WallpaperKanbanObjectStyle
 import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
+import com.hank.clawlive.data.model.WallpaperKanbanCard
+import com.hank.clawlive.data.model.WallpaperKanbanSchedule
 import com.hank.clawlive.engine.ClawRenderer
 import com.hank.clawlive.ui.WallpaperPreviewView
 import java.io.File
@@ -126,6 +129,168 @@ class WallpaperAnimationVisualProbeTest {
             }
             instrumentation.waitForIdleSync()
         }
+    }
+
+    @Test
+    fun captureKanbanWhiteboardTextFitProbe() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val prefs = LayoutPreferences.getInstance(context)
+        prefs.clearAllCustomPositions()
+        prefs.clearAllEntityScales()
+        prefs.useCustomLayout = true
+        prefs.wallpaperWalkingEnabled = false
+        prefs.wallpaperSpeechBubblesEnabled = false
+        prefs.wallpaperKanbanTasksEnabled = true
+        prefs.wallpaperKanbanAutomationBoardEnabled = true
+        prefs.wallpaperKanbanAssetWhiteboardEnabled = true
+        prefs.wallpaperKanbanHandwrittenBoardTextEnabled = true
+        prefs.wallpaperKanbanPrivacyModeEnabled = false
+        prefs.usageOverlayEnabled = false
+        prefs.setEntityScale(1, 0.78f)
+        prefs.setEntityScale(2, 0.78f)
+        prefs.setEntityScale(3, 0.78f)
+        prefs.setCustomPosition(1, 0.23f, 0.32f)
+        prefs.setCustomPosition(2, 0.50f, 0.32f)
+        prefs.setCustomPosition(3, 0.77f, 0.32f)
+
+        val now = System.currentTimeMillis()
+        val cards = listOf(
+            WallpaperKanbanCard(
+                id = "auto-1",
+                title = "自動化任務監控（每小時）",
+                priority = "P1",
+                status = "todo",
+                assignedBots = listOf(1),
+                updatedAt = now,
+                isAutomation = true,
+                schedule = WallpaperKanbanSchedule(true, "hourly", now + 9 * 60_000, "Asia/Taipei")
+            ),
+            WallpaperKanbanCard(
+                id = "auto-2",
+                title = "Review weekly Cross-platform Release Package",
+                priority = "P2",
+                status = "in_progress",
+                assignedBots = listOf(1),
+                updatedAt = now - 10_000,
+                isAutomation = true,
+                schedule = WallpaperKanbanSchedule(true, "daily", now + 36 * 60_000, "Asia/Taipei")
+            ),
+            WallpaperKanbanCard(
+                id = "auto-3",
+                title = "API Health + 免費額度檢查",
+                priority = "P0",
+                status = "blocked",
+                assignedBots = listOf(1),
+                updatedAt = now - 20_000,
+                isAutomation = true,
+                schedule = WallpaperKanbanSchedule(true, "daily", now + 72 * 60_000, "Asia/Taipei")
+            ),
+            WallpaperKanbanCard(
+                id = "auto-4",
+                title = "同步任務牆白板字體縮放",
+                priority = "P1",
+                status = "review",
+                assignedBots = listOf(2),
+                updatedAt = now - 30_000,
+                isAutomation = true,
+                schedule = WallpaperKanbanSchedule(true, "daily", now + 18 * 60_000, "Asia/Taipei")
+            ),
+            WallpaperKanbanCard(
+                id = "auto-5",
+                title = "Long English title should never escape the board surface",
+                priority = "P2",
+                status = "todo",
+                assignedBots = listOf(2),
+                updatedAt = now - 40_000,
+                isAutomation = true,
+                schedule = WallpaperKanbanSchedule(true, "daily", now + 66 * 60_000, "Asia/Taipei")
+            ),
+            WallpaperKanbanCard(
+                id = "auto-6",
+                title = "白板寬度碰撞避讓",
+                priority = "P1",
+                status = "in_progress",
+                assignedBots = listOf(3),
+                updatedAt = now - 50_000,
+                isAutomation = true,
+                schedule = WallpaperKanbanSchedule(true, "daily", now + 24 * 60_000, "Asia/Taipei")
+            ),
+            WallpaperKanbanCard(
+                id = "task-1",
+                title = "桌面堆疊任務",
+                priority = "P1",
+                status = "todo",
+                assignedBots = listOf(2),
+                updatedAt = now - 60_000
+            ),
+            WallpaperKanbanCard(
+                id = "task-2",
+                title = "Object orbit depth",
+                priority = "P2",
+                status = "in_progress",
+                assignedBots = listOf(2),
+                updatedAt = now - 70_000
+            )
+        )
+        val bitmap = Bitmap.createBitmap(1080, 1920, Bitmap.Config.ARGB_8888)
+        val renderer = ClawRenderer(context)
+        renderer.drawMultiEntity(
+            Canvas(bitmap),
+            listOf(
+                EntityStatus(entityId = 1, name = "Mac_F", state = CharacterState.IDLE, isBound = true),
+                EntityStatus(entityId = 2, name = "Mac_ClaudeAce主管", state = CharacterState.IDLE, isBound = true),
+                EntityStatus(entityId = 3, name = "Mac_E", state = CharacterState.IDLE, isBound = true)
+            ),
+            loading = false,
+            kanbanCards = cards
+        )
+
+        val file = saveBitmap("wallpaper-kanban-whiteboard-text-fit.png", bitmap)
+        assertTrue(file.length() > 0)
+    }
+
+    @Test
+    fun captureKanbanFolderGroundPileProbe() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val prefs = LayoutPreferences.getInstance(context)
+        prefs.clearAllCustomPositions()
+        prefs.clearAllEntityScales()
+        prefs.useCustomLayout = true
+        prefs.wallpaperWalkingEnabled = false
+        prefs.wallpaperSpeechBubblesEnabled = false
+        prefs.wallpaperKanbanTasksEnabled = true
+        prefs.wallpaperKanbanAutomationBoardEnabled = false
+        prefs.wallpaperKanbanPrivacyModeEnabled = true
+        prefs.wallpaperKanbanObjectStyle = WallpaperKanbanObjectStyle.FOLDER
+        prefs.usageOverlayEnabled = false
+        prefs.setEntityScale(2, 0.58f)
+        prefs.setCustomPosition(2, 0.5f, 0.42f)
+
+        val now = System.currentTimeMillis()
+        val statuses = listOf("todo", "in_progress", "review", "blocked")
+        val cards = (0 until 12).map { index ->
+            WallpaperKanbanCard(
+                id = "folder-depth-$index",
+                title = "Folder depth probe $index",
+                priority = if (index % 5 == 0) "P0" else "P2",
+                status = statuses[index % statuses.size],
+                assignedBots = listOf(2),
+                updatedAt = now - index * 30_000L
+            )
+        }
+        val bitmap = Bitmap.createBitmap(1080, 1920, Bitmap.Config.ARGB_8888)
+        val renderer = ClawRenderer(context)
+        renderer.drawMultiEntity(
+            Canvas(bitmap),
+            listOf(
+                EntityStatus(entityId = 2, name = "Mac_ClaudeAce主管", state = CharacterState.IDLE, isBound = true)
+            ),
+            loading = false,
+            kanbanCards = cards
+        )
+
+        val file = saveBitmap("wallpaper-kanban-folder-ground-pile.png", bitmap)
+        assertTrue(file.length() > 0)
     }
 
     private fun saveBitmap(name: String, bitmap: Bitmap): File {

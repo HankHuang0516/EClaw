@@ -27,12 +27,27 @@
                 userVisibleOnly: true,
                 applicationServerKey: urlBase64ToUint8Array(vapidRes.publicKey)
             });
-            await fetch('/api/push/subscribe', {
+            const subRes = await fetch('/api/push/subscribe', {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ subscription: sub.toJSON() })
             });
+            // Round-trip push health (card_0a5d4a97): stash the server-side
+            // subscription id so the SW can include it on /api/push/ack.
+            // Server is free to omit subscriptionId — SW falls back to
+            // nonce-only attribution if missing.
+            try {
+                const body = subRes && subRes.ok ? await subRes.clone().json() : null;
+                const subId = body && (body.subscriptionId || (body.subscription && body.subscription.id));
+                if (subId && 'caches' in window) {
+                    const cache = await caches.open('webpush-meta-v1');
+                    await cache.put(
+                        '/__webpush-subscription-id',
+                        new Response(String(subId), { headers: { 'Content-Type': 'text/plain' } })
+                    );
+                }
+            } catch (_) { /* best-effort */ }
         } catch (e) {
             if (typeof console !== 'undefined') console.debug('[webpush] auto-enable skipped:', e && e.message);
         }
