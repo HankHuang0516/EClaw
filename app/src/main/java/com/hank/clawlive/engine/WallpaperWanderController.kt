@@ -64,6 +64,7 @@ class WallpaperWanderController(
         var ambientGoal: AmbientWanderGoal,
         var ambientStep: Int,
         var facingDirection: WalkFacingDirection,
+        var manualTarget: Boolean = false,
         var onArrive: (() -> Unit)? = null
     )
 
@@ -104,6 +105,7 @@ class WallpaperWanderController(
         state.targetYPct = yPct.coerceIn(MIN_Y_PCT, MAX_Y_PCT)
         state.motionState = MotionState.MOVING_TO_TARGET
         state.moving = false
+        state.manualTarget = true
         state.onArrive = onArrive
     }
 
@@ -111,6 +113,7 @@ class WallpaperWanderController(
         val state = commandState(entityId)
         state.motionState = MotionState.STOPPED
         state.moving = false
+        state.manualTarget = false
         state.onArrive = null
     }
 
@@ -127,6 +130,7 @@ class WallpaperWanderController(
         state.motionState = MotionState.WANDERING
         state.moving = false
         state.idleUntilMs = 0L
+        state.manualTarget = false
         state.onArrive = null
     }
 
@@ -164,6 +168,8 @@ class WallpaperWanderController(
                 state.xPct * width to state.yPct * height
             } else if (gatherTargets.isNotEmpty()) {
                 advanceConversationTarget(entity, base, width, height, nowMs, gatherTargets[entity.entityId])
+            } else if (states[entity.entityId]?.manualTarget == true) {
+                advanceManualTarget(entity, base, width, height, nowMs)
             } else {
                 advanceHome(entity, base, width, height, nowMs)
             }
@@ -181,11 +187,29 @@ class WallpaperWanderController(
         val state = stateFor(entity.entityId, base, width, height, nowMs)
         state.homeXPct = (base.first / width).coerceIn(MIN_X_PCT, MAX_X_PCT)
         state.homeYPct = (base.second / height).coerceIn(MIN_Y_PCT, MAX_Y_PCT)
+        state.manualTarget = false
         if (state.motionState == MotionState.SLEEPING) {
             state.motionState = MotionState.STOPPED
         }
         val target = gatherTarget ?: (state.homeXPct to state.homeYPct)
         return advanceTowardExplicitTarget(state, target.first, target.second, width, height, nowMs)
+    }
+
+    private fun advanceManualTarget(
+        entity: EntityStatus,
+        base: Pair<Float, Float>,
+        width: Float,
+        height: Float,
+        nowMs: Long
+    ): Pair<Float, Float> {
+        val state = stateFor(entity.entityId, base, width, height, nowMs)
+        state.homeXPct = (base.first / width).coerceIn(MIN_X_PCT, MAX_X_PCT)
+        state.homeYPct = (base.second / height).coerceIn(MIN_Y_PCT, MAX_Y_PCT)
+        if (state.motionState == MotionState.SLEEPING) {
+            state.motionState = MotionState.STOPPED
+            state.manualTarget = false
+        }
+        return advanceTowardExplicitTarget(state, state.targetXPct, state.targetYPct, width, height, nowMs)
     }
 
     private fun advanceHome(
@@ -198,6 +222,7 @@ class WallpaperWanderController(
         val state = stateFor(entity.entityId, base, width, height, nowMs)
         state.homeXPct = (base.first / width).coerceIn(MIN_X_PCT, MAX_X_PCT)
         state.homeYPct = (base.second / height).coerceIn(MIN_Y_PCT, MAX_Y_PCT)
+        state.manualTarget = false
         if (state.motionState == MotionState.SLEEPING) {
             state.motionState = MotionState.STOPPED
         }
@@ -229,6 +254,7 @@ class WallpaperWanderController(
         val arrived = moveTowardTarget(state, width, height, targetSpeedPctPerSecond, dtSeconds)
         if (arrived) {
             state.motionState = MotionState.STOPPED
+            state.manualTarget = false
             val callback = state.onArrive
             state.onArrive = null
             callback?.invoke()
