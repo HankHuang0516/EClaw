@@ -5,7 +5,10 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.LinearGradient
+import android.graphics.RadialGradient
 import android.graphics.RectF
+import android.graphics.Shader
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.text.TextPaint
@@ -526,7 +529,7 @@ class WallpaperKanbanRenderer(
         nowMs: Long
     ) {
         if (tasks.isEmpty()) return
-        val clusterCount = tasks.size.coerceIn(1, MAX_TASK_ORBIT_CLUSTERS)
+        val clusterCount = taskObjectClusterCount(tasks)
         val placements = tasks.mapIndexedNotNull { index, state ->
             createTaskObjectPlacement(canvas, entityId, base, unit, clusterCount, index, state, nowMs)
         }
@@ -536,7 +539,7 @@ class WallpaperKanbanRenderer(
             val minLeft = clusterPlacements.minOf { it.rect.left }
             val maxRight = clusterPlacements.maxOf { it.rect.right }
             val maxBottom = clusterPlacements.maxOf { it.rect.bottom }
-            shadowPaint.color = Color.argb(50, 0, 0, 0)
+            shadowPaint.color = Color.argb(42, 100, 116, 139)
             canvas.drawOval(
                 RectF(minLeft - unit * 0.035f, maxBottom - unit * 0.025f, maxRight + unit * 0.035f, maxBottom + unit * 0.055f),
                 shadowPaint
@@ -546,14 +549,13 @@ class WallpaperKanbanRenderer(
         placements.sortedWith(compareBy<TaskObjectPlacement> { it.centerY }.thenBy { it.layer }).forEach { placement ->
             drawTaskObjectPlacement(canvas, placement, unit)
         }
+    }
 
-        if (!layoutPrefs.wallpaperKanbanPrivacyModeEnabled) {
-            placements.groupBy { it.column }
-                .values
-                .mapNotNull { columnPlacements -> columnPlacements.maxByOrNull { it.layer } }
-                .take(3)
-                .forEach { drawTaskObjectTitle(canvas, it, unit) }
-        }
+    private fun taskObjectClusterCount(tasks: List<VisualCardState>): Int {
+        val folderCount = tasks.count { resolveTaskObjectKind(it) == TaskObjectKind.FOLDER }
+        val folderDominant = folderCount * 2 >= tasks.size
+        val maxClusters = if (folderDominant) MAX_FOLDER_GROUND_CLUSTERS else MAX_TASK_ORBIT_CLUSTERS
+        return tasks.size.coerceIn(1, maxClusters)
     }
 
     private fun createTaskObjectPlacement(
@@ -572,7 +574,7 @@ class WallpaperKanbanRenderer(
         val kind = resolveTaskObjectKind(state)
         val column = index % clusterCount
         val layer = index / clusterCount
-        val slot = taskOrbitSlot(canvas, entityId, base, column)
+        val slot = taskOrbitSlot(canvas, entityId, base, column, kind)
         val size = taskObjectSize(kind, unit * slot.scale, seed)
         val width = size.first
         val height = size.second
@@ -581,7 +583,7 @@ class WallpaperKanbanRenderer(
             TaskObjectKind.STORAGE_BOX -> height * 0.34f
             TaskObjectKind.CLIPBOARD -> height * 0.18f
             TaskObjectKind.STICKY_CARD -> height * 0.24f
-            TaskObjectKind.FOLDER -> height * 0.32f
+            TaskObjectKind.FOLDER -> height * 0.36f
         }
         val naturalJitterX = (((seed / 7) % 5) - 2) * unit * 0.006f
         val naturalJitterY = (((seed / 13) % 5) - 2) * unit * 0.004f
@@ -591,7 +593,7 @@ class WallpaperKanbanRenderer(
             0f
         }
         val removalLift = if (state.terminal) removalProgress * unit * 0.13f else 0f
-        val stackLean = (((seed / 19) % 3) - 1) * unit * 0.007f * layer
+        val stackLean = (((seed / 19) % 3) - 1) * unit * (if (kind == TaskObjectKind.FOLDER) 0.015f else 0.007f) * layer
         val centerX = (base.first + slot.offsetX * unit + stackLean + naturalJitterX)
             .coerceIn(width * 0.62f, canvas.width - width * 0.62f)
         val centerY = (base.second + unit * slot.offsetY - layer * layerRise + naturalJitterY - lift - removalLift)
@@ -619,30 +621,71 @@ class WallpaperKanbanRenderer(
         )
     }
 
-    private fun taskOrbitSlot(canvas: Canvas, entityId: Int, base: Pair<Float, Float>, cluster: Int): TaskOrbitSlot {
+    private fun taskOrbitSlot(
+        canvas: Canvas,
+        entityId: Int,
+        base: Pair<Float, Float>,
+        cluster: Int,
+        kind: TaskObjectKind
+    ): TaskOrbitSlot {
+        if (kind == TaskObjectKind.FOLDER) {
+            return folderGroundSlot(canvas, base, cluster)
+        }
         val defaultSlots = arrayOf(
-            TaskOrbitSlot(-0.52f, 0.42f, 1.03f, -2.6f),
-            TaskOrbitSlot(0.52f, 0.42f, 1.03f, 2.4f),
-            TaskOrbitSlot(-0.36f, 0.18f, 0.9f, -1.2f),
-            TaskOrbitSlot(0.36f, 0.18f, 0.9f, 1.2f),
-            TaskOrbitSlot(0f, 0.58f, 1.08f, if (entityId % 2 == 0) 1.6f else -1.6f),
-            TaskOrbitSlot(0f, 0.08f, 0.84f, if (entityId % 2 == 0) -0.8f else 0.8f)
+            TaskOrbitSlot(-0.48f, 0.58f, 1.04f, -2.8f),
+            TaskOrbitSlot(0.48f, 0.58f, 1.04f, 2.6f),
+            TaskOrbitSlot(-0.24f, 1.04f, 0.92f, -1.4f),
+            TaskOrbitSlot(0.24f, 1.04f, 0.92f, 1.4f),
+            TaskOrbitSlot(-0.36f, 0.25f, 0.9f, -1.2f),
+            TaskOrbitSlot(0.36f, 0.25f, 0.9f, 1.2f),
+            TaskOrbitSlot(0f, 0.1f, 0.84f, if (entityId % 2 == 0) -0.8f else 0.8f)
         )
         val leftEdgeSlots = arrayOf(
-            TaskOrbitSlot(0.46f, 0.42f, 1.03f, 2.2f),
-            TaskOrbitSlot(0.30f, 0.18f, 0.9f, 0.8f),
-            TaskOrbitSlot(0.66f, 0.30f, 0.98f, 3.0f),
+            TaskOrbitSlot(0.46f, 0.54f, 1.04f, 2.2f),
+            TaskOrbitSlot(0.72f, 0.52f, 1.02f, 3.0f),
+            TaskOrbitSlot(0.30f, 1.04f, 0.92f, -1.4f),
+            TaskOrbitSlot(0.58f, 1.04f, 0.92f, 1.4f),
+            TaskOrbitSlot(0.30f, 0.22f, 0.9f, 0.8f),
             TaskOrbitSlot(0.20f, 0.58f, 1.08f, -1.4f),
             TaskOrbitSlot(0.52f, 0.08f, 0.84f, 1.0f),
-            TaskOrbitSlot(0.78f, 0.52f, 1f, 2.8f)
+            TaskOrbitSlot(0.78f, 0.42f, 1f, 2.8f)
         )
         val rightEdgeSlots = arrayOf(
-            TaskOrbitSlot(-0.46f, 0.42f, 1.03f, -2.2f),
-            TaskOrbitSlot(-0.30f, 0.18f, 0.9f, -0.8f),
-            TaskOrbitSlot(-0.66f, 0.30f, 0.98f, -3.0f),
+            TaskOrbitSlot(-0.46f, 0.54f, 1.04f, -2.2f),
+            TaskOrbitSlot(-0.72f, 0.52f, 1.02f, -3.0f),
+            TaskOrbitSlot(-0.30f, 1.04f, 0.92f, 1.4f),
+            TaskOrbitSlot(-0.58f, 1.04f, 0.92f, -1.4f),
+            TaskOrbitSlot(-0.30f, 0.22f, 0.9f, -0.8f),
             TaskOrbitSlot(-0.20f, 0.58f, 1.08f, 1.4f),
             TaskOrbitSlot(-0.52f, 0.08f, 0.84f, -1.0f),
-            TaskOrbitSlot(-0.78f, 0.52f, 1f, -2.8f)
+            TaskOrbitSlot(-0.78f, 0.42f, 1f, -2.8f)
+        )
+        val slots = when {
+            base.first < canvas.width * 0.28f -> leftEdgeSlots
+            base.first > canvas.width * 0.72f -> rightEdgeSlots
+            else -> defaultSlots
+        }
+        return slots[cluster % slots.size]
+    }
+
+    private fun folderGroundSlot(canvas: Canvas, base: Pair<Float, Float>, cluster: Int): TaskOrbitSlot {
+        val defaultSlots = arrayOf(
+            TaskOrbitSlot(-0.74f, 0.76f, 1.04f, -3.2f),
+            TaskOrbitSlot(0.74f, 0.76f, 1.04f, 3.1f),
+            TaskOrbitSlot(-0.40f, 1.28f, 0.94f, -1.6f),
+            TaskOrbitSlot(0.40f, 1.28f, 0.94f, 1.6f)
+        )
+        val leftEdgeSlots = arrayOf(
+            TaskOrbitSlot(0.68f, 0.72f, 1.04f, 2.6f),
+            TaskOrbitSlot(0.98f, 0.74f, 1.02f, 3.3f),
+            TaskOrbitSlot(0.46f, 1.24f, 0.94f, -1.3f),
+            TaskOrbitSlot(0.82f, 1.24f, 0.94f, 1.6f)
+        )
+        val rightEdgeSlots = arrayOf(
+            TaskOrbitSlot(-0.68f, 0.72f, 1.04f, -2.6f),
+            TaskOrbitSlot(-0.98f, 0.74f, 1.02f, -3.3f),
+            TaskOrbitSlot(-0.46f, 1.24f, 0.94f, 1.3f),
+            TaskOrbitSlot(-0.82f, 1.24f, 0.94f, -1.6f)
         )
         val slots = when {
             base.first < canvas.width * 0.28f -> leftEdgeSlots
@@ -673,7 +716,7 @@ class WallpaperKanbanRenderer(
         val variance = ((seed % 5) - 2) * 0.012f
         return when (kind) {
             TaskObjectKind.BOOK -> unit * (0.55f + variance) to unit * (0.16f + variance * 0.35f)
-            TaskObjectKind.FOLDER -> unit * (0.42f + variance) to unit * (0.25f + variance * 0.4f)
+            TaskObjectKind.FOLDER -> unit * (0.56f + variance) to unit * (0.32f + variance * 0.4f)
             TaskObjectKind.CLIPBOARD -> unit * (0.34f + variance) to unit * (0.43f + variance)
             TaskObjectKind.STORAGE_BOX -> unit * (0.42f + variance) to unit * (0.31f + variance * 0.6f)
             TaskObjectKind.STICKY_CARD -> unit * (0.34f + variance) to unit * (0.25f + variance * 0.4f)
@@ -692,67 +735,6 @@ class WallpaperKanbanRenderer(
         }
         if (placement.state.terminal) {
             drawRemovalSpark(canvas, placement.centerX, placement.rect.top, unit, placement.removalProgress, placement.alpha)
-        }
-        canvas.restore()
-    }
-
-    private fun drawTaskObjectTitle(canvas: Canvas, placement: TaskObjectPlacement, unit: Float) {
-        if (placement.state.terminal) return
-        textPaint.textSize = (unit * 0.043f).coerceIn(8f, 12f)
-        textPaint.color = Color.argb((placement.alpha * 0.76f).toInt().coerceIn(0, 220), 15, 23, 42)
-        textPaint.textAlign = Paint.Align.CENTER
-        val title = ellipsizeToWidth(placement.state.title, placement.rect.width() * 0.9f, textPaint)
-        canvas.drawText(title, placement.centerX, placement.rect.bottom + unit * 0.055f, textPaint)
-        textPaint.textAlign = Paint.Align.LEFT
-    }
-
-    private fun drawTaskFolder(
-        canvas: Canvas,
-        base: Pair<Float, Float>,
-        unit: Float,
-        index: Int,
-        totalCount: Int,
-        state: VisualCardState,
-        nowMs: Long
-    ) {
-        val removalProgress = removalProgress(state, nowMs)
-        if (state.terminal && removalProgress >= 1f) return
-        val seed = abs(state.id.hashCode())
-        val maxColumns = min(totalCount.coerceAtLeast(1), 4)
-        val row = index / maxColumns
-        val col = index % maxColumns
-        val visibleColumns = min(maxColumns, (totalCount - row * maxColumns).coerceAtLeast(1))
-        val colOffset = col - (visibleColumns - 1) / 2f
-        val rowDepth = row.coerceAtMost(5)
-        val naturalJitterX = (((seed / 7) % 7) - 3) * unit * 0.008f
-        val naturalJitterY = (((seed / 13) % 5) - 2) * unit * 0.007f
-        val pileLean = if ((seed and 1) == 0) -1f else 1f
-        val cx = (base.first + colOffset * unit * 0.115f + pileLean * rowDepth * unit * 0.018f + naturalJitterX)
-            .coerceIn(unit * 0.18f, canvas.width - unit * 0.18f)
-        val cy = (base.second + unit * 0.35f + rowDepth * unit * 0.035f - abs(colOffset) * unit * 0.018f + naturalJitterY)
-            .coerceIn(unit * 0.25f, canvas.height - unit * 0.08f)
-        val scale = (0.8f - rowDepth * 0.018f + ((seed % 5) * 0.018f)).coerceIn(0.68f, 0.86f)
-        val width = unit * 0.38f * scale
-        val height = unit * 0.27f * scale
-        val alpha = if (state.terminal) ((1f - removalProgress) * 230).toInt() else 230
-        val lift = if (state.reviewUntilMs > nowMs) sin(((state.reviewUntilMs - nowMs) / REVIEW_DELAY_MS.toFloat()) * PI).toFloat() * unit * 0.03f else 0f
-        val left = cx - width / 2f
-        val top = cy - height / 2f - lift - (if (state.terminal) removalProgress * unit * 0.12f else 0f)
-        val right = left + width
-        val bottom = top + height
-
-        canvas.save()
-        canvas.rotate((((seed % 9) - 4) * 1.1f), cx, cy)
-        drawFolderShape(canvas, RectF(left, top, right, bottom), state, alpha)
-        if (!layoutPrefs.wallpaperKanbanPrivacyModeEnabled && !state.terminal && index < 4) {
-            textPaint.textSize = (unit * 0.045f).coerceIn(8f, 12f)
-            textPaint.color = Color.argb((alpha * 0.78f).toInt().coerceIn(0, 220), 15, 23, 42)
-            textPaint.textAlign = Paint.Align.CENTER
-            canvas.drawText(state.title.take(FOLDER_TITLE_MAX_CHARS), cx, bottom + unit * 0.055f, textPaint)
-            textPaint.textAlign = Paint.Align.LEFT
-        }
-        if (state.terminal) {
-            drawRemovalSpark(canvas, cx, top, unit, removalProgress, alpha)
         }
         canvas.restore()
     }
@@ -879,35 +861,193 @@ class WallpaperKanbanRenderer(
 
     private fun drawFolderShape(canvas: Canvas, rect: RectF, state: VisualCardState, alpha: Int) {
         val color = colorForStatus(state.displayStatus, state.priority, alpha)
-        val tabWidth = rect.width() * 0.38f
-        val tabHeight = rect.height() * 0.28f
-        folderPaint.color = color
+        val width = rect.width()
+        val height = rect.height()
+        val open = state.displayStatus == "in_progress" || state.displayStatus == "review"
+        val depth = height * 0.16f
+        val frontTop = rect.top + height * if (open) 0.43f else 0.32f
+        val frontBottom = rect.bottom - height * 0.08f
+        val backTop = rect.top + height * 0.08f
+        val backBottom = rect.bottom - height * 0.22f
         folderStrokePaint.alpha = (alpha * 0.72f).toInt().coerceIn(0, 190)
 
-        val tab = RectF(rect.left + rect.width() * 0.08f, rect.top, rect.left + tabWidth, rect.top + tabHeight)
-        canvas.drawRoundRect(tab, 6f, 6f, folderPaint)
+        shadowPaint.shader = RadialGradient(
+            rect.centerX(),
+            rect.bottom - depth * 0.15f,
+            width * 0.58f,
+            intArrayOf(Color.argb((alpha * 0.26f).toInt().coerceIn(0, 86), 51, 65, 85), Color.TRANSPARENT),
+            floatArrayOf(0.28f, 1f),
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawOval(
+            RectF(rect.left + width * 0.04f, rect.bottom - depth * 0.42f, rect.right + width * 0.06f, rect.bottom + depth * 0.56f),
+            shadowPaint
+        )
+        shadowPaint.shader = null
 
-        val bodyTop = rect.top + tabHeight * 0.45f
-        val body = RectF(rect.left, bodyTop, rect.right, rect.bottom)
-        if (state.displayStatus == "in_progress") {
-            val back = Path().apply {
-                moveTo(body.left + rect.width() * 0.05f, body.top + rect.height() * 0.05f)
-                lineTo(body.right - rect.width() * 0.08f, body.top - rect.height() * 0.12f)
-                lineTo(body.right, body.bottom - rect.height() * 0.12f)
-                lineTo(body.left, body.bottom)
-                close()
-            }
-            folderPaint.color = lighten(color, 1.18f, alpha)
-            canvas.drawPath(back, folderPaint)
-            folderPaint.color = color
-            canvas.drawRoundRect(body, 7f, 7f, folderPaint)
-            drawStatusMark(canvas, body, "in_progress", alpha)
-        } else {
-            canvas.drawRoundRect(body, 7f, 7f, folderPaint)
-            drawStatusMark(canvas, body, state.displayStatus, alpha)
+        val bottomFace = Path().apply {
+            moveTo(rect.left + width * 0.06f, frontBottom - depth * 0.35f)
+            lineTo(rect.right - width * 0.02f, frontBottom - depth * 0.62f)
+            lineTo(rect.right - width * 0.1f, frontBottom + depth * 0.3f)
+            lineTo(rect.left + width * 0.1f, frontBottom + depth * 0.48f)
+            close()
         }
-        canvas.drawRoundRect(body, 7f, 7f, folderStrokePaint)
+        folderPaint.shader = LinearGradient(
+            0f,
+            frontBottom - depth,
+            0f,
+            frontBottom + depth,
+            darken(color, 0.82f, alpha),
+            darken(color, 0.48f, alpha),
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawPath(bottomFace, folderPaint)
+        folderPaint.shader = null
+
+        val backCover = Path().apply {
+            moveTo(rect.left + width * 0.08f, backTop + height * 0.08f)
+            lineTo(rect.right - width * 0.1f, backTop)
+            lineTo(rect.right - width * 0.03f, backBottom)
+            lineTo(rect.left + width * 0.02f, backBottom + height * 0.06f)
+            close()
+        }
+        folderPaint.shader = LinearGradient(
+            0f,
+            backTop,
+            0f,
+            backBottom,
+            lighten(color, 1.22f, alpha),
+            lighten(color, 0.92f, alpha),
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawPath(backCover, folderPaint)
+        folderPaint.shader = null
+
+        val tab = Path().apply {
+            moveTo(rect.left + width * 0.13f, backTop + height * 0.02f)
+            lineTo(rect.left + width * 0.42f, backTop - height * 0.01f)
+            lineTo(rect.left + width * 0.52f, backTop + height * 0.11f)
+            lineTo(rect.left + width * 0.18f, backTop + height * 0.14f)
+            close()
+        }
+        folderPaint.shader = LinearGradient(
+            0f,
+            backTop,
+            0f,
+            backTop + height * 0.16f,
+            lighten(color, 1.32f, alpha),
+            lighten(color, 1.02f, alpha),
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawPath(tab, folderPaint)
+        folderPaint.shader = null
+
+        val paperTop = frontTop - height * if (open) 0.2f else 0.08f
+        val paperBottom = frontTop + height * if (open) 0.15f else 0.05f
+        val paperStack = Path().apply {
+            moveTo(rect.left + width * 0.12f, paperTop + height * 0.04f)
+            lineTo(rect.right - width * 0.13f, paperTop)
+            lineTo(rect.right - width * 0.06f, paperBottom)
+            lineTo(rect.left + width * 0.08f, paperBottom + height * 0.03f)
+            close()
+        }
+        folderPaint.shader = LinearGradient(
+            0f,
+            paperTop,
+            0f,
+            paperBottom,
+            Color.argb((alpha * 0.96f).toInt().coerceIn(0, 245), 255, 248, 225),
+            Color.argb((alpha * 0.9f).toInt().coerceIn(0, 235), 226, 214, 184),
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawPath(paperStack, folderPaint)
+        folderPaint.shader = null
+        accentPaint.shader = null
+        accentPaint.style = Paint.Style.STROKE
+        accentPaint.strokeWidth = (height * 0.018f).coerceIn(0.8f, 1.8f)
+        accentPaint.color = Color.argb((alpha * 0.28f).toInt().coerceIn(0, 86), 120, 53, 15)
+        repeat(if (open) 4 else 2) { i ->
+            val y = paperTop + (paperBottom - paperTop) * (i + 1) / (if (open) 5f else 3f)
+            canvas.drawLine(rect.left + width * 0.13f, y + height * 0.02f, rect.right - width * 0.11f, y - height * 0.02f, accentPaint)
+        }
+        accentPaint.style = Paint.Style.FILL
+
+        val frontCover = Path().apply {
+            moveTo(rect.left + width * 0.02f, frontTop + height * 0.05f)
+            lineTo(rect.right - width * 0.08f, frontTop - height * 0.07f)
+            lineTo(rect.right, frontBottom - depth * 0.42f)
+            lineTo(rect.left + width * 0.07f, frontBottom)
+            close()
+        }
+        folderPaint.shader = LinearGradient(
+            rect.left,
+            frontTop,
+            rect.right,
+            frontBottom,
+            lighten(color, 1.12f, alpha),
+            darken(color, 0.72f, alpha),
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawPath(frontCover, folderPaint)
+        folderPaint.shader = null
+
+        val frontLip = Path().apply {
+            moveTo(rect.left + width * 0.07f, frontBottom - depth * 0.2f)
+            lineTo(rect.right, frontBottom - depth * 0.52f)
+            lineTo(rect.right - width * 0.1f, frontBottom + depth * 0.18f)
+            lineTo(rect.left + width * 0.11f, frontBottom + depth * 0.36f)
+            close()
+        }
+        folderPaint.shader = LinearGradient(
+            0f,
+            frontBottom - depth,
+            0f,
+            frontBottom + depth,
+            darken(color, 0.76f, alpha),
+            darken(color, 0.52f, alpha),
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawPath(frontLip, folderPaint)
+        folderPaint.shader = null
+
+        accentPaint.shader = null
+        accentPaint.style = Paint.Style.STROKE
+        accentPaint.strokeWidth = (height * 0.018f).coerceIn(0.9f, 1.8f)
+        accentPaint.color = Color.argb((alpha * 0.32f).toInt().coerceIn(0, 95), 255, 255, 255)
+        canvas.drawLine(
+            rect.left + width * 0.11f,
+            frontBottom - depth * 0.22f,
+            rect.right - width * 0.12f,
+            frontBottom - depth * 0.48f,
+            accentPaint
+        )
+        accentPaint.color = Color.argb((alpha * 0.22f).toInt().coerceIn(0, 70), 15, 23, 42)
+        canvas.drawLine(
+            rect.left + width * 0.1f,
+            frontBottom + depth * 0.34f,
+            rect.right - width * 0.13f,
+            frontBottom + depth * 0.12f,
+            accentPaint
+        )
+        accentPaint.style = Paint.Style.FILL
+
+        folderStrokePaint.strokeWidth = (height * 0.028f).coerceIn(1.1f, 2.4f)
+        canvas.drawPath(backCover, folderStrokePaint)
+        canvas.drawPath(frontCover, folderStrokePaint)
+        canvas.drawPath(frontLip, folderStrokePaint)
+
+        val statusBounds = RectF(
+            rect.right - width * 0.34f,
+            frontTop + height * 0.08f,
+            rect.right - width * 0.08f,
+            frontBottom - height * 0.05f
+        )
+        drawStatusMark(canvas, statusBounds, state.displayStatus, alpha)
+        folderPaint.shader = null
+        accentPaint.shader = null
+        shadowPaint.shader = null
         folderStrokePaint.alpha = 255
+        folderStrokePaint.strokeWidth = 2.2f
     }
 
     private fun drawStatusMark(canvas: Canvas, body: RectF, status: String, alpha: Int) {
@@ -1058,8 +1198,7 @@ class WallpaperKanbanRenderer(
         private const val BOARD_ASSET_WRITING_BOTTOM = 0.58f
         private const val BOARD_ASSET_WRITING_WIDTH_FRACTION = BOARD_ASSET_WRITING_RIGHT - BOARD_ASSET_WRITING_LEFT
         private const val BOARD_ASSET_WRITING_HEIGHT_FRACTION = BOARD_ASSET_WRITING_BOTTOM - BOARD_ASSET_WRITING_TOP
-        private const val MAX_TASK_STACK_LAYERS = 9
         private const val MAX_TASK_ORBIT_CLUSTERS = 6
-        private const val FOLDER_TITLE_MAX_CHARS = 10
+        private const val MAX_FOLDER_GROUND_CLUSTERS = 4
     }
 }
