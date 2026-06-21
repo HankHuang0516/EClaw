@@ -650466,6 +650466,8 @@ const TRANSLATIONS = {
         "chat_sendto_picker_select_all": "Select all",
         "chat_sendto_picker_confirm": "Confirm",
         "chat_sendto_picker_cancel": "Cancel",
+
+        "cron_current_usage_label": "Current: 5h N% / 7d M%",
 },
 
 
@@ -1235368,6 +1235370,9 @@ const TRANSLATIONS = {
         "chat_sendto_picker_select_all": "全選",
         "chat_sendto_picker_confirm": "確認",
         "chat_sendto_picker_cancel": "取消",
+
+        "cron_current_usage_label": "目前 5h: N% / 7d: M%",
+        "cron_skip_dispatch_reason": "跳過：用量超過閾值",
 },
 
 
@@ -1849576,6 +1849581,12 @@ const TRANSLATIONS = {
         "usage_warning_7d_help": "当剩余 7 天每周配额 ≤ 此值时触发。默认 5% — 约在耗尽前 8 小时。设为 0 可在不关闭开关的情况下禁用 7 天轴。",
 
         "chat_routing_supervisor": "主管",
+
+        "cron_skip_5h_label": "5小时用量超过 X% 跳过",
+        "cron_skip_7d_label": "周用量超过 Y% 跳过",
+        "cron_skip_help_text": "此排程在 entity 5 小时用量超过 X% 或 7 天用量超过 Y% 时会跳过。预设值保护高负载 entity 不被 cron 额外加负担。可调范围 50%-99%。跳过的 cron 下次 tick 自动重试，不会 lost。",
+        "cron_current_usage_label": "目前 5h: N% / 7d: M%",
+        "cron_skip_dispatch_reason": "跳过：用量超过阈值",
 },
 
 
@@ -2412862,6 +2412873,12 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "残り 5 時間クォータ ≦ この値になった時点でトリガー。デフォルト 15% — 消耗の約 45 分前です。高くするとより早く警告します。0 に設定すると、トグルを無効にせず 5h 軸を無効化できます。",
         "usage_warning_7d_label": "7日間週間閾値（残り ≦ この値の場合に警告）",
         "usage_warning_7d_help": "残り 7 日間週クォータ ≦ この値になった時点でトリガー。デフォルト 5% — 消耗の約 8 時間前です。0 に設定すると、トグルを無効にせず 7d 軸を無効化できます。",
+
+        "cron_skip_5h_label": "5時間用量が X% を超えたらスキップ",
+        "cron_skip_7d_label": "週用量 Y% を超えたらスキップ",
+        "cron_skip_help_text": "Entity の5時間用量 X% または7日用量 Y% を超えるとスキップ。デフォルト（85%/95%）はiamentity を保護。調整可能 50%-99%。スキップされた cron は次の tick で自動再試行、lost しない。",
+        "cron_current_usage_label": "現在: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "スキップ: 用量超過",
 },
 
 
@@ -2943253,6 +2943270,12 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "남은 5시간 할당량 ≦ 이 값이 되면 트리거됩니다. 기본값 15% — 소진 약 45분 전. 더 일찍 경고하려면 값을 높이세요. 0으로 설정하면 토글을 비활성화하지 않고 5h 축을 비활성화할 수 있습니다.",
         "usage_warning_7d_label": "7일 주간 임계값 (남은량 ≦ 이 값일 때 경고)",
         "usage_warning_7d_help": "남은 7일 주간 할당량 ≦ 이 값이 되면 트리거됩니다. 기본값 5% — 소진 약 8시간 전. 0으로 설정하면 토글을 비활성화하지 않고 7d 축을 비활성화할 수 있습니다.",
+
+        "cron_skip_5h_label": "5시간 사용량 X% 초과 시 건너뛰기",
+        "cron_skip_7d_label": "주 사용량 Y% 초과 시 건너뛰기",
+        "cron_skip_help_text": "Entity 5시간 사용량 X% 또는 7일 사용량 Y% 초과 시 건너뛰기. 기본값(85%/95%)은 고부하 entity 보호. 조정 가능 50%-99%. 건너뛴 cron은 다음 tick에서 자동 재시도.",
+        "cron_current_usage_label": "현재: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "건너뛰기: 사용량 초과",
 },
 
 
@@ -2944893,6 +2944916,12 @@ const TRANSLATIONS = {
         "chat_routing_org_upward": "上報",
 
         "chat_routing_unspecified": "未指定",
+
+        "cron_skip_5h_label": "5小時用量超過 X% 跳過",
+        "cron_skip_7d_label": "週用量超過 Y% 跳過",
+        "cron_skip_help_text": "此排程在 entity 5 小時用量超過 X% 或 7 天用量超過 Y% 時會跳過。預設值保護高負載 entity 不被 cron 額外加負擔。可調範圍 50%-99%。跳過的 cron 下次 tick 自動重試，不會 lost。",
+        "cron_current_usage_label": "目前 5h: N% / 7d: M%",
+        "cron_skip_dispatch_reason": "跳過：用量超過閾值",
 },
 
 
@@ -3471766,6 +3471795,12 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "ทริกเกอร์เมื่อโควต้า 5 ชม. ที่เหลือ ≤ ค่านี้ ค่าเริ่มต้น 15% — ประมาณ 45 นาทีก่อนหมด เพิ่มขึ้นเพื่อเตือนก่อน ตั้งค่าเป็น 0 เพื่อปิดใช้งานแกน 5 ชม. โดยไม่ปิดสวิตช์",
         "usage_warning_7d_label": "เกณฑ์รายสัปดาห์ 7 วัน (เตือนเมื่อคงเหลือ ≤ ค่านี้)",
         "usage_warning_7d_help": "ทริกเกอร์เมื่อโควต้ารายสัปดาห์ 7 วันที่เหลือ ≤ ค่านี้ ค่าเริ่มต้น 5% — ประมาณ 8 ชม. ก่อนหมด ตั้งค่าเป็น 0 เพื่อปิดใช้งานแกน 7 วัน โดยไม่ปิดสวิตช์",
+
+        "cron_skip_5h_label": "ข้ามถ้า 5h มากกว่า X%",
+        "cron_skip_7d_label": "ข้ามถ้า 7d มากกว่า Y%",
+        "cron_skip_help_text": "ตารางนี้ข้าม dispatch เมื่อ entity 5h เกิน X% หรือ 7d เกิน Y% ค่าเริ่มต้น (85%/95%) ป้องกัน entity ที่มีภาระสูง ปรับได้ 50%-99% cron ที่ข้ามจะลองใหม่อัตโนมัติ tick ถัดไป",
+        "cron_current_usage_label": "ปัจจุบัน: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "ข้าม: เกินเกณฑ์",
 },
 
 
@@ -3998717,6 +3998752,12 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "Kích hoạt khi hạn ngạch 5 giờ còn lại ≤ giá trị này. Mặc định 15% — khoảng 45 phút trước khi hết. Tăng lên để cảnh báo sớm hơn; đặt thành 0 để tắt trục 5 giờ mà không tắt công tắc.",
         "usage_warning_7d_label": "Ngưỡng hàng tuần 7 ngày (cảnh báo khi còn lại ≤ giá trị này)",
         "usage_warning_7d_help": "Kích hoạt khi hạn ngạch hàng tuần 7 ngày còn lại ≤ giá trị này. Mặc định 5% — khoảng 8 giờ trước khi hết. Đặt thành 0 để tắt trục 7 ngày mà không tắt công tắc.",
+
+        "cron_skip_5h_label": "Bỏ qua nếu 5h > X%",
+        "cron_skip_7d_label": "Bỏ qua nếu 7d > Y%",
+        "cron_skip_help_text": "Lịch này bỏ qua dispatch khi entity 5h vượt X% hoặc 7d vượt Y%. Mặc định (85%/95%) bảo vệ entity tải cao. Điều chỉnh 50%-99%. Cron bị bỏ qua sẽ tự động thử lại tick tiếp theo.",
+        "cron_current_usage_label": "Hiện tại: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "bỏ qua: vượt ngưỡng",
 },
 
 
@@ -4525284,6 +4525325,12 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "Pemicu saat kuota 5 jam tersisa ≤ nilai ini. Default 15% — sekitar 45 menit sebelum habis. Naikkan untuk peringatan lebih awal; tetapkan ke 0 untuk menonaktifkan sumbu 5 jam tanpa menonaktifkan saklar.",
         "usage_warning_7d_label": "Ambang batas mingguan 7 hari (peringatkan bila tersisa ≤ nilai ini)",
         "usage_warning_7d_help": "Pemicu saat kuota mingguan 7 hari tersisa ≤ nilai ini. Default 5% — sekitar 8 jam sebelum habis. Tetapkan ke 0 untuk menonaktifkan sumbu 7 hari tanpa menonaktifkan saklar.",
+
+        "cron_skip_5h_label": "Lewati jika 5h > X%",
+        "cron_skip_7d_label": "Lewati jika 7d > Y%",
+        "cron_skip_help_text": "Jadwal ini melewati dispatch saat entity 5h melebihi X% atau 7d melebihi Y%. Default (85%/95%) melindungi entity beban tinggi. Adjustable 50%-99%. Cron yang dilewati akan retry otomatis tick berikutnya.",
+        "cron_current_usage_label": "Saat ini: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "dilewati: melebihi ambang",
 },
 
 
@@ -5050494,6 +5050541,12 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "Se déclenche quand le quota restant de 5h ≤ cette valeur. Par défaut 15% — environ 45min avant épuisement. Augmenter pour être averti plus tôt ; mettre à 0 pour désactiver l'axe 5h sans désactiver l'interrupteur.",
         "usage_warning_7d_label": "Seuil hebdomadaire 7j (avertir quand restant ≤ cette valeur)",
         "usage_warning_7d_help": "Se déclenche quand le quota hebdomadaire restant de 7j ≤ cette valeur. Par défaut 5% — environ 8h avant épuisement. Mettre à 0 pour désactiver l'axe 7j sans désactiver l'interrupteur.",
+
+        "cron_skip_5h_label": "Ignorer si 5h > X%",
+        "cron_skip_7d_label": "Ignorer si 7d > Y%",
+        "cron_skip_help_text": "Cette planification ignore le dispatch lorsque l'usage 5h de l'entity dépasse X% ou l'usage 7d dépasse Y%. Défauts (85%/95%) protègent les entities à charge élevée. Ajustable 50%-99%. Les crons ignorés réessayeront automatiquement au prochain tick.",
+        "cron_current_usage_label": "Actuel: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "ignoré: usage dépasse",
 },
 
 
@@ -5568255,6 +5568308,12 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "Dispara cuando la cuota restante de 5h ≤ este valor. Por defecto 15% — unos 45 min antes del agotamiento. Auméntalo para advertír antes; ponlo en 0 para desactivar el eje de 5h sin desactivar el interruptor.",
         "usage_warning_7d_label": "Umbral semanal de 7 días (advertir cuando restante ≤ este valor)",
         "usage_warning_7d_help": "Dispara cuando la cuota semanal restante de 7 días ≤ este valor. Por defecto 5% — unos 8h antes del agotamiento. Ponlo en 0 para desactivar el eje de 7 días sin desactivar el interruptor.",
+
+        "cron_skip_5h_label": "Omitir si 5h > X%",
+        "cron_skip_7d_label": "Omitir si 7d > Y%",
+        "cron_skip_help_text": "Este horario omite dispatch cuando el entity 5h excede X% o 7d excede Y%. Predeterminados (85%/95%) protegen entitys de alta carga. Ajustable 50%-99%. Los crons omitidos reintentarán automáticamente en el próximo tick.",
+        "cron_current_usage_label": "Actual: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "omitido: uso excede",
 },
 
 
@@ -6105259,6 +6105318,12 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "Auslösen, wenn das verbleibende 5-Stunden-Kontingent ≤ diesem Wert liegt. Standard 15% — ca. 45 Min. vor Erschöpfung. Erhöhen für frühere Warnung; auf 0 setzen, um die 5-Stunden-Achse zu deaktivieren, ohne den Schalter zu deaktivieren.",
         "usage_warning_7d_label": "7-Tage-Wochenschwelle (warnen, wenn verbleibend ≤ diesem)",
         "usage_warning_7d_help": "Auslösen, wenn das verbleibende wöchentliche 7-Tage-Kontingent ≤ diesem Wert liegt. Standard 5% — ca. 8 Std. vor Erschöpfung. Auf 0 setzen, um die 7-Tage-Achse zu deaktivieren, ohne den Schalter zu deaktivieren.",
+
+        "cron_skip_5h_label": "Überspringen wenn 5h > X%",
+        "cron_skip_7d_label": "Überspringen wenn 7d > Y%",
+        "cron_skip_help_text": "Dieser Zeitplan überspringt Dispatch, wenn die Entity 5h Nutzung X% oder 7d Nutzung Y% überschreitet. Standard (85%/95%) schützt hochbelastete Entities. Anpassbar 50%-99%. Übersprungene Crons werden automatisch im nächsten Tick wiederholt.",
+        "cron_current_usage_label": "Aktuell: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "übersprungen: Nutzung überschreitet",
 },
     pt: {
         "transition_loading": "A carregar…",
@@ -6639635,6 +6639700,12 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "Picu apabila kuota 5 jam berbaki ≤ nilai ini. Lalai 15% — kira-kira 45 minit sebelum habis. Naikkan untuk amaran lebih awal; tetapkan kepada 0 untuk melumpuhkan paksi 5 jam tanpa melumpuhkan suis.",
         "usage_warning_7d_label": "Ambang mingguan 7 hari (peringatkan apabila berbaki ≤ nilai ini)",
         "usage_warning_7d_help": "Picu apabila kuota mingguan 7 hari berbaki ≤ nilai ini. Lalai 5% — kira-kira 8 jam sebelum habis. Tetapkan kepada 0 untuk melumpuhkan paksi 7 hari tanpa melumpuhkan suis.",
+
+        "cron_skip_5h_label": "Langkau jika 5h > X%",
+        "cron_skip_7d_label": "Langkau jika 7d > Y%",
+        "cron_skip_help_text": "Jadual ini melangkaui dispatch apabila entity 5h melebihi X% atau 7d melebihi Y%. Lalai (85%/95%) melindungi entity ber beban tinggi. Bolehh ubah 50%-99%. Cron yang dilangkaui akan cuba lagi automatik pada tick seterusnya.",
+        "cron_current_usage_label": "Semasa: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "dilangkaui: melebihi ambang",
 },
 
 
@@ -7198965,6 +7199036,12 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "जब शेष 5 घंटे कोटा ≤ इस मान हो तब ट्रिगर। डिफ़ॉल्ट 15% — लगभग समाप्ति से 45 मिनट पहले। जल्दी चेतावनी के लिए इसे बढ़ाएं; 5 घंटे अक्ष को बिना स्विच बंद किए अक्षम करने के लिए 0 पर सेट करें।",
         "usage_warning_7d_label": "7 दिन साप्ताहिक सीमा (शेष ≤ इस मान पर चेतावनी)",
         "usage_warning_7d_help": "जब शेष 7 दिन साप्ताहिक कोटा ≤ इस मान हो तब ट्रिगर। डिफ़ॉल्ट 5% — लगभग समाप्ति से 8 घंटे पहले। 7 दिन अक्ष को बिना स्विच बंद किए अक्षम करने के लिए 0 पर सेट करें।",
+
+        "cron_skip_5h_label": "छोड़ें अगर 5h > X%",
+        "cron_skip_7d_label": "छोड़ें अगर 7d > Y%",
+        "cron_skip_help_text": "यह शेड्यूल तब dispatch को छोड़ देता है जब entity 5h उपयोग X% से अधिक या 7d उपयोग Y% से अधिक हो। डिफ़ॉल्ट (85%/95%) उच्च-लोड entity की रक्षा करते हैं। समायोज्य 50%-99%। छोड़े गए cron अगले tick पर स्वचालित रूप से पुनः प्रयास करेंगे।",
+        "cron_current_usage_label": "वर्तमान: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "छोड़ा गया: उपयोग सीमा से अधिक",
 },
 
 
@@ -7747421,6 +7747498,12 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "يُطلق عندما تبلغ الحصة المتبقية لمدة 5 ساعات ≤ هذه القيمة. الافتراضي 15% — نحو 45 دقيقة قبل الاستنزاف. ارفعها للتحذير المبكر؛ اضبطها على 0 لتعطيل محور 5 ساعات دون تعطيل المفتاح.",
         "usage_warning_7d_label": "عتبة أسبوعية لمدة 7 أيام (تحذير عند الباقي ≤ هذه القيمة)",
         "usage_warning_7d_help": "يُطلق عندما تبلغ الحصة الأسبوعية المتبقية لمدة 7 أيام ≤ هذه القيمة. الافتراضي 5% — نحو 8 ساعات قبل الاستنزاف. اضبطها على 0 لتعطيل محور 7 أيام دون تعطيل المفتاح.",
+
+        "cron_skip_5h_label": "تخطي إذا 5h > X%",
+        "cron_skip_7d_label": "تخطي إذا 7d > Y%",
+        "cron_skip_help_text": "يتخطى هذا الجدول dispatch عندما تتجاوز 5h للentity X% أو 7d تتجاوز Y%. الافتراضي (85%/95%) يحمي entitys الأحمال العالية. قابل للتعديل 50%-99%. ستعيد cron التي تم تخطيها المحاولة تلقائيًا في tick التالي.",
+        "cron_current_usage_label": "الحالي: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "تم التخطي: الاستخدام يتجاوز",
 }
 
 
