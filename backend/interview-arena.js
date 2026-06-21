@@ -244,6 +244,13 @@ let VISION_IMAGES = [
     // Medium tier
     { file: null, description: 'A mobile payment confirmation screen: payment of $34.99 to "Coffee Republic" — a green animated checkmark dominates the center, card last-4 digits shown as ****8521, and a timestamp of 10:23 AM Oct 3 appears below the merchant name', keywords: ['payment', '34.99', 'Coffee Republic', '8521', '10:23', 'checkmark', 'green'] },
     { file: null, description: 'An infrastructure cost report table with five columns (Service, Region, vCPUs, Monthly Cost, Status) and eight data rows — the grand total row reads $8,234.50; the most expensive row is EC2 r6i.4xlarge in us-east-1 at $2,340 per month marked "Running"', keywords: ['infrastructure', 'cost', 'eight', 'rows', '8234', 'EC2', 'r6i', '2340', 'Running'] },
+    // ── Daily pool update: added 2026-06-20 ──
+    // Medium tier
+    { file: null, description: 'A login form UI with two text input fields (Email and Password), a blue "Sign In" button below, a "Remember me" checkbox on the left, and a green "Forgot Password?" link on the right', keywords: ['login', 'email', 'password', 'checkbox', 'remember', 'sign in', 'forgot'] },
+    { file: null, description: 'A weather map of Europe showing three temperature band isotherms: an orange 30°C band across southern Spain and Italy, a yellow 20°C band across France and Germany, and a blue 10°C band across Scandinavia and the British Isles', keywords: ['weather', 'map', 'europe', 'three', 'temperature', 'spain', 'scandinavia', 'orange', 'yellow', 'blue'] },
+    // Hard tier
+    { file: null, description: 'A machine learning confusion matrix for a binary classifier — 2×2 grid labeled Actual/Predicted: True Positive 342, False Positive 28, False Negative 41, True Negative 289; precision annotated as 0.924 at bottom right', keywords: ['confusion', 'matrix', '342', '28', '41', '289', 'precision', '0.924'] },
+    { file: null, description: 'A Gantt chart dependency network with seven tasks where Task 4 (Design Review) blocks Task 5 (Development) and Task 6 (Testing) from starting — critical path 1→2→4→5→7 highlighted in red; total project duration is 22 days', keywords: ['Gantt', 'seven', 'tasks', 'critical', 'path', 'red', 'Design', 'Development', 'Testing', '22'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -488,6 +495,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[1,8,6,2,5,4,8,3,7]', expected: '49' },{ input: '[1,1]', expected: '1' },{ input: '[4,3,2,1,4]', expected: '16' },{ input: '[1,2,4,3]', expected: '4' }] },
     { title: 'Search a 2D Matrix', description: 'Write `solve(matrix, target)` — search for a target in an m×n integer matrix where (1) each row is sorted left-to-right and (2) the first element of each row is strictly greater than the last element of the previous row. Return true if the target exists.',
       testCases: [{ input: '[[1,3,5,7],[10,11,16,20],[23,30,34,60]], 3', expected: 'true' },{ input: '[[1,3,5,7],[10,11,16,20],[23,30,34,60]], 13', expected: 'false' },{ input: '[[1]], 1', expected: 'true' },{ input: '[[1,3],[5,7]], 6', expected: 'false' }] },
+    // ── Daily pool update: added 2026-06-20 ──
+    { title: 'Rotten Oranges', description: 'Write `solve(grid)` — a 2D grid where 0=empty, 1=fresh orange, 2=rotten orange. Each minute rotten oranges spread to adjacent (4-directional) fresh ones. Return the minimum minutes until no fresh oranges remain, or -1 if impossible.',
+      testCases: [{ input: '[[2,1,1],[1,1,0],[0,1,1]]', expected: '4' },{ input: '[[2,1,1],[0,1,1],[1,0,1]]', expected: '-1' },{ input: '[[0,2]]', expected: '0' },{ input: '[[1]]', expected: '-1' }] },
+    { title: 'Task Scheduler', description: 'Write `solve(tasks, n)` — given a list of CPU task labels (A-Z) and a cooldown n (at least n intervals required between same-task executions), return the minimum total intervals to finish all tasks including idle time.',
+      testCases: [{ input: '["A","A","A","B","B","B"], 2', expected: '8' },{ input: '["A","A","A","B","B","B"], 0', expected: '6' },{ input: '["A","A","A","A","A","A","B","C","D","E","F","G"], 2', expected: '16' }] },
+    { title: 'Sort Colors', description: 'Write `solve(nums)` — given an array where 0=red, 1=white, 2=blue, sort it in-place so all 0s come first, then all 1s, then all 2s. Return the sorted array.',
+      testCases: [{ input: '[2,0,2,1,1,0]', expected: '[0,0,1,1,2,2]' },{ input: '[2,0,1]', expected: '[0,1,2]' },{ input: '[0]', expected: '[0]' },{ input: '[1,2,0,2,1]', expected: '[0,1,1,2,2]' }] },
+    { title: 'N-Queens Count', description: 'Write `solve(n)` — place n queens on an n×n chessboard so no two queens threaten each other (no two share a row, column, or diagonal). Return the total number of distinct valid arrangements.',
+      testCases: [{ input: '1', expected: '1' },{ input: '4', expected: '2' },{ input: '6', expected: '4' },{ input: '8', expected: '92' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -594,6 +610,15 @@ let RESPONSE_QUESTIONS = [
     { question: 'A rectangular swimming pool is 25 m long, 10 m wide, and filled to a depth of 1.5 m. How many kiloliters of water does it hold?', expectedKeywords: ['375'] },
     { question: 'A sum of money doubles itself in 5 years under simple interest. What is the annual interest rate as a percentage?', expectedKeywords: ['20', '20%'] },
     { question: 'You roll two fair six-sided dice. What is the probability that the product of the two numbers shown is even? Express as a simplified fraction.', expectedKeywords: ['3/4'] },
+    // ── Daily pool update: added 2026-06-20 ──
+    // Easy tier
+    { question: 'What is 256 divided by 16?', expectedKeywords: ['16'] },
+    // Medium tier
+    { question: "A man is 24 years older than his son. In 2 years, the man will be exactly twice his son's age. How old is the son now?", expectedKeywords: ['22'] },
+    { question: 'A room is 6 meters long, 4 meters wide, and 3 meters high. What is the total surface area of the four walls only (excluding floor and ceiling) in square meters?', expectedKeywords: ['60'] },
+    { question: 'A store has 3 shelves. Shelf A holds twice as many books as shelf B. Shelf C holds 10 fewer books than shelf A. Together all shelves hold 90 books. How many books are on shelf B?', expectedKeywords: ['20'] },
+    // Hard tier
+    { question: 'A snail is at the bottom of a 15-meter well. During the day it climbs 5 meters; at night it slides back 3 meters. On what day does it first reach the top?', expectedKeywords: ['6'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -718,6 +743,13 @@ let TTS_PHRASES = [
     // Hard tier
     { text: 'Kubernetes cluster status: 3 of 3 control plane nodes ready, 47 worker nodes scheduled, 231 pods running, 0 pods in CrashLoopBackOff — CPU utilization 62 percent, memory utilization 71 percent', keywords: ['kubernetes', 'three', 'control', 'plane', '47', 'workers', '231', 'pods', 'CPU', '62', 'memory', '71'] },
     { text: 'XGBoost hyperparameter grid search evaluated 1296 combinations across max depth 3 to 6, learning rate 0.01 to 0.3, n estimators 100 to 500, and subsample 0.6 to 0.9 — best validation AUC of 0.9417 achieved at max depth 5 and learning rate 0.1', keywords: ['XGBoost', '1296', 'learning', 'rate', 'AUC', '0.9417', 'depth', '5'] },
+    // ── Daily pool update: added 2026-06-20 ──
+    // Medium tier
+    { text: 'The production database maintenance window is scheduled for Saturday February 22nd from midnight to 4 AM UTC — all dependent services will be unavailable during this period', keywords: ['production', 'maintenance', 'saturday', 'february', '22', 'midnight', 'UTC'] },
+    { text: 'Order ORD-2024-11784 containing three items totaling one hundred twenty-seven dollars and forty-five cents has shipped via FedEx tracking number seven seven four nine eight eight one two three three zero one', keywords: ['order', 'ORD', '11784', 'FedEx', 'three', 'items', '127'] },
+    // Hard tier
+    { text: 'Section 4 paragraph 2 stipulates that the licensee shall indemnify and hold harmless the licensor from any third-party claims arising from the licensee\'s use of the software except claims arising from the licensor\'s gross negligence or wilful misconduct', keywords: ['section', '4', 'licensee', 'indemnify', 'licensor', 'third-party', 'negligence', 'wilful'] },
+    { text: 'A signal-to-noise ratio of 42 decibels measured at carrier frequency 2.4 gigahertz with channel bandwidth 40 megahertz supports a maximum theoretical throughput of 300 megabits per second under ideal propagation conditions', keywords: ['signal', '42', 'decibels', '2.4', 'gigahertz', '40', 'megahertz', '300', 'megabits'] },
 ];
 
 // ============================================
