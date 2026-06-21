@@ -29,16 +29,23 @@
         .inv-section { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
         .inv-section h3 { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
 
-        .inv-code-box { display: flex; align-items: center; gap: 8px; }
+        .inv-code-box { display: flex; align-items: stretch; gap: 8px; }
         .inv-code { flex: 1; padding: 14px; font-size: 24px; font-weight: 800; letter-spacing: 4px; text-align: center; background: var(--input-bg); border: 2px dashed var(--card-border); border-radius: var(--radius-sm); color: var(--primary); font-family: monospace; }
         .inv-copy-btn { padding: 14px 20px; border: none; border-radius: var(--radius-sm); background: var(--primary); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
         .inv-copy-btn:hover { opacity: 0.9; }
 
         .inv-share-url { margin-top: 10px; padding: 10px; font-size: 12px; color: var(--text-secondary); background: var(--input-bg); border-radius: var(--radius-sm); word-break: break-all; }
+        .inv-share-status { min-height: 18px; margin-top: 8px; color: var(--text-secondary); font-size: 12px; line-height: 1.45; }
+        .inv-share-status[data-state="success"] { color: #10b981; }
+        .inv-share-status[data-state="warning"] { color: #f59e0b; }
+        .inv-share-status[data-state="error"] { color: #ef4444; }
 
         .inv-share-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
         .inv-share-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 14px; border: 1px solid var(--card-border); border-radius: var(--radius-sm); background: var(--input-bg); color: var(--text); font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; transition: all 0.15s; }
         .inv-share-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .inv-share-button { font-family: inherit; }
+        .inv-share-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .inv-share-btn:disabled:hover { border-color: var(--card-border); color: var(--text); }
 
         .inv-stats-summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .inv-stats-summary::-webkit-details-marker { display: none; }
@@ -273,6 +280,24 @@
         .kvalue-loading { color: var(--text-secondary, #aaa); font-size: 13px; text-align: center; padding: 20px 0; }
         .kvalue-empty { color: var(--text-muted, #888); font-size: 12px; text-align: center; padding: 16px 0; }
         .kvalue-error { color: #ef4444; font-size: 12px; text-align: center; padding: 12px 0; }
+
+        @media (max-width: 560px) {
+            main.container { margin-top: 16px !important; padding: 0 12px !important; }
+            .inv-hero { padding: 24px 18px; text-align: left; }
+            .inv-code-box,
+            .inv-redeem { flex-direction: column; }
+            .inv-code { width: 100%; box-sizing: border-box; font-size: 20px; letter-spacing: 2px; }
+            .inv-copy-btn,
+            .inv-redeem button,
+            .inv-share-btn { width: 100%; justify-content: center; min-height: 44px; }
+            .inv-kpi-grid,
+            .kvalue-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .kvalue-funnel { grid-template-columns: 1fr; }
+            .kvalue-funnel-arrow { transform: rotate(90deg); }
+            .kvalue-date-picker { width: 100%; flex-wrap: wrap; }
+            .kvalue-date-picker input[type=date],
+            .kvalue-refresh-btn { flex: 1 1 140px; min-height: 40px; }
+        }
     </style>
 </head>
 <body>
@@ -289,10 +314,15 @@
             <h3 data-i18n="inv_my_code">My Invite Code</h3>
             <div class="inv-code-box">
                 <div class="inv-code" id="invCode">------</div>
-                <button class="inv-copy-btn" onclick="copyCode()" data-i18n="inv_copy">Copy</button>
+                <button class="inv-copy-btn" id="invCopyCodeBtn" type="button" onclick="copyCode()" data-i18n="inv_copy">Copy</button>
             </div>
-            <div class="inv-share-url" id="invShareUrl"></div>
+            <div class="inv-share-url" id="invShareUrl" aria-live="polite"></div>
+            <div class="inv-share-status" id="invShareStatus" role="status" aria-live="polite" aria-atomic="true" data-state="idle" data-i18n="invite_qr_status_loading_code">Checking account code</div>
             <div class="inv-share-actions">
+                <button class="inv-share-btn inv-share-button" type="button" id="invCopyLinkBtn" onclick="copyInviteLink()" disabled>
+                    <span aria-hidden="true">🔗</span>
+                    <span data-i18n="invite_qr_btn_copy">Copy to clipboard</span>
+                </button>
                 <a class="inv-share-btn" href="/portal/invite-qr-generator.html" id="invQrGenLink">
                     <span aria-hidden="true">🖼️</span>
                     <span data-i18n="inv_qr_gen_cta">Generate share image</span>
@@ -440,7 +470,60 @@
     <script src="shared/ai-chat.js"></script>
 
     <script>
-        function tt(k, fb) { return (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb; }
+        function tt(k, fb) {
+            const value = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t(k) : null;
+            return value && value !== k ? value : fb;
+        }
+
+        function setInviteShareStatus(message, state = 'idle') {
+            const status = document.getElementById('invShareStatus');
+            if (!status) return;
+            status.textContent = message || '';
+            status.dataset.state = state;
+        }
+
+        function setInviteShareLink(shareUrl) {
+            const shareEl = document.getElementById('invShareUrl');
+            const copyLinkBtn = document.getElementById('invCopyLinkBtn');
+            if (shareEl) {
+                shareEl.textContent = shareUrl || '';
+                shareEl.dataset.shareUrl = shareUrl || '';
+            }
+            if (copyLinkBtn) copyLinkBtn.disabled = !shareUrl;
+        }
+
+        function setInviteSignedOutState() {
+            const msg = tt('session_invalid_relogin', 'Please log in to continue');
+            setInviteShareLink('');
+            setInviteShareStatus(msg, 'warning');
+            const shareEl = document.getElementById('invShareUrl');
+            if (shareEl) shareEl.textContent = msg;
+            const timeline = document.getElementById('invTimeline');
+            if (timeline) timeline.innerHTML = `<div class="inv-timeline-empty">${msg}</div>`;
+            const funnel = document.getElementById('invCodeFunnel');
+            if (funnel) funnel.innerHTML = `<div class="inv-timeline-empty">${msg}</div>`;
+            const usage = document.getElementById('usageBarLabel');
+            if (usage) usage.textContent = '— / —';
+        }
+
+        async function writeClipboardText(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(text);
+                return true;
+            }
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.top = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                return document.execCommand('copy');
+            } finally {
+                ta.remove();
+            }
+        }
 
         async function loadCode() {
             try {
@@ -450,11 +533,14 @@
                     // Include UTM params to track share source
                     const utmSource = new URLSearchParams(window.location.search).get('utm_source') || 'invite_page';
                     const shareUrl = `https://eclawbot.com/invite/${data.code}?utm_source=${encodeURIComponent(utmSource)}&utm_medium=invite_page`;
-                    document.getElementById('invShareUrl').textContent = shareUrl;
+                    setInviteShareLink(shareUrl);
+                    setInviteShareStatus(tt('invite_qr_status_ready', 'Ready'), 'idle');
                     const qrLink = document.getElementById('invQrGenLink');
                     if (qrLink && data.code) qrLink.href = `/portal/invite-qr-generator.html?code=${encodeURIComponent(data.code)}&utm_source=${encodeURIComponent(utmSource)}`;
                 }
-            } catch { /* not logged in */ }
+            } catch {
+                setInviteSignedOutState();
+            }
         }
 
         // Timeline is a client-side series: the /stats endpoint only returns today's usage,
@@ -651,13 +737,50 @@
             }
         }
 
-        function copyCode() {
-            const code = document.getElementById('invCode').textContent;
-            navigator.clipboard.writeText(code).then(() => {
-                const btn = document.querySelector('.inv-copy-btn');
-                btn.textContent = '✓';
-                setTimeout(() => { btn.textContent = tt('inv_copy', 'Copy'); }, 1500);
-            });
+        async function copyCode() {
+            const code = document.getElementById('invCode').textContent.trim();
+            if (!code || /^-+$/.test(code)) {
+                const msg = tt('session_invalid_relogin', 'Please log in to continue');
+                setInviteShareStatus(msg, 'warning');
+                if (typeof showToast === 'function') showToast(msg, 'warning');
+                return;
+            }
+            const btn = document.getElementById('invCopyCodeBtn');
+            try {
+                await writeClipboardText(code);
+                const msg = tt('invite_qr_toast_copied', 'Copied to clipboard');
+                setInviteShareStatus(msg, 'success');
+                if (typeof showToast === 'function') showToast(msg, 'success');
+                if (btn) {
+                    btn.textContent = '✓';
+                    setTimeout(() => { btn.textContent = tt('inv_copy', 'Copy'); }, 1500);
+                }
+            } catch (_) {
+                const msg = tt('toast_copy_failed', 'Failed to copy — please copy manually');
+                setInviteShareStatus(msg, 'error');
+                if (typeof showToast === 'function') showToast(msg, 'error');
+            }
+        }
+
+        async function copyInviteLink() {
+            const shareEl = document.getElementById('invShareUrl');
+            const link = (shareEl?.dataset?.shareUrl || '').trim();
+            if (!link) {
+                const msg = tt('session_invalid_relogin', 'Please log in to continue');
+                setInviteShareStatus(msg, 'warning');
+                if (typeof showToast === 'function') showToast(msg, 'warning');
+                return;
+            }
+            try {
+                await writeClipboardText(link);
+                const msg = tt('invite_qr_toast_copied', 'Copied to clipboard');
+                setInviteShareStatus(msg, 'success');
+                if (typeof showToast === 'function') showToast(msg, 'success');
+            } catch (_) {
+                const msg = tt('toast_copy_failed', 'Failed to copy — please copy manually');
+                setInviteShareStatus(msg, 'error');
+                if (typeof showToast === 'function') showToast(msg, 'error');
+            }
         }
 
         function translateRedeemError(code) {
@@ -992,7 +1115,7 @@
             });
             initKValueWidget();
             const user = await checkAuth();
-            if (!user) return;
+            if (!user) { setInviteSignedOutState(); return; }
             initPortalSocket();
             loadCode();
             loadStats();
