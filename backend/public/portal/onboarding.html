@@ -11,7 +11,17 @@
     <link rel="stylesheet" href="shared/style.css">
     <link rel="canonical" href="https://eclawbot.com/portal/onboarding.html">
     <style>
+        main {
+            min-height: 100vh;
+        }
+
+        .ob-container,
+        .ob-container * {
+            box-sizing: border-box;
+        }
+
         .ob-container {
+            width: min(100%, 880px);
             max-width: 880px;
             margin: 0 auto;
             padding: 32px 20px 80px;
@@ -46,7 +56,7 @@
 
         .ob-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
             gap: 14px;
             margin-bottom: 32px;
         }
@@ -70,6 +80,15 @@
             transform: translateY(-2px);
             border-color: var(--accent, #7c3aed);
             box-shadow: 0 6px 18px rgba(124, 58, 237, 0.15);
+        }
+
+        .ob-card:focus-visible,
+        .ob-template-btn:focus-visible,
+        .ob-primary-btn:focus-visible,
+        .ob-skip-btn:focus-visible,
+        .ob-wizard-link:focus-visible {
+            outline: 3px solid rgba(14, 165, 233, 0.55);
+            outline-offset: 3px;
         }
 
         .ob-card[data-disabled="true"] {
@@ -105,6 +124,7 @@
             position: absolute;
             top: 12px;
             right: 12px;
+            max-width: calc(100% - 24px);
             font-size: 11px;
             font-weight: 600;
             padding: 3px 8px;
@@ -119,8 +139,8 @@
             margin: 0 0 34px;
             padding: 22px;
             border: 1px solid rgba(124, 58, 237, 0.28);
-            border-radius: 18px;
-            background: linear-gradient(135deg, rgba(124, 58, 237, 0.12), rgba(14, 165, 233, 0.08));
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.10), rgba(14, 165, 233, 0.09));
             box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
         }
 
@@ -176,7 +196,7 @@
 
         .ob-progress {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 8px;
             margin: 18px 0;
         }
@@ -190,6 +210,8 @@
             color: var(--text-secondary);
             font-size: 12px;
             line-height: 1.35;
+            min-width: 0;
+            overflow-wrap: anywhere;
         }
 
         .ob-progress-step::before {
@@ -228,7 +250,7 @@
 
         .ob-template-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 10px;
             margin-bottom: 16px;
         }
@@ -242,10 +264,12 @@
             padding: 14px;
             cursor: pointer;
             transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+            min-width: 0;
         }
 
         .ob-template-btn:hover,
-        .ob-template-btn.active {
+        .ob-template-btn.active,
+        .ob-template-btn[aria-pressed="true"] {
             border-color: #7c3aed;
             transform: translateY(-1px);
             box-shadow: 0 8px 18px rgba(124, 58, 237, 0.14);
@@ -274,6 +298,14 @@
             border-radius: 16px;
             background: var(--card);
             padding: 16px;
+        }
+
+        .ob-demo-panel[data-state="running"] {
+            border-color: rgba(14, 165, 233, 0.55);
+        }
+
+        .ob-demo-panel[data-state="complete"] {
+            border-color: rgba(16, 185, 129, 0.55);
         }
 
         .ob-demo-flow {
@@ -311,6 +343,17 @@
             font-size: 14px;
         }
 
+        .ob-demo-status {
+            margin-top: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(14, 165, 233, 0.24);
+            background: rgba(14, 165, 233, 0.08);
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.5;
+            padding: 9px 11px;
+        }
+
         .ob-quickwin-actions {
             display: flex;
             flex-wrap: wrap;
@@ -335,6 +378,11 @@
 
         .ob-primary-btn:hover {
             background: #6d28d9;
+        }
+
+        .ob-primary-btn:disabled {
+            opacity: 0.68;
+            cursor: wait;
         }
 
         .ob-footer {
@@ -405,20 +453,13 @@
             line-height: 1.5;
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 720px) {
             .ob-container {
-                padding: 24px 16px 60px;
+                padding: 28px 18px 72px;
             }
 
-            .ob-hero h1 {
-                font-size: 22px;
-            }
-
-            .ob-grid,
-            .ob-template-grid,
-            .ob-demo-flow,
-            .ob-progress {
-                grid-template-columns: 1fr;
+            .ob-quickwin {
+                padding: 18px;
             }
 
             .ob-quickwin-head {
@@ -427,6 +468,47 @@
 
             .ob-quickwin-eta {
                 text-align: left;
+            }
+
+            .ob-progress,
+            .ob-demo-flow {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .ob-template-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 540px) {
+            .ob-container {
+                padding: 24px 14px 60px;
+            }
+
+            .ob-hero {
+                margin-bottom: 30px;
+            }
+
+            .ob-hero h1 {
+                font-size: 22px;
+            }
+
+            .ob-grid,
+            .ob-demo-flow,
+            .ob-progress {
+                grid-template-columns: 1fr;
+            }
+
+            .ob-card {
+                padding: 16px;
+            }
+
+            .ob-quickwin-actions {
+                flex-direction: column;
+            }
+
+            .ob-primary-btn {
+                width: 100%;
             }
         }
     </style>
@@ -455,32 +537,32 @@
                     </div>
                 </div>
 
-                <div class="ob-progress" id="ob-progress" aria-label="5-minute onboarding progress">
-                    <div class="ob-progress-step active" data-ob-step="1" data-step-index="1" data-i18n="onboarding_progress_step1">Choose a template</div>
-                    <div class="ob-progress-step" data-ob-step="2" data-step-index="2" data-i18n="onboarding_progress_step2">Watch agents split work</div>
-                    <div class="ob-progress-step" data-ob-step="3" data-step-index="3" data-i18n="onboarding_progress_step3">Get a first useful result</div>
-                    <div class="ob-progress-step" data-ob-step="4" data-step-index="4" data-i18n="onboarding_progress_step4">Continue in chat</div>
+                <div class="ob-progress" id="ob-progress" aria-label="5-minute onboarding progress" role="list">
+                    <div class="ob-progress-step active" data-ob-step="1" data-step-index="1" data-i18n="onboarding_progress_step1" role="listitem">Choose a template</div>
+                    <div class="ob-progress-step" data-ob-step="2" data-step-index="2" data-i18n="onboarding_progress_step2" role="listitem">Watch agents split work</div>
+                    <div class="ob-progress-step" data-ob-step="3" data-step-index="3" data-i18n="onboarding_progress_step3" role="listitem">Get a first useful result</div>
+                    <div class="ob-progress-step" data-ob-step="4" data-step-index="4" data-i18n="onboarding_progress_step4" role="listitem">Continue in chat</div>
                 </div>
 
                 <div class="ob-template-grid" id="ob-template-grid" aria-label="Prebuilt workflow templates">
-                    <button class="ob-template-btn active" type="button" data-ob-template="content">
+                    <button class="ob-template-btn active" type="button" data-ob-template="content" aria-pressed="true">
                         <span class="ob-template-icon">✍️</span>
                         <div class="ob-template-title" data-i18n="onboarding_template_content_title">Content creation</div>
                         <div class="ob-template-desc" data-i18n="onboarding_template_content_desc">Research, outline, and draft a launch post.</div>
                     </button>
-                    <button class="ob-template-btn" type="button" data-ob-template="code">
+                    <button class="ob-template-btn" type="button" data-ob-template="code" aria-pressed="false">
                         <span class="ob-template-icon">🧑‍💻</span>
                         <div class="ob-template-title" data-i18n="onboarding_template_code_title">Code review</div>
                         <div class="ob-template-desc" data-i18n="onboarding_template_code_desc">Find risks, propose fixes, and write a checklist.</div>
                     </button>
-                    <button class="ob-template-btn" type="button" data-ob-template="translate">
+                    <button class="ob-template-btn" type="button" data-ob-template="translate" aria-pressed="false">
                         <span class="ob-template-icon">🌐</span>
                         <div class="ob-template-title" data-i18n="onboarding_template_translate_title">Translation workflow</div>
                         <div class="ob-template-desc" data-i18n="onboarding_template_translate_desc">Translate, localize tone, and QA key strings.</div>
                     </button>
                 </div>
 
-                <div class="ob-demo-panel" id="ob-demo-panel">
+                <div class="ob-demo-panel" id="ob-demo-panel" data-state="ready">
                     <div class="ob-demo-flow" aria-label="Agent collaboration demo">
                         <div class="ob-demo-node"><strong data-i18n="onboarding_demo_user">You</strong><span id="ob-demo-user">Ask for one useful outcome</span></div>
                         <div class="ob-demo-node"><strong data-i18n="onboarding_demo_planner">Planner agent</strong><span data-i18n="onboarding_demo_planner_desc">Breaks the task into steps</span></div>
@@ -491,8 +573,9 @@
                         <h3 data-i18n="onboarding_demo_result_title">First useful result</h3>
                         <p id="ob-demo-result-text" data-i18n="onboarding_demo_result_content">Launch post outline: problem → how EClaw coordinates agents → 3 proof points → CTA to try a free bot.</p>
                     </div>
+                    <div class="ob-demo-status" id="ob-demo-status" role="status" aria-live="polite">Ready: choose a workflow template, then run the preview.</div>
                     <div class="ob-quickwin-actions">
-                        <button class="ob-primary-btn" type="button" id="ob-run-demo" data-i18n="onboarding_quickwin_run">Run 30-sec preview</button>
+                        <button class="ob-primary-btn" type="button" id="ob-run-demo" aria-describedby="ob-demo-status" data-i18n="onboarding_quickwin_run">Run 30-sec preview</button>
                         <a class="ob-primary-btn" id="ob-open-chat" href="/portal/chat.html?quickWin=content" data-i18n="onboarding_quickwin_continue">Continue this in chat</a>
                     </div>
                 </div>
@@ -562,21 +645,46 @@
             const DISMISS_KEY = 'eclaw_onboarding_dismissed';
             const LAST_SEEN_KEY = 'eclaw_onboarding_last_seen';
             let onboardingTutorialManager = null;
+            let currentQuickWinTemplate = 'content';
 
 
             const quickWinTemplates = {
                 content: {
                     user: 'Draft a launch post in 30 seconds',
+                    selectedStatus: {
+                        en: 'Content creation selected. Run the preview to watch the handoff.',
+                        zh: '已選擇內容創作。執行預覽來看 agent 如何交接。'
+                    },
+                    runningStatus: {
+                        en: 'Running content creation preview...',
+                        zh: '正在執行內容創作預覽...'
+                    },
                     resultKey: 'onboarding_demo_result_content',
                     resultFallback: 'Launch post outline: problem → how EClaw coordinates agents → 3 proof points → CTA to try a free bot.'
                 },
                 code: {
                     user: 'Review this pull request quickly',
+                    selectedStatus: {
+                        en: 'Code review selected. Run the preview to see the checklist form.',
+                        zh: '已選擇程式審查。執行預覽來看檢查清單如何成形。'
+                    },
+                    runningStatus: {
+                        en: 'Running code review preview...',
+                        zh: '正在執行程式審查預覽...'
+                    },
                     resultKey: 'onboarding_demo_result_code',
                     resultFallback: 'Code review checklist: verify auth boundaries, add regression tests, confirm CI gates, and note deployment risks.'
                 },
                 translate: {
                     user: 'Localize this onboarding copy',
+                    selectedStatus: {
+                        en: 'Translation workflow selected. Run the preview to see the localization pass.',
+                        zh: '已選擇翻譯工作流。執行預覽來看在地化流程。'
+                    },
+                    runningStatus: {
+                        en: 'Running translation workflow preview...',
+                        zh: '正在執行翻譯工作流預覽...'
+                    },
                     resultKey: 'onboarding_demo_result_translate',
                     resultFallback: 'Translation plan: preserve product terms, adapt tone for Taiwan users, QA placeholders, and compare final strings side by side.'
                 }
@@ -592,6 +700,24 @@
                 return fallback;
             }
 
+            function prefersZhStatus() {
+                const activeLang = (typeof i18n !== 'undefined' && i18n.lang) || (document.documentElement && document.documentElement.lang) || navigator.language || '';
+                const lang = String(activeLang).toLowerCase();
+                return lang === 'zh' || lang.startsWith('zh-');
+            }
+
+            function statusText(value) {
+                if (!value || typeof value === 'string') return value || '';
+                return prefersZhStatus() ? (value.zh || value.en || '') : (value.en || value.zh || '');
+            }
+
+            function setDemoStatus(message, state) {
+                const statusEl = document.getElementById('ob-demo-status');
+                const panel = document.getElementById('ob-demo-panel');
+                if (statusEl) statusEl.textContent = message;
+                if (panel && state) panel.setAttribute('data-state', state);
+            }
+
             function setQuickWinProgress(step) {
                 document.querySelectorAll('[data-ob-step]').forEach((el) => {
                     const index = parseInt(el.getAttribute('data-ob-step'), 10);
@@ -602,16 +728,20 @@
 
             function selectQuickWinTemplate(templateId, progressStep) {
                 const config = quickWinTemplates[templateId] || quickWinTemplates.content;
+                currentQuickWinTemplate = quickWinTemplates[templateId] ? templateId : 'content';
                 document.querySelectorAll('[data-ob-template]').forEach((btn) => {
-                    btn.classList.toggle('active', btn.getAttribute('data-ob-template') === templateId);
+                    const isActive = btn.getAttribute('data-ob-template') === currentQuickWinTemplate;
+                    btn.classList.toggle('active', isActive);
+                    btn.setAttribute('aria-pressed', String(isActive));
                 });
                 const userEl = document.getElementById('ob-demo-user');
                 const resultEl = document.getElementById('ob-demo-result-text');
                 const chatLink = document.getElementById('ob-open-chat');
                 if (userEl) userEl.textContent = config.user;
                 if (resultEl) resultEl.textContent = tr(config.resultKey, config.resultFallback);
-                if (chatLink) chatLink.href = `/portal/chat.html?quickWin=${encodeURIComponent(templateId)}`;
-                try { localStorage.setItem('eclaw_onboarding_quickwin_template', templateId); } catch (_) {}
+                if (chatLink) chatLink.href = `/portal/chat.html?quickWin=${encodeURIComponent(currentQuickWinTemplate)}`;
+                setDemoStatus(statusText(config.selectedStatus), 'ready');
+                try { localStorage.setItem('eclaw_onboarding_quickwin_template', currentQuickWinTemplate); } catch (_) {}
                 setQuickWinProgress(progressStep || 1);
                 if (onboardingTutorialManager && progressStep >= 1) {
                     onboardingTutorialManager.start();
@@ -680,10 +810,16 @@
                 const runDemo = document.getElementById('ob-run-demo');
                 if (runDemo) {
                     runDemo.addEventListener('click', () => {
+                        const config = quickWinTemplates[currentQuickWinTemplate] || quickWinTemplates.content;
                         setQuickWinProgress(3);
+                        setDemoStatus(statusText(config.runningStatus), 'running');
                         runDemo.disabled = true;
                         setTimeout(() => {
                             setQuickWinProgress(4);
+                            setDemoStatus(statusText({
+                                en: 'Preview complete. Continue in chat to use this workflow.',
+                                zh: '預覽完成。可帶到聊天繼續使用這個工作流。'
+                            }), 'complete');
                             if (onboardingTutorialManager) onboardingTutorialManager.complete();
                             runDemo.disabled = false;
                         }, 650);
