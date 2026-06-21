@@ -3,6 +3,7 @@ package com.hank.clawlive.engine
 import android.graphics.PointF
 import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
+import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.min
 import kotlin.random.Random
@@ -28,6 +29,11 @@ enum class AmbientWanderGoal {
     VISIT_COMPANION,
     PATROL,
     RETURN_HOME
+}
+
+enum class WalkFacingDirection {
+    LEFT,
+    RIGHT
 }
 
 /**
@@ -58,6 +64,7 @@ class WallpaperWanderController(
         var motionState: MotionState,
         var ambientGoal: AmbientWanderGoal,
         var ambientStep: Int,
+        var facingDirection: WalkFacingDirection,
         var onArrive: (() -> Unit)? = null
     )
 
@@ -77,6 +84,10 @@ class WallpaperWanderController(
 
     fun ambientGoal(entityId: Int): AmbientWanderGoal {
         return states[entityId]?.ambientGoal ?: AmbientWanderGoal.RANDOM
+    }
+
+    fun facingDirection(entityId: Int): WalkFacingDirection {
+        return states[entityId]?.facingDirection ?: WalkFacingDirection.RIGHT
     }
 
     override fun position(entityId: Int): PointF {
@@ -245,7 +256,8 @@ class WallpaperWanderController(
                 moving = false,
                 motionState = MotionState.WANDERING,
                 ambientGoal = AmbientWanderGoal.RANDOM,
-                ambientStep = 0
+                ambientStep = 0,
+                facingDirection = WalkFacingDirection.RIGHT
             )
         }
         coerceToSafeBounds(state)
@@ -267,7 +279,8 @@ class WallpaperWanderController(
                 moving = false,
                 motionState = MotionState.STOPPED,
                 ambientGoal = AmbientWanderGoal.RANDOM,
-                ambientStep = 0
+                ambientStep = 0,
+                facingDirection = WalkFacingDirection.RIGHT
             )
         }
     }
@@ -281,6 +294,9 @@ class WallpaperWanderController(
     ): Boolean {
         val dxPx = (state.targetXPct - state.xPct) * width
         val dyPx = (state.targetYPct - state.yPct) * height
+        if (abs(dxPx) > FACING_EPSILON_PX) {
+            state.facingDirection = if (dxPx < 0f) WalkFacingDirection.LEFT else WalkFacingDirection.RIGHT
+        }
         val distancePx = hypot(dxPx, dyPx)
         val stepPx = speedPctPerSecond * min(width, height) * dtSeconds
 
@@ -402,6 +418,7 @@ class WallpaperWanderController(
         const val DEFAULT_WANDER_SPEED_PCT_PER_SECOND = 0.04f
         const val DEFAULT_TARGET_SPEED_PCT_PER_SECOND = 0.12f
         private const val ARRIVAL_EPSILON_PX = 1f
+        private const val FACING_EPSILON_PX = 0.5f
         private const val MAX_IDLE_MS = 3000L
         private const val MIN_RETARGET_MS = 3000L
         private const val MAX_RETARGET_MS = 8000L

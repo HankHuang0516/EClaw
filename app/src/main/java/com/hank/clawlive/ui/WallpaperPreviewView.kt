@@ -21,6 +21,8 @@ import com.hank.clawlive.data.model.UsageSnapshotLatest
 import com.hank.clawlive.engine.ProceduralCreatureDrawer
 import com.hank.clawlive.engine.SpritesheetCompanionDrawer
 import com.hank.clawlive.engine.UsageOverlayRenderer
+import com.hank.clawlive.engine.WalkFacingDirection
+import com.hank.clawlive.engine.WallpaperInteractionController
 import com.hank.clawlive.engine.WallpaperWanderController
 import com.hank.clawlive.data.repository.CompanionRepository
 import kotlin.math.ceil
@@ -45,6 +47,7 @@ class WallpaperPreviewView @JvmOverloads constructor(
     private val layoutPrefs = LayoutPreferences.getInstance(context)
     private val usageOverlayRenderer = UsageOverlayRenderer(context, layoutPrefs)
     private val wanderController = WallpaperWanderController()
+    private val interactionController = WallpaperInteractionController()
     private val animationHandler = Handler(Looper.getMainLooper())
     private val animationRunnable = object : Runnable {
         override fun run() {
@@ -127,6 +130,14 @@ class WallpaperPreviewView @JvmOverloads constructor(
         textSize = 40f
         textAlign = Paint.Align.CENTER
         isAntiAlias = true
+    }
+
+    private val interactionTextPaint = Paint().apply {
+        color = Color.WHITE
+        textSize = 30f
+        textAlign = Paint.Align.CENTER
+        isAntiAlias = true
+        isFakeBoldText = true
     }
     
     init {
@@ -289,10 +300,20 @@ class WallpaperPreviewView @JvmOverloads constructor(
             enabled = layoutPrefs.wallpaperWalkingEnabled,
             purposeful = layoutPrefs.wallpaperPurposefulWalkingEnabled
         )
+        val interactionState = interactionController.apply(
+            positions = renderPositions,
+            entities = entities,
+            width = width.toFloat(),
+            height = height.toFloat(),
+            enabled = layoutPrefs.wallpaperEntityInteractionsEnabled,
+            nowMs = System.currentTimeMillis()
+        )
 
         // Draw each entity with per-entity scale
         entities.forEachIndexed { index, entity ->
-            val (x, y) = renderPositions.getOrNull(index) ?: basePositions.getOrNull(index) ?: (width / 2f to height / 2f)
+            val (x, y) = interactionState.positions.getOrNull(index)
+                ?: basePositions.getOrNull(index)
+                ?: (width / 2f to height / 2f)
             lastRenderPositionsByEntity[entity.entityId] = x to y
             
             // Get per-entity scale
@@ -328,7 +349,8 @@ class WallpaperPreviewView @JvmOverloads constructor(
                 x,
                 y,
                 entityScale,
-                walking = wanderController.isWalking(entity.entityId)
+                walking = wanderController.isWalking(entity.entityId),
+                facingDirection = wanderController.facingDirection(entity.entityId)
             )
 
             // Draw entity name label
@@ -344,6 +366,10 @@ class WallpaperPreviewView @JvmOverloads constructor(
                 labelPaint.color = Color.CYAN
                 canvas.drawText("${String.format("%.1f", entityScale)}x", x, labelY + 30f, labelPaint)
             }
+        }
+
+        interactionState.effects.forEach { effect ->
+            drawInteractionEffect(canvas, effect)
         }
 
         usageOverlayRenderer.draw(
@@ -518,7 +544,8 @@ class WallpaperPreviewView @JvmOverloads constructor(
         cx: Float,
         cy: Float,
         scale: Float,
-        walking: Boolean = false
+        walking: Boolean = false,
+        facingDirection: WalkFacingDirection = WalkFacingDirection.RIGHT
     ) {
         val companion = companionRepository?.cached(entity.entityId) ?: companionsByEntity[entity.entityId]
         if (companion?.assetType == "spritesheet") {
@@ -529,7 +556,8 @@ class WallpaperPreviewView @JvmOverloads constructor(
                 if (walking) WallpaperWanderController.WALKING_STATE_ASSET else entity.state.toString(),
                 cx,
                 cy,
-                scale * 1.2f
+                scale * 1.2f,
+                facingDirection
             ) ?: SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED
             if (result == SpritesheetCompanionDrawer.DrawResult.DRAWN ||
                 result == SpritesheetCompanionDrawer.DrawResult.LOADING
@@ -541,7 +569,11 @@ class WallpaperPreviewView @JvmOverloads constructor(
         canvas.save()
 
         val svgScale = 3f * scale
-        canvas.translate(cx - (60 * svgScale), cy - (60 * svgScale))
+        canvas.translate(cx, cy)
+        if (facingDirection == WalkFacingDirection.LEFT) {
+            canvas.scale(-1f, 1f)
+        }
+        canvas.translate(-(60 * svgScale), -(60 * svgScale))
         canvas.scale(svgScale, svgScale)
 
         val bodyColor = parseHexColor(companion?.color) ?: when (entity.entityId) {
@@ -593,6 +625,23 @@ class WallpaperPreviewView @JvmOverloads constructor(
         }
 
         canvas.restore()
+    }
+
+    private fun drawInteractionEffect(
+        canvas: Canvas,
+        effect: WallpaperInteractionController.InteractionEffect
+    ) {
+        val alpha = effect.alpha(System.currentTimeMillis())
+        if (alpha <= 0f) return
+        interactionTextPaint.textSize = (30f * effect.scale(System.currentTimeMillis())).coerceIn(18f, 46f)
+        interactionTextPaint.alpha = (alpha * 210f).toInt().coerceIn(0, 230)
+        interactionTextPaint.color = when (effect.kind) {
+            WallpaperInteractionController.InteractionKind.GREETING -> Color.rgb(96, 165, 250)
+            WallpaperInteractionController.InteractionKind.SPARK -> Color.rgb(250, 204, 21)
+            WallpaperInteractionController.InteractionKind.BUMP -> Color.rgb(45, 212, 191)
+        }
+        canvas.drawText(effect.label, effect.centerX, effect.centerY, interactionTextPaint)
+        interactionTextPaint.alpha = 255
     }
 
     private fun drawUsageOverlayScaleIndicator(canvas: Canvas) {

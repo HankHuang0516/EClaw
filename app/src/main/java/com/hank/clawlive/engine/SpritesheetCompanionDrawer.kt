@@ -52,7 +52,8 @@ class SpritesheetCompanionDrawer(
         currentState: String,
         centerX: Float,
         centerY: Float,
-        scale: Float
+        scale: Float,
+        facingDirection: WalkFacingDirection = WalkFacingDirection.RIGHT
     ): DrawResult {
         val sheetUrl = companion.spritesheetUrl()
         if (sheetUrl.isNullOrBlank()) return DrawResult.UNSUPPORTED
@@ -101,7 +102,12 @@ class SpritesheetCompanionDrawer(
             centerX + renderSize / 2f,
             centerY + renderSize / 2f
         )
+        canvas.save()
+        if (facingDirection == WalkFacingDirection.LEFT) {
+            canvas.scale(-1f, 1f, centerX, centerY)
+        }
         canvas.drawBitmap(sheet, src, dst, paint)
+        canvas.restore()
         return DrawResult.DRAWN
     }
 

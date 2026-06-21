@@ -72,6 +72,12 @@ class WallpaperMoreSettingsActivity : AppCompatActivity() {
         ) { layoutPrefs.wallpaperPurposefulWalkingEnabled = it }
         addSwitch(
             content,
+            title = getString(R.string.wallpaper_setting_entity_interactions),
+            description = getString(R.string.wallpaper_setting_entity_interactions_desc),
+            checked = layoutPrefs.wallpaperEntityInteractionsEnabled
+        ) { layoutPrefs.wallpaperEntityInteractionsEnabled = it }
+        addSwitch(
+            content,
             title = getString(R.string.wallpaper_setting_bubble_pulse),
             description = getString(R.string.wallpaper_setting_bubble_pulse_desc),
             checked = layoutPrefs.wallpaperBubblePulseEnabled
@@ -170,7 +176,20 @@ class WallpaperMoreSettingsActivity : AppCompatActivity() {
     }
 
     private fun bubbleDurationLabel(seconds: Int): String {
-        return getString(R.string.wallpaper_setting_bubble_duration_value, seconds)
+        val minutes = seconds / 60
+        val remainingSeconds = seconds % 60
+        return when {
+            minutes <= 0 -> getString(R.string.wallpaper_setting_bubble_duration_value, seconds)
+            remainingSeconds == 0 -> getString(
+                R.string.wallpaper_setting_bubble_duration_minutes_value,
+                minutes
+            )
+            else -> getString(
+                R.string.wallpaper_setting_bubble_duration_minutes_seconds_value,
+                minutes,
+                remainingSeconds
+            )
+        }
     }
 
     private fun addSwitch(

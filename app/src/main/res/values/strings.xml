@@ -130,10 +130,14 @@
     <string name="wallpaper_setting_speech_bubbles">Message bubbles</string>
     <string name="wallpaper_setting_speech_bubbles_desc">Show entity status and recent messages near each companion.</string>
     <string name="wallpaper_setting_bubble_duration">Message bubble duration</string>
-    <string name="wallpaper_setting_bubble_duration_desc">Controls how long wallpaper bubbles stay visible; long messages automatically get more time.</string>
+    <string name="wallpaper_setting_bubble_duration_desc">Controls how long wallpaper bubbles stay visible, from 5 seconds to 5 minutes; long messages automatically get more time.</string>
     <string name="wallpaper_setting_bubble_duration_value">%1$d sec</string>
+    <string name="wallpaper_setting_bubble_duration_minutes_value">%1$d min</string>
+    <string name="wallpaper_setting_bubble_duration_minutes_seconds_value">%1$d min %2$d sec</string>
     <string name="wallpaper_setting_purposeful_walking">Purposeful walking</string>
     <string name="wallpaper_setting_purposeful_walking_desc">Give idle companions goals like visiting peers, patrolling, and returning home.</string>
+    <string name="wallpaper_setting_entity_interactions">Entity interactions</string>
+    <string name="wallpaper_setting_entity_interactions_desc">Let companions react when they bump into each other, with tiny greetings and bounce-away moments.</string>
     <string name="wallpaper_setting_bubble_pulse">Bubble pulse</string>
     <string name="wallpaper_setting_bubble_pulse_desc">Briefly highlight a companion when its bubble changes.</string>
     <string name="wallpaper_setting_bubble_avoidance">Smart bubble avoidance</string>
