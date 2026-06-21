@@ -103,9 +103,11 @@
             color: var(--text-secondary);
             margin-right: 8px;
         }
-        .share-btn {
+        .share-btn,
+        .share-action {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
             font-size: 13px;
             font-weight: 500;
@@ -115,9 +117,23 @@
             border-radius: var(--radius-sm);
             padding: 8px 14px;
             text-decoration: none;
+            min-height: 36px;
             transition: opacity 0.15s;
         }
-        .share-btn:hover { opacity: 0.8; }
+        .share-action { cursor: pointer; font-family: inherit; }
+        .share-action.primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+        .share-btn:hover,
+        .share-action:hover { opacity: 0.8; }
+        .share-status {
+            flex-basis: 100%;
+            min-height: 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
         .nav-back {
             display: inline-flex;
             align-items: center;
@@ -128,6 +144,26 @@
             text-decoration: none;
         }
         .nav-back:hover { color: var(--text); }
+        @media (max-width: 560px) {
+            body {
+                padding: 28px 16px 72px;
+            }
+            h1 {
+                font-size: 28px;
+            }
+            .share-row {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            .share-label {
+                margin-right: 0;
+            }
+            .share-btn,
+            .share-action {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -192,14 +228,79 @@
     <p class="signature">— Hank</p>
 
     <!-- Social share row -->
-    <div class="share-row">
-        <span class="share-label" data-i18n="about_founder_share_label">Share this:</span>
+    <div class="share-row" aria-labelledby="aboutFounderShareLabel">
+        <span id="aboutFounderShareLabel" class="share-label" data-i18n="about_founder_share_label">Share this:</span>
+        <button class="share-action primary" type="button" onclick="shareFounderStory()" aria-describedby="shareStatus">Share</button>
+        <button class="share-action" type="button" onclick="copyFounderLink()" aria-describedby="shareStatus">Copy link</button>
         <a class="share-btn" target="_blank" rel="noopener"
            href="https://twitter.com/intent/tweet?text=One%20workflow%3A%20bug%20%E2%86%92%20planner%20%E2%86%92%20executor%20%E2%86%92%20reviewer%20%E2%86%92%20release.%20No%20re-explaining.%20Less%20manual%20scheduling.%20Clear%20evidence%20of%20done.%20Why%20I%20built%20EClawbot%3A&amp;url=https%3A%2F%2Feclawbot.com%2Fportal%2Fabout-founder.html">𝕏 / Twitter</a>
         <a class="share-btn" target="_blank" rel="noopener"
            href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Feclawbot.com%2Fportal%2Fabout-founder.html">LinkedIn</a>
         <a class="share-btn" target="_blank" rel="noopener"
            href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Feclawbot.com%2Fportal%2Fabout-founder.html">Facebook</a>
+        <span id="shareStatus" class="share-status" role="status" aria-live="polite" aria-atomic="true"></span>
     </div>
+
+    <script>
+        const FOUNDER_CANONICAL_URL = 'https://eclawbot.com/portal/about-founder.html';
+        const founderSharePayload = {
+            title: 'Why I Built EClawbot',
+            text: 'Shared memory and named accountable agents so AI assistants stop losing context at every handoff.',
+            url: FOUNDER_CANONICAL_URL
+        };
+
+        function setShareStatus(message) {
+            const el = document.getElementById('shareStatus');
+            if (el) el.textContent = message || '';
+        }
+
+        function copyTextFallback(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            const ok = document.execCommand('copy');
+            ta.remove();
+            if (!ok) throw new Error('copy command failed');
+        }
+
+        async function copyFounderLink() {
+            try {
+                let copied = false;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    try {
+                        await navigator.clipboard.writeText(FOUNDER_CANONICAL_URL);
+                        copied = true;
+                    } catch (_) { /* fall back below */ }
+                }
+                if (!copied) {
+                    copyTextFallback(FOUNDER_CANONICAL_URL);
+                }
+                setShareStatus('Founder story link copied.');
+            } catch (_) {
+                setShareStatus('Copy failed. Use the social links or copy the browser URL.');
+            }
+        }
+
+        async function shareFounderStory() {
+            try {
+                if (navigator.share && (!navigator.canShare || navigator.canShare(founderSharePayload))) {
+                    await navigator.share(founderSharePayload);
+                    setShareStatus('Share sheet opened.');
+                    return;
+                }
+                await copyFounderLink();
+            } catch (err) {
+                if (err && err.name === 'AbortError') {
+                    setShareStatus('Share cancelled.');
+                } else {
+                    await copyFounderLink();
+                }
+            }
+        }
+    </script>
 </body>
 </html>
