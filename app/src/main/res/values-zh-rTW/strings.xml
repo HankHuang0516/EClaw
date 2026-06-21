@@ -822,10 +822,14 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="wallpaper_setting_speech_bubbles">訊息泡泡</string>
     <string name="wallpaper_setting_speech_bubbles_desc">在夥伴旁顯示實體狀態與最近訊息。</string>
     <string name="wallpaper_setting_bubble_duration">訊息泡泡停留時間</string>
-    <string name="wallpaper_setting_bubble_duration_desc">調整桌布泡泡存在時間；長訊息會自動延長，但最多 30 秒。</string>
+    <string name="wallpaper_setting_bubble_duration_desc">調整桌布泡泡存在時間，可從 5 秒到 5 分鐘；長訊息會自動延長。</string>
     <string name="wallpaper_setting_bubble_duration_value">%1$d 秒</string>
+    <string name="wallpaper_setting_bubble_duration_minutes_value">%1$d 分鐘</string>
+    <string name="wallpaper_setting_bubble_duration_minutes_seconds_value">%1$d 分 %2$d 秒</string>
     <string name="wallpaper_setting_purposeful_walking">有目的的走路</string>
     <string name="wallpaper_setting_purposeful_walking_desc">讓待機夥伴會拜訪同伴、巡邏、回到自己的活動區。</string>
+    <string name="wallpaper_setting_entity_interactions">實體互動</string>
+    <string name="wallpaper_setting_entity_interactions_desc">夥伴碰到彼此時會有小招呼、彈開等互動反應。</string>
     <string name="wallpaper_setting_bubble_pulse">泡泡脈衝</string>
     <string name="wallpaper_setting_bubble_pulse_desc">泡泡內容更新時短暫高亮夥伴。</string>
     <string name="wallpaper_setting_bubble_avoidance">智慧泡泡避讓</string>

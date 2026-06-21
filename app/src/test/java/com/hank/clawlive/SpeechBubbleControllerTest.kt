@@ -51,17 +51,17 @@ class SpeechBubbleControllerTest {
     /** T2-1 lifecycle — bubble expires and is gone after its TTL. */
     @Test
     fun bubbleExpiresAfterTimeout() {
-        val controller = SpeechBubbleController(defaultTtlMs = 4_000L)
+        val controller = SpeechBubbleController(defaultTtlMs = 5_000L)
         controller.show(entityId = 3, text = "x", nowMs = 0L)
 
         // Short messages use the preferred/default TTL; still visible just before.
-        assertTrue(controller.isVisible(3, nowMs = 3_999L))
-        assertNotNull(controller.placementFor(3, 0.5f, 0.5f, 0.1f, nowMs = 3_999L))
+        assertTrue(controller.isVisible(3, nowMs = 4_999L))
+        assertNotNull(controller.placementFor(3, 0.5f, 0.5f, 0.1f, nowMs = 4_999L))
 
         // after TTL: gone.
-        assertFalse(controller.isVisible(3, nowMs = 4_001L))
-        assertNull(controller.placementFor(3, 0.5f, 0.5f, 0.1f, nowMs = 4_001L))
-        assertEquals(0, controller.activeCount(nowMs = 4_001L))
+        assertFalse(controller.isVisible(3, nowMs = 5_001L))
+        assertNull(controller.placementFor(3, 0.5f, 0.5f, 0.1f, nowMs = 5_001L))
+        assertEquals(0, controller.activeCount(nowMs = 5_001L))
     }
 
     /** Reduce-motion / disabled-walk: a static (non-walking) entity still anchors. */
@@ -123,24 +123,24 @@ class SpeechBubbleControllerTest {
         assertTrue(controller.isVisible(16, nowMs = 14_999L))
         assertFalse(controller.isVisible(16, nowMs = 15_001L))
 
-        // 600-char message -> would be 36s, capped to the smart 30s max.
-        val long = "a".repeat(600)
+        // 6000-char message -> would be 360s, capped to the smart 5m max.
+        val long = "a".repeat(6000)
         controller.show(entityId = 6, text = long, nowMs = 0L)
-        assertTrue(controller.isVisible(6, nowMs = 29_999L))
-        assertFalse(controller.isVisible(6, nowMs = 30_001L))
+        assertTrue(controller.isVisible(6, nowMs = 299_999L))
+        assertFalse(controller.isVisible(6, nowMs = 300_001L))
     }
 
     /** §5.3 / O-7 — a new message resets the TTL rather than letting the old one expire. */
     @Test
     fun newMessageResetsTtl() {
-        val controller = SpeechBubbleController(defaultTtlMs = 4_000L)
+        val controller = SpeechBubbleController(defaultTtlMs = 5_000L)
         controller.show(entityId = 7, text = "first", nowMs = 0L)
         // refresh near end of life
-        controller.show(entityId = 7, text = "second", nowMs = 3_500L)
+        controller.show(entityId = 7, text = "second", nowMs = 4_500L)
 
-        // original would have expired at 4_000L; refreshed one lives to 7_500L.
-        assertTrue(controller.isVisible(7, nowMs = 7_000L))
-        val placement = controller.placementFor(7, 0.5f, 0.5f, 0.1f, nowMs = 7_000L)!!
+        // original would have expired at 5_000L; refreshed one lives to 9_500L.
+        assertTrue(controller.isVisible(7, nowMs = 9_000L))
+        val placement = controller.placementFor(7, 0.5f, 0.5f, 0.1f, nowMs = 9_000L)!!
         assertEquals("second", placement.text)
     }
 

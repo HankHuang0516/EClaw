@@ -4,6 +4,7 @@ import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.engine.AmbientWanderGoal
 import com.hank.clawlive.engine.MotionState
+import com.hank.clawlive.engine.WalkFacingDirection
 import com.hank.clawlive.engine.WallpaperWanderController
 import kotlin.random.Random
 import org.junit.Assert.assertEquals
@@ -57,6 +58,22 @@ class WallpaperWanderControllerTest {
     }
 
     @Test
+    fun facingDirectionFollowsHorizontalTargetDirection() {
+        val controller = WallpaperWanderController(random = Random(5))
+        val entity = EntityStatus(entityId = 1, state = CharacterState.IDLE)
+        val base = listOf(500f to 500f)
+
+        controller.positionsFor(base, listOf(entity), 1000f, 1000f, enabled = true, nowMs = 0L)
+        controller.setTarget(1, 0.1f, 0.5f)
+        controller.positionsFor(base, listOf(entity), 1000f, 1000f, enabled = true, nowMs = 1000L)
+        assertEquals(WalkFacingDirection.LEFT, controller.facingDirection(1))
+
+        controller.setTarget(1, 0.9f, 0.5f)
+        controller.positionsFor(base, listOf(entity), 1000f, 1000f, enabled = true, nowMs = 2000L)
+        assertEquals(WalkFacingDirection.RIGHT, controller.facingDirection(1))
+    }
+
+    @Test
     fun disabledWanderReturnsBasePositionAndDoesNotWalk() {
         val controller = WallpaperWanderController(random = Random(3))
         val entity = EntityStatus(entityId = 2, state = CharacterState.IDLE)
@@ -80,6 +97,20 @@ class WallpaperWanderControllerTest {
 
         assertEquals(first, after)
         assertFalse(controller.isWalking(3))
+    }
+
+    @Test
+    fun nonLocomotionPetdexActionsDoNotSlideDuringAmbientWander() {
+        val controller = WallpaperWanderController(random = Random(13))
+        val entity = EntityStatus(entityId = 30, state = CharacterState.REVIEW)
+        val base = listOf(540f to 620f)
+
+        val first = controller.positionsFor(base, listOf(entity), 1000f, 1000f, enabled = true, nowMs = 0L)
+        val after = controller.positionsFor(base, listOf(entity), 1000f, 1000f, enabled = true, nowMs = 9000L)
+
+        assertEquals(first, after)
+        assertFalse(controller.isWalking(30))
+        assertEquals(MotionState.SLEEPING, controller.motionState(30))
     }
 
     @Test

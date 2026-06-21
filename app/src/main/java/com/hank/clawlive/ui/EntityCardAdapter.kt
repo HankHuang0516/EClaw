@@ -266,12 +266,14 @@ class EntityCardAdapter(
         }
 
         private fun getStateBadgeColor(state: CharacterState): Int {
-            return when (state) {
-                CharacterState.IDLE -> Color.parseColor("#4CAF50")
-                CharacterState.BUSY -> Color.parseColor("#2196F3")
-                CharacterState.EATING -> Color.parseColor("#FF9800")
-                CharacterState.SLEEPING -> Color.parseColor("#607D8B")
-                CharacterState.EXCITED -> Color.parseColor("#E91E63")
+            return when {
+                state == CharacterState.FAILED -> Color.parseColor("#EF4444")
+                state == CharacterState.REVIEW -> Color.parseColor("#8B5CF6")
+                state.pausesAmbientWander -> Color.parseColor("#607D8B")
+                state.busyLike -> Color.parseColor("#2196F3")
+                state.excitedLike -> Color.parseColor("#E91E63")
+                state == CharacterState.EATING -> Color.parseColor("#FF9800")
+                else -> Color.parseColor("#4CAF50")
             }
         }
     }

@@ -20,6 +20,7 @@ class WallpaperMoreSettingsUiTest {
                 val prefs = LayoutPreferences.getInstance(activity)
                 assertTrue(prefs.wallpaperSpeechBubblesEnabled)
                 assertTrue(prefs.wallpaperPurposefulWalkingEnabled)
+                assertTrue(prefs.wallpaperEntityInteractionsEnabled)
                 assertTrue(prefs.wallpaperBubblePulseEnabled)
                 assertTrue(prefs.wallpaperBubbleOverlayAvoidanceEnabled)
                 assertTrue(prefs.wallpaperStateAuraEnabled)
@@ -38,9 +39,12 @@ class WallpaperMoreSettingsUiTest {
                     }
                 }
                 collect(root)
-                assertTrue("Expected advanced wallpaper switches", switches.size >= 8)
+                assertTrue("Expected advanced wallpaper switches", switches.size >= 9)
                 switches.forEach { assertTrue("Default-on switch should start checked", it.isChecked) }
                 assertTrue("Expected bubble duration slider", sliders.isNotEmpty())
+                val durationSlider = sliders.first()
+                assertEquals(5f, durationSlider.valueFrom, 0.001f)
+                assertEquals(300f, durationSlider.valueTo, 0.001f)
 
                 switches.first().isChecked = false
                 assertFalse(prefs.wallpaperSpeechBubblesEnabled)
@@ -50,8 +54,18 @@ class WallpaperMoreSettingsUiTest {
                 assertFalse(prefs.wallpaperPurposefulWalkingEnabled)
                 prefs.wallpaperPurposefulWalkingEnabled = true
 
-                sliders.first().value = 18f
+                switches[2].isChecked = false
+                assertFalse(prefs.wallpaperEntityInteractionsEnabled)
+                prefs.wallpaperEntityInteractionsEnabled = true
+
+                durationSlider.value = 18f
                 assertEquals(18, prefs.wallpaperBubbleDurationSeconds)
+                durationSlider.value = 300f
+                assertEquals(300, prefs.wallpaperBubbleDurationSeconds)
+                prefs.wallpaperBubbleDurationSeconds = 1
+                assertEquals(5, prefs.wallpaperBubbleDurationSeconds)
+                prefs.wallpaperBubbleDurationSeconds = 999
+                assertEquals(300, prefs.wallpaperBubbleDurationSeconds)
                 prefs.wallpaperBubbleDurationSeconds = LayoutPreferences.WALLPAPER_BUBBLE_DURATION_DEFAULT_SECONDS
             }
         }

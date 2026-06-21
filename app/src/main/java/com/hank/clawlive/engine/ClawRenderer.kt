@@ -33,6 +33,7 @@ class ClawRenderer(
     private val spritesheetDrawer = companionRepository?.let { SpritesheetCompanionDrawer(it) }
     private val usageOverlayRenderer = UsageOverlayRenderer(context, layoutPrefs)
     private val wanderController = WallpaperWanderController()
+    private val interactionController = WallpaperInteractionController()
     private val speechBubbleController = SpeechBubbleController()
     private val renderDiagnostics = WallpaperRenderDiagnostics()
     private val lastBubbleMessageByEntity = mutableMapOf<Int, String>()
@@ -127,6 +128,13 @@ class ClawRenderer(
         style = Paint.Style.STROKE
         isAntiAlias = true
         strokeCap = Paint.Cap.ROUND
+    }
+
+    private val interactionTextPaint = TextPaint().apply {
+        color = Color.WHITE
+        textAlign = Paint.Align.CENTER
+        isAntiAlias = true
+        isFakeBoldText = true
     }
 
     // Animation state
@@ -506,6 +514,14 @@ class ClawRenderer(
         )
         val baseScale = getScaleFactor(entities.size)
         val nowMs = System.currentTimeMillis()
+        val interactionState = interactionController.apply(
+            positions = positions,
+            entities = entities,
+            width = width,
+            height = height,
+            enabled = layoutPrefs.wallpaperEntityInteractionsEnabled,
+            nowMs = nowMs
+        )
         if (layoutPrefs.wallpaperSpeechBubblesEnabled) {
             syncSpeechBubbles(entities, nowMs)
         } else {
@@ -528,26 +544,41 @@ class ClawRenderer(
         }
 
         entities.forEachIndexed { index, entity ->
-            if (index < positions.size) {
-                val (cx, cy) = positions[index]
+            if (index < interactionState.positions.size) {
+                val (cx, cy) = interactionState.positions[index]
+                val interactionPose = interactionState.posesByEntity[entity.entityId]
+                val drawCy = cy - (interactionPose?.liftPx ?: 0f)
                 // Apply per-entity scale multiplier on top of base scale
                 val entityScale = layoutPrefs.getEntityScale(entity.entityId)
                 val finalScale = baseScale * entityScale
-                val motionStateOverride = if (wanderController.isWalking(entity.entityId)) {
+                val spritesheetState = if (
+                    wanderController.isWalking(entity.entityId) &&
+                    entity.state.canUseAmbientWalkingAnimation
+                ) {
                     WallpaperWanderController.WALKING_STATE_ASSET
-                } else null
+                } else {
+                    entity.state.wallpaperActionKey
+                }
+                val facingDirection = interactionPose?.facingDirection
+                    ?: wanderController.facingDirection(entity.entityId)
                 drawSingleEntityAt(
                     canvas,
                     entity,
                     cx,
-                    cy,
+                    drawCy,
                     finalScale,
                     width,
-                    motionStateOverride,
+                    spritesheetState,
                     nowMs,
-                    bubbleAvoidBounds
+                    bubbleAvoidBounds,
+                    facingDirection,
+                    shouldMirrorSpritesheetForFacing(spritesheetState)
                 )
             }
+        }
+
+        interactionState.effects.forEach { effect ->
+            drawInteractionEffect(canvas, effect, baseScale, nowMs)
         }
 
         usageOverlayRenderer.draw(canvas, usageSnapshot)
@@ -597,6 +628,11 @@ class ClawRenderer(
         bubblePulseStartedByEntity.clear()
     }
 
+    private fun shouldMirrorSpritesheetForFacing(spritesheetState: String): Boolean {
+        return spritesheetState != CharacterState.RUNNING_LEFT.wallpaperActionKey &&
+            spritesheetState != CharacterState.RUNNING_RIGHT.wallpaperActionKey
+    }
+
     /**
      * Draw a single entity at the specified position with scale.
      */
@@ -607,16 +643,18 @@ class ClawRenderer(
         centerY: Float,
         scale: Float,
         screenWidth: Float,
-        motionStateOverride: String? = null,
+        spritesheetState: String = entity.state.wallpaperActionKey,
         nowMs: Long = System.currentTimeMillis(),
-        bubbleAvoidBounds: RectF? = null
+        bubbleAvoidBounds: RectF? = null,
+        facingDirection: WalkFacingDirection = WalkFacingDirection.RIGHT,
+        mirrorSpritesheetForFacing: Boolean = true
     ) {
         // Calculate Animation (Bobbing)
         val time = nowMs - startTime
-        val bobOffset = if (entity.state == CharacterState.SLEEPING) {
+        val bobOffset = if (entity.state.pausesAmbientWander) {
             0f
         } else {
-            val speed = if (entity.state == CharacterState.BUSY) 0.01f else 0.003f
+            val speed = if (entity.state.busyLike) 0.01f else 0.003f
             (sin(time * speed) * 30 * scale).toFloat()
         }
 
@@ -655,10 +693,12 @@ class ClawRenderer(
                 canvas,
                 companion,
                 entity.entityId,
-                motionStateOverride ?: entity.state.toString(),
+                spritesheetState,
                 centerX,
                 charY,
-                scale
+                scale,
+                facingDirection,
+                mirrorSpritesheetForFacing
             ) ?: SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED
         } else SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED
         if (attemptedSpritesheet && layoutPrefs.wallpaperAdaptiveEffectsEnabled) {
@@ -670,7 +710,7 @@ class ClawRenderer(
             SpritesheetCompanionDrawer.DrawResult.LOADING -> Unit
             SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED,
             SpritesheetCompanionDrawer.DrawResult.ERROR ->
-                drawLobsterAtPosition(canvas, centerX, charY, entity, scale, companion)
+                drawLobsterAtPosition(canvas, centerX, charY, entity, scale, companion, facingDirection)
         }
 
         val bubblePlacement = if (layoutPrefs.wallpaperSpeechBubblesEnabled) {
@@ -790,6 +830,26 @@ class ClawRenderer(
         shadowPaint.alpha = 255
     }
 
+    private fun drawInteractionEffect(
+        canvas: Canvas,
+        effect: WallpaperInteractionController.InteractionEffect,
+        scale: Float,
+        nowMs: Long
+    ) {
+        if (isAmbient) return
+        val alpha = effect.alpha(nowMs)
+        if (alpha <= 0f) return
+        interactionTextPaint.textSize = (30f * scale * effect.scale(nowMs)).coerceIn(18f, 46f)
+        interactionTextPaint.alpha = (alpha * 210f).toInt().coerceIn(0, 230)
+        interactionTextPaint.color = when (effect.kind) {
+            WallpaperInteractionController.InteractionKind.GREETING -> Color.rgb(96, 165, 250)
+            WallpaperInteractionController.InteractionKind.SPARK -> Color.rgb(250, 204, 21)
+            WallpaperInteractionController.InteractionKind.BUMP -> Color.rgb(45, 212, 191)
+        }
+        canvas.drawText(effect.label, effect.centerX, effect.centerY, interactionTextPaint)
+        interactionTextPaint.alpha = 255
+    }
+
     private fun drawStateAura(
         canvas: Canvas,
         entity: EntityStatus,
@@ -800,12 +860,15 @@ class ClawRenderer(
         time: Long
     ) {
         if (isAmbient) return
-        val accent = when (entity.state) {
-            CharacterState.IDLE -> if (wanderController.isWalking(entity.entityId)) Color.rgb(45, 212, 191) else return
-            CharacterState.BUSY -> Color.rgb(59, 130, 246)
-            CharacterState.EATING -> Color.rgb(34, 197, 94)
-            CharacterState.EXCITED -> Color.rgb(245, 158, 11)
-            CharacterState.SLEEPING -> Color.rgb(99, 102, 241)
+        val accent = when {
+            entity.state == CharacterState.IDLE && wanderController.isWalking(entity.entityId) -> Color.rgb(45, 212, 191)
+            entity.state.busyLike -> Color.rgb(59, 130, 246)
+            entity.state == CharacterState.EATING -> Color.rgb(34, 197, 94)
+            entity.state.excitedLike -> Color.rgb(245, 158, 11)
+            entity.state == CharacterState.FAILED -> Color.rgb(248, 113, 113)
+            entity.state == CharacterState.REVIEW -> Color.rgb(168, 85, 247)
+            entity.state.pausesAmbientWander -> Color.rgb(99, 102, 241)
+            else -> return
         }
         val pulse = (sin(time * 0.0045f) * 0.5f + 0.5f).toFloat()
         stateAuraPaint.color = accent
@@ -833,12 +896,14 @@ class ClawRenderer(
         bubblePulsePaint.alpha = 255
     }
 
-    private fun stateAccentColor(state: CharacterState): Int = when (state) {
-        CharacterState.SLEEPING -> Color.rgb(129, 140, 248)
-        CharacterState.EXCITED -> Color.rgb(251, 146, 60)
-        CharacterState.BUSY -> Color.rgb(96, 165, 250)
-        CharacterState.EATING -> Color.rgb(74, 222, 128)
-        CharacterState.IDLE -> Color.rgb(45, 212, 191)
+    private fun stateAccentColor(state: CharacterState): Int = when {
+        state == CharacterState.FAILED -> Color.rgb(248, 113, 113)
+        state == CharacterState.REVIEW -> Color.rgb(168, 85, 247)
+        state.pausesAmbientWander -> Color.rgb(129, 140, 248)
+        state.excitedLike -> Color.rgb(251, 146, 60)
+        state.busyLike -> Color.rgb(96, 165, 250)
+        state == CharacterState.EATING -> Color.rgb(74, 222, 128)
+        else -> Color.rgb(45, 212, 191)
     }
 
     /**
@@ -1029,11 +1094,13 @@ class ClawRenderer(
         }
         path.close()
 
-        val bubblesColor = when (entity.state) {
-            CharacterState.SLEEPING -> Color.argb(230, 50, 50, 80)
-            CharacterState.EXCITED -> Color.argb(230, 255, 100, 50)
-            CharacterState.BUSY -> Color.argb(230, 50, 100, 150)
-            CharacterState.EATING -> Color.argb(230, 80, 150, 50)
+        val bubblesColor = when {
+            entity.state == CharacterState.FAILED -> Color.argb(230, 120, 45, 45)
+            entity.state == CharacterState.REVIEW -> Color.argb(230, 80, 55, 135)
+            entity.state.pausesAmbientWander -> Color.argb(230, 50, 50, 80)
+            entity.state.excitedLike -> Color.argb(230, 255, 100, 50)
+            entity.state.busyLike -> Color.argb(230, 50, 100, 150)
+            entity.state == CharacterState.EATING -> Color.argb(230, 80, 150, 50)
             else -> Color.argb(230, 40, 40, 40)
         }
         bubblePaint.color = bubblesColor
@@ -1059,12 +1126,16 @@ class ClawRenderer(
     /**
      * Get emoji for state.
      */
-    private fun getStateEmoji(state: CharacterState): String = when (state) {
-        CharacterState.IDLE -> "😐"
-        CharacterState.SLEEPING -> "😴"
-        CharacterState.EXCITED -> "🎉"
-        CharacterState.BUSY -> "💼"
-        CharacterState.EATING -> "🍽️"
+    private fun getStateEmoji(state: CharacterState): String = when {
+        state == CharacterState.IDLE -> "😐"
+        state == CharacterState.SLEEPING || state == CharacterState.WAITING -> "😴"
+        state == CharacterState.FAILED -> "⚠️"
+        state == CharacterState.REVIEW -> "🔎"
+        state == CharacterState.WAVING || state == CharacterState.HAPPY -> "👋"
+        state.excitedLike -> "🎉"
+        state.busyLike -> "💼"
+        state == CharacterState.EATING -> "🍽️"
+        else -> "😐"
     }
 
     /**
@@ -1081,13 +1152,18 @@ class ClawRenderer(
         cy: Float,
         entity: EntityStatus,
         scale: Float,
-        companion: CompanionDetail? = null
+        companion: CompanionDetail? = null,
+        facingDirection: WalkFacingDirection = WalkFacingDirection.RIGHT
     ) {
         // SVG scale (original is 4x, now multiply by entity scale)
         val svgScale = 4f * scale
 
         canvas.save()
-        canvas.translate(cx - (60 * svgScale), cy - (60 * svgScale))
+        canvas.translate(cx, cy)
+        if (facingDirection == WalkFacingDirection.LEFT) {
+            canvas.scale(-1f, 1f)
+        }
+        canvas.translate(-(60 * svgScale), -(60 * svgScale))
         canvas.scale(svgScale, svgScale)
 
         // Colors
@@ -1263,7 +1339,7 @@ class ClawRenderer(
             isAntiAlias = true
         }
 
-        val defaultLid = if (entity.state == CharacterState.SLEEPING) 1.0f else 0f
+        val defaultLid = if (entity.state == CharacterState.SLEEPING || entity.state == CharacterState.WAITING) 1.0f else 0f
         val lidFactor = (entity.parts?.get("EYE_LID") as? Double)?.toFloat() ?: defaultLid
         val browAngle = (entity.parts?.get("EYE_ANGLE") as? Double)?.toFloat() ?: 0f
 

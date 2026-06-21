@@ -306,6 +306,12 @@ class LayoutPreferences private constructor(context: Context) {
             prefs.edit().putBoolean(KEY_WALLPAPER_PURPOSEFUL_WALKING_ENABLED, value).apply()
         }
 
+    var wallpaperEntityInteractionsEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_ENTITY_INTERACTIONS_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_ENTITY_INTERACTIONS_ENABLED, value).apply()
+        }
+
     var wallpaperSpeechBubblesEnabled: Boolean
         get() = prefs.getBoolean(KEY_WALLPAPER_SPEECH_BUBBLES_ENABLED, true)
         set(value) {
@@ -530,6 +536,7 @@ class LayoutPreferences private constructor(context: Context) {
         private const val KEY_SERVER_ENTITY_LIMIT = "server_entity_limit"
         private const val KEY_WALLPAPER_WALKING_ENABLED = "wallpaper_walking_enabled"
         private const val KEY_WALLPAPER_PURPOSEFUL_WALKING_ENABLED = "wallpaper_purposeful_walking_enabled"
+        private const val KEY_WALLPAPER_ENTITY_INTERACTIONS_ENABLED = "wallpaper_entity_interactions_enabled"
         private const val KEY_WALLPAPER_SPEECH_BUBBLES_ENABLED = "wallpaper_speech_bubbles_enabled"
         private const val KEY_WALLPAPER_BUBBLE_DURATION_SECONDS = "wallpaper_bubble_duration_seconds"
         private const val KEY_WALLPAPER_BUBBLE_PULSE_ENABLED = "wallpaper_bubble_pulse_enabled"
@@ -555,8 +562,8 @@ class LayoutPreferences private constructor(context: Context) {
         const val RESET_WINDOW_WEEKLY = "weekly"
         const val RESET_WINDOW_5H_WEEKLY = "5h_weekly"
 
-        const val WALLPAPER_BUBBLE_DURATION_MIN_SECONDS = 3
-        const val WALLPAPER_BUBBLE_DURATION_MAX_SECONDS = 30
+        const val WALLPAPER_BUBBLE_DURATION_MIN_SECONDS = 5
+        const val WALLPAPER_BUBBLE_DURATION_MAX_SECONDS = 300
         const val WALLPAPER_BUBBLE_DURATION_DEFAULT_SECONDS = 12
 
         // Display mode constants

@@ -170,7 +170,7 @@ components:
           type: string
         state:
           type: string
-          enum: [IDLE, BUSY, HAPPY, SAD, ANGRY, CONFUSED, SLEEPING]
+          enum: [IDLE, BUSY, EATING, SLEEPING, EXCITED, HAPPY, WALKING, SAD, ANGRY, CONFUSED, idle, running-right, running-left, waving, jumping, failed, waiting, running, review]
         message:
           type: string
         parts:
@@ -1311,7 +1311,7 @@ paths:
                   type: string
                 state:
                   type: string
-                  enum: [IDLE, BUSY, HAPPY, SAD, ANGRY, CONFUSED, SLEEPING]
+                  enum: [IDLE, BUSY, EATING, SLEEPING, EXCITED, HAPPY, WALKING, SAD, ANGRY, CONFUSED, idle, running-right, running-left, waving, jumping, failed, waiting, running, review]
                 message:
                   type: string
                   description: Status text (also used as delivery content when speakTo/broadcast is set)

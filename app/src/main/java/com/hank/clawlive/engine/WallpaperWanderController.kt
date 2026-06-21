@@ -1,8 +1,8 @@
 package com.hank.clawlive.engine
 
 import android.graphics.PointF
-import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
+import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.min
 import kotlin.random.Random
@@ -28,6 +28,11 @@ enum class AmbientWanderGoal {
     VISIT_COMPANION,
     PATROL,
     RETURN_HOME
+}
+
+enum class WalkFacingDirection {
+    LEFT,
+    RIGHT
 }
 
 /**
@@ -58,6 +63,7 @@ class WallpaperWanderController(
         var motionState: MotionState,
         var ambientGoal: AmbientWanderGoal,
         var ambientStep: Int,
+        var facingDirection: WalkFacingDirection,
         var onArrive: (() -> Unit)? = null
     )
 
@@ -77,6 +83,10 @@ class WallpaperWanderController(
 
     fun ambientGoal(entityId: Int): AmbientWanderGoal {
         return states[entityId]?.ambientGoal ?: AmbientWanderGoal.RANDOM
+    }
+
+    fun facingDirection(entityId: Int): WalkFacingDirection {
+        return states[entityId]?.facingDirection ?: WalkFacingDirection.RIGHT
     }
 
     override fun position(entityId: Int): PointF {
@@ -137,7 +147,7 @@ class WallpaperWanderController(
         val activeIds = entities.map { it.entityId }.toSet()
         states.keys.toList().forEach { id -> if (id !in activeIds) states.remove(id) }
         val ambientPeers = entities.mapIndexedNotNull { index, entity ->
-            if (entity.state == CharacterState.SLEEPING) return@mapIndexedNotNull null
+            if (entity.state.pausesAmbientWander) return@mapIndexedNotNull null
             val base = basePositions.getOrNull(index) ?: (width / 2f to height / 2f)
             val baseX = (base.first / width).coerceIn(MIN_X_PCT, MAX_X_PCT)
             val baseY = (base.second / height).coerceIn(MIN_Y_PCT, MAX_Y_PCT)
@@ -151,7 +161,7 @@ class WallpaperWanderController(
 
         return entities.mapIndexed { index, entity ->
             val base = basePositions.getOrNull(index) ?: (width / 2f to height / 2f)
-            if (entity.state == CharacterState.SLEEPING) {
+            if (entity.state.pausesAmbientWander) {
                 val state = stateFor(entity.entityId, base, width, height, nowMs)
                 state.motionState = MotionState.SLEEPING
                 state.moving = false
@@ -245,7 +255,8 @@ class WallpaperWanderController(
                 moving = false,
                 motionState = MotionState.WANDERING,
                 ambientGoal = AmbientWanderGoal.RANDOM,
-                ambientStep = 0
+                ambientStep = 0,
+                facingDirection = WalkFacingDirection.RIGHT
             )
         }
         coerceToSafeBounds(state)
@@ -267,7 +278,8 @@ class WallpaperWanderController(
                 moving = false,
                 motionState = MotionState.STOPPED,
                 ambientGoal = AmbientWanderGoal.RANDOM,
-                ambientStep = 0
+                ambientStep = 0,
+                facingDirection = WalkFacingDirection.RIGHT
             )
         }
     }
@@ -281,6 +293,9 @@ class WallpaperWanderController(
     ): Boolean {
         val dxPx = (state.targetXPct - state.xPct) * width
         val dyPx = (state.targetYPct - state.yPct) * height
+        if (abs(dxPx) > FACING_EPSILON_PX) {
+            state.facingDirection = if (dxPx < 0f) WalkFacingDirection.LEFT else WalkFacingDirection.RIGHT
+        }
         val distancePx = hypot(dxPx, dyPx)
         val stepPx = speedPctPerSecond * min(width, height) * dtSeconds
 
@@ -327,8 +342,8 @@ class WallpaperWanderController(
         val peers = ambientPeers.filter { it.entityId != entity.entityId }
         val step = state.ambientStep++
         val goal = when {
-            peers.isNotEmpty() && entity.state == CharacterState.EXCITED -> AmbientWanderGoal.VISIT_COMPANION
-            entity.state == CharacterState.BUSY -> if (step % 2 == 0) AmbientWanderGoal.PATROL else AmbientWanderGoal.RETURN_HOME
+            peers.isNotEmpty() && entity.state.excitedLike -> AmbientWanderGoal.VISIT_COMPANION
+            entity.state.busyLike -> if (step % 2 == 0) AmbientWanderGoal.PATROL else AmbientWanderGoal.RETURN_HOME
             peers.isNotEmpty() && step % 3 == 0 -> AmbientWanderGoal.VISIT_COMPANION
             step % 3 == 1 -> AmbientWanderGoal.PATROL
             else -> AmbientWanderGoal.RETURN_HOME
@@ -402,6 +417,7 @@ class WallpaperWanderController(
         const val DEFAULT_WANDER_SPEED_PCT_PER_SECOND = 0.04f
         const val DEFAULT_TARGET_SPEED_PCT_PER_SECOND = 0.12f
         private const val ARRIVAL_EPSILON_PX = 1f
+        private const val FACING_EPSILON_PX = 0.5f
         private const val MAX_IDLE_MS = 3000L
         private const val MIN_RETARGET_MS = 3000L
         private const val MAX_RETARGET_MS = 8000L

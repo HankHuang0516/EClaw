@@ -4,6 +4,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.CompanionDetail
 import com.hank.clawlive.data.model.EntityStatus
 import kotlin.math.sin
@@ -113,7 +114,7 @@ object ProceduralCreatureDrawer {
     private fun drawCatFace(canvas: Canvas, e: EntityStatus, dark: Int) {
         val eye = fillPaint(Color.parseColor("#1a1a2e"))
         val glow = fillPaint(Color.parseColor("#80ffd9"))
-        val sleeping = e.state.toString() == "SLEEPING"
+        val sleeping = e.state == CharacterState.SLEEPING || e.state == CharacterState.WAITING
 
         if (sleeping) {
             // Closed eyes (curve)
@@ -155,7 +156,7 @@ object ProceduralCreatureDrawer {
     // ---------------------------------------------------------------- Dog
     private fun drawDog(canvas: Canvas, e: EntityStatus, body: Int, dark: Int, t: Long) {
         val tailWag = sin(t * 0.012).toFloat() * 12f
-        val tongue = e.state.toString() == "EXCITED" || e.state.toString() == "EATING"
+        val tongue = e.state.excitedLike || e.state == CharacterState.EATING
 
         val bodyP = fillPaint(body)
         val outline = strokePaint(dark, 2f)
@@ -212,7 +213,7 @@ object ProceduralCreatureDrawer {
 
     private fun drawDogFace(canvas: Canvas, e: EntityStatus, dark: Int, tongue: Boolean) {
         val eye = fillPaint(Color.parseColor("#1a1a2e"))
-        val sleeping = e.state.toString() == "SLEEPING"
+        val sleeping = e.state == CharacterState.SLEEPING || e.state == CharacterState.WAITING
 
         if (sleeping) {
             val p = strokePaint(Color.parseColor("#1a1a2e"), 2f)
@@ -316,7 +317,7 @@ object ProceduralCreatureDrawer {
     }
 
     private fun drawFishFace(canvas: Canvas, e: EntityStatus) {
-        val sleeping = e.state.toString() == "SLEEPING"
+        val sleeping = e.state == CharacterState.SLEEPING || e.state == CharacterState.WAITING
         val white = fillPaint(Color.WHITE)
         val pupil = fillPaint(Color.parseColor("#1a1a2e"))
         val outline = strokePaint(Color.parseColor("#1a1a2e"), 1f)
