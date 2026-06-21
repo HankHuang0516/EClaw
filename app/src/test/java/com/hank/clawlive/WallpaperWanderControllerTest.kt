@@ -100,6 +100,20 @@ class WallpaperWanderControllerTest {
     }
 
     @Test
+    fun nonLocomotionPetdexActionsDoNotSlideDuringAmbientWander() {
+        val controller = WallpaperWanderController(random = Random(13))
+        val entity = EntityStatus(entityId = 30, state = CharacterState.REVIEW)
+        val base = listOf(540f to 620f)
+
+        val first = controller.positionsFor(base, listOf(entity), 1000f, 1000f, enabled = true, nowMs = 0L)
+        val after = controller.positionsFor(base, listOf(entity), 1000f, 1000f, enabled = true, nowMs = 9000L)
+
+        assertEquals(first, after)
+        assertFalse(controller.isWalking(30))
+        assertEquals(MotionState.SLEEPING, controller.motionState(30))
+    }
+
+    @Test
     fun wanderStaysInsideSafeWallpaperBounds() {
         val controller = WallpaperWanderController(random = Random(23))
         val entity = EntityStatus(entityId = 4, state = CharacterState.IDLE)

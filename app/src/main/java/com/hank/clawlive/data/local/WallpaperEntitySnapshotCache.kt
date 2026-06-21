@@ -1,8 +1,10 @@
 package com.hank.clawlive.data.local
 
 import android.content.Context
-import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
+import com.hank.clawlive.data.model.CharacterState
+import com.hank.clawlive.data.model.CharacterStateJsonAdapter
 import com.hank.clawlive.data.model.CompanionDetail
 import com.hank.clawlive.data.model.EntityStatus
 import timber.log.Timber
@@ -18,7 +20,9 @@ import timber.log.Timber
  */
 class WallpaperEntitySnapshotCache private constructor(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    private val gson = Gson()
+    private val gson = GsonBuilder()
+        .registerTypeAdapter(CharacterState::class.java, CharacterStateJsonAdapter())
+        .create()
 
     data class Snapshot(
         val entities: List<EntityStatus>,

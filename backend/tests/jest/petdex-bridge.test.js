@@ -3,6 +3,8 @@
  * The renderer-side frame-index math is exercised in petdx-renderer.test.js.
  */
 
+const fs = require('fs');
+const path = require('path');
 const bridge = require('../../petdex-bridge');
 
 describe('buildDescriptor', () => {
@@ -44,13 +46,32 @@ describe('buildDescriptor', () => {
             kind: 'character',
             spritesheetUrl: 'https://r2/cortana.webp',
         });
-        expect(d.supportedStates).toEqual(['IDLE', 'BUSY', 'WALKING', 'SLEEPING', 'EXCITED', 'HAPPY']);
+        expect(d.supportedStates).toEqual([
+            'IDLE',
+            'BUSY',
+            'WALKING',
+            'SLEEPING',
+            'EXCITED',
+            'HAPPY',
+            'idle',
+            'running-right',
+            'running-left',
+            'waving',
+            'jumping',
+            'failed',
+            'waiting',
+            'running',
+            'review',
+        ]);
         expect(d.stateAssets.IDLE.animation).toBe('idle');
         expect(d.stateAssets.BUSY.animation).toBe('running');
         expect(d.stateAssets.WALKING.animation).toBe('running-right');
         expect(d.stateAssets.SLEEPING.animation).toBe('waiting');
         expect(d.stateAssets.EXCITED.animation).toBe('jumping');
         expect(d.stateAssets.HAPPY.animation).toBe('waving');
+        expect(d.stateAssets['running-left'].animation).toBe('running-left');
+        expect(d.stateAssets.failed.animation).toBe('failed');
+        expect(d.stateAssets.review.animation).toBe('review');
     });
 
     it('attaches Petdex provenance + MIT license', () => {
@@ -128,5 +149,24 @@ describe('syncPetdexCatalog', () => {
         const result = await bridge.syncPetdexCatalog(pool, () => {});
         expect(result.inserted).toBe(0);
         expect(result.total).toBe(0);
+    });
+});
+
+describe('OpenAPI Petdex action state contract', () => {
+    it('documents all native Petdex action keys for entity state', () => {
+        const yaml = fs.readFileSync(path.resolve(__dirname, '../../openapi.yaml'), 'utf8');
+        [
+            'idle',
+            'running-right',
+            'running-left',
+            'waving',
+            'jumping',
+            'failed',
+            'waiting',
+            'running',
+            'review',
+        ].forEach((action) => {
+            expect(yaml).toContain(action);
+        });
     });
 });

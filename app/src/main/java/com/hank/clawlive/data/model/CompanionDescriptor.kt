@@ -2,6 +2,7 @@ package com.hank.clawlive.data.model
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import java.util.Locale
 
 /**
  * Petdx Companion descriptor — Android-side mirror of the JSON returned by
@@ -67,9 +68,12 @@ data class CompanionDetail(
      * or null if not declared.
      */
     fun stateAsset(state: String): StateAssetHint? {
+        return declaredStateAsset(state) ?: declaredStateAsset("IDLE")
+    }
+
+    private fun declaredStateAsset(state: String): StateAssetHint? {
         val sa = descriptor?.getAsJsonObject("stateAssets") ?: return null
-        val key = if (sa.has(state)) state else "IDLE"
-        val obj = sa.getAsJsonObject(key) ?: return null
+        val obj = sa.getAsJsonObject(state) ?: return null
         return StateAssetHint(
             loop = obj.get("loop")?.asBoolean ?: true,
             fps = obj.get("fps")?.asInt ?: 4,
@@ -80,7 +84,13 @@ data class CompanionDetail(
     }
 
     fun spritesheetAnimation(state: String): SpriteAnimationHint? {
-        val stateHint = stateAsset(state) ?: return null
+        val directAnimation = directSpritesheetAnimation(state)
+        val declaredStateHint = declaredStateAsset(state)
+        if (declaredStateHint == null && directAnimation != null) {
+            return directAnimation
+        }
+
+        val stateHint = declaredStateHint ?: declaredStateAsset("IDLE") ?: return directAnimation
         val animationName = stateHint.animation
         val fallbackRow = defaultSpritesheetRow(state, stateHint)
         if (animationName.isNullOrBlank()) {
@@ -91,20 +101,46 @@ data class CompanionDetail(
             )
         }
 
-        val asset = descriptor?.getAsJsonObject("asset") ?: return null
-        val animations = asset.getAsJsonObject("animations") ?: return null
-        val anim = animations.getAsJsonObject(animationName)
-            ?: animations.getAsJsonObject("idle")
+        val anim = animationObject(animationName)
+            ?: animationObject("idle")
             ?: return null
 
+        return spriteAnimationHint(anim, fallbackRow, stateHint.frames, stateHint.fps)
+    }
+
+    private fun directSpritesheetAnimation(state: String): SpriteAnimationHint? {
+        val anim = animationObject(state) ?: return null
+        val row = anim.get("row")?.asInt ?: 0
+        val frames = anim.get("count")?.asInt ?: 1
+        return spriteAnimationHint(anim, row, frames, 4)
+    }
+
+    private fun animationObject(name: String): JsonObject? {
+        val asset = descriptor?.getAsJsonObject("asset") ?: return null
+        val animations = asset.getAsJsonObject("animations") ?: return null
+        val raw = name.trim()
+        if (raw.isBlank()) return null
+        val normalized = raw.lowercase(Locale.US).replace('_', '-')
+        val element = animations.get(raw)
+            ?: animations.get(normalized)
+            ?: return null
+        return element.takeIf { it.isJsonObject }?.asJsonObject
+    }
+
+    private fun spriteAnimationHint(
+        anim: JsonObject,
+        fallbackRow: Int,
+        fallbackFrames: Int,
+        fallbackFps: Int
+    ): SpriteAnimationHint {
         val row = anim.get("row")?.asInt ?: fallbackRow
         val durations = when {
             anim.has("frames") && anim.get("frames").isJsonArray -> {
                 anim.getAsJsonArray("frames").mapNotNull { it.asInt.takeIf { v -> v > 0 } }
             }
             else -> {
-                val count = anim.get("count")?.asInt ?: stateHint.frames
-                val dur = anim.get("dur")?.asInt ?: (1000 / stateHint.fps.coerceAtLeast(1))
+                val count = anim.get("count")?.asInt ?: fallbackFrames
+                val dur = anim.get("dur")?.asInt ?: (1000 / fallbackFps.coerceAtLeast(1))
                 val last = anim.get("last")?.asInt
                 List(count.coerceAtLeast(1)) { index ->
                     if (last != null && index == count - 1) last.coerceAtLeast(1) else dur.coerceAtLeast(1)

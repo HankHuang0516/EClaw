@@ -1,7 +1,6 @@
 package com.hank.clawlive.engine
 
 import android.graphics.PointF
-import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
 import kotlin.math.abs
 import kotlin.math.hypot
@@ -148,7 +147,7 @@ class WallpaperWanderController(
         val activeIds = entities.map { it.entityId }.toSet()
         states.keys.toList().forEach { id -> if (id !in activeIds) states.remove(id) }
         val ambientPeers = entities.mapIndexedNotNull { index, entity ->
-            if (entity.state == CharacterState.SLEEPING) return@mapIndexedNotNull null
+            if (entity.state.pausesAmbientWander) return@mapIndexedNotNull null
             val base = basePositions.getOrNull(index) ?: (width / 2f to height / 2f)
             val baseX = (base.first / width).coerceIn(MIN_X_PCT, MAX_X_PCT)
             val baseY = (base.second / height).coerceIn(MIN_Y_PCT, MAX_Y_PCT)
@@ -162,7 +161,7 @@ class WallpaperWanderController(
 
         return entities.mapIndexed { index, entity ->
             val base = basePositions.getOrNull(index) ?: (width / 2f to height / 2f)
-            if (entity.state == CharacterState.SLEEPING) {
+            if (entity.state.pausesAmbientWander) {
                 val state = stateFor(entity.entityId, base, width, height, nowMs)
                 state.motionState = MotionState.SLEEPING
                 state.moving = false
@@ -343,8 +342,8 @@ class WallpaperWanderController(
         val peers = ambientPeers.filter { it.entityId != entity.entityId }
         val step = state.ambientStep++
         val goal = when {
-            peers.isNotEmpty() && entity.state == CharacterState.EXCITED -> AmbientWanderGoal.VISIT_COMPANION
-            entity.state == CharacterState.BUSY -> if (step % 2 == 0) AmbientWanderGoal.PATROL else AmbientWanderGoal.RETURN_HOME
+            peers.isNotEmpty() && entity.state.excitedLike -> AmbientWanderGoal.VISIT_COMPANION
+            entity.state.busyLike -> if (step % 2 == 0) AmbientWanderGoal.PATROL else AmbientWanderGoal.RETURN_HOME
             peers.isNotEmpty() && step % 3 == 0 -> AmbientWanderGoal.VISIT_COMPANION
             step % 3 == 1 -> AmbientWanderGoal.PATROL
             else -> AmbientWanderGoal.RETURN_HOME

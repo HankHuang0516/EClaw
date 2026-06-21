@@ -17,9 +17,11 @@
  *     row 3 waving (4f), row 4 jumping (5f), row 5 failed (8f),
  *     row 6 waiting (6f), row 7 running (6f), row 8 review (6f).
  *
- * Our state mapping (EClaw companion state → Petdex animation row):
+ * Our state mapping (EClaw companion state / native Petdex action → Petdex animation row):
  *   IDLE → 0(idle), BUSY → 7(running), WALKING → 1(running-right),
- *   SLEEPING → 6(waiting), EXCITED → 4(jumping), HAPPY → 3(waving).
+ *   SLEEPING → 6(waiting), EXCITED → 4(jumping), HAPPY → 3(waving),
+ *   plus native Petdex actions idle/running-right/running-left/waving/jumping/
+ *   failed/waiting/running/review.
  */
 
 const MANIFEST_URL = 'https://petdex.crafter.run/api/manifest';
@@ -48,6 +50,15 @@ const STATE_TO_ANIMATION = {
     SLEEPING: 'waiting',
     EXCITED:  'jumping',
     HAPPY:    'waving',
+    idle:     'idle',
+    'running-right': 'running-right',
+    'running-left':  'running-left',
+    waving:   'waving',
+    jumping:  'jumping',
+    failed:   'failed',
+    waiting:  'waiting',
+    running:  'running',
+    review:   'review',
 };
 
 const KIND_TO_CATEGORY = {

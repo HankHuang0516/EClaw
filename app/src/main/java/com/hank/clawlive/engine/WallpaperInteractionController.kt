@@ -1,6 +1,5 @@
 package com.hank.clawlive.engine
 
-import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
 import kotlin.math.PI
 import kotlin.math.hypot
@@ -50,7 +49,13 @@ class WallpaperInteractionController(
 
     data class RenderState(
         val positions: List<Pair<Float, Float>>,
-        val effects: List<InteractionEffect>
+        val effects: List<InteractionEffect>,
+        val posesByEntity: Map<Int, InteractionPose> = emptyMap()
+    )
+
+    data class InteractionPose(
+        val liftPx: Float = 0f,
+        val facingDirection: WalkFacingDirection? = null
     )
 
     private data class PairKey(val first: Int, val second: Int) {
@@ -92,7 +97,7 @@ class WallpaperInteractionController(
         }
 
         val entityIds = entities.map { it.entityId }.toSet()
-        val sleepingIds = entities.filter { it.state == CharacterState.SLEEPING }.map { it.entityId }.toSet()
+        val sleepingIds = entities.filter { it.state.pausesAmbientWander }.map { it.entityId }.toSet()
         active.keys.toList().forEach { key ->
             val expired = active[key]?.expiresAtMs?.let { nowMs >= it } ?: true
             val missing = key.first !in entityIds || key.second !in entityIds
@@ -104,12 +109,14 @@ class WallpaperInteractionController(
 
         val indexById = entities.mapIndexed { index, entity -> entity.entityId to index }.toMap()
         val adjusted = positions.toMutableList()
+        val posesByEntity = mutableMapOf<Int, InteractionPose>()
         active.values.forEach { interaction ->
             val firstIndex = indexById[interaction.key.first] ?: return@forEach
             val secondIndex = indexById[interaction.key.second] ?: return@forEach
             val progress = interactionProgress(interaction, nowMs)
             val pulse = sin((progress * PI).toFloat()).coerceIn(0f, 1f)
             val bouncePx = min(width, height) * BOUNCE_DISTANCE_PCT * pulse
+            val hopPx = min(width, height) * HOP_DISTANCE_PCT * pulse
 
             adjusted[firstIndex] = adjusted[firstIndex].offset(
                 -interaction.unitX * bouncePx,
@@ -122,6 +129,14 @@ class WallpaperInteractionController(
                 interaction.unitY * bouncePx,
                 width,
                 height
+            )
+            val firstFacing = if (interaction.unitX >= 0f) WalkFacingDirection.RIGHT else WalkFacingDirection.LEFT
+            val secondFacing = if (interaction.unitX >= 0f) WalkFacingDirection.LEFT else WalkFacingDirection.RIGHT
+            posesByEntity[interaction.key.first] = posesByEntity[interaction.key.first].merge(
+                InteractionPose(liftPx = hopPx, facingDirection = firstFacing)
+            )
+            posesByEntity[interaction.key.second] = posesByEntity[interaction.key.second].merge(
+                InteractionPose(liftPx = hopPx, facingDirection = secondFacing)
             )
         }
 
@@ -141,7 +156,7 @@ class WallpaperInteractionController(
             )
         }
 
-        return RenderState(adjusted, effects)
+        return RenderState(adjusted, effects, posesByEntity)
     }
 
     private fun detectCollisions(
@@ -209,11 +224,20 @@ class WallpaperInteractionController(
         return (first + dx).coerceIn(0f, width) to (second + dy).coerceIn(0f, height)
     }
 
+    private fun InteractionPose?.merge(other: InteractionPose): InteractionPose {
+        if (this == null) return other
+        return InteractionPose(
+            liftPx = maxOf(liftPx, other.liftPx),
+            facingDirection = other.facingDirection ?: facingDirection
+        )
+    }
+
     companion object {
         private const val DEFAULT_COLLISION_DISTANCE_PCT = 0.12f
         private const val DEFAULT_COOLDOWN_MS = 8_000L
         private const val DEFAULT_EFFECT_DURATION_MS = 1_200L
         private const val BOUNCE_DISTANCE_PCT = 0.035f
+        private const val HOP_DISTANCE_PCT = 0.025f
         private const val EFFECT_FLOAT_PCT = 0.06f
     }
 }

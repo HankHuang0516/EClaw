@@ -314,7 +314,9 @@ class WallpaperPreviewView @JvmOverloads constructor(
             val (x, y) = interactionState.positions.getOrNull(index)
                 ?: basePositions.getOrNull(index)
                 ?: (width / 2f to height / 2f)
-            lastRenderPositionsByEntity[entity.entityId] = x to y
+            val interactionPose = interactionState.posesByEntity[entity.entityId]
+            val drawY = y - (interactionPose?.liftPx ?: 0f)
+            lastRenderPositionsByEntity[entity.entityId] = x to drawY
             
             // Get per-entity scale
             val entityScale = entityScales[entity.entityId] ?: 1.0f
@@ -347,16 +349,17 @@ class WallpaperPreviewView @JvmOverloads constructor(
                 canvas,
                 entity,
                 x,
-                y,
+                drawY,
                 entityScale,
                 walking = wanderController.isWalking(entity.entityId),
-                facingDirection = wanderController.facingDirection(entity.entityId)
+                facingDirection = interactionPose?.facingDirection
+                    ?: wanderController.facingDirection(entity.entityId)
             )
 
             // Draw entity name label
             labelPaint.textSize = 32f * entityScale.coerceAtLeast(0.7f)
             labelPaint.color = Color.WHITE
-            val labelY = y + indicatorRadius + 40f
+            val labelY = drawY + indicatorRadius + 40f
             val displayName = entity.name ?: "#${entity.entityId}"
             canvas.drawText(displayName, x, labelY, labelPaint)
             
@@ -549,15 +552,21 @@ class WallpaperPreviewView @JvmOverloads constructor(
     ) {
         val companion = companionRepository?.cached(entity.entityId) ?: companionsByEntity[entity.entityId]
         if (companion?.assetType == "spritesheet") {
+            val spritesheetState = if (walking && entity.state.canUseAmbientWalkingAnimation) {
+                WallpaperWanderController.WALKING_STATE_ASSET
+            } else {
+                entity.state.wallpaperActionKey
+            }
             val result = spritesheetDrawer?.draw(
                 canvas,
                 companion,
                 entity.entityId,
-                if (walking) WallpaperWanderController.WALKING_STATE_ASSET else entity.state.toString(),
+                spritesheetState,
                 cx,
                 cy,
                 scale * 1.2f,
-                facingDirection
+                facingDirection,
+                shouldMirrorSpritesheetForFacing(spritesheetState)
             ) ?: SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED
             if (result == SpritesheetCompanionDrawer.DrawResult.DRAWN ||
                 result == SpritesheetCompanionDrawer.DrawResult.LOADING
@@ -872,6 +881,11 @@ class WallpaperPreviewView @JvmOverloads constructor(
             enableCustomLayoutForGesture()
             invalidate()
         }
+    }
+
+    private fun shouldMirrorSpritesheetForFacing(spritesheetState: String): Boolean {
+        return spritesheetState != com.hank.clawlive.data.model.CharacterState.RUNNING_LEFT.wallpaperActionKey &&
+            spritesheetState != com.hank.clawlive.data.model.CharacterState.RUNNING_RIGHT.wallpaperActionKey
     }
 
     private fun finishLockedScale() {
