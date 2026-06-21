@@ -2,6 +2,7 @@ package com.hank.clawlive
 
 import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
+import com.hank.clawlive.engine.AmbientWanderGoal
 import com.hank.clawlive.engine.MotionState
 import com.hank.clawlive.engine.WallpaperWanderController
 import kotlin.random.Random
@@ -24,6 +25,35 @@ class WallpaperWanderControllerTest {
         assertNotEquals("walking should update x", base[0].first, after[0].first)
         assertNotEquals("walking should update y", base[0].second, after[0].second)
         assertTrue("controller reports walking while moving", controller.isWalking(1))
+    }
+
+    @Test
+    fun purposefulWanderFirstRetargetMovesTowardCompanion() {
+        val controller = WallpaperWanderController(random = Random(41))
+        val left = EntityStatus(entityId = 1, state = CharacterState.IDLE)
+        val right = EntityStatus(entityId = 2, state = CharacterState.IDLE)
+        val entities = listOf(left, right)
+        val base = listOf(200f to 500f, 800f to 500f)
+
+        controller.positionsFor(base, entities, 1000f, 1000f, enabled = true, purposeful = true, nowMs = 0L)
+        val after = controller.positionsFor(base, entities, 1000f, 1000f, enabled = true, purposeful = true, nowMs = 9000L)
+
+        assertEquals(AmbientWanderGoal.VISIT_COMPANION, controller.ambientGoal(1))
+        assertTrue("left companion should head toward the right companion", after[0].first > base[0].first)
+    }
+
+    @Test
+    fun purposefulWanderCanBeDisabledForClassicRandomMode() {
+        val controller = WallpaperWanderController(random = Random(43))
+        val left = EntityStatus(entityId = 1, state = CharacterState.IDLE)
+        val right = EntityStatus(entityId = 2, state = CharacterState.IDLE)
+        val entities = listOf(left, right)
+        val base = listOf(200f to 500f, 800f to 500f)
+
+        controller.positionsFor(base, entities, 1000f, 1000f, enabled = true, purposeful = false, nowMs = 0L)
+        controller.positionsFor(base, entities, 1000f, 1000f, enabled = true, purposeful = false, nowMs = 9000L)
+
+        assertEquals(AmbientWanderGoal.RANDOM, controller.ambientGoal(1))
     }
 
     @Test

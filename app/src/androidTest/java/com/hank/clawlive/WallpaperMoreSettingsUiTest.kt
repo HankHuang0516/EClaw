@@ -19,6 +19,7 @@ class WallpaperMoreSettingsUiTest {
             scenario.onActivity { activity ->
                 val prefs = LayoutPreferences.getInstance(activity)
                 assertTrue(prefs.wallpaperSpeechBubblesEnabled)
+                assertTrue(prefs.wallpaperPurposefulWalkingEnabled)
                 assertTrue(prefs.wallpaperBubblePulseEnabled)
                 assertTrue(prefs.wallpaperBubbleOverlayAvoidanceEnabled)
                 assertTrue(prefs.wallpaperStateAuraEnabled)
@@ -37,13 +38,17 @@ class WallpaperMoreSettingsUiTest {
                     }
                 }
                 collect(root)
-                assertTrue("Expected advanced wallpaper switches", switches.size >= 7)
+                assertTrue("Expected advanced wallpaper switches", switches.size >= 8)
                 switches.forEach { assertTrue("Default-on switch should start checked", it.isChecked) }
                 assertTrue("Expected bubble duration slider", sliders.isNotEmpty())
 
                 switches.first().isChecked = false
                 assertFalse(prefs.wallpaperSpeechBubblesEnabled)
                 prefs.wallpaperSpeechBubblesEnabled = true
+
+                switches[1].isChecked = false
+                assertFalse(prefs.wallpaperPurposefulWalkingEnabled)
+                prefs.wallpaperPurposefulWalkingEnabled = true
 
                 sliders.first().value = 18f
                 assertEquals(18, prefs.wallpaperBubbleDurationSeconds)

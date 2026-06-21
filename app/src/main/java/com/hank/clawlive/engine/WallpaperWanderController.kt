@@ -23,6 +23,13 @@ enum class MotionState {
     SLEEPING
 }
 
+enum class AmbientWanderGoal {
+    RANDOM,
+    VISIT_COMPANION,
+    PATROL,
+    RETURN_HOME
+}
+
 /**
  * Lightweight per-device wallpaper wander engine.
  *
@@ -40,6 +47,8 @@ class WallpaperWanderController(
     private data class WanderState(
         var xPct: Float,
         var yPct: Float,
+        var homeXPct: Float,
+        var homeYPct: Float,
         var targetXPct: Float,
         var targetYPct: Float,
         var lastUpdateMs: Long,
@@ -47,7 +56,15 @@ class WallpaperWanderController(
         var retargetAtMs: Long,
         var moving: Boolean,
         var motionState: MotionState,
+        var ambientGoal: AmbientWanderGoal,
+        var ambientStep: Int,
         var onArrive: (() -> Unit)? = null
+    )
+
+    private data class AmbientPeer(
+        val entityId: Int,
+        val xPct: Float,
+        val yPct: Float
     )
 
     private val states = mutableMapOf<Int, WanderState>()
@@ -57,6 +74,10 @@ class WallpaperWanderController(
     }
 
     fun isWalking(entityId: Int): Boolean = states[entityId]?.moving == true
+
+    fun ambientGoal(entityId: Int): AmbientWanderGoal {
+        return states[entityId]?.ambientGoal ?: AmbientWanderGoal.RANDOM
+    }
 
     override fun position(entityId: Int): PointF {
         val state = states[entityId] ?: return PointF(0.5f, 0.5f)
@@ -105,6 +126,7 @@ class WallpaperWanderController(
         width: Float,
         height: Float,
         enabled: Boolean,
+        purposeful: Boolean = true,
         nowMs: Long = System.currentTimeMillis()
     ): List<Pair<Float, Float>> {
         if (!enabled || width <= 0f || height <= 0f) {
@@ -114,6 +136,18 @@ class WallpaperWanderController(
 
         val activeIds = entities.map { it.entityId }.toSet()
         states.keys.toList().forEach { id -> if (id !in activeIds) states.remove(id) }
+        val ambientPeers = entities.mapIndexedNotNull { index, entity ->
+            if (entity.state == CharacterState.SLEEPING) return@mapIndexedNotNull null
+            val base = basePositions.getOrNull(index) ?: (width / 2f to height / 2f)
+            val baseX = (base.first / width).coerceIn(MIN_X_PCT, MAX_X_PCT)
+            val baseY = (base.second / height).coerceIn(MIN_Y_PCT, MAX_Y_PCT)
+            val state = states[entity.entityId]
+            AmbientPeer(
+                entityId = entity.entityId,
+                xPct = state?.xPct ?: baseX,
+                yPct = state?.yPct ?: baseY
+            )
+        }
 
         return entities.mapIndexed { index, entity ->
             val base = basePositions.getOrNull(index) ?: (width / 2f to height / 2f)
@@ -123,19 +157,24 @@ class WallpaperWanderController(
                 state.moving = false
                 state.xPct * width to state.yPct * height
             } else {
-                advance(entity.entityId, base, width, height, nowMs)
+                advance(entity, base, width, height, nowMs, purposeful, ambientPeers)
             }
         }
     }
 
     private fun advance(
-        entityId: Int,
+        entity: EntityStatus,
         base: Pair<Float, Float>,
         width: Float,
         height: Float,
-        nowMs: Long
+        nowMs: Long,
+        purposeful: Boolean,
+        ambientPeers: List<AmbientPeer>
     ): Pair<Float, Float> {
+        val entityId = entity.entityId
         val state = stateFor(entityId, base, width, height, nowMs)
+        state.homeXPct = (base.first / width).coerceIn(MIN_X_PCT, MAX_X_PCT)
+        state.homeYPct = (base.second / height).coerceIn(MIN_Y_PCT, MAX_Y_PCT)
         if (state.motionState == MotionState.SLEEPING) {
             state.motionState = MotionState.WANDERING
             state.idleUntilMs = 0L
@@ -169,13 +208,13 @@ class WallpaperWanderController(
         }
 
         if (nowMs >= state.retargetAtMs) {
-            retarget(state, nowMs)
+            retarget(state, nowMs, entity, purposeful, ambientPeers)
         }
 
         if (moveTowardTarget(state, width, height, wanderSpeedPctPerSecond, dtSeconds)) {
             state.moving = false
             state.idleUntilMs = nowMs + randomLong(0L, MAX_IDLE_MS)
-            retarget(state, state.idleUntilMs)
+            retarget(state, state.idleUntilMs, entity, purposeful, ambientPeers)
         }
 
         coerceToSafeBounds(state)
@@ -196,13 +235,17 @@ class WallpaperWanderController(
             WanderState(
                 xPct = x,
                 yPct = y,
+                homeXPct = x,
+                homeYPct = y,
                 targetXPct = target.first,
                 targetYPct = target.second,
                 lastUpdateMs = nowMs,
                 idleUntilMs = nowMs + randomLong(0L, MAX_IDLE_MS),
                 retargetAtMs = nowMs + randomLong(MIN_RETARGET_MS, MAX_RETARGET_MS),
                 moving = false,
-                motionState = MotionState.WANDERING
+                motionState = MotionState.WANDERING,
+                ambientGoal = AmbientWanderGoal.RANDOM,
+                ambientStep = 0
             )
         }
         coerceToSafeBounds(state)
@@ -214,13 +257,17 @@ class WallpaperWanderController(
             WanderState(
                 xPct = 0.5f,
                 yPct = 0.5f,
+                homeXPct = 0.5f,
+                homeYPct = 0.5f,
                 targetXPct = 0.5f,
                 targetYPct = 0.5f,
                 lastUpdateMs = 0L,
                 idleUntilMs = 0L,
                 retargetAtMs = 0L,
                 moving = false,
-                motionState = MotionState.STOPPED
+                motionState = MotionState.STOPPED,
+                ambientGoal = AmbientWanderGoal.RANDOM,
+                ambientStep = 0
             )
         }
     }
@@ -254,11 +301,82 @@ class WallpaperWanderController(
         return false
     }
 
-    private fun retarget(state: WanderState, fromMs: Long) {
-        val target = randomTarget()
+    private fun retarget(
+        state: WanderState,
+        fromMs: Long,
+        entity: EntityStatus,
+        purposeful: Boolean,
+        ambientPeers: List<AmbientPeer>
+    ) {
+        val target = if (purposeful) {
+            purposefulTarget(state, entity, ambientPeers)
+        } else {
+            state.ambientGoal = AmbientWanderGoal.RANDOM
+            randomTarget()
+        }
         state.targetXPct = target.first
         state.targetYPct = target.second
         state.retargetAtMs = fromMs + randomLong(MIN_RETARGET_MS, MAX_RETARGET_MS)
+    }
+
+    private fun purposefulTarget(
+        state: WanderState,
+        entity: EntityStatus,
+        ambientPeers: List<AmbientPeer>
+    ): Pair<Float, Float> {
+        val peers = ambientPeers.filter { it.entityId != entity.entityId }
+        val step = state.ambientStep++
+        val goal = when {
+            peers.isNotEmpty() && entity.state == CharacterState.EXCITED -> AmbientWanderGoal.VISIT_COMPANION
+            entity.state == CharacterState.BUSY -> if (step % 2 == 0) AmbientWanderGoal.PATROL else AmbientWanderGoal.RETURN_HOME
+            peers.isNotEmpty() && step % 3 == 0 -> AmbientWanderGoal.VISIT_COMPANION
+            step % 3 == 1 -> AmbientWanderGoal.PATROL
+            else -> AmbientWanderGoal.RETURN_HOME
+        }
+        state.ambientGoal = goal
+
+        return when (goal) {
+            AmbientWanderGoal.VISIT_COMPANION -> companionVisitTarget(entity.entityId, peers)
+            AmbientWanderGoal.PATROL -> patrolTarget(state, step)
+            AmbientWanderGoal.RETURN_HOME -> nearHomeTarget(state)
+            AmbientWanderGoal.RANDOM -> randomTarget()
+        }
+    }
+
+    private fun companionVisitTarget(entityId: Int, peers: List<AmbientPeer>): Pair<Float, Float> {
+        val peer = peers.random(random)
+        val side = if ((entityId + peer.entityId) % 2 == 0) 1f else -1f
+        val x = peer.xPct + side * randomFloat(SOCIAL_MIN_OFFSET_PCT, SOCIAL_MAX_OFFSET_PCT)
+        val y = peer.yPct + randomFloat(-SOCIAL_Y_OFFSET_PCT, SOCIAL_Y_OFFSET_PCT)
+        return safeTarget(x, y)
+    }
+
+    private fun patrolTarget(state: WanderState, step: Int): Pair<Float, Float> {
+        val phase = step % 4
+        val x = state.homeXPct + when (phase) {
+            0 -> -PATROL_RADIUS_X_PCT
+            1 -> PATROL_RADIUS_X_PCT
+            2 -> PATROL_RADIUS_X_PCT * 0.5f
+            else -> -PATROL_RADIUS_X_PCT * 0.5f
+        }
+        val y = state.homeYPct + when (phase) {
+            0 -> -PATROL_RADIUS_Y_PCT
+            1 -> -PATROL_RADIUS_Y_PCT * 0.4f
+            2 -> PATROL_RADIUS_Y_PCT
+            else -> PATROL_RADIUS_Y_PCT * 0.4f
+        }
+        return safeTarget(x, y)
+    }
+
+    private fun nearHomeTarget(state: WanderState): Pair<Float, Float> {
+        return safeTarget(
+            state.homeXPct + randomFloat(-HOME_RADIUS_PCT, HOME_RADIUS_PCT),
+            state.homeYPct + randomFloat(-HOME_RADIUS_PCT, HOME_RADIUS_PCT)
+        )
+    }
+
+    private fun safeTarget(xPct: Float, yPct: Float): Pair<Float, Float> {
+        return xPct.coerceIn(MIN_X_PCT, MAX_X_PCT) to yPct.coerceIn(MIN_Y_PCT, MAX_Y_PCT)
     }
 
     private fun randomTarget(): Pair<Float, Float> {
@@ -291,6 +409,12 @@ class WallpaperWanderController(
         private const val MAX_X_PCT = 0.92f
         private const val MIN_Y_PCT = 0.12f
         private const val MAX_Y_PCT = 0.82f
+        private const val SOCIAL_MIN_OFFSET_PCT = 0.06f
+        private const val SOCIAL_MAX_OFFSET_PCT = 0.12f
+        private const val SOCIAL_Y_OFFSET_PCT = 0.05f
+        private const val PATROL_RADIUS_X_PCT = 0.16f
+        private const val PATROL_RADIUS_Y_PCT = 0.08f
+        private const val HOME_RADIUS_PCT = 0.05f
         const val WALKING_STATE_ASSET = "WALKING"
     }
 }

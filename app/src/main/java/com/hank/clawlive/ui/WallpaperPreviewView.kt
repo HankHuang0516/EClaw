@@ -286,7 +286,8 @@ class WallpaperPreviewView @JvmOverloads constructor(
             entities = entities,
             width = width.toFloat(),
             height = height.toFloat(),
-            enabled = layoutPrefs.wallpaperWalkingEnabled
+            enabled = layoutPrefs.wallpaperWalkingEnabled,
+            purposeful = layoutPrefs.wallpaperPurposefulWalkingEnabled
         )
 
         // Draw each entity with per-entity scale
