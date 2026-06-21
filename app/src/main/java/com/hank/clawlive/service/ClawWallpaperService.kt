@@ -7,6 +7,7 @@ import android.service.wallpaper.WallpaperService
 import android.view.SurfaceHolder
 import timber.log.Timber
 import com.hank.clawlive.engine.ClawRenderer
+import com.hank.clawlive.engine.EngineLifecycleController
 import com.hank.clawlive.data.model.AgentStatus
 import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
@@ -74,10 +75,38 @@ class ClawWallpaperService : WallpaperService() {
 
         private val drawRunnable = Runnable { draw() }
 
+        // Pure-JVM lifecycle state machine (card_f9b2cc2d). Source of truth for
+        // whether engine-lifetime resources are still alive. Surface
+        // destroy→recreate (an app-switch) must NOT tear down engineScope /
+        // renderer / companionRepository — only Engine.onDestroy does.
+        private val lifecycle = EngineLifecycleController(object : EngineLifecycleController.Hooks {
+            override fun stopDrawLoop() {
+                handler.removeCallbacks(drawRunnable)
+            }
+
+            override fun restartInactivePollersAndDraw() {
+                if (statusJob?.isActive != true) observeStatus()
+                if (usageJob?.isActive != true) observeUsage()
+                if (kanbanJob?.isActive != true) observeKanban()
+                draw()
+            }
+
+            override fun cancelAllPollers() {
+                this@ClawEngine.cancelAllPollers()
+            }
+
+            override fun releaseEngineResources() {
+                engineScope.cancel()
+                renderer.release()
+                companionRepository.release()
+            }
+        })
+
         override fun onCreate(surfaceHolder: SurfaceHolder?) {
             super.onCreate(surfaceHolder)
             Timber.d("ClawEngine onCreate")
             setTouchEventsEnabled(true)
+            lifecycle.onEngineCreate()
             observeStatus()
             observeUsage()
             observeKanban()
@@ -183,24 +212,12 @@ class ClawWallpaperService : WallpaperService() {
         override fun onVisibilityChanged(visible: Boolean) {
             this.visible = visible
             Timber.d("onVisibilityChanged: $visible")
-            if (visible) {
-                // Restart pollers if they were cancelled while hidden. Without
-                // this, the wallpaper would only repaint stale state until the
-                // user re-enters the live wallpaper preview. Bug
-                // card_a7baa3b0b1151099d4523428 close-out.
-                if (statusJob?.isActive != true) observeStatus()
-                if (usageJob?.isActive != true) observeUsage()
-                if (kanbanJob?.isActive != true) observeKanban()
-                draw()
-            } else {
-                // Stop hitting /api/status while the wallpaper isn't on
-                // screen (screen off, app covering, dock visible). Without
-                // this gate the service kept polling every 5s indefinitely,
-                // saturating CF rate-limits → 429 storms. The companion
-                // jobs are tied to the same lifecycle.
-                handler.removeCallbacks(drawRunnable)
-                cancelAllPollers()
-            }
+            // Delegate to the lifecycle controller. When shown it restarts any
+            // poller that was cancelled while hidden (card_a7baa3b0b1151099d4523428
+            // close-out) and redraws. When hidden it stops the draw loop and
+            // cancels all pollers — the quota gate that prevents the /api/status
+            // 429 storm. Engine-lifetime resources are untouched either way.
+            lifecycle.onVisibilityChanged(visible)
         }
 
         override fun onTouchEvent(event: android.view.MotionEvent?) {
@@ -243,16 +260,50 @@ class ClawWallpaperService : WallpaperService() {
             super.onTouchEvent(event)
         }
 
+        override fun onSurfaceCreated(holder: SurfaceHolder?) {
+            super.onSurfaceCreated(holder)
+            Timber.d("onSurfaceCreated")
+            // Surface is back (e.g. returning from an app-switch). The framework
+            // has already pointed `surfaceHolder` at the new surface. Resume
+            // rendering if visible — restart any poller that went inactive and
+            // redraw. Engine-lifetime resources were preserved by
+            // onSurfaceDestroyed, so this recovers without a process restart.
+            // (card_f9b2cc2d)
+            lifecycle.onSurfaceCreated()
+        }
+
+        override fun onSurfaceChanged(holder: SurfaceHolder?, format: Int, width: Int, height: Int) {
+            super.onSurfaceChanged(holder, format, width, height)
+            Timber.d("onSurfaceChanged ${width}x$height")
+            // Geometry/format change (rotation, etc.). Treat like a recreate for
+            // resume purposes so the very next frame repaints onto the new
+            // surface. (card_f9b2cc2d)
+            lifecycle.onSurfaceChanged()
+        }
+
         override fun onSurfaceDestroyed(holder: SurfaceHolder?) {
             super.onSurfaceDestroyed(holder)
+            // PAUSE ONLY. card_f9b2cc2d: an app-switch destroys then recreates
+            // the surface. Tearing down engine-lifetime resources here (the old
+            // bug) permanently cancelled engineScope so every later
+            // engineScope.launch{} was a no-op and draw() used a released
+            // renderer → black until a full process restart. We now only stop
+            // the draw loop and mark not-visible; engineScope / renderer /
+            // companionRepository survive for the next onSurfaceCreated. Pollers
+            // already get the quota gate via onVisibilityChanged(false), which
+            // fires before the surface is destroyed.
             visible = false
-            handler.removeCallbacks(drawRunnable)
-            companionJobs.values.forEach { it.cancel() }
-            companionJobs.clear()
-            engineScope.cancel()
-            renderer.release()
-            companionRepository.release()
-            Timber.d("onSurfaceDestroyed")
+            lifecycle.onSurfaceDestroyed()
+            Timber.d("onSurfaceDestroyed (paused, engine-lifetime preserved)")
+        }
+
+        override fun onDestroy() {
+            // The ONE place engine-lifetime resources are torn down. Reached when
+            // the Engine itself is being destroyed (wallpaper deselected /
+            // service stopped), not on a transient surface destroy. (card_f9b2cc2d)
+            lifecycle.onEngineDestroy()
+            Timber.d("ClawEngine onDestroy — engine-lifetime resources released")
+            super.onDestroy()
         }
 
         private var drawCount = 0
