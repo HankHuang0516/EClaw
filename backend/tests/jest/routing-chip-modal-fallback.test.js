@@ -141,7 +141,11 @@ describe('chat.html surface — resolveEntityLabel + normalizeRoutingPayload exi
 });
 
 describe('i18n — chat_routing_supervisor ships in EN + ZH (>=3 locales)', () => {
-    test('chat_routing_supervisor key occurs at least 3 times (en + zh-TW + zh-CN)', () => {
+    test('chat_routing_supervisor key occurs at least 3 times (en + zh + zh-CN)', () => {
+        // zh holds Traditional (zh-TW falls back through it), zh-CN holds
+        // Simplified, en is the source of meaning. zh-TW is intentionally
+        // slim (<100 keys per i18n-fallback-chain.test.js) and inherits
+        // 主管 via the zh fallback path.
         const occurrences = (i18nSrc.match(/"chat_routing_supervisor"\s*:/g) || []).length;
         expect(occurrences).toBeGreaterThanOrEqual(3);
     });
@@ -150,8 +154,7 @@ describe('i18n — chat_routing_supervisor ships in EN + ZH (>=3 locales)', () =
         expect(i18nSrc).toMatch(/"chat_routing_supervisor"\s*:\s*"Supervisor"/);
     });
 
-    test('zh-TW value is "主管"', () => {
-        // Just check the localized string is present near the key in some form.
+    test('Chinese value is "主管" (covers zh + zh-CN)', () => {
         expect(i18nSrc).toMatch(/"chat_routing_supervisor"\s*:\s*"主管"/);
     });
 });
