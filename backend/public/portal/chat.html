@@ -2088,21 +2088,6 @@
             display: inline-block;
             vertical-align: middle;
         }
-        /* Direct Pet/Dex companion sprite path (card_f04e9fe5). When
-           /api/entities ships a petdxAvatarUrl we bypass the emoji ladder
-           inside getAvatarForEntity (which would otherwise let an explicit
-           non-default avatar emoji like 🐻 win over the real sprite) and
-           render the image directly. Sizing matches the generic <img> rule
-           above; object-fit:cover guarantees the spritesheet first frame
-           fills the circle even when the sheet is wider than tall. */
-        .sendto-btn-avatar > .sendto-petdx-avatar {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            object-fit: cover;
-            display: inline-block;
-            vertical-align: middle;
-        }
         .sendto-btn-name {
             overflow: hidden;
             text-overflow: ellipsis;
@@ -7336,48 +7321,15 @@
             return Array.from(document.querySelectorAll('.target-entity-check input[type="checkbox"]'));
         }
 
-        // Render a tiny avatar element for the picker-button summary.
-        //
-        // Priority chain (card_f04e9fe5 — Hank「#1 2 3 還是沒有同步夥伴外觀」):
-        //   1. boundEntities[*].petdxAvatarUrl → direct <img class="sendto-petdx-avatar">.
-        //      This shortcut exists because /api/entities returns the OWNER's
-        //      selected Pet/Dex companion sprite URL for every bound entity,
-        //      but `_entityAvatarMap` will let a NON-default explicit emoji
-        //      (e.g. 🐻/🐱/🐶) win over the petdx URL inside getAvatarForEntity
-        //      (entity-utils.js §0.4 — only 🦞/🐷 are treated as "default"
-        //      and dropped; any other explicit emoji shadows the petdx URL).
-        //      The sendto button summary needs to surface the REAL companion
-        //      sprite so users can recognize who they're targeting at a glance.
-        //   2. Fall back to getAvatarForEntity + renderAvatarHtml — preserves
-        //      every already-tested path (live descriptor canvas, vault URL,
-        //      character emoji, legacy default 🦞).
+        // Render a tiny avatar element for the picker-button summary. The
+        // existing renderAvatarHtml is reused so emoji / image URL / petdx
+        // sprite all keep their already-tested rendering paths. Falls back
+        // to the 🦞 emoji when getAvatarForEntity returns nothing (matches
+        // the global default at chat.html:3867 + entity-utils.js).
         function _sendtoBtnAvatarHtml(entityId) {
             const name = (typeof getEntityDisplayName === 'function')
                 ? getEntityDisplayName(entityId)
                 : ('Entity #' + entityId);
-            const safeName = (typeof escapeHtml === 'function') ? escapeHtml(name) : name;
-
-            // Step 1: petdxAvatarUrl from boundEntities — wins over explicit
-            // emoji avatars so the sendto button shows the real companion.
-            let petdxUrl = null;
-            if (typeof boundEntities !== 'undefined' && Array.isArray(boundEntities)) {
-                const eidNum = Number(entityId);
-                const match = boundEntities.find(e => Number(e && e.entityId) === eidNum);
-                if (match && typeof match.petdxAvatarUrl === 'string' && match.petdxAvatarUrl) {
-                    petdxUrl = match.petdxAvatarUrl;
-                }
-            }
-            if (petdxUrl) {
-                const safeUrl = (typeof escapeHtml === 'function') ? escapeHtml(petdxUrl) : petdxUrl;
-                // 20px circular img — inherits .sendto-btn-avatar wrapper sizing
-                // for stacked layout (-8px overlap is owned by the wrapper).
-                const img = '<img class="sendto-petdx-avatar" src="' + safeUrl
-                    + '" alt="' + safeName + '" loading="lazy">';
-                return '<span class="sendto-btn-avatar" role="img" aria-label="' + safeName
-                    + '" title="' + safeName + '">' + img + '</span>';
-            }
-
-            // Step 2: existing fallback chain (emoji / live descriptor / vault URL).
             const raw = (typeof getAvatarForEntity === 'function')
                 ? getAvatarForEntity(entityId)
                 : '';
@@ -7390,6 +7342,7 @@
             // span carries title for hover-readability AT; renderAvatarHtml
             // also emits alt="avatar" inside <img>, which we replace by
             // injecting the entity name via aria-label on the wrapper.
+            const safeName = (typeof escapeHtml === 'function') ? escapeHtml(name) : name;
             return '<span class="sendto-btn-avatar" role="img" aria-label="' + safeName
                 + '" title="' + safeName + '">' + inner + '</span>';
         }
