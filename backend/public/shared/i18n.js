@@ -650456,6 +650456,8 @@ const TRANSLATIONS = {
         "cron_skip_5h_label": "Skip if 5h usage > X%",
         "cron_skip_7d_label": "Skip if 7d usage > Y%",
         "cron_skip_help_text": "Slider range 50–99. When the assigned entity's current usage exceeds the threshold, this cron tick is skipped to protect the high-load entity; the next scheduled tick auto-retries.",
+
+        "chat_routing_supervisor": "Supervisor",
 },
 
 
@@ -1235348,6 +1235350,8 @@ const TRANSLATIONS = {
         "cron_skip_5h_label": "5小時用量超過 X% 跳過",
         "cron_skip_7d_label": "週用量超過 Y% 跳過",
         "cron_skip_help_text": "拉桿範圍 50–99。當指派智能體目前用量超過門檻時，這次 cron 觸發會跳過以保護高負載智能體；下個排程觸發會自動重試。",
+
+        "chat_routing_supervisor": "主管",
 },
 
 
@@ -1849554,6 +1849558,8 @@ const TRANSLATIONS = {
         "usage_warning_5h_help": "当剩余 5 小时配额 ≤ 此值时触发。默认 15% — 约在耗尽前 45 分钟。如需更早警告可调高；设为 0 可在不关闭开关的情况下禁用 5 小时轴。",
         "usage_warning_7d_label": "7天每周阈值（剩余量 ≤ 此值时警告）",
         "usage_warning_7d_help": "当剩余 7 天每周配额 ≤ 此值时触发。默认 5% — 约在耗尽前 8 小时。设为 0 可在不关闭开关的情况下禁用 7 天轴。",
+
+        "chat_routing_supervisor": "主管",
 },
 
 

@@ -8898,9 +8898,99 @@
             renderRoutingChipDetailBody(bodyEl, payload, kind, detail || null);
         }
 
+        // card_816c435e: shared label resolver used by every render site in the
+        // routing-detail modal. Coalesces sum/name/id/publicCode → never lets
+        // `undefined`/`null`/`'?'`/empty/literal-"undefined" string reach the
+        // DOM. Mirrors the chip-path priority chain so the modal label matches
+        // what the chip itself shows (chip uses orgChartCommanderId as the
+        // last-resort floor too).
+        //
+        //   opts.which       'from' | 'to'  (controls neutral fallback label)
+        //   opts.isUser      bool — to-side self-reply (toUser) → "User" label
+        //   opts.tt          (k, fb) => string  (i18n resolver)
+        //
+        // Returns: { label, code, lv, avatar, initials } — caller composes HTML.
+        function resolveEntityLabel(sum, fallbackId, fallbackName, fallbackCode, opts) {
+            const tt = (opts && opts.tt) || ((k, fb) => fb);
+            const which = (opts && opts.which) || 'to';
+
+            // Reject the literal string 'undefined'/'null'/'?' too — backends
+            // (and prior buggy frontends) have been observed stringifying a
+            // JS undefined into the wire payload, and a trimmed '?' is the
+            // exact bug card_29eed229 chased out of the chip path.
+            const isBadName = (v) => {
+                if (v == null) return true;
+                const s = String(v).trim();
+                if (s === '' || s === 'undefined' || s === 'null' || s === '?' || s === '？') return true;
+                return false;
+            };
+
+            const sumName = (sum && !isBadName(sum.name)) ? sum.name
+                : (sum && !isBadName(sum.character)) ? sum.character : null;
+            const safeFallbackName = !isBadName(fallbackName) ? fallbackName : null;
+
+            // to-side self-reply → "User" wins over a missing entity name.
+            if (opts && opts.isUser) {
+                const userLabel = tt('chat_routing_to_user', 'User');
+                return {
+                    label: userLabel,
+                    code: '',
+                    lv: '',
+                    initials: String(userLabel).slice(0, 2),
+                    avatar: (sum && sum.avatar) || null,
+                };
+            }
+
+            // Floor: org-chart commander id (chip-path floor — chat-html cache).
+            const commanderFloor = (typeof orgChartCommanderId !== 'undefined'
+                && orgChartCommanderId != null
+                && (fallbackId == null || Number(orgChartCommanderId) !== Number(fallbackId)))
+                ? ('#' + orgChartCommanderId) : null;
+
+            // Neutral last resort: a sender-side label distinct from the
+            // generic "Unspecified" so we never paint the same word on BOTH
+            // pills (the original symptom card_e53b0908 was hunting).
+            const neutral = which === 'from'
+                ? tt('chat_routing_sender', 'Sender')
+                : tt('chat_routing_supervisor', '主管');
+
+            const label = sumName
+                || safeFallbackName
+                || (fallbackId != null && Number.isFinite(Number(fallbackId)) ? '#' + fallbackId : null)
+                || (!isBadName(fallbackCode) ? '#' + fallbackCode : null)
+                || commanderFloor
+                || neutral;
+
+            const code = (sum && !isBadName(sum.publicCode)) ? '#' + sum.publicCode
+                : (!sum && !isBadName(fallbackCode) ? '#' + fallbackCode : '');
+            const lv = (sum && sum.level != null) ? `LV${sum.level}` : '';
+            const initials = String(label).slice(0, 2);
+            return { label, code, lv, initials, avatar: (sum && sum.avatar) || null };
+        }
+
+        // card_816c435e: normalize a routing payload BEFORE any label render —
+        // coerce undefined/null/'undefined' name fields once so every render
+        // site can rely on a known shape. Returns a SHALLOW COPY (mutation-safe).
+        function normalizeRoutingPayload(payload) {
+            const p = Object.assign({}, payload || {});
+            const isBad = (v) => v == null || (typeof v === 'string' && (v.trim() === '' || v.trim() === 'undefined' || v.trim() === 'null'));
+            if (isBad(p.from_name)) p.from_name = null;
+            if (isBad(p.to_name)) p.to_name = null;
+            if (isBad(p.from_public_code)) p.from_public_code = null;
+            if (isBad(p.to_public_code)) p.to_public_code = null;
+            // Coerce entity ids: keep null if not finite-numeric.
+            if (p.from_entity_id != null && !Number.isFinite(Number(p.from_entity_id))) p.from_entity_id = null;
+            if (p.to_entity_id != null && !Number.isFinite(Number(p.to_entity_id))) p.to_entity_id = null;
+            return p;
+        }
+
         function renderRoutingChipDetailBody(bodyEl, payload, kind, detail) {
             const tt = (k, fb) => (typeof i18n !== 'undefined' && i18n.t && i18n.t(k)) || fb;
             const esc = (v) => escapeHtml(v == null ? '' : String(v));
+
+            // card_816c435e: coerce undefined/null/'undefined' fields ONCE up
+            // front so every render site below works off a known-clean shape.
+            payload = normalizeRoutingPayload(payload);
 
             // Build entity lookup map from server response (preferred) so the
             // tree can label nodes; falls back to local boundEntities.
@@ -8910,36 +9000,17 @@
             const fromSum = (detail && detail.fromEntity) || (payload.from_entity_id != null ? summariesById.get(payload.from_entity_id) : null);
             const toSum = (detail && detail.toEntity) || (payload.to_entity_id != null ? summariesById.get(payload.to_entity_id) : null);
 
-            // card_e53b0908: a chat row ALWAYS knows its sender (entity_id), so
-            // the from-pill must never degrade to 「Unspecified」/undefined. Build
-            // the from-side fallback chain from the payload's sender floor
-            // (id / name / publicCode), only landing on a neutral label as the
-            // last resort — and a sender-specific one ("Sender") so we never
-            // emit the same generic "Unspecified" on BOTH sides.
-            const renderPill = (which, sum, fallbackId, fallbackName, fallbackCode) => {
-                // card_ecda7243: never fall through to a bare '?'. When neither a
-                // summary nor an explicit name/id resolve, show a clearly-labeled
-                // state instead of a naked question mark or a literal "undefined".
-                // Guard: a `undefined`/null fallbackName must NOT be stringified
-                // into the template — coalesce through the whole chain first.
-                const safeFallbackName = (fallbackName != null && String(fallbackName).trim() !== '' && String(fallbackName) !== 'undefined')
-                    ? fallbackName : null;
-                const neutral = which === 'from'
-                    ? tt('chat_routing_sender', 'Sender')
-                    : tt('chat_routing_unspecified', 'Unspecified');
-                const label = (sum && (sum.name || sum.character))
-                    || safeFallbackName
-                    || (fallbackId != null ? '#' + fallbackId : null)
-                    || (fallbackCode ? '#' + fallbackCode : null)
-                    || neutral;
-                const code = sum && sum.publicCode ? '#' + sum.publicCode
-                    : (!sum && fallbackCode ? '#' + fallbackCode : '');
-                const lv = sum && sum.level != null ? `LV${sum.level}` : '';
-                const initials = String(label).slice(0, 2);
-                const avatar = sum && sum.avatar
-                    ? `<img class="rd-avatar" src="${esc(sum.avatar)}" alt="" onerror="this.outerHTML='<span class=\\'rd-avatar-fb\\'>${esc(initials)}</span>'">`
-                    : `<span class="rd-avatar-fb">${esc(initials)}</span>`;
-                return `<span class="rd-entity-pill rd-pill-${which}">${avatar}<span>${esc(label)}</span>${code ? `<span style="opacity:0.55;font-size:11px;">${esc(code)}</span>` : ''}${lv ? `<span class="rd-lv">${esc(lv)}</span>` : ''}</span>`;
+            // card_e53b0908 + card_816c435e: a chat row ALWAYS knows its sender
+            // (entity_id), so the from-pill must never degrade to
+            // 「Unspecified」/undefined. resolveEntityLabel coalesces the whole
+            // chain (sum → fallbackName → fallbackId → fallbackCode →
+            // orgChartCommanderId → neutral) so no '?'/'undefined' can leak.
+            const renderPill = (which, sum, fallbackId, fallbackName, fallbackCode, isUser) => {
+                const r = resolveEntityLabel(sum, fallbackId, fallbackName, fallbackCode, { which, isUser, tt });
+                const avatar = r.avatar
+                    ? `<img class="rd-avatar" src="${esc(r.avatar)}" alt="" onerror="this.outerHTML='<span class=\\'rd-avatar-fb\\'>${esc(r.initials)}</span>'">`
+                    : `<span class="rd-avatar-fb">${esc(r.initials)}</span>`;
+                return `<span class="rd-entity-pill rd-pill-${which}">${avatar}<span>${esc(r.label)}</span>${r.code ? `<span style="opacity:0.55;font-size:11px;">${esc(r.code)}</span>` : ''}${r.lv ? `<span class="rd-lv">${esc(r.lv)}</span>` : ''}</span>`;
             };
 
             const modeLabel = payload.mode === 'broadcast'
@@ -8971,11 +9042,14 @@
             let html = '<div class="rd-section">';
             html += `<div class="rd-section-title">${esc(tt('chat_routing_detail_section_route', 'This message route'))}</div>`;
             html += '<div class="rd-route-line">';
-            html += renderPill('from', fromSum, payload.from_entity_id, payload.from_name, payload.from_public_code);
+            html += renderPill('from', fromSum, payload.from_entity_id, payload.from_name, payload.from_public_code, false);
             html += '<span class="rd-arrow">→</span>';
-            // card_ecda7243: a self-reply to the device owner targets USER (to_is_user),
-            // not an entity — show the localized "User" label instead of a bare '?'.
-            html += renderPill('to', toSum, payload.to_entity_id, payload.to_is_user ? tt('chat_routing_to_user', 'User') : payload.to_name, payload.to_public_code);
+            // card_ecda7243 + card_816c435e: a self-reply to the device owner
+            // targets USER (to_is_user) — pass through the isUser flag so the
+            // shared resolver returns the localized "User" label; never let
+            // payload.to_name (which may be `undefined` on legacy rows) reach
+            // the DOM.
+            html += renderPill('to', toSum, payload.to_entity_id, payload.to_name, payload.to_public_code, !!payload.to_is_user);
             if (modeLabel) html += `<span class="rd-mode-pill">${esc(modeLabel)}</span>`;
             html += `<span class="rd-status-pill rd-status-${esc(statusKey)}">${esc(statusLabel)}</span>`;
             html += '</div>';
@@ -9004,6 +9078,8 @@
             html += '</div>';
 
             // Section 4: smart hierarchy chain (superior + peers)
+            // card_816c435e: every label uses resolveEntityLabel so a missing
+            // summary.name / entityId cannot stringify into '#undefined'.
             if (detail && detail.chain) {
                 const c = detail.chain;
                 html += '<div class="rd-section">';
@@ -9011,15 +9087,15 @@
                 if (c.superior) {
                     const sname = c.superior.kind === 'USER'
                         ? tt('chat_routing_superior_user', 'USER (device owner)')
-                        : (c.superior.summary && (c.superior.summary.name || c.superior.summary.character)) || ('#' + c.superior.entityId);
+                        : resolveEntityLabel(c.superior.summary, c.superior.entityId, null, null, { which: 'to', tt }).label;
                     html += `<div>${esc(tt('chat_routing_chain_superior', 'Superior'))}: ${esc(sname)}</div>`;
                 }
                 if (Array.isArray(c.subordinates) && c.subordinates.length > 0) {
-                    const subNames = c.subordinates.map(s => (s.summary && (s.summary.name || s.summary.character)) || ('#' + s.entityId)).join(', ');
+                    const subNames = c.subordinates.map(s => resolveEntityLabel(s.summary, s.entityId, null, null, { which: 'to', tt }).label).join(', ');
                     html += `<div>${esc(tt('chat_routing_chain_subordinates', 'Subordinates'))}: ${esc(subNames)}</div>`;
                 }
                 if (Array.isArray(c.peers) && c.peers.length > 0) {
-                    const peerNames = c.peers.map(p => (p.summary && (p.summary.name || p.summary.character)) || ('#' + p.entityId)).join(', ');
+                    const peerNames = c.peers.map(p => resolveEntityLabel(p.summary, p.entityId, null, null, { which: 'to', tt }).label).join(', ');
                     html += `<div>${esc(tt('chat_routing_chain_peers', 'Peers'))}: ${esc(peerNames)}</div>`;
                 }
                 html += '</div>';
@@ -9036,10 +9112,14 @@
         function renderOrgTreeHtml(hierarchy, summariesById, currentToId, currentFromId, esc) {
             // Defensive: hierarchy could be malformed. Walk only known keys.
             if (!hierarchy || typeof hierarchy !== 'object') return '';
+            const tt = (k, fb) => (typeof i18n !== 'undefined' && i18n.t && i18n.t(k)) || fb;
+            // card_816c435e: route every label through the shared resolver so a
+            // missing summary AND a missing/non-finite id can't paint
+            // '#undefined' into the tree. resolveEntityLabel returns the
+            // commander/supervisor floor as a last resort.
             const labelFor = (id) => {
                 const s = summariesById.get(id);
-                if (!s) return '#' + id;
-                return (s.name || s.character || ('#' + id));
+                return resolveEntityLabel(s, id, null, null, { which: 'to', tt }).label;
             };
             const roleFor = (id) => {
                 const s = summariesById.get(id);
