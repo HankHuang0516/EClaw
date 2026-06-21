@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "E-Claw",
+    "name": "EClawbot",
     "slug": "eclawbot",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -21,13 +21,13 @@
         "applinks:eclawbot.com"
       ],
       "infoPlist": {
-        "NSCameraUsageDescription": "E-Claw needs camera access to send photos to your entities.",
-        "NSPhotoLibraryUsageDescription": "E-Claw needs photo library access to send images to your entities.",
-        "NSMicrophoneUsageDescription": "E-Claw needs microphone access to record voice messages.",
-        "NSPhotoLibraryAddUsageDescription": "E-Claw saves media files to your photo library.",
+        "NSCameraUsageDescription": "EClawbot uses the camera when you choose Take Photo in chat or feedback, so you can send a new image to your AI entities or attach a bug-report screenshot.",
+        "NSPhotoLibraryUsageDescription": "EClawbot uses your photo library only when you choose Attach Photo, for example to send an existing image to an AI entity or include screenshots with feedback.",
+        "NSMicrophoneUsageDescription": "EClawbot uses the microphone only when you choose to record a voice message for your AI entities.",
+        "NSPhotoLibraryAddUsageDescription": "EClawbot saves media to your photo library only when you choose to download or save an image from chat or files.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "3"
+      "buildNumber": "11"
     },
     "android": {
       "adaptiveIcon": {
@@ -58,8 +58,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "E-Claw needs access to your photos to send images.",
-          "cameraPermission": "E-Claw needs camera access to take photos."
+          "photosPermission": "EClawbot uses your photo library only when you choose Attach Photo, for example to send an existing image to an AI entity or include screenshots with feedback.",
+          "cameraPermission": "EClawbot uses the camera when you choose Take Photo in chat or feedback, so you can send a new image to your AI entities or attach a bug-report screenshot."
         }
       ],
       "expo-localization",

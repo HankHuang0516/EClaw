@@ -175,6 +175,9 @@
     "no_products": "暫無可用商品，請稍後再試。",
     "bonus_label": "紅利",
     "transaction_history": "交易紀錄",
+    "empty_history": "尚無交易紀錄。",
+    "iap_ios_only": "Apple IAP 加值僅可在 iOS 使用。",
+    "iap_unavailable": "Apple IAP 暫時無法使用，請稍後再試。",
     "iap_compliance": "付款由 Apple 處理，條款與條件適用。"
   },
   "auth": {

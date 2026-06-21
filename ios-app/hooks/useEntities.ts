@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { useEntityStore } from '../store/entityStore';
 import { useAuthStore } from '../store/authStore';
+import type { Entity } from '../store/entityStore';
 import { deviceApi } from '../services/api';
 import { socketService } from '../services/socketService';
 import { EntityUpdate } from '../services/socketService';
@@ -39,7 +40,12 @@ export function useEntities() {
   useEffect(() => {
     const unsubscribe = socketService.on<EntityUpdate>('entity:update', (data) => {
       if (data.entityId) {
-        updateEntity(data.entityId, data);
+        const { entityId, character, ...rest } = data;
+        const updates: Partial<Entity> = { ...rest };
+        if (character === 'LOBSTER' || character === 'PIG') {
+          updates.character = character;
+        }
+        updateEntity(entityId, updates);
       }
     });
     return unsubscribe;

@@ -175,6 +175,9 @@
     "no_products": "No products available. Try again later.",
     "bonus_label": "bonus",
     "transaction_history": "Transaction History",
+    "empty_history": "No transaction history yet.",
+    "iap_ios_only": "Apple IAP top-up is only available on iOS.",
+    "iap_unavailable": "Apple IAP is temporarily unavailable. Please try again later.",
     "iap_compliance": "Payments are processed by Apple. Terms and conditions apply."
   },
   "auth": {
