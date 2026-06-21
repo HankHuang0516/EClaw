@@ -1073,4 +1073,10 @@ If you have any questions, please contact us via our official email.
     <string name="custom_layout_using_preset">Using preset layout</string>
     <!-- Health-checking status shown on entity avatar while passive health-check runs -->
     <string name="health_checking">Health-checking</string>
+
+    <!-- Native WebView reconnect-overlay banner (card_323b95f2 / parent card_93d56b5d).
+         Shown when the WebView main frame fails to load due to transient transport
+         errors (ERR_INTERNET_DISCONNECTED etc.). Web layer counterpart shipped in PR #3618. -->
+    <string name="reconnect_banner_title">Reconnecting…</string>
+    <string name="reconnect_banner_subtitle">Will resume automatically once you\'re back online — no need to sign in again.</string>
 </resources>

@@ -957,4 +957,10 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="webview_title_eclawbot_portal">EClawbot 入口網站</string>
     <!-- Health-checking status shown on entity avatar while passive health-check runs -->
     <string name="health_checking">健檢中</string>
+
+    <!-- Native WebView reconnect-overlay banner (card_323b95f2 / parent card_93d56b5d).
+         Shown when the WebView main frame fails to load due to transient transport
+         errors (ERR_INTERNET_DISCONNECTED etc.). Web layer counterpart shipped in PR #3618. -->
+    <string name="reconnect_banner_title">重新連線中…</string>
+    <string name="reconnect_banner_subtitle">連線恢復後自動繼續，不需重新登入</string>
 </resources>

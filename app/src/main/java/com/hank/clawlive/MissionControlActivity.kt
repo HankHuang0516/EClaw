@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -20,6 +21,8 @@ import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.NavItem
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import com.hank.clawlive.ui.nav.EClawNativeNavBridge
+import com.hank.clawlive.ui.reconnect.ReconnectBackoff
+import com.hank.clawlive.ui.reconnect.ReconnectOverlayController
 import timber.log.Timber
 
 /**
@@ -32,6 +35,7 @@ class MissionControlActivity : AppCompatActivity() {
 
     private val deviceManager: DeviceManager by lazy { DeviceManager.getInstance(this) }
     private var webView: WebView? = null
+    private var reconnectOverlay: ReconnectOverlayController? = null
     private var pendingNavIntent: String? = null
     private var pageReady: Boolean = false
 
@@ -105,6 +109,21 @@ class MissionControlActivity : AppCompatActivity() {
                     view?.evaluateJavascript(EClawNativeNavBridge.JS_SHIM, null)
                     pageReady = true
                     deliverPendingNavIntent()
+                    reconnectOverlay?.onPageFinished()
+                }
+
+                override fun onReceivedError(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                    error: WebResourceError?
+                ) {
+                    super.onReceivedError(view, request, error)
+                    if (request?.isForMainFrame != true) return
+                    val code = error?.errorCode ?: WebViewClient.ERROR_UNKNOWN
+                    if (!ReconnectBackoff.isTransportError(code)) return
+                    val failingUrl = request.url?.toString()
+                    Timber.w("[Mission] main-frame transport error code=$code url=$failingUrl — showing reconnect overlay")
+                    reconnectOverlay?.onTransportError(failingUrl)
                 }
             }
             webChromeClient = WebChromeClient()
@@ -116,6 +135,7 @@ class MissionControlActivity : AppCompatActivity() {
 
         container.addView(wv)
         webView = wv
+        reconnectOverlay = ReconnectOverlayController(this, container, wv, tag = "Mission")
 
         val deviceId = deviceManager.deviceId
         val deviceSecret = deviceManager.deviceSecret
@@ -172,6 +192,8 @@ class MissionControlActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        reconnectOverlay?.destroy()
+        reconnectOverlay = null
         webView?.destroy()
         webView = null
         Timber.d("[Mission] onDestroy: WebView cleaned up")
