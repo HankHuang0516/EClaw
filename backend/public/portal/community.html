@@ -885,6 +885,59 @@
         .rate-slider-value {
             font-size: 13px; color: var(--text); font-weight: 600; white-space: nowrap; min-width: 120px; text-align: right;
         }
+        .plaza-result-panel {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 0 0 14px;
+            padding: 12px 14px;
+            background: rgba(79, 195, 247, 0.08);
+            border: 1px solid rgba(79, 195, 247, 0.22);
+            border-radius: var(--radius-sm);
+        }
+        .plaza-result-copy {
+            min-width: 0;
+        }
+        .plaza-result-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.35;
+        }
+        .plaza-result-detail {
+            margin-top: 2px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.45;
+        }
+        .plaza-clear-filters {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 32px;
+            padding: 0 14px;
+            border-radius: var(--radius-pill);
+            border: 1px solid rgba(79, 195, 247, 0.35);
+            background: rgba(79, 195, 247, 0.10);
+            color: var(--accent-cyan);
+            font-size: 12px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: border-color 0.2s, background 0.2s, color 0.2s;
+        }
+        .plaza-clear-filters:hover:not(:disabled),
+        .plaza-clear-filters:focus-visible {
+            border-color: var(--accent-cyan);
+            background: rgba(79, 195, 247, 0.16);
+            color: var(--text);
+        }
+        .plaza-clear-filters:disabled {
+            cursor: default;
+            opacity: 0.55;
+        }
         .rental-cost-box { background: var(--input-bg); border: 1px solid var(--card-border); border-radius: var(--radius-sm); padding: 12px; margin-top: 8px; font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
         .rental-cost-box .cost-line { display: flex; justify-content: space-between; padding: 2px 0; }
         .rental-cost-box .cost-total { font-weight: 700; color: var(--text); font-size: 14px; border-top: 1px solid var(--card-border); margin-top: 6px; padding-top: 6px; }
@@ -905,6 +958,8 @@
             .plaza-hero-title { font-size: 22px; }
             .plaza-filters { gap: 4px; }
             .plaza-chip { min-height: 44px; height: 44px; line-height: 44px; padding: 0 14px; font-size: 12px; }
+            .plaza-result-panel { align-items: stretch; flex-direction: column; }
+            .plaza-clear-filters { width: 100%; }
             .plaza-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
             .bot-card { padding: 12px; }
             .bot-card-avatar { width: 40px; height: 40px; font-size: 22px; }
@@ -1037,6 +1092,15 @@
             <span class="rate-slider-value" id="rateSliderValue">1 – 50 e&#24163;/1K</span>
         </div>
 
+        <!-- Result context -->
+        <div class="plaza-result-panel" id="resultPanel" role="status" aria-live="polite">
+            <div class="plaza-result-copy">
+                <div class="plaza-result-label" id="resultSummary">Showing Bot Plaza results</div>
+                <div class="plaza-result-detail" id="resultDetail">Use search, filters, capabilities, or rate to narrow the list.</div>
+            </div>
+            <button class="plaza-clear-filters" id="clearAllFilters" type="button" onclick="clearAllFilters()" disabled>Clear filters</button>
+        </div>
+
         <!-- Stats -->
         <div class="plaza-stats">
             <span><span class="count" id="resultCount">0</span> <span data-i18n="community_bots_found">個 Bot</span></span>
@@ -1108,6 +1172,48 @@
     let rateMax = 50;
     let _rateDebounce = null;
     let loadBotsRequestSeq = 0;
+
+    function compactControlText(text) {
+        return String(text || '')
+            .replace(/[^\p{Letter}\p{Number}\s/_.-]+/gu, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function currentFilterLabel() {
+        const active = document.querySelector('.plaza-chip.active');
+        return compactControlText(active ? active.textContent : 'All') || 'All';
+    }
+
+    function currentSortLabel() {
+        const selected = document.querySelector('#sortSelect option:checked');
+        return compactControlText(selected ? selected.textContent : currentSort) || currentSort;
+    }
+
+    function updateResultPanel(resultCount) {
+        const summary = document.getElementById('resultSummary');
+        const detail = document.getElementById('resultDetail');
+        const clearBtn = document.getElementById('clearAllFilters');
+        if (!summary || !detail || !clearBtn) return;
+
+        const activeParts = [];
+        if (searchQuery) activeParts.push('search "' + searchQuery + '"');
+        if (currentFilter !== 'all') activeParts.push('category ' + currentFilterLabel());
+        if (selectedCaps.size) activeParts.push('capabilities ' + Array.from(selectedCaps).join(', '));
+        if (rateMin > 1 || rateMax < 50) activeParts.push('rate ' + rateMin + '-' + rateMax + ' ecoin/1K');
+
+        const countText = typeof resultCount === 'number'
+            ? resultCount + ' bot' + (resultCount === 1 ? '' : 's')
+            : 'Bot Plaza results';
+        const hasActive = activeParts.length > 0;
+        summary.textContent = hasActive
+            ? 'Showing ' + countText + ' matching ' + activeParts.join(' · ')
+            : 'Showing ' + countText + ' from Bot Plaza';
+        detail.textContent = 'Sorted by ' + currentSortLabel() + (hasActive
+            ? '. Clear filters to return to the full plaza.'
+            : '. Use search, filters, capabilities, or rate to narrow the list.');
+        clearBtn.disabled = !hasActive;
+    }
 
     /* ══════ Avatar resolution ══════ */
     // Plaza bots are a MIX of (a) other users' bots — for which we can't
@@ -1382,7 +1488,8 @@
         } catch (e) {
             if (requestSeq !== loadBotsRequestSeq) return;
             console.error('loadBots:', e);
-            document.getElementById('emptyState').style.display = 'block';
+            allBots = [];
+            renderGrid([]);
         } finally {
             if (requestSeq === loadBotsRequestSeq) {
                 document.getElementById('loading').style.display = 'none';
@@ -1395,9 +1502,16 @@
         const grid = document.getElementById('botGrid');
         const empty = document.getElementById('emptyState');
         document.getElementById('loadMore').style.display = 'none';
-        if (!bots.length) { grid.innerHTML = ''; empty.style.display = 'block'; document.getElementById('resultCount').textContent = '0'; return; }
+        if (!bots.length) {
+            grid.innerHTML = '';
+            empty.style.display = 'block';
+            document.getElementById('resultCount').textContent = '0';
+            updateResultPanel(0);
+            return;
+        }
         empty.style.display = 'none';
         document.getElementById('resultCount').textContent = bots.length;
+        updateResultPanel(bots.length);
         grid.innerHTML = bots.map(bot => bot.isRental ? renderRentalCard(bot) : renderCommunityCard(bot)).join('');
         // Animate any AvatarPetdx canvas placeholders just emitted for
         // own-device bots whose companion descriptor has been preloaded.
@@ -1491,12 +1605,33 @@
         </div>`;
     }
 
-    function filterAndSort() { loadBots(); }
+    function filterAndSort() { updateResultPanel(); loadBots(); }
 
     /* ══════ Interactions ══════ */
     function setFilter(f, el) { currentFilter = f; document.querySelectorAll('.plaza-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); filterAndSort(); }
     function handleSort() { currentSort = document.getElementById('sortSelect').value; filterAndSort(); }
     function clearSearch() { document.getElementById('searchInput').value=''; searchQuery=''; document.getElementById('searchClear').classList.remove('visible'); filterAndSort(); }
+    function clearAllFilters() {
+        const searchInput = document.getElementById('searchInput');
+        const searchClear = document.getElementById('searchClear');
+        const rateMinEl = document.getElementById('rateMin');
+        const rateMaxEl = document.getElementById('rateMax');
+        const allChip = document.querySelector('.plaza-chip[data-filter="all"]');
+        if (searchInput) searchInput.value = '';
+        if (searchClear) searchClear.classList.remove('visible');
+        if (rateMinEl) rateMinEl.value = '1';
+        if (rateMaxEl) rateMaxEl.value = '50';
+        document.querySelectorAll('.plaza-chip').forEach(c => c.classList.remove('active'));
+        if (allChip) allChip.classList.add('active');
+        document.querySelectorAll('.cap-filter-chip').forEach(c => c.classList.remove('active'));
+        searchQuery = '';
+        currentFilter = 'all';
+        selectedCaps.clear();
+        rateMin = 1;
+        rateMax = 50;
+        document.getElementById('rateSliderValue').textContent = '1 \u2013 50 e\u5e63/1K';
+        filterAndSort();
+    }
     function setView(v, el) { document.querySelectorAll('.plaza-view-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); document.getElementById('botGrid').style.gridTemplateColumns = v==='list' ? '1fr' : ''; }
     function loadMoreBots() { document.getElementById('loadMore').style.display='none'; }
 
