@@ -251,6 +251,16 @@ let VISION_IMAGES = [
     // Hard tier
     { file: null, description: 'A machine learning confusion matrix for a binary classifier — 2×2 grid labeled Actual/Predicted: True Positive 342, False Positive 28, False Negative 41, True Negative 289; precision annotated as 0.924 at bottom right', keywords: ['confusion', 'matrix', '342', '28', '41', '289', 'precision', '0.924'] },
     { file: null, description: 'A Gantt chart dependency network with seven tasks where Task 4 (Design Review) blocks Task 5 (Development) and Task 6 (Testing) from starting — critical path 1→2→4→5→7 highlighted in red; total project duration is 22 days', keywords: ['Gantt', 'seven', 'tasks', 'critical', 'path', 'red', 'Design', 'Development', 'Testing', '22'] },
+    // ── Daily pool update: added 2026-06-21 ──
+    // Medium tier
+    { file: null, description: 'A GitHub Actions CI pipeline showing 4 jobs: "checkout" ✅ 12s, "install" ✅ 47s, "test" ❌ failed at 1m 23s, "deploy" ⏸ skipped — total runtime 2m 22s displayed at the top right', keywords: ['GitHub', 'Actions', 'four', 'jobs', 'failed', 'test', 'skipped', 'deploy', '2m'] },
+    { file: null, description: 'A pie chart divided into six sectors representing smartphone OS market share: Android 71%, iOS 28%, KaiOS 0.5%, Windows 0.3%, Others 0.2% — the Android sector is dark green and the iOS sector is blue', keywords: ['pie', 'six', 'Android', '71', 'iOS', '28', 'market', 'share', 'green', 'blue'] },
+    { file: null, description: 'A weekly task planner grid with 7 columns (Mon–Sun): Monday has 5 tasks with 2 checked, Wednesday has 3 tasks all 3 checked, Saturday has 1 unchecked task — a red "Overdue" badge is pinned to two Monday items', keywords: ['weekly', 'planner', 'seven', 'monday', 'five', 'wednesday', 'three', 'saturday', 'overdue', 'red'] },
+    { file: null, description: 'A shopping checkout UI: cart summary on the left shows 3 items (T-shirt $29.99, Jeans $59.99, Sneakers $89.99), subtotal $179.97, a 15% discount applied shows −$27.00, shipping $5.99, grand total $158.96 — a green "Apply Promo Code" field is visible at the bottom', keywords: ['checkout', 'three', 'items', '179.97', 'discount', '27', 'shipping', '158.96', 'promo', 'green'] },
+    // Hard tier
+    { file: null, description: 'A CPU profiler flame graph over 5 seconds: widest block is renderComponent at 1.8s; below are eventHandler 0.9s, fetchData 0.6s, and parseJSON 0.3s from left to right — three narrow red overflow warning bars are overlaid at the top', keywords: ['profiler', 'flame', 'graph', 'renderComponent', '1.8', 'fetchData', 'parseJSON', 'three', 'red', 'five'] },
+    { file: null, description: 'A Wireshark packet capture showing 6 rows: TCP SYN, TCP SYN-ACK, TCP ACK, HTTP GET /api/users, HTTP 200 OK (1.2 KB), TCP FIN — source IP 10.0.0.5 to destination 52.87.33.11, latency 8 ms between SYN and SYN-ACK', keywords: ['wireshark', 'six', 'TCP', 'SYN', 'GET', 'api/users', '200', '10.0.0.5', '52.87', 'latency'] },
+    { file: null, description: 'A five-day stock candlestick chart: Mon green candle $142→$149, Tue red candle $149→$143, Wed green $143→$157, Thu red $157→$151, Fri large green $151→$168 — volume bars below each candle with Friday\'s bar clearly the tallest', keywords: ['candlestick', 'five', 'green', 'red', 'friday', '168', 'volume', 'tallest', 'monday', 'tuesday'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -504,6 +514,17 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[2,0,2,1,1,0]', expected: '[0,0,1,1,2,2]' },{ input: '[2,0,1]', expected: '[0,1,2]' },{ input: '[0]', expected: '[0]' },{ input: '[1,2,0,2,1]', expected: '[0,1,1,2,2]' }] },
     { title: 'N-Queens Count', description: 'Write `solve(n)` — place n queens on an n×n chessboard so no two queens threaten each other (no two share a row, column, or diagonal). Return the total number of distinct valid arrangements.',
       testCases: [{ input: '1', expected: '1' },{ input: '4', expected: '2' },{ input: '6', expected: '4' },{ input: '8', expected: '92' }] },
+    // ── Daily pool update: added 2026-06-21 ──
+    { title: 'Decode String', description: 'Write `solve(s)` — decode an encoded string where `k[encoded_string]` means the encoded_string is repeated k times. Encodings can be nested.',
+      testCases: [{ input: '"3[a]2[bc]"', expected: '"aaabcbc"' },{ input: '"2[abc]3[cd]ef"', expected: '"abcabccdcdcdef"' },{ input: '"3[a2[c]]"', expected: '"accaccacc"' },{ input: '"abc"', expected: '"abc"' }] },
+    { title: 'Palindrome Minimum Cuts', description: 'Write `solve(s)` — return the minimum number of cuts needed to partition string s so that every substring is a palindrome.',
+      testCases: [{ input: '"aab"', expected: '1' },{ input: '"aaaa"', expected: '0' },{ input: '"a"', expected: '0' },{ input: '"ab"', expected: '1' },{ input: '"abacaba"', expected: '0' }] },
+    { title: 'Partition Equal Subset Sum', description: 'Write `solve(nums)` — return true if the array can be partitioned into two subsets with equal sum.',
+      testCases: [{ input: '[1,5,11,5]', expected: 'true' },{ input: '[1,2,3,5]', expected: 'false' },{ input: '[2,2,3,5]', expected: 'false' },{ input: '[3,3,3,3]', expected: 'true' },{ input: '[1,1]', expected: 'true' }] },
+    { title: 'Implement LRU Cache', description: 'Write `solve(capacity, ops)` — implement an LRU (Least Recently Used) cache with given capacity. ops is an array of ["get", key] or ["put", key, value]. Return an array of results for "get" operations (-1 if key absent); "put" returns null.',
+      testCases: [{ input: '2, [["put",1,1],["put",2,2],["get",1],["put",3,3],["get",2],["get",3]]', expected: '[null,null,1,null,-1,3]' },{ input: '1, [["put",1,1],["get",1],["put",2,2],["get",1],["get",2]]', expected: '[null,1,null,-1,2]' }] },
+    { title: 'Word Ladder Length', description: 'Write `solve(beginWord, endWord, wordList)` — return the length of the shortest transformation sequence from beginWord to endWord where each step changes exactly one letter and each intermediate word must exist in wordList. Return 0 if no path exists.',
+      testCases: [{ input: '"hit", "cog", ["hot","dot","dog","lot","log","cog"]', expected: '5' },{ input: '"hit", "cog", ["hot","dot","dog","lot","log"]', expected: '0' },{ input: '"a", "c", ["a","b","c"]', expected: '2' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -619,6 +640,19 @@ let RESPONSE_QUESTIONS = [
     { question: 'A store has 3 shelves. Shelf A holds twice as many books as shelf B. Shelf C holds 10 fewer books than shelf A. Together all shelves hold 90 books. How many books are on shelf B?', expectedKeywords: ['20'] },
     // Hard tier
     { question: 'A snail is at the bottom of a 15-meter well. During the day it climbs 5 meters; at night it slides back 3 meters. On what day does it first reach the top?', expectedKeywords: ['6'] },
+    // ── Daily pool update: added 2026-06-21 ──
+    // Easy tier
+    { question: 'What is 144 divided by 12?', expectedKeywords: ['12'] },
+    { question: 'How many hours are in one week?', expectedKeywords: ['168'] },
+    // Medium tier
+    { question: 'A car rental costs $45 per day plus $0.20 per mile. If a customer rents the car for 3 days and drives 150 miles, what is the total cost in dollars?', expectedKeywords: ['165', '$165'] },
+    { question: 'In a village, 40% of the population are adults and 60% are children. If there are 480 adults, what is the total population of the village?', expectedKeywords: ['1200'] },
+    { question: 'A car travels 300 km total. For the first 120 km it travels at 60 km/h; for the remaining 180 km it travels at 90 km/h. What is the total travel time in hours?', expectedKeywords: ['4'] },
+    { question: 'A salesman earns a 5% commission on the first $10,000 of monthly sales and 8% on any sales above that. How much commission does he earn in a month with $18,000 in total sales?', expectedKeywords: ['1140', '$1,140', '1,140'] },
+    // Hard tier
+    { question: 'In how many distinct ways can the letters of the word "ALGEBRA" be arranged? (Note: the letter A appears twice.)', expectedKeywords: ['2520'] },
+    { question: 'A container has 10 liters of a 40% alcohol mixture. How many liters of pure alcohol must be added to bring the alcohol concentration up to 60%?', expectedKeywords: ['5', '5 liters'] },
+    { question: 'What is the units digit of 7 raised to the power 53?', expectedKeywords: ['7'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -750,6 +784,18 @@ let TTS_PHRASES = [
     // Hard tier
     { text: 'Section 4 paragraph 2 stipulates that the licensee shall indemnify and hold harmless the licensor from any third-party claims arising from the licensee\'s use of the software except claims arising from the licensor\'s gross negligence or wilful misconduct', keywords: ['section', '4', 'licensee', 'indemnify', 'licensor', 'third-party', 'negligence', 'wilful'] },
     { text: 'A signal-to-noise ratio of 42 decibels measured at carrier frequency 2.4 gigahertz with channel bandwidth 40 megahertz supports a maximum theoretical throughput of 300 megabits per second under ideal propagation conditions', keywords: ['signal', '42', 'decibels', '2.4', 'gigahertz', '40', 'megahertz', '300', 'megabits'] },
+    // ── Daily pool update: added 2026-06-21 ──
+    // Easy tier
+    { text: 'Please wash your hands before handling food', keywords: ['wash', 'hands', 'before', 'handling', 'food'] },
+    { text: 'The store opens at nine AM and closes at six PM Monday through Friday', keywords: ['store', 'opens', 'nine', 'closes', 'six', 'monday', 'friday'] },
+    // Medium tier
+    { text: 'The next board meeting is scheduled for Tuesday July eighth at 14:00 in conference room Eagle on the third floor', keywords: ['board', 'meeting', 'tuesday', 'july', 'eighth', '14:00', 'Eagle', 'third', 'floor'] },
+    { text: 'Security alert: a login attempt was detected from IP address 203.0.113.47 in Singapore at 03:14 UTC — if this was not you please change your password immediately', keywords: ['security', 'alert', '203.0.113.47', 'Singapore', '03:14', 'UTC', 'password', 'immediately'] },
+    { text: 'Invoice INV-2025-00312 for fourteen thousand eight hundred sixty-two dollars and fifty cents is due within thirty days of the statement date printed at the top of this document', keywords: ['invoice', 'INV', '2025', 'fourteen', 'thousand', 'eight', 'thirty', 'days', 'statement'] },
+    // Hard tier
+    { text: 'The asset management system allocated sixty-three million two hundred forty-four thousand US dollars across eleven funds with a weighted average duration of four point seven years and a yield to maturity of five point three percent', keywords: ['sixty-three', 'million', 'eleven', 'funds', 'weighted', 'duration', '4.7', 'yield', 'maturity', '5.3'] },
+    { text: 'RFC 7519 defines JSON Web Tokens as a compact URL-safe means of representing claims where the header dot payload dot signature triplet is base64URL encoded and signed with HS256 or RS256 algorithms', keywords: ['RFC', '7519', 'JSON', 'Web', 'Tokens', 'header', 'payload', 'base64URL', 'HS256', 'RS256'] },
+    { text: 'Tensor shape mismatch: expected batch size 32 comma sequence length 128 comma hidden dimension 768 but received 32 comma 64 comma 768 at layer MultiHeadAttention in the forward pass', keywords: ['tensor', 'shape', '32', '128', '768', '64', 'MultiHeadAttention', 'forward', 'mismatch'] },
 ];
 
 // ============================================
