@@ -12011,6 +12011,10 @@ app.post('/api/client/speak', idempotencyMiddleware, clientSpeakDedupeMiddleware
                 messageObj.delivered = true;
                 console.log(`[Push] ✓ Channel push OK for Device ${deviceId} Entity ${eId}`);
                 serverLog('info', 'client_push', `Entity ${eId} channel push OK`, { deviceId, entityId: eId, metadata: { source, mode: 'channel' } });
+            } else if (pushResult.reason === 'push_timeout') {
+                // Benign async-uncertain (see webhook path below) — info, not warn.
+                console.log(`[Push] ⏳ Channel push timeout for Device ${deviceId} Entity ${eId} — bot may reply async via /api/transform`);
+                serverLog('info', 'client_push', `Entity ${eId} channel push timeout (async-uncertain)`, { deviceId, entityId: eId, metadata: { mode: 'channel' } });
             } else {
                 console.warn(`[Push] ✗ Channel push failed for Device ${deviceId} Entity ${eId}: ${pushResult.reason}`);
                 serverLog('warn', 'client_push', `Entity ${eId} channel push failed: ${pushResult.reason}`, { deviceId, entityId: eId });
@@ -12071,6 +12075,12 @@ app.post('/api/client/speak', idempotencyMiddleware, clientSpeakDedupeMiddleware
                 messageObj.delivered = true;
                 console.log(`[Push] ✓ Successfully pushed to Device ${deviceId} Entity ${eId}`);
                 serverLog('info', 'client_push', `Entity ${eId} push OK`, { deviceId, entityId: eId, metadata: { source, webhookUrl: entity.webhook.url } });
+            } else if (pushResult.reason === 'push_timeout') {
+                // Benign async-uncertain: pushToBot already logged the timeout; the bot
+                // may still reply via /api/transform. Log at info so the prod-log ERROR
+                // monitor doesn't page a benign timeout (card_52ee8e0c et al.).
+                console.log(`[Push] ⏳ Device ${deviceId} Entity ${eId}: push timeout — bot may reply async via /api/transform`);
+                serverLog('info', 'client_push', `Entity ${eId} push timeout (async-uncertain)`, { deviceId, entityId: eId, metadata: { webhookUrl: entity.webhook?.url } });
             } else {
                 console.warn(`[Push] ✗ Failed to push to Device ${deviceId} Entity ${eId}: ${pushResult.reason}`);
                 serverLog('warn', 'client_push', `Entity ${eId} push failed: ${pushResult.reason}`, { deviceId, entityId: eId, metadata: { webhookUrl: entity.webhook?.url } });
@@ -19170,13 +19180,19 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
         const isAbort = err.name === 'AbortError' || err.name === 'TimeoutError'
             || /aborted|timeout/i.test(err.message || '');
 
-        // Log severity must match reality (no "benign error"): a gateway timeout is a
-        // known async-uncertain state (bot may still reply via /api/transform), so it is
-        // a WARN, not an ERROR. Reserve console.error + serverLog('error') for hard
-        // failures (ENOTFOUND / ECONNREFUSED / TLS / non-2xx). This stops benign
-        // push-timeout noise (esp. to offline/test devices) from paging as ERROR.
+        // Log severity must match reality (no "benign error"): a gateway timeout is
+        // EXPECTED operation, not a failure — the bot may still reply async via
+        // /api/transform after the 15s push window. So it is INFO, not warn/error.
+        // (A prior pass logged this at console.warn intending "not an ERROR", but the
+        // prod-log monitor buckets stderr — both console.warn AND console.error — as
+        // ERROR, so warn still paged. card_52ee8e0c: this benign push_timeout recurred
+        // as an ErrLog/ERROR card every 6h. Logging at info/console.log keeps it off
+        // stderr; the "which bot went silent" signal is preserved by entity.pushStatus
+        // + the no_reply axis counter below, independent of console level.) Reserve
+        // console.error + serverLog('error') for hard failures (ENOTFOUND /
+        // ECONNREFUSED / TLS / non-2xx).
         if (isAbort) {
-            console.warn(`[Push] ⏳ Device ${deviceId} Entity ${entity.entityId}: push gateway timeout (no 15s ack) — bot may reply async via /api/transform: ${err.message}`);
+            console.log(`[Push] ⏳ Device ${deviceId} Entity ${entity.entityId}: push gateway timeout (no 15s ack) — bot may reply async via /api/transform: ${err.message}`);
         } else {
             console.error(`[Push] ✗ Device ${deviceId} Entity ${entity.entityId}: Push error:`, err.message);
             console.error(`[Push] Full error:`, err);
