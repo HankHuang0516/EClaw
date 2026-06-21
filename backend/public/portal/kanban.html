@@ -552,6 +552,11 @@
         .kb-cron-chip { padding:4px 10px; border-radius:var(--radius-pill); font-size:11px; cursor:pointer; border:1px solid var(--card-border); background:none; color:var(--text-secondary); transition:all 0.2s; }
         .kb-cron-chip.active { background:var(--primary); color:#fff; border-color:var(--primary); }
         .kb-cron-chip:hover:not(.active) { border-color:var(--text-muted); }
+        /* card_d948f8cc — schedule-editor usage-threshold sliders */
+        .kb-cron-skip-help { width:18px; height:18px; border-radius:50%; border:1px solid var(--card-border); background:none; color:var(--text-secondary); font-size:11px; font-weight:600; line-height:1; cursor:pointer; padding:0; display:inline-flex; align-items:center; justify-content:center; }
+        .kb-cron-skip-help:hover { border-color:var(--primary); color:var(--primary); }
+        .kb-cron-skip-group input[type="range"] { accent-color:var(--primary); }
+        .kb-cron-skip-help-text { font-size:12px; color:var(--text-secondary); margin-top:6px; padding:8px 10px; background:rgba(var(--accent-rgb,99,102,241),0.08); border-radius:6px; line-height:1.45; }
 
         /* ══════════════ App WebView: full-frame board ══════════════ */
         body.app-webview .nav,
@@ -1092,6 +1097,28 @@
                     <option value="Europe/London">Europe/London (UTC+0)</option>
                     <option value="UTC">UTC</option>
                 </select>
+            </div>
+            <div class="kb-form-group kb-cron-skip-group">
+                <label class="kb-form-label" style="display:flex;align-items:center;gap:6px">
+                    <span data-i18n="cron_skip_5h_label">Skip if 5h usage &gt; X%</span>
+                    <button type="button" class="kb-cron-skip-help" aria-label="explainer" onclick="toggleCronSkipHelp(event)">?</button>
+                </label>
+                <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+                    <input type="range" id="edit-skip-5h" min="50" max="99" step="1" value="85" oninput="updateCronSkipDisplay()" style="flex:1">
+                    <span id="edit-skip-5h-val" style="min-width:40px;font-variant-numeric:tabular-nums">85%</span>
+                    <span id="edit-cur-5h" style="font-size:12px;color:var(--text-secondary);min-width:90px">目前 5h: —</span>
+                </div>
+            </div>
+            <div class="kb-form-group kb-cron-skip-group">
+                <label class="kb-form-label">
+                    <span data-i18n="cron_skip_7d_label">Skip if 7d usage &gt; Y%</span>
+                </label>
+                <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+                    <input type="range" id="edit-skip-7d" min="50" max="99" step="1" value="95" oninput="updateCronSkipDisplay()" style="flex:1">
+                    <span id="edit-skip-7d-val" style="min-width:40px;font-variant-numeric:tabular-nums">95%</span>
+                    <span id="edit-cur-7d" style="font-size:12px;color:var(--text-secondary);min-width:90px">目前 7d: —</span>
+                </div>
+                <div id="edit-cron-skip-help" class="kb-cron-skip-help-text" style="display:none;font-size:12px;color:var(--text-secondary);margin-top:6px;padding:8px 10px;background:rgba(var(--accent-rgb,99,102,241),0.08);border-radius:6px" data-i18n="cron_skip_help_text">Slider range 50–99. When the assigned entity's current usage exceeds the threshold, this cron tick is skipped to protect the high-load entity; the next scheduled tick auto-retries.</div>
             </div>
             </div><!-- /#editSchedFields -->
             <div class="kb-form-actions">
@@ -3080,6 +3107,18 @@
                 const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
                 document.getElementById('editSchedRunAt').value = local;
             }
+            // card_d948f8cc — populate usage-threshold sliders + current-usage hint
+            const skip5h = Number.isFinite(sc.skipIf5hUsagePctOver) ? sc.skipIf5hUsagePctOver : 85;
+            const skip7d = Number.isFinite(sc.skipIf7dUsagePctOver) ? sc.skipIf7dUsagePctOver : 95;
+            const skip5hEl = document.getElementById('edit-skip-5h');
+            const skip7dEl = document.getElementById('edit-skip-7d');
+            const skip5hValEl = document.getElementById('edit-skip-5h-val');
+            const skip7dValEl = document.getElementById('edit-skip-7d-val');
+            if (skip5hEl) skip5hEl.value = String(skip5h);
+            if (skip7dEl) skip7dEl.value = String(skip7d);
+            if (skip5hValEl) skip5hValEl.textContent = skip5h + '%';
+            if (skip7dValEl) skip7dValEl.textContent = skip7d + '%';
+            populateCurrentUsageDisplay({ targetIds: ['edit-cur-5h', 'edit-cur-7d'] });
             document.getElementById('editSchedModal').classList.add('show');
         }
 
@@ -3123,6 +3162,11 @@
                 if (!runAtVal) { showToast(t('kb_auto_edit_no_runat', 'Please set a run time'), true); return; }
                 body.runAt = new Date(runAtVal).toISOString();
             }
+            // card_d948f8cc — per-card usage-threshold cron-skip
+            const editSkip5hEl = document.getElementById('edit-skip-5h');
+            const editSkip7dEl = document.getElementById('edit-skip-7d');
+            if (editSkip5hEl) body.skipIf5hUsagePctOver = parseInt(editSkip5hEl.value, 10);
+            if (editSkip7dEl) body.skipIf7dUsagePctOver = parseInt(editSkip7dEl.value, 10);
             const cardOnlyMode = document.getElementById('editSchedFields').style.display === 'none';
             try {
                 // Save title/description via card update endpoint
@@ -3355,6 +3399,8 @@
             const cron = sc.cronExpression || sc.cron || '';
             const isEnabled = sc.enabled !== false;
             const currentDispatchMode = card.dispatchMode === 'idle_only' ? 'idle_only' : 'immediate';
+            const skip5h = Number.isFinite(sc.skipIf5hUsagePctOver) ? sc.skipIf5hUsagePctOver : 85;
+            const skip7d = Number.isFinite(sc.skipIf7dUsagePctOver) ? sc.skipIf7dUsagePctOver : 95;
 
             const priorityOpts = ['P0','P1','P2','P3'].map(p =>
                 `<option value="${p}"${card.priority===p?' selected':''}>${p}</option>`
@@ -3406,6 +3452,28 @@
                         ${t('kb_auto_enabled','Enabled')}
                     </label>
                 </div>
+                <div class="kb-form-group kb-cron-skip-group">
+                    <label class="kb-form-label" style="display:flex;align-items:center;gap:6px">
+                        <span data-i18n="cron_skip_5h_label">Skip if 5h usage &gt; X%</span>
+                        <button type="button" class="kb-cron-skip-help" aria-label="explainer" onclick="toggleCronSkipHelp(event)">?</button>
+                    </label>
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+                        <input type="range" id="sp-skip-5h" min="50" max="99" step="1" value="${skip5h}" oninput="updateCronSkipDisplay()" style="flex:1">
+                        <span id="sp-skip-5h-val" style="min-width:40px;font-variant-numeric:tabular-nums">${skip5h}%</span>
+                        <span id="sp-cur-5h" style="font-size:12px;color:var(--text-secondary);min-width:90px">目前 5h: —</span>
+                    </div>
+                </div>
+                <div class="kb-form-group kb-cron-skip-group">
+                    <label class="kb-form-label">
+                        <span data-i18n="cron_skip_7d_label">Skip if 7d usage &gt; Y%</span>
+                    </label>
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+                        <input type="range" id="sp-skip-7d" min="50" max="99" step="1" value="${skip7d}" oninput="updateCronSkipDisplay()" style="flex:1">
+                        <span id="sp-skip-7d-val" style="min-width:40px;font-variant-numeric:tabular-nums">${skip7d}%</span>
+                        <span id="sp-cur-7d" style="font-size:12px;color:var(--text-secondary);min-width:90px">目前 7d: —</span>
+                    </div>
+                    <div id="sp-cron-skip-help" class="kb-cron-skip-help-text" style="display:none;font-size:12px;color:var(--text-secondary);margin-top:6px;padding:8px 10px;background:rgba(var(--accent-rgb,99,102,241),0.08);border-radius:6px" data-i18n="cron_skip_help_text">Slider range 50–99. When the assigned entity's current usage exceeds the threshold, this cron tick is skipped to protect the high-load entity; the next scheduled tick auto-retries.</div>
+                </div>
                 <div class="kb-form-group">
                     <label class="kb-form-label">🚦 Dispatch Mode</label>
                     <select class="kb-form-select" id="sp-dispatch-mode">
@@ -3444,6 +3512,73 @@
                     <button class="btn btn-primary" onclick="saveSchedulePanel('${cardId}')">${t('kb_auto_edit_save','Save')}</button>
                 </div>
             `;
+            // Lazy-fetch this device's current usage to give the user a live
+            // reference while choosing the threshold (degrades silently).
+            populateCurrentUsageDisplay({ targetIds: ['sp-cur-5h', 'sp-cur-7d'] });
+        }
+
+        // ── Cron skip-on-usage threshold helpers (card_d948f8cc) ──
+        // Two sliders + a "current usage" hint let the user pick a per-card
+        // ceiling that the cron dispatcher will respect. Backend wiring lands
+        // separately; values are persisted via the existing schedule endpoint.
+        function updateCronSkipDisplay() {
+            const pairs = [['sp-skip-5h', 'sp-skip-5h-val'], ['sp-skip-7d', 'sp-skip-7d-val'],
+                           ['edit-skip-5h', 'edit-skip-5h-val'], ['edit-skip-7d', 'edit-skip-7d-val']];
+            pairs.forEach(([srcId, dstId]) => {
+                const src = document.getElementById(srcId);
+                const dst = document.getElementById(dstId);
+                if (src && dst) dst.textContent = src.value + '%';
+            });
+        }
+
+        function toggleCronSkipHelp(ev) {
+            if (ev) ev.preventDefault();
+            const target = ev && ev.target;
+            const root = target ? target.closest('.kb-form-group') : null;
+            const help = root
+                ? root.parentElement.querySelector('.kb-cron-skip-help-text')
+                : document.getElementById('sp-cron-skip-help') || document.getElementById('edit-cron-skip-help');
+            if (help) help.style.display = help.style.display === 'none' ? '' : 'none';
+        }
+
+        let _cronSkipUsageCache = null;
+        async function populateCurrentUsageDisplay({ targetIds }) {
+            const [el5h, el7d] = targetIds.map(id => document.getElementById(id));
+            if (!el5h && !el7d) return;
+            try {
+                if (!_cronSkipUsageCache) {
+                    const qs = 'deviceId=' + encodeURIComponent(currentUser.deviceId)
+                             + '&deviceSecret=' + encodeURIComponent(currentUser.deviceSecret);
+                    const res = await fetch('/api/usage/snapshot?' + qs, { credentials: 'same-origin' });
+                    if (!res.ok) throw new Error('http ' + res.status);
+                    const snap = await res.json();
+                    if (!snap || !snap.success) throw new Error('snapshot failed');
+                    _cronSkipUsageCache = snap.latest || {};
+                    // Invalidate after 30s so reopening the editor re-reads.
+                    setTimeout(() => { _cronSkipUsageCache = null; }, 30000);
+                }
+                const latest = _cronSkipUsageCache;
+                const claudeLive = latest && latest.claude && latest.claude.live;
+                const codexRl = latest && latest.codex && latest.codex.rate_limits;
+                // Prefer Claude live %, fall back to Codex rate_limits — the
+                // dispatcher will read whichever engine the assigned entity
+                // actually runs on, but the editor surfaces a single hint
+                // (whichever is available) so the user has context.
+                const pick = (claudeKey, codexKey) => {
+                    if (claudeLive && Number.isFinite(claudeLive[claudeKey])) return Math.round(claudeLive[claudeKey]);
+                    if (codexRl && Number.isFinite(codexRl[codexKey])) return Math.round(codexRl[codexKey]);
+                    return null;
+                };
+                const fiveH = pick('five_hour_pct', 'five_hour_pct');
+                const sevenD = pick('seven_day_pct', 'seven_day_pct');
+                if (el5h) el5h.textContent = '目前 5h: ' + (fiveH === null ? '—' : fiveH + '%');
+                if (el7d) el7d.textContent = '目前 7d: ' + (sevenD === null ? '—' : sevenD + '%');
+            } catch (err) {
+                // Degrade gracefully — keep the dash placeholder so the user
+                // can still set thresholds without a live reference.
+                if (el5h) el5h.textContent = '目前 5h: —';
+                if (el7d) el7d.textContent = '目前 7d: —';
+            }
         }
 
         function spToggleSchedFields() {
@@ -3485,6 +3620,12 @@
                 if (!runAtVal) { showToast(t('kb_auto_edit_no_runat','Please set a run time'), true); return; }
                 schedBody.runAt = new Date(runAtVal).toISOString();
             }
+            // card_d948f8cc — per-card usage-threshold cron-skip (UI-only until
+            // backend dispatcher honors it; values persist regardless).
+            const skip5hEl = document.getElementById('sp-skip-5h');
+            const skip7dEl = document.getElementById('sp-skip-7d');
+            if (skip5hEl) schedBody.skipIf5hUsagePctOver = parseInt(skip5hEl.value, 10);
+            if (skip7dEl) schedBody.skipIf7dUsagePctOver = parseInt(skip7dEl.value, 10);
 
             try {
                 await apiCall('PUT', `/api/mission/card/${cardId}`, {
