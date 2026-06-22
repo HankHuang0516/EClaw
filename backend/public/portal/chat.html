@@ -1940,6 +1940,13 @@
             min-height: 34px;
             padding-right: 64px; /* reserve space for absolutely-positioned toggle (mobile-safe) */
         }
+        /* The row holds the *underlying* .target-entity-check / .target-contact-check
+           checkboxes that getSelectedTargets()/sendMessage() read; since the sendto
+           picker (card_91d5c93b) became the visible UI, this row carries the HTML
+           `hidden` attribute and must stay invisible state-backing. Without this
+           rule the `display:flex` above overrode `hidden`, rendering a duplicate
+           visible 傳送給 checkbox row beside the picker (card_02d16858). */
+        .target-bar-row[hidden] { display: none !important; }
 
         .target-bar-overflow {
             display: none;
@@ -2224,6 +2231,37 @@
             height: 16px;
             flex-shrink: 0;
             cursor: pointer;
+        }
+        /* Contacts merged into the picker (card_02d16858) */
+        .sendto-picker-section-label {
+            padding: 8px 4px 4px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .sendto-picker-addcontact {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            padding: 8px 4px 2px;
+        }
+        .sendto-picker-addcontact-input {
+            flex: 1 1 120px;
+            min-width: 0;
+            padding: 6px 8px;
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: 13px;
+        }
+        .sendto-picker-addcontact-msg {
+            font-size: 11px;
+            color: var(--text-muted);
+            flex-basis: 100%;
         }
         .sendto-picker-empty {
             padding: 24px 16px;
@@ -5061,10 +5099,22 @@
                 allItems.push({ el: addBtn, type: 'add' });
             }
 
+            // Append the underlying checkboxes (the send-state getSelectedTargets/
+            // sendMessage read). The row itself is hidden state-backing now that the
+            // sendto picker (card_91d5c93b) is the visible UI.
+            allItems.forEach(item => row.appendChild(item.el));
+
+            // When the row is hidden, getBoundingClientRect is all-zero so overflow
+            // detection is meaningless and the ▲+N toggle must not be created —
+            // skip the measurement entirely (card_02d16858). Picker reflects state.
+            if (row.hidden) {
+                updateTargetAll();
+                return;
+            }
+
             // Step 1: measure with wrap enabled to detect overflow
             row.style.flexWrap = 'wrap';
             row.style.overflow = 'visible';
-            allItems.forEach(item => row.appendChild(item.el));
 
             // Step 2: after layout, detect which items go beyond first row
             requestAnimationFrame(() => {
@@ -7496,6 +7546,49 @@
                 });
             }
 
+            // ── Contacts section (cross-device publicCode recipients) ──
+            // Migrated into the picker so the old target-bar can stay hidden
+            // state-backing (card_02d16858). Contacts keep their hidden
+            // .target-contact-check backing; Select-all stays ENTITY-only (#6),
+            // so contact rows use data-picker-contact (not data-picker-entity).
+            if (Array.isArray(contacts) && contacts.length > 0) {
+                const secLabel = document.createElement('div');
+                secLabel.className = 'sendto-picker-section-label';
+                secLabel.textContent = (i18n && i18n.t) ? (i18n.t('chat_contacts_section') || 'Contacts') : 'Contacts';
+                list.appendChild(secLabel);
+                contacts.forEach(c => {
+                    const code = c && c.publicCode ? String(c.publicCode) : '';
+                    if (!code) return;
+                    const sel = '.target-contact-check input[type="checkbox"][data-contact-code="' + ((window.CSS && CSS.escape) ? CSS.escape(code) : code) + '"]';
+                    const underlying = document.querySelector(sel);
+                    const isChecked = !!(underlying && underlying.checked);
+                    const avatar = c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
+                    const avatarHtml = (typeof renderAvatarHtml === 'function') ? renderAvatarHtml(avatar, 28) : '';
+                    const name = c.name || c.character || code;
+                    const offlineTag = c.online ? '' : `<span>${escapeHtml((i18n && i18n.t) ? (i18n.t('chat_contacts_offline') || 'offline') : 'offline')}</span>`;
+                    const row = document.createElement('label');
+                    row.className = 'sendto-picker-row-item';
+                    row.dataset.contactCode = code;
+                    row.innerHTML = `
+                        <span class="sendto-picker-row-avatar">${avatarHtml}</span>
+                        <span class="sendto-picker-row-meta">
+                            <span class="sendto-picker-row-name">${escapeHtml(name)}</span>
+                            <span class="sendto-picker-row-sub"><span>${escapeHtml(code)}</span>${offlineTag}</span>
+                        </span>
+                        <input type="checkbox" data-picker-contact="${escapeHtml(code)}" ${isChecked ? 'checked' : ''} aria-label="${escapeHtml(name)}">
+                    `;
+                    list.appendChild(row);
+                });
+            }
+
+            // Add-contact affordance (replaces the old bar's inline + button;
+            // #6: don't reuse showAddContactForm verbatim — it appended into the
+            // now-hidden #targetBarRow). Inline form rendered inside the picker.
+            const addRow = document.createElement('div');
+            addRow.className = 'sendto-picker-addcontact';
+            addRow.innerHTML = `<button type="button" class="btn btn-outline btn-sm" onclick="showSendtoPickerAddContact(this)">${escapeHtml((i18n && i18n.t) ? (i18n.t('chat_contacts_add') || '➕ Add contact') : '➕ Add contact')}</button>`;
+            list.appendChild(addRow);
+
             // Reflect select-all state from current row checkboxes.
             syncSendtoPickerSelectAllState();
 
@@ -7555,10 +7648,65 @@
                     }
                 }
             });
+            // Apply contact row state → underlying .target-contact-check backing
+            // (contacts were migrated into the picker; card_02d16858).
+            document.querySelectorAll('#sendtoPickerList input[data-picker-contact]').forEach(rowCb => {
+                const code = rowCb.dataset.pickerContact;
+                const sel = '.target-contact-check input[type="checkbox"][data-contact-code="' + ((window.CSS && CSS.escape) ? CSS.escape(code) : code) + '"]';
+                const underlying = document.querySelector(sel);
+                if (underlying && underlying.checked !== rowCb.checked) underlying.checked = rowCb.checked;
+            });
             if (typeof persistTargetSelection === 'function') persistTargetSelection();
             if (typeof updateTargetAll === 'function') updateTargetAll();
             refreshSendtoPickerButtonLabel();
             closeSendtoPickerOverlay();
+        }
+
+        // Inline add-contact form inside the sendto picker (replaces the old
+        // target-bar's showAddContactForm, which appended into the now-hidden
+        // #targetBarRow). On success it reuses the existing contacts pipeline
+        // (loadContacts state + renderTargetBar to mint the hidden
+        // .target-contact-check backing), then re-renders the picker rows so the
+        // new contact is visible + pre-checked. (card_02d16858)
+        function showSendtoPickerAddContact(btn) {
+            const host = btn && btn.closest('.sendto-picker-addcontact');
+            if (!host) return;
+            const ph = (i18n && i18n.t) ? (i18n.t('chat_contacts_add_placeholder') || 'Enter 6-char code') : 'Enter 6-char code';
+            const addLbl = (i18n && i18n.t) ? (i18n.t('chat_contacts_add_btn') || 'Add') : 'Add';
+            const cancelLbl = (i18n && i18n.t) ? (i18n.t('chat_contacts_add_cancel') || 'Cancel') : 'Cancel';
+            host.innerHTML = `<input type="text" maxlength="8" class="sendto-picker-addcontact-input" placeholder="${escapeHtml(ph)}">
+                <button type="button" class="btn btn-primary btn-sm" id="sendtoPickerAddBtn">${escapeHtml(addLbl)}</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="openSendtoPicker()">${escapeHtml(cancelLbl)}</button>
+                <span class="sendto-picker-addcontact-msg" id="sendtoPickerAddMsg"></span>`;
+            const input = host.querySelector('.sendto-picker-addcontact-input');
+            const addBtn = host.querySelector('#sendtoPickerAddBtn');
+            if (input) input.focus();
+            const doAdd = async () => {
+                const code = (input && input.value || '').trim().toLowerCase();
+                const msg = document.getElementById('sendtoPickerAddMsg');
+                if (!code || code.length < 3) { if (msg) msg.textContent = ''; return; }
+                if (addBtn) addBtn.disabled = true;
+                try {
+                    const data = await apiCall('POST', '/api/contacts', { deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret, publicCode: code });
+                    if (data && data.success && data.contact) {
+                        if (!contacts.some(c => c.publicCode === data.contact.publicCode)) contacts.push(data.contact);
+                        const saved = localStorage.getItem('chat_last_contact_targets');
+                        const codes = saved ? saved.split(',') : [];
+                        if (!codes.includes(code)) codes.push(code);
+                        localStorage.setItem('chat_last_contact_targets', codes.join(','));
+                        if (typeof renderTargetBar === 'function') renderTargetBar(); // mint hidden .target-contact-check backing
+                        showToast((i18n && i18n.t) ? (i18n.t('chat_contacts_added') || 'Added') : 'Added', 'success');
+                        openSendtoPicker(); // re-render picker rows incl. the new contact
+                    }
+                } catch (err) {
+                    const m = (err && err.data && err.data.error) || (err && err.message) || '';
+                    const el = document.getElementById('sendtoPickerAddMsg');
+                    if (el) { el.textContent = (i18n && i18n.t) ? (i18n.t('chat_contacts_not_found') || m) : m; el.style.color = 'var(--danger)'; }
+                    if (addBtn) addBtn.disabled = false;
+                }
+            };
+            if (addBtn) addBtn.onclick = doAdd;
+            if (input) input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); doAdd(); } });
         }
 
         function toggleSendtoPickerSelectAll(checkbox) {
