@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Request
+import retrofit2.HttpException
 import timber.log.Timber
 import java.util.concurrent.ConcurrentHashMap
 
@@ -81,6 +82,11 @@ class CompanionRepository(
         botSecret: String,
         intervalMs: Long = 30_000
     ): Flow<CompanionDetail?> = flow {
+        // Stagger companion pollers so per-entity fetches don't all fire at t=0
+        // on resume (the burst that trips the device-level rate limit).
+        // Each entity gets a random 2–8s head-start delay.
+        delay((2_000L..8_000L).random())
+        var backoffMs = intervalMs
         while (true) {
             try {
                 val resp = api.getCurrentCompanion(
@@ -88,6 +94,7 @@ class CompanionRepository(
                     botSecret = botSecret,
                     entityId = entityId
                 )
+                backoffMs = intervalMs
                 val companion = resp.selection?.companion
                 if (companion != null) {
                     // Preload the spritesheet BEFORE swapping the descriptor.
@@ -118,10 +125,19 @@ class CompanionRepository(
                     }
                 }
                 emit(companion)
+            } catch (e: HttpException) {
+                if (e.code() == 429) {
+                    backoffMs = minOf(backoffMs * 2, 300_000L).coerceAtLeast(60_000L)
+                    Timber.w("Companion flow entity $entityId 429 rate-limited — backing off ${backoffMs}ms")
+                } else {
+                    backoffMs = intervalMs
+                    Timber.w(e, "Companion fetch failed for entity $entityId")
+                }
             } catch (e: Exception) {
+                backoffMs = intervalMs
                 Timber.w(e, "Companion fetch failed for entity $entityId")
             }
-            delay(intervalMs)
+            delay(backoffMs)
         }
     }
 
