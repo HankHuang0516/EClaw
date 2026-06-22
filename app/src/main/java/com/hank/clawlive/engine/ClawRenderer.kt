@@ -329,6 +329,28 @@ class ClawRenderer(
         Timber.d("ClawRenderer resources released")
     }
 
+    // card_f9b2cc2d resilient-render fix. The wallpaper went pure black on resume
+    // because drawMultiEntity drew the background and then THREW while rendering an
+    // entity/stage (e.g. a recycled bitmap or a transient null after an
+    // app-switch); the exception propagated out and the engine posted only the
+    // half-drawn black frame. A single bad entity or sub-stage must never blank the
+    // whole wallpaper. Each entity and each render stage is now wrapped so a failure
+    // is contained (that one entity/stage is skipped this frame) and the rest of the
+    // frame still draws. Failures are recorded to Crashlytics once per distinct
+    // stage key so we still learn the exact cause without per-frame spam.
+    private val reportedRenderErrors = HashSet<String>()
+    private fun reportRenderStageError(stage: String, e: Throwable) {
+        Timber.e(e, "render stage failed: $stage")
+        if (reportedRenderErrors.add(stage)) {
+            try {
+                com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().apply {
+                    setCustomKey("render_stage", stage)
+                    recordException(e)
+                }
+            } catch (_: Exception) { /* crashlytics unavailable — Timber already logged */ }
+        }
+    }
+
     // ============================================
     // MULTI-ENTITY RENDERING
     // ============================================
@@ -585,13 +607,17 @@ class ClawRenderer(
             nowMs = nowMs,
             reactionDurationMs = layoutPrefs.wallpaperCollisionReactionDurationMs
         )
-        kanbanRenderer.drawBackground(
-            canvas = canvas,
-            entities = entities,
-            basePositions = basePositions,
-            baseScale = baseScale,
-            nowMs = nowMs
-        )
+        try {
+            kanbanRenderer.drawBackground(
+                canvas = canvas,
+                entities = entities,
+                basePositions = basePositions,
+                baseScale = baseScale,
+                nowMs = nowMs
+            )
+        } catch (e: Exception) {
+            reportRenderStageError("kanbanBackground", e)
+        }
         if (layoutPrefs.wallpaperAdaptiveEffectsEnabled) {
             renderDiagnostics.recordFrame(
                 walkingEntityCount = entities.count { wanderController.isWalking(it.entityId) },
@@ -630,38 +656,55 @@ class ClawRenderer(
                 } else {
                     effectiveState.wallpaperActionKey
                 }
-                drawSingleEntityAt(
-                    canvas,
-                    entity,
-                    cx,
-                    drawCy,
-                    finalScale,
-                    spritesheetState,
-                    nowMs,
-                    facingDirection,
-                    shouldMirrorSpritesheetForFacing(spritesheetState)
-                )
-                bubbleDrawTargets.add(BubbleDrawTarget(entity, cx, drawCy, finalScale))
+                try {
+                    drawSingleEntityAt(
+                        canvas,
+                        entity,
+                        cx,
+                        drawCy,
+                        finalScale,
+                        spritesheetState,
+                        nowMs,
+                        facingDirection,
+                        shouldMirrorSpritesheetForFacing(spritesheetState)
+                    )
+                    bubbleDrawTargets.add(BubbleDrawTarget(entity, cx, drawCy, finalScale))
+                } catch (e: Exception) {
+                    // card_f9b2cc2d: one bad entity must not blank the whole wallpaper.
+                    reportRenderStageError("entity:${entity.entityId}", e)
+                }
             }
         }
 
-        interactionState.effects.forEach { effect ->
-            drawInteractionEffect(canvas, effect, baseScale, nowMs)
+        try {
+            interactionState.effects.forEach { effect ->
+                drawInteractionEffect(canvas, effect, baseScale, nowMs)
+            }
+        } catch (e: Exception) {
+            reportRenderStageError("interactionEffects", e)
         }
 
-        usageOverlayRenderer.draw(canvas, usageSnapshot)
+        try {
+            usageOverlayRenderer.draw(canvas, usageSnapshot)
+        } catch (e: Exception) {
+            reportRenderStageError("usageOverlay", e)
+        }
 
         bubbleDrawTargets.forEach { target ->
-            drawSpeechBubbleForEntity(
-                canvas = canvas,
-                entity = target.entity,
-                centerX = target.centerX,
-                centerY = target.centerY,
-                scale = target.scale,
-                screenWidth = width,
-                nowMs = nowMs,
-                avoidBounds = bubbleAvoidBounds
-            )
+            try {
+                drawSpeechBubbleForEntity(
+                    canvas = canvas,
+                    entity = target.entity,
+                    centerX = target.centerX,
+                    centerY = target.centerY,
+                    scale = target.scale,
+                    screenWidth = width,
+                    nowMs = nowMs,
+                    avoidBounds = bubbleAvoidBounds
+                )
+            } catch (e: Exception) {
+                reportRenderStageError("bubble:${target.entity.entityId}", e)
+            }
         }
     }
 
