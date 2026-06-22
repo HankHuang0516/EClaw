@@ -66,6 +66,7 @@ import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.EntityChipHelper
 import com.hank.clawlive.ui.NavItem
+import com.hank.clawlive.ui.NavResumeController
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
@@ -81,6 +82,14 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var usageManager: UsageManager
     private val layoutPrefs: LayoutPreferences by lazy { LayoutPreferences.getInstance(this) }
     private val deviceManager: DeviceManager by lazy { DeviceManager.getInstance(this) }
+    private val navResume: NavResumeController by lazy {
+        val prefs = getSharedPreferences("nav_resume_prefs", MODE_PRIVATE)
+        NavResumeController(object : NavResumeController.Store {
+            override fun readLastNav(): String? = prefs.getString("last_nav", null)
+            override fun writeLastNav(name: String) { prefs.edit().putString("last_nav", name).apply() }
+            override fun clearLastNav() { prefs.edit().remove("last_nav").apply() }
+        })
+    }
 
     // ── Settings update-available chip (card_28a8290a) ──
     private val appUpdateManager: AppUpdateManager by lazy { AppUpdateManagerFactory.create(this) }
@@ -242,6 +251,8 @@ class SettingsActivity : AppCompatActivity() {
         updateEntityCount()
         loadAccountStatus()
         updateCrashLogBadge()
+        // Persist current tab so process-death restart can restore here (card_489a8836).
+        navResume.onNavigatedTo(NavItem.SETTINGS)
     }
 
     override fun onPause() {

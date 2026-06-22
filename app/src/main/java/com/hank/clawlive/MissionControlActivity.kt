@@ -19,6 +19,7 @@ import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.NavItem
+import com.hank.clawlive.ui.NavResumeController
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import com.hank.clawlive.ui.nav.EClawNativeNavBridge
 import com.hank.clawlive.ui.reconnect.ReconnectBackoff
@@ -38,6 +39,15 @@ class MissionControlActivity : AppCompatActivity() {
     private var reconnectOverlay: ReconnectOverlayController? = null
     private var pendingNavIntent: String? = null
     private var pageReady: Boolean = false
+
+    private val navResume: NavResumeController by lazy {
+        val prefs = getSharedPreferences("nav_resume_prefs", MODE_PRIVATE)
+        NavResumeController(object : NavResumeController.Store {
+            override fun readLastNav(): String? = prefs.getString("last_nav", null)
+            override fun writeLastNav(name: String) { prefs.edit().putString("last_nav", name).apply() }
+            override fun clearLastNav() { prefs.edit().remove("last_nav").apply() }
+        })
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +71,8 @@ class MissionControlActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         RecordingIndicatorHelper.attach(this)
+        // Persist current tab so process-death restart can restore here (card_489a8836).
+        navResume.onNavigatedTo(NavItem.MISSION)
     }
 
     override fun onPause() {

@@ -22,6 +22,7 @@ import org.junit.runners.Suite
     WallpaperWanderControllerTest::class,
     EngineLifecycleControllerTest::class,
     CompanionDescriptorAnimationTest::class,
+    NavResumeControllerTest::class,
     NotificationPreferenceCatalogTest::class,
     SettingsManifestResolverTest::class,
     SettingsManifestSyncTest::class,
