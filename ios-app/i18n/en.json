@@ -259,7 +259,13 @@
     "file_manager": "Files",
     "card_holder": "Card Holder",
     "intro_guide": "Tutorial & Intro",
-    "intro_guide_desc": "Watch the 75s demo + Quick Start walkthrough"
+    "intro_guide_desc": "Watch the 75s demo + Quick Start walkthrough",
+    "more_section_title": "More settings",
+    "feature_help_title": "About this setting",
+    "feature_gated_badge": "Update app for native screen",
+    "feature_gated_help": "This setting has a native screen in a newer app version. Update the app to get it here, or open it on the web now.",
+    "feature_web_help": "This setting opens in a web view because the native screen isn't in this app version yet. You can use it on the web now.",
+    "open_on_web": "Open on web"
   },
   "entity": {
     "rename": "Rename Entity",

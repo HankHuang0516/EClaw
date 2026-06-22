@@ -409,6 +409,22 @@ export const contactsApi = {
     apiClient.get('/api/chat/history-by-code', { params: { publicCode, limit } }),
 };
 
+// ── Settings Manifest (auto-sync seam, Stage 2) ──────────────
+// Public GET — pure capability descriptor, no auth (mirrors /api/version).
+// Sending appVersion + platform lets the backend apply the minAppVersion gate.
+// See backend/lib/settings-manifest.js + docs/specs/settings-manifest-spec.md and
+// the Android ClawApiService.getSettingsManifest reference.
+
+import type { SettingsManifestResponse } from './settingsManifest';
+
+export const settingsManifestApi = {
+  /** Fetch the settings manifest at launch (Stage 2 consume). */
+  get: (appVersion?: string | null, platform: 'ios' | 'android' = 'ios') =>
+    apiClient.get<SettingsManifestResponse>('/api/settings-manifest', {
+      params: { appVersion: appVersion ?? undefined, platform },
+    }),
+};
+
 // ── Misc APIs ────────────────────────────────────────────────
 
 export const miscApi = {

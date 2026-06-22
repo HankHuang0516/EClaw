@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, ScrollView, StyleSheet, Modal } from 'react-native';
 import {
   Text,
   List,
@@ -13,13 +13,20 @@ import {
   useTheme,
   Snackbar,
   ActivityIndicator,
+  IconButton,
+  Appbar,
 } from 'react-native-paper';
+import { WebView } from 'react-native-webview';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import i18next from 'i18next';
 import { useAuthStore } from '../../store/authStore';
-import { authApi } from '../../services/api';
+import { authApi, settingsManifestApi } from '../../services/api';
+import {
+  planDynamicRows,
+  type DynamicSettingsRow,
+} from '../../services/settingsManifest';
 import { Alert, Linking } from 'react-native';
 import { SUPPORTED_LANGUAGES } from '../../i18n';
 import Constants from 'expo-constants';
@@ -42,6 +49,46 @@ export default function SettingsScreen() {
   const [notifBroadcast, setNotifBroadcast] = useState(true);
 
   const appVersion = Constants.expoConfig?.version ?? '1.0.0';
+
+  // ── Settings auto-sync (manifest Stage 2) ──────────────────────────────────
+  // Mirrors Android SettingsActivity.loadSettingsManifest(): fetch
+  // GET /api/settings-manifest at launch and surface any settings feature this
+  // binary does NOT render natively — opening its web fallback in a WebView. A
+  // native feature gated out by the running app version shows a "?" gated-help row.
+  // Graceful degradation: any failure leaves the static screen exactly as-is.
+  const [manifestRows, setManifestRows] = useState<DynamicSettingsRow[]>([]);
+  const [webView, setWebView] = useState<DynamicSettingsRow | null>(null);
+  const [helpRow, setHelpRow] = useState<DynamicSettingsRow | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        // Spec §4 / Stage-2: send the REAL installed version so the backend's
+        // minAppVersion gate is correct. Constants.expoConfig.version is the
+        // app.json version pinned at build time.
+        const res = await settingsManifestApi.get(appVersion, 'ios');
+        const data = res.data;
+        if (cancelled) return;
+        if (!data?.success || !data.manifest) {
+          // non-success / missing manifest — keep static screen
+          return;
+        }
+        const rows = planDynamicRows(data.manifest, appVersion);
+        if (!cancelled) setManifestRows(rows);
+      } catch {
+        // offline / 5xx / parse — keep static settings screen, never crash/blank
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [appVersion]);
+
+  const openWebFallback = (row: DynamicSettingsRow) => {
+    setHelpRow(null);
+    setWebView(row);
+  };
 
   // Mirrors Android SettingsActivity.showBindEmailDialog() — this is
   // account REGISTRATION (bind device to new email), not login.
@@ -276,6 +323,43 @@ export default function SettingsScreen() {
 
         <Divider />
 
+        {/* Auto-synced settings (manifest Stage 2) — features this app version
+            doesn't render natively; opens the web fallback in a WebView. Renders
+            nothing when the manifest is empty / fetch failed (graceful degrade). */}
+        {manifestRows.length > 0 && (
+          <>
+            <List.Section title={t('settings.more_section_title', 'More settings')}>
+              {manifestRows.map((row) => (
+                <List.Item
+                  key={row.key}
+                  title={row.name}
+                  description={
+                    row.gated
+                      ? t('settings.feature_gated_badge', 'Update app for native screen')
+                      : undefined
+                  }
+                  left={(props) => (
+                    <List.Icon
+                      {...props}
+                      icon={row.gated ? 'alert-circle-outline' : 'open-in-new'}
+                    />
+                  )}
+                  right={(props) => (
+                    <IconButton
+                      {...props}
+                      icon="help-circle-outline"
+                      accessibilityLabel={t('settings.feature_help_title', 'About this setting')}
+                      onPress={() => setHelpRow(row)}
+                    />
+                  )}
+                  onPress={() => openWebFallback(row)}
+                />
+              ))}
+            </List.Section>
+            <Divider />
+          </>
+        )}
+
         {/* Account Actions */}
         <View style={styles.bottomActions}>
           <Button
@@ -381,6 +465,64 @@ export default function SettingsScreen() {
         </Dialog>
       </Portal>
 
+      {/* Manifest feature "?" help — what / needs / next step (spec §4) */}
+      <Portal>
+        <Dialog visible={!!helpRow} onDismiss={() => setHelpRow(null)}>
+          <Dialog.Title>
+            {t('settings.feature_help_title', 'About this setting')}
+          </Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">
+              {helpRow?.gated
+                ? t(
+                    'settings.feature_gated_help',
+                    "This setting has a native screen in a newer app version. Update the app to get it here, or open it on the web now."
+                  )
+                : t(
+                    'settings.feature_web_help',
+                    "This setting opens in a web view because the native screen isn't in this app version yet. You can use it on the web now."
+                  )}
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setHelpRow(null)}>
+              {t('common.cancel', 'Cancel')}
+            </Button>
+            <Button
+              mode="contained"
+              onPress={() => helpRow && openWebFallback(helpRow)}
+            >
+              {t('settings.open_on_web', 'Open on web')}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      {/* Web fallback WebView — opens the manifest feature's portal page */}
+      <Modal
+        visible={!!webView}
+        animationType="slide"
+        onRequestClose={() => setWebView(null)}
+      >
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top', 'bottom']}>
+          <Appbar.Header>
+            <Appbar.BackAction onPress={() => setWebView(null)} />
+            <Appbar.Content title={webView?.name ?? ''} />
+          </Appbar.Header>
+          {webView && (
+            <WebView
+              source={{ uri: webView.webFallback }}
+              startInLoadingState
+              renderLoading={() => (
+                <View style={styles.webLoading}>
+                  <ActivityIndicator />
+                </View>
+              )}
+            />
+          )}
+        </SafeAreaView>
+      </Modal>
+
       <Snackbar visible={!!snack} onDismiss={() => setSnack('')} duration={2000}>
         {snack}
       </Snackbar>
@@ -400,5 +542,10 @@ const styles = StyleSheet.create({
   },
   deleteBtn: {
     width: '100%',
+  },
+  webLoading: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
