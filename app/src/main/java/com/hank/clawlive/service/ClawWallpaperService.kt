@@ -289,10 +289,19 @@ class ClawWallpaperService : WallpaperService() {
             // engineScope.launch{} was a no-op and draw() used a released
             // renderer → black until a full process restart. We now only stop
             // the draw loop and mark not-visible; engineScope / renderer /
-            // companionRepository survive for the next onSurfaceCreated. Pollers
-            // already get the quota gate via onVisibilityChanged(false), which
-            // fires before the surface is destroyed.
-            visible = false
+            // companionRepository survive for the next onSurfaceCreated.
+            //
+            // RESIDUAL black (card_f9b2cc2d, still reported after the engineScope
+            // fix): this used to also do `visible = false`. A BRIEF app-switch
+            // destroys→recreates the surface with NO onVisibilityChanged toggle,
+            // so that spurious visible=false was never restored — the next
+            // onSurfaceCreated's resume + the draw-loop reschedule (both gated on
+            // `visible`) never ran → permanent black until a process restart,
+            // exactly matching "even the loading-entities text never appears".
+            // Visibility is owned SOLELY by onVisibilityChanged; do NOT clear it
+            // here. The loop is halted by stopDrawLoop() (lifecycle hook) and is
+            // additionally gated on lifecycle.surfacePresent so it cannot spin
+            // while the surface is gone.
             lifecycle.onSurfaceDestroyed()
             Timber.d("onSurfaceDestroyed (paused, engine-lifetime preserved)")
         }
@@ -345,7 +354,11 @@ class ClawWallpaperService : WallpaperService() {
             }
 
             handler.removeCallbacks(drawRunnable)
-            if (visible) {
+            // Loop only while shown AND a surface is present. The surfacePresent
+            // gate stops a 30fps no-op draw spin between a surface destroy and
+            // recreate now that onSurfaceDestroyed no longer clears `visible`
+            // (card_f9b2cc2d residual fix).
+            if (visible && lifecycle.surfacePresent) {
                 handler.postDelayed(drawRunnable, 33)
             }
         }
