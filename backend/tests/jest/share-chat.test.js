@@ -345,6 +345,36 @@ describe('share-chat registration flow (static analysis)', () => {
         expect(html).toContain("document.getElementById('msgInput')");
         expect(html).not.toContain("document.getElementById('messageInput')");
     });
+
+    it('renders a persistent share status panel with copy-link control', () => {
+        expect(html).toContain('id="shareChatStatusPanel"');
+        expect(html).toContain('data-auth-state="loading"');
+        expect(html).toContain('aria-live="polite"');
+        expect(html).toContain('id="shareTargetLabel"');
+        expect(html).toContain('id="shareStatusText"');
+        expect(html).toContain('id="copyShareLinkBtn"');
+        expect(html).toContain('onclick="copyShareLink()"');
+        expect(html).toContain('aria-label="Copy share chat link"');
+    });
+
+    it('share status panel reflects auth and delivery states', () => {
+        expect(html).toContain('function updateShareStatusPanel()');
+        expect(html).toContain("setShareStatus('guest', t('sc_start_conversation'");
+        expect(html).toContain("setShareStatus('verify', t('sc_send_verify_required_tip'");
+        expect(html).toContain("setShareStatus('ready', `${t('sc_send_as'");
+        expect(html).toContain("setShareStatus('verify', t('sc_message_queued'");
+        expect(html).toContain("document.getElementById('senderSelect').addEventListener('change', updateShareStatusPanel)");
+    });
+
+    it('copy-share action uses canonical /c link and clipboard fallback', () => {
+        expect(html).toContain('function shareLinkUrl()');
+        expect(html).toContain('`${window.location.origin}/c/${encodeURIComponent(targetCode)}`');
+        expect(html).toContain('async function copyShareLink()');
+        expect(html).toContain('navigator.clipboard.writeText(url)');
+        expect(html).toContain('function copyTextFallback(text)');
+        expect(html).toContain("document.execCommand('copy')");
+        expect(html).toContain("setShareStatus('copied', t('sc_link_copied'");
+    });
 });
 
 // ════════════════════════════════════════════════════════════════
