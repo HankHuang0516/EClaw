@@ -22,11 +22,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import i18next from 'i18next';
 import { useAuthStore } from '../../store/authStore';
-import { authApi, settingsManifestApi } from '../../services/api';
+import { authApi, settingsManifestApi, miscApi } from '../../services/api';
 import {
   planDynamicRows,
   type DynamicSettingsRow,
 } from '../../services/settingsManifest';
+import { shouldShowChip, appStoreDeepLink, appStoreHttpsLink } from '../../services/updateChip';
 import { Alert, Linking } from 'react-native';
 import { SUPPORTED_LANGUAGES } from '../../i18n';
 import Constants from 'expo-constants';
@@ -84,6 +85,54 @@ export default function SettingsScreen() {
       cancelled = true;
     };
   }, [appVersion]);
+
+  // ── Update-available chip (card_1771f826) ──────────────────────────────────
+  // iOS counterpart of the Android update chip (card_28a8290a): GET /api/version
+  // and surface a chip ONLY when the backend says an update is available AND a
+  // local version-compare confirms latest is strictly newer (shouldShowChip).
+  // Tapping it deep-links to the App Store product page (itms-apps://, Apple-
+  // compliant — the user taps "Update" there; no silent install). Any failure
+  // leaves the chip hidden (graceful — never a false "update" prompt).
+  const [updateLatest, setUpdateLatest] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await miscApi.getVersion();
+        const u = res?.data?.update;
+        if (cancelled) return;
+        if (shouldShowChip(u?.available, appVersion, u?.latestVersion)) {
+          setUpdateLatest((u?.latestVersion ?? '').trim() || null);
+        }
+      } catch {
+        // offline / 5xx / parse — keep chip hidden
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [appVersion]);
+
+  const openAppStoreUpdate = async () => {
+    try {
+      const canDeep = await Linking.canOpenURL(appStoreDeepLink);
+      await Linking.openURL(canDeep ? appStoreDeepLink : appStoreHttpsLink);
+    } catch {
+      Linking.openURL(appStoreHttpsLink).catch(() => {});
+    }
+  };
+
+  const showUpdateHelp = () => {
+    Alert.alert(
+      t('settings.update_help_title', 'App update available'),
+      t('settings.update_help_body', {
+        current: appVersion,
+        latest: updateLatest ?? '',
+        defaultValue:
+          'A newer version (v{{latest}}) is available; you are on v{{current}}. Tap Update to open the App Store, then tap Update there to install — Apple does not allow in-app installs.',
+      }),
+    );
+  };
 
   const openWebFallback = (row: DynamicSettingsRow) => {
     setHelpRow(null);
@@ -385,6 +434,34 @@ export default function SettingsScreen() {
           >
             {t('settings.app_version', { version: appVersion })}
           </Text>
+          {updateLatest && (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginTop: 8,
+              }}
+            >
+              <Button
+                mode="contained-tonal"
+                compact
+                icon="arrow-up-circle-outline"
+                onPress={openAppStoreUpdate}
+              >
+                {t('settings.update_available', {
+                  latest: updateLatest,
+                  defaultValue: 'Update available · v{{latest}}',
+                })}
+              </Button>
+              <IconButton
+                icon="help-circle-outline"
+                size={18}
+                onPress={showUpdateHelp}
+                accessibilityLabel={t('settings.update_help_title', 'App update available')}
+              />
+            </View>
+          )}
         </View>
       </ScrollView>
 
