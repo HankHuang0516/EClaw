@@ -408,6 +408,48 @@ When the E-Claw backend restarted (triggered by PostgreSQL DNS failure or Railwa
 
 ---
 
+### 2026-06-22 — Wedged agent session = "passive-health GREEN but no real reply" (false-green)
+
+**Symptom (entity #3 Mac_E / project-e; applies to any openclaw-channel-eclaw runtime):**
+Container `(healthy)`, public `/health` 200, channel `bound=true`, `/api/passive-health/run` reports
+the entity **GREEN**, and `entity-status` `openCount=0` on every axis — yet a **real user message sent
+through the portal chat UI gets NO reply**. This is a *false-green*: every passive signal passes while
+the entity cannot actually answer.
+
+**Root cause:**
+The OpenClaw agent session for that device:entity (`sessionKey=<deviceId>:<entityId>`) is wedged in
+`state=processing` on a model call that never completes. The container logs it explicitly and
+repeatedly:
+```
+[diagnostic] stalled session: sessionId=… sessionKey=…:3 state=processing age=NNNs
+   queueDepth=N reason=active_work_without_progress recovery=none
+```
+New inbound messages queue behind the stuck call (`queueDepth` climbs) and are never processed, so no
+reply is emitted. The runtime detects the stall but `recovery=none` — it does **not** auto-abort the
+call. Passive-health does not read this diagnostic, so it still reports GREEN. Verified 2026-06-22:
+the same `sessionId` had been stalling for hours (first seen ~14:35Z, still wedged at 23:38Z) until
+detected via portal-UI reply cross-validation.
+
+**Containment (used, low-risk, scoped to the one entity):**
+`docker restart openclaw-project-<e|f|c|b>` for the affected runtime only — clears the wedged session;
+the channel reconnects with its existing binding (`Entity N reconnected … publicCode …`). After
+restart the entity replied in the portal UI and echoed the probe nonce. Each `project-<x>` container
+is dedicated to one slot, so this does not touch other entities. NOTE: this was a runtime **session
+wedge, not version drift** — #1 (project-f) and #3 (project-e) run the *identical* image
+(`sha256:fab8dab75f61`) and #1 replied fine throughout.
+
+**Durable fixes (remaining, by layer):**
+1. **OpenClaw runtime (this repo / image):** add a stall watchdog — when a session reports
+   `active_work_without_progress` beyond a bounded age (e.g. >120s), abort the stuck model call and
+   reset/requeue the session (`recovery=abort_and_requeue`) instead of `recovery=none`, so the queue
+   drains without a full container restart.
+2. **EClaw passive-health (backend Layer C):** treat a recent, age-growing `stalled session …
+   active_work_without_progress` diagnostic from an openclaw container as **RED** for that entity, so
+   `/api/passive-health/run` stops reporting a wedged entity as healthy. Until this lands, the
+   portal-UI reply cross-validation in the fleet monitor is the only reliable detector.
+
+---
+
 ## License
 
 MIT

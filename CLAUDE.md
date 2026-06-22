@@ -18,7 +18,7 @@
 ```
 EClaw/
 ├── backend/                  # Node.js Express server (deployed to Railway)
-│   ├── index.js              # Main server (~24,001 lines) — all API routes
+│   ├── index.js              # Main server (~24,157 lines) — all API routes
 │   ├── db.js                 # PostgreSQL connection pool + schema creation
 │   ├── auth.js               # Auth module (JWT, OAuth, OIDC, RBAC)
 │   ├── mission.js            # Mission Control dashboard system
@@ -177,8 +177,8 @@ EClaw/
 │   │   │   └── og-image.png       # Open Graph social sharing image
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
-│   ├── tests/                # Regression + integration tests (59 files)
-│   ├── tests/jest/           # Jest unit tests (358 files, CI-run via `npm test`)
+│   ├── tests/                # Regression + integration tests (79 files)
+│   ├── tests/jest/           # Jest unit tests (371 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -241,7 +241,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~24,001 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~24,157 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -1247,11 +1247,30 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **SpeakTo Routing Audit Log**: Add audit log for speakTo routing decisions (card_488f05)
 - **Heartbeat Severity Gate**: Auto-block restricted to P0/P1 stale in_progress cards only (#3564)
 
+### Recent Features (v1.1190.x+, 2026-06-22 – 2026-06-23)
+
+- **Community Filter URL Persistence**: community.html search/sort/rate filters persisted in URL for reload/back/share (#3694)
+- **Publisher Auth Guard**: `checkAuth` guard in publisher.html init prevents auth.js 522 from bricking page at "Loading" (#3692)
+- **TTS Foreground Service Fix**: `startForeground` on every start + `START_NOT_STICKY` — fix `ForegroundServiceDidNotStartInTimeException` killing wallpaper process (#3691, #3674)
+- **Kanban Nudge Lifecycle Directive**: Nudge carries explicit task-lifecycle directive, not just tool-list (#3690)
+- **Wallpaper Stability v1.1.x**: Loading-wallpaper placeholder (#3678); resilient per-stage render (#3683); resume watchdog + surface-valid draw gate + Crashlytics (#3682); multi-level loading markers (#3680); wrap early render stages (#3686); spritesheet LOADING visibility fix (#3689); residual black on app-switch fix (#3669)
+- **Chat Mobile Greeting Fix**: Keep mobile greeting topic inline (#3688)
+- **Destructive Confirm itemName**: Pass `itemName` to destructive `showConfirm` callers for context (#3685)
+- **Point-Edit Graceful Degrade**: Graceful-degrade + single-line log when Chromium executable missing (#3679)
+- **Push Log Severity Fix**: Downgrade unbound-entity skip log from warn to debug (#3677)
+- **Audit Rules Hardening**: Companion rating-cache RMW + harden 5 weekly-audit rules (#3676)
+- **Android Restore Last Page**: Restore last page on app resume instead of dashboard (#3671)
+- **Chat FROM Pill Fix**: FROM pill shows sender not commanderFloor (#3670)
+- **Wallpaper Bubble Duration**: Raise bubble-duration slider max 20s → 10min (#3668)
+- **Duplicate SendTo Control Fix**: Remove duplicate sendto control — hidden target-bar beat `hidden` via CSS (#3667)
+- **AI Support Admin Guard**: Guard `resolveIsAdmin` against non-uuid principals (#3665)
+- **Device TTS Delivery Awareness**: POST /api/device/tts now reports `delivered:false` + `warning:"tts_not_delivered"` when device offline and no FCM token, instead of silent fire-and-forget (#3662)
+
 ---
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~5100 test cases across 358 Jest files + 59 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~5200 test cases across 371 Jest files + 79 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1344,7 +1363,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
 | Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
 
-### Jest Unit Tests (CI-run, `npm test`, 358 files)
+### Jest Unit Tests (CI-run, `npm test`, 371 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -1427,7 +1446,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (358 files)
+cd backend && npm test                  # Jest unit tests (371 files)
 cd backend && npm run lint              # ESLint
 ```
 
