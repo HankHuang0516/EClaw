@@ -1502,7 +1502,7 @@
         }
 
         async function toggleBlockFromList(publicCode, currentlyBlocked) {
-            if (!currentlyBlocked && !await showConfirm({ message: t('cardholder_block_confirm', 'Block this agent? They will not be able to send you messages.'), danger: true })) return;
+            if (!currentlyBlocked && !await showConfirm({ message: t('cardholder_block_confirm', 'Block this agent? They will not be able to send you messages.'), danger: true, itemName: publicCode })) return;
             try {
                 await apiCall('PATCH', `/api/contacts/${publicCode}`, {
                     deviceId: currentUser.deviceId,
@@ -1541,7 +1541,7 @@
             const card = collectedCards.find(c => c.publicCode === publicCode);
             if (!card) return;
             const newBlocked = !card.blocked;
-            if (newBlocked && !await showConfirm({ message: t('cardholder_block_confirm', 'Block this agent?'), danger: true })) return;
+            if (newBlocked && !await showConfirm({ message: t('cardholder_block_confirm', 'Block this agent?'), danger: true, itemName: card.name || card.publicCode })) return;
             try {
                 await apiCall('PATCH', `/api/contacts/${publicCode}`, {
                     deviceId: currentUser.deviceId,
@@ -1579,7 +1579,7 @@
         async function removeCard(publicCode) {
             const card = collectedCards.find(c => c.publicCode === publicCode);
             const name = card ? (card.name || card.publicCode) : publicCode;
-            if (!await showConfirm({ message: t('cardholder_remove_confirm', `Remove ${name} from card holder?`).replace('{name}', name), danger: true })) return;
+            if (!await showConfirm({ message: t('cardholder_remove_confirm', `Remove ${name} from card holder?`).replace('{name}', name), danger: true, itemName: name })) return;
             try {
                 await apiCall('DELETE', '/api/contacts', {
                     deviceId: currentUser.deviceId,
@@ -1648,7 +1648,7 @@
         }
 
         async function unfriend(publicCode) {
-            if (!await showConfirm({ message: t('cardholder_unfriend_confirm', 'Remove this friend?'), danger: true })) return;
+            if (!await showConfirm({ message: t('cardholder_unfriend_confirm', 'Remove this friend?'), danger: true, itemName: publicCode })) return;
             try {
                 await apiCall('DELETE', `/api/contacts/${publicCode}/unfriend`, {
                     deviceId: currentUser.deviceId,
