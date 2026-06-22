@@ -297,6 +297,7 @@
     <string name="claw_renderer_loading_entities">正在加载实体…</string>
     <string name="claw_renderer_loading_wallpaper">正在加载壁纸…</string>
     <string name="claw_wallpaper_loading_marker">加载中… (%1$s)</string>
+    <string name="claw_wallpaper_render_error">壁纸重绘错误，已上报</string>
     <string name="claw_renderer_no_entities_connected">无已连接实体</string>
     <string name="claw_renderer_open_app_to_bind">打开 E-Claw 应用进行绑定</string>
     <string name="claw_renderer_with_openclaw_bot">OpenClaw 机器人的实体</string>
