@@ -309,6 +309,7 @@ Tus comentarios enviados aparecerán aquí.</string>
     <string name="claw_renderer_loading_entities">Cargando entidades…</string>
     <string name="claw_renderer_loading_wallpaper">Cargando fondo de pantalla…</string>
     <string name="claw_wallpaper_loading_marker">Cargando… (%1$s)</string>
+    <string name="claw_wallpaper_render_error">Error al redibujar el fondo (reportado)</string>
     <string name="claw_renderer_no_entities_connected">No hay entidades conectadas</string>
     <string name="claw_renderer_open_app_to_bind">Abre la app E-Claw para vincular</string>
     <string name="claw_renderer_with_openclaw_bot">entidades con el bot OpenClaw</string>

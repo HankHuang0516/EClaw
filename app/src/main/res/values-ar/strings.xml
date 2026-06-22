@@ -584,6 +584,7 @@ GPS: عند الطلب فقط، بلا تتبع في الخلفية، تُفقد
     <string name="claw_renderer_loading_entities">جارٍ تحميل الكيانات…</string>
     <string name="claw_renderer_loading_wallpaper">جارٍ تحميل الخلفية…</string>
     <string name="claw_wallpaper_loading_marker">جارٍ التحميل… (%1$s)</string>
+    <string name="claw_wallpaper_render_error">خطأ في إعادة رسم الخلفية (تم الإبلاغ)</string>
     <string name="claw_renderer_no_entities_connected">لا توجد كيانات متصلة</string>
     <string name="claw_renderer_open_app_to_bind">افتح تطبيق E-Claw للربط</string>
     <string name="claw_renderer_with_openclaw_bot">الكيانات مع بوت OpenClaw</string>

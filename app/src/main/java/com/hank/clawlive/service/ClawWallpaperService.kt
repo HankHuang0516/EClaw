@@ -119,6 +119,58 @@ class ClawWallpaperService : WallpaperService() {
             }
         }
 
+        /**
+         * Authoritative check of whether the current surface is actually
+         * drawable, independent of the surfacePresent flag (which depends on
+         * onSurfaceCreated/Changed having fired). Used as the draw-loop gate and
+         * by the resume watchdog so a missed/late surface callback can no longer
+         * leave the wallpaper permanently black. (card_f9b2cc2d)
+         */
+        private fun surfaceValid(): Boolean =
+            try { surfaceHolder?.surface?.isValid == true } catch (e: Exception) { false }
+
+        // card_f9b2cc2d resume watchdog. A brief app-switch return can deliver
+        // onVisibilityChanged(true) WITHOUT a paired onSurfaceCreated, or the
+        // surface becomes valid a few hundred ms AFTER the callback. The 33ms
+        // draw loop only (re)schedules itself from inside draw(); if nothing
+        // kicks the first draw once the surface is valid, the loop stays dead →
+        // permanent black. This bounded retry burst re-attempts draw() at
+        // increasing delays after every resume entry point; the first attempt
+        // that finds a valid surface restarts the self-sustaining 33ms loop. If
+        // the whole window elapses while visible but the surface never becomes
+        // valid, it records a Crashlytics non-fatal so the genuinely-stuck case
+        // (deepest GL/surface level) is captured in the field.
+        private val resumeRetryDelaysMs = longArrayOf(100, 300, 600, 1200, 2500)
+        private var resumeWatchdogToken = 0
+
+        private fun kickDrawLoop(reason: String) {
+            // Supersede any in-flight watchdog burst.
+            val token = ++resumeWatchdogToken
+            if (visible && surfaceValid()) draw()
+            for (delay in resumeRetryDelaysMs) {
+                handler.postDelayed({
+                    if (token != resumeWatchdogToken || !visible) return@postDelayed
+                    if (surfaceValid()) {
+                        draw()
+                    } else if (delay == resumeRetryDelaysMs.last()) {
+                        reportStuckBlack(reason)
+                    }
+                }, delay)
+            }
+        }
+
+        private fun reportStuckBlack(reason: String) {
+            val msg = "wallpaper resume stuck black: reason=$reason visible=$visible " +
+                "surfaceValid=${surfaceValid()} surfacePresent=${lifecycle.surfacePresent}"
+            Timber.e(msg)
+            try {
+                com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance()
+                    .recordException(IllegalStateException(msg))
+            } catch (e: Exception) {
+                Timber.e(e, "crashlytics report failed")
+            }
+        }
+
         // Pure-JVM lifecycle state machine (card_f9b2cc2d). Source of truth for
         // whether engine-lifetime resources are still alive. Surface
         // destroy→recreate (an app-switch) must NOT tear down engineScope /
@@ -154,6 +206,8 @@ class ClawWallpaperService : WallpaperService() {
             observeStatus()
             observeUsage()
             observeKanban()
+            // Start the lifetime self-healing heartbeat (card_f9b2cc2d).
+            handler.postDelayed(healthHeartbeat, 1000L)
         }
 
         // Tracks which entityIds already have a companion-poller flow running so
@@ -267,6 +321,10 @@ class ClawWallpaperService : WallpaperService() {
             // cancels all pollers — the quota gate that prevents the /api/status
             // 429 storm. Engine-lifetime resources are untouched either way.
             lifecycle.onVisibilityChanged(visible)
+            // Resume watchdog: kick the draw loop independently of whether a
+            // paired onSurfaceCreated arrives, so a missed/late surface callback
+            // can't leave us black. (card_f9b2cc2d)
+            if (visible) kickDrawLoop("visibility")
         }
 
         override fun onTouchEvent(event: android.view.MotionEvent?) {
@@ -325,6 +383,7 @@ class ClawWallpaperService : WallpaperService() {
             // onSurfaceDestroyed, so this recovers without a process restart.
             // (card_f9b2cc2d)
             lifecycle.onSurfaceCreated()
+            kickDrawLoop("surfaceCreated")
         }
 
         override fun onSurfaceChanged(holder: SurfaceHolder?, format: Int, width: Int, height: Int) {
@@ -335,6 +394,7 @@ class ClawWallpaperService : WallpaperService() {
             // resume purposes so the very next frame repaints onto the new
             // surface. (card_f9b2cc2d)
             lifecycle.onSurfaceChanged()
+            kickDrawLoop("surfaceChanged")
         }
 
         override fun onSurfaceDestroyed(holder: SurfaceHolder?) {
@@ -366,12 +426,49 @@ class ClawWallpaperService : WallpaperService() {
             // The ONE place engine-lifetime resources are torn down. Reached when
             // the Engine itself is being destroyed (wallpaper deselected /
             // service stopped), not on a transient surface destroy. (card_f9b2cc2d)
+            // Invalidate any in-flight resume-watchdog burst so its pending
+            // posted lambdas become no-ops instead of firing against a dead engine.
+            resumeWatchdogToken++
+            handler.removeCallbacks(healthHeartbeat)
             lifecycle.onEngineDestroy()
             Timber.d("ClawEngine onDestroy — engine-lifetime resources released")
             super.onDestroy()
         }
 
         private var drawCount = 0
+        private var drawFailureCount = 0
+        private var lastGoodFrameMs = 0L
+
+        // card_f9b2cc2d self-healing heartbeat. The strongest reproduction of the
+        // black screen ("pure black, no marker text, only a full app restart
+        // recovers") is consistent with the 33ms draw loop having stopped while
+        // the wallpaper is actually on-screen, with NO lifecycle callback
+        // (onVisibilityChanged/onSurfaceCreated) arriving to restart it. Neither
+        // the resume watchdog (callback-triggered) nor the surfacePresent flag can
+        // recover that. This heartbeat runs for the engine's whole lifetime,
+        // independent of any callback and of the cached `visible` flag: every ~1s
+        // it consults the framework's authoritative isVisible and, if we should be
+        // showing and the surface is drawable but no frame has been posted for
+        // ~1s, it kicks draw() — which restarts the self-sustaining loop. Cost is
+        // one no-op handler tick/sec while healthy (the loop keeps lastGoodFrameMs
+        // fresh, so the kick only fires when the loop is genuinely dead).
+        private val healthHeartbeat = object : Runnable {
+            override fun run() {
+                try {
+                    val showing = try { isVisible } catch (e: Exception) { visible }
+                    if (showing && surfaceValid() &&
+                        android.os.SystemClock.uptimeMillis() - lastGoodFrameMs > 1000L) {
+                        Timber.w("healthHeartbeat: stale frame, kicking draw loop")
+                        draw()
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "healthHeartbeat error")
+                } finally {
+                    if (lifecycle.engineAlive) handler.postDelayed(this, 1000L)
+                }
+            }
+        }
+
         private fun draw() {
             val holder = surfaceHolder
             var canvas: Canvas? = null
@@ -398,11 +495,46 @@ class ClawWallpaperService : WallpaperService() {
                 } else if (drawCount <= 5) {
                 }
             } catch (e: Exception) {
-                Timber.e(e, "Error during drawing")
+                // card_f9b2cc2d ROOT-CAUSE CAPTURE + visible fallback. The
+                // reported "pure black, no text" on resume is consistent with
+                // drawMultiEntity drawing the black background and then THROWING
+                // while rendering entities (e.g. a recycled/released bitmap after
+                // an app-switch). The old code only Timber.e'd and the `finally`
+                // posted the half-drawn black canvas — silent black every 33ms,
+                // overwriting the loading markers, until a process restart. Now:
+                // (1) record the real exception to Crashlytics so the exact stack
+                // is captured in the field, and (2) overpaint a DISTINCT, visible
+                // error frame so the user never sees silent black and can report
+                // what they see.
+                drawFailureCount++
+                Timber.e(e, "Error during drawing (failure #$drawFailureCount)")
+                if (drawFailureCount <= 3 || drawFailureCount % 100 == 0) {
+                    try {
+                        com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().apply {
+                            setCustomKey("draw_failure_count", drawFailureCount)
+                            setCustomKey("entities", currentEntities.size)
+                            setCustomKey("hasFirstResponse", hasFirstResponse)
+                            setCustomKey("surfaceValid", surfaceValid())
+                            recordException(e)
+                        }
+                    } catch (ce: Exception) { Timber.e(ce, "crashlytics draw report failed") }
+                }
+                try {
+                    canvas?.let { c ->
+                        c.drawColor(0xFF2A0E0E.toInt()) // distinct dark red = render error (NOT black)
+                        c.drawText(
+                            this@ClawWallpaperService.getString(R.string.claw_wallpaper_render_error),
+                            c.width / 2f, c.height / 2f, loadingPaint
+                        )
+                    }
+                } catch (fe: Exception) { Timber.e(fe, "error-frame paint failed") }
             } finally {
                 if (canvas != null) {
                     try {
                         holder.unlockCanvasAndPost(canvas)
+                        // Record a successful posted frame so the self-healing
+                        // heartbeat can tell a live loop from a dead one. (card_f9b2cc2d)
+                        lastGoodFrameMs = android.os.SystemClock.uptimeMillis()
                     } catch (e: Exception) {
                         Timber.e(e, "Error unlocking canvas")
                     }
@@ -410,11 +542,18 @@ class ClawWallpaperService : WallpaperService() {
             }
 
             handler.removeCallbacks(drawRunnable)
-            // Loop only while shown AND a surface is present. The surfacePresent
-            // gate stops a 30fps no-op draw spin between a surface destroy and
-            // recreate now that onSurfaceDestroyed no longer clears `visible`
-            // (card_f9b2cc2d residual fix).
-            if (visible && lifecycle.surfacePresent) {
+            // Loop only while shown AND the REAL surface is valid. card_f9b2cc2d
+            // residual-black root cause: the gate used to read the
+            // `lifecycle.surfacePresent` FLAG, which is only set true by
+            // onSurfaceCreated/Changed. On a brief app-switch the framework can
+            // deliver onVisibilityChanged(true) WITHOUT a paired
+            // onSurfaceCreated (surface re-validated late, or the callback never
+            // re-fires), leaving the flag stuck false → the loop never
+            // rescheduled → permanent black until a process kill. Gating on the
+            // authoritative surfaceHolder.surface.isValid makes the loop
+            // self-heal: it runs whenever we are visible and the surface is
+            // actually drawable, regardless of which lifecycle callback fired.
+            if (visible && surfaceValid()) {
                 handler.postDelayed(drawRunnable, 33)
             }
         }
