@@ -44,7 +44,20 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
         super.onCreate()
         Timber.d("[TTS] Service created")
         createNotificationChannel()
-        startForeground(NOTIFICATION_ID, buildNotification("TTS 語音服務就緒"))
+        // Guard against ForegroundServiceStartNotAllowedException (Android 12+/API 31+):
+        // calling startForeground() while the app is background-restricted throws and crashes.
+        // Catch it, log gracefully, and stop the service instead of crashing.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            try {
+                startForeground(NOTIFICATION_ID, buildNotification("TTS 語音服務就緒"))
+            } catch (e: android.app.ForegroundServiceStartNotAllowedException) {
+                Timber.e(e, "[TTS] startForeground blocked — app is background-restricted (API ${Build.VERSION.SDK_INT}); stopping service gracefully")
+                stopSelf()
+                return
+            }
+        } else {
+            startForeground(NOTIFICATION_ID, buildNotification("TTS 語音服務就緒"))
+        }
         tts = TextToSpeech(this, this)
         observeTtsFlow()
     }
