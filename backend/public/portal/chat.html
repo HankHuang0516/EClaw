@@ -7551,7 +7551,7 @@
             // state-backing (card_02d16858). Contacts keep their hidden
             // .target-contact-check backing; Select-all stays ENTITY-only (#6),
             // so contact rows use data-picker-contact (not data-picker-entity).
-            if (Array.isArray(contacts) && contacts.length > 0) {
+            if (typeof contacts !== 'undefined' && Array.isArray(contacts) && contacts.length > 0) {
                 const secLabel = document.createElement('div');
                 secLabel.className = 'sendto-picker-section-label';
                 secLabel.textContent = (i18n && i18n.t) ? (i18n.t('chat_contacts_section') || 'Contacts') : 'Contacts';
