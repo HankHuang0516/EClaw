@@ -296,6 +296,7 @@
     <string name="wallpaper_no_bound_entities">バインドされたエンティティがありません</string>
     <string name="claw_renderer_loading_entities">エンティティを読み込み中…</string>
     <string name="claw_renderer_loading_wallpaper">壁紙を読み込み中…</string>
+    <string name="claw_wallpaper_loading_marker">読み込み中… (%1$s)</string>
     <string name="claw_renderer_no_entities_connected">接続されたエンティティがありません</string>
     <string name="claw_renderer_open_app_to_bind">バインドするにはE-Clawアプリを開く</string>
     <string name="claw_renderer_with_openclaw_bot">OpenClawボットのエンティティ</string>

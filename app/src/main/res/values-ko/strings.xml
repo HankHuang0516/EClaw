@@ -296,6 +296,7 @@
     <string name="wallpaper_no_bound_entities">바인드된 엔티티가 없습니다</string>
     <string name="claw_renderer_loading_entities">엔티티 로딩 중…</string>
     <string name="claw_renderer_loading_wallpaper">배경화면 로딩 중…</string>
+    <string name="claw_wallpaper_loading_marker">로딩 중… (%1$s)</string>
     <string name="claw_renderer_no_entities_connected">연결된 엔티티 없음</string>
     <string name="claw_renderer_open_app_to_bind">바인드하려면 E-Claw 앱 열기</string>
     <string name="claw_renderer_with_openclaw_bot">OpenClaw 봇의 엔티티</string>

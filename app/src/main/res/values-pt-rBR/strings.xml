@@ -520,6 +520,7 @@
     <string name="wallpaper_no_bound_entities">Sem entidades vinculadas</string>
     <string name="claw_renderer_loading_entities">Carregando entidades…</string>
     <string name="claw_renderer_loading_wallpaper">Carregando papel de parede…</string>
+    <string name="claw_wallpaper_loading_marker">Carregando… (%1$s)</string>
     <string name="claw_renderer_no_entities_connected">Nenhuma entidade conectada</string>
     <string name="claw_renderer_open_app_to_bind">Abra o aplicativo E-Claw para vincular</string>
     <string name="claw_renderer_with_openclaw_bot">entidades com bot OpenClaw</string>
