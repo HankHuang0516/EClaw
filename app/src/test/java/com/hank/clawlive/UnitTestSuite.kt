@@ -20,6 +20,7 @@ import org.junit.runners.Suite
     MessageRequestFormatTest::class,
     ChatEchoSuppressionTest::class,
     WallpaperWanderControllerTest::class,
+    EngineLifecycleControllerTest::class,
     CompanionDescriptorAnimationTest::class,
     NotificationPreferenceCatalogTest::class,
     SettingsManifestResolverTest::class,
