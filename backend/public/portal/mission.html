@@ -2886,7 +2886,9 @@
         }
 
         async function deleteNotePage(noteId) {
-            if (!await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) return;
+            const note = dashboard.notes.find(n => n.id === noteId);
+            const itemName = note ? (note.title || note.id) : noteId;
+            if (!await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) return;
             try {
                 await apiCall('DELETE', '/api/mission/note/page', {
                     deviceId: currentUser.deviceId,
@@ -3368,7 +3370,9 @@
         }
 
         async function deleteSkill(id) {
-            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
+            const skill = dashboard.skills.find(s => s.id === id);
+            const itemName = skill ? (skill.title || skill.id) : id;
+            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) {
                 dashboard.skills = dashboard.skills.filter(s => s.id !== id);
                 markChanged();
                 renderSkills();
@@ -3384,7 +3388,9 @@
             menu.style.top = e.clientY + 'px';
 
             menu.querySelector('.context-menu-item').onclick = async () => {
-                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
+                const skill = dashboard.skills.find(s => s.id === id);
+                const itemName = skill ? (skill.title || skill.id) : id;
+                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) {
                     dashboard.skills = dashboard.skills.filter(s => s.id !== id);
                     markChanged();
                     renderSkills();
@@ -3495,7 +3501,9 @@
         }
 
         async function deleteRule(id) {
-            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
+            const rule = dashboard.rules.find(r => r.id === id);
+            const itemName = rule ? (rule.name || rule.id) : id;
+            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) {
                 dashboard.rules = dashboard.rules.filter(r => r.id !== id);
                 markChanged();
                 renderRules();
@@ -3511,7 +3519,9 @@
             menu.style.top = e.clientY + 'px';
 
             menu.querySelector('.context-menu-item').onclick = async () => {
-                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
+                const rule = dashboard.rules.find(r => r.id === id);
+                const itemName = rule ? (rule.name || rule.id) : id;
+                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) {
                     dashboard.rules = dashboard.rules.filter(r => r.id !== id);
                     markChanged();
                     renderRules();
@@ -3708,7 +3718,9 @@
         }
 
         async function deleteSoul(id) {
-            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
+            const soul = dashboard.souls.find(s => s.id === id);
+            const itemName = soul ? (soul.name || soul.id) : id;
+            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) {
                 dashboard.souls = dashboard.souls.filter(s => s.id !== id);
                 markChanged();
                 renderSouls();
@@ -3724,7 +3736,9 @@
             menu.style.top = e.clientY + 'px';
 
             menu.querySelector('.context-menu-item').onclick = async () => {
-                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
+                const soul = dashboard.souls.find(s => s.id === id);
+                const itemName = soul ? (soul.name || soul.id) : id;
+                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) {
                     dashboard.souls = dashboard.souls.filter(s => s.id !== id);
                     markChanged();
                     renderSouls();

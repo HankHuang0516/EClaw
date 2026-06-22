@@ -5412,7 +5412,7 @@
             if (event) event.stopPropagation();
             const contact = contacts.find(c => c.publicCode === publicCode);
             const name = contact ? (contact.name || contact.publicCode) : publicCode;
-            if (!await showConfirm({ message: i18n.t('chat_contacts_remove_confirm').replace('{name}', name), danger: true })) return;
+            if (!await showConfirm({ message: i18n.t('chat_contacts_remove_confirm').replace('{name}', name), danger: true, itemName: name })) return;
             try {
                 await apiCall('DELETE', '/api/contacts', {
                     deviceId: currentUser.deviceId,
@@ -8473,7 +8473,8 @@
         async function schedCancel(id) {
             const ok = await showConfirm({
                 message: i18n.t('chat_schedule_delete_confirm') || 'Cancel this scheduled message?',
-                danger: true
+                danger: true,
+                itemName: id
             });
             if (!ok) return;
             try {
@@ -8845,7 +8846,7 @@
             }
         }
         async function deleteR2File(fileId) {
-            if (!await showConfirm({ message: '確定刪除這個檔案？（無法復原）', danger: true })) return;
+            if (!await showConfirm({ message: '確定刪除這個檔案？（無法復原）', danger: true, itemName: fileId })) return;
             try {
                 const res = await fetch(API_BASE + '/api/files/' + encodeURIComponent(fileId), {
                     method: 'DELETE',

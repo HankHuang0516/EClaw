@@ -3379,7 +3379,7 @@
             const msg = rosterT(confirmKey, action === 'manual_rebind'
                 ? `This will terminate ${activeCount} active rentals and issue refunds from your wallet. Continue?`
                 : 'Apply this manual owner action?');
-            const ok = await showConfirm({ title: rosterT('settings_roster_confirm_title', 'Confirm roster action'), message: msg, danger: ['archive','manual_rebind'].includes(action) });
+            const ok = await showConfirm({ title: rosterT('settings_roster_confirm_title', 'Confirm roster action'), message: msg, itemName: targetId, danger: ['archive','manual_rebind'].includes(action) });
             if (!ok) return;
             try {
                 if (targetType === 'listing') {

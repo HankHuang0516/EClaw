@@ -1463,7 +1463,7 @@
         }
 
         async function revokeSkill(skillId) {
-            if (!await showConfirm({ message: i18n.t('skill_contrib_revoke_confirm'), danger: true })) return;
+            if (!await showConfirm({ message: i18n.t('skill_contrib_revoke_confirm'), danger: true, itemName: skillId })) return;
             try {
                 await apiCall('DELETE', '/api/skill-templates/' + encodeURIComponent(skillId));
                 showToast(i18n.t('skill_contrib_revoked'), 'success');
@@ -1474,7 +1474,7 @@
         }
 
         async function revokeSoul(soulId) {
-            if (!await showConfirm({ message: i18n.t('soul_contrib_revoke_confirm'), danger: true })) return;
+            if (!await showConfirm({ message: i18n.t('soul_contrib_revoke_confirm'), danger: true, itemName: soulId })) return;
             try {
                 await apiCall('DELETE', '/api/soul-templates/' + encodeURIComponent(soulId));
                 showToast(i18n.t('soul_contrib_revoked'), 'success');
@@ -1485,7 +1485,7 @@
         }
 
         async function revokeRule(ruleId) {
-            if (!await showConfirm({ message: i18n.t('rule_contrib_revoke_confirm'), danger: true })) return;
+            if (!await showConfirm({ message: i18n.t('rule_contrib_revoke_confirm'), danger: true, itemName: ruleId })) return;
             try {
                 await apiCall('DELETE', '/api/rule-templates/' + encodeURIComponent(ruleId));
                 showToast(i18n.t('rule_contrib_revoked'), 'success');
