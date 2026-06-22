@@ -12089,9 +12089,15 @@ app.post('/api/client/speak', idempotencyMiddleware, clientSpeakDedupeMiddleware
             console.warn(`[Push] ✗ No webhook registered for Device ${deviceId} Entity ${eId} - client will show dialog`);
             serverLog('warn', 'client_push', `Entity ${eId} no webhook`, { deviceId, entityId: eId });
         } else {
-            // No condition matched — entity is unbound or in unexpected state (#181 diagnostic)
-            console.warn(`[Push] ✗ Entity ${eId} skipped: bindingType=${entity.bindingType}, webhook=${!!entity.webhook}, isBound=${entity.isBound}`);
-            serverLog('warn', 'client_push', `Entity ${eId} skipped (no push condition matched)`, { deviceId, entityId: eId, metadata: { bindingType: entity.bindingType, hasWebhook: !!entity.webhook, isBound: entity.isBound } });
+            // Entity is UNBOUND (no bot bound to this slot) — there is nothing to
+            // push to, so skipping is expected, not an error. Real delivery gaps
+            // are still surfaced at warn by the branches above (push failed /
+            // bound-but-no-webhook). The #181 diagnostic that justified `warn`
+            // here is resolved; an unbound slot being skipped is a routine no-op,
+            // so log it at debug to keep severity == reality (no false ErrLog
+            // pages, e.g. a released free-bot slot). card_ ErrLog triage.
+            console.debug(`[Push] Entity ${eId} skipped (unbound): bindingType=${entity.bindingType}, webhook=${!!entity.webhook}, isBound=${entity.isBound}`);
+            serverLog('debug', 'client_push', `Entity ${eId} skipped (unbound — no push target)`, { deviceId, entityId: eId, metadata: { bindingType: entity.bindingType, hasWebhook: !!entity.webhook, isBound: entity.isBound } });
         }
 
         // Determine binding type for this entity
