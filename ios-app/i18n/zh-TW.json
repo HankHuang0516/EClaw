@@ -265,7 +265,10 @@
     "feature_gated_badge": "更新 App 以使用原生畫面",
     "feature_gated_help": "此設定在較新版本的 App 中有原生畫面。請更新 App 以在此使用，或先在網頁版開啟。",
     "feature_web_help": "此設定會在網頁檢視中開啟，因為這個 App 版本尚未內建原生畫面。你現在可以在網頁版使用。",
-    "open_on_web": "在網頁開啟"
+    "open_on_web": "在網頁開啟",
+    "update_available": "有可用更新 · v{{latest}}",
+    "update_help_title": "有 App 更新",
+    "update_help_body": "有新版本(v{{latest}}),你目前是 v{{current}}。點「更新」開啟 App Store,在那裡點 Update 安裝 — Apple 不允許 App 內直接安裝。"
   },
   "entity": {
     "rename": "重新命名實體",

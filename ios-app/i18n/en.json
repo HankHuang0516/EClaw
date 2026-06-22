@@ -265,7 +265,10 @@
     "feature_gated_badge": "Update app for native screen",
     "feature_gated_help": "This setting has a native screen in a newer app version. Update the app to get it here, or open it on the web now.",
     "feature_web_help": "This setting opens in a web view because the native screen isn't in this app version yet. You can use it on the web now.",
-    "open_on_web": "Open on web"
+    "open_on_web": "Open on web",
+    "update_available": "Update available · v{{latest}}",
+    "update_help_title": "App update available",
+    "update_help_body": "A newer version (v{{latest}}) is available; you are on v{{current}}. Tap Update to open the App Store, then tap Update there to install — Apple does not allow in-app installs."
   },
   "entity": {
     "rename": "Rename Entity",
