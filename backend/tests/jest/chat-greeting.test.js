@@ -18,4 +18,13 @@ describe('greet banner — theme-token regression guard (card_079ea943)', () => 
             expect(tokens).toMatch(new RegExp(t.replace(/[-]/g, '\\-') + '\\s*:'));
         }
     });
+    test('returning-topic text wraps inline on mobile instead of flex columns', () => {
+        const ruleStart = src.indexOf('.greet-banner-text {');
+        const ruleEnd = src.indexOf('.greet-chips', ruleStart);
+        const rule = src.slice(ruleStart, ruleEnd);
+
+        expect(rule).toMatch(/display:\s*block/);
+        expect(rule).toMatch(/overflow-wrap:\s*anywhere/);
+        expect(rule).not.toMatch(/display:\s*flex/);
+    });
 });
