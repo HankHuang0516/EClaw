@@ -15,6 +15,17 @@ function getAnthropicClient() {
     return _anthropicClient;
 }
 
+// user_accounts.id is a Postgres `uuid`. Some callers in this file authenticate
+// by device secret only (no account) and synthesize a non-account principal
+// `req.user.userId = \`device_<deviceId>\``. Feeding that into a `WHERE id = $1`
+// uuid query throws `invalid input syntax for type uuid` and spams ERROR logs,
+// even though such device sessions can never be a user_accounts admin. Gate any
+// admin lookup on this so non-uuid principals short-circuit before the query.
+const ACCOUNT_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isAccountUuid(userId) {
+    return typeof userId === 'string' && ACCOUNT_UUID_RE.test(userId);
+}
+
 module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstructions, feedbackModule }) {
     const router = express.Router();
 
@@ -62,7 +73,12 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
     // `try{...} catch (_) {}` blocks which hid schema drift on user_accounts
     // (e.g. is_admin column rename would lock every admin out invisibly).
     async function resolveIsAdmin(userId) {
-        if (!userId) return false;
+        // Non-account principals (notably the device-secret `device_<deviceId>`
+        // synthetic ids set below) are never user_accounts admins and would
+        // throw `invalid input syntax for type uuid` against the uuid `id`
+        // column — short-circuit before the query instead of catching+logging
+        // a guaranteed miss as an ERROR.
+        if (!isAccountUuid(userId)) return false;
         try {
             const r = await chatPool.query('SELECT is_admin FROM user_accounts WHERE id = $1', [userId]);
             return r.rows[0]?.is_admin || false;
@@ -1827,3 +1843,6 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
 
     return { router, initSupportTable, closeIssue };
 };
+
+// Exported for unit testing the admin-principal guard (see resolveIsAdmin).
+module.exports.isAccountUuid = isAccountUuid;
