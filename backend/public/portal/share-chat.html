@@ -40,6 +40,19 @@
         .badge-online { background: #22c55e22; color: #22c55e; }
         .badge-offline { background: #94a3b822; color: #94a3b8; }
 
+        /* -- Share context -- */
+        .share-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; background: var(--input-bg); border: 1px solid var(--card-border); border-radius: var(--radius); margin-bottom: 8px; }
+        .share-meta[data-auth-state="ready"] { border-color: rgba(34,197,94,0.35); }
+        .share-meta[data-auth-state="verify"] { border-color: rgba(245,158,11,0.45); }
+        .share-meta[data-auth-state="error"] { border-color: rgba(239,68,68,0.45); }
+        .share-meta-main { min-width: 0; }
+        .share-meta-label { font-size: 13px; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .share-meta-status { margin-top: 2px; font-size: 12px; line-height: 1.35; color: var(--text-secondary); overflow-wrap: anywhere; }
+        .share-meta-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .copy-share-btn { min-height: 32px; padding: 7px 12px; border: 1px solid var(--card-border); border-radius: var(--radius-pill); background: var(--card); color: var(--text); font-size: 12px; font-weight: 700; cursor: pointer; }
+        .copy-share-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .copy-share-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
         /* ── Sender selector ── */
         .sender-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--input-bg); border: 1px solid var(--card-border); border-radius: var(--radius); margin-bottom: 8px; font-size: 13px; }
         .sender-bar label { color: var(--text-muted); white-space: nowrap; }
@@ -188,6 +201,22 @@
         .proxy-cta-text { font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 8px; font-weight: 500; }
         .proxy-cta-btn { display: inline-block; padding: 8px 20px; background: #fff; color: var(--primary); font-size: 13px; font-weight: 700; border-radius: 20px; text-decoration: none; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
         .proxy-cta-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+        @media (max-width: 520px) {
+            .share-chat-wrap { height: 100dvh; padding: 12px; }
+            .entity-header { align-items: flex-start; }
+            .entity-header .info { min-width: 0; }
+            .entity-header .info .name,
+            .entity-header .info .desc { overflow-wrap: anywhere; }
+            .share-meta { align-items: stretch; flex-direction: column; }
+            .share-meta-label { white-space: normal; }
+            .share-meta-actions,
+            .copy-share-btn { width: 100%; }
+            .copy-share-btn { justify-content: center; }
+            .sender-bar { align-items: stretch; flex-direction: column; }
+            .input-bar { gap: 6px; }
+            .input-bar button { min-width: 72px; padding-inline: 12px; }
+        }
     </style>
 <script type="application/ld+json" id="jsonld-data"></script>
 </head>
@@ -204,6 +233,17 @@
                 <div class="desc" id="entityDesc"></div>
             </div>
             <span class="badge badge-offline" id="entityBadge" data-i18n="sc_offline">offline</span>
+        </div>
+
+        <!-- Share and delivery state -->
+        <div class="share-meta" id="shareChatStatusPanel" data-auth-state="loading" aria-live="polite">
+            <div class="share-meta-main">
+                <div class="share-meta-label" id="shareTargetLabel" data-i18n="sc_share_chat_title">Share chat link</div>
+                <div class="share-meta-status" id="shareStatusText" data-i18n="sc_loading">Loading...</div>
+            </div>
+            <div class="share-meta-actions">
+                <button type="button" class="copy-share-btn" id="copyShareLinkBtn" onclick="copyShareLink()" aria-label="Copy share chat link" data-i18n="sc_copy" disabled>Copy</button>
+            </div>
         </div>
 
         <!-- Sender selector (hidden for unregistered) -->
@@ -416,6 +456,91 @@
         return typeof i18n !== 'undefined' ? i18n.t(key) : fallback;
     }
 
+    function shareLinkUrl() {
+        if (!targetCode) return window.location.href;
+        return `${window.location.origin}/c/${encodeURIComponent(targetCode)}`;
+    }
+
+    function setShareStatus(state, message) {
+        const panel = document.getElementById('shareChatStatusPanel');
+        const label = document.getElementById('shareTargetLabel');
+        const text = document.getElementById('shareStatusText');
+        const copyBtn = document.getElementById('copyShareLinkBtn');
+        if (panel && state) panel.dataset.authState = state;
+        if (label) {
+            const name = targetEntity && (targetEntity.name || targetEntity.publicCode || targetCode);
+            label.textContent = name
+                ? t('sc_chat_with', 'Chat with {name}').replace('{name}', name)
+                : t('sc_share_chat_title', 'Share chat link');
+        }
+        if (text) text.textContent = message || t('sc_loading', 'Loading...');
+        if (copyBtn) {
+            copyBtn.disabled = !targetCode;
+            if (targetCode) copyBtn.title = shareLinkUrl();
+            else copyBtn.removeAttribute('title');
+        }
+    }
+
+    function updateShareStatusPanel() {
+        if (!targetCode || targetCode.length < 4) {
+            setShareStatus('error', t('sc_invalid_link', 'Invalid link'));
+            return;
+        }
+        if (!targetEntity) {
+            setShareStatus('loading', t('sc_loading', 'Loading...'));
+            return;
+        }
+        if (!currentUser) {
+            setShareStatus('guest', t('sc_start_conversation', 'Start the conversation!'));
+            return;
+        }
+        if (!emailVerified) {
+            setShareStatus('verify', t('sc_send_verify_required_tip', 'Please verify your email before sending messages'));
+            return;
+        }
+        const sender = document.getElementById('senderSelect');
+        const selected = sender && sender.selectedOptions && sender.selectedOptions[0]
+            ? sender.selectedOptions[0].textContent
+            : t('sc_me', 'Me');
+        setShareStatus('ready', `${t('sc_send_as', 'Send as:')} ${selected}`);
+    }
+
+    function copyTextFallback(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try {
+            ok = document.execCommand('copy');
+        } catch (_) {
+            ok = false;
+        }
+        ta.remove();
+        if (!ok) throw new Error('copy failed');
+    }
+
+    async function copyShareLink() {
+        const url = shareLinkUrl();
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(url);
+            } else {
+                copyTextFallback(url);
+            }
+            showToast(t('sc_link_copied', 'Link copied!'), 'success');
+            setShareStatus('copied', t('sc_link_copied', 'Link copied!'));
+            setTimeout(updateShareStatusPanel, 2400);
+        } catch (e) {
+            dbg('warn', `Share link copy failed: ${e.message}`);
+            showToast(t('sc_copy_failed', 'Copy failed'), 'error');
+            updateShareStatusPanel();
+        }
+    }
+
     // State
     let currentUser = null;     // null = not logged in
     let emailVerified = false;
@@ -437,6 +562,7 @@
         const urlCode = new URLSearchParams(window.location.search).get('code') || '';
         targetCode = (cIndex >= 0 && parts[cIndex + 1]) ? parts[cIndex + 1] : urlCode;
         dbg('info', `Target code extracted: "${targetCode}"`, { pathParts: parts, urlCode });
+        updateShareStatusPanel();
 
         if (!targetCode || targetCode.length < 4) {
             dbg('error', 'Invalid target code — too short or empty');
@@ -455,10 +581,12 @@
                 dbg('error', 'Entity not found', data);
                 document.getElementById('entityName').textContent = t('sc_entity_not_found', 'Entity not found');
                 document.getElementById('sendBtn').disabled = true;
+                setShareStatus('error', t('sc_entity_not_found', 'Entity not found'));
                 return;
             }
             targetEntity = data.entity;
             renderEntityHeader(targetEntity);
+            updateShareStatusPanel();
 
             // Update OG meta for link previews
             document.title = t('sc_chat_with', 'Chat with {name}').replace('{name}', targetEntity.name || targetCode) + ' - EClawbot';
@@ -496,6 +624,7 @@
             dbg('error', `Lookup failed: ${e.message}`);
             document.getElementById('entityName').textContent = t('sc_failed_to_load', 'Failed to load');
             document.getElementById('sendBtn').disabled = true;
+            setShareStatus('error', t('sc_failed_to_load', 'Failed to load'));
             return;
         }
 
@@ -506,6 +635,7 @@
         document.getElementById('msgInput').addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
         });
+        document.getElementById('senderSelect').addEventListener('change', updateShareStatusPanel);
 
         // First focus on input when logged-in-but-unverified → surface verify modal once,
         // so the user doesn't type a message thinking it'll be delivered.
@@ -562,6 +692,7 @@
             if (!resp.ok) {
                 dbg('warn', `Auth failed (${resp.status}) — user not logged in`);
                 currentUser = null;
+                updateShareStatusPanel();
                 return;
             }
             const data = await resp.json();
@@ -578,16 +709,19 @@
             } else {
                 dbg('warn', 'Auth response not successful', data);
                 currentUser = null;
+                updateShareStatusPanel();
             }
         } catch (e) {
             dbg('error', `Auth check error: ${e.message}`);
             currentUser = null;
+            updateShareStatusPanel();
         }
     }
 
     function onAuthReady() {
         dbg('info', 'onAuthReady called', { emailVerified, hasUser: !!currentUser, deviceId: currentUser?.deviceId });
         updateSendButtonState();
+        updateShareStatusPanel();
         // Show sender selector only for verified users
         if (emailVerified) {
             dbg('info', 'Email verified — loading entities, chat history, starting poll');
@@ -616,6 +750,7 @@
                     select.appendChild(opt);
                 }
             });
+            updateShareStatusPanel();
         } catch (e) { /* ignore */ }
     }
 
@@ -662,6 +797,7 @@
             }
             // Ensure verification polling is running
             if (!verifyPollTimer) startVerificationPolling();
+            setShareStatus('verify', t('sc_message_queued', 'Message queued (email verification required)'));
             // Always surface the verify modal so user understands why their message is gray
             showVerifyEmailModal();
             return;
@@ -1120,6 +1256,7 @@
                 await checkAuthSilent();
             }
             updateSendButtonState();
+            updateShareStatusPanel();
 
             // Save pending message to DB so it survives page reload
             const saved = pendingText;
@@ -1210,6 +1347,7 @@
             btn.disabled = false;
             btn.removeAttribute('title');
         }
+        updateShareStatusPanel();
     }
     function showVerifyEmailModal() {
         const addr = document.getElementById('verifyEmailAddr');
@@ -1285,6 +1423,7 @@
 
                     onAuthReady();
                     showToast(t('sc_email_verified', 'Email verified! You can now chat.'), 'success');
+                    updateShareStatusPanel();
                 }
             } catch (e) {
                 dbg('error', `Verification poll error: ${e.message}`);
