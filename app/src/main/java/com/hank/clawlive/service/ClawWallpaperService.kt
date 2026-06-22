@@ -1,11 +1,14 @@
 package com.hank.clawlive.service
 
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.os.Handler
 import android.os.Looper
 import android.service.wallpaper.WallpaperService
 import android.view.SurfaceHolder
 import timber.log.Timber
+import com.hank.clawlive.R
 import com.hank.clawlive.engine.ClawRenderer
 import com.hank.clawlive.engine.EngineLifecycleController
 import com.hank.clawlive.data.model.AgentStatus
@@ -74,6 +77,47 @@ class ClawWallpaperService : WallpaperService() {
         private var hasFirstResponse = false
 
         private val drawRunnable = Runnable { draw() }
+
+        // card_f9b2cc2d diagnostic+mitigation: paint for the multi-level loading
+        // markers. Each black-screen-prone entry point paints a DISTINCT labelled
+        // "Loading… (<where>)" frame DIRECTLY (independent of the draw loop), so
+        // (a) the user never sees raw black on resume, and (b) which label shows
+        // tells us exactly which path was hit (vs still-pure-black = the Engine
+        // never even got the callback → deepest surface/GL level).
+        private val loadingPaint = Paint().apply {
+            color = Color.WHITE
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+            textSize = 38f
+        }
+
+        /**
+         * Lock the surface and paint ONE labelled loading frame immediately,
+         * bypassing the draw loop. Safe to call from any lifecycle callback —
+         * if the real draw loop then runs it simply overwrites this; if it does
+         * NOT (the bug), this stays on screen instead of black. `where` is the
+         * diagnostic marker (surface / resume / changed).
+         */
+        private fun paintLoadingMarker(where: String, holder: SurfaceHolder? = surfaceHolder) {
+            val h = holder ?: return
+            var canvas: Canvas? = null
+            try {
+                canvas = h.lockCanvas() ?: return
+                canvas.drawColor(0xFF0B1220.toInt()) // dark navy — deliberate surface, not black
+                val cx = canvas.width / 2f
+                val cy = canvas.height / 2f
+                val label = this@ClawWallpaperService.getString(
+                    R.string.claw_wallpaper_loading_marker, where
+                )
+                canvas.drawText(label, cx, cy, loadingPaint)
+            } catch (e: Exception) {
+                Timber.e(e, "paintLoadingMarker($where) failed")
+            } finally {
+                if (canvas != null) {
+                    try { h.unlockCanvasAndPost(canvas) } catch (e: Exception) { Timber.e(e, "marker unlock failed") }
+                }
+            }
+        }
 
         // Pure-JVM lifecycle state machine (card_f9b2cc2d). Source of truth for
         // whether engine-lifetime resources are still alive. Surface
@@ -212,6 +256,11 @@ class ClawWallpaperService : WallpaperService() {
         override fun onVisibilityChanged(visible: Boolean) {
             this.visible = visible
             Timber.d("onVisibilityChanged: $visible")
+            // Becoming visible (returning to the home screen) is the moment the
+            // app-switch black is reported. Paint "Loading… (resume)" directly so
+            // the very first visible frame is never raw black; the draw loop (if
+            // it resumes via the controller below) overwrites it immediately.
+            if (visible) paintLoadingMarker("resume")
             // Delegate to the lifecycle controller. When shown it restarts any
             // poller that was cancelled while hidden (card_a7baa3b0b1151099d4523428
             // close-out) and redraws. When hidden it stops the draw loop and
@@ -263,6 +312,12 @@ class ClawWallpaperService : WallpaperService() {
         override fun onSurfaceCreated(holder: SurfaceHolder?) {
             super.onSurfaceCreated(holder)
             Timber.d("onSurfaceCreated")
+            // Paint a labelled loading frame on the FRESH surface immediately,
+            // before the draw loop is asked to resume. If the loop resumes it
+            // overwrites this within ~33ms; if it does NOT (the persistent-black
+            // bug) the user sees "Loading… (surface)" instead of raw black, and
+            // the label tells us the surface WAS recreated but the loop stalled.
+            paintLoadingMarker("surface", holder)
             // Surface is back (e.g. returning from an app-switch). The framework
             // has already pointed `surfaceHolder` at the new surface. Resume
             // rendering if visible — restart any poller that went inactive and
@@ -275,6 +330,7 @@ class ClawWallpaperService : WallpaperService() {
         override fun onSurfaceChanged(holder: SurfaceHolder?, format: Int, width: Int, height: Int) {
             super.onSurfaceChanged(holder, format, width, height)
             Timber.d("onSurfaceChanged ${width}x$height")
+            paintLoadingMarker("changed", holder)
             // Geometry/format change (rotation, etc.). Treat like a recreate for
             // resume purposes so the very next frame repaints onto the new
             // surface. (card_f9b2cc2d)

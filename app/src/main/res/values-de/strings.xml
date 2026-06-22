@@ -582,6 +582,7 @@ Bei Fragen kontaktieren Sie uns über unsere offizielle E-Mail.
     <string name="wallpaper_no_bound_entities">Keine gebundenen Entitäten</string>
     <string name="claw_renderer_loading_entities">Entitäten werden geladen…</string>
     <string name="claw_renderer_loading_wallpaper">Hintergrund wird geladen…</string>
+    <string name="claw_wallpaper_loading_marker">Wird geladen… (%1$s)</string>
     <string name="claw_renderer_no_entities_connected">Keine Entitäten verbunden</string>
     <string name="claw_renderer_open_app_to_bind">E-Claw App öffnen zum Binden</string>
     <string name="claw_renderer_with_openclaw_bot">Entitäten mit OpenClaw-Bot</string>
