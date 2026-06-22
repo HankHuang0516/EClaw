@@ -620910,6 +620910,19 @@ const TRANSLATIONS = {
 
 
         "pub_platforms_loading": "Loading platforms…",
+        "pub_result_loading": "Loading publisher platforms",
+        "pub_result_meta_idle": "Choose a ready platform to compose a post.",
+        "pub_result_error": "Platform list did not load.",
+        "pub_result_ready": "Showing {count} publisher platforms",
+        "pub_result_filtered": "Showing {count} {filter} platforms",
+        "pub_result_meta_counts": "{ready} ready · {unconfigured} need setup · {composeReady} compose forms",
+        "pub_result_meta_selected": "Selected: {platform}",
+        "pub_filter_all": "All",
+        "pub_filter_ready": "Ready",
+        "pub_filter_unconfigured": "Needs setup",
+        "pub_filter_compose": "Compose forms",
+        "pub_clear_filters": "Clear filter",
+        "pub_no_filtered_platforms": "No platforms match this filter.",
 
 
 
@@ -622446,6 +622459,8 @@ const TRANSLATIONS = {
 
 
         "pub_chip_rate_day": "/day",
+        "pub_chip_drafts_only": "Drafts only",
+        "pub_chip_no_form": "API only",
 
 
 
@@ -1235063,6 +1235078,19 @@ const TRANSLATIONS = {
         "pub_platforms_title": "平台",
         "pub_btn_refresh": "重新整理",
         "pub_platforms_loading": "正在載入平台…",
+        "pub_result_loading": "正在載入發布平台",
+        "pub_result_meta_idle": "選擇已就緒的平台來撰寫貼文。",
+        "pub_result_error": "平台清單載入失敗。",
+        "pub_result_ready": "顯示 {count} 個發布平台",
+        "pub_result_filtered": "顯示 {count} 個{filter}平台",
+        "pub_result_meta_counts": "{ready} 個就緒 · {unconfigured} 個需設定 · {composeReady} 個可撰寫表單",
+        "pub_result_meta_selected": "已選擇：{platform}",
+        "pub_filter_all": "全部",
+        "pub_filter_ready": "就緒",
+        "pub_filter_unconfigured": "需設定",
+        "pub_filter_compose": "撰寫表單",
+        "pub_clear_filters": "清除篩選",
+        "pub_no_filtered_platforms": "沒有符合此篩選的平台。",
         "pub_compose_title": "撰寫",
         "pub_btn_clear": "清除",
         "pub_btn_publish": "發布",
@@ -1235075,6 +1235103,8 @@ const TRANSLATIONS = {
         "pub_chip_unconfigured": "未設定",
         "pub_chip_rate": "速率：",
         "pub_chip_rate_day": "/天",
+        "pub_chip_drafts_only": "僅草稿",
+        "pub_chip_no_form": "僅 API",
         "pub_compose_draftsonly": "僅草稿",
         "pub_compose_no_schema": "此平台尚未定義撰寫表單 — 請直接透過 API 發布，或新增結構描述。",
         "pub_err_no_key": "請先在頁面上方儲存你的 Publisher API key。",
