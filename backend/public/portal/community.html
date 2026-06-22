@@ -1635,7 +1635,55 @@
         </div>`;
     }
 
-    function filterAndSort() { updateResultPanel(); loadBots(); }
+    function filterAndSort() { syncFiltersToUrl(); updateResultPanel(); loadBots(); }
+
+    // card_f6b61c8: persist the active filters in the URL (history.replaceState)
+    // so a refresh / back-nav / shared link keeps the user's search+sort+rate
+    // instead of resetting to the default plaza. Only manages its own keys so
+    // unrelated params (embed/tour/bot/#rental) are preserved. Never throws.
+    function syncFiltersToUrl() {
+        try {
+            const p = new URLSearchParams(window.location.search);
+            searchQuery ? p.set('q', searchQuery) : p.delete('q');
+            (currentSort && currentSort !== 'newest') ? p.set('sort', currentSort) : p.delete('sort');
+            (rateMin > 1) ? p.set('rateMin', String(rateMin)) : p.delete('rateMin');
+            (rateMax < 50) ? p.set('rateMax', String(rateMax)) : p.delete('rateMax');
+            const qs = p.toString();
+            history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+        } catch (_) { /* URL sync must never break filtering */ }
+    }
+
+    // card_f6b61c8: on load, restore filters from the URL into state + inputs.
+    // Called before the initial loadBots() so the restored values drive the
+    // first render. Clamps/sanitizes everything; never throws.
+    function restoreFiltersFromUrl() {
+        try {
+            const p = new URLSearchParams(window.location.search);
+            const q = p.get('q');
+            if (q) {
+                searchQuery = q.slice(0, 100);
+                const si = document.getElementById('searchInput');
+                if (si) si.value = searchQuery;
+                const sc = document.getElementById('searchClear');
+                if (sc && searchQuery) sc.classList.add('visible');
+            }
+            const sort = p.get('sort');
+            if (sort) {
+                currentSort = sort;
+                const ss = document.getElementById('sortSelect');
+                if (ss) ss.value = sort;
+            }
+            const rmin = parseInt(p.get('rateMin') || '', 10);
+            const rmax = parseInt(p.get('rateMax') || '', 10);
+            if (!isNaN(rmin)) { rateMin = Math.min(Math.max(rmin, 1), 50); const e = document.getElementById('rateMin'); if (e) e.value = String(rateMin); }
+            if (!isNaN(rmax)) { rateMax = Math.min(Math.max(rmax, 1), 50); const e = document.getElementById('rateMax'); if (e) e.value = String(rateMax); }
+            if (rateMin > rateMax) { const t = rateMin; rateMin = rateMax; rateMax = t; }
+            if (rateMin > 1 || rateMax < 50) {
+                const rv = document.getElementById('rateSliderValue');
+                if (rv) rv.textContent = rateMin + ' – ' + rateMax + ' e幣/1K';
+            }
+        } catch (_) { /* bad URL params must never block the page */ }
+    }
 
     /* ══════ Interactions ══════ */
     function setFilter(f, el) { currentFilter = f; document.querySelectorAll('.plaza-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); filterAndSort(); }
@@ -2074,6 +2122,9 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
     function checkModalScroll() { const mc = document.getElementById('detailContent'); if (mc && mc.scrollHeight > mc.clientHeight) mc.classList.add('has-scroll'); }
 
+    // card_f6b61c8: restore filters from the URL before the first render so a
+    // refreshed / shared filtered link returns with the same search+sort+rate.
+    restoreFiltersFromUrl();
     const sortSelect = document.getElementById('sortSelect');
     if (sortSelect) sortSelect.value = currentSort;
 
