@@ -918,7 +918,7 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="wallpaper_setting_speech_bubbles">消息气泡</string>
     <string name="wallpaper_setting_speech_bubbles_desc">在伙伴旁显示实体状态与最近消息。</string>
     <string name="wallpaper_setting_bubble_duration">消息气泡停留时间</string>
-    <string name="wallpaper_setting_bubble_duration_desc">调整壁纸气泡存在时间，可从 1 到 20 秒；聊天聚集会在这个 TTL 结束后回到原位。</string>
+    <string name="wallpaper_setting_bubble_duration_desc">调整壁纸气泡存在时间，可从 1 秒到 10 分钟；聊天聚集会在这个 TTL 结束后回到原位。</string>
     <string name="wallpaper_setting_bubble_duration_value">%1$d 秒</string>
     <string name="wallpaper_setting_bubble_duration_minutes_value">%1$d 分钟</string>
     <string name="wallpaper_setting_bubble_duration_minutes_seconds_value">%1$d 分 %2$d 秒</string>

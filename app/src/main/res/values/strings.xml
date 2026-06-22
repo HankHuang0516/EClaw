@@ -136,7 +136,7 @@
     <string name="wallpaper_setting_speech_bubbles">Message bubbles</string>
     <string name="wallpaper_setting_speech_bubbles_desc">Show entity status and recent messages near each companion.</string>
     <string name="wallpaper_setting_bubble_duration">Message bubble duration</string>
-    <string name="wallpaper_setting_bubble_duration_desc">Controls how long wallpaper bubbles stay visible, from 1 to 20 seconds. Conversation walking returns home when this TTL ends.</string>
+    <string name="wallpaper_setting_bubble_duration_desc">Controls how long wallpaper bubbles stay visible, from 1 second to 10 minutes. Conversation walking returns home when this TTL ends.</string>
     <string name="wallpaper_setting_bubble_duration_value">%1$d sec</string>
     <string name="wallpaper_setting_bubble_duration_minutes_value">%1$d min</string>
     <string name="wallpaper_setting_bubble_duration_minutes_seconds_value">%1$d min %2$d sec</string>
