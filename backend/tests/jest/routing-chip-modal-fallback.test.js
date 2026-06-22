@@ -305,10 +305,11 @@ describe('normalizeRoutingPayload — coerce undefined name fields to null up-fr
 
 describe('end-to-end smoke: every modal label-render path is undefined-proof', () => {
     // Compose normalize + resolve to mimic what the modal does for each pill.
+    // opts.sum overrides the null default so callers can supply a detail.fromEntity/toEntity.
     function renderLabel(payload, which, opts) {
         const { normalizeRoutingPayload, resolveEntityLabel } = makeHelpers(opts.commanderId || null);
         const p = normalizeRoutingPayload(payload);
-        const sum = (which === 'to') ? null : null; // no server detail
+        const sum = (opts && opts.sum !== undefined) ? opts.sum : null; // no server detail by default
         const id = (which === 'to') ? p.to_entity_id : p.from_entity_id;
         const nm = (which === 'to') ? p.to_name : p.from_name;
         const code = (which === 'to') ? p.to_public_code : p.from_public_code;
@@ -363,5 +364,93 @@ describe('end-to-end smoke: every modal label-render path is undefined-proof', (
             expect(tlabel).not.toContain('undefined');
             expect(flabel).not.toContain('undefined');
         }
+    });
+});
+
+// ── card_f15eda1e regression ──────────────────────────────────────────────
+// Hank screenshot: routing-detail FROM pill showed "supervisor→supervisor"
+// (both pills read as 主管/commander) for a Hermes(#5)→Mac_ClaudeAce主管(#2)
+// message. Root hypothesis: commanderFloor (#2) was bleeding into the FROM
+// pill whenever to_entity_id === orgChartCommanderId.
+//
+// The correct invariant: as long as from_entity_id or from_name is present,
+// the FROM pill must resolve to the sender — never to commanderFloor — even
+// when commanderId === to_entity_id (i.e., both equal 2).
+describe('card_f15eda1e regression — FROM pill never resolves to commanderFloor when sender is known', () => {
+    // Shared scenario: Hermes(#5) → Mac_ClaudeAce主管(#2), orgChartCommanderId=2.
+    // This is exactly Hank's reported combination where both TO and commanderFloor are #2.
+    const COMMANDER_ID = 2; // same as to_entity_id
+
+    // Local helper for this suite (renderLabel is scoped to the previous describe).
+    function resolveFrom(payload, sum, commanderId) {
+        const { normalizeRoutingPayload, resolveEntityLabel } = makeHelpers(commanderId);
+        const p = normalizeRoutingPayload(payload);
+        return resolveEntityLabel(sum || null, p.from_entity_id, p.from_name, p.from_public_code, { which: 'from', tt: ttStub }).label;
+    }
+    function resolveTo(payload, sum, commanderId) {
+        const { normalizeRoutingPayload, resolveEntityLabel } = makeHelpers(commanderId);
+        const p = normalizeRoutingPayload(payload);
+        return resolveEntityLabel(sum || null, p.to_entity_id, p.to_name, p.to_public_code, { which: 'to', isUser: !!p.to_is_user, tt: ttStub }).label;
+    }
+
+    test('from-pill with full detail (fromEntity.name=Hermes) → "Hermes", not commanderFloor "#2"', () => {
+        // Mirrors the happy path: server returns detail.fromEntity
+        const hermesSum = { entityId: 5, publicCode: 'cibx1h', name: 'Hermes', level: 14, avatar: null };
+        const label = resolveFrom(
+            { from_entity_id: 5, from_name: 'Hermes', to_entity_id: 2, to_name: 'Mac_ClaudeAce主管', mode: 'speakTo', status: 'sent' },
+            hermesSum,
+            COMMANDER_ID
+        );
+        expect(label).toBe('Hermes');
+        expect(label).not.toBe('#' + COMMANDER_ID);
+        expect(label).not.toContain('主管');
+    });
+
+    test('from-pill with from_name only (no detail, fallbackName path) → "Hermes", not commanderFloor', () => {
+        // Mirrors the payload-only path: detail null, but routing_meta carries from_name
+        const label = resolveFrom(
+            { from_entity_id: 5, from_name: 'Hermes', to_entity_id: 2, to_name: 'Mac_ClaudeAce主管' },
+            null,
+            COMMANDER_ID
+        );
+        expect(label).toBe('Hermes');
+        expect(label).not.toBe('#' + COMMANDER_ID);
+        expect(label).not.toContain('主管');
+    });
+
+    test('from-pill with from_entity_id only (no from_name, no detail) → "#5", not commanderFloor "#2"', () => {
+        // Mirrors old messages that only have entity_id in routing_meta but no from_name.
+        // The fallbackId path (#5) must fire BEFORE commanderFloor (#2).
+        const label = resolveFrom(
+            { from_entity_id: 5, to_entity_id: 2, to_name: 'Mac_ClaudeAce主管' },
+            null,
+            COMMANDER_ID
+        );
+        expect(label).toBe('#5');
+        expect(label).not.toBe('#' + COMMANDER_ID);
+    });
+
+    test('to-pill with to_entity_id=2 (commanderId) → "Mac_ClaudeAce主管" via to_name, not "#2" fallback', () => {
+        // Ensures the TO side also resolves correctly when to_name is present.
+        const toSum = { entityId: 2, name: 'Mac_ClaudeAce主管', publicCode: '3xa3h4', level: 44 };
+        const label = resolveTo(
+            { from_entity_id: 5, from_name: 'Hermes', to_entity_id: 2, to_name: 'Mac_ClaudeAce主管' },
+            toSum,
+            COMMANDER_ID
+        );
+        expect(label).toBe('Mac_ClaudeAce主管');
+    });
+
+    test('FROM pill commanderFloor guard: resolveEntityLabel opts.which=from skips commanderFloor even when fallbackId matches commanderId', () => {
+        // Edge: from_entity_id === commanderId. The FROM-side must not fire
+        // commanderFloor at all (it's for TO-side unknown fallback only).
+        // commanderFloor is only injected when fallbackId ≠ commanderId.
+        // So if from_entity_id === commanderId, the label resolves to '#commanderId' via fallbackId path.
+        const { resolveEntityLabel } = makeHelpers(COMMANDER_ID);
+        const r = resolveEntityLabel(null, COMMANDER_ID, null, null, { which: 'from', tt: ttStub });
+        // fallbackId path fires (#2), not commanderFloor (which guard checks fallbackId ≠ commanderId)
+        // — the check `Number(orgChartCommanderId) !== Number(fallbackId)` prevents commanderFloor
+        // from doubling with the fallbackId result.
+        expect(r.label).toBe('#' + COMMANDER_ID);
     });
 });
