@@ -520,7 +520,11 @@ class ClawRenderer(
         if (multiDrawCount <= 5) {
         }
 
-        // Background: draw custom image or solid black
+        // Background: draw custom image or solid black. card_f9b2cc2d v1.1.5:
+        // wrapped — a recycled/failed bg bitmap on resume must NOT throw out of
+        // drawMultiEntity (which would hit the caller's red-error fallback). On
+        // failure paint a deliberate dark surface and report the stage.
+        try {
         val backgroundBitmap = getBackgroundBitmap(width.toInt(), height.toInt())
         if (backgroundBitmap != null) {
             canvas.drawBitmap(backgroundBitmap, 0f, 0f, backgroundPaint)
@@ -545,6 +549,10 @@ class ClawRenderer(
             // User intentionally chose a solid-black / no-image wallpaper — keep pure black.
             canvas.drawColor(Color.BLACK)
         }
+        } catch (e: Exception) {
+            try { canvas.drawColor(0xFF0B1220.toInt()) } catch (_: Exception) {}
+            reportRenderStageError("background", e)
+        }
 
         if (entities.isEmpty()) {
             if (loading) {
@@ -567,6 +575,10 @@ class ClawRenderer(
             return
         }
 
+        // card_f9b2cc2d v1.1.5: wrap the whole layout-compute + entity render so a
+        // throw in any early stage (positions / wander / interaction) can't escape
+        // to the caller's red-error fallback — the background is already painted above.
+        try {
         val basePositions = calculateEntityPositions(width, height, entities.size, entities)
         val baseScale = getScaleFactor(entities.size)
         val nowMs = System.currentTimeMillis()
@@ -705,6 +717,13 @@ class ClawRenderer(
             } catch (e: Exception) {
                 reportRenderStageError("bubble:${target.entity.entityId}", e)
             }
+        }
+        } catch (e: Exception) {
+            // card_f9b2cc2d v1.1.5: any uncaught throw in the layout-compute /
+            // entity-render section is contained here (background already painted)
+            // so draw() never re-throws into the red-error fallback. The stage key
+            // names it in Crashlytics for a precise follow-up.
+            reportRenderStageError("layout", e)
         }
     }
 
