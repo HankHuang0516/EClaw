@@ -317,11 +317,31 @@ router.post('/resolve-coordinate', resolveCoordinateLimiter, async (req, res) =>
         }
         return res.json(target);
     } catch (err) {
-        console.error('[point-edit] resolver failure:', err);
+        // Concise, single-line message. Playwright prints a multi-line "install
+        // browsers" banner (╔══ … npx playwright install … <3 Playwright Team)
+        // when the Chromium executable is missing; logging the full err object
+        // makes the prod ErrLog monitor split that banner into ~9 separate ERROR
+        // cards. Log ONE line and, for the capability gap, degrade to 503.
+        const firstLine = String(err && err.message ? err.message : err).split('\n')[0];
+        const browserMissing = /Executable doesn't exist|playwright install|browserType\.launch/i
+            .test(err && err.message ? err.message : '');
+        if (browserMissing) {
+            // Headless Chromium isn't provisioned in this runtime (nixpacks prod
+            // runs `npm install` only, not `npx playwright install`). Treat as a
+            // disabled capability, not a crash. To ENABLE point-edit in prod, add
+            // `npx playwright install --with-deps chromium` to the build.
+            console.error('[point-edit] headless Chromium unavailable in this runtime — point-edit disabled (enable via `npx playwright install chromium`)');
+            return res.status(503).json({
+                success: false,
+                error: 'point_edit_unavailable',
+                message: 'Point-edit (headless browser) is not available in this environment.',
+            });
+        }
+        console.error('[point-edit] resolver failure:', firstLine);
         return res.status(500).json({
             success: false,
             error: 'resolver_failure',
-            message: err.message,
+            message: firstLine,
         });
     }
 });
