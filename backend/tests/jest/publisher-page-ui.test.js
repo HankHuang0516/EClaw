@@ -5,6 +5,20 @@ describe('publisher page self-improvement UI', () => {
     const pagePath = path.join(__dirname, '../../public/portal/publisher.html');
     const html = fs.readFileSync(pagePath, 'utf8');
 
+    test('init() guards checkAuth so an auth.js load failure cannot brick the page at Loading (card_8da798aa)', () => {
+        // Intermittent 522 on shared/auth.js leaves checkAuth undefined; an
+        // unguarded `await checkAuth()` throws and the page stays stuck on the
+        // loading state. init() must guard the call and still reveal content.
+        expect(html).toContain("if (typeof checkAuth === 'function')");
+        expect(html).toContain('currentUser = await checkAuth();');
+        // the guarded call is wrapped so a throw can't abort init()
+        const init = html.slice(html.indexOf('async function init()'), html.indexOf('function hydrateApiKey()'));
+        expect(init).toMatch(/try\s*\{[\s\S]*typeof checkAuth === 'function'[\s\S]*await checkAuth\(\)[\s\S]*\}\s*catch/);
+        // render must still happen after the guarded auth block
+        expect(init).toContain("document.getElementById('loadingState').style.display = 'none';");
+        expect(init).toContain("document.getElementById('pageContent').style.display = 'block';");
+    });
+
     test('renders a live platform result panel and filter controls', () => {
         expect(html).toContain('class="platform-result-panel" id="platformResultPanel" role="status" aria-live="polite" aria-atomic="true"');
         expect(html).toContain('id="platformResultSummary" data-i18n="pub_result_loading"');

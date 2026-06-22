@@ -375,7 +375,21 @@
         async function init() {
             renderNav('mission');
             if (typeof renderFooter === 'function') renderFooter();
-            currentUser = await checkAuth();
+            // card_8da798aa (#6 finding): an intermittent 522 on shared/auth.js
+            // leaves checkAuth undefined, and an unguarded `await checkAuth()`
+            // throws a ReferenceError that aborts init() — the page then stays
+            // stuck on the "Loading" state forever. Guard exactly like the admin
+            // pages already do (typeof checkAuth === 'function') and never let an
+            // auth dependency failure block render: the platform list is public
+            // and publishing uses a localStorage API key, so auth here is only
+            // optional personalization (currentUser is read null-safely below).
+            try {
+                if (typeof checkAuth === 'function') {
+                    currentUser = await checkAuth();
+                }
+            } catch (e) {
+                console.warn('[publisher] checkAuth unavailable; rendering unauthenticated', e);
+            }
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('pageContent').style.display = 'block';
             hydrateApiKey();
