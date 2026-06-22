@@ -16,8 +16,12 @@
 
 jest.mock('pg', () => {
     const mockQuery = jest.fn();
+    // POST /:id/rating runs its upsert + cache recompute in a transaction via
+    // pool.connect(); the client shares mockQuery so the positional queue still
+    // drives every query (pool.query lookups + client.query txn statements).
     const Pool = jest.fn().mockImplementation(() => ({
         query: mockQuery,
+        connect: jest.fn().mockResolvedValue({ query: mockQuery, release: jest.fn() }),
         end: jest.fn(),
     }));
     return { Pool, __mockQuery: mockQuery };
@@ -604,11 +608,13 @@ describe('companion-api: POST /:id/rating', () => {
             device_id: null, author_entity_id: null,
         };
         __mockQuery
-            .mockResolvedValueOnce({ rowCount: 1, rows: [baseCompanion] })       // companions lookup
+            .mockResolvedValueOnce({ rowCount: 1, rows: [baseCompanion] })       // companions lookup (pool.query)
+            .mockResolvedValueOnce({ rows: [] })                                 // BEGIN
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{}] })                  // SELECT 1 … FOR UPDATE
             .mockResolvedValueOnce({ rowCount: 0, rows: [] })                    // exists rating
-            .mockResolvedValueOnce({ rowCount: 1, rows: [] })                    // INSERT
-            .mockResolvedValueOnce({ rowCount: 1, rows: [{ n: 3, avg: 4.33 }] }) // agg
-            .mockResolvedValueOnce({ rowCount: 1, rows: [] });                   // UPDATE companions
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] })                    // INSERT rating
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{ n: 3, avg: 4.33 }] }) // recompute UPDATE companions … RETURNING
+            .mockResolvedValueOnce({ rows: [] });                               // COMMIT
         const res = await request(makeApp())
             .post('/api/companion/petdx-pub/rating')
             .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
@@ -625,17 +631,19 @@ describe('companion-api: POST /:id/rating', () => {
             device_id: null, author_entity_id: null,
         };
         __mockQuery
-            .mockResolvedValueOnce({ rowCount: 1, rows: [baseCompanion] })
-            .mockResolvedValueOnce({ rowCount: 1, rows: [{ id: 99 }] })          // existing
-            .mockResolvedValueOnce({ rowCount: 1, rows: [] })                    // UPDATE rating
-            .mockResolvedValueOnce({ rowCount: 1, rows: [{ n: 1, avg: 2.0 }] })
-            .mockResolvedValueOnce({ rowCount: 1, rows: [] });
+            .mockResolvedValueOnce({ rowCount: 1, rows: [baseCompanion] })       // [0] companions lookup
+            .mockResolvedValueOnce({ rows: [] })                                 // [1] BEGIN
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{}] })                  // [2] SELECT 1 … FOR UPDATE
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{ id: 99 }] })          // [3] existing rating
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] })                    // [4] UPDATE companion_ratings
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{ n: 1, avg: 2.0 }] }) // [5] recompute
+            .mockResolvedValueOnce({ rows: [] });                               // [6] COMMIT
         const res = await request(makeApp())
             .post('/api/companion/petdx-pub/rating')
             .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
             .send({ stars: 2 });
         expect(res.status).toBe(200);
-        const updateCall = __mockQuery.mock.calls[2];
+        const updateCall = __mockQuery.mock.calls[4];
         expect(updateCall[0]).toMatch(/UPDATE companion_ratings/);
         expect(updateCall[1][0]).toBe(2);
     });

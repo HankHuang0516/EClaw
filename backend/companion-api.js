@@ -681,9 +681,11 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
     });
 
     // ── POST /api/companion/:id/rating ────────────────────────────
-    // Body: { stars: 1..5 }. Upsert per (device, entity). Recompute
-    // companions.rating_avg + rating_count atomically (well, two queries —
-    // good enough for v1; trigger upgrade can come with comment moderation).
+    // Body: { stars: 1..5 }. Upsert per (device, entity), then recompute the
+    // denormalized companions.rating_avg + rating_count. The upsert + recompute
+    // run in one transaction under a `SELECT … FOR UPDATE` lock on the cache row
+    // so concurrent raters of the same companion serialize and cannot lost-update
+    // the cached aggregate (weekly-audit RMW finding card_f9b2cc2d triage).
     router.post('/:id/rating', authReader, async (req, res) => {
         const { id } = req.params;
         if (!/^[a-z0-9-]{1,80}$/i.test(id)) {
@@ -712,48 +714,65 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
             }
 
             const now = Date.now();
-            const existsRes = await pool.query(
-                `SELECT id FROM companion_ratings
-                  WHERE companion_id = $1
-                    AND device_id = $2
-                    AND entity_id IS NOT DISTINCT FROM $3`,
-                [id, req.botAuth.deviceId, req.botAuth.entityId]
-            );
-            if (existsRes.rowCount > 0) {
-                await pool.query(
-                    `UPDATE companion_ratings
-                        SET stars = $1, updated_at = $2
-                      WHERE id = $3`,
-                    [stars, now, existsRes.rows[0].id]
-                );
-            } else {
-                await pool.query(
-                    `INSERT INTO companion_ratings
-                        (device_id, entity_id, companion_id, stars, created_at, updated_at)
-                     VALUES ($1, $2, $3, $4, $5, $5)`,
-                    [req.botAuth.deviceId, req.botAuth.entityId, id, stars, now]
-                );
-            }
+            const client = await pool.connect();
+            let ratingCount, ratingAvg;
+            try {
+                await client.query('BEGIN');
+                // Serialize concurrent raters of THIS companion on the cache row,
+                // so the recompute-and-write below cannot lost-update.
+                await client.query('SELECT 1 FROM companions WHERE id = $1 FOR UPDATE', [id]);
 
-            const aggRes = await pool.query(
-                `SELECT COUNT(*)::int AS n, AVG(stars)::real AS avg
-                   FROM companion_ratings WHERE companion_id = $1`,
-                [id]
-            );
-            const { n, avg } = aggRes.rows[0];
-            await pool.query(
-                `UPDATE companions
-                    SET rating_count = $1, rating_avg = $2
-                  WHERE id = $3`,
-                [n, avg, id]
-            );
+                const existsRes = await client.query(
+                    `SELECT id FROM companion_ratings
+                      WHERE companion_id = $1
+                        AND device_id = $2
+                        AND entity_id IS NOT DISTINCT FROM $3`,
+                    [id, req.botAuth.deviceId, req.botAuth.entityId]
+                );
+                if (existsRes.rowCount > 0) {
+                    await client.query(
+                        `UPDATE companion_ratings
+                            SET stars = $1, updated_at = $2
+                          WHERE id = $3`,
+                        [stars, now, existsRes.rows[0].id]
+                    );
+                } else {
+                    await client.query(
+                        `INSERT INTO companion_ratings
+                            (device_id, entity_id, companion_id, stars, created_at, updated_at)
+                         VALUES ($1, $2, $3, $4, $5, $5)`,
+                        [req.botAuth.deviceId, req.botAuth.entityId, id, stars, now]
+                    );
+                }
+
+                // Recompute the denormalized cache in a single atomic statement —
+                // the COUNT/AVG aggregate is evaluated inside the same UPDATE (no
+                // SELECT-then-UPDATE round-trip), under the row lock above.
+                const upd = await client.query(
+                    `UPDATE companions c
+                        SET rating_count = sub.n, rating_avg = sub.avg
+                       FROM (SELECT COUNT(*)::int AS n, AVG(stars)::real AS avg
+                               FROM companion_ratings WHERE companion_id = $1) sub
+                      WHERE c.id = $1
+                  RETURNING sub.n AS n, sub.avg AS avg`,
+                    [id]
+                );
+                await client.query('COMMIT');
+                ratingCount = upd.rows[0]?.n ?? 0;
+                ratingAvg = upd.rows[0]?.avg ?? null;
+            } catch (txErr) {
+                await client.query('ROLLBACK').catch(() => {});
+                throw txErr;
+            } finally {
+                client.release();
+            }
 
             res.json({
                 success: true,
                 companionId: id,
                 stars,
-                ratingAvg: avg,
-                ratingCount: n,
+                ratingAvg,
+                ratingCount,
             });
         } catch (err) {
             log('error', 'companion', `[Companion] rating post failed: ${err.message}`);
