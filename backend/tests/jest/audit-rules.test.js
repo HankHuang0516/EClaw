@@ -134,6 +134,123 @@ describe('audit-rules — falseHits suppression', () => {
     });
 });
 
+// ─── 2026-06-22 weekly-audit precision pass (card_f9b2cc2d triage) ──────────
+// Each rule below produced 0 true positives but 2–52 false positives/week.
+// These tests pin the new suppressions AND that real positives still fire.
+describe('audit-rules — precision pass: publicCode comments + encoding constants', () => {
+    test("does NOT flag 'oauth2' / 'latin1' / 'a1b1c1' (encoding/test constants)", () => {
+        const text = "authMode: 'oauth2'; const e = 'latin1'; const rle = 'a1b1c1';";
+        expect(audit.scanText('backend/x.js', text)
+            .some(r => r.ruleId === 'hardcoded-public-code-literal')).toBe(false);
+    });
+    test('does NOT flag publicCode-shaped literals inside comment / JSDoc lines', () => {
+        const text = [
+            "  *   - \"abc123\"   6-char publicCode (cross-device)",
+            "  // legit display name like 'alice1'",
+            "  *   ProductTour.register('track1', [",
+        ].join('\n');
+        expect(audit.scanText('backend/x.js', text)
+            .some(r => r.ruleId === 'hardcoded-public-code-literal')).toBe(false);
+    });
+    test('STILL flags a real publicCode literal in executable code', () => {
+        expect(audit.scanText('backend/x.js', "speakTo(['3xa3h4']);")
+            .some(r => r.ruleId === 'hardcoded-public-code-literal')).toBe(true);
+    });
+});
+
+describe('audit-rules — precision pass: RMW upsert / row-lock / literal', () => {
+    test('does NOT flag ON CONFLICT … DO UPDATE upsert (atomic)', () => {
+        const sql = 'INSERT ... ON CONFLICT (device_id) DO UPDATE SET violation_count = $2, is_blocked = $3';
+        expect(audit.scanText('backend/gatekeeper.js', sql)
+            .some(r => r.ruleId === 'cross-entity-read-modify-write-race')).toBe(false);
+    });
+    test('does NOT flag a literal-constant reset (SET violation_count = 0)', () => {
+        const sql = 'UPDATE gatekeeper_blocks SET violation_count = 0, is_blocked = FALSE WHERE device_id = $1';
+        expect(audit.scanText('backend/gatekeeper.js', sql)
+            .some(r => r.ruleId === 'cross-entity-read-modify-write-race')).toBe(false);
+    });
+    test('does NOT flag a write guarded by SELECT … FOR UPDATE earlier in the txn', () => {
+        const sql = [
+            "await c.query('SELECT 1 FROM companions WHERE id = $1 FOR UPDATE', [id]);",
+            "await c.query('UPDATE companions SET rating_count = $1 WHERE id = $2', [n, id]);",
+        ].join('\n');
+        expect(audit.scanText('backend/companion-api.js', sql)
+            .some(r => r.ruleId === 'cross-entity-read-modify-write-race')).toBe(false);
+    });
+    test('STILL flags a bare non-atomic counter write-back ($n, no lock/upsert)', () => {
+        const sql = 'await db.query("UPDATE cards SET comment_count = $2 WHERE id = $1", [id, n]);';
+        expect(audit.scanText('backend/api_card.js', sql)
+            .some(r => r.ruleId === 'cross-entity-read-modify-write-race')).toBe(true);
+    });
+});
+
+describe('audit-rules — precision pass: owner-only single-row-per-device table', () => {
+    test('does NOT flag user_accounts (UNIQUE(device_id) → 1 row/device)', () => {
+        const sql = "'SELECT language FROM user_accounts WHERE device_id = $1 LIMIT 1'";
+        expect(audit.scanText('backend/kanban.js', sql)
+            .some(r => r.ruleId === 'owner-only-user-query-assumption')).toBe(false);
+    });
+    test('STILL flags LIMIT 1 on a non-unique table', () => {
+        const sql = "'SELECT name FROM profiles WHERE device_id = $1 LIMIT 1'";
+        expect(audit.scanText('backend/api_profile.js', sql)
+            .some(r => r.ruleId === 'owner-only-user-query-assumption')).toBe(true);
+    });
+});
+
+describe('audit-rules — precision pass: db-query entity_id filter (schema-aware)', () => {
+    test('does NOT flag a device-grain table (no entity_id column)', () => {
+        const sql = [
+            'SELECT source_card_id FROM kanban_card_links',
+            ' WHERE device_id = $1',
+        ].join('\n');
+        expect(audit.scanText('backend/api_kanban_card_links.js', sql)
+            .some(r => r.ruleId === 'db-query-missing-entity-id-filter')).toBe(false);
+    });
+    test('does NOT flag when entity_id IS filtered on a continuation line', () => {
+        const sql = [
+            'SELECT x FROM entity_error_counters',
+            ' WHERE device_id = $1',
+            '   AND entity_id = $2',
+        ].join('\n');
+        expect(audit.scanText('backend/entity-status.js', sql)
+            .some(r => r.ruleId === 'db-query-missing-entity-id-filter')).toBe(false);
+    });
+    test('STILL flags an entity-scoped table read with no entity_id filter', () => {
+        const sql = [
+            'SELECT body FROM chat_messages',
+            ' WHERE device_id = $1',
+        ].join('\n');
+        expect(audit.scanText('backend/leak.js', sql)
+            .some(r => r.ruleId === 'db-query-missing-entity-id-filter')).toBe(true);
+    });
+    test('fails SAFE: unresolved table is kept (treated as entity-scoped)', () => {
+        // no FROM in window → cannot prove device-grain → keep the finding
+        const sql = 'WHERE device_id = $1';
+        expect(audit.scanText('backend/unknown.js', sql)
+            .some(r => r.ruleId === 'db-query-missing-entity-id-filter')).toBe(true);
+    });
+});
+
+describe('audit-rules — precision pass: body.entityId IDOR auth-awareness', () => {
+    test('does NOT flag when caller is validated (safeEqual botSecret nearby)', () => {
+        const code = [
+            'const entityId = req.body.entityId ?? req.query.entityId;',
+            'const entity = device.entities[eId];',
+            'if (!safeEqual(botSecret, entity.botSecret)) return res.status(403).json({});',
+        ].join('\n');
+        expect(audit.scanText('backend/index.js', code)
+            .some(r => r.ruleId === 'entity-id-from-body-unverified')).toBe(false);
+    });
+    test('STILL flags a body.entityId read with NO caller-auth check nearby', () => {
+        const code = [
+            'const entityId = req.body.entityId;',
+            'await pool.query("DELETE FROM widgets WHERE entity_id = $1", [entityId]);',
+        ].join('\n');
+        expect(audit.scanText('backend/leak.js', code)
+            .some(r => r.ruleId === 'entity-id-from-body-unverified')).toBe(true);
+    });
+});
+
 describe('audit-rules — file exemptions', () => {
     test('test paths exempt the Hank-UUID rule', () => {
         const text = "const d = '480def4c-2183-4d8e-afd0-b131ae89adcc';";
