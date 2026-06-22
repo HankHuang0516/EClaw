@@ -104,7 +104,13 @@ class EngineLifecycleController(private val hooks: Hooks) {
      */
     fun onSurfaceDestroyed() {
         surfacePresent = false
-        visible = false
+        // Do NOT clear `visible` here — visibility is owned exclusively by
+        // onVisibilityChanged. A *brief* app-switch can destroy→recreate the
+        // surface with NO visibility toggle (the system never sends
+        // onVisibilityChanged(false)/(true)). If we cleared `visible`, the
+        // following onSurfaceCreated would skip its draw (visible==false) and
+        // nothing would ever repaint until a full process restart — the residual
+        // black screen card_f9b2cc2d users still hit after the engineScope fix.
         hooks.stopDrawLoop()
         // engineAlive stays true. No releaseEngineResources() here.
     }
