@@ -18,6 +18,7 @@ glide = "4.16.0"
 markwon = "4.6.2"
 firebaseBom = "33.7.0"
 googleServices = "4.4.2"
+firebaseCrashlyticsPlugin = "3.0.2"
 credentialManager = "1.5.0-beta01"
 googleId = "1.1.1"
 facebookSdk = "17.0.0"
@@ -58,6 +59,7 @@ markwon-core = { group = "io.noties.markwon", name = "core", version.ref = "mark
 # Firebase
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging-ktx" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 
 # Glide Image Loading
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
@@ -84,3 +86,4 @@ androidApplication = { id = "com.android.application", version.ref = "agp" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlinKapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
 googleServices = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+firebaseCrashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlyticsPlugin" }

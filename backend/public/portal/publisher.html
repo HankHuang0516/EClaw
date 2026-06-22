@@ -41,6 +41,53 @@
             text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
         }
 
+        .platform-result-panel {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            background: var(--input-bg);
+        }
+        .platform-result-panel[data-state="error"] {
+            border-color: rgba(244,67,54,0.35);
+            background: rgba(244,67,54,0.08);
+        }
+        .platform-result-text {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .platform-result-label {
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .platform-result-meta {
+            color: var(--text-muted);
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .platform-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .platform-filter {
+            min-height: 28px;
+        }
+        .platform-filter[aria-pressed="true"] {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(255,68,68,0.08);
+        }
+
         /* Platform grid */
         .platform-grid {
             display: grid;
@@ -55,9 +102,19 @@
             background: var(--input-bg);
             transition: border-color 0.15s, background 0.15s;
             display: flex; flex-direction: column; gap: 6px;
+            width: 100%;
+            text-align: left;
+            color: inherit;
+            font: inherit;
         }
+        button.platform-chip { appearance: none; }
         .platform-chip:hover { border-color: var(--primary); }
-        .platform-chip.active { border-color: var(--primary); background: rgba(255,68,68,0.08); }
+        .platform-chip:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+        .platform-chip.active,
+        .platform-chip[aria-pressed="true"] { border-color: var(--primary); background: rgba(255,68,68,0.08); }
         .platform-chip.unconfigured { opacity: 0.55; }
         .chip-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
         .chip-name { font-size: 14px; font-weight: 600; color: var(--text); }
@@ -123,6 +180,14 @@
         .key-bar .key-status.unset { background: rgba(255,152,0,0.15); color: var(--warning-hover, #ffb74d); }
 
         @media (max-width: 480px) {
+            .platform-result-panel {
+                align-items: stretch;
+                flex-direction: column;
+            }
+            .platform-result-panel .btn {
+                width: 100%;
+            }
+
             .key-bar {
                 flex-wrap: wrap;
             }
@@ -208,7 +273,7 @@
                         aria-label="Show publisher API key"
                         title="Show publisher API key"
                         onclick="togglePasswordVisibility('apiKeyInput', this)">👁</button>
-                    <button class="btn btn-sm btn-primary" onclick="saveApiKey()" data-i18n="pub_apikey_save">Save</button>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="saveApiKey()" data-i18n="pub_apikey_save">Save</button>
                     <span id="apiKeyStatus" class="key-status unset" data-i18n="pub_apikey_unset">not set</span>
                 </div>
                 <div class="field-hint" data-i18n="pub_apikey_hint">
@@ -220,7 +285,20 @@
             <div class="card" style="margin-bottom:16px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                     <div class="section-title" style="margin-bottom:0;" data-i18n="pub_platforms_title">Platforms</div>
-                    <button class="btn btn-sm btn-outline" onclick="loadPlatforms()" data-i18n="pub_btn_refresh">Refresh</button>
+                    <button type="button" class="btn btn-sm btn-outline" onclick="loadPlatforms()" data-i18n="pub_btn_refresh">Refresh</button>
+                </div>
+                <div class="platform-result-panel" id="platformResultPanel" role="status" aria-live="polite" aria-atomic="true" data-state="loading">
+                    <div class="platform-result-text">
+                        <div class="platform-result-label" id="platformResultSummary" data-i18n="pub_result_loading">Loading publisher platforms</div>
+                        <div class="platform-result-meta" id="platformResultMeta" data-i18n="pub_result_meta_idle">Choose a ready platform to compose a post.</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline" id="clearPlatformFilters" onclick="clearPlatformFilter()" data-i18n="pub_clear_filters" disabled>Clear filter</button>
+                </div>
+                <div class="platform-filters" role="group" aria-label="Publisher platform filters">
+                    <button type="button" class="btn btn-sm btn-outline platform-filter" data-platform-filter="all" onclick="setPlatformFilter('all')" aria-pressed="true" data-i18n="pub_filter_all">All</button>
+                    <button type="button" class="btn btn-sm btn-outline platform-filter" data-platform-filter="ready" onclick="setPlatformFilter('ready')" aria-pressed="false" data-i18n="pub_filter_ready">Ready</button>
+                    <button type="button" class="btn btn-sm btn-outline platform-filter" data-platform-filter="unconfigured" onclick="setPlatformFilter('unconfigured')" aria-pressed="false" data-i18n="pub_filter_unconfigured">Needs setup</button>
+                    <button type="button" class="btn btn-sm btn-outline platform-filter" data-platform-filter="compose" onclick="setPlatformFilter('compose')" aria-pressed="false" data-i18n="pub_filter_compose">Compose forms</button>
                 </div>
                 <div id="platformGrid" class="platform-grid">
                     <div class="empty-state" data-i18n="pub_platforms_loading">Loading platforms…</div>
@@ -240,8 +318,8 @@
                 <div id="composeFields"></div>
 
                 <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
-                    <button class="btn btn-outline" onclick="clearCompose()" data-i18n="pub_btn_clear">Clear</button>
-                    <button class="btn btn-primary" id="publishBtn" onclick="publishNow()" data-i18n="pub_btn_publish">Publish</button>
+                    <button type="button" class="btn btn-outline" onclick="clearCompose()" data-i18n="pub_btn_clear">Clear</button>
+                    <button type="button" class="btn btn-primary" id="publishBtn" onclick="publishNow()" data-i18n="pub_btn_publish">Publish</button>
                 </div>
 
                 <div id="composeResult"></div>
@@ -262,11 +340,26 @@
         // ─── State ───
         let allPlatforms = [];
         let selected = null;
+        let platformFilter = 'all';
         const API_KEY_STORAGE = 'eclawPublisherApiKey';
+        const PLATFORM_FILTERS = {
+            all: { key: 'pub_filter_all', label: 'All' },
+            ready: { key: 'pub_filter_ready', label: 'Ready' },
+            unconfigured: { key: 'pub_filter_unconfigured', label: 'Needs setup' },
+            compose: { key: 'pub_filter_compose', label: 'Compose forms' }
+        };
 
         // ─── Utils ───
         function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
         function getApiKey() { return localStorage.getItem(API_KEY_STORAGE) || ''; }
+        function fillTemplate(template, values) {
+            return String(template).replace(/\{(\w+)\}/g, (_, k) =>
+                Object.prototype.hasOwnProperty.call(values, k) ? values[k] : '');
+        }
+        function platformFilterLabel(filter = platformFilter) {
+            const meta = PLATFORM_FILTERS[filter] || PLATFORM_FILTERS.all;
+            return i18n.t(meta.key, meta.label);
+        }
         function togglePasswordVisibility(inputId, btn) {
             const el = document.getElementById(inputId);
             el.type = el.type === 'password' ? 'text' : 'password';
@@ -319,6 +412,11 @@
         async function loadPlatforms() {
             const grid = document.getElementById('platformGrid');
             grid.innerHTML = '<div class="empty-state">' + esc(i18n.t('pub_platforms_loading', 'Loading platforms…')) + '</div>';
+            setPlatformResult(
+                i18n.t('pub_result_loading', 'Loading publisher platforms'),
+                i18n.t('pub_result_meta_idle', 'Choose a ready platform to compose a post.'),
+                'loading'
+            );
             try {
                 const res = await fetch('/api/publisher/platforms');
                 const data = await res.json();
@@ -328,17 +426,87 @@
             } catch (e) {
                 grid.innerHTML = '<div class="empty-state" style="color:var(--error);">' +
                     esc(i18n.t('pub_platforms_err', 'Failed to load platforms: ') + (e.message || e)) + '</div>';
+                setPlatformResult(
+                    i18n.t('pub_result_error', 'Platform list did not load.'),
+                    e.message || String(e),
+                    'error'
+                );
             }
+        }
+
+        function getFilteredPlatforms() {
+            if (platformFilter === 'ready') return allPlatforms.filter(p => p.configured);
+            if (platformFilter === 'unconfigured') return allPlatforms.filter(p => !p.configured);
+            if (platformFilter === 'compose') return allPlatforms.filter(p => Boolean(SCHEMAS[p.id]));
+            return allPlatforms;
+        }
+
+        function syncPlatformFilterButtons() {
+            document.querySelectorAll('[data-platform-filter]').forEach(btn => {
+                const active = btn.dataset.platformFilter === platformFilter;
+                btn.classList.toggle('active', active);
+                btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
+            const clear = document.getElementById('clearPlatformFilters');
+            if (clear) clear.disabled = platformFilter === 'all';
+        }
+
+        function setPlatformFilter(filter) {
+            platformFilter = PLATFORM_FILTERS[filter] ? filter : 'all';
+            renderPlatforms();
+        }
+
+        function clearPlatformFilter() {
+            setPlatformFilter('all');
+        }
+
+        function setPlatformResult(summary, meta = '', state = 'ready') {
+            const panel = document.getElementById('platformResultPanel');
+            const summaryEl = document.getElementById('platformResultSummary');
+            const metaEl = document.getElementById('platformResultMeta');
+            if (panel) panel.dataset.state = state;
+            if (summaryEl) summaryEl.textContent = summary;
+            if (metaEl) metaEl.textContent = meta;
+        }
+
+        function updatePlatformResultContext(displayPlatforms = getFilteredPlatforms()) {
+            const ready = allPlatforms.filter(p => p.configured).length;
+            const unconfigured = allPlatforms.length - ready;
+            const composeReady = allPlatforms.filter(p => Boolean(SCHEMAS[p.id])).length;
+            const summaryTemplate = platformFilter === 'all'
+                ? i18n.t('pub_result_ready', 'Showing {count} publisher platforms')
+                : i18n.t('pub_result_filtered', 'Showing {count} {filter} platforms');
+            const summary = fillTemplate(summaryTemplate, {
+                count: displayPlatforms.length,
+                filter: platformFilterLabel().toLowerCase()
+            });
+            const meta = fillTemplate(
+                i18n.t('pub_result_meta_counts', '{ready} ready · {unconfigured} need setup · {composeReady} compose forms'),
+                { ready, unconfigured, composeReady }
+            );
+            const selectedMeta = selected
+                ? ' · ' + fillTemplate(i18n.t('pub_result_meta_selected', 'Selected: {platform}'), { platform: selected.name })
+                : '';
+            setPlatformResult(summary, meta + selectedMeta, 'ready');
         }
 
         function renderPlatforms() {
             const grid = document.getElementById('platformGrid');
+            syncPlatformFilterButtons();
             if (!allPlatforms.length) {
                 grid.innerHTML = '<div class="empty-state">' +
                     esc(i18n.t('pub_platforms_none', 'No platforms registered.')) + '</div>';
+                updatePlatformResultContext([]);
                 return;
             }
-            grid.innerHTML = allPlatforms.map(p => {
+            const displayPlatforms = getFilteredPlatforms();
+            if (!displayPlatforms.length) {
+                grid.innerHTML = '<div class="empty-state">' +
+                    esc(i18n.t('pub_no_filtered_platforms', 'No platforms match this filter.')) + '</div>';
+                updatePlatformResultContext(displayPlatforms);
+                return;
+            }
+            grid.innerHTML = displayPlatforms.map(p => {
                 const classes = ['platform-chip'];
                 if (!p.configured) classes.push('unconfigured');
                 if (selected && selected.id === p.id) classes.push('active');
@@ -351,18 +519,25 @@
                     esc(i18n.t('pub_chip_rate', 'Rate: ')) +
                     (p.rateLimit.remaining ?? '?') + '/' + (p.rateLimit.maxPerDay ?? '?') +
                     ' ' + esc(i18n.t('pub_chip_rate_day', '/day')) + '</div>');
-                return '<div class="' + classes.join(' ') + '" data-platform-id="' + esc(p.id) + '">' +
+                if (p.draftsOnly) extra.push('<div style="font-size:11px;color:var(--text-muted);">' +
+                    esc(i18n.t('pub_chip_drafts_only', 'Drafts only')) + '</div>');
+                if (!SCHEMAS[p.id]) extra.push('<div style="font-size:11px;color:var(--text-muted);">' +
+                    esc(i18n.t('pub_chip_no_form', 'API only')) + '</div>');
+                return '<button type="button" class="' + classes.join(' ') + '" data-platform-id="' + esc(p.id) + '"' +
+                    ' aria-pressed="' + (selected && selected.id === p.id ? 'true' : 'false') + '"' +
+                    ' aria-label="' + esc(p.name + ' ' + (p.configured ? i18n.t('pub_chip_ready', 'ready') : i18n.t('pub_chip_unconfigured', 'unconfigured'))) + '">' +
                     '<div class="chip-row"><span class="chip-name">' + esc(p.name) + '</span>' + badge + '</div>' +
                     '<div class="chip-row">' +
                     '<span class="chip-region">' + esc(p.region || '') + '</span>' +
                     '<span class="chip-format">' + esc(p.contentFormat) + '</span>' +
                     '</div>' + extra.join('') +
-                    '</div>';
+                    '</button>';
             }).join('');
             // Attach click handlers via dataset instead of inline onclick — avoids JS-string-escape pitfalls
             grid.querySelectorAll('.platform-chip').forEach(el => {
                 el.addEventListener('click', () => selectPlatform(el.dataset.platformId));
             });
+            updatePlatformResultContext(displayPlatforms);
         }
 
         function selectPlatform(id) {

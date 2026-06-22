@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlinAndroid)
     id("kotlin-kapt")
     alias(libs.plugins.googleServices)
+    alias(libs.plugins.firebaseCrashlytics)
 }
 
 android {
@@ -20,8 +21,8 @@ android {
         applicationId = "com.hank.clawlive"
         minSdk = 24
         targetSdk = 35
-        versionCode = 112
-        versionName = "1.1.2"
+        versionCode = 116
+        versionName = "1.1.6"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -118,6 +119,11 @@ dependencies {
     // Firebase Cloud Messaging (FCM) for push notifications
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+
+    // Firebase Crashlytics — captures the wallpaper resume black-screen
+    // non-fatals (card_f9b2cc2d). Same project as FCM (eclaw-cc72a); no
+    // google-services.json change, so push is unaffected.
+    implementation(libs.firebase.crashlytics)
 
     // Google Sign-In (Credential Manager)
     implementation(libs.credentials)

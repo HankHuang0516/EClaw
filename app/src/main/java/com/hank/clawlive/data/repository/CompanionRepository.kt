@@ -50,7 +50,25 @@ class CompanionRepository(
     private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     init {
-        descriptorCache.putAll(snapshotCache.loadCompanionMap())
+        val restored = snapshotCache.loadCompanionMap()
+        descriptorCache.putAll(restored)
+        // card_f9b2cc2d v1.1.6: warm the spritesheet bitmap cache for restored
+        // companions so the first frames after a cold engine (re)create paint the
+        // real avatar instead of a blank LOADING gap. Without this the renderer
+        // sees "spritesheet descriptor present, sheet absent" → DrawResult.LOADING
+        // and, with no custom background, a pure-black wallpaper until the lazy
+        // per-frame load happens to land. Best-effort, off the main thread.
+        if (restored.isNotEmpty()) {
+            ioScope.launch {
+                restored.values.forEach { companion ->
+                    if (companion.assetType == "spritesheet") {
+                        companion.spritesheetUrl()?.takeIf { it.isNotBlank() }?.let { url ->
+                            runCatching { sheetCache.getOrLoad(url) { loadBitmap(url) } }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /** Returns the cached companion for an entity, or null until a fetch lands. */

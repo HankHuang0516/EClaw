@@ -297,6 +297,7 @@
     <string name="claw_renderer_loading_entities">Đang tải thực thể…</string>
     <string name="claw_renderer_loading_wallpaper">Đang tải hình nền…</string>
     <string name="claw_wallpaper_loading_marker">Đang tải… (%1$s)</string>
+    <string name="claw_wallpaper_render_error">Lỗi vẽ lại hình nền (đã báo cáo)</string>
     <string name="claw_renderer_no_entities_connected">Không có thực thể kết nối</string>
     <string name="claw_renderer_open_app_to_bind">Mở app E-Claw để liên kết</string>
     <string name="claw_renderer_with_openclaw_bot">thực thể với bot OpenClaw</string>

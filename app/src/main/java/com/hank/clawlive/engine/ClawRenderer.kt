@@ -42,6 +42,21 @@ class ClawRenderer(
     private val lastBubbleDurationByEntity = mutableMapOf<Int, Long>()
     private val bubblePulseStartedByEntity = mutableMapOf<Int, Long>()
 
+    // card_f9b2cc2d v1.1.6 regression fix. A spritesheet whose bitmap is not in
+    // sheetCache returns DrawResult.LOADING, which historically painted NOTHING
+    // (to avoid a companion-switch flash to the default lobster, card_9e52c7b).
+    // But after a cold engine (re)create — CompanionRepository restores the
+    // spritesheet DESCRIPTOR from snapshot but not the sheet bitmap — or a cache
+    // eviction / failed reload, that LOADING persists for many ticks (or forever
+    // if the sheet can never be fetched). With no custom background the canvas is
+    // solid black, so invisible entities = the "pure black, no text, no
+    // exception" resume bug. We keep a short no-paint grace for genuinely brief
+    // loads (no flash), but once an entity has been continuously LOADING past the
+    // grace window we draw the procedural fallback so an entity is NEVER
+    // invisible for more than ~0.75s, regardless of why the sheet is missing.
+    private val spritesheetLoadingSinceMs = mutableMapOf<Int, Long>()
+    private val spritesheetStuckReported = mutableSetOf<Int>()
+
     private data class BubbleDrawTarget(
         val entity: EntityStatus,
         val centerX: Float,
@@ -329,6 +344,52 @@ class ClawRenderer(
         Timber.d("ClawRenderer resources released")
     }
 
+    // card_f9b2cc2d resilient-render fix. The wallpaper went pure black on resume
+    // because drawMultiEntity drew the background and then THREW while rendering an
+    // entity/stage (e.g. a recycled bitmap or a transient null after an
+    // app-switch); the exception propagated out and the engine posted only the
+    // half-drawn black frame. A single bad entity or sub-stage must never blank the
+    // whole wallpaper. Each entity and each render stage is now wrapped so a failure
+    // is contained (that one entity/stage is skipped this frame) and the rest of the
+    // frame still draws. Failures are recorded to Crashlytics once per distinct
+    // stage key so we still learn the exact cause without per-frame spam.
+    private val reportedRenderErrors = HashSet<String>()
+    private fun reportRenderStageError(stage: String, e: Throwable) {
+        Timber.e(e, "render stage failed: $stage")
+        if (reportedRenderErrors.add(stage)) {
+            try {
+                com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().apply {
+                    setCustomKey("render_stage", stage)
+                    recordException(e)
+                }
+            } catch (_: Exception) { /* crashlytics unavailable — Timber already logged */ }
+        }
+    }
+
+    // card_f9b2cc2d v1.1.6: a spritesheet stuck in LOADING past the grace window
+    // (sheet genuinely unavailable) fell back to the procedural drawer instead of
+    // staying invisible. Record the field cause once per stuck episode (cleared
+    // when the entity next draws a real frame) so we learn WHICH sheet/companion
+    // is failing without per-frame Crashlytics spam.
+    private fun reportSpritesheetStuckLoading(entityId: Int, companion: CompanionDetail?, loadingMs: Long) {
+        if (!spritesheetStuckReported.add(entityId)) return
+        Timber.w("Spritesheet stuck LOADING ${loadingMs}ms for entity $entityId (companion=${companion?.id}) → procedural fallback")
+        try {
+            com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().apply {
+                setCustomKey("stuck_entity_id", entityId)
+                setCustomKey("stuck_loading_ms", loadingMs)
+                setCustomKey("stuck_companion_id", companion?.id ?: "null")
+                recordException(
+                    IllegalStateException(
+                        "wallpaper spritesheet stuck LOADING ${loadingMs}ms entity=$entityId → procedural fallback (card_f9b2cc2d)"
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "stuck-loading crashlytics report failed")
+        }
+    }
+
     // ============================================
     // MULTI-ENTITY RENDERING
     // ============================================
@@ -498,7 +559,11 @@ class ClawRenderer(
         if (multiDrawCount <= 5) {
         }
 
-        // Background: draw custom image or solid black
+        // Background: draw custom image or solid black. card_f9b2cc2d v1.1.5:
+        // wrapped — a recycled/failed bg bitmap on resume must NOT throw out of
+        // drawMultiEntity (which would hit the caller's red-error fallback). On
+        // failure paint a deliberate dark surface and report the stage.
+        try {
         val backgroundBitmap = getBackgroundBitmap(width.toInt(), height.toInt())
         if (backgroundBitmap != null) {
             canvas.drawBitmap(backgroundBitmap, 0f, 0f, backgroundPaint)
@@ -523,6 +588,10 @@ class ClawRenderer(
             // User intentionally chose a solid-black / no-image wallpaper — keep pure black.
             canvas.drawColor(Color.BLACK)
         }
+        } catch (e: Exception) {
+            try { canvas.drawColor(0xFF0B1220.toInt()) } catch (_: Exception) {}
+            reportRenderStageError("background", e)
+        }
 
         if (entities.isEmpty()) {
             if (loading) {
@@ -545,6 +614,10 @@ class ClawRenderer(
             return
         }
 
+        // card_f9b2cc2d v1.1.5: wrap the whole layout-compute + entity render so a
+        // throw in any early stage (positions / wander / interaction) can't escape
+        // to the caller's red-error fallback — the background is already painted above.
+        try {
         val basePositions = calculateEntityPositions(width, height, entities.size, entities)
         val baseScale = getScaleFactor(entities.size)
         val nowMs = System.currentTimeMillis()
@@ -585,13 +658,17 @@ class ClawRenderer(
             nowMs = nowMs,
             reactionDurationMs = layoutPrefs.wallpaperCollisionReactionDurationMs
         )
-        kanbanRenderer.drawBackground(
-            canvas = canvas,
-            entities = entities,
-            basePositions = basePositions,
-            baseScale = baseScale,
-            nowMs = nowMs
-        )
+        try {
+            kanbanRenderer.drawBackground(
+                canvas = canvas,
+                entities = entities,
+                basePositions = basePositions,
+                baseScale = baseScale,
+                nowMs = nowMs
+            )
+        } catch (e: Exception) {
+            reportRenderStageError("kanbanBackground", e)
+        }
         if (layoutPrefs.wallpaperAdaptiveEffectsEnabled) {
             renderDiagnostics.recordFrame(
                 walkingEntityCount = entities.count { wanderController.isWalking(it.entityId) },
@@ -630,38 +707,62 @@ class ClawRenderer(
                 } else {
                     effectiveState.wallpaperActionKey
                 }
-                drawSingleEntityAt(
-                    canvas,
-                    entity,
-                    cx,
-                    drawCy,
-                    finalScale,
-                    spritesheetState,
-                    nowMs,
-                    facingDirection,
-                    shouldMirrorSpritesheetForFacing(spritesheetState)
-                )
-                bubbleDrawTargets.add(BubbleDrawTarget(entity, cx, drawCy, finalScale))
+                try {
+                    drawSingleEntityAt(
+                        canvas,
+                        entity,
+                        cx,
+                        drawCy,
+                        finalScale,
+                        spritesheetState,
+                        nowMs,
+                        facingDirection,
+                        shouldMirrorSpritesheetForFacing(spritesheetState)
+                    )
+                    bubbleDrawTargets.add(BubbleDrawTarget(entity, cx, drawCy, finalScale))
+                } catch (e: Exception) {
+                    // card_f9b2cc2d: one bad entity must not blank the whole wallpaper.
+                    reportRenderStageError("entity:${entity.entityId}", e)
+                }
             }
         }
 
-        interactionState.effects.forEach { effect ->
-            drawInteractionEffect(canvas, effect, baseScale, nowMs)
+        try {
+            interactionState.effects.forEach { effect ->
+                drawInteractionEffect(canvas, effect, baseScale, nowMs)
+            }
+        } catch (e: Exception) {
+            reportRenderStageError("interactionEffects", e)
         }
 
-        usageOverlayRenderer.draw(canvas, usageSnapshot)
+        try {
+            usageOverlayRenderer.draw(canvas, usageSnapshot)
+        } catch (e: Exception) {
+            reportRenderStageError("usageOverlay", e)
+        }
 
         bubbleDrawTargets.forEach { target ->
-            drawSpeechBubbleForEntity(
-                canvas = canvas,
-                entity = target.entity,
-                centerX = target.centerX,
-                centerY = target.centerY,
-                scale = target.scale,
-                screenWidth = width,
-                nowMs = nowMs,
-                avoidBounds = bubbleAvoidBounds
-            )
+            try {
+                drawSpeechBubbleForEntity(
+                    canvas = canvas,
+                    entity = target.entity,
+                    centerX = target.centerX,
+                    centerY = target.centerY,
+                    scale = target.scale,
+                    screenWidth = width,
+                    nowMs = nowMs,
+                    avoidBounds = bubbleAvoidBounds
+                )
+            } catch (e: Exception) {
+                reportRenderStageError("bubble:${target.entity.entityId}", e)
+            }
+        }
+        } catch (e: Exception) {
+            // card_f9b2cc2d v1.1.5: any uncaught throw in the layout-compute /
+            // entity-render section is contained here (background already painted)
+            // so draw() never re-throws into the red-error fallback. The stage key
+            // names it in Crashlytics for a precise follow-up.
+            reportRenderStageError("layout", e)
         }
     }
 
@@ -913,11 +1014,31 @@ class ClawRenderer(
         }
 
         when (drawResult) {
-            SpritesheetCompanionDrawer.DrawResult.DRAWN,
-            SpritesheetCompanionDrawer.DrawResult.LOADING -> Unit
+            SpritesheetCompanionDrawer.DrawResult.DRAWN -> {
+                // Healthy frame — clear this entity's LOADING-grace tracker.
+                spritesheetLoadingSinceMs.remove(entity.entityId)
+                spritesheetStuckReported.remove(entity.entityId)
+            }
+            SpritesheetCompanionDrawer.DrawResult.LOADING -> {
+                // Sheet not yet in cache. A brief load paints nothing this tick
+                // (no flash to the default lobster). But a SUSTAINED LOADING —
+                // cold snapshot restore, cache eviction, or a reload that never
+                // lands — must not leave the entity invisible (the pure-black
+                // bug). Once continuously LOADING past the grace window, draw the
+                // procedural fallback (color-matched via the companion descriptor)
+                // so an entity is never invisible for more than the grace.
+                // (card_f9b2cc2d v1.1.6)
+                val since = spritesheetLoadingSinceMs.getOrPut(entity.entityId) { nowMs }
+                if (shouldFallbackForStuckSpritesheet(since, nowMs)) {
+                    reportSpritesheetStuckLoading(entity.entityId, companion, nowMs - since)
+                    drawLobsterAtPosition(canvas, centerX, charY, entity, scale, companion, facingDirection)
+                }
+            }
             SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED,
-            SpritesheetCompanionDrawer.DrawResult.ERROR ->
+            SpritesheetCompanionDrawer.DrawResult.ERROR -> {
+                spritesheetLoadingSinceMs.remove(entity.entityId)
                 drawLobsterAtPosition(canvas, centerX, charY, entity, scale, companion, facingDirection)
+            }
         }
 
         // Draw Name and Status Group BELOW the entity
@@ -1586,5 +1707,26 @@ class ClawRenderer(
         private const val CONVERSATION_GROUP_WINDOW_MS = 2_000L
         private const val CONVERSATION_EVENT_STALE_MS = 120_000L
         private const val MAX_SEEN_CONVERSATIONS = 128
+
+        /**
+         * card_f9b2cc2d v1.1.6: how long a spritesheet may stay in LOADING (and
+         * paint nothing) before the renderer falls back to the procedural drawer
+         * so the entity is never invisible. Short enough the user never sees a
+         * long black gap; long enough a quick disk-decode load doesn't flash the
+         * procedural lobster (preserves the no-flash intent of card_9e52c7b).
+         */
+        const val SPRITESHEET_LOADING_GRACE_MS = 750L
+
+        /**
+         * Pure decision for the LOADING grace window (unit-tested without a
+         * Context). Returns true once a spritesheet has been continuously LOADING
+         * for at least [graceMs]. [loadingSinceMs] is the wall-clock ms when
+         * LOADING first began for this entity (0 means "not currently tracked").
+         */
+        fun shouldFallbackForStuckSpritesheet(
+            loadingSinceMs: Long,
+            nowMs: Long,
+            graceMs: Long = SPRITESHEET_LOADING_GRACE_MS
+        ): Boolean = loadingSinceMs > 0L && nowMs - loadingSinceMs >= graceMs
     }
 }

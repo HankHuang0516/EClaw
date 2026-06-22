@@ -674,6 +674,32 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     ? getMissionApiHints(API_BASE, pushDeviceId, pushEid, entity.botSecret)
                     : '';
 
+                // ── 2b. Task-lifecycle directive (card_c0819f4e) ──
+                // The hint block above is a passive TOOL LIST — it shows the
+                // "Move card" curl but never tells the assigned agent that it is
+                // OBLIGATED to advance this card's status when it starts/finishes.
+                // A stateless agent (e.g. Hermes/#5) does the work, reports in
+                // chat, and never moves the card → it sits in todo/in_progress and
+                // re-nudges forever. This directive names the SPECIFIC card id and
+                // states the obligation explicitly, so even an agent with no
+                // persistent todo knows exactly which card to move and that a chat
+                // reply does not close it. Wording is status-agnostic ("if
+                // assigned to you and not yet finished") so it is correct for
+                // nudges, assignments, reopens and reviewer asks alike.
+                const lifecycleDirective = cardId
+                    ? `\n\n[KANBAN LIFECYCLE — ACTION REQUIRED]\n` +
+                      `This notification concerns card ${cardId}. If it is assigned to you and not yet finished:\n` +
+                      `• when you START working, move it to in_progress\n` +
+                      `• when you COMPLETE the work, move it to done (or review if it needs sign-off)\n` +
+                      `Replying in chat does NOT change the card's status — you MUST call the "Move card" tool ` +
+                      `below with CARD_ID=${cardId} and newStatus=in_progress|review|done. ` +
+                      `A card left unmoved keeps re-nudging and auto-escalating.`
+                    : '';
+
+                // Hints + lifecycle directive travel together so the obligation
+                // sits right next to the Move card command in every push path.
+                const missionBlock = kanbanHints + lifecycleDirective;
+
                 // ── 3. Build full message with description ──
                 const descBlock = description
                     ? `\n\n[TASK DESCRIPTION]\n${description}\n[/TASK DESCRIPTION]`
@@ -688,7 +714,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                         eclaw_context: {
                             expectsReply: true,
                             silentToken: '[SILENT]',
-                            missionHints: kanbanHints,
+                            missionHints: missionBlock,
                         }
                     }, entity.channelAccountId);
                     console.log(`[Kanban] Channel push to entity ${pushEid}@${pushDeviceId}: ${result.pushed ? 'OK' : result.reason}`);
@@ -699,7 +725,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                         `[KANBAN NOTIFICATION] ${message}`,
                         descBlock,
                         `[NOTIFICATION — NO REPLY EXPECTED] This is a Kanban task notification. Take action on the card as needed.`,
-                        kanbanHints,
+                        missionBlock,
                     ].filter(Boolean).join('\n');
 
                     const pushResult = await pushToBot(entity, pushDeviceId, 'kanban_notification', { message: pushMsg });
@@ -713,7 +739,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
                 } else if (pushToEntity) {
                     // Legacy fallback
-                    const pushMsg = `[KANBAN NOTIFICATION] ${message}${descBlock}${kanbanHints}`;
+                    const pushMsg = `[KANBAN NOTIFICATION] ${message}${descBlock}${missionBlock}`;
                     await pushToEntity(pushDeviceId, pushEid, pushMsg);
                     console.log(`[Kanban] Legacy push to entity ${pushEid}@${pushDeviceId}`);
                 }

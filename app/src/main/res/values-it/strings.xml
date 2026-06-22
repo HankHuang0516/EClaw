@@ -521,6 +521,7 @@
     <string name="claw_renderer_loading_entities">Caricamento entità…</string>
     <string name="claw_renderer_loading_wallpaper">Caricamento sfondo…</string>
     <string name="claw_wallpaper_loading_marker">Caricamento… (%1$s)</string>
+    <string name="claw_wallpaper_render_error">Errore di ridisegno dello sfondo (segnalato)</string>
     <string name="claw_renderer_no_entities_connected">Nessuna entità collegata</string>
     <string name="claw_renderer_open_app_to_bind">Apri l\'app E-Claw per associare</string>
     <string name="claw_renderer_with_openclaw_bot">entità con il bot OpenClaw</string>
