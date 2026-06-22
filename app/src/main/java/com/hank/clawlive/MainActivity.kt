@@ -30,6 +30,7 @@ import com.hank.clawlive.fcm.ClawFcmService
 import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.NavItem
+import com.hank.clawlive.ui.NavResumeController
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import com.hank.clawlive.ui.reconnect.ReconnectBackoff
 import com.hank.clawlive.ui.reconnect.ReconnectOverlayController
@@ -50,6 +51,16 @@ class MainActivity : AppCompatActivity() {
     private val deviceManager: DeviceManager by lazy { DeviceManager.getInstance(this) }
     private var webView: WebView? = null
     private var reconnectOverlay: ReconnectOverlayController? = null
+
+    /** Persists and restores the last-active tab across process-death restarts. */
+    private val navResume: NavResumeController by lazy {
+        val prefs = getSharedPreferences("nav_resume_prefs", MODE_PRIVATE)
+        NavResumeController(object : NavResumeController.Store {
+            override fun readLastNav(): String? = prefs.getString("last_nav", null)
+            override fun writeLastNav(name: String) { prefs.edit().putString("last_nav", name).apply() }
+            override fun clearLastNav() { prefs.edit().remove("last_nav").apply() }
+        })
+    }
 
     private val notifPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -85,11 +96,47 @@ class MainActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_main)
 
+        // Process-death restore: if the user was on a non-HOME tab when the OS
+        // killed the process, re-launch that tab Activity so they land back there
+        // instead of the dashboard. Skip when a deep-link intent is present — the
+        // App Link target always takes priority over the saved tab.
+        if (intent?.data == null) {
+            restoreLastNavIfNeeded()
+        }
+
         BottomNavHelper.setup(this, NavItem.HOME)
         AiChatFabHelper.setup(this, "home")
         setupWindowInsets()
         registerDeviceThenLoadWebView()
         checkForAppUpdate()
+    }
+
+    /**
+     * On process-death restart, re-launch the last-active tab Activity so the
+     * user is not always dropped onto the dashboard (card_489a8836).
+     * Uses FLAG_ACTIVITY_REORDER_TO_FRONT to avoid duplicating the Activity if
+     * Android already has a saved instance in the back-stack restoration path.
+     */
+    private fun restoreLastNavIfNeeded() {
+        val item = navResume.restoredNavItem() ?: return
+        val targetClass: Class<*> = when (item) {
+            NavItem.CHAT -> ChatActivity::class.java
+            NavItem.MISSION -> MissionControlActivity::class.java
+            NavItem.SETTINGS -> SettingsActivity::class.java
+            NavItem.CARDS -> {
+                // CARDS uses WebViewActivity with a specific URL; handled by BottomNavHelper.
+                // Re-route to home for CARDS since there is no standalone CARDS Activity class.
+                return
+            }
+            NavItem.HOME -> return
+        }
+        Timber.d("[NavResume] Process-death restore → re-launching $item")
+        val intent = Intent(this, targetClass).apply {
+            flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+        }
+        startActivity(intent)
+        @Suppress("DEPRECATION")
+        overridePendingTransition(0, 0)
     }
 
     private fun registerDeviceThenLoadWebView() {
@@ -124,6 +171,9 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         TelemetryHelper.trackPageView(this, "main")
         RecordingIndicatorHelper.attach(this)
+        // Record HOME as the current tab so process-death restart doesn't jump
+        // to a stale non-home tab when the user deliberately navigated back here.
+        navResume.onNavigatedTo(NavItem.HOME)
     }
 
     override fun onPause() {
