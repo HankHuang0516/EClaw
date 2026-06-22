@@ -15,6 +15,7 @@ import com.hank.clawlive.data.model.UsageSnapshotLatest
 import com.hank.clawlive.data.model.WallpaperKanbanCard
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.cancel
+import com.hank.clawlive.data.remote.TelemetryHelper
 
 class ClawWallpaperService : WallpaperService() {
 
@@ -74,6 +75,25 @@ class ClawWallpaperService : WallpaperService() {
         private var hasFirstResponse = false
 
         private val drawRunnable = Runnable { draw() }
+
+        // ── card_f9b2cc2d debug telemetry ──────────────────────────────────
+        // Hank still saw a black screen on 1.0.97. Instrument the wallpaper
+        // lifecycle + draw so a real-device repro is read back via
+        // GET /api/device-telemetry (type="lifecycle", action "wp_*"). Throttled:
+        // every lifecycle event, but only the FIRST ok draw + every
+        // lockCanvas-null / draw exception (never per-frame) so we see the exact
+        // step where rendering stops without flooding telemetry.
+        private var loggedFirstDrawAfterResume = false
+        private fun wpTel(ev: String, extra: Map<String, Any?> = emptyMap()) {
+            try {
+                TelemetryHelper.init(this@ClawWallpaperService.applicationContext)
+                TelemetryHelper.trackLifecycle("wp_$ev", mapOf(
+                    "visible" to visible,
+                    "surfacePresent" to lifecycle.surfacePresent,
+                    "engineAlive" to lifecycle.engineAlive
+                ) + extra)
+            } catch (_: Exception) {}
+        }
 
         // Pure-JVM lifecycle state machine (card_f9b2cc2d). Source of truth for
         // whether engine-lifetime resources are still alive. Surface
@@ -212,6 +232,7 @@ class ClawWallpaperService : WallpaperService() {
         override fun onVisibilityChanged(visible: Boolean) {
             this.visible = visible
             Timber.d("onVisibilityChanged: $visible")
+            wpTel("onVisibilityChanged", mapOf("arg" to visible))
             // Delegate to the lifecycle controller. When shown it restarts any
             // poller that was cancelled while hidden (card_a7baa3b0b1151099d4523428
             // close-out) and redraws. When hidden it stops the draw loop and
@@ -269,7 +290,9 @@ class ClawWallpaperService : WallpaperService() {
             // redraw. Engine-lifetime resources were preserved by
             // onSurfaceDestroyed, so this recovers without a process restart.
             // (card_f9b2cc2d)
+            loggedFirstDrawAfterResume = false
             lifecycle.onSurfaceCreated()
+            wpTel("onSurfaceCreated")
         }
 
         override fun onSurfaceChanged(holder: SurfaceHolder?, format: Int, width: Int, height: Int) {
@@ -278,7 +301,9 @@ class ClawWallpaperService : WallpaperService() {
             // Geometry/format change (rotation, etc.). Treat like a recreate for
             // resume purposes so the very next frame repaints onto the new
             // surface. (card_f9b2cc2d)
+            loggedFirstDrawAfterResume = false
             lifecycle.onSurfaceChanged()
+            wpTel("onSurfaceChanged")
         }
 
         override fun onSurfaceDestroyed(holder: SurfaceHolder?) {
@@ -303,6 +328,7 @@ class ClawWallpaperService : WallpaperService() {
             // additionally gated on lifecycle.surfacePresent so it cannot spin
             // while the surface is gone.
             lifecycle.onSurfaceDestroyed()
+            wpTel("onSurfaceDestroyed")
             Timber.d("onSurfaceDestroyed (paused, engine-lifetime preserved)")
         }
 
@@ -310,6 +336,7 @@ class ClawWallpaperService : WallpaperService() {
             // The ONE place engine-lifetime resources are torn down. Reached when
             // the Engine itself is being destroyed (wallpaper deselected /
             // service stopped), not on a transient surface destroy. (card_f9b2cc2d)
+            wpTel("onEngineDestroy")
             lifecycle.onEngineDestroy()
             Timber.d("ClawEngine onDestroy — engine-lifetime resources released")
             super.onDestroy()
@@ -339,10 +366,18 @@ class ClawWallpaperService : WallpaperService() {
                     } else {
                         renderer.draw(canvas, currentStatus)
                     }
-                } else if (drawCount <= 5) {
+                    if (!loggedFirstDrawAfterResume) {
+                        loggedFirstDrawAfterResume = true
+                        wpTel("draw_first_ok", mapOf("entityCount" to currentEntities.size, "firstResp" to hasFirstResponse))
+                    }
+                } else {
+                    // lockCanvas returned null while we tried to draw — the
+                    // black-screen smoking gun. Throttled so it can't flood.
+                    if (drawCount <= 5 || drawCount % 120 == 0) wpTel("draw_lockCanvas_NULL", mapOf("drawCount" to drawCount))
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Error during drawing")
+                if (drawCount <= 5 || drawCount % 120 == 0) wpTel("draw_exception", mapOf("err" to (e.message ?: e.javaClass.simpleName)))
             } finally {
                 if (canvas != null) {
                     try {
