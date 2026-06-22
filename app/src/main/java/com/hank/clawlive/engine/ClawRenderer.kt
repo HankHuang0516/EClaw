@@ -42,6 +42,21 @@ class ClawRenderer(
     private val lastBubbleDurationByEntity = mutableMapOf<Int, Long>()
     private val bubblePulseStartedByEntity = mutableMapOf<Int, Long>()
 
+    // card_f9b2cc2d v1.1.6 regression fix. A spritesheet whose bitmap is not in
+    // sheetCache returns DrawResult.LOADING, which historically painted NOTHING
+    // (to avoid a companion-switch flash to the default lobster, card_9e52c7b).
+    // But after a cold engine (re)create — CompanionRepository restores the
+    // spritesheet DESCRIPTOR from snapshot but not the sheet bitmap — or a cache
+    // eviction / failed reload, that LOADING persists for many ticks (or forever
+    // if the sheet can never be fetched). With no custom background the canvas is
+    // solid black, so invisible entities = the "pure black, no text, no
+    // exception" resume bug. We keep a short no-paint grace for genuinely brief
+    // loads (no flash), but once an entity has been continuously LOADING past the
+    // grace window we draw the procedural fallback so an entity is NEVER
+    // invisible for more than ~0.75s, regardless of why the sheet is missing.
+    private val spritesheetLoadingSinceMs = mutableMapOf<Int, Long>()
+    private val spritesheetStuckReported = mutableSetOf<Int>()
+
     private data class BubbleDrawTarget(
         val entity: EntityStatus,
         val centerX: Float,
@@ -348,6 +363,30 @@ class ClawRenderer(
                     recordException(e)
                 }
             } catch (_: Exception) { /* crashlytics unavailable — Timber already logged */ }
+        }
+    }
+
+    // card_f9b2cc2d v1.1.6: a spritesheet stuck in LOADING past the grace window
+    // (sheet genuinely unavailable) fell back to the procedural drawer instead of
+    // staying invisible. Record the field cause once per stuck episode (cleared
+    // when the entity next draws a real frame) so we learn WHICH sheet/companion
+    // is failing without per-frame Crashlytics spam.
+    private fun reportSpritesheetStuckLoading(entityId: Int, companion: CompanionDetail?, loadingMs: Long) {
+        if (!spritesheetStuckReported.add(entityId)) return
+        Timber.w("Spritesheet stuck LOADING ${loadingMs}ms for entity $entityId (companion=${companion?.id}) → procedural fallback")
+        try {
+            com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().apply {
+                setCustomKey("stuck_entity_id", entityId)
+                setCustomKey("stuck_loading_ms", loadingMs)
+                setCustomKey("stuck_companion_id", companion?.id ?: "null")
+                recordException(
+                    IllegalStateException(
+                        "wallpaper spritesheet stuck LOADING ${loadingMs}ms entity=$entityId → procedural fallback (card_f9b2cc2d)"
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "stuck-loading crashlytics report failed")
         }
     }
 
@@ -975,11 +1014,31 @@ class ClawRenderer(
         }
 
         when (drawResult) {
-            SpritesheetCompanionDrawer.DrawResult.DRAWN,
-            SpritesheetCompanionDrawer.DrawResult.LOADING -> Unit
+            SpritesheetCompanionDrawer.DrawResult.DRAWN -> {
+                // Healthy frame — clear this entity's LOADING-grace tracker.
+                spritesheetLoadingSinceMs.remove(entity.entityId)
+                spritesheetStuckReported.remove(entity.entityId)
+            }
+            SpritesheetCompanionDrawer.DrawResult.LOADING -> {
+                // Sheet not yet in cache. A brief load paints nothing this tick
+                // (no flash to the default lobster). But a SUSTAINED LOADING —
+                // cold snapshot restore, cache eviction, or a reload that never
+                // lands — must not leave the entity invisible (the pure-black
+                // bug). Once continuously LOADING past the grace window, draw the
+                // procedural fallback (color-matched via the companion descriptor)
+                // so an entity is never invisible for more than the grace.
+                // (card_f9b2cc2d v1.1.6)
+                val since = spritesheetLoadingSinceMs.getOrPut(entity.entityId) { nowMs }
+                if (shouldFallbackForStuckSpritesheet(since, nowMs)) {
+                    reportSpritesheetStuckLoading(entity.entityId, companion, nowMs - since)
+                    drawLobsterAtPosition(canvas, centerX, charY, entity, scale, companion, facingDirection)
+                }
+            }
             SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED,
-            SpritesheetCompanionDrawer.DrawResult.ERROR ->
+            SpritesheetCompanionDrawer.DrawResult.ERROR -> {
+                spritesheetLoadingSinceMs.remove(entity.entityId)
                 drawLobsterAtPosition(canvas, centerX, charY, entity, scale, companion, facingDirection)
+            }
         }
 
         // Draw Name and Status Group BELOW the entity
@@ -1648,5 +1707,26 @@ class ClawRenderer(
         private const val CONVERSATION_GROUP_WINDOW_MS = 2_000L
         private const val CONVERSATION_EVENT_STALE_MS = 120_000L
         private const val MAX_SEEN_CONVERSATIONS = 128
+
+        /**
+         * card_f9b2cc2d v1.1.6: how long a spritesheet may stay in LOADING (and
+         * paint nothing) before the renderer falls back to the procedural drawer
+         * so the entity is never invisible. Short enough the user never sees a
+         * long black gap; long enough a quick disk-decode load doesn't flash the
+         * procedural lobster (preserves the no-flash intent of card_9e52c7b).
+         */
+        const val SPRITESHEET_LOADING_GRACE_MS = 750L
+
+        /**
+         * Pure decision for the LOADING grace window (unit-tested without a
+         * Context). Returns true once a spritesheet has been continuously LOADING
+         * for at least [graceMs]. [loadingSinceMs] is the wall-clock ms when
+         * LOADING first began for this entity (0 means "not currently tracked").
+         */
+        fun shouldFallbackForStuckSpritesheet(
+            loadingSinceMs: Long,
+            nowMs: Long,
+            graceMs: Long = SPRITESHEET_LOADING_GRACE_MS
+        ): Boolean = loadingSinceMs > 0L && nowMs - loadingSinceMs >= graceMs
     }
 }
