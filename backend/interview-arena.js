@@ -261,6 +261,14 @@ let VISION_IMAGES = [
     { file: null, description: 'A CPU profiler flame graph over 5 seconds: widest block is renderComponent at 1.8s; below are eventHandler 0.9s, fetchData 0.6s, and parseJSON 0.3s from left to right — three narrow red overflow warning bars are overlaid at the top', keywords: ['profiler', 'flame', 'graph', 'renderComponent', '1.8', 'fetchData', 'parseJSON', 'three', 'red', 'five'] },
     { file: null, description: 'A Wireshark packet capture showing 6 rows: TCP SYN, TCP SYN-ACK, TCP ACK, HTTP GET /api/users, HTTP 200 OK (1.2 KB), TCP FIN — source IP 10.0.0.5 to destination 52.87.33.11, latency 8 ms between SYN and SYN-ACK', keywords: ['wireshark', 'six', 'TCP', 'SYN', 'GET', 'api/users', '200', '10.0.0.5', '52.87', 'latency'] },
     { file: null, description: 'A five-day stock candlestick chart: Mon green candle $142→$149, Tue red candle $149→$143, Wed green $143→$157, Thu red $157→$151, Fri large green $151→$168 — volume bars below each candle with Friday\'s bar clearly the tallest', keywords: ['candlestick', 'five', 'green', 'red', 'friday', '168', 'volume', 'tallest', 'monday', 'tuesday'] },
+    // ── Daily pool update: added 2026-06-22 ──
+    // Medium tier
+    { file: null, description: 'A mobile app notification panel showing 4 alerts on a dark background at 11:52 AM: two chat messages from "Alex", one calendar reminder reading "Sprint Review in 30 min", and one system alert "iOS 17.4 ready to install"', keywords: ['notification', 'four', 'Alex', 'sprint', 'review', 'calendar', '11:52', 'dark'] },
+    { file: null, description: 'A file explorer window showing 7 items in a folder named "Project-Q3": three .docx files, two .xlsx spreadsheets, one .png image, and one subfolder labeled "Archives" — the largest file "budget_final.xlsx" is 2.4 MB and highlighted in blue', keywords: ['file', 'seven', 'three', 'docx', 'xlsx', 'budget', '2.4', 'Archives', 'blue'] },
+    { file: null, description: 'A regression line scatter plot with 20 data points: x-axis "Years of Experience" (0–12), y-axis "Salary K$" (30–130) — most points cluster near the line y = 8x + 35; two outlier points are circled in red above the line at coordinates (4, 110) and (9, 125)', keywords: ['scatter', 'regression', 'twenty', 'salary', 'years', 'outlier', 'red', '110', '125'] },
+    // Hard tier
+    { file: null, description: 'A REST API response JSON body with 5 top-level keys: "status" is "error", "code" is 429, "message" is "Rate limit exceeded — retry after 60 seconds", "retry_after" is 60, and a nested "quota" object shows "used" 1000 and "limit" 1000', keywords: ['JSON', 'status', 'error', '429', 'rate', 'limit', 'retry', '60', 'quota', '1000'] },
+    { file: null, description: 'A Kubernetes pod status table with 5 rows: nginx-deployment 2/2 Running 3d, redis-master 1/1 Running 5d, postgres-primary 0/1 CrashLoopBackOff (7 restarts) 2h, prometheus 1/1 Running 1d, grafana 1/1 Running 12h — two red warning icons appear in the postgres-primary row', keywords: ['kubernetes', 'five', 'nginx', 'redis', 'postgres', 'CrashLoopBackOff', 'seven', 'restarts', 'prometheus', 'grafana'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -525,6 +533,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '2, [["put",1,1],["put",2,2],["get",1],["put",3,3],["get",2],["get",3]]', expected: '[null,null,1,null,-1,3]' },{ input: '1, [["put",1,1],["get",1],["put",2,2],["get",1],["get",2]]', expected: '[null,1,null,-1,2]' }] },
     { title: 'Word Ladder Length', description: 'Write `solve(beginWord, endWord, wordList)` — return the length of the shortest transformation sequence from beginWord to endWord where each step changes exactly one letter and each intermediate word must exist in wordList. Return 0 if no path exists.',
       testCases: [{ input: '"hit", "cog", ["hot","dot","dog","lot","log","cog"]', expected: '5' },{ input: '"hit", "cog", ["hot","dot","dog","lot","log"]', expected: '0' },{ input: '"a", "c", ["a","b","c"]', expected: '2' }] },
+    // ── Daily pool update: added 2026-06-22 ──
+    { title: 'Graph Valid Tree', description: 'Write `solve(n, edges)` — given n nodes labeled 0 to n-1 and an array of undirected edges, return true if these edges form a valid tree (connected and contains no cycles).',
+      testCases: [{ input: '5, [[0,1],[0,2],[0,3],[1,4]]', expected: 'true' },{ input: '5, [[0,1],[1,2],[2,3],[1,3],[1,4]]', expected: 'false' },{ input: '1, []', expected: 'true' },{ input: '3, [[0,1]]', expected: 'false' }] },
+    { title: 'Meeting Rooms II', description: 'Write `solve(intervals)` — given a list of meeting intervals [start, end], return the minimum number of meeting rooms required to schedule all meetings without overlap.',
+      testCases: [{ input: '[[0,30],[5,10],[15,20]]', expected: '2' },{ input: '[[7,10],[2,4]]', expected: '1' },{ input: '[[0,10],[5,15],[10,20]]', expected: '2' },{ input: '[[0,5],[5,10]]', expected: '1' }] },
+    { title: 'Minimum Arrows to Burst Balloons', description: 'Write `solve(points)` — each balloon is a horizontal segment [x_start, x_end]. An arrow shot at x value x_pos bursts all balloons where x_start <= x_pos <= x_end. Return the minimum number of arrows needed to burst all balloons.',
+      testCases: [{ input: '[[10,16],[2,8],[1,6],[7,12]]', expected: '2' },{ input: '[[1,2],[3,4],[5,6],[7,8]]', expected: '4' },{ input: '[[1,2],[2,3],[3,4],[4,5]]', expected: '2' },{ input: '[[2,3],[2,3]]', expected: '1' }] },
+    { title: 'Max Points on a Line', description: 'Write `solve(points)` — given an array of [x, y] coordinate pairs, return the maximum number of points that lie on the same straight line.',
+      testCases: [{ input: '[[1,1],[2,2],[3,3]]', expected: '3' },{ input: '[[1,1],[3,2],[5,3],[4,1],[2,3],[1,4]]', expected: '4' },{ input: '[[0,0]]', expected: '1' },{ input: '[[0,0],[1,1]]', expected: '2' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -653,6 +670,19 @@ let RESPONSE_QUESTIONS = [
     { question: 'In how many distinct ways can the letters of the word "ALGEBRA" be arranged? (Note: the letter A appears twice.)', expectedKeywords: ['2520'] },
     { question: 'A container has 10 liters of a 40% alcohol mixture. How many liters of pure alcohol must be added to bring the alcohol concentration up to 60%?', expectedKeywords: ['5', '5 liters'] },
     { question: 'What is the units digit of 7 raised to the power 53?', expectedKeywords: ['7'] },
+    // ── Daily pool update: added 2026-06-22 ──
+    // Easy tier
+    { question: 'How many faces does a cube have?', expectedKeywords: ['6', 'six'] },
+    { question: 'What is the value of sin(90°)?', expectedKeywords: ['1', 'one'] },
+    // Medium tier
+    { question: 'A train departs at 08:35 and the journey takes 2 hours and 47 minutes. What time does it arrive?', expectedKeywords: ['11:22'] },
+    { question: 'A rectangle has an area of 48 cm² and a width of 6 cm. What is its perimeter in cm?', expectedKeywords: ['32'] },
+    { question: 'A cyclist covers 45 km in 1.5 hours. What is his average speed in km/h?', expectedKeywords: ['30'] },
+    { question: 'A tank holds 400 liters. It is currently 35% full. How many liters need to be added to fill it completely?', expectedKeywords: ['260'] },
+    // Hard tier
+    { question: 'In how many ways can 5 books be arranged on a shelf if 2 specific books must always be kept next to each other?', expectedKeywords: ['48'] },
+    { question: 'A geometric series has a first term of 3 and a common ratio of 2. What is the sum of the first 6 terms?', expectedKeywords: ['189'] },
+    { question: 'A 30-60-90 triangle has a hypotenuse of 10 cm. What is the area of the triangle in cm²? (Exact value)', expectedKeywords: ['25√3', '25*√3', '21.65', '21.6'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -796,6 +826,18 @@ let TTS_PHRASES = [
     { text: 'The asset management system allocated sixty-three million two hundred forty-four thousand US dollars across eleven funds with a weighted average duration of four point seven years and a yield to maturity of five point three percent', keywords: ['sixty-three', 'million', 'eleven', 'funds', 'weighted', 'duration', '4.7', 'yield', 'maturity', '5.3'] },
     { text: 'RFC 7519 defines JSON Web Tokens as a compact URL-safe means of representing claims where the header dot payload dot signature triplet is base64URL encoded and signed with HS256 or RS256 algorithms', keywords: ['RFC', '7519', 'JSON', 'Web', 'Tokens', 'header', 'payload', 'base64URL', 'HS256', 'RS256'] },
     { text: 'Tensor shape mismatch: expected batch size 32 comma sequence length 128 comma hidden dimension 768 but received 32 comma 64 comma 768 at layer MultiHeadAttention in the forward pass', keywords: ['tensor', 'shape', '32', '128', '768', '64', 'MultiHeadAttention', 'forward', 'mismatch'] },
+    // ── Daily pool update: added 2026-06-22 ──
+    // Easy tier
+    { text: 'The weather forecast shows a high of twenty-three degrees with a chance of rain in the afternoon', keywords: ['weather', 'twenty-three', 'chance', 'rain', 'afternoon'] },
+    { text: 'Your password must be at least eight characters long and include at least one number and one special character', keywords: ['password', 'eight', 'characters', 'number', 'special', 'character'] },
+    // Medium tier
+    { text: 'Dispatch order DP-2024-77921 for twelve units of item SKU-4421-B has been approved and will be fulfilled from warehouse zone C row four', keywords: ['dispatch', 'DP-2024', '77921', 'twelve', 'SKU-4421', 'warehouse', 'zone', 'four'] },
+    { text: 'The Federal Reserve raised interest rates by twenty-five basis points to a target range of five point two five to five point five percent', keywords: ['Federal Reserve', 'interest', 'twenty-five', 'basis', 'points', 'five point', 'percent'] },
+    { text: 'Patient record P-2024-003817: blood glucose 7.4 millimoles per liter, HbA1c 6.8 percent, systolic blood pressure 138 millimeters of mercury — next review scheduled in three months', keywords: ['patient', 'glucose', '7.4', 'HbA1c', '6.8', 'systolic', '138', 'three', 'months'] },
+    // Hard tier
+    { text: 'Clause 12 sub-paragraph C of the service level agreement stipulates that the vendor shall maintain a minimum uptime of ninety-nine point nine percent calculated as a rolling thirty-day average and excluding scheduled maintenance windows notified at least 48 hours in advance', keywords: ['clause', '12', 'vendor', 'uptime', 'ninety-nine', 'thirty-day', 'maintenance', '48', 'hours'] },
+    { text: 'The signal travels through a single-mode fiber optic cable at approximately two-thirds the speed of light in vacuum or two times ten to the power of eight meters per second — a round-trip latency of 5 milliseconds corresponds to a cable length of roughly 750 kilometers', keywords: ['fiber', 'optic', 'two-thirds', 'speed', 'light', 'latency', '5', 'milliseconds', '750', 'kilometers'] },
+    { text: 'Trading halt alert: ticker NVDA circuit breaker triggered at 10:47:23 EST after a 7.4 percent intraday decline — Level 1 halt duration 5 minutes, Level 2 threshold 13 percent, Level 3 threshold 20 percent', keywords: ['trading', 'halt', 'NVDA', '10:47', 'percent', 'decline', 'Level', 'threshold', '13', '20'] },
 ];
 
 // ============================================
