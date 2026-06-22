@@ -646,7 +646,11 @@ class LayoutPreferences private constructor(context: Context) {
         const val RESET_WINDOW_5H_WEEKLY = "5h_weekly"
 
         const val WALLPAPER_BUBBLE_DURATION_MIN_SECONDS = 1
-        const val WALLPAPER_BUBBLE_DURATION_MAX_SECONDS = 20
+        // Max raised 20s → 600s (10 min) per Hank request (card_c421110c). This
+        // single constant drives both the setter clamp (coerceIn below) and the
+        // WallpaperMoreSettings slider's valueTo, so the slider now reaches 10 min;
+        // secondsLabel() already renders ≥60s as "N 分鐘 / N 分 M 秒".
+        const val WALLPAPER_BUBBLE_DURATION_MAX_SECONDS = 600
         const val WALLPAPER_BUBBLE_DURATION_DEFAULT_SECONDS = 5
         const val WALLPAPER_COLLISION_REACTION_DURATION_MIN_SECONDS = 1
         const val WALLPAPER_COLLISION_REACTION_DURATION_MAX_SECONDS = 20

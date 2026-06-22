@@ -62,10 +62,10 @@ class WallpaperMoreSettingsUiTest {
                 assertEquals(18, prefs.wallpaperBubbleDurationSeconds)
                 durationSlider.value = 300f
                 assertEquals(300, prefs.wallpaperBubbleDurationSeconds)
-                prefs.wallpaperBubbleDurationSeconds = 1
-                assertEquals(5, prefs.wallpaperBubbleDurationSeconds)
+                prefs.wallpaperBubbleDurationSeconds = 0
+                assertEquals(1, prefs.wallpaperBubbleDurationSeconds) // clamps up to MIN=1
                 prefs.wallpaperBubbleDurationSeconds = 999
-                assertEquals(300, prefs.wallpaperBubbleDurationSeconds)
+                assertEquals(600, prefs.wallpaperBubbleDurationSeconds) // clamps down to MAX=600 (10 min)
                 prefs.wallpaperBubbleDurationSeconds = LayoutPreferences.WALLPAPER_BUBBLE_DURATION_DEFAULT_SECONDS
             }
         }

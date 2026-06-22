@@ -832,7 +832,7 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="wallpaper_setting_speech_bubbles">訊息泡泡</string>
     <string name="wallpaper_setting_speech_bubbles_desc">在夥伴旁顯示實體狀態與最近訊息。</string>
     <string name="wallpaper_setting_bubble_duration">訊息泡泡停留時間</string>
-    <string name="wallpaper_setting_bubble_duration_desc">調整桌布泡泡存在時間，可從 1 到 20 秒；聊天聚集會在這個 TTL 結束後回到原位。</string>
+    <string name="wallpaper_setting_bubble_duration_desc">調整桌布泡泡存在時間，可從 1 秒到 10 分鐘；聊天聚集會在這個 TTL 結束後回到原位。</string>
     <string name="wallpaper_setting_bubble_duration_value">%1$d 秒</string>
     <string name="wallpaper_setting_bubble_duration_minutes_value">%1$d 分鐘</string>
     <string name="wallpaper_setting_bubble_duration_minutes_seconds_value">%1$d 分 %2$d 秒</string>
