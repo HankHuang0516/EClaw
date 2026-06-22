@@ -81,17 +81,41 @@
             gap: 12px;
         }
         .tier-card {
+            appearance: none;
+            -webkit-appearance: none;
             border: 1px solid var(--card-border);
             border-radius: var(--radius-sm);
             padding: 14px;
             background: var(--input-bg);
+            color: inherit;
+            font: inherit;
+            text-align: left;
             position: relative;
             cursor: pointer;
+            width: 100%;
             transition: border-color 0.15s, transform 0.1s;
         }
         .tier-card:hover { border-color: var(--accent, #6366f1); }
+        .tier-card:focus-visible {
+            outline: 3px solid rgba(99, 102, 241, 0.28);
+            outline-offset: 2px;
+            border-color: var(--accent, #6366f1);
+        }
         .tier-card:active { transform: scale(0.97); }
         .tier-card.is-pending { opacity: 0.6; pointer-events: none; }
+        .tier-card:disabled {
+            cursor: progress;
+        }
+        .wallet-action-status {
+            margin-top: 12px;
+            min-height: 20px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+        .wallet-action-status[data-state="success"] { color: #059669; }
+        .wallet-action-status[data-state="error"] { color: #dc2626; }
+        .wallet-action-status:empty { display: none; }
         .topup-toast {
             position: fixed;
             left: 50%;
@@ -261,6 +285,7 @@
             <div class="tier-grid" id="tierGrid">
                 <!-- populated by JS -->
             </div>
+            <div class="wallet-action-status" id="walletActionStatus" role="status" aria-live="polite" aria-atomic="true"></div>
             <p style="font-size:11px;color:var(--text-secondary);margin-top:12px;" data-i18n="wallet_topup_note">
                 ⓘ Top-up is processed via the Android app. The web view above is informational only.
             </p>
@@ -370,7 +395,8 @@
                 const ecoinUnit = tt('wallet_ecoin_unit', 'e-coin');
                 const usdLabel = tt('wallet_usd_label', 'USD');
                 for (const t of data.tiers) {
-                    const card = document.createElement('div');
+                    const card = document.createElement('button');
+                    card.type = 'button';
                     card.className = 'tier-card';
                     const bonusBadge = t.bonusPct > 0
                         ? `<span class="tier-bonus">+${t.bonusPct}%</span>` : '';
@@ -385,6 +411,7 @@
                     `;
                     card.title = titleHint;
                     card.dataset.productId = t.productId;
+                    card.setAttribute('aria-label', `$${t.priceUsd} ${usdLabel}, ${t.ecoinTotal.toLocaleString()} ${ecoinUnit}`);
                     card.addEventListener('click', () => tapTier(card, t.productId));
                     grid.appendChild(card);
                 }
@@ -399,36 +426,47 @@
             if (pendingTierCard) return;
             const bridge = window.AndroidBridge;
             if (!bridge || typeof bridge.launchTopupPurchase !== 'function') {
-                showTopupToast(tt('wallet_topup_via_app', 'Please top up via the Android app'), true);
+                showTopupToast(tt('wallet_topup_via_app', 'Please top up via the Android app'), true, 'error');
                 return;
             }
             pendingTierCard = card;
             card.classList.add('is-pending');
+            card.disabled = true;
             try {
                 bridge.launchTopupPurchase(productId);
             } catch (err) {
                 console.error('[wallet] launchTopupPurchase failed', err);
                 card.classList.remove('is-pending');
+                card.disabled = false;
                 pendingTierCard = null;
-                showTopupToast(tt('wallet_topup_failed', 'Top-up failed. Please try again.'), true);
+                showTopupToast(tt('wallet_topup_failed', 'Top-up failed. Please try again.'), true, 'error');
             }
         }
 
         window.onTopupComplete = function(productId, success) {
             if (pendingTierCard) {
                 pendingTierCard.classList.remove('is-pending');
+                pendingTierCard.disabled = false;
                 pendingTierCard = null;
             }
             if (success) {
-                showTopupToast(tt('wallet_topup_success', 'Top-up successful!'));
+                showTopupToast(tt('wallet_topup_success', 'Top-up successful!'), false, 'success');
                 loadBalance();
                 loadHistory();
             } else {
-                showTopupToast(tt('wallet_topup_failed', 'Top-up failed. Please try again.'), true);
+                showTopupToast(tt('wallet_topup_failed', 'Top-up failed. Please try again.'), true, 'error');
             }
         };
 
-        function showTopupToast(text, isError) {
+        function setWalletActionStatus(message, state = 'idle') {
+            const statusEl = document.getElementById('walletActionStatus');
+            if (!statusEl) return;
+            statusEl.textContent = message || '';
+            statusEl.dataset.state = state;
+        }
+
+        function showTopupToast(text, isError, state = 'idle') {
+            setWalletActionStatus(text, state);
             const existing = document.querySelector('.topup-toast');
             if (existing) existing.remove();
             const el = document.createElement('div');
