@@ -519,6 +519,7 @@
     <string name="chat_load_image_failed">Impossibile caricare l\'immagine</string>
     <string name="wallpaper_no_bound_entities">Nessuna entità vincolata</string>
     <string name="claw_renderer_loading_entities">Caricamento entità…</string>
+    <string name="claw_renderer_loading_wallpaper">Caricamento sfondo…</string>
     <string name="claw_renderer_no_entities_connected">Nessuna entità collegata</string>
     <string name="claw_renderer_open_app_to_bind">Apri l\'app E-Claw per associare</string>
     <string name="claw_renderer_with_openclaw_bot">entità con il bot OpenClaw</string>

@@ -295,6 +295,7 @@
     <string name="chat_load_image_failed">載入圖片失敗</string>
     <string name="wallpaper_no_bound_entities">無已綁定實體</string>
     <string name="claw_renderer_loading_entities">載入實體中…</string>
+    <string name="claw_renderer_loading_wallpaper">載入桌布中…</string>
     <string name="claw_renderer_no_entities_connected">無已連接實體</string>
     <string name="claw_renderer_open_app_to_bind">開啟 E-Claw 應用綁定</string>
     <string name="claw_renderer_with_openclaw_bot">OpenClaw 機器的實體</string>

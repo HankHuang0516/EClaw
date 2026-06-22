@@ -589,6 +589,7 @@ Jika anda mempunyai sebarang soalan, sila hubungi kami melalui e-mel rasmi kami.
     <string name="chat_load_image_failed">Gagal memuat imej</string>
     <string name="wallpaper_no_bound_entities">Tiada entiti terikat</string>
     <string name="claw_renderer_loading_entities">Memuat entiti…</string>
+    <string name="claw_renderer_loading_wallpaper">Memuat kertas dinding…</string>
     <string name="claw_renderer_no_entities_connected">Tiada entiti bersambung</string>
     <string name="claw_renderer_open_app_to_bind">Buka app E-Claw untuk mengikat</string>
     <string name="claw_renderer_with_openclaw_bot">entiti dengan bot OpenClaw</string>

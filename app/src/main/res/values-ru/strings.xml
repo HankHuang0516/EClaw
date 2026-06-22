@@ -519,6 +519,7 @@
     <string name="chat_load_image_failed">Не удалось загрузить изображение</string>
     <string name="wallpaper_no_bound_entities">Нет связанных сущностей</string>
     <string name="claw_renderer_loading_entities">Загрузка объектов…</string>
+    <string name="claw_renderer_loading_wallpaper">Загрузка обоев…</string>
     <string name="claw_renderer_no_entities_connected">Нет подключенных объектов</string>
     <string name="claw_renderer_open_app_to_bind">Откройте приложение E-Claw для привязки.</string>
     <string name="claw_renderer_with_openclaw_bot">сущности с ботом OpenClaw</string>

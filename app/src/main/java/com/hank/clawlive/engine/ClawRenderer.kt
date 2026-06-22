@@ -502,12 +502,26 @@ class ClawRenderer(
         val backgroundBitmap = getBackgroundBitmap(width.toInt(), height.toInt())
         if (backgroundBitmap != null) {
             canvas.drawBitmap(backgroundBitmap, 0f, 0f, backgroundPaint)
-            if (multiDrawCount <= 3) {
-            }
+        } else if (layoutPrefs.useBackgroundImage && layoutPrefs.backgroundImageUri != null) {
+            // A background image IS configured but hasn't loaded yet / failed to decode
+            // (the brief render gap after a resume, or slow/failed storage access).
+            // Show a "Loading wallpaper…" placeholder on a dark surface instead of a
+            // confusing pure-black screen (card_43f365e2, Hank-direct). Don't return —
+            // fall through so the entities-empty text below still overlays on top.
+            canvas.drawColor(0xFF0B1220.toInt()) // dark navy — reads as a deliberate surface, not a black/crash screen
+            val prevSize = textPaint.textSize
+            val prevColor = textPaint.color
+            textPaint.textSize = 32f
+            textPaint.color = Color.WHITE
+            canvas.drawText(
+                context.getString(R.string.claw_renderer_loading_wallpaper),
+                width / 2f, height / 2f, textPaint
+            )
+            textPaint.textSize = prevSize
+            textPaint.color = prevColor
         } else {
+            // User intentionally chose a solid-black / no-image wallpaper — keep pure black.
             canvas.drawColor(Color.BLACK)
-            if (multiDrawCount <= 3) {
-            }
         }
 
         if (entities.isEmpty()) {
