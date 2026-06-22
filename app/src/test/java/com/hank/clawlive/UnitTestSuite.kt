@@ -21,6 +21,7 @@ import org.junit.runners.Suite
     ChatEchoSuppressionTest::class,
     WallpaperWanderControllerTest::class,
     EngineLifecycleControllerTest::class,
+    SpritesheetLoadingGraceTest::class,
     CompanionDescriptorAnimationTest::class,
     NavResumeControllerTest::class,
     NotificationPreferenceCatalogTest::class,
