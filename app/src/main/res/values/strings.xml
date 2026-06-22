@@ -916,6 +916,10 @@ If you have any questions, please contact us via our official email.
     <string name="update_message">A new version (v%s) is available. Update for the best experience!</string>
     <string name="update_now">Update Now</string>
     <string name="update_later">Later</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">About this update</string>
+    <string name="update_help_body">Your version %1$s → latest %2$s. Tap "Update Now" to update right inside the app (about 30 seconds, no need to leave). If in-app update isn\'t available, the Play Store opens instead.</string>
+    <string name="update_store_unavailable">Couldn\'t open the store to update. Please update from Google Play.</string>
 
     <!-- Card Holder (shared by MainActivity agent-card editor) -->
     <string name="card_holder_capabilities">Capabilities</string>

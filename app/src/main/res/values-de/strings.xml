@@ -805,6 +805,10 @@ Bei Fragen kontaktieren Sie uns über unsere offizielle E-Mail.
     <string name="update_title">Update verfügbar</string>
     <string name="update_message">Eine neue Version (v%s) ist verfügbar. Aktualisieren Sie für die beste Erfahrung!</string>
     <string name="update_now">Jetzt aktualisieren</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">Über dieses Update</string>
+    <string name="update_help_body">Deine Version %1$s → neueste %2$s. Tippe auf „Jetzt aktualisieren“, um direkt in der App zu aktualisieren (etwa 30 Sekunden, ohne die App zu verlassen). Falls das In-App-Update nicht verfügbar ist, öffnet sich der Play Store.</string>
+    <string name="update_store_unavailable">Store konnte zum Aktualisieren nicht geöffnet werden. Bitte über Google Play aktualisieren.</string>
     <string name="update_later">Später</string>
 
     <!-- Card Holder -->    <string name="card_holder_capabilities">Fähigkeiten</string>

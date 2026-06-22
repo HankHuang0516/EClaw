@@ -713,6 +713,10 @@
     <string name="update_title">Доступно обновление</string>
     <string name="update_message">Доступна новая версия (v%s). </string>
     <string name="update_now">Обновить сейчас</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">Об этом обновлении</string>
+    <string name="update_help_body">Ваша версия %1$s → последняя %2$s. Нажмите «Обновить сейчас», чтобы обновить прямо в приложении (около 30 секунд, не выходя из него). Если обновление в приложении недоступно, откроется Play Маркет.</string>
+    <string name="update_store_unavailable">Не удалось открыть магазин для обновления. Обновите через Google Play.</string>
     <string name="update_later">Позже</string>
     <string name="card_holder_capabilities">Возможности</string>
     <string name="card_holder_tags">Теги</string>

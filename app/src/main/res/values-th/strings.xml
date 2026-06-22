@@ -745,6 +745,10 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="update_later">ภายหลัง</string>
     <string name="update_message">เวอร์ชันใหม่ (v%s) พร้อมใช้งานแล้ว อัปเดตเพื่อประสบการณ์ที่ดีที่สุด!</string>
     <string name="update_now">อัปเดตเลย</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">เกี่ยวกับการอัปเดตนี้</string>
+    <string name="update_help_body">เวอร์ชันของคุณ %1$s → ล่าสุด %2$s แตะ "อัปเดตเลย" เพื่ออัปเดตภายในแอปได้ทันที (ประมาณ 30 วินาที ไม่ต้องออกจากแอป) หากอัปเดตในแอปไม่ได้ ระบบจะเปิด Play Store แทน</string>
+    <string name="update_store_unavailable">เปิดสโตร์เพื่ออัปเดตไม่ได้ โปรดอัปเดตจาก Google Play</string>
     <string name="update_title">มีอัปเดตใหม่</string>
     <string name="upload">อัปโหลด</string>
     <string name="upload_error">อัปโหลดล้มเหลว</string>

@@ -745,6 +745,10 @@ Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua
     <string name="update_later">Để sau</string>
     <string name="update_message">Phiên bản mới (v%s) đã sẵn sàng. Cập nhật để có trải nghiệm tốt nhất!</string>
     <string name="update_now">Cập nhật ngay</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">Giới thiệu về bản cập nhật này</string>
+    <string name="update_help_body">Phiên bản của bạn %1$s → mới nhất %2$s. Nhấn "Cập nhật ngay" để cập nhật ngay trong ứng dụng (khoảng 30 giây, không cần rời ứng dụng). Nếu không cập nhật được trong ứng dụng, Cửa hàng Play sẽ mở ra.</string>
+    <string name="update_store_unavailable">Không mở được cửa hàng để cập nhật. Vui lòng cập nhật từ Google Play.</string>
     <string name="update_title">Có bản cập nhật mới</string>
     <string name="upload">Tải lên</string>
     <string name="upload_error">Tải lên thất bại</string>

@@ -749,6 +749,10 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="update_later">稍后再说</string>
     <string name="update_message">新版本 (v%s) 已推出，立即更新以获得最佳体验！</string>
     <string name="update_now">立即更新</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">关于此更新</string>
+    <string name="update_help_body">你的版本 %1$s → 最新 %2$s。点「立即更新」直接在 App 内更新（约 30 秒，无需离开 App）。若无法在 App 内更新，将改为打开 Play 商店。</string>
+    <string name="update_store_unavailable">无法打开商店进行更新，请改到 Google Play 更新。</string>
     <string name="update_title">有新版本可用</string>
     <string name="upload">上传</string>
     <string name="upload_error">上传失败</string>

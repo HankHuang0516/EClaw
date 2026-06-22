@@ -1,5 +1,6 @@
 package com.hank.clawlive
 
+import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
@@ -12,6 +13,9 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts.StartIntentSenderForResult
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -51,6 +55,13 @@ import com.hank.clawlive.settings.NotificationPreferenceCatalog
 import com.hank.clawlive.settings.NotificationPreferenceCategory
 import com.hank.clawlive.settings.DynamicSettingsRow
 import com.hank.clawlive.settings.SettingsManifestSync
+import com.hank.clawlive.settings.UpdateChipDecision
+import com.google.android.play.core.appupdate.AppUpdateManager
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.appupdate.AppUpdateOptions
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.EntityChipHelper
@@ -61,12 +72,32 @@ import androidx.core.os.LocaleListCompat
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+private const val PLAY_STORE_FALLBACK_URL =
+    "https://play.google.com/store/apps/details?id=com.hank.clawlive"
+
 class SettingsActivity : AppCompatActivity() {
 
     private lateinit var billingManager: BillingManager
     private lateinit var usageManager: UsageManager
     private val layoutPrefs: LayoutPreferences by lazy { LayoutPreferences.getInstance(this) }
     private val deviceManager: DeviceManager by lazy { DeviceManager.getInstance(this) }
+
+    // ── Settings update-available chip (card_28a8290a) ──
+    private val appUpdateManager: AppUpdateManager by lazy { AppUpdateManagerFactory.create(this) }
+    // Receives the result of the Play Core In-App Update IMMEDIATE flow.
+    private val updateFlowLauncher: ActivityResultLauncher<IntentSenderRequest> =
+        registerForActivityResult(StartIntentSenderForResult()) { result ->
+            if (result.resultCode != RESULT_OK) {
+                // User cancelled the full-screen IMMEDIATE update, or it failed to
+                // launch/download. Offer the Play Store as a manual fallback rather
+                // than leaving them stuck.
+                Timber.w("[UpdateChip] In-app update flow result=${result.resultCode} — offering store fallback")
+                openStoreFallback()
+            }
+        }
+    // Cached store URL from the last /api/version response (Play Store deep link).
+    private var updateStoreUrl: String = PLAY_STORE_FALLBACK_URL
+    private var updateLatestVersion: String = ""
 
     // UI elements
     private lateinit var cardSubscription: MaterialCardView
@@ -172,6 +203,7 @@ class SettingsActivity : AppCompatActivity() {
         observeSubscriptionState()
         updateEntityCount()
         displayAppVersion()
+        checkForUpdateChip()
         setupDeveloperCollapsible()
         setupNotifCollapsible()
         setupBroadcastSettingsCollapsible()
@@ -982,6 +1014,131 @@ class SettingsActivity : AppCompatActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    // ============================================
+    // UPDATE-AVAILABLE CHIP + PLAY CORE IN-APP UPDATE (card_28a8290a)
+    // ============================================
+
+    /**
+     * Decide whether to show the "update available" chip next to the version row.
+     *
+     * Reuses the EXISTING version-fetch seam: GET /api/version via
+     * [NetworkModule.api.checkAppVersion] (the same call MainActivity uses for its
+     * launch-time update dialog). The backend compares the client version against
+     * LATEST_APP_VERSION server-side and returns `update.available` + latestVersion +
+     * storeUrl. We additionally cross-check locally via [UpdateChipDecision] so a
+     * stale flag can never produce a *false* update prompt.
+     *
+     * Graceful degradation (spec Acceptance): any failure / null update block / blank
+     * version leaves the chip GONE — never crash, never a false "update now" prompt.
+     */
+    private fun checkForUpdateChip() {
+        val installedVersion = deviceManager.appVersion
+        if (installedVersion.isBlank() || installedVersion == "unknown") return
+
+        lifecycleScope.launch {
+            val versionInfo = runCatching {
+                NetworkModule.api.checkAppVersion(installedVersion)
+            }.getOrElse { e ->
+                Timber.d(e, "[UpdateChip] /api/version fetch failed — chip stays hidden")
+                return@launch
+            }
+
+            val update = versionInfo.update
+            val show = UpdateChipDecision.shouldShowChip(
+                available = update?.available,
+                installedVersion = installedVersion,
+                latestVersion = update?.latestVersion
+            )
+            if (!show || update == null) return@launch
+
+            updateStoreUrl = update.storeUrl.ifBlank { PLAY_STORE_FALLBACK_URL }
+            updateLatestVersion = update.latestVersion
+            showUpdateChip(installedVersion, update.latestVersion, update.releaseNotes)
+        }
+    }
+
+    private fun showUpdateChip(currentVersion: String, latestVersion: String, releaseNotes: String?) {
+        val row = findViewById<LinearLayout>(R.id.updateChipRow)
+        val chip = findViewById<Chip>(R.id.chipUpdateAvailable)
+        val help = findViewById<ImageButton>(R.id.btnUpdateHelp)
+
+        chip.setOnClickListener { startInAppUpdate() }
+        help.setOnClickListener { showUpdateHelpDialog(currentVersion, latestVersion, releaseNotes) }
+        row.visibility = View.VISIBLE
+    }
+
+    /**
+     * Launch the Play Core In-App Update IMMEDIATE flow: full-screen update UI,
+     * background download, then restart — the user stays in-app (~30s). If Play
+     * reports no immediate update is available (e.g. sideloaded build, Play absent,
+     * or update not yet rolled out to this device) we fall back to the store.
+     */
+    private fun startInAppUpdate() {
+        val infoTask = runCatching { appUpdateManager.appUpdateInfo }.getOrElse { e ->
+            Timber.w(e, "[UpdateChip] appUpdateInfo unavailable — store fallback")
+            openStoreFallback()
+            return
+        }
+        infoTask
+            .addOnSuccessListener { info ->
+                val canImmediate = info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE &&
+                    info.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
+                if (canImmediate) {
+                    runCatching {
+                        appUpdateManager.startUpdateFlowForResult(
+                            info,
+                            updateFlowLauncher,
+                            AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()
+                        )
+                    }.onFailure { e ->
+                        Timber.w(e, "[UpdateChip] startUpdateFlowForResult failed — store fallback")
+                        openStoreFallback()
+                    }
+                } else {
+                    Timber.d("[UpdateChip] Play immediate update not available — store fallback")
+                    openStoreFallback()
+                }
+            }
+            .addOnFailureListener { e ->
+                Timber.w(e, "[UpdateChip] appUpdateInfo failed — store fallback")
+                openStoreFallback()
+            }
+    }
+
+    /**
+     * Store fallback chain: market://details deep link (opens the Play app directly),
+     * then the https://play.google.com/... web URL if the Play Store app is absent.
+     */
+    private fun openStoreFallback() {
+        val marketUri = Uri.parse("market://details?id=$packageName")
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, marketUri))
+        } catch (e: ActivityNotFoundException) {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(updateStoreUrl)))
+            } catch (e2: Exception) {
+                Timber.e(e2, "[UpdateChip] No store available to open")
+                Toast.makeText(this, getString(R.string.update_store_unavailable), Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun showUpdateHelpDialog(currentVersion: String, latestVersion: String, releaseNotes: String?) {
+        val message = buildString {
+            append(getString(R.string.update_help_body, currentVersion, latestVersion))
+            if (!releaseNotes.isNullOrBlank()) {
+                append("\n\n")
+                append(releaseNotes)
+            }
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.update_help_title))
+            .setMessage(message)
+            .setPositiveButton(getString(R.string.update_now)) { _, _ -> startInAppUpdate() }
+            .setNegativeButton(getString(R.string.update_later), null)
+            .show()
     }
 
     // ============================================

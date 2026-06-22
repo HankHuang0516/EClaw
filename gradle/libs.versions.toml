@@ -23,6 +23,7 @@ googleId = "1.1.1"
 facebookSdk = "17.0.0"
 playServicesLocation = "21.3.0"
 playIntegrity = "1.6.0"
+playAppUpdate = "2.1.0"
 
 [libraries]
 billing = { group = "com.android.billingclient", name = "billing-ktx", version.ref = "billing" }
@@ -75,6 +76,8 @@ play-services-location = { group = "com.google.android.gms", name = "play-servic
 
 # Google Play Integrity
 play-integrity = { group = "com.google.android.play", name = "integrity", version.ref = "playIntegrity" }
+play-app-update = { group = "com.google.android.play", name = "app-update", version.ref = "playAppUpdate" }
+play-app-update-ktx = { group = "com.google.android.play", name = "app-update-ktx", version.ref = "playAppUpdate" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

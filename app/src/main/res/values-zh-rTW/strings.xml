@@ -768,6 +768,10 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="update_later">稍後再說</string>
     <string name="update_message">新版本 (v%s) 已推出，立即更新以獲得最佳體驗！</string>
     <string name="update_now">立即更新</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">關於此更新</string>
+    <string name="update_help_body">你的版本 %1$s → 最新 %2$s。點「立即更新」直接在 App 內更新（約 30 秒，不用離開 App）。若無法在 App 內更新，將改為開啟 Play 商店。</string>
+    <string name="update_store_unavailable">無法開啟商店進行更新，請改到 Google Play 更新。</string>
     <string name="update_title">有新版本可用</string>
     <string name="upload">上傳</string>
     <string name="upload_error">上傳失敗</string>

@@ -713,6 +713,10 @@
     <string name="update_title">Aggiornamento disponibile</string>
     <string name="update_message">Una nuova versione (v%s) è disponibile. </string>
     <string name="update_now">Aggiorna ora</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">Informazioni su questo aggiornamento</string>
+    <string name="update_help_body">La tua versione %1$s → ultima %2$s. Tocca "Aggiorna ora" per aggiornare direttamente nell\'app (circa 30 secondi, senza uscire). Se l\'aggiornamento in-app non è disponibile, si apre il Play Store.</string>
+    <string name="update_store_unavailable">Impossibile aprire lo store per l\'aggiornamento. Aggiorna da Google Play.</string>
     <string name="update_later">Dopo</string>
     <string name="card_holder_capabilities">Capacità</string>
     <string name="card_holder_tags">Tag</string>
