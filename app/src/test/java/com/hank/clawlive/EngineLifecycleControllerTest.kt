@@ -150,4 +150,28 @@ class EngineLifecycleControllerTest {
         assertTrue(c.surfacePresent)
         assertTrue(c.engineAlive)
     }
+
+    @Test
+    fun briefAppSwitchSurfaceOnlyCycleStillRedraws() {
+        // Regression card_f9b2cc2d (residual black after the engineScope fix):
+        // a *brief* app-switch can destroy then recreate the surface with NO
+        // onVisibilityChanged toggle. `visible` must survive the surface-destroy
+        // so the following onSurfaceCreated redraws — otherwise the wallpaper
+        // stays black until a full process restart (exactly the user's report:
+        // "even the loading-entities text never appears").
+        val (c, hooks) = controller()
+        c.onEngineCreate()
+        c.onSurfaceCreated()
+        c.onVisibilityChanged(true)
+        val restartsAfterShow = hooks.restartCount
+
+        // Surface-only cycle: NO onVisibilityChanged(false)/(true) around it.
+        c.onSurfaceDestroyed()
+        assertTrue("visible must survive a surface-only destroy", c.visible)
+        c.onSurfaceCreated()
+
+        assertTrue("must redraw on surface recreate without a visibility toggle",
+            hooks.restartCount > restartsAfterShow)
+        assertTrue("engine stays alive across the surface-only cycle", c.engineAlive)
+    }
 }
