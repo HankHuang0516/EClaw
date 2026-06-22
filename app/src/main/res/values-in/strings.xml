@@ -296,6 +296,7 @@
     <string name="chat_load_image_failed">Gagal memuat gambar</string>
     <string name="wallpaper_no_bound_entities">Tidak ada entitas yang terikat</string>
     <string name="claw_renderer_loading_entities">Memuat entitas…</string>
+    <string name="claw_renderer_loading_wallpaper">Memuat wallpaper…</string>
     <string name="claw_renderer_no_entities_connected">Tidak ada entitas terhubung</string>
     <string name="claw_renderer_open_app_to_bind">Buka app E-Claw untuk mengikat</string>
     <string name="claw_renderer_with_openclaw_bot">entitas dengan bot OpenClaw</string>

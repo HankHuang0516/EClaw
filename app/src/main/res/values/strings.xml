@@ -680,6 +680,7 @@ If you have any questions, please contact us via our official email.
     <string name="chat_load_image_failed">Failed to load image</string>
     <string name="wallpaper_no_bound_entities">No bound entities</string>
     <string name="claw_renderer_loading_entities">Loading entities…</string>
+    <string name="claw_renderer_loading_wallpaper">Loading wallpaper…</string>
     <string name="claw_renderer_no_entities_connected">No entities connected</string>
     <string name="claw_renderer_open_app_to_bind">Open E-Claw app to bind</string>
     <string name="claw_renderer_with_openclaw_bot">entities with OpenClaw bot</string>

@@ -295,6 +295,7 @@
     <string name="chat_load_image_failed">โหลดรูปภาพไม่สำเร็จ</string>
     <string name="wallpaper_no_bound_entities">ไม่มีเอนทิตีที่ถูกผูกไว้</string>
     <string name="claw_renderer_loading_entities">กำลังโหลด Entity…</string>
+    <string name="claw_renderer_loading_wallpaper">กำลังโหลดวอลล์เปเปอร์…</string>
     <string name="claw_renderer_no_entities_connected">ไม่มี Entity เชื่อมต่อ</string>
     <string name="claw_renderer_open_app_to_bind">เปิดแอป E-Claw เพื่อผูก</string>
     <string name="claw_renderer_with_openclaw_bot">Entity กับบอท OpenClaw</string>

@@ -187,6 +187,7 @@
     <string name="chat_offline_message">Tidak dapat terhubung. Silakan periksa koneksi internet Anda.</string>
     <string name="choose_plan_title">Pilih Paket</string>
     <string name="claw_renderer_loading_entities">Memuat entitas…</string>
+    <string name="claw_renderer_loading_wallpaper">Memuat wallpaper…</string>
     <string name="claw_renderer_no_entities_connected">Tidak ada entitas terhubung</string>
     <string name="claw_renderer_open_app_to_bind">Buka app E-Claw untuk mengikat</string>
     <string name="claw_renderer_with_openclaw_bot">entitas dengan bot OpenClaw</string>
