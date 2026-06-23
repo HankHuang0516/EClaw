@@ -7896,25 +7896,20 @@
 
             let finalText = text;
             if (replyContexts.length) {
-                // Embed his_<uuid> token per quote so each referenced bubble renders
-                // as a clickable chip for everyone (sender + recipient bots see it
-                // inline and can scroll back). messages.id is a UUID, so we validate
-                // the canonical 8-4-4-4-12 form and skip the token if it doesn't
-                // match (no silent digit-stripping). One "↩ …" LINE per quote so the
-                // recipient entity receives EVERY quote, not just the last (card_277c80f5).
+                // One "↩ …" line per quote so the recipient entity receives EVERY
+                // quote, not just the last (card_277c80f5). his_<uuid> token per quote
+                // keeps each referenced bubble a clickable chip (validate canonical
+                // UUID; skip token otherwise). Newlines collapsed → block joined by
+                // '\n', split from body by '\n\n' so stripReplyQuotePrefix stays correct.
                 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
                 const quoteLines = replyContexts.map(rc => {
-                    // Collapse newlines so each quote stays a single line; the block is
-                    // joined by '\n' and separated from the body by '\n\n', which keeps
-                    // stripReplyQuotePrefix() (cuts at first '\n\n') correct.
                     const oneLine = (rc.text || '').replace(/\s*\n+\s*/g, ' ');
                     const excerpt = oneLine.length > 80 ? oneLine.slice(0, 80) + '…' : oneLine;
                     const rawMsgId = rc.msgId ? String(rc.msgId).trim().toLowerCase() : '';
                     const hisToken = UUID_RE.test(rawMsgId) ? ` his_${rawMsgId}` : '';
                     return `↩ ${rc.senderName}:${hisToken} "${excerpt}"`;
                 });
-                const quoteBlock = quoteLines.join('\n');
-                finalText = text ? `${quoteBlock}\n\n${text}` : quoteBlock;
+                finalText = text ? `${quoteLines.join('\n')}\n\n${text}` : quoteLines.join('\n');
                 clearReplyContext();
             }
             finalText = normalizeTargetSlashForSend(finalText);

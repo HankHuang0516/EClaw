@@ -42,8 +42,10 @@ describe('chat.html multi-quote accumulation (card_277c80f5)', () => {
     test('send emits one quote line per entry so the entity receives every quote', () => {
         const send = html.slice(html.indexOf('if (replyContexts.length) {'));
         expect(send).toContain('const quoteLines = replyContexts.map(rc => {');
-        expect(send).toContain('const quoteBlock = quoteLines.join(\'\\n\');');
-        expect(send).toContain('finalText = text ? `${quoteBlock}\\n\\n${text}` : quoteBlock;');
+        // one "↩ …" line per quote, joined by newline
+        expect(send).toContain("quoteLines.join('\\n')");
+        // the outgoing body is built from ALL quotes, not just the last
+        expect(send).toMatch(/finalText = text \?[^\n]*quoteLines\.join/);
         // newlines collapsed per quote so the block stays strip-compatible
         expect(send).toContain("(rc.text || '').replace(/\\s*\\n+\\s*/g, ' ')");
     });
