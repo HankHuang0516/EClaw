@@ -494,9 +494,12 @@ class ClawWallpaperService : WallpaperService() {
                     }
                 } else if (drawCount <= 5) {
                 }
-            } catch (e: Exception) {
-                // card_f9b2cc2d ROOT-CAUSE CAPTURE + visible fallback. The
-                // reported "pure black, no text" on resume is consistent with
+            } catch (e: Throwable) {
+                // card_f9b2cc2d ROOT-CAUSE CAPTURE + visible fallback. catch THROWABLE
+                // (not just Exception) so a render-thread OutOfMemoryError [BLK-RENDER]
+                // (an Error) also paints the visible error frame below instead of
+                // escaping to the process-killing uncaught handler → pure black.
+                // The reported "pure black, no text" on resume is consistent with
                 // drawMultiEntity drawing the black background and then THROWING
                 // while rendering entities (e.g. a recycled/released bitmap after
                 // an app-switch). The old code only Timber.e'd and the `finally`

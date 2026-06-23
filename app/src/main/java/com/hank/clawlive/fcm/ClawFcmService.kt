@@ -85,12 +85,28 @@ class ClawFcmService : FirebaseMessagingService() {
                 putExtra("tts_text", body)
                 putExtra("tts_entity_name", title)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(ttsIntent)
-            } else {
-                startService(ttsIntent)
+            // BLK-FGS (card_f9b2cc2d): on Android 12+ a background-restricted app
+            // throws ForegroundServiceStartNotAllowedException at THIS call site —
+            // and FCM is delivered precisely while the app is backgrounded (e.g.
+            // user just switched to home). The exception is thrown back to the
+            // caller BEFORE TtsService runs, so TtsService's own try/catch cannot
+            // catch it; uncaught here it kills the shared process and takes the
+            // live wallpaper down with it (pure black, needs app restart). Guard it
+            // and fall through to a normal notification so the message is never lost.
+            var ttsStarted = false
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(ttsIntent)
+                } else {
+                    startService(ttsIntent)
+                }
+                ttsStarted = true
+            } catch (t: Throwable) {
+                Timber.e(t, "[FCM] tts startForegroundService refused (${t.javaClass.simpleName}); falling back to notification")
+                try { com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().recordException(t) } catch (_: Throwable) {}
             }
-            return  // Don't show a notification for TTS
+            if (ttsStarted) return  // spoke via service; no notification needed
+            // else: fall through to show a normal notification carrying the body
         }
 
         // Keep the foreground channel consistent with the channel the backend

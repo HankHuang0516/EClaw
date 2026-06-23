@@ -47,7 +47,14 @@ class CompanionRepository(
     private val diskSheetCache = WallpaperSpritesheetDiskCache.getInstance(context)
     private val descriptorCache = ConcurrentHashMap<Int, CompanionDetail>()
     private val sheetCache = SheetBitmapCache(maxEntries = 8)
-    private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    // BLK-OOM (card_f9b2cc2d): a CoroutineExceptionHandler so ANY uncaught throwable
+    // on this IO scope (incl. OutOfMemoryError) is contained here and never reaches
+    // the process-killing default uncaught handler (which would black the wallpaper).
+    private val ioScope = CoroutineScope(
+        Dispatchers.IO + SupervisorJob() + kotlinx.coroutines.CoroutineExceptionHandler { _, e ->
+            Timber.e(e, "[CompanionRepo] contained uncaught on ioScope (${e.javaClass.simpleName})")
+        }
+    )
 
     init {
         val restored = snapshotCache.loadCompanionMap()
@@ -188,8 +195,13 @@ class CompanionRepository(
                     diskSheetCache.save(url, bytes)
                 }
             }
-        } catch (e: Exception) {
-            Timber.e(e, "Spritesheet decode failed for $url")
+        } catch (e: Throwable) {
+            // BLK-OOM (card_f9b2cc2d): BitmapFactory throws java.lang.OutOfMemoryError
+            // (an Error, NOT an Exception) on an oversized/corrupt sheet. Catching only
+            // Exception let it escape this IO coroutine → ClawApplication uncaught handler
+            // → process death → pure-black wallpaper. Catch Throwable; null falls back to
+            // the already-guarded LOADING/procedural render.
+            Timber.e(e, "Spritesheet decode failed for $url (${e.javaClass.simpleName})")
             null
         }
     }
