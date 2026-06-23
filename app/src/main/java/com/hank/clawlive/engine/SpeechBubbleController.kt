@@ -80,8 +80,9 @@ class SpeechBubbleController(
     fun reset() = bubbles.clear()
 
     /**
-     * Show (or refresh) a bubble for [entityId]. TTL starts from the preferred
-     * user duration, then extends for long text at 0.06s/char and caps at 20s.
+     * Show (or refresh) a bubble for [entityId]. TTL = the user's preferred dwell
+     * (honored up to the 10-min slider ceiling), or the long-text auto-extension
+     * (0.06s/char, itself capped at 20s) — whichever is larger.
      * [ttlMsOverride] remains an exact escape hatch for deterministic tests.
      * A new message resets the TTL (rapid-fire chat, open question O-7).
      * Blank text clears any existing bubble.
@@ -166,9 +167,18 @@ class SpeechBubbleController(
     }
 
     private fun ttlForText(text: String, preferredTtlMs: Long): Long {
-        val preferred = preferredTtlMs.coerceIn(MIN_TTL_MS, MAX_TTL_MS)
-        val scaled = (PER_CHAR_MS * text.length).coerceAtLeast(MIN_TTL_MS)
-        return maxOf(preferred, scaled).coerceAtMost(MAX_TTL_MS)
+        // card_c421110c: the user-configured dwell is AUTHORITATIVE. Honor it up to
+        // the 10-min slider ceiling (MAX_USER_TTL_MS). The old code did
+        // `maxOf(preferred, scaled).coerceAtMost(MAX_TTL_MS)` with MAX_TTL_MS = 20s,
+        // which silently capped EVERY bubble at 20s — so the slider (raised to 10 min)
+        // had no runtime effect (set 3 min → got 20s). The 20s cap belongs ONLY to the
+        // long-text auto-extension, never to the user's explicit preference.
+        val preferred = preferredTtlMs.coerceIn(MIN_TTL_MS, MAX_USER_TTL_MS)
+        // Auto-extend short dwells so a long message stays readable, but cap that
+        // auto-extension at MAX_AUTO_SCALE_TTL_MS so a giant message can't pin a bubble
+        // forever. This never shrinks a larger user preference (we take the max).
+        val scaled = (PER_CHAR_MS * text.length).coerceIn(MIN_TTL_MS, MAX_AUTO_SCALE_TTL_MS)
+        return maxOf(preferred, scaled)
     }
 
     private fun prune(nowMs: Long) {
@@ -181,8 +191,18 @@ class SpeechBubbleController(
         const val DEFAULT_TTL_MS = 5_000L
         /** Floor for any message bubble (§5.3). */
         const val MIN_TTL_MS = 1_000L
-        /** Smart cap for long messages, regardless of text length. */
-        const val MAX_TTL_MS = 20_000L
+        /**
+         * Ceiling for the user-configured dwell preference. Matches the wallpaper
+         * bubble-duration slider max (LayoutPreferences.WALLPAPER_BUBBLE_DURATION_MAX_SECONDS
+         * = 600s = 10 min, card_c421110c). The user's explicit setting is honored up to here.
+         */
+        const val MAX_USER_TTL_MS = 600_000L
+        /**
+         * Cap for the long-text AUTO-extension only (§5.3) — NOT a ceiling on the user's
+         * explicit dwell setting. Bounds how long a very long message can self-extend so it
+         * can't pin a bubble forever when the user left the dwell short.
+         */
+        const val MAX_AUTO_SCALE_TTL_MS = 20_000L
         /** Per-character contribution to TTL (§5.3: 0.06s/char). */
         const val PER_CHAR_MS = 60L
         /** Fade-out ramp window at the end of life. */

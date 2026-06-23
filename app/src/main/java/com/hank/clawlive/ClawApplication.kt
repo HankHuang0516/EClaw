@@ -1,7 +1,10 @@
 package com.hank.clawlive
 
+import android.app.Activity
 import android.app.Application
 import android.content.Context
+import android.os.Bundle
+import java.util.concurrent.atomic.AtomicInteger
 import com.google.firebase.messaging.FirebaseMessaging
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.remote.NetworkModule
@@ -22,8 +25,45 @@ import java.net.URL
 
 class ClawApplication : Application() {
 
+    companion object {
+        /** Number of started (visible) Activities. >0 means the app has UI in the foreground. */
+        private val startedActivityCount = AtomicInteger(0)
+
+        /**
+         * True when the app has at least one started Activity. A visible LIVE WALLPAPER
+         * does NOT count as a foreground Activity, so this is precisely false in the
+         * home-screen-wallpaper state where a background FGS start would risk killing
+         * the wallpaper's process. ClawFcmService gates its TTS foreground-service start
+         * on this. card_f9b2cc2d (BLK-FGS).
+         */
+        fun isAppInForeground(): Boolean = startedActivityCount.get() > 0
+    }
+
     override fun onCreate() {
         super.onCreate()
+
+        // 0. Track foreground-activity state. BLK-FGS (card_f9b2cc2d): an FCM-triggered
+        // TTS foreground service started while the app has NO foreground Activity (the
+        // exact state when the live wallpaper is showing on the home screen) is the
+        // residual black-screen trigger — on Android 12+ the start is either rejected
+        // synchronously OR, if a high-priority FCM grants a temporary exemption but the
+        // wallpaper-resume burst delays TtsService past the ~5s startForeground deadline,
+        // the system kills the WHOLE shared process with
+        // ForegroundServiceDidNotStartInTimeException, taking the wallpaper engine down
+        // (pure black, needs app restart). ClawFcmService consults
+        // ClawApplication.isAppInForeground() and, when false, skips the FGS start and
+        // posts a normal notification instead — removing the crash path at the source.
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityStarted(activity: Activity) { startedActivityCount.incrementAndGet() }
+            override fun onActivityStopped(activity: Activity) {
+                if (startedActivityCount.get() > 0) startedActivityCount.decrementAndGet()
+            }
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
+            override fun onActivityResumed(activity: Activity) {}
+            override fun onActivityPaused(activity: Activity) {}
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+            override fun onActivityDestroyed(activity: Activity) {}
+        })
 
         // 1. Plant Timber trees FIRST
         if (BuildConfig.DEBUG) {

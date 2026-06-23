@@ -130,6 +130,33 @@ class SpeechBubbleControllerTest {
         assertFalse(controller.isVisible(6, nowMs = 20_001L))
     }
 
+    /**
+     * card_c421110c regression — a LONG user dwell preference (e.g. the 3-minute the
+     * user actually set) must be honored, NOT silently capped at the old hardcoded 20s.
+     * This is the exact bug: slider raised to 10 min but ttlForText still did
+     * `.coerceAtMost(MAX_TTL_MS=20s)`, so any setting above 20s was ignored.
+     */
+    @Test
+    fun longUserPreferredDwellIsHonoredNotCappedAt20s() {
+        val controller = SpeechBubbleController()
+        // user set the bubble-duration slider to 3 minutes (180s)
+        controller.show(entityId = 20, text = "hi", nowMs = 0L, preferredTtlMs = 180_000L)
+        // old bug: bubble vanished at ~20s. It must now survive far past the old 20s cap.
+        assertTrue("3-min bubble must survive past the old 20s cap", controller.isVisible(20, nowMs = 60_000L))
+        assertTrue(controller.isVisible(20, nowMs = 179_000L))
+        // ...and expire at its real 3-minute TTL.
+        assertFalse(controller.isVisible(20, nowMs = 180_001L))
+    }
+
+    /** The user preference clamps to the 10-min slider ceiling (not to the 20s auto-scale cap). */
+    @Test
+    fun userPreferenceClampsToTenMinuteCeiling() {
+        val controller = SpeechBubbleController()
+        controller.show(entityId = 21, text = "hi", nowMs = 0L, preferredTtlMs = 999_999_999L)
+        assertTrue(controller.isVisible(21, nowMs = 599_000L))
+        assertFalse(controller.isVisible(21, nowMs = 600_001L))
+    }
+
     /** §5.3 / O-7 — a new message resets the TTL rather than letting the old one expire. */
     @Test
     fun newMessageResetsTtl() {

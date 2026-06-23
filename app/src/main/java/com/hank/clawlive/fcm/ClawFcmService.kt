@@ -93,17 +93,34 @@ class ClawFcmService : FirebaseMessagingService() {
             // catch it; uncaught here it kills the shared process and takes the
             // live wallpaper down with it (pure black, needs app restart). Guard it
             // and fall through to a normal notification so the message is never lost.
+            // BLK-FGS PREVENTION (card_f9b2cc2d): the synchronous try/catch below only
+            // catches a SYNC ForegroundServiceStartNotAllowedException. The residual
+            // black-screen (Hank repro: send chat msg → Home → ~3s → black) is the ASYNC
+            // case: a high-priority FCM grants a temporary background-FGS exemption so the
+            // start SUCCEEDS, but the live-wallpaper resume burst delays TtsService past the
+            // ~5s startForeground deadline → the system kills the WHOLE shared process with
+            // ForegroundServiceDidNotStartInTimeException, blacking the wallpaper. No
+            // in-process catch can stop that. Prevent it at the source: on O+ only start the
+            // FGS when the app actually has a foreground Activity. When just the wallpaper is
+            // visible (no Activity), skip the service and post a notification — TTS while
+            // backgrounded is a nice-to-have; the wallpaper surviving is mandatory.
+            val canStartTtsFgs = Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+                com.hank.clawlive.ClawApplication.isAppInForeground()
             var ttsStarted = false
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(ttsIntent)
-                } else {
-                    startService(ttsIntent)
+            if (canStartTtsFgs) {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        startForegroundService(ttsIntent)
+                    } else {
+                        startService(ttsIntent)
+                    }
+                    ttsStarted = true
+                } catch (t: Throwable) {
+                    Timber.e(t, "[FCM] tts startForegroundService refused (${t.javaClass.simpleName}); falling back to notification")
+                    try { com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().recordException(t) } catch (_: Throwable) {}
                 }
-                ttsStarted = true
-            } catch (t: Throwable) {
-                Timber.e(t, "[FCM] tts startForegroundService refused (${t.javaClass.simpleName}); falling back to notification")
-                try { com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().recordException(t) } catch (_: Throwable) {}
+            } else {
+                Timber.w("[FCM] app has no foreground Activity (wallpaper-only) — skipping TTS foreground-service start to protect the wallpaper process; showing notification instead")
             }
             if (ttsStarted) return  // spoke via service; no notification needed
             // else: fall through to show a normal notification carrying the body
