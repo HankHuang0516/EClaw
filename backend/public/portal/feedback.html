@@ -543,11 +543,6 @@
             margin-bottom: 10px;
         }
 
-        .photo-safety {
-            margin-top: -4px;
-            line-height: 1.4;
-        }
-
         .photo-add-btn {
             display: inline-flex;
             align-items: center;
@@ -1225,7 +1220,11 @@
         function setFeedbackEmptyState(filter = currentFilter) {
             const emptyEl = document.getElementById('emptyState');
             if (!emptyEl) return;
-            const t = (key, fallback) => typeof i18n !== 'undefined' ? i18n.t(key) : fallback;
+            const t = (key, fallback) => {
+                if (typeof i18n === 'undefined' || !i18n.t) return fallback;
+                const translated = i18n.t(key);
+                return translated && translated !== key ? translated : fallback;
+            };
             const titleEl = emptyEl.querySelector('h3');
             const descEl = emptyEl.querySelector('p');
             if (filter === 'all') {
@@ -1233,7 +1232,12 @@
                 descEl.textContent = t('feedback_empty_sub', 'Your submitted feedback will appear here.');
             } else {
                 titleEl.textContent = `${getFeedbackFilterLabel(filter)}: 0`;
-                descEl.textContent = `${t('feedback_filter_all', 'All')} shows ${allFeedback.length} submitted feedback item${allFeedback.length === 1 ? '' : 's'}.`;
+                const allLabel = getFeedbackFilterLabel('all');
+                const fallback = `${allLabel}: ${allFeedback.length} submitted feedback item(s).`;
+                const translated = (typeof i18n !== 'undefined' && i18n.t)
+                    ? i18n.t('feedback_filter_empty_sub', { label: allLabel, count: allFeedback.length })
+                    : fallback;
+                descEl.textContent = translated && translated !== 'feedback_filter_empty_sub' ? translated : fallback;
             }
         }
 

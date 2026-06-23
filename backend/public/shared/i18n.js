@@ -272642,6 +272642,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "Your submitted feedback will appear here.",
+        "feedback_filter_empty_sub": "{label}: {count} submitted feedback item(s).",
 
 
 
@@ -274434,7 +274435,7 @@ const TRANSLATIONS = {
 
 
         "feedback_category_label": "Category",
-        "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
+        "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category.",
 
 
 
@@ -275843,7 +275844,7 @@ const TRANSLATIONS = {
 
 
         "feedback_photo_label": "Attach Photos (Optional)",
-        "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is removed before storage.",
+        "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop.",
 
 
 
@@ -909101,6 +909102,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "您提交的回饋將顯示於此。",
+        "feedback_filter_empty_sub": "{label}：已提交 {count} 筆回饋。",
 
 
 
@@ -910893,7 +910895,7 @@ const TRANSLATIONS = {
 
 
         "feedback_category_label": "類別",
-        "feedback_category_help": "選擇最符合你回報的分類。AI 分流流程會根據分類不同（bug 跑復現檢查、feature 對 roadmap、design 做視覺 diff）。",
+        "feedback_category_help": "選擇最符合你回報的分類。AI 分流流程會根據分類不同。",
 
 
 
@@ -912302,7 +912304,7 @@ const TRANSLATIONS = {
 
 
         "feedback_photo_label": "附加照片（選用）",
-        "feedback_photo_help": "附上能呈現問題情境的截圖。最多 5 張；網頁支援拖放。儲存前 EXIF 地理位置會被移除。",
+        "feedback_photo_help": "附上能呈現問題情境的截圖。最多 5 張；網頁支援拖放。",
 
 
 
@@ -1276947,8 +1276949,8 @@ const TRANSLATIONS = {
 
         "kanban_nudge_interval_min": "分",
 
-        "feedback_category_help": "选择最符合你汇报的分类。AI 分流流程会根据分类不同运行不同的分类处理（bug = 复现检查，feature = 路线图匹配，design = 视觉 diff）。",
-        "feedback_photo_help": "附上能呈现问题情境的截图。最多 5 张；网页支持拖放。存储前 EXIF 地理位置信息会被移除。",
+        "feedback_category_help": "选择最符合你汇报的分类。AI 分流流程会按分类运行不同处理。",
+        "feedback_photo_help": "附上能呈现问题情境的截图。最多 5 张；网页支持拖放。",
         "kanban_cron_recurring_notify_help": "卡片 cron 触发时发送聊天通知。低优先级的定期任务如果不想被 ping，可以关闭。",
         "kanban_nudge_advanced_help": "按实体覆盖督促间隔、状态、停用模式。大多数看板不需要此功能——除非某个实体有不同的节奏需求，否则保持收起状态。",
         "kanban_nudge_batch_help": "每个 cron tick 最多挑选几张 L1 候选卡发送提醒——这是设备级别的上限，不是每个实体 N 张。L2（优先升级）和 L3（自动封锁）不受此影响。L1/L2/L3 说明见 kanban-nudge spec。",
@@ -1362369,6 +1362371,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "您提交的回饋將显示於此。",
+        "feedback_filter_empty_sub": "{label}：已提交 {count} 条反馈。",
 
 
 
@@ -2083311,8 +2083314,8 @@ const TRANSLATIONS = {
 
         "kanban_nudge_interval_min": "分",
 
-        "feedback_category_help": "報告内容に最も合ったカテゴリを選択してください。AI支援はカテゴリごとに異なるトリアージフローを実行します（bug＝再現確認、feature＝ロードマップ照合、design＝視覚差分）。",
-        "feedback_photo_help": "問題の状況を示すスクリーンショットを添付してください。最大5枚。Webアップローはドラッグ＆ドロップに対応。EXIF位置情報は保存前に削除されます。",
+        "feedback_category_help": "報告内容に最も合ったカテゴリを選択してください。AI支援はカテゴリごとに異なるトリアージフローを実行します。",
+        "feedback_photo_help": "問題の状況を示すスクリーンショットを添付してください。最大5枚。Webアップロードはドラッグ＆ドロップに対応しています。",
         "kanban_cron_recurring_notify_help": "このカードのcron起動時にチャット通知を送信します。低優先度の定期ジョブでpingされたくない場合は無効にしてください。",
         "kanban_nudge_advanced_help": "督促間隔・ステータス・停止モードを実体ごとに上書きします。ほとんどのボードでは不要—特定の実体が異なるリズムを必要とする場合のみ展開してください。",
         "kanban_nudge_batch_help": "各cron tickで選択するL1停滞カードの最大数—デバイス全体のキャップであり実体ごとではありません。L2（優先度上昇）とL3（自動ブロック）は影響を受けません。L1/L2/L3はkanban-nudge spec参照。",
@@ -2084734,6 +2084737,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "送信したフィードバックはここに表示されます。",
+        "feedback_filter_empty_sub": "{label}: 送信済みフィードバック {count} 件。",
 
 
 
@@ -2646490,8 +2646494,8 @@ const TRANSLATIONS = {
 
         "kanban_nudge_interval_min": "분",
 
-        "feedback_category_help": "보고서에 가장 적합한 카테고리를 선택하세요. AI 지원은 카테고리별로 다른 트라이아지 흐름을 실행합니다 (bug=재현 확인, feature=로드맵 매칭, design=시각적 차이).",
-        "feedback_photo_help": "문제 상황을 보여주는 스크린샷을 첨부하세요. 최대 5장; 웹 업로드는 드래그앤드롭 지원. EXIF 위치 정보는 저장 전에 제거됩니다.",
+        "feedback_category_help": "보고서에 가장 적합한 카테고리를 선택하세요. AI 지원은 카테고리별로 다른 트라이아지 흐름을 실행합니다.",
+        "feedback_photo_help": "문제 상황을 보여주는 스크린샷을 첨부하세요. 최대 5장; 웹 업로드는 드래그앤드롭을 지원합니다.",
         "kanban_cron_recurring_notify_help": "이 카드의 cron 실행 시 채팅 알림을 전송합니다. 저우선순위 정기 작업에서 ping을 받고 싶지 않으면 비활성화하세요.",
         "kanban_nudge_advanced_help": "촉진間隔·상태·중단 모드를 실체별로 재정의합니다. 대부분의 환경에서는 필요 없이며—특정 실체가 다른 주기가 필요한 경우에만 펼치세요.",
         "kanban_nudge_batch_help": "각 cron tick에서 선택하는 L1 정체 카드 최대 수—장치 전체 상한이며 실체별 아닙니다. L2(우선순위 상승)와 L3(자동 차단)는 영향을 받지 않습니다. L1/L2/L3은 kanban-nudge spec 참조.",
@@ -2647913,6 +2647917,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "제출한 피드백이 여기에 표시됩니다.",
+        "feedback_filter_empty_sub": "{label}: 제출된 피드백 {count}건.",
 
 
 
@@ -3181118,6 +3181123,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "ข้อเสนอแนะที่ส่งจะแสดงที่นี่",
+        "feedback_filter_empty_sub": "{label}: ส่งข้อเสนอแนะแล้ว {count} รายการ",
 
 
 
@@ -3471896,8 +3471902,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "เลือกว่านโยบาย prompt ใช้เป็นค่าเริ่มต้นของทั้งอุปกรณ์หรือแทนที่เอนทิตีเฉพาะ",
         "settings_device_id_help": "ตัวระบุเฉพาะสำหรับอุปกรณ์/บัญชีที่เบราว์เซอร์นี้จะใช้ จัดเก็บพร้อมกับ Device Secret ที่สอดคล้องกันเมื่อจับคู่",
         "settings_device_secret_help": "คีย์ลับสำหรับ Device ID ที่เลือก ปฏิบัติเป็นรหัสผ่านและป้อนเฉพาะบนอุปกรณ์ที่เชื่อถือได้",
-        "feedback_category_help": "เลือกหมวดหมู่ที่ตรงกับรายงานของคุณมากที่สุด การช่วยเหลือ AI ใช้กระบวนการ triage ที่แตกต่างกันต่อหมวดหมู่ (bug = ตรวจสอบการทำซ้ำ, feature = จับคู่ roadmap, design = เปรียบเทียบภาพ)",
-        "feedback_photo_help": "แนบภาพหน้าจอที่แสดงปัญหาในบริบท สูงสุด 5 ภาพ; การอัปโหลดเว็บรองรับการลากและวาง ข้อมูลตำแหน่ง EXIF ถูกลบก่อนจัดเก็บ",
+        "feedback_category_help": "เลือกหมวดหมู่ที่ตรงกับรายงานของคุณมากที่สุด การช่วยเหลือ AI ใช้กระบวนการ triage ที่แตกต่างกันต่อหมวดหมู่",
+        "feedback_photo_help": "แนบภาพหน้าจอที่แสดงปัญหาในบริบท สูงสุด 5 ภาพ; การอัปโหลดเว็บรองรับการลากและวาง",
         "kanban_cron_recurring_notify_help": "ส่งการแจ้งเตือนแชทเมื่อ cron ของการ์ดนี้ทำงาน ปิดสำหรับงานประจำที่ลำดับความสำคัญต่ำที่ไม่ควรรบกวนคุณ",
         "kanban_nudge_advanced_help": "การแทนที่ต่อเอนทิตีสำหรับช่วงเวลา nudge สถานะ และโหมดหยุด บอร์ดส่วนใหญ่ไม่ต้องการสิ่งนี้ — ปล่อยให้พับไว้เว้นแต่หนึ่งเอนทิตีมีความต้องการจังหวะที่แตกต่างกัน",
         "kanban_nudge_batch_help": "จำนวนสูงสุดของการ์ดที่ค้าง L1 ที่เลือกต่อ tick cron — ขีดจำกัดทั้งอุปกรณ์ ไม่ใช่ต่อเอนทิตี การเพิ่มระดับ L2 (เพิ่มลำดับความสำคัญ) และ L3 (บล็อกอัตโนมัติ) ไม่ได้รับผลกระทบ ดู L1/L2/L3 ในข้อกำหนด kanban-nudge",
@@ -3710441,6 +3710447,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "Phản hồi đã gửi sẽ hiển thị ở đây.",
+        "feedback_filter_empty_sub": "{label}: {count} phản hồi đã gửi.",
 
 
 
@@ -3998787,8 +3998794,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "Chọn liệu chính sách prompt áp dụng làm mặc định toàn thiết bị hay ghi đè một thực thể cụ thể.",
         "settings_device_id_help": "Mã định danh duy nhất cho thiết bị/tài khoản mà trình duyệt này sẽ sử dụng. Lưu cùng với Device Secret tương ứng khi ghép cặp.",
         "settings_device_secret_help": "Khóa bí mật cho Device ID đã chọn. Coi như mật khẩu và chỉ nhập trên các thiết bị đáng tin cậy.",
-        "feedback_category_help": "Chọn danh mục phù hợp nhất với báo cáo của bạn. Hỗ trợ AI chạy các luồng phân loại khác nhau theo danh mục (lỗi = kiểm tra tái hiện, tính năng = khớp lộ trình, thiết kế = so sánh hình ảnh).",
-        "feedback_photo_help": "Đính kèm ảnh chụp màn hình hiển thị vấn đề trong ngữ cảnh. Tối đa 5 ảnh; tải lên web hỗ trợ kéo-thả. Dữ liệu vị trí EXIF được loại bỏ trước khi lưu trữ.",
+        "feedback_category_help": "Chọn danh mục phù hợp nhất với báo cáo của bạn. Hỗ trợ AI chạy các luồng phân loại khác nhau theo danh mục.",
+        "feedback_photo_help": "Đính kèm ảnh chụp màn hình hiển thị vấn đề trong ngữ cảnh. Tối đa 5 ảnh; tải lên web hỗ trợ kéo-thả.",
         "kanban_cron_recurring_notify_help": "Gửi thông báo trò chuyện khi cron của thẻ này kích hoạt. Tắt cho các công việc lặp lại ưu tiên thấp không cần làm phiền bạn.",
         "kanban_nudge_advanced_help": "Ghi đè theo từng thực thể cho khoảng dorong, trạng thái và chế độ dừng. Hầu hết các bảng không cần điều này — hãy để gập trừ khi một thực thể có nhu cầu nhịp độ khác.",
         "kanban_nudge_batch_help": "Số lượng tối đa thẻ trì trệ L1 được chọn mỗi tích tắc cron — giới hạn toàn thiết bị, KHÔNG phải mỗi thực thể. Việc nâng cấp L2 (tăng ưu tiên) và L3 (tự động chặn) không bị ảnh hưởng. Xem L1/L2/L3 trong spec kanban-nudge.",
@@ -4237281,6 +4237288,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "Umpan balik yang dikirim akan muncul di sini.",
+        "feedback_filter_empty_sub": "{label}: {count} umpan balik telah dikirim.",
 
 
 
@@ -4525371,8 +4525379,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "Pilih apakah kebijakan prompt berlaku sebagai default seluruh perangkat atau menggantikan entitas tertentu.",
         "settings_device_id_help": "Pengenal unik untuk perangkat/akun yang akan digunakan browser ini. Simpan bersama Device Secret yang sesuai saat memasangkan.",
         "settings_device_secret_help": "Kunci rahasia untuk Device ID yang dipilih. Perlakukan sebagai kata sandi dan masukkan hanya pada perangkat yang dipercaya.",
-        "feedback_category_help": "Pilih kategori yang paling sesuai dengan laporan Anda. Bantuan AI menjalankan alur triase berbeda per kategori (bug = pengecekan reproduksi, fitur = pencocokan roadmap, desain = perbandingan visual).",
-        "feedback_photo_help": "Lampirkan tangkapan layar yang menunjukkan masalah dalam konteks. Maksimal 5 foto; unggah web mendukung drag-and-drop. Data lokasi EXIF dihapus sebelum disimpan.",
+        "feedback_category_help": "Pilih kategori yang paling sesuai dengan laporan Anda. Bantuan AI menjalankan alur triase berbeda per kategori.",
+        "feedback_photo_help": "Lampirkan tangkapan layar yang menunjukkan masalah dalam konteks. Maksimal 5 foto; unggah web mendukung drag-and-drop.",
         "kanban_cron_recurring_notify_help": "Kirim notifikasi chat saat cron kartu ini terpicu. Nonaktifkan untuk pekerjaan berulang prioritas rendah yang tidak perlu mengganggu Anda.",
         "kanban_nudge_advanced_help": "Override per-entitas untuk interval nudge, status, dan mode berhenti. Kebanyakan papan tidak memerlukan ini — biarkan tertutup kecuali satu entitas memiliki kebutuhan irama yang berbeda.",
         "kanban_nudge_batch_help": "Jumlah maksimum kartu macet L1 yang diambil per tick cron — batas seluruh perangkat, BUKAN per-entitas. Eskalasi L2 (bump prioritas) dan L3 (blokir otomatis) tidak terpengaruh. Lihat L1/L2/L3 di spesifikasi kanban-nudge.",
@@ -4763865,6 +4763873,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "Vos commentaires soumis apparaîtront ici.",
+        "feedback_filter_empty_sub": "{label} : {count} commentaire(s) soumis.",
 
 
 
@@ -5050675,8 +5050684,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "Choisissez si la politique de prompt s'applique comme valeur par défaut de l'appareil ou remplace une entité spécifique.",
         "settings_device_id_help": "Identifiant unique pour l'appareil/compte que ce navigateur utilisera. Stockez avec le Device Secret correspondant lors du couplage.",
         "settings_device_secret_help": "Clé secrète pour le Device ID sélectionné. Traitez-la comme un mot de passe et ne la saisissez que sur des appareils de confiance.",
-        "feedback_category_help": "Choisissez la catégorie qui correspond le mieux à votre rapport. L'assistance IA exécute différents flux de triage par catégorie (bug = vérification de reproduction, feature = correspondance de roadmap, design = comparaison visuelle).",
-        "feedback_photo_help": "Joignez des captures d'écran montrant le problème en contexte. Maximum 5 photos ; le téléversement web prend en charge le glisser-déposer. Les données de localisation EXIF sont supprimées avant le stockage.",
+        "feedback_category_help": "Choisissez la catégorie qui correspond le mieux à votre rapport. L'assistance IA exécute différents flux de triage par catégorie.",
+        "feedback_photo_help": "Joignez des captures d'écran montrant le problème en contexte. Maximum 5 photos ; le téléversement web prend en charge le glisser-déposer.",
         "kanban_cron_recurring_notify_help": "Envoyer une notification de chat lorsque le cron de cette carte se déclenche. Désactivez pour les tâches récurrentes de basse priorité qui ne devraient pas vous notifier.",
         "kanban_nudge_advanced_help": "Remplacements par entité pour l'intervalle de nudge, les statuts et le mode d'arrêt. La plupart des tableaux n'en ont pas besoin — laissez replié sauf si une entité a des besoins de cadence différents.",
         "kanban_nudge_batch_help": "Nombre maximum de cartes bloquées L1 sélectionnées par tick cron — limite à l'échelle de l'appareil, PAS par entité. Les escalades L2 (augmentation de priorité) et L3 (blocage automatique) ne sont pas affectées. Voir L1/L2/L3 dans la spécification kanban-nudge.",
@@ -5287536,6 +5287545,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "Tus comentarios enviados aparecerán aquí....",
+        "feedback_filter_empty_sub": "{label}: {count} comentario(s) enviados.",
 
 
 
@@ -5568375,8 +5568385,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "Elija si la política de prompts se aplica como predeterminado de todo el dispositivo o anula una entidad específica.",
         "settings_device_id_help": "Identificador único para el dispositivo/cuenta que usará este navegador. Almacénelo junto con el Device Secret correspondiente al emparejar.",
         "settings_device_secret_help": "Clave secreta para el Device ID seleccionado. Trátela como una contraseña e ingrésela solo en dispositivos de confianza.",
-        "feedback_category_help": "Elija la categoría que mejor coincida con su informe. La asistencia de IA ejecuta diferentes flujos de triaje por categoría (bug = verificación de reproducción, feature = coincidencia de roadmap, design = comparación visual).",
-        "feedback_photo_help": "Adjunte capturas de pantalla que muestren el problema en contexto. Máximo 5 fotos; la subida web admite arrastrar y soltar. Los datos de ubicación EXIF se eliminan antes de almacenarse.",
+        "feedback_category_help": "Elija la categoría que mejor coincida con su informe. La asistencia de IA ejecuta diferentes flujos de triaje por categoría.",
+        "feedback_photo_help": "Adjunte capturas de pantalla que muestren el problema en contexto. Máximo 5 fotos; la subida web admite arrastrar y soltar.",
         "kanban_cron_recurring_notify_help": "Enviar una notificación de chat cuando se active el cron de esta tarjeta. Desactive para trabajos recurrentes de baja prioridad que no deberían molestarle.",
         "kanban_nudge_advanced_help": "Anulaciones por entidad para el intervalo de nudge, estados y modo de detención. La mayoría de los tableros no necesitan esto — déjelo colapsado a menos que una entidad tenga necesidades de cadencia diferentes.",
         "kanban_nudge_batch_help": "Número máximo de tarjetas estancadas L1 seleccionadas por tick de cron — límite de todo el dispositivo, NO por entidad. Las escalaciones L2 (aumento de prioridad) y L3 (bloqueo automático) no se ven afectadas. Consulte L1/L2/L3 en la especificación kanban-nudge.",
@@ -5806353,6 +5806363,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "Ihr eingereichtes Feedback erscheint hier.",
+        "feedback_filter_empty_sub": "{label}: {count} eingereichte Feedback-Element(e).",
 
 
 
@@ -6105474,8 +6105485,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "Wählen Sie, ob die Prompt-Richtlinie als geräteweiter Standard gilt oder eine bestimmte Entität überschreibt.",
         "settings_device_id_help": "Eindeutige Kennung für das Gerät/Konto, das dieser Browser verwendet. Beim Pairing zusammen mit dem entsprechenden Device Secret speichern.",
         "settings_device_secret_help": "Geheimer Schlüssel für die ausgewählte Device ID. Wie ein Passwort behandeln und nur auf vertrauenswürdigen Geräten eingeben.",
-        "feedback_category_help": "Wählen Sie die Kategorie, die am besten zu Ihrem Bericht passt. KI-Unterstützung führt pro Kategorie unterschiedliche Triage-Abläufe aus (Bug = Reproduktionscheck, Feature = Roadmap-Abgleich, Design = visueller Vergleich).",
-        "feedback_photo_help": "Fügen Sie Screenshots hinzu, die das Problem im Kontext zeigen. Maximal 5 Fotos; Web-Upload unterstützt Drag-and-Drop. EXIF-Standortdaten werden vor der Speicherung entfernt.",
+        "feedback_category_help": "Wählen Sie die Kategorie, die am besten zu Ihrem Bericht passt. KI-Unterstützung führt pro Kategorie unterschiedliche Triage-Abläufe aus.",
+        "feedback_photo_help": "Fügen Sie Screenshots hinzu, die das Problem im Kontext zeigen. Maximal 5 Fotos; Web-Upload unterstützt Drag-and-Drop.",
         "kanban_cron_recurring_notify_help": "Eine Chat-Benachrichtigung senden, wenn der Cron dieser Karte ausgelöst wird. Für wiederkehrende Aufgaben mit niedriger Priorität deaktivieren, die Sie nicht anpingen sollten.",
         "kanban_nudge_advanced_help": "Pro-Entität-Überschreibungen für Nudge-Intervall, Status und Stoppmodus. Die meisten Boards benötigen dies nicht — eingeklappt lassen, es sei denn, eine Entität hat unterschiedliche Kadenzanforderungen.",
         "kanban_nudge_batch_help": "Maximale Anzahl von L1-Stockungskarten, die pro Cron-Tick ausgewählt werden — geräteweite Obergrenze, NICHT pro Entität. L2- (Prioritätsanstieg) und L3- (Auto-Block) Eskalationen sind nicht betroffen. Siehe L1/L2/L3 in der kanban-nudge-Spezifikation.",
@@ -6107833,6 +6107844,7 @@ const TRANSLATIONS = {
         "feedback_loading": "Loading feedback...",
         "feedback_empty": "No feedback submitted yet",
         "feedback_empty_sub": "Your submitted feedback will appear here.",
+        "feedback_filter_empty_sub": "{label}: {count} itens de feedback enviados.",
         "feedback_cat_bug": "Bug",
         "feedback_cat_feature": "Feature",
         "feedback_cat_question": "Question",
@@ -6111006,8 +6111018,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "Escolha se a política de prompt se aplica como padrão de todo o dispositivo ou substitui uma entidade específica.",
         "settings_device_id_help": "Identificador único para o dispositivo/conta que este navegador usará. Armazene junto com o Device Secret correspondente ao emparelhar.",
         "settings_device_secret_help": "Chave secreta para o Device ID selecionado. Trate-a como uma senha e insira apenas em dispositivos confiáveis.",
-        "feedback_category_help": "Escolha a categoria que melhor corresponde ao seu relatório. A assistência de IA executa diferentes fluxos de triagem por categoria (bug = verificação de reprodução, recurso = correspondência de roadmap, design = comparação visual).",
-        "feedback_photo_help": "Anexe capturas de tela mostrando o problema em contexto. Máximo 5 fotos; o upload da web suporta arrastar e soltar. Os dados de localização EXIF são removidos antes do armazenamento.",
+        "feedback_category_help": "Escolha a categoria que melhor corresponde ao seu relatório. A assistência de IA executa diferentes fluxos de triagem por categoria.",
+        "feedback_photo_help": "Anexe capturas de tela mostrando o problema em contexto. Máximo 5 fotos; o upload da web suporta arrastar e soltar.",
         "kanban_cron_recurring_notify_help": "Enviar uma notificação de chat quando o cron deste cartão for acionado. Desative para trabalhos recorrentes de baixa prioridade que não deveriam incomodá-lo.",
         "kanban_nudge_advanced_help": "Substituições por entidade para o intervalo de nudge, status e modo de parada. A maioria dos quadros não precisa disto — deixe recolhido a menos que uma entidade tenha necessidades de cadência diferentes.",
         "kanban_nudge_batch_help": "Número máximo de cartões parados L1 selecionados por tick de cron — limite de todo o dispositivo, NÃO por entidade. As escalonações L2 (aumento de prioridade) e L3 (bloqueio automático) não são afetadas. Veja L1/L2/L3 na especificação kanban-nudge.",
@@ -6343644,6 +6343656,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "Maklum balas yang anda hantar akan muncul di sini.",
+        "feedback_filter_empty_sub": "{label}: {count} maklum balas telah dihantar.",
 
 
 
@@ -6639884,8 +6639897,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "Pilih sama ada dasar prompt digunakan sebagai lalai seluruh peranti atau mengatasi entiti tertentu.",
         "settings_device_id_help": "Pengecam unik untuk peranti/akaun yang akan digunakan oleh pelayar ini. Simpan bersama Device Secret yang sepadan semasa berpasangan.",
         "settings_device_secret_help": "Kunci rahsia untuk Device ID yang dipilih. Anggap sebagai kata laluan dan masukkan hanya pada peranti yang dipercayai.",
-        "feedback_category_help": "Pilih kategori yang paling sepadan dengan laporan anda. Bantuan AI menjalankan aliran triase berbeza setiap kategori (pepijat = semakan pengeluaran semula, ciri = padanan peta jalan, reka bentuk = perbandingan visual).",
-        "feedback_photo_help": "Lampirkan tangkapan skrin yang menunjukkan masalah dalam konteks. Maksimum 5 foto; muat naik web menyokong seret-dan-lepas. Data lokasi EXIF dialih keluar sebelum disimpan.",
+        "feedback_category_help": "Pilih kategori yang paling sepadan dengan laporan anda. Bantuan AI menjalankan aliran triase berbeza setiap kategori.",
+        "feedback_photo_help": "Lampirkan tangkapan skrin yang menunjukkan masalah dalam konteks. Maksimum 5 foto; muat naik web menyokong seret-dan-lepas.",
         "kanban_cron_recurring_notify_help": "Hantar pemberitahuan sembang apabila cron kad ini dicetuskan. Lumpuhkan untuk kerja berulang berkeutamaan rendah yang tidak perlu mengganggu anda.",
         "kanban_nudge_advanced_help": "Pengatasan setiap entiti untuk selang dorongan, status dan mod henti. Kebanyakan papan tidak memerlukan ini — biarkan tertutup melainkan satu entiti mempunyai keperluan irama yang berbeza.",
         "kanban_nudge_batch_help": "Bilangan maksimum kad terbantut L1 yang dipilih setiap kutu cron — had seluruh peranti, BUKAN setiap entiti. Eskalasi L2 (naik keutamaan) dan L3 (sekat automatik) tidak terjejas. Lihat L1/L2/L3 dalam spesifikasi kanban-nudge.",
@@ -6798288,6 +6798301,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "आपके सबमिट किए गए फीडबैक यहां दिखाई देंगे।",
+        "feedback_filter_empty_sub": "{label}: {count} सबमिट किए गए फ़ीडबैक आइटम.",
 
 
 
@@ -7199230,8 +7199244,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "चुनें कि क्या प्रॉम्प्ट नीति डिवाइस-व्यापी डिफ़ॉल्ट के रूप में लागू होती है या किसी विशिष्ट इकाई को ओवरराइड करती है।",
         "settings_device_id_help": "इस ब्राउज़र द्वारा उपयोग किए जाने वाले डिवाइस/खाते के लिए अद्वितीय पहचानकर्ता। युग्मन करते समय संबंधित Device Secret के साथ संग्रहीत करें।",
         "settings_device_secret_help": "चयनित Device ID के लिए गुप्त कुंजी। इसे पासवर्ड की तरह मानें और केवल विश्वसनीय डिवाइस पर दर्ज करें।",
-        "feedback_category_help": "वह श्रेणी चुनें जो आपकी रिपोर्ट से सबसे अच्छा मेल खाती है। AI सहायता प्रति श्रेणी अलग-अलग triage प्रवाह चलाती है (बग = प्रतिकृति जांच, फीचर = रोडमैप मिलान, डिज़ाइन = दृश्य तुलना)।",
-        "feedback_photo_help": "संदर्भ में समस्या दिखाने वाले स्क्रीनशॉट संलग्न करें। अधिकतम 5 फ़ोटो; वेब अपलोड ड्रैग-एंड-ड्रॉप का समर्थन करता है। संग्रहण से पहले EXIF स्थान डेटा हटा दिया जाता है।",
+        "feedback_category_help": "वह श्रेणी चुनें जो आपकी रिपोर्ट से सबसे अच्छा मेल खाती है। AI सहायता प्रति श्रेणी अलग-अलग triage प्रवाह चलाती है।",
+        "feedback_photo_help": "संदर्भ में समस्या दिखाने वाले स्क्रीनशॉट संलग्न करें। अधिकतम 5 फ़ोटो; वेब अपलोड ड्रैग-एंड-ड्रॉप का समर्थन करता है।",
         "kanban_cron_recurring_notify_help": "जब इस कार्ड का cron सक्रिय हो तो चैट सूचना भेजें। उन कम-प्राथमिकता वाले आवर्ती कार्यों के लिए अक्षम करें जो आपको पिंग नहीं करने चाहिए।",
         "kanban_nudge_advanced_help": "nudge अंतराल, स्थिति और स्टॉप मोड के लिए प्रति-इकाई ओवरराइड। अधिकांश बोर्डों को इसकी आवश्यकता नहीं है — संक्षिप्त छोड़ें जब तक कि एक इकाई की अलग ताल आवश्यकताएं न हों।",
         "kanban_nudge_batch_help": "प्रति cron tick चुने गए L1 रुके हुए कार्डों की अधिकतम संख्या — डिवाइस-व्यापी कैप, प्रति-इकाई नहीं। L2 (प्राथमिकता बढ़ोतरी) और L3 (ऑटो-ब्लॉक) वृद्धि प्रभावित नहीं होती। kanban-nudge spec में L1/L2/L3 देखें।",
@@ -7431890,6 +7431904,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "ستظهر تعليقاتك المرسلة هنا.",
+        "feedback_filter_empty_sub": "{label}: {count} عنصر تعليقات مُرسل.",
 
 
 
@@ -7747703,8 +7747718,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "اختر ما إذا كانت سياسة prompt تنطبق كافتراضي على مستوى الجهاز أو تتجاوز كيانًا محددًا.",
         "settings_device_id_help": "معرف فريد للجهاز/الحساب الذي سيستخدمه هذا المتصفح. خزنه مع Device Secret المقابل عند الإقران.",
         "settings_device_secret_help": "المفتاح السري لـ Device ID المحدد. تعامل معه ككلمة مرور وأدخله فقط على الأجهزة الموثوقة.",
-        "feedback_category_help": "اختر الفئة التي تطابق تقريرك بشكل أفضل. تشغل مساعدة الذكاء الاصطناعي تدفقات فرز مختلفة لكل فئة (خطأ = فحص إعادة الإنتاج، ميزة = مطابقة خارطة الطريق، تصميم = مقارنة بصرية).",
-        "feedback_photo_help": "أرفق لقطات شاشة تُظهر المشكلة في سياقها. الحد الأقصى 5 صور؛ يدعم التحميل عبر الويب السحب والإفلات. تتم إزالة بيانات موقع EXIF قبل التخزين.",
+        "feedback_category_help": "اختر الفئة التي تطابق تقريرك بشكل أفضل. تشغل مساعدة الذكاء الاصطناعي تدفقات فرز مختلفة لكل فئة.",
+        "feedback_photo_help": "أرفق لقطات شاشة تُظهر المشكلة في سياقها. الحد الأقصى 5 صور؛ يدعم التحميل عبر الويب السحب والإفلات.",
         "kanban_cron_recurring_notify_help": "أرسل إشعار دردشة عند تشغيل cron لهذه البطاقة. قم بتعطيله للأعمال المتكررة منخفضة الأولوية التي لا ينبغي أن تزعجك.",
         "kanban_nudge_advanced_help": "تجاوزات لكل كيان لفاصل nudge والحالات ووضع التوقف. لا تحتاج معظم اللوحات إلى ذلك — اتركه مطويًا ما لم يكن لكيان واحد احتياجات إيقاع مختلفة.",
         "kanban_nudge_batch_help": "الحد الأقصى لعدد بطاقات L1 المتوقفة المختارة لكل tick cron — حد على مستوى الجهاز، وليس لكل كيان. لا تتأثر تصعيدات L2 (زيادة الأولوية) وL3 (الحظر التلقائي). انظر L1/L2/L3 في مواصفات kanban-nudge.",
