@@ -1,12 +1,12 @@
 {
   "_comment": "Canonical help copy per field. Source of truth for en + zh-TW. Locale fanout in child 6 (translate from these into the other 14 locales).",
   "feedback_category": {
-    "en": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
-    "zh-TW": "選擇最符合你回報的分類。AI 分流流程會根據分類不同（bug 跑復現檢查、feature 對 roadmap、design 做視覺 diff）。"
+    "en": "Pick the category that best matches your report. AI assist runs different triage flows per category.",
+    "zh-TW": "選擇最符合你回報的分類。AI 分流流程會根據分類不同。"
   },
   "feedback_photo": {
-    "en": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
-    "zh-TW": "附上能呈現問題情境的截圖。最多 5 張；網頁支援拖放。上傳前 EXIF 地理位置會被移除。"
+    "en": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop.",
+    "zh-TW": "附上能呈現問題情境的截圖。最多 5 張；網頁支援拖放。"
   },
   "kanban_cron_recurring_notify": {
     "en": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
