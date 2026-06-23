@@ -51,6 +51,18 @@
             margin-bottom: 10px;
         }
 
+        .category-helper {
+            margin-top: -6px;
+            margin-bottom: 14px;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--card-border);
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
         /* Category cards */
         .category-cards {
             display: flex;
@@ -65,16 +77,25 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             padding: 14px 8px;
             border-radius: var(--radius-sm);
             border: 1px solid var(--card-border);
             background: var(--input-bg);
+            color: inherit;
+            font: inherit;
             cursor: pointer;
             transition: all 0.2s;
+            appearance: none;
         }
 
         .cat-card:hover {
             border-color: var(--text-secondary);
+        }
+
+        .cat-card:focus-visible {
+            outline: 2px solid var(--warning);
+            outline-offset: 2px;
         }
 
         .cat-card .cat-icon {
@@ -136,6 +157,25 @@
         .submit-textarea:focus {
             outline: none;
             border-color: var(--warning);
+        }
+
+        .composer-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin: -4px 0 12px;
+            color: var(--text-muted);
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .composer-meta span:first-child {
+            min-width: 0;
+        }
+
+        .text-count {
+            flex-shrink: 0;
+            font-variant-numeric: tabular-nums;
         }
 
         .submit-btn {
@@ -268,8 +308,15 @@
         .filter-bar {
             display: flex;
             gap: 8px;
-            margin-bottom: 20px;
             flex-wrap: wrap;
+        }
+
+        .history-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 20px;
         }
 
         .filter-btn {
@@ -293,6 +340,18 @@
             color: #000;
             border-color: var(--warning);
             font-weight: 600;
+        }
+
+        .feedback-summary {
+            min-height: 32px;
+            padding: 7px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--card-border);
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.35;
+            text-align: right;
         }
 
         /* Feedback card */
@@ -484,6 +543,11 @@
             margin-bottom: 10px;
         }
 
+        .photo-safety {
+            margin-top: -4px;
+            line-height: 1.4;
+        }
+
         .photo-add-btn {
             display: inline-flex;
             align-items: center;
@@ -659,6 +723,36 @@
             font-size: 18px;
             font-weight: bold;
         }
+
+        @media (max-width: 640px) {
+            .page-header {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .category-cards,
+            .history-controls,
+            .composer-meta {
+                flex-direction: column;
+            }
+
+            .cat-card {
+                width: 100%;
+                min-height: 64px;
+            }
+
+            .filter-btn {
+                flex: 1 1 calc(50% - 4px);
+                min-height: 36px;
+            }
+
+            .feedback-summary {
+                width: 100%;
+                box-sizing: border-box;
+                text-align: left;
+            }
+        }
     </style>
 </head>
 
@@ -687,26 +781,32 @@
 
             <div class="category-label" data-i18n="feedback_category_label">Category</div>
             <div class="category-cards">
-                <div class="cat-card selected-bug" data-cat="bug" onclick="selectCategory('bug')">
+                <button type="button" class="cat-card selected-bug" data-cat="bug" onclick="selectCategory('bug')" aria-pressed="true">
                     <span class="cat-icon">🐛</span>
                     <span class="cat-label" data-i18n="feedback_cat_bug">Bug</span>
-                </div>
-                <div class="cat-card" data-cat="feature" onclick="selectCategory('feature')">
+                </button>
+                <button type="button" class="cat-card" data-cat="feature" onclick="selectCategory('feature')" aria-pressed="false">
                     <span class="cat-icon">💡</span>
                     <span class="cat-label" data-i18n="feedback_cat_feature">Feature</span>
-                </div>
-                <div class="cat-card" data-cat="question" onclick="selectCategory('question')">
+                </button>
+                <button type="button" class="cat-card" data-cat="question" onclick="selectCategory('question')" aria-pressed="false">
                     <span class="cat-icon">❓</span>
                     <span class="cat-label" data-i18n="feedback_cat_question">Question</span>
-                </div>
+                </button>
             </div>
+            <div class="category-helper" id="feedbackCategoryHelp" data-i18n="feedback_category_help">Pick the category that best matches your report. AI assist runs different triage flows per category.</div>
 
-            <textarea id="submitText" class="submit-textarea" placeholder="Describe the issue or suggestion..." data-i18n-placeholder="feedback_hint"></textarea>
+            <textarea id="submitText" class="submit-textarea" maxlength="2000" placeholder="Describe the issue or suggestion..." data-i18n-placeholder="feedback_hint" aria-describedby="feedbackCategoryHelp feedbackComposerState feedbackTextCount"></textarea>
+            <div class="composer-meta">
+                <span id="feedbackComposerState" data-i18n="feedback_hint">Describe the issue or suggestion...</span>
+                <span class="text-count" id="feedbackTextCount">0/2000</span>
+            </div>
 
             <!-- Photo upload -->
             <div class="photo-section">
                 <div class="photo-label" data-i18n="feedback_photo_label">Attach Photos (Optional)</div>
-                <div class="photo-hint" data-i18n="feedback_photo_hint">Add up to 5 photos to help illustrate the issue</div>
+                <div class="photo-hint" id="feedbackPhotoHint" data-i18n="feedback_photo_hint">Add up to 5 photos to help illustrate the issue</div>
+                <div class="photo-hint photo-safety" data-i18n="feedback_photo_help">Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.</div>
                 <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp,image/gif" multiple style="display:none" onchange="onPhotosSelected(event)" aria-label="Attach photos">
                 <button type="button" class="photo-add-btn" id="photoAddBtn" onclick="document.getElementById('photoInput').click()">
                     📷 <span data-i18n="feedback_photo_add">Add Photos</span>
@@ -735,15 +835,18 @@
         </div>
 
         <!-- Filter bar -->
-        <div class="filter-bar">
-            <button class="filter-btn active" data-filter="all" onclick="filterFeedback('all')"
-                data-i18n="feedback_filter_all">All</button>
-            <button class="filter-btn" data-filter="bug" onclick="filterFeedback('bug')"
-                data-i18n="feedback_cat_bug">Bug</button>
-            <button class="filter-btn" data-filter="feature" onclick="filterFeedback('feature')"
-                data-i18n="feedback_cat_feature">Feature</button>
-            <button class="filter-btn" data-filter="question" onclick="filterFeedback('question')"
-                data-i18n="feedback_cat_question">Question</button>
+        <div class="history-controls">
+            <div class="filter-bar" aria-label="Filter feedback history">
+                <button class="filter-btn active" data-filter="all" onclick="filterFeedback('all')" aria-pressed="true"
+                    data-i18n="feedback_filter_all">All</button>
+                <button class="filter-btn" data-filter="bug" onclick="filterFeedback('bug')" aria-pressed="false"
+                    data-i18n="feedback_cat_bug">Bug</button>
+                <button class="filter-btn" data-filter="feature" onclick="filterFeedback('feature')" aria-pressed="false"
+                    data-i18n="feedback_cat_feature">Feature</button>
+                <button class="filter-btn" data-filter="question" onclick="filterFeedback('question')" aria-pressed="false"
+                    data-i18n="feedback_cat_question">Question</button>
+            </div>
+            <div class="feedback-summary" id="feedbackSummary" role="status" aria-live="polite" data-i18n="feedback_loading">Loading feedback...</div>
         </div>
 
         <!-- Loading state -->
@@ -781,6 +884,7 @@
         let allFeedback = [];
         let currentFilter = 'all';
         let feedbackCategory = 'bug';
+        let feedbackSubmitting = false;
         // currentUser is declared in shared/auth.js
         let selectedPhotos = []; // File objects selected for upload
         let feedbackPhotoObserver = null;
@@ -788,6 +892,7 @@
         const queuedFeedbackPhotoIds = new Set();
         let activeFeedbackPhotoLoads = 0;
         const MAX_FEEDBACK_PHOTO_LOADS = 3;
+        const MAX_FEEDBACK_TEXT_LENGTH = 2000;
         let feedbackPhotoGeneration = 0;
 
         window.addEventListener('DOMContentLoaded', async () => {
@@ -797,6 +902,10 @@
             if (typeof i18n !== 'undefined') {
                 i18n.apply();
             }
+
+            const submitText = document.getElementById('submitText');
+            if (submitText) submitText.addEventListener('input', updateSubmitReadiness);
+            updateSubmitReadiness();
 
             const user = await checkAuth();
             if (!user) return;
@@ -810,10 +919,35 @@
             feedbackCategory = cat;
             document.querySelectorAll('.cat-card').forEach(card => {
                 card.className = 'cat-card';
+                card.setAttribute('aria-pressed', card.dataset.cat === cat ? 'true' : 'false');
                 if (card.dataset.cat === cat) {
                     card.classList.add('selected-' + cat);
                 }
             });
+        }
+
+        function updateSubmitReadiness() {
+            const textEl = document.getElementById('submitText');
+            const btn = document.getElementById('submitBtn');
+            const countEl = document.getElementById('feedbackTextCount');
+            const stateEl = document.getElementById('feedbackComposerState');
+            if (!textEl || !btn) return;
+
+            const t = (key, fallback) => typeof i18n !== 'undefined' ? i18n.t(key) : fallback;
+            const rawLength = textEl.value.length;
+            const ready = textEl.value.trim().length > 0;
+            btn.disabled = feedbackSubmitting || !ready;
+            if (!feedbackSubmitting) {
+                btn.textContent = t('settings_btn_send_feedback', 'Send');
+                btn.style.background = '';
+                btn.style.color = '';
+            }
+            if (countEl) countEl.textContent = `${rawLength}/${MAX_FEEDBACK_TEXT_LENGTH}`;
+            if (stateEl) {
+                stateEl.textContent = ready
+                    ? t('feedback_auto_log_hint', 'Logs from the last 5 minutes will be automatically captured to help diagnose the issue.')
+                    : t('feedback_hint', 'Describe the issue or suggestion...');
+            }
         }
 
         // ============================================
@@ -902,11 +1036,15 @@
 
         async function submitFeedback() {
             const text = document.getElementById('submitText').value.trim();
-            if (!text) return;
+            if (!text || feedbackSubmitting) {
+                updateSubmitReadiness();
+                return;
+            }
 
             const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
             const t = (key, fallback) => typeof i18n !== 'undefined' ? i18n.t(key) : fallback;
+            feedbackSubmitting = true;
+            updateSubmitReadiness();
             btn.textContent = t('feedback_sending', 'Sending...');
 
             try {
@@ -933,13 +1071,12 @@
                     }
                 }
 
-                btn.textContent = t('feedback_sent_short', 'Sent');
-                btn.style.background = 'var(--success)';
-                btn.style.color = '#fff';
-
                 // Clear photo selection
+                document.getElementById('submitText').value = '';
                 selectedPhotos = [];
                 renderPhotoPreviews();
+                feedbackSubmitting = false;
+                updateSubmitReadiness();
 
                 showSubmitResult(result, photosUploaded);
 
@@ -950,10 +1087,8 @@
                     telemetry.trackAction('send_feedback', { category: feedbackCategory, photos: photosUploaded });
                 }
             } catch (e) {
-                btn.disabled = false;
-                btn.textContent = t('settings_btn_send_feedback', 'Send');
-                btn.style.background = '';
-                btn.style.color = '';
+                feedbackSubmitting = false;
+                updateSubmitReadiness();
                 if (typeof showToast === 'function') {
                     showToast('Failed: ' + e.message, 'error');
                 }
@@ -1042,6 +1177,8 @@
                 allFeedback = data.feedback || [];
 
                 if (allFeedback.length === 0) {
+                    setFeedbackEmptyState();
+                    updateFeedbackSummary(0, 0);
                     emptyEl.style.display = '';
                 } else {
                     renderFeedback();
@@ -1050,6 +1187,9 @@
                 loadingEl.style.display = 'none';
                 emptyEl.style.display = '';
                 emptyEl.querySelector('h3').textContent = 'Failed to load: ' + e.message;
+                emptyEl.querySelector('p').textContent = '';
+                const summaryEl = document.getElementById('feedbackSummary');
+                if (summaryEl) summaryEl.textContent = 'Feedback could not be loaded.';
             }
         }
 
@@ -1057,8 +1197,45 @@
             currentFilter = filter;
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.filter === filter);
+                btn.setAttribute('aria-pressed', btn.dataset.filter === filter ? 'true' : 'false');
             });
             renderFeedback();
+        }
+
+        function getFeedbackFilterLabel(filter) {
+            const t = (key, fallback) => typeof i18n !== 'undefined' ? i18n.t(key) : fallback;
+            if (filter === 'bug') return t('feedback_cat_bug', 'Bug');
+            if (filter === 'feature') return t('feedback_cat_feature', 'Feature');
+            if (filter === 'question') return t('feedback_cat_question', 'Question');
+            return t('feedback_filter_all', 'All');
+        }
+
+        function updateFeedbackSummary(total, filtered) {
+            const summaryEl = document.getElementById('feedbackSummary');
+            if (!summaryEl) return;
+            const historyLabel = getFeedbackFilterLabel(currentFilter);
+            if (total === 0) {
+                summaryEl.textContent = `${getFeedbackFilterLabel('all')}: 0`;
+            } else if (currentFilter === 'all') {
+                summaryEl.textContent = `${getFeedbackFilterLabel('all')}: ${total}`;
+            } else {
+                summaryEl.textContent = `${historyLabel}: ${filtered} / ${total}`;
+            }
+        }
+
+        function setFeedbackEmptyState(filter = currentFilter) {
+            const emptyEl = document.getElementById('emptyState');
+            if (!emptyEl) return;
+            const t = (key, fallback) => typeof i18n !== 'undefined' ? i18n.t(key) : fallback;
+            const titleEl = emptyEl.querySelector('h3');
+            const descEl = emptyEl.querySelector('p');
+            if (filter === 'all') {
+                titleEl.textContent = t('feedback_empty', 'No feedback submitted yet');
+                descEl.textContent = t('feedback_empty_sub', 'Your submitted feedback will appear here.');
+            } else {
+                titleEl.textContent = `${getFeedbackFilterLabel(filter)}: 0`;
+                descEl.textContent = `${t('feedback_filter_all', 'All')} shows ${allFeedback.length} submitted feedback item${allFeedback.length === 1 ? '' : 's'}.`;
+            }
         }
 
         function renderFeedback() {
@@ -1070,8 +1247,10 @@
             const filtered = currentFilter === 'all'
                 ? allFeedback
                 : allFeedback.filter(f => f.category === currentFilter);
+            updateFeedbackSummary(allFeedback.length, filtered.length);
 
             if (filtered.length === 0) {
+                setFeedbackEmptyState();
                 emptyEl.style.display = '';
                 return;
             }
