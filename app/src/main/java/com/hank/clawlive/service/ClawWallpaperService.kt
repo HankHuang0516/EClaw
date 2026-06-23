@@ -3,8 +3,10 @@ package com.hank.clawlive.service
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.service.wallpaper.WallpaperService
 import android.view.SurfaceHolder
 import timber.log.Timber
@@ -78,44 +80,139 @@ class ClawWallpaperService : WallpaperService() {
 
         private val drawRunnable = Runnable { draw() }
 
-        // card_f9b2cc2d diagnostic+mitigation: paint for the multi-level loading
-        // markers. Each black-screen-prone entry point paints a DISTINCT labelled
-        // "Loading… (<where>)" frame DIRECTLY (independent of the draw loop), so
-        // (a) the user never sees raw black on resume, and (b) which label shows
-        // tells us exactly which path was hit (vs still-pure-black = the Engine
-        // never even got the callback → deepest surface/GL level).
-        private val loadingPaint = Paint().apply {
+        // ─────────────────────────────────────────────────────────────────────
+        // card_f22e489c / card_f9b2cc2d — THE NEVER-BLACK FLOOR.
+        //
+        // Owner-mandated structural guarantee (v1.1.9): "even if it black-screens,
+        // '桌布加載中…' must appear." Every prior fix chased a specific crash/return
+        // path; the wallpaper STILL went pure black because *some* non-crash path
+        // (null lockCanvas, a stalled loop, a missed callback, a half-drawn black
+        // frame) left the last surface black. This floor removes the entire class
+        // of failures by CONSTRUCTION: every posted frame ALWAYS starts as a navy
+        // "loading" baseline (visible text + an animated arc + a [BLK-XXX] tag),
+        // and the real content is only ever an OVERLAY on top. If content is not
+        // ready, or throws, or the loop stalls, the loading baseline is what the
+        // surface keeps showing — never raw black.
+        // ─────────────────────────────────────────────────────────────────────
+
+        // Deliberate navy surface used by the floor — reads as "loading", not crash.
+        private val floorBg = 0xFF0B1220.toInt()
+
+        private val floorTextPaint = Paint().apply {
             color = Color.WHITE
             textAlign = Paint.Align.CENTER
             isAntiAlias = true
-            textSize = 38f
+            textSize = 44f
+        }
+
+        // Animated spinner arc — its sweep phase is driven by SystemClock so it
+        // visibly rotates every frame even when no content is drawing, proving the
+        // surface is live (not a frozen black screen).
+        private val floorArcPaint = Paint().apply {
+            color = 0xFF22D3EE.toInt() // cyan accent, matches the in-app health ring
+            style = Paint.Style.STROKE
+            strokeWidth = 6f
+            strokeCap = Paint.Cap.ROUND
+            isAntiAlias = true
+        }
+
+        // Small, low-opacity bottom-corner diagnostic tag (BLK-LOAD / BLK-RENDER /
+        // BLK-SURFACE) so any future near-black state is self-identifying on screen.
+        private val floorTagPaint = Paint().apply {
+            color = Color.WHITE
+            alpha = 90
+            textAlign = Paint.Align.RIGHT
+            isAntiAlias = true
+            textSize = 24f
+        }
+
+        private val floorArcRect = RectF()
+
+        /**
+         * Paint the always-on loading baseline onto an ALREADY-LOCKED canvas:
+         * navy fill, centered localized "桌布加載中…" text, an animated cyan arc
+         * spinner, and a small [BLK-XXX] diagnostic tag. This is the floor every
+         * frame is built on; content (if any) is overlaid afterwards. Never throws
+         * out (best-effort; any sub-step is individually guarded) so it can be the
+         * last line of defence.
+         *
+         * @param tag the on-screen diagnostic code: BLK-LOAD (normal loading),
+         *   BLK-RENDER (caught content error), BLK-SURFACE (canvas re-acquire
+         *   retries), etc.
+         */
+        private fun paintLoadingFloor(canvas: Canvas, tag: String) {
+            try { canvas.drawColor(floorBg) } catch (_: Throwable) {}
+            val cx = canvas.width / 2f
+            val cy = canvas.height / 2f
+            try {
+                val label = this@ClawWallpaperService.getString(R.string.claw_renderer_loading_wallpaper)
+                canvas.drawText(label, cx, cy, floorTextPaint)
+            } catch (_: Throwable) {}
+            // Animated arc above the text. Phase from SystemClock → visibly spins.
+            try {
+                val r = (minOf(canvas.width, canvas.height) * 0.10f).coerceIn(40f, 160f)
+                val top = cy - r - 90f
+                floorArcRect.set(cx - r, top - r, cx + r, top + r)
+                val startAngle = (SystemClock.uptimeMillis() / 3L % 360L).toFloat()
+                canvas.drawArc(floorArcRect, startAngle, 270f, false, floorArcPaint)
+            } catch (_: Throwable) {}
+            // Bottom-right diagnostic tag.
+            try {
+                canvas.drawText(tag, canvas.width - 18f, canvas.height - 18f, floorTagPaint)
+            } catch (_: Throwable) {}
         }
 
         /**
-         * Lock the surface and paint ONE labelled loading frame immediately,
+         * Lock the surface with a bounded retry burst instead of bailing on the
+         * first null. card_f22e489c: the classic "black + NO text" signature is
+         * `lockCanvas() ?: return` silently giving up — the surface keeps its last
+         * (black) contents and nothing repaints. We re-read the holder and retry a
+         * few times with tiny sleeps; if every attempt is null we record it and let
+         * the caller reschedule the next frame (we NEVER permanently stop).
+         * Returns the locked Canvas or null after exhausting retries.
+         */
+        private fun lockCanvasWithRetry(holder: SurfaceHolder?, where: String): Pair<Canvas, SurfaceHolder>? {
+            var attempt = 0
+            while (attempt < 4) {
+                val h = holder ?: surfaceHolder
+                if (h != null) {
+                    val c = try { h.lockCanvas() } catch (e: Throwable) {
+                        Timber.e(e, "lockCanvas threw ($where) attempt=$attempt"); null
+                    }
+                    if (c != null) return c to h
+                }
+                attempt++
+                if (attempt < 4) { try { Thread.sleep(8L) } catch (_: InterruptedException) {} }
+            }
+            // All retries null — record [BLK-SURFACE] but DO NOT stop the loop.
+            val msg = "lockCanvas null after retries ($where) surfaceValid=${surfaceValid()}"
+            Timber.e(msg)
+            try {
+                com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance()
+                    .recordException(IllegalStateException("BLK-SURFACE: $msg"))
+            } catch (_: Exception) {}
+            return null
+        }
+
+        /**
+         * Lock the surface and paint ONE loading-floor frame immediately,
          * bypassing the draw loop. Safe to call from any lifecycle callback —
-         * if the real draw loop then runs it simply overwrites this; if it does
-         * NOT (the bug), this stays on screen instead of black. `where` is the
-         * diagnostic marker (surface / resume / changed).
+         * if the real draw loop then runs it simply overlays content; if it does
+         * NOT (the bug), this navy "桌布加載中…" floor stays on screen instead of
+         * black. `where` becomes a BLK-XXX-style tag on screen.
          */
         private fun paintLoadingMarker(where: String, holder: SurfaceHolder? = surfaceHolder) {
-            val h = holder ?: return
-            var canvas: Canvas? = null
+            val locked = lockCanvasWithRetry(holder, where) ?: return
+            val (canvas, h) = locked
             try {
-                canvas = h.lockCanvas() ?: return
-                canvas.drawColor(0xFF0B1220.toInt()) // dark navy — deliberate surface, not black
-                val cx = canvas.width / 2f
-                val cy = canvas.height / 2f
-                val label = this@ClawWallpaperService.getString(
-                    R.string.claw_wallpaper_loading_marker, where
-                )
-                canvas.drawText(label, cx, cy, loadingPaint)
-            } catch (e: Exception) {
+                paintLoadingFloor(canvas, "BLK-LOAD/$where")
+            } catch (e: Throwable) {
                 Timber.e(e, "paintLoadingMarker($where) failed")
             } finally {
-                if (canvas != null) {
-                    try { h.unlockCanvasAndPost(canvas) } catch (e: Exception) { Timber.e(e, "marker unlock failed") }
-                }
+                try {
+                    h.unlockCanvasAndPost(canvas)
+                    lastGoodFrameMs = SystemClock.uptimeMillis()
+                } catch (e: Exception) { Timber.e(e, "marker unlock failed") }
             }
         }
 
@@ -206,8 +303,8 @@ class ClawWallpaperService : WallpaperService() {
             observeStatus()
             observeUsage()
             observeKanban()
-            // Start the lifetime self-healing heartbeat (card_f9b2cc2d).
-            handler.postDelayed(healthHeartbeat, 1000L)
+            // Start the lifetime self-healing heartbeat (card_f9b2cc2d / card_f22e489c).
+            handler.postDelayed(healthHeartbeat, HEARTBEAT_INTERVAL_MS)
         }
 
         // Tracks which entityIds already have a companion-poller flow running so
@@ -456,61 +553,78 @@ class ClawWallpaperService : WallpaperService() {
             override fun run() {
                 try {
                     val showing = try { isVisible } catch (e: Exception) { visible }
-                    if (showing && surfaceValid() &&
-                        android.os.SystemClock.uptimeMillis() - lastGoodFrameMs > 1000L) {
-                        Timber.w("healthHeartbeat: stale frame, kicking draw loop")
-                        draw()
+                    val staleMs = SystemClock.uptimeMillis() - lastGoodFrameMs
+                    if (showing && staleMs > STALE_FRAME_MS) {
+                        // card_f22e489c WATCHDOG / SELF-HEAL. No frame has been
+                        // posted for > ~2s while we should be showing — the loop is
+                        // stuck or the render thread is dead. Force a re-kick: paint
+                        // the loading floor SYNCHRONOUSLY first (so the user sees
+                        // "桌布加載中…" instead of black even if draw() can't run),
+                        // then restart the frame scheduler. If the surface is not
+                        // currently drawable, run the bounded resume burst which
+                        // re-acquires it and repaints once it is valid.
+                        Timber.w("healthHeartbeat: stale ${staleMs}ms, force re-kick")
+                        if (surfaceValid()) {
+                            paintLoadingMarker("heartbeat")
+                            handler.removeCallbacks(drawRunnable)
+                            draw()
+                        } else {
+                            kickDrawLoop("heartbeat")
+                        }
                     }
                 } catch (e: Exception) {
                     Timber.e(e, "healthHeartbeat error")
                 } finally {
-                    if (lifecycle.engineAlive) handler.postDelayed(this, 1000L)
+                    if (lifecycle.engineAlive) handler.postDelayed(this, HEARTBEAT_INTERVAL_MS)
                 }
             }
         }
 
         private fun draw() {
-            val holder = surfaceHolder
-            var canvas: Canvas? = null
             drawCount++
-            if (drawCount <= 5 || drawCount % 100 == 0) {
-            }
 
+            // card_f22e489c NEVER-BLACK FLOOR. Acquire the canvas with a bounded
+            // retry instead of `lockCanvas() ?: return` (that silent bail is the
+            // exact "black + no text" signature — the surface keeps its last black
+            // contents and the loop's reschedule below is the only thing that lets
+            // it recover). If we still can't get a canvas after retries, we don't
+            // post a frame THIS tick, but we still reschedule at the bottom so the
+            // next tick tries again — the loop is never permanently stopped.
+            val locked = lockCanvasWithRetry(surfaceHolder, "draw")
+            if (locked == null) {
+                handler.removeCallbacks(drawRunnable)
+                if (visible && surfaceValid()) handler.postDelayed(drawRunnable, FRAME_INTERVAL_MS)
+                return
+            }
+            val (canvas, holder) = locked
+
+            // STEP 1 — ALWAYS-PAINT BASELINE. Every single frame starts as the
+            // navy "桌布加載中…" loading floor (text + animated arc + [BLK-XXX] tag).
+            // Whatever happens to the content overlay below, this is already on the
+            // canvas, so the posted frame can never be raw black.
+            paintLoadingFloor(canvas, "BLK-LOAD")
+
+            // STEP 2 — overlay the real content ON TOP of the floor, fully guarded.
+            // Throwable (not just Exception) so a render-thread OutOfMemoryError
+            // also lands here instead of escaping to the process-killing uncaught
+            // handler. On any throw we leave the loading floor visible and stamp a
+            // BLK-RENDER tag so a content failure shows "loading + code", never
+            // black, and is self-identifying on screen.
             try {
-                canvas = holder.lockCanvas()
-                if (canvas != null) {
-                    if (drawCount <= 3) {
-                    }
-                    if (multiEntityMode) {
-                        renderer.drawMultiEntity(
-                            canvas,
-                            currentEntities,
-                            loading = !hasFirstResponse,
-                            usageSnapshot = currentUsageSnapshot,
-                            kanbanCards = currentKanbanCards
-                        )
-                    } else {
-                        renderer.draw(canvas, currentStatus)
-                    }
-                } else if (drawCount <= 5) {
+                if (multiEntityMode) {
+                    renderer.drawMultiEntity(
+                        canvas,
+                        currentEntities,
+                        loading = !hasFirstResponse,
+                        usageSnapshot = currentUsageSnapshot,
+                        kanbanCards = currentKanbanCards
+                    )
+                } else {
+                    renderer.draw(canvas, currentStatus)
                 }
             } catch (e: Throwable) {
-                // card_f9b2cc2d ROOT-CAUSE CAPTURE + visible fallback. catch THROWABLE
-                // (not just Exception) so a render-thread OutOfMemoryError [BLK-RENDER]
-                // (an Error) also paints the visible error frame below instead of
-                // escaping to the process-killing uncaught handler → pure black.
-                // The reported "pure black, no text" on resume is consistent with
-                // drawMultiEntity drawing the black background and then THROWING
-                // while rendering entities (e.g. a recycled/released bitmap after
-                // an app-switch). The old code only Timber.e'd and the `finally`
-                // posted the half-drawn black canvas — silent black every 33ms,
-                // overwriting the loading markers, until a process restart. Now:
-                // (1) record the real exception to Crashlytics so the exact stack
-                // is captured in the field, and (2) overpaint a DISTINCT, visible
-                // error frame so the user never sees silent black and can report
-                // what they see.
                 drawFailureCount++
-                Timber.e(e, "Error during drawing (failure #$drawFailureCount)")
+                Timber.e(e, "Error during content overlay (failure #$drawFailureCount)")
                 if (drawFailureCount <= 3 || drawFailureCount % 100 == 0) {
                     try {
                         com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().apply {
@@ -522,25 +636,23 @@ class ClawWallpaperService : WallpaperService() {
                         }
                     } catch (ce: Exception) { Timber.e(ce, "crashlytics draw report failed") }
                 }
+                // Re-establish the loading floor (the partial content may have
+                // dirtied it) with the render-error code + the localized banner.
                 try {
-                    canvas?.let { c ->
-                        c.drawColor(0xFF2A0E0E.toInt()) // distinct dark red = render error (NOT black)
-                        c.drawText(
-                            this@ClawWallpaperService.getString(R.string.claw_wallpaper_render_error),
-                            c.width / 2f, c.height / 2f, loadingPaint
-                        )
-                    }
-                } catch (fe: Exception) { Timber.e(fe, "error-frame paint failed") }
+                    paintLoadingFloor(canvas, "BLK-RENDER")
+                    canvas.drawText(
+                        this@ClawWallpaperService.getString(R.string.claw_wallpaper_render_error),
+                        canvas.width / 2f, canvas.height / 2f + 64f, floorTagPaint
+                    )
+                } catch (fe: Throwable) { Timber.e(fe, "error-frame floor repaint failed") }
             } finally {
-                if (canvas != null) {
-                    try {
-                        holder.unlockCanvasAndPost(canvas)
-                        // Record a successful posted frame so the self-healing
-                        // heartbeat can tell a live loop from a dead one. (card_f9b2cc2d)
-                        lastGoodFrameMs = android.os.SystemClock.uptimeMillis()
-                    } catch (e: Exception) {
-                        Timber.e(e, "Error unlocking canvas")
-                    }
+                try {
+                    holder.unlockCanvasAndPost(canvas)
+                    // Record a successful posted frame so the self-healing
+                    // heartbeat can tell a live loop from a dead one.
+                    lastGoodFrameMs = SystemClock.uptimeMillis()
+                } catch (e: Exception) {
+                    Timber.e(e, "Error unlocking canvas")
                 }
             }
 
@@ -557,8 +669,17 @@ class ClawWallpaperService : WallpaperService() {
             // self-heal: it runs whenever we are visible and the surface is
             // actually drawable, regardless of which lifecycle callback fired.
             if (visible && surfaceValid()) {
-                handler.postDelayed(drawRunnable, 33)
+                handler.postDelayed(drawRunnable, FRAME_INTERVAL_MS)
             }
         }
+    }
+
+    private companion object {
+        // ~30fps draw loop.
+        const val FRAME_INTERVAL_MS = 33L
+        // Self-healing heartbeat tick.
+        const val HEARTBEAT_INTERVAL_MS = 1000L
+        // card_f22e489c: force a re-kick if no frame posted for > ~2s while visible.
+        const val STALE_FRAME_MS = 2000L
     }
 }
