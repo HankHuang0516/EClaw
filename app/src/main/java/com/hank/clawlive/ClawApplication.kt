@@ -44,9 +44,23 @@ class ClawApplication : Application() {
                 trySyncFlushCrashToServer(throwable, recentLines)
             } catch (_: Exception) {
                 // Must not throw — always let default handler run
-            } finally {
-                defaultHandler?.uncaughtException(thread, throwable)
             }
+            // BLK-FGS recovery (card_f9b2cc2d): a foreground-service-policy throwable
+            // (ForegroundServiceStartNotAllowed / DidNotStartInTime / RemoteServiceException
+            // with an FGS message) is a recoverable OS policy rejection, NOT a real
+            // app crash. The call sites are now guarded, but as belt-and-braces: if
+            // one still reaches here, letting the default handler run would kill this
+            // shared process and take the live wallpaper down with it (pure black,
+            // needs app restart). Swallow ONLY this narrow class so the process — and
+            // the wallpaper engine — survive; it was already logged + recorded above.
+            if (isRecoverableForegroundServiceCrash(throwable)) {
+                try {
+                    com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().recordException(throwable)
+                } catch (_: Throwable) {}
+                Timber.e(throwable, "[App] swallowed recoverable FGS crash (${throwable.javaClass.simpleName}) — keeping process + wallpaper alive")
+                return@setDefaultUncaughtExceptionHandler
+            }
+            defaultHandler?.uncaughtException(thread, throwable)
         }
 
         // 4. Initialize TelemetryHelper early (centralized here)
@@ -207,4 +221,30 @@ class ClawApplication : Application() {
 
     private fun escapeJson(s: String): String =
         s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r")
+
+    /**
+     * BLK-FGS (card_f9b2cc2d): true only for the narrow class of foreground-service
+     * policy rejections that are recoverable — swallowing these keeps the shared
+     * process (and the live wallpaper engine) alive instead of dying to a pure-black
+     * screen. Walks the cause chain; matches by class name so it works across API
+     * levels (ForegroundServiceStartNotAllowedException, RemoteServiceException$
+     * ForegroundServiceDidNotStartInTimeException, etc.) without compile-time deps.
+     */
+    private fun isRecoverableForegroundServiceCrash(t: Throwable?): Boolean {
+        var cur = t
+        var depth = 0
+        while (cur != null && depth < 8) {
+            val name = cur.javaClass.name
+            val msg = cur.message ?: ""
+            if (name.contains("ForegroundServiceStartNotAllowedException") ||
+                name.contains("ForegroundServiceDidNotStartInTimeException") ||
+                (name.contains("RemoteServiceException") && msg.contains("ForegroundService"))
+            ) {
+                return true
+            }
+            cur = cur.cause
+            depth++
+        }
+        return false
+    }
 }

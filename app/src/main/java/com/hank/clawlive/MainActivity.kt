@@ -76,10 +76,19 @@ class MainActivity : AppCompatActivity() {
 
         // TTS foreground service (bot voice replies)
         val ttsIntent = Intent(this, com.hank.clawlive.service.TtsService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(ttsIntent)
-        } else {
-            startService(ttsIntent)
+        // BLK-FGS (card_f9b2cc2d): a foreground-service start must never crash the
+        // process — it shares the process with the live wallpaper engine, so an
+        // uncaught ForegroundServiceStartNotAllowedException here turns the
+        // wallpaper pure-black until app restart.
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(ttsIntent)
+            } else {
+                startService(ttsIntent)
+            }
+        } catch (t: Throwable) {
+            Timber.e(t, "[Main] tts startForegroundService refused (${t.javaClass.simpleName})")
+            try { com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().recordException(t) } catch (_: Throwable) {}
         }
 
         observeLocationRequests()

@@ -32,8 +32,11 @@ class WallpaperSpritesheetDiskCache private constructor(context: Context) {
                 file.delete()
                 null
             }
-        } catch (e: Exception) {
-            Timber.w(e, "Failed to load wallpaper spritesheet cache")
+        } catch (e: Throwable) {
+            // BLK-OOM (card_f9b2cc2d): decodeFile throws OutOfMemoryError (an Error, not
+            // Exception) on a huge/corrupt cached sheet. Catch Throwable so it can't
+            // escape to the process-killing uncaught handler; drop the bad file + null.
+            Timber.w(e, "Failed to load wallpaper spritesheet cache (${e.javaClass.simpleName})")
             file.delete()
             null
         }
