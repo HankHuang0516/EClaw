@@ -269,3 +269,222 @@ describe('audit-rules — file exemptions', () => {
         expect(audit.scanText('x.js', null)).toEqual([]);
     });
 });
+
+// ─── Dimension C: human_operability (card_3c6fb87 SPEC v1+v2, Hank 2026-06-23) ──
+// R1–R7. Each rule has a positive fixture (fires) and a negative fixture (does
+// NOT fire) so a regex/context regression that widens or narrows the rule flips
+// a test. Fixtures use a real portal path so the filePathFilter scope is exercised.
+const P = 'public/portal/x.html';        // portal HTML (R1–R6)
+const PCSS = 'public/portal/x.css';      // portal CSS  (R7)
+const has = (text, ruleId, file = P) =>
+    audit.scanText(file, text).some(r => r.ruleId === ruleId);
+
+describe('audit-rules — operability dimension catalog', () => {
+    test("'operability' is a registered dimension with ≥7 rules", () => {
+        expect(audit.DIMENSIONS).toContain('operability');
+        const ops = audit.RULES.filter(r => r.dimension === 'operability');
+        expect(ops.length).toBeGreaterThanOrEqual(7);
+        for (const r of ops) {
+            expect(r.pattern).toBeInstanceOf(RegExp);
+            expect(audit.SEVERITIES).toContain(r.severity);
+        }
+    });
+    test('operability rules are scoped OFF non-portal files', () => {
+        // A backend service file with an icon-only button-shaped string must not fire R1.
+        expect(has('<button class="x">🔥</button>', 'operability-icon-button-no-aria',
+            'index.js')).toBe(false);
+    });
+});
+
+describe('audit-rules — R1 icon-button-no-aria', () => {
+    test('icon-only button (emoji) with no aria-label/title FIRES', () => {
+        expect(has('<button class="fab" onclick="open()">🤖</button>',
+            'operability-icon-button-no-aria')).toBe(true);
+    });
+    test('icon-only button with an HTML-entity glyph FIRES', () => {
+        expect(has('<button class="modal-close" onclick="close()">&#x2715;</button>',
+            'operability-icon-button-no-aria')).toBe(true);
+    });
+    test('icon button WITH aria-label does NOT fire', () => {
+        expect(has('<button class="fab" aria-label="Open chat" onclick="open()">🤖</button>',
+            'operability-icon-button-no-aria')).toBe(false);
+    });
+    test('icon button WITH title does NOT fire', () => {
+        expect(has('<button class="v" title="Grid" onclick="g()">⊞</button>',
+            'operability-icon-button-no-aria')).toBe(false);
+    });
+    test('button with real text label does NOT fire (text IS the name)', () => {
+        expect(has('<button onclick="more()">Load more</button>',
+            'operability-icon-button-no-aria')).toBe(false);
+    });
+});
+
+describe('audit-rules — R2 div-onclick-no-keyboard', () => {
+    test('<div onclick> with no role/tabindex (action handler) FIRES', () => {
+        expect(has('<div class="hdr" onclick="toggleSection()">More</div>',
+            'operability-div-onclick-no-keyboard')).toBe(true);
+    });
+    test('<div onclick> WITH role + tabindex does NOT fire', () => {
+        expect(has('<div role="button" tabindex="0" onclick="toggleSection()">More</div>',
+            'operability-div-onclick-no-keyboard')).toBe(false);
+    });
+    test('modal backdrop (event.target===this) does NOT fire', () => {
+        expect(has('<div class="overlay" onclick="if(event.target===this)close()">',
+            'operability-div-onclick-no-keyboard')).toBe(false);
+    });
+    test('overlay/backdrop close-on-click does NOT fire', () => {
+        expect(has('<div class="kb-message-modal-backdrop" onclick="closeMessageModal()"></div>',
+            'operability-div-onclick-no-keyboard')).toBe(false);
+    });
+});
+
+describe('audit-rules — R3 input-no-label', () => {
+    test('text input with placeholder + no label/aria FIRES', () => {
+        expect(has('<input type="text" id="q" placeholder="Search...">',
+            'operability-input-no-label')).toBe(true);
+    });
+    test('input WITH aria-label does NOT fire', () => {
+        expect(has('<input type="text" id="q" placeholder="Search..." aria-label="Search">',
+            'operability-input-no-label')).toBe(false);
+    });
+    test('input WITH a matching <label for> elsewhere in the file does NOT fire', () => {
+        const html = [
+            '<label class="form-label" for="email">Email</label>',
+            '<input type="email" id="email" placeholder="you@example.com">',
+        ].join('\n');
+        expect(has(html, 'operability-input-no-label')).toBe(false);
+    });
+    test('type=hidden input does NOT fire', () => {
+        expect(has('<input type="hidden" id="csrf" placeholder="x">',
+            'operability-input-no-label')).toBe(false);
+    });
+});
+
+describe('audit-rules — R4 destructive-no-confirm', () => {
+    test('delete handler that does a DELETE with no confirm FIRES (P1)', () => {
+        const code = [
+            'async function removeBot(botId) {',
+            "  await apiCall('DELETE', '/api/admin/official-bot/' + botId);",
+            '  showToast("removed");',
+            '}',
+        ].join('\n');
+        const f = audit.scanText(P, code).find(r => r.ruleId === 'operability-destructive-no-confirm');
+        expect(f).toBeTruthy();
+        expect(f.severity).toBe('P1');
+    });
+    test('delete handler WITH showConfirm in body does NOT fire', () => {
+        const code = [
+            'async function deleteFile(idx) {',
+            "  if (!await showConfirm({ message: 'Delete?' })) return;",
+            "  await apiCall('DELETE', '/api/files/' + idx);",
+            '}',
+        ].join('\n');
+        expect(has(code, 'operability-destructive-no-confirm')).toBe(false);
+    });
+    test('UI-only reset (no server mutation) does NOT fire', () => {
+        const code = [
+            'function clearSearch() {',
+            "  document.getElementById('q').value = '';",
+            '  filterAndSort();',
+            '}',
+        ].join('\n');
+        expect(has(code, 'operability-destructive-no-confirm')).toBe(false);
+    });
+    test('JS Set.delete() in a clear handler is NOT a server mutation', () => {
+        const code = [
+            'function clearReceiverHintForEntity(entityId) {',
+            '  autoToggledReceiverEntities.delete(entityId);',
+            '}',
+        ].join('\n');
+        expect(has(code, 'operability-destructive-no-confirm')).toBe(false);
+    });
+});
+
+describe('audit-rules — R5 emptystate-no-next-step', () => {
+    test('empty-state block with no CTA / next step FIRES', () => {
+        expect(has('<div class="empty-state">No pending friend requests</div>',
+            'operability-emptystate-no-next-step')).toBe(true);
+    });
+    test('empty-state WITH a CTA button does NOT fire', () => {
+        const html = [
+            '<div class="empty-state">',
+            '  <div>No cards yet</div>',
+            '  <button class="btn" onclick="go()">Go to Plaza</button>',
+            '</div>',
+        ].join('\n');
+        expect(has(html, 'operability-emptystate-no-next-step')).toBe(false);
+    });
+    test('empty-state with instructional next-step copy does NOT fire', () => {
+        expect(has('<div class="empty-state">Click "Capture Screen" to see the UI tree.</div>',
+            'operability-emptystate-no-next-step')).toBe(false);
+    });
+    test('positive/success empty state ("No issues detected") does NOT fire', () => {
+        expect(has('<ul class="rm-issues empty"><li>No issues detected.</li></ul>',
+            'operability-emptystate-no-next-step')).toBe(false);
+    });
+    test('a child sub-element (empty-state-icon) does NOT itself fire', () => {
+        expect(has('<div class="empty-state-icon">📭</div>',
+            'operability-emptystate-no-next-step')).toBe(false);
+    });
+});
+
+describe('audit-rules — R6 mutation-no-feedback', () => {
+    test('fire-and-forget POST (no await/then/catch/feedback) FIRES', () => {
+        const code = [
+            "function ping() {",
+            "  fetch('/api/x', { method: 'POST', body: '{}' });",
+            "}",
+        ].join('\n');
+        expect(has(code, 'operability-mutation-no-feedback')).toBe(true);
+    });
+    test('awaited mutating call does NOT fire', () => {
+        expect(has("await apiCall('POST', '/api/x', body);",
+            'operability-mutation-no-feedback')).toBe(false);
+    });
+    test('mutating call with a .catch handler does NOT fire', () => {
+        const code = [
+            "apiCall('PUT', '/api/avatar', { emoji })",
+            "  .catch(() => {});",
+        ].join('\n');
+        expect(has(code, 'operability-mutation-no-feedback')).toBe(false);
+    });
+    test('mutating call with a .then(success-toast) does NOT fire', () => {
+        const code = [
+            "apiCall('POST', '/api/x', body)",
+            "  .then(() => showToast('ok'));",
+        ].join('\n');
+        expect(has(code, 'operability-mutation-no-feedback')).toBe(false);
+    });
+});
+
+describe('audit-rules — R7 focus-style-removed', () => {
+    test(':focus { outline: none } with no replacement (single line) FIRES', () => {
+        expect(has('.btn:focus { outline: none; }',
+            'operability-focus-style-removed', PCSS)).toBe(true);
+    });
+    test(':focus { outline:none; border-color } (replacement present) does NOT fire', () => {
+        expect(has('.search:focus { outline: none; border-color: var(--accent); }',
+            'operability-focus-style-removed', PCSS)).toBe(false);
+    });
+    test('multi-line :focus block with a border-color replacement does NOT fire', () => {
+        const css = [
+            '.edit-field input:focus {',
+            '    outline: none;',
+            '    border-color: var(--primary);',
+            '}',
+        ].join('\n');
+        expect(has(css, 'operability-focus-style-removed', PCSS)).toBe(false);
+    });
+    test('multi-line :focus block removing outline with NO replacement FIRES', () => {
+        const css = [
+            '.bare:focus {',
+            '    outline: none;',
+            '}',
+        ].join('\n');
+        expect(has(css, 'operability-focus-style-removed', PCSS)).toBe(true);
+    });
+    test('outline:none on a NON-focus selector does NOT fire (not a focus removal)', () => {
+        expect(has('.input-bar input { outline: none; border: none; }',
+            'operability-focus-style-removed', PCSS)).toBe(false);
+    });
+});
