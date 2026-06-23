@@ -269,6 +269,18 @@ let VISION_IMAGES = [
     // Hard tier
     { file: null, description: 'A REST API response JSON body with 5 top-level keys: "status" is "error", "code" is 429, "message" is "Rate limit exceeded — retry after 60 seconds", "retry_after" is 60, and a nested "quota" object shows "used" 1000 and "limit" 1000', keywords: ['JSON', 'status', 'error', '429', 'rate', 'limit', 'retry', '60', 'quota', '1000'] },
     { file: null, description: 'A Kubernetes pod status table with 5 rows: nginx-deployment 2/2 Running 3d, redis-master 1/1 Running 5d, postgres-primary 0/1 CrashLoopBackOff (7 restarts) 2h, prometheus 1/1 Running 1d, grafana 1/1 Running 12h — two red warning icons appear in the postgres-primary row', keywords: ['kubernetes', 'five', 'nginx', 'redis', 'postgres', 'CrashLoopBackOff', 'seven', 'restarts', 'prometheus', 'grafana'] },
+    // ── Daily pool update: added 2026-06-23 ──
+    // Easy tier
+    { file: null, description: 'A green recycle symbol on a white background — three curved arrows forming a triangle loop', keywords: ['recycle', 'green', 'triangle', 'arrows', 'white'] },
+    { file: null, description: 'A red octagonal stop sign with white bold letters spelling STOP against a clear blue sky', keywords: ['stop', 'sign', 'red', 'octagonal', 'white', 'letters', 'blue'] },
+    // Medium tier
+    { file: null, description: 'A leaderboard table showing the top 5 players: rank 1 Alice 9840 pts, rank 2 Bob 8721 pts, rank 3 Carol 7532 pts, rank 4 Dave 6104 pts, rank 5 Eve 5099 pts — gold star badges appear next to the top two entries', keywords: ['leaderboard', 'five', 'Alice', '9840', 'Bob', 'Carol', 'gold', 'star'] },
+    { file: null, description: 'A GitHub issues list showing 4 open issues: "bug" labels in red on issues #342 and #357, an "enhancement" label in blue on issue #361, a "help wanted" label in yellow on issue #364 — issue #342 titled "Fix login timeout" is pinned at the top with a thumbtack icon', keywords: ['github', 'issue', 'four', 'bug', 'enhancement', '342', 'login', 'pinned', 'yellow'] },
+    { file: null, description: 'A startup timeline infographic with 5 milestones on a horizontal line: Seed $500K in 2019, MVP Launch in 2020, Series A $3M in 2021, 10K Users in 2022, Series B $12M in 2023 — each milestone is marked with a filled circle and alternating above/below labels', keywords: ['timeline', 'five', 'milestones', 'seed', 'series', 'MVP', '2019', '12M', '2023'] },
+    // Hard tier
+    { file: null, description: 'A global server latency heat map with 47 data points across 3 regions: US East cluster shows 12ms in green, EU West shows 28ms in yellow, AP Southeast shows 87ms in dark red — the colour scale bar on the right runs from 0ms white to 100ms dark red', keywords: ['latency', 'three', 'regions', '12ms', '28ms', '87ms', 'green', 'yellow', 'red', '47'] },
+    { file: null, description: 'An OpenAPI 3.0 spec excerpt showing 3 endpoints: GET /users (200 response with User array schema), POST /users (requestBody with email and name fields), DELETE /users/{id} (204 response) — a red padlock security badge next to DELETE reads "Bearer Token Required"', keywords: ['OpenAPI', 'three', 'endpoints', 'GET', 'POST', 'DELETE', '200', '204', 'bearer', 'padlock'] },
+    { file: null, description: 'A compiler error output for main.cpp showing 4 diagnostics: line 23 "undefined reference to makePayment()", line 47 "no matching function for call to validate(int, std::string)", line 52 "warning: implicit conversion from double to int", line 71 "fatal error: payment.h: No such file or directory" — two entries are highlighted in red as fatal', keywords: ['compiler', 'four', 'main.cpp', 'line', '23', '47', 'undefined', 'payment', 'fatal', 'error'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -542,6 +554,17 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[10,16],[2,8],[1,6],[7,12]]', expected: '2' },{ input: '[[1,2],[3,4],[5,6],[7,8]]', expected: '4' },{ input: '[[1,2],[2,3],[3,4],[4,5]]', expected: '2' },{ input: '[[2,3],[2,3]]', expected: '1' }] },
     { title: 'Max Points on a Line', description: 'Write `solve(points)` — given an array of [x, y] coordinate pairs, return the maximum number of points that lie on the same straight line.',
       testCases: [{ input: '[[1,1],[2,2],[3,3]]', expected: '3' },{ input: '[[1,1],[3,2],[5,3],[4,1],[2,3],[1,4]]', expected: '4' },{ input: '[[0,0]]', expected: '1' },{ input: '[[0,0],[1,1]]', expected: '2' }] },
+    // ── Daily pool update: added 2026-06-23 ──
+    { title: 'Validate IP Address', description: 'Write `solve(ip)` — return "IPv4" if the string is a valid IPv4 address (four dot-separated numbers each 0–255, no leading zeros), "IPv6" if it is a valid IPv6 address (eight colon-separated groups of 1–4 hex digits), or "Neither".',
+      testCases: [{ input: '"172.16.254.1"', expected: '"IPv4"' },{ input: '"2001:0db8:85a3:0:0:8A2E:0370:7334"', expected: '"IPv6"' },{ input: '"256.256.256.256"', expected: '"Neither"' },{ input: '"02001:0db8:85a3:0000:0000:8a2e:0370:7334"', expected: '"Neither"' },{ input: '"192.168.1"', expected: '"Neither"' }] },
+    { title: 'Critical Connections in a Network', description: 'Write `solve(n, connections)` — given n servers (0-indexed) and a list of undirected connections, return all critical connections (bridges) whose removal disconnects the network. Return each bridge with the smaller node index first, and sort the result.',
+      testCases: [{ input: '4, [[0,1],[1,2],[2,0],[1,3]]', expected: '[[1,3]]' },{ input: '2, [[0,1]]', expected: '[[0,1]]' },{ input: '3, [[0,1],[1,2],[0,2]]', expected: '[]' },{ input: '5, [[0,1],[1,2],[2,3],[3,0],[1,4]]', expected: '[[1,4]]' }] },
+    { title: 'Serialize and Deserialize Binary Tree', description: 'Write `solve(nodes)` — `nodes` is a level-order array representation of a binary tree (null for missing nodes). Serialize the tree to a string, then deserialize it back, and return the level-order array. Trailing nulls may be omitted.',
+      testCases: [{ input: '[1,2,3,null,null,4,5]', expected: '[1,2,3,null,null,4,5]' },{ input: '[]', expected: '[]' },{ input: '[1]', expected: '[1]' },{ input: '[1,2,null,3]', expected: '[1,2,null,3]' }] },
+    { title: 'Alien Dictionary', description: 'Write `solve(words)` — given a list of words in lexicographic order according to an alien language, return the sorted order of the unique characters in that language as a string. If the order is invalid (cyclic dependency), return "".',
+      testCases: [{ input: '["wrt","wrf","er","ett","rftt"]', expected: '"wertf"' },{ input: '["z","x"]', expected: '"zx"' },{ input: '["z","x","z"]', expected: '""' },{ input: '["abc","ab"]', expected: '""' }] },
+    { title: 'Minimum Cost to Connect Sticks', description: 'Write `solve(sticks)` — you have an array of stick lengths. Each step you pick the two shortest sticks, join them (cost = their sum), and put the new stick back. Return the minimum total cost to connect all sticks into one.',
+      testCases: [{ input: '[2,4,3]', expected: '14' },{ input: '[1,8,3,5]', expected: '30' },{ input: '[5]', expected: '0' },{ input: '[1,1,1,1]', expected: '8' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -683,6 +706,18 @@ let RESPONSE_QUESTIONS = [
     { question: 'In how many ways can 5 books be arranged on a shelf if 2 specific books must always be kept next to each other?', expectedKeywords: ['48'] },
     { question: 'A geometric series has a first term of 3 and a common ratio of 2. What is the sum of the first 6 terms?', expectedKeywords: ['189'] },
     { question: 'A 30-60-90 triangle has a hypotenuse of 10 cm. What is the area of the triangle in cm²? (Exact value)', expectedKeywords: ['25√3', '25*√3', '21.65', '21.6'] },
+    // ── Daily pool update: added 2026-06-23 ──
+    // Easy tier
+    { question: 'How many centimeters are in one meter?', expectedKeywords: ['100', 'one hundred'] },
+    { question: 'What is the boiling point of water in degrees Celsius at sea level?', expectedKeywords: ['100'] },
+    // Medium tier
+    { question: 'A water tank measures 4 m long, 3 m wide, and 2 m deep. It is currently at 75% capacity. How many cubic meters of water are in the tank?', expectedKeywords: ['18'] },
+    { question: 'A delivery truck carries three packages weighing 12 kg, 18 kg, and 25 kg. The maximum load is 80 kg. How many kilograms of spare capacity remain?', expectedKeywords: ['25'] },
+    { question: 'A cyclist rides 60 km at 20 km/h and then a further 40 km at 40 km/h. What is the average speed for the whole journey in km/h?', expectedKeywords: ['25'] },
+    // Hard tier
+    { question: 'A 3×3 magic square uses the integers 1 to 9 each exactly once, and every row, column, and diagonal sums to the same value. What is that constant sum?', expectedKeywords: ['15', 'fifteen'] },
+    { question: 'What is the units digit of the sum 1! + 2! + 3! + 4! + 5! + ... + 20! (the sum of all factorials from 1 to 20)?', expectedKeywords: ['3'] },
+    { question: 'A person can type 60 words per minute. If a document has 4500 words and the person takes a 5-minute break after every 30 minutes of typing, how many minutes in total does it take to finish the document?', expectedKeywords: ['85'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -838,6 +873,18 @@ let TTS_PHRASES = [
     { text: 'Clause 12 sub-paragraph C of the service level agreement stipulates that the vendor shall maintain a minimum uptime of ninety-nine point nine percent calculated as a rolling thirty-day average and excluding scheduled maintenance windows notified at least 48 hours in advance', keywords: ['clause', '12', 'vendor', 'uptime', 'ninety-nine', 'thirty-day', 'maintenance', '48', 'hours'] },
     { text: 'The signal travels through a single-mode fiber optic cable at approximately two-thirds the speed of light in vacuum or two times ten to the power of eight meters per second — a round-trip latency of 5 milliseconds corresponds to a cable length of roughly 750 kilometers', keywords: ['fiber', 'optic', 'two-thirds', 'speed', 'light', 'latency', '5', 'milliseconds', '750', 'kilometers'] },
     { text: 'Trading halt alert: ticker NVDA circuit breaker triggered at 10:47:23 EST after a 7.4 percent intraday decline — Level 1 halt duration 5 minutes, Level 2 threshold 13 percent, Level 3 threshold 20 percent', keywords: ['trading', 'halt', 'NVDA', '10:47', 'percent', 'decline', 'Level', 'threshold', '13', '20'] },
+    // ── Daily pool update: added 2026-06-23 ──
+    // Easy tier
+    { text: 'Your session will expire in five minutes — please save your progress before it ends', keywords: ['session', 'expire', 'five', 'save', 'progress'] },
+    { text: 'The store will close in thirty minutes — please bring your items to the checkout', keywords: ['store', 'close', 'thirty', 'minutes', 'checkout'] },
+    // Medium tier
+    { text: 'Boarding for flight QF27 to Sydney will commence at gate D34 in fifteen minutes — carry-on bags must not exceed 10 kilograms and 55 centimeters in length', keywords: ['boarding', 'QF27', 'Sydney', 'D34', 'fifteen', '10', 'kilograms', '55'] },
+    { text: 'Product code PA-7721-XL is currently on backorder with an estimated restock date of January 9th — please register your email to receive a notification when stock becomes available', keywords: ['PA-7721', 'backorder', 'january', '9', 'notification', 'restock'] },
+    { text: 'Alert: API gateway returned HTTP 503 for endpoint slash api slash payments at 07:42 UTC — auto-retry 3 of 5 in progress, fallback region us-west-2 activated', keywords: ['API', 'gateway', '503', 'payments', '07:42', 'UTC', 'retry', 'three', 'fallback', 'us-west'] },
+    // Hard tier
+    { text: 'SEC Form 8-K filed October 14th 2024 by ClearPath Holdings Inc ticker CLPH discloses a material definitive agreement with an acquisition value of three hundred twenty-seven million dollars subject to customary regulatory closing conditions', keywords: ['SEC', '8-K', 'October', '2024', 'CLPH', 'material', '327', 'million', 'acquisition', 'regulatory'] },
+    { text: 'RSA-2048 uses a 2048-bit modulus derived from two 1024-bit primes p and q — the public exponent e is conventionally 65537 and the private exponent d satisfies d times e congruent to 1 modulo phi of n where phi of n equals p minus 1 times q minus 1', keywords: ['RSA', '2048', 'modulus', '1024', 'primes', '65537', 'private', 'congruent', 'phi'] },
+    { text: 'Intraday options pricing update: the implied volatility smile for SPX 0DTE options peaked at 38.4 percent for strikes 1 percent out-of-the-money — theta decay accelerated to negative 0.94 per contract with a delta of 0.32 and vega of 0.07 on the 5700 call', keywords: ['options', 'SPX', '0DTE', 'implied', 'volatility', '38.4', 'theta', 'delta', '0.32', 'vega', '5700'] },
 ];
 
 // ============================================
