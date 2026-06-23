@@ -1,6 +1,8 @@
 package com.hank.clawlive.data.remote
 
 import android.content.Context
+import android.content.Intent
+import android.os.Build
 import com.hank.clawlive.BuildConfig
 import com.hank.clawlive.data.local.DeviceManager
 import io.socket.client.IO
@@ -46,6 +48,13 @@ object SocketManager {
 
     fun connect(context: Context) {
         if (isInitialized) return
+
+        // card_f9b2cc2d: TtsService now lives in an isolated ":tts" process, so the
+        // socket's in-process ttsFlow can't reach it. Hold the application context
+        // (never an Activity — these socket callbacks outlive any screen) so the
+        // device:tts handler can forward each utterance across the process boundary
+        // via an explicit Intent.
+        val appCtx = context.applicationContext
 
         val dm = DeviceManager.getInstance(context)
         val deviceId = dm.deviceId
@@ -116,6 +125,31 @@ object SocketManager {
                     val json = args.firstOrNull() as? JSONObject ?: return@on
                     Timber.d("[Socket] device:tts: $json")
                     _ttsFlow.tryEmit(json)
+                    // card_f9b2cc2d: forward to the isolated :tts process via Intent.
+                    // TtsService.onStartCommand reads these extras and speaks. Wrapped
+                    // in try/catch because a backgrounded startForegroundService() can
+                    // throw ForegroundServiceStartNotAllowedException on Android 12+;
+                    // an uncaught throw here would kill the MAIN process (and the live
+                    // wallpaper), the very crash this whole change exists to prevent.
+                    try {
+                        val text = json.optString("text", "")
+                        if (text.isNotEmpty()) {
+                            val ttsIntent = Intent(appCtx, com.hank.clawlive.service.TtsService::class.java).apply {
+                                putExtra("tts_text", text)
+                                putExtra("tts_lang", json.optString("lang", "zh-TW"))
+                                putExtra("tts_speed", json.optDouble("speed", 1.0).toFloat())
+                                putExtra("tts_pitch", json.optDouble("pitch", 1.0).toFloat())
+                                putExtra("tts_entity_name", json.optString("entityName", "Bot"))
+                            }
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                appCtx.startForegroundService(ttsIntent)
+                            } else {
+                                appCtx.startService(ttsIntent)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Timber.e(e, "[Socket] Failed to start :tts TtsService for device:tts")
+                    }
                 }
 
                 on("location_request") { args ->

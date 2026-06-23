@@ -189,9 +189,18 @@
             </intent-filter>
         </service>
 
+        <!-- card_f9b2cc2d: run TtsService in an isolated ":tts" process. A
+             startForegroundService() that misses the OS 5s startForeground()
+             deadline triggers an ASYNC system kill (ForegroundServiceDidNotStart-
+             InTimeException) that no in-process try/catch can intercept. While the
+             service shared the main process, that kill took the live-wallpaper
+             engine down with it (pure black, needs app restart). Isolating it gives
+             the FGS its own idle main looper (so it makes the deadline) AND scopes
+             any residual kill to the :tts process, leaving the wallpaper alive. -->
         <service
             android:name=".service.TtsService"
             android:exported="false"
+            android:process=":tts"
             android:foregroundServiceType="mediaPlayback" />
 
         <!-- Facebook SDK -->

@@ -2,6 +2,7 @@ package com.hank.clawlive
 
 import android.app.Application
 import android.content.Context
+import android.os.Build
 import com.google.firebase.messaging.FirebaseMessaging
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.remote.NetworkModule
@@ -31,6 +32,19 @@ class ClawApplication : Application() {
         }
         val fileTree = FileTimberTree(this)
         Timber.plant(fileTree)
+
+        // card_f9b2cc2d: TtsService now runs in an isolated ":tts" process (see
+        // AndroidManifest) so an FGS-deadline kill can never take the main process
+        // (and the live wallpaper) down. The Application object is instantiated in
+        // EVERY process, but the heavy main-process bootstrap below — Telemetry,
+        // FCM token self-heal, Play Integrity, pending-crash upload, FCM channels —
+        // must run ONLY in the main process. Re-running it in :tts would double-
+        // register the FCM token and waste startup. Bail out after Timber so the
+        // :tts process keeps just enough for TtsService's own logging.
+        if (isTtsProcess()) {
+            Timber.i("ClawApplication: running in :tts process — minimal init only")
+            return
+        }
 
         // 2. Initialize crash log manager
         CrashLogManager.init(this)
@@ -97,6 +111,31 @@ class ClawApplication : Application() {
         reportPlayIntegrityStartup()
 
         Timber.i("ClawApplication initialized")
+    }
+
+    /** True when this Application instance is hosting the isolated ":tts" process. */
+    private fun isTtsProcess(): Boolean {
+        val name = currentProcessName() ?: return false
+        return name.endsWith(":tts")
+    }
+
+    /**
+     * Current process name. Uses the framework API on P+ and falls back to
+     * /proc/self/cmdline on API 24–27 (minSdk is 24). Returns null if it cannot
+     * be determined — callers treat null as "assume main process".
+     */
+    private fun currentProcessName(): String? {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            return try { getProcessName() } catch (_: Throwable) { null }
+        }
+        return try {
+            java.io.File("/proc/self/cmdline").readText()
+                .substringBefore('\u0000')
+                .trim()
+                .ifEmpty { null }
+        } catch (_: Throwable) {
+            null
+        }
     }
 
     private fun reportPlayIntegrityStartup() {
