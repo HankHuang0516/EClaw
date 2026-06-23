@@ -192,6 +192,7 @@
         <service
             android:name=".service.TtsService"
             android:exported="false"
+            android:process=":tts"
             android:foregroundServiceType="mediaPlayback" />
 
         <!-- Facebook SDK -->

@@ -3,6 +3,7 @@ package com.hank.clawlive
 import android.app.Activity
 import android.app.Application
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import java.util.concurrent.atomic.AtomicInteger
 import com.google.firebase.messaging.FirebaseMessaging
@@ -42,40 +43,26 @@ class ClawApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // 0. Track foreground-activity state. BLK-FGS (card_f9b2cc2d): an FCM-triggered
-        // TTS foreground service started while the app has NO foreground Activity (the
-        // exact state when the live wallpaper is showing on the home screen) is the
-        // residual black-screen trigger — on Android 12+ the start is either rejected
-        // synchronously OR, if a high-priority FCM grants a temporary exemption but the
-        // wallpaper-resume burst delays TtsService past the ~5s startForeground deadline,
-        // the system kills the WHOLE shared process with
-        // ForegroundServiceDidNotStartInTimeException, taking the wallpaper engine down
-        // (pure black, needs app restart). ClawFcmService consults
-        // ClawApplication.isAppInForeground() and, when false, skips the FGS start and
-        // posts a normal notification instead — removing the crash path at the source.
-        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
-            override fun onActivityStarted(activity: Activity) { startedActivityCount.incrementAndGet() }
-            override fun onActivityStopped(activity: Activity) {
-                if (startedActivityCount.get() > 0) startedActivityCount.decrementAndGet()
-            }
-            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
-            override fun onActivityResumed(activity: Activity) {}
-            override fun onActivityPaused(activity: Activity) {}
-            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
-            override fun onActivityDestroyed(activity: Activity) {}
-        })
+        // BLK-FGS process-isolation (card_f9b2cc2d, v1.1.11): TtsService now runs in
+        // its own ":tts" process (AndroidManifest android:process=":tts"). Application
+        // .onCreate runs in EVERY process of the app — including ":tts" — so MAIN-ONLY
+        // initialization must NOT double-run there. isMainProcess gates the heavy/
+        // main-only init. Crash logging, Timber, the FGS-crash-swallowing uncaught
+        // handler, CrashLogManager, and the notification channels run in BOTH processes
+        // (the ":tts" process must be able to log/recover and own its TTS channel).
+        val isMainProcess = currentProcessName()?.let { it == packageName } ?: true
 
-        // 1. Plant Timber trees FIRST
+        // 1. Plant Timber trees FIRST (both processes)
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
         val fileTree = FileTimberTree(this)
         Timber.plant(fileTree)
 
-        // 2. Initialize crash log manager
+        // 2. Initialize crash log manager (both processes)
         CrashLogManager.init(this)
 
-        // 3. Install UncaughtExceptionHandler
+        // 3. Install UncaughtExceptionHandler (both processes)
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             try {
@@ -88,11 +75,11 @@ class ClawApplication : Application() {
             // BLK-FGS recovery (card_f9b2cc2d): a foreground-service-policy throwable
             // (ForegroundServiceStartNotAllowed / DidNotStartInTime / RemoteServiceException
             // with an FGS message) is a recoverable OS policy rejection, NOT a real
-            // app crash. The call sites are now guarded, but as belt-and-braces: if
-            // one still reaches here, letting the default handler run would kill this
-            // shared process and take the live wallpaper down with it (pure black,
-            // needs app restart). Swallow ONLY this narrow class so the process — and
-            // the wallpaper engine — survive; it was already logged + recorded above.
+            // app crash. With process isolation a DidNotStartInTime now kills only the
+            // ":tts" process (the wallpaper engine lives in the main process and is
+            // untouched), but we keep this narrow swallow as defense-in-depth so even
+            // that isolated process survives where possible; it was already logged +
+            // recorded above.
             if (isRecoverableForegroundServiceCrash(throwable)) {
                 try {
                     com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().recordException(throwable)
@@ -103,13 +90,9 @@ class ClawApplication : Application() {
             defaultHandler?.uncaughtException(thread, throwable)
         }
 
-        // 4. Initialize TelemetryHelper early (centralized here)
-        TelemetryHelper.init(this)
-
-        // 5. Upload any pending crash logs from previous session
-        uploadPendingCrashLogs()
-
-        // 5b. Create notification channels at process startup (card_caa6307).
+        // 3b. Create notification channels at process startup (card_caa6307) — BOTH
+        // processes. The ":tts" process needs the TTS channel to post its foreground
+        // notification, and the main process needs "eclaw_chat" for hybrid FCM pushes.
         // CRITICAL for "task completed" pushes: the backend sends a HYBRID FCM
         // message (android.notification block + data block) with
         // channelId="eclaw_chat". When the app is backgrounded or killed, the
@@ -119,25 +102,64 @@ class ClawApplication : Application() {
         // dropped — no error, no display. An FCM push can cold-start the app
         // process (which is why the token re-registers below), running
         // Application.onCreate but NOT MainActivity.onCreate, where channels
-        // used to be created exclusively. That left "eclaw_chat" missing on the
-        // exact code path the system uses to display the notification → silent.
-        // createNotificationChannel is idempotent, so MainActivity's call (kept
-        // for safety) is a harmless no-op once this has run.
+        // used to be created exclusively. createNotificationChannel is idempotent,
+        // so MainActivity's call (kept for safety) is a harmless no-op once this
+        // has run.
         ClawFcmService.createChannels(this)
 
-        // 6. Self-heal FCM token registration on every launch.
-        // onNewToken() only fires when the token changes (install / clear-data / reinstall).
-        // If the very first registration failed (e.g. before deviceSecret was provisioned),
-        // the device would stay unregistered forever. Pulling the current token at startup
-        // and POSTing it unconditionally fixes that class of silent failures.
-        refreshAndRegisterFcmToken()
+        if (isMainProcess) {
+            // 0. Track foreground-activity state (MAIN PROCESS ONLY — Activities only
+            // exist here). BLK-FGS (card_f9b2cc2d): an FCM-triggered TTS foreground
+            // service started while the app has NO foreground Activity (the exact state
+            // when the live wallpaper is showing on the home screen) was the residual
+            // black-screen trigger. ClawFcmService runs in the main process, so it reads
+            // this counter correctly; isAppInForeground() therefore stays accurate.
+            registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+                override fun onActivityStarted(activity: Activity) { startedActivityCount.incrementAndGet() }
+                override fun onActivityStopped(activity: Activity) {
+                    if (startedActivityCount.get() > 0) startedActivityCount.decrementAndGet()
+                }
+                override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
+                override fun onActivityResumed(activity: Activity) {}
+                override fun onActivityPaused(activity: Activity) {}
+                override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+                override fun onActivityDestroyed(activity: Activity) {}
+            })
 
-        // 7. Report a Play Integrity startup signal in release builds so Play
-        // Console can monitor genuine installs without adding user-visible work.
-        reportPlayIntegrityStartup()
+            // 4. Initialize TelemetryHelper early (centralized here)
+            TelemetryHelper.init(this)
 
-        Timber.i("ClawApplication initialized")
+            // 5. Upload any pending crash logs from previous session
+            uploadPendingCrashLogs()
+
+            // 6. Self-heal FCM token registration on every launch.
+            // onNewToken() only fires when the token changes (install / clear-data / reinstall).
+            // If the very first registration failed (e.g. before deviceSecret was provisioned),
+            // the device would stay unregistered forever. Pulling the current token at startup
+            // and POSTing it unconditionally fixes that class of silent failures.
+            refreshAndRegisterFcmToken()
+
+            // 7. Report a Play Integrity startup signal in release builds so Play
+            // Console can monitor genuine installs without adding user-visible work.
+            reportPlayIntegrityStartup()
+        }
+
+        Timber.i("ClawApplication initialized (mainProcess=$isMainProcess)")
     }
+
+    /**
+     * Resolve the current process name. On Android P+ the framework exposes
+     * Application.getProcessName() directly; below P we scan running app processes
+     * for our own pid. The main process name equals the package name; the isolated
+     * TTS service runs in "<package>:tts". Returns null if it cannot be determined
+     * (caller then assumes main process — the safe default).
+     */
+    private fun currentProcessName(): String? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) getProcessName()
+        else try {
+            val am = getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+            am.runningAppProcesses?.firstOrNull { it.pid == android.os.Process.myPid() }?.processName
+        } catch (_: Throwable) { null }
 
     private fun reportPlayIntegrityStartup() {
         if (BuildConfig.DEBUG) {
