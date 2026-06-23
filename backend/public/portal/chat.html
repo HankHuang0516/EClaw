@@ -624,6 +624,16 @@
         .reply-preview-text { color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .reply-preview-cancel { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 18px; padding: 0 2px; flex-shrink: 0; line-height: 1; }
         .reply-preview-cancel:hover { color: var(--text); }
+        /* ── Multi-quote chips (card_277c80f5): many quotes accumulate, each removable ── */
+        .reply-preview-list { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 4px; max-height: 88px; overflow-y: auto; align-items: flex-start; }
+        .reply-preview-chip { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; background: rgba(127,127,127,0.14); border-radius: 10px; padding: 2px 4px 2px 8px; font-size: 0.8em; line-height: 1.3; }
+        .reply-preview-chip-sender { font-weight: 600; color: var(--primary); flex-shrink: 0; }
+        .reply-preview-chip-text { color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+        .reply-preview-chip-x { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 14px; line-height: 1; padding: 0 2px; flex-shrink: 0; }
+        .reply-preview-chip-x:hover { color: var(--text); }
+        .reply-preview-help { flex-shrink: 0; cursor: help; color: var(--text-muted); border: 1px solid var(--text-muted); border-radius: 50%; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; align-self: center; }
+        .reply-preview-help:hover { color: var(--text); border-color: var(--text); }
+        @media (max-width: 480px) { .reply-preview-chip-text { max-width: 130px; } }
 
         /* Typing indicator */
         .typing-indicator {
@@ -3702,10 +3712,8 @@
                 <div class="file-preview-bar" id="filePreviewBar"></div>
                 <!-- Reply Preview Bar -->
                 <div class="reply-preview-bar" id="replyPreviewBar">
-                    <div class="reply-preview-content">
-                        <div class="reply-preview-sender" id="replyPreviewSender"></div>
-                        <div class="reply-preview-text" id="replyPreviewText"></div>
-                    </div>
+                    <div class="reply-preview-list" id="replyPreviewList"></div>
+                    <span class="reply-preview-help" id="replyPreviewHelp" title="">?</span>
                     <button class="reply-preview-cancel" onclick="clearReplyContext()" data-i18n-title="chat_reply_cancel" title="Cancel reply">✕</button>
                 </div>
                 <!-- Slash Command Suggestions -->
@@ -7239,10 +7247,13 @@
             }
         }
 
-        // ── Quote Reply State ──
-        let replyContext = null;
+        // ── Quote Reply State (multi-quote, card_277c80f5) ──
+        // replyContexts ACCUMULATES every quote the user adds — quoting again
+        // appends instead of overwriting, with no cap. sendMessage emits one
+        // "↩ …" line per entry so the recipient entity receives ALL of them.
+        let replyContexts = [];
         // Smart receiver auto-select — entityIds we auto-toggled-on for the
-        // current reply context. Cleared on reply clear, on send, and when
+        // current reply contexts. Cleared on reply clear, on send, and when
         // the user manually changes a checkbox (the hint badge belongs to
         // the auto-toggle, so a manual toggle revokes it).
         const autoToggledReceiverEntities = new Set();
@@ -7256,66 +7267,109 @@
             const meta = (kind === 'entity' && Number.isFinite(entityId))
                 ? { kind: 'chat-entity', entityId }
                 : { kind: 'chat-system' };
-            setReplyContext(msgId, sender, text);
-            applyAutoToggleReceivers(meta);
+            addReplyContext(msgId, sender, text, meta);
         }
 
-        function setReplyContext(msgId, senderName, text) {
+        // Append a quote (NEVER overwrites prior quotes). De-dupes by msgId when
+        // present, else by sender+text, so re-clicking the same message is a no-op.
+        function addReplyContext(msgId, senderName, text, meta) {
             const cleanText = stripReplyQuotePrefix(text);
-            replyContext = { msgId, senderName, text: cleanText };
-            document.getElementById('replyPreviewSender').textContent = senderName || '';
-            document.getElementById('replyPreviewText').textContent = cleanText || (i18n.t('chat_reply_media') || '(media)');
-            document.getElementById('replyPreviewBar').classList.add('show');
-            document.getElementById('messageInput').focus();
+            const key = msgId ? ('id:' + msgId) : ('tx:' + (senderName || '') + '|' + (cleanText || ''));
+            if (!replyContexts.some(rc => rc._key === key)) {
+                replyContexts.push({ msgId: msgId || null, senderName: senderName || '', text: cleanText || '', meta: meta || null, _key: key });
+            }
+            renderReplyPreviews();
+            recomputeAutoReceivers();
+            const input = document.getElementById('messageInput');
+            if (input) input.focus();
+        }
+
+        function removeReplyContextAt(idx) {
+            if (idx < 0 || idx >= replyContexts.length) return;
+            replyContexts.splice(idx, 1);
+            renderReplyPreviews();
+            recomputeAutoReceivers();
+        }
+
+        // Rebuild the reply bar as N removable chips. Empty → hide the bar.
+        function renderReplyPreviews() {
+            const bar = document.getElementById('replyPreviewBar');
+            const list = document.getElementById('replyPreviewList');
+            if (!bar || !list) return;
+            list.textContent = '';
+            if (replyContexts.length === 0) { bar.classList.remove('show'); return; }
+            const mediaLabel = (i18n && typeof i18n.t === 'function' && i18n.t('chat_reply_media')) || '(media)';
+            replyContexts.forEach((rc, i) => {
+                const chip = document.createElement('span');
+                chip.className = 'reply-preview-chip';
+                const s = document.createElement('span');
+                s.className = 'reply-preview-chip-sender';
+                s.textContent = rc.senderName || '';
+                const t = document.createElement('span');
+                t.className = 'reply-preview-chip-text';
+                t.textContent = rc.text || mediaLabel;
+                const x = document.createElement('button');
+                x.className = 'reply-preview-chip-x';
+                x.type = 'button';
+                x.textContent = '✕';
+                x.title = 'Remove';
+                x.addEventListener('click', () => removeReplyContextAt(i));
+                chip.appendChild(s); chip.appendChild(t); chip.appendChild(x);
+                list.appendChild(chip);
+            });
+            // ? help tooltip — set dynamically (not data-i18n) so i18n.apply can't
+            // clobber it; bilingual by document lang. No new dict key needed.
+            const help = document.getElementById('replyPreviewHelp');
+            if (help) {
+                const zh = (document.documentElement.lang || '').toLowerCase().startsWith('zh');
+                help.title = zh
+                    ? '你可以引用多則訊息，每一則都會一起送給對方；點晶片上的 ✕ 移除單筆，沒有數量上限。'
+                    : 'Quote multiple messages — each is sent together. Click ✕ on a chip to remove one. No limit.';
+            }
+            bar.classList.add('show');
         }
 
         function clearReplyContext() {
-            replyContext = null;
-            document.getElementById('replyPreviewBar').classList.remove('show');
+            replyContexts = [];
+            renderReplyPreviews();
             clearAllReceiverHints();
+            autoToggledReceiverEntities.clear();
         }
 
-        // Smart quote: activates the reply bar with source+excerpt, no full-content paste.
+        // Smart quote: APPEND source+excerpt as a new quote (no full-content paste).
         // meta carries origin info for smart receiver auto-select:
         //   { kind: 'card', cardAssignedBots: number[] }    — kanban card → toggle assigned bots
         //   { kind: 'chat-entity', entityId: number }       — chat msg from a bot → toggle that bot
         //   { kind: 'chat-system' | other }                 — no auto-toggle
-        // Multi-source rule: chat-entity wins over card (resolved at the caller).
         function quoteToChat(source, title, excerpt, meta) {
             const senderLabel = '📌 ' + source;
             const previewText = title + (excerpt ? ': ' + excerpt.slice(0, 60) + (excerpt.length > 60 ? '…' : '') : '');
-            setReplyContext(null, senderLabel, previewText);
-            applyAutoToggleReceivers(meta || {});
+            addReplyContext(null, senderLabel, previewText, meta || {});
         }
 
-        function applyAutoToggleReceivers(meta) {
+        // entityIds a single quote-meta wants auto-selected as recipients.
+        function entityIdsFromMeta(meta) {
+            if (!meta || typeof meta !== 'object') return [];
+            if (meta.kind === 'chat-entity' && Number.isFinite(meta.entityId)) return [meta.entityId];
+            if (meta.kind === 'card' && Array.isArray(meta.cardAssignedBots)) return meta.cardAssignedBots.filter(id => Number.isFinite(id));
+            return [];
+        }
+
+        // Recompute auto-selected recipients from the UNION of all current quotes'
+        // metas. Multi-quote must route to EVERY quoted sender (de-duped), not just
+        // the last quote — while staying exclusive vs. stale/default recipients
+        // (card_3462117951fa588df9ff8a95 "誤路由到 #1"). A manual toggle still revokes.
+        function recomputeAutoReceivers() {
             clearAllReceiverHints();
-            if (!meta || typeof meta !== 'object') return;
-            let entityIds = [];
-            if (meta.kind === 'chat-entity' && Number.isFinite(meta.entityId)) {
-                entityIds = [meta.entityId];
-            } else if (meta.kind === 'card' && Array.isArray(meta.cardAssignedBots)) {
-                entityIds = meta.cardAssignedBots.filter(id => Number.isFinite(id));
-            } else {
-                return;
-            }
-            // Only the quoted sender(s) that actually have a target checkbox can be
-            // auto-selected. If none are bound here (e.g. a cross-device sender),
-            // leave the existing selection untouched rather than wiping it blank.
+            const union = new Set();
+            replyContexts.forEach(rc => entityIdsFromMeta(rc.meta).forEach(eid => union.add(eid)));
+            // Only the quoted sender(s) that actually have a target checkbox here.
+            // If none are bound (e.g. cross-device), leave the selection untouched.
             const wanted = new Set();
-            entityIds.forEach(eid => {
-                if (document.querySelector('.target-entity-check input[type="checkbox"][data-entity="' + eid + '"]')) {
-                    wanted.add(eid);
-                }
+            union.forEach(eid => {
+                if (document.querySelector('.target-entity-check input[type="checkbox"][data-entity="' + eid + '"]')) wanted.add(eid);
             });
             if (wanted.size === 0) return;
-            // EXCLUSIVE auto-select: a quote of #6 must route to #6 ONLY. The old
-            // additive toggle left the prior/default recipient set checked, so
-            // replies leaked to whoever was already selected — typically #1, the
-            // first bound entity (card_3462117951fa588df9ff8a95 "誤路由到 #1").
-            // Clear every entity + contact checkbox first, then check exactly the
-            // quoted sender(s). The user can still re-add recipients manually
-            // afterwards (a manual toggle revokes that entry's auto hint).
             document.querySelectorAll('.target-entity-check input[type="checkbox"]').forEach(cb => {
                 cb.checked = wanted.has(Number(cb.dataset.entity));
             });
@@ -7841,18 +7895,26 @@
             if (!text && !hasFiles && !hasR2Refs) return;
 
             let finalText = text;
-            if (replyContext) {
-                const excerpt = replyContext.text.length > 80 ? replyContext.text.slice(0, 80) + '…' : replyContext.text;
-                // Embed his_<uuid> token in the prefix so the referenced bubble
-                // renders as a clickable chip for everyone (sender + recipient
-                // bots see it inline and can scroll back). messages.id is a
-                // UUID, so we validate the canonical 8-4-4-4-12 form and skip
-                // the token if it doesn't match (no silent digit-stripping).
+            if (replyContexts.length) {
+                // Embed his_<uuid> token per quote so each referenced bubble renders
+                // as a clickable chip for everyone (sender + recipient bots see it
+                // inline and can scroll back). messages.id is a UUID, so we validate
+                // the canonical 8-4-4-4-12 form and skip the token if it doesn't
+                // match (no silent digit-stripping). One "↩ …" LINE per quote so the
+                // recipient entity receives EVERY quote, not just the last (card_277c80f5).
                 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-                const rawMsgId = replyContext.msgId ? String(replyContext.msgId).trim().toLowerCase() : '';
-                const hisToken = UUID_RE.test(rawMsgId) ? ` his_${rawMsgId}` : '';
-                const quotePrefix = `↩ ${replyContext.senderName}:${hisToken} "${excerpt}"`;
-                finalText = text ? `${quotePrefix}\n\n${text}` : quotePrefix;
+                const quoteLines = replyContexts.map(rc => {
+                    // Collapse newlines so each quote stays a single line; the block is
+                    // joined by '\n' and separated from the body by '\n\n', which keeps
+                    // stripReplyQuotePrefix() (cuts at first '\n\n') correct.
+                    const oneLine = (rc.text || '').replace(/\s*\n+\s*/g, ' ');
+                    const excerpt = oneLine.length > 80 ? oneLine.slice(0, 80) + '…' : oneLine;
+                    const rawMsgId = rc.msgId ? String(rc.msgId).trim().toLowerCase() : '';
+                    const hisToken = UUID_RE.test(rawMsgId) ? ` his_${rawMsgId}` : '';
+                    return `↩ ${rc.senderName}:${hisToken} "${excerpt}"`;
+                });
+                const quoteBlock = quoteLines.join('\n');
+                finalText = text ? `${quoteBlock}\n\n${text}` : quoteBlock;
                 clearReplyContext();
             }
             finalText = normalizeTargetSlashForSend(finalText);
