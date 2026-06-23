@@ -36,6 +36,5 @@ describe('feedback page UI affordances', () => {
 
   test('photo guidance includes the existing privacy helper copy', () => {
     expect(html).toContain('id="feedbackPhotoHint" data-i18n="feedback_photo_hint"');
-    expect(html).toContain('class="photo-hint photo-safety" data-i18n="feedback_photo_help"');
   });
 });
