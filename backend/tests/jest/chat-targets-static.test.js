@@ -21,7 +21,10 @@ describe('chat target selection safety', () => {
     test('sendMessage surfaces the existing select-entity error when no targets are selected', () => {
         const start = chatHtml.indexOf('async function sendMessage()');
         expect(start).toBeGreaterThan(0);
-        const body = chatHtml.slice(start, start + 5000);
+        // Window widened 5000 -> 6000 (card_277c80f5): the multi-quote block added
+        // ~lines to the top of sendMessage, pushing the (intact) no-target guard to
+        // ~offset 5100. The guard itself is unchanged; only its position moved.
+        const body = chatHtml.slice(start, start + 6000);
 
         expect(body).toContain('const targets = getSelectedTargets();');
         expect(body).toMatch(/targets\.local\.length\s*===\s*0\s*&&\s*targets\.contacts\.length\s*===\s*0/);
