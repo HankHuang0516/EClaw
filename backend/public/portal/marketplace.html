@@ -958,7 +958,7 @@
             if (!state.filtered.length) {
                 const hasFilters = hasActiveMarketplaceFilters();
                 renderState(
-                    hasFilters ? 'No matching bots for current filters.' : tt('mp_no_results', 'No bots available yet. Check back later!'),
+                    hasFilters ? tt('mp_no_matching_filters', 'No matching bots for current filters.') : tt('mp_no_results', 'No bots available yet. Check back later!'),
                     hasFilters ? tt('community_empty_desc', 'Try different keywords or filters') : 'Publish a bot from Card Holder to make the marketplace useful for the next renter.'
                 );
                 return;

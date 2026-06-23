@@ -35,7 +35,7 @@ describe('marketplace filter result summary', () => {
     });
 
     test('empty state distinguishes no marketplace data from no matching filters', () => {
-        expect(html).toContain('No matching bots for current filters.');
+        expect(html).toContain("tt('mp_no_matching_filters', 'No matching bots for current filters.')");
         expect(html).toContain("tt('community_empty_desc', 'Try different keywords or filters')");
         expect(html).toContain("tt('mp_no_results', 'No bots available yet. Check back later!')");
     });
