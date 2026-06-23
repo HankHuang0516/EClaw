@@ -36,9 +36,10 @@ describe('feedback page UI affordances', () => {
     expect(html).not.toContain('shows ${allFeedback.length} submitted feedback item');
   });
 
-  test('photo guidance avoids unsupported EXIF helper copy', () => {
+  test('photo guidance states storage-side EXIF/GPS sanitization', () => {
     expect(html).toContain('id="feedbackPhotoHint" data-i18n="feedback_photo_hint"');
-    expect(html).not.toContain('data-i18n="feedback_photo_help"');
+    expect(html).toContain('data-i18n="feedback_photo_help"');
+    expect(html).toContain('EXIF/GPS metadata is removed before storage.');
   });
 
   test('feedback helper translations match the visible category filters', () => {
@@ -60,12 +61,14 @@ describe('feedback page UI affordances', () => {
     expect(categoryEntries).toHaveLength(15);
     expect(filteredEmptyEntries).toHaveLength(15);
     expect(photoHelpEntries).toHaveLength(15);
-    expect(settingsHelpCopy).not.toMatch(/\bEXIF\b/i);
+    expect(settingsHelpCopy).toMatch(/EXIF\/GPS metadata is removed before storage/);
+    expect(settingsHelpCopy).toMatch(/儲存前會移除 EXIF\/GPS metadata/);
     for (const value of categoryEntries) {
       expect(value).not.toMatch(/\bdesign\b|visual diff|視覺 diff|视觉 diff|시각적 차이|เปรียบเทียบภาพ|so sánh hình ảnh|perbandingan visual|comparaison visuelle|comparación visual|visueller Vergleich|reka bentuk|दृश्य तुलना|مقارنة بصرية/i);
     }
     for (const value of photoHelpEntries) {
-      expect(value).not.toMatch(/\bEXIF\b/i);
+      expect(value).toMatch(/EXIF\/GPS/i);
+      expect(value).not.toMatch(/before upload|上傳前|上传前|アップロード前|업로드 전에|ก่อนอัปโหลด|trước khi tải lên|sebelum diunggah|avant le téléversement|antes de subir|vor dem Upload|sebelum muat naik|अपलोड से पहले|قبل التحميل/i);
     }
     for (const value of filteredEmptyEntries) {
       expect(value).toContain('{label}');

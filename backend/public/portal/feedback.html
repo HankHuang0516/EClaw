@@ -801,6 +801,7 @@
             <div class="photo-section">
                 <div class="photo-label" data-i18n="feedback_photo_label">Attach Photos (Optional)</div>
                 <div class="photo-hint" id="feedbackPhotoHint" data-i18n="feedback_photo_hint">Add up to 5 photos to help illustrate the issue</div>
+                <div class="photo-hint photo-safety" data-i18n="feedback_photo_help">Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF/GPS metadata is removed before storage.</div>
                 <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp,image/gif" multiple style="display:none" onchange="onPhotosSelected(event)" aria-label="Attach photos">
                 <button type="button" class="photo-add-btn" id="photoAddBtn" onclick="document.getElementById('photoInput').click()">
                     📷 <span data-i18n="feedback_photo_add">Add Photos</span>
