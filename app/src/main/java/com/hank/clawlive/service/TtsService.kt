@@ -11,28 +11,22 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import androidx.core.app.NotificationCompat
 import com.hank.clawlive.R
+import com.hank.clawlive.data.remote.SocketManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Foreground service that speaks text aloud using Android's built-in TextToSpeech
- * engine. Works even when the app is in background.
+ * Foreground service that listens to Socket.IO TTS events and speaks text aloud
+ * using Android's built-in TextToSpeech engine. Works even when the app is in background.
  *
- * BLK-FGS process isolation (card_f9b2cc2d, v1.1.11): this service runs in its own
- * ":tts" process (AndroidManifest android:process=":tts"). That keeps its main looper
- * separate from the live-wallpaper engine's process, so the wallpaper-resume burst can
- * never starve this service's startForeground() past the OS deadline; and even if a
- * foreground-service crash ever did occur, only the ":tts" process dies — the
- * wallpaper's process and engine are untouched (never goes black).
- *
- * Because SocketManager.ttsFlow is a MAIN-process singleton (invisible from ":tts"),
- * this service no longer collects it directly. It speaks ONLY from onStartCommand
- * intent extras (tts_text / tts_lang / tts_speed / tts_pitch / tts_entity_name). Two
- * callers supply those extras:
- *   1) ClawFcmService — FCM category=tts push fallback.
- *   2) MainActivity — a main-process coroutine that collects SocketManager.ttsFlow and
- *      forwards each event to this service as a startService Intent.
+ * Receives JSON via SocketManager.ttsFlow:
+ *   { "text": "...", "lang": "zh-TW", "speed": 1.0, "pitch": 1.0, "entityId": 0, "entityName": "Bot" }
  */
 class TtsService : Service(), TextToSpeech.OnInitListener {
 
@@ -44,6 +38,7 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private var isForeground = false
+    private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val utteranceCounter = AtomicInteger(0)
 
     override fun onCreate() {
@@ -52,6 +47,7 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
         createNotificationChannel()
         if (!ensureForeground()) return
         tts = TextToSpeech(this, this)
+        observeTtsFlow()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -127,6 +123,21 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
             Timber.d("[TTS] Engine initialized successfully")
         } else {
             Timber.e("[TTS] Engine initialization failed with status: $status")
+        }
+    }
+
+    private fun observeTtsFlow() {
+        serviceScope.launch {
+            SocketManager.ttsFlow.collect { json ->
+                val text = json.optString("text", "")
+                val lang = json.optString("lang", "zh-TW")
+                val speed = json.optDouble("speed", 1.0).toFloat()
+                val pitch = json.optDouble("pitch", 1.0).toFloat()
+                val entityName = json.optString("entityName", "Bot")
+                if (text.isNotEmpty()) {
+                    speak(text, lang, speed, pitch, entityName)
+                }
+            }
         }
     }
 
@@ -208,6 +219,7 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
     }
 
     override fun onDestroy() {
+        serviceScope.cancel()
         tts?.stop()
         tts?.shutdown()
         tts = null

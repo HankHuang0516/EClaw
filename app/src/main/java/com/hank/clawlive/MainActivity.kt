@@ -74,34 +74,6 @@ class MainActivity : AppCompatActivity() {
         TelemetryHelper.init(this)
         com.hank.clawlive.data.remote.SocketManager.connect(this)
 
-        // BLK-FGS process isolation (card_f9b2cc2d, v1.1.11): TtsService now runs in its
-        // own ":tts" process, where SocketManager.ttsFlow (a MAIN-process singleton) is
-        // invisible. Bridge the socket TTS events to the isolated service here, from the
-        // main process while we are foreground: collect ttsFlow and forward each event as
-        // a startService Intent carrying the same extras the FCM path uses. lifecycleScope
-        // auto-cancels this on Activity destroy. A plain startService (NOT
-        // startForegroundService) is used because MainActivity is foreground, so the
-        // service may promote itself; the call is wrapped in try/catch(Throwable) so a
-        // foreground-service rejection can never crash the app.
-        lifecycleScope.launch {
-            com.hank.clawlive.data.remote.SocketManager.ttsFlow.collect { json ->
-                val text = json.optString("text", "")
-                if (text.isEmpty()) return@collect
-                try {
-                    val fwd = Intent(this@MainActivity, com.hank.clawlive.service.TtsService::class.java).apply {
-                        putExtra("tts_text", text)
-                        putExtra("tts_lang", json.optString("lang", "zh-TW"))
-                        putExtra("tts_speed", json.optDouble("speed", 1.0).toFloat())
-                        putExtra("tts_pitch", json.optDouble("pitch", 1.0).toFloat())
-                        putExtra("tts_entity_name", json.optString("entityName", "Bot"))
-                    }
-                    startService(fwd)
-                } catch (t: Throwable) {
-                    Timber.e(t, "[Main] socket→tts forward failed (${t.javaClass.simpleName})")
-                }
-            }
-        }
-
         // TTS foreground service (bot voice replies)
         val ttsIntent = Intent(this, com.hank.clawlive.service.TtsService::class.java)
         // BLK-FGS (card_f9b2cc2d): a foreground-service start must never crash the
