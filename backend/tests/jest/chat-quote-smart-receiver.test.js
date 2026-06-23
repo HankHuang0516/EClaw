@@ -44,8 +44,12 @@ describe('chat quote-reply smart receiver — chat.html surface', () => {
         );
     });
 
-    test('applyAutoToggleReceivers dispatches on meta.kind for card / chat-entity', () => {
-        expect(chatHtml).toMatch(/function\s+applyAutoToggleReceivers\s*\(\s*meta\s*\)/);
+    test('entityIdsFromMeta dispatches on meta.kind for card / chat-entity', () => {
+        // Multi-quote refactor: the single-state applyAutoToggleReceivers(meta)
+        // was split into the pure dispatcher entityIdsFromMeta(meta) +
+        // recomputeAutoReceivers() which unions over replyContexts[].
+        expect(chatHtml).toMatch(/function\s+entityIdsFromMeta\s*\(\s*meta\s*\)/);
+        expect(chatHtml).toMatch(/function\s+recomputeAutoReceivers\s*\(\s*\)/);
         // Both code paths must be present so neither rule silently drops
         // (a regex match keeps both branches honest).
         expect(chatHtml).toMatch(/meta\.kind\s*===\s*['"]chat-entity['"]/);
@@ -116,10 +120,22 @@ describe('chat quote-reply smart receiver — chat.html surface', () => {
     // The auto-select must be EXCLUSIVE — clearing the residual/default
     // selection — otherwise a quote of #6 still leaks to whoever was already
     // checked (#1). This is the load-bearing assertion for card_3462...
-    test('applyAutoToggleReceivers clears every entity + contact checkbox before checking the sender', () => {
-        const fn = chatHtml.match(/function\s+applyAutoToggleReceivers\s*\(\s*meta\s*\)\s*\{[\s\S]*?\n        \}/);
-        expect(fn).not.toBeNull();
-        const body = fn[0];
+    test('recomputeAutoReceivers clears every entity + contact checkbox before checking the sender', () => {
+        const m = chatHtml.match(/function\s+recomputeAutoReceivers\s*\(\s*\)\s*\{/);
+        expect(m).not.toBeNull();
+        // brace-balance walk to capture the whole body
+        let depth = 1;
+        let i = m.index + m[0].length;
+        while (i < chatHtml.length && depth > 0) {
+            const ch = chatHtml[i];
+            if (ch === '{') depth++;
+            else if (ch === '}') depth--;
+            i++;
+        }
+        const body = chatHtml.slice(m.index, i);
+        // unions entityIdsFromMeta over every current quote (multi-quote routes
+        // to EVERY quoted sender, not just the last)
+        expect(body).toMatch(/replyContexts\.forEach\([\s\S]*?entityIdsFromMeta\(\s*rc\.meta\s*\)/);
         // resets all entity checkboxes to (wanted.has) and all contacts to false
         expect(body).toMatch(/\.target-entity-check input\[type="checkbox"\][\s\S]*?cb\.checked\s*=\s*wanted\.has\(Number\(cb\.dataset\.entity\)\)/);
         expect(body).toMatch(/\.target-contact-check input\[type="checkbox"\][\s\S]*?cb\.checked\s*=\s*false/);
@@ -222,11 +238,18 @@ describe('chat_receiver_hint_auto — i18n key parity across 12 locales', () => 
     });
 });
 
-describe('applyAutoToggleReceivers — behaviour against a hand-rolled DOM stub', () => {
+describe('recomputeAutoReceivers — behaviour against a hand-rolled DOM stub', () => {
     // jest.config.js uses testEnvironment:'node' with no jsdom. We extract
     // the function bodies from chat.html, evaluate them inside a tiny
-    // document-like shim, and exercise the three spec cases. This gives us
-    // a behavioural assertion without pulling in a new dep.
+    // document-like shim, and exercise the spec cases. This gives us a
+    // behavioural assertion without pulling in a new dep.
+    //
+    // Multi-quote refactor: the old single-state applyAutoToggleReceivers(meta)
+    // is gone. Auto-select is now driven by recomputeAutoReceivers() which
+    // unions entityIdsFromMeta(rc.meta) over a replyContexts[] array. The
+    // sandbox seeds that array (one entry per quoted meta) and then invokes
+    // recomputeAutoReceivers() — exactly how addReplyContext/removeReplyContextAt
+    // drive it in production.
     function makeStubDocument(entityIds) {
         const labels = entityIds.map(eid => {
             const cb = {
@@ -333,48 +356,65 @@ describe('applyAutoToggleReceivers — behaviour against a hand-rolled DOM stub'
         return chatHtml.slice(m.index, i);
     }
 
-    // Build a sandbox with the three functions we need + a stub document.
+    // Build a sandbox with the functions we need + a stub document.
     function makeSandbox(entityIds) {
         const stubDoc = makeStubDocument(entityIds);
+        const replyContexts = []; // seeded per-test, then recompute unions over it
         const sandbox = {
             document: stubDoc,
             autoToggledReceiverEntities: new Set(),
             i18n: { t: (k) => (k === 'chat_receiver_hint_auto' ? 'auto' : null) },
             persistTargetSelection: () => {},
             updateTargetAll: () => {},
+            replyContexts,
         };
-        // applyAutoToggleReceivers reads/writes autoToggledReceiverEntities,
-        // calls i18n.t, document.querySelector, etc. clearAllReceiverHints
-        // is invoked at the top, and clearReceiverHintForEntity is the
-        // companion. Extract all three.
+        // recomputeAutoReceivers reads the replyContexts array + writes
+        // autoToggledReceiverEntities, calls entityIdsFromMeta, i18n.t,
+        // document.querySelector, etc. clearAllReceiverHints is invoked at the
+        // top, clearReceiverHintForEntity is the companion. Extract all four.
         const body =
-            extractFunction('applyAutoToggleReceivers') +
+            extractFunction('recomputeAutoReceivers') +
+            '\n' +
+            extractFunction('entityIdsFromMeta') +
             '\n' +
             extractFunction('clearAllReceiverHints') +
             '\n' +
             extractFunction('clearReceiverHintForEntity');
-        // Wrap so the sandbox keys behave like free variables.
+        // Wrap so the sandbox keys behave like free variables. replyContexts is
+        // passed by reference; seed it via `quote(meta)` then call recompute()
+        // exactly like addReplyContext does in production.
         const fn = new Function(
             'document',
             'autoToggledReceiverEntities',
             'i18n',
             'persistTargetSelection',
             'updateTargetAll',
-            `${body}\nreturn { applyAutoToggleReceivers, clearAllReceiverHints, clearReceiverHintForEntity };`
+            'replyContexts',
+            `${body}\nreturn { recomputeAutoReceivers, entityIdsFromMeta, clearAllReceiverHints, clearReceiverHintForEntity };`
         );
-        const api = fn(
+        const inner = fn(
             sandbox.document,
             sandbox.autoToggledReceiverEntities,
             sandbox.i18n,
             sandbox.persistTargetSelection,
-            sandbox.updateTargetAll
+            sandbox.updateTargetAll,
+            replyContexts
         );
+        // `auto(meta)` mimics quoting a single message with `meta`, then
+        // recomputing — the production path through addReplyContext.
+        const api = {
+            ...inner,
+            auto(meta) {
+                replyContexts.push({ meta: meta || null });
+                inner.recomputeAutoReceivers();
+            },
+        };
         return { sandbox, api };
     }
 
     test('card source → each entity in cardAssignedBots is toggled on + badged', () => {
         const { sandbox, api } = makeSandbox([1, 2, 3]);
-        api.applyAutoToggleReceivers({ kind: 'card', cardAssignedBots: [1, 3] });
+        api.auto({ kind: 'card', cardAssignedBots: [1, 3] });
         const cb1 = sandbox.document.querySelector('[data-entity="1"]');
         const cb2 = sandbox.document.querySelector('[data-entity="2"]');
         const cb3 = sandbox.document.querySelector('[data-entity="3"]');
@@ -387,7 +427,7 @@ describe('applyAutoToggleReceivers — behaviour against a hand-rolled DOM stub'
 
     test('chat-entity source → only the sender entity is toggled', () => {
         const { sandbox, api } = makeSandbox([1, 5, 7]);
-        api.applyAutoToggleReceivers({ kind: 'chat-entity', entityId: 5 });
+        api.auto({ kind: 'chat-entity', entityId: 5 });
         expect(sandbox.document.querySelector('[data-entity="1"]').checked).toBe(false);
         expect(sandbox.document.querySelector('[data-entity="5"]').checked).toBe(true);
         expect(sandbox.document.querySelector('[data-entity="7"]').checked).toBe(false);
@@ -402,7 +442,7 @@ describe('applyAutoToggleReceivers — behaviour against a hand-rolled DOM stub'
         // simulate the default "all checked" / last-sent residual state
         sandbox.document.querySelector('[data-entity="1"]').checked = true;
         sandbox.document.querySelector('[data-entity="7"]').checked = true;
-        api.applyAutoToggleReceivers({ kind: 'chat-entity', entityId: 5 });
+        api.auto({ kind: 'chat-entity', entityId: 5 });
         expect(sandbox.document.querySelector('[data-entity="1"]').checked).toBe(false);
         expect(sandbox.document.querySelector('[data-entity="5"]').checked).toBe(true);
         expect(sandbox.document.querySelector('[data-entity="7"]').checked).toBe(false);
@@ -414,14 +454,14 @@ describe('applyAutoToggleReceivers — behaviour against a hand-rolled DOM stub'
     test('unbound sender → existing selection preserved (no exclusive wipe)', () => {
         const { sandbox, api } = makeSandbox([1, 2]);
         sandbox.document.querySelector('[data-entity="1"]').checked = true;
-        api.applyAutoToggleReceivers({ kind: 'chat-entity', entityId: 9 }); // 9 not bound
+        api.auto({ kind: 'chat-entity', entityId: 9 }); // 9 not bound
         expect(sandbox.document.querySelector('[data-entity="1"]').checked).toBe(true);
         expect(sandbox.document.querySelectorAll('.receiver-hint-auto').length).toBe(0);
     });
 
     test('chat-system source → no toggle, no badge', () => {
         const { sandbox, api } = makeSandbox([1, 2]);
-        api.applyAutoToggleReceivers({ kind: 'chat-system' });
+        api.auto({ kind: 'chat-system' });
         expect(sandbox.document.querySelector('[data-entity="1"]').checked).toBe(false);
         expect(sandbox.document.querySelector('[data-entity="2"]').checked).toBe(false);
         const badges = sandbox.document.querySelectorAll('.receiver-hint-auto');
@@ -430,9 +470,9 @@ describe('applyAutoToggleReceivers — behaviour against a hand-rolled DOM stub'
 
     test('empty / undefined meta → no-op', () => {
         const { sandbox, api } = makeSandbox([1, 2]);
-        api.applyAutoToggleReceivers(undefined);
-        api.applyAutoToggleReceivers({});
-        api.applyAutoToggleReceivers({ kind: 'card' }); // missing cardAssignedBots
+        api.auto(undefined);
+        api.auto({});
+        api.auto({ kind: 'card' }); // missing cardAssignedBots
         expect(sandbox.document.querySelector('[data-entity="1"]').checked).toBe(false);
         expect(sandbox.document.querySelector('[data-entity="2"]').checked).toBe(false);
         expect(sandbox.document.querySelectorAll('.receiver-hint-auto').length).toBe(0);
@@ -440,7 +480,7 @@ describe('applyAutoToggleReceivers — behaviour against a hand-rolled DOM stub'
 
     test('clearReceiverHintForEntity removes the badge for that entity', () => {
         const { sandbox, api } = makeSandbox([1, 2]);
-        api.applyAutoToggleReceivers({ kind: 'card', cardAssignedBots: [1, 2] });
+        api.auto({ kind: 'card', cardAssignedBots: [1, 2] });
         expect(sandbox.document.querySelectorAll('.receiver-hint-auto').length).toBe(2);
         api.clearReceiverHintForEntity(1);
         expect(sandbox.document.querySelectorAll('.receiver-hint-auto').length).toBe(1);
