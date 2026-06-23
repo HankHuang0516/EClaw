@@ -21,6 +21,19 @@ const DEFAULTS = {
     // Stop-mode pauses stale-card nudges for an entity without changing card ownership.
     // Exposed through per-entity overrides; device default remains false.
     kanban_nudge_stop_mode: false,
+    // Auto-escalation master switch (card_a0c2bc798affdf0a6310f5bb / Hank-direct).
+    // Governs the clock-triggered L2/L3 ladder: priority-bump (L2),
+    // P0-stalled supervisor ping + auto-block (L3). When false, ONLY L1 standard
+    // nudges fire — no priority changes, no supervisor pings, no auto-block.
+    // Device-wide settable via PUT /api/device-preferences.
+    kanban_auto_escalate_enabled: true,
+    // When true (default), automation cards NEVER auto-escalate even if the master
+    // switch above is on. "Automation card" = cron母卡 (is_automation=true) OR a
+    // cron-spawned child card (is_auto_generated=true, the "[Auto] … (date)" rows).
+    // This is the cron-noise fix: those child cards never have their own owner
+    // working them, so the L2/L3 ladder fired "🚨 P0 stalled 主管請介入" every
+    // interval. They still get L1 nudges so the work isn't forgotten.
+    kanban_auto_escalate_skip_automation: true,
     // Phase 2 (card_e066cb6b / kanban-nudge-spec.md §6): per-entity overrides on top
     // of the device-wide defaults above. Shape: { "<entityId>": { ...partialPrefs } }.
     // Only the keys in NUDGE_ENTITY_OVERRIDE_KEYS may be overridden — batch_size and
@@ -55,6 +68,12 @@ const NUDGE_STATUS_OPTIONS = new Set(KanbanStatus.NUDGEABLE_STATUSES);
 
 function coerceValue(key, raw) {
     const def = DEFAULTS[key];
+    // Auto-escalation toggles accept a real boolean OR the string 'true'/'false'
+    // (a bare `!!raw` would coerce the string 'false' to true — wrong for an API
+    // that may serialize the flag as a query/JSON string).
+    if (key === 'kanban_auto_escalate_enabled' || key === 'kanban_auto_escalate_skip_automation') {
+        return raw === true || raw === 'true';
+    }
     if (typeof def === 'boolean') return !!raw;
     if (typeof def === 'number') {
         const n = Number(raw);
