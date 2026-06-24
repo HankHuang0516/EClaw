@@ -431526,6 +431526,10 @@ const TRANSLATIONS = {
 
 
         "delete_account_confirm_label": "I understand that deleting my account is permanent and all my data will be erased.",
+        "delete_account_ready_locked_title": "Deletion is locked",
+        "delete_account_ready_locked": "Check the confirmation box to enable the final delete button.",
+        "delete_account_ready_enabled_title": "Deletion is enabled",
+        "delete_account_ready_enabled": "The final delete button is enabled. This action cannot be undone.",
 
 
 
@@ -1054967,6 +1054971,10 @@ const TRANSLATIONS = {
 
 
         "delete_account_confirm_label": "我了解刪除帳號是永久性的，我的所有資料將被清除。",
+        "delete_account_ready_locked_title": "刪除仍鎖定",
+        "delete_account_ready_locked": "勾選確認框後，才會啟用最後刪除按鈕。",
+        "delete_account_ready_enabled_title": "刪除已啟用",
+        "delete_account_ready_enabled": "最後刪除按鈕已啟用。此操作無法復原。",
 
 
 
