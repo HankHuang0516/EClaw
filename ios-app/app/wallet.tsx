@@ -21,6 +21,7 @@ import {
   finishTransaction,
   purchaseUpdatedListener,
   purchaseErrorListener,
+  ErrorCode,
   type Product,
   type Purchase,
   type PurchaseError,
@@ -100,12 +101,12 @@ export default function WalletScreen() {
         setIapAvailable(true);
 
         // Fetch products from App Store (v15: fetchProducts instead of getProducts)
-        const prods = await fetchProducts({ skus: IAP_PRODUCT_IDS });
-        setProducts(prods);
+        const prods = await fetchProducts({ skus: IAP_PRODUCT_IDS, type: 'in-app' });
+        setProducts(((prods ?? []) as Product[]).filter((product) => product.type === 'in-app'));
 
         // Listen for purchase completions
         purchaseUpdateSub = purchaseUpdatedListener(async (purchase: Purchase) => {
-          const receipt = purchase.transactionReceipt;
+          const receipt = purchase.purchaseToken;
           if (!receipt) return;
           try {
             await verifyAndFinish(purchase);
@@ -119,7 +120,7 @@ export default function WalletScreen() {
 
         // Listen for purchase errors
         purchaseErrorSub = purchaseErrorListener((err: PurchaseError) => {
-          if (err.code === 'E_USER_CANCELLED') {
+          if (err.code === ErrorCode.UserCancelled) {
             setPurchasing(null);
             return;
           }
@@ -148,7 +149,7 @@ export default function WalletScreen() {
   const verifyAndFinish = async (purchase: Purchase) => {
     const productId = purchase.productId;
     const transactionId = purchase.transactionId || '';
-    const receipt = purchase.transactionReceipt || '';
+    const receipt = purchase.purchaseToken || '';
 
     // Backend verification (must succeed before finishTransaction)
     const SecureStore = require('expo-secure-store');
@@ -191,10 +192,13 @@ export default function WalletScreen() {
     if (purchasing) return;
     setPurchasing(productId);
     try {
-      await requestPurchase({ sku: productId });
+      await requestPurchase({
+        request: { ios: { sku: productId } },
+        type: 'in-app',
+      });
       // purchaseUpdatedListener handles the rest
     } catch (err: any) {
-      if (err.code === 'E_USER_CANCELLED') {
+      if (err.code === ErrorCode.UserCancelled) {
         setPurchasing(null);
         return;
       }
@@ -264,22 +268,23 @@ export default function WalletScreen() {
           </Text>
         ) : (
           products
-            .sort((a, b) => parseFloat(a.price || '0') - parseFloat(b.price || '0'))
+            .sort((a, b) => Number(a.price ?? 0) - Number(b.price ?? 0))
             .map((product) => {
-              const meta = TIER_META[product.productId];
-              const isPurchasing = purchasing === product.productId;
+              const productId = product.id;
+              const meta = TIER_META[productId];
+              const isPurchasing = purchasing === productId;
               return (
                 <Card
-                  key={product.productId}
+                  key={productId}
                   style={styles.tierCard}
                   mode="outlined"
-                  onPress={() => handlePurchase(product.productId)}
+                  onPress={() => handlePurchase(productId)}
                   disabled={!!purchasing}
                 >
                   <Card.Content style={styles.tierContent}>
                     <View style={styles.tierLeft}>
                       <Text variant="titleMedium">
-                        {meta?.label || product.title || product.productId}
+                        {meta?.label || product.title || productId}
                       </Text>
                       <Text variant="bodySmall" style={{ opacity: 0.75 }}>
                         {meta
@@ -297,7 +302,7 @@ export default function WalletScreen() {
                         <ActivityIndicator />
                       ) : (
                         <Text variant="titleLarge" style={{ color: theme.colors.primary }}>
-                          {product.localizedPrice || `$${product.price}`}
+                          {product.displayPrice || `$${product.price ?? ''}`}
                         </Text>
                       )}
                     </View>

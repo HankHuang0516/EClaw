@@ -7,6 +7,8 @@ import { deviceApi } from './api';
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
   }),
@@ -79,7 +81,7 @@ class NotificationService {
     handler: (payload: PushNotificationPayload, notificationId: string) => void
   ): () => void {
     const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = response.notification.request.content.data as PushNotificationPayload;
+      const data = response.notification.request.content.data as unknown as PushNotificationPayload;
       const notificationId = response.notification.request.identifier;
       handler(data, notificationId);
     });
@@ -92,7 +94,7 @@ class NotificationService {
     handler: (payload: PushNotificationPayload) => void
   ): () => void {
     const subscription = Notifications.addNotificationReceivedListener((notification) => {
-      const data = notification.request.content.data as PushNotificationPayload;
+      const data = notification.request.content.data as unknown as PushNotificationPayload;
       handler(data);
     });
 

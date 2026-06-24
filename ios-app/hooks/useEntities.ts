@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { useEntityStore } from '../store/entityStore';
+import { Entity, useEntityStore } from '../store/entityStore';
 import { useAuthStore } from '../store/authStore';
 import { deviceApi } from '../services/api';
 import { socketService } from '../services/socketService';
@@ -39,7 +39,7 @@ export function useEntities() {
   useEffect(() => {
     const unsubscribe = socketService.on<EntityUpdate>('entity:update', (data) => {
       if (data.entityId) {
-        updateEntity(data.entityId, data);
+        updateEntity(data.entityId, data as Partial<Entity>);
       }
     });
     return unsubscribe;
