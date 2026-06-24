@@ -4,6 +4,9 @@ module.exports = {
     // Set required env vars before any test module loads
     setupFiles: ['./tests/jest/helpers/env-setup.js'],
     testMatch: ['**/tests/jest/**/*.test.js'],
+    // Constrain search to backend/ only — without this, testMatch globs into
+    // parent-dir worktrees (6000+ stale files) despite testPathIgnorePatterns.
+    roots: ['<rootDir>'],
     // Worktrees from concurrent claude sessions pollute the test scan and
     // crash on missing 'pg' from their stale node_modules; skip them.
     // Found 2026-06-10 02:57 TW via Run 9 of the perpetual E2E card (gap J1).

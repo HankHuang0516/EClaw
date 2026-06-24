@@ -1247,6 +1247,16 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **SpeakTo Routing Audit Log**: Add audit log for speakTo routing decisions (card_488f05)
 - **Heartbeat Severity Gate**: Auto-block restricted to P0/P1 stale in_progress cards only (#3564)
 
+### Recent Features (v1.1190.x+, 2026-06-23 – 2026-06-25)
+
+- **Chat Multi-Quote Accumulation**: Quotes accumulate (unlimited) instead of overwriting; entity receives every quote; per-quote remove chip in reply bar (#3697)
+- **Kanban Auto-P0 Escalation Toggle**: API-controllable `kanban_auto_escalate_enabled` + `kanban_auto_escalate_skip_automation` device preferences; default-skip cron cards from stale escalation (#3706)
+- **Audit Operability Dimension**: 7 portal-scoped static rules (R1–R7) for human operability self-improvement; PR-diff preflight integration (#3707)
+- **Wallpaper Black-Screen NPE Fix**: Guard null `fromCharacter` in render loop — stop black-screen NPE (v1.1.9) (#3713)
+- **Wallpaper Process-Death Fix**: Close v1.1.7 black-screen process-death paths — v1.1.8 (#3702)
+- **Mission Note/Add Fix**: `note/add` reads `deviceId` from merged query+body like `authenticate()` — fixes null device_id 500 (#3696)
+- **Feedback Photo Metadata Safety**: Feedback photo metadata safety copy for EXIF strip (#3711)
+
 ### Recent Features (v1.1190.x+, 2026-06-22 – 2026-06-23)
 
 - **Community Filter URL Persistence**: community.html search/sort/rate filters persisted in URL for reload/back/share (#3694)
@@ -1270,7 +1280,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~5200 test cases across 371 Jest files + 79 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~5283 test cases across 379 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1363,7 +1373,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
 | Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
 
-### Jest Unit Tests (CI-run, `npm test`, 371 files)
+### Jest Unit Tests (CI-run, `npm test`, 379 files)
 
 | Test | File | Description |
 |------|------|-------------|
