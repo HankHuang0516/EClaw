@@ -150,6 +150,29 @@ describe('DELETE /api/auth/account', () => {
             expect.stringContaining('DELETE FROM oauth_clients'),
         ]));
 
+        // Verify the live kanban board + per-card schedules/execution history are cleaned
+        // (regression: the delete-account page promises "Kanban board data" and
+        // "Schedules and execution history" — these must actually be deleted).
+        expect(queries).toEqual(expect.arrayContaining([
+            expect.stringContaining('DELETE FROM kanban_card_tags'),
+            expect.stringContaining('DELETE FROM kanban_comments'),
+            expect.stringContaining('DELETE FROM kanban_notes'),
+            expect.stringContaining('DELETE FROM kanban_files'),
+            expect.stringContaining('DELETE FROM kanban_card_dependencies'),
+            expect.stringContaining('DELETE FROM kanban_card_links'),
+            expect.stringContaining('DELETE FROM kanban_cards'),
+            expect.stringContaining('DELETE FROM kanban_tags'),
+            expect.stringContaining('DELETE FROM kanban_pending_notify'),
+            expect.stringContaining('DELETE FROM kanban_entity_nudge_log'),
+            expect.stringContaining('DELETE FROM scheduled_messages'),
+        ]));
+
+        // kanban_cards must be deleted before its child tables' parent (cards) so the
+        // explicit child deletes run first — assert children precede the parent delete.
+        const idx = (needle) => queries.findIndex(q => q.includes(needle));
+        expect(idx('DELETE FROM kanban_card_tags')).toBeLessThan(idx('DELETE FROM kanban_cards'));
+        expect(idx('DELETE FROM kanban_comments')).toBeLessThan(idx('DELETE FROM kanban_cards'));
+
         // Verify entities are deleted (account is being destroyed)
         expect(queries).toEqual(expect.arrayContaining([
             expect.stringContaining('DELETE FROM entities'),
