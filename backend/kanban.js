@@ -3372,6 +3372,19 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 : KanbanStatus.NUDGE_DEFAULT_STATUSES
         );
 
+        // Auto-escalation toggles (card_a0c2bc798affdf0a6310f5bb / Hank-direct).
+        // Master switch defaults true; automation-skip defaults true. Both gate ONLY
+        // the clock-triggered L2/L3 ladder below — L1 standard nudges always run so
+        // skipped cards are never forgotten.
+        const autoEscalateEnabled = basePrefs.kanban_auto_escalate_enabled !== false;            // default true
+        const skipAutomationEscalation = basePrefs.kanban_auto_escalate_skip_automation !== false; // default true
+        // A card counts as "automation" for escalation-skip if it's a cron母卡
+        // (is_automation) OR a cron-spawned child (is_auto_generated, the
+        // "[Auto] … (date)" rows). The child INSERT sets is_auto_generated=true but
+        // NOT is_automation, and the child cards are the ones flooding the supervisor
+        // with "🚨 P0 stalled" pings — so both flags must be checked here.
+        const isAutomationCard = (card) => card.is_automation === true || card.is_auto_generated === true;
+
         // Phase 2 (kanban-nudge-spec.md §6): per-entity overrides.
         // Cached resolution keyed on entityId, computed once per tick.
         const entityPrefsCache = new Map();
@@ -3494,13 +3507,22 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 ? Date.now() - new Date(card.last_stale_nudge_at).getTime()
                 : Infinity;
 
-            if (elapsedMs >= blockAfterMs && card.status !== 'blocked' && sinceLast > intervalMs) {
-                await fireBlockEscalation(card, filterNudgeStoppedRecipients(buildEscalationRecipients(card)));
-                continue;
-            }
-            if (elapsedMs >= escalateAfterMs && sinceLast > intervalMs) {
-                const fired = await fireLevelTwoEscalation(card, filterNudgeStoppedRecipients(buildEscalationRecipients(card)));
-                if (fired) continue;
+            // Auto-escalation gate (card_a0c2bc798affdf0a6310f5bb): suppress the
+            // L2/L3 ladder when the master switch is off, or (default) when this is
+            // an automation card and skip-automation is on. The card still falls
+            // through to the L1 push below so it isn't forgotten — only the
+            // priority-bump / P0-stalled-ping / auto-block escalations are skipped.
+            const escalationAllowed = autoEscalateEnabled && !(skipAutomationEscalation && isAutomationCard(card));
+
+            if (escalationAllowed) {
+                if (elapsedMs >= blockAfterMs && card.status !== 'blocked' && sinceLast > intervalMs) {
+                    await fireBlockEscalation(card, filterNudgeStoppedRecipients(buildEscalationRecipients(card)));
+                    continue;
+                }
+                if (elapsedMs >= escalateAfterMs && sinceLast > intervalMs) {
+                    const fired = await fireLevelTwoEscalation(card, filterNudgeStoppedRecipients(buildEscalationRecipients(card)));
+                    if (fired) continue;
+                }
             }
             // Level 1 candidate if enough interval has passed.
             if (sinceLast > intervalMs) level1Pending.push(card);
