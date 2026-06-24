@@ -2094,9 +2094,30 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
 
                 // --- Device-scoped tables (have FK CASCADE to devices, but delete explicitly for safety) ---
                 await safeDelete('mission_dashboard', 'device_id = $1', [deviceId], 'DELETE mission_dashboard (cascades mission_items/notes/rules)');
+                await safeDelete('mission_sync_log', 'device_id = $1', [deviceId]); // mission/kanban sync audit log for this device
                 await safeDelete('device_vars', 'device_id = $1', [deviceId]);
                 await safeDelete('device_telemetry', 'device_id = $1', [deviceId]);
-                await safeDelete('schedules', 'device_id = $1', [deviceId]);
+                await safeDelete('schedules', 'device_id = $1', [deviceId]); // legacy/no-op if table absent; real schedule data lives in kanban_cards.schedule_* + scheduled_messages (purged below)
+
+                // --- Kanban board (the live mission/kanban data: cards, comments, notes, tags,
+                //     files, dependencies, links) + per-card cron schedules & execution history
+                //     (kanban_cards.schedule_*). The card-child tables have ON DELETE CASCADE on
+                //     kanban_cards(id), but we delete each explicitly first (some legacy DBs may be
+                //     missing a constraint) — children before parents, then the device-scoped tables. ---
+                await safeDelete('kanban_card_tags', 'device_id = $1', [deviceId]);
+                await safeDelete('kanban_comments', 'device_id = $1', [deviceId]);
+                await safeDelete('kanban_notes', 'device_id = $1', [deviceId]);
+                await safeDelete('kanban_files', 'device_id = $1', [deviceId]);
+                await safeDelete('kanban_card_dependencies', 'device_id = $1', [deviceId]);
+                await safeDelete('kanban_card_links', 'device_id = $1', [deviceId]);
+                await safeDelete('kanban_cards', 'device_id = $1', [deviceId], 'DELETE kanban_cards (cron schedules + execution history)');
+                await safeDelete('kanban_tags', 'device_id = $1', [deviceId]);
+                await safeDelete('kanban_pending_notify', 'device_id = $1', [deviceId]);
+                await safeDelete('kanban_entity_nudge_log', 'device_id = $1', [deviceId]);
+
+                // --- Scheduled messages + their execution record (sent_at) ---
+                await safeDelete('scheduled_messages', 'device_id = $1', [deviceId]);
+
                 await safeDelete('agent_card_holder', 'device_id = $1', [deviceId]);
                 await safeDelete('entity_trash', 'device_id = $1', [deviceId]);
                 await safeDelete('channel_accounts', 'device_id = $1', [deviceId]);
