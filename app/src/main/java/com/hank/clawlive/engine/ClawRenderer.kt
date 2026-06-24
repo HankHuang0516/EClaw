@@ -826,7 +826,13 @@ class ClawRenderer(
             entity.messageQueue.orEmpty().mapNotNull { queueItem ->
                 val text = queueItem.text?.trim().orEmpty()
                 if (text.isBlank()) return@mapNotNull null
-                if (queueItem.fromCharacter.isBlank()) return@mapNotNull null
+                // Gson can bypass Kotlin null-safety: user/scheduled messages lack
+                // fromCharacter (backend only sets it on entity-to-entity messages), so a
+                // null slips into this non-null-typed field. Calling .isBlank() directly
+                // threw NPE on every draw frame → blank/black wallpaper (card_f22e489c).
+                // Mirror the same defensive guard StateRepository already uses.
+                @Suppress("SENSELESS_COMPARISON")
+                if (queueItem.fromCharacter == null || queueItem.fromCharacter.isBlank()) return@mapNotNull null
                 if (queueItem.fromEntityId !in entityIds) return@mapNotNull null
                 if (queueItem.fromEntityId == entity.entityId && queueItem.routingMode != "broadcast") {
                     return@mapNotNull null
