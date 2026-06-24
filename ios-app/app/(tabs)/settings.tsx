@@ -264,7 +264,7 @@ export default function SettingsScreen() {
             description={t('settings.messages_used', { used: 0, total: 15 })}
             left={(props) => <List.Icon {...props} icon="star" />}
             right={() => (
-              <Button mode="contained" compact onPress={() => {}}>
+              <Button mode="contained" compact onPress={() => router.push('/wallet')}>
                 {t('settings.upgrade')}
               </Button>
             )}
