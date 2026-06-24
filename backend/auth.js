@@ -2094,6 +2094,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
 
                 // --- Device-scoped tables (have FK CASCADE to devices, but delete explicitly for safety) ---
                 await safeDelete('mission_dashboard', 'device_id = $1', [deviceId], 'DELETE mission_dashboard (cascades mission_items/notes/rules)');
+                await safeDelete('mission_sync_log', 'device_id = $1', [deviceId]); // mission/kanban sync audit log for this device
                 await safeDelete('device_vars', 'device_id = $1', [deviceId]);
                 await safeDelete('device_telemetry', 'device_id = $1', [deviceId]);
                 await safeDelete('schedules', 'device_id = $1', [deviceId]); // legacy/no-op if table absent; real schedule data lives in kanban_cards.schedule_* + scheduled_messages (purged below)

@@ -165,6 +165,7 @@ describe('DELETE /api/auth/account', () => {
             expect.stringContaining('DELETE FROM kanban_pending_notify'),
             expect.stringContaining('DELETE FROM kanban_entity_nudge_log'),
             expect.stringContaining('DELETE FROM scheduled_messages'),
+            expect.stringContaining('DELETE FROM mission_sync_log'),
         ]));
 
         // kanban_cards must be deleted before its child tables' parent (cards) so the
