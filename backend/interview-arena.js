@@ -281,6 +281,17 @@ let VISION_IMAGES = [
     { file: null, description: 'A global server latency heat map with 47 data points across 3 regions: US East cluster shows 12ms in green, EU West shows 28ms in yellow, AP Southeast shows 87ms in dark red — the colour scale bar on the right runs from 0ms white to 100ms dark red', keywords: ['latency', 'three', 'regions', '12ms', '28ms', '87ms', 'green', 'yellow', 'red', '47'] },
     { file: null, description: 'An OpenAPI 3.0 spec excerpt showing 3 endpoints: GET /users (200 response with User array schema), POST /users (requestBody with email and name fields), DELETE /users/{id} (204 response) — a red padlock security badge next to DELETE reads "Bearer Token Required"', keywords: ['OpenAPI', 'three', 'endpoints', 'GET', 'POST', 'DELETE', '200', '204', 'bearer', 'padlock'] },
     { file: null, description: 'A compiler error output for main.cpp showing 4 diagnostics: line 23 "undefined reference to makePayment()", line 47 "no matching function for call to validate(int, std::string)", line 52 "warning: implicit conversion from double to int", line 71 "fatal error: payment.h: No such file or directory" — two entries are highlighted in red as fatal', keywords: ['compiler', 'four', 'main.cpp', 'line', '23', '47', 'undefined', 'payment', 'fatal', 'error'] },
+    // ── Daily pool update: added 2026-06-24 ──
+    // Easy tier
+    { file: null, description: 'A red map location pin centered on a minimal white background with a small white circle inside the pin head', keywords: ['location', 'pin', 'red', 'white', 'map', 'circle'] },
+    { file: null, description: 'A dark chess knight piece icon — a classic horse silhouette in black on a white square background', keywords: ['chess', 'knight', 'horse', 'black', 'white'] },
+    // Medium tier
+    { file: null, description: 'A REST API documentation page listing 3 endpoints with color-coded HTTP method badges: GET /users in green, POST /users in blue, DELETE /users/{id} in red — each row shows the path, method, and a one-line description', keywords: ['API', 'three', 'endpoints', 'GET', 'POST', 'DELETE', 'green', 'blue', 'red'] },
+    { file: null, description: 'A Slack message thread in dark mode showing a code-block attachment — 5 thumbs-up emoji reactions are displayed below the message and a "12 replies" badge appears in the thread footer with the last reply timestamped "Today at 4:17 PM"', keywords: ['slack', 'code', 'five', 'thumbs', 'reactions', '12', 'replies', '4:17', 'dark'] },
+    { file: null, description: 'A mobile banking app showing three recent transactions on a dark card: −$34.50 Coffee Republic at 09:12, −$127.80 Amazon at 14:03, +$2,500.00 Payroll at 00:00 — account balance shows $6,241.37 at the top in white', keywords: ['banking', 'three', 'transactions', '34.50', '127.80', '2500', 'payroll', '6241', 'balance'] },
+    // Hard tier
+    { file: null, description: 'A SQL query result table with six columns (id, name, department, salary, hire_date, status) and 8 data rows — the status column shows "Active" for 6 rows in green and "Inactive" for 2 rows in gray; the bottom summary row shows total salary $458,200 and average $57,275 highlighted in yellow', keywords: ['SQL', 'six', 'columns', 'eight', 'rows', 'salary', '458200', 'inactive', 'average', '57275', 'active'] },
+    { file: null, description: 'A machine learning training curve chart: two lines plotted over 50 epochs — training loss (blue solid line) starts at 2.8 and descends to 0.31 by epoch 50; validation loss (orange dashed line) diverges upward after epoch 35, reaching 0.68 at epoch 50 — a vertical red dashed "Early Stop" annotation marks epoch 35', keywords: ['training', 'loss', 'blue', 'validation', 'orange', 'fifty', 'epochs', '35', 'diverges', 'early', 'stop', '2.8', '0.31'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -565,6 +576,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '["wrt","wrf","er","ett","rftt"]', expected: '"wertf"' },{ input: '["z","x"]', expected: '"zx"' },{ input: '["z","x","z"]', expected: '""' },{ input: '["abc","ab"]', expected: '""' }] },
     { title: 'Minimum Cost to Connect Sticks', description: 'Write `solve(sticks)` — you have an array of stick lengths. Each step you pick the two shortest sticks, join them (cost = their sum), and put the new stick back. Return the minimum total cost to connect all sticks into one.',
       testCases: [{ input: '[2,4,3]', expected: '14' },{ input: '[1,8,3,5]', expected: '30' },{ input: '[5]', expected: '0' },{ input: '[1,1,1,1]', expected: '8' }] },
+    // ── Daily pool update: added 2026-06-24 ──
+    { title: 'Find All Anagrams in String', description: 'Write `solve(s, p)` — return all start indices of anagram substrings of p found in s. Return them sorted in ascending order.',
+      testCases: [{ input: '"cbaebabacd", "abc"', expected: '[0,6]' },{ input: '"abab", "ab"', expected: '[0,1,2]' },{ input: '"aaa", "b"', expected: '[]' },{ input: '"af", "be"', expected: '[]' }] },
+    { title: 'Min Stack', description: 'Write `solve(ops)` — implement a stack supporting push, pop, and getMin in O(1). ops is an array of ["push",val], ["pop"], or ["getMin"]. push/pop return null; getMin returns the current minimum. Assume getMin and pop are never called on an empty stack.',
+      testCases: [{ input: '[["push",3],["push",1],["push",2],["getMin"],["pop"],["getMin"]]', expected: '[null,null,null,1,null,1]' },{ input: '[["push",5],["push",3],["push",7],["getMin"],["pop"],["getMin"]]', expected: '[null,null,null,3,null,3]' }] },
+    { title: 'Cheapest Flights Within K Stops', description: 'Write `solve(n, flights, src, dst, k)` — n cities labeled 0 to n-1, flights[i] = [from, to, price]. Find the cheapest price from src to dst with at most k stops. Return -1 if no valid route exists.',
+      testCases: [{ input: '4, [[0,1,100],[1,2,100],[2,0,100],[1,3,600],[2,3,200]], 0, 3, 1', expected: '700' },{ input: '3, [[0,1,100],[1,2,100],[0,2,500]], 0, 2, 1', expected: '200' },{ input: '3, [[0,1,100],[1,2,100],[0,2,500]], 0, 2, 0', expected: '500' }] },
+    { title: 'Median of Two Sorted Arrays', description: 'Write `solve(nums1, nums2)` — return the median of the two sorted arrays merged. If the combined length is even, return the average of the two middle values as a float with one decimal place.',
+      testCases: [{ input: '[1,3], [2]', expected: '2.0' },{ input: '[1,2], [3,4]', expected: '2.5' },{ input: '[], [1]', expected: '1.0' },{ input: '[3], [-2,-1]', expected: '-1.0' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -718,6 +738,19 @@ let RESPONSE_QUESTIONS = [
     { question: 'A 3×3 magic square uses the integers 1 to 9 each exactly once, and every row, column, and diagonal sums to the same value. What is that constant sum?', expectedKeywords: ['15', 'fifteen'] },
     { question: 'What is the units digit of the sum 1! + 2! + 3! + 4! + 5! + ... + 20! (the sum of all factorials from 1 to 20)?', expectedKeywords: ['3'] },
     { question: 'A person can type 60 words per minute. If a document has 4500 words and the person takes a 5-minute break after every 30 minutes of typing, how many minutes in total does it take to finish the document?', expectedKeywords: ['85'] },
+    // ── Daily pool update: added 2026-06-24 ──
+    // Easy tier
+    { question: 'How many seconds are in one minute?', expectedKeywords: ['60', 'sixty'] },
+    { question: 'What is the chemical symbol for gold?', expectedKeywords: ['Au'] },
+    // Medium tier
+    { question: 'A water tank is filled to capacity. Each hour it loses one-quarter of its remaining water. What fraction of the original water remains after 2 hours?', expectedKeywords: ['9/16', '0.5625', '56.25'] },
+    { question: 'Convert the binary number 10110 to its decimal equivalent.', expectedKeywords: ['22', 'twenty-two'] },
+    { question: 'A bag contains 4 red and 6 blue marbles. Two marbles are drawn without replacement. What is the probability that both marbles are the same color? Express as a simplified fraction.', expectedKeywords: ['7/15'] },
+    { question: 'If a = 3 and b = 4, what is the value of 2a² + 3b − 5?', expectedKeywords: ['25', 'twenty-five'] },
+    // Hard tier
+    { question: 'A prime number p is such that p, p+2, and p+4 are all prime. What is the value of p? (Hint: think about divisibility by 3 for consecutive odd numbers.)', expectedKeywords: ['3', 'three'] },
+    { question: 'A clock is set correctly at noon. It gains 30 seconds every hour. What time does the clock display when the actual time is midnight (12 hours later)?', expectedKeywords: ['12:06', '6 minutes', 'six'] },
+    { question: 'How many trailing zeros does 100! (100 factorial) end with?', expectedKeywords: ['24', 'twenty-four'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -885,6 +918,17 @@ let TTS_PHRASES = [
     { text: 'SEC Form 8-K filed October 14th 2024 by ClearPath Holdings Inc ticker CLPH discloses a material definitive agreement with an acquisition value of three hundred twenty-seven million dollars subject to customary regulatory closing conditions', keywords: ['SEC', '8-K', 'October', '2024', 'CLPH', 'material', '327', 'million', 'acquisition', 'regulatory'] },
     { text: 'RSA-2048 uses a 2048-bit modulus derived from two 1024-bit primes p and q — the public exponent e is conventionally 65537 and the private exponent d satisfies d times e congruent to 1 modulo phi of n where phi of n equals p minus 1 times q minus 1', keywords: ['RSA', '2048', 'modulus', '1024', 'primes', '65537', 'private', 'congruent', 'phi'] },
     { text: 'Intraday options pricing update: the implied volatility smile for SPX 0DTE options peaked at 38.4 percent for strikes 1 percent out-of-the-money — theta decay accelerated to negative 0.94 per contract with a delta of 0.32 and vega of 0.07 on the 5700 call', keywords: ['options', 'SPX', '0DTE', 'implied', 'volatility', '38.4', 'theta', 'delta', '0.32', 'vega', '5700'] },
+    // ── Daily pool update: added 2026-06-24 ──
+    // Easy tier
+    { text: 'Good morning everyone and welcome to today\'s presentation', keywords: ['good', 'morning', 'everyone', 'welcome', 'presentation'] },
+    { text: 'The temperature outside is fifteen degrees and dropping throughout the evening', keywords: ['temperature', 'fifteen', 'degrees', 'dropping', 'evening'] },
+    // Medium tier
+    { text: 'Flight QR four-seventeen to Doha departs at eleven fifty-five from gate D22 — this is the final boarding call for all remaining passengers', keywords: ['QR', '417', 'Doha', 'eleven', 'fifty-five', 'gate', 'D22', 'final', 'boarding'] },
+    { text: 'Lab results for patient ID P-4421: hemoglobin nine point four grams per deciliter, white blood cell count twelve thousand per microliter, platelet count one hundred eighty thousand per microliter', keywords: ['hemoglobin', '9.4', 'white', 'blood', '12000', 'platelet', '180000', 'microliter', 'P-4421'] },
+    { text: 'Reminder: quarterly tax filing deadline is September thirtieth — late submissions incur a five percent penalty plus two percent interest per month compounded from the due date', keywords: ['quarterly', 'tax', 'september', 'thirtieth', 'five', 'percent', 'penalty', 'interest', 'two', 'compounded'] },
+    // Hard tier
+    { text: 'Pursuant to Article 9 section 3 sub-paragraph ii the indemnifying party shall not be liable for indirect consequential or punitive damages exceeding the total contract value of two hundred fifty thousand United States dollars', keywords: ['article', '9', 'section', 'indemnifying', 'liable', 'indirect', 'consequential', 'punitive', '250000', 'dollars'] },
+    { text: 'ECG interpretation: sinus tachycardia at 112 beats per minute, PR interval 0.18 seconds, QRS duration 0.09 seconds, ST elevation 2 millimeters in leads V2 through V4 — consistent with anterior STEMI requiring immediate cath lab activation', keywords: ['ECG', '112', 'PR', '0.18', 'QRS', '0.09', 'ST', 'elevation', 'V2', 'V4', 'STEMI', 'anterior'] },
 ];
 
 // ============================================
