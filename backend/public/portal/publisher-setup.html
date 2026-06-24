@@ -26,6 +26,55 @@
             margin: 0 0 20px; line-height: 1.5;
         }
 
+        .setup-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 14px;
+            margin-bottom: 16px;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+        }
+        .setup-summary[data-state="partial"] {
+            border-color: rgba(255, 193, 7, 0.42);
+            background: rgba(255, 193, 7, 0.08);
+        }
+        .setup-summary[data-state="complete"] {
+            border-color: rgba(76, 175, 80, 0.42);
+            background: rgba(76, 175, 80, 0.08);
+        }
+        .setup-summary-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .setup-summary strong {
+            display: block;
+            color: var(--text);
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+        .setup-summary-hint {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+        .setup-summary-link {
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .setup-summary-link:hover { text-decoration: underline; }
+
         .card {
             background: var(--card);
             border: 1px solid var(--card-border);
@@ -45,9 +94,48 @@
             display: block; font-size: 13px; font-weight: 500;
             color: var(--text); margin-bottom: 6px;
         }
+        .field.field-missing input {
+            border-color: var(--danger, #f44336);
+            box-shadow: 0 0 0 2px rgba(244, 67, 54, 0.08);
+        }
         .field-hint {
             font-size: 11px; color: var(--text-muted);
             margin-top: 4px; line-height: 1.4;
+        }
+
+        .setup-checklist {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            padding: 0;
+            margin: 0 0 18px;
+            list-style: none;
+        }
+        .setup-check-item {
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 9px 10px;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 12px;
+            background: var(--input-bg);
+        }
+        .setup-check-item[data-state="complete"] {
+            border-color: rgba(76, 175, 80, 0.38);
+            color: var(--text);
+        }
+        .setup-check-status {
+            flex: 0 0 auto;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .setup-check-item[data-state="complete"] .setup-check-status {
+            color: var(--success, #4caf50);
         }
 
         .pw-row {
@@ -122,6 +210,19 @@
         .help a { color: var(--primary); }
 
         #loadingState { padding: 40px 0; text-align: center; color: var(--text-secondary); }
+
+        @media (max-width: 520px) {
+            main { padding: 18px 12px; }
+            .setup-summary { display: block; }
+            .setup-summary-link {
+                display: inline-block;
+                margin-top: 10px;
+            }
+            .setup-checklist { grid-template-columns: 1fr; }
+            .pw-row { align-items: stretch; }
+            .pw-toggle { min-width: 42px; }
+            .actions .btn { flex: 1 1 100%; }
+        }
     </style>
 </head>
 
@@ -139,59 +240,93 @@
                     將你的 4 組 X OAuth 1.0a 金鑰儲存至裝置保管庫。機器人發推時會使用這些憑證，其他人無法讀取。
                 </p>
 
+                <div class="setup-summary" id="setupSummary" role="status" aria-live="polite" aria-atomic="true" data-state="empty">
+                    <div>
+                        <span class="setup-summary-label">Setup progress / 設定進度</span>
+                        <strong id="setupProgressText">0 of 4 keys entered / 已填 0/4 組金鑰</strong>
+                        <span class="setup-summary-hint" id="setupProgressHint">
+                            Enter all credentials to enable a vault save. / 輸入全部憑證後才能儲存。
+                        </span>
+                    </div>
+                    <a class="setup-summary-link" href="publisher.html">Back to Publisher / 返回發布器</a>
+                </div>
+
                 <div class="card">
                     <div class="section-title">Credentials / 憑證</div>
+
+                    <ul class="setup-checklist" aria-label="X credential setup checklist">
+                        <li class="setup-check-item" data-key-item="xConsumerKey" data-state="missing">
+                            <span>Consumer Key / 消費者金鑰</span>
+                            <span class="setup-check-status" id="state-xConsumerKey">Missing / 未填</span>
+                        </li>
+                        <li class="setup-check-item" data-key-item="xConsumerSecret" data-state="missing">
+                            <span>Consumer Secret / 消費者密鑰</span>
+                            <span class="setup-check-status" id="state-xConsumerSecret">Missing / 未填</span>
+                        </li>
+                        <li class="setup-check-item" data-key-item="xAccessToken" data-state="missing">
+                            <span>Access Token / 存取權杖</span>
+                            <span class="setup-check-status" id="state-xAccessToken">Missing / 未填</span>
+                        </li>
+                        <li class="setup-check-item" data-key-item="xAccessTokenSecret" data-state="missing">
+                            <span>Access Token Secret / 存取權杖密鑰</span>
+                            <span class="setup-check-status" id="state-xAccessTokenSecret">Missing / 未填</span>
+                        </li>
+                    </ul>
 
                     <div class="field">
                         <label for="xConsumerKey">Consumer Key / 消費者金鑰</label>
                         <div class="pw-row">
-                            <input type="password" id="xConsumerKey" autocomplete="off" spellcheck="false">
+                            <input type="password" id="xConsumerKey" autocomplete="off" spellcheck="false"
+                                aria-describedby="hint-xConsumerKey state-xConsumerKey" aria-invalid="false">
                             <button type="button" class="pw-toggle"
                                 data-visibility-label="consumer key"
                                 aria-label="Show consumer key"
                                 title="Show consumer key"
                                 onclick="togglePw('xConsumerKey', this)">👁</button>
                         </div>
-                        <div class="field-hint">From X Developer Portal → App → Keys and tokens → API Key.</div>
+                        <div class="field-hint" id="hint-xConsumerKey">From X Developer Portal → App → Keys and tokens → API Key.</div>
                     </div>
 
                     <div class="field">
                         <label for="xConsumerSecret">Consumer Secret / 消費者密鑰</label>
                         <div class="pw-row">
-                            <input type="password" id="xConsumerSecret" autocomplete="off" spellcheck="false">
+                            <input type="password" id="xConsumerSecret" autocomplete="off" spellcheck="false"
+                                aria-describedby="hint-xConsumerSecret state-xConsumerSecret" aria-invalid="false">
                             <button type="button" class="pw-toggle"
                                 data-visibility-label="consumer secret"
                                 aria-label="Show consumer secret"
                                 title="Show consumer secret"
                                 onclick="togglePw('xConsumerSecret', this)">👁</button>
                         </div>
-                        <div class="field-hint">Paired with the Consumer Key. AKA "API Key Secret".</div>
+                        <div class="field-hint" id="hint-xConsumerSecret">Paired with the Consumer Key. AKA "API Key Secret".</div>
                     </div>
 
                     <div class="field">
                         <label for="xAccessToken">Access Token / 存取權杖</label>
                         <div class="pw-row">
-                            <input type="password" id="xAccessToken" autocomplete="off" spellcheck="false">
+                            <input type="password" id="xAccessToken" autocomplete="off" spellcheck="false"
+                                aria-describedby="hint-xAccessToken state-xAccessToken" aria-invalid="false">
                             <button type="button" class="pw-toggle"
                                 data-visibility-label="access token"
                                 aria-label="Show access token"
                                 title="Show access token"
                                 onclick="togglePw('xAccessToken', this)">👁</button>
                         </div>
-                        <div class="field-hint">Generated in X Developer Portal under your App → Keys and tokens → Access Token.</div>
+                        <div class="field-hint" id="hint-xAccessToken">Generated in X Developer Portal under your App → Keys and tokens → Access Token.</div>
                     </div>
 
                     <div class="field">
                         <label for="xAccessTokenSecret">Access Token Secret / 存取權杖密鑰</label>
                         <div class="pw-row">
-                            <input type="password" id="xAccessTokenSecret" autocomplete="off" spellcheck="false">
+                            <input type="password" id="xAccessTokenSecret" autocomplete="off" spellcheck="false"
+                                aria-describedby="hint-xAccessTokenSecret state-xAccessTokenSecret" aria-invalid="false">
                             <button type="button" class="pw-toggle"
                                 data-visibility-label="access token secret"
                                 aria-label="Show access token secret"
                                 title="Show access token secret"
                                 onclick="togglePw('xAccessTokenSecret', this)">👁</button>
                         </div>
-                        <div class="field-hint">Paired with the Access Token.</div>
+                        <div class="field-hint" id="hint-xAccessTokenSecret">Paired with the Access Token.</div>
                     </div>
 
                     <p class="help">
@@ -202,12 +337,12 @@
 
                     <div class="actions">
                         <button type="button" class="btn btn-outline" onclick="clearForm()">Clear / 清空</button>
-                        <button type="button" class="btn btn-primary" id="saveBtn" onclick="saveToVault()">
+                        <button type="button" class="btn btn-primary" id="saveBtn" onclick="saveToVault()" disabled>
                             Save to vault / 儲存至保管庫
                         </button>
                     </div>
 
-                    <div id="result" class="result"></div>
+                    <div id="result" class="result" role="status" aria-live="polite" aria-atomic="true"></div>
                 </div>
             </div>
         </div>
@@ -224,11 +359,58 @@
         // or via the iOS/Android URL-param auth fallback.
 
         const X_KEYS = [
-            ['xConsumerKey',       'X_CONSUMER_KEY'],
-            ['xConsumerSecret',    'X_CONSUMER_SECRET'],
-            ['xAccessToken',       'X_ACCESS_TOKEN'],
-            ['xAccessTokenSecret', 'X_ACCESS_TOKEN_SECRET']
+            ['xConsumerKey',       'X_CONSUMER_KEY',        'Consumer Key'],
+            ['xConsumerSecret',    'X_CONSUMER_SECRET',     'Consumer Secret'],
+            ['xAccessToken',       'X_ACCESS_TOKEN',        'Access Token'],
+            ['xAccessTokenSecret', 'X_ACCESS_TOKEN_SECRET', 'Access Token Secret']
         ];
+        let hasAttemptedSave = false;
+
+        function getCompletedKeyCount() {
+            return X_KEYS.filter(([id]) => {
+                const el = document.getElementById(id);
+                return Boolean(el && el.value.trim());
+            }).length;
+        }
+
+        function updateSetupState() {
+            const completed = getCompletedKeyCount();
+            const complete = completed === X_KEYS.length;
+            const summary = document.getElementById('setupSummary');
+            const progress = document.getElementById('setupProgressText');
+            const hint = document.getElementById('setupProgressHint');
+            const btn = document.getElementById('saveBtn');
+
+            if (summary) summary.dataset.state = complete ? 'complete' : (completed > 0 ? 'partial' : 'empty');
+            if (progress) progress.textContent = completed + ' of 4 keys entered / 已填 ' + completed + '/4 組金鑰';
+            if (hint) {
+                hint.textContent = complete
+                    ? 'Ready to save. Secret values stay hidden in this checklist. / 可以儲存了，清單不會顯示金鑰內容。'
+                    : 'Enter all credentials to enable a vault save. / 輸入全部憑證後才能儲存。';
+            }
+
+            for (const [id] of X_KEYS) {
+                const input = document.getElementById(id);
+                const filled = Boolean(input && input.value.trim());
+                const item = document.querySelector('[data-key-item="' + id + '"]');
+                const status = document.getElementById('state-' + id);
+                const field = input ? input.closest('.field') : null;
+                if (item) item.dataset.state = filled ? 'complete' : 'missing';
+                if (status) status.textContent = filled ? 'Ready / 已填' : 'Missing / 未填';
+                if (input) input.setAttribute('aria-invalid', hasAttemptedSave && !filled ? 'true' : 'false');
+                if (field) field.classList.toggle('field-missing', hasAttemptedSave && !filled);
+            }
+
+            if (btn && btn.dataset.busy !== 'true') btn.disabled = !complete;
+        }
+
+        function bindSetupStateInputs() {
+            for (const [id] of X_KEYS) {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', updateSetupState);
+            }
+            updateSetupState();
+        }
 
         function togglePw(id, btn) {
             const el = document.getElementById(id);
@@ -247,6 +429,8 @@
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             }
+            hasAttemptedSave = false;
+            updateSetupState();
             hideResult();
         }
 
@@ -265,6 +449,8 @@
 
         async function saveToVault() {
             hideResult();
+            hasAttemptedSave = true;
+            updateSetupState();
             if (!window.currentUser || !window.currentUser.deviceId || !window.currentUser.deviceSecret) {
                 showResult('Not authenticated. / 尚未登入。', 'error');
                 return;
@@ -279,11 +465,13 @@
                 vars[keyName] = v;
             }
             if (missing.length > 0) {
+                updateSetupState();
                 showResult('All 4 keys are required (missing: ' + missing.join(', ') + ') / 4 組金鑰皆為必填', 'error');
                 return;
             }
 
             const btn = document.getElementById('saveBtn');
+            btn.dataset.busy = 'true';
             btn.disabled = true;
             btn.textContent = 'Saving… / 儲存中…';
 
@@ -317,8 +505,9 @@
             } catch (e) {
                 showResult('Save failed: ' + (e.message || e) + ' / 儲存失敗', 'error');
             } finally {
-                btn.disabled = false;
+                btn.dataset.busy = 'false';
                 btn.textContent = 'Save to vault / 儲存至保管庫';
+                updateSetupState();
             }
         }
 
@@ -328,6 +517,7 @@
                 if (!user) return; // checkAuth redirects on failure
                 document.getElementById('loadingState').style.display = 'none';
                 document.getElementById('pageContent').style.display = 'block';
+                bindSetupStateInputs();
             } catch (e) {
                 document.getElementById('loadingState').textContent =
                     'Auth error: ' + (e.message || e);
