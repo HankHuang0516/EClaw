@@ -1257,6 +1257,15 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Mission Note/Add Fix**: `note/add` reads `deviceId` from merged query+body like `authenticate()` — fixes null device_id 500 (#3696)
 - **Feedback Photo Metadata Safety**: Feedback photo metadata safety copy for EXIF strip (#3711)
 
+### Recent Features (v1.1190.x+, 2026-06-25 – 2026-06-26)
+
+- **Action Requests ("需要你" HITL Inbox)**: Full HITL (Human-in-the-Loop) action request system — `agent-action-requests.js` backend model with `agent_action_requests` table; `POST /api/action-requests/emit` + `GET /api/action-requests/list` + `POST /api/action-requests/:id/resolve` API; auto-resolve on smart-quote reply via `/api/client/speak`; consensus type + real-time Socket.IO push (`action_request:new`, `action_request:resolved`); timeout-policy worker (a/b/c/d enforcement + consensus auto-execute); frontend socket live-refresh + consensus UI + settings panel; default-collapsed summary + lifecycle hardening (#3726–#3741)
+- **Kanban Notify on Assign/Comment**: Notify agents on (re)assign + @-mentioned comment with latest comment context (#3727)
+- **Kanban Debug Flag**: Gate verbose `[Kanban]` console.log behind `KANBAN_DEBUG` flag (#3725)
+- **iOS Update-Chip Fixes**: Send `appVersion` to `/api/version` so update-chip can trigger (#3720); declare `itms-apps` in `LSApplicationQueriesSchemes` for deep-link (#3723)
+- **Portal QA/UIUX Sweep**: i18n fallback + a11y labels (#3721)
+- **Idle Dispatch Guard**: Guard non-integer `botId` before SQL int cast (#3715)
+
 ### Recent Features (v1.1190.x+, 2026-06-22 – 2026-06-23)
 
 - **Community Filter URL Persistence**: community.html search/sort/rate filters persisted in URL for reload/back/share (#3694)
@@ -1280,7 +1289,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~5283 test cases across 379 Jest files + 59 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~5412 test cases across 395 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
