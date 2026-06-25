@@ -147,11 +147,20 @@ router.get('/bot-status/:botId', async (req, res) => {
             return res.status(401).json({ success: false, error: 'Authentication required' });
         }
 
-        const busy = await isBotBusy(deviceId, parseInt(botId));
+        // Validate botId is a real integer BEFORE it reaches the SQL int cast
+        // (isBotBusy does `to_jsonb($2::int)`). A non-numeric path param would
+        // otherwise parseInt → NaN → Postgres "invalid input syntax for type
+        // integer: \"NaN\"" (logged as "Bot status error"). Reject up front.
+        const botEntityId = Number.parseInt(botId, 10);
+        if (!Number.isInteger(botEntityId)) {
+            return res.status(400).json({ success: false, error: 'Invalid botId — must be an integer' });
+        }
+
+        const busy = await isBotBusy(deviceId, botEntityId);
 
         res.json({
             success: true,
-            botEntityId: parseInt(botId),
+            botEntityId,
             isBusy: busy,
             status: busy ? 'busy' : 'idle'
         });
