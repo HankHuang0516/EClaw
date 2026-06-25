@@ -46,6 +46,7 @@ const { tKanban, statusLabel } = require('./i18n/kanban-notifications');
 const devicePrefs = require('./device-preferences');
 const { emit: emitKanbanEvent } = require('./lib/kanban-events');
 const { resolveEntityHostDevice } = require('./lib/per-device-cron');
+const mentionParser = require('./mention-parser');
 
 // Cache device→language to avoid repeated lookups
 const deviceLangCache = new Map();
@@ -609,6 +610,36 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         const API_BASE = 'https://eclawbot.com';
         const SOURCE_TAG = 'kanban_notify';
 
+        // ── Latest-comment enrichment (card_cc20541e) ──
+        // Assignment/@-mention notifications carry the most actionable context
+        // when they include the latest留言. Prefer an explicitly-passed
+        // latestComment (the @-mention path already has the text in hand); else,
+        // when a cardId is given, fetch the newest non-system comment row so the
+        // push always reflects the current discussion. Bounded to keep the push
+        // payload sane. Best-effort: a failed fetch must never block the push.
+        const LATEST_COMMENT_MAX = 1500;
+        let latestComment = typeof options.latestComment === 'string' ? options.latestComment : null;
+        if (!latestComment && cardId) {
+            try {
+                const c = await pool.query(
+                    `SELECT text FROM kanban_comments
+                      WHERE card_id = $1 AND is_system = false
+                      ORDER BY created_at DESC
+                      LIMIT 1`,
+                    [cardId]
+                );
+                if (c.rows[0]?.text) latestComment = c.rows[0].text;
+            } catch (e) {
+                console.warn(`[Kanban] latest-comment fetch failed for card ${cardId}:`, e.message);
+            }
+        }
+        if (latestComment && latestComment.length > LATEST_COMMENT_MAX) {
+            latestComment = latestComment.slice(0, LATEST_COMMENT_MAX) + '…';
+        }
+        const commentBlock = latestComment
+            ? `\n\n[LATEST COMMENT]\n${latestComment}\n[/LATEST COMMENT]`
+            : '';
+
         for (const eid of entityIds) {
             try {
                 // ── Per-device host resolution ──
@@ -710,7 +741,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     const result = await pushToChannelCallback(pushDeviceId, pushEid, {
                         event: 'kanban_notification',
                         from: 'kanban',
-                        text: message + descBlock,
+                        text: message + descBlock + commentBlock,
                         eclaw_context: {
                             expectsReply: true,
                             silentToken: '[SILENT]',
@@ -724,6 +755,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     const pushMsg = [
                         `[KANBAN NOTIFICATION] ${message}`,
                         descBlock,
+                        commentBlock,
                         `[NOTIFICATION — NO REPLY EXPECTED] This is a Kanban task notification. Take action on the card as needed.`,
                         missionBlock,
                     ].filter(Boolean).join('\n');
@@ -739,7 +771,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
                 } else if (pushToEntity) {
                     // Legacy fallback
-                    const pushMsg = `[KANBAN NOTIFICATION] ${message}${descBlock}${missionBlock}`;
+                    const pushMsg = `[KANBAN NOTIFICATION] ${message}${descBlock}${commentBlock}${missionBlock}`;
                     await pushToEntity(pushDeviceId, pushEid, pushMsg);
                     console.log(`[Kanban] Legacy push to entity ${pushEid}@${pushDeviceId}`);
                 }
@@ -748,6 +780,49 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 console.error(`[Kanban] Failed to push to entity ${eid}:`, e.message);
             }
         }
+    }
+
+    // ── @-mention resolution for card comments (card_cc20541e) ──
+    // Reuse the platform's canonical mention parser (backend/mention-parser.js)
+    // so card comments accept the exact same token forms as chat: @#N / @N
+    // (same-device entityId), <@N>, @xxxxxx / <@xxxxxx> (6-char publicCode),
+    // and same-device display names. The parser needs a publicCodeIndex to
+    // resolve publicCode tokens; the kanban module is same-device only, so we
+    // synthesize a minimal index from the card's own device bindings rather
+    // than threading the global index through the factory. Returns an array of
+    // same-device entityIds that were @-mentioned.
+    function resolveCommentMentions(deviceId, text) {
+        if (!text || typeof text !== 'string') return [];
+        const device = devices[deviceId];
+        const entities = device?.entities || {};
+        // Per-device publicCode → { deviceId, entityId } so @xxxxxx resolves
+        // without the global publicCodeIndex (cross-device mentions are out of
+        // scope for kanban notifications — same device only).
+        const localPublicCodeIndex = {};
+        for (const [eidRaw, entity] of Object.entries(entities)) {
+            if (entity?.isBound && entity?.publicCode) {
+                localPublicCodeIndex[entity.publicCode] = { deviceId, entityId: parseInt(eidRaw, 10) };
+            }
+        }
+        let parsed;
+        try {
+            parsed = mentionParser.parseMentions(text, {
+                senderDeviceId: deviceId,
+                devices,
+                publicCodeIndex: localPublicCodeIndex,
+            });
+        } catch (e) {
+            console.warn('[Kanban] mention parse failed:', e.message);
+            return [];
+        }
+        const ids = new Set();
+        for (const m of (parsed.mentions || [])) {
+            // Same-device, bound entity only.
+            if (m && !m.isCrossDevice && m.deviceId === deviceId && Number.isFinite(m.entityId)) {
+                ids.add(Number(m.entityId));
+            }
+        }
+        return [...ids];
     }
 
     // ── Smart-queue notify helpers (card_dfe3b8df Phase 2 + #2307 hotfix) ──
@@ -2165,6 +2240,37 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             }
 
             await bumpVersion(deviceId);
+
+            // ── A. Notify on (re)assignment (card_cc20541e) ──
+            // When this PUT ADDS new entity ids to assigned_bots, ping ONLY the
+            // newly-added ids (not the whole assigned set — that would re-spam
+            // unchanged assignees on every edit). Best-effort, fire-and-forget:
+            // a notify failure must never break the 200 response. Mirrors the
+            // create-path notify (line ~1234) so a card assigned via edit gets
+            // the same task brief the create flow would have delivered.
+            if (assignedBots !== undefined && Array.isArray(assignedBots)) {
+                try {
+                    const before = existing.rows[0];
+                    const updated = result.rows[0];
+                    const prevSet = new Set(
+                        (Array.isArray(before.assigned_bots) ? before.assigned_bots : []).map(Number)
+                    );
+                    const newlyAdded = (Array.isArray(updated.assigned_bots) ? updated.assigned_bots : [])
+                        .map(Number)
+                        .filter(id => Number.isFinite(id) && !prevSet.has(id));
+                    if (newlyAdded.length > 0) {
+                        const lang = await getDeviceLanguage(deviceId);
+                        const msg = tKanban(lang, 'assignedToYou', { title: updated.title });
+                        notifyEntities(deviceId, newlyAdded, msg, {
+                            description: updated.description,
+                            cardId: updated.id,
+                        });
+                    }
+                } catch (notifyErr) {
+                    console.error('[Kanban] assign-notify failed:', notifyErr.message);
+                }
+            }
+
             res.json({ success: true, card: serializeCard(result.rows[0]) });
         } catch (err) {
             console.error('[Kanban] Update card error:', err);
@@ -2730,7 +2836,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
         try {
             const cardCheck = await pool.query(
-                `SELECT id, assigned_bots FROM kanban_cards WHERE id = $1 AND device_id = $2`,
+                `SELECT id, title, assigned_bots FROM kanban_cards WHERE id = $1 AND device_id = $2`,
                 [cardId, deviceId]
             );
             if (cardCheck.rows.length === 0) {
@@ -2761,6 +2867,32 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             await bumpVersion(deviceId);
 
             res.json({ success: true, comment });
+
+            // ── B. Notify @-mentioned entities (card_cc20541e) ──
+            // ANTI-SPAM: only an @-mention triggers a push — a plain comment
+            // notifies nobody (the create/move/reopen paths already cover
+            // assignment-time pings). Fired AFTER res.json so notify latency
+            // never delays the comment response; wrapped so a failure can't
+            // surface as an unhandled rejection. The mentioned entity gets the
+            // comment text itself as the actionable brief (latestComment).
+            try {
+                const commentText = result.rows[0].text;
+                const mentionedIds = resolveCommentMentions(deviceId, commentText)
+                    // Don't ping a bot for its OWN comment.
+                    .filter(id => id !== eId);
+                if (mentionedIds.length > 0) {
+                    const lang = await getDeviceLanguage(deviceId);
+                    const msg = tKanban(lang, 'commentMention', { title: cardCheck.rows[0].title });
+                    for (const mentionedId of mentionedIds) {
+                        notifyEntities(deviceId, [mentionedId], msg, {
+                            cardId,
+                            latestComment: commentText,
+                        });
+                    }
+                }
+            } catch (notifyErr) {
+                console.error('[Kanban] comment-mention notify failed:', notifyErr.message);
+            }
         } catch (err) {
             console.error('[Kanban] Add comment error:', err);
             res.status(500).json({ success: false, error: err.message });
