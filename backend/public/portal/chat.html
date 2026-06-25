@@ -8486,6 +8486,18 @@
             // restore them (and their action-request binding) instead of orphaning
             // the request (card_b176c435).
             const replyContextsSnapshot = replyContexts.slice();
+            // Restore the optimistically-cleared quote chips + their action-request
+            // binding on ANY abort path — the early-return guards below (uploads still
+            // pending / no routing target) as well as the catch. Without this a send
+            // that never leaves the client silently orphans the staged reply with no
+            // feedback (card_2625ae06; extends the catch-only restore of card_b176c435).
+            const restoreReplyContextsOnAbort = () => {
+                if (replyContextsSnapshot.length && replyContexts.length === 0) {
+                    replyContexts = replyContextsSnapshot.slice();
+                    renderReplyPreviews();
+                    recomputeAutoReceivers();
+                }
+            };
             let finalText = text;
             if (replyContexts.length) {
                 // One "↩ …" line per quote so the recipient entity receives EVERY
@@ -8519,6 +8531,7 @@
             // Check if any files still uploading
             if (pendingFiles.some(f => f.status === 'uploading')) {
                 showToast(i18n.t('chat_wait_upload') || 'Please wait for uploads to finish', 'error');
+                restoreReplyContextsOnAbort();
                 return;
             }
 
@@ -8557,6 +8570,7 @@
 
             if (targets.local.length === 0 && targets.contacts.length === 0) {
                 showToast(i18n.t('chat_select_entity'), 'error');
+                restoreReplyContextsOnAbort();
                 return;
             }
 
@@ -8733,11 +8747,7 @@
                 // Send failed — the request was never resolved server-side, so
                 // restore the quote chips (incl. the action-request binding) the
                 // optimistic clear removed, letting the user retry (card_b176c435).
-                if (replyContextsSnapshot.length && replyContexts.length === 0) {
-                    replyContexts = replyContextsSnapshot.slice();
-                    renderReplyPreviews();
-                    recomputeAutoReceivers();
-                }
+                restoreReplyContextsOnAbort();
             } finally {
                 btn.disabled = false;
                 input.focus();
