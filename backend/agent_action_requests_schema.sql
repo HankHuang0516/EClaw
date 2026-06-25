@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS agent_action_requests (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     resolved_at TIMESTAMPTZ DEFAULT NULL,
     CONSTRAINT aar_prompt_len CHECK (char_length(prompt) BETWEEN 1 AND 2000),
-    CONSTRAINT aar_type_valid CHECK (type IN ('decision','approval','input','credential','review','clarify')),
+    CONSTRAINT aar_type_valid CHECK (type IN ('decision','approval','input','credential','review','clarify','consensus')),
     CONSTRAINT aar_status_valid CHECK (status IN ('pending','resolved','dismissed'))
 );
 

@@ -650360,6 +650360,7 @@ const TRANSLATIONS = {
         "action_request_type_credential": "Credential",
         "action_request_type_review": "Review",
         "action_request_type_clarify": "Clarify",
+        "action_request_type_consensus": "Consensus",
 
         "kb_toast_moved": "Moved to {col}",
         "kb_toast_archived": "Archived",
@@ -1235367,6 +1235368,7 @@ const TRANSLATIONS = {
         "action_request_type_credential": "憑證",
         "action_request_type_review": "審查",
         "action_request_type_clarify": "釐清",
+        "action_request_type_consensus": "協商共識",
 
         "kb_toast_moved": "已移到 {col}",
         "kb_toast_archived": "已封存",
