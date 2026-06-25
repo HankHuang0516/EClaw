@@ -2,9 +2,10 @@
 .info-tabs {
     display: flex;
     gap: 4px;
+    flex-wrap: wrap;
     border-bottom: 1px solid var(--card-border);
     margin-bottom: 32px;
-    overflow-x: auto;
+    overflow-x: visible;
     scrollbar-width: none;
 }
 
@@ -28,6 +29,29 @@
 .info-tab.active {
     color: var(--primary);
     border-bottom-color: var(--primary);
+}
+
+.info-tab-picker {
+    display: none;
+}
+
+.info-tab-picker-label {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.info-tab-select {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    color: var(--text);
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    font: inherit;
 }
 
 .info-panel { display: none; }
@@ -1219,9 +1243,12 @@
     }
     .guide-sub-btn.active { border-left: none; border-bottom-color: var(--primary); }
     .guide-sidebar-btn .expand-arrow { display: none; }
-    .info-tab { padding: 8px 10px; font-size: 12px; }
-    .info-tabs { -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
-    .info-tab { scroll-snap-align: start; flex-shrink: 0; }
+    .info-tabs { display: none; }
+    .info-tab-picker {
+        display: grid;
+        gap: 6px;
+        margin: 0 0 20px;
+    }
     .cmp-channels { gap: 8px; }
     .cmp-channel-header { padding: 14px 10px; }
     .cmp-channel-icon { font-size: 32px; }
