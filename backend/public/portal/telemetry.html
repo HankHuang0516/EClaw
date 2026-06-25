@@ -52,7 +52,43 @@
             border: 1px solid var(--card-border);
         }
         .tel-btn.danger { background: #c0392b; }
+        .tel-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
         .tel-btn:hover { opacity: 0.85; }
+
+        .tel-context-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            margin-bottom: 16px;
+        }
+        .tel-context-panel[data-state="filtered"] {
+            border-color: rgba(var(--primary-rgb, 74, 144, 226), 0.55);
+            box-shadow: 0 0 0 1px rgba(var(--primary-rgb, 74, 144, 226), 0.08);
+        }
+        .tel-context-panel[data-state="error"] {
+            border-color: rgba(255, 68, 68, 0.35);
+        }
+        .tel-context-title {
+            margin: 0 0 4px;
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .tel-context-meta {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .tel-clear-filter[hidden] { display: none; }
 
         .tel-summary {
             display: grid;
@@ -118,6 +154,10 @@
             white-space: nowrap;
         }
         table.tel-table td.col-detail { word-break: break-all; }
+        .tel-table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
         .tel-empty {
             color: var(--text-secondary);
             font-size: 13px;
@@ -137,6 +177,13 @@
         .tel-note { color: var(--text-secondary); font-size: 12px; margin-top: 6px; }
         @media (max-width: 720px) {
             .tel-actions { margin-left: 0; width: 100%; }
+            .tel-actions .tel-btn { flex: 1 1 140px; }
+            .tel-context-panel {
+                align-items: stretch;
+                flex-direction: column;
+            }
+            .tel-clear-filter { width: 100%; }
+            table.tel-table { min-width: 520px; }
         }
     </style>
 </head>
@@ -181,13 +228,21 @@
                 </div>
             </div>
 
+            <div id="telemetryContext" class="tel-context-panel" role="status" aria-live="polite" aria-atomic="true" data-state="loading">
+                <div>
+                    <p id="telemetryContextTitle" class="tel-context-title">Loading telemetry / 載入 telemetry 中</p>
+                    <p id="telemetryContextMeta" class="tel-context-meta">Fetching the latest device buffer / 正在讀取最新裝置緩衝區</p>
+                </div>
+                <button id="clearTypeFilter" class="tel-btn secondary tel-clear-filter" type="button" hidden>Clear type filter / 清除類型篩選</button>
+            </div>
+
             <div id="errorBanner" class="tel-error" style="display: none;"></div>
 
             <div class="tel-summary" id="summaryGrid"></div>
 
             <div class="tel-section">
                 <h2 data-i18n="[html]telemetry_entries">Recent entries</h2>
-                <div style="overflow-x:auto;">
+                <div class="tel-table-wrap">
                     <table class="tel-table">
                         <thead>
                             <tr>
@@ -212,6 +267,16 @@
     <script src="shared/footer.js"></script>
     <script>
         let refreshTimer = null;
+        let lastTelemetryCount = 0;
+        let telemetryFetchSeq = 0;
+
+        function tt(key, fallback) {
+            if (typeof i18n !== 'undefined' && i18n.t) {
+                const value = i18n.t(key);
+                return value && value !== key ? value : fallback;
+            }
+            return fallback;
+        }
 
         function showError(msg) {
             const el = document.getElementById('errorBanner');
@@ -233,6 +298,55 @@
             return `${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
         }
 
+        function selectedTypeLabel(type) {
+            if (!type) return tt('[html]telemetry_type_all', 'All');
+            return type;
+        }
+
+        function setTelemetryBusy(isBusy) {
+            const content = document.getElementById('telemetryContent');
+            const refreshBtn = document.getElementById('refreshBtn');
+            if (content) content.setAttribute('aria-busy', isBusy ? 'true' : 'false');
+            if (refreshBtn) refreshBtn.disabled = !!isBusy;
+        }
+
+        function updateTelemetryContext(options = {}) {
+            const context = document.getElementById('telemetryContext');
+            const title = document.getElementById('telemetryContextTitle');
+            const meta = document.getElementById('telemetryContextMeta');
+            const clear = document.getElementById('clearTypeFilter');
+            const typeSel = document.getElementById('typeSel');
+            const limitSel = document.getElementById('limitSel');
+            if (!context || !title || !meta || !clear || !typeSel || !limitSel) return;
+
+            const type = typeSel.value;
+            const limit = limitSel.value || '100';
+            const filtered = !!type;
+            const state = options.state || (filtered ? 'filtered' : 'all');
+            context.dataset.state = state;
+            clear.hidden = !filtered;
+            clear.disabled = !filtered;
+
+            if (state === 'loading') {
+                title.textContent = tt('[html]telemetry_status_loading', 'Loading telemetry / 載入 telemetry 中');
+                meta.textContent = tt('[html]telemetry_status_loading_meta', 'Fetching the latest device buffer / 正在讀取最新裝置緩衝區');
+                return;
+            }
+            if (state === 'error') {
+                title.textContent = tt('[html]telemetry_status_error', 'Telemetry load failed / Telemetry 載入失敗');
+                meta.textContent = tt('[html]telemetry_status_error_meta', 'Keep filters in place, then refresh after the issue is fixed / 保留目前篩選，修復後可重新整理');
+                return;
+            }
+
+            const count = typeof options.count === 'number' ? options.count : lastTelemetryCount;
+            const typeLabel = selectedTypeLabel(type);
+            const when = fmtTime(new Date().toISOString());
+            title.textContent = filtered
+                ? `Showing ${typeLabel} telemetry / 顯示 ${typeLabel} 類型 telemetry`
+                : tt('[html]telemetry_status_all', 'Showing all telemetry / 顯示全部 telemetry');
+            meta.textContent = `${fmtNumber(count)} entries loaded, limit ${limit}, updated ${when} / 已載入 ${fmtNumber(count)} 筆，限制 ${limit}，更新 ${when}`;
+        }
+
         function escapeHtml(s) {
             return String(s == null ? '' : s)
                 .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -242,7 +356,7 @@
         function renderSummary(s) {
             const grid = document.getElementById('summaryGrid');
             grid.innerHTML = '';
-            const totalLabel = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t('[html]telemetry_total_label', 'Total entries') : 'Total entries';
+            const totalLabel = tt('[html]telemetry_total_label', 'Total entries');
             const cards = [
                 { label: totalLabel, value: fmtNumber(s.total || 0) }
             ];
@@ -280,7 +394,10 @@
                 td.colSpan = 3;
                 td.className = 'tel-empty';
                 td.setAttribute('data-i18n', '[html]telemetry_no_entries');
-                td.textContent = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t('[html]telemetry_no_entries', 'No telemetry entries in buffer.') : 'No telemetry entries in buffer.';
+                const type = document.getElementById('typeSel')?.value || '';
+                td.textContent = type
+                    ? `No ${selectedTypeLabel(type)} telemetry entries in buffer. / 緩衝區沒有 ${selectedTypeLabel(type)} telemetry。`
+                    : tt('[html]telemetry_no_entries', 'No telemetry entries in buffer.');
                 tr.appendChild(td); tbody.appendChild(tr);
                 return;
             }
@@ -304,10 +421,12 @@
             const user = window.currentUser;
             if (!user || !user.deviceId || !user.deviceSecret) {
                 showError('Not signed in or missing device credentials.');
+                updateTelemetryContext({ state: 'error' });
                 return;
             }
             const type = document.getElementById('typeSel').value;
             const limit = document.getElementById('limitSel').value;
+            const requestSeq = ++telemetryFetchSeq;
 
             const qs = new URLSearchParams({
                 deviceId: user.deviceId,
@@ -318,21 +437,39 @@
 
             try {
                 showError('');
+                setTelemetryBusy(true);
+                updateTelemetryContext({ state: 'loading' });
                 const summary = await apiCall('GET', `/api/device-telemetry/summary?deviceId=${encodeURIComponent(user.deviceId)}&deviceSecret=${encodeURIComponent(user.deviceSecret)}`);
+                if (requestSeq !== telemetryFetchSeq) return;
                 renderSummary(summary || {});
 
                 const data = await apiCall('GET', `/api/device-telemetry?${qs.toString()}`);
-                renderEntries((data && data.entries) || []);
+                if (requestSeq !== telemetryFetchSeq) return;
+                const entries = (data && data.entries) || [];
+                lastTelemetryCount = entries.length;
+                renderEntries(entries);
+                updateTelemetryContext({ count: entries.length });
             } catch (e) {
+                if (requestSeq !== telemetryFetchSeq) return;
                 console.error('[Telemetry] Fetch failed:', e);
                 showError('Failed to load telemetry: ' + (e.message || e));
+                updateTelemetryContext({ state: 'error' });
+            } finally {
+                if (requestSeq === telemetryFetchSeq) setTelemetryBusy(false);
             }
+        }
+
+        function clearTypeFilter() {
+            const typeSel = document.getElementById('typeSel');
+            if (!typeSel || !typeSel.value) return;
+            typeSel.value = '';
+            fetchTelemetry();
         }
 
         async function clearBuffer() {
             const user = window.currentUser;
             if (!user || !user.deviceId || !user.deviceSecret) return;
-            const proceed = window.confirm((typeof i18n !== 'undefined' && i18n.t) ? i18n.t('[html]telemetry_clear_confirm', 'Clear the entire telemetry buffer for this device?') : 'Clear the entire telemetry buffer for this device?');
+            const proceed = window.confirm(tt('[html]telemetry_clear_confirm', 'Clear the entire telemetry buffer for this device?'));
             if (!proceed) return;
             try {
                 await apiCall('DELETE', '/api/device-telemetry', {
@@ -360,6 +497,7 @@
                 document.getElementById('limitSel').addEventListener('change', fetchTelemetry);
                 document.getElementById('refreshBtn').addEventListener('click', fetchTelemetry);
                 document.getElementById('clearBtn').addEventListener('click', clearBuffer);
+                document.getElementById('clearTypeFilter').addEventListener('click', clearTypeFilter);
 
                 await fetchTelemetry();
 
