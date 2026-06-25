@@ -179,12 +179,15 @@ function manifest(...features: SettingsManifestFeature[]): SettingsManifest {
 
 describe('planDynamicRows — Stage-2 auto-sync delta', () => {
   test('NEW web-only feature with no native row -> emits web row (the payoff)', () => {
-    const rows = planDynamicRows(manifest(f('rotate_secret', false)), '1.0.94');
+    // passive_health: still web-only (not in the iOS static screen nor a Stage-3
+    // native row), so it is exactly the auto-sync payoff. rotate_secret/
+    // switch_device used to live here but are now native (card_c3b13f64).
+    const rows = planDynamicRows(manifest(f('passive_health', false)), '1.0.94');
     expect(rows.length).toBe(1);
-    expect(rows[0].key).toBe('rotate_secret');
+    expect(rows[0].key).toBe('passive_health');
     expect(rows[0].gated).toBe(false);
     expect(rows[0].webFallback).toBe(
-      'https://eclawbot.com/portal/settings.html?focus=rotate_secret'
+      'https://eclawbot.com/portal/settings.html?focus=passive_health'
     );
   });
 
@@ -250,9 +253,11 @@ describe('planDynamicRows — Stage-2 auto-sync delta', () => {
   test('live-like iOS manifest -> only the features iOS does not render natively surface', () => {
     // Reflects the iOS static screen: account/subscription/language/notifications/
     // invite/wallet/my_rentals/files/feedback render natively; kanban_nudge is a
-    // web-backed static row. channel_api / display / chat_prefs /
-    // developer_broadcast / companion_petdx are NOT in the iOS static screen, so
-    // the manifest auto-surfaces them (the drift-fix the seam exists for).
+    // web-backed static row; rotate_secret/switch_device are Stage-3 native rows
+    // (card_c3b13f64) so they no longer auto-surface as web rows. channel_api /
+    // display / chat_prefs / developer_broadcast / companion_petdx are NOT in the
+    // iOS static screen, so the manifest auto-surfaces them (the drift-fix the
+    // seam exists for).
     const rows = planDynamicRows(
       manifest(
         f('account_identity', true, { minVer: '1.0.0' }),
@@ -273,8 +278,8 @@ describe('planDynamicRows — Stage-2 auto-sync delta', () => {
         f('files', true, { minVer: '1.0.0' }),
         f('companion_petdx', true, { minVer: '1.0.0' }), // not in iOS static -> web row
         f('feedback', true, { minVer: '1.0.0' }),
-        f('rotate_secret', false), // NEW web-only -> row
-        f('switch_device', false) // NEW web-only -> row
+        f('rotate_secret', false), // Stage-3 native row -> skip
+        f('switch_device', false) // Stage-3 native row -> skip
       ),
       '1.0.94'
     );
@@ -287,9 +292,19 @@ describe('planDynamicRows — Stage-2 auto-sync delta', () => {
       'agent_policy',
       'passive_health',
       'companion_petdx',
-      'rotate_secret',
-      'switch_device',
     ]);
     expect(rows.some((r) => r.gated)).toBe(false);
+  });
+
+  test('Stage-3 native rows (rotate_secret + switch_device) are covered natively -> no web rows', () => {
+    // card_c3b13f64: both are native:false in the manifest (no WebView surface to
+    // gate) but the iOS app now renders them as native settings rows, so the
+    // auto-sync planner must NOT emit duplicate web rows for them. Mirrors the
+    // Android SettingsManifestSyncTest.planDynamicRows_stage3NativeRows_areCoveredNatively.
+    const rows = planDynamicRows(
+      manifest(f('rotate_secret', false), f('switch_device', false)),
+      '1.0.94'
+    );
+    expect(rows).toEqual([]);
   });
 });

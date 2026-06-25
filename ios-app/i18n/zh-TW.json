@@ -268,7 +268,22 @@
     "open_on_web": "在網頁開啟",
     "update_available": "有可用更新 · v{{latest}}",
     "update_help_title": "有 App 更新",
-    "update_help_body": "有新版本(v{{latest}}),你目前是 v{{current}}。點「更新」開啟 App Store,在那裡點 Update 安裝 — Apple 不允許 App 內直接安裝。"
+    "update_help_body": "有新版本(v{{latest}}),你目前是 v{{current}}。點「更新」開啟 App Store,在那裡點 Update 安裝 — Apple 不允許 App 內直接安裝。",
+    "security_device": "安全與裝置",
+    "rotate_device_secret": "更換裝置密鑰",
+    "rotate_device_secret_hint": "若目前的裝置密鑰已外洩,可重新產生一組新密鑰。其他工作階段需使用新密鑰才能登入。",
+    "rotate_secret_confirm_title": "確定要更換裝置密鑰?",
+    "rotate_secret_confirm_btn": "更換",
+    "rotate_secret_success": "裝置密鑰已更換,新密鑰已儲存於此裝置。",
+    "rotate_secret_failed": "無法更換裝置密鑰,請再試一次。",
+    "switch_device": "切換裝置",
+    "switch_device_confirm": "切換",
+    "switch_device_hint": "將此 App 登入到另一個裝置 ID。若您有第二個擁有自己實體的管理員帳號,此功能很有用。",
+    "device_id": "裝置 ID",
+    "device_secret": "裝置密鑰",
+    "switch_device_success_title": "已切換裝置",
+    "switch_device_success_msg": "目前登入身分:{{account}}\nApp 將重新啟動以載入此裝置。",
+    "switch_device_restart": "立即重啟"
   },
   "entity": {
     "rename": "重新命名實體",

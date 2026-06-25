@@ -257,6 +257,17 @@ export const feedbackApi = {
 
 // ── Auth APIs ────────────────────────────────────────────────
 
+/** Response shape of POST /api/device/rotate-secret. `newDeviceSecret` is the
+ *  rotated secret, returned exactly ONCE — persist it immediately on success. */
+export interface RotateSecretResponse {
+  success: boolean;
+  deviceId?: string;
+  newDeviceSecret?: string;
+  rotatedAt?: string;
+  error?: string;
+  message?: string;
+}
+
 export const authApi = {
   /** Email + password login */
   login: (email: string, password: string) =>
@@ -269,6 +280,15 @@ export const authApi = {
   /** Login with device credentials (returns JWT) */
   deviceLogin: (deviceId: string, deviceSecret: string) =>
     apiClient.post('/api/auth/device-login', { deviceId, deviceSecret }),
+
+  /**
+   * Rotate this device's secret (Stage-3 native; mirrors the manifest
+   * rotate_secret feature → POST /api/device/rotate-secret). The backend returns
+   * the new secret ONCE in `newDeviceSecret`; the caller must persist it locally
+   * (overwriting the stored deviceSecret, same deviceId). 401 on mismatch.
+   */
+  rotateDeviceSecret: (deviceId: string, deviceSecret: string) =>
+    apiClient.post<RotateSecretResponse>('/api/device/rotate-secret', { deviceId, deviceSecret }),
 
   /** Forgot password — sends reset email */
   forgotPassword: (email: string) =>
