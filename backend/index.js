@@ -12206,6 +12206,26 @@ app.post('/api/client/speak', idempotencyMiddleware, clientSpeakDedupeMiddleware
     if (mentionWarnings.length > 0) {
         clientSpeakResponse.warnings = (clientSpeakResponse.warnings || []).concat(mentionWarnings);
     }
+
+    // ── "需要你" smart-quote auto-resolve (card_b51598b7) ──
+    // A freeform quoted reply to a pending action-request carries
+    // actionRequest:{ requestId } (the inbox 回覆 button anchored it). The
+    // message above is already saved; now mark that request resolved with the
+    // user's reply text as the answer. Device-scoped + pending-only inside the
+    // helper. Best-effort: a failure here must NEVER break the speak response.
+    try {
+        const arReqId = req.body && req.body.actionRequest && req.body.actionRequest.requestId;
+        if (arReqId && agentActionRequestsModule && typeof agentActionRequestsModule.resolveActionRequest === 'function') {
+            const row = await agentActionRequestsModule.resolveActionRequest(deviceId, arReqId, { text: text || '' }, device);
+            if (row) {
+                clientSpeakResponse.actionRequestResolved = { requestId: row.id };
+                serverLog('info', 'agent_action_requests', `auto-resolve via speak id=${row.id} from=${row.from_entity_id}`, { deviceId });
+            }
+        }
+    } catch (arErr) {
+        console.error('[AgentActionRequests] speak auto-resolve failed:', arErr.message);
+    }
+
     res.json(clientSpeakResponse);
 });
 

@@ -7482,6 +7482,14 @@
             body.replyContext = replyContextsPayload.length === 1
                 ? replyContextsPayload[0]
                 : { requests: replyContextsPayload };
+            // Smart-quote → auto-resolve loop (card_b51598b7): forward the FIRST
+            // pending action-request so the /api/client/speak handler can resolve
+            // it server-side with the reply text as the answer. Server-authoritative
+            // — works even if the client-side resolve call below is dropped/offline.
+            const first = replyContextsPayload[0];
+            if (first && first.requestId) {
+                body.actionRequest = { requestId: first.requestId, anchorMessageId: first.anchorMessageId || null };
+            }
             return body;
         }
 
