@@ -327,6 +327,7 @@
             background: var(--card, #1A1A2E); border: 1px solid var(--card-border, #333355);
             color: var(--text, #ffffff);
             font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; gap: 8px;
+            flex-shrink: 0; /* never starve the chat history; the inbox body caps+scrolls itself */
         }
         body.dark .greet-banner { background: #23262f; border-color: #3a3f4d; }
         .greet-banner-text { display: block; overflow-wrap: anywhere; }
@@ -338,8 +339,33 @@
         }
         .greet-chip:hover { background: rgba(91,108,255,0.1); }
         .greet-chip.greet-chip-dismiss { border-color: var(--card-border, #333355); color: var(--text-secondary, #AAAAAA); }
-        .action-request-inbox { display: flex; flex-direction: column; gap: 10px; }
-        .action-request-inbox-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        /* 需要你 inbox — default-collapsed one-line summary 「🔔 需要你 N 件 ▼」,
+           expands to a viewport-capped, self-scrolling list so a burst of
+           requests can never cover the chat (card_b176c435). */
+        .action-request-inbox { display: flex; flex-direction: column; gap: 0; }
+        .action-request-inbox-summary {
+            display: flex; align-items: center; gap: 8px; width: 100%;
+            min-height: 36px; padding: 6px 6px; background: transparent; border: none;
+            color: var(--text, #ffffff); font-size: 14px; font-weight: 700;
+            cursor: pointer; text-align: left; border-radius: 8px;
+        }
+        .action-request-inbox-summary:hover { background: rgba(91,108,255,0.06); }
+        .action-request-inbox-summary .ar-bell { flex-shrink: 0; }
+        .action-request-inbox-summary .ar-summary-label { flex: 0 0 auto; }
+        .ar-chevron {
+            margin-left: auto; flex-shrink: 0; color: var(--text-secondary, #AAAAAA);
+            transition: transform .18s ease;
+        }
+        .action-request-inbox.is-open .ar-chevron { transform: rotate(180deg); }
+        .action-request-inbox-body {
+            display: none; flex-direction: column; gap: 10px; margin-top: 8px;
+            max-height: 40vh; overflow-y: auto; overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+        .action-request-inbox.is-open .action-request-inbox-body { display: flex; }
+        @media (max-width: 640px) { .action-request-inbox-body { max-height: 38vh; } }
+        @media (prefers-reduced-motion: reduce) { .ar-chevron { transition: none; } }
+        .action-request-inbox-head { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
         .action-request-inbox-title { font-weight: 700; color: var(--text, #ffffff); }
         .action-request-inbox-status { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
         .action-request-inbox-count {
@@ -368,7 +394,10 @@
             display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 8px;
             border: 1px solid rgba(45,212,191,0.65); color: #2dd4bf; background: rgba(20,184,166,0.12);
         }
-        .action-request-prompt { color: var(--text, #ffffff); overflow-wrap: anywhere; }
+        .action-request-prompt {
+            color: var(--text, #ffffff); overflow-wrap: anywhere;
+            display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;
+        }
         .action-request-type-hint { color: var(--text-secondary, #AAAAAA); font-size: 12px; line-height: 1.45; }
         .action-request-options, .action-request-actions { display: flex; flex-wrap: wrap; gap: 6px; }
         .action-request-option, .action-request-action {
@@ -4049,6 +4078,17 @@
         let actionRequestTimeoutPolicy = 'keep';
         const actionRequestConsensusTriggeredIds = new Set();
         let actionRequestRefreshTimer = null;
+        // Inbox is collapsed by default so a burst of "需要你" requests never
+        // covers the chat (card_b176c435); the user's open/closed choice persists.
+        const ACTION_REQUEST_INBOX_OPEN_KEY = 'needsyou_inbox_open';
+        let actionRequestInboxOpen = (() => {
+            try { return localStorage.getItem(ACTION_REQUEST_INBOX_OPEN_KEY) === '1'; } catch (_) { return false; }
+        })();
+        // Coalesce a refresh that arrives while one is already in flight, so the
+        // post-resolve/socket refetch is never silently dropped (card_b176c435).
+        let actionRequestsRefreshPending = false;
+        let actionRequestsRefreshPendingRender = false;
+        let actionRequestsRefreshPendingForce = false;
 
         // ── System-message smart filter (spec chat-smart-filter-system-messages.md) ──
         // Active set of 5 categories from ChatSourceCategory. Default per spec:
@@ -7401,7 +7441,16 @@
                 if (renderGreeting && window.EclawGreeting) window.EclawGreeting.maybeShow({ force: forceGreeting });
                 return actionRequests;
             }
-            if (actionRequestsLoading) return actionRequests;
+            // A refresh requested mid-flight (e.g. socket 'resolved' lands while the
+            // post-send refetch is running) must not be dropped — record it and
+            // re-run once the in-flight load finishes, carrying the strongest
+            // render flags forward so the emptied/updated inbox always repaints.
+            if (actionRequestsLoading) {
+                actionRequestsRefreshPending = true;
+                if (renderGreeting) actionRequestsRefreshPendingRender = true;
+                if (forceGreeting) actionRequestsRefreshPendingForce = true;
+                return actionRequests;
+            }
             actionRequestsLoading = true;
             try {
                 const qs = new URLSearchParams({
@@ -7425,6 +7474,15 @@
                 actionRequestsLoaded = true;
                 actionRequestsLoading = false;
                 if (renderGreeting && window.EclawGreeting) window.EclawGreeting.maybeShow({ force: forceGreeting });
+            }
+            // Run the coalesced refresh that arrived mid-flight, if any.
+            if (actionRequestsRefreshPending) {
+                actionRequestsRefreshPending = false;
+                const nextRender = actionRequestsRefreshPendingRender;
+                const nextForce = actionRequestsRefreshPendingForce;
+                actionRequestsRefreshPendingRender = false;
+                actionRequestsRefreshPendingForce = false;
+                await loadActionRequests({ renderGreeting: nextRender, forceGreeting: nextForce });
             }
             return actionRequests;
         }
@@ -7500,6 +7558,12 @@
         async function dismissActionRequest(requestId) {
             const id = normalizeChatMessageId(requestId);
             if (!id || !currentUser?.deviceId || !currentUser?.deviceSecret) return;
+            // Optimistically drop the item + any pending reply binding so 略過 feels
+            // instant and a lingering/already-resolved card can always be cleared.
+            actionRequests = actionRequests.filter(r => normalizeChatMessageId(r && r.id) !== id);
+            clearActionRequestConsensusTriggered(id);
+            removeReplyContextForRequest(id);
+            if (window.EclawGreeting) { try { EclawGreeting.maybeShow({ force: true }); } catch (_) {} }
             try {
                 await apiCall('POST', `/api/action-requests/${id}/dismiss`, {
                     deviceId: currentUser.deviceId,
@@ -7507,10 +7571,23 @@
                 });
                 if (typeof showToast === 'function') showToast(i18n.t('action_request_dismissed') || 'Request dismissed', 'success');
             } catch (err) {
-                if (typeof showToast === 'function') showToast((i18n.t('chat_send_failed') || 'Failed') + ': ' + (err.message || err), 'error');
+                // A request already resolved/dismissed server-side (404/409/410) is the
+                // expected state after a reply — treat it as success, not an error
+                // (card_b176c435: "回覆後按略過跳紅字關不掉").
+                const st = err && err.status;
+                if (st === 404 || st === 409 || st === 410) {
+                    if (typeof showToast === 'function') showToast(i18n.t('action_request_dismissed') || 'Request dismissed', 'success');
+                } else if (typeof showToast === 'function') {
+                    showToast((i18n.t('chat_send_failed') || 'Failed') + ': ' + (err.message || err), 'error');
+                }
             } finally {
                 await loadActionRequests({ renderGreeting: true, forceGreeting: true });
             }
+        }
+
+        function setActionRequestInboxOpen(open) {
+            actionRequestInboxOpen = !!open;
+            try { localStorage.setItem(ACTION_REQUEST_INBOX_OPEN_KEY, open ? '1' : '0'); } catch (_) {}
         }
 
         function renderActionRequestInbox(banner) {
@@ -7518,27 +7595,60 @@
             const t = actionRequestT;
             banner.textContent = '';
             const wrap = document.createElement('div');
-            wrap.className = 'action-request-inbox';
-            const head = document.createElement('div');
-            head.className = 'action-request-inbox-head';
-            const title = document.createElement('span');
-            title.className = 'action-request-inbox-title';
-            title.textContent = t('action_request_inbox_title', 'Needs you');
+            wrap.className = 'action-request-inbox' + (actionRequestInboxOpen ? ' is-open' : '');
+            // Suppress whole-inbox screen-reader re-announcement on every poll/socket
+            // refresh; only the count below is a live region (card_b176c435).
+            wrap.setAttribute('aria-live', 'off');
+
+            const bodyId = 'actionRequestInboxBody';
+
+            // Always-visible, collapsed-by-default one-line summary 「🔔 需要你 N 件 ▼」.
+            const summary = document.createElement('button');
+            summary.type = 'button';
+            summary.className = 'action-request-inbox-summary';
+            summary.setAttribute('aria-expanded', actionRequestInboxOpen ? 'true' : 'false');
+            summary.setAttribute('aria-controls', bodyId);
+            const bell = document.createElement('span');
+            bell.className = 'ar-bell';
+            bell.setAttribute('aria-hidden', 'true');
+            bell.textContent = '🔔';
+            const summaryLabel = document.createElement('span');
+            summaryLabel.className = 'ar-summary-label';
+            summaryLabel.textContent = t('action_request_inbox_title', 'Needs you');
             const count = document.createElement('span');
             count.className = 'action-request-inbox-count';
+            count.setAttribute('aria-live', 'polite');
+            count.setAttribute('aria-atomic', 'true');
             count.textContent = t('action_request_inbox_count', '{count} pending', { count: actionRequests.length });
+            const chevron = document.createElement('span');
+            chevron.className = 'ar-chevron';
+            chevron.setAttribute('aria-hidden', 'true');
+            chevron.textContent = '▼';
+            summary.appendChild(bell);
+            summary.appendChild(summaryLabel);
+            summary.appendChild(count);
+            summary.appendChild(chevron);
+            summary.addEventListener('click', () => {
+                const next = !wrap.classList.contains('is-open');
+                wrap.classList.toggle('is-open', next);
+                summary.setAttribute('aria-expanded', next ? 'true' : 'false');
+                setActionRequestInboxOpen(next);
+            });
+            wrap.appendChild(summary);
+
+            // Expandable body: live-state badge + the request list (caps + scrolls).
+            const body = document.createElement('div');
+            body.className = 'action-request-inbox-body';
+            body.id = bodyId;
+            const head = document.createElement('div');
+            head.className = 'action-request-inbox-head';
             const live = document.createElement('span');
             live.className = 'action-request-live-state' + (actionRequestRealtimeEnabled ? ' on' : '');
             live.textContent = actionRequestRealtimeEnabled
                 ? t('action_request_realtime_on', 'Live')
                 : t('action_request_realtime_off', 'Manual refresh');
-            const status = document.createElement('span');
-            status.className = 'action-request-inbox-status';
-            status.appendChild(live);
-            status.appendChild(count);
-            head.appendChild(title);
-            head.appendChild(status);
-            wrap.appendChild(head);
+            head.appendChild(live);
+            body.appendChild(head);
 
             actionRequests.forEach(request => {
                 const typeMeta = actionRequestTypeMeta(request.type);
@@ -7614,8 +7724,9 @@
                 dismiss.addEventListener('click', () => dismissActionRequest(request.id));
                 actions.appendChild(dismiss);
                 item.appendChild(actions);
-                wrap.appendChild(item);
+                body.appendChild(item);
             });
+            wrap.appendChild(body);
             banner.appendChild(wrap);
             banner.style.display = '';
         }
@@ -7733,6 +7844,20 @@
             replyContexts.splice(idx, 1);
             renderReplyPreviews();
             recomputeAutoReceivers();
+        }
+
+        // Drop any pending reply-context chip bound to a given action-request id
+        // (used when that request is dismissed/resolved so the composer's quote
+        // can't outlive the inbox item it pointed at — card_b176c435).
+        function removeReplyContextForRequest(requestId) {
+            const id = normalizeChatMessageId(requestId);
+            if (!id) return;
+            const before = replyContexts.length;
+            replyContexts = replyContexts.filter(rc => rc._key !== ('request:' + id));
+            if (replyContexts.length !== before) {
+                renderReplyPreviews();
+                recomputeAutoReceivers();
+            }
         }
 
         // Rebuild the reply bar as N removable chips. Empty → hide the bar.
@@ -8270,6 +8395,13 @@
                     this._shown = true;
                     return;
                 }
+                // The last request just cleared. Tear down any stale inbox DOM NOW,
+                // before the greeting logic's guarded/_shown early-returns can leave a
+                // phantom "需要你" card mounted (card_b176c435 empty-state leak).
+                if (banner.querySelector('.action-request-inbox')) {
+                    banner.textContent = '';
+                    banner.style.display = 'none';
+                }
                 if (!ACTION_REQUEST_INBOX_EMPTY_FALLBACK_TO_GREETING) {
                     banner.style.display = 'none';
                     this._shown = true;
@@ -8350,6 +8482,10 @@
             if (!text && !hasFiles && !hasR2Refs) return;
 
             const actionRequestReplyContexts = collectActionRequestReplyContexts();
+            // Snapshot quotes BEFORE the optimistic clear so a failed send can
+            // restore them (and their action-request binding) instead of orphaning
+            // the request (card_b176c435).
+            const replyContextsSnapshot = replyContexts.slice();
             let finalText = text;
             if (replyContexts.length) {
                 // One "↩ …" line per quote so the recipient entity receives EVERY
@@ -8594,6 +8730,14 @@
                 input.value = savedContent;
                 input.style.height = 'auto';
                 input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+                // Send failed — the request was never resolved server-side, so
+                // restore the quote chips (incl. the action-request binding) the
+                // optimistic clear removed, letting the user retry (card_b176c435).
+                if (replyContextsSnapshot.length && replyContexts.length === 0) {
+                    replyContexts = replyContextsSnapshot.slice();
+                    renderReplyPreviews();
+                    recomputeAutoReceivers();
+                }
             } finally {
                 btn.disabled = false;
                 input.focus();

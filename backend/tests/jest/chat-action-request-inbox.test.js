@@ -105,3 +105,63 @@ describe('chat action request inbox (card_b51598b7 frontend)', () => {
         expect(i18nJs).toContain('"action_request_consensus_triggered": "協商中"');
     });
 });
+
+describe('需要你 inbox collapse + lifecycle hardening (card_b176c435)', () => {
+    test('inbox is collapsed by default with a persisted open/closed state', () => {
+        expect(chatHtml).toContain("const ACTION_REQUEST_INBOX_OPEN_KEY = 'needsyou_inbox_open';");
+        // default closed: only an explicit '1' opens it
+        expect(chatHtml).toContain("return localStorage.getItem(ACTION_REQUEST_INBOX_OPEN_KEY) === '1';");
+        expect(chatHtml).toMatch(/function setActionRequestInboxOpen\(open\)/);
+        expect(chatHtml).toContain("localStorage.setItem(ACTION_REQUEST_INBOX_OPEN_KEY, open ? '1' : '0');");
+    });
+
+    test('renders a one-line summary 「🔔 + title + count + chevron」 that toggles the body', () => {
+        expect(chatHtml).toContain("summary.className = 'action-request-inbox-summary';");
+        expect(chatHtml).toContain("bell.textContent = '🔔';");
+        expect(chatHtml).toContain("chevron.textContent = '▼';");
+        expect(chatHtml).toContain("summary.setAttribute('aria-expanded', actionRequestInboxOpen ? 'true' : 'false');");
+        expect(chatHtml).toContain("summary.setAttribute('aria-controls', bodyId);");
+        // the request list lives in the collapsible body, not directly in wrap
+        expect(chatHtml).toContain("body.className = 'action-request-inbox-body';");
+        expect(chatHtml).toContain('body.appendChild(item);');
+        expect(chatHtml).toContain('wrap.appendChild(body);');
+    });
+
+    test('CSS caps the expanded body so a burst of requests cannot cover the chat', () => {
+        expect(chatHtml).toMatch(/\.action-request-inbox-body\s*\{[^}]*max-height:\s*40vh/);
+        expect(chatHtml).toMatch(/\.action-request-inbox-body\s*\{[^}]*overflow-y:\s*auto/);
+        expect(chatHtml).toContain('.action-request-inbox.is-open .action-request-inbox-body { display: flex; }');
+        // the banner must not shrink the message list to absorb the inbox
+        expect(chatHtml).toMatch(/\.greet-banner\s*\{[^}]*flex-shrink:\s*0/);
+    });
+
+    test('whole inbox is not a live region; only the count announces changes', () => {
+        expect(chatHtml).toContain("wrap.setAttribute('aria-live', 'off');");
+        expect(chatHtml).toContain("count.setAttribute('aria-live', 'polite');");
+    });
+
+    test('dismiss is optimistic and idempotent for already-resolved requests', () => {
+        const fn = chatHtml.slice(chatHtml.indexOf('async function dismissActionRequest('), chatHtml.indexOf('function renderActionRequestInbox('));
+        expect(fn).toContain('actionRequests = actionRequests.filter(r => normalizeChatMessageId(r && r.id) !== id);');
+        expect(fn).toContain('removeReplyContextForRequest(id);');
+        expect(fn).toContain('const st = err && err.status;');
+        expect(fn).toContain('if (st === 404 || st === 409 || st === 410) {');
+    });
+
+    test('a mid-flight refresh is coalesced, never dropped', () => {
+        const fn = chatHtml.slice(chatHtml.indexOf('async function loadActionRequests('), chatHtml.indexOf('function scheduleActionRequestRefresh('));
+        expect(fn).toContain('actionRequestsRefreshPending = true;');
+        expect(fn).toContain('if (actionRequestsRefreshPending) {');
+        expect(fn).toContain('await loadActionRequests({ renderGreeting: nextRender, forceGreeting: nextForce });');
+    });
+
+    test('emptied inbox tears down stale DOM before greeting early-returns', () => {
+        expect(chatHtml).toContain("if (banner.querySelector('.action-request-inbox')) {");
+    });
+
+    test('failed send restores the quote chips it optimistically cleared', () => {
+        expect(chatHtml).toContain('const replyContextsSnapshot = replyContexts.slice();');
+        expect(chatHtml).toContain('if (replyContextsSnapshot.length && replyContexts.length === 0) {');
+        expect(chatHtml).toMatch(/function removeReplyContextForRequest\(requestId\)/);
+    });
+});
