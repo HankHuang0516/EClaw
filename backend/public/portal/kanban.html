@@ -1205,6 +1205,17 @@
         }
 
         const KB_CHAT_MESSAGE_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+        // [card_329bfe94] Gate verbose [Kanban] debug logs behind a flag so the prod
+        // console stays quiet. The per-card renderCard log alone emitted ~one line
+        // per card (~485/load on a full board) and re-fired on every interaction.
+        // Re-enable for debugging with `?debug` in the URL or localStorage.kanban_debug='1'.
+        // (console.warn/error are intentionally NOT gated — real warnings/errors must surface.)
+        const KANBAN_DEBUG = (() => {
+            try { return new URLSearchParams(location.search).has('debug') || localStorage.getItem('kanban_debug') === '1'; }
+            catch (_) { return false; }
+        })();
+        const kbDebugLog = (...args) => { if (KANBAN_DEBUG) console.log(...args); };
         function normalizeKanbanChatMessageId(value) {
             const id = String(value || '').trim().toLowerCase();
             return KB_CHAT_MESSAGE_ID_RE.test(id) ? id : '';
@@ -1556,7 +1567,7 @@
                 const tail = extra ? '&' + extra : '';
                 const data = await apiCall('GET', `/api/mission/cards?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}${tail}`);
                 if (data.cards) { const changed = allCards.length > 0; allCards = data.cards.filter(c => !c.isAutomation); renderBoard(changed); }
-                console.log('[Kanban] loadCards:', (data.cards||[]).length, 'total cards');
+                kbDebugLog('[Kanban] loadCards:', (data.cards||[]).length, 'total cards');
             } catch(e) { console.error('[Kanban] loadCards failed:', e.message, e.stack); }
             await loadAutomations();
         }
@@ -2070,7 +2081,7 @@
         }
 
         function renderCard(card) {
-            console.log('[Kanban] renderCard:', card.id, card.title, 'assigned:', card.assignedBots);
+            kbDebugLog('[Kanban] renderCard:', card.id, card.title, 'assigned:', card.assignedBots);
             const isStale = card.is_stale ? ' stale' : '';
             const isArchived = card.archived ? ' archived' : '';
             const commentCount = card.comment_count || 0;
@@ -3656,12 +3667,12 @@
         }
 
         async function loadComments() {
-            console.log('[Kanban] loadComments for card:', openCardId);
+            kbDebugLog('[Kanban] loadComments for card:', openCardId);
             const panel = document.getElementById('panel-comments');
             try {
                 const data = await apiGetComments(openCardId);
                 const comments = data.comments || [];
-                console.log('[Kanban] loadComments:', comments.length, 'comments loaded');
+                kbDebugLog('[Kanban] loadComments:', comments.length, 'comments loaded');
 
                 const card = findCard(openCardId);
                 const myEntityIds = new Set(boundEntities.map(e => e.entityId));
@@ -4097,7 +4108,7 @@
                 ]);
                 automationCards = data.cards || [];
                 cardProjections = projData.projections || {};
-                console.log('[Kanban] loadAutomations:', automationCards.length, 'automation cards');
+                kbDebugLog('[Kanban] loadAutomations:', automationCards.length, 'automation cards');
                 renderAutomationSection();
             } catch(e) { console.error('[Kanban] loadAutomations failed:', e.message); }
         }
@@ -4443,13 +4454,13 @@
             autoCollapsed = !autoCollapsed;
             document.getElementById('autoHeader').classList.toggle('open', !autoCollapsed);
             document.getElementById('autoBody').classList.toggle('open', !autoCollapsed);
-            console.log('[Kanban] toggleAutomation:', autoCollapsed ? 'collapsed' : 'expanded');
+            kbDebugLog('[Kanban] toggleAutomation:', autoCollapsed ? 'collapsed' : 'expanded');
         }
 
         function toggleAutoFields() {
             const checked = document.getElementById('newIsAutomation').checked;
             document.getElementById('autoFields').classList.toggle('show', checked);
-            console.log('[Kanban] toggleAutoFields:', checked);
+            kbDebugLog('[Kanban] toggleAutoFields:', checked);
         }
 
         function selectCronChip(btn, chipsId, customId) {
@@ -4649,9 +4660,9 @@
                 body.isAutomation = true;
                 body.schedule = { type: 'recurring', cron };
                 body.dispatchMode = document.getElementById('newDispatchMode').value === 'idle_only' ? 'idle_only' : 'immediate';
-                console.log('[Kanban] createCard: automation, cron=', cron);
+                kbDebugLog('[Kanban] createCard: automation, cron=', cron);
             }
-            console.log('[Kanban] createCard:', JSON.stringify(body));
+            kbDebugLog('[Kanban] createCard:', JSON.stringify(body));
             try {
                 const createResp = await apiCreateCard(body);
                 const newGatedEl = document.getElementById('newGated');
