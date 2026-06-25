@@ -1931,6 +1931,21 @@ try {
     scheduledMessagesModule = { initDatabase: () => {}, startPoller: () => {}, stopPoller: () => {} };
 }
 
+// Agent Action Requests — the "需要你" HITL inbox (card_a03d9d09 / card_edeb190b)
+let agentActionRequestsModule;
+try {
+    agentActionRequestsModule = require('./agent-action-requests')(devices, {
+        pushToBot,
+        unifiedPush,
+        serverLog,
+    });
+    app.use('/api/action-requests', agentActionRequestsModule.router);
+    console.log('[AgentActionRequests] Module loaded successfully');
+} catch (err) {
+    console.error('[AgentActionRequests] Failed to load module:', err.message);
+    agentActionRequestsModule = { initDatabase: () => {} };
+}
+
 // ============================================
 // PAGE VIEW TRACKING (fire-and-forget)
 // ============================================
@@ -2527,6 +2542,9 @@ if (scheduledMessagesModule && scheduledMessagesModule.initDatabase) {
     if (process.env.NODE_ENV !== 'test' && scheduledMessagesModule.startPoller) {
         scheduledMessagesModule.startPoller();
     }
+}
+if (agentActionRequestsModule && agentActionRequestsModule.initDatabase) {
+    agentActionRequestsModule.initDatabase();
 }
 // Wire notification callback (notifyDevice defined later, uses closure)
 missionModule.setNotifyCallback((deviceId, notif) => notifyDevice(deviceId, notif));
