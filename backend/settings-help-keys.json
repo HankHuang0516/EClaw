@@ -1,5 +1,5 @@
 {
-  "generated_at": "GENERATED — do not hand-edit",
+  "generated_at": "GENERATED \u2014 do not hand-edit",
   "source": [
     "portal/settings.html"
   ],
@@ -90,26 +90,6 @@
       "help_key": "kanban_nudge_statuses_help"
     },
     {
-      "field_key": "passive_health_auto_repair",
-      "label_key": "passive_health_auto_repair_label",
-      "help_key": "passive_health_auto_repair_help"
-    },
-    {
-      "field_key": "passive_health_enable",
-      "label_key": "passive_health_enable_label",
-      "help_key": "passive_health_enable_help"
-    },
-    {
-      "field_key": "passive_health_interval",
-      "label_key": "passive_health_interval_label",
-      "help_key": "passive_health_interval_help"
-    },
-    {
-      "field_key": "passive_health_section",
-      "label_key": "passive_health_title",
-      "help_key": "passive_health_section_help"
-    },
-    {
       "field_key": "prompt_policy_claude_override",
       "label_key": "prompt_policy_claude_override_label",
       "help_key": "prompt_policy_claude_override_help"
@@ -168,16 +148,6 @@
       "field_key": "settings_device_secret",
       "label_key": "settings_device_secret",
       "help_key": "settings_device_secret_help"
-    },
-    {
-      "field_key": "settings_roster_section",
-      "label_key": "settings_roster_section_title",
-      "help_key": "settings_roster_section_help"
-    },
-    {
-      "field_key": "settings_wallet_section",
-      "label_key": "nav_wallet",
-      "help_key": "settings_wallet_section_help"
     },
     {
       "field_key": "usage_warning_5h",
