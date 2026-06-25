@@ -4080,7 +4080,7 @@
         let actionRequestRefreshTimer = null;
         // Inbox is collapsed by default so a burst of "需要你" requests never
         // covers the chat (card_b176c435); the user's open/closed choice persists.
-        const ACTION_REQUEST_INBOX_OPEN_KEY = 'action_request_inbox_open';
+        const ACTION_REQUEST_INBOX_OPEN_KEY = 'needsyou_inbox_open';
         let actionRequestInboxOpen = (() => {
             try { return localStorage.getItem(ACTION_REQUEST_INBOX_OPEN_KEY) === '1'; } catch (_) { return false; }
         })();

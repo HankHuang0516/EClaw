@@ -108,7 +108,7 @@ describe('chat action request inbox (card_b51598b7 frontend)', () => {
 
 describe('需要你 inbox collapse + lifecycle hardening (card_b176c435)', () => {
     test('inbox is collapsed by default with a persisted open/closed state', () => {
-        expect(chatHtml).toContain("const ACTION_REQUEST_INBOX_OPEN_KEY = 'action_request_inbox_open';");
+        expect(chatHtml).toContain("const ACTION_REQUEST_INBOX_OPEN_KEY = 'needsyou_inbox_open';");
         // default closed: only an explicit '1' opens it
         expect(chatHtml).toContain("return localStorage.getItem(ACTION_REQUEST_INBOX_OPEN_KEY) === '1';");
         expect(chatHtml).toMatch(/function setActionRequestInboxOpen\(open\)/);
