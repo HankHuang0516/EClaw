@@ -338,6 +338,28 @@
         }
         .greet-chip:hover { background: rgba(91,108,255,0.1); }
         .greet-chip.greet-chip-dismiss { border-color: var(--card-border, #333355); color: var(--text-secondary, #AAAAAA); }
+        .action-request-inbox { display: flex; flex-direction: column; gap: 10px; }
+        .action-request-inbox-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .action-request-inbox-title { font-weight: 700; color: var(--text, #ffffff); }
+        .action-request-inbox-count {
+            flex-shrink: 0; color: var(--primary, #5b6cff); border: 1px solid var(--primary, #5b6cff);
+            border-radius: 999px; padding: 2px 8px; font-size: 12px; line-height: 1.4;
+        }
+        .action-request-item {
+            display: grid; gap: 7px; padding: 9px 10px; border-radius: 10px;
+            background: rgba(127,127,127,0.10); border: 1px solid var(--card-border, #333355);
+        }
+        .action-request-meta { color: var(--text-secondary, #AAAAAA); font-size: 12px; }
+        .action-request-prompt { color: var(--text, #ffffff); overflow-wrap: anywhere; }
+        .action-request-options, .action-request-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+        .action-request-option, .action-request-action {
+            border: 1px solid var(--card-border, #333355); color: var(--text, #ffffff);
+            background: transparent; border-radius: 8px; padding: 4px 9px; min-height: 30px;
+            font-size: 12px; cursor: pointer;
+        }
+        .action-request-option { border-color: var(--primary, #5b6cff); color: var(--primary, #5b6cff); }
+        .action-request-action:hover, .action-request-option:hover { background: rgba(91,108,255,0.10); }
+        .action-request-action.danger { color: var(--danger, #ef4444); border-color: rgba(239,68,68,0.45); }
         body.density-comfortable .chat-msg { max-width: 75%; }
         body.density-comfortable .chat-source { font-size: 12px; margin-bottom: 4px; }
 
@@ -4000,6 +4022,10 @@
         const entityRuntimeStatus = new Map();
         let activeChatMessageDeepLinkId = null;
         let activeChatMessageDeepLinkMissingId = null;
+        const ACTION_REQUEST_INBOX_EMPTY_FALLBACK_TO_GREETING = true;
+        let actionRequests = [];
+        let actionRequestsLoaded = false;
+        let actionRequestsLoading = false;
 
         // ── System-message smart filter (spec chat-smart-filter-system-messages.md) ──
         // Active set of 5 categories from ChatSourceCategory. Default per spec:
@@ -4630,6 +4656,7 @@
             if (!_rentalHealthPollTimer) _rentalHealthPollTimer = setInterval(loadRentalHealthStatus, 60000);
             console.log('[CHAT_DEBUG] loadBoundEntities done, loading messages...');
             await loadMessages();
+            await loadActionRequests({ renderGreeting: true, forceGreeting: true });
             await handleChatMessageDeepLink({ showMissingToast: true, scroll: true });
             console.log('[CHAT_DEBUG] loadMessages done, count:', allMessages.length);
             isFirstLoad = false;
@@ -7247,6 +7274,244 @@
             }
         }
 
+        function getActionRequestById(requestId) {
+            const id = normalizeChatMessageId(requestId);
+            return id ? actionRequests.find(r => normalizeChatMessageId(r && r.id) === id) || null : null;
+        }
+
+        function actionRequestTypeLabel(type) {
+            const raw = String(type || '').trim();
+            const key = raw ? 'action_request_type_' + raw : '';
+            return key && i18n && i18n.t ? (i18n.t(key) || raw) : raw;
+        }
+
+        async function loadActionRequests({ renderGreeting = false, forceGreeting = false } = {}) {
+            if (!currentUser?.deviceId || !currentUser?.deviceSecret) {
+                actionRequests = [];
+                actionRequestsLoaded = true;
+                if (renderGreeting && window.EclawGreeting) window.EclawGreeting.maybeShow({ force: forceGreeting });
+                return actionRequests;
+            }
+            if (actionRequestsLoading) return actionRequests;
+            actionRequestsLoading = true;
+            try {
+                const qs = new URLSearchParams({
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    status: 'pending'
+                });
+                const data = await apiCall('GET', `/api/action-requests?${qs.toString()}`);
+                actionRequests = Array.isArray(data?.requests)
+                    ? data.requests.filter(r => r && r.status === 'pending')
+                    : [];
+            } catch (err) {
+                console.warn('[CHAT] action request inbox load failed:', err.message || err);
+                actionRequests = [];
+            } finally {
+                actionRequestsLoaded = true;
+                actionRequestsLoading = false;
+                if (renderGreeting && window.EclawGreeting) window.EclawGreeting.maybeShow({ force: forceGreeting });
+            }
+            return actionRequests;
+        }
+
+        function openActionRequestAnchor(request) {
+            const anchorMessageId = normalizeChatMessageId(request && request.anchorMessageId);
+            if (!anchorMessageId) return false;
+            if (typeof window.openHistoryMessage === 'function') {
+                window.openHistoryMessage(anchorMessageId);
+                return true;
+            }
+            if (typeof openChatMessageDeepLink === 'function') {
+                openChatMessageDeepLink(anchorMessageId, { showMissingToast: true, scroll: true });
+                return true;
+            }
+            return false;
+        }
+
+        function actionRequestMeta(request) {
+            const requestId = normalizeChatMessageId(request && request.id);
+            const anchorMessageId = normalizeChatMessageId(request && request.anchorMessageId);
+            const entityId = Number(request && request.fromEntityId);
+            return {
+                kind: Number.isFinite(entityId) ? 'chat-entity' : 'chat-system',
+                entityId,
+                actionRequest: { requestId, anchorMessageId: anchorMessageId || null }
+            };
+        }
+
+        function focusActionRequestReply(requestId, optionIndex = null) {
+            const request = getActionRequestById(requestId);
+            if (!request) return;
+            openActionRequestAnchor(request);
+            const entityId = Number(request.fromEntityId);
+            const entityName = Number.isFinite(entityId) && typeof getEntityDisplayName === 'function'
+                ? getEntityDisplayName(entityId)
+                : (Number.isFinite(entityId) ? ('#' + entityId) : '');
+            const source = ((i18n && i18n.t && i18n.t('action_request_reply_source')) || 'Needs you') + (entityName ? ' ' + entityName : '');
+            addReplyContext(request.anchorMessageId || null, source, request.prompt || '', actionRequestMeta(request));
+            if (optionIndex !== null && Array.isArray(request.options) && request.options[optionIndex] !== undefined) {
+                const input = document.getElementById('messageInput');
+                if (input) {
+                    input.value = String(request.options[optionIndex]);
+                    input.focus();
+                    input.style.height = 'auto';
+                    input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+                }
+            }
+        }
+
+        async function dismissActionRequest(requestId) {
+            const id = normalizeChatMessageId(requestId);
+            if (!id || !currentUser?.deviceId || !currentUser?.deviceSecret) return;
+            try {
+                await apiCall('POST', `/api/action-requests/${id}/dismiss`, {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret
+                });
+                if (typeof showToast === 'function') showToast(i18n.t('action_request_dismissed') || 'Request dismissed', 'success');
+            } catch (err) {
+                if (typeof showToast === 'function') showToast((i18n.t('chat_send_failed') || 'Failed') + ': ' + (err.message || err), 'error');
+            } finally {
+                await loadActionRequests({ renderGreeting: true, forceGreeting: true });
+            }
+        }
+
+        function renderActionRequestInbox(banner) {
+            if (!banner) return;
+            const t = (k, fb, vars = {}) => {
+                let value = (window.i18n && i18n.t) ? (i18n.t(k, vars) || fb) : fb;
+                Object.keys(vars).forEach(key => { value = String(value).replace('{' + key + '}', vars[key]); });
+                return value;
+            };
+            banner.textContent = '';
+            const wrap = document.createElement('div');
+            wrap.className = 'action-request-inbox';
+            const head = document.createElement('div');
+            head.className = 'action-request-inbox-head';
+            const title = document.createElement('span');
+            title.className = 'action-request-inbox-title';
+            title.textContent = t('action_request_inbox_title', 'Needs you');
+            const count = document.createElement('span');
+            count.className = 'action-request-inbox-count';
+            count.textContent = t('action_request_inbox_count', '{count} pending', { count: actionRequests.length });
+            head.appendChild(title);
+            head.appendChild(count);
+            wrap.appendChild(head);
+
+            actionRequests.forEach(request => {
+                const item = document.createElement('div');
+                item.className = 'action-request-item';
+                const entityId = Number(request.fromEntityId);
+                const meta = document.createElement('div');
+                meta.className = 'action-request-meta';
+                meta.textContent = t('action_request_meta', 'Entity #{entityId} · {type}', {
+                    entityId: Number.isFinite(entityId) ? entityId : '?',
+                    type: actionRequestTypeLabel(request.type)
+                });
+                const prompt = document.createElement('div');
+                prompt.className = 'action-request-prompt';
+                prompt.textContent = request.prompt || '';
+                item.appendChild(meta);
+                item.appendChild(prompt);
+
+                if (Array.isArray(request.options) && request.options.length > 0) {
+                    const opts = document.createElement('div');
+                    opts.className = 'action-request-options';
+                    request.options.forEach((option, idx) => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'action-request-option';
+                        btn.textContent = String(option);
+                        btn.title = t('action_request_option_title', 'Use option: {option}', { option: String(option) });
+                        btn.addEventListener('click', () => focusActionRequestReply(request.id, idx));
+                        opts.appendChild(btn);
+                    });
+                    item.appendChild(opts);
+                }
+
+                const actions = document.createElement('div');
+                actions.className = 'action-request-actions';
+                const reply = document.createElement('button');
+                reply.type = 'button';
+                reply.className = 'action-request-action';
+                reply.textContent = t('action_request_inbox_reply', 'Reply');
+                reply.addEventListener('click', () => focusActionRequestReply(request.id));
+                actions.appendChild(reply);
+                if (request.anchorMessageId) {
+                    const anchor = document.createElement('button');
+                    anchor.type = 'button';
+                    anchor.className = 'action-request-action';
+                    anchor.textContent = t('action_request_inbox_anchor', 'Show source');
+                    anchor.addEventListener('click', () => openActionRequestAnchor(request));
+                    actions.appendChild(anchor);
+                }
+                const dismiss = document.createElement('button');
+                dismiss.type = 'button';
+                dismiss.className = 'action-request-action danger';
+                dismiss.textContent = t('action_request_inbox_dismiss', 'Dismiss');
+                dismiss.addEventListener('click', () => dismissActionRequest(request.id));
+                actions.appendChild(dismiss);
+                item.appendChild(actions);
+                wrap.appendChild(item);
+            });
+            banner.appendChild(wrap);
+            banner.style.display = '';
+        }
+
+        function collectActionRequestReplyContexts() {
+            const contexts = [];
+            const seen = new Set();
+            replyContexts.forEach(rc => {
+                const requestId = normalizeChatMessageId(rc.requestId || rc.meta?.actionRequest?.requestId);
+                if (!requestId || seen.has(requestId)) return;
+                const anchorMessageId = normalizeChatMessageId(rc.anchorMessageId || rc.meta?.actionRequest?.anchorMessageId);
+                seen.add(requestId);
+                contexts.push({ requestId, anchorMessageId: anchorMessageId || null });
+            });
+            return contexts;
+        }
+
+        function attachReplyContextPayload(body, contexts) {
+            if (!body || !Array.isArray(contexts) || contexts.length === 0) return body;
+            const replyContextsPayload = contexts.map(ctx => ({
+                requestId: ctx.requestId,
+                anchorMessageId: ctx.anchorMessageId || null
+            }));
+            body.replyContexts = replyContextsPayload;
+            body.replyContext = replyContextsPayload.length === 1
+                ? replyContextsPayload[0]
+                : { requests: replyContextsPayload };
+            return body;
+        }
+
+        async function resolveActionRequestReplyContexts(contexts, answerText) {
+            if (!Array.isArray(contexts) || contexts.length === 0 || !currentUser?.deviceId || !currentUser?.deviceSecret) return;
+            let resolved = 0;
+            for (const ctx of contexts) {
+                try {
+                    await apiCall('POST', `/api/action-requests/${ctx.requestId}/resolve`, {
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                        answer: {
+                            text: answerText || '',
+                            replyContext: {
+                                requestId: ctx.requestId,
+                                anchorMessageId: ctx.anchorMessageId || null
+                            }
+                        }
+                    });
+                    resolved++;
+                } catch (err) {
+                    console.warn('[CHAT] action request resolve failed:', ctx.requestId, err.message || err);
+                }
+            }
+            if (resolved > 0 && typeof showToast === 'function') {
+                showToast(i18n.t('action_request_resolved') || 'Request resolved', 'success');
+            }
+            await loadActionRequests({ renderGreeting: true, forceGreeting: true });
+        }
+
         // ── Quote Reply State (multi-quote, card_277c80f5) ──
         // replyContexts ACCUMULATES every quote the user adds — quoting again
         // appends instead of overwriting, with no cap. sendMessage emits one
@@ -7274,9 +7539,19 @@
         // present, else by sender+text, so re-clicking the same message is a no-op.
         function addReplyContext(msgId, senderName, text, meta) {
             const cleanText = stripReplyQuotePrefix(text);
-            const key = msgId ? ('id:' + msgId) : ('tx:' + (senderName || '') + '|' + (cleanText || ''));
+            const requestId = normalizeChatMessageId(meta?.actionRequest?.requestId);
+            const anchorMessageId = normalizeChatMessageId(meta?.actionRequest?.anchorMessageId || msgId);
+            const key = requestId ? ('request:' + requestId) : (msgId ? ('id:' + msgId) : ('tx:' + (senderName || '') + '|' + (cleanText || '')));
             if (!replyContexts.some(rc => rc._key === key)) {
-                replyContexts.push({ msgId: msgId || null, senderName: senderName || '', text: cleanText || '', meta: meta || null, _key: key });
+                replyContexts.push({
+                    msgId: msgId || null,
+                    senderName: senderName || '',
+                    text: cleanText || '',
+                    meta: meta || null,
+                    requestId: requestId || null,
+                    anchorMessageId: anchorMessageId || null,
+                    _key: key
+                });
             }
             renderReplyPreviews();
             recomputeAutoReceivers();
@@ -7817,14 +8092,25 @@
                 const day = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
                 return 'eclaw_greet_' + day;
             },
-            maybeShow() {
-                if (this._shown) return;
-                this._shown = true; // single evaluation per page load
+            maybeShow({ force = false } = {}) {
+                const banner = document.getElementById('greetBanner');
+                if (!banner) return;
+                if (!actionRequestsLoaded) return;
+                if (actionRequests.length > 0) {
+                    renderActionRequestInbox(banner);
+                    this._shown = true;
+                    return;
+                }
+                if (!ACTION_REQUEST_INBOX_EMPTY_FALLBACK_TO_GREETING) {
+                    banner.style.display = 'none';
+                    this._shown = true;
+                    return;
+                }
+                if (this._shown && !force) return;
+                this._shown = true; // single evaluation per page load unless a request refresh forces it
                 let guarded = false;
                 try { guarded = !!localStorage.getItem(this._guardKey()); } catch (_) {}
                 if (guarded) return;
-                const banner = document.getElementById('greetBanner');
-                if (!banner) return;
                 const t = (k, fb) => (window.i18n && i18n.t) ? i18n.t(k, fb) : fb;
                 const esc = (x) => (typeof escapeHtml === 'function') ? escapeHtml(x) : x;
                 const botMsgs = (allMessages || []).filter(m => m.is_from_bot && (m.text || '').trim());
@@ -7894,6 +8180,7 @@
             // Must have text, media, or r2refs
             if (!text && !hasFiles && !hasR2Refs) return;
 
+            const actionRequestReplyContexts = collectActionRequestReplyContexts();
             let finalText = text;
             if (replyContexts.length) {
                 // One "↩ …" line per quote so the recipient entity receives EVERY
@@ -7984,7 +8271,7 @@
                         for (let i = 0; i < readyFiles.length; i++) {
                             const f = readyFiles[i];
                             const msgText = fileMsgText(i, f, finalText);
-                            const fileResp = await apiCall('POST', '/api/client/speak', {
+                            const fileResp = await apiCall('POST', '/api/client/speak', attachReplyContextPayload({
                                 deviceId: currentUser.deviceId,
                                 deviceSecret: currentUser.deviceSecret,
                                 entityId: entityId,
@@ -7992,7 +8279,7 @@
                                 source: 'web_chat',
                                 mediaType: f.type,
                                 mediaUrl: f.mediaUrl
-                            });
+                            }, actionRequestReplyContexts));
                             if (hasNoWebhookWarning(fileResp)) {
                                 showWebhookTroubleModal();
                                 break;
@@ -8006,6 +8293,7 @@
                             text: finalText,
                             source: 'web_chat'
                         };
+                        attachReplyContextPayload(speakBody, actionRequestReplyContexts);
                         if (r2Attachments) speakBody.attachments = r2Attachments;
                         // Inject confirmation flag for slash command re-send
                         if (pendingConfirmCommand && text === `/${pendingConfirmCommand}`) {
@@ -8089,12 +8377,13 @@
                             const f = readyFiles[i];
                             const msgText = fileMsgText(i, f, finalText);
                             await Promise.all(targets.contacts.map(code =>
-                                crossSpeakSafe({ deviceId: currentUser.deviceId, fromEntityId, targetCode: code, text: msgText, source: 'web_chat', mediaType: f.type, mediaUrl: f.mediaUrl })
+                                crossSpeakSafe(attachReplyContextPayload({ deviceId: currentUser.deviceId, fromEntityId, targetCode: code, text: msgText, source: 'web_chat', mediaType: f.type, mediaUrl: f.mediaUrl }, actionRequestReplyContexts))
                             ));
                         }
                     } else {
                         await Promise.all(targets.contacts.map(code => {
                             const body = { deviceId: currentUser.deviceId, fromEntityId, targetCode: code, text: finalText, source: 'web_chat' };
+                            attachReplyContextPayload(body, actionRequestReplyContexts);
                             if (r2Attachments) body.attachments = r2Attachments;
                             return crossSpeakSafe(body);
                         }));
@@ -8107,6 +8396,8 @@
 
                 // Clear pending files (media and/or cloud-drive refs)
                 if (hasFiles || hasR2Refs) clearAllPendingFiles();
+
+                await resolveActionRequestReplyContexts(actionRequestReplyContexts, finalText);
 
                 // Notify Android widget
                 if (isAndroidWebView && text) {
@@ -9477,6 +9768,7 @@
                 alert(notice);
             }
         }
+        window.openHistoryMessage = openHistoryMessage;
 
         async function openNoteModal(noteId) {
             const titleEl = document.getElementById('noteModalTitle');
