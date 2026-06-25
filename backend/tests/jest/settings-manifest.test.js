@@ -84,7 +84,7 @@ describe('buildSettingsManifest() — structure', () => {
         const keys = buildSettingsManifest('1.0.0', 'android').features.map((f) => f.key);
         const expected = [
             'account_identity', 'channel_api', 'subscription', 'invite', 'language',
-            'display', 'chat_prefs', 'rental_management', 'notifications',
+            'display', 'chat_prefs', 'action_requests', 'rental_management', 'notifications',
             'developer_broadcast', 'agent_policy', 'kanban_nudge', 'passive_health',
             'wallet', 'my_rentals', 'files', 'companion_petdx', 'feedback',
             'rotate_secret', 'switch_device', 'logout',
@@ -132,7 +132,7 @@ describe('buildSettingsManifest() — platform handling', () => {
 
 describe('drift list — HIGH/MED features are web-only on both platforms', () => {
     for (const platform of SUPPORTED_PLATFORMS) {
-        for (const key of ['rotate_secret', 'switch_device', 'rental_management', 'agent_policy', 'kanban_nudge', 'passive_health']) {
+        for (const key of ['rotate_secret', 'switch_device', 'rental_management', 'agent_policy', 'kanban_nudge', 'passive_health', 'action_requests']) {
             it(`${key} is native:false on ${platform}`, () => {
                 const f = buildSettingsManifest('1.0.0', platform).features.find((x) => x.key === key);
                 expect(f.native).toBe(false);
@@ -254,7 +254,7 @@ describe('Stage-3 field registry — #6 nested schema', () => {
 
     it('value-bearing features expose both read+write; pure-action features write-only', () => {
         // Read+write features.
-        for (const k of ['account_identity', 'notifications', 'chat_prefs', 'kanban_nudge']) {
+        for (const k of ['account_identity', 'notifications', 'chat_prefs', 'action_requests', 'kanban_nudge']) {
             const ds = byKey(k).schema.dataSource;
             expect(ds.read).toBeTruthy();
             expect(ds.write).toBeTruthy();
@@ -280,6 +280,10 @@ describe('Stage-3 field registry — #6 nested schema', () => {
         expect(byKey('notifications').schema.dataSource.write.requestPath).toBe('prefs');
 
         expect(byKey('chat_prefs').schema.dataSource.read.path).toBe('/api/device-preferences');
+        expect(byKey('action_requests').schema.dataSource.read.path).toBe('/api/device-preferences');
+        expect(byKey('action_requests').schema.dataSource.write.path).toBe('/api/device-preferences');
+        expect(byKey('action_requests').schema.dataSource.read.responsePath).toBe('prefs');
+        expect(byKey('action_requests').schema.dataSource.write.requestPath).toBe('prefs');
         expect(byKey('kanban_nudge').schema.dataSource.read.path).toBe('/api/device-preferences');
 
         expect(byKey('rotate_secret').schema.dataSource.write.path).toBe('/api/device/rotate-secret');
@@ -365,6 +369,30 @@ describe('Stage-3 field registry — #6 nested schema', () => {
         expect(Array.isArray(field.validation.options)).toBe(true);
         expect(field.validation.options.map((o) => o.value)).toEqual(['small', 'medium', 'large']);
         for (const opt of field.validation.options) assertLabelShape(opt.label);
+    });
+
+    it('action_requests exposes realtime and timeout policy device prefs', () => {
+        const fields = fieldsOf('action_requests');
+        expect(fields.map((x) => x.key)).toEqual([
+            'action_request_realtime',
+            'action_request_timeout_policy',
+        ]);
+
+        const realtime = fields.find((x) => x.key === 'action_request_realtime');
+        expect(realtime.type).toBe('boolean');
+        expect(realtime.control).toBe('switch');
+        expect(realtime.scope).toBe('device');
+        expect(realtime.default).toBe(true);
+        expect(realtime.validation.required).toBe(false);
+
+        const timeout = fields.find((x) => x.key === 'action_request_timeout_policy');
+        expect(timeout.type).toBe('enum');
+        expect(timeout.control).toBe('select');
+        expect(timeout.scope).toBe('device');
+        expect(timeout.default).toBe('keep');
+        expect(timeout.validation.required).toBe(false);
+        expect(timeout.validation.options.map((o) => o.value)).toEqual(['keep', 'auto_dismiss', 'escalate']);
+        for (const opt of timeout.validation.options) assertLabelShape(opt.label);
     });
 
     it('account_identity display name is a string field with maxLength + writeAlias', () => {

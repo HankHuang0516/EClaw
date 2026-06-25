@@ -1,9 +1,19 @@
 {
-  "generated_at": "GENERATED — do not hand-edit",
+  "generated_at": "GENERATED \u2014 do not hand-edit",
   "source": [
     "portal/settings.html"
   ],
   "keys": [
+    {
+      "field_key": "action_request_realtime",
+      "label_key": "action_request_realtime_label",
+      "help_key": "action_request_realtime_help"
+    },
+    {
+      "field_key": "action_request_timeout_policy",
+      "label_key": "action_request_timeout_policy_label",
+      "help_key": "action_request_timeout_policy_help"
+    },
     {
       "field_key": "feedback_category",
       "label_key": "feedback_category_label",

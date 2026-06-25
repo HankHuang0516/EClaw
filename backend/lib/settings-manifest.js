@@ -217,6 +217,58 @@ const FEATURES = [
         },
     },
     {
+        key: 'action_requests',
+        name: 'Needs-you Requests',
+        enabled: true,
+        // Web-only configuration surface today; native apps can open the focused
+        // settings card until an app-rendered field registry consumer ships.
+        native: { android: false, ios: false },
+        minAppVersion: { android: '0.0.0', ios: '0.0.0' },
+        schema: {
+            version: FIELD_SCHEMA_VERSION,
+            renderer: 'form',
+            dataSource: {
+                read: { method: 'GET', path: '/api/device-preferences', auth: 'device', responsePath: 'prefs' },
+                write: { method: 'PUT', path: '/api/device-preferences', auth: 'device', requestPath: 'prefs' },
+            },
+            fields: [
+                {
+                    key: 'action_request_realtime',
+                    type: 'boolean',
+                    control: 'switch',
+                    label: { i18n: 'action_request_realtime_label', fallback: 'Live refresh inbox' },
+                    help: {
+                        i18n: 'action_request_realtime_desc',
+                        fallback: 'Refresh the inbox immediately when agents emit, resolve, or dismiss requests.',
+                    },
+                    scope: 'device',
+                    default: true,
+                    validation: { required: false },
+                },
+                {
+                    key: 'action_request_timeout_policy',
+                    type: 'enum',
+                    control: 'select',
+                    label: { i18n: 'action_request_timeout_policy_label', fallback: 'Unanswered request policy' },
+                    help: {
+                        i18n: 'action_request_timeout_policy_desc',
+                        fallback: 'Stored now for the timeout worker; no automatic timeout action runs until that worker ships.',
+                    },
+                    scope: 'device',
+                    default: 'keep',
+                    validation: {
+                        required: false,
+                        options: [
+                            { value: 'keep', label: { i18n: 'action_request_timeout_keep', fallback: 'Keep pending' } },
+                            { value: 'auto_dismiss', label: { i18n: 'action_request_timeout_auto_dismiss', fallback: 'Auto-dismiss later' } },
+                            { value: 'escalate', label: { i18n: 'action_request_timeout_escalate', fallback: 'Escalate later' } },
+                        ],
+                    },
+                },
+            ],
+        },
+    },
+    {
         key: 'rental_management',
         name: 'Rental Management',
         enabled: true,

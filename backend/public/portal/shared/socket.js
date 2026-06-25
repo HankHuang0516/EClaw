@@ -38,6 +38,10 @@ function initPortalSocket() {
         if (typeof onSocketChatMessage === 'function') onSocketChatMessage(msg);
     });
 
+    portalSocket.on('action_request:changed', (data) => {
+        if (typeof onSocketActionRequestChanged === 'function') onSocketActionRequestChanged(data);
+    });
+
     portalSocket.on('entity:update', (data) => {
         if (typeof onSocketEntityUpdate === 'function') onSocketEntityUpdate(data);
     });

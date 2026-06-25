@@ -339,18 +339,32 @@
         .greet-chip:hover { background: rgba(91,108,255,0.1); }
         .greet-chip.greet-chip-dismiss { border-color: var(--card-border, #333355); color: var(--text-secondary, #AAAAAA); }
         .action-request-inbox { display: flex; flex-direction: column; gap: 10px; }
-        .action-request-inbox-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .action-request-inbox-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
         .action-request-inbox-title { font-weight: 700; color: var(--text, #ffffff); }
+        .action-request-inbox-status { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
         .action-request-inbox-count {
             flex-shrink: 0; color: var(--primary, #5b6cff); border: 1px solid var(--primary, #5b6cff);
             border-radius: 999px; padding: 2px 8px; font-size: 12px; line-height: 1.4;
         }
+        .action-request-live-state {
+            flex-shrink: 0; border: 1px solid var(--card-border, #333355); color: var(--text-secondary, #AAAAAA);
+            border-radius: 999px; padding: 2px 8px; font-size: 12px; line-height: 1.4;
+        }
+        .action-request-live-state.on { border-color: rgba(34,197,94,0.55); color: #22c55e; }
         .action-request-item {
             display: grid; gap: 7px; padding: 9px 10px; border-radius: 10px;
             background: rgba(127,127,127,0.10); border: 1px solid var(--card-border, #333355);
         }
-        .action-request-meta { color: var(--text-secondary, #AAAAAA); font-size: 12px; }
+        .action-request-item.type-consensus { border-color: rgba(20,184,166,0.45); background: rgba(20,184,166,0.08); }
+        .action-request-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: var(--text-secondary, #AAAAAA); font-size: 12px; }
+        .action-request-type-badge {
+            display: inline-flex; align-items: center; gap: 4px; border-radius: 999px;
+            padding: 2px 8px; border: 1px solid var(--card-border, #333355);
+            color: var(--text, #ffffff); background: rgba(255,255,255,0.04);
+        }
+        .action-request-type-badge.type-consensus { border-color: rgba(20,184,166,0.65); color: #2dd4bf; background: rgba(20,184,166,0.12); }
         .action-request-prompt { color: var(--text, #ffffff); overflow-wrap: anywhere; }
+        .action-request-type-hint { color: var(--text-secondary, #AAAAAA); font-size: 12px; line-height: 1.45; }
         .action-request-options, .action-request-actions { display: flex; flex-wrap: wrap; gap: 6px; }
         .action-request-option, .action-request-action {
             border: 1px solid var(--card-border, #333355); color: var(--text, #ffffff);
@@ -4026,6 +4040,9 @@
         let actionRequests = [];
         let actionRequestsLoaded = false;
         let actionRequestsLoading = false;
+        let actionRequestRealtimeEnabled = true;
+        let actionRequestTimeoutPolicy = 'keep';
+        let actionRequestRefreshTimer = null;
 
         // ── System-message smart filter (spec chat-smart-filter-system-messages.md) ──
         // Active set of 5 categories from ChatSourceCategory. Default per spec:
@@ -4135,16 +4152,35 @@
             try { localStorage.setItem('eclaw_chat_avatar_size', chatAvatarSize); } catch (_) {}
         }
 
+        function normalizeActionRequestTimeoutPolicy(value) {
+            return ['keep', 'auto_dismiss', 'escalate'].includes(value) ? value : 'keep';
+        }
+
+        function applyActionRequestPrefs(prefs = {}) {
+            actionRequestRealtimeEnabled = prefs.action_request_realtime !== false;
+            actionRequestTimeoutPolicy = normalizeActionRequestTimeoutPolicy(prefs.action_request_timeout_policy);
+        }
+
         async function loadChatAvatarSizePreference() {
             applyChatAvatarSize(localStorage.getItem('eclaw_chat_avatar_size') || 'medium');
             if (!currentUser?.deviceId || !currentUser?.deviceSecret) return;
             try {
                 const data = await apiCall('GET', `/api/device-preferences?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
                 applyChatAvatarSize(data?.prefs?.chat_avatar_size || chatAvatarSize);
+                applyActionRequestPrefs(data?.prefs || {});
             } catch (_) {
-                // Keep local/default size; avatar size must never block chat load.
+                // Keep local/default prefs; device preferences must never block chat load.
             }
         }
+
+        window.onSocketDevicePreferences = function(data) {
+            if (!data || !data.prefs) return;
+            applyChatAvatarSize(data.prefs.chat_avatar_size || chatAvatarSize);
+            applyActionRequestPrefs(data.prefs);
+            if (actionRequestsLoaded && window.EclawGreeting) {
+                window.EclawGreeting.maybeShow({ force: true });
+            }
+        };
 
         function getChatAvatarPx() {
             return CHAT_AVATAR_SIZE_PX[chatAvatarSize] || CHAT_AVATAR_SIZE_PX.medium;
@@ -4776,6 +4812,7 @@
                     const hiddenMs = Date.now() - _lastHiddenAt;
                     if (hiddenMs > 10000) { // only if hidden for >10s
                         loadMessages().catch(() => {});
+                        scheduleActionRequestRefresh('visible');
                     }
                 }
             });
@@ -4821,6 +4858,9 @@
             refreshInterval = setInterval(async () => {
                 if (!portalSocket || !portalSocket.connected) {
                     await loadMessages();
+                    if (actionRequestRealtimeEnabled) {
+                        await loadActionRequests({ renderGreeting: true, forceGreeting: true });
+                    }
                 }
             }, 5000);
         });
@@ -7279,10 +7319,46 @@
             return id ? actionRequests.find(r => normalizeChatMessageId(r && r.id) === id) || null : null;
         }
 
-        function actionRequestTypeLabel(type) {
+        function actionRequestT(key, fallback, vars = {}) {
+            let value = (window.i18n && i18n.t) ? i18n.t(key, vars) : fallback;
+            if (!value || value === key) value = fallback;
+            Object.keys(vars).forEach(k => { value = String(value).replace('{' + k + '}', vars[k]); });
+            return value;
+        }
+
+        function actionRequestTypeMeta(type) {
             const raw = String(type || '').trim();
-            const key = raw ? 'action_request_type_' + raw : '';
-            return key && i18n && i18n.t ? (i18n.t(key) || raw) : raw;
+            const fallback = raw ? raw.charAt(0).toUpperCase() + raw.slice(1).replace(/_/g, ' ') : 'Request';
+            const label = raw ? actionRequestT('action_request_type_' + raw, fallback) : fallback;
+            const icons = {
+                decision: '⚖',
+                approval: '✓',
+                input: '✎',
+                credential: '🔐',
+                review: '👁',
+                clarify: '?',
+                consensus: '🤝',
+            };
+            const meta = {
+                raw,
+                label,
+                icon: icons[raw] || '!',
+                className: raw ? ('type-' + raw.replace(/[^a-z0-9_-]/gi, '-')) : 'type-request',
+                hint: '',
+                replyLabel: actionRequestT('action_request_inbox_reply', 'Reply'),
+            };
+            if (raw === 'consensus') {
+                meta.hint = actionRequestT(
+                    'action_request_type_consensus_hint',
+                    'Align with the relevant entities, then reply with the agreed next step.'
+                );
+                meta.replyLabel = actionRequestT('action_request_consensus_reply', 'Record consensus');
+            }
+            return meta;
+        }
+
+        function actionRequestTypeLabel(type) {
+            return actionRequestTypeMeta(type).label;
         }
 
         async function loadActionRequests({ renderGreeting = false, forceGreeting = false } = {}) {
@@ -7314,6 +7390,20 @@
             }
             return actionRequests;
         }
+
+        function scheduleActionRequestRefresh(reason = 'socket') {
+            if (!actionRequestRealtimeEnabled) return;
+            if (actionRequestRefreshTimer) clearTimeout(actionRequestRefreshTimer);
+            actionRequestRefreshTimer = setTimeout(async () => {
+                actionRequestRefreshTimer = null;
+                await loadActionRequests({ renderGreeting: true, forceGreeting: true });
+            }, reason === 'visible' ? 0 : 120);
+        }
+
+        window.onSocketActionRequestChanged = function(data) {
+            if (!data || !['emitted', 'resolved', 'dismissed'].includes(data.kind)) return;
+            scheduleActionRequestRefresh('socket');
+        };
 
         function openActionRequestAnchor(request) {
             const anchorMessageId = normalizeChatMessageId(request && request.anchorMessageId);
@@ -7379,11 +7469,7 @@
 
         function renderActionRequestInbox(banner) {
             if (!banner) return;
-            const t = (k, fb, vars = {}) => {
-                let value = (window.i18n && i18n.t) ? (i18n.t(k, vars) || fb) : fb;
-                Object.keys(vars).forEach(key => { value = String(value).replace('{' + key + '}', vars[key]); });
-                return value;
-            };
+            const t = actionRequestT;
             banner.textContent = '';
             const wrap = document.createElement('div');
             wrap.className = 'action-request-inbox';
@@ -7395,25 +7481,47 @@
             const count = document.createElement('span');
             count.className = 'action-request-inbox-count';
             count.textContent = t('action_request_inbox_count', '{count} pending', { count: actionRequests.length });
+            const live = document.createElement('span');
+            live.className = 'action-request-live-state' + (actionRequestRealtimeEnabled ? ' on' : '');
+            live.textContent = actionRequestRealtimeEnabled
+                ? t('action_request_realtime_on', 'Live')
+                : t('action_request_realtime_off', 'Manual refresh');
+            const status = document.createElement('span');
+            status.className = 'action-request-inbox-status';
+            status.appendChild(live);
+            status.appendChild(count);
             head.appendChild(title);
-            head.appendChild(count);
+            head.appendChild(status);
             wrap.appendChild(head);
 
             actionRequests.forEach(request => {
+                const typeMeta = actionRequestTypeMeta(request.type);
                 const item = document.createElement('div');
-                item.className = 'action-request-item';
+                item.className = 'action-request-item ' + typeMeta.className;
                 const entityId = Number(request.fromEntityId);
                 const meta = document.createElement('div');
                 meta.className = 'action-request-meta';
-                meta.textContent = t('action_request_meta', 'Entity #{entityId} · {type}', {
+                const typeBadge = document.createElement('span');
+                typeBadge.className = 'action-request-type-badge ' + typeMeta.className;
+                typeBadge.textContent = typeMeta.icon + ' ' + typeMeta.label;
+                const metaText = document.createElement('span');
+                metaText.textContent = t('action_request_meta', 'Entity #{entityId} · {type}', {
                     entityId: Number.isFinite(entityId) ? entityId : '?',
-                    type: actionRequestTypeLabel(request.type)
+                    type: typeMeta.label
                 });
+                meta.appendChild(typeBadge);
+                meta.appendChild(metaText);
                 const prompt = document.createElement('div');
                 prompt.className = 'action-request-prompt';
                 prompt.textContent = request.prompt || '';
                 item.appendChild(meta);
                 item.appendChild(prompt);
+                if (typeMeta.hint) {
+                    const hint = document.createElement('div');
+                    hint.className = 'action-request-type-hint';
+                    hint.textContent = typeMeta.hint;
+                    item.appendChild(hint);
+                }
 
                 if (Array.isArray(request.options) && request.options.length > 0) {
                     const opts = document.createElement('div');
@@ -7435,7 +7543,7 @@
                 const reply = document.createElement('button');
                 reply.type = 'button';
                 reply.className = 'action-request-action';
-                reply.textContent = t('action_request_inbox_reply', 'Reply');
+                reply.textContent = typeMeta.replyLabel;
                 reply.addEventListener('click', () => focusActionRequestReply(request.id));
                 actions.appendChild(reply);
                 if (request.anchorMessageId) {

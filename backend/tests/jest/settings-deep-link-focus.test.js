@@ -39,11 +39,11 @@ function loadDeepLink(url) {
 }
 
 describe('settings-deep-link FOCUS_MAP — APP entry buttons', () => {
-    test('exposes channel-api and kanban-nudge keys', () => {
+    test('exposes channel-api, kanban-nudge, and action request keys', () => {
         const w = loadDeepLink('https://example.com/portal/settings.html');
         expect(Array.isArray(w.SETTINGS_DEEP_LINK_KEYS)).toBe(true);
         expect(w.SETTINGS_DEEP_LINK_KEYS).toEqual(
-            expect.arrayContaining(['channel-api', 'kanban-nudge'])
+            expect.arrayContaining(['channel-api', 'kanban-nudge', 'action_requests', 'action-requests'])
         );
     });
 
