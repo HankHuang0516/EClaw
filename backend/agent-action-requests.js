@@ -97,6 +97,43 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog } = {}) 
         }
     }
 
+    // Best-effort: notify the emitting agent that its request was answered.
+    // Extracted so both POST /:id/resolve and the /api/client/speak smart-quote
+    // auto-resolve path push back identically (card_b51598b7). Never throws.
+    function notifyAgentResolved(deviceId, device, row, answer) {
+        try {
+            const entity = device && device.entities && device.entities[row.from_entity_id];
+            if (!entity || !entity.isBound) return;
+            const note = `[需要你 RESOLVED] "${row.prompt}" → ${JSON.stringify(answer ?? null)} (request ${row.id}${row.anchor_message_id ? `, anchor ${row.anchor_message_id}` : ''})`;
+            if (entity.bindingType === 'channel' && typeof unifiedPush === 'function') {
+                unifiedPush(entity, deviceId, 'action_request_resolved', { message: note, requestId: row.id, anchorMessageId: row.anchor_message_id, answer: answer ?? null }, { event: 'message', from: 'action_request' }).catch(() => {});
+            } else if (entity.webhook && typeof pushToBot === 'function') {
+                pushToBot(entity, deviceId, 'action_request_resolved', { message: note }).catch(() => {});
+            }
+        } catch (_) {}
+    }
+
+    // Core resolve: guarded UPDATE (pending-only, device-scoped) + best-effort
+    // agent push-back. Shared by POST /:id/resolve and the /api/client/speak
+    // smart-quote auto-resolve loop (card_b51598b7).
+    // Returns the resolved row, or null if nothing pending matched / id invalid.
+    // Throws only on a DB error so the HTTP endpoint can 500; the speak path
+    // wraps the call in try/catch and treats any failure as a no-op.
+    async function resolveActionRequest(deviceId, requestId, answer, device) {
+        if (!deviceId || !UUID_RE.test(String(requestId))) return null;
+        const result = await pool.query(
+            `UPDATE agent_action_requests
+                SET status = 'resolved', answer = $1::jsonb, resolved_at = NOW()
+              WHERE id = $2 AND device_id = $3 AND status = 'pending'
+            RETURNING *`,
+            [answer !== undefined ? JSON.stringify(answer) : null, requestId, deviceId]
+        );
+        if (result.rows.length === 0) return null;
+        const row = result.rows[0];
+        notifyAgentResolved(deviceId, device, row, answer);
+        return row;
+    }
+
     // ── Dual auth: deviceSecret (user) OR botSecret+entityId (agent) ──
     // Returns { device, deviceId, entityId|null, isUser } or null (after sending the error response).
     function authenticate(req, res) {
@@ -217,30 +254,10 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog } = {}) 
         const { answer } = req.body || {};
 
         try {
-            const result = await pool.query(
-                `UPDATE agent_action_requests
-                    SET status = 'resolved', answer = $1::jsonb, resolved_at = NOW()
-                  WHERE id = $2 AND device_id = $3 AND status = 'pending'
-                RETURNING *`,
-                [answer !== undefined ? JSON.stringify(answer) : null, id, deviceId]
-            );
-            if (result.rows.length === 0) {
+            const row = await resolveActionRequest(deviceId, id, answer, device);
+            if (!row) {
                 return res.status(404).json({ success: false, error: 'Not found or already resolved/dismissed' });
             }
-            const row = result.rows[0];
-            // Best-effort notify the emitting agent that its request was answered.
-            // Full smart-quote/anchor routing is child card_b51598b7.
-            try {
-                const entity = device.entities && device.entities[row.from_entity_id];
-                if (entity && entity.isBound) {
-                    const note = `[需要你 RESOLVED] "${row.prompt}" → ${JSON.stringify(answer ?? null)} (request ${row.id}${row.anchor_message_id ? `, anchor ${row.anchor_message_id}` : ''})`;
-                    if (entity.bindingType === 'channel' && typeof unifiedPush === 'function') {
-                        unifiedPush(entity, deviceId, 'action_request_resolved', { message: note, requestId: row.id, anchorMessageId: row.anchor_message_id, answer: answer ?? null }, { event: 'message', from: 'action_request' }).catch(() => {});
-                    } else if (entity.webhook && typeof pushToBot === 'function') {
-                        pushToBot(entity, deviceId, 'action_request_resolved', { message: note }).catch(() => {});
-                    }
-                }
-            } catch (_) {}
             log('info', `resolve id=${row.id} from=${row.from_entity_id}`, { deviceId });
             return res.json({ success: true, request: rowToApi(row) });
         } catch (err) {
@@ -282,6 +299,10 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog } = {}) 
     return {
         router,
         initDatabase: initAgentActionRequestsDatabase,
+        // Shared resolve so /api/client/speak can auto-resolve a request a
+        // smart-quote reply answers (card_b51598b7). Device-scoped, pending-only,
+        // + best-effort agent push-back. Returns the row, or null on no-match.
+        resolveActionRequest,
         _pool: pool,
     };
 };
