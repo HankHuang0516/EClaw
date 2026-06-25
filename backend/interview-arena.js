@@ -292,6 +292,17 @@ let VISION_IMAGES = [
     // Hard tier
     { file: null, description: 'A SQL query result table with six columns (id, name, department, salary, hire_date, status) and 8 data rows — the status column shows "Active" for 6 rows in green and "Inactive" for 2 rows in gray; the bottom summary row shows total salary $458,200 and average $57,275 highlighted in yellow', keywords: ['SQL', 'six', 'columns', 'eight', 'rows', 'salary', '458200', 'inactive', 'average', '57275', 'active'] },
     { file: null, description: 'A machine learning training curve chart: two lines plotted over 50 epochs — training loss (blue solid line) starts at 2.8 and descends to 0.31 by epoch 50; validation loss (orange dashed line) diverges upward after epoch 35, reaching 0.68 at epoch 50 — a vertical red dashed "Early Stop" annotation marks epoch 35', keywords: ['training', 'loss', 'blue', 'validation', 'orange', 'fifty', 'epochs', '35', 'diverges', 'early', 'stop', '2.8', '0.31'] },
+    // ── Daily pool update: added 2026-06-25 ──
+    // Easy tier
+    { file: null, description: 'A blue thumbs-up like button icon on a white background with the number "1.2K" in gray text beside it', keywords: ['thumbs', 'up', 'blue', '1.2K', 'like', 'gray'] },
+    { file: null, description: 'A muted speaker icon — a gray loudspeaker symbol with a red diagonal strikethrough line across it', keywords: ['muted', 'speaker', 'gray', 'red', 'strikethrough', 'icon'] },
+    // Medium tier
+    { file: null, description: 'A SaaS pricing comparison table with three columns (Starter $12/mo, Pro $49/mo highlighted in blue as "Best Value", Enterprise $199/mo) and six feature rows — only Pro and Enterprise have checkmarks for rows 3 and 4, and only Enterprise has rows 5 and 6 checked', keywords: ['pricing', 'three', 'columns', 'starter', 'pro', '49', 'enterprise', '199', 'best', 'value', 'six', 'rows'] },
+    { file: null, description: 'A Git merge conflict screen in a code editor: a file named auth.js shows a "Current Change" block in green (lines 14–17) and an "Incoming Change" block in blue (lines 14–18) — three action buttons appear at the top: "Accept Current Change", "Accept Incoming Change", "Accept Both Changes"', keywords: ['git', 'merge', 'conflict', 'auth.js', 'green', 'blue', 'current', 'incoming', 'three', 'accept'] },
+    { file: null, description: 'A Docker container status table listing 5 containers: nginx, postgres, redis, and worker all show "Up 3 days" in green; the api container shows "Restarting (1) 2 hours ago" highlighted in red — the bottom bar shows 4 healthy and 1 unhealthy', keywords: ['docker', 'five', 'containers', 'nginx', 'postgres', 'redis', 'api', 'restarting', 'red', 'unhealthy'] },
+    // Hard tier
+    { file: null, description: 'A CI/CD pipeline dependency graph with 8 stages in sequence: Source → Build (2.1 min) → Unit Tests (4.7 min) → Integration Tests (8.3 min) → Security Scan (3.1 min) → Docker Build (1.8 min) → Staging Deploy (5.2 min) → Smoke Test (2.4 min) — the Security Scan stage shows a red ❌ badge reading "CRITICAL: 1 CVE found"', keywords: ['pipeline', 'eight', 'stages', 'build', 'unit', 'integration', 'security', 'scan', 'CVE', 'critical', 'red'] },
+    { file: null, description: 'A database migration log with 9 rows of ALTER TABLE statements: 5 rows in green marked "completed", 2 rows in yellow marked "pending", and 1 row in red marked "FAILED: unique constraint violation on users.email at 14:23:07" — a progress bar at the bottom reads "6/9 migrations applied"', keywords: ['migration', 'nine', 'rows', 'completed', 'five', 'pending', 'failed', 'constraint', 'email', '14:23', 'six'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -585,6 +596,13 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '4, [[0,1,100],[1,2,100],[2,0,100],[1,3,600],[2,3,200]], 0, 3, 1', expected: '700' },{ input: '3, [[0,1,100],[1,2,100],[0,2,500]], 0, 2, 1', expected: '200' },{ input: '3, [[0,1,100],[1,2,100],[0,2,500]], 0, 2, 0', expected: '500' }] },
     { title: 'Median of Two Sorted Arrays', description: 'Write `solve(nums1, nums2)` — return the median of the two sorted arrays merged. If the combined length is even, return the average of the two middle values as a float with one decimal place.',
       testCases: [{ input: '[1,3], [2]', expected: '2.0' },{ input: '[1,2], [3,4]', expected: '2.5' },{ input: '[], [1]', expected: '1.0' },{ input: '[3], [-2,-1]', expected: '-1.0' }] },
+    // ── Daily pool update: added 2026-06-25 ──
+    { title: 'Longest Consecutive Sequence', description: 'Write `solve(nums)` — given an unsorted array of integers, return the length of the longest consecutive elements sequence. Your algorithm must run in O(n) time using a hash set.',
+      testCases: [{ input: '[100,4,200,1,3,2]', expected: '4' },{ input: '[0,3,7,2,5,8,4,6,0,1]', expected: '9' },{ input: '[]', expected: '0' },{ input: '[1,2,0,1]', expected: '3' }] },
+    { title: 'Product of Array Except Self', description: 'Write `solve(nums)` — return an array where output[i] equals the product of all elements in nums except nums[i]. Do not use division.',
+      testCases: [{ input: '[1,2,3,4]', expected: '[24,12,8,6]' },{ input: '[-1,1,0,-3,3]', expected: '[0,0,9,0,0]' },{ input: '[2,3]', expected: '[3,2]' },{ input: '[1,1,1]', expected: '[1,1,1]' }] },
+    { title: 'Burst Balloons', description: 'Write `solve(nums)` — you have n balloons, each labeled with a number. Bursting balloon i earns nums[i-1] * nums[i] * nums[i+1] coins (treat out-of-bounds indices as 1). Return the maximum total coins you can collect by bursting all balloons optimally.',
+      testCases: [{ input: '[3,1,5,8]', expected: '167' },{ input: '[1,5]', expected: '10' },{ input: '[7]', expected: '7' },{ input: '[0,0,0]', expected: '0' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -751,6 +769,17 @@ let RESPONSE_QUESTIONS = [
     { question: 'A prime number p is such that p, p+2, and p+4 are all prime. What is the value of p? (Hint: think about divisibility by 3 for consecutive odd numbers.)', expectedKeywords: ['3', 'three'] },
     { question: 'A clock is set correctly at noon. It gains 30 seconds every hour. What time does the clock display when the actual time is midnight (12 hours later)?', expectedKeywords: ['12:06', '6 minutes', 'six'] },
     { question: 'How many trailing zeros does 100! (100 factorial) end with?', expectedKeywords: ['24', 'twenty-four'] },
+    // ── Daily pool update: added 2026-06-25 ──
+    // Easy tier
+    { question: 'What is the chemical formula for water?', expectedKeywords: ['H2O'] },
+    { question: 'How many meters are in one kilometer?', expectedKeywords: ['1000', 'one thousand'] },
+    // Medium tier
+    { question: 'The average of 5 numbers is 18. When a 6th number is added, the new average becomes 20. What is the 6th number?', expectedKeywords: ['30'] },
+    { question: 'A shopkeeper marks up a product by 40% above cost price and then offers a 25% discount on the marked price. What is the net percentage profit on the original cost price?', expectedKeywords: ['5', '5%'] },
+    { question: 'A bag contains 6 red and 4 blue marbles. Three marbles are drawn without replacement. What is the probability that exactly 2 are red? Express as a simplified fraction.', expectedKeywords: ['1/2', 'half', '0.5'] },
+    // Hard tier
+    { question: 'How many 4-digit numbers are divisible by both 6 and 9 but NOT by 18? (Hint: consider the LCM of 6 and 9.)', expectedKeywords: ['0', 'zero', 'none'] },
+    { question: '$12,000 is divided among A, B, and C such that A gets twice as much as B, and B gets three times as much as C. How much does A receive?', expectedKeywords: ['7200', '$7,200', '7,200'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -929,6 +958,16 @@ let TTS_PHRASES = [
     // Hard tier
     { text: 'Pursuant to Article 9 section 3 sub-paragraph ii the indemnifying party shall not be liable for indirect consequential or punitive damages exceeding the total contract value of two hundred fifty thousand United States dollars', keywords: ['article', '9', 'section', 'indemnifying', 'liable', 'indirect', 'consequential', 'punitive', '250000', 'dollars'] },
     { text: 'ECG interpretation: sinus tachycardia at 112 beats per minute, PR interval 0.18 seconds, QRS duration 0.09 seconds, ST elevation 2 millimeters in leads V2 through V4 — consistent with anterior STEMI requiring immediate cath lab activation', keywords: ['ECG', '112', 'PR', '0.18', 'QRS', '0.09', 'ST', 'elevation', 'V2', 'V4', 'STEMI', 'anterior'] },
+    // ── Daily pool update: added 2026-06-25 ──
+    // Easy tier
+    { text: 'Please enter your username and password to continue logging in to your account', keywords: ['username', 'password', 'continue', 'logging', 'account'] },
+    { text: 'Your order number 5521 has been successfully placed and will arrive by Friday', keywords: ['order', '5521', 'successfully', 'placed', 'friday'] },
+    // Medium tier
+    { text: 'Departure notification: train ICE 527 to Frankfurt Hauptbahnhof departs from platform 9 at 14:43 — coaches 1 through 5 are first class, coaches 6 through 11 are second class', keywords: ['ICE', '527', 'Frankfurt', 'platform', '9', '14:43', 'first', 'class', 'second', 'eleven'] },
+    { text: 'Your recent transaction of three hundred forty-seven dollars and sixty cents was declined at MegaStore on November eighth — please call the fraud prevention line at 1-800-555-0199 to verify your identity', keywords: ['transaction', '347', 'sixty', 'declined', 'MegaStore', 'november', '555', '0199', 'fraud', 'verify'] },
+    // Hard tier
+    { text: 'Pursuant to International Financial Reporting Standards IAS 36 paragraph 59 the recoverable amount of the cash-generating unit was assessed at forty-two million six hundred thousand euros using a pre-tax discount rate of nine point five percent and a terminal growth rate of two percent', keywords: ['IAS', '36', 'recoverable', 'cash-generating', 'forty-two', 'million', 'nine', 'five', 'discount', 'terminal', 'two'] },
+    { text: 'The Merkle tree inclusion proof for transaction 0xf3a4b217e9cd8041 contains four sibling hashes: 0x1a2b3c at left level 1, 0x9f8e7d at right level 2, 0xc5d4e3 at left level 3, and 0xa0b1c2 at right level 4 — concatenate and hash each pair from leaf to root to verify membership in block 19842716', keywords: ['merkle', 'tree', '0xf3a4', 'four', 'sibling', 'left', 'right', 'root', 'block', '19842716'] },
 ];
 
 // ============================================
