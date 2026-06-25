@@ -31,8 +31,9 @@
             border-radius: var(--radius-sm);
             padding: 6px 10px;
             font-size: 13px;
+            min-height: 32px;
         }
-        .ana-controls input[type=text] { min-width: 180px; }
+        .ana-controls input[type=text] { min-width: 220px; }
         .ana-refresh-btn {
             display: inline-flex;
             align-items: center;
@@ -48,6 +49,60 @@
             cursor: pointer;
         }
         .ana-refresh-btn:hover { opacity: 0.85; }
+        .ana-refresh-btn:disabled {
+            cursor: progress;
+            opacity: 0.65;
+        }
+        .ana-clear-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 28px;
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 6px 12px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .ana-clear-btn:hover { border-color: var(--text-secondary); }
+        .ana-clear-btn[hidden] { display: none; }
+
+        .ana-filter-context {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        .ana-filter-context[data-state="filtered"] {
+            border-color: rgba(70, 132, 255, 0.45);
+            box-shadow: inset 0 0 0 1px rgba(70, 132, 255, 0.12);
+        }
+        .ana-filter-context strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+        .ana-context-main {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+        }
+        #contextPath {
+            overflow-wrap: anywhere;
+        }
+        .ana-context-hint {
+            text-align: right;
+        }
 
         .ana-summary {
             display: grid;
@@ -120,12 +175,35 @@
             gap: 16px;
         }
         @media (max-width: 720px) {
+            .ana-controls {
+                align-items: stretch;
+            }
+            .ana-controls label {
+                flex: 1 1 100%;
+                align-items: stretch;
+            }
+            .ana-controls select,
+            .ana-controls input[type=text],
+            .ana-refresh-btn,
+            .ana-clear-btn {
+                width: 100%;
+            }
             .ana-grid-2 { grid-template-columns: 1fr; }
             .ana-refresh-btn { margin-left: 0; }
+            .ana-filter-context {
+                align-items: stretch;
+                flex-direction: column;
+            }
+            .ana-context-hint { text-align: left; }
         }
 
+        .ana-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
         table.ana-table {
             width: 100%;
+            min-width: 360px;
             border-collapse: collapse;
             font-size: 13px;
         }
@@ -197,10 +275,21 @@
                     <span data-i18n="analytics_path_filter_label">Path filter</span>
                     <input id="pathInput" type="text" data-i18n-placeholder="analytics_path_filter_placeholder" placeholder="e.g. /landing* or /docs/*">
                 </label>
+                <button id="clearPathBtn" class="ana-clear-btn" type="button" hidden>Clear filter / 清除篩選</button>
                 <button id="refreshBtn" class="ana-refresh-btn" data-i18n="analytics_refresh">Refresh</button>
             </div>
 
             <div id="errorBanner" class="ana-error" style="display: none;"></div>
+
+            <div id="filterContext" class="ana-filter-context" role="status" aria-live="polite" aria-atomic="true" data-state="all">
+                <div class="ana-context-main">
+                    <span data-i18n="analytics_days_label">Range</span>
+                    <strong id="contextRange">Last 30 days</strong>
+                    <span aria-hidden="true">·</span>
+                    <strong id="contextPath">All paths / 全部路徑</strong>
+                </div>
+                <span id="contextHint" class="ana-context-hint">All public analytics paths / 全部公開分析路徑</span>
+            </div>
 
             <div class="ana-summary">
                 <div class="ana-stat-card">
@@ -231,24 +320,28 @@
             <div class="ana-grid-2">
                 <div class="ana-section">
                     <h2 data-i18n="analytics_top_paths">Top paths</h2>
-                    <table class="ana-table">
-                        <thead><tr>
-                            <th data-i18n="analytics_col_path">Path</th>
-                            <th class="num" data-i18n="analytics_col_views">Views</th>
-                        </tr></thead>
-                        <tbody id="topPathsBody"></tbody>
-                    </table>
+                    <div class="ana-table-wrap">
+                        <table class="ana-table">
+                            <thead><tr>
+                                <th data-i18n="analytics_col_path">Path</th>
+                                <th class="num" data-i18n="analytics_col_views">Views</th>
+                            </tr></thead>
+                            <tbody id="topPathsBody"></tbody>
+                        </table>
+                    </div>
                 </div>
                 <div class="ana-section">
                     <h2 data-i18n="analytics_by_campaign">By UTM campaign</h2>
-                    <table class="ana-table">
-                        <thead><tr>
-                            <th data-i18n="analytics_col_campaign">Campaign</th>
-                            <th class="num" data-i18n="analytics_col_views">Views</th>
-                            <th class="num" data-i18n="analytics_col_uniq">Unique</th>
-                        </tr></thead>
-                        <tbody id="byCampaignBody"></tbody>
-                    </table>
+                    <div class="ana-table-wrap">
+                        <table class="ana-table">
+                            <thead><tr>
+                                <th data-i18n="analytics_col_campaign">Campaign</th>
+                                <th class="num" data-i18n="analytics_col_views">Views</th>
+                                <th class="num" data-i18n="analytics_col_uniq">Unique</th>
+                            </tr></thead>
+                            <tbody id="byCampaignBody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -268,6 +361,38 @@
         function fmtNumber(n) {
             if (typeof n !== 'number' || !isFinite(n)) return '—';
             return n.toLocaleString();
+        }
+
+        function daysLabelForValue(days) {
+            const value = String(days || '30');
+            if (value === '7') return i18n.t('analytics_days_7', 'Last 7 days');
+            if (value === '90') return i18n.t('analytics_days_90', 'Last 90 days');
+            return i18n.t('analytics_days_30', 'Last 30 days');
+        }
+
+        function getActivePathFilter() {
+            const input = document.getElementById('pathInput');
+            return input ? input.value.trim() : '';
+        }
+
+        function renderAnalyticsContext() {
+            const context = document.getElementById('filterContext');
+            const rangeEl = document.getElementById('contextRange');
+            const pathEl = document.getElementById('contextPath');
+            const hintEl = document.getElementById('contextHint');
+            const clearBtn = document.getElementById('clearPathBtn');
+            const daysSel = document.getElementById('daysSel');
+            if (!context || !rangeEl || !pathEl || !hintEl || !daysSel) return;
+
+            const pathGlob = getActivePathFilter();
+            const filtered = !!pathGlob;
+            context.dataset.state = filtered ? 'filtered' : 'all';
+            rangeEl.textContent = daysLabelForValue(daysSel.value);
+            pathEl.textContent = filtered ? pathGlob : 'All paths / 全部路徑';
+            hintEl.textContent = filtered
+                ? 'Filtered to matching paths / 僅顯示符合路徑'
+                : 'All public analytics paths / 全部公開分析路徑';
+            if (clearBtn) clearBtn.hidden = !filtered;
         }
 
         function showError(msg) {
@@ -386,7 +511,10 @@
                 td.colSpan = 2;
                 td.className = 'ana-empty';
                 td.setAttribute('data-i18n', 'analytics_no_data');
-                td.textContent = i18n.t('analytics_no_data', 'No data in range');
+                const pathGlob = getActivePathFilter();
+                td.textContent = pathGlob
+                    ? `No paths match "${pathGlob}" in this range / 此範圍沒有符合「${pathGlob}」的路徑`
+                    : i18n.t('analytics_no_data', 'No data in range');
                 tr.appendChild(td); tbody.appendChild(tr);
                 return;
             }
@@ -413,7 +541,10 @@
                 td.colSpan = 3;
                 td.className = 'ana-empty';
                 td.setAttribute('data-i18n', 'analytics_no_campaigns');
-                td.textContent = i18n.t('analytics_no_campaigns', 'No tagged campaigns in range');
+                const pathGlob = getActivePathFilter();
+                td.textContent = pathGlob
+                    ? `No tagged campaigns match "${pathGlob}" / 沒有符合「${pathGlob}」的已標記活動`
+                    : i18n.t('analytics_no_campaigns', 'No tagged campaigns in range');
                 tr.appendChild(td); tbody.appendChild(tr);
                 return;
             }
@@ -433,18 +564,23 @@
         }
 
         async function fetchAnalytics() {
+            renderAnalyticsContext();
             if (!currentUser || !currentUser.deviceId || !currentUser.deviceSecret) {
                 showError(i18n.t('analytics_err_no_device', 'Device credentials not available. Device owner access only.'));
                 return;
             }
             const days = document.getElementById('daysSel').value || '30';
-            const pathGlob = document.getElementById('pathInput').value.trim();
+            const pathGlob = getActivePathFilter();
             const params = new URLSearchParams({
                 deviceId: currentUser.deviceId,
                 deviceSecret: currentUser.deviceSecret,
                 days: days
             });
             if (pathGlob) params.set('path', pathGlob);
+            const content = document.getElementById('analyticsContent');
+            const refreshBtn = document.getElementById('refreshBtn');
+            if (content) content.setAttribute('aria-busy', 'true');
+            if (refreshBtn) refreshBtn.disabled = true;
             try {
                 const data = await apiCall('GET', `/api/analytics/site-pageviews?${params.toString()}`);
                 if (!data || data.success === false) {
@@ -459,6 +595,9 @@
             } catch (e) {
                 console.error('[Analytics] Fetch failed:', e);
                 showError(i18n.t('analytics_err_fetch', 'Failed to load analytics') + ': ' + (e.message || e));
+            } finally {
+                if (content) content.setAttribute('aria-busy', 'false');
+                if (refreshBtn) refreshBtn.disabled = false;
             }
         }
 
@@ -477,9 +616,19 @@
                 let pathDebounce = null;
                 document.getElementById('pathInput').addEventListener('input', () => {
                     clearTimeout(pathDebounce);
+                    renderAnalyticsContext();
                     pathDebounce = setTimeout(fetchAnalytics, 500);
                 });
+                document.getElementById('clearPathBtn').addEventListener('click', () => {
+                    clearTimeout(pathDebounce);
+                    const input = document.getElementById('pathInput');
+                    input.value = '';
+                    renderAnalyticsContext();
+                    fetchAnalytics();
+                    input.focus();
+                });
 
+                renderAnalyticsContext();
                 await fetchAnalytics();
 
                 refreshTimer = setInterval(() => {
@@ -489,6 +638,7 @@
 
                 if (typeof i18n !== 'undefined' && i18n.onLanguageChange) {
                     i18n.onLanguageChange(() => {
+                        renderAnalyticsContext();
                         if (lastResult) {
                             renderChart(lastResult.daily || []);
                             renderTopPaths(lastResult.topPaths || []);
