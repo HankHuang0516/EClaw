@@ -10,6 +10,11 @@
       "help_key": "action_request_realtime_help"
     },
     {
+      "field_key": "action_request_timeout_minutes",
+      "label_key": "action_request_timeout_minutes_label",
+      "help_key": "action_request_timeout_minutes_help"
+    },
+    {
       "field_key": "action_request_timeout_policy",
       "label_key": "action_request_timeout_policy_label",
       "help_key": "action_request_timeout_policy_help"
