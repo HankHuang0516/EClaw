@@ -54,10 +54,25 @@ const DEFAULTS = {
     // display on this flag. timeout policy = what to do with an un-answered
     // request after a deadline (consumed by a future settings/timeout PR).
     action_request_realtime: true,
-    action_request_timeout_policy: 'keep', // 'keep' | 'auto_dismiss' | 'escalate'
+    // What to do with a "需要你" request the user never answers, once it is older
+    // than action_request_timeout_minutes. Consumed by the timeout worker in
+    // backend/agent-action-requests.js (card_ce0d685b):
+    //   'keep'         → never auto-act (device is a no-op for the worker)
+    //   'auto_dismiss' → mark dismissed + tell the emitter it was skipped
+    //   'safe_default' → resolve with a safe-default answer; agent continues
+    //   'consensus'    → trigger ONE bot-to-bot consensus round; the emitting
+    //                    agent synthesizes the entities' replies and resolves via
+    //                    the existing resolve API → auto-executes the decision
+    //                    (Hank's decision: no user confirmation gate).
+    action_request_timeout_policy: 'keep', // 'keep' | 'auto_dismiss' | 'safe_default' | 'consensus'
+    // Deadline (minutes) after which the policy above fires. Default 1440 (24h).
+    // Clamped to [5, 43200] (5 min .. 30 days).
+    action_request_timeout_minutes: 1440,
 };
 
-const ACTION_REQUEST_TIMEOUT_POLICIES = new Set(['keep', 'auto_dismiss', 'escalate']);
+const ACTION_REQUEST_TIMEOUT_POLICIES = new Set(['keep', 'auto_dismiss', 'safe_default', 'consensus']);
+const ACTION_REQUEST_TIMEOUT_MINUTES_MIN = 5;
+const ACTION_REQUEST_TIMEOUT_MINUTES_MAX = 43200; // 30 days
 
 // Spec: docs/specs/kanban-nudge-spec.md §6 — restricted override key set.
 const NUDGE_ENTITY_OVERRIDE_KEYS = [
@@ -84,6 +99,12 @@ function coerceValue(key, raw) {
         return raw === true || raw === 'true';
     }
     if (typeof def === 'boolean') return !!raw;
+    if (key === 'action_request_timeout_minutes') {
+        // parseInt-style coercion + clamp to [5, 43200]; invalid → default 1440.
+        const n = parseInt(raw, 10);
+        if (!Number.isFinite(n)) return def;
+        return Math.max(ACTION_REQUEST_TIMEOUT_MINUTES_MIN, Math.min(ACTION_REQUEST_TIMEOUT_MINUTES_MAX, n));
+    }
     if (typeof def === 'number') {
         const n = Number(raw);
         if (!Number.isFinite(n)) return def;
