@@ -355,6 +355,7 @@
             display: grid; gap: 7px; padding: 9px 10px; border-radius: 10px;
             background: rgba(127,127,127,0.10); border: 1px solid var(--card-border, #333355);
         }
+        .action-request-item.in-consensus { border-color: rgba(45,212,191,0.55); background: rgba(20,184,166,0.10); }
         .action-request-item.type-consensus { border-color: rgba(20,184,166,0.45); background: rgba(20,184,166,0.08); }
         .action-request-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: var(--text-secondary, #AAAAAA); font-size: 12px; }
         .action-request-type-badge {
@@ -363,6 +364,10 @@
             color: var(--text, #ffffff); background: rgba(255,255,255,0.04);
         }
         .action-request-type-badge.type-consensus { border-color: rgba(20,184,166,0.65); color: #2dd4bf; background: rgba(20,184,166,0.12); }
+        .action-request-consensus-state {
+            display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 8px;
+            border: 1px solid rgba(45,212,191,0.65); color: #2dd4bf; background: rgba(20,184,166,0.12);
+        }
         .action-request-prompt { color: var(--text, #ffffff); overflow-wrap: anywhere; }
         .action-request-type-hint { color: var(--text-secondary, #AAAAAA); font-size: 12px; line-height: 1.45; }
         .action-request-options, .action-request-actions { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -4042,6 +4047,7 @@
         let actionRequestsLoading = false;
         let actionRequestRealtimeEnabled = true;
         let actionRequestTimeoutPolicy = 'keep';
+        const actionRequestConsensusTriggeredIds = new Set();
         let actionRequestRefreshTimer = null;
 
         // ── System-message smart filter (spec chat-smart-filter-system-messages.md) ──
@@ -4153,7 +4159,7 @@
         }
 
         function normalizeActionRequestTimeoutPolicy(value) {
-            return ['keep', 'auto_dismiss', 'escalate'].includes(value) ? value : 'keep';
+            return ['keep', 'auto_dismiss', 'safe_default', 'consensus'].includes(value) ? value : 'keep';
         }
 
         function applyActionRequestPrefs(prefs = {}) {
@@ -7361,6 +7367,33 @@
             return actionRequestTypeMeta(type).label;
         }
 
+        function isActionRequestConsensusTriggered(request) {
+            const id = normalizeChatMessageId(request && request.id);
+            return !!(
+                request &&
+                (request.consensusTriggered || request.consensusTriggeredAt || request.consensus_triggered_at ||
+                    (id && actionRequestConsensusTriggeredIds.has(id)))
+            );
+        }
+
+        function markActionRequestConsensusTriggered(requestId) {
+            const id = normalizeChatMessageId(requestId);
+            if (!id) return false;
+            actionRequestConsensusTriggeredIds.add(id);
+            let changed = false;
+            actionRequests = actionRequests.map(request => {
+                if (normalizeChatMessageId(request && request.id) !== id || request.consensusTriggered) return request;
+                changed = true;
+                return { ...request, consensusTriggered: true };
+            });
+            return changed;
+        }
+
+        function clearActionRequestConsensusTriggered(requestId) {
+            const id = normalizeChatMessageId(requestId);
+            if (id) actionRequestConsensusTriggeredIds.delete(id);
+        }
+
         async function loadActionRequests({ renderGreeting = false, forceGreeting = false } = {}) {
             if (!currentUser?.deviceId || !currentUser?.deviceSecret) {
                 actionRequests = [];
@@ -7379,7 +7412,12 @@
                 const data = await apiCall('GET', `/api/action-requests?${qs.toString()}`);
                 actionRequests = Array.isArray(data?.requests)
                     ? data.requests.filter(r => r && r.status === 'pending')
+                        .map(r => ({ ...r, consensusTriggered: isActionRequestConsensusTriggered(r) }))
                     : [];
+                const pendingIds = new Set(actionRequests.map(r => normalizeChatMessageId(r && r.id)).filter(Boolean));
+                actionRequestConsensusTriggeredIds.forEach(id => {
+                    if (!pendingIds.has(id)) actionRequestConsensusTriggeredIds.delete(id);
+                });
             } catch (err) {
                 console.warn('[CHAT] action request inbox load failed:', err.message || err);
                 actionRequests = [];
@@ -7401,7 +7439,15 @@
         }
 
         window.onSocketActionRequestChanged = function(data) {
-            if (!data || !['emitted', 'resolved', 'dismissed'].includes(data.kind)) return;
+            if (!data || !['emitted', 'resolved', 'dismissed', 'consensus_triggered'].includes(data.kind)) return;
+            if (data.kind === 'consensus_triggered') {
+                const changed = markActionRequestConsensusTriggered(data.requestId);
+                if (changed && actionRequestsLoaded && window.EclawGreeting) {
+                    window.EclawGreeting.maybeShow({ force: true });
+                }
+            } else if (data.kind === 'resolved' || data.kind === 'dismissed') {
+                clearActionRequestConsensusTriggered(data.requestId);
+            }
             scheduleActionRequestRefresh('socket');
         };
 
@@ -7497,19 +7543,26 @@
             actionRequests.forEach(request => {
                 const typeMeta = actionRequestTypeMeta(request.type);
                 const item = document.createElement('div');
-                item.className = 'action-request-item ' + typeMeta.className;
+                const consensusTriggered = isActionRequestConsensusTriggered(request);
+                item.className = 'action-request-item ' + typeMeta.className + (consensusTriggered ? ' in-consensus' : '');
                 const entityId = Number(request.fromEntityId);
                 const meta = document.createElement('div');
                 meta.className = 'action-request-meta';
                 const typeBadge = document.createElement('span');
                 typeBadge.className = 'action-request-type-badge ' + typeMeta.className;
                 typeBadge.textContent = typeMeta.icon + ' ' + typeMeta.label;
+                meta.appendChild(typeBadge);
+                if (consensusTriggered) {
+                    const consensusBadge = document.createElement('span');
+                    consensusBadge.className = 'action-request-consensus-state';
+                    consensusBadge.textContent = t('action_request_consensus_triggered', 'In consensus');
+                    meta.appendChild(consensusBadge);
+                }
                 const metaText = document.createElement('span');
                 metaText.textContent = t('action_request_meta', 'Entity #{entityId} · {type}', {
                     entityId: Number.isFinite(entityId) ? entityId : '?',
                     type: typeMeta.label
                 });
-                meta.appendChild(typeBadge);
                 meta.appendChild(metaText);
                 const prompt = document.createElement('div');
                 prompt.className = 'action-request-prompt';
