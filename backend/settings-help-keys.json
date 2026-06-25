@@ -5,6 +5,16 @@
   ],
   "keys": [
     {
+      "field_key": "action_request_realtime",
+      "label_key": "action_request_realtime_label",
+      "help_key": "action_request_realtime_help"
+    },
+    {
+      "field_key": "action_request_timeout_policy",
+      "label_key": "action_request_timeout_policy_label",
+      "help_key": "action_request_timeout_policy_help"
+    },
+    {
       "field_key": "feedback_category",
       "label_key": "feedback_category_label",
       "help_key": "feedback_category_help"
@@ -80,6 +90,26 @@
       "help_key": "kanban_nudge_statuses_help"
     },
     {
+      "field_key": "passive_health_auto_repair",
+      "label_key": "passive_health_auto_repair_label",
+      "help_key": "passive_health_auto_repair_help"
+    },
+    {
+      "field_key": "passive_health_enable",
+      "label_key": "passive_health_enable_label",
+      "help_key": "passive_health_enable_help"
+    },
+    {
+      "field_key": "passive_health_interval",
+      "label_key": "passive_health_interval_label",
+      "help_key": "passive_health_interval_help"
+    },
+    {
+      "field_key": "passive_health_section",
+      "label_key": "passive_health_title",
+      "help_key": "passive_health_section_help"
+    },
+    {
       "field_key": "prompt_policy_claude_override",
       "label_key": "prompt_policy_claude_override_label",
       "help_key": "prompt_policy_claude_override_help"
@@ -138,6 +168,16 @@
       "field_key": "settings_device_secret",
       "label_key": "settings_device_secret",
       "help_key": "settings_device_secret_help"
+    },
+    {
+      "field_key": "settings_roster_section",
+      "label_key": "settings_roster_section_title",
+      "help_key": "settings_roster_section_help"
+    },
+    {
+      "field_key": "settings_wallet_section",
+      "label_key": "nav_wallet",
+      "help_key": "settings_wallet_section_help"
     },
     {
       "field_key": "usage_warning_5h",
