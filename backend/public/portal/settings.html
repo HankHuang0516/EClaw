@@ -945,6 +945,38 @@
             </div>
         </div>
 
+        <!-- Action Request Preferences Card -->
+        <div class="card" id="actionRequestSettingsCard">
+            <div class="card-title">
+                <span>🧭 <span data-i18n="action_request_settings_title">Needs-you requests</span></span>
+            </div>
+            <p class="section-desc" data-i18n="action_request_settings_desc">Controls the Human-in-the-Loop inbox for agent requests that need your decision.</p>
+            <div class="setting-row">
+                <div class="setting-row-label">
+                    <span data-i18n="action_request_realtime_label">Live refresh inbox</span>
+                    <small style="display:block;color:var(--text-muted);font-size:11px;" data-i18n="action_request_realtime_desc">Refresh the inbox immediately when agents emit, resolve, or dismiss requests.</small>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggleActionRequestRealtime" aria-label="Live refresh action request inbox"
+                           onchange="saveActionRequestRealtimePref(this.checked)">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-row">
+                <div class="setting-row-label">
+                    <span data-i18n="action_request_timeout_policy_label">Unanswered request policy</span>
+                    <small style="display:block;color:var(--text-muted);font-size:11px;" data-i18n="action_request_timeout_policy_desc">Stored now for the timeout worker; no automatic timeout action runs until that worker ships.</small>
+                </div>
+                <select id="actionRequestTimeoutPolicy" class="policy-select" style="width:auto;min-width:180px;"
+                        onchange="saveActionRequestTimeoutPolicy(this.value)"
+                        aria-label="Action request timeout policy">
+                    <option value="keep" data-i18n="action_request_timeout_keep">Keep pending</option>
+                    <option value="auto_dismiss" data-i18n="action_request_timeout_auto_dismiss">Auto-dismiss later</option>
+                    <option value="escalate" data-i18n="action_request_timeout_escalate">Escalate later</option>
+                </select>
+            </div>
+        </div>
+
         <!-- Owner Rental Roster Card -->
         <!-- Rental Management — merges the former 出租管理 (owner roster) and
              我的租賃 (My Rentals) cards into ONE section fed by real rental APIs
@@ -2726,6 +2758,7 @@
                 const toggle = document.getElementById('toggleBroadcastRecipientInfo');
                 if (toggle) toggle.checked = prefs.broadcast_recipient_info !== false;
                 applyChatAvatarSizePref(prefs);
+                applyActionRequestPrefs(prefs);
                 applyKanbanNudgePrefs(prefs);
                 applyUsageWarningPrefs(prefs);
                 refreshUsageWarningStaleNotice();
@@ -2744,9 +2777,39 @@
             }
         }
 
+        function normalizeActionRequestTimeoutPolicy(value) {
+            return ['keep', 'auto_dismiss', 'escalate'].includes(value) ? value : 'keep';
+        }
+
+        function applyActionRequestPrefs(prefs = {}) {
+            const realtime = document.getElementById('toggleActionRequestRealtime');
+            if (realtime) realtime.checked = prefs.action_request_realtime !== false;
+            const policy = document.getElementById('actionRequestTimeoutPolicy');
+            if (policy) policy.value = normalizeActionRequestTimeoutPolicy(prefs.action_request_timeout_policy);
+        }
+
+        async function saveActionRequestRealtimePref(enabled) {
+            await saveActionRequestPrefPatch({ action_request_realtime: !!enabled });
+        }
+
+        async function saveActionRequestTimeoutPolicy(value) {
+            await saveActionRequestPrefPatch({ action_request_timeout_policy: normalizeActionRequestTimeoutPolicy(value) });
+        }
+
+        async function saveActionRequestPrefPatch(patch) {
+            try {
+                const data = await apiCall('PUT', '/api/device-preferences', { prefs: patch });
+                if (data && data.prefs) applyActionRequestPrefs(data.prefs);
+            } catch (e) {
+                await loadDevicePreferences();
+                showToast(i18n.t('toast_preference_update_failed'), 'error');
+            }
+        }
+
         window.onSocketDevicePreferences = function(data) {
             if (!data || !data.prefs) return;
             applyChatAvatarSizePref(data.prefs);
+            applyActionRequestPrefs(data.prefs);
             applyKanbanNudgePrefs(data.prefs);
             applyUsageWarningPrefs(data.prefs);
         };
