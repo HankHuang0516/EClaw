@@ -453,7 +453,13 @@
 
     // i18n helper
     function t(key, fallback) {
-        return typeof i18n !== 'undefined' ? i18n.t(key) : fallback;
+        // i18n.t returns the bare key when it's missing; use our inline fallback in
+        // that case so users never see a raw key like "sc_send_failed" (card_4cafbf7e QA).
+        if (typeof i18n !== 'undefined' && i18n.t) {
+            const v = i18n.t(key);
+            if (v && v !== key) return v;
+        }
+        return fallback;
     }
 
     function shareLinkUrl() {
