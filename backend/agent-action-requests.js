@@ -68,21 +68,55 @@ async function initAgentActionRequestsDatabase() {
         console.error('[AgentActionRequests] Failed to init database:', error.message);
     }
 
-    // ── Idempotent constraint migration (card_8151054f) ──
+    // ── Idempotent, transactional constraint migration (card_8151054f; hardened) ──
     // The table already exists in prod, so the CREATE TABLE above is a no-op and
     // the freshened aar_type_valid CHECK (with 'consensus') in the schema file is
-    // NOT applied to the live table. Drop + recreate the constraint so the new
-    // 'consensus' type becomes insertable on the existing table. Best-effort: a
-    // failure here (e.g. an in-flight row violating the new IN-list, which cannot
-    // happen since the list only grows) must never crash init.
+    // NOT applied to the live table. We must drop + recreate the constraint so the
+    // new 'consensus' type becomes insertable on the existing table.
+    //
+    // Hardening (PR#3732 follow-up findings #1 + #2):
+    //   - GUARD first: if the live constraint already lists 'consensus', skip ALL
+    //     DDL. ACCESS EXCLUSIVE lock + full-table re-validation on every boot is
+    //     wasteful, and re-running on each restart is pointless once current.
+    //   - TRANSACTIONAL: when DDL is needed, run DROP+ADD inside a single
+    //     transaction on ONE pooled client, so there is never a *committed*
+    //     bare-constraint window (the old code committed the DROP, leaving the
+    //     table unconstrained until the separate ADD committed — and a multi-
+    //     instance race could DROP after a peer ADDed).
+    //   - ADVISORY LOCK: a transaction-scoped advisory lock serializes concurrent
+    //     instances doing the migration (cheap, auto-released on COMMIT/ROLLBACK).
+    // Best-effort throughout: any failure logs and never throws/crashes init.
     try {
-        await pool.query('ALTER TABLE agent_action_requests DROP CONSTRAINT IF EXISTS aar_type_valid');
-        await pool.query(
-            `ALTER TABLE agent_action_requests
-                ADD CONSTRAINT aar_type_valid
-                CHECK (type IN ('decision','approval','input','credential','review','clarify','consensus'))`
+        const existing = await pool.query(
+            `SELECT pg_get_constraintdef(oid) AS def
+               FROM pg_constraint
+              WHERE conname = 'aar_type_valid'
+                AND conrelid = 'agent_action_requests'::regclass`
         );
-        console.log('[AgentActionRequests] aar_type_valid constraint migrated (includes consensus)');
+        const curDef = existing.rows.length ? existing.rows[0].def : null;
+        if (curDef && curDef.includes('consensus')) {
+            console.log('[AgentActionRequests] aar_type_valid already current');
+        } else {
+            const client = await pool.connect();
+            try {
+                await client.query('BEGIN');
+                // 8151054f → numeric advisory-lock key (card id, transaction-scoped).
+                await client.query('SELECT pg_advisory_xact_lock(8151054)');
+                await client.query('ALTER TABLE agent_action_requests DROP CONSTRAINT IF EXISTS aar_type_valid');
+                await client.query(
+                    `ALTER TABLE agent_action_requests
+                        ADD CONSTRAINT aar_type_valid
+                        CHECK (type IN ('decision','approval','input','credential','review','clarify','consensus'))`
+                );
+                await client.query('COMMIT');
+                console.log('[AgentActionRequests] aar_type_valid constraint migrated (includes consensus)');
+            } catch (e) {
+                await client.query('ROLLBACK').catch(() => {});
+                throw e;
+            } finally {
+                client.release();
+            }
+        }
     } catch (err) {
         console.error('[AgentActionRequests] aar_type_valid migration skipped:', err.message);
     }
@@ -171,15 +205,25 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io } = 
     // Returns the resolved row, or null if nothing pending matched / id invalid.
     // Throws only on a DB error so the HTTP endpoint can 500; the speak path
     // wraps the call in try/catch and treats any failure as a no-op.
-    async function resolveActionRequest(deviceId, requestId, answer, device) {
+    //
+    // `restrictToEntityId` (PR#3732 follow-up finding #3): when non-null, the
+    // UPDATE also requires from_entity_id = that id, so a botSecret holder can
+    // only resolve a request IT emitted — never another entity's request on the
+    // same device (which would also forge a push-back to that other entity). The
+    // human/deviceSecret (isUser) path and the /api/client/speak USER auto-resolve
+    // path pass null (default) — the user owns the whole device inbox.
+    async function resolveActionRequest(deviceId, requestId, answer, device, restrictToEntityId = null) {
         if (!deviceId || !UUID_RE.test(String(requestId))) return null;
-        const result = await pool.query(
-            `UPDATE agent_action_requests
+        const params = [answer !== undefined ? JSON.stringify(answer) : null, requestId, deviceId];
+        let sql = `UPDATE agent_action_requests
                 SET status = 'resolved', answer = $1::jsonb, resolved_at = NOW()
-              WHERE id = $2 AND device_id = $3 AND status = 'pending'
-            RETURNING *`,
-            [answer !== undefined ? JSON.stringify(answer) : null, requestId, deviceId]
-        );
+              WHERE id = $2 AND device_id = $3 AND status = 'pending'`;
+        if (restrictToEntityId != null) {
+            params.push(restrictToEntityId);
+            sql += ` AND from_entity_id = $${params.length}`;
+        }
+        sql += ` RETURNING *`;
+        const result = await pool.query(sql, params);
         if (result.rows.length === 0) return null;
         const row = result.rows[0];
         notifyAgentResolved(deviceId, device, row, answer);
@@ -233,6 +277,20 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io } = 
         if (!Number.isInteger(fromEntityId) || fromEntityId < 0) {
             return res.status(400).json({ success: false, error: 'fromEntityId required (integer)' });
         }
+        // The bot path's auth.entityId is already vetted by authenticate(); only the
+        // user (deviceSecret) path names an arbitrary fromEntityId, so confirm it is
+        // a real bound entity on THIS device (finding #5). device.entities keys may
+        // be string- or int-typed — check both forms.
+        if (auth.isUser) {
+            const ents = auth.device && auth.device.entities;
+            const known = ents && (
+                Object.prototype.hasOwnProperty.call(ents, String(fromEntityId)) ||
+                Object.prototype.hasOwnProperty.call(ents, fromEntityId)
+            );
+            if (!known) {
+                return res.status(400).json({ success: false, error: 'fromEntityId is not a known entity on this device' });
+            }
+        }
         if (typeof type !== 'string' || !VALID_TYPES.has(type)) {
             return res.status(400).json({ success: false, error: `type must be one of: ${[...VALID_TYPES].join('|')}` });
         }
@@ -241,6 +299,12 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io } = 
         }
         if (options !== undefined && options !== null && !Array.isArray(options)) {
             return res.status(400).json({ success: false, error: 'options must be an array when provided' });
+        }
+        // Bound the options payload (finding #4). prompt is already capped at
+        // MAX_PROMPT_LEN; this mirrors that with a clearer error than the global
+        // body-parser cap. Defense-in-depth.
+        if (Array.isArray(options) && (options.length > 50 || JSON.stringify(options).length > 8192)) {
+            return res.status(400).json({ success: false, error: 'options too large (max 50 items / 8KB)' });
         }
         const anchor = normalizeAnchor(anchorMessageId);
 
@@ -310,7 +374,10 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io } = 
         const { answer } = req.body || {};
 
         try {
-            const row = await resolveActionRequest(deviceId, id, answer, device);
+            // A botSecret holder may only resolve its OWN emitted requests; the
+            // human (isUser/deviceSecret) owns the whole device inbox (finding #3).
+            const restrictToEntityId = auth.isUser ? null : auth.entityId;
+            const row = await resolveActionRequest(deviceId, id, answer, device, restrictToEntityId);
             if (!row) {
                 return res.status(404).json({ success: false, error: 'Not found or already resolved/dismissed' });
             }
@@ -334,13 +401,18 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io } = 
             return res.status(400).json({ success: false, error: 'Invalid id' });
         }
         try {
-            const result = await pool.query(
-                `UPDATE agent_action_requests
+            // A botSecret holder may only dismiss its OWN emitted requests; the
+            // human (isUser/deviceSecret) owns the whole device inbox (finding #3).
+            const params = [id, deviceId];
+            let sql = `UPDATE agent_action_requests
                     SET status = 'dismissed', resolved_at = NOW()
-                  WHERE id = $1 AND device_id = $2 AND status = 'pending'
-                RETURNING *`,
-                [id, deviceId]
-            );
+                  WHERE id = $1 AND device_id = $2 AND status = 'pending'`;
+            if (!auth.isUser) {
+                params.push(auth.entityId);
+                sql += ` AND from_entity_id = $${params.length}`;
+            }
+            sql += ` RETURNING *`;
+            const result = await pool.query(sql, params);
             if (result.rows.length === 0) {
                 return res.status(404).json({ success: false, error: 'Not found or already resolved/dismissed' });
             }
