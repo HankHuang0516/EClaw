@@ -55,10 +55,10 @@ describe('kanban notify → task-lifecycle directive (card_c0819f4e)', () => {
         // channel path
         expect(kanbanSrc).toMatch(/missionHints: missionBlock,/);
         // webhook path: missionBlock is an element of the pushMsg array
-        const webhookBlock = kanbanSrc.slice(kanbanSrc.indexOf('Non-channel: build full push message')).slice(0, 400);
+        const webhookBlock = kanbanSrc.slice(kanbanSrc.indexOf('Non-channel: build full push message')).slice(0, 600);
         expect(webhookBlock).toMatch(/missionBlock,/);
-        // legacy path
-        expect(kanbanSrc).toMatch(/\$\{descBlock\}\$\{missionBlock\}/);
+        // legacy path (card_cc20541e inserts ${commentBlock} between descBlock and missionBlock)
+        expect(kanbanSrc).toMatch(/\$\{descBlock\}\$\{commentBlock\}\$\{missionBlock\}/);
 
         // Guard: no push path may still emit the bare kanbanHints variable —
         // every consumer must go through missionBlock so the directive travels.
