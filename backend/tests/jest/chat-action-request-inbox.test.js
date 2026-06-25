@@ -61,7 +61,9 @@ describe('chat action request inbox (card_b51598b7 frontend)', () => {
         expect(chatHtml).toMatch(/function scheduleActionRequestRefresh\(reason = 'socket'\)/);
         expect(chatHtml).toContain('if (!actionRequestRealtimeEnabled) return;');
         expect(chatHtml).toMatch(/window\.onSocketActionRequestChanged = function\(data\)/);
-        expect(chatHtml).toContain("['emitted', 'resolved', 'dismissed'].includes(data.kind)");
+        expect(chatHtml).toContain("['emitted', 'resolved', 'dismissed', 'consensus_triggered'].includes(data.kind)");
+        expect(chatHtml).toContain("data.kind === 'consensus_triggered'");
+        expect(chatHtml).toContain("actionRequestConsensusIds.add(requestId)");
         expect(chatHtml).toContain("scheduleActionRequestRefresh('socket');");
     });
 
@@ -70,8 +72,11 @@ describe('chat action request inbox (card_b51598b7 frontend)', () => {
         expect(chatHtml).toContain("consensus: '🤝'");
         expect(chatHtml).toContain("'action_request_type_consensus_hint'");
         expect(chatHtml).toContain("'action_request_consensus_reply'");
+        expect(chatHtml).toContain("'action_request_consensus_triggered'");
+        expect(chatHtml).toContain("consensusBadge.textContent = t('action_request_consensus_triggered', 'In consensus');");
         expect(chatHtml).toContain("item.className = 'action-request-item ' + typeMeta.className;");
         expect(chatHtml).toContain('action-request-type-badge');
+        expect(chatHtml).toContain('action-request-consensus-state');
         expect(chatHtml).toContain('.action-request-item.type-consensus');
     });
 
@@ -87,6 +92,7 @@ describe('chat action request inbox (card_b51598b7 frontend)', () => {
             'action_request_type_consensus',
             'action_request_type_consensus_hint',
             'action_request_consensus_reply',
+            'action_request_consensus_triggered',
         ].forEach(key => {
             expect(i18nJs).toContain(`"${key}"`);
         });

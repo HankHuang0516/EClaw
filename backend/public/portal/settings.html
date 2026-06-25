@@ -966,16 +966,35 @@
             <div class="setting-row">
                 <!-- HELP-KEY: action_request_timeout_policy_help -->
                 <div class="setting-row-label">
-                    <span data-i18n="action_request_timeout_policy_label">Unanswered request policy</span>
-                    <small style="display:block;color:var(--text-muted);font-size:11px;" data-i18n="action_request_timeout_policy_desc">Stored now for the timeout worker; no automatic timeout action runs until that worker ships.</small>
+                    <span>
+                        <span data-i18n="action_request_timeout_policy_label">Unanswered request policy</span>
+                        <span class="help-icon" data-help-content-key="action_request_timeout_policy_help"></span>
+                    </span>
+                    <small style="display:block;color:var(--text-muted);font-size:11px;" data-i18n="action_request_timeout_policy_desc">Choose what the timeout worker does after the unanswered window.</small>
                 </div>
                 <select id="actionRequestTimeoutPolicy" class="policy-select" style="width:auto;min-width:180px;"
                         onchange="saveActionRequestTimeoutPolicy(this.value)"
                         aria-label="Action request timeout policy">
                     <option value="keep" data-i18n="action_request_timeout_keep">Keep pending</option>
-                    <option value="auto_dismiss" data-i18n="action_request_timeout_auto_dismiss">Auto-dismiss later</option>
-                    <option value="escalate" data-i18n="action_request_timeout_escalate">Escalate later</option>
+                    <option value="auto_dismiss" data-i18n="action_request_timeout_auto_dismiss">Auto-dismiss</option>
+                    <option value="safe_default" data-i18n="action_request_timeout_safe_default">Safe default</option>
+                    <option value="consensus" data-i18n="action_request_timeout_consensus">Consensus</option>
                 </select>
+            </div>
+            <div class="setting-row">
+                <!-- HELP-KEY: action_request_timeout_minutes_help -->
+                <div class="setting-row-label">
+                    <span>
+                        <span data-i18n="action_request_timeout_minutes_label">Unanswered window (minutes)</span>
+                        <span class="help-icon" data-help-content-key="action_request_timeout_minutes_help"></span>
+                    </span>
+                    <small style="display:block;color:var(--text-muted);font-size:11px;" data-i18n="action_request_timeout_minutes_desc">Run the selected policy after this many minutes without a reply.</small>
+                </div>
+                <input type="number" id="actionRequestTimeoutMinutes" class="policy-input"
+                       min="5" max="43200" step="1" value="1440"
+                       style="width:108px;text-align:right;"
+                       onchange="saveActionRequestTimeoutMinutes(this.value)"
+                       aria-label="Action request timeout minutes">
             </div>
         </div>
 
@@ -2780,7 +2799,13 @@
         }
 
         function normalizeActionRequestTimeoutPolicy(value) {
-            return ['keep', 'auto_dismiss', 'escalate'].includes(value) ? value : 'keep';
+            return ['keep', 'auto_dismiss', 'safe_default', 'consensus'].includes(value) ? value : 'keep';
+        }
+
+        function normalizeActionRequestTimeoutMinutes(value) {
+            const parsed = parseInt(value, 10);
+            if (!Number.isFinite(parsed)) return 1440;
+            return Math.max(5, Math.min(43200, parsed));
         }
 
         function applyActionRequestPrefs(prefs = {}) {
@@ -2788,6 +2813,8 @@
             if (realtime) realtime.checked = prefs.action_request_realtime !== false;
             const policy = document.getElementById('actionRequestTimeoutPolicy');
             if (policy) policy.value = normalizeActionRequestTimeoutPolicy(prefs.action_request_timeout_policy);
+            const minutes = document.getElementById('actionRequestTimeoutMinutes');
+            if (minutes) minutes.value = normalizeActionRequestTimeoutMinutes(prefs.action_request_timeout_minutes);
         }
 
         async function saveActionRequestRealtimePref(enabled) {
@@ -2796,6 +2823,10 @@
 
         async function saveActionRequestTimeoutPolicy(value) {
             await saveActionRequestPrefPatch({ action_request_timeout_policy: normalizeActionRequestTimeoutPolicy(value) });
+        }
+
+        async function saveActionRequestTimeoutMinutes(value) {
+            await saveActionRequestPrefPatch({ action_request_timeout_minutes: normalizeActionRequestTimeoutMinutes(value) });
         }
 
         async function saveActionRequestPrefPatch(patch) {

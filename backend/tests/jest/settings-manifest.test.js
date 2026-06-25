@@ -376,6 +376,7 @@ describe('Stage-3 field registry — #6 nested schema', () => {
         expect(fields.map((x) => x.key)).toEqual([
             'action_request_realtime',
             'action_request_timeout_policy',
+            'action_request_timeout_minutes',
         ]);
 
         const realtime = fields.find((x) => x.key === 'action_request_realtime');
@@ -391,8 +392,15 @@ describe('Stage-3 field registry — #6 nested schema', () => {
         expect(timeout.scope).toBe('device');
         expect(timeout.default).toBe('keep');
         expect(timeout.validation.required).toBe(false);
-        expect(timeout.validation.options.map((o) => o.value)).toEqual(['keep', 'auto_dismiss', 'escalate']);
+        expect(timeout.validation.options.map((o) => o.value)).toEqual(['keep', 'auto_dismiss', 'safe_default', 'consensus']);
         for (const opt of timeout.validation.options) assertLabelShape(opt.label);
+
+        const minutes = fields.find((x) => x.key === 'action_request_timeout_minutes');
+        expect(minutes.type).toBe('number');
+        expect(minutes.control).toBe('stepper');
+        expect(minutes.scope).toBe('device');
+        expect(minutes.default).toBe(1440);
+        expect(minutes.validation).toEqual({ required: false, min: 5, max: 43200, step: 1, unit: 'minutes' });
     });
 
     it('account_identity display name is a string field with maxLength + writeAlias', () => {

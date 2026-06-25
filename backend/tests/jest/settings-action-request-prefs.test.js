@@ -12,9 +12,13 @@ describe('settings action request preferences (card_8151054f frontend)', () => {
         expect(settingsHtml).toContain("saveActionRequestRealtimePref(this.checked)");
         expect(settingsHtml).toContain('id="actionRequestTimeoutPolicy"');
         expect(settingsHtml).toContain("saveActionRequestTimeoutPolicy(this.value)");
+        expect(settingsHtml).toContain('id="actionRequestTimeoutMinutes"');
+        expect(settingsHtml).toContain("saveActionRequestTimeoutMinutes(this.value)");
         expect(settingsHtml).toContain('value="keep"');
         expect(settingsHtml).toContain('value="auto_dismiss"');
-        expect(settingsHtml).toContain('value="escalate"');
+        expect(settingsHtml).toContain('value="safe_default"');
+        expect(settingsHtml).toContain('value="consensus"');
+        expect(settingsHtml).not.toContain('value="escalate"');
     });
 
     test('loads, saves, and socket-applies action request device preferences', () => {
@@ -24,6 +28,7 @@ describe('settings action request preferences (card_8151054f frontend)', () => {
         expect(settingsHtml).toContain('applyActionRequestPrefs(prefs);');
         expect(settingsHtml).toContain('action_request_realtime: !!enabled');
         expect(settingsHtml).toContain('action_request_timeout_policy: normalizeActionRequestTimeoutPolicy(value)');
+        expect(settingsHtml).toContain('action_request_timeout_minutes: normalizeActionRequestTimeoutMinutes(value)');
         expect(settingsHtml).toContain('applyActionRequestPrefs(data.prefs);');
     });
 
@@ -32,9 +37,12 @@ describe('settings action request preferences (card_8151054f frontend)', () => {
             'action_request_settings_title',
             'action_request_realtime_label',
             'action_request_timeout_policy_label',
+            'action_request_timeout_minutes_label',
+            'action_request_timeout_minutes_help',
             'action_request_timeout_keep',
             'action_request_timeout_auto_dismiss',
-            'action_request_timeout_escalate',
+            'action_request_timeout_safe_default',
+            'action_request_timeout_consensus',
             'action_request_realtime_on',
             'action_request_realtime_off',
         ].forEach(key => {

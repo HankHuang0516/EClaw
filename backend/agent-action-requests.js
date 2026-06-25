@@ -165,6 +165,7 @@ function rowToApi(row) {
         answer: row.answer || null,
         createdAt: new Date(row.created_at).getTime(),
         resolvedAt: row.resolved_at ? new Date(row.resolved_at).getTime() : null,
+        consensusTriggeredAt: row.consensus_triggered_at ? new Date(row.consensus_triggered_at).getTime() : null,
     };
 }
 
