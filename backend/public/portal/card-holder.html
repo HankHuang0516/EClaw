@@ -135,6 +135,52 @@
         .filter-chip:hover { border-color: var(--primary); color: var(--text); }
         .filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
+        .cardholder-result-panel {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            margin: -4px 0 14px;
+            background: rgba(var(--primary-rgb), 0.08);
+            border: 1px solid rgba(var(--primary-rgb), 0.18);
+            border-radius: 8px;
+        }
+
+        .cardholder-result-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+
+        .cardholder-result-copy strong {
+            font-size: 13px;
+            color: var(--text);
+        }
+
+        .cardholder-result-copy span {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .cardholder-clear-btn {
+            flex-shrink: 0;
+            padding: 6px 10px;
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            background: var(--card);
+            color: var(--text);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .cardholder-clear-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
         /* ── Friend badge ── */
         .friend-badge { display:inline-block; font-size:11px; background:#4caf50; color:#fff; padding:1px 6px; border-radius:10px; margin-left:6px; vertical-align:middle; }
         .req-badge { display:inline-block; font-size:10px; background:#f44336; color:#fff; padding:0 5px; border-radius:8px; min-width:14px; text-align:center; margin-left:4px; vertical-align:middle; }
@@ -607,6 +653,13 @@
 
         @media (max-width: 600px) {
             .search-bar input { width: 120px; }
+            .cardholder-result-panel {
+                align-items: stretch;
+                flex-direction: column;
+            }
+            .cardholder-clear-btn {
+                width: 100%;
+            }
         }
         /* ── Share modal ── */
         .share-modal-content { padding: 20px; max-width: 380px; }
@@ -672,6 +725,14 @@
             <span class="filter-chip" data-filter="friends" onclick="setFilter('friends')" data-i18n="cardholder_filter_friends">Friends</span>
             <span class="filter-chip" data-filter="pinned" onclick="setFilter('pinned')" data-i18n="cardholder_filter_pinned">Pinned</span>
             <span class="filter-chip" data-filter="requests" onclick="setFilter('requests')" data-i18n="cardholder_filter_requests">Requests <span id="requestBadge" class="req-badge" style="display:none">0</span></span>
+        </div>
+
+        <div class="cardholder-result-panel" id="cardholderResultPanel" aria-live="polite">
+            <div class="cardholder-result-copy">
+                <strong id="cardholderResultTitle">Loading cards...</strong>
+                <span id="cardholderResultMeta">Syncing Card Holder sections.</span>
+            </div>
+            <button type="button" class="cardholder-clear-btn" id="cardholderClearBtn" onclick="clearCardholderView()" hidden>Clear</button>
         </div>
 
         <!-- Main scrollable content (3 sections) -->
@@ -757,6 +818,8 @@
         let isSearching = false;
         let searchSaved = [];
         let searchExternal = [];
+        let activeSearchQuery = '';
+        let searchRequestSeq = 0;
         let searchDebounce = null;
 
         // ── Init ──
@@ -875,6 +938,7 @@
                 document.getElementById('mainContent').style.display = 'none';
                 document.getElementById('searchResults').style.display = '';
                 renderSearchResults();
+                updateCardholderSummary();
                 return;
             }
 
@@ -893,6 +957,7 @@
                     html += `<div class="empty-state"><div class="empty-state-icon">\u{1F4EC}</div><div class="empty-state-text">${t('cardholder_no_requests', 'No pending friend requests')}</div></div>`;
                 }
                 container.innerHTML = html;
+                updateCardholderSummary();
                 return;
             }
 
@@ -926,6 +991,107 @@
             }
 
             container.innerHTML = html;
+            updateCardholderSummary();
+        }
+
+        function formatTemplate(template, values) {
+            return Object.keys(values).reduce((text, key) => {
+                return text.split(`{${key}}`).join(String(values[key]));
+            }, template);
+        }
+
+        function formatCount(count, oneKey, oneFallback, manyKey, manyFallback, values = {}) {
+            const template = t(count === 1 ? oneKey : manyKey, count === 1 ? oneFallback : manyFallback);
+            return formatTemplate(template, { count, ...values });
+        }
+
+        function getFilterLabel(filter) {
+            const labels = {
+                all: t('cardholder_filter_all', 'All'),
+                friends: t('cardholder_filter_friends', 'Friends'),
+                pinned: t('cardholder_filter_pinned', 'Pinned'),
+                requests: t('cardholder_filter_requests', 'Requests')
+            };
+            return labels[filter] || filter;
+        }
+
+        function updateCardholderSummary() {
+            const title = document.getElementById('cardholderResultTitle');
+            const meta = document.getElementById('cardholderResultMeta');
+            const clear = document.getElementById('cardholderClearBtn');
+            if (!title || !meta || !clear) return;
+
+            if (isSearching) {
+                const total = searchSaved.length + searchExternal.length;
+                title.textContent = formatCount(
+                    total,
+                    'cardholder_search_result_one',
+                    '{count} result for "{query}"',
+                    'cardholder_search_result_many',
+                    '{count} results for "{query}"',
+                    { query: activeSearchQuery }
+                );
+                meta.textContent = formatTemplate(t('cardholder_search_meta', '{saved} saved, {external} online agents'), {
+                    saved: searchSaved.length,
+                    external: searchExternal.length
+                });
+                clear.hidden = false;
+                clear.textContent = t('common_clear', 'Clear');
+                clear.setAttribute('aria-label', t('cardholder_clear_search', 'Clear card search'));
+                return;
+            }
+
+            if (currentFilter === 'requests') {
+                title.textContent = formatCount(
+                    friendRequests.length,
+                    'cardholder_pending_request_one',
+                    '{count} pending friend request',
+                    'cardholder_pending_request_many',
+                    '{count} pending friend requests'
+                );
+                meta.textContent = t('cardholder_requests_hint', 'Review incoming requests without losing your saved cards.');
+                clear.hidden = currentFilter === 'all';
+                clear.textContent = t('common_clear', 'Clear');
+                clear.setAttribute('aria-label', t('cardholder_clear_filter', 'Clear Card Holder filter'));
+                return;
+            }
+
+            const filteredRecent = applyContactFilter(recentCards);
+            const filteredCollected = applyContactFilter(collectedCards);
+            const visibleTotal = myCards.length + filteredRecent.length + filteredCollected.length;
+            title.textContent = formatCount(
+                visibleTotal,
+                'cardholder_cards_shown_one',
+                '{count} card shown',
+                'cardholder_cards_shown_many',
+                '{count} cards shown'
+            );
+            meta.textContent = formatTemplate(t('cardholder_summary_meta', '{mine} mine, {recent} recent, {collected} collected'), {
+                mine: myCards.length,
+                recent: filteredRecent.length,
+                collected: filteredCollected.length
+            });
+            if (currentFilter !== 'all') {
+                meta.textContent = `${t('cardholder_active_filter', 'Filter')}: ${getFilterLabel(currentFilter)} · ${meta.textContent}`;
+            }
+            clear.hidden = currentFilter === 'all';
+            clear.textContent = t('common_clear', 'Clear');
+            clear.setAttribute('aria-label', t('cardholder_clear_filter', 'Clear Card Holder filter'));
+        }
+
+        function clearCardholderView() {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = '';
+            searchRequestSeq += 1;
+            isSearching = false;
+            activeSearchQuery = '';
+            searchSaved = [];
+            searchExternal = [];
+            if (currentFilter !== 'all') {
+                setFilter('all');
+                return;
+            }
+            rebuildContent();
         }
 
         // Petdx 夥伴 avatar resolution for CROSS-DEVICE contact rows (audit P3,
@@ -1046,6 +1212,8 @@
         document.getElementById('searchInput').addEventListener('input', function() {
             clearTimeout(searchDebounce);
             const query = this.value.trim();
+            activeSearchQuery = query;
+            const requestSeq = ++searchRequestSeq;
             if (!query) {
                 isSearching = false;
                 searchSaved = [];
@@ -1053,19 +1221,38 @@
                 rebuildContent();
                 return;
             }
-            if (query.length < 2) return;
-            searchDebounce = setTimeout(() => performSearch(query), 300);
+            if (query.length < 2) {
+                isSearching = false;
+                searchSaved = [];
+                searchExternal = [];
+                rebuildContent();
+                return;
+            }
+            searchDebounce = setTimeout(() => performSearch(query, requestSeq), 300);
         });
 
-        async function performSearch(query) {
+        function isLatestSearchQuery(query, requestSeq) {
+            return requestSeq === searchRequestSeq && activeSearchQuery === query && query.length >= 2;
+        }
+
+        async function performSearch(query, requestSeq) {
+            if (!isLatestSearchQuery(query, requestSeq)) return;
             try {
                 const data = await apiCall('GET', `/api/contacts/search?deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}&q=${encodeURIComponent(query)}`);
+                if (!isLatestSearchQuery(query, requestSeq)) return;
                 searchSaved = data.saved || data.cards || [];
                 searchExternal = data.external || [];
                 isSearching = true;
+                activeSearchQuery = query;
                 rebuildContent();
             } catch (err) {
                 console.error('Search error:', err);
+                if (!isLatestSearchQuery(query, requestSeq)) return;
+                isSearching = true;
+                activeSearchQuery = query;
+                searchSaved = [];
+                searchExternal = [];
+                rebuildContent();
             }
         }
 
@@ -1680,7 +1867,9 @@
         function escapeAttr(s) { return escapeHtml(s); }
 
         function t(key, fallback) {
-            return typeof i18n !== 'undefined' ? i18n.t(key) : fallback;
+            if (typeof i18n === 'undefined') return fallback;
+            const value = i18n.t(key);
+            return value && value !== key ? value : fallback;
         }
 
         function showToast(msg, type = 'success') {
