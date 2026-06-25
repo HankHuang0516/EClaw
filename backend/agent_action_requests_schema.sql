@@ -22,6 +22,10 @@ CREATE TABLE IF NOT EXISTS agent_action_requests (
     answer JSONB DEFAULT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     resolved_at TIMESTAMPTZ DEFAULT NULL,
+    -- Set once when the timeout worker fires a 'consensus' round for this still-
+    -- pending request, so the worker never re-triggers a round on each 5-min tick
+    -- (card_ce0d685b). NULL = no consensus round triggered yet.
+    consensus_triggered_at TIMESTAMPTZ DEFAULT NULL,
     CONSTRAINT aar_prompt_len CHECK (char_length(prompt) BETWEEN 1 AND 2000),
     CONSTRAINT aar_type_valid CHECK (type IN ('decision','approval','input','credential','review','clarify','consensus')),
     CONSTRAINT aar_status_valid CHECK (status IN ('pending','resolved','dismissed'))

@@ -28,6 +28,11 @@ const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 const safeEqual = require('./safe-equal');
+// Singleton device-preferences module (its internal pool is wired once by
+// index.js via initTable). The timeout worker reads each device's policy +
+// timeout-minutes from here. Tests may inject a `getDevicePrefs` override on the
+// factory options to avoid touching it.
+const devicePrefs = require('./device-preferences');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -42,6 +47,11 @@ const MAX_LIST_LIMIT = 500;
 // plain schema re-run won't change the constraint).
 const VALID_TYPES = new Set(['decision', 'approval', 'input', 'credential', 'review', 'clarify', 'consensus']);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Timeout-policy worker (card_ce0d685b): sweep cadence + a process-level guard so
+// re-requiring / re-instantiating the factory never stacks intervals.
+const TIMEOUT_SWEEP_INTERVAL_MS = 5 * 60 * 1000; // every 5 minutes
+let timeoutSweepTimer = null;
 
 async function initAgentActionRequestsDatabase() {
     try {
@@ -120,6 +130,21 @@ async function initAgentActionRequestsDatabase() {
     } catch (err) {
         console.error('[AgentActionRequests] aar_type_valid migration skipped:', err.message);
     }
+
+    // ── Idempotent column migration: consensus_triggered_at (card_ce0d685b) ──
+    // The timeout worker's 'consensus' policy leaves a request 'pending' (the
+    // emitting agent resolves it after synthesis), so without a marker the worker
+    // would re-fire a consensus round every 5-min tick. This column is set once
+    // when a round is triggered. ADD COLUMN IF NOT EXISTS is a no-op on a table
+    // that already has it. Best-effort: never throws/crashes init.
+    try {
+        await pool.query(
+            `ALTER TABLE agent_action_requests
+                ADD COLUMN IF NOT EXISTS consensus_triggered_at TIMESTAMPTZ DEFAULT NULL`
+        );
+    } catch (err) {
+        console.error('[AgentActionRequests] consensus_triggered_at migration skipped:', err.message);
+    }
 }
 
 // ── Helpers ──
@@ -146,8 +171,15 @@ function rowToApi(row) {
 /**
  * Factory. Matches the kanban/scheduled-messages module style so index.js wires it the same way.
  */
-module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io } = {}) {
+module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, getDevicePrefs } = {}) {
     const router = express.Router();
+
+    // How the worker reads a device's timeout policy + minutes. Defaults to the
+    // singleton device-preferences module; tests inject a stub so they never
+    // touch real PG. Always returns an object (falls back to {} on error).
+    const readDevicePrefs = typeof getDevicePrefs === 'function'
+        ? getDevicePrefs
+        : (deviceId) => devicePrefs.getPrefs(deviceId);
 
     function log(level, msg, meta) {
         if (typeof serverLog === 'function') {
@@ -162,8 +194,14 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io } = 
     // Room       : 'device:<deviceId>'   (same room convention as chat:message)
     // Payload    : { kind, requestId, fromEntityId }
     //                kind         : 'emitted' | 'resolved' | 'dismissed'
+    //                               | 'consensus_triggered'
     //                requestId    : the agent_action_requests row UUID (string)
     //                fromEntityId : the emitting entity id (integer)
+    //              NEW kind 'consensus_triggered' (card_ce0d685b): the timeout
+    //              worker opened a bot-to-bot consensus round for a still-pending
+    //              request (consensus policy). The request stays 'pending' until
+    //              the emitting agent synthesizes + resolves it; the frontend can
+    //              render a "協商中 / In consensus" badge on this event.
     // Semantics  : fired AFTER the DB write commits, best-effort. The frontend
     //              "需要你" inbox listens on this event to live-refresh (it should
     //              re-fetch GET /api/action-requests rather than trust the payload
@@ -231,6 +269,149 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io } = 
         // /api/client/speak smart-quote auto-resolve path emits identically.
         emitChanged(deviceId, 'resolved', row.id, row.from_entity_id);
         return row;
+    }
+
+    // Best-effort: push a free-text message to one bound entity (channel or
+    // webhook). Mirrors notifyAgentResolved's transport selection. Never throws.
+    function pushTextToEntity(deviceId, entity, eventType, message, extra = {}) {
+        try {
+            if (!entity || !entity.isBound) return;
+            if (entity.bindingType === 'channel' && typeof unifiedPush === 'function') {
+                unifiedPush(entity, deviceId, eventType, { message, ...extra }, { event: 'message', from: 'action_request' }).catch(() => {});
+            } else if (entity.webhook && typeof pushToBot === 'function') {
+                pushToBot(entity, deviceId, eventType, { message, ...extra }).catch(() => {});
+            }
+        } catch (_) {}
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // TIMEOUT-POLICY WORKER (card_ce0d685b)
+    // ──────────────────────────────────────────────────────────────────────
+    // Periodically (every 5 min) enforces each device's
+    // `action_request_timeout_policy` on its pending "需要你" requests older than
+    // `action_request_timeout_minutes` (read from device-preferences):
+    //
+    //   keep         → no-op (device skipped entirely; this is the default).
+    //   auto_dismiss → mark the request dismissed + tell the emitting agent its
+    //                  request timed out and was auto-skipped; emit
+    //                  'action_request:changed' kind='dismissed'.
+    //   safe_default → call resolveActionRequest with a safe-default answer, so it
+    //                  resolves + notifies the emitter + emits kind='resolved'
+    //                  identically to a human answer; the agent continues.
+    //   consensus    → trigger ONE bot-to-bot consensus round (does NOT resolve):
+    //                    1. stamp consensus_triggered_at (so it never re-fires);
+    //                    2. broadcast a zh consensus prompt to every bound entity
+    //                       on the device (the emitter included);
+    //                    3. emit 'action_request:changed' kind='consensus_triggered'
+    //                       (a NEW socket kind — frontend shows "協商中").
+    //
+    // AUTO-EXECUTE CONTRACT (Hank's decision — no user confirmation):
+    //   The server worker's job is detect-timeout → trigger-round → mark. The
+    //   *synthesis + resolution* is the agent layer: the emitting agent
+    //   (#from_entity_id), on seeing the consensus prompt, collects the other
+    //   entities' replies, synthesizes the consensus decision, and calls
+    //   POST /api/action-requests/:id/resolve with that answer. Because resolve
+    //   has no user gate, that auto-executes the decision. The worker never
+    //   resolves a consensus request itself — it only opens the round once.
+    //
+    // Resilience: each device + each request is wrapped in try/catch so one bad
+    // row never aborts the sweep. Exported for direct test invocation. The
+    // periodic timer is registered once at module init (NODE_ENV !== 'test').
+    // ══════════════════════════════════════════════════════════════════════
+    async function enforceActionRequestTimeouts() {
+        let deviceIds = [];
+        try {
+            const r = await pool.query(
+                `SELECT DISTINCT device_id FROM agent_action_requests WHERE status = 'pending'`
+            );
+            deviceIds = r.rows.map(row => row.device_id).filter(Boolean);
+        } catch (err) {
+            console.error('[AgentActionRequests] timeout sweep: device scan failed:', err.message);
+            return;
+        }
+
+        for (const deviceId of deviceIds) {
+            try {
+                let prefs = {};
+                try { prefs = (await readDevicePrefs(deviceId)) || {}; } catch (_) { prefs = {}; }
+                const policy = prefs.action_request_timeout_policy || 'keep';
+                if (policy === 'keep') continue; // default: never auto-act
+                const minutesRaw = prefs.action_request_timeout_minutes;
+                const minutes = Number.isFinite(Number(minutesRaw)) ? Number(minutesRaw) : 1440;
+
+                // Pending requests older than the timeout. For consensus, also skip
+                // ones we've already opened a round for (consensus_triggered_at set).
+                let sql = `SELECT * FROM agent_action_requests
+                            WHERE device_id = $1 AND status = 'pending'
+                              AND created_at < NOW() - ($2 * interval '1 minute')`;
+                if (policy === 'consensus') sql += ` AND consensus_triggered_at IS NULL`;
+                sql += ` ORDER BY created_at ASC LIMIT ${MAX_LIST_LIMIT}`;
+                const res = await pool.query(sql, [deviceId, minutes]);
+                const rows = res.rows || [];
+                if (rows.length === 0) continue;
+
+                const device = devices && devices[deviceId];
+
+                for (const row of rows) {
+                    try {
+                        if (policy === 'auto_dismiss') {
+                            const upd = await pool.query(
+                                `UPDATE agent_action_requests
+                                    SET status = 'dismissed', resolved_at = NOW()
+                                  WHERE id = $1 AND status = 'pending'
+                                RETURNING *`,
+                                [row.id]
+                            );
+                            if (upd.rows.length === 0) continue; // raced/already acted
+                            emitChanged(deviceId, 'dismissed', row.id, row.from_entity_id);
+                            const emitter = device && device.entities && device.entities[row.from_entity_id];
+                            pushTextToEntity(
+                                deviceId, emitter, 'action_request_timeout_dismissed',
+                                `[逾時自動略過] 你的請求逾時未回覆，已自動略過：「${row.prompt}」(request ${row.id})`,
+                                { requestId: row.id }
+                            );
+                            log('info', `timeout auto_dismiss id=${row.id} from=${row.from_entity_id}`, { deviceId });
+                        } else if (policy === 'safe_default') {
+                            // Reuse the shared resolve path so it resolves + notifies
+                            // the emitter + emits kind='resolved' exactly like a human.
+                            await resolveActionRequest(
+                                deviceId, row.id,
+                                { text: '[安全預設] 逾時未回覆，agent 以安全預設續跑', auto: true, reason: 'timeout_safe_default' },
+                                device
+                            );
+                            log('info', `timeout safe_default id=${row.id} from=${row.from_entity_id}`, { deviceId });
+                        } else if (policy === 'consensus') {
+                            // 1. Stamp the marker first (guarded) so it never re-fires.
+                            const stamp = await pool.query(
+                                `UPDATE agent_action_requests
+                                    SET consensus_triggered_at = NOW()
+                                  WHERE id = $1 AND status = 'pending' AND consensus_triggered_at IS NULL
+                                RETURNING *`,
+                                [row.id]
+                            );
+                            if (stamp.rows.length === 0) continue; // raced / already opened
+                            // 2. Broadcast the consensus prompt to all bound entities.
+                            const consensusMsg =
+                                `[協商共識] 請求逾時需多方共識：「${row.prompt}」` +
+                                `(發起：#${row.from_entity_id})。請各實體表態，` +
+                                `由 #${row.from_entity_id} 綜合後直接 resolve 此請求` +
+                                `(requestId=${row.id}) 以自動執行決定。`;
+                            const entities = (device && device.entities) || {};
+                            for (const ent of Object.values(entities)) {
+                                pushTextToEntity(deviceId, ent, 'action_request_consensus', consensusMsg, { requestId: row.id });
+                            }
+                            // 3. New socket kind so the frontend can show "協商中".
+                            emitChanged(deviceId, 'consensus_triggered', row.id, row.from_entity_id);
+                            log('info', `timeout consensus_triggered id=${row.id} from=${row.from_entity_id}`, { deviceId });
+                        }
+                    } catch (rowErr) {
+                        console.error(`[AgentActionRequests] timeout enforce failed id=${row.id}:`, rowErr.message);
+                    }
+                }
+            } catch (devErr) {
+                console.error(`[AgentActionRequests] timeout sweep failed device=${deviceId}:`, devErr.message);
+            }
+        }
     }
 
     // ── Dual auth: deviceSecret (user) OR botSecret+entityId (agent) ──
@@ -426,6 +607,17 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io } = 
         }
     });
 
+    // Register the periodic timeout sweep ONCE per process (card_ce0d685b).
+    // Skipped under test (jest calls enforceActionRequestTimeouts directly). The
+    // module-level guard stops a re-`require` / multi-factory-call from stacking
+    // intervals. Failures are swallowed so the timer never crashes the process.
+    if (process.env.NODE_ENV !== 'test' && !timeoutSweepTimer) {
+        timeoutSweepTimer = setInterval(() => {
+            enforceActionRequestTimeouts().catch(() => {});
+        }, TIMEOUT_SWEEP_INTERVAL_MS);
+        if (typeof timeoutSweepTimer.unref === 'function') timeoutSweepTimer.unref();
+    }
+
     return {
         router,
         initDatabase: initAgentActionRequestsDatabase,
@@ -433,6 +625,9 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io } = 
         // smart-quote reply answers (card_b51598b7). Device-scoped, pending-only,
         // + best-effort agent push-back. Returns the row, or null on no-match.
         resolveActionRequest,
+        // Timeout-policy worker (card_ce0d685b). Exported so tests + an external
+        // scheduler can invoke a sweep directly.
+        enforceActionRequestTimeouts,
         _pool: pool,
     };
 };
