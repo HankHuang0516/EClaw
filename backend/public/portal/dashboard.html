@@ -2753,9 +2753,15 @@
             return div.innerHTML;
         }
 
-        function dashboardText(key, fallback) {
-            const value = (typeof i18n !== 'undefined' && typeof i18n.t === 'function') ? i18n.t(key) : null;
-            return value && value !== key ? value : fallback;
+        function formatDashboardText(template, values = {}) {
+            return Object.keys(values).reduce((text, key) => {
+                return text.split(`{${key}}`).join(String(values[key]));
+            }, template);
+        }
+
+        function dashboardText(key, fallback, params = {}) {
+            const value = (typeof i18n !== 'undefined' && typeof i18n.t === 'function') ? i18n.t(key, params) : null;
+            return value && value !== key ? value : formatDashboardText(fallback, params);
         }
 
         function setDashboardMetric(id, value) {
@@ -2782,14 +2788,14 @@
 
             summary.dataset.state = state;
             if (state === 'loading') {
-                title.textContent = dashboardText('dashboard_summary_loading_title', 'Loading entities / 載入實體中');
-                meta.textContent = dashboardText('dashboard_summary_loading_meta', 'Checking bound entity slots. / 正在檢查實體欄位。');
+                title.textContent = dashboardText('dashboard_summary_loading_title', 'Loading entities');
+                meta.textContent = dashboardText('dashboard_summary_loading_meta', 'Checking bound entity slots.');
                 ['dashboardMetricBound', 'dashboardMetricActive', 'dashboardMetricChannel', 'dashboardMetricE2ee'].forEach(id => setDashboardMetric(id, '--'));
                 return;
             }
             if (state === 'error') {
-                title.textContent = dashboardText('dashboard_summary_error_title', 'Entity list unavailable / 無法載入實體清單');
-                meta.textContent = dashboardText('dashboard_summary_error_meta', 'Check your connection or retry. / 請檢查連線後重試。');
+                title.textContent = dashboardText('dashboard_summary_error_title', 'Entity list unavailable');
+                meta.textContent = dashboardText('dashboard_summary_error_meta', 'Check your connection or retry.');
                 ['dashboardMetricBound', 'dashboardMetricActive', 'dashboardMetricChannel', 'dashboardMetricE2ee'].forEach(id => setDashboardMetric(id, '--'));
                 return;
             }
@@ -2800,16 +2806,15 @@
             setDashboardMetric('dashboardMetricE2ee', e2ee);
 
             if (state === 'empty') {
-                title.textContent = dashboardText('dashboard_summary_empty_title', 'No entities bound / 尚未綁定實體');
-                meta.textContent = dashboardText('dashboard_summary_empty_meta', 'Add a slot below to start routing messages. / 從下方新增欄位開始路由訊息。');
+                title.textContent = dashboardText('dashboard_summary_empty_title', 'No entities bound');
+                meta.textContent = dashboardText('dashboard_summary_empty_meta', 'Add a slot below to start routing messages.');
                 return;
             }
 
             title.textContent = (bound === 1)
-                ? dashboardText('dashboard_summary_ready_one', '1 entity ready / 1 個實體可用')
-                : bound + ' ' + dashboardText('dashboard_summary_ready_many_suffix', 'entities ready /') + ' ' + bound + ' 個實體可用';
-            meta.textContent = active + ' active, ' + channel + ' channel-bound, ' + e2ee + ' E2EE / '
-                + active + ' 個活動中，' + channel + ' 個頻道綁定，' + e2ee + ' 個加密';
+                ? dashboardText('dashboard_summary_ready_one', '1 entity ready')
+                : dashboardText('dashboard_summary_ready_many', '{count} entities ready', { count: bound });
+            meta.textContent = dashboardText('dashboard_summary_ready_meta', '{active} active, {channel} channel-bound, {e2ee} E2EE', { active, channel, e2ee });
         }
 
         async function refreshDashboardEntities() {

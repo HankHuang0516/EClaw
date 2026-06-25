@@ -143,6 +143,15 @@ const TRANSLATIONS = {
         "cardholder_search_meta": "{saved} saved, {external} online agents",
         "cardholder_pending_request_one": "{count} pending friend request",
         "cardholder_pending_request_many": "{count} pending friend requests",
+        "dashboard_summary_loading_title": "Loading entities",
+        "dashboard_summary_loading_meta": "Checking bound entity slots.",
+        "dashboard_summary_error_title": "Entity list unavailable",
+        "dashboard_summary_error_meta": "Check your connection or retry.",
+        "dashboard_summary_empty_title": "No entities bound",
+        "dashboard_summary_empty_meta": "Add a slot below to start routing messages.",
+        "dashboard_summary_ready_one": "1 entity ready",
+        "dashboard_summary_ready_many": "{count} entities ready",
+        "dashboard_summary_ready_meta": "{active} active, {channel} channel-bound, {e2ee} E2EE",
         "a11y_community_sort_bots": "Sort bots",
         "a11y_community_rate_min": "Minimum rate",
         "a11y_community_rate_max": "Maximum rate",
@@ -650860,6 +650869,15 @@ const TRANSLATIONS = {
         "cardholder_search_meta": "已儲存 {saved}、線上代理 {external}",
         "cardholder_pending_request_one": "{count} 個待處理好友請求",
         "cardholder_pending_request_many": "{count} 個待處理好友請求",
+        "dashboard_summary_loading_title": "載入實體中",
+        "dashboard_summary_loading_meta": "正在檢查實體欄位。",
+        "dashboard_summary_error_title": "無法載入實體清單",
+        "dashboard_summary_error_meta": "請檢查連線後重試。",
+        "dashboard_summary_empty_title": "尚未綁定實體",
+        "dashboard_summary_empty_meta": "從下方新增欄位開始路由訊息。",
+        "dashboard_summary_ready_one": "1 個實體可用",
+        "dashboard_summary_ready_many": "{count} 個實體可用",
+        "dashboard_summary_ready_meta": "{active} 個活動中，{channel} 個頻道綁定，{e2ee} 個加密",
         "a11y_community_sort_bots": "排序機器人",
         "a11y_community_rate_min": "最低費率",
         "a11y_community_rate_max": "最高費率",
@@ -1235740,6 +1235758,15 @@ const TRANSLATIONS = {
 
 
 "zh-CN": {
+        "dashboard_summary_loading_title": "正在加载实体",
+        "dashboard_summary_loading_meta": "正在检查实体槽位。",
+        "dashboard_summary_error_title": "无法加载实体列表",
+        "dashboard_summary_error_meta": "请检查连接后重试。",
+        "dashboard_summary_empty_title": "尚未绑定实体",
+        "dashboard_summary_empty_meta": "从下方新增槽位开始路由消息。",
+        "dashboard_summary_ready_one": "1 个实体可用",
+        "dashboard_summary_ready_many": "{count} 个实体可用",
+        "dashboard_summary_ready_meta": "{active} 个活动中，{channel} 个频道绑定，{e2ee} 个加密",
 
 
 
@@ -2943826,6 +2943853,15 @@ const TRANSLATIONS = {
 
 
     "zh-TW": {
+        "dashboard_summary_loading_title": "載入實體中",
+        "dashboard_summary_loading_meta": "正在檢查實體欄位。",
+        "dashboard_summary_error_title": "無法載入實體清單",
+        "dashboard_summary_error_meta": "請檢查連線後重試。",
+        "dashboard_summary_empty_title": "尚未綁定實體",
+        "dashboard_summary_empty_meta": "從下方新增欄位開始路由訊息。",
+        "dashboard_summary_ready_one": "1 個實體可用",
+        "dashboard_summary_ready_many": "{count} 個實體可用",
+        "dashboard_summary_ready_meta": "{active} 個活動中，{channel} 個頻道綁定，{e2ee} 個加密",
         "chat_receiver_hint_auto": "自動",
         "mission_tab_interactive_dev": "交互開發",
         "usage_warning_title": "用量警告",

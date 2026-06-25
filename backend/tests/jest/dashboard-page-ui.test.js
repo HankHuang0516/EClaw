@@ -3,7 +3,9 @@ const path = require('path');
 
 describe('dashboard page self-improvement UI', () => {
     const pagePath = path.join(__dirname, '../../public/portal/dashboard.html');
+    const i18nPath = path.join(__dirname, '../../public/shared/i18n.js');
     const html = fs.readFileSync(pagePath, 'utf8');
+    const i18n = fs.readFileSync(i18nPath, 'utf8');
 
     test('renders a live entity overview panel with stable actions', () => {
         expect(html).toContain('class="dashboard-entity-summary" id="dashboardEntitySummary" data-state="loading" data-tab-content="entities"');
@@ -26,9 +28,37 @@ describe('dashboard page self-improvement UI', () => {
         expect(html).toContain("entities.filter(e => e.encryptionStatus === 'e2ee').length");
         expect(html).toContain("title.textContent = dashboardText('dashboard_summary_error_title'");
         expect(html).toContain("meta.textContent = dashboardText('dashboard_summary_empty_meta'");
-        expect(html).toContain("return value && value !== key ? value : fallback;");
+        expect(html).toContain("function formatDashboardText(template, values = {})");
+        expect(html).toContain("i18n.t(key, params)");
+        expect(html).toContain("return value && value !== key ? value : formatDashboardText(fallback, params);");
+        expect(html).toContain("dashboardText('dashboard_summary_ready_many', '{count} entities ready', { count: bound })");
+        expect(html).toContain("dashboardText('dashboard_summary_ready_meta', '{active} active, {channel} channel-bound, {e2ee} E2EE', { active, channel, e2ee })");
+        expect(html).not.toContain('dashboard_summary_ready_many_suffix');
+        expect(html).not.toContain('1 entity ready / 1 個實體可用');
+        expect(html).not.toContain('entities ready /');
+        expect(html).not.toContain("+ e2ee + ' E2EE / '");
         expect(html).not.toContain('dashboardEntitySummaryTitle.innerHTML');
         expect(html).not.toContain('dashboardEntitySummaryMeta.innerHTML');
+    });
+
+    test('defines localized entity summary keys without bilingual fallbacks', () => {
+        [
+            'dashboard_summary_loading_title',
+            'dashboard_summary_loading_meta',
+            'dashboard_summary_error_title',
+            'dashboard_summary_error_meta',
+            'dashboard_summary_empty_title',
+            'dashboard_summary_empty_meta',
+            'dashboard_summary_ready_one',
+            'dashboard_summary_ready_many',
+            'dashboard_summary_ready_meta',
+        ].forEach((key) => {
+            const occurrences = i18n.match(new RegExp(`"${key}"`, 'g')) || [];
+            expect(occurrences.length).toBeGreaterThanOrEqual(4);
+        });
+        expect(i18n).toContain('"dashboard_summary_ready_many": "{count} entities ready"');
+        expect(i18n).toContain('"dashboard_summary_ready_many": "{count} 個實體可用"');
+        expect(i18n).toContain('"dashboard_summary_ready_many": "{count} 个实体可用"');
     });
 
     test('keeps loading, empty, error, and tab visibility synchronized', () => {
