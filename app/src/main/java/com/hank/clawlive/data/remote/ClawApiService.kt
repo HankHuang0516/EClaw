@@ -414,6 +414,19 @@ interface ClawApiService {
     @POST("api/auth/app-login")
     suspend fun appLogin(@Body body: Map<String, String>): AppLoginResponse
 
+    // ── Settings Stage 3 native: Rotate Secret + Switch Device (card_c3b13f64) ──
+
+    // Rotate the device secret. The new secret is returned ONCE in the response and
+    // MUST be persisted locally (overwrite the stored deviceSecret) — the old secret
+    // is invalidated server-side. 401 Invalid credentials on mismatch; rate-limited.
+    @POST("api/device/rotate-secret")
+    suspend fun rotateDeviceSecret(@Body request: RotateSecretRequest): RotateSecretResponse
+
+    // Sign this device into a different deviceId/deviceSecret pair. On success the
+    // returned user object carries the canonical creds to persist before restart.
+    @POST("api/auth/device-login")
+    suspend fun deviceLogin(@Body request: DeviceLoginRequest): DeviceLoginResponse
+
     @PATCH("api/auth/language")
     suspend fun updateLanguage(@Body body: Map<String, String>): ApiResponse
 
@@ -802,6 +815,42 @@ data class AppLoginResponse(
     val email: String? = null,
     val language: String? = null,
     val error: String? = null
+)
+
+// ── Settings Stage 3 native: Rotate Secret + Switch Device (card_c3b13f64) ──
+
+data class RotateSecretRequest(
+    val deviceId: String,
+    val deviceSecret: String
+)
+
+data class RotateSecretResponse(
+    val success: Boolean,
+    val deviceId: String? = null,
+    val newDeviceSecret: String? = null,
+    val rotatedAt: String? = null,
+    val error: String? = null
+)
+
+data class DeviceLoginRequest(
+    val deviceId: String,
+    val deviceSecret: String
+)
+
+data class DeviceLoginResponse(
+    val success: Boolean,
+    val authToken: String? = null,
+    val user: DeviceLoginUser? = null,
+    val error: String? = null
+)
+
+data class DeviceLoginUser(
+    val id: String? = null,
+    val email: String? = null,
+    val deviceId: String? = null,
+    val deviceSecret: String? = null,
+    val language: String? = null,
+    val subscriptionStatus: String? = null
 )
 
 data class OAuthLoginResponse(

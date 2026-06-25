@@ -353,6 +353,17 @@ class SettingsActivity : AppCompatActivity() {
             WebViewActivity.launch(this, "https://eclawbot.com/portal/settings.html?focus=kanban-nudge", getString(R.string.kanban_nudge_settings_title))
         }
 
+        // Stage 3 native — Rotate Secret + Switch Device (card_c3b13f64)
+        findViewById<MaterialButton>(R.id.rowRotateSecret).setOnClickListener {
+            TelemetryHelper.trackAction("settings_rotate_secret")
+            showRotateSecretDialog()
+        }
+
+        findViewById<MaterialButton>(R.id.rowSwitchDevice).setOnClickListener {
+            TelemetryHelper.trackAction("settings_switch_device")
+            showSwitchDeviceDialog()
+        }
+
         findViewById<MaterialButton>(R.id.btnWallet).setOnClickListener {
             TelemetryHelper.trackAction("settings_wallet")
             WebViewActivity.launch(this, "https://eclawbot.com/portal/wallet.html", getString(R.string.settings_wallet))
@@ -1011,6 +1022,199 @@ class SettingsActivity : AppCompatActivity() {
                     Toast.makeText(this@SettingsActivity, errorMsg ?: getString(R.string.unknown_error), Toast.LENGTH_SHORT).show()
                     dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
                     dialog.getButton(AlertDialog.BUTTON_POSITIVE).text = getString(R.string.account_login_btn)
+                }
+            }
+        }
+    }
+
+    // ============================================
+    // STAGE 3 NATIVE: ROTATE SECRET + SWITCH DEVICE (card_c3b13f64)
+    // ============================================
+
+    /**
+     * Rotate the device secret. Destructive: the current secret is invalidated and a
+     * new one is issued (manifest field `validation.confirm = true`), so other
+     * sessions must re-enter the new value to sign in. On success the new secret
+     * returned ONCE is persisted locally via [DeviceManager.setCredentials] (keeping
+     * the same deviceId). Never logs the secret in plaintext.
+     */
+    private fun showRotateSecretDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.settings_rotate_secret_confirm_title))
+            .setMessage(getString(R.string.settings_rotate_device_secret_hint))
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(getString(R.string.settings_rotate_secret_confirm_btn)) { _, _ ->
+                lifecycleScope.launch {
+                    try {
+                        val response = NetworkModule.api.rotateDeviceSecret(
+                            com.hank.clawlive.data.remote.RotateSecretRequest(
+                                deviceId = deviceManager.deviceId,
+                                deviceSecret = deviceManager.deviceSecret
+                            )
+                        )
+                        if (response.success && !response.newDeviceSecret.isNullOrBlank()) {
+                            // Persist the new secret ONCE (returned only here); keep the
+                            // same deviceId. Mirrors the account-login persistence seam.
+                            deviceManager.setCredentials(deviceManager.deviceId, response.newDeviceSecret)
+                            TelemetryHelper.trackAction("settings_rotate_secret_success")
+                            Toast.makeText(
+                                this@SettingsActivity,
+                                getString(R.string.settings_rotate_secret_success),
+                                Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            Toast.makeText(
+                                this@SettingsActivity,
+                                response.error ?: getString(R.string.unknown_error),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    } catch (e: Exception) {
+                        Timber.e(e, "Rotate device secret failed")
+                        TelemetryHelper.trackError(e, mapOf("action" to "rotate_secret"))
+                        val errorMsg = try {
+                            val errorBody = (e as? retrofit2.HttpException)?.response()?.errorBody()?.string()
+                            val json = com.google.gson.JsonParser.parseString(errorBody ?: "").asJsonObject
+                            json.get("error")?.asString ?: e.message
+                        } catch (_: Exception) { e.message }
+                        Toast.makeText(
+                            this@SettingsActivity,
+                            errorMsg ?: getString(R.string.settings_rotate_secret_failed),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+            .show()
+    }
+
+    /**
+     * Sign this device into a different Device ID / Device Secret pair via
+     * POST /api/auth/device-login. On success the canonical creds from the response
+     * are persisted via [DeviceManager.setCredentials] and the app is restarted to
+     * pick them up — mirroring [showAccountLoginDialog]'s post-login restart. The
+     * secret field uses a password input and is never logged in plaintext.
+     */
+    private fun showSwitchDeviceDialog() {
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dpToPx(24), dpToPx(16), dpToPx(24), dpToPx(8))
+        }
+
+        val deviceIdInput = TextInputLayout(this).apply {
+            hint = getString(R.string.settings_device_id)
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+        }
+        val deviceIdEdit = TextInputEditText(this)
+        deviceIdEdit.inputType = android.text.InputType.TYPE_CLASS_TEXT
+        deviceIdInput.addView(deviceIdEdit)
+        layout.addView(deviceIdInput)
+
+        val deviceSecretInput = TextInputLayout(this).apply {
+            hint = getString(R.string.settings_device_secret)
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+            endIconMode = TextInputLayout.END_ICON_PASSWORD_TOGGLE
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            lp.topMargin = dpToPx(12)
+            layoutParams = lp
+        }
+        val deviceSecretEdit = TextInputEditText(this)
+        deviceSecretEdit.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        deviceSecretInput.addView(deviceSecretEdit)
+        layout.addView(deviceSecretInput)
+
+        val hintText = TextView(this).apply {
+            text = getString(R.string.settings_switch_device_hint)
+            setTextColor(0x99FFFFFF.toInt())
+            textSize = 12f
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            lp.topMargin = dpToPx(8)
+            layoutParams = lp
+        }
+        layout.addView(hintText)
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.settings_switch_device))
+            .setView(layout)
+            .setPositiveButton(getString(R.string.settings_switch_device_confirm), null)
+            .setNegativeButton(R.string.cancel, null)
+            .create()
+
+        dialog.show()
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val deviceId = deviceIdEdit.text?.toString()?.trim() ?: ""
+            val deviceSecret = deviceSecretEdit.text?.toString()?.trim() ?: ""
+
+            if (deviceId.isEmpty() || deviceSecret.isEmpty()) {
+                Toast.makeText(this, getString(R.string.bind_email_fill_all), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).text = getString(R.string.account_login_logging_in)
+
+            lifecycleScope.launch {
+                try {
+                    val response = NetworkModule.api.deviceLogin(
+                        com.hank.clawlive.data.remote.DeviceLoginRequest(
+                            deviceId = deviceId,
+                            deviceSecret = deviceSecret
+                        )
+                    )
+                    val user = response.user
+                    if (response.success && user?.deviceId != null && user.deviceSecret != null) {
+                        // Overwrite local credentials with the switched device's creds.
+                        deviceManager.setCredentials(user.deviceId, user.deviceSecret)
+                        // Restore language preference from server, if provided.
+                        user.language?.let { lang ->
+                            val localeTag = when (lang) {
+                                "zh" -> "zh-TW"
+                                "zh-CN" -> "zh-CN"
+                                "id" -> "in"
+                                else -> lang
+                            }
+                            AppCompatDelegate.setApplicationLocales(
+                                LocaleListCompat.forLanguageTags(localeTag)
+                            )
+                        }
+                        dialog.dismiss()
+                        TelemetryHelper.trackAction("settings_switch_device_success")
+
+                        // Show success and prompt restart (same mechanism as account login).
+                        AlertDialog.Builder(this@SettingsActivity)
+                            .setTitle(getString(R.string.settings_switch_device_success_title))
+                            .setMessage(getString(R.string.settings_switch_device_success_msg, user.email ?: user.deviceId))
+                            .setPositiveButton(getString(R.string.account_login_restart)) { _, _ ->
+                                val intent = packageManager.getLaunchIntentForPackage(packageName)
+                                intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                startActivity(intent)
+                                Runtime.getRuntime().exit(0)
+                            }
+                            .setCancelable(false)
+                            .show()
+                    } else {
+                        Toast.makeText(this@SettingsActivity, response.error ?: getString(R.string.unknown_error), Toast.LENGTH_SHORT).show()
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).text = getString(R.string.settings_switch_device_confirm)
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Switch device failed")
+                    TelemetryHelper.trackError(e, mapOf("action" to "switch_device"))
+                    val errorMsg = try {
+                        val errorBody = (e as? retrofit2.HttpException)?.response()?.errorBody()?.string()
+                        val json = com.google.gson.JsonParser.parseString(errorBody ?: "").asJsonObject
+                        json.get("error")?.asString ?: e.message
+                    } catch (_: Exception) { e.message }
+                    Toast.makeText(this@SettingsActivity, errorMsg ?: getString(R.string.unknown_error), Toast.LENGTH_SHORT).show()
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).text = getString(R.string.settings_switch_device_confirm)
                 }
             }
         }
