@@ -164,4 +164,18 @@ describe('需要你 inbox collapse + lifecycle hardening (card_b176c435)', () =>
         expect(chatHtml).toContain('if (replyContextsSnapshot.length && replyContexts.length === 0) {');
         expect(chatHtml).toMatch(/function removeReplyContextForRequest\(requestId\)/);
     });
+
+    test('every send abort path (uploads-pending / no-target / catch) restores the staged reply, not just the catch (card_2625ae06)', () => {
+        // clearReplyContext() runs optimistically BEFORE the early-return guards, so
+        // each abort must restore the snapshot or the staged quote + action-request
+        // binding is silently orphaned with no user feedback. One DRY helper covers all.
+        const fn = chatHtml.slice(chatHtml.indexOf('async function sendMessage('), chatHtml.indexOf('async function uploadVoice('));
+        expect(fn).toContain('const restoreReplyContextsOnAbort = () => {');
+        // uploads-still-pending guard restores before returning
+        expect(fn).toMatch(/chat_wait_upload[\s\S]{0,180}restoreReplyContextsOnAbort\(\);\s*\n\s*return;/);
+        // no-routing-target guard restores before returning
+        expect(fn).toMatch(/chat_select_entity[\s\S]{0,140}restoreReplyContextsOnAbort\(\);\s*\n\s*return;/);
+        // invoked on all three abort paths: 2 early-return guards + the catch
+        expect((fn.match(/restoreReplyContextsOnAbort\(\)/g) || []).length).toBeGreaterThanOrEqual(3);
+    });
 });
