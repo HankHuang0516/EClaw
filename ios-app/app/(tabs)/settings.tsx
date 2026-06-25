@@ -98,7 +98,7 @@ export default function SettingsScreen() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await miscApi.getVersion();
+        const res = await miscApi.getVersion(appVersion);
         const u = res?.data?.update;
         if (cancelled) return;
         if (shouldShowChip(u?.available, appVersion, u?.latestVersion)) {

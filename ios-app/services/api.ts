@@ -428,7 +428,12 @@ export const settingsManifestApi = {
 // ── Misc APIs ────────────────────────────────────────────────
 
 export const miscApi = {
-  getVersion: () => apiClient.get('/api/version'),
+  // Pass the installed appVersion so the backend returns the `update` block.
+  // /api/version only computes `update.available` when `?appVersion=` is present
+  // (backend/index.js app.get('/api/version')); without it res.data.update is
+  // undefined and the Settings update-chip can never trigger (card_1771f826).
+  getVersion: (appVersion?: string | null) =>
+    apiClient.get('/api/version', { params: { appVersion: appVersion ?? undefined } }),
   getFreeBotTos: () => apiClient.get('/api/free-bot-tos'),
   agreeFreeBotTos: () => apiClient.post('/api/free-bot-tos/agree'),
 };
