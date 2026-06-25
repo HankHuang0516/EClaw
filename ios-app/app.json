@@ -25,7 +25,8 @@
         "NSPhotoLibraryUsageDescription": "E-Claw needs photo library access to send images to your entities.",
         "NSMicrophoneUsageDescription": "E-Claw needs microphone access to record voice messages.",
         "NSPhotoLibraryAddUsageDescription": "E-Claw saves media files to your photo library.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "LSApplicationQueriesSchemes": ["itms-apps"]
       },
       "buildNumber": "3"
     },
