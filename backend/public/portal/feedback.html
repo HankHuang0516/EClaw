@@ -760,7 +760,7 @@
         </div>
 
         <!-- Ask AI Banner -->
-        <div class="ask-ai-banner" onclick="openAiChat()">
+        <div class="ask-ai-banner" role="button" tabindex="0" aria-label="Ask AI for help" onclick="openAiChat()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openAiChat();}">
             <span class="ask-ai-banner-icon">🤖</span>
             <div class="ask-ai-banner-text">
                 <div class="ask-ai-banner-title" data-i18n="feedback_ask_ai_title">Need quick help? Ask AI</div>

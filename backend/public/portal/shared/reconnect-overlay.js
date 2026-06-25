@@ -32,7 +32,16 @@
         el.id = BANNER_ID;
         el.setAttribute('role', 'status');
         el.setAttribute('aria-live', 'polite');
-        const t = (k, fb) => (window.i18n && window.i18n.t) ? window.i18n.t(k, fb) : fb;
+        // i18n.t(key, params) treats the 2nd arg as {name}-substitution params, NOT a
+        // fallback, and returns the bare key string when the key is missing. So pass the
+        // inline fallback ourselves when i18n has no translation (card_4cafbf7e QA).
+        const t = (k, fb) => {
+            if (window.i18n && window.i18n.t) {
+                const v = window.i18n.t(k);
+                if (v && v !== k) return v;
+            }
+            return fb;
+        };
         el.innerHTML = '<span class="spinner" aria-hidden="true"></span>' +
             '<span>' + t('reconnect_overlay_text', '網路連線中斷，正在重新連線…') + '</span>';
         el.title = t('reconnect_overlay_help',

@@ -3775,9 +3775,9 @@
 
     <!-- Photo Lightbox -->
     <div class="lightbox" id="lightbox" onclick="if(event.target===this)closeLightbox()">
-        <button class="lightbox-arrow prev" onclick="event.stopPropagation();lightboxNav(-1)">&#8249;</button>
+        <button class="lightbox-arrow prev" aria-label="Previous image" onclick="event.stopPropagation();lightboxNav(-1)">&#8249;</button>
         <img id="lightboxImg" src="" alt="Enlarged chat image" onclick="event.stopPropagation();toggleLightboxZoom()">
-        <button class="lightbox-arrow next" onclick="event.stopPropagation();lightboxNav(1)">&#8250;</button>
+        <button class="lightbox-arrow next" aria-label="Next image" onclick="event.stopPropagation();lightboxNav(1)">&#8250;</button>
         <div class="lightbox-counter" id="lightboxCounter"></div>
     </div>
 
@@ -3837,7 +3837,7 @@
                 </div>
                 <div style="display:flex;gap:6px;align-items:flex-start">
                     <button class="entity-modal-close" id="entityModalRequoteBtn" data-i18n-title="chip_popover_requote" title="再引用到聊天" onclick="requoteFromEntityModal()" style="font-size:18px">📌</button>
-                    <button class="entity-modal-close" onclick="closeModal('entityPreviewModal')">&times;</button>
+                    <button class="entity-modal-close" aria-label="Close" onclick="closeModal('entityPreviewModal')">&times;</button>
                 </div>
             </div>
             <div class="entity-modal-body" id="entityModalBody">
@@ -3871,7 +3871,7 @@
                     <div class="note-modal-title" id="noteModalTitle">Note</div>
                     <div class="note-modal-id" id="noteModalId"></div>
                 </div>
-                <button class="note-modal-close" onclick="closeModal('notePreviewModal')">&times;</button>
+                <button class="note-modal-close" aria-label="Close" onclick="closeModal('notePreviewModal')">&times;</button>
             </div>
             <div class="note-modal-body" id="noteModalBody">
                 <div class="note-modal-loading">Loading...</div>
