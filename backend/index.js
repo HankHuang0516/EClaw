@@ -1938,6 +1938,7 @@ try {
         pushToBot,
         unifiedPush,
         serverLog,
+        io, // real-time inbox push: emits 'action_request:changed' to device:<id> (card_8151054f)
     });
     app.use('/api/action-requests', agentActionRequestsModule.router);
     console.log('[AgentActionRequests] Module loaded successfully');

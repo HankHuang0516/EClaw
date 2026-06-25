@@ -35,7 +35,12 @@ const pool = new Pool({
 
 const MAX_PROMPT_LEN = 2000;
 const MAX_LIST_LIMIT = 500;
-const VALID_TYPES = new Set(['decision', 'approval', 'input', 'credential', 'review', 'clarify']);
+// 'consensus' = 與其他實體討論取得共識 (added card_8151054f). NOTE: if you add a
+// type here you MUST also extend the aar_type_valid CHECK constraint — both in
+// agent_action_requests_schema.sql AND the idempotent migration in
+// initAgentActionRequestsDatabase() below (the prod table already exists, so a
+// plain schema re-run won't change the constraint).
+const VALID_TYPES = new Set(['decision', 'approval', 'input', 'credential', 'review', 'clarify', 'consensus']);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function initAgentActionRequestsDatabase() {
@@ -61,6 +66,25 @@ async function initAgentActionRequestsDatabase() {
         console.log(`[AgentActionRequests] Database initialized: ${ok} OK, ${skipped} skipped, ${failed} failed`);
     } catch (error) {
         console.error('[AgentActionRequests] Failed to init database:', error.message);
+    }
+
+    // ── Idempotent constraint migration (card_8151054f) ──
+    // The table already exists in prod, so the CREATE TABLE above is a no-op and
+    // the freshened aar_type_valid CHECK (with 'consensus') in the schema file is
+    // NOT applied to the live table. Drop + recreate the constraint so the new
+    // 'consensus' type becomes insertable on the existing table. Best-effort: a
+    // failure here (e.g. an in-flight row violating the new IN-list, which cannot
+    // happen since the list only grows) must never crash init.
+    try {
+        await pool.query('ALTER TABLE agent_action_requests DROP CONSTRAINT IF EXISTS aar_type_valid');
+        await pool.query(
+            `ALTER TABLE agent_action_requests
+                ADD CONSTRAINT aar_type_valid
+                CHECK (type IN ('decision','approval','input','credential','review','clarify','consensus'))`
+        );
+        console.log('[AgentActionRequests] aar_type_valid constraint migrated (includes consensus)');
+    } catch (err) {
+        console.error('[AgentActionRequests] aar_type_valid migration skipped:', err.message);
     }
 }
 
@@ -88,13 +112,41 @@ function rowToApi(row) {
 /**
  * Factory. Matches the kanban/scheduled-messages module style so index.js wires it the same way.
  */
-module.exports = function (devices, { pushToBot, unifiedPush, serverLog } = {}) {
+module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io } = {}) {
     const router = express.Router();
 
     function log(level, msg, meta) {
         if (typeof serverLog === 'function') {
             try { serverLog(level, 'agent_action_requests', msg, meta || {}); } catch (_) {}
         }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // SOCKET EVENT CONTRACT (card_8151054f) — frontend integration point for #6
+    // ──────────────────────────────────────────────────────────────────────
+    // Event name : 'action_request:changed'
+    // Room       : 'device:<deviceId>'   (same room convention as chat:message)
+    // Payload    : { kind, requestId, fromEntityId }
+    //                kind         : 'emitted' | 'resolved' | 'dismissed'
+    //                requestId    : the agent_action_requests row UUID (string)
+    //                fromEntityId : the emitting entity id (integer)
+    // Semantics  : fired AFTER the DB write commits, best-effort. The frontend
+    //              "需要你" inbox listens on this event to live-refresh (it should
+    //              re-fetch GET /api/action-requests rather than trust the payload
+    //              as the full row). A socket failure here NEVER affects the HTTP
+    //              response. This name + shape is the stable contract — do not
+    //              rename without coordinating with the frontend.
+    // ══════════════════════════════════════════════════════════════════════
+    function emitChanged(deviceId, kind, requestId, fromEntityId) {
+        try {
+            if (io && deviceId) {
+                io.to(`device:${deviceId}`).emit('action_request:changed', {
+                    kind,
+                    requestId,
+                    fromEntityId,
+                });
+            }
+        } catch (_) { /* socket failure must never break the HTTP response */ }
     }
 
     // Best-effort: notify the emitting agent that its request was answered.
@@ -131,6 +183,9 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog } = {}) 
         if (result.rows.length === 0) return null;
         const row = result.rows[0];
         notifyAgentResolved(deviceId, device, row, answer);
+        // Live-refresh the inbox. Lives here (not only in the endpoint) so the
+        // /api/client/speak smart-quote auto-resolve path emits identically.
+        emitChanged(deviceId, 'resolved', row.id, row.from_entity_id);
         return row;
     }
 
@@ -199,6 +254,7 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog } = {}) 
             );
             const row = result.rows[0];
             log('info', `emit id=${row.id} from=${fromEntityId} type=${type}`, { deviceId });
+            emitChanged(deviceId, 'emitted', row.id, row.from_entity_id);
             return res.json({ success: true, request: rowToApi(row) });
         } catch (err) {
             console.error('[AgentActionRequests] POST failed:', err.message);
@@ -288,8 +344,10 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog } = {}) 
             if (result.rows.length === 0) {
                 return res.status(404).json({ success: false, error: 'Not found or already resolved/dismissed' });
             }
+            const row = result.rows[0];
             log('info', `dismiss id=${id}`, { deviceId });
-            return res.json({ success: true, request: rowToApi(result.rows[0]) });
+            emitChanged(deviceId, 'dismissed', row.id, row.from_entity_id);
+            return res.json({ success: true, request: rowToApi(row) });
         } catch (err) {
             console.error('[AgentActionRequests] dismiss failed:', err.message);
             return res.status(500).json({ success: false, error: 'Internal error' });

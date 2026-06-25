@@ -48,7 +48,16 @@ const DEFAULTS = {
     // Shape: { enabled: bool, threshold_5h_pct: 0-100, threshold_7d_pct: 0-100 }
     // Trigger logic: warn if (5h_remaining ≤ threshold_5h_pct) OR (7d_remaining ≤ threshold_7d_pct).
     usage_warning_config: { enabled: true, threshold_5h_pct: 15, threshold_7d_pct: 5 },
+    // "需要你" HITL inbox (card_8151054f). Backend stub defaults only — the full
+    // settings UI is a separate PR (#6). The backend ALWAYS emits the
+    // 'action_request:changed' socket event; the frontend gates live-refresh
+    // display on this flag. timeout policy = what to do with an un-answered
+    // request after a deadline (consumed by a future settings/timeout PR).
+    action_request_realtime: true,
+    action_request_timeout_policy: 'keep', // 'keep' | 'auto_dismiss' | 'escalate'
 };
+
+const ACTION_REQUEST_TIMEOUT_POLICIES = new Set(['keep', 'auto_dismiss', 'escalate']);
 
 // Spec: docs/specs/kanban-nudge-spec.md §6 — restricted override key set.
 const NUDGE_ENTITY_OVERRIDE_KEYS = [
@@ -84,6 +93,9 @@ function coerceValue(key, raw) {
     }
     if (key === 'kanban_nudge_priority_mode') {
         return NUDGE_PRIORITY_MODES.has(raw) ? raw : def;
+    }
+    if (key === 'action_request_timeout_policy') {
+        return ACTION_REQUEST_TIMEOUT_POLICIES.has(raw) ? raw : def;
     }
     if (key === 'kanban_nudge_statuses') {
         if (!Array.isArray(raw)) return [...def];
