@@ -819,6 +819,7 @@
         let searchSaved = [];
         let searchExternal = [];
         let activeSearchQuery = '';
+        let searchRequestSeq = 0;
         let searchDebounce = null;
 
         // ── Init ──
@@ -993,8 +994,15 @@
             updateCardholderSummary();
         }
 
-        function formatCount(count, one, many) {
-            return count === 1 ? one.replace('{count}', count) : many.replace('{count}', count);
+        function formatTemplate(template, values) {
+            return Object.keys(values).reduce((text, key) => {
+                return text.split(`{${key}}`).join(String(values[key]));
+            }, template);
+        }
+
+        function formatCount(count, oneKey, oneFallback, manyKey, manyFallback, values = {}) {
+            const template = t(count === 1 ? oneKey : manyKey, count === 1 ? oneFallback : manyFallback);
+            return formatTemplate(template, { count, ...values });
         }
 
         function getFilterLabel(filter) {
@@ -1015,8 +1023,18 @@
 
             if (isSearching) {
                 const total = searchSaved.length + searchExternal.length;
-                title.textContent = formatCount(total, '{count} result for "' + activeSearchQuery + '"', '{count} results for "' + activeSearchQuery + '"');
-                meta.textContent = `${searchSaved.length} saved, ${searchExternal.length} online agents`;
+                title.textContent = formatCount(
+                    total,
+                    'cardholder_search_result_one',
+                    '{count} result for "{query}"',
+                    'cardholder_search_result_many',
+                    '{count} results for "{query}"',
+                    { query: activeSearchQuery }
+                );
+                meta.textContent = formatTemplate(t('cardholder_search_meta', '{saved} saved, {external} online agents'), {
+                    saved: searchSaved.length,
+                    external: searchExternal.length
+                });
                 clear.hidden = false;
                 clear.textContent = t('common_clear', 'Clear');
                 clear.setAttribute('aria-label', t('cardholder_clear_search', 'Clear card search'));
@@ -1024,7 +1042,13 @@
             }
 
             if (currentFilter === 'requests') {
-                title.textContent = formatCount(friendRequests.length, '{count} pending friend request', '{count} pending friend requests');
+                title.textContent = formatCount(
+                    friendRequests.length,
+                    'cardholder_pending_request_one',
+                    '{count} pending friend request',
+                    'cardholder_pending_request_many',
+                    '{count} pending friend requests'
+                );
                 meta.textContent = t('cardholder_requests_hint', 'Review incoming requests without losing your saved cards.');
                 clear.hidden = currentFilter === 'all';
                 clear.textContent = t('common_clear', 'Clear');
@@ -1035,8 +1059,18 @@
             const filteredRecent = applyContactFilter(recentCards);
             const filteredCollected = applyContactFilter(collectedCards);
             const visibleTotal = myCards.length + filteredRecent.length + filteredCollected.length;
-            title.textContent = formatCount(visibleTotal, '{count} card shown', '{count} cards shown');
-            meta.textContent = `${myCards.length} mine, ${filteredRecent.length} recent, ${filteredCollected.length} collected`;
+            title.textContent = formatCount(
+                visibleTotal,
+                'cardholder_cards_shown_one',
+                '{count} card shown',
+                'cardholder_cards_shown_many',
+                '{count} cards shown'
+            );
+            meta.textContent = formatTemplate(t('cardholder_summary_meta', '{mine} mine, {recent} recent, {collected} collected'), {
+                mine: myCards.length,
+                recent: filteredRecent.length,
+                collected: filteredCollected.length
+            });
             if (currentFilter !== 'all') {
                 meta.textContent = `${t('cardholder_active_filter', 'Filter')}: ${getFilterLabel(currentFilter)} · ${meta.textContent}`;
             }
@@ -1048,6 +1082,7 @@
         function clearCardholderView() {
             const searchInput = document.getElementById('searchInput');
             if (searchInput) searchInput.value = '';
+            searchRequestSeq += 1;
             isSearching = false;
             activeSearchQuery = '';
             searchSaved = [];
@@ -1178,6 +1213,7 @@
             clearTimeout(searchDebounce);
             const query = this.value.trim();
             activeSearchQuery = query;
+            const requestSeq = ++searchRequestSeq;
             if (!query) {
                 isSearching = false;
                 searchSaved = [];
@@ -1192,12 +1228,18 @@
                 rebuildContent();
                 return;
             }
-            searchDebounce = setTimeout(() => performSearch(query), 300);
+            searchDebounce = setTimeout(() => performSearch(query, requestSeq), 300);
         });
 
-        async function performSearch(query) {
+        function isLatestSearchQuery(query, requestSeq) {
+            return requestSeq === searchRequestSeq && activeSearchQuery === query && query.length >= 2;
+        }
+
+        async function performSearch(query, requestSeq) {
+            if (!isLatestSearchQuery(query, requestSeq)) return;
             try {
                 const data = await apiCall('GET', `/api/contacts/search?deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}&q=${encodeURIComponent(query)}`);
+                if (!isLatestSearchQuery(query, requestSeq)) return;
                 searchSaved = data.saved || data.cards || [];
                 searchExternal = data.external || [];
                 isSearching = true;
@@ -1205,6 +1247,7 @@
                 rebuildContent();
             } catch (err) {
                 console.error('Search error:', err);
+                if (!isLatestSearchQuery(query, requestSeq)) return;
                 isSearching = true;
                 activeSearchQuery = query;
                 searchSaved = [];
