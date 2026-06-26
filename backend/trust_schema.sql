@@ -103,8 +103,12 @@ CREATE TABLE IF NOT EXISTS user_blacklist (
 );
 
 CREATE INDEX IF NOT EXISTS idx_blacklist_user ON user_blacklist(user_id);
-CREATE INDEX IF NOT EXISTS idx_blacklist_active ON user_blacklist(expires_at)
-    WHERE expires_at IS NULL OR expires_at > NOW();
+-- Plain b-tree on expires_at: a partial predicate cannot reference NOW()
+-- (STABLE, not IMMUTABLE → Postgres rejects it: "functions in index predicate
+-- must be marked IMMUTABLE", so the index silently failed to create on prod).
+-- A full index on expires_at still serves the active-blacklist range filter
+-- (expires_at IS NULL OR expires_at > NOW()); user_id lookups use idx_blacklist_user.
+CREATE INDEX IF NOT EXISTS idx_blacklist_active ON user_blacklist(expires_at);
 
 -- ============================================
 -- rental_cooldowns — prevent repeat-rental abuse (P4)
