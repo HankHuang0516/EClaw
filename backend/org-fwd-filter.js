@@ -18,6 +18,44 @@
 // first matching group wins); isLowSignalFwd is order-independent (any match →
 // true). The flat ORG_FWD_NOISE_PATTERNS below is derived from this list so the
 // boolean filter and the classifier can never drift apart.
+
+// ── Peer-heartbeat-echo vocabulary (card_59f41e5b) ──
+// Shared by BOTH peer-heartbeat regexes (the 收到-led one and the #N-led sibling)
+// so the lookahead trigger set and the `$`-anchored body can never drift apart.
+// Two safety properties keep this false-positive safe (the whole feature hinges
+// on never eating a real escalation):
+//   1. HB_TRIGGER — at least one keep-alive keyword MUST be present, so a bare
+//      "收到，#6。" or "#6 …" never matches; and
+//   2. HB_WL — the body is END-ANCHORED to this whitelist of heartbeat-domain
+//      tokens. The instant any real prose appears (a card id, a verb like 修/
+//      發現, a PR ref, words like 重構/完成/dashboard) a non-whitelist char
+//      breaks the `$` anchor and the message FORWARDS. A peer never appends an
+//      escalation to a heartbeat echo — those arrive as separate messages.
+// NB: 🦞 sits as a plain (un-quantified) alternative, so no /u flag is needed
+// (the surrogate pair is matched literally); a bare `🦞?` WOULD need /u.
+const HB_WL = [
+    '[，,。.\\s]',                         // separators / punctuation
+    '#?\\d+(?:[mhsd]|分|秒|時|天)?',       // entity refs (#6) + time spans (42m29s, 45m)
+    '前', '後', '🦞',
+    '仍在跑', '還在跑', '在線', '餘量', '窗口', '仍可守',
+    'bridge', 'alive', 'last', 'output', 'watchdog',
+    // #5's live watchdog narration vocabulary (card_59f41e5b extension)
+    '僅餘', '即將觸發', '觸發', 'handoff', '到期', '進', 'resource',
+    '決定', '處置', '接近', '警戒線', '警戒', '臨界', 'owner', '或',
+    // connectives that merely glue heartbeat tokens into a sentence (NOT triggers)
+    '但', '已', '等',
+].join('|');
+
+// Keep-alive keywords — the lookahead requires ≥1 of these (reachable through
+// HB_WL) so a content-free ack never trips the heartbeat regex. Every token here
+// is also in HB_WL (so a triggered token is always whitelisted by the body).
+const HB_TRIGGER = [
+    '仍在跑', '還在跑', '在線', '餘量', '窗口', '仍可守',
+    'watchdog', 'bridge', 'output',
+    '僅餘', '即將觸發', '觸發', 'handoff', '到期', '進', 'resource',
+    '決定', '處置', '接近', '警戒線', '警戒', '臨界', 'owner', '或',
+].join('|');
+
 const ORG_FWD_NOISE_GROUPS = [
     // ── JSON parse / stack-trace crash fragments (the original Mac_E flood) ──
     ['json_crash', /^\s*Unexpected (non-whitespace character after JSON|token .* in JSON|end of JSON)/i],
@@ -79,10 +117,13 @@ const ORG_FWD_NOISE_GROUPS = [
 
     // ── Codex/openclaw runtime machine-noise forwards (card_77c4b9e2) ──
     // #6's openclaw/codex runtime auto-emits these lifecycle templates:
-    //   • #N_PERMISSION_HANDOFF — a FALSE alarm fired when a benign post-exec
+    //   • #N_<KIND>_HANDOFF — a FALSE alarm fired when a benign post-exec
     //     cleanup WARN ("Failed to terminate MCP process group N: Operation not
     //     permitted") is misread as a real exec blocker; observed re-firing
-    //     ~1/min.
+    //     ~1/min. The runtime emits several KINDs of the SAME machine-noise
+    //     class — #N_PERMISSION_HANDOFF and (card_59f41e5b) #N_RESOURCE_HANDOFF —
+    //     so the token is generalized to #\d+_[A-Z]+_HANDOFF to cover any future
+    //     <KIND> without another fix-forward.
     //   • "Codex #N status heartbeat" / bridge-lifecycle notices — periodic
     //     keep-alive status, no decision content.
     // The emitter is REMOTE (the process behind CODEX_COMMANDS_URL, not this
@@ -93,23 +134,33 @@ const ORG_FWD_NOISE_GROUPS = [
     // arrive already prefixed. Anchored at line start so a bot's OWN prose that
     // merely mentions "heartbeat"/"handoff" in a sentence still forwards, and
     // a genuine permission gate (different leading text) is never swallowed.
-    ['permission_handoff', /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?#\d+_PERMISSION_HANDOFF\b/i],
+    // Reason label kept as 'permission_handoff' for stability across the family.
+    ['permission_handoff', /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?#\d+_[A-Z]+_HANDOFF\b/i],
     ['heartbeat', /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?Codex\s+#?\d*\s*status heartbeat\b/i],
     ['heartbeat', /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?Codex\s+(?:bridge error|watchdog|bridge status)\b/i],
     ['heartbeat', /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?EClaw progress update\b/i],
     // Chinese peer heartbeat / status-echo ack (card_59f41e5b). These are the
     // "收到，#6 仍在跑 / last output 9m29s 前 / watchdog 35m 餘量。🦞" keep-alive
-    // echoes peers bounce back. Two safety properties make this false-positive
-    // safe (the whole feature hinges on never eating a real escalation):
-    //   1. a lookahead REQUIRES at least one keep-alive keyword, so a bare
-    //      "收到，#6" never matches; and
-    //   2. it is END-ANCHORED to a whitelist of heartbeat tokens (separators,
-    //      entity refs #N, time numbers like 9m29s/35m, 前/後, 🦞, and the
-    //      keep-alive keywords). The instant any real prose appears (e.g.
-    //      "…但我發現 card_123 卡住了，需要你決定") a non-whitelist char breaks
-    //      the `$` anchor and the message FORWARDS. A peer never appends an
-    //      escalation to a heartbeat echo — those arrive as separate messages.
-    ['heartbeat', /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?(?:收到|已收到)(?=(?:[，,。.\s]|#?\d+(?:[mhsd]|分|秒|時|天)?|前|後|🦞|仍在跑|還在跑|在線|餘量|窗口|仍可守|bridge|alive|last|output|watchdog)*?(?:仍在跑|還在跑|在線|餘量|窗口|仍可守|watchdog|bridge|output))(?:[，,。.\s]|#?\d+(?:[mhsd]|分|秒|時|天)?|前|後|🦞|仍在跑|還在跑|在線|餘量|窗口|仍可守|bridge|alive|last|output|watchdog)*$/i],
+    // echoes peers bounce back, plus #5's live watchdog narration
+    // ("收到，#6 last output 42m29s 前，watchdog 僅餘 2m30s，即將觸發 handoff。🦞" /
+    // "收到，#6 仍在跑，但接近警戒線。🦞"). Built from the shared HB_TRIGGER /
+    // HB_WL vocabulary above so the lookahead and the `$`-anchored body never
+    // drift. Safety: a lookahead REQUIRES ≥1 keep-alive keyword (so a bare
+    // "收到，#6" never matches), and the body is END-ANCHORED to HB_WL — any
+    // real prose (card id, verb, PR ref) breaks the `$` anchor → FORWARDS.
+    ['heartbeat', new RegExp(
+        `^\\s*(?:\\[📢\\s*FWD\\s+from\\s+#\\d+\\]\\s*)?(?:收到|已收到)` +
+        `(?=(?:${HB_WL})*?(?:${HB_TRIGGER}))(?:${HB_WL})*$`, 'i')],
+    // Sibling: the SAME watchdog-narration echo that starts with "#N" instead of
+    // "收到" — e.g. "#6 watchdog 45m 到期，已進 resource handoff。等 #6 或 owner
+    // 決定處置。🦞". To stay false-positive safe it (a) requires a heartbeat
+    // keyword IMMEDIATELY after "#N " (so "#6 的 avatar bug 我修好了，PR #3760"
+    // never matches), and (b) is `$`-anchored to HB_WL (so "#6 watchdog
+    // dashboard 重構完成，PR #3761" breaks on "dashboard" → FORWARDS). It does
+    // NOT match a bare message merely starting with "#N".
+    ['heartbeat', new RegExp(
+        `^\\s*(?:\\[📢\\s*FWD\\s+from\\s+#\\d+\\]\\s*)?#\\d+\\s+` +
+        `(?:watchdog|resource(?:\\s+handoff)?|仍在跑|還在跑|到期)(?:${HB_WL})*$`, 'i')],
 
     // ── Standalone lobster mascot ping (card_59f41e5b) ──
     // A bare 🦞 (optionally FWD-wrapped) carries no information.
