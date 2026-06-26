@@ -222,21 +222,16 @@ function makeInbox(opts = {}) {
         },
     };
 
-    // window carries i18n (actionRequestT reads window.i18n) + optional greeting.
+    // window carries i18n (actionRequestT reads window.i18n). The greeting
+    // feature was removed (card_cc9700b7) — there is no window.EclawGreeting.
     const windowStub = {
         i18n: i18nStub,
-        EclawGreeting: opts.greeting || null,
         openHistoryMessage: undefined,
     };
 
     const currentUser = (opts.currentUser !== undefined)
         ? opts.currentUser
         : { deviceId: 'dev-1', deviceSecret: 'sec-1' };
-
-    // ACTION_REQUEST_INBOX_EMPTY_FALLBACK_TO_GREETING is a chat.html global; the
-    // inbox functions under test never read it (only EclawGreeting.maybeShow,
-    // which we stub), but declare it so the spliced body never ReferenceErrors.
-    const FLAG_EMPTY_FALLBACK = !!opts.emptyFallbackFlag;
 
     // Compose the spliced source: state vars + the needed function bodies.
     // Order matters only for hoisting of `const`; functions hoist regardless.
@@ -253,7 +248,6 @@ function makeInbox(opts = {}) {
         })();
         let actionRequestsRefreshPending = false;
         let actionRequestsRefreshPendingRender = false;
-        let actionRequestsRefreshPendingForce = false;
         let replyContexts = [];
     `;
 
@@ -273,6 +267,9 @@ function makeInbox(opts = {}) {
         extractFunction('dismissActionRequest'),
         extractFunction('setActionRequestInboxOpen'),
         extractFunction('renderActionRequestInbox'),
+        // The inbox render entry point loadActionRequests/dismissActionRequest
+        // funnel through (replaced EclawGreeting.maybeShow; card_cc9700b7).
+        extractFunction('refreshActionRequestBanner'),
     ].join('\n');
 
     // Slice the socket handler (assigned to window.*) out by hand.
@@ -300,6 +297,7 @@ function makeInbox(opts = {}) {
             dismissActionRequest,
             setActionRequestInboxOpen,
             renderActionRequestInbox,
+            refreshActionRequestBanner,
             // live-state accessors (read the SAME closure vars the fns mutate)
             getActionRequests: () => actionRequests,
             setActionRequests: (v) => { actionRequests = v; },
@@ -313,13 +311,11 @@ function makeInbox(opts = {}) {
     const factory = new Function(
         'document', 'window', 'i18n', 'localStorage',
         'apiCall', 'currentUser', 'showToast',
-        'ACTION_REQUEST_INBOX_EMPTY_FALLBACK_TO_GREETING',
         body
     );
     const api = factory(
         document, windowStub, i18nStub, localStorageStub,
-        apiCallMock, currentUser, showToast,
-        FLAG_EMPTY_FALLBACK
+        apiCallMock, currentUser, showToast
     );
 
     return { api, banner, document, localStorage: localStorageStub, apiCall: apiCallMock, showToast, currentUser };
@@ -538,7 +534,64 @@ describe('inbox dismiss — already-resolved (404/409/410) treated as success', 
 });
 
 // ════════════════════════════════════════════════════════════════════════════
-// DEFERRED — empty-state greeting fallback depends on a flag Plan A flips.
+// Behavior 5 — refreshActionRequestBanner: inbox-or-hide (greeting fully removed)
+// ────────────────────────────────────────────────────────────────────────────
+// Plan A (Hank 2026-06-26 opt1 全砍 greeting; card_cc9700b7 / card_168aeb1f) deleted
+// the EclawGreeting feature outright. The single render entry is now
+// refreshActionRequestBanner(): render the inbox while there are pending
+// requests, otherwise tear the banner down and hide it — NO greeting fallback.
 // ════════════════════════════════════════════════════════════════════════════
-// eslint-disable-next-line jest/no-disabled-tests
-it.todo('empty→banner clearing / greeting fallback — depends on ACTION_REQUEST_INBOX_EMPTY_FALLBACK_TO_GREETING flag flipped by Plan A / card_168aeb1f');
+describe('refreshActionRequestBanner — inbox-or-hide (greeting removed)', () => {
+    test('pending requests → renders the inbox into the banner (banner visible)', () => {
+        const { api, banner } = makeInbox();
+        api.setLoaded(true);
+        api.setActionRequests([makeRequest(REQ_A), makeRequest(REQ_B)]);
+
+        api.refreshActionRequestBanner();
+
+        expect(findByClass(banner, 'action-request-inbox')).not.toBeNull();
+        expect(banner.style.display).not.toBe('none');
+    });
+
+    test('emptied inbox → tears down the stale inbox DOM and hides the banner (no greeting)', () => {
+        const { api, banner } = makeInbox();
+        api.setLoaded(true);
+        // First a pending request mounts the inbox…
+        api.setActionRequests([makeRequest(REQ_A)]);
+        api.refreshActionRequestBanner();
+        expect(findByClass(banner, 'action-request-inbox')).not.toBeNull();
+
+        // …then it clears → banner must be emptied + hidden, with no greeting markup.
+        api.setActionRequests([]);
+        api.refreshActionRequestBanner();
+
+        expect(findByClass(banner, 'action-request-inbox')).toBeNull();
+        expect(banner.style.display).toBe('none');
+        expect(banner.textContent).toBe('');
+        // No greeting fallback chips leak into the empty banner.
+        expect(findByClass(banner, 'greet-chips')).toBeNull();
+        expect(findByClass(banner, 'greet-chip')).toBeNull();
+    });
+
+    test('loaded + already empty → banner stays hidden (no greeting, no inbox)', () => {
+        const { api, banner } = makeInbox();
+        api.setLoaded(true);
+        api.setActionRequests([]);
+
+        api.refreshActionRequestBanner();
+
+        expect(findByClass(banner, 'action-request-inbox')).toBeNull();
+        expect(banner.style.display).toBe('none');
+    });
+
+    test('not-yet-loaded → no-op (keeps the !actionRequestsLoaded guard)', () => {
+        const { api, banner } = makeInbox();
+        api.setLoaded(false);
+        api.setActionRequests([makeRequest(REQ_A)]);
+
+        api.refreshActionRequestBanner();
+
+        // Guard short-circuits before any render so a half-loaded page never flashes.
+        expect(findByClass(banner, 'action-request-inbox')).toBeNull();
+    });
+});

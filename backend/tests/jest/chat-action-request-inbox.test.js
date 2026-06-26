@@ -7,12 +7,17 @@ const socketJs = fs.readFileSync(path.join(ROOT, 'public', 'portal', 'shared', '
 const i18nJs = fs.readFileSync(path.join(ROOT, 'public', 'shared', 'i18n.js'), 'utf8');
 
 describe('chat action request inbox (card_b51598b7 frontend)', () => {
-    test('load-time pending inbox calls the backend list API and gates greeting fallback behind a flag', () => {
-        expect(chatHtml).toContain('const ACTION_REQUEST_INBOX_EMPTY_FALLBACK_TO_GREETING = true;');
-        expect(chatHtml).toMatch(/async function loadActionRequests\(\{ renderGreeting = false, forceGreeting = false \} = \{\}\)/);
+    test('load-time pending inbox calls the backend list API and renders inbox-or-hide (greeting removed, card_cc9700b7)', () => {
+        // Greeting feature fully removed — no EclawGreeting object, no
+        // ACTION_REQUEST_INBOX_EMPTY_FALLBACK_TO_GREETING flag. The single render
+        // entry is refreshActionRequestBanner(): inbox when pending, hide when empty.
+        expect(chatHtml).not.toContain('EclawGreeting');
+        expect(chatHtml).not.toContain('ACTION_REQUEST_INBOX_EMPTY_FALLBACK_TO_GREETING');
+        expect(chatHtml).toMatch(/function refreshActionRequestBanner\(\)/);
+        expect(chatHtml).toMatch(/async function loadActionRequests\(\{ renderInbox = false \} = \{\}\)/);
         expect(chatHtml).toContain("status: 'pending'");
         expect(chatHtml).toContain("`/api/action-requests?${qs.toString()}`");
-        expect(chatHtml).toContain('await loadActionRequests({ renderGreeting: true, forceGreeting: true });');
+        expect(chatHtml).toContain('await loadActionRequests({ renderInbox: true });');
         expect(chatHtml).toContain('if (!actionRequestsLoaded) return;');
         expect(chatHtml).toContain('if (actionRequests.length > 0) {');
         expect(chatHtml).toContain('renderActionRequestInbox(banner);');
@@ -51,7 +56,7 @@ describe('chat action request inbox (card_b51598b7 frontend)', () => {
         expect(chatHtml).toContain('await resolveActionRequestReplyContexts(actionRequestReplyContexts, finalText);');
         expect(chatHtml).toMatch(/async function dismissActionRequest\(requestId\)/);
         expect(chatHtml).toContain('`/api/action-requests/${id}/dismiss`');
-        expect(chatHtml).toContain('await loadActionRequests({ renderGreeting: true, forceGreeting: true });');
+        expect(chatHtml).toContain('await loadActionRequests({ renderInbox: true });');
     });
 
     test('socket realtime contract refreshes the inbox through a client preference gate', () => {
@@ -152,10 +157,10 @@ describe('需要你 inbox collapse + lifecycle hardening (card_b176c435)', () =>
         const fn = chatHtml.slice(chatHtml.indexOf('async function loadActionRequests('), chatHtml.indexOf('function scheduleActionRequestRefresh('));
         expect(fn).toContain('actionRequestsRefreshPending = true;');
         expect(fn).toContain('if (actionRequestsRefreshPending) {');
-        expect(fn).toContain('await loadActionRequests({ renderGreeting: nextRender, forceGreeting: nextForce });');
+        expect(fn).toContain('await loadActionRequests({ renderInbox: nextRender });');
     });
 
-    test('emptied inbox tears down stale DOM before greeting early-returns', () => {
+    test('emptied inbox tears down stale DOM + hides the banner (no greeting fallback, card_cc9700b7)', () => {
         expect(chatHtml).toContain("if (banner.querySelector('.action-request-inbox')) {");
     });
 
