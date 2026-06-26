@@ -408,6 +408,42 @@
         /* 計畫C: inbox 篩選條件 facet (All / Consensus) + its empty state. */
         .action-request-inbox-filter { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 2px; }
         .action-request-filter-empty { color: var(--text-secondary, #AAAAAA); font-size: 12px; padding: 6px 2px; }
+        /* 子5 (owner-decision inbox): extra blocks rendered ONLY when a request carries
+           decisionContext {whatWasDone, recommendation, evidence[], recommendedOptionIndex}.
+           Gated inside renderActionRequestInbox(); ordinary requests are unaffected. */
+        .action-request-decision-block {
+            display: flex; flex-direction: column; gap: 3px;
+            border-left: 2px solid var(--card-border, #333355); padding: 1px 0 1px 8px;
+        }
+        .action-request-decision-block.is-recommendation { border-left-color: var(--primary, #5b6cff); }
+        .action-request-decision-label {
+            color: var(--text-secondary, #AAAAAA); font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.4px;
+        }
+        .action-request-decision-text { color: var(--text, #ffffff); font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+        .action-request-evidence { display: flex; flex-direction: column; gap: 4px; }
+        .action-request-evidence-chips { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+        .action-request-evidence-chip {
+            display: inline-flex; align-items: center; gap: 4px; max-width: 100%;
+            border: 1px solid rgba(45,212,191,0.55); color: #2dd4bf; background: rgba(20,184,166,0.10);
+            border-radius: 999px; padding: 3px 9px; font-size: 12px; text-decoration: none; cursor: pointer;
+        }
+        .action-request-evidence-chip:hover { background: rgba(20,184,166,0.18); }
+        .action-request-evidence-chip .ar-chip-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .action-request-option.is-recommended {
+            border-color: var(--primary, #5b6cff); background: rgba(91,108,255,0.14); font-weight: 700;
+        }
+        .action-request-recommended-badge {
+            display: inline-flex; align-items: center; margin-left: 5px; border-radius: 999px;
+            padding: 0 6px; font-size: 10px; font-weight: 700; line-height: 16px;
+            color: var(--primary, #5b6cff); background: rgba(91,108,255,0.18); border: 1px solid rgba(91,108,255,0.45);
+        }
+        @media (max-width: 640px) {
+            /* On narrow viewports chips wrap to new rows; each truncates instead of
+               forcing horizontal overflow of the inbox card. */
+            .action-request-evidence-chip { max-width: 100%; }
+            .action-request-evidence-chip .ar-chip-label { max-width: 60vw; }
+        }
         body.density-comfortable .chat-msg { max-width: 75%; }
         body.density-comfortable .chat-source { font-size: 12px; margin-bottom: 4px; }
 
@@ -7607,6 +7643,9 @@
         function renderActionRequestInbox(banner) {
             if (!banner) return;
             const t = actionRequestT;
+            // 子5: only ever expose a URL in an href after confirming it's http(s) —
+            // blocks javascript:/data: and other XSS-prone schemes in evidence chips.
+            const isHttpUrl = (u) => typeof u === 'string' && /^https?:\/\//i.test(u);
             banner.textContent = '';
             const wrap = document.createElement('div');
             wrap.className = 'action-request-inbox' + (actionRequestInboxOpen ? ' is-open' : '');
@@ -7720,6 +7759,29 @@
                 prompt.textContent = request.prompt || '';
                 item.appendChild(meta);
                 item.appendChild(prompt);
+
+                // 子5 (owner-decision): the server attaches decisionContext only when it
+                // auto-surfaces an owner-only review/blocked card. When present, surface
+                // what the commander did, the evidence, and their recommendation. All
+                // gated below so ordinary requests render exactly as before.
+                const dc = (request.decisionContext && typeof request.decisionContext === 'object'
+                    && !Array.isArray(request.decisionContext)) ? request.decisionContext : null;
+
+                // Block 1 — what was done (commander text → textContent, XSS-safe).
+                if (dc && typeof dc.whatWasDone === 'string' && dc.whatWasDone.trim()) {
+                    const wwd = document.createElement('div');
+                    wwd.className = 'action-request-decision-block';
+                    const wwdLabel = document.createElement('div');
+                    wwdLabel.className = 'action-request-decision-label';
+                    wwdLabel.textContent = t('action_request_field_what_was_done', 'What was done');
+                    const wwdText = document.createElement('div');
+                    wwdText.className = 'action-request-decision-text';
+                    wwdText.textContent = dc.whatWasDone;
+                    wwd.appendChild(wwdLabel);
+                    wwd.appendChild(wwdText);
+                    item.appendChild(wwd);
+                }
+
                 if (typeMeta.hint) {
                     const hint = document.createElement('div');
                     hint.className = 'action-request-type-hint';
@@ -7727,14 +7789,80 @@
                     item.appendChild(hint);
                 }
 
+                // Block 2 — evidence chips (PR / screenshot links). Only chips with a
+                // valid http(s) url are rendered; clicking opens in a new tab.
+                if (dc && Array.isArray(dc.evidence)) {
+                    const evItems = dc.evidence.filter(e => e && typeof e === 'object' && isHttpUrl(e.url));
+                    if (evItems.length > 0) {
+                        const ev = document.createElement('div');
+                        ev.className = 'action-request-evidence';
+                        const evLabel = document.createElement('div');
+                        evLabel.className = 'action-request-decision-label';
+                        evLabel.textContent = t('action_request_field_evidence', 'Evidence');
+                        ev.appendChild(evLabel);
+                        const evRow = document.createElement('div');
+                        evRow.className = 'action-request-evidence-chips';
+                        evItems.forEach(e => {
+                            const chip = document.createElement('a');
+                            chip.className = 'action-request-evidence-chip';
+                            chip.href = e.url;
+                            chip.target = '_blank';
+                            chip.rel = 'noopener noreferrer';
+                            const kind = String(e.kind || '').toLowerCase();
+                            const icon = (kind === 'image' || kind === 'screenshot') ? '🖼' : '🔗';
+                            const iconSpan = document.createElement('span');
+                            iconSpan.setAttribute('aria-hidden', 'true');
+                            iconSpan.textContent = icon;
+                            const lbl = document.createElement('span');
+                            lbl.className = 'ar-chip-label';
+                            lbl.textContent = (typeof e.label === 'string' && e.label) ? e.label : e.url;
+                            chip.appendChild(iconSpan);
+                            chip.appendChild(lbl);
+                            chip.title = lbl.textContent;
+                            evRow.appendChild(chip);
+                        });
+                        ev.appendChild(evRow);
+                        item.appendChild(ev);
+                    }
+                }
+
+                // Block 3a — recommendation line (commander text → textContent, XSS-safe).
+                if (dc && typeof dc.recommendation === 'string' && dc.recommendation.trim()) {
+                    const rec = document.createElement('div');
+                    rec.className = 'action-request-decision-block is-recommendation';
+                    const recLabel = document.createElement('div');
+                    recLabel.className = 'action-request-decision-label';
+                    recLabel.textContent = t('action_request_field_recommendation', 'My recommendation');
+                    const recText = document.createElement('div');
+                    recText.className = 'action-request-decision-text';
+                    recText.textContent = dc.recommendation;
+                    rec.appendChild(recLabel);
+                    rec.appendChild(recText);
+                    item.appendChild(rec);
+                }
+
                 if (Array.isArray(request.options) && request.options.length > 0) {
                     const opts = document.createElement('div');
                     opts.className = 'action-request-options';
+                    // Block 3b — highlight the recommended option (record-only; one-tap
+                    // behaviour is unchanged — the click handler is identical).
+                    const recIdx = (dc && Number.isInteger(dc.recommendedOptionIndex))
+                        ? dc.recommendedOptionIndex : null;
                     request.options.forEach((option, idx) => {
                         const btn = document.createElement('button');
                         btn.type = 'button';
                         btn.className = 'action-request-option';
-                        btn.textContent = String(option);
+                        const isRecommended = recIdx !== null && recIdx === idx;
+                        if (isRecommended) btn.classList.add('is-recommended');
+                        const optLabel = document.createElement('span');
+                        optLabel.textContent = String(option);
+                        btn.appendChild(optLabel);
+                        if (isRecommended) {
+                            const recBadge = document.createElement('span');
+                            recBadge.className = 'action-request-recommended-badge';
+                            recBadge.textContent = t('action_request_recommended_badge', 'Recommended');
+                            btn.appendChild(recBadge);
+                        }
                         btn.title = t('action_request_option_title', 'Use option: {option}', { option: String(option) });
                         btn.addEventListener('click', () => focusActionRequestReply(request.id, idx));
                         opts.appendChild(btn);
