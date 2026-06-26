@@ -3752,7 +3752,7 @@
             <!-- Messages Area -->
             <div class="chat-messages-wrapper">
                 <div class="greet-banner" id="greetBanner" style="display:none" role="status"></div>
-                <div class="ops-status-strip" id="opsStatusStrip" style="display:none" role="status" aria-live="polite"></div>
+                <div class="ops-status-strip" id="opsStatusStrip" style="display:none" role="status"></div>
                 <div class="chat-messages" id="chatMessages">
                     <div class="chat-loading" id="chatLoading">
                         <div class="spinner"></div>
@@ -8717,6 +8717,11 @@
                     const cd = document.createElement('span');
                     cd.className = 'ops-b2b-countdown';
                     cd.dataset.b2bCountdown = String(e.entityId);
+                    // aria-hidden: the 1s ticker rewrites this textContent every
+                    // second; inside the role="status" live region that would spam
+                    // screen-reader announcements (audit card_c6731c2f F8). The chip's
+                    // remaining/max stays announceable; only the ticking glyph is muted.
+                    cd.setAttribute('aria-hidden', 'true');
                     cd.textContent = ' ⏱ ' + _schedFmtCountdown(regenAt - Date.now());
                     chip.appendChild(cd);
                 }
