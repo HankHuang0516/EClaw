@@ -145,12 +145,38 @@ async function initAgentActionRequestsDatabase() {
     } catch (err) {
         console.error('[AgentActionRequests] consensus_triggered_at migration skipped:', err.message);
     }
+
+    // ── Idempotent column migration: related_card_id (計畫D, card_df646877) ──
+    // Optional kanban-card reference an agent can attach to a request so the inbox
+    // can render a "🗂 任務卡" deep-link chip. The prod table already exists, so the
+    // CREATE TABLE above is a no-op; this ALTER adds the column to the live table.
+    // ADD COLUMN IF NOT EXISTS is a no-op once present. Best-effort: never throws.
+    try {
+        await pool.query(
+            `ALTER TABLE agent_action_requests
+                ADD COLUMN IF NOT EXISTS related_card_id VARCHAR(64) DEFAULT NULL`
+        );
+    } catch (err) {
+        console.error('[AgentActionRequests] related_card_id migration skipped:', err.message);
+    }
 }
 
 // ── Helpers ──
 function normalizeAnchor(value) {
     if (typeof value === 'string' && UUID_RE.test(value.trim())) return value.trim();
     return null;
+}
+
+// Optional related_card_id (計畫D, card_df646877): a kanban card reference.
+// Shared by the create (POST /) and edit (PUT /:id) paths so the rule is stated
+// once. Returns { ok, value }: value is a trimmed non-empty string or null.
+//   undefined | null            → { ok: true,  value: null }   (none / clear)
+//   string ≤ 64 chars           → { ok: true,  value: <trim|null> }
+//   non-string | string > 64    → { ok: false }
+function validateRelatedCardId(value) {
+    if (value === undefined || value === null) return { ok: true, value: null };
+    if (typeof value !== 'string' || value.length > 64) return { ok: false, value: null };
+    return { ok: true, value: value.trim() || null };
 }
 
 function rowToApi(row) {
@@ -161,6 +187,7 @@ function rowToApi(row) {
         type: row.type,
         prompt: row.prompt,
         options: row.options || null,
+        relatedCardId: row.related_card_id || null,
         status: row.status,
         answer: row.answer || null,
         createdAt: new Date(row.created_at).getTime(),
@@ -194,9 +221,12 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
     // Room       : 'device:<deviceId>'   (same room convention as chat:message)
     // Payload    : { kind, requestId, fromEntityId }
     //                kind         : 'emitted' | 'resolved' | 'dismissed'
-    //                               | 'consensus_triggered'
+    //                               | 'consensus_triggered' | 'edited'
     //                requestId    : the agent_action_requests row UUID (string)
     //                fromEntityId : the emitting entity id (integer)
+    //              NEW kind 'edited' (card_cd4f323c): an agent edited the
+    //              request's content (prompt/options/type) via PUT. The inbox
+    //              should re-fetch to show the updated text.
     //              NEW kind 'consensus_triggered' (card_ce0d685b): the timeout
     //              worker opened a bot-to-bot consensus round for a still-pending
     //              request (consensus policy). The request stays 'pending' until
@@ -487,15 +517,20 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         if (Array.isArray(options) && (options.length > 50 || JSON.stringify(options).length > 8192)) {
             return res.status(400).json({ success: false, error: 'options too large (max 50 items / 8KB)' });
         }
+        // Optional kanban-card reference (計畫D): string ≤64 chars or null.
+        const relCard = validateRelatedCardId(req.body.relatedCardId);
+        if (!relCard.ok) {
+            return res.status(400).json({ success: false, error: 'relatedCardId must be a string of max 64 chars or null' });
+        }
         const anchor = normalizeAnchor(anchorMessageId);
 
         try {
             const result = await pool.query(
                 `INSERT INTO agent_action_requests
-                    (device_id, from_entity_id, anchor_message_id, type, prompt, options)
-                 VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+                    (device_id, from_entity_id, anchor_message_id, type, prompt, options, related_card_id)
+                 VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
                  RETURNING *`,
-                [deviceId, fromEntityId, anchor, type, prompt, options != null ? JSON.stringify(options) : null]
+                [deviceId, fromEntityId, anchor, type, prompt, options != null ? JSON.stringify(options) : null, relCard.value]
             );
             const row = result.rows[0];
             log('info', `emit id=${row.id} from=${fromEntityId} type=${type}`, { deviceId });
@@ -604,6 +639,152 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         } catch (err) {
             console.error('[AgentActionRequests] dismiss failed:', err.message);
             return res.status(500).json({ success: false, error: 'Internal error' });
+        }
+    });
+
+    // ════════════════════════════════════════
+    // PUT /:id — edit a pending request's CONTENT (card_cd4f323c)
+    // ──────────────────────────────────────────────────────────────────────
+    // Hank's decisions 2026-06-26:
+    //   opt1 編輯語意: an agent may edit the prompt text, options/choices, and
+    //                 type of an EXISTING request (partial — send any subset).
+    //   opt2 權限範圍: CROSS-AGENT. ANY valid agent on the device may edit ANY
+    //                 request — we deliberately do NOT restrict to from_entity_id
+    //                 (unlike resolve/dismiss, which gate botSecret holders to
+    //                 their own requests via restrictToEntityId). That cross-
+    //                 agent power is a tampering risk, so EVERY successful edit
+    //                 writes one agent_action_request_audit row (editorEntityId +
+    //                 per-field old→new) in the SAME transaction as the UPDATE.
+    // Only 'pending' requests are editable (mirrors the resolve/dismiss guard).
+    // Validation of each provided field reuses the create-path rules verbatim.
+    // ════════════════════════════════════════
+    router.put('/:id', async (req, res) => {
+        const auth = authenticate(req, res);
+        if (!auth) return;
+        const { deviceId } = auth;
+        const { id } = req.params;
+        if (!UUID_RE.test(String(id))) {
+            return res.status(400).json({ success: false, error: 'Invalid id' });
+        }
+
+        const body = req.body || {};
+        const hasType = Object.prototype.hasOwnProperty.call(body, 'type');
+        const hasPrompt = Object.prototype.hasOwnProperty.call(body, 'prompt');
+        const hasOptions = Object.prototype.hasOwnProperty.call(body, 'options');
+        const hasRelatedCardId = Object.prototype.hasOwnProperty.call(body, 'relatedCardId');
+        if (!hasType && !hasPrompt && !hasOptions && !hasRelatedCardId) {
+            return res.status(400).json({ success: false, error: 'Provide at least one editable field: prompt, options, type, relatedCardId' });
+        }
+        // Validate each PROVIDED field with the exact same rules as POST / (create).
+        if (hasType && (typeof body.type !== 'string' || !VALID_TYPES.has(body.type))) {
+            return res.status(400).json({ success: false, error: `type must be one of: ${[...VALID_TYPES].join('|')}` });
+        }
+        if (hasPrompt && (typeof body.prompt !== 'string' || body.prompt.length < 1 || body.prompt.length > MAX_PROMPT_LEN)) {
+            return res.status(400).json({ success: false, error: `prompt must be a string of length 1..${MAX_PROMPT_LEN}` });
+        }
+        if (hasOptions) {
+            if (body.options !== null && !Array.isArray(body.options)) {
+                return res.status(400).json({ success: false, error: 'options must be an array or null' });
+            }
+            if (Array.isArray(body.options) && (body.options.length > 50 || JSON.stringify(body.options).length > 8192)) {
+                return res.status(400).json({ success: false, error: 'options too large (max 50 items / 8KB)' });
+            }
+        }
+        // related_card_id (計畫D): string ≤64 or null (null clears the link).
+        let relatedCardIdNew = null;
+        if (hasRelatedCardId) {
+            const relCard = validateRelatedCardId(body.relatedCardId);
+            if (!relCard.ok) {
+                return res.status(400).json({ success: false, error: 'relatedCardId must be a string of max 64 chars or null' });
+            }
+            relatedCardIdNew = relCard.value;
+        }
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            // Lock the target row; device-scoped. Cross-agent (opt2): NO
+            // from_entity_id filter — any agent on the device may edit it.
+            const cur = await client.query(
+                `SELECT * FROM agent_action_requests
+                  WHERE id = $1 AND device_id = $2
+                  FOR UPDATE`,
+                [id, deviceId]
+            );
+            if (cur.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ success: false, error: 'Not found' });
+            }
+            const before = cur.rows[0];
+            if (before.status !== 'pending') {
+                await client.query('ROLLBACK');
+                return res.status(409).json({ success: false, error: 'Only pending requests can be edited' });
+            }
+
+            // Build the partial UPDATE + the per-field old→new change set. Only
+            // fields whose value ACTUALLY changes are written / audited.
+            const sets = [];
+            const params = [];
+            const changes = {};
+            if (hasType && body.type !== before.type) {
+                params.push(body.type); sets.push(`type = $${params.length}`);
+                changes.type = { old: before.type, new: body.type };
+            }
+            if (hasPrompt && body.prompt !== before.prompt) {
+                params.push(body.prompt); sets.push(`prompt = $${params.length}`);
+                changes.prompt = { old: before.prompt, new: body.prompt };
+            }
+            if (hasOptions) {
+                const newOpts = body.options != null ? JSON.stringify(body.options) : null;
+                const oldOpts = before.options != null ? JSON.stringify(before.options) : null;
+                if (newOpts !== oldOpts) {
+                    params.push(newOpts); sets.push(`options = $${params.length}::jsonb`);
+                    changes.options = { old: before.options ?? null, new: body.options ?? null };
+                }
+            }
+            if (hasRelatedCardId) {
+                const oldRel = before.related_card_id ?? null;
+                if (relatedCardIdNew !== oldRel) {
+                    params.push(relatedCardIdNew); sets.push(`related_card_id = $${params.length}`);
+                    changes.relatedCardId = { old: oldRel, new: relatedCardIdNew };
+                }
+            }
+
+            // No effective change → 200 with the row, no audit row written.
+            if (sets.length === 0) {
+                await client.query('COMMIT');
+                return res.json({ success: true, request: rowToApi(before), changed: false });
+            }
+
+            params.push(id);
+            const upd = await client.query(
+                `UPDATE agent_action_requests SET ${sets.join(', ')}
+                  WHERE id = $${params.length}
+                RETURNING *`,
+                params
+            );
+            const after = upd.rows[0];
+
+            // Audit row — SAME transaction as the UPDATE (opt2 mitigation).
+            // editor_entity_id is the bot's entity id, or NULL for a human edit.
+            await client.query(
+                `INSERT INTO agent_action_request_audit
+                    (request_id, device_id, editor_entity_id, changes)
+                 VALUES ($1, $2, $3, $4::jsonb)`,
+                [id, deviceId, auth.entityId, JSON.stringify(changes)]
+            );
+            await client.query('COMMIT');
+
+            log('info', `edit id=${id} editor=${auth.entityId ?? 'user'} fields=${Object.keys(changes).join(',')}`, { deviceId });
+            emitChanged(deviceId, 'edited', after.id, after.from_entity_id);
+            return res.json({ success: true, request: rowToApi(after), changed: true });
+        } catch (err) {
+            await client.query('ROLLBACK').catch(() => {});
+            console.error('[AgentActionRequests] edit failed:', err.message);
+            log('error', `edit failed id=${id}: ${err.message}`, { deviceId });
+            return res.status(500).json({ success: false, error: 'Internal error' });
+        } finally {
+            client.release();
         }
     });
 

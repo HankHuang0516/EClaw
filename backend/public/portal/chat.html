@@ -318,7 +318,10 @@
         body.density-comfortable .chat-messages { padding: 20px; padding-right: 36px; gap: 18px; }
         body.density-comfortable .chat-bubble { padding: 12px 18px; font-size: 15px; line-height: 1.5; }
 
-        /* ── 情緒價值 #1: greeting banner (card_f8167ec5) ── */
+        /* ── 需要你 (action-request) inbox container — was the greeting banner;
+           the greeting feature was removed and the inbox fully replaces it
+           (card_cc9700b7). The #greetBanner element + this class are the shared
+           render surface the inbox mounts into. ── */
         .greet-banner {
             margin: 8px 14px 4px; padding: 10px 14px; border-radius: 14px;
             /* real theme tokens only — the originals referenced two variables
@@ -330,15 +333,6 @@
             flex-shrink: 0; /* never starve the chat history; the inbox body caps+scrolls itself */
         }
         body.dark .greet-banner { background: #23262f; border-color: #3a3f4d; }
-        .greet-banner-text { display: block; overflow-wrap: anywhere; }
-        .greet-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-        .greet-chip {
-            border: 1px solid var(--primary, #5b6cff); color: var(--primary, #5b6cff);
-            background: transparent; border-radius: 16px; padding: 5px 14px;
-            font-size: 13px; cursor: pointer; min-height: 32px;
-        }
-        .greet-chip:hover { background: rgba(91,108,255,0.1); }
-        .greet-chip.greet-chip-dismiss { border-color: var(--card-border, #333355); color: var(--text-secondary, #AAAAAA); }
         /* 需要你 inbox — default-collapsed one-line summary 「🔔 需要你 N 件 ▼」,
            expands to a viewport-capped, self-scrolling list so a burst of
            requests can never cover the chat (card_b176c435). */
@@ -408,6 +402,12 @@
         .action-request-option { border-color: var(--primary, #5b6cff); color: var(--primary, #5b6cff); }
         .action-request-action:hover, .action-request-option:hover { background: rgba(91,108,255,0.10); }
         .action-request-action.danger { color: var(--danger, #ef4444); border-color: rgba(239,68,68,0.45); }
+        /* 計畫D: 🗂 任務卡 deep-link chip — only present when a request has relatedCardId. */
+        .action-request-action.action-request-card-link { border-color: rgba(45,212,191,0.55); color: #2dd4bf; }
+        .action-request-action.action-request-card-link:hover { background: rgba(20,184,166,0.12); }
+        /* 計畫C: inbox 篩選條件 facet (All / Consensus) + its empty state. */
+        .action-request-inbox-filter { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 2px; }
+        .action-request-filter-empty { color: var(--text-secondary, #AAAAAA); font-size: 12px; padding: 6px 2px; }
         body.density-comfortable .chat-msg { max-width: 75%; }
         body.density-comfortable .chat-source { font-size: 12px; margin-bottom: 4px; }
 
@@ -4070,7 +4070,6 @@
         const entityRuntimeStatus = new Map();
         let activeChatMessageDeepLinkId = null;
         let activeChatMessageDeepLinkMissingId = null;
-        const ACTION_REQUEST_INBOX_EMPTY_FALLBACK_TO_GREETING = true;
         let actionRequests = [];
         let actionRequestsLoaded = false;
         let actionRequestsLoading = false;
@@ -4084,11 +4083,19 @@
         let actionRequestInboxOpen = (() => {
             try { return localStorage.getItem(ACTION_REQUEST_INBOX_OPEN_KEY) === '1'; } catch (_) { return false; }
         })();
+        // 篩選條件 facet for the "需要你" inbox (計畫C, card_2a6f260f): 'all' shows every
+        // pending request; 'consensus' narrows to the consensus-discussion requests
+        // (type='consensus' or an in-consensus round) so the user can focus on each
+        // multi-agent discussion / viewpoint. The choice persists across reloads.
+        const ACTION_REQUEST_INBOX_FILTER_KEY = 'needsyou_inbox_filter';
+        let actionRequestInboxFilter = (() => {
+            try { return localStorage.getItem(ACTION_REQUEST_INBOX_FILTER_KEY) === 'consensus' ? 'consensus' : 'all'; }
+            catch (_) { return 'all'; }
+        })();
         // Coalesce a refresh that arrives while one is already in flight, so the
         // post-resolve/socket refetch is never silently dropped (card_b176c435).
         let actionRequestsRefreshPending = false;
         let actionRequestsRefreshPendingRender = false;
-        let actionRequestsRefreshPendingForce = false;
 
         // ── System-message smart filter (spec chat-smart-filter-system-messages.md) ──
         // Active set of 5 categories from ChatSourceCategory. Default per spec:
@@ -4223,9 +4230,7 @@
             if (!data || !data.prefs) return;
             applyChatAvatarSize(data.prefs.chat_avatar_size || chatAvatarSize);
             applyActionRequestPrefs(data.prefs);
-            if (actionRequestsLoaded && window.EclawGreeting) {
-                window.EclawGreeting.maybeShow({ force: true });
-            }
+            if (actionRequestsLoaded) refreshActionRequestBanner();
         };
 
         function getChatAvatarPx() {
@@ -4738,7 +4743,7 @@
             if (!_rentalHealthPollTimer) _rentalHealthPollTimer = setInterval(loadRentalHealthStatus, 60000);
             console.log('[CHAT_DEBUG] loadBoundEntities done, loading messages...');
             await loadMessages();
-            await loadActionRequests({ renderGreeting: true, forceGreeting: true });
+            await loadActionRequests({ renderInbox: true });
             await handleChatMessageDeepLink({ showMissingToast: true, scroll: true });
             console.log('[CHAT_DEBUG] loadMessages done, count:', allMessages.length);
             isFirstLoad = false;
@@ -4905,7 +4910,7 @@
                 if (!portalSocket || !portalSocket.connected) {
                     await loadMessages();
                     if (actionRequestRealtimeEnabled) {
-                        await loadActionRequests({ renderGreeting: true, forceGreeting: true });
+                        await loadActionRequests({ renderInbox: true });
                     }
                 }
             }, 5000);
@@ -5568,7 +5573,7 @@
                     _sourceParseCache.clear();
                     renderFilterChips();
                     renderMessages(prevCount < allMessages.length);
-                    try { EclawGreeting.maybeShow(); } catch (_) { /* greeting must never break chat */ }
+                    try { refreshActionRequestBanner(); } catch (_) { /* inbox render must never break chat */ }
                     if (!isFirstLoad && getChatMessageDeepLinkId()) {
                         await handleChatMessageDeepLink({ showMissingToast: false, scroll: false });
                     }
@@ -7434,11 +7439,11 @@
             if (id) actionRequestConsensusTriggeredIds.delete(id);
         }
 
-        async function loadActionRequests({ renderGreeting = false, forceGreeting = false } = {}) {
+        async function loadActionRequests({ renderInbox = false } = {}) {
             if (!currentUser?.deviceId || !currentUser?.deviceSecret) {
                 actionRequests = [];
                 actionRequestsLoaded = true;
-                if (renderGreeting && window.EclawGreeting) window.EclawGreeting.maybeShow({ force: forceGreeting });
+                if (renderInbox) refreshActionRequestBanner();
                 return actionRequests;
             }
             // A refresh requested mid-flight (e.g. socket 'resolved' lands while the
@@ -7447,8 +7452,7 @@
             // render flags forward so the emptied/updated inbox always repaints.
             if (actionRequestsLoading) {
                 actionRequestsRefreshPending = true;
-                if (renderGreeting) actionRequestsRefreshPendingRender = true;
-                if (forceGreeting) actionRequestsRefreshPendingForce = true;
+                if (renderInbox) actionRequestsRefreshPendingRender = true;
                 return actionRequests;
             }
             actionRequestsLoading = true;
@@ -7473,16 +7477,14 @@
             } finally {
                 actionRequestsLoaded = true;
                 actionRequestsLoading = false;
-                if (renderGreeting && window.EclawGreeting) window.EclawGreeting.maybeShow({ force: forceGreeting });
+                if (renderInbox) refreshActionRequestBanner();
             }
             // Run the coalesced refresh that arrived mid-flight, if any.
             if (actionRequestsRefreshPending) {
                 actionRequestsRefreshPending = false;
                 const nextRender = actionRequestsRefreshPendingRender;
-                const nextForce = actionRequestsRefreshPendingForce;
                 actionRequestsRefreshPendingRender = false;
-                actionRequestsRefreshPendingForce = false;
-                await loadActionRequests({ renderGreeting: nextRender, forceGreeting: nextForce });
+                await loadActionRequests({ renderInbox: nextRender });
             }
             return actionRequests;
         }
@@ -7492,7 +7494,7 @@
             if (actionRequestRefreshTimer) clearTimeout(actionRequestRefreshTimer);
             actionRequestRefreshTimer = setTimeout(async () => {
                 actionRequestRefreshTimer = null;
-                await loadActionRequests({ renderGreeting: true, forceGreeting: true });
+                await loadActionRequests({ renderInbox: true });
             }, reason === 'visible' ? 0 : 120);
         }
 
@@ -7500,9 +7502,7 @@
             if (!data || !['emitted', 'resolved', 'dismissed', 'consensus_triggered'].includes(data.kind)) return;
             if (data.kind === 'consensus_triggered') {
                 const changed = markActionRequestConsensusTriggered(data.requestId);
-                if (changed && actionRequestsLoaded && window.EclawGreeting) {
-                    window.EclawGreeting.maybeShow({ force: true });
-                }
+                if (changed && actionRequestsLoaded) refreshActionRequestBanner();
             } else if (data.kind === 'resolved' || data.kind === 'dismissed') {
                 clearActionRequestConsensusTriggered(data.requestId);
             }
@@ -7563,7 +7563,7 @@
             actionRequests = actionRequests.filter(r => normalizeChatMessageId(r && r.id) !== id);
             clearActionRequestConsensusTriggered(id);
             removeReplyContextForRequest(id);
-            if (window.EclawGreeting) { try { EclawGreeting.maybeShow({ force: true }); } catch (_) {} }
+            try { refreshActionRequestBanner(); } catch (_) {}
             try {
                 await apiCall('POST', `/api/action-requests/${id}/dismiss`, {
                     deviceId: currentUser.deviceId,
@@ -7581,13 +7581,27 @@
                     showToast((i18n.t('chat_send_failed') || 'Failed') + ': ' + (err.message || err), 'error');
                 }
             } finally {
-                await loadActionRequests({ renderGreeting: true, forceGreeting: true });
+                await loadActionRequests({ renderInbox: true });
             }
         }
 
         function setActionRequestInboxOpen(open) {
             actionRequestInboxOpen = !!open;
             try { localStorage.setItem(ACTION_REQUEST_INBOX_OPEN_KEY, open ? '1' : '0'); } catch (_) {}
+        }
+
+        // 計畫C (card_2a6f260f): persist the inbox 篩選條件 facet ('all' | 'consensus').
+        function setActionRequestInboxFilter(value) {
+            actionRequestInboxFilter = value === 'consensus' ? 'consensus' : 'all';
+            try { localStorage.setItem(ACTION_REQUEST_INBOX_FILTER_KEY, actionRequestInboxFilter); } catch (_) {}
+        }
+
+        // A request is a consensus-discussion item when its type is 'consensus' OR
+        // the timeout worker has opened a consensus round on it (協商中). The 'all'
+        // facet matches everything so the default inbox is unchanged.
+        function actionRequestMatchesFilter(request) {
+            if (actionRequestInboxFilter !== 'consensus') return true;
+            return String(request && request.type) === 'consensus' || isActionRequestConsensusTriggered(request);
         }
 
         function renderActionRequestInbox(banner) {
@@ -7650,7 +7664,34 @@
             head.appendChild(live);
             body.appendChild(head);
 
-            actionRequests.forEach(request => {
+            // 篩選條件 facet (計畫C, card_2a6f260f): All / Consensus discussion. Reuses
+            // the existing .filter-chip look so it matches the chat filter bar. The
+            // summary count stays the TOTAL pending; only the list below is filtered.
+            const filterRow = document.createElement('div');
+            filterRow.className = 'action-request-inbox-filter';
+            filterRow.setAttribute('role', 'group');
+            filterRow.setAttribute('aria-label', t('action_request_filter_label', 'Filter requests'));
+            [
+                ['all', 'action_request_filter_all', 'All'],
+                ['consensus', 'action_request_filter_consensus', 'Consensus'],
+            ].forEach(([value, key, fb]) => {
+                const chip = document.createElement('button');
+                chip.type = 'button';
+                chip.className = 'filter-chip' + (actionRequestInboxFilter === value ? ' active' : '');
+                chip.dataset.arFilter = value;
+                chip.textContent = t(key, fb);
+                chip.setAttribute('aria-pressed', actionRequestInboxFilter === value ? 'true' : 'false');
+                chip.addEventListener('click', () => {
+                    if (actionRequestInboxFilter === value) return;
+                    setActionRequestInboxFilter(value);
+                    refreshActionRequestBanner();
+                });
+                filterRow.appendChild(chip);
+            });
+            body.appendChild(filterRow);
+
+            const visibleRequests = actionRequests.filter(actionRequestMatchesFilter);
+            visibleRequests.forEach(request => {
                 const typeMeta = actionRequestTypeMeta(request.type);
                 const item = document.createElement('div');
                 const consensusTriggered = isActionRequestConsensusTriggered(request);
@@ -7717,6 +7758,19 @@
                     anchor.addEventListener('click', () => openActionRequestAnchor(request));
                     actions.appendChild(anchor);
                 }
+                // 計畫D (card_df646877): OPTIONAL 🗂 任務卡 chip — only when the request
+                // carries a relatedCardId. Clicking deep-links to the kanban card via
+                // the shared openKanbanCard() (SmartRouter split / native app /
+                // standalone fallbacks). Absent relatedCardId → no chip, no layout shift.
+                if (request.relatedCardId) {
+                    const cardLink = document.createElement('button');
+                    cardLink.type = 'button';
+                    cardLink.className = 'action-request-action action-request-card-link';
+                    cardLink.textContent = t('action_request_card_link', '🗂 Task card');
+                    cardLink.title = t('action_request_card_link_title', 'Open linked card {card}', { card: String(request.relatedCardId) });
+                    cardLink.addEventListener('click', (event) => openKanbanCard(request.relatedCardId, event));
+                    actions.appendChild(cardLink);
+                }
                 const dismiss = document.createElement('button');
                 dismiss.type = 'button';
                 dismiss.className = 'action-request-action danger';
@@ -7726,6 +7780,15 @@
                 item.appendChild(actions);
                 body.appendChild(item);
             });
+            // The banner is only rendered when there ARE pending requests, so an empty
+            // list here means the active 篩選條件 (consensus) matched none — tell the
+            // user instead of showing a blank body (計畫C).
+            if (visibleRequests.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'action-request-filter-empty';
+                empty.textContent = t('action_request_filter_empty', 'No requests match this filter.');
+                body.appendChild(empty);
+            }
             wrap.appendChild(body);
             banner.appendChild(wrap);
             banner.style.display = '';
@@ -7789,7 +7852,7 @@
             if (resolved > 0 && typeof showToast === 'function') {
                 showToast(i18n.t('action_request_resolved') || 'Request resolved', 'success');
             }
-            await loadActionRequests({ renderGreeting: true, forceGreeting: true });
+            await loadActionRequests({ renderInbox: true });
         }
 
         // ── Quote Reply State (multi-quote, card_277c80f5) ──
@@ -8376,93 +8439,28 @@
         }
 
         // ── Send Message ──
-        // ── 情緒價值 #1: 回訪個人化問候 + 新手 starter chips (card_f8167ec5) ──
-        // Banner lives OUTSIDE #chatMessages so renderMessages() re-renders
-        // can never wipe it. Shown at most once per device per day.
-        const EclawGreeting = {
-            _shown: false,
-            _guardKey() {
-                const d = new Date();
-                const day = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-                return 'eclaw_greet_' + day;
-            },
-            maybeShow({ force = false } = {}) {
-                const banner = document.getElementById('greetBanner');
-                if (!banner) return;
-                if (!actionRequestsLoaded) return;
-                if (actionRequests.length > 0) {
-                    renderActionRequestInbox(banner);
-                    this._shown = true;
-                    return;
-                }
-                // The last request just cleared. Tear down any stale inbox DOM NOW,
-                // before the greeting logic's guarded/_shown early-returns can leave a
-                // phantom "需要你" card mounted (card_b176c435 empty-state leak).
-                if (banner.querySelector('.action-request-inbox')) {
-                    banner.textContent = '';
-                    banner.style.display = 'none';
-                }
-                if (!ACTION_REQUEST_INBOX_EMPTY_FALLBACK_TO_GREETING) {
-                    banner.style.display = 'none';
-                    this._shown = true;
-                    return;
-                }
-                if (this._shown && !force) return;
-                this._shown = true; // single evaluation per page load unless a request refresh forces it
-                let guarded = false;
-                try { guarded = !!localStorage.getItem(this._guardKey()); } catch (_) {}
-                if (guarded) return;
-                const t = (k, fb) => (window.i18n && i18n.t) ? i18n.t(k, fb) : fb;
-                const esc = (x) => (typeof escapeHtml === 'function') ? escapeHtml(x) : x;
-                const botMsgs = (allMessages || []).filter(m => m.is_from_bot && (m.text || '').trim());
-                let html;
-                if (botMsgs.length > 0) {
-                    // Returning user: topic = last bot message, stripped to 40 chars.
-                    // (Vector recall has no portal client route today — this is the
-                    // card-sanctioned fallback and needs zero extra API calls.)
-                    const last = botMsgs[botMsgs.length - 1];
-                    const topic = (typeof stripReplyQuotePrefix === 'function' ? stripReplyQuotePrefix(last.text) : last.text)
-                        .replace(/\s+/g, ' ').trim().slice(0, 40);
-                    const tpl = t('greet_returning_template', '上次我們聊到「{topic}」，要接著聊嗎？');
-                    html = '<div class="greet-banner-text">👋 ' + esc(tpl).replace('{topic}', '<b>' + esc(topic) + '</b>') + '</div>' +
-                        '<div class="greet-chips">' +
-                        '<button class="greet-chip" onclick="EclawGreeting.continueTopic()">' + esc(t('greet_continue', '繼續上次話題')) + '</button>' +
-                        '<button class="greet-chip greet-chip-dismiss" onclick="EclawGreeting.dismiss()">' + esc(t('greet_change_topic', '換個話題')) + '</button>' +
-                        '</div>';
-                } else {
-                    // Brand-new entity: welcome + 3 starter prompts (activation moment).
-                    const starters = [
-                        t('greet_starter_1', '你可以幫我做什麼？'),
-                        t('greet_starter_2', '幫我規劃今天的待辦事項'),
-                        t('greet_starter_3', '用三句話介紹一下你自己')
-                    ];
-                    html = '<div class="greet-banner-text">🎉 ' + esc(t('greet_welcome_new', '歡迎！我是你的 AI 夥伴，點一個問題開始吧：')) + '</div>' +
-                        '<div class="greet-chips">' +
-                        starters.map(st => '<button class="greet-chip" onclick="EclawGreeting.sendStarter(this)">' + esc(st) + '</button>').join('') +
-                        '<button class="greet-chip greet-chip-dismiss" onclick="EclawGreeting.dismiss()">✕</button>' +
-                        '</div>';
-                }
-                banner.innerHTML = html;
-                banner.style.display = '';
-                try { localStorage.setItem(this._guardKey(), '1'); } catch (_) {}
-            },
-            continueTopic() {
-                const t = (k, fb) => (window.i18n && i18n.t) ? i18n.t(k, fb) : fb;
-                const input = document.getElementById('messageInput');
-                if (input) { input.value = t('greet_continue_send_text', '我們繼續上次的話題吧'); sendMessage(); }
-                this.dismiss();
-            },
-            sendStarter(btn) {
-                const input = document.getElementById('messageInput');
-                if (input) { input.value = btn.textContent.trim(); sendMessage(); }
-                this.dismiss();
-            },
-            dismiss() {
-                const banner = document.getElementById('greetBanner');
-                if (banner) banner.style.display = 'none';
+        // ── 需要你 (action-request) inbox render entry point (card_cc9700b7) ──
+        // The banner lives OUTSIDE #chatMessages so renderMessages() re-renders
+        // can never wipe it. Single render entry for the inbox: when there are
+        // pending requests render the inbox, otherwise tear down any stale inbox
+        // DOM and hide the banner. The legacy greeting feature (return-visit topic,
+        // new-user welcome, starter prompts) was fully removed — the inbox replaces
+        // it, so there is no greeting fallback on the empty state.
+        function refreshActionRequestBanner() {
+            const banner = document.getElementById('greetBanner');
+            if (!banner) return;
+            if (!actionRequestsLoaded) return;
+            if (actionRequests.length > 0) {
+                renderActionRequestInbox(banner);
+                return;
             }
-        };
-        window.EclawGreeting = EclawGreeting;
+            // No pending requests — drop any stale inbox DOM (card_b176c435
+            // empty-state leak guard) and hide the banner.
+            if (banner.querySelector('.action-request-inbox')) {
+                banner.textContent = '';
+            }
+            banner.style.display = 'none';
+        }
 
         async function sendMessage() {
             const input = document.getElementById('messageInput');
@@ -8486,6 +8484,18 @@
             // restore them (and their action-request binding) instead of orphaning
             // the request (card_b176c435).
             const replyContextsSnapshot = replyContexts.slice();
+            // Restore the optimistically-cleared quote chips + their action-request
+            // binding on ANY abort path — the early-return guards below (uploads still
+            // pending / no routing target) as well as the catch. Without this a send
+            // that never leaves the client silently orphans the staged reply with no
+            // feedback (card_2625ae06; extends the catch-only restore of card_b176c435).
+            const restoreReplyContextsOnAbort = () => {
+                if (replyContextsSnapshot.length && replyContexts.length === 0) {
+                    replyContexts = replyContextsSnapshot.slice();
+                    renderReplyPreviews();
+                    recomputeAutoReceivers();
+                }
+            };
             let finalText = text;
             if (replyContexts.length) {
                 // One "↩ …" line per quote so the recipient entity receives EVERY
@@ -8519,6 +8529,7 @@
             // Check if any files still uploading
             if (pendingFiles.some(f => f.status === 'uploading')) {
                 showToast(i18n.t('chat_wait_upload') || 'Please wait for uploads to finish', 'error');
+                restoreReplyContextsOnAbort();
                 return;
             }
 
@@ -8557,6 +8568,7 @@
 
             if (targets.local.length === 0 && targets.contacts.length === 0) {
                 showToast(i18n.t('chat_select_entity'), 'error');
+                restoreReplyContextsOnAbort();
                 return;
             }
 
@@ -8733,11 +8745,7 @@
                 // Send failed — the request was never resolved server-side, so
                 // restore the quote chips (incl. the action-request binding) the
                 // optimistic clear removed, letting the user retry (card_b176c435).
-                if (replyContextsSnapshot.length && replyContexts.length === 0) {
-                    replyContexts = replyContextsSnapshot.slice();
-                    renderReplyPreviews();
-                    recomputeAutoReceivers();
-                }
+                restoreReplyContextsOnAbort();
             } finally {
                 btn.disabled = false;
                 input.focus();

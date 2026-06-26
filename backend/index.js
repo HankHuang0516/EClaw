@@ -1568,7 +1568,8 @@ app.get('/api/help', (req, res) => {
         vault:      ['vault','device-vars','devicevars','secret','api key','apikey','金鑰','密鑰','秘密','保險箱','audit','審計','variables','環境變數','환경 변수','보관소','감사','シークレット','金庫','監査','bí mật','kho','giám sát','rahasia','brankas','audit log'],
         analytics:  ['analytics','growth','metrics','signup','retention','kpi','viral','k-value','成長','指標','留存','分析','회귀','분석','지표','メトリクス','分析','指標'],
         usage:      ['usage','spend','token spend','token','claude usage','codex usage','snapshot','timeline','daemon','widget','usage widget','dashboard widget','dashboard usage widget','5h','5-hour','five hour','gauge','用量','花費','token 花費','token 用量','使用量','消費','儀表板用量','用量小工具','5小時','コスト','使用量','使用ウィジェット','사용량','비용','사용량 위젯'],
-        remote_control: ['remote control','screen control','screen capture','screen image','device control','tap','swipe','long press','launch app','stop app','mobile-use','mobile use','minitap','遠端控制','螢幕控制','畫面控制','點擊','滑動','長按','啟動 app','關閉 app','操作 app','遥控','屏幕控制','リモート制御','画面制御','タップ','スワイプ','長押し','앱 실행','앱 종료','원격 제어','화면 제어','탭']
+        remote_control: ['remote control','screen control','screen capture','screen image','device control','tap','swipe','long press','launch app','stop app','mobile-use','mobile use','minitap','遠端控制','螢幕控制','畫面控制','點擊','滑動','長按','啟動 app','關閉 app','操作 app','遥控','屏幕控制','リモート制御','画面制御','タップ','スワイプ','長押し','앱 실행','앱 종료','원격 제어','화면 제어','탭'],
+        action_requests: ['action request','action-request','actionrequest','action_request','需要你','hitl','human in the loop','human-in-the-loop','ask user','ask the user','詢問使用者','需要決定','需要你決定','需要協助','編輯請求','edit request','edit action request','resolve request','dismiss request','inbox','需要你 inbox','請求收件匣']
     };
 
     const matched = Object.entries(INTENT_MAP).find(([category, kws]) =>
@@ -1650,6 +1651,13 @@ app.get('/api/help', (req, res) => {
             { title: 'GET channel repair log (public; filter channel/kind/limit)', curl: `curl -s "${apiBase}/api/channel-repair-log?limit=50"  # &channel=openclaw-channel-eclaw&kind=fix` },
             { title: 'POST a repair record (auth: deviceSecret OR entityId+botSecret; never include secrets)', curl: `curl -s -X POST "${apiBase}/api/channel-repair-log" -H "Content-Type: application/json" -d ${d},"channel_type":"openclaw-channel-eclaw","entity_refs":"#1","kind":"fix","title":"...","detail":"...","status":"mitigated","occurred_at":"2026-06-08T05:33:00Z","source":"monitor"}'` }
         ],
+        action_requests: [
+            { title: 'Emit a 需要你 request (ask the user/agent to decide/approve/fill-in; relatedCardId optionally links a kanban card → 🗂 任務卡 chip)', curl: `curl -s -X POST "${apiBase}/api/action-requests" -H "Content-Type: application/json" -d ${d},"type":"decision","prompt":"QUESTION_TEXT","options":["A","B"],"relatedCardId":"card_XXXXXXXX"}'` },
+            { title: 'List requests for this device (status: pending|resolved|dismissed|all)', curl: `curl -s "${apiBase}/api/action-requests?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&status=pending"` },
+            { title: 'Edit an existing request — prompt/options/type/relatedCardId (cross-agent, audited; send any subset; relatedCardId:null clears the card link)', curl: `curl -s -X PUT "${apiBase}/api/action-requests/REQUEST_ID" -H "Content-Type: application/json" -d ${d},"prompt":"NEW_QUESTION_TEXT","options":["A","B","C"],"type":"approval","relatedCardId":"card_XXXXXXXX"}'` },
+            { title: 'Resolve (answer) a pending request', curl: `curl -s -X POST "${apiBase}/api/action-requests/REQUEST_ID/resolve" -H "Content-Type: application/json" -d ${d},"answer":"YOUR_ANSWER"}'` },
+            { title: 'Dismiss a pending request', curl: `curl -s -X POST "${apiBase}/api/action-requests/REQUEST_ID/dismiss" -H "Content-Type: application/json" -d ${d}}'` }
+        ],
         remote_control: [
             { title: 'Screen capture (UI tree, long-poll ≤5s)', curl: `curl -s -X POST "${apiBase}/api/device/screen-capture" -H "Content-Type: application/json" -d ${d}}'` },
             { title: 'Send tap', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"tap","params":{"x":100,"y":200}}'` },
@@ -1671,7 +1679,7 @@ app.get('/api/help', (req, res) => {
     res.json({
         intent,
         matched_category: matched,
-        tip: `Use ?intent=KEYWORD to discover APIs. Categories: messaging, kanban, schedule, notes, search, files, entities, vault, analytics, usage, remote_control`,
+        tip: `Use ?intent=KEYWORD to discover APIs. Categories: messaging, kanban, schedule, notes, search, files, entities, vault, analytics, usage, remote_control, action_requests`,
         curl_examples: curlBlock
     });
 });
