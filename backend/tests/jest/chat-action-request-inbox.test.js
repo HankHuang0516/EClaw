@@ -7,12 +7,17 @@ const socketJs = fs.readFileSync(path.join(ROOT, 'public', 'portal', 'shared', '
 const i18nJs = fs.readFileSync(path.join(ROOT, 'public', 'shared', 'i18n.js'), 'utf8');
 
 describe('chat action request inbox (card_b51598b7 frontend)', () => {
-    test('load-time pending inbox calls the backend list API and gates greeting fallback behind a flag', () => {
-        expect(chatHtml).toContain('const ACTION_REQUEST_INBOX_EMPTY_FALLBACK_TO_GREETING = true;');
-        expect(chatHtml).toMatch(/async function loadActionRequests\(\{ renderGreeting = false, forceGreeting = false \} = \{\}\)/);
+    test('load-time pending inbox calls the backend list API and renders inbox-or-hide (greeting removed, card_cc9700b7)', () => {
+        // Greeting feature fully removed — no EclawGreeting object, no
+        // ACTION_REQUEST_INBOX_EMPTY_FALLBACK_TO_GREETING flag. The single render
+        // entry is refreshActionRequestBanner(): inbox when pending, hide when empty.
+        expect(chatHtml).not.toContain('EclawGreeting');
+        expect(chatHtml).not.toContain('ACTION_REQUEST_INBOX_EMPTY_FALLBACK_TO_GREETING');
+        expect(chatHtml).toMatch(/function refreshActionRequestBanner\(\)/);
+        expect(chatHtml).toMatch(/async function loadActionRequests\(\{ renderInbox = false \} = \{\}\)/);
         expect(chatHtml).toContain("status: 'pending'");
         expect(chatHtml).toContain("`/api/action-requests?${qs.toString()}`");
-        expect(chatHtml).toContain('await loadActionRequests({ renderGreeting: true, forceGreeting: true });');
+        expect(chatHtml).toContain('await loadActionRequests({ renderInbox: true });');
         expect(chatHtml).toContain('if (!actionRequestsLoaded) return;');
         expect(chatHtml).toContain('if (actionRequests.length > 0) {');
         expect(chatHtml).toContain('renderActionRequestInbox(banner);');
@@ -51,7 +56,7 @@ describe('chat action request inbox (card_b51598b7 frontend)', () => {
         expect(chatHtml).toContain('await resolveActionRequestReplyContexts(actionRequestReplyContexts, finalText);');
         expect(chatHtml).toMatch(/async function dismissActionRequest\(requestId\)/);
         expect(chatHtml).toContain('`/api/action-requests/${id}/dismiss`');
-        expect(chatHtml).toContain('await loadActionRequests({ renderGreeting: true, forceGreeting: true });');
+        expect(chatHtml).toContain('await loadActionRequests({ renderInbox: true });');
     });
 
     test('socket realtime contract refreshes the inbox through a client preference gate', () => {
@@ -103,5 +108,79 @@ describe('chat action request inbox (card_b51598b7 frontend)', () => {
         expect(i18nJs).toContain('"action_request_type_consensus": "協商共識"');
         expect(i18nJs).toContain('"action_request_consensus_triggered": "In consensus"');
         expect(i18nJs).toContain('"action_request_consensus_triggered": "協商中"');
+    });
+});
+
+describe('需要你 inbox collapse + lifecycle hardening (card_b176c435)', () => {
+    test('inbox is collapsed by default with a persisted open/closed state', () => {
+        expect(chatHtml).toContain("const ACTION_REQUEST_INBOX_OPEN_KEY = 'needsyou_inbox_open';");
+        // default closed: only an explicit '1' opens it
+        expect(chatHtml).toContain("return localStorage.getItem(ACTION_REQUEST_INBOX_OPEN_KEY) === '1';");
+        expect(chatHtml).toMatch(/function setActionRequestInboxOpen\(open\)/);
+        expect(chatHtml).toContain("localStorage.setItem(ACTION_REQUEST_INBOX_OPEN_KEY, open ? '1' : '0');");
+    });
+
+    test('renders a one-line summary 「🔔 + title + count + chevron」 that toggles the body', () => {
+        expect(chatHtml).toContain("summary.className = 'action-request-inbox-summary';");
+        expect(chatHtml).toContain("bell.textContent = '🔔';");
+        expect(chatHtml).toContain("chevron.textContent = '▼';");
+        expect(chatHtml).toContain("summary.setAttribute('aria-expanded', actionRequestInboxOpen ? 'true' : 'false');");
+        expect(chatHtml).toContain("summary.setAttribute('aria-controls', bodyId);");
+        // the request list lives in the collapsible body, not directly in wrap
+        expect(chatHtml).toContain("body.className = 'action-request-inbox-body';");
+        expect(chatHtml).toContain('body.appendChild(item);');
+        expect(chatHtml).toContain('wrap.appendChild(body);');
+    });
+
+    test('CSS caps the expanded body so a burst of requests cannot cover the chat', () => {
+        expect(chatHtml).toMatch(/\.action-request-inbox-body\s*\{[^}]*max-height:\s*40vh/);
+        expect(chatHtml).toMatch(/\.action-request-inbox-body\s*\{[^}]*overflow-y:\s*auto/);
+        expect(chatHtml).toContain('.action-request-inbox.is-open .action-request-inbox-body { display: flex; }');
+        // the banner must not shrink the message list to absorb the inbox
+        expect(chatHtml).toMatch(/\.greet-banner\s*\{[^}]*flex-shrink:\s*0/);
+    });
+
+    test('whole inbox is not a live region; only the count announces changes', () => {
+        expect(chatHtml).toContain("wrap.setAttribute('aria-live', 'off');");
+        expect(chatHtml).toContain("count.setAttribute('aria-live', 'polite');");
+    });
+
+    test('dismiss is optimistic and idempotent for already-resolved requests', () => {
+        const fn = chatHtml.slice(chatHtml.indexOf('async function dismissActionRequest('), chatHtml.indexOf('function renderActionRequestInbox('));
+        expect(fn).toContain('actionRequests = actionRequests.filter(r => normalizeChatMessageId(r && r.id) !== id);');
+        expect(fn).toContain('removeReplyContextForRequest(id);');
+        expect(fn).toContain('const st = err && err.status;');
+        expect(fn).toContain('if (st === 404 || st === 409 || st === 410) {');
+    });
+
+    test('a mid-flight refresh is coalesced, never dropped', () => {
+        const fn = chatHtml.slice(chatHtml.indexOf('async function loadActionRequests('), chatHtml.indexOf('function scheduleActionRequestRefresh('));
+        expect(fn).toContain('actionRequestsRefreshPending = true;');
+        expect(fn).toContain('if (actionRequestsRefreshPending) {');
+        expect(fn).toContain('await loadActionRequests({ renderInbox: nextRender });');
+    });
+
+    test('emptied inbox tears down stale DOM + hides the banner (no greeting fallback, card_cc9700b7)', () => {
+        expect(chatHtml).toContain("if (banner.querySelector('.action-request-inbox')) {");
+    });
+
+    test('failed send restores the quote chips it optimistically cleared', () => {
+        expect(chatHtml).toContain('const replyContextsSnapshot = replyContexts.slice();');
+        expect(chatHtml).toContain('if (replyContextsSnapshot.length && replyContexts.length === 0) {');
+        expect(chatHtml).toMatch(/function removeReplyContextForRequest\(requestId\)/);
+    });
+
+    test('every send abort path (uploads-pending / no-target / catch) restores the staged reply, not just the catch (card_2625ae06)', () => {
+        // clearReplyContext() runs optimistically BEFORE the early-return guards, so
+        // each abort must restore the snapshot or the staged quote + action-request
+        // binding is silently orphaned with no user feedback. One DRY helper covers all.
+        const fn = chatHtml.slice(chatHtml.indexOf('async function sendMessage('), chatHtml.indexOf('async function uploadVoice('));
+        expect(fn).toContain('const restoreReplyContextsOnAbort = () => {');
+        // uploads-still-pending guard restores before returning
+        expect(fn).toMatch(/chat_wait_upload[\s\S]{0,180}restoreReplyContextsOnAbort\(\);\s*\n\s*return;/);
+        // no-routing-target guard restores before returning
+        expect(fn).toMatch(/chat_select_entity[\s\S]{0,140}restoreReplyContextsOnAbort\(\);\s*\n\s*return;/);
+        // invoked on all three abort paths: 2 early-return guards + the catch
+        expect((fn.match(/restoreReplyContextsOnAbort\(\)/g) || []).length).toBeGreaterThanOrEqual(3);
     });
 });
