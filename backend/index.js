@@ -1824,6 +1824,23 @@ try {
         emitDevicePreferences: (deviceId, prefs) => {
             io.to(`device:${deviceId}`).emit('device:preferences', { deviceId, prefs });
         },
+        // Owner-decision inbox auto-surface (子3/子4): late-bound thunk because the
+        // action-requests module is constructed AFTER kanban below. By the time a
+        // /card/:id/move request runs, agentActionRequestsModule is wired. Returns
+        // a resolved null when the module is unavailable so the hook stays a no-op.
+        createActionRequest: (...args) => (
+            agentActionRequestsModule && typeof agentActionRequestsModule.createActionRequest === 'function'
+                ? agentActionRequestsModule.createActionRequest(...args)
+                : Promise.resolve(null)
+        ),
+        // Owner-decision lifecycle (子6a): auto-dismiss a card's pending owner-
+        // decision request(s) when it leaves review/blocked. Late-bound thunk for
+        // the same construction-order reason as createActionRequest above.
+        dismissActionRequestsForCard: (...args) => (
+            agentActionRequestsModule && typeof agentActionRequestsModule.dismissActionRequestsForCard === 'function'
+                ? agentActionRequestsModule.dismissActionRequestsForCard(...args)
+                : Promise.resolve([])
+        ),
     });
     app.use('/api/mission', kanbanModule.router);
     console.log('[Kanban] Module loaded successfully');

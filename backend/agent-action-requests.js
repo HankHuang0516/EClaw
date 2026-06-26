@@ -159,6 +159,21 @@ async function initAgentActionRequestsDatabase() {
     } catch (err) {
         console.error('[AgentActionRequests] related_card_id migration skipped:', err.message);
     }
+
+    // ── Idempotent column migration: decision_context (owner-decision classifier) ──
+    // JSONB blob the server attaches when it auto-surfaces an owner-only
+    // review/blocked child card: {whatWasDone, recommendation, evidence, recommended
+    // OptionIndex}. The prod table already exists, so the CREATE TABLE above is a
+    // no-op; this ALTER adds the column to the live table. ADD COLUMN IF NOT EXISTS
+    // is a no-op once present. Best-effort: never throws/crashes init.
+    try {
+        await pool.query(
+            `ALTER TABLE agent_action_requests
+                ADD COLUMN IF NOT EXISTS decision_context JSONB DEFAULT NULL`
+        );
+    } catch (err) {
+        console.error('[AgentActionRequests] decision_context migration skipped:', err.message);
+    }
 }
 
 // ── Helpers ──
@@ -179,6 +194,23 @@ function validateRelatedCardId(value) {
     return { ok: true, value: value.trim() || null };
 }
 
+// Optional decision_context (owner-decision classifier): a JSONB blob the server
+// attaches when it auto-surfaces an owner-only review/blocked card. Shape:
+//   {whatWasDone, recommendation, evidence:[{label,url,kind}], recommendedOptionIndex}
+// Shared by the create (POST /) and edit (PUT /:id) paths. Returns { ok, value }
+// where `value` is a JSON STRING (ready for a ::jsonb cast) or null:
+//   undefined | null              → { ok: true,  value: null }   (none / clear)
+//   plain object, JSON ≤ 8192     → { ok: true,  value: <json-string> }
+//   non-object | JSON > 8192      → { ok: false }
+function validateDecisionContext(value) {
+    if (value === undefined || value === null) return { ok: true, value: null };
+    if (typeof value !== 'object' || Array.isArray(value)) return { ok: false, value: null };
+    let json;
+    try { json = JSON.stringify(value); } catch (_) { return { ok: false, value: null }; }
+    if (json == null || json.length > 8192) return { ok: false, value: null };
+    return { ok: true, value: json };
+}
+
 function rowToApi(row) {
     return {
         id: row.id,
@@ -188,6 +220,7 @@ function rowToApi(row) {
         prompt: row.prompt,
         options: row.options || null,
         relatedCardId: row.related_card_id || null,
+        decisionContext: row.decision_context || null,
         status: row.status,
         answer: row.answer || null,
         createdAt: new Date(row.created_at).getTime(),
@@ -314,6 +347,59 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         } catch (_) {}
     }
 
+    // Core create: insert ONE request row + emit 'emitted'. Shared by the HTTP
+    // POST / route AND the kanban owner-decision auto-surface hook (子3/子4) so
+    // there is exactly one INSERT code path. INPUT VALIDATION IS THE CALLER'S
+    // JOB: the HTTP route validates + caps every field; the kanban hook passes
+    // already-shaped server-built values. `options`/`decisionContext` may be a
+    // JS value (stringified here) or an already-serialized JSON string.
+    // Returns the created row in rowToApi() shape. Throws only on DB error.
+    async function createActionRequest({
+        deviceId, fromEntityId, type, prompt, options,
+        anchorMessageId, relatedCardId, decisionContext,
+    } = {}) {
+        const anchor = normalizeAnchor(anchorMessageId);
+        const optionsJson = options != null
+            ? (typeof options === 'string' ? options : JSON.stringify(options))
+            : null;
+        const decisionJson = decisionContext != null
+            ? (typeof decisionContext === 'string' ? decisionContext : JSON.stringify(decisionContext))
+            : null;
+        const result = await pool.query(
+            `INSERT INTO agent_action_requests
+                (device_id, from_entity_id, anchor_message_id, type, prompt, options, related_card_id, decision_context)
+             VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8::jsonb)
+             RETURNING *`,
+            [deviceId, fromEntityId, anchor, type, prompt, optionsJson, relatedCardId != null ? relatedCardId : null, decisionJson]
+        );
+        const row = result.rows[0];
+        emitChanged(deviceId, 'emitted', row.id, row.from_entity_id);
+        return rowToApi(row);
+    }
+
+    // Owner-decision lifecycle (子6a): when a kanban card leaves review/blocked,
+    // dismiss any still-pending OWNER-DECISION request(s) for it. We only touch
+    // rows the move-hook created — decision_context IS NOT NULL — so an agent's
+    // ordinary request that merely references the same card is left untouched.
+    // Device-scoped; emits 'dismissed' per row on the SAME socket contract as the
+    // HTTP dismiss so the inbox live-refreshes. Returns the dismissed rows.
+    // Throws only on a DB error (the kanban hook wraps the call in try/catch).
+    async function dismissActionRequestsForCard(deviceId, cardId) {
+        if (!deviceId || !cardId) return [];
+        const upd = await pool.query(
+            `UPDATE agent_action_requests
+                SET status = 'dismissed', resolved_at = NOW()
+              WHERE device_id = $1 AND related_card_id = $2
+                AND status = 'pending' AND decision_context IS NOT NULL
+            RETURNING *`,
+            [deviceId, cardId]
+        );
+        for (const row of (upd.rows || [])) {
+            emitChanged(deviceId, 'dismissed', row.id, row.from_entity_id);
+        }
+        return upd.rows || [];
+    }
+
     // ══════════════════════════════════════════════════════════════════════
     // TIMEOUT-POLICY WORKER (card_ce0d685b)
     // ──────────────────────────────────────────────────────────────────────
@@ -384,6 +470,11 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
 
                 for (const row of rows) {
                     try {
+                        // 子6(b): owner-decision items (decision_context non-null) are
+                        // PINNED to 'keep' semantics — they wait for Hank and must
+                        // NEVER be auto_dismissed / safe_defaulted / consensus-routed
+                        // by the timeout worker, regardless of the device's policy.
+                        if (row.decision_context != null) continue;
                         if (policy === 'auto_dismiss') {
                             const upd = await pool.query(
                                 `UPDATE agent_action_requests
@@ -522,20 +613,28 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         if (!relCard.ok) {
             return res.status(400).json({ success: false, error: 'relatedCardId must be a string of max 64 chars or null' });
         }
-        const anchor = normalizeAnchor(anchorMessageId);
+        // Optional owner-decision context: a plain object whose JSON is ≤8192
+        // bytes, or null (mirrors the related_card_id validation + the 8KB cap on
+        // options). Returns a ready-to-cast JSON string or null.
+        const decCtx = validateDecisionContext(req.body.decisionContext);
+        if (!decCtx.ok) {
+            return res.status(400).json({ success: false, error: 'decisionContext must be an object whose JSON is at most 8192 bytes, or null' });
+        }
 
         try {
-            const result = await pool.query(
-                `INSERT INTO agent_action_requests
-                    (device_id, from_entity_id, anchor_message_id, type, prompt, options, related_card_id)
-                 VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
-                 RETURNING *`,
-                [deviceId, fromEntityId, anchor, type, prompt, options != null ? JSON.stringify(options) : null, relCard.value]
-            );
-            const row = result.rows[0];
-            log('info', `emit id=${row.id} from=${fromEntityId} type=${type}`, { deviceId });
-            emitChanged(deviceId, 'emitted', row.id, row.from_entity_id);
-            return res.json({ success: true, request: rowToApi(row) });
+            // Shared INSERT path (子3) — same code the kanban hook calls.
+            const apiRow = await createActionRequest({
+                deviceId,
+                fromEntityId,
+                type,
+                prompt,
+                options: options != null ? options : null,
+                anchorMessageId,
+                relatedCardId: relCard.value,
+                decisionContext: decCtx.value,
+            });
+            log('info', `emit id=${apiRow.id} from=${fromEntityId} type=${type}`, { deviceId });
+            return res.json({ success: true, request: apiRow });
         } catch (err) {
             console.error('[AgentActionRequests] POST failed:', err.message);
             log('error', `POST failed: ${err.message}`, { deviceId });
@@ -672,8 +771,9 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         const hasPrompt = Object.prototype.hasOwnProperty.call(body, 'prompt');
         const hasOptions = Object.prototype.hasOwnProperty.call(body, 'options');
         const hasRelatedCardId = Object.prototype.hasOwnProperty.call(body, 'relatedCardId');
-        if (!hasType && !hasPrompt && !hasOptions && !hasRelatedCardId) {
-            return res.status(400).json({ success: false, error: 'Provide at least one editable field: prompt, options, type, relatedCardId' });
+        const hasDecisionContext = Object.prototype.hasOwnProperty.call(body, 'decisionContext');
+        if (!hasType && !hasPrompt && !hasOptions && !hasRelatedCardId && !hasDecisionContext) {
+            return res.status(400).json({ success: false, error: 'Provide at least one editable field: prompt, options, type, relatedCardId, decisionContext' });
         }
         // Validate each PROVIDED field with the exact same rules as POST / (create).
         if (hasType && (typeof body.type !== 'string' || !VALID_TYPES.has(body.type))) {
@@ -698,6 +798,16 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
                 return res.status(400).json({ success: false, error: 'relatedCardId must be a string of max 64 chars or null' });
             }
             relatedCardIdNew = relCard.value;
+        }
+        // decision_context (owner-decision classifier): object ≤8192 JSON or null
+        // (null clears it). Lets the commander refine the surfaced context.
+        let decisionContextNew = null; // JSON string or null
+        if (hasDecisionContext) {
+            const decCtx = validateDecisionContext(body.decisionContext);
+            if (!decCtx.ok) {
+                return res.status(400).json({ success: false, error: 'decisionContext must be an object whose JSON is at most 8192 bytes, or null' });
+            }
+            decisionContextNew = decCtx.value;
         }
 
         const client = await pool.connect();
@@ -747,6 +857,16 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
                 if (relatedCardIdNew !== oldRel) {
                     params.push(relatedCardIdNew); sets.push(`related_card_id = $${params.length}`);
                     changes.relatedCardId = { old: oldRel, new: relatedCardIdNew };
+                }
+            }
+            if (hasDecisionContext) {
+                const oldDc = before.decision_context != null ? JSON.stringify(before.decision_context) : null;
+                if (decisionContextNew !== oldDc) {
+                    params.push(decisionContextNew); sets.push(`decision_context = $${params.length}::jsonb`);
+                    changes.decisionContext = {
+                        old: before.decision_context ?? null,
+                        new: decisionContextNew != null ? JSON.parse(decisionContextNew) : null,
+                    };
                 }
             }
 
@@ -809,6 +929,14 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         // Timeout-policy worker (card_ce0d685b). Exported so tests + an external
         // scheduler can invoke a sweep directly.
         enforceActionRequestTimeouts,
+        // Shared create path (子3) so the kanban move-hook can auto-surface an
+        // owner-only review/blocked card into this inbox via the SAME INSERT +
+        // 'emitted' socket emit the HTTP route uses. Caller validates inputs.
+        createActionRequest,
+        // Owner-decision lifecycle (子6a): kanban calls this when a card leaves
+        // review/blocked to auto-dismiss its pending owner-decision request(s) +
+        // emit the 'dismissed' socket event.
+        dismissActionRequestsForCard,
         _pool: pool,
     };
 };
