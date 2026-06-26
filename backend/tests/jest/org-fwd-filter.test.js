@@ -244,6 +244,54 @@ describe('isLowSignalFwd()', () => {
         });
     });
 
+    describe('extended HANDOFF token + #5 watchdog-narration heartbeat coverage (card_59f41e5b)', () => {
+        // Fix-forward extending PR #3758/#3759: two machine-noise variants were
+        // verified slipping through live (classifyLowSignalFwd === null) on the
+        // deployed /api/suppression-log.
+        //   GAP 1: #6 now also emits #6_RESOURCE_HANDOFF (same class as
+        //          #N_PERMISSION_HANDOFF) → generalize to #N_<UPPER>_HANDOFF.
+        //   GAP 2: #5's live watchdog narration uses tokens (僅餘 / 即將觸發 /
+        //          到期 / resource handoff / 接近 / 警戒線 …) missing from the
+        //          heartbeat whitelist, incl. a #N-led variant (no 收到 prefix).
+
+        it('GAP1: generalized #N_<UPPER>_HANDOFF (RESOURCE_HANDOFF and others) is suppressed', () => {
+            // raw (pre-prefix) and FWD-wrapped, with multi-line blocker bodies
+            expect(isLowSignalFwd('#1_RESOURCE_HANDOFF\n- Blocker: still waiting')).toBe(true);
+            expect(classifyLowSignalFwd('#1_RESOURCE_HANDOFF\n- Blocker: still waiting')).toBe('permission_handoff');
+            expect(classifyLowSignalFwd('[📢 FWD from #6] #6_RESOURCE_HANDOFF\n- Blocker: codex exec is still running, but no stdout/stderr has been observed for 45m 29s.')).toBe('permission_handoff');
+            // pre-existing PERMISSION_HANDOFF still covered by the generalized token
+            expect(classifyLowSignalFwd('[📢 FWD from #6] #6_PERMISSION_HANDOFF\n- Blocker: ...')).toBe('permission_handoff');
+        });
+
+        it('GAP2-A: 收到-led watchdog narration (僅餘 / 即將觸發 / handoff) is a heartbeat echo', () => {
+            expect(isLowSignalFwd('收到，#6 last output 42m29s 前，watchdog 僅餘 2m30s，即將觸發 handoff。🦞')).toBe(true);
+            expect(classifyLowSignalFwd('收到，#6 last output 42m29s 前，watchdog 僅餘 2m30s，即將觸發 handoff。🦞')).toBe('heartbeat');
+        });
+
+        it('GAP2-B: #N-led watchdog narration (no 收到 prefix) is a heartbeat echo', () => {
+            expect(isLowSignalFwd('#6 watchdog 45m 到期，已進 resource handoff。等 #6 或 owner 決定處置。🦞')).toBe(true);
+            expect(classifyLowSignalFwd('#6 watchdog 45m 到期，已進 resource handoff。等 #6 或 owner 決定處置。🦞')).toBe('heartbeat');
+            expect(classifyLowSignalFwd('[📢 FWD from #5] #6 watchdog 45m 到期，已進 resource handoff。🦞')).toBe('heartbeat');
+        });
+
+        it('GAP2-C: 收到-led near-threshold heartbeat (接近 / 警戒線) is a heartbeat echo', () => {
+            expect(isLowSignalFwd('收到，#6 仍在跑，但接近警戒線。🦞')).toBe(true);
+            expect(classifyLowSignalFwd('收到，#6 仍在跑，但接近警戒線。🦞')).toBe('heartbeat');
+        });
+
+        it('CRITICAL false-positive guards: real work still forwards (classify === null)', () => {
+            // 收到-led real reports
+            expect(classifyLowSignalFwd('收到，正在處理 card_a60568c，預計 30 分鐘內回報')).toBeNull();
+            expect(classifyLowSignalFwd('收到你的 PR #3758，我來 review')).toBeNull();
+            expect(classifyLowSignalFwd('了解了，這個 bug 根因是 X，我修')).toBeNull();
+            // #N-led real work — the new sibling pattern must NOT swallow these
+            expect(classifyLowSignalFwd('#6 的 avatar bug 我修好了，PR #3760 待 review')).toBeNull();
+            expect(classifyLowSignalFwd('#6 watchdog dashboard 重構完成，PR #3761')).toBeNull();
+            // a heartbeat echo with an appended escalation must still forward
+            expect(classifyLowSignalFwd('收到，#6 仍在跑，但我發現 card_123 卡住了，需要你決定')).toBeNull();
+        });
+    });
+
     describe('classifyLowSignalFwd() reason labels (card_59f41e5b)', () => {
         it('labels each noise category for the suppression-transparency log', () => {
             expect(classifyLowSignalFwd('Unexpected end of JSON input')).toBe('json_crash');
