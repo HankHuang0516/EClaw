@@ -1253,8 +1253,11 @@ function recordSuppressedForward(deviceId, item) {
     const arr = suppressionLog[deviceId] || (suppressionLog[deviceId] = []);
     arr.push(rec);
     if (arr.length > SUPPRESSION_LOG_CAP) arr.splice(0, arr.length - SUPPRESSION_LOG_CAP);
-    // Live UI: notify the dashboard suppression-transparency drawer.
-    if (io) io.to(deviceId).emit('suppression:logged', { deviceId, item: rec, count: arr.length });
+    // Live UI: notify the dashboard suppression-transparency drawer. Must target
+    // the `device:${deviceId}` room the portal/app socket actually joins (see the
+    // socket connection handler) — emitting to a bare `deviceId` room hit nobody,
+    // so the chat ops-strip live feed silently never fired (audit card_c6731c2f F9).
+    if (io) io.to(`device:${deviceId}`).emit('suppression:logged', { deviceId, item: rec, count: arr.length });
     return rec;
 }
 
@@ -8551,7 +8554,15 @@ function authDeviceRead(query) {
 app.get('/api/suppression-log', (req, res) => {
     const auth = authDeviceRead(req.query);
     if (!auth.ok) return res.status(auth.status).json({ success: false, message: auth.error });
-    const items = suppressionLog[auth.deviceId] || [];
+    let items = suppressionLog[auth.deviceId] || [];
+    // Scope a bot-authed (entityId-bearing) caller to its OWN suppressed forwards;
+    // the owner deviceSecret path passes no entityId and sees the whole-device feed
+    // (mirrors /api/b2b-status). Audit card_c6731c2f (F10) — a bot should not read
+    // every entity's suppressed-snippet buffer.
+    const scopeId = parseInt(req.query.entityId);
+    if (Number.isInteger(scopeId) && isValidEntityId(auth.device, scopeId)) {
+        items = items.filter(it => Number(it.fromEntityId) === scopeId);
+    }
     res.json({ success: true, count: items.length, items });
 });
 

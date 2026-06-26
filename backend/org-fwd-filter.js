@@ -99,7 +99,11 @@ const ORG_FWD_NOISE_GROUPS = [
     // a genuine permission gate (different leading text) is never swallowed.
     // Reason label kept as 'permission_handoff' for stability across the family.
     ['permission_handoff', /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?#\d+_[A-Z]+_HANDOFF\b/i],
-    ['heartbeat', /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?Codex\s+#?\d*\s*status heartbeat\b/i],
+    // NB: middle gap is \s? (not \s*) — two unbounded whitespace runs (\s+ … \s*)
+    // around the non-whitespace #?\d* caused O(n^2) backtracking on a long space
+    // run that never reaches "status" (audit card_c6731c2f). One bounded gap kills
+    // the quadratic while still matching "Codex #5 status heartbeat" / "Codex status…".
+    ['heartbeat', /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?Codex\s+#?\d*\s?status heartbeat\b/i],
     ['heartbeat', /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?Codex\s+(?:bridge error|watchdog|bridge status)\b/i],
     ['heartbeat', /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?EClaw progress update\b/i],
     // Chinese peer watchdog-narration heartbeat echo (card_59f41e5b + fix-forward).
@@ -119,16 +123,21 @@ const ORG_FWD_NOISE_GROUPS = [
     //      output/仍在跑/還在跑/餘量/僅餘/沉默/在線/resource/到期/觸發/心跳/codex…),
     //      and
     //   3. it ENDS with the 🦞 sign-off (peers' machine heartbeats always do), and
-    //   4. it carries NO actionable-content marker (a card id, PR #, URL, or a
-    //      work verb 我修/修好/完成/我發現/待 review).
+    //   4. it carries NO actionable-content marker (a card id, PR #, URL, a work
+    //      verb 我修/修好/完成/我發現/待 review, OR an ACTIVE owner-ask:
+    //      請 owner / 需要你 / 授權 / rollback / 回滾 / 加額度 / 緊急 / urgent /
+    //      升級 / escalat). The active-ask markers were added after the audit
+    //      (card_c6731c2f) found the heuristic SUPPRESSED real escalations like
+    //      "請 owner 盡快決定要不要 rollback🦞" / "需要你授權加額度🦞" — both end in
+    //      🦞 and mention a heartbeat keyword but are genuine owner pings. The
+    //      PASSIVE "等 owner 處置/決定🦞" (bot waiting, not asking) deliberately
+    //      stays suppressed, so 決定/處置 are NOT in the exclusion list.
     // (1)+(2) say "looks like a heartbeat"; (3)+(4) are the false-positive guards
-    // that keep a REAL escalation forwarding — a genuine owner-ping won't append
-    // 🦞 and a real status report carries a card/PR/verb. The whole feature hinges
-    // on never eating a real escalation, so a borderline non-🦞 heartbeat narration
-    // deliberately FORWARDS (annoying noise ≪ an eaten escalation). NB: [\s\S]
-    // (not the /s flag) handles multi-line bodies; 🦞 is matched as a literal
-    // surrogate pair (no /u flag, consistent with the other patterns here).
-    ['heartbeat', /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?(?:收到|已收到|了解|#\d+\b)(?=[\s\S]*(?:watchdog|handoff|bridge|last\s*output|仍在跑|還在跑|餘量|僅餘|沉默|沈默|在線|resource|到期|觸發|心跳|heartbeat|codex))(?![\s\S]*(?:card_[0-9a-f]{6}|PR\s*#?\d|https?:\/\/|我修|修好|完成|我發現|待\s*review))[\s\S]*🦞[\s，,。.!！~]*$/i],
+    // that keep a REAL escalation forwarding. The whole feature hinges on never
+    // eating a real escalation, so a borderline narration deliberately FORWARDS
+    // (annoying noise ≪ an eaten escalation). NB: [\s\S] (not the /s flag) handles
+    // multi-line bodies; 🦞 is a literal surrogate pair (no /u flag, like the rest).
+    ['heartbeat', /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?(?:收到|已收到|了解|#\d+\b)(?=[\s\S]*(?:watchdog|handoff|bridge|last\s*output|仍在跑|還在跑|餘量|僅餘|沉默|沈默|在線|resource|到期|觸發|心跳|heartbeat|codex))(?![\s\S]*(?:card_[0-9a-f]{6}|PR\s*#?\d|https?:\/\/|我修|修好|完成|我發現|待\s*review|請\s*owner|需要你|授權|rollback|回滾|加\s*額度|加.{0,3}額度|緊急|urgent|升級|escalat))[\s\S]*🦞[\s，,。.!！~]*$/i],
 
     // ── Standalone lobster mascot ping (card_59f41e5b) ──
     // A bare 🦞 (optionally FWD-wrapped) carries no information.

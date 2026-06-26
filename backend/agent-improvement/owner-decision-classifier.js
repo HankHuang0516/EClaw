@@ -19,15 +19,26 @@
 const OWNER_ONLY_CATEGORIES = Object.freeze([
     {
         category: 'irreversible_data',
-        kws: ['drop table', 'truncate', 'purge', 'delete account', 'wipe', 'irreversible',
+        // Multi-word EN phrases + CJK are unambiguous → safe as substrings.
+        kws: ['drop table', 'delete account', 'irreversible',
             '刪除帳號', '不可逆', '清庫', '抹除'],
-        res: [],
+        // Short ambiguous EN words need word boundaries so they don't match inside
+        // larger words (audit card_c6731c2f): 'wipe'→'swipe', 'truncate'→
+        // 'truncated', and 'purge' inside the bot-resolvable 'auto-purge done
+        // cards' doneRetention flow (excluded via the auto- lookbehind).
+        res: [/\btruncate\b/i, /\bwipe\b/i, /(?<!auto[-\s])\bpurge\b/i],
     },
     {
         category: 'spend_cost',
-        kws: ['provision', 'paid plan', 'budget', 'spend', 'quota raise', 'subscription',
-            'billing', '$', '付費', '訂閱', '花錢', '加預算'],
-        res: [],
+        kws: ['provision', 'paid plan', 'budget', 'quota raise', 'subscription',
+            'billing', '付費', '訂閱', '花錢', '加預算'],
+        // 'spend' as a substring matched 'suspend'/'suspended', and a bare '$'
+        // matched EVERY dev card carrying a dollar sign (shell $1/$PATH, template
+        // ${foo}, jQuery $) — flooding the very inbox this feature keeps short
+        // (audit card_c6731c2f). Word-boundary 'spend' + a real price shape (a
+        // digit then >=1 more digit/sep) for '$' excludes single-digit shell
+        // params and ${...}/$WORD while still catching $200 / $1,000 / $9.99.
+        res: [/\bspend(?:ing|s)?\b/i, /\$\s?\d[\d,.]+/],
     },
     {
         category: 'product_direction',
@@ -53,8 +64,13 @@ const OWNER_ONLY_CATEGORIES = Object.freeze([
 ]);
 
 // Explicit owner flag — an author/gate that literally marks the work as
-// owner-only / un-authorizable / legal-hold / 需要你. Always forces ownerOnly.
-const EXPLICIT_FLAG_RE = /owner[-_ ]?only|需要你|un-?authoriz|不可授權|legal-hold/i;
+// owner-only / un-authorizable / legal-hold. Always forces ownerOnly.
+// NB: bare 需要你 was too loose — it is an everyday Chinese phrase (這個需要你確認 /
+// 需要你幫忙) AND literally the inbox's own display name, so ordinary commander
+// comments tripped it (audit card_c6731c2f). Require a deliberate decision verb
+// after 需要你 (決策/核可/裁示/拍板/定奪/授權) so only an explicit owner-decision
+// marker fires, not casual usage.
+const EXPLICIT_FLAG_RE = /owner[-_ ]?only|un-?authoriz|不可授權|legal-hold|需要你\s*(?:決策|核可|裁示|拍板|定奪|授權)/i;
 
 // painTags (OODA-R taxonomy) that represent pure front-end / appearance work.
 // A screenshot-review card whose pain is ONLY these is a UI vision-check (a

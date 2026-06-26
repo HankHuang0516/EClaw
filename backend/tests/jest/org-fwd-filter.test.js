@@ -383,3 +383,28 @@ describe('isLowSignalFwd()', () => {
         });
     });
 });
+
+describe('audit card_c6731c2f regressions', () => {
+    describe('F7 — real 🦞-signed owner escalations must FORWARD (never eaten)', () => {
+        it('forwards an active owner-ping asking for a rollback decision', () => {
+            expect(isLowSignalFwd('收到，#6 watchdog 觸發了，請 owner 盡快決定要不要 rollback🦞')).toBe(false);
+        });
+        it('forwards an active resource / authorization escalation', () => {
+            expect(isLowSignalFwd('已收到，#1 還在跑，但 resource 快爆了，需要你授權加額度🦞')).toBe(false);
+        });
+        it('still SUPPRESSES a passive watchdog-narration heartbeat (bot waiting, not asking)', () => {
+            expect(classifyLowSignalFwd('收到，#6 last output 66m29s 前，bridge alive，沉默超 1h。等 owner 處置。🦞')).toBe('heartbeat');
+        });
+    });
+
+    describe('F4 — Codex status-heartbeat regex is not quadratic on long whitespace', () => {
+        it('classifies a real heartbeat and resists a pathological space run within budget', () => {
+            expect(classifyLowSignalFwd('Codex #5 status heartbeat')).toBe('heartbeat');
+            const evil = 'Codex ' + ' '.repeat(50000) + 'X';
+            const t0 = Date.now();
+            isLowSignalFwd(evil);
+            // was O(n^2): ~150ms at 20k spaces and climbing; the \s? bound keeps it flat.
+            expect(Date.now() - t0).toBeLessThan(250);
+        });
+    });
+});
