@@ -132,12 +132,20 @@ const ORG_FWD_NOISE_GROUPS = [
     //      🦞 and mention a heartbeat keyword but are genuine owner pings. The
     //      PASSIVE "等 owner 處置/決定🦞" (bot waiting, not asking) deliberately
     //      stays suppressed, so 決定/處置 are NOT in the exclusion list.
+    //      ⚠ bare 緊急/urgent were REMOVED from the exclusion (card_8008278a): #5's
+    //      passive narration "…沉默 9h，等 owner 緊急處置🦞" repeats every ~15min and
+    //      the bare 緊急 forced every copy to FORWARD → flood. 緊急/urgent appear in
+    //      passive watchdog status, not just active asks; the active-ask markers
+    //      (請 owner / 需要你 / 授權 / rollback / 加額度 / 升級 / escalat) already
+    //      keep genuine pings forwarding, and the heartbeat SHAPE gate (ack-start +
+    //      🦞-end) means only machine-narration is affected — a fresh human-style
+    //      "緊急!" escalation won't match the shape and is never reached by this rule.
     // (1)+(2) say "looks like a heartbeat"; (3)+(4) are the false-positive guards
     // that keep a REAL escalation forwarding. The whole feature hinges on never
     // eating a real escalation, so a borderline narration deliberately FORWARDS
     // (annoying noise ≪ an eaten escalation). NB: [\s\S] (not the /s flag) handles
     // multi-line bodies; 🦞 is a literal surrogate pair (no /u flag, like the rest).
-    ['heartbeat', /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?(?:收到|已收到|了解|#\d+\b)(?=[\s\S]*(?:watchdog|handoff|bridge|last\s*output|仍在跑|還在跑|餘量|僅餘|沉默|沈默|在線|resource|到期|觸發|心跳|heartbeat|codex))(?![\s\S]*(?:card_[0-9a-f]{6}|PR\s*#?\d|https?:\/\/|我修|修好|完成|我發現|待\s*review|請\s*owner|需要你|授權|rollback|回滾|加\s*額度|加.{0,3}額度|緊急|urgent|升級|escalat))[\s\S]*🦞[\s，,。.!！~]*$/i],
+    ['heartbeat', /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?(?:收到|已收到|了解|#\d+\b)(?=[\s\S]*(?:watchdog|handoff|bridge|last\s*output|仍在跑|還在跑|餘量|僅餘|沉默|沈默|在線|resource|到期|觸發|心跳|heartbeat|codex))(?![\s\S]*(?:card_[0-9a-f]{6}|PR\s*#?\d|https?:\/\/|我修|修好|完成|我發現|待\s*review|請\s*owner|需要你|授權|rollback|回滾|加\s*額度|加.{0,3}額度|升級|escalat))[\s\S]*🦞[\s，,。.!！~]*$/i],
 
     // ── Standalone lobster mascot ping (card_59f41e5b) ──
     // A bare 🦞 (optionally FWD-wrapped) carries no information.

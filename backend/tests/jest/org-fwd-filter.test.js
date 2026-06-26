@@ -395,6 +395,17 @@ describe('audit card_c6731c2f regressions', () => {
         it('still SUPPRESSES a passive watchdog-narration heartbeat (bot waiting, not asking)', () => {
             expect(classifyLowSignalFwd('收到，#6 last output 66m29s 前，bridge alive，沉默超 1h。等 owner 處置。🦞')).toBe('heartbeat');
         });
+        // card_8008278a: bare 緊急/urgent were REMOVED from the forward-exclusion —
+        // #5's PASSIVE narration "…沉默 9h，等 owner 緊急處置🦞" repeats every ~15min
+        // and the bare 緊急 forced every copy to FORWARD (flood). It is passive
+        // watchdog status (等 owner 緊急處置), not an active ask, so it must SUPPRESS.
+        it('SUPPRESSES the repeating passive "等 owner 緊急處置" watchdog narration (flood fix)', () => {
+            expect(classifyLowSignalFwd('收到，#6 last output 565m58s，bridge alive，沉默 9h25m，heartbeat 延遲。等 owner 緊急處置。🦞')).toBe('heartbeat');
+        });
+        it('STILL forwards an active ask even though 緊急 is no longer a marker (請 owner / 授權 carry it)', () => {
+            expect(isLowSignalFwd('收到，#6 緊急！請 owner 盡快決定要不要 rollback🦞')).toBe(false);
+            expect(isLowSignalFwd('已收到 #1 緊急，需要你授權加額度🦞')).toBe(false);
+        });
     });
 
     describe('F4 — Codex status-heartbeat regex is not quadratic on long whitespace', () => {
