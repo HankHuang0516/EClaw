@@ -402,6 +402,12 @@
         .action-request-option { border-color: var(--primary, #5b6cff); color: var(--primary, #5b6cff); }
         .action-request-action:hover, .action-request-option:hover { background: rgba(91,108,255,0.10); }
         .action-request-action.danger { color: var(--danger, #ef4444); border-color: rgba(239,68,68,0.45); }
+        /* 計畫D: 🗂 任務卡 deep-link chip — only present when a request has relatedCardId. */
+        .action-request-action.action-request-card-link { border-color: rgba(45,212,191,0.55); color: #2dd4bf; }
+        .action-request-action.action-request-card-link:hover { background: rgba(20,184,166,0.12); }
+        /* 計畫C: inbox 篩選條件 facet (All / Consensus) + its empty state. */
+        .action-request-inbox-filter { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 2px; }
+        .action-request-filter-empty { color: var(--text-secondary, #AAAAAA); font-size: 12px; padding: 6px 2px; }
         body.density-comfortable .chat-msg { max-width: 75%; }
         body.density-comfortable .chat-source { font-size: 12px; margin-bottom: 4px; }
 
@@ -4077,6 +4083,15 @@
         let actionRequestInboxOpen = (() => {
             try { return localStorage.getItem(ACTION_REQUEST_INBOX_OPEN_KEY) === '1'; } catch (_) { return false; }
         })();
+        // 篩選條件 facet for the "需要你" inbox (計畫C, card_2a6f260f): 'all' shows every
+        // pending request; 'consensus' narrows to the consensus-discussion requests
+        // (type='consensus' or an in-consensus round) so the user can focus on each
+        // multi-agent discussion / viewpoint. The choice persists across reloads.
+        const ACTION_REQUEST_INBOX_FILTER_KEY = 'needsyou_inbox_filter';
+        let actionRequestInboxFilter = (() => {
+            try { return localStorage.getItem(ACTION_REQUEST_INBOX_FILTER_KEY) === 'consensus' ? 'consensus' : 'all'; }
+            catch (_) { return 'all'; }
+        })();
         // Coalesce a refresh that arrives while one is already in flight, so the
         // post-resolve/socket refetch is never silently dropped (card_b176c435).
         let actionRequestsRefreshPending = false;
@@ -7575,6 +7590,20 @@
             try { localStorage.setItem(ACTION_REQUEST_INBOX_OPEN_KEY, open ? '1' : '0'); } catch (_) {}
         }
 
+        // 計畫C (card_2a6f260f): persist the inbox 篩選條件 facet ('all' | 'consensus').
+        function setActionRequestInboxFilter(value) {
+            actionRequestInboxFilter = value === 'consensus' ? 'consensus' : 'all';
+            try { localStorage.setItem(ACTION_REQUEST_INBOX_FILTER_KEY, actionRequestInboxFilter); } catch (_) {}
+        }
+
+        // A request is a consensus-discussion item when its type is 'consensus' OR
+        // the timeout worker has opened a consensus round on it (協商中). The 'all'
+        // facet matches everything so the default inbox is unchanged.
+        function actionRequestMatchesFilter(request) {
+            if (actionRequestInboxFilter !== 'consensus') return true;
+            return String(request && request.type) === 'consensus' || isActionRequestConsensusTriggered(request);
+        }
+
         function renderActionRequestInbox(banner) {
             if (!banner) return;
             const t = actionRequestT;
@@ -7635,7 +7664,34 @@
             head.appendChild(live);
             body.appendChild(head);
 
-            actionRequests.forEach(request => {
+            // 篩選條件 facet (計畫C, card_2a6f260f): All / Consensus discussion. Reuses
+            // the existing .filter-chip look so it matches the chat filter bar. The
+            // summary count stays the TOTAL pending; only the list below is filtered.
+            const filterRow = document.createElement('div');
+            filterRow.className = 'action-request-inbox-filter';
+            filterRow.setAttribute('role', 'group');
+            filterRow.setAttribute('aria-label', t('action_request_filter_label', 'Filter requests'));
+            [
+                ['all', 'action_request_filter_all', 'All'],
+                ['consensus', 'action_request_filter_consensus', 'Consensus'],
+            ].forEach(([value, key, fb]) => {
+                const chip = document.createElement('button');
+                chip.type = 'button';
+                chip.className = 'filter-chip' + (actionRequestInboxFilter === value ? ' active' : '');
+                chip.dataset.arFilter = value;
+                chip.textContent = t(key, fb);
+                chip.setAttribute('aria-pressed', actionRequestInboxFilter === value ? 'true' : 'false');
+                chip.addEventListener('click', () => {
+                    if (actionRequestInboxFilter === value) return;
+                    setActionRequestInboxFilter(value);
+                    refreshActionRequestBanner();
+                });
+                filterRow.appendChild(chip);
+            });
+            body.appendChild(filterRow);
+
+            const visibleRequests = actionRequests.filter(actionRequestMatchesFilter);
+            visibleRequests.forEach(request => {
                 const typeMeta = actionRequestTypeMeta(request.type);
                 const item = document.createElement('div');
                 const consensusTriggered = isActionRequestConsensusTriggered(request);
@@ -7702,6 +7758,19 @@
                     anchor.addEventListener('click', () => openActionRequestAnchor(request));
                     actions.appendChild(anchor);
                 }
+                // 計畫D (card_df646877): OPTIONAL 🗂 任務卡 chip — only when the request
+                // carries a relatedCardId. Clicking deep-links to the kanban card via
+                // the shared openKanbanCard() (SmartRouter split / native app /
+                // standalone fallbacks). Absent relatedCardId → no chip, no layout shift.
+                if (request.relatedCardId) {
+                    const cardLink = document.createElement('button');
+                    cardLink.type = 'button';
+                    cardLink.className = 'action-request-action action-request-card-link';
+                    cardLink.textContent = t('action_request_card_link', '🗂 Task card');
+                    cardLink.title = t('action_request_card_link_title', 'Open linked card {card}', { card: String(request.relatedCardId) });
+                    cardLink.addEventListener('click', (event) => openKanbanCard(request.relatedCardId, event));
+                    actions.appendChild(cardLink);
+                }
                 const dismiss = document.createElement('button');
                 dismiss.type = 'button';
                 dismiss.className = 'action-request-action danger';
@@ -7711,6 +7780,15 @@
                 item.appendChild(actions);
                 body.appendChild(item);
             });
+            // The banner is only rendered when there ARE pending requests, so an empty
+            // list here means the active 篩選條件 (consensus) matched none — tell the
+            // user instead of showing a blank body (計畫C).
+            if (visibleRequests.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'action-request-filter-empty';
+                empty.textContent = t('action_request_filter_empty', 'No requests match this filter.');
+                body.appendChild(empty);
+            }
             wrap.appendChild(body);
             banner.appendChild(wrap);
             banner.style.display = '';

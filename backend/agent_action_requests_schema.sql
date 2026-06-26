@@ -26,6 +26,9 @@ CREATE TABLE IF NOT EXISTS agent_action_requests (
     -- pending request, so the worker never re-triggers a round on each 5-min tick
     -- (card_ce0d685b). NULL = no consensus round triggered yet.
     consensus_triggered_at TIMESTAMPTZ DEFAULT NULL,
+    -- Optional kanban-card reference (計畫D, card_df646877). When set, the inbox
+    -- item renders a "🗂 任務卡" chip that deep-links to this card. NULL = no card.
+    related_card_id VARCHAR(64) DEFAULT NULL,
     CONSTRAINT aar_prompt_len CHECK (char_length(prompt) BETWEEN 1 AND 2000),
     CONSTRAINT aar_type_valid CHECK (type IN ('decision','approval','input','credential','review','clarify','consensus')),
     CONSTRAINT aar_status_valid CHECK (status IN ('pending','resolved','dismissed'))
