@@ -4,7 +4,7 @@
  * acks) up the org chart and into the user's channel.
  */
 
-const { isLowSignalFwd, ORG_FWD_MIN_BODY_LEN } = require('../../org-fwd-filter');
+const { isLowSignalFwd, classifyLowSignalFwd, ORG_FWD_MIN_BODY_LEN } = require('../../org-fwd-filter');
 const { tKanban, statusLabel, TRANSLATIONS } = require('../../i18n/kanban-notifications');
 
 describe('isLowSignalFwd()', () => {
@@ -201,6 +201,80 @@ describe('isLowSignalFwd()', () => {
             expect(isLowSignalFwd('Need you to grant GitHub repo scope for the private mirror before I can push')).toBe(false);
             expect(isLowSignalFwd('I finished the permission-handoff refactor PR #3120, ready for review')).toBe(false);
             expect(isLowSignalFwd('Heartbeat metrics dashboard shipped — p99 latency down 40%')).toBe(false);
+        });
+    });
+
+    describe('Chinese bot-to-bot ack / peer-heartbeat-echo noise (card_59f41e5b)', () => {
+        // Repro: peers bounce "[📢 FWD from #N] 收到 🦞" / "已收到。" /
+        // "收到，#6 仍在跑 …" keep-alive echoes that org-forward up and flood the
+        // user's chat. These are pure acks / status echoes with no decision
+        // content and must be suppressed before the upward forward.
+        it('suppresses the peer-status-echo "[📢 FWD from #5] 收到，#6 仍在跑。🦞"', () => {
+            expect(isLowSignalFwd('[📢 FWD from #5] 收到，#6 仍在跑。🦞')).toBe(true);
+        });
+
+        it('suppresses pure acks "[📢 FWD from #6] 收到 🦞" / "已收到。"', () => {
+            expect(isLowSignalFwd('[📢 FWD from #6] 收到 🦞')).toBe(true);
+            expect(isLowSignalFwd('[📢 FWD from #6] 已收到。')).toBe(true);
+            expect(isLowSignalFwd('已收到。')).toBe(true);
+            expect(isLowSignalFwd('收到，了解。')).toBe(true);
+            expect(isLowSignalFwd('好的 🦞')).toBe(true);
+        });
+
+        it('suppresses the watchdog/last-output peer heartbeat echo', () => {
+            expect(isLowSignalFwd('收到，#6 last output 9m29s 前，watchdog 35m 餘量。🦞')).toBe(true);
+            expect(isLowSignalFwd('[📢 FWD from #6] 收到，#5 bridge alive，窗口 40m 仍可守')).toBe(true);
+            expect(isLowSignalFwd('已收到，#1 還在跑')).toBe(true);
+        });
+
+        it('suppresses a standalone lobster mascot 🦞 (with and without FWD wrapper)', () => {
+            expect(isLowSignalFwd('🦞')).toBe(true);
+            expect(isLowSignalFwd('[📢 FWD from #5] 🦞')).toBe(true);
+            expect(isLowSignalFwd('   🦞   ')).toBe(true);
+        });
+
+        it('CRITICAL false-positive guard: a real "收到 + actionable" report still forwards', () => {
+            // The existing guard the whole feature hinges on — a status report
+            // that begins with 收到 but carries a card id + ETA must NOT be eaten.
+            expect(isLowSignalFwd('收到，正在處理 card_a60568c，預計 30 分鐘內回報')).toBe(false);
+            expect(isLowSignalFwd('收到你的 PR #3758，我來 review')).toBe(false);
+            expect(isLowSignalFwd('了解了，這個 bug 根因是 X，我修')).toBe(false);
+            expect(isLowSignalFwd('收到，#6 仍在跑，但我發現 card_123 卡住了，需要你決定')).toBe(false);
+            expect(isLowSignalFwd('好的，我先把 deploy 跑起來再回報結果')).toBe(false);
+        });
+    });
+
+    describe('classifyLowSignalFwd() reason labels (card_59f41e5b)', () => {
+        it('labels each noise category for the suppression-transparency log', () => {
+            expect(classifyLowSignalFwd('Unexpected end of JSON input')).toBe('json_crash');
+            expect(classifyLowSignalFwd('[Hermes 回應超時]')).toBe('timeout_marker');
+            expect(classifyLowSignalFwd('[📢 FWD from #6] 收到 🦞')).toBe('ack');
+            expect(classifyLowSignalFwd('已收到。')).toBe('ack');
+            expect(classifyLowSignalFwd('📌 狀態更新：待辦 → 進行中')).toBe('kanban_echo');
+            expect(classifyLowSignalFwd('[📢 FWD from #1] MODEL_HEALTH/ACK ok')).toBe('model_health');
+            expect(classifyLowSignalFwd('#6_PERMISSION_HANDOFF\n- Next step: grant')).toBe('permission_handoff');
+            expect(classifyLowSignalFwd('Codex #6 status heartbeat\n- Elapsed: 30s')).toBe('heartbeat');
+            expect(classifyLowSignalFwd('收到，#6 仍在跑。🦞')).toBe('heartbeat');
+            expect(classifyLowSignalFwd('🦞')).toBe('lobster');
+            expect(classifyLowSignalFwd('short')).toBe('low_signal');
+        });
+
+        it('returns null for real signal (forwards)', () => {
+            expect(classifyLowSignalFwd('收到，正在處理 card_a60568c，預計 30 分鐘內回報')).toBeNull();
+            expect(classifyLowSignalFwd('Card 7a03c4 moved to in_progress, ETA 2h')).toBeNull();
+        });
+
+        it('isLowSignalFwd === (classifyLowSignalFwd != null) for a spread of inputs', () => {
+            const samples = [
+                null, '', '   ', 'ack', '🦞', '已收到。',
+                '收到，正在處理 card_a60568c，預計 30 分鐘內回報',
+                'Card 7a03c4 moved to in_progress, ETA 2h',
+                '#6_PERMISSION_HANDOFF\n- Next step: grant',
+                'meaningful !',
+            ];
+            for (const s of samples) {
+                expect(isLowSignalFwd(s)).toBe(classifyLowSignalFwd(s) != null);
+            }
         });
     });
 
