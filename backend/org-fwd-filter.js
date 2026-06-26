@@ -52,6 +52,27 @@ const ORG_FWD_NOISE_PATTERNS = [
     /^\s*♻️?\s*Card reopened/iu,         // card reopened echo (kanban.js:2405/2408)
     // model-health FWD echoes (background traffic, by design): "[📢 FWD … MODEL_HEALTH/ACK]"
     /^\s*\[📢\s*FWD\b.*\b(MODEL_HEALTH|ACK)\b/i,
+
+    // ── Codex/openclaw runtime machine-noise forwards (card_77c4b9e2) ──
+    // #6's openclaw/codex runtime auto-emits these lifecycle templates:
+    //   • #N_PERMISSION_HANDOFF — a FALSE alarm fired when a benign post-exec
+    //     cleanup WARN ("Failed to terminate MCP process group N: Operation not
+    //     permitted") is misread as a real exec blocker; observed re-firing
+    //     ~1/min.
+    //   • "Codex #N status heartbeat" / bridge-lifecycle notices — periodic
+    //     keep-alive status, no decision content.
+    // The emitter is REMOTE (the process behind CODEX_COMMANDS_URL, not this
+    // repo) and re-evaluates per exec, stateless — so it cannot be silenced
+    // from chat and must be dropped HERE before the upward org-chart forward,
+    // exactly like the MODEL_HEALTH/ACK echoes above. The leading
+    // "[📢 FWD from #N]" wrapper is optional because the raw machine token can
+    // arrive already prefixed. Anchored at line start so a bot's OWN prose that
+    // merely mentions "heartbeat"/"handoff" in a sentence still forwards, and
+    // a genuine permission gate (different leading text) is never swallowed.
+    /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?#\d+_PERMISSION_HANDOFF\b/i,
+    /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?Codex\s+#?\d*\s*status heartbeat\b/i,
+    /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?Codex\s+(?:bridge error|watchdog|bridge status)\b/i,
+    /^\s*(?:\[📢\s*FWD\s+from\s+#\d+\]\s*)?EClaw progress update\b/i,
 ];
 
 const ORG_FWD_MIN_BODY_LEN = 12;

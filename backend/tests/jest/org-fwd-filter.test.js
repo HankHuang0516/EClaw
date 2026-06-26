@@ -161,6 +161,49 @@ describe('isLowSignalFwd()', () => {
         });
     });
 
+    describe('Codex/openclaw runtime machine-noise forwards (card_77c4b9e2)', () => {
+        // Repro (2026-06-26): #6's codex runtime auto-emitted #6_PERMISSION_HANDOFF
+        // every ~1min from a benign post-exec cleanup WARN, plus periodic status
+        // heartbeats. These were org-forwarded up to #2 and flooded the user's
+        // chat because ORG_FWD_NOISE_PATTERNS had no matching entry.
+        const HANDOFF = `#6_PERMISSION_HANDOFF
+- Blocker: Codex runtime output reported permission_or_login: WARN codex_rmcp_client::stdio_server_launcher: Failed to terminate MCP process group 64526: Operation not permitted (os error 1)
+- Next step: grant the required permission/login through an approved channel`;
+        const HEARTBEAT = `Codex #6 status heartbeat
+- Task: [task in progress - preview redacted to prevent secret leak]
+- Elapsed: 30s
+- Progress: bridge is still alive, codex exec is still running`;
+
+        it('suppresses raw #N_PERMISSION_HANDOFF (pre-prefix, as orgChartForward sees it)', () => {
+            expect(isLowSignalFwd(HANDOFF)).toBe(true);
+            expect(isLowSignalFwd('#1_PERMISSION_HANDOFF\n- Next step: grant')).toBe(true);
+        });
+
+        it('suppresses the already-wrapped "[📢 FWD from #N] #N_PERMISSION_HANDOFF" variant', () => {
+            expect(isLowSignalFwd(`[📢 FWD from #6] ${HANDOFF}`)).toBe(true);
+        });
+
+        it('suppresses "Codex #N status heartbeat" (with and without the entity number)', () => {
+            expect(isLowSignalFwd(HEARTBEAT)).toBe(true);
+            expect(isLowSignalFwd(`[📢 FWD from #6] ${HEARTBEAT}`)).toBe(true);
+            expect(isLowSignalFwd('Codex status heartbeat\n- Elapsed: 30s\n- Progress: still running')).toBe(true);
+        });
+
+        it('suppresses Codex bridge error / watchdog / bridge status + EClaw progress update', () => {
+            expect(isLowSignalFwd('Codex bridge error: socket closed unexpectedly, retrying')).toBe(true);
+            expect(isLowSignalFwd('Codex watchdog recovery window is 45m 0s only if heartbeats stop')).toBe(true);
+            expect(isLowSignalFwd('Codex bridge status: reconnected after transient drop')).toBe(true);
+            expect(isLowSignalFwd('EClaw progress update — still polling, nothing new')).toBe(true);
+        });
+
+        it('does NOT suppress a real permission request or prose that merely mentions handoff/heartbeat', () => {
+            // Critical false-positive guard: a genuine gate / real work forwards.
+            expect(isLowSignalFwd('Need you to grant GitHub repo scope for the private mirror before I can push')).toBe(false);
+            expect(isLowSignalFwd('I finished the permission-handoff refactor PR #3120, ready for review')).toBe(false);
+            expect(isLowSignalFwd('Heartbeat metrics dashboard shipped — p99 latency down 40%')).toBe(false);
+        });
+    });
+
     describe('real messages must pass through (no false positives)', () => {
         it('lets normal status reports through', () => {
             expect(isLowSignalFwd('Card 7a03c4 moved to in_progress, ETA 2h')).toBe(false);
