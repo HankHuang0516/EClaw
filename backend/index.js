@@ -18,7 +18,7 @@ const sitePageviews = require('./site-pageviews');
 const feedbackModule = require('./device-feedback');
 const chatIntegrity = require('./chat-integrity');
 const communitySsr = require('./community-ssr');
-const { isLowSignalFwd } = require('./org-fwd-filter');
+const { isLowSignalFwd, classifyLowSignalFwd } = require('./org-fwd-filter');
 const orgFwdEscalation = require('./org-fwd-escalation');
 const { buildOrgEntitySessionKey, isOrgEntitySessionKey } = require('./session-scope');
 const { assignDefaultCompanionIfMissing } = require('./petdx-phase0-hook');
@@ -1204,6 +1204,20 @@ function getBotToBotRemaining(deviceId, entityId) {
     return Math.max(0, BOT2BOT_MAX_MESSAGES - botToBotCounter[key].count);
 }
 
+// Time (ms) until this entity's bucket regenerates its NEXT token — feeds the
+// front-end b2b quota countdown chip (card_59f41e5b). Returns 0 when there is
+// nothing pending to regenerate (no bucket, or a full bucket at count 0). The
+// bucket is regenerated first so the value reflects the current moment; if the
+// regen drained it back to full we again return 0 (no pending countdown).
+function getBotToBotNextRegenMs(deviceId, entityId) {
+    const key = `${deviceId}:${entityId}`;
+    const bucket = botToBotCounter[key];
+    if (!bucket || bucket.count === 0) return 0;
+    _regenBotToBotTokens(bucket);
+    if (bucket.count === 0) return 0;
+    return Math.max(0, BOT2BOT_REGEN_INTERVAL_MS - (Date.now() - bucket.lastRegenAt));
+}
+
 // Reset bot-to-bot counter when human sends a message (called from /api/client/speak)
 function resetBotToBotCounter(deviceId) {
     const prefix = `${deviceId}:`;
@@ -1215,6 +1229,33 @@ function resetBotToBotCounter(deviceId) {
     }
     // Also clear broadcast dedup cache for this device so human-initiated broadcasts work fresh
     delete recentBroadcasts[deviceId];
+}
+
+// ── Suppression transparency ring buffer (card_59f41e5b) ──
+// orgChartForward() drops low-signal machine noise (ack/heartbeat echoes, JSON
+// crash fragments, kanban-notice echoes — see org-fwd-filter.js) before it can
+// flood the user's channel. Instead of dropping SILENTLY, each suppressed
+// forward is recorded here and pushed live to the dashboard, so the user can
+// see WHAT was filtered and WHY ("drop-but-surface"). In-memory only (not
+// persisted); per-device array capped at SUPPRESSION_LOG_CAP, oldest dropped.
+// Shape: suppressionLog[deviceId] = [{ ts, fromEntityId, reason, snippet }] (oldest-first).
+const suppressionLog = {};
+const SUPPRESSION_LOG_CAP = 50;
+
+function recordSuppressedForward(deviceId, item) {
+    if (!deviceId) return null;
+    const rec = {
+        ts: Date.now(),
+        fromEntityId: item && item.fromEntityId != null ? item.fromEntityId : null,
+        reason: (item && item.reason) || 'low_signal',
+        snippet: String((item && item.snippet) || '').slice(0, 80),
+    };
+    const arr = suppressionLog[deviceId] || (suppressionLog[deviceId] = []);
+    arr.push(rec);
+    if (arr.length > SUPPRESSION_LOG_CAP) arr.splice(0, arr.length - SUPPRESSION_LOG_CAP);
+    // Live UI: notify the dashboard suppression-transparency drawer.
+    if (io) io.to(deviceId).emit('suppression:logged', { deviceId, item: rec, count: arr.length });
+    return rec;
 }
 
 function checkCrossSpeakRateLimit(deviceId, entityId) {
@@ -8480,6 +8521,66 @@ app.get('/api/status', (req, res) => {
         rental_contract_id: entity.rental_contract_id || null,
         versionInfo: getVersionInfo(appVersion || entity.appVersion)
     });
+});
+
+// Shared read-auth for the transparency GETs below (card_59f41e5b): authorize
+// with the SAME credentials the other mission/status GETs accept —
+// deviceId+deviceSecret (owner) OR deviceId+botSecret+entityId (a bound bot).
+// Returns { ok, status, error } and never leaks which factor failed.
+function authDeviceRead(query) {
+    const { deviceId, deviceSecret, botSecret } = query;
+    const eId = parseInt(query.entityId);
+    if (!deviceId) return { ok: false, status: 400, error: 'deviceId required' };
+    const device = devices[deviceId];
+    if (!device) return { ok: false, status: 404, error: 'Device not found' };
+    const deviceAuthed = !!(deviceSecret && device.deviceSecret && safeEqual(device.deviceSecret, deviceSecret));
+    const botEntity = (botSecret && Number.isInteger(eId) && isValidEntityId(device, eId)) ? device.entities[eId] : null;
+    const botAuthed = !!(botEntity && botEntity.isBound && botEntity.botSecret && safeEqual(botEntity.botSecret, botSecret));
+    if (!deviceAuthed && !botAuthed) return { ok: false, status: 403, error: 'Invalid credentials' };
+    return { ok: true, deviceId, device };
+}
+
+/**
+ * GET /api/suppression-log — "drop-but-surface" transparency feed (card_59f41e5b)
+ * Returns the in-memory ring buffer of low-signal org-chart forwards that were
+ * suppressed for this device (see orgChartForward / org-fwd-filter.js).
+ * Query: deviceId, botSecret, entityId  (or deviceId, deviceSecret)
+ * Response: { success:true, count, items:[{ ts, fromEntityId, reason, snippet }] }
+ *   items are OLDEST-FIRST (append order); `count` === items.length (cap 50).
+ */
+app.get('/api/suppression-log', (req, res) => {
+    const auth = authDeviceRead(req.query);
+    if (!auth.ok) return res.status(auth.status).json({ success: false, message: auth.error });
+    const items = suppressionLog[auth.deviceId] || [];
+    res.json({ success: true, count: items.length, items });
+});
+
+/**
+ * GET /api/b2b-status — bot-to-bot quota + regen countdown (card_59f41e5b)
+ * Feeds the front-end b2b quota countdown chip. Reports, per BOUND entity on
+ * the device (or just the one named by entityId), the remaining b2b tokens, the
+ * bucket capacity, and ms until the next token regenerates.
+ * Query: deviceId, botSecret, entityId  (entityId also scopes the result to one
+ *        entity; omit deviceSecret form to report the whole device)
+ * Response: { success:true, max, entities:[{ entityId, remaining, max, nextRegenMs }] }
+ */
+app.get('/api/b2b-status', (req, res) => {
+    const auth = authDeviceRead(req.query);
+    if (!auth.ok) return res.status(auth.status).json({ success: false, message: auth.error });
+    const { deviceId, device } = auth;
+    const scopeId = parseInt(req.query.entityId);
+    // When deviceSecret-authed and an entityId is given, scope to that one;
+    // bot-authed callers may also pass entityId to scope to themselves.
+    const ids = (Number.isInteger(scopeId) && isValidEntityId(device, scopeId))
+        ? [scopeId]
+        : Object.keys(device.entities).map(Number).filter(id => device.entities[id] && device.entities[id].isBound);
+    const entities = ids.map(id => ({
+        entityId: id,
+        remaining: getBotToBotRemaining(deviceId, id),
+        max: BOT2BOT_MAX_MESSAGES,
+        nextRegenMs: getBotToBotNextRegenMs(deviceId, id),
+    }));
+    res.json({ success: true, max: BOT2BOT_MAX_MESSAGES, entities });
 });
 
 /**
@@ -19317,8 +19418,17 @@ const ORG_TASK_FWD_PREFIX = '[📋 TASK FWD';
 
 async function orgChartForward(entity, deviceId, message, opts = {}) {
     if (!message || message.startsWith(ORG_TASK_FWD_PREFIX) || message.startsWith(ORG_FWD_PREFIX)) return;
-    if (isLowSignalFwd(message)) {
-        serverLog('info', 'org_forward_skip', `#${entity.entityId} suppressed low-signal fwd: "${String(message).trim().slice(0, 60)}"`, { deviceId, entityId: entity.entityId });
+    // card_59f41e5b: "drop-but-surface" — classify WHY it's low-signal, drop the
+    // upward forward as before, but ALSO record it + push a live event so the
+    // dashboard can show the user what was filtered (instead of a silent drop).
+    const lowSignalReason = classifyLowSignalFwd(message);
+    if (lowSignalReason) {
+        serverLog('info', 'org_forward_skip', `#${entity.entityId} suppressed low-signal fwd (${lowSignalReason}): "${String(message).trim().slice(0, 60)}"`, { deviceId, entityId: entity.entityId });
+        recordSuppressedForward(deviceId, {
+            fromEntityId: opts.fromEntityId != null ? opts.fromEntityId : (entity.entityId != null ? entity.entityId : null),
+            reason: lowSignalReason,
+            snippet: String(message).trim().slice(0, 80),
+        });
         return;
     }
 
@@ -24219,3 +24329,12 @@ module.exports._officialBorrowTest = {
 };
 module.exports._buildBindFailurePayload = buildBindFailurePayload;
 module.exports._getSilentTransformSuppressionReason = getSilentTransformSuppressionReason;
+// card_59f41e5b — b2b quota countdown + suppression-transparency internals
+module.exports._checkBotToBotRateLimit = checkBotToBotRateLimit;
+module.exports._getBotToBotRemaining = getBotToBotRemaining;
+module.exports._getBotToBotNextRegenMs = getBotToBotNextRegenMs;
+module.exports._BOT2BOT_MAX_MESSAGES = BOT2BOT_MAX_MESSAGES;
+module.exports._BOT2BOT_REGEN_INTERVAL_MS = BOT2BOT_REGEN_INTERVAL_MS;
+module.exports._recordSuppressedForward = recordSuppressedForward;
+module.exports._suppressionLog = suppressionLog;
+module.exports._SUPPRESSION_LOG_CAP = SUPPRESSION_LOG_CAP;
