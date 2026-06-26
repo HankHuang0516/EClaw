@@ -139,3 +139,41 @@ describe('classifier shape invariants', () => {
         ]);
     });
 });
+
+describe('audit card_c6731c2f — false-positive hardening', () => {
+    const fp = (s) => expect(classifyOwnerDecision(s).ownerOnly).toBe(false);
+    const tp = (s, cat) => {
+        const r = classifyOwnerDecision(s);
+        expect(r.ownerOnly).toBe(true);
+        if (cat) expect(r.categories).toContain(cat);
+    };
+
+    test('F1 — a bare $ no longer trips spend_cost (shell / template / jQuery)', () => {
+        fp('fix shell script using $1 and $PATH');
+        fp('template literal uses ${foo}');
+        fp('refactor the jQuery $ selector');
+    });
+    test('F1 — a real price shape still fires spend_cost', () => {
+        tp('bump the plan, it is $200 per month', 'spend_cost');
+        tp('花錢 $1,000 budget', 'spend_cost');
+    });
+    test('F2 — substring over-matches are gone (suspend / swipe / auto-purge / truncated)', () => {
+        fp('account suspended after 3 failed logins');
+        fp('fix swipe up gesture');
+        fp('auto-purge done cards via doneRetention');
+        fp('the log output was truncated');
+    });
+    test('F2 — the real words still fire', () => {
+        tp('we should spend more on infra', 'spend_cost');
+        tp('truncate the orders table', 'irreversible_data');
+        tp('purge the production database', 'irreversible_data');
+    });
+    test('F3 — casual 需要你 is not an explicit owner flag', () => {
+        fp('這個需要你確認一下');
+        fp('需要你幫忙看一下 log');
+    });
+    test('F3 — a deliberate 需要你<decision-verb> marker still forces ownerOnly', () => {
+        tp('需要你決策要不要 rollback', 'explicit_flag');
+        tp('這題需要你核可', 'explicit_flag');
+    });
+});
