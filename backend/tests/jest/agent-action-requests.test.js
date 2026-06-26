@@ -59,6 +59,7 @@ function rowFixture(over = {}) {
     return {
         id: UUID, device_id: deviceId, from_entity_id: 2, anchor_message_id: null,
         type: 'decision', prompt: 'pick A or B', options: ['A', 'B'],
+        related_card_id: null,
         status: 'pending', answer: null,
         created_at: new Date('2026-06-25T00:00:00Z'), resolved_at: null, ...over,
     };
@@ -121,6 +122,39 @@ describe('POST / (emit)', () => {
         const res = await post('/api/action-requests').send({ deviceId, deviceSecret, type: 'decision', prompt: 'x' });
         expect(res.status).toBe(400);
         expect(res.body.error).toMatch(/fromEntityId/);
+    });
+
+    // 計畫D (card_df646877): optional relatedCardId persists + surfaces via rowToApi.
+    it('persists an optional relatedCardId and returns it as relatedCardId', async () => {
+        mockPoolQuery.mockResolvedValueOnce({ rows: [rowFixture({ related_card_id: 'card_df646877' })] });
+        const res = await post('/api/action-requests').send({
+            deviceId, botSecret: 'bot-2', entityId: 2,
+            type: 'decision', prompt: 'pick A or B', relatedCardId: 'card_df646877',
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.request.relatedCardId).toBe('card_df646877');
+        // INSERT writes the related_card_id column as the 7th param.
+        const [sql, params] = mockPoolQuery.mock.calls[0];
+        expect(sql).toMatch(/related_card_id/);
+        expect(params[6]).toBe('card_df646877');
+    });
+    it('omitting relatedCardId stores null', async () => {
+        mockPoolQuery.mockResolvedValueOnce({ rows: [rowFixture()] });
+        const res = await post('/api/action-requests').send({
+            deviceId, botSecret: 'bot-2', entityId: 2, type: 'input', prompt: 'fill in',
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.request.relatedCardId).toBeNull();
+        expect(mockPoolQuery.mock.calls[0][1][6]).toBeNull();
+    });
+    it('rejects a relatedCardId longer than 64 chars', async () => {
+        const res = await post('/api/action-requests').send({
+            deviceId, botSecret: 'bot-2', entityId: 2, type: 'decision', prompt: 'x',
+            relatedCardId: 'c'.repeat(65),
+        });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/relatedCardId/);
+        expect(mockPoolQuery).not.toHaveBeenCalled();
     });
 });
 
@@ -235,6 +269,44 @@ describe('PUT /:id (edit)', () => {
         expect(changes.prompt).toEqual({ old: 'pick A or B', new: 'pick A, B or C' });
         expect(changes.options).toEqual({ old: ['A', 'B'], new: ['A', 'B', 'C'] });
         expect(changes.type).toEqual({ old: 'decision', new: 'approval' });
+    });
+
+    it('(c3) 計畫D: edits relatedCardId, writes the column + audits old→new', async () => {
+        const before = rowFixture({ related_card_id: null });
+        const after = rowFixture({ related_card_id: 'card_df646877' });
+        queueEditTxn(before, after);
+        const res = await put(`/api/action-requests/${UUID}`).send({
+            deviceId, botSecret: 'bot-2', entityId: 2, relatedCardId: 'card_df646877',
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.changed).toBe(true);
+        expect(res.body.request.relatedCardId).toBe('card_df646877');
+        const updCall = mockPoolQuery.mock.calls.find(c => /UPDATE agent_action_requests SET/.test(c[0]));
+        expect(updCall[0]).toMatch(/related_card_id = /);
+        const changes = JSON.parse(auditCall()[1][3]);
+        expect(changes.relatedCardId).toEqual({ old: null, new: 'card_df646877' });
+    });
+
+    it('(c4) 計畫D: relatedCardId:null clears an existing card link (audited)', async () => {
+        const before = rowFixture({ related_card_id: 'card_old' });
+        const after = rowFixture({ related_card_id: null });
+        queueEditTxn(before, after);
+        const res = await put(`/api/action-requests/${UUID}`).send({
+            deviceId, botSecret: 'bot-2', entityId: 2, relatedCardId: null,
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.changed).toBe(true);
+        const changes = JSON.parse(auditCall()[1][3]);
+        expect(changes.relatedCardId).toEqual({ old: 'card_old', new: null });
+    });
+
+    it('(d) rejects a relatedCardId longer than 64 chars with 400 (no DB write)', async () => {
+        const res = await put(`/api/action-requests/${UUID}`).send({
+            deviceId, botSecret: 'bot-2', entityId: 2, relatedCardId: 'c'.repeat(65),
+        });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/relatedCardId/);
+        expect(mockPoolQuery).not.toHaveBeenCalled();
     });
 
     it('(c2) human (deviceSecret) edit records editorEntityId = null', async () => {

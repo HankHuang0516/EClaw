@@ -145,12 +145,38 @@ async function initAgentActionRequestsDatabase() {
     } catch (err) {
         console.error('[AgentActionRequests] consensus_triggered_at migration skipped:', err.message);
     }
+
+    // ── Idempotent column migration: related_card_id (計畫D, card_df646877) ──
+    // Optional kanban-card reference an agent can attach to a request so the inbox
+    // can render a "🗂 任務卡" deep-link chip. The prod table already exists, so the
+    // CREATE TABLE above is a no-op; this ALTER adds the column to the live table.
+    // ADD COLUMN IF NOT EXISTS is a no-op once present. Best-effort: never throws.
+    try {
+        await pool.query(
+            `ALTER TABLE agent_action_requests
+                ADD COLUMN IF NOT EXISTS related_card_id VARCHAR(64) DEFAULT NULL`
+        );
+    } catch (err) {
+        console.error('[AgentActionRequests] related_card_id migration skipped:', err.message);
+    }
 }
 
 // ── Helpers ──
 function normalizeAnchor(value) {
     if (typeof value === 'string' && UUID_RE.test(value.trim())) return value.trim();
     return null;
+}
+
+// Optional related_card_id (計畫D, card_df646877): a kanban card reference.
+// Shared by the create (POST /) and edit (PUT /:id) paths so the rule is stated
+// once. Returns { ok, value }: value is a trimmed non-empty string or null.
+//   undefined | null            → { ok: true,  value: null }   (none / clear)
+//   string ≤ 64 chars           → { ok: true,  value: <trim|null> }
+//   non-string | string > 64    → { ok: false }
+function validateRelatedCardId(value) {
+    if (value === undefined || value === null) return { ok: true, value: null };
+    if (typeof value !== 'string' || value.length > 64) return { ok: false, value: null };
+    return { ok: true, value: value.trim() || null };
 }
 
 function rowToApi(row) {
@@ -161,6 +187,7 @@ function rowToApi(row) {
         type: row.type,
         prompt: row.prompt,
         options: row.options || null,
+        relatedCardId: row.related_card_id || null,
         status: row.status,
         answer: row.answer || null,
         createdAt: new Date(row.created_at).getTime(),
@@ -490,15 +517,20 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         if (Array.isArray(options) && (options.length > 50 || JSON.stringify(options).length > 8192)) {
             return res.status(400).json({ success: false, error: 'options too large (max 50 items / 8KB)' });
         }
+        // Optional kanban-card reference (計畫D): string ≤64 chars or null.
+        const relCard = validateRelatedCardId(req.body.relatedCardId);
+        if (!relCard.ok) {
+            return res.status(400).json({ success: false, error: 'relatedCardId must be a string of max 64 chars or null' });
+        }
         const anchor = normalizeAnchor(anchorMessageId);
 
         try {
             const result = await pool.query(
                 `INSERT INTO agent_action_requests
-                    (device_id, from_entity_id, anchor_message_id, type, prompt, options)
-                 VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+                    (device_id, from_entity_id, anchor_message_id, type, prompt, options, related_card_id)
+                 VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
                  RETURNING *`,
-                [deviceId, fromEntityId, anchor, type, prompt, options != null ? JSON.stringify(options) : null]
+                [deviceId, fromEntityId, anchor, type, prompt, options != null ? JSON.stringify(options) : null, relCard.value]
             );
             const row = result.rows[0];
             log('info', `emit id=${row.id} from=${fromEntityId} type=${type}`, { deviceId });
@@ -639,8 +671,9 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         const hasType = Object.prototype.hasOwnProperty.call(body, 'type');
         const hasPrompt = Object.prototype.hasOwnProperty.call(body, 'prompt');
         const hasOptions = Object.prototype.hasOwnProperty.call(body, 'options');
-        if (!hasType && !hasPrompt && !hasOptions) {
-            return res.status(400).json({ success: false, error: 'Provide at least one editable field: prompt, options, type' });
+        const hasRelatedCardId = Object.prototype.hasOwnProperty.call(body, 'relatedCardId');
+        if (!hasType && !hasPrompt && !hasOptions && !hasRelatedCardId) {
+            return res.status(400).json({ success: false, error: 'Provide at least one editable field: prompt, options, type, relatedCardId' });
         }
         // Validate each PROVIDED field with the exact same rules as POST / (create).
         if (hasType && (typeof body.type !== 'string' || !VALID_TYPES.has(body.type))) {
@@ -656,6 +689,15 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
             if (Array.isArray(body.options) && (body.options.length > 50 || JSON.stringify(body.options).length > 8192)) {
                 return res.status(400).json({ success: false, error: 'options too large (max 50 items / 8KB)' });
             }
+        }
+        // related_card_id (計畫D): string ≤64 or null (null clears the link).
+        let relatedCardIdNew = null;
+        if (hasRelatedCardId) {
+            const relCard = validateRelatedCardId(body.relatedCardId);
+            if (!relCard.ok) {
+                return res.status(400).json({ success: false, error: 'relatedCardId must be a string of max 64 chars or null' });
+            }
+            relatedCardIdNew = relCard.value;
         }
 
         const client = await pool.connect();
@@ -698,6 +740,13 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
                 if (newOpts !== oldOpts) {
                     params.push(newOpts); sets.push(`options = $${params.length}::jsonb`);
                     changes.options = { old: before.options ?? null, new: body.options ?? null };
+                }
+            }
+            if (hasRelatedCardId) {
+                const oldRel = before.related_card_id ?? null;
+                if (relatedCardIdNew !== oldRel) {
+                    params.push(relatedCardIdNew); sets.push(`related_card_id = $${params.length}`);
+                    changes.relatedCardId = { old: oldRel, new: relatedCardIdNew };
                 }
             }
 

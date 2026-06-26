@@ -184,3 +184,66 @@ describe('需要你 inbox collapse + lifecycle hardening (card_b176c435)', () =>
         expect((fn.match(/restoreReplyContextsOnAbort\(\)/g) || []).length).toBeGreaterThanOrEqual(3);
     });
 });
+
+describe('需要你 inbox 篩選條件 facet (計畫C, card_2a6f260f)', () => {
+    test('a persisted All / Consensus filter state drives a matcher', () => {
+        expect(chatHtml).toContain("const ACTION_REQUEST_INBOX_FILTER_KEY = 'needsyou_inbox_filter';");
+        expect(chatHtml).toContain('let actionRequestInboxFilter = (() => {');
+        expect(chatHtml).toMatch(/function setActionRequestInboxFilter\(value\)/);
+        expect(chatHtml).toContain("localStorage.setItem(ACTION_REQUEST_INBOX_FILTER_KEY, actionRequestInboxFilter);");
+        // matcher: consensus facet narrows to type==='consensus' OR an in-consensus round
+        expect(chatHtml).toMatch(/function actionRequestMatchesFilter\(request\)/);
+        expect(chatHtml).toContain("if (actionRequestInboxFilter !== 'consensus') return true;");
+        expect(chatHtml).toContain("return String(request && request.type) === 'consensus' || isActionRequestConsensusTriggered(request);");
+    });
+
+    test('the inbox renders filter chips and applies the matcher to the list', () => {
+        const fn = chatHtml.slice(chatHtml.indexOf('function renderActionRequestInbox('), chatHtml.indexOf('function collectActionRequestReplyContexts('));
+        expect(fn).toContain("filterRow.className = 'action-request-inbox-filter';");
+        expect(fn).toContain("['all', 'action_request_filter_all', 'All'],");
+        expect(fn).toContain("['consensus', 'action_request_filter_consensus', 'Consensus'],");
+        expect(fn).toContain('setActionRequestInboxFilter(value);');
+        // chips reuse the existing .filter-chip look + active state
+        expect(fn).toContain("chip.className = 'filter-chip' + (actionRequestInboxFilter === value ? ' active' : '');");
+        // the list is the filtered set, not the raw actionRequests
+        expect(fn).toContain('const visibleRequests = actionRequests.filter(actionRequestMatchesFilter);');
+        expect(fn).toContain('visibleRequests.forEach(request => {');
+        // empty-state when the facet matches nothing
+        expect(fn).toContain('if (visibleRequests.length === 0) {');
+        expect(fn).toContain("empty.className = 'action-request-filter-empty';");
+        // does not regress the separate system-message filter
+        expect(chatHtml).toContain("function applySysFilterChipState()");
+    });
+
+    test('EN + ZH strings exist for the filter facet', () => {
+        ['action_request_filter_label', 'action_request_filter_all', 'action_request_filter_consensus', 'action_request_filter_empty']
+            .forEach(key => expect(i18nJs).toContain(`"${key}"`));
+        expect(i18nJs).toContain('"action_request_filter_consensus": "Consensus"');
+        expect(i18nJs).toContain('"action_request_filter_consensus": "協商討論"');
+    });
+});
+
+describe('需要你 inbox related-card chip (計畫D, card_df646877)', () => {
+    test('the chip renders ONLY when a request has relatedCardId and opens the card via openKanbanCard', () => {
+        const fn = chatHtml.slice(chatHtml.indexOf('function renderActionRequestInbox('), chatHtml.indexOf('function collectActionRequestReplyContexts('));
+        // gated on relatedCardId — absent → no chip, no layout shift
+        expect(fn).toContain('if (request.relatedCardId) {');
+        expect(fn).toContain("cardLink.className = 'action-request-action action-request-card-link';");
+        expect(fn).toContain("cardLink.textContent = t('action_request_card_link', '🗂 Task card');");
+        // clicking deep-links to the kanban card via the shared open mechanism
+        expect(fn).toContain('openKanbanCard(request.relatedCardId, event)');
+        // the chip lives in the actions row (after Show source, before Dismiss)
+        expect(fn.indexOf('action-request-card-link')).toBeLessThan(fn.indexOf("dismiss.className = 'action-request-action danger';"));
+    });
+
+    test('openKanbanCard exists as the shared deep-link entry', () => {
+        expect(chatHtml).toMatch(/function openKanbanCard\(cardId, event\)/);
+    });
+
+    test('EN + ZH strings exist for the related-card chip', () => {
+        ['action_request_card_link', 'action_request_card_link_title']
+            .forEach(key => expect(i18nJs).toContain(`"${key}"`));
+        expect(i18nJs).toContain('"action_request_card_link": "🗂 Task card"');
+        expect(i18nJs).toContain('"action_request_card_link": "🗂 任務卡"');
+    });
+});
