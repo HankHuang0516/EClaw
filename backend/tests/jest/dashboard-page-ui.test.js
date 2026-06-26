@@ -80,4 +80,21 @@ describe('dashboard page self-improvement UI', () => {
         expect(html).toMatch(/@media \(max-width: 640px\)[\s\S]*\.dashboard-entity-metrics\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
         expect(html).toMatch(/@media \(max-width: 640px\)[\s\S]*\.dashboard-entity-actions \.btn\s*\{[\s\S]*min-width:\s*0/);
     });
+
+    test('card_cb00b807: mobile summary collapses the empty gap (justify-content:flex-start)', () => {
+        // The base rule is space-between (horizontal row); the mobile column MUST
+        // override it to flex-start or the title/metrics get pushed apart vertically.
+        expect(html).toMatch(/@media \(max-width: 640px\)[\s\S]*\.dashboard-entity-summary\s*\{[\s\S]*flex-direction:\s*column[\s\S]*justify-content:\s*flex-start/);
+    });
+
+    test('card_cb00b807: the 4 overview tiles are actionable buttons with drill-in + labels', () => {
+        // each metric is a <button> wired to drillDashboardMetric + a descriptive title
+        ['bound', 'active', 'channel', 'e2ee'].forEach((m) => {
+            expect(html).toMatch(new RegExp(`<button[^>]*class="dashboard-entity-metric"[^>]*data-metric="${m}"[^>]*onclick="drillDashboardMetric\\('${m}'\\)"[^>]*title=`));
+        });
+        expect(html).toMatch(/function drillDashboardMetric\(/);
+        // interactivity affordance + a11y focus ring on the tiles
+        expect(html).toMatch(/\.dashboard-entity-metric\s*\{[\s\S]*cursor:\s*pointer/);
+        expect(html).toMatch(/\.dashboard-entity-metric:focus-visible\s*\{[\s\S]*outline:/);
+    });
 });

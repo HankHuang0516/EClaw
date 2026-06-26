@@ -91,6 +91,23 @@
             background: var(--input-bg);
             border: 1px solid var(--card-border);
             border-radius: 8px;
+            /* tiles are now <button>s (clickable drill-in, card_cb00b807) — reset the
+               UA button look + signal interactivity. */
+            font: inherit;
+            text-align: left;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+            transition: border-color 0.12s, background 0.12s, transform 0.06s;
+        }
+        .dashboard-entity-metric:hover {
+            border-color: var(--accent-cyan, #4fc3f7);
+            background: var(--card-bg);
+        }
+        .dashboard-entity-metric:active { transform: scale(0.98); }
+        .dashboard-entity-metric:focus-visible {
+            outline: 2px solid var(--accent-cyan, #4fc3f7);
+            outline-offset: 2px;
         }
 
         .dashboard-entity-metric strong {
@@ -333,6 +350,11 @@
             .dashboard-entity-summary {
                 align-items: stretch;
                 flex-direction: column;
+                /* Override the base justify-content:space-between — on a column this
+                   pushed the title to the top and metrics/actions to the bottom,
+                   leaving a large empty gap on phones (card_cb00b807, Hank). Stack
+                   tightly top-down instead. */
+                justify-content: flex-start;
             }
             .dashboard-entity-metrics {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2187,10 +2209,10 @@
                 <div class="dashboard-entity-summary-meta" id="dashboardEntitySummaryMeta">Checking bound entity slots. / 正在檢查實體欄位。</div>
             </div>
             <div class="dashboard-entity-metrics" aria-label="Dashboard entity overview">
-                <div class="dashboard-entity-metric"><strong id="dashboardMetricBound">--</strong><span>Bound / 已綁定</span></div>
-                <div class="dashboard-entity-metric"><strong id="dashboardMetricActive">--</strong><span>Active / 活動中</span></div>
-                <div class="dashboard-entity-metric"><strong id="dashboardMetricChannel">--</strong><span>Channel / 頻道</span></div>
-                <div class="dashboard-entity-metric"><strong id="dashboardMetricE2ee">--</strong><span>E2EE / 加密</span></div>
+                <button type="button" class="dashboard-entity-metric" data-metric="bound" onclick="drillDashboardMetric('bound')" title="已綁定實體數 — 點此查看實體清單 / Bound entities — view the list"><strong id="dashboardMetricBound">--</strong><span>Bound / 已綁定</span></button>
+                <button type="button" class="dashboard-entity-metric" data-metric="active" onclick="drillDashboardMetric('active')" title="目前在線的實體 — 點此查看 / Active (online) entities — view the list"><strong id="dashboardMetricActive">--</strong><span>Active / 活動中</span></button>
+                <button type="button" class="dashboard-entity-metric" data-metric="channel" onclick="drillDashboardMetric('channel')" title="使用 EClaw Channel 綁定的實體 — 點此到頻道綁定設定 / Channel-bound — open channel binding"><strong id="dashboardMetricChannel">--</strong><span>Channel / 頻道</span></button>
+                <button type="button" class="dashboard-entity-metric" data-metric="e2ee" onclick="drillDashboardMetric('e2ee')" title="啟用端到端加密的實體 — 點此查看 / End-to-end-encrypted entities — view the list"><strong id="dashboardMetricE2ee">--</strong><span>E2EE / 加密</span></button>
             </div>
             <div class="dashboard-entity-actions">
                 <button class="btn btn-sm btn-outline" id="dashboardSummaryRefresh" type="button" onclick="refreshDashboardEntities()">Refresh / 重新整理</button>
@@ -2836,6 +2858,23 @@
             const card = document.getElementById('addEntityCard');
             if (!isAddExpanded) toggleAddEntity();
             if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Overview stat tiles are clickable (card_cb00b807): clicking a metric scrolls
+        // the user to the relevant area so the number means something actionable, not
+        // just a static figure. Bound/Active/E2EE → the entity list; Channel → the
+        // channel-binding section (falls back to the list if that section isn't present).
+        function drillDashboardMetric(which) {
+            const grid = document.getElementById('entityGrid');
+            let target = grid;
+            if (which === 'channel') {
+                target = document.getElementById('channelPromo')
+                    || document.querySelector('.channel-promo, .channel-bind-warning')
+                    || grid;
+            }
+            if (target && typeof target.scrollIntoView === 'function') {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
 
         // getAvatarForEntity is provided by shared/entity-utils.js
