@@ -80,6 +80,7 @@ describe('POST /api/client/speak — smart-quote auto-resolve', () => {
     let app;
     let arPool;
     const UUID = '99999999-8888-7777-6666-555555555555';
+    const UUID_B = '88888888-7777-6666-5555-444444444444';
     const post = (p) => request(app).post(p).set('Host', 'localhost');
     const get = (p) => request(app).get(p).set('Host', 'localhost');
 
@@ -162,6 +163,46 @@ describe('POST /api/client/speak — smart-quote auto-resolve', () => {
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
         expect(lastResolveCall()).toBeUndefined();           // no resolve UPDATE fired
+        expect(res.body.actionRequestResolved).toBeUndefined();
+    });
+
+    it('a reply bundling MULTIPLE distinct requests does NOT auto-resolve any (ambiguous)', async () => {
+        // 需要你 inbox INDEPENDENCE: a single human reply must auto-resolve EXACTLY
+        // one item. When the send bundles two distinct action-requests (multi-quote
+        // → replyContext.requests[]), the server must NOT pick one — that wrote one
+        // reply's text onto a request it was not composed for (the live P0 bug).
+        const deviceId = 'speak-ar-multi';
+        const secret = await registerDevice(deviceId);
+        await post('/api/bind').send({ deviceId, entityId: 0, name: 'Bot', character: '🤖', webhook: '' });
+
+        const res = await post('/api/client/speak').send({
+            deviceId, deviceSecret: secret, entityId: 0, source: 'web_chat',
+            text: 'only meant for the first item',
+            actionRequest: { requestId: UUID },
+            replyContext: { requests: [{ requestId: UUID }, { requestId: UUID_B }] },
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        // FAIL-ON-OLD: old code resolved UUID (the first of the bundle).
+        expect(lastResolveCall()).toBeUndefined();
+        expect(res.body.actionRequestResolved).toBeUndefined();
+    });
+
+    it('a reply whose replyContext target disagrees with actionRequest.requestId does NOT auto-resolve', async () => {
+        const deviceId = 'speak-ar-mismatch';
+        const secret = await registerDevice(deviceId);
+        await post('/api/bind').send({ deviceId, entityId: 0, name: 'Bot', character: '🤖', webhook: '' });
+
+        const res = await post('/api/client/speak').send({
+            deviceId, deviceSecret: secret, entityId: 0, source: 'web_chat',
+            text: 'mismatched targeting',
+            actionRequest: { requestId: UUID },
+            replyContext: { requestId: UUID_B },
+        });
+
+        expect(res.status).toBe(200);
+        expect(lastResolveCall()).toBeUndefined();
         expect(res.body.actionRequestResolved).toBeUndefined();
     });
 

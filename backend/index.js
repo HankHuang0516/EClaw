@@ -12362,8 +12362,29 @@ app.post('/api/client/speak', idempotencyMiddleware, clientSpeakDedupeMiddleware
     // user's reply text as the answer. Device-scoped + pending-only inside the
     // helper. Best-effort: a failure here must NEVER break the speak response.
     try {
-        const arReqId = req.body && req.body.actionRequest && req.body.actionRequest.requestId;
-        if (arReqId && agentActionRequestsModule && typeof agentActionRequestsModule.resolveActionRequest === 'function') {
+        const ar = req.body && req.body.actionRequest;
+        const arReqId = ar && ar.requestId;
+        // Ambiguity guard (需要你 inbox independence): one human reply must
+        // auto-resolve EXACTLY one inbox item. When the reply bundles MULTIPLE
+        // distinct action-requests (multi-quote → replyContext.requests[]), or its
+        // replyContext target disagrees with actionRequest.requestId, the server
+        // must NOT pick one to auto-resolve — that would write this reply's text
+        // onto a request it was not composed for. Resolve none; the explicit
+        // per-item POST /:id/resolve calls own the disambiguated case.
+        const rc = req.body && req.body.replyContext;
+        let ambiguousTarget = false;
+        if (rc && Array.isArray(rc.requests)) {
+            const ids = new Set(
+                rc.requests.map(r => r && r.requestId).filter(Boolean).map(v => String(v).toLowerCase())
+            );
+            if (ids.size > 1) ambiguousTarget = true;
+            else if (ids.size === 1 && arReqId && !ids.has(String(arReqId).toLowerCase())) ambiguousTarget = true;
+        } else if (rc && rc.requestId && arReqId && String(rc.requestId).toLowerCase() !== String(arReqId).toLowerCase()) {
+            ambiguousTarget = true;
+        }
+        if (arReqId && ambiguousTarget) {
+            serverLog('info', 'agent_action_requests', 'speak auto-resolve skipped: reply targets multiple/mismatched requests (ambiguous)', { deviceId });
+        } else if (arReqId && agentActionRequestsModule && typeof agentActionRequestsModule.resolveActionRequest === 'function') {
             const row = await agentActionRequestsModule.resolveActionRequest(deviceId, arReqId, { text: text || '' }, device);
             if (row) {
                 clientSpeakResponse.actionRequestResolved = { requestId: row.id };

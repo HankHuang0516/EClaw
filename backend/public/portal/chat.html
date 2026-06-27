@@ -8214,24 +8214,45 @@
 
         async function resolveActionRequestReplyContexts(contexts, answerText) {
             if (!Array.isArray(contexts) || contexts.length === 0 || !currentUser?.deviceId || !currentUser?.deviceSecret) return;
-            let resolved = 0;
+            // 需要你 inbox INDEPENDENCE: one reply text resolves EXACTLY ONE inbox
+            // item. Quoting several 需要你 items into a single send used to resolve
+            // them ALL with that one text — so an answer meant for item A overwrote
+            // unrelated item B (cross-contamination). De-dupe by requestId; if the
+            // send still targets more than one DISTINCT request, refuse to broadcast
+            // and tell the user to answer them individually (resolve none).
+            const uniq = [];
+            const seen = new Set();
             for (const ctx of contexts) {
-                try {
-                    await apiCall('POST', `/api/action-requests/${ctx.requestId}/resolve`, {
-                        deviceId: currentUser.deviceId,
-                        deviceSecret: currentUser.deviceSecret,
-                        answer: {
-                            text: answerText || '',
-                            replyContext: {
-                                requestId: ctx.requestId,
-                                anchorMessageId: ctx.anchorMessageId || null
-                            }
-                        }
-                    });
-                    resolved++;
-                } catch (err) {
-                    console.warn('[CHAT] action request resolve failed:', ctx.requestId, err.message || err);
+                const id = ctx && ctx.requestId;
+                if (!id || seen.has(id)) continue;
+                seen.add(id);
+                uniq.push(ctx);
+            }
+            if (uniq.length === 0) return;
+            if (uniq.length > 1) {
+                if (typeof showToast === 'function') {
+                    showToast(i18n.t('action_request_one_at_a_time') || 'Please answer each request separately — one reply resolves one item.', 'error');
                 }
+                await loadActionRequests({ renderInbox: true });
+                return;
+            }
+            const ctx = uniq[0];
+            let resolved = 0;
+            try {
+                await apiCall('POST', `/api/action-requests/${ctx.requestId}/resolve`, {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    answer: {
+                        text: answerText || '',
+                        replyContext: {
+                            requestId: ctx.requestId,
+                            anchorMessageId: ctx.anchorMessageId || null
+                        }
+                    }
+                });
+                resolved++;
+            } catch (err) {
+                console.warn('[CHAT] action request resolve failed:', ctx.requestId, err.message || err);
             }
             if (resolved > 0 && typeof showToast === 'function') {
                 showToast(i18n.t('action_request_resolved') || 'Request resolved', 'success');
