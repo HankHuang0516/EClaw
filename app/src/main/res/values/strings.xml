@@ -93,9 +93,9 @@
     <string name="drag_to_position">Drag entities to position them</string>
     <string name="pinch_to_resize">Drag to move; pinch entities or usage to resize</string>
     <string name="wallpaper_walking_title">Walking Feature</string>
-    <string name="wallpaper_walking_settings_desc">Slow goal-based movement for wallpaper entities</string>
+    <string name="wallpaper_walking_settings_desc">Lets wallpaper entities walk. Pair with Conscious walking to pick event-only or free roaming.</string>
     <string name="wallpaper_walking_help_button">About wallpaper walking</string>
-    <string name="wallpaper_walking_help">What: wallpaper entities stay at their home positions until a speak-to, @all, or broadcast conversation happens. The sender and receivers gather at the center with one-entity spacing, then return home when the message bubble TTL ends.\n\nNeeds: live wallpaper enabled, at least one bound entity, and directional walking animation available.\n\nTest: send a speak-to or broadcast message between entities, then watch the sender and receivers gather and return.</string>
+    <string name="wallpaper_walking_help">What: this is the master switch for wallpaper movement. With Conscious walking ON (default), entities stay at their home positions and only move for a speak-to, @all, or broadcast conversation — the sender and receivers gather at the center with one-entity spacing, then return home when the message bubble TTL ends. With Conscious walking OFF, entities roam freely all the time, doing a random goal action (visit a peer, patrol, return home) every few seconds.\n\nNeeds: live wallpaper enabled, at least one bound entity, and directional walking animation available.\n\nTest: turn Conscious walking off and watch entities wander; or leave it on and send a speak-to/broadcast to watch them gather and return.</string>
     <string name="wallpaper_custom_layout_help_button">About custom layout</string>
     <string name="wallpaper_custom_layout_help">Lets you drag entities to persistent wallpaper home positions. Conscious walking and kanban task objects use these home positions as their source of truth.</string>
     <string name="wallpaper_background_help_button">About custom background</string>
@@ -140,10 +140,8 @@
     <string name="wallpaper_setting_bubble_duration_value">%1$d sec</string>
     <string name="wallpaper_setting_bubble_duration_minutes_value">%1$d min</string>
     <string name="wallpaper_setting_bubble_duration_minutes_seconds_value">%1$d min %2$d sec</string>
-    <string name="wallpaper_setting_purposeful_walking">Purposeful walking</string>
-    <string name="wallpaper_setting_purposeful_walking_desc">Give idle companions goals like visiting peers, patrolling, and returning home.</string>
     <string name="wallpaper_setting_conscious_walking">Conscious walking</string>
-    <string name="wallpaper_setting_conscious_walking_desc">Only move entities for speak-to, @all, and broadcast conversations. The sender and receivers gather at the center with one-entity spacing, then return home when the bubble TTL ends.</string>
+    <string name="wallpaper_setting_conscious_walking_desc">On: entities only move for speak-to, @all, and broadcast conversations — the sender and receivers gather at the center with one-entity spacing, then return home when the bubble TTL ends. Off: entities roam freely with goal actions like visiting peers and patrolling.</string>
     <string name="wallpaper_setting_entity_interactions">Entity interactions</string>
     <string name="wallpaper_setting_entity_interactions_desc">Let companions react when they bump into each other. Both entities play the same random action: wave, jump, fail, or review.</string>
     <string name="wallpaper_setting_collision_duration">Collision action duration</string>

@@ -158,6 +158,14 @@ class WallpaperWanderController(
         } else {
             emptyMap()
         }
+        // 行走功能 (free walking / ambient) needs peer positions so a roaming entity can
+        // visit companions or patrol. Only built when conscious mode is OFF so the
+        // 有意識的行走 (conscious / event-only) path stays allocation-free per frame.
+        val ambientPeers = if (!purposeful) {
+            buildAmbientPeers(basePositions, entities, width, height)
+        } else {
+            emptyList()
+        }
 
         return entities.mapIndexed { index, entity ->
             val base = basePositions.getOrNull(index) ?: (width / 2f to height / 2f)
@@ -170,9 +178,33 @@ class WallpaperWanderController(
                 advanceConversationTarget(entity, base, width, height, nowMs, gatherTargets[entity.entityId])
             } else if (states[entity.entityId]?.manualTarget == true) {
                 advanceManualTarget(entity, base, width, height, nowMs)
-            } else {
+            } else if (purposeful) {
+                // 有意識的行走 (conscious / event-only): idle at home until a chat event fires.
                 advanceHome(entity, base, width, height, nowMs)
+            } else {
+                // 行走功能 (free walking / ambient): roam continuously with goal-based actions.
+                advance(entity, base, width, height, nowMs, purposeful = true, ambientPeers = ambientPeers)
             }
+        }
+    }
+
+    private fun buildAmbientPeers(
+        basePositions: List<Pair<Float, Float>>,
+        entities: List<EntityStatus>,
+        width: Float,
+        height: Float
+    ): List<AmbientPeer> {
+        return entities.mapIndexedNotNull { index, entity ->
+            if (entity.state.pausesAmbientWander) return@mapIndexedNotNull null
+            val base = basePositions.getOrNull(index) ?: (width / 2f to height / 2f)
+            val baseX = (base.first / width).coerceIn(MIN_X_PCT, MAX_X_PCT)
+            val baseY = (base.second / height).coerceIn(MIN_Y_PCT, MAX_Y_PCT)
+            val state = states[entity.entityId]
+            AmbientPeer(
+                entityId = entity.entityId,
+                xPct = state?.xPct ?: baseX,
+                yPct = state?.yPct ?: baseY
+            )
         }
     }
 
@@ -301,7 +333,10 @@ class WallpaperWanderController(
         val state = stateFor(entityId, base, width, height, nowMs)
         state.homeXPct = (base.first / width).coerceIn(MIN_X_PCT, MAX_X_PCT)
         state.homeYPct = (base.second / height).coerceIn(MIN_Y_PCT, MAX_Y_PCT)
-        if (state.motionState == MotionState.SLEEPING) {
+        // Ambient roaming never produces STOPPED on its own; a STOPPED/SLEEPING state here
+        // means the entity just arrived home in conscious mode and the user switched to free
+        // walking — resume wandering instead of staying frozen.
+        if (state.motionState == MotionState.SLEEPING || state.motionState == MotionState.STOPPED) {
             state.motionState = MotionState.WANDERING
             state.idleUntilMs = 0L
         }

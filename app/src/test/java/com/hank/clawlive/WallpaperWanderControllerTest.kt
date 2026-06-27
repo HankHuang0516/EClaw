@@ -153,6 +153,55 @@ class WallpaperWanderControllerTest {
     }
 
     @Test
+    fun freeWalkingRoamsAwayFromHomeWhenConsciousModeOff() {
+        // 行走功能 (free walking / ambient): with conscious mode OFF (purposeful = false)
+        // entities must roam continuously, not stay frozen at their home positions.
+        // Regression guard for the #3617 wiring that left advance() unreachable.
+        val controller = WallpaperWanderController(random = Random(5))
+        val entities = listOf(
+            EntityStatus(entityId = 1, state = CharacterState.IDLE),
+            EntityStatus(entityId = 2, state = CharacterState.IDLE)
+        )
+        val base = listOf(250f to 500f, 750f to 500f)
+
+        controller.positionsFor(base, entities, 1000f, 1000f, enabled = true, purposeful = false, nowMs = 0L)
+        var maxDisplacement = 0f
+        var t = 0L
+        repeat(60) {
+            t += 500L
+            val pos = controller.positionsFor(base, entities, 1000f, 1000f, enabled = true, purposeful = false, nowMs = t)
+            for (i in pos.indices) {
+                val dx = pos[i].first - base[i].first
+                val dy = pos[i].second - base[i].second
+                maxDisplacement = maxOf(maxDisplacement, kotlin.math.hypot(dx.toDouble(), dy.toDouble()).toFloat())
+            }
+        }
+
+        assertTrue(
+            "free walking (conscious OFF) must roam away from home, got max=$maxDisplacement",
+            maxDisplacement > 20f
+        )
+    }
+
+    @Test
+    fun consciousModeKeepsEntitiesHomeWithoutConversation() {
+        // 有意識的行走 (conscious / event-only, purposeful = true): entities idle at home
+        // and never ambient-roam without a chat event.
+        val controller = WallpaperWanderController(random = Random(5))
+        val entities = listOf(EntityStatus(entityId = 1, state = CharacterState.IDLE))
+        val base = listOf(250f to 500f)
+
+        controller.positionsFor(base, entities, 1000f, 1000f, enabled = true, purposeful = true, nowMs = 0L)
+        var t = 0L
+        repeat(60) {
+            t += 500L
+            val pos = controller.positionsFor(base, entities, 1000f, 1000f, enabled = true, purposeful = true, nowMs = t)
+            assertEquals("conscious mode must stay at home x", base[0].first, pos[0].first, 0.001f)
+            assertEquals("conscious mode must stay at home y", base[0].second, pos[0].second, 0.001f)
+        }
+    }
+
+    @Test
     fun walkingStateConstantMatchesPetdxDescriptorStateName() {
         assertEquals("WALKING", WallpaperWanderController.WALKING_STATE_ASSET)
     }
