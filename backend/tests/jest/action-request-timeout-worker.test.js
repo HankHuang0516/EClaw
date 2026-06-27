@@ -91,6 +91,37 @@ describe('device-preferences: action_request_timeout_* coercion', () => {
         }
     });
 
+    test('需要你 negotiation prefs: defaults + clamps (window/synth-grace/min-entities)', async () => {
+        // defaults
+        expect(devicePrefs.DEFAULTS.consensus_window_minutes).toBe(30);
+        expect(devicePrefs.DEFAULTS.consensus_synthesis_grace_minutes).toBe(360);
+        expect(devicePrefs.DEFAULTS.consensus_min_entities).toBe(2);
+
+        const written = [];
+        const stubPool = { query: jest.fn((sql, params) => { written.push({ sql, params }); return Promise.resolve({ rows: [] }); }) };
+        await devicePrefs.initTable(stubPool);
+        const readBack = () => JSON.parse(written[written.length - 1].params[1]);
+        const cases = [
+            ['consensus_window_minutes', 0, 1],          // below min → clamp up
+            ['consensus_window_minutes', 30, 30],
+            ['consensus_window_minutes', 99999, 1440],   // above max → clamp down
+            ['consensus_window_minutes', 'oops', 30],    // NaN → default
+            ['consensus_synthesis_grace_minutes', 1, 5], // below min
+            ['consensus_synthesis_grace_minutes', 360, 360],
+            ['consensus_synthesis_grace_minutes', 99999, 43200], // above max
+            ['consensus_synthesis_grace_minutes', 'x', 360],     // NaN → default
+            ['consensus_min_entities', 1, 2],            // below min
+            ['consensus_min_entities', 5, 5],
+            ['consensus_min_entities', 99, 20],          // above max
+            ['consensus_min_entities', 'nope', 2],       // NaN → default
+        ];
+        for (const [key, input, expected] of cases) {
+            written.length = 0;
+            await devicePrefs.updatePrefs(deviceId, { [key]: input });
+            expect(readBack()[key]).toBe(expected);
+        }
+    });
+
     test('minutes clamps to [5,43200], parses ints, defaults invalid → 1440', async () => {
         const written = [];
         const stubPool = { query: jest.fn((sql, params) => { written.push({ sql, params }); return Promise.resolve({ rows: [] }); }) };
@@ -118,24 +149,45 @@ describe('device-preferences: action_request_timeout_* coercion', () => {
 });
 
 // ───────────────────────────── worker ─────────────────────────────
+// The worker now runs, per device, BEFORE the policy/keep gate: a 計畫E ratify
+// pass (no-op unless ratify_enabled) and a POLICY-INDEPENDENT negotiation
+// ADVANCE pass (T2 close SELECT + T3b fallback SELECT). consensus policy OPENS
+// rounds via a dedicated backstop (no created_at age clause). To stay robust to
+// that internal query order we route the pg mock by SQL content rather than by a
+// brittle ordered Once-chain; each test supplies only the rows it cares about.
+function routeMock({ scan = [], timeoutSelect = [], t2Select = [], t3bSelect = [], backstopSelect = [], onUpdate } = {}) {
+    mockPoolQuery.mockImplementation(async (sql) => {
+        const s = String(sql);
+        if (/SELECT DISTINCT device_id/.test(s)) return { rows: scan };
+        if (/SELECT \* FROM agent_action_requests/.test(s)) {
+            if (/consensus_collect_at IS NULL/.test(s) && /consensus_triggered_at < NOW/.test(s)) return { rows: t2Select };
+            if (/consensus_collect_at IS NOT NULL/.test(s)) return { rows: t3bSelect };
+            if (/jsonb_array_length/.test(s)) return { rows: backstopSelect };
+            if (/created_at < NOW/.test(s)) return { rows: timeoutSelect };
+            return { rows: [] };
+        }
+        if (/UPDATE agent_action_requests/.test(s)) return onUpdate ? onUpdate(s) : { rows: [] };
+        return { rows: [] };
+    });
+}
+
 describe('enforceActionRequestTimeouts', () => {
-    test('policy=keep → device skipped, NO pending-request SELECT/UPDATE', async () => {
-        const { mod } = buildModule({ prefs: { action_request_timeout_policy: 'keep', action_request_timeout_minutes: 1440 } });
-        // call 0 = DISTINCT device scan
-        mockPoolQuery.mockResolvedValueOnce({ rows: [{ device_id: deviceId }] });
+    test('policy=keep → no auto-act writes (advance pass runs but writes nothing)', async () => {
+        const { mod, emitToRoom } = buildModule({ prefs: { action_request_timeout_policy: 'keep', action_request_timeout_minutes: 1440 } });
+        routeMock({ scan: [{ device_id: deviceId }] });
         await mod.enforceActionRequestTimeouts();
-        // Only the device-scan query ran; no per-device SELECT or any write.
-        expect(mockPoolQuery).toHaveBeenCalledTimes(1);
-        expect(mockPoolQuery.mock.calls[0][0]).toMatch(/SELECT DISTINCT device_id/);
+        // keep skips the timeout SELECT + every auto-act write; the negotiation
+        // advance pass runs but its SELECTs return empty → no UPDATE/resolve/dismiss.
+        const writes = mockPoolQuery.mock.calls.filter(c => /UPDATE agent_action_requests/.test(c[0]));
+        expect(writes).toHaveLength(0);
+        expect(emitToRoom).not.toHaveBeenCalled();
     });
 
-    test('the pending SELECT carries the timeout-minutes interval + status=pending', async () => {
+    test('the timeout SELECT carries the timeout-minutes interval + status=pending', async () => {
         const { mod } = buildModule({ prefs: { action_request_timeout_policy: 'auto_dismiss', action_request_timeout_minutes: 90 } });
-        mockPoolQuery
-            .mockResolvedValueOnce({ rows: [{ device_id: deviceId }] }) // scan
-            .mockResolvedValueOnce({ rows: [] });                       // pending SELECT → none
+        routeMock({ scan: [{ device_id: deviceId }], timeoutSelect: [] });
         await mod.enforceActionRequestTimeouts();
-        const selectCall = mockPoolQuery.mock.calls[1];
+        const selectCall = mockPoolQuery.mock.calls.find(c => /SELECT \* FROM agent_action_requests/.test(c[0]) && /created_at < NOW/.test(c[0]));
         expect(selectCall[0]).toMatch(/status = 'pending'/);
         expect(selectCall[0]).toMatch(/created_at < NOW\(\) - \(\$2 \* interval '1 minute'\)/);
         expect(selectCall[1]).toEqual([deviceId, 90]);
@@ -143,96 +195,109 @@ describe('enforceActionRequestTimeouts', () => {
 
     test('auto_dismiss → dismiss UPDATE + emitChanged(dismissed) + emitter push', async () => {
         const { mod, emitToRoom, unifiedPush } = buildModule({ prefs: { action_request_timeout_policy: 'auto_dismiss', action_request_timeout_minutes: 1440 } });
-        mockPoolQuery
-            .mockResolvedValueOnce({ rows: [{ device_id: deviceId }] })       // scan
-            .mockResolvedValueOnce({ rows: [pendingRow()] })                  // pending SELECT
-            .mockResolvedValueOnce({ rows: [pendingRow({ status: 'dismissed', resolved_at: new Date() })] }); // dismiss UPDATE
+        routeMock({
+            scan: [{ device_id: deviceId }],
+            timeoutSelect: [pendingRow()],
+            onUpdate: () => ({ rows: [pendingRow({ status: 'dismissed', resolved_at: new Date() })] }),
+        });
         await mod.enforceActionRequestTimeouts();
 
-        const updateCall = mockPoolQuery.mock.calls[2];
-        expect(updateCall[0]).toMatch(/SET status = 'dismissed'/);
+        const updateCall = mockPoolQuery.mock.calls.find(c => /UPDATE agent_action_requests/.test(c[0]) && /SET status = 'dismissed'/.test(c[0]));
         expect(updateCall[0]).toMatch(/WHERE id = \$1 AND status = 'pending'/);
         expect(updateCall[1]).toEqual([UUID]);
 
         expect(emitToRoom).toHaveBeenCalledWith('action_request:changed', { kind: 'dismissed', requestId: UUID, fromEntityId: 1 });
-        // emitter (#1) was told it timed out
         const pushed = unifiedPush.mock.calls.find(c => /逾時自動略過/.test(c[3].message));
         expect(pushed).toBeTruthy();
     });
 
     test('safe_default → resolveActionRequest path: resolve UPDATE + emitChanged(resolved)', async () => {
         const { mod, emitToRoom, unifiedPush } = buildModule({ prefs: { action_request_timeout_policy: 'safe_default', action_request_timeout_minutes: 1440 } });
-        mockPoolQuery
-            .mockResolvedValueOnce({ rows: [{ device_id: deviceId }] })       // scan
-            .mockResolvedValueOnce({ rows: [pendingRow()] })                  // pending SELECT
-            .mockResolvedValueOnce({ rows: [pendingRow({ status: 'resolved', resolved_at: new Date() })] }); // resolve UPDATE
+        routeMock({
+            scan: [{ device_id: deviceId }],
+            timeoutSelect: [pendingRow()],
+            onUpdate: () => ({ rows: [pendingRow({ status: 'resolved', resolved_at: new Date() })] }),
+        });
         await mod.enforceActionRequestTimeouts();
 
-        const resolveCall = mockPoolQuery.mock.calls[2];
-        expect(resolveCall[0]).toMatch(/SET status = 'resolved'/);
-        // safe-default answer payload was passed as the jsonb param
+        const resolveCall = mockPoolQuery.mock.calls.find(c => /UPDATE agent_action_requests/.test(c[0]) && /SET status = 'resolved'/.test(c[0]));
         const answerJson = JSON.parse(resolveCall[1][0]);
         expect(answerJson.reason).toBe('timeout_safe_default');
         expect(answerJson.auto).toBe(true);
 
         expect(emitToRoom).toHaveBeenCalledWith('action_request:changed', { kind: 'resolved', requestId: UUID, fromEntityId: 1 });
-        // emitter notified via the RESOLVED push-back (resolveActionRequest)
         const pushed = unifiedPush.mock.calls.find(c => /RESOLVED/.test(c[3].message));
         expect(pushed).toBeTruthy();
     });
 
-    test('consensus → stamp consensus_triggered_at + broadcast prompt + emitChanged(consensus_triggered); NO resolve', async () => {
+    test('consensus → OPENS a negotiation round (stamp + structured vote prompt + consensus_triggered); NO resolve', async () => {
         const { mod, emitToRoom, unifiedPush } = buildModule({ prefs: { action_request_timeout_policy: 'consensus', action_request_timeout_minutes: 1440 } });
-        mockPoolQuery
-            .mockResolvedValueOnce({ rows: [{ device_id: deviceId }] })       // scan
-            .mockResolvedValueOnce({ rows: [pendingRow()] })                  // pending SELECT
-            .mockResolvedValueOnce({ rows: [pendingRow({ consensus_triggered_at: new Date() })] }); // stamp UPDATE
+        const row = pendingRow({ options: ['A', 'B'] });
+        routeMock({
+            scan: [{ device_id: deviceId }],
+            backstopSelect: [row], // the OPEN backstop SELECT (no age clause, jsonb_array_length>=2)
+            onUpdate: () => ({ rows: [pendingRow({ options: ['A', 'B'], consensus_triggered_at: new Date() })] }),
+        });
         await mod.enforceActionRequestTimeouts();
 
-        // pending SELECT excluded already-triggered rows
-        expect(mockPoolQuery.mock.calls[1][0]).toMatch(/consensus_triggered_at IS NULL/);
+        // the backstop SELECT has NO created_at age clause + requires options>=2
+        const backstop = mockPoolQuery.mock.calls.find(c => /SELECT \* FROM agent_action_requests/.test(c[0]) && /jsonb_array_length/.test(c[0]));
+        expect(backstop[0]).toMatch(/consensus_triggered_at IS NULL/);
+        expect(backstop[0]).not.toMatch(/created_at < NOW/);
 
-        const stampCall = mockPoolQuery.mock.calls[2];
-        expect(stampCall[0]).toMatch(/SET consensus_triggered_at = NOW\(\)/);
+        const stampCall = mockPoolQuery.mock.calls.find(c => /UPDATE agent_action_requests/.test(c[0]) && /SET consensus_triggered_at = NOW\(\)/.test(c[0]));
         expect(stampCall[0]).toMatch(/consensus_triggered_at IS NULL/);
         expect(stampCall[1]).toEqual([UUID]);
 
-        // exactly 3 queries → no resolve/dismiss UPDATE fired
-        expect(mockPoolQuery).toHaveBeenCalledTimes(3);
+        // NO resolve/dismiss UPDATE fired
+        const badWrite = mockPoolQuery.mock.calls.find(c => /UPDATE agent_action_requests/.test(c[0]) && /(status = 'resolved'|status = 'dismissed')/.test(c[0]));
+        expect(badWrite).toBeUndefined();
 
         expect(emitToRoom).toHaveBeenCalledWith('action_request:changed', { kind: 'consensus_triggered', requestId: UUID, fromEntityId: 1 });
 
-        // bot-to-bot consensus prompt broadcast to BOTH bound entities
+        // structured vote prompt broadcast to BOTH bound entities, listing options + /vote
         const consensusPushes = unifiedPush.mock.calls.filter(c => /協商共識/.test(c[3].message));
         expect(consensusPushes.length).toBe(2);
         const msg = consensusPushes[0][3].message;
         expect(msg).toMatch(/requestId=11111111-2222-3333-4444-555555555555/);
         expect(msg).toMatch(/發起：#1/);
+        expect(msg).toMatch(/\/vote/);
+        expect(msg).toMatch(/\[0\] A/);
+        expect(msg).toMatch(/\[1\] B/);
     });
 
-    test('consensus: a request already stamped (consensus_triggered_at set) is not re-fired', async () => {
-        // The SELECT filters consensus_triggered_at IS NULL, so a stamped row never
-        // returns → the worker performs no UPDATE for it.
+    test('consensus: a request already opened (consensus_triggered_at set) is not re-opened', async () => {
+        // The backstop SELECT filters consensus_triggered_at IS NULL, so a stamped
+        // row never returns → no second open / stamp UPDATE.
         const { mod, emitToRoom, unifiedPush } = buildModule({ prefs: { action_request_timeout_policy: 'consensus', action_request_timeout_minutes: 1440 } });
-        mockPoolQuery
-            .mockResolvedValueOnce({ rows: [{ device_id: deviceId }] }) // scan
-            .mockResolvedValueOnce({ rows: [] });                       // SELECT excludes stamped → empty
+        routeMock({ scan: [{ device_id: deviceId }], backstopSelect: [] });
         await mod.enforceActionRequestTimeouts();
-        expect(mockPoolQuery).toHaveBeenCalledTimes(2);          // scan + empty SELECT only
+        const stampCall = mockPoolQuery.mock.calls.find(c => /UPDATE agent_action_requests/.test(c[0]) && /SET consensus_triggered_at = NOW\(\)/.test(c[0]));
+        expect(stampCall).toBeUndefined();
         expect(emitToRoom).not.toHaveBeenCalled();
         expect(unifiedPush).not.toHaveBeenCalled();
     });
 
     test('one bad row does not abort the sweep (best-effort per request)', async () => {
+        const row1 = pendingRow();
         const row2 = pendingRow({ id: '22222222-2222-3333-4444-555555555555', from_entity_id: 2 });
         const { mod, emitToRoom } = buildModule({ prefs: { action_request_timeout_policy: 'auto_dismiss', action_request_timeout_minutes: 1440 } });
-        mockPoolQuery
-            .mockResolvedValueOnce({ rows: [{ device_id: deviceId }] })   // scan
-            .mockResolvedValueOnce({ rows: [pendingRow(), row2] })        // two pending
-            .mockRejectedValueOnce(new Error('boom'))                     // first dismiss throws
-            .mockResolvedValueOnce({ rows: [row2] });                     // second dismiss ok
+        routeMock({ scan: [{ device_id: deviceId }], timeoutSelect: [row1, row2] });
+        // Make ONLY the first dismiss UPDATE reject; subsequent ones resolve.
+        let firstUpdate = true;
+        const base = mockPoolQuery.getMockImplementation();
+        mockPoolQuery.mockImplementation(async (sql, params) => {
+            if (/UPDATE agent_action_requests/.test(String(sql)) && /dismissed/.test(String(sql)) && firstUpdate) {
+                firstUpdate = false;
+                throw new Error('boom');
+            }
+            if (/UPDATE agent_action_requests/.test(String(sql)) && /dismissed/.test(String(sql))) {
+                return { rows: [row2] };
+            }
+            return base(sql, params);
+        });
         await mod.enforceActionRequestTimeouts();
-        // second row still emitted despite first throwing
+        // second row still emitted despite the first throwing
         expect(emitToRoom).toHaveBeenCalledWith('action_request:changed', { kind: 'dismissed', requestId: row2.id, fromEntityId: 2 });
     });
 });

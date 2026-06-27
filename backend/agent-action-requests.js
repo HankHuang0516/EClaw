@@ -67,6 +67,120 @@ let timeoutSweepTimer = null;
 const MAX_RATIFY_RETRIES = 2;
 const RATIFY_DEFAULT_GRACE_MINUTES = 1440;
 
+// ══════════════════════════════════════════════════════════════════════════
+// 需要你 NEGOTIATION / CONSENSUS WORKFLOW (owner-approved build)
+// ──────────────────────────────────────────────────────────────────────────
+// A 需要你 item with options (and the device on the consensus policy + enough
+// bound entities) opens a bot-to-bot negotiation round: entities VOTE → the
+// task-owner entity (from_entity_id) SYNTHESIZES a best answer → it is written
+// back to the inbox item (SURFACED, never auto-executed) → the owner disposes.
+// Never hangs (server fallback after a grace window); never auto-executes an
+// owner-only item (the owner-veto applies only at DISPOSITION).
+//
+// All tunables are device-prefs (clamped here so a junk pref never breaks the
+// clock math). Defaults mirror device-preferences.js DEFAULTS.
+const CONSENSUS_WINDOW_MIN_DEFAULT = 30;        // collect window (minutes)
+const CONSENSUS_WINDOW_MIN_MIN = 1;
+const CONSENSUS_WINDOW_MIN_MAX = 1440;
+const CONSENSUS_SYNTH_GRACE_DEFAULT = 360;      // owner-synth grace (minutes)
+const CONSENSUS_SYNTH_GRACE_MIN = 5;
+const CONSENSUS_SYNTH_GRACE_MAX = 43200;
+const CONSENSUS_MIN_ENTITIES_DEFAULT = 2;       // min bound entities to negotiate
+const CONSENSUS_MIN_ENTITIES_MIN = 2;
+const CONSENSUS_MIN_ENTITIES_MAX = 20;
+
+function clampInt(raw, def, lo, hi) {
+    const n = parseInt(raw, 10);
+    if (!Number.isFinite(n)) return def;
+    return Math.max(lo, Math.min(hi, n));
+}
+function clampWindowMinutes(raw) {
+    return clampInt(raw, CONSENSUS_WINDOW_MIN_DEFAULT, CONSENSUS_WINDOW_MIN_MIN, CONSENSUS_WINDOW_MIN_MAX);
+}
+function clampSynthGraceMinutes(raw) {
+    return clampInt(raw, CONSENSUS_SYNTH_GRACE_DEFAULT, CONSENSUS_SYNTH_GRACE_MIN, CONSENSUS_SYNTH_GRACE_MAX);
+}
+function clampMinEntities(raw) {
+    return clampInt(raw, CONSENSUS_MIN_ENTITIES_DEFAULT, CONSENSUS_MIN_ENTITIES_MIN, CONSENSUS_MIN_ENTITIES_MAX);
+}
+
+// Count entities bound on a device (the N in the k/N vote progress + the
+// min-entities trigger gate). Tolerates a missing/odd device shape.
+function countBoundEntities(device) {
+    if (!device || !device.entities) return 0;
+    let n = 0;
+    for (const e of Object.values(device.entities)) {
+        if (e && e.isBound) n++;
+    }
+    return n;
+}
+
+// Render one option to a human label. options[] may be strings or objects.
+function optionLabel(o) {
+    if (o == null) return '';
+    if (typeof o === 'string') return o;
+    if (typeof o === 'object') {
+        if (typeof o.label === 'string') return o.label;
+        if (typeof o.text === 'string') return o.text;
+        if (typeof o.value === 'string') return o.value;
+        try { return JSON.stringify(o); } catch (_) { return String(o); }
+    }
+    return String(o);
+}
+
+// TRIGGER predicate (encapsulated per the design). A row is negotiable when ALL
+// hold: (1) device pref policy === 'consensus'; (2) options is an array len>=2;
+// (3) device has >= consensus_min_entities bound entities; (4) status='pending'
+// AND consensus_triggered_at IS NULL. decision_context does NOT block opening —
+// owner-only items DO deliberate; the owner-veto applies only at DISPOSITION.
+function isNegotiable(row, prefs, boundEntityCount) {
+    if (!row || !prefs) return false;
+    if (prefs.action_request_timeout_policy !== 'consensus') return false;
+    if (row.status !== 'pending') return false;
+    if (row.consensus_triggered_at != null) return false;
+    const opts = row.options;
+    if (!Array.isArray(opts) || opts.length < 2) return false;
+    if (Number(boundEntityCount) < clampMinEntities(prefs.consensus_min_entities)) return false;
+    return true;
+}
+
+// Deterministic plurality tally of vote rows. Returns {bestOptionIndex,count,total}.
+//   - only votes carrying an integer option_index contribute to the option tally;
+//     free-text-only votes still count toward `total`.
+//   - tie → recommendedOptionIndex if it is among the tied set, else the LOWEST index.
+//   - zero option-votes → bestOptionIndex = recommendedOptionIndex ?? null, count 0.
+function tallyVotes(voteRows, optionsLen, recommendedOptionIndex) {
+    const rows = Array.isArray(voteRows) ? voteRows : [];
+    const total = rows.length;
+    const recIdx = Number.isInteger(recommendedOptionIndex) ? recommendedOptionIndex : null;
+    const counts = new Map();
+    for (const v of rows) {
+        const oi = v.option_index;
+        if (Number.isInteger(oi)) counts.set(oi, (counts.get(oi) || 0) + 1);
+    }
+    if (counts.size === 0) {
+        return { bestOptionIndex: recIdx, count: 0, total };
+    }
+    let max = -1;
+    for (const c of counts.values()) if (c > max) max = c;
+    const tied = [...counts.entries()].filter(([, c]) => c === max).map(([oi]) => oi);
+    let bestOptionIndex;
+    if (tied.length === 1) bestOptionIndex = tied[0];
+    else if (recIdx != null && tied.includes(recIdx)) bestOptionIndex = recIdx;
+    else bestOptionIndex = Math.min(...tied);
+    return { bestOptionIndex, count: max, total };
+}
+
+// Shape vote rows for the API / negotiation.perEntity blob.
+function votesToPerEntity(voteRows) {
+    return (voteRows || []).map(v => ({
+        entityId: v.entity_id,
+        optionIndex: Number.isInteger(v.option_index) ? v.option_index : null,
+        freeText: v.free_text || null,
+        rationale: v.rationale || null,
+    }));
+}
+
 async function initAgentActionRequestsDatabase() {
     try {
         const schemaPath = path.join(__dirname, 'agent_action_requests_schema.sql');
@@ -187,6 +301,48 @@ async function initAgentActionRequestsDatabase() {
         );
     } catch (err) {
         console.error('[AgentActionRequests] decision_context migration skipped:', err.message);
+    }
+
+    // ── Idempotent migration: negotiation/consensus workflow (需要你 negotiation) ──
+    // consensus_collect_at = the collection window closed / owner prompted to
+    // synthesize (S1→S2). negotiation = the TERMINAL synthesized conclusion blob
+    // (non-null ⇒ concluded + surfaced, status STILL 'pending' until disposition).
+    // Both additive + reversible; the committed migration lives in
+    // migrations/20260627_action_request_negotiation.{up,down}.sql. ADD COLUMN IF
+    // NOT EXISTS is a no-op once present. Best-effort: never throws/crashes init.
+    try {
+        await pool.query(
+            `ALTER TABLE agent_action_requests
+                ADD COLUMN IF NOT EXISTS consensus_collect_at TIMESTAMPTZ DEFAULT NULL`
+        );
+        await pool.query(
+            `ALTER TABLE agent_action_requests
+                ADD COLUMN IF NOT EXISTS negotiation JSONB DEFAULT NULL`
+        );
+    } catch (err) {
+        console.error('[AgentActionRequests] negotiation columns migration skipped:', err.message);
+    }
+
+    // ── Idempotent: per-entity negotiation votes child table ──
+    // One vote per (request, entity); last-write-wins via the UNIQUE constraint.
+    try {
+        await pool.query(
+            `CREATE TABLE IF NOT EXISTS agent_action_request_votes (
+                id BIGSERIAL PRIMARY KEY,
+                request_id UUID NOT NULL,
+                entity_id INTEGER NOT NULL,
+                option_index INTEGER DEFAULT NULL,
+                free_text TEXT DEFAULT NULL,
+                rationale TEXT DEFAULT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                CONSTRAINT aar_votes_unique UNIQUE (request_id, entity_id)
+            )`
+        );
+        await pool.query(
+            `CREATE INDEX IF NOT EXISTS idx_aar_votes_request ON agent_action_request_votes(request_id)`
+        );
+    } catch (err) {
+        console.error('[AgentActionRequests] votes table migration skipped:', err.message);
     }
 }
 
@@ -322,6 +478,12 @@ function rowToApi(row) {
         // null when the request was never negotiated) so clients can tell which
         // resolved rows were the product of a negotiation vs a plain human resolve.
         consensusTriggeredAt: row.consensus_triggered_at ? new Date(row.consensus_triggered_at).getTime() : null,
+        // Negotiation workflow markers (需要你 negotiation). consensusCollectAt = the
+        // collection window closed / owner was prompted to synthesize (ms or null).
+        // negotiation = the TERMINAL conclusion blob; non-null ⇒ "協商完成 — 待裁決"
+        // (status STILL 'pending' until the owner disposes / ratify auto-resolves).
+        consensusCollectAt: row.consensus_collect_at ? new Date(row.consensus_collect_at).getTime() : null,
+        negotiation: row.negotiation || null,
     };
 }
 
@@ -352,8 +514,16 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
     // Payload    : { kind, requestId, fromEntityId }
     //                kind         : 'emitted' | 'resolved' | 'dismissed'
     //                               | 'consensus_triggered' | 'edited'
+    //                               | 'vote' | 'consensus_collecting'
+    //                               | 'negotiation_concluded'
     //                requestId    : the agent_action_requests row UUID (string)
     //                fromEntityId : the emitting entity id (integer)
+    //              需要你 negotiation kinds: 'vote' (an entity voted; payload also
+    //              carries { votes:{count,total} } k/N), 'consensus_collecting'
+    //              (collection window closed → owner prompted to synthesize),
+    //              'negotiation_concluded' (a conclusion was written back; payload
+    //              carries { fallback } — true=server tally, false=owner synth).
+    //              The inbox should re-fetch on any of these.
     //              NEW kind 'edited' (card_cd4f323c): an agent edited the
     //              request's content (prompt/options/type) via PUT. The inbox
     //              should re-fetch to show the updated text.
@@ -369,13 +539,18 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
     //              response. This name + shape is the stable contract — do not
     //              rename without coordinating with the frontend.
     // ══════════════════════════════════════════════════════════════════════
-    function emitChanged(deviceId, kind, requestId, fromEntityId) {
+    // `extra` (optional): additional fields merged into the payload — used by the
+    // negotiation flow's kind='vote' to carry { votes: { count, total } } (k/N).
+    // When omitted the payload is the exact { kind, requestId, fromEntityId } shape
+    // the original contract guarantees (…{} spreads nothing).
+    function emitChanged(deviceId, kind, requestId, fromEntityId, extra) {
         try {
             if (io && deviceId) {
                 io.to(`device:${deviceId}`).emit('action_request:changed', {
                     kind,
                     requestId,
                     fromEntityId,
+                    ...(extra || {}),
                 });
             }
         } catch (_) { /* socket failure must never break the HTTP response */ }
@@ -457,6 +632,210 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         } catch (_) {}
     }
 
+    // ══════════════════════════════════════════════════════════════════════
+    // NEGOTIATION ENGINE (需要你 negotiation workflow)
+    // ──────────────────────────────────────────────────────────────────────
+    // State machine (markers on agent_action_requests; status STAYS 'pending'
+    // through S0→S3 — only T4 disposition flips status):
+    //   consensus_triggered_at  → round OPENED (S1 collecting)
+    //   consensus_collect_at    → window CLOSED / owner prompted (S2 synthesizing)
+    //   negotiation (JSONB)     → TERMINAL conclusion (S3 concluded + surfaced)
+    // Socket kinds emitted: consensus_triggered → vote → consensus_collecting →
+    // negotiation_concluded. None of these resolve; disposition is a separate act.
+    // ══════════════════════════════════════════════════════════════════════
+
+    // T1 OPEN (idempotent, CAS-guarded). Stamps consensus_triggered_at, broadcasts
+    // a STRUCTURED vote prompt (options + requestId + the from_entity_id synthesizer)
+    // to ALL bound entities, and emits kind='consensus_triggered'. Returns the won
+    // row, or null when another tick already opened it (CAS lost). Shared by the
+    // on-arrival path and the worker backstop.
+    async function openNegotiationRound(row, device) {
+        const stamp = await pool.query(
+            `UPDATE agent_action_requests SET consensus_triggered_at = NOW()
+               WHERE id = $1 AND status = 'pending' AND consensus_triggered_at IS NULL
+             RETURNING *`,
+            [row.id]
+        );
+        if (stamp.rows.length === 0) return null; // raced — another tick opened it
+        const won = stamp.rows[0];
+        const deviceId = won.device_id;
+        const opts = Array.isArray(won.options) ? won.options : [];
+        const optionsList = opts.map((o, i) => `  [${i}] ${optionLabel(o)}`).join('\n');
+        // NOTE: keeps the substrings 「協商共識」/「發起：#N」/「requestId=…」 the legacy
+        // consensus prompt used, now extended with the explicit options + /vote call.
+        const msg =
+            `[協商共識] 需多方表決：「${won.prompt}」\n` +
+            `發起：#${won.from_entity_id}（由其綜整最佳解 best solution）\n` +
+            `選項:\n${optionsList}\n` +
+            `請各實體投票：POST /api/action-requests/${won.id}/vote ` +
+            `{optionIndex 或 freeText, rationale}（requestId=${won.id}）。`;
+        const entities = (device && device.entities) || {};
+        for (const ent of Object.values(entities)) {
+            pushTextToEntity(deviceId, ent, 'action_request_consensus', msg,
+                { requestId: won.id, options: opts, synthesizerEntityId: won.from_entity_id });
+        }
+        emitChanged(deviceId, 'consensus_triggered', won.id, won.from_entity_id);
+        log('info', `negotiation round opened id=${won.id} from=${won.from_entity_id}`, { deviceId });
+        return won;
+    }
+
+    // T3b FALLBACK conclusion (NEVER-HANG). Deterministic plurality tally of votes;
+    // writes a server_fallback negotiation blob (fallback:true) — NEVER resolves,
+    // NEVER arms ratify. CAS-guarded on negotiation IS NULL. Returns the row or null.
+    async function concludeByFallback(row) {
+        const deviceId = row.device_id;
+        const opts = Array.isArray(row.options) ? row.options : [];
+        const dc = (row.decision_context && typeof row.decision_context === 'object') ? row.decision_context : {};
+        const recIdx = Number.isInteger(dc.recommendedOptionIndex) ? dc.recommendedOptionIndex : null;
+        let voteRows = [];
+        try {
+            const vr = await pool.query(
+                `SELECT entity_id, option_index, free_text, rationale
+                   FROM agent_action_request_votes WHERE request_id = $1 ORDER BY created_at ASC`,
+                [row.id]
+            );
+            voteRows = vr.rows || [];
+        } catch (_) { voteRows = []; }
+        const tally = tallyVotes(voteRows, opts.length, recIdx);
+        const hasVotes = tally.count > 0 && Number.isInteger(tally.bestOptionIndex);
+        const bestOptionIndex = Number.isInteger(tally.bestOptionIndex) ? tally.bestOptionIndex : null;
+        const bestSolution = (bestOptionIndex != null && bestOptionIndex >= 0 && bestOptionIndex < opts.length)
+            ? optionLabel(opts[bestOptionIndex]) : '';
+        const conclusion = hasVotes
+            ? `伺服器後援統計：多數選項 [${bestOptionIndex}]（${tally.count}/${tally.total} 票）。請您裁決。`
+            : '收集期內無共識/agent 未綜整，請您裁決';
+        const negotiation = {
+            conclusion,
+            bestSolution,
+            bestOptionIndex,
+            votes: { count: tally.count, total: tally.total },
+            perEntity: votesToPerEntity(voteRows),
+            synthesizedBy: 'server_fallback',
+            synthesizedAt: Date.now(),
+            fallback: true,
+        };
+        const upd = await pool.query(
+            `UPDATE agent_action_requests SET negotiation = $2::jsonb
+               WHERE id = $1 AND status = 'pending'
+                 AND consensus_triggered_at IS NOT NULL
+                 AND consensus_collect_at IS NOT NULL
+                 AND negotiation IS NULL
+             RETURNING *`,
+            [row.id, JSON.stringify(negotiation)]
+        );
+        if (upd.rows.length === 0) return null; // raced (owner synthesized first)
+        emitChanged(deviceId, 'negotiation_concluded', row.id, row.from_entity_id, { fallback: true });
+        log('info', `negotiation fallback concluded id=${row.id} best=${bestOptionIndex} votes=${tally.count}/${tally.total}`, { deviceId });
+        return upd.rows[0];
+    }
+
+    // ADVANCE pass (T2 CLOSE + T3b FALLBACK) — POLICY-INDEPENDENT, keyed only on
+    // markers + clock. Invoked by the worker BEFORE the policy/keep gate so an
+    // in-flight round always finishes even if the device is on 'keep'.
+    async function advanceNegotiations(deviceId, prefs, device) {
+        const windowMin = clampWindowMinutes(prefs && prefs.consensus_window_minutes);
+        const synthGraceMin = clampSynthGraceMinutes(prefs && prefs.consensus_synthesis_grace_minutes);
+
+        // ── T2 CLOSE: collection window elapsed; stamp consensus_collect_at + prompt OWNER. ──
+        let closeRows = [];
+        try {
+            const r = await pool.query(
+                `SELECT * FROM agent_action_requests
+                  WHERE device_id = $1 AND status = 'pending'
+                    AND consensus_triggered_at IS NOT NULL
+                    AND consensus_collect_at IS NULL
+                    AND negotiation IS NULL
+                    AND consensus_triggered_at < NOW() - ($2 * interval '1 minute')
+                  ORDER BY created_at ASC LIMIT ${MAX_LIST_LIMIT}`,
+                [deviceId, windowMin]
+            );
+            closeRows = r.rows || [];
+        } catch (err) {
+            console.error(`[AgentActionRequests] negotiation T2 select failed device=${deviceId}:`, err.message);
+        }
+        for (const row of closeRows) {
+            try {
+                const upd = await pool.query(
+                    `UPDATE agent_action_requests SET consensus_collect_at = NOW()
+                       WHERE id = $1 AND status = 'pending'
+                         AND consensus_triggered_at IS NOT NULL
+                         AND consensus_collect_at IS NULL
+                         AND negotiation IS NULL
+                     RETURNING *`,
+                    [row.id]
+                );
+                if (upd.rows.length === 0) continue; // raced
+                const owner = device && device.entities && device.entities[row.from_entity_id];
+                const synthMsg =
+                    `[協商綜整] 收集期結束，請你（#${row.from_entity_id}）綜整各實體投票並提交最佳解：` +
+                    `先 GET /api/action-requests/${row.id}/votes 看票，再 ` +
+                    `POST /api/action-requests/${row.id}/negotiation-result ` +
+                    `{conclusion, bestSolution, bestOptionIndex}（requestId=${row.id}）。`;
+                pushTextToEntity(deviceId, owner, 'action_request_consensus', synthMsg,
+                    { requestId: row.id, phase: 'synthesize' });
+                emitChanged(deviceId, 'consensus_collecting', row.id, row.from_entity_id);
+                log('info', `negotiation collect-closed id=${row.id} owner=${row.from_entity_id}`, { deviceId });
+            } catch (e) {
+                console.error(`[AgentActionRequests] negotiation T2 close failed id=${row.id}:`, e.message);
+            }
+        }
+
+        // ── T3b FALLBACK: owner-synth grace elapsed with no result → server tally. ──
+        let fbRows = [];
+        try {
+            const r = await pool.query(
+                `SELECT * FROM agent_action_requests
+                  WHERE device_id = $1 AND status = 'pending'
+                    AND consensus_collect_at IS NOT NULL
+                    AND negotiation IS NULL
+                    AND consensus_collect_at < NOW() - ($2 * interval '1 minute')
+                  ORDER BY created_at ASC LIMIT ${MAX_LIST_LIMIT}`,
+                [deviceId, synthGraceMin]
+            );
+            fbRows = r.rows || [];
+        } catch (err) {
+            console.error(`[AgentActionRequests] negotiation T3b select failed device=${deviceId}:`, err.message);
+        }
+        for (const row of fbRows) {
+            try { await concludeByFallback(row); }
+            catch (e) { console.error(`[AgentActionRequests] negotiation T3b fallback failed id=${row.id}:`, e.message); }
+        }
+    }
+
+    // OPEN backstop (consensus policy only). Opens rounds for eligible pending rows
+    // with NO created_at age clause — so a row whose on-arrival open failed (push/
+    // prefs hiccup) is picked up on the very next tick rather than waiting out a
+    // timeout. Eligibility re-checked via isNegotiable.
+    async function openNegotiationBackstop(deviceId, prefs, device) {
+        const boundCount = countBoundEntities(device);
+        if (boundCount < clampMinEntities(prefs && prefs.consensus_min_entities)) return;
+        let rows = [];
+        try {
+            const r = await pool.query(
+                `SELECT * FROM agent_action_requests
+                  WHERE device_id = $1 AND status = 'pending'
+                    AND consensus_triggered_at IS NULL
+                    AND options IS NOT NULL
+                    AND jsonb_typeof(options) = 'array'
+                    AND jsonb_array_length(options) >= 2
+                  ORDER BY created_at ASC LIMIT ${MAX_LIST_LIMIT}`,
+                [deviceId]
+            );
+            rows = r.rows || [];
+        } catch (err) {
+            console.error(`[AgentActionRequests] negotiation backstop select failed device=${deviceId}:`, err.message);
+            return;
+        }
+        for (const row of rows) {
+            try {
+                if (!isNegotiable(row, prefs, boundCount)) continue;
+                await openNegotiationRound(row, device);
+            } catch (e) {
+                console.error(`[AgentActionRequests] negotiation backstop open failed id=${row.id}:`, e.message);
+            }
+        }
+    }
+
     // Core create: insert ONE request row + emit 'emitted'. Shared by the HTTP
     // POST / route AND the kanban owner-decision auto-surface hook (子3/子4) so
     // there is exactly one INSERT code path. INPUT VALIDATION IS THE CALLER'S
@@ -484,6 +863,22 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         );
         const row = result.rows[0];
         emitChanged(deviceId, 'emitted', row.id, row.from_entity_id);
+        // ON-ARRIVAL negotiation open (需要你 negotiation): best-effort, AFTER the
+        // committed INSERT + 'emitted'. A prefs/push error here must NOT fail request
+        // creation — fully wrapped in try/catch. Only fires when isNegotiable (device
+        // on consensus policy + options>=2 + enough bound entities). The worker
+        // backstop re-attempts any open that this best-effort path missed.
+        try {
+            let prefs = {};
+            try { prefs = (await readDevicePrefs(deviceId)) || {}; } catch (_) { prefs = {}; }
+            const device = devices && devices[deviceId];
+            if (isNegotiable(row, prefs, countBoundEntities(device))) {
+                const won = await openNegotiationRound(row, device);
+                if (won) row.consensus_triggered_at = won.consensus_triggered_at;
+            }
+        } catch (e) {
+            console.error('[AgentActionRequests] on-arrival negotiation open failed:', e.message);
+        }
         return rowToApi(row);
     }
 
@@ -632,37 +1027,52 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
             try {
                 let prefs = {};
                 try { prefs = (await readDevicePrefs(deviceId)) || {}; } catch (_) { prefs = {}; }
+                const device = devices && devices[deviceId];
                 // 計畫E (card_e9d01b6e): run the independent ratify pass FIRST — it is
                 // gated on its own dark-launch pref (action_request_ratify_enabled),
                 // must not be skipped by 'keep', and must run before the
                 // decision_context pin below (which keeps every OTHER owner-decision
                 // row waiting for Hank). Failure-isolated so it never aborts the sweep.
-                try { await runRatifyPass(deviceId, prefs, devices && devices[deviceId]); }
+                try { await runRatifyPass(deviceId, prefs, device); }
                 catch (e) { console.error(`[AgentActionRequests] ratify pass failed device=${deviceId}:`, e.message); }
+
+                // 需要你 negotiation — ADVANCE in-flight rounds (T2 CLOSE + T3b
+                // FALLBACK). POLICY-INDEPENDENT, keyed only on markers + clock, so it
+                // runs BEFORE the keep gate: a round opened on-arrival must always
+                // finish even if the device is now on 'keep'. Failure-isolated.
+                try { await advanceNegotiations(deviceId, prefs, device); }
+                catch (e) { console.error(`[AgentActionRequests] negotiation advance failed device=${deviceId}:`, e.message); }
+
                 const policy = prefs.action_request_timeout_policy || 'keep';
                 if (policy === 'keep') continue; // default: never auto-act
+
+                // 需要你 negotiation — consensus policy OPENS rounds (backstop, no
+                // created_at age clause). It does NOT auto_dismiss/safe_default, so we
+                // open eligible rows and move to the next device.
+                if (policy === 'consensus') {
+                    try { await openNegotiationBackstop(deviceId, prefs, device); }
+                    catch (e) { console.error(`[AgentActionRequests] negotiation backstop failed device=${deviceId}:`, e.message); }
+                    continue;
+                }
+
                 const minutesRaw = prefs.action_request_timeout_minutes;
                 const minutes = Number.isFinite(Number(minutesRaw)) ? Number(minutesRaw) : 1440;
 
-                // Pending requests older than the timeout. For consensus, also skip
-                // ones we've already opened a round for (consensus_triggered_at set).
-                let sql = `SELECT * FROM agent_action_requests
+                // Pending requests older than the timeout (auto_dismiss / safe_default).
+                const sql = `SELECT * FROM agent_action_requests
                             WHERE device_id = $1 AND status = 'pending'
-                              AND created_at < NOW() - ($2 * interval '1 minute')`;
-                if (policy === 'consensus') sql += ` AND consensus_triggered_at IS NULL`;
-                sql += ` ORDER BY created_at ASC LIMIT ${MAX_LIST_LIMIT}`;
+                              AND created_at < NOW() - ($2 * interval '1 minute')
+                            ORDER BY created_at ASC LIMIT ${MAX_LIST_LIMIT}`;
                 const res = await pool.query(sql, [deviceId, minutes]);
                 const rows = res.rows || [];
                 if (rows.length === 0) continue;
-
-                const device = devices && devices[deviceId];
 
                 for (const row of rows) {
                     try {
                         // 子6(b): owner-decision items (decision_context non-null) are
                         // PINNED to 'keep' semantics — they wait for Hank and must
-                        // NEVER be auto_dismissed / safe_defaulted / consensus-routed
-                        // by the timeout worker, regardless of the device's policy.
+                        // NEVER be auto_dismissed / safe_defaulted by the timeout
+                        // worker, regardless of the device's policy.
                         if (row.decision_context != null) continue;
                         if (policy === 'auto_dismiss') {
                             const upd = await pool.query(
@@ -690,29 +1100,6 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
                                 device
                             );
                             log('info', `timeout safe_default id=${row.id} from=${row.from_entity_id}`, { deviceId });
-                        } else if (policy === 'consensus') {
-                            // 1. Stamp the marker first (guarded) so it never re-fires.
-                            const stamp = await pool.query(
-                                `UPDATE agent_action_requests
-                                    SET consensus_triggered_at = NOW()
-                                  WHERE id = $1 AND status = 'pending' AND consensus_triggered_at IS NULL
-                                RETURNING *`,
-                                [row.id]
-                            );
-                            if (stamp.rows.length === 0) continue; // raced / already opened
-                            // 2. Broadcast the consensus prompt to all bound entities.
-                            const consensusMsg =
-                                `[協商共識] 請求逾時需多方共識：「${row.prompt}」` +
-                                `(發起：#${row.from_entity_id})。請各實體表態，` +
-                                `由 #${row.from_entity_id} 綜合後直接 resolve 此請求` +
-                                `(requestId=${row.id}) 以自動執行決定。`;
-                            const entities = (device && device.entities) || {};
-                            for (const ent of Object.values(entities)) {
-                                pushTextToEntity(deviceId, ent, 'action_request_consensus', consensusMsg, { requestId: row.id });
-                            }
-                            // 3. New socket kind so the frontend can show "協商中".
-                            emitChanged(deviceId, 'consensus_triggered', row.id, row.from_entity_id);
-                            log('info', `timeout consensus_triggered id=${row.id} from=${row.from_entity_id}`, { deviceId });
                         }
                     } catch (rowErr) {
                         console.error(`[AgentActionRequests] timeout enforce failed id=${row.id}:`, rowErr.message);
@@ -951,6 +1338,247 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
     });
 
     // ════════════════════════════════════════
+    // POST /:id/vote — cast/update one entity's negotiation vote (需要你 negotiation)
+    // ──────────────────────────────────────────────────────────────────────
+    // Auth: botSecret + entityId (the vote is cast BY that entity). One vote per
+    // (request, entity); last-write-wins (ON CONFLICT DO UPDATE). Accepted ONLY
+    // while S1 COLLECTING (round open, not yet closed/concluded). Body:
+    //   { optionIndex?: int, freeText?: string, rationale?: string } — at least one
+    //   of optionIndex/freeText. optionIndex must index into the request's options.
+    // ════════════════════════════════════════
+    router.post('/:id/vote', async (req, res) => {
+        const auth = authenticate(req, res);
+        if (!auth) return;
+        const { deviceId } = auth;
+        const { id } = req.params;
+        if (!UUID_RE.test(String(id))) {
+            return res.status(400).json({ success: false, error: 'Invalid id' });
+        }
+        // A vote is attributed to the voting entity → require bot auth.
+        if (auth.isUser || !Number.isInteger(auth.entityId)) {
+            return res.status(400).json({ success: false, error: 'vote requires botSecret + entityId (the voting entity)' });
+        }
+        const body = req.body || {};
+        const hasOption = body.optionIndex !== undefined && body.optionIndex !== null;
+        const hasFree = typeof body.freeText === 'string' && body.freeText.trim().length > 0;
+        if (!hasOption && !hasFree) {
+            return res.status(400).json({ success: false, error: 'provide optionIndex (integer) or freeText (non-empty string)' });
+        }
+        let optionIndex = null;
+        if (hasOption) {
+            optionIndex = parseInt(body.optionIndex, 10);
+            if (!Number.isInteger(optionIndex) || optionIndex < 0) {
+                return res.status(400).json({ success: false, error: 'optionIndex must be a non-negative integer' });
+            }
+        }
+        const freeText = hasFree ? String(body.freeText).slice(0, MAX_PROMPT_LEN) : null;
+        const rationale = typeof body.rationale === 'string' ? body.rationale.slice(0, MAX_PROMPT_LEN) : null;
+
+        try {
+            const cur = await pool.query(
+                `SELECT * FROM agent_action_requests WHERE id = $1 AND device_id = $2`,
+                [id, deviceId]
+            );
+            if (cur.rows.length === 0) {
+                return res.status(404).json({ success: false, error: 'Not found' });
+            }
+            const row = cur.rows[0];
+            // Accept votes ONLY while S1 COLLECTING.
+            const inS1 = row.status === 'pending'
+                && row.consensus_triggered_at != null
+                && row.consensus_collect_at == null
+                && row.negotiation == null;
+            if (!inS1) {
+                return res.status(409).json({ success: false, error: 'voting is closed (no open collection round)' });
+            }
+            if (optionIndex != null) {
+                const opts = Array.isArray(row.options) ? row.options : [];
+                if (optionIndex >= opts.length) {
+                    return res.status(400).json({ success: false, error: `optionIndex out of range (0..${Math.max(0, opts.length - 1)})` });
+                }
+            }
+            await pool.query(
+                `INSERT INTO agent_action_request_votes (request_id, entity_id, option_index, free_text, rationale)
+                 VALUES ($1, $2, $3, $4, $5)
+                 ON CONFLICT (request_id, entity_id) DO UPDATE
+                    SET option_index = EXCLUDED.option_index,
+                        free_text = EXCLUDED.free_text,
+                        rationale = EXCLUDED.rationale,
+                        created_at = NOW()`,
+                [id, auth.entityId, optionIndex, freeText, rationale]
+            );
+            const cnt = await pool.query(
+                `SELECT COUNT(*)::int AS total FROM agent_action_request_votes WHERE request_id = $1`,
+                [id]
+            );
+            const cast = (cnt.rows[0] && cnt.rows[0].total) || 0;
+            const boundCount = countBoundEntities(auth.device);
+            // emit kind='vote' carrying k/N progress.
+            emitChanged(deviceId, 'vote', id, row.from_entity_id, { votes: { count: cast, total: boundCount } });
+            log('info', `vote id=${id} by=${auth.entityId} option=${optionIndex} cast=${cast}`, { deviceId });
+            return res.json({
+                success: true,
+                vote: { requestId: id, entityId: auth.entityId, optionIndex, freeText, rationale },
+                tally: { count: cast, total: boundCount },
+            });
+        } catch (err) {
+            console.error('[AgentActionRequests] vote failed:', err.message);
+            return res.status(500).json({ success: false, error: 'Internal error' });
+        }
+    });
+
+    // ════════════════════════════════════════
+    // GET /:id/votes — list the votes + plurality tally (device-scoped read)
+    // ════════════════════════════════════════
+    router.get('/:id/votes', async (req, res) => {
+        const auth = authenticate(req, res);
+        if (!auth) return;
+        const { deviceId } = auth;
+        const { id } = req.params;
+        if (!UUID_RE.test(String(id))) {
+            return res.status(400).json({ success: false, error: 'Invalid id' });
+        }
+        try {
+            const cur = await pool.query(
+                `SELECT options, decision_context FROM agent_action_requests WHERE id = $1 AND device_id = $2`,
+                [id, deviceId]
+            );
+            if (cur.rows.length === 0) {
+                return res.status(404).json({ success: false, error: 'Not found' });
+            }
+            const opts = Array.isArray(cur.rows[0].options) ? cur.rows[0].options : [];
+            const dc = (cur.rows[0].decision_context && typeof cur.rows[0].decision_context === 'object') ? cur.rows[0].decision_context : {};
+            const recIdx = Number.isInteger(dc.recommendedOptionIndex) ? dc.recommendedOptionIndex : null;
+            const vr = await pool.query(
+                `SELECT entity_id, option_index, free_text, rationale, created_at
+                   FROM agent_action_request_votes WHERE request_id = $1 ORDER BY created_at ASC`,
+                [id]
+            );
+            const voteRows = vr.rows || [];
+            const tally = tallyVotes(voteRows, opts.length, recIdx);
+            return res.json({
+                success: true,
+                requestId: id,
+                votes: votesToPerEntity(voteRows),
+                tally: { bestOptionIndex: tally.bestOptionIndex, count: tally.count, total: tally.total },
+            });
+        } catch (err) {
+            console.error('[AgentActionRequests] votes list failed:', err.message);
+            return res.status(500).json({ success: false, error: 'Internal error' });
+        }
+    });
+
+    // ════════════════════════════════════════
+    // POST /:id/negotiation-result — owner (from_entity_id) synthesizes (T3a)
+    // ──────────────────────────────────────────────────────────────────────
+    // Auth: botSecret restricted to from_entity_id (the synthesizer), OR human
+    // deviceSecret. Writes the TERMINAL negotiation blob — does NOT resolve;
+    // status stays 'pending' until disposition. Body:
+    //   { conclusion?: string, bestSolution?: string, bestOptionIndex?: int,
+    //     perEntity?: array } — conclusion OR bestSolution required.
+    // ════════════════════════════════════════
+    router.post('/:id/negotiation-result', async (req, res) => {
+        const auth = authenticate(req, res);
+        if (!auth) return;
+        const { deviceId } = auth;
+        const { id } = req.params;
+        if (!UUID_RE.test(String(id))) {
+            return res.status(400).json({ success: false, error: 'Invalid id' });
+        }
+        const body = req.body || {};
+        const conclusion = typeof body.conclusion === 'string' ? body.conclusion.slice(0, MAX_PROMPT_LEN) : '';
+        const bestSolution = typeof body.bestSolution === 'string' ? body.bestSolution.slice(0, MAX_PROMPT_LEN) : '';
+        if (!conclusion && !bestSolution) {
+            return res.status(400).json({ success: false, error: 'conclusion or bestSolution required' });
+        }
+        let bestOptionIndex = null;
+        if (body.bestOptionIndex !== undefined && body.bestOptionIndex !== null) {
+            bestOptionIndex = parseInt(body.bestOptionIndex, 10);
+            if (!Number.isInteger(bestOptionIndex) || bestOptionIndex < 0) {
+                return res.status(400).json({ success: false, error: 'bestOptionIndex must be a non-negative integer or null' });
+            }
+        }
+        let perEntityProvided = null;
+        if (Array.isArray(body.perEntity)) {
+            if (JSON.stringify(body.perEntity).length > 8192) {
+                return res.status(400).json({ success: false, error: 'perEntity too large (max 8KB)' });
+            }
+            perEntityProvided = body.perEntity;
+        }
+        try {
+            // A botSecret holder may only synthesize ITS OWN (from_entity_id) request.
+            const restrictToEntityId = auth.isUser ? null : auth.entityId;
+            const cur = await pool.query(
+                `SELECT * FROM agent_action_requests WHERE id = $1 AND device_id = $2`,
+                [id, deviceId]
+            );
+            if (cur.rows.length === 0) {
+                return res.status(404).json({ success: false, error: 'Not found' });
+            }
+            const row = cur.rows[0];
+            if (restrictToEntityId != null && row.from_entity_id !== restrictToEntityId) {
+                return res.status(403).json({ success: false, error: 'only the synthesizer (from_entity_id) may submit the result' });
+            }
+            const eligible = row.status === 'pending' && row.consensus_triggered_at != null && row.negotiation == null;
+            if (!eligible) {
+                return res.status(409).json({ success: false, error: 'no open negotiation round to conclude' });
+            }
+            const opts = Array.isArray(row.options) ? row.options : [];
+            if (bestOptionIndex != null && bestOptionIndex >= opts.length) {
+                return res.status(400).json({ success: false, error: `bestOptionIndex out of range (0..${Math.max(0, opts.length - 1)})` });
+            }
+            let voteRows = [];
+            try {
+                const vr = await pool.query(
+                    `SELECT entity_id, option_index, free_text, rationale
+                       FROM agent_action_request_votes WHERE request_id = $1 ORDER BY created_at ASC`,
+                    [id]
+                );
+                voteRows = vr.rows || [];
+            } catch (_) { voteRows = []; }
+            const total = voteRows.length;
+            const count = Number.isInteger(bestOptionIndex)
+                ? voteRows.filter(v => v.option_index === bestOptionIndex).length : 0;
+            const negotiation = {
+                conclusion,
+                bestSolution,
+                bestOptionIndex: Number.isInteger(bestOptionIndex) ? bestOptionIndex : null,
+                votes: { count, total },
+                perEntity: perEntityProvided != null ? perEntityProvided : votesToPerEntity(voteRows),
+                synthesizedBy: auth.isUser ? 'human' : auth.entityId,
+                synthesizedAt: Date.now(),
+                fallback: false,
+            };
+            const negJson = JSON.stringify(negotiation);
+            if (negJson.length > 16384) {
+                return res.status(400).json({ success: false, error: 'negotiation result too large' });
+            }
+            // Guarded write — does NOT resolve (status stays 'pending').
+            const params = [negJson, id];
+            let sql = `UPDATE agent_action_requests SET negotiation = $1::jsonb
+                         WHERE id = $2 AND status = 'pending'
+                           AND consensus_triggered_at IS NOT NULL
+                           AND negotiation IS NULL`;
+            if (restrictToEntityId != null) {
+                params.push(restrictToEntityId);
+                sql += ` AND from_entity_id = $${params.length}`;
+            }
+            sql += ` RETURNING *`;
+            const upd = await pool.query(sql, params);
+            if (upd.rows.length === 0) {
+                return res.status(409).json({ success: false, error: 'no open negotiation round to conclude (raced)' });
+            }
+            const after = upd.rows[0];
+            emitChanged(deviceId, 'negotiation_concluded', after.id, after.from_entity_id, { fallback: false });
+            log('info', `negotiation concluded id=${id} by=${auth.entityId ?? 'user'} best=${negotiation.bestOptionIndex}`, { deviceId });
+            return res.json({ success: true, request: rowToApi(after) });
+        } catch (err) {
+            console.error('[AgentActionRequests] negotiation-result failed:', err.message);
+            return res.status(500).json({ success: false, error: 'Internal error' });
+        }
+    });
+
+    // ════════════════════════════════════════
     // PUT /:id — edit a pending request's CONTENT (card_cd4f323c)
     // ──────────────────────────────────────────────────────────────────────
     // Hank's decisions 2026-06-26:
@@ -1167,6 +1795,11 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         // review/blocked to auto-dismiss its pending owner-decision request(s) +
         // emit the 'dismissed' socket event.
         dismissActionRequestsForCard,
+        // 需要你 negotiation: exported for direct test invocation of the engine.
+        openNegotiationRound,
+        advanceNegotiations,
+        openNegotiationBackstop,
+        concludeByFallback,
         _pool: pool,
     };
 };
@@ -1177,3 +1810,14 @@ module.exports.initAgentActionRequestsDatabase = initAgentActionRequestsDatabase
 module.exports.recomputeRatifyMode = recomputeRatifyMode;
 module.exports.ratifyInputFrom = ratifyInputFrom;
 module.exports.MAX_RATIFY_RETRIES = MAX_RATIFY_RETRIES;
+// 需要你 negotiation: pure helpers exported for unit testing without a pool.
+module.exports.isNegotiable = isNegotiable;
+module.exports.tallyVotes = tallyVotes;
+module.exports.countBoundEntities = countBoundEntities;
+module.exports.optionLabel = optionLabel;
+module.exports.clampWindowMinutes = clampWindowMinutes;
+module.exports.clampSynthGraceMinutes = clampSynthGraceMinutes;
+module.exports.clampMinEntities = clampMinEntities;
+module.exports.CONSENSUS_WINDOW_MIN_DEFAULT = CONSENSUS_WINDOW_MIN_DEFAULT;
+module.exports.CONSENSUS_SYNTH_GRACE_DEFAULT = CONSENSUS_SYNTH_GRACE_DEFAULT;
+module.exports.CONSENSUS_MIN_ENTITIES_DEFAULT = CONSENSUS_MIN_ENTITIES_DEFAULT;

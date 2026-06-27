@@ -126,6 +126,8 @@ describe('子6b timeout worker pins owner-decision rows to keep', () => {
     it('never auto_dismisses a pending row whose decision_context is non-null', async () => {
         mockPoolQuery
             .mockResolvedValueOnce({ rows: [{ device_id: deviceId }] })                       // SELECT DISTINCT device_id
+            .mockResolvedValueOnce({ rows: [] })                                              // negotiation T2 advance SELECT (empty)
+            .mockResolvedValueOnce({ rows: [] })                                              // negotiation T3b advance SELECT (empty)
             .mockResolvedValueOnce({ rows: [rowFixture({ decision_context: { whatWasDone: 'x' } })] }); // candidate SELECT
         await mod.enforceActionRequestTimeouts();
         // The per-row guard must have skipped it → NO UPDATE ... dismissed call.
@@ -136,6 +138,8 @@ describe('子6b timeout worker pins owner-decision rows to keep', () => {
     it('still auto_dismisses an ordinary pending row (decision_context null)', async () => {
         mockPoolQuery
             .mockResolvedValueOnce({ rows: [{ device_id: deviceId }] })          // SELECT DISTINCT device_id
+            .mockResolvedValueOnce({ rows: [] })                                 // negotiation T2 advance SELECT (empty)
+            .mockResolvedValueOnce({ rows: [] })                                 // negotiation T3b advance SELECT (empty)
             .mockResolvedValueOnce({ rows: [rowFixture({ decision_context: null })] }) // candidate SELECT
             .mockResolvedValueOnce({ rows: [rowFixture({ status: 'dismissed' })] });   // UPDATE ... dismissed RETURNING *
         await mod.enforceActionRequestTimeouts();

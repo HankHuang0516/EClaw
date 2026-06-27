@@ -79,6 +79,16 @@ const DEFAULTS = {
     // anchored to when it was armed (decision_context.ratify.armedAt), not emit
     // time. Default 1440 (24h); clamped [5, 43200] like the timeout deadline.
     action_request_ratify_grace_minutes: 1440,
+    // 需要你 negotiation workflow (owner-approved build). When the timeout policy is
+    // 'consensus', a 需要你 item with options>=2 (+ enough bound entities) opens a
+    // bot-to-bot negotiation round: entities vote, the task-owner entity synthesizes
+    // a best answer, it is surfaced (never auto-executed), the owner disposes.
+    //   consensus_window_minutes           — collection window (vote phase). [1,1440], default 30.
+    //   consensus_synthesis_grace_minutes  — owner-synth grace before server fallback. [5,43200], default 360.
+    //   consensus_min_entities             — min bound entities required to negotiate. [2,20], default 2.
+    consensus_window_minutes: 30,
+    consensus_synthesis_grace_minutes: 360,
+    consensus_min_entities: 2,
     // Server-authoritative entity ACTIVITY state machine (lib/entity-activity.js).
     // Deterministic decay thresholds (replaces the old random sleep coin-flip).
     // entity_idle_after_seconds: seconds since the last SEND (no pending work)
@@ -97,6 +107,14 @@ const ENTITY_SLEEP_AFTER_MINUTES_MAX = 1440;
 const ACTION_REQUEST_TIMEOUT_POLICIES = new Set(['keep', 'auto_dismiss', 'safe_default', 'consensus']);
 const ACTION_REQUEST_TIMEOUT_MINUTES_MIN = 5;
 const ACTION_REQUEST_TIMEOUT_MINUTES_MAX = 43200; // 30 days
+
+// 需要你 negotiation tunables (clamp ranges; defaults live in DEFAULTS above).
+const CONSENSUS_WINDOW_MIN_MIN = 1;
+const CONSENSUS_WINDOW_MIN_MAX = 1440;
+const CONSENSUS_SYNTH_GRACE_MIN = 5;
+const CONSENSUS_SYNTH_GRACE_MAX = 43200;
+const CONSENSUS_MIN_ENTITIES_MIN = 2;
+const CONSENSUS_MIN_ENTITIES_MAX = 20;
 
 // Spec: docs/specs/kanban-nudge-spec.md §6 — restricted override key set.
 const NUDGE_ENTITY_OVERRIDE_KEYS = [
@@ -131,6 +149,22 @@ function coerceValue(key, raw) {
         const n = parseInt(raw, 10);
         if (!Number.isFinite(n)) return def;
         return Math.max(ACTION_REQUEST_TIMEOUT_MINUTES_MIN, Math.min(ACTION_REQUEST_TIMEOUT_MINUTES_MAX, n));
+    }
+    // 需要你 negotiation tunables — parseInt-style coercion + per-key clamp; junk → default.
+    if (key === 'consensus_window_minutes') {
+        const n = parseInt(raw, 10);
+        if (!Number.isFinite(n)) return def;
+        return Math.max(CONSENSUS_WINDOW_MIN_MIN, Math.min(CONSENSUS_WINDOW_MIN_MAX, n));
+    }
+    if (key === 'consensus_synthesis_grace_minutes') {
+        const n = parseInt(raw, 10);
+        if (!Number.isFinite(n)) return def;
+        return Math.max(CONSENSUS_SYNTH_GRACE_MIN, Math.min(CONSENSUS_SYNTH_GRACE_MAX, n));
+    }
+    if (key === 'consensus_min_entities') {
+        const n = parseInt(raw, 10);
+        if (!Number.isFinite(n)) return def;
+        return Math.max(CONSENSUS_MIN_ENTITIES_MIN, Math.min(CONSENSUS_MIN_ENTITIES_MAX, n));
     }
     if (typeof def === 'number') {
         const n = Number(raw);

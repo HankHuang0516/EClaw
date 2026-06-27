@@ -37,6 +37,13 @@ CREATE TABLE IF NOT EXISTS agent_action_requests (
     -- timeout worker pins rows with a non-null decision_context to 'keep' (they
     -- wait for the owner and are never auto-dismissed/safe-defaulted/consensus'd).
     decision_context JSONB DEFAULT NULL,
+    -- 需要你 negotiation workflow. consensus_collect_at = collection window closed /
+    -- owner prompted to synthesize (S1→S2). negotiation = TERMINAL conclusion blob
+    -- {conclusion,bestSolution,bestOptionIndex,votes:{count,total},perEntity,
+    -- synthesizedBy,synthesizedAt,fallback}; non-null ⇒ "協商完成 — 待裁決" (status
+    -- STILL 'pending' until the owner disposes / ratify auto-resolves).
+    consensus_collect_at TIMESTAMPTZ DEFAULT NULL,
+    negotiation JSONB DEFAULT NULL,
     CONSTRAINT aar_prompt_len CHECK (char_length(prompt) BETWEEN 1 AND 2000),
     CONSTRAINT aar_type_valid CHECK (type IN ('decision','approval','input','credential','review','clarify','consensus')),
     CONSTRAINT aar_status_valid CHECK (status IN ('pending','resolved','dismissed'))
@@ -64,3 +71,21 @@ CREATE TABLE IF NOT EXISTS agent_action_request_audit (
 
 CREATE INDEX IF NOT EXISTS idx_aar_audit_request ON agent_action_request_audit(request_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_aar_audit_editor ON agent_action_request_audit(device_id, editor_entity_id, created_at DESC);
+
+-- agent_action_request_votes — per-entity negotiation votes (需要你 negotiation).
+-- One vote per (request, entity); last-write-wins via the UNIQUE constraint
+-- (INSERT … ON CONFLICT (request_id, entity_id) DO UPDATE). A vote carries an
+-- option_index (a choice into the request's options[]) OR free_text, plus an
+-- optional rationale. Votes are accepted only while the round is COLLECTING.
+CREATE TABLE IF NOT EXISTS agent_action_request_votes (
+    id BIGSERIAL PRIMARY KEY,
+    request_id UUID NOT NULL,
+    entity_id INTEGER NOT NULL,
+    option_index INTEGER DEFAULT NULL,
+    free_text TEXT DEFAULT NULL,
+    rationale TEXT DEFAULT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT aar_votes_unique UNIQUE (request_id, entity_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_aar_votes_request ON agent_action_request_votes(request_id);

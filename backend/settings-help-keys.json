@@ -20,6 +20,21 @@
       "help_key": "action_request_timeout_policy_help"
     },
     {
+      "field_key": "consensus_min_entities",
+      "label_key": "consensus_min_entities_label",
+      "help_key": "consensus_min_entities_help"
+    },
+    {
+      "field_key": "consensus_synthesis_grace_minutes",
+      "label_key": "consensus_synthesis_grace_minutes_label",
+      "help_key": "consensus_synthesis_grace_minutes_help"
+    },
+    {
+      "field_key": "consensus_window_minutes",
+      "label_key": "consensus_window_minutes_label",
+      "help_key": "consensus_window_minutes_help"
+    },
+    {
       "field_key": "entity_idle_after_seconds",
       "label_key": "entity_idle_after_seconds_label",
       "help_key": "entity_idle_after_seconds_help"
