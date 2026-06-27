@@ -932,8 +932,10 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 cardParams.push(cardId);
                 cardWhere += ` AND id = $${cardParams.length}`;
             } else {
+                // Mirror checkStaleCards' candidate set so this diagnostic reflects
+                // what actually gets nudged: backlog is parked → never stale-nudged.
                 cardWhere += `
-                  AND status IN ('backlog', 'todo', 'in_progress', 'review')
+                  AND status IN ('todo', 'in_progress', 'review')
                   AND EXTRACT(EPOCH FROM (NOW() - status_changed_at)) * 1000 > stale_threshold_ms`;
             }
             const cardsRes = await pool.query(
@@ -3586,7 +3588,16 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         try {
             // Fetch stale candidates WITHOUT the global nudge-gap filter; we apply
             // per-device nudge interval + status filter (from device_preferences) below.
-            // backlog (待排程) included here and filtered per-device — users can opt in.
+            // backlog (待排程) is EXCLUDED here: backlog = intentionally parked / "not
+            // now", so a parked card must never be flood re-nudged "please continue"
+            // (owner-reported zombie nudge, card_3e95f4c1: a parked #6 recurring-driver
+            // card and a parked daily-E2E card re-nudged every ~17 min for 7+ hours each).
+            // Only actively-worked statuses (todo / in_progress / review) get stale
+            // nudges; done + archived are already excluded (status filter + the
+            // archived = false guard). This extends the #3781 hygiene that stopped
+            // re-nudging archived/done parents — now to parked backlog cards too.
+            // Backlog cards stay fully visible on the board; this only stops the active
+            // re-nudge pings, not their board presence.
             // Skip recurring-schedule automation parents: their status_changed_at never
             // moves (cron creates child cards instead), so they would always look stale
             // and get escalated to P0 every staleThresholdMs window. Mirrors the same
@@ -3599,14 +3610,10 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             // Once run_at passes (timer fires or window elapses without fire), the card
             // falls back into stale eligibility — preserves L1/L2/L3 safety rails for
             // actually-stuck post-runAt cards.
-            // gated=true only suppresses L1/L2/L3 for backlog cards (launch-pending
-            // drafts). Active-status cards (todo/in_progress/review) keep escalating
-            // even if a stale gated flag is left over — defense-in-depth alongside
-            // the API guard + /move auto-reset.
             const result = await pool.query(`
                 SELECT * FROM kanban_cards
                 WHERE archived = false
-                  AND status IN ('backlog', 'todo', 'in_progress', 'review')
+                  AND status IN ('todo', 'in_progress', 'review')
                   AND EXTRACT(EPOCH FROM (NOW() - status_changed_at)) * 1000 > stale_threshold_ms
                   AND (schedule_enabled = false OR schedule_type != 'recurring' OR schedule_enabled IS NULL)
                   AND NOT (
@@ -3615,7 +3622,6 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     AND schedule_run_at IS NOT NULL
                     AND schedule_run_at > NOW()
                   )
-                  AND (status != 'backlog' OR COALESCE(gated, false) = false)
                   -- Suppress nudges on orphaned children of a stopped parent:
                   -- if the parent card is archived (any child) or the parent is
                   -- DONE and this is a cron-spawned child (is_auto_generated),

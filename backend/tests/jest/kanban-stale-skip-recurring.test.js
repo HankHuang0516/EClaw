@@ -55,8 +55,11 @@ describe('checkStaleCards — recurring-schedule skip filter', () => {
         );
     });
 
-    test('SELECT still scopes to active statuses', () => {
-        expect(body).toMatch(/status IN \('backlog', 'todo', 'in_progress', 'review'\)/);
+    test('SELECT still scopes to active statuses (backlog now excluded — parked)', () => {
+        // backlog dropped from the candidate set: parked cards must not be re-nudged
+        // (see kanban-stale-skip-backlog.test.js for the fail-on-old behavioural proof).
+        expect(body).toMatch(/status IN \('todo', 'in_progress', 'review'\)/);
+        expect(body).not.toMatch(/status IN \([^)]*'backlog'[^)]*\)/);
     });
 });
 
