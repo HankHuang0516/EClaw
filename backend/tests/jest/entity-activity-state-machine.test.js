@@ -176,6 +176,85 @@ describe('entity-activity: SLEEPING only after SLEEP_AFTER with no pending', () 
     });
 });
 
+describe('entity-activity: open kanban assignment forbids sleep (card_52b9032216e43e6c75ca2b6a)', () => {
+    // Mirrors the index.js wiring: a single grouped query returns kanban_cards
+    // rows, bucketPendingKanban folds them into Map<deviceId, Set<entityId>>, the
+    // loop sets entity._pendingKanban = set.has(entityId), then evaluates.
+    const DEVICE = 'dev-A';
+    const STALE = {
+        // far past SLEEP_AFTER + empty message queue → OLD wiring (no kanban
+        // signal) would let this bot decay to SLEEPING ("Zzz" while tasks pile up).
+        lastSendAt: NOW - (SLEEP_AFTER_MS + 5 * 60 * 1000),
+        lastActivityAt: NOW - (SLEEP_AFTER_MS + 5 * 60 * 1000),
+        messageQueue: [],
+    };
+
+    function wire(entityId, rows) {
+        const byDevice = activity.bucketPendingKanban(rows);
+        const openSet = byDevice.get(DEVICE);
+        const entity = makeEntity({ entityId, ...STALE });
+        entity._pendingKanban = !!(openSet && openSet.has(entity.entityId));
+        return entity;
+    }
+
+    // ── (a) open assigned card + stale + empty queue → ACTIVE, never SLEEPING ──
+    test('(a) bot with an open assigned (in_progress) card is ACTIVE, NOT SLEEPING', () => {
+        const rows = [
+            { device_id: DEVICE, status: 'in_progress', archived: false, assigned_bots: [2] },
+            { device_id: DEVICE, status: 'todo', archived: false, assigned_bots: [5, 7] },
+        ];
+        const bot2 = wire(2, rows);
+        // FAIL-ON-OLD: without the kanban signal this entity is SLEEPING…
+        expect(activity.evaluateActivityState(makeEntity({ entityId: 2, ...STALE }), NOW, OPTS))
+            .toBe(ACTIVITY.SLEEPING);
+        // …with it, the wired entity stays awake.
+        expect(bot2._pendingKanban).toBe(true);
+        expect(activity.evaluateActivityState(bot2, NOW, OPTS)).toBe(ACTIVITY.ACTIVE);
+        expect(activity.evaluateActivityState(bot2, NOW, OPTS)).not.toBe(ACTIVITY.SLEEPING);
+
+        // a multi-assignee 'todo' card keeps EACH assignee awake.
+        expect(activity.evaluateActivityState(wire(5, rows), NOW, OPTS)).toBe(ACTIVITY.ACTIVE);
+        expect(activity.evaluateActivityState(wire(7, rows), NOW, OPTS)).toBe(ACTIVITY.ACTIVE);
+    });
+
+    // ── (b) no assigned cards + stale → SLEEPING (unchanged) ──
+    test('(b) bot with NO assigned open cards still SLEEPS after SLEEP_AFTER', () => {
+        const rows = [{ device_id: DEVICE, status: 'in_progress', archived: false, assigned_bots: [2] }];
+        const bot9 = wire(9, rows); // entity 9 is on no card
+        expect(bot9._pendingKanban).toBe(false);
+        expect(activity.evaluateActivityState(bot9, NOW, OPTS)).toBe(ACTIVITY.SLEEPING);
+    });
+
+    // ── (c) done / review / archived / backlog cards do NOT count as pending ──
+    test('(c) done, review, archived and backlog cards do NOT keep a bot awake', () => {
+        const rows = [
+            { device_id: DEVICE, status: 'done', archived: false, assigned_bots: [2] },
+            { device_id: DEVICE, status: 'review', archived: false, assigned_bots: [2] },
+            { device_id: DEVICE, status: 'backlog', archived: false, assigned_bots: [2] },
+            { device_id: DEVICE, status: 'in_progress', archived: true, assigned_bots: [2] }, // archived
+        ];
+        const bot2 = wire(2, rows);
+        expect(bot2._pendingKanban).toBe(false);
+        expect(activity.evaluateActivityState(bot2, NOW, OPTS)).toBe(ACTIVITY.SLEEPING);
+    });
+
+    test('bucketPendingKanban folds rows per device + parses stringified JSONB, ignores junk', () => {
+        const rows = [
+            { device_id: 'dev-A', status: 'todo', archived: false, assigned_bots: '[2,4]' }, // string JSONB
+            { device_id: 'dev-B', status: 'in_progress', archived: false, assigned_bots: [4] },
+            { device_id: 'dev-A', status: 'done', archived: false, assigned_bots: [9] },       // finished
+            null,                                                                              // junk row
+            { device_id: 'dev-A', status: 'todo', archived: false, assigned_bots: null },      // no array
+        ];
+        const map = activity.bucketPendingKanban(rows);
+        expect([...map.get('dev-A')].sort((a, b) => a - b)).toEqual([2, 4]);
+        expect([...map.get('dev-B')]).toEqual([4]);
+        expect(map.has('dev-C')).toBe(false);
+        expect(activity.bucketPendingKanban(null).size).toBe(0);
+        expect(activity.bucketPendingKanban([]).size).toBe(0);
+    });
+});
+
 describe('entity-activity: expressive overlays + state classifiers', () => {
     test('busy-family states classify as active', () => {
         for (const s of ['BUSY', 'PROCESSING', 'WORKING', 'IN_PROGRESS', 'IN-PROGRESS', 'busy', ' processing ']) {

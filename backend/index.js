@@ -6277,6 +6277,39 @@ function loadSkillDoc() {
 const activityPrefsCache = new Map(); // deviceId -> { idleAfterMs, sleepAfterMs, fetchedAt }
 const ACTIVITY_PREFS_TTL_MS = 60 * 1000;
 
+// Per-batch cache of which bound entities have OPEN (todo/in_progress) assigned
+// kanban cards. Without this, a bot with a piled-up TASK queue but an empty
+// MESSAGE queue is judged IDLE→SLEEPING and shows "Zzz" on the wallpaper while
+// work is outstanding (card_52b9032216e43e6c75ca2b6a). ONE grouped query for ALL
+// devices, refreshed lazily at most once per TTL — the 5 s activity loop NEVER
+// issues a DB query per entity per tick; each tick reads the last-known cache.
+let pendingKanbanCache = { byDevice: new Map(), fetchedAt: 0 };
+let pendingKanbanRefreshing = false;
+const PENDING_KANBAN_TTL_MS = 30 * 1000;
+
+function refreshPendingKanbanCache(now) {
+    if (!chatPool) return;
+    if (pendingKanbanRefreshing) return;
+    if (pendingKanbanCache.fetchedAt && now - pendingKanbanCache.fetchedAt <= PENDING_KANBAN_TTL_MS) return;
+    pendingKanbanRefreshing = true;
+    // Single grouped read across every device; the status filter hits
+    // idx_kanban_cards_status (device_id, status). bucketPendingKanban (pure)
+    // folds the rows into Map<deviceId, Set<entityId>>.
+    chatPool.query(
+        `SELECT device_id, status, archived, assigned_bots
+           FROM kanban_cards
+          WHERE status IN ('todo', 'in_progress')
+            AND (archived IS NULL OR archived = false)`
+    ).then(res => {
+        pendingKanbanCache = {
+            byDevice: entityActivity.bucketPendingKanban(res.rows),
+            fetchedAt: Date.now(),
+        };
+    }).catch(err => {
+        console.error('[ActivityKanban] pending-kanban refresh failed:', err.message);
+    }).finally(() => { pendingKanbanRefreshing = false; });
+}
+
 function getActivityThresholds(deviceId, now) {
     const cached = activityPrefsCache.get(deviceId);
     if (!cached || now - cached.fetchedAt > ACTIVITY_PREFS_TTL_MS) {
@@ -6358,13 +6391,18 @@ function evaluateEntityActivity(entity, now, idleAfterMs, sleepAfterMs) {
 // Evaluate every bound entity once. `optsOverride` lets tests force explicit
 // thresholds (bypassing the per-device pref cache) for deterministic assertions.
 function runEntityActivityEvaluation(now = Date.now(), optsOverride = null) {
+    refreshPendingKanbanCache(now); // non-blocking; this tick uses the last-known cache
     for (const deviceId in devices) {
         const device = devices[deviceId];
         if (!device || !device.entities) continue;
         const thresholds = optsOverride || getActivityThresholds(deviceId, now);
+        const openKanban = pendingKanbanCache.byDevice.get(deviceId);
         for (const i of Object.keys(device.entities).map(Number)) {
             const entity = device.entities[i];
             if (!entity || !entity.isBound) continue;
+            // Open assigned kanban card (todo/in_progress) → pendingWork → the
+            // evaluator forbids IDLE/SLEEPING, so a busy bot never shows asleep.
+            entity._pendingKanban = !!(openKanban && openKanban.has(entity.entityId));
             evaluateEntityActivity(entity, now, thresholds.idleAfterMs, thresholds.sleepAfterMs);
         }
     }

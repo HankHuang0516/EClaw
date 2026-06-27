@@ -36,6 +36,15 @@ const BUSY_FAMILY = new Set(['BUSY', 'PROCESSING', 'WORKING', 'IN_PROGRESS', 'IN
 // Agent-declared transient expressive poses rendered as TTL overlays.
 const EXPRESSIVE = new Set(['EXCITED', 'HAPPY', 'WAVING', 'JUMPING', 'REVIEW', 'FAILED']);
 
+// Kanban statuses that count as UNFINISHED assigned work for activity purposes.
+// Canonical enum (public/shared/kanban-status.js): backlog, todo, in_progress,
+// review, done, blocked. Only 'todo' + 'in_progress' mean "the bot has work it
+// must act on NOW" → it must stay awake. Excluded: 'backlog' (not yet pulled
+// onto the board), 'review'/'done' (handed off for sign-off / finished),
+// 'blocked' (cannot act — waiting on a dependency). Mirrors the org-forward
+// task-check status filter in index.js.
+const UNFINISHED_KANBAN_STATUSES = new Set(['todo', 'in_progress']);
+
 // How long an expressive overlay shows before reverting to the activity base.
 const OVERLAY_TTL_MS = 30 * 1000;
 
@@ -67,6 +76,35 @@ function computePendingWork(entity) {
     if (entity._pendingKanban === true) return true;
     if (entity._pendingScheduled === true) return true;
     return false;
+}
+
+// PURE bucketing helper for the kanban pendingWork signal. Given kanban_cards
+// rows ({ device_id, status, archived, assigned_bots }), return
+// Map<deviceId, Set<entityId>> of entities that have ≥1 UNFINISHED, non-archived
+// assigned card. The DB query (index.js) already filters status/archived for
+// efficiency; this re-applies the same policy so the filter is unit-testable and
+// the helper is robust to an unfiltered or malformed feed. No I/O — the caller
+// runs the single grouped query and passes the rows in.
+function bucketPendingKanban(rows) {
+    const byDevice = new Map();
+    if (!Array.isArray(rows)) return byDevice;
+    for (const row of rows) {
+        if (!row) continue;
+        if (row.archived === true) continue;
+        if (!UNFINISHED_KANBAN_STATUSES.has(String(row.status || '').trim())) continue;
+        let ids = row.assigned_bots;
+        // assigned_bots is JSONB (array of entity IDs); some drivers return it as
+        // a string — parse defensively and skip anything that isn't an array.
+        if (typeof ids === 'string') { try { ids = JSON.parse(ids); } catch (_) { ids = null; } }
+        if (!Array.isArray(ids)) continue;
+        let set = byDevice.get(row.device_id);
+        if (!set) { set = new Set(); byDevice.set(row.device_id, set); }
+        for (const raw of ids) {
+            const id = Number(raw);
+            if (Number.isFinite(id)) set.add(id);
+        }
+    }
+    return byDevice;
 }
 
 // DETERMINISTIC activity evaluator — NO randomness, NO side effects.
@@ -112,12 +150,14 @@ module.exports = {
     ACTIVITY,
     BUSY_FAMILY,
     EXPRESSIVE,
+    UNFINISHED_KANBAN_STATUSES,
     OVERLAY_TTL_MS,
     DEFAULT_IDLE_AFTER_MS,
     DEFAULT_SLEEP_AFTER_MS,
     isBusyFamilyState,
     isExpressiveState,
     computePendingWork,
+    bucketPendingKanban,
     evaluateActivityState,
     overlayActive,
     defaultMessageForState,
