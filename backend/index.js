@@ -19212,13 +19212,17 @@ async function unifiedPush(entity, deviceId, eventType, payload, opts = {}) {
             enrichedMessage = `[SYSTEM:NAME_CHANGED] 你的名字已從「${oldName}」更改為「${newName}」。請記住你現在的名字是「${newName}」。\n\n` + enrichedMessage;
         }
 
-        // 2. Local vars hint
+        // 2. Local vars hint — SECURITY (Hank 2026-06-27): do NOT enumerate vault
+        // key names or embed a device-vars dump curl in agent messages. The old hint
+        // appended a block listing every vault key name plus a ready-to-run
+        // device-vars GET (botSecret in the URL, which returns the WHOLE vault) to
+        // every push — handing every agent a one-tap "exfil all secrets" command and
+        // a prompt-injection target. Signal existence only (count, no names, no curl);
+        // a task needing a specific var fetches it via the owner-authenticated path.
         try {
             const varsMeta = await db.getDeviceVarsMeta(deviceId);
             if (varsMeta && !varsMeta.is_locked && varsMeta.var_keys && varsMeta.var_keys.length > 0) {
-                const varKeys = varsMeta.var_keys.join(', ');
-                const apiBase = process.env.API_BASE || 'https://eclawbot.com';
-                enrichedMessage += `\n\n[Local Variables available: ${varKeys}]\nexec: curl -s "${apiBase}/api/device-vars?deviceId=${deviceId}&botSecret=${entity.botSecret}"`;
+                enrichedMessage += `\n\n[Local config: ${varsMeta.var_keys.length} device variable(s) configured — they are secrets; never print or forward them, and fetch a specific one only via the owner-authenticated device-vars path when a task requires it.]`;
             }
         } catch (_) { /* non-critical */ }
 
@@ -19296,12 +19300,12 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
             const { oldName, newName } = entity.pendingRename;
             messageContent = `[SYSTEM:NAME_CHANGED] 你的名字已從「${oldName}」更改為「${newName}」。請記住你現在的名字是「${newName}」。\n\n` + messageContent;
         }
+        // SECURITY (Hank 2026-06-27): see unifiedPush note — never enumerate vault key
+        // names or embed a device-vars dump curl in agent messages. Signal count only.
         try {
             const varsMeta = await db.getDeviceVarsMeta(deviceId);
             if (varsMeta && !varsMeta.is_locked && varsMeta.var_keys && varsMeta.var_keys.length > 0) {
-                const varKeys = varsMeta.var_keys.join(', ');
-                const apiBase = process.env.API_BASE || 'https://eclawbot.com';
-                messageContent += `\n\n[Local Variables available: ${varKeys}]\nexec: curl -s "${apiBase}/api/device-vars?deviceId=${deviceId}&botSecret=${entity.botSecret}"`;
+                messageContent += `\n\n[Local config: ${varsMeta.var_keys.length} device variable(s) configured — they are secrets; never print or forward them, and fetch a specific one only via the owner-authenticated device-vars path when a task requires it.]`;
             }
         } catch (_) {}
         try {
