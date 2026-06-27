@@ -27,6 +27,16 @@ function initPortalSocket() {
 
     portalSocket.on('connect', () => {
         console.log('[Socket] Connected');
+        // The live channel the user actually depends on is up. On socket.io
+        // auto-reconnect this is what flips the reconnect banner back off, and it
+        // clears a banner that a transient HTTP blip raised while the socket was
+        // healthy all along. Without this the overlay could only self-clear via
+        // its /api/version probe and never reacted to the real transport recovering.
+        try {
+            if (window.__reconnectOverlay && typeof window.__reconnectOverlay.noteServerReachable === 'function') {
+                window.__reconnectOverlay.noteServerReachable();
+            }
+        } catch (_) { /* overlay optional */ }
         updateNotifBadge();
     });
 

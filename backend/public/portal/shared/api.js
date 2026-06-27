@@ -84,6 +84,20 @@ async function apiCall(method, path, body = null, opts = {}) {
         throw err;
     }
 
+    // Reaching here = a 2xx application response round-tripped, so the channel the
+    // user depends on is demonstrably up. Clear any stale reconnect banner that a
+    // transient blip may have raised (e.g. a single dropped background poll while
+    // the live socket stayed healthy) and record the good round-trip so a lone
+    // later blip is treated as transient rather than alarming. (false-disconnect
+    // banner fix — the overlay used to only self-clear via its own /api/version
+    // probe and ignored every successful message send / poll the user just made.)
+    try {
+        if (typeof window !== 'undefined' && window.__reconnectOverlay
+            && typeof window.__reconnectOverlay.noteServerReachable === 'function') {
+            window.__reconnectOverlay.noteServerReachable();
+        }
+    } catch (_) { /* overlay optional */ }
+
     return data;
 }
 
