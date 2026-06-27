@@ -68,6 +68,17 @@ const DEFAULTS = {
     // Deadline (minutes) after which the policy above fires. Default 1440 (24h).
     // Clamped to [5, 43200] (5 min .. 30 days).
     action_request_timeout_minutes: 1440,
+    // 計畫E ratify-loop (card_e9d01b6e). DARK-LAUNCH master switch: when true, the
+    // worker's independent ratify pass may passively default-agree (silence ⇒ the
+    // agent's server-armed decided option ships) on requests whose
+    // decision_context.ratify.mode was recomputed to 'default_agree'. DEFAULT FALSE
+    // — flipping it on in prod is the OWNER's decision; everything else (build /
+    // merge) ships dark. Consumed by runRatifyPass in agent-action-requests.js.
+    action_request_ratify_enabled: false,
+    // Silence grace (minutes) before an armed default_agree ratify auto-resolves,
+    // anchored to when it was armed (decision_context.ratify.armedAt), not emit
+    // time. Default 1440 (24h); clamped [5, 43200] like the timeout deadline.
+    action_request_ratify_grace_minutes: 1440,
 };
 
 const ACTION_REQUEST_TIMEOUT_POLICIES = new Set(['keep', 'auto_dismiss', 'safe_default', 'consensus']);
@@ -95,11 +106,14 @@ function coerceValue(key, raw) {
     // Auto-escalation toggles accept a real boolean OR the string 'true'/'false'
     // (a bare `!!raw` would coerce the string 'false' to true — wrong for an API
     // that may serialize the flag as a query/JSON string).
-    if (key === 'kanban_auto_escalate_enabled' || key === 'kanban_auto_escalate_skip_automation') {
+    if (key === 'kanban_auto_escalate_enabled' || key === 'kanban_auto_escalate_skip_automation'
+        || key === 'action_request_ratify_enabled') {
+        // 計畫E: ratify master switch — same string-safe boolean coercion (a bare
+        // `!!raw` would turn the string 'false' true, fail-OPEN for an auto-merge gate).
         return raw === true || raw === 'true';
     }
     if (typeof def === 'boolean') return !!raw;
-    if (key === 'action_request_timeout_minutes') {
+    if (key === 'action_request_timeout_minutes' || key === 'action_request_ratify_grace_minutes') {
         // parseInt-style coercion + clamp to [5, 43200]; invalid → default 1440.
         const n = parseInt(raw, 10);
         if (!Number.isFinite(n)) return def;
