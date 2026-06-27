@@ -19423,7 +19423,12 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
                 || eventType === 'kanban_nudge') {
                 axis = 'system_msg_no_reply';
             }
-            entityStatus.incrementCounter(deviceId, entity.entityId, axis);
+            // card_errctr: thread the real push event type + failure reason into
+            // the error-event history (歷史紀錄) so the timeline is reviewable.
+            entityStatus.incrementCounter(deviceId, entity.entityId, axis, {
+                eventType: eventType || 'push_failure',
+                payloadSnippet: `push failed: ${reasonCode}`,
+            });
         } catch (_) { /* ignore */ }
         return { pushed: false, reason: reasonCode };
     }

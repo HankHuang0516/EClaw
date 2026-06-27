@@ -223,6 +223,41 @@
         return res.json();
     }
 
+    // card_errctr: 歷史紀錄 / error-event history timeline (newest first).
+    async function fetchErrorHistory(eid, before, limit) {
+        const qs = _credQs();
+        qs.set('limit', String(limit || 30));
+        if (before) qs.set('before', String(before));
+        const res = await fetch(`/api/entity-status/${eid}/errors?${qs.toString()}`, {
+            credentials: 'include',
+            headers: _credHeaders(),
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+    }
+
+    // card_errctr: reset the CURRENT cumulative counter only (server keeps the
+    // historical total + the error-event history). Secrets travel in headers.
+    async function fetchResetCounters(eid, axis) {
+        const c = readCreds();
+        const body = {};
+        if (axis) body.axis = axis;
+        if (c.deviceId) body.deviceId = c.deviceId;
+        if (c.deviceSecret) body.deviceSecret = c.deviceSecret;
+        else if (c.botSecret) {
+            body.botSecret = c.botSecret;
+            if (c.entityId) body.entityId = Number(c.entityId);
+        }
+        const res = await fetch(`/api/entity-status/${eid}/counter/reset`, {
+            method: 'POST',
+            headers: Object.assign({ 'Content-Type': 'application/json' }, _credHeaders()),
+            body: JSON.stringify(body),
+            credentials: 'include',
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+    }
+
     function escapeHtml(s) {
         return String(s || '').replace(/[&<>"']/g, (c) => ({
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -421,15 +456,29 @@
                     <button type="button" class="${ROOT_CLASS}__close" aria-label="Close" data-action="close">✕</button>
                 </header>
                 <div class="${ROOT_CLASS}__help-popover" data-role="help-popover" hidden>
-                    <p><strong>Counters</strong> — each row counts open events the entity hasn&#39;t acted on. Number is live: it drops as the entity replies. Click a counter to see <em>which</em> events.</p>
+                    <p><strong>Counters</strong> — each row shows two cumulative error totals: <em>當下 / Current</em> (resettable via the Reset button) and <em>歷史 / All-time</em> (never resets). An amber badge shows events still awaiting a reply. Click a counter to see <em>which</em> events.</p>
+                    <p><strong>歷史紀錄 / Error history</strong> — a persisted, time-stamped log of every error event, kept even after you reset the current counter.</p>
                     <p><strong>Achievements</strong> — cumulative wins: tasks completed, chat 👍/👎, reviews, notes. Click a row to see the contributing cards / messages as chips.</p>
                     <p><strong>Operation log</strong> — recent kanban / message / system events for this entity, newest first. Card chips open the card&#39;s popover; ${ICON_QUOTE} quotes the row into your chat composer.</p>
                 </div>
                 <section class="${ROOT_CLASS}__section" data-section="counters">
-                    <h3 class="${ROOT_CLASS}__section-title">累計錯誤次數 / Error counters</h3>
+                    <div class="${ROOT_CLASS}__section-head">
+                        <h3 class="${ROOT_CLASS}__section-title">累計錯誤次數 / Error counters</h3>
+                        <button type="button" class="${ROOT_CLASS}__reset-btn"
+                            data-action="reset-counters"
+                            title="重置「當下累計」(歷史累計與歷史紀錄不受影響) / Reset the current cumulative only (historical total + history are kept)">
+                            重置當下 / Reset current</button>
+                    </div>
+                    <p class="${ROOT_CLASS}__metric-legend">當下累計 / current (resettable) · 歷史累計 / historical (never resets)</p>
                     <ul class="${ROOT_CLASS}__counter-list" data-role="counter-list">
                         <li class="${ROOT_CLASS}__counter-row" data-state="loading">Loading…</li>
                     </ul>
+                </section>
+                <section class="${ROOT_CLASS}__section" data-section="error-history">
+                    <h3 class="${ROOT_CLASS}__section-title">歷史紀錄 / Error history</h3>
+                    <ol class="${ROOT_CLASS}__log-list" data-role="error-history-list">
+                        <li class="${ROOT_CLASS}__log-row" data-state="loading">Loading…</li>
+                    </ol>
                 </section>
                 <section class="${ROOT_CLASS}__section" data-section="achievements">
                     <h3 class="${ROOT_CLASS}__section-title">成就 / Achievements</h3>
@@ -465,6 +514,11 @@
                 const logId = btn && btn.dataset.logId;
                 if (logId) handleQuoteClick(eid, logId);
                 e.stopPropagation();
+                return;
+            }
+            if (action === 'reset-counters') {
+                e.stopPropagation();
+                handleResetClick(eid);
                 return;
             }
             // Counter drill-down: clicking a counter row expands the open
@@ -517,21 +571,71 @@
             list.innerHTML = `<li class="${ROOT_CLASS}__counter-row" data-state="empty">No counters yet.</li>`;
             return;
         }
-        // Live counter = openCount when the backend provides it; fall back to
-        // cumulative count for old clients / old backends. Hank's spec: the
-        // displayed number is "what's currently open", not lifetime total.
+        // card_errctr: each row shows TWO cumulative numbers — 當下 (current,
+        // resettable) and 歷史 (historical, never resets). `openCount` (events
+        // still awaiting a reply) is surfaced as a small inline badge when >0 so
+        // the live health signal isn't lost. Older backends without the split
+        // degrade gracefully: historicalCount falls back to count.
         list.innerHTML = counters.map(c => {
-            const live = (typeof c.openCount === 'number') ? c.openCount : c.count;
+            const cur = Number(c.count) || 0;
+            const hist = (typeof c.historicalCount === 'number') ? c.historicalCount : cur;
+            const open = (typeof c.openCount === 'number') ? c.openCount : 0;
+            const label = escapeHtml(pickLabel(c.axis));
+            const openBadge = open > 0
+                ? `<span class="${ROOT_CLASS}__counter-open" title="目前未回覆 / currently open">${open} ${pickWord('open')}</span>`
+                : '';
             return `
-            <li class="${ROOT_CLASS}__counter-row" data-axis="${c.axis}"
+            <li class="${ROOT_CLASS}__counter-row" data-axis="${escapeHtml(c.axis)}"
                 role="button" tabindex="0"
                 aria-expanded="false"
-                aria-label="${pickLabel(c.axis)}: ${live} open. Click to see which events.">
+                aria-label="${label}: ${pickWord('current')} ${cur}, ${pickWord('historical')} ${hist}${open > 0 ? ', ' + open + ' open' : ''}. Click to see which events.">
                 ${SVG_CHEVRON}
-                <span class="${ROOT_CLASS}__counter-label">${pickLabel(c.axis)}</span>
-                <span class="${ROOT_CLASS}__counter-value">${live}</span>
+                <span class="${ROOT_CLASS}__counter-label">${label}${openBadge}</span>
+                <span class="${ROOT_CLASS}__counter-metrics">
+                    <span class="${ROOT_CLASS}__counter-metric" title="當下累計 (可重置) / current cumulative (resettable)">
+                        <span class="${ROOT_CLASS}__counter-metric-label">${pickWord('current')}</span>
+                        <span class="${ROOT_CLASS}__counter-value">${cur}</span>
+                    </span>
+                    <span class="${ROOT_CLASS}__counter-metric" title="歷史累計 (永不重置) / historical cumulative (never resets)">
+                        <span class="${ROOT_CLASS}__counter-metric-label">${pickWord('historical')}</span>
+                        <span class="${ROOT_CLASS}__counter-value ${ROOT_CLASS}__counter-value--hist">${hist}</span>
+                    </span>
+                </span>
             </li>`;
         }).join('');
+    }
+
+    // Tiny bilingual word picker for the 當下/歷史 metric labels — mirrors the
+    // local-dict pattern pickLabel() uses (no i18n.js dependency).
+    function pickWord(kind) {
+        const lang = (document.documentElement.getAttribute('lang') || 'en').toLowerCase();
+        const isZh = lang.startsWith('zh') || lang === 'tw' || lang === 'cn';
+        const zh = { current: '當下', historical: '歷史', open: '未回覆', reset: '重置當下' };
+        const en = { current: 'Current', historical: 'All-time', open: 'open', reset: 'Reset current' };
+        return (isZh ? zh : en)[kind] || kind;
+    }
+
+    // POST the current-counter reset (current cumulative → 0). historical_count
+    // and the error-event history are left intact server-side. Confirm first
+    // since it clears the live "current" tally for every axis on this entity.
+    async function handleResetClick(eid) {
+        const isZh = (document.documentElement.getAttribute('lang') || 'en')
+            .toLowerCase().startsWith('zh');
+        const msg = isZh
+            ? '重置「當下累計」歸零?(歷史累計與歷史紀錄會保留)'
+            : 'Reset the CURRENT cumulative to 0? (Historical total + history are kept.)';
+        if (typeof window.confirm === 'function' && !window.confirm(msg)) return;
+        try {
+            const data = await fetchResetCounters(eid);
+            if (rootEl && data && data.counters) {
+                renderCounters(rootEl, data.counters);
+            }
+            // History is unchanged by a reset, but refresh so the UI stays live.
+            if (rootEl) loadErrorHistory(rootEl, eid);
+        } catch (err) {
+            /* surface nothing destructive — the counters simply stay as-is */
+            console.warn('[EntityStatusPanel] reset failed:', err && err.message);
+        }
     }
 
     // Render the drill-down rows for one axis. Each row = (timestamp, chip).
@@ -704,6 +808,43 @@
         }
     }
 
+    // card_errctr: render the 歷史紀錄 / error-history timeline. Each row is a
+    // persisted error event (time · axis label · snippet) that survives a
+    // current-counter reset. XSS-safe — every dynamic field is escaped.
+    function renderErrorHistory(items) {
+        if (!items || items.length === 0) {
+            return `<li class="${ROOT_CLASS}__log-row" data-state="empty">No error history yet. / 尚無歷史紀錄。</li>`;
+        }
+        return items.map(it => {
+            const ts = formatTs(it.occurredAt);
+            const axisLabel = escapeHtml(pickLabel(it.axis));
+            const snippet = it.payloadSnippet ? escapeHtml(it.payloadSnippet) : '';
+            const sender = (it.senderEntityId != null)
+                ? `<span class="${ROOT_CLASS}__hist-from">#${escapeHtml(it.senderEntityId)}</span>` : '';
+            return `
+            <li class="${ROOT_CLASS}__log-row" data-axis="${escapeHtml(it.axis)}">
+                <time class="${ROOT_CLASS}__log-time">${escapeHtml(ts)}</time>
+                <span class="${ROOT_CLASS}__log-summary">
+                    <span class="${ROOT_CLASS}__hist-axis">${axisLabel}</span>
+                    ${sender}
+                    ${snippet ? `<span class="${ROOT_CLASS}__hist-snippet">${snippet}</span>` : ''}
+                </span>
+            </li>`;
+        }).join('');
+    }
+
+    async function loadErrorHistory(root, eid) {
+        const list = root && root.querySelector('[data-role="error-history-list"]');
+        if (!list) return;
+        list.innerHTML = `<li class="${ROOT_CLASS}__log-row" data-state="loading">Loading…</li>`;
+        try {
+            const data = await fetchErrorHistory(eid);
+            list.innerHTML = renderErrorHistory(data.items || []);
+        } catch (err) {
+            list.innerHTML = `<li class="${ROOT_CLASS}__log-row" data-state="error">Failed to load: ${escapeHtml(err.message)}</li>`;
+        }
+    }
+
     function ensureStyles() {
         if (document.getElementById('entity-status-panel-style')) return;
         const style = document.createElement('style');
@@ -746,6 +887,27 @@
 .${ROOT_CLASS}__counter-value { font-size: 16px; font-weight: 600; color: var(--primary, #6c63ff);
     background: rgba(108,99,255,0.12); padding: 2px 10px; border-radius: 999px; min-width: 32px;
     text-align: center; }
+.${ROOT_CLASS}__counter-value--hist { color: var(--text-secondary, #aaa);
+    background: rgba(255,255,255,0.06); }
+.${ROOT_CLASS}__counter-metrics { display: inline-flex; gap: 10px; align-items: center; }
+.${ROOT_CLASS}__counter-metric { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
+.${ROOT_CLASS}__counter-metric-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--text-muted, #888); }
+.${ROOT_CLASS}__counter-open { display: inline-block; margin-left: 6px; font-size: 10px;
+    color: var(--warning, #f59e0b); background: rgba(245,158,11,0.14); padding: 0 6px;
+    border-radius: 999px; vertical-align: middle; }
+.${ROOT_CLASS}__section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.${ROOT_CLASS}__section-head .${ROOT_CLASS}__section-title { margin: 0; }
+.${ROOT_CLASS}__reset-btn { background: none; border: 1px solid var(--card-border, #333);
+    color: var(--text-muted, #888); cursor: pointer; font-size: 11px; padding: 3px 8px;
+    border-radius: 6px; white-space: nowrap; }
+.${ROOT_CLASS}__reset-btn:hover { color: var(--text, #fff); border-color: var(--primary, #6c63ff);
+    background: rgba(108,99,255,0.08); }
+.${ROOT_CLASS}__metric-legend { font-size: 11px; color: var(--text-muted, #888);
+    margin: 4px 0 10px; }
+.${ROOT_CLASS}__hist-axis { color: var(--text, #e0e0e0); font-weight: 600; }
+.${ROOT_CLASS}__hist-from { color: var(--text-muted, #888); font-size: 11px; margin: 0 4px; }
+.${ROOT_CLASS}__hist-snippet { color: var(--text-secondary, #aaa); }
 .${ROOT_CLASS}__counter-events { list-style: none; margin: 4px 0 8px 24px; padding: 0;
     border-left: 2px solid var(--card-border, #333); }
 .${ROOT_CLASS}__counter-event-row { display: grid; grid-template-columns: auto 1fr; gap: 8px;
@@ -827,7 +989,10 @@
                 }
             }
         );
-        await Promise.all([statusP, achP]);
+        // card_errctr: 歷史紀錄 timeline loads alongside counters/achievements;
+        // its own failure stays contained to its section.
+        const histP = loadErrorHistory(rootEl, targetEid);
+        await Promise.all([statusP, achP, histP]);
 
         // Initial log fetch + infinite scroll setup.
         logCursor = null;
