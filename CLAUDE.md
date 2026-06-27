@@ -178,7 +178,7 @@ EClaw/
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
 │   ├── tests/                # Regression + integration tests (79 files)
-│   ├── tests/jest/           # Jest unit tests (371 files, CI-run via `npm test`)
+│   ├── tests/jest/           # Jest unit tests (399 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -1266,6 +1266,19 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Portal QA/UIUX Sweep**: i18n fallback + a11y labels (#3721)
 - **Idle Dispatch Guard**: Guard non-integer `botId` before SQL int cast (#3715)
 
+### Recent Features (v1.1190.x+, 2026-06-27 – 2026-06-28)
+
+- **Owner-Decision Classifier + Inbox UI (v1.1190)**: Server-side `owner-decision` classifier for action requests — auto-tags requests requiring human owner decisions (#3756); portal inbox renders `decision_context` with what-was-done + evidence chips + recommendation (#3757)
+- **Org-Fwd Suppression System (v1.1190)**: Multi-phase suppression of machine-noise in org-chart forwarding — suppress `#N_PERMISSION_HANDOFF` + Codex heartbeat echoes (#3758); cover `#N_UPPER_HANDOFF` + `#5` watchdog-narration heartbeat echoes (#3760); robust shape-heuristic for peer watchdog heartbeat echoes (#3761); drop bare 緊急/urgent from F7 exclusion to stop passive-watchdog reflood (#3770)
+- **Suppression Transparency + B2B Quota (v1.1190)**: Suppression transparency feed + b2b quota countdown for org-fwd (#3759); chat-UI suppression transparency feed + b2b quota countdown (#3762)
+- **Org-Fwd Classifier Hardening (v1.1190)**: Harden owner-decision classifier + suppression per PR audit (#3763)
+- **Action Requests Enhancements (v1.1190)**: `PUT /api/action-requests/:id` edit endpoint (#3750); related-card chip + consensus-discussion filter (#3753)
+- **Chat EclawGreeting Removal (v1.1190)**: Remove EclawGreeting — 需要你 inbox fully replaces greeting as the primary chat entry point (#3751)
+- **Chat Staged Reply Fix (v1.1190)**: Restore staged reply on send-abort paths (#3747)
+- **Chat Action-Request Inbox Tests (v1.1190)**: Behavioral tests for 需要你 action-request inbox (#3749)
+- **Trust Index Fix (v1.1190)**: Drop non-IMMUTABLE `NOW()` from `idx_blacklist_active` index definition (#3754)
+- **Arena Daily Pool Update**: Daily question pool update for interview arena (target difficulty 70/100)
+
 ### Recent Features (v1.1190.x+, 2026-06-22 – 2026-06-23)
 
 - **Community Filter URL Persistence**: community.html search/sort/rate filters persisted in URL for reload/back/share (#3694)
@@ -1289,7 +1302,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~5412 test cases across 395 Jest files + 59 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~5564 test cases across 399 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1382,7 +1395,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
 | Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
 
-### Jest Unit Tests (CI-run, `npm test`, 379 files)
+### Jest Unit Tests (CI-run, `npm test`, 399 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -1465,7 +1478,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (371 files)
+cd backend && npm test                  # Jest unit tests (399 files)
 cd backend && npm run lint              # ESLint
 ```
 

@@ -699,6 +699,7 @@ class ClawRenderer(
             height = height,
             enabled = walkingEnabled,
             purposeful = layoutPrefs.wallpaperPurposefulWalkingEnabled,
+            conscious = layoutPrefs.wallpaperConsciousWalkingEnabled,
             nowMs = nowMs,
             conversationEntityIds = conversationEntityIds,
             entityUnitPx = 300f * baseScale * maxEntityScale,
@@ -876,7 +877,7 @@ class ClawRenderer(
                 activeConversationGroups.remove(key)
             }
         }
-        if (!layoutPrefs.wallpaperPurposefulWalkingEnabled || !layoutPrefs.wallpaperSpeechBubblesEnabled) {
+        if (!layoutPrefs.wallpaperConsciousWalkingEnabled || !layoutPrefs.wallpaperSpeechBubblesEnabled) {
             activeConversationGroups.clear()
             return emptySet()
         }

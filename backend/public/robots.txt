@@ -40,6 +40,20 @@ Disallow: /portal/analytics.html
 Disallow: /portal/schedule.html
 Disallow: /portal/compare.html
 Disallow: /portal/roadmap.html
+Disallow: /portal/about-founder.html
+Disallow: /portal/hover-click-demo.html
+Disallow: /portal/interactive-dev.html
+Disallow: /portal/invite-styling-demo.html
+Disallow: /portal/mindmap.html
+Disallow: /portal/nagoya-image-atlas-20260513.html
+Disallow: /portal/petdx-browser.html
+Disallow: /portal/petdx-preview.html
+Disallow: /portal/telemetry.html
+Disallow: /portal/stories/
+Disallow: /portal/bot/
+
+# Supplementary promo/demo pages
+Disallow: /promo-chat-avatar.html
 
 # API endpoints
 Disallow: /api/

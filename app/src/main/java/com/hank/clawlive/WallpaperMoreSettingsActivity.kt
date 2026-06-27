@@ -68,10 +68,16 @@ class WallpaperMoreSettingsActivity : AppCompatActivity() {
         addBubbleDurationSlider(content)
         addSwitch(
             content,
-            title = getString(R.string.wallpaper_setting_conscious_walking),
-            description = getString(R.string.wallpaper_setting_conscious_walking_desc),
+            title = getString(R.string.wallpaper_setting_purposeful_walking),
+            description = getString(R.string.wallpaper_setting_purposeful_walking_desc),
             checked = layoutPrefs.wallpaperPurposefulWalkingEnabled
         ) { layoutPrefs.wallpaperPurposefulWalkingEnabled = it }
+        addSwitch(
+            content,
+            title = getString(R.string.wallpaper_setting_conscious_walking),
+            description = getString(R.string.wallpaper_setting_conscious_walking_desc),
+            checked = layoutPrefs.wallpaperConsciousWalkingEnabled
+        ) { layoutPrefs.wallpaperConsciousWalkingEnabled = it }
         addSwitch(
             content,
             title = getString(R.string.wallpaper_setting_entity_interactions),

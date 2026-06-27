@@ -9,12 +9,13 @@ import kotlin.math.abs
 import kotlin.random.Random
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class WallpaperWanderControllerTest {
     @Test
-    fun idleEntitiesStayAtHomeWithoutConversation() {
+    fun idleEntitiesUseAmbientWalkingByDefault() {
         val controller = WallpaperWanderController(random = Random(7))
         val entities = listOf(
             EntityStatus(entityId = 1, state = CharacterState.IDLE),
@@ -25,10 +26,73 @@ class WallpaperWanderControllerTest {
         controller.positionsFor(base, entities, 1000f, 1000f, enabled = true, nowMs = 0L)
         val after = controller.positionsFor(base, entities, 1000f, 1000f, enabled = true, nowMs = 9000L)
 
-        assertEquals(base, after)
-        assertFalse(controller.isWalking(1))
-        assertFalse(controller.isWalking(2))
-        assertEquals(MotionState.STOPPED, controller.motionState(1))
+        assertNotEquals("ambient walking should move idle entities away from home", base, after)
+        assertTrue(controller.isWalking(1) || controller.isWalking(2))
+        assertEquals(MotionState.WANDERING, controller.motionState(1))
+    }
+
+    @Test
+    fun purposefulAmbientWalkingCanBeDisabledWithoutDisablingConversationWalking() {
+        val controller = WallpaperWanderController(random = Random(11))
+        val entities = listOf(
+            EntityStatus(entityId = 1, state = CharacterState.IDLE),
+            EntityStatus(entityId = 2, state = CharacterState.IDLE)
+        )
+        val base = listOf(150f to 500f, 850f to 500f)
+
+        controller.positionsFor(base, entities, 1000f, 1000f, enabled = true, purposeful = false, nowMs = 0L)
+        val after = controller.positionsFor(
+            base,
+            entities,
+            1000f,
+            1000f,
+            enabled = true,
+            purposeful = false,
+            conscious = true,
+            nowMs = 1000L,
+            conversationEntityIds = setOf(1, 2),
+            entityUnitPx = 220f
+        )
+
+        assertTrue("sender should still move right for a conversation", after[0].first > base[0].first)
+        assertTrue("receiver should still move left for a conversation", after[1].first < base[1].first)
+    }
+
+    @Test
+    fun consciousWalkingCanIgnoreConversationRouteWithoutDisablingAmbientWalking() {
+        val ambientController = WallpaperWanderController(random = Random(19))
+        val consciousOffController = WallpaperWanderController(random = Random(19))
+        val entities = listOf(
+            EntityStatus(entityId = 1, state = CharacterState.IDLE),
+            EntityStatus(entityId = 2, state = CharacterState.IDLE)
+        )
+        val base = listOf(150f to 500f, 850f to 500f)
+
+        ambientController.positionsFor(base, entities, 1000f, 1000f, enabled = true, nowMs = 0L)
+        consciousOffController.positionsFor(base, entities, 1000f, 1000f, enabled = true, nowMs = 0L)
+        val ambientOnly = ambientController.positionsFor(
+            base,
+            entities,
+            1000f,
+            1000f,
+            enabled = true,
+            conscious = false,
+            nowMs = 1000L
+        )
+        val withConversationIgnored = consciousOffController.positionsFor(
+            base,
+            entities,
+            1000f,
+            1000f,
+            enabled = true,
+            conscious = false,
+            nowMs = 1000L,
+            conversationEntityIds = setOf(1, 2),
+            entityUnitPx = 220f
+        )
+
+        assertEquals(ambientOnly, withConversationIgnored)
+        assertTrue(consciousOffController.isWalking(1) || consciousOffController.isWalking(2))
     }
 
     @Test

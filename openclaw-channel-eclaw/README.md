@@ -425,10 +425,20 @@ repeatedly:
    queueDepth=N reason=active_work_without_progress recovery=none
 ```
 New inbound messages queue behind the stuck call (`queueDepth` climbs) and are never processed, so no
-reply is emitted. The runtime detects the stall but `recovery=none` — it does **not** auto-abort the
-call. Passive-health does not read this diagnostic, so it still reports GREEN. Verified 2026-06-22:
-the same `sessionId` had been stalling for hours (first seen ~14:35Z, still wedged at 23:38Z) until
-detected via portal-UI reply cross-validation.
+reply is emitted. Passive-health does not read this diagnostic, so it still reports GREEN. Verified
+2026-06-22: the same `sessionId` had been stalling for hours (first seen ~14:35Z, still wedged at
+23:38Z) until detected via portal-UI reply cross-validation.
+
+**RECURRENCE 2026-06-26 (#3 project-e):** same failure mode, with a new wrinkle — the runtime now DOES
+run a watchdog (it logs `recovery=checking` → `stuck session recovery: action=abort_embedded_run`),
+but the soft abort is **ineffective against a wedged embedded-run owner**: every attempt returns
+`aborted=true drained=true forceCleared=false released=0` with
+`lastProgress=embedded_run:recovery_skipped_active_owner`, then the SAME `sessionId`
+(`bf3aff46-…`) is re-detected as stalled ~90s later. It looped this way for ~10,870s (~3h),
+`queueDepth` climbing as my cross-validation message stacked behind the dead work. `docker restart
+openclaw-project-e` cleared it; #3 then replied in the portal UI (`我在線…✅`). Same-image #1
+(project-f) was unaffected by this wedge (its non-reply that run was an unrelated gpt-5.5 provider
+cooldown, `next=none`).
 
 **Containment (used, low-risk, scoped to the one entity):**
 `docker restart openclaw-project-<e|f|c|b>` for the affected runtime only — clears the wedged session;
@@ -439,10 +449,13 @@ wedge, not version drift** — #1 (project-f) and #3 (project-e) run the *identi
 (`sha256:fab8dab75f61`) and #1 replied fine throughout.
 
 **Durable fixes (remaining, by layer):**
-1. **OpenClaw runtime (this repo / image):** add a stall watchdog — when a session reports
-   `active_work_without_progress` beyond a bounded age (e.g. >120s), abort the stuck model call and
-   reset/requeue the session (`recovery=abort_and_requeue`) instead of `recovery=none`, so the queue
-   drains without a full container restart.
+1. **OpenClaw runtime (this repo / image):** the stall watchdog now EXISTS but its *soft* abort never
+   clears a wedged owner — it loops `abort_embedded_run` with `forceCleared=false released=0` /
+   `recovery_skipped_active_owner` indefinitely (observed ~3h on the same `sessionId`, 2026-06-26).
+   FIX: after K consecutive failed soft `abort_embedded_run` attempts on the same `sessionId`,
+   ESCALATE to a hard force-clear (`forceCleared=true`) / worker-process recycle that actually
+   releases the lane, so the queue drains without a full container restart. Soft-abort-without-
+   escalation is the bug.
 2. **EClaw passive-health (backend Layer C):** treat a recent, age-growing `stalled session …
    active_work_without_progress` diagnostic from an openclaw container as **RED** for that entity, so
    `/api/passive-health/run` stops reporting a wedged entity as healthy. Until this lands, the
