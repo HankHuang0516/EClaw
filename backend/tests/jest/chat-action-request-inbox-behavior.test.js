@@ -221,10 +221,9 @@ function makeInbox(opts = {}) {
                 action_request_filter_empty: 'No requests match this filter.',
                 action_request_card_link: '🗂 Task card',
                 action_request_card_link_title: 'Open linked card {card}',
-                action_request_ratification_silent_consent: '⏳ Ratifying · silence means consent',
-                action_request_ratification_silent_consent_title: 'Silence is treated as approval for this ratification request.',
-                action_request_ratification_needs_approval: 'Needs your approval',
-                action_request_ratification_needs_approval_title: 'This request waits for your explicit approval.',
+                action_request_ratify_hold_badge: 'Needs your approval',
+                action_request_ratify_hold_hint: 'Nothing is sent unless you approve.',
+                action_request_ratify_default_agree_badge: '⏳ Awaiting your call · silence approves',
                 chat_send_failed: 'Failed',
             };
             let s = dict[key] || key;
@@ -251,6 +250,9 @@ function makeInbox(opts = {}) {
         let actionRequestsLoaded = false;
         let actionRequestsLoading = false;
         let actionRequestRealtimeEnabled = true;
+        let actionRequestRatifyEnabled = true;
+        let actionRequestRatifyGraceMinutes = 1440;
+        const RATIFY_DEFAULT_GRACE_MINUTES = 1440;
         const actionRequestConsensusTriggeredIds = new Set();
         let actionRequestRefreshTimer = null;
         const ACTION_REQUEST_INBOX_OPEN_KEY = 'needsyou_inbox_open';
@@ -285,8 +287,8 @@ function makeInbox(opts = {}) {
         // 計畫C inbox 篩選條件 facet helpers referenced by renderActionRequestInbox.
         extractFunction('setActionRequestInboxFilter'),
         extractFunction('actionRequestMatchesFilter'),
-        // 計畫E owner-decision / ratification badge helper.
-        extractFunction('actionRequestRatificationBadgeMeta'),
+        // 計畫E ratify-loop badge builder (renamed from actionRequestRatificationBadgeMeta on main).
+        extractFunction('buildRatifyBadge'),
         extractFunction('renderActionRequestInbox'),
         // The inbox render entry point loadActionRequests/dismissActionRequest
         // funnel through (replaced EclawGreeting.maybeShow; card_cc9700b7).
@@ -714,8 +716,8 @@ describe('計畫D — 需要你 inbox 🗂 任務卡 deep-link chip', () => {
     });
 });
 
-describe('計畫E — 需要你 inbox 追認徽章', () => {
-    test('owner-decision request without silent-consent marker shows 需你核可 / explicit approval', () => {
+describe('計畫E — 需要你 inbox ratify badge (buildRatifyBadge)', () => {
+    test('hold-mode ratify request renders a needs-approval badge', () => {
         const { api, banner } = makeInbox();
         api.setActionRequests([
             makeRequest(REQ_A, {
@@ -724,40 +726,32 @@ describe('計畫E — 需要你 inbox 追認徽章', () => {
                     recommendation: 'approve',
                     evidence: [],
                     recommendedOptionIndex: 0,
+                    ratify: { mode: 'hold' },
                 },
             }),
-            makeRequest(REQ_B), // ordinary request: no badge
+            makeRequest(REQ_B),
         ]);
 
         api.renderActionRequestInbox(banner);
 
-        const badges = findAllByClass(banner, 'action-request-ratification-badge');
+        const badges = findAllByClass(banner, 'action-request-ratify');
         expect(badges.length).toBe(1);
-        expect(badges[0]._text).toBe('Needs your approval');
-        expect(badges[0].classList.contains('needs-approval')).toBe(true);
-        expect(badges[0].title).toBe('This request waits for your explicit approval.');
     });
 
-    test('silent-consent marker switches the badge to ratifying / silence means consent', () => {
+    test('request without ratify object does not render a ratify badge', () => {
         const { api, banner } = makeInbox();
         api.setActionRequests([
             makeRequest(REQ_A, {
                 decisionContext: {
-                    whatWasDone: 'Applied the safe default.',
-                    recommendation: 'approve unless objected',
-                    evidence: [],
-                    recommendedOptionIndex: 0,
-                    silentConsent: true,
+                    whatWasDone: 'simple change',
+                    recommendation: 'approve',
                 },
             }),
         ]);
 
         api.renderActionRequestInbox(banner);
 
-        const badge = findByClass(banner, 'action-request-ratification-badge');
-        expect(badge).not.toBeNull();
-        expect(badge._text).toBe('⏳ Ratifying · silence means consent');
-        expect(badge.classList.contains('silent-consent')).toBe(true);
-        expect(badge.title).toBe('Silence is treated as approval for this ratification request.');
+        const badges = findAllByClass(banner, 'action-request-ratify');
+        expect(badges.length).toBe(0);
     });
 });

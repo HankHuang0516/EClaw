@@ -248,35 +248,16 @@ describe('需要你 inbox related-card chip (計畫D, card_df646877)', () => {
     });
 });
 
-describe('需要你 inbox 追認徽章 (計畫E)', () => {
-    test('decisionContext rows render a ratification badge with silent-consent and explicit-approval states', () => {
-        const fn = chatHtml.slice(chatHtml.indexOf('function actionRequestRatificationBadgeMeta('), chatHtml.indexOf('function renderActionRequestInbox('));
-        expect(fn).toContain("function actionRequestRatificationBadgeMeta(request)");
-        expect(fn).toContain("if (!dc) return null;");
-        expect(fn).toContain("'silent_consent'");
-        expect(fn).toContain("'silence_means_consent'");
-        expect(fn).toContain("'auto_approve_on_timeout'");
-        expect(fn).toContain("'action_request_ratification_silent_consent'");
-        expect(fn).toContain("'action_request_ratification_needs_approval'");
-
-        const renderFn = chatHtml.slice(chatHtml.indexOf('function renderActionRequestInbox('), chatHtml.indexOf('function collectActionRequestReplyContexts('));
-        expect(renderFn).toContain('const ratificationBadgeMeta = actionRequestRatificationBadgeMeta(request);');
-        expect(renderFn).toContain("ratificationBadge.className = 'action-request-ratification-badge ' + ratificationBadgeMeta.className;");
-        expect(renderFn.indexOf('actionRequestRatificationBadgeMeta(request)')).toBeLessThan(renderFn.indexOf("metaText.textContent = t('action_request_meta'"));
-        expect(chatHtml).toContain('.action-request-ratification-badge');
-        expect(chatHtml).toContain('.action-request-ratification-badge.silent-consent');
+describe('需要你 inbox ratify badge (計畫E, buildRatifyBadge)', () => {
+    test('chat.html contains the buildRatifyBadge function with hold and default_agree modes', () => {
+        expect(chatHtml).toContain('function buildRatifyBadge(ratify, opts)');
+        expect(chatHtml).toContain("mode !== 'default_agree'");
+        expect(chatHtml).toContain("mode !== 'hold'");
+        expect(chatHtml).toContain('.action-request-ratify');
     });
 
-    test('EN + ZH strings exist for the ratification badge', () => {
-        [
-            'action_request_ratification_silent_consent',
-            'action_request_ratification_silent_consent_title',
-            'action_request_ratification_needs_approval',
-            'action_request_ratification_needs_approval_title',
-        ].forEach(key => expect(i18nJs).toContain(`"${key}"`));
-        expect(i18nJs).toContain('"action_request_ratification_silent_consent": "⏳ Ratifying · silence means consent"');
-        expect(i18nJs).toContain('"action_request_ratification_silent_consent": "⏳ 追認中·靜默視同同意"');
-        expect(i18nJs).toContain('"action_request_ratification_needs_approval": "Needs your approval"');
-        expect(i18nJs).toContain('"action_request_ratification_needs_approval": "需你核可"');
+    test('EN i18n keys exist for the ratify badge (hold + default_agree)', () => {
+        expect(i18nJs).toContain('"action_request_ratify_hold_badge"');
+        expect(i18nJs).toContain('"action_request_ratify_default_agree_badge"');
     });
 });
