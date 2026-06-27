@@ -312,6 +312,17 @@ let VISION_IMAGES = [
     // Hard tier
     { file: null, description: 'A Terraform plan output showing 8 total resources: 4 to add in green (aws_instance, aws_security_group, aws_subnet, aws_route_table), 2 to change in yellow (aws_lambda with memory updated from 512 MB to 1024 MB and timeout from 30 s to 60 s), 1 to destroy in red (aws_s3_bucket named "legacy-data"), and 1 unchanged', keywords: ['terraform', 'eight', 'four', 'add', 'green', 'lambda', '512', '1024', 'destroy', 's3', 'legacy'] },
     { file: null, description: 'A packet flow diagram for a TLS 1.3 handshake showing seven steps: Client Hello → Server Hello → Encrypted Extensions → Certificate → Certificate Verify → Server Finished → Client Finished — a horizontal dashed arrow labeled "Session Ticket (optional)" is shown after Server Finished', keywords: ['TLS', '1.3', 'handshake', 'seven', 'client', 'hello', 'certificate', 'verify', 'finished', 'session', 'ticket', 'optional'] },
+    // ── Daily pool update: added 2026-06-27 ──
+    // Easy tier
+    { file: null, description: 'A yellow warning triangle with an exclamation mark inside — the standard road hazard sign on a white background', keywords: ['warning', 'triangle', 'yellow', 'exclamation', 'hazard'] },
+    { file: null, description: 'A green power button icon centered on a dark background — a circular ring with a vertical bar at the top', keywords: ['power', 'button', 'green', 'circle', 'dark'] },
+    // Medium tier
+    { file: null, description: 'A split-screen code review diff tool: left panel shows 5 red deleted lines, right panel shows 7 green inserted lines — a reviewer comment bubble appears on line 3 of the right panel reading "Consider extracting this to a helper function"', keywords: ['code', 'review', 'diff', 'five', 'red', 'seven', 'green', 'comment', 'helper'] },
+    { file: null, description: 'An API rate limit monitoring chart over 24 hours: a blue "requests/min" line peaks at 847 at 14:00, a red dashed "limit" line stays flat at 1000 req/min — three yellow spike markers appear at 06:00, 14:00, and 20:00', keywords: ['rate', 'limit', 'chart', 'blue', '847', 'red', 'three', 'markers', '1000', '14:00'] },
+    { file: null, description: 'A state machine diagram with 4 states: Idle (grey), Processing (blue), Error (red), Complete (green) — arrows show transitions: Idle→Processing on "start", Processing→Error on "fail", Processing→Complete on "success", Error→Idle on "reset" — the Error state has a bold red border', keywords: ['state', 'machine', 'four', 'idle', 'processing', 'error', 'complete', 'transitions', 'bold', 'red'] },
+    // Hard tier
+    { file: null, description: 'A Linux htop process monitor screenshot: overall CPU bar at 73%, memory at 11.4 GB of 16 GB — 5 processes listed: PID 3847 "python3 train.py" at 92.1% CPU, PID 1021 "nginx" at 0.3%, PID 4412 "postgres" at 4.7%, PID 2201 "redis-server" at 1.2%, PID 5501 "node" at 0.9% — red load average 7.42 in top-right', keywords: ['htop', 'CPU', '73', 'memory', '11.4', 'five', '3847', 'python', '92.1', 'nginx', '7.42', 'load'] },
+    { file: null, description: 'A microservices architecture diagram with 6 services connected by arrows: API Gateway → Auth Service, API Gateway → User Service, API Gateway → Order Service, Order Service → Payment Service, Payment Service → Notification Service — a red ❌ on the Payment→Notification arrow indicates a failed webhook, highlighted in orange', keywords: ['microservices', 'six', 'services', 'API', 'Gateway', 'payment', 'notification', 'failed', 'orange', 'webhook'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -623,6 +634,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[73,74,75,71,69,72,76,73]', expected: '[1,1,4,2,1,1,0,0]' },{ input: '[30,40,50,60]', expected: '[1,1,1,0]' },{ input: '[30,60,90]', expected: '[1,1,0]' },{ input: '[30]', expected: '[0]' }] },
     { title: 'Longest Mountain in Array', description: 'Write `solve(nums)` — a mountain subarray is a contiguous subarray where elements strictly increase to a peak then strictly decrease (minimum length 3). Return the length of the longest mountain, or 0 if none exists.',
       testCases: [{ input: '[2,1,4,7,3,2,5]', expected: '5' },{ input: '[2,2,2]', expected: '0' },{ input: '[1,2,3]', expected: '0' },{ input: '[0,1,0]', expected: '3' },{ input: '[1,3,5,4,2,0,1,3,2]', expected: '6' }] },
+    // ── Daily pool update: added 2026-06-27 ──
+    { title: 'Zigzag Level Order', description: 'Write `solve(nodes)` — given a binary tree as a level-order array (null for missing nodes), return the zigzag level-order traversal: left→right for the first level, right→left for the second, and so on alternating.',
+      testCases: [{ input: '[3,9,20,null,null,15,7]', expected: '[[3],[20,9],[15,7]]' },{ input: '[1,2,3,4,5,6,7]', expected: '[[1],[3,2],[4,5,6,7]]' },{ input: '[1]', expected: '[[1]]' },{ input: '[]', expected: '[]' }] },
+    { title: 'Combination Sum', description: 'Write `solve(candidates, target)` — find all unique combinations where the chosen numbers sum to target. Numbers may be reused. Return results sorted lexicographically.',
+      testCases: [{ input: '[2,3,6,7], 7', expected: '[[2,2,3],[7]]' },{ input: '[2,3], 6', expected: '[[2,2,2],[3,3]]' },{ input: '[2], 1', expected: '[]' },{ input: '[1,2], 4', expected: '[[1,1,1,1],[1,1,2],[2,2]]' }] },
+    { title: 'Longest Repeating Character Replacement', description: 'Write `solve(s, k)` — you can replace at most k characters in the string with any letter. Return the length of the longest substring containing only one distinct character after the replacements.',
+      testCases: [{ input: '"AABABBA", 1', expected: '4' },{ input: '"ABAB", 2', expected: '4' },{ input: '"AAAA", 0', expected: '4' },{ input: '"AABA", 0', expected: '2' },{ input: '"KRSCDCSONAJNHLBMDQGIFCPEKPOHQIHLTDIQGEKLRLCQNBOHNDQGHJPNDQPERNPLNULL", 4', expected: '7' }] },
+    { title: 'Count of Smaller Numbers After Self', description: 'Write `solve(nums)` — return an array where answer[i] is the count of elements strictly smaller than nums[i] that appear to its right.',
+      testCases: [{ input: '[5,2,6,1]', expected: '[2,1,1,0]' },{ input: '[-1,-1]', expected: '[0,0]' },{ input: '[1]', expected: '[0]' },{ input: '[3,2,1]', expected: '[2,1,0]' },{ input: '[2,0,1]', expected: '[2,0,0]' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -808,6 +828,18 @@ let RESPONSE_QUESTIONS = [
     // Hard tier
     { question: 'In a town, 30% of the population are vegetarian. Of the non-vegetarian population, 40% eat red meat. What percentage of the town\'s total population eats red meat?', expectedKeywords: ['28', '28%'] },
     { question: 'A committee of 4 people is to be selected from a group of 7 men and 5 women. In how many ways can the committee be formed if it must contain at least 2 women?', expectedKeywords: ['285'] },
+    // ── Daily pool update: added 2026-06-27 ──
+    // Easy tier
+    { question: 'What is 8 × 7?', expectedKeywords: ['56', 'fifty-six'] },
+    { question: 'What is the Roman numeral for 1000?', expectedKeywords: ['M'] },
+    // Medium tier
+    { question: 'A rectangular field is 90 m long and 40 m wide. A path 2 m wide runs all the way around the inside edge. What is the area of the path in square meters?', expectedKeywords: ['504'] },
+    { question: '$5,000 is invested at 6% simple interest per year. How many years does it take for the investment to reach $6,500?', expectedKeywords: ['5', 'five'] },
+    { question: 'A bag contains 3 red, 4 blue, and 5 green marbles. If one marble is drawn at random, what is the probability it is NOT green? Express as a simplified fraction.', expectedKeywords: ['7/12'] },
+    { question: 'A price is first increased by 20% then decreased by 20%. What is the net percentage change from the original price?', expectedKeywords: ['4', '-4', 'decrease', 'down', '−4'] },
+    // Hard tier
+    { question: 'A cone has a base radius of 6 cm and a slant height of 10 cm. What is the total surface area of the cone? Express your answer as "Xπ" where X is a whole number.', expectedKeywords: ['96π', '96pi', '96 π'] },
+    { question: 'Five friends (A, B, C, D, E) sit in a row at a cinema. In how many ways can they sit if two specific friends must NOT be adjacent?', expectedKeywords: ['72', 'seventy-two'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -1005,6 +1037,17 @@ let TTS_PHRASES = [
     // Hard tier
     { text: 'The variance swap strike for a 3-month tenor on EUR/USD cross-volatility was fixed at 7.4 vol-squared — the daily P&L equals realised variance minus the fixed strike multiplied by the notional of five million vega', keywords: ['variance', 'swap', 'strike', 'EUR/USD', '7.4', 'vol', 'P&L', 'realised', 'notional', 'five', 'million'] },
     { text: 'Pursuant to Section 2 article 8 sub-paragraph c of the Master Services Agreement dated the third of March two thousand twenty-four the service provider shall maintain a minimum of ninety-nine point nine five percent monthly uptime as set forth in Schedule B appendix three', keywords: ['section', '2', 'article', '8', 'march', 'two thousand', 'ninety-nine', 'monthly', 'uptime', 'schedule', 'appendix', 'three'] },
+    // ── Daily pool update: added 2026-06-27 ──
+    // Easy tier
+    { text: 'The elevator is out of service — please use the stairs on the left', keywords: ['elevator', 'out', 'service', 'stairs', 'left'] },
+    { text: 'Fasten your seatbelt before the vehicle begins to move', keywords: ['fasten', 'seatbelt', 'vehicle', 'begins', 'move'] },
+    // Medium tier
+    { text: 'Project Mercury milestone review is on Thursday March 5th at 09:30 in the Hudson conference room — dial-in passcode 7841', keywords: ['Mercury', 'thursday', 'march', '5', '09:30', 'Hudson', '7841'] },
+    { text: 'API rate limit exceeded: 1200 requests in the last 60 seconds against a quota of 1000 per minute — retry allowed after 48 seconds', keywords: ['API', 'rate', 'limit', '1200', '60', 'seconds', '1000', 'retry', '48'] },
+    { text: 'Scheduled maintenance window for cluster prod-us-east-1: Saturday June 28th from 02:00 to 04:00 UTC — all read replicas will be promoted to primary during this window', keywords: ['maintenance', 'prod', 'us-east', 'saturday', 'june', '28', '02:00', '04:00', 'UTC', 'replicas'] },
+    // Hard tier
+    { text: 'The Basel III capital adequacy framework requires banks to maintain a minimum Common Equity Tier 1 ratio of 4.5 percent plus a capital conservation buffer of 2.5 percent — the effective floor is therefore 7 percent of risk-weighted assets', keywords: ['Basel', 'III', 'Tier', '4.5', 'conservation', '2.5', 'seven', 'percent', 'risk-weighted'] },
+    { text: 'Inference completed in 847 milliseconds: model CLIP-ViT-L14 processed a batch of 32 image-text pairs achieving top-1 accuracy of 91.4 percent on the ImageNet validation set — peak GPU memory 6.2 GB on device cuda:0', keywords: ['CLIP', 'ViT', '847', 'milliseconds', '32', '91.4', 'GPU', '6.2', 'cuda', 'ImageNet'] },
 ];
 
 // ============================================
