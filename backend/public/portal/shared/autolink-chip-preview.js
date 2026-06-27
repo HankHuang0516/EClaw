@@ -125,11 +125,13 @@
             if (kind === 'kanban' && type === 'card') {
                 const deviceId = (global.currentUser && global.currentUser.deviceId) || '';
                 const deviceSecret = (global.currentUser && global.currentUser.deviceSecret) || '';
-                const qs = deviceId
-                    ? '?deviceId=' + encodeURIComponent(deviceId) + (deviceSecret ? '&deviceSecret=' + encodeURIComponent(deviceSecret) : '')
-                    : '';
+                // deviceId is non-secret and stays in the query; deviceSecret
+                // moves to the X-Device-Secret header so it never lands in
+                // browser history / access logs / the Referer header.
+                const qs = deviceId ? '?deviceId=' + encodeURIComponent(deviceId) : '';
                 const url = '/api/mission/card/card_' + id + qs;
-                return fetch(url, { credentials: 'include' })
+                const headers = deviceSecret ? { 'X-Device-Secret': deviceSecret } : {};
+                return fetch(url, { credentials: 'include', headers })
                     .then(r => r.json())
                     .then(j => {
                         if (j && j.success === false) throw new Error(j.error || 'fetch failed');

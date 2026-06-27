@@ -129,15 +129,24 @@
         };
     }
 
+    // Secrets now travel in request HEADERS (X-Device-Secret / X-Bot-Secret),
+    // never in the URL query, to keep them out of browser history, server /
+    // Cloudflare access logs and the Referer header. The query keeps only
+    // non-secret routing params (deviceId, and entityId for bot-auth).
+    function _credHeaders() {
+        const c = readCreds();
+        const h = {};
+        if (c.deviceSecret) h['X-Device-Secret'] = c.deviceSecret;
+        else if (c.botSecret) h['X-Bot-Secret'] = c.botSecret;
+        return h;
+    }
+
     function _credQs() {
         const c = readCreds();
         const qs = new URLSearchParams();
         if (c.deviceId) qs.set('deviceId', c.deviceId);
-        if (c.deviceSecret) qs.set('deviceSecret', c.deviceSecret);
-        else if (c.botSecret) {
-            qs.set('botSecret', c.botSecret);
-            if (c.entityId) qs.set('entityId', String(c.entityId));
-        }
+        // entityId is only needed (non-secret) for bot-auth disambiguation.
+        if (!c.deviceSecret && c.botSecret && c.entityId) qs.set('entityId', String(c.entityId));
         return qs;
     }
 
@@ -145,6 +154,7 @@
         const qs = _credQs();
         const res = await fetch(`/api/entity-status/${eid}?${qs.toString()}`, {
             credentials: 'include',
+            headers: _credHeaders(),
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
@@ -156,6 +166,7 @@
         if (before) qs.set('before', String(before));
         const res = await fetch(`/api/entity-status/${eid}/log?${qs.toString()}`, {
             credentials: 'include',
+            headers: _credHeaders(),
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
@@ -166,6 +177,7 @@
         qs.set('limit', '50');
         const res = await fetch(`/api/entity-status/${eid}/counter/${encodeURIComponent(axis)}/events?${qs.toString()}`, {
             credentials: 'include',
+            headers: _credHeaders(),
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
@@ -175,6 +187,7 @@
         const qs = _credQs();
         const res = await fetch(`/api/entity-status/${eid}/achievements?${qs.toString()}`, {
             credentials: 'include',
+            headers: _credHeaders(),
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
@@ -185,6 +198,7 @@
         qs.set('limit', '50');
         const res = await fetch(`/api/entity-status/${eid}/achievement/${encodeURIComponent(axis)}/events?${qs.toString()}`, {
             credentials: 'include',
+            headers: _credHeaders(),
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();

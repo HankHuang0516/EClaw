@@ -183,12 +183,16 @@
         if (!deviceId) throw new Error('missing_creds');
         const params = ['from=' + encodeURIComponent(fromId),
                         'deviceId=' + encodeURIComponent(deviceId)];
+        // Secrets travel in request headers (X-Device-Secret / X-Bot-Secret),
+        // never in the URL query, so they don't leak into browser history,
+        // server/Cloudflare access logs or the Referer header.
         // Prefer deviceSecret (kanban portal convention); fall back to botSecret
         // for bot-authed callers / tests.
+        const headers = {};
         if (deviceSecret) {
-            params.push('deviceSecret=' + encodeURIComponent(deviceSecret));
+            headers['X-Device-Secret'] = deviceSecret;
         } else if (botSecret) {
-            params.push('botSecret=' + encodeURIComponent(botSecret));
+            headers['X-Bot-Secret'] = botSecret;
         } else {
             throw new Error('missing_creds');
         }
@@ -196,7 +200,7 @@
             params.push('entityId=' + encodeURIComponent(entityId));
         }
         const url = REFS_ENDPOINT + '?' + params.join('&');
-        const res = await fetch(url, { credentials: 'same-origin' });
+        const res = await fetch(url, { credentials: 'same-origin', headers });
         if (!res.ok) throw new Error('http_' + res.status);
         const json = await res.json();
         if (!json || json.success !== true) throw new Error('api_error');
