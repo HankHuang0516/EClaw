@@ -9658,7 +9658,17 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
             if (tParse.hasAll && !broadcast && !(speakTo && speakTo.length > 0)) {
                 broadcast = true;
                 routingResolvedVia = 'mention';
-            } else if (tParse.mentions.length > 0 && !broadcast && !(speakTo && speakTo.length > 0)) {
+            } else if (tParse.mentions.length > 0 && !broadcast && !(speakTo && speakTo.length > 0) && channelModule.messageStartsWithMention(finalMessage)) {
+                // ── First-token-only guard (card_2ee0afbb / card_488f05280caf) ──
+                // Only auto-promote an in-text @-mention to speakTo when the
+                // message's FIRST non-whitespace/non-emoji token IS the mention.
+                // A casual mid-body reference ("this is broken, ask @xx to look")
+                // is NOT routing intent — promoting it mis-routes the reply into
+                // the referenced entity's chat history, polluting its context.
+                // The /api/channel path already enforces this (channel-api.js);
+                // /api/transform was missing it, so the two routing seams now
+                // agree. `@all` broadcast (above) is intentionally NOT subject to
+                // this rule — preserves the pre-existing "@all anywhere" convention.
                 speakTo = tParse.mentions.map(m => m.publicCode);
                 routingResolvedVia = 'mention';
             }
