@@ -247,3 +247,17 @@ describe('需要你 inbox related-card chip (計畫D, card_df646877)', () => {
         expect(i18nJs).toContain('"action_request_card_link": "🗂 任務卡"');
     });
 });
+
+describe('需要你 inbox ratify badge (計畫E, buildRatifyBadge)', () => {
+    test('chat.html contains the buildRatifyBadge function with hold and default_agree modes', () => {
+        expect(chatHtml).toContain('function buildRatifyBadge(ratify, opts)');
+        expect(chatHtml).toContain("mode !== 'default_agree'");
+        expect(chatHtml).toContain("mode !== 'hold'");
+        expect(chatHtml).toContain('.action-request-ratify');
+    });
+
+    test('EN i18n keys exist for the ratify badge (hold + default_agree)', () => {
+        expect(i18nJs).toContain('"action_request_ratify_hold_badge"');
+        expect(i18nJs).toContain('"action_request_ratify_default_agree_badge"');
+    });
+});
