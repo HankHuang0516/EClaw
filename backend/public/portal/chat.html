@@ -444,6 +444,43 @@
             .action-request-evidence-chip { max-width: 100%; }
             .action-request-evidence-chip .ar-chip-label { max-width: 60vw; }
         }
+        /* 計畫E ratify-loop (card_e9d01b6e): per-item badge on a 需要你 request whose
+           decisionContext.ratify was server-ARMED. Rendered ONLY when the device pref
+           action_request_ratify_enabled is ON (dark-launch default OFF). default_agree
+           = ACTION-BEARING warning (silence auto-sends → amber + live countdown);
+           hold = calm owner-decision (silence does NOT send → neutral). Both are
+           visually distinct from the blue "Recommended" pill, which is record-only. */
+        .action-request-ratify {
+            display: flex; flex-direction: column; gap: 4px;
+            border-radius: 9px; padding: 7px 10px; font-size: 12px; line-height: 1.45;
+            border: 1px solid var(--card-border, #333355);
+        }
+        .action-request-ratify-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .action-request-ratify-title { font-weight: 700; }
+        .action-request-ratify-hint { font-size: 11px; line-height: 1.4; opacity: 0.9; overflow-wrap: anywhere; }
+        .action-request-ratify-countdown {
+            display: inline-flex; align-items: center; gap: 4px; margin-left: auto;
+            font-variant-numeric: tabular-nums; font-weight: 700;
+        }
+        .action-request-ratify-countdown .ar-ratify-cd-label { font-weight: 400; opacity: 0.85; }
+        /* default_agree: amber, time-sensitive — silence WILL send + execute. */
+        .action-request-ratify.is-default-agree {
+            border-color: rgba(245,158,11,0.6); color: #f59e0b; background: rgba(245,158,11,0.12);
+        }
+        .action-request-ratify.is-default-agree .action-request-ratify-hint { color: #fbbf24; opacity: 1; }
+        /* terminal state once the countdown hits 0 — escalate to red "sending". */
+        .action-request-ratify.is-sending {
+            border-color: rgba(239,68,68,0.65); color: #ef4444; background: rgba(239,68,68,0.14);
+        }
+        /* hold: calm/neutral — needs your approval, silence does NOT send. */
+        .action-request-ratify.is-hold {
+            border-color: var(--card-border, #333355); color: var(--text-secondary, #AAAAAA);
+            background: rgba(148,163,184,0.10);
+        }
+        @media (prefers-reduced-motion: no-preference) {
+            .action-request-ratify.is-sending { animation: ratify-sending-pulse 1.2s ease-in-out infinite; }
+        }
+        @keyframes ratify-sending-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.65; } }
         /* Ops status strip (card_59f41e5b): suppression transparency + b2b countdown.
            Read-only owner surface above the message list; hidden when nothing to show. */
         .ops-status-strip { margin: 0 0 6px; display: flex; flex-direction: column; gap: 6px; }
@@ -4144,6 +4181,15 @@
         let actionRequestRealtimeEnabled = true;
         let actionRequestTimeoutPolicy = 'keep';
         const actionRequestConsensusTriggeredIds = new Set();
+        // 計畫E ratify-loop (card_e9d01b6e): dark-launch device prefs mirrored to the
+        // client so the per-item ratify badge only renders when the loop is actually
+        // ON, and so the default_agree silence countdown anchors to (armedAt + grace).
+        // Defaults MUST match device-preferences.js (action_request_ratify_enabled:false,
+        // action_request_ratify_grace_minutes:1440).
+        const RATIFY_DEFAULT_GRACE_MINUTES = 1440;
+        let actionRequestRatifyEnabled = false;
+        let actionRequestRatifyGraceMinutes = RATIFY_DEFAULT_GRACE_MINUTES;
+        let _ratifyCountdownTicker = null;
 
         // ── Ops status strip (card_59f41e5b): suppression transparency + b2b countdown.
         // Read-only owner-facing surface; declared early to avoid TDZ from the socket
@@ -4290,6 +4336,13 @@
         function applyActionRequestPrefs(prefs = {}) {
             actionRequestRealtimeEnabled = prefs.action_request_realtime !== false;
             actionRequestTimeoutPolicy = normalizeActionRequestTimeoutPolicy(prefs.action_request_timeout_policy);
+            // 計畫E ratify-loop (card_e9d01b6e): mirror the dark-launch master switch +
+            // silence grace. Badge is gated on this being strictly true (default OFF).
+            actionRequestRatifyEnabled = prefs.action_request_ratify_enabled === true;
+            const ratifyGrace = Number(prefs.action_request_ratify_grace_minutes);
+            actionRequestRatifyGraceMinutes = (Number.isFinite(ratifyGrace) && ratifyGrace > 0)
+                ? ratifyGrace
+                : RATIFY_DEFAULT_GRACE_MINUTES;
         }
 
         async function loadChatAvatarSizePreference() {
@@ -7691,6 +7744,134 @@
             return String(request && request.type) === 'consensus' || isActionRequestConsensusTriggered(request);
         }
 
+        // 計畫E ratify-loop (card_e9d01b6e): build the per-item ratify badge for a
+        // 需要你 request. PURE + XSS-safe — every string lands via textContent / DOM
+        // nodes, NEVER innerHTML string-concat. Returns an Element, or null when the
+        // badge must not show. opts = { enabled:boolean, graceMinutes:number, now:ms }.
+        // Fail-closed gates:
+        //   - opts.enabled !== true             → null (device pref OFF; dark launch)
+        //   - ratify missing / not a plain obj  → null
+        //   - mode not 'default_agree'|'hold'   → null
+        //   - default_agree without a finite armedAt → null (not server-ARMED yet)
+        // default_agree = ACTION-BEARING: silence auto-sends → amber badge + a live
+        // countdown to (armedAt + grace) + an unmistakable "doing nothing sends it"
+        // hint. hold = calm owner-decision: silence does NOT send.
+        function buildRatifyBadge(ratify, opts) {
+            const o = opts || {};
+            if (o.enabled !== true) return null;
+            if (!ratify || typeof ratify !== 'object' || Array.isArray(ratify)) return null;
+            const mode = ratify.mode;
+            if (mode !== 'default_agree' && mode !== 'hold') return null;
+            const t = actionRequestT;
+
+            const badge = document.createElement('div');
+            badge.className = 'action-request-ratify';
+            badge.setAttribute('role', 'status');
+            const head = document.createElement('div');
+            head.className = 'action-request-ratify-head';
+            const title = document.createElement('span');
+            title.className = 'action-request-ratify-title';
+            const hint = document.createElement('div');
+            hint.className = 'action-request-ratify-hint';
+
+            if (mode === 'default_agree') {
+                const armedAt = Number(ratify.armedAt);
+                if (!Number.isFinite(armedAt) || armedAt <= 0) return null;
+                const graceMin = (Number.isFinite(Number(o.graceMinutes)) && Number(o.graceMinutes) > 0)
+                    ? Number(o.graceMinutes)
+                    : (typeof RATIFY_DEFAULT_GRACE_MINUTES !== 'undefined' ? RATIFY_DEFAULT_GRACE_MINUTES : 1440);
+                const deadline = armedAt + graceMin * 60 * 1000;
+                const now = Number.isFinite(Number(o.now)) ? Number(o.now) : Date.now();
+                const remaining = deadline - now;
+
+                badge.classList.add('is-default-agree');
+                title.textContent = t('action_request_ratify_default_agree_badge', '⏳ Awaiting your call · silence approves');
+                head.appendChild(title);
+
+                const cd = document.createElement('span');
+                cd.className = 'action-request-ratify-countdown';
+                cd.setAttribute('data-ratify-deadline', String(deadline));
+                // aria-hidden: the 1s ticker rewrites this every second; inside the
+                // role="status" badge that would spam screen readers. Title + hint
+                // stay announceable; only the ticking glyph is muted.
+                cd.setAttribute('aria-hidden', 'true');
+                const cdLabel = document.createElement('span');
+                cdLabel.className = 'ar-ratify-cd-label';
+                const cdClock = document.createElement('span');
+                cdClock.className = 'ar-ratify-cd-clock';
+                if (remaining <= 0) {
+                    badge.classList.add('is-sending');
+                    cd.removeAttribute('data-ratify-deadline'); // already elapsed → ticker skips it
+                    cdLabel.textContent = '';
+                    cdClock.textContent = t('action_request_ratify_sending', 'Sending…');
+                } else {
+                    cdLabel.textContent = t('action_request_ratify_countdown_prefix', 'Auto-sends in');
+                    cdClock.textContent = (typeof _schedFmtCountdown === 'function')
+                        ? _schedFmtCountdown(remaining)
+                        : String(Math.max(0, Math.round(remaining / 1000))) + 's';
+                }
+                cd.appendChild(cdLabel);
+                cd.appendChild(cdClock);
+                head.appendChild(cd);
+                badge.appendChild(head);
+
+                hint.textContent = t('action_request_ratify_default_agree_hint',
+                    'If you do nothing, this will be sent and executed automatically when the countdown ends.');
+                badge.appendChild(hint);
+            } else { // hold
+                badge.classList.add('is-hold');
+                title.textContent = t('action_request_ratify_hold_badge', 'Needs your approval');
+                head.appendChild(title);
+                badge.appendChild(head);
+                hint.textContent = t('action_request_ratify_hold_hint', 'Nothing is sent unless you approve.');
+                badge.appendChild(hint);
+            }
+            return badge;
+        }
+
+        // Live-updates every visible default_agree countdown once per second. Mirrors
+        // the b2b countdown ticker (_opsEnsureCountdownTicker): self-clears the moment
+        // no node carries [data-ratify-deadline] so it never leaks across re-renders.
+        function _ratifyEnsureCountdownTicker() {
+            if (typeof document === 'undefined' || typeof document.querySelector !== 'function') return;
+            const hasCd = !!document.querySelector('[data-ratify-deadline]');
+            if (hasCd && !_ratifyCountdownTicker) {
+                _ratifyCountdownTicker = setInterval(_ratifyTickCountdowns, 1000);
+            } else if (!hasCd && _ratifyCountdownTicker) {
+                clearInterval(_ratifyCountdownTicker); _ratifyCountdownTicker = null;
+            }
+        }
+
+        function _ratifyTickCountdowns() {
+            if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') {
+                if (_ratifyCountdownTicker) { clearInterval(_ratifyCountdownTicker); _ratifyCountdownTicker = null; }
+                return;
+            }
+            const els = document.querySelectorAll('[data-ratify-deadline]');
+            if (!els.length) {
+                if (_ratifyCountdownTicker) { clearInterval(_ratifyCountdownTicker); _ratifyCountdownTicker = null; }
+                return;
+            }
+            const now = Date.now();
+            els.forEach(cd => {
+                const deadline = Number(cd.getAttribute('data-ratify-deadline'));
+                const clock = cd.querySelector ? cd.querySelector('.ar-ratify-cd-clock') : null;
+                const label = cd.querySelector ? cd.querySelector('.ar-ratify-cd-label') : null;
+                const badge = cd.closest ? cd.closest('.action-request-ratify') : null;
+                const remaining = (Number.isFinite(deadline) ? deadline : 0) - now;
+                if (remaining <= 0) {
+                    if (badge && badge.classList) badge.classList.add('is-sending');
+                    if (label) label.textContent = '';
+                    if (clock) clock.textContent = actionRequestT('action_request_ratify_sending', 'Sending…');
+                    cd.removeAttribute('data-ratify-deadline'); // stop ticking this one
+                } else if (clock) {
+                    clock.textContent = (typeof _schedFmtCountdown === 'function')
+                        ? _schedFmtCountdown(remaining)
+                        : String(Math.round(remaining / 1000)) + 's';
+                }
+            });
+        }
+
         function renderActionRequestInbox(banner) {
             if (!banner) return;
             const t = actionRequestT;
@@ -7818,6 +7999,22 @@
                 const dc = (request.decisionContext && typeof request.decisionContext === 'object'
                     && !Array.isArray(request.decisionContext)) ? request.decisionContext : null;
 
+                // 計畫E ratify-loop (card_e9d01b6e): when this request's ratify block was
+                // server-ARMED and the loop is ON (device pref), surface a badge that makes
+                // the silence-semantics unmistakable — placed high (right under the prompt)
+                // so a "silence auto-sends" warning is seen first. typeof-guarded so the
+                // behavioral test harness (which doesn't declare these) is unaffected, and
+                // the badge never renders when the pref is OFF.
+                const ratifyOn = (typeof actionRequestRatifyEnabled !== 'undefined') && actionRequestRatifyEnabled === true;
+                if (ratifyOn && dc && dc.ratify) {
+                    const ratifyBadge = buildRatifyBadge(dc.ratify, {
+                        enabled: true,
+                        graceMinutes: actionRequestRatifyGraceMinutes,
+                        now: Date.now(),
+                    });
+                    if (ratifyBadge) item.appendChild(ratifyBadge);
+                }
+
                 // Block 1 — what was done (commander text → textContent, XSS-safe).
                 if (dc && typeof dc.whatWasDone === 'string' && dc.whatWasDone.trim()) {
                     const wwd = document.createElement('div');
@@ -7912,6 +8109,10 @@
                             const recBadge = document.createElement('span');
                             recBadge.className = 'action-request-recommended-badge';
                             recBadge.textContent = t('action_request_recommended_badge', 'Recommended');
+                            // 計畫E: disambiguate a record-only SUGGESTION from a default_agree
+                            // ratify (which auto-sends on silence). The "Recommended" pill is
+                            // never action-bearing; spell that out so the two never blur.
+                            recBadge.title = t('action_request_recommended_badge_title', 'Suggestion only — recorded, not auto-sent');
                             btn.appendChild(recBadge);
                         }
                         btn.title = t('action_request_option_title', 'Use option: {option}', { option: String(option) });
@@ -7971,6 +8172,10 @@
             wrap.appendChild(body);
             banner.appendChild(wrap);
             banner.style.display = '';
+            // 計畫E: start/refresh the 1s ratify countdown ticker if any default_agree
+            // badge mounted; it self-clears when no [data-ratify-deadline] node remains.
+            // typeof-guarded for the test harness (no _ratifyEnsureCountdownTicker there).
+            if (typeof _ratifyEnsureCountdownTicker === 'function') _ratifyEnsureCountdownTicker();
         }
 
         function collectActionRequestReplyContexts() {
