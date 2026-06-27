@@ -57,7 +57,8 @@ class WallpaperWanderController(
         var targetXPct: Float,
         var targetYPct: Float,
         var lastUpdateMs: Long,
-        var idleUntilMs: Long,
+        var actionUntilMs: Long,
+        var nextActionAtMs: Long,
         var retargetAtMs: Long,
         var moving: Boolean,
         var motionState: MotionState,
@@ -81,6 +82,16 @@ class WallpaperWanderController(
     }
 
     fun isWalking(entityId: Int): Boolean = states[entityId]?.moving == true
+
+    /**
+     * True while an ambient entity is mid random-action: during this ~3s window the entity
+     * holds its position (stationary gesture) and the renderer can overlay an action pose.
+     * Uses lastUpdateMs (set each advance tick) as "now" so callers need not pass time.
+     */
+    fun isPerformingAction(entityId: Int): Boolean {
+        val state = states[entityId] ?: return false
+        return state.lastUpdateMs < state.actionUntilMs
+    }
 
     fun ambientGoal(entityId: Int): AmbientWanderGoal {
         return states[entityId]?.ambientGoal ?: AmbientWanderGoal.RANDOM
@@ -121,7 +132,7 @@ class WallpaperWanderController(
         val state = states[entityId] ?: return
         if (state.motionState == MotionState.STOPPED) {
             state.motionState = MotionState.WANDERING
-            state.idleUntilMs = 0L
+            state.actionUntilMs = 0L
         }
     }
 
@@ -129,7 +140,7 @@ class WallpaperWanderController(
         val state = commandState(entityId)
         state.motionState = MotionState.WANDERING
         state.moving = false
-        state.idleUntilMs = 0L
+        state.actionUntilMs = 0L
         state.manualTarget = false
         state.onArrive = null
     }
@@ -335,10 +346,12 @@ class WallpaperWanderController(
         state.homeYPct = (base.second / height).coerceIn(MIN_Y_PCT, MAX_Y_PCT)
         // Ambient roaming never produces STOPPED on its own; a STOPPED/SLEEPING state here
         // means the entity just arrived home in conscious mode and the user switched to free
-        // walking — resume wandering instead of staying frozen.
+        // walking — resume wandering instead of staying frozen, and re-arm the action cadence
+        // so it roams first before the next stationary action.
         if (state.motionState == MotionState.SLEEPING || state.motionState == MotionState.STOPPED) {
             state.motionState = MotionState.WANDERING
-            state.idleUntilMs = 0L
+            state.actionUntilMs = 0L
+            state.nextActionAtMs = nowMs + ACTION_INTERVAL_MS
         }
 
         val dtSeconds = ((nowMs - state.lastUpdateMs).coerceIn(0L, 1000L)) / 1000f
@@ -363,7 +376,21 @@ class WallpaperWanderController(
             MotionState.WANDERING -> Unit
         }
 
-        if (nowMs < state.idleUntilMs) {
+        // Every ~10s the entity performs a ~3s stationary random action. The cadence is
+        // independent of arrival so it reliably fires (the old arrival-only idle almost never
+        // triggered: retarget every 3-8s reassigned the target before the slow 0.04/s wander
+        // could arrive, so the entity roamed nonstop and never paused).
+        if (nowMs >= state.nextActionAtMs) {
+            state.actionUntilMs = nowMs + ACTION_DURATION_MS
+            state.nextActionAtMs = nowMs + ACTION_INTERVAL_MS
+            // Pick a fresh random ambient goal as the "action" flourish for this pause.
+            state.ambientGoal = randomActionGoal()
+            state.ambientStep++
+        }
+
+        // During the action window hold the position: the entity is stationary while the
+        // action gesture plays (locomotion is gated off).
+        if (nowMs < state.actionUntilMs) {
             state.moving = false
             return state.xPct * width to state.yPct * height
         }
@@ -373,13 +400,19 @@ class WallpaperWanderController(
         }
 
         if (moveTowardTarget(state, width, height, wanderSpeedPctPerSecond, dtSeconds)) {
+            // Arrived early: just pick the next roam target and keep going. The stationary
+            // pause is driven by the action cadence above, not by arrival.
             state.moving = false
-            state.idleUntilMs = nowMs + randomLong(0L, MAX_IDLE_MS)
-            retarget(state, state.idleUntilMs, entity, purposeful, ambientPeers)
+            retarget(state, nowMs, entity, purposeful, ambientPeers)
         }
 
         coerceToSafeBounds(state)
         return state.xPct * width to state.yPct * height
+    }
+
+    private fun randomActionGoal(): AmbientWanderGoal {
+        val goals = AmbientWanderGoal.values()
+        return goals[random.nextInt(goals.size)]
     }
 
     private fun stateFor(
@@ -401,7 +434,8 @@ class WallpaperWanderController(
                 targetXPct = target.first,
                 targetYPct = target.second,
                 lastUpdateMs = nowMs,
-                idleUntilMs = nowMs + randomLong(0L, MAX_IDLE_MS),
+                actionUntilMs = 0L,
+                nextActionAtMs = nowMs + ACTION_INTERVAL_MS,
                 retargetAtMs = nowMs + randomLong(MIN_RETARGET_MS, MAX_RETARGET_MS),
                 moving = false,
                 motionState = MotionState.WANDERING,
@@ -424,7 +458,8 @@ class WallpaperWanderController(
                 targetXPct = 0.5f,
                 targetYPct = 0.5f,
                 lastUpdateMs = 0L,
-                idleUntilMs = 0L,
+                actionUntilMs = 0L,
+                nextActionAtMs = 0L,
                 retargetAtMs = 0L,
                 moving = false,
                 motionState = MotionState.STOPPED,
@@ -570,7 +605,9 @@ class WallpaperWanderController(
         const val DEFAULT_GATHER_SPACING_PCT = 0.18f
         private const val ARRIVAL_EPSILON_PX = 1f
         private const val FACING_EPSILON_PX = 0.5f
-        private const val MAX_IDLE_MS = 3000L
+        // Free-walking action cadence: every ~10s the entity performs a ~3s stationary action.
+        private const val ACTION_INTERVAL_MS = 10000L
+        private const val ACTION_DURATION_MS = 3000L
         private const val MIN_RETARGET_MS = 3000L
         private const val MAX_RETARGET_MS = 8000L
         private const val MIN_X_PCT = 0.08f

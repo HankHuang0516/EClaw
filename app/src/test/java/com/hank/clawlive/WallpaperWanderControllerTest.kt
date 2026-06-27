@@ -202,6 +202,43 @@ class WallpaperWanderControllerTest {
     }
 
     @Test
+    fun freeWalkingHoldsPositionDuringRandomActionAndRoamsBetween() {
+        // 行走功能 (free walking): every ~10s the entity performs a ~3s stationary random
+        // action — during that window its position MUST NOT change (it freezes while the
+        // gesture plays), and it MUST roam (advance) between actions.
+        // Pre-fix bug: the pause was armed only on arrival, which the 0.04/s wander almost
+        // never reached before the 3-8s retarget, so the entity moved nonstop and never held.
+        val controller = WallpaperWanderController(random = Random(5))
+        val entities = listOf(EntityStatus(entityId = 1, state = CharacterState.IDLE))
+        val base = listOf(250f to 500f)
+
+        controller.positionsFor(base, entities, 1000f, 1000f, enabled = true, purposeful = false, nowMs = 0L)
+        var t = 0L
+        var prev: Pair<Float, Float>? = null
+        var sawActionHold = false
+        var sawRoamMove = false
+        repeat(400) { // 40s at 100ms ticks -> several 10s action cadences
+            t += 100L
+            val pos = controller.positionsFor(base, entities, 1000f, 1000f, enabled = true, purposeful = false, nowMs = t)[0]
+            val acting = controller.isPerformingAction(1)
+            val previous = prev
+            if (previous != null) {
+                val moved = pos.first != previous.first || pos.second != previous.second
+                if (acting) {
+                    assertFalse("position must NOT change during a stationary random action (t=$t)", moved)
+                    sawActionHold = true
+                } else if (moved) {
+                    sawRoamMove = true
+                }
+            }
+            prev = pos
+        }
+
+        assertTrue("expected at least one stationary action window within 40s", sawActionHold)
+        assertTrue("entity must roam (advance) between actions", sawRoamMove)
+    }
+
+    @Test
     fun walkingStateConstantMatchesPetdxDescriptorStateName() {
         assertEquals("WALKING", WallpaperWanderController.WALKING_STATE_ASSET)
     }
