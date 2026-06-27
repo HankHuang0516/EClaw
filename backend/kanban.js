@@ -442,7 +442,7 @@ async function initKanbanDatabase() {
 /**
  * Factory: receives in-memory devices object from index.js
  */
-function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback, saveChatMessage, getMissionApiHints, pushToBot, orgChart, notifyDevice, emitDevicePreferences } = {}) {
+function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback, saveChatMessage, getMissionApiHints, pushToBot, orgChart, notifyDevice, emitDevicePreferences, createActionRequest, dismissActionRequestsForCard } = {}) {
     const router = express.Router();
 
     // Health check
@@ -2529,6 +2529,126 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     from: statusLabel(lang, oldStatus)
                 });
                 notifyEntities(deviceId, [updatedCard.reviewerEntityId], reviewerMsg, { description: card.description, cardId, role: 'reviewer' });
+            }
+
+            // ── Owner-decision inbox auto-surface (子4) — failure-isolated ──
+            // A parent-child card moving INTO review/blocked is classified for
+            // genuine OWNER-ONLY signals (irreversible data / spend / product
+            // direction / legal-PII / security policy / strategic tradeoff /
+            // explicit flag). If owner-only AND not already surfaced, ONE
+            // record-only「需要你決策」item is opened in the 需要你 inbox with the
+            // commander's last comment as whatWasDone + PR/screenshot evidence.
+            // The option set RECORDS Hank's choice only — NO auto-execute. Mirrors
+            // the OODA-R preflight hook below: self-invoking async IIFE wrapped in
+            // try/catch; a classifier or DB error NEVER blocks or fails the move.
+            if (card.parent_card_id != null && ['review', 'blocked'].includes(newStatus) && oldStatus !== newStatus) {
+                (async () => {
+                    try {
+                        if (typeof createActionRequest !== 'function') return;
+
+                        // Latest non-system (commander) comment + all comment texts.
+                        const cmtRes = await pool.query(
+                            `SELECT text, is_system AS "isSystem", created_at AS "createdAt"
+                             FROM kanban_comments
+                             WHERE card_id = $1 AND device_id = $2
+                             ORDER BY created_at ASC`,
+                            [cardId, deviceId]
+                        );
+                        const comments = cmtRes.rows || [];
+                        const lastHuman = [...comments].reverse().find(c => !c.isSystem);
+                        const whatWasDone = (lastHuman && typeof lastHuman.text === 'string' ? lastHuman.text : '').slice(0, 1000);
+
+                        // Evidence: PR URLs from any comment + image files on the card.
+                        const evidence = [];
+                        const seenPr = new Set();
+                        const PR_RE = /https?:\/\/github\.com\/[^\s)]+\/pull\/\d+/gi;
+                        for (const c of comments) {
+                            const txt = typeof c.text === 'string' ? c.text : '';
+                            let m;
+                            while ((m = PR_RE.exec(txt)) !== null) {
+                                if (!seenPr.has(m[0])) { seenPr.add(m[0]); evidence.push({ label: 'PR', url: m[0], kind: 'pr' }); }
+                            }
+                        }
+                        const filesRes = await pool.query(
+                            `SELECT url, filename FROM kanban_files
+                             WHERE card_id = $1 AND device_id = $2 AND mime_type LIKE 'image/%'
+                             ORDER BY created_at ASC`,
+                            [cardId, deviceId]
+                        );
+                        for (const f of (filesRes.rows || [])) {
+                            evidence.push({ label: f.filename || 'screenshot', url: f.url || null, kind: 'image' });
+                        }
+
+                        // painTags (best-effort) so the classifier can short-circuit
+                        // a pure UI vision-check card.
+                        let painTags = [];
+                        try {
+                            const classifier = require('./agent-improvement/classifier');
+                            painTags = classifier.classifyPainTags(`${card.title || ''}\n\n${card.description || ''}`, undefined);
+                        } catch (_) { /* classifier optional */ }
+
+                        const { classifyCardOwnerDecision } = require('./agent-improvement/owner-decision-classifier');
+                        const verdict = classifyCardOwnerDecision({
+                            title: card.title || '',
+                            description: card.description || '',
+                            latestComment: whatWasDone,
+                            gateReason: card.gate_reason || '',
+                            requiresScreenshotReview: card.requires_screenshot_review === true,
+                            painTags,
+                        });
+                        if (!verdict.ownerOnly) return;
+
+                        // Dedup: skip if a pending request already references this card.
+                        const dup = await pool.query(
+                            `SELECT 1 FROM agent_action_requests
+                             WHERE device_id = $1 AND related_card_id = $2 AND status = 'pending'
+                             LIMIT 1`,
+                            [deviceId, cardId]
+                        );
+                        if (dup.rows.length > 0) return;
+
+                        // from_entity_id: the card's owner/assignee, else the mover, else 0.
+                        const moverId = parseInt(req.body.entityId, 10);
+                        const ownerId = (Array.isArray(bots) && bots.length && Number.isInteger(bots[0]))
+                            ? bots[0]
+                            : (Number.isInteger(moverId) && moverId >= 0 ? moverId : 0);
+
+                        const headline = `需要你決策：「${card.title || cardId}」(${verdict.categories.join(', ') || 'owner-only'})`.slice(0, 2000);
+                        await createActionRequest({
+                            deviceId,
+                            fromEntityId: ownerId,
+                            type: 'decision',
+                            prompt: headline,
+                            options: ['核可', '退回', '延後'], // RECORD-ONLY — no auto-execute
+                            relatedCardId: cardId,
+                            decisionContext: {
+                                whatWasDone,
+                                recommendation: whatWasDone,
+                                evidence,
+                                recommendedOptionIndex: 0,
+                            },
+                        });
+                        console.log(`[Kanban] owner-decision surfaced card=${cardId} cats=${verdict.categories.join(',')}`);
+                    } catch (e) {
+                        console.error('[Kanban] owner-decision hook error (non-blocking):', e.message);
+                    }
+                })();
+            }
+
+            // ── Owner-decision lifecycle (子6a) — failure-isolated ──
+            // When a card LEAVES review/blocked, the surfaced decision is moot:
+            // auto-dismiss any pending owner-decision request(s) for it (+ emit the
+            // 'dismissed' socket event via the injected helper). Never blocks the move.
+            if (typeof dismissActionRequestsForCard === 'function'
+                && ['review', 'blocked'].includes(oldStatus)
+                && !['review', 'blocked'].includes(newStatus)) {
+                (async () => {
+                    try {
+                        await dismissActionRequestsForCard(deviceId, cardId);
+                    } catch (e) {
+                        console.error('[Kanban] owner-decision auto-dismiss error (non-blocking):', e.message);
+                    }
+                })();
             }
 
             await bumpVersion(deviceId);

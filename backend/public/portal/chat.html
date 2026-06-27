@@ -402,6 +402,79 @@
         .action-request-option { border-color: var(--primary, #5b6cff); color: var(--primary, #5b6cff); }
         .action-request-action:hover, .action-request-option:hover { background: rgba(91,108,255,0.10); }
         .action-request-action.danger { color: var(--danger, #ef4444); border-color: rgba(239,68,68,0.45); }
+        /* 計畫D: 🗂 任務卡 deep-link chip — only present when a request has relatedCardId. */
+        .action-request-action.action-request-card-link { border-color: rgba(45,212,191,0.55); color: #2dd4bf; }
+        .action-request-action.action-request-card-link:hover { background: rgba(20,184,166,0.12); }
+        /* 計畫C: inbox 篩選條件 facet (All / Consensus) + its empty state. */
+        .action-request-inbox-filter { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 2px; }
+        .action-request-filter-empty { color: var(--text-secondary, #AAAAAA); font-size: 12px; padding: 6px 2px; }
+        /* 子5 (owner-decision inbox): extra blocks rendered ONLY when a request carries
+           decisionContext {whatWasDone, recommendation, evidence[], recommendedOptionIndex}.
+           Gated inside renderActionRequestInbox(); ordinary requests are unaffected. */
+        .action-request-decision-block {
+            display: flex; flex-direction: column; gap: 3px;
+            border-left: 2px solid var(--card-border, #333355); padding: 1px 0 1px 8px;
+        }
+        .action-request-decision-block.is-recommendation { border-left-color: var(--primary, #5b6cff); }
+        .action-request-decision-label {
+            color: var(--text-secondary, #AAAAAA); font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.4px;
+        }
+        .action-request-decision-text { color: var(--text, #ffffff); font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+        .action-request-evidence { display: flex; flex-direction: column; gap: 4px; }
+        .action-request-evidence-chips { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+        .action-request-evidence-chip {
+            display: inline-flex; align-items: center; gap: 4px; max-width: 100%;
+            border: 1px solid rgba(45,212,191,0.55); color: #2dd4bf; background: rgba(20,184,166,0.10);
+            border-radius: 999px; padding: 3px 9px; font-size: 12px; text-decoration: none; cursor: pointer;
+        }
+        .action-request-evidence-chip:hover { background: rgba(20,184,166,0.18); }
+        .action-request-evidence-chip .ar-chip-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .action-request-option.is-recommended {
+            border-color: var(--primary, #5b6cff); background: rgba(91,108,255,0.14); font-weight: 700;
+        }
+        .action-request-recommended-badge {
+            display: inline-flex; align-items: center; margin-left: 5px; border-radius: 999px;
+            padding: 0 6px; font-size: 10px; font-weight: 700; line-height: 16px;
+            color: var(--primary, #5b6cff); background: rgba(91,108,255,0.18); border: 1px solid rgba(91,108,255,0.45);
+        }
+        @media (max-width: 640px) {
+            /* On narrow viewports chips wrap to new rows; each truncates instead of
+               forcing horizontal overflow of the inbox card. */
+            .action-request-evidence-chip { max-width: 100%; }
+            .action-request-evidence-chip .ar-chip-label { max-width: 60vw; }
+        }
+        /* Ops status strip (card_59f41e5b): suppression transparency + b2b countdown.
+           Read-only owner surface above the message list; hidden when nothing to show. */
+        .ops-status-strip { margin: 0 0 6px; display: flex; flex-direction: column; gap: 6px; }
+        .ops-strip-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+        .ops-suppressed-summary {
+            display: inline-flex; align-items: center; gap: 2px; cursor: pointer;
+            background: rgba(148,163,184,0.10); border: 1px solid var(--card-border, #333355);
+            color: var(--text-secondary, #AAAAAA); border-radius: 999px; padding: 3px 10px; font-size: 12px;
+        }
+        .ops-suppressed-summary:hover { background: rgba(148,163,184,0.18); }
+        .ops-suppressed-summary .ops-chevron { display: inline-block; transition: transform 0.15s; }
+        .ops-suppressed-summary.is-open .ops-chevron { transform: rotate(180deg); }
+        .ops-b2b-chip {
+            display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 3px 10px;
+            font-size: 12px; border: 1px solid rgba(91,108,255,0.45); color: var(--primary, #5b6cff);
+            background: rgba(91,108,255,0.10);
+        }
+        .ops-b2b-countdown { font-variant-numeric: tabular-nums; opacity: 0.9; }
+        .ops-suppressed-list {
+            display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto;
+            border-left: 2px solid var(--card-border, #333355); padding-left: 8px;
+        }
+        .ops-suppressed-item { display: flex; flex-direction: column; gap: 2px; }
+        .ops-suppressed-head { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .ops-reason-badge {
+            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+            color: #2dd4bf; border: 1px solid rgba(45,212,191,0.5); border-radius: 999px; padding: 0 6px;
+        }
+        .ops-suppressed-meta { font-size: 11px; color: var(--text-secondary, #AAAAAA); }
+        .ops-suppressed-snippet { font-size: 12px; color: var(--text, #ffffff); opacity: 0.85; overflow-wrap: anywhere; }
+        @media (max-width: 640px) { .ops-suppressed-list { max-height: 160px; } }
         body.density-comfortable .chat-msg { max-width: 75%; }
         body.density-comfortable .chat-source { font-size: 12px; margin-bottom: 4px; }
 
@@ -3679,6 +3752,7 @@
             <!-- Messages Area -->
             <div class="chat-messages-wrapper">
                 <div class="greet-banner" id="greetBanner" style="display:none" role="status"></div>
+                <div class="ops-status-strip" id="opsStatusStrip" style="display:none" role="status"></div>
                 <div class="chat-messages" id="chatMessages">
                     <div class="chat-loading" id="chatLoading">
                         <div class="spinner"></div>
@@ -4070,12 +4144,31 @@
         let actionRequestRealtimeEnabled = true;
         let actionRequestTimeoutPolicy = 'keep';
         const actionRequestConsensusTriggeredIds = new Set();
+
+        // ── Ops status strip (card_59f41e5b): suppression transparency + b2b countdown.
+        // Read-only owner-facing surface; declared early to avoid TDZ from the socket
+        // handler / init call that reference these before the fn block below executes.
+        let opsSuppressionItems = [];   // {ts,fromEntityId,reason,snippet} oldest-first, cap 50
+        let opsSuppressionOpen = false;
+        let opsB2bEntities = [];        // [{entityId,remaining,max,nextRegenMs}]
+        const opsB2bNextRegenAt = {};   // entityId -> epoch ms of next token regen (0 = full/none)
+        let _opsB2bCountdownTicker = null;
+        let _opsB2bPollTimer = null;
         let actionRequestRefreshTimer = null;
         // Inbox is collapsed by default so a burst of "需要你" requests never
         // covers the chat (card_b176c435); the user's open/closed choice persists.
         const ACTION_REQUEST_INBOX_OPEN_KEY = 'needsyou_inbox_open';
         let actionRequestInboxOpen = (() => {
             try { return localStorage.getItem(ACTION_REQUEST_INBOX_OPEN_KEY) === '1'; } catch (_) { return false; }
+        })();
+        // 篩選條件 facet for the "需要你" inbox (計畫C, card_2a6f260f): 'all' shows every
+        // pending request; 'consensus' narrows to the consensus-discussion requests
+        // (type='consensus' or an in-consensus round) so the user can focus on each
+        // multi-agent discussion / viewpoint. The choice persists across reloads.
+        const ACTION_REQUEST_INBOX_FILTER_KEY = 'needsyou_inbox_filter';
+        let actionRequestInboxFilter = (() => {
+            try { return localStorage.getItem(ACTION_REQUEST_INBOX_FILTER_KEY) === 'consensus' ? 'consensus' : 'all'; }
+            catch (_) { return 'all'; }
         })();
         // Coalesce a refresh that arrives while one is already in flight, so the
         // post-resolve/socket refetch is never silently dropped (card_b176c435).
@@ -4729,6 +4822,8 @@
             console.log('[CHAT_DEBUG] loadBoundEntities done, loading messages...');
             await loadMessages();
             await loadActionRequests({ renderInbox: true });
+            loadOpsStatus(); // ops status strip (suppression + b2b countdown); read-only, non-blocking
+            if (!_opsB2bPollTimer) _opsB2bPollTimer = setInterval(loadOpsStatus, 30000);
             await handleChatMessageDeepLink({ showMissingToast: true, scroll: true });
             console.log('[CHAT_DEBUG] loadMessages done, count:', allMessages.length);
             isFirstLoad = false;
@@ -7107,6 +7202,13 @@
 
         // Listen for real-time reaction updates
         if (typeof socket !== 'undefined' && socket) {
+            // Ops status: live "drop-but-surface" suppression feed (card_59f41e5b).
+            socket.on('suppression:logged', (data) => {
+                if (!data || !data.item) return;
+                opsSuppressionItems.push(data.item);
+                if (opsSuppressionItems.length > 50) opsSuppressionItems.splice(0, opsSuppressionItems.length - 50);
+                try { renderOpsStatusStrip(); } catch (_) { /* never break chat */ }
+            });
             socket.on('chat:card_resolved', (data) => {
                 if (!data) return;
                 const msg = allMessages.find(m => String(m.id) === String(data.message_id));
@@ -7575,9 +7677,26 @@
             try { localStorage.setItem(ACTION_REQUEST_INBOX_OPEN_KEY, open ? '1' : '0'); } catch (_) {}
         }
 
+        // 計畫C (card_2a6f260f): persist the inbox 篩選條件 facet ('all' | 'consensus').
+        function setActionRequestInboxFilter(value) {
+            actionRequestInboxFilter = value === 'consensus' ? 'consensus' : 'all';
+            try { localStorage.setItem(ACTION_REQUEST_INBOX_FILTER_KEY, actionRequestInboxFilter); } catch (_) {}
+        }
+
+        // A request is a consensus-discussion item when its type is 'consensus' OR
+        // the timeout worker has opened a consensus round on it (協商中). The 'all'
+        // facet matches everything so the default inbox is unchanged.
+        function actionRequestMatchesFilter(request) {
+            if (actionRequestInboxFilter !== 'consensus') return true;
+            return String(request && request.type) === 'consensus' || isActionRequestConsensusTriggered(request);
+        }
+
         function renderActionRequestInbox(banner) {
             if (!banner) return;
             const t = actionRequestT;
+            // 子5: only ever expose a URL in an href after confirming it's http(s) —
+            // blocks javascript:/data: and other XSS-prone schemes in evidence chips.
+            const isHttpUrl = (u) => typeof u === 'string' && /^https?:\/\//i.test(u);
             banner.textContent = '';
             const wrap = document.createElement('div');
             wrap.className = 'action-request-inbox' + (actionRequestInboxOpen ? ' is-open' : '');
@@ -7635,7 +7754,34 @@
             head.appendChild(live);
             body.appendChild(head);
 
-            actionRequests.forEach(request => {
+            // 篩選條件 facet (計畫C, card_2a6f260f): All / Consensus discussion. Reuses
+            // the existing .filter-chip look so it matches the chat filter bar. The
+            // summary count stays the TOTAL pending; only the list below is filtered.
+            const filterRow = document.createElement('div');
+            filterRow.className = 'action-request-inbox-filter';
+            filterRow.setAttribute('role', 'group');
+            filterRow.setAttribute('aria-label', t('action_request_filter_label', 'Filter requests'));
+            [
+                ['all', 'action_request_filter_all', 'All'],
+                ['consensus', 'action_request_filter_consensus', 'Consensus'],
+            ].forEach(([value, key, fb]) => {
+                const chip = document.createElement('button');
+                chip.type = 'button';
+                chip.className = 'filter-chip' + (actionRequestInboxFilter === value ? ' active' : '');
+                chip.dataset.arFilter = value;
+                chip.textContent = t(key, fb);
+                chip.setAttribute('aria-pressed', actionRequestInboxFilter === value ? 'true' : 'false');
+                chip.addEventListener('click', () => {
+                    if (actionRequestInboxFilter === value) return;
+                    setActionRequestInboxFilter(value);
+                    refreshActionRequestBanner();
+                });
+                filterRow.appendChild(chip);
+            });
+            body.appendChild(filterRow);
+
+            const visibleRequests = actionRequests.filter(actionRequestMatchesFilter);
+            visibleRequests.forEach(request => {
                 const typeMeta = actionRequestTypeMeta(request.type);
                 const item = document.createElement('div');
                 const consensusTriggered = isActionRequestConsensusTriggered(request);
@@ -7664,6 +7810,29 @@
                 prompt.textContent = request.prompt || '';
                 item.appendChild(meta);
                 item.appendChild(prompt);
+
+                // 子5 (owner-decision): the server attaches decisionContext only when it
+                // auto-surfaces an owner-only review/blocked card. When present, surface
+                // what the commander did, the evidence, and their recommendation. All
+                // gated below so ordinary requests render exactly as before.
+                const dc = (request.decisionContext && typeof request.decisionContext === 'object'
+                    && !Array.isArray(request.decisionContext)) ? request.decisionContext : null;
+
+                // Block 1 — what was done (commander text → textContent, XSS-safe).
+                if (dc && typeof dc.whatWasDone === 'string' && dc.whatWasDone.trim()) {
+                    const wwd = document.createElement('div');
+                    wwd.className = 'action-request-decision-block';
+                    const wwdLabel = document.createElement('div');
+                    wwdLabel.className = 'action-request-decision-label';
+                    wwdLabel.textContent = t('action_request_field_what_was_done', 'What was done');
+                    const wwdText = document.createElement('div');
+                    wwdText.className = 'action-request-decision-text';
+                    wwdText.textContent = dc.whatWasDone;
+                    wwd.appendChild(wwdLabel);
+                    wwd.appendChild(wwdText);
+                    item.appendChild(wwd);
+                }
+
                 if (typeMeta.hint) {
                     const hint = document.createElement('div');
                     hint.className = 'action-request-type-hint';
@@ -7671,14 +7840,80 @@
                     item.appendChild(hint);
                 }
 
+                // Block 2 — evidence chips (PR / screenshot links). Only chips with a
+                // valid http(s) url are rendered; clicking opens in a new tab.
+                if (dc && Array.isArray(dc.evidence)) {
+                    const evItems = dc.evidence.filter(e => e && typeof e === 'object' && isHttpUrl(e.url));
+                    if (evItems.length > 0) {
+                        const ev = document.createElement('div');
+                        ev.className = 'action-request-evidence';
+                        const evLabel = document.createElement('div');
+                        evLabel.className = 'action-request-decision-label';
+                        evLabel.textContent = t('action_request_field_evidence', 'Evidence');
+                        ev.appendChild(evLabel);
+                        const evRow = document.createElement('div');
+                        evRow.className = 'action-request-evidence-chips';
+                        evItems.forEach(e => {
+                            const chip = document.createElement('a');
+                            chip.className = 'action-request-evidence-chip';
+                            chip.href = e.url;
+                            chip.target = '_blank';
+                            chip.rel = 'noopener noreferrer';
+                            const kind = String(e.kind || '').toLowerCase();
+                            const icon = (kind === 'image' || kind === 'screenshot') ? '🖼' : '🔗';
+                            const iconSpan = document.createElement('span');
+                            iconSpan.setAttribute('aria-hidden', 'true');
+                            iconSpan.textContent = icon;
+                            const lbl = document.createElement('span');
+                            lbl.className = 'ar-chip-label';
+                            lbl.textContent = (typeof e.label === 'string' && e.label) ? e.label : e.url;
+                            chip.appendChild(iconSpan);
+                            chip.appendChild(lbl);
+                            chip.title = lbl.textContent;
+                            evRow.appendChild(chip);
+                        });
+                        ev.appendChild(evRow);
+                        item.appendChild(ev);
+                    }
+                }
+
+                // Block 3a — recommendation line (commander text → textContent, XSS-safe).
+                if (dc && typeof dc.recommendation === 'string' && dc.recommendation.trim()) {
+                    const rec = document.createElement('div');
+                    rec.className = 'action-request-decision-block is-recommendation';
+                    const recLabel = document.createElement('div');
+                    recLabel.className = 'action-request-decision-label';
+                    recLabel.textContent = t('action_request_field_recommendation', 'My recommendation');
+                    const recText = document.createElement('div');
+                    recText.className = 'action-request-decision-text';
+                    recText.textContent = dc.recommendation;
+                    rec.appendChild(recLabel);
+                    rec.appendChild(recText);
+                    item.appendChild(rec);
+                }
+
                 if (Array.isArray(request.options) && request.options.length > 0) {
                     const opts = document.createElement('div');
                     opts.className = 'action-request-options';
+                    // Block 3b — highlight the recommended option (record-only; one-tap
+                    // behaviour is unchanged — the click handler is identical).
+                    const recIdx = (dc && Number.isInteger(dc.recommendedOptionIndex))
+                        ? dc.recommendedOptionIndex : null;
                     request.options.forEach((option, idx) => {
                         const btn = document.createElement('button');
                         btn.type = 'button';
                         btn.className = 'action-request-option';
-                        btn.textContent = String(option);
+                        const isRecommended = recIdx !== null && recIdx === idx;
+                        if (isRecommended) btn.classList.add('is-recommended');
+                        const optLabel = document.createElement('span');
+                        optLabel.textContent = String(option);
+                        btn.appendChild(optLabel);
+                        if (isRecommended) {
+                            const recBadge = document.createElement('span');
+                            recBadge.className = 'action-request-recommended-badge';
+                            recBadge.textContent = t('action_request_recommended_badge', 'Recommended');
+                            btn.appendChild(recBadge);
+                        }
                         btn.title = t('action_request_option_title', 'Use option: {option}', { option: String(option) });
                         btn.addEventListener('click', () => focusActionRequestReply(request.id, idx));
                         opts.appendChild(btn);
@@ -7702,6 +7937,19 @@
                     anchor.addEventListener('click', () => openActionRequestAnchor(request));
                     actions.appendChild(anchor);
                 }
+                // 計畫D (card_df646877): OPTIONAL 🗂 任務卡 chip — only when the request
+                // carries a relatedCardId. Clicking deep-links to the kanban card via
+                // the shared openKanbanCard() (SmartRouter split / native app /
+                // standalone fallbacks). Absent relatedCardId → no chip, no layout shift.
+                if (request.relatedCardId) {
+                    const cardLink = document.createElement('button');
+                    cardLink.type = 'button';
+                    cardLink.className = 'action-request-action action-request-card-link';
+                    cardLink.textContent = t('action_request_card_link', '🗂 Task card');
+                    cardLink.title = t('action_request_card_link_title', 'Open linked card {card}', { card: String(request.relatedCardId) });
+                    cardLink.addEventListener('click', (event) => openKanbanCard(request.relatedCardId, event));
+                    actions.appendChild(cardLink);
+                }
                 const dismiss = document.createElement('button');
                 dismiss.type = 'button';
                 dismiss.className = 'action-request-action danger';
@@ -7711,6 +7959,15 @@
                 item.appendChild(actions);
                 body.appendChild(item);
             });
+            // The banner is only rendered when there ARE pending requests, so an empty
+            // list here means the active 篩選條件 (consensus) matched none — tell the
+            // user instead of showing a blank body (計畫C).
+            if (visibleRequests.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'action-request-filter-empty';
+                empty.textContent = t('action_request_filter_empty', 'No requests match this filter.');
+                body.appendChild(empty);
+            }
             wrap.appendChild(body);
             banner.appendChild(wrap);
             banner.style.display = '';
@@ -8382,6 +8639,140 @@
                 banner.textContent = '';
             }
             banner.style.display = 'none';
+        }
+
+        // ─── Ops status strip (card_59f41e5b) ────────────────────────────────────
+        // "drop-but-surface" suppression feed + bot-to-bot quota regen countdown.
+        // Backend: GET /api/suppression-log, GET /api/b2b-status, socket
+        // 'suppression:logged'. All read-only; failures never break chat.
+        function opsReasonLabel(reason) {
+            const key = 'ops_reason_' + String(reason || 'low_signal').replace(/[^a-z0-9_]/gi, '_');
+            return actionRequestT(key, String(reason || 'low_signal'));
+        }
+
+        function opsFmtAgo(ts) {
+            const sec = Math.max(0, Math.floor((Date.now() - Number(ts)) / 1000));
+            if (sec < 60) return actionRequestT('ops_ago_just_now', 'just now');
+            const min = Math.floor(sec / 60);
+            if (min < 60) return actionRequestT('ops_ago_min', '{n}m ago', { n: min });
+            return actionRequestT('ops_ago_hr', '{n}h ago', { n: Math.floor(min / 60) });
+        }
+
+        async function loadOpsStatus() {
+            if (!currentUser?.deviceId || !currentUser?.deviceSecret) return;
+            const qs = `deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`;
+            try {
+                const [sup, b2b] = await Promise.all([
+                    apiCall('GET', `/api/suppression-log?${qs}`).catch(() => null),
+                    apiCall('GET', `/api/b2b-status?${qs}`).catch(() => null),
+                ]);
+                if (sup && sup.success && Array.isArray(sup.items)) opsSuppressionItems = sup.items.slice(-50);
+                if (b2b && b2b.success && Array.isArray(b2b.entities)) {
+                    opsB2bEntities = b2b.entities;
+                    const now = Date.now();
+                    b2b.entities.forEach(e => {
+                        opsB2bNextRegenAt[e.entityId] = (Number(e.nextRegenMs) > 0) ? now + Number(e.nextRegenMs) : 0;
+                    });
+                }
+            } catch (_) { /* read-only; never break chat */ }
+            renderOpsStatusStrip();
+        }
+
+        function renderOpsStatusStrip() {
+            const strip = document.getElementById('opsStatusStrip');
+            if (!strip) return;
+            const t = actionRequestT;
+            strip.textContent = '';
+            const n = opsSuppressionItems.length;
+            // Only chip entities below full quota — those have something to count down.
+            const b2bShown = (opsB2bEntities || []).filter(e => e && Number(e.remaining) < Number(e.max));
+            if (n === 0 && b2bShown.length === 0) { strip.style.display = 'none'; return; }
+            strip.style.display = '';
+
+            const row = document.createElement('div');
+            row.className = 'ops-strip-row';
+
+            if (n > 0) {
+                const sumBtn = document.createElement('button');
+                sumBtn.type = 'button';
+                sumBtn.className = 'ops-suppressed-summary' + (opsSuppressionOpen ? ' is-open' : '');
+                sumBtn.setAttribute('aria-expanded', opsSuppressionOpen ? 'true' : 'false');
+                const bell = document.createElement('span'); bell.setAttribute('aria-hidden', 'true'); bell.textContent = '🔕';
+                const lbl = document.createElement('span'); lbl.textContent = ' ' + t('ops_suppressed_count', '{count} suppressed', { count: n });
+                const chev = document.createElement('span'); chev.className = 'ops-chevron'; chev.setAttribute('aria-hidden', 'true'); chev.textContent = ' ▼';
+                sumBtn.appendChild(bell); sumBtn.appendChild(lbl); sumBtn.appendChild(chev);
+                sumBtn.addEventListener('click', () => { opsSuppressionOpen = !opsSuppressionOpen; renderOpsStatusStrip(); });
+                row.appendChild(sumBtn);
+            }
+
+            b2bShown.forEach(e => {
+                const chip = document.createElement('span');
+                chip.className = 'ops-b2b-chip';
+                chip.title = t('ops_b2b_title', 'Bot-to-bot message quota (regenerates over time)');
+                const q = document.createElement('span');
+                q.textContent = t('ops_b2b_remaining', 'b2b #{id} {remaining}/{max}', { id: e.entityId, remaining: e.remaining, max: e.max });
+                chip.appendChild(q);
+                const regenAt = opsB2bNextRegenAt[e.entityId];
+                if (regenAt && regenAt > Date.now()) {
+                    const cd = document.createElement('span');
+                    cd.className = 'ops-b2b-countdown';
+                    cd.dataset.b2bCountdown = String(e.entityId);
+                    // aria-hidden: the 1s ticker rewrites this textContent every
+                    // second; inside the role="status" live region that would spam
+                    // screen-reader announcements (audit card_c6731c2f F8). The chip's
+                    // remaining/max stays announceable; only the ticking glyph is muted.
+                    cd.setAttribute('aria-hidden', 'true');
+                    cd.textContent = ' ⏱ ' + _schedFmtCountdown(regenAt - Date.now());
+                    chip.appendChild(cd);
+                }
+                row.appendChild(chip);
+            });
+
+            strip.appendChild(row);
+
+            if (n > 0 && opsSuppressionOpen) {
+                const list = document.createElement('div');
+                list.className = 'ops-suppressed-list';
+                opsSuppressionItems.slice().reverse().forEach(it => {
+                    const item = document.createElement('div');
+                    item.className = 'ops-suppressed-item';
+                    const head = document.createElement('div'); head.className = 'ops-suppressed-head';
+                    const rb = document.createElement('span'); rb.className = 'ops-reason-badge'; rb.textContent = opsReasonLabel(it.reason);
+                    const meta = document.createElement('span'); meta.className = 'ops-suppressed-meta';
+                    meta.textContent = ((it.fromEntityId != null) ? ('#' + it.fromEntityId) : '?') + ' · ' + opsFmtAgo(it.ts);
+                    head.appendChild(rb); head.appendChild(meta);
+                    const snip = document.createElement('div'); snip.className = 'ops-suppressed-snippet'; snip.textContent = it.snippet || '';
+                    item.appendChild(head); item.appendChild(snip);
+                    list.appendChild(item);
+                });
+                strip.appendChild(list);
+            }
+
+            _opsEnsureCountdownTicker();
+        }
+
+        function _opsEnsureCountdownTicker() {
+            const hasCd = !!document.querySelector('[data-b2b-countdown]');
+            if (hasCd && !_opsB2bCountdownTicker) {
+                _opsB2bCountdownTicker = setInterval(_opsTickB2bCountdowns, 1000);
+            } else if (!hasCd && _opsB2bCountdownTicker) {
+                clearInterval(_opsB2bCountdownTicker); _opsB2bCountdownTicker = null;
+            }
+        }
+
+        function _opsTickB2bCountdowns() {
+            const els = document.querySelectorAll('[data-b2b-countdown]');
+            if (!els.length) { if (_opsB2bCountdownTicker) { clearInterval(_opsB2bCountdownTicker); _opsB2bCountdownTicker = null; } return; }
+            let anyExpired = false;
+            els.forEach(el => {
+                const id = el.dataset.b2bCountdown;
+                const regenAt = opsB2bNextRegenAt[id] != null ? opsB2bNextRegenAt[id] : opsB2bNextRegenAt[Number(id)];
+                const rem = (regenAt || 0) - Date.now();
+                el.textContent = ' ⏱ ' + _schedFmtCountdown(Math.max(0, rem));
+                if (rem <= 0) { anyExpired = true; el.removeAttribute('data-b2b-countdown'); }
+            });
+            // A token regenerated → refetch real remaining counts once (not per-tick).
+            if (anyExpired) loadOpsStatus();
         }
 
         async function sendMessage() {

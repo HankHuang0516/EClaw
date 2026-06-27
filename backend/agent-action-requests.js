@@ -33,6 +33,12 @@ const safeEqual = require('./safe-equal');
 // timeout-minutes from here. Tests may inject a `getDevicePrefs` override on the
 // factory options to avoid touching it.
 const devicePrefs = require('./device-preferences');
+// 計畫E ratify-loop (card_e9d01b6e): the fail-CLOSED green-light predicate that
+// decides whether an agent-consensus decision may be armed for *passive
+// default-agree* (silence ⇒ the decided option ships). NEVER trust an agent's
+// claimed mode — the server recomputes it here (PUT) and again at fire time
+// (worker). See ratify-reversibility.js for the design invariant.
+const { classifyRatifyMode } = require('./agent-improvement/ratify-reversibility');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -52,6 +58,14 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // re-requiring / re-instantiating the factory never stacks intervals.
 const TIMEOUT_SWEEP_INTERVAL_MS = 5 * 60 * 1000; // every 5 minutes
 let timeoutSweepTimer = null;
+
+// 計畫E ratify-loop (card_e9d01b6e). N-cap: after this many *armed* default_agree
+// rounds for one request, the server refuses to re-arm (forces hold) — a redo
+// loop can't silently auto-merge forever. Server-enforced via the audit trail
+// (not agent self-report). Default grace window before a default_agree row is
+// auto-resolved by silence reuses the 24h (1440-min) timeout default.
+const MAX_RATIFY_RETRIES = 2;
+const RATIFY_DEFAULT_GRACE_MINUTES = 1440;
 
 async function initAgentActionRequestsDatabase() {
     try {
@@ -145,12 +159,130 @@ async function initAgentActionRequestsDatabase() {
     } catch (err) {
         console.error('[AgentActionRequests] consensus_triggered_at migration skipped:', err.message);
     }
+
+    // ── Idempotent column migration: related_card_id (計畫D, card_df646877) ──
+    // Optional kanban-card reference an agent can attach to a request so the inbox
+    // can render a "🗂 任務卡" deep-link chip. The prod table already exists, so the
+    // CREATE TABLE above is a no-op; this ALTER adds the column to the live table.
+    // ADD COLUMN IF NOT EXISTS is a no-op once present. Best-effort: never throws.
+    try {
+        await pool.query(
+            `ALTER TABLE agent_action_requests
+                ADD COLUMN IF NOT EXISTS related_card_id VARCHAR(64) DEFAULT NULL`
+        );
+    } catch (err) {
+        console.error('[AgentActionRequests] related_card_id migration skipped:', err.message);
+    }
+
+    // ── Idempotent column migration: decision_context (owner-decision classifier) ──
+    // JSONB blob the server attaches when it auto-surfaces an owner-only
+    // review/blocked child card: {whatWasDone, recommendation, evidence, recommended
+    // OptionIndex}. The prod table already exists, so the CREATE TABLE above is a
+    // no-op; this ALTER adds the column to the live table. ADD COLUMN IF NOT EXISTS
+    // is a no-op once present. Best-effort: never throws/crashes init.
+    try {
+        await pool.query(
+            `ALTER TABLE agent_action_requests
+                ADD COLUMN IF NOT EXISTS decision_context JSONB DEFAULT NULL`
+        );
+    } catch (err) {
+        console.error('[AgentActionRequests] decision_context migration skipped:', err.message);
+    }
 }
 
 // ── Helpers ──
 function normalizeAnchor(value) {
     if (typeof value === 'string' && UUID_RE.test(value.trim())) return value.trim();
     return null;
+}
+
+// Optional related_card_id (計畫D, card_df646877): a kanban card reference.
+// Shared by the create (POST /) and edit (PUT /:id) paths so the rule is stated
+// once. Returns { ok, value }: value is a trimmed non-empty string or null.
+//   undefined | null            → { ok: true,  value: null }   (none / clear)
+//   string ≤ 64 chars           → { ok: true,  value: <trim|null> }
+//   non-string | string > 64    → { ok: false }
+function validateRelatedCardId(value) {
+    if (value === undefined || value === null) return { ok: true, value: null };
+    if (typeof value !== 'string' || value.length > 64) return { ok: false, value: null };
+    return { ok: true, value: value.trim() || null };
+}
+
+// Optional decision_context (owner-decision classifier): a JSONB blob the server
+// attaches when it auto-surfaces an owner-only review/blocked card. Shape:
+//   {whatWasDone, recommendation, evidence:[{label,url,kind}], recommendedOptionIndex}
+// Shared by the create (POST /) and edit (PUT /:id) paths. Returns { ok, value }
+// where `value` is a JSON STRING (ready for a ::jsonb cast) or null:
+//   undefined | null              → { ok: true,  value: null }   (none / clear)
+//   plain object, JSON ≤ 8192     → { ok: true,  value: <json-string> }
+//   non-object | JSON > 8192      → { ok: false }
+function validateDecisionContext(value) {
+    if (value === undefined || value === null) return { ok: true, value: null };
+    if (typeof value !== 'object' || Array.isArray(value)) return { ok: false, value: null };
+    let json;
+    try { json = JSON.stringify(value); } catch (_) { return { ok: false, value: null }; }
+    if (json == null || json.length > 8192) return { ok: false, value: null };
+    return { ok: true, value: json };
+}
+
+// 計畫E ratify-loop (card_e9d01b6e). Build the RatifyInput the green-light
+// predicate expects from a request's prompt + its decisionContext.ratify block.
+function ratifyInputFrom(prompt, ratify) {
+    const r = (ratify && typeof ratify === 'object') ? ratify : {};
+    return {
+        proposalText: typeof prompt === 'string' ? prompt : '',
+        decidedOptionLabel: typeof r.decidedOptionLabel === 'string' ? r.decidedOptionLabel : '',
+        reversibilityClass: r.reversibilityClass,
+        changedFiles: Array.isArray(r.changedFiles) ? r.changedFiles : undefined,
+        diffSummary: typeof r.diffSummary === 'string' ? r.diffSummary : undefined,
+        prUrl: r.prUrl,
+        relatedCardText: typeof r.relatedCardText === 'string' ? r.relatedCardText : '',
+    };
+}
+
+// 計畫E ratify-loop (card_e9d01b6e). SERVER-AUTHORITATIVE recompute of a ratify
+// block's mode. NEVER trusts the agent-supplied `mode` — recomputes it via the
+// fail-closed green-light predicate, then applies the N-cap from the AUDIT trail
+// (how many prior default_agree arms this request already has). Returns a NEW
+// ratify object with server-stamped {mode, holdReasons, serverComputed, armedAt}.
+// `armedAt` is refreshed only when the new mode is default_agree (it anchors the
+// silence-grace window in the worker); a hold clears it.
+//   - mode='default_agree' ONLY when classifyRatifyMode says so AND prior arms < N
+//   - any predicate hold, classifier veto, or retry-cap → mode='hold'
+async function recomputeRatifyMode(client, requestId, prompt, ratify, nowMs) {
+    const r = (ratify && typeof ratify === 'object') ? { ...ratify } : {};
+    const verdict = classifyRatifyMode(ratifyInputFrom(prompt, r));
+    let mode = verdict.mode;
+    const holdReasons = [...(verdict.holdReasons || [])];
+
+    // N-cap (server-enforced, reconstructed from the immutable audit trail — not
+    // the agent's self-reported attempt counter). Count how many prior PUTs armed
+    // a default_agree ratify on THIS request; if we are at/over the cap, refuse.
+    let priorArms = 0;
+    try {
+        const c = await client.query(
+            `SELECT COUNT(*)::int AS n FROM agent_action_request_audit
+              WHERE request_id = $1
+                AND changes #>> '{decisionContext,new,ratify,mode}' = 'default_agree'`,
+            [requestId]
+        );
+        priorArms = (c.rows[0] && c.rows[0].n) || 0;
+    } catch (_) {
+        // Fail-closed: if we cannot establish the count, do not arm.
+        priorArms = MAX_RATIFY_RETRIES;
+        holdReasons.push('retry_count_unavailable');
+    }
+    if (mode === 'default_agree' && priorArms >= MAX_RATIFY_RETRIES) {
+        mode = 'hold';
+        holdReasons.push(`retry_cap_reached:${priorArms}/${MAX_RATIFY_RETRIES}`);
+    }
+
+    r.mode = mode;
+    r.holdReasons = holdReasons;
+    r.serverComputed = true;
+    r.priorArms = priorArms;
+    r.armedAt = mode === 'default_agree' ? nowMs : null;
+    return r;
 }
 
 function rowToApi(row) {
@@ -161,6 +293,8 @@ function rowToApi(row) {
         type: row.type,
         prompt: row.prompt,
         options: row.options || null,
+        relatedCardId: row.related_card_id || null,
+        decisionContext: row.decision_context || null,
         status: row.status,
         answer: row.answer || null,
         createdAt: new Date(row.created_at).getTime(),
@@ -287,6 +421,59 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         } catch (_) {}
     }
 
+    // Core create: insert ONE request row + emit 'emitted'. Shared by the HTTP
+    // POST / route AND the kanban owner-decision auto-surface hook (子3/子4) so
+    // there is exactly one INSERT code path. INPUT VALIDATION IS THE CALLER'S
+    // JOB: the HTTP route validates + caps every field; the kanban hook passes
+    // already-shaped server-built values. `options`/`decisionContext` may be a
+    // JS value (stringified here) or an already-serialized JSON string.
+    // Returns the created row in rowToApi() shape. Throws only on DB error.
+    async function createActionRequest({
+        deviceId, fromEntityId, type, prompt, options,
+        anchorMessageId, relatedCardId, decisionContext,
+    } = {}) {
+        const anchor = normalizeAnchor(anchorMessageId);
+        const optionsJson = options != null
+            ? (typeof options === 'string' ? options : JSON.stringify(options))
+            : null;
+        const decisionJson = decisionContext != null
+            ? (typeof decisionContext === 'string' ? decisionContext : JSON.stringify(decisionContext))
+            : null;
+        const result = await pool.query(
+            `INSERT INTO agent_action_requests
+                (device_id, from_entity_id, anchor_message_id, type, prompt, options, related_card_id, decision_context)
+             VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8::jsonb)
+             RETURNING *`,
+            [deviceId, fromEntityId, anchor, type, prompt, optionsJson, relatedCardId != null ? relatedCardId : null, decisionJson]
+        );
+        const row = result.rows[0];
+        emitChanged(deviceId, 'emitted', row.id, row.from_entity_id);
+        return rowToApi(row);
+    }
+
+    // Owner-decision lifecycle (子6a): when a kanban card leaves review/blocked,
+    // dismiss any still-pending OWNER-DECISION request(s) for it. We only touch
+    // rows the move-hook created — decision_context IS NOT NULL — so an agent's
+    // ordinary request that merely references the same card is left untouched.
+    // Device-scoped; emits 'dismissed' per row on the SAME socket contract as the
+    // HTTP dismiss so the inbox live-refreshes. Returns the dismissed rows.
+    // Throws only on a DB error (the kanban hook wraps the call in try/catch).
+    async function dismissActionRequestsForCard(deviceId, cardId) {
+        if (!deviceId || !cardId) return [];
+        const upd = await pool.query(
+            `UPDATE agent_action_requests
+                SET status = 'dismissed', resolved_at = NOW()
+              WHERE device_id = $1 AND related_card_id = $2
+                AND status = 'pending' AND decision_context IS NOT NULL
+            RETURNING *`,
+            [deviceId, cardId]
+        );
+        for (const row of (upd.rows || [])) {
+            emitChanged(deviceId, 'dismissed', row.id, row.from_entity_id);
+        }
+        return upd.rows || [];
+    }
+
     // ══════════════════════════════════════════════════════════════════════
     // TIMEOUT-POLICY WORKER (card_ce0d685b)
     // ──────────────────────────────────────────────────────────────────────
@@ -321,6 +508,78 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
     // row never aborts the sweep. Exported for direct test invocation. The
     // periodic timer is registered once at module init (NODE_ENV !== 'test').
     // ══════════════════════════════════════════════════════════════════════
+    // ══════════════════════════════════════════════════════════════════════
+    // 計畫E RATIFY PASS (card_e9d01b6e) — passive default-agree on silence.
+    // ──────────────────────────────────────────────────────────────────────
+    // DARK-LAUNCH: runs ONLY when a device has explicitly set the new pref
+    // `action_request_ratify_enabled === true` (default undefined/false ⇒ no-op).
+    //
+    // For each pending request whose decision_context.ratify was armed
+    // default_agree (server-stamped — see recomputeRatifyMode) and whose silence
+    // grace window has elapsed, this RE-RUNS the fail-closed green-light at fire
+    // time and, only if it still says default_agree, resolves the request with the
+    // decided option as the answer (silence ⇒ agree → the emitting agent merges
+    // its PR). If anything drifted (class/path/diff/veto), it HOLDS — never
+    // resolves. This is a SEPARATE pass from the timeout-policy worker so it is not
+    // skipped by 'keep' and not blocked by the decision_context pin (which keeps
+    // every OTHER owner-decision row waiting for Hank).
+    //
+    // Stacked safety: dark-default-off; matches ratify.mode==='default_agree'
+    // EXACTLY; re-derives the verdict at fire time; the N-cap already capped how
+    // many times it could be armed (PUT handler); grace anchored to armedAt.
+    // ══════════════════════════════════════════════════════════════════════
+    async function runRatifyPass(deviceId, prefs, device) {
+        if (!prefs || prefs.action_request_ratify_enabled !== true) return; // dark launch
+        const graceRaw = prefs.action_request_ratify_grace_minutes;
+        const graceMin = Number.isFinite(Number(graceRaw)) ? Number(graceRaw) : RATIFY_DEFAULT_GRACE_MINUTES;
+        const graceMs = graceMin * 60 * 1000;
+        const nowMs = Date.now();
+
+        let rows = [];
+        try {
+            const r = await pool.query(
+                `SELECT * FROM agent_action_requests
+                  WHERE device_id = $1 AND status = 'pending'
+                    AND decision_context #>> '{ratify,planE}' = 'true'
+                    AND decision_context #>> '{ratify,mode}' = 'default_agree'
+                  ORDER BY created_at ASC LIMIT ${MAX_LIST_LIMIT}`,
+                [deviceId]
+            );
+            rows = r.rows || [];
+        } catch (err) {
+            console.error(`[AgentActionRequests] ratify pass query failed device=${deviceId}:`, err.message);
+            return;
+        }
+
+        for (const row of rows) {
+            try {
+                const dc = row.decision_context || {};
+                const ratify = (dc && typeof dc === 'object' && dc.ratify) || {};
+                // Silence grace anchored to when default_agree was armed, not emit time.
+                const armedAt = Number(ratify.armedAt);
+                if (!Number.isFinite(armedAt) || (nowMs - armedAt) < graceMs) continue;
+                // RE-RUN the fail-closed green-light at fire time. Any drift ⇒ HOLD,
+                // never resolve (the whole point of double fail-closed).
+                const verdict = classifyRatifyMode(ratifyInputFrom(row.prompt, ratify));
+                if (verdict.mode !== 'default_agree') {
+                    log('info', `ratify fire-time gate HOLD id=${row.id}: ${verdict.holdReasons.join(';')}`, { deviceId });
+                    continue;
+                }
+                const answer = typeof ratify.decidedOptionLabel === 'string' ? ratify.decidedOptionLabel : '';
+                // Resolve via the shared path → notifies the emitter + emits
+                // kind='resolved' identically to a human answer; the agent merges.
+                await resolveActionRequest(
+                    deviceId, row.id,
+                    { text: `[計畫E 追認] 靜默逾時視同同意，依追認決定續跑：${answer}`, auto: true, reason: 'ratify_default_agree' },
+                    device
+                );
+                log('info', `ratify default_agree resolved id=${row.id} from=${row.from_entity_id}`, { deviceId });
+            } catch (rowErr) {
+                console.error(`[AgentActionRequests] ratify resolve failed id=${row.id}:`, rowErr.message);
+            }
+        }
+    }
+
     async function enforceActionRequestTimeouts() {
         let deviceIds = [];
         try {
@@ -337,6 +596,13 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
             try {
                 let prefs = {};
                 try { prefs = (await readDevicePrefs(deviceId)) || {}; } catch (_) { prefs = {}; }
+                // 計畫E (card_e9d01b6e): run the independent ratify pass FIRST — it is
+                // gated on its own dark-launch pref (action_request_ratify_enabled),
+                // must not be skipped by 'keep', and must run before the
+                // decision_context pin below (which keeps every OTHER owner-decision
+                // row waiting for Hank). Failure-isolated so it never aborts the sweep.
+                try { await runRatifyPass(deviceId, prefs, devices && devices[deviceId]); }
+                catch (e) { console.error(`[AgentActionRequests] ratify pass failed device=${deviceId}:`, e.message); }
                 const policy = prefs.action_request_timeout_policy || 'keep';
                 if (policy === 'keep') continue; // default: never auto-act
                 const minutesRaw = prefs.action_request_timeout_minutes;
@@ -357,6 +623,11 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
 
                 for (const row of rows) {
                     try {
+                        // 子6(b): owner-decision items (decision_context non-null) are
+                        // PINNED to 'keep' semantics — they wait for Hank and must
+                        // NEVER be auto_dismissed / safe_defaulted / consensus-routed
+                        // by the timeout worker, regardless of the device's policy.
+                        if (row.decision_context != null) continue;
                         if (policy === 'auto_dismiss') {
                             const upd = await pool.query(
                                 `UPDATE agent_action_requests
@@ -490,20 +761,33 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         if (Array.isArray(options) && (options.length > 50 || JSON.stringify(options).length > 8192)) {
             return res.status(400).json({ success: false, error: 'options too large (max 50 items / 8KB)' });
         }
-        const anchor = normalizeAnchor(anchorMessageId);
+        // Optional kanban-card reference (計畫D): string ≤64 chars or null.
+        const relCard = validateRelatedCardId(req.body.relatedCardId);
+        if (!relCard.ok) {
+            return res.status(400).json({ success: false, error: 'relatedCardId must be a string of max 64 chars or null' });
+        }
+        // Optional owner-decision context: a plain object whose JSON is ≤8192
+        // bytes, or null (mirrors the related_card_id validation + the 8KB cap on
+        // options). Returns a ready-to-cast JSON string or null.
+        const decCtx = validateDecisionContext(req.body.decisionContext);
+        if (!decCtx.ok) {
+            return res.status(400).json({ success: false, error: 'decisionContext must be an object whose JSON is at most 8192 bytes, or null' });
+        }
 
         try {
-            const result = await pool.query(
-                `INSERT INTO agent_action_requests
-                    (device_id, from_entity_id, anchor_message_id, type, prompt, options)
-                 VALUES ($1, $2, $3, $4, $5, $6::jsonb)
-                 RETURNING *`,
-                [deviceId, fromEntityId, anchor, type, prompt, options != null ? JSON.stringify(options) : null]
-            );
-            const row = result.rows[0];
-            log('info', `emit id=${row.id} from=${fromEntityId} type=${type}`, { deviceId });
-            emitChanged(deviceId, 'emitted', row.id, row.from_entity_id);
-            return res.json({ success: true, request: rowToApi(row) });
+            // Shared INSERT path (子3) — same code the kanban hook calls.
+            const apiRow = await createActionRequest({
+                deviceId,
+                fromEntityId,
+                type,
+                prompt,
+                options: options != null ? options : null,
+                anchorMessageId,
+                relatedCardId: relCard.value,
+                decisionContext: decCtx.value,
+            });
+            log('info', `emit id=${apiRow.id} from=${fromEntityId} type=${type}`, { deviceId });
+            return res.json({ success: true, request: apiRow });
         } catch (err) {
             console.error('[AgentActionRequests] POST failed:', err.message);
             log('error', `POST failed: ${err.message}`, { deviceId });
@@ -639,8 +923,10 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         const hasType = Object.prototype.hasOwnProperty.call(body, 'type');
         const hasPrompt = Object.prototype.hasOwnProperty.call(body, 'prompt');
         const hasOptions = Object.prototype.hasOwnProperty.call(body, 'options');
-        if (!hasType && !hasPrompt && !hasOptions) {
-            return res.status(400).json({ success: false, error: 'Provide at least one editable field: prompt, options, type' });
+        const hasRelatedCardId = Object.prototype.hasOwnProperty.call(body, 'relatedCardId');
+        const hasDecisionContext = Object.prototype.hasOwnProperty.call(body, 'decisionContext');
+        if (!hasType && !hasPrompt && !hasOptions && !hasRelatedCardId && !hasDecisionContext) {
+            return res.status(400).json({ success: false, error: 'Provide at least one editable field: prompt, options, type, relatedCardId, decisionContext' });
         }
         // Validate each PROVIDED field with the exact same rules as POST / (create).
         if (hasType && (typeof body.type !== 'string' || !VALID_TYPES.has(body.type))) {
@@ -656,6 +942,25 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
             if (Array.isArray(body.options) && (body.options.length > 50 || JSON.stringify(body.options).length > 8192)) {
                 return res.status(400).json({ success: false, error: 'options too large (max 50 items / 8KB)' });
             }
+        }
+        // related_card_id (計畫D): string ≤64 or null (null clears the link).
+        let relatedCardIdNew = null;
+        if (hasRelatedCardId) {
+            const relCard = validateRelatedCardId(body.relatedCardId);
+            if (!relCard.ok) {
+                return res.status(400).json({ success: false, error: 'relatedCardId must be a string of max 64 chars or null' });
+            }
+            relatedCardIdNew = relCard.value;
+        }
+        // decision_context (owner-decision classifier): object ≤8192 JSON or null
+        // (null clears it). Lets the commander refine the surfaced context.
+        let decisionContextNew = null; // JSON string or null
+        if (hasDecisionContext) {
+            const decCtx = validateDecisionContext(body.decisionContext);
+            if (!decCtx.ok) {
+                return res.status(400).json({ success: false, error: 'decisionContext must be an object whose JSON is at most 8192 bytes, or null' });
+            }
+            decisionContextNew = decCtx.value;
         }
 
         const client = await pool.connect();
@@ -679,6 +984,27 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
                 return res.status(409).json({ success: false, error: 'Only pending requests can be edited' });
             }
 
+            // 計畫E ratify-loop (card_e9d01b6e): if this edit arms a ratify block
+            // (decisionContext.ratify.planE), the server RE-DERIVES its mode here —
+            // the agent's claimed mode is never trusted. classifyRatifyMode is
+            // fail-closed and the N-cap is read from the audit trail (same txn, row
+            // already locked). The recomputed block (with server-stamped mode /
+            // holdReasons / armedAt) replaces what the agent sent.
+            if (hasDecisionContext && decisionContextNew != null) {
+                let dcObj = null;
+                try { dcObj = JSON.parse(decisionContextNew); } catch (_) { dcObj = null; }
+                if (dcObj && dcObj.ratify && typeof dcObj.ratify === 'object' && dcObj.ratify.planE === true) {
+                    const nowMs = Date.now();
+                    dcObj.ratify = await recomputeRatifyMode(client, id, before.prompt, dcObj.ratify, nowMs);
+                    decisionContextNew = JSON.stringify(dcObj);
+                    // Re-check the 8KB cap after the server stamp (holdReasons grow it).
+                    if (decisionContextNew.length > 8192) {
+                        await client.query('ROLLBACK');
+                        return res.status(400).json({ success: false, error: 'decisionContext too large after server ratify stamp' });
+                    }
+                }
+            }
+
             // Build the partial UPDATE + the per-field old→new change set. Only
             // fields whose value ACTUALLY changes are written / audited.
             const sets = [];
@@ -698,6 +1024,23 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
                 if (newOpts !== oldOpts) {
                     params.push(newOpts); sets.push(`options = $${params.length}::jsonb`);
                     changes.options = { old: before.options ?? null, new: body.options ?? null };
+                }
+            }
+            if (hasRelatedCardId) {
+                const oldRel = before.related_card_id ?? null;
+                if (relatedCardIdNew !== oldRel) {
+                    params.push(relatedCardIdNew); sets.push(`related_card_id = $${params.length}`);
+                    changes.relatedCardId = { old: oldRel, new: relatedCardIdNew };
+                }
+            }
+            if (hasDecisionContext) {
+                const oldDc = before.decision_context != null ? JSON.stringify(before.decision_context) : null;
+                if (decisionContextNew !== oldDc) {
+                    params.push(decisionContextNew); sets.push(`decision_context = $${params.length}::jsonb`);
+                    changes.decisionContext = {
+                        old: before.decision_context ?? null,
+                        new: decisionContextNew != null ? JSON.parse(decisionContextNew) : null,
+                    };
                 }
             }
 
@@ -760,8 +1103,21 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         // Timeout-policy worker (card_ce0d685b). Exported so tests + an external
         // scheduler can invoke a sweep directly.
         enforceActionRequestTimeouts,
+        // Shared create path (子3) so the kanban move-hook can auto-surface an
+        // owner-only review/blocked card into this inbox via the SAME INSERT +
+        // 'emitted' socket emit the HTTP route uses. Caller validates inputs.
+        createActionRequest,
+        // Owner-decision lifecycle (子6a): kanban calls this when a card leaves
+        // review/blocked to auto-dismiss its pending owner-decision request(s) +
+        // emit the 'dismissed' socket event.
+        dismissActionRequestsForCard,
         _pool: pool,
     };
 };
 
 module.exports.initAgentActionRequestsDatabase = initAgentActionRequestsDatabase;
+// 計畫E (card_e9d01b6e): exported for unit tests — the SERVER-authoritative ratify
+// recompute (fail-closed mode + audit-trail N-cap) and its input builder.
+module.exports.recomputeRatifyMode = recomputeRatifyMode;
+module.exports.ratifyInputFrom = ratifyInputFrom;
+module.exports.MAX_RATIFY_RETRIES = MAX_RATIFY_RETRIES;

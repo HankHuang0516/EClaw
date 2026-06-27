@@ -81,6 +81,7 @@ function makeElement(tag) {
         id: '',
         _className: '',
         attrs: {},
+        dataset: {},
         style: {},
         children: [],
         parent: null,
@@ -214,6 +215,12 @@ function makeInbox(opts = {}) {
                 action_request_inbox_anchor: 'Show source',
                 action_request_meta: 'Entity #{entityId} · {type}',
                 action_request_dismissed: 'Request dismissed',
+                action_request_filter_label: 'Filter requests',
+                action_request_filter_all: 'All',
+                action_request_filter_consensus: 'Consensus',
+                action_request_filter_empty: 'No requests match this filter.',
+                action_request_card_link: '🗂 Task card',
+                action_request_card_link_title: 'Open linked card {card}',
                 chat_send_failed: 'Failed',
             };
             let s = dict[key] || key;
@@ -246,6 +253,11 @@ function makeInbox(opts = {}) {
         let actionRequestInboxOpen = (() => {
             try { return localStorage.getItem(ACTION_REQUEST_INBOX_OPEN_KEY) === '1'; } catch (_) { return false; }
         })();
+        const ACTION_REQUEST_INBOX_FILTER_KEY = 'needsyou_inbox_filter';
+        let actionRequestInboxFilter = (() => {
+            try { return localStorage.getItem(ACTION_REQUEST_INBOX_FILTER_KEY) === 'consensus' ? 'consensus' : 'all'; }
+            catch (_) { return 'all'; }
+        })();
         let actionRequestsRefreshPending = false;
         let actionRequestsRefreshPendingRender = false;
         let replyContexts = [];
@@ -266,6 +278,9 @@ function makeInbox(opts = {}) {
         extractFunction('removeReplyContextForRequest'),
         extractFunction('dismissActionRequest'),
         extractFunction('setActionRequestInboxOpen'),
+        // 計畫C inbox 篩選條件 facet helpers referenced by renderActionRequestInbox.
+        extractFunction('setActionRequestInboxFilter'),
+        extractFunction('actionRequestMatchesFilter'),
         extractFunction('renderActionRequestInbox'),
         // The inbox render entry point loadActionRequests/dismissActionRequest
         // funnel through (replaced EclawGreeting.maybeShow; card_cc9700b7).
@@ -281,6 +296,9 @@ function makeInbox(opts = {}) {
     const stubs = `
         function renderReplyPreviews() {}
         function recomputeAutoReceivers() {}
+        // 計畫D: the 🗂 任務卡 chip click handler calls openKanbanCard — not invoked
+        // during render, stubbed so a click test could spy on it if needed.
+        function openKanbanCard() {}
         const CHAT_MESSAGE_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     `;
 
@@ -593,5 +611,99 @@ describe('refreshActionRequestBanner — inbox-or-hide (greeting removed)', () =
 
         // Guard short-circuits before any render so a half-loaded page never flashes.
         expect(findByClass(banner, 'action-request-inbox')).toBeNull();
+    });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// Behavior — 計畫C 篩選條件 facet (card_2a6f260f) + 計畫D 🗂 任務卡 chip (card_df646877)
+// ════════════════════════════════════════════════════════════════════════════
+function findByText(root, text) {
+    const stack = root.children.slice();
+    while (stack.length) {
+        const node = stack.shift();
+        if (node._text === text) return node;
+        stack.unshift(...node.children);
+    }
+    return null;
+}
+
+describe('計畫C — 需要你 inbox 篩選條件 facet (All / Consensus)', () => {
+    test('default (no stored filter) is "all": every pending request renders + both chips present', () => {
+        const { api, banner } = makeInbox();
+        api.setActionRequests([
+            makeRequest(REQ_A, { type: 'decision' }),
+            makeRequest(REQ_B, { type: 'consensus' }),
+        ]);
+        api.renderActionRequestInbox(banner);
+
+        const filter = findByClass(banner, 'action-request-inbox-filter');
+        expect(filter).not.toBeNull();
+        // two chips, "All" active by default
+        const chips = findAllByClass(banner, 'filter-chip');
+        expect(chips.length).toBe(2);
+        const active = chips.find(c => c.classList.contains('active'));
+        expect(active._text).toBe('All');
+        // both requests visible, no empty-state
+        expect(findAllByClass(banner, 'action-request-item').length).toBe(2);
+        expect(findByClass(banner, 'action-request-filter-empty')).toBeNull();
+    });
+
+    test('stored filter "consensus" narrows the list to consensus items only', () => {
+        const { api, banner } = makeInbox({ storage: { needsyou_inbox_filter: 'consensus' } });
+        api.setActionRequests([
+            makeRequest(REQ_A, { type: 'decision' }),
+            makeRequest(REQ_B, { type: 'consensus' }),
+            makeRequest(REQ_C, { type: 'input' }),
+        ]);
+        api.renderActionRequestInbox(banner);
+
+        // only the consensus request renders
+        expect(findAllByClass(banner, 'action-request-item').length).toBe(1);
+        // "Consensus" chip is the active one
+        const active = findAllByClass(banner, 'filter-chip').find(c => c.classList.contains('active'));
+        expect(active._text).toBe('Consensus');
+        // summary count stays the TOTAL pending (3), not the filtered count
+        expect(findByClass(banner, 'action-request-inbox-count')._text).toBe('3 pending');
+    });
+
+    test('consensus filter with no matching request shows the empty-state (no items)', () => {
+        const { api, banner } = makeInbox({ storage: { needsyou_inbox_filter: 'consensus' } });
+        api.setActionRequests([makeRequest(REQ_A, { type: 'decision' })]);
+        api.renderActionRequestInbox(banner);
+
+        expect(findAllByClass(banner, 'action-request-item').length).toBe(0);
+        expect(findByClass(banner, 'action-request-filter-empty')._text).toBe('No requests match this filter.');
+    });
+
+    test('a request in a triggered consensus round matches the consensus filter', () => {
+        const { api, banner } = makeInbox({ storage: { needsyou_inbox_filter: 'consensus' } });
+        // type is not consensus, but the timeout worker opened a round (協商中)
+        api.setActionRequests([makeRequest(REQ_A, { type: 'decision', consensusTriggered: true })]);
+        api.renderActionRequestInbox(banner);
+
+        expect(findAllByClass(banner, 'action-request-item').length).toBe(1);
+    });
+});
+
+describe('計畫D — 需要你 inbox 🗂 任務卡 deep-link chip', () => {
+    test('renders the card chip ONLY when relatedCardId is present', () => {
+        const { api, banner } = makeInbox();
+        api.setActionRequests([
+            makeRequest(REQ_A, { relatedCardId: 'card_df646877' }),
+            makeRequest(REQ_B), // no relatedCardId
+        ]);
+        api.renderActionRequestInbox(banner);
+
+        const links = findAllByClass(banner, 'action-request-card-link');
+        expect(links.length).toBe(1);
+        expect(links[0]._text).toBe('🗂 Task card');
+        expect(links[0].tagName).toBe('BUTTON');
+    });
+
+    test('no card chip at all when no request carries relatedCardId (no layout change)', () => {
+        const { api, banner } = makeInbox();
+        api.setActionRequests([makeRequest(REQ_A), makeRequest(REQ_B)]);
+        api.renderActionRequestInbox(banner);
+        expect(findAllByClass(banner, 'action-request-card-link').length).toBe(0);
     });
 });

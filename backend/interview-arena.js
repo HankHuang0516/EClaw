@@ -303,6 +303,15 @@ let VISION_IMAGES = [
     // Hard tier
     { file: null, description: 'A CI/CD pipeline dependency graph with 8 stages in sequence: Source → Build (2.1 min) → Unit Tests (4.7 min) → Integration Tests (8.3 min) → Security Scan (3.1 min) → Docker Build (1.8 min) → Staging Deploy (5.2 min) → Smoke Test (2.4 min) — the Security Scan stage shows a red ❌ badge reading "CRITICAL: 1 CVE found"', keywords: ['pipeline', 'eight', 'stages', 'build', 'unit', 'integration', 'security', 'scan', 'CVE', 'critical', 'red'] },
     { file: null, description: 'A database migration log with 9 rows of ALTER TABLE statements: 5 rows in green marked "completed", 2 rows in yellow marked "pending", and 1 row in red marked "FAILED: unique constraint violation on users.email at 14:23:07" — a progress bar at the bottom reads "6/9 migrations applied"', keywords: ['migration', 'nine', 'rows', 'completed', 'five', 'pending', 'failed', 'constraint', 'email', '14:23', 'six'] },
+    // ── Daily pool update: added 2026-06-26 ──
+    // Easy tier
+    { file: null, description: 'A dark blue envelope icon on a white background with a white flap at the top — a small red circle badge in the upper-right corner displays the number 3 indicating three unread messages', keywords: ['envelope', 'blue', 'red', 'badge', 'three', 'unread'] },
+    // Medium tier
+    { file: null, description: 'A side-by-side A/B test results panel: Variant A shows 4,211 visitors, 312 conversions, and 7.4% conversion rate in a white card; Variant B shows 4,187 visitors, 471 conversions, and 11.2% conversion rate — a green "Winner" badge appears on Variant B with "+51% relative uplift" annotation', keywords: ['A/B', 'variant', 'conversion', '11.2', 'winner', 'green', 'uplift', '4211', '7.4'] },
+    { file: null, description: 'A responsive design preview panel showing the same landing page at three viewport widths side by side: desktop at 1440px with a full nav bar, tablet at 768px with a condensed nav, and mobile at 375px with a hamburger menu icon replacing the navigation links', keywords: ['responsive', 'design', 'three', 'desktop', '1440', 'tablet', '768', 'mobile', '375', 'hamburger'] },
+    // Hard tier
+    { file: null, description: 'A Terraform plan output showing 8 total resources: 4 to add in green (aws_instance, aws_security_group, aws_subnet, aws_route_table), 2 to change in yellow (aws_lambda with memory updated from 512 MB to 1024 MB and timeout from 30 s to 60 s), 1 to destroy in red (aws_s3_bucket named "legacy-data"), and 1 unchanged', keywords: ['terraform', 'eight', 'four', 'add', 'green', 'lambda', '512', '1024', 'destroy', 's3', 'legacy'] },
+    { file: null, description: 'A packet flow diagram for a TLS 1.3 handshake showing seven steps: Client Hello → Server Hello → Encrypted Extensions → Certificate → Certificate Verify → Server Finished → Client Finished — a horizontal dashed arrow labeled "Session Ticket (optional)" is shown after Server Finished', keywords: ['TLS', '1.3', 'handshake', 'seven', 'client', 'hello', 'certificate', 'verify', 'finished', 'session', 'ticket', 'optional'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -603,6 +612,17 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[1,2,3,4]', expected: '[24,12,8,6]' },{ input: '[-1,1,0,-3,3]', expected: '[0,0,9,0,0]' },{ input: '[2,3]', expected: '[3,2]' },{ input: '[1,1,1]', expected: '[1,1,1]' }] },
     { title: 'Burst Balloons', description: 'Write `solve(nums)` — you have n balloons, each labeled with a number. Bursting balloon i earns nums[i-1] * nums[i] * nums[i+1] coins (treat out-of-bounds indices as 1). Return the maximum total coins you can collect by bursting all balloons optimally.',
       testCases: [{ input: '[3,1,5,8]', expected: '167' },{ input: '[1,5]', expected: '10' },{ input: '[7]', expected: '7' },{ input: '[0,0,0]', expected: '0' }] },
+    // ── Daily pool update: added 2026-06-26 ──
+    { title: '3Sum', description: 'Write `solve(nums)` — find all unique triplets [a, b, c] such that a + b + c = 0. Sort each triplet in ascending order, then sort all triplets lexicographically.',
+      testCases: [{ input: '[-1,0,1,2,-1,-4]', expected: '[[-1,-1,2],[-1,0,1]]' },{ input: '[0,1,1]', expected: '[]' },{ input: '[0,0,0]', expected: '[[0,0,0]]' },{ input: '[]', expected: '[]' },{ input: '[0,0,0,0]', expected: '[[0,0,0]]' }] },
+    { title: 'Search in Rotated Sorted Array', description: 'Write `solve(nums, target)` — given an integer array sorted ascending then rotated at some pivot (no duplicates), return the index of the target or -1 if not found.',
+      testCases: [{ input: '[4,5,6,7,0,1,2], 0', expected: '4' },{ input: '[4,5,6,7,0,1,2], 3', expected: '-1' },{ input: '[1], 0', expected: '-1' },{ input: '[1,3], 3', expected: '1' },{ input: '[3,1], 1', expected: '1' }] },
+    { title: 'Majority Element', description: 'Write `solve(nums)` — return the element that appears more than ⌊n/2⌋ times. The majority element is guaranteed to exist.',
+      testCases: [{ input: '[3,2,3]', expected: '3' },{ input: '[2,2,1,1,1,2,2]', expected: '2' },{ input: '[1]', expected: '1' },{ input: '[6,5,5]', expected: '5' },{ input: '[4,4,4,3,3,3,4]', expected: '4' }] },
+    { title: 'Daily Temperatures', description: 'Write `solve(temperatures)` — return an array where answer[i] is the number of days you must wait after day i for a warmer temperature. If no future day is warmer, answer[i] = 0.',
+      testCases: [{ input: '[73,74,75,71,69,72,76,73]', expected: '[1,1,4,2,1,1,0,0]' },{ input: '[30,40,50,60]', expected: '[1,1,1,0]' },{ input: '[30,60,90]', expected: '[1,1,0]' },{ input: '[30]', expected: '[0]' }] },
+    { title: 'Longest Mountain in Array', description: 'Write `solve(nums)` — a mountain subarray is a contiguous subarray where elements strictly increase to a peak then strictly decrease (minimum length 3). Return the length of the longest mountain, or 0 if none exists.',
+      testCases: [{ input: '[2,1,4,7,3,2,5]', expected: '5' },{ input: '[2,2,2]', expected: '0' },{ input: '[1,2,3]', expected: '0' },{ input: '[0,1,0]', expected: '3' },{ input: '[1,3,5,4,2,0,1,3,2]', expected: '6' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -780,6 +800,14 @@ let RESPONSE_QUESTIONS = [
     // Hard tier
     { question: 'How many 4-digit numbers are divisible by both 6 and 9 but NOT by 18? (Hint: consider the LCM of 6 and 9.)', expectedKeywords: ['0', 'zero', 'none'] },
     { question: '$12,000 is divided among A, B, and C such that A gets twice as much as B, and B gets three times as much as C. How much does A receive?', expectedKeywords: ['7200', '$7,200', '7,200'] },
+    // ── Daily pool update: added 2026-06-26 ──
+    // Medium tier
+    { question: 'Pipe A fills a tank in 4 hours, pipe B fills it in 6 hours, and pipe C drains it in 12 hours. If all three are open simultaneously starting from an empty tank, how many hours does it take to fill the tank?', expectedKeywords: ['3', 'three hours', 'three'] },
+    { question: 'A product costs $60 to manufacture. It is sold at a 25% profit in summer. In winter the summer price is discounted by 20%. What is the winter selling price?', expectedKeywords: ['60', '$60'] },
+    { question: 'A boat travels 72 km downstream in 4 hours and returns the same 72 km upstream in 6 hours. What is the speed of the boat in still water in km/h?', expectedKeywords: ['15'] },
+    // Hard tier
+    { question: 'In a town, 30% of the population are vegetarian. Of the non-vegetarian population, 40% eat red meat. What percentage of the town\'s total population eats red meat?', expectedKeywords: ['28', '28%'] },
+    { question: 'A committee of 4 people is to be selected from a group of 7 men and 5 women. In how many ways can the committee be formed if it must contain at least 2 women?', expectedKeywords: ['285'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -968,6 +996,15 @@ let TTS_PHRASES = [
     // Hard tier
     { text: 'Pursuant to International Financial Reporting Standards IAS 36 paragraph 59 the recoverable amount of the cash-generating unit was assessed at forty-two million six hundred thousand euros using a pre-tax discount rate of nine point five percent and a terminal growth rate of two percent', keywords: ['IAS', '36', 'recoverable', 'cash-generating', 'forty-two', 'million', 'nine', 'five', 'discount', 'terminal', 'two'] },
     { text: 'The Merkle tree inclusion proof for transaction 0xf3a4b217e9cd8041 contains four sibling hashes: 0x1a2b3c at left level 1, 0x9f8e7d at right level 2, 0xc5d4e3 at left level 3, and 0xa0b1c2 at right level 4 — concatenate and hash each pair from leaf to root to verify membership in block 19842716', keywords: ['merkle', 'tree', '0xf3a4', 'four', 'sibling', 'left', 'right', 'root', 'block', '19842716'] },
+    // ── Daily pool update: added 2026-06-26 ──
+    // Easy tier
+    { text: 'The next shuttle bus departs at quarter past two and arrives at Central Station in approximately forty-five minutes', keywords: ['shuttle', 'quarter', 'two', 'forty-five', 'central', 'station'] },
+    // Medium tier
+    { text: 'Production incident INC-2024-5812: database replica at node-db-03 has fallen 2,847 transactions behind the primary — replication lag is 14.7 seconds and growing', keywords: ['incident', 'INC', '5812', 'node-db', '2847', 'transactions', '14.7', 'replication', 'lag'] },
+    { text: 'Prescription number RX-9948021: take two 500-milligram tablets of amoxicillin three times daily for ten days — do not exceed six tablets in any 24-hour period', keywords: ['prescription', 'RX', '9948021', 'two', '500', 'amoxicillin', 'three', 'ten', 'six'] },
+    // Hard tier
+    { text: 'The variance swap strike for a 3-month tenor on EUR/USD cross-volatility was fixed at 7.4 vol-squared — the daily P&L equals realised variance minus the fixed strike multiplied by the notional of five million vega', keywords: ['variance', 'swap', 'strike', 'EUR/USD', '7.4', 'vol', 'P&L', 'realised', 'notional', 'five', 'million'] },
+    { text: 'Pursuant to Section 2 article 8 sub-paragraph c of the Master Services Agreement dated the third of March two thousand twenty-four the service provider shall maintain a minimum of ninety-nine point nine five percent monthly uptime as set forth in Schedule B appendix three', keywords: ['section', '2', 'article', '8', 'march', 'two thousand', 'ninety-nine', 'monthly', 'uptime', 'schedule', 'appendix', 'three'] },
 ];
 
 // ============================================
