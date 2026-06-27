@@ -3549,7 +3549,7 @@
         }
 
         async function resetXdSettings(entityId) {
-            if (!await showConfirm({ message: i18n.t('dash_xd_reset_confirm'), danger: true, itemName: entityId })) return;
+            if (!await showConfirm({ message: i18n.t('dash_xd_reset_confirm'), confirmText: i18n.t('common_reset'), danger: true, itemName: entityId })) return;
             try {
                 var data = await apiCall('DELETE', '/api/entity/cross-device-settings', {
                     deviceId: currentUser.deviceId,
@@ -3798,7 +3798,7 @@
         }
 
         async function deleteIdentity(entityId) {
-            if (!await showConfirm({ message: i18n.t('dash_id_clear_confirm') + entityId + '?', danger: true, itemName: entityId })) return;
+            if (!await showConfirm({ message: i18n.t('dash_id_clear_confirm') + entityId + '?', confirmText: i18n.t('common_clear'), danger: true, itemName: entityId })) return;
             try {
                 var data = await apiCall('DELETE', '/api/entity/identity', {
                     deviceId: currentUser.deviceId,
@@ -4872,7 +4872,7 @@
 
         async function resetOrgChart() {
             const t = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t.bind(i18n) : (k, fb) => fb || k;
-            if (!await showConfirm({ message: t('org_reset_confirm', 'Reset organization chart to saved default?'), danger: true })) return;
+            if (!await showConfirm({ message: t('org_reset_confirm', 'Reset organization chart to saved default?'), confirmText: t('common_reset', 'Reset'), danger: true })) return;
             const validIds = entities.filter(e => e.isBound).map(e => e.entityId);
             const validSet = new Set(validIds);
             const saved = loadOrgChartDefault();

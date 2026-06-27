@@ -1820,8 +1820,8 @@
         }
 
         // Unified bulk operation: apply mutation, save immediately, offer undo on success.
-        async function bulkOp({ confirmMsg, applyFn, restoreFn, overlayMsg, successMsg }) {
-            if (!await showConfirm({ message: confirmMsg, danger: true })) return;
+        async function bulkOp({ confirmMsg, confirmText, applyFn, restoreFn, overlayMsg, successMsg }) {
+            if (!await showConfirm({ message: confirmMsg, confirmText, danger: true })) return;
             applyFn();
             showBulkOverlay(overlayMsg);
             try {
@@ -1857,6 +1857,7 @@
 
             await bulkOp({
                 confirmMsg: i18n.t('mc_confirm_clear_category') || `Clear all items in "${cat}"?`,
+                confirmText: i18n.t('common_clear'),
                 applyFn: () => { dashboard[key] = dashboard[key].filter(item => item.category !== cat); },
                 restoreFn: () => { dashboard[key] = backup; },
                 overlayMsg: i18n.t('mc_bulk_clearing') || 'Clearing...',
@@ -1873,6 +1874,7 @@
 
             await bulkOp({
                 confirmMsg: i18n.t('mc_confirm_delete_category') || `Delete category "${cat}"? Items will become uncategorized.`,
+                confirmText: i18n.t('common_delete'),
                 applyFn: () => {
                     const order = getCategoryOrder(section);
                     const idx = order.indexOf(cat);
@@ -2305,7 +2307,7 @@
         async function deleteNote(id) {
             const note = dashboard.notes.find(n => n.id === id);
             const itemName = note ? (note.title || note.id) : id;
-            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) {
+            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) {
                 dashboard.notes = dashboard.notes.filter(n => n.id !== id);
                 markChanged();
                 renderNotes();
@@ -2323,7 +2325,7 @@
             menu.querySelector('.context-menu-item').onclick = async () => {
                 const note = dashboard.notes.find(n => n.id === id);
                 const itemName = note ? (note.title || note.id) : id;
-                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) {
+                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) {
                     dashboard.notes = dashboard.notes.filter(n => n.id !== id);
                     markChanged();
                     renderNotes();
@@ -2593,7 +2595,7 @@
         }
 
         async function clearDrawing() {
-            if (!await showConfirm({ message: i18n.t('mc_note_draw_clear_confirm') || 'Clear all drawings?', danger: true })) return;
+            if (!await showConfirm({ message: i18n.t('mc_note_draw_clear_confirm') || 'Clear all drawings?', confirmText: i18n.t('common_clear'), danger: true })) return;
             drawStrokes = [];
             redrawCanvas();
         }
@@ -2888,7 +2890,7 @@
         async function deleteNotePage(noteId) {
             const note = dashboard.notes.find(n => n.id === noteId);
             const itemName = note ? (note.title || note.id) : noteId;
-            if (!await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) return;
+            if (!await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) return;
             try {
                 await apiCall('DELETE', '/api/mission/note/page', {
                     deviceId: currentUser.deviceId,
@@ -3372,7 +3374,7 @@
         async function deleteSkill(id) {
             const skill = dashboard.skills.find(s => s.id === id);
             const itemName = skill ? (skill.title || skill.id) : id;
-            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) {
+            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) {
                 dashboard.skills = dashboard.skills.filter(s => s.id !== id);
                 markChanged();
                 renderSkills();
@@ -3390,7 +3392,7 @@
             menu.querySelector('.context-menu-item').onclick = async () => {
                 const skill = dashboard.skills.find(s => s.id === id);
                 const itemName = skill ? (skill.title || skill.id) : id;
-                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) {
+                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) {
                     dashboard.skills = dashboard.skills.filter(s => s.id !== id);
                     markChanged();
                     renderSkills();
@@ -3503,7 +3505,7 @@
         async function deleteRule(id) {
             const rule = dashboard.rules.find(r => r.id === id);
             const itemName = rule ? (rule.name || rule.id) : id;
-            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) {
+            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) {
                 dashboard.rules = dashboard.rules.filter(r => r.id !== id);
                 markChanged();
                 renderRules();
@@ -3521,7 +3523,7 @@
             menu.querySelector('.context-menu-item').onclick = async () => {
                 const rule = dashboard.rules.find(r => r.id === id);
                 const itemName = rule ? (rule.name || rule.id) : id;
-                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) {
+                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) {
                     dashboard.rules = dashboard.rules.filter(r => r.id !== id);
                     markChanged();
                     renderRules();
@@ -3720,7 +3722,7 @@
         async function deleteSoul(id) {
             const soul = dashboard.souls.find(s => s.id === id);
             const itemName = soul ? (soul.name || soul.id) : id;
-            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) {
+            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) {
                 dashboard.souls = dashboard.souls.filter(s => s.id !== id);
                 markChanged();
                 renderSouls();
@@ -3738,7 +3740,7 @@
             menu.querySelector('.context-menu-item').onclick = async () => {
                 const soul = dashboard.souls.find(s => s.id === id);
                 const itemName = soul ? (soul.name || soul.id) : id;
-                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) {
+                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) {
                     dashboard.souls = dashboard.souls.filter(s => s.id !== id);
                     markChanged();
                     renderSouls();

@@ -650621,6 +650621,11 @@ const TRANSLATIONS = {
         "action_request_ratify_hold_badge": "Needs your approval",
         "action_request_ratify_hold_hint": "Nothing is sent unless you approve.",
         "action_request_recommended_badge_title": "Suggestion only — recorded, not auto-sent",
+
+        "common_revoke": "Revoke",
+        "common_block": "Block",
+        "common_reset": "Reset",
+        "common_archive": "Archive",
 },
 
 
@@ -1235679,6 +1235684,11 @@ const TRANSLATIONS = {
         "action_request_ratify_hold_badge": "需你核可",
         "action_request_ratify_hold_hint": "未經你核可不會送出。",
         "action_request_recommended_badge_title": "僅供參考 · 不會自動送出",
+
+        "common_revoke": "撤銷",
+        "common_block": "封鎖",
+        "common_reset": "重設",
+        "common_archive": "封存",
 },
 
 
@@ -1849941,6 +1849951,12 @@ const TRANSLATIONS = {
         "action_request_ratify_hold_badge": "需你核可",
         "action_request_ratify_hold_hint": "未经你核可不会送出。",
         "action_request_recommended_badge_title": "仅供参考 · 不会自动送出",
+
+        "common_revoke": "撤销",
+        "common_block": "封锁",
+        "common_reset": "重置",
+        "common_archive": "归档",
+        "common_clear": "清除",
 },
 
 

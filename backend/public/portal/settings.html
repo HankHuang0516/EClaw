@@ -2236,7 +2236,7 @@
             const acct = (currentUser && Array.isArray(currentUser.channelAccounts))
                 ? currentUser.channelAccounts.find(a => a.id === id) : null;
             const itemName = acct ? (acct.label || acct.handle || acct.channel || id) : id;
-            if (!await showConfirm({ message: i18n.t('toast_delete_channel_confirm'), itemName, danger: true })) return;
+            if (!await showConfirm({ message: i18n.t('toast_delete_channel_confirm'), itemName, confirmText: i18n.t('common_delete'), danger: true })) return;
             try {
                 await apiCall('DELETE', `/api/channel/account/${id}`);
                 // Re-fetch fresh user data to sync channel accounts
