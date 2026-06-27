@@ -2502,7 +2502,7 @@
         async function archiveTaskCard(cardId) {
             const card = findCard(cardId);
             if (!card) return;
-            if (!await showConfirm({ message: t('kb_archive_confirm', 'Archive this card?'), itemName: card.title || card.id, danger: true })) return;
+            if (!await showConfirm({ message: t('kb_archive_confirm', 'Archive this card?'), itemName: card.title || card.id, confirmText: t('common_archive', 'Archive'), danger: true })) return;
             // Optimistic: drop the card from the board right away; revert on
             // server failure. Undo path uses the existing /restore endpoint.
             const idx = allCards.findIndex(c => c.id === cardId);
@@ -2685,7 +2685,7 @@
         async function archiveCardFromDetail(cardId) {
             const card = findCard(cardId);
             if (!card) return;
-            if (!await showConfirm({ message: t('kb_archive_confirm', 'Archive this card?'), itemName: card.title || card.id, danger: true })) return;
+            if (!await showConfirm({ message: t('kb_archive_confirm', 'Archive this card?'), itemName: card.title || card.id, confirmText: t('common_archive', 'Archive'), danger: true })) return;
             await withAutoAction(null, () => apiCall('DELETE', `/api/mission/card/${cardId}?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`), {
                 closeOnDone: true, successMsg: '🗑 ' + t('kb_archive', 'Archive'),
             });
@@ -3018,7 +3018,7 @@
         async function deleteAutomation(cardId) {
             const card = findCard(cardId);
             if (!card) return;
-            if (!await showConfirm({ message: t('kb_auto_delete_confirm', `Delete automation "${card.title}"? This will archive the card.`), itemName: card.title || card.id, danger: true })) return;
+            if (!await showConfirm({ message: t('kb_auto_delete_confirm', `Delete automation "${card.title}"? This will archive the card.`), itemName: card.title || card.id, confirmText: t('common_delete', 'Delete'), danger: true })) return;
             const btn = document.querySelector('.kb-auto-action-btn.delete');
             await withAutoAction(btn, () => apiCall('DELETE', `/api/mission/card/${cardId}?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`), {
                 closeOnDone: true, successMsg: '🗑 ' + t('toast_entity_deleted', 'Deleted'),
