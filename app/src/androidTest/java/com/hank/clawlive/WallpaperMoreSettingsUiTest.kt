@@ -20,7 +20,6 @@ class WallpaperMoreSettingsUiTest {
                 val prefs = LayoutPreferences.getInstance(activity)
                 assertTrue(prefs.wallpaperSpeechBubblesEnabled)
                 assertTrue(prefs.wallpaperPurposefulWalkingEnabled)
-                assertTrue(prefs.wallpaperConsciousWalkingEnabled)
                 assertTrue(prefs.wallpaperEntityInteractionsEnabled)
                 assertTrue(prefs.wallpaperBubblePulseEnabled)
                 assertTrue(prefs.wallpaperBubbleOverlayAvoidanceEnabled)
@@ -40,12 +39,12 @@ class WallpaperMoreSettingsUiTest {
                     }
                 }
                 collect(root)
-                assertTrue("Expected advanced wallpaper switches", switches.size >= 10)
+                assertTrue("Expected advanced wallpaper switches", switches.size >= 9)
                 switches.forEach { assertTrue("Default-on switch should start checked", it.isChecked) }
                 assertTrue("Expected bubble duration slider", sliders.isNotEmpty())
                 val durationSlider = sliders.first()
-                assertEquals(LayoutPreferences.WALLPAPER_BUBBLE_DURATION_MIN_SECONDS.toFloat(), durationSlider.valueFrom, 0.001f)
-                assertEquals(LayoutPreferences.WALLPAPER_BUBBLE_DURATION_MAX_SECONDS.toFloat(), durationSlider.valueTo, 0.001f)
+                assertEquals(5f, durationSlider.valueFrom, 0.001f)
+                assertEquals(300f, durationSlider.valueTo, 0.001f)
 
                 switches.first().isChecked = false
                 assertFalse(prefs.wallpaperSpeechBubblesEnabled)
@@ -56,17 +55,13 @@ class WallpaperMoreSettingsUiTest {
                 prefs.wallpaperPurposefulWalkingEnabled = true
 
                 switches[2].isChecked = false
-                assertFalse(prefs.wallpaperConsciousWalkingEnabled)
-                prefs.wallpaperConsciousWalkingEnabled = true
-
-                switches[3].isChecked = false
                 assertFalse(prefs.wallpaperEntityInteractionsEnabled)
                 prefs.wallpaperEntityInteractionsEnabled = true
 
                 durationSlider.value = 18f
                 assertEquals(18, prefs.wallpaperBubbleDurationSeconds)
-                durationSlider.value = LayoutPreferences.WALLPAPER_BUBBLE_DURATION_MAX_SECONDS.toFloat()
-                assertEquals(LayoutPreferences.WALLPAPER_BUBBLE_DURATION_MAX_SECONDS, prefs.wallpaperBubbleDurationSeconds)
+                durationSlider.value = 300f
+                assertEquals(300, prefs.wallpaperBubbleDurationSeconds)
                 prefs.wallpaperBubbleDurationSeconds = 0
                 assertEquals(1, prefs.wallpaperBubbleDurationSeconds) // clamps up to MIN=1
                 prefs.wallpaperBubbleDurationSeconds = 999

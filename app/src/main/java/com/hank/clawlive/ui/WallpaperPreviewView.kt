@@ -282,8 +282,7 @@ class WallpaperPreviewView @JvmOverloads constructor(
             width = width.toFloat(),
             height = height.toFloat(),
             enabled = layoutPrefs.wallpaperWalkingEnabled,
-            purposeful = layoutPrefs.wallpaperPurposefulWalkingEnabled,
-            conscious = layoutPrefs.wallpaperConsciousWalkingEnabled
+            purposeful = layoutPrefs.wallpaperPurposefulWalkingEnabled
         )
         val interactionState = interactionController.apply(
             positions = renderPositions,
