@@ -36,6 +36,11 @@ const CANONICAL_ACHIEVEMENTS = [
     'notes_authored',
 ];
 
+// card_errctr: hard upper bound on retained error-event history rows per
+// (device, entity). pruneErrorEventsFor() trims to the newest N after each
+// append, so the 歷史紀錄 timeline is reviewable but never unbounded.
+const ERROR_EVENT_CAP = 1000;
+
 let pool = null;
 let devicesRef = null;
 // MessageLifecycle dual-write (spec §7, card_1b1c1322). Lazily required to
@@ -84,6 +89,27 @@ function initTable(chatPool) {
         CREATE INDEX IF NOT EXISTS idx_eec_lookup
             ON entity_error_counters(device_id, entity_id);
 
+        -- card_errctr (current-vs-historical split, owner P0 2026-06-27):
+        -- \`count\` is REDEFINED as the resettable "current cumulative" (當下累計).
+        -- \`historical_count\` is the all-time monotonic total (歷史累計) that the
+        -- reset path NEVER touches; \`current_reset_at\` records when \`count\` was
+        -- last cleared so the UI can show "since <time>". Both are additive
+        -- (ADD COLUMN IF NOT EXISTS = metadata-only, no table rewrite on PG11+).
+        ALTER TABLE entity_error_counters
+            ADD COLUMN IF NOT EXISTS historical_count INT NOT NULL DEFAULT 0;
+        ALTER TABLE entity_error_counters
+            ADD COLUMN IF NOT EXISTS current_reset_at TIMESTAMPTZ;
+        -- One-time, invariant-preserving backfill: existing \`count\` rows were
+        -- never resettable before this change, so count == all-time total today.
+        -- Seed historical_count from count, but ONLY when historical is behind
+        -- (historical_count < count). This fires exactly once (just-migrated rows
+        -- start at historical_count=0) and is a SAFE no-op on every later boot —
+        -- after a real reset count=0 <= historical so the WHERE never matches and
+        -- the historical total is preserved.
+        UPDATE entity_error_counters
+            SET historical_count = count
+          WHERE historical_count < count;
+
         CREATE TABLE IF NOT EXISTS entity_operation_log (
             id BIGSERIAL PRIMARY KEY,
             device_id VARCHAR(64) NOT NULL,
@@ -97,6 +123,26 @@ function initTable(chatPool) {
             ON entity_operation_log(device_id, entity_id, occurred_at DESC);
         CREATE INDEX IF NOT EXISTS idx_eol_event_type
             ON entity_operation_log(device_id, entity_id, event_type, occurred_at DESC);
+
+        -- card_errctr: 歷史紀錄 / error-event history. Every counter tick (silent
+        -- recipient swept past its grace window, or a direct push-failure) appends
+        -- ONE row here so the timeline survives a current-counter reset and stays
+        -- reviewable. Bounded per (device, entity) by pruneErrorEventsFor() — kept
+        -- to ERROR_EVENT_CAP newest rows — so it can never grow without limit.
+        CREATE TABLE IF NOT EXISTS entity_error_events (
+            id BIGSERIAL PRIMARY KEY,
+            device_id VARCHAR(64) NOT NULL,
+            entity_id INT NOT NULL,
+            axis VARCHAR(64) NOT NULL,
+            event_type VARCHAR(64),
+            sender_entity_id INT,
+            payload_snippet TEXT,
+            occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+        CREATE INDEX IF NOT EXISTS idx_eee_lookup
+            ON entity_error_events(device_id, entity_id, id DESC);
+        CREATE INDEX IF NOT EXISTS idx_eee_axis
+            ON entity_error_events(device_id, entity_id, axis, id DESC);
 
         CREATE TABLE IF NOT EXISTS outbound_msg_pending (
             id BIGSERIAL PRIMARY KEY,
@@ -255,7 +301,8 @@ async function sweepExpired() {
     if (!pool) return { tickedCount: 0 };
     try {
         const expired = await pool.query(
-            `SELECT id, device_id, recipient_entity_id, axis
+            `SELECT id, device_id, recipient_entity_id, axis,
+                    event_type, sender_entity_id, payload_snippet
                FROM outbound_msg_pending
               WHERE expires_at <= NOW()
               LIMIT 500`
@@ -263,14 +310,26 @@ async function sweepExpired() {
         if (!expired.rows.length) return { tickedCount: 0 };
         for (const row of expired.rows) {
             try {
+                // card_errctr: bump BOTH the resettable current total and the
+                // never-reset historical total in one upsert.
                 await pool.query(`
-                    INSERT INTO entity_error_counters (device_id, entity_id, axis, count, last_event_at)
-                    VALUES ($1, $2, $3, 1, NOW())
+                    INSERT INTO entity_error_counters (device_id, entity_id, axis, count, historical_count, last_event_at)
+                    VALUES ($1, $2, $3, 1, 1, NOW())
                     ON CONFLICT (device_id, entity_id, axis) DO UPDATE
                     SET count = entity_error_counters.count + 1,
+                        historical_count = entity_error_counters.historical_count + 1,
                         last_event_at = NOW(),
                         updated_at = NOW()
                 `, [row.device_id, row.recipient_entity_id, row.axis]);
+
+                // card_errctr: this expiry IS an error event (recipient stayed
+                // silent past its grace window) — append it to the reviewable
+                // 歷史紀錄 timeline with the pending row's full context.
+                await recordErrorEvent(row.device_id, row.recipient_entity_id, row.axis, {
+                    eventType: row.event_type || 'no_reply',
+                    senderEntityId: row.sender_entity_id,
+                    payloadSnippet: row.payload_snippet,
+                });
 
                 // Dual-write divergence guard (spec §6.5 / §9.10): the legacy
                 // chat_no_reply counter just ticked because the bot stayed
@@ -427,16 +486,16 @@ function bindJwtSecret(secret) {
 async function getCounters(deviceId, entityId) {
     if (!pool) return [];
     const result = await pool.query(
-        `SELECT axis, count, last_event_at
+        `SELECT axis, count, historical_count, last_event_at, current_reset_at
            FROM entity_error_counters
           WHERE device_id = $1 AND entity_id = $2`,
         [deviceId, entityId]
     );
     // Currently-open events per axis: rows still sitting in outbound_msg_pending
     // for this entity-as-recipient. These are the events the panel's drill-down
-    // will surface. `count` (cumulative) stays for backward-compat with any
-    // existing chart/badge; `openCount` is the live health number Hank's spec
-    // is built around — drops as the entity replies.
+    // will surface. `count` is the resettable 當下累計 / current cumulative,
+    // `historicalCount` the never-reset 歷史累計 / historical cumulative, and
+    // `openCount` is the live health number that drops as the entity replies.
     const openRows = await pool.query(
         `SELECT axis, COUNT(*)::int AS open_count
            FROM outbound_msg_pending
@@ -446,6 +505,16 @@ async function getCounters(deviceId, entityId) {
     );
     const openByAxis = new Map(openRows.rows.map(r => [r.axis, Number(r.open_count)]));
     const byAxis = new Map(result.rows.map(r => [r.axis, r]));
+    // historical_count is additive (added after the table shipped) — fall back
+    // to count when the column is absent/null so a pre-migration row never
+    // surfaces a historical total BELOW its current total.
+    const histOf = (row) => {
+        if (!row) return 0;
+        const h = row.historical_count;
+        return (h == null) ? Number(row.count) || 0 : Number(h);
+    };
+    const resetOf = (row) => (row && row.current_reset_at)
+        ? new Date(row.current_reset_at).toISOString() : null;
     // Always surface canonical axes even when count = 0, so the UI can render
     // a stable row order. Extra non-canonical axes (forward-compat) appear after.
     const ordered = [];
@@ -454,8 +523,10 @@ async function getCounters(deviceId, entityId) {
         ordered.push({
             axis,
             count: row ? Number(row.count) : 0,
+            historicalCount: histOf(row),
             openCount: openByAxis.get(axis) || 0,
-            lastEventAt: row && row.last_event_at ? row.last_event_at.toISOString() : null,
+            lastEventAt: row && row.last_event_at ? new Date(row.last_event_at).toISOString() : null,
+            currentResetAt: resetOf(row),
         });
         byAxis.delete(axis);
         openByAxis.delete(axis);
@@ -464,8 +535,10 @@ async function getCounters(deviceId, entityId) {
         ordered.push({
             axis,
             count: Number(row.count),
+            historicalCount: histOf(row),
             openCount: openByAxis.get(axis) || 0,
-            lastEventAt: row.last_event_at ? row.last_event_at.toISOString() : null,
+            lastEventAt: row.last_event_at ? new Date(row.last_event_at).toISOString() : null,
+            currentResetAt: resetOf(row),
         });
         openByAxis.delete(axis);
     }
@@ -473,7 +546,7 @@ async function getCounters(deviceId, entityId) {
     // hasn't fired since first dispatch). Surface them so the drill-down lists
     // line up even before the cumulative row is created.
     for (const [axis, openCount] of openByAxis) {
-        ordered.push({ axis, count: 0, openCount, lastEventAt: null });
+        ordered.push({ axis, count: 0, historicalCount: 0, openCount, lastEventAt: null, currentResetAt: null });
     }
     return ordered;
 }
@@ -847,16 +920,142 @@ async function getAchievementEvents(deviceId, entityId, axis, limit) {
     }
 }
 
-async function incrementCounter(deviceId, entityId, axis) {
+async function incrementCounter(deviceId, entityId, axis, opts) {
     if (!pool) return;
+    // card_errctr: bump BOTH the resettable current total (count) AND the
+    // all-time historical total (historical_count). historical_count is never
+    // touched by the reset path, so it is the monotonic 歷史累計.
     await pool.query(`
-        INSERT INTO entity_error_counters (device_id, entity_id, axis, count, last_event_at)
-        VALUES ($1, $2, $3, 1, NOW())
+        INSERT INTO entity_error_counters (device_id, entity_id, axis, count, historical_count, last_event_at)
+        VALUES ($1, $2, $3, 1, 1, NOW())
         ON CONFLICT (device_id, entity_id, axis) DO UPDATE
         SET count = entity_error_counters.count + 1,
+            historical_count = entity_error_counters.historical_count + 1,
             last_event_at = NOW(),
             updated_at = NOW()
     `, [deviceId, entityId, axis]);
+    // Append to the reviewable error-event history (歷史紀錄). Best-effort —
+    // never let a history-write failure mask the underlying error path.
+    opts = opts || {};
+    await recordErrorEvent(deviceId, entityId, axis, {
+        eventType: opts.eventType || 'counter_inc',
+        senderEntityId: opts.senderEntityId != null ? opts.senderEntityId : null,
+        payloadSnippet: opts.payloadSnippet || null,
+    });
+}
+
+// card_errctr: append one error event to the bounded 歷史紀錄 timeline, then
+// trim to ERROR_EVENT_CAP newest rows for this (device, entity). Fully
+// best-effort — swallows every error so the caller's hot path is unaffected.
+async function recordErrorEvent(deviceId, entityId, axis, opts) {
+    if (!pool || deviceId == null || entityId == null) return;
+    opts = opts || {};
+    try {
+        await pool.query(
+            `INSERT INTO entity_error_events
+                (device_id, entity_id, axis, event_type, sender_entity_id, payload_snippet, occurred_at)
+             VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7::timestamptz, NOW()))`,
+            [
+                String(deviceId).slice(0, 64),
+                Number(entityId),
+                String(axis || 'other').slice(0, 64),
+                opts.eventType ? String(opts.eventType).slice(0, 64) : null,
+                opts.senderEntityId != null ? Number(opts.senderEntityId) : null,
+                opts.payloadSnippet ? String(opts.payloadSnippet).slice(0, 240) : null,
+                opts.occurredAt ? new Date(opts.occurredAt).toISOString() : null,
+            ]
+        );
+        await pruneErrorEventsFor(deviceId, entityId, ERROR_EVENT_CAP);
+    } catch (err) {
+        console.error('[EntityStatus] recordErrorEvent error:', err.message);
+    }
+}
+
+// Bound the history table: delete every row older than the Nth-newest for this
+// (device, entity). Indexed + scoped to one entity, so a no-op when the entity
+// has fewer than `cap` rows. Best-effort.
+async function pruneErrorEventsFor(deviceId, entityId, cap) {
+    if (!pool) return;
+    const keep = Math.max(1, Number(cap) || ERROR_EVENT_CAP);
+    try {
+        await pool.query(
+            `DELETE FROM entity_error_events
+              WHERE device_id = $1 AND entity_id = $2
+                AND id < (
+                    SELECT MIN(id) FROM (
+                        SELECT id FROM entity_error_events
+                         WHERE device_id = $1 AND entity_id = $2
+                         ORDER BY id DESC
+                         LIMIT $3
+                    ) keep
+                )`,
+            [deviceId, Number(entityId), keep]
+        );
+    } catch (err) {
+        console.error('[EntityStatus] pruneErrorEventsFor error:', err.message);
+    }
+}
+
+// Cursor-paginated read of the 歷史紀錄 timeline (newest first). Optional axis
+// filter. Mirrors getOperationLog's cursor shape (beforeId → nextCursor).
+async function getErrorHistory(deviceId, entityId, opts) {
+    if (!pool) return { items: [], nextCursor: null };
+    opts = opts || {};
+    const limit = Math.min(Math.max(parseInt(opts.limit) || 30, 1), 100);
+    const beforeId = parseInt(opts.beforeId) || null;
+    const axis = opts.axis && CANONICAL_AXES.includes(opts.axis) ? opts.axis : null;
+    const params = [deviceId, Number(entityId)];
+    let clause = '';
+    if (axis) { params.push(axis); clause += ` AND axis = $${params.length}`; }
+    if (beforeId) { params.push(beforeId); clause += ` AND id < $${params.length}`; }
+    params.push(limit);
+    const result = await pool.query(
+        `SELECT id, axis, event_type, sender_entity_id, payload_snippet, occurred_at
+           FROM entity_error_events
+          WHERE device_id = $1 AND entity_id = $2
+          ${clause}
+          ORDER BY id DESC
+          LIMIT $${params.length}`,
+        params
+    );
+    const items = result.rows.map(r => ({
+        id: String(r.id),
+        axis: r.axis,
+        eventType: r.event_type || null,
+        senderEntityId: r.sender_entity_id != null ? Number(r.sender_entity_id) : null,
+        payloadSnippet: r.payload_snippet || null,
+        occurredAt: r.occurred_at ? new Date(r.occurred_at).toISOString() : null,
+    }));
+    return {
+        items,
+        nextCursor: items.length === limit ? items[items.length - 1].id : null,
+    };
+}
+
+// card_errctr: reset the CURRENT cumulative counter only. Sets count = 0 and
+// stamps current_reset_at = NOW(); historical_count and the entity_error_events
+// history are left completely untouched. Optional single-axis scope (must be a
+// canonical axis); omit to reset every axis for the entity. Returns the number
+// of counter rows affected.
+async function resetCurrentCounters(deviceId, entityId, axis) {
+    if (!pool || deviceId == null || entityId == null) return 0;
+    const params = [deviceId, Number(entityId)];
+    let clause = '';
+    if (axis) {
+        if (!CANONICAL_AXES.includes(axis)) return 0;
+        params.push(axis);
+        clause = ` AND axis = $${params.length}`;
+    }
+    const result = await pool.query(
+        `UPDATE entity_error_counters
+            SET count = 0,
+                current_reset_at = NOW(),
+                updated_at = NOW()
+          WHERE device_id = $1 AND entity_id = $2
+          ${clause}`,
+        params
+    );
+    return result.rowCount || 0;
 }
 
 function authDeviceOrBot(req) {
@@ -1127,6 +1326,80 @@ router.get('/:eId/log', express.json(), async (req, res) => {
     }
 });
 
+// card_errctr: 歷史紀錄 / error-event history timeline (newest first, cursor
+// paginated). Optional ?axis= filter (must be a canonical axis). This survives
+// a current-counter reset — the whole point of persisting the events.
+router.get('/:eId/errors', async (req, res) => {
+    const auth = authDeviceOrBot(req);
+    if (!auth) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    const targetEId = parseInt(req.params.eId);
+    if (!Number.isFinite(targetEId) || targetEId < 0) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+    let axis = null;
+    if (req.query.axis) {
+        axis = String(req.query.axis);
+        if (!CANONICAL_AXES.includes(axis)) {
+            return res.status(400).json({ success: false, error: 'Invalid axis' });
+        }
+    }
+    try {
+        const data = await getErrorHistory(auth.deviceId, targetEId, {
+            limit: req.query.limit,
+            beforeId: req.query.before,
+            axis,
+        });
+        res.json({
+            success: true,
+            deviceId: auth.deviceId,
+            entityId: targetEId,
+            items: data.items,
+            nextCursor: data.nextCursor,
+        });
+    } catch (err) {
+        console.error('[EntityStatus] getErrorHistory error:', err.message);
+        res.status(500).json({ success: false, error: 'internal' });
+    }
+});
+
+// card_errctr: reset the CURRENT cumulative counter only. historical_count and
+// the error-event history are untouched. Optional body { axis } restricts the
+// reset to one canonical axis; omit to reset all axes for the entity.
+router.post('/:eId/counter/reset', express.json(), async (req, res) => {
+    const auth = authDeviceOrBot(req);
+    if (!auth) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    const targetEId = parseInt(req.params.eId);
+    if (!Number.isFinite(targetEId) || targetEId < 0) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+    let axis = null;
+    if (req.body && req.body.axis) {
+        axis = String(req.body.axis);
+        if (!CANONICAL_AXES.includes(axis)) {
+            return res.status(400).json({ success: false, error: 'Invalid axis' });
+        }
+    }
+    try {
+        const affected = await resetCurrentCounters(auth.deviceId, targetEId, axis);
+        const counters = await getCounters(auth.deviceId, targetEId);
+        res.json({
+            success: true,
+            deviceId: auth.deviceId,
+            entityId: targetEId,
+            axis: axis || null,
+            reset: affected,
+            counters,
+        });
+    } catch (err) {
+        console.error('[EntityStatus] resetCurrentCounters error:', err.message);
+        res.status(500).json({ success: false, error: 'internal' });
+    }
+});
+
 router.post('/:eId/quote', express.json(), async (req, res) => {
     const auth = authDeviceOrBot(req);
     if (!auth) {
@@ -1182,6 +1455,11 @@ module.exports = {
     logOperation,
     getOperationLog,
     getLogRowById,
+    recordErrorEvent,
+    pruneErrorEventsFor,
+    getErrorHistory,
+    resetCurrentCounters,
+    ERROR_EVENT_CAP,
     router,
     CANONICAL_AXES,
     CANONICAL_ACHIEVEMENTS,
