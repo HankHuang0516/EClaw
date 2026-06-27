@@ -73,8 +73,44 @@
     main {
         max-width: 1280px; margin: 0 auto; padding: 16px;
     }
+    .browse-context {
+        display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px;
+        align-items: center;
+        background: var(--panel); border: 1px solid var(--border);
+        border-radius: 8px; padding: 12px; margin-bottom: 12px;
+    }
+    .browse-context-copy {
+        min-width: 0; flex: 1 1 280px;
+    }
+    .browse-context-title {
+        font-size: 13px; font-weight: 700; color: var(--text);
+    }
+    .browse-context-meta {
+        margin-top: 3px; font-size: 12px; color: var(--muted);
+    }
+    .browse-context-filters {
+        display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;
+    }
+    .active-filter-chip {
+        max-width: 100%;
+        display: inline-flex; align-items: center; min-height: 26px;
+        padding: 3px 8px; border-radius: 999px;
+        background: var(--accent-soft); border: 1px solid rgba(230, 57, 70, 0.38);
+        color: var(--accent); font-size: 11px;
+    }
+    .browse-context-actions {
+        display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    }
+    .context-btn {
+        min-height: 32px;
+        background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+        border-radius: 6px; padding: 6px 12px; font: inherit; font-size: 12px;
+        cursor: pointer;
+    }
+    .context-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .context-btn:disabled { opacity: 0.48; cursor: not-allowed; }
     .status-bar {
-        display: flex; justify-content: space-between; color: var(--muted);
+        display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; color: var(--muted);
         font-size: 12px; margin-bottom: 12px;
     }
     .grid {
@@ -187,6 +223,21 @@
 
     @media (max-width: 600px) {
         .topbar h1 { font-size: 16px; }
+        .browse-context {
+            align-items: stretch;
+            flex-direction: column;
+        }
+        .browse-context-copy {
+            flex-basis: auto;
+        }
+        .browse-context-actions .context-btn {
+            flex: 1 1 0;
+            min-width: 0;
+        }
+        .status-bar {
+            align-items: flex-start;
+            flex-direction: column;
+        }
         .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
     }
 </style>
@@ -209,11 +260,22 @@
     <div id="login-warn" class="login-warn" style="display: none;">
         ⚠️ 尚未登入或找不到 device 憑證。請先 <a href="/portal/index.html">登入主控台</a>，或在開發模式下用 <code>?deviceId=...&deviceSecret=...</code> 帶入。
     </div>
+    <section class="browse-context" id="browseContext" role="status" aria-live="polite" aria-atomic="true">
+        <div class="browse-context-copy">
+            <div class="browse-context-title" id="browseContextTitle">準備載入伙伴 / Preparing companions</div>
+            <div class="browse-context-meta" id="browseContextMeta">全部範圍 · 全部分類 · 熱門排序</div>
+            <div class="browse-context-filters" id="browseContextFilters" aria-label="Active filters"></div>
+        </div>
+        <div class="browse-context-actions">
+            <button type="button" class="context-btn" id="clear-active-filters" onclick="resetFilters()" hidden>清除篩選 / Clear</button>
+            <button type="button" class="context-btn" id="refresh-list" onclick="refreshCompanionList()">重新整理 / Refresh</button>
+        </div>
+    </section>
     <div class="status-bar">
-        <span id="status">載入中…</span>
+        <span id="status" aria-live="polite">載入中…</span>
         <span id="pagination"></span>
     </div>
-    <div id="grid" class="grid"></div>
+    <div id="grid" class="grid" aria-busy="false"></div>
     <div id="empty" class="empty" style="display: none;">
         <div id="empty-msg">沒有符合條件的伙伴 / No companions match your filter.</div>
         <button id="empty-reset" onclick="resetFilters()">清除篩選 / Reset</button>
@@ -321,6 +383,56 @@
     let totalPages = 1;
     let isLoading = false;
     let searchTimer = 0;
+    let listRequestSeq = 0;
+
+    function currentFilterLabels() {
+        const labels = [];
+        FILTER_GROUPS.forEach(group => {
+            const active = group.options.find(opt => opt.v === filterState[group.key]);
+            if (group.key === 'sort' && filterState.sort === 'popular') return;
+            if (active && active.v) labels.push(group.label + ': ' + active.t);
+        });
+        if (searchTerm) labels.push('搜尋: ' + searchTerm);
+        return labels;
+    }
+
+    function renderBrowseContext(state) {
+        const title = document.getElementById('browseContextTitle');
+        const meta = document.getElementById('browseContextMeta');
+        const chips = document.getElementById('browseContextFilters');
+        const clearBtn = document.getElementById('clear-active-filters');
+        if (!title || !meta || !chips || !clearBtn) return;
+
+        const activeLabels = currentFilterLabels();
+        chips.innerHTML = '';
+        activeLabels.forEach(label => {
+            const chip = document.createElement('span');
+            chip.className = 'active-filter-chip';
+            chip.textContent = label;
+            chips.appendChild(chip);
+        });
+        clearBtn.hidden = activeLabels.length === 0;
+
+        const entityLabel = activeEntityId ? ('Entity #' + activeEntityId) : '全裝置 / Device-wide';
+        const scope = FILTER_GROUPS[0].options.find(opt => opt.v === filterState.scope)?.t || '全部';
+        const category = FILTER_GROUPS[1].options.find(opt => opt.v === filterState.category)?.t || '全部';
+        const sort = FILTER_GROUPS[2].options.find(opt => opt.v === filterState.sort)?.t || '熱門';
+        meta.textContent = `${entityLabel} · ${scope}範圍 · ${category}類型 · ${sort}排序`;
+
+        if (state === 'auth') {
+            title.textContent = '需要登入 / Login required';
+        } else if (state === 'loading') {
+            title.textContent = '載入伙伴中 / Loading companions';
+        } else if (state === 'error') {
+            title.textContent = '無法載入伙伴 / Companion list unavailable';
+        } else if (totalCount === 0) {
+            title.textContent = activeLabels.length
+                ? '沒有符合條件的伙伴 / No matching companions'
+                : '尚無伙伴 / No companions yet';
+        } else {
+            title.textContent = `共 ${totalCount} 個伙伴 · 第 ${currentPage}/${totalPages} 頁`;
+        }
+    }
 
     // Sync ?page=N back into the URL bar without reloading. Preserves all other
     // query params (deviceId/deviceSecret/entityId/botSecret/…) so a deep link
@@ -359,8 +471,12 @@
             g.appendChild(lbl);
             group.options.forEach(opt => {
                 const c = document.createElement('button');
+                c.type = 'button';
                 c.className = 'chip';
                 if (filterState[group.key] === opt.v) c.classList.add('active');
+                c.setAttribute('aria-pressed', filterState[group.key] === opt.v ? 'true' : 'false');
+                c.dataset.filterKey = group.key;
+                c.dataset.filterValue = opt.v;
                 c.textContent = opt.t;
                 c.addEventListener('click', () => {
                     filterState[group.key] = opt.v;
@@ -383,6 +499,10 @@
         loadList();
     };
 
+    window.refreshCompanionList = function () {
+        loadList();
+    };
+
     // ── List loader ───────────────────────────────────────────────
     // loadList(): always loads the page in `currentPage`, replacing grid
     // content (no append). Filter/search/entity changes reset currentPage=1
@@ -393,15 +513,17 @@
         const empty = document.getElementById('empty');
         const emptyMsg = document.getElementById('empty-msg');
         const emptyReset = document.getElementById('empty-reset');
+        const requestId = ++listRequestSeq;
 
         const creds = getCreds();
         if (!creds.deviceId || (!creds.deviceSecret && !creds.botSecret)) {
             document.getElementById('login-warn').style.display = 'block';
             status.textContent = '未登入';
+            grid.setAttribute('aria-busy', 'false');
+            renderBrowseContext('auth');
             return;
         }
 
-        if (isLoading) return;
         isLoading = true;
 
         // Tear down current page renderers + clear grid BEFORE the fetch so
@@ -409,7 +531,9 @@
         empty.style.display = 'none';
         tearDownRenderers();
         grid.innerHTML = '';
+        grid.setAttribute('aria-busy', 'true');
         status.textContent = '載入中…';
+        renderBrowseContext('loading');
 
         const q = authQuery();
         if (filterState.scope)    q.set('scope', filterState.scope);
@@ -423,20 +547,29 @@
         try {
             const r = await fetch('/api/companion/list?' + q.toString());
             data = await r.json();
+            if (requestId !== listRequestSeq) return;
             if (!data.success) {
                 status.textContent = '載入失敗：' + (data.error || r.status);
+                grid.setAttribute('aria-busy', 'false');
+                renderBrowseContext('error');
                 return;
             }
         } catch (err) {
+            if (requestId !== listRequestSeq) return;
             status.textContent = '網路錯誤：' + err.message;
+            grid.setAttribute('aria-busy', 'false');
+            renderBrowseContext('error');
             return;
         } finally {
-            isLoading = false;
+            if (requestId === listRequestSeq) isLoading = false;
         }
+
+        if (requestId !== listRequestSeq) return;
 
         const items = data.companions || [];
         totalCount = data.total || 0;
         totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+        grid.setAttribute('aria-busy', 'false');
 
         // Clamp currentPage if the active filter shrank the result set so much
         // that the saved page no longer exists (e.g. user on page 5, then
@@ -449,6 +582,7 @@
         }
 
         status.textContent = '共 ' + totalCount + ' 個伙伴';
+        renderBrowseContext('ready');
 
         if (totalCount === 0) {
             // Distinguish "no companions exist at all" from "no match for current
@@ -858,7 +992,8 @@
                 opt.textContent = '#' + id + ' ' + name + code;
                 sel.appendChild(opt);
             });
-            sel.value = activeEntityId || '';
+        sel.value = activeEntityId || '';
+        renderBrowseContext('ready');
         } catch (err) {
             // Non-fatal: leave the default device-wide option in place.
         }
@@ -876,6 +1011,7 @@
         currentPage = 1;
         loadList();
         refreshOwnerState();
+        renderBrowseContext('loading');
     });
 
     // ── Helpers ──────────────────────────────────────────────────
