@@ -79,7 +79,20 @@ const DEFAULTS = {
     // anchored to when it was armed (decision_context.ratify.armedAt), not emit
     // time. Default 1440 (24h); clamped [5, 43200] like the timeout deadline.
     action_request_ratify_grace_minutes: 1440,
+    // Server-authoritative entity ACTIVITY state machine (lib/entity-activity.js).
+    // Deterministic decay thresholds (replaces the old random sleep coin-flip).
+    // entity_idle_after_seconds: seconds since the last SEND (no pending work)
+    //   before ACTIVE → IDLE. Default 60; clamped [15, 3600].
+    entity_idle_after_seconds: 60,
+    // entity_sleep_after_minutes: minutes of inactivity (no pending work, no
+    //   message in the window) before IDLE → SLEEPING. Default 20; clamped [1, 1440].
+    entity_sleep_after_minutes: 20,
 };
+
+const ENTITY_IDLE_AFTER_SECONDS_MIN = 15;
+const ENTITY_IDLE_AFTER_SECONDS_MAX = 3600;
+const ENTITY_SLEEP_AFTER_MINUTES_MIN = 1;
+const ENTITY_SLEEP_AFTER_MINUTES_MAX = 1440;
 
 const ACTION_REQUEST_TIMEOUT_POLICIES = new Set(['keep', 'auto_dismiss', 'safe_default', 'consensus']);
 const ACTION_REQUEST_TIMEOUT_MINUTES_MIN = 5;
@@ -124,6 +137,12 @@ function coerceValue(key, raw) {
         if (!Number.isFinite(n)) return def;
         if (key === 'kanban_nudge_batch_size') return Math.max(1, Math.min(20, Math.round(n)));
         if (key === 'kanban_nudge_interval_minutes') return Math.max(5, Math.min(24 * 60, Math.round(n)));
+        if (key === 'entity_idle_after_seconds') {
+            return Math.max(ENTITY_IDLE_AFTER_SECONDS_MIN, Math.min(ENTITY_IDLE_AFTER_SECONDS_MAX, Math.round(n)));
+        }
+        if (key === 'entity_sleep_after_minutes') {
+            return Math.max(ENTITY_SLEEP_AFTER_MINUTES_MIN, Math.min(ENTITY_SLEEP_AFTER_MINUTES_MAX, Math.round(n)));
+        }
         return n;
     }
     if (key === 'kanban_nudge_priority_mode') {
