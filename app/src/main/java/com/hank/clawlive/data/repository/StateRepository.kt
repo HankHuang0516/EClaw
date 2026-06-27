@@ -6,7 +6,6 @@ import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.local.WallpaperEntitySnapshotCache
 import com.hank.clawlive.data.model.AgentStatus
-import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.model.MultiEntityResponse
 import com.hank.clawlive.data.model.UsageSnapshotLatest
@@ -33,6 +32,14 @@ class StateRepository(
      */
     fun getStatusFlow(intervalMs: Long = 5_000): Flow<AgentStatus> = flow {
         var backoffMs = intervalMs
+        // FSM Stage 3 (server-authoritative): remember the last state the SERVER
+        // reported so a transport/poll failure can re-show it instead of
+        // synthesizing SLEEPING. The old code mapped every network error →
+        // CharacterState.SLEEPING, which made a brief offline blip look like the
+        // entity fell asleep. SLEEPING must come ONLY from the server's
+        // deterministic evaluator (backend/lib/entity-activity.js), never a fetch
+        // failure. See ActivityStatePolicy.stateOnPollError.
+        var lastStatus: AgentStatus? = null
         while (true) {
             try {
                 val status = api.getAgentStatus(
@@ -42,6 +49,7 @@ class StateRepository(
                     appVersion = deviceManager.appVersion
                 )
                 backoffMs = intervalMs
+                lastStatus = status
                 emit(status)
                 Timber.d("API Status fetched: ${status.character} - ${status.state}")
             } catch (e: HttpException) {
@@ -52,24 +60,25 @@ class StateRepository(
                     backoffMs = intervalMs
                     Timber.e(e, "Error fetching from API")
                 }
-                emit(
-                    AgentStatus(
-                        message = "Lost: ${e.message}\nRetrying...",
-                        state = CharacterState.SLEEPING
-                    )
-                )
+                emit(statusOnPollError(lastStatus))
             } catch (e: Exception) {
                 backoffMs = intervalMs
                 Timber.e(e, "Error fetching from API")
-                emit(
-                    AgentStatus(
-                        message = "Lost: ${e.message}\nRetrying...",
-                        state = CharacterState.SLEEPING
-                    )
-                )
+                emit(statusOnPollError(lastStatus))
             }
             delay(backoffMs)
         }
+    }
+
+    /**
+     * Status to emit when a single-entity poll fails. FSM Stage 3 invariant:
+     * keep the last SERVER-known activity state (or a neutral IDLE when nothing
+     * has been received yet) — a transport failure must NEVER drive the entity
+     * to SLEEPING. The decision lives in the pure-Kotlin [ActivityStatePolicy].
+     */
+    private fun statusOnPollError(lastStatus: AgentStatus?): AgentStatus {
+        val safeState = ActivityStatePolicy.stateOnPollError(lastStatus?.state)
+        return (lastStatus ?: AgentStatus()).copy(state = safeState)
     }
 
     /**
@@ -151,6 +160,11 @@ class StateRepository(
                 emit(filteredResponse)
                 Timber.d("Multi-entity status: ${filteredEntities.size} entities for device ${deviceManager.deviceId}")
             } catch (e: HttpException) {
+                // FSM Stage 3 invariant (already satisfied here): a poll failure
+                // re-shows the last server-known entities from the offline cache
+                // (each carrying its last server-evaluated `state`) or an empty
+                // list — it NEVER synthesizes SLEEPING. Unlike getStatusFlow, the
+                // multi-entity path was already free of the error→false-sleep bug.
                 if (e.code() == 429) {
                     backoffMs = minOf(backoffMs * 2, 300_000L).coerceAtLeast(60_000L)
                     Timber.w("Multi-entity status 429 rate-limited — backing off ${backoffMs}ms")
