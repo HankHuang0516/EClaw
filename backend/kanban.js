@@ -317,6 +317,31 @@ function getRecurringScheduleFireDecision(card, now = new Date(), graceMs = SCHE
     };
 }
 
+/**
+ * Decide whether a due schedule should be AUTO-DISABLED instead of fired.
+ * Returns 'archived' | 'done' | null (null = fire normally).
+ *
+ * Owner-reported re-nudge loop: when the owner archives or marks DONE a
+ * scheduled card (especially a cron母卡), schedule_enabled stays true and
+ * schedule_next_run_at stays in the past. The card then looks "due" on every
+ * tick forever — the server keeps re-spawning child cards and any consumer
+ * (UI badge, an external cron watcher that binds a static card-id snapshot)
+ * keeps treating it as pending and re-nudges. Disabling the schedule the first
+ * time the scheduler sees the card inactive breaks the loop at the source.
+ *
+ * `done` only stops AUTOMATION母卡 (is_automation) and one-shot (`once`) cards.
+ * A normal self-recurring card legitimately cycles done→todo on each fire
+ * (see the recurring branch below), so a plain `done` must NOT disable those.
+ */
+function scheduleAutoDisableReason(card) {
+    if (!card) return null;
+    if (card.archived === true) return 'archived';
+    if (card.status === 'done' && (card.is_automation === true || card.schedule_type === 'once')) {
+        return 'done';
+    }
+    return null;
+}
+
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
 });
@@ -3588,6 +3613,21 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     AND schedule_run_at > NOW()
                   )
                   AND (status != 'backlog' OR COALESCE(gated, false) = false)
+                  -- Suppress nudges on orphaned children of a stopped parent:
+                  -- if the parent card is archived (any child) or the parent is
+                  -- DONE and this is a cron-spawned child (is_auto_generated),
+                  -- the work-stream was stopped by the owner — re-nudging the
+                  -- entity to finish it just floods the supervisor. The parent's
+                  -- own schedule is auto-disabled in checkScheduleTriggers; this
+                  -- mirrors that for the already-spawned children.
+                  AND NOT EXISTS (
+                    SELECT 1 FROM kanban_cards parent
+                    WHERE parent.id = kanban_cards.parent_card_id
+                      AND (
+                        parent.archived = true
+                        OR (parent.status = 'done' AND kanban_cards.is_auto_generated = true)
+                      )
+                  )
             `);
 
             if (result.rows.length === 0) return;
@@ -4065,10 +4105,15 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
      */
     async function checkScheduleTriggers() {
         try {
+            // NOTE: archived cards are intentionally INCLUDED here (no
+            // `archived = false` filter) so the self-heal guard below can
+            // auto-disable their stale schedules. Without that, an archived
+            // card keeps schedule_enabled=true + a past schedule_next_run_at
+            // forever, and every consumer (UI badge / external cron watcher)
+            // keeps seeing it as "due" → endless re-nudge.
             const result = await pool.query(`
                 SELECT * FROM kanban_cards
-                WHERE archived = false
-                  AND schedule_enabled = true
+                WHERE schedule_enabled = true
                   AND schedule_next_run_at IS NOT NULL
                   AND schedule_next_run_at <= NOW()
             `);
@@ -4078,6 +4123,26 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             console.log(`[Kanban] Schedule triggers: ${result.rows.length} card(s) due`);
 
             for (const card of result.rows) {
+                // Self-heal: a scheduled card that has been archived (any type),
+                // or a cron母卡/once card the owner marked done, must STOP firing.
+                // Disable the schedule once, log + record it, and skip — this is
+                // the server-side fix for the re-nudge loop (owner directive:
+                // "if a cron's parent card is archived, the cron schedule should
+                // auto-disable and log it, not keep firing").
+                const disableReason = scheduleAutoDisableReason(card);
+                if (disableReason) {
+                    await pool.query(
+                        `UPDATE kanban_cards SET schedule_enabled = false, updated_at = NOW() WHERE id = $1`,
+                        [card.id]
+                    );
+                    try {
+                        await addSystemComment(card.id, card.device_id,
+                            `🛑 排程自動停用 — 卡片已${disableReason === 'archived' ? '封存' : '完成'}，停止觸發 (schedule auto-disabled: ${disableReason})`);
+                    } catch (e) { /* best-effort: comment on an archived card is non-critical */ }
+                    console.log(`[Kanban] Schedule auto-disabled: card ${card.id} (${card.title}) is ${disableReason} → schedule_enabled=false (re-nudge loop broken)`);
+                    continue;
+                }
+
                 const bots = card.assigned_bots || [];
                 const schedType = card.schedule_type;
 
@@ -4815,6 +4880,7 @@ module.exports._private = {
     computeCronNextRun,
     computeCronPreviousRun,
     getRecurringScheduleFireDecision,
+    scheduleAutoDisableReason,
     SCHEDULE_LATE_FIRE_GRACE_MS,
     // card_c2635849 cron usage-threshold skip
     isValidUsageThreshold,
