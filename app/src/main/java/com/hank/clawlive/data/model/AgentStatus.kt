@@ -130,7 +130,12 @@ enum class CharacterState(
             val value = raw?.trim()?.takeIf { it.isNotEmpty() } ?: return IDLE
             return when (value.lowercase(Locale.US).replace('_', '-')) {
                 "idle" -> IDLE
-                "busy" -> BUSY
+                // FSM Stage 3: the server-authoritative activity machine
+                // (backend/lib/entity-activity.js) emits its canonical ACTIVE
+                // state on the wire as "BUSY", but accept the canonical name too
+                // so an ACTIVE entity is rendered busy-like, never mis-mapped to
+                // the IDLE fallback (which would look asleep/idle right after a send).
+                "busy", "active" -> BUSY
                 "eating" -> EATING
                 "sleeping", "sleep" -> SLEEPING
                 "excited" -> EXCITED

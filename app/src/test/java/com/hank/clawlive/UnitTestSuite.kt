@@ -22,6 +22,7 @@ import org.junit.runners.Suite
     WallpaperWanderControllerTest::class,
     WallpaperLayoutDefaultsTest::class,
     WallpaperDragControllerTest::class,
+    ActivityStatePolicyTest::class,
     LayoutPreferencesTest::class,
     EngineLifecycleControllerTest::class,
     SpritesheetLoadingGraceTest::class,
