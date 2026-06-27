@@ -1765,7 +1765,11 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
         pushToChannelCallback,
         setKanbanAutoReview,
         setOrgChartForward,
-        verifyChannelKey
+        verifyChannelKey,
+        // Pure first-token-mention helper, also exposed on the factory object
+        // below. Surfaced on the instance so /api/transform (index.js) can
+        // apply the same first-token guard the /api/channel seam uses.
+        messageStartsWithMention
     };
 }
 

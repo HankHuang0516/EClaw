@@ -233,7 +233,11 @@ describe('POST /api/transform — senderHint', () => {
         const res = await post('/api/transform').send({
             deviceId, entityId: 1, botSecret: botSecret1,
             state: 'IDLE',
-            message: `> @all in quote\nplease send this to @#3`
+            // card_2ee0afbb defect 2: a direct mention only auto-routes when it
+            // is the FIRST token, so lead with @#3 (the legitimate routing
+            // intent). The quoted @all on the next line is still escaped by the
+            // contextual-escape pass, proving the two mechanisms coexist.
+            message: `@#3 please send this\n> @all in quote`
         });
 
         expect(res.status).toBe(200);
