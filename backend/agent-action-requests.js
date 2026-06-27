@@ -352,6 +352,24 @@ function normalizeAnchor(value) {
     return null;
 }
 
+// ── Cross-target integrity (需要你 inbox independence) ──
+// The requestId an answer was COMPOSED FOR. The chat composer embeds the source
+// request inside the answer payload (answer.replyContext.requestId; a top-level
+// answer.requestId is also honored). resolveActionRequest + the /:id/resolve
+// route use this to REFUSE writing one inbox item's answer onto a DIFFERENT
+// request — one reply resolves exactly the item it targeted, never a neighbour.
+// Returns a normalized (lower-cased) id string, or null when the answer carries
+// no self-described target (worker safe-defaults, ratify decisions, option
+// clicks, and plain-string answers → unguarded; they resolve normally).
+function extractReplyTargetId(answer) {
+    if (!answer || typeof answer !== 'object') return null;
+    const rc = answer.replyContext;
+    const cand = (rc && typeof rc === 'object' && rc.requestId) || answer.requestId || null;
+    if (cand == null) return null;
+    const s = String(cand).trim();
+    return s ? s.toLowerCase() : null;
+}
+
 // Optional related_card_id (計畫D, card_df646877): a kanban card reference.
 // Shared by the create (POST /) and edit (PUT /:id) paths so the rule is stated
 // once. Returns { ok, value }: value is a trimmed non-empty string or null.
@@ -569,6 +587,19 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
     // path pass null (default) — the user owns the whole device inbox.
     async function resolveActionRequest(deviceId, requestId, answer, device, restrictToEntityId = null) {
         if (!deviceId || !UUID_RE.test(String(requestId))) return null;
+        // Cross-target integrity guard: never write an answer that was composed for
+        // a DIFFERENT request onto this one. If the answer self-describes a target
+        // (answer.replyContext.requestId / answer.requestId) that disagrees with
+        // `requestId`, the targeting is ambiguous / mis-bound → resolve NONE. This
+        // is the single chokepoint EVERY resolve path funnels through (HTTP
+        // /:id/resolve, /api/client/speak auto-resolve, timeout + ratify workers),
+        // so one reply can never overwrite a neighbouring pending item. Answers
+        // with no embedded target (workers, plain text) pass straight through.
+        const embeddedTarget = extractReplyTargetId(answer);
+        if (embeddedTarget && embeddedTarget !== String(requestId).toLowerCase()) {
+            log('warn', `cross-target reply rejected: answer bound to ${embeddedTarget} but resolving ${requestId}`, { deviceId });
+            return null;
+        }
         const params = [answer !== undefined ? JSON.stringify(answer) : null, requestId, deviceId];
         let sql = `UPDATE agent_action_requests
                 SET status = 'resolved', answer = $1::jsonb, resolved_at = NOW()
@@ -1241,6 +1272,17 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
             return res.status(400).json({ success: false, error: 'Invalid id' });
         }
         const { answer } = req.body || {};
+
+        // Cross-target integrity: a reply composed for a DIFFERENT request must not
+        // resolve this one. Surface the ambiguity explicitly (409) rather than
+        // silently no-op'ing it as the generic 404 the null path returns.
+        // resolveActionRequest enforces the SAME rule as a deep chokepoint for the
+        // non-HTTP callers (speak / workers).
+        const embeddedTarget = extractReplyTargetId(answer);
+        if (embeddedTarget && embeddedTarget !== String(id).toLowerCase()) {
+            log('warn', `resolve target mismatch: answer bound to ${embeddedTarget} but url id=${id}`, { deviceId });
+            return res.status(409).json({ success: false, error: 'reply target mismatch: this answer is bound to a different request' });
+        }
 
         try {
             // A botSecret holder may only resolve its OWN emitted requests; the

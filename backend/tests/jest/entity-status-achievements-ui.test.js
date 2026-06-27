@@ -66,7 +66,9 @@ describe('entity-status-panel — achievements section contract', () => {
     });
 
     test('open() fetches counters and achievements concurrently', () => {
-        expect(panelSrc).toMatch(/Promise\.all\(\[statusP, achP\]\)/);
+        // card_errctr added the error-history fetch (histP) to the same
+        // concurrent batch — counters + achievements + history load together.
+        expect(panelSrc).toMatch(/Promise\.all\(\[statusP, achP, histP\]\)/);
     });
 
     test.each(AXES)('local label fallback covers axis %s in zh + en', (axis) => {

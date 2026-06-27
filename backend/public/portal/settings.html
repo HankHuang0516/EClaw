@@ -1028,6 +1028,38 @@
             </div>
         </div>
 
+        <!-- Entity Activity Card — server-authoritative idle/sleep thresholds -->
+        <div class="card" id="entityActivitySettingsCard">
+            <div class="card-title">
+                <span>😴 <span data-i18n="entity_activity_settings_title">Entity activity &amp; sleep</span></span>
+            </div>
+            <p class="section-desc" data-i18n="entity_activity_settings_desc">When your bots show as busy, idle, or sleeping on the wallpaper. The server decides this deterministically — a bot with pending work never sleeps.</p>
+            <div class="setting-row">
+                <!-- HELP-KEY: entity_idle_after_seconds_help -->
+                <div class="setting-row-label">
+                    <span data-i18n="entity_idle_after_seconds_label">Go idle after</span>
+                    <small style="display:block;color:var(--text-muted);font-size:11px;" data-i18n="entity_idle_after_seconds_desc">Seconds after a bot's last message (with no pending work) before it shows as idle.</small>
+                </div>
+                <input type="number" id="entityIdleAfterSeconds" class="policy-input"
+                       min="15" max="3600" step="5" value="60"
+                       style="width:110px;text-align:right;"
+                       onchange="saveEntityIdleAfterSeconds(this.value)"
+                       aria-label="Entity go idle after seconds">
+            </div>
+            <div class="setting-row">
+                <!-- HELP-KEY: entity_sleep_after_minutes_help -->
+                <div class="setting-row-label">
+                    <span data-i18n="entity_sleep_after_minutes_label">Go to sleep after</span>
+                    <small style="display:block;color:var(--text-muted);font-size:11px;" data-i18n="entity_sleep_after_minutes_desc">Minutes of inactivity (no pending work) before an idle bot falls asleep.</small>
+                </div>
+                <input type="number" id="entitySleepAfterMinutes" class="policy-input"
+                       min="1" max="1440" step="1" value="20"
+                       style="width:110px;text-align:right;"
+                       onchange="saveEntitySleepAfterMinutes(this.value)"
+                       aria-label="Entity go to sleep after minutes">
+            </div>
+        </div>
+
         <!-- Owner Rental Roster Card -->
         <!-- Rental Management — merges the former 出租管理 (owner roster) and
              我的租賃 (My Rentals) cards into ONE section fed by real rental APIs
@@ -2810,6 +2842,7 @@
                 if (toggle) toggle.checked = prefs.broadcast_recipient_info !== false;
                 applyChatAvatarSizePref(prefs);
                 applyActionRequestPrefs(prefs);
+                applyEntityActivityPrefs(prefs);
                 applyKanbanNudgePrefs(prefs);
                 applyUsageWarningPrefs(prefs);
                 refreshUsageWarningStaleNotice();
@@ -2923,9 +2956,53 @@
             if (!data || !data.prefs) return;
             applyChatAvatarSizePref(data.prefs);
             applyActionRequestPrefs(data.prefs);
+            applyEntityActivityPrefs(data.prefs);
             applyKanbanNudgePrefs(data.prefs);
             applyUsageWarningPrefs(data.prefs);
         };
+
+        // ============================================
+        // ENTITY ACTIVITY STATE MACHINE (lib/entity-activity.js)
+        // Server-authoritative idle/sleep thresholds — replaces the random
+        // sleep coin-flip that wrongly slept entities (blocked walking QA).
+        // ============================================
+        const ENTITY_IDLE_AFTER_SECONDS = { MIN: 15, MAX: 3600, DEFAULT: 60 };
+        const ENTITY_SLEEP_AFTER_MINUTES = { MIN: 1, MAX: 1440, DEFAULT: 20 };
+
+        function clampNumber(value, bounds) {
+            const n = parseInt(value, 10);
+            if (!Number.isFinite(n)) return bounds.DEFAULT;
+            return Math.max(bounds.MIN, Math.min(bounds.MAX, n));
+        }
+
+        function applyEntityActivityPrefs(prefs = {}) {
+            const idle = document.getElementById('entityIdleAfterSeconds');
+            if (idle) idle.value = String(clampNumber(
+                prefs.entity_idle_after_seconds != null ? prefs.entity_idle_after_seconds : ENTITY_IDLE_AFTER_SECONDS.DEFAULT,
+                ENTITY_IDLE_AFTER_SECONDS));
+            const sleep = document.getElementById('entitySleepAfterMinutes');
+            if (sleep) sleep.value = String(clampNumber(
+                prefs.entity_sleep_after_minutes != null ? prefs.entity_sleep_after_minutes : ENTITY_SLEEP_AFTER_MINUTES.DEFAULT,
+                ENTITY_SLEEP_AFTER_MINUTES));
+        }
+
+        async function saveEntityActivityPrefPatch(patch) {
+            try {
+                const data = await apiCall('PUT', '/api/device-preferences', { prefs: patch });
+                if (data && data.prefs) applyEntityActivityPrefs(data.prefs);
+            } catch (e) {
+                await loadDevicePreferences();
+                showToast(i18n.t('toast_preference_update_failed'), 'error');
+            }
+        }
+
+        async function saveEntityIdleAfterSeconds(value) {
+            await saveEntityActivityPrefPatch({ entity_idle_after_seconds: clampNumber(value, ENTITY_IDLE_AFTER_SECONDS) });
+        }
+
+        async function saveEntitySleepAfterMinutes(value) {
+            await saveEntityActivityPrefPatch({ entity_sleep_after_minutes: clampNumber(value, ENTITY_SLEEP_AFTER_MINUTES) });
+        }
 
         // ============================================
         // USAGE WARNING (card_9cd84ee7d830b2f76c595f6c)
