@@ -42,6 +42,43 @@ describe('settings action request preferences (card_8151054f frontend)', () => {
         expect(settingsHtml).toContain('Math.max(ACTION_REQUEST_TIMEOUT_MINUTES_MIN, Math.min(ACTION_REQUEST_TIMEOUT_MINUTES_MAX, n))');
     });
 
+    test('renders the 需要你 negotiation tunable controls (window / synth grace / min entities)', () => {
+        expect(settingsHtml).toContain('id="consensusWindowMinutes"');
+        expect(settingsHtml).toContain('saveConsensusWindowMinutes(this.value)');
+        expect(settingsHtml).toContain('id="consensusSynthesisGraceMinutes"');
+        expect(settingsHtml).toContain('saveConsensusSynthesisGraceMinutes(this.value)');
+        expect(settingsHtml).toContain('id="consensusMinEntities"');
+        expect(settingsHtml).toContain('saveConsensusMinEntities(this.value)');
+        // input ranges mirror the backend clamps
+        expect(settingsHtml).toContain('min="1" max="1440" step="1" value="30"');
+        expect(settingsHtml).toContain('min="5" max="43200" step="5" value="360"');
+        expect(settingsHtml).toContain('min="2" max="20" step="1" value="2"');
+    });
+
+    test('normalizers + apply wiring for the negotiation prefs', () => {
+        expect(settingsHtml).toContain('normalizeConsensusWindowMinutes(prefs.consensus_window_minutes)');
+        expect(settingsHtml).toContain('normalizeConsensusSynthesisGraceMinutes(prefs.consensus_synthesis_grace_minutes)');
+        expect(settingsHtml).toContain('normalizeConsensusMinEntities(prefs.consensus_min_entities)');
+        expect(settingsHtml).toContain('consensus_window_minutes: normalizeConsensusWindowMinutes(value)');
+        expect(settingsHtml).toContain('consensus_synthesis_grace_minutes: normalizeConsensusSynthesisGraceMinutes(value)');
+        expect(settingsHtml).toContain('consensus_min_entities: normalizeConsensusMinEntities(value)');
+    });
+
+    test('EN and ZH strings exist for the negotiation settings surface', () => {
+        [
+            'consensus_window_minutes_label',
+            'consensus_window_minutes_desc',
+            'consensus_synthesis_grace_minutes_label',
+            'consensus_synthesis_grace_minutes_desc',
+            'consensus_min_entities_label',
+            'consensus_min_entities_desc',
+        ].forEach(key => {
+            expect(i18nJs).toContain(`"${key}"`);
+        });
+        expect(i18nJs).toContain('"consensus_min_entities_label": "Minimum entities to negotiate"');
+        expect(i18nJs).toContain('"consensus_min_entities_label": "協商所需最少實體數"');
+    });
+
     test('EN and ZH strings exist for the settings surface', () => {
         [
             'action_request_settings_title',

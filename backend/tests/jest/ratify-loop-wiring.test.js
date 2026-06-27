@@ -144,9 +144,12 @@ describe('runRatifyPass via enforceActionRequestTimeouts — dark launch + fire-
         const { mod } = buildModule({ prefs: { action_request_timeout_policy: 'keep' } });
         mockPoolQuery.mockResolvedValueOnce({ rows: [{ device_id: deviceId }] }); // scan
         await mod.enforceActionRequestTimeouts();
-        // only the DISTINCT scan ran — ratify pass returned before querying, keep skipped the rest
-        expect(mockPoolQuery).toHaveBeenCalledTimes(1);
+        // dark launch: the ratify pass returned before querying (no ratify SELECT)
+        // and keep skipped every auto-act write. (The policy-independent negotiation
+        // advance pass may issue marker SELECTs, but writes nothing here.)
         expect(mockPoolQuery.mock.calls[0][0]).toMatch(/SELECT DISTINCT device_id/);
+        expect(mockPoolQuery.mock.calls.find(c => /ratify,planE/.test(c[0]))).toBeUndefined();
+        expect(mockPoolQuery.mock.calls.filter(c => /UPDATE agent_action_requests/.test(c[0]))).toHaveLength(0);
     });
 
     test('enabled + default_agree row past grace ⇒ resolve with reason ratify_default_agree', async () => {
@@ -179,8 +182,8 @@ describe('runRatifyPass via enforceActionRequestTimeouts — dark launch + fire-
             .mockResolvedValueOnce({ rows: [{ device_id: deviceId }] })
             .mockResolvedValueOnce({ rows: [ratifyRow({}, { armedAt: recent })] });
         await mod.enforceActionRequestTimeouts();
-        // scan + candidate SELECT only; no resolve UPDATE
-        expect(mockPoolQuery).toHaveBeenCalledTimes(2);
+        // candidate SELECT ran but nothing resolved (armedAt too recent)
+        expect(mockPoolQuery.mock.calls.filter(c => /UPDATE agent_action_requests/.test(c[0]))).toHaveLength(0);
         expect(emitToRoom).not.toHaveBeenCalled();
     });
 
@@ -193,7 +196,7 @@ describe('runRatifyPass via enforceActionRequestTimeouts — dark launch + fire-
             .mockResolvedValueOnce({ rows: [ratifyRow({}, { reversibilityClass: 'reversible_code_branch', changedFiles: ['backend/auth.js'] })] });
         await mod.enforceActionRequestTimeouts();
         // re-derive at fire time HOLDs → no resolve UPDATE
-        expect(mockPoolQuery).toHaveBeenCalledTimes(2);
+        expect(mockPoolQuery.mock.calls.filter(c => /UPDATE agent_action_requests/.test(c[0]))).toHaveLength(0);
         expect(emitToRoom).not.toHaveBeenCalled();
     });
 
