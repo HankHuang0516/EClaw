@@ -242,4 +242,61 @@ class WallpaperWanderControllerTest {
     fun walkingStateConstantMatchesPetdxDescriptorStateName() {
         assertEquals("WALKING", WallpaperWanderController.WALKING_STATE_ASSET)
     }
+
+    @Test
+    fun pinnedEntityStaysExactlyAtBaseAcrossManyTicksEvenInFreeWalking() {
+        // HARD PIN (owner decision): a pinned entity must NOT drift or retarget,
+        // even with free walking (purposeful = false) ON — the mode that
+        // otherwise roams (see freeWalkingRoamsAwayFromHome). The un-pinned peer
+        // is left free. Fails on old code (no pinnedEntityIds suppression).
+        val controller = WallpaperWanderController(random = Random(5))
+        val entities = listOf(
+            EntityStatus(entityId = 1, state = CharacterState.IDLE),
+            EntityStatus(entityId = 2, state = CharacterState.IDLE)
+        )
+        val base = listOf(250f to 500f, 750f to 500f)
+
+        controller.positionsFor(
+            base, entities, 1000f, 1000f,
+            enabled = true, purposeful = false, nowMs = 0L, pinnedEntityIds = setOf(1)
+        )
+        var t = 0L
+        repeat(120) {
+            t += 500L
+            val pos = controller.positionsFor(
+                base, entities, 1000f, 1000f,
+                enabled = true, purposeful = false, nowMs = t, pinnedEntityIds = setOf(1)
+            )
+            assertEquals("pinned entity must hold base x", base[0].first, pos[0].first, 0.0001f)
+            assertEquals("pinned entity must hold base y", base[0].second, pos[0].second, 0.0001f)
+        }
+        assertFalse("pinned entity never walks", controller.isWalking(1))
+        assertEquals(MotionState.STOPPED, controller.motionState(1))
+    }
+
+    @Test
+    fun pinnedEntityIgnoresConversationGatherWhilePeerStillGathers() {
+        // A pinned entity is fully stationary; it does NOT join a conversation
+        // gather, but an un-pinned peer in the same conversation still moves.
+        val controller = WallpaperWanderController(random = Random(11))
+        val entities = listOf(
+            EntityStatus(entityId = 1, state = CharacterState.IDLE),
+            EntityStatus(entityId = 2, state = CharacterState.IDLE)
+        )
+        val base = listOf(150f to 500f, 850f to 500f)
+
+        controller.positionsFor(
+            base, entities, 1000f, 1000f,
+            enabled = true, nowMs = 0L, pinnedEntityIds = setOf(1)
+        )
+        val after = controller.positionsFor(
+            base, entities, 1000f, 1000f,
+            enabled = true, nowMs = 1000L,
+            conversationEntityIds = setOf(1, 2), entityUnitPx = 220f, pinnedEntityIds = setOf(1)
+        )
+
+        assertEquals("pinned sender stays put", base[0].first, after[0].first, 0.0001f)
+        assertEquals("pinned sender stays put (y)", base[0].second, after[0].second, 0.0001f)
+        assertTrue("un-pinned receiver still gathers toward center", after[1].first < base[1].first)
+    }
 }

@@ -42,6 +42,44 @@ class ClawRenderer(
     private val lastBubbleDurationByEntity = mutableMapOf<Int, Long>()
     private val bubblePulseStartedByEntity = mutableMapOf<Int, Long>()
 
+    // Last on-screen pixel center each entity was drawn at this frame. Exposed so
+    // the wallpaper Engine can hit-test a touch to the nearest entity for the
+    // live drag-to-reposition (HARD PIN) gesture. (card wallpaper-drag-pin)
+    private val lastRenderedPositionsByEntity = mutableMapOf<Int, Pair<Float, Float>>()
+    private var lastDrawWidthPx: Float = 0f
+    private var lastDrawHeightPx: Float = 0f
+
+    // Transient live-drag state: while the user drags an entity, it is drawn at
+    // the finger and excluded from wander/pin so it follows freely; on lift the
+    // Engine persists the drop point as the entity's pinned custom position.
+    private var draggingEntityId: Int? = null
+    private var dragPosPx: Pair<Float, Float>? = null
+
+    /** Pixel centers each entity was last drawn at (entityId -> x,y). */
+    fun lastRenderedPositions(): Map<Int, Pair<Float, Float>> = lastRenderedPositionsByEntity.toMap()
+
+    /** Canvas width/height of the most recent frame (for hit-radius math). */
+    fun lastDrawWidth(): Float = lastDrawWidthPx
+    fun lastDrawHeight(): Float = lastDrawHeightPx
+
+    /** Begin dragging [entityId]: stop its wander and draw it at the finger. */
+    fun beginDrag(entityId: Int, xPx: Float, yPx: Float) {
+        draggingEntityId = entityId
+        dragPosPx = xPx to yPx
+        wanderController.stop(entityId)
+    }
+
+    /** Update the in-flight drag position (finger move). */
+    fun updateDragPosition(xPx: Float, yPx: Float) {
+        if (draggingEntityId != null) dragPosPx = xPx to yPx
+    }
+
+    /** End the drag (the Engine has persisted the pin). */
+    fun endDrag() {
+        draggingEntityId = null
+        dragPosPx = null
+    }
+
     // card_f9b2cc2d v1.1.6 regression fix. A spritesheet whose bitmap is not in
     // sheetCache returns DrawResult.LOADING, which historically painted NOTHING
     // (to avoid a companion-switch flash to the default lobster, card_9e52c7b).
@@ -404,16 +442,25 @@ class ClawRenderer(
         count: Int,
         entities: List<EntityStatus>? = null
     ): List<Pair<Float, Float>> {
-        // Check if custom layout mode is enabled and we have entity info
-        if (layoutPrefs.useCustomLayout && entities != null) {
-            return entities.map { entity ->
+        // Honor custom positions when custom layout is on OR when ANY entity has a
+        // saved custom_pos / pin (B2: a pinned/configured position must be honored
+        // even if useCustomLayout was never explicitly toggled — otherwise a pin
+        // would be silently ignored). An entity with no saved position falls back
+        // to the SHARED grid default (B1) — identical to the settings preview —
+        // instead of the old screen-center, which made no-custom-pos entities
+        // (e.g. entity #10) stack at the center on the live wallpaper while the
+        // editor showed them in a grid.
+        if (entities != null &&
+            (layoutPrefs.useCustomLayout || layoutPrefs.hasAnyCustomOrPinnedPosition())
+        ) {
+            val count = entities.size
+            return entities.mapIndexed { index, entity ->
                 val customPos = layoutPrefs.getCustomPosition(entity.entityId)
                 if (customPos != null) {
-                    // Convert percentage to actual coordinates
                     Pair(customPos.first * width, customPos.second * height)
                 } else {
-                    // Fallback to center if no custom position set
-                    Pair(width / 2f, height / 2f)
+                    val (px, py) = WallpaperLayoutDefaults.resolveBasePositionPercent(index, count)
+                    Pair(px * width, py * height)
                 }
             }
         }
@@ -638,6 +685,13 @@ class ClawRenderer(
         }
         val walkingEnabled = layoutPrefs.wallpaperWalkingEnabled
         val maxEntityScale = entities.maxOfOrNull { layoutPrefs.getEntityScale(it.entityId).toDouble() }?.toFloat() ?: 1f
+        // HARD PIN: pinned entities are LOCKED at their configured position. The
+        // entity currently being live-dragged is excluded so it follows the
+        // finger; its pin is re-applied on drop.
+        val pinnedIds = entities.asSequence()
+            .map { it.entityId }
+            .filter { layoutPrefs.isPinned(it) && it != draggingEntityId }
+            .toSet()
         val positions = wanderController.positionsFor(
             basePositions = basePositions,
             entities = entities,
@@ -647,7 +701,8 @@ class ClawRenderer(
             purposeful = layoutPrefs.wallpaperPurposefulWalkingEnabled,
             nowMs = nowMs,
             conversationEntityIds = conversationEntityIds,
-            entityUnitPx = 300f * baseScale * maxEntityScale
+            entityUnitPx = 300f * baseScale * maxEntityScale,
+            pinnedEntityIds = pinnedIds
         )
         val interactionState = interactionController.apply(
             positions = positions,
@@ -686,11 +741,16 @@ class ClawRenderer(
         }
 
         val bubbleDrawTargets = mutableListOf<BubbleDrawTarget>()
+        lastRenderedPositionsByEntity.clear()
+        lastDrawWidthPx = width
+        lastDrawHeightPx = height
         entities.forEachIndexed { index, entity ->
             if (index < interactionState.positions.size) {
-                val (cx, cy) = interactionState.positions[index]
+                val drag = if (entity.entityId == draggingEntityId) dragPosPx else null
+                val (cx, cy) = drag ?: interactionState.positions[index]
                 val interactionPose = interactionState.posesByEntity[entity.entityId]
-                val drawCy = cy - (interactionPose?.liftPx ?: 0f)
+                val drawCy = cy - (if (drag != null) 0f else (interactionPose?.liftPx ?: 0f))
+                lastRenderedPositionsByEntity[entity.entityId] = cx to drawCy
                 // Apply per-entity scale multiplier on top of base scale
                 val entityScale = layoutPrefs.getEntityScale(entity.entityId)
                 val finalScale = baseScale * entityScale
