@@ -30,105 +30,6 @@
             color: var(--primary);
         }
 
-        .dashboard-entity-summary {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 14px;
-            padding: 12px 14px;
-            margin-bottom: 14px;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius);
-        }
-
-        .dashboard-entity-summary[data-state="ready"] {
-            border-color: rgba(79, 195, 247, 0.35);
-        }
-
-        .dashboard-entity-summary[data-state="empty"] {
-            border-color: rgba(255, 193, 7, 0.36);
-        }
-
-        .dashboard-entity-summary[data-state="error"] {
-            border-color: rgba(255, 107, 107, 0.45);
-        }
-
-        .dashboard-entity-summary-copy {
-            flex: 1 1 260px;
-            min-width: 0;
-        }
-
-        .dashboard-entity-summary-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--text);
-            line-height: 1.35;
-        }
-
-        .dashboard-entity-summary-meta {
-            margin-top: 3px;
-            font-size: 12px;
-            color: var(--text-secondary);
-            line-height: 1.4;
-            word-break: break-word;
-        }
-
-        .dashboard-entity-metrics {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(72px, 1fr));
-            gap: 8px;
-            flex: 1 1 360px;
-            min-width: 0;
-        }
-
-        .dashboard-entity-metric {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            min-width: 0;
-            padding: 8px 10px;
-            background: var(--input-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 8px;
-            /* tiles are now <button>s (clickable drill-in, card_cb00b807) — reset the
-               UA button look + signal interactivity. */
-            font: inherit;
-            text-align: left;
-            cursor: pointer;
-            -webkit-appearance: none;
-            appearance: none;
-            transition: border-color 0.12s, background 0.12s, transform 0.06s;
-        }
-        .dashboard-entity-metric:hover {
-            border-color: var(--accent-cyan, #4fc3f7);
-            background: var(--card-bg);
-        }
-        .dashboard-entity-metric:active { transform: scale(0.98); }
-        .dashboard-entity-metric:focus-visible {
-            outline: 2px solid var(--accent-cyan, #4fc3f7);
-            outline-offset: 2px;
-        }
-
-        .dashboard-entity-metric strong {
-            color: var(--primary);
-            font-size: 18px;
-            line-height: 1;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .dashboard-entity-metric span {
-            color: var(--text-secondary);
-            font-size: 11px;
-            line-height: 1.25;
-        }
-
-        .dashboard-entity-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex: 0 0 auto;
-        }
 
         .entity-grid {
             display: grid;
@@ -346,26 +247,6 @@
             .page-header > div {
                 width: 100%;
                 justify-content: space-between;
-            }
-            .dashboard-entity-summary {
-                align-items: stretch;
-                flex-direction: column;
-                /* Override the base justify-content:space-between — on a column this
-                   pushed the title to the top and metrics/actions to the bottom,
-                   leaving a large empty gap on phones (card_cb00b807, Hank). Stack
-                   tightly top-down instead. */
-                justify-content: flex-start;
-            }
-            .dashboard-entity-metrics {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                width: 100%;
-            }
-            .dashboard-entity-actions {
-                width: 100%;
-            }
-            .dashboard-entity-actions .btn {
-                flex: 1 1 0;
-                min-width: 0;
             }
             .entity-grid {
                 grid-template-columns: 1fr;
@@ -2203,22 +2084,6 @@
             </button>
         </div>
 
-        <section class="dashboard-entity-summary" id="dashboardEntitySummary" data-state="loading" data-tab-content="entities" aria-labelledby="dashboardEntitySummaryTitle">
-            <div class="dashboard-entity-summary-copy" id="dashboardEntitySummaryStatus" role="status" aria-live="polite" aria-atomic="true">
-                <div class="dashboard-entity-summary-title" id="dashboardEntitySummaryTitle">Loading entities / 載入實體中</div>
-                <div class="dashboard-entity-summary-meta" id="dashboardEntitySummaryMeta">Checking bound entity slots. / 正在檢查實體欄位。</div>
-            </div>
-            <div class="dashboard-entity-metrics" aria-label="Dashboard entity overview">
-                <button type="button" class="dashboard-entity-metric" data-metric="bound" onclick="drillDashboardMetric('bound')" title="已綁定實體數 — 點此查看實體清單 / Bound entities — view the list"><strong id="dashboardMetricBound">--</strong><span>Bound / 已綁定</span></button>
-                <button type="button" class="dashboard-entity-metric" data-metric="active" onclick="drillDashboardMetric('active')" title="目前在線的實體 — 點此查看 / Active (online) entities — view the list"><strong id="dashboardMetricActive">--</strong><span>Active / 活動中</span></button>
-                <button type="button" class="dashboard-entity-metric" data-metric="channel" onclick="drillDashboardMetric('channel')" title="使用 EClaw Channel 綁定的實體 — 點此到頻道綁定設定 / Channel-bound — open channel binding"><strong id="dashboardMetricChannel">--</strong><span>Channel / 頻道</span></button>
-                <button type="button" class="dashboard-entity-metric" data-metric="e2ee" onclick="drillDashboardMetric('e2ee')" title="啟用端到端加密的實體 — 點此查看 / End-to-end-encrypted entities — view the list"><strong id="dashboardMetricE2ee">--</strong><span>E2EE / 加密</span></button>
-            </div>
-            <div class="dashboard-entity-actions">
-                <button class="btn btn-sm btn-outline" id="dashboardSummaryRefresh" type="button" onclick="refreshDashboardEntities()">Refresh / 重新整理</button>
-                <button class="btn btn-sm btn-primary" id="dashboardSummaryAdd" type="button" onclick="focusAddEntity()">Add / 新增</button>
-            </div>
-        </section>
 
         <!-- Tab: Entity Cards Grid -->
         <div class="entity-grid" id="entityGrid" data-tab-content="entities">
@@ -2775,107 +2640,6 @@
             return div.innerHTML;
         }
 
-        function formatDashboardText(template, values = {}) {
-            return Object.keys(values).reduce((text, key) => {
-                return text.split(`{${key}}`).join(String(values[key]));
-            }, template);
-        }
-
-        function dashboardText(key, fallback, params = {}) {
-            const value = (typeof i18n !== 'undefined' && typeof i18n.t === 'function') ? i18n.t(key, params) : null;
-            return value && value !== key ? value : formatDashboardText(fallback, params);
-        }
-
-        function setDashboardMetric(id, value) {
-            const el = document.getElementById(id);
-            if (el) el.textContent = String(value);
-        }
-
-        function isDashboardEntityActive(entity) {
-            const state = String(entity && entity.state || '').toLowerCase();
-            return !!state && !['idle', 'offline', 'unknown'].includes(state);
-        }
-
-        function renderDashboardEntitySummary(stateOverride) {
-            const summary = document.getElementById('dashboardEntitySummary');
-            const title = document.getElementById('dashboardEntitySummaryTitle');
-            const meta = document.getElementById('dashboardEntitySummaryMeta');
-            if (!summary || !title || !meta) return;
-
-            const bound = entities.length;
-            const active = entities.filter(isDashboardEntityActive).length;
-            const channel = entities.filter(e => e.bindingType === 'channel').length;
-            const e2ee = entities.filter(e => e.encryptionStatus === 'e2ee').length;
-            const state = stateOverride || (bound > 0 ? 'ready' : 'empty');
-
-            summary.dataset.state = state;
-            if (state === 'loading') {
-                title.textContent = dashboardText('dashboard_summary_loading_title', 'Loading entities');
-                meta.textContent = dashboardText('dashboard_summary_loading_meta', 'Checking bound entity slots.');
-                ['dashboardMetricBound', 'dashboardMetricActive', 'dashboardMetricChannel', 'dashboardMetricE2ee'].forEach(id => setDashboardMetric(id, '--'));
-                return;
-            }
-            if (state === 'error') {
-                title.textContent = dashboardText('dashboard_summary_error_title', 'Entity list unavailable');
-                meta.textContent = dashboardText('dashboard_summary_error_meta', 'Check your connection or retry.');
-                ['dashboardMetricBound', 'dashboardMetricActive', 'dashboardMetricChannel', 'dashboardMetricE2ee'].forEach(id => setDashboardMetric(id, '--'));
-                return;
-            }
-
-            setDashboardMetric('dashboardMetricBound', bound);
-            setDashboardMetric('dashboardMetricActive', active);
-            setDashboardMetric('dashboardMetricChannel', channel);
-            setDashboardMetric('dashboardMetricE2ee', e2ee);
-
-            if (state === 'empty') {
-                title.textContent = dashboardText('dashboard_summary_empty_title', 'No entities bound');
-                meta.textContent = dashboardText('dashboard_summary_empty_meta', 'Add a slot below to start routing messages.');
-                return;
-            }
-
-            title.textContent = (bound === 1)
-                ? dashboardText('dashboard_summary_ready_one', '1 entity ready')
-                : dashboardText('dashboard_summary_ready_many', '{count} entities ready', { count: bound });
-            meta.textContent = dashboardText('dashboard_summary_ready_meta', '{active} active, {channel} channel-bound, {e2ee} E2EE', { active, channel, e2ee });
-        }
-
-        async function refreshDashboardEntities() {
-            const btn = document.getElementById('dashboardSummaryRefresh');
-            if (isEditMode) {
-                renderDashboardEntitySummary();
-                return;
-            }
-            if (btn) btn.disabled = true;
-            renderDashboardEntitySummary('loading');
-            try {
-                await loadEntities();
-            } finally {
-                if (btn) btn.disabled = false;
-            }
-        }
-
-        function focusAddEntity() {
-            const card = document.getElementById('addEntityCard');
-            if (!isAddExpanded) toggleAddEntity();
-            if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
-        // Overview stat tiles are clickable (card_cb00b807): clicking a metric scrolls
-        // the user to the relevant area so the number means something actionable, not
-        // just a static figure. Bound/Active/E2EE → the entity list; Channel → the
-        // channel-binding section (falls back to the list if that section isn't present).
-        function drillDashboardMetric(which) {
-            const grid = document.getElementById('entityGrid');
-            let target = grid;
-            if (which === 'channel') {
-                target = document.getElementById('channelPromo')
-                    || document.querySelector('.channel-promo, .channel-bind-warning')
-                    || grid;
-            }
-            if (target && typeof target.scrollIntoView === 'function') {
-                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        }
 
         // getAvatarForEntity is provided by shared/entity-utils.js
 
@@ -3271,7 +3035,6 @@
             } catch (e) {
                 // Only show error on first load
                 const grid = document.getElementById('entityGrid');
-                renderDashboardEntitySummary('error');
                 if (grid.querySelector('#loadingState')) {
                     grid.innerHTML = '<div class="empty-state">' + i18n.t('dash_err_load_entities') + '</div>';
                 }
@@ -3388,7 +3151,6 @@
             const emptyState = document.getElementById('emptyState');
 
             if (entities.length === 0) {
-                renderDashboardEntitySummary('empty');
                 grid.innerHTML = '';
                 emptyState.style.display = '';
                 // Auto-expand add entity when empty
@@ -3398,7 +3160,6 @@
                 return;
             }
 
-            renderDashboardEntitySummary('ready');
             emptyState.style.display = 'none';
             grid.classList.toggle('edit-mode', isEditMode);
             grid.innerHTML = entities.map(entity => {
@@ -4591,14 +4352,11 @@
             const entityGrid = document.getElementById('entityGrid');
             const emptyState = document.getElementById('emptyState');
             const orgContainer = document.getElementById('orgChartContainer');
-            const entitySummary = document.getElementById('dashboardEntitySummary');
             if (tab === 'entities') {
-                if (entitySummary) entitySummary.style.display = '';
                 entityGrid.style.display = '';
                 if (emptyState) emptyState.style.display = entities.filter(e => e.isBound).length === 0 ? '' : 'none';
                 orgContainer.classList.remove('active');
             } else {
-                if (entitySummary) entitySummary.style.display = 'none';
                 entityGrid.style.display = 'none';
                 if (emptyState) emptyState.style.display = 'none';
                 orgContainer.classList.add('active');
