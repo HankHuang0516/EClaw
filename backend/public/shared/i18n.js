@@ -650613,6 +650613,14 @@ const TRANSLATIONS = {
         "cron_current_usage_label": "Current: 5h N% / 7d M%",
 
         "chat_sendto_button_label_many_more": "+{count} more",
+
+        "action_request_ratify_default_agree_badge": "⏳ Awaiting your call · silence approves",
+        "action_request_ratify_default_agree_hint": "If you do nothing, this will be sent and executed automatically when the countdown ends.",
+        "action_request_ratify_countdown_prefix": "Auto-sends in",
+        "action_request_ratify_sending": "Sending…",
+        "action_request_ratify_hold_badge": "Needs your approval",
+        "action_request_ratify_hold_hint": "Nothing is sent unless you approve.",
+        "action_request_recommended_badge_title": "Suggestion only — recorded, not auto-sent",
 },
 
 
@@ -1235663,6 +1235671,14 @@ const TRANSLATIONS = {
         "cron_skip_dispatch_reason": "跳過：用量超過閾值",
 
         "chat_sendto_button_label_many_more": "+{count} 位",
+
+        "action_request_ratify_default_agree_badge": "⏳ 追認中 · 靜默視同同意",
+        "action_request_ratify_default_agree_hint": "若不處理，倒數結束後將自動送出並執行。",
+        "action_request_ratify_countdown_prefix": "距自動送出",
+        "action_request_ratify_sending": "即將送出…",
+        "action_request_ratify_hold_badge": "需你核可",
+        "action_request_ratify_hold_hint": "未經你核可不會送出。",
+        "action_request_recommended_badge_title": "僅供參考 · 不會自動送出",
 },
 
 
@@ -1849917,6 +1849933,14 @@ const TRANSLATIONS = {
         "cron_skip_help_text": "此排程在 entity 5 小时用量超过 X% 或 7 天用量超过 Y% 时会跳过。预设值保护高负载 entity 不被 cron 额外加负担。可调范围 50%-99%。跳过的 cron 下次 tick 自动重试，不会 lost。",
         "cron_current_usage_label": "目前 5h: N% / 7d: M%",
         "cron_skip_dispatch_reason": "跳过：用量超过阈值",
+
+        "action_request_ratify_default_agree_badge": "⏳ 追认中 · 静默视同同意",
+        "action_request_ratify_default_agree_hint": "若不处理，倒计时结束后将自动送出并执行。",
+        "action_request_ratify_countdown_prefix": "距自动送出",
+        "action_request_ratify_sending": "即将送出…",
+        "action_request_ratify_hold_badge": "需你核可",
+        "action_request_ratify_hold_hint": "未经你核可不会送出。",
+        "action_request_recommended_badge_title": "仅供参考 · 不会自动送出",
 },
 
 
