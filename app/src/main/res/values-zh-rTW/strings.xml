@@ -795,9 +795,9 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="wallpaper_usage_engine_codex">Codex</string>
     <string name="wallpaper_usage_items">顯示項目</string>
     <string name="wallpaper_walking_title">行走功能</string>
-    <string name="wallpaper_walking_settings_desc">讓桌布實體慢慢依目標走動</string>
+    <string name="wallpaper_walking_settings_desc">讓桌布實體會走動;搭配「有意識地走路」可選擇只在聊天時移動或自由漫遊。</string>
     <string name="wallpaper_walking_help_button">關於桌布行走功能</string>
-    <string name="wallpaper_walking_help">說明：桌布上的實體平時會待在各自原位，只有 speak-to、@all 或 broadcast 聊天事件發生時才會移動。sender 與 receiver 會保持一個實體單位間距聚集到中間，訊息泡泡 TTL 結束後回到原位。\n\n需要：已開啟即時桌布、至少一個已綁定實體、方向性走路動畫可用。\n\n測試：傳送實體間 speak-to 或 broadcast 訊息，觀察 sender 與 receiver 聚集後回家。</string>
+    <string name="wallpaper_walking_help">說明：這是桌布走動的總開關。當「有意識地走路」開啟(預設)時，實體平時待在各自原位，只有 speak-to、@all 或 broadcast 聊天事件發生時才移動;sender 與 receiver 會保持一個實體單位間距聚集到中間，訊息泡泡 TTL 結束後回到原位。當「有意識地走路」關閉時，實體會一直自由走動，每隔幾秒做一個隨機目標動作(拜訪同伴、巡邏、回到活動區)。\n\n需要：已開啟即時桌布、至少一個已綁定實體、方向性走路動畫可用。\n\n測試：關閉「有意識地走路」觀察實體自由漫遊;或保持開啟並傳送 speak-to/broadcast 觀察聚集後回家。</string>
     <string name="wallpaper_custom_layout_help_button">關於自訂佈局</string>
     <string name="wallpaper_custom_layout_help">可拖曳實體並保存桌布原位；有意識地走路與看板任務物件都會以這些原位作為來源。</string>
     <string name="wallpaper_background_help_button">關於自訂背景</string>
@@ -839,10 +839,8 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="wallpaper_setting_bubble_duration_value">%1$d 秒</string>
     <string name="wallpaper_setting_bubble_duration_minutes_value">%1$d 分鐘</string>
     <string name="wallpaper_setting_bubble_duration_minutes_seconds_value">%1$d 分 %2$d 秒</string>
-    <string name="wallpaper_setting_purposeful_walking">有目的的走路</string>
-    <string name="wallpaper_setting_purposeful_walking_desc">讓待機夥伴會拜訪同伴、巡邏、回到自己的活動區。</string>
     <string name="wallpaper_setting_conscious_walking">有意識地走路</string>
-    <string name="wallpaper_setting_conscious_walking_desc">只有 speak-to、@all 與 broadcast 聊天事件會讓實體移動；sender 與 receiver 會保持一個實體單位間距聚集到中間，泡泡 TTL 結束後回到各自原位。</string>
+    <string name="wallpaper_setting_conscious_walking_desc">開啟：只有 speak-to、@all 與 broadcast 聊天事件會讓實體移動；sender 與 receiver 會保持一個實體單位間距聚集到中間，泡泡 TTL 結束後回到各自原位。關閉：實體會自由漫遊，並做拜訪同伴、巡邏等目標動作。</string>
     <string name="wallpaper_setting_entity_interactions">實體互動</string>
     <string name="wallpaper_setting_entity_interactions_desc">夥伴碰到彼此時會一起播放同一個隨機動作：揮手、跳躍、失敗或審視。</string>
     <string name="wallpaper_setting_collision_duration">碰撞動作持續時間</string>

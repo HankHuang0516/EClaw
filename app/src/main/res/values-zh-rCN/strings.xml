@@ -776,9 +776,9 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="wallpaper_usage_engine_codex">Codex</string>
     <string name="wallpaper_usage_items">显示项目</string>
     <string name="wallpaper_walking_title">行走功能</string>
-    <string name="wallpaper_walking_settings_desc">让壁纸实体慢慢依目标移动</string>
+    <string name="wallpaper_walking_settings_desc">让壁纸实体会走动；搭配「有意识地行走」可选择只在聊天时移动或自由漫游。</string>
     <string name="wallpaper_walking_help_button">关于壁纸行走功能</string>
-    <string name="wallpaper_walking_help">说明：壁纸上的实体平时会待在各自原位，只有 speak-to、@all 或 broadcast 聊天事件发生时才会移动。sender 与 receiver 会保持一个实体单位间距聚集到中间，消息气泡 TTL 结束后回到原位。\n\n需要：已开启实时壁纸、至少一个已绑定实体、方向性行走动画可用。\n\n测试：发送实体间 speak-to 或 broadcast 消息，观察 sender 与 receiver 聚集后回家。</string>
+    <string name="wallpaper_walking_help">说明：这是壁纸走动的总开关。当「有意识地行走」开启(默认)时，实体平时待在各自原位，只有 speak-to、@all 或 broadcast 聊天事件发生时才移动；sender 与 receiver 会保持一个实体单位间距聚集到中间，消息气泡 TTL 结束后回到原位。当「有意识地行走」关闭时，实体会一直自由走动，每隔几秒做一个随机目标动作(拜访同伴、巡逻、回到活动区)。\n\n需要：已开启实时壁纸、至少一个已绑定实体、方向性行走动画可用。\n\n测试：关闭「有意识地行走」观察实体自由漫游；或保持开启并发送 speak-to/broadcast 观察聚集后回家。</string>
     <string name="wallpaper_custom_layout_help_button">关于自定义布局</string>
     <string name="wallpaper_custom_layout_help">可拖拽实体并保存壁纸原位；有意识地行走与看板任务物件都会以这些原位作为来源。</string>
     <string name="wallpaper_background_help_button">关于自定义背景</string>
@@ -925,10 +925,8 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="wallpaper_setting_bubble_duration_value">%1$d 秒</string>
     <string name="wallpaper_setting_bubble_duration_minutes_value">%1$d 分钟</string>
     <string name="wallpaper_setting_bubble_duration_minutes_seconds_value">%1$d 分 %2$d 秒</string>
-    <string name="wallpaper_setting_purposeful_walking">有目的的行走</string>
-    <string name="wallpaper_setting_purposeful_walking_desc">让待机伙伴会拜访同伴、巡逻、回到自己的活动区。</string>
     <string name="wallpaper_setting_conscious_walking">有意识地行走</string>
-    <string name="wallpaper_setting_conscious_walking_desc">只有 speak-to、@all 与 broadcast 聊天事件会让实体移动；sender 与 receiver 会保持一个实体单位间距聚集到中间，气泡 TTL 结束后回到各自原位。</string>
+    <string name="wallpaper_setting_conscious_walking_desc">开启：只有 speak-to、@all 与 broadcast 聊天事件会让实体移动；sender 与 receiver 会保持一个实体单位间距聚集到中间，气泡 TTL 结束后回到各自原位。关闭：实体会自由漫游，并做拜访同伴、巡逻等目标动作。</string>
     <string name="wallpaper_setting_entity_interactions">实体互动</string>
     <string name="wallpaper_setting_entity_interactions_desc">伙伴碰到彼此时会一起播放同一个随机动作：挥手、跳跃、失败或审视。</string>
     <string name="wallpaper_setting_collision_duration">碰撞动作持续时间</string>
