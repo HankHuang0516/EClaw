@@ -175,6 +175,74 @@ describe('GET / (list)', () => {
     });
 });
 
+// ════════════════════════════════════════
+// Negotiation-history surfacing (card_ce0d685b, Stage C — additive read path).
+//   (a) rowToApi maps consensus_triggered_at → consensusTriggeredAt (ms / null).
+//   (b) ?negotiatedOnly=true adds `consensus_triggered_at IS NOT NULL` and
+//       returns ONLY negotiated rows (excludes a resolved-by-human row that has
+//       no consensus marker).
+// ════════════════════════════════════════
+describe('negotiation history (card_ce0d685b)', () => {
+    const NEG_TS = new Date('2026-06-26T03:00:00Z');
+
+    it('(a) rowToApi exposes consensus_triggered_at as consensusTriggeredAt (ms)', async () => {
+        mockPoolQuery.mockResolvedValueOnce({
+            rows: [rowFixture({ status: 'resolved', answer: { decision: 'A' }, consensus_triggered_at: NEG_TS })],
+        });
+        const res = await get('/api/action-requests?deviceId=' + deviceId + '&deviceSecret=' + deviceSecret + '&status=resolved');
+        expect(res.status).toBe(200);
+        const r = res.body.requests[0];
+        expect(r.consensusTriggeredAt).toBe(NEG_TS.getTime());
+        // The negotiated decision rides along in `answer`.
+        expect(r.answer).toEqual({ decision: 'A' });
+    });
+
+    it('(a) consensusTriggeredAt is null when the row was never negotiated', async () => {
+        mockPoolQuery.mockResolvedValueOnce({ rows: [rowFixture()] }); // fixture has no consensus_triggered_at
+        const res = await get('/api/action-requests?deviceId=' + deviceId + '&deviceSecret=' + deviceSecret);
+        expect(res.status).toBe(200);
+        expect(res.body.requests[0].consensusTriggeredAt).toBeNull();
+    });
+
+    it('(b) ?negotiatedOnly=true filters the SQL to consensus_triggered_at IS NOT NULL', async () => {
+        mockPoolQuery.mockResolvedValueOnce({
+            rows: [rowFixture({ status: 'resolved', answer: { decision: 'B' }, consensus_triggered_at: NEG_TS })],
+        });
+        const res = await get('/api/action-requests?deviceId=' + deviceId + '&deviceSecret=' + deviceSecret + '&status=resolved&negotiatedOnly=true');
+        expect(res.status).toBe(200);
+        const [sql] = mockPoolQuery.mock.calls[0];
+        expect(sql).toMatch(/consensus_triggered_at IS NOT NULL/);
+        expect(res.body.requests).toHaveLength(1);
+        expect(res.body.requests[0].consensusTriggeredAt).toBe(NEG_TS.getTime());
+    });
+
+    it('(b) omitting negotiatedOnly does NOT add the consensus filter', async () => {
+        mockPoolQuery.mockResolvedValueOnce({ rows: [] });
+        await get('/api/action-requests?deviceId=' + deviceId + '&deviceSecret=' + deviceSecret + '&status=resolved');
+        const [sql] = mockPoolQuery.mock.calls[0];
+        expect(sql).not.toMatch(/consensus_triggered_at/);
+    });
+
+    it('(b) negotiatedOnly excludes a resolved-by-human row that lacks the consensus marker', async () => {
+        // The DB only returns rows matching `consensus_triggered_at IS NOT NULL`,
+        // so a human-resolved row (consensus_triggered_at NULL) never comes back.
+        // Assert both: the WHERE clause is present AND the negotiated-only payload
+        // carries the marker while the human row would be filtered out by it.
+        const negotiated = rowFixture({ id: UUID, status: 'resolved', answer: { decision: 'A' }, consensus_triggered_at: NEG_TS });
+        mockPoolQuery.mockResolvedValueOnce({ rows: [negotiated] }); // DB applied the filter
+        const res = await get('/api/action-requests?deviceId=' + deviceId + '&deviceSecret=' + deviceSecret + '&status=all&negotiatedOnly=true');
+        expect(res.status).toBe(200);
+        const [sql] = mockPoolQuery.mock.calls[0];
+        expect(sql).toMatch(/consensus_triggered_at IS NOT NULL/);
+        // status=all → no status predicate, only the negotiation predicate.
+        expect(sql).not.toMatch(/status = \$/);
+        // Every returned row is a real negotiation (non-null marker); the
+        // human-resolved row (marker null) is excluded by the WHERE clause.
+        expect(res.body.requests.every(r => r.consensusTriggeredAt != null)).toBe(true);
+        expect(res.body.requests.map(r => r.id)).toEqual([UUID]);
+    });
+});
+
 describe('POST /:id/resolve', () => {
     it('resolves a pending request by id+device, returns updated row', async () => {
         mockPoolQuery.mockResolvedValueOnce({ rows: [rowFixture({ status: 'resolved', answer: 'A', resolved_at: new Date() })] });

@@ -299,6 +299,11 @@ function rowToApi(row) {
         answer: row.answer || null,
         createdAt: new Date(row.created_at).getTime(),
         resolvedAt: row.resolved_at ? new Date(row.resolved_at).getTime() : null,
+        // Negotiation marker (card_ce0d685b): the timeout worker stamps this when
+        // it opens a consensus round. Exposed (ms, matching the timestamps above;
+        // null when the request was never negotiated) so clients can tell which
+        // resolved rows were the product of a negotiation vs a plain human resolve.
+        consensusTriggeredAt: row.consensus_triggered_at ? new Date(row.consensus_triggered_at).getTime() : null,
     };
 }
 
@@ -807,6 +812,12 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
             return res.status(400).json({ success: false, error: 'status must be pending|resolved|dismissed|all' });
         }
         const fromEntityId = req.query.fromEntityId;
+        // Negotiation-history filter (card_ce0d685b): when set, restrict to rows
+        // the timeout worker opened a consensus round on (consensus_triggered_at
+        // IS NOT NULL). Purely additive — composes with status, so callers fetch
+        // negotiation history via ?status=resolved&negotiatedOnly=true (or
+        // ?status=all&negotiatedOnly=true to include in-flight rounds).
+        const negotiatedOnly = String(req.query.negotiatedOnly) === 'true';
 
         try {
             const params = [deviceId];
@@ -818,6 +829,9 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
             if (fromEntityId != null && fromEntityId !== '') {
                 params.push(parseInt(fromEntityId, 10));
                 sql += ` AND from_entity_id = $${params.length}`;
+            }
+            if (negotiatedOnly) {
+                sql += ` AND consensus_triggered_at IS NOT NULL`;
             }
             sql += ` ORDER BY created_at ASC LIMIT ${MAX_LIST_LIMIT}`;
             const result = await pool.query(sql, params);
