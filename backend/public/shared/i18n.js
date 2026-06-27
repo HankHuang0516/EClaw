@@ -650425,6 +650425,9 @@ const TRANSLATIONS = {
         "entity_sleep_after_minutes_label": "Go to sleep after",
         "entity_sleep_after_minutes_desc": "Minutes of inactivity (no pending work) before an idle bot falls asleep.",
         "entity_sleep_after_minutes_help": "Minutes of inactivity — with no pending work and no message in the window — before IDLE becomes SLEEPING. Allowed range 1 minute to 1440 (24 hours); default 20.",
+        "entity_runtime_state_stale_seconds_label": "Trust live status for",
+        "entity_runtime_state_stale_seconds_desc": "Seconds a bot's self-reported live status (busy / waiting / error) is trusted before the server falls back to timing rules.",
+        "entity_runtime_state_stale_seconds_help": "Seconds a bot's self-reported live status (busy / stuck / crashed / idle, sent on its heartbeat) is TRUSTED before it is treated as stale and ignored — after which the server falls back to last-message timing and the kanban idle floor. Allowed range 5 seconds to 600 (10 minutes); default 45.",
 
         "kb_toast_moved": "Moved to {col}",
         "kb_toast_archived": "Archived",
@@ -1235510,6 +1235513,9 @@ const TRANSLATIONS = {
         "entity_sleep_after_minutes_label": "睡眠時間",
         "entity_sleep_after_minutes_desc": "閒置夥伴在無活動（且無待辦工作）幾分鐘後進入睡眠。",
         "entity_sleep_after_minutes_help": "在無活動（且無待辦工作、視窗內無訊息）幾分鐘後，由閒置（IDLE）轉為睡眠（SLEEPING）。允許範圍 1 分鐘到 1440 分鐘（24 小時）；預設 20。",
+        "entity_runtime_state_stale_seconds_label": "即時狀態信任時間",
+        "entity_runtime_state_stale_seconds_desc": "夥伴自行回報的即時狀態（忙碌／等待／錯誤）被信任幾秒，逾時後伺服器改用時間規則判定。",
+        "entity_runtime_state_stale_seconds_help": "夥伴在心跳中自行回報的即時狀態（忙碌 busy／卡住 stuck／當機 crashed／閒置 idle）被信任幾秒，逾時即視為過期並忽略——之後伺服器改以最後訊息時間與看板待辦底線（idle floor）判定。允許範圍 5 秒到 600 秒（10 分鐘）；預設 45。",
 
         "kb_toast_moved": "已移到 {col}",
         "kb_toast_archived": "已封存",

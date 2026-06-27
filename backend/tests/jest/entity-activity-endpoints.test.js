@@ -143,3 +143,74 @@ test('POST /api/client/speak queues inbound → pendingWork blocks sleep forever
     runEval(farFuture, { idleAfterMs: 1, sleepAfterMs: 1 });
     expect(entity.state).toBe(ACTIVITY.SLEEPING);
 });
+
+// ── (h) Stage 1/2: POST /api/entity/heartbeat stamps runtimeState ──
+test('(h) heartbeat with runtimeState "busy" stamps runtimeState/lastRuntimeBusyAt → BUSY', async () => {
+    const deviceId = 'fsm-dev-hb-busy';
+    const deviceSecret = 'fsm-secret-hb-busy';
+    const botSecret = await bindEntity(deviceId, deviceSecret, 0);
+
+    const entity = devices[deviceId].entities[0];
+    // Make the entity OTHERWISE want to sleep: stale send, no pending, no card.
+    entity.lastSendAt = Date.now() - 60 * 60 * 1000;
+    entity.lastActivityAt = Date.now() - 60 * 60 * 1000;
+
+    const res = await post('/api/entity/heartbeat').send({
+        deviceId, entityId: 0, botSecret, runtimeState: 'busy',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.runtimeState).toBe('busy');           // echoed back
+    expect(entity.runtimeState).toBe('busy');
+    expect(typeof entity.lastRuntimeStateAt).toBe('number');
+    expect(typeof entity.lastRuntimeBusyAt).toBe('number');
+
+    // FAIL-ON-OLD: old heartbeat ignored runtimeState; the stale entity would
+    // sleep. With a fresh runtime busy stamp the evaluator returns BUSY.
+    runEval(Date.now(), { idleAfterMs: 60 * 1000, sleepAfterMs: 20 * 60 * 1000 });
+    expect(entity.state).toBe(ACTIVITY.ACTIVE);
+});
+
+test('heartbeat runtimeState "stuck" → REVIEW; "crashed" → FAILED', async () => {
+    const deviceId = 'fsm-dev-hb-states';
+    const deviceSecret = 'fsm-secret-hb-states';
+    const botSecret = await bindEntity(deviceId, deviceSecret, 0);
+    const entity = devices[deviceId].entities[0];
+    const opts = { idleAfterMs: 60 * 1000, sleepAfterMs: 20 * 60 * 1000 };
+
+    let res = await post('/api/entity/heartbeat').send({ deviceId, entityId: 0, botSecret, runtimeState: 'stuck' });
+    expect(res.status).toBe(200);
+    expect(entity.runtimeState).toBe('stuck');
+    runEval(Date.now(), opts);
+    expect(entity.state).toBe('REVIEW');
+
+    res = await post('/api/entity/heartbeat').send({ deviceId, entityId: 0, botSecret, runtimeState: 'crashed' });
+    expect(res.status).toBe(200);
+    expect(entity.runtimeState).toBe('crashed');
+    runEval(Date.now(), opts);
+    expect(entity.state).toBe('FAILED');
+
+    // recovers: back to busy → BUSY (wakes from FAILED).
+    res = await post('/api/entity/heartbeat').send({ deviceId, entityId: 0, botSecret, runtimeState: 'busy' });
+    expect(res.status).toBe(200);
+    runEval(Date.now(), opts);
+    expect(entity.state).toBe(ACTIVITY.ACTIVE);
+});
+
+test('heartbeat is backward-compatible (no runtimeState) and rejects junk values', async () => {
+    const deviceId = 'fsm-dev-hb-compat';
+    const deviceSecret = 'fsm-secret-hb-compat';
+    const botSecret = await bindEntity(deviceId, deviceSecret, 0);
+    const entity = devices[deviceId].entities[0];
+
+    // No runtimeState → old behavior, nothing stamped.
+    let res = await post('/api/entity/heartbeat').send({ deviceId, entityId: 0, botSecret });
+    expect(res.status).toBe(200);
+    expect(res.body.runtimeState).toBeNull();
+    expect(entity.runtimeState).toBeUndefined();
+
+    // Out-of-allow-list value → ignored (never stamped).
+    res = await post('/api/entity/heartbeat').send({ deviceId, entityId: 0, botSecret, runtimeState: 'pizza' });
+    expect(res.status).toBe(200);
+    expect(res.body.runtimeState).toBeNull();
+    expect(entity.runtimeState).toBeUndefined();
+});
