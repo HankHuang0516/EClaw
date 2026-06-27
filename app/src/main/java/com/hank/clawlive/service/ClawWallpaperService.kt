@@ -50,6 +50,14 @@ class ClawWallpaperService : WallpaperService() {
             this@ClawWallpaperService
         )
 
+        // Live drag-to-reposition (HARD PIN). The pure-Kotlin state machine owns
+        // the hit-test / long-press / drag / commit decisions; this Engine is the
+        // Android glue (Handler timer, renderer redraw, prefs persistence).
+        private val layoutPrefs =
+            com.hank.clawlive.data.local.LayoutPreferences.getInstance(this@ClawWallpaperService)
+        private val dragController = com.hank.clawlive.engine.WallpaperDragController()
+        private var pendingLongPress: Runnable? = null
+
         private val engineScope = kotlinx.coroutines.CoroutineScope(
             kotlinx.coroutines.Dispatchers.Main + kotlinx.coroutines.SupervisorJob()
         )
@@ -328,43 +336,152 @@ class ClawWallpaperService : WallpaperService() {
         }
 
         override fun onTouchEvent(event: android.view.MotionEvent?) {
-            if (event?.action == android.view.MotionEvent.ACTION_UP) {
-                // Only wake up if there are bound entities
-                if (multiEntityMode) {
-                    if (currentEntities.isEmpty()) {
-                        // No entities connected, do nothing
-                        super.onTouchEvent(event)
-                        return
-                    }
-                    // Wake up entity 0 on tap
-                    currentEntities = currentEntities.mapIndexed { index, entity ->
-                        if (index == 0) entity.copy(message = "Waking up...", state = CharacterState.EXCITED)
-                        else entity
-                    }
-                } else {
-                    currentStatus = currentStatus.copy(message = "Waking up...", state = CharacterState.EXCITED)
+            if (event == null) {
+                super.onTouchEvent(event)
+                return
+            }
+            when (event.actionMasked) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    if (handleDragDown(event)) return
                 }
-                if (visible) draw()
-
-                engineScope.launch {
-                    try {
-                        repository.wakeUp()
-                        if (multiEntityMode && currentEntities.isNotEmpty()) {
-                            currentEntities = currentEntities.mapIndexed { index, entity ->
-                                if (index == 0) entity.copy(message = "I'm Awake!")
-                                else entity
-                            }
-                        } else {
-                            currentStatus = currentStatus.copy(message = "I'm Awake!")
-                        }
+                android.view.MotionEvent.ACTION_MOVE -> {
+                    if (handleDragMove(event)) return
+                }
+                android.view.MotionEvent.ACTION_UP -> {
+                    if (handleDragUp(event)) return
+                    // Not a drag — original tap = wake-entity-0 behavior.
+                    handleTapWake()
+                }
+                android.view.MotionEvent.ACTION_CANCEL -> {
+                    cancelPendingLongPress()
+                    if (dragController.isDragging) {
+                        dragController.cancel()
+                        renderer.endDrag()
                         if (visible) draw()
-                        kotlinx.coroutines.delay(2000)
-                    } catch (e: Exception) {
-                        Timber.e(e, "Wake up failed")
                     }
                 }
             }
             super.onTouchEvent(event)
+        }
+
+        /** Hit radius for grabbing an entity (scaled with screen + a min target). */
+        private fun hitRadiusPx(): Float {
+            val w = renderer.lastDrawWidth().takeIf { it > 0f }
+                ?: surfaceHolder?.surfaceFrame?.width()?.toFloat()
+                ?: return 0f
+            val minRadius = 96f * resources.displayMetrics.density
+            return maxOf(
+                w * com.hank.clawlive.engine.WallpaperDragController.DEFAULT_HIT_RADIUS_FACTOR,
+                minRadius
+            )
+        }
+
+        private fun cancelPendingLongPress() {
+            pendingLongPress?.let { handler.removeCallbacks(it) }
+            pendingLongPress = null
+        }
+
+        /**
+         * ACTION_DOWN: if the touch lands on a rendered entity, arm a long-press
+         * that promotes the press to a drag. Returns true when the press was
+         * captured (an entity is under the finger), so the Engine waits for the
+         * long-press instead of treating it as a plain tap.
+         */
+        private fun handleDragDown(event: android.view.MotionEvent): Boolean {
+            if (currentEntities.isEmpty()) return false
+            val result = dragController.onDown(
+                event.x,
+                event.y,
+                renderer.lastRenderedPositions(),
+                hitRadiusPx()
+            )
+            if (!result.hitEntity) return false
+            val x = event.x
+            val y = event.y
+            cancelPendingLongPress()
+            val runnable = Runnable {
+                pendingLongPress = null
+                val id = dragController.onLongPress() ?: return@Runnable
+                renderer.beginDrag(id, x, y)
+                if (visible) draw()
+            }
+            pendingLongPress = runnable
+            handler.postDelayed(
+                runnable,
+                com.hank.clawlive.engine.WallpaperDragController.LONG_PRESS_MS
+            )
+            return true
+        }
+
+        private fun handleDragMove(event: android.view.MotionEvent): Boolean {
+            val slop = android.view.ViewConfiguration
+                .get(this@ClawWallpaperService).scaledTouchSlop.toFloat()
+            return when (val r = dragController.onMove(event.x, event.y, slop)) {
+                is com.hank.clawlive.engine.WallpaperDragController.MoveResult.Drag -> {
+                    renderer.updateDragPosition(r.x, r.y)
+                    if (visible) draw()
+                    true
+                }
+                com.hank.clawlive.engine.WallpaperDragController.MoveResult.PendingCancelled -> {
+                    // Treat as a page swipe: drop the long-press, do not consume.
+                    cancelPendingLongPress()
+                    false
+                }
+                com.hank.clawlive.engine.WallpaperDragController.MoveResult.Ignored -> false
+            }
+        }
+
+        /**
+         * ACTION_UP: if a drag was in progress, persist the drop point as the
+         * entity's pinned custom position and stop the gesture. Returns true when
+         * a drag was committed (so the Engine skips tap=wake).
+         */
+        private fun handleDragUp(event: android.view.MotionEvent): Boolean {
+            cancelPendingLongPress()
+            val commit = dragController.onUp(
+                renderer.lastDrawWidth(),
+                renderer.lastDrawHeight()
+            )
+            renderer.endDrag()
+            if (commit == null) return false
+            // HARD PIN: custom_pos + pinned + useCustomLayout in one write.
+            layoutPrefs.pinAt(commit.entityId, commit.xPercent, commit.yPercent)
+            Timber.d("Pinned entity ${commit.entityId} at ${commit.xPercent},${commit.yPercent}")
+            if (visible) draw()
+            return true
+        }
+
+        private fun handleTapWake() {
+            // Only wake up if there are bound entities
+            if (multiEntityMode) {
+                if (currentEntities.isEmpty()) return
+                // Wake up entity 0 on tap
+                currentEntities = currentEntities.mapIndexed { index, entity ->
+                    if (index == 0) entity.copy(message = "Waking up...", state = CharacterState.EXCITED)
+                    else entity
+                }
+            } else {
+                currentStatus = currentStatus.copy(message = "Waking up...", state = CharacterState.EXCITED)
+            }
+            if (visible) draw()
+
+            engineScope.launch {
+                try {
+                    repository.wakeUp()
+                    if (multiEntityMode && currentEntities.isNotEmpty()) {
+                        currentEntities = currentEntities.mapIndexed { index, entity ->
+                            if (index == 0) entity.copy(message = "I'm Awake!")
+                            else entity
+                        }
+                    } else {
+                        currentStatus = currentStatus.copy(message = "I'm Awake!")
+                    }
+                    if (visible) draw()
+                    kotlinx.coroutines.delay(2000)
+                } catch (e: Exception) {
+                    Timber.e(e, "Wake up failed")
+                }
+            }
         }
 
         override fun onSurfaceCreated(holder: SurfaceHolder?) {
@@ -430,6 +547,7 @@ class ClawWallpaperService : WallpaperService() {
             // posted lambdas become no-ops instead of firing against a dead engine.
             resumeWatchdogToken++
             handler.removeCallbacks(healthHeartbeat)
+            cancelPendingLongPress()
             lifecycle.onEngineDestroy()
             Timber.d("ClawEngine onDestroy — engine-lifetime resources released")
             super.onDestroy()

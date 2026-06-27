@@ -154,7 +154,8 @@ class WallpaperWanderController(
         purposeful: Boolean = true,
         nowMs: Long = System.currentTimeMillis(),
         conversationEntityIds: Set<Int> = emptySet(),
-        entityUnitPx: Float = min(width, height) * DEFAULT_GATHER_SPACING_PCT
+        entityUnitPx: Float = min(width, height) * DEFAULT_GATHER_SPACING_PCT,
+        pinnedEntityIds: Set<Int> = emptySet()
     ): List<Pair<Float, Float>> {
         if (!enabled || width <= 0f || height <= 0f) {
             states.clear()
@@ -180,7 +181,16 @@ class WallpaperWanderController(
 
         return entities.mapIndexed { index, entity ->
             val base = basePositions.getOrNull(index) ?: (width / 2f to height / 2f)
-            if (entity.state.pausesAmbientWander) {
+            if (entity.entityId in pinnedEntityIds) {
+                // HARD PIN (owner decision): the entity is LOCKED at its configured
+                // position. No advance, no retarget, no ambient action, no
+                // conversation gather — it stays EXACTLY at base every frame. We
+                // still sync the internal state to base so an eventual un-pin
+                // resumes from the pinned spot rather than snapping from a stale
+                // wander position.
+                holdPinned(entity.entityId, base, width, height, nowMs)
+                base
+            } else if (entity.state.pausesAmbientWander) {
                 val state = stateFor(entity.entityId, base, width, height, nowMs)
                 state.motionState = MotionState.SLEEPING
                 state.moving = false
@@ -413,6 +423,34 @@ class WallpaperWanderController(
     private fun randomActionGoal(): AmbientWanderGoal {
         val goals = AmbientWanderGoal.values()
         return goals[random.nextInt(goals.size)]
+    }
+
+    /**
+     * Pin [entityId] to [base]: force the in-memory state to the base position and
+     * fully stop it so no motion path can move it. Idempotent per frame.
+     */
+    private fun holdPinned(
+        entityId: Int,
+        base: Pair<Float, Float>,
+        width: Float,
+        height: Float,
+        nowMs: Long
+    ) {
+        val xPct = (base.first / width).coerceIn(MIN_X_PCT, MAX_X_PCT)
+        val yPct = (base.second / height).coerceIn(MIN_Y_PCT, MAX_Y_PCT)
+        val state = stateFor(entityId, base, width, height, nowMs)
+        state.xPct = xPct
+        state.yPct = yPct
+        state.homeXPct = xPct
+        state.homeYPct = yPct
+        state.targetXPct = xPct
+        state.targetYPct = yPct
+        state.motionState = MotionState.STOPPED
+        state.moving = false
+        state.manualTarget = false
+        state.onArrive = null
+        state.actionUntilMs = 0L
+        state.lastUpdateMs = nowMs
     }
 
     private fun stateFor(

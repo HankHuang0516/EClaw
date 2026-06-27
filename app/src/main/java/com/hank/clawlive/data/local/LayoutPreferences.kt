@@ -40,12 +40,10 @@ enum class WallpaperKanbanObjectStyle {
 /**
  * Manages entity layout preferences
  */
-class LayoutPreferences private constructor(context: Context) {
-
-    private val appContext: Context = context.applicationContext
-    private val prefs: SharedPreferences = context.getSharedPreferences(
-        PREFS_NAME, Context.MODE_PRIVATE
-    )
+class LayoutPreferences private constructor(
+    private val prefs: SharedPreferences,
+    private val appContext: Context?
+) {
 
     var entityLayout: EntityLayout
         get() {
@@ -190,20 +188,30 @@ class LayoutPreferences private constructor(context: Context) {
     }
 
     /**
-     * Clear custom position for an entity
+     * Clear custom position for an entity (also drops its pin so a cleared
+     * position is never left "pinned" to a stale spot).
      */
     fun clearCustomPosition(entityId: Int) {
-        prefs.edit().remove("${KEY_CUSTOM_POS_PREFIX}$entityId").apply()
+        prefs.edit()
+            .remove("${KEY_CUSTOM_POS_PREFIX}$entityId")
+            .remove("${KEY_PINNED_PREFIX}$entityId")
+            .apply()
     }
 
     /**
-     * Clear all custom positions (reset to defaults)
+     * Clear all custom positions (reset to defaults).
+     *
+     * Scans the actual stored keys instead of a hardcoded 0..7 slot range. The
+     * old range silently skipped entity ids >= 8 (e.g. entity #10) so their
+     * custom_pos / pin orphaned forever — the configured-vs-displayed desync for
+     * high-id entities (card wallpaper-drag-pin, B3). Also clears the matching
+     * pin so a reset truly returns the entity to free/default layout.
      */
     fun clearAllCustomPositions() {
         val editor = prefs.edit()
-        for (i in 0..7) {
-            editor.remove("${KEY_CUSTOM_POS_PREFIX}$i")
-        }
+        prefs.all.keys
+            .filter { it.startsWith(KEY_CUSTOM_POS_PREFIX) || it.startsWith(KEY_PINNED_PREFIX) }
+            .forEach { editor.remove(it) }
         editor.apply()
     }
 
@@ -223,14 +231,70 @@ class LayoutPreferences private constructor(context: Context) {
     }
 
     /**
-     * Clear all custom scales (reset to defaults)
+     * Clear all custom scales (reset to defaults).
+     *
+     * Key-scan (not 0..7) so entity ids >= 8 (e.g. entity #10) are cleared too
+     * — same #10-orphan fix as [clearAllCustomPositions] (card wallpaper-drag-pin, B3).
      */
     fun clearAllEntityScales() {
         val editor = prefs.edit()
-        for (i in 0..7) {
-            editor.remove("${KEY_ENTITY_SCALE_PREFIX}$i")
-        }
+        prefs.all.keys
+            .filter { it.startsWith(KEY_ENTITY_SCALE_PREFIX) }
+            .forEach { editor.remove(it) }
         editor.apply()
+    }
+
+    // ============================================================
+    // PINNED POSITION (HARD PIN) — owner decision: a dragged/dropped
+    // position becomes a LOCK. A pinned entity stops EXACTLY at its
+    // custom_pos and does not wander/retarget/gather around it. The flag
+    // is per-entity and read by the wander loop (WallpaperWanderController)
+    // and the renderer.
+    // ============================================================
+
+    /** Whether [entityId] is pinned (held exactly at its custom position). */
+    fun isPinned(entityId: Int): Boolean {
+        return prefs.getBoolean("${KEY_PINNED_PREFIX}$entityId", false)
+    }
+
+    /** Set or clear the pin for [entityId]. */
+    fun setPinned(entityId: Int, pinned: Boolean) {
+        if (pinned) {
+            prefs.edit().putBoolean("${KEY_PINNED_PREFIX}$entityId", true).apply()
+        } else {
+            prefs.edit().remove("${KEY_PINNED_PREFIX}$entityId").apply()
+        }
+    }
+
+    /** All currently-pinned entity ids (scans actual keys; not slot-limited). */
+    fun getPinnedEntityIds(): Set<Int> {
+        return prefs.all.keys
+            .filter { it.startsWith(KEY_PINNED_PREFIX) && prefs.getBoolean(it, false) }
+            .mapNotNull { it.removePrefix(KEY_PINNED_PREFIX).toIntOrNull() }
+            .toSet()
+    }
+
+    /** True if ANY entity has a saved custom position or pin. */
+    fun hasAnyCustomOrPinnedPosition(): Boolean {
+        return prefs.all.keys.any {
+            (it.startsWith(KEY_CUSTOM_POS_PREFIX)) ||
+                (it.startsWith(KEY_PINNED_PREFIX) && prefs.getBoolean(it, false))
+        }
+    }
+
+    /**
+     * Atomically pin [entityId] at (xPercent,yPercent): persist the custom
+     * position, set the pin, and enable custom layout so the renderer honors it.
+     * This is the single write the live-wallpaper drag commit performs.
+     */
+    fun pinAt(entityId: Int, xPercent: Float, yPercent: Float) {
+        val x = xPercent.coerceIn(0.05f, 0.95f)
+        val y = yPercent.coerceIn(0.05f, 0.95f)
+        prefs.edit()
+            .putString("${KEY_CUSTOM_POS_PREFIX}$entityId", "$x,$y")
+            .putBoolean("${KEY_PINNED_PREFIX}$entityId", true)
+            .putBoolean(KEY_USE_CUSTOM_LAYOUT, true)
+            .apply()
     }
 
     /**
@@ -238,13 +302,15 @@ class LayoutPreferences private constructor(context: Context) {
      * @param permutation order[newSlot] = oldSlot (same semantics as the reorder API)
      */
     fun migrateEntityOrder(permutation: IntArray) {
-        // 1. Snapshot old positions and scales
+        // 1. Snapshot old positions, scales, and pins
         val oldPositions = mutableMapOf<Int, String?>()
         val oldScales = mutableMapOf<Int, Float?>()
+        val oldPinned = mutableMapOf<Int, Boolean>()
         for (oldSlot in permutation) {
             oldPositions[oldSlot] = prefs.getString("${KEY_CUSTOM_POS_PREFIX}$oldSlot", null)
             val scaleKey = "${KEY_ENTITY_SCALE_PREFIX}$oldSlot"
             oldScales[oldSlot] = if (prefs.contains(scaleKey)) prefs.getFloat(scaleKey, 1.0f) else null
+            oldPinned[oldSlot] = prefs.getBoolean("${KEY_PINNED_PREFIX}$oldSlot", false)
         }
 
         // 2. Apply to new slots
@@ -264,6 +330,12 @@ class LayoutPreferences private constructor(context: Context) {
                 editor.putFloat("${KEY_ENTITY_SCALE_PREFIX}$newSlot", scale)
             } else {
                 editor.remove("${KEY_ENTITY_SCALE_PREFIX}$newSlot")
+            }
+            // Pin (HARD PIN follows the entity through a reorder)
+            if (oldPinned[oldSlot] == true) {
+                editor.putBoolean("${KEY_PINNED_PREFIX}$newSlot", true)
+            } else {
+                editor.remove("${KEY_PINNED_PREFIX}$newSlot")
             }
         }
 
@@ -585,9 +657,10 @@ class LayoutPreferences private constructor(context: Context) {
     }
 
     private fun isAnimatorDurationDisabled(): Boolean {
+        val ctx = appContext ?: return false
         return try {
             Settings.Global.getFloat(
-                appContext.contentResolver,
+                ctx.contentResolver,
                 Settings.Global.ANIMATOR_DURATION_SCALE,
                 1f
             ) == 0f
@@ -606,6 +679,7 @@ class LayoutPreferences private constructor(context: Context) {
         private const val KEY_USE_CUSTOM_LAYOUT = "use_custom_layout"
         private const val KEY_CUSTOM_POS_PREFIX = "custom_pos_"
         private const val KEY_ENTITY_SCALE_PREFIX = "entity_scale_"
+        private const val KEY_PINNED_PREFIX = "pinned_"
         private const val KEY_USE_BACKGROUND_IMAGE = "use_background_image"
         private const val KEY_BACKGROUND_URI = "background_image_uri"
         private const val KEY_DEBUG_ENTITY_LIMIT = "debug_entity_limit"
@@ -666,8 +740,20 @@ class LayoutPreferences private constructor(context: Context) {
 
         fun getInstance(context: Context): LayoutPreferences {
             return instance ?: synchronized(this) {
-                instance ?: LayoutPreferences(context.applicationContext).also { instance = it }
+                instance ?: LayoutPreferences(
+                    context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE),
+                    context.applicationContext
+                ).also { instance = it }
             }
         }
+
+        /**
+         * Build a standalone instance backed by the supplied [SharedPreferences]
+         * for unit tests (no Android Context / animator-scale probe). Does NOT
+         * touch the process-wide singleton.
+         */
+        @JvmStatic
+        fun forTesting(prefs: SharedPreferences): LayoutPreferences =
+            LayoutPreferences(prefs, null)
     }
 }

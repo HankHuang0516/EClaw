@@ -24,10 +24,9 @@ import com.hank.clawlive.engine.SpritesheetCompanionDrawer
 import com.hank.clawlive.engine.UsageOverlayRenderer
 import com.hank.clawlive.engine.WalkFacingDirection
 import com.hank.clawlive.engine.WallpaperInteractionController
+import com.hank.clawlive.engine.WallpaperLayoutDefaults
 import com.hank.clawlive.engine.WallpaperWanderController
 import com.hank.clawlive.data.repository.CompanionRepository
-import kotlin.math.ceil
-import kotlin.math.sqrt
 import timber.log.Timber
 
 /**
@@ -250,25 +249,9 @@ class WallpaperPreviewView @JvmOverloads constructor(
      * The last row is centered when it has fewer items than the column count.
      */
     private fun getDefaultPosition(index: Int, count: Int): Pair<Float, Float> {
-        if (count <= 0) return Pair(0.5f, 0.5f)
-        val cols = ceil(sqrt(count.toDouble())).toInt().coerceAtLeast(1)
-        val rows = ceil(count.toDouble() / cols).toInt()
-        val paddingX = 0.1f
-        val paddingY = 0.15f
-        val usableW = 1f - 2 * paddingX
-        val usableH = 1f - 2 * paddingY
-        val colStep = usableW / cols
-        val rowStep = usableH / rows
-        val row = index / cols
-        val col = index % cols
-        val itemsInLastRow = count - (rows - 1) * cols
-        val x = if (row == rows - 1 && itemsInLastRow < cols) {
-            paddingX + (usableW - itemsInLastRow * colStep) / 2f + col * colStep + colStep / 2f
-        } else {
-            paddingX + col * colStep + colStep / 2f
-        }
-        val y = paddingY + row * rowStep + rowStep / 2f
-        return Pair(x, y)
+        // Delegate to the shared default so the preview and the live renderer
+        // resolve a missing custom_pos IDENTICALLY (B1 parity).
+        return WallpaperLayoutDefaults.resolveBasePositionPercent(index, count)
     }
 
     override fun onDraw(canvas: Canvas) {
