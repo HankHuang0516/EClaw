@@ -20,6 +20,7 @@ const path = require('path');
 const { Pool } = require('pg');
 const { syncPetdexCatalog, R2_KEY_PREFIX, PROXY_PATH_PREFIX } = require('./petdex-bridge');
 const { extractFrameZero } = require('./companion-avatar-util');
+const extractCreds = require('./extract-creds');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -275,10 +276,14 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
     // `req.botAuth.entityId` may be null on device-only auth — `scope=mine`
     // still requires botSecret because it filters by author entity.
     function authReader(req, res, next) {
-        const deviceId = req.query.deviceId || req.body?.deviceId;
-        const deviceSecret = req.query.deviceSecret || req.body?.deviceSecret;
-        const botSecret = req.query.botSecret || req.body?.botSecret;
-        const entityIdRaw = req.query.entityId || req.body?.entityId;
+        // Accepts secrets via query/body (legacy) OR X-Device-Secret /
+        // X-Bot-Secret headers (secret-leakage hardening). Additive: query/body
+        // still take precedence so existing callers are unaffected.
+        const creds = extractCreds(req);
+        const deviceId = creds.deviceId;
+        const deviceSecret = creds.deviceSecret;
+        const botSecret = creds.botSecret;
+        const entityIdRaw = creds.entityId;
         const entityId = entityIdRaw != null ? parseInt(entityIdRaw, 10) : null;
 
         if (!deviceId || (!deviceSecret && !botSecret)) {

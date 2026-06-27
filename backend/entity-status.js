@@ -13,6 +13,7 @@
 
 const express = require('express');
 const safeEqual = require('./safe-equal');
+const extractCreds = require('./extract-creds');
 const { entityGitEmail } = require('./scripts/entity-git-author');
 
 const CANONICAL_AXES = [
@@ -859,10 +860,14 @@ async function incrementCounter(deviceId, entityId, axis) {
 }
 
 function authDeviceOrBot(req) {
-    let deviceId = req.query.deviceId || req.body?.deviceId;
-    const deviceSecret = req.query.deviceSecret || req.body?.deviceSecret;
-    const botSecret = req.query.botSecret || req.body?.botSecret;
-    const callerEntityId = parseInt(req.query.entityId || req.body?.entityId) || 0;
+    // Accepts secrets via query/body (legacy) OR X-Device-Secret / X-Bot-Secret
+    // headers (secret-leakage hardening). Additive: query/body still win so
+    // existing callers are unaffected.
+    const creds = extractCreds(req);
+    let deviceId = creds.deviceId;
+    const deviceSecret = creds.deviceSecret;
+    const botSecret = creds.botSecret;
+    const callerEntityId = parseInt(creds.entityId) || 0;
 
     // Portal sessions hit this endpoint with a JWT cookie and no explicit
     // device/bot secret in the query string. Mirror the same fallback used by

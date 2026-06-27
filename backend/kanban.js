@@ -41,6 +41,7 @@ const path = require('path');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const safeEqual = require('./safe-equal');
+const extractCreds = require('./extract-creds');
 const { newCardId } = require('./entity-id');
 const { tKanban, statusLabel } = require('./i18n/kanban-notifications');
 const devicePrefs = require('./device-preferences');
@@ -541,8 +542,10 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     }
 
     function authenticate(req, res) {
-        const params = { ...req.query, ...req.body };
-        const { deviceId, deviceSecret, botSecret, entityId } = params;
+        // Accepts secrets via query/body (legacy) OR X-Device-Secret /
+        // X-Bot-Secret headers (secret-leakage hardening). Additive: query/body
+        // still take precedence so existing callers are unaffected.
+        const { deviceId, deviceSecret, botSecret, entityId } = extractCreds(req);
 
         if (!deviceId) {
             res.status(400).json({ success: false, error: 'Missing deviceId' });
