@@ -27,6 +27,7 @@ const JWT_SECRET_FALLBACK = process.env.JWT_SECRET || require('crypto').randomBy
 
 const notifModule = require('./notifications');
 const devicePrefs = require('./device-preferences');
+const entityActivity = require('./lib/entity-activity');
 const orgChartModule = require('./org-chart');
 const crossDeviceSettings = require('./entity-cross-device-settings');
 const feedbackEmail = require('./feedback-email');
@@ -5840,6 +5841,15 @@ function enqueueMessage(toEntity, messageObj, ctx) {
     toEntity.messageQueue.push(messageObj);
     toEntity.lastEnqueuedAt = Date.now();
 
+    // Activity FSM: any inbound (client /api/client/speak OR A2A speakTo) is
+    // "activity" — it resets the sleep anchor and the non-empty queue makes
+    // computePendingWork() true, so the entity cannot be IDLE/SLEEPING while it
+    // owes a reply. Wake a dormant entity immediately (no 5 s loop lag).
+    toEntity.lastActivityAt = Date.now();
+    if (toEntity.state === entityActivity.ACTIVITY.SLEEPING || toEntity.state === entityActivity.ACTIVITY.IDLE) {
+        toEntity.state = entityActivity.ACTIVITY.ACTIVE;
+    }
+
     while (toEntity.messageQueue.length > MESSAGE_QUEUE_CAP) {
         const dropped = toEntity.messageQueue.shift();
         toEntity.deadLetterQueue.push({
@@ -5991,6 +6001,11 @@ function createDefaultEntity(entityId) {
         parts: {},
         lastUpdated: Date.now(),
         lastSeen: null, // Runtime heartbeat timestamp from the entity daemon
+        // Server-authoritative ACTIVITY state machine (lib/entity-activity.js):
+        lastSendAt: null,             // last /api/transform that delivered a message / busy state
+        lastActivityAt: Date.now(),   // last send OR inbound (anchors the sleep timer)
+        overlayState: null,           // active expressive overlay (EXCITED/HAPPY/...) or null
+        overlayUntil: null,           // epoch ms when the overlay reverts to the activity base
         messageQueue: [],
         deadLetterQueue: [], // Phase H1.1: capped overflow buffer for forensics
         lastEnqueuedAt: null, // Phase H1.2: when server last appended to messageQueue
@@ -6243,27 +6258,127 @@ function loadSkillDoc() {
     return "MCP Skill documentation not found.";
 }
 
-// Auto-decay loop for ALL devices' entities
-setInterval(() => {
-    const now = Date.now();
+// ============================================================================
+// Server-authoritative entity ACTIVITY state machine (lib/entity-activity.js)
+// ----------------------------------------------------------------------------
+// Replaces the old "5 min no update → Math.random() > 0.7 → SLEEPING" coin-flip
+// that randomly slept entities (incl. ones with pending work) — the root cause
+// of "entities all sleeping", which blocked walking-emulator QA. Transitions
+// are now DETERMINISTIC. The wake-to-ACTIVE direction is handled by the send
+// endpoints (/api/transform, /api/client/speak → enqueueMessage); this loop
+// only drives the decay direction (ACTIVE → IDLE → SLEEPING) and reverts
+// expired expressive overlays.
+// ============================================================================
+
+// Per-device cache of the two activity thresholds so this 5 s loop NEVER issues
+// a DB query per tick. Refreshed lazily (async, non-blocking) at most once per
+// ACTIVITY_PREFS_TTL_MS per device; the current tick uses the last-known values
+// (or module defaults until the first refresh resolves).
+const activityPrefsCache = new Map(); // deviceId -> { idleAfterMs, sleepAfterMs, fetchedAt }
+const ACTIVITY_PREFS_TTL_MS = 60 * 1000;
+
+function getActivityThresholds(deviceId, now) {
+    const cached = activityPrefsCache.get(deviceId);
+    if (!cached || now - cached.fetchedAt > ACTIVITY_PREFS_TTL_MS) {
+        // Defensive: this runs inside a timer — never let a missing/throwing
+        // getPrefs crash the loop; fall back to last-known / module defaults.
+        try {
+            const p = (devicePrefs && typeof devicePrefs.getPrefs === 'function')
+                ? devicePrefs.getPrefs(deviceId) : null;
+            if (p && typeof p.then === 'function') {
+                p.then(prefs => {
+                    const idleSec = Number(prefs.entity_idle_after_seconds);
+                    const sleepMin = Number(prefs.entity_sleep_after_minutes);
+                    activityPrefsCache.set(deviceId, {
+                        idleAfterMs: (Number.isFinite(idleSec) ? idleSec : 60) * 1000,
+                        sleepAfterMs: (Number.isFinite(sleepMin) ? sleepMin : 20) * 60 * 1000,
+                        fetchedAt: Date.now(),
+                    });
+                }).catch(() => { /* keep last-known / defaults */ });
+            }
+        } catch (_) { /* keep last-known / defaults */ }
+    }
+    if (cached) return { idleAfterMs: cached.idleAfterMs, sleepAfterMs: cached.sleepAfterMs };
+    return {
+        idleAfterMs: entityActivity.DEFAULT_IDLE_AFTER_MS,
+        sleepAfterMs: entityActivity.DEFAULT_SLEEP_AFTER_MS,
+    };
+}
+
+// Apply one deterministic activity evaluation to a single entity (mutates
+// entity.state/message/overlay). Pure decision-making lives in
+// lib/entity-activity.js; this wrapper applies the transition rules.
+function evaluateEntityActivity(entity, now, idleAfterMs, sleepAfterMs) {
+    if (!entity) return;
+
+    // 1. Active expressive overlay → keep showing it (its server TTL guarantees
+    //    it can't get stuck; it reverts below once expired).
+    if (entityActivity.overlayActive(entity, now)) {
+        if (entity.state !== entity.overlayState) {
+            entity.state = entity.overlayState;
+            entity.lastUpdated = now;
+        }
+        return;
+    }
+    const hadOverlay = !!entity.overlayState;
+    if (hadOverlay) { entity.overlayState = null; entity.overlayUntil = null; }
+
+    const desired = entityActivity.evaluateActivityState(entity, now, { idleAfterMs, sleepAfterMs });
+    const cur = entity.state;
+
+    if (hadOverlay) {
+        // Overlay just expired → revert to the derived activity base unconditionally.
+        if (cur !== desired) {
+            entity.state = desired;
+            const msg = entityActivity.defaultMessageForState(desired);
+            if (msg) entity.message = msg;
+            entity.lastUpdated = now;
+        }
+        return;
+    }
+
+    // 2. Normal decay/wake. The loop only moves toward IDLE/SLEEPING; the send
+    //    endpoints handle wake-to-ACTIVE. We still wake here if pendingWork/inbound
+    //    flipped the derived state back to ACTIVE while the entity was dormant.
+    if (desired === entityActivity.ACTIVITY.SLEEPING && cur !== entityActivity.ACTIVITY.SLEEPING) {
+        entity.state = entityActivity.ACTIVITY.SLEEPING;
+        entity.message = 'Zzz...';
+        entity.lastUpdated = now;
+    } else if (desired === entityActivity.ACTIVITY.IDLE && cur !== entityActivity.ACTIVITY.IDLE) {
+        entity.state = entityActivity.ACTIVITY.IDLE;
+        entity.message = 'Waiting...';
+        entity.lastUpdated = now;
+    } else if (desired === entityActivity.ACTIVITY.ACTIVE
+        && (cur === entityActivity.ACTIVITY.SLEEPING || cur === entityActivity.ACTIVITY.IDLE)) {
+        entity.state = entityActivity.ACTIVITY.ACTIVE;
+        entity.lastUpdated = now;
+    }
+}
+
+// Evaluate every bound entity once. `optsOverride` lets tests force explicit
+// thresholds (bypassing the per-device pref cache) for deterministic assertions.
+function runEntityActivityEvaluation(now = Date.now(), optsOverride = null) {
     for (const deviceId in devices) {
         const device = devices[deviceId];
+        if (!device || !device.entities) continue;
+        const thresholds = optsOverride || getActivityThresholds(deviceId, now);
         for (const i of Object.keys(device.entities).map(Number)) {
             const entity = device.entities[i];
             if (!entity || !entity.isBound) continue;
-
-            // Random State Change (Idle vs Sleep) if no updates for 5 minutes
-            if (now - entity.lastUpdated > 300000) {
-                if (Math.random() > 0.7) {
-                    entity.state = "SLEEPING";
-                    entity.message = "Zzz...";
-                } else {
-                    entity.state = "IDLE";
-                    entity.message = "Waiting...";
-                }
-                entity.lastUpdated = now;
-            }
+            evaluateEntityActivity(entity, now, thresholds.idleAfterMs, thresholds.sleepAfterMs);
         }
+    }
+}
+
+// NODE_ENV==='test' skips the auto-running timer (mirrors the scheduled-messages
+// poller gate) — tests drive evaluation deterministically via
+// _runEntityActivityEvaluation. The binding-code cleanup runs in either mode.
+const _activityDecayInterval = setInterval(() => {
+    const now = Date.now();
+    try {
+        if (process.env.NODE_ENV !== 'test') runEntityActivityEvaluation(now);
+    } catch (err) {
+        console.error('[ActivityFSM] evaluation tick error:', err && err.message);
     }
 
     // Clean up expired binding codes
@@ -6273,6 +6388,9 @@ setInterval(() => {
         }
     }
 }, 5000);
+if (_activityDecayInterval && typeof _activityDecayInterval.unref === 'function') {
+    _activityDecayInterval.unref(); // don't keep the process / jest alive on this timer
+}
 
 // ============================================
 // ROUTES
@@ -8040,6 +8158,7 @@ app.post('/api/bind', async (req, res) => {
     entity.state = "IDLE";
     entity.message = "Connected!";
     entity.lastUpdated = Date.now();
+    entity.lastActivityAt = Date.now(); // Activity FSM: fresh bind = recently alive (don't sleep instantly)
 
     // Get app version from pending binding (stored when device registered)
     const deviceAppVersion = binding.appVersion || entity.appVersion;
@@ -9613,6 +9732,35 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
     }
 
     entity.lastUpdated = Date.now();
+
+    // ── Server-authoritative ACTIVITY state machine (lib/entity-activity.js) ──
+    // A transform that DELIVERS a message OR declares a busy-family state marks
+    // the entity ACTIVE (sets lastSendAt + lastActivityAt). Expressive states
+    // (EXCITED/HAPPY/...) become TTL overlays so they can't get stuck. This makes
+    // the legacy `state:"IDLE"` that bots attach to every send advisory only —
+    // the SERVER decides idle/sleep deterministically (no random coin-flip).
+    {
+        const _activityNow = Date.now();
+        const _deliversMessage = finalMessage !== undefined && finalMessage && !isSuppressedMessage;
+        const _declaredBusy = entityActivity.isBusyFamilyState(state);
+        const _declaredExpressive = entityActivity.isExpressiveState(state);
+        if (_deliversMessage || _declaredBusy) {
+            entity.lastSendAt = _activityNow;
+            entity.lastActivityAt = _activityNow;
+            // Wake immediately (no 5 s loop lag) unless an expressive overlay was
+            // declared (handled below). Keep an agent's busy SUB-state if given.
+            if (_declaredBusy) {
+                entity.state = String(state).trim().toUpperCase();
+            } else if (!_declaredExpressive) {
+                entity.state = entityActivity.ACTIVITY.ACTIVE;
+            }
+        }
+        if (_declaredExpressive) {
+            entity.overlayState = String(state).trim().toUpperCase();
+            entity.overlayUntil = _activityNow + entityActivity.OVERLAY_TTL_MS;
+            entity.state = entity.overlayState;
+        }
+    }
 
     // Strip self-targets from speakTo BEFORE computing hasDelivery — otherwise
     // a bot that accidentally speakTo's its own publicCode (or entityId) loses
@@ -24359,3 +24507,7 @@ module.exports._BOT2BOT_REGEN_INTERVAL_MS = BOT2BOT_REGEN_INTERVAL_MS;
 module.exports._recordSuppressedForward = recordSuppressedForward;
 module.exports._suppressionLog = suppressionLog;
 module.exports._SUPPRESSION_LOG_CAP = SUPPRESSION_LOG_CAP;
+// Server-authoritative entity ACTIVITY state machine (lib/entity-activity.js)
+module.exports._entityActivity = entityActivity;
+module.exports._evaluateEntityActivity = evaluateEntityActivity;
+module.exports._runEntityActivityEvaluation = runEntityActivityEvaluation;
