@@ -97,12 +97,19 @@ const DEFAULTS = {
     // entity_sleep_after_minutes: minutes of inactivity (no pending work, no
     //   message in the window) before IDLE → SLEEPING. Default 20; clamped [1, 1440].
     entity_sleep_after_minutes: 20,
+    // entity_runtime_state_stale_seconds: how long a heartbeat-reported
+    //   runtimeState (busy|stuck|crashed|idle) is TRUSTED by the activity machine
+    //   before it is treated as stale and ignored (the evaluator then falls back
+    //   to lastSend / kanban-floor heuristics). Default 45; clamped [5, 600].
+    entity_runtime_state_stale_seconds: 45,
 };
 
 const ENTITY_IDLE_AFTER_SECONDS_MIN = 15;
 const ENTITY_IDLE_AFTER_SECONDS_MAX = 3600;
 const ENTITY_SLEEP_AFTER_MINUTES_MIN = 1;
 const ENTITY_SLEEP_AFTER_MINUTES_MAX = 1440;
+const ENTITY_RUNTIME_STATE_STALE_SECONDS_MIN = 5;
+const ENTITY_RUNTIME_STATE_STALE_SECONDS_MAX = 600;
 
 const ACTION_REQUEST_TIMEOUT_POLICIES = new Set(['keep', 'auto_dismiss', 'safe_default', 'consensus']);
 const ACTION_REQUEST_TIMEOUT_MINUTES_MIN = 5;
@@ -176,6 +183,9 @@ function coerceValue(key, raw) {
         }
         if (key === 'entity_sleep_after_minutes') {
             return Math.max(ENTITY_SLEEP_AFTER_MINUTES_MIN, Math.min(ENTITY_SLEEP_AFTER_MINUTES_MAX, Math.round(n)));
+        }
+        if (key === 'entity_runtime_state_stale_seconds') {
+            return Math.max(ENTITY_RUNTIME_STATE_STALE_SECONDS_MIN, Math.min(ENTITY_RUNTIME_STATE_STALE_SECONDS_MAX, Math.round(n)));
         }
         return n;
     }

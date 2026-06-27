@@ -12,9 +12,19 @@
  *   #2 pendingWork=true → never IDLE/SLEEPING.
  *   #3 inactivity ≥ SLEEP_AFTER + no pending → SLEEPING.
  *
+ * Real-activity redesign (stages 0-2, card_35cb55fc):
+ *   Stage 0 — _pendingKanban is an IDLE FLOOR, not pendingWork: an open assigned
+ *      card → IDLE (awake, never SLEEPING) but NEVER fake-BUSY. Old (#3795)
+ *      returned ACTIVE → permanent false-BUSY on #1/#5 (fail-on-old in (a)).
+ *   Stage 1 — a FRESH, trusted runtimeState "busy" is the PRIMARY BUSY signal;
+ *      absent/stale → graceful fallback to the lastSend/floor heuristics.
+ *   Stage 2 — runtimeState "stuck"→REVIEW, "crashed"→FAILED (existing wire
+ *      CharacterState strings AgentStatus.fromWireValue already parses).
+ *
  * FAIL-ON-OLD: this module (lib/entity-activity.js) does not exist on old code,
  * so the suite hard-fails there; the assertions additionally pin the exact
- * coin-flip failure mode (see the Math.random stub test).
+ * coin-flip failure mode (see the Math.random stub test) and the Stage 0/1/2
+ * behavior changes vs the #3795 baseline.
  */
 
 const activity = require('../../lib/entity-activity');
@@ -114,17 +124,6 @@ describe('entity-activity: pendingWork forbids IDLE/SLEEPING', () => {
         }
     });
 
-    test('precomputed kanban in_progress flag blocks sleep', () => {
-        const entity = makeEntity({
-            lastSendAt: NOW - 60 * 60 * 1000,
-            lastActivityAt: NOW - 60 * 60 * 1000,
-            messageQueue: [],
-            _pendingKanban: true,
-        });
-        expect(activity.computePendingWork(entity)).toBe(true);
-        expect(activity.evaluateActivityState(entity, NOW, OPTS)).toBe(ACTIVITY.ACTIVE);
-    });
-
     test('precomputed queued scheduled-message flag blocks sleep', () => {
         const entity = makeEntity({
             lastSendAt: NOW - 60 * 60 * 1000,
@@ -197,24 +196,29 @@ describe('entity-activity: open kanban assignment forbids sleep (card_52b9032216
         return entity;
     }
 
-    // ── (a) open assigned card + stale + empty queue → ACTIVE, never SLEEPING ──
-    test('(a) bot with an open assigned (in_progress) card is ACTIVE, NOT SLEEPING', () => {
+    // ── (a) Stage 0: open assigned card = IDLE FLOOR — IDLE, never SLEEPING,
+    //    never fake-BUSY (this is the live false-BUSY fix for #1/#5). ──
+    test('(a) open assigned card → IDLE floor (never SLEEPING, never fake-BUSY)', () => {
         const rows = [
             { device_id: DEVICE, status: 'in_progress', archived: false, assigned_bots: [2] },
             { device_id: DEVICE, status: 'todo', archived: false, assigned_bots: [5, 7] },
         ];
         const bot2 = wire(2, rows);
-        // FAIL-ON-OLD: without the kanban signal this entity is SLEEPING…
+        // Without ANY kanban signal this stale, empty-queue entity → SLEEPING.
         expect(activity.evaluateActivityState(makeEntity({ entityId: 2, ...STALE }), NOW, OPTS))
             .toBe(ACTIVITY.SLEEPING);
-        // …with it, the wired entity stays awake.
+        // FAIL-ON-OLD (#3795 wired _pendingKanban as pendingWork → returned ACTIVE
+        // here, i.e. a permanent false-BUSY on the wallpaper). Stage 0: the open
+        // card is now ONLY an IDLE floor → the bot stays awake but shows IDLE.
         expect(bot2._pendingKanban).toBe(true);
-        expect(activity.evaluateActivityState(bot2, NOW, OPTS)).toBe(ACTIVITY.ACTIVE);
+        expect(activity.computePendingWork(bot2)).toBe(false);
+        expect(activity.evaluateActivityState(bot2, NOW, OPTS)).toBe(ACTIVITY.IDLE);
         expect(activity.evaluateActivityState(bot2, NOW, OPTS)).not.toBe(ACTIVITY.SLEEPING);
+        expect(activity.evaluateActivityState(bot2, NOW, OPTS)).not.toBe(ACTIVITY.ACTIVE);
 
-        // a multi-assignee 'todo' card keeps EACH assignee awake.
-        expect(activity.evaluateActivityState(wire(5, rows), NOW, OPTS)).toBe(ACTIVITY.ACTIVE);
-        expect(activity.evaluateActivityState(wire(7, rows), NOW, OPTS)).toBe(ACTIVITY.ACTIVE);
+        // a multi-assignee 'todo' card keeps EACH assignee awake at the IDLE floor.
+        expect(activity.evaluateActivityState(wire(5, rows), NOW, OPTS)).toBe(ACTIVITY.IDLE);
+        expect(activity.evaluateActivityState(wire(7, rows), NOW, OPTS)).toBe(ACTIVITY.IDLE);
     });
 
     // ── (b) no assigned cards + stale → SLEEPING (unchanged) ──
@@ -279,8 +283,161 @@ describe('entity-activity: expressive overlays + state classifiers', () => {
     });
 
     test('canonical activity states map to existing wire CharacterState values', () => {
+        // Every value is a string AgentStatus.fromWireValue already parses
+        // (app/.../data/model/AgentStatus.kt) — no new client art/strings.
         expect(ACTIVITY.ACTIVE).toBe('BUSY');
         expect(ACTIVITY.IDLE).toBe('IDLE');
         expect(ACTIVITY.SLEEPING).toBe('SLEEPING');
+        expect(ACTIVITY.REVIEW).toBe('REVIEW');
+        expect(ACTIVITY.FAILED).toBe('FAILED');
+    });
+});
+
+describe('entity-activity: Stage 1/2 real-activity runtimeState (busy/stuck/crashed/idle)', () => {
+    const STALE_CARD = {
+        // far past SLEEP_AFTER, empty queue, but an OPEN assigned card → without a
+        // runtime signal this would sit at the IDLE floor.
+        lastSendAt: NOW - (SLEEP_AFTER_MS + 10 * 60 * 1000),
+        lastActivityAt: NOW - (SLEEP_AFTER_MS + 10 * 60 * 1000),
+        messageQueue: [],
+        _pendingKanban: true,
+    };
+    // 45s default staleness window is applied when opts.runtimeStaleMs is omitted.
+    const fresh = (now) => now - 10 * 1000;  // stamped 10s ago = fresh
+    const stale = (now) => now - 90 * 1000;  // stamped 90s ago = stale (> 45s)
+
+    // ── (c) fresh runtimeState busy → BUSY regardless of cards ──
+    test('(c) fresh runtimeState "busy" → BUSY even with no cards and a stale lastSend', () => {
+        const entity = makeEntity({
+            lastSendAt: NOW - (SLEEP_AFTER_MS + 60 * 1000), // would otherwise SLEEP
+            lastActivityAt: NOW - (SLEEP_AFTER_MS + 60 * 1000),
+            runtimeState: 'busy',
+            lastRuntimeStateAt: fresh(NOW),
+            lastRuntimeBusyAt: fresh(NOW),
+        });
+        // FAIL-ON-OLD: old evaluator had no runtimeState input → this entity
+        // (stale send, no pending) decayed to SLEEPING. Now it is BUSY.
+        expect(activity.evaluateActivityState(makeEntity({
+            lastSendAt: NOW - (SLEEP_AFTER_MS + 60 * 1000),
+            lastActivityAt: NOW - (SLEEP_AFTER_MS + 60 * 1000),
+        }), NOW, OPTS)).toBe(ACTIVITY.SLEEPING);
+        expect(activity.evaluateActivityState(entity, NOW, OPTS)).toBe(ACTIVITY.ACTIVE);
+    });
+
+    // ── (d) fresh runtimeState stuck → REVIEW ──
+    test('(d) fresh runtimeState "stuck" → REVIEW (agent waiting at a confirm/prompt)', () => {
+        const entity = makeEntity({
+            ...STALE_CARD,
+            runtimeState: 'stuck',
+            lastRuntimeStateAt: fresh(NOW),
+        });
+        // FAIL-ON-OLD: old code only ever returned BUSY/IDLE/SLEEPING — REVIEW is new.
+        expect(activity.evaluateActivityState(entity, NOW, OPTS)).toBe(ACTIVITY.REVIEW);
+        expect(activity.evaluateActivityState(entity, NOW, OPTS)).toBe('REVIEW');
+    });
+
+    // ── (e) fresh runtimeState crashed → FAILED ──
+    test('(e) fresh runtimeState "crashed" → FAILED', () => {
+        const entity = makeEntity({
+            ...STALE_CARD,
+            runtimeState: 'crashed',
+            lastRuntimeStateAt: fresh(NOW),
+        });
+        // FAIL-ON-OLD: FAILED is a new evaluator output.
+        expect(activity.evaluateActivityState(entity, NOW, OPTS)).toBe(ACTIVITY.FAILED);
+        expect(activity.evaluateActivityState(entity, NOW, OPTS)).toBe('FAILED');
+    });
+
+    // ── (f) regression: nothing fresh, no cards → SLEEPING ──
+    test('(f) stale runtimeState + no cards + stale send → SLEEPING (regression)', () => {
+        const entity = makeEntity({
+            lastSendAt: NOW - (SLEEP_AFTER_MS + 60 * 1000),
+            lastActivityAt: NOW - (SLEEP_AFTER_MS + 60 * 1000),
+            runtimeState: 'busy',
+            lastRuntimeStateAt: stale(NOW),       // 90s ago → ignored
+            lastRuntimeBusyAt: NOW - (SLEEP_AFTER_MS + 60 * 1000),
+        });
+        expect(activity.freshRuntimeState(entity, NOW)).toBeNull();
+        expect(activity.evaluateActivityState(entity, NOW, OPTS)).toBe(ACTIVITY.SLEEPING);
+    });
+
+    // ── (g) stale runtimeState → graceful fallback to lastSendAt heuristic ──
+    test('(g) stale runtimeState busy is ignored; lastSendAt grace still applies', () => {
+        // stuck reported 90s ago (stale) but a message was sent 10s ago → the
+        // evaluator ignores the stale runtime and falls back to lastSend → BUSY.
+        const recentSend = makeEntity({
+            lastSendAt: NOW - 10 * 1000,
+            lastActivityAt: NOW - 10 * 1000,
+            runtimeState: 'stuck',
+            lastRuntimeStateAt: stale(NOW),
+        });
+        expect(activity.evaluateActivityState(recentSend, NOW, OPTS)).toBe(ACTIVITY.ACTIVE);
+
+        // same stale runtime but the send is also old + an open card → IDLE floor
+        // (NOT the stale REVIEW, NOT SLEEPING).
+        const oldSend = makeEntity({
+            ...STALE_CARD,
+            runtimeState: 'stuck',
+            lastRuntimeStateAt: stale(NOW),
+        });
+        expect(activity.evaluateActivityState(oldSend, NOW, OPTS)).toBe(ACTIVITY.IDLE);
+    });
+
+    // ── lastRuntimeBusyAt extends the BUSY grace even with no current heartbeat ──
+    test('recent lastRuntimeBusyAt keeps BUSY within idle grace (graceful degradation)', () => {
+        const entity = makeEntity({
+            lastSendAt: NOW - 60 * 60 * 1000,        // sent long ago
+            lastActivityAt: NOW - 60 * 60 * 1000,
+            runtimeState: 'busy',
+            lastRuntimeStateAt: stale(NOW),          // current beat stale → ignored
+            lastRuntimeBusyAt: NOW - 20 * 1000,      // but was busy 20s ago (< idle grace)
+        });
+        expect(activity.freshRuntimeState(entity, NOW)).toBeNull();
+        expect(activity.evaluateActivityState(entity, NOW, OPTS)).toBe(ACTIVITY.ACTIVE);
+    });
+
+    // ── fresh "idle" is NOT a hard override; it falls through to heuristics ──
+    test('fresh runtimeState "idle" falls through to the IDLE floor / sleep logic', () => {
+        const withCard = makeEntity({
+            ...STALE_CARD,
+            runtimeState: 'idle',
+            lastRuntimeStateAt: fresh(NOW),
+            lastRuntimeBusyAt: 0,
+        });
+        expect(activity.evaluateActivityState(withCard, NOW, OPTS)).toBe(ACTIVITY.IDLE);
+
+        const noCard = makeEntity({
+            lastSendAt: NOW - (SLEEP_AFTER_MS + 60 * 1000),
+            lastActivityAt: NOW - (SLEEP_AFTER_MS + 60 * 1000),
+            runtimeState: 'idle',
+            lastRuntimeStateAt: fresh(NOW),
+        });
+        expect(activity.evaluateActivityState(noCard, NOW, OPTS)).toBe(ACTIVITY.SLEEPING);
+    });
+
+    // ── out-of-allow-list runtimeState is ignored ──
+    test('unknown runtimeState value is ignored (treated as absent)', () => {
+        expect(activity.freshRuntimeState({ runtimeState: 'pizza', lastRuntimeStateAt: fresh(NOW) }, NOW)).toBeNull();
+        expect(activity.freshRuntimeState({ runtimeState: 'busy', lastRuntimeStateAt: 0 }, NOW)).toBeNull();
+        expect(activity.freshRuntimeState({}, NOW)).toBeNull();
+        expect(activity.freshRuntimeState(null, NOW)).toBeNull();
+        // normalizes case/whitespace
+        expect(activity.freshRuntimeState({ runtimeState: '  BUSY ', lastRuntimeStateAt: fresh(NOW) }, NOW)).toBe('busy');
+    });
+
+    // ── a custom (shorter) staleness window is honored ──
+    test('runtimeStaleMs opt tightens the trust window', () => {
+        const entity = makeEntity({
+            ...STALE_CARD,
+            runtimeState: 'busy',
+            lastRuntimeStateAt: NOW - 30 * 1000, // 30s ago
+            lastRuntimeBusyAt: NOW - 30 * 1000,
+        });
+        // default 45s window → fresh → BUSY
+        expect(activity.evaluateActivityState(entity, NOW, OPTS)).toBe(ACTIVITY.ACTIVE);
+        // tightened to 20s → 30s-old beat is stale → no current grace either
+        // (lastRuntimeBusyAt 30s > a 20s idle grace) → IDLE floor.
+        expect(activity.evaluateActivityState(entity, NOW, { ...OPTS, idleAfterMs: 20 * 1000, runtimeStaleMs: 20 * 1000 }))
+            .toBe(ACTIVITY.IDLE);
     });
 });

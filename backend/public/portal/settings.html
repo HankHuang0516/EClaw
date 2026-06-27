@@ -1058,6 +1058,18 @@
                        onchange="saveEntitySleepAfterMinutes(this.value)"
                        aria-label="Entity go to sleep after minutes">
             </div>
+            <div class="setting-row">
+                <!-- HELP-KEY: entity_runtime_state_stale_seconds_help -->
+                <div class="setting-row-label">
+                    <span data-i18n="entity_runtime_state_stale_seconds_label">Trust live status for</span>
+                    <small style="display:block;color:var(--text-muted);font-size:11px;" data-i18n="entity_runtime_state_stale_seconds_desc">Seconds a bot's self-reported live status (busy / waiting / error) is trusted before the server falls back to timing rules.</small>
+                </div>
+                <input type="number" id="entityRuntimeStateStaleSeconds" class="policy-input"
+                       min="5" max="600" step="5" value="45"
+                       style="width:110px;text-align:right;"
+                       onchange="saveEntityRuntimeStateStaleSeconds(this.value)"
+                       aria-label="Entity trust live status for seconds">
+            </div>
         </div>
 
         <!-- Owner Rental Roster Card -->
@@ -2968,6 +2980,7 @@
         // ============================================
         const ENTITY_IDLE_AFTER_SECONDS = { MIN: 15, MAX: 3600, DEFAULT: 60 };
         const ENTITY_SLEEP_AFTER_MINUTES = { MIN: 1, MAX: 1440, DEFAULT: 20 };
+        const ENTITY_RUNTIME_STATE_STALE_SECONDS = { MIN: 5, MAX: 600, DEFAULT: 45 };
 
         function clampNumber(value, bounds) {
             const n = parseInt(value, 10);
@@ -2984,6 +2997,10 @@
             if (sleep) sleep.value = String(clampNumber(
                 prefs.entity_sleep_after_minutes != null ? prefs.entity_sleep_after_minutes : ENTITY_SLEEP_AFTER_MINUTES.DEFAULT,
                 ENTITY_SLEEP_AFTER_MINUTES));
+            const stale = document.getElementById('entityRuntimeStateStaleSeconds');
+            if (stale) stale.value = String(clampNumber(
+                prefs.entity_runtime_state_stale_seconds != null ? prefs.entity_runtime_state_stale_seconds : ENTITY_RUNTIME_STATE_STALE_SECONDS.DEFAULT,
+                ENTITY_RUNTIME_STATE_STALE_SECONDS));
         }
 
         async function saveEntityActivityPrefPatch(patch) {
@@ -3002,6 +3019,10 @@
 
         async function saveEntitySleepAfterMinutes(value) {
             await saveEntityActivityPrefPatch({ entity_sleep_after_minutes: clampNumber(value, ENTITY_SLEEP_AFTER_MINUTES) });
+        }
+
+        async function saveEntityRuntimeStateStaleSeconds(value) {
+            await saveEntityActivityPrefPatch({ entity_runtime_state_stale_seconds: clampNumber(value, ENTITY_RUNTIME_STATE_STALE_SECONDS) });
         }
 
         // ============================================

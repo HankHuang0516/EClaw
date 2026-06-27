@@ -40,6 +40,11 @@
       "help_key": "entity_idle_after_seconds_help"
     },
     {
+      "field_key": "entity_runtime_state_stale_seconds",
+      "label_key": "entity_runtime_state_stale_seconds_label",
+      "help_key": "entity_runtime_state_stale_seconds_help"
+    },
+    {
       "field_key": "entity_sleep_after_minutes",
       "label_key": "entity_sleep_after_minutes_label",
       "help_key": "entity_sleep_after_minutes_help"

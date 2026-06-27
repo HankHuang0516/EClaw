@@ -6322,41 +6322,53 @@ function getActivityThresholds(deviceId, now) {
                 p.then(prefs => {
                     const idleSec = Number(prefs.entity_idle_after_seconds);
                     const sleepMin = Number(prefs.entity_sleep_after_minutes);
+                    const staleSec = Number(prefs.entity_runtime_state_stale_seconds);
                     activityPrefsCache.set(deviceId, {
                         idleAfterMs: (Number.isFinite(idleSec) ? idleSec : 60) * 1000,
                         sleepAfterMs: (Number.isFinite(sleepMin) ? sleepMin : 20) * 60 * 1000,
+                        runtimeStaleMs: (Number.isFinite(staleSec) ? staleSec : 45) * 1000,
                         fetchedAt: Date.now(),
                     });
                 }).catch(() => { /* keep last-known / defaults */ });
             }
         } catch (_) { /* keep last-known / defaults */ }
     }
-    if (cached) return { idleAfterMs: cached.idleAfterMs, sleepAfterMs: cached.sleepAfterMs };
+    if (cached) return {
+        idleAfterMs: cached.idleAfterMs,
+        sleepAfterMs: cached.sleepAfterMs,
+        runtimeStaleMs: cached.runtimeStaleMs,
+    };
     return {
         idleAfterMs: entityActivity.DEFAULT_IDLE_AFTER_MS,
         sleepAfterMs: entityActivity.DEFAULT_SLEEP_AFTER_MS,
+        runtimeStaleMs: entityActivity.DEFAULT_RUNTIME_STALE_MS,
     };
 }
 
 // Apply one deterministic activity evaluation to a single entity (mutates
 // entity.state/message/overlay). Pure decision-making lives in
 // lib/entity-activity.js; this wrapper applies the transition rules.
-function evaluateEntityActivity(entity, now, idleAfterMs, sleepAfterMs) {
-    if (!entity) return;
+function evaluateEntityActivity(entity, now, idleAfterMs, sleepAfterMs, runtimeStaleMs) {
+    if (!entity) return false;
+    const A = entityActivity.ACTIVITY;
+    let changed = false;
 
     // 1. Active expressive overlay → keep showing it (its server TTL guarantees
-    //    it can't get stuck; it reverts below once expired).
+    //    it can't get stuck; it reverts below once expired). An agent-declared
+    //    EXCITED/HAPPY/REVIEW/FAILED celebration/pose ALWAYS wins over the
+    //    runtimeState-derived base for its TTL.
     if (entityActivity.overlayActive(entity, now)) {
         if (entity.state !== entity.overlayState) {
             entity.state = entity.overlayState;
             entity.lastUpdated = now;
+            changed = true;
         }
-        return;
+        return changed;
     }
     const hadOverlay = !!entity.overlayState;
     if (hadOverlay) { entity.overlayState = null; entity.overlayUntil = null; }
 
-    const desired = entityActivity.evaluateActivityState(entity, now, { idleAfterMs, sleepAfterMs });
+    const desired = entityActivity.evaluateActivityState(entity, now, { idleAfterMs, sleepAfterMs, runtimeStaleMs });
     const cur = entity.state;
 
     if (hadOverlay) {
@@ -6366,26 +6378,46 @@ function evaluateEntityActivity(entity, now, idleAfterMs, sleepAfterMs) {
             const msg = entityActivity.defaultMessageForState(desired);
             if (msg) entity.message = msg;
             entity.lastUpdated = now;
+            changed = true;
         }
-        return;
+        return changed;
     }
 
-    // 2. Normal decay/wake. The loop only moves toward IDLE/SLEEPING; the send
-    //    endpoints handle wake-to-ACTIVE. We still wake here if pendingWork/inbound
-    //    flipped the derived state back to ACTIVE while the entity was dormant.
-    if (desired === entityActivity.ACTIVITY.SLEEPING && cur !== entityActivity.ACTIVITY.SLEEPING) {
-        entity.state = entityActivity.ACTIVITY.SLEEPING;
+    // 2. Normal decay/wake + runtime-driven REVIEW/FAILED. The loop never clobbers
+    //    an agent's busy SUB-state (PROCESSING/WORKING/…) down to plain BUSY — it
+    //    only promotes to ACTIVE from a dormant/derived base. REVIEW (stuck) and
+    //    FAILED (crashed) come from a FRESH, authoritative runtimeState, so they
+    //    are applied whenever the derived state differs.
+    if (desired === A.SLEEPING && cur !== A.SLEEPING) {
+        entity.state = A.SLEEPING;
         entity.message = 'Zzz...';
         entity.lastUpdated = now;
-    } else if (desired === entityActivity.ACTIVITY.IDLE && cur !== entityActivity.ACTIVITY.IDLE) {
-        entity.state = entityActivity.ACTIVITY.IDLE;
+        changed = true;
+    } else if (desired === A.IDLE && cur !== A.IDLE) {
+        entity.state = A.IDLE;
         entity.message = 'Waiting...';
         entity.lastUpdated = now;
-    } else if (desired === entityActivity.ACTIVITY.ACTIVE
-        && (cur === entityActivity.ACTIVITY.SLEEPING || cur === entityActivity.ACTIVITY.IDLE)) {
-        entity.state = entityActivity.ACTIVITY.ACTIVE;
+        changed = true;
+    } else if (desired === A.REVIEW && cur !== A.REVIEW) {
+        // runtimeState "stuck" — agent waiting at a confirm/prompt. Preserve the
+        // current bubble text (often the prompt itself); only flip the state.
+        entity.state = A.REVIEW;
         entity.lastUpdated = now;
+        changed = true;
+    } else if (desired === A.FAILED && cur !== A.FAILED) {
+        // runtimeState "crashed"/error. Preserve the bubble text; flip the state.
+        entity.state = A.FAILED;
+        entity.lastUpdated = now;
+        changed = true;
+    } else if (desired === A.ACTIVE
+        && (cur === A.SLEEPING || cur === A.IDLE || cur === A.REVIEW || cur === A.FAILED)) {
+        // Wake back to BUSY from any derived dormant/blocked base (e.g. runtime
+        // flipped stuck→busy, or pendingWork/inbound arrived while idle).
+        entity.state = A.ACTIVE;
+        entity.lastUpdated = now;
+        changed = true;
     }
+    return changed;
 }
 
 // Evaluate every bound entity once. `optsOverride` lets tests force explicit
@@ -6400,10 +6432,32 @@ function runEntityActivityEvaluation(now = Date.now(), optsOverride = null) {
         for (const i of Object.keys(device.entities).map(Number)) {
             const entity = device.entities[i];
             if (!entity || !entity.isBound) continue;
-            // Open assigned kanban card (todo/in_progress) → pendingWork → the
-            // evaluator forbids IDLE/SLEEPING, so a busy bot never shows asleep.
+            // Open assigned kanban card (todo/in_progress) → IDLE FLOOR: the
+            // evaluator forbids SLEEPING (so a bot with work never shows asleep)
+            // but no longer fakes BUSY (Stage 0).
             entity._pendingKanban = !!(openKanban && openKanban.has(entity.entityId));
-            evaluateEntityActivity(entity, now, thresholds.idleAfterMs, thresholds.sleepAfterMs);
+            const changed = evaluateEntityActivity(
+                entity, now, thresholds.idleAfterMs, thresholds.sleepAfterMs, thresholds.runtimeStaleMs);
+            // Push the new activity-derived state to live clients (wallpaper /
+            // dashboard) so heartbeat-driven BUSY/REVIEW/FAILED + idle/sleep decay
+            // are real-time, not only visible on the next /api/entities poll. Emit
+            // ONLY on a real state change (bounded: ≤1 per entity per transition)
+            // and never let an emit error crash the activity loop. For leased_out
+            // entities emit STATE ONLY — the bubble text may be renter chat content
+            // that must not leak to the owner (mirrors the transform emit policy).
+            if (changed && io) {
+                try {
+                    const base = {
+                        deviceId, entityId: entity.entityId,
+                        name: entity.name, character: entity.character,
+                        state: entity.state,
+                        parts: entity.parts, lastUpdated: entity.lastUpdated,
+                        xp: entity.xp || 0, level: entity.level || 1,
+                    };
+                    if (entity.rental_status !== 'leased_out') base.message = entity.message;
+                    io.to(`device:${deviceId}`).emit('entity:update', base);
+                } catch (_) { /* never break the activity loop on an emit error */ }
+            }
         }
     }
 }
@@ -8758,7 +8812,7 @@ app.get('/api/b2b-status', (req, res) => {
  * Body: { deviceId, entityId, botSecret } or { deviceId, entityId, deviceSecret }
  */
 app.post('/api/entity/heartbeat', async (req, res) => {
-    const { deviceId, entityId, botSecret, deviceSecret } = req.body || {};
+    const { deviceId, entityId, botSecret, deviceSecret, runtimeState } = req.body || {};
 
     if (!deviceId) {
         return res.status(400).json({ success: false, message: 'deviceId required' });
@@ -8785,6 +8839,26 @@ app.post('/api/entity/heartbeat', async (req, res) => {
     }
 
     const status = recordEntityHeartbeat(entity);
+
+    // OPTIONAL real-activity signal from the agent's own runtime (Stage 1/2).
+    // Backward-compatible: when `runtimeState` is absent the heartbeat behaves
+    // exactly as before. The value is validated against a fixed allow-list
+    // (busy|stuck|crashed|idle); anything else is ignored (never stamped) so a
+    // bad client can't wedge an entity into an arbitrary state. The activity FSM
+    // (lib/entity-activity.js) only TRUSTS this stamp while it is fresh
+    // (entity_runtime_state_stale_seconds, default 45 s).
+    let runtimeStateAccepted = null;
+    if (runtimeState !== undefined && runtimeState !== null) {
+        const rs = String(runtimeState).trim().toLowerCase();
+        if (entityActivity.RUNTIME_STATES.has(rs)) {
+            const nowMs = Date.now();
+            entity.runtimeState = rs;
+            entity.lastRuntimeStateAt = nowMs;
+            if (rs === 'busy') entity.lastRuntimeBusyAt = nowMs;
+            runtimeStateAccepted = rs;
+        }
+    }
+
     saveData().catch(err => console.error(`[Heartbeat] saveData failed: ${err.message}`));
 
     res.json({
@@ -8793,6 +8867,7 @@ app.post('/api/entity/heartbeat', async (req, res) => {
         daemonConnected: status.daemonConnected,
         lastSeen: status.lastSeen,
         stale: status.stale,
+        runtimeState: runtimeStateAccepted,
     });
 });
 
