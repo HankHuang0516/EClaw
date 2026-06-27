@@ -1,6 +1,7 @@
 // info.js — Info page logic (extracted from info.html)
 
 let currentUser = null;
+let infoTabPicker = null;
 
 window.addEventListener('DOMContentLoaded', async () => {
     // Soft auth check: show authenticated nav if logged in, public nav otherwise
@@ -25,6 +26,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     // ── Info tab switching ──
     const infoTabs = document.querySelectorAll('.info-tab');
     const infoPanels = document.querySelectorAll('.info-panel');
+    infoTabPicker = buildInfoTabPicker();
+    updateInfoTabState(
+        document.querySelector('.info-tab.active')?.getAttribute('data-info-tab') || 'quickstart'
+    );
 
     infoTabs.forEach(tab => {
         tab.addEventListener('click', () => {
@@ -32,6 +37,16 @@ window.addEventListener('DOMContentLoaded', async () => {
             switchInfoTab(target);
         });
     });
+
+    const tabRail = document.querySelector('.info-tabs');
+    if (tabRail && typeof MutationObserver !== 'undefined') {
+        const tabObserver = new MutationObserver(() => {
+            const active = document.querySelector('.info-tab.active')?.getAttribute('data-info-tab') || 'quickstart';
+            infoTabPicker = buildInfoTabPicker(true);
+            updateInfoTabState(active);
+        });
+        tabObserver.observe(tabRail, { attributes: true, attributeFilter: ['hidden'], subtree: true });
+    }
 
     // ── Guide sidebar ──
     const guideSidebarBtns = document.querySelectorAll('#guideSidebarQS .guide-sidebar-btn, #guideSidebarUG .guide-sidebar-btn, #guideSidebarAdv .guide-sidebar-btn, #guideSidebarChannelPlugins .guide-sidebar-btn');
@@ -171,6 +186,54 @@ window.addEventListener('DOMContentLoaded', async () => {
     window.addEventListener('hashchange', handleHash);
 });
 
+function buildInfoTabPicker(forceRebuild = false) {
+    const tabs = [...document.querySelectorAll('.info-tab[data-info-tab]')]
+        .filter(tab => !tab.hidden);
+    const tabRail = document.querySelector('.info-tabs');
+    if (!tabRail || !tabs.length) return null;
+
+    const existing = document.querySelector('.info-tab-picker');
+    if (existing && !forceRebuild) return existing.querySelector('.info-tab-select');
+    if (existing) existing.remove();
+
+    const wrapper = document.createElement('label');
+    wrapper.className = 'info-tab-picker';
+    wrapper.setAttribute('aria-label', 'Info section picker');
+
+    const label = document.createElement('span');
+    label.className = 'info-tab-picker-label';
+    label.textContent = 'Info section';
+
+    const select = document.createElement('select');
+    select.className = 'info-tab-select';
+    tabs.forEach(tab => {
+        const option = document.createElement('option');
+        option.value = tab.getAttribute('data-info-tab');
+        option.textContent = tab.textContent.trim();
+        select.appendChild(option);
+    });
+
+    select.addEventListener('change', () => switchInfoTab(select.value));
+    wrapper.append(label, select);
+    tabRail.insertAdjacentElement('afterend', wrapper);
+    return select;
+}
+
+function updateInfoTabState(target) {
+    const tabs = [...document.querySelectorAll('.info-tab[data-info-tab]')];
+    tabs.forEach(tab => {
+        const active = tab.getAttribute('data-info-tab') === target;
+        tab.toggleAttribute('aria-current', active);
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+        if (active && typeof tab.scrollIntoView === 'function') {
+            tab.scrollIntoView({ block: 'nearest', inline: 'center' });
+        }
+    });
+    if (infoTabPicker && [...infoTabPicker.options].some(option => option.value === target)) {
+        infoTabPicker.value = target;
+    }
+}
+
 function renderMermaidIn(root) {
     if (!root || typeof mermaid === 'undefined') return;
     const nodes = [...root.querySelectorAll('pre.mermaid:not([data-processed])')]
@@ -232,6 +295,7 @@ function updateSeoMeta(key) {
 }
 
 function switchInfoTab(target) {
+    if (!target) return;
     const infoTabs = document.querySelectorAll('.info-tab');
     const infoPanels = document.querySelectorAll('.info-panel');
     infoTabs.forEach(t => t.classList.remove('active'));
@@ -243,6 +307,7 @@ function switchInfoTab(target) {
         panel.classList.add('active');
         renderMermaidIn(panel);
     }
+    updateInfoTabState(target);
     if (target === 'channel-plugins' && window._navigateToGuide) {
         window._navigateToGuide('codex-channel');
         return;
@@ -264,12 +329,13 @@ function handleHash() {
         infoPanels.forEach(p => p.classList.remove('active'));
         const guideBtn = [...document.querySelectorAll('[data-guide]')].find(b => b.getAttribute('data-guide') === guideId);
         const isChannelPlugin = guideBtn && guideBtn.closest('#panel-channel-plugins');
-        const tabName = isChannelPlugin ? 'channel-plugins' : 'quickstart';
+        const tabName = isChannelPlugin ? 'channel-plugins' : 'guide';
         const panelId = isChannelPlugin ? 'panel-channel-plugins' : 'panel-guide';
         const tab = document.querySelector(`.info-tab[data-info-tab="${tabName}"]`);
         const panel = document.getElementById(panelId);
         if (tab) tab.classList.add('active');
         if (panel) panel.classList.add('active');
+        updateInfoTabState(tabName);
         if (window._navigateToGuide) window._navigateToGuide(guideId);
         return;
     }
@@ -284,6 +350,7 @@ function handleHash() {
         const panel = document.getElementById('panel-channel-plugins');
         if (tab) tab.classList.add('active');
         if (panel) panel.classList.add('active');
+        updateInfoTabState('channel-plugins');
         if (window._navigateToGuide) window._navigateToGuide(guideId);
         return;
     }
