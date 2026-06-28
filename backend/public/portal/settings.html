@@ -246,6 +246,64 @@
             color: var(--text);
         }
 
+        .policy-input[readonly] {
+            opacity: 0.72;
+            cursor: default;
+        }
+
+        .ratify-grace-inputs {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .ratify-grace-inputs label {
+            display: inline-flex;
+            gap: 4px;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .readonly-policy-note {
+            margin-top: 6px;
+            padding: 9px 10px;
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            background: var(--bg);
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .ratify-guardrail-row {
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .ratify-guardrail-row .readonly-policy-note {
+            flex: 1 1 260px;
+            max-width: 360px;
+        }
+
+        @media (max-width: 520px) {
+            .ratify-grace-inputs {
+                justify-content: flex-start;
+            }
+
+            .ratify-guardrail-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .ratify-guardrail-row .readonly-policy-note {
+                flex: 0 1 auto;
+                max-width: none;
+            }
+        }
+
         .policy-actions {
             display: flex;
             flex-wrap: wrap;
@@ -989,6 +1047,63 @@
                        style="width:110px;text-align:right;"
                        onchange="saveActionRequestTimeoutMinutes(this.value)"
                        aria-label="Action request timeout duration minutes">
+            </div>
+            <div class="setting-row">
+                <div class="setting-row-label">
+                    <span data-i18n="action_request_ratify_title">Decision ratification</span>
+                    <small style="display:block;color:var(--text-muted);font-size:11px;" data-i18n="action_request_ratify_desc">Plan E passive approval for server-armed, low-risk reversible decisions. Default is on; turn this off to opt out.</small>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggleActionRequestRatify" aria-label="Enable Plan E decision ratification"
+                           onchange="saveActionRequestRatifyEnabledPref(this.checked)">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-row">
+                <!-- HELP-KEY: action_request_ratify_grace_help -->
+                <div class="setting-row-label">
+                    <span data-i18n="action_request_ratify_grace_label">Ratify silence grace</span>
+                    <small style="display:block;color:var(--text-muted);font-size:11px;" data-i18n="action_request_ratify_grace_desc">How long after a server-armed default-agree decision before silence resolves it.</small>
+                </div>
+                <div class="ratify-grace-inputs">
+                    <label>
+                        <input type="number" id="actionRequestRatifyGraceHours" class="policy-input"
+                               min="0" max="720" step="1" value="24"
+                               style="width:72px;text-align:right;"
+                               onchange="saveActionRequestRatifyGraceFromParts()"
+                               aria-label="Ratify silence grace hours">
+                        <span data-i18n="action_request_ratify_grace_hours">h</span>
+                    </label>
+                    <label>
+                        <input type="number" id="actionRequestRatifyGraceMinutes" class="policy-input"
+                               min="0" max="59" step="1" value="0"
+                               style="width:72px;text-align:right;"
+                               onchange="saveActionRequestRatifyGraceFromParts()"
+                               aria-label="Ratify silence grace minutes remainder">
+                        <span data-i18n="action_request_ratify_grace_minutes">m</span>
+                    </label>
+                </div>
+            </div>
+            <div class="setting-row">
+                <!-- HELP-KEY: action_request_ratify_max_attempts_help -->
+                <div class="setting-row-label">
+                    <span data-i18n="action_request_ratify_max_attempts_label">Ratify N cap</span>
+                    <small style="display:block;color:var(--text-muted);font-size:11px;" data-i18n="action_request_ratify_max_attempts_desc">Maximum server-armed default-agree rounds per request.</small>
+                </div>
+                <input type="number" id="actionRequestRatifyMaxAttempts" class="policy-input"
+                       min="1" max="5" step="1" value="2"
+                       onchange="saveActionRequestRatifyMaxAttempts(this.value)"
+                       style="width:72px;text-align:right;"
+                       aria-label="Ratify max attempts">
+            </div>
+            <div class="setting-row ratify-guardrail-row">
+                <!-- HELP-KEY: action_request_ratify_guardrails_help -->
+                <div class="setting-row-label">
+                    <span data-i18n="action_request_ratify_guardrails_label">Ratify guardrails</span>
+                    <small style="display:block;color:var(--text-muted);font-size:11px;" data-i18n="action_request_ratify_guardrails_desc">Read-only server checks. The browser cannot weaken these.</small>
+                </div>
+                <div id="actionRequestRatifyGuardrails" class="readonly-policy-note" aria-readonly="true" role="note"
+                     data-i18n="action_request_ratify_guardrails_value">Fail-closed: server recomputes the mode, only default_agree can auto-resolve, verdict is re-run at fire time, high-risk paths/diffs hold, and the N cap is enforced from audit history.</div>
             </div>
             <div class="setting-row">
                 <!-- HELP-KEY: consensus_window_minutes_help -->
@@ -2877,6 +2992,12 @@
         const ACTION_REQUEST_TIMEOUT_MINUTES_MIN = 5;
         const ACTION_REQUEST_TIMEOUT_MINUTES_MAX = 43200;
         const ACTION_REQUEST_TIMEOUT_MINUTES_DEFAULT = 1440;
+        const ACTION_REQUEST_RATIFY_GRACE_MINUTES_MIN = 5;
+        const ACTION_REQUEST_RATIFY_GRACE_MINUTES_MAX = 43200;
+        const ACTION_REQUEST_RATIFY_GRACE_MINUTES_DEFAULT = 1440;
+        const ACTION_REQUEST_RATIFY_MAX_ATTEMPTS_MIN = 1;
+        const ACTION_REQUEST_RATIFY_MAX_ATTEMPTS_MAX = 5;
+        const ACTION_REQUEST_RATIFY_MAX_ATTEMPTS_DEFAULT = 2;
 
         function normalizeActionRequestTimeoutPolicy(value) {
             return ACTION_REQUEST_TIMEOUT_POLICIES.includes(value) ? value : 'keep';
@@ -2886,6 +3007,34 @@
             const n = parseInt(value, 10);
             if (!Number.isFinite(n)) return ACTION_REQUEST_TIMEOUT_MINUTES_DEFAULT;
             return Math.max(ACTION_REQUEST_TIMEOUT_MINUTES_MIN, Math.min(ACTION_REQUEST_TIMEOUT_MINUTES_MAX, n));
+        }
+
+        function normalizeActionRequestRatifyGraceMinutes(value) {
+            const n = parseInt(value, 10);
+            if (!Number.isFinite(n)) return ACTION_REQUEST_RATIFY_GRACE_MINUTES_DEFAULT;
+            return Math.max(ACTION_REQUEST_RATIFY_GRACE_MINUTES_MIN, Math.min(ACTION_REQUEST_RATIFY_GRACE_MINUTES_MAX, n));
+        }
+
+        function splitActionRequestRatifyGraceMinutes(value) {
+            const total = normalizeActionRequestRatifyGraceMinutes(value);
+            return {
+                hours: Math.floor(total / 60),
+                minutes: total % 60,
+            };
+        }
+
+        function getActionRequestRatifyGraceMinutesFromUI() {
+            const hours = parseInt(document.getElementById('actionRequestRatifyGraceHours')?.value, 10);
+            const minutes = parseInt(document.getElementById('actionRequestRatifyGraceMinutes')?.value, 10);
+            const h = Number.isFinite(hours) ? Math.max(0, Math.min(720, hours)) : 0;
+            const m = Number.isFinite(minutes) ? Math.max(0, Math.min(59, minutes)) : 0;
+            return normalizeActionRequestRatifyGraceMinutes((h * 60) + m);
+        }
+
+        function normalizeActionRequestRatifyMaxAttempts(value) {
+            const n = parseInt(value, 10);
+            if (!Number.isFinite(n)) return ACTION_REQUEST_RATIFY_MAX_ATTEMPTS_DEFAULT;
+            return Math.max(ACTION_REQUEST_RATIFY_MAX_ATTEMPTS_MIN, Math.min(ACTION_REQUEST_RATIFY_MAX_ATTEMPTS_MAX, n));
         }
 
         // 需要你 negotiation tunables — mirror the backend clamps in device-preferences.js.
@@ -2922,6 +3071,15 @@
             if (policy) policy.value = normalizeActionRequestTimeoutPolicy(prefs.action_request_timeout_policy);
             const minutes = document.getElementById('actionRequestTimeoutMinutes');
             if (minutes) minutes.value = String(normalizeActionRequestTimeoutMinutes(prefs.action_request_timeout_minutes));
+            const ratify = document.getElementById('toggleActionRequestRatify');
+            if (ratify) ratify.checked = prefs.action_request_ratify_enabled === true;
+            const ratifyGrace = splitActionRequestRatifyGraceMinutes(prefs.action_request_ratify_grace_minutes);
+            const ratifyHours = document.getElementById('actionRequestRatifyGraceHours');
+            if (ratifyHours) ratifyHours.value = String(ratifyGrace.hours);
+            const ratifyMinutes = document.getElementById('actionRequestRatifyGraceMinutes');
+            if (ratifyMinutes) ratifyMinutes.value = String(ratifyGrace.minutes);
+            const ratifyMax = document.getElementById('actionRequestRatifyMaxAttempts');
+            if (ratifyMax) ratifyMax.value = String(normalizeActionRequestRatifyMaxAttempts(prefs.action_request_ratify_max_attempts));
             const cWindow = document.getElementById('consensusWindowMinutes');
             if (cWindow) cWindow.value = String(normalizeConsensusWindowMinutes(prefs.consensus_window_minutes));
             const cGrace = document.getElementById('consensusSynthesisGraceMinutes');
@@ -2940,6 +3098,18 @@
 
         async function saveActionRequestTimeoutMinutes(value) {
             await saveActionRequestPrefPatch({ action_request_timeout_minutes: normalizeActionRequestTimeoutMinutes(value) });
+        }
+
+        async function saveActionRequestRatifyEnabledPref(enabled) {
+            await saveActionRequestPrefPatch({ action_request_ratify_enabled: !!enabled });
+        }
+
+        async function saveActionRequestRatifyGraceFromParts() {
+            await saveActionRequestPrefPatch({ action_request_ratify_grace_minutes: getActionRequestRatifyGraceMinutesFromUI() });
+        }
+
+        async function saveActionRequestRatifyMaxAttempts(value) {
+            await saveActionRequestPrefPatch({ action_request_ratify_max_attempts: normalizeActionRequestRatifyMaxAttempts(value) });
         }
 
         async function saveConsensusWindowMinutes(value) {
