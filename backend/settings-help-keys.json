@@ -1,7 +1,22 @@
 {
-  "generated_at": "GENERATED \u2014 do not hand-edit",
+  "generated_at": "GENERATED — do not hand-edit",
   "source": [
-    "portal/settings.html"
+    "portal/settings.html",
+    {
+      "field_key": "action_request_ratify_grace",
+      "label_key": "action_request_ratify_grace_label",
+      "help_key": "action_request_ratify_grace_help"
+    },
+    {
+      "field_key": "action_request_ratify_guardrails",
+      "label_key": "action_request_ratify_guardrails_label",
+      "help_key": "action_request_ratify_guardrails_help"
+    },
+    {
+      "field_key": "action_request_ratify_max_attempts",
+      "label_key": "action_request_ratify_max_attempts_label",
+      "help_key": "action_request_ratify_max_attempts_help"
+    }
   ],
   "keys": [
     {
