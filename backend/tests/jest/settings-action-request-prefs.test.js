@@ -55,6 +55,21 @@ describe('settings action request preferences (card_8151054f frontend)', () => {
         expect(settingsHtml).toContain('min="2" max="20" step="1" value="2"');
     });
 
+    test('renders the 計畫E decision ratification controls with read-only safety surface', () => {
+        expect(settingsHtml).toContain('id="toggleActionRequestRatify"');
+        expect(settingsHtml).toContain('saveActionRequestRatifyEnabledPref(this.checked)');
+        expect(settingsHtml).toContain('id="actionRequestRatifyGraceHours"');
+        expect(settingsHtml).toContain('id="actionRequestRatifyGraceMinutes"');
+        expect(settingsHtml).toContain('saveActionRequestRatifyGraceFromParts()');
+        expect(settingsHtml).toContain('min="0" max="720" step="1" value="24"');
+        expect(settingsHtml).toContain('min="0" max="59" step="1" value="0"');
+        expect(settingsHtml).toContain('id="actionRequestRatifyMaxAttempts"');
+        expect(settingsHtml).toContain('saveActionRequestRatifyMaxAttempts(this.value)');
+        expect(settingsHtml).toContain('min="1" max="5" step="1" value="2"');
+        expect(settingsHtml).toContain('id="actionRequestRatifyGuardrails"');
+        expect(settingsHtml).toContain('aria-readonly="true" role="note"');
+    });
+
     test('normalizers + apply wiring for the negotiation prefs', () => {
         expect(settingsHtml).toContain('normalizeConsensusWindowMinutes(prefs.consensus_window_minutes)');
         expect(settingsHtml).toContain('normalizeConsensusSynthesisGraceMinutes(prefs.consensus_synthesis_grace_minutes)');
@@ -62,6 +77,21 @@ describe('settings action request preferences (card_8151054f frontend)', () => {
         expect(settingsHtml).toContain('consensus_window_minutes: normalizeConsensusWindowMinutes(value)');
         expect(settingsHtml).toContain('consensus_synthesis_grace_minutes: normalizeConsensusSynthesisGraceMinutes(value)');
         expect(settingsHtml).toContain('consensus_min_entities: normalizeConsensusMinEntities(value)');
+    });
+
+    test('normalizers + apply wiring for the ratify prefs mirror the backend contract', () => {
+        expect(settingsHtml).toContain('const ACTION_REQUEST_RATIFY_GRACE_MINUTES_MIN = 5;');
+        expect(settingsHtml).toContain('const ACTION_REQUEST_RATIFY_GRACE_MINUTES_MAX = 43200;');
+        expect(settingsHtml).toContain('const ACTION_REQUEST_RATIFY_GRACE_MINUTES_DEFAULT = 1440;');
+        expect(settingsHtml).toContain('const ACTION_REQUEST_RATIFY_MAX_ATTEMPTS_MIN = 1;');
+        expect(settingsHtml).toContain('const ACTION_REQUEST_RATIFY_MAX_ATTEMPTS_MAX = 5;');
+        expect(settingsHtml).toContain('const ACTION_REQUEST_RATIFY_MAX_ATTEMPTS_DEFAULT = 2;');
+        expect(settingsHtml).toContain('prefs.action_request_ratify_enabled === true');
+        expect(settingsHtml).toContain('splitActionRequestRatifyGraceMinutes(prefs.action_request_ratify_grace_minutes)');
+        expect(settingsHtml).toContain('normalizeActionRequestRatifyMaxAttempts(prefs.action_request_ratify_max_attempts)');
+        expect(settingsHtml).toContain('action_request_ratify_enabled: !!enabled');
+        expect(settingsHtml).toContain('action_request_ratify_grace_minutes: getActionRequestRatifyGraceMinutesFromUI()');
+        expect(settingsHtml).toContain('action_request_ratify_max_attempts: normalizeActionRequestRatifyMaxAttempts(value)');
     });
 
     test('EN and ZH strings exist for the negotiation settings surface', () => {
@@ -77,6 +107,24 @@ describe('settings action request preferences (card_8151054f frontend)', () => {
         });
         expect(i18nJs).toContain('"consensus_min_entities_label": "Minimum entities to negotiate"');
         expect(i18nJs).toContain('"consensus_min_entities_label": "協商所需最少實體數"');
+    });
+
+    test('EN and ZH strings exist for the ratify settings surface', () => {
+        [
+            'action_request_ratify_title',
+            'action_request_ratify_desc',
+            'action_request_ratify_grace_label',
+            'action_request_ratify_grace_desc',
+            'action_request_ratify_max_attempts_label',
+            'action_request_ratify_max_attempts_desc',
+            'action_request_ratify_guardrails_label',
+            'action_request_ratify_guardrails_desc',
+            'action_request_ratify_guardrails_value',
+        ].forEach(key => {
+            expect(i18nJs).toContain(`"${key}"`);
+        });
+        expect(i18nJs).toContain('"action_request_ratify_title": "Decision ratification"');
+        expect(i18nJs).toContain('"action_request_ratify_title": "決策追認"');
     });
 
     test('EN and ZH strings exist for the settings surface', () => {
