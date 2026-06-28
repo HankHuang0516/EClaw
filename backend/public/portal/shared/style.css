@@ -1233,7 +1233,10 @@ a:hover { text-decoration: underline; }
 
     /* Dialog — mobile bottom-sheet */
     .dialog-overlay { align-items: flex-end; }
-    .dialog { padding: 16px; min-width: auto; max-height: 85vh; max-height: 85dvh; border-radius: var(--radius) var(--radius) 0 0; width: 100%; max-width: 100%; }
+    /* Bottom-sheet hugs the screen bottom, so the bottommost (destructive) action
+       can fall under the home-indicator / gesture bar on notched devices. Pad the
+       sheet bottom by the safe-area inset (floored at the normal 16px). */
+    .dialog { padding: 16px; padding-bottom: max(16px, env(safe-area-inset-bottom)); min-width: auto; max-height: 85vh; max-height: 85dvh; border-radius: var(--radius) var(--radius) 0 0; width: 100%; max-width: 100%; }
     .dialog-actions { flex-direction: column; }
     .dialog-actions .btn { width: 100%; justify-content: center; }
 
