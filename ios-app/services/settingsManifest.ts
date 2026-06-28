@@ -242,6 +242,12 @@ export const nativeRowKeys: ReadonlySet<string> = new Set([
   'my_rentals',
   'files',
   'feedback',
+  // Stage-3 native (card_c3b13f64): Rotate Secret + Switch Device are now
+  // rendered as native settings rows (see ios-app/app/(tabs)/settings.tsx), so
+  // the manifest auto-sync path must NOT also emit duplicate web rows for them.
+  // Mirrors the Android SettingsManifestSync.nativeRowKeys addition (PR #3742).
+  'rotate_secret',
+  'switch_device',
   'logout',
 ]);
 

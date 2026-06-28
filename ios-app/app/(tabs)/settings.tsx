@@ -31,12 +31,25 @@ import { shouldShowChip, appStoreDeepLink, appStoreHttpsLink } from '../../servi
 import { Alert, Linking } from 'react-native';
 import { SUPPORTED_LANGUAGES } from '../../i18n';
 import Constants from 'expo-constants';
+import * as Updates from 'expo-updates';
+import type { AuthUser } from '../../store/authStore';
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
   const router = useRouter();
-  const { deviceId, user, authToken, clearUserSession, clearAll, language, setLanguage } = useAuthStore();
+  const {
+    deviceId,
+    deviceSecret,
+    user,
+    authToken,
+    clearUserSession,
+    clearAll,
+    language,
+    setLanguage,
+    setDeviceCredentials,
+    setUserSession,
+  } = useAuthStore();
 
   const [langDialogVisible, setLangDialogVisible] = useState(false);
   const [emailDialogVisible, setEmailDialogVisible] = useState(false);
@@ -48,6 +61,14 @@ export default function SettingsScreen() {
   const [snack, setSnack] = useState('');
   const [notifBotReply, setNotifBotReply] = useState(true);
   const [notifBroadcast, setNotifBroadcast] = useState(true);
+
+  // ── Stage-3 native: Rotate Secret + Switch Device (card_c3b13f64) ──────────
+  const [rotateDialogVisible, setRotateDialogVisible] = useState(false);
+  const [rotateLoading, setRotateLoading] = useState(false);
+  const [switchDialogVisible, setSwitchDialogVisible] = useState(false);
+  const [switchDeviceId, setSwitchDeviceId] = useState('');
+  const [switchDeviceSecret, setSwitchDeviceSecret] = useState('');
+  const [switchLoading, setSwitchLoading] = useState(false);
 
   const appVersion = Constants.expoConfig?.version ?? '1.0.0';
 
@@ -221,6 +242,116 @@ export default function SettingsScreen() {
     );
   };
 
+  // ── Rotate Device Secret (Stage-3 native, card_c3b13f64) ───────────────────
+  // Mirrors Android SettingsActivity.showRotateSecretDialog(): destructive
+  // confirm → POST /api/device/rotate-secret. The new secret is returned ONCE in
+  // `newDeviceSecret`; on success it is persisted via setDeviceCredentials with
+  // the SAME deviceId (the credential store seam login.tsx uses). The secret is
+  // never surfaced or logged in plaintext — only success/failure is shown.
+  const handleRotateSecret = async () => {
+    if (!deviceId || !deviceSecret) {
+      setSnack(t('settings.rotate_secret_failed', 'Could not rotate Device Secret. Please try again.'));
+      return;
+    }
+    setRotateLoading(true);
+    try {
+      const res = await authApi.rotateDeviceSecret(deviceId, deviceSecret);
+      const newSecret = res.data?.newDeviceSecret;
+      if (res.data?.success && newSecret) {
+        // Persist the once-returned secret locally, keeping the same deviceId.
+        await setDeviceCredentials(deviceId, newSecret);
+        setRotateDialogVisible(false);
+        setSnack(t('settings.rotate_secret_success', 'Device Secret rotated. The new secret has been saved on this device.'));
+      } else {
+        setSnack(
+          res.data?.error ||
+            res.data?.message ||
+            t('settings.rotate_secret_failed', 'Could not rotate Device Secret. Please try again.')
+        );
+      }
+    } catch (err: any) {
+      // The interceptor already strips to a message; never echo the secret.
+      setSnack(err?.message || t('settings.rotate_secret_failed', 'Could not rotate Device Secret. Please try again.'));
+    } finally {
+      setRotateLoading(false);
+    }
+  };
+
+  // ── Switch Device (Stage-3 native, card_c3b13f64) ──────────────────────────
+  // Mirrors Android SettingsActivity.showSwitchDeviceDialog() + login.tsx's
+  // handleDeviceLogin: two inputs (Device ID + masked Device Secret) → the
+  // EXISTING authApi.deviceLogin (POST /api/auth/device-login). On success the
+  // returned creds are persisted the same way the login screen does
+  // (setDeviceCredentials + setUserSession) and the app is reloaded so every
+  // screen picks up the new device — the iOS equivalent of Android's
+  // launch-intent restart.
+  const handleSwitchDevice = async () => {
+    const id = switchDeviceId.trim();
+    const secret = switchDeviceSecret.trim();
+    if (!id || !secret) {
+      setSnack(t('auth.fill_required_fields', 'Please fill in all fields'));
+      return;
+    }
+    setSwitchLoading(true);
+    try {
+      const res = await authApi.deviceLogin(id, secret);
+      const data = res.data;
+      if (!data?.success && data?.success !== undefined) {
+        setSnack(data?.error || data?.message || t('settings.rotate_secret_failed', 'Failed'));
+        return;
+      }
+      // Persist the new device credentials (the entered pair is canonical; prefer
+      // any backend-echoed values when present), exactly like login.tsx.
+      const respUser = data?.user;
+      await setDeviceCredentials(respUser?.deviceId || id, respUser?.deviceSecret || secret);
+      const token = data?.authToken || data?.token;
+      if (token && respUser) {
+        const authUser: AuthUser = {
+          id: respUser.id,
+          email: respUser.email ?? null,
+          displayName: respUser.displayName ?? null,
+          avatarUrl: respUser.avatarUrl ?? null,
+          provider: 'device',
+          subscriptionStatus: respUser.subscriptionStatus,
+          googleLinked: respUser.googleLinked,
+          facebookLinked: respUser.facebookLinked,
+          appleLinked: respUser.appleLinked,
+        };
+        await setUserSession(token, authUser);
+      }
+      setSwitchDialogVisible(false);
+      setSwitchDeviceId('');
+      setSwitchDeviceSecret('');
+      // Restart so the whole app reloads under the new device — mirrors the
+      // Android post-login restart. In dev/Expo Go reloadAsync may be a no-op;
+      // fall back to navigating to the tabs root.
+      Alert.alert(
+        t('settings.switch_device_success_title', 'Device Switched'),
+        t('settings.switch_device_success_msg', {
+          account: respUser?.email || respUser?.deviceId || id,
+          defaultValue: 'Now signed in as: {{account}}\nThe app will restart to load this device.',
+        }),
+        [
+          {
+            text: t('settings.switch_device_restart', 'Restart'),
+            onPress: async () => {
+              try {
+                await Updates.reloadAsync();
+              } catch {
+                // Not in an OTA-updatable build (e.g. dev client) — soft reload.
+                router.replace('/(tabs)');
+              }
+            },
+          },
+        ]
+      );
+    } catch (err: any) {
+      setSnack(err?.message || String(err));
+    } finally {
+      setSwitchLoading(false);
+    }
+  };
+
   const providerLabel = () => {
     if (!user) return t('auth.current_provider_device', 'Device-only authentication');
     switch (user.provider) {
@@ -253,6 +384,28 @@ export default function SettingsScreen() {
               onPress={() => router.push('/bind-email')}
             />
           )}
+        </List.Section>
+
+        <Divider />
+
+        {/* Security & Device (Stage-3 native, card_c3b13f64) — Rotate Secret +
+            Switch Device rendered natively instead of via the manifest WebView
+            fallback. Both gated behind a device identity (deviceId/deviceSecret). */}
+        <List.Section title={t('settings.security_device', 'Security & Device')}>
+          <List.Item
+            title={t('settings.rotate_device_secret', 'Rotate Device Secret')}
+            description={t('settings.rotate_device_secret_hint', 'Generate a new Device Secret if the current one has leaked. Other sessions will need the new value to sign in.')}
+            left={(props) => <List.Icon {...props} icon="key-change" />}
+            disabled={!deviceId || !deviceSecret}
+            onPress={() => setRotateDialogVisible(true)}
+          />
+          <List.Item
+            title={t('settings.switch_device', 'Switch Device')}
+            description={t('settings.switch_device_hint', 'Sign this app into a different Device ID. Useful if you have a second admin account with its own entities.')}
+            left={(props) => <List.Icon {...props} icon="account-switch" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={() => setSwitchDialogVisible(true)}
+          />
         </List.Section>
 
         <Divider />
@@ -510,6 +663,82 @@ export default function SettingsScreen() {
               disabled={emailLoading}
             >
               {t('settings.bind_email_confirm', 'Bind')}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      {/* Rotate Device Secret confirm (Stage-3 native, card_c3b13f64) —
+          destructive; manifest schema marks validation.confirm:true. */}
+      <Portal>
+        <Dialog visible={rotateDialogVisible} onDismiss={() => !rotateLoading && setRotateDialogVisible(false)}>
+          <Dialog.Title>
+            {t('settings.rotate_secret_confirm_title', 'Rotate Device Secret?')}
+          </Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">
+              {t('settings.rotate_device_secret_hint', 'Generate a new Device Secret if the current one has leaked. Other sessions will need the new value to sign in.')}
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setRotateDialogVisible(false)} disabled={rotateLoading}>
+              {t('common.cancel', 'Cancel')}
+            </Button>
+            <Button
+              mode="contained"
+              onPress={handleRotateSecret}
+              loading={rotateLoading}
+              disabled={rotateLoading}
+              textColor={theme.colors.onError}
+              buttonColor={theme.colors.error}
+            >
+              {t('settings.rotate_secret_confirm_btn', 'Rotate')}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      {/* Switch Device dialog (Stage-3 native, card_c3b13f64) — Device ID +
+          masked Device Secret → authApi.deviceLogin, then persist + restart. */}
+      <Portal>
+        <Dialog visible={switchDialogVisible} onDismiss={() => !switchLoading && setSwitchDialogVisible(false)}>
+          <Dialog.Title>{t('settings.switch_device', 'Switch Device')}</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 12 }}>
+              {t('settings.switch_device_hint', 'Sign this app into a different Device ID. Useful if you have a second admin account with its own entities.')}
+            </Text>
+            <TextInput
+              label={t('settings.device_id', 'Device ID')}
+              value={switchDeviceId}
+              onChangeText={setSwitchDeviceId}
+              autoCapitalize="none"
+              autoCorrect={false}
+              mode="outlined"
+              style={{ marginBottom: 12 }}
+              disabled={switchLoading}
+            />
+            <TextInput
+              label={t('settings.device_secret', 'Device Secret')}
+              value={switchDeviceSecret}
+              onChangeText={setSwitchDeviceSecret}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              mode="outlined"
+              disabled={switchLoading}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setSwitchDialogVisible(false)} disabled={switchLoading}>
+              {t('common.cancel', 'Cancel')}
+            </Button>
+            <Button
+              mode="contained"
+              onPress={handleSwitchDevice}
+              loading={switchLoading}
+              disabled={switchLoading}
+            >
+              {t('settings.switch_device_confirm', 'Switch')}
             </Button>
           </Dialog.Actions>
         </Dialog>
