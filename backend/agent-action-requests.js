@@ -66,6 +66,16 @@ let timeoutSweepTimer = null;
 // auto-resolved by silence reuses the 24h (1440-min) timeout default.
 const MAX_RATIFY_RETRIES = 2;
 const RATIFY_DEFAULT_GRACE_MINUTES = 1440;
+// 計畫E adjustable params (card_c3d48c4607ee753b2c98e04b). The N-cap and the
+// silence grace are device prefs (action_request_ratify_max_attempts /
+// action_request_ratify_grace_minutes). These bounds are the worker-side
+// DEFENSIVE re-clamp so a junk/out-of-range pref can never disable the cap or
+// make the auto-ratify timer fire too eagerly. The cap default reuses
+// MAX_RATIFY_RETRIES; the grace default reuses RATIFY_DEFAULT_GRACE_MINUTES.
+const RATIFY_MAX_ATTEMPTS_MIN = 1;
+const RATIFY_MAX_ATTEMPTS_MAX = 5;
+const RATIFY_GRACE_MINUTES_MIN = 60;     // never auto-ratify faster than 1h
+const RATIFY_GRACE_MINUTES_MAX = 10080;  // 7 days
 
 // ══════════════════════════════════════════════════════════════════════════
 // 需要你 NEGOTIATION / CONSENSUS WORKFLOW (owner-approved build)
@@ -102,6 +112,14 @@ function clampSynthGraceMinutes(raw) {
 }
 function clampMinEntities(raw) {
     return clampInt(raw, CONSENSUS_MIN_ENTITIES_DEFAULT, CONSENSUS_MIN_ENTITIES_MIN, CONSENSUS_MIN_ENTITIES_MAX);
+}
+// 計畫E adjustable params (card_c3d48c4607ee753b2c98e04b). Defensive runtime
+// re-clamp of the two ratify tunables; junk/undefined → the safe default.
+function clampRatifyMaxAttempts(raw) {
+    return clampInt(raw, MAX_RATIFY_RETRIES, RATIFY_MAX_ATTEMPTS_MIN, RATIFY_MAX_ATTEMPTS_MAX);
+}
+function clampRatifyGraceMinutes(raw) {
+    return clampInt(raw, RATIFY_DEFAULT_GRACE_MINUTES, RATIFY_GRACE_MINUTES_MIN, RATIFY_GRACE_MINUTES_MAX);
 }
 
 // Count entities bound on a device (the N in the k/N vote progress + the
@@ -423,7 +441,11 @@ function ratifyInputFrom(prompt, ratify) {
 // silence-grace window in the worker); a hold clears it.
 //   - mode='default_agree' ONLY when classifyRatifyMode says so AND prior arms < N
 //   - any predicate hold, classifier veto, or retry-cap → mode='hold'
-async function recomputeRatifyMode(client, requestId, prompt, ratify, nowMs) {
+// The N-cap is now a device pref (action_request_ratify_max_attempts): the caller
+// passes `maxAttempts`, defensively re-clamped here ([1,5], junk/undefined →
+// MAX_RATIFY_RETRIES) so an out-of-range pref can never widen or disable the cap.
+async function recomputeRatifyMode(client, requestId, prompt, ratify, nowMs, maxAttempts) {
+    const cap = clampRatifyMaxAttempts(maxAttempts);
     const r = (ratify && typeof ratify === 'object') ? { ...ratify } : {};
     const verdict = classifyRatifyMode(ratifyInputFrom(prompt, r));
     let mode = verdict.mode;
@@ -443,12 +465,12 @@ async function recomputeRatifyMode(client, requestId, prompt, ratify, nowMs) {
         priorArms = (c.rows[0] && c.rows[0].n) || 0;
     } catch (_) {
         // Fail-closed: if we cannot establish the count, do not arm.
-        priorArms = MAX_RATIFY_RETRIES;
+        priorArms = cap;
         holdReasons.push('retry_count_unavailable');
     }
-    if (mode === 'default_agree' && priorArms >= MAX_RATIFY_RETRIES) {
+    if (mode === 'default_agree' && priorArms >= cap) {
         mode = 'hold';
-        holdReasons.push(`retry_cap_reached:${priorArms}/${MAX_RATIFY_RETRIES}`);
+        holdReasons.push(`retry_cap_reached:${priorArms}/${cap}`);
     }
 
     r.mode = mode;
@@ -955,14 +977,19 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
     // skipped by 'keep' and not blocked by the decision_context pin (which keeps
     // every OTHER owner-decision row waiting for Hank).
     //
-    // Stacked safety: dark-default-off; matches ratify.mode==='default_agree'
-    // EXACTLY; re-derives the verdict at fire time; the N-cap already capped how
-    // many times it could be armed (PUT handler); grace anchored to armedAt.
+    // Stacked safety: the worker enable-gate is the ONLY thing default-ON changes
+    // (card_c3d48c4607ee753b2c98e04b) — WHAT may auto-ratify is unchanged. It still
+    // matches ratify.mode==='default_agree' EXACTLY; re-derives the fail-closed
+    // verdict at fire time; the N-cap already capped how many times it could be
+    // armed (PUT handler); grace anchored to armedAt.
     // ══════════════════════════════════════════════════════════════════════
     async function runRatifyPass(deviceId, prefs, device) {
-        if (!prefs || prefs.action_request_ratify_enabled !== true) return; // dark launch
-        const graceRaw = prefs.action_request_ratify_grace_minutes;
-        const graceMin = Number.isFinite(Number(graceRaw)) ? Number(graceRaw) : RATIFY_DEFAULT_GRACE_MINUTES;
+        // default-ON (card_c3d48c4607ee753b2c98e04b): an UNSET/true pref RUNS the
+        // pass; only an explicit `false` disables it. (Was dark-launch:
+        // enabled !== true ⇒ skip.) This flips WHETHER the worker runs, never the
+        // fail-closed green-light predicate below that gates WHAT it may resolve.
+        if (prefs && prefs.action_request_ratify_enabled === false) return;
+        const graceMin = clampRatifyGraceMinutes(prefs && prefs.action_request_ratify_grace_minutes);
         const graceMs = graceMin * 60 * 1000;
         const nowMs = Date.now();
 
@@ -1679,7 +1706,14 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
                 try { dcObj = JSON.parse(decisionContextNew); } catch (_) { dcObj = null; }
                 if (dcObj && dcObj.ratify && typeof dcObj.ratify === 'object' && dcObj.ratify.planE === true) {
                     const nowMs = Date.now();
-                    dcObj.ratify = await recomputeRatifyMode(client, id, before.prompt, dcObj.ratify, nowMs);
+                    // N-cap from the device pref (clamped inside recomputeRatifyMode);
+                    // a prefs read failure → undefined → safe default cap.
+                    let ratifyPrefs = {};
+                    try { ratifyPrefs = (await readDevicePrefs(deviceId)) || {}; } catch (_) { ratifyPrefs = {}; }
+                    dcObj.ratify = await recomputeRatifyMode(
+                        client, id, before.prompt, dcObj.ratify, nowMs,
+                        ratifyPrefs.action_request_ratify_max_attempts,
+                    );
                     decisionContextNew = JSON.stringify(dcObj);
                     // Re-check the 8KB cap after the server stamp (holdReasons grow it).
                     if (decisionContextNew.length > 8192) {
@@ -1810,6 +1844,10 @@ module.exports.initAgentActionRequestsDatabase = initAgentActionRequestsDatabase
 module.exports.recomputeRatifyMode = recomputeRatifyMode;
 module.exports.ratifyInputFrom = ratifyInputFrom;
 module.exports.MAX_RATIFY_RETRIES = MAX_RATIFY_RETRIES;
+// 計畫E adjustable params (card_c3d48c4607ee753b2c98e04b): defensive clamps for
+// the two ratify tunables — exported for unit tests.
+module.exports.clampRatifyMaxAttempts = clampRatifyMaxAttempts;
+module.exports.clampRatifyGraceMinutes = clampRatifyGraceMinutes;
 // 需要你 negotiation: pure helpers exported for unit testing without a pool.
 module.exports.isNegotiable = isNegotiable;
 module.exports.tallyVotes = tallyVotes;

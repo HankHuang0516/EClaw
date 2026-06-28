@@ -36,9 +36,13 @@ beforeAll(() => {
     app = express();
     app.use(express.json());
     // Inject getDevicePrefs so the timeout worker never touches device-preferences.
+    // action_request_ratify_enabled:false isolates this suite from the (now
+    // default-ON, card_c3d48c4607ee753b2c98e04b) ratify pass — this file tests the
+    // timeout/owner-decision pinning path, whose positional query mocks assume the
+    // ratify pass issues no SELECT.
     mod = require('../../agent-action-requests')(devices, {
         serverLog: () => {},
-        getDevicePrefs: () => ({ action_request_timeout_policy: 'auto_dismiss', action_request_timeout_minutes: 1 }),
+        getDevicePrefs: () => ({ action_request_timeout_policy: 'auto_dismiss', action_request_timeout_minutes: 1, action_request_ratify_enabled: false }),
     });
     app.use('/api/action-requests', mod.router);
 });

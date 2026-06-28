@@ -68,17 +68,26 @@ const DEFAULTS = {
     // Deadline (minutes) after which the policy above fires. Default 1440 (24h).
     // Clamped to [5, 43200] (5 min .. 30 days).
     action_request_timeout_minutes: 1440,
-    // 計畫E ratify-loop (card_e9d01b6e). DARK-LAUNCH master switch: when true, the
-    // worker's independent ratify pass may passively default-agree (silence ⇒ the
-    // agent's server-armed decided option ships) on requests whose
-    // decision_context.ratify.mode was recomputed to 'default_agree'. DEFAULT FALSE
-    // — flipping it on in prod is the OWNER's decision; everything else (build /
-    // merge) ships dark. Consumed by runRatifyPass in agent-action-requests.js.
-    action_request_ratify_enabled: false,
+    // 計畫E ratify-loop. Master switch for the worker's independent ratify pass:
+    // when on, the pass may passively default-agree (silence ⇒ the agent's
+    // server-armed decided option ships) on requests whose
+    // decision_context.ratify.mode was recomputed to 'default_agree'.
+    // ⚠️ DEFAULT-ON (card_c3d48c4607ee753b2c98e04b) — a GLOBAL flip from the prior
+    // dark-launch DEFAULT FALSE. An UNSET pref now ENABLES the pass; only an
+    // explicit `false` disables it. WHAT may auto-ratify is unchanged (the
+    // fail-closed green-light predicate in runRatifyPass still gates every row).
+    // Consumed by runRatifyPass in agent-action-requests.js.
+    action_request_ratify_enabled: true,
     // Silence grace (minutes) before an armed default_agree ratify auto-resolves,
     // anchored to when it was armed (decision_context.ratify.armedAt), not emit
-    // time. Default 1440 (24h); clamped [5, 43200] like the timeout deadline.
+    // time. Default 1440 (24h); persistence clamps [5, 43200] like the timeout
+    // deadline; the worker re-clamps [60, 10080] defensively.
     action_request_ratify_grace_minutes: 1440,
+    // 計畫E adjustable N-cap (card_c3d48c4607ee753b2c98e04b). Server-enforced max
+    // number of armed default_agree rounds per request (audit-trail reconstructed,
+    // not agent self-report). Default 2; clamped [1, 5]. Consumed by
+    // recomputeRatifyMode (agent-action-requests.js).
+    action_request_ratify_max_attempts: 2,
     // 需要你 negotiation workflow (owner-approved build). When the timeout policy is
     // 'consensus', a 需要你 item with options>=2 (+ enough bound entities) opens a
     // bot-to-bot negotiation round: entities vote, the task-owner entity synthesizes
@@ -114,6 +123,11 @@ const ENTITY_RUNTIME_STATE_STALE_SECONDS_MAX = 600;
 const ACTION_REQUEST_TIMEOUT_POLICIES = new Set(['keep', 'auto_dismiss', 'safe_default', 'consensus']);
 const ACTION_REQUEST_TIMEOUT_MINUTES_MIN = 5;
 const ACTION_REQUEST_TIMEOUT_MINUTES_MAX = 43200; // 30 days
+
+// 計畫E adjustable N-cap (card_c3d48c4607ee753b2c98e04b): max armed default_agree
+// rounds per request. Persistence clamp [1,5]; invalid → default 2.
+const ACTION_REQUEST_RATIFY_MAX_ATTEMPTS_MIN = 1;
+const ACTION_REQUEST_RATIFY_MAX_ATTEMPTS_MAX = 5;
 
 // 需要你 negotiation tunables (clamp ranges; defaults live in DEFAULTS above).
 const CONSENSUS_WINDOW_MIN_MIN = 1;
@@ -156,6 +170,12 @@ function coerceValue(key, raw) {
         const n = parseInt(raw, 10);
         if (!Number.isFinite(n)) return def;
         return Math.max(ACTION_REQUEST_TIMEOUT_MINUTES_MIN, Math.min(ACTION_REQUEST_TIMEOUT_MINUTES_MAX, n));
+    }
+    // 計畫E adjustable N-cap — parseInt-style coercion + clamp [1,5]; junk → default 2.
+    if (key === 'action_request_ratify_max_attempts') {
+        const n = parseInt(raw, 10);
+        if (!Number.isFinite(n)) return def;
+        return Math.max(ACTION_REQUEST_RATIFY_MAX_ATTEMPTS_MIN, Math.min(ACTION_REQUEST_RATIFY_MAX_ATTEMPTS_MAX, n));
     }
     // 需要你 negotiation tunables — parseInt-style coercion + per-key clamp; junk → default.
     if (key === 'consensus_window_minutes') {
