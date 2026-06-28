@@ -55,8 +55,14 @@ ${extraStyle}
   window.currentUser = { deviceId: 'dev-test', deviceSecret: 'sec-test', entityId: '2' };
   window.__capturedFetches = [];
   window.__fetchResolver = null;
-  window.fetch = (url) => {
-    window.__capturedFetches.push(url);
+  function normalizeHeaders(init) {
+    const headers = init && init.headers ? init.headers : {};
+    if (headers instanceof Headers) return Object.fromEntries(headers.entries());
+    if (Array.isArray(headers)) return Object.fromEntries(headers);
+    return { ...headers };
+  }
+  window.fetch = (url, init = {}) => {
+    window.__capturedFetches.push({ url: String(url), headers: normalizeHeaders(init) });
     return Promise.resolve({
       ok: true,
       json: async () => (${JSON.stringify(REFS_PAYLOAD)}),
@@ -129,12 +135,20 @@ test('desktop: ? icon click → popover renders Outgoing + Incoming', async () =
 
         // fetch was called with correct URL shape — using window.currentUser
         // convention (deviceSecret, not botSecret)
-        const urls = await page.evaluate(() => window.__capturedFetches);
-        assert(urls.length === 1, `fetches=${urls.length}`);
-        assert(urls[0].includes('/api/refs?from=card_aa15ed26'), 'fetch URL: ' + urls[0]);
-        assert(urls[0].includes('deviceId=dev-test'), 'fetch creds: ' + urls[0]);
-        assert(urls[0].includes('deviceSecret=sec-test'), 'expected deviceSecret in URL, was: ' + urls[0]);
-        assert(!urls[0].includes('botSecret='), 'should NOT include botSecret when deviceSecret present: ' + urls[0]);
+        const calls = await page.evaluate(() => window.__capturedFetches);
+        assert(calls.length === 1, `fetches=${calls.length}`);
+        const call = calls[0];
+        const deviceSecretHeader = Object.entries(call.headers || {})
+            .find(([k]) => k.toLowerCase() === 'x-device-secret')?.[1];
+        const botSecretHeader = Object.entries(call.headers || {})
+            .find(([k]) => k.toLowerCase() === 'x-bot-secret')?.[1];
+        assert(call.url.includes('/api/refs?from=card_aa15ed26'), 'fetch URL: ' + call.url);
+        assert(call.url.includes('deviceId=dev-test'), 'fetch creds: ' + call.url);
+        assert(call.url.includes('entityId=2'), 'entityId: ' + call.url);
+        assert(deviceSecretHeader === 'sec-test', 'expected X-Device-Secret header: ' + JSON.stringify(call));
+        assert(!botSecretHeader, 'should NOT send X-Bot-Secret when deviceSecret present: ' + JSON.stringify(call));
+        assert(!call.url.includes('deviceSecret='), 'should NOT include deviceSecret in URL: ' + call.url);
+        assert(!call.url.includes('botSecret='), 'should NOT include botSecret in URL: ' + call.url);
     });
 });
 
@@ -146,11 +160,18 @@ test('auth: botSecret fallback when deviceSecret absent (bot-authed caller)', as
     await withPage({ viewport: { width: 1280, height: 800 }, html }, async (page) => {
         await page.click('.eclaw-refs-icon');
         await page.waitForSelector('.eclaw-refs-icon-title');
-        const urls = await page.evaluate(() => window.__capturedFetches);
-        assert(urls.length === 1, `fetches=${urls.length}`);
-        assert(urls[0].includes('botSecret=bot-test'), 'expected botSecret fallback: ' + urls[0]);
-        assert(urls[0].includes('entityId=2'), 'expected entityId in URL: ' + urls[0]);
-        assert(!urls[0].includes('deviceSecret='), 'should NOT include deviceSecret: ' + urls[0]);
+        const calls = await page.evaluate(() => window.__capturedFetches);
+        assert(calls.length === 1, `fetches=${calls.length}`);
+        const call = calls[0];
+        const botSecretHeader = Object.entries(call.headers || {})
+            .find(([k]) => k.toLowerCase() === 'x-bot-secret')?.[1];
+        const deviceSecretHeader = Object.entries(call.headers || {})
+            .find(([k]) => k.toLowerCase() === 'x-device-secret')?.[1];
+        assert(botSecretHeader === 'bot-test', 'expected X-Bot-Secret header: ' + JSON.stringify(call));
+        assert(call.url.includes('entityId=2'), 'expected entityId in URL: ' + call.url);
+        assert(!deviceSecretHeader, 'should NOT send X-Device-Secret: ' + JSON.stringify(call));
+        assert(!call.url.includes('botSecret='), 'should NOT include botSecret in URL: ' + call.url);
+        assert(!call.url.includes('deviceSecret='), 'should NOT include deviceSecret in URL: ' + call.url);
     });
 });
 
@@ -206,8 +227,8 @@ test('mobile: 390x844 popover renders bottom-sheet variant', async () => {
 test('error path: fetch fails → error message renders', async () => {
     const errStyle = '';
     const html = buildHtml(errStyle).replace(
-        'window.fetch = (url) => {',
-        'window.fetch = (url) => { window.__capturedFetches.push(url); return Promise.resolve({ ok: false, status: 500, json: async () => ({}) }); };\nwindow.__unused = () => {'
+        'window.fetch = (url, init = {}) => {',
+        'window.fetch = (url, init = {}) => { window.__capturedFetches.push({ url: String(url), headers: normalizeHeaders(init) }); return Promise.resolve({ ok: false, status: 500, json: async () => ({}) }); };\nwindow.__unused = () => {'
     );
     await withPage({ viewport: { width: 1280, height: 800 }, html }, async (page) => {
         await page.click('.eclaw-refs-icon');
