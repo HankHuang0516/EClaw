@@ -1,7 +1,9 @@
 {
   "generated_at": "GENERATED — do not hand-edit",
   "source": [
-    "portal/settings.html",
+    "portal/settings.html"
+  ],
+  "keys": [
     {
       "field_key": "action_request_ratify_grace",
       "label_key": "action_request_ratify_grace_label",
@@ -16,9 +18,7 @@
       "field_key": "action_request_ratify_max_attempts",
       "label_key": "action_request_ratify_max_attempts_label",
       "help_key": "action_request_ratify_max_attempts_help"
-    }
-  ],
-  "keys": [
+    },
     {
       "field_key": "action_request_realtime",
       "label_key": "action_request_realtime_label",
