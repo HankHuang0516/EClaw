@@ -617,6 +617,22 @@
     <string name="account_login_success_msg">Account restored: %s\nThe app will restart to load your data.</string>
     <string name="account_login_restart">Restart Now</string>
 
+    <!-- Settings Stage 3 native: Rotate Secret + Switch Device (card_c3b13f64) -->
+    <!-- i18n keys mirror the settings-manifest schema field i18n names. -->
+    <string name="settings_rotate_device_secret">Rotate Device Secret</string>
+    <string name="settings_rotate_device_secret_hint">Generate a new Device Secret if the current one has leaked. Other sessions will need the new value to sign in.</string>
+    <string name="settings_rotate_secret_confirm_title">Rotate Device Secret?</string>
+    <string name="settings_rotate_secret_confirm_btn">Rotate</string>
+    <string name="settings_rotate_secret_success">Device Secret rotated. The new secret has been saved on this device.</string>
+    <string name="settings_rotate_secret_failed">Could not rotate Device Secret. Please try again.</string>
+    <string name="settings_switch_device">Switch Device</string>
+    <string name="settings_switch_device_confirm">Switch</string>
+    <string name="settings_switch_device_hint">Sign this app into a different Device ID. Useful if you have a second admin account with its own entities.</string>
+    <string name="settings_device_id">Device ID</string>
+    <string name="settings_device_secret">Device Secret</string>
+    <string name="settings_switch_device_success_title">Device Switched</string>
+    <string name="settings_switch_device_success_msg">Now signed in as: %s\nThe app will restart to load this device.</string>
+
     <!-- Privacy Policy -->
     <string name="privacy_policy_title">Privacy Policy</string>
     <string name="delete_account">Delete Account</string>

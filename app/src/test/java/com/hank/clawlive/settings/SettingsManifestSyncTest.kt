@@ -40,18 +40,36 @@ class SettingsManifestSyncTest {
 
     @Test
     fun planDynamicRows_newWebOnlyFeature_emitsWebRow() {
-        // rotate_secret / switch_device: native:false, no static row.
+        // rental_management: native:false, no static native row → dynamic web row.
         val rows = SettingsManifestSync.planDynamicRows(
-            manifest(feature("rotate_secret", native = false)),
+            manifest(feature("rental_management", native = false)),
             "1.0.94"
         )
         assertEquals(1, rows.size)
-        assertEquals("rotate_secret", rows[0].key)
+        assertEquals("rental_management", rows[0].key)
         assertFalse("plain web-only feature is not version-gated", rows[0].gated)
         assertEquals(
-            "https://eclawbot.com/portal/settings.html?focus=rotate_secret",
+            "https://eclawbot.com/portal/settings.html?focus=rental_management",
             rows[0].webFallback
         )
+    }
+
+    // ── Stage 3 native (card_c3b13f64): rotate_secret / switch_device are now ──
+    // ── handled by native dialogs, so even though the manifest declares them   ──
+    // ── web-only (native:false) the planner must NOT emit a duplicate web row. ──
+
+    @Test
+    fun planDynamicRows_stage3NativeRows_areCoveredNatively() {
+        assertTrue("rotate_secret is a native static row", "rotate_secret" in SettingsManifestSync.nativeRowKeys)
+        assertTrue("switch_device is a native static row", "switch_device" in SettingsManifestSync.nativeRowKeys)
+        val rows = SettingsManifestSync.planDynamicRows(
+            manifest(
+                feature("rotate_secret", native = false),
+                feature("switch_device", native = false)
+            ),
+            "1.0.94"
+        )
+        assertTrue("native-handled features emit no dynamic web row", rows.isEmpty())
     }
 
     // ── feature the static screen already renders natively → no dynamic row ──
@@ -162,13 +180,15 @@ class SettingsManifestSyncTest {
                 feature("rental_management", native = false),      // NEW web-only → row
                 feature("agent_policy", native = false),           // NEW web-only → row
                 feature("passive_health", native = false),         // NEW web-only → row
-                feature("rotate_secret", native = false),          // NEW web-only → row
-                feature("switch_device", native = false)           // NEW web-only → row
+                feature("rotate_secret", native = false),          // Stage 3 native → no row
+                feature("switch_device", native = false)           // Stage 3 native → no row
             ),
             "1.0.94"
         )
         assertEquals(
-            listOf("rental_management", "agent_policy", "passive_health", "rotate_secret", "switch_device"),
+            // rotate_secret/switch_device are now native static rows (Stage 3) so they
+            // are statically covered — only the genuinely web-only features surface.
+            listOf("rental_management", "agent_policy", "passive_health"),
             rows.map { it.key }
         )
         assertTrue("all are plain web-only, none gated", rows.none { it.gated })

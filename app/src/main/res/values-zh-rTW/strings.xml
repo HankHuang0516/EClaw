@@ -702,6 +702,20 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="settings_feature_web_help">此設定會在網頁檢視中開啟，因為此 App 版本尚未內建原生畫面。更新 App 即可取得原生畫面，或現在直接在網頁中使用。</string>
     <string name="settings_feature_gated_help">此設定的原生版本需要較新的 App 版本。更新 App 即可取得原生畫面，或現在直接在網頁中開啟。</string>
     <string name="settings_feature_gated_badge">更新 App 以使用原生版</string>
+    <!-- 設定第三階段原生：更換密鑰 + 切換裝置 (card_c3b13f64) -->
+    <string name="settings_rotate_device_secret">更換裝置密鑰</string>
+    <string name="settings_rotate_device_secret_hint">若目前的裝置密鑰已外洩，可重新產生一組新密鑰。其他工作階段需使用新密鑰才能登入。</string>
+    <string name="settings_rotate_secret_confirm_title">確定要更換裝置密鑰？</string>
+    <string name="settings_rotate_secret_confirm_btn">更換</string>
+    <string name="settings_rotate_secret_success">裝置密鑰已更換，新密鑰已儲存於此裝置。</string>
+    <string name="settings_rotate_secret_failed">無法更換裝置密鑰，請再試一次。</string>
+    <string name="settings_switch_device">切換裝置</string>
+    <string name="settings_switch_device_confirm">切換</string>
+    <string name="settings_switch_device_hint">將此 App 登入到另一個裝置 ID。若您有第二個擁有自己實體的管理員帳號，此功能很有用。</string>
+    <string name="settings_device_id">裝置 ID</string>
+    <string name="settings_device_secret">裝置密鑰</string>
+    <string name="settings_switch_device_success_title">已切換裝置</string>
+    <string name="settings_switch_device_success_msg">目前登入身分：%s\nApp 將重新啟動以載入此裝置。</string>
     <string name="show_label">顯示</string>
     <string name="sign_in_facebook">使用 Facebook 登入</string>
     <string name="sign_in_google">使用 Google 登入</string>

@@ -69,6 +69,8 @@ object SettingsManifestSync {
         "feedback",
         "account_identity",
         "channel_api",
+        "rotate_secret",
+        "switch_device",
         "logout"
     )
 

@@ -623,6 +623,38 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Rotate Device Secret (Stage 3 native — card_c3b13f64) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/rowRotateSecret"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_rotate_device_secret"
+                android:textColor="@color/text_white_80"
+                app:backgroundTint="@color/surface_input"
+                android:layout_marginTop="16dp"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_refresh"
+                app:iconTint="@color/text_white_80"
+                app:strokeColor="@color/text_dark"
+                app:strokeWidth="1dp"
+                style="@style/Widget.Material3.Button.TonalButton"/>
+
+            <!-- Switch Device (Stage 3 native — card_c3b13f64) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/rowSwitchDevice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_switch_device"
+                android:textColor="@color/text_white_80"
+                app:backgroundTint="@color/surface_input"
+                android:layout_marginTop="8dp"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_devices"
+                app:iconTint="@color/text_white_80"
+                app:strokeColor="@color/text_dark"
+                app:strokeWidth="1dp"
+                style="@style/Widget.Material3.Button.TonalButton"/>
+
             <!-- Kanban Nudge Settings Button — opens WebView deep-linked to the Kanban Nudge card -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnKanbanNudge"

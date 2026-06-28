@@ -867,6 +867,20 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="settings_feature_web_help">此设置会在网页视图中打开，因为此 App 版本尚未内置原生界面。更新 App 即可获得原生界面，或现在直接在网页中使用。</string>
     <string name="settings_feature_gated_help">此设置的原生版本需要较新的 App 版本。更新 App 即可获得原生界面，或现在直接在网页中打开。</string>
     <string name="settings_feature_gated_badge">更新 App 以使用原生版</string>
+    <!-- 设置第三阶段原生：更换密钥 + 切换设备 (card_c3b13f64) -->
+    <string name="settings_rotate_device_secret">更换设备密钥</string>
+    <string name="settings_rotate_device_secret_hint">若当前的设备密钥已泄露，可重新生成一组新密钥。其他会话需使用新密钥才能登录。</string>
+    <string name="settings_rotate_secret_confirm_title">确定要更换设备密钥？</string>
+    <string name="settings_rotate_secret_confirm_btn">更换</string>
+    <string name="settings_rotate_secret_success">设备密钥已更换，新密钥已保存在此设备。</string>
+    <string name="settings_rotate_secret_failed">无法更换设备密钥，请重试。</string>
+    <string name="settings_switch_device">切换设备</string>
+    <string name="settings_switch_device_confirm">切换</string>
+    <string name="settings_switch_device_hint">将此 App 登录到另一个设备 ID。若您有第二个拥有自己实体的管理员账号，此功能很有用。</string>
+    <string name="settings_device_id">设备 ID</string>
+    <string name="settings_device_secret">设备密钥</string>
+    <string name="settings_switch_device_success_title">已切换设备</string>
+    <string name="settings_switch_device_success_msg">当前登录身份：%s\nApp 将重新启动以载入此设备。</string>
     <string name="settings_invite">邀请好友</string>
     <string name="settings_my_rentals">我的租借</string>
     <string name="settings_wallet">钱包</string>
