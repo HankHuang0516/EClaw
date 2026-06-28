@@ -88,6 +88,34 @@ describe('recomputeRatifyMode — server-authoritative mode + audit-trail N-cap'
         expect(out.mode).toBe('default_agree');
     });
 
+    // 計畫E adjustable N-cap (card_c3d48c4607ee753b2c98e04b): the cap is now a device
+    // pref passed as maxAttempts (clamped [1,5]). FAILS on old code (hardcoded 2).
+    test('N-cap honors the pref: cap=1 ⇒ 1 prior arm already holds', async () => {
+        const out = await recomputeRatifyMode(clientWithArms(1), UUID, 'tweak copy', cleanRatify(), 1700, 1);
+        expect(out.mode).toBe('hold');
+        expect(out.holdReasons.join(';')).toMatch(/retry_cap_reached:1\/1/);
+    });
+
+    test('N-cap honors the pref: cap=4 ⇒ 3 prior arms still permits default_agree', async () => {
+        const out = await recomputeRatifyMode(clientWithArms(3), UUID, 'tweak copy', cleanRatify(), 1700, 4);
+        expect(out.mode).toBe('default_agree');
+    });
+
+    test('N-cap pref clamped: junk maxAttempts → default cap 2; out-of-range high → 5', async () => {
+        const junk = await recomputeRatifyMode(clientWithArms(MAX_RATIFY_RETRIES), UUID, 'tweak copy', cleanRatify(), 1700, 'nonsense');
+        expect(junk.mode).toBe('hold'); // junk → cap 2; 2 prior arms ⇒ hold
+        const high = await recomputeRatifyMode(clientWithArms(4), UUID, 'tweak copy', cleanRatify(), 1700, 99);
+        expect(high.mode).toBe('default_agree'); // 99 clamped to 5; 4 prior < 5
+    });
+
+    test('fail-closed retry-count-unavailable uses the (clamped) pref cap, not the const', async () => {
+        const client = { query: jest.fn().mockRejectedValue(new Error('db down')) };
+        const out = await recomputeRatifyMode(client, UUID, 'tweak copy', cleanRatify(), 1700, 4);
+        expect(out.mode).toBe('hold');
+        expect(out.priorArms).toBe(4); // fail-closed: priorArms set to the cap (4), not 2
+        expect(out.holdReasons.join(';')).toMatch(/retry_count_unavailable/);
+    });
+
     test('fail-closed when the audit count query throws (count unavailable ⇒ hold)', async () => {
         const client = { query: jest.fn().mockRejectedValue(new Error('db down')) };
         const out = await recomputeRatifyMode(client, UUID, 'tweak copy', cleanRatify(), 1700);
@@ -140,13 +168,25 @@ function ratifyRow(over = {}, ratifyOver = {}) {
 }
 
 describe('runRatifyPass via enforceActionRequestTimeouts — dark launch + fire-time fail-closed', () => {
-    test('DARK LAUNCH: ratify_enabled unset ⇒ no ratify query at all (device scan only, policy=keep)', async () => {
+    // 計畫E default-ON (card_c3d48c4607ee753b2c98e04b): an UNSET pref now RUNS the
+    // ratify pass (it issues the candidate SELECT). FAILS on old dark-launch code
+    // (which returned before querying when ratify_enabled !== true).
+    test('DEFAULT-ON: ratify_enabled UNSET ⇒ the ratify pass RUNS (candidate SELECT issued, no auto-write on empty)', async () => {
         const { mod } = buildModule({ prefs: { action_request_timeout_policy: 'keep' } });
+        mockPoolQuery.mockResolvedValueOnce({ rows: [{ device_id: deviceId }] }); // scan; candidate SELECT → default empty rows
+        await mod.enforceActionRequestTimeouts();
+        expect(mockPoolQuery.mock.calls[0][0]).toMatch(/SELECT DISTINCT device_id/);
+        // default-ON: the ratify candidate SELECT DID run (was skipped under dark-launch)
+        expect(mockPoolQuery.mock.calls.find(c => /ratify,planE/.test(c[0]))).toBeDefined();
+        // nothing to resolve (no candidate rows) ⇒ no auto-act write
+        expect(mockPoolQuery.mock.calls.filter(c => /UPDATE agent_action_requests/.test(c[0]))).toHaveLength(0);
+    });
+
+    // Explicit OFF is the ONLY way to disable the worker post-flip.
+    test('EXPLICIT OFF: ratify_enabled=false ⇒ no ratify query at all (device scan only, policy=keep)', async () => {
+        const { mod } = buildModule({ prefs: { action_request_ratify_enabled: false, action_request_timeout_policy: 'keep' } });
         mockPoolQuery.mockResolvedValueOnce({ rows: [{ device_id: deviceId }] }); // scan
         await mod.enforceActionRequestTimeouts();
-        // dark launch: the ratify pass returned before querying (no ratify SELECT)
-        // and keep skipped every auto-act write. (The policy-independent negotiation
-        // advance pass may issue marker SELECTs, but writes nothing here.)
         expect(mockPoolQuery.mock.calls[0][0]).toMatch(/SELECT DISTINCT device_id/);
         expect(mockPoolQuery.mock.calls.find(c => /ratify,planE/.test(c[0]))).toBeUndefined();
         expect(mockPoolQuery.mock.calls.filter(c => /UPDATE agent_action_requests/.test(c[0]))).toHaveLength(0);
@@ -214,9 +254,11 @@ describe('runRatifyPass via enforceActionRequestTimeouts — dark launch + fire-
 describe('device-preferences: ratify pref coercion (dark-launch safe)', () => {
     const devicePrefs = require('../../device-preferences');
 
-    test('DEFAULTS: ratify disabled + 1440-min grace', () => {
-        expect(devicePrefs.DEFAULTS.action_request_ratify_enabled).toBe(false);
+    // ⚠️ default-ON global flip (card_c3d48c4607ee753b2c98e04b): was `false`.
+    test('DEFAULTS: ratify DEFAULT-ON + 1440-min grace + 2 max-attempts', () => {
+        expect(devicePrefs.DEFAULTS.action_request_ratify_enabled).toBe(true);
         expect(devicePrefs.DEFAULTS.action_request_ratify_grace_minutes).toBe(1440);
+        expect(devicePrefs.DEFAULTS.action_request_ratify_max_attempts).toBe(2);
     });
 
     test('action_request_ratify_enabled string-safe: only true/`true` enable; `false`/junk stay off', async () => {
@@ -243,5 +285,50 @@ describe('device-preferences: ratify pref coercion (dark-launch safe)', () => {
             await devicePrefs.updatePrefs(deviceId, { action_request_ratify_grace_minutes: input });
             expect(readBack().action_request_ratify_grace_minutes).toBe(expected);
         }
+    });
+
+    // 計畫E adjustable N-cap (card_c3d48c4607ee753b2c98e04b): GET/PUT round-trip of the
+    // new pref through the persistence coercion. FAILS on old code (key not in DEFAULTS
+    // ⇒ updatePrefs filters it out ⇒ readBack has no such key).
+    test('action_request_ratify_max_attempts clamps [1,5]; invalid → 2', async () => {
+        const written = [];
+        const stubPool = { query: jest.fn((sql, params) => { written.push({ sql, params }); return Promise.resolve({ rows: [] }); }) };
+        await devicePrefs.initTable(stubPool);
+        const readBack = () => JSON.parse(written[written.length - 1].params[1]);
+        const cases = [[1, 1], [5, 5], [0, 1], [99, 5], [3, 3], ['4', 4], ['oops', 2], [null, 2]];
+        for (const [input, expected] of cases) {
+            written.length = 0;
+            await devicePrefs.updatePrefs(deviceId, { action_request_ratify_max_attempts: input });
+            expect(readBack().action_request_ratify_max_attempts).toBe(expected);
+        }
+    });
+});
+
+// ───────────────────────── worker-side defensive clamps ─────────────────────────
+// 計畫E adjustable params (card_c3d48c4607ee753b2c98e04b): the worker re-clamps both
+// tunables so a junk/out-of-range pref can never disable the N-cap or fire the timer
+// too eagerly. FAILS on old code (these exports did not exist).
+describe('agent-action-requests: ratify tunable clamps', () => {
+    const { clampRatifyMaxAttempts, clampRatifyGraceMinutes } = factory;
+
+    test('clampRatifyMaxAttempts: [1,5], junk/undefined → default 2', () => {
+        expect(clampRatifyMaxAttempts(1)).toBe(1);
+        expect(clampRatifyMaxAttempts(5)).toBe(5);
+        expect(clampRatifyMaxAttempts(0)).toBe(1);    // below floor → clamp up
+        expect(clampRatifyMaxAttempts(99)).toBe(5);   // above ceiling → clamp down
+        expect(clampRatifyMaxAttempts('3')).toBe(3);
+        expect(clampRatifyMaxAttempts('junk')).toBe(2);
+        expect(clampRatifyMaxAttempts(undefined)).toBe(2);
+        expect(clampRatifyMaxAttempts(null)).toBe(2);
+    });
+
+    test('clampRatifyGraceMinutes: [60,10080], junk/undefined → default 1440', () => {
+        expect(clampRatifyGraceMinutes(60)).toBe(60);
+        expect(clampRatifyGraceMinutes(10080)).toBe(10080);
+        expect(clampRatifyGraceMinutes(1)).toBe(60);        // below floor → 1h floor
+        expect(clampRatifyGraceMinutes(99999)).toBe(10080); // above ceiling → 7d cap
+        expect(clampRatifyGraceMinutes('120')).toBe(120);
+        expect(clampRatifyGraceMinutes('junk')).toBe(1440);
+        expect(clampRatifyGraceMinutes(undefined)).toBe(1440);
     });
 });
