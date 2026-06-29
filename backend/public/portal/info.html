@@ -5225,7 +5225,7 @@ platforms:
             <div class="faq-toolbar">
                 <div class="faq-search">
                     <span>🔍</span>
-                    <input type="text" id="faqSearchInput" data-i18n="faq_search_placeholder" placeholder="搜尋常見問題..." maxlength="100" oninput="filterFaq()">
+                    <input type="text" id="faqSearchInput" aria-label="Search FAQ" data-i18n="faq_search_placeholder" placeholder="搜尋常見問題..." maxlength="100" oninput="filterFaq()">
                 </div>
                 <div class="faq-chips">
                     <button class="faq-chip active" data-faq-cat="all" onclick="setFaqCat('all',this)" data-i18n="faq_chip_all">全部</button>
@@ -5343,7 +5343,7 @@ platforms:
                 <div class="rn-hero-title" data-i18n="rn_hero_title">Release Notes</div>
                 <div class="rn-hero-subtitle" data-i18n="rn_hero_subtitle">What's new in EClawbot — features, improvements, and fixes across the platform.</div>
                 <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                    <input type="text" id="rnSearch" data-i18n="rn_search_placeholder" placeholder="Search versions..." style="padding:8px 12px;border-radius:8px;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text);font-size:13px;width:200px;">
+                    <input type="text" id="rnSearch" aria-label="Search versions" data-i18n="rn_search_placeholder" placeholder="Search versions..." style="padding:8px 12px;border-radius:8px;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text);font-size:13px;width:200px;">
                     <select id="rnFilter" style="padding:8px 12px;border-radius:8px;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text);font-size:13px;">
                         <option value="all" data-i18n="rn_filter_all">All</option>
                         <option value="Features" data-i18n="rn_filter_features">Features</option>
@@ -5459,7 +5459,7 @@ platforms:
                         <option value="risk" data-i18n="crl_kind_risk">Risk</option>
                         <option value="todo" data-i18n="crl_kind_todo">TODO</option>
                     </select>
-                    <input type="text" id="crlSearch" data-i18n="crl_search_placeholder" placeholder="Search records..." style="padding:8px 12px;border-radius:8px;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text);font-size:13px;width:180px;">
+                    <input type="text" id="crlSearch" aria-label="Search records" data-i18n="crl_search_placeholder" placeholder="Search records..." style="padding:8px 12px;border-radius:8px;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text);font-size:13px;width:180px;">
                     <span id="crlCount" style="color:var(--text-secondary);font-size:13px;"></span>
                 </div>
             </div>

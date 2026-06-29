@@ -3933,7 +3933,7 @@
         <div class="modal-box">
             <div class="r2-modal-header">
                 <div class="modal-title" data-i18n="chat_cloud_drive_title">&#x1F4C1; Cloud Drive</div>
-                <button onclick="closeR2FilesPanel()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);line-height:1;">&#x2715;</button>
+                <button onclick="closeR2FilesPanel()" aria-label="Close" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);line-height:1;">&#x2715;</button>
             </div>
             <div id="r2UsageText" style="font-size:12px;color:var(--text-muted);">載入中...</div>
             <div class="r2-usage-bar"><div class="r2-usage-fill" id="r2UsageFill" style="width:0%"></div></div>
@@ -6518,7 +6518,7 @@
                     const durStr = Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
                     mediaHtml = `
                         <div class="chat-voice" data-src="${escapeHtml(msg.media_url)}">
-                            <button class="voice-play-btn" onclick="toggleVoice(this)">&#9654;</button>
+                            <button class="voice-play-btn" onclick="toggleVoice(this)" aria-label="Play voice message">&#9654;</button>
                             <div class="voice-progress" onclick="seekVoice(event, this)"><div class="voice-progress-fill"></div></div>
                             <span class="voice-duration">${durStr}</span>
                         </div>`;

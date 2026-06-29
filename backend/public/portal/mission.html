@@ -1700,7 +1700,7 @@
             const catAttr = esc(cat);
             return `<div class="cat-folder" data-section="${section}" data-category="${catAttr}"
                         ondragover="onDropZoneDragOver(event)" ondragleave="onDropZoneDragLeave(event)" ondrop="onCatDrop(event)">
-                <div class="cat-header" onclick="handleCatHeaderClick(this)">
+                <div class="cat-header" role="button" tabindex="0" onclick="handleCatHeaderClick(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();handleCatHeaderClick(this)}">
                     <span class="cat-chevron ${expanded ? 'open' : ''}">&#9654;</span>
                     <span class="cat-name">${esc(cat)}</span>
                     <span class="cat-count">(${count})</span>

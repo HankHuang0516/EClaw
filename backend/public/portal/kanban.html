@@ -836,7 +836,7 @@
 
         <!-- ⚡ Automation Collapse Section -->
         <div class="kb-automation" id="kbAutomation" style="display:none">
-            <div class="kb-auto-header" id="autoHeader" onclick="toggleAutomation()">
+            <div class="kb-auto-header" id="autoHeader" onclick="toggleAutomation()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleAutomation()}">
                 <h3>⚡ <span data-i18n="kb_auto_title">Automations</span> <span class="kb-auto-count" id="autoCount">0</span>
                     <span class="kb-auto-view-toggle" onclick="event.stopPropagation()">
                         <button class="kb-auto-view-btn" data-view="grid" onclick="switchAutoView('grid')" data-i18n-title="kb_auto_view_grid" title="Grid" aria-label="Grid">☰</button>
@@ -2908,7 +2908,7 @@
                             <option value="supports">supports</option>
                             <option value="contradicts">contradicts</option>
                         </select>
-                        <input id="cardLinkTarget" placeholder="target card id" style="min-width:180px;flex:1">
+                        <input id="cardLinkTarget" placeholder="target card id" aria-label="Target card id" style="min-width:180px;flex:1">
                         <button class="kb-move-btn" onclick="addCardLink('${cardId}')">Add link</button>
                     </div>
                     ${renderCardLinkRows(cardId, 'Outgoing', outgoing, 'outgoing')}
@@ -4068,7 +4068,7 @@
                     <label style="display:block;font-size:13px;margin:10px 0 4px">Reason <span style="color:#f66">*</span></label>
                     <textarea id="kbReopenReason" rows="4" placeholder="e.g. validation failed; artifact missing; regression reported" style="width:100%;padding:8px;border-radius:8px;background:var(--bg-secondary,#222);color:inherit;border:1px solid var(--border-color,#444);resize:vertical"></textarea>
                     <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px"><input id="kbReopenPrFlag" type="checkbox"> Requires PR rework</label>
-                    <input id="kbReopenPrNumber" placeholder="New PR number or URL (optional until final Done)" style="width:100%;margin-top:6px;padding:8px;border-radius:8px;background:var(--bg-secondary,#222);color:inherit;border:1px solid var(--border-color,#444)">
+                    <input id="kbReopenPrNumber" placeholder="New PR number or URL (optional until final Done)" aria-label="New PR number or URL" style="width:100%;margin-top:6px;padding:8px;border-radius:8px;background:var(--bg-secondary,#222);color:inherit;border:1px solid var(--border-color,#444)">
                     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
                         <button class="btn btn-ghost" onclick="closeReopenDialog()">Cancel</button>
                         <button class="btn btn-primary" onclick="submitReopenCard('${cardId}')">Reopen</button>
