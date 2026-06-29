@@ -7,7 +7,7 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.1185.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Current version**: 1.1190.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
 - **Android app version**: 1.0.96 (versionCode 104); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
@@ -18,7 +18,7 @@
 ```
 EClaw/
 ├── backend/                  # Node.js Express server (deployed to Railway)
-│   ├── index.js              # Main server (~24,157 lines) — all API routes
+│   ├── index.js              # Main server (~24,656 lines) — all API routes
 │   ├── db.js                 # PostgreSQL connection pool + schema creation
 │   ├── auth.js               # Auth module (JWT, OAuth, OIDC, RBAC)
 │   ├── mission.js            # Mission Control dashboard system
@@ -178,7 +178,7 @@ EClaw/
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
 │   ├── tests/                # Regression + integration tests (79 files)
-│   ├── tests/jest/           # Jest unit tests (399 files, CI-run via `npm test`)
+│   ├── tests/jest/           # Jest unit tests (418 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -241,7 +241,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~24,157 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~24,656 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -1266,6 +1266,17 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Portal QA/UIUX Sweep**: i18n fallback + a11y labels (#3721)
 - **Idle Dispatch Guard**: Guard non-integer `botId` before SQL int cast (#3715)
 
+### Recent Features (v1.1190.x+, 2026-06-28 – 2026-06-29)
+
+- **Ratify Settings UI (v1.1190)**: 計畫E ratify-loop settings UI — enable toggle + grace (hours/minutes) + N cap + read-only guardrails card; settings-help invariant with HELP-KEY annotations; registry keys[] placement fix; default-ON copy alignment (#3802+)
+- **Real-Activity Entity State (v1.1190)**: Server-authoritative entity state (BUSY/REVIEW/FAILED/IDLE/SLEEPING) driven by real activity — stages 0-2 (#3797); stale-card watcher exempt parked backlog (#3796); open assigned cards never shows asleep (#3795)
+- **Mobile Bottom-Sheet Safe Area (v1.1190)**: Mobile destructive bottom-sheet pads safe-area-inset-bottom (#3802)
+- **Android versionCode 125 / versionName 1.1.14**: Wallpaper settings + walking behavior release (#3801)
+- **Action Request Negotiation/Consensus**: 需要你 negotiation/consensus workflow — vote → synthesize → surface (#3789); one reply resolves exactly ONE request fix (#3787)
+- **Wallpaper FSM Stage 3**: Client consumes server-authoritative activity state, fixes error→false-sleep (#3791); drag-to-reposition HARD PIN + desync fix (#3790); reconnect free-walking + de-dupe walking toggles (#3785)
+- **Vault Security Leak Fix**: Stop leaking whole vault to every agent message (#3792)
+- **Chat Reconnecting Banner Fix**: Clear false 'reconnecting' banner when messaging works (#3794)
+
 ### Recent Features (v1.1190.x+, 2026-06-27 – 2026-06-28)
 
 - **Owner-Decision Classifier + Inbox UI (v1.1190)**: Server-side `owner-decision` classifier for action requests — auto-tags requests requiring human owner decisions (#3756); portal inbox renders `decision_context` with what-was-done + evidence chips + recommendation (#3757)
@@ -1302,7 +1313,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~5564 test cases across 399 Jest files + 59 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~5877 test cases across 418 Jest files + 79 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1395,7 +1406,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
 | Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
 
-### Jest Unit Tests (CI-run, `npm test`, 399 files)
+### Jest Unit Tests (CI-run, `npm test`, 418 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -1478,7 +1489,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (399 files)
+cd backend && npm test                  # Jest unit tests (418 files)
 cd backend && npm run lint              # ESLint
 ```
 
