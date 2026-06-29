@@ -305,6 +305,32 @@ async function createTables() {
         `);
         console.log('[Push] DB migration: fcm_token + apns_token columns ensured on devices table');
 
+        // Multi-device FCM tokens (push notification clobber fix, 2026-06-29).
+        // The legacy single devices.fcm_token column means MULTIPLE physical devices
+        // sharing one deviceId (e.g. owner's phone + a desktop emulator) each register
+        // their token under the same deviceId and OVERWRITE each other — only the
+        // last-registered device receives pushes. Mirror the multi-row push_subscriptions
+        // design: one row per (device_id, token) so notifyDevice can fan out to ALL of a
+        // device's tokens. Backfill the current single-column token so no device regresses.
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS device_fcm_tokens (
+                device_id   TEXT   NOT NULL,
+                token       TEXT   NOT NULL,
+                platform    TEXT   NOT NULL DEFAULT 'fcm',
+                updated_at  BIGINT,
+                PRIMARY KEY (device_id, token)
+            )
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_device_fcm_tokens_device ON device_fcm_tokens(device_id)
+        `);
+        await client.query(`
+            INSERT INTO device_fcm_tokens (device_id, token, platform, updated_at)
+            SELECT device_id, fcm_token, 'fcm', $1 FROM devices WHERE fcm_token IS NOT NULL
+            ON CONFLICT (device_id, token) DO NOTHING
+        `, [Date.now()]);
+        console.log('[Push] DB migration: device_fcm_tokens multi-token table ensured + backfilled');
+
         // Official bot bindings (free bot multi-device tracking)
         await client.query(`
             CREATE TABLE IF NOT EXISTS official_bot_bindings (

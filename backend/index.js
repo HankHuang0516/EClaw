@@ -21961,10 +21961,19 @@ app.post('/api/device/fcm-token', (req, res) => {
         chatPool.query('UPDATE devices SET apns_token = $1 WHERE device_id = $2', [resolvedToken, deviceId]).catch(() => {});
         serverLog('info', 'fcm_token', `APNs token registered`, { deviceId, metadata: { prevPrefix, newPrefix, changed, platform: 'apns' } });
     } else {
-        // Android FCM token (default)
+        // Android FCM token (default). Keep the legacy single column = latest token for
+        // backward compat, AND upsert into device_fcm_tokens so multiple physical devices
+        // on the same deviceId (phone + emulator + …) each keep their own token and ALL
+        // receive pushes instead of clobbering one another (multi-device fix 2026-06-29).
         device.fcmToken = resolvedToken;
         chatPool.query('ALTER TABLE devices ADD COLUMN IF NOT EXISTS fcm_token TEXT').catch(() => {});
         chatPool.query('UPDATE devices SET fcm_token = $1 WHERE device_id = $2', [resolvedToken, deviceId]).catch(() => {});
+        chatPool.query(
+            `INSERT INTO device_fcm_tokens (device_id, token, platform, updated_at)
+             VALUES ($1, $2, 'fcm', $3)
+             ON CONFLICT (device_id, token) DO UPDATE SET updated_at = EXCLUDED.updated_at`,
+            [deviceId, resolvedToken, Date.now()]
+        ).catch(() => {});
         serverLog('info', 'fcm_token', `FCM token registered`, { deviceId, metadata: { prevPrefix, newPrefix, changed, platform: 'fcm' } });
     }
 
@@ -22014,47 +22023,76 @@ try {
     console.warn('[FCM] Firebase Admin init FAILED:', e.message);
 }
 
+// Gather ALL live FCM tokens for a device (multi-device fix 2026-06-29): the union of
+// the in-memory latest token and every row in device_fcm_tokens, deduped. This is why a
+// push reaches the owner's phone AND their emulator/second device instead of only the
+// last one to register. Falls back to the in-memory token alone if the table query fails
+// (e.g. first boot before migration) so delivery never regresses.
+async function getDeviceFcmTokens(deviceId) {
+    const set = new Set();
+    const inMem = devices[deviceId]?.fcmToken;
+    if (inMem) set.add(inMem);
+    try {
+        const r = await chatPool.query(
+            "SELECT token FROM device_fcm_tokens WHERE device_id = $1 AND platform = 'fcm'",
+            [deviceId]
+        );
+        for (const row of r.rows) if (row.token) set.add(row.token);
+    } catch (e) {
+        serverLog('warn', 'fcm_send', `device_fcm_tokens read failed, using in-mem only: ${e.message}`, { deviceId });
+    }
+    return [...set];
+}
+
 async function sendFcm(deviceId, notif) {
     if (!firebaseAdmin) {
         serverLog('warn', 'fcm_send', 'skip: firebaseAdmin not initialized', { deviceId, metadata: { category: notif?.category } });
         return false;
     }
-    const device = devices[deviceId];
-    const token = device?.fcmToken;
-    if (!token) {
-        serverLog('warn', 'fcm_send', 'skip: no fcmToken for device', { deviceId, metadata: { deviceExists: !!device, category: notif?.category } });
+    const tokens = await getDeviceFcmTokens(deviceId);
+    if (tokens.length === 0) {
+        serverLog('warn', 'fcm_send', 'skip: no fcmToken for device', { deviceId, metadata: { deviceExists: !!devices[deviceId], category: notif?.category } });
         return false;
     }
-    const tokenPrefix = token.slice(0, 12);
     // Silent categories handled by the app's FCM service (start TtsService,
     // fetch GPS, etc). Sending an android.notification for these would make
     // the OS display a visible tray notification when the app is killed.
     const silent = notif.category === 'tts' || notif.category === 'location_request';
-    const fcmMessage = {
-        token,
-        data: notifModule.buildFcmNotificationData(notif),
-        android: { priority: 'high' }
-    };
-    if (!silent) {
-        fcmMessage.android.notification = {
-            title: notif.title || '',
-            body: notif.body || '',
-            channelId: 'eclaw_chat',
-            sound: 'default'
+    let anyOk = false;
+    // Fan out to EVERY registered device sharing this deviceId.
+    for (const token of tokens) {
+        const tokenPrefix = token.slice(0, 12);
+        const fcmMessage = {
+            token,
+            data: notifModule.buildFcmNotificationData(notif),
+            android: { priority: 'high' }
         };
-    }
-    try {
-        const resp = await firebaseAdmin.messaging().send(fcmMessage);
-        serverLog('info', 'fcm_send', 'sent OK', { deviceId, metadata: { tokenPrefix, category: notif?.category, messageId: resp } });
-        return true;
-    } catch (e) {
-        if (e.code === 'messaging/registration-token-not-registered') {
-            delete devices[deviceId]?.fcmToken;
-            chatPool.query('UPDATE devices SET fcm_token = NULL WHERE device_id = $1', [deviceId]).catch(() => {});
+        if (!silent) {
+            fcmMessage.android.notification = {
+                title: notif.title || '',
+                body: notif.body || '',
+                channelId: 'eclaw_chat',
+                sound: 'default'
+            };
         }
-        serverLog('error', 'fcm_send', `send failed: ${e.message}`, { deviceId, metadata: { tokenPrefix, code: e.code } });
-        return false;
+        try {
+            const resp = await firebaseAdmin.messaging().send(fcmMessage);
+            serverLog('info', 'fcm_send', 'sent OK', { deviceId, metadata: { tokenPrefix, category: notif?.category, messageId: resp } });
+            anyOk = true;
+        } catch (e) {
+            if (e.code === 'messaging/registration-token-not-registered') {
+                // Delete only THIS dead token's row — never the whole device (would
+                // wipe the other live devices' tokens, the original clobber bug).
+                chatPool.query('DELETE FROM device_fcm_tokens WHERE device_id = $1 AND token = $2', [deviceId, token]).catch(() => {});
+                if (devices[deviceId]?.fcmToken === token) {
+                    delete devices[deviceId].fcmToken;
+                    chatPool.query('UPDATE devices SET fcm_token = NULL WHERE device_id = $1', [deviceId]).catch(() => {});
+                }
+            }
+            serverLog('error', 'fcm_send', `send failed: ${e.message}`, { deviceId, metadata: { tokenPrefix, code: e.code } });
+        }
     }
+    return anyOk;
 }
 
 // ── Schedule API Routes removed — migrated to Kanban ──
