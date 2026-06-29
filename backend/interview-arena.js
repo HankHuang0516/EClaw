@@ -323,6 +323,24 @@ let VISION_IMAGES = [
     // Hard tier
     { file: null, description: 'A Linux htop process monitor screenshot: overall CPU bar at 73%, memory at 11.4 GB of 16 GB — 5 processes listed: PID 3847 "python3 train.py" at 92.1% CPU, PID 1021 "nginx" at 0.3%, PID 4412 "postgres" at 4.7%, PID 2201 "redis-server" at 1.2%, PID 5501 "node" at 0.9% — red load average 7.42 in top-right', keywords: ['htop', 'CPU', '73', 'memory', '11.4', 'five', '3847', 'python', '92.1', 'nginx', '7.42', 'load'] },
     { file: null, description: 'A microservices architecture diagram with 6 services connected by arrows: API Gateway → Auth Service, API Gateway → User Service, API Gateway → Order Service, Order Service → Payment Service, Payment Service → Notification Service — a red ❌ on the Payment→Notification arrow indicates a failed webhook, highlighted in orange', keywords: ['microservices', 'six', 'services', 'API', 'Gateway', 'payment', 'notification', 'failed', 'orange', 'webhook'] },
+    // ── Daily pool update: added 2026-06-28 ──
+    // Easy tier
+    { file: null, description: 'A red "No Entry" road sign — a white horizontal rectangle bar centered inside a red circle, mounted on a gray pole against a clear blue sky', keywords: ['no entry', 'red', 'sign', 'white', 'bar', 'blue'] },
+    // Medium tier
+    { file: null, description: 'A Trello-style kanban board with three swimlane columns: "To Do" has 4 cards, "In Progress" has 2 cards, and "Done" has 7 cards — a blue card titled "Deploy hotfix" in the In Progress column has a red urgent priority tag in the upper right', keywords: ['trello', 'kanban', 'three', 'columns', 'four', 'done', 'seven', 'blue', 'deploy', 'urgent', 'red'] },
+    { file: null, description: 'A classroom seating chart arranged as a 5×6 grid of 30 desks: six desks are marked with a red X to indicate absent students; the front-center desk is highlighted in yellow and labeled "Teacher Demo Station"', keywords: ['classroom', 'five', 'six', 'thirty', 'desks', 'absent', 'red', 'teacher', 'demo', 'yellow'] },
+    // Hard tier
+    { file: null, description: 'A JSON Schema definition for an "Employee" object listing seven required properties: id (integer), name (string, minLength 2), email (format email), department (enum: Engineering, HR, Finance, Legal), salary (number, minimum 30000), startDate (format date), and isActive (boolean) — two red error markers appear beside the "startDate" and "isActive" entries indicating validation failures', keywords: ['JSON', 'schema', 'seven', 'employee', 'email', 'department', 'enum', 'salary', '30000', 'isActive', 'error', 'startDate'] },
+    { file: null, description: 'A radar spider chart comparing two ML models across 5 axes: accuracy, speed, memory efficiency, robustness, and explainability — Model A (blue polygon fill) scores highest on explainability (0.82) and lowest on speed (0.44); Model B (orange polygon fill) scores highest on speed (0.79) and lowest on explainability (0.31)', keywords: ['radar', 'spider', 'chart', 'two', 'models', 'five', 'blue', 'orange', 'explainability', '0.82', 'speed', '0.44'] },
+    // ── Daily pool update: added 2026-06-29 ──
+    // Easy tier
+    { file: null, description: 'A golden padlock icon on a dark navy background — fully closed with the shackle looped through the body and a small keyhole visible at the center bottom', keywords: ['padlock', 'golden', 'locked', 'keyhole', 'dark', 'navy'] },
+    // Medium tier
+    { file: null, description: 'A search results page showing 5 results for the query "machine learning tutorial": the top result is highlighted in a blue card with a "Sponsored" badge; the third result has a video thumbnail with a red circular play button; all five results display a 4.5-star average rating', keywords: ['search', 'five', 'results', 'blue', 'sponsored', 'third', 'video', 'red', 'play', 'four', 'star'] },
+    { file: null, description: 'A split-screen code comparison: left panel shows a Python file with 8 lines and right panel shows a JavaScript file with 11 lines — both implement binary search; line 5 of the Python file is highlighted in yellow showing "mid = (low + high) // 2"', keywords: ['code', 'comparison', 'Python', 'JavaScript', 'eight', 'eleven', 'binary', 'search', 'mid', 'yellow', 'five'] },
+    // Hard tier
+    { file: null, description: 'A distributed systems topology diagram with 4 geographic regions (US-East, US-West, EU-West, AP-Southeast): each region contains a primary database node and a read replica; solid arrows show synchronous intra-region replication and dashed arrows show asynchronous cross-region replication — the EU-West region displays an orange replication lag warning badge reading "847 ms behind"', keywords: ['distributed', 'four', 'regions', 'primary', 'database', 'replica', 'async', 'sync', 'EU', '847', 'lag', 'orange'] },
+    { file: null, description: 'A stock options chain table for AAPL with 6 rows of strike prices from $165 to $190 in $5 increments: columns show call bid, call ask, implied volatility, and open interest — the $175 row is highlighted in yellow as the at-the-money option showing IV 28.4% and OI 14,232', keywords: ['options', 'chain', 'AAPL', 'six', 'strikes', '175', 'call', 'implied', 'volatility', '28.4', '14232', 'at-the-money', 'yellow'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -643,6 +661,20 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '"AABABBA", 1', expected: '4' },{ input: '"ABAB", 2', expected: '4' },{ input: '"AAAA", 0', expected: '4' },{ input: '"AABA", 0', expected: '2' },{ input: '"KRSCDCSONAJNHLBMDQGIFCPEKPOHQIHLTDIQGEKLRLCQNBOHNDQGHJPNDQPERNPLNULL", 4', expected: '7' }] },
     { title: 'Count of Smaller Numbers After Self', description: 'Write `solve(nums)` — return an array where answer[i] is the count of elements strictly smaller than nums[i] that appear to its right.',
       testCases: [{ input: '[5,2,6,1]', expected: '[2,1,1,0]' },{ input: '[-1,-1]', expected: '[0,0]' },{ input: '[1]', expected: '[0]' },{ input: '[3,2,1]', expected: '[2,1,0]' },{ input: '[2,0,1]', expected: '[2,0,0]' }] },
+    // ── Daily pool update: added 2026-06-28 ──
+    { title: 'Pacific Atlantic Water Flow', description: 'Write `solve(heights)` — given an m×n integer matrix of heights, return all positions [r,c] where rain water can flow to both the Pacific Ocean (top/left border) and the Atlantic Ocean (bottom/right border). Water flows to adjacent cells with equal or lower height. Return positions sorted by row then column.',
+      testCases: [{ input: '[[1,2,2,3,5],[3,2,3,4,4],[2,4,5,3,1],[6,7,1,4,5],[5,1,1,2,4]]', expected: '[[0,4],[1,3],[1,4],[2,2],[3,0],[3,1],[4,0]]' },{ input: '[[1]]', expected: '[[0,0]]' },{ input: '[[1,2],[2,1]]', expected: '[[0,1],[1,0]]' }] },
+    { title: 'Reconstruct Itinerary', description: 'Write `solve(tickets)` — given a list of airline tickets [from, to], reconstruct the itinerary starting from "JFK". Use all tickets exactly once. If multiple valid itineraries exist, return the one with the smallest lexical order.',
+      testCases: [{ input: '[["MUC","LHR"],["JFK","MUC"],["SFO","SJC"],["LHR","SFO"]]', expected: '["JFK","MUC","LHR","SFO","SJC"]' },{ input: '[["JFK","SFO"],["JFK","ATL"],["SFO","ATL"],["ATL","JFK"],["ATL","SFO"]]', expected: '["JFK","ATL","JFK","SFO","ATL","SFO"]' },{ input: '[["JFK","KUL"],["JFK","NRT"],["NRT","JFK"]]', expected: '["JFK","NRT","JFK","KUL"]' }] },
+    { title: 'Range Sum Query', description: 'Write `solve(nums, queries)` — given an integer array, answer multiple range sum queries. queries is an array of [left, right] (0-indexed, inclusive). Return an array of the sum for each query. Optimise so repeated queries are fast.',
+      testCases: [{ input: '[-2,0,3,-5,2,-1], [[0,2],[2,5],[0,5]]', expected: '[1,-1,-3]' },{ input: '[1,2,3,4], [[0,3],[1,2],[0,1]]', expected: '[10,5,3]' },{ input: '[5], [[0,0]]', expected: '[5]' }] },
+    // ── Daily pool update: added 2026-06-29 ──
+    { title: 'Surrounded Regions', description: 'Write `solve(board)` — given an m×n board of "X" and "O", capture all regions surrounded by "X" by flipping all surrounded "O"s to "X". An "O" is surrounded if it is not connected (4-directional) to any "O" on the border. Return the modified board.',
+      testCases: [{ input: '[["X","X","X","X"],["X","O","O","X"],["X","X","O","X"],["X","O","X","X"]]', expected: '[["X","X","X","X"],["X","X","X","X"],["X","X","X","X"],["X","O","X","X"]]' },{ input: '[["X"]]', expected: '[["X"]]' },{ input: '[["O","O"],["O","O"]]', expected: '[["O","O"],["O","O"]]' }] },
+    { title: 'Stone Game', description: 'Write `solve(piles)` — Alice and Bob play a game with piles of stones. They take turns (Alice goes first) picking either the first or last pile. Both play optimally. Return true if Alice wins (has more stones), false if Bob wins. Note: Alice always wins when there are an even number of piles.',
+      testCases: [{ input: '[5,3,4,5]', expected: 'true' },{ input: '[3,7,2,3]', expected: 'true' },{ input: '[1,5,233,7]', expected: 'true' },{ input: '[2,4,6,8,10,12]', expected: 'true' }] },
+    { title: 'Longest Bitonic Subarray', description: 'Write `solve(nums)` — a bitonic subarray first strictly increases then strictly decreases (or is purely increasing or purely decreasing). Return the length of the longest bitonic contiguous subarray.',
+      testCases: [{ input: '[1,3,5,4,2]', expected: '5' },{ input: '[1,2,3,4,5]', expected: '5' },{ input: '[5,4,3,2,1]', expected: '5' },{ input: '[1,3,5,4,2,7,6]', expected: '5' },{ input: '[1]', expected: '1' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -840,6 +872,28 @@ let RESPONSE_QUESTIONS = [
     // Hard tier
     { question: 'A cone has a base radius of 6 cm and a slant height of 10 cm. What is the total surface area of the cone? Express your answer as "Xπ" where X is a whole number.', expectedKeywords: ['96π', '96pi', '96 π'] },
     { question: 'Five friends (A, B, C, D, E) sit in a row at a cinema. In how many ways can they sit if two specific friends must NOT be adjacent?', expectedKeywords: ['72', 'seventy-two'] },
+    // ── Daily pool update: added 2026-06-28 ──
+    // Easy tier
+    { question: 'How many angles does an equilateral triangle have?', expectedKeywords: ['3', 'three'] },
+    { question: 'What is 15% of 200?', expectedKeywords: ['30', 'thirty'] },
+    // Medium tier
+    { question: 'A tank holds 200 liters when full and is currently 40% full. After adding 60 liters, what percentage full is the tank?', expectedKeywords: ['70', '70%'] },
+    { question: 'If 3x + 7 = 22, what is the value of x?', expectedKeywords: ['5', 'five'] },
+    { question: 'A pipe fills a barrel in 8 minutes, while another pipe drains it in 12 minutes. Starting with an empty barrel and both pipes open, how many minutes until it is full?', expectedKeywords: ['24', 'twenty-four'] },
+    // Hard tier
+    { question: 'In a group of 50 people, everyone shakes hands exactly once with every other person. How many handshakes take place in total?', expectedKeywords: ['1225'] },
+    { question: 'A bus departs every 20 minutes and a train departs every 15 minutes. At 7:00 AM both depart at the same time. What is the next time both depart simultaneously?', expectedKeywords: ['8:00', '8:00 AM', 'sixty', '1 hour', '60 minutes'] },
+    // ── Daily pool update: added 2026-06-29 ──
+    // Easy tier
+    { question: 'How many vertices does a cube have?', expectedKeywords: ['8', 'eight'] },
+    { question: 'What is 30% of 150?', expectedKeywords: ['45', 'forty-five'] },
+    // Medium tier
+    { question: 'A number increased by 15% gives 230. What is the original number?', expectedKeywords: ['200', 'two hundred'] },
+    { question: 'Two numbers have a sum of 84 and a difference of 12. What is the larger number?', expectedKeywords: ['48', 'forty-eight'] },
+    { question: 'Worker A can finish a task in 6 days. After 2 days working alone, worker B joins and together they finish the remaining work. Worker B alone would take 9 days for the full task. How many more days are needed after B joins?', expectedKeywords: ['3', 'three'] },
+    // Hard tier
+    { question: 'How many integers from 1 to 1000 are divisible by neither 2 nor 5?', expectedKeywords: ['400', 'four hundred'] },
+    { question: 'What is the angle in degrees subtended at the centre of a circle by an arc that is one-sixth of the circumference?', expectedKeywords: ['60', 'sixty'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -1048,6 +1102,25 @@ let TTS_PHRASES = [
     // Hard tier
     { text: 'The Basel III capital adequacy framework requires banks to maintain a minimum Common Equity Tier 1 ratio of 4.5 percent plus a capital conservation buffer of 2.5 percent — the effective floor is therefore 7 percent of risk-weighted assets', keywords: ['Basel', 'III', 'Tier', '4.5', 'conservation', '2.5', 'seven', 'percent', 'risk-weighted'] },
     { text: 'Inference completed in 847 milliseconds: model CLIP-ViT-L14 processed a batch of 32 image-text pairs achieving top-1 accuracy of 91.4 percent on the ImageNet validation set — peak GPU memory 6.2 GB on device cuda:0', keywords: ['CLIP', 'ViT', '847', 'milliseconds', '32', '91.4', 'GPU', '6.2', 'cuda', 'ImageNet'] },
+    // ── Daily pool update: added 2026-06-28 ──
+    // Easy tier
+    { text: 'Please fasten your seatbelt and ensure your tray table is in the upright and locked position before takeoff', keywords: ['fasten', 'seatbelt', 'tray', 'upright', 'locked', 'takeoff'] },
+    // Medium tier
+    { text: 'Contract ID MSA-2024-09871 requires countersignature by both parties no later than December 31st — please forward the executed copy to legal at contracts at example dot com for filing', keywords: ['contract', 'MSA', '2024', '09871', 'countersignature', 'december', '31', 'legal', 'example'] },
+    { text: 'The monthly SLA report for client EC-4782 shows actual availability of ninety-nine point seven percent against a contractual target of ninety-nine point nine percent — a penalty credit of eight hundred dollars has been automatically applied to the next invoice', keywords: ['SLA', 'EC-4782', 'ninety-nine', 'seven', 'nine', 'penalty', '800', 'credit', 'invoice'] },
+    // Hard tier
+    { text: 'The fund achieved a Sharpe ratio of 1.87 and a Sortino ratio of 2.14 over the trailing 36-month period with annualised return of 12.4 percent, annualised volatility of 6.6 percent, and maximum drawdown of negative 8.3 percent', keywords: ['Sharpe', '1.87', 'Sortino', '2.14', '36', 'annualised', '12.4', 'volatility', '6.6', 'drawdown', '8.3'] },
+    { text: 'Emergency data breach notification: unauthorized read access to the users table detected at 23:17 UTC — 847 accounts affected, PII exposed is limited to names and hashed passwords using SHA-256 with bcrypt salt rounds of 12, no plaintext credentials compromised, all active sessions invalidated', keywords: ['breach', 'unauthorized', '23:17', 'UTC', '847', 'accounts', 'SHA-256', 'bcrypt', 'twelve', 'sessions', 'invalidated'] },
+    // ── Daily pool update: added 2026-06-29 ──
+    // Easy tier
+    { text: 'Your delivery is scheduled for this Thursday between two and four in the afternoon — someone must be present to sign for the package', keywords: ['delivery', 'thursday', 'two', 'four', 'afternoon', 'sign'] },
+    { text: 'A scheduled fire alarm test will take place at eleven AM on Wednesday — please do not evacuate the building during the test', keywords: ['fire', 'alarm', 'eleven', 'wednesday', 'evacuate', 'test'] },
+    // Medium tier
+    { text: 'System upgrade notice: platform version 4.2.1 will be deployed to the production environment on Sunday at 03:00 AM UTC — estimated downtime is thirty minutes and all pending background jobs will be queued automatically and resumed after the upgrade', keywords: ['upgrade', 'version', '4.2.1', 'production', 'sunday', '03:00', 'UTC', 'thirty', 'downtime', 'queued'] },
+    { text: 'Student ID S-2024-00421: your provisional offer letter for the Master of Computer Science programme commencing September fifteenth requires acceptance via the online admissions portal by July 7th at 17:00 — failure to respond by the deadline will result in automatic withdrawal of the offer', keywords: ['student', 'S-2024', '00421', 'master', 'computer', 'science', 'september', 'fifteenth', 'july', '7', '17:00', 'deadline'] },
+    // Hard tier
+    { text: 'Under International Accounting Standard 38 an intangible asset is recognised only when it is probable that future economic benefits will flow to the entity and its cost can be measured reliably — development-phase costs may be capitalised only when all six criteria in IAS 38 paragraph 57 are simultaneously satisfied', keywords: ['IAS', '38', 'intangible', 'asset', 'economic', 'benefits', 'capitalised', 'development', 'six', 'criteria', 'paragraph', '57'] },
+    { text: 'Zero-knowledge proof: the prover commits to witness w using Pedersen commitment C equals g to the power of w times h to the power of r — the verifier issues challenge c, the prover responds with z equals r plus c times w modulo the prime order q — soundness error probability is one over q', keywords: ['zero-knowledge', 'proof', 'prover', 'Pedersen', 'commitment', 'verifier', 'challenge', 'soundness', 'modulo', 'prime', 'order', 'probability'] },
 ];
 
 // ============================================
