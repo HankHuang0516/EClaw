@@ -308,11 +308,20 @@ function showConfirm({ message, title, confirmText, cancelText, danger, itemName
         }
         const _keyHandler = (e) => {
             if (e.key === 'Escape') cleanup(false);
-            // For destructive confirms Enter dismisses (= cancel) so an
-            // accidental keypress on a focused Cancel button still resolves
-            // false. Non-danger confirms keep the original Enter=confirm
-            // ergonomics so OK-flow dialogs still feel snappy.
-            if (e.key === 'Enter') cleanup(!danger ? true : false);
+            // Enter semantics (WAI-ARIA APG: a focused button reacts to Enter
+            // and Space identically). Non-danger: Enter confirms. Danger: Enter
+            // confirms ONLY when the Confirm button is focused (fall through to
+            // its native click → cleanup(true), matching Space); when focus is
+            // on Cancel or anywhere else — including the safe default focus — a
+            // stray Enter still cancels.
+            if (e.key === 'Enter') {
+                if (!danger) {
+                    cleanup(true);
+                } else if (document.activeElement !== overlay.querySelector('.eclaw-confirm-ok')) {
+                    cleanup(false);
+                }
+                // danger + Confirm focused → native button activation confirms
+            }
             // Focus trap: keep Tab / Shift+Tab cycling among the two buttons so
             // focus cannot escape onto background elements while the modal is
             // open. Cancel is the first tabbable, OK is the last.
