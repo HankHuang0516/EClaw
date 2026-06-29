@@ -331,6 +331,35 @@ async function createTables() {
         `, [Date.now()]);
         console.log('[Push] DB migration: device_fcm_tokens multi-token table ensured + backfilled');
 
+        // Multi-device APNs tokens (push clobber fix — sibling of device_fcm_tokens, 2026-06-29).
+        // `devices.apns_token` has the identical single-column clobber as fcm_token had: a
+        // user with an iPhone AND an iPad sharing one deviceId would have the second device's
+        // APNs token OVERWRITE the first, so only the last-registered iOS device could ever
+        // receive a native push. Mirror the FCM fix with one row per (device_id, token).
+        // NOTE: there is currently NO APNs SEND path in the backend (apns_token is write-only:
+        // registered + read by the diagnostic status endpoint, never sent to). This table +
+        // upsert is preventive parity so that WHENEVER a native APNs sender is built it is
+        // already clobber-safe — it MUST read getDeviceApnsTokens() and delete only single
+        // dead-token rows, never the whole device. Backfill the legacy column so nothing regresses.
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS device_apns_tokens (
+                device_id   TEXT   NOT NULL,
+                token       TEXT   NOT NULL,
+                platform    TEXT   NOT NULL DEFAULT 'apns',
+                updated_at  BIGINT,
+                PRIMARY KEY (device_id, token)
+            )
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_device_apns_tokens_device ON device_apns_tokens(device_id)
+        `);
+        await client.query(`
+            INSERT INTO device_apns_tokens (device_id, token, platform, updated_at)
+            SELECT device_id, apns_token, 'apns', $1 FROM devices WHERE apns_token IS NOT NULL
+            ON CONFLICT (device_id, token) DO NOTHING
+        `, [Date.now()]);
+        console.log('[Push] DB migration: device_apns_tokens multi-token table ensured + backfilled');
+
         // Official bot bindings (free bot multi-device tracking)
         await client.query(`
             CREATE TABLE IF NOT EXISTS official_bot_bindings (

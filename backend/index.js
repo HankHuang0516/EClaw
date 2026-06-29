@@ -5371,16 +5371,21 @@ app.post('/api/admin/push-update', adminAuth, adminCheck, async (req, res) => {
     const targetVersion = version || LATEST_APP_VERSION;
     const notes = releaseNotes || `Version ${targetVersion} is now available!`;
 
-    // Collect all FCM tokens from in-memory devices
+    // Collect EVERY FCM token per device (multi-device fix 2026-06-29). A single deviceId can
+    // have several physical devices registered (phone + emulator + …). The old code took only
+    // device.fcmToken — the single in-memory latest token — so a multi-device user got the
+    // update push on just ONE device: the exact single-token clobber PR #3808 fixed for
+    // sendFcm, still latent here. Reuse getDeviceFcmTokens to fan out to all of them.
     const tokens = [];
-    const deviceIds = [];
-    for (const deviceId in devices) {
-        const device = devices[deviceId];
-        if (device.fcmToken) {
-            tokens.push(device.fcmToken);
-            deviceIds.push(deviceId);
+    const tokenMeta = []; // parallel to tokens: { deviceId, token } → a stale token deletes only its own row
+    const deviceIdList = Object.keys(devices);
+    const perDeviceTokens = await Promise.all(deviceIdList.map(id => getDeviceFcmTokens(id)));
+    deviceIdList.forEach((deviceId, i) => {
+        for (const token of perDeviceTokens[i]) {
+            tokens.push(token);
+            tokenMeta.push({ deviceId, token });
         }
-    }
+    });
 
     if (tokens.length === 0) {
         return res.json({ success: true, sent: 0, failed: 0, total: 0, message: 'No devices with FCM tokens' });
@@ -5393,7 +5398,7 @@ app.post('/api/admin/push-update', adminAuth, adminCheck, async (req, res) => {
     // Send via Firebase sendEachForMulticast (batches of 500)
     for (let i = 0; i < tokens.length; i += 500) {
         const batch = tokens.slice(i, i + 500);
-        const batchDeviceIds = deviceIds.slice(i, i + 500);
+        const batchMeta = tokenMeta.slice(i, i + 500);
         try {
             const response = await firebaseAdmin.messaging().sendEachForMulticast({
                 tokens: batch,
@@ -5416,14 +5421,17 @@ app.post('/api/admin/push-update', adminAuth, adminCheck, async (req, res) => {
             successCount += response.successCount;
             failureCount += response.failureCount;
 
-            // Clean up stale tokens
+            // Clean up stale tokens — delete only THIS dead token's row, never the whole
+            // device (that would wipe a multi-device user's other live tokens = the clobber
+            // bug again). Mirror sendFcm's per-row cleanup.
             response.responses.forEach((resp, idx) => {
                 if (!resp.success && resp.error?.code === 'messaging/registration-token-not-registered') {
-                    const staleDeviceId = batchDeviceIds[idx];
-                    if (devices[staleDeviceId]) {
+                    const { deviceId: staleDeviceId, token: staleToken } = batchMeta[idx];
+                    chatPool.query('DELETE FROM device_fcm_tokens WHERE device_id = $1 AND token = $2', [staleDeviceId, staleToken]).catch(() => {});
+                    if (devices[staleDeviceId]?.fcmToken === staleToken) {
                         delete devices[staleDeviceId].fcmToken;
+                        chatPool.query('UPDATE devices SET fcm_token = NULL WHERE device_id = $1', [staleDeviceId]).catch(() => {});
                     }
-                    chatPool.query('UPDATE devices SET fcm_token = NULL WHERE device_id = $1', [staleDeviceId]).catch(() => {});
                     staleTokensCleaned++;
                 }
             });
@@ -21955,10 +21963,20 @@ app.post('/api/device/fcm-token', (req, res) => {
     const changed = prevToken !== resolvedToken;
 
     if (resolvedPlatform === 'apns') {
-        // iOS APNs token
+        // iOS APNs token. Keep the legacy single column = latest token for backward compat,
+        // AND upsert into device_apns_tokens so an iPhone + iPad (or any two iOS devices)
+        // sharing one deviceId each keep their own token instead of clobbering one another —
+        // the same multi-device fix applied to FCM. (No native APNs sender exists yet; this
+        // makes storage clobber-safe ahead of one being built. 2026-06-29.)
         device.apnsToken = resolvedToken;
         chatPool.query('ALTER TABLE devices ADD COLUMN IF NOT EXISTS apns_token TEXT').catch(() => {});
         chatPool.query('UPDATE devices SET apns_token = $1 WHERE device_id = $2', [resolvedToken, deviceId]).catch(() => {});
+        chatPool.query(
+            `INSERT INTO device_apns_tokens (device_id, token, platform, updated_at)
+             VALUES ($1, $2, 'apns', $3)
+             ON CONFLICT (device_id, token) DO UPDATE SET updated_at = EXCLUDED.updated_at`,
+            [deviceId, resolvedToken, Date.now()]
+        ).catch(() => {});
         serverLog('info', 'fcm_token', `APNs token registered`, { deviceId, metadata: { prevPrefix, newPrefix, changed, platform: 'apns' } });
     } else {
         // Android FCM token (default). Keep the legacy single column = latest token for
@@ -21983,7 +22001,7 @@ app.post('/api/device/fcm-token', (req, res) => {
 // Read-only FCM/APNs registration status. Diagnostic for "no notifications
 // despite enabled" — lets the device owner check whether the token even made
 // it to the backend without exposing the token itself.
-app.get('/api/device/fcm-status', (req, res) => {
+app.get('/api/device/fcm-status', async (req, res) => {
     const { deviceId, deviceSecret } = req.query;
     if (!deviceId || !deviceSecret) {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
@@ -21994,11 +22012,16 @@ app.get('/api/device/fcm-status', (req, res) => {
     }
     const fcm = device.fcmToken || null;
     const apns = device.apnsToken || null;
+    // tokenCount > 1 means multiple physical devices on this deviceId now coexist — which
+    // was impossible under the old single-column schema (they clobbered each other). It is
+    // the at-a-glance "is the multi-device push fix actually working?" signal.
+    const fcmTokens = await getDeviceFcmTokens(deviceId);
+    const apnsTokens = await getDeviceApnsTokens(deviceId);
     res.json({
         success: true,
         firebaseAdminInitialized: !!firebaseAdmin,
-        fcm: { registered: !!fcm, prefix: fcm ? fcm.slice(0, 12) : null },
-        apns: { registered: !!apns, prefix: apns ? apns.slice(0, 12) : null }
+        fcm: { registered: !!fcm, prefix: fcm ? fcm.slice(0, 12) : null, tokenCount: fcmTokens.length },
+        apns: { registered: !!apns, prefix: apns ? apns.slice(0, 12) : null, tokenCount: apnsTokens.length }
     });
 });
 
@@ -22040,6 +22063,27 @@ async function getDeviceFcmTokens(deviceId) {
         for (const row of r.rows) if (row.token) set.add(row.token);
     } catch (e) {
         serverLog('warn', 'fcm_send', `device_fcm_tokens read failed, using in-mem only: ${e.message}`, { deviceId });
+    }
+    return [...set];
+}
+
+// Gather ALL live APNs tokens for a device — sibling of getDeviceFcmTokens (2026-06-29).
+// There is NO native APNs sender wired up yet (apns_token is currently write-only). This
+// helper exists so that whoever builds the iOS native push path fans out to every iOS
+// device on a shared deviceId from day one, and — like sendFcm — deletes only a single
+// dead-token row on failure, never the whole device (re-introducing the clobber bug).
+async function getDeviceApnsTokens(deviceId) {
+    const set = new Set();
+    const inMem = devices[deviceId]?.apnsToken;
+    if (inMem) set.add(inMem);
+    try {
+        const r = await chatPool.query(
+            "SELECT token FROM device_apns_tokens WHERE device_id = $1 AND platform = 'apns'",
+            [deviceId]
+        );
+        for (const row of r.rows) if (row.token) set.add(row.token);
+    } catch (e) {
+        serverLog('warn', 'fcm_send', `device_apns_tokens read failed, using in-mem only: ${e.message}`, { deviceId });
     }
     return [...set];
 }
