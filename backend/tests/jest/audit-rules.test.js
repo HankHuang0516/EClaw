@@ -488,3 +488,31 @@ describe('audit-rules — R7 focus-style-removed', () => {
             'operability-focus-style-removed', PCSS)).toBe(false);
     });
 });
+
+describe('audit-rules — false-positive exemptions (card_e4c6d43f weekly-noise reduction)', () => {
+    const fires = (fp, text, rid) => audit.scanText(fp, text).some(r => r.ruleId === rid);
+
+    test('scanner self-ref: compliance-scan.js exempt from hardcoded-hank-device-id (still fires in product code)', () => {
+        const t = "const HANKS_DEVICE_ID = '480def4c-2183-4d8e-afd0-b131ae89adcc';";
+        expect(fires('backend/scripts/compliance-scan.js', t, 'hardcoded-hank-device-id')).toBe(false);
+        expect(fires('backend/index.js', t, 'hardcoded-hank-device-id')).toBe(true);
+    });
+
+    test('scanner self-ref + tests exempt from hardcoded-users-hank-path (still fires in product code)', () => {
+        const t = 'const p = "/Users/hank/Desktop/foo";';
+        expect(fires('backend/scripts/compliance-scan.js', t, 'hardcoded-users-hank-path')).toBe(false);
+        expect(fires('backend/tests/jest/compliance-scan.test.js', t, 'hardcoded-users-hank-path')).toBe(false);
+        expect(fires('backend/index.js', t, 'hardcoded-users-hank-path')).toBe(true);
+    });
+
+    test('root-level test_*.js exempt from hardcoded-entity-id-comparison (still fires in product code)', () => {
+        const t = 'const e1 = entities.find(e => e.entityId === 1);';
+        expect(fires('backend/test_multi_tenant.js', t, 'hardcoded-entity-id-comparison')).toBe(false);
+        expect(fires('backend/router.js', t, 'hardcoded-entity-id-comparison')).toBe(true);
+    });
+
+    test('public-code regex drops 0x-hex literals but keeps real publicCode shape', () => {
+        expect(fires('backend/interview-arena.js', "const x = '0xf3a4';", 'hardcoded-public-code-literal')).toBe(false);
+        expect(fires('backend/svc.js', "const code = 'tbwb9e';", 'hardcoded-public-code-literal')).toBe(true);
+    });
+});

@@ -36,6 +36,7 @@
 const TEST_PATH_HINTS = Object.freeze([
     '/tests/', '/test/', '__tests__', '.test.js', '.spec.js',
     '/fixtures/', '/migrations/', // migrations may legitimately reference example IDs
+    'test_',          // root-level legacy test scripts (test_multi_tenant.js etc.)
 ]);
 const HANK_HEX_DEVICE = '480def4c-2183-4d8e-afd0-b131ae89adcc';
 const HANK_HEX_REGEX = new RegExp(HANK_HEX_DEVICE, 'g');
@@ -309,7 +310,7 @@ function ctxInputPlaceholderNoLabel(idx, lines) {
     return true;
 }
 
-const CONFIRM_REF = /showConfirm|confirm\s*\(|window\.confirm|data-confirm|confirm-overlay|confirmDialog/i;
+const CONFIRM_REF = /showConfirm|confirm\s*\(|window\.confirm|data-confirm|confirm-overlay|confirmDialog|confirmCheck|\.checked\b/i; // +checkbox-gate (delete-account confirmCheck)
 // A SERVER mutation only — an HTTP write. Deliberately NOT `.delete(`/`.destroy(`
 // which match JS Set/Map.delete() and teardown helpers (false positives like
 // `mySet.delete(id)` / `widget.destroy()`), not data loss on the backend.
@@ -433,7 +434,7 @@ const RULES = [
         title: 'Hank\'s deviceId UUID hardcoded in source',
         rationale: 'EClawbot must work for any user. Hardcoding the test device UUID into shipped code makes the feature single-tenant.',
         pattern: HANK_HEX_REGEX,
-        allowFiles: TEST_PATH_HINTS.slice(),
+        allowFiles: TEST_PATH_HINTS.concat(['compliance-scan']), // scripts/compliance-scan.js DEFINES the literal to detect it (self-ref)
     },
     {
         id: 'hardcoded-users-hank-path',
@@ -442,7 +443,7 @@ const RULES = [
         title: 'Absolute path under /Users/hank/ in shipped code',
         rationale: 'Paths under one developer\'s home directory will not resolve on production or another contributor\'s laptop.',
         pattern: /\/Users\/hank\//,
-        allowFiles: ['/scripts/dev', '/.local/', '/docs/'],
+        allowFiles: TEST_PATH_HINTS.concat(['/scripts/dev', '/.local/', '/docs/', 'compliance-scan']), // + tests + scanner self-ref (rule descriptions / fixtures)
     },
     {
         id: 'hardcoded-entity-id-comparison',
@@ -463,7 +464,7 @@ const RULES = [
         // letter and a digit — that is the publicCode shape (e.g. tbwb9e, 3xa3h4).
         // Lookaheads keep us from false-firing on '401', '256kb', plain words, or
         // long hashes (the earlier `[a-z0-9]*\d[a-z0-9]*` matched all of those).
-        pattern: /['"`](?=[a-z0-9]{6}['"`])(?=[a-z0-9]*[a-z])(?=[a-z0-9]*\d)[a-z0-9]{6}['"`]/,
+        pattern: /['"`](?!0x)(?=[a-z0-9]{6}['"`])(?=[a-z0-9]*[a-z])(?=[a-z0-9]*\d)[a-z0-9]{6}['"`]/, // (?!0x) drops hex literals like '0xf3a4'
         filePathFilter: (p) => /\.(js|ts)$/.test(p) && !/\.test\./.test(p),
         // Words with the publicCode shape (6 alnum, letter+digit) that are NOT
         // publicCodes — encodings, hash algos, mime fragments. Without this
