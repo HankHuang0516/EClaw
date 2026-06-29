@@ -1216,7 +1216,7 @@
 
         <!-- Notifications Card -->
         <div class="card">
-            <div class="notif-header" role="button" tabindex="0" onclick="toggleNotifSection()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleNotifSection()}">
+            <div class="notif-header" role="button" tabindex="0" onclick="toggleNotifSection()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                 <div class="card-title" style="margin-bottom:0;">
                     <span>🔔 <span data-i18n="notif_settings_title">Notifications</span></span>
                 </div>
@@ -1240,7 +1240,7 @@
 
         <!-- Developer Section (collapsible) -->
         <div class="card">
-            <div class="notif-header" role="button" tabindex="0" onclick="toggleDeveloperSection()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDeveloperSection()}">
+            <div class="notif-header" role="button" tabindex="0" onclick="toggleDeveloperSection()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                 <div class="card-title" style="margin-bottom:0;">
                     <span>🛠️ <span data-i18n="developer_section_title">Developer</span></span>
                 </div>
@@ -1735,7 +1735,7 @@
         <!-- card_01417648: explicit empty-state with ? icon explains why the wallet
              row can look empty for a globe-user device (no account yet). The
              help-icon click/hover surfaces the concrete next step. -->
-        <div class="card" id="walletCard" style="cursor:pointer;" role="button" tabindex="0" onclick="(window.SmartRouter&&window.SmartRouter.navigate('wallet'))||(window.location.href='wallet.html')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();(window.SmartRouter&&window.SmartRouter.navigate('wallet'))||(window.location.href='wallet.html')}">
+        <div class="card" id="walletCard" style="cursor:pointer;" role="button" tabindex="0" onclick="(window.SmartRouter&&window.SmartRouter.navigate('wallet'))||(window.location.href='wallet.html')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
             <div class="card-title" style="display:flex;align-items:center;gap:8px;">
                 <span>💎 <span data-i18n="nav_wallet">Wallet</span></span>
                 <span class="help-icon" data-help-content-key="settings_wallet_section_help" tabindex="0" onclick="event.stopPropagation();"></span>
@@ -1758,7 +1758,7 @@
              (card_411522dac74b0e193bd306d3). -->
 
         <!-- Invite Card -->
-        <div class="card" style="cursor:pointer;" role="button" tabindex="0" onclick="(window.SmartRouter&&window.SmartRouter.navigate('invite'))||(window.location.href='invite.html')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();(window.SmartRouter&&window.SmartRouter.navigate('invite'))||(window.location.href='invite.html')}">
+        <div class="card" style="cursor:pointer;" role="button" tabindex="0" onclick="(window.SmartRouter&&window.SmartRouter.navigate('invite'))||(window.location.href='invite.html')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
             <div class="card-title">
                 <span>🎁 <span data-i18n="nav_invite">Invite Friends</span></span>
             </div>
@@ -1766,7 +1766,7 @@
         </div>
 
         <!-- Files Card (moved from nav) -->
-        <div class="card" style="cursor:pointer;" role="button" tabindex="0" onclick="(window.SmartRouter&&window.SmartRouter.navigate('files'))||(window.location.href='files.html')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();(window.SmartRouter&&window.SmartRouter.navigate('files'))||(window.location.href='files.html')}">
+        <div class="card" style="cursor:pointer;" role="button" tabindex="0" onclick="(window.SmartRouter&&window.SmartRouter.navigate('files'))||(window.location.href='files.html')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
             <div class="card-title">
                 <span>📁 <span data-i18n="nav_files">Files</span></span>
             </div>
@@ -1774,7 +1774,7 @@
         </div>
 
         <!-- Companion Card (Phase C: Petdx UIUX integration; see docs/specs/petdx-uiux-spec-amendment-2026-06-05-phase-C-settings-integration.md) -->
-        <div class="card" style="cursor:pointer;" role="button" tabindex="0" onclick="(window.SmartRouter&&window.SmartRouter.navigate('petdx'))||(window.location.href='petdx-browser.html')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();(window.SmartRouter&&window.SmartRouter.navigate('petdx'))||(window.location.href='petdx-browser.html')}">
+        <div class="card" style="cursor:pointer;" role="button" tabindex="0" onclick="(window.SmartRouter&&window.SmartRouter.navigate('petdx'))||(window.location.href='petdx-browser.html')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
             <div class="card-title">
                 <span>🐾 <span data-i18n="nav_companion">Companion</span></span>
             </div>
@@ -1784,7 +1784,7 @@
         <!-- Feedback Card -->
         <div class="card">
             <div class="feedback-header">
-                <div class="feedback-body" role="button" tabindex="0" onclick="showFeedbackDialog()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showFeedbackDialog()}">
+                <div class="feedback-body" role="button" tabindex="0" onclick="showFeedbackDialog()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                     <div class="card-title">
                         <span>💬 <span data-i18n="settings_feedback_title">Feedback</span></span>
                     </div>

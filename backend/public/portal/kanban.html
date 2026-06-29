@@ -836,7 +836,7 @@
 
         <!-- ⚡ Automation Collapse Section -->
         <div class="kb-automation" id="kbAutomation" style="display:none">
-            <div class="kb-auto-header" id="autoHeader" onclick="toggleAutomation()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleAutomation()}">
+            <div class="kb-auto-header" id="autoHeader" onclick="toggleAutomation()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                 <h3>⚡ <span data-i18n="kb_auto_title">Automations</span> <span class="kb-auto-count" id="autoCount">0</span>
                     <span class="kb-auto-view-toggle" onclick="event.stopPropagation()">
                         <button class="kb-auto-view-btn" data-view="grid" onclick="switchAutoView('grid')" data-i18n-title="kb_auto_view_grid" title="Grid" aria-label="Grid">☰</button>
