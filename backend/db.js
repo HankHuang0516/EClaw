@@ -541,7 +541,15 @@ async function createTables() {
                 ON device_vars_audit (device_id, created_at DESC)
         `);
 
-        // Channel accounts (OpenClaw channel plugin integration)
+        // Channel accounts (OpenClaw channel plugin integration).
+        // A device is meant to have MANY channel accounts (one per plugin) — row identity is
+        // `channel_api_key UNIQUE` (a fresh key is generated per /provision). Do NOT declare
+        // UNIQUE(device_id): the original schema had it, and the idempotent DROP CONSTRAINT
+        // migration above (channel_accounts_device_id_key) removes it from EXISTING DBs — but
+        // that DROP runs *before* this CREATE, so on a FRESH DB (table not yet present) the
+        // drop is a no-op and a re-declared UNIQUE(device_id) here would survive forever,
+        // making a 2nd /provision fail-loud with a unique violation (audit spinoff card_4d9786fc).
+        // Omitting it here fixes fresh DBs; the DROP above still cleans up legacy DBs.
         await client.query(`
             CREATE TABLE IF NOT EXISTS channel_accounts (
                 id SERIAL PRIMARY KEY,
@@ -552,8 +560,7 @@ async function createTables() {
                 callback_token TEXT,
                 status TEXT DEFAULT 'active',
                 created_at BIGINT NOT NULL,
-                updated_at BIGINT NOT NULL,
-                UNIQUE(device_id)
+                updated_at BIGINT NOT NULL
             )
         `);
         await client.query(`CREATE INDEX IF NOT EXISTS idx_channel_api_key ON channel_accounts(channel_api_key)`);
