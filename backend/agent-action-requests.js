@@ -151,11 +151,27 @@ function optionLabel(o) {
 // (3) device has >= consensus_min_entities bound entities; (4) status='pending'
 // AND consensus_triggered_at IS NULL. decision_context does NOT block opening —
 // owner-only items DO deliberate; the owner-veto applies only at DISPOSITION.
+// An OWNER-decision request (decision_context.ownerOnly === true) is for Hank to
+// resolve in the 需要你 inbox — it must NOT open a bot-to-bot consensus round.
+// (Opening one buzzed every bound entity with a vote prompt the instant such an
+// item was created — the flood Hank flagged.) decision_context arrives as a jsonb
+// object off a DB row, but tolerate a raw string. (DELIVERY fix — owner reminders.)
+function isOwnerOnlyDecision(decisionContext) {
+    if (decisionContext == null) return false;
+    let dc = decisionContext;
+    if (typeof dc === 'string') {
+        try { dc = JSON.parse(dc); } catch (_) { return false; }
+    }
+    return !!(dc && typeof dc === 'object' && dc.ownerOnly === true);
+}
+
 function isNegotiable(row, prefs, boundEntityCount) {
     if (!row || !prefs) return false;
     if (prefs.action_request_timeout_policy !== 'consensus') return false;
     if (row.status !== 'pending') return false;
     if (row.consensus_triggered_at != null) return false;
+    // Owner decisions wait for Hank, never a bot vote (DELIVERY fix).
+    if (isOwnerOnlyDecision(row.decision_context)) return false;
     const opts = row.options;
     if (!Array.isArray(opts) || opts.length < 2) return false;
     if (Number(boundEntityCount) < clampMinEntities(prefs.consensus_min_entities)) return false;
@@ -362,6 +378,24 @@ async function initAgentActionRequestsDatabase() {
     } catch (err) {
         console.error('[AgentActionRequests] votes table migration skipped:', err.message);
     }
+
+    // ── Idempotent: owner-decision morning-digest dedup (DELIVERY fix) ──
+    // One digest per (device, device-local-date). The 5-min sweep fires up to 12×
+    // inside the digest hour and may run on multiple instances; the PK makes the
+    // "send today's digest" decision win exactly once per day per device.
+    try {
+        await pool.query(
+            `CREATE TABLE IF NOT EXISTS owner_decision_digest_sent (
+                device_id TEXT NOT NULL,
+                sent_date TEXT NOT NULL,
+                sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                item_count INTEGER DEFAULT NULL,
+                CONSTRAINT owner_digest_pk PRIMARY KEY (device_id, sent_date)
+            )`
+        );
+    } catch (err) {
+        console.error('[AgentActionRequests] owner_decision_digest_sent migration skipped:', err.message);
+    }
 }
 
 // ── Helpers ──
@@ -512,7 +546,7 @@ function rowToApi(row) {
 /**
  * Factory. Matches the kanban/scheduled-messages module style so index.js wires it the same way.
  */
-module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, getDevicePrefs } = {}) {
+module.exports = function (devices, { pushToBot, unifiedPush, notifyDevice, serverLog, io, getDevicePrefs } = {}) {
     const router = express.Router();
 
     // How the worker reads a device's timeout policy + minutes. Defaults to the
@@ -885,6 +919,38 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         );
         const row = result.rows[0];
         emitChanged(deviceId, 'emitted', row.id, row.from_entity_id);
+        // OWNER-DECISION PUSH (DELIVERY fix): an ownerOnly item must actively REACH
+        // Hank's device (socket + Web Push + FCM fan-out via notifyDevice), not just
+        // sit in a collapsed inbox where it died silently. Gated on
+        // decision_context.ownerOnly so bot-to-bot requests never buzz the owner's
+        // phone, and on an opt-out pref. Best-effort: a push error must NEVER fail
+        // request creation (fully wrapped).
+        if (typeof notifyDevice === 'function' && isOwnerOnlyDecision(decisionContext)) {
+            try {
+                let prefsPush = {};
+                try { prefsPush = (await readDevicePrefs(deviceId)) || {}; } catch (_) { prefsPush = {}; }
+                if (prefsPush.owner_decision_push_enabled !== false) {
+                    let dc = decisionContext;
+                    if (typeof dc === 'string') { try { dc = JSON.parse(dc); } catch (_) { dc = null; } }
+                    Promise.resolve(notifyDevice(deviceId, {
+                        type: 'owner_decision',
+                        category: 'action_request',
+                        title: '需要你拍板',
+                        body: prompt,
+                        link: '/',
+                        metadata: {
+                            kind: 'owner_decision_created',
+                            requestId: row.id,
+                            relatedCardId: relatedCardId != null ? relatedCardId : null,
+                            recommendedOptionIndex: (dc && typeof dc === 'object') ? dc.recommendedOptionIndex : undefined,
+                        },
+                    })).catch((e) => log('error', `owner-decision push failed id=${row.id}: ${e.message}`, { deviceId }));
+                    log('info', `owner-decision push id=${row.id}`, { deviceId });
+                }
+            } catch (e) {
+                log('error', `owner-decision push wrap failed id=${row.id}: ${e.message}`, { deviceId });
+            }
+        }
         // ON-ARRIVAL negotiation open (需要你 negotiation): best-effort, AFTER the
         // committed INSERT + 'emitted'. A prefs/push error here must NOT fail request
         // creation — fully wrapped in try/catch. Only fires when isNegotiable (device
@@ -1038,6 +1104,102 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         }
     }
 
+    // ══════════════════════════════════════════════════════════════════════
+    // OWNER-DECISION MORNING DIGEST (DELIVERY fix)
+    // ──────────────────────────────────────────────────────────────────────
+    // Once per day, on/after the configured digest hour (device-local), if the
+    // device still has pending ownerOnly items, push ONE summary to the owner's
+    // device (notifyDevice → socket + Web Push + FCM fan-out). Without this an
+    // owner-decision created overnight would sit unseen in a collapsed inbox.
+    // Idempotent per (device, local-date) via owner_decision_digest_sent.
+    //   opt-out: owner_decision_digest_enabled === false
+    //   hour:    owner_decision_digest_hour (0..23, default 8)
+    //   tz:      owner_decision_digest_tz   (IANA, default 'Asia/Taipei')
+    // Never resolves or mutates requests; failure-isolated by the caller.
+    // ══════════════════════════════════════════════════════════════════════
+    function localDateAndHour(tz) {
+        try {
+            const parts = new Intl.DateTimeFormat('en-CA', {
+                timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', hour12: false,
+            }).formatToParts(new Date());
+            const get = (t) => (parts.find(p => p.type === t) || {}).value;
+            let hour = parseInt(get('hour'), 10);
+            if (hour === 24) hour = 0; // some ICU builds emit '24' at midnight
+            return { date: `${get('year')}-${get('month')}-${get('day')}`, hour };
+        } catch (_) {
+            const d = new Date(); // bad tz → server-local fallback
+            return { date: d.toISOString().slice(0, 10), hour: d.getHours() };
+        }
+    }
+
+    async function runOwnerDigestPass(deviceId, prefs, device) {
+        if (prefs && prefs.owner_decision_digest_enabled === false) return;
+        if (typeof notifyDevice !== 'function') return;
+
+        const tz = (prefs && typeof prefs.owner_decision_digest_tz === 'string' && prefs.owner_decision_digest_tz)
+            || 'Asia/Taipei';
+        const hourPref = Number(prefs && prefs.owner_decision_digest_hour);
+        const digestHour = Number.isFinite(hourPref) ? Math.min(23, Math.max(0, Math.trunc(hourPref))) : 8;
+        const { date: localDate, hour: localHour } = localDateAndHour(tz);
+        if (localHour < digestHour) return; // not yet the morning window
+
+        let items = [];
+        try {
+            const r = await pool.query(
+                `SELECT id, prompt FROM agent_action_requests
+                  WHERE device_id = $1 AND status = 'pending'
+                    AND decision_context ->> 'ownerOnly' = 'true'
+                  ORDER BY created_at ASC LIMIT 50`,
+                [deviceId]
+            );
+            items = r.rows || [];
+        } catch (err) {
+            log('error', `owner digest query failed: ${err.message}`, { deviceId });
+            return;
+        }
+        if (items.length === 0) return;
+
+        // Win the once-per-day race (multi-instance safe): only the inserter sends.
+        let won = false;
+        try {
+            const ins = await pool.query(
+                `INSERT INTO owner_decision_digest_sent (device_id, sent_date, item_count)
+                 VALUES ($1, $2, $3)
+                 ON CONFLICT (device_id, sent_date) DO NOTHING
+                 RETURNING device_id`,
+                [deviceId, localDate, items.length]
+            );
+            won = (ins.rowCount || 0) > 0;
+        } catch (err) {
+            log('error', `owner digest dedup insert failed: ${err.message}`, { deviceId });
+            return;
+        }
+        if (!won) return;
+
+        const n = items.length;
+        const preview = items.slice(0, 3)
+            .map(it => `• ${String(it.prompt || '').replace(/\s+/g, ' ').slice(0, 60)}`)
+            .join('\n');
+        try {
+            await notifyDevice(deviceId, {
+                type: 'owner_decision_digest',
+                category: 'action_request',
+                title: `需要你：${n} 項待拍板`,
+                body: preview + (n > 3 ? `\n…還有 ${n - 3} 項` : ''),
+                link: '/',
+                metadata: {
+                    kind: 'owner_decision_digest',
+                    count: n,
+                    requestIds: items.map(it => it.id),
+                },
+            });
+            log('info', `owner digest sent device=${deviceId} count=${n} date=${localDate}`, { deviceId });
+        } catch (err) {
+            log('error', `owner digest push failed: ${err.message}`, { deviceId });
+        }
+    }
+
     async function enforceActionRequestTimeouts() {
         let deviceIds = [];
         try {
@@ -1069,6 +1231,12 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
                 // finish even if the device is now on 'keep'. Failure-isolated.
                 try { await advanceNegotiations(deviceId, prefs, device); }
                 catch (e) { console.error(`[AgentActionRequests] negotiation advance failed device=${deviceId}:`, e.message); }
+
+                // OWNER-DECISION MORNING DIGEST (DELIVERY fix): runs BEFORE the keep
+                // gate so default-policy ('keep') devices — i.e. almost everyone —
+                // still get their once-a-day reminder of pending owner decisions.
+                try { await runOwnerDigestPass(deviceId, prefs, device); }
+                catch (e) { console.error(`[AgentActionRequests] owner digest pass failed device=${deviceId}:`, e.message); }
 
                 const policy = prefs.action_request_timeout_policy || 'keep';
                 if (policy === 'keep') continue; // default: never auto-act
@@ -1821,6 +1989,9 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         // Timeout-policy worker (card_ce0d685b). Exported so tests + an external
         // scheduler can invoke a sweep directly.
         enforceActionRequestTimeouts,
+        // Owner-decision morning digest (DELIVERY fix). Exported for direct test
+        // invocation of the once-per-day reminder pass.
+        runOwnerDigestPass,
         // Shared create path (子3) so the kanban move-hook can auto-surface an
         // owner-only review/blocked card into this inbox via the SAME INSERT +
         // 'emitted' socket emit the HTTP route uses. Caller validates inputs.
@@ -1843,6 +2014,11 @@ module.exports.initAgentActionRequestsDatabase = initAgentActionRequestsDatabase
 // recompute (fail-closed mode + audit-trail N-cap) and its input builder.
 module.exports.recomputeRatifyMode = recomputeRatifyMode;
 module.exports.ratifyInputFrom = ratifyInputFrom;
+// DELIVERY fix: exported for unit tests — the ownerOnly predicate that both
+// suppresses bot consensus on owner decisions and gates the owner-device push,
+// and the negotiability gate it feeds.
+module.exports.isOwnerOnlyDecision = isOwnerOnlyDecision;
+module.exports.isNegotiable = isNegotiable;
 module.exports.MAX_RATIFY_RETRIES = MAX_RATIFY_RETRIES;
 // 計畫E adjustable params (card_c3d48c4607ee753b2c98e04b): defensive clamps for
 // the two ratify tunables — exported for unit tests.
