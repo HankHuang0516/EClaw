@@ -17,10 +17,14 @@
 
 const express = require('express');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+const {
+    COMMUNITY_SPRITE_HOST,
+    COMMUNITY_SLUG_PATTERN,
+} = require('./petdex-bridge');
 
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,128}$/;
 
-function createRouter({ r2, bucket, log } = {}) {
+function createRouter({ r2, bucket, log, fetch: fetchImpl } = {}) {
     const router = express.Router();
     const client = r2 || new S3Client({
         region: 'auto',
@@ -32,6 +36,7 @@ function createRouter({ r2, bucket, log } = {}) {
     });
     const bucketName = bucket || process.env.R2_BUCKET_NAME || 'eclaw-files';
     const logger = typeof log === 'function' ? log : () => {};
+    const doFetch = fetchImpl || globalThis.fetch;
 
     // Shared streamer for the immutable public webp assets under
     // petdx-sprites/{slug}/. `filename` is the object basename (sprite.webp /
@@ -65,9 +70,64 @@ function createRouter({ r2, bucket, log } = {}) {
         }
     }
 
+    // Community sprite proxy — fixes the 🦞 fallback caused by Chrome ORB
+    // (Opaque Response Blocking) on the cross-origin `assets.petdex.dev` CDN.
+    // Streaming the bytes back same-origin removes the cross-origin condition
+    // ORB blocks on. SECURITY: this is NOT an open proxy — the upstream host
+    // and `/pets/<slug>/sprite.webp` path shape are hard-coded literals, and
+    // only a charset-validated slug is interpolated (no host/scheme/path is
+    // taken from the request), so it cannot be coerced into SSRF.
+    async function streamCommunitySprite(req, res) {
+        const { slug } = req.params;
+        if (!slug || !COMMUNITY_SLUG_PATTERN.test(slug)) {
+            return res.status(404).type('text/plain').send('not found');
+        }
+        if (typeof doFetch !== 'function') {
+            logger('error', 'petdex-route', '[petdx] community proxy: no fetch available');
+            return res.status(502).type('text/plain').send('upstream error');
+        }
+        const upstreamUrl = `https://${COMMUNITY_SPRITE_HOST}/pets/${slug}/sprite.webp`;
+        let upstream;
+        try {
+            upstream = await doFetch(upstreamUrl, {
+                headers: {
+                    // Custom UA — a default urllib/empty UA can trip the CDN's
+                    // edge UA filter (CF 1010). curl/named agents return 200.
+                    'User-Agent': 'EClaw-petdex-proxy/1.0',
+                    'Accept': 'image/webp,image/*;q=0.8,*/*;q=0.5',
+                },
+            });
+        } catch (err) {
+            logger('warn', 'petdex-route', `[petdx] community fetch ${slug} failed: ${err.message}`);
+            return res.status(502).type('text/plain').send('upstream error');
+        }
+        if (!upstream.ok) {
+            if (upstream.status === 404) {
+                return res.status(404).type('text/plain').send('not found');
+            }
+            logger('warn', 'petdex-route', `[petdx] community ${slug} upstream HTTP ${upstream.status}`);
+            return res.status(502).type('text/plain').send('upstream error');
+        }
+        let buf;
+        try {
+            buf = Buffer.from(await upstream.arrayBuffer());
+        } catch (err) {
+            logger('warn', 'petdex-route', `[petdx] community ${slug} body read failed: ${err.message}`);
+            return res.status(502).type('text/plain').send('upstream error');
+        }
+        res.setHeader('Content-Type', 'image/webp');
+        // Not immutable: community sprites can recover/update upstream, so cache
+        // for a day rather than the year-long immutable TTL the R2 assets use.
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.setHeader('Content-Length', String(buf.length));
+        return res.end(buf);
+    }
+
     router.get('/:slug/sprite.webp', (req, res) => streamPetdxWebp(req, res, 'sprite.webp'));
     // Plaza Plan-3 Phase 4: single-frame avatar (derived frame 0, ≤512×512).
     router.get('/:slug/avatar.webp', (req, res) => streamPetdxWebp(req, res, 'avatar.webp'));
+    // Community partner sprites still on the external CDN (ORB same-origin fix).
+    router.get('/community/:slug/sprite.webp', (req, res) => streamCommunitySprite(req, res));
 
     return router;
 }
