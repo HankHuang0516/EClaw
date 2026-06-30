@@ -150,6 +150,50 @@ describe('GET /api/petdx/community/:slug/sprite.webp', () => {
     });
 });
 
+// ── (a2) .png community sprites (the MAJORITY) must proxy too ────────
+// Regression: the first cut hard-coded sprite.webp; live data shows most
+// community sprites are sprite.png, so a webp-only rewrite left every png
+// partner ORB-blocked → still 🦞. Verified live: assets.petdex.dev serves
+// both .png (image/png) and .webp (image/webp) 200 to the proxy UA.
+describe('community proxy preserves the .png extension', () => {
+    const { rewriteCommunitySpriteUrl, parseCommunitySpriteUrl } = bridge;
+
+    test('bridge rewrite preserves .png and parses the extension', () => {
+        expect(rewriteCommunitySpriteUrl('https://assets.petdex.dev/pets/bubbles-pixel-71f2838ee19f/sprite.png'))
+            .toBe('/api/petdx/community/bubbles-pixel-71f2838ee19f/sprite.png');
+        expect(parseCommunitySpriteUrl('https://assets.petdex.dev/pets/coco/sprite.WEBP'))
+            .toEqual({ slug: 'coco', ext: 'webp' });
+        expect(parseCommunitySpriteUrl('https://assets.petdex.dev/pets/coco/sprite.gif')).toBeNull();
+    });
+
+    function appWithFetch(fetchImpl) {
+        const app = express();
+        app.use('/api/petdx', createRouter({
+            r2: { send: () => Promise.reject(new Error('r2 unused')) },
+            bucket: 'test-bucket', fetch: fetchImpl,
+        }));
+        return app;
+    }
+
+    test('route serves .png with image/png from the .png upstream', async () => {
+        const fetchImpl = jest.fn().mockResolvedValue({
+            ok: true, status: 200, arrayBuffer: async () => Buffer.from('\x89PNGfake'),
+        });
+        const res = await request(appWithFetch(fetchImpl))
+            .get('/api/petdx/community/bubbles-pixel-71f2838ee19f/sprite.png');
+        expect(res.status).toBe(200);
+        expect(res.headers['content-type']).toBe('image/png');
+        expect(fetchImpl.mock.calls[0][0])
+            .toBe('https://assets.petdex.dev/pets/bubbles-pixel-71f2838ee19f/sprite.png');
+    });
+
+    test('an unsupported extension (.gif) never matches the route → 404, no fetch', async () => {
+        const fetchImpl = jest.fn();
+        expect((await request(appWithFetch(fetchImpl)).get('/api/petdx/community/zoro/sprite.gif')).status).toBe(404);
+        expect(fetchImpl).not.toHaveBeenCalled();
+    });
+});
+
 // ── (b) serializer rewrite + kind passthrough ───────────────────────
 describe('companion-api serializer: rewrites external sprite URLs to the proxy', () => {
     const { rowToCompanionCard, rowToCompanionDetail } = companionFactory._test;

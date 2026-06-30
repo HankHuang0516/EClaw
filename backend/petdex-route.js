@@ -79,22 +79,26 @@ function createRouter({ r2, bucket, log, fetch: fetchImpl } = {}) {
     // taken from the request), so it cannot be coerced into SSRF.
     async function streamCommunitySprite(req, res) {
         const { slug } = req.params;
-        if (!slug || !COMMUNITY_SLUG_PATTERN.test(slug)) {
+        // Community sprites are .png (majority) OR .webp — preserve the requested
+        // extension; anything else is rejected (keeps the path shape a literal).
+        const ext = String(req.params.ext || '').toLowerCase();
+        if (!slug || !COMMUNITY_SLUG_PATTERN.test(slug) || (ext !== 'webp' && ext !== 'png')) {
             return res.status(404).type('text/plain').send('not found');
         }
         if (typeof doFetch !== 'function') {
             logger('error', 'petdex-route', '[petdx] community proxy: no fetch available');
             return res.status(502).type('text/plain').send('upstream error');
         }
-        const upstreamUrl = `https://${COMMUNITY_SPRITE_HOST}/pets/${slug}/sprite.webp`;
+        const upstreamUrl = `https://${COMMUNITY_SPRITE_HOST}/pets/${slug}/sprite.${ext}`;
         let upstream;
         try {
             upstream = await doFetch(upstreamUrl, {
                 headers: {
                     // Custom UA — a default urllib/empty UA can trip the CDN's
-                    // edge UA filter (CF 1010). curl/named agents return 200.
+                    // edge UA filter (CF 1010). curl/named agents return 200
+                    // (verified live: EClaw-petdex-proxy/1.0 → 200 for png+webp).
                     'User-Agent': 'EClaw-petdex-proxy/1.0',
-                    'Accept': 'image/webp,image/*;q=0.8,*/*;q=0.5',
+                    'Accept': 'image/webp,image/png,image/*;q=0.8,*/*;q=0.5',
                 },
             });
         } catch (err) {
@@ -115,7 +119,7 @@ function createRouter({ r2, bucket, log, fetch: fetchImpl } = {}) {
             logger('warn', 'petdex-route', `[petdx] community ${slug} body read failed: ${err.message}`);
             return res.status(502).type('text/plain').send('upstream error');
         }
-        res.setHeader('Content-Type', 'image/webp');
+        res.setHeader('Content-Type', ext === 'png' ? 'image/png' : 'image/webp');
         // Not immutable: community sprites can recover/update upstream, so cache
         // for a day rather than the year-long immutable TTL the R2 assets use.
         res.setHeader('Cache-Control', 'public, max-age=86400');
@@ -127,7 +131,8 @@ function createRouter({ r2, bucket, log, fetch: fetchImpl } = {}) {
     // Plaza Plan-3 Phase 4: single-frame avatar (derived frame 0, ≤512×512).
     router.get('/:slug/avatar.webp', (req, res) => streamPetdxWebp(req, res, 'avatar.webp'));
     // Community partner sprites still on the external CDN (ORB same-origin fix).
-    router.get('/community/:slug/sprite.webp', (req, res) => streamCommunitySprite(req, res));
+    // Accept .png (majority) and .webp; the (png|webp) constraint keeps it tight.
+    router.get('/community/:slug/sprite.:ext(png|webp)', (req, res) => streamCommunitySprite(req, res));
 
     return router;
 }

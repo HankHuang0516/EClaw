@@ -40,23 +40,33 @@ const PROXY_PATH_PREFIX = '/api/petdx';
 const COMMUNITY_SPRITE_HOST = 'assets.petdex.dev';
 const COMMUNITY_PROXY_PATH_PREFIX = `${PROXY_PATH_PREFIX}/community`;
 const COMMUNITY_SLUG_PATTERN = /^[a-z0-9_-]+$/i;
+// Community sprites are served as EITHER sprite.png (the majority) OR sprite.webp
+// — capture the extension so the proxy preserves it (a webp-only rewrite left
+// every .png partner ORB-blocked → still 🦞).
 const COMMUNITY_SPRITE_URL_RE =
-    /^https?:\/\/assets\.petdex\.dev\/pets\/([a-z0-9_-]+)\/sprite\.webp(?:[?#].*)?$/i;
+    /^https?:\/\/assets\.petdex\.dev\/pets\/([a-z0-9_-]+)\/sprite\.(webp|png)(?:[?#].*)?$/i;
 
-// Extract the slug from an external community sprite URL, or null if the URL
-// is not an exact assets.petdex.dev/pets/<slug>/sprite.webp shape.
-function communitySpriteSlugFromUrl(url) {
+// Parse an external community sprite URL into { slug, ext }, or null if the URL
+// is not an exact assets.petdex.dev/pets/<slug>/sprite.(webp|png) shape.
+function parseCommunitySpriteUrl(url) {
     if (typeof url !== 'string') return null;
     const m = url.match(COMMUNITY_SPRITE_URL_RE);
-    return m ? m[1] : null;
+    return m ? { slug: m[1], ext: m[2].toLowerCase() } : null;
 }
 
-// Rewrite an external community sprite URL to the same-origin proxy path.
-// Non-matching URLs (already proxied, R2-hosted, avatar.webp, null) pass
-// through unchanged — the rewrite is a no-op for everything but the ORB case.
+// Back-compat: extract just the slug (null when the URL isn't a community sprite).
+function communitySpriteSlugFromUrl(url) {
+    const ref = parseCommunitySpriteUrl(url);
+    return ref ? ref.slug : null;
+}
+
+// Rewrite an external community sprite URL to the same-origin proxy path,
+// PRESERVING the original extension (.png/.webp). Non-matching URLs (already
+// proxied, R2-hosted, avatar.webp, null) pass through unchanged — the rewrite is
+// a no-op for everything but the ORB case.
 function rewriteCommunitySpriteUrl(url) {
-    const slug = communitySpriteSlugFromUrl(url);
-    return slug ? `${COMMUNITY_PROXY_PATH_PREFIX}/${slug}/sprite.webp` : url;
+    const ref = parseCommunitySpriteUrl(url);
+    return ref ? `${COMMUNITY_PROXY_PATH_PREFIX}/${ref.slug}/sprite.${ref.ext}` : url;
 }
 
 // Apply the rewrite to descriptor.asset.url (the URL the renderer actually
@@ -386,6 +396,7 @@ module.exports = {
     COMMUNITY_PROXY_PATH_PREFIX,
     COMMUNITY_SLUG_PATTERN,
     COMMUNITY_SPRITE_URL_RE,
+    parseCommunitySpriteUrl,
     communitySpriteSlugFromUrl,
     rewriteCommunitySpriteUrl,
     rewriteDescriptorSpriteUrl,
