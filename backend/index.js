@@ -2007,6 +2007,7 @@ try {
     agentActionRequestsModule = require('./agent-action-requests')(devices, {
         pushToBot,
         unifiedPush,
+        notifyDevice, // owner-device push for ownerOnly action requests (DELIVERY fix): socket + Web Push + FCM fan-out
         serverLog,
         io, // real-time inbox push: emits 'action_request:changed' to device:<id> (card_8151054f)
     });

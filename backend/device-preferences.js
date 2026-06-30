@@ -111,6 +111,19 @@ const DEFAULTS = {
     //   before it is treated as stale and ignored (the evaluator then falls back
     //   to lastSend / kanban-floor heuristics). Default 45; clamped [5, 600].
     entity_runtime_state_stale_seconds: 45,
+    // Owner-decision DELIVERY reminders (DELIVERY fix — Hank: "eclaw 應該也要提醒？").
+    // An ownerOnly 需要你 item now (a) pushes the owner device the instant it is
+    // created, and (b) is summarized in a once-a-day morning digest, so owner
+    // decisions stop dying silently in a collapsed inbox. All default ON (opt-out).
+    // Consumed by createActionRequest + runOwnerDigestPass (agent-action-requests.js).
+    //   owner_decision_push_enabled    — push on creation of an ownerOnly item.
+    //   owner_decision_digest_enabled  — send the once-a-day pending-decisions digest.
+    //   owner_decision_digest_hour     — device-local hour [0,23] on/after which the digest fires. Default 8.
+    //   owner_decision_digest_tz       — IANA tz the hour is evaluated in. Default 'Asia/Taipei'.
+    owner_decision_push_enabled: true,
+    owner_decision_digest_enabled: true,
+    owner_decision_digest_hour: 8,
+    owner_decision_digest_tz: 'Asia/Taipei',
 };
 
 const ENTITY_IDLE_AFTER_SECONDS_MIN = 15;
@@ -159,9 +172,12 @@ function coerceValue(key, raw) {
     // (a bare `!!raw` would coerce the string 'false' to true — wrong for an API
     // that may serialize the flag as a query/JSON string).
     if (key === 'kanban_auto_escalate_enabled' || key === 'kanban_auto_escalate_skip_automation'
-        || key === 'action_request_ratify_enabled') {
+        || key === 'action_request_ratify_enabled'
+        || key === 'owner_decision_push_enabled' || key === 'owner_decision_digest_enabled') {
         // 計畫E: ratify master switch — same string-safe boolean coercion (a bare
         // `!!raw` would turn the string 'false' true, fail-OPEN for an auto-merge gate).
+        // Owner-decision reminder toggles ride the same string-safe path so 'false'
+        // from the settings API actually disables the push/digest (DELIVERY fix).
         return raw === true || raw === 'true';
     }
     if (typeof def === 'boolean') return !!raw;
@@ -207,6 +223,8 @@ function coerceValue(key, raw) {
         if (key === 'entity_runtime_state_stale_seconds') {
             return Math.max(ENTITY_RUNTIME_STATE_STALE_SECONDS_MIN, Math.min(ENTITY_RUNTIME_STATE_STALE_SECONDS_MAX, Math.round(n)));
         }
+        // Owner-decision digest hour clamps to a valid hour-of-day [0,23] (DELIVERY fix).
+        if (key === 'owner_decision_digest_hour') return Math.max(0, Math.min(23, Math.round(n)));
         return n;
     }
     if (key === 'kanban_nudge_priority_mode') {
@@ -214,6 +232,14 @@ function coerceValue(key, raw) {
     }
     if (key === 'action_request_timeout_policy') {
         return ACTION_REQUEST_TIMEOUT_POLICIES.has(raw) ? raw : def;
+    }
+    // Owner-decision digest tz: accept only a string Intl recognizes as an IANA
+    // zone, else fall back to the default (DELIVERY fix). Guards against a typo
+    // silently shifting everyone's digest hour or throwing in the worker.
+    if (key === 'owner_decision_digest_tz') {
+        if (typeof raw !== 'string' || !raw) return def;
+        try { new Intl.DateTimeFormat('en-US', { timeZone: raw }); return raw; }
+        catch (_) { return def; }
     }
     if (key === 'kanban_nudge_statuses') {
         if (!Array.isArray(raw)) return [...def];
