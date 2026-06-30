@@ -2268,7 +2268,7 @@
 
         <!-- Add Entity Section -->
         <div class="card" id="addEntityCard">
-            <div class="add-entity-header" onclick="toggleAddEntity()">
+            <div class="add-entity-header" onclick="toggleAddEntity()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                 <div class="card-title" style="margin-bottom:0;" data-i18n="dash_add_entity">
                     Add Entity
                 </div>
@@ -2313,7 +2313,7 @@
 
                 <!-- EClaw Channel Promotion -->
                 <div class="channel-promo" id="channelPromo">
-                    <div class="channel-promo-header" onclick="toggleChannelPromo()">
+                    <div class="channel-promo-header" onclick="toggleChannelPromo()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                         <span class="channel-promo-icon">⚡</span>
                         <span data-i18n="dash_channel_promo">Try EClaw Channel? More native, faster</span>
                         <span class="channel-promo-arrow" id="channelPromoArrow">›</span>
@@ -2437,7 +2437,7 @@
 
         <!-- Official Borrow Section -->
         <div class="card" id="borrowCard">
-            <div class="add-entity-header" onclick="toggleBorrow()">
+            <div class="add-entity-header" onclick="toggleBorrow()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                 <div class="card-title" style="margin-bottom:0;">
                     <span data-i18n="borrow_title">Official Bot Rental</span>
                     <span class="beta-badge">BETA</span>

@@ -1139,7 +1139,7 @@
     <div class="modal-overlay" id="detailModal" onclick="if(event.target===this)closeDetail()">
         <div style="position:relative;max-width:560px;width:100%;max-height:75vh;">
             <div class="modal-content" id="detailContent" style="max-height:75vh;overflow-y:auto;border-radius:16px;">
-                <button class="modal-close" onclick="closeDetail()">✕</button>
+                <button class="modal-close" aria-label="Close" onclick="closeDetail()">✕</button>
                 <!-- Rendered by JS -->
             </div>
             <!-- gradient now inside modal-content as sticky div -->
@@ -1761,7 +1761,7 @@
             }
 
             content.innerHTML = `
-                <button class="modal-close" onclick="closeDetail()">✕</button>
+                <button class="modal-close" aria-label="Close" onclick="closeDetail()">✕</button>
                 <div class="detail-header">
                     <div class="detail-avatar">${botAvatarHtml(resolveBotAvatar(bot), 72, entityIdForPublicCode(bot.publicCode))}</div>
                     <div class="detail-name">${esc(bot.name)}</div>
@@ -1916,7 +1916,7 @@
                     : `<div style="margin:12px 20px 0;padding:12px;border-radius:12px;background:#f3f4f6;border:1px solid #d1d5db;color:#4b5563;font-size:13px;line-height:1.45;">⏸ ${ttt('listing_soft_paused_visitor_banner','This bot is temporarily unavailable while the owner fixes health checks. The page remains available, but renting is disabled for now.')}${softPauseEta ? `<div>${ttt('mp_est_total','Estimated')}: ${esc(softPauseEta)}</div>` : ''}</div>`)
                 : '';
             content.innerHTML = `
-                <button class="modal-close" onclick="closeDetail()">\u2715</button>
+                <button class="modal-close" aria-label="Close" onclick="closeDetail()">\u2715</button>
                 <div class="detail-header">
                     <div class="detail-avatar">${botAvatarHtml(resolveBotAvatar({ petdxAvatarUrl: l.petdx_avatar_url, avatar: l.avatar_url }), 72, l.owner_entity_id)}</div>
                     <div class="detail-name">${esc(l.title)}</div>

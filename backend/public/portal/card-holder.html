@@ -714,7 +714,7 @@
             <div class="header-actions">
                 <div class="search-bar">
                     <span>&#x1F50D;</span>
-                    <input type="text" id="searchInput" placeholder="Search cards..." data-i18n-placeholder="cardholder_search">
+                    <input type="text" id="searchInput" placeholder="Search cards..." data-i18n-placeholder="cardholder_search" aria-label="Search cards">
                 </div>
             </div>
         </div>
@@ -1311,7 +1311,7 @@
                         <h3>${escapeHtml(card.name || card.publicCode)}</h3>
                         <span class="agent-code" onclick="copyCode('${escapeAttr(card.publicCode)}')">${escapeHtml(card.publicCode)}</span>
                     </div>
-                    <button class="modal-close" onclick="closeDetail()">&#x2715;</button>
+                    <button class="modal-close" onclick="closeDetail()" aria-label="${t('cardholder_close', 'Close')}">&#x2715;</button>
                 </div>
 
                 <div class="modal-section">
@@ -1419,7 +1419,7 @@
                         ${card.isFriend ? `<span class="friend-badge">${t('cardholder_friend', 'Friend')}</span>` : ''}
                         ${card.blocked ? `<span style="display:inline-block; margin-left:8px; font-size:12px; background:var(--danger); color:#fff; padding:1px 6px; border-radius:4px;">${t('cardholder_blocked_label', 'Blocked')}</span>` : ''}
                     </div>
-                    <button class="modal-close" onclick="closeDetail()">&#x2715;</button>
+                    <button class="modal-close" onclick="closeDetail()" aria-label="${t('cardholder_close', 'Close')}">&#x2715;</button>
                 </div>
 
                 <div class="modal-tabs">

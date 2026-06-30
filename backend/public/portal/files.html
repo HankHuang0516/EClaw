@@ -709,7 +709,7 @@
 
         <!-- Folder Filter Bar -->
         <div class="folder-filter-bar" id="folderFilterBar">
-            <div class="folder-chip active" data-folder="all" onclick="setFolderFilter('all')" data-i18n="files_folder_all">All</div>
+            <div class="folder-chip active" data-folder="all" onclick="setFolderFilter('all')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" role="button" tabindex="0" data-i18n="files_folder_all">All</div>
             <!-- dynamic folder chips + add button rendered by JS -->
         </div>
 

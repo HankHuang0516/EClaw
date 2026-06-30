@@ -261,7 +261,7 @@
 
         <!-- Input -->
         <div class="input-bar">
-            <input type="text" id="msgInput" data-i18n-placeholder="sc_placeholder" placeholder="Type a message..." maxlength="5000" autocomplete="off">
+            <input type="text" id="msgInput" aria-label="Type a message" data-i18n-placeholder="sc_placeholder" placeholder="Type a message..." maxlength="5000" autocomplete="off">
             <button id="sendBtn" onclick="handleSend()" data-i18n="sc_send">Send</button>
         </div>
 
@@ -1535,10 +1535,10 @@
         dialog.innerHTML = `<div style="background:var(--card);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px;max-width:380px;width:100%">
             <h3 style="margin:0 0 4px">🛒 ${escapeHtml(name)}</h3>
             <p style="color:var(--primary);font-weight:700;margin:0 0 16px">${escapeHtml(price)}</p>
-            <input id="od-name" data-i18n-placeholder="sc_order_name" placeholder="Name" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px" required>
-            <input id="od-phone" data-i18n-placeholder="sc_order_phone" placeholder="Phone" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px" required>
-            <input id="od-email" placeholder="Email" type="email" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px">
-            <input id="od-addr" data-i18n-placeholder="sc_order_address" placeholder="Shipping address" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px">
+            <input id="od-name" aria-label="Name" data-i18n-placeholder="sc_order_name" placeholder="Name" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px" required>
+            <input id="od-phone" aria-label="Phone" data-i18n-placeholder="sc_order_phone" placeholder="Phone" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px" required>
+            <input id="od-email" aria-label="Email" placeholder="Email" type="email" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px">
+            <input id="od-addr" aria-label="Shipping address" data-i18n-placeholder="sc_order_address" placeholder="Shipping address" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px">
             <div style="display:flex;gap:8px;margin-top:12px">
                 <button onclick="document.getElementById('orderDialog').remove()" data-i18n="sc_order_cancel" style="flex:1;padding:10px;background:rgba(255,255,255,0.1);color:var(--text);border:none;border-radius:8px;cursor:pointer">Cancel</button>
                 <button id="od-submit" onclick="submitOrder(this)" data-i18n="sc_order_confirm" style="flex:1;padding:10px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">Confirm Order</button>
