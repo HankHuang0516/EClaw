@@ -341,6 +341,15 @@ let VISION_IMAGES = [
     // Hard tier
     { file: null, description: 'A distributed systems topology diagram with 4 geographic regions (US-East, US-West, EU-West, AP-Southeast): each region contains a primary database node and a read replica; solid arrows show synchronous intra-region replication and dashed arrows show asynchronous cross-region replication — the EU-West region displays an orange replication lag warning badge reading "847 ms behind"', keywords: ['distributed', 'four', 'regions', 'primary', 'database', 'replica', 'async', 'sync', 'EU', '847', 'lag', 'orange'] },
     { file: null, description: 'A stock options chain table for AAPL with 6 rows of strike prices from $165 to $190 in $5 increments: columns show call bid, call ask, implied volatility, and open interest — the $175 row is highlighted in yellow as the at-the-money option showing IV 28.4% and OI 14,232', keywords: ['options', 'chain', 'AAPL', 'six', 'strikes', '175', 'call', 'implied', 'volatility', '28.4', '14232', 'at-the-money', 'yellow'] },
+    // ── Daily pool update: added 2026-07-01 ──
+    // Easy tier
+    { file: null, description: 'A two-color pie chart on a white background: the blue slice occupies 60% and is labeled "Completed"; the orange slice occupies 40% and is labeled "Remaining" — both percentage values are printed inside their respective segments', keywords: ['pie', 'chart', 'two', 'blue', 'orange', 'sixty', 'forty', 'completed', 'remaining'] },
+    // Medium tier
+    { file: null, description: 'A Gantt chart with five horizontal task bars across nine weeks: "Requirements" (weeks 1–2, green, 100%), "Design" (weeks 2–4, blue, 100%), "Development" (weeks 3–7, yellow, 75%), "Testing" (weeks 6–8, orange, 30%), and "Deployment" (week 9, red, 0%) — each bar is labeled with its completion percentage on the right end', keywords: ['gantt', 'five', 'tasks', 'requirements', 'design', 'development', 'testing', 'deployment', 'green', 'blue', 'yellow', 'orange', 'red', '75', '30'] },
+    { file: null, description: 'A network topology diagram showing one central router connected by orange ethernet cables to six branch switches arranged in a ring — three of the switches each connect to two workstations at the leaf level giving six workstations total', keywords: ['network', 'router', 'six', 'switches', 'orange', 'ethernet', 'three', 'workstations', 'ring'] },
+    // Hard tier
+    { file: null, description: 'A UML sequence diagram with four participant lifelines — User, AuthService, TokenService, and Database — showing a login flow: User sends POST /login to AuthService; AuthService queries the Database and on success calls TokenService.mintJWT(); TokenService returns a signed JWT; AuthService replies 200 OK with the token', keywords: ['UML', 'sequence', 'four', 'lifelines', 'User', 'AuthService', 'TokenService', 'Database', 'login', 'JWT', '200'] },
+    { file: null, description: 'A CPU scheduling timeline across 20 time units showing three processes: P1 (green) runs 0–4, P2 (blue) 4–9, P3 (orange) 9–14, P1 resumes 14–17, P2 resumes 17–20 — a vertical context-switch marker appears at each boundary and a label at the bottom reads "Total idle: 0 units"', keywords: ['CPU', 'scheduling', 'three', 'processes', 'twenty', 'green', 'blue', 'orange', 'context-switch', 'idle', 'zero'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -675,6 +684,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[5,3,4,5]', expected: 'true' },{ input: '[3,7,2,3]', expected: 'true' },{ input: '[1,5,233,7]', expected: 'true' },{ input: '[2,4,6,8,10,12]', expected: 'true' }] },
     { title: 'Longest Bitonic Subarray', description: 'Write `solve(nums)` — a bitonic subarray first strictly increases then strictly decreases (or is purely increasing or purely decreasing). Return the length of the longest bitonic contiguous subarray.',
       testCases: [{ input: '[1,3,5,4,2]', expected: '5' },{ input: '[1,2,3,4,5]', expected: '5' },{ input: '[5,4,3,2,1]', expected: '5' },{ input: '[1,3,5,4,2,7,6]', expected: '5' },{ input: '[1]', expected: '1' }] },
+    // ── Daily pool update: added 2026-07-01 ──
+    { title: 'Palindrome Partitioning Minimum Cuts', description: 'Write `solve(s)` — return the minimum number of cuts to partition string `s` so that every substring in the partition is a palindrome.',
+      testCases: [{ input: '"aab"', expected: '1' },{ input: '"ababbbabbababa"', expected: '3' },{ input: '"a"', expected: '0' },{ input: '"ab"', expected: '1' },{ input: '"aaa"', expected: '0' }] },
+    { title: 'Jump Game II', description: 'Write `solve(nums)` — given an integer array where nums[i] is the maximum jump length from index i, return the minimum number of jumps to reach the last index. You can always reach the last index.',
+      testCases: [{ input: '[2,3,1,1,4]', expected: '2' },{ input: '[2,3,0,1,4]', expected: '2' },{ input: '[1,1,1,1]', expected: '3' },{ input: '[1,2,3]', expected: '2' },{ input: '[0]', expected: '0' }] },
+    { title: 'Maximum Sum Rectangle in a Matrix', description: 'Write `solve(matrix)` — find the non-empty sub-rectangle in an m×n integer matrix with the maximum possible sum. Return the sum only.',
+      testCases: [{ input: '[[1,2,-1,-4,-20],[-8,-3,4,2,1],[3,8,10,1,3],[-4,-1,1,7,-6]]', expected: '29' },{ input: '[[1,1],[1,1]]', expected: '4' },{ input: '[[-1,-2],[-3,-4]]', expected: '-1' },{ input: '[[5]]', expected: '5' }] },
+    { title: 'Minimum Window Substring', description: 'Write `solve(s, t)` — return the minimum window in string s that contains all characters of t (including duplicates). If no valid window exists, return "". The answer is guaranteed unique.',
+      testCases: [{ input: '"ADOBECODEBANC", "ABC"', expected: '"BANC"' },{ input: '"a", "a"', expected: '"a"' },{ input: '"a", "aa"', expected: '""' },{ input: '"abc", "b"', expected: '"b"' },{ input: '"bba", "ab"', expected: '"ba"' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -894,6 +912,18 @@ let RESPONSE_QUESTIONS = [
     // Hard tier
     { question: 'How many integers from 1 to 1000 are divisible by neither 2 nor 5?', expectedKeywords: ['400', 'four hundred'] },
     { question: 'What is the angle in degrees subtended at the centre of a circle by an arc that is one-sixth of the circumference?', expectedKeywords: ['60', 'sixty'] },
+    // ── Daily pool update: added 2026-07-01 ──
+    // Easy tier
+    { question: 'What is 7 squared?', expectedKeywords: ['49', 'forty-nine'] },
+    { question: 'How many hours are in three days?', expectedKeywords: ['72', 'seventy-two'] },
+    // Medium tier
+    { question: 'A rectangular garden is 12 meters long and 8 meters wide. What is the area in square meters?', expectedKeywords: ['96', 'ninety-six'] },
+    { question: 'A jar has 4 red, 6 blue, and 5 green marbles. What is the probability of drawing a blue marble at random? Simplify the fraction.', expectedKeywords: ['2/5', '6/15', 'two fifths'] },
+    { question: 'A train traveling at 90 km/h takes 2.5 hours to reach its destination. Traveling at 75 km/h instead, how many extra hours does the journey take?', expectedKeywords: ['0.5', 'half', 'half an hour', '30 minutes'] },
+    { question: 'Two workers together can paint a fence in 4 hours. Worker A alone takes 6 hours. How many hours would Worker B alone take?', expectedKeywords: ['12', 'twelve'] },
+    // Hard tier
+    { question: 'How many different 3-person committees can be formed from a group of 8 people?', expectedKeywords: ['56', 'fifty-six'] },
+    { question: 'Starting with $1,000, an investment gains 20%, then loses 25%, then gains 10%. What is the final amount?', expectedKeywords: ['990', '$990'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -1121,6 +1151,15 @@ let TTS_PHRASES = [
     // Hard tier
     { text: 'Under International Accounting Standard 38 an intangible asset is recognised only when it is probable that future economic benefits will flow to the entity and its cost can be measured reliably — development-phase costs may be capitalised only when all six criteria in IAS 38 paragraph 57 are simultaneously satisfied', keywords: ['IAS', '38', 'intangible', 'asset', 'economic', 'benefits', 'capitalised', 'development', 'six', 'criteria', 'paragraph', '57'] },
     { text: 'Zero-knowledge proof: the prover commits to witness w using Pedersen commitment C equals g to the power of w times h to the power of r — the verifier issues challenge c, the prover responds with z equals r plus c times w modulo the prime order q — soundness error probability is one over q', keywords: ['zero-knowledge', 'proof', 'prover', 'Pedersen', 'commitment', 'verifier', 'challenge', 'soundness', 'modulo', 'prime', 'order', 'probability'] },
+    // ── Daily pool update: added 2026-07-01 ──
+    // Easy tier
+    { text: 'All passengers in rows fifteen through twenty-five please proceed to gate B12 for boarding — we will begin in five minutes', keywords: ['passengers', 'fifteen', 'twenty-five', 'gate', 'B12', 'five', 'minutes'] },
+    // Medium tier
+    { text: 'Transaction reference TXN-20260701-0042 for two hundred seventy-five dollars and sixty cents was successfully processed — a confirmation email has been sent to the address on file', keywords: ['TXN', '20260701', '0042', '275', 'sixty', 'cents', 'processed', 'confirmation', 'email'] },
+    { text: 'Build pipeline ID 9183 failed at the integration-test stage after 4 minutes and 22 seconds — 3 test suites passed and 2 failed; logs are available at the CI dashboard under run 9183', keywords: ['pipeline', '9183', 'integration', 'four', 'minutes', '22', 'three', 'two', 'failed'] },
+    // Hard tier
+    { text: 'Under GDPR Article 83 paragraph 5, infringements of the basic principles for processing including the conditions for consent shall be subject to administrative fines of up to twenty million euros or four percent of the total worldwide annual turnover, whichever is higher', keywords: ['GDPR', 'Article', '83', 'paragraph', 'consent', 'twenty', 'million', 'euros', 'four', 'percent', 'turnover'] },
+    { text: 'Layer 3 switch configuration complete: VLAN 100 tagged on ports GigabitEthernet 0 through 23, VLAN 200 native untagged on GigabitEthernet 24 — OSPF area 0 adjacency formed with neighbour 10.0.0.1 after 3 hello packets, spanning-tree mode RSTP active on all VLANs', keywords: ['VLAN', '100', 'GigabitEthernet', '23', '200', 'OSPF', 'area', 'adjacency', '10.0.0.1', 'three', 'hello', 'RSTP'] },
 ];
 
 // ============================================
