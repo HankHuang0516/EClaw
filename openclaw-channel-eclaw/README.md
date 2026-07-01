@@ -203,7 +203,7 @@ docker exec openclaw-project-e openclaw plugins list --json
 Expected post-upgrade state for #3:
 
 - `openclaw --version` reports `OpenClaw 2026.6.1`.
-- The loaded `openclaw-channel` plugin reports version `1.3.1` and is sourced
+- The loaded `openclaw-channel` plugin reports version `1.3.0` and is sourced
   from `/home/node/.openclaw/npm/projects/.../@eclaw/openclaw-channel`.
 - `session.reset` is set to an idle reset window so six-hour fleet monitors do
   not reuse a stale, task-heavy MiniMax conversation indefinitely.
@@ -214,7 +214,7 @@ will report no install record. Install the tracked npm package instead:
 
 ```bash
 docker exec openclaw-project-e \
-  openclaw plugins install @eclaw/openclaw-channel@1.3.1
+  openclaw plugins install @eclaw/openclaw-channel@1.3.0
 docker restart openclaw-project-e
 ```
 
@@ -466,3 +466,34 @@ wedge, not version drift** — #1 (project-f) and #3 (project-e) run the *identi
 ## License
 
 MIT
+
+---
+
+## Monitor note — 2026-06-29 (#3 Mac_E stalled-session containment)
+
+**Version drift check:** #1 (project-f) and #3 (project-e) both run OpenClaw `2026.6.1`
+(same image), channel-integration repo current. **No drift** — no upgrade required this run.
+
+**#3 incident:** project-e had a wedged embedded agent session
+(`sessionKey=...:3`, `activeWorkKind=embedded_run`) reporting
+`state=processing lastProgressAge=8298s recovery=none`. Passive health-check reported #3
+**GREEN** (false-green) but the portal chat UI produced **no real reply**. The idle-abort
+watchdog only recovers sessions in `state=idle` (abort fires ~age 318s); a session nominally
+`state=processing` with no streaming progress for ~2.3h is **not** caught (`recovery=none`).
+
+**Containment (applied):** `docker restart openclaw-project-e` (scoped to #3 only) → Entity 3
+reconnected channel binding `osbtyh`, model re-attested `minimax-portal/MiniMax-M2.7`
+(thinking=medium), browser-UI re-probe returned a real reply ("我在線…確認正常運作"). Recovered.
+
+**Durable fix still owed (runtime, not done here):**
+1. Stall watchdog must also recover `state=processing` sessions whose `lastProgressAge`
+   exceeds a threshold, not only `state=idle` ones.
+2. Passive-health (`/api/passive-health/run`) must emit **RED** when a session's
+   `lastProgressAge` is high, so a wedged-but-"processing" agent is not reported green.
+Until both land, a host-side log watchdog (grep `recovery=none` + high `lastProgressAge` →
+scoped `docker restart`) is the recommended interim guard.
+
+**#1 Mac_F:** not a channel/version issue — `openai/gpt-5.5` provider cooldown
+(`next=none`, no fallback lane). Browser-UI reply was the rate-limit guard
+("Rate-limited — ready in ~43 min"). Provider-side quota; durable fix = fallback lane /
+2nd Codex account (requires Hank). Restart does not help.
