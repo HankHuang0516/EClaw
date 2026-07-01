@@ -1266,6 +1266,15 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Portal QA/UIUX Sweep**: i18n fallback + a11y labels (#3721)
 - **Idle Dispatch Guard**: Guard non-integer `botId` before SQL int cast (#3715)
 
+### Recent Features (v1.1190.x+, 2026-06-30 – 2026-07-02)
+
+- **Multi-Device Push Fix (v1.1190)**: Stop phone/emulator FCM tokens clobbering each other (#3808); multi-device APNs tokens + admin-broadcast fan-out fix (#3810)
+- **Channel Account Fix (v1.1190)**: Allow many `channel_accounts` per device on fresh DBs (#3811)
+- **Audit False-Positive Fix (v1.1190)**: Kill recurring weekly false-positives in compliance rules (#3813)
+- **iOS Rotate Secret + Switch Device**: Stage 3 native Rotate Secret + Switch Device (#3743)
+- **Android Rotate Secret + Switch Device**: Stage 3 native Rotate Secret + Switch Device (#3742)
+- **Portal Refs Popover Auth Test**: Assert refs popover header auth (#3806)
+
 ### Recent Features (v1.1190.x+, 2026-06-28 – 2026-06-29)
 
 - **Ratify Settings UI (v1.1190)**: 計畫E ratify-loop settings UI — enable toggle + grace (hours/minutes) + N cap + read-only guardrails card; settings-help invariant with HELP-KEY annotations; registry keys[] placement fix; default-ON copy alignment (#3802+)
@@ -1313,7 +1322,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~5877 test cases across 418 Jest files + 79 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~5906 test cases across 421 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
