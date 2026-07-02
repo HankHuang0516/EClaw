@@ -168,6 +168,44 @@
         `;
     }
 
+    // Screenshot/attachment thumbnail strip for the card-chip popover.
+    //
+    // Regression note (card fix/chip-card-screenshot-thumbnails): the popover
+    // fetches GET /api/mission/card/:id, whose payload carries `card.files[]`
+    // ({ fileId, filename, url, mimeType, ... } — see backend/kanban.js
+    // mapCardFileRow + the /card/:id handler which does `card.files = …`), and
+    // the full kanban modal renders those images as a thumbnail grid + lightbox
+    // (kanban.html loadScreenshots/openLightbox). The chip popover shipped
+    // WITHOUT this block, so scrolling the chip never revealed the card's
+    // screenshots — reachable everywhere else but not in the quick-preview chip.
+    // This restores parity: image files → a scrollable thumbnail grid; each
+    // thumb is a real <a href=signedUrl> so a click enlarges it (a host page's
+    // window.openLightbox is preferred when present — see bindPopoverActions).
+    function buildScreenshotBlockHtml(c) {
+        const files = Array.isArray(c.files) ? c.files : [];
+        const images = files.filter(f => f && typeof f.url === 'string' && f.url
+            && /^image\//i.test(String(f.mimeType || f.mime_type || '')));
+        if (!images.length) return '';
+        const label = t('chip_popover_screenshots', '📸 截圖');
+        // TODO(#6): attach the "?" spec-tooltip icon here (right of the section
+        // label), reusing the portal's existing help-icon pattern. Backend/data
+        // is ready; only the tooltip affordance is #6's (UI) piece. Marker id
+        // below so #6 can target it without re-deriving the DOM shape.
+        const thumbs = images.map(f => {
+            const url = escapeHtml(f.url);
+            const name = escapeHtml(f.filename || 'screenshot');
+            return '<a class="chip-popover-thumb" href="' + url + '"'
+                + ' data-action="thumb" data-url="' + url + '" data-name="' + name + '"'
+                + ' target="_blank" rel="noopener" title="' + name + '">'
+                + '<img src="' + url + '" alt="' + name + '" loading="lazy"></a>';
+        }).join('');
+        return '<div class="chip-popover-shots">'
+            + '<div class="chip-popover-shots-label" data-chip-help-anchor="screenshots">'
+            + escapeHtml(label) + ' <span class="chip-popover-shots-count">' + images.length + '</span></div>'
+            + '<div class="chip-popover-thumbs">' + thumbs + '</div>'
+            + '</div>';
+    }
+
     function buildContentHtml(d, refType, refId) {
         if (d.kind !== 'card') return buildErrorHtml(new Error('ref_not_supported:kind'), refType, refId);
         const c = d.data;
@@ -180,6 +218,7 @@
             const truncated = cmt.text && cmt.text.length > 120 ? '…' : '';
             return '<div class="chip-popover-comment">💬 ' + renderChips(escapeHtml(raw)) + truncated + '</div>';
         }).join('');
+        const screenshotsHtml = buildScreenshotBlockHtml(c);
         const titleRendered = renderChips(escapeHtml(c.title || ''));
         const hashId = c.id.indexOf('card_') === 0 ? c.id : ('card_' + c.id);
         const fullUrl = '/portal/kanban.html#' + hashId;
@@ -196,6 +235,7 @@
             <div class="chip-popover-body">
                 ${descRaw ? '<div class="chip-popover-desc">' + desc + '</div>' : ''}
                 ${comments}
+                ${screenshotsHtml}
             </div>
             <div class="chip-popover-footer">
                 <a href="${escapeHtml(fullUrl)}" class="chip-popover-open" data-action="open-full" data-card-id="${escapeHtml(hashId)}">${escapeHtml(openFullLabel)}</a>
@@ -224,6 +264,20 @@
             if (!btn) return;
             e.stopPropagation();
             const action = btn.getAttribute('data-action');
+            if (action === 'thumb') {
+                // Enlarge a screenshot thumbnail. Prefer the host page's own
+                // lightbox (chat.html/kanban.html/feedback.html define
+                // window.openLightbox); otherwise fall through to the native
+                // <a target="_blank"> so the image still opens on the 4 pages
+                // that host the chip without a lightbox.
+                const url = btn.getAttribute('data-url') || '';
+                const name = btn.getAttribute('data-name') || '';
+                if (url && typeof window.openLightbox === 'function') {
+                    e.preventDefault();
+                    try { window.openLightbox(url, name); return; } catch (_) {}
+                }
+                return; // let the <a> open the signed URL in a new tab
+            }
             if (action === 'close') {
                 const idx = stack.indexOf(pop);
                 if (idx >= 0) closeFromIndex(idx);
