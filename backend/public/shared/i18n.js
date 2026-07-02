@@ -10722,6 +10722,7 @@ const TRANSLATIONS = {
 
 
         "mc_bulk_undo": "Undo",
+        "mc_note_deleted": "Note deleted",
 
 
 
@@ -661178,6 +661179,7 @@ const TRANSLATIONS = {
 
 
         "mc_bulk_undo": "復原",
+        "mc_note_deleted": "便箋已刪除",
 
 
 
@@ -1659108,6 +1659110,7 @@ const TRANSLATIONS = {
 
 
         "mc_bulk_undo": "复原",
+        "mc_note_deleted": "便签已删除",
 
 
 
@@ -6105979,6 +6105982,7 @@ const TRANSLATIONS = {
         "mc_confirm_delete_category": "Delete this category? Items will become uncategorized.",
         "mc_bulk_cancel": "Cancel",
         "mc_bulk_undo": "Undo",
+        "mc_note_deleted": "Note deleted",
         "mc_bulk_clearing": "Clearing...",
         "mc_bulk_cleared": "{count} items cleared",
         "mc_bulk_restoring": "Restoring...",

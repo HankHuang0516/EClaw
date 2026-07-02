@@ -2305,12 +2305,24 @@
         }
 
         async function deleteNote(id) {
-            const note = dashboard.notes.find(n => n.id === id);
-            const itemName = note ? (note.title || note.id) : id;
+            const removedIdx = dashboard.notes.findIndex(n => n.id === id);
+            if (removedIdx === -1) return;
+            const note = dashboard.notes[removedIdx];
+            const itemName = note.title || note.id;
             if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) {
+                const removed = note;
                 dashboard.notes = dashboard.notes.filter(n => n.id !== id);
                 markChanged();
                 renderNotes();
+                // card_3ffe8415: single-note delete now offers a ~6s undo toast, the
+                // same safety net bulk delete already had. Confirm PREVENTS mis-taps,
+                // undo RECOVERS from them (Material/HIG) — the two are complementary,
+                // and it was inconsistent that only bulk had the recoverable net.
+                showUndoToast(i18n.t('mc_note_deleted') || 'Note deleted', () => {
+                    dashboard.notes.splice(Math.min(removedIdx, dashboard.notes.length), 0, removed);
+                    markChanged();
+                    renderNotes();
+                });
             }
         }
 
@@ -2323,14 +2335,10 @@
             menu.style.top = e.clientY + 'px';
 
             menu.querySelector('.context-menu-item').onclick = async () => {
-                const note = dashboard.notes.find(n => n.id === id);
-                const itemName = note ? (note.title || note.id) : id;
-                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) {
-                    dashboard.notes = dashboard.notes.filter(n => n.id !== id);
-                    markChanged();
-                    renderNotes();
-                }
                 menu.style.display = 'none';
+                // card_3ffe8415: route through deleteNote so this path also gets the
+                // confirm + undo-toast safety net (was a duplicated no-undo delete).
+                await deleteNote(id);
             };
 
             setTimeout(() => document.addEventListener('click', () => menu.style.display = 'none', { once: true }), 10);
