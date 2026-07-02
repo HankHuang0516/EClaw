@@ -341,6 +341,15 @@ let VISION_IMAGES = [
     // Hard tier
     { file: null, description: 'A distributed systems topology diagram with 4 geographic regions (US-East, US-West, EU-West, AP-Southeast): each region contains a primary database node and a read replica; solid arrows show synchronous intra-region replication and dashed arrows show asynchronous cross-region replication — the EU-West region displays an orange replication lag warning badge reading "847 ms behind"', keywords: ['distributed', 'four', 'regions', 'primary', 'database', 'replica', 'async', 'sync', 'EU', '847', 'lag', 'orange'] },
     { file: null, description: 'A stock options chain table for AAPL with 6 rows of strike prices from $165 to $190 in $5 increments: columns show call bid, call ask, implied volatility, and open interest — the $175 row is highlighted in yellow as the at-the-money option showing IV 28.4% and OI 14,232', keywords: ['options', 'chain', 'AAPL', 'six', 'strikes', '175', 'call', 'implied', 'volatility', '28.4', '14232', 'at-the-money', 'yellow'] },
+    // ── Daily pool update: added 2026-07-02 ──
+    // Easy tier
+    { file: null, description: 'A gold star rating widget showing 4 out of 5 stars filled in yellow — the fifth star outline is hollow in gray', keywords: ['star', 'rating', 'four', 'five', 'gold', 'yellow', 'gray', 'hollow'] },
+    // Medium tier
+    { file: null, description: 'A Jenkins CI pipeline visualization with 5 stages: Build (green ✅ 2 min 11 s), Unit Tests (green ✅ 4 min 37 s), Security Scan (red ❌ 1 min 09 s — badge reads "CRITICAL: CVE-2024-9901 found"), Integration Tests (gray ⏭ skipped), Deploy (gray ⏭ skipped) — total elapsed timer reads 7 min 57 s', keywords: ['Jenkins', 'five', 'stages', 'build', 'green', 'security', 'scan', 'red', 'CVE', '2024', 'skipped', 'deploy', '7'] },
+    { file: null, description: 'A Python traceback error in a dark terminal: 4 stack frames leading to line 83 in payments.py — the error reads "TypeError: unsupported operand type(s) for +: \'int\' and \'str\'" with the offending line "total = base_price + discount_code" highlighted in red', keywords: ['Python', 'traceback', 'four', 'frames', 'payments', 'line', '83', 'TypeError', 'int', 'str', 'total'] },
+    // Hard tier
+    { file: null, description: 'A Figma design canvas showing 3 nested frames: an outer white card containing a 2×3 product thumbnail grid (6 items); a floating "Filters" panel overlapping the card with 4 toggle switches (3 on, 1 off labeled "In Stock Only"); and a red notification badge displaying "12" on a bell icon in the upper-right corner', keywords: ['figma', 'three', 'frames', 'grid', 'six', 'filters', 'four', 'toggles', 'badge', '12', 'bell', 'red'] },
+    { file: null, description: 'A memory profiler heap snapshot table showing the top 8 retained objects by size: Array 42.3 MB (31%), Object 28.7 MB (21%), string 19.4 MB (14%), Map 12.1 MB (9%) — each row has a proportional colored bar; the Array row is highlighted in red as the largest retained object', keywords: ['memory', 'profiler', 'heap', 'eight', 'Array', '42.3', 'MB', 'string', 'Map', 'retained', 'red', 'largest'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -675,6 +684,13 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[5,3,4,5]', expected: 'true' },{ input: '[3,7,2,3]', expected: 'true' },{ input: '[1,5,233,7]', expected: 'true' },{ input: '[2,4,6,8,10,12]', expected: 'true' }] },
     { title: 'Longest Bitonic Subarray', description: 'Write `solve(nums)` — a bitonic subarray first strictly increases then strictly decreases (or is purely increasing or purely decreasing). Return the length of the longest bitonic contiguous subarray.',
       testCases: [{ input: '[1,3,5,4,2]', expected: '5' },{ input: '[1,2,3,4,5]', expected: '5' },{ input: '[5,4,3,2,1]', expected: '5' },{ input: '[1,3,5,4,2,7,6]', expected: '5' },{ input: '[1]', expected: '1' }] },
+    // ── Daily pool update: added 2026-07-02 ──
+    { title: 'Count Pairs With Target Sum', description: 'Write `solve(nums, target)` — return the count of all unique unordered pairs (i, j) where i < j such that nums[i] + nums[j] === target.',
+      testCases: [{ input: '[1,5,3,3,3], 6', expected: '4' },{ input: '[1,2,3,4,5], 5', expected: '2' },{ input: '[1,1,1], 2', expected: '3' },{ input: '[], 5', expected: '0' }] },
+    { title: 'Binary Tree Right Side View', description: 'Write `solve(nodes)` — given a binary tree as a level-order array (null for missing nodes), return the values visible when looking from the right side (the rightmost node at each level).',
+      testCases: [{ input: '[1,2,3,null,5,null,4]', expected: '[1,3,4]' },{ input: '[1,null,3]', expected: '[1,3]' },{ input: '[]', expected: '[]' },{ input: '[1,2,3,4]', expected: '[1,3,4]' }] },
+    { title: 'Longest Arithmetic Subsequence', description: 'Write `solve(nums)` — return the length of the longest arithmetic subsequence in the array. A subsequence is arithmetic if consecutive differences are all equal. Elements need not be contiguous.',
+      testCases: [{ input: '[3,6,9,12]', expected: '4' },{ input: '[9,4,7,2,10]', expected: '3' },{ input: '[20,1,15,3,10,5,8]', expected: '4' },{ input: '[1,2]', expected: '2' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -894,6 +910,16 @@ let RESPONSE_QUESTIONS = [
     // Hard tier
     { question: 'How many integers from 1 to 1000 are divisible by neither 2 nor 5?', expectedKeywords: ['400', 'four hundred'] },
     { question: 'What is the angle in degrees subtended at the centre of a circle by an arc that is one-sixth of the circumference?', expectedKeywords: ['60', 'sixty'] },
+    // ── Daily pool update: added 2026-07-02 ──
+    // Easy tier
+    { question: 'How many degrees are in a right angle?', expectedKeywords: ['90', 'ninety'] },
+    { question: 'What is 11 × 12?', expectedKeywords: ['132'] },
+    // Medium tier
+    { question: 'A train travels from city X to city Y in 2 hours at 90 km/h. On the return journey it travels at 60 km/h. What is the average speed for the entire round trip in km/h?', expectedKeywords: ['72'] },
+    { question: 'A bag contains 8 red and 4 blue marbles. Three marbles are drawn at random without replacement. What is the probability that all three are red? Express as a simplified fraction.', expectedKeywords: ['14/55'] },
+    // Hard tier
+    { question: 'In how many ways can 8 people be seated around a circular table if 2 specific people must NOT be adjacent to each other?', expectedKeywords: ['1800', 'one thousand eight hundred'] },
+    { question: 'A container holds a 60-liter mixture of acid and water in a ratio of 2:1. How many liters of pure acid must be added to make the ratio 3:1?', expectedKeywords: ['12', 'twelve'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -1121,6 +1147,14 @@ let TTS_PHRASES = [
     // Hard tier
     { text: 'Under International Accounting Standard 38 an intangible asset is recognised only when it is probable that future economic benefits will flow to the entity and its cost can be measured reliably — development-phase costs may be capitalised only when all six criteria in IAS 38 paragraph 57 are simultaneously satisfied', keywords: ['IAS', '38', 'intangible', 'asset', 'economic', 'benefits', 'capitalised', 'development', 'six', 'criteria', 'paragraph', '57'] },
     { text: 'Zero-knowledge proof: the prover commits to witness w using Pedersen commitment C equals g to the power of w times h to the power of r — the verifier issues challenge c, the prover responds with z equals r plus c times w modulo the prime order q — soundness error probability is one over q', keywords: ['zero-knowledge', 'proof', 'prover', 'Pedersen', 'commitment', 'verifier', 'challenge', 'soundness', 'modulo', 'prime', 'order', 'probability'] },
+    // ── Daily pool update: added 2026-07-02 ──
+    // Easy tier
+    { text: 'The bus to downtown departs from bay four at half past three', keywords: ['bus', 'downtown', 'bay', 'four', 'half', 'three'] },
+    // Medium tier
+    { text: 'Patient ID PT-2024-19847 has been admitted to ward seven B bed twenty-two — attending physician is Dr Okonkwo and the scheduled procedure is tomorrow at 08:30', keywords: ['patient', 'PT-2024', '19847', 'ward', 'seven', 'bed', 'twenty-two', 'Okonkwo', '08:30'] },
+    { text: 'Production alert: pod api-gateway-7c8d9f experienced an OOMKilled event at 16:42 UTC — container memory limit was 512 megabytes but peak resident set size reached 618 megabytes — autoscaler scaled replicas from 3 to 5', keywords: ['api-gateway', '16:42', 'UTC', 'OOMKilled', '512', 'megabytes', '618', 'autoscaler', 'three', 'five'] },
+    // Hard tier
+    { text: 'The convertible note term sheet specifies a conversion price of sixty-two dollars and fifty cents per share, an annual coupon of one point five percent payable semi-annually, and a put option exercisable on the third anniversary at one hundred and two percent of par value', keywords: ['convertible', 'note', 'sixty-two', 'fifty', 'coupon', 'one', 'five', 'semi-annually', 'put', 'option', 'third', 'anniversary', 'par'] },
 ];
 
 // ============================================
