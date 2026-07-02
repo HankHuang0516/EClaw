@@ -1266,7 +1266,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Portal QA/UIUX Sweep**: i18n fallback + a11y labels (#3721)
 - **Idle Dispatch Guard**: Guard non-integer `botId` before SQL int cast (#3715)
 
-### Recent Features (v1.1190.x+, 2026-06-30 – 2026-07-02)
+### Recent Features (v1.1190.x+, 2026-06-30 – 2026-07-03)
 
 - **Multi-Device Push Fix (v1.1190)**: Stop phone/emulator FCM tokens clobbering each other (#3808); multi-device APNs tokens + admin-broadcast fan-out fix (#3810)
 - **Channel Account Fix (v1.1190)**: Allow many `channel_accounts` per device on fresh DBs (#3811)
@@ -1274,6 +1274,20 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **iOS Rotate Secret + Switch Device**: Stage 3 native Rotate Secret + Switch Device (#3743)
 - **Android Rotate Secret + Switch Device**: Stage 3 native Rotate Secret + Switch Device (#3742)
 - **Portal Refs Popover Auth Test**: Assert refs popover header auth (#3806)
+- **A11y: showConfirm Enter Key (v1.1190)**: Enter activates focused Confirm button per WAI-ARIA APG (#3814)
+- **Portal A11y Sweep (v1.1190)**: aria-labels + keyboard operability sweep across portal pages (#3812)
+- **AI Support Error Surface Fix**: Never surface upstream auth/API errors to users; proxy env-token precedence (#3847)
+- **Kanban Bot Routing Fix**: Route bot completion reports to dispatcher, not fail-safe to human (#3848)
+- **Device Vars Merge Fix**: Merge must not drop owner (null-source) keys; additive patch mode (#3849)
+- **Card Holder Loading Fix**: Don't gate card rendering behind avatar preload (stuck loading) (#3850)
+- **Action Request Mobile Overflow Fix**: 需要你 inbox mobile text overflow + tofu icons (#3851)
+- **Action Request Sequential Reply Fix**: Stage one item at a time, don't discard (#3852)
+- **Device Vars Value Endpoint**: `GET /api/device-vars/value` — read one vault value by name (botSecret auth) (#3853)
+- **Action Request Batch Reply**: Stage multiple items with individual answers, one Send resolves each (#3854)
+- **Task Chip Screenshot Strip Fix**: Restore card screenshot/thumbnail strip in task-card chip popover (#3855)
+- **Avatar Emoji Fallback Fix**: Card-holder my-cards emoji fallback + exam wrong-entity avatar (#3856)
+- **Avatar onerror Fix**: `renderAvatarHtml` URL branch had no onerror → broken images across ~10 portal pages (#3857)
+- **Mission Note Undo Toast**: Single-note delete gets an undo toast (parity with bulk) (#3858)
 
 ### Recent Features (v1.1190.x+, 2026-06-28 – 2026-06-29)
 
@@ -1322,7 +1336,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~5906 test cases across 421 Jest files + 59 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~5911 test cases across 421 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|

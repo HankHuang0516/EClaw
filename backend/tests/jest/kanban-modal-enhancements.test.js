@@ -17,6 +17,14 @@ const i18nSrc = fs.readFileSync(
     'utf8'
 );
 
+function sliceBetween(startNeedle, endNeedle) {
+    const start = src.indexOf(startNeedle);
+    const end = src.indexOf(endNeedle, start + startNeedle.length);
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(end).toBeGreaterThan(start);
+    return src.slice(start, end);
+}
+
 describe('kanban modal — maximize', () => {
     test('maximize button sits in the modal header with aria-pressed', () => {
         expect(src).toMatch(/<button class="kb-modal-maximize" id="kbModalMaxBtn" onclick="toggleModalMaximize\(\)"[^>]*aria-pressed="false"/);
@@ -78,5 +86,45 @@ describe('kanban modal — i18n keys', () => {
     ];
     test.each(NEEDED)('%s is declared in i18n.js', (key) => {
         expect(i18nSrc).toMatch(new RegExp('"' + key + '":'));
+    });
+});
+
+describe('kanban modal — task relation chips keep screenshot review visible', () => {
+    test('relation task chips open linked cards on the screenshots tab', () => {
+        const detailChipRow = sliceBetween('function renderDetailLinkChipRow(card)', 'function renderParentArchivedBanner');
+        const moveBarSecondary = sliceBetween('function renderTaskSecondaryActions(card)', 'function toggleTaskOverflow');
+
+        expect(src).toMatch(/function openTaskChipDetail\(cardId, event\)/);
+        expect(src).toMatch(/openDetail\(cardId, \{ initialTab: 'screenshots' \}\)/);
+        expect(src).toMatch(/data-open-tab="\$\{escapeHtml\(opts\.openTab\)\}"/);
+        expect(detailChipRow).toMatch(/openTaskChipDetail\('\$\{escapeJs\(parentId\)\}', event\)/);
+        expect(detailChipRow).toMatch(/openTaskChipDetail\('\$\{escapeJs\(card\.linkedPrevCardId\)\}', event\)/);
+        expect(detailChipRow).toMatch(/openTaskChipDetail\('\$\{escapeJs\(card\.linkedNextCardId\)\}', event\)/);
+
+        // The move-bar secondary row intentionally stays PR/Chat-only, so this
+        // guard must be anchored to the real description chip row above.
+        expect(moveBarSecondary).not.toMatch(/openTaskChipDetail/);
+        expect(moveBarSecondary).not.toMatch(/linkedPrevCardId|linkedNextCardId/);
+    });
+
+    test('openDetail selects the requested initial tab instead of always resetting to comments', () => {
+        const openDetail = sliceBetween('async function openDetail(cardId, opts = {})', 'function renderDetailTags');
+
+        expect(openDetail).toMatch(/const initialTab = opts && opts\.initialTab === 'screenshots' \? 'screenshots' : 'comments';/);
+        expect(openDetail).toMatch(/document\.querySelector\(`\.kb-modal-tab\[data-detail-tab="\$\{initialTab\}"\]`\)/);
+        expect(openDetail).toMatch(/switchDetailTab\(initialTab, initialBtn\);/);
+        expect(src).toMatch(/data-detail-tab="screenshots" data-i18n="kb_tab_screenshots"/);
+    });
+
+    test('screenshots panel keeps the field, thumbnails, and help icon contract', () => {
+        const loadScreenshots = sliceBetween('async function loadScreenshots()', 'function openLightbox');
+
+        expect(loadScreenshots).toMatch(/const shots = \(data\.files \|\| \[\]\)\.filter\(f => \(f\.mimeType \|\| f\.mime_type \|\| ''\)\.startsWith\('image\/'\)\);/);
+        expect(loadScreenshots).toMatch(/class="kb-ss-banner on"/);
+        expect(loadScreenshots).toMatch(/class="kb-ss-help"/);
+        expect(loadScreenshots).toMatch(/aria-label="\$\{help\}"/);
+        expect(loadScreenshots).toMatch(/class="kb-ss-grid"/);
+        expect(loadScreenshots).toMatch(/class="kb-ss-thumb"/);
+        expect(loadScreenshots).toMatch(/openLightbox\(this\.dataset\.url, this\.dataset\.name\)/);
     });
 });

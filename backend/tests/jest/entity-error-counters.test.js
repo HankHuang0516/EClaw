@@ -329,4 +329,16 @@ describe('entity-status-panel — current/historical/history UI contract', () =>
         expect(panelSrc).toMatch(/\/errors\?/);
         expect(panelSrc).toMatch(/error-history|errorHistory|歷史紀錄/);
     });
+
+    test('error history section has an accessible collapsed dropdown toggle', () => {
+        expect(panelSrc).toMatch(/data-action="toggle-error-history"/);
+        expect(panelSrc).toMatch(/aria-expanded="false"/);
+        expect(panelSrc).toMatch(/aria-controls="\$\{historyListId\}"/);
+        expect(panelSrc).toMatch(/data-role="error-history-list" hidden/);
+        expect(panelSrc).toMatch(/entityStatus\.historyExpanded\.\$\{eid\}/);
+        expect(panelSrc).toMatch(/applyInitialErrorHistoryState\(root, eid\)/);
+        expect(panelSrc).toMatch(/max-height 0\.2s ease/);
+        expect(panelSrc).toMatch(/prefers-reduced-motion: reduce/);
+        expect(panelSrc).toMatch(/function toggleErrorHistory\(/);
+    });
 });

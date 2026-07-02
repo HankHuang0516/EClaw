@@ -331,21 +331,26 @@
             color: var(--text, #ffffff);
             font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; gap: 8px;
             flex-shrink: 0; /* never starve the chat history; the inbox body caps+scrolls itself */
+            box-sizing: border-box; max-width: calc(100% - 28px); min-width: 0; overflow-x: hidden;
         }
         body.dark .greet-banner { background: #23262f; border-color: #3a3f4d; }
         /* 需要你 inbox — default-collapsed one-line summary 「🔔 需要你 N 件 ▼」,
            expands to a viewport-capped, self-scrolling list so a burst of
            requests can never cover the chat (card_b176c435). */
-        .action-request-inbox { display: flex; flex-direction: column; gap: 0; }
+        .action-request-inbox {
+            display: flex; flex-direction: column; gap: 0; min-width: 0; max-width: 100%;
+        }
         .action-request-inbox-summary {
             display: flex; align-items: center; gap: 8px; width: 100%;
             min-height: 36px; padding: 6px 6px; background: transparent; border: none;
             color: var(--text, #ffffff); font-size: 14px; font-weight: 700;
-            cursor: pointer; text-align: left; border-radius: 8px;
+            cursor: pointer; text-align: left; border-radius: 8px; box-sizing: border-box; min-width: 0;
         }
         .action-request-inbox-summary:hover { background: rgba(91,108,255,0.06); }
         .action-request-inbox-summary .ar-bell { flex-shrink: 0; }
-        .action-request-inbox-summary .ar-summary-label { flex: 0 0 auto; }
+        .action-request-inbox-summary .ar-summary-label {
+            flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
         .ar-chevron {
             margin-left: auto; flex-shrink: 0; color: var(--text-secondary, #AAAAAA);
             transition: transform .18s ease;
@@ -354,47 +359,53 @@
         .action-request-inbox-body {
             display: none; flex-direction: column; gap: 10px; margin-top: 8px;
             max-height: 40vh; overflow-y: auto; overscroll-behavior: contain;
-            -webkit-overflow-scrolling: touch;
+            -webkit-overflow-scrolling: touch; min-width: 0; max-width: 100%;
         }
         .action-request-inbox.is-open .action-request-inbox-body { display: flex; }
         @media (max-width: 640px) { .action-request-inbox-body { max-height: 38vh; } }
         @media (prefers-reduced-motion: reduce) { .ar-chevron { transition: none; } }
         .action-request-inbox-head { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
         .action-request-inbox-title { font-weight: 700; color: var(--text, #ffffff); }
-        .action-request-inbox-status { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+        .action-request-inbox-status { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; min-width: 0; max-width: 100%; }
         .action-request-inbox-count {
-            flex-shrink: 0; color: var(--primary, #5b6cff); border: 1px solid var(--primary, #5b6cff);
+            flex: 0 0 auto; min-width: 0; max-width: 46%; color: var(--primary, #5b6cff); border: 1px solid var(--primary, #5b6cff);
             border-radius: 999px; padding: 2px 8px; font-size: 12px; line-height: 1.4;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center;
         }
         .action-request-live-state {
-            flex-shrink: 0; border: 1px solid var(--card-border, #333355); color: var(--text-secondary, #AAAAAA);
+            flex: 0 1 auto; min-width: 0; max-width: 100%; border: 1px solid var(--card-border, #333355); color: var(--text-secondary, #AAAAAA);
             border-radius: 999px; padding: 2px 8px; font-size: 12px; line-height: 1.4;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center;
         }
         .action-request-live-state.on { border-color: rgba(34,197,94,0.55); color: #22c55e; }
         .action-request-item {
             display: grid; gap: 7px; padding: 9px 10px; border-radius: 10px;
             background: rgba(127,127,127,0.10); border: 1px solid var(--card-border, #333355);
-            /* card_b2e36cd6: a grid item's implicit column is `auto`-sized, so a
-               long unbreakable token (requestId / URL / CJK run) expands the track
-               PAST the inbox width and spills out of the box on mobile — even though
-               the text has overflow-wrap. Pin the column to minmax(0,1fr) and let
-               children shrink (min-width:0) so content wraps INSIDE the card. */
             grid-template-columns: minmax(0, 1fr);
+            box-sizing: border-box; min-width: 0; max-width: 100%; overflow: hidden;
         }
         .action-request-item > * { min-width: 0; max-width: 100%; }
         .action-request-meta { overflow-wrap: anywhere; }
         .action-request-item.in-consensus { border-color: rgba(45,212,191,0.55); background: rgba(20,184,166,0.10); }
         .action-request-item.type-consensus { border-color: rgba(20,184,166,0.45); background: rgba(20,184,166,0.08); }
-        .action-request-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: var(--text-secondary, #AAAAAA); font-size: 12px; }
+        .action-request-meta {
+            display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+            color: var(--text-secondary, #AAAAAA); font-size: 12px; min-width: 0; max-width: 100%;
+        }
         .action-request-type-badge {
             display: inline-flex; align-items: center; gap: 4px; border-radius: 999px;
             padding: 2px 8px; border: 1px solid var(--card-border, #333355);
             color: var(--text, #ffffff); background: rgba(255,255,255,0.04);
+            max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .action-request-meta-text {
+            min-width: 0; max-width: 100%; overflow-wrap: anywhere;
         }
         .action-request-type-badge.type-consensus { border-color: rgba(20,184,166,0.65); color: #2dd4bf; background: rgba(20,184,166,0.12); }
         .action-request-consensus-state {
             display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 8px;
             border: 1px solid rgba(45,212,191,0.65); color: #2dd4bf; background: rgba(20,184,166,0.12);
+            max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         .action-request-prompt {
             color: var(--text, #ffffff); overflow-wrap: anywhere;
@@ -405,8 +416,13 @@
         .action-request-option, .action-request-action {
             border: 1px solid var(--card-border, #333355); color: var(--text, #ffffff);
             background: transparent; border-radius: 8px; padding: 4px 9px; min-height: 30px;
-            font-size: 12px; cursor: pointer;
+            font-size: 12px; cursor: pointer; max-width: 100%; min-width: 0;
+            white-space: normal; overflow-wrap: anywhere; text-align: left;
         }
+        .action-request-option {
+            display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px;
+        }
+        .action-request-option > span { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
         .action-request-option { border-color: var(--primary, #5b6cff); color: var(--primary, #5b6cff); }
         .action-request-action:hover, .action-request-option:hover { background: rgba(91,108,255,0.10); }
         .action-request-action.danger { color: var(--danger, #ef4444); border-color: rgba(239,68,68,0.45); }
@@ -422,6 +438,7 @@
         .action-request-decision-block {
             display: flex; flex-direction: column; gap: 3px;
             border-left: 2px solid var(--card-border, #333355); padding: 1px 0 1px 8px;
+            min-width: 0; max-width: 100%;
         }
         .action-request-decision-block.is-recommendation { border-left-color: var(--primary, #5b6cff); }
         .action-request-decision-label {
@@ -429,20 +446,23 @@
             text-transform: uppercase; letter-spacing: 0.4px;
         }
         .action-request-decision-text { color: var(--text, #ffffff); font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
-        .action-request-evidence { display: flex; flex-direction: column; gap: 4px; }
+        .action-request-evidence { display: flex; flex-direction: column; gap: 4px; min-width: 0; max-width: 100%; }
         .action-request-evidence-chips { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
         .action-request-evidence-chip {
             display: inline-flex; align-items: center; gap: 4px; max-width: 100%;
             border: 1px solid rgba(45,212,191,0.55); color: #2dd4bf; background: rgba(20,184,166,0.10);
             border-radius: 999px; padding: 3px 9px; font-size: 12px; text-decoration: none; cursor: pointer;
+            min-width: 0; box-sizing: border-box;
         }
         .action-request-evidence-chip:hover { background: rgba(20,184,166,0.18); }
-        .action-request-evidence-chip .ar-chip-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .action-request-evidence-chip .ar-chip-label {
+            min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
         .action-request-option.is-recommended {
             border-color: var(--primary, #5b6cff); background: rgba(91,108,255,0.14); font-weight: 700;
         }
         .action-request-recommended-badge {
-            display: inline-flex; align-items: center; margin-left: 5px; border-radius: 999px;
+            display: inline-flex; align-items: center; margin-left: 0; border-radius: 999px;
             padding: 0 6px; font-size: 10px; font-weight: 700; line-height: 16px;
             color: var(--primary, #5b6cff); background: rgba(91,108,255,0.18); border: 1px solid rgba(91,108,255,0.45);
         }
@@ -450,7 +470,7 @@
             /* On narrow viewports chips wrap to new rows; each truncates instead of
                forcing horizontal overflow of the inbox card. */
             .action-request-evidence-chip { max-width: 100%; }
-            .action-request-evidence-chip .ar-chip-label { max-width: 60vw; }
+            .action-request-evidence-chip .ar-chip-label { max-width: calc(100vw - 92px); }
         }
         /* 計畫E ratify-loop (card_e9d01b6e): per-item badge on a 需要你 request whose
            decisionContext.ratify was server-ARMED. Rendered ONLY when the device pref
@@ -461,16 +481,27 @@
         .action-request-ratify {
             display: flex; flex-direction: column; gap: 4px;
             border-radius: 9px; padding: 7px 10px; font-size: 12px; line-height: 1.45;
-            border: 1px solid var(--card-border, #333355);
+            border: 1px solid var(--card-border, #333355); min-width: 0; max-width: 100%; box-sizing: border-box;
         }
-        .action-request-ratify-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-        .action-request-ratify-title { font-weight: 700; }
-        .action-request-ratify-hint { font-size: 11px; line-height: 1.4; opacity: 0.9; overflow-wrap: anywhere; }
+        .action-request-ratify-head {
+            display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; max-width: 100%;
+        }
+        .action-request-ratify-title {
+            flex: 1 1 160px; min-width: 0; max-width: 100%; font-weight: 700; overflow-wrap: anywhere;
+        }
+        .action-request-ratify-hint {
+            min-width: 0; max-width: 100%; font-size: 11px; line-height: 1.4; opacity: 0.9; overflow-wrap: anywhere;
+        }
         .action-request-ratify-countdown {
-            display: inline-flex; align-items: center; gap: 4px; margin-left: auto;
+            display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-left: auto;
+            min-width: 0; max-width: 100%; overflow-wrap: anywhere;
             font-variant-numeric: tabular-nums; font-weight: 700;
         }
-        .action-request-ratify-countdown .ar-ratify-cd-label { font-weight: 400; opacity: 0.85; }
+        .action-request-ratify-countdown .ar-ratify-cd-label {
+            min-width: 0; max-width: 100%; font-weight: 400; opacity: 0.85; overflow-wrap: anywhere;
+        }
+        .action-request-ratify-countdown .ar-ratify-cd-clock { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+        @media (max-width: 640px) { .action-request-ratify-countdown { margin-left: 0; } }
         /* default_agree: amber, time-sensitive — silence WILL send + execute. */
         .action-request-ratify.is-default-agree {
             border-color: rgba(245,158,11,0.6); color: #f59e0b; background: rgba(245,158,11,0.12);
@@ -8016,6 +8047,7 @@
                     meta.appendChild(consensusBadge);
                 }
                 const metaText = document.createElement('span');
+                metaText.className = 'action-request-meta-text';
                 metaText.textContent = t('action_request_meta', 'Entity #{entityId} · {type}', {
                     entityId: Number.isFinite(entityId) ? entityId : '?',
                     type: typeMeta.label
