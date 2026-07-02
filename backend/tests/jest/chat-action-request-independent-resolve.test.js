@@ -1,19 +1,24 @@
 /**
  * 需要你 inbox INDEPENDENCE — frontend resolve targeting (chat.html).
  *
- * P0 bug: the owner sent ONE reply (intended for inbox item A) and the chat sent
- * a resolve for EVERY accumulated action-request reply context with that SAME
- * text — so an unrelated pending item B was also marked resolved with A's answer.
+ * P0 bug (history): the owner sent ONE reply (intended for inbox item A) and the
+ * chat resolved EVERY accumulated action-request context with that SAME text — so an
+ * unrelated item B was resolved with A's answer (cross-contamination). #3787 fixed
+ * this by REFUSING when >1 item was staged; the product decision then EVOLVED to
+ * batch/coexist, where each staged item carries its OWN answer (ctx.answerText) and a
+ * single Send resolves EACH with its own text (no shared broadcast, no refusal).
  *
- * This EXECUTES resolveActionRequestReplyContexts() (extracted from chat.html,
- * which has no module export — same brace-count + `new Function` harness the
- * sibling chat-action-request-inbox-behavior.test.js uses) and pins:
+ * This EXECUTES resolveActionRequestReplyContexts() (extracted from chat.html, which
+ * has no module export — same brace-count + `new Function` harness the sibling
+ * chat-action-request-inbox-behavior.test.js uses) and pins:
  *   - exactly ONE distinct request → resolves exactly that one item.
- *   - MULTIPLE distinct requests in one send → resolves NONE + warns the owner to
- *     answer each separately (no cross-contamination).
+ *   - MULTIPLE distinct requests, EACH with its own answerText → each resolves with
+ *     ITS OWN text (no cross-contamination — A's answer never lands on B).
+ *   - a duplicate of the same request collapses to a single resolve.
  *
- * FAIL-ON-OLD: the old body looped over every context calling /resolve with the
- * shared answerText, so the multi-target test saw 2 resolve POSTs; now it sees 0.
+ * CHANGED (why): the old "TWO distinct requests → resolve NONE + one_at_a_time toast"
+ * assertion pinned the reverted #3787 refuse behaviour; under batch/coexist the two
+ * items now resolve independently with their own answers. Updated below.
  */
 'use strict';
 
@@ -72,16 +77,23 @@ describe('resolveActionRequestReplyContexts — one reply resolves exactly one i
         expect(posts[0][2].answer.replyContext.requestId).toBe(REQ_A);
     });
 
-    it('TWO distinct requests in one send resolve NONE (no cross-contamination)', async () => {
+    it('TWO distinct requests, each with its OWN answer, resolve independently (no cross-contamination)', async () => {
         const { fn, apiCall, showToast } = makeHarness();
         await fn(
-            [{ requestId: REQ_A, anchorMessageId: null }, { requestId: REQ_B, anchorMessageId: null }],
-            'pin answer — must NOT also resolve the migration request'
+            [
+                { requestId: REQ_A, anchorMessageId: null, answerText: 'answer for A' },
+                { requestId: REQ_B, anchorMessageId: null, answerText: 'answer for B' },
+            ],
+            'shared fallback — must NOT be used since both carry their own answer'
         );
-        // FAIL-ON-OLD: old code POSTed a resolve for BOTH REQ_A and REQ_B.
-        expect(resolvePosts(apiCall)).toHaveLength(0);
-        // The owner is told to answer each request separately.
-        expect(showToast).toHaveBeenCalledWith('action_request_one_at_a_time', 'error');
+        const posts = resolvePosts(apiCall);
+        expect(posts).toHaveLength(2);   // batch/coexist: BOTH resolve (was 0 under the #3787 refuse)
+        const byId = Object.fromEntries(posts.map(p => [p[1], p[2].answer.text]));
+        // Each request resolves with its OWN answer — A's text never lands on B.
+        expect(byId[`/api/action-requests/${REQ_A}/resolve`]).toBe('answer for A');
+        expect(byId[`/api/action-requests/${REQ_B}/resolve`]).toBe('answer for B');
+        // No "answer each separately" refusal anymore.
+        expect(showToast).not.toHaveBeenCalledWith('action_request_one_at_a_time', 'error');
     });
 
     it('a duplicate of the same request collapses to a single resolve', async () => {

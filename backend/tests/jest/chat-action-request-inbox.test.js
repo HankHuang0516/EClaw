@@ -42,7 +42,8 @@ describe('chat action request inbox (card_b51598b7 frontend)', () => {
     test('outgoing speak payload carries requestId and anchorMessageId reply context', () => {
         expect(chatHtml).toContain('const actionRequestReplyContexts = collectActionRequestReplyContexts();');
         expect(chatHtml).toMatch(/function\s+collectActionRequestReplyContexts\s*\(\)/);
-        expect(chatHtml).toMatch(/contexts\.push\(\{\s*requestId,\s*anchorMessageId: anchorMessageId \|\| null\s*\}\)/);
+        // batch/coexist: each collected context now also carries its own answerText.
+        expect(chatHtml).toMatch(/contexts\.push\(\{\s*requestId,\s*anchorMessageId: anchorMessageId \|\| null,\s*answerText: rc\.answerText \|\| ''\s*\}\)/);
         expect(chatHtml).toMatch(/function\s+attachReplyContextPayload\s*\(\s*body,\s*contexts\s*\)/);
         expect(chatHtml).toContain('body.replyContexts = replyContextsPayload;');
         expect(chatHtml).toContain('body.replyContext = replyContextsPayload.length === 1');
@@ -53,7 +54,10 @@ describe('chat action request inbox (card_b51598b7 frontend)', () => {
     test('send success resolves requests and dismiss refreshes the pending count', () => {
         expect(chatHtml).toMatch(/async function resolveActionRequestReplyContexts\(contexts, answerText\)/);
         expect(chatHtml).toContain('`/api/action-requests/${ctx.requestId}/resolve`');
-        expect(chatHtml).toContain('await resolveActionRequestReplyContexts(actionRequestReplyContexts, finalText);');
+        // batch/coexist: the shared fallback answer is now the RAW composer text (not
+        // the quote-decorated finalText) so a per-item-blank item resolves with exactly
+        // what the owner typed. Each staged item still resolves with its own answerText.
+        expect(chatHtml).toContain('await resolveActionRequestReplyContexts(actionRequestReplyContexts, text);');
         expect(chatHtml).toMatch(/async function dismissActionRequest\(requestId\)/);
         expect(chatHtml).toContain('`/api/action-requests/${id}/dismiss`');
         expect(chatHtml).toContain('await loadActionRequests({ renderInbox: true });');
