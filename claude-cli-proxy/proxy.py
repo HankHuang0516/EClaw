@@ -883,11 +883,33 @@ def restore_claude_config():
             pass
 
 
+# ── Env token is the single source of truth for CLI auth ────
+def enforce_env_token_auth():
+    """When CLAUDE_CODE_OAUTH_TOKEN is set on the service, retire any stored
+    credentials file left on the volume by a past `claude login`. The CLI
+    prefers the stored (possibly expired) session over the env token, which
+    made env-token rotation a silent no-op — every run kept failing with
+    "401 Invalid authentication credentials" (card_747b9500, 2026-07-02).
+    The stale file is renamed (not deleted) so a rollback is possible."""
+    if not os.environ.get("CLAUDE_CODE_OAUTH_TOKEN"):
+        return
+    home = Path(os.environ.get("HOME", "/root"))
+    creds = home / ".claude" / ".credentials.json"
+    if creds.exists():
+        try:
+            retired = creds.with_name(f".credentials.json.retired.{int(time.time())}")
+            creds.rename(retired)
+            log.info(f"[Startup] CLAUDE_CODE_OAUTH_TOKEN set — retired stored credentials file to {retired.name}")
+        except Exception as e:
+            log.warning(f"[Startup] Could not retire stored credentials file: {e}")
+
+
 # ── App Lifespan ─────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     restore_claude_config()
+    enforce_env_token_auth()
 
     # Write DB config for child processes
     if DATABASE_URL:
