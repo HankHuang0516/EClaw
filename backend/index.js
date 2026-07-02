@@ -1670,6 +1670,7 @@ app.get('/api/help', (req, res) => {
         ],
         vault: [
             { title: 'Read vault key names (bot side)', curl: `curl -s "${apiBase}/api/device-vars?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
+            { title: 'Read ONE value by name (bot side) — value returns ONLY in the response body, so you never have to paste a secret into chat/logs', curl: `curl -s "${apiBase}/api/device-vars/value?name=KEY&deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
             { title: 'Add/update single key — SAFE additive patch (drops nothing; use this for programmatic single-key writes)', curl: `curl -s -X POST "${apiBase}/api/device-vars" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","deviceSecret":"DEVICE_SECRET","source":"web","patch":true,"vars":{"KEY":"VALUE"}}'` },
             { title: 'Full source-sync (editor): REPLACES all keys of this source with the set below; keys of this source you OMIT are deleted (owner/other-source keys preserved). Send the COMPLETE set.', curl: `curl -s -X POST "${apiBase}/api/device-vars" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","deviceSecret":"DEVICE_SECRET","source":"web","vars":{"KEY1":"V1","KEY2":"V2"}}'` },
             { title: 'Delete single key (owner)', curl: `curl -s -X DELETE "${apiBase}/api/device-vars/KEY?deviceId=${deviceId}&deviceSecret=DEVICE_SECRET"` },
@@ -22793,6 +22794,96 @@ app.get('/api/device-vars', async (req, res) => {
         // Log the real exception type so future incidents don't get mis-labelled
         // as "decryption" when it's actually a serialization bug.
         console.error(`[Vars] GET handler failed for ${deviceId}: ${err && err.name}: ${err && err.message}`);
+        return res.status(500).json({ success: false, error: 'Decryption failed' });
+    }
+});
+
+// GET /api/device-vars/value — read ONE vault value BY NAME so the secret
+// value never has to appear in a chat message (owner-decided spec).
+//
+// Auth model (owner-decided, card_keyref): botSecret of a bot bound to this
+// device is sufficient — NO deviceSecret, NO user auth, NO per-key allowlist.
+// We reuse the SAME botSecret→entity validation the names-only GET above uses
+// (`e.isBound && safeEqual(e.botSecret, botSecret)`, index.js ~22752-22756);
+// this variant additionally pins it to the caller's declared entityId so the
+// audit row records which entity read which key. Same 403 error shape on
+// failure ({ success:false, error:'Invalid botSecret' }).
+//
+// The decrypted value travels ONLY in this response body. It is NEVER injected
+// into any push/message/log, and the audit row (action:'bot_read_value')
+// records deviceId/entityId/key name/ip/ua but NOT the value — mirroring the
+// "never stores the value" invariant of logDeviceVarsAudit (db.js:1831).
+// Single-key by-name only: this does not enumerate or bulk-dump values.
+app.get('/api/device-vars/value', async (req, res) => {
+    const { deviceId, botSecret, entityId, name } = req.query;
+    if (!deviceId || !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and botSecret required' });
+    }
+    if (!name || typeof name !== 'string' || !name.trim()) {
+        return res.status(400).json({ success: false, error: 'name required' });
+    }
+    const keyName = name;
+    const device = devices[deviceId];
+    if (!device) {
+        return res.status(404).json({ success: false, error: 'Device not found' });
+    }
+
+    // Reuse the names-only GET bot-auth check: a bound entity whose botSecret
+    // matches. Pin to the declared entityId first (audit accuracy); fall back
+    // to a botSecret scan across the device's slots so a caller that omits or
+    // mis-sends entityId is still authorized iff the botSecret genuinely
+    // belongs to a bound entity on THIS device (mirrors index.js:4247-4260).
+    let eId = parseInt(entityId, 10);
+    let botEntity = !isNaN(eId) && device.entities && device.entities[eId];
+    if (!botEntity || !botEntity.isBound || !safeEqual(botEntity.botSecret, botSecret)) {
+        eId = -1;
+        botEntity = null;
+        for (const i of Object.keys(device.entities || {}).map(Number)) {
+            const e = device.entities[i];
+            if (e && e.isBound && safeEqual(e.botSecret, botSecret)) {
+                eId = i;
+                botEntity = e;
+                break;
+            }
+        }
+    }
+    if (!botEntity) {
+        return res.status(403).json({ success: false, error: 'Invalid botSecret' });
+    }
+
+    const _auditCtx = { ip: req.ip, ua: req.get('user-agent') };
+    const row = await db.getDeviceVars(deviceId);
+    if (!row) {
+        return res.status(404).json({ success: false, error: 'not_found' });
+    }
+
+    // Bots are blocked by the owner's lock flag (same as names-only GET).
+    if (row.is_locked) {
+        return res.status(403).json({ success: false, error: 'locked', message: 'Variables are locked by owner' });
+    }
+
+    try {
+        // Mirror the names-only GET decryption path exactly (index.js:22773).
+        const vars = decryptVars(row.encrypted_vars, row.iv, row.auth_tag);
+        if (!Object.prototype.hasOwnProperty.call(vars, keyName)) {
+            return res.status(404).json({ success: false, error: 'not_found' });
+        }
+        // Audit BEFORE returning. Value is deliberately excluded — only the key
+        // NAME is recorded (logDeviceVarsAudit never stores values, db.js:1831).
+        if (typeof db.logDeviceVarsAudit === 'function') {
+            db.logDeviceVarsAudit({
+                deviceId,
+                action: 'bot_read_value',
+                keyName,
+                source: `entity:${eId}`,
+                callerIp: _auditCtx.ip,
+                callerUa: _auditCtx.ua,
+            });
+        }
+        // The decrypted value travels ONLY here, in the response body.
+        return res.json({ success: true, name: keyName, value: vars[keyName] });
+    } catch (err) {
+        console.error(`[Vars] value-by-name failed for ${deviceId}: ${err && err.name}: ${err && err.message}`);
         return res.status(500).json({ success: false, error: 'Decryption failed' });
     }
 });
