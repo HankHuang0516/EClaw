@@ -411947,6 +411947,7 @@ const TRANSLATIONS = {
 
 
         "chip_popover_open_full": "Open full page →",
+        "chip_popover_screenshots": "📸 Screenshots",
 
 
 
@@ -1035496,6 +1035497,7 @@ const TRANSLATIONS = {
 
 
         "chip_popover_open_full": "打開完整頁面 →",
+        "chip_popover_screenshots": "📸 截圖",
 
 
 
@@ -1849644,6 +1849646,7 @@ const TRANSLATIONS = {
         "chip_popover_not_supported": "此引用类型尚未支援预览",
         "chip_popover_requote": "再引用到聊天",
         "chip_popover_open_full": "打开完整页面 →",
+        "chip_popover_screenshots": "📸 截图",
         "chip_popover_cycle": "已在引用堆叠上",
         "chip_popover_too_deep": "太深，请直接跳页",
         "chip_popover_requoted": "已引用至聊天",
@@ -6109245,6 +6109248,7 @@ const TRANSLATIONS = {
         "chip_popover_not_supported": "Preview not yet supported for this reference type",
         "chip_popover_requote": "Quote to chat again",
         "chip_popover_open_full": "Open full page →",
+        "chip_popover_screenshots": "📸 Screenshots",
         "chip_popover_cycle": "Already in the reference stack",
         "chip_popover_too_deep": "Too deep — open the full page instead",
         "chip_popover_requoted": "Quoted into chat",
