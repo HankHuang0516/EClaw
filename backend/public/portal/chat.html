@@ -813,6 +813,11 @@
         .reply-preview-chip-text { color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
         .reply-preview-chip-x { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 14px; line-height: 1; padding: 0 2px; flex-shrink: 0; }
         .reply-preview-chip-x:hover { color: var(--text); }
+        /* ── Per-item inbox answer (batch/coexist): each 需要你 chip carries its own answer.
+           The chip wraps so the answer textarea drops to a new line and grows full-width. ── */
+        .reply-preview-chip:has(.reply-preview-chip-answer) { flex-wrap: wrap; }
+        .reply-preview-chip-answer { flex: 1 1 100%; min-width: 0; width: 100%; box-sizing: border-box; margin-top: 3px; resize: vertical; font: inherit; font-size: 0.95em; color: var(--text); background: var(--bg, rgba(255,255,255,0.06)); border: 1px solid var(--text-muted); border-radius: 6px; padding: 3px 6px; line-height: 1.35; min-height: 1.6em; }
+        .reply-preview-chip-answer:focus { outline: none; border-color: var(--primary); }
         .reply-preview-help { flex-shrink: 0; cursor: help; color: var(--text-muted); border: 1px solid var(--text-muted); border-radius: 50%; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; align-self: center; }
         .reply-preview-help:hover { color: var(--text); border-color: var(--text); }
         @media (max-width: 480px) { .reply-preview-chip-text { max-width: 130px; } }
@@ -7689,15 +7694,13 @@
         function focusActionRequestReply(requestId, optionIndex = null) {
             const request = getActionRequestById(requestId);
             if (!request) return;
-            // card_6a5cc9bb: the 需要你 inbox is a per-item decision surface, not a
-            // multi-quote target — at most ONE action-request may be staged for reply
-            // at a time. Clicking "Reply"/an option on an inbox item REPLACES any
-            // previously-staged inbox item (regular chat quotes still accumulate,
-            // card_277c80f5). Without this, staging A then B then Send hit the
-            // uniq.length>1 guard in resolveActionRequestReplyContexts and resolved
-            // NEITHER item — the owner "無法連續處理多個問題" (PR #3787 turned the old
-            // "one answer resolves both" into "one answer resolves neither").
-            clearStagedActionRequestReplies();
+            // card (batch/coexist): the 需要你 inbox lets the owner STAGE SEVERAL items
+            // at once, EACH carrying its OWN answer, then submit them together in one
+            // Send — every item resolves with its own text. Staging item B therefore
+            // does NOT replace item A (that was the one-at-a-time behaviour of #3852);
+            // each action-request chip owns a per-item answer <textarea> (rc.answerText)
+            // rendered by renderReplyPreviews(). Regular chat quotes (card_277c80f5)
+            // keep accumulating unchanged.
             openActionRequestAnchor(request);
             const entityId = Number(request.fromEntityId);
             const entityName = Number.isFinite(entityId) && typeof getEntityDisplayName === 'function'
@@ -7706,21 +7709,16 @@
             const source = ((i18n && i18n.t && i18n.t('action_request_reply_source')) || 'Needs you') + (entityName ? ' ' + entityName : '');
             addReplyContext(request.anchorMessageId || null, source, request.prompt || '', actionRequestMeta(request));
             if (optionIndex !== null && Array.isArray(request.options) && request.options[optionIndex] !== undefined) {
-                const input = document.getElementById('messageInput');
-                if (input) {
-                    // card_6a5cc9bb Failure Mode 2 ("回覆被覆蓋掉"): don't silently clobber
-                    // owner-typed free text. Auto-fill the option only when the composer
-                    // is empty or still holds a prior auto-filled option (so switching
-                    // between options works, but a typed answer is never destroyed).
-                    const optText = String(request.options[optionIndex]);
-                    if (!input.value.trim() || input.value === lastAutoFilledOptionValue) {
-                        input.value = optText;
-                        lastAutoFilledOptionValue = optText;
-                        input.style.height = 'auto';
-                        input.style.height = Math.min(input.scrollHeight, 120) + 'px';
-                    }
-                    input.focus();
-                }
+                // An option button writes THIS item's own answer (rc.answerText), NOT
+                // the shared composer — so answering item B via an option never touches
+                // item A's answer nor whatever the owner typed in #messageInput.
+                const optText = String(request.options[optionIndex]);
+                const rid = normalizeChatMessageId(requestId);
+                const ctx = replyContexts.find(rc => rc.requestId && normalizeChatMessageId(rc.requestId) === rid);
+                if (ctx) ctx.answerText = optText;
+                renderReplyPreviews();
+                const input = document.getElementById('replyAnswerInput_' + rid);
+                if (input) input.focus();
             }
         }
 
@@ -8215,7 +8213,10 @@
                 if (!requestId || seen.has(requestId)) return;
                 const anchorMessageId = normalizeChatMessageId(rc.anchorMessageId || rc.meta?.actionRequest?.anchorMessageId);
                 seen.add(requestId);
-                contexts.push({ requestId, anchorMessageId: anchorMessageId || null });
+                // batch/coexist: carry THIS item's own answer so resolve() uses it
+                // (a blank per-item answer falls back to the shared composer text —
+                // the single-item case where the owner typed in #messageInput).
+                contexts.push({ requestId, anchorMessageId: anchorMessageId || null, answerText: rc.answerText || '' });
             });
             return contexts;
         }
@@ -8243,12 +8244,13 @@
 
         async function resolveActionRequestReplyContexts(contexts, answerText) {
             if (!Array.isArray(contexts) || contexts.length === 0 || !currentUser?.deviceId || !currentUser?.deviceSecret) return;
-            // 需要你 inbox INDEPENDENCE: one reply text resolves EXACTLY ONE inbox
-            // item. Quoting several 需要你 items into a single send used to resolve
-            // them ALL with that one text — so an answer meant for item A overwrote
-            // unrelated item B (cross-contamination). De-dupe by requestId; if the
-            // send still targets more than one DISTINCT request, refuse to broadcast
-            // and tell the user to answer them individually (resolve none).
+            // 需要你 inbox BATCH/COEXIST: the owner can stage SEVERAL inbox items at
+            // once, EACH carrying its OWN answer (ctx.answerText, edited via the
+            // per-chip textarea), then submit them together in one Send — each item
+            // resolves with ITS OWN text, id-scoped and independent (one failure never
+            // blocks the others). A context with no per-item answer falls back to the
+            // shared `answerText` arg (the single-item case where the owner typed in
+            // the main composer). De-dupe by requestId first.
             const uniq = [];
             const seen = new Set();
             for (const ctx of contexts) {
@@ -8258,33 +8260,43 @@
                 uniq.push(ctx);
             }
             if (uniq.length === 0) return;
-            if (uniq.length > 1) {
-                if (typeof showToast === 'function') {
-                    showToast(i18n.t('action_request_one_at_a_time') || 'Please answer each request separately — one reply resolves one item.', 'error');
-                }
-                await loadActionRequests({ renderInbox: true });
-                return;
-            }
-            const ctx = uniq[0];
             let resolved = 0;
-            try {
-                await apiCall('POST', `/api/action-requests/${ctx.requestId}/resolve`, {
-                    deviceId: currentUser.deviceId,
-                    deviceSecret: currentUser.deviceSecret,
-                    answer: {
-                        text: answerText || '',
-                        replyContext: {
-                            requestId: ctx.requestId,
-                            anchorMessageId: ctx.anchorMessageId || null
+            let skippedBlank = 0;
+            for (const ctx of uniq) {
+                const own = (ctx.answerText != null) ? String(ctx.answerText) : '';
+                // Each item resolves with ITS OWN answer. The shared composer text is
+                // a fallback ONLY when a SINGLE item is staged (owner typed in the main
+                // box). With MULTIPLE items staged we must NEVER broadcast one composer
+                // text across them — that was the card_2cfe0586 cross-contamination bug
+                // (one reply wrongly resolved several items). An un-answered item in a
+                // batch is skipped (left pending), not resolved with a sibling's text.
+                const perItemAnswer = own.length
+                    ? own
+                    : (uniq.length === 1 ? (answerText || '') : null);
+                if (perItemAnswer === null) { skippedBlank++; continue; }
+                try {
+                    await apiCall('POST', `/api/action-requests/${ctx.requestId}/resolve`, {
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                        answer: {
+                            text: perItemAnswer,
+                            replyContext: {
+                                requestId: ctx.requestId,
+                                anchorMessageId: ctx.anchorMessageId || null
+                            }
                         }
-                    }
-                });
-                resolved++;
-            } catch (err) {
-                console.warn('[CHAT] action request resolve failed:', ctx.requestId, err.message || err);
+                    });
+                    resolved++;
+                } catch (err) {
+                    // Independent: a single failed resolve must not abort the rest.
+                    console.warn('[CHAT] action request resolve failed:', ctx.requestId, err.message || err);
+                }
             }
             if (resolved > 0 && typeof showToast === 'function') {
-                showToast(i18n.t('action_request_resolved') || 'Request resolved', 'success');
+                const msg = resolved === 1
+                    ? (i18n.t('action_request_resolved') || 'Request resolved')
+                    : (i18n.t('action_request_resolved_n') || `${resolved} requests resolved`).replace('{n}', String(resolved));
+                showToast(msg, 'success');
             }
             await loadActionRequests({ renderInbox: true });
         }
@@ -8294,11 +8306,6 @@
         // appends instead of overwriting, with no cap. sendMessage emits one
         // "↩ …" line per entry so the recipient entity receives ALL of them.
         let replyContexts = [];
-        // card_6a5cc9bb Failure Mode 2: the last option string we auto-filled into
-        // the composer. Lets focusActionRequestReply tell "text the owner typed"
-        // (never clobber) from "text we auto-filled from an option" (safe to replace
-        // when switching options). Reset on clear/send.
-        let lastAutoFilledOptionValue = '';
         // Smart receiver auto-select — entityIds we auto-toggled-on for the
         // current reply contexts. Cleared on reply clear, on send, and when
         // the user manually changes a checkbox (the hint badge belongs to
@@ -8345,6 +8352,10 @@
                     meta: meta || null,
                     requestId: requestId || null,
                     anchorMessageId: anchorMessageId || null,
+                    // batch/coexist: each staged ACTION-REQUEST chip carries its OWN
+                    // answer, edited via a per-chip <textarea> in renderReplyPreviews().
+                    // Non-AR chat quotes leave this empty (unused).
+                    answerText: '',
                     _key: key
                 });
             }
@@ -8383,6 +8394,7 @@
             list.textContent = '';
             if (replyContexts.length === 0) { bar.classList.remove('show'); return; }
             const mediaLabel = (i18n && typeof i18n.t === 'function' && i18n.t('chat_reply_media')) || '(media)';
+            const zhLang = (document.documentElement.lang || '').toLowerCase().startsWith('zh');
             replyContexts.forEach((rc, i) => {
                 const chip = document.createElement('span');
                 chip.className = 'reply-preview-chip';
@@ -8399,6 +8411,25 @@
                 x.title = 'Remove';
                 x.addEventListener('click', () => removeReplyContextAt(i));
                 chip.appendChild(s); chip.appendChild(t); chip.appendChild(x);
+                // batch/coexist: an ACTION-REQUEST chip (truthy requestId) also carries
+                // its OWN answer input, bound to rc.answerText — so several inbox items
+                // can be staged, each with its own answer, and one Send resolves each
+                // with its own text. Non-AR chat quotes render as before (no input).
+                if (rc.requestId) {
+                    const ans = document.createElement('textarea');
+                    ans.className = 'reply-preview-chip-answer';
+                    ans.id = 'replyAnswerInput_' + normalizeChatMessageId(rc.requestId);
+                    ans.rows = 1;
+                    ans.style.minWidth = '0';
+                    ans.value = rc.answerText || '';           // textarea.value is XSS-safe (never parsed as HTML)
+                    ans.placeholder = zhLang ? '你的回覆…' : 'Your answer…';
+                    ans.title = zhLang
+                        ? '這一則需要你的回覆；每一則各自送出各自的答案。'
+                        : 'Answer for this item; each item is resolved with its own answer.';
+                    ans.setAttribute('aria-label', (rc.senderName || 'Needs you') + (zhLang ? ' 的回覆' : ' answer'));
+                    ans.addEventListener('input', (e) => { rc.answerText = e.target.value; });
+                    chip.appendChild(ans);
+                }
                 list.appendChild(chip);
             });
             // ? help tooltip — set dynamically (not data-i18n) so i18n.apply can't
@@ -8415,7 +8446,6 @@
 
         function clearReplyContext() {
             replyContexts = [];
-            lastAutoFilledOptionValue = '';
             renderReplyPreviews();
             clearAllReceiverHints();
             autoToggledReceiverEntities.clear();
@@ -9063,10 +9093,31 @@
             const hasFiles = readyFiles.length > 0;
             const hasR2Refs = readyR2Refs.length > 0;
 
-            // Must have text, media, or r2refs
-            if (!text && !hasFiles && !hasR2Refs) return;
-
             const actionRequestReplyContexts = collectActionRequestReplyContexts();
+            // batch/coexist: the owner may answer inbox items with NO composer text and
+            // NO chat quotes — every staged chip carries its own answer. In that case
+            // resolve each item with its own answer and DON'T post an empty/quoted chat
+            // message. Any staged AR context whose per-item answer is non-empty counts
+            // as "content" so the send isn't dropped by the empty-guard below.
+            const stagedActionRequests = replyContexts.filter(rc => rc.requestId);
+            const hasRegularQuotes = replyContexts.some(rc => !rc.requestId);
+            const inboxAnswersOnly = !text && !hasFiles && !hasR2Refs
+                && !hasRegularQuotes && stagedActionRequests.length > 0;
+            if (inboxAnswersOnly) {
+                const btnEl = document.getElementById('btnSend');
+                if (btnEl) btnEl.disabled = true;
+                try {
+                    await resolveActionRequestReplyContexts(actionRequestReplyContexts, '');
+                    clearReplyContext();
+                } finally {
+                    if (btnEl) btnEl.disabled = false;
+                }
+                return;
+            }
+
+            // Must have text, media, or r2refs (a staged inbox item with an answer also
+            // qualifies — it is resolved alongside whatever chat message goes out).
+            if (!text && !hasFiles && !hasR2Refs && stagedActionRequests.length === 0) return;
             // Snapshot quotes BEFORE the optimistic clear so a failed send can
             // restore them (and their action-request binding) instead of orphaning
             // the request (card_b176c435).
@@ -9301,7 +9352,12 @@
                 // Clear pending files (media and/or cloud-drive refs)
                 if (hasFiles || hasR2Refs) clearAllPendingFiles();
 
-                await resolveActionRequestReplyContexts(actionRequestReplyContexts, finalText);
+                // batch/coexist: each staged inbox item resolves with ITS OWN answer
+                // (ctx.answerText). The shared fallback is the RAW composer text — not
+                // the quote-decorated finalText — so an item with no per-item answer is
+                // resolved with exactly what the owner typed (single-item back-compat),
+                // never the "↩ …" quote prefix.
+                await resolveActionRequestReplyContexts(actionRequestReplyContexts, text);
 
                 // Notify Android widget
                 if (isAndroidWebView && text) {
