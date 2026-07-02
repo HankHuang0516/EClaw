@@ -374,7 +374,15 @@
         .action-request-item {
             display: grid; gap: 7px; padding: 9px 10px; border-radius: 10px;
             background: rgba(127,127,127,0.10); border: 1px solid var(--card-border, #333355);
+            /* card_b2e36cd6: a grid item's implicit column is `auto`-sized, so a
+               long unbreakable token (requestId / URL / CJK run) expands the track
+               PAST the inbox width and spills out of the box on mobile — even though
+               the text has overflow-wrap. Pin the column to minmax(0,1fr) and let
+               children shrink (min-width:0) so content wraps INSIDE the card. */
+            grid-template-columns: minmax(0, 1fr);
         }
+        .action-request-item > * { min-width: 0; max-width: 100%; }
+        .action-request-meta { overflow-wrap: anywhere; }
         .action-request-item.in-consensus { border-color: rgba(45,212,191,0.55); background: rgba(20,184,166,0.10); }
         .action-request-item.type-consensus { border-color: rgba(20,184,166,0.45); background: rgba(20,184,166,0.08); }
         .action-request-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: var(--text-secondary, #AAAAAA); font-size: 12px; }
@@ -7521,13 +7529,17 @@
             const raw = String(type || '').trim();
             const fallback = raw ? raw.charAt(0).toUpperCase() + raw.slice(1).replace(/_/g, ' ') : 'Request';
             const label = raw ? actionRequestT('action_request_type_' + raw, fallback) : fallback;
+            // card_b2e36cd6: bare pictographic chars (⚖ ✎ 👁) with no emoji
+            // variation selector render as monochrome text OR a missing-glyph tofu
+            // box (「破圖」) on some mobile fonts. Append U+FE0F to request color-emoji
+            // presentation so they render consistently across devices.
             const icons = {
-                decision: '⚖',
-                approval: '✓',
-                input: '✎',
+                decision: '⚖️',
+                approval: '✅',
+                input: '✏️',
                 credential: '🔐',
-                review: '👁',
-                clarify: '?',
+                review: '👁️',
+                clarify: '❓',
                 consensus: '🤝',
             };
             const meta = {
