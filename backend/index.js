@@ -14862,7 +14862,14 @@ app.get('/api/contacts/my-cards', async (req, res) => {
             isPublic: !!ent.isPublic
         });
     }
-    res.json({ success: true, cards });
+    // card_55e811b8: my-cards was the ONLY card-holder path that never enriched
+    // rows with petdxAvatarUrl (recent/search/cross-device all do), so when the
+    // canvas sprite descriptor fails to resolve the front-end had no URL fallback
+    // and dropped straight to the emoji — the recurring "avatar missing smart-
+    // partner appearance" bug. Give my-cards the same same-origin proxy URL
+    // safety net as the other paths.
+    const enrichedCards = await enrichCardHolderEntriesWithPetdx(cards);
+    res.json({ success: true, cards: enrichedCards });
 });
 
 /**

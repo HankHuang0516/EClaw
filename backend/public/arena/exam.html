@@ -590,7 +590,16 @@
                     const data = await res.json();
                     const bound = (data.entities || []).filter(e => e && e.isBound !== false);
                     if (!bound.length) return;
-                    entityId = Number(bound[0].entityId || bound[0].id);
+                    // card_cea91e58: bind to the ACTIVE session entity, not bound[0].
+                    // Picking bound[0] always showed the first entity (#1)'s
+                    // companion even when a different entity (e.g. #2) was the one
+                    // actually taking the exam. Use the shared active-entity key
+                    // (petdx-browser's eclaw_petdex_active_entity_id); fall back to
+                    // bound[0] only when it's unset or no longer bound.
+                    let activeId = NaN;
+                    try { activeId = Number(localStorage.getItem('eclaw_petdex_active_entity_id')); } catch (_) { /* private mode */ }
+                    const chosen = (Number.isFinite(activeId) && bound.find(e => Number(e.entityId || e.id) === activeId)) || bound[0];
+                    entityId = Number(chosen.entityId || chosen.id);
                 } catch (_) { return; }
                 if (!Number.isFinite(entityId)) return;
 

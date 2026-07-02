@@ -1128,7 +1128,11 @@
 
         // ── My Card rendering ──
         function renderMyCardHtml(c) {
-            const avatar = c.avatar || '\u{1F99E}';
+            // card_55e811b8: prefer the same-origin petdx proxy URL (now enriched
+            // onto my-cards rows) so the real smart-partner sprite shows via the
+            // canvas/URL path; emoji is the last resort only when no companion
+            // exists — no more silent instant-fallback to a default glyph.
+            const avatar = c.petdxAvatarUrl || c.avatar || '\u{1F99E}';
             const ac = c.agentCard || {};
             let html = `<div class="card-item" onclick="showMyCardDetail('${escapeAttr(c.publicCode)}')">
                 <div class="card-row">
@@ -1317,7 +1321,8 @@
             if (!card) return;
 
             const ac = card.agentCard || {};
-            const avatar = card.avatar || '\u{1F99E}';
+            // card_55e811b8: same as the list view — prefer the enriched proxy URL.
+            const avatar = card.petdxAvatarUrl || card.avatar || '\u{1F99E}';
 
             const content = document.getElementById('detailContent');
             content.innerHTML = `
