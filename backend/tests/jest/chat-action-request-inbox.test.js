@@ -140,6 +140,23 @@ describe('需要你 inbox collapse + lifecycle hardening (card_b176c435)', () =>
         expect(chatHtml).toMatch(/\.greet-banner\s*\{[^}]*flex-shrink:\s*0/);
     });
 
+    test('mobile inbox layout clamps long labels, chips, and buttons inside the card', () => {
+        expect(chatHtml).toMatch(/\.greet-banner\s*\{[\s\S]*max-width:\s*calc\(100% - 28px\)[\s\S]*overflow-x:\s*hidden/);
+        expect(chatHtml).toMatch(/\.action-request-inbox-summary \.ar-summary-label\s*\{[\s\S]*flex:\s*1 1 auto[\s\S]*min-width:\s*0[\s\S]*text-overflow:\s*ellipsis/);
+        expect(chatHtml).toMatch(/\.action-request-inbox-count\s*\{[\s\S]*max-width:\s*46%[\s\S]*text-overflow:\s*ellipsis[\s\S]*white-space:\s*nowrap/);
+        expect(chatHtml).toMatch(/\.action-request-live-state\s*\{[\s\S]*max-width:\s*100%[\s\S]*text-overflow:\s*ellipsis[\s\S]*white-space:\s*nowrap/);
+        expect(chatHtml).toMatch(/\.action-request-item\s*\{[\s\S]*min-width:\s*0[\s\S]*max-width:\s*100%[\s\S]*overflow:\s*hidden/);
+        expect(chatHtml).toMatch(/\.action-request-type-badge\s*\{[\s\S]*max-width:\s*100%[\s\S]*text-overflow:\s*ellipsis[\s\S]*white-space:\s*nowrap/);
+        expect(chatHtml).toMatch(/\.action-request-consensus-state\s*\{[\s\S]*max-width:\s*100%[\s\S]*text-overflow:\s*ellipsis[\s\S]*white-space:\s*nowrap/);
+        expect(chatHtml).toContain("metaText.className = 'action-request-meta-text';");
+        expect(chatHtml).toMatch(/\.action-request-meta-text\s*\{[\s\S]*min-width:\s*0[\s\S]*overflow-wrap:\s*anywhere/);
+        expect(chatHtml).toMatch(/\.action-request-option, \.action-request-action\s*\{[\s\S]*max-width:\s*100%[\s\S]*white-space:\s*normal[\s\S]*overflow-wrap:\s*anywhere/);
+        expect(chatHtml).toMatch(/\.action-request-evidence-chip\s*\{[\s\S]*max-width:\s*100%[\s\S]*min-width:\s*0/);
+        expect(chatHtml).toMatch(/\.action-request-evidence-chip \.ar-chip-label\s*\{[\s\S]*min-width:\s*0[\s\S]*text-overflow:\s*ellipsis/);
+        expect(chatHtml).toMatch(/\.action-request-ratify-title\s*\{[\s\S]*min-width:\s*0[\s\S]*overflow-wrap:\s*anywhere/);
+        expect(chatHtml).toMatch(/@media \(max-width:\s*640px\)\s*\{\s*\.action-request-ratify-countdown\s*\{\s*margin-left:\s*0/);
+    });
+
     test('whole inbox is not a live region; only the count announces changes', () => {
         expect(chatHtml).toContain("wrap.setAttribute('aria-live', 'off');");
         expect(chatHtml).toContain("count.setAttribute('aria-live', 'polite');");

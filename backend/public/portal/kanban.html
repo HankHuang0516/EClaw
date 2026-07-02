@@ -303,9 +303,12 @@
         .kb-file-name:hover { text-decoration:underline; }
 
         /* Screenshot review tab */
-        .kb-ss-banner { font-size:12px; padding:8px 12px; border-radius:var(--radius-sm); margin-bottom:12px; border:1px solid var(--card-border); }
+        .kb-ss-banner { display:flex; align-items:center; gap:8px; font-size:12px; padding:8px 12px; border-radius:var(--radius-sm); margin-bottom:12px; border:1px solid var(--card-border); }
         .kb-ss-banner.on { background:rgba(255,193,7,0.12); border-color:#f0ad4e; color:#f0ad4e; }
         .kb-ss-banner.off { background:var(--input-bg); color:var(--text-muted); }
+        .kb-ss-banner-text { flex:1; min-width:0; overflow-wrap:anywhere; }
+        .kb-ss-help { flex:0 0 auto; width:20px; height:20px; border-radius:50%; border:1px solid currentColor; background:transparent; color:inherit; font-size:12px; font-weight:800; line-height:18px; display:inline-flex; align-items:center; justify-content:center; cursor:help; padding:0; }
+        .kb-ss-help:focus { outline:2px solid currentColor; outline-offset:2px; }
         .kb-ss-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; }
         .kb-ss-thumb { cursor:pointer; background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); overflow:hidden; transition:transform .15s, border-color .15s; }
         .kb-ss-thumb:hover { transform:scale(1.03); border-color:var(--primary); }
@@ -927,11 +930,11 @@
             <div class="kb-modal-splitter" id="kbModalSplitter" role="separator" aria-orientation="horizontal"
                  aria-label="Drag to resize description area" tabindex="0"></div>
             <div class="kb-modal-tabs">
-                <button class="kb-modal-tab active" data-i18n="kb_tab_comments" onclick="switchDetailTab('comments',this)">💬 Comments</button>
-                <button class="kb-modal-tab" data-i18n="kb_tab_notes" onclick="switchDetailTab('notes',this)">📝 Notes</button>
-                <button class="kb-modal-tab" data-i18n="kb_tab_files" onclick="switchDetailTab('files',this)">📎 Files</button>
-                <button class="kb-modal-tab" data-i18n="kb_tab_screenshots" onclick="switchDetailTab('screenshots',this)">📸 截圖審查</button>
-                <button class="kb-modal-tab" id="scheduleTab" data-i18n="kb_tab_schedule" onclick="switchDetailTab('schedule',this)" style="display:none">⚙️ Schedule</button>
+                <button class="kb-modal-tab active" data-detail-tab="comments" data-i18n="kb_tab_comments" onclick="switchDetailTab('comments',this)">💬 Comments</button>
+                <button class="kb-modal-tab" data-detail-tab="notes" data-i18n="kb_tab_notes" onclick="switchDetailTab('notes',this)">📝 Notes</button>
+                <button class="kb-modal-tab" data-detail-tab="files" data-i18n="kb_tab_files" onclick="switchDetailTab('files',this)">📎 Files</button>
+                <button class="kb-modal-tab" data-detail-tab="screenshots" data-i18n="kb_tab_screenshots" onclick="switchDetailTab('screenshots',this)">📸 截圖審查</button>
+                <button class="kb-modal-tab" data-detail-tab="schedule" id="scheduleTab" data-i18n="kb_tab_schedule" onclick="switchDetailTab('schedule',this)" style="display:none">⚙️ Schedule</button>
             </div>
             <div class="kb-modal-panel active" id="panel-comments"></div>
             <div class="kb-modal-panel" id="panel-notes"></div>
@@ -2583,8 +2586,14 @@
             return text.length > 110 ? text.slice(0, 107).trimEnd() + '…' : text;
         }
 
-        function taskChip(kind, label, title, onClick) {
-            return `<button type="button" class="kb-task-chip ${kind}" title="${escapeHtml(title || label)}" onclick="${onClick}">${label}</button>`;
+        function taskChip(kind, label, title, onClick, opts = {}) {
+            const openTab = opts.openTab ? ` data-open-tab="${escapeHtml(opts.openTab)}"` : '';
+            return `<button type="button" class="kb-task-chip ${kind}"${openTab} title="${escapeHtml(title || label)}" onclick="${onClick}">${label}</button>`;
+        }
+
+        function openTaskChipDetail(cardId, event) {
+            if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
+            return openDetail(cardId, { initialTab: 'screenshots' });
         }
 
         // In-description workflow-chain chip row — Parent / Prev / Next pointers.
@@ -2600,15 +2609,15 @@
             if (!parentId && !hasPrev && !hasNext) return '';
             const chips = [];
             if (parentId) {
-                chips.push(taskChip('parent', `↖ <span>${t('kb_chip_parent','母卡')}</span>`, parentId, `openDetail('${escapeJs(parentId)}')`));
+                chips.push(taskChip('parent', `↖ <span>${t('kb_chip_parent','母卡')}</span>`, parentId, `openTaskChipDetail('${escapeJs(parentId)}', event)`, { openTab: 'screenshots' }));
             }
             if (hasPrev) {
                 const prevTitle = (card.linkedPrev && card.linkedPrev.title) || card.linkedPrevCardId;
-                chips.push(taskChip('prev', `← <span>${t('kb_chip_prev','上一張')}</span>`, prevTitle, `openDetail('${escapeJs(card.linkedPrevCardId)}')`));
+                chips.push(taskChip('prev', `← <span>${t('kb_chip_prev','上一張')}</span>`, prevTitle, `openTaskChipDetail('${escapeJs(card.linkedPrevCardId)}', event)`, { openTab: 'screenshots' }));
             }
             if (hasNext) {
                 const nextTitle = (card.linkedNext && card.linkedNext.title) || card.linkedNextCardId;
-                chips.push(taskChip('next', `<span>${t('kb_chip_next','下一張')}</span> →`, nextTitle, `openDetail('${escapeJs(card.linkedNextCardId)}')`));
+                chips.push(taskChip('next', `<span>${t('kb_chip_next','下一張')}</span> →`, nextTitle, `openTaskChipDetail('${escapeJs(card.linkedNextCardId)}', event)`, { openTab: 'screenshots' }));
             }
             return `<div class="kb-detail-link-chip-row" data-testid="detail-link-chip-row" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;width:100%">${chips.join('')}</div>`;
         }
@@ -2623,15 +2632,15 @@
             const parentId = card.parentCardId || card.parent_card_id || '';
             if (parentId) {
                 const parent = related?.parentCard || null;
-                chips.push(taskChip('parent', `↖ <span>${t('kb_chip_parent','母卡')}</span>`, parent ? parent.title : parentId, `openDetail('${escapeJs(parentId)}')`));
+                chips.push(taskChip('parent', `↖ <span>${t('kb_chip_parent','母卡')}</span>`, parent ? parent.title : parentId, `openTaskChipDetail('${escapeJs(parentId)}', event)`, { openTab: 'screenshots' }));
             }
             if (card.linkedPrevCardId) {
                 const prev = related?.prevCard || null;
-                chips.push(taskChip('prev', `← <span>${t('kb_chip_prev','上一張')}</span>`, prev ? prev.title : card.linkedPrevCardId, `openDetail('${escapeJs(card.linkedPrevCardId)}')`));
+                chips.push(taskChip('prev', `← <span>${t('kb_chip_prev','上一張')}</span>`, prev ? prev.title : card.linkedPrevCardId, `openTaskChipDetail('${escapeJs(card.linkedPrevCardId)}', event)`, { openTab: 'screenshots' }));
             }
             if (card.linkedNextCardId) {
                 const next = related?.nextCard || null;
-                chips.push(taskChip('next', `<span>${t('kb_chip_next','下一張')}</span> →`, next ? next.title : card.linkedNextCardId, `openDetail('${escapeJs(card.linkedNextCardId)}')`));
+                chips.push(taskChip('next', `<span>${t('kb_chip_next','下一張')}</span> →`, next ? next.title : card.linkedNextCardId, `openTaskChipDetail('${escapeJs(card.linkedNextCardId)}', event)`, { openTab: 'screenshots' }));
             }
             const prUrl = getCardPrUrl(card);
             if (prUrl) chips.push(taskChip('pr', `🔗 <span>PR</span>`, prUrl, `openCardPr('${escapeJs(card.id)}')`));
@@ -2691,7 +2700,7 @@
             });
         }
 
-        async function openDetail(cardId) {
+        async function openDetail(cardId, opts = {}) {
             openCardId = cardId;
             let card = findCard(cardId);
             // Archived cards are not in allCards/automationCards. Fetch on demand
@@ -2803,8 +2812,11 @@
             document.getElementById('scheduleTab').style.display = card.isAutomation ? '' : 'none';
             document.getElementById('panel-schedule').innerHTML = '';
 
-            // Load first tab
-            switchDetailTab('comments', document.querySelector('.kb-modal-tab'));
+            // Load first tab. Relation task chips open directly to Screenshots so
+            // the selected card's screenshot-review field and thumbnails are visible.
+            const initialTab = opts && opts.initialTab === 'screenshots' ? 'screenshots' : 'comments';
+            const initialBtn = document.querySelector(`.kb-modal-tab[data-detail-tab="${initialTab}"]`) || document.querySelector('.kb-modal-tab');
+            switchDetailTab(initialTab, initialBtn);
             document.getElementById('detailModal').classList.add('show');
         }
 
@@ -3893,9 +3905,11 @@
                 const shots = (data.files || []).filter(f => (f.mimeType || f.mime_type || '').startsWith('image/'));
                 const card = findCard(openCardId);
                 const gate = card && card.requiresScreenshotReview !== false;
+                const help = escapeHtml(t('kb_screenshot_help', 'Image attachments uploaded to this card via POST /api/mission/card/:id/file with image/* render here. Required cards need at least one screenshot before review/done.'));
+                const helpButton = `<button type="button" class="kb-ss-help" aria-label="${help}" title="${help}">?</button>`;
                 const gateBanner = gate
-                    ? `<div class="kb-ss-banner on">📸 此卡需截圖審查：${shots.length ? `已附 ${shots.length} 張` : '尚未附任何截圖，無法移到 review/done'}</div>`
-                    : `<div class="kb-ss-banner off">此卡未開啟截圖審查門檻</div>`;
+                    ? `<div class="kb-ss-banner on"><span class="kb-ss-banner-text">📸 此卡需截圖審查：${shots.length ? `已附 ${shots.length} 張` : '尚未附任何截圖，無法移到 review/done'}</span>${helpButton}</div>`
+                    : `<div class="kb-ss-banner off"><span class="kb-ss-banner-text">此卡未開啟截圖審查門檻</span>${helpButton}</div>`;
                 if (shots.length === 0) {
                     panel.innerHTML = gateBanner + '<div class="kb-empty">尚無截圖。Bot 完成任務時用 POST /api/mission/card/&lt;id&gt;/file 附上 image/* 檔即可。</div>';
                     return;
