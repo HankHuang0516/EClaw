@@ -7689,6 +7689,15 @@
         function focusActionRequestReply(requestId, optionIndex = null) {
             const request = getActionRequestById(requestId);
             if (!request) return;
+            // card_6a5cc9bb: the 需要你 inbox is a per-item decision surface, not a
+            // multi-quote target — at most ONE action-request may be staged for reply
+            // at a time. Clicking "Reply"/an option on an inbox item REPLACES any
+            // previously-staged inbox item (regular chat quotes still accumulate,
+            // card_277c80f5). Without this, staging A then B then Send hit the
+            // uniq.length>1 guard in resolveActionRequestReplyContexts and resolved
+            // NEITHER item — the owner "無法連續處理多個問題" (PR #3787 turned the old
+            // "one answer resolves both" into "one answer resolves neither").
+            clearStagedActionRequestReplies();
             openActionRequestAnchor(request);
             const entityId = Number(request.fromEntityId);
             const entityName = Number.isFinite(entityId) && typeof getEntityDisplayName === 'function'
@@ -7699,10 +7708,18 @@
             if (optionIndex !== null && Array.isArray(request.options) && request.options[optionIndex] !== undefined) {
                 const input = document.getElementById('messageInput');
                 if (input) {
-                    input.value = String(request.options[optionIndex]);
+                    // card_6a5cc9bb Failure Mode 2 ("回覆被覆蓋掉"): don't silently clobber
+                    // owner-typed free text. Auto-fill the option only when the composer
+                    // is empty or still holds a prior auto-filled option (so switching
+                    // between options works, but a typed answer is never destroyed).
+                    const optText = String(request.options[optionIndex]);
+                    if (!input.value.trim() || input.value === lastAutoFilledOptionValue) {
+                        input.value = optText;
+                        lastAutoFilledOptionValue = optText;
+                        input.style.height = 'auto';
+                        input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+                    }
                     input.focus();
-                    input.style.height = 'auto';
-                    input.style.height = Math.min(input.scrollHeight, 120) + 'px';
                 }
             }
         }
@@ -8277,11 +8294,29 @@
         // appends instead of overwriting, with no cap. sendMessage emits one
         // "↩ …" line per entry so the recipient entity receives ALL of them.
         let replyContexts = [];
+        // card_6a5cc9bb Failure Mode 2: the last option string we auto-filled into
+        // the composer. Lets focusActionRequestReply tell "text the owner typed"
+        // (never clobber) from "text we auto-filled from an option" (safe to replace
+        // when switching options). Reset on clear/send.
+        let lastAutoFilledOptionValue = '';
         // Smart receiver auto-select — entityIds we auto-toggled-on for the
         // current reply contexts. Cleared on reply clear, on send, and when
         // the user manually changes a checkbox (the hint badge belongs to
         // the auto-toggle, so a manual toggle revokes it).
         const autoToggledReceiverEntities = new Set();
+
+        // card_6a5cc9bb: drop every staged ACTION-REQUEST reply context (those bound
+        // to a requestId), leaving regular chat quotes untouched. Enforces the
+        // one-inbox-item-at-a-time invariant so a Send resolves exactly the item the
+        // owner is currently answering — never a stale sibling, never zero items.
+        function clearStagedActionRequestReplies() {
+            const before = replyContexts.length;
+            replyContexts = replyContexts.filter(rc => !rc.requestId);
+            if (replyContexts.length !== before) {
+                renderReplyPreviews();
+                recomputeAutoReceivers();
+            }
+        }
 
         function handleReplyBtn(btn) {
             const msgId = btn.dataset.msgId;
@@ -8380,6 +8415,7 @@
 
         function clearReplyContext() {
             replyContexts = [];
+            lastAutoFilledOptionValue = '';
             renderReplyPreviews();
             clearAllReceiverHints();
             autoToggledReceiverEntities.clear();
