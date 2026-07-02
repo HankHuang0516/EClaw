@@ -41,6 +41,7 @@ const compression = require('compression');
 
 const safeEqual = require('./safe-equal');
 const { safeUpdatedAtToISO } = require('./safe-date');
+const { mergeDeviceVars } = require('./lib/device-vars-merge');
 const { createHermesHealthMonitor, hermesLog } = require('./hermes-health-check');
 const { createSettingsHelpInvariantCron } = require('./settings-help-invariant-cron');
 const { createPushHealthCheckCron } = require('./push-health-check-cron');
@@ -1669,7 +1670,8 @@ app.get('/api/help', (req, res) => {
         ],
         vault: [
             { title: 'Read vault key names (bot side)', curl: `curl -s "${apiBase}/api/device-vars?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
-            { title: 'Merge single key (owner, DEVICE_SECRET required)', curl: `curl -s -X POST "${apiBase}/api/device-vars" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","deviceSecret":"DEVICE_SECRET","source":"web","vars":{"KEY":"VALUE"}}'` },
+            { title: 'Add/update single key — SAFE additive patch (drops nothing; use this for programmatic single-key writes)', curl: `curl -s -X POST "${apiBase}/api/device-vars" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","deviceSecret":"DEVICE_SECRET","source":"web","patch":true,"vars":{"KEY":"VALUE"}}'` },
+            { title: 'Full source-sync (editor): REPLACES all keys of this source with the set below; keys of this source you OMIT are deleted (owner/other-source keys preserved). Send the COMPLETE set.', curl: `curl -s -X POST "${apiBase}/api/device-vars" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","deviceSecret":"DEVICE_SECRET","source":"web","vars":{"KEY1":"V1","KEY2":"V2"}}'` },
             { title: 'Delete single key (owner)', curl: `curl -s -X DELETE "${apiBase}/api/device-vars/KEY?deviceId=${deviceId}&deviceSecret=DEVICE_SECRET"` },
             { title: 'WIPE all keys (owner, requires explicit confirm)', curl: `curl -s -X DELETE "${apiBase}/api/device-vars?deviceId=${deviceId}&deviceSecret=DEVICE_SECRET&confirm=YES_DELETE_ALL_VAULT"` },
             { title: 'Audit log — who touched the vault (owner)', curl: `curl -s "${apiBase}/api/device-vars/audit?deviceId=${deviceId}&deviceSecret=DEVICE_SECRET&limit=50"` },
@@ -22610,6 +22612,11 @@ app.post('/api/device-vars', async (req, res) => {
 
     const isLocked = locked === true;
     const src = (source === 'web' || source === 'app') ? source : null;
+    // patch mode (card_ed04f8aa): purely additive — add/override only the incoming
+    // keys, NEVER drop a key the caller didn't mention. The safe path for
+    // programmatic single-key updates (an agent writing one secret must not risk
+    // the whole vault). Requires a source; ignored in legacy replace mode.
+    const patchMode = req.body.patch === true;
 
     try {
         let merged = incoming;
@@ -22649,68 +22656,12 @@ app.post('/api/device-vars', async (req, res) => {
                 }
             }
 
-            merged = {};
-            mergedSources = {};
-
-            // 1. Keep keys from other source that are NOT in incoming
-            for (const [k, v] of Object.entries(existingVars)) {
-                const keySrc = existingSources[k] || null;
-                if (keySrc && keySrc !== src && !(k in incoming)) {
-                    // Key from the other platform, not present in incoming — preserve it
-                    merged[k] = v;
-                    mergedSources[k] = keySrc;
-                }
-            }
-
-            // 2. Process incoming keys — detect conflicts
-            for (const [k, v] of Object.entries(incoming)) {
-                const existingVal = existingVars[k];
-                const existingSrc = existingSources[k] || null;
-
-                if (existingVal === undefined || existingVal === v || existingSrc === src || !existingSrc) {
-                    // No conflict: new key, same value, same source, or no source info
-                    merged[k] = v;
-                    mergedSources[k] = src;
-                } else {
-                    // Conflict: same key, different value, different source
-                    const _otherSrc = existingSrc;
-                    const webSuffix = '_Web';
-                    const appSuffix = '_APP';
-
-                    // Remove the unsuffixed key from merged (if carried over in step 1)
-                    delete merged[k];
-                    delete mergedSources[k];
-
-                    // Create suffixed keys
-                    const webKey = k + webSuffix;
-                    const appKey = k + appSuffix;
-
-                    if (src === 'web') {
-                        merged[webKey] = v;
-                        mergedSources[webKey] = 'web';
-                        merged[appKey] = existingVal;
-                        mergedSources[appKey] = 'app';
-                    } else {
-                        merged[webKey] = existingVal;
-                        mergedSources[webKey] = 'web';
-                        merged[appKey] = v;
-                        mergedSources[appKey] = 'app';
-                    }
-
-                    conflicts.push({ key: k, webKey, appKey });
-                }
-            }
-
-            // 3. Carry over suffixed keys from existing that still belong to the other source
-            for (const [k, v] of Object.entries(existingVars)) {
-                if (!(k in merged) && (k.endsWith('_Web') || k.endsWith('_APP'))) {
-                    const keySrc = existingSources[k] || null;
-                    if (keySrc && keySrc !== src) {
-                        merged[k] = v;
-                        mergedSources[k] = keySrc;
-                    }
-                }
-            }
+            // Merge semantics live in a pure, unit-tested helper (card_ed04f8aa)
+            // so the 2026-07-02 owner-key-wipe regression is covered without a
+            // live pg pool. See backend/lib/device-vars-merge.js.
+            ({ merged, mergedSources, conflicts } = mergeDeviceVars({
+                existingVars, existingSources, incoming, src, patchMode,
+            }));
         } else {
             // Legacy mode (no source): replace all, no merge.
             // Guard: an empty `incoming` in legacy mode wipes the vault —
