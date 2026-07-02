@@ -48,7 +48,9 @@ describe('kanban notify → task-lifecycle directive (card_c0819f4e)', () => {
     });
 
     test('hints + directive are combined into one missionBlock', () => {
-        expect(kanbanSrc).toMatch(/const missionBlock = kanbanHints \+ lifecycleDirective;/);
+        // card_e9379868 appended the dispatcher routingDirective to the same block
+        // so the reply-routing target ships alongside the lifecycle obligation.
+        expect(kanbanSrc).toMatch(/const missionBlock = kanbanHints \+ lifecycleDirective \+ routingDirective;/);
     });
 
     test('ALL three push paths ship missionBlock (channel / webhook / legacy), not bare kanbanHints', () => {
