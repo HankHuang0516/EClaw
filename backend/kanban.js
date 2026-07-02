@@ -44,6 +44,7 @@ const safeEqual = require('./safe-equal');
 const extractCreds = require('./extract-creds');
 const { newCardId } = require('./entity-id');
 const { tKanban, statusLabel } = require('./i18n/kanban-notifications');
+const { buildDispatcherRoutingDirective } = require('./lib/kanban-dispatcher-routing');
 const devicePrefs = require('./device-preferences');
 const { emit: emitKanbanEvent } = require('./lib/kanban-events');
 const { resolveEntityHostDevice } = require('./lib/per-device-cron');
@@ -629,7 +630,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         // assuming the card's own device hosts it. Default false keeps every other
         // caller (once-triggers, manual notifies) on the legacy local-only path.
         // See backend/lib/per-device-cron.js + card_1ce50de359411f0d0947399f.
-        const { description, cardId, perDeviceCron = false } = options;
+        const { description, cardId, perDeviceCron = false, dispatcherEntityId } = options;
         if (!pushToChannelCallback && !pushToEntity && !pushToBot) {
             console.warn('[Kanban] No push callback available — notifications will not be delivered');
             return;
@@ -667,6 +668,29 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         const commentBlock = latestComment
             ? `\n\n[LATEST COMMENT]\n${latestComment}\n[/LATEST COMMENT]`
             : '';
+
+        // ── Dispatcher routing hint (card_e9379868) ──
+        // A kanban notification is a SYSTEM event with no sender entity, so when an
+        // assigned bot replies "task done" in chat, the central router finds no
+        // speakTo/@mention/senderHint and fail-safes the message to a human — the
+        // DISPATCHER (the commander who assigned the card) never receives it and
+        // cannot verify/close the card. Fix: tell the bot exactly who to route its
+        // completion report to. The dispatcher entity lives on the card's own device
+        // (deviceId), so resolve its publicCode here (once) and hand the recipient
+        // both the same-device @#N token and the cross-device @publicCode token
+        // (recipient may be hosted on another device under per-device cron).
+        let dispatcherMeta = null;
+        const dispId = Number(dispatcherEntityId);
+        if (dispId && dispId > 0) {
+            const dispEntity = devices?.[deviceId]?.entities?.[dispId];
+            if (dispEntity?.publicCode) {
+                dispatcherMeta = { entityId: dispId, publicCode: dispEntity.publicCode };
+            } else {
+                // Still emit the @#N token even if publicCode is unavailable — a
+                // same-device reply routes on @#N alone.
+                dispatcherMeta = { entityId: dispId, publicCode: null };
+            }
+        }
 
         for (const eid of entityIds) {
             try {
@@ -755,9 +779,17 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                       `A card left unmoved keeps re-nudging and auto-escalating.`
                     : '';
 
-                // Hints + lifecycle directive travel together so the obligation
-                // sits right next to the Move card command in every push path.
-                const missionBlock = kanbanHints + lifecycleDirective;
+                // ── Dispatcher routing directive (card_e9379868) ──
+                // Tells the assigned bot who to address so its completion report
+                // routes back to the dispatcher instead of fail-safing to a human.
+                const routingDirective = buildDispatcherRoutingDirective({
+                    dispatcherMeta, recipientEntityId: eid, cardId,
+                });
+
+                // Hints + lifecycle + routing directives travel together so the
+                // obligation and the reply-routing target sit right next to the
+                // Move card command in every push path.
+                const missionBlock = kanbanHints + lifecycleDirective + routingDirective;
 
                 // ── 3. Build full message with description ──
                 const descBlock = description
@@ -1336,7 +1368,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     title: title.trim(),
                     status: statusLabel(lang, cardStatus)
                 });
-                notifyEntities(deviceId, bots, msg, { description, cardId: card.id });
+                notifyEntities(deviceId, bots, msg, { description, cardId: card.id, dispatcherEntityId: createdBy });
             }
 
             if (awardEntityXP) {
@@ -2294,6 +2326,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                         notifyEntities(deviceId, newlyAdded, msg, {
                             description: updated.description,
                             cardId: updated.id,
+                            dispatcherEntityId: updated.created_by,
                         });
                     }
                 } catch (notifyErr) {
@@ -2546,7 +2579,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     from: statusLabel(lang, oldStatus),
                     to: statusLabel(lang, newStatus)
                 });
-                notifyEntities(deviceId, bots, msg, { description: card.description, cardId });
+                notifyEntities(deviceId, bots, msg, { description: card.description, cardId, dispatcherEntityId: card.created_by });
             }
 
             // Notify reviewer on /move → review (card_dfb65748c14680560c7bb873).
