@@ -88,6 +88,10 @@
         + 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
         + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
         + '<polyline points="9 6 15 12 9 18"/></svg>';
+    const SVG_SECTION_CHEVRON = '<svg class="' + ROOT_CLASS + '__section-chevron" width="13" height="13" '
+        + 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+        + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+        + '<polyline points="9 6 15 12 9 18"/></svg>';
 
     function pickLabel(axis) {
         const lang = (document.documentElement.getAttribute('lang') || 'en').toLowerCase();
@@ -434,6 +438,7 @@
     }
 
     function buildDom(eid) {
+        const historyListId = `${ROOT_CLASS}-error-history-${eid}`;
         const root = document.createElement('aside');
         root.className = ROOT_CLASS;
         root.setAttribute('role', 'dialog');
@@ -474,9 +479,21 @@
                         <li class="${ROOT_CLASS}__counter-row" data-state="loading">Loading…</li>
                     </ul>
                 </section>
-                <section class="${ROOT_CLASS}__section" data-section="error-history">
-                    <h3 class="${ROOT_CLASS}__section-title">歷史紀錄 / Error history</h3>
-                    <ol class="${ROOT_CLASS}__log-list" data-role="error-history-list">
+                <section class="${ROOT_CLASS}__section ${ROOT_CLASS}__section--collapsible"
+                    data-section="error-history" data-collapsed="true">
+                    <h3 class="${ROOT_CLASS}__section-title ${ROOT_CLASS}__section-title--toggle">
+                        <button type="button" class="${ROOT_CLASS}__section-toggle"
+                            data-action="toggle-error-history"
+                            aria-expanded="false"
+                            aria-controls="${historyListId}"
+                            title="歷史紀錄 / Error history">
+                            ${SVG_SECTION_CHEVRON}
+                            <span>歷史紀錄 / Error history</span>
+                            <span class="${ROOT_CLASS}__section-count" data-role="error-history-count"></span>
+                        </button>
+                    </h3>
+                    <ol id="${historyListId}" class="${ROOT_CLASS}__log-list ${ROOT_CLASS}__collapsible-body"
+                        data-role="error-history-list" hidden>
                         <li class="${ROOT_CLASS}__log-row" data-state="loading">Loading…</li>
                     </ol>
                 </section>
@@ -521,6 +538,11 @@
                 handleResetClick(eid);
                 return;
             }
+            if (action === 'toggle-error-history') {
+                e.stopPropagation();
+                toggleErrorHistory(root);
+                return;
+            }
             // Counter drill-down: clicking a counter row expands the open
             // events that comprise the live `openCount`. Toggles closed on
             // a second click. Doesn't fire if the user clicked inside an
@@ -561,6 +583,7 @@
                 e.stopPropagation();
             }
         });
+        applyInitialErrorHistoryState(root, eid);
         return root;
     }
 
@@ -636,6 +659,74 @@
             /* surface nothing destructive — the counters simply stay as-is */
             console.warn('[EntityStatusPanel] reset failed:', err && err.message);
         }
+    }
+
+    function errorHistoryStorageKey(eid) {
+        return `entityStatus.historyExpanded.${eid}`;
+    }
+
+    function readErrorHistoryExpanded(eid) {
+        try {
+            return localStorage.getItem(errorHistoryStorageKey(eid)) === 'true';
+        } catch (_) {
+            return false;
+        }
+    }
+
+    function writeErrorHistoryExpanded(eid, open) {
+        try {
+            localStorage.setItem(errorHistoryStorageKey(eid), open ? 'true' : 'false');
+        } catch (_) { /* private mode etc — keep the UI usable */ }
+    }
+
+    function applyInitialErrorHistoryState(root, eid) {
+        setErrorHistoryExpanded(root, readErrorHistoryExpanded(eid), { persist: false, animate: false });
+    }
+
+    function setErrorHistoryExpanded(root, open, opts = {}) {
+        const section = root && root.querySelector('[data-section="error-history"]');
+        const btn = root && root.querySelector('[data-action="toggle-error-history"]');
+        const list = root && root.querySelector('[data-role="error-history-list"]');
+        if (!section || !btn || !list) return;
+        const animate = opts.animate !== false;
+        if (list._collapseTimer) {
+            clearTimeout(list._collapseTimer);
+            list._collapseTimer = null;
+        }
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        section.dataset.collapsed = open ? 'false' : 'true';
+        section.classList.toggle(`${ROOT_CLASS}__section--expanded`, open);
+        if (open) {
+            list.removeAttribute('hidden');
+        } else if (animate && !window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) {
+            list._collapseTimer = setTimeout(() => {
+                if (btn.getAttribute('aria-expanded') !== 'true') list.setAttribute('hidden', '');
+                list._collapseTimer = null;
+            }, 220);
+        } else {
+            list.setAttribute('hidden', '');
+        }
+        if (opts.persist !== false) {
+            const eid = root.dataset && root.dataset.targetEntityId;
+            if (eid) writeErrorHistoryExpanded(eid, open);
+        }
+    }
+
+    function toggleErrorHistory(root, forceOpen) {
+        const btn = root && root.querySelector('[data-action="toggle-error-history"]');
+        if (!btn) return;
+        const open = (typeof forceOpen === 'boolean')
+            ? forceOpen
+            : btn.getAttribute('aria-expanded') !== 'true';
+        setErrorHistoryExpanded(root, open);
+    }
+
+    function updateErrorHistoryCount(root, count, hasMore) {
+        const el = root && root.querySelector('[data-role="error-history-count"]');
+        if (!el) return;
+        const n = Number(count) || 0;
+        el.textContent = n > 0 ? `${n}${hasMore ? '+' : ''}` : '';
+        el.setAttribute('aria-label', n > 0 ? `${n}${hasMore ? ' or more' : ''} history entries` : 'No history entries');
     }
 
     // Render the drill-down rows for one axis. Each row = (timestamp, chip).
@@ -839,9 +930,12 @@
         list.innerHTML = `<li class="${ROOT_CLASS}__log-row" data-state="loading">Loading…</li>`;
         try {
             const data = await fetchErrorHistory(eid);
-            list.innerHTML = renderErrorHistory(data.items || []);
+            const items = data.items || [];
+            list.innerHTML = renderErrorHistory(items);
+            updateErrorHistoryCount(root, items.length, !!data.nextCursor);
         } catch (err) {
             list.innerHTML = `<li class="${ROOT_CLASS}__log-row" data-state="error">Failed to load: ${escapeHtml(err.message)}</li>`;
+            updateErrorHistoryCount(root, 0, false);
         }
     }
 
@@ -872,6 +966,28 @@
 .${ROOT_CLASS}__section { padding: 14px 18px; border-bottom: 1px solid var(--card-border, #333); }
 .${ROOT_CLASS}__section-title { font-size: 13px; font-weight: 600;
     color: var(--text-secondary, #aaa); margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+.${ROOT_CLASS}__section-title--toggle { margin: 0; }
+.${ROOT_CLASS}__section-toggle { width: 100%; display: flex; align-items: center; gap: 8px;
+    background: none; border: none; color: inherit; cursor: pointer; font: inherit; letter-spacing: inherit;
+    text-transform: inherit; padding: 0; text-align: left; }
+.${ROOT_CLASS}__section-toggle:hover { color: var(--text, #fff); }
+.${ROOT_CLASS}__section-toggle:focus { outline: 2px solid var(--primary, #6c63ff);
+    outline-offset: 3px; border-radius: 4px; }
+.${ROOT_CLASS}__section-chevron { flex: 0 0 auto; transition: transform 0.15s ease;
+    color: var(--text-muted, #888); }
+.${ROOT_CLASS}__section-toggle[aria-expanded="true"] .${ROOT_CLASS}__section-chevron { transform: rotate(90deg); }
+.${ROOT_CLASS}__section-count { margin-left: auto; min-width: 22px; height: 18px; padding: 0 7px;
+    border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.06); color: var(--text-muted, #888); font-size: 10px;
+    font-weight: 700; font-variant-numeric: tabular-nums; }
+.${ROOT_CLASS}__section-count:empty { display: none; }
+.${ROOT_CLASS}__collapsible-body { margin-top: 0; max-height: 0; opacity: 0; overflow: hidden;
+    transition: max-height 0.2s ease, opacity 0.16s ease, margin-top 0.16s ease; }
+.${ROOT_CLASS}__section--expanded .${ROOT_CLASS}__collapsible-body { margin-top: 10px; max-height: 360px; opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+    .${ROOT_CLASS}__collapsible-body,
+    .${ROOT_CLASS}__section-chevron { transition: none; }
+}
 .${ROOT_CLASS}__counter-list { list-style: none; margin: 0; padding: 0; }
 .${ROOT_CLASS}__counter-row { display: grid; grid-template-columns: 16px 1fr auto; gap: 8px;
     align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--card-border, #333);
