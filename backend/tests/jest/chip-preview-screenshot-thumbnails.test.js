@@ -86,6 +86,16 @@ describe('chip popover screenshot-thumbnail block', () => {
         expect(html).toMatch(/chip-popover-shots-count">2</);
     });
 
+    test('card_abdf0904: the section carries a "?" spec-tooltip icon with a title', () => {
+        const html = buildScreenshotBlockHtml({ files: [IMG()] });
+        // the "?" help affordance is present, styled by chip-popover-shots-help
+        expect(html).toMatch(/class="chip-popover-shots-help"[^>]*>\?</);
+        // it exposes a non-empty title tooltip (the spec annotation Hank asked for)
+        expect(html).toMatch(/class="chip-popover-shots-help"[^>]*title="[^"]+"/);
+        // and an aria-label for a11y
+        expect(html).toMatch(/class="chip-popover-shots-help"[^>]*aria-label="[^"]+"/);
+    });
+
     test('renders nothing when the card has no image files', () => {
         expect(buildScreenshotBlockHtml({ files: [] })).toBe('');
         expect(buildScreenshotBlockHtml({})).toBe('');
@@ -148,7 +158,10 @@ describe('chip popover render wiring (source-text guard)', () => {
         expect(CHIP_SRC).toMatch(/window\.openLightbox/);
     });
 
-    test('leaves a TODO marker for #6 to attach the ? spec-tooltip icon', () => {
-        expect(CHIP_SRC).toMatch(/TODO\(#6\)/);
+    test('card_abdf0904: the ? spec-tooltip icon is IMPLEMENTED (TODO(#6) marker resolved)', () => {
+        // The screenshot section now ships the "?" help affordance itself — the
+        // earlier TODO(#6) placeholder has been resolved, not just deferred.
+        expect(CHIP_SRC).not.toMatch(/TODO\(#6\)/);
+        expect(CHIP_SRC).toMatch(/chip-popover-shots-help/);
     });
 });
