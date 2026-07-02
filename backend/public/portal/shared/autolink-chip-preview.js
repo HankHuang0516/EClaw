@@ -187,10 +187,18 @@
             && /^image\//i.test(String(f.mimeType || f.mime_type || '')));
         if (!images.length) return '';
         const label = t('chip_popover_screenshots', '📸 截圖');
-        // TODO(#6): attach the "?" spec-tooltip icon here (right of the section
-        // label), reusing the portal's existing help-icon pattern. Backend/data
-        // is ready; only the tooltip affordance is #6's (UI) piece. Marker id
-        // below so #6 can target it without re-deriving the DOM shape.
+        // card_abdf0904: "?" spec-tooltip icon (Hank: 加上 ? icon 註解詳細規格).
+        // Native title = robust bilingual affordance (hover on desktop, long-press
+        // on mobile) that no i18n.apply pass can clobber; language by document lang,
+        // same approach chat.html's replyPreviewHelp uses.
+        const zh = ((typeof document !== 'undefined' && document.documentElement
+            && document.documentElement.lang) || '').toLowerCase().indexOf('zh') === 0;
+        const helpText = zh
+            ? '此區顯示這張卡片的截圖／附件縮圖；點縮圖可放大檢視。內容來自卡片附件並隨其更新。此功能過去存在、一度消失，現已修復並加了防回歸測試以防再次消失。'
+            : "This card's screenshots / attachment thumbnails — click a thumbnail to enlarge. It reflects the card's current attachments. The section had regressed away and is now restored with a guard test so it can't silently vanish again.";
+        const helpIcon = ' <span class="chip-popover-shots-help" role="img"'
+            + ' aria-label="' + escapeHtml(zh ? '截圖區說明' : 'about screenshots') + '"'
+            + ' title="' + escapeHtml(helpText) + '">?</span>';
         const thumbs = images.map(f => {
             const url = escapeHtml(f.url);
             const name = escapeHtml(f.filename || 'screenshot');
@@ -201,7 +209,8 @@
         }).join('');
         return '<div class="chip-popover-shots">'
             + '<div class="chip-popover-shots-label" data-chip-help-anchor="screenshots">'
-            + escapeHtml(label) + ' <span class="chip-popover-shots-count">' + images.length + '</span></div>'
+            + escapeHtml(label) + ' <span class="chip-popover-shots-count">' + images.length + '</span>'
+            + helpIcon + '</div>'
             + '<div class="chip-popover-thumbs">' + thumbs + '</div>'
             + '</div>';
     }
