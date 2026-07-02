@@ -848,21 +848,37 @@
         // ── Data loading ──
         async function loadAllData() {
             await Promise.all([loadMyCards(), loadRecent(), loadCollected(), loadFriendRequests()]);
-            // Preload petdx companion descriptors for my own cards so the
-            // avatar canvases mount on first paint. Other-bot cards don't
-            // have a local entityId, so they keep the legacy emoji/img path.
+
+            // Render the cards NOW. Card rendering must NEVER be gated behind
+            // avatar preload (card_415faf19): a single entity whose
+            // /api/companion/current hangs would leave the un-guarded
+            // `await preload()` pending forever → rebuildContent() never runs →
+            // the page sticks on "Loading cards…". This was reproducible on the
+            // admin account (many entities) while ordinary accounts loaded fine.
+            rebuildContent();
+
+            // Progressive avatar enhancement — best-effort, must never block or
+            // throw up the page. Bounded by a timeout so a hung companion fetch
+            // can't stall the mount; autoMount runs after rebuildContent has
+            // created the canvas placeholders.
             if (window.AvatarPetdx && currentUser && currentUser.deviceSecret) {
                 const myEntityIds = myCards.map(c => c.entityId).filter(Boolean);
                 if (myEntityIds.length) {
-                    await window.AvatarPetdx.preload({
-                        deviceId: currentUser.deviceId,
-                        deviceSecret: currentUser.deviceSecret,
-                        entityIds: myEntityIds
-                    });
-                    window.AvatarPetdx.autoMount();
+                    try {
+                        await Promise.race([
+                            window.AvatarPetdx.preload({
+                                deviceId: currentUser.deviceId,
+                                deviceSecret: currentUser.deviceSecret,
+                                entityIds: myEntityIds
+                            }),
+                            new Promise(resolve => setTimeout(resolve, 8000)),
+                        ]);
+                        window.AvatarPetdx.autoMount();
+                    } catch (err) {
+                        console.warn('[card-holder] avatar preload/mount failed (non-fatal):', err && err.message);
+                    }
                 }
             }
-            rebuildContent();
         }
 
         async function loadFriendRequests() {
