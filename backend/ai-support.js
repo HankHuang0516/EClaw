@@ -5,6 +5,7 @@
 // ============================================
 const express = require('express');
 const safeEqual = require('./safe-equal');
+const { sanitizeProxyResponse } = require('./ai-support-sanitize');
 
 // Lazy-load Anthropic client (only when ANTHROPIC_API_KEY is set)
 let _anthropicClient = null;
@@ -852,38 +853,10 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
 
     const toolHandlers = buildToolHandlers();
 
-    // ── Sanitize raw Claude CLI session JSON ─────
-    // The proxy sometimes returns raw Claude CLI session output (e.g. {"type":"result","subtype":"error_max_turns",...})
-    // instead of clean text. Detect and replace with user-friendly message.
-    function sanitizeProxyResponse(responseText) {
-        if (!responseText || typeof responseText !== 'string') {
-            return responseText || 'Sorry, I could not generate a response. Please try again.';
-        }
-
-        const trimmed = responseText.trim();
-        // Detect raw JSON session results
-        if (trimmed.startsWith('{') && trimmed.includes('"type"')) {
-            try {
-                const parsed = JSON.parse(trimmed);
-                if (parsed.type === 'result' || parsed.subtype || parsed.session_id) {
-                    console.warn(`[AI Chat] Raw session JSON detected (subtype: ${parsed.subtype}), sanitizing`);
-                    if (parsed.result_text) {
-                        return parsed.result_text;
-                    } else if (parsed.subtype === 'error_max_turns') {
-                        return 'Sorry, this question was too complex for me to fully analyze. Could you try asking a more specific question?';
-                    } else if (parsed.subtype === 'error_tool_execution') {
-                        return 'I encountered an error while looking into your issue. Please try again.';
-                    } else {
-                        return 'Sorry, I was unable to process your request. Please try rephrasing your question.';
-                    }
-                }
-            } catch (_) {
-                // Not valid JSON, leave as-is
-            }
-        }
-
-        return responseText;
-    }
+    // ── Sanitize proxy responses ─────
+    // Raw CLI session JSON *and* plain-text upstream auth/API errors must never
+    // reach a user verbatim. Logic lives in ./ai-support-sanitize (unit-tested);
+    // see card_747b9500 (2026-07-02 "Failed to authenticate. API Error: 401" leak).
 
     // ── Log Query to DB ─────────────────────────
     function logSupportQuery(deviceId, entityId, result) {
