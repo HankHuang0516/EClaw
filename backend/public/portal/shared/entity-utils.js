@@ -238,8 +238,20 @@ function renderAvatarHtml(avatar, size, entityId, opts) {
             + 'background-image:url(' + _escAttr(avatar) + ');background-repeat:no-repeat;'
             + 'background-size:800% 900%;background-position:0 0;"></div>';
     } else if (isAvatarUrl(avatar)) {
-        inner = '<img src="' + avatar + '" class="entity-avatar-img"' + eidAttr +
-            ' style="width:' + size + 'px;height:' + size + 'px;" alt="avatar" loading="lazy">';
+        // card_430579ee: wrap the <img> so a load FAILURE (404 / expired R2 URL /
+        // Chrome net::ERR_BLOCKED_BY_ORB on an external petdx sprite) degrades to
+        // the emoji fallback instead of the browser's broken-image glyph. Before,
+        // this plain <img> had no onerror, so avatar failures showed 破圖 across
+        // every portal surface that renders via this shared helper (~10 pages).
+        // eidAttr lives on the wrapper so click delegates still resolve entityId;
+        // _escAttr hardens the (previously raw) URL against attribute breakout.
+        inner = '<span class="entity-avatar-imgwrap"' + eidAttr
+            + ' style="display:inline-block;width:' + size + 'px;height:' + size + 'px;'
+            + 'line-height:' + size + 'px;text-align:center;font-size:' + Math.round(size * 0.7) + 'px;">'
+            + '<img src="' + _escAttr(avatar) + '" class="entity-avatar-img"'
+            + ' style="width:' + size + 'px;height:' + size + 'px;" alt="avatar" loading="lazy"'
+            + ' onerror="this.onerror=null;var p=this.parentNode;if(p){p.className=&quot;entity-avatar-emoji&quot;;p.textContent=&quot;\u{1F99E}&quot;;}">'
+            + '</span>';
     } else if (entityId != null) {
         // Emoji fallback — wrap in a span so the click delegate can resolve entityId.
         inner = '<span class="entity-avatar-emoji"' + eidAttr + '>' + (avatar || '\u{1F99E}') + '</span>';
