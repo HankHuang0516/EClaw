@@ -469,7 +469,7 @@ async function initKanbanDatabase() {
 /**
  * Factory: receives in-memory devices object from index.js
  */
-function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback, saveChatMessage, getMissionApiHints, pushToBot, orgChart, notifyDevice, emitDevicePreferences, createActionRequest, dismissActionRequestsForCard } = {}) {
+function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback, saveChatMessage, getMissionApiHints, pushToBot, orgChart, notifyDevice, emitDevicePreferences, createActionRequest, dismissActionRequestsForCard, dismissSurfacerActionRequestsForCard } = {}) {
     const router = express.Router();
 
     // Health check
@@ -3686,10 +3686,179 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
             for (const [deviceId, cards] of byDevice) {
                 await processDeviceStaleCards(deviceId, cards);
+                // Waiting-state surfacer (phases 2-3 of card_76b073959c279d6204d9fd42).
+                // Rides the SAME worker tick (no new cron). Fully gated behind the
+                // default-FALSE waiting_state_surfacer_enabled pref inside the
+                // function → a complete no-op until Hank explicitly enables it.
+                // Failure-isolated: a surfacer error NEVER breaks the stale scan.
+                try {
+                    await surfaceOwnerWaitingStates(deviceId);
+                } catch (e) {
+                    console.error('[Kanban] waiting-state surfacer error (non-blocking):', e.message);
+                }
             }
         } catch (err) {
             console.error('[Kanban] Stale check error:', err.message);
         }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // WAITING-STATE SURFACER (phases 2-3 of card_76b073959c279d6204d9fd42)
+    // ──────────────────────────────────────────────────────────────────────
+    // Hank ONLY monitors the 需要你 (action-request) inbox — he never opens task
+    // cards. This routine generalizes the review/blocked owner-decision move-hook
+    // into a periodic pass that catches EVERY card genuinely WAITING ON THE OWNER
+    // (including in_progress cards blocked on an owner decision) and auto-surfaces
+    // exactly ONE inbox item per card, then auto-dismisses it when the wait clears.
+    //
+    // SAFETY (the #1 risk is flooding the inbox):
+    //   * DARK-LAUNCH: gated behind waiting_state_surfacer_enabled (DEFAULT FALSE).
+    //     When false, this function early-returns BEFORE touching the DB — a
+    //     complete no-op. Nothing changes for anyone until Hank enables it.
+    //   * DEDUP: at most ONE open surfacer item per card. Surfacer items carry
+    //     decision_context.surfacer === true so we find/dedup/dismiss ONLY our own
+    //     rows and never touch ordinary owner-decision or agent action-requests.
+    //   * AUTO-DISMISS: when a card is no longer 'owner'-waiting (wait cleared, or
+    //     it left the waiting statuses entirely), its surfacer item is dismissed
+    //     via dismissSurfacerActionRequestsForCard (surfacer-only guard).
+    async function surfaceOwnerWaitingStates(deviceId) {
+        if (!deviceId) return;
+        if (typeof createActionRequest !== 'function') return;
+
+        // Gate: dark-launch, DEFAULT FALSE. Unset pref → false → complete no-op.
+        const prefs = await devicePrefs.getPrefs(deviceId).catch(() => ({}));
+        if (prefs.waiting_state_surfacer_enabled !== true) return;
+
+        const { classifyCardWaitingState } = require('./waiting-state');
+
+        // Candidate cards: any active card in a status that CAN be owner-waiting
+        // (blocked / review / in_progress). todo/done/backlog/archived excluded.
+        const cardsRes = await pool.query(
+            `SELECT * FROM kanban_cards
+              WHERE device_id = $1
+                AND archived = false
+                AND status IN ('blocked', 'review', 'in_progress')`,
+            [deviceId]
+        );
+        const cards = cardsRes.rows || [];
+
+        // All pending SURFACER items for this device, keyed by related_card_id, so
+        // we can dedup (skip create when one exists) and dismiss (wait cleared /
+        // card gone). We match ONLY our own rows via decision_context.surfacer.
+        const openRes = await pool.query(
+            `SELECT related_card_id AS "cardId"
+               FROM agent_action_requests
+              WHERE device_id = $1
+                AND status = 'pending'
+                AND (decision_context #>> '{surfacer}') = 'true'`,
+            [deviceId]
+        );
+        const openSurfacerCards = new Set(
+            (openRes.rows || []).map(r => r.cardId).filter(id => id != null)
+        );
+
+        const dismiss = (typeof dismissSurfacerActionRequestsForCard === 'function')
+            ? dismissSurfacerActionRequestsForCard
+            : async () => [];
+
+        for (const card of cards) {
+            const cardId = card.id;
+            // Latest non-system comment (the narrow in_progress await-owner marker
+            // lives here) — best-effort; a query error must not abort the pass.
+            let latestComment = '';
+            try {
+                const cmt = await pool.query(
+                    `SELECT text FROM kanban_comments
+                      WHERE card_id = $1 AND device_id = $2 AND is_system = false
+                      ORDER BY created_at DESC LIMIT 1`,
+                    [cardId, deviceId]
+                );
+                latestComment = (cmt.rows[0] && typeof cmt.rows[0].text === 'string') ? cmt.rows[0].text : '';
+            } catch (_) { latestComment = ''; }
+
+            let verdict = null;
+            try {
+                verdict = classifyCardWaitingState(card, {
+                    latestComment,
+                    decisionContext: card.decision_context || null,
+                });
+            } catch (_) { verdict = null; }
+
+            const hasItem = openSurfacerCards.has(cardId);
+
+            if (verdict === 'owner') {
+                // DEDUP: one surfacer item per card. If one exists, leave it.
+                if (hasItem) continue;
+                try {
+                    const reason = describeOwnerWaitReason(card, latestComment);
+                    const headline = `需要你決策：「${card.title || cardId}」(${reason})`.slice(0, 2000);
+                    const from = (Array.isArray(card.assigned_bots) && card.assigned_bots.length
+                        && Number.isInteger(Number(card.assigned_bots[0])))
+                        ? Number(card.assigned_bots[0])
+                        : 0;
+                    await createActionRequest({
+                        deviceId,
+                        fromEntityId: from,
+                        type: 'decision',
+                        prompt: headline,
+                        options: ['核可', '退回', '延後'], // RECORD-ONLY — no auto-execute
+                        relatedCardId: cardId,
+                        decisionContext: {
+                            surfacer: true,          // ← our distinguishing marker
+                            waitingOn: 'owner',
+                            ownerOnly: true,
+                            reason,
+                            whatWasDone: latestComment.slice(0, 1000),
+                            recommendation: latestComment.slice(0, 1000),
+                            evidence: [],
+                            recommendedOptionIndex: 0,
+                            relatedCardId: cardId,
+                        },
+                    });
+                    openSurfacerCards.add(cardId);
+                    console.log(`[Kanban] waiting-state surfaced (owner) card=${cardId} reason=${reason}`);
+                } catch (e) {
+                    console.error(`[Kanban] waiting-state surface create error card=${cardId} (non-blocking):`, e.message);
+                }
+            } else if (hasItem) {
+                // Wait cleared (card no longer owner-waiting) but a surfacer item is
+                // still open → dismiss it (surfacer-only guard in the helper).
+                try {
+                    await dismiss(deviceId, cardId);
+                    openSurfacerCards.delete(cardId);
+                    console.log(`[Kanban] waiting-state auto-dismissed (wait cleared) card=${cardId}`);
+                } catch (e) {
+                    console.error(`[Kanban] waiting-state dismiss error card=${cardId} (non-blocking):`, e.message);
+                }
+            }
+        }
+
+        // Sweep surfacer items whose card is GONE from the candidate set entirely
+        // (moved to done/archived/todo/backlog, or deleted) — those cards never
+        // appear in the loop above, so dismiss their stale surfacer items here.
+        const candidateIds = new Set(cards.map(c => c.id));
+        for (const cardId of openSurfacerCards) {
+            if (candidateIds.has(cardId)) continue;
+            try {
+                await dismiss(deviceId, cardId);
+                console.log(`[Kanban] waiting-state auto-dismissed (card left waiting statuses) card=${cardId}`);
+            } catch (e) {
+                console.error(`[Kanban] waiting-state dismiss(stale) error card=${cardId} (non-blocking):`, e.message);
+            }
+        }
+    }
+
+    // Compact human reason for the surfacer headline / decision_context.
+    function describeOwnerWaitReason(card, latestComment) {  // eslint-disable-line no-unused-vars
+        const status = String(card.status || '').toLowerCase();
+        const config = (card.config && typeof card.config === 'object') ? card.config : {};
+        if (String(config.waitingOn || '').toLowerCase() === 'owner' || config.awaitOwner === true) {
+            return 'config waitingOn=owner';
+        }
+        if (status === 'review') return 'review + ownerOnly';
+        if (status === 'blocked') return `blocked (${card.gate_reason || 'owner-only reason'})`.slice(0, 120);
+        if (status === 'in_progress') return 'in_progress + [await-owner] marker';
+        return 'owner-only';
     }
 
     async function processDeviceStaleCards(deviceId, cards) {

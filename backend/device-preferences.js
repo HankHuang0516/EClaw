@@ -124,6 +124,16 @@ const DEFAULTS = {
     // Same string-safe boolean coercion as the auto-escalate toggles (a bare
     // `!!raw` would turn the string 'false' true → fail-OPEN, wrong for a routing gate).
     commander_forward_fallback_enabled: false,
+    // Waiting-state surfacer (phases 2-3 of card_76b073959c279d6204d9fd42).
+    // DARK-LAUNCH: DEFAULT FALSE. When true, the kanban worker's stale-scan pass
+    // also runs a "waiting-state surfacer" that auto-opens a 需要你 inbox item for
+    // every card genuinely WAITING ON THE OWNER (blocked with an owner-only
+    // reason / review + ownerOnly / explicit config.waitingOn='owner' /
+    // in_progress with an explicit [await-owner] marker), and auto-dismisses that
+    // item when the wait clears. Strictly de-duplicated (≤1 surfacer item/card).
+    // Until explicitly enabled, the surfacer is a complete no-op — nothing
+    // changes for anyone. Consumed by surfaceOwnerWaitingStates in kanban.js.
+    waiting_state_surfacer_enabled: false,
 };
 
 const ENTITY_IDLE_AFTER_SECONDS_MIN = 15;
@@ -173,12 +183,16 @@ function coerceValue(key, raw) {
     // that may serialize the flag as a query/JSON string).
     if (key === 'kanban_auto_escalate_enabled' || key === 'kanban_auto_escalate_skip_automation'
         || key === 'action_request_ratify_enabled'
-        || key === 'commander_forward_fallback_enabled') {
+        || key === 'commander_forward_fallback_enabled'
+        || key === 'waiting_state_surfacer_enabled') {
         // 計畫E: ratify master switch — same string-safe boolean coercion (a bare
         // `!!raw` would turn the string 'false' true, fail-OPEN for an auto-merge gate).
         // commander_forward_fallback_enabled (card_3ce0080a) shares the coercion for
         // the same fail-OPEN reason: it is a message-routing gate that MUST stay off
         // unless the value is a real true / the string 'true'.
+        // waiting_state_surfacer_enabled is dark-launch DEFAULT FALSE: the string
+        // 'false' must stay false so an accidental serialized flag never flips the
+        // inbox-flood risk open.
         return raw === true || raw === 'true';
     }
     if (typeof def === 'boolean') return !!raw;

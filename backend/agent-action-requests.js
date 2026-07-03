@@ -927,6 +927,31 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         return upd.rows || [];
     }
 
+    // Waiting-state surfacer lifecycle (phases 2-3 of card_76b073959c279d6204d9fd42):
+    // dismiss ONLY the SURFACER-created pending item(s) for a card — rows whose
+    // decision_context.surfacer === true. This is STRICTLY NARROWER than
+    // dismissActionRequestsForCard (which dismisses every owner-decision row,
+    // decision_context IS NOT NULL): the surfacer must NEVER touch the move-hook's
+    // owner-decision rows nor any ordinary action-request. Same 'dismissed' socket
+    // contract so the inbox live-refreshes. Device-scoped; throws only on DB error
+    // (the kanban caller wraps it in try/catch).
+    async function dismissSurfacerActionRequestsForCard(deviceId, cardId) {
+        if (!deviceId || !cardId) return [];
+        const upd = await pool.query(
+            `UPDATE agent_action_requests
+                SET status = 'dismissed', resolved_at = NOW()
+              WHERE device_id = $1 AND related_card_id = $2
+                AND status = 'pending'
+                AND (decision_context #>> '{surfacer}') = 'true'
+            RETURNING *`,
+            [deviceId, cardId]
+        );
+        for (const row of (upd.rows || [])) {
+            emitChanged(deviceId, 'dismissed', row.id, row.from_entity_id);
+        }
+        return upd.rows || [];
+    }
+
     // ══════════════════════════════════════════════════════════════════════
     // TIMEOUT-POLICY WORKER (card_ce0d685b)
     // ──────────────────────────────────────────────────────────────────────
@@ -1829,6 +1854,11 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         // review/blocked to auto-dismiss its pending owner-decision request(s) +
         // emit the 'dismissed' socket event.
         dismissActionRequestsForCard,
+        // Waiting-state surfacer lifecycle (phases 2-3 of card_76b073959c279d6204d9fd42):
+        // NARROWER dismiss that only touches surfacer rows (decision_context.surfacer
+        // === true), so the surfacer never dismisses the move-hook's owner-decision
+        // rows or ordinary action-requests. Injected into kanban.js.
+        dismissSurfacerActionRequestsForCard,
         // 需要你 negotiation: exported for direct test invocation of the engine.
         openNegotiationRound,
         advanceNegotiations,
