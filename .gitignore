@@ -19,6 +19,9 @@ node_modules/
 backend/node_modules/
 backend/data/*
 !backend/data/skill-templates.json
+!backend/data/soul-templates.json
+!backend/data/rule-templates.json
+!backend/data/arena-questions.json
 !backend/data/routing-policies/
 !backend/data/routing-policies/*.txt
 backend/.cache/
