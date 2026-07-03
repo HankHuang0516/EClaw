@@ -60,6 +60,11 @@ const UI_PAIN_TAGS = Object.freeze(['ux_feedback', 'redirect_deeplink', 'deliver
  * @property {boolean} [isUiCard]            explicit override; if undefined, painTags is inspected
  * @property {string[]} [painTags]           used to infer isUiCard when not passed
  * @property {boolean} [strictArtifacts]     default true when severity/files provided; false otherwise
+ * @property {boolean} [isAutomation]        automation / ops card (scheduled cron母卡 is_automation OR
+ *                                           cron-spawned [Auto] child is_auto_generated). Pure operations
+ *                                           (health checks, audits, scheduled automations) have no PR, so
+ *                                           the PR-link sub-requirement is SKIPPED for these cards. The
+ *                                           6-item evidence checklist is still enforced.
  */
 
 /**
@@ -176,8 +181,15 @@ function evaluateDoneGate(input) {
     // v1 path: text-only, allow now.
     if (!useV2) return { allowed: true };
 
-    // 3. v2 — PR link in evidence (severity-tier independent: always required)
-    if (!PR_LINK_PATTERN.test(evidenceComment.text)) {
+    // 3. v2 — PR link in evidence (severity-tier independent: always required),
+    // EXCEPT for automation / ops cards. Scheduled automations, health-check
+    // sweeps and audit crons (is_automation母卡 OR is_auto_generated [Auto] child)
+    // are pure operations with NO code change → no PR to cite. Requiring a PR link
+    // blocked every ops card and forced a manual requiresPreflightReview:false. The
+    // 6-item evidence checklist above (Scope/Acceptance/Test plan/Evidence plan/
+    // Out-of-scope/User POV) is STILL enforced for them — only this PR-link
+    // sub-check is skipped. Non-automation cards are unchanged.
+    if (!input.isAutomation && !PR_LINK_PATTERN.test(evidenceComment.text)) {
         return {
             allowed: false,
             code: 'PREFLIGHT_GATE_FAILED',

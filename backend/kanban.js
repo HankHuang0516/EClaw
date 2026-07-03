@@ -2532,6 +2532,10 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     files: filesRes.rows,
                     severity: (card.priority || 'P2'),
                     painTags,
+                    // Automation / ops cards (scheduled automation母卡 or a
+                    // cron-spawned [Auto] child) have no PR to cite — exempt them
+                    // from the PR-link sub-check (6-item checklist still enforced).
+                    isAutomation: card.is_automation === true || card.is_auto_generated === true,
                 });
                 if (!verdict.allowed) {
                     return res.status(400).json({
