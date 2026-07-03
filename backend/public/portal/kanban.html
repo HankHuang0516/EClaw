@@ -1420,10 +1420,15 @@
             return { cardId: head, commentAnchor };
         }
 
-        function handleHashDeepLink() {
+        async function handleHashDeepLink() {
             const target = parseDeepLinkHash();
             if (!target) return;
-            const card = findCard(target.cardId);
+            // A deep-link from chat / 需要你 inbox / notifications may target a card
+            // that isn't in the current board slice (done/archived/other column, or
+            // arriving before loadCards() populated it). Fall back to a single-card
+            // fetch by id BEFORE giving up — only toast "Not found" if the backend
+            // genuinely has no such card.
+            const card = findCard(target.cardId) || await ensureCardLoaded(target.cardId);
             if (!card) {
                 const msg = (t('toast_not_found', 'Not found') || 'Not found') + ': ' + target.cardId;
                 showToast(msg, true);
@@ -1451,7 +1456,7 @@
                     openDetail(cardId);
                 } else {
                     await loadCards();
-                    handleHashDeepLink();
+                    await handleHashDeepLink();
                 }
                 return true;
             } catch (e) {
