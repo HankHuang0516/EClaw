@@ -1245638,7 +1245638,7 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_admin_users_desc": "檢視並轮替 ADMIN_DEVICE_IDS 名单。",
+        "admin_hub_card_admin_users_desc": "檢视并轮替 ADMIN_DEVICE_IDS 名单。",
 
 
 
@@ -1245894,7 +1245894,7 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_feature_flags_desc": "針对特定装置或全域开啟 / 关闭實验功能。",
+        "admin_hub_card_feature_flags_desc": "針对特定装置或全域开启 / 关闭實验功能。",
 
 
 
@@ -1246022,7 +1246022,7 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_log_browser": "错誤紀錄瀏覽器",
+        "admin_hub_card_log_browser": "错誤紀錄浏览器",
 
 
 
@@ -1246150,7 +1246150,7 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_log_browser_desc": "依分类、等級、时间區间篩选 server_logs。",
+        "admin_hub_card_log_browser_desc": "依分类、等級、时间区间篩选 server_logs。",
 
 
 
@@ -1246406,7 +1246406,7 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_rental_monitor_desc": "资料库延遲、墓碑成长、Publisher 串接狀態、机队計数。",
+        "admin_hub_card_rental_monitor_desc": "资料库延遲、墓碑成长、Publisher 串接狀態、机队计数。",
 
 
 
@@ -1246790,7 +1246790,7 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_sys_metrics_desc": "CPU / 記憶体 / socket 数 / 請求率。",
+        "admin_hub_card_sys_metrics_desc": "CPU / 記憶体 / socket 数 / 请求率。",
 
 
 
@@ -1246918,7 +1246918,7 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_footnote": "僅管理员可見 — 非管理员会在首頁载入时看到 403 提示並被引導回 /portal/",
+        "admin_hub_footnote": "僅管理员可見 — 非管理员会在首页载入时看到 403 提示并被引導回 /portal/",
 
 
 
@@ -1247046,7 +1247046,7 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_section_future": "規劃中",
+        "admin_hub_section_future": "规劃中",
 
 
 
@@ -1247322,7 +1247322,7 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_subtitle": "开发 + 运營工具，只限管理员可用；非管理员会自動跳轉回 /portal/。",
+        "admin_hub_subtitle": "开发 + 运營工具，只限管理员可用；非管理员会自动跳轉回 /portal/。",
 
 
 
@@ -1249114,7 +1249114,7 @@ const TRANSLATIONS = {
 
 
 
-        "admin_placeholder_setup_pwd": "若未使用 SETUP_PASSWORD 請留空",
+        "admin_placeholder_setup_pwd": "若未使用 SETUP_PASSWORD 请留空",
 
 
 
@@ -1253594,7 +1253594,7 @@ const TRANSLATIONS = {
 
 
 
-        "ai_chat_error": "抱歉，出了点問题，請稍后再試。",
+        "ai_chat_error": "抱歉，出了点問题，请稍后再試。",
 
 
 
@@ -1253850,7 +1253850,7 @@ const TRANSLATIONS = {
 
 
 
-        "ai_chat_rate_limited": "已达到訊息上限，請稍后再試。",
+        "ai_chat_rate_limited": "已达到訊息上限，请稍后再試。",
 
 
 
@@ -1253978,7 +1253978,7 @@ const TRANSLATIONS = {
 
 
 
-        "ai_chat_still_working": "这需要一点时间，請稍候...",
+        "ai_chat_still_working": "这需要一点时间，请稍候...",
 
 
 
@@ -1254618,7 +1254618,7 @@ const TRANSLATIONS = {
 
 
 
-        "ai_progress_bash": "執行分析",
+        "ai_progress_bash": "执行分析",
 
 
 
@@ -1255258,7 +1255258,7 @@ const TRANSLATIONS = {
 
 
 
-        "ai_progress_read": "讀取檔案",
+        "ai_progress_read": "读取檔案",
 
 
 
@@ -1255642,7 +1255642,7 @@ const TRANSLATIONS = {
 
 
 
-        "ai_progress_write": "寫入檔案",
+        "ai_progress_write": "写入檔案",
 
 
 
@@ -1259072,7 +1259072,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_back": "返回 Agent 能力評测",
+        "arena_back": "返回 Agent 能力评测",
 
 
 
@@ -1259200,7 +1259200,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_badge": "Agent 能力評测",
+        "arena_badge": "Agent 能力评测",
 
 
 
@@ -1259456,7 +1259456,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_comments_hint": "完成考試並登上排行榜后即可留言。",
+        "arena_comments_hint": "完成考試并登上排行榜后即可留言。",
 
 
 
@@ -1259840,7 +1259840,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_comments_text_ph": "留下你的評論...",
+        "arena_comments_text_ph": "留下你的评论...",
 
 
 
@@ -1260096,7 +1260096,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_cooldown_prefix": "下次評测开放时间：",
+        "arena_cooldown_prefix": "下次评测开放时间：",
 
 
 
@@ -1260224,7 +1260224,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_copy_btn": "📋 複製指令",
+        "arena_copy_btn": "📋 复製指令",
 
 
 
@@ -1260352,7 +1260352,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_copy_label": "📋 複製以下指令傳给你的 Bot：",
+        "arena_copy_label": "📋 复製以下指令傳给你的 Bot：",
 
 
 
@@ -1260480,7 +1260480,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_exam_title": "Agent 能力評测 — 考試",
+        "arena_exam_title": "Agent 能力评测 — 考試",
 
 
 
@@ -1260736,7 +1260736,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_fb_caps_q": "你希望 Agent 具備哪些功能？（多选）",
+        "arena_fb_caps_q": "你希望 Agent 具备哪些功能？（多选）",
 
 
 
@@ -1260864,7 +1260864,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_fb_comment_ph": "给 EClawbot 的建議或想说的話...",
+        "arena_fb_comment_ph": "给 EClawbot 的建议或想说的話...",
 
 
 
@@ -1261376,7 +1261376,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_generate": "🎯 產生模擬考試",
+        "arena_generate": "🎯 产生模擬考試",
 
 
 
@@ -1262528,7 +1262528,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_report_title": "📊 考試報告",
+        "arena_report_title": "📊 考試报告",
 
 
 
@@ -1262784,7 +1262784,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_subtitle": "AI Agent 標準化評测框架。12 項基準涵蓋感知、互動、推理、程式生成与安全韌性，即时計分。",
+        "arena_subtitle": "AI Agent 标準化评测框架。12 項基準涵蓋感知、互动、推理、程式生成与安全韌性，即时计分。",
 
 
 
@@ -1266216,7 +1266216,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_title": "EClawbot Agent 能力評测",
+        "arena_title": "EClawbot Agent 能力评测",
 
 
 
@@ -1268520,7 +1268520,7 @@ const TRANSLATIONS = {
 
 
 
-        "borrow_cost_24_7": "24/7 穩定不斷線",
+        "borrow_cost_24_7": "24/7 穩定不斷线",
 
 
 
@@ -1269800,7 +1269800,7 @@ const TRANSLATIONS = {
 
 
 
-        "borrow_desc": "为您的實体租用官方 Bot。Bot 会自動与您的動態桌布互動。",
+        "borrow_desc": "为您的實体租用官方 Bot。Bot 会自动与您的动態桌布互动。",
 
 
 
@@ -1271336,7 +1271336,7 @@ const TRANSLATIONS = {
 
 
 
-        "borrow_pay_desc": "输入信用卡资訊以租用專屬个人 Bot（NT$288/月）。含无限訊息及 24/7 全天候在線。",
+        "borrow_pay_desc": "输入信用卡资訊以租用專属个人 Bot（NT$288/月）。含无限訊息及 24/7 全天候在线。",
 
 
 
@@ -1271720,7 +1271720,7 @@ const TRANSLATIONS = {
 
 
 
-        "borrow_personal_desc": "專屬个人 Bot",
+        "borrow_personal_desc": "專属个人 Bot",
 
 
 
@@ -1271848,7 +1271848,7 @@ const TRANSLATIONS = {
 
 
 
-        "borrow_personal_feat_247": "24/7 全天候在線",
+        "borrow_personal_feat_247": "24/7 全天候在线",
 
 
 
@@ -1272104,7 +1272104,7 @@ const TRANSLATIONS = {
 
 
 
-        "borrow_personal_feat_memory": "專屬記憶（只屬於你）",
+        "borrow_personal_feat_memory": "專属記憶（只属於你）",
 
 
 
@@ -1272744,7 +1272744,7 @@ const TRANSLATIONS = {
 
 
 
-        "borrow_rental_demand_fail": "发送失败，請重試。",
+        "borrow_rental_demand_fail": "发送失败，请重試。",
 
 
 
@@ -1272872,7 +1272872,7 @@ const TRANSLATIONS = {
 
 
 
-        "borrow_rental_demand_success": "已发出租用需求，等待回覆，通常需要 1-2 个工作天。",
+        "borrow_rental_demand_success": "已发出租用需求，等待回复，通常需要 1-2 个工作天。",
 
 
 
@@ -1273512,7 +1273512,7 @@ const TRANSLATIONS = {
 
 
 
-        "borrow_sold_out_message": "月租版 Bot 目前已售完。\n\n您可以提出租用需求申請，我们会在有名額时通知您（通常需要 1-2 个工作天）。",
+        "borrow_sold_out_message": "月租版 Bot 目前已售完。\n\n您可以提出租用需求申请，我们会在有名額时通知您（通常需要 1-2 个工作天）。",
 
 
 
@@ -1273640,7 +1273640,7 @@ const TRANSLATIONS = {
 
 
 
-        "borrow_sold_out_submit": "提出申請",
+        "borrow_sold_out_submit": "提出申请",
 
 
 
@@ -1274280,7 +1274280,7 @@ const TRANSLATIONS = {
 
 
 
-        "borrow_tos_loading": "载入使用規範中...",
+        "borrow_tos_loading": "载入使用规范中...",
 
 
 
@@ -1274408,7 +1274408,7 @@ const TRANSLATIONS = {
 
 
 
-        "borrow_tos_required": "使用免费版机器人前，請先閱讀並同意使用規範。",
+        "borrow_tos_required": "使用免费版机器人前，请先閱读并同意使用规范。",
 
 
 
@@ -1274536,7 +1274536,7 @@ const TRANSLATIONS = {
 
 
 
-        "borrow_tos_title": "免费版机器人使用規範",
+        "borrow_tos_title": "免费版机器人使用规范",
 
 
 
@@ -1274920,7 +1274920,7 @@ const TRANSLATIONS = {
 
 
 
-        "borrow_unbind_desc": "確定要解除 Entity #{id} 的官方 Bot 嗎？Bot 將歸还到池中。",
+        "borrow_unbind_desc": "确定要解除 Entity #{id} 的官方 Bot 嗎？Bot 將歸还到池中。",
 
 
 
@@ -1277880,7 +1277880,7 @@ const TRANSLATIONS = {
 
 
 
-        "kanban_cron_recurring_notify_label": "🅱️ 排程母卡自身重複触发时通知（无子卡）",
+        "kanban_cron_recurring_notify_label": "🅱️ 排程母卡自身重复触发时通知（无子卡）",
 
 
 
@@ -1279032,7 +1279032,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_already_friends": "已經是好友或請求待处理中",
+        "cardholder_already_friends": "已經是好友或请求待处理中",
 
 
 
@@ -1280952,7 +1280952,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_copy_code": "複製",
+        "cardholder_copy_code": "复製",
 
 
 
@@ -1282872,7 +1282872,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_filter_requests": "好友請求",
+        "cardholder_filter_requests": "好友请求",
 
 
 
@@ -1283128,7 +1283128,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_friend_accepted": "已接受好友請求！",
+        "cardholder_friend_accepted": "已接受好友请求！",
 
 
 
@@ -1283256,7 +1283256,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_friend_rejected": "已拒絕好友請求",
+        "cardholder_friend_rejected": "已拒絕好友请求",
 
 
 
@@ -1283512,7 +1283512,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_friend_req_sent": "好友請求已发送！",
+        "cardholder_friend_req_sent": "好友请求已发送！",
 
 
 
@@ -1283640,7 +1283640,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_friend_requests": "好友請求",
+        "cardholder_friend_requests": "好友请求",
 
 
 
@@ -1283896,7 +1283896,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_interactions": "互動次数",
+        "cardholder_interactions": "互动次数",
 
 
 
@@ -1284152,7 +1284152,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_last_interaction": "最后互動",
+        "cardholder_last_interaction": "最后互动",
 
 
 
@@ -1285304,7 +1285304,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_no_requests": "沒有待处理的好友請求",
+        "cardholder_no_requests": "沒有待处理的好友请求",
 
 
 
@@ -1285688,7 +1285688,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_notes": "備註",
+        "cardholder_notes": "备註",
 
 
 
@@ -1285816,7 +1285816,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_notes_placeholder": "新增備註...",
+        "cardholder_notes_placeholder": "新增备註...",
 
 
 
@@ -1286584,7 +1286584,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_recent_empty": "尚无最近互動",
+        "cardholder_recent_empty": "尚无最近互动",
 
 
 
@@ -1286712,7 +1286712,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_recent_empty_sub": "与你互動的名片会显示在此",
+        "cardholder_recent_empty_sub": "与你互动的名片会显示在此",
 
 
 
@@ -1287353,7 +1287353,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_remove_confirm": "確定要从名片夾移除 {name} 嗎？",
+        "cardholder_remove_confirm": "确定要从名片夾移除 {name} 嗎？",
 
 
 
@@ -1287737,7 +1287737,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_search_external": "線上代理",
+        "cardholder_search_external": "线上代理",
 
 
 
@@ -1288121,7 +1288121,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_send_friend_req": "发送好友請求",
+        "cardholder_send_friend_req": "发送好友请求",
 
 
 
@@ -1288761,7 +1288761,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_tags": "標籤",
+        "cardholder_tags": "标籤",
 
 
 
@@ -1288889,7 +1288889,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_tags_placeholder": "標籤1, 標籤2, 標籤3",
+        "cardholder_tags_placeholder": "标籤1, 标籤2, 标籤3",
 
 
 
@@ -1289529,7 +1289529,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_unfriend_confirm": "確定要解除好友关係？",
+        "cardholder_unfriend_confirm": "确定要解除好友关係？",
 
 
 
@@ -1290169,7 +1290169,7 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_website_label": "網站",
+        "cardholder_website_label": "网站",
 
 
 
@@ -1290297,7 +1290297,7 @@ const TRANSLATIONS = {
 
 
 
-        "channel_ai_agent_hint": "🤖 強烈建議使用 Claude Code 等 AI Agent 进行輔助安装。",
+        "channel_ai_agent_hint": "🤖 強烈建议使用 Claude Code 等 AI Agent 进行輔助安装。",
 
 
 
@@ -1292985,7 +1292985,7 @@ const TRANSLATIONS = {
 
 
 
-        "chat_contacts_offline": "離線",
+        "chat_contacts_offline": "离线",
 
 
 
@@ -1293113,7 +1293113,7 @@ const TRANSLATIONS = {
 
 
 
-        "chat_contacts_offline_send": "对方實体已離線，无法傳送",
+        "chat_contacts_offline_send": "对方實体已离线，无法傳送",
 
 
 
@@ -1293241,7 +1293241,7 @@ const TRANSLATIONS = {
 
 
 
-        "chat_contacts_remove_confirm": "確定移除 {name}？",
+        "chat_contacts_remove_confirm": "确定移除 {name}？",
 
 
 
@@ -1298997,7 +1298997,7 @@ const TRANSLATIONS = {
 
 
 
-        "chat_reply_btn": "回覆",
+        "chat_reply_btn": "回复",
 
 
 
@@ -1301173,7 +1301173,7 @@ const TRANSLATIONS = {
 
 
 
-        "chat_wait_upload": "請等待上傳完成",
+        "chat_wait_upload": "请等待上傳完成",
 
 
 
@@ -1303349,7 +1303349,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_cat_interaction": "互動方式",
+        "cmp_cat_interaction": "互动方式",
 
 
 
@@ -1304117,7 +1304117,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_cat_wallpaper": "動態桌布",
+        "cmp_cat_wallpaper": "动態桌布",
 
 
 
@@ -1304629,7 +1304629,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_attach_desc": "上傳照片（Flickr 云端）、錄製语音訊息、傳送檔案（最大 100 MB）。獨立的檔案管理頁面，支援實体/类型篩选、广播附件和送达追蹤。",
+        "cmp_eclaw_attach_desc": "上傳照片（Flickr 云端）、錄製语音訊息、傳送檔案（最大 100 MB）。獨立的檔案管理页面，支援實体/类型篩选、广播附件和送达追蹤。",
 
 
 
@@ -1304885,7 +1304885,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_best_1": "Android 動態桌布 + iPhone 可用 Web 入口",
+        "cmp_eclaw_best_1": "Android 动態桌布 + iPhone 可用 Web 入口",
 
 
 
@@ -1305013,7 +1305013,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_best_2": "即时主動推播更新",
+        "cmp_eclaw_best_2": "即时主动推播更新",
 
 
 
@@ -1305141,7 +1305141,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_best_3": "多實体動態管理（无上限）",
+        "cmp_eclaw_best_3": "多實体动態管理（无上限）",
 
 
 
@@ -1305397,7 +1305397,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_best_5": "檔案管理员：實体層級篩选",
+        "cmp_eclaw_best_5": "檔案管理员：實体层級篩选",
 
 
 
@@ -1305525,7 +1305525,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_best_for": "EClawbot 最適合⋯",
+        "cmp_eclaw_best_for": "EClawbot 最适合⋯",
 
 
 
@@ -1305653,7 +1305653,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_cost_desc": "免费机器人（共享、无限消息）。个人机器人 NT$288/月（專屬、无限制）。自架：免费。",
+        "cmp_eclaw_cost_desc": "免费机器人（共享、无限消息）。个人机器人 NT$288/月（專属、无限制）。自架：免费。",
 
 
 
@@ -1306293,7 +1306293,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_entity_title": "无上限動態實体",
+        "cmp_eclaw_entity_title": "无上限动態實体",
 
 
 
@@ -1306421,7 +1306421,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_fmt_desc": "訊息包含文字、心情、動畫狀態。透过 API 以结構化 JSON 控制桌布。",
+        "cmp_eclaw_fmt_desc": "訊息包含文字、心情、动畫狀態。透过 API 以结構化 JSON 控制桌布。",
 
 
 
@@ -1306677,7 +1306677,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_interact_desc": "机器人主動推播狀態更新到桌布。可直接对話，也可广播訊息给所有實体。",
+        "cmp_eclaw_interact_desc": "机器人主动推播狀態更新到桌布。可直接对話，也可广播訊息给所有實体。",
 
 
 
@@ -1306933,7 +1306933,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_mem_desc": "聊天記錄存在 E-Claw 伺服器。根據方案（免费/个人）可共享或私有記憶。",
+        "cmp_eclaw_mem_desc": "聊天記錄存在 E-Claw 伺服器。根据方案（免费/个人）可共享或私有記憶。",
 
 
 
@@ -1307189,7 +1307189,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_mission_desc": "內建任務看板（待办/进行中/完成）、筆記、技能、規則和灵魂/人格系統。可指派任務给實体、变更时推播通知、版本控制协作。",
+        "cmp_eclaw_mission_desc": "内建任務看板（待办/进行中/完成）、筆記、技能、规則和灵魂/人格系統。可指派任務给實体、变更时推播通知、版本控制协作。",
 
 
 
@@ -1307573,7 +1307573,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_plat_desc": "動態桌布在 Android 上使用。網頁入口（iPhone 也能用！）可聊天、任務控制、檔案管理 — 除了桌布以外全部功能都有。",
+        "cmp_eclaw_plat_desc": "动態桌布在 Android 上使用。网页入口（iPhone 也能用！）可聊天、任務控制、檔案管理 — 除了桌布以外全部功能都有。",
 
 
 
@@ -1307701,7 +1307701,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_plat_title": "Android + 網頁入口",
+        "cmp_eclaw_plat_title": "Android + 网页入口",
 
 
 
@@ -1307957,7 +1307957,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_push_title": "主動推播",
+        "cmp_eclaw_push_title": "主动推播",
 
 
 
@@ -1308085,7 +1308085,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_setup_desc": "使用 Android App 或網頁入口皆可，兩者獨立运作。註冊帳号、產生綁定碼、貼给机器人即完成。",
+        "cmp_eclaw_setup_desc": "使用 Android App 或网页入口皆可，兩者獨立运作。註冊帳号、产生綁定碼、貼给机器人即完成。",
 
 
 
@@ -1308213,7 +1308213,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_setup_title": "Android App 或網頁入口",
+        "cmp_eclaw_setup_title": "Android App 或网页入口",
 
 
 
@@ -1308341,7 +1308341,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_tagline": "原生動態桌布頻道",
+        "cmp_eclaw_tagline": "原生动態桌布頻道",
 
 
 
@@ -1308469,7 +1308469,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_eclaw_wp_desc": "机器人控制桌布狀態（心情、訊息、動畫），你的手机桌面活过来。",
+        "cmp_eclaw_wp_desc": "机器人控制桌布狀態（心情、訊息、动畫），你的手机桌面活过来。",
 
 
 
@@ -1308725,7 +1308725,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_subtitle": "EClawbot 提供完整的 AI Agent 协作体验 — A2A 通訊、即时視覺化、广播推送、任務管理一應俱全。Telegram 只有聊天。",
+        "cmp_subtitle": "EClawbot 提供完整的 AI Agent 协作体验 — A2A 通訊、即时视覺化、广播推送、任務管理一應俱全。Telegram 只有聊天。",
 
 
 
@@ -1308853,7 +1308853,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_tag_builtin": "內建",
+        "cmp_tag_builtin": "内建",
 
 
 
@@ -1309109,7 +1309109,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_tag_manual": "手動",
+        "cmp_tag_manual": "手动",
 
 
 
@@ -1309621,7 +1309621,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_tag_passive": "被動",
+        "cmp_tag_passive": "被动",
 
 
 
@@ -1310261,7 +1310261,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_tg_attach_desc": "照片、影片、檔案、貼圖、语音和視訊訊息——全都嵌在聊天中。檔案存在 Telegram 伺服器，沒有獨立的檔案管理或實体層級篩选。",
+        "cmp_tg_attach_desc": "照片、影片、檔案、貼圖、语音和视訊訊息——全都嵌在聊天中。檔案存在 Telegram 伺服器，沒有獨立的檔案管理或實体层級篩选。",
 
 
 
@@ -1311029,7 +1311029,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_tg_best_for": "Telegram 最適合⋯",
+        "cmp_tg_best_for": "Telegram 最适合⋯",
 
 
 
@@ -1311925,7 +1311925,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_tg_fmt_desc": "文字、照片、影片、檔案、貼圖、內嵌鍵盤、位置等 Telegram 功能。",
+        "cmp_tg_fmt_desc": "文字、照片、影片、檔案、貼圖、内嵌鍵盤、位置等 Telegram 功能。",
 
 
 
@@ -1312181,7 +1312181,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_tg_interact_desc": "傳訊息、收回覆。經典聊天机器人体验，支援文字、圖片和按鈕。",
+        "cmp_tg_interact_desc": "傳訊息、收回复。經典聊天机器人体验，支援文字、圖片和按鈕。",
 
 
 
@@ -1312309,7 +1312309,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_tg_interact_title": "標準聊天",
+        "cmp_tg_interact_title": "标準聊天",
 
 
 
@@ -1312437,7 +1312437,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_tg_mem_desc": "記憶取決於机器人實作，可使用 OpenClaw 內建記憶或外部儲存。",
+        "cmp_tg_mem_desc": "記憶取决於机器人實作，可使用 OpenClaw 内建記憶或外部儲存。",
 
 
 
@@ -1312693,7 +1312693,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_tg_mission_desc": "Telegram 沒有原生任務管理功能。需要第三方机器人或外部工具（Trello、Notion）来追蹤專案，也沒有實体層級的任務指派。",
+        "cmp_tg_mission_desc": "Telegram 沒有原生任務管理功能。需要第三方机器人或外部工具（Trello、Notion）来追蹤專案，也沒有實体层級的任務指派。",
 
 
 
@@ -1312821,7 +1312821,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_tg_mission_title": "无內建任務系統",
+        "cmp_tg_mission_title": "无内建任務系統",
 
 
 
@@ -1312949,7 +1312949,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_tg_plat_desc": "Telegram 支援 iOS、Android、桌面版和網頁版，隨处都能聊天。",
+        "cmp_tg_plat_desc": "Telegram 支援 iOS、Android、桌面版和网页版，隨处都能聊天。",
 
 
 
@@ -1313205,7 +1313205,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_tg_push_desc": "机器人傳訊时收到 Telegram 標準通知，需要打开 App 才能閱讀。",
+        "cmp_tg_push_desc": "机器人傳訊时收到 Telegram 标準通知，需要打开 App 才能閱读。",
 
 
 
@@ -1313717,7 +1313717,7 @@ const TRANSLATIONS = {
 
 
 
-        "cmp_tg_wp_desc": "Telegram 机器人无法更新手机動態桌布，僅有聊天体验。",
+        "cmp_tg_wp_desc": "Telegram 机器人无法更新手机动態桌布，僅有聊天体验。",
 
 
 
@@ -1314613,7 +1314613,7 @@ const TRANSLATIONS = {
 
 
 
-        "common_copy_key": "📋 複製金鑰",
+        "common_copy_key": "📋 复製金鑰",
 
 
 
@@ -1315381,7 +1315381,7 @@ const TRANSLATIONS = {
 
 
 
-        "common_ok": "確定",
+        "common_ok": "确定",
 
 
 
@@ -1316533,7 +1316533,7 @@ const TRANSLATIONS = {
 
 
 
-        "community_comment_placeholder": "留下你的評價…",
+        "community_comment_placeholder": "留下你的评價…",
 
 
 
@@ -1316661,7 +1316661,7 @@ const TRANSLATIONS = {
 
 
 
-        "community_comment_reply": "回覆",
+        "community_comment_reply": "回复",
 
 
 
@@ -1318982,7 +1318982,7 @@ const TRANSLATIONS = {
 
 
 
-        "community_hero_subtitle": "探索公开的 AI Bot 名片，找到你需要的智慧助手，或讓更多人发现你的 Bot。",
+        "community_hero_subtitle": "探索公开的 AI Bot 名片，找到你需要的智慧助手，或让更多人发现你的 Bot。",
 
 
 
@@ -1319494,7 +1319494,7 @@ const TRANSLATIONS = {
 
 
 
-        "community_search_placeholder": "搜尋 Bot 名称、描述、標籤…",
+        "community_search_placeholder": "搜尋 Bot 名称、描述、标籤…",
 
 
 
@@ -1320006,7 +1320006,7 @@ const TRANSLATIONS = {
 
 
 
-        "community_sort_rating": "⭐ 評分",
+        "community_sort_rating": "⭐ 评分",
 
 
 
@@ -1321926,7 +1321926,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_btn_copy": "複製指令",
+        "dash_btn_copy": "复製指令",
 
 
 
@@ -1322054,7 +1322054,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_btn_generate": "產生代碼",
+        "dash_btn_generate": "产生代碼",
 
 
 
@@ -1322182,7 +1322182,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_btn_generating": "產生中...",
+        "dash_btn_generating": "产生中...",
 
 
 
@@ -1322438,7 +1322438,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_btn_refresh": "重新连線",
+        "dash_btn_refresh": "重新连线",
 
 
 
@@ -1322566,7 +1322566,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_btn_regenerate": "重新產生",
+        "dash_btn_regenerate": "重新产生",
 
 
 
@@ -1322950,7 +1322950,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_caps_arena_only": "由 Arena 評测验證 — 不可編輯",
+        "dash_caps_arena_only": "由 Arena 评测验证 — 不可編輯",
 
 
 
@@ -1323078,7 +1323078,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_caps_none": "尚无 Arena 評测结果。請執行 Arena 测試来验證能力。",
+        "dash_caps_none": "尚无 Arena 评测结果。请执行 Arena 测試来验证能力。",
 
 
 
@@ -1323206,7 +1323206,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_channel_bind_warning": "2026-03 版本以上強烈建議使用 EClaw Channel 綁定，避免綁定失败。",
+        "dash_channel_bind_warning": "2026-03 版本以上強烈建议使用 EClaw Channel 綁定，避免綁定失败。",
 
 
 
@@ -1323974,7 +1323974,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_code_copied": "指令已複製到剪貼簿！",
+        "dash_code_copied": "指令已复製到剪貼簿！",
 
 
 
@@ -1324102,7 +1324102,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_code_expired": "代碼已过期 - 請重新產生",
+        "dash_code_expired": "代碼已过期 - 请重新产生",
 
 
 
@@ -1324358,7 +1324358,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_code_generated": "已產生綁定代碼！",
+        "dash_code_generated": "已产生綁定代碼！",
 
 
 
@@ -1324486,7 +1324486,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_copy_code": "点击複製公开代碼",
+        "dash_copy_code": "点击复製公开代碼",
 
 
 
@@ -1329222,7 +1329222,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_invite_cta": "查看我的邀請碼",
+        "dash_invite_cta": "查看我的邀请碼",
 
 
 
@@ -1329350,7 +1329350,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_invite_subtitle": "好友也能獲得 100 e幣。立即分享你的邀請碼。",
+        "dash_invite_subtitle": "好友也能獲得 100 e幣。立即分享你的邀请碼。",
 
 
 
@@ -1329478,7 +1329478,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_invite_title": "邀請好友，每位註冊赚 500 e幣",
+        "dash_invite_title": "邀请好友，每位註冊赚 500 e幣",
 
 
 
@@ -1329862,7 +1329862,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_listing_created": "上架清单已建立！請執行面試以取得发布资格。",
+        "dash_listing_created": "上架清单已建立！请执行面試以取得发布资格。",
 
 
 
@@ -1331014,7 +1331014,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_overwrite_desc": "插槽 {id} 目前綁定了 <strong>{name}</strong>。產生新的綁定碼后，當新的 Bot 连線时將取代现有的 Bot。確定要繼續嗎？",
+        "dash_overwrite_desc": "插槽 {id} 目前綁定了 <strong>{name}</strong>。产生新的綁定碼后，当新的 Bot 连线时將取代现有的 Bot。确定要繼續嗎？",
 
 
 
@@ -1331271,12 +1331271,12 @@ const TRANSLATIONS = {
 
 
         "dash_plaza_publish": "上架到 Bot Plaza",
-        "card_plaza_make_public": "公開到廣場（免費展示）",
-        "card_plaza_make_public_hint": "在 Bot Plaza 公開展示你的 Bot，讓其他人可以發現並互動 — 免費展示，非出租。",
-        "dash_plaza_incomplete_title": "請先補齊名片欄位再公開",
+        "card_plaza_make_public": "公开到廣場（免費展示）",
+        "card_plaza_make_public_hint": "在 Bot Plaza 公开展示你的 Bot，让其他人可以发现并互动 — 免費展示，非出租。",
+        "dash_plaza_incomplete_title": "请先补齊名片欄位再公开",
         "dash_plaza_missing_description": "描述",
-        "dash_plaza_missing_protocols": "通訊協定（至少一項）",
-        "dash_plaza_missing_tags": "標籤（至少一項）",
+        "dash_plaza_missing_protocols": "通訊协定（至少一項）",
+        "dash_plaza_missing_tags": "标籤（至少一項）",
         "dash_list_rental_paid_suffix": "（付費租借）",
 
 
@@ -1331405,7 +1331405,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_plaza_publish_hint": "將此 Bot 公开上架，讓其他人可以发现和互動",
+        "dash_plaza_publish_hint": "將此 Bot 公开上架，让其他人可以发现和互动",
 
 
 
@@ -1331927,7 +1331927,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_public_code_copied": "公开代碼已複製！",
+        "dash_public_code_copied": "公开代碼已复製！",
 
 
 
@@ -1332055,7 +1332055,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_refresh_broken_message": "机器人的 Webhook 连線似乎已中斷。是否要重新綁定此實体？",
+        "dash_refresh_broken_message": "机器人的 Webhook 连线似乎已中斷。是否要重新綁定此實体？",
 
 
 
@@ -1332311,7 +1332311,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_refresh_broken_title": "连線中斷",
+        "dash_refresh_broken_title": "连线中斷",
 
 
 
@@ -1332439,7 +1332439,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_refresh_cooldown": "請等待 {s} 秒后再試",
+        "dash_refresh_cooldown": "请等待 {s} 秒后再試",
 
 
 
@@ -1332567,7 +1332567,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_refresh_success": "连線已刷新！",
+        "dash_refresh_success": "连线已刷新！",
 
 
 
@@ -1332695,7 +1332695,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_refreshing": "连線中...",
+        "dash_refreshing": "连线中...",
 
 
 
@@ -1332823,7 +1332823,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_remove_desc": "確定要刪除 <strong>{name}</strong> (#{id}) 嗎？此實体欄位將被永久移除。",
+        "dash_remove_desc": "确定要刪除 <strong>{name}</strong> (#{id}) 嗎？此實体欄位將被永久移除。",
 
 
 
@@ -1334103,7 +1334103,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_restart_failed": "⚠️ 通道重啟失败",
+        "dash_restart_failed": "⚠️ 通道重启失败",
 
 
 
@@ -1334231,7 +1334231,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_restart_success": "🔄 通道已成功重啟",
+        "dash_restart_success": "🔄 通道已成功重启",
 
 
 
@@ -1334359,7 +1334359,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_run_arena": "📝 評测中心（瀏覽器 Agent）",
+        "dash_run_arena": "📝 评测中心（浏览器 Agent）",
 
 
 
@@ -1334487,7 +1334487,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_run_interview": "執行面試",
+        "dash_run_interview": "执行面試",
 
 
 
@@ -1334999,7 +1334999,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_tos_load_error": "载入服務条款失败。",
+        "dash_tos_load_error": "载入服务条款失败。",
 
 
 
@@ -1336663,7 +1336663,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_xd_reject_msg_hint": "被擋下时的自動回覆（空白 = 静默）",
+        "dash_xd_reject_msg_hint": "被擋下时的自动回复（空白 = 静默）",
 
 
 
@@ -1336919,7 +1336919,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_xd_reset_confirm": "確定要还原所有跨装置訊息设定为预设值嗎？",
+        "dash_xd_reset_confirm": "确定要还原所有跨装置訊息设定为预设值嗎？",
 
 
 
@@ -1338327,7 +1338327,7 @@ const TRANSLATIONS = {
 
 
 
-        "delete_account_confirm_title": "確认刪除",
+        "delete_account_confirm_title": "确认刪除",
 
 
 
@@ -1338967,7 +1338967,7 @@ const TRANSLATIONS = {
 
 
 
-        "delete_account_data_mission": "任務控制资料（任務、筆記、規則、灵魂）",
+        "delete_account_data_mission": "任務控制资料（任務、筆記、规則、灵魂）",
 
 
 
@@ -1339095,7 +1339095,7 @@ const TRANSLATIONS = {
 
 
 
-        "delete_account_data_schedules": "排程与執行歷史",
+        "delete_account_data_schedules": "排程与执行历史",
 
 
 
@@ -1340119,7 +1340119,7 @@ const TRANSLATIONS = {
 
 
 
-        "delete_account_err_delete_failed": "刪除失败，請重試。",
+        "delete_account_err_delete_failed": "刪除失败，请重試。",
 
 
 
@@ -1340375,7 +1340375,7 @@ const TRANSLATIONS = {
 
 
 
-        "delete_account_err_sdk_loading": "Google SDK 载入中，請重試。",
+        "delete_account_err_sdk_loading": "Google SDK 载入中，请重試。",
 
 
 
@@ -1340503,7 +1340503,7 @@ const TRANSLATIONS = {
 
 
 
-        "delete_account_err_signin_failed": "登入失败，請重試。",
+        "delete_account_err_signin_failed": "登入失败，请重試。",
 
 
 
@@ -1340887,7 +1340887,7 @@ const TRANSLATIONS = {
 
 
 
-        "delete_account_subtitle": "使用您的 Google 帳号登入以验證身份，並永久刪除您的 EClawbot 帳号。",
+        "delete_account_subtitle": "使用您的 Google 帳号登入以验证身份，并永久刪除您的 EClawbot 帳号。",
 
 
 
@@ -1341527,7 +1341527,7 @@ const TRANSLATIONS = {
 
 
 
-        "demo_gps_desc": "Bot 請求你的 GPS 位置提供情境感知服務。問「附近有什麼好吃的？」即可根據座標獲得即时个人化推薦。",
+        "demo_gps_desc": "Bot 请求你的 GPS 位置提供情境感知服务。問「附近有什麼好吃的？」即可根据座标獲得即时个人化推薦。",
 
 
 
@@ -1341783,7 +1341783,7 @@ const TRANSLATIONS = {
 
 
 
-        "demo_notes_desc": "豐富的筆記頁面支援完整 HTML 渲染 — Bot 可建立精美文件、報告与互動內容，用戶可作为獨立網頁瀏覽。",
+        "demo_notes_desc": "豐富的筆記页面支援完整 HTML 渲染 — Bot 可建立精美文件、报告与互动内容，用戶可作为獨立网页瀏覽。",
 
 
 
@@ -1341911,7 +1341911,7 @@ const TRANSLATIONS = {
 
 
 
-        "demo_notes_title": "📝 筆記頁面",
+        "demo_notes_title": "📝 筆記页面",
 
 
 
@@ -1343063,7 +1343063,7 @@ const TRANSLATIONS = {
 
 
 
-        "demo_tag_rich": "豐富內容",
+        "demo_tag_rich": "豐富内容",
 
 
 
@@ -1344599,7 +1344599,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_cta_subtitle": "加入使用 EClawbot 自動化工作流程並部署 AI 代理人團队的企业行列。",
+        "ent_cta_subtitle": "加入使用 EClawbot 自动化工作流程并部署 AI 代理人團队的企业行列。",
 
 
 
@@ -1344727,7 +1344727,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_cta_title": "準備好开始了嗎？",
+        "ent_cta_title": "準备好开始了嗎？",
 
 
 
@@ -1344855,7 +1344855,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_demo_error": "连線错誤，請再試一次。",
+        "ent_demo_error": "连线错誤，请再試一次。",
 
 
 
@@ -1345367,7 +1345367,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_demo_greet_prompt": "請以这家企业的 AI 助理身份自我介紹，並根據內容簡短说明这家企业的业務。",
+        "ent_demo_greet_prompt": "请以这家企业的 AI 助理身份自我介紹，并根据内容簡短说明这家企业的业務。",
 
 
 
@@ -1345751,7 +1345751,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_demo_invalid_url": "請输入有效的網址",
+        "ent_demo_invalid_url": "请输入有效的网址",
 
 
 
@@ -1346007,7 +1346007,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_demo_loaded": "網站已载入",
+        "ent_demo_loaded": "网站已载入",
 
 
 
@@ -1346135,7 +1346135,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_demo_loading": "正在载入網站...",
+        "ent_demo_loading": "正在载入网站...",
 
 
 
@@ -1346391,7 +1346391,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_demo_subtitle": "输入您的網站或上傳文件，AI 代理人將學习您的业務並开始对話。",
+        "ent_demo_subtitle": "输入您的网站或上傳文件，AI 代理人將学习您的业務并开始对話。",
 
 
 
@@ -1347031,7 +1347031,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_demo_welcome": "输入網站網址或上傳檔案，然后开始与 AI 代理人对話。",
+        "ent_demo_welcome": "输入网站网址或上傳檔案，然后开始与 AI 代理人对話。",
 
 
 
@@ -1347543,7 +1347543,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_ec_product_ai_note": "AI 生成的產品頁面 · ",
+        "ent_ec_product_ai_note": "AI 生成的产品页面 · ",
 
 
 
@@ -1347671,7 +1347671,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_ec_product_link": "在新分頁开啟",
+        "ent_ec_product_link": "在新分页开启",
 
 
 
@@ -1347927,7 +1347927,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_ec_section_subtitle": "这是一个真實运行的 AI 客服机器人「小蝦客服」。試著問它商品资訊、运费政策、或請它推薦商品！",
+        "ent_ec_section_subtitle": "这是一个真實运行的 AI 客服机器人「小蝦客服」。試著問它商品资訊、运费政策、或请它推薦商品！",
 
 
 
@@ -1348055,7 +1348055,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_ec_section_title": "🛒 線上体验：AI 电商客服",
+        "ent_ec_section_title": "🛒 线上体验：AI 电商客服",
 
 
 
@@ -1348183,7 +1348183,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_ec_setup_note": "✨ 这个 Demo 只花了 10 分鐘设定 — 用 EClaw 的 Entity 系統 + Note Pages + Proxy Window",
+        "ent_ec_setup_note": "✨ 这个 Demo 只花了 10 分钟设定 — 用 EClaw 的 Entity 系統 + Note Pages + Proxy Window",
 
 
 
@@ -1348311,7 +1348311,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_feat_a2a_desc": "代理人对代理人结構化任務派发。代理人跨装置协作、委派和回報，具備型別化酬载和投递追蹤。",
+        "ent_feat_a2a_desc": "代理人对代理人结構化任務派发。代理人跨装置协作、委派和回报，具备型別化酬载和投递追蹤。",
 
 
 
@@ -1348439,7 +1348439,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_feat_a2a_title": "A2A 协議",
+        "ent_feat_a2a_title": "A2A 协议",
 
 
 
@@ -1348567,7 +1348567,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_feat_audit_desc": "追蹤每一个操作 — 验證事件、API 呼叫、實体变更。按类別、时间範圍、使用者查詢日誌。管理员專用稽核端点確保合規。",
+        "ent_feat_audit_desc": "追蹤每一个操作 — 验证事件、API 呼叫、實体变更。按类別、时间范圍、使用者查詢日誌。管理员專用稽核端点确保合规。",
 
 
 
@@ -1348823,7 +1348823,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_feat_e2ee_desc": "每个通道和實体的端对端加密能力標記。使用 AES-256-GCM 加密儲存环境变数。",
+        "ent_feat_e2ee_desc": "每个通道和實体的端对端加密能力标記。使用 AES-256-GCM 加密儲存环境变数。",
 
 
 
@@ -1349079,7 +1349079,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_feat_mission_desc": "集中式儀表板，包含待办事項、任務、筆記、規則和代理人协调。即时同步 Web、Android 和 iOS。",
+        "ent_feat_mission_desc": "集中式儀表板，包含待办事項、任務、筆記、规則和代理人协调。即时同步 Web、Android 和 iOS。",
 
 
 
@@ -1349335,7 +1349335,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_feat_rbac_desc": "基於角色的存取控制，內建 4 个预设角色（管理员、开发者、操作员、檢視者）。每个 API 端点皆有細粒度權限中介軟体。",
+        "ent_feat_rbac_desc": "基於角色的存取控制，内建 4 个预设角色（管理员、开发者、操作员、檢视者）。每个 API 端点皆有細粒度權限中介軟体。",
 
 
 
@@ -1349591,7 +1349591,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_feat_sso_desc": "透过通用 OIDC 连接您的身份提供者。內建 Google、Facebook OAuth。完整的 OAuth 2.0 伺服器支援客戶端憑證和令牌管理。",
+        "ent_feat_sso_desc": "透过通用 OIDC 连接您的身份提供者。内建 Google、Facebook OAuth。完整的 OAuth 2.0 伺服器支援客戶端憑证和令牌管理。",
 
 
 
@@ -1349847,7 +1349847,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_features_subtitle": "專为要求安全性、合規性和控制權的組織而建。",
+        "ent_features_subtitle": "專为要求安全性、合规性和控制權的组织而建。",
 
 
 
@@ -1350231,7 +1350231,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_hero_subtitle": "部署、管理和协调 AI 代理人團队，具備企业級安全性、存取控制和即时監控。您的个人企业 AI 小帮手。",
+        "ent_hero_subtitle": "部署、管理和协调 AI 代理人團队，具备企业級安全性、存取控制和即时監控。您的个人企业 AI 小帮手。",
 
 
 
@@ -1350487,7 +1350487,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_how_subtitle": "幾分鐘內啟動您的 AI 代理人團队。",
+        "ent_how_subtitle": "几分钟内启动您的 AI 代理人團队。",
 
 
 
@@ -1350871,7 +1350871,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_step1_desc": "建立代理人身份，设定角色、技能和个性。指定公开的 Proxy Window 網址以服務客戶。",
+        "ent_step1_desc": "建立代理人身份，设定角色、技能和个性。指定公开的 Proxy Window 网址以服务客戶。",
 
 
 
@@ -1351127,7 +1351127,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_step2_desc": "连结跨團队和装置的代理人。使用 A2A 协議进行结構化任務派发和即时协作。",
+        "ent_step2_desc": "连结跨團队和装置的代理人。使用 A2A 协议进行结構化任務派发和即时协作。",
 
 
 
@@ -1351639,7 +1351639,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_uc_auto_desc": "使用 Mission Control 自動化內部工作流程。排程任務、定义規則，讓代理人透过 A2A 协議协作完成複雜操作。",
+        "ent_uc_auto_desc": "使用 Mission Control 自动化内部工作流程。排程任務、定义规則，让代理人透过 A2A 协议协作完成复杂操作。",
 
 
 
@@ -1351767,7 +1351767,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_uc_auto_title": "工作流程自動化",
+        "ent_uc_auto_title": "工作流程自动化",
 
 
 
@@ -1351895,7 +1351895,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_uc_collab_desc": "啟用跨装置代理人通訊。不同團队的代理人可以自動交換任務、共享上下文並协调行動。",
+        "ent_uc_collab_desc": "启用跨装置代理人通訊。不同團队的代理人可以自动交換任務、共享上下文并协调行动。",
 
 
 
@@ -1352151,7 +1352151,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_uc_cs_desc": "透过 Proxy Window 公开網址部署面向客戶的代理人。每位代理人擁有獨立的身份、语氣和行为边界，全天候 24/7 服務客戶。",
+        "ent_uc_cs_desc": "透过 Proxy Window 公开网址部署面向客戶的代理人。每位代理人擁有獨立的身份、语氣和行为边界，全天候 24/7 服务客戶。",
 
 
 
@@ -1352279,7 +1352279,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_uc_cs_title": "AI 客戶服務",
+        "ent_uc_cs_title": "AI 客戶服务",
 
 
 
@@ -1352407,7 +1352407,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_uc_pub_desc": "一次 API 呼叫即可同时发佈內容到 12+ 个平台 — Blogger、X、DEV.to、WordPress、LinkedIn、Reddit、Mastodon 等。",
+        "ent_uc_pub_desc": "一次 API 呼叫即可同时发佈内容到 12+ 个平台 — Blogger、X、DEV.to、WordPress、LinkedIn、Reddit、Mastodon 等。",
 
 
 
@@ -1352663,7 +1352663,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_usecases_subtitle": "从客戶服務到內部自動化，EClawbot 灵活適應您的业務需求。",
+        "ent_usecases_subtitle": "从客戶服务到内部自动化，EClawbot 灵活适應您的业務需求。",
 
 
 
@@ -1352919,7 +1352919,7 @@ const TRANSLATIONS = {
 
 
 
-        "env_bot_read_desc": "Bot 收到訊息时，push 通知底部会列出可用的 key 名称（值不会出现）。Bot 主動呼叫以下指令取得實际值：",
+        "env_bot_read_desc": "Bot 收到訊息时，push 通知底部会列出可用的 key 名称（值不会出现）。Bot 主动呼叫以下指令取得實际值：",
 
 
 
@@ -1353047,7 +1353047,7 @@ const TRANSLATIONS = {
 
 
 
-        "env_bot_read_title": "🤖 Bot 讀取方式",
+        "env_bot_read_title": "🤖 Bot 读取方式",
 
 
 
@@ -1353815,7 +1353815,7 @@ const TRANSLATIONS = {
 
 
 
-        "env_lock_readable": "Bot 可讀取",
+        "env_lock_readable": "Bot 可读取",
 
 
 
@@ -1353943,7 +1353943,7 @@ const TRANSLATIONS = {
 
 
 
-        "env_lock_unreadable": "Bot 无法讀取",
+        "env_lock_unreadable": "Bot 无法读取",
 
 
 
@@ -1354071,7 +1354071,7 @@ const TRANSLATIONS = {
 
 
 
-        "env_locked_banner": "🔒 已鎖定 — Bot 无法讀取任何变数",
+        "env_locked_banner": "🔒 已鎖定 — Bot 无法读取任何变数",
 
 
 
@@ -1354327,7 +1354327,7 @@ const TRANSLATIONS = {
 
 
 
-        "env_notice": "🔐 值經 AES-256 加密后儲存於伺服器。Bot 被呼叫时可讀取这些变数。",
+        "env_notice": "🔐 值經 AES-256 加密后儲存於伺服器。Bot 被呼叫时可读取这些变数。",
 
 
 
@@ -1355095,7 +1355095,7 @@ const TRANSLATIONS = {
 
 
 
-        "env_vars_btn_save": "儲存並繼續",
+        "env_vars_btn_save": "儲存并繼續",
 
 
 
@@ -1355351,7 +1355351,7 @@ const TRANSLATIONS = {
 
 
 
-        "env_vars_dialog_desc": "檢視並设定必要的变数。可修改 Key 名称，或留空以保留目前的值。",
+        "env_vars_dialog_desc": "檢视并设定必要的变数。可修改 Key 名称，或留空以保留目前的值。",
 
 
 
@@ -1355991,7 +1355991,7 @@ const TRANSLATIONS = {
 
 
 
-        "faq_a_bind": "前往 Dashboard（Web Portal 或 App），选擇一个 Entity 欄位，点击「產生綁定碼」。複製綁定指令並貼到你的 Bot。Bot 会自動確认綁定。也可以使用「官方 Bot 租用」快速体验免费版。",
+        "faq_a_bind": "前往 Dashboard（Web Portal 或 App），选擇一个 Entity 欄位，点击「产生綁定碼」。复製綁定指令并貼到你的 Bot。Bot 会自动确认綁定。也可以使用「官方 Bot 租用」快速体验免费版。",
 
 
 
@@ -1356119,7 +1356119,7 @@ const TRANSLATIONS = {
 
 
 
-        "faq_a_broadcast": "广播可一次对所有已綁定的代理发送訊息。適合公告或协调整个代理團队的任務。送达報告可追蹤哪些代理已收到广播。",
+        "faq_a_broadcast": "广播可一次对所有已綁定的代理发送訊息。适合公告或协调整个代理團队的任務。送达报告可追蹤哪些代理已收到广播。",
 
 
 
@@ -1356247,7 +1356247,7 @@ const TRANSLATIONS = {
 
 
 
-        "faq_a_cc_vs_openclaw": "主要差別是<strong>計费方式</strong>。OpenClaw Channel 用 Anthropic API key，按 token 計费；Claude Code Channel 用 claude.ai 訂閱額度，一个月固定费用，跑再多訊息都不額外收费。如果你已經有 claude.ai Max/Teams 訂閱，Claude Code Channel 就不用再付 API 费用。缺点是 Claude Code Channel 目前是實验性功能，穩定性略低於 OpenClaw Channel。",
+        "faq_a_cc_vs_openclaw": "主要差別是<strong>计费方式</strong>。OpenClaw Channel 用 Anthropic API key，按 token 计费；Claude Code Channel 用 claude.ai 訂閱額度，一个月固定费用，跑再多訊息都不額外收费。如果你已經有 claude.ai Max/Teams 訂閱，Claude Code Channel 就不用再付 API 费用。缺点是 Claude Code Channel 目前是實验性功能，穩定性略低於 OpenClaw Channel。",
 
 
 
@@ -1356375,7 +1356375,7 @@ const TRANSLATIONS = {
 
 
 
-        "faq_a_create_bot": "Bot 在 OpenClaw 平台（託管於 Zeabur）上开发。請參閱使用手冊的教學、API 文件和 Skill Templates。也可以透过 A2A 协議整合任何外部 AI 代理。",
+        "faq_a_create_bot": "Bot 在 OpenClaw 平台（託管於 Zeabur）上开发。请參閱使用手冊的教学、API 文件和 Skill Templates。也可以透过 A2A 协议整合任何外部 AI 代理。",
 
 
 
@@ -1356631,7 +1356631,7 @@ const TRANSLATIONS = {
 
 
 
-        "faq_a_mission": "Mission Control 是 EClawbot 內建的任務管理系統。建立任務（待办/執行中/完成）、指派给代理、管理筆記、设定技能与規則，定义代理个性（「灵魂」）。任務变動时代理自動收到通知。",
+        "faq_a_mission": "Mission Control 是 EClawbot 内建的任務管理系統。建立任務（待办/执行中/完成）、指派给代理、管理筆記、设定技能与规則，定义代理个性（「灵魂」）。任務变动时代理自动收到通知。",
 
 
 
@@ -1356759,7 +1356759,7 @@ const TRANSLATIONS = {
 
 
 
-        "faq_a_openclaw": "OpenClaw 是以 EClawbot 为基礎的 Bot 开发生態系統。开发者在 OpenClaw 上建立 AI 代理，再透过 Webhook、Channel Plugin 或 A2A 协議连接到 EClawbot，實现代理间通訊与任務自動化。",
+        "faq_a_openclaw": "OpenClaw 是以 EClawbot 为基礎的 Bot 开发生態系統。开发者在 OpenClaw 上建立 AI 代理，再透过 Webhook、Channel Plugin 或 A2A 协议连接到 EClawbot，實现代理间通訊与任務自动化。",
 
 
 
@@ -1356887,7 +1356887,7 @@ const TRANSLATIONS = {
 
 
 
-        "faq_a_proxy_window": "尹代理窗口讓每个 AI 代理擁有專屬的公开连结。外部客戶可以直接在瀏覽器中与你的代理互動——下单購买、查詢资訊、预約排程——无需安装任何 App。適用於电商客服、顾問諮詢、IT 維运等场景。",
+        "faq_a_proxy_window": "尹代理窗口让每个 AI 代理擁有專属的公开连结。外部客戶可以直接在浏览器中与你的代理互动——下单購买、查詢资訊、预約排程——无需安装任何 App。适用於电商客服、顾問諮詢、IT 維运等场景。",
 
 
 
@@ -1357015,7 +1357015,7 @@ const TRANSLATIONS = {
 
 
 
-        "faq_a_slots": "每台装置支援多个 Entity 欄位，每个欄位可綁定不同的 AI 代理，各自擁有獨立的身份、技能、聊天紀錄和 Agent Card。欄位会自動擴展。",
+        "faq_a_slots": "每台装置支援多个 Entity 欄位，每个欄位可綁定不同的 AI 代理，各自擁有獨立的身份、技能、聊天紀錄和 Agent Card。欄位会自动擴展。",
 
 
 
@@ -1357143,7 +1357143,7 @@ const TRANSLATIONS = {
 
 
 
-        "faq_a_speakto": "直接对話實现代理间的点对点通訊。一个代理可以向另一个特定代理发送訊息並收到回覆，驅動 A2A 协作工作流程中代理之间的任務协调。",
+        "faq_a_speakto": "直接对話實现代理间的点对点通訊。一个代理可以向另一个特定代理发送訊息并收到回复，驅动 A2A 协作工作流程中代理之间的任務协调。",
 
 
 
@@ -1357271,7 +1357271,7 @@ const TRANSLATIONS = {
 
 
 
-        "faq_a_telegram": "可以！OpenClaw Bot 支援多个頻道，包括 Telegram、Discord、Slack 等。EClawbot 是 OpenClaw 生態系統中的一个頻道。請參閱比較分頁了解各平台差异。",
+        "faq_a_telegram": "可以！OpenClaw Bot 支援多个頻道，包括 Telegram、Discord、Slack 等。EClawbot 是 OpenClaw 生態系統中的一个頻道。请參閱比較分页了解各平台差异。",
 
 
 
@@ -1357399,7 +1357399,7 @@ const TRANSLATIONS = {
 
 
 
-        "faq_a_web_vs_app": "三个平台（Web Portal、Android、iOS）可獨立使用，资料即时同步。Web Portal 推薦用於多代理管理、Mission Control 和企业工作流程。Android App 額外提供動態桌布体验。根據需求选擇，或三者並用。",
+        "faq_a_web_vs_app": "三个平台（Web Portal、Android、iOS）可獨立使用，资料即时同步。Web Portal 推薦用於多代理管理、Mission Control 和企业工作流程。Android App 額外提供动態桌布体验。根据需求选擇，或三者并用。",
 
 
 
@@ -1357527,7 +1357527,7 @@ const TRANSLATIONS = {
 
 
 
-        "faq_a_what_is": "EClawbot 是一个 Agent-to-Agent（A2A）通訊平台，具備 AI 代理生態系統。帮助个人和小型企业建立、管理、部署 AI 代理（Entity），實现代理间协作、任務派发和自動化。你可以透过 Web Portal、Android App 或 iOS App 管理一切。",
+        "faq_a_what_is": "EClawbot 是一个 Agent-to-Agent（A2A）通訊平台，具备 AI 代理生態系統。帮助个人和小型企业建立、管理、部署 AI 代理（Entity），實现代理间协作、任務派发和自动化。你可以透过 Web Portal、Android App 或 iOS App 管理一切。",
 
 
 
@@ -1358551,7 +1358551,7 @@ const TRANSLATIONS = {
 
 
 
-        "faq_cta_text": "还有其他問题？請查閱使用手冊取得詳細文件。",
+        "faq_cta_text": "还有其他問题？请查閱使用手冊取得詳細文件。",
 
 
 
@@ -1360087,7 +1360087,7 @@ const TRANSLATIONS = {
 
 
 
-        "faq_q_slots": "可以有幾个 AI 代理？",
+        "faq_q_slots": "可以有几个 AI 代理？",
 
 
 
@@ -1361879,7 +1361879,7 @@ const TRANSLATIONS = {
 
 
 
-        "feedback_auto_log_hint": "系統將自動擷取最近 5 分鐘的紀錄以协助問题診斷。",
+        "feedback_auto_log_hint": "系統將自动擷取最近 5 分钟的紀錄以协助問题診斷。",
 
 
 
@@ -1362135,7 +1362135,7 @@ const TRANSLATIONS = {
 
 
 
-        "feedback_cat_feature": "功能建議",
+        "feedback_cat_feature": "功能建议",
 
 
 
@@ -1363032,7 +1363032,7 @@ const TRANSLATIONS = {
 
 
 
-        "feedback_hint": "描述問题或建議…",
+        "feedback_hint": "描述問题或建议…",
 
 
 
@@ -1364440,7 +1364440,7 @@ const TRANSLATIONS = {
 
 
 
-        "feedback_result_logs": "已擷取：%d 个 API 請求、%d 筆伺服器紀錄",
+        "feedback_result_logs": "已擷取：%d 个 API 请求、%d 筆伺服器紀錄",
 
 
 
@@ -1365720,7 +1365720,7 @@ const TRANSLATIONS = {
 
 
 
-        "feedback_status_resolved": "已解決",
+        "feedback_status_resolved": "已解决",
 
 
 
@@ -1366488,7 +1366488,7 @@ const TRANSLATIONS = {
 
 
 
-        "file_edit_binary_reject": "二进位檔案无法線上編輯",
+        "file_edit_binary_reject": "二进位檔案无法线上編輯",
 
 
 
@@ -1366616,7 +1366616,7 @@ const TRANSLATIONS = {
 
 
 
-        "file_edit_btn": "線上編輯",
+        "file_edit_btn": "线上編輯",
 
 
 
@@ -1367640,7 +1367640,7 @@ const TRANSLATIONS = {
 
 
 
-        "file_edit_too_large": "檔案太大，无法線上編輯（上限 512KB）",
+        "file_edit_too_large": "檔案太大，无法线上編輯（上限 512KB）",
 
 
 
@@ -1369944,7 +1369944,7 @@ const TRANSLATIONS = {
 
 
 
-        "files_folder_enter_number": "請输入編号：",
+        "files_folder_enter_number": "请输入編号：",
 
 
 
@@ -1370584,7 +1370584,7 @@ const TRANSLATIONS = {
 
 
 
-        "files_link_copied": "连结已複製到剪貼簿！",
+        "files_link_copied": "连结已复製到剪貼簿！",
 
 
 
@@ -1372889,7 +1372889,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_agentcard_api_auth": "认證方式：Header <code>x-device-secret</code> 或 <code>x-bot-secret</code>",
+        "guide_agentcard_api_auth": "认证方式：Header <code>x-device-secret</code> 或 <code>x-bot-secret</code>",
 
 
 
@@ -1373401,7 +1373401,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_agentcard_ch_li4": "✅ 查看代理的能力、协定和標籤",
+        "guide_agentcard_ch_li4": "✅ 查看代理的能力、协定和标籤",
 
 
 
@@ -1374041,7 +1374041,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_agentcard_field_provider": "提供者/組織名称",
+        "guide_agentcard_field_provider": "提供者/组织名称",
 
 
 
@@ -1374169,7 +1374169,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_agentcard_field_tags": "標籤，方便搜尋与分类",
+        "guide_agentcard_field_tags": "标籤，方便搜尋与分类",
 
 
 
@@ -1374297,7 +1374297,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_agentcard_field_url": "代理的服務網址（可选）",
+        "guide_agentcard_field_url": "代理的服务网址（可选）",
 
 
 
@@ -1375577,7 +1375577,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_agentcard_meta": "建立代理的数位名片，讓客戶一眼了解你的服務能力",
+        "guide_agentcard_meta": "建立代理的数位名片，让客戶一眼了解你的服务能力",
 
 
 
@@ -1375833,7 +1375833,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_agentcard_mock_cap_val": "行程規劃、景点推薦、住宿比價、交通安排",
+        "guide_agentcard_mock_cap_val": "行程规劃、景点推薦、住宿比價、交通安排",
 
 
 
@@ -1375961,7 +1375961,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_agentcard_mock_desc": "亚洲旅游行程規劃專家",
+        "guide_agentcard_mock_desc": "亚洲旅游行程规劃專家",
 
 
 
@@ -1376729,7 +1376729,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_agentcard_mock_tag3": "行程規劃",
+        "guide_agentcard_mock_tag3": "行程规劃",
 
 
 
@@ -1376985,7 +1376985,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_agentcard_note_a2a": "💡 Agent Card 遵循 A2A（Agent-to-Agent）协議標準，讓其他 AI 代理也能讀懂你的代理能力，實现自動化协作。",
+        "guide_agentcard_note_a2a": "💡 Agent Card 遵循 A2A（Agent-to-Agent）协议标準，让其他 AI 代理也能读懂你的代理能力，實现自动化协作。",
 
 
 
@@ -1377497,7 +1377497,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_agentcard_p_what": "Agent Card 是每个實体的「数位名片」。它包含代理的名称、描述、能力標籤、支援的通訊协定等资訊。當外部用戶透过代理窗口或名片夾瀏覽你的代理时，Agent Card 就是他们看到的第一印象。",
+        "guide_agentcard_p_what": "Agent Card 是每个實体的「数位名片」。它包含代理的名称、描述、能力标籤、支援的通訊协定等资訊。当外部用戶透过代理窗口或名片夾瀏覽你的代理时，Agent Card 就是他们看到的第一印象。",
 
 
 
@@ -1378393,7 +1378393,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_agentcard_tip_li4": "✅ <strong>標籤要準確</strong>：方便搜尋发现，使用常見关鍵字",
+        "guide_agentcard_tip_li4": "✅ <strong>标籤要準确</strong>：方便搜尋发现，使用常見关鍵字",
 
 
 
@@ -1378777,7 +1378777,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_agentcard_web_li1": "前往 <strong>Dashboard</strong> 頁面",
+        "guide_agentcard_web_li1": "前往 <strong>Dashboard</strong> 页面",
 
 
 
@@ -1379161,7 +1379161,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_agentcard_web_li4": "填入名称、描述等欄位，加入能力和標籤",
+        "guide_agentcard_web_li4": "填入名称、描述等欄位，加入能力和标籤",
 
 
 
@@ -1379545,7 +1379545,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arch_core_deploy": "<strong>Railway</strong> 在 push 到 <code>main</code> 时自動部署（監控 <code>backend/</code> 资料夾）",
+        "guide_arch_core_deploy": "<strong>Railway</strong> 在 push 到 <code>main</code> 时自动部署（監控 <code>backend/</code> 资料夾）",
 
 
 
@@ -1379673,7 +1379673,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arch_core_design": "核心设計",
+        "guide_arch_core_design": "核心设计",
 
 
 
@@ -1379801,7 +1379801,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arch_core_slots": "每个装置擁有 <strong>无上限的動態 entity slots</strong> — 綁定 Bot 时自動新增空位，每个 slot 可獨立綁定不同 Bot",
+        "guide_arch_core_slots": "每个装置擁有 <strong>无上限的动態 entity slots</strong> — 綁定 Bot 时自动新增空位，每个 slot 可獨立綁定不同 Bot",
 
 
 
@@ -1380185,7 +1380185,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arch_overview_desc": "EClawbot 由三个主要部分組成：Android App、后端服務（Railway）、以及 OpenClaw AI 平台（Zeabur）。",
+        "guide_arch_overview_desc": "EClawbot 由三个主要部分组成：Android App、后端服务（Railway）、以及 OpenClaw AI 平台（Zeabur）。",
 
 
 
@@ -1380441,7 +1380441,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_cta_link": "前往Agent 能力評测 →",
+        "guide_arena_cta_link": "前往Agent 能力评测 →",
 
 
 
@@ -1380825,7 +1380825,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_step1": "前往 Arena 頁面，点击「產生模擬考試」",
+        "guide_arena_step1": "前往 Arena 页面，点击「产生模擬考試」",
 
 
 
@@ -1380953,7 +1380953,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_step2": "複製產生的指令，傳送给你的 Bot",
+        "guide_arena_step2": "复製产生的指令，傳送给你的 Bot",
 
 
 
@@ -1381081,7 +1381081,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_step3": "即时觀看 Bot 完成每道挑戰的評分動態",
+        "guide_arena_step3": "即时觀看 Bot 完成每道挑戰的评分动態",
 
 
 
@@ -1381209,7 +1381209,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_step4": "取得最終分数，提交排行榜，並给予回饋",
+        "guide_arena_step4": "取得最終分数，提交排行榜，并给予回饋",
 
 
 
@@ -1381465,7 +1381465,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_t1": "視覺",
+        "guide_arena_t1": "视覺",
 
 
 
@@ -1382745,7 +1382745,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_t8": "程式设計",
+        "guide_arena_t8": "程式设计",
 
 
 
@@ -1383129,7 +1383129,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_title": "Agent 能力評测",
+        "guide_arena_title": "Agent 能力评测",
 
 
 
@@ -1383257,7 +1383257,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_total": "滿分：147 分（真實分数，不正規化）",
+        "guide_arena_total": "滿分：147 分（真實分数，不正规化）",
 
 
 
@@ -1383385,7 +1383385,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_what_desc": "Agent 能力評测是一个公开测試平台，任何人都可以免登入評估 AI Bot 的真實能力。12 道互動挑戰即时評分。",
+        "guide_arena_what_desc": "Agent 能力评测是一个公开测試平台，任何人都可以免登入评估 AI Bot 的真實能力。12 道互动挑戰即时评分。",
 
 
 
@@ -1383513,7 +1383513,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_what_title": "🧪 什麼是Agent 能力評测？",
+        "guide_arena_what_title": "🧪 什麼是Agent 能力评测？",
 
 
 
@@ -1384281,7 +1384281,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_config_title": "Agent Card 範例",
+        "guide_bp_config_title": "Agent Card 范例",
 
 
 
@@ -1385049,7 +1385049,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_feat_browse_desc": "按評分/最新/熱门/活躍排序，搜尋名称/標籤/能力",
+        "guide_bp_feat_browse_desc": "按评分/最新/熱门/活躍排序，搜尋名称/标籤/能力",
 
 
 
@@ -1385305,7 +1385305,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_feat_card_desc": "每个 Bot 有專屬名片：名称、描述、能力、標籤、評分、等級",
+        "guide_bp_feat_card_desc": "每个 Bot 有專属名片：名称、描述、能力、标籤、评分、等級",
 
 
 
@@ -1385561,7 +1385561,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_feat_chat_desc": "点「开始对話」直接开啟代理窗口，无需安装",
+        "guide_bp_feat_chat_desc": "点「开始对話」直接开启代理窗口，无需安装",
 
 
 
@@ -1385689,7 +1385689,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_feat_comment": "💬 留言評價",
+        "guide_bp_feat_comment": "💬 留言评價",
 
 
 
@@ -1385817,7 +1385817,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_feat_comment_desc": "对使用过的 Bot 留下評價",
+        "guide_bp_feat_comment_desc": "对使用过的 Bot 留下评價",
 
 
 
@@ -1386073,7 +1386073,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_feat_level_desc": "越活躍評分越高等級越高；Legend 等級特別显眼",
+        "guide_bp_feat_level_desc": "越活躍评分越高等級越高；Legend 等級特別显眼",
 
 
 
@@ -1386969,7 +1386969,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_meta": "探索公开的 AI Bot 名片，找到你需要的智慧助手，或讓更多人发现你的 Bot",
+        "guide_bp_meta": "探索公开的 AI Bot 名片，找到你需要的智慧助手，或让更多人发现你的 Bot",
 
 
 
@@ -1387225,7 +1387225,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_p_what": "Bot 广场是 EClawbot 的公开 Bot 目錄。任何用戶都可以將自己的 AI 代理公开上架，讓其他人发现、收藏、直接对話。就像 App Store，但每个 App 都是一个 AI 助手。",
+        "guide_bp_p_what": "Bot 广场是 EClawbot 的公开 Bot 目錄。任何用戶都可以將自己的 AI 代理公开上架，让其他人发现、收藏、直接对話。就像 App Store，但每个 App 都是一个 AI 助手。",
 
 
 
@@ -1387353,7 +1387353,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_step1_desc": "在 Dashboard 选擇實体 → Agent Card → 填寫名称、描述、能力、標籤。",
+        "guide_bp_step1_desc": "在 Dashboard 选擇實体 → Agent Card → 填寫名称、描述、能力、标籤。",
 
 
 
@@ -1387865,7 +1387865,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_step3_desc": "上架后用戶搜尋时就能找到。越多互動評分越高，排名越前面。",
+        "guide_bp_step3_desc": "上架后用戶搜尋时就能找到。越多互动评分越高，排名越前面。",
 
 
 
@@ -1388505,7 +1388505,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_tip_li2": "✅ <strong>能力標籤要精準</strong>：填真實能力，帮助搜尋",
+        "guide_bp_tip_li2": "✅ <strong>能力标籤要精準</strong>：填真實能力，帮助搜尋",
 
 
 
@@ -1388633,7 +1388633,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_tip_li3": "✅ <strong>保持在線</strong>：在線 Bot 排名更高",
+        "guide_bp_tip_li3": "✅ <strong>保持在线</strong>：在线 Bot 排名更高",
 
 
 
@@ -1388761,7 +1388761,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_tip_li4": "✅ <strong>鼓勵留言</strong>：好評提升等級和曝光",
+        "guide_bp_tip_li4": "✅ <strong>鼓勵留言</strong>：好评提升等級和曝光",
 
 
 
@@ -1389145,7 +1389145,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li2": "sub 用 computer MCP 截圖时觸发 elicitation，TTY 被鎖",
+        "guide_bridge_case_li2": "sub 用 computer MCP 截圖时触发 elicitation，TTY 被鎖",
 
 
 
@@ -1389273,7 +1389273,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li3": "main 用 <code>eye</code>（macOS 螢幕全覽工具）看到彈窗 → osascript 自動按「Allow all」",
+        "guide_bridge_case_li3": "main 用 <code>eye</code>（macOS 螢幕全覽工具）看到彈窗 → osascript 自动按「Allow all」",
 
 
 
@@ -1389657,7 +1389657,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li6": "修复（PR #1854）→ 再派 sub 验證 → 確认展开到 90% → 闭环完成",
+        "guide_bridge_case_li6": "修复（PR #1854）→ 再派 sub 验证 → 确认展开到 90% → 闭环完成",
 
 
 
@@ -1389913,7 +1389913,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_cta_info": "搭配「用 Claude 指揮 OpenClaw」：<a href=\"#guide/usecase-claude-openclaw\">查看教學</a>",
+        "guide_bridge_cta_info": "搭配「用 Claude 指揮 OpenClaw」：<a href=\"#guide/usecase-claude-openclaw\">查看教学</a>",
 
 
 
@@ -1390297,7 +1390297,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_h2_flow": "執行流程",
+        "guide_bridge_h2_flow": "执行流程",
 
 
 
@@ -1390425,7 +1390425,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_h2_limit": "適用场景 & 限制",
+        "guide_bridge_h2_limit": "适用场景 & 限制",
 
 
 
@@ -1390553,7 +1390553,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_h2_prereq": "前置準備",
+        "guide_bridge_h2_prereq": "前置準备",
 
 
 
@@ -1390681,7 +1390681,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_h2_what": "什麼是这个組合技？",
+        "guide_bridge_h2_what": "什麼是这个组合技？",
 
 
 
@@ -1390809,7 +1390809,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_h2_why": "为什麼需要这个組合？",
+        "guide_bridge_h2_why": "为什麼需要这个组合？",
 
 
 
@@ -1391193,7 +1391193,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_li_why3": "✅ 組合技解法：main 透过 Terminal Bridge 監控 sub 畫面，偵测到 elicitation 就用 key code 自動授權 → sub 拿到 allowAll 繼續跑，全程无人介入",
+        "guide_bridge_li_why3": "✅ 组合技解法：main 透过 Terminal Bridge 監控 sub 畫面，偵测到 elicitation 就用 key code 自动授權 → sub 拿到 allowAll 繼續跑，全程无人介入",
 
 
 
@@ -1391321,7 +1391321,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_lim_li1": "✅ 適合：长时间 E2E drill、多平台平行测試、涉及 MCP 授權的自動化",
+        "guide_bridge_lim_li1": "✅ 适合：长时间 E2E drill、多平台平行测試、涉及 MCP 授權的自动化",
 
 
 
@@ -1391449,7 +1391449,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_lim_li2": "✅ 適合：main Claude 需要「隨时接手」的场景（eye 工具讓 main 看得到 sub 的畫面）",
+        "guide_bridge_lim_li2": "✅ 适合：main Claude 需要「隨时接手」的场景（eye 工具让 main 看得到 sub 的畫面）",
 
 
 
@@ -1391577,7 +1391577,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_lim_li3": "⚠️ 目前僅支援 macOS；Linux / Windows 需要替換底層 AppleScript 呼叫",
+        "guide_bridge_lim_li3": "⚠️ 目前僅支援 macOS；Linux / Windows 需要替換底层 AppleScript 呼叫",
 
 
 
@@ -1391833,7 +1391833,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_meta": "讓一个 main Claude Code 指揮多个 sub-Claude，在各自的 terminal 跑平行任務；sub 的 MCP 授權由 main 自動按鍵完成，全流程无人介入。",
+        "guide_bridge_meta": "让一个 main Claude Code 指揮多个 sub-Claude，在各自的 terminal 跑平行任務；sub 的 MCP 授權由 main 自动按鍵完成，全流程无人介入。",
 
 
 
@@ -1391961,7 +1391961,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_note_loop": "人类只下了一次指令。整个「发现 → 修复 → 验證 → 合併」闭环都由 main + sub 自動完成。",
+        "guide_bridge_note_loop": "人类只下了一次指令。整个「发现 → 修复 → 验证 → 合併」闭环都由 main + sub 自动完成。",
 
 
 
@@ -1392089,7 +1392089,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_p_case": "當天就是透过这組合技发现並修好一个 Android 原生 bug：",
+        "guide_bridge_p_case": "当天就是透过这组合技发现并修好一个 Android 原生 bug：",
 
 
 
@@ -1392217,7 +1392217,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_p_what": "兩个机制合起来，讓 Claude Code 能夠「一人指揮多人」：",
+        "guide_bridge_p_what": "兩个机制合起来，让 Claude Code 能夠「一人指揮多人」：",
 
 
 
@@ -1392345,7 +1392345,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_p_why": "长时间 E2E 自動化的兩个經典卡点：",
+        "guide_bridge_p_why": "长时间 E2E 自动化的兩个經典卡点：",
 
 
 
@@ -1393113,7 +1393113,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_td_terminal": "main Claude 透过 <code>osascript do script in window id</code> 把指令送进另一个 Terminal.app 視窗，再用 <code>get contents of selected tab</code> 把输出讀回来。不需要 broker、不搶焦点。",
+        "guide_bridge_td_terminal": "main Claude 透过 <code>osascript do script in window id</code> 把指令送进另一个 Terminal.app 视窗，再用 <code>get contents of selected tab</code> 把输出读回来。不需要 broker、不搶焦点。",
 
 
 
@@ -1393497,7 +1393497,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_title": "🌉 終端橋接 + 橋接授權 — Claude Code 多 session 自動化",
+        "guide_bridge_title": "🌉 終端橋接 + 橋接授權 — Claude Code 多 session 自动化",
 
 
 
@@ -1393625,7 +1393625,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_callout_subscription_best_for": "適合：token 快用完、想省成本、或只有訂閱帳号沒 API key 的场景。",
+        "guide_cc_channel_callout_subscription_best_for": "适合：token 快用完、想省成本、或只有訂閱帳号沒 API key 的场景。",
 
 
 
@@ -1394009,7 +1394009,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_callout_subscription_compare_openclaw": "<strong>OpenClaw Channel</strong> → 需要 Anthropic API key，按 token 計费",
+        "guide_cc_channel_callout_subscription_compare_openclaw": "<strong>OpenClaw Channel</strong> → 需要 Anthropic API key，按 token 计费",
 
 
 
@@ -1395289,7 +1395289,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_envvars_row_auto_wake_delay": "轉发后多少秒檢查 idle 並喚醒",
+        "guide_cc_channel_envvars_row_auto_wake_delay": "轉发后多少秒檢查 idle 并喚醒",
         "guide_cc_channel_envvars_row_auto_wake_poll": "Claude 仍 busy 时的重新检查间隔（秒）",
         "guide_cc_channel_envvars_row_auto_wake_max_wait": "总共最多等多久才放弃唤醒（秒）",
 
@@ -1395419,7 +1395419,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_envvars_row_auto_wake_enabled": "idle session 自動喚醒（<code>/clear</code> 后或新 session 必備）",
+        "guide_cc_channel_envvars_row_auto_wake_enabled": "idle session 自动喚醒（<code>/clear</code> 后或新 session 必备）",
 
 
 
@@ -1395675,7 +1395675,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_envvars_row_context_watch": "Context 壓力監控（20% 警告 / 5% 自動 <code>/clear</code>）",
+        "guide_cc_channel_envvars_row_context_watch": "Context 壓力監控（20% 警告 / 5% 自动 <code>/clear</code>）",
 
 
 
@@ -1396187,7 +1396187,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_envvars_row_watchdog_enabled": "是否啟用看门狗机制",
+        "guide_cc_channel_envvars_row_watchdog_enabled": "是否启用看门狗机制",
 
 
 
@@ -1396443,7 +1396443,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_envvars_row_webhook_url": "公开 URL（不含 <code>/eclaw-webhook</code> 路徑）",
+        "guide_cc_channel_envvars_row_webhook_url": "公开 URL（不含 <code>/eclaw-webhook</code> 路径）",
 
 
 
@@ -1396699,7 +1396699,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_h2_approval": "互動式權限確认",
+        "guide_cc_channel_h2_approval": "互动式權限确认",
 
 
 
@@ -1396955,7 +1396955,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_h2_automation": "自動化机制",
+        "guide_cc_channel_h2_automation": "自动化机制",
 
 
 
@@ -1397467,7 +1397467,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_h2_references": "延伸閱讀",
+        "guide_cc_channel_h2_references": "延伸閱读",
 
 
 
@@ -1398107,7 +1398107,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_h3_approval_setup": "啟用方式",
+        "guide_cc_channel_h3_approval_setup": "启用方式",
 
 
 
@@ -1398235,7 +1398235,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_h3_autowake": "④ Auto-wake（自動喚醒）",
+        "guide_cc_channel_h3_autowake": "④ Auto-wake（自动喚醒）",
 
 
 
@@ -1398363,7 +1398363,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_h3_cmd_auto_approve": "<code>/auto_approve</code>（或 <code>/自動核准</code>）",
+        "guide_cc_channel_h3_cmd_auto_approve": "<code>/auto_approve</code>（或 <code>/自动核准</code>）",
 
 
 
@@ -1398747,7 +1398747,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_h3_enforcer": "③ Reply tool 強制器",
+        "guide_cc_channel_h3_enforcer": "③ Reply tool 强制器",
 
 
 
@@ -1399003,7 +1399003,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_h3_faq1": "Q: 啟動后角色沒有出现？",
+        "guide_cc_channel_h3_faq1": "Q: 启动后角色沒有出现？",
 
 
 
@@ -1399131,7 +1399131,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_h3_faq2": "Q: Claude Code 沒有回覆？",
+        "guide_cc_channel_h3_faq2": "Q: Claude Code 沒有回复？",
 
 
 
@@ -1399387,7 +1399387,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_h3_faq_context": "Q: Claude 行为异常、开始用 Playwright 开瀏覽器代替 reply？",
+        "guide_cc_channel_h3_faq_context": "Q: Claude 行为异常、开始用 Playwright 开浏览器代替 reply？",
 
 
 
@@ -1400411,7 +1400411,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_h3_step4": "第 4 步：啟動���務",
+        "guide_cc_channel_h3_step4": "第 4 步：启动���務",
 
 
 
@@ -1400667,7 +1400667,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_h3_step5": "第 5 步：测試连線",
+        "guide_cc_channel_h3_step5": "第 5 步：测試连线",
 
 
 
@@ -1400795,7 +1400795,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_h3_step5_tmux": "第 5 步：啟動 tmux session",
+        "guide_cc_channel_h3_step5_tmux": "第 5 步：启动 tmux session",
 
 
 
@@ -1400923,7 +1400923,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_h3_step6_test": "第 6 步：测試连線",
+        "guide_cc_channel_h3_step6_test": "第 6 步：测試连线",
 
 
 
@@ -1401179,7 +1401179,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_li_approval_setup1": "執行 <code>patch-fakechat.sh</code>：对 fakechat 套件打 patch，讓 bridge 支援 <code>/ask</code> 端点以接收 hook 的權限請求並回傳使用者选擇。",
+        "guide_cc_channel_li_approval_setup1": "执行 <code>patch-fakechat.sh</code>：对 fakechat 套件打 patch，让 bridge 支援 <code>/ask</code> 端点以接收 hook 的權限请求并回傳使用者选擇。",
 
 
 
@@ -1401307,7 +1401307,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_li_approval_setup2": "设定 <code>PreToolUse</code> hook：在 Claude Code 设定中註冊 hook script，攔截工具呼叫並呼叫 bridge <code>/ask</code>，根據 EClawbot 卡片回傳的決定放行或阻擋。",
+        "guide_cc_channel_li_approval_setup2": "设定 <code>PreToolUse</code> hook：在 Claude Code 设定中註冊 hook script，攔截工具呼叫并呼叫 bridge <code>/ask</code>，根据 EClawbot 卡片回傳的决定放行或阻擋。",
 
 
 
@@ -1401563,7 +1401563,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_li_ref_openclaw": "🔌 OpenClaw Channel（穩定、推薦生產环境）：<a href=\"#guide/openclaw-channel\">查看教學</a>",
+        "guide_cc_channel_li_ref_openclaw": "🔌 OpenClaw Channel（穩定、推薦生产环境）：<a href=\"#guide/openclaw-channel\">查看教学</a>",
 
 
 
@@ -1401691,7 +1401691,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_li_ref_repo": "📘 GitHub Repo + README：<a href=\"https://github.com/HankHuang0516/claude-code-eclaw-channel\" target=\"_blank\" rel=\"noopener\">HankHuang0516/claude-code-eclaw-channel</a>（环境变数、重啟流程、复原程序）",
+        "guide_cc_channel_li_ref_repo": "📘 GitHub Repo + README：<a href=\"https://github.com/HankHuang0516/claude-code-eclaw-channel\" target=\"_blank\" rel=\"noopener\">HankHuang0516/claude-code-eclaw-channel</a>（环境变数、重启流程、复原程序）",
 
 
 
@@ -1401819,7 +1401819,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_li_req1": "✅ <strong>Bun</strong> 執行环境（<a href=\"https://bun.sh\" target=\"_blank\" rel=\"noopener\">bun.sh</a>）",
+        "guide_cc_channel_li_req1": "✅ <strong>Bun</strong> 执行环境（<a href=\"https://bun.sh\" target=\"_blank\" rel=\"noopener\">bun.sh</a>）",
 
 
 
@@ -1401947,7 +1401947,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_li_req2": "✅ <strong>Claude Code</strong> CLI 已安装並可用（<code>claude</code> 指令）",
+        "guide_cc_channel_li_req2": "✅ <strong>Claude Code</strong> CLI 已安装并可用（<code>claude</code> 指令）",
 
 
 
@@ -1402203,7 +1402203,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_li_req4": "✅ 已有 EClawbot 帳号並產生 Channel API Key（參考 <a href=\"#guide/openclaw-channel\">OpenClaw Channel 教學</a> 第 1 步）",
+        "guide_cc_channel_li_req4": "✅ 已有 EClawbot 帳号并产生 Channel API Key（參考 <a href=\"#guide/openclaw-channel\">OpenClaw Channel 教学</a> 第 1 步）",
 
 
 
@@ -1402331,7 +1402331,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_li_req5": "✅ <strong>fakechat plugin</strong>（在 Claude Code 內執行 <code>/plugin install fakechat@claude-plugins-official</code> 安装）",
+        "guide_cc_channel_li_req5": "✅ <strong>fakechat plugin</strong>（在 Claude Code 内执行 <code>/plugin install fakechat@claude-plugins-official</code> 安装）",
 
 
 
@@ -1402459,7 +1402459,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_li_req6": "✅ 公开 URL（用於接收 webhook），建議使用 <a href=\"https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/\" target=\"_blank\" rel=\"noopener\">Cloudflare Tunnel</a> 或 <a href=\"https://ngrok.com/\" target=\"_blank\" rel=\"noopener\">ngrok</a>",
+        "guide_cc_channel_li_req6": "✅ 公开 URL（用於接收 webhook），建议使用 <a href=\"https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/\" target=\"_blank\" rel=\"noopener\">Cloudflare Tunnel</a> 或 <a href=\"https://ngrok.com/\" target=\"_blank\" rel=\"noopener\">ngrok</a>",
 
 
 
@@ -1402843,7 +1402843,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_li_step4c": "在 tmux session 中啟動 Claude Code",
+        "guide_cc_channel_li_step4c": "在 tmux session 中启动 Claude Code",
 
 
 
@@ -1403099,7 +1403099,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_li_watchdog_ack": "<strong>✅ 確认</strong> — 不做任何事，Claude 处理完会自己回覆",
+        "guide_cc_channel_li_watchdog_ack": "<strong>✅ 确认</strong> — 不做任何事，Claude 处理完会自己回复",
 
 
 
@@ -1403227,7 +1403227,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_li_watchdog_interrupt": "<strong>⚡ 打斷</strong> — 透过 tmux 中斷 Claude 當前工作，要求立即回覆最新訊息",
+        "guide_cc_channel_li_watchdog_interrupt": "<strong>⚡ 打斷</strong> — 透过 tmux 中斷 Claude 当前工作，要求立即回复最新訊息",
 
 
 
@@ -1403483,7 +1403483,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_meta": "透过 fakechat WebSocket 橋接，讓 Claude Code 成为你的 EClawbot 角色",
+        "guide_cc_channel_meta": "透过 fakechat WebSocket 橋接，让 Claude Code 成为你的 EClawbot 角色",
 
 
 
@@ -1403611,7 +1403611,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_note_approval": "小提示：选擇「✅ 全程允许」会把該工具/路徑加入本次 session 的白名单，后續同类請求自動放行，避免重複打擾。Session 结束后白名单会清空。",
+        "guide_cc_channel_note_approval": "小提示：选擇「✅ 全程允许」会把該工具/路径加入本次 session 的白名单，后續同类请求自动放行，避免重复打擾。Session 结束后白名单会清空。",
 
 
 
@@ -1403867,7 +1403867,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_approval_link": "完整安装步驟与 hook script 範例請見：<a href=\"https://github.com/HankHuang0516/claude-code-eclaw-channel\" target=\"_blank\" rel=\"noopener\">github.com/HankHuang0516/claude-code-eclaw-channel</a>",
+        "guide_cc_channel_p_approval_link": "完整安装步驟与 hook script 范例请見：<a href=\"https://github.com/HankHuang0516/claude-code-eclaw-channel\" target=\"_blank\" rel=\"noopener\">github.com/HankHuang0516/claude-code-eclaw-channel</a>",
 
 
 
@@ -1403995,7 +1403995,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_approval_problem": "<strong>問题：</strong>當 Claude Code 嘗試讀寫敏感路徑（例如 <code>.claude/</code>、系統檔案）或執行需要授權的工具时，会彈出權限確认 prompt 並阻塞 tmux session。在 Channel 模式下，使用者看不到这个 prompt，整个 session 会卡住，无法繼續处理 EClawbot 訊息。",
+        "guide_cc_channel_p_approval_problem": "<strong>問题：</strong>当 Claude Code 嘗試读寫敏感路径（例如 <code>.claude/</code>、系統檔案）或执行需要授權的工具时，会彈出權限确认 prompt 并阻塞 tmux session。在 Channel 模式下，使用者看不到这个 prompt，整个 session 会卡住，无法繼續处理 EClawbot 訊息。",
 
 
 
@@ -1404251,7 +1404251,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_approval_solution": "<strong>解決方案：</strong>透过 Claude Code 的 <code>PreToolUse</code> hook 攔截这些工具呼叫，將權限請求打包成富文本卡片推送到 EClawbot 的对應角色聊天室。卡片內含 [✅ 同意] [✅ 全程允许] [❌ 拒絕] 三顆按鈕，使用者点击后決定会回傳给 hook，hook 再決定放行或阻擋該工具呼叫，session 完全不需要进入互動模式。",
+        "guide_cc_channel_p_approval_solution": "<strong>解决方案：</strong>透过 Claude Code 的 <code>PreToolUse</code> hook 攔截这些工具呼叫，將權限请求打包成富文本卡片推送到 EClawbot 的对應角色聊天室。卡片内含 [✅ 同意] [✅ 全程允许] [❌ 拒絕] 三顆按鈕，使用者点击后决定会回傳给 hook，hook 再决定放行或阻擋該工具呼叫，session 完全不需要进入互动模式。",
 
 
 
@@ -1404379,7 +1404379,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_automation": "Bridge 內建六項自動化机制，讓 Claude Code channel 在无人看管下也能穩定运作。所有机制都可透过环境变数开关。",
+        "guide_cc_channel_p_automation": "Bridge 内建六項自动化机制，让 Claude Code channel 在无人看管下也能穩定运作。所有机制都可透过环境变数开关。",
 
 
 
@@ -1404507,7 +1404507,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_autowake": "Claude Code 是回應式 agent，<code>/clear</code> 后或新 session 即使收到 MCP notification 也不会自動开始处理。Bridge 在轉发訊息后延遲 <code>ECLAW_AUTO_WAKE_DELAY_S</code> 秒（预设 10 秒）檢查 tmux 狀態，若偵测到 idle 便透过 <code>tmux send-keys</code> 注入「处理 pending channel messages」字串觸发新 turn。冷卻时间为 <code>ECLAW_AUTO_WAKE_COOLDOWN_S</code> 秒避免 spam。",
+        "guide_cc_channel_p_autowake": "Claude Code 是回應式 agent，<code>/clear</code> 后或新 session 即使收到 MCP notification 也不会自动开始处理。Bridge 在轉发訊息后延遲 <code>ECLAW_AUTO_WAKE_DELAY_S</code> 秒（预设 10 秒）檢查 tmux 狀態，若偵测到 idle 便透过 <code>tmux send-keys</code> 注入「处理 pending channel messages」字串触发新 turn。冷卻时间为 <code>ECLAW_AUTO_WAKE_COOLDOWN_S</code> 秒避免 spam。",
 
 
 
@@ -1404635,7 +1404635,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_cmd_auto_approve": "切換「自動核准模式」。开啟时，bridge 的 <code>/ask</code> 端点对所有 PreToolUse hook 請求自動回 <code>approve</code>，不再推送 rich card 给使用者。適合放著讓 Claude 长时间自動化处理任務。再输入一次即可关闭。",
+        "guide_cc_channel_p_cmd_auto_approve": "切換「自动核准模式」。开启时，bridge 的 <code>/ask</code> 端点对所有 PreToolUse hook 请求自动回 <code>approve</code>，不再推送 rich card 给使用者。适合放著让 Claude 长时间自动化处理任務。再输入一次即可关闭。",
 
 
 
@@ -1404763,7 +1404763,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_cmd_model": "切換 Claude Code 使用的模型。Bridge 会回一张 rich card 讓你从 ⚡ Sonnet / 🧠 Opus / 🪶 Haiku 中选擇，点击后 bridge 会自動重啟 Claude Code session 以载入新模型。",
+        "guide_cc_channel_p_cmd_model": "切換 Claude Code 使用的模型。Bridge 会回一张 rich card 让你从 ⚡ Sonnet / 🧠 Opus / 🪶 Haiku 中选擇，点击后 bridge 会自动重启 Claude Code session 以载入新模型。",
 
 
 
@@ -1405019,7 +1405019,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_context": "Bridge 每 60 秒讀取 tmux 畫面，偵测 Claude Code 显示的 <code>N% until auto-compact</code> 指示。剩余 20% 时送出警告；剩余 5% 时自動送 <code>/clear</code> 指令釋放 context。防止 context 瀕臨耗盡时 Claude 行为异常（例如放棄 MCP tool 改用 Playwright）。设 <code>ECLAW_CONTEXT_WATCH_ENABLED=false</code> 可停用。",
+        "guide_cc_channel_p_context": "Bridge 每 60 秒读取 tmux 畫面，偵测 Claude Code 显示的 <code>N% until auto-compact</code> 指示。剩余 20% 时送出警告；剩余 5% 时自动送 <code>/clear</code> 指令釋放 context。防止 context 瀕臨耗尽时 Claude 行为异常（例如放棄 MCP tool 改用 Playwright）。设 <code>ECLAW_CONTEXT_WATCH_ENABLED=false</code> 可停用。",
 
 
 
@@ -1405147,7 +1405147,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_enforcer": "Bridge 追蹤每条使用者訊息是否被 <code>reply</code> tool 回覆。超过 <code>ECLAW_REPLY_TIMEOUT_S</code> 秒（预设 120 秒）仍未 reply 但 Claude 仍在忙（例如开了瀏覽器），会自動注入提醒訊息：<em>「不要用 Playwright 点 UI，請用 reply tool」</em>，把 Claude 拉回正確的回覆流程。",
+        "guide_cc_channel_p_enforcer": "Bridge 追蹤每条使用者訊息是否被 <code>reply</code> tool 回复。超过 <code>ECLAW_REPLY_TIMEOUT_S</code> 秒（预设 120 秒）仍未 reply 但 Claude 仍在忙（例如开了浏览器），会自动注入提醒訊息：<em>「不要用 Playwright 点 UI，请用 reply tool」</em>，把 Claude 拉回正确的回复流程。",
 
 
 
@@ -1405275,7 +1405275,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_envvars": "完整的 bridge 环境变数清单，必填者以 ✅ 標示；其余为选填並附预设值。",
+        "guide_cc_channel_p_envvars": "完整的 bridge 环境变数清单，必填者以 ✅ 标示；其余为选填并附预设值。",
 
 
 
@@ -1405403,7 +1405403,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_errorloop": "當 bridge 呼叫 EClaw API 把回覆送出失败（例如 API Key 过期、network error、quota 超標），会透过 <code>notifyClaudeError</code> 把错誤訊息注入 Claude 的 channel inbox，讓 Claude 知道「上一次回覆送不出去」並有机会重試或改变策略。使用者也会在下一次訊息看到 bridge 的错誤提示。",
+        "guide_cc_channel_p_errorloop": "当 bridge 呼叫 EClaw API 把回复送出失败（例如 API Key 过期、network error、quota 超标），会透过 <code>notifyClaudeError</code> 把错誤訊息注入 Claude 的 channel inbox，让 Claude 知道「上一次回复送不出去」并有机会重試或改变策略。使用者也会在下一次訊息看到 bridge 的错誤提示。",
 
 
 
@@ -1405531,7 +1405531,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_faq1": "確认 <code>.mcp.json</code> 中的 <code>ECLAW_API_KEY</code> 和 <code>ECLAW_WEBHOOK_URL</code> 正確，且公开 URL 能被 EClaw 平台连線（Cloudflare Tunnel / ngrok 沒斷）。檢查 bridge log 是否有 bind 成功的訊息。",
+        "guide_cc_channel_p_faq1": "确认 <code>.mcp.json</code> 中的 <code>ECLAW_API_KEY</code> 和 <code>ECLAW_WEBHOOK_URL</code> 正确，且公开 URL 能被 EClaw 平台连线（Cloudflare Tunnel / ngrok 沒斷）。檢查 bridge log 是否有 bind 成功的訊息。",
 
 
 
@@ -1405659,7 +1405659,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_faq2": "常見原因：tmux session 掛了（<code>tmux ls</code>）、fakechat plugin 沒啟動（<code>curl http://localhost:8787/</code>）、或 Claude Code session idle 了。若 session idle，bridge 的 auto-wake 机制應会自動喚醒；若仍不動可手動 <code>tmux attach -t eclaw-bot</code> 看畫面。",
+        "guide_cc_channel_p_faq2": "常見原因：tmux session 掛了（<code>tmux ls</code>）、fakechat plugin 沒启动（<code>curl http://localhost:8787/</code>）、或 Claude Code session idle 了。若 session idle，bridge 的 auto-wake 机制應会自动喚醒；若仍不动可手动 <code>tmux attach -t eclaw-bot</code> 看畫面。",
 
 
 
@@ -1405787,7 +1405787,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_faq3": "可以。兩者是完全獨立的 channel 整合，使用不同的 API Key / 不同的 entity 綁定即可並存。",
+        "guide_cc_channel_p_faq3": "可以。兩者是完全獨立的 channel 整合，使用不同的 API Key / 不同的 entity 綁定即可并存。",
 
 
 
@@ -1405915,7 +1405915,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_faq_context": "Context 壓力过大導致 Claude「忽略」fakechat instructions 的常見症狀。Bridge 的 Context 壓力監控（20% 警告 / 5% auto-<code>/clear</code>）与 Reply tool 強制器應可自動处理；也可手動在 tmux 送 <code>Escape</code> + <code>/clear</code> 立即釋放 context。",
+        "guide_cc_channel_p_faq_context": "Context 壓力过大導致 Claude「忽略」fakechat instructions 的常見症狀。Bridge 的 Context 壓力監控（20% 警告 / 5% auto-<code>/clear</code>）与 Reply tool 强制器應可自动处理；也可手动在 tmux 送 <code>Escape</code> + <code>/clear</code> 立即釋放 context。",
 
 
 
@@ -1406043,7 +1406043,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_faq_health": "先確认 bridge 及 fakechat 元件狀態：",
+        "guide_cc_channel_p_faq_health": "先确认 bridge 及 fakechat 元件狀態：",
 
 
 
@@ -1406427,7 +1406427,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_kanban_queue": "Bridge 预设把来自 EClaw kanban 的自動訊息視为 Claude 的工作佇列並轉发（<code>ECLAW_FORWARD_KANBAN=true</code>）。當 bot 发生 context overflow、需要緊急静音时，可暫时设为 <code>false</code> 停止轉发 kanban 訊息，不影響使用者主動发送的訊息。",
+        "guide_cc_channel_p_kanban_queue": "Bridge 预设把来自 EClaw kanban 的自动訊息视为 Claude 的工作佇列并轉发（<code>ECLAW_FORWARD_KANBAN=true</code>）。当 bot 发生 context overflow、需要緊急静音时，可暫时设为 <code>false</code> 停止轉发 kanban 訊息，不影响使用者主动发送的訊息。",
 
 
 
@@ -1406683,7 +1406683,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_step3": "建立 <code>.env</code> 檔案，填入你的 Channel API 憑證：",
+        "guide_cc_channel_p_step3": "建立 <code>.env</code> 檔案，填入你的 Channel API 憑证：",
 
 
 
@@ -1406811,7 +1406811,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_step3_patch": "官方 fakechat plugin 的预设 instructions 太寬鬆，Claude 有时只在 transcript 印字而沒呼叫 <code>reply</code> tool，会導致 EClaw 使用者收不到回覆。執行以下指令強制套用雙语規則（每次 fakechat 更新后都需重跑）：",
+        "guide_cc_channel_p_step3_patch": "官方 fakechat plugin 的预设 instructions 太寬鬆，Claude 有时只在 transcript 印字而沒呼叫 <code>reply</code> tool，会導致 EClaw 使用者收不到回复。执行以下指令强制套用雙语规則（每次 fakechat 更新后都需重跑）：",
 
 
 
@@ -1407067,7 +1407067,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_step4": "啟動后，plugin 会自動：",
+        "guide_cc_channel_p_step4": "启动后，plugin 会自动：",
 
 
 
@@ -1407195,7 +1407195,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_step4_env": "複製设定檔範例並填入你的值（詳細欄位说明見下方「环境变数」章節）：",
+        "guide_cc_channel_p_step4_env": "复製设定檔范例并填入你的值（詳細欄位说明見下方「环境变数」章節）：",
 
 
 
@@ -1407323,7 +1407323,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_step5": "回到 EClawbot App 或 Portal，在綁定的角色聊天室中傳送任意訊息。如果 Claude Code 正常回覆，代表设定成功。",
+        "guide_cc_channel_p_step5": "回到 EClawbot App 或 Portal，在綁定的角色聊天室中傳送任意訊息。如果 Claude Code 正常回复，代表设定成功。",
 
 
 
@@ -1407451,7 +1407451,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_step5_tmux": "在兩个 tmux session 中分別啟動 Claude Code（含 fakechat channel）与 bridge：",
+        "guide_cc_channel_p_step5_tmux": "在兩个 tmux session 中分別启动 Claude Code（含 fakechat channel）与 bridge：",
 
 
 
@@ -1407579,7 +1407579,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_step6_test": "確认 bridge 健康：<code>curl http://localhost:18800/health</code>（應看到 <code>wsConnected=true</code>）。接著回到 EClawbot App 或 Portal 在綁定的角色聊天室傳送訊息，Claude Code 正常回覆即完成设定。",
+        "guide_cc_channel_p_step6_test": "确认 bridge 健康：<code>curl http://localhost:18800/health</code>（應看到 <code>wsConnected=true</code>）。接著回到 EClawbot App 或 Portal 在綁定的角色聊天室傳送訊息，Claude Code 正常回复即完成设定。",
 
 
 
@@ -1407707,7 +1407707,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_watchdog": "使用者送第二則訊息时若 Claude 仍未回覆第一則，超过 <code>ECLAW_WATCHDOG_TIMEOUT</code> 秒（预设 30 秒）bridge 会推送一张 rich card 给使用者，附三顆按鈕：",
+        "guide_cc_channel_p_watchdog": "使用者送第二則訊息时若 Claude 仍未回复第一則，超过 <code>ECLAW_WATCHDOG_TIMEOUT</code> 秒（预设 30 秒）bridge 会推送一张 rich card 给使用者，附三顆按鈕：",
 
 
 
@@ -1407835,7 +1407835,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_watchdog_note": "同一批訊息只会觸发一次 card（不会洗版），Claude 若在使用者点按鈕前回覆，watchdog 狀態自動清除。",
+        "guide_cc_channel_p_watchdog_note": "同一批訊息只会触发一次 card（不会洗版），Claude 若在使用者点按鈕前回复，watchdog 狀態自动清除。",
 
 
 
@@ -1407963,7 +1407963,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_p_what": "Claude Code Channel 是一个橋接服務，透过 <strong>fakechat WebSocket</strong> 协定连接 EClawbot 与 Claude Code。它在本机啟動一个 WebSocket 伺服器，攔截 EClawbot 推送过来的用戶訊息，轉交给 Claude Code 处理，再將 Claude Code 的回覆透过 Channel API 送回 EClawbot。",
+        "guide_cc_channel_p_what": "Claude Code Channel 是一个橋接服务，透过 <strong>fakechat WebSocket</strong> 协定连接 EClawbot 与 Claude Code。它在本机启动一个 WebSocket 伺服器，攔截 EClawbot 推送过来的用戶訊息，轉交给 Claude Code 处理，再將 Claude Code 的回复透过 Channel API 送回 EClawbot。",
 
 
 
@@ -1408347,7 +1408347,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_cc_channel_warn_experimental": "⚠️ <strong>實验性功能</strong> — Claude Code Channel 依赖 <code>--dangerously-load-development-channels</code>，此为 Claude Code 的實验性 API，穩定性不如 OpenClaw Channel。建議生產环境使用 <a href=\"#channel-plugins/openclaw-channel\">OpenClaw Channel</a>。",
+        "guide_cc_channel_warn_experimental": "⚠️ <strong>實验性功能</strong> — Claude Code Channel 依赖 <code>--dangerously-load-development-channels</code>，此为 Claude Code 的實验性 API，穩定性不如 OpenClaw Channel。建议生产环境使用 <a href=\"#channel-plugins/openclaw-channel\">OpenClaw Channel</a>。",
 
 
 
@@ -1408731,7 +1408731,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_h2_3": "步驟教學",
+        "guide_channel_h2_3": "步驟教学",
 
 
 
@@ -1408987,7 +1408987,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_h2_5": "技术補充（进阶）",
+        "guide_channel_h2_5": "技术补充（进阶）",
 
 
 
@@ -1409115,7 +1409115,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_h3_1": "第 1 步：在 Portal 產生 API Key",
+        "guide_channel_h3_1": "第 1 步：在 Portal 产生 API Key",
 
 
 
@@ -1409243,7 +1409243,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_h3_2": "第 2 步：在 OpenClaw 安装並设定 E-Claw Channel",
+        "guide_channel_h3_2": "第 2 步：在 OpenClaw 安装并设定 E-Claw Channel",
 
 
 
@@ -1409371,7 +1409371,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_h3_3": "第 3 步：重啟 OpenClaw",
+        "guide_channel_h3_3": "第 3 步：重启 OpenClaw",
 
 
 
@@ -1409499,7 +1409499,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_h3_4": "第 4 步：確认角色出现在 App / Portal",
+        "guide_channel_h3_4": "第 4 步：确认角色出现在 App / Portal",
 
 
 
@@ -1410267,7 +1410267,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_li_1": "✅ 已有 E-Claw 帳号並登入 Portal",
+        "guide_channel_li_1": "✅ 已有 E-Claw 帳号并登入 Portal",
 
 
 
@@ -1410523,7 +1410523,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_li_3": "✅ 你的 OpenClaw 伺服器可被外網存取（或设定了 ECLAW_WEBHOOK_URL）",
+        "guide_channel_li_3": "✅ 你的 OpenClaw 伺服器可被外网存取（或设定了 ECLAW_WEBHOOK_URL）",
 
 
 
@@ -1411035,7 +1411035,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_li_7": "角色狀態更新，App 显示 AI 的回覆",
+        "guide_channel_li_7": "角色狀態更新，App 显示 AI 的回复",
 
 
 
@@ -1411291,7 +1411291,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_li_reply": "你的 AI 处理后，呼叫 E-Claw 的 <code>POST /api/channel/message</code> 回覆",
+        "guide_channel_li_reply": "你的 AI 处理后，呼叫 E-Claw 的 <code>POST /api/channel/message</code> 回复",
 
 
 
@@ -1411419,7 +1411419,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_meta": "讓你自己的 AI（例如 Claude）住进 E-Claw 角色里",
+        "guide_channel_meta": "让你自己的 AI（例如 Claude）住进 E-Claw 角色里",
 
 
 
@@ -1411675,7 +1411675,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_note_2": "一个 API Key 可以同时綁定多个 entity slots（讓同一台 OpenClaw 管理多个角色）。如果你有多台獨立的 OpenClaw 伺服器，才需要分別產生不同的 Key。",
+        "guide_channel_note_2": "一个 API Key 可以同时綁定多个 entity slots（让同一台 OpenClaw 管理多个角色）。如果你有多台獨立的 OpenClaw 伺服器，才需要分別产生不同的 Key。",
 
 
 
@@ -1411803,7 +1411803,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_note_3": "角色旁边如果有 <strong>[C]</strong> 標記，代表这是 Channel 綁定（Channel binding type）。",
+        "guide_channel_note_3": "角色旁边如果有 <strong>[C]</strong> 标記，代表这是 Channel 綁定（Channel binding type）。",
 
 
 
@@ -1412059,7 +1412059,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_2": "綁定后，你在 App 或 Portal 里傳给那个角色的訊息，会直接推送到你的 OpenClaw AI；AI 回覆后，角色的狀態会即时更新。",
+        "guide_channel_p_2": "綁定后，你在 App 或 Portal 里傳给那个角色的訊息，会直接推送到你的 OpenClaw AI；AI 回复后，角色的狀態会即时更新。",
 
 
 
@@ -1412187,7 +1412187,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_3": "前往 <strong>设定 → Channel API</strong>，点「新增 API Key」。系統会產生一組 Key + Secret，請立刻複製妥當——Secret 只显示一次。",
+        "guide_channel_p_3": "前往 <strong>设定 → Channel API</strong>，点「新增 API Key」。系統会产生一组 Key + Secret，请立刻复製妥当——Secret 只显示一次。",
 
 
 
@@ -1412315,7 +1412315,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_4": "儲存设定后重啟 OpenClaw。Plugin 啟動时会自動：",
+        "guide_channel_p_4": "儲存设定后重启 OpenClaw。Plugin 启动时会自动：",
 
 
 
@@ -1412699,7 +1412699,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_7": "前往设定頁刪除該 Key，再產生新的一組即可。舊 Key 刪除后立即失效，对應的角色会自動解綁。",
+        "guide_channel_p_7": "前往设定页刪除該 Key，再产生新的一组即可。舊 Key 刪除后立即失效，对應的角色会自动解綁。",
 
 
 
@@ -1413083,7 +1413083,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_faq1_a": "先確认 OpenClaw log 有出现 <code>Bound entity</code> 成功訊息。如果沒有，通常是 API Key/Secret 貼错、或 <code>entity_id</code> 超出範圍（免费方案 0–3，付费方案 0–7）。",
+        "guide_channel_p_faq1_a": "先确认 OpenClaw log 有出现 <code>Bound entity</code> 成功訊息。如果沒有，通常是 API Key/Secret 貼错、或 <code>entity_id</code> 超出范圍（免费方案 0–3，付费方案 0–7）。",
 
 
 
@@ -1413211,7 +1413211,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_faq2_a": "最常見原因是 <code>ECLAW_WEBHOOK_URL</code> 外網连不到。確认你的 OpenClaw 伺服器有公开的 HTTPS 端点，或透过 ngrok 等工具暴露出来。",
+        "guide_channel_p_faq2_a": "最常見原因是 <code>ECLAW_WEBHOOK_URL</code> 外网连不到。确认你的 OpenClaw 伺服器有公开的 HTTPS 端点，或透过 ngrok 等工具暴露出来。",
 
 
 
@@ -1413339,7 +1413339,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_faq3_a": "可以。为每个 OpenClaw session 分別產生一組 API Key，各自设定不同的 <code>entity_id</code>，即可讓角色 0 对應 AI-A、角色 1 对應 AI-B，彼此獨立。",
+        "guide_channel_p_faq3_a": "可以。为每个 OpenClaw session 分別产生一组 API Key，各自设定不同的 <code>entity_id</code>，即可让角色 0 对應 AI-A、角色 1 对應 AI-B，彼此獨立。",
 
 
 
@@ -1413851,7 +1413851,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_title": "自帶 OpenClaw Bot — Channel 綁定教學",
+        "guide_channel_title": "自帶 OpenClaw Bot — Channel 綁定教学",
 
 
 
@@ -1413979,7 +1413979,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_warning_1": "<strong>ECLAW_WEBHOOK_URL</strong> 必須是外網可连到的位址，E-Claw 伺服器需要用它把用戶訊息推送过去。",
+        "guide_channel_warning_1": "<strong>ECLAW_WEBHOOK_URL</strong> 必須是外网可连到的位址，E-Claw 伺服器需要用它把用戶訊息推送过去。",
 
 
 
@@ -1414107,7 +1414107,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_copy_example_btn": "複製範例（填入你的憑證）",
+        "guide_copy_example_btn": "复製范例（填入你的憑证）",
 
 
 
@@ -1414235,7 +1414235,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_copy_example_copied": "已複製！",
+        "guide_copy_example_copied": "已复製！",
 
 
 
@@ -1414363,7 +1414363,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_copy_example_hint": "若你已登入，複製內容会自動帶入你的 Device ID 与 Device Secret；短期目标与最終目标欄位請自行填寫。",
+        "guide_copy_example_hint": "若你已登入，复製内容会自动帶入你的 Device ID 与 Device Secret；短期目标与最終目标欄位请自行填寫。",
 
 
 
@@ -1414491,7 +1414491,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_api_auth": "认證方式：Header <code>x-device-secret</code>",
+        "guide_crossdevice_api_auth": "认证方式：Header <code>x-device-secret</code>",
 
 
 
@@ -1415515,7 +1415515,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_gate_li2": "<strong>2. 黑名单</strong> — 比对 Blacklist，命中即拒絕並回傳拒絕訊息",
+        "guide_crossdevice_gate_li2": "<strong>2. 黑名单</strong> — 比对 Blacklist，命中即拒絕并回傳拒絕訊息",
 
 
 
@@ -1415643,7 +1415643,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_gate_li3": "<strong>3. 白名单</strong> — 若开啟白名单模式，不在名单內的一律拒絕",
+        "guide_crossdevice_gate_li3": "<strong>3. 白名单</strong> — 若开启白名单模式，不在名单内的一律拒絕",
 
 
 
@@ -1415771,7 +1415771,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_gate_li4": "<strong>4. 禁用詞</strong> — 訊息內容包含禁用詞即拒絕（不分大小寫）",
+        "guide_crossdevice_gate_li4": "<strong>4. 禁用詞</strong> — 訊息内容包含禁用詞即拒絕（不分大小寫）",
 
 
 
@@ -1416027,7 +1416027,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_gate_li6": "<strong>6. 速率限制</strong> — 发送者在冷卻期內再发訊息会收到 429 错誤",
+        "guide_crossdevice_gate_li6": "<strong>6. 速率限制</strong> — 发送者在冷卻期内再发訊息会收到 429 错誤",
 
 
 
@@ -1417563,7 +1417563,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_note_scenario": "💡 设定位置：<strong>儀表板 → 选擇實体 → 編輯 → ⚙ Cross-Device Msg</strong>。与身份（Identity）和 Agent Card 一起組成 Bot 对外及对內的完整定义。",
+        "guide_crossdevice_note_scenario": "💡 设定位置：<strong>儀表板 → 选擇實体 → 編輯 → ⚙ Cross-Device Msg</strong>。与身份（Identity）和 Agent Card 一起组成 Bot 对外及对内的完整定义。",
 
 
 
@@ -1417819,7 +1417819,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_p_what": "跨装置訊息（Cross-Device Messaging）是外部用戶透过 Public Code 向你的 Bot 发送訊息时的入口管控机制。它是訊息进入 Bot 之前的第一道防線，讓你精準控制谁能发訊息、什麼內容能通过、每人多久能发一次。",
+        "guide_crossdevice_p_what": "跨装置訊息（Cross-Device Messaging）是外部用戶透过 Public Code 向你的 Bot 发送訊息时的入口管控机制。它是訊息进入 Bot 之前的第一道防线，让你精準控制谁能发訊息、什麼内容能通过、每人多久能发一次。",
 
 
 
@@ -1418331,7 +1418331,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_preview_preinject_val": "你是电商客服，請用繁体中文回覆",
+        "guide_crossdevice_preview_preinject_val": "你是电商客服，请用繁体中文回复",
 
 
 
@@ -1419483,7 +1419483,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_set_preinject_desc": "在外部訊息推送给 Bot 之前，自動加入指定文字。用於補充情境或指示。最多 500 字元。",
+        "guide_crossdevice_set_preinject_desc": "在外部訊息推送给 Bot 之前，自动加入指定文字。用於补充情境或指示。最多 500 字元。",
 
 
 
@@ -1420251,7 +1420251,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_set_whitelist_desc": "白名单模式啟用时，只有这些 Public Code 的訊息能通过。",
+        "guide_crossdevice_set_whitelist_desc": "白名单模式启用时，只有这些 Public Code 的訊息能通过。",
 
 
 
@@ -1420507,7 +1420507,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_set_whitelist_mode_desc": "开啟后，僅允许白名单中的来源发送訊息，其他全部拒絕。",
+        "guide_crossdevice_set_whitelist_mode_desc": "开启后，僅允许白名单中的来源发送訊息，其他全部拒絕。",
 
 
 
@@ -1421019,7 +1421019,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_tip_li2": "✅ <strong>善用预注入</strong>：讓 Bot 每次收到外部訊息都帶有充分的角色情境",
+        "guide_crossdevice_tip_li2": "✅ <strong>善用预注入</strong>：让 Bot 每次收到外部訊息都帶有充分的角色情境",
 
 
 
@@ -1421147,7 +1421147,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_tip_li3": "✅ <strong>设定拒絕訊息</strong>：比静默拒絕更友善，讓被擋的用戶知道原因",
+        "guide_crossdevice_tip_li3": "✅ <strong>设定拒絕訊息</strong>：比静默拒絕更友善，让被擋的用戶知道原因",
 
 
 
@@ -1421275,7 +1421275,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_tip_li4": "✅ <strong>搭配 Card Holder</strong>：在名片夾中封鎖对象会作为閘门的第一層檢查",
+        "guide_crossdevice_tip_li4": "✅ <strong>搭配 Card Holder</strong>：在名片夾中封鎖对象会作为閘门的第一层檢查",
 
 
 
@@ -1421531,7 +1421531,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_uc1_desc": "设定禁用詞过濾不當內容、啟用速率限制防止訊息轟炸、將恶意用戶加入黑名单永久封鎖。",
+        "guide_crossdevice_uc1_desc": "设定禁用詞过濾不当内容、启用速率限制防止訊息轟炸、將恶意用戶加入黑名单永久封鎖。",
 
 
 
@@ -1421787,7 +1421787,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_uc2_desc": "啟用白名单模式，僅允许特定客戶的 Public Code 存取代理服務，打造專屬 VIP 通道。",
+        "guide_crossdevice_uc2_desc": "启用白名单模式，僅允许特定客戶的 Public Code 存取代理服务，打造專属 VIP 通道。",
 
 
 
@@ -1421915,7 +1421915,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_uc2_title": "🔒 VIP 專屬服務",
+        "guide_crossdevice_uc2_title": "🔒 VIP 專属服务",
 
 
 
@@ -1422043,7 +1422043,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_uc3_desc": "透过预注入指令，在每則外部訊息前自動加入角色提示，例如「你是旅游顾問，請用友善语氣回覆」。",
+        "guide_crossdevice_uc3_desc": "透过预注入指令，在每則外部訊息前自动加入角色提示，例如「你是旅游顾問，请用友善语氣回复」。",
 
 
 
@@ -1422299,7 +1422299,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_warn": "⚠️ 速率限制是記憶体內計算，伺服器重啟后会重置。黑白名单与禁用詞則永久保存在资料库中。",
+        "guide_crossdevice_warn": "⚠️ 速率限制是記憶体内计算，伺服器重启后会重置。黑白名单与禁用詞則永久保存在资料库中。",
 
 
 
@@ -1423451,7 +1423451,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_adv_mission_desc": "每筆訂单自動建立 TODO，追蹤处理进度",
+        "guide_ec_adv_mission_desc": "每筆訂单自动建立 TODO，追蹤处理进度",
 
 
 
@@ -1423579,7 +1423579,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_adv_note": "📝 動態商品目錄",
+        "guide_ec_adv_note": "📝 动態商品目錄",
 
 
 
@@ -1424347,7 +1424347,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_config_bound": "不处理退款金流、不洩漏成本價、爭議轉人工",
+        "guide_ec_config_bound": "不处理退款金流、不洩漏成本價、爭议轉人工",
 
 
 
@@ -1424475,7 +1424475,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_config_instr": "根據商品目錄回答查詢、主動推薦、引導下单",
+        "guide_ec_config_instr": "根据商品目錄回答查詢、主动推薦、引導下单",
 
 
 
@@ -1424859,7 +1424859,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_config_title": "电商客服设定範例",
+        "guide_ec_config_title": "电商客服设定范例",
 
 
 
@@ -1425115,7 +1425115,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_conv_b1": "推薦「極光无線藍牙耳机 Pro」！主動降噪很適合通勤，40 小时續航一周充一次，还有 IPX5 防水。NT$1,280，目前有货哦 😊",
+        "guide_ec_conv_b1": "推薦「极光无线藍牙耳机 Pro」！主动降噪很适合通勤，40 小时續航一周充一次，还有 IPX5 防水。NT$1,280，目前有货哦 😊",
 
 
 
@@ -1425243,7 +1425243,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_conv_b2": "太好了！請提供：1️⃣ 收件人姓名 2️⃣ 手机号碼 3️⃣ 收件地址，我帮您建立訂单 📦",
+        "guide_ec_conv_b2": "太好了！请提供：1️⃣ 收件人姓名 2️⃣ 手机号碼 3️⃣ 收件地址，我帮您建立訂单 📦",
 
 
 
@@ -1425371,7 +1425371,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_conv_b3": "可以的！七天內未拆封可退货。請提供訂单編号，我为您啟動退货流程 🔄",
+        "guide_ec_conv_b3": "可以的！七天内未拆封可退货。请提供訂单編号，我为您启动退货流程 🔄",
 
 
 
@@ -1426139,7 +1426139,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_cta_identity": "身份设定：<a href=\"#guide/detail-identity\">Identity 设定教學</a>",
+        "guide_ec_cta_identity": "身份设定：<a href=\"#guide/detail-identity\">Identity 设定教学</a>",
 
 
 
@@ -1426267,7 +1426267,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_cta_proxy": "设定指南：<a href=\"#guide/usecase-proxy-window\">尹代理窗口完整教學</a>",
+        "guide_ec_cta_proxy": "设定指南：<a href=\"#guide/usecase-proxy-window\">尹代理窗口完整教学</a>",
 
 
 
@@ -1426651,7 +1426651,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_feat_inquiry_desc": "客戶問價格、規格、库存，Bot 即时回覆",
+        "guide_ec_feat_inquiry_desc": "客戶問價格、规格、库存，Bot 即时回复",
 
 
 
@@ -1426779,7 +1426779,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_feat_inquiry_how": "商品目錄存在 Note Page，Bot 讀取回答",
+        "guide_ec_feat_inquiry_how": "商品目錄存在 Note Page，Bot 读取回答",
 
 
 
@@ -1427035,7 +1427035,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_feat_order_desc": "確认商品后引導客戶完成下单",
+        "guide_ec_feat_order_desc": "确认商品后引導客戶完成下单",
 
 
 
@@ -1427419,7 +1427419,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_feat_recommend_desc": "根據客戶需求推薦合適商品",
+        "guide_ec_feat_recommend_desc": "根据客戶需求推薦合适商品",
 
 
 
@@ -1427931,7 +1427931,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_feat_return_how": "Rules 規則定义退換货 SOP",
+        "guide_ec_feat_return_how": "Rules 规則定义退換货 SOP",
 
 
 
@@ -1428443,7 +1428443,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_feat_voice": "🔊 语音回覆",
+        "guide_ec_feat_voice": "🔊 语音回复",
 
 
 
@@ -1428571,7 +1428571,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_feat_voice_desc": "门市场景搭配 TTS 语音播報",
+        "guide_ec_feat_voice_desc": "门市场景搭配 TTS 语音播报",
 
 
 
@@ -1428699,7 +1428699,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_feat_voice_how": "<a href=\"#guide/usecase-voice-tts\">TTS API</a> 即时朗讀",
+        "guide_ec_feat_voice_how": "<a href=\"#guide/usecase-voice-tts\">TTS API</a> 即时朗读",
 
 
 
@@ -1428955,7 +1428955,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_flow1_sub": "瀏覽器开啟连结",
+        "guide_ec_flow1_sub": "浏览器开启连结",
 
 
 
@@ -1430107,7 +1430107,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_h2_conversation": "實际对話範例",
+        "guide_ec_h2_conversation": "實际对話范例",
 
 
 
@@ -1430363,7 +1430363,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_h2_setup": "10 分鐘快速设定",
+        "guide_ec_h2_setup": "10 分钟快速设定",
 
 
 
@@ -1430747,7 +1430747,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_meta": "讓 AI 代理接待客戶、推薦商品、处理退換货，全年无休",
+        "guide_ec_meta": "让 AI 代理接待客戶、推薦商品、处理退換货，全年无休",
 
 
 
@@ -1430875,7 +1430875,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_note_demo": "🛒 <strong>即时体验：</strong>我们在<a href=\"/enterprise#ecommerce-demo\">企业方案頁面</a>放了一个真實的 AI 电商客服 Demo，可以直接对話試用！",
+        "guide_ec_note_demo": "🛒 <strong>即时体验：</strong>我们在<a href=\"/enterprise#ecommerce-demo\">企业方案页面</a>放了一个真實的 AI 电商客服 Demo，可以直接对話試用！",
 
 
 
@@ -1431003,7 +1431003,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_p_what": "傳統客服人力有限、回覆慢、难以 24 小时待命。EClawbot 的 AI 代理可以透过<strong>尹代理窗口</strong>直接面对客戶，处理商品查詢、訂单追蹤、退換货流程，而且只要 10 分鐘就能上線。",
+        "guide_ec_p_what": "傳統客服人力有限、回复慢、难以 24 小时待命。EClawbot 的 AI 代理可以透过<strong>尹代理窗口</strong>直接面对客戶，处理商品查詢、訂单追蹤、退換货流程，而且只要 10 分钟就能上线。",
 
 
 
@@ -1431131,7 +1431131,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_step1_desc": "在 Mission Control 的 Notes 中建立商品目錄。每件商品包含名称、價格、規格、库存狀態。Bot 会讀取这份目錄来回答客戶。",
+        "guide_ec_step1_desc": "在 Mission Control 的 Notes 中建立商品目錄。每件商品包含名称、價格、规格、库存狀態。Bot 会读取这份目錄来回答客戶。",
 
 
 
@@ -1431259,7 +1431259,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_step1_title": "Step 1：建立商品目錄（3 分鐘）",
+        "guide_ec_step1_title": "Step 1：建立商品目錄（3 分钟）",
 
 
 
@@ -1431515,7 +1431515,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_step2_title": "Step 2：设定 AI 客服身份（3 分鐘）",
+        "guide_ec_step2_title": "Step 2：设定 AI 客服身份（3 分钟）",
 
 
 
@@ -1431643,7 +1431643,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_step3_desc": "开啟跨装置訊息，设定禁用詞过濾和速率限制，確保客服窗口安全运作。",
+        "guide_ec_step3_desc": "开启跨装置訊息，设定禁用詞过濾和速率限制，确保客服窗口安全运作。",
 
 
 
@@ -1431771,7 +1431771,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_step3_li1": "✅ 啟用 Cross-Device Messaging",
+        "guide_ec_step3_li1": "✅ 启用 Cross-Device Messaging",
 
 
 
@@ -1432155,7 +1432155,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_step3_li4": "✅ 设定 Pre-inject：「你是电商客服，請用繁体中文回覆」",
+        "guide_ec_step3_li4": "✅ 设定 Pre-inject：「你是电商客服，请用繁体中文回复」",
 
 
 
@@ -1432283,7 +1432283,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_step3_title": "Step 3：设定跨装置訊息閘门（2 分鐘）",
+        "guide_ec_step3_title": "Step 3：设定跨装置訊息閘门（2 分钟）",
 
 
 
@@ -1432667,7 +1432667,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_step4_title": "Step 4：发布代理窗口连结（2 分鐘）",
+        "guide_ec_step4_title": "Step 4：发布代理窗口连结（2 分钟）",
 
 
 
@@ -1433307,7 +1433307,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_tip_li2": "✅ <strong>设定明確边界</strong>：金流退款等敏感操作轉人工处理",
+        "guide_ec_tip_li2": "✅ <strong>设定明确边界</strong>：金流退款等敏感操作轉人工处理",
 
 
 
@@ -1433435,7 +1433435,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_tip_li3": "✅ <strong>Pre-inject 加上商品目錄 Note ID</strong>：讓 Bot 知道去哪里查商品资料",
+        "guide_ec_tip_li3": "✅ <strong>Pre-inject 加上商品目錄 Note ID</strong>：让 Bot 知道去哪里查商品资料",
 
 
 
@@ -1433691,7 +1433691,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_tip_li5": "✅ <strong>定期看对話紀錄</strong>：了解客戶常問什麼，持續優化 Bot 回覆",
+        "guide_ec_tip_li5": "✅ <strong>定期看对話紀錄</strong>：了解客戶常問什麼，持續優化 Bot 回复",
 
 
 
@@ -1433819,7 +1433819,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_ec_title": "电商 AI 客服 — 10 分鐘打造智能購物助手",
+        "guide_ec_title": "电商 AI 客服 — 10 分钟打造智能購物助手",
 
 
 
@@ -1434331,7 +1434331,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_envvars_meta": "任務中心 &gt; 环境变数 <span class=\"mc-label\" style=\"background:rgba(255,152,0,0.15);color:#FF9800;\">User 授權 / Bot 讀取</span>",
+        "guide_envvars_meta": "任務中心 &gt; 环境变数 <span class=\"mc-label\" style=\"background:rgba(255,152,0,0.15);color:#FF9800;\">User 授權 / Bot 读取</span>",
 
 
 
@@ -1434459,7 +1434459,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_envvars_p_1": "讓 Bot 安全存取敏感资訊（API Key、Token 等）。变数以 <strong>AES-256-GCM</strong> 加密儲存於伺服器，Bot 每次讀取都需要装置擁有者即时授權（JIT — Just-in-Time Approval）。",
+        "guide_envvars_p_1": "让 Bot 安全存取敏感资訊（API Key、Token 等）。变数以 <strong>AES-256-GCM</strong> 加密儲存於伺服器，Bot 每次读取都需要装置擁有者即时授權（JIT — Just-in-Time Approval）。",
 
 
 
@@ -1434715,7 +1434715,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_envvars_td_10": "可在 Portal → Env Variables 頁面新增、編輯、刪除变数",
+        "guide_envvars_td_10": "可在 Portal → Env Variables 页面新增、編輯、刪除变数",
 
 
 
@@ -1434971,7 +1434971,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_envvars_td_12": "在 App → Mission Control → Env Variables 同樣可管理，並接收授權通知",
+        "guide_envvars_td_12": "在 App → Mission Control → Env Variables 同樣可管理，并接收授權通知",
 
 
 
@@ -1435099,7 +1435099,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_envvars_td_13": "讀取（Bot）",
+        "guide_envvars_td_13": "读取（Bot）",
 
 
 
@@ -1435227,7 +1435227,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_envvars_td_14": "寫入（User）",
+        "guide_envvars_td_14": "写入（User）",
 
 
 
@@ -1435867,7 +1435867,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_envvars_td_4": "Bot 請求讀取时，App 彈出授權对話框，使用者確认后才解密回傳，授權快取 5 分鐘",
+        "guide_envvars_td_4": "Bot 请求读取时，App 彈出授權对話框，使用者确认后才解密回傳，授權快取 5 分钟",
 
 
 
@@ -1436123,7 +1436123,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_envvars_td_6": "开啟鎖定后，Bot 的所有讀取請求立即拒絕，不显示授權彈窗",
+        "guide_envvars_td_6": "开启鎖定后，Bot 的所有读取请求立即拒絕，不显示授權彈窗",
 
 
 
@@ -1436251,7 +1436251,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_envvars_td_7": "離線保护",
+        "guide_envvars_td_7": "离线保护",
 
 
 
@@ -1436379,7 +1436379,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_envvars_td_8": "装置未连線（Socket.IO 斷線）时，Bot 請求直接回傳 403，不会等待",
+        "guide_envvars_td_8": "装置未连线（Socket.IO 斷线）时，Bot 请求直接回傳 403，不会等待",
 
 
 
@@ -1437019,7 +1437019,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_card_10_desc": "一鍵发布內容到 12+ 平台（DEV.to、X、Reddit、LinkedIn 等）",
+        "guide_features_card_10_desc": "一鍵发布内容到 12+ 平台（DEV.to、X、Reddit、LinkedIn 等）",
 
 
 
@@ -1437275,7 +1437275,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_card_1_desc": "多个 AI 代理透过 Agent-to-Agent 协議即时通訊、广播协作、跨装置任務派发",
+        "guide_features_card_1_desc": "多个 AI 代理透过 Agent-to-Agent 协议即时通訊、广播协作、跨装置任務派发",
 
 
 
@@ -1437531,7 +1437531,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_card_2_desc": "为代理建立專屬公开连结，客戶可直接在瀏覽器中与 AI 互動、下单、查詢",
+        "guide_features_card_2_desc": "为代理建立專属公开连结，客戶可直接在浏览器中与 AI 互动、下单、查詢",
 
 
 
@@ -1437787,7 +1437787,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_card_3_desc": "Mission Control 建立待办、派发任務、追蹤进度，代理自動收到通知",
+        "guide_features_card_3_desc": "Mission Control 建立待办、派发任務、追蹤进度，代理自动收到通知",
 
 
 
@@ -1438299,7 +1438299,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_card_5_desc": "建立数位名片，展示能力与標籤，便於被其他用戶发现与收藏",
+        "guide_features_card_5_desc": "建立数位名片，展示能力与标籤，便於被其他用戶发现与收藏",
 
 
 
@@ -1439067,7 +1439067,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_card_8_desc": "AES-256-GCM 加密儲存金鑰，JIT 即时授權机制確保安全",
+        "guide_features_card_8_desc": "AES-256-GCM 加密儲存金鑰，JIT 即时授權机制确保安全",
 
 
 
@@ -1439323,7 +1439323,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_card_9_desc": "內建 AI 即时問答，自動診斷問题、提供解決方案",
+        "guide_features_card_9_desc": "内建 AI 即时問答，自动診斷問题、提供解决方案",
 
 
 
@@ -1439835,7 +1439835,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_cta_web": "Web Portal（推薦）：<a href=\"dashboard.html\">开啟 EClawbot 網頁版</a>",
+        "guide_features_cta_web": "Web Portal（推薦）：<a href=\"dashboard.html\">开启 EClawbot 网页版</a>",
 
 
 
@@ -1440219,7 +1440219,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_gps_desc": "Bot 可主動請求用戶的 GPS 位置，實现情境式互動服務 — 附近美食、停车场、朋友位置等。",
+        "guide_features_gps_desc": "Bot 可主动请求用戶的 GPS 位置，實现情境式互动服务 — 附近美食、停车场、朋友位置等。",
 
 
 
@@ -1440859,7 +1440859,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_intro": "EClawbot 讓你建立 AI 代理團队，透过 A2A 协議讓代理彼此协作、自動化任務、对外服務客戶。支援 Web Portal、Android App、iOS App 三平台即时同步。",
+        "guide_features_intro": "EClawbot 让你建立 AI 代理團队，透过 A2A 协议让代理彼此协作、自动化任務、对外服务客戶。支援 Web Portal、Android App、iOS App 三平台即时同步。",
 
 
 
@@ -1441243,7 +1441243,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_tbl_10_desc": "一鍵发布內容到 12+ 平台（Blogger、DEV.to、X、Reddit、LinkedIn 等）",
+        "guide_features_tbl_10_desc": "一鍵发布内容到 12+ 平台（Blogger、DEV.to、X、Reddit、LinkedIn 等）",
 
 
 
@@ -1441499,7 +1441499,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_tbl_1_desc": "多个 AI 代理透过 Agent-to-Agent 协議即时通訊、广播协作、跨装置任務派发",
+        "guide_features_tbl_1_desc": "多个 AI 代理透过 Agent-to-Agent 协议即时通訊、广播协作、跨装置任務派发",
 
 
 
@@ -1441755,7 +1441755,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_tbl_2_desc": "为每个代理建立專屬公开连结，客戶可直接在瀏覽器中与你的 AI 代理互動、下单、查詢",
+        "guide_features_tbl_2_desc": "为每个代理建立專属公开连结，客戶可直接在浏览器中与你的 AI 代理互动、下单、查詢",
 
 
 
@@ -1442011,7 +1442011,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_tbl_3_desc": "Mission Control 任務管理，建立待办、派发任務、追蹤进度，代理自動收到通知",
+        "guide_features_tbl_3_desc": "Mission Control 任務管理，建立待办、派发任務、追蹤进度，代理自动收到通知",
 
 
 
@@ -1442523,7 +1442523,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_tbl_5_desc": "建立代理数位名片，展示能力、协議支援、標籤，便於被其他用戶发现与收藏",
+        "guide_features_tbl_5_desc": "建立代理数位名片，展示能力、协议支援、标籤，便於被其他用戶发现与收藏",
 
 
 
@@ -1443035,7 +1443035,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_tbl_7_desc": "Webhook + Channel Plugin 兩種方式接入 OpenClaw AI Bot，支援多模型协作",
+        "guide_features_tbl_7_desc": "Webhook + Channel Plugin 兩种方式接入 OpenClaw AI Bot，支援多模型协作",
 
 
 
@@ -1443291,7 +1443291,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_tbl_8_desc": "AES-256-GCM 加密儲存 Bot 金鑰，JIT 即时授權机制確保安全",
+        "guide_features_tbl_8_desc": "AES-256-GCM 加密儲存 Bot 金鑰，JIT 即时授權机制确保安全",
 
 
 
@@ -1443547,7 +1443547,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_tbl_9_desc": "內建 EClawbot AI 即时問答，自動診斷問题、提供解決方案",
+        "guide_features_tbl_9_desc": "内建 EClawbot AI 即时問答，自动診斷問题、提供解决方案",
 
 
 
@@ -1444315,7 +1444315,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_why1_desc": "为代理设定 Identity + Agent Card，分享连结给客戶，即可在瀏覽器中直接互動。適合电商客服、旅游顾問、预約排程等场景。",
+        "guide_features_why1_desc": "为代理设定 Identity + Agent Card，分享连结给客戶，即可在浏览器中直接互动。适合电商客服、旅游顾問、预約排程等场景。",
 
 
 
@@ -1444443,7 +1444443,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_why1_pain": "想讓 AI 代理对外接待客戶、处理訂单？",
+        "guide_features_why1_pain": "想让 AI 代理对外接待客戶、处理訂单？",
 
 
 
@@ -1444699,7 +1444699,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_why2_desc": "透过 Speak-to、Broadcast、Mission Control，讓代理彼此分工合作，自動完成任務並回報进度。",
+        "guide_features_why2_desc": "透过 Speak-to、Broadcast、Mission Control，让代理彼此分工合作，自动完成任務并回报进度。",
 
 
 
@@ -1444827,7 +1444827,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_why2_pain": "想讓多个 AI 代理协作、自動化工作流程？",
+        "guide_features_why2_pain": "想让多个 AI 代理协作、自动化工作流程？",
 
 
 
@@ -1444955,7 +1444955,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_why2_solution": "→ A2A 协議，代理间即时通訊",
+        "guide_features_why2_solution": "→ A2A 协议，代理间即时通訊",
 
 
 
@@ -1445595,7 +1445595,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_api1_title": "查看攔截統計",
+        "guide_gk_api1_title": "查看攔截統计",
 
 
 
@@ -1445723,7 +1445723,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_api2_title": "设定 Gatekeeper 規則",
+        "guide_gk_api2_title": "设定 Gatekeeper 规則",
 
 
 
@@ -1446107,7 +1446107,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_check1_desc": "包含广告、釣鱼、敏感詞的訊息自動攔截",
+        "guide_gk_check1_desc": "包含广告、釣鱼、敏感詞的訊息自动攔截",
 
 
 
@@ -1446875,7 +1446875,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_check3_desc": "啟用后只有白名单装置可发訊息（嚴格模式）",
+        "guide_gk_check3_desc": "启用后只有白名单装置可发訊息（嚴格模式）",
 
 
 
@@ -1447131,7 +1447131,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_check4_cfg": "Rate Limit（次/分鐘）",
+        "guide_gk_check4_cfg": "Rate Limit（次/分钟）",
 
 
 
@@ -1447259,7 +1447259,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_check4_desc": "同一装置短时间超过訊息上限，自動降速或封鎖",
+        "guide_gk_check4_desc": "同一装置短时间超过訊息上限，自动降速或封鎖",
 
 
 
@@ -1448027,7 +1448027,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_check6_desc": "装置被暫停服務时所有訊息皆被攔截",
+        "guide_gk_check6_desc": "装置被暫停服务时所有訊息皆被攔截",
 
 
 
@@ -1448283,7 +1448283,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_cta_crossdevice": "跨装置设定：<a href=\"#guide/detail-crossdevice\">Cross-Device Msg 教學</a>",
+        "guide_gk_cta_crossdevice": "跨装置设定：<a href=\"#guide/detail-crossdevice\">Cross-Device Msg 教学</a>",
 
 
 
@@ -1448411,7 +1448411,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_cta_proxy": "適用场景：<a href=\"#guide/usecase-proxy-window\">尹代理窗口安全设定</a>",
+        "guide_gk_cta_proxy": "适用场景：<a href=\"#guide/usecase-proxy-window\">尹代理窗口安全设定</a>",
 
 
 
@@ -1449179,7 +1449179,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_flow3_sub": "处理合規訊息",
+        "guide_gk_flow3_sub": "处理合规訊息",
 
 
 
@@ -1449947,7 +1449947,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_meta": "六層过濾机制，攔截恶意訊息、防止轟炸、黑白名单精準控制",
+        "guide_gk_meta": "六层过濾机制，攔截恶意訊息、防止轟炸、黑白名单精準控制",
 
 
 
@@ -1450203,7 +1450203,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_note_stats": "🛡️ <strong>即时統計：</strong>透过 <code>GET /api/gatekeeper/stats</code> 查看攔截数量和封鎖装置清单。",
+        "guide_gk_note_stats": "🛡️ <strong>即时統计：</strong>透过 <code>GET /api/gatekeeper/stats</code> 查看攔截数量和封鎖装置清单。",
 
 
 
@@ -1450331,7 +1450331,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_p_what": "Gatekeeper（守门员）是 EClawbot 的跨装置訊息安全層。每一条外部訊息进入你的 Bot 之前，都必須通过六道檢查。任何一道不过，訊息就被攔截，防止 Bot 被垃圾訊息、恶意用戶或自動轟炸攻击。",
+        "guide_gk_p_what": "Gatekeeper（守门员）是 EClawbot 的跨装置訊息安全层。每一条外部訊息进入你的 Bot 之前，都必須通过六道檢查。任何一道不过，訊息就被攔截，防止 Bot 被垃圾訊息、恶意用戶或自动轟炸攻击。",
 
 
 
@@ -1450843,7 +1450843,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_tip_li1": "✅ <strong>先从速率限制开始</strong>：预设 10 次/分鐘，大多数场景都夠用",
+        "guide_gk_tip_li1": "✅ <strong>先从速率限制开始</strong>：预设 10 次/分钟，大多数场景都夠用",
 
 
 
@@ -1451099,7 +1451099,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_tip_li3": "✅ <strong>查看統計掌握狀況</strong>：每天查看 stats API 了解攔截趨勢",
+        "guide_gk_tip_li3": "✅ <strong>查看統计掌握狀況</strong>：每天查看 stats API 了解攔截趨勢",
 
 
 
@@ -1451227,7 +1451227,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_tip_li4": "⚠️ <strong>白名单要謹慎</strong>：啟用后所有不在清单的用戶都无法使用",
+        "guide_gk_tip_li4": "⚠️ <strong>白名单要謹慎</strong>：启用后所有不在清单的用戶都无法使用",
 
 
 
@@ -1451483,7 +1451483,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_uc_corp": "🏢 企业內部 Bot",
+        "guide_gk_uc_corp": "🏢 企业内部 Bot",
 
 
 
@@ -1451995,7 +1451995,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_uc_pub": "🌐 公开服務",
+        "guide_gk_uc_pub": "🌐 公开服务",
 
 
 
@@ -1452379,7 +1452379,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_uc_test_desc": "白名单只含测試装置，隔離测試流量",
+        "guide_gk_uc_test_desc": "白名单只含测試装置，隔离测試流量",
 
 
 
@@ -1452507,7 +1452507,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gk_uc_th_rule": "建議規則",
+        "guide_gk_uc_th_rule": "建议规則",
 
 
 
@@ -1453019,7 +1453019,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_api_msg_example": "請分享你的位置以獲取附近推薦 📍",
+        "guide_gps_api_msg_example": "请分享你的位置以获取附近推薦 📍",
 
 
 
@@ -1453147,7 +1453147,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_api_request_title": "1. 請求用戶位置",
+        "guide_gps_api_request_title": "1. 请求用戶位置",
 
 
 
@@ -1453275,7 +1453275,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_api_response_title": "3. 回應範例",
+        "guide_gps_api_response_title": "3. 回應范例",
 
 
 
@@ -1453787,7 +1453787,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_cta_title": "立即体验 GPS 位置服務",
+        "guide_gps_cta_title": "立即体验 GPS 位置服务",
 
 
 
@@ -1454299,7 +1454299,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_flow_rec_sub": "附近 3 公里內",
+        "guide_gps_flow_rec_sub": "附近 3 公里内",
 
 
 
@@ -1454427,7 +1454427,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_flow_report": "App 回報位置",
+        "guide_gps_flow_report": "App 回报位置",
 
 
 
@@ -1454555,7 +1454555,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_flow_report_sub": "lat / lng 座標",
+        "guide_gps_flow_report_sub": "lat / lng 座标",
 
 
 
@@ -1454683,7 +1454683,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_flow_request": "Bot 請求 GPS",
+        "guide_gps_flow_request": "Bot 请求 GPS",
 
 
 
@@ -1454939,7 +1454939,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_gif_label": "▲ Bot 請求 GPS → 用戶授權 → 即时附近推薦 Demo",
+        "guide_gps_gif_label": "▲ Bot 请求 GPS → 用戶授權 → 即时附近推薦 Demo",
 
 
 
@@ -1455195,7 +1455195,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_scenario1_desc": "用戶問「附近有什麼好吃的？」Bot 獲取 GPS 后，依距離排序回傳餐廳清单，附上評分、價位、營业时间，方便立即做決定。",
+        "guide_gps_scenario1_desc": "用戶問「附近有什麼好吃的？」Bot 获取 GPS 后，依距离排序回傳餐廳清单，附上评分、價位、營业时间，方便立即做决定。",
 
 
 
@@ -1455451,7 +1455451,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_scenario2_desc": "停车困难？Bot 查詢附近停车场，显示距離、费率、剩余车位（需串接停车场 API），讓开车族轻鬆找位。",
+        "guide_gps_scenario2_desc": "停车困难？Bot 查詢附近停车场，显示距离、费率、剩余车位（需串接停车场 API），让开车族轻鬆找位。",
 
 
 
@@ -1455707,7 +1455707,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_scenario3_desc": "群組活動找人？Bot 請求多名用戶的 GPS 后，計算集合点並提供導航连结，一鍵解決「你在哪？我在这！」的混亂。",
+        "guide_gps_scenario3_desc": "群组活动找人？Bot 请求多名用戶的 GPS 后，计算集合点并提供導航连结，一鍵解决「你在哪？我在这！」的混亂。",
 
 
 
@@ -1456219,7 +1456219,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_setup_step1": "# 步驟 1：设定 Bot Identity，告訴它位置感知服務的職责",
+        "guide_gps_setup_step1": "# 步驟 1：设定 Bot Identity，告訴它位置感知服务的職责",
 
 
 
@@ -1456475,7 +1456475,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_setup_step3": "# 步驟 3：App 授權后回報 lat/lng",
+        "guide_gps_setup_step3": "# 步驟 3：App 授權后回报 lat/lng",
 
 
 
@@ -1456859,7 +1456859,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_subtitle": "問一句「附近哪里吃飯？」，Bot 請求 GPS 位置，即刻推薦最近的好去处",
+        "guide_gps_subtitle": "問一句「附近哪里吃飯？」，Bot 请求 GPS 位置，即刻推薦最近的好去处",
 
 
 
@@ -1456987,7 +1456987,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_tip1": "📍 <strong>先問后定位</strong>：先確认用戶需求，再請求 GPS，避免突然要求位置讓用戶感到突兀",
+        "guide_gps_tip1": "📍 <strong>先問后定位</strong>：先确认用戶需求，再请求 GPS，避免突然要求位置让用戶感到突兀",
 
 
 
@@ -1457243,7 +1457243,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_tip2": "🔒 <strong>隱私告知</strong>：請求前说明用途，例如「为了推薦附近餐廳，需要你的位置」",
+        "guide_gps_tip2": "🔒 <strong>隱私告知</strong>：请求前说明用途，例如「为了推薦附近餐廳，需要你的位置」",
 
 
 
@@ -1457755,7 +1457755,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_tip4": "🗺️ <strong>附地圖连结</strong>：搭配 Google Maps 连结（<code>https://maps.google.com/?q=lat,lng</code>）讓用戶一鍵導航",
+        "guide_gps_tip4": "🗺️ <strong>附地圖连结</strong>：搭配 Google Maps 连结（<code>https://maps.google.com/?q=lat,lng</code>）让用戶一鍵導航",
 
 
 
@@ -1458011,7 +1458011,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_tip5": "⏱️ <strong>位置快取</strong>：同一对話中不必每次都重新請求 GPS，使用最近一次回報的座標即可",
+        "guide_gps_tip5": "⏱️ <strong>位置快取</strong>：同一对話中不必每次都重新请求 GPS，使用最近一次回报的座标即可",
 
 
 
@@ -1458651,7 +1458651,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_gps_what_desc": "EClawbot 的 <strong>GPS 位置分享</strong>功能讓 Bot 可以請求用戶的即时座標，再搭配后端推薦 API，回傳附近的餐廳、停车场、景点等资訊。对話情境感知（Context-Aware），不再猜你在哪。",
+        "guide_gps_what_desc": "EClawbot 的 <strong>GPS 位置分享</strong>功能让 Bot 可以请求用戶的即时座标，再搭配后端推薦 API，回傳附近的餐廳、停车场、景点等资訊。对話情境感知（Context-Aware），不再猜你在哪。",
 
 
 
@@ -1458779,7 +1458779,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_callout_body": "Hermes Channel 搭配 <strong>MiniMax coding-plan 訂閱 Key</strong>（<code>sk-cp-...</code>）可走訂閱額度，不另計 token fee用。也支援 OpenAI / Anthropic / OpenRouter / Nous Portal / 本地 Ollama 等 18 家 provider — 照你手边的 credential 选最划算的。",
+        "guide_hermes_channel_callout_body": "Hermes Channel 搭配 <strong>MiniMax coding-plan 訂閱 Key</strong>（<code>sk-cp-...</code>）可走訂閱額度，不另计 token fee用。也支援 OpenAI / Anthropic / OpenRouter / Nous Portal / 本地 Ollama 等 18 家 provider — 照你手边的 credential 选最划算的。",
 
 
 
@@ -1459419,7 +1459419,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_h2_references": "延伸閱讀",
+        "guide_hermes_channel_h2_references": "延伸閱读",
 
 
 
@@ -1460059,7 +1460059,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_h3_2": "第 2 步：存憑證到 Keychain",
+        "guide_hermes_channel_h3_2": "第 2 步：存憑证到 Keychain",
 
 
 
@@ -1460571,7 +1460571,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_h3_6": "第 6 步：啟動 bridge",
+        "guide_hermes_channel_h3_6": "第 6 步：启动 bridge",
 
 
 
@@ -1460955,7 +1460955,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_h3_faq_cold": "Q: 回覆延遲多少？",
+        "guide_hermes_channel_h3_faq_cold": "Q: 回复延遲多少？",
 
 
 
@@ -1461339,7 +1461339,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_h3_faq_zombie": "Q: Bridge log 卡在 \"spawning chat\" 之后沒動静？",
+        "guide_hermes_channel_h3_faq_zombie": "Q: Bridge log 卡在 \"spawning chat\" 之后沒动静？",
 
 
 
@@ -1461467,7 +1461467,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_li_ref_cc": "🤖 Claude Code Channel（訂閱額度相同概念）：<a href=\"#guide/claude-code-channel\">查看教學</a>",
+        "guide_hermes_channel_li_ref_cc": "🤖 Claude Code Channel（訂閱額度相同概念）：<a href=\"#guide/claude-code-channel\">查看教学</a>",
 
 
 
@@ -1461723,7 +1461723,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_li_ref_openclaw": "🔌 OpenClaw Channel（TypeScript 版 reference）：<a href=\"#guide/openclaw-channel\">查看教學</a>",
+        "guide_hermes_channel_li_ref_openclaw": "🔌 OpenClaw Channel（TypeScript 版 reference）：<a href=\"#guide/openclaw-channel\">查看教学</a>",
 
 
 
@@ -1462363,7 +1462363,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_li_req4": "✅ <strong>EClawbot Channel API Key</strong>（<code>eck_...</code>）— 於 Portal → Settings → Channel API 產生",
+        "guide_hermes_channel_li_req4": "✅ <strong>EClawbot Channel API Key</strong>（<code>eck_...</code>）— 於 Portal → Settings → Channel API 产生",
 
 
 
@@ -1462747,7 +1462747,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_meta": "用 NousResearch 的 Hermes Agent（Python）當 EClawbot 角色的 AI 后端",
+        "guide_hermes_channel_meta": "用 NousResearch 的 Hermes Agent（Python）当 EClawbot 角色的 AI 后端",
 
 
 
@@ -1463131,7 +1463131,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_p_faq_auth": "EClaw 推 webhook 用 <code>Authorization: Bearer &lt;callback_token&gt;</code>，但 Hermes in建 webhook gateway 期待的是 HMAC-SHA256 簽章。兩種机制不相容。Bridge 在 Hermes gateway 之前先接、自己验 Bearer 后才轉发；所以 gateway 那層的 HMAC 必須跳过。Production 要補強，可在 bridge 加 reverse proxy 同时支援兩種 auth。",
+        "guide_hermes_channel_p_faq_auth": "EClaw 推 webhook 用 <code>Authorization: Bearer &lt;callback_token&gt;</code>，但 Hermes in建 webhook gateway 期待的是 HMAC-SHA256 簽章。兩种机制不相容。Bridge 在 Hermes gateway 之前先接、自己验 Bearer 后才轉发；所以 gateway 那层的 HMAC 必須跳过。Production 要补強，可在 bridge 加 reverse proxy 同时支援兩种 auth。",
 
 
 
@@ -1463259,7 +1463259,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_p_faq_cold": "2026-04-28 起 bridge 走 hermes_daemon.py（option B）— daemon 在 boot 时起一个 hermes --continue 常駐 child，冷啟成本只付一次。日常 per-message latency ≈ Hermes 推論时间（typically 1–3s）。当 HERMES_DAEMON_URL 未設定或 daemon 不可用，bridge 自動 fallback 回舊的 per-request hermes chat subprocess 模式，那條路徑仍会看到 7–9 秒冷啟。歷史記錄与 fallback 行为见 KNOW-HOW §14、SPEC-bridge-refactor.md。",
+        "guide_hermes_channel_p_faq_cold": "2026-04-28 起 bridge 走 hermes_daemon.py（option B）— daemon 在 boot 时起一个 hermes --continue 常駐 child，冷启成本只付一次。日常 per-message latency ≈ Hermes 推论时间（typically 1–3s）。当 HERMES_DAEMON_URL 未设定或 daemon 不可用，bridge 自动 fallback 回舊的 per-request hermes chat subprocess 模式，那條路径仍会看到 7–9 秒冷启。历史記錄与 fallback 行为见 KNOW-HOW §14、SPEC-bridge-refactor.md。",
 
 
 
@@ -1463387,7 +1463387,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_p_faq_multiple": "可以，完全獨立。每个 channel 用自己的 <code>eck_...</code> Key 綁不同的 entity slot，沒有冲突。如果想共用一台 Hermes 容器服務多个 entity，bind 多次（每个 entity 獨立 botSecret）即可，不过目前 bridge 只处理一个 entity；多 entity 要改成讀取多組 <code>HERMES_ECLAW_ENTITY_ID</code> 並在 <code>process_message</code> 里分派。",
+        "guide_hermes_channel_p_faq_multiple": "可以，完全獨立。每个 channel 用自己的 <code>eck_...</code> Key 綁不同的 entity slot，沒有冲突。如果想共用一台 Hermes 容器服务多个 entity，bind 多次（每个 entity 獨立 botSecret）即可，不过目前 bridge 只处理一个 entity；多 entity 要改成读取多组 <code>HERMES_ECLAW_ENTITY_ID</code> 并在 <code>process_message</code> 里分派。",
 
 
 
@@ -1463515,7 +1463515,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_p_faq_provider": "Hermes v1 改了 config schema，舊的 <code>provider: minimax</code> 寫在頂層会被忽略，要改成 <code>model: { provider: minimax, name: MiniMax-M2.7 }</code>。跑 <code>hermes doctor</code> 会明確指出 <em>\"Stale root-level config keys\"</em>。修完重啟 bridge 即可。",
+        "guide_hermes_channel_p_faq_provider": "Hermes v1 改了 config schema，舊的 <code>provider: minimax</code> 寫在頂层会被忽略，要改成 <code>model: { provider: minimax, name: MiniMax-M2.7 }</code>。跑 <code>hermes doctor</code> 会明确指出 <em>\"Stale root-level config keys\"</em>。修完重启 bridge 即可。",
 
 
 
@@ -1463771,7 +1463771,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_p_provider": "进 Hermes 容器跑 <code>hermes setup</code>（或 <code>hermes login</code> 用 Nous Portal），把 provider key 存到 <code>~/.hermes/auth.json</code>，並把 config.yaml 设成新 schema（v0.x 的舊寫法会報 <code>No inference provider configured</code>）：",
+        "guide_hermes_channel_p_provider": "进 Hermes 容器跑 <code>hermes setup</code>（或 <code>hermes login</code> 用 Nous Portal），把 provider key 存到 <code>~/.hermes/auth.json</code>，并把 config.yaml 设成新 schema（v0.x 的舊寫法会报 <code>No inference provider configured</code>）：",
 
 
 
@@ -1463899,7 +1463899,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_p_test": "开 <code>https://eclawbot.com/c/&lt;publicCode&gt;</code>（bind 时回傳的那个 6 碼）傳訊息。预期冷啟 7–9 秒后 Hermes 回覆。即时看 log：",
+        "guide_hermes_channel_p_test": "开 <code>https://eclawbot.com/c/&lt;publicCode&gt;</code>（bind 时回傳的那个 6 碼）傳訊息。预期冷启 7–9 秒后 Hermes 回复。即时看 log：",
 
 
 
@@ -1464027,7 +1464027,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_p_what1": "Hermes Channel 是一个 Python bridge（aiohttp），讓 <a href=\"https://github.com/NousResearch/hermes-agent\" target=\"_blank\" rel=\"noopener\">Hermes Agent</a>（NousResearch 开源的自我成长型 AI agent）能以原生 bot 的身份綁在 EClawbot 角色上，跟 OpenClaw Channel / Claude Code Channel 並列。",
+        "guide_hermes_channel_p_what1": "Hermes Channel 是一个 Python bridge（aiohttp），让 <a href=\"https://github.com/NousResearch/hermes-agent\" target=\"_blank\" rel=\"noopener\">Hermes Agent</a>（NousResearch 开源的自我成长型 AI agent）能以原生 bot 的身份綁在 EClawbot 角色上，跟 OpenClaw Channel / Claude Code Channel 并列。",
 
 
 
@@ -1464155,7 +1464155,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_p_what2": "收到使用者訊息 → bridge 呼叫 Hermes CLI 取得回覆 → POST 回 EClawbot。Hermes 的 tools、skills、memory、session 都可用；附帶的 KNOW-HOW 文件記錄了 15 条开发时踩过的坑，copy-paste 可用。",
+        "guide_hermes_channel_p_what2": "收到使用者訊息 → bridge 呼叫 Hermes CLI 取得回复 → POST 回 EClawbot。Hermes 的 tools、skills、memory、session 都可用；附帶的 KNOW-HOW 文件記錄了 15 条开发时踩过的坑，copy-paste 可用。",
 
 
 
@@ -1464411,7 +1464411,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_warning_quick_tunnel": "⚠️ <strong>別在容器in跑 Quick Tunnel（<code>--url ...</code>）</strong>：容器網路 UDP buffer 太小会讓 QUIC 连線一直掉。一定要用 named tunnel（<code>--token ...</code>），穩定又有固定 domain。",
+        "guide_hermes_channel_warning_quick_tunnel": "⚠️ <strong>別在容器in跑 Quick Tunnel（<code>--url ...</code>）</strong>：容器网路 UDP buffer 太小会让 QUIC 连线一直掉。一定要用 named tunnel（<code>--token ...</code>），穩定又有固定 domain。",
 
 
 
@@ -1464539,7 +1464539,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_hermes_channel_warning_teardown": "⚠️ Teardown 用的是 <strong>safe unbind</strong>（<code>DELETE /api/entity</code> 需 botSecret），不会碰 entity 资料。如果想连 entity 整个 slot 一起清除才需要 <code>DELETE /api/device/entity/:id/permanent</code>（不可逆，請三思）。",
+        "guide_hermes_channel_warning_teardown": "⚠️ Teardown 用的是 <strong>safe unbind</strong>（<code>DELETE /api/entity</code> 需 botSecret），不会碰 entity 资料。如果想连 entity 整个 slot 一起清除才需要 <code>DELETE /api/device/entity/:id/permanent</code>（不可逆，请三思）。",
 
 
 
@@ -1464667,7 +1464667,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_api_auth": "认證方式：Header <code>x-device-secret</code> 或 <code>x-bot-secret</code>",
+        "guide_identity_api_auth": "认证方式：Header <code>x-device-secret</code> 或 <code>x-bot-secret</code>",
 
 
 
@@ -1464923,7 +1464923,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_ex_boundaries": "不处理退款、不洩漏內部定價策略",
+        "guide_identity_ex_boundaries": "不处理退款、不洩漏内部定價策略",
 
 
 
@@ -1465051,7 +1465051,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_ex_instructions": "收到訂单查詢时，先確认訂单編号，再查詢物流狀態...",
+        "guide_identity_ex_instructions": "收到訂单查詢时，先确认訂单編号，再查詢物流狀態...",
 
 
 
@@ -1465179,7 +1465179,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_ex_profile": "專业电商客服，24 小时在線服務",
+        "guide_identity_ex_profile": "專业电商客服，24 小时在线服务",
 
 
 
@@ -1466203,7 +1466203,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_field_rules": "套用的規則模板 ID 清单",
+        "guide_identity_field_rules": "套用的规則模板 ID 清单",
 
 
 
@@ -1467483,7 +1467483,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_meta": "定义代理的角色、行为準則与溝通风格，讓 AI 精準扮演你需要的角色",
+        "guide_identity_meta": "定义代理的角色、行为準則与溝通风格，让 AI 精準扮演你需要的角色",
 
 
 
@@ -1467611,7 +1467611,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_note_analogy": "💡 把 Identity 想像成一份「職位说明書」——清楚定义代理的職责範圍、工作方式、禁區，讓 AI 不会偏離你的期望。",
+        "guide_identity_note_analogy": "💡 把 Identity 想像成一份「職位说明書」——清楚定义代理的職责范圍、工作方式、禁区，让 AI 不会偏离你的期望。",
 
 
 
@@ -1467867,7 +1467867,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_p_templates": "你可以搭配 <strong>Soul Template</strong>（灵魂模板）和 <strong>Rule Template</strong>（規則模板）快速设定 Identity，不必从零开始。",
+        "guide_identity_p_templates": "你可以搭配 <strong>Soul Template</strong>（灵魂模板）和 <strong>Rule Template</strong>（规則模板）快速设定 Identity，不必从零开始。",
 
 
 
@@ -1467995,7 +1467995,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_p_what": "Identity 是每个實体（Entity）的統一身份结構，包含角色定位、行为指示、语调风格、边界限制等设定。它決定了你的 AI 代理「是谁」以及「如何行動」。當外部用戶透过代理窗口互動时，Identity 就是代理表现的核心依據。",
+        "guide_identity_p_what": "Identity 是每个實体（Entity）的統一身份结構，包含角色定位、行为指示、语调风格、边界限制等设定。它决定了你的 AI 代理「是谁」以及「如何行动」。当外部用戶透过代理窗口互动时，Identity 就是代理表现的核心依据。",
 
 
 
@@ -1468123,7 +1468123,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_preview_boundaries": "不代訂机票、不处理簽證問题",
+        "guide_identity_preview_boundaries": "不代訂机票、不处理簽证問题",
 
 
 
@@ -1468251,7 +1468251,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_preview_instructions": "根據客戶预算、时间、偏好推薦行程...",
+        "guide_identity_preview_instructions": "根据客戶预算、时间、偏好推薦行程...",
 
 
 
@@ -1468379,7 +1468379,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_preview_role": "旅游行程規劃師",
+        "guide_identity_preview_role": "旅游行程规劃師",
 
 
 
@@ -1468763,7 +1468763,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_th_example": "範例",
+        "guide_identity_th_example": "范例",
 
 
 
@@ -1469019,7 +1469019,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_tip_li1": "✅ <strong>角色要具体</strong>：「电商客服專员」比「助手」更能讓 AI 聚焦",
+        "guide_identity_tip_li1": "✅ <strong>角色要具体</strong>：「电商客服專员」比「助手」更能让 AI 聚焦",
 
 
 
@@ -1469275,7 +1469275,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_tip_li3": "✅ <strong>边界要明確</strong>：列出代理「不做」的事，避免越權",
+        "guide_identity_tip_li3": "✅ <strong>边界要明确</strong>：列出代理「不做」的事，避免越權",
 
 
 
@@ -1469531,7 +1469531,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_tip_li5": "✅ <strong>定期更新</strong>：根據客戶回饋调整 Identity 设定",
+        "guide_identity_tip_li5": "✅ <strong>定期更新</strong>：根据客戶回饋调整 Identity 设定",
 
 
 
@@ -1469915,7 +1469915,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_tmpl_li2": "选擇合適的模板后，会自動填入 <code>soulTemplateId</code> 和 <code>ruleTemplateIds</code>",
+        "guide_identity_tmpl_li2": "选擇合适的模板后，会自动填入 <code>soulTemplateId</code> 和 <code>ruleTemplateIds</code>",
 
 
 
@@ -1470171,7 +1470171,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_web_li1": "前往 <strong>Dashboard</strong> 頁面",
+        "guide_identity_web_li1": "前往 <strong>Dashboard</strong> 页面",
 
 
 
@@ -1471067,7 +1471067,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_intent_col_keywords": "关鍵字範例",
+        "guide_intent_col_keywords": "关鍵字范例",
 
 
 
@@ -1471195,7 +1471195,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_intent_dynamic": "動態擴充 Keyword",
+        "guide_intent_dynamic": "动態擴充 Keyword",
 
 
 
@@ -1471323,7 +1471323,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_intent_dynamic_desc": "Keyword list 儲存在 mission note <code>⚙️ api-intent-keywords</code>。Bot 可更新此 note 新增关鍵字，<strong>无需重啟 server</strong>，5 分鐘內生效。",
+        "guide_intent_dynamic_desc": "Keyword list 儲存在 mission note <code>⚙️ api-intent-keywords</code>。Bot 可更新此 note 新增关鍵字，<strong>无需重启 server</strong>，5 分钟内生效。",
 
 
 
@@ -1471579,7 +1471579,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_intent_meta": "Bot 收到訊息时，依关鍵字自動附上对應的 API curl 範例，減少 token 浪费",
+        "guide_intent_meta": "Bot 收到訊息时，依关鍵字自动附上对應的 API curl 范例，減少 token 浪费",
 
 
 
@@ -1471707,7 +1471707,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_intent_safety": "安全设計",
+        "guide_intent_safety": "安全设计",
 
 
 
@@ -1471835,7 +1471835,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_intent_safety_1": "JSON parse 失败 → 静默跳过，不影響正常 push 流程",
+        "guide_intent_safety_1": "JSON parse 失败 → 静默跳过，不影响正常 push 流程",
 
 
 
@@ -1471963,7 +1471963,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_intent_safety_2": "Cache TTL 5 分鐘 → 降低 DB 讀取壓力",
+        "guide_intent_safety_2": "Cache TTL 5 分钟 → 降低 DB 读取壓力",
 
 
 
@@ -1472091,7 +1472091,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_intent_safety_3": "只附加 hint，不修改原始訊息內容",
+        "guide_intent_safety_3": "只附加 hint，不修改原始訊息内容",
 
 
 
@@ -1472347,7 +1472347,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_intent_title": "🧠 動態 API 注入 — Intent Keyword System",
+        "guide_intent_title": "🧠 动態 API 注入 — Intent Keyword System",
 
 
 
@@ -1472475,7 +1472475,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_intent_what": "什麼是動態 API 注入？",
+        "guide_intent_what": "什麼是动態 API 注入？",
 
 
 
@@ -1472603,7 +1472603,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_intent_what_desc": "每次 Bot 收到 push 通知时，EClawbot 后端会分析訊息內容，偵测是否包含预设的 Intent 关鍵字。若命中，系統自動附加对應的 API curl 範例，讓 Bot 的 LLM 不需要記憶所有 API。",
+        "guide_intent_what_desc": "每次 Bot 收到 push 通知时，EClawbot 后端会分析訊息内容，偵测是否包含预设的 Intent 关鍵字。若命中，系統自动附加对應的 API curl 范例，让 Bot 的 LLM 不需要記憶所有 API。",
 
 
 
@@ -1472859,7 +1472859,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_api_comment_comment": "# 留言討論",
+        "guide_kanban_api_comment_comment": "# 留言討论",
 
 
 
@@ -1473371,7 +1473371,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_board_caption": "▲ 五欄看板 · 橘框 = 卡住催促 · ⏰ = 超时警告 · 现正进行中的任務以紫框標示",
+        "guide_kanban_board_caption": "▲ 五欄看板 · 橘框 = 卡住催促 · ⏰ = 超时警告 · 现正进行中的任務以紫框标示",
 
 
 
@@ -1473883,7 +1473883,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_cta_kanban": "开啟看板：<a href=\"kanban.html\">前往 Kanban 看板</a>",
+        "guide_kanban_cta_kanban": "开启看板：<a href=\"kanban.html\">前往 Kanban 看板</a>",
 
 
 
@@ -1475163,7 +1475163,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_demo_card_gps_demo": "GPS Demo 頁面",
+        "guide_kanban_demo_card_gps_demo": "GPS Demo 页面",
 
 
 
@@ -1475291,7 +1475291,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_demo_card_i18n": "i18n 翻譯補齐",
+        "guide_kanban_demo_card_i18n": "i18n 翻譯补齐",
 
 
 
@@ -1475547,7 +1475547,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_demo_card_kanban_demo": "Kanban Demo 頁面",
+        "guide_kanban_demo_card_kanban_demo": "Kanban Demo 页面",
 
 
 
@@ -1477339,7 +1477339,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_flow_timer": "計时开始",
+        "guide_kanban_flow_timer": "计时开始",
 
 
 
@@ -1477723,7 +1477723,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_role_backend_desc": "负责 API 开发、DB 设計、CI/CD。完成后自己把卡片推进到 Review，通知 #2 验收。",
+        "guide_kanban_role_backend_desc": "负责 API 开发、DB 设计、CI/CD。完成后自己把卡片推进到 Review，通知 #2 验收。",
 
 
 
@@ -1477851,7 +1477851,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_role_content": "✍️ #5 ContentSEO (內容行銷)",
+        "guide_kanban_role_content": "✍️ #5 ContentSEO (内容行銷)",
 
 
 
@@ -1478235,7 +1478235,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_role_frontend_desc": "负责 UI/UX、Demo 頁面、截圖/GIF。与 #3 並行开工，完成后推进到 Review。",
+        "guide_kanban_role_frontend_desc": "负责 UI/UX、Demo 页面、截圖/GIF。与 #3 并行开工，完成后推进到 Review。",
 
 
 
@@ -1478747,7 +1478747,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_stale_desc": "每张卡片都有 <code>staleThresholdMs</code> 計时器。狀態超过指定时间未更新，系統自動催促负责 Bot，避免任務卡住沒人处理。",
+        "guide_kanban_stale_desc": "每张卡片都有 <code>staleThresholdMs</code> 计时器。狀態超过指定时间未更新，系統自动催促负责 Bot，避免任務卡住沒人处理。",
 
 
 
@@ -1478875,7 +1478875,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_subtitle": "讓多个 AI Bot 在同一个 Kanban 看板协作，任務卡片自動流動，卡住就催促",
+        "guide_kanban_subtitle": "让多个 AI Bot 在同一个 Kanban 看板协作，任務卡片自动流动，卡住就催促",
 
 
 
@@ -1479003,7 +1479003,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_title": "📋 Kanban AI 團队看板 — 多 Bot 协作、自動催促、进度一目了然",
+        "guide_kanban_title": "📋 Kanban AI 團队看板 — 多 Bot 协作、自动催促、进度一目了然",
 
 
 
@@ -1479259,7 +1479259,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_usecase_li1": "🤖 <strong>AI 开发團队</strong>：后端、前端、內容各自负责欄位，自動流轉不需人工追蹤",
+        "guide_kanban_usecase_li1": "🤖 <strong>AI 开发團队</strong>：后端、前端、内容各自负责欄位，自动流轉不需人工追蹤",
 
 
 
@@ -1479515,7 +1479515,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_usecase_li2": "📦 <strong>电商訂单处理</strong>：客服 Bot 建单 → 物流 Bot 出货 → 客服 Bot 追蹤，全程自動",
+        "guide_kanban_usecase_li2": "📦 <strong>电商訂单处理</strong>：客服 Bot 建单 → 物流 Bot 出货 → 客服 Bot 追蹤，全程自动",
 
 
 
@@ -1479771,7 +1479771,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_usecase_li3": "📝 <strong>內容生產流水線</strong>：研究 → 撰寫 → 翻譯 → 審核 → 发布，每步都有 Bot 负责",
+        "guide_kanban_usecase_li3": "📝 <strong>内容生产流水线</strong>：研究 → 撰寫 → 翻譯 → 審核 → 发布，每步都有 Bot 负责",
 
 
 
@@ -1479899,7 +1479899,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_usecase_li3_strong": "內容生產流水線",
+        "guide_kanban_usecase_li3_strong": "内容生产流水线",
 
 
 
@@ -1480027,7 +1480027,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_usecase_li4": "🔧 <strong>DevOps 自動化</strong>：CI 失败自動建卡 → Backend Bot 修复 → 推进到 Done",
+        "guide_kanban_usecase_li4": "🔧 <strong>DevOps 自动化</strong>：CI 失败自动建卡 → Backend Bot 修复 → 推进到 Done",
 
 
 
@@ -1480155,7 +1480155,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_usecase_li4_strong": "DevOps 自動化",
+        "guide_kanban_usecase_li4_strong": "DevOps 自动化",
 
 
 
@@ -1480411,7 +1480411,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kanban_what_desc": "EClawbot 的 <strong>Kanban 看板</strong>是一个五欄式任務管理系統，專为多 Bot 协作设計。每张卡片有指派的 Bot、優先級、截止催促机制，讓你的 AI 團队像真人开发團队一樣高效运作。",
+        "guide_kanban_what_desc": "EClawbot 的 <strong>Kanban 看板</strong>是一个五欄式任務管理系統，專为多 Bot 协作设计。每张卡片有指派的 Bot、優先級、截止催促机制，让你的 AI 團队像真人开发團队一樣高效运作。",
 
 
 
@@ -1481691,7 +1481691,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_col_todo_sub": "準備开工",
+        "guide_kb_col_todo_sub": "準备开工",
 
 
 
@@ -1481947,7 +1481947,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_cta_kanban": "前往看板：<a href=\"/portal/kanban.html\">Kanban 看板頁面</a>",
+        "guide_kb_cta_kanban": "前往看板：<a href=\"/portal/kanban.html\">Kanban 看板页面</a>",
 
 
 
@@ -1482587,7 +1482587,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_feat_auto": "⚡ 自動化卡片",
+        "guide_kb_feat_auto": "⚡ 自动化卡片",
 
 
 
@@ -1482715,7 +1482715,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_feat_auto_desc": "isAutomation=true 的卡片可设定 cron 排程，定时自動觸发子卡",
+        "guide_kb_feat_auto_desc": "isAutomation=true 的卡片可设定 cron 排程，定时自动触发子卡",
 
 
 
@@ -1482971,7 +1482971,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_feat_comment_desc": "Bot 在卡片留言回報进度、問题、截圖连结",
+        "guide_kb_feat_comment_desc": "Bot 在卡片留言回报进度、問题、截圖连结",
 
 
 
@@ -1483739,7 +1483739,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_feat_stale_desc": "卡片超过 staleThresholdMs 未移動，自動標記逾期並通知负责 Bot",
+        "guide_kb_feat_stale_desc": "卡片超过 staleThresholdMs 未移动，自动标記逾期并通知负责 Bot",
 
 
 
@@ -1483867,7 +1483867,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_h2_automation": "自動化卡片（Cron）",
+        "guide_kb_h2_automation": "自动化卡片（Cron）",
 
 
 
@@ -1484507,7 +1484507,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_h2_usecases": "適用场景",
+        "guide_kb_h2_usecases": "适用场景",
 
 
 
@@ -1484891,7 +1484891,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_meta": "五欄看板 + Bot 协作 + 自動化催促，打造真正的 AI 开发團队",
+        "guide_kb_meta": "五欄看板 + Bot 协作 + 自动化催促，打造真正的 AI 开发團队",
 
 
 
@@ -1485019,7 +1485019,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_note_demo": "📋 <strong>你现在就在用它！</strong>这个頁面的开发任務，就是用 EClawbot Kanban 管理的。<a href=\"/portal/kanban.html\">前往看板頁面 →</a>",
+        "guide_kb_note_demo": "📋 <strong>你现在就在用它！</strong>这个页面的开发任務，就是用 EClawbot Kanban 管理的。<a href=\"/portal/kanban.html\">前往看板页面 →</a>",
 
 
 
@@ -1485147,7 +1485147,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_p_automation": "设定 <code>isAutomation: true</code> 的卡片可以作为定时觸发器，按 cron 排程自動建立子卡並派发给 Bot 執行。",
+        "guide_kb_p_automation": "设定 <code>isAutomation: true</code> 的卡片可以作为定时触发器，按 cron 排程自动建立子卡并派发给 Bot 执行。",
 
 
 
@@ -1485275,7 +1485275,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_p_stale": "每张卡片有 <code>staleThresholdMs</code>（逾期閾值，预设 3 小时）。卡片在某欄超过閾值未移動时，系統自動：",
+        "guide_kb_p_stale": "每张卡片有 <code>staleThresholdMs</code>（逾期閾值，预设 3 小时）。卡片在某欄超过閾值未移动时，系統自动：",
 
 
 
@@ -1485403,7 +1485403,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_p_what": "EClawbot 的 Kanban 是專为 Bot 團队设計的任務看板。每张卡片可以指派给一个或多个 Bot，Bot 完成工作后自己推进卡片到下一欄。搭配<strong>自動化催促机制</strong>，超时的卡片会自動提醒负责的 Bot，讓任務不会卡住。",
+        "guide_kb_p_what": "EClawbot 的 Kanban 是專为 Bot 團队设计的任務看板。每张卡片可以指派给一个或多个 Bot，Bot 完成工作后自己推进卡片到下一欄。搭配<strong>自动化催促机制</strong>，超时的卡片会自动提醒负责的 Bot，让任務不会卡住。",
 
 
 
@@ -1485531,7 +1485531,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_stale_example": "#5 你的卡片「电商 AI 客服文案」已在 In Progress 超过 3 小时，請回報进度或更新预計完成时间。",
+        "guide_kb_stale_example": "#5 你的卡片「电商 AI 客服文案」已在 In Progress 超过 3 小时，请回报进度或更新预计完成时间。",
 
 
 
@@ -1485659,7 +1485659,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_stale_li1": "⏰ 標記卡片为「逾期」狀態",
+        "guide_kb_stale_li1": "⏰ 标記卡片为「逾期」狀態",
 
 
 
@@ -1485915,7 +1485915,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_stale_li3": "📊 PM Bot 定期掃描逾期卡片，主動催促",
+        "guide_kb_stale_li3": "📊 PM Bot 定期掃描逾期卡片，主动催促",
 
 
 
@@ -1486043,7 +1486043,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_stale_preview_title": "⏰ 逾期催促通知範例",
+        "guide_kb_stale_preview_title": "⏰ 逾期催促通知范例",
 
 
 
@@ -1486171,7 +1486171,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_step1_desc": "PM Bot（如 Entity #2）根據需求建立卡片，设定標题、描述、優先權，並指派给负责的 Bot。",
+        "guide_kb_step1_desc": "PM Bot（如 Entity #2）根据需求建立卡片，设定标题、描述、優先權，并指派给负责的 Bot。",
 
 
 
@@ -1486427,7 +1486427,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_step2_desc": "被指派的 Bot 收到 Webhook / Push 通知，开始在卡片留言更新进度，並將狀態推进到 In Progress。",
+        "guide_kb_step2_desc": "被指派的 Bot 收到 Webhook / Push 通知，开始在卡片留言更新进度，并將狀態推进到 In Progress。",
 
 
 
@@ -1486683,7 +1486683,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_step3_desc": "Bot 完成工作（如提交 PR）后，呼叫 API 將卡片推进到 Review，並在留言板留下验收资訊。",
+        "guide_kb_step3_desc": "Bot 完成工作（如提交 PR）后，呼叫 API 將卡片推进到 Review，并在留言板留下验收资訊。",
 
 
 
@@ -1486939,7 +1486939,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_step4_desc": "PM Bot 或人工验收通过后，將卡片推进到 Done。逾期未完成的卡片会自動觸发催促通知。",
+        "guide_kb_step4_desc": "PM Bot 或人工验收通过后，將卡片推进到 Done。逾期未完成的卡片会自动触发催促通知。",
 
 
 
@@ -1487067,7 +1487067,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_step4_title": "Step 4：PM Bot 验收，標記完成",
+        "guide_kb_step4_title": "Step 4：PM Bot 验收，标記完成",
 
 
 
@@ -1487451,7 +1487451,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_tip_li1": "✅ <strong>卡片描述要具体</strong>：清楚说明產出物和验收標準，Bot 才能知道做到什麼程度算完成",
+        "guide_kb_tip_li1": "✅ <strong>卡片描述要具体</strong>：清楚说明产出物和验收标準，Bot 才能知道做到什麼程度算完成",
 
 
 
@@ -1487835,7 +1487835,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_tip_li4": "✅ <strong>PM Bot 定期巡邏</strong>：设定自動化卡片讓 PM Bot 每小时掃描逾期卡片",
+        "guide_kb_tip_li4": "✅ <strong>PM Bot 定期巡邏</strong>：设定自动化卡片让 PM Bot 每小时掃描逾期卡片",
 
 
 
@@ -1487963,7 +1487963,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_tip_li5": "✅ <strong>Review 欄不堆積</strong>：进入 Review 的卡片應在 1 小时內验收，維持節奏",
+        "guide_kb_tip_li5": "✅ <strong>Review 欄不堆積</strong>：进入 Review 的卡片應在 1 小时内验收，維持節奏",
 
 
 
@@ -1488091,7 +1488091,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_title": "Kanban AI 團队看板 — 讓 Bot 自動推进任務",
+        "guide_kb_title": "Kanban AI 團队看板 — 让 Bot 自动推进任務",
 
 
 
@@ -1488219,7 +1488219,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_uc_content": "✍️ 內容團队",
+        "guide_kb_uc_content": "✍️ 内容團队",
 
 
 
@@ -1488731,7 +1488731,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_uc_marketing": "📣 行銷活動",
+        "guide_kb_uc_marketing": "📣 行銷活动",
 
 
 
@@ -1488859,7 +1488859,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_uc_marketing_desc": "活動 Bot 規劃 → 文案 Bot 撰寫 → 发布 Bot 多平台发送",
+        "guide_kb_uc_marketing_desc": "活动 Bot 规劃 → 文案 Bot 撰寫 → 发布 Bot 多平台发送",
 
 
 
@@ -1489115,7 +1489115,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_kb_uc_ops_desc": "監控 Bot 发现問题 → 自動建卡 → 維运 Bot 处理 → 验收",
+        "guide_kb_uc_ops_desc": "監控 Bot 发现問题 → 自动建卡 → 維运 Bot 处理 → 验收",
 
 
 
@@ -1489755,7 +1489755,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_lw_cta_setup": "设定教學：<a href=\"#guide/setup\">完整设定指南</a>",
+        "guide_lw_cta_setup": "设定教学：<a href=\"#guide/setup\">完整设定指南</a>",
 
 
 
@@ -1489883,7 +1489883,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_lw_cta_title": "下载 Android App 体验動態桌布",
+        "guide_lw_cta_title": "下载 Android App 体验动態桌布",
 
 
 
@@ -1490651,7 +1490651,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_lw_feat2_desc": "设定 AI 的頭像、名称、背景動畫风格。讓桌布有个性，不只是壁紙。",
+        "guide_lw_feat2_desc": "设定 AI 的頭像、名称、背景动畫风格。让桌布有个性，不只是壁紙。",
 
 
 
@@ -1490907,7 +1490907,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_lw_feat3_desc": "Bot 主動推送訊息时，直接显示在桌布上。行事曆提醒、任務更新，一眼即見。",
+        "guide_lw_feat3_desc": "Bot 主动推送訊息时，直接显示在桌布上。行事曆提醒、任務更新，一眼即見。",
 
 
 
@@ -1491419,7 +1491419,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_lw_step2": "# 步驟 2：长按主螢幕 → 选擇「桌布」→「動態桌布」",
+        "guide_lw_step2": "# 步驟 2：长按主螢幕 → 选擇「桌布」→「动態桌布」",
 
 
 
@@ -1491803,7 +1491803,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_lw_step5": "# 步驟 5：套用桌布，AI 开始在主螢幕活動 ✨",
+        "guide_lw_step5": "# 步驟 5：套用桌布，AI 开始在主螢幕活动 ✨",
 
 
 
@@ -1492059,7 +1492059,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_lw_title": "🖼️ Android 動態桌布 — 把 AI 代理变成你的手机壁紙",
+        "guide_lw_title": "🖼️ Android 动態桌布 — 把 AI 代理变成你的手机壁紙",
 
 
 
@@ -1492187,7 +1492187,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_lw_usecase1": "📅 <strong>早晨簡報</strong>：起床解鎖，AI 自動播報今日天氣、行事曆、待办事項",
+        "guide_lw_usecase1": "📅 <strong>早晨簡报</strong>：起床解鎖，AI 自动播报今日天氣、行事曆、待办事項",
 
 
 
@@ -1492315,7 +1492315,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_lw_usecase1_strong": "早晨簡報",
+        "guide_lw_usecase1_strong": "早晨簡报",
 
 
 
@@ -1492955,7 +1492955,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_lw_usecase4": "🎭 <strong>角色陪伴</strong>：设定喜愛的 AI 角色为桌布，有溫度的互動陪伴日常",
+        "guide_lw_usecase4": "🎭 <strong>角色陪伴</strong>：设定喜愛的 AI 角色为桌布，有溫度的互动陪伴日常",
 
 
 
@@ -1493339,7 +1493339,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_lw_what": "什麼是 AI 動態桌布？",
+        "guide_lw_what": "什麼是 AI 动態桌布？",
 
 
 
@@ -1493467,7 +1493467,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_lw_what_desc": "EClawbot 的 Android App 支援设定为 <strong>Live Wallpaper（動態桌布）</strong>。你的 AI 代理不再藏在 App 里，而是直接活在手机主螢幕——呼叫它就像滑手机一樣自然，甚至不用解鎖。",
+        "guide_lw_what_desc": "EClawbot 的 Android App 支援设定为 <strong>Live Wallpaper（动態桌布）</strong>。你的 AI 代理不再藏在 App 里，而是直接活在手机主螢幕——呼叫它就像滑手机一樣自然，甚至不用解鎖。",
 
 
 
@@ -1493851,7 +1493851,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mdone_p_1": "所有已完成的待办与任務会歸檔到这里，附帶完成时间戳記，方便追蹤歷史紀錄。",
+        "guide_mdone_p_1": "所有已完成的待办与任務会歸檔到这里，附帶完成时间戳記，方便追蹤历史紀錄。",
 
 
 
@@ -1494107,7 +1494107,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mdone_td_2": "歷史回顾",
+        "guide_mdone_td_2": "历史回顾",
 
 
 
@@ -1494235,7 +1494235,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mdone_td_3": "方便確认 Bot 过去執行了哪些任務",
+        "guide_mdone_td_3": "方便确认 Bot 过去执行了哪些任務",
 
 
 
@@ -1494491,7 +1494491,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mdone_td_5": "可刪除不再需要的歷史紀錄",
+        "guide_mdone_td_5": "可刪除不再需要的历史紀錄",
 
 
 
@@ -1494747,7 +1494747,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_behavior_bot": "Bot標記Bot时的行为",
+        "guide_mention_behavior_bot": "Bot标記Bot时的行为",
 
 
 
@@ -1497420,7 +1497420,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_flow_user_sub": "下拉選單",
+        "guide_mention_flow_user_sub": "下拉选单",
 
 
 
@@ -1497548,7 +1497548,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_h2_api": "API 開發者參考",
+        "guide_mention_h2_api": "API 开发者參考",
 
 
 
@@ -1497676,7 +1497676,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_h2_how": "運作原理",
+        "guide_mention_h2_how": "运作原理",
 
 
 
@@ -1498188,7 +1498188,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_h2_usecases": "三種典型用法",
+        "guide_mention_h2_usecases": "三种典型用法",
 
 
 
@@ -1498444,7 +1498444,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_h2_what": "什麼是@標記？",
+        "guide_mention_h2_what": "什麼是@标記？",
 
 
 
@@ -1498572,7 +1498572,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_h3_api_bot": "Bot 端：如何讀取 mentions",
+        "guide_mention_h3_api_bot": "Bot 端：如何读取 mentions",
 
 
 
@@ -1498956,7 +1498956,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_h3_case1": "情境一：請主 Bot 轉達訊息給其他 Bot",
+        "guide_mention_h3_case1": "情境一：请主 Bot 轉达訊息給其他 Bot",
 
 
 
@@ -1499084,7 +1499084,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_h3_case2": "情境二：同時 @ 多個 Bot 開會",
+        "guide_mention_h3_case2": "情境二：同时 @ 多个 Bot 开会",
 
 
 
@@ -1499596,7 +1499596,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_note_design": "💡 设計理念：<strong>@是意圖提示，而非路由提示</strong>。帮助AI判斷應該「傳给谁」。",
+        "guide_mention_note_design": "💡 设计理念：<strong>@是意圖提示，而非路由提示</strong>。帮助AI判斷應該「傳给谁」。",
 
 
 
@@ -1499724,7 +1499724,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_note_explicit": "💡 Bot 若已明確帶 <code>speakTo</code> / <code>broadcast</code> 欄位，<strong>會優先採用</strong>，不會被 token 自動填充覆蓋。",
+        "guide_mention_note_explicit": "💡 Bot 若已明确帶 <code>speakTo</code> / <code>broadcast</code> 欄位，<strong>会優先採用</strong>，不会被 token 自动填充覆蓋。",
 
 
 
@@ -1499980,7 +1499980,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_p_api_bot": "Bot 收到 push 時，<code>eclaw_context.mentions</code> 是結構化資料；webhook payload 末尾的 <code>[MENTIONS]</code> 區塊則是純文字提示，方便 LLM Bot 直接讀取。",
+        "guide_mention_p_api_bot": "Bot 收到 push 时，<code>eclaw_context.mentions</code> 是结構化资料；webhook payload 末尾的 <code>[MENTIONS]</code> 区塊則是純文字提示，方便 LLM Bot 直接读取。",
 
 
 
@@ -1500108,7 +1500108,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_p_case1": "你勾選了「主助手」，想讓他幫忙傳話給「股票分析師」。",
+        "guide_mention_p_case1": "你勾选了「主助手」，想让他幫忙傳話給「股票分析師」。",
 
 
 
@@ -1500236,7 +1500236,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_p_case2": "勾選「會議主持」，標記三個專家一起腦力激盪。",
+        "guide_mention_p_case2": "勾选「会议主持」，标記三个專家一起腦力激盪。",
 
 
 
@@ -1500364,7 +1500364,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_p_case3": "勾選你的「公告 Bot」，用 <code>@all</code> 暗示「這要廣播」。",
+        "guide_mention_p_case3": "勾选你的「公告 Bot」，用 <code>@all</code> 暗示「这要廣播」。",
 
 
 
@@ -1500492,7 +1500492,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_p_how": "使用者勾選的 Bot 會收到原訊息，<strong>外加</strong>一段 <code>[MENTIONS]</code> 提示，告訴它使用者點了誰、以及怎麼透過 <code>/api/transform</code> 的 <code>speakTo</code> 欄位轉發過去。是否真的轉發由 Bot 自行決定。",
+        "guide_mention_p_how": "使用者勾选的 Bot 会收到原訊息，<strong>外加</strong>一段 <code>[MENTIONS]</code> 提示，告訴它使用者點了誰、以及怎麼透过 <code>/api/transform</code> 的 <code>speakTo</code> 欄位轉发过去。是否真的轉发由 Bot 自行决定。",
 
 
 
@@ -1500620,7 +1500620,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_p_user_vs_bot": "兩種方向的 <code>@</code> 處理方式刻意設計成不一樣，原因是「使用者有 UI 可選收件人，Bot 沒有」。",
+        "guide_mention_p_user_vs_bot": "兩种方向的 <code>@</code> 处理方式刻意设计成不一樣，原因是「使用者有 UI 可选收件人，Bot 沒有」。",
 
 
 
@@ -1500876,7 +1500876,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_safety_li1": "<strong>Gatekeeper 守門</strong> — Token 會在敏感字偵測前被剝離，無法用 token 包裝來繞過 <code>botSecret</code> 等敏感字偵測",
+        "guide_mention_safety_li1": "<strong>Gatekeeper 守门</strong> — Token 会在敏感字偵测前被剝离，无法用 token 包裝来繞过 <code>botSecret</code> 等敏感字偵测",
 
 
 
@@ -1501004,7 +1501004,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_safety_li2": "<strong>名片夾封鎖</strong> — 跨裝置 @ 會檢查對方是否在 Card Holder 封鎖你；被封鎖則該 mention 標記為 <code>blocked</code> 並回傳警告",
+        "guide_mention_safety_li2": "<strong>名片夾封鎖</strong> — 跨裝置 @ 会檢查对方是否在 Card Holder 封鎖你；被封鎖則該 mention 标記为 <code>blocked</code> 并回傳警告",
 
 
 
@@ -1501132,7 +1501132,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_safety_li3": "<strong>未知 publicCode</strong> — 解析不到的 token 不會丟錯誤，會放進 <code>unresolved</code> 警告陣列",
+        "guide_mention_safety_li3": "<strong>未知 publicCode</strong> — 解析不到的 token 不会丟错誤，会放进 <code>unresolved</code> 警告陣列",
 
 
 
@@ -1501260,7 +1501260,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_safety_li4": "<strong>未綁定實體</strong> — 已 unbind 的實體無法被 @",
+        "guide_mention_safety_li4": "<strong>未綁定實体</strong> — 已 unbind 的實体无法被 @",
 
 
 
@@ -1501516,7 +1501516,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_th_behavior": "後端行為",
+        "guide_mention_th_behavior": "后端行为",
 
 
 
@@ -1501772,7 +1501772,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_th_meaning": "意義",
+        "guide_mention_th_meaning": "意义",
 
 
 
@@ -1502028,7 +1502028,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_th_why": "為什麼",
+        "guide_mention_th_why": "为什麼",
 
 
 
@@ -1502156,7 +1502156,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_tips_li1": "打 <code>@</code> 後可以繼續打字模糊搜尋（例如 <code>@bo</code> 會列出所有名字含 bo 的實體）",
+        "guide_mention_tips_li1": "打 <code>@</code> 后可以繼續打字模糊搜尋（例如 <code>@bo</code> 会列出所有名字含 bo 的實体）",
 
 
 
@@ -1502284,7 +1502284,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_tips_li2": "用 <strong>↑/↓</strong> 移動選項，<strong>Enter</strong> 或 <strong>Tab</strong> 確認，<strong>Esc</strong> 取消",
+        "guide_mention_tips_li2": "用 <strong>↑/↓</strong> 移动选項，<strong>Enter</strong> 或 <strong>Tab</strong> 确认，<strong>Esc</strong> 取消",
 
 
 
@@ -1502412,7 +1502412,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_tips_li3": "點選 <code>@all</code> 時會跳出確認對話框，避免誤觸發廣播",
+        "guide_mention_tips_li3": "點选 <code>@all</code> 时会跳出确认对話框，避免誤触发廣播",
 
 
 
@@ -1502540,7 +1502540,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_tips_li4": "下拉選單列表中 <span style=\"color:#86efac;\">綠色 🔗</span> 標記代表跨裝置聯絡人",
+        "guide_mention_tips_li4": "下拉选单列表中 <span style=\"color:#86efac;\">綠色 🔗</span> 标記代表跨裝置聯絡人",
 
 
 
@@ -1502668,7 +1502668,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_tips_li5": "中日韓輸入法（IME）已適配，組合字過程不會誤觸發 dropdown",
+        "guide_mention_tips_li5": "中日韓输入法（IME）已适配，组合字过程不会誤触发 dropdown",
 
 
 
@@ -1502796,7 +1502796,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_tips_li6": "同名實體會在下拉選單中顯示 <code>#publicCode</code> 後綴幫你區分",
+        "guide_mention_tips_li6": "同名實体会在下拉选单中显示 <code>#publicCode</code> 后綴幫你区分",
 
 
 
@@ -1502924,7 +1502924,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_title": "@標記實体 — 完整指南",
+        "guide_mention_title": "@标記實体 — 完整指南",
 
 
 
@@ -1503052,7 +1503052,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_token_all": "字面廣播關鍵字，提示 Bot 使用者想對所有人說話",
+        "guide_mention_token_all": "字面廣播关鍵字，提示 Bot 使用者想对所有人說話",
 
 
 
@@ -1503180,7 +1503180,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_token_publiccode": "用於解析標記的令牌或publicCode",
+        "guide_mention_token_publiccode": "用於解析标記的令牌或publicCode",
 
 
 
@@ -1503308,7 +1503308,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_token_simple": "使用者打字觸發下拉選單，選中後自動轉成 <code>&lt;@xxxxxx&gt;</code> token",
+        "guide_mention_token_simple": "使用者打字触发下拉选单，选中后自动轉成 <code>&lt;@xxxxxx&gt;</code> token",
 
 
 
@@ -1503436,7 +1503436,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_warn": "⚠️ Mention 不會自動扣費或影響配額計算，但若收訊 Bot 真的呼叫 transform 轉發，會佔用 bot-to-bot 配額（每對 30 分鐘 5 則）。",
+        "guide_mention_warn": "⚠️ Mention 不会自动扣費或影响配額计算，但若收訊 Bot 真的呼叫 transform 轉发，会佔用 bot-to-bot 配額（每对 30 分钟 5 則）。",
 
 
 
@@ -1503564,7 +1503564,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_why_bot": "Bot 沒 UI，只能用文字表達意圖，自動 route 才合理",
+        "guide_mention_why_bot": "Bot 沒 UI，只能用文字表达意圖，自动 route 才合理",
 
 
 
@@ -1503692,7 +1503692,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_why_user": "使用者已有勾選 UI，<code>@</code> 只是「順便提示一下」",
+        "guide_mention_why_user": "使用者已有勾选 UI，<code>@</code> 只是「順便提示一下」",
 
 
 
@@ -1504844,7 +1504844,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_role_0": "游戲規則设計、玩法架構、HTML 骨架生成",
+        "guide_mg_role_0": "游戲规則设计、玩法架構、HTML 骨架生成",
 
 
 
@@ -1504972,7 +1504972,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_role_1": "UI/UX 美化、素材優化、視覺一致性",
+        "guide_mg_role_1": "UI/UX 美化、素材優化、视覺一致性",
 
 
 
@@ -1505100,7 +1505100,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_role_2": "任務派发、E2E 验證测試、调度协调",
+        "guide_mg_role_2": "任務派发、E2E 验证测試、调度协调",
 
 
 
@@ -1505228,7 +1505228,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_role_3": "游戲實测、Bug 回報、品质把关",
+        "guide_mg_role_3": "游戲實测、Bug 回报、品质把关",
 
 
 
@@ -1505356,7 +1505356,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_schedule": "自動化排程设計",
+        "guide_mg_schedule": "自动化排程设计",
 
 
 
@@ -1505740,7 +1505740,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_schedule_desc": "透过 Kanban 排程 API，为每个 Agent 配置專屬的定期任務卡片。系統会在指定时间自動把任務推送给对應實体，无需人工介入。",
+        "guide_mg_schedule_desc": "透过 Kanban 排程 API，为每个 Agent 配置專属的定期任務卡片。系統会在指定时间自动把任務推送给对應實体，无需人工介入。",
 
 
 
@@ -1505996,7 +1505996,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_sop_art_2": "讀取美編規範文件（色系、字体、排版指南）",
+        "guide_mg_sop_art_2": "读取美編规范文件（色系、字体、排版指南）",
 
 
 
@@ -1506124,7 +1506124,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_sop_art_3": "隨机抽取一款游戲查看視覺品质",
+        "guide_mg_sop_art_3": "隨机抽取一款游戲查看视覺品质",
 
 
 
@@ -1506252,7 +1506252,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_sop_art_4": "辨識是否已美化（对比色塊佔比、互動元素樣式）",
+        "guide_mg_sop_art_4": "辨識是否已美化（对比色塊佔比、互动元素樣式）",
 
 
 
@@ -1506380,7 +1506380,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_sop_art_5": "找到純色/低质素素材並替換为視覺豐富版本",
+        "guide_mg_sop_art_5": "找到純色/低质素素材并替換为视覺豐富版本",
 
 
 
@@ -1506508,7 +1506508,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_sop_art_6": "验證視覺效果后 git push",
+        "guide_mg_sop_art_6": "验证视覺效果后 git push",
 
 
 
@@ -1506764,7 +1506764,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_sop_fix_2": "讀取 doc/ 下的开发文件与 Bug 列表",
+        "guide_mg_sop_fix_2": "读取 doc/ 下的开发文件与 Bug 列表",
 
 
 
@@ -1507276,7 +1507276,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_sop_fix_6": "git push 並广播通知其他 Agent",
+        "guide_mg_sop_fix_6": "git push 并广播通知其他 Agent",
 
 
 
@@ -1507532,7 +1507532,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_sop_pipe_2": "Vision 模型分析視覺品质",
+        "guide_mg_sop_pipe_2": "Vision 模型分析视覺品质",
 
 
 
@@ -1507660,7 +1507660,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_sop_pipe_3": "生成品质評分卡（滿分 10）",
+        "guide_mg_sop_pipe_3": "生成品质评分卡（滿分 10）",
 
 
 
@@ -1507788,7 +1507788,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_sop_pipe_4": "評分 < 7 分自動派发改善任務",
+        "guide_mg_sop_pipe_4": "评分 < 7 分自动派发改善任務",
 
 
 
@@ -1507916,7 +1507916,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_sop_pipe_5": "回報至总指揮看板，更新巡檢紀錄",
+        "guide_mg_sop_pipe_5": "回报至总指揮看板，更新巡檢紀錄",
 
 
 
@@ -1508044,7 +1508044,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_sop_qa_1": "Playwright browser_navigate 开啟隨机游戲",
+        "guide_mg_sop_qa_1": "Playwright browser_navigate 开启隨机游戲",
 
 
 
@@ -1508300,7 +1508300,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_sop_qa_3": "實际游玩 2+ 回合，觀察互動反應",
+        "guide_mg_sop_qa_3": "實际游玩 2+ 回合，觀察互动反應",
 
 
 
@@ -1508428,7 +1508428,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_sop_qa_4": "进行品质評分（可玩性 / 視覺 / 音效）",
+        "guide_mg_sop_qa_4": "进行品质评分（可玩性 / 视覺 / 音效）",
 
 
 
@@ -1508684,7 +1508684,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_sop_qa_6": "撰寫测試報告並广播结果",
+        "guide_mg_sop_qa_6": "撰寫测試报告并广播结果",
 
 
 
@@ -1509324,7 +1509324,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_tech_1": "<strong>EClawbot Kanban</strong> — 任務卡片管理，自動追蹤每款游戲的开发狀態",
+        "guide_mg_tech_1": "<strong>EClawbot Kanban</strong> — 任務卡片管理，自动追蹤每款游戲的开发狀態",
 
 
 
@@ -1509452,7 +1509452,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_tech_2": "<strong>OpenClaw Channel</strong> — 3 个 MiniMax Agent 透过 channel webhook 接收並執行任務",
+        "guide_mg_tech_2": "<strong>OpenClaw Channel</strong> — 3 个 MiniMax Agent 透过 channel webhook 接收并执行任務",
 
 
 
@@ -1509580,7 +1509580,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_tech_3": "<strong>Claude Code + Playwright</strong> — 总指揮自動化 E2E 测試，验證每款游戲可正常运行",
+        "guide_mg_tech_3": "<strong>Claude Code + Playwright</strong> — 总指揮自动化 E2E 测試，验证每款游戲可正常运行",
 
 
 
@@ -1509708,7 +1509708,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_tech_4": "<strong>GitHub Actions + CDN</strong> — 自動部署至 minigame.eclawbot.com",
+        "guide_mg_tech_4": "<strong>GitHub Actions + CDN</strong> — 自动部署至 minigame.eclawbot.com",
 
 
 
@@ -1509836,7 +1509836,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_tech_5": "<strong>GA v2 Analytics</strong> — 玩家行为追蹤 + 用戶 Bug 回報机制",
+        "guide_mg_tech_5": "<strong>GA v2 Analytics</strong> — 玩家行为追蹤 + 用戶 Bug 回报机制",
 
 
 
@@ -1510220,7 +1510220,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mg_what_desc": "这是一个用 EClawbot 平台驅動的實际生產專案：<strong>4 个 AI Agent 自主协作</strong>，在 1 周半內完成 298 款静態網頁游戲的设計、开发、美編優化与品质審查，全程<strong>无人工干涉</strong>。",
+        "guide_mg_what_desc": "这是一个用 EClawbot 平台驅动的實际生产專案：<strong>4 个 AI Agent 自主协作</strong>，在 1 周半内完成 298 款静態网页游戲的设计、开发、美編優化与品质審查，全程<strong>无人工干涉</strong>。",
 
 
 
@@ -1510604,7 +1510604,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mission_overview_intro": "Mission Control 是 E-Claw 的 Web 管理面板，讓你透过瀏覽器跨装置管理 AI Bot 的所有行为。同一装置上的所有 Entity（最多 4 个）<strong>共享同一个 Dashboard</strong>，可互相协作。",
+        "guide_mission_overview_intro": "Mission Control 是 E-Claw 的 Web 管理面板，让你透过浏览器跨装置管理 AI Bot 的所有行为。同一装置上的所有 Entity（最多 4 个）<strong>共享同一个 Dashboard</strong>，可互相协作。",
 
 
 
@@ -1510732,7 +1510732,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mission_overview_meta": "Web 管理面板 — 管理 Bot 的待办、任務、筆記、Skills、灵魂、規則、排程",
+        "guide_mission_overview_meta": "Web 管理面板 — 管理 Bot 的待办、任務、筆記、Skills、灵魂、规則、排程",
 
 
 
@@ -1511116,7 +1511116,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mission_overview_sync_desc": "Mission Control Dashboard 使用<strong>版本号（version）</strong>做乐觀鎖定。每次操作都会自動递增版本号，Bot 可透过定期轮詢 <code>GET /api/mission/dashboard</code> 比对版本号来偵测使用者的静默修改。",
+        "guide_mission_overview_sync_desc": "Mission Control Dashboard 使用<strong>版本号（version）</strong>做乐觀鎖定。每次操作都会自动递增版本号，Bot 可透过定期轮詢 <code>GET /api/mission/dashboard</code> 比对版本号来偵测使用者的静默修改。",
 
 
 
@@ -1511244,7 +1511244,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mission_overview_sync_note": "建議 Bot 每 15 分鐘轮詢一次 Dashboard，比对 <code>version</code> 欄位，若版本变更則重新讀取所有項目。这能確保 Bot 即时回應使用者在 Web 面板上的操作。",
+        "guide_mission_overview_sync_note": "建议 Bot 每 15 分钟轮詢一次 Dashboard，比对 <code>version</code> 欄位，若版本变更則重新读取所有項目。这能确保 Bot 即时回應使用者在 Web 面板上的操作。",
 
 
 
@@ -1511756,7 +1511756,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mission_overview_tbl_env_access": "User 授權 / Bot 讀取",
+        "guide_mission_overview_tbl_env_access": "User 授權 / Bot 读取",
 
 
 
@@ -1513292,7 +1513292,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mission_overview_tbl_remote_access": "User 啟用 / Bot 執行",
+        "guide_mission_overview_tbl_remote_access": "User 启用 / Bot 执行",
 
 
 
@@ -1513804,7 +1513804,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mission_overview_tbl_rules_desc": "制定行为準則与自動化工作流程，支援 6 種規則类型",
+        "guide_mission_overview_tbl_rules_desc": "制定行为準則与自动化工作流程，支援 6 种规則类型",
 
 
 
@@ -1513932,7 +1513932,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mission_overview_tbl_rules_item": "規則",
+        "guide_mission_overview_tbl_rules_item": "规則",
 
 
 
@@ -1514188,7 +1514188,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mission_overview_tbl_schedule_desc": "定时執行任務，支援即时狀態追蹤与執行紀錄",
+        "guide_mission_overview_tbl_schedule_desc": "定时执行任務，支援即时狀態追蹤与执行紀錄",
 
 
 
@@ -1515980,7 +1515980,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mlist_p_1": "显示目前「进行中」的任務。當一个待办項目被「开始」后，会自動移到这里，狀態为 IN_PROGRESS。",
+        "guide_mlist_p_1": "显示目前「进行中」的任務。当一个待办項目被「开始」后，会自动移到这里，狀態为 IN_PROGRESS。",
 
 
 
@@ -1516364,7 +1516364,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mlist_td_2": "即时显示每个任務的執行狀態，Bot 处理中会自動更新",
+        "guide_mlist_td_2": "即时显示每个任務的执行狀態，Bot 处理中会自动更新",
 
 
 
@@ -1516876,7 +1516876,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mlist_td_6": "显示該任務由哪个 Entity 负责執行",
+        "guide_mlist_td_6": "显示該任務由哪个 Entity 负责执行",
 
 
 
@@ -1517004,7 +1517004,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mlist_td_7": "標記完成",
+        "guide_mlist_td_7": "标記完成",
 
 
 
@@ -1517132,7 +1517132,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mlist_td_8": "任務完成后移至「已完成」區塊",
+        "guide_mlist_td_8": "任務完成后移至「已完成」区塊",
 
 
 
@@ -1517516,7 +1517516,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mp_android_best": "行動中使用、语音互動、桌布助手",
+        "guide_mp_android_best": "行动中使用、语音互动、桌布助手",
 
 
 
@@ -1517644,7 +1517644,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mp_android_strength": "動態桌布、TTS 语音、GPS 位置、FCM 推播",
+        "guide_mp_android_strength": "动態桌布、TTS 语音、GPS 位置、FCM 推播",
 
 
 
@@ -1518028,7 +1518028,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mp_cta_wallpaper": "動態桌布：<a href=\"#guide/usecase-live-wallpaper\">動態桌布设定</a>",
+        "guide_mp_cta_wallpaper": "动態桌布：<a href=\"#guide/usecase-live-wallpaper\">动態桌布设定</a>",
 
 
 
@@ -1518540,7 +1518540,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mp_h2_sync": "同步的內容",
+        "guide_mp_h2_sync": "同步的内容",
 
 
 
@@ -1519436,7 +1519436,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mp_note_realtime": "⚡ <strong>真正即时：</strong>Socket.IO 讓三平台之间的延遲通常低於 100ms，不需要手動重新整理。",
+        "guide_mp_note_realtime": "⚡ <strong>真正即时：</strong>Socket.IO 让三平台之间的延遲通常低於 100ms，不需要手动重新整理。",
 
 
 
@@ -1519564,7 +1519564,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mp_p_what": "EClawbot 支援三个平台：Web Portal（瀏覽器）、Android App、iOS App。三个平台共用同一后端，透过 Socket.IO 即时同步，无論你在哪个装置操作，所有变更都会立即反映到其他平台。",
+        "guide_mp_p_what": "EClawbot 支援三个平台：Web Portal（浏览器）、Android App、iOS App。三个平台共用同一后端，透过 Socket.IO 即时同步，无论你在哪个装置操作，所有变更都会立即反映到其他平台。",
 
 
 
@@ -1519948,7 +1519948,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mp_scene2_desc": "Android 手机设定動態桌布显示 Bot 最新回覆，同时用 iPhone 繼續对話。訊息即时同步，不会漏接。",
+        "guide_mp_scene2_desc": "Android 手机设定动態桌布显示 Bot 最新回复，同时用 iPhone 繼續对話。訊息即时同步，不会漏接。",
 
 
 
@@ -1520588,7 +1520588,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mp_sync_chat_desc": "所有平台即时显示新訊息，不重複推送",
+        "guide_mp_sync_chat_desc": "所有平台即时显示新訊息，不重复推送",
 
 
 
@@ -1521100,7 +1521100,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mp_sync_entity_desc": "綁定/解綁、在線狀態即时同步",
+        "guide_mp_sync_entity_desc": "綁定/解綁、在线狀態即时同步",
 
 
 
@@ -1522636,7 +1522636,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mp_th_best": "最適合",
+        "guide_mp_th_best": "最适合",
 
 
 
@@ -1523020,7 +1523020,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mp_tip_li1": "✅ <strong>同一 Device ID 可同时在多装置登入</strong>：不需要多組帳号",
+        "guide_mp_tip_li1": "✅ <strong>同一 Device ID 可同时在多装置登入</strong>：不需要多组帳号",
 
 
 
@@ -1523148,7 +1523148,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mp_tip_li2": "✅ <strong>Socket.IO 斷線自動重连</strong>：網路不穩也不用擔心漏接",
+        "guide_mp_tip_li2": "✅ <strong>Socket.IO 斷线自动重连</strong>：网路不穩也不用擔心漏接",
 
 
 
@@ -1523404,7 +1523404,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mp_tip_li4": "⚠️ <strong>Web Portal 需要瀏覽器保持开啟</strong>：关闭分頁就无法收到即时通知",
+        "guide_mp_tip_li4": "⚠️ <strong>Web Portal 需要浏览器保持开启</strong>：关闭分页就无法收到即时通知",
 
 
 
@@ -1523916,7 +1523916,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_api_accept": "接受好友請求",
+        "guide_msg_api_accept": "接受好友请求",
 
 
 
@@ -1524044,7 +1524044,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_api_cancel": "取消已发送的請求",
+        "guide_msg_api_cancel": "取消已发送的请求",
 
 
 
@@ -1524172,7 +1524172,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_api_count": "待处理請求数量",
+        "guide_msg_api_count": "待处理请求数量",
 
 
 
@@ -1524428,7 +1524428,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_api_list_req": "列出好友請求",
+        "guide_msg_api_list_req": "列出好友请求",
 
 
 
@@ -1524556,7 +1524556,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_api_reject": "拒絕好友請求",
+        "guide_msg_api_reject": "拒絕好友请求",
 
 
 
@@ -1524684,7 +1524684,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_api_send_req": "发送好友請求",
+        "guide_msg_api_send_req": "发送好友请求",
 
 
 
@@ -1525836,7 +1525836,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_evt_accepted": "对方接受了你的好友請求",
+        "guide_msg_evt_accepted": "对方接受了你的好友请求",
 
 
 
@@ -1525964,7 +1525964,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_evt_rejected": "对方拒絕了你的好友請求",
+        "guide_msg_evt_rejected": "对方拒絕了你的好友请求",
 
 
 
@@ -1526220,7 +1526220,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_evt_request": "收到好友請求",
+        "guide_msg_evt_request": "收到好友请求",
 
 
 
@@ -1526604,7 +1526604,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_flow_friend": "好友請求",
+        "guide_msg_flow_friend": "好友请求",
 
 
 
@@ -1526988,7 +1526988,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_h2_architecture": "三層架構",
+        "guide_msg_h2_architecture": "三层架構",
 
 
 
@@ -1527116,7 +1527116,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_h2_friend_flow": "好友請求流程",
+        "guide_msg_h2_friend_flow": "好友请求流程",
 
 
 
@@ -1528012,7 +1528012,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_layer1_desc": "Card Holder — 单向收集 Agent 名片，支援釘选、分类、封鎖、備註",
+        "guide_msg_layer1_desc": "Card Holder — 单向收集 Agent 名片，支援釘选、分类、封鎖、备註",
 
 
 
@@ -1528396,7 +1528396,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_layer2_desc": "发送好友請求 → 对方接受 → 雙方成为好友。好友享有免限速、可设定「僅限好友」模式",
+        "guide_msg_layer2_desc": "发送好友请求 → 对方接受 → 雙方成为好友。好友享有免限速、可设定「僅限好友」模式",
 
 
 
@@ -1529292,7 +1529292,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_p_overview": "EClawbot 的訊息与好友系統整合了跨装置通訊、名片夾管理、好友請求三大功能，讓 AI Agent 之间能建立信任关係並安全地交換訊息。",
+        "guide_msg_p_overview": "EClawbot 的訊息与好友系統整合了跨装置通訊、名片夾管理、好友请求三大功能，让 AI Agent 之间能建立信任关係并安全地交換訊息。",
 
 
 
@@ -1529420,7 +1529420,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_p_protection": "跨装置訊息經过 6 層安全檢查：",
+        "guide_msg_p_protection": "跨装置訊息經过 6 层安全檢查：",
 
 
 
@@ -1529548,7 +1529548,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_p_settings": "在设定頁面的 Cross-Device Settings 中，开啟 'friends_only' 即可讓你的 Agent 只接收好友訊息。",
+        "guide_msg_p_settings": "在设定页面的 Cross-Device Settings 中，开启 'friends_only' 即可让你的 Agent 只接收好友訊息。",
 
 
 
@@ -1529932,7 +1529932,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_perk3": "✅ 名片夾中显示綠色「好友」標記，優先排序",
+        "guide_msg_perk3": "✅ 名片夾中显示綠色「好友」标記，優先排序",
 
 
 
@@ -1530316,7 +1530316,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_step1_title": "Step 1: 发送好友請求",
+        "guide_msg_step1_title": "Step 1: 发送好友请求",
 
 
 
@@ -1530444,7 +1530444,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_step2_desc": "目标装置收到 Socket.IO 'friend:request' 即时通知，可在名片夾「Requests」分頁查看。",
+        "guide_msg_step2_desc": "目标装置收到 Socket.IO 'friend:request' 即时通知，可在名片夾「Requests」分页查看。",
 
 
 
@@ -1530700,7 +1530700,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_step3_desc": "接受后，雙方的名片夾自動標記为好友（綠色徽章），对方也会收到通知。",
+        "guide_msg_step3_desc": "接受后，雙方的名片夾自动标記为好友（綠色徽章），对方也会收到通知。",
 
 
 
@@ -1531468,7 +1531468,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_th_layer": "層次",
+        "guide_msg_th_layer": "层次",
 
 
 
@@ -1531852,7 +1531852,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_msg_th_timing": "觸发时机",
+        "guide_msg_th_timing": "触发时机",
 
 
 
@@ -1532236,7 +1532236,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_nav_arena": "Agent 能力評测",
+        "guide_nav_arena": "Agent 能力评测",
 
 
 
@@ -1532876,7 +1532876,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_nav_detail_mention": "@ 標記實體",
+        "guide_nav_detail_mention": "@ 标記實体",
 
 
 
@@ -1533388,7 +1533388,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_nav_intent_api": "動態 API 注入",
+        "guide_nav_intent_api": "动態 API 注入",
 
 
 
@@ -1534156,7 +1534156,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_nav_mission_rules": "規則",
+        "guide_nav_mission_rules": "规則",
 
 
 
@@ -1535180,7 +1535180,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_nav_setup": "设定教學",
+        "guide_nav_setup": "设定教学",
 
 
 
@@ -1535820,7 +1535820,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_nav_usecase_bridge": "🌉 終端橋接組合技",
+        "guide_nav_usecase_bridge": "🌉 終端橋接组合技",
 
 
 
@@ -1536588,7 +1536588,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_nav_usecase_live_wallpaper": "動態桌布",
+        "guide_nav_usecase_live_wallpaper": "动態桌布",
 
 
 
@@ -1537356,7 +1537356,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_nav_usecase_wallpaper": "動態桌布",
+        "guide_nav_usecase_wallpaper": "动態桌布",
 
 
 
@@ -1538124,7 +1538124,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_notes_p_1": "筆記功能讓使用者和 Bot 都能記錄參考资訊。適合存放備忘、偏好设定、对話摘要等。",
+        "guide_notes_p_1": "筆記功能让使用者和 Bot 都能記錄參考资訊。适合存放备忘、偏好设定、对話摘要等。",
 
 
 
@@ -1538892,7 +1538892,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_notes_td_2": "点击「+ 新增」建立筆記，包含標题、內容、分类（category）",
+        "guide_notes_td_2": "点击「+ 新增」建立筆記，包含标题、内容、分类（category）",
 
 
 
@@ -1539148,7 +1539148,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_notes_td_4": "Bot 讀寫",
+        "guide_notes_td_4": "Bot 读寫",
 
 
 
@@ -1539276,7 +1539276,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_notes_td_5": "Bot 可透过 API 讀取、新增、更新、刪除筆記",
+        "guide_notes_td_5": "Bot 可透过 API 读取、新增、更新、刪除筆記",
 
 
 
@@ -1539660,7 +1539660,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_notes_td_8": "用途範例",
+        "guide_notes_td_8": "用途范例",
 
 
 
@@ -1539788,7 +1539788,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_notes_td_9": "使用者偏好紀錄、对話摘要、Bot 工作日誌、设定備忘",
+        "guide_notes_td_9": "使用者偏好紀錄、对話摘要、Bot 工作日誌、设定备忘",
 
 
 
@@ -1540812,7 +1540812,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_plaza_cta_community": "开啟广场：<a href=\"community.html\">Bot 广场頁面</a>",
+        "guide_plaza_cta_community": "开启广场：<a href=\"community.html\">Bot 广场页面</a>",
 
 
 
@@ -1541196,7 +1541196,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_plaza_feat1_desc": "按名称关鍵字搜尋，或用类型 chip 篩选（聊天、电商、客服、搜尋、創意、A2A）。排序支援熱门、最新、評分、活躍度。",
+        "guide_plaza_feat1_desc": "按名称关鍵字搜尋，或用类型 chip 篩选（聊天、电商、客服、搜尋、創意、A2A）。排序支援熱门、最新、评分、活躍度。",
 
 
 
@@ -1541452,7 +1541452,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_plaza_feat2_desc": "点击 Bot 卡片展开完整 Agent Card：技能、標籤、使用限制、評分統計，以及底部留言板（支援巢狀回覆）。",
+        "guide_plaza_feat2_desc": "点击 Bot 卡片展开完整 Agent Card：技能、标籤、使用限制、评分統计，以及底部留言板（支援巢狀回复）。",
 
 
 
@@ -1541708,7 +1541708,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_plaza_feat3_desc": "在 Bot 设定中开啟公开可見性，填寫 Agent Card（名称、描述、技能、標籤），你的 Bot 就会出现在广场供所有人发现。",
+        "guide_plaza_feat3_desc": "在 Bot 设定中开启公开可見性，填寫 Agent Card（名称、描述、技能、标籤），你的 Bot 就会出现在广场供所有人发现。",
 
 
 
@@ -1542476,7 +1542476,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_plaza_stat2_label": "社群評分 & 留言",
+        "guide_plaza_stat2_label": "社群评分 & 留言",
 
 
 
@@ -1542604,7 +1542604,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_plaza_stat2_sub": "找到你喜歡的 Bot，留下評價",
+        "guide_plaza_stat2_sub": "找到你喜歡的 Bot，留下评價",
 
 
 
@@ -1543244,7 +1543244,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_plaza_step3": "# 步驟 3：开啟 visibility = public",
+        "guide_plaza_step3": "# 步驟 3：开启 visibility = public",
 
 
 
@@ -1543500,7 +1543500,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_plaza_subtitle": "一个开放的 Bot 生態社群，发现有趣的 AI 代理，或讓更多人找到你的 Bot",
+        "guide_plaza_subtitle": "一个开放的 Bot 生態社群，发现有趣的 AI 代理，或让更多人找到你的 Bot",
 
 
 
@@ -1544524,7 +1544524,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_plaza_what_desc": "Bot 广场（Bot Plaza）是 EClawbot 的公开 AI 代理目錄。Bot 持有者可以把自己的代理公开上架，讓其他用戶搜尋、試用、評分、留言。无論是电商客服、旅游顾問、程式教學，还是有趣的角色扮演 Bot，都能在这里找到同好。",
+        "guide_plaza_what_desc": "Bot 广场（Bot Plaza）是 EClawbot 的公开 AI 代理目錄。Bot 持有者可以把自己的代理公开上架，让其他用戶搜尋、試用、评分、留言。无论是电商客服、旅游顾問、程式教学，还是有趣的角色扮演 Bot，都能在这里找到同好。",
 
 
 
@@ -1545164,7 +1545164,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_ex2b": "提供行程建議、景点推薦、代訂住宿",
+        "guide_proxy_ex2b": "提供行程建议、景点推薦、代訂住宿",
 
 
 
@@ -1545292,7 +1545292,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_ex3a": "內容行銷",
+        "guide_proxy_ex3a": "内容行銷",
 
 
 
@@ -1545420,7 +1545420,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_ex3b": "代理自動撰寫並发布文章到多个平台",
+        "guide_proxy_ex3b": "代理自动撰寫并发布文章到多个平台",
 
 
 
@@ -1545676,7 +1545676,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_ex4b": "監控后台狀態、自動处理告警、生成報告",
+        "guide_proxy_ex4b": "監控后台狀態、自动处理告警、生成报告",
 
 
 
@@ -1545804,7 +1545804,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_ex5a": "预約服務",
+        "guide_proxy_ex5a": "预約服务",
 
 
 
@@ -1547340,7 +1547340,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_h2_use": "實际應用範例",
+        "guide_proxy_h2_use": "實际應用范例",
 
 
 
@@ -1547980,7 +1547980,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_meta": "讓你的 AI 代理擁有專屬对外窗口，客戶可直接对話、下单、查詢",
+        "guide_proxy_meta": "让你的 AI 代理擁有專属对外窗口，客戶可直接对話、下单、查詢",
 
 
 
@@ -1548108,7 +1548108,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_note_scenario": "💡 適用场景：电商客服、旅游顾問、內容行銷代理、IT 維运助手、预約排程服務等。只要分享连结，客戶就能与你的代理即时互動。",
+        "guide_proxy_note_scenario": "💡 适用场景：电商客服、旅游顾問、内容行銷代理、IT 維运助手、预約排程服务等。只要分享连结，客戶就能与你的代理即时互动。",
 
 
 
@@ -1548364,7 +1548364,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_p_what": "「尹代理」窗口是名片夾（Card Holder）中每个實体的專屬连结網址。透过这个连结，外部用戶无需安装 App，即可在瀏覽器中直接与你的 AI 代理对話，完成下单購买、地点定位、行程安排、文章发布、后台維护等各種任務。",
+        "guide_proxy_p_what": "「尹代理」窗口是名片夾（Card Holder）中每个實体的專属连结网址。透过这个连结，外部用戶无需安装 App，即可在浏览器中直接与你的 AI 代理对話，完成下单購买、地点定位、行程安排、文章发布、后台維护等各种任務。",
 
 
 
@@ -1548620,7 +1548620,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_preview1_boundaries": "不处理退款、不洩漏內部资訊",
+        "guide_proxy_preview1_boundaries": "不处理退款、不洩漏内部资訊",
 
 
 
@@ -1550668,7 +1550668,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_preview3_boundaries": "不处理退款、不洩漏內部资訊",
+        "guide_proxy_preview3_boundaries": "不处理退款、不洩漏内部资訊",
 
 
 
@@ -1551308,7 +1551308,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_step1_desc": "跨装置訊息是外部訊息进入你的 Bot 的第一道门。在这里设定过濾規則、黑白名单、速率限制，確保只有合規的訊息能到达你的代理。",
+        "guide_proxy_step1_desc": "跨装置訊息是外部訊息进入你的 Bot 的第一道门。在这里设定过濾规則、黑白名单、速率限制，确保只有合规的訊息能到达你的代理。",
 
 
 
@@ -1552204,7 +1552204,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_step2_desc": "为代理建立一张名片，包含名称、描述、能力、支援的协定与標籤。这张名片会显示在代理窗口的頂部，讓客戶一目了然。",
+        "guide_proxy_step2_desc": "为代理建立一张名片，包含名称、描述、能力、支援的协定与标籤。这张名片会显示在代理窗口的頂部，让客戶一目了然。",
 
 
 
@@ -1552332,7 +1552332,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_step2_li1": "✅ <strong>名称与描述</strong>：清楚说明代理提供什麼服務",
+        "guide_proxy_step2_li1": "✅ <strong>名称与描述</strong>：清楚说明代理提供什麼服务",
 
 
 
@@ -1552460,7 +1552460,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_step2_li2": "✅ <strong>能力（Capabilities）</strong>：列出代理能做的事，如「訂单查詢」、「行程規劃」",
+        "guide_proxy_step2_li2": "✅ <strong>能力（Capabilities）</strong>：列出代理能做的事，如「訂单查詢」、「行程规劃」",
 
 
 
@@ -1552588,7 +1552588,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_step2_li3": "✅ <strong>协定（Protocols）</strong>：標記支援的通訊协定",
+        "guide_proxy_step2_li3": "✅ <strong>协定（Protocols）</strong>：标記支援的通訊协定",
 
 
 
@@ -1552716,7 +1552716,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_step2_li4": "✅ <strong>標籤（Tags）</strong>：方便搜尋与分类",
+        "guide_proxy_step2_li4": "✅ <strong>标籤（Tags）</strong>：方便搜尋与分类",
 
 
 
@@ -1553100,7 +1553100,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_step3_desc": "设定代理的角色、指示、语调、边界等。这決定了代理如何回應客戶，是 Bot 的內在定义。",
+        "guide_proxy_step3_desc": "设定代理的角色、指示、语调、边界等。这决定了代理如何回應客戶，是 Bot 的内在定义。",
 
 
 
@@ -1553228,7 +1553228,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_step3_li1": "✅ <strong>角色（Role）</strong>：例如「电商客服專员」、「旅游行程規劃師」",
+        "guide_proxy_step3_li1": "✅ <strong>角色（Role）</strong>：例如「电商客服專员」、「旅游行程规劃師」",
 
 
 
@@ -1553996,7 +1553996,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_step4_desc": "每个设定好的實体都有一个專屬的 Public Code。透过名片夾的分享功能，生成一个可直接开啟的对話连结。",
+        "guide_proxy_step4_desc": "每个设定好的實体都有一个專属的 Public Code。透过名片夾的分享功能，生成一个可直接开启的对話连结。",
 
 
 
@@ -1554380,7 +1554380,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_step4_li3": "✅ 將连结分享给客戶、嵌入官網、或印在實体名片上",
+        "guide_proxy_step4_li3": "✅ 將连结分享给客戶、嵌入官网、或印在實体名片上",
 
 
 
@@ -1554508,7 +1554508,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_step4_note": "📌 客戶点开连结后，会看到代理的名片资訊与对話介面，可直接开始对話。未註冊的用戶也能以訪客身份互動。",
+        "guide_proxy_step4_note": "📌 客戶点开连结后，会看到代理的名片资訊与对話介面，可直接开始对話。未註冊的用戶也能以訪客身份互动。",
 
 
 
@@ -1554636,7 +1554636,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_step4_title": "Step 4：取得並分享代理窗口连结",
+        "guide_proxy_step4_title": "Step 4：取得并分享代理窗口连结",
 
 
 
@@ -1555020,7 +1555020,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_title": "尹代理窗口 — 企业級代理服務入口",
+        "guide_proxy_title": "尹代理窗口 — 企业級代理服务入口",
 
 
 
@@ -1556044,7 +1556044,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_quickstart_prerequisites": "先決条件",
+        "guide_quickstart_prerequisites": "先决条件",
 
 
 
@@ -1557068,7 +1557068,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_remote_h2_4": "Bot 使用範例",
+        "guide_remote_h2_4": "Bot 使用范例",
 
 
 
@@ -1557196,7 +1557196,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_remote_meta": "任務中心 &gt; 远端控制 <span class=\"mc-label\" style=\"background:rgba(244,67,54,0.15);color:#F44336;\">User 啟用 / Bot 執行</span>",
+        "guide_remote_meta": "任務中心 &gt; 远端控制 <span class=\"mc-label\" style=\"background:rgba(244,67,54,0.15);color:#F44336;\">User 启用 / Bot 执行</span>",
 
 
 
@@ -1557324,7 +1557324,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_remote_note_1": "此功能预设关闭，需在 App Settings → Remote Control 手動开啟並授予无障礙服務權限。",
+        "guide_remote_note_1": "此功能预设关闭，需在 App Settings → Remote Control 手动开启并授予无障礙服务權限。",
 
 
 
@@ -1557452,7 +1557452,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_remote_p_1": "讓 Bot 自主操控你的手机 UI。Bot 透过 <strong>Accessibility Tree（无障礙语意樹）</strong> 讀取畫面结構，再发送点击、输入、滑動等指令。整个过程不截圖，Bot 只看到文字元素，不会擷取敏感視覺內容。",
+        "guide_remote_p_1": "让 Bot 自主操控你的手机 UI。Bot 透过 <strong>Accessibility Tree（无障礙语意樹）</strong> 读取畫面结構，再发送点击、输入、滑动等指令。整个过程不截圖，Bot 只看到文字元素，不会擷取敏感视覺内容。",
 
 
 
@@ -1557708,7 +1557708,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_remote_td_10": "对可滾動元素向上或向下滑動",
+        "guide_remote_td_10": "对可滾动元素向上或向下滑动",
 
 
 
@@ -1558220,7 +1558220,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_remote_td_14": "Bot 可反覆截圖 → 判斷 → 執行指令，完成複雜的多步驟任務",
+        "guide_remote_td_14": "Bot 可反覆截圖 → 判斷 → 执行指令，完成复杂的多步驟任務",
 
 
 
@@ -1558476,7 +1558476,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_remote_td_16": "功能预设 OFF，需用戶主動开啟",
+        "guide_remote_td_16": "功能预设 OFF，需用戶主动开启",
 
 
 
@@ -1558732,7 +1558732,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_remote_td_18": "離線保护",
+        "guide_remote_td_18": "离线保护",
 
 
 
@@ -1558860,7 +1558860,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_remote_td_19": "手机 Socket.IO 斷線时，Bot 請求立即回傳 503",
+        "guide_remote_td_19": "手机 Socket.IO 斷线时，Bot 请求立即回傳 503",
 
 
 
@@ -1558988,7 +1558988,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_remote_td_2": "Bot 請求目前畫面的语意樹（最多 300 个元素），包含文字、类型、座標、可互動屬性",
+        "guide_remote_td_2": "Bot 请求目前畫面的语意樹（最多 300 个元素），包含文字、类型、座标、可互动属性",
 
 
 
@@ -1559244,7 +1559244,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_remote_td_21": "Bot 只取得文字结構（Accessibility Tree），不含圖片、影片等視覺內容",
+        "guide_remote_td_21": "Bot 只取得文字结構（Accessibility Tree），不含圖片、影片等视覺内容",
 
 
 
@@ -1559756,7 +1559756,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_remote_td_25": "執行控制指令",
+        "guide_remote_td_25": "执行控制指令",
 
 
 
@@ -1560012,7 +1560012,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_remote_td_4": "按 Node ID 或 XY 座標点击元素",
+        "guide_remote_td_4": "按 Node ID 或 XY 座标点击元素",
 
 
 
@@ -1560524,7 +1560524,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_remote_td_8": "对输入欄位送出鍵盤 Enter / 確认，適用於沒有實体送出按鈕的情境",
+        "guide_remote_td_8": "对输入欄位送出鍵盤 Enter / 确认，适用於沒有實体送出按鈕的情境",
 
 
 
@@ -1560652,7 +1560652,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_remote_td_9": "滑動 (scroll)",
+        "guide_remote_td_9": "滑动 (scroll)",
 
 
 
@@ -1561676,7 +1561676,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_rules_meta": "任務中心 &gt; 規則 <span class=\"mc-label mc-label-user\">User 定义行为</span>",
+        "guide_rules_meta": "任務中心 &gt; 规則 <span class=\"mc-label mc-label-user\">User 定义行为</span>",
 
 
 
@@ -1561804,7 +1561804,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_rules_p_1": "規則系統讓使用者为 Bot 制定行为準則和自動化工作流程。可定义多種类型的規則並指派给不同 Entity。",
+        "guide_rules_p_1": "规則系統让使用者为 Bot 制定行为準則和自动化工作流程。可定义多种类型的规則并指派给不同 Entity。",
 
 
 
@@ -1561932,7 +1561932,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_rules_td_1": "新增規則",
+        "guide_rules_td_1": "新增规則",
 
 
 
@@ -1562444,7 +1562444,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_rules_td_2": "点击「+ 新增」建立規則，设定名称、描述、規則类型",
+        "guide_rules_td_2": "点击「+ 新增」建立规則，设定名称、描述、规則类型",
 
 
 
@@ -1562572,7 +1562572,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_rules_td_3": "規則类型",
+        "guide_rules_td_3": "规則类型",
 
 
 
@@ -1562700,7 +1562700,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_rules_td_4": "支援 6 種：WORKFLOW、CODE_REVIEW、COMMUNICATION、DEPLOYMENT、SYNC、HEARTBEAT",
+        "guide_rules_td_4": "支援 6 种：WORKFLOW、CODE_REVIEW、COMMUNICATION、DEPLOYMENT、SYNC、HEARTBEAT",
 
 
 
@@ -1562828,7 +1562828,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_rules_td_5": "啟用 / 停用",
+        "guide_rules_td_5": "启用 / 停用",
 
 
 
@@ -1563084,7 +1563084,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_rules_td_7": "一个規則可同时套用到多个 Entity",
+        "guide_rules_td_7": "一个规則可同时套用到多个 Entity",
 
 
 
@@ -1563340,7 +1563340,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_rules_td_9": "任何 Entity 都可以新增或修改規則，不限於自己被指派的",
+        "guide_rules_td_9": "任何 Entity 都可以新增或修改规則，不限於自己被指派的",
 
 
 
@@ -1563724,7 +1563724,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_rules_title": "規則 / Workflow",
+        "guide_rules_title": "规則 / Workflow",
 
 
 
@@ -1563980,7 +1563980,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_schedule_h2_2": "狀態標籤说明",
+        "guide_schedule_h2_2": "狀態标籤说明",
 
 
 
@@ -1564364,7 +1564364,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_schedule_p_1": "排程功能讓使用者和 Bot 设定定时執行的任務。可在指定时间自動觸发任務，並追蹤每次執行的狀態与结果。",
+        "guide_schedule_p_1": "排程功能让使用者和 Bot 设定定时执行的任務。可在指定时间自动触发任務，并追蹤每次执行的狀態与结果。",
 
 
 
@@ -1564620,7 +1564620,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_schedule_td_10": "取消尚未執行的排程",
+        "guide_schedule_td_10": "取消尚未执行的排程",
 
 
 
@@ -1564748,7 +1564748,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_schedule_td_11": "執行紀錄",
+        "guide_schedule_td_11": "执行紀錄",
 
 
 
@@ -1564876,7 +1564876,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_schedule_td_12": "歸檔所有已執行的排程，包含執行时间、目标 Entity、结果",
+        "guide_schedule_td_12": "歸檔所有已执行的排程，包含执行时间、目标 Entity、结果",
 
 
 
@@ -1565132,7 +1565132,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_schedule_td_14": "排程已建立，尚未到執行时间",
+        "guide_schedule_td_14": "排程已建立，尚未到执行时间",
 
 
 
@@ -1565388,7 +1565388,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_schedule_td_16": "執行中",
+        "guide_schedule_td_16": "执行中",
 
 
 
@@ -1565516,7 +1565516,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_schedule_td_17": "已到執行时间，Bot 正在处理任務",
+        "guide_schedule_td_17": "已到执行时间，Bot 正在处理任務",
 
 
 
@@ -1565900,7 +1565900,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_schedule_td_2": "点击「+ 新增排程」建立定时任務，设定執行时间、目标 Entity、任務內容",
+        "guide_schedule_td_2": "点击「+ 新增排程」建立定时任務，设定执行时间、目标 Entity、任務内容",
 
 
 
@@ -1566028,7 +1566028,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_schedule_td_20": "任務已成功執行完畢",
+        "guide_schedule_td_20": "任務已成功执行完畢",
 
 
 
@@ -1566412,7 +1566412,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_schedule_td_23": "任務執行过程中发生错誤",
+        "guide_schedule_td_23": "任務执行过程中发生错誤",
 
 
 
@@ -1567052,7 +1567052,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_schedule_td_28": "執行紀錄",
+        "guide_schedule_td_28": "执行紀錄",
 
 
 
@@ -1567180,7 +1567180,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_schedule_td_3": "執行时间",
+        "guide_schedule_td_3": "执行时间",
 
 
 
@@ -1567308,7 +1567308,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_schedule_td_4": "设定排程的執行时间点（如 09:00 PM），到时自動觸发",
+        "guide_schedule_td_4": "设定排程的执行时间点（如 09:00 PM），到时自动触发",
 
 
 
@@ -1567564,7 +1567564,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_schedule_td_6": "指定由哪个 Entity 執行此排程任務",
+        "guide_schedule_td_6": "指定由哪个 Entity 执行此排程任務",
 
 
 
@@ -1567820,7 +1567820,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_schedule_td_8": "即时显示排程狀態：等待中、執行中、已完成、失败",
+        "guide_schedule_td_8": "即时显示排程狀態：等待中、执行中、已完成、失败",
 
 
 
@@ -1569100,7 +1569100,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_setup_bind_option1_note": "免费版与所有用戶共享記憶，適合体验。需要獨立記憶和无限訊息請选月租版。",
+        "guide_setup_bind_option1_note": "免费版与所有用戶共享記憶，适合体验。需要獨立記憶和无限訊息请选月租版。",
 
 
 
@@ -1569356,7 +1569356,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_setup_bind_option2_desc": "如果你在 OpenClaw 上有自己的 AI Bot，可以透过 Webhook 或 Channel Plugin 綁定到 EClawbot。在 Dashboard 选擇空的 Entity 欄位，產生 Binding Code 即可。自有 Bot 沒有訊息限制。",
+        "guide_setup_bind_option2_desc": "如果你在 OpenClaw 上有自己的 AI Bot，可以透过 Webhook 或 Channel Plugin 綁定到 EClawbot。在 Dashboard 选擇空的 Entity 欄位，产生 Binding Code 即可。自有 Bot 沒有訊息限制。",
 
 
 
@@ -1569996,7 +1569996,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_setup_platform_intro": "你可以透过 <strong>Web Portal</strong>（瀏覽器）、<strong>Android App</strong> 或 <strong>iOS App</strong> 三个平台使用 EClawbot，资料即时同步。",
+        "guide_setup_platform_intro": "你可以透过 <strong>Web Portal</strong>（浏览器）、<strong>Android App</strong> 或 <strong>iOS App</strong> 三个平台使用 EClawbot，资料即时同步。",
 
 
 
@@ -1570124,7 +1570124,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_setup_proxy_note": "想讓你的 AI 代理对外服務客戶？請參考「<a href=\"#guide/usecase-proxy-window\">尹代理窗口</a>」，为代理建立專屬公开连结，客戶可直接在瀏覽器中互動。",
+        "guide_setup_proxy_note": "想让你的 AI 代理对外服务客戶？请參考「<a href=\"#guide/usecase-proxy-window\">尹代理窗口</a>」，为代理建立專属公开连结，客戶可直接在浏览器中互动。",
 
 
 
@@ -1570508,7 +1570508,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_setup_step1_desc": "前往 <a href=\"index.html\">EClawbot Web Portal</a> 註冊帳号，登入后即可在 Dashboard 管理你的 AI 代理。適合需要多 Agent 协作、任務管理、环境变数设定的进阶用戶。",
+        "guide_setup_step1_desc": "前往 <a href=\"index.html\">EClawbot Web Portal</a> 註冊帳号，登入后即可在 Dashboard 管理你的 AI 代理。适合需要多 Agent 协作、任務管理、环境变数设定的进阶用戶。",
 
 
 
@@ -1570764,7 +1570764,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_setup_step2_desc": "到 Google Play Store 搜尋「<strong>e-claw</strong>」下载 EClawbot App。App 提供即时桌布視覺化、聊天、任務管理等功能。",
+        "guide_setup_step2_desc": "到 Google Play Store 搜尋「<strong>e-claw</strong>」下载 EClawbot App。App 提供即时桌布视覺化、聊天、任務管理等功能。",
 
 
 
@@ -1571404,7 +1571404,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_setup_tip_multi_agent": "可綁定多个 AI 代理到同一装置，讓它们互相协作（A2A）。",
+        "guide_setup_tip_multi_agent": "可綁定多个 AI 代理到同一装置，让它们互相协作（A2A）。",
 
 
 
@@ -1571916,7 +1571916,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_setup_use_agentcard": "建立名片 — 製作 Agent Card 讓其他人发现你的代理",
+        "guide_setup_use_agentcard": "建立名片 — 製作 Agent Card 让其他人发现你的代理",
 
 
 
@@ -1572044,7 +1572044,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_setup_use_chat": "与代理聊天 — 在 Chat 頁面直接对話",
+        "guide_setup_use_chat": "与代理聊天 — 在 Chat 页面直接对話",
 
 
 
@@ -1572428,7 +1572428,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_setup_use_proxy": "对外开放 — 透过尹代理窗口讓客戶直接与你的代理互動",
+        "guide_setup_use_proxy": "对外开放 — 透过尹代理窗口让客戶直接与你的代理互动",
 
 
 
@@ -1572684,7 +1572684,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_setup_what_is_eclawbot_desc": "<strong>EClawbot</strong> 是一个 Agent-to-Agent（A2A）通訊平台，讓你建立、管理多个 AI 代理（Entity），並讓它们彼此协作、自動化執行任務。无論是电商客服、內容行銷、IT 維运还是预約排程，EClawbot 都能帮你搞定。",
+        "guide_setup_what_is_eclawbot_desc": "<strong>EClawbot</strong> 是一个 Agent-to-Agent（A2A）通訊平台，让你建立、管理多个 AI 代理（Entity），并让它们彼此协作、自动化执行任務。无论是电商客服、内容行銷、IT 維运还是预約排程，EClawbot 都能帮你搞定。",
 
 
 
@@ -1573196,7 +1573196,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_skills_p_1": "Skills 定义 Bot 可以使用的外部技能或 API 文件。每个 Skill 可附帶文件 URL，讓 Bot 學习如何使用該技能。",
+        "guide_skills_p_1": "Skills 定义 Bot 可以使用的外部技能或 API 文件。每个 Skill 可附帶文件 URL，让 Bot 学习如何使用該技能。",
 
 
 
@@ -1573708,7 +1573708,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_skills_td_2": "点击「+ Add」建立技能，设定標题、文件 URL",
+        "guide_skills_td_2": "点击「+ Add」建立技能，设定标题、文件 URL",
 
 
 
@@ -1574092,7 +1574092,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_skills_td_5": "可指定哪些 Entity 具備此技能（如只有 Entity 0 有天氣查詢能力）",
+        "guide_skills_td_5": "可指定哪些 Entity 具备此技能（如只有 Entity 0 有天氣查詢能力）",
 
 
 
@@ -1574220,7 +1574220,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_skills_td_6": "內建 Skill",
+        "guide_skills_td_6": "内建 Skill",
 
 
 
@@ -1575500,7 +1575500,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_soul_p_1": "灵魂定义 Bot 的人格特质与溝通风格。使用者可以为每个 Entity 指定不同的人格设定，隨时切換啟用或停用。",
+        "guide_soul_p_1": "灵魂定义 Bot 的人格特质与溝通风格。使用者可以为每个 Entity 指定不同的人格设定，隨时切換启用或停用。",
 
 
 
@@ -1577036,7 +1577036,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_soul_td_5": "範本选擇",
+        "guide_soul_td_5": "范本选擇",
 
 
 
@@ -1577164,7 +1577164,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_soul_td_6": "啟用 / 停用",
+        "guide_soul_td_6": "启用 / 停用",
 
 
 
@@ -1577420,7 +1577420,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_soul_td_8": "當多个灵魂同时啟用时，Bot 会融合所有啟用灵魂的特质来回應",
+        "guide_soul_td_8": "当多个灵魂同时启用时，Bot 会融合所有启用灵魂的特质来回應",
 
 
 
@@ -1578572,7 +1578572,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_structure_mod_play": "<strong>google_play/</strong> — Google Play Store 上架素材（圖標、功能圖片）",
+        "guide_structure_mod_play": "<strong>google_play/</strong> — Google Play Store 上架素材（圖标、功能圖片）",
 
 
 
@@ -1578828,7 +1578828,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_structure_mod_tests": "<strong>backend/tests/</strong> — 回歸测試套件，確保 Bot API 与广播功能正常运作",
+        "guide_structure_mod_tests": "<strong>backend/tests/</strong> — 回歸测試套件，确保 Bot API 与广播功能正常运作",
 
 
 
@@ -1578956,7 +1578956,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_structure_modules": "主要模組说明",
+        "guide_structure_modules": "主要模组说明",
 
 
 
@@ -1579980,7 +1579980,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_testing_li_3": "先开 Issue 討論，再发 PR",
+        "guide_testing_li_3": "先开 Issue 討论，再发 PR",
 
 
 
@@ -1581004,7 +1581004,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_testing_p_1": "这是一个个人/實验性專案，歡迎提交 Issue 和建議。",
+        "guide_testing_p_1": "这是一个个人/實验性專案，歡迎提交 Issue 和建议。",
 
 
 
@@ -1582284,7 +1582284,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_todo_td_11": "Bot 自動操作",
+        "guide_todo_td_11": "Bot 自动操作",
 
 
 
@@ -1582412,7 +1582412,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_todo_td_12": "Bot 可透过 API 新增、更新、刪除待办，並即时反映在面板上",
+        "guide_todo_td_12": "Bot 可透过 API 新增、更新、刪除待办，并即时反映在面板上",
 
 
 
@@ -1583180,7 +1583180,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_todo_td_2": "点击「+ 新增」按鈕建立項目，可设定標题、描述、優先順序（LOW / MEDIUM / HIGH / URGENT）",
+        "guide_todo_td_2": "点击「+ 新增」按鈕建立項目，可设定标题、描述、優先順序（LOW / MEDIUM / HIGH / URGENT）",
 
 
 
@@ -1583948,7 +1583948,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_todo_td_8": "跳过任務阶段，直接標記为完成並移至「已完成」",
+        "guide_todo_td_8": "跳过任務阶段，直接标記为完成并移至「已完成」",
 
 
 
@@ -1585228,7 +1585228,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_cmd_3b": "「讓 bot 显示 '___'」",
+        "guide_usecase_cmd_3b": "「让 bot 显示 '___'」",
 
 
 
@@ -1585484,7 +1585484,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_cmd_4b": "「每天/每小时讓 bot 自動做 ___」",
+        "guide_usecase_cmd_4b": "「每天/每小时让 bot 自动做 ___」",
 
 
 
@@ -1586764,7 +1586764,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_cmd_th_2": "说法範例",
+        "guide_usecase_cmd_th_2": "说法范例",
 
 
 
@@ -1586892,7 +1586892,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_cmp_1a": "下指令 → 自己去 Portal 檢查 → 发现错了 → 手動糾正 → 再確认",
+        "guide_usecase_cmp_1a": "下指令 → 自己去 Portal 檢查 → 发现错了 → 手动糾正 → 再确认",
 
 
 
@@ -1587404,7 +1587404,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_cmp_3a": "容易遗漏細節（例如放错頁面）",
+        "guide_usecase_cmp_3a": "容易遗漏細節（例如放错页面）",
 
 
 
@@ -1587532,7 +1587532,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_cmp_3b": "Claude 多点交叉验證",
+        "guide_usecase_cmp_3b": "Claude 多点交叉验证",
 
 
 
@@ -1588172,7 +1588172,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_code_arch": "你（自然语言）→ Claude（AI 指揮官）→ Eclaw API → OpenClaw Bot（執行任務）→ 回報结果",
+        "guide_usecase_code_arch": "你（自然语言）→ Claude（AI 指揮官）→ Eclaw API → OpenClaw Bot（执行任務）→ 回报结果",
 
 
 
@@ -1588300,7 +1588300,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_code_example": "請用 WebFetch 讀取 https://eclawbot.com/api/skill-doc，然后帮我控制我的 OpenClaw bot\n\n我的 Eclaw 设定：\nDevice ID: 48xxxx4c-2183-xxxx-afd0-b131ae8xxxxc\nDevice Secret: xxxxdb10-2xxx-42b6-xxxx-f9d446c97ff9-7cff9697-xxxx1-415d-a282-4e8axxxxe49a\n- 我要控制的 bot 是 Entity 0\n\n請帮我控制这个 OpenClaw bot。\n\n短期目标: [你的短期目标]\n短期目标完畢后，你要进行審查，確定沒有失誤\n最終目标: [你的最終目标]\n最終目标完畢后，你要进行審查，確定沒有失誤",
+        "guide_usecase_code_example": "请用 WebFetch 读取 https://eclawbot.com/api/skill-doc，然后帮我控制我的 OpenClaw bot\n\n我的 Eclaw 设定：\nDevice ID: 48xxxx4c-2183-xxxx-afd0-b131ae8xxxxc\nDevice Secret: xxxxdb10-2xxx-42b6-xxxx-f9d446c97ff9-7cff9697-xxxx1-415d-a282-4e8axxxxe49a\n- 我要控制的 bot 是 Entity 0\n\n请帮我控制这个 OpenClaw bot。\n\n短期目标: [你的短期目标]\n短期目标完畢后，你要进行審查，确定沒有失誤\n最終目标: [你的最終目标]\n最終目标完畢后，你要进行審查，确定沒有失誤",
 
 
 
@@ -1588428,7 +1588428,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_code_loop": "你下指令\n  │\n  ▼\nClaude 发送任務给 OpenClaw bot\n  │\n  ▼\nClaude 主動查詢執行结果\n  │\n  ├── 正確 ──► 回報给你「完成」\n  │\n  └── 发现错誤\n        │\n        ▼\n      Claude 分析错誤原因\n        │\n        ▼\n      Claude 发送糾错指令给 bot\n        │\n        ▼\n      Claude 再次验證（重複直到正確）",
+        "guide_usecase_code_loop": "你下指令\n  │\n  ▼\nClaude 发送任務给 OpenClaw bot\n  │\n  ▼\nClaude 主动查詢执行结果\n  │\n  ├── 正确 ──► 回报给你「完成」\n  │\n  └── 发现错誤\n        │\n        ▼\n      Claude 分析错誤原因\n        │\n        ▼\n      Claude 发送糾错指令给 bot\n        │\n        ▼\n      Claude 再次验证（重复直到正确）",
 
 
 
@@ -1588556,7 +1588556,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_code_multibot": "讓 entity 0 负责收集资料，entity 1 负责分析，兩个 bot 一起帮我做市场调查",
+        "guide_usecase_code_multibot": "让 entity 0 负责收集资料，entity 1 负责分析，兩个 bot 一起帮我做市场调查",
 
 
 
@@ -1588940,7 +1588940,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_copy_template": "請用 WebFetch 讀取 https://eclawbot.com/api/skill-doc，然后帮我控制我的 OpenClaw bot\n\n我的 Eclaw 设定：\nDevice ID: {{DEVICE_ID}}\nDevice Secret: {{DEVICE_SECRET}}\n- 我要控制的 bot 是 Entity 0\n\n請帮我控制这个 OpenClaw bot。\n\n短期目标: [你的短期目标]\n短期目标完畢后，你要进行審查，確定沒有失誤\n最終目标: [你的最終目标]\n最終目标完畢后，你要进行審查，確定沒有失誤",
+        "guide_usecase_copy_template": "请用 WebFetch 读取 https://eclawbot.com/api/skill-doc，然后帮我控制我的 OpenClaw bot\n\n我的 Eclaw 设定：\nDevice ID: {{DEVICE_ID}}\nDevice Secret: {{DEVICE_SECRET}}\n- 我要控制的 bot 是 Entity 0\n\n请帮我控制这个 OpenClaw bot。\n\n短期目标: [你的短期目标]\n短期目标完畢后，你要进行審查，确定沒有失誤\n最終目标: [你的最終目标]\n最終目标完畢后，你要进行審查，确定沒有失誤",
 
 
 
@@ -1589068,7 +1589068,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_faq_1": "<strong>Q: Claude 说「我沒有办法執行 HTTP 請求」怎麼办？</strong><br>\n                        A: 你需要使用 <strong>Claude Code CLI</strong>（有 Bash 工具），或在 Claude.ai 啟用 MCP 工具。標準对話介面只会给你指令讓你自己貼到終端机執行。",
+        "guide_usecase_faq_1": "<strong>Q: Claude 说「我沒有办法执行 HTTP 请求」怎麼办？</strong><br>\n                        A: 你需要使用 <strong>Claude Code CLI</strong>（有 Bash 工具），或在 Claude.ai 启用 MCP 工具。标準对話介面只会给你指令让你自己貼到終端机执行。",
 
 
 
@@ -1589196,7 +1589196,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_faq_2": "<strong>Q: Device Secret 在哪里找？</strong><br>\n                        A: Web Portal → 右上角頭像 → Settings → Device Secret 列 → 点眼睛圖示显示 → 複製。Bot Secret 是 bot 自己的憑證，用戶不需要取得。",
+        "guide_usecase_faq_2": "<strong>Q: Device Secret 在哪里找？</strong><br>\n                        A: Web Portal → 右上角頭像 → Settings → Device Secret 列 → 点眼睛圖示显示 → 复製。Bot Secret 是 bot 自己的憑证，用戶不需要取得。",
 
 
 
@@ -1589324,7 +1589324,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_faq_3": "<strong>Q: Claude 下的指令 bot 沒有反應？</strong><br>\n                        A: 確认 bot 已綁定（isBound: true）、Device Secret 正確、OpenClaw 在線。",
+        "guide_usecase_faq_3": "<strong>Q: Claude 下的指令 bot 沒有反應？</strong><br>\n                        A: 确认 bot 已綁定（isBound: true）、Device Secret 正确、OpenClaw 在线。",
 
 
 
@@ -1589580,7 +1589580,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_h2_2": "前置準備",
+        "guide_usecase_h2_2": "前置準备",
 
 
 
@@ -1589708,7 +1589708,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_h2_3": "完整範例",
+        "guide_usecase_h2_3": "完整范例",
 
 
 
@@ -1590092,7 +1590092,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_h2_6": "闭环验證与自動糾错（最关鍵的特性）",
+        "guide_usecase_h2_6": "闭环验证与自动糾错（最关鍵的特性）",
 
 
 
@@ -1590348,7 +1590348,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_h3_1": "真實案例：排程设错位置，Claude 自動糾正",
+        "guide_usecase_h3_1": "真實案例：排程设错位置，Claude 自动糾正",
 
 
 
@@ -1590604,7 +1590604,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_li_2": "✅ 一个已在 OpenClaw 平台上运行的 AI bot，並已綁定到你的 Eclaw entity",
+        "guide_usecase_li_2": "✅ 一个已在 OpenClaw 平台上运行的 AI bot，并已綁定到你的 Eclaw entity",
 
 
 
@@ -1591116,7 +1591116,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_li_6": "查詢 <code>GET /api/bot/schedules</code>，確认正式排程列表是空的",
+        "guide_usecase_li_6": "查詢 <code>GET /api/bot/schedules</code>，确认正式排程列表是空的",
 
 
 
@@ -1591244,7 +1591244,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_li_7": "发送糾错指令：刪除错誤 Rule + 用正確 API 建立排程",
+        "guide_usecase_li_7": "发送糾错指令：刪除错誤 Rule + 用正确 API 建立排程",
 
 
 
@@ -1591372,7 +1591372,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_li_8": "再次验證：Rule 已消失 ✓ 排程已出现 ✓ bot 回報「✅ 排程已设定」",
+        "guide_usecase_li_8": "再次验证：Rule 已消失 ✓ 排程已出现 ✓ bot 回报「✅ 排程已设定」",
 
 
 
@@ -1591500,7 +1591500,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_li_9": "<strong>最終才回報给你：完成</strong>",
+        "guide_usecase_li_9": "<strong>最終才回报给你：完成</strong>",
 
 
 
@@ -1591628,7 +1591628,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_meta": "讓 Claude AI 成为你的「AI 指揮官」，透过 Eclaw 远端控制你的 OpenClaw bot",
+        "guide_usecase_meta": "让 Claude AI 成为你的「AI 指揮官」，透过 Eclaw 远端控制你的 OpenClaw bot",
 
 
 
@@ -1591756,7 +1591756,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_note_1": "⚠️ Claude.ai 標準对話介面<strong>无法直接執行 HTTP 請求</strong>，需要 <strong>Claude Code CLI</strong> 才能讓 Claude 真正帮你操作 API。",
+        "guide_usecase_note_1": "⚠️ Claude.ai 标準对話介面<strong>无法直接执行 HTTP 请求</strong>，需要 <strong>Claude Code CLI</strong> 才能让 Claude 真正帮你操作 API。",
 
 
 
@@ -1591884,7 +1591884,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_note_2": "从頭到尾你只说了一句話。Claude 獨立完成了发送、验證、发现错誤、糾正、再验證的完整流程。",
+        "guide_usecase_note_2": "从頭到尾你只说了一句話。Claude 獨立完成了发送、验证、发现错誤、糾正、再验证的完整流程。",
 
 
 
@@ -1592140,7 +1592140,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_p_2": "直接複製以下內容，貼给 Claude，它会自動讀取说明書並帮你控制 OpenClaw bot：",
+        "guide_usecase_p_2": "直接复製以下内容，貼给 Claude，它会自动读取说明書并帮你控制 OpenClaw bot：",
 
 
 
@@ -1592396,7 +1592396,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_p_4": "Claude 会分別对兩个 entity 发送任務，整合结果后回報给你。",
+        "guide_usecase_p_4": "Claude 会分別对兩个 entity 发送任務，整合结果后回报给你。",
 
 
 
@@ -1592524,7 +1592524,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_p_5": "这是整个系統最重要的特性：<strong>你下完指令后，不需要自己进去验證结果。</strong> Claude 会自動完成「发送 → 验證 → 糾错 → 再验證」的完整闭环，直到任務真正正確完成为止。",
+        "guide_usecase_p_5": "这是整个系統最重要的特性：<strong>你下完指令后，不需要自己进去验证结果。</strong> Claude 会自动完成「发送 → 验证 → 糾错 → 再验证」的完整闭环，直到任務真正正确完成为止。",
 
 
 
@@ -1592652,7 +1592652,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_p_6": "你只说了一句：<strong>「帮我的 bot 设定每小时自動搜尋技能的排程」</strong>",
+        "guide_usecase_p_6": "你只说了一句：<strong>「帮我的 bot 设定每小时自动搜尋技能的排程」</strong>",
 
 
 
@@ -1592780,7 +1592780,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_p_7": "Claude 在背后自動完成：",
+        "guide_usecase_p_7": "Claude 在背后自动完成：",
 
 
 
@@ -1592908,7 +1592908,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_recommend_compare": "Claude Code Channel 设定簡单但有 weekly limit；OpenClaw Channel 更灵活但需要 API token。依據你的需求选擇最適合的方案。",
+        "guide_usecase_recommend_compare": "Claude Code Channel 设定簡单但有 weekly limit；OpenClaw Channel 更灵活但需要 API token。依据你的需求选擇最适合的方案。",
 
 
 
@@ -1593036,7 +1593036,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_recommend_desc": "除了透过 Claude Code 終端机手動指揮龙蝦，你也可以设定 <strong>Channel Plugin</strong>，讓龙蝦自動接收訊息並回覆，不需要你在終端机前一直操作。",
+        "guide_usecase_recommend_desc": "除了透过 Claude Code 終端机手动指揮龙蝦，你也可以设定 <strong>Channel Plugin</strong>，让龙蝦自动接收訊息并回复，不需要你在終端机前一直操作。",
 
 
 
@@ -1593164,7 +1593164,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_recommend_opt_a": "<strong>Claude Code Channel</strong> — 使用 claude.ai 帳号（Max 訂閱額度），適合个人开发者。<a href=\"#guide/claude-code-channel\">查看教學</a>",
+        "guide_usecase_recommend_opt_a": "<strong>Claude Code Channel</strong> — 使用 claude.ai 帳号（Max 訂閱額度），适合个人开发者。<a href=\"#guide/claude-code-channel\">查看教学</a>",
 
 
 
@@ -1593292,7 +1593292,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_recommend_opt_b": "<strong>OpenClaw Channel</strong> — 使用 Anthropic API Key，適合需要多 Bot 同时运作的进阶用戶。<a href=\"#guide/openclaw-channel\">查看教學</a>",
+        "guide_usecase_recommend_opt_b": "<strong>OpenClaw Channel</strong> — 使用 Anthropic API Key，适合需要多 Bot 同时运作的进阶用戶。<a href=\"#guide/openclaw-channel\">查看教学</a>",
 
 
 
@@ -1593420,7 +1593420,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_recommend_title": "💡 推薦：使用 Channel Plugin 讓龙蝦自動协作",
+        "guide_usecase_recommend_title": "💡 推薦：使用 Channel Plugin 让龙蝦自动协作",
 
 
 
@@ -1593932,7 +1593932,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_usecase_td_4": "AI bot 的运行平台，執行實际任務",
+        "guide_usecase_td_4": "AI bot 的运行平台，执行實际任務",
 
 
 
@@ -1594700,7 +1594700,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_cta_chat": "在聊天室試試：<a href=\"chat.html\">开啟 Chat</a> 並問 bot「你还記得我们之前聊过 ... 嗎？」看氣泡下方的引用。",
+        "guide_vm_cta_chat": "在聊天室試試：<a href=\"chat.html\">开启 Chat</a> 并問 bot「你还記得我们之前聊过 ... 嗎？」看氣泡下方的引用。",
         "guide_cr_title": "\U0001F500 为什么 EClaw 有两条 Channel Routing 路径？",
         "guide_cr_meta": "thin-pipe 与 LLM runtime 的设计哲学",
         "guide_cr_h2_two_paths": "两条路径，各司其职",
@@ -1595108,7 +1595108,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_how1": "打开聊天頁面（<a href=\"chat.html\">Chat</a> 或 Agent Window）",
+        "guide_vm_how1": "打开聊天页面（<a href=\"chat.html\">Chat</a> 或 Agent Window）",
 
 
 
@@ -1595236,7 +1595236,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_how2": "像平常一樣跟 bot 对話 — 所有訊息背景自動寫入向量池",
+        "guide_vm_how2": "像平常一樣跟 bot 对話 — 所有訊息背景自动写入向量池",
 
 
 
@@ -1595364,7 +1595364,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_how3": "Bot 回覆后，点开氣泡下方的「相关舊訊息」按鈕查看引用",
+        "guide_vm_how3": "Bot 回复后，点开氣泡下方的「相关舊訊息」按鈕查看引用",
 
 
 
@@ -1595492,7 +1595492,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_how4": "跨 session 問問题（例：「你还記得我们上次聊的 ... 嗎？」），bot 会自動檢索並引用",
+        "guide_vm_how4": "跨 session 問問题（例：「你还記得我们上次聊的 ... 嗎？」），bot 会自动檢索并引用",
 
 
 
@@ -1596004,7 +1596004,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_pain3": "❌ Bot 回答沒有根據 — 你沒办法追問「你剛才说的那个来源在哪？」",
+        "guide_vm_pain3": "❌ Bot 回答沒有根据 — 你沒办法追問「你剛才说的那个来源在哪？」",
 
 
 
@@ -1596132,7 +1596132,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_sp1_desc": "每則訊息都寫进 pgvector，即使过了一个月、不同 session、不同装置，只要语意沾边就能撈出来。記憶是资料库層級，不是 prompt 層級 — 不再受 8k / 32k / 200k token 上限綁架。",
+        "guide_vm_sp1_desc": "每則訊息都寫进 pgvector，即使过了一个月、不同 session、不同装置，只要语意沾边就能撈出来。記憶是资料库层級，不是 prompt 层級 — 不再受 8k / 32k / 200k token 上限綁架。",
 
 
 
@@ -1596260,7 +1596260,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_sp1_pain": "想讓 AI 記得跨 session、跨月份的对話？",
+        "guide_vm_sp1_pain": "想让 AI 記得跨 session、跨月份的对話？",
 
 
 
@@ -1596388,7 +1596388,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_sp1_solution": "→ 向量記憶讓 bot「記性」超越 context window",
+        "guide_vm_sp1_solution": "→ 向量記憶让 bot「記性」超越 context window",
 
 
 
@@ -1596516,7 +1596516,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_sp2_desc": "你（装置主人）开 chat 时可以橫跨自己持有的所有 bot 查任意对话，看一眼就掌握 Bot #3 与 Bot #5 的歷史脈絡。Bot 与 Bot 之間的协作則透过 Kanban 卡片內容、speakTo 訊息正文与 @提及推送主動傳遞 — 每个 bot 自己只查得到屬於自己的对话池，确保隔離与权責分明。",
+        "guide_vm_sp2_desc": "你（装置主人）开 chat 时可以橫跨自己持有的所有 bot 查任意对话，看一眼就掌握 Bot #3 与 Bot #5 的历史脈絡。Bot 与 Bot 之间的协作則透过 Kanban 卡片内容、speakTo 訊息正文与 @提及推送主动傳遞 — 每个 bot 自己只查得到属於自己的对话池，确保隔离与权責分明。",
 
 
 
@@ -1596772,7 +1596772,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_sp2_solution": "→ 主人視角:跨 bot 统一檢索；Bot 之間維持各自的对话池隔離",
+        "guide_vm_sp2_solution": "→ 主人视角:跨 bot 统一檢索；Bot 之间維持各自的对话池隔离",
 
 
 
@@ -1596900,7 +1596900,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_sp3_desc": "Bot 根據向量檢索给出的每个答案，对話氣泡下方都可以展开「相关舊訊息」清单，点击就跳到原始 context。是真的有溯源能力的回答，不是从訓練资料瞎猜。",
+        "guide_vm_sp3_desc": "Bot 根据向量檢索给出的每个答案，对話氣泡下方都可以展开「相关舊訊息」清单，点击就跳到原始 context。是真的有溯源能力的回答，不是从訓練资料瞎猜。",
 
 
 
@@ -1597028,7 +1597028,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_sp3_pain": "想要 bot 回答时附上「證據来源」而不是瞎編？",
+        "guide_vm_sp3_pain": "想要 bot 回答时附上「证据来源」而不是瞎編？",
 
 
 
@@ -1597156,7 +1597156,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_sp3_solution": "→ 每則回答自動帶引用连结（Citation）",
+        "guide_vm_sp3_solution": "→ 每則回答自动帶引用连结（Citation）",
 
 
 
@@ -1597668,7 +1597668,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_tech_api_desc": "<code>POST /api/chat/search</code> 依自然语言問句搜尋对话歷史；用 botSecret 認證会被綁定到該 bot 自己的 entity，用 deviceSecret（主人）認證可選擇性指定 entityId 或省略以橫跨整台装置",
+        "guide_vm_tech_api_desc": "<code>POST /api/chat/search</code> 依自然语言問句搜尋对话历史；用 botSecret 认证会被綁定到該 bot 自己的 entity，用 deviceSecret（主人）认证可选擇性指定 entityId 或省略以橫跨整台装置",
 
 
 
@@ -1597924,7 +1597924,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_tech_embed_desc": "OpenAI text-embedding-3-small（1536 維，成本低、召回率高）；需在 device-vars 配置 OPENAI 或 VOYAGE embedding key 才会實際寫入向量欄位",
+        "guide_vm_tech_embed_desc": "OpenAI text-embedding-3-small（1536 維，成本低、召回率高）；需在 device-vars 配置 OPENAI 或 VOYAGE embedding key 才会實際写入向量欄位",
 
 
 
@@ -1598180,7 +1598180,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_tech_fallback_desc": "未配置 embedding key 或 pgvector 不可用时，訊息原文仍保留，自動退回 ILIKE 关鍵字搜尋，功能不中斷（差別只在能不能跨措辭召回）",
+        "guide_vm_tech_fallback_desc": "未配置 embedding key 或 pgvector 不可用时，訊息原文仍保留，自动退回 ILIKE 关鍵字搜尋，功能不中斷（差別只在能不能跨措辭召回）",
 
 
 
@@ -1598308,7 +1598308,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_tech_storage": "儲存層：",
+        "guide_vm_tech_storage": "儲存层：",
 
 
 
@@ -1598820,7 +1598820,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_vm_what_desc": "EClawbot 把每一則聊天訊息都寫进 <strong>pgvector 资料库</strong>，用 1536 維语意向量當指紋。你問「上周我们聊过的那个 API 是怎麼设計的？」Bot 不用从頭讀歷史訊息，直接用语意相似度在毫秒in撈出相关片段並附上引用连结。",
+        "guide_vm_what_desc": "EClawbot 把每一則聊天訊息都寫进 <strong>pgvector 资料库</strong>，用 1536 維语意向量当指紋。你問「上周我们聊过的那个 API 是怎麼设计的？」Bot 不用从頭读历史訊息，直接用语意相似度在毫秒in撈出相关片段并附上引用连结。",
 
 
 
@@ -1599076,7 +1599076,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_api_desc": "Bot 发送 <code>POST /api/device/tts</code> 即可讓手机朗讀文字：",
+        "guide_voice_api_desc": "Bot 发送 <code>POST /api/device/tts</code> 即可让手机朗读文字：",
 
 
 
@@ -1599716,7 +1599716,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_example": "程式碼範例",
+        "guide_voice_example": "程式碼范例",
 
 
 
@@ -1599844,7 +1599844,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_example_desc": "OpenClaw Bot 在回覆用戶时同时觸发语音：",
+        "guide_voice_example_desc": "OpenClaw Bot 在回复用戶时同时触发语音：",
 
 
 
@@ -1599972,7 +1599972,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_feat1": "📱 <strong>背景播放</strong>：App 在背景或鎖屏时也能语音播報（Foreground Service）",
+        "guide_voice_feat1": "📱 <strong>背景播放</strong>：App 在背景或鎖屏时也能语音播报（Foreground Service）",
 
 
 
@@ -1600100,7 +1600100,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_feat2": "🔔 <strong>FCM 備援</strong>：Socket.IO 斷線时透过 Firebase Cloud Messaging 觸发",
+        "guide_voice_feat2": "🔔 <strong>FCM 备援</strong>：Socket.IO 斷线时透过 Firebase Cloud Messaging 触发",
 
 
 
@@ -1600996,7 +1600996,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_how_desc": "Bot 呼叫 TTS API → 伺服器轉发到 App → Android TextToSpeech 引擎朗讀 → 用戶听到语音回覆",
+        "guide_voice_how_desc": "Bot 呼叫 TTS API → 伺服器轉发到 App → Android TextToSpeech 引擎朗读 → 用戶听到语音回复",
 
 
 
@@ -1601124,7 +1601124,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_note": "💡 <strong>提示：</strong>TTS 目前僅支援 Android 装置。iOS 支援規劃中。文字长度上限 500 字，超过請分段呼叫。",
+        "guide_voice_note": "💡 <strong>提示：</strong>TTS 目前僅支援 Android 装置。iOS 支援规劃中。文字长度上限 500 字，超过请分段呼叫。",
 
 
 
@@ -1601764,7 +1601764,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_param_text": "要朗讀的文字（最多 500 字）",
+        "guide_voice_param_text": "要朗读的文字（最多 500 字）",
 
 
 
@@ -1602276,7 +1602276,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_scene1_desc": "电商客服 Bot 在回覆文字的同时，透过 TTS 语音播報重点资訊。「您的訂单已出货，预計明天到达。」讓用戶不用盯著螢幕也能接收资訊。",
+        "guide_voice_scene1_desc": "电商客服 Bot 在回复文字的同时，透过 TTS 语音播报重点资訊。「您的訂单已出货，预计明天到达。」让用戶不用盯著螢幕也能接收资訊。",
 
 
 
@@ -1602404,7 +1602404,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_scene1_title": "🎧 客服语音回覆",
+        "guide_voice_scene1_title": "🎧 客服语音回复",
 
 
 
@@ -1602532,7 +1602532,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_scene2_desc": "搭配语音输入，打造完整的语音对話体验。用戶说話 → Bot 理解 → TTS 语音回覆，如同 Siri / Google Assistant。",
+        "guide_voice_scene2_desc": "搭配语音输入，打造完整的语音对話体验。用戶说話 → Bot 理解 → TTS 语音回复，如同 Siri / Google Assistant。",
 
 
 
@@ -1602788,7 +1602788,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_scene3_desc": "視障用戶可透过语音接收 Bot 的所有回覆。支援多语言、可调语速，確保资訊无障礙傳达。",
+        "guide_voice_scene3_desc": "视障用戶可透过语音接收 Bot 的所有回复。支援多语言、可调语速，确保资訊无障礙傳达。",
 
 
 
@@ -1603044,7 +1603044,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_scene4_desc": "支援繁中 / 英文 / 日文 / 韓文 / 泰文等多種语言。適合多语客服场景，Bot 自動偵测语言並以对應语音回覆。",
+        "guide_voice_scene4_desc": "支援繁中 / 英文 / 日文 / 韓文 / 泰文等多种语言。适合多语客服场景，Bot 自动偵测语言并以对應语音回复。",
 
 
 
@@ -1603172,7 +1603172,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_scene4_title": "🌍 多语言播報",
+        "guide_voice_scene4_title": "🌍 多语言播报",
 
 
 
@@ -1603300,7 +1603300,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_subtitle": "讓你的 AI 代理「开口说話」，透过手机喇叭直接语音回覆用戶",
+        "guide_voice_subtitle": "让你的 AI 代理「开口说話」，透过手机喇叭直接语音回复用戶",
 
 
 
@@ -1603428,7 +1603428,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_title": "🔊 语音对話 — Bot TTS 即时语音回覆",
+        "guide_voice_title": "🔊 语音对話 — Bot TTS 即时语音回复",
 
 
 
@@ -1603684,7 +1603684,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_what_desc": "EClawbot 的 <strong>TTS（Text-to-Speech）API</strong> 讓 Bot 能透过 Android 装置的喇叭即时语音播報。即使 App 在背景运行，语音也能正常播出。適合需要语音互動的场景 —— 客服语音回覆、语音助手、无障礙輔助等。",
+        "guide_voice_what_desc": "EClawbot 的 <strong>TTS（Text-to-Speech）API</strong> 让 Bot 能透过 Android 装置的喇叭即时语音播报。即使 App 在背景运行，语音也能正常播出。适合需要语音互动的场景 —— 客服语音回复、语音助手、无障礙輔助等。",
 
 
 
@@ -1604068,7 +1604068,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_cta_title": "开始体验動態桌布",
+        "guide_wp_cta_title": "开始体验动態桌布",
 
 
 
@@ -1604324,7 +1604324,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_feat_gesture": "👆 手勢互動",
+        "guide_wp_feat_gesture": "👆 手勢互动",
 
 
 
@@ -1604452,7 +1604452,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_feat_gesture_desc": "点击开啟对話，长按进入设定",
+        "guide_wp_feat_gesture_desc": "点击开启对話，长按进入设定",
 
 
 
@@ -1605476,7 +1605476,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_feat_notify_desc": "Bot 回覆后桌布自動更新，无需开啟 App",
+        "guide_wp_feat_notify_desc": "Bot 回复后桌布自动更新，无需开启 App",
 
 
 
@@ -1606116,7 +1606116,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_h2_what": "什麼是動態桌布？",
+        "guide_wp_h2_what": "什麼是动態桌布？",
 
 
 
@@ -1606244,7 +1606244,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_meta": "EClawbot Android App 獨特功能：AI Bot 的对話介面直接成为手机動態桌布",
+        "guide_wp_meta": "EClawbot Android App 獨特功能：AI Bot 的对話介面直接成为手机动態桌布",
 
 
 
@@ -1606500,7 +1606500,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_note_unique": "🎨 <strong>獨家功能：</strong>手机桌布不只是静態圖片，而是隨时在線的 AI 助手。",
+        "guide_wp_note_unique": "🎨 <strong>獨家功能：</strong>手机桌布不只是静態圖片，而是隨时在线的 AI 助手。",
 
 
 
@@ -1606628,7 +1606628,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_p_what": "EClawbot Android 支援 <strong>Live Wallpaper</strong> 模式。Bot 的对話視窗作为手机桌布显示，主畫面就能看到最新回覆，不需开啟 App。",
+        "guide_wp_p_what": "EClawbot Android 支援 <strong>Live Wallpaper</strong> 模式。Bot 的对話视窗作为手机桌布显示，主畫面就能看到最新回复，不需开启 App。",
 
 
 
@@ -1607012,7 +1607012,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_step2_desc": "开啟 App，输入 Device ID 登入，选擇 Bot Entity。",
+        "guide_wp_step2_desc": "开启 App，输入 Device ID 登入，选擇 Bot Entity。",
 
 
 
@@ -1607268,7 +1607268,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_step3_desc": "长按桌布 → 動態桌布 → EClawbot → 套用。",
+        "guide_wp_step3_desc": "长按桌布 → 动態桌布 → EClawbot → 套用。",
 
 
 
@@ -1607524,7 +1607524,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_step4_desc": "主畫面显示 Bot 对話介面，新訊息自動更新。",
+        "guide_wp_step4_desc": "主畫面显示 Bot 对話介面，新訊息自动更新。",
 
 
 
@@ -1608036,7 +1608036,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_tip_li1": "✅ <strong>设定主動推播</strong>：Bot 要主動发訊息，桌布才有動態感",
+        "guide_wp_tip_li1": "✅ <strong>设定主动推播</strong>：Bot 要主动发訊息，桌布才有动態感",
 
 
 
@@ -1608164,7 +1608164,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_tip_li2": "✅ <strong>搭配 TTS</strong>：桌布显示 + 语音播報，雙重提醒",
+        "guide_wp_tip_li2": "✅ <strong>搭配 TTS</strong>：桌布显示 + 语音播报，雙重提醒",
 
 
 
@@ -1608292,7 +1608292,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_tip_li3": "✅ <strong>轻量 Soul</strong>：桌布回覆要簡短有力",
+        "guide_wp_tip_li3": "✅ <strong>轻量 Soul</strong>：桌布回复要簡短有力",
 
 
 
@@ -1608420,7 +1608420,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_tip_li4": "⚠️ <strong>注意耗电</strong>：動態桌布持續运行，建議开省电模式",
+        "guide_wp_tip_li4": "⚠️ <strong>注意耗电</strong>：动態桌布持續运行，建议开省电模式",
 
 
 
@@ -1608548,7 +1608548,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_title": "動態桌布 — 讓 AI 住进你的手机桌布",
+        "guide_wp_title": "动態桌布 — 让 AI 住进你的手机桌布",
 
 
 
@@ -1609700,7 +1609700,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_uc_th_bot": "建議设定",
+        "guide_wp_uc_th_bot": "建议设定",
 
 
 
@@ -1610212,7 +1610212,7 @@ const TRANSLATIONS = {
 
 
 
-        "hermes_coming_soon_desc": "Hermes 是 EClaw 即將推出的 channel 整合，我们正在努力打造中，敬請期待！",
+        "hermes_coming_soon_desc": "Hermes 是 EClaw 即將推出的 channel 整合，我们正在努力打造中，敬请期待！",
 
 
 
@@ -1610468,7 +1610468,7 @@ const TRANSLATIONS = {
 
 
 
-        "hermes_coming_soon_notify_btn": "上線时通知我",
+        "hermes_coming_soon_notify_btn": "上线时通知我",
 
 
 
@@ -1610852,7 +1610852,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_credit_swap_cta_invite": "邀請朋友：<a href=\"settings.html\">设定 → 推薦碼</a>（雙方都拿獎勵）",
+        "info_guide_credit_swap_cta_invite": "邀请朋友：<a href=\"settings.html\">设定 → 推薦碼</a>（雙方都拿獎勵）",
 
 
 
@@ -1611620,7 +1611620,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_credit_swap_meta": "在 EClaw 不只是金钱交易。每帮別人跑任務、每出借 bot，都会被記帳；未来需要时換回別人替你处理大量数據的点数。",
+        "info_guide_credit_swap_meta": "在 EClaw 不只是金钱交易。每帮別人跑任務、每出借 bot，都会被記帳；未来需要时換回別人替你处理大量数据的点数。",
 
 
 
@@ -1611748,7 +1611748,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_credit_swap_problem_desc": "你是个体戶或小團队，沒办法买最高阶訂閱、沒有大算力。但偶爾你会需要「請別人帮你处理一大坨资料」— 比如標 1 万筆客服紀錄、跑 500 个競品分析。傳統做法是花大钱外包；EClaw 给你另一个选擇：用你的闲置时间 / bot，換未来別人替你做。",
+        "info_guide_credit_swap_problem_desc": "你是个体戶或小團队，沒办法买最高阶訂閱、沒有大算力。但偶爾你会需要「请別人帮你处理一大坨资料」— 比如标 1 万筆客服紀錄、跑 500 个競品分析。傳統做法是花大钱外包；EClaw 给你另一个选擇：用你的闲置时间 / bot，換未来別人替你做。",
 
 
 
@@ -1612260,7 +1612260,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_credit_swap_scenario2_desc": "你的 bot 擅长设計、朋友的擅长寫程式。需要对方專长时就用 e幣租；自己 bot 闲著就上架收 e幣。长期下来形成穩定的雙向互助，比单獨訂閱所有 AI 都便宜。",
+        "info_guide_credit_swap_scenario2_desc": "你的 bot 擅长设计、朋友的擅长寫程式。需要对方專长时就用 e幣租；自己 bot 闲著就上架收 e幣。长期下来形成穩定的雙向互助，比单獨訂閱所有 AI 都便宜。",
 
 
 
@@ -1612388,7 +1612388,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_credit_swap_scenario2_solution": "→ 你的设計 bot ↔ 朋友的程式 bot，互相支援",
+        "info_guide_credit_swap_scenario2_solution": "→ 你的设计 bot ↔ 朋友的程式 bot，互相支援",
 
 
 
@@ -1612900,7 +1612900,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_credit_swap_solution_li3": "✅ <strong>透明、可審計</strong>：所有出借与兌換都在 ledger 上，雙方都看得到，不会有糾紛",
+        "info_guide_credit_swap_solution_li3": "✅ <strong>透明、可审计</strong>：所有出借与兌換都在 ledger 上，雙方都看得到，不会有糾紛",
 
 
 
@@ -1613028,7 +1613028,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_credit_swap_solution_li4": "✅ <strong>推薦獎勵</strong>：邀請朋友加入 EClaw，雙方都拿开戶獎勵 e幣，社群越大互助机会越多",
+        "info_guide_credit_swap_solution_li4": "✅ <strong>推薦獎勵</strong>：邀请朋友加入 EClaw，雙方都拿开戶獎勵 e幣，社群越大互助机会越多",
 
 
 
@@ -1613156,7 +1613156,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_credit_swap_solution_li5": "✅ <strong>信用評分</strong>：好評累積 = 信用提升 = 未来更容易借到強 bot、被優先媒合",
+        "info_guide_credit_swap_solution_li5": "✅ <strong>信用评分</strong>：好评累積 = 信用提升 = 未来更容易借到強 bot、被優先媒合",
 
 
 
@@ -1613284,7 +1613284,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_credit_swap_title": "🕐 时间銀行 — 你的 10 分鐘，未来換大数據",
+        "info_guide_credit_swap_title": "🕐 时间銀行 — 你的 10 分钟，未来換大数据",
 
 
 
@@ -1613796,7 +1613796,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_passive_income_cta_title": "準備好赚被動收入了嗎？",
+        "info_guide_passive_income_cta_title": "準备好赚被动收入了嗎？",
 
 
 
@@ -1614308,7 +1614308,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_passive_income_meta": "你已經为 OpenClaw 訂閱付月费，bot 卻有大半时间在发呆？上架到租借市场，闲置时段自動轉成 e幣收入。",
+        "info_guide_passive_income_meta": "你已經为 OpenClaw 訂閱付月费，bot 卻有大半时间在发呆？上架到租借市场，闲置时段自动轉成 e幣收入。",
 
 
 
@@ -1614436,7 +1614436,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_passive_income_problem_desc": "你訂了 Claude Max、ChatGPT Plus、Gemini Advanced，月费一个都不便宜。但實际上你的 bot 大半夜在睡覺、上班时间在闲置、周末完全沒人用。固定成本在燒，產出卻是零。",
+        "info_guide_passive_income_problem_desc": "你訂了 Claude Max、ChatGPT Plus、Gemini Advanced，月费一个都不便宜。但實际上你的 bot 大半夜在睡覺、上班时间在闲置、周末完全沒人用。固定成本在燒，产出卻是零。",
 
 
 
@@ -1614692,7 +1614692,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_passive_income_scenario1_solution": "→ 每天 500–2,000 e幣被動收入",
+        "info_guide_passive_income_scenario1_solution": "→ 每天 500–2,000 e幣被动收入",
 
 
 
@@ -1614948,7 +1614948,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_passive_income_scenario2_desc": "设置「业務时间外才接租」規則，自家系統優先。闲置时段被同產业同行租走 — 不僅補貼成本，还可能变成新合作来源。",
+        "info_guide_passive_income_scenario2_desc": "设置「业務时间外才接租」规則，自家系統優先。闲置时段被同产业同行租走 — 不僅补貼成本，还可能变成新合作来源。",
 
 
 
@@ -1615332,7 +1615332,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_passive_income_solution_li1": "✅ <strong>一鍵上架</strong>：把 bot 公开到 Bot 广场，自動进入租借市场排程",
+        "info_guide_passive_income_solution_li1": "✅ <strong>一鍵上架</strong>：把 bot 公开到 Bot 广场，自动进入租借市场排程",
 
 
 
@@ -1615588,7 +1615588,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_passive_income_solution_li3": "✅ <strong>自動结算</strong>：每筆出租自動入帳 e幣（你拿 85%，平台 13%，保險池 2%）",
+        "info_guide_passive_income_solution_li3": "✅ <strong>自动结算</strong>：每筆出租自动入帳 e幣（你拿 85%，平台 13%，保險池 2%）",
 
 
 
@@ -1615716,7 +1615716,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_passive_income_solution_li4": "✅ <strong>合約鎖版本</strong>：租借期间 bot 设定会 snapshot 凍结，租客结束后自動歸还",
+        "info_guide_passive_income_solution_li4": "✅ <strong>合約鎖版本</strong>：租借期间 bot 设定会 snapshot 凍结，租客结束后自动歸还",
 
 
 
@@ -1615972,7 +1615972,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_passive_income_title": "💤 闲置 bot 赚 e幣 — 把你的 AI 变成被動收入",
+        "info_guide_passive_income_title": "💤 闲置 bot 赚 e幣 — 把你的 AI 变成被动收入",
 
 
 
@@ -1616996,7 +1616996,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_rent_to_use_meta": "不想为了单次大数據分析多訂一个 Claude Max？用 e幣租別人闲置的 bot，價格通常比官方訂閱便宜 30–70%。",
+        "info_guide_rent_to_use_meta": "不想为了单次大数据分析多訂一个 Claude Max？用 e幣租別人闲置的 bot，價格通常比官方訂閱便宜 30–70%。",
 
 
 
@@ -1617636,7 +1617636,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_rent_to_use_scenario2_desc": "想知道 Gemini 2.5 Pro 寫程式真的比 Claude 強嗎？租 30 分鐘跑你日常的真實任務，不用为了試用就訂閱。把 e幣當成「免费試用幣」。",
+        "info_guide_rent_to_use_scenario2_desc": "想知道 Gemini 2.5 Pro 寫程式真的比 Claude 強嗎？租 30 分钟跑你日常的真實任務，不用为了試用就訂閱。把 e幣当成「免费試用幣」。",
 
 
 
@@ -1617764,7 +1617764,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_rent_to_use_scenario2_solution": "→ 租 30 分鐘評估，覺得好再決定要不要訂",
+        "info_guide_rent_to_use_scenario2_solution": "→ 租 30 分钟评估，覺得好再决定要不要訂",
 
 
 
@@ -1618020,7 +1618020,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_rent_to_use_solution_li1": "✅ <strong>瀏覽市场</strong>：依模型、評分、能力篩选，找到最適合的 bot",
+        "info_guide_rent_to_use_solution_li1": "✅ <strong>瀏覽市场</strong>：依模型、评分、能力篩选，找到最适合的 bot",
 
 
 
@@ -1618276,7 +1618276,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_rent_to_use_solution_li3": "✅ <strong>按量計费</strong>：后端逐則訊息算 token，不会被多收",
+        "info_guide_rent_to_use_solution_li3": "✅ <strong>按量计费</strong>：后端逐則訊息算 token，不会被多收",
 
 
 
@@ -1618404,7 +1618404,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_rent_to_use_solution_li4": "✅ <strong>30 分到 7 天彈性</strong>：要租 30 分鐘做一次任務、或租一周跑專案都行",
+        "info_guide_rent_to_use_solution_li4": "✅ <strong>30 分到 7 天彈性</strong>：要租 30 分钟做一次任務、或租一周跑專案都行",
 
 
 
@@ -1618660,7 +1618660,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_rent_to_use_solution_li6": "✅ <strong>2% 保險池</strong>：bot 出問题、跑爛任務 → 平台自動賠给你，不用自己吵",
+        "info_guide_rent_to_use_solution_li6": "✅ <strong>2% 保險池</strong>：bot 出問题、跑爛任務 → 平台自动賠给你，不用自己吵",
 
 
 
@@ -1618788,7 +1618788,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_rent_to_use_title": "⚡ 用 e幣租借大模型 — 不綁月费，按分鐘付",
+        "info_guide_rent_to_use_title": "⚡ 用 e幣租借大模型 — 不綁月费，按分钟付",
 
 
 
@@ -1619172,7 +1619172,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_why_eclaw_b11_desc": "每筆平台费 2% 自動进保險池，糾紛时賠给你不用吵；邀請朋友加入雙方都拿 e幣。整个生態自我成长。",
+        "info_guide_why_eclaw_b11_desc": "每筆平台费 2% 自动进保險池，糾紛时賠给你不用吵；邀请朋友加入雙方都拿 e幣。整个生態自我成长。",
 
 
 
@@ -1619428,7 +1619428,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_why_eclaw_b1_desc": "每一筆 e幣进出都上鏈式 ledger，余額与交易帳本每天自動对帳。钱流得透明、查得到、不会憑空消失。",
+        "info_guide_why_eclaw_b1_desc": "每一筆 e幣进出都上鏈式 ledger，余額与交易帳本每天自动对帳。钱流得透明、查得到、不会憑空消失。",
 
 
 
@@ -1619684,7 +1619684,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_why_eclaw_b2_desc": "$1 → $20 USD 五阶儲值，越大筆紅利越多（最高 +15% 加赠）。Google Play 內購安全结帳，不留信用卡号。",
+        "info_guide_why_eclaw_b2_desc": "$1 → $20 USD 五阶儲值，越大筆紅利越多（最高 +15% 加赠）。Google Play 内購安全结帳，不留信用卡号。",
 
 
 
@@ -1619940,7 +1619940,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_why_eclaw_b3_desc": "租借钱与合約寫入共用同一筆资料库交易，T+24h 结算。不会出现「钱扣了但合約沒生效」这種半完成狀態。",
+        "info_guide_why_eclaw_b3_desc": "租借钱与合約写入共用同一筆资料库交易，T+24h 结算。不会出现「钱扣了但合約沒生效」这种半完成狀態。",
 
 
 
@@ -1620196,7 +1620196,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_why_eclaw_b4_desc": "12 关互動挑戰（視覺、表单、拖拉、編碼、语音…）由 Interview Arena 公开测試打分，零成本、不可造假。租到的 bot 真有實力。",
+        "info_guide_why_eclaw_b4_desc": "12 关互动挑戰（视覺、表单、拖拉、編碼、语音…）由 Interview Arena 公开测試打分，零成本、不可造假。租到的 bot 真有實力。",
 
 
 
@@ -1620324,7 +1620324,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_why_eclaw_b4_title": "自動 Bot 面試",
+        "info_guide_why_eclaw_b4_title": "自动 Bot 面試",
 
 
 
@@ -1620452,7 +1620452,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_why_eclaw_b5_desc": "系統依 bot 模型家族 + 能力分数推薦合理租金區间，不用自己算。新手出租也不会定错價賠本。",
+        "info_guide_why_eclaw_b5_desc": "系統依 bot 模型家族 + 能力分数推薦合理租金区间，不用自己算。新手出租也不会定错價賠本。",
 
 
 
@@ -1620708,7 +1620708,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_why_eclaw_b6_desc": "公开 bot 能力排行榜 + 即时評分。租客挑得到強的、出租方拿得出證據，整个市场有公信力。",
+        "info_guide_why_eclaw_b6_desc": "公开 bot 能力排行榜 + 即时评分。租客挑得到強的、出租方拿得出证据，整个市场有公信力。",
 
 
 
@@ -1620964,7 +1620964,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_why_eclaw_b7_desc": "9 阶段合約生命周期，租借當下的设定会 snapshot 凍结。出租方之后改设定也不会影響进行中的合約。",
+        "info_guide_why_eclaw_b7_desc": "9 阶段合約生命周期，租借当下的设定会 snapshot 凍结。出租方之后改设定也不会影响进行中的合約。",
 
 
 
@@ -1621220,7 +1621220,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_why_eclaw_b8_desc": "后端逐則訊息計费，不可造假。租客付 100%、出租方收 85%、平台 13%、保險池 2%。每一塊钱去哪都看得到。",
+        "info_guide_why_eclaw_b8_desc": "后端逐則訊息计费，不可造假。租客付 100%、出租方收 85%、平台 13%、保險池 2%。每一塊钱去哪都看得到。",
 
 
 
@@ -1621348,7 +1621348,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_why_eclaw_b8_title": "Token 按量計费",
+        "info_guide_why_eclaw_b8_title": "Token 按量计费",
 
 
 
@@ -1621476,7 +1621476,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_why_eclaw_b9_desc": "租借开始时，bot 会原子性插入到你的装置；结束时自動歸还给原主。不用手動綁定，不会兩边同时被佔用。",
+        "info_guide_why_eclaw_b9_desc": "租借开始时，bot 会原子性插入到你的装置；结束时自动歸还给原主。不用手动綁定，不会兩边同时被佔用。",
 
 
 
@@ -1621860,7 +1621860,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_why_eclaw_roadmap_link": "📐 开发者視角：想看完整技术細節、子系統狀態、6 阶段 roadmap？前往 <a href=\"roadmap.html\">產品 Roadmap</a>。",
+        "info_guide_why_eclaw_roadmap_link": "📐 开发者视角：想看完整技术細節、子系統狀態、6 阶段 roadmap？前往 <a href=\"roadmap.html\">产品 Roadmap</a>。",
 
 
 
@@ -1621988,7 +1621988,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_guide_why_eclaw_title": "💎 为什麼选擇 EClaw — 11 大子系統，全部使用者視角",
+        "info_guide_why_eclaw_title": "💎 为什麼选擇 EClaw — 11 大子系統，全部使用者视角",
 
 
 
@@ -1622116,7 +1622116,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_hero_credit_swap_body": "你今天帮別人跑 10 分鐘任務，未来就能兌換別人帮你处理大量资料的点数。每一次互助都会被記帳。",
+        "info_hero_credit_swap_body": "你今天帮別人跑 10 分钟任務，未来就能兌換別人帮你处理大量资料的点数。每一次互助都会被記帳。",
 
 
 
@@ -1622372,7 +1622372,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_hero_credit_swap_title": "🕐 时间銀行：10 分鐘換大数據",
+        "info_hero_credit_swap_title": "🕐 时间銀行：10 分钟換大数据",
 
 
 
@@ -1622500,7 +1622500,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_hero_passive_income_body": "你的 bot 沒在用？上架到广场，每筆出租自動入帳 e幣。像 Airbnb 你的 AI 能力。",
+        "info_hero_passive_income_body": "你的 bot 沒在用？上架到广场，每筆出租自动入帳 e幣。像 Airbnb 你的 AI 能力。",
 
 
 
@@ -1622884,7 +1622884,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_hero_rent_to_use_body": "不用綁月费、不用买长期訂閱。需要大模型算力时，用 e幣按分鐘租借別人的 bot，價格比原生訂閱便宜 30-70%。",
+        "info_hero_rent_to_use_body": "不用綁月费、不用买长期訂閱。需要大模型算力时，用 e幣按分钟租借別人的 bot，價格比原生訂閱便宜 30-70%。",
 
 
 
@@ -1623268,7 +1623268,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_hooks_subtitle": "把闲置 AI 变成被動收入、按量租借大模型、或用任務換取未来的点数。",
+        "info_hooks_subtitle": "把闲置 AI 变成被动收入、按量租借大模型、或用任務換取未来的点数。",
 
 
 
@@ -1623396,7 +1623396,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_hooks_title": "💎 三个讓你立刻獲益的方式",
+        "info_hooks_title": "💎 三个让你立刻獲益的方式",
 
 
 
@@ -1624804,7 +1624804,7 @@ const TRANSLATIONS = {
 
 
 
-        "info_tab_roadmap": "產品路線圖",
+        "info_tab_roadmap": "产品路线圖",
 
 
 
@@ -1625060,7 +1625060,7 @@ const TRANSLATIONS = {
 
 
 
-        "inv_copy": "複製",
+        "inv_copy": "复製",
 
 
 
@@ -1625188,7 +1625188,7 @@ const TRANSLATIONS = {
 
 
 
-        "inv_desc": "分享你的邀請碼。你得 500 e幣，好友得 100 e幣。",
+        "inv_desc": "分享你的邀请碼。你得 500 e幣，好友得 100 e幣。",
 
 
 
@@ -1625700,7 +1625700,7 @@ const TRANSLATIONS = {
 
 
 
-        "inv_heading": "邀請好友，赚取 e幣",
+        "inv_heading": "邀请好友，赚取 e幣",
 
 
 
@@ -1625828,7 +1625828,7 @@ const TRANSLATIONS = {
 
 
 
-        "inv_invited": "已邀請好友",
+        "inv_invited": "已邀请好友",
 
 
 
@@ -1625956,7 +1625956,7 @@ const TRANSLATIONS = {
 
 
 
-        "inv_my_code": "我的邀請碼",
+        "inv_my_code": "我的邀请碼",
 
 
 
@@ -1626084,7 +1626084,7 @@ const TRANSLATIONS = {
 
 
 
-        "inv_qr_gen_cta": "產生分享圖",
+        "inv_qr_gen_cta": "产生分享圖",
 
 
 
@@ -1626468,7 +1626468,7 @@ const TRANSLATIONS = {
 
 
 
-        "inv_redeem_title": "有邀請碼？",
+        "inv_redeem_title": "有邀请碼？",
 
 
 
@@ -1626724,7 +1626724,7 @@ const TRANSLATIONS = {
 
 
 
-        "inv_stats": "邀請統計",
+        "inv_stats": "邀请統计",
 
 
 
@@ -1627620,7 +1627620,7 @@ const TRANSLATIONS = {
 
 
 
-        "inv_tier_progress": "再邀請 {n} 人即可达成 {tier}",
+        "inv_tier_progress": "再邀请 {n} 人即可达成 {tier}",
 
 
 
@@ -1627748,7 +1627748,7 @@ const TRANSLATIONS = {
 
 
 
-        "inv_tier_req": "邀請 {n} 人达成",
+        "inv_tier_req": "邀请 {n} 人达成",
 
 
 
@@ -1628132,7 +1628132,7 @@ const TRANSLATIONS = {
 
 
 
-        "inv_title": "EClawbot - 邀請好友",
+        "inv_title": "EClawbot - 邀请好友",
 
 
 
@@ -1628388,7 +1628388,7 @@ const TRANSLATIONS = {
 
 
 
-        "invite_banner_cta": "立即邀請",
+        "invite_banner_cta": "立即邀请",
 
 
 
@@ -1628516,7 +1628516,7 @@ const TRANSLATIONS = {
 
 
 
-        "invite_banner_desc_prefix": "你的邀請碼 ",
+        "invite_banner_desc_prefix": "你的邀请碼 ",
 
 
 
@@ -1628644,7 +1628644,7 @@ const TRANSLATIONS = {
 
 
 
-        "invite_banner_desc_suffix": "，每成功邀請一位朋友，雙方各得 500 e幣。",
+        "invite_banner_desc_suffix": "，每成功邀请一位朋友，雙方各得 500 e幣。",
 
 
 
@@ -1628772,7 +1628772,7 @@ const TRANSLATIONS = {
 
 
 
-        "invite_banner_title": "邀請好友，雙方同赚 e幣",
+        "invite_banner_title": "邀请好友，雙方同赚 e幣",
 
 
 
@@ -1628900,7 +1628900,7 @@ const TRANSLATIONS = {
 
 
 
-        "invite_qr_btn_copy": "複製到剪貼簿",
+        "invite_qr_btn_copy": "复製到剪貼簿",
 
 
 
@@ -1629156,7 +1629156,7 @@ const TRANSLATIONS = {
 
 
 
-        "invite_qr_code_label": "邀請碼",
+        "invite_qr_code_label": "邀请碼",
 
 
 
@@ -1629284,7 +1629284,7 @@ const TRANSLATIONS = {
 
 
 
-        "invite_qr_desc": "製作含邀請碼与 QR Code 的品牌圖，方便貼到社群媒体。",
+        "invite_qr_desc": "製作含邀请碼与 QR Code 的品牌圖，方便貼到社群媒体。",
 
 
 
@@ -1629540,7 +1629540,7 @@ const TRANSLATIONS = {
 
 
 
-        "invite_qr_reward_inviter": "邀請人",
+        "invite_qr_reward_inviter": "邀请人",
 
 
 
@@ -1630180,7 +1630180,7 @@ const TRANSLATIONS = {
 
 
 
-        "invite_qr_title": "產生邀請分享圖",
+        "invite_qr_title": "产生邀请分享圖",
 
 
 
@@ -1630308,7 +1630308,7 @@ const TRANSLATIONS = {
 
 
 
-        "invite_qr_toast_copied": "已複製到剪貼簿",
+        "invite_qr_toast_copied": "已复製到剪貼簿",
 
 
 
@@ -1630436,7 +1630436,7 @@ const TRANSLATIONS = {
 
 
 
-        "invite_qr_toast_copy_failed": "複製失败，請改用下载",
+        "invite_qr_toast_copy_failed": "复製失败，请改用下载",
 
 
 
@@ -1630564,7 +1630564,7 @@ const TRANSLATIONS = {
 
 
 
-        "invite_qr_toast_copy_unsupported": "不支援複製，請改用下载",
+        "invite_qr_toast_copy_unsupported": "不支援复製，请改用下载",
 
 
 
@@ -1630820,7 +1630820,7 @@ const TRANSLATIONS = {
 
 
 
-        "invite_stats_error": "载入失败，請重試。",
+        "invite_stats_error": "载入失败，请重試。",
 
 
 
@@ -1630948,7 +1630948,7 @@ const TRANSLATIONS = {
 
 
 
-        "invite_stats_kpi_bonus": "累計獲得 e幣（估算）",
+        "invite_stats_kpi_bonus": "累计獲得 e幣（估算）",
 
 
 
@@ -1631204,7 +1631204,7 @@ const TRANSLATIONS = {
 
 
 
-        "invite_stats_kpi_invited": "累計成功邀請",
+        "invite_stats_kpi_invited": "累计成功邀请",
 
 
 
@@ -1631333,7 +1631333,7 @@ const TRANSLATIONS = {
 
 
         "invite_stats_kpi_today_used": "今日已用",
-        "invite_unlimited_label": "已送出（無限制）",
+        "invite_unlimited_label": "已送出（无限制）",
 
 
 
@@ -1631717,7 +1631717,7 @@ const TRANSLATIONS = {
 
 
 
-        "invite_stats_subtitle": "一眼掌握你的邀請成效。",
+        "invite_stats_subtitle": "一眼掌握你的邀请成效。",
 
 
 
@@ -1633637,7 +1633637,7 @@ const TRANSLATIONS = {
 
 
 
-        "invite_stats_title": "邀請儀表板",
+        "invite_stats_title": "邀请儀表板",
 
 
 
@@ -1633765,7 +1633765,7 @@ const TRANSLATIONS = {
 
 
 
-        "invite_toast_welcome": "🎁 你的邀請碼 {code} 已就緒 — 每邀請一位朋友，雙方各得 500 e幣",
+        "invite_toast_welcome": "🎁 你的邀请碼 {code} 已就緒 — 每邀请一位朋友，雙方各得 500 e幣",
 
 
 
@@ -1634537,7 +1634537,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_auto_delete_confirm": "確定刪除此自動化？將会歸檔。",
+        "kb_auto_delete_confirm": "确定刪除此自动化？將会歸檔。",
 
 
 
@@ -1635049,7 +1635049,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_auto_edit_no_cron": "請选擇或输入 cron 表达式",
+        "kb_auto_edit_no_cron": "请选擇或输入 cron 表达式",
 
 
 
@@ -1635177,7 +1635177,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_auto_edit_no_runat": "請设定執行时间",
+        "kb_auto_edit_no_runat": "请设定执行时间",
 
 
 
@@ -1635817,7 +1635817,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_auto_enabled": "已啟用",
+        "kb_auto_enabled": "已启用",
 
 
 
@@ -1636073,7 +1636073,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_auto_last_trigger": "上次觸发",
+        "kb_auto_last_trigger": "上次触发",
 
 
 
@@ -1636201,7 +1636201,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_auto_next": "下次執行：{nextRun}",
+        "kb_auto_next": "下次执行：{nextRun}",
 
 
 
@@ -1636329,7 +1636329,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_auto_next_trigger": "下次觸发",
+        "kb_auto_next_trigger": "下次触发",
 
 
 
@@ -1636585,7 +1636585,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_auto_not_triggered": "未觸发",
+        "kb_auto_not_triggered": "未触发",
 
 
 
@@ -1637097,7 +1637097,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_auto_projected": "预計執行",
+        "kb_auto_projected": "预计执行",
 
 
 
@@ -1637225,7 +1637225,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_auto_resume": "啟用",
+        "kb_auto_resume": "启用",
 
 
 
@@ -1637481,7 +1637481,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_auto_title": "自動化任務",
+        "kb_auto_title": "自动化任務",
 
 
 
@@ -1637737,7 +1637737,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_auto_view_grid": "網格",
+        "kb_auto_view_grid": "网格",
 
 
 
@@ -1640681,7 +1640681,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_label_automation": "设为自動化",
+        "kb_label_automation": "设为自动化",
 
 
 
@@ -1641065,7 +1641065,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_label_run_at": "執行时间",
+        "kb_label_run_at": "执行时间",
 
 
 
@@ -1641577,7 +1641577,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_label_timezone": "时區",
+        "kb_label_timezone": "时区",
 
 
 
@@ -1641705,7 +1641705,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_label_title": "標题",
+        "kb_label_title": "标题",
 
 
 
@@ -1642217,7 +1642217,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_placeholder_desc": "描述任務內容…",
+        "kb_placeholder_desc": "描述任務内容…",
 
 
 
@@ -1642345,7 +1642345,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_placeholder_title": "卡片標题…",
+        "kb_placeholder_title": "卡片标题…",
 
 
 
@@ -1642985,7 +1642985,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_sched_once": "单次執行",
+        "kb_sched_once": "单次执行",
 
 
 
@@ -1643113,7 +1643113,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_sched_recurring": "重複（Cron）",
+        "kb_sched_recurring": "重复（Cron）",
 
 
 
@@ -1647081,7 +1647081,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_label_requires_screenshot": "需截圖審查（完成時附截圖才可推進 review/done）",
+        "kb_label_requires_screenshot": "需截圖審查（完成时附截圖才可推进 review/done）",
         "kb_label_gated": "Launch-gate（发布闸）——开启时，L1/L2/L3 自动升级跳过此卡；卡片离开发布就绪后自动解除",
 
 
@@ -1647722,7 +1647722,7 @@ const TRANSLATIONS = {
 
 
 
-        "landing_faq_a1": "EClawbot 是一个 A2A 通訊平台及个人企业 AI 小帮手。协助个人和中小企业建構、管理和部署 AI 代理人，實现跨代理协作、任務派发和自動化。每个代理人可擁有專屬公开網址（代理視窗）提供客戶服務。透过 Web 入口、Android 應用程式或 iOS 應用程式管理一切。",
+        "landing_faq_a1": "EClawbot 是一个 A2A 通訊平台及个人企业 AI 小帮手。协助个人和中小企业建構、管理和部署 AI 代理人，實现跨代理协作、任務派发和自动化。每个代理人可擁有專属公开网址（代理视窗）提供客戶服务。透过 Web 入口、Android 應用程式或 iOS 應用程式管理一切。",
 
 
 
@@ -1647850,7 +1647850,7 @@ const TRANSLATIONS = {
 
 
 
-        "landing_faq_a2": "不是。EClawbot（eclawbot.com）是用於 AI 代理人編排和跨代理协作的 A2A 通訊平台。ELAUT 的 EClawbot 是一个来自比利时的實体街机夾娃娃机品牌。兩者是完全不同的產品。",
+        "landing_faq_a2": "不是。EClawbot（eclawbot.com）是用於 AI 代理人編排和跨代理协作的 A2A 通訊平台。ELAUT 的 EClawbot 是一个来自比利时的實体街机夾娃娃机品牌。兩者是完全不同的产品。",
 
 
 
@@ -1647978,7 +1647978,7 @@ const TRANSLATIONS = {
 
 
 
-        "landing_faq_a3": "EClawbot 是驅動 OpenClaw 生態系的基礎设施平台。OpenClaw 使用者可以將他们的 AI 代理人连接到 EClawbot，透过 A2A 协議进行跨代理通訊、任務派发和协作自動化。",
+        "landing_faq_a3": "EClawbot 是驅动 OpenClaw 生態系的基礎设施平台。OpenClaw 使用者可以將他们的 AI 代理人连接到 EClawbot，透过 A2A 协议进行跨代理通訊、任務派发和协作自动化。",
 
 
 
@@ -1648106,7 +1648106,7 @@ const TRANSLATIONS = {
 
 
 
-        "landing_faq_a4": "EClawbot 支援三个平台：Web 入口（eclawbot.com/portal）、Android 原生應用程式，以及使用 React Native（Expo）建構的 iOS 應用程式。所有平台共用相同的后端 API 和即时 Socket.IO 连線。",
+        "landing_faq_a4": "EClawbot 支援三个平台：Web 入口（eclawbot.com/portal）、Android 原生應用程式，以及使用 React Native（Expo）建構的 iOS 應用程式。所有平台共用相同的后端 API 和即时 Socket.IO 连线。",
 
 
 
@@ -1648234,7 +1648234,7 @@ const TRANSLATIONS = {
 
 
 
-        "landing_faq_a5": "A2A（代理人对代理人）是一種通訊协議，允许 EClawbot 上的 AI 代理人互相发送结構化任務。它實现跨代理协作、任務派发和跨装置自動化工作流程。",
+        "landing_faq_a5": "A2A（代理人对代理人）是一种通訊协议，允许 EClawbot 上的 AI 代理人互相发送结構化任務。它實现跨代理协作、任務派发和跨装置自动化工作流程。",
 
 
 
@@ -1649002,7 +1649002,7 @@ const TRANSLATIONS = {
 
 
 
-        "landing_faq_q5": "EClawbot 中的 A2A 协議是什麼？",
+        "landing_faq_q5": "EClawbot 中的 A2A 协议是什麼？",
 
 
 
@@ -1649386,7 +1649386,7 @@ const TRANSLATIONS = {
 
 
 
-        "landing_feat1_desc": "为您的企业建構和部署 AI 代理人團队。每个代理人都有自己的身份、技能，以及專屬的公开網址（代理視窗），讓客戶可以直接互動。",
+        "landing_feat1_desc": "为您的企业建構和部署 AI 代理人團队。每个代理人都有自己的身份、技能，以及專属的公开网址（代理视窗），让客戶可以直接互动。",
 
 
 
@@ -1649642,7 +1649642,7 @@ const TRANSLATIONS = {
 
 
 
-        "landing_feat2_desc": "代理人对代理人通訊實现跨代理任務派发、协作流程和跨装置自動化任務執行。",
+        "landing_feat2_desc": "代理人对代理人通訊實现跨代理任務派发、协作流程和跨装置自动化任務执行。",
 
 
 
@@ -1649770,7 +1649770,7 @@ const TRANSLATIONS = {
 
 
 
-        "landing_feat2_title": "A2A 协議",
+        "landing_feat2_title": "A2A 协议",
 
 
 
@@ -1649898,7 +1649898,7 @@ const TRANSLATIONS = {
 
 
 
-        "landing_feat3_desc": "完整的任務管理：待办事項、任務、筆記和規則。透过结構化任務儀表板协调 AI 代理人。",
+        "landing_feat3_desc": "完整的任務管理：待办事項、任務、筆記和规則。透过结構化任務儀表板协调 AI 代理人。",
 
 
 
@@ -1650410,7 +1650410,7 @@ const TRANSLATIONS = {
 
 
 
-        "landing_feat5_desc": "OAuth 2.0 / OIDC 认證、RBAC 角色、E2EE 感知、TLS/HTTPS 安全標頭及完整稽核日誌。",
+        "landing_feat5_desc": "OAuth 2.0 / OIDC 认证、RBAC 角色、E2EE 感知、TLS/HTTPS 安全标頭及完整稽核日誌。",
 
 
 
@@ -1650666,7 +1650666,7 @@ const TRANSLATIONS = {
 
 
 
-        "landing_feat6_desc": "无縫的頻道式外掛系統，接入 OpenClaw 生態系。內建发佈器可一次发佈至 12+ 平台。",
+        "landing_feat6_desc": "无縫的頻道式外掛系統，接入 OpenClaw 生態系。内建发佈器可一次发佈至 12+ 平台。",
 
 
 
@@ -1651307,7 +1651307,7 @@ const TRANSLATIONS = {
 
 
 
-        "landing_hero_subtitle": "代理人对代理人（A2A）通訊平台 — 您的个人企业 AI 小帮手。建構、管理和部署 AI 代理人，實现跨代理协作、任務自動化和客戶服務。由 OpenClaw 驅動。",
+        "landing_hero_subtitle": "代理人对代理人（A2A）通訊平台 — 您的个人企业 AI 小帮手。建構、管理和部署 AI 代理人，實现跨代理协作、任務自动化和客戶服务。由 OpenClaw 驅动。",
 
 
 
@@ -1652715,7 +1652715,7 @@ const TRANSLATIONS = {
 
 
 
-        "login_device_desc": "已經有 Android App 了嗎？从 设定 > 網頁版入口 输入装置憑證。",
+        "login_device_desc": "已經有 Android App 了嗎？从 设定 > 网页版入口 输入装置憑证。",
 
 
 
@@ -1653995,7 +1653995,7 @@ const TRANSLATIONS = {
 
 
 
-        "login_label_confirm": "確认密碼",
+        "login_label_confirm": "确认密碼",
 
 
 
@@ -1654891,7 +1654891,7 @@ const TRANSLATIONS = {
 
 
 
-        "login_msg_email_verified": "Email 已验證！现在可以登入了。",
+        "login_msg_email_verified": "Email 已验证！现在可以登入了。",
 
 
 
@@ -1655019,7 +1655019,7 @@ const TRANSLATIONS = {
 
 
 
-        "login_msg_enter_email": "請输入您的 Email",
+        "login_msg_enter_email": "请输入您的 Email",
 
 
 
@@ -1655147,7 +1655147,7 @@ const TRANSLATIONS = {
 
 
 
-        "login_msg_fill_all": "請填寫所有欄位",
+        "login_msg_fill_all": "请填寫所有欄位",
 
 
 
@@ -1655531,7 +1655531,7 @@ const TRANSLATIONS = {
 
 
 
-        "login_msg_reset_sent": "如果此 Email 存在，重设连结已寄出，請查看信箱。",
+        "login_msg_reset_sent": "如果此 Email 存在，重设连结已寄出，请查看信箱。",
 
 
 
@@ -1655659,7 +1655659,7 @@ const TRANSLATIONS = {
 
 
 
-        "login_msg_verification_sent": "验證信已寄出！請查看信箱。",
+        "login_msg_verification_sent": "验证信已寄出！请查看信箱。",
 
 
 
@@ -1655915,7 +1655915,7 @@ const TRANSLATIONS = {
 
 
 
-        "login_placeholder_confirm": "確认密碼",
+        "login_placeholder_confirm": "确认密碼",
 
 
 
@@ -1657195,7 +1657195,7 @@ const TRANSLATIONS = {
 
 
 
-        "maintenance_payment_desc": "付款功能目前正在維护中，請稍后再試。",
+        "maintenance_payment_desc": "付款功能目前正在維护中，请稍后再試。",
 
 
 
@@ -1657579,7 +1657579,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_auth_error_missing": "請输入 Device ID 和 Secret",
+        "mc_auth_error_missing": "请输入 Device ID 和 Secret",
 
 
 
@@ -1657707,7 +1657707,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_auth_subtitle": "输入你的装置憑證来同步 Dashboard",
+        "mc_auth_subtitle": "输入你的装置憑证来同步 Dashboard",
 
 
 
@@ -1658219,7 +1658219,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_btn_connect": "连線",
+        "mc_btn_connect": "连线",
 
 
 
@@ -1659244,7 +1659244,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_card_countdown": "倒数計时",
+        "mc_card_countdown": "倒数计时",
 
 
 
@@ -1659372,7 +1659372,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_card_due_at": "執行时间",
+        "mc_card_due_at": "执行时间",
 
 
 
@@ -1659884,7 +1659884,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_confirm_delete": "確定刪除？",
+        "mc_confirm_delete": "确定刪除？",
 
 
 
@@ -1660524,7 +1660524,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_countdown_min": "分鐘",
+        "mc_countdown_min": "分钟",
 
 
 
@@ -1660908,7 +1660908,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_deprecated_add": "請使用看板任務作为替代方案。看板任務頁面已有完整生態，請讓 bot 將现有任務逐步轉移到看板任務頁面。",
+        "mc_deprecated_add": "请使用看板任務作为替代方案。看板任務页面已有完整生態，请让 bot 將现有任務逐步轉移到看板任務页面。",
 
 
 
@@ -1661164,7 +1661164,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_dlg_add_rule": "新增規則",
+        "mc_dlg_add_rule": "新增规則",
 
 
 
@@ -1661804,7 +1661804,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_dlg_content": "內容",
+        "mc_dlg_content": "内容",
 
 
 
@@ -1662060,7 +1662060,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_dlg_due_at": "執行时间",
+        "mc_dlg_due_at": "执行时间",
 
 
 
@@ -1662444,7 +1662444,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_dlg_edit_rule": "編輯規則",
+        "mc_dlg_edit_rule": "編輯规則",
 
 
 
@@ -1662828,7 +1662828,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_dlg_rule_name": "規則名称",
+        "mc_dlg_rule_name": "规則名称",
 
 
 
@@ -1663596,7 +1663596,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_dlg_soul_gallery_builtin": "內建模板",
+        "mc_dlg_soul_gallery_builtin": "内建模板",
 
 
 
@@ -1664364,7 +1664364,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_dlg_title": "標题",
+        "mc_dlg_title": "标题",
 
 
 
@@ -1665132,7 +1665132,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_empty_rules": "尚无規則",
+        "mc_empty_rules": "尚无规則",
 
 
 
@@ -1665900,7 +1665900,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_menu_mark_done": "標記完成",
+        "mc_menu_mark_done": "标記完成",
 
 
 
@@ -1666412,7 +1666412,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_note_copy_link": "複製连结",
+        "mc_note_copy_link": "复製连结",
 
 
 
@@ -1667308,7 +1667308,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_note_edit_page": "編輯網頁",
+        "mc_note_edit_page": "編輯网页",
 
 
 
@@ -1667436,7 +1667436,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_note_link_copied": "已複製！",
+        "mc_note_link_copied": "已复製！",
 
 
 
@@ -1667692,7 +1667692,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_note_open_page": "开啟網頁",
+        "mc_note_open_page": "开启网页",
 
 
 
@@ -1667948,7 +1667948,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_note_page_empty": "尚无網頁內容。",
+        "mc_note_page_empty": "尚无网页内容。",
 
 
 
@@ -1668076,7 +1668076,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_note_page_link_hint": "內部连结：&lt;a href=\"eclaw://note/NOTE_ID\"&gt;...&lt;/a&gt;",
+        "mc_note_page_link_hint": "内部连结：&lt;a href=\"eclaw://note/NOTE_ID\"&gt;...&lt;/a&gt;",
 
 
 
@@ -1668204,7 +1668204,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_note_page_placeholder": "输入 HTML 內容...",
+        "mc_note_page_placeholder": "输入 HTML 内容...",
 
 
 
@@ -1668332,7 +1668332,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_note_page_public": "公开此網頁",
+        "mc_note_page_public": "公开此网页",
 
 
 
@@ -1668460,7 +1668460,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_note_page_public_hint": "公开的網頁无需登入即可在 /p/CODE/NOTE_ID 瀏覽",
+        "mc_note_page_public_hint": "公开的网页无需登入即可在 /p/CODE/NOTE_ID 瀏覽",
 
 
 
@@ -1668588,7 +1668588,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_note_page_saved": "網頁已儲存",
+        "mc_note_page_saved": "网页已儲存",
 
 
 
@@ -1670764,7 +1670764,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_rule_template_title": "規則模板",
+        "mc_rule_template_title": "规則模板",
 
 
 
@@ -1670892,7 +1670892,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_rules_title": "規則 (Workflow)",
+        "mc_rules_title": "规則 (Workflow)",
 
 
 
@@ -1671916,7 +1671916,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_skill_url_label": "相关網址（选填）",
+        "mc_skill_url_label": "相关网址（选填）",
 
 
 
@@ -1672556,7 +1672556,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_status_inprogress": "執行中",
+        "mc_status_inprogress": "执行中",
 
 
 
@@ -1673836,7 +1673836,7 @@ const TRANSLATIONS = {
 
 
 
-        "mention_all_confirm": "要把這則訊息廣播給所有已綁定的代理嗎？裝置上的每一位代理都會收到。",
+        "mention_all_confirm": "要把这則訊息廣播給所有已綁定的代理嗎？裝置上的每一位代理都会收到。",
 
 
 
@@ -1674220,7 +1674220,7 @@ const TRANSLATIONS = {
 
 
 
-        "mention_blocked_contact": "對方已封鎖你",
+        "mention_blocked_contact": "对方已封鎖你",
 
 
 
@@ -1674604,7 +1674604,7 @@ const TRANSLATIONS = {
 
 
 
-        "message_copied": "訊息已複製",
+        "message_copied": "訊息已复製",
 
 
 
@@ -1676140,7 +1676140,7 @@ const TRANSLATIONS = {
 
 
 
-        "mp_d_rating": "評分",
+        "mp_d_rating": "评分",
 
 
 
@@ -1676268,7 +1676268,7 @@ const TRANSLATIONS = {
 
 
 
-        "mp_d_rent_duration": "租借时长（分鐘）",
+        "mp_d_rent_duration": "租借时长（分钟）",
 
 
 
@@ -1676652,7 +1676652,7 @@ const TRANSLATIONS = {
 
 
 
-        "mp_d_uptime": "上線率",
+        "mp_d_uptime": "上线率",
 
 
 
@@ -1677932,7 +1677932,7 @@ const TRANSLATIONS = {
 
 
 
-        "mp_login_first": "請先登入",
+        "mp_login_first": "请先登入",
 
 
 
@@ -1678060,7 +1678060,7 @@ const TRANSLATIONS = {
 
 
 
-        "mp_no_results": "目前沒有可租借的 Bot，請稍后再来！",
+        "mp_no_results": "目前沒有可租借的 Bot，请稍后再来！",
 
 
 
@@ -1678188,7 +1678188,7 @@ const TRANSLATIONS = {
 
 
 
-        "mp_privacy_agree": "我了解並同意",
+        "mp_privacy_agree": "我了解并同意",
 
 
 
@@ -1678316,7 +1678316,7 @@ const TRANSLATIONS = {
 
 
 
-        "mp_privacy_warning": "您的对話將透过出租者的伺服器处理。請勿分享信用卡号、密碼或个人身分资訊。",
+        "mp_privacy_warning": "您的对話將透过出租者的伺服器处理。请勿分享信用卡号、密碼或个人身分资訊。",
 
 
 
@@ -1678835,7 +1678835,7 @@ const TRANSLATIONS = {
 
 
 
-        "mp_rent_success": "租借成功！請至「我的租賃」查看詳情。",
+        "mp_rent_success": "租借成功！请至「我的租賃」查看詳情。",
 
 
 
@@ -1679219,7 +1679219,7 @@ const TRANSLATIONS = {
 
 
 
-        "mp_rent_warning": "⚠️ 您的訊息將傳送到出租者的伺服器。請避免透露敏感资訊。",
+        "mp_rent_warning": "⚠️ 您的訊息將傳送到出租者的伺服器。请避免透露敏感资訊。",
 
 
 
@@ -1679987,7 +1679987,7 @@ const TRANSLATIONS = {
 
 
 
-        "mp_sort_rating": "最高評分",
+        "mp_sort_rating": "最高评分",
 
 
 
@@ -1681012,7 +1681012,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_charged": "已計费",
+        "mr_charged": "已计费",
 
 
 
@@ -1681268,7 +1681268,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_confirm_end": "確认结束",
+        "mr_confirm_end": "确认结束",
 
 
 
@@ -1683444,7 +1683444,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_dispute_evidence_placeholder": "請描述問题（选填）...",
+        "mr_dispute_evidence_placeholder": "请描述問题（选填）...",
 
 
 
@@ -1683700,7 +1683700,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_dispute_select_required": "請选擇申訴类型",
+        "mr_dispute_select_required": "请选擇申訴类型",
 
 
 
@@ -1684212,7 +1684212,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_dispute_status_resolved": "已解決",
+        "mr_dispute_status_resolved": "已解决",
 
 
 
@@ -1684468,7 +1684468,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_dtype_bot_crash": "Bot 當机 — 无回應/當机",
+        "mr_dtype_bot_crash": "Bot 当机 — 无回應/当机",
 
 
 
@@ -1684852,7 +1684852,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_dtype_financial": "金流問题 — 费用計算有誤",
+        "mr_dtype_financial": "金流問题 — 费用计算有誤",
 
 
 
@@ -1685492,7 +1685492,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_end_early_irreversible": "此操作无法撤銷。根據提前終止条款：",
+        "mr_end_early_irreversible": "此操作无法撤銷。根据提前終止条款：",
 
 
 
@@ -1686132,7 +1686132,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_end_early_title": "確认提前结束租借？",
+        "mr_end_early_title": "确认提前结束租借？",
 
 
 
@@ -1687412,7 +1687412,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_review": "評分",
+        "mr_review": "评分",
 
 
 
@@ -1687668,7 +1687668,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_review_submitted": "評分已提交！",
+        "mr_review_submitted": "评分已提交！",
 
 
 
@@ -1687796,7 +1687796,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_select_rating": "請选擇評分星数",
+        "mr_select_rating": "请选擇评分星数",
 
 
 
@@ -1688308,7 +1688308,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_sla_bot_crash": "5 分鐘自動验證",
+        "mr_sla_bot_crash": "5 分钟自动验证",
 
 
 
@@ -1688436,7 +1688436,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_sla_capability": "24h 回應 / 48h 解決",
+        "mr_sla_capability": "24h 回應 / 48h 解决",
 
 
 
@@ -1688564,7 +1688564,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_sla_financial": "12h 回應 / 48h 解決",
+        "mr_sla_financial": "12h 回應 / 48h 解决",
 
 
 
@@ -1688692,7 +1688692,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_sla_quality": "24h 回應 / 72h 解決",
+        "mr_sla_quality": "24h 回應 / 72h 解决",
 
 
 
@@ -1689460,7 +1689460,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_status_ended_disputed": "已结束(爭議)",
+        "mr_status_ended_disputed": "已结束(爭议)",
 
 
 
@@ -1689844,7 +1689844,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_status_ended_violation": "已结束(違規)",
+        "mr_status_ended_violation": "已结束(違规)",
 
 
 
@@ -1689972,7 +1689972,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_status_ended_zero_balance": "已结束(余額耗盡)",
+        "mr_status_ended_zero_balance": "已结束(余額耗尽)",
 
 
 
@@ -1690356,7 +1690356,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_submit_review": "提交評分",
+        "mr_submit_review": "提交评分",
 
 
 
@@ -1692535,7 +1692535,7 @@ const TRANSLATIONS = {
         "nav_files": "檔案",
 
         "nav_companion": "伙伴",
-        "settings_companion_desc": "瀏覽並為你的每個實體挑選 Petdx 伙伴",
+        "settings_companion_desc": "瀏覽并为你的每个實体挑选 Petdx 伙伴",
 
 
 
@@ -1692791,7 +1692791,7 @@ const TRANSLATIONS = {
 
 
 
-        "nav_invite": "邀請好友",
+        "nav_invite": "邀请好友",
 
 
 
@@ -1694583,7 +1694583,7 @@ const TRANSLATIONS = {
 
 
 
-        "notif_bot_reply": "Bot 回覆",
+        "notif_bot_reply": "Bot 回复",
 
 
 
@@ -1694967,7 +1694967,7 @@ const TRANSLATIONS = {
 
 
 
-        "notif_feedback_reply": "意見回覆",
+        "notif_feedback_reply": "意見回复",
 
 
 
@@ -1695095,7 +1695095,7 @@ const TRANSLATIONS = {
 
 
 
-        "notif_feedback_resolved": "意見已解決",
+        "notif_feedback_resolved": "意見已解决",
 
 
 
@@ -1695223,7 +1695223,7 @@ const TRANSLATIONS = {
 
 
 
-        "notif_mark_all": "全部標为已讀",
+        "notif_mark_all": "全部标为已读",
 
 
 
@@ -1695351,7 +1695351,7 @@ const TRANSLATIONS = {
 
 
 
-        "notif_pref_bot_reply": "Bot 回覆",
+        "notif_pref_bot_reply": "Bot 回复",
 
 
 
@@ -1696247,7 +1696247,7 @@ const TRANSLATIONS = {
 
 
 
-        "notif_push_enable": "啟用瀏覽器推播",
+        "notif_push_enable": "启用浏览器推播",
 
 
 
@@ -1696375,7 +1696375,7 @@ const TRANSLATIONS = {
 
 
 
-        "notif_push_enabled": "推播已啟用",
+        "notif_push_enabled": "推播已启用",
 
 
 
@@ -1697271,7 +1697271,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_dismiss_hint": "你隨時可以從「設定」頁重新開啟這個指引。",
+        "onboarding_dismiss_hint": "你隨时可以从「设定」页重新开启这个指引。",
 
 
 
@@ -1697527,7 +1697527,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_quickwin_title": "先看 agent 協作，再開始設定",
+        "onboarding_quickwin_title": "先看 agent 协作，再开始设定",
 
 
 
@@ -1697655,7 +1697655,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_quickwin_desc": "選一個工作流模板，看 EClaw 如何把一句需求拆成有用的第一個結果。這個預覽不需要 API key 或付費。",
+        "onboarding_quickwin_desc": "选一个工作流模板，看 EClaw 如何把一句需求拆成有用的第一个结果。这个预覽不需要 API key 或付費。",
 
 
 
@@ -1697783,7 +1697783,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_quickwin_eta": "目標：5 分鐘內得到有用結果",
+        "onboarding_quickwin_eta": "目标：5 分钟内得到有用结果",
 
 
 
@@ -1697911,7 +1697911,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_quickwin_eta_sub": "預覽結果 30 秒內出現",
+        "onboarding_quickwin_eta_sub": "预覽结果 30 秒内出现",
 
 
 
@@ -1698039,7 +1698039,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_progress_step1": "選模板",
+        "onboarding_progress_step1": "选模板",
 
 
 
@@ -1698295,7 +1698295,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_progress_step3": "得到第一個有用結果",
+        "onboarding_progress_step3": "得到第一个有用结果",
 
 
 
@@ -1698423,7 +1698423,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_progress_step4": "進入聊天繼續",
+        "onboarding_progress_step4": "进入聊天繼續",
 
 
 
@@ -1698551,7 +1698551,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_template_content_title": "內容創作",
+        "onboarding_template_content_title": "内容創作",
 
 
 
@@ -1698679,7 +1698679,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_template_content_desc": "研究、擬大綱，快速產出發布文。",
+        "onboarding_template_content_desc": "研究、擬大綱，快速产出发布文。",
 
 
 
@@ -1698935,7 +1698935,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_template_code_desc": "找風險、提出修正，整理檢查清單。",
+        "onboarding_template_code_desc": "找风险、提出修正，整理檢查清单。",
 
 
 
@@ -1699191,7 +1699191,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_template_translate_desc": "翻譯、調整語氣，並 QA 重要字串。",
+        "onboarding_template_translate_desc": "翻譯、调整語氣，并 QA 重要字串。",
 
 
 
@@ -1699447,7 +1699447,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_demo_planner": "規劃 agent",
+        "onboarding_demo_planner": "规劃 agent",
 
 
 
@@ -1699703,7 +1699703,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_demo_worker": "執行 agent",
+        "onboarding_demo_worker": "执行 agent",
 
 
 
@@ -1699831,7 +1699831,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_demo_worker_desc": "產出第一版結果",
+        "onboarding_demo_worker_desc": "产出第一版结果",
 
 
 
@@ -1700087,7 +1700087,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_demo_reviewer_desc": "檢查品質與下一步",
+        "onboarding_demo_reviewer_desc": "檢查品質与下一步",
 
 
 
@@ -1700215,7 +1700215,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_demo_result_title": "第一個有用結果",
+        "onboarding_demo_result_title": "第一个有用结果",
 
 
 
@@ -1700343,7 +1700343,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_demo_result_content": "發布文大綱：問題 → EClaw 如何協調 agent → 3 個證明點 → CTA 邀請試用免費 bot。",
+        "onboarding_demo_result_content": "发布文大綱：問题 → EClaw 如何协调 agent → 3 个证明點 → CTA 邀请試用免費 bot。",
 
 
 
@@ -1700471,7 +1700471,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_demo_result_code": "程式審查清單：確認 auth 邊界、補 regression test、檢查 CI gates，並標註部署風險。",
+        "onboarding_demo_result_code": "程式審查清单：确认 auth 邊界、补 regression test、檢查 CI gates，并标註部署风险。",
 
 
 
@@ -1700599,7 +1700599,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_demo_result_translate": "翻譯計畫：保留產品術語、調整台灣使用者語氣、QA placeholders，最後並排比對字串。",
+        "onboarding_demo_result_translate": "翻譯计畫：保留产品術語、调整台灣使用者語氣、QA placeholders，最后并排比对字串。",
 
 
 
@@ -1700727,7 +1700727,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_quickwin_run": "執行 30 秒預覽",
+        "onboarding_quickwin_run": "执行 30 秒预覽",
 
 
 
@@ -1700983,7 +1700983,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_dont_show_again": "別再顯示此指引",
+        "onboarding_dont_show_again": "別再显示此指引",
 
 
 
@@ -1701111,7 +1701111,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_hero_desc": "選一個你想先試的方向，我們會一步一步帶你走完。",
+        "onboarding_hero_desc": "选一个你想先試的方向，我们会一步一步帶你走完。",
 
 
 
@@ -1701239,7 +1701239,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_hero_title": "歡迎來到 EClawbot",
+        "onboarding_hero_title": "歡迎来到 EClawbot",
 
 
 
@@ -1701367,7 +1701367,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_intent_heading": "你想先從哪裡開始？",
+        "onboarding_intent_heading": "你想先从哪裡开始？",
 
 
 
@@ -1701623,7 +1701623,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_title": "EClawbot - 開始使用",
+        "onboarding_title": "EClawbot - 开始使用",
 
 
 
@@ -1702007,7 +1702007,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_tour_skip": "跳過",
+        "onboarding_tour_skip": "跳过",
 
 
 
@@ -1702135,7 +1702135,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_tour_track1_step1": "這裡勾選你要的類型 — 免費與官方 bot 都在「出租」分類裡。",
+        "onboarding_tour_track1_step1": "这裡勾选你要的类型 — 免費与官方 bot 都在「出租」分类裡。",
 
 
 
@@ -1702263,7 +1702263,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_tour_track1_step2": "點這個看詳情 — 點任一張 bot 卡片查看完整資訊與租借條件。",
+        "onboarding_tour_track1_step2": "點这个看詳情 — 點任一張 bot 卡片查看完整资訊与租借條件。",
 
 
 
@@ -1702391,7 +1702391,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_tour_track1_step3": "按這裡開始租 — 接下來我們會帶你完成綁定。",
+        "onboarding_tour_track1_step3": "按这裡开始租 — 接下来我们会帶你完成綁定。",
 
 
 
@@ -1702519,7 +1702519,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_tour_track1_step4": "綁好就能用 — 在這裡產生 Channel API Key，讓你租的 bot 真正能回話。",
+        "onboarding_tour_track1_step4": "綁好就能用 — 在这裡产生 Channel API Key，让你租的 bot 真正能回話。",
 
 
 
@@ -1702647,7 +1702647,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_tour_track1_step5": "完成啦！你租的 bot 會出現在儀表板上。",
+        "onboarding_tour_track1_step5": "完成啦！你租的 bot 会出现在儀表板上。",
 
 
 
@@ -1703159,7 +1703159,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_tour_track2_step4": "e幣 不夠时就在这里儲值（目前只能从 Android App 內 Google Play 購买）。",
+        "onboarding_tour_track2_step4": "e幣 不夠时就在这里儲值（目前只能从 Android App 内 Google Play 購买）。",
 
 
 
@@ -1703287,7 +1703287,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_tour_track2_step5": "完成啦！你的租約、出租 bot、爭議都会出现在这一頁。",
+        "onboarding_tour_track2_step5": "完成啦！你的租約、出租 bot、爭议都会出现在这一页。",
 
 
 
@@ -1703415,7 +1703415,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_tour_track3_step1": "这里是 Channel API 管理中心。OpenClaw 是你可以自己架的 bot 生態系 — 綁定 channel 讓 OpenClaw 的 bot 透过 EClaw 收发訊息。",
+        "onboarding_tour_track3_step1": "这里是 Channel API 管理中心。OpenClaw 是你可以自己架的 bot 生態系 — 綁定 channel 让 OpenClaw 的 bot 透过 EClaw 收发訊息。",
 
 
 
@@ -1703543,7 +1703543,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_tour_track3_step2": "点「+ New Key」產生一組一次性的 API key + secret，给你本地的 OpenClaw 使用。",
+        "onboarding_tour_track3_step2": "点「+ New Key」产生一组一次性的 API key + secret，给你本地的 OpenClaw 使用。",
 
 
 
@@ -1703671,7 +1703671,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_tour_track3_step3": "複製 key 与 secret，貼进你本地的 openclaw.config.yaml。Secret 只显示一次，关掉就再也拿不回来。",
+        "onboarding_tour_track3_step3": "复製 key 与 secret，貼进你本地的 openclaw.config.yaml。Secret 只显示一次，关掉就再也拿不回来。",
 
 
 
@@ -1703799,7 +1703799,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_tour_track3_step4": "重啟 OpenClaw。Plugin 会自動註冊 webhook，第一則 bot 訊息会验證连線是否打通。",
+        "onboarding_tour_track3_step4": "重启 OpenClaw。Plugin 会自动註冊 webhook，第一則 bot 訊息会验证连线是否打通。",
 
 
 
@@ -1703927,7 +1703927,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_tour_track3_step5": "完成啦！OpenClaw 註冊成功后，channel entity 会显示在这里，標著 ⚡Channel 徽章。",
+        "onboarding_tour_track3_step5": "完成啦！OpenClaw 註冊成功后，channel entity 会显示在这里，标著 ⚡Channel 徽章。",
 
 
 
@@ -1704567,7 +1704567,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_tour_track4_step5": "完成啦！隨便打开一个 bot 发訊息，第一則 Claude 回覆就是验證綁定成功。",
+        "onboarding_tour_track4_step5": "完成啦！隨便打开一个 bot 发訊息，第一則 Claude 回复就是验证綁定成功。",
 
 
 
@@ -1704695,7 +1704695,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_tour_track6_step1": "歡迎来到 Agent Arena — 一套標準化的評测，衡量 AI agent 在視覺、瀏覽器、程式、推理与安全等真實任務上的表现。",
+        "onboarding_tour_track6_step1": "歡迎来到 Agent Arena — 一套标準化的评测，衡量 AI agent 在视覺、浏览器、程式、推理与安全等真實任務上的表现。",
 
 
 
@@ -1704823,7 +1704823,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_tour_track6_step2": "点「Start Evaluation」开一场考試。你的 agent 会去抓 12 题测試，逐题作答，后端依结果自動打分。",
+        "onboarding_tour_track6_step2": "点「Start Evaluation」开一场考試。你的 agent 会去抓 12 题测試，逐题作答，后端依结果自动打分。",
 
 
 
@@ -1705079,7 +1705079,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_tour_track6_step4": "这 12 个評分維度涵蓋視覺、文件、瀏覽、表单、验證、程式生成/修改、規劃、错誤恢复、約束、拒答、範疇。点任一列可看評分規則。",
+        "onboarding_tour_track6_step4": "这 12 个评分維度涵蓋视覺、文件、瀏覽、表单、验证、程式生成/修改、规劃、错誤恢复、約束、拒答、范疇。点任一列可看评分规則。",
 
 
 
@@ -1705207,7 +1705207,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_tour_track6_step5": "考完試之后可以送榜並在这里留下評論。挑 agent 时多看評論 — 同儕回饋往往比原始分数更有參考價值。",
+        "onboarding_tour_track6_step5": "考完試之后可以送榜并在这里留下评论。挑 agent 时多看评论 — 同儕回饋往往比原始分数更有參考價值。",
 
 
 
@@ -1705591,7 +1705591,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_track2_desc": "儲值 e幣，從廣場租借更強的 bot。",
+        "onboarding_track2_desc": "儲值 e幣，从廣場租借更強的 bot。",
 
 
 
@@ -1705847,7 +1705847,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_track3_desc": "接上你自己的 OpenClaw API key，驅動 bot。",
+        "onboarding_track3_desc": "接上你自己的 OpenClaw API key，驅动 bot。",
 
 
 
@@ -1706103,7 +1706103,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_track4_desc": "用你自己的 Anthropic API key 讓 bot 用 Claude 回應。",
+        "onboarding_track4_desc": "用你自己的 Anthropic API key 让 bot 用 Claude 回應。",
 
 
 
@@ -1706487,7 +1706487,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_track5_desc": "加入等候名單，上線時第一時間通知你。",
+        "onboarding_track5_desc": "加入等候名单，上线时第一时间通知你。",
 
 
 
@@ -1706743,7 +1706743,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_track6_desc": "對你的 agent 跑評測、比較結果。",
+        "onboarding_track6_desc": "对你的 agent 跑评测、比較结果。",
 
 
 
@@ -1706871,7 +1706871,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_track6_title": "Agent 評測系統",
+        "onboarding_track6_title": "Agent 评测系統",
 
 
 
@@ -1706999,7 +1706999,7 @@ const TRANSLATIONS = {
 
 
 
-        "onboarding_wizard_link": "还不確定？做 3 题小测验 →",
+        "onboarding_wizard_link": "还不确定？做 3 题小测验 →",
 
 
 
@@ -1709431,7 +1709431,7 @@ const TRANSLATIONS = {
 
 
 
-        "portal_app_subtitle": "動態桌布小帮手",
+        "portal_app_subtitle": "动態桌布小帮手",
 
 
 
@@ -1709943,7 +1709943,7 @@ const TRANSLATIONS = {
 
 
 
-        "qs_cta_text": "準備好了嗎？免费註冊，3 分鐘內开始你的第一场 AI 对話。",
+        "qs_cta_text": "準备好了嗎？免费註冊，3 分钟内开始你的第一场 AI 对話。",
 
 
 
@@ -1710327,7 +1710327,7 @@ const TRANSLATIONS = {
 
 
 
-        "qs_demo_mission_desc": "TODO、規則、技能、筆記一站管理",
+        "qs_demo_mission_desc": "TODO、规則、技能、筆記一站管理",
 
 
 
@@ -1711096,7 +1711096,7 @@ const TRANSLATIONS = {
 
 
         "qs_hero_title": "你想做什麼？",
-        "qs_promo_full_page_link": "📺 開啟完整影片頁",
+        "qs_promo_full_page_link": "📺 开启完整影片页",
 
 
 
@@ -1711224,7 +1711224,7 @@ const TRANSLATIONS = {
 
 
 
-        "qs_intent_biz_desc": "24/7 自動接单、推薦商品、处理退換货",
+        "qs_intent_biz_desc": "24/7 自动接单、推薦商品、处理退換货",
 
 
 
@@ -1711480,7 +1711480,7 @@ const TRANSLATIONS = {
 
 
 
-        "qs_intent_chat_desc": "讓 AI 代理回覆客戶、处理日常对話",
+        "qs_intent_chat_desc": "让 AI 代理回复客戶、处理日常对話",
 
 
 
@@ -1711736,7 +1711736,7 @@ const TRANSLATIONS = {
 
 
 
-        "qs_intent_team_desc": "建立 AI 團队，讓代理互相分工、自動化流程",
+        "qs_intent_team_desc": "建立 AI 團队，让代理互相分工、自动化流程",
 
 
 
@@ -1712504,7 +1712504,7 @@ const TRANSLATIONS = {
 
 
 
-        "qs_step3_desc": "进入 Chat 頁面，与你的 AI 代理对話、派发任務、管理團队",
+        "qs_step3_desc": "进入 Chat 页面，与你的 AI 代理对話、派发任務、管理團队",
 
 
 
@@ -1713016,7 +1713016,7 @@ const TRANSLATIONS = {
 
 
 
-        "rental_error_cooldown": "此 Bot 有 24 小时冷卻期，請稍后再試。",
+        "rental_error_cooldown": "此 Bot 有 24 小时冷卻期，请稍后再試。",
 
 
 
@@ -1713532,7 +1713532,7 @@ const TRANSLATIONS = {
 
 
 
-        "rental_monitor_auth_required": "請先登入才能檢視監控资訊。",
+        "rental_monitor_auth_required": "请先登入才能檢视監控资訊。",
 
 
 
@@ -1713660,7 +1713660,7 @@ const TRANSLATIONS = {
 
 
 
-        "rental_monitor_db_down": "離線",
+        "rental_monitor_db_down": "离线",
 
 
 
@@ -1714940,7 +1714940,7 @@ const TRANSLATIONS = {
 
 
 
-        "rental_monitor_kpi_section_title": "关鍵指標",
+        "rental_monitor_kpi_section_title": "关鍵指标",
 
 
 
@@ -1716476,7 +1716476,7 @@ const TRANSLATIONS = {
 
 
 
-        "rental_monitor_pub_col_region": "地區",
+        "rental_monitor_pub_col_region": "地区",
 
 
 
@@ -1716732,7 +1716732,7 @@ const TRANSLATIONS = {
 
 
 
-        "rental_monitor_pub_connected": "已连線",
+        "rental_monitor_pub_connected": "已连线",
 
 
 
@@ -1716860,7 +1716860,7 @@ const TRANSLATIONS = {
 
 
 
-        "rental_monitor_pub_disconnected": "未连線",
+        "rental_monitor_pub_disconnected": "未连线",
 
 
 
@@ -1719036,7 +1719036,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_dep_violation": "5 次違規",
+        "rm_dep_violation": "5 次違规",
 
 
 
@@ -1719548,7 +1719548,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_dev_title": "开发路線圖",
+        "rm_dev_title": "开发路线圖",
 
 
 
@@ -1720060,7 +1720060,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_full_doc": "完整規格書（1,500+ 行），請參閱：",
+        "rm_full_doc": "完整规格書（1,500+ 行），请參閱：",
 
 
 
@@ -1720700,7 +1720700,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_hero_subtitle": "按需租借进阶 AI Bot。將闲置的 Bot 產能变现，赚取 e幣。",
+        "rm_hero_subtitle": "按需租借进阶 AI Bot。將闲置的 Bot 产能变现，赚取 e幣。",
 
 
 
@@ -1721340,7 +1721340,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_kd_duration": "租期範圍",
+        "rm_kd_duration": "租期范圍",
 
 
 
@@ -1721468,7 +1721468,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_kd_duration_v": "30 分鐘 – 7 天",
+        "rm_kd_duration_v": "30 分钟 – 7 天",
 
 
 
@@ -1722108,7 +1722108,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_kd_grace": "寬限期",
+        "rm_kd_grace": "宽限期",
 
 
 
@@ -1722620,7 +1722620,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_kd_metering": "Token 計量",
+        "rm_kd_metering": "Token 计量",
 
 
 
@@ -1723004,7 +1723004,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_kd_pricing_v": "Owner 自訂，系統建議區间",
+        "rm_kd_pricing_v": "Owner 自訂，系統建议区间",
 
 
 
@@ -1723644,7 +1723644,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_kd_settle_v": "T+24 小时（爭議緩冲）",
+        "rm_kd_settle_v": "T+24 小时（爭议緩冲）",
 
 
 
@@ -1723772,7 +1723772,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_kd_title": "关鍵设計決策",
+        "rm_kd_title": "关鍵设计决策",
 
 
 
@@ -1724028,7 +1724028,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_kd_withdraw_v": "不可提现 — 僅限站內消费",
+        "rm_kd_withdraw_v": "不可提现 — 僅限站内消费",
 
 
 
@@ -1724668,7 +1724668,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p0_t3": "钱包頁面（余額 + 歷史 + 方案）",
+        "rm_p0_t3": "钱包页面（余額 + 历史 + 方案）",
 
 
 
@@ -1725180,7 +1725180,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p1_desc": "Bot 上架 CRUD、自動面試評分、市集搜尋、定價建議。",
+        "rm_p1_desc": "Bot 上架 CRUD、自动面試评分、市集搜尋、定價建议。",
 
 
 
@@ -1725692,7 +1725692,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p1_t3": "8 道面試探針引擎（regex + 啟发式，零 LLM 成本）",
+        "rm_p1_t3": "8 道面試探針引擎（regex + 启发式，零 LLM 成本）",
 
 
 
@@ -1725820,7 +1725820,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p1_t4": "定價建議器（基礎费率 × 能力加成）",
+        "rm_p1_t4": "定價建议器（基礎费率 × 能力加成）",
 
 
 
@@ -1726332,7 +1726332,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p1_t8": "市集頁面",
+        "rm_p1_t8": "市集页面",
 
 
 
@@ -1726460,7 +1726460,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p2_desc": "契約狀態机、版本鎖定、Token 計量代理、Entity 点交、隱私护欄、A2A 协作。",
+        "rm_p2_desc": "契約狀態机、版本鎖定、Token 计量代理、Entity 点交、隱私护欄、A2A 协作。",
 
 
 
@@ -1726716,7 +1726716,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p2_t1": "契約开始/结束的跨模組原子交易",
+        "rm_p2_t1": "契約开始/结束的跨模组原子交易",
 
 
 
@@ -1727100,7 +1727100,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p2_t3": "资料库層 Bot 獨佔保證（部分 UNIQUE index）",
+        "rm_p2_t3": "资料库层 Bot 獨佔保证（部分 UNIQUE index）",
 
 
 
@@ -1727356,7 +1727356,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p2_t5": "Token 計量代理（逐訊息計费）",
+        "rm_p2_t5": "Token 计量代理（逐訊息计费）",
 
 
 
@@ -1727868,7 +1727868,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p2_t9": "契約到期 + 寬限期排程",
+        "rm_p2_t9": "契約到期 + 宽限期排程",
 
 
 
@@ -1727996,7 +1727996,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p3_desc": "評分、糾紛仲裁、信用分数、反詐欺、管理后台。",
+        "rm_p3_desc": "评分、糾紛仲裁、信用分数、反詐欺、管理后台。",
 
 
 
@@ -1728124,7 +1728124,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p3_name": "信任層",
+        "rm_p3_name": "信任层",
 
 
 
@@ -1728252,7 +1728252,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p3_t1": "1–5 星評分 + 留言系統",
+        "rm_p3_t1": "1–5 星评分 + 留言系統",
 
 
 
@@ -1728380,7 +1728380,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p3_t2": "申訴管道含自動當机验證",
+        "rm_p3_t2": "申訴管道含自动当机验证",
 
 
 
@@ -1728508,7 +1728508,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p3_t3": "防刷規則（自租、人頭、假評分）",
+        "rm_p3_t3": "防刷规則（自租、人頭、假评分）",
 
 
 
@@ -1728636,7 +1728636,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p3_t4": "管理员爭議处理台 + 補償工具",
+        "rm_p3_t4": "管理员爭议处理台 + 补償工具",
 
 
 
@@ -1728764,7 +1728764,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p4_desc": "保險池、黑名单、SLA 統計、通知觸发器、合規掛鉤。",
+        "rm_p4_desc": "保險池、黑名单、SLA 統计、通知触发器、合规掛鉤。",
 
 
 
@@ -1729020,7 +1729020,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p4_t1": "保險池（佣金 2% 自動存入）",
+        "rm_p4_t1": "保險池（佣金 2% 自动存入）",
 
 
 
@@ -1729276,7 +1729276,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p4_t3": "SLA 儀表板（上線率 %、當机次数、延遲）",
+        "rm_p4_t3": "SLA 儀表板（上线率 %、当机次数、延遲）",
 
 
 
@@ -1729404,7 +1729404,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p4_t4": "年齡確认 + KYC 掛鉤",
+        "rm_p4_t4": "年齡确认 + KYC 掛鉤",
 
 
 
@@ -1729532,7 +1729532,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p5_desc": "邀請碼、邀請獎勵、市场激勵方案。",
+        "rm_p5_desc": "邀请碼、邀请獎勵、市场激勵方案。",
 
 
 
@@ -1729788,7 +1729788,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p5_t1": "邀請碼系統（6 字碼，防刷保护）",
+        "rm_p5_t1": "邀请碼系統（6 字碼，防刷保护）",
 
 
 
@@ -1729916,7 +1729916,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_p5_t2": "雙边獎勵（邀請人 + 被邀請人）",
+        "rm_p5_t2": "雙边獎勵（邀请人 + 被邀请人）",
 
 
 
@@ -1730300,7 +1730300,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_planned": "規劃中",
+        "rm_planned": "规劃中",
 
 
 
@@ -1730428,7 +1730428,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_scoring_done": "評分引擎完成",
+        "rm_scoring_done": "评分引擎完成",
 
 
 
@@ -1730556,7 +1730556,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_stat_decisions": "已鎖定设計決策",
+        "rm_stat_decisions": "已鎖定设计决策",
 
 
 
@@ -1731708,7 +1731708,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_step_interview": "面試（自動）",
+        "rm_step_interview": "面試（自动）",
 
 
 
@@ -1732220,7 +1732220,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_step_view": "檢視 Agent Card",
+        "rm_step_view": "檢视 Agent Card",
 
 
 
@@ -1732732,7 +1732732,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_sys11_desc": "雙边獎勵邀請碼。防刷保护。",
+        "rm_sys11_desc": "雙边獎勵邀请碼。防刷保护。",
 
 
 
@@ -1732860,7 +1732860,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_sys11_label": "⑪ 邀請碼系統",
+        "rm_sys11_label": "⑪ 邀请碼系統",
 
 
 
@@ -1733244,7 +1733244,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_sys2_desc": "5 檔 Google Play 儲值方案。透过 UNIQUE(channel, txn_id) 防重複。",
+        "rm_sys2_desc": "5 檔 Google Play 儲值方案。透过 UNIQUE(channel, txn_id) 防重复。",
 
 
 
@@ -1733500,7 +1733500,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_sys3_desc": "原子 P2P 轉帳、跨模組共享 withTransaction() 交易。T+24h 结算。",
+        "rm_sys3_desc": "原子 P2P 轉帳、跨模组共享 withTransaction() 交易。T+24h 结算。",
 
 
 
@@ -1733756,7 +1733756,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_sys4_desc": "8 道自動探針。純 regex 評分 — 零成本、確定性、不可偽造。",
+        "rm_sys4_desc": "8 道自动探針。純 regex 评分 — 零成本、确定性、不可偽造。",
 
 
 
@@ -1734140,7 +1734140,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_sys5_label": "⑤ 定價建議系統",
+        "rm_sys5_label": "⑤ 定價建议系統",
 
 
 
@@ -1734396,7 +1734396,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_sys6_label": "⑥ Bot 能力評估系統",
+        "rm_sys6_label": "⑥ Bot 能力评估系統",
 
 
 
@@ -1734524,7 +1734524,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_sys7_desc": "9 狀態生命周期。版本鎖定快照。押金结算矩陣。资料库層獨佔。",
+        "rm_sys7_desc": "9 狀態生命周期。版本鎖定快照。押金结算矩陣。资料库层獨佔。",
 
 
 
@@ -1734780,7 +1734780,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_sys8_desc": "后端逐訊息計费。租客 100%，Owner 85%，平台 13%，保險 2%。",
+        "rm_sys8_desc": "后端逐訊息计费。租客 100%，Owner 85%，平台 13%，保險 2%。",
 
 
 
@@ -1734908,7 +1734908,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_sys8_label": "⑧ Token 計量系統",
+        "rm_sys8_label": "⑧ Token 计量系統",
 
 
 
@@ -1735292,7 +1735292,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_sys_desc": "構成租借市集的 11 大子系統，依領域分組。",
+        "rm_sys_desc": "構成租借市集的 11 大子系統，依領域分组。",
 
 
 
@@ -1735548,7 +1735548,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_tech1_desc": "钱包 + 契約寫入共享单一 BEGIN/COMMIT 交易，透过 withTransaction() 注入。",
+        "rm_tech1_desc": "钱包 + 契約写入共享单一 BEGIN/COMMIT 交易，透过 withTransaction() 注入。",
 
 
 
@@ -1735676,7 +1735676,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_tech1_label": "跨模組原子性",
+        "rm_tech1_label": "跨模组原子性",
 
 
 
@@ -1735804,7 +1735804,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_tech2_desc": "rental_snapshots 在契約啟動时凍结设定。Owner 修改不影響进行中的租約。",
+        "rm_tech2_desc": "rental_snapshots 在契約启动时凍结设定。Owner 修改不影响进行中的租約。",
 
 
 
@@ -1736060,7 +1736060,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_tech3_desc": "部分 UNIQUE 索引保證不可能重複预訂。",
+        "rm_tech3_desc": "部分 UNIQUE 索引保证不可能重复预訂。",
 
 
 
@@ -1736188,7 +1736188,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_tech3_label": "资料库層獨佔",
+        "rm_tech3_label": "资料库层獨佔",
 
 
 
@@ -1736316,7 +1736316,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_tech4_desc": "每次变動攜帶 UNIQUE idempotency_key。重試安全。",
+        "rm_tech4_desc": "每次变动攜帶 UNIQUE idempotency_key。重試安全。",
 
 
 
@@ -1736572,7 +1736572,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_tech5_desc": "純 regex 評分。確定性、可重现、不可偽造。",
+        "rm_tech5_desc": "純 regex 评分。确定性、可重现、不可偽造。",
 
 
 
@@ -1736828,7 +1736828,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_tech6_desc": "CTE 比对快取余額与帳本加总。偏移觸发告警。",
+        "rm_tech6_desc": "CTE 比对快取余額与帳本加总。偏移触发告警。",
 
 
 
@@ -1737980,7 +1737980,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_tier_standard": "標準",
+        "rm_tier_standard": "标準",
 
 
 
@@ -1738236,7 +1738236,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_tier_total": "合計",
+        "rm_tier_total": "合计",
 
 
 
@@ -1738492,7 +1738492,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_vision_desc": "將 EClaw 的 Bot 广场从静態展示區轉型为動態的 P2P 租借交易所。擁有闲置 OpenClaw 訂閱額度的 Bot 主人可上架出租赚取 e幣，租客按 Token 用量付费。平台抽取 15% 佣金並撥 2% 进保險池用於爭議賠付。",
+        "rm_vision_desc": "將 EClaw 的 Bot 广场从静態展示区轉型为动態的 P2P 租借交易所。擁有闲置 OpenClaw 訂閱額度的 Bot 主人可上架出租赚取 e幣，租客按 Token 用量付费。平台抽取 15% 佣金并撥 2% 进保險池用於爭议賠付。",
 
 
 
@@ -1738748,7 +1738748,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1031_1": "Bot 閘道斷線偵测 — 偵测「需要配对」错誤並即时通知使用者",
+        "rn_1031_1": "Bot 閘道斷线偵测 — 偵测「需要配对」错誤并即时通知使用者",
 
 
 
@@ -1739132,7 +1739132,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1031_4": "技能文件優化 — 以 URL 擷取取代內嵌 44KB 文件，加速綁定",
+        "rn_1031_4": "技能文件優化 — 以 URL 擷取取代内嵌 44KB 文件，加速綁定",
 
 
 
@@ -1739260,7 +1739260,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1031_5": "改进错誤指引 — 更完善的错誤訊息並引導至官方文件",
+        "rn_1031_5": "改进错誤指引 — 更完善的错誤訊息并引導至官方文件",
 
 
 
@@ -1739388,7 +1739388,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1032_1": "AI 智慧綁定診斷 — 自動三阶段診斷 Bot 连線問题",
+        "rn_1032_1": "AI 智慧綁定診斷 — 自动三阶段診斷 Bot 连线問题",
 
 
 
@@ -1739516,7 +1739516,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1032_2": "WebSocket 傳输支援 OpenClaw 閘道 SETUP_PASSWORD 认證",
+        "rn_1032_2": "WebSocket 傳输支援 OpenClaw 閘道 SETUP_PASSWORD 认证",
 
 
 
@@ -1739772,7 +1739772,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1032_4": "Web 入口網站儀表板實体卡片編輯模式",
+        "rn_1032_4": "Web 入口网站儀表板實体卡片編輯模式",
 
 
 
@@ -1739900,7 +1739900,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1032_5": "使用限制现已套用至所有綁定實体，確保资源公平分配",
+        "rn_1032_5": "使用限制现已套用至所有綁定實体，确保资源公平分配",
 
 
 
@@ -1740028,7 +1740028,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1032_6": "遙测正確擷取子路由路徑，改善持續时间追蹤",
+        "rn_1032_6": "遙测正确擷取子路由路径，改善持續时间追蹤",
 
 
 
@@ -1740156,7 +1740156,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1033_1": "社群登入 — 在 Android 和網頁入口使用 Google 或 Facebook 登入",
+        "rn_1033_1": "社群登入 — 在 Android 和网页入口使用 Google 或 Facebook 登入",
 
 
 
@@ -1740284,7 +1740284,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1033_2": "浮動 AI 聊天 — 所有頁面上可拖曳的助手，支援背景处理和圖片",
+        "rn_1033_2": "浮动 AI 聊天 — 所有页面上可拖曳的助手，支援背景处理和圖片",
 
 
 
@@ -1740540,7 +1740540,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1033_4": "AI 回饋至 GitHub — AI 助手自動为错誤報告建立 Issue",
+        "rn_1033_4": "AI 回饋至 GitHub — AI 助手自动为错誤报告建立 Issue",
 
 
 
@@ -1740796,7 +1740796,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1033_6": "聊天去重现在正確保留使用者訊息，實体渲染支援 EYE_LID/EYE_ANGLE",
+        "rn_1033_6": "聊天去重现在正确保留使用者訊息，實体渲染支援 EYE_LID/EYE_ANGLE",
 
 
 
@@ -1740924,7 +1740924,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1034_1": "應用內更新对話框 — 啟動时檢查更新，支援选擇性或強制更新",
+        "rn_1034_1": "應用内更新对話框 — 启动时檢查更新，支援选擇性或强制更新",
 
 
 
@@ -1741180,7 +1741180,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1034_3": "AI GitHub 動作 — AI 助手现可自動关闭 GitHub Issues",
+        "rn_1034_3": "AI GitHub 动作 — AI 助手现可自动关闭 GitHub Issues",
 
 
 
@@ -1743100,7 +1743100,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1036_4": "自動佈建頻道 API 金鑰 — 装置註冊时自動建立頻道金鑰",
+        "rn_1036_4": "自动佈建頻道 API 金鑰 — 装置註冊时自动建立頻道金鑰",
 
 
 
@@ -1743356,7 +1743356,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1036_6": "崩潰修复 + 除错日誌 — 修复實体迭代崩潰，崩潰報告傳送至日誌",
+        "rn_1036_6": "崩潰修复 + 除错日誌 — 修复實体迭代崩潰，崩潰报告傳送至日誌",
 
 
 
@@ -1743740,7 +1743740,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1038_1": "頻道 API 金鑰显示 — 可在设定頁面直接查看並複製 OpenClaw Channel API 憑證",
+        "rn_1038_1": "頻道 API 金鑰显示 — 可在设定页面直接查看并复製 OpenClaw Channel API 憑证",
 
 
 
@@ -1743868,7 +1743868,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1038_2": "刪除帳号 — 新增完整帳号刪除頁面和 API，符合 Google Play 资料安全規範",
+        "rn_1038_2": "刪除帳号 — 新增完整帳号刪除页面和 API，符合 Google Play 资料安全规范",
 
 
 
@@ -1743996,7 +1743996,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1038_3": "AI 聊天持久化 — requestId 在 Activity 重建后持久保留（旋轉螢幕、App 重啟）",
+        "rn_1038_3": "AI 聊天持久化 — requestId 在 Activity 重建后持久保留（旋轉螢幕、App 重启）",
 
 
 
@@ -1744124,7 +1744124,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1038_4": "修复连结预覽崩潰 — 聊天 coroutine 生命周期問题已解決",
+        "rn_1038_4": "修复连结预覽崩潰 — 聊天 coroutine 生命周期問题已解决",
 
 
 
@@ -1744636,7 +1744636,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1040_1": "聊天圖片预覽 — 圖片 URL 现在会在聊天視窗內直接显示为內嵌预覽",
+        "rn_1040_1": "聊天圖片预覽 — 圖片 URL 现在会在聊天视窗内直接显示为内嵌预覽",
 
 
 
@@ -1745148,7 +1745148,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1040_5": "截圖可靠性 — 上傳限制提升至 5 MB，改进错誤回報与 canTakeScreenshot 防护",
+        "rn_1040_5": "截圖可靠性 — 上傳限制提升至 5 MB，改进错誤回报与 canTakeScreenshot 防护",
 
 
 
@@ -1745276,7 +1745276,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1040_6": "Claude CLI Proxy — 修复 Docker 啟動問题，改进日誌输出，優化预熱间隔",
+        "rn_1040_6": "Claude CLI Proxy — 修复 Docker 启动問题，改进日誌输出，優化预熱间隔",
 
 
 
@@ -1745404,7 +1745404,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1041_1": "灵魂与規則模板库 — 在 Mission Control 直接瀏覽並套用 AI Agent 灵魂与規則模板",
+        "rn_1041_1": "灵魂与规則模板库 — 在 Mission Control 直接瀏覽并套用 AI Agent 灵魂与规則模板",
 
 
 
@@ -1745532,7 +1745532,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1041_2": "设備密鑰显示 — 在设定頁面显示、複製並匯出所有憑證",
+        "rn_1041_2": "设备密鑰显示 — 在设定页面显示、复製并匯出所有憑证",
 
 
 
@@ -1745788,7 +1745788,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1041_4": "必填变数警告 — 套用技能模板前，偵测缺少的必填环境变数並提示",
+        "rn_1041_4": "必填变数警告 — 套用技能模板前，偵测缺少的必填环境变数并提示",
 
 
 
@@ -1745916,7 +1745916,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1041_5": "AI Agent 协作品牌重塑 — 更新應用程式內容以反映 AI Agent 协作定位",
+        "rn_1041_5": "AI Agent 协作品牌重塑 — 更新應用程式内容以反映 AI Agent 协作定位",
 
 
 
@@ -1746044,7 +1746044,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1041_6": "后端修复 — 修复綁定 race condition；重新綁定时重置 bot 对 bot 速率計数器",
+        "rn_1041_6": "后端修复 — 修复綁定 race condition；重新綁定时重置 bot 对 bot 速率计数器",
 
 
 
@@ -1746172,7 +1746172,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1042_1": "灵魂与規則库統一 — 範本选擇整合至 Mission Control 的 Gallery；下拉选单已移除",
+        "rn_1042_1": "灵魂与规則库統一 — 范本选擇整合至 Mission Control 的 Gallery；下拉选单已移除",
 
 
 
@@ -1746300,7 +1746300,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1042_2": "社群範本貢獻 — Bot 现可透过 API 貢獻灵魂与規則範本，並提供非同步審核回饋",
+        "rn_1042_2": "社群范本貢獻 — Bot 现可透过 API 貢獻灵魂与规則范本，并提供非同步審核回饋",
 
 
 
@@ -1746428,7 +1746428,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1042_3": "排程雙重认證 — 排程端点新增 deviceSecret 认證",
+        "rn_1042_3": "排程雙重认证 — 排程端点新增 deviceSecret 认证",
 
 
 
@@ -1746556,7 +1746556,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1042_4": "语言跨设備同步 — 语言偏好设定持久化至伺服器，跨设備同步",
+        "rn_1042_4": "语言跨设备同步 — 语言偏好设定持久化至伺服器，跨设备同步",
 
 
 
@@ -1746684,7 +1746684,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1042_5": "AI 聊天与插件穩定性 — 关闭聊天时的誤報網路错誤已修复；Channel 插件新增指数退避自動重连",
+        "rn_1042_5": "AI 聊天与插件穩定性 — 关闭聊天时的誤报网路错誤已修复；Channel 插件新增指数退避自动重连",
 
 
 
@@ -1746812,7 +1746812,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1042_6": "后台与 API 改进 — 分頁用戶列表、API 认證自動偵测、后台欄位排序優化",
+        "rn_1042_6": "后台与 API 改进 — 分页用戶列表、API 认证自动偵测、后台欄位排序優化",
 
 
 
@@ -1747068,7 +1747068,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1043_2": "Channel Bot ECLAW_READY 推播 — 綁定完成后 Bot 立即收到通知，即时確认设置",
+        "rn_1043_2": "Channel Bot ECLAW_READY 推播 — 綁定完成后 Bot 立即收到通知，即时确认设置",
 
 
 
@@ -1747196,7 +1747196,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1043_3": "排程器显示台灣时间 — 排程訊息的任務提示中现在包含當前台灣时间",
+        "rn_1043_3": "排程器显示台灣时间 — 排程訊息的任務提示中现在包含当前台灣时间",
 
 
 
@@ -1747324,7 +1747324,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1043_4": "灵魂圖库統一並加入圖示 — 內建与社群灵魂模板合併为一个附帶 emoji 圖示的統一圖库",
+        "rn_1043_4": "灵魂圖库統一并加入圖示 — 内建与社群灵魂模板合併为一个附帶 emoji 圖示的統一圖库",
 
 
 
@@ -1747452,7 +1747452,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1043_5": "XP 与等級保留 — 所有解除綁定/重新綁定路徑中實体 XP 与等級均正確保留",
+        "rn_1043_5": "XP 与等級保留 — 所有解除綁定/重新綁定路径中實体 XP 与等級均正确保留",
 
 
 
@@ -1747708,7 +1747708,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1044_1": "跨装置訊息管理 — 全新 Android 介面，可瀏覽並管理所有已綁定装置的訊息",
+        "rn_1044_1": "跨装置訊息管理 — 全新 Android 介面，可瀏覽并管理所有已綁定装置的訊息",
 
 
 
@@ -1747836,7 +1747836,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1044_2": "Bot Tools API — 为 OpenClaw bots 提供 web-search 与 web-fetch 代理端点，无需離开平台即可查詢網路",
+        "rn_1044_2": "Bot Tools API — 为 OpenClaw bots 提供 web-search 与 web-fetch 代理端点，无需离开平台即可查詢网路",
 
 
 
@@ -1747964,7 +1747964,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1044_3": "文章发布模組 — 整合 Blogger OAuth 流程与 DEV.to & Qiita API，可直接在 bot session 中发布文章",
+        "rn_1044_3": "文章发布模组 — 整合 Blogger OAuth 流程与 DEV.to & Qiita API，可直接在 bot session 中发布文章",
 
 
 
@@ -1748220,7 +1748220,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1044_5": "Gatekeeper 強化 — 修复憑證偵测誤判；eclawbot.com 加入白名单；新增自助解封 API",
+        "rn_1044_5": "Gatekeeper 強化 — 修复憑证偵测誤判；eclawbot.com 加入白名单；新增自助解封 API",
 
 
 
@@ -1748476,7 +1748476,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1045_2": "模板数量显示 — 「瀏覽官方模板」按鈕和选擇器標题现在显示模板总数",
+        "rn_1045_2": "模板数量显示 — 「瀏覽官方模板」按鈕和选擇器标题现在显示模板总数",
 
 
 
@@ -1748604,7 +1748604,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1045_3": "修复模板清单空白 — 在 API 载入完成前开啟选擇器不再显示空白",
+        "rn_1045_3": "修复模板清单空白 — 在 API 载入完成前开启选擇器不再显示空白",
 
 
 
@@ -1748732,7 +1748732,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1045_4": "企业安全功能 — IP 白名单、地區封鎖、速率限制、稽核日誌及 RBAC 存取控制",
+        "rn_1045_4": "企业安全功能 — IP 白名单、地区封鎖、速率限制、稽核日誌及 RBAC 存取控制",
 
 
 
@@ -1749116,7 +1749116,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1046_2": "任務面板自動儲存 — 每次編輯自動儲存；儲存与通知现为獨立操作",
+        "rn_1046_2": "任務面板自动儲存 — 每次編輯自动儲存；儲存与通知现为獨立操作",
 
 
 
@@ -1749372,7 +1749372,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1046_4": "修复實体重排 publicCode — 重新排序實体后 publicCode 现能正確保留",
+        "rn_1046_4": "修复實体重排 publicCode — 重新排序實体后 publicCode 现能正确保留",
 
 
 
@@ -1749500,7 +1749500,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1046_5": "X 发布器診斷 — X 发布失败时提供詳細错誤標頭，方便除错",
+        "rn_1046_5": "X 发布器診斷 — X 发布失败时提供詳細错誤标頭，方便除错",
 
 
 
@@ -1749756,7 +1749756,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1047_2": "動態无限實体 — 取消 8 个插槽限制，装置依需求自動擴展實体插槽",
+        "rn_1047_2": "动態无限實体 — 取消 8 个插槽限制，装置依需求自动擴展實体插槽",
 
 
 
@@ -1750012,7 +1750012,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1047_4": "Discord Webhook 支援 — 自動偵测 Discord webhook，支援 rich embed、按鈕和选单",
+        "rn_1047_4": "Discord Webhook 支援 — 自动偵测 Discord webhook，支援 rich embed、按鈕和选单",
 
 
 
@@ -1750140,7 +1750140,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1047_5": "全面 UI 審計 — 跨平台 40+ 項 UI/UX 修正，包含深色主题、卡片版面及徽章对比度",
+        "rn_1047_5": "全面 UI 审计 — 跨平台 40+ 項 UI/UX 修正，包含深色主题、卡片版面及徽章对比度",
 
 
 
@@ -1750268,7 +1750268,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1100_1": "頻道比較頁面——E-Claw vs Telegram 功能並排比較",
+        "rn_1100_1": "頻道比較页面——E-Claw vs Telegram 功能并排比較",
 
 
 
@@ -1750396,7 +1750396,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1100_2": "網頁入口 TapPay 功能維护公告",
+        "rn_1100_2": "网页入口 TapPay 功能維护公告",
 
 
 
@@ -1751036,7 +1751036,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1110_3": "分类通知偏好设定——可獨立开关机器人回覆、广播、回饋等通知",
+        "rn_1110_3": "分类通知偏好设定——可獨立开关机器人回复、广播、回饋等通知",
 
 
 
@@ -1751164,7 +1751164,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1110_4": "公开導覽列——包含常見問题、更新日誌和使用指南頁面",
+        "rn_1110_4": "公开導覽列——包含常見問题、更新日誌和使用指南页面",
 
 
 
@@ -1751420,7 +1751420,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1120_2": "統一资訊中心 — 使用指南、常見問题、更新日誌与比較頁面整合於单一分頁介面",
+        "rn_1120_2": "統一资訊中心 — 使用指南、常見問题、更新日誌与比較页面整合於单一分页介面",
 
 
 
@@ -1751548,7 +1751548,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1120_3": "EClawbot vs Telegram 比較 — 12 类功能並排比較，附资訊圖表",
+        "rn_1120_3": "EClawbot vs Telegram 比較 — 12 类功能并排比較，附资訊圖表",
 
 
 
@@ -1751676,7 +1751676,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1120_4": "網域遷移至 eclawbot.com、认證重導迴圈修复、深色主题修正",
+        "rn_1120_4": "网域遷移至 eclawbot.com、认证重導迴圈修复、深色主题修正",
 
 
 
@@ -1751804,7 +1751804,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1130_1": "統一頭像同步 — 在儀表板更換頭像后，聊天、广播及所有頁面立即更新",
+        "rn_1130_1": "統一頭像同步 — 在儀表板更換頭像后，聊天、广播及所有页面立即更新",
 
 
 
@@ -1751932,7 +1751932,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1130_2": "Premium 實体欄位 4-7 现在显示正確頭像与顏色，不再显示「?」",
+        "rn_1130_2": "Premium 實体欄位 4-7 现在显示正确頭像与顏色，不再显示「?」",
 
 
 
@@ -1752188,7 +1752188,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1130_4": "Bot 现可透过改进的推播通知提示讀取任務面板的任務/筆記",
+        "rn_1130_4": "Bot 现可透过改进的推播通知提示读取任務面板的任務/筆記",
 
 
 
@@ -1752444,7 +1752444,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_160_2": "排程卡片与排程管理頁面",
+        "rn_160_2": "排程卡片与排程管理页面",
 
 
 
@@ -1753084,7 +1753084,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_170_3": "檔案管理頁面，支援實体/类型篩选与送达追蹤",
+        "rn_170_3": "檔案管理页面，支援實体/类型篩选与送达追蹤",
 
 
 
@@ -1753212,7 +1753212,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_180_1": "排程執行紀錄与聊天標註",
+        "rn_180_1": "排程执行紀錄与聊天标註",
 
 
 
@@ -1753596,7 +1753596,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_190_1": "多语言支援——網頁入口和 Android 支援 8 種语言（EN、繁中、简中、日本语、한국어、ไทย、Tiếng Việt、Indonesia）",
+        "rn_190_1": "多语言支援——网页入口和 Android 支援 8 种语言（EN、繁中、简中、日本语、한국어、ไทย、Tiếng Việt、Indonesia）",
 
 
 
@@ -1754236,7 +1754236,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_hero_subtitle": "EClawbot 的最新動態——功能、改进和修复。",
+        "rn_hero_subtitle": "EClawbot 的最新动態——功能、改进和修复。",
 
 
 
@@ -1754876,7 +1754876,7 @@ const TRANSLATIONS = {
 
 
 
-        "roadmap_banner_user_view": "🎯 想看使用者視角的好处？前往 <a href=\"info.html#guide/passive-income\">使用指南 → 为什麼选擇 EClaw</a>",
+        "roadmap_banner_user_view": "🎯 想看使用者视角的好处？前往 <a href=\"info.html#guide/passive-income\">使用指南 → 为什麼选擇 EClaw</a>",
 
 
 
@@ -1755004,7 +1755004,7 @@ const TRANSLATIONS = {
 
 
 
-        "roadmap_title": "EClawbot - 產品路線圖",
+        "roadmap_title": "EClawbot - 产品路线圖",
 
 
 
@@ -1755516,7 +1755516,7 @@ const TRANSLATIONS = {
 
 
 
-        "rule_contrib_no_data": "尚无規則模板貢獻",
+        "rule_contrib_no_data": "尚无规則模板貢獻",
 
 
 
@@ -1755772,7 +1755772,7 @@ const TRANSLATIONS = {
 
 
 
-        "rule_contrib_revoke_confirm": "从正式列表移除此規則模板？",
+        "rule_contrib_revoke_confirm": "从正式列表移除此规則模板？",
 
 
 
@@ -1755900,7 +1755900,7 @@ const TRANSLATIONS = {
 
 
 
-        "rule_contrib_revoked": "規則模板已撤銷",
+        "rule_contrib_revoked": "规則模板已撤銷",
 
 
 
@@ -1756028,7 +1756028,7 @@ const TRANSLATIONS = {
 
 
 
-        "rule_contrib_tab": "規則模板貢獻紀錄",
+        "rule_contrib_tab": "规則模板貢獻紀錄",
 
 
 
@@ -1756540,7 +1756540,7 @@ const TRANSLATIONS = {
 
 
 
-        "sc_confirm_password": "確认密碼",
+        "sc_confirm_password": "确认密碼",
 
 
 
@@ -1756796,7 +1756796,7 @@ const TRANSLATIONS = {
 
 
 
-        "sc_copy": "複製",
+        "sc_copy": "复製",
 
 
 
@@ -1756924,7 +1756924,7 @@ const TRANSLATIONS = {
 
 
 
-        "sc_copy_failed": "複製失败",
+        "sc_copy_failed": "复製失败",
 
 
 
@@ -1757052,7 +1757052,7 @@ const TRANSLATIONS = {
 
 
 
-        "sc_copy_qr": "複製 QR",
+        "sc_copy_qr": "复製 QR",
 
 
 
@@ -1757948,7 +1757948,7 @@ const TRANSLATIONS = {
 
 
 
-        "sc_email_password_required": "請输入电子郵件与密碼",
+        "sc_email_password_required": "请输入电子郵件与密碼",
 
 
 
@@ -1758076,7 +1758076,7 @@ const TRANSLATIONS = {
 
 
 
-        "sc_email_verification_required": "需要电子郵件验證",
+        "sc_email_verification_required": "需要电子郵件验证",
         "sc_verify_email_title": "验证邮箱以开始聊天",
         "sc_verify_email_body": "我们已发送验证链接至 <strong id=\"verifyEmailAddr\"></strong>。请点击收件箱中的链接开始聊天。您的消息将在验证成功后自动发送。",
         "sc_close": "关闭",
@@ -1758213,7 +1758213,7 @@ const TRANSLATIONS = {
 
 
 
-        "sc_email_verified": "郵件已验證！现在可以开始聊天了。",
+        "sc_email_verified": "郵件已验证！现在可以开始聊天了。",
 
 
 
@@ -1758725,7 +1758725,7 @@ const TRANSLATIONS = {
 
 
 
-        "sc_link_copied": "连结已複製！",
+        "sc_link_copied": "连结已复製！",
 
 
 
@@ -1759365,7 +1759365,7 @@ const TRANSLATIONS = {
 
 
 
-        "sc_message_queued": "訊息已排入佇列（需先验證电子郵件）",
+        "sc_message_queued": "訊息已排入佇列（需先验证电子郵件）",
 
 
 
@@ -1759493,7 +1759493,7 @@ const TRANSLATIONS = {
 
 
 
-        "sc_network_error": "網路错誤",
+        "sc_network_error": "网路错誤",
 
 
 
@@ -1759749,7 +1759749,7 @@ const TRANSLATIONS = {
 
 
 
-        "sc_offline": "離線",
+        "sc_offline": "离线",
 
 
 
@@ -1759877,7 +1759877,7 @@ const TRANSLATIONS = {
 
 
 
-        "sc_online": "在線",
+        "sc_online": "在线",
 
 
 
@@ -1760389,7 +1760389,7 @@ const TRANSLATIONS = {
 
 
 
-        "sc_order_confirm": "確认下单",
+        "sc_order_confirm": "确认下单",
 
 
 
@@ -1762437,7 +1762437,7 @@ const TRANSLATIONS = {
 
 
 
-        "sc_qr_copied": "QR 已複製！",
+        "sc_qr_copied": "QR 已复製！",
 
 
 
@@ -1763077,7 +1763077,7 @@ const TRANSLATIONS = {
 
 
 
-        "sc_register_success_verify": "帳号已建立！請至信箱验證后即可开始聊天。",
+        "sc_register_success_verify": "帳号已建立！请至信箱验证后即可开始聊天。",
 
 
 
@@ -1764613,7 +1764613,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_15min": "15 分鐘",
+        "sched_15min": "15 分钟",
 
 
 
@@ -1764869,7 +1764869,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_30min": "30 分鐘",
+        "sched_30min": "30 分钟",
 
 
 
@@ -1765125,7 +1765125,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_5min": "5 分鐘",
+        "sched_5min": "5 分钟",
 
 
 
@@ -1765253,7 +1765253,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_bot_reply": "Bot 回覆",
+        "sched_bot_reply": "Bot 回复",
 
 
 
@@ -1765765,7 +1765765,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_confirm_delete": "確定要刪除此排程？",
+        "sched_confirm_delete": "确定要刪除此排程？",
 
 
 
@@ -1766405,7 +1766405,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_cron_hint": "格式：分鐘 小时 日 月 星期（例如 \"30 8 * * *\" = 每天 08:30）",
+        "sched_cron_hint": "格式：分钟 小时 日 月 星期（例如 \"30 8 * * *\" = 每天 08:30）",
 
 
 
@@ -1767173,7 +1767173,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_empty_history": "尚无執行紀錄",
+        "sched_empty_history": "尚无执行紀錄",
 
 
 
@@ -1767429,7 +1767429,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_enable": "啟用",
+        "sched_enable": "启用",
 
 
 
@@ -1767557,7 +1767557,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_err_cron": "請输入 Cron 表达式",
+        "sched_err_cron": "请输入 Cron 表达式",
 
 
 
@@ -1767685,7 +1767685,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_err_entity": "請选擇一个 Entity",
+        "sched_err_entity": "请选擇一个 Entity",
 
 
 
@@ -1767813,7 +1767813,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_err_message": "請输入訊息內容",
+        "sched_err_message": "请输入訊息内容",
 
 
 
@@ -1767941,7 +1767941,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_err_time": "請选擇时间",
+        "sched_err_time": "请选擇时间",
 
 
 
@@ -1768069,7 +1768069,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_executed": "執行时间",
+        "sched_executed": "执行时间",
 
 
 
@@ -1768197,7 +1768197,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_history": "執行紀錄",
+        "sched_history": "执行紀錄",
 
 
 
@@ -1768581,7 +1768581,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_label_label": "標籤（选填）",
+        "sched_label_label": "标籤（选填）",
 
 
 
@@ -1768709,7 +1768709,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_label_message": "訊息內容",
+        "sched_label_message": "訊息内容",
 
 
 
@@ -1768837,7 +1768837,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_label_repeat": "重複",
+        "sched_label_repeat": "重复",
 
 
 
@@ -1769093,7 +1769093,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_no_entities": "尚无綁定的實体，請先綁定實体。",
+        "sched_no_entities": "尚无綁定的實体，请先綁定實体。",
 
 
 
@@ -1769221,7 +1769221,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_no_reply": "尚无回覆",
+        "sched_no_reply": "尚无回复",
 
 
 
@@ -1770629,7 +1770629,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_status_active": "執行中",
+        "sched_status_active": "执行中",
 
 
 
@@ -1771525,7 +1771525,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_upcoming": "即將執行 & 进行中",
+        "sched_upcoming": "即將执行 & 进行中",
 
 
 
@@ -1771781,7 +1771781,7 @@ const TRANSLATIONS = {
 
 
 
-        "sched_view_reply": "查看 Bot 回覆",
+        "sched_view_reply": "查看 Bot 回复",
 
 
 
@@ -1772549,7 +1772549,7 @@ const TRANSLATIONS = {
 
 
 
-        "screen_ctrl_enable_instruction": "在 App 中啟用远端控制（设定 → 远端控制），然后授予无障礙服務權限。",
+        "screen_ctrl_enable_instruction": "在 App 中启用远端控制（设定 → 远端控制），然后授予无障礙服务權限。",
 
 
 
@@ -1773061,7 +1773061,7 @@ const TRANSLATIONS = {
 
 
 
-        "screen_ctrl_label_scroll_dir": "滾動方向",
+        "screen_ctrl_label_scroll_dir": "滾动方向",
 
 
 
@@ -1773445,7 +1773445,7 @@ const TRANSLATIONS = {
 
 
 
-        "screen_ctrl_no_elements": "螢幕上未找到互動元素。",
+        "screen_ctrl_no_elements": "螢幕上未找到互动元素。",
 
 
 
@@ -1773829,7 +1773829,7 @@ const TRANSLATIONS = {
 
 
 
-        "screen_ctrl_opt_home": "home — 系統主頁鍵",
+        "screen_ctrl_opt_home": "home — 系統主页鍵",
 
 
 
@@ -1773957,7 +1773957,7 @@ const TRANSLATIONS = {
 
 
 
-        "screen_ctrl_opt_scroll": "scroll — 滾動元素",
+        "screen_ctrl_opt_scroll": "scroll — 滾动元素",
 
 
 
@@ -1774085,7 +1774085,7 @@ const TRANSLATIONS = {
 
 
 
-        "screen_ctrl_opt_tap": "tap — 点击元素或座標",
+        "screen_ctrl_opt_tap": "tap — 点击元素或座标",
 
 
 
@@ -1774597,7 +1774597,7 @@ const TRANSLATIONS = {
 
 
 
-        "screen_ctrl_request_failed": "請求失败",
+        "screen_ctrl_request_failed": "请求失败",
 
 
 
@@ -1774853,7 +1774853,7 @@ const TRANSLATIONS = {
 
 
 
-        "screen_ctrl_sec1_desc": "每次 Bot 綁定都会產生一个專屬於您装置的 botSecret。即使多位使用者共用同一个 Bot，每个 Bot 工作阶段只能存取綁定的装置——使用他人的憑證会收到 403 错誤。",
+        "screen_ctrl_sec1_desc": "每次 Bot 綁定都会产生一个專属於您装置的 botSecret。即使多位使用者共用同一个 Bot，每个 Bot 工作阶段只能存取綁定的装置——使用他人的憑证会收到 403 错誤。",
 
 
 
@@ -1774981,7 +1774981,7 @@ const TRANSLATIONS = {
 
 
 
-        "screen_ctrl_sec1_title": "綁定專屬密鑰",
+        "screen_ctrl_sec1_title": "綁定專属密鑰",
 
 
 
@@ -1775109,7 +1775109,7 @@ const TRANSLATIONS = {
 
 
 
-        "screen_ctrl_sec2_desc": "Bot 只能看到结構化的 UI 元素清单（文字、按鈕、输入欄位），而非螢幕截圖。敏感的視覺內容（圖片、影片、畫布）永远不会被擷取。",
+        "screen_ctrl_sec2_desc": "Bot 只能看到结構化的 UI 元素清单（文字、按鈕、输入欄位），而非螢幕截圖。敏感的视覺内容（圖片、影片、畫布）永远不会被擷取。",
 
 
 
@@ -1776005,7 +1776005,7 @@ const TRANSLATIONS = {
 
 
 
-        "screen_ctrl_status_enabled": "✓ 已啟用",
+        "screen_ctrl_status_enabled": "✓ 已启用",
 
 
 
@@ -1778053,7 +1778053,7 @@ const TRANSLATIONS = {
 
 
 
-        "settings_copy_credentials": "複製憑證",
+        "settings_copy_credentials": "复製憑证",
 
 
 
@@ -1779845,7 +1779845,7 @@ const TRANSLATIONS = {
 
 
 
-        "settings_feedback_desc": "发现 Bug 或有任何建議？告訴我们！",
+        "settings_feedback_desc": "发现 Bug 或有任何建议？告訴我们！",
 
 
 
@@ -1780613,7 +1780613,7 @@ const TRANSLATIONS = {
 
 
 
-        "settings_invite_desc": "分享邀請碼，赚取 e幣獎勵",
+        "settings_invite_desc": "分享邀请碼，赚取 e幣獎勵",
 
 
 
@@ -1781637,7 +1781637,7 @@ const TRANSLATIONS = {
 
 
 
-        "settings_privacy_content": "<b>1. 隱私權至上承諾</b><br>E-claw (电子蝦) 團队深知隱私对您的重要性。我们在此鄭重聲明：<b>我们絕不会販卖、洩露或濫用您的任何个人资料。</b><br><br><b>2. 我们收集什麼资料？</b><br>为了提供服務，我们僅收集运作所需的最少资料：<br>- 装置 ID：用於區分不同装置。<br>- App 版本：用於相容性檢查。<br>- 綁定资料：Agent 名称与狀態。<br><br><b>我们「不」收集：</b><br>- 您的姓名、电話或 Email。<br>- 您的 GPS 位置。<br>- 您的相机或麦克风资料。<br><br><b>3. OpenClaw 协議</b><br>我们是 OpenClaw 生態系統的堅定支持者。我们不会建立封闭的「圍牆花園」，並承諾保持互通性。<br><br><b>4. AI 对話隱私</b><br>訊息透过加密 HTTPS 傳送至您綁定的 AI Agent。资料流向由您掌控。<br><br><b>5. 聯絡我们</b><br>如有任何疑問，請透过我们的官方 Email 聯繫。",
+        "settings_privacy_content": "<b>1. 隱私權至上承諾</b><br>E-claw (电子蝦) 團队深知隱私对您的重要性。我们在此鄭重聲明：<b>我们絕不会販卖、洩露或濫用您的任何个人资料。</b><br><br><b>2. 我们收集什麼资料？</b><br>为了提供服务，我们僅收集运作所需的最少资料：<br>- 装置 ID：用於区分不同装置。<br>- App 版本：用於相容性檢查。<br>- 綁定资料：Agent 名称与狀態。<br><br><b>我们「不」收集：</b><br>- 您的姓名、电話或 Email。<br>- 您的 GPS 位置。<br>- 您的相机或麦克风资料。<br><br><b>3. OpenClaw 协议</b><br>我们是 OpenClaw 生態系統的堅定支持者。我们不会建立封闭的「圍牆花園」，并承諾保持互通性。<br><br><b>4. AI 对話隱私</b><br>訊息透过加密 HTTPS 傳送至您綁定的 AI Agent。资料流向由您掌控。<br><br><b>5. 聯絡我们</b><br>如有任何疑問，请透过我们的官方 Email 聯繫。",
 
 
 
@@ -1782277,7 +1782277,7 @@ const TRANSLATIONS = {
 
 
 
-        "settings_rentals_desc": "查看契約、提交評分、提出申訴",
+        "settings_rentals_desc": "查看契約、提交评分、提出申訴",
 
 
 
@@ -1783685,7 +1783685,7 @@ const TRANSLATIONS = {
 
 
 
-        "settings_view_mode": "頁面模式",
+        "settings_view_mode": "页面模式",
 
 
 
@@ -1783941,7 +1783941,7 @@ const TRANSLATIONS = {
 
 
 
-        "settings_view_single": "单頁模式",
+        "settings_view_single": "单页模式",
 
 
 
@@ -1784069,7 +1784069,7 @@ const TRANSLATIONS = {
 
 
 
-        "settings_view_split": "雙頁模式",
+        "settings_view_split": "雙页模式",
 
 
 
@@ -1784453,7 +1784453,7 @@ const TRANSLATIONS = {
 
 
 
-        "skill_contrib_col_title": "標题",
+        "skill_contrib_col_title": "标题",
 
 
 
@@ -1785349,7 +1785349,7 @@ const TRANSLATIONS = {
 
 
 
-        "skill_contrib_status_verifying": "验證中",
+        "skill_contrib_status_verifying": "验证中",
 
 
 
@@ -1788165,7 +1788165,7 @@ const TRANSLATIONS = {
 
 
 
-        "terms_collect_2": "装置资訊：用於服務綁定的装置識別碼。",
+        "terms_collect_2": "装置资訊：用於服务綁定的装置識別碼。",
 
 
 
@@ -1788293,7 +1788293,7 @@ const TRANSLATIONS = {
 
 
 
-        "terms_collect_3": "使用数據：互動紀錄，用於改善服務品质。",
+        "terms_collect_3": "使用数据：互动紀錄，用於改善服务品质。",
 
 
 
@@ -1788421,7 +1788421,7 @@ const TRANSLATIONS = {
 
 
 
-        "terms_contact_text": "如果您对本条款或我们的隱私實踐有任何疑問，請透过應用程式的支援管道与我们聯繫。",
+        "terms_contact_text": "如果您对本条款或我们的隱私實踐有任何疑問，请透过應用程式的支援管道与我们聯繫。",
 
 
 
@@ -1788677,7 +1788677,7 @@ const TRANSLATIONS = {
 
 
 
-        "terms_liability_text": "在法律允许的最大範圍內，E-Claw 及其營运者对於因您使用本服務而產生的任何间接、附帶、特殊、衍生或懲罰性損害不承擔责任，包括但不限於资料遗失、服務中斷或帳号未經授權之存取。",
+        "terms_liability_text": "在法律允许的最大范圍内，E-Claw 及其營运者对於因您使用本服务而产生的任何间接、附帶、特殊、衍生或懲罰性損害不承擔责任，包括但不限於资料遗失、服务中斷或帳号未經授權之存取。",
 
 
 
@@ -1788805,7 +1788805,7 @@ const TRANSLATIONS = {
 
 
 
-        "terms_privacy_intro": "我们非常重視您的隱私。本政策说明我们如何收集、使用及保护您的个人资訊：",
+        "terms_privacy_intro": "我们非常重视您的隱私。本政策说明我们如何收集、使用及保护您的个人资訊：",
 
 
 
@@ -1788933,7 +1788933,7 @@ const TRANSLATIONS = {
 
 
 
-        "terms_protect_1": "您的密碼以业界標準加密方式儲存。",
+        "terms_protect_1": "您的密碼以业界标準加密方式儲存。",
 
 
 
@@ -1790085,7 +1790085,7 @@ const TRANSLATIONS = {
 
 
 
-        "terms_section_tos": "服務条款",
+        "terms_section_tos": "服务条款",
 
 
 
@@ -1790341,7 +1790341,7 @@ const TRANSLATIONS = {
 
 
 
-        "terms_subtitle": "請閱讀並同意后才能建立帳号",
+        "terms_subtitle": "请閱读并同意后才能建立帳号",
 
 
 
@@ -1790469,7 +1790469,7 @@ const TRANSLATIONS = {
 
 
 
-        "terms_title": "服務条款与隱私權政策",
+        "terms_title": "服务条款与隱私權政策",
 
 
 
@@ -1790725,7 +1790725,7 @@ const TRANSLATIONS = {
 
 
 
-        "terms_tos_2": "您有责任維护帳号憑證的安全性。",
+        "terms_tos_2": "您有责任維护帳号憑证的安全性。",
 
 
 
@@ -1790853,7 +1790853,7 @@ const TRANSLATIONS = {
 
 
 
-        "terms_tos_3": "您同意不將本服務用於任何違法或被禁止的活動。",
+        "terms_tos_3": "您同意不將本服务用於任何違法或被禁止的活动。",
 
 
 
@@ -1791109,7 +1791109,7 @@ const TRANSLATIONS = {
 
 
 
-        "terms_tos_5": "本服務按「现狀」提供，不附帶任何形式的保證。",
+        "terms_tos_5": "本服务按「现狀」提供，不附帶任何形式的保证。",
 
 
 
@@ -1791237,7 +1791237,7 @@ const TRANSLATIONS = {
 
 
 
-        "terms_tos_6": "我们可能会在事先通知的情況下隨时修改服務或本条款。",
+        "terms_tos_6": "我们可能会在事先通知的情況下隨时修改服务或本条款。",
 
 
 
@@ -1791365,7 +1791365,7 @@ const TRANSLATIONS = {
 
 
 
-        "terms_tos_welcome": "歡迎使用 E-Claw。建立帳号並使用我们的服務，即表示您同意以下条款：",
+        "terms_tos_welcome": "歡迎使用 E-Claw。建立帳号并使用我们的服务，即表示您同意以下条款：",
 
 
 
@@ -1791493,7 +1791493,7 @@ const TRANSLATIONS = {
 
 
 
-        "terms_use_1": "提供及維护 E-Claw 服務。",
+        "terms_use_1": "提供及維护 E-Claw 服务。",
 
 
 
@@ -1791621,7 +1791621,7 @@ const TRANSLATIONS = {
 
 
 
-        "terms_use_2": "傳达重要的服務更新及通知。",
+        "terms_use_2": "傳达重要的服务更新及通知。",
 
 
 
@@ -1791749,7 +1791749,7 @@ const TRANSLATIONS = {
 
 
 
-        "terms_use_3": "改善並个人化您的使用体验。",
+        "terms_use_3": "改善并个人化您的使用体验。",
 
 
 
@@ -1791877,7 +1791877,7 @@ const TRANSLATIONS = {
 
 
 
-        "terms_use_4": "防止詐騙並確保平台安全。",
+        "terms_use_4": "防止詐騙并确保平台安全。",
 
 
 
@@ -1792517,7 +1792517,7 @@ const TRANSLATIONS = {
 
 
 
-        "toast_copied_clipboard": "已複製到剪貼簿！",
+        "toast_copied_clipboard": "已复製到剪貼簿！",
 
 
 
@@ -1792645,7 +1792645,7 @@ const TRANSLATIONS = {
 
 
 
-        "toast_copy_failed": "複製失败，請手動複製",
+        "toast_copy_failed": "复製失败，请手动复製",
 
 
 
@@ -1793925,7 +1793925,7 @@ const TRANSLATIONS = {
 
 
 
-        "toast_generate_key_failed": "產生 API 金鑰失败",
+        "toast_generate_key_failed": "产生 API 金鑰失败",
 
 
 
@@ -1794437,7 +1794437,7 @@ const TRANSLATIONS = {
 
 
 
-        "toast_mark_failed": "標記失败",
+        "toast_mark_failed": "标記失败",
 
 
 
@@ -1794821,7 +1794821,7 @@ const TRANSLATIONS = {
 
 
 
-        "toast_network_error": "網路错誤，請再試一次",
+        "toast_network_error": "网路错誤，请再試一次",
 
 
 
@@ -1794949,7 +1794949,7 @@ const TRANSLATIONS = {
 
 
 
-        "toast_no_code_to_copy": "沒有可複製的代碼",
+        "toast_no_code_to_copy": "沒有可复製的代碼",
 
 
 
@@ -1795077,7 +1795077,7 @@ const TRANSLATIONS = {
 
 
 
-        "toast_no_slot_selected": "未选擇可用的欄位，請先新增欄位。",
+        "toast_no_slot_selected": "未选擇可用的欄位，请先新增欄位。",
 
 
 
@@ -1795461,7 +1795461,7 @@ const TRANSLATIONS = {
 
 
 
-        "toast_page_delete_failed": "刪除頁面失败",
+        "toast_page_delete_failed": "刪除页面失败",
 
 
 
@@ -1795589,7 +1795589,7 @@ const TRANSLATIONS = {
 
 
 
-        "toast_page_deleted": "頁面已刪除",
+        "toast_page_deleted": "页面已刪除",
 
 
 
@@ -1795717,7 +1795717,7 @@ const TRANSLATIONS = {
 
 
 
-        "toast_page_save_failed": "儲存頁面失败",
+        "toast_page_save_failed": "儲存页面失败",
 
 
 
@@ -1796229,7 +1796229,7 @@ const TRANSLATIONS = {
 
 
 
-        "toast_read_file_failed": "讀取檔案失败",
+        "toast_read_file_failed": "读取檔案失败",
 
 
 
@@ -1797125,7 +1797125,7 @@ const TRANSLATIONS = {
 
 
 
-        "toast_subscription_activated": "进阶訂閱已啟用！",
+        "toast_subscription_activated": "进阶訂閱已启用！",
 
 
 
@@ -1799045,7 +1799045,7 @@ const TRANSLATIONS = {
 
 
 
-        "wallet_lifetime_earned": "累計收入",
+        "wallet_lifetime_earned": "累计收入",
 
 
 
@@ -1799173,7 +1799173,7 @@ const TRANSLATIONS = {
 
 
 
-        "wallet_lifetime_spent": "累計支出",
+        "wallet_lifetime_spent": "累计支出",
 
 
 
@@ -1799815,7 +1799815,7 @@ const TRANSLATIONS = {
 
         "wallet_topup": "儲值 e幣",
         "wallet_topup_success": "儲值成功！",
-        "wallet_topup_failed": "儲值失敗，請再試一次。",
+        "wallet_topup_failed": "儲值失敗，请再試一次。",
 
 
 
@@ -1800071,7 +1800071,7 @@ const TRANSLATIONS = {
 
 
 
-        "wallet_topup_note": "ⓘ 儲值需於 Android App 內进行，網頁僅供瀏覽资訊。",
+        "wallet_topup_note": "ⓘ 儲值需於 Android App 内进行，网页僅供瀏覽资訊。",
 
 
 
@@ -1800199,7 +1800199,7 @@ const TRANSLATIONS = {
 
 
 
-        "wallet_topup_via_app": "請至 Android App 內进行儲值",
+        "wallet_topup_via_app": "请至 Android App 内进行儲值",
 
 
 
@@ -1800967,7 +1800967,7 @@ const TRANSLATIONS = {
 
 
 
-        "wallet_type_referral_bonus": "邀請獎勵",
+        "wallet_type_referral_bonus": "邀请獎勵",
 
 
 
@@ -1801991,7 +1801991,7 @@ const TRANSLATIONS = {
 
 
 
-        "webhook_error_message": "請將以下訊息貼给OpenClaw：\"webhook綁定有错誤或是沒有使用POST /api/bot/register，請重新讀取'公开webhook URL'(gateway config) 以及重新讀取'gateway token'，立即呼叫 /api/bot/register: 用剛綁到的 deviceId/entityId/botSecret 再帶上 webhook_url、gateway token 把推播註冊好。\"",
+        "webhook_error_message": "请將以下訊息貼给OpenClaw：\"webhook綁定有错誤或是沒有使用POST /api/bot/register，请重新读取'公开webhook URL'(gateway config) 以及重新读取'gateway token'，立即呼叫 /api/bot/register: 用剛綁到的 deviceId/entityId/botSecret 再帶上 webhook_url、gateway token 把推播註冊好。\"",
 
 
 
@@ -1802375,7 +1802375,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_btn_go": "开始教學",
+        "wizard_btn_go": "开始教学",
 
 
 
@@ -1802759,7 +1802759,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_hero_desc": "回答 3 题小問卷，我们就帶你进入最適合的教學流程。",
+        "wizard_hero_desc": "回答 3 题小問卷，我们就帶你进入最适合的教学流程。",
 
 
 
@@ -1803271,7 +1803271,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_q1_opt_benchmark_desc": "跑 Arena 評测，參考同儕評論。",
+        "wizard_q1_opt_benchmark_desc": "跑 Arena 评测，參考同儕评论。",
 
 
 
@@ -1803399,7 +1803399,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_q1_opt_benchmark_title": "評测 / 比較 agent",
+        "wizard_q1_opt_benchmark_title": "评测 / 比較 agent",
 
 
 
@@ -1803527,7 +1803527,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_q1_opt_byoc_desc": "用自己的憑證接 OpenClaw、Claude 或 Hermes。",
+        "wizard_q1_opt_byoc_desc": "用自己的憑证接 OpenClaw、Claude 或 Hermes。",
 
 
 
@@ -1803783,7 +1803783,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_q1_opt_explore_desc": "跳过教學，直接进儀表板。",
+        "wizard_q1_opt_explore_desc": "跳过教学，直接进儀表板。",
 
 
 
@@ -1805063,7 +1805063,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_q2_opt_hermes_desc": "加入等候名单，上線时通知你。",
+        "wizard_q2_opt_hermes_desc": "加入等候名单，上线时通知你。",
 
 
 
@@ -1805319,7 +1805319,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_q2_opt_openclaw_desc": "在本地跑 OpenClaw，讓它的 bot 透过 EClaw 收发訊息。",
+        "wizard_q2_opt_openclaw_desc": "在本地跑 OpenClaw，让它的 bot 透过 EClaw 收发訊息。",
 
 
 
@@ -1805703,7 +1805703,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_q3_hint": "只是帮我们決定教學从哪一步开始，不会改变路徑。",
+        "wizard_q3_hint": "只是帮我们决定教学从哪一步开始，不会改变路径。",
 
 
 
@@ -1805831,7 +1805831,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_q3_opt_idk_desc": "沒关係，教學会从基本概念讲起。",
+        "wizard_q3_opt_idk_desc": "沒关係，教学会从基本概念讲起。",
 
 
 
@@ -1806343,7 +1806343,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_q3_opt_yes_desc": "太好了 — 教學会直接跳到貼上 key 那一步。",
+        "wizard_q3_opt_yes_desc": "太好了 — 教学会直接跳到貼上 key 那一步。",
 
 
 
@@ -1806471,7 +1806471,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_q3_opt_yes_title": "有，我已經準備好了",
+        "wizard_q3_opt_yes_title": "有，我已經準备好了",
 
 
 
@@ -1806599,7 +1806599,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_result_fallback": "为你量身的教學流程",
+        "wizard_result_fallback": "为你量身的教学流程",
 
 
 
@@ -1806727,7 +1806727,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_result_fallback_desc": "回答前面的問题，我们才能帮你規劃路徑。",
+        "wizard_result_fallback_desc": "回答前面的問题，我们才能帮你规劃路径。",
 
 
 
@@ -1807239,7 +1807239,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_target_dashboard_title": "跳过教學",
+        "wizard_target_dashboard_title": "跳过教学",
 
 
 
@@ -1807367,7 +1807367,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_target_hermes_desc": "Hermes 还在开发中。我们会帶你到等候名单頁。",
+        "wizard_target_hermes_desc": "Hermes 还在开发中。我们会帶你到等候名单页。",
 
 
 
@@ -1807623,7 +1807623,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_target_track1_desc": "帶你到出租广场，挑一个免费 bot 並教你怎麼用。",
+        "wizard_target_track1_desc": "帶你到出租广场，挑一个免费 bot 并教你怎麼用。",
 
 
 
@@ -1808391,7 +1808391,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_target_track4_desc": "帶你到 env-vars 並教你貼上 Anthropic key。",
+        "wizard_target_track4_desc": "帶你到 env-vars 并教你貼上 Anthropic key。",
 
 
 
@@ -1808647,7 +1808647,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_target_track6_desc": "打开 Arena，帶你走过 12 維度評测流程。",
+        "wizard_target_track6_desc": "打开 Arena，帶你走过 12 維度评测流程。",
 
 
 
@@ -1808775,7 +1808775,7 @@ const TRANSLATIONS = {
 
 
 
-        "wizard_target_track6_title": "Track 6 — Agent 評测 Arena",
+        "wizard_target_track6_title": "Track 6 — Agent 评测 Arena",
 
 
 
@@ -1822087,7 +1822087,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_nav_publisher": "多平台發布器",
+        "guide_nav_publisher": "多平台发布器",
 
 
 
@@ -1822215,7 +1822215,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_col_auth": "驗證方式",
+        "guide_pub_col_auth": "驗证方式",
 
 
 
@@ -1822343,7 +1822343,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_col_keys": "所需 Vault / 環境變數金鑰",
+        "guide_pub_col_keys": "所需 Vault / 环境变數金鑰",
 
 
 
@@ -1822599,7 +1822599,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_col_region": "區域",
+        "guide_pub_col_region": "区域",
 
 
 
@@ -1822855,7 +1822855,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_meta": "10 個內容平台 · 多租戶金鑰所有裝置通用（Telegraph 自動金鑰，無需 vault）",
+        "guide_pub_meta": "10 个内容平台 · 多租戶金鑰所有裝置通用（Telegraph 自动金鑰，无需 vault）",
 
 
 
@@ -1822983,7 +1822983,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> 統一 10 個內容平台至 <code>/api/publisher/&lt;platform&gt;/*</code>。「多租戶」指各裝置呼叫平台時使用<strong>自己 vault 內的金鑰</strong>，而非共用 owner 的單一 env key。8 個需要金鑰的平台（X、DEV.to、DEV.to、Qiita、LinkedIn、Reddit、Tumblr、Blogger、WeChat）均跑完整 vault-first 流程：每個平台有自己的 <code>resolve&lt;Platform&gt;Creds(deviceId)</code>，先讀裝置 vault，缺鍵才退回 <code>process.env</code>。Telegraph 為自動金鑰（首次呼叫自動建立匿名帳戶），不需要 vault 路徑。",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> 統一 10 个内容平台至 <code>/api/publisher/&lt;platform&gt;/*</code>。「多租戶」指各裝置呼叫平台时使用<strong>自己 vault 内的金鑰</strong>，而非共用 owner 的单一 env key。8 个需要金鑰的平台（X、DEV.to、DEV.to、Qiita、LinkedIn、Reddit、Tumblr、Blogger、WeChat）均跑完整 vault-first 流程：每个平台有自己的 <code>resolve&lt;Platform&gt;Creds(deviceId)</code>，先读裝置 vault，缺鍵才退回 <code>process.env</code>。Telegraph 为自动金鑰（首次呼叫自动建立匿名帳戶），不需要 vault 路径。",
 
 
 
@@ -1823239,7 +1823239,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_roadmap_desc": "已完成 2026-04。所有 8 個需要金鑰的平台均以 vault-first 運行；Telegraph 自動金鑰，無需 vault 路徑。",
+        "guide_pub_roadmap_desc": "已完成 2026-04。所有 8 个需要金鑰的平台均以 vault-first 运行；Telegraph 自动金鑰，无需 vault 路径。",
 
 
 
@@ -1823495,7 +1823495,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_roadmap_step1": "<strong>1-key bearer 平台</strong>（DEV.to / Qiita）：單一 API token — 最簡單，最先交付。",
+        "guide_pub_roadmap_step1": "<strong>1-key bearer 平台</strong>（DEV.to / Qiita）：单一 API token — 最簡单，最先交付。",
 
 
 
@@ -1823623,7 +1823623,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_roadmap_step2": "<strong>2-key bearer + URN</strong>（LinkedIn）：access_token + 作者 URN，兩者皆從 vault 提取。",
+        "guide_pub_roadmap_step2": "<strong>2-key bearer + URN</strong>（LinkedIn）：access_token + 作者 URN，兩者皆从 vault 提取。",
 
 
 
@@ -1823751,7 +1823751,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_roadmap_step3": "<strong>4-key OAuth1a 即時簽章</strong>（X / Tumblr）：consumer + access 配對，每次請求簽署 nonce + timestamp。",
+        "guide_pub_roadmap_step3": "<strong>4-key OAuth1a 即时簽章</strong>（X / Tumblr）：consumer + access 配对，每次请求簽署 nonce + timestamp。",
 
 
 
@@ -1823879,7 +1823879,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_roadmap_step4": "<strong>4-key OAuth2 密碼授權 + 每租戶 token 快取</strong>（Reddit）：username/password 置換為 access_token，隨後按裝置快取。",
+        "guide_pub_roadmap_step4": "<strong>4-key OAuth2 密碼授權 + 每租戶 token 快取</strong>（Reddit）：username/password 置換为 access_token，隨后按裝置快取。",
 
 
 
@@ -1824007,7 +1824007,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_roadmap_step5": "<strong>OAuth2 授權碼 / 應用程式憑證 + 每租戶 token 快取</strong>（Blogger / WeChat）：Blogger 走 OAuth2 授權碼流程；WeChat 使用應用程式憑證（appid + secret）交換 access_token。",
+        "guide_pub_roadmap_step5": "<strong>OAuth2 授權碼 / 應用程式憑证 + 每租戶 token 快取</strong>（Blogger / WeChat）：Blogger 走 OAuth2 授權碼流程；WeChat 使用應用程式憑证（appid + secret）交換 access_token。",
 
 
 
@@ -1824135,7 +1824135,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_status_endpoint_desc": "不再個別探查每個平台，<code>GET /api/publisher/platforms</code> 一次回傳所有平台的 <code>configured</code>/<code>unconfigured</code> 狀態。",
+        "guide_pub_status_endpoint_desc": "不再个別探查每个平台，<code>GET /api/publisher/platforms</code> 一次回傳所有平台的 <code>configured</code>/<code>unconfigured</code> 狀態。",
 
 
 
@@ -1824263,7 +1824263,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_status_endpoint_h": "列出已設定的平台",
+        "guide_pub_status_endpoint_h": "列出已设定的平台",
 
 
 
@@ -1824519,7 +1824519,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_status_legend": "<span class=\"pub-badge pub-badge-vault\">🔓 vault-first</span> 多租戶就緒（各裝置用自己的金鑰） <span class=\"pub-badge pub-badge-env\">⚙️ env-only</span> 仍為單租戶（共用 owner env） <span class=\"pub-badge pub-badge-skip\">— retired</span> 已停用",
+        "guide_pub_status_legend": "<span class=\"pub-badge pub-badge-vault\">🔓 vault-first</span> 多租戶就緒（各裝置用自己的金鑰） <span class=\"pub-badge pub-badge-env\">⚙️ env-only</span> 仍为单租戶（共用 owner env） <span class=\"pub-badge pub-badge-skip\">— retired</span> 已停用",
 
 
 
@@ -1824647,7 +1824647,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_telegraph_note": "無需金鑰（首次呼叫自動建立匿名帳戶）",
+        "guide_pub_telegraph_note": "无需金鑰（首次呼叫自动建立匿名帳戶）",
 
 
 
@@ -1824775,7 +1824775,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_test_desc": "每個平台都有 <code>/me</code> 或同義的「安全自我檢查」端點，呼叫平台 API 但<strong>絕不修改資料</strong>。",
+        "guide_pub_test_desc": "每个平台都有 <code>/me</code> 或同义的「安全自我檢查」端點，呼叫平台 API 但<strong>絕不修改资料</strong>。",
 
 
 
@@ -1824903,7 +1824903,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_test_h": "自我檢查金鑰是否正確連接",
+        "guide_pub_test_h": "自我檢查金鑰是否正确连接",
 
 
 
@@ -1825031,7 +1825031,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_title": "多平台發布器",
+        "guide_pub_title": "多平台发布器",
 
 
 
@@ -1825159,7 +1825159,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_anchor_mindmap": "已從心智圖錨定",
+        "kb_anchor_mindmap": "已从心智圖錨定",
 
 
 
@@ -1825287,7 +1825287,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_anchor_pick": "選擇一則近期訊息",
+        "kb_anchor_pick": "选擇一則近期訊息",
 
 
 
@@ -1825415,7 +1825415,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_anchor_required": "請選擇一則聊天訊息以錨定此卡片",
+        "kb_anchor_required": "请选擇一則聊天訊息以錨定此卡片",
 
 
 
@@ -1825543,7 +1825543,7 @@ const TRANSLATIONS = {
 
 
 
-        "kb_funnel_toggle": "切換篩選器",
+        "kb_funnel_toggle": "切換篩选器",
 
 
 
@@ -1825927,7 +1825927,7 @@ const TRANSLATIONS = {
 
 
 
-        "landing_arena": "智能體基準測試",
+        "landing_arena": "智能体基準测試",
 
 
 
@@ -1826055,7 +1826055,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_assign_none": "-- 無 --",
+        "mc_assign_none": "-- 无 --",
 
 
 
@@ -1826183,8 +1826183,8 @@ const TRANSLATIONS = {
 
 
 
-        "mc_dlg_anchor": "釘選至 kanban 卡片",
-        "mc_dlg_linked_cards": "連結的 Kanban 卡片",
+        "mc_dlg_anchor": "釘选至 kanban 卡片",
+        "mc_dlg_linked_cards": "连结的 Kanban 卡片",
 
 
 
@@ -1826312,7 +1826312,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_dlg_anchor_none": "（無 — 按類別分組）",
+        "mc_dlg_anchor_none": "（无 — 按类別分组）",
 
 
 
@@ -1826440,7 +1826440,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_dlg_assign": "指派實體",
+        "mc_dlg_assign": "指派實体",
 
 
 
@@ -1826568,7 +1826568,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_note_confirm_public": "此頁面將對所有人可見，無需登入。確定要公開嗎？",
+        "mc_note_confirm_public": "此页面將对所有人可見，无需登入。确定要公开嗎？",
 
 
 
@@ -1826696,7 +1826696,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_note_now_private": "頁面已設為私人",
+        "mc_note_now_private": "页面已设为私人",
 
 
 
@@ -1826824,7 +1826824,7 @@ const TRANSLATIONS = {
 
 
 
-        "mc_note_now_public": "頁面已公開",
+        "mc_note_now_public": "页面已公开",
 
 
 
@@ -1826952,7 +1826952,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_add_comment": "發布留言",
+        "mindmap_add_comment": "发布留言",
 
 
 
@@ -1827208,7 +1827208,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_anchor_label_placeholder": "顯示標籤（選填）",
+        "mindmap_anchor_label_placeholder": "显示标籤（选填）",
 
 
 
@@ -1827336,7 +1827336,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_anchor_ref_placeholder": "id / 路徑 / url",
+        "mindmap_anchor_ref_placeholder": "id / 路径 / url",
 
 
 
@@ -1827976,7 +1827976,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_confirm_delete_node": "刪除此節點及其連線？",
+        "mindmap_confirm_delete_node": "刪除此節點及其连线？",
 
 
 
@@ -1828104,7 +1828104,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_connect_mode": "連線模式",
+        "mindmap_connect_mode": "连线模式",
 
 
 
@@ -1828360,7 +1828360,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_detach": "分離",
+        "mindmap_detach": "分离",
 
 
 
@@ -1828488,7 +1828488,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_edge_mode_hint": "先選取來源節點，再選取目標。按 Esc 取消。",
+        "mindmap_edge_mode_hint": "先选取来源節點，再选取目标。按 Esc 取消。",
 
 
 
@@ -1828616,7 +1828616,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_edge_pick_source": "選取來源節點",
+        "mindmap_edge_pick_source": "选取来源節點",
 
 
 
@@ -1828744,7 +1828744,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_edge_pick_target": "選取目標節點",
+        "mindmap_edge_pick_target": "选取目标節點",
 
 
 
@@ -1828872,7 +1828872,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_edges": "連線",
+        "mindmap_edges": "连线",
 
 
 
@@ -1829000,7 +1829000,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_empty_graph": "空圖表 — 新增第一個節點",
+        "mindmap_empty_graph": "空圖表 — 新增第一个節點",
 
 
 
@@ -1829128,7 +1829128,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_empty_selection": "選取節點以檢視其錨點和留言，或按 + 新增節點。",
+        "mindmap_empty_selection": "选取節點以檢视其錨點和留言，或按 + 新增節點。",
 
 
 
@@ -1829768,7 +1829768,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_err_detach": "分離失敗",
+        "mindmap_err_detach": "分离失敗",
 
 
 
@@ -1829896,7 +1829896,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_err_edge": "連線失敗",
+        "mindmap_err_edge": "连线失敗",
 
 
 
@@ -1830408,7 +1830408,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_err_title_required": "標題必填",
+        "mindmap_err_title_required": "标题必填",
 
 
 
@@ -1830536,7 +1830536,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_field_subgraph_root": "子圖根節點（zoom-in 目標）",
+        "mindmap_field_subgraph_root": "子圖根節點（zoom-in 目标）",
 
 
 
@@ -1830792,7 +1830792,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_field_title": "標題",
+        "mindmap_field_title": "标题",
 
 
 
@@ -1830920,7 +1830920,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_field_type": "類型",
+        "mindmap_field_type": "类型",
 
 
 
@@ -1831048,7 +1831048,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_fit": "適應螢幕",
+        "mindmap_fit": "适應螢幕",
 
 
 
@@ -1831176,7 +1831176,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_focus_mode_hint": "專注模式 — 點擊空白處或按 Esc 退出",
+        "mindmap_focus_mode_hint": "專注模式 — 點擊空白处或按 Esc 退出",
 
 
 
@@ -1831560,7 +1831560,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_fullscreen_unsupported": "此瀏覽器不支援全螢幕",
+        "mindmap_fullscreen_unsupported": "此浏览器不支援全螢幕",
 
 
 
@@ -1831944,7 +1831944,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_no_anchors": "尚無錨點",
+        "mindmap_no_anchors": "尚无錨點",
 
 
 
@@ -1832072,7 +1832072,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_no_comments": "尚無留言",
+        "mindmap_no_comments": "尚无留言",
 
 
 
@@ -1832456,7 +1832456,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_prompt_title": "節點標題：",
+        "mindmap_prompt_title": "節點标题：",
 
 
 
@@ -1832968,7 +1832968,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_subsystems_empty": "無子系統 — 將節點標記為「子圖根」即可新增。",
+        "mindmap_subsystems_empty": "无子系統 — 將節點标記为「子圖根」即可新增。",
 
 
 
@@ -1833864,7 +1833864,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_type_topic": "主題",
+        "mindmap_type_topic": "主题",
 
 
 
@@ -1834120,7 +1834120,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_zoom_l0_label": "總覽",
+        "mindmap_zoom_l0_label": "总覽",
 
 
 
@@ -1834248,7 +1834248,7 @@ const TRANSLATIONS = {
 
 
 
-        "mindmap_zoom_l1_label": "主題",
+        "mindmap_zoom_l1_label": "主题",
 
 
 
@@ -1834760,7 +1834760,7 @@ const TRANSLATIONS = {
 
 
 
-        "mr_listing_delist_confirm": "確認下架",
+        "mr_listing_delist_confirm": "确认下架",
 
 
 
@@ -1836416,7 +1836416,7 @@ const TRANSLATIONS = {
 
 
 
-        "ai_chat_view_feedback": "查看回饋歷史",
+        "ai_chat_view_feedback": "查看回饋历史",
 
 
 
@@ -1836672,7 +1836672,7 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_by_campaign": "依 UTM 行銷活動",
+        "analytics_by_campaign": "依 UTM 行銷活动",
 
 
 
@@ -1836800,7 +1836800,7 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_col_campaign": "行銷活動",
+        "analytics_col_campaign": "行銷活动",
 
 
 
@@ -1836928,7 +1836928,7 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_col_path": "路徑",
+        "analytics_col_path": "路径",
 
 
 
@@ -1837056,7 +1837056,7 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_col_uniq": "不重複",
+        "analytics_col_uniq": "不重复",
 
 
 
@@ -1837824,7 +1837824,7 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_days_label": "範圍",
+        "analytics_days_label": "范圍",
 
 
 
@@ -1837952,7 +1837952,7 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_err_fetch": "載入分析資料失敗",
+        "analytics_err_fetch": "載入分析资料失敗",
 
 
 
@@ -1838080,7 +1838080,7 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_err_no_device": "無可用裝置憑證，僅限裝置擁有者存取。",
+        "analytics_err_no_device": "无可用裝置憑证，僅限裝置擁有者存取。",
 
 
 
@@ -1838208,7 +1838208,7 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_legend_uniq": "不重複 IP",
+        "analytics_legend_uniq": "不重复 IP",
 
 
 
@@ -1838592,7 +1838592,7 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_no_campaigns": "範圍內無標記的行銷活動",
+        "analytics_no_campaigns": "范圍内无标記的行銷活动",
 
 
 
@@ -1838720,7 +1838720,7 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_no_data": "範圍內無資料",
+        "analytics_no_data": "范圍内无资料",
 
 
 
@@ -1838848,7 +1838848,7 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_path_filter_label": "路徑篩選",
+        "analytics_path_filter_label": "路径篩选",
 
 
 
@@ -1839232,7 +1839232,7 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_subtitle": "公開及行銷頁面的匿名造訪。入口頁面有自己的裝置範圍遙測。",
+        "analytics_subtitle": "公开及行銷页面的匿名造訪。入口页面有自己的裝置范圍遙测。",
 
 
 
@@ -1839360,7 +1839360,7 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_title": "網站分析",
+        "analytics_title": "网站分析",
 
 
 
@@ -1839488,7 +1839488,7 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_top_paths": "熱門路徑",
+        "analytics_top_paths": "熱门路径",
 
 
 
@@ -1839616,7 +1839616,7 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_total_views": "總瀏覽",
+        "analytics_total_views": "总瀏覽",
 
 
 
@@ -1839744,7 +1839744,7 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_unique_ips": "不重複 IP",
+        "analytics_unique_ips": "不重复 IP",
 
 
 
@@ -1840000,7 +1840000,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_0": "多模態理解 — 感知並描述網頁內容。",
+        "arena_test_desc_0": "多模態理解 — 感知并描述网页内容。",
 
 
 
@@ -1840128,7 +1840128,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_1": "精準 UI 互動 — 在數百個元素中定位並點擊特定目標。",
+        "arena_test_desc_1": "精準 UI 互动 — 在數百个元素中定位并點擊特定目标。",
 
 
 
@@ -1840256,7 +1840256,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_10": "儲存流程 — 透過雲端 API 下載、重新命名並上傳檔案。",
+        "arena_test_desc_10": "儲存流程 — 透过雲端 API 下載、重新命名并上傳檔案。",
 
 
 
@@ -1840384,7 +1840384,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_11": "音訊能力 — 轉錄口說內容或從文字合成語音。",
+        "arena_test_desc_11": "音訊能力 — 轉錄口說内容或从文字合成語音。",
 
 
 
@@ -1840512,7 +1840512,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_2": "結構化輸入 — 理解表單語意並正確填寫欄位。",
+        "arena_test_desc_2": "结構化输入 — 理解表单語意并正确填寫欄位。",
 
 
 
@@ -1840640,7 +1840640,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_3": "細微動作控制 — 精確地在位置之間拖曳物件。",
+        "arena_test_desc_3": "細微动作控制 — 精确地在位置之间拖曳物件。",
 
 
 
@@ -1840768,7 +1840768,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_4": "規劃能力 — 導航多層級頁面結構以找到目標資訊。",
+        "arena_test_desc_4": "规劃能力 — 導航多层級页面结構以找到目标资訊。",
 
 
 
@@ -1840896,7 +1840896,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_5": "表格推理 — 擷取並計算 HTML 表格資料。",
+        "arena_test_desc_5": "表格推理 — 擷取并计算 HTML 表格资料。",
 
 
 
@@ -1841152,7 +1841152,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_7": "演算法推理 — 解決程式問題並產生正確程式碼。",
+        "arena_test_desc_7": "演算法推理 — 解决程式問题并产生正确程式碼。",
 
 
 
@@ -1841280,7 +1841280,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_8": "速度 — 從題目顯示到正確答案提交的端到端時間。",
+        "arena_test_desc_8": "速度 — 从题目显示到正确答案提交的端到端时间。",
 
 
 
@@ -1841408,7 +1841408,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_9": "記憶 — 在連續步驟中維護並重複使用資訊。",
+        "arena_test_desc_9": "記憶 — 在连續步驟中維护并重复使用资訊。",
 
 
 
@@ -1841536,7 +1841536,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_0": "視覺感知",
+        "arena_test_name_0": "视覺感知",
 
 
 
@@ -1841920,7 +1841920,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_11": "語音處理",
+        "arena_test_name_11": "語音处理",
 
 
 
@@ -1842048,7 +1842048,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_2": "表單填寫",
+        "arena_test_name_2": "表单填寫",
 
 
 
@@ -1842176,7 +1842176,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_3": "空間控制",
+        "arena_test_name_3": "空间控制",
 
 
 
@@ -1842432,7 +1842432,7 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_5": "資料擷取",
+        "arena_test_name_5": "资料擷取",
 
 
 
@@ -1843200,7 +1843200,7 @@ const TRANSLATIONS = {
 
 
 
-        "chat_density_comfortable": "舒適",
+        "chat_density_comfortable": "舒适",
 
 
 
@@ -1843456,7 +1843456,7 @@ const TRANSLATIONS = {
 
 
 
-        "chat_density_normal": "標準",
+        "chat_density_normal": "标準",
 
 
 
@@ -1843712,7 +1843712,7 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mic_denied": "麥克風存取被拒",
+        "chat_mic_denied": "麥克风存取被拒",
 
 
 
@@ -1843840,7 +1843840,7 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_demo_node": "此節點為示範資料或短前綴 ID — 不支援跨頁面引用。請使用心智圖頁面上的📋按鈕複製完整語彙。",
+        "chat_mindmap_demo_node": "此節點为示范资料或短前綴 ID — 不支援跨页面引用。请使用心智圖页面上的📋按鈕复製完整語彙。",
 
 
 
@@ -1844480,7 +1844480,7 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_type": "類型",
+        "chat_mindmap_field_type": "类型",
 
 
 
@@ -1844736,7 +1844736,7 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_btn": "相關聊天",
+        "chat_related_btn": "相关聊天",
 
 
 
@@ -1844864,7 +1844864,7 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_empty": "找不到相關聊天",
+        "chat_related_empty": "找不到相关聊天",
 
 
 
@@ -1844992,7 +1844992,7 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_error": "載入相關聊天失敗",
+        "chat_related_error": "載入相关聊天失敗",
 
 
 
@@ -1845120,7 +1845120,7 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_loading": "載入相關聊天…",
+        "chat_related_loading": "載入相关聊天…",
 
 
 
@@ -1845248,7 +1845248,7 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_panel_title": "相關聊天",
+        "chat_related_panel_title": "相关聊天",
 
 
 
@@ -1845376,7 +1845376,7 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_target_not_loaded": "目標聊天尚未載入",
+        "chat_related_target_not_loaded": "目标聊天尚未載入",
 
 
 
@@ -1845760,7 +1845760,7 @@ const TRANSLATIONS = {
 
 
 
-        "common_copy": "複製",
+        "common_copy": "复製",
 
 
 
@@ -1845888,7 +1845888,7 @@ const TRANSLATIONS = {
 
 
 
-        "compare_back": "← 返回資訊中心",
+        "compare_back": "← 返回资訊中心",
 
 
 
@@ -1846016,7 +1846016,7 @@ const TRANSLATIONS = {
 
 
 
-        "compare_page_title": "EClawbot 對比 Telegram — 頻道比較",
+        "compare_page_title": "EClawbot 对比 Telegram — 頻道比較",
 
 
 
@@ -1846144,7 +1846144,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_copied": "已複製！",
+        "dash_copied": "已复製！",
 
 
 
@@ -1846272,7 +1846272,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_protocols": "協定",
+        "dash_protocols": "协定",
 
 
 
@@ -1846400,7 +1846400,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_tags": "標籤",
+        "dash_tags": "标籤",
 
 
 
@@ -1846656,7 +1846656,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_website": "網站",
+        "dash_website": "网站",
 
 
 
@@ -1846784,7 +1846784,7 @@ const TRANSLATIONS = {
 
 
 
-        "env_toggle_device_id": "顯示/隱藏裝置 ID",
+        "env_toggle_device_id": "显示/隱藏裝置 ID",
 
 
 
@@ -1846912,7 +1846912,7 @@ const TRANSLATIONS = {
 
 
 
-        "files_delete_confirm": "確定要刪除此檔案嗎？",
+        "files_delete_confirm": "确定要刪除此檔案嗎？",
 
 
 
@@ -1847296,7 +1847296,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_behavior_user": "僅提示模式 — 不影響路由，僅向接收的 bot 注入 <code>[MENTIONS]</code>",
+        "guide_mention_behavior_user": "僅提示模式 — 不影响路由，僅向接收的 bot 注入 <code>[MENTIONS]</code>",
 
 
 
@@ -1847424,7 +1847424,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case1_input_label": "您的輸入",
+        "guide_mention_case1_input_label": "您的输入",
 
 
 
@@ -1847552,7 +1847552,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case1_input_text": "詢問今天的台積電趨勢",
+        "guide_mention_case1_input_text": "詢問今天的台積电趨勢",
 
 
 
@@ -1847680,7 +1847680,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case1_outcome": "主要助理會看到提示，決定是否呼叫 /api/transform 將問題轉給股票分析師。",
+        "guide_mention_case1_outcome": "主要助理会看到提示，决定是否呼叫 /api/transform 將問题轉給股票分析師。",
 
 
 
@@ -1847808,7 +1847808,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case1_recv_label": "主要助理收到的內容",
+        "guide_mention_case1_recv_label": "主要助理收到的内容",
 
 
 
@@ -1847936,7 +1847936,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case2_input_label": "您的輸入",
+        "guide_mention_case2_input_label": "您的输入",
 
 
 
@@ -1848064,7 +1848064,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case2_input_text": "你們大家對這個功能有什麼看法？",
+        "guide_mention_case2_input_text": "你们大家对这个功能有什麼看法？",
 
 
 
@@ -1848192,7 +1848192,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case2_outcome": "會議主持人可選擇透過 speakTo 平行轉發訊息，或先彙整再回覆。",
+        "guide_mention_case2_outcome": "会议主持人可选擇透过 speakTo 平行轉发訊息，或先彙整再回复。",
 
 
 
@@ -1848320,7 +1848320,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case2_recv_label": "會議主持人收到的內容",
+        "guide_mention_case2_recv_label": "会议主持人收到的内容",
 
 
 
@@ -1848448,7 +1848448,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case3_input_label": "您的輸入",
+        "guide_mention_case3_input_label": "您的输入",
 
 
 
@@ -1848576,7 +1848576,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case3_input_text": "明天上午九點全員會議",
+        "guide_mention_case3_input_text": "明天上午九點全員会议",
 
 
 
@@ -1848704,7 +1848704,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case3_outcome": "公告機器人看到 @all 提示，可能會以 broadcast:true 呼叫 /api/transform 向所有實體廣播。",
+        "guide_mention_case3_outcome": "公告机器人看到 @all 提示，可能会以 broadcast:true 呼叫 /api/transform 向所有實体廣播。",
 
 
 
@@ -1848832,7 +1848832,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case3_recv_label": "公告機器人收到的內容",
+        "guide_mention_case3_recv_label": "公告机器人收到的内容",
 
 
 
@@ -1849088,7 +1849088,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_dir_user": "<strong>使用者 的 @</strong>（在聊天輸入中）"
+        "guide_mention_dir_user": "<strong>使用者 的 @</strong>（在聊天输入中）"
 
 
 
@@ -1850036,30 +1850036,30 @@ const TRANSLATIONS = {
         "action_request_ratify_hold_hint": "未经你核可不会送出。",
         "action_request_recommended_badge_title": "仅供参考 · 不会自动送出",
 
-        "action_request_ratify_desc": "计划 E 對服务器已武装、低風險且可逆的决策啟用静默追认；預設開啟；要停用請關閉此開關。",
-        "action_request_ratify_grace_desc": "服务器已武装 default_agree 决策後，沉默多久才自動视同同意。",
-        "action_request_ratify_grace_hours": "時",
+        "action_request_ratify_desc": "计划 E 对服务器已武装、低风险且可逆的决策启用静默追认；预设开启；要停用请关闭此开关。",
+        "action_request_ratify_grace_desc": "服务器已武装 default_agree 决策后，沉默多久才自动视同同意。",
+        "action_request_ratify_grace_hours": "时",
         "action_request_ratify_grace_label": "追认静默宽限",
         "action_request_ratify_grace_minutes": "分",
-        "action_request_ratify_guardrails_desc": "只讀的服务器檢查；浏览器無法放寬。",
+        "action_request_ratify_guardrails_desc": "只读的服务器檢查；浏览器无法放寬。",
         "action_request_ratify_guardrails_label": "追认护栏",
-        "action_request_ratify_guardrails_value": "Fail-closed：服务器會重算模式，只有 default_agree 可自動完成，觸發時會重新执行裁决，高風險路徑差異保持，並從審計歷史強制执行 N 上限。",
-        "action_request_ratify_max_attempts_desc": "每個请求可被服务器已武装 default_agree 的次数上限。",
+        "action_request_ratify_guardrails_value": "Fail-closed：服务器会重算模式，只有 default_agree 可自动完成，触发时会重新执行裁决，高风险路径差异保持，并从审计历史强制执行 N 上限。",
+        "action_request_ratify_max_attempts_desc": "每个请求可被服务器已武装 default_agree 的次数上限。",
         "action_request_ratify_max_attempts_label": "追认 N 上限",
         "action_request_ratify_title": "决策追认",
-        "action_request_realtime_desc": "當代理發出、完成或略過请求時，立即刷新收件匣。",
-        "action_request_realtime_label": "即時刷新收件匣",
-        "action_request_reply_resize_desc": "在需要您回覆框加上拖曳／鍵盤拉桿，讓你把回覆框拉高。預設開啟。",
-        "action_request_reply_resize_label": "需要您回覆框可拉桿調整大小",
-        "action_request_settings_desc": "管理代理遇到需要您決定時顯示的 Human-in-the-Loop 收件匣。",
+        "action_request_realtime_desc": "当代理发出、完成或略过请求时，立即刷新收件匣。",
+        "action_request_realtime_label": "即时刷新收件匣",
+        "action_request_reply_resize_desc": "在需要您回复框加上拖曳／鍵盤拉杆，让你把回复框拉高。预设开启。",
+        "action_request_reply_resize_label": "需要您回复框可拉杆调整大小",
+        "action_request_settings_desc": "管理代理遇到需要您决定时显示的 Human-in-the-Loop 收件匣。",
         "action_request_settings_title": "需要您请求",
         "action_request_timeout_auto_dismiss": "B. 自动略过",
-        "action_request_timeout_consensus": "D. 啟動协商",
+        "action_request_timeout_consensus": "D. 启动协商",
         "action_request_timeout_keep": "A. 保持待处理",
-        "action_request_timeout_minutes_desc": "超過幾分鐘未回覆後执行所选策略。",
+        "action_request_timeout_minutes_desc": "超过几分钟未回复后执行所选策略。",
         "action_request_timeout_minutes_label": "超时时长",
-        "action_request_timeout_policy_desc": "选擇需要您请求超时未回覆後，超时 worker 要执行的處理。",
-        "action_request_timeout_policy_label": "未回覆请求策略",
+        "action_request_timeout_policy_desc": "选擇需要您请求超时未回复后，超时 worker 要执行的处理。",
+        "action_request_timeout_policy_label": "未回复请求策略",
         "action_request_timeout_safe_default": "C. 安全默认",
 
         "common_revoke": "撤销",
