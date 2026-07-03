@@ -1022,6 +1022,18 @@
                 </label>
             </div>
             <div class="setting-row">
+                <!-- HELP-KEY: action_request_reply_resize_help -->
+                <div class="setting-row-label">
+                    <span data-i18n="action_request_reply_resize_label">Resizable reply box</span>
+                    <small style="display:block;color:var(--text-muted);font-size:11px;" data-i18n="action_request_reply_resize_desc">Add a drag/keyboard handle to the Needs-you reply box so you can make it taller. Default is on.</small>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggleActionRequestReplyResize" aria-label="Enable resizable Needs-you reply box"
+                           onchange="saveActionRequestReplyResizePref(this.checked)">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-row">
                 <!-- HELP-KEY: action_request_timeout_policy_help -->
                 <div class="setting-row-label">
                     <span data-i18n="action_request_timeout_policy_label">Unanswered request policy</span>
@@ -3067,6 +3079,9 @@
         function applyActionRequestPrefs(prefs = {}) {
             const realtime = document.getElementById('toggleActionRequestRealtime');
             if (realtime) realtime.checked = prefs.action_request_realtime !== false;
+            // 需要你 reply-resize grip (card_c44c318): DEFAULT-ON, only explicit false opts out.
+            const replyResize = document.getElementById('toggleActionRequestReplyResize');
+            if (replyResize) replyResize.checked = prefs.action_request_reply_resize_enabled !== false;
             const policy = document.getElementById('actionRequestTimeoutPolicy');
             if (policy) policy.value = normalizeActionRequestTimeoutPolicy(prefs.action_request_timeout_policy);
             const minutes = document.getElementById('actionRequestTimeoutMinutes');
@@ -3090,6 +3105,10 @@
 
         async function saveActionRequestRealtimePref(enabled) {
             await saveActionRequestPrefPatch({ action_request_realtime: !!enabled });
+        }
+
+        async function saveActionRequestReplyResizePref(enabled) {
+            await saveActionRequestPrefPatch({ action_request_reply_resize_enabled: !!enabled });
         }
 
         async function saveActionRequestTimeoutPolicy(value) {

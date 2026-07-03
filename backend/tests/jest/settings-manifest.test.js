@@ -375,6 +375,7 @@ describe('Stage-3 field registry — #6 nested schema', () => {
         const fields = fieldsOf('action_requests');
         expect(fields.map((x) => x.key)).toEqual([
             'action_request_realtime',
+            'action_request_reply_resize_enabled',
             'action_request_timeout_policy',
             'action_request_timeout_minutes',
         ]);
@@ -385,6 +386,14 @@ describe('Stage-3 field registry — #6 nested schema', () => {
         expect(realtime.scope).toBe('device');
         expect(realtime.default).toBe(true);
         expect(realtime.validation.required).toBe(false);
+
+        // 需要你 reply-resize grip (card_c44c318): DEFAULT-ON boolean switch.
+        const replyResize = fields.find((x) => x.key === 'action_request_reply_resize_enabled');
+        expect(replyResize.type).toBe('boolean');
+        expect(replyResize.control).toBe('switch');
+        expect(replyResize.scope).toBe('device');
+        expect(replyResize.default).toBe(true);
+        expect(replyResize.validation.required).toBe(false);
 
         const timeout = fields.find((x) => x.key === 'action_request_timeout_policy');
         expect(timeout.type).toBe('enum');

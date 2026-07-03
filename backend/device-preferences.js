@@ -134,6 +134,15 @@ const DEFAULTS = {
     // Until explicitly enabled, the surfacer is a complete no-op — nothing
     // changes for anyone. Consumed by surfaceOwnerWaitingStates in kanban.js.
     waiting_state_surfacer_enabled: false,
+    // 需要你 reply-input drag-to-resize grip (card_c44c318865d2aa77376e9746).
+    // When on, the per-item action-request answer box (.reply-preview-chip-answer
+    // in chat.html) gets a drag/keyboard "拉桿" resize handle (shared/resize-grip.js)
+    // so the tiny rows=1 box can be made taller; the chosen height persists per
+    // device (localStorage). ⚠️ DEFAULT-ON (Hank asked default-enable, pending #6
+    // design sign-off): an UNSET pref ENABLES the grip; only an explicit `false`
+    // disables it (then the textarea keeps its native resize:vertical fallback).
+    // Pure front-end affordance — no server behavior rides on this flag.
+    action_request_reply_resize_enabled: true,
 };
 
 const ENTITY_IDLE_AFTER_SECONDS_MIN = 15;
@@ -184,7 +193,8 @@ function coerceValue(key, raw) {
     if (key === 'kanban_auto_escalate_enabled' || key === 'kanban_auto_escalate_skip_automation'
         || key === 'action_request_ratify_enabled'
         || key === 'commander_forward_fallback_enabled'
-        || key === 'waiting_state_surfacer_enabled') {
+        || key === 'waiting_state_surfacer_enabled'
+        || key === 'action_request_reply_resize_enabled') {
         // 計畫E: ratify master switch — same string-safe boolean coercion (a bare
         // `!!raw` would turn the string 'false' true, fail-OPEN for an auto-merge gate).
         // commander_forward_fallback_enabled (card_3ce0080a) shares the coercion for
