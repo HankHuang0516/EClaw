@@ -19754,6 +19754,82 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
 const ORG_FWD_PREFIX = '[📢 FWD';
 const ORG_TASK_FWD_PREFIX = '[📋 TASK FWD';
 
+// Commander-class entities, ordered by preference (#2 commander, then #1 deputy).
+// Mirrors kanban.js ESCALATION_SUPERVISOR_ENTITY_IDS — the platform already treats
+// #1/#2 as supervisors. Used as the commander-forward fallback target (below) when
+// no org chart is configured. (card_3ce0080a, Leg-2 Option-1.)
+const COMMANDER_FORWARD_ENTITY_IDS = [2, 1];
+
+/**
+ * Commander-forward fallback (card_3ce0080a, Leg-2 Option-1).
+ *
+ * orgChartForward() below is DORMANT on devices with no org chart: with the
+ * default taskForward:false + an empty hierarchy it returns without forwarding,
+ * so a subordinate's substantive OWN output never reaches a commander (#2). This
+ * fallback — gated behind the DEFAULT-OFF pref commander_forward_fallback_enabled
+ * — forwards that output up to a bound commander-class entity (#2, else #1) even
+ * without a hierarchy. It reuses the SAME low-signal filter and delivery path as
+ * the normal superior-forward so handoff/heartbeat noise is still dropped and no
+ * chat bubble is created.
+ *
+ * Called ONLY from orgChartForward's dormant return points (taskForward off OR no
+ * org-chart superior for this entity). `message` is already known non-low-signal
+ * (classifyLowSignalFwd ran + returned null at the top of orgChartForward) and
+ * `opts.inbound` is already falsy (the inbound branch returns earlier), but both
+ * are re-checked here so the helper is safe in isolation and unit-testable.
+ *
+ * Failure-isolated: any error is swallowed (logged) — a fallback error must never
+ * break the caller. Returns nothing.
+ *
+ * Commander resolution: the first entity id in COMMANDER_FORWARD_ENTITY_IDS ([2,1])
+ * that is bound AND is not the forwarding entity itself AND is not opts.fromEntityId
+ * (the original sender already has the message). Never self-forwards.
+ */
+async function commanderForwardFallback(entity, deviceId, message, opts = {}) {
+    try {
+        // Re-assert the guards (caller already checked, but keep the helper safe
+        // in isolation): only the entity's OWN substantive output, never inbound.
+        if (opts.inbound) return;
+        if (!message || isLowSignalFwd(message)) return;
+
+        const prefs = await devicePrefs.getPrefs(deviceId);
+        if (!prefs || prefs.commander_forward_fallback_enabled !== true) return; // DEFAULT-OFF gate
+
+        const device = devices[deviceId];
+        if (!device || !device.entities) return;
+
+        // Resolve a bound commander that is neither this entity nor the original
+        // sender. Ordered #2-then-#1, mirroring the escalation supervisor fallback.
+        const fromEntityId = opts.fromEntityId != null ? Number(opts.fromEntityId) : null;
+        let commanderId = null;
+        for (const cid of COMMANDER_FORWARD_ENTITY_IDS) {
+            if (cid === entity.entityId) continue;      // never self-forward
+            if (fromEntityId != null && cid === fromEntityId) continue; // sender already has it
+            const cand = device.entities[cid];
+            if (cand && cand.isBound) { commanderId = cid; break; }
+        }
+        if (commanderId == null) return; // no bound commander → no-op
+
+        const commanderEntity = device.entities[commanderId];
+        const prefix = `${ORG_FWD_PREFIX} from #${entity.entityId}] `;
+        const fwdMsg = prefix + message;
+        console.log(`[OrgChart] Commander-forward fallback #${entity.entityId} -> #${commanderId} (no org chart)`);
+        serverLog('info', 'org_forward_fallback', `#${entity.entityId} -> #${commanderId} (commander fallback): "${fwdMsg.slice(0, 80)}"`, { deviceId, entityId: entity.entityId });
+
+        // Silent push — same delivery as the normal superior-forward (no
+        // saveChatMessage → no duplicate chat bubble).
+        unifiedPush(commanderEntity, deviceId, 'org_forward', { message: fwdMsg }, {
+            skipMiddleware: true,
+            from: `entity:${entity.entityId}`,
+        }).catch(err => {
+            console.error(`[OrgChart] Commander-forward fallback to #${commanderId} failed:`, err.message);
+        });
+    } catch (err) {
+        // Failure-isolated: never let the fallback break orgChartForward.
+        console.error('[OrgChart] commanderForwardFallback error:', err.message);
+    }
+}
+
 async function orgChartForward(entity, deviceId, message, opts = {}) {
     if (!message || message.startsWith(ORG_TASK_FWD_PREFIX) || message.startsWith(ORG_FWD_PREFIX)) return;
     // card_59f41e5b: "drop-but-surface" — classify WHY it's low-signal, drop the
@@ -19810,11 +19886,25 @@ async function orgChartForward(entity, deviceId, message, opts = {}) {
 
     try {
         const orgData = await orgChartModule.getOrgChart(deviceId);
-        if (!orgData.options.taskForward && !orgData.options.allForward) return;
-        if (!orgData.hierarchy || !orgData.hierarchy.USER) return;
+        // Dormant-when-no-org-chart path (card_3ce0080a): with the default
+        // taskForward:false + no configured hierarchy, the org-chart forward does
+        // nothing, so a subordinate's substantive output never reaches a commander.
+        // The DEFAULT-OFF commander_forward_fallback_enabled pref (checked inside the
+        // helper) routes it to a bound commander (#2, else #1) instead. Behavior is
+        // byte-for-byte unchanged while the pref is false (helper no-ops).
+        if (!orgData.options.taskForward && !orgData.options.allForward) {
+            return commanderForwardFallback(entity, deviceId, message, opts);
+        }
+        if (!orgData.hierarchy || !orgData.hierarchy.USER) {
+            return commanderForwardFallback(entity, deviceId, message, opts);
+        }
 
         const superiorId = orgChartModule.getSuperior(orgData.hierarchy, entity.entityId);
-        if (superiorId == null) return;
+        // No org-chart superior for this entity (orphan / not placed in the tree)
+        // → same dormant case; try the commander fallback before giving up.
+        if (superiorId == null) {
+            return commanderForwardFallback(entity, deviceId, message, opts);
+        }
         // USER is the top — not a pushable entity. If direct superior is USER, skip.
         if (superiorId === 'USER') return;
         // Skip if superior is the original sender — they already have the message (prevents speakTo echo)

@@ -111,6 +111,19 @@ const DEFAULTS = {
     //   before it is treated as stale and ignored (the evaluator then falls back
     //   to lastSend / kanban-floor heuristics). Default 45; clamped [5, 600].
     entity_runtime_state_stale_seconds: 45,
+    // Commander-forward fallback (card_3ce0080a, Leg-2 Option-1). orgChartForward
+    // in index.js is DORMANT on devices with no org chart: with the default
+    // taskForward:false + an empty hierarchy it forwards NOTHING, so a
+    // subordinate's substantive output never reaches a commander (#2). When this
+    // pref is TRUE, a subordinate's substantive (non-low-signal) OWN output is
+    // forwarded up to a bound commander-class entity (#2, else #1) even without an
+    // org chart configured — reusing the same low-signal filter so handoff/
+    // heartbeat noise is still dropped.
+    // ⚠️ DEFAULT FALSE (dark-launch). This touches message routing, so it is
+    // gated OFF until explicitly enabled per-device via PUT /api/device-preferences.
+    // Same string-safe boolean coercion as the auto-escalate toggles (a bare
+    // `!!raw` would turn the string 'false' true → fail-OPEN, wrong for a routing gate).
+    commander_forward_fallback_enabled: false,
     // Waiting-state surfacer (phases 2-3 of card_76b073959c279d6204d9fd42).
     // DARK-LAUNCH: DEFAULT FALSE. When true, the kanban worker's stale-scan pass
     // also runs a "waiting-state surfacer" that auto-opens a 需要你 inbox item for
@@ -169,9 +182,14 @@ function coerceValue(key, raw) {
     // (a bare `!!raw` would coerce the string 'false' to true — wrong for an API
     // that may serialize the flag as a query/JSON string).
     if (key === 'kanban_auto_escalate_enabled' || key === 'kanban_auto_escalate_skip_automation'
-        || key === 'action_request_ratify_enabled' || key === 'waiting_state_surfacer_enabled') {
+        || key === 'action_request_ratify_enabled'
+        || key === 'commander_forward_fallback_enabled'
+        || key === 'waiting_state_surfacer_enabled') {
         // 計畫E: ratify master switch — same string-safe boolean coercion (a bare
         // `!!raw` would turn the string 'false' true, fail-OPEN for an auto-merge gate).
+        // commander_forward_fallback_enabled (card_3ce0080a) shares the coercion for
+        // the same fail-OPEN reason: it is a message-routing gate that MUST stay off
+        // unless the value is a real true / the string 'true'.
         // waiting_state_surfacer_enabled is dark-launch DEFAULT FALSE: the string
         // 'false' must stay false so an accidental serialized flag never flips the
         // inbox-flood risk open.
