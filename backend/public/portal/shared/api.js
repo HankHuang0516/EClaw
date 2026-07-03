@@ -243,6 +243,23 @@ function _eclawEnsureDialogAnimStyle() {
 @media (prefers-reduced-motion: reduce) {
     .eclaw-confirm-overlay,
     .eclaw-confirm-dialog { animation: none; }
+}
+/* Destructive-confirm thumb-zone guard (card_3267470a): on narrow (phone)
+   viewports the actions stack full-width vertically, which puts the LAST DOM
+   button — the destructive Confirm — at the very bottom, i.e. the easiest
+   single-thumb target, directly under Cancel. column-reverse flips only the
+   VISUAL order so the safe Cancel sits in the bottom thumb zone and the
+   destructive button is above it. DOM order is untouched, so tab order, the
+   focus trap, safe-default-focus (Cancel) and Esc all keep working exactly as
+   before. Scoped to danger dialogs + phone width, so desktop (side-by-side
+   row) is unaffected. */
+@media (max-width: 480px) {
+    .eclaw-confirm-dialog.eclaw-confirm-danger .dialog-actions {
+        display: flex;
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+    .eclaw-confirm-dialog.eclaw-confirm-danger .dialog-actions > .btn { width: 100%; }
 }`;
     document.head.appendChild(style);
 }
@@ -279,7 +296,7 @@ function showConfirm({ message, title, confirmText, cancelText, danger, itemName
         const itemStrip = (danger && itemName)
             ? `<div class="eclaw-confirm-item" style="margin:8px 0 0;padding:8px 12px;background:var(--bg-secondary, rgba(0,0,0,0.04));border-left:3px solid var(--danger, #e53e3e);border-radius:4px;font-weight:600;color:var(--text);word-break:break-word">${_escHtml(itemName)}</div>`
             : '';
-        overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog" ${dialogAria} ${_ECLAW_DIALOG_SHADOW_STYLE}>
+        overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog${danger ? ' eclaw-confirm-danger' : ''}" ${dialogAria} ${_ECLAW_DIALOG_SHADOW_STYLE}>
             ${title ? `<div class="dialog-title" id="${titleId}">${_escHtml(title)}</div>` : ''}
             <div class="dialog-body"><p id="${messageId}" style="margin:0;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p>${itemStrip}</div>
             <div class="dialog-actions">
