@@ -148,8 +148,13 @@ function validateConfigShape(testType, config) {
         }
     }
     // Type-specific shape checks
-    if (testType === 'arena_vision' && !config.imageFile && !config.description) {
-        issues.push('arena_vision: both imageFile and description are empty');
+    if (testType === 'arena_vision') {
+        if (!config.imageFile && !config.description) {
+            issues.push('arena_vision: both imageFile and description are empty');
+        }
+        if (!Array.isArray(config.expectedKeywords) || config.expectedKeywords.length === 0) {
+            issues.push('arena_vision: expectedKeywords must be a non-empty array');
+        }
     }
     if (testType === 'arena_form_fill') {
         if (!Array.isArray(config.fields) || config.fields.length === 0) {
