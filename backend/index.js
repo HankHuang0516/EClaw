@@ -9262,6 +9262,51 @@ async function deliverToEntity(opts) {
         viaChannel = null
     } = opts;
 
+    // ── Direct-b2b deliver-time low-signal guard (card_39226e06) ──
+    // deliverToEntity is the SINGLE deliver point for direct bot-to-bot messages
+    // (/api/transform speakTo + broadcast): the sender (fromEntity/fromId) and the
+    // recipient (toEntity/toId) are BOTH bound bot entities — a real end user goes
+    // through /api/client/speak, which never calls this function, so user delivery
+    // is untouched by construction.
+    //
+    // The org-fwd low-signal filter (classifyLowSignalFwd) previously ran ONLY
+    // inside orgChartForward(), so #6's routine "Codex #N status heartbeat" noise —
+    // delivered DIRECTLY to #2 via speakTo/transform after Hank set #6→#2 in the
+    // org chart — bypassed it entirely and flooded the commander. Run the SAME
+    // classifier here, before we persist/push to the recipient bot, and DROP only
+    // when it flags the message low-signal. Conservative by design:
+    //   • only affects bot recipients (this fn is entity→entity only),
+    //   • only drops when classifyLowSignalFwd returns non-null (heartbeat / ack /
+    //     kanban-echo / machine-noise) — a substantive report ("已完成任務，PR #1234
+    //     merged…") classifies as null and is delivered normally,
+    //   • fail-safe: if classification throws, we DELIVER (never let the filter eat
+    //     a message on error).
+    // Recorded via the shared drop-but-surface suppression log (card_59f41e5b) so
+    // the dashboard shows what was filtered and why.
+    try {
+        const lowSignalReason = classifyLowSignalFwd(text);
+        if (lowSignalReason) {
+            recordSuppressedForward(targetDeviceId, {
+                fromEntityId: fromId,
+                reason: lowSignalReason,
+                snippet: typeof text === 'string' ? text.slice(0, 80) : '',
+            });
+            console.log(`[b2b-suppress] dropped low-signal direct-b2b deliver Entity ${fromId} -> ${toId} on ${targetDeviceId} (reason=${lowSignalReason}): "${(typeof text === 'string' ? text : '').slice(0, 60)}"`);
+            return {
+                entityId: toId,
+                character: toEntity && toEntity.character,
+                pushed: false,
+                mode: 'suppressed',
+                reason: `low_signal:${lowSignalReason}`,
+                suppressed: true,
+                ...(isCrossDevice ? { publicCode: toEntity && toEntity.publicCode, targetDeviceId } : {})
+            };
+        }
+    } catch (err) {
+        // Fail-safe: classification error → deliver normally (never drop on error).
+        console.error(`[b2b-suppress] classify error, delivering normally: ${err.message}`);
+    }
+
     const sourceLabel = isCrossDevice
         ? `xdevice:${fromEntity.publicCode}:${fromEntity.character}`
         : `entity:${fromId}:${fromEntity.character}`;
@@ -24915,6 +24960,10 @@ module.exports._BOT2BOT_REGEN_INTERVAL_MS = BOT2BOT_REGEN_INTERVAL_MS;
 module.exports._recordSuppressedForward = recordSuppressedForward;
 module.exports._suppressionLog = suppressionLog;
 module.exports._SUPPRESSION_LOG_CAP = SUPPRESSION_LOG_CAP;
+// Direct-b2b deliver point — exported for the deliver-time low-signal guard test
+// (card_39226e06). This is the single entity→entity delivery fn for
+// /api/transform speakTo + broadcast.
+module.exports._deliverToEntity = deliverToEntity;
 // Server-authoritative entity ACTIVITY state machine (lib/entity-activity.js)
 module.exports._entityActivity = entityActivity;
 module.exports._evaluateEntityActivity = evaluateEntityActivity;
