@@ -1889,6 +1889,14 @@ try {
                 ? agentActionRequestsModule.dismissActionRequestsForCard(...args)
                 : Promise.resolve([])
         ),
+        // Waiting-state surfacer (phases 2-3 of card_76b073959c279d6204d9fd42):
+        // NARROWER dismiss the surfacer uses so it only touches its own rows
+        // (decision_context.surfacer === true). Late-bound thunk, same reason.
+        dismissSurfacerActionRequestsForCard: (...args) => (
+            agentActionRequestsModule && typeof agentActionRequestsModule.dismissSurfacerActionRequestsForCard === 'function'
+                ? agentActionRequestsModule.dismissSurfacerActionRequestsForCard(...args)
+                : Promise.resolve([])
+        ),
     });
     app.use('/api/mission', kanbanModule.router);
     console.log('[Kanban] Module loaded successfully');
