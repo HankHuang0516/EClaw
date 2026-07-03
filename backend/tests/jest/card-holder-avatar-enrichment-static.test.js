@@ -31,6 +31,13 @@ describe('card-holder my-cards must enrich rows with petdxAvatarUrl (index.js)',
         // and the response must send the enriched list, not the raw one
         expect(body).toMatch(/cards:\s*enrichedCards/);
     });
+
+    it('petdx enrichment uses same-origin sprite assets when avatar_url is missing', () => {
+        expect(idx).toMatch(/function resolvePetdxSelectionAvatarUrl/);
+        expect(idx).toMatch(/row\.asset_type === 'spritesheet'/);
+        expect(idx).toMatch(/isPetdxSpriteProxyUrl\(row\.asset_url\)/);
+        expect(idx).toMatch(/return row\.asset_url\.trim\(\)/);
+    });
 });
 
 describe('card-holder.html prefers the enriched proxy URL before the emoji fallback', () => {
