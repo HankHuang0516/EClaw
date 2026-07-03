@@ -105,7 +105,12 @@
 
     function applyPanelSize(panel) {
         if (!panel) return;
-        const size = clampPanelSize(windowState.width || DEFAULT_PANEL_SIZE.width, windowState.height || DEFAULT_PANEL_SIZE.height);
+        if (!Number.isFinite(Number(windowState.width)) || !Number.isFinite(Number(windowState.height))) {
+            panel.style.width = '';
+            panel.style.height = '';
+            return;
+        }
+        const size = clampPanelSize(windowState.width, windowState.height);
         panel.style.width = size.width + 'px';
         panel.style.height = size.height + 'px';
     }
