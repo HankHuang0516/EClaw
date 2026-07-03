@@ -362,7 +362,27 @@
             -webkit-overflow-scrolling: touch; min-width: 0; max-width: 100%;
         }
         .action-request-inbox.is-open .action-request-inbox-body { display: flex; }
-        @media (max-width: 640px) { .action-request-inbox-body { max-height: 38vh; } }
+        /* Mobile: the inbox lived inside .chat-messages-wrapper{overflow:hidden} as a
+           tiny 38vh nested-scroll box — on real phones that nested scroll region is
+           unusable and the owner could not scroll to see all items. When OPEN on a
+           phone, lift the inbox into a full-height fixed overlay that ESCAPES the
+           clipping wrapper, so the body gets a large, reliably-swipeable scroll area
+           and every action-request is reachable. Collapsed state + desktop unchanged. */
+        @media (max-width: 640px) {
+            .action-request-inbox.is-open {
+                position: fixed; left: 6px; right: 6px; top: 54px; bottom: 10px;
+                z-index: 6000; margin: 0; overflow: hidden;
+                display: flex; flex-direction: column;
+                background: var(--card-bg, #12121a);
+                border: 1px solid var(--card-border, #333355);
+                border-radius: 12px; box-shadow: 0 8px 40px rgba(0,0,0,0.5); padding: 10px;
+            }
+            .action-request-inbox.is-open .action-request-inbox-body {
+                max-height: none; flex: 1 1 auto; overflow-y: auto;
+                -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+            }
+            .action-request-inbox:not(.is-open) .action-request-inbox-body { max-height: 38vh; }
+        }
         @media (prefers-reduced-motion: reduce) { .ar-chevron { transition: none; } }
         .action-request-inbox-head { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
         .action-request-inbox-title { font-weight: 700; color: var(--text, #ffffff); }
