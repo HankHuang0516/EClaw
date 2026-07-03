@@ -411949,6 +411949,8 @@ const TRANSLATIONS = {
 
         "chip_popover_open_full": "Open full page →",
         "chip_popover_screenshots": "📸 Screenshots",
+        "chip_popover_screenshots_help": "Image attachments from this card appear here. Click a thumbnail to enlarge it; non-image files stay in the full card.",
+        "chip_popover_screenshots_help_label": "Screenshot field help",
 
 
 
@@ -1035501,6 +1035503,8 @@ const TRANSLATIONS = {
 
         "chip_popover_open_full": "打開完整頁面 →",
         "chip_popover_screenshots": "📸 截圖",
+        "chip_popover_screenshots_help": "這裡顯示此卡片的圖片附件。點縮圖可放大截圖；非圖片檔案仍保留在完整卡片內。",
+        "chip_popover_screenshots_help_label": "截圖欄位說明",
 
 
 
@@ -1849652,6 +1849656,8 @@ const TRANSLATIONS = {
         "chip_popover_requote": "再引用到聊天",
         "chip_popover_open_full": "打开完整页面 →",
         "chip_popover_screenshots": "📸 截图",
+        "chip_popover_screenshots_help": "这里显示此卡片的图片附件。点击缩略图可放大截图；非图片文件仍保留在完整卡片内。",
+        "chip_popover_screenshots_help_label": "截图字段说明",
         "chip_popover_cycle": "已在引用堆叠上",
         "chip_popover_too_deep": "太深，请直接跳页",
         "chip_popover_requoted": "已引用至聊天",
@@ -6109255,6 +6109261,8 @@ const TRANSLATIONS = {
         "chip_popover_requote": "Quote to chat again",
         "chip_popover_open_full": "Open full page →",
         "chip_popover_screenshots": "📸 Screenshots",
+        "chip_popover_screenshots_help": "Image attachments from this card appear here. Click a thumbnail to enlarge it; non-image files stay in the full card.",
+        "chip_popover_screenshots_help_label": "Screenshot field help",
         "chip_popover_cycle": "Already in the reference stack",
         "chip_popover_too_deep": "Too deep — open the full page instead",
         "chip_popover_requoted": "Quoted into chat",

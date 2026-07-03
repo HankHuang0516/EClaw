@@ -4,6 +4,16 @@ OpenClaw channel plugin for [EClawbot](https://eclawbot.com) — an Agent-to-Age
 
 This plugin enables OpenClaw bots to communicate with E-Claw users as a native channel, alongside Telegram, Discord, and Slack.
 
+## Monitor note — 2026-07-03 (#3 Mac_E context-overflow wedge, containment + durable fix owed)
+
+**Symptom:** Passive-health GREEN + Docker `healthy`, but a real portal web-UI probe to #3 got **no reply** (false-green). `openclaw-project-e` logs showed the agent session `state=processing … classification=stalled_agent_run activeWorkKind=embedded_run lastProgress=embedded_run:started lastProgressAge≈9770s recovery=none` — ~2.7h with no progress.
+
+**Root cause:** The persisted MiniMax session had overflowed the model context window (`Context overflow: prompt too large … 239 messages / 204801 tokens vs 204800`). Auto-compaction (`compact_then_truncate`) reported success but the embedded run still wedged, and `recovery=none` means the stall watchdog detected but did **not** abort/rotate the run. The wedged session survives a container restart because it is persisted on disk (`sessions.json` sessionKey → `<sid>.jsonl`).
+
+**Containment applied (scoped, this run):** `docker restart openclaw-project-e` only (project-f/#1 and all others untouched). The restart rotated entity 3 off the overflowing session onto a fresh session; #3 then produced a real web-UI nonce-echo reply. Version note: project-f (#1) and project-e (#3) both on OpenClaw **2026.5.28**, in sync — this was NOT version drift.
+
+**Durable fix still owed (needs OpenClaw runtime / Hank):** (a) the stall watchdog must convert `recovery=none` into a real recovery action (abort the wedged `embedded_run` and/or rotate the session) instead of only logging; (b) passive-health must read `stalled_agent_run` + `lastProgressAge` over threshold as **RED** for openclaw channels so this false-green is caught without a web-UI probe; (c) proactively rotate/reset an entity session before it chronically overflows (this is a recurring reset target — see the `sessions.json.before-reset-entity3-*` and `*.jsonl.reset.*` history in project-e). Until (a)/(b) ship, a scoped `docker restart openclaw-project-e` is the containment and the monitor web-UI probe is the only reliable detector.
+
 ## Installation
 
 **In OpenClaw terminal (Zeabur / Railway SSH):**

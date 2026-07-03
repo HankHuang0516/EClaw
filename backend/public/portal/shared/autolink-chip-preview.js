@@ -187,10 +187,18 @@
             && /^image\//i.test(String(f.mimeType || f.mime_type || '')));
         if (!images.length) return '';
         const label = t('chip_popover_screenshots', '📸 截圖');
-        // TODO(#6): attach the "?" spec-tooltip icon here (right of the section
-        // label), reusing the portal's existing help-icon pattern. Backend/data
-        // is ready; only the tooltip affordance is #6's (UI) piece. Marker id
-        // below so #6 can target it without re-deriving the DOM shape.
+        const helpText = t(
+            'chip_popover_screenshots_help',
+            'Image attachments from this card appear here. Click a thumbnail to enlarge it; non-image files stay in the full card.'
+        );
+        const helpLabel = t('chip_popover_screenshots_help_label', 'Screenshot field help');
+        const helpIconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+        const helpIcon = '<span class="help-icon chip-popover-shots-help"'
+            + ' data-help-content-key="chip_popover_screenshots_help"'
+            + ' data-help-content="' + escapeHtml(helpText) + '"'
+            + ' tabindex="0" role="button" aria-label="' + escapeHtml(helpLabel) + '">'
+            + helpIconSvg
+            + '</span>';
         const thumbs = images.map(f => {
             const url = escapeHtml(f.url);
             const name = escapeHtml(f.filename || 'screenshot');
@@ -201,7 +209,7 @@
         }).join('');
         return '<div class="chip-popover-shots">'
             + '<div class="chip-popover-shots-label" data-chip-help-anchor="screenshots">'
-            + escapeHtml(label) + ' <span class="chip-popover-shots-count">' + images.length + '</span></div>'
+            + escapeHtml(label) + ' <span class="chip-popover-shots-count">' + images.length + '</span>' + helpIcon + '</div>'
             + '<div class="chip-popover-thumbs">' + thumbs + '</div>'
             + '</div>';
     }

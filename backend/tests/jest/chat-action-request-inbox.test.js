@@ -155,6 +155,8 @@ describe('需要你 inbox collapse + lifecycle hardening (card_b176c435)', () =>
         expect(chatHtml).toContain("metaText.className = 'action-request-meta-text';");
         expect(chatHtml).toMatch(/\.action-request-meta-text\s*\{[\s\S]*min-width:\s*0[\s\S]*overflow-wrap:\s*anywhere/);
         expect(chatHtml).toMatch(/\.action-request-option, \.action-request-action\s*\{[\s\S]*max-width:\s*100%[\s\S]*white-space:\s*normal[\s\S]*overflow-wrap:\s*anywhere/);
+        expect(chatHtml).toMatch(/\.action-request-inbox-filter\s*\{[\s\S]*min-width:\s*0[\s\S]*max-width:\s*100%/);
+        expect(chatHtml).toMatch(/\.action-request-inbox-filter \.filter-chip\s*\{[\s\S]*min-width:\s*0[\s\S]*max-width:\s*100%[\s\S]*box-sizing:\s*border-box[\s\S]*overflow:\s*hidden[\s\S]*text-overflow:\s*ellipsis/);
         expect(chatHtml).toMatch(/\.action-request-evidence-chip\s*\{[\s\S]*max-width:\s*100%[\s\S]*min-width:\s*0/);
         expect(chatHtml).toMatch(/\.action-request-evidence-chip \.ar-chip-label\s*\{[\s\S]*min-width:\s*0[\s\S]*text-overflow:\s*ellipsis/);
         expect(chatHtml).toMatch(/\.action-request-ratify-title\s*\{[\s\S]*min-width:\s*0[\s\S]*overflow-wrap:\s*anywhere/);

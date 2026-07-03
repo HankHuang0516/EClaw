@@ -84,6 +84,9 @@ describe('chip popover screenshot-thumbnail block', () => {
         expect(html).toContain('https://cdn.example/two.jpg');
         // count badge reflects the number of screenshots
         expect(html).toMatch(/chip-popover-shots-count">2</);
+        expect(html).toMatch(/help-icon chip-popover-shots-help/);
+        expect(html).toMatch(/data-help-content-key="chip_popover_screenshots_help"/);
+        expect(html).toMatch(/aria-label="Screenshot field help"/);
     });
 
     test('renders nothing when the card has no image files', () => {
@@ -124,7 +127,7 @@ describe('chip popover screenshot-thumbnail block', () => {
         expect(html).toContain('&quot;');                  // payload quotes encoded
         // Every emitted tag is one of ours (div/span/a/img) — no injected tag.
         const tags = (html.match(/<([a-zA-Z][a-zA-Z0-9]*)/g) || []).map(s => s.slice(1).toLowerCase());
-        expect(tags.every(tg => ['div', 'span', 'a', 'img'].includes(tg))).toBe(true);
+        expect(tags.every(tg => ['div', 'span', 'a', 'img', 'svg', 'circle', 'path', 'line'].includes(tg))).toBe(true);
     });
 
     test('skips files that lack a usable url', () => {
@@ -148,7 +151,10 @@ describe('chip popover render wiring (source-text guard)', () => {
         expect(CHIP_SRC).toMatch(/window\.openLightbox/);
     });
 
-    test('leaves a TODO marker for #6 to attach the ? spec-tooltip icon', () => {
-        expect(CHIP_SRC).toMatch(/TODO\(#6\)/);
+    test('renders the ? spec-tooltip help icon instead of leaving the affordance as a TODO', () => {
+        const body = extractFunction(CHIP_SRC, 'buildScreenshotBlockHtml');
+        expect(body).toMatch(/chip-popover-shots-help/);
+        expect(body).toMatch(/data-help-content-key="chip_popover_screenshots_help"/);
+        expect(body).not.toMatch(/TODO\(#6\)/);
     });
 });

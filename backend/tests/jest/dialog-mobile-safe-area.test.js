@@ -6,11 +6,14 @@
  *
  * The shared showConfirm() dialog becomes a bottom-sheet on mobile
  * (`@media (max-width: 768px)`, `.dialog-overlay{align-items:flex-end}`), so its
- * bottommost element — the destructive primary action — sits flush against the
- * screen bottom. Without `env(safe-area-inset-bottom)` padding it overlaps the
- * iPhone home-indicator / Android gesture bar on notched devices. Playwright's
- * 0px-inset headless viewport cannot catch this, so this static CSS guard keeps
- * the fix from silently regressing.
+ * bottommost element sits flush against the screen bottom. Without
+ * `env(safe-area-inset-bottom)` padding it overlaps the iPhone home-indicator /
+ * Android gesture bar on notched devices. Playwright's 0px-inset headless viewport
+ * cannot catch this, so this static CSS guard keeps the fix from silently
+ * regressing.
+ *
+ * P3 follow-up: when actions stack vertically on mobile, destructive buttons must
+ * render above Cancel so the bottom thumb zone contains the safe action.
  */
 'use strict';
 
@@ -34,5 +37,12 @@ describe('mobile destructive bottom-sheet — safe-area-inset-bottom guard', () 
         expect(dialogRule).not.toBe('');
         // floor at the normal 16px, grow to the device safe-area inset
         expect(dialogRule).toMatch(/padding-bottom:\s*max\(\s*16px\s*,\s*env\(safe-area-inset-bottom\)\s*\)/);
+    });
+
+    test('mobile destructive actions render above Cancel, not under it', () => {
+        const seg = css.split(MARKER)[1] || '';
+        const dangerOrderRule = (seg.match(/\.dialog-actions\s+\.btn-danger\s*\{[^}]*\}/) || [''])[0];
+        expect(dangerOrderRule).not.toBe('');
+        expect(dangerOrderRule).toMatch(/order:\s*-1\b/);
     });
 });
