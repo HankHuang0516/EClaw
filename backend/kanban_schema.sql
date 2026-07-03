@@ -68,6 +68,16 @@ ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_screenshot_review BOO
 -- Bypass: flip to FALSE via PUT /card/:id for trivial dep-bumps / doc renames.
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_preflight_review BOOLEAN DEFAULT TRUE;
 
+-- Per-card PR-link opt-in (2026-07-03, owner directive "PR link 是 option 且默認不阻擋"):
+-- when TRUE, the done-gate additionally requires the evidence comment to cite a
+-- https://github.com/<owner>/<repo>/pull/<N> link. DEFAULT FALSE = NOT blocking, so
+-- by default no card needs a PR link at done. Set at card creation via
+-- POST /card {requirePrLink} or later via PUT /card/:id/config {requirePrLink};
+-- also settable on automation母卡 (parent cron cards). Supersedes the old
+-- automation-only PR-link exemption — everything is exempt by default, opting in
+-- turns enforcement on. Automation/ops cards stay exempt even when opted in.
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_pr_link BOOLEAN DEFAULT FALSE;
+
 -- Backlog launch-gate (2026-05-20): when gated=true, L1/L2/L3 staleness escalation
 -- skips this card so launch-pending drafts don't auto-bounce backlog→blocked.
 -- App layer auto-resets gated=false on any status change out of backlog.

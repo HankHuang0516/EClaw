@@ -1069,6 +1069,9 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             reviewerEntityId: row.reviewer_entity_id != null ? parseInt(row.reviewer_entity_id) : null,
             requiresScreenshotReview: row.requires_screenshot_review !== false,
             requiresPreflightReview: row.requires_preflight_review !== false,
+            // Per-card PR-link opt-in (owner directive 2026-07-03). Defaults FALSE
+            // (not blocking); only when TRUE does the done-gate require a PR link.
+            requirePrLink: row.requires_pr_link === true,
             gated: !!row.gated,
             gateReason: row.gate_reason || null,
             reopenedAt: row.reopened_at ? new Date(row.reopened_at).getTime() : null,
@@ -1165,7 +1168,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         // from req.body alone meant a query-cred caller (deviceId not in body) passed auth
         // then bound NULL device_id into the INSERT → "null value in column device_id ...
         // violates not-null constraint" 500 on card create.
-        const { deviceId, title, description, priority, status, assignedBots, entityId, reviewerEntityId, isAutomation, schedule, requiresScreenshotReview, chatAnchorMessageId, chatAnchorCoord, dispatchMode } = { ...req.query, ...req.body };
+        const { deviceId, title, description, priority, status, assignedBots, entityId, reviewerEntityId, isAutomation, schedule, requiresScreenshotReview, requirePrLink, chatAnchorMessageId, chatAnchorCoord, dispatchMode } = { ...req.query, ...req.body };
 
         if (!deviceId) {
             return res.status(400).json({ success: false, error: 'Missing deviceId' });
@@ -1287,6 +1290,11 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             ? false  // Default to disabled for all new cards
             : requiresScreenshotReview !== false;
 
+        // Per-card PR-link opt-in for the done-gate (owner directive 2026-07-03).
+        // DEFAULT false (not blocking) — only an explicit truthy requirePrLink at
+        // create time turns done-gate PR-link enforcement on for this card.
+        const finalRequirePrLink = requirePrLink === true || requirePrLink === 'true';
+
         // Validate dispatch mode
         const finalDispatchMode = (dispatchMode === 'idle_only') ? 'idle_only' : 'immediate';
 
@@ -1341,16 +1349,16 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 `INSERT INTO kanban_cards (id, device_id, title, description, priority, status, assigned_bots, created_by, reviewer_entity_id, status_changed_at,
                     is_automation, schedule_enabled, schedule_type, schedule_cron, schedule_run_at, schedule_timezone, schedule_next_run_at, requires_screenshot_review,
                     chat_anchor_message_id, chat_anchor_coord, dispatch_mode,
-                    schedule_skip_if_5h_pct_over, schedule_skip_if_7d_pct_over)
+                    schedule_skip_if_5h_pct_over, schedule_skip_if_7d_pct_over, requires_pr_link)
                  VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, NOW(),
                     $10, $11, $12, $13, $14, $15, $16, $17,
                     $18, $19::jsonb, $20,
-                    $21, $22)
+                    $21, $22, $23)
                  RETURNING *`,
                 [newCardId(), deviceId, title.trim(), finalDescription, cardPriority, cardStatus, JSON.stringify(bots), createdBy, reviewer,
                     finalAutomation, schedEnabled, schedType, schedCron, schedRunAt, schedTz, schedNextRunAt, finalRequiresScreenshot,
                     anchorMsgId, anchorCoord ? JSON.stringify(anchorCoord) : null, finalDispatchMode,
-                    schedSkip5h, schedSkip7d]
+                    schedSkip5h, schedSkip7d, finalRequirePrLink]
             );
 
             const card = serializeCard(result.rows[0]);
@@ -2532,9 +2540,15 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     files: filesRes.rows,
                     severity: (card.priority || 'P2'),
                     painTags,
-                    // Automation / ops cards (scheduled automation母卡 or a
-                    // cron-spawned [Auto] child) have no PR to cite — exempt them
-                    // from the PR-link sub-check (6-item checklist still enforced).
+                    // Per-card PR-link opt-in (owner directive 2026-07-03). The
+                    // PR-link sub-check enforces ONLY when this card explicitly
+                    // opted in (requires_pr_link=true, set at create or via
+                    // PUT /card/:id/config). DEFAULT false → PR link NOT required.
+                    requirePrLink: card.requires_pr_link === true,
+                    // Redundant safety exemption: automation / ops cards (scheduled
+                    // automation母卡 or a cron-spawned [Auto] child) have no PR to
+                    // cite, so they skip the PR-link sub-check even if opted in.
+                    // The 6-item evidence checklist is always enforced.
                     isAutomation: card.is_automation === true || card.is_auto_generated === true,
                 });
                 if (!verdict.allowed) {
@@ -3283,7 +3297,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     router.put('/card/:id/config', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] PUT /card/:id/config called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, staleThresholdMs, doneRetentionMs, isAutomation } = req.body;
+        const { deviceId, staleThresholdMs, doneRetentionMs, isAutomation, requirePrLink } = req.body;
         const cardId = req.params.id;
 
         try {
@@ -3311,6 +3325,14 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 updates.push(`is_automation = $${paramIdx++}`);
                 params.push(!!isAutomation);
                 console.log(`[Kanban] Config: set is_automation=${!!isAutomation} for card ${cardId}`);
+            }
+            // Per-card PR-link opt-in for the done-gate (owner directive 2026-07-03).
+            // Settable/updatable here — including on automation母卡. Default (never
+            // set) is FALSE = not blocking; flip TRUE to make done require a PR link.
+            if (requirePrLink !== undefined) {
+                updates.push(`requires_pr_link = $${paramIdx++}`);
+                params.push(!!requirePrLink);
+                console.log(`[Kanban] Config: set requires_pr_link=${!!requirePrLink} for card ${cardId}`);
             }
 
             if (updates.length === 0) {
