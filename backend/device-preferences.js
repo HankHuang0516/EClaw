@@ -111,6 +111,16 @@ const DEFAULTS = {
     //   before it is treated as stale and ignored (the evaluator then falls back
     //   to lastSend / kanban-floor heuristics). Default 45; clamped [5, 600].
     entity_runtime_state_stale_seconds: 45,
+    // Waiting-state surfacer (phases 2-3 of card_76b073959c279d6204d9fd42).
+    // DARK-LAUNCH: DEFAULT FALSE. When true, the kanban worker's stale-scan pass
+    // also runs a "waiting-state surfacer" that auto-opens a 需要你 inbox item for
+    // every card genuinely WAITING ON THE OWNER (blocked with an owner-only
+    // reason / review + ownerOnly / explicit config.waitingOn='owner' /
+    // in_progress with an explicit [await-owner] marker), and auto-dismisses that
+    // item when the wait clears. Strictly de-duplicated (≤1 surfacer item/card).
+    // Until explicitly enabled, the surfacer is a complete no-op — nothing
+    // changes for anyone. Consumed by surfaceOwnerWaitingStates in kanban.js.
+    waiting_state_surfacer_enabled: false,
 };
 
 const ENTITY_IDLE_AFTER_SECONDS_MIN = 15;
@@ -159,9 +169,12 @@ function coerceValue(key, raw) {
     // (a bare `!!raw` would coerce the string 'false' to true — wrong for an API
     // that may serialize the flag as a query/JSON string).
     if (key === 'kanban_auto_escalate_enabled' || key === 'kanban_auto_escalate_skip_automation'
-        || key === 'action_request_ratify_enabled') {
+        || key === 'action_request_ratify_enabled' || key === 'waiting_state_surfacer_enabled') {
         // 計畫E: ratify master switch — same string-safe boolean coercion (a bare
         // `!!raw` would turn the string 'false' true, fail-OPEN for an auto-merge gate).
+        // waiting_state_surfacer_enabled is dark-launch DEFAULT FALSE: the string
+        // 'false' must stay false so an accidental serialized flag never flips the
+        // inbox-flood risk open.
         return raw === true || raw === 'true';
     }
     if (typeof def === 'boolean') return !!raw;
