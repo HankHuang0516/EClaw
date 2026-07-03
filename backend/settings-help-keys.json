@@ -35,6 +35,11 @@
       "help_key": "action_request_timeout_policy_help"
     },
     {
+      "field_key": "action_request_reply_resize",
+      "label_key": "action_request_reply_resize_label",
+      "help_key": "action_request_reply_resize_help"
+    },
+    {
       "field_key": "consensus_min_entities",
       "label_key": "consensus_min_entities_label",
       "help_key": "consensus_min_entities_help"
