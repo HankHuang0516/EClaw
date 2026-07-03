@@ -159,7 +159,9 @@ describe('evaluateDoneGate v2 — artifact requirements', () => {
 describe('evaluateDoneGate v2 — PR link requirement', () => {
     const baseFiles = [{ filename: 'jest.txt', mime_type: 'text/plain', created_at: '2026-06-07T03:00:00Z' }];
 
-    test('rejected when no github.com pull/N link in evidence', () => {
+    // 2026-07-03: PR link is now a per-card opt-in that defaults OFF — pass
+    // requirePrLink:true to exercise the enforced-when-opted-in path.
+    test('rejected when opted-in (requirePrLink) but no github.com pull/N link in evidence', () => {
         const v = evaluateDoneGate({
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true,
@@ -170,6 +172,7 @@ describe('evaluateDoneGate v2 — PR link requirement', () => {
                 mkComment(evidence({ pr: false }), { isSystem: false, t: '2026-06-07T02:00:00Z' }),
             ],
             files: baseFiles,
+            requirePrLink: true,
         });
         expect(v.allowed).toBe(false);
         expect(v.missingItems).toEqual(['PR link']);
@@ -399,13 +402,14 @@ describe('evaluateDoneGate v2 — evidence comment selection (card_4c3a75bc)', (
         expect(v.allowed).toBe(true);
     });
 
-    test('still fails when NO complete comment carries a PR link', () => {
+    test('opted-in: still fails when NO complete comment carries a PR link', () => {
         const v = evaluateDoneGate({
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true,
             severity: 'P2', painTags: ['task_context'],
             comments: [preflight, completeNoPr],
             files: [jest],
+            requirePrLink: true,
         });
         expect(v.allowed).toBe(false);
         expect(v.missingItems).toEqual(['PR link']);

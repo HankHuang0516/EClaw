@@ -60,11 +60,19 @@ const UI_PAIN_TAGS = Object.freeze(['ux_feedback', 'redirect_deeplink', 'deliver
  * @property {boolean} [isUiCard]            explicit override; if undefined, painTags is inspected
  * @property {string[]} [painTags]           used to infer isUiCard when not passed
  * @property {boolean} [strictArtifacts]     default true when severity/files provided; false otherwise
+ * @property {boolean} [requirePrLink]       per-card opt-in for the PR-link sub-check. DEFAULT false
+ *                                           (NOT blocking) — owner directive 2026-07-03: "PR link 是
+ *                                           option 且默認不阻擋". The PR-link requirement is enforced
+ *                                           ONLY when this is explicitly TRUE (set at card creation via
+ *                                           POST /card {requirePrLink} or later via PUT /card/:id/config).
+ *                                           This SUPERSEDES the isAutomation-only exemption: by default
+ *                                           NO card needs a PR link at done; opting in turns it on.
  * @property {boolean} [isAutomation]        automation / ops card (scheduled cron母卡 is_automation OR
- *                                           cron-spawned [Auto] child is_auto_generated). Pure operations
- *                                           (health checks, audits, scheduled automations) have no PR, so
- *                                           the PR-link sub-requirement is SKIPPED for these cards. The
- *                                           6-item evidence checklist is still enforced.
+ *                                           cron-spawned [Auto] child is_auto_generated). Kept as a
+ *                                           redundant safety exemption: even if a card opts in with
+ *                                           requirePrLink=true, automation/ops cards (which have no PR)
+ *                                           still skip the PR-link sub-check. The 6-item evidence
+ *                                           checklist is always enforced regardless of either flag.
  */
 
 /**
@@ -181,15 +189,20 @@ function evaluateDoneGate(input) {
     // v1 path: text-only, allow now.
     if (!useV2) return { allowed: true };
 
-    // 3. v2 — PR link in evidence (severity-tier independent: always required),
-    // EXCEPT for automation / ops cards. Scheduled automations, health-check
-    // sweeps and audit crons (is_automation母卡 OR is_auto_generated [Auto] child)
-    // are pure operations with NO code change → no PR to cite. Requiring a PR link
-    // blocked every ops card and forced a manual requiresPreflightReview:false. The
+    // 3. v2 — PR link in evidence. Owner directive 2026-07-03: this is now a
+    // PER-CARD OPT-IN that DEFAULTS OFF ("PR link 是 option 且默認不阻擋").
+    // The PR-link sub-check blocks ONLY when the card explicitly opted in with
+    // requirePrLink === true (set at create via POST /card {requirePrLink} or
+    // later via PUT /card/:id/config). By default (false/undefined) NO card
+    // needs a PR link at done. This generalises & supersedes the old
+    // automation-only exemption: everything is exempt by default, and opting in
+    // is what turns enforcement on. isAutomation is KEPT as a redundant safety —
+    // automation / ops cards (is_automation母卡 OR is_auto_generated [Auto] child)
+    // have no PR to cite, so they skip the check even if they opted in. The
     // 6-item evidence checklist above (Scope/Acceptance/Test plan/Evidence plan/
-    // Out-of-scope/User POV) is STILL enforced for them — only this PR-link
-    // sub-check is skipped. Non-automation cards are unchanged.
-    if (!input.isAutomation && !PR_LINK_PATTERN.test(evidenceComment.text)) {
+    // Out-of-scope/User POV) is STILL enforced regardless of requirePrLink.
+    const prLinkRequired = input.requirePrLink === true && !input.isAutomation;
+    if (prLinkRequired && !PR_LINK_PATTERN.test(evidenceComment.text)) {
         return {
             allowed: false,
             code: 'PREFLIGHT_GATE_FAILED',

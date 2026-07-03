@@ -55,7 +55,14 @@ function baseComments(evidenceOpts) {
 const jestLog = [mkFile('jest_out.txt', 'text/plain')];
 
 describe('done-gate — automation/ops PR-link exemption', () => {
-    test('(a) automation card with 6 items but NO PR link → ALLOWED', () => {
+    // NOTE (2026-07-03 owner directive): PR-link enforcement is now a per-card
+    // opt-in (requirePrLink) that DEFAULTS OFF. These automation-exemption tests
+    // therefore pass requirePrLink:true to exercise the "opted-in but still exempt
+    // because automation" path — the load-bearing rule that keeps ops cards free of
+    // the PR-link requirement even when a board opts everything in. The
+    // isAutomation exemption is kept as a REDUNDANT safety layer on top of the
+    // default-off requirePrLink behavior (covered in the per-card test file).
+    test('(a) automation card OPTED-IN with 6 items but NO PR link → ALLOWED (automation still exempt)', () => {
         const v = evaluateDoneGate({
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true,
@@ -63,12 +70,13 @@ describe('done-gate — automation/ops PR-link exemption', () => {
             painTags: ['task_context'],
             comments: baseComments({ pr: false }),
             files: jestLog,
+            requirePrLink: true,
             isAutomation: true,
         });
         expect(v.allowed).toBe(true);
     });
 
-    test('(b) NON-automation card with 6 items but no PR link → BLOCKED on PR link', () => {
+    test('(b) NON-automation card OPTED-IN with 6 items but no PR link → BLOCKED on PR link', () => {
         const v = evaluateDoneGate({
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true,
@@ -76,6 +84,7 @@ describe('done-gate — automation/ops PR-link exemption', () => {
             painTags: ['task_context'],
             comments: baseComments({ pr: false }),
             files: jestLog,
+            requirePrLink: true,
             isAutomation: false,
         });
         expect(v.allowed).toBe(false);
@@ -83,7 +92,7 @@ describe('done-gate — automation/ops PR-link exemption', () => {
         expect(v.missingItems).toEqual(['PR link']);
     });
 
-    test('(b2) omitting isAutomation entirely is treated as non-automation → still needs PR link', () => {
+    test('(b2) opted-in, omitting isAutomation entirely is treated as non-automation → still needs PR link', () => {
         const v = evaluateDoneGate({
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true,
@@ -91,6 +100,7 @@ describe('done-gate — automation/ops PR-link exemption', () => {
             painTags: ['task_context'],
             comments: baseComments({ pr: false }),
             files: jestLog,
+            requirePrLink: true,
             // isAutomation not passed
         });
         expect(v.allowed).toBe(false);
@@ -105,6 +115,7 @@ describe('done-gate — automation/ops PR-link exemption', () => {
             painTags: ['task_context'],
             comments: baseComments({ pr: false, drop: 'Test plan' }),
             files: jestLog,
+            requirePrLink: true,
             isAutomation: true,
         });
         expect(v.allowed).toBe(false);
@@ -120,6 +131,7 @@ describe('done-gate — automation/ops PR-link exemption', () => {
             painTags: ['task_context'],
             comments: baseComments({ pr: true }),
             files: jestLog,
+            requirePrLink: true,
             isAutomation: true,
         });
         expect(v.allowed).toBe(true);

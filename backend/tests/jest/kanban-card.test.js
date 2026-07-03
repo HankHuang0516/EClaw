@@ -323,6 +323,96 @@ describe('POST /card — assignedBots validation', () => {
 });
 
 // ════════════════════════════════════════════════════════════════
+// POST /card + PUT /card/:id/config — per-card requirePrLink option
+// (owner directive 2026-07-03: PR link is opt-in, default off)
+// ════════════════════════════════════════════════════════════════
+describe('requirePrLink per-card option', () => {
+    const anchor = 'aaaaaaaa-1111-2222-3333-444444444444';
+
+    function insertCall() {
+        return mockQuery.mock.calls.find(c => /INSERT INTO kanban_cards/.test(c[0]));
+    }
+    function configUpdateCall() {
+        return mockQuery.mock.calls.find(c => /UPDATE kanban_cards SET/.test(c[0]) && /requires_pr_link/.test(c[0]));
+    }
+
+    it('POST /card persists requires_pr_link=true when requirePrLink:true', async () => {
+        const res = await post('/api/mission/card').send({
+            ...AUTH, title: 'Opt-in card', assignedBots: [0],
+            chatAnchorMessageId: anchor, requirePrLink: true,
+        });
+        expect(res.status).not.toBe(400);
+        const call = insertCall();
+        const idx = columnParamIndex(call[0], 'requires_pr_link');
+        expect(idx).toBeGreaterThanOrEqual(0);
+        expect(call[1][idx]).toBe(true);
+    });
+
+    it('POST /card defaults requires_pr_link=false when option absent', async () => {
+        const res = await post('/api/mission/card').send({
+            ...AUTH, title: 'Default card', assignedBots: [0],
+            chatAnchorMessageId: anchor,
+        });
+        expect(res.status).not.toBe(400);
+        const call = insertCall();
+        const idx = columnParamIndex(call[0], 'requires_pr_link');
+        expect(idx).toBeGreaterThanOrEqual(0);
+        expect(call[1][idx]).toBe(false);
+    });
+
+    it('POST /card treats non-true value as false (only === true / "true" opts in)', async () => {
+        const res = await post('/api/mission/card').send({
+            ...AUTH, title: 'Weird value', assignedBots: [0],
+            chatAnchorMessageId: anchor, requirePrLink: 0,
+        });
+        expect(res.status).not.toBe(400);
+        const call = insertCall();
+        const idx = columnParamIndex(call[0], 'requires_pr_link');
+        expect(call[1][idx]).toBe(false);
+    });
+
+    it('PUT /card/:id/config accepts requirePrLink:true and writes requires_pr_link', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{
+                id: 'card-x', device_id: 'test-dev', title: 'C',
+                priority: 'P2', status: 'todo', assigned_bots: [0],
+                created_by: 0, requires_pr_link: true,
+                created_at: new Date(), updated_at: new Date(),
+                status_changed_at: new Date(), archived: false,
+            }],
+        });
+        const res = await put('/api/mission/card/card-x/config').send({
+            ...AUTH, requirePrLink: true,
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.card.requirePrLink).toBe(true);
+        const call = configUpdateCall();
+        expect(call).toBeTruthy();
+        // the boolean param is coerced via !!requirePrLink
+        expect(call[1]).toContain(true);
+    });
+
+    it('PUT /card/:id/config accepts requirePrLink:false to turn enforcement off', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{
+                id: 'card-y', device_id: 'test-dev', title: 'C',
+                priority: 'P2', status: 'todo', assigned_bots: [0],
+                created_by: 0, requires_pr_link: false,
+                created_at: new Date(), updated_at: new Date(),
+                status_changed_at: new Date(), archived: false,
+            }],
+        });
+        const res = await put('/api/mission/card/card-y/config').send({
+            ...AUTH, requirePrLink: false,
+        });
+        expect(res.status).toBe(200);
+        const call = configUpdateCall();
+        expect(call).toBeTruthy();
+        expect(call[0]).toMatch(/requires_pr_link\s*=\s*\$\d+/);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
 // PUT /card/:id — Update rejects empty assignedBots
 // ════════════════════════════════════════════════════════════════
 describe('PUT /card/:id — assignedBots validation', () => {
