@@ -383,6 +383,14 @@
             background: rgba(127,127,127,0.10); border: 1px solid var(--card-border, #333355);
             grid-template-columns: minmax(0, 1fr);
             box-sizing: border-box; min-width: 0; max-width: 100%; overflow: hidden;
+            /* Items live in a flex-column, max-height, overflow-y:auto inbox body.
+               With the default flex-shrink:1 a tall item (e.g. a decision with a
+               long prompt + options + reply previews) gets COMPRESSED to fit the
+               body, then overflow:hidden clips its lower content — so nothing
+               overflows the body and it never scrolls (card_*: owner couldn't
+               scroll the 需要你 inbox to read a tall item). flex-shrink:0 keeps
+               each item at its natural height so the body overflows → scrolls. */
+            flex-shrink: 0;
         }
         .action-request-item > * { min-width: 0; max-width: 100%; }
         .action-request-meta { overflow-wrap: anywhere; }
