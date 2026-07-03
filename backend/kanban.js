@@ -3850,11 +3850,11 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
             if (escalationAllowed) {
                 if (elapsedMs >= blockAfterMs && card.status !== 'blocked' && sinceLast > intervalMs) {
-                    await fireBlockEscalation(card, filterNudgeStoppedRecipients(buildEscalationRecipients(card)));
+                    await fireBlockEscalation(card, filterNudgeStoppedRecipients(await buildEscalationRecipients(card)));
                     continue;
                 }
                 if (elapsedMs >= escalateAfterMs && sinceLast > intervalMs) {
-                    const fired = await fireLevelTwoEscalation(card, filterNudgeStoppedRecipients(buildEscalationRecipients(card)));
+                    const fired = await fireLevelTwoEscalation(card, filterNudgeStoppedRecipients(await buildEscalationRecipients(card)));
                     if (fired) continue;
                 }
             }
@@ -3987,14 +3987,66 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         }
     }
 
-    function buildEscalationRecipients(card) {
+    // Commander-class entities, ordered by preference (#2 commander, then #1
+    // deputy). Mirrors REOPEN_SUPERVISOR_ENTITY_IDS — the platform already treats
+    // #1/#2 as supervisors. Used as the fallback escalation target when no reviewer
+    // is set and no org chart is configured.
+    const ESCALATION_SUPERVISOR_ENTITY_IDS = [2, 1];
+
+    /**
+     * Resolve the supervisor an escalation should also reach, so a stuck
+     * subordinate's card doesn't just re-nudge the STUCK assignee forever with no
+     * commander ever intervening (card_3ce0080a). Preference:
+     *   1. org-chart superior of the (first) assignee, if a hierarchy is configured
+     *   2. fallback: a bound commander-class entity (#2 then #1) that isn't itself
+     *      an assignee
+     * Returns an entity id (number) or null. Never returns an assignee.
+     */
+    async function resolveEscalationSupervisor(card, bots) {
+        const assignees = new Set(bots.map(Number));
+        // (1) org-chart superior
+        if (orgChart && bots.length > 0) {
+            try {
+                const orgData = await orgChart.getOrgChart(card.device_id);
+                const sup = orgData && orgData.hierarchy
+                    ? orgChart.getSuperior(orgData.hierarchy, Number(bots[0]))
+                    : null;
+                if (typeof sup === 'number' && !assignees.has(sup)) {
+                    const device = devices[card.device_id];
+                    if (device && device.entities && device.entities[sup] && device.entities[sup].isBound) {
+                        return sup;
+                    }
+                }
+            } catch (err) {
+                // non-fatal: fall through to the commander fallback
+                if (serverLog) serverLog('warn', 'kanban', `[Escalation] org-chart superior lookup failed: ${err.message}`, { deviceId: card.device_id });
+            }
+        }
+        // (2) commander-class fallback
+        const device = devices[card.device_id];
+        if (device && device.entities) {
+            for (const cid of ESCALATION_SUPERVISOR_ENTITY_IDS) {
+                if (assignees.has(cid)) continue;
+                if (device.entities[cid] && device.entities[cid].isBound) return cid;
+            }
+        }
+        return null;
+    }
+
+    async function buildEscalationRecipients(card) {
         const config = card.config || {};
         const esc = config.escalationPolicy || {};
         const notifyEntityId = esc.notifyEntityId || card.reviewer_entity_id;
         const bots = Array.isArray(card.assigned_bots) ? card.assigned_bots : [];
+        // Supervisor visibility (card_3ce0080a): without this, a card whose
+        // reviewer_entity_id is null escalates ONLY to its assignees, so a blocked
+        // subordinate's card re-nudges the stuck bot indefinitely and burns its
+        // tokens with no commander in the loop. Add a resolved supervisor to L2/L3/
+        // P0 escalation recipients (not routine L1 nudges).
+        const supervisorId = await resolveEscalationSupervisor(card, bots);
         const seen = new Set();
         const out = [];
-        for (const id of [notifyEntityId, ...bots]) {
+        for (const id of [notifyEntityId, supervisorId, ...bots]) {
             if (id == null) continue;
             const key = String(id);
             if (seen.has(key)) continue;
@@ -4006,7 +4058,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
     async function fireBlockEscalation(card, recipientIds = null) {
         const elapsedHrs = Math.round((Date.now() - new Date(card.status_changed_at).getTime()) / 3600000 * 10) / 10;
-        const recipients = Array.isArray(recipientIds) ? recipientIds : buildEscalationRecipients(card);
+        const recipients = Array.isArray(recipientIds) ? recipientIds : await buildEscalationRecipients(card);
         // Severity gate (card_22ab8c3b path #2, sibling of PR #3564):
         // P0 cards are "fix now, supervisor's attention". Auto-moving them to
         // `blocked` hides them from the active board and clears the in_progress
@@ -4045,7 +4097,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
     async function fireLevelTwoEscalation(card, recipientIds = null) {
         const elapsedHrs = Math.round((Date.now() - new Date(card.status_changed_at).getTime()) / 3600000 * 10) / 10;
-        const recipients = Array.isArray(recipientIds) ? recipientIds : buildEscalationRecipients(card);
+        const recipients = Array.isArray(recipientIds) ? recipientIds : await buildEscalationRecipients(card);
         // Severity gate (card_22ab8c3b path #2): P3 cards in `backlog` are
         // design-first drafts awaiting launch — they sit there on purpose and
         // must NOT be silently bumped to P2 by clock alone. Skip L2; the L1
