@@ -1288,6 +1288,19 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Avatar Emoji Fallback Fix**: Card-holder my-cards emoji fallback + exam wrong-entity avatar (#3856)
 - **Avatar onerror Fix**: `renderAvatarHtml` URL branch had no onerror → broken images across ~10 portal pages (#3857)
 - **Mission Note Undo Toast**: Single-note delete gets an undo toast (parity with bulk) (#3858)
+- **Kanban Deep-Link Fix**: Deep-link opens out-of-slice cards (#3863)
+- **Stale Escalation Supervisor Fix**: Stale-card escalations reach supervisor, not only stuck assignee (#3864)
+- **Destructive Confirm Thumb Zone**: Keep destructive Confirm out of phone thumb zone (#3865)
+- **需要你 Inbox Scroll Fix**: Inbox scrolls tall items; owner couldn't scroll to read (#3866)
+- **Task-Load Census**: Task-load census in stale nudges (#3867)
+- **Waiting-State Surfacer**: Inbox waiting-state surfacer (dark-launch, default off) (#3868)
+- **需要你 Mobile Full-Screen**: Inbox opens as full-screen scrollable overlay on mobile (#3869)
+- **Done-Gate Automation Exempt**: Exempt automation/ops cards from PR-link requirement (#3870)
+- **Commander-Forward Fallback**: Commander-forward fallback routing (dark-launch, default off) (#3871)
+- **Done-Gate PR-Link Opt-In**: PR-link enforcement is per-card opt-in option (default off) (#3872)
+- **AI Chat Resize Grip**: Resizable AI chat panel with grip + saved size (#3873-#3876)
+- **Card Holder Avatar Enrichment**: Enrichment falls to descriptor/petdx-sprite before emoji (#3877)
+- **Routing Heartbeat Filter**: Drop low-signal heartbeats on direct b2b deliver path (#3878)
 
 ### Recent Features (v1.1190.x+, 2026-06-28 – 2026-06-29)
 
@@ -1336,7 +1349,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~5911 test cases across 421 Jest files + 59 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~5994 test cases across 431 Jest files + 79 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
