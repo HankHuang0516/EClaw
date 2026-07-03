@@ -4130,6 +4130,56 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         return true;
     }
 
+    /**
+     * Build a compact one-line "task-load census" for a single entity — how many
+     * OPEN cards it is currently an assignee on, grouped by status, plus the age
+     * of its oldest open card. Prepended to stale nudges (waiting-state awareness,
+     * owner Hank) so the recipient agent is always reminded of its TOTAL
+     * outstanding workload, not just the one card being nudged. Backend-enforced:
+     * the server computes and injects this, the agent doesn't have to remember.
+     *
+     * Returns '' when the entity has no open cards (so the caller emits no census
+     * line) or on any DB error — a census failure must never break the nudge.
+     */
+    async function buildEntityTaskCensus(deviceId, entityId) {
+        try {
+            // Open statuses only — exclude done/backlog/archived (mirrors the
+            // census columns below). assigned_bots is a jsonb array of entity
+            // ids; `@> to_jsonb($n::int)` is the containment filter used
+            // elsewhere in this file (e.g. lines ~4296/4529).
+            const res = await pool.query(
+                `SELECT status, status_changed_at
+                   FROM kanban_cards
+                  WHERE device_id = $1
+                    AND archived = false
+                    AND status IN ('todo','in_progress','review','blocked')
+                    AND assigned_bots @> to_jsonb($2::int)`,
+                [deviceId, Number(entityId)]
+            );
+            const counts = { todo: 0, in_progress: 0, review: 0, blocked: 0 };
+            let oldest = null;
+            for (const row of res.rows) {
+                if (counts[row.status] === undefined) continue;
+                counts[row.status]++;
+                if (row.status_changed_at) {
+                    const t = new Date(row.status_changed_at).getTime();
+                    if (!Number.isNaN(t) && (oldest === null || t < oldest)) oldest = t;
+                }
+            }
+            const total = counts.todo + counts.in_progress + counts.review + counts.blocked;
+            if (total === 0) return '';
+            let staleSeg = '';
+            if (oldest !== null) {
+                const hrs = Math.round((Date.now() - oldest) / 3600000 * 10) / 10;
+                staleSeg = `｜最舊停留${hrs}h`;
+            }
+            return `【#${entityId} 未完成｜待辦${counts.todo}·進行中${counts.in_progress}·審查${counts.review}·封鎖${counts.blocked}${staleSeg}】收到請先盤點：完成的移 done、卡住的升級`;
+        } catch (err) {
+            if (serverLog) serverLog('warn', 'kanban', `[Census] task-load census failed for #${entityId}: ${err.message}`, { deviceId });
+            return '';
+        }
+    }
+
     async function fireLevelOneNudge(card, recipientIds = null) {
         const bots = Array.isArray(recipientIds) ? recipientIds : (card.assigned_bots || []);
         const cardStatusLabel = STATUS_LABELS[card.status] || card.status;
@@ -4149,7 +4199,15 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 status: statusLabel(lang, card.status),
                 hours: elapsedHrs
             });
-            notifyEntities(card.device_id, bots, msg, { description: card.description, cardId: card.id });
+            // Personalize per recipient: each bot gets a census of ITS OWN open
+            // cards prepended, so notifyEntities is called once per bot. If the
+            // census is empty (no open cards / query error) send msg alone with
+            // no stray leading newline.
+            for (const bid of bots) {
+                const censusLine = await buildEntityTaskCensus(card.device_id, bid);
+                const finalMsg = censusLine ? (censusLine + '\n' + msg) : msg;
+                notifyEntities(card.device_id, [bid], finalMsg, { description: card.description, cardId: card.id });
+            }
             await recordEntityNudge(card.device_id, bots);
         }
         console.log(`[Kanban] Nudged card ${card.id} (${card.title}) — ${elapsedHrs}h in ${card.status}`);

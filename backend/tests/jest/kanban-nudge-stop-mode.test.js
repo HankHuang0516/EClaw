@@ -70,7 +70,10 @@ describe('kanban nudge stop-mode preferences', () => {
         const l3 = extractFunctionBody(kanbanSrc, 'async function fireBlockEscalation(card, recipientIds = null)');
 
         expect(l1).toMatch(/const bots = Array\.isArray\(recipientIds\) \? recipientIds : \(card\.assigned_bots \|\| \[\]\)/);
-        expect(l1).toMatch(/notifyEntities\(card\.device_id, bots/);
+        // fireLevelOneNudge now notifies PER-BOT so it can prepend a per-entity
+        // task-load census (feat/kanban-nudge-task-census) — the notify target is
+        // a single-id array [bid] inside a loop, not the whole `bots` list.
+        expect(l1).toMatch(/notifyEntities\(card\.device_id, \[bid\], finalMsg/);
         expect(l1).toMatch(/recordEntityNudge\(card\.device_id, bots\)/);
         expect(l2).toMatch(/const recipients = Array\.isArray\(recipientIds\) \? recipientIds : await buildEscalationRecipients\(card\)/);
         expect(l3).toMatch(/const recipients = Array\.isArray\(recipientIds\) \? recipientIds : await buildEscalationRecipients\(card\)/);
