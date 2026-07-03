@@ -4216,6 +4216,7 @@
     <script src="shared/entity-status-panel.js"></script>
     <script src="shared/chat-source-category.js"></script>
     <script src="../shared/filter-summary.js"></script>
+    <script src="shared/resize-grip.js"></script>
     <script src="shared/mention-autocomplete.js"></script>
     <script src="shared/mention-resolver.js"></script>
     <script src="shared/mention-render.js"></script>
@@ -4271,6 +4272,12 @@
         let actionRequestRatifyEnabled = false;
         let actionRequestRatifyGraceMinutes = RATIFY_DEFAULT_GRACE_MINUTES;
         let _ratifyCountdownTicker = null;
+        // 需要你 reply-input drag-to-resize grip (card_c44c318). DEFAULT-ON: an unset
+        // pref enables the grip (Hank asked default-enable, pending #6 design sign-off);
+        // only an explicit `false` disables it → mirrors device-preferences.js
+        // action_request_reply_resize_enabled coercion. renderReplyPreviews() reads
+        // this flag at render time to decide whether to attach EclawResizeGrip.
+        let actionRequestReplyResizeEnabled = true;
 
         // ── Ops status strip (card_59f41e5b): suppression transparency + b2b countdown.
         // Read-only owner-facing surface; declared early to avoid TDZ from the socket
@@ -4424,6 +4431,11 @@
             actionRequestRatifyGraceMinutes = (Number.isFinite(ratifyGrace) && ratifyGrace > 0)
                 ? ratifyGrace
                 : RATIFY_DEFAULT_GRACE_MINUTES;
+            // Reply-resize grip (card_c44c318): DEFAULT-ON, only an explicit false opts out.
+            actionRequestReplyResizeEnabled = prefs.action_request_reply_resize_enabled !== false;
+            // A live pref flip (socket/settings) should retroactively add/remove grips
+            // on any reply chips already on screen.
+            if (typeof renderReplyPreviews === 'function' && replyContexts.length) renderReplyPreviews();
         }
 
         async function loadChatAvatarSizePreference() {
@@ -8498,6 +8510,28 @@
                     ans.setAttribute('aria-label', (rc.senderName || 'Needs you') + (zhLang ? ' 的回覆' : ' answer'));
                     ans.addEventListener('input', (e) => { rc.answerText = e.target.value; });
                     chip.appendChild(ans);
+                    // 需要你 reply drag-to-resize grip (card_c44c318): when the pref is
+                    // ON, attach a bottom-edge handle so the tiny rows=1 answer box can be
+                    // dragged/keyboard-resized taller. Shared storageKey 'ar-reply' → one
+                    // saved height applies to the reply input generally (not per-requestId),
+                    // so a size the user picks once carries across inbox items. Clamp
+                    // ~1.6em(min)..50vh(max). When the pref is OFF, no grip is attached and
+                    // the textarea keeps its native `resize:vertical` fallback behavior.
+                    if (actionRequestReplyResizeEnabled && window.EclawResizeGrip && typeof window.EclawResizeGrip.attach === 'function') {
+                        try {
+                            window.EclawResizeGrip.attach({
+                                el: ans,
+                                mount: chip,
+                                storageKey: 'ar-reply',
+                                axis: 'vertical',
+                                min: { height: 26 },          // ~1.6em floor, matches CSS min-height
+                                max: { heightVh: 50 },        // never taller than half the viewport
+                                step: 24,
+                                getEnabled: () => actionRequestReplyResizeEnabled,
+                                ariaLabel: zhLang ? '拖曳或用方向鍵調整回覆框高度' : 'Drag or use arrow keys to resize the reply box',
+                            });
+                        } catch (_) { /* grip is a progressive enhancement — never block the reply UI */ }
+                    }
                 }
                 list.appendChild(chip);
             });

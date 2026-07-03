@@ -1454,6 +1454,39 @@ a:hover { text-decoration: underline; }
 .ai-chat-resize-grip:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .ai-chat-resize-disabled .ai-chat-resize-grip { display: none; }
 
+/* ── Reusable resize grip (shared/resize-grip.js, card_c44c318) ──────────────
+   A drag/keyboard handle that lives BELOW the element it resizes. Visual reuse
+   of the AI-chat grip affordance (#6 design; pending #6 sign-off). First used on
+   the 需要你 reply textarea .reply-preview-chip-answer. The default axis is
+   'vertical' → the handle reads as a bottom edge (row-resize cursor, a wide
+   short bar), unlike the AI-chat corner grip. */
+.eclaw-resize-grip {
+    display: block;
+    width: 100%;
+    height: 12px;
+    margin-top: 1px;
+    cursor: ns-resize;
+    touch-action: none;      /* let the drag own the gesture (no page scroll steal) */
+    position: relative;
+    flex: 1 1 100%;          /* sit on its own row inside the flex-wrap reply chip */
+}
+.eclaw-resize-grip::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 34px;
+    height: 4px;
+    border-radius: 3px;
+    background: var(--text-muted);
+    opacity: 0.6;
+}
+.eclaw-resize-grip:hover::before,
+.eclaw-resize-grip:focus-visible::before { background: var(--primary); opacity: 1; }
+.eclaw-resize-grip:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 3px; }
+.eclaw-resize-grip-disabled { display: none; }
+
 .ai-chat-messages {
     flex: 1;
     overflow-y: auto;

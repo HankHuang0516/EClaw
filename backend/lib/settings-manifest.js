@@ -246,6 +246,20 @@ const FEATURES = [
                     validation: { required: false },
                 },
                 {
+                    // 需要你 reply-input drag-to-resize grip (card_c44c318). DEFAULT-ON.
+                    key: 'action_request_reply_resize_enabled',
+                    type: 'boolean',
+                    control: 'switch',
+                    label: { i18n: 'action_request_reply_resize_label', fallback: 'Resizable reply box' },
+                    help: {
+                        i18n: 'action_request_reply_resize_desc',
+                        fallback: 'Add a drag/keyboard handle to the Needs-you reply box so you can make it taller. Default is on.',
+                    },
+                    scope: 'device',
+                    default: true,
+                    validation: { required: false },
+                },
+                {
                     key: 'action_request_timeout_policy',
                     type: 'enum',
                     control: 'select',
