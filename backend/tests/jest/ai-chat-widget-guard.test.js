@@ -95,6 +95,14 @@ describe('AI Chat Widget WebView Guard (#419)', () => {
         expect(code).toMatch(/resizeEnabled/);
     });
 
+    test('ai-chat.js keeps CSS responsive sizing until a window size is saved', () => {
+        const code = fs.readFileSync(AI_CHAT_JS, 'utf-8');
+        expect(code).toMatch(/function applyPanelSize/);
+        expect(code).toMatch(/panel\.style\.width\s*=\s*''/);
+        expect(code).toMatch(/panel\.style\.height\s*=\s*''/);
+        expect(code).toMatch(/const size = clampPanelSize\(windowState\.width, windowState\.height\)/);
+    });
+
     test('ai-chat resize CSS includes desktop grip and disable/mobile fallback', () => {
         const css = fs.readFileSync(STYLE_CSS, 'utf-8');
         expect(css).toMatch(/\.ai-chat-resize-grip\s*\{/);
