@@ -24,6 +24,7 @@
     const DEFAULT_PANEL_SIZE = { width: 380, height: 520 };
     const MIN_PANEL_SIZE = { width: 300, height: 360 };
     const PANEL_VIEWPORT_MARGIN = 16;
+    const COMPACT_PANEL_BREAKPOINT = 640;
 
     let chatHistory = [];
     let isOpen = false;
@@ -103,9 +104,14 @@
         };
     }
 
+    function isCompactPanelViewport() {
+        if (window.matchMedia && window.matchMedia(`(max-width: ${COMPACT_PANEL_BREAKPOINT}px)`).matches) return true;
+        return (window.innerWidth || 0) <= COMPACT_PANEL_BREAKPOINT;
+    }
+
     function applyPanelSize(panel) {
         if (!panel) return;
-        if (!Number.isFinite(Number(windowState.width)) || !Number.isFinite(Number(windowState.height))) {
+        if (isCompactPanelViewport() || !Number.isFinite(Number(windowState.width)) || !Number.isFinite(Number(windowState.height))) {
             panel.style.width = '';
             panel.style.height = '';
             return;

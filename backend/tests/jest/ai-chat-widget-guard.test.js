@@ -89,6 +89,7 @@ describe('AI Chat Widget WebView Guard (#419)', () => {
         expect(code).toMatch(/WINDOW_STATE_KEY\s*=\s*'eclaw_ai_chat_window_state_v1'/);
         expect(code).toMatch(/function getWindowStateId/);
         expect(code).toMatch(/function setupPanelWindowControls/);
+        expect(code).toMatch(/function isCompactPanelViewport/);
         expect(code).toMatch(/ai-chat-resize-toggle-btn/);
         expect(code).toMatch(/ai-chat-resize-grip/);
         expect(code).toMatch(/pointerdown/);
@@ -100,6 +101,7 @@ describe('AI Chat Widget WebView Guard (#419)', () => {
         expect(code).toMatch(/function applyPanelSize/);
         expect(code).toMatch(/panel\.style\.width\s*=\s*''/);
         expect(code).toMatch(/panel\.style\.height\s*=\s*''/);
+        expect(code).toMatch(/isCompactPanelViewport\(\)\s*\|\|/);
         expect(code).toMatch(/const size = clampPanelSize\(windowState\.width, windowState\.height\)/);
     });
 
