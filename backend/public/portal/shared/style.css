@@ -1406,6 +1406,7 @@ a:hover { text-decoration: underline; }
 .ai-chat-header-icon { font-size: 20px; }
 .ai-chat-header-title { font-size: 15px; font-weight: 700; }
 .ai-chat-header-right { display: flex; gap: 4px; }
+.ai-chat-resize-toggle-btn,
 .ai-chat-clear-btn,
 .ai-chat-close-btn {
     background: none;
@@ -1417,8 +1418,41 @@ a:hover { text-decoration: underline; }
     border-radius: 4px;
     transition: background 0.15s;
 }
+.ai-chat-resize-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.ai-chat-resize-toggle-btn[aria-pressed="true"] { color: var(--primary); }
 .ai-chat-clear-btn:hover,
-.ai-chat-close-btn:hover { background: var(--card-border); color: var(--text); }
+.ai-chat-close-btn:hover,
+.ai-chat-resize-toggle-btn:hover { background: var(--card-border); color: var(--text); }
+
+.ai-chat-resize-grip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 22px;
+    height: 22px;
+    cursor: nwse-resize;
+    touch-action: none;
+    z-index: 1;
+}
+.ai-chat-resize-grip::before {
+    content: "";
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 10px;
+    height: 10px;
+    border-top: 2px solid var(--text-muted);
+    border-left: 2px solid var(--text-muted);
+    opacity: 0.7;
+}
+.ai-chat-resize-grip:hover::before,
+.ai-chat-resize-grip:focus-visible::before { border-color: var(--primary); opacity: 1; }
+.ai-chat-resize-grip:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.ai-chat-resize-disabled .ai-chat-resize-grip { display: none; }
 
 .ai-chat-messages {
     flex: 1;
@@ -1544,6 +1578,8 @@ a:hover { text-decoration: underline; }
 @media (max-width: 640px) {
     .ai-chat-panel { width: calc(100vw - 16px); height: calc(100vh - 80px); bottom: 8px; right: 8px; }
     .ai-chat-fab { bottom: 16px; right: 16px; width: 50px; height: 50px; }
+    .ai-chat-resize-grip,
+    .ai-chat-resize-toggle-btn { display: none; }
 }
 
 /* ── Help Popover ───────────────────────────────────────────────────────────── */
