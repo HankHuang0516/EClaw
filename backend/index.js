@@ -7690,14 +7690,51 @@ async function clearPetdxVaultForEntity(deviceId, entityId, callContext = 'unbin
     }
 }
 
+function isPetdxSpriteProxyUrl(url) {
+    return typeof url === 'string' && /\/api\/petdx\/[a-z0-9][a-z0-9-]{0,128}\/sprite\.(webp|png)(\?|$)/i.test(url);
+}
+
+function petdxDescriptorAvatarUrl(row) {
+    let descriptor = row && row.descriptor;
+    if (!descriptor) return null;
+    if (typeof descriptor === 'string') {
+        try { descriptor = JSON.parse(descriptor); } catch (_) { return null; }
+    }
+    if (typeof descriptor !== 'object') return null;
+    const candidates = [
+        descriptor.avatarUrl,
+        descriptor.avatar && descriptor.avatar.url,
+        descriptor.descriptor && descriptor.descriptor.avatar && descriptor.descriptor.avatar.url,
+    ];
+    for (const c of candidates) {
+        if (typeof c === 'string' && c.trim()) return c.trim();
+    }
+    return null;
+}
+
+function resolvePetdxSelectionAvatarUrl(row, companionId) {
+    if (row && typeof row.avatar_url === 'string' && row.avatar_url.trim()) {
+        return row.avatar_url.trim();
+    }
+    const descriptorUrl = petdxDescriptorAvatarUrl(row);
+    if (descriptorUrl) return descriptorUrl;
+    if (row && row.asset_type === 'spritesheet'
+        && typeof row.asset_url === 'string'
+        && isPetdxSpriteProxyUrl(row.asset_url)) {
+        return row.asset_url.trim();
+    }
+    return `/static/companions/${companionId}/avatar.png`;
+}
+
 // PR-B: read the per-entity companion enrichment straight from the DB source of
 // truth (companion_select_log latest row per entity, JOIN companions for the
 // live avatar) instead of the retired PETDX_CURRENT_/PETDX_AVATAR_ vault mirror.
 // Output shape is unchanged: Map<entityId, {petdxCompanionId, petdxAvatarUrl}>.
-// petdxAvatarUrl prefers the live companions.avatar_url and falls back to the
-// /static/companions/<id>/avatar.png shape the vault used to cache. Tombstoned
-// (origin='unbind-cleared') entities are excluded so a freshly-unbound slot
-// shows no stale companion.
+// petdxAvatarUrl prefers companions.avatar_url, then descriptor avatar URL, then
+// the same-origin /api/petdx sprite URL for crop-aware rendering. The legacy
+// /static/companions/<id>/avatar.png convention remains as the final Phase-0
+// fallback. Tombstoned (origin='unbind-cleared') entities are excluded so a
+// freshly-unbound slot shows no stale companion.
 async function getPetdxEntityEnrichmentMap(deviceId) {
     const out = new Map();
     if (!deviceId) return out;
@@ -7705,7 +7742,8 @@ async function getPetdxEntityEnrichmentMap(deviceId) {
     try {
         const res = await chatPool.query(
             `SELECT DISTINCT ON (l.entity_id)
-                    l.entity_id, l.companion_id, l.origin, c.avatar_url
+                    l.entity_id, l.companion_id, l.origin,
+                    c.avatar_url, c.asset_type, c.asset_url, c.descriptor
                FROM companion_select_log l
                LEFT JOIN companions c ON c.id = l.companion_id
               WHERE l.device_id = $1 AND l.entity_id IS NOT NULL
@@ -7718,9 +7756,7 @@ async function getPetdxEntityEnrichmentMap(deviceId) {
             if (!Number.isFinite(entityId)) continue;
             const companionId = r.companion_id;
             if (!companionId) continue;
-            const avatarUrl = (typeof r.avatar_url === 'string' && r.avatar_url.trim())
-                ? r.avatar_url
-                : `/static/companions/${companionId}/avatar.png`;
+            const avatarUrl = resolvePetdxSelectionAvatarUrl(r, companionId);
             out.set(entityId, { petdxCompanionId: companionId, petdxAvatarUrl: avatarUrl });
         }
     } catch (err) {

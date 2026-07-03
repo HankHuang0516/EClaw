@@ -1,9 +1,9 @@
 /**
  * PR-B regression: /api/entities enrichment reads companion selections from
  * the companion_select_log source of truth (joined to companions for the live
- * avatar_url), NOT the retired PETDX_CURRENT_/PETDX_AVATAR_<id> device-vars
- * vault mirror. The portal resolver still receives petdxCompanionId +
- * petdxAvatarUrl on each entity payload.
+ * avatar_url/asset_url), NOT the retired PETDX_CURRENT_/PETDX_AVATAR_<id>
+ * device-vars vault mirror. The portal resolver still receives
+ * petdxCompanionId + petdxAvatarUrl on each entity payload.
  */
 
 const fs = require('fs');
@@ -25,14 +25,20 @@ describe('/api/entities petdx enrichment', () => {
         expect(helper).toMatch(/DISTINCT ON \(l\.entity_id\)/);
         expect(helper).toMatch(/FROM companion_select_log l/);
         expect(helper).toMatch(/LEFT JOIN companions c ON c\.id = l\.companion_id/);
+        expect(helper).toMatch(/c\.avatar_url,\s*c\.asset_type,\s*c\.asset_url,\s*c\.descriptor/);
         // No vault decrypt path remains.
         expect(helper).not.toMatch(/decryptVars/);
         expect(helper).not.toMatch(/db\.getDeviceVars/);
     });
 
-    it('skips tombstoned selections and falls back to the static avatar path', () => {
+    it('skips tombstoned selections and resolves a displayable avatar URL', () => {
         expect(helper).toMatch(/if \(r\.origin === PETDX_TOMBSTONE_ORIGIN\) continue/);
-        expect(helper).toMatch(/\/static\/companions\/\$\{companionId\}\/avatar\.png/);
+        expect(src).toMatch(/function resolvePetdxSelectionAvatarUrl/);
+        expect(src).toMatch(/function petdxDescriptorAvatarUrl/);
+        expect(src).toMatch(/function isPetdxSpriteProxyUrl/);
+        expect(src).toMatch(/asset_type === 'spritesheet'/);
+        expect(src).toMatch(/isPetdxSpriteProxyUrl\(row\.asset_url\)/);
+        expect(src).toMatch(/\/static\/companions\/\$\{companionId\}\/avatar\.png/);
         expect(helper).toMatch(/petdxCompanionId: companionId, petdxAvatarUrl: avatarUrl/);
     });
 
