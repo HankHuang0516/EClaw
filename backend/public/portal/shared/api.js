@@ -264,7 +264,7 @@ function _eclawEnsureDialogAnimStyle() {
     document.head.appendChild(style);
 }
 
-function showConfirm({ message, title, confirmText, cancelText, danger, itemName } = {}) {
+function showConfirm({ message, title, confirmText, cancelText, danger, itemName, confirmPhrase } = {}) {
     // Dev-time hint: destructive confirms should name the item so a fast-clicking user can
     // verify what's about to be destroyed. Localhost / dev hosts only; silent in production.
     const _isDevHost = typeof window !== 'undefined' && window.location
@@ -296,24 +296,47 @@ function showConfirm({ message, title, confirmText, cancelText, danger, itemName
         const itemStrip = (danger && itemName)
             ? `<div class="eclaw-confirm-item" style="margin:8px 0 0;padding:8px 12px;background:var(--bg-secondary, rgba(0,0,0,0.04));border-left:3px solid var(--danger, #e53e3e);border-radius:4px;font-weight:600;color:var(--text);word-break:break-word">${_escHtml(itemName)}</div>`
             : '';
+        // Typed-confirmation gate: when confirmPhrase is set, render an input and keep the
+        // Confirm button disabled until the user types the exact phrase (trimmed). Raises the
+        // friction for the highest-severity irreversible actions (e.g. account deletion) so a
+        // single tap can never commit them. See card_5abe811.
+        const needsPhrase = typeof confirmPhrase === 'string' && confirmPhrase.trim().length > 0;
+        const phrase = needsPhrase ? confirmPhrase.trim() : '';
+        const phraseInputId = `eclaw-confirm-phrase-${dialogId}`;
+        const phraseLabel = needsPhrase ? t('dialog_type_to_confirm', 'Type {phrase} to confirm').replace('{phrase}', phrase) : '';
+        const phraseBlock = needsPhrase
+            ? `<div class="eclaw-confirm-phrase" style="margin:12px 0 0">
+                 <label for="${phraseInputId}" style="display:block;margin:0 0 6px;font-size:13px;color:var(--text-secondary)">${_escHtml(phraseLabel)}</label>
+                 <input id="${phraseInputId}" type="text" class="eclaw-confirm-phrase-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="${_escAttr(phraseLabel)}" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border, #ccc);border-radius:6px;font-size:15px;background:var(--bg, #fff);color:var(--text)">
+               </div>`
+            : '';
         overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog${danger ? ' eclaw-confirm-danger' : ''}" ${dialogAria} ${_ECLAW_DIALOG_SHADOW_STYLE}>
             ${title ? `<div class="dialog-title" id="${titleId}">${_escHtml(title)}</div>` : ''}
-            <div class="dialog-body"><p id="${messageId}" style="margin:0;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p>${itemStrip}</div>
+            <div class="dialog-body"><p id="${messageId}" style="margin:0;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p>${itemStrip}${phraseBlock}</div>
             <div class="dialog-actions">
                 <button type="button" class="btn btn-outline eclaw-confirm-cancel"${danger && !cancelText ? ` aria-label="${_escAttr(t('dialog_cancel_aria', 'Cancel, keep current state'))}"` : ''}>${_escHtml(cancelText || t('dialog_cancel', 'Cancel'))}</button>
-                <button type="button" class="btn ${danger ? 'btn-danger' : 'btn-primary'} eclaw-confirm-ok"${danger && !confirmText ? ` aria-label="${_escAttr(t('dialog_confirm_destructive', 'Confirm destructive action'))}"` : ''}>${danger ? '<span class="eclaw-confirm-danger-glyph" aria-hidden="true">⚠ </span>' : ''}${_escHtml(confirmText || (danger ? t('dialog_confirm', 'Confirm') : t('dialog_ok', 'OK')))}</button>
+                <button type="button" class="btn ${danger ? 'btn-danger' : 'btn-primary'} eclaw-confirm-ok"${needsPhrase ? ' disabled aria-disabled="true"' : ''}${danger && !confirmText ? ` aria-label="${_escAttr(t('dialog_confirm_destructive', 'Confirm destructive action'))}"` : ''}>${danger ? '<span class="eclaw-confirm-danger-glyph" aria-hidden="true">⚠ </span>' : ''}${_escHtml(confirmText || (danger ? t('dialog_confirm', 'Confirm') : t('dialog_ok', 'OK')))}</button>
             </div>
         </div>`;
         _eclawEnsureDialogAnimStyle();
         document.body.appendChild(overlay);
         _eclawLockBodyScroll();
         const cleanup = (result) => { document.removeEventListener('keydown', _keyHandler, true); overlay.remove(); _eclawUnlockBodyScroll(); resolve(result); };
-        // Safe default focus: when danger=true, focus Cancel so a stray
-        // Enter / Space does not commit the destructive action. Matches the
-        // Material Design and Apple HIG guidance for destructive confirms.
+        const okBtn = overlay.querySelector('.eclaw-confirm-ok');
+        const phraseInput = needsPhrase ? overlay.querySelector('.eclaw-confirm-phrase-input') : null;
+        const phraseMatches = () => !needsPhrase || (phraseInput && phraseInput.value.trim() === phrase);
+        if (needsPhrase) {
+            const sync = () => { okBtn.disabled = !phraseMatches(); okBtn.setAttribute('aria-disabled', String(okBtn.disabled)); };
+            phraseInput.addEventListener('input', sync);
+            sync();
+        }
+        // Safe default focus: with a typed-confirm gate, focus the input so the user types
+        // immediately (Confirm stays disabled until the phrase matches, so this can't commit
+        // by accident). Otherwise, when danger=true focus Cancel so a stray Enter/Space does
+        // not commit — matches Material Design and Apple HIG guidance for destructive confirms.
         const safeBtnSel = danger ? '.eclaw-confirm-cancel' : '.eclaw-confirm-ok';
-        overlay.querySelector(safeBtnSel).focus();
-        overlay.querySelector('.eclaw-confirm-ok').addEventListener('click', () => cleanup(true));
+        (needsPhrase ? phraseInput : overlay.querySelector(safeBtnSel)).focus();
+        okBtn.addEventListener('click', () => { if (!okBtn.disabled) cleanup(true); });
         overlay.querySelector('.eclaw-confirm-cancel').addEventListener('click', () => cleanup(false));
         // Backdrop-tap dismiss: only allowed when NOT destructive. iOS HIG forbids
         // scrim-dismiss on .alert-style modals because the backdrop is ~80% of a
@@ -332,24 +355,38 @@ function showConfirm({ message, title, confirmText, cancelText, danger, itemName
             // on Cancel or anywhere else — including the safe default focus — a
             // stray Enter still cancels.
             if (e.key === 'Enter') {
-                if (!danger) {
+                if (needsPhrase && document.activeElement === phraseInput) {
+                    // Enter while typing the confirmation phrase: commit only when it matches;
+                    // otherwise swallow it so it can neither submit a stray form nor cancel.
+                    e.preventDefault();
+                    if (phraseMatches()) cleanup(true);
+                } else if (!danger) {
                     cleanup(true);
                 } else if (document.activeElement !== overlay.querySelector('.eclaw-confirm-ok')) {
                     cleanup(false);
                 }
-                // danger + Confirm focused → native button activation confirms
+                // danger + Confirm focused → native button activation confirms (no-op if disabled)
             }
-            // Focus trap: keep Tab / Shift+Tab cycling among the two buttons so
-            // focus cannot escape onto background elements while the modal is
-            // open. Cancel is the first tabbable, OK is the last.
+            // Focus trap: keep Tab / Shift+Tab cycling among the dialog's focusable controls
+            // so focus cannot escape onto background elements. Cancel is the first tabbable and
+            // OK the last; when a typed-confirm gate adds an input, it joins the cycle before
+            // Cancel and a still-disabled OK is skipped.
             if (e.key === 'Tab') {
                 const cancel = overlay.querySelector('.eclaw-confirm-cancel');
                 const ok = overlay.querySelector('.eclaw-confirm-ok');
                 const active = document.activeElement;
-                if (e.shiftKey && active === cancel) { e.preventDefault(); ok.focus(); }
-                else if (!e.shiftKey && active === ok) { e.preventDefault(); cancel.focus(); }
-                // Focus escaped the dialog (scrim click / programmatic blur): pull it back in.
-                else if (active !== cancel && active !== ok) { e.preventDefault(); cancel.focus(); }
+                if (needsPhrase && phraseInput) {
+                    const seq = [phraseInput, cancel, ok].filter(el => el && !el.disabled);
+                    const first = seq[0], last = seq[seq.length - 1];
+                    if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); }
+                    else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+                    else if (!seq.includes(active)) { e.preventDefault(); first.focus(); }
+                } else {
+                    if (e.shiftKey && active === cancel) { e.preventDefault(); ok.focus(); }
+                    else if (!e.shiftKey && active === ok) { e.preventDefault(); cancel.focus(); }
+                    // Focus escaped the dialog (scrim click / programmatic blur): pull it back in.
+                    else if (active !== cancel && active !== ok) { e.preventDefault(); cancel.focus(); }
+                }
             }
         };
         // Document-level capture so the dialog's key handling keeps working even

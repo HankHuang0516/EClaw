@@ -238,6 +238,21 @@
                 updateDeleteBtn();
                 return;
             }
+            // Final typed-confirmation gate (card_5abe811): account deletion is the single most
+            // irreversible action in the product (wipes the account + all data), so it must not
+            // be committable by one tap. Require the user to type DELETE. Fail-safe: if the shared
+            // dialog helper is unavailable, fall through to the original readiness-checkbox gate.
+            if (typeof showConfirm === 'function') {
+                const warn = (document.getElementById('deleteWarning')?.textContent || '').trim();
+                const confirmed = await showConfirm({
+                    danger: true,
+                    title: i18n.t('delete_account_title'),
+                    message: warn || i18n.t('delete_account_ready_enabled'),
+                    confirmPhrase: 'DELETE',
+                    confirmText: i18n.t('delete_account_btn')
+                });
+                if (!confirmed) return;
+            }
             const btn = document.getElementById('deleteBtn');
             btn.disabled = true;
             btn.setAttribute('aria-disabled', 'true');
