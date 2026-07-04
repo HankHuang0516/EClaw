@@ -1424,6 +1424,26 @@
     /* ══════ Load ══════ */
     // Default: merge rental listings + community bots in one grid.
     // "出租" filter narrows to rental-only; other filters narrow to community-only.
+    function normalizeCommunityCapabilities(raw) {
+        const labelFor = (value, fallback) => {
+            if (value == null || value === false) return '';
+            if (typeof value === 'string' || typeof value === 'number') return String(value);
+            if (typeof value === 'object') return value.name || value.label || value.id || fallback || '';
+            return fallback || String(value);
+        };
+        if (Array.isArray(raw)) {
+            return raw.map(c => labelFor(c)).filter(Boolean);
+        }
+        if (raw && typeof raw === 'object') {
+            return Object.entries(raw)
+                .filter(([, value]) => !(value && typeof value === 'object' && value.supported === false))
+                .map(([key, value]) => labelFor(value, key))
+                .filter(Boolean);
+        }
+        const label = labelFor(raw);
+        return label ? [label] : [];
+    }
+
     async function loadBots() {
         const requestSeq = ++loadBotsRequestSeq;
         document.getElementById('loading').style.display = 'flex';
@@ -1442,7 +1462,7 @@
                     publicCode: r.publicCode, name: r.name || 'Unnamed',
                     avatar: resolveBotAvatar(r),
                     desc: r.description || '', tags: r.tags || [],
-                    caps: (r.capabilities || []).map(c => c.name || c.id || c),
+                    caps: normalizeCommunityCapabilities(r.capabilities),
                     stars: r.avgRating || 0, reviews: r.messageCount || 0,
                     level: r.level || 1, xp: r.xp || 0,
                     // Arena verified score (card_ad404375). Number fields only —
