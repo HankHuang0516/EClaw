@@ -2037,9 +2037,14 @@
             border: none; cursor: pointer; white-space: nowrap;
         }
         .msg-attachment-img {
-            max-width: 200px; max-height: 160px; border-radius: 8px;
-            display: block; cursor: pointer; object-fit: cover;
+            max-width: 220px; max-height: 220px; width: auto; height: auto;
+            border-radius: 10px; margin-top: 6px;
+            display: block; cursor: zoom-in; object-fit: contain;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.12);
         }
+        .chat-msg.received .msg-attachment-img { border-color: var(--card-border); }
+        .msg-attachment-img:hover { opacity: 0.92; }
         /* Compact chip — one-line strip used when an inline <video>/<audio>
            player already covers the same file, so the chip becomes a
            caption + download link instead of a full card. */
@@ -3585,6 +3590,7 @@
 
         /* ── Entity Preview Modal ── */
         #entityPreviewModal .modal-box {
+            position: relative;
             max-width: 600px;
             text-align: left;
             max-height: 80vh;
@@ -3596,7 +3602,24 @@
             align-items: center;
             margin-bottom: 16px;
             padding-bottom: 12px;
+            /* leave room so the requote 📌 / title never slide under the
+               absolutely-positioned corner close button */
+            padding-right: 44px;
             border-bottom: 1px solid var(--card-border);
+        }
+        /* Close (✕) pinned to the top-right corner of the whole chip container. */
+        #entityPreviewModal .entity-modal-close-corner {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            line-height: 1;
         }
         #entityPreviewModal .entity-modal-type {
             font-size: 11px;
@@ -4085,6 +4108,9 @@
     <!-- Entity Preview Modal (Card, Skill, Rule, Listing, etc.) -->
     <div class="modal-overlay" id="entityPreviewModal" data-entity-type="" data-entity-id="">
         <div class="modal-box">
+            <!-- Close (✕) pinned to the top-right corner of the whole chip so it
+                 never sits next to / gets obscured by the 📌 requote icon. -->
+            <button class="entity-modal-close entity-modal-close-corner" aria-label="Close" onclick="closeModal('entityPreviewModal')">&times;</button>
             <div class="entity-modal-header">
                 <div>
                     <div class="entity-modal-type" id="entityModalType"></div>
@@ -4093,7 +4119,6 @@
                 </div>
                 <div style="display:flex;gap:6px;align-items:flex-start">
                     <button class="entity-modal-close" id="entityModalRequoteBtn" data-i18n-title="chip_popover_requote" title="再引用到聊天" onclick="requoteFromEntityModal()" style="font-size:18px">📌</button>
-                    <button class="entity-modal-close" aria-label="Close" onclick="closeModal('entityPreviewModal')">&times;</button>
                 </div>
             </div>
             <div class="entity-modal-body" id="entityModalBody">
@@ -6758,6 +6783,15 @@
                         const editBtn = isTextEditableFilename(a.filename)
                             ? `<button class="msg-attachment-btn" data-i18n="file_edit_btn" onclick="event.stopPropagation();openFileEditor('${fileIdAttr}','${filenameAttr}')">&#x270F;&#xFE0F; ${i18n.t('file_edit_btn') || '線上編輯'}</button>`
                             : '';
+                        // Image attachments render as an inline thumbnail (not a
+                        // tappable file chip). The signed url is fetched lazily by
+                        // wireInlineMediaLazyLoad → assigned to .src, and tapping the
+                        // thumb opens the existing lightbox at full size.
+                        if (isImage) {
+                            return `<img class="msg-attachment-img" data-attachment-fileid="${fileIdAttr}"`
+                                + ` data-attachment-name="${filenameAttr}" alt="${filenameAttr}" loading="lazy"`
+                                + ` onclick="event.stopPropagation();openAttachmentImage(this)">`;
+                        }
                         let playerHtml = '';
                         if (isVideo) {
                             playerHtml = `<video class="chat-video chat-attachment-media" data-attachment-fileid="${fileIdAttr}" controls preload="metadata" onclick="event.stopPropagation();" style="max-width:300px;max-height:240px;border-radius:8px;display:block;margin-bottom:6px;background:#000;"></video>`;
@@ -7157,7 +7191,7 @@
         let _inlineMediaObserver = null;
         function wireInlineMediaLazyLoad(container) {
             if (!currentUser) return;
-            const players = container.querySelectorAll('video[data-attachment-fileid], audio[data-attachment-fileid]');
+            const players = container.querySelectorAll('video[data-attachment-fileid], audio[data-attachment-fileid], img[data-attachment-fileid]');
             if (!players.length) return;
 
             const loadOne = async (el) => {
@@ -7173,6 +7207,9 @@
                     const res = await fetch(`/api/files/${encodeURIComponent(fileId)}?${params}`);
                     const data = await res.json();
                     if (data && data.success && data.url) {
+                        // Stash the resolved url so a tap opens the lightbox at
+                        // full size without re-fetching a fresh signed url.
+                        el.dataset.resolvedUrl = data.url;
                         preserveChatScrollDuring(() => { el.src = data.url; }, { settle: true });
                     } else {
                         el.dataset.mediaLoaded = '';
@@ -11591,24 +11628,51 @@
             const filesList = (filesResp && Array.isArray(filesResp.files)) ? filesResp.files : [];
             const shots = filesList.filter(f => (f.mimeType || f.mime_type || '').startsWith('image/'));
             const gate = c.requiresScreenshotReview !== false;
+            // Show attached images in SOME surface no matter what: when the
+            // screenshot-review gate is on we keep the 截圖審查 banner + "尚無截圖"
+            // empty-state; when it's off we still render any attached images under
+            // a plain 附件 block so an attached image is never invisible.
             if (gate || shots.length > 0) {
-                const banner = gate
-                    ? `<div class="entity-ss-banner on">📸 此卡需截圖審查：${shots.length ? `已附 ${shots.length} 張` : '尚未附任何截圖，無法移到 review/done'}</div>`
-                    : '';
-                html += `<div class="entity-screenshots"><div class="entity-comments-header">📸 截圖審查</div>${banner}`;
-                if (shots.length === 0) {
-                    html += `<div class="entity-comments-empty">尚無截圖</div>`;
-                } else {
-                    html += `<div class="entity-ss-grid">` + shots.map(f => {
+                const gridHtml = shots.length
+                    ? `<div class="entity-ss-grid">` + shots.map(f => {
                         const u = escapeHtml(f.url);
                         const n = escapeHtml(f.filename || '');
                         return `<div class="entity-ss-thumb" data-url="${u}" data-name="${n}" onclick="openChatLightbox(this.dataset.url, this.dataset.name)"><img src="${u}" alt="${n}" loading="lazy"><div class="entity-ss-caption">${n}</div></div>`;
-                    }).join('') + `</div>`;
+                    }).join('') + `</div>`
+                    : '';
+                if (gate) {
+                    const banner = `<div class="entity-ss-banner on">📸 此卡需截圖審查：${shots.length ? `已附 ${shots.length} 張` : '尚未附任何截圖，無法移到 review/done'}</div>`;
+                    html += `<div class="entity-screenshots"><div class="entity-comments-header">📸 截圖審查</div>${banner}`;
+                    html += shots.length ? gridHtml : `<div class="entity-comments-empty">尚無截圖</div>`;
+                    html += `</div>`;
+                } else {
+                    // Gate off but the card carries images — surface them as 附件.
+                    html += `<div class="entity-screenshots"><div class="entity-comments-header">🖼️ 附件</div>${gridHtml}</div>`;
                 }
-                html += `</div>`;
             }
 
             return { title: c.title, id: c.id, html };
+        }
+
+        // Open an inline image attachment thumbnail in the lightbox. Prefers the
+        // already-resolved signed url (stashed by wireInlineMediaLazyLoad); falls
+        // back to fetching a fresh one if the thumb was tapped before hydration.
+        async function openAttachmentImage(imgEl) {
+            if (!imgEl) return;
+            const name = imgEl.dataset.attachmentName || imgEl.getAttribute('alt') || '';
+            const ready = imgEl.dataset.resolvedUrl || imgEl.src;
+            if (ready) { openChatLightbox(ready, name); return; }
+            const fileId = imgEl.dataset.attachmentFileid;
+            if (!fileId || !currentUser) return;
+            try {
+                const params = new URLSearchParams({ deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret });
+                const res = await fetch(`/api/files/${encodeURIComponent(fileId)}?${params}`);
+                const data = await res.json();
+                if (data && data.success && data.url) {
+                    imgEl.dataset.resolvedUrl = data.url;
+                    openChatLightbox(data.url, name);
+                }
+            } catch (e) { /* silent — thumb tap is best-effort */ }
         }
 
         function openChatLightbox(url, name) {
