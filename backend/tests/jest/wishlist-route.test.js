@@ -36,6 +36,18 @@ function appWith(opts = {}) {
 
 const DUMMY_KEY = 'DUMMY_KEY';
 
+// A caller-auth stub that accepts one specific botSecret and maps it to a
+// caller-owned publicCode. Everything else is unauthenticated (fail closed).
+function fakeAuth(publicCode, goodBotSecret = 'GOOD_SECRET') {
+    return async ({ botSecret }) =>
+        botSecret === goodBotSecret ? { ok: true, publicCode } : { ok: false };
+}
+const CALLER = {
+    deviceId: 'dev-1',
+    entityId: 2,
+    botSecret: 'GOOD_SECRET',
+};
+
 describe('wishlist-route proxy', () => {
     // 1) 200 search — passes body through, pins the URL + named UA.
     it('200: GET /search proxies to the wishlist host with UA curl/8.4.0', async () => {
@@ -70,16 +82,90 @@ describe('wishlist-route proxy', () => {
         expect(called).toBe(false);
     });
 
-    // 3) 401 add-item — upstream rejects a bad merchant key.
-    it('401: POST add-item returns 401 when upstream returns 401', async () => {
+    // 3) 401 add-item — upstream rejects a bad merchant key (caller IS authed).
+    it('401: POST /listings returns 401 when upstream returns 401', async () => {
         const fetchImpl = async () => fakeResponse(401, { error: 'bad key' });
         const getVaultValue = async () => DUMMY_KEY;
-        const app = appWith({ fetchImpl, getVaultValue });
+        const app = appWith({ fetchImpl, getVaultValue, authenticateCaller: fakeAuth('tbwb9e') });
         const res = await request(app)
-            .post('/api/wishlist-bridge/wishlists/1/items')
-            .send({ proxy_end_user_id: 'u1', name: 'thing', notes: '', price: 10 });
+            .post('/api/wishlist-bridge/listings')
+            .send({ ...CALLER, wishlistId: 1, name: 'thing', notes: '', price: 10 });
 
         expect(res.status).toBe(401);
+    });
+
+    // 3b) CONFUSED-DEPUTY (HIGH #2): no caller creds ⇒ 401, and the merchant key
+    // is NEVER read (no anonymous borrow of merchant authority).
+    it('401: POST /listings without caller creds never reads the vault or calls upstream', async () => {
+        let vaultRead = false;
+        let fetched = false;
+        const getVaultValue = async () => { vaultRead = true; return DUMMY_KEY; };
+        const fetchImpl = async () => { fetched = true; return fakeResponse(200, {}); };
+        const app = appWith({ fetchImpl, getVaultValue, authenticateCaller: fakeAuth('tbwb9e') });
+        const res = await request(app)
+            .post('/api/wishlist-bridge/listings')
+            .send({ wishlistId: 1, name: 'thing' }); // no deviceId/entityId/botSecret
+
+        expect(res.status).toBe(401);
+        expect(vaultRead).toBe(false);
+        expect(fetched).toBe(false);
+    });
+
+    // 3c) CONFUSED-DEPUTY: bad botSecret ⇒ 403, key never read.
+    it('403: POST /listings with an invalid botSecret is rejected before any vault read', async () => {
+        let vaultRead = false;
+        const getVaultValue = async () => { vaultRead = true; return DUMMY_KEY; };
+        const app = appWith({ getVaultValue, authenticateCaller: fakeAuth('tbwb9e') });
+        const res = await request(app)
+            .post('/api/wishlist-bridge/listings')
+            .send({ deviceId: 'dev-1', entityId: 2, botSecret: 'WRONG', wishlistId: 1, name: 'x' });
+
+        expect(res.status).toBe(403);
+        expect(vaultRead).toBe(false);
+    });
+
+    // 3d) OWNERSHIP BINDING (HIGH #1): a caller authed as tbwb9e cannot write a
+    // listing under a DIFFERENT public code ⇒ 403, no vault read, no upstream.
+    it('403: POST /listings rejects writing under a public code the caller does not control', async () => {
+        let vaultRead = false;
+        let fetched = false;
+        const getVaultValue = async () => { vaultRead = true; return DUMMY_KEY; };
+        const fetchImpl = async () => { fetched = true; return fakeResponse(201, {}); };
+        const app = appWith({ fetchImpl, getVaultValue, authenticateCaller: fakeAuth('tbwb9e') });
+        const res = await request(app)
+            .post('/api/wishlist-bridge/listings')
+            // caller is tbwb9e but tries to write under 3xa3h4 (someone else)
+            .send({ ...CALLER, wishlistId: 1, name: 'x', publicCode: '3xa3h4' });
+
+        expect(res.status).toBe(403);
+        expect(vaultRead).toBe(false);
+        expect(fetched).toBe(false);
+    });
+
+    // 3e) HAPPY PATH: authed caller, own code, forwards to /api/items/upsert-listing
+    // with the merchant key + named UA, and FORCES publicCode to the caller's own.
+    it('201: POST /listings forwards to upsert-listing under the caller-owned code', async () => {
+        const calls = [];
+        const fetchImpl = async (url, init) => {
+            calls.push({ url, init });
+            return fakeResponse(201, { upserted: 'created', item: { id: 9 } });
+        };
+        const getVaultValue = async () => DUMMY_KEY;
+        const app = appWith({ fetchImpl, getVaultValue, authenticateCaller: fakeAuth('tbwb9e') });
+        const res = await request(app)
+            .post('/api/wishlist-bridge/listings')
+            // caller omits publicCode; proxy must inject the caller's own (tbwb9e)
+            .send({ ...CALLER, wishlistId: 1, name: 'Genuine', price: 42 });
+
+        expect(res.status).toBe(201);
+        expect(calls).toHaveLength(1);
+        expect(calls[0].url).toBe(
+            'https://wishlist-app-production.up.railway.app/api/items/upsert-listing'
+        );
+        expect(calls[0].init.headers['User-Agent']).toBe('curl/8.4.0');
+        expect(calls[0].init.headers['x-merchant-api-key']).toBe(DUMMY_KEY);
+        const sent = JSON.parse(calls[0].init.body);
+        expect(sent.publicCode).toBe('tbwb9e'); // forced to caller's own code
     });
 
     // 4) 502 upstream network failure.
@@ -104,7 +190,8 @@ describe('wishlist-route proxy', () => {
         expect(res.body).toEqual([]);
     });
 
-    // 6) locked-vault (403) and missing-key both degrade to 502 + distinct reason.
+    // 6) locked-vault (403) and missing-key both degrade to 502 + distinct reason
+    //    (caller is authed + writing under their own code — the failure is the vault).
     it('502 reason:locked when the vault read throws a "locked" error (403)', async () => {
         const getVaultValue = async () => {
             throw new Error('vault locked: cannot read WISHLIST_MERCHANT_KEY (locked)');
@@ -114,10 +201,10 @@ describe('wishlist-route proxy', () => {
             called = true;
             return fakeResponse(200, {});
         };
-        const app = appWith({ fetchImpl, getVaultValue });
+        const app = appWith({ fetchImpl, getVaultValue, authenticateCaller: fakeAuth('tbwb9e') });
         const res = await request(app)
-            .post('/api/wishlist-bridge/wishlists/1/items')
-            .send({ proxy_end_user_id: 'u1', name: 'thing', price: 5 });
+            .post('/api/wishlist-bridge/listings')
+            .send({ ...CALLER, wishlistId: 1, name: 'thing', price: 5 });
 
         expect(res.status).toBe(502);
         expect(res.body).toEqual({ error: 'wishlist merchant key unavailable', reason: 'locked' });
@@ -128,38 +215,16 @@ describe('wishlist-route proxy', () => {
         const getVaultValue = async () => {
             throw new Error('vault has no value for WISHLIST_MERCHANT_KEY: missing key');
         };
-        const app = appWith({ getVaultValue });
+        const app = appWith({ getVaultValue, authenticateCaller: fakeAuth('tbwb9e') });
         const res = await request(app)
-            .post('/api/wishlist-bridge/wishlists/1/items')
-            .send({ proxy_end_user_id: 'u1', name: 'thing', price: 5 });
+            .post('/api/wishlist-bridge/listings')
+            .send({ ...CALLER, wishlistId: 1, name: 'thing', price: 5 });
 
         expect(res.status).toBe(502);
         expect(res.body).toEqual({
             error: 'wishlist merchant key unavailable',
             reason: 'missing key',
         });
-    });
-
-    // 7) SSRF/validation — non-numeric wishlistId rejected, no upstream, no vault read.
-    it('400: POST /wishlists/abc/items (non-numeric) rejected before any upstream/vault call', async () => {
-        let fetched = false;
-        let vaultRead = false;
-        const fetchImpl = async () => {
-            fetched = true;
-            return fakeResponse(200, {});
-        };
-        const getVaultValue = async () => {
-            vaultRead = true;
-            return DUMMY_KEY;
-        };
-        const app = appWith({ fetchImpl, getVaultValue });
-        const res = await request(app)
-            .post('/api/wishlist-bridge/wishlists/abc/items')
-            .send({ proxy_end_user_id: 'u1', name: 'thing', price: 5 });
-
-        expect(res.status).toBe(400);
-        expect(fetched).toBe(false);
-        expect(vaultRead).toBe(false);
     });
 
     // 7b) SSRF bonus — the request cannot select the upstream host; it is always pinned.

@@ -2578,7 +2578,24 @@ app.use('/api/petdx', petdxRoute.createRouter({ log: serverLog }));
 // (never from the request); named UA curl/8.4.0 on every outbound call. Degrades
 // gracefully when the merchant key is missing/locked (502 + reason).
 const wishlistRoute = require('./wishlist-route');
-app.use('/api/wishlist-bridge', wishlistRoute.createRouter({ log: serverLog }));
+app.use('/api/wishlist-bridge', wishlistRoute.createRouter({
+    log: serverLog,
+    // Wire the write path to REAL caller authentication (security-review HIGH #2):
+    // validate the caller's own botSecret against their entity, and return that
+    // entity's own publicCode so the listing is bound to the authenticated
+    // identity. Never trusts a client-supplied code.
+    authenticateCaller: async ({ deviceId, entityId, botSecret }) => {
+        const device = devices[deviceId];
+        if (!device) return { ok: false, reason: 'device_not_found' };
+        const auth = authEntityAccess(device, null, botSecret, entityId);
+        if (auth.error) return { ok: false, reason: auth.error };
+        const entity = auth.entity;
+        if (!entity || !entity.isBound || !entity.publicCode) {
+            return { ok: false, reason: 'entity_not_bound' };
+        }
+        return { ok: true, publicCode: entity.publicCode };
+    },
+}));
 
 // Daily cleanup of expired files (runs at 03:17 server time)
 const nodeCron = require('node-cron');

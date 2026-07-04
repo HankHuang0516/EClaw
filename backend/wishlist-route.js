@@ -13,6 +13,16 @@
  * degrades gracefully: a missing key surfaces as 502 {error, reason:'missing
  * key'}, and a locked vault (HTTP 403) surfaces as reason:'locked' — never a
  * crash, and the secret is never logged or echoed.
+ *
+ * CONFUSED-DEPUTY GUARD (security-review HIGH #2): the proxy holds the merchant
+ * key, so an UNAUTHENTICATED write endpoint would let any anonymous caller
+ * borrow merchant authority. Therefore the write path REQUIRES the caller to
+ * prove they are a real EClaw entity (deviceId + entityId + botSecret) via the
+ * injected `authenticateCaller`, and the listing is ALWAYS written under the
+ * caller's OWN resolved publicCode — a caller can never write under a code they
+ * do not control. The write is routed to the wishlist `/api/items/upsert-listing`
+ * endpoint (which independently re-verifies the code), NOT the blind createItem
+ * path (security-review HIGH #1). Read endpoints (search/items/public) stay open.
  */
 
 const express = require('express');
@@ -73,13 +83,23 @@ function defaultGetVaultValue(doFetch) {
     };
 }
 
-function createRouter({ log, fetchImpl, getVaultValue, rateLimit, now } = {}) {
+function createRouter({ log, fetchImpl, getVaultValue, authenticateCaller, rateLimit, now } = {}) {
     const router = express.Router();
     const logger = typeof log === 'function' ? log : () => {};
     const doFetch = fetchImpl || globalThis.fetch;
     const readVaultValue =
         typeof getVaultValue === 'function' ? getVaultValue : defaultGetVaultValue(doFetch);
     const clock = typeof now === 'function' ? now : () => Date.now();
+
+    // Caller authentication for the write path. Must resolve { ok, publicCode }
+    // ONLY when the (deviceId, entityId, botSecret) triple proves a real, bound
+    // EClaw entity; otherwise { ok:false }. Injected at mount (wired to the live
+    // devices map + authEntityAccess) and faked in tests. If not provided, the
+    // write path fails CLOSED (no auth = no merchant-key borrow).
+    const authCaller =
+        typeof authenticateCaller === 'function'
+            ? authenticateCaller
+            : async () => ({ ok: false, reason: 'no_auth_configured' });
 
     // Minimal but real fixed-window throttle keyed by caller id (req.ip). A Map
     // of id -> array of request timestamps within the current window. Defaults
@@ -127,6 +147,8 @@ function createRouter({ log, fetchImpl, getVaultValue, rateLimit, now } = {}) {
                     'User-Agent': OUTBOUND_UA,
                     'Accept': 'application/json',
                 },
+                // Never follow a redirect off the pinned host (defense in depth).
+                redirect: 'manual',
             });
             if (!resp.ok) {
                 logger('warn', 'wishlist-route', `[wishlist] search upstream HTTP ${resp.status}`);
@@ -153,6 +175,7 @@ function createRouter({ log, fetchImpl, getVaultValue, rateLimit, now } = {}) {
                     'User-Agent': OUTBOUND_UA,
                     'Accept': 'application/json',
                 },
+                redirect: 'manual',
             });
             if (!resp.ok) {
                 logger('warn', 'wishlist-route', `[wishlist] items/public upstream HTTP ${resp.status}`);
@@ -166,18 +189,59 @@ function createRouter({ log, fetchImpl, getVaultValue, rateLimit, now } = {}) {
         }
     });
 
-    // POST /wishlists/:wishlistId/items — add an item; needs the merchant key.
-    router.post('/wishlists/:wishlistId/items', async (req, res) => {
+    // POST /listings — create/update a wishlist listing under the CALLER'S OWN
+    // verified EClaw public code. This is the ONLY write path.
+    //
+    // Security (review HIGH #1 + #2):
+    //   1. The caller MUST prove they are a real EClaw entity by supplying their
+    //      own { deviceId, entityId, botSecret }. authCaller resolves this to the
+    //      caller's own publicCode, or fails closed. No auth ⇒ no merchant-key
+    //      borrow (fixes the confused-deputy).
+    //   2. The listing is ALWAYS written under the caller's OWN publicCode. Any
+    //      publicCode / proxy_end_user_id in the body that names a DIFFERENT code
+    //      is rejected (403) — a caller can never write under a code they do not
+    //      control (fixes the spoof/ownership gap).
+    //   3. The write is routed to the wishlist `/api/items/upsert-listing`
+    //      endpoint, which independently re-verifies the code — NOT the blind
+    //      createItem path that trusts proxy_end_user_id.
+    router.post('/listings', async (req, res) => {
         if (overRateLimit(callerId(req))) {
             return res.status(429).json({ error: 'rate limited' });
         }
-        const { wishlistId } = req.params;
-        // Validate BEFORE any vault read or upstream call (no SSRF, no wasted key read).
-        if (!/^\d+$/.test(wishlistId)) {
-            return res.status(400).json({ error: 'wishlistId must be numeric' });
+
+        const body = req.body || {};
+        const { deviceId, entityId, botSecret } = body;
+
+        // (1) Authenticate the caller as a real EClaw entity BEFORE any vault
+        // read or upstream call. No creds ⇒ 401; bad creds ⇒ 403; fail closed.
+        if (!deviceId || entityId === undefined || entityId === null || !botSecret) {
+            return res.status(401).json({
+                error: 'caller authentication required (deviceId, entityId, botSecret)',
+            });
+        }
+        let caller;
+        try {
+            caller = await authCaller({ deviceId, entityId, botSecret });
+        } catch (err) {
+            logger('warn', 'wishlist-route', `[wishlist] caller auth error: ${err.message}`);
+            return res.status(502).json({ error: 'caller auth unavailable' });
+        }
+        if (!caller || !caller.ok || !caller.publicCode) {
+            return res.status(403).json({ error: 'caller is not a verified EClaw entity' });
+        }
+        const callerCode = String(caller.publicCode).toLowerCase();
+
+        // (2) Ownership binding: if the body names a public code (bare or as an
+        // eclaw:<code> proxy id), it MUST equal the caller's own code. We ignore
+        // whatever else and always write under callerCode.
+        const claimed = extractClaimedCode(body.publicCode) || extractClaimedCode(body.proxy_end_user_id);
+        if (claimed && claimed !== callerCode) {
+            return res.status(403).json({
+                error: 'cannot write a listing under a public code you do not control',
+            });
         }
 
-        // Read the merchant key from the vault by NAME. Degrade gracefully:
+        // (3) Read the merchant key from the vault by NAME. Degrade gracefully:
         // missing key / locked vault → 502 with a distinct reason (never crash).
         let merchantKey;
         try {
@@ -189,14 +253,17 @@ function createRouter({ log, fetchImpl, getVaultValue, rateLimit, now } = {}) {
             return res.status(502).json({ error: 'wishlist merchant key unavailable', reason });
         }
 
-        const body = req.body || {};
+        // Forward ONLY the safe listing fields; force publicCode to callerCode so
+        // the upstream verifier binds the write to the authenticated identity.
         const payload = {
-            proxy_end_user_id: body.proxy_end_user_id,
+            publicCode: callerCode,
+            wishlistId: body.wishlistId,
+            itemId: body.itemId,
             name: body.name,
             notes: body.notes,
             price: body.price,
         };
-        const upstreamUrl = `${WISHLIST_BASE}/api/wishlists/${wishlistId}/items`;
+        const upstreamUrl = `${WISHLIST_BASE}/api/items/upsert-listing`;
         try {
             const resp = await doFetch(upstreamUrl, {
                 method: 'POST',
@@ -207,13 +274,17 @@ function createRouter({ log, fetchImpl, getVaultValue, rateLimit, now } = {}) {
                     'Accept': 'application/json',
                 },
                 body: JSON.stringify(payload),
+                redirect: 'manual',
             });
             if (resp.status === 401) {
-                // Bad/expired merchant key at upstream — surface as 401.
                 return res.status(401).json({ error: 'unauthorized' });
             }
+            if (resp.status === 403) {
+                // Upstream re-verification rejected the code (defense in depth).
+                return res.status(403).json({ error: 'listing rejected by upstream verifier' });
+            }
             if (!resp.ok) {
-                logger('warn', 'wishlist-route', `[wishlist] add-item upstream HTTP ${resp.status}`);
+                logger('warn', 'wishlist-route', `[wishlist] upsert upstream HTTP ${resp.status}`);
                 return res.status(502).json({ error: 'upstream error' });
             }
             let data = null;
@@ -222,10 +293,9 @@ function createRouter({ log, fetchImpl, getVaultValue, rateLimit, now } = {}) {
             } catch (_e) {
                 data = null;
             }
-            // Pass through the upstream success status (201 created / 200).
             return res.status(resp.status === 201 ? 201 : 200).json(data == null ? {} : data);
         } catch (err) {
-            logger('warn', 'wishlist-route', `[wishlist] add-item fetch failed: ${err.message}`);
+            logger('warn', 'wishlist-route', `[wishlist] upsert fetch failed: ${err.message}`);
             return res.status(502).json({ error: 'upstream error' });
         }
     });
@@ -233,4 +303,14 @@ function createRouter({ log, fetchImpl, getVaultValue, rateLimit, now } = {}) {
     return router;
 }
 
-module.exports = { createRouter, WISHLIST_HOST, MERCHANT_KEY_NAME };
+// Extract a bare 6-char public code from either a raw code or an `eclaw:<code>`
+// envelope. Returns null if the shape is not a valid code. Used for the
+// ownership-binding check on the write path.
+function extractClaimedCode(raw) {
+    if (typeof raw !== 'string') return null;
+    let v = raw.trim().toLowerCase();
+    if (v.startsWith('eclaw:')) v = v.slice('eclaw:'.length).trim();
+    return /^[a-z0-9]{6}$/.test(v) ? v : null;
+}
+
+module.exports = { createRouter, WISHLIST_HOST, MERCHANT_KEY_NAME, extractClaimedCode };
