@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-12",
+  "updatedAt": "2026-07-18T23:49:11.722Z",
   "targetDifficulty": 70,
   "pools": {
     "arena_vision": [
@@ -2130,6 +2130,71 @@
           "5",
           "red",
           "43,102"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A green circular checkmark icon with a white tick inside on a dark card background — a label reads \"Verified\" in white text below it",
+        "keywords": [
+          "green",
+          "checkmark",
+          "verified",
+          "white",
+          "circular"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A sprint board showing 4 columns: Backlog, In Progress, Review, Done. A banner reads \"Sprint 14 — 4 days remaining\". Six story cards are distributed across the columns.",
+        "keywords": [
+          "sprint",
+          "board",
+          "columns",
+          "backlog",
+          "review",
+          "done",
+          "four"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A server rack diagram labeled \"12U Rack — Zone B\". Two nodes are visible: node-01 (green LED, online) and node-02 (red LED, fault). A power distribution unit (PDU) is at the bottom.",
+        "keywords": [
+          "rack",
+          "server",
+          "node",
+          "fault",
+          "red",
+          "LED",
+          "PDU",
+          "zone"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A JWT decode panel showing: Header alg=RS256, Payload sub=user-88432 with scope=admin and exp=1751000000. A countdown label reads \"Expires in 23h 41m\".",
+        "keywords": [
+          "JWT",
+          "RS256",
+          "admin",
+          "scope",
+          "expires",
+          "payload",
+          "decode"
+        ]
+      },
+      {
+        "file": null,
+        "description": "An OpenTelemetry trace waterfall diagram. The root span \"api.request\" spans 1284ms. A child span \"db.query\" spans 847ms and is marked with a red ERROR badge and tooltip \"timeout after 800ms\".",
+        "keywords": [
+          "trace",
+          "waterfall",
+          "span",
+          "error",
+          "timeout",
+          "db",
+          "query",
+          "OpenTelemetry"
         ]
       }
     ],
@@ -4563,6 +4628,108 @@
             "expected": "1"
           }
         ]
+      },
+      {
+        "title": "Minimum Size Subarray Sum",
+        "description": "Given an array of positive integers nums and a positive integer target, return the minimal length of a subarray whose sum is >= target. If no such subarray exists, return 0. Use a sliding window approach.",
+        "testCases": [
+          {
+            "input": "target=7, nums=[2,3,1,2,4,3]",
+            "expected": "2"
+          },
+          {
+            "input": "target=4, nums=[1,4,4]",
+            "expected": "1"
+          },
+          {
+            "input": "target=11, nums=[1,1,1,1,1,1,1,1]",
+            "expected": "0"
+          },
+          {
+            "input": "target=15, nums=[1,2,3,4,5]",
+            "expected": "5"
+          }
+        ]
+      },
+      {
+        "title": "Intersection of Two Arrays II",
+        "description": "Given two integer arrays nums1 and nums2, return an array of their intersection. Each element in the result must appear as many times as it shows in both arrays. The result can be in any order.",
+        "testCases": [
+          {
+            "input": "nums1=[1,2,2,1], nums2=[2,2]",
+            "expected": "[2,2]"
+          },
+          {
+            "input": "nums1=[4,9,5], nums2=[9,4,9,8,4]",
+            "expected": "[4,9]"
+          },
+          {
+            "input": "nums1=[1], nums2=[1]",
+            "expected": "[1]"
+          },
+          {
+            "input": "nums1=[1,2,3], nums2=[4,5,6]",
+            "expected": "[]"
+          }
+        ]
+      },
+      {
+        "title": "Longest Valid Parentheses",
+        "description": "Given a string containing just the characters \"(\" and \")\", return the length of the longest valid (well-formed) parentheses substring.",
+        "testCases": [
+          {
+            "input": "s=\"(()\"",
+            "expected": "2"
+          },
+          {
+            "input": "s=\")()())\"",
+            "expected": "4"
+          },
+          {
+            "input": "s=\"\"",
+            "expected": "0"
+          },
+          {
+            "input": "s=\"()(())\"",
+            "expected": "6"
+          },
+          {
+            "input": "s=\"(()(((()\"",
+            "expected": "2"
+          }
+        ]
+      },
+      {
+        "title": "Smallest Range Covering Elements from K Lists",
+        "description": "You have k lists of sorted integers. Find the smallest range [a, b] such that there is at least one number from each of the k lists contained in [a, b]. If there are multiple answers, return the one with the smallest left bound.",
+        "testCases": [
+          {
+            "input": "nums=[[4,10,15,24,26],[0,9,12,20],[5,18,22,30]]",
+            "expected": "[20,24]"
+          },
+          {
+            "input": "nums=[[1,2,3],[1,2,3],[1,2,3]]",
+            "expected": "[1,1]"
+          },
+          {
+            "input": "nums=[[10],[11]]",
+            "expected": "[10,11]"
+          }
+        ]
+      },
+      {
+        "title": "Valid Sudoku",
+        "description": "Determine if a 9x9 Sudoku board is valid. Only the filled cells need to be validated according to the following rules: each row must contain digits 1-9 without repetition; each column must contain digits 1-9 without repetition; each of the nine 3x3 sub-boxes must contain digits 1-9 without repetition.",
+        "testCases": [
+          {
+            "input": "board=[[\"5\",\"3\",\".\",\".\",\"7\",\".\",\".\",\".\",\".\"],[\"6\",\".\",\".\",\"1\",\"9\",\"5\",\".\",\".\",\".\"],[\".\",\"9\",\"8\",\".\",\".\",\".\",\".\",\"6\",\".\"],[\"8\",\".\",\".\",\".\",\"6\",\".\",\".\",\".\",\"3\"],[\"4\",\".\",\".\",\"8\",\".\",\"3\",\".\",\".\",\"1\"],[\"7\",\".\",\".\",\".\",\"2\",\".\",\".\",\".\",\"6\"],[\".\",\"6\",\".\",\".\",\".\",\".\",\"2\",\"8\",\".\"],[\".\",\".\",\".\",\"4\",\"1\",\"9\",\".\",\".\",\"5\"],[\".\",\".\",\".\",\".\",\"8\",\".\",\".\",\"7\",\"9\"]]",
+            "expected": "true"
+          },
+          {
+            "input": "board=[[\"8\",\"3\",\".\",\".\",\"7\",\".\",\".\",\".\",\".\"],[\"6\",\".\",\".\",\"1\",\"9\",\"5\",\".\",\".\",\".\"],[\".\",\"9\",\"8\",\".\",\".\",\".\",\".\",\"6\",\".\"],[\"8\",\".\",\".\",\".\",\"6\",\".\",\".\",\".\",\"3\"],[\"4\",\".\",\".\",\"8\",\".\",\"3\",\".\",\".\",\"1\"],[\"7\",\".\",\".\",\".\",\"2\",\".\",\".\",\".\",\"6\"],[\".\",\"6\",\".\",\".\",\".\",\".\",\"2\",\"8\",\".\"],[\".\",\".\",\".\",\"4\",\"1\",\"9\",\".\",\".\",\"5\"],[\".\",\".\",\".\",\".\",\"8\",\".\",\".\",\"7\",\"9\"]]",
+            "expected": "false"
+          }
+        ]
       }
     ],
     "arena_response_time": [
@@ -5731,6 +5898,63 @@
         "expectedKeywords": [
           "2.4",
           "12/5"
+        ]
+      },
+      {
+        "question": "How many months in a year have exactly 31 days?",
+        "expectedKeywords": [
+          "7",
+          "seven"
+        ]
+      },
+      {
+        "question": "What is 25% of 80?",
+        "expectedKeywords": [
+          "20",
+          "twenty"
+        ]
+      },
+      {
+        "question": "A clock shows exactly 6:00. What is the angle in degrees between the hour hand and the minute hand?",
+        "expectedKeywords": [
+          "180",
+          "degrees",
+          "straight"
+        ]
+      },
+      {
+        "question": "Alice is twice as old as Bob was when Alice was as old as Bob is now. Bob is 15 years old. How old is Alice?",
+        "expectedKeywords": [
+          "20",
+          "twenty"
+        ]
+      },
+      {
+        "question": "A container holds 120 litres. It is currently 45% full. You remove 30 litres. What percentage of the container is now full? Round to one decimal place.",
+        "expectedKeywords": [
+          "20.8",
+          "20.8%"
+        ]
+      },
+      {
+        "question": "In how many ways can the letters of the word COMMITTEE be arranged?",
+        "expectedKeywords": [
+          "45360"
+        ]
+      },
+      {
+        "question": "A fair coin is tossed 5 times. What is the probability of getting exactly 3 heads? Express as a fraction.",
+        "expectedKeywords": [
+          "5/16",
+          "0.3125",
+          "31.25"
+        ]
+      },
+      {
+        "question": "A bag contains 3 red marbles and 2 green marbles. You draw marbles one at a time without replacement until you draw a green marble. What is the expected number of draws?",
+        "expectedKeywords": [
+          "2",
+          "two"
         ]
       }
     ],
@@ -7598,7 +7822,75 @@
           "twenty-seven",
           "exceptions"
         ]
+      },
+      {
+        "text": "Your session is about to expire — please click continue to remain logged in.",
+        "keywords": [
+          "session",
+          "expire",
+          "click",
+          "continue",
+          "logged"
+        ]
+      },
+      {
+        "text": "Attention passengers: the boarding gate for flight four seven nine has changed from D12 to B08.",
+        "keywords": [
+          "boarding",
+          "gate",
+          "flight",
+          "changed",
+          "D12",
+          "B08"
+        ]
+      },
+      {
+        "text": "Flight AA-483 to Buenos Aires departs at 23:15 from gate G47. Passengers requiring special assistance should board first via the priority lane.",
+        "keywords": [
+          "flight",
+          "Buenos Aires",
+          "departs",
+          "23:15",
+          "gate",
+          "G47",
+          "priority"
+        ]
+      },
+      {
+        "text": "Work order WO-2024-77302 has been assigned to technician ID T-4219. Estimated completion time is 3 hours. Parts required: capacitor C47 and relay module R-12.",
+        "keywords": [
+          "work order",
+          "WO-2024-77302",
+          "technician",
+          "T-4219",
+          "capacitor",
+          "relay"
+        ]
+      },
+      {
+        "text": "Under IFRS 9, financial assets are classified into three categories based on the business model test and the contractual cash flow characteristics test: amortised cost, fair value through other comprehensive income, and fair value through profit or loss.",
+        "keywords": [
+          "IFRS 9",
+          "financial assets",
+          "amortised cost",
+          "fair value",
+          "comprehensive income",
+          "business model"
+        ]
+      },
+      {
+        "text": "In a commit-reveal scheme secured by SHA-3-256, the committer first publishes a hash of their secret value concatenated with a random nonce. During the reveal phase, the original value and nonce are disclosed and verified against the published hash.",
+        "keywords": [
+          "commit",
+          "reveal",
+          "SHA-3-256",
+          "hash",
+          "nonce",
+          "secret",
+          "verify"
+        ]
       }
     ]
-  }
+  },
+  "note": "Daily pool update — target difficulty 70/100. Added 5 vision, 5 coding, 8 response, 6 tts questions."
 }
