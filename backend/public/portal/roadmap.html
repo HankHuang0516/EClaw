@@ -1005,6 +1005,67 @@
             </div>
         </div>
 
+        <!-- wishlist × EClaw Matchmaking Roadmap -->
+        <div class="rm-section" id="wishlist-matchmaking-roadmap">
+            <h2>🤝 <span data-i18n="rm_wl_title">wishlist × EClaw 代理撮合 (無金流, agent 牽線)</span></h2>
+            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;" data-i18n="rm_wl_desc">Agent 只牽線、不交易、不收付款：買方 agent ↔ 賣方 agent 全部走「純 EClaw public-code b2b 協定」跨裝置握手 (invite → accept → contact)，把 wishlist 想要/擁有清單撮合起來。身分對應 = EClaw public code；聯絡資訊外送前須人工「需要你」確認。Hank 已拍板 C0=種資料，早期不 hold。</p>
+
+            <div class="rm-phase todo" data-card-id="wishlist-phase-0-foundation">
+                <h3>Phase 0 — <span data-i18n="rm_wl_p0_name">地基 + go 訊號</span> <span class="rm-status-badge todo" data-i18n="rm_planned">Planned</span></h3>
+                <div class="rm-phase-desc" data-i18n="rm_wl_p0_desc">種市場、驗活 wishlist prod API、定義 public-code b2b 撮合協定信封，並實證跨裝置邀請真的送達另一台裝置。</div>
+                <ul class="rm-tasks">
+                    <li data-i18n="rm_wl_p0_t1">以 Merchant key 種擬真樣本 (想要/擁有，含 proxy_end_user_id="eclaw:&lt;publicCode&gt;")，讓 /api/items/public 非空</li>
+                    <li data-i18n="rm_wl_p0_t2">curl 驗活 wishlist prod API：讀取/建立→讀回，確認 ?q= 目前被忽略</li>
+                    <li data-i18n="rm_wl_p0_t3">文件化 invite / accept / decline / contact 協定信封 (皆以 public code 為 key，承載於 /api/transform)</li>
+                    <li data-i18n="rm_wl_p0_t4">兩裝置 /api/transform speakTo 往返，證明邀請帶 push 落到另一台裝置</li>
+                </ul>
+            </div>
+
+            <div class="rm-phase todo" data-card-id="wishlist-phase-1-bridge">
+                <h3>Phase 1 — <span data-i18n="rm_wl_p1_name">clone wishlist + 帳號橋接 + 搜尋</span> <span class="rm-status-badge todo" data-i18n="rm_planned">Planned</span></h3>
+                <div class="rm-phase-desc" data-i18n="rm_wl_p1_desc">對 wishlist repo 做真實程式工作：EClaw 帳號橋接 (public-code → wishlist user 綠色通道)、net-new 搜尋端點、讀寫路徑，以及 EClaw 端 backend client。</div>
+                <ul class="rm-tasks">
+                    <li data-i18n="rm_wl_p1_t1">git clone wishlist-app，實作 EClaw 帳號橋接：public code → wishlist user (綠色通道，讓 EClaw agent 成一等公民)</li>
+                    <li data-i18n="rm_wl_p1_t2">net-new GET /api/items/search?q= 搜尋端點</li>
+                    <li data-i18n="rm_wl_p1_t3">撮合流程需要的讀 / 列 / upsert 路徑 (賣家/商家上架寫入)</li>
+                    <li data-i18n="rm_wl_p1_t4">EClaw 端對應 backend client (金鑰自 vault 名稱參照，永不回顯)</li>
+                </ul>
+            </div>
+
+            <div class="rm-phase todo" data-card-id="wishlist-phase-2-handshake">
+                <h3>Phase 2 — <span data-i18n="rm_wl_p2_name">端到端 b2b 撮合握手</span> <span class="rm-status-badge todo" data-i18n="rm_planned">Planned</span></h3>
+                <div class="rm-phase-desc" data-i18n="rm_wl_p2_desc">純 EClaw public-code b2b 握手端到端：買家詢問 → 找品項+賣家 → 雙邊輕量同意 → 交換名片/聯絡。預設 opt-in OFF，含配額與 kill-switch，無任何側門。</div>
+                <ul class="rm-tasks">
+                    <li data-i18n="rm_wl_p2_t1">買家文字意圖 → search(P1) → LLM 重排 → 找不到則 add；產生 matchId 去重</li>
+                    <li data-i18n="rm_wl_p2_t2">用 P0 信封在 /api/transform 跑 invite / accept / decline / contact 完整握手，全部以 public code 為 key</li>
+                    <li data-i18n="rm_wl_p2_t3">雙邊輕量同意：agent 名片可自動；真實聯絡資訊須先過雙方 owner「需要你」人工確認</li>
+                    <li data-i18n="rm_wl_p2_t4">預設 opt-in OFF + 配額 + kill-switch</li>
+                </ul>
+            </div>
+
+            <div class="rm-phase todo" data-card-id="wishlist-phase-3-vision">
+                <h3>Phase 3 — <span data-i18n="rm_wl_p3_name">照片辨識 + 賣家發起式撮合</span> <span class="rm-status-badge todo" data-i18n="rm_planned">Planned</span></h3>
+                <div class="rm-phase-desc" data-i18n="rm_wl_p3_desc">擴充撮合能力：照片路徑 (傳照片 → 品項辨識 → 撮合)、賣家發起式撮合 (上架 → 反向搜尋 wishlist 想要清單 → 邀請買家)，以及週期性重掃/去重。</div>
+                <ul class="rm-tasks">
+                    <li data-i18n="rm_wl_p3_t1">照片路徑：EClaw Claude vision 抽取品名/標籤 → 餵入 P1 搜尋 (含 vision 成本上限，跑在 entity-2 預算上)</li>
+                    <li data-i18n="rm_wl_p3_t2">賣家發起式：merchant 上架 → 反向搜尋 wishlist 想要清單 → 對買家發 invite (仍走 P0 協定)</li>
+                    <li data-i18n="rm_wl_p3_t3">週期性重掃迴圈：對新賣家「剛好一次」發邀請，以 matchId=hash(...) 去重、冪等重查</li>
+                </ul>
+            </div>
+
+            <div class="rm-phase todo" data-card-id="wishlist-phase-4-ga">
+                <h3>Phase 4 — <span data-i18n="rm_wl_p4_name">GA 硬化 + dark-launch → default-on</span> <span class="rm-status-badge todo" data-i18n="rm_planned">Planned</span></h3>
+                <div class="rm-phase-desc" data-i18n="rm_wl_p4_desc">GA 上線硬化：指標、濫用/rate-limit、離線賣家 fallback、結構化邀請原語升級，dark-launch → 待真實庫存出現後預設開啟。</div>
+                <ul class="rm-tasks">
+                    <li data-i18n="rm_wl_p4_t1">指標：撮合品質 / 邀請送達率 / 接受率 / 成本 metrics</li>
+                    <li data-i18n="rm_wl_p4_t2">濫用防護：對上架文字/照片做 prompt-injection 硬化與清洗；rate-limit 調校</li>
+                    <li data-i18n="rm_wl_p4_t3">離線/非 EClaw 賣家 fallback：wishlist-native 通知或排隊重試</li>
+                    <li data-i18n="rm_wl_p4_t4">結構化邀請原語升級 (rich-card ask_id callback 或 A2A tasks/send push)，取代 v1 free-form 信封</li>
+                    <li data-i18n="rm_wl_p4_t5">Dark-launch → wishlist 有真實庫存後才 default-on</li>
+                </ul>
+            </div>
+        </div>
+
         <!-- Technical Highlights -->
         <div class="rm-section">
             <h2>🏗️ <span data-i18n="rm_tech_title">Technical Highlights</span></h2>
