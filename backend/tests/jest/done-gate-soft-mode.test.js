@@ -121,19 +121,24 @@ describe('SOFT done-gate — (b) pure-backend card gets NO screenshot demand/blo
         expect(v.allowed).toBe(true);
     });
 
-    test('regression guard: WITHOUT the explicit isUiCard, the painTag alone would demand a screenshot (the bug)', () => {
+    test('regression guard: WITHOUT the explicit isUiCard, the painTag alone infers UI → hard-blocked', () => {
+        // card_5d50ee10 tightened this: delivery_reliability is a UI_CARD_PAIN_TAG,
+        // so the HARD vision check now fires FIRST (even before the old severity-tier
+        // screenshot check), demanding both an image and a [VISION] attestation. The
+        // card is still blocked — now on the stronger vision sentinels. The callsite
+        // avoids this false-positive by passing an explicit isUiCard=false for
+        // backend cards (see the two tests above).
         const v = evaluateDoneGate({
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true,
             severity: 'P0',
-            // no isUiCard → painTag delivery_reliability infers UI → screenshot demanded
             painTags: ['delivery_reliability'],
             comments: [preflight, fullEvidence],
             files: [jestFile],
             softMode: false,
         });
         expect(v.allowed).toBe(false);
-        expect(v.missingItems).toEqual(['screenshot_artifact']);
+        expect(v.missingItems).toEqual(['vision_screenshot_artifact', 'vision_attestation']);
     });
 });
 
