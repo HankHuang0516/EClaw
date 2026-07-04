@@ -19,6 +19,7 @@ import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.CompanionDetail
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.model.UsageSnapshotLatest
+import com.hank.clawlive.data.model.WalkActionConfig
 import com.hank.clawlive.engine.ProceduralCreatureDrawer
 import com.hank.clawlive.engine.SpritesheetCompanionDrawer
 import com.hank.clawlive.engine.UsageOverlayRenderer
@@ -66,6 +67,7 @@ class WallpaperPreviewView @JvmOverloads constructor(
     // Per-entity selected companion descriptor — drives renderer dispatch
     // (cat/dog/fish via ProceduralCreatureDrawer; null falls back to legacy lobster).
     private var companionsByEntity: Map<Int, CompanionDetail?> = emptyMap()
+    private var walkActionConfigsByEntity: Map<Int, WalkActionConfig> = emptyMap()
 
     private var usageSnapshot: UsageSnapshotLatest? = null
     private var usageOverlayTopInsetPx: Float = 0f
@@ -207,6 +209,11 @@ class WallpaperPreviewView @JvmOverloads constructor(
         invalidate()
     }
 
+    fun setWalkActionConfigs(configs: Map<Int, WalkActionConfig>) {
+        walkActionConfigsByEntity = configs
+        invalidate()
+    }
+
     fun setUsageSnapshot(snapshot: UsageSnapshotLatest?) {
         usageSnapshot = snapshot
         invalidate()
@@ -282,7 +289,8 @@ class WallpaperPreviewView @JvmOverloads constructor(
             width = width.toFloat(),
             height = height.toFloat(),
             enabled = layoutPrefs.wallpaperWalkingEnabled,
-            purposeful = layoutPrefs.wallpaperPurposefulWalkingEnabled
+            purposeful = layoutPrefs.wallpaperPurposefulWalkingEnabled,
+            walkActionConfigsByEntity = walkActionConfigsByEntity
         )
         val interactionState = interactionController.apply(
             positions = renderPositions,
@@ -337,7 +345,9 @@ class WallpaperPreviewView @JvmOverloads constructor(
                 entityScale,
                 walking = wanderController.isWalking(entity.entityId),
                 facingDirection = interactionPose?.facingDirection
-                    ?: wanderController.facingDirection(entity.entityId)
+                    ?: wanderController.facingDirection(entity.entityId),
+                actionState = interactionState.actionStatesByEntity[entity.entityId],
+                ambientActionKey = wanderController.actionStateKey(entity.entityId)
             )
 
             // Draw entity name label
@@ -532,18 +542,22 @@ class WallpaperPreviewView @JvmOverloads constructor(
         cy: Float,
         scale: Float,
         walking: Boolean = false,
-        facingDirection: WalkFacingDirection = WalkFacingDirection.RIGHT
+        facingDirection: WalkFacingDirection = WalkFacingDirection.RIGHT,
+        actionState: CharacterState? = null,
+        ambientActionKey: String? = null
     ) {
         val companion = companionRepository?.cached(entity.entityId) ?: companionsByEntity[entity.entityId]
         if (companion?.assetType == "spritesheet") {
-            val spritesheetState = if (walking && entity.state.canUseAmbientWalkingAnimation) {
-                when (facingDirection) {
-                    WalkFacingDirection.LEFT -> CharacterState.RUNNING_LEFT.wallpaperActionKey
-                    WalkFacingDirection.RIGHT -> CharacterState.RUNNING_RIGHT.wallpaperActionKey
+            val spritesheetState = actionState?.wallpaperActionKey
+                ?: ambientActionKey
+                ?: if (walking && entity.state.canUseAmbientWalkingAnimation) {
+                    when (facingDirection) {
+                        WalkFacingDirection.LEFT -> CharacterState.RUNNING_LEFT.wallpaperActionKey
+                        WalkFacingDirection.RIGHT -> CharacterState.RUNNING_RIGHT.wallpaperActionKey
+                    }
+                } else {
+                    entity.state.wallpaperActionKey
                 }
-            } else {
-                entity.state.wallpaperActionKey
-            }
             val result = spritesheetDrawer?.draw(
                 canvas,
                 companion,

@@ -17,6 +17,7 @@ import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.CompanionDetail
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.model.UsageSnapshotLatest
+import com.hank.clawlive.data.model.WalkActionConfig
 import com.hank.clawlive.data.model.WallpaperKanbanCard
 import com.hank.clawlive.data.repository.CompanionRepository
 import timber.log.Timber
@@ -54,6 +55,7 @@ class ClawRenderer(
     // Engine persists the drop point as the entity's pinned custom position.
     private var draggingEntityId: Int? = null
     private var dragPosPx: Pair<Float, Float>? = null
+    private var walkActionConfigsByEntity: Map<Int, WalkActionConfig> = emptyMap()
 
     /** Pixel centers each entity was last drawn at (entityId -> x,y). */
     fun lastRenderedPositions(): Map<Int, Pair<Float, Float>> = lastRenderedPositionsByEntity.toMap()
@@ -61,6 +63,10 @@ class ClawRenderer(
     /** Canvas width/height of the most recent frame (for hit-radius math). */
     fun lastDrawWidth(): Float = lastDrawWidthPx
     fun lastDrawHeight(): Float = lastDrawHeightPx
+
+    fun setWalkActionConfigs(configs: Map<Int, WalkActionConfig>) {
+        walkActionConfigsByEntity = configs
+    }
 
     /** Begin dragging [entityId]: stop its wander and draw it at the finger. */
     fun beginDrag(entityId: Int, xPx: Float, yPx: Float) {
@@ -702,7 +708,8 @@ class ClawRenderer(
             nowMs = nowMs,
             conversationEntityIds = conversationEntityIds,
             entityUnitPx = 300f * baseScale * maxEntityScale,
-            pinnedEntityIds = pinnedIds
+            pinnedEntityIds = pinnedIds,
+            walkActionConfigsByEntity = walkActionConfigsByEntity
         )
         val interactionState = interactionController.apply(
             positions = positions,
@@ -758,15 +765,21 @@ class ClawRenderer(
                     ?: wanderController.facingDirection(entity.entityId)
                 val actionState = kanbanActionStates[entity.entityId]
                     ?: interactionState.actionStatesByEntity[entity.entityId]
-                val effectiveState = actionState ?: entity.state
-                val spritesheetState = if (
-                    wanderController.isWalking(entity.entityId) &&
-                    effectiveState.canUseAmbientWalkingAnimation
-                ) {
-                    walkingSpritesheetStateFor(facingDirection)
+                val ambientActionKey = if (actionState == null) {
+                    wanderController.actionStateKey(entity.entityId)
                 } else {
-                    effectiveState.wallpaperActionKey
+                    null
                 }
+                val spritesheetState = actionState?.wallpaperActionKey
+                    ?: ambientActionKey
+                    ?: if (
+                        wanderController.isWalking(entity.entityId) &&
+                        entity.state.canUseAmbientWalkingAnimation
+                    ) {
+                        walkingSpritesheetStateFor(facingDirection)
+                    } else {
+                        entity.state.wallpaperActionKey
+                    }
                 try {
                     drawSingleEntityAt(
                         canvas,

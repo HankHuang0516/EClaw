@@ -2,6 +2,7 @@ package com.hank.clawlive
 
 import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
+import com.hank.clawlive.data.model.WalkActionConfig
 import com.hank.clawlive.engine.MotionState
 import com.hank.clawlive.engine.WalkFacingDirection
 import com.hank.clawlive.engine.WallpaperWanderController
@@ -9,6 +10,7 @@ import kotlin.math.abs
 import kotlin.random.Random
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -203,7 +205,7 @@ class WallpaperWanderControllerTest {
 
     @Test
     fun freeWalkingHoldsPositionDuringRandomActionAndRoamsBetween() {
-        // 行走功能 (free walking): every ~10s the entity performs a ~3s stationary random
+        // 行走功能 (free walking): every 10-30s the entity performs a ~3s stationary random
         // action — during that window its position MUST NOT change (it freezes while the
         // gesture plays), and it MUST roam (advance) between actions.
         // Pre-fix bug: the pause was armed only on arrival, which the 0.04/s wander almost
@@ -217,7 +219,7 @@ class WallpaperWanderControllerTest {
         var prev: Pair<Float, Float>? = null
         var sawActionHold = false
         var sawRoamMove = false
-        repeat(400) { // 40s at 100ms ticks -> several 10s action cadences
+        repeat(400) { // 40s at 100ms ticks -> at least one 10-30s action cadence
             t += 100L
             val pos = controller.positionsFor(base, entities, 1000f, 1000f, enabled = true, purposeful = false, nowMs = t)[0]
             val acting = controller.isPerformingAction(1)
@@ -236,6 +238,115 @@ class WallpaperWanderControllerTest {
 
         assertTrue("expected at least one stationary action window within 40s", sawActionHold)
         assertTrue("entity must roam (advance) between actions", sawRoamMove)
+    }
+
+    @Test
+    fun freeWalkingRandomActionCadenceIsIndependentPerEntityAndWithinRange() {
+        val controller = WallpaperWanderController(random = Random(19))
+        val entities = listOf(
+            EntityStatus(entityId = 1, state = CharacterState.IDLE),
+            EntityStatus(entityId = 2, state = CharacterState.IDLE)
+        )
+        val base = listOf(250f to 500f, 750f to 500f)
+        val actionStarts = mutableMapOf<Int, MutableList<Long>>(
+            1 to mutableListOf(),
+            2 to mutableListOf()
+        )
+        val wasActing = mutableMapOf(1 to false, 2 to false)
+
+        controller.positionsFor(base, entities, 1000f, 1000f, enabled = true, purposeful = false, nowMs = 0L)
+        var t = 0L
+        repeat(700) {
+            t += 100L
+            controller.positionsFor(base, entities, 1000f, 1000f, enabled = true, purposeful = false, nowMs = t)
+            entities.forEach { entity ->
+                val acting = controller.isPerformingAction(entity.entityId)
+                if (acting && wasActing[entity.entityId] == false) {
+                    actionStarts.getValue(entity.entityId).add(t)
+                }
+                wasActing[entity.entityId] = acting
+            }
+        }
+
+        val first = actionStarts.getValue(1)
+        val second = actionStarts.getValue(2)
+        assertTrue("entity 1 should perform at least two actions", first.size >= 2)
+        assertTrue("entity 2 should perform at least two actions", second.size >= 2)
+        assertNotEquals("entities should not share the same first action time", first.first(), second.first())
+        (first.zipWithNext() + second.zipWithNext()).forEach { (prev, next) ->
+            val delta = next - prev
+            assertTrue("action interval should be >= 9.9s with tick rounding, got $delta", delta >= 9_900L)
+            assertTrue("action interval should be <= 30.1s with tick rounding, got $delta", delta <= 30_100L)
+        }
+    }
+
+    @Test
+    fun walkConfigFiltersNegativeActionsBeforeRandomSelection() {
+        val controller = WallpaperWanderController(random = Random(23))
+        val entities = listOf(EntityStatus(entityId = 1, state = CharacterState.IDLE))
+        val base = listOf(250f to 500f)
+        val config = WalkActionConfig(
+            weights = mapOf("fail" to 100f),
+            allowNegative = false,
+            negativeActions = listOf("fail", "sad", "sick", "angry")
+        )
+
+        controller.positionsFor(base, entities, 1000f, 1000f, enabled = true, purposeful = false, nowMs = 0L)
+        var actionKey: String? = null
+        var t = 0L
+        repeat(310) {
+            t += 100L
+            controller.positionsFor(
+                base,
+                entities,
+                1000f,
+                1000f,
+                enabled = true,
+                purposeful = false,
+                nowMs = t,
+                walkActionConfigsByEntity = mapOf(1 to config)
+            )
+            if (controller.isPerformingAction(1) && actionKey == null) {
+                actionKey = controller.actionStateKey(1)
+            }
+        }
+
+        assertTrue("expected an action inside the 30s max interval", actionKey != null)
+        assertNotEquals("failed", actionKey)
+    }
+
+    @Test
+    fun walkConfigAllowsNegativeActionsWhenEntityOptsIn() {
+        val controller = WallpaperWanderController(random = Random(29))
+        val entities = listOf(EntityStatus(entityId = 1, state = CharacterState.IDLE))
+        val base = listOf(250f to 500f)
+        val config = WalkActionConfig(
+            weights = mapOf("fail" to 1f),
+            allowNegative = true,
+            negativeActions = listOf("fail", "sad", "sick", "angry")
+        )
+
+        controller.positionsFor(base, entities, 1000f, 1000f, enabled = true, purposeful = false, nowMs = 0L)
+        var actionKey: String? = null
+        var t = 0L
+        repeat(310) {
+            t += 100L
+            controller.positionsFor(
+                base,
+                entities,
+                1000f,
+                1000f,
+                enabled = true,
+                purposeful = false,
+                nowMs = t,
+                walkActionConfigsByEntity = mapOf(1 to config)
+            )
+            if (controller.isPerformingAction(1) && actionKey == null) {
+                actionKey = controller.actionStateKey(1)
+            }
+        }
+
+        assertEquals("failed", actionKey)
     }
 
     @Test

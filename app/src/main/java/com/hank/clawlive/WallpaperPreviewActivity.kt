@@ -24,6 +24,7 @@ import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.repository.CompanionRepository
+import com.hank.clawlive.data.repository.WalkConfigRepository
 import com.hank.clawlive.service.ClawWallpaperService
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import com.hank.clawlive.ui.WallpaperPreviewView
@@ -71,7 +72,9 @@ class WallpaperPreviewActivity : AppCompatActivity() {
     private val deviceManager by lazy { DeviceManager.getInstance(this) }
     private val layoutPrefs by lazy { LayoutPreferences.getInstance(this) }
     private val companionRepository by lazy { CompanionRepository(api, this) }
+    private val walkConfigRepository by lazy { WalkConfigRepository(this) }
     private val companionJobs = mutableMapOf<Int, Job>()
+    private val walkConfigJobs = mutableMapOf<Int, Job>()
 
     // Photo picker launcher
     private val photoPickerLauncher = registerForActivityResult(
@@ -131,7 +134,10 @@ class WallpaperPreviewActivity : AppCompatActivity() {
     override fun onDestroy() {
         companionJobs.values.forEach { it.cancel() }
         companionJobs.clear()
+        walkConfigJobs.values.forEach { it.cancel() }
+        walkConfigJobs.clear()
         companionRepository.release()
+        walkConfigRepository.release()
         previewView.onCustomLayoutEnabled = null
         super.onDestroy()
     }
@@ -426,6 +432,7 @@ class WallpaperPreviewActivity : AppCompatActivity() {
 
                 previewView.setEntities(boundEntities)
                 loadCompanions(boundEntities)
+                loadWalkConfigs(boundEntities)
 
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load entities")
@@ -470,6 +477,30 @@ class WallpaperPreviewActivity : AppCompatActivity() {
             companionJobs[entityId] = lifecycleScope.launch {
                 companionRepository.getCompanionFlow(entityId, secret).collect {
                     previewView.invalidate()
+                }
+            }
+        }
+    }
+
+    private fun loadWalkConfigs(entities: List<com.hank.clawlive.data.model.EntityStatus>) {
+        val active = entities.mapNotNull { entity ->
+            entity.botSecret?.let { secret -> entity.entityId to secret }
+        }
+        val activeIds = active.map { it.first }.toSet()
+        walkConfigRepository.pruneTo(activeIds)
+        previewView.setWalkActionConfigs(walkConfigRepository.cachedMap())
+
+        walkConfigJobs.keys.toList().forEach { entityId ->
+            if (entityId !in activeIds) {
+                walkConfigJobs.remove(entityId)?.cancel()
+            }
+        }
+
+        for ((entityId, secret) in active) {
+            if (walkConfigJobs[entityId]?.isActive == true) continue
+            walkConfigJobs[entityId] = lifecycleScope.launch {
+                walkConfigRepository.getWalkConfigFlow(entityId, secret).collect {
+                    previewView.setWalkActionConfigs(walkConfigRepository.cachedMap())
                 }
             }
         }
