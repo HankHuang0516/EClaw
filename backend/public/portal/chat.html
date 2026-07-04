@@ -10137,37 +10137,37 @@
         // ── Env Var Reference ──
         async function initEnvVarBtn(deviceId, deviceSecret) {
             const storageKey = `eclawLocalVars_${deviceId}`;
-            let vars;
-            try { vars = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { vars = {}; }
+            const envBtn = document.getElementById('attachMenuEnvBtn');
+            const chipsEl = document.getElementById('envVarChips');
+            let vars = {};
 
-            // Sync from server so WebView / new sessions pick up vars set elsewhere.
-            // GET first to obtain updatedAt, then POST WITH expectedUpdatedAt so this
-            // background merge can't clobber concurrent edits (optimistic lock) and
-            // doesn't trip the server's "POST without expectedUpdatedAt" warn.
+            if (envBtn) envBtn.style.display = 'none';
+            if (chipsEl) chipsEl.innerHTML = '';
+
+            // Key Reference is read-only. Treat the server vault as authoritative
+            // so keys deleted from mission/env-vars pages cannot be resurrected from
+            // stale chat localStorage.
             try {
-                const serverData = await apiCall('GET', `/api/device-vars?deviceId=${deviceId}&deviceSecret=${deviceSecret}`);
-                const serverUpdatedAt = serverData && serverData.updatedAt;
+                const data = await apiCall(
+                    'GET',
+                    `/api/device-vars?deviceId=${encodeURIComponent(deviceId)}&deviceSecret=${encodeURIComponent(deviceSecret)}`
+                );
+                const serverVars = data && data.vars && typeof data.vars === 'object' && !Array.isArray(data.vars)
+                    ? data.vars
+                    : {};
+                vars = serverVars;
                 if (Object.keys(vars).length > 0) {
-                    const body = { deviceId, deviceSecret, vars, source: 'web' };
-                    if (serverUpdatedAt) body.expectedUpdatedAt = serverUpdatedAt;
-                    const data = await apiCall('POST', '/api/device-vars', body);
-                    if (data && data.mergedVars) {
-                        vars = data.mergedVars;
-                        localStorage.setItem(storageKey, JSON.stringify(vars));
-                    }
-                } else if (serverData && serverData.vars) {
-                    // Fresh session — adopt server-side vars (no POST of an empty set)
-                    vars = serverData.vars;
                     localStorage.setItem(storageKey, JSON.stringify(vars));
+                } else {
+                    localStorage.removeItem(storageKey);
                 }
-            } catch { /* non-critical — fall back to local; 409 on concurrent edit is fine */ }
+            } catch { return; }
 
             const keys = Object.keys(vars);
             if (!keys.length) return;
 
-            document.getElementById('attachMenuEnvBtn').style.display = '';
-            const chipsEl = document.getElementById('envVarChips');
-            chipsEl.innerHTML = keys.map(k =>
+            if (envBtn) envBtn.style.display = '';
+            if (chipsEl) chipsEl.innerHTML = keys.map(k =>
                 `<button class="env-var-chip" onclick="insertEnvVarRef('${k.replace(/'/g, "\\'")}')">{{${k}}}</button>`
             ).join('');
         }
