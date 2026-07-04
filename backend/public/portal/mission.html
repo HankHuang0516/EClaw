@@ -1080,7 +1080,16 @@
                 if (intent.target === 'card' && intent.cardId) {
                     const id = String(intent.cardId).trim();
                     if (!id) return false;
-                    if (window.SmartRouter && window.SmartRouter.navigate('card', { cardId: id })) return true;
+                    // eclawHandleNativeNavigateIntent is invoked ONLY by the native
+                    // replay (Android/iOS bridge) while this page is hosted in the
+                    // mission tab's WebView. SmartRouter.navigate('card') maps the
+                    // 'card' target to the 'mission' tab (APP_TARGET_TAB) — i.e. the
+                    // tab we are already on — so in app mode it re-enters the native
+                    // bridge, which re-launches this same Activity (SINGLE_TOP →
+                    // onNewIntent → replay → this handler) in an INFINITE LOOP and the
+                    // card never opens (card_92c17b66 notification deep-link bug).
+                    // Card detail lives in kanban.html, so navigate this WebView there
+                    // directly with the canonical ?card=<id>#<id> deep-link.
                     window.location.href = '/portal/kanban.html?card=' + encodeURIComponent(id) + '#' + encodeURIComponent(id);
                     return true;
                 }
