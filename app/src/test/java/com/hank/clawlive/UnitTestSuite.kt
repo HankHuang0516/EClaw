@@ -1,6 +1,7 @@
 package com.hank.clawlive
 
 import com.hank.clawlive.fcm.FcmChannelCreationTest
+import com.hank.clawlive.fcm.KanbanDoneDeepLinkTest
 import com.hank.clawlive.settings.NotificationPreferenceCatalogTest
 import com.hank.clawlive.settings.SettingsManifestResolverTest
 import com.hank.clawlive.settings.SettingsManifestSyncTest
@@ -31,6 +32,7 @@ import org.junit.runners.Suite
     NotificationPreferenceCatalogTest::class,
     SettingsManifestResolverTest::class,
     SettingsManifestSyncTest::class,
-    FcmChannelCreationTest::class
+    FcmChannelCreationTest::class,
+    KanbanDoneDeepLinkTest::class
 )
 class UnitTestSuite
