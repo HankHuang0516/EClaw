@@ -2,6 +2,7 @@ package com.hank.clawlive.engine
 
 import android.graphics.PointF
 import com.hank.clawlive.data.model.EntityStatus
+import com.hank.clawlive.data.model.WalkActionConfig
 import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.min
@@ -65,6 +66,7 @@ class WallpaperWanderController(
         var ambientGoal: AmbientWanderGoal,
         var ambientStep: Int,
         var facingDirection: WalkFacingDirection,
+        var actionStateKey: String? = null,
         var manualTarget: Boolean = false,
         var onArrive: (() -> Unit)? = null
     )
@@ -97,6 +99,11 @@ class WallpaperWanderController(
         return states[entityId]?.ambientGoal ?: AmbientWanderGoal.RANDOM
     }
 
+    fun actionStateKey(entityId: Int): String? {
+        val state = states[entityId] ?: return null
+        return if (state.lastUpdateMs < state.actionUntilMs) state.actionStateKey else null
+    }
+
     fun facingDirection(entityId: Int): WalkFacingDirection {
         return states[entityId]?.facingDirection ?: WalkFacingDirection.RIGHT
     }
@@ -124,6 +131,8 @@ class WallpaperWanderController(
         val state = commandState(entityId)
         state.motionState = MotionState.STOPPED
         state.moving = false
+        state.actionUntilMs = 0L
+        state.actionStateKey = null
         state.manualTarget = false
         state.onArrive = null
     }
@@ -133,6 +142,7 @@ class WallpaperWanderController(
         if (state.motionState == MotionState.STOPPED) {
             state.motionState = MotionState.WANDERING
             state.actionUntilMs = 0L
+            state.actionStateKey = null
         }
     }
 
@@ -141,6 +151,7 @@ class WallpaperWanderController(
         state.motionState = MotionState.WANDERING
         state.moving = false
         state.actionUntilMs = 0L
+        state.actionStateKey = null
         state.manualTarget = false
         state.onArrive = null
     }
@@ -155,7 +166,8 @@ class WallpaperWanderController(
         nowMs: Long = System.currentTimeMillis(),
         conversationEntityIds: Set<Int> = emptySet(),
         entityUnitPx: Float = min(width, height) * DEFAULT_GATHER_SPACING_PCT,
-        pinnedEntityIds: Set<Int> = emptySet()
+        pinnedEntityIds: Set<Int> = emptySet(),
+        walkActionConfigsByEntity: Map<Int, WalkActionConfig> = emptyMap()
     ): List<Pair<Float, Float>> {
         if (!enabled || width <= 0f || height <= 0f) {
             states.clear()
@@ -204,7 +216,16 @@ class WallpaperWanderController(
                 advanceHome(entity, base, width, height, nowMs)
             } else {
                 // 行走功能 (free walking / ambient): roam continuously with goal-based actions.
-                advance(entity, base, width, height, nowMs, purposeful = true, ambientPeers = ambientPeers)
+                advance(
+                    entity,
+                    base,
+                    width,
+                    height,
+                    nowMs,
+                    purposeful = true,
+                    ambientPeers = ambientPeers,
+                    walkActionConfig = walkActionConfigsByEntity[entity.entityId]
+                )
             }
         }
     }
@@ -348,7 +369,8 @@ class WallpaperWanderController(
         height: Float,
         nowMs: Long,
         purposeful: Boolean,
-        ambientPeers: List<AmbientPeer>
+        ambientPeers: List<AmbientPeer>,
+        walkActionConfig: WalkActionConfig?
     ): Pair<Float, Float> {
         val entityId = entity.entityId
         val state = stateFor(entityId, base, width, height, nowMs)
@@ -361,7 +383,8 @@ class WallpaperWanderController(
         if (state.motionState == MotionState.SLEEPING || state.motionState == MotionState.STOPPED) {
             state.motionState = MotionState.WANDERING
             state.actionUntilMs = 0L
-            state.nextActionAtMs = nowMs + ACTION_INTERVAL_MS
+            state.actionStateKey = null
+            state.nextActionAtMs = nowMs + randomActionIntervalMs()
         }
 
         val dtSeconds = ((nowMs - state.lastUpdateMs).coerceIn(0L, 1000L)) / 1000f
@@ -386,15 +409,16 @@ class WallpaperWanderController(
             MotionState.WANDERING -> Unit
         }
 
-        // Every ~10s the entity performs a ~3s stationary random action. The cadence is
-        // independent of arrival so it reliably fires (the old arrival-only idle almost never
+        // Every 10-30s the entity performs a ~3s stationary random action. The per-entity
+        // randomized cadence is independent of arrival so it reliably fires (the old arrival-only idle almost never
         // triggered: retarget every 3-8s reassigned the target before the slow 0.04/s wander
         // could arrive, so the entity roamed nonstop and never paused).
         if (nowMs >= state.nextActionAtMs) {
             state.actionUntilMs = nowMs + ACTION_DURATION_MS
-            state.nextActionAtMs = nowMs + ACTION_INTERVAL_MS
+            state.nextActionAtMs = nowMs + randomActionIntervalMs()
             // Pick a fresh random ambient goal as the "action" flourish for this pause.
             state.ambientGoal = randomActionGoal()
+            state.actionStateKey = randomActionStateKey(walkActionConfig)
             state.ambientStep++
         }
 
@@ -425,6 +449,18 @@ class WallpaperWanderController(
         return goals[random.nextInt(goals.size)]
     }
 
+    private fun randomActionStateKey(config: WalkActionConfig?): String {
+        val actions = (config ?: WalkActionConfig()).weightedActionKeys()
+        val total = actions.sumOf { it.second.toDouble() }.toFloat()
+        if (total <= 0f) return "idle"
+        var cursor = random.nextFloat() * total
+        actions.forEach { (action, weight) ->
+            cursor -= weight
+            if (cursor <= 0f) return action
+        }
+        return actions.lastOrNull()?.first ?: "idle"
+    }
+
     /**
      * Pin [entityId] to [base]: force the in-memory state to the base position and
      * fully stop it so no motion path can move it. Idempotent per frame.
@@ -450,6 +486,7 @@ class WallpaperWanderController(
         state.manualTarget = false
         state.onArrive = null
         state.actionUntilMs = 0L
+        state.actionStateKey = null
         state.lastUpdateMs = nowMs
     }
 
@@ -473,13 +510,14 @@ class WallpaperWanderController(
                 targetYPct = target.second,
                 lastUpdateMs = nowMs,
                 actionUntilMs = 0L,
-                nextActionAtMs = nowMs + ACTION_INTERVAL_MS,
+                nextActionAtMs = nowMs + randomActionIntervalMs(),
                 retargetAtMs = nowMs + randomLong(MIN_RETARGET_MS, MAX_RETARGET_MS),
                 moving = false,
                 motionState = MotionState.WANDERING,
                 ambientGoal = AmbientWanderGoal.RANDOM,
                 ambientStep = 0,
-                facingDirection = WalkFacingDirection.RIGHT
+                facingDirection = WalkFacingDirection.RIGHT,
+                actionStateKey = null
             )
         }
         coerceToSafeBounds(state)
@@ -503,7 +541,8 @@ class WallpaperWanderController(
                 motionState = MotionState.STOPPED,
                 ambientGoal = AmbientWanderGoal.RANDOM,
                 ambientStep = 0,
-                facingDirection = WalkFacingDirection.RIGHT
+                facingDirection = WalkFacingDirection.RIGHT,
+                actionStateKey = null
             )
         }
     }
@@ -632,6 +671,10 @@ class WallpaperWanderController(
         return min + random.nextLong(max - min + 1)
     }
 
+    private fun randomActionIntervalMs(): Long {
+        return randomLong(MIN_ACTION_INTERVAL_MS, MAX_ACTION_INTERVAL_MS)
+    }
+
     private fun coerceToSafeBounds(state: WanderState) {
         state.xPct = state.xPct.coerceIn(MIN_X_PCT, MAX_X_PCT)
         state.yPct = state.yPct.coerceIn(MIN_Y_PCT, MAX_Y_PCT)
@@ -643,8 +686,9 @@ class WallpaperWanderController(
         const val DEFAULT_GATHER_SPACING_PCT = 0.18f
         private const val ARRIVAL_EPSILON_PX = 1f
         private const val FACING_EPSILON_PX = 0.5f
-        // Free-walking action cadence: every ~10s the entity performs a ~3s stationary action.
-        private const val ACTION_INTERVAL_MS = 10000L
+        // Free-walking action cadence: each entity independently pauses every 10-30s.
+        private const val MIN_ACTION_INTERVAL_MS = 10000L
+        private const val MAX_ACTION_INTERVAL_MS = 30000L
         private const val ACTION_DURATION_MS = 3000L
         private const val MIN_RETARGET_MS = 3000L
         private const val MAX_RETARGET_MS = 8000L

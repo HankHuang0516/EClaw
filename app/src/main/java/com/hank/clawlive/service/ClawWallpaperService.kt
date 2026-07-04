@@ -44,6 +44,9 @@ class ClawWallpaperService : WallpaperService() {
             com.hank.clawlive.data.remote.NetworkModule.api,
             this@ClawWallpaperService
         )
+        private val walkConfigRepository = com.hank.clawlive.data.repository.WalkConfigRepository(
+            this@ClawWallpaperService
+        )
         private val renderer = ClawRenderer(this@ClawWallpaperService, companionRepository)
         private val repository = com.hank.clawlive.data.repository.StateRepository(
             com.hank.clawlive.data.remote.NetworkModule.api,
@@ -203,6 +206,7 @@ class ClawWallpaperService : WallpaperService() {
                 engineScope.cancel()
                 renderer.release()
                 companionRepository.release()
+                walkConfigRepository.release()
             }
         })
 
@@ -221,6 +225,7 @@ class ClawWallpaperService : WallpaperService() {
         // Tracks which entityIds already have a companion-poller flow running so
         // we don't spawn duplicate jobs each time getMultiEntityStatusFlow emits.
         private val companionJobs = mutableMapOf<Int, kotlinx.coroutines.Job>()
+        private val walkConfigJobs = mutableMapOf<Int, kotlinx.coroutines.Job>()
 
         // Held references so visibility transitions can cancel/restart pollers
         // rather than letting them burn API quota while the wallpaper is
@@ -246,6 +251,7 @@ class ClawWallpaperService : WallpaperService() {
                             currentEntities = response.entities
                             hasFirstResponse = true
                             ensureCompanionPollers(response.entities)
+                            ensureWalkConfigPollers(response.entities)
                             if (visible) draw()
                         }
                 } else {
@@ -291,6 +297,8 @@ class ClawWallpaperService : WallpaperService() {
             kanbanJob = null
             companionJobs.values.forEach { it.cancel() }
             companionJobs.clear()
+            walkConfigJobs.values.forEach { it.cancel() }
+            walkConfigJobs.clear()
         }
 
         private fun ensureCompanionPollers(entities: List<EntityStatus>) {
@@ -309,6 +317,30 @@ class ClawWallpaperService : WallpaperService() {
                 if (companionJobs[id]?.isActive == true) continue
                 companionJobs[id] = engineScope.launch {
                     companionRepository.getCompanionFlow(id, secret).collect {
+                        if (visible) draw()
+                    }
+                }
+            }
+        }
+
+        private fun ensureWalkConfigPollers(entities: List<EntityStatus>) {
+            val active = entities.mapNotNull { e ->
+                e.botSecret?.let { secret -> e.entityId to secret }
+            }
+            val activeIds = active.map { it.first }.toSet()
+            walkConfigRepository.pruneTo(activeIds)
+            renderer.setWalkActionConfigs(walkConfigRepository.cachedMap())
+
+            walkConfigJobs.keys.toList().forEach { id ->
+                if (id !in activeIds) {
+                    walkConfigJobs.remove(id)?.cancel()
+                }
+            }
+            for ((id, secret) in active) {
+                if (walkConfigJobs[id]?.isActive == true) continue
+                walkConfigJobs[id] = engineScope.launch {
+                    walkConfigRepository.getWalkConfigFlow(id, secret).collect {
+                        renderer.setWalkActionConfigs(walkConfigRepository.cachedMap())
                         if (visible) draw()
                     }
                 }
