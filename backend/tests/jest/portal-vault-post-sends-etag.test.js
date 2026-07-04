@@ -12,9 +12,11 @@
 //   - backend/public/portal/publisher-setup.html  (deliberate 4-key X save)
 //   - backend/public/portal/mission.html          (background syncVarsToServer)
 //
-// chat.html and env-vars.html already did GET-then-POST-with-etag. This test
-// pins ALL web POST paths to that pattern so a future edit can't silently
-// regress one back to a no-etag POST and re-open this recurring card.
+// env-vars.html does GET-then-POST-with-etag. chat.html's Key Reference popup
+// used to as well, but is now GET-only (card_f6038f0f — the POST "merge"
+// resurrected deleted keys), so it must NOT POST the vault at all. This test
+// pins the remaining web POST paths to the etag pattern, and pins chat.html
+// read-only, so a future edit can't silently regress either.
 
 const fs = require('fs');
 const path = require('path');
@@ -42,9 +44,16 @@ describe('portal vault-save paths send expectedUpdatedAt (card_9bd4b4c0)', () =>
         expect(src).toMatch(/apiCall\(\s*['"]POST['"]\s*,\s*['"]\/api\/device-vars['"]\s*,\s*body\s*\)/);
     });
 
-    test('chat.html / env-vars.html keep their existing etag handling (regression guard)', () => {
-        expect(read('chat.html')).toMatch(/expectedUpdatedAt/);
+    test('env-vars.html keeps etag handling; chat.html no longer POSTs the vault (card_f6038f0f)', () => {
+        // env-vars.html still authors vars → must keep the optimistic-lock etag.
         expect(read('env-vars.html')).toMatch(/expectedUpdatedAt/);
+        // chat.html's Key Reference popup is now GET-only (card_f6038f0f): it must
+        // NOT POST localStorage back to /api/device-vars (that "merge" resurrected
+        // keys deleted on the mission page), so it correctly no longer references
+        // expectedUpdatedAt. Pin it read-only so a future edit can't re-introduce
+        // the resurrecting POST.
+        const chat = read('chat.html');
+        expect(/apiCall\(\s*['"]POST['"]\s*,\s*['"]\/api\/device-vars['"]/.test(chat)).toBe(false);
     });
 
     // Comprehensive guard: ANY portal file that POSTs to /api/device-vars MUST

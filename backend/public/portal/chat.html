@@ -10137,30 +10137,34 @@
         // ── Env Var Reference ──
         async function initEnvVarBtn(deviceId, deviceSecret) {
             const storageKey = `eclawLocalVars_${deviceId}`;
-            let vars;
-            try { vars = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { vars = {}; }
+            let vars = {};
 
-            // Sync from server so WebView / new sessions pick up vars set elsewhere.
-            // GET first to obtain updatedAt, then POST WITH expectedUpdatedAt so this
-            // background merge can't clobber concurrent edits (optimistic lock) and
-            // doesn't trip the server's "POST without expectedUpdatedAt" warn.
+            // The Key Reference popup is a READ surface — it only lists the vault's
+            // key names so you can insert {{KEY}}. Vars are authored on the mission
+            // page, so the SERVER is the single source of truth. GET-only, then
+            // reconcile the local cache to match the server (keys deleted on the
+            // mission page get dropped from the cache too).
+            //
+            // We must NEVER POST localStorage back here (the old code did): that
+            // "merge" resurrected keys deleted elsewhere and returned them as the
+            // display source, so a var deleted on the mission page reappeared as a
+            // chip — and worse, pushed the stale key back onto the server vault
+            // (card_f6038f0f, P1). A read surface must not write.
             try {
-                const serverData = await apiCall('GET', `/api/device-vars?deviceId=${deviceId}&deviceSecret=${deviceSecret}`);
-                const serverUpdatedAt = serverData && serverData.updatedAt;
-                if (Object.keys(vars).length > 0) {
-                    const body = { deviceId, deviceSecret, vars, source: 'web' };
-                    if (serverUpdatedAt) body.expectedUpdatedAt = serverUpdatedAt;
-                    const data = await apiCall('POST', '/api/device-vars', body);
-                    if (data && data.mergedVars) {
-                        vars = data.mergedVars;
-                        localStorage.setItem(storageKey, JSON.stringify(vars));
-                    }
-                } else if (serverData && serverData.vars) {
-                    // Fresh session — adopt server-side vars (no POST of an empty set)
+                const serverData = await apiCall('GET', `/api/device-vars?deviceId=${encodeURIComponent(deviceId)}&deviceSecret=${encodeURIComponent(deviceSecret)}`);
+                if (serverData && serverData.vars && typeof serverData.vars === 'object' && !Array.isArray(serverData.vars)) {
                     vars = serverData.vars;
-                    localStorage.setItem(storageKey, JSON.stringify(vars));
+                } else {
+                    // Reachable but no vars object → treat as an empty vault.
+                    vars = {};
                 }
-            } catch { /* non-critical — fall back to local; 409 on concurrent edit is fine */ }
+                // Cache := server truth, so deletions propagate on the next open.
+                localStorage.setItem(storageKey, JSON.stringify(vars));
+            } catch {
+                // Offline / locked / request error — display the last cached list for
+                // reference only. Read-only, no POST, so nothing can be resurrected.
+                try { vars = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { vars = {}; }
+            }
 
             const keys = Object.keys(vars);
             if (!keys.length) return;
