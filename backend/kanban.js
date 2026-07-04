@@ -2661,6 +2661,38 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
             const updatedCard = serializeCard(result.rows[0]);
 
+            // 🔎 Review-time evidence reminder (Hank 2026-07-04): when a card enters `review`
+            // and auto-detects as UI/UX (same detection the done-gate uses: requires_screenshot_review
+            // / requires_interaction_review / title+description keywords / attached image), remind the
+            // reviewer UP-FRONT what the done-gate will HARD-require, so they gather evidence early
+            // instead of hitting the wall at →done. Non-blocking heads-up; the hard block stays at done.
+            if (newStatus === 'review') {
+                const _rText = String(card.title || '') + ' ' + String(card.description || '');
+                const _uiHit = card.requires_screenshot_review === true
+                    || /\bUI\b|\bUIUX\b|介面|畫面|外觀|縮圖|按鈕|版面|排版|配色|破圖|樣式|圖示|\bmodal\b|\bdialog\b|\bbutton\b|\bicon\b|\bthumbnail\b|\bcss\b/i.test(_rText);
+                const _uxHit = card.requires_interaction_review === true
+                    || /\bUX\b|拖曳|拖移|手勢|滑動|長按|操作流程|互動|\bgesture\b|\bswipe\b|\bscroll\b|\bdrag\b|\bnavigation\b/i.test(_rText);
+                if (_uiHit || _uxHit) {
+                    const [cRes, fRes] = await Promise.all([
+                        pool.query(`SELECT text FROM kanban_comments WHERE card_id = $1 AND device_id = $2`, [cardId, deviceId]),
+                        pool.query(`SELECT mime_type FROM kanban_files WHERE card_id = $1 AND device_id = $2`, [cardId, deviceId]),
+                    ]);
+                    const cmts = cRes.rows.map(r => r.text || '');
+                    const hasImage = fRes.rows.some(r => String(r.mime_type || '').startsWith('image/'));
+                    const hasAnyFile = fRes.rows.length > 0;
+                    const hasVision = cmts.some(t => t.includes('[VISION]'));
+                    const hasUxOp = cmts.some(t => t.includes('[UX-OPERATED]'));
+                    const missing = [];
+                    if (_uiHit && !(hasImage && hasVision)) missing.push('UI：附一張截圖 image + 一則 `[VISION]:<你實際看到什麼>` 留言');
+                    if (_uxHit && !(hasUxOp && hasAnyFile)) missing.push('UX：一則 `[UX-OPERATED]:<操作流程>` 留言 + 互動證據附件');
+                    if (missing.length > 0) {
+                        const kind = _uiHit && _uxHit ? 'UI/UX' : (_uiHit ? 'UI' : 'UX');
+                        await addSystemComment(cardId, deviceId,
+                            `🔎 審查提醒：此卡判定為 ${kind} 卡。移到 done 前需補 → ${missing.join('；')}。缺就會被 done-gate 硬擋（審查不靠自覺）。`);
+                    }
+                }
+            }
+
             // ⚠️ Soft-gate warning comment (card_f52ef42e) — record what's incomplete
             // so a reviewer can find evidence-incomplete cards. Never blocks the move.
             if (softFlagged) {
