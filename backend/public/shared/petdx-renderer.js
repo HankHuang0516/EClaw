@@ -39,6 +39,38 @@
     const DEFAULT_FPS = 4;
     const DEFAULT_FALLBACK_POLICY = 'silent_to_idle';
 
+    // ── Per-kind emoji fallback (sprite missing / ORB-blocked) ──────────
+    // Spec §3.4: when a sprite fails to load we draw a per-kind emoji + the
+    // name initial. The grid's synthetic descriptor used to omit `kind`, so
+    // EVERY card fell through to the 🦞 default. resolveCompanionKind also
+    // infers `kind` from the companion `category` so a card that only carries
+    // category (animal/human/…) still gets the right emoji.
+    const FALLBACK_EMOJI_BY_KIND = { creature: '🐾', character: '🧑', object: '🎯' };
+    const DEFAULT_FALLBACK_EMOJI = '🦞';
+    const CATEGORY_TO_KIND = {
+        animal: 'creature',
+        human: 'character',
+        robot: 'object',
+        mascot: 'object',
+        custom: 'object',
+    };
+
+    function resolveCompanionKind(descriptor) {
+        if (!descriptor || typeof descriptor !== 'object') return null;
+        const direct = descriptor.kind
+            || (descriptor.sourceAttribution && descriptor.sourceAttribution.kind);
+        if (direct) return direct;
+        if (descriptor.category && CATEGORY_TO_KIND[descriptor.category]) {
+            return CATEGORY_TO_KIND[descriptor.category];
+        }
+        return null;
+    }
+
+    function fallbackEmojiForKind(descriptor) {
+        const kind = resolveCompanionKind(descriptor);
+        return FALLBACK_EMOJI_BY_KIND[kind] || DEFAULT_FALLBACK_EMOJI;
+    }
+
     // ── Spritesheet image cache ─────────────────────────────────
     // Multiple renderer instances on the same page (the grid is 1 canvas
     // per card) hit the same R2 URLs; cache by URL so the browser only
@@ -277,9 +309,7 @@
         function drawSpritesheetFallback(ctx, w, h, descriptor) {
             // Per-kind emoji + name-initial badge, used when sprite asset is missing
             // or failed to load. See docs/specs/petdx-uiux-spec-amendment-2026-06-05-self-host-sprite.md §3.4.
-            const kind = descriptor && (descriptor.kind || (descriptor.sourceAttribution && descriptor.sourceAttribution.kind));
-            const emojiByKind = { creature: '🐾', character: '🧑', object: '🎯' };
-            const emoji = emojiByKind[kind] || '🦞';
+            const emoji = fallbackEmojiForKind(descriptor);
             const name = (descriptor && descriptor.name) || '';
             const initial = name.trim().charAt(0).toUpperCase();
 
@@ -627,6 +657,9 @@
         // spritesheet cache during the descriptor fetch instead of waiting
         // for the first rAF tick to start the WEBP download.
         prefetchSpritesheet: loadSpritesheet,
+        // Per-kind emoji fallback (exposed for unit tests + grid reuse).
+        resolveCompanionKind,
+        fallbackEmojiForKind,
         DEFAULT_STATE,
     };
 }));

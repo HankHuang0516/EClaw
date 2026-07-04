@@ -18,7 +18,10 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
-const { syncPetdexCatalog, R2_KEY_PREFIX, PROXY_PATH_PREFIX } = require('./petdex-bridge');
+const {
+    syncPetdexCatalog, R2_KEY_PREFIX, PROXY_PATH_PREFIX,
+    rewriteCommunitySpriteUrl, rewriteDescriptorSpriteUrl,
+} = require('./petdex-bridge');
 const { extractFrameZero } = require('./companion-avatar-util');
 const extractCreds = require('./extract-creds');
 
@@ -162,7 +165,9 @@ function rowToCompanionCard(row) {
         id: row.id,
         name: row.name,
         version: row.version,
-        avatarUrl: row.avatar_url,
+        // Rewrite external community-CDN URLs to the same-origin proxy so the
+        // browser doesn't ORB-block them (no-op for R2/proxy/null URLs).
+        avatarUrl: rewriteCommunitySpriteUrl(row.avatar_url),
         thumbnailUrl: row.thumbnail_url,
         author: row.author_entity_id != null
             ? { entityId: row.author_entity_id }
@@ -186,10 +191,18 @@ function rowToCompanionCard(row) {
     // so cards can animate without a follow-up /:id fetch per tile. Procedural
     // cards already work off the renderer-key heuristic in petdx-browser.html.
     if (row.asset_type === 'spritesheet') {
-        card.assetUrl = row.asset_url;
+        card.assetUrl = rewriteCommunitySpriteUrl(row.asset_url);
         const d = row.descriptor || {};
-        if (d.asset) card.asset = d.asset;
+        // descriptor.asset.url is the URL the renderer actually loads — rewrite
+        // it too (clone, never mutate the row) so the grid fetches same-origin.
+        if (d.asset) {
+            const rewritten = rewriteDescriptorSpriteUrl(d);
+            card.asset = rewritten.asset;
+        }
         if (d.stateAssets) card.stateAssets = d.stateAssets;
+        // Surface `kind` so the grid's synthetic descriptor can pick the right
+        // emoji fallback (🐾/🧑/🎯) instead of always defaulting to 🦞.
+        if (d.kind) card.kind = d.kind;
     }
     return card;
 }
@@ -197,8 +210,11 @@ function rowToCompanionCard(row) {
 function rowToCompanionDetail(row) {
     return {
         ...rowToCompanionCard(row),
-        descriptor: row.descriptor,
-        assetUrl: row.asset_url,
+        // The modal renders straight off detail.descriptor — rewrite its
+        // asset.url (and assetUrl) to the same-origin proxy too, or the
+        // bigger preview ORB-blocks even though the grid card is fixed.
+        descriptor: rewriteDescriptorSpriteUrl(row.descriptor),
+        assetUrl: rewriteCommunitySpriteUrl(row.asset_url),
         license: row.license,
         i18nData: row.i18n_data,
         publishedAt: row.published_at,
