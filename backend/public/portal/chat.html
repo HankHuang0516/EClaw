@@ -10151,8 +10151,8 @@
             // chip — and worse, pushed the stale key back onto the server vault
             // (card_f6038f0f, P1). A read surface must not write.
             try {
-                const serverData = await apiCall('GET', `/api/device-vars?deviceId=${deviceId}&deviceSecret=${deviceSecret}`);
-                if (serverData && serverData.vars && typeof serverData.vars === 'object') {
+                const serverData = await apiCall('GET', `/api/device-vars?deviceId=${encodeURIComponent(deviceId)}&deviceSecret=${encodeURIComponent(deviceSecret)}`);
+                if (serverData && serverData.vars && typeof serverData.vars === 'object' && !Array.isArray(serverData.vars)) {
                     vars = serverData.vars;
                 } else {
                     // Reachable but no vars object → treat as an empty vault.
