@@ -1069,6 +1069,10 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             reviewerEntityId: row.reviewer_entity_id != null ? parseInt(row.reviewer_entity_id) : null,
             requiresScreenshotReview: row.requires_screenshot_review !== false,
             requiresPreflightReview: row.requires_preflight_review !== false,
+            // HARD UX-interaction evidence opt-in (card_5d50ee10). Defaults FALSE;
+            // when TRUE the done-gate hard-requires a [UX-OPERATED] attestation +
+            // an interaction artifact before →done, even in soft mode.
+            requiresInteractionReview: row.requires_interaction_review === true,
             // Per-card PR-link opt-in (owner directive 2026-07-03). Defaults FALSE
             // (not blocking); only when TRUE does the done-gate require a PR link.
             requirePrLink: row.requires_pr_link === true,
@@ -2105,7 +2109,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     router.put('/card/:id', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] PUT /card/:id called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, title, description, priority, assignedBots, reviewerEntityId, requiresScreenshotReview, requiresPreflightReview, dispatchMode, requiresPrRework, reworkPrNumber, linkedPrevCardId, linkedNextCardId } = req.body;
+        const { deviceId, title, description, priority, assignedBots, reviewerEntityId, requiresScreenshotReview, requiresInteractionReview, requiresPreflightReview, dispatchMode, requiresPrRework, reworkPrNumber, linkedPrevCardId, linkedNextCardId } = req.body;
         const cardId = req.params.id;
 
         try {
@@ -2179,6 +2183,12 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             if (requiresScreenshotReview !== undefined) {
                 updates.push(`requires_screenshot_review = $${paramIdx++}`);
                 params.push(!!requiresScreenshotReview);
+            }
+            // HARD UX-interaction evidence opt-in (card_5d50ee10). Mirror how
+            // requiresScreenshotReview is handled: coerce to a boolean.
+            if (requiresInteractionReview !== undefined) {
+                updates.push(`requires_interaction_review = $${paramIdx++}`);
+                params.push(!!requiresInteractionReview);
             }
             if (requiresPreflightReview !== undefined) {
                 updates.push(`requires_preflight_review = $${paramIdx++}`);
@@ -2573,6 +2583,12 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     // honour it and never fall back to painTags — a backend card
                     // (requires_screenshot_review=false) never gets a screenshot demand.
                     isUiCard: card.requires_screenshot_review === true,
+                    // HARD vision/interaction evidence (card_5d50ee10). Automatic
+                    // UI/UX card detection keys off these explicit flags (plus
+                    // painTags / attached images inside the gate). These two hard
+                    // checks BLOCK a →done move even in soft mode.
+                    requiresScreenshotReview: card.requires_screenshot_review === true,
+                    requiresInteractionReview: card.requires_interaction_review === true,
                     // Per-card PR-link opt-in (owner directive 2026-07-03). The
                     // PR-link sub-check enforces ONLY when this card explicitly
                     // opted in (requires_pr_link=true, set at create or via

@@ -47,6 +47,42 @@ const PR_LINK_PATTERN = /https?:\/\/github\.com\/[\w.\-]+\/[\w.\-]+\/pull\/\d+/i
 
 const UI_PAIN_TAGS = Object.freeze(['ux_feedback', 'redirect_deeplink', 'delivery_reliability']);
 
+// ── HARD vision/interaction evidence (card_5d50ee10, P0) ────────────────────
+// A class of "card marked done but has a visible bug the owner had to find"
+// failures came from reviewers closing UI/UX cards without proving they actually
+// LOOKED at / OPERATED the surface. These two checks are the whole point: they
+// HARD-BLOCK a →done move EVEN IN SOFT MODE (soft mode must NOT suppress them).
+//
+// Card-type detection is AUTOMATIC and does NOT rely on anyone remembering a flag:
+//   UI card  = requiresScreenshotReview===true OR painTag ∈ UI_CARD_PAIN_TAGS
+//              OR any attached file is an image.
+//   UX card  = requiresInteractionReview===true OR painTag ∈ UX_CARD_PAIN_TAGS.
+// The explicit `isUiCard` override still works (it forces the UI branch on/off).
+//
+// UI-vision evidence  = (a) an image/* attachment AFTER the preflight comment
+//                     + (b) a comment carrying `[VISION]` followed by ≥15 chars
+//                       of what the reviewer actually saw.
+// UX-interaction evidence = a comment carrying `[UX-OPERATED]` + ≥15 chars of the
+//                       flow operated, AND ≥1 artifact (any file, image or not)
+//                       as interaction evidence.
+const UI_CARD_PAIN_TAGS = Object.freeze(['ui', 'uiux', 'ui_ux', 'frontend', 'delivery_reliability', 'visual']);
+const UX_CARD_PAIN_TAGS = Object.freeze(['interaction', 'gesture', 'flow', 'ux', 'navigation', 'drag', 'scroll']);
+
+const VISION_TOKEN = '[VISION]';
+const UX_OPERATED_TOKEN = '[UX-OPERATED]';
+// Reviewer must write a non-trivial description AFTER the token (≥ this many
+// trimmed chars) so the token can't be dropped in bare.
+const MIN_ATTESTATION_CHARS = 15;
+
+// Extract the text that FOLLOWS the first occurrence of `token` in `text`,
+// trimmed. Returns '' when the token is absent.
+function attestationAfter(text, token) {
+    if (typeof text !== 'string') return '';
+    const idx = text.indexOf(token);
+    if (idx === -1) return '';
+    return text.slice(idx + token.length).trim();
+}
+
 /**
  * @typedef {Object} GateInput
  * @property {string} oldStatus
@@ -117,6 +153,28 @@ function mimeOf(f) {
     return (f.mimeType || f.mime_type || '').toString().toLowerCase();
 }
 
+// AUTOMATIC UI-card detection for the HARD vision check (card_5d50ee10). Wider
+// than inferIsUiCard's painTag set: also honours the explicit override, the
+// requiresScreenshotReview signal, the expanded UI_CARD_PAIN_TAGS list, AND any
+// attached image (a card that has a screenshot is de-facto a UI card). This must
+// NOT rely on someone remembering to set a flag.
+function detectUiCard(input, files) {
+    if (typeof input.isUiCard === 'boolean') return input.isUiCard;
+    if (input.requiresScreenshotReview === true) return true;
+    const pt = Array.isArray(input.painTags) ? input.painTags : [];
+    if (pt.some(t => UI_CARD_PAIN_TAGS.includes(t))) return true;
+    const fs = Array.isArray(files) ? files : [];
+    if (fs.some(f => mimeOf(f).startsWith('image/'))) return true;
+    return false;
+}
+
+// AUTOMATIC UX-card detection for the HARD interaction check (card_5d50ee10).
+function detectUxCard(input) {
+    if (input.requiresInteractionReview === true) return true;
+    const pt = Array.isArray(input.painTags) ? input.painTags : [];
+    return pt.some(t => UX_CARD_PAIN_TAGS.includes(t));
+}
+
 /**
  * Pure predicate. Defaults to ALLOW when transition isn't done-bound or
  * card is opted out.
@@ -160,7 +218,76 @@ function evaluateDoneGate(input) {
             break;
         }
     }
+    // ── HARD vision / interaction evidence (card_5d50ee10, P0) ──────────────
+    // These two checks HARD-BLOCK a →done move EVEN IN SOFT MODE. They are the
+    // whole point of this gate: a UI/UX card cannot be closed without proof the
+    // reviewer actually LOOKED at (image + [VISION] attestation) or OPERATED
+    // ([UX-OPERATED] attestation + artifact) the surface. `hardVisionUxBlock` is
+    // computed BEFORE the preflight check (so the no-preflight soft path can't
+    // escape it either) and consulted before EVERY allow-path below. When there
+    // is no preflight comment, preflightIdx=-1 / preflightTs=0, so evidence is
+    // read from the full comment/file list (correct — a UI/UX card still needs
+    // its vision/interaction proof regardless of the preflight marker).
+    const hardVisionUxBlock = (() => {
+        const files = Array.isArray(input.files) ? input.files : [];
+        const filesAfterPre = files.filter(f => tsOf(f) >= preflightTs);
+        const commentsAfterPre = [];
+        for (let i = preflightIdx + 1; i < list.length; i++) {
+            const c = list[i];
+            if (c && typeof c.text === 'string' && !c.isSystem) commentsAfterPre.push(c);
+        }
+
+        const isUi = detectUiCard(input, files);
+        const isUx = detectUxCard(input);
+
+        if (isUi) {
+            const hasImage = filesAfterPre.some(f => mimeOf(f).startsWith('image/'));
+            const hasVision = commentsAfterPre.some(
+                c => attestationAfter(c.text, VISION_TOKEN).length >= MIN_ATTESTATION_CHARS
+            );
+            if (!hasImage || !hasVision) {
+                const missing = [];
+                if (!hasImage) missing.push('vision_screenshot_artifact');
+                if (!hasVision) missing.push('vision_attestation');
+                return {
+                    allowed: false,
+                    code: 'PREFLIGHT_GATE_FAILED',
+                    error: 'UI card requires vision evidence: an image attachment AND a [VISION] attestation of what was seen',
+                    hint: `此 UI 卡需要「看過」的證據：(1) preflight 之後上傳一張截圖 (image/*) 經 POST /api/mission/card/:id/file，且 (2) 一則留言以 "${VISION_TOKEN}" 開頭並描述你實際看到的畫面（≥${MIN_ATTESTATION_CHARS} 字）。缺: ${missing.join(', ')}。此檢查即使在 soft 模式也硬擋。`,
+                    missingItems: missing,
+                };
+            }
+        }
+
+        if (isUx) {
+            const hasOperated = commentsAfterPre.some(
+                c => attestationAfter(c.text, UX_OPERATED_TOKEN).length >= MIN_ATTESTATION_CHARS
+            );
+            const hasArtifact = filesAfterPre.length > 0;
+            if (!hasOperated || !hasArtifact) {
+                const missing = [];
+                if (!hasOperated) missing.push('ux_operated_attestation');
+                if (!hasArtifact) missing.push('ux_interaction_artifact');
+                return {
+                    allowed: false,
+                    code: 'PREFLIGHT_GATE_FAILED',
+                    error: 'UX card requires interaction evidence: a [UX-OPERATED] attestation AND an interaction artifact',
+                    hint: `此 UX 卡需要「操作過」的證據：(1) 一則留言以 "${UX_OPERATED_TOKEN}" 開頭並描述你實際走過的操作流程（≥${MIN_ATTESTATION_CHARS} 字），且 (2) preflight 之後至少一個附件（任何檔案或截圖）作為互動證據。缺: ${missing.join(', ')}。此檢查即使在 soft 模式也硬擋。`,
+                    missingItems: missing,
+                };
+            }
+        }
+        return null;
+    })();
+    // Applied at every allow-path via allowOrHardBlock(): the HARD vision/UX
+    // block (if any) ALWAYS wins over a soft allow.
+    const allowOrHardBlock = (verdict) => hardVisionUxBlock || verdict;
+
+    // Preflight-not-found: the HARD vision/UX block still fires first (a UI/UX
+    // card with no vision/interaction proof is hard-blocked even if it also lacks
+    // a preflight). Otherwise fall back to the legacy preflight handling.
     if (preflightIdx === -1) {
+        if (hardVisionUxBlock) return hardVisionUxBlock;
         const b = block({
             allowed: false,
             code: 'PREFLIGHT_GATE_FAILED',
@@ -222,17 +349,21 @@ function evaluateDoneGate(input) {
             hint: `缺少: ${bm.join(', ')}. 在 evidence comment 內逐項補上 (照 composer template 順序). 若此卡為 trivial dep-bump / doc-only, PUT /card/:id 把 requiresPreflightReview 設 false.`,
             missingItems: bm,
         });
-        if (b) return b;
+        // HARD vision/UX evidence always wins over the (hard-mode) checklist block.
+        if (b) return hardVisionUxBlock || b;
         // Soft mode: evidence checklist incomplete — recorded above. Continue to
         // the artifact checks below (guarded for the null evidenceComment).
     }
 
     // v1 path: text-only. Hard mode allows outright; soft mode may still carry a
     // finding from a missing evidence comment above, so fold it into the warning.
+    // The HARD vision/UX block (if any) still applies via allowOrHardBlock.
     if (!useV2) {
-        return softFindings.length
-            ? { allowed: true, softWarning: buildSoftWarning(softFindings) }
-            : { allowed: true };
+        return allowOrHardBlock(
+            softFindings.length
+                ? { allowed: true, softWarning: buildSoftWarning(softFindings) }
+                : { allowed: true }
+        );
     }
 
     // 3. v2 — PR link in evidence. Owner directive 2026-07-03: this is now a
@@ -259,7 +390,7 @@ function evaluateDoneGate(input) {
             hint: 'Include a https://github.com/<owner>/<repo>/pull/<N> URL in the evidence comment so the PR can be linked back.',
             missingItems: ['PR link'],
         });
-        if (b) return b;
+        if (b) return hardVisionUxBlock || b;
     }
 
     // 4. v2 — artifact attachments after preflight
@@ -295,7 +426,7 @@ function evaluateDoneGate(input) {
             hint: 'Upload the jest verbose output (or other test log) via POST /api/mission/card/:id/file with mimeType: "text/plain" AFTER the preflight comment. Text-claim of "tests passed" is insufficient.',
             missingItems: ['jest_output_artifact'],
         });
-        if (b) return b;
+        if (b) return hardVisionUxBlock || b;
     }
     if (requiresScreenshot && !hasScreenshot) {
         const b = block({
@@ -305,12 +436,15 @@ function evaluateDoneGate(input) {
             hint: 'Upload a post-deploy screenshot via POST /api/mission/card/:id/file with mimeType: "image/png". User-visible UI changes must include a screenshot capturing the actual rendered result.',
             missingItems: ['screenshot_artifact'],
         });
-        if (b) return b;
+        if (b) return hardVisionUxBlock || b;
     }
 
-    // Soft mode: if any finding accumulated, allow WITH a warning; else a clean pass.
-    if (softFindings.length) return { allowed: true, softWarning: buildSoftWarning(softFindings) };
-    return { allowed: true };
+    // Soft mode: if any finding accumulated, allow WITH a warning; else a clean
+    // pass. The HARD vision/UX block (card_5d50ee10) wins over both via
+    // allowOrHardBlock — a UI/UX card without vision/interaction proof is blocked
+    // even here, in either mode.
+    if (softFindings.length) return allowOrHardBlock({ allowed: true, softWarning: buildSoftWarning(softFindings) });
+    return allowOrHardBlock({ allowed: true });
 }
 
 // Human ⚠️ line the kanban callsite posts as a soft-warning card comment
@@ -335,6 +469,11 @@ module.exports = {
     USER_POV_ALIASES,
     PR_LINK_PATTERN,
     UI_PAIN_TAGS,
+    UI_CARD_PAIN_TAGS,
+    UX_CARD_PAIN_TAGS,
+    VISION_TOKEN,
+    UX_OPERATED_TOKEN,
+    MIN_ATTESTATION_CHARS,
     evaluateDoneGate,
     buildSoftWarning,
 };

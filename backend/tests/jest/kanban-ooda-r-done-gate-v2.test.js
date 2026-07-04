@@ -10,6 +10,7 @@ const {
     PREFLIGHT_MARKER,
     USER_POV_ALIASES,
     PR_LINK_PATTERN,
+    VISION_TOKEN,
 } = require('../../agent-improvement/done-gate');
 
 const {
@@ -90,13 +91,20 @@ describe('evaluateDoneGate v2 — artifact requirements', () => {
         expect(v.missingItems).toEqual(['screenshot_artifact']);
     });
 
-    test('P0 UI card: jest log + screenshot both → pass', () => {
+    test('P0 UI card: jest log + screenshot + [VISION] attestation → pass', () => {
+        // card_5d50ee10: a card with an image is now auto-classified UI and ALSO
+        // needs a [VISION] attestation of what was seen. jest + screenshot alone is
+        // no longer sufficient — the reviewer must state what they observed.
+        const visionComment = mkComment(
+            `${VISION_TOKEN} verified the rendered dialog: the confirm button is blue and centered, no overflow`,
+            { t: '2026-06-07T02:30:00Z' }
+        );
         const v = evaluateDoneGate({
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true,
             severity: 'P0',
             painTags: ['ux_feedback'],
-            comments: baseComments,
+            comments: [...baseComments, visionComment],
             files: [
                 mkFile('jest_out.txt', 'text/plain'),
                 mkFile('proof.png', 'image/png'),
@@ -135,6 +143,10 @@ describe('evaluateDoneGate v2 — artifact requirements', () => {
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true,
             severity: 'P2',
+            // card_5d50ee10: an attached image would auto-classify this as a UI card
+            // (→ [VISION] demand). Pin isUiCard:false so this test keeps proving the
+            // ORIGINAL point in isolation: an image alone is not a jest/test log.
+            isUiCard: false,
             painTags: ['task_context'],
             comments: baseComments,
             files: [mkFile('screen.png', 'image/png')],

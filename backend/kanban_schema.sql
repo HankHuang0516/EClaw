@@ -63,6 +63,15 @@ ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS reviewer_entity_id INTEGER DEF
 -- without at least one image/* file attached via POST /api/mission/card/:id/file.
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_screenshot_review BOOLEAN DEFAULT TRUE;
 
+-- HARD UX-interaction evidence opt-in (2026-07-04, card_5d50ee10): when TRUE the
+-- OODA-R done-gate hard-requires a [UX-OPERATED] attestation comment (≥15 chars of
+-- the flow operated) PLUS an interaction artifact before a card can move to done —
+-- and this check blocks EVEN IN SOFT MODE (soft mode must not suppress it). DEFAULT
+-- FALSE. Card-type detection is also automatic (painTags interaction/gesture/flow/
+-- ux/navigation/drag/scroll), so this flag is an explicit override, not the only
+-- trigger. Settable via PUT /card/:id {requiresInteractionReview}.
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_interaction_review BOOLEAN DEFAULT FALSE;
+
 -- OODA-R Phase 1 #3c done-gate (2026-06-07): cards with this flag cannot move to done
 -- without a composer-marker preflight comment AND a 5-item evidence comment.
 -- Bypass: flip to FALSE via PUT /card/:id for trivial dep-bumps / doc renames.
