@@ -2567,6 +2567,20 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     );
                 } catch (_) { /* classifier optional; gate falls back */ }
                 const { evaluateDoneGate } = require('./agent-improvement/done-gate');
+                // Broaden UI/UX detection so a manually-created card whose TITLE/description
+                // reads as UI/UX (e.g. "[Bug/UI] ...") but that carries no painTag /
+                // requires_screenshot_review flag / image is still caught by the HARD
+                // vision/interaction gate — the "un-tagged UI card slips through" gap found by
+                // dogfooding (card_5d50ee10 follow-up). Bias toward "needs verification": a false
+                // positive merely asks for a screenshot, the safe direction. Word-boundary UI/UX
+                // + specific UI/UX nouns (EN+ZH) so it does not over-catch generic backend text.
+                // Deliberately excludes the ambiguous `delivery_reliability` painTag (that infra
+                // tag on backend cards caused the old false "UI needs screenshot" demand).
+                const _gateText = String(card.title || '') + ' ' + String(card.description || '');
+                const _uiTitleHit = /\bUI\b|\bUIUX\b|介面|畫面|外觀|縮圖|按鈕|版面|排版|配色|破圖|樣式|圖示|\bmodal\b|\bdialog\b|\bbutton\b|\bicon\b|\bthumbnail\b|\bcss\b/i.test(_gateText);
+                const _uxTitleHit = /\bUX\b|拖曳|拖移|手勢|滑動|長按|操作流程|互動|\bgesture\b|\bswipe\b|\bscroll\b|\bdrag\b|\bnavigation\b/i.test(_gateText);
+                const _hasImageFile = (filesRes.rows || []).some(f => String(f.mime_type || f.mimeType || '').startsWith('image/'));
+                const _uiCardDetected = card.requires_screenshot_review === true || _uiTitleHit || _hasImageFile;
                 const verdict = evaluateDoneGate({
                     oldStatus,
                     newStatus,
@@ -2582,13 +2596,13 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     // screenshot". Passing an explicit boolean makes inferIsUiCard
                     // honour it and never fall back to painTags — a backend card
                     // (requires_screenshot_review=false) never gets a screenshot demand.
-                    isUiCard: card.requires_screenshot_review === true,
+                    isUiCard: _uiCardDetected,
                     // HARD vision/interaction evidence (card_5d50ee10). Automatic
                     // UI/UX card detection keys off these explicit flags (plus
                     // painTags / attached images inside the gate). These two hard
                     // checks BLOCK a →done move even in soft mode.
                     requiresScreenshotReview: card.requires_screenshot_review === true,
-                    requiresInteractionReview: card.requires_interaction_review === true,
+                    requiresInteractionReview: card.requires_interaction_review === true || _uxTitleHit,
                     // Per-card PR-link opt-in (owner directive 2026-07-03). The
                     // PR-link sub-check enforces ONLY when this card explicitly
                     // opted in (requires_pr_link=true, set at create or via
