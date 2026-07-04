@@ -962269,6 +962269,32 @@ const TRANSLATIONS = {
 
 
         "invite_qr_btn_download": "下載 PNG",
+        "invite_qr_btn_copied": "已複製",
+        "invite_qr_btn_downloaded": "已下載",
+        "invite_qr_status_copy_unavailable": "剪貼簿無法使用",
+        "invite_qr_status_copied": "已複製",
+        "invite_qr_status_copy_failed": "複製失敗",
+        "invite_qr_status_loading_code": "正在檢查帳戶邀請碼",
+        "invite_qr_status_loading_code_detail": "若瀏覽器未登入，可手動輸入邀請碼",
+        "invite_qr_helper_loaded": "已載入帳戶邀請碼",
+        "invite_qr_status_manual": "手動輸入邀請碼",
+        "invite_qr_status_manual_detail": "此處未載入帳戶邀請碼，輸入或貼上邀請碼來個人化圖片",
+        "invite_qr_helper_sanitized": "僅保留字母和數字",
+        "invite_qr_helper_ready": "預覽會隨邀請碼自動更新",
+        "invite_qr_helper_empty": "僅支援字母和數字，預覽在收到邀請碼前使用佔位符",
+        "invite_qr_status_failed": "預覽失敗",
+        "invite_qr_status_failed_detail": "請嘗試其他圖片尺寸或重新載入頁面",
+        "invite_qr_status_ready": "就緒",
+        "invite_qr_status_ready_detail": "預覽已是最新，準備好後可下載或複製 PNG",
+        "invite_qr_status_rendering": "正在轉譯預覽",
+        "invite_qr_status_rendering_code": "正在為此邀請連結建立 QR 圖片",
+        "invite_qr_status_rendering_empty": "正在建立佔位符預覽，等待邀請碼可用",
+        "invite_qr_status_qr_fallback": "QR 替代方案已繪製",
+        "invite_qr_status_qr_fallback_detail": "QR 圖片庫未載入，但海報仍可下載",
+        "invite_qr_status_downloaded": "已下載",
+        "invite_qr_status_placeholder": "佔位符預覽",
+        "invite_qr_status_placeholder_detail": "輸入邀請碼以替換佔位符連結",
+
 
 
 
@@ -2136656,6 +2136682,32 @@ const TRANSLATIONS = {
 
 
         "invite_qr_btn_download": "Download PNG",
+        "invite_qr_btn_copied": "コピーしました",
+        "invite_qr_btn_downloaded": "ダウンロードしました",
+        "invite_qr_status_copy_unavailable": "クリップボードは利用できません",
+        "invite_qr_status_copied": "コピーしました",
+        "invite_qr_status_copy_failed": "コピーに失敗しました",
+        "invite_qr_status_loading_code": "アカウントコードを確認中",
+        "invite_qr_status_loading_code_detail": "ブラウザにサインインしていない場合、手動でコードを入力できます",
+        "invite_qr_helper_loaded": "アカウント招待コードを読み込みました",
+        "invite_qr_status_manual": "手動コード入力",
+        "invite_qr_status_manual_detail": "アカウントコードが読み込まれていません。コードを入力または貼り付けて画像をパーソナライズしてください",
+        "invite_qr_helper_sanitized": "文字と数字のみ保持されます",
+        "invite_qr_helper_ready": "プレビューはコードの変更時に自動更新されます",
+        "invite_qr_helper_empty": "文字と数字のみサポートされています。プレビューはコードが利用可能になるまでプレースホルダーを使用します",
+        "invite_qr_status_failed": "プレビューの生成に失敗しました",
+        "invite_qr_status_failed_detail": "他の画像サイズを試すか、ページを再読み込みしてください",
+        "invite_qr_status_ready": "準備完了",
+        "invite_qr_status_ready_detail": "プレビューは最新の状態です。準備ができたらPNGをダウンロードまたはコピーしてください",
+        "invite_qr_status_rendering": "プレビューを生成中",
+        "invite_qr_status_rendering_code": "この招待リンクのQRコードを作成しています",
+        "invite_qr_status_rendering_empty": "コードが利用できるようになるまでプレースホルダープレビューを作成しています",
+        "invite_qr_status_qr_fallback": "QRコードの代替案を生成しました",
+        "invite_qr_status_qr_fallback_detail": "QRコードライブラリが読み込まれませんでしたが、ポスターは引き続きダウンロードできます",
+        "invite_qr_status_downloaded": "ダウンロードしました",
+        "invite_qr_status_placeholder": "プレースホルダープレビュー",
+        "invite_qr_status_placeholder_detail": "招待コードを入力してプレースホルダーリンクを置き換えてください",
+
 
 
 
@@ -2699850,6 +2699902,32 @@ const TRANSLATIONS = {
 
 
         "invite_qr_btn_download": "Download PNG",
+        "invite_qr_btn_copied": "복사됨",
+        "invite_qr_btn_downloaded": "다운로드됨",
+        "invite_qr_status_copy_unavailable": "클립보드 사용 불가",
+        "invite_qr_status_copied": "복사됨",
+        "invite_qr_status_copy_failed": "복사 실패",
+        "invite_qr_status_loading_code": "계정 코드 확인 중",
+        "invite_qr_status_loading_code_detail": "브라우저에 로그인하지 않은 경우 코드를 수동으로 입력할 수 있습니다",
+        "invite_qr_helper_loaded": "계정 초대 코드를 불러왔습니다",
+        "invite_qr_status_manual": "수동 코드 입력",
+        "invite_qr_status_manual_detail": "여기에 계정 코드가 로드되지 않았습니다. 코드를 입력하거나 붙여넣어 이미지를 개인화하세요",
+        "invite_qr_helper_sanitized": "문자와 숫자만 유지됩니다",
+        "invite_qr_helper_ready": "코드가 변경되면 미리보기가 자동으로 업데이트됩니다",
+        "invite_qr_helper_empty": "문자와 숫자만 지원됩니다. 미리보기는 코드를 사용할 수 있을 때까지 플레이스홀더를 사용합니다",
+        "invite_qr_status_failed": "미리보기 실패",
+        "invite_qr_status_failed_detail": "다른 이미지 크기를 시도하거나 페이지를 새로고침하세요",
+        "invite_qr_status_ready": "준비됨",
+        "invite_qr_status_ready_detail": "미리보기가 현재 상태입니다. 준비가 되면 PNG를 다운로드하거나 복사하세요",
+        "invite_qr_status_rendering": "미리보기 생성 중",
+        "invite_qr_status_rendering_code": "이 초대 링크의 QR 이미지를 만들고 있습니다",
+        "invite_qr_status_rendering_empty": "코드를 사용할 수 있을 때까지 플레이스홀더 미리보기를 만들고 있습니다",
+        "invite_qr_status_qr_fallback": "QR 대체方案的 생성됨",
+        "invite_qr_status_qr_fallback_detail": "QR 라이브러리가 로드되지 않았지만 포스터는 계속 다운로드할 수 있습니다",
+        "invite_qr_status_downloaded": "다운로드됨",
+        "invite_qr_status_placeholder": "플레이스홀더 미리보기",
+        "invite_qr_status_placeholder_detail": "초대 코드를 입력하여 플레이스홀더 링크를 대체하세요",
+
 
 
 
@@ -3223091,6 +3223169,32 @@ const TRANSLATIONS = {
 
 
         "invite_qr_btn_download": "Download PNG",
+        "invite_qr_btn_copied": "คัดลอกแล้ว",
+        "invite_qr_btn_downloaded": "ดาวน์โหลดแล้ว",
+        "invite_qr_status_copy_unavailable": "คลิปบอร์ดไม่พร้อมใช้งาน",
+        "invite_qr_status_copied": "คัดลอกแล้ว",
+        "invite_qr_status_copy_failed": "คัดลอกไม่สำเร็จ",
+        "invite_qr_status_loading_code": "กำลังตรวจสอบรหัสบัญชี",
+        "invite_qr_status_loading_code_detail": "หากเบราว์เซอร์ไม่ได้ลงชื่อเข้าใช้ คุณสามารถพิมพ์รหัสด้วยตนเอง",
+        "invite_qr_helper_loaded": "โหลดรหัสเชิญบัญชีแล้ว",
+        "invite_qr_status_manual": "ป้อนรหัสด้วยตนเอง",
+        "invite_qr_status_manual_detail": "ไม่มีรหัสบัญชีที่นี่ พิมพ์หรือวางรหัสเพื่อปรับแต่งรูปภาพ",
+        "invite_qr_helper_sanitized": "เก็บเฉพาะตัวอักษรและตัวเลขเท่านั้น",
+        "invite_qr_helper_ready": "ตัวอย่างจะอัปเดตอัตโนมัติเมื่อรหัสเปลี่ยน",
+        "invite_qr_helper_empty": "รองรับเฉพาะตัวอักษรและตัวเลขเท่านั้น ตัวอย่างจะใช้ตัวแทนจนกว่าจะมีรหัส",
+        "invite_qr_status_failed": "ตัวอย่างล้มเหลว",
+        "invite_qr_status_failed_detail": "ลองขนาดภาพอื่นหรือโหลดหน้าใหม่",
+        "invite_qr_status_ready": "พร้อม",
+        "invite_qr_status_ready_detail": "ตัวอย่างเป็นปัจจุบันแล้ว ดาวน์โหลดหรือคัดลอก PNG เมื่อพร้อม",
+        "invite_qr_status_rendering": "กำลังสร้างตัวอย่าง",
+        "invite_qr_status_rendering_code": "กำลังสร้างภาพ QR สำหรับลิงก์เชิญนี้",
+        "invite_qr_status_rendering_empty": "กำลังสร้างตัวอย่างตัวแทนจนกว่าจะมีรหัส",
+        "invite_qr_status_qr_fallback": "สร้าง QR ทางเลือกแล้ว",
+        "invite_qr_status_qr_fallback_detail": "ไลบรารี QR ไม่ได้โหลด แต่ยังสามารถดาวน์โหลดโปสเตอร์ได้",
+        "invite_qr_status_downloaded": "ดาวน์โหลดแล้ว",
+        "invite_qr_status_placeholder": "ตัวอย่างตัวแทน",
+        "invite_qr_status_placeholder_detail": "ป้อนรหัสเชิญเพื่อแทนที่ลิงก์ตัวแทน",
+
 
 
 
@@ -3752441,6 +3752545,32 @@ const TRANSLATIONS = {
 
 
         "invite_qr_btn_download": "Download PNG",
+        "invite_qr_btn_copied": "Đã sao chép",
+        "invite_qr_btn_downloaded": "Đã tải xuống",
+        "invite_qr_status_copy_unavailable": "Bảng nhớ tạm không khả dụng",
+        "invite_qr_status_copied": "Đã sao chép",
+        "invite_qr_status_copy_failed": "Sao chép thất bại",
+        "invite_qr_status_loading_code": "Đang kiểm tra mã tài khoản",
+        "invite_qr_status_loading_code_detail": "Nếu trình duyệt chưa đăng nhập, bạn có thể nhập mã thủ công",
+        "invite_qr_helper_loaded": "Đã tải mã mời tài khoản",
+        "invite_qr_status_manual": "Nhập mã thủ công",
+        "invite_qr_status_manual_detail": "Không có mã tài khoản ở đây. Nhập hoặc dán mã để cá nhân hóa hình ảnh",
+        "invite_qr_helper_sanitized": "Chỉ giữ lại chữ cái và số",
+        "invite_qr_helper_ready": "Bản xem trước cập nhật tự động khi mã thay đổi",
+        "invite_qr_helper_empty": "Chỉ hỗ trợ chữ cái và số. Bản xem trước sử dụng chỗ dựa cho đến khi có mã",
+        "invite_qr_status_failed": "Bản xem trước thất bại",
+        "invite_qr_status_failed_detail": "Thử kích thước hình ảnh khác hoặc tải lại trang",
+        "invite_qr_status_ready": "Sẵn sàng",
+        "invite_qr_status_ready_detail": "Bản xem trước đã cập nhật. Tải xuống hoặc sao chép PNG khi đã sẵn sàng",
+        "invite_qr_status_rendering": "Đang tạo bản xem trước",
+        "invite_qr_status_rendering_code": "Đang tạo hình ảnh QR cho liên kết mời này",
+        "invite_qr_status_rendering_empty": "Đang tạo bản xem trước chỗ dựa cho đến khi có mã",
+        "invite_qr_status_qr_fallback": "Đã vẽ QR dự phòng",
+        "invite_qr_status_qr_fallback_detail": "Thư viện QR không tải được nhưng áp phích vẫn có thể tải xuống",
+        "invite_qr_status_downloaded": "Đã tải xuống",
+        "invite_qr_status_placeholder": "Bản xem trước chỗ dựa",
+        "invite_qr_status_placeholder_detail": "Nhập mã mời để thay thế liên kết chỗ dựa",
+
 
 
 
@@ -4279300,6 +4279430,32 @@ const TRANSLATIONS = {
 
 
         "invite_qr_btn_download": "Download PNG",
+        "invite_qr_btn_copied": "Disalin",
+        "invite_qr_btn_downloaded": "Diunduh",
+        "invite_qr_status_copy_unavailable": "Papan klip tidak tersedia",
+        "invite_qr_status_copied": "Disalin",
+        "invite_qr_status_copy_failed": "Gagal menyalin",
+        "invite_qr_status_loading_code": "Memeriksa kode akun",
+        "invite_qr_status_loading_code_detail": "Jika browser belum masuk, Anda bisa mengetik kode secara manual",
+        "invite_qr_helper_loaded": "Kode undangan akun dimuat",
+        "invite_qr_status_manual": "Masukkan kode manual",
+        "invite_qr_status_manual_detail": "Tidak ada kode akun dimuat di sini. Ketik atau tempelkan kode untuk mempersonalisasi gambar",
+        "invite_qr_helper_sanitized": "Hanya huruf dan angka yang disimpan",
+        "invite_qr_helper_ready": "Pratinjau diperbarui secara otomatis saat kode berubah",
+        "invite_qr_helper_empty": "Hanya mendukung huruf dan angka. Pratinjau menggunakan placeholder sampai kode tersedia",
+        "invite_qr_status_failed": "Pratinjau gagal",
+        "invite_qr_status_failed_detail": "Coba ukuran gambar lain atau muat ulang halaman",
+        "invite_qr_status_ready": "Siap",
+        "invite_qr_status_ready_detail": "Pratinjau sudah yang terbaru. Unduh atau salin PNG saat siap",
+        "invite_qr_status_rendering": "Membuat pratinjau",
+        "invite_qr_status_rendering_code": "Membuat gambar QR untuk tautan undangan ini",
+        "invite_qr_status_rendering_empty": "Membuat pratinjau placeholder sampai kode tersedia",
+        "invite_qr_status_qr_fallback": "QR fallback digambar",
+        "invite_qr_status_qr_fallback_detail": "Perpustakaan QR tidak dimuat, tapi poster tetap bisa diunduh",
+        "invite_qr_status_downloaded": "Diunduh",
+        "invite_qr_status_placeholder": "Pratinjau placeholder",
+        "invite_qr_status_placeholder_detail": "Masukkan kode undangan untuk mengganti tautan placeholder",
+
 
 
 
