@@ -9,10 +9,11 @@
  * is pushed back to the emitting agent so it can unblock and continue.
  *
  * Endpoints:
- *   POST   /            — emit a request        (agent action → botSecret+entityId, or deviceSecret+fromEntityId)
- *   GET    /            — list requests          (deviceSecret OR botSecret; default status=pending)
- *   POST   /:id/resolve — answer a request       (user action → deviceSecret, or botSecret)
- *   POST   /:id/dismiss — drop a request         (user action → deviceSecret, or botSecret)
+ *   POST   /              — emit a request        (agent action → botSecret+entityId, or deviceSecret+fromEntityId)
+ *   GET    /              — list requests          (deviceSecret OR botSecret; default status=pending)
+ *   GET    /pending-count — cheap unresolved COUNT (deviceSecret OR botSecret; for the home-screen widget / icon badge)
+ *   POST   /:id/resolve   — answer a request       (user action → deviceSecret, or botSecret)
+ *   POST   /:id/dismiss   — drop a request         (user action → deviceSecret, or botSecret)
  *
  * `anchorMessageId` pins the originating chat message (a chat_messages UUID,
  * surfaced in chat as his_<uuid>) so the inbox item routes back to that
@@ -1308,6 +1309,41 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
             return res.json({ success: true, requests: result.rows.map(rowToApi) });
         } catch (err) {
             console.error('[AgentActionRequests] GET failed:', err.message);
+            return res.status(500).json({ success: false, error: 'Internal error' });
+        }
+    });
+
+    // ════════════════════════════════════════
+    // GET /pending-count — cheap unresolved-count for the home-screen widget / icon badge
+    // ──────────────────────────────────────────────────────────────────────
+    // The App's home-screen widget / launcher icon polls this to know whether to
+    // light the 需要你 badge (only when count > 0). "Unresolved" == status =
+    // 'pending' (the same predicate GET / uses for its default list, and the same
+    // rows the guarded resolve/dismiss UPDATEs move off pending) — a resolved or
+    // dismissed request has status != 'pending' and is NOT counted. Kept to a
+    // single COUNT(*) so a widget can poll it frequently without cost.
+    //
+    // Auth is IDENTICAL to GET / (authenticate): deviceSecret (owner) OR
+    // botSecret + entityId (bound bot). Device-scoped — counts the whole device
+    // inbox regardless of which entity emitted the requests (the badge is a
+    // device-level "you have owner decisions waiting" signal).
+    //   → { success: true, count: <int>, deviceId }
+    // ════════════════════════════════════════
+    router.get('/pending-count', async (req, res) => {
+        const auth = authenticate(req, res);
+        if (!auth) return;
+        const { deviceId } = auth;
+        try {
+            const result = await pool.query(
+                `SELECT COUNT(*)::int AS count
+                   FROM agent_action_requests
+                  WHERE device_id = $1 AND status = 'pending'`,
+                [deviceId]
+            );
+            const count = (result.rows[0] && result.rows[0].count) || 0;
+            return res.json({ success: true, count, deviceId });
+        } catch (err) {
+            console.error('[AgentActionRequests] pending-count failed:', err.message);
             return res.status(500).json({ success: false, error: 'Internal error' });
         }
     });
