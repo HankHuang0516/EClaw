@@ -30,6 +30,7 @@ const devicePrefs = require('./device-preferences');
 const entityActivity = require('./lib/entity-activity');
 const orgChartModule = require('./org-chart');
 const crossDeviceSettings = require('./entity-cross-device-settings');
+const walkConfig = require('./entity-walk-config');
 const feedbackEmail = require('./feedback-email');
 const chatEmbedding = require('./chat-embedding');
 const embeddingClient = require('./embedding-client');
@@ -13126,6 +13127,112 @@ app.delete('/api/entity/cross-device-settings', async (req, res) => {
     }
 });
 
+// ==========================================================================
+// Entity Walk Config — self-sovereign wallpaper "walking / idle stop-action"
+// weights + negative-action opt-in (card_31f828967b38f61b2043c808).
+//
+// Auth model (self-sovereign, mirrors GET /api/device-vars/value, card_keyref):
+// the WRITE path is proven by botSecret OWNERSHIP — a caller may only set the
+// config for the entity whose botSecret it presents. Cross-entity writes are
+// rejected: even a valid botSecret for entity A cannot write entity B's config.
+// The READ path uses the same botSecret-of-a-bound-entity-on-this-device gate
+// so an entity (or a peer bound on the same device) can read a config; the App
+// drives the wallpaper from these values and MUST exclude negativeActions for
+// entities whose allowNegative is false.
+//
+// Helper: resolve the entity that OWNS a botSecret on this device. Returns the
+// integer entityId, or -1 if the botSecret does not belong to any bound entity
+// (same scan as the device-vars/value handler, index.js ~23024).
+// ==========================================================================
+function resolveBotSecretEntity(device, botSecret, declaredEntityId) {
+    let eId = parseInt(declaredEntityId, 10);
+    let ent = !isNaN(eId) && device.entities && device.entities[eId];
+    if (ent && ent.isBound && safeEqual(ent.botSecret, botSecret)) {
+        return eId;
+    }
+    // Fall back to a scan so a caller that omits/mis-sends entityId is still
+    // authorized iff the botSecret genuinely belongs to a bound entity here.
+    for (const i of Object.keys(device.entities || {}).map(Number)) {
+        const e = device.entities[i];
+        if (e && e.isBound && safeEqual(e.botSecret, botSecret)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/**
+ * GET /api/entity/walk-config?deviceId=&entityId=&botSecret=
+ * Read an entity's wallpaper walk config. Auth = botSecret of a bound entity on
+ * this device (self or a peer bound on the same device may read). Returns a
+ * complete fail-safe shape (allowNegative defaults false, weights {} = equal).
+ */
+app.get('/api/entity/walk-config', async (req, res) => {
+    const { deviceId, botSecret, entityId } = req.query;
+    if (!deviceId || !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and botSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device) {
+        return res.status(404).json({ success: false, error: 'Device not found' });
+    }
+    // Caller must present a botSecret that belongs to SOME bound entity here.
+    const callerEid = resolveBotSecretEntity(device, botSecret, entityId);
+    if (callerEid < 0) {
+        return res.status(403).json({ success: false, error: 'Invalid botSecret' });
+    }
+    // Which entity's config to read: the declared entityId if valid+bound,
+    // else the caller's own entity. (A peer read is allowed; only WRITES are
+    // locked to the caller's own entity.)
+    let targetEid = parseInt(entityId, 10);
+    if (isNaN(targetEid) || !device.entities || !device.entities[targetEid] || !device.entities[targetEid].isBound) {
+        targetEid = callerEid;
+    }
+    try {
+        const config = await walkConfig.getConfig(deviceId, targetEid);
+        return res.json({ success: true, entityId: targetEid, ...config });
+    } catch (err) {
+        console.error('[WalkConfig] GET error:', err.message);
+        return res.status(500).json({ success: false, error: 'Internal error' });
+    }
+});
+
+/**
+ * PUT /api/entity/walk-config { deviceId, entityId, botSecret, weights, allowNegative }
+ * An entity sets ITS OWN config. Self-sovereign auth: the presented botSecret
+ * MUST own the target entityId on this device — cross-entity writes rejected.
+ * Fail-safe: allowNegative defaults false; invalid/omitted weights → {} (equal).
+ */
+app.put('/api/entity/walk-config', async (req, res) => {
+    const { deviceId, botSecret, entityId, weights, allowNegative } = req.body || {};
+    if (!deviceId || !botSecret || entityId === undefined || entityId === null) {
+        return res.status(400).json({ success: false, error: 'deviceId, botSecret, entityId required' });
+    }
+    const device = devices[deviceId];
+    if (!device) {
+        return res.status(404).json({ success: false, error: 'Device not found' });
+    }
+    const targetEid = parseInt(entityId, 10);
+    if (isNaN(targetEid) || !device.entities || !device.entities[targetEid]) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+    // Self-sovereign gate: the botSecret must own EXACTLY this entity. Unlike
+    // the read path, no scan-fallback to another slot — an entity can only
+    // configure ITSELF (reject cross-entity writes explicitly).
+    const target = device.entities[targetEid];
+    if (!target.isBound || !safeEqual(target.botSecret, botSecret)) {
+        return res.status(403).json({ success: false, error: 'Invalid botSecret for this entity' });
+    }
+    try {
+        await walkConfig.setConfig(deviceId, targetEid, { weights, allowNegative });
+        const config = await walkConfig.getConfig(deviceId, targetEid);
+        return res.json({ success: true, entityId: targetEid, ...config });
+    } catch (err) {
+        console.error('[WalkConfig] PUT error:', err.message);
+        return res.status(500).json({ success: false, error: 'Internal error' });
+    }
+});
+
 /**
  * POST /api/entity/cross-speak
  * Cross-device entity-to-entity messaging via public code.
@@ -20960,6 +21067,7 @@ passiveHealth.startScheduler(3_600_000); // hourly tick; per-device intervalHour
 
 orgChartModule.initTable(chatPool);
 crossDeviceSettings.initTable(chatPool);
+walkConfig.initTable(chatPool);
 chatIntegrity.initIntegrityTable(chatPool);
 articlePublisher.initPublisherTable(chatPool);
 // Wire per-device vault resolver for BYO credentials (Phase 1: X/Twitter)
