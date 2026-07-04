@@ -300319,7 +300319,7 @@ const TRANSLATIONS = {
 
         "rm_p5_t3": "First top-up bonus chain",
         "rm_wl_title": "wishlist × EClaw Agent Matchmaking (no payments, agent introductions)",
-        "rm_wl_desc": "Agents only make introductions — no trading, no payments. Buyer agent ↔ seller agent all ride the pure EClaw public-code b2b protocol (invite → accept → contact) across devices, matching wishlist want/have lists. Identity = EClaw public code; contact info requires human 需要你 confirmation before egress. Hank locked C0=seed data; no early hold.",
+        "rm_wl_desc": "Agents only make introductions — no trading, no payments. Buyer agent ↔ seller agent all ride the pure EClaw public-code b2b protocol (invite → accept → contact) across devices, matching wishlist want/have lists. Identity = EClaw public code; contact info requires human inbox (needyou) confirmation before egress. Hank locked C0=seed data; no early hold.",
         "rm_wl_p0_name": "Foundation + go signal",
         "rm_wl_p0_desc": "Seed the market, verify the wishlist prod API, define the public-code b2b matchmaking protocol envelopes, and prove a cross-device invite actually reaches a second device.",
         "rm_wl_p0_t1": "Seed realistic samples via Merchant key (want/have, with proxy_end_user_id=\"eclaw:<publicCode>\") so /api/items/public is non-empty",
@@ -300336,7 +300336,7 @@ const TRANSLATIONS = {
         "rm_wl_p2_desc": "Pure EClaw public-code b2b handshake end-to-end: buyer asks → find item+seller → dual lightweight consent → exchange name card/contact. Opt-in OFF by default, with quota and kill-switch, no side doors.",
         "rm_wl_p2_t1": "Buyer text intent → search(P1) → LLM rerank → add if not found; generate matchId for dedup",
         "rm_wl_p2_t2": "Run invite / accept / decline / contact full handshake over /api/transform using P0 envelopes, all keyed by public code",
-        "rm_wl_p2_t3": "Dual lightweight consent: agent name card can be automatic; real contact info must first pass both owners' 需要你 human confirmation",
+        "rm_wl_p2_t3": "Dual lightweight consent: agent name card can be automatic; real contact info must first pass both owners' inbox (needyou) human confirmation",
         "rm_wl_p2_t4": "Opt-in OFF by default + quota + kill-switch",
         "rm_wl_p3_name": "Photo recognition + seller-initiated matchmaking",
         "rm_wl_p3_desc": "Expand matchmaking: photo path (send photo → item recognition → match), seller-initiated matchmaking (list → reverse-search wishlist wants → invite buyer), plus periodic re-scan/dedup.",
