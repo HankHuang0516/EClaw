@@ -2109,6 +2109,74 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     router.put('/card/:id', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] PUT /card/:id called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
+
+        // ── footgun #1 (card_c17d3c7bb6e789389edf58f4): snake_case tolerance +
+        // unknown-field warning. This handler destructures a FIXED set of
+        // camelCase config keys below; a caller sending the snake_case spelling
+        // (e.g. `requires_screenshot_review`) — the exact form used in the DB and
+        // in serializeCard output — used to be SILENTLY dropped (no error, no-op,
+        // caller believes it worked). We now:
+        //   1. Alias each known snake_case spelling onto its camelCase key,
+        //      applied ONLY when the camelCase key is absent so an explicit
+        //      camelCase value still wins.
+        //   2. Collect any leftover keys that are neither a known field, a known
+        //      alias, nor an auth passthrough, and surface them as a non-fatal
+        //      `warnings[]` in the response (NEVER 400 — stays backward-compatible;
+        //      it only ADDS a warnings array so a typo is visible not swallowed).
+        // The alias map + KNOWN_FIELDS set below are derived from the fields this
+        // handler ACTUALLY destructures/updates — keep them in sync if the
+        // destructure list changes.
+        const KNOWN_CONFIG_FIELDS = [
+            'title', 'description', 'priority', 'assignedBots', 'reviewerEntityId',
+            'requiresScreenshotReview', 'requiresInteractionReview', 'requiresPreflightReview',
+            'dispatchMode', 'requiresPrRework', 'reworkPrNumber',
+            'linkedPrevCardId', 'linkedNextCardId',
+        ];
+        // snake_case → camelCase for every config field this handler processes.
+        const SNAKE_ALIASES = {
+            requires_screenshot_review: 'requiresScreenshotReview',
+            requires_interaction_review: 'requiresInteractionReview',
+            requires_preflight_review: 'requiresPreflightReview',
+            requires_pr_rework: 'requiresPrRework',
+            rework_pr_number: 'reworkPrNumber',
+            dispatch_mode: 'dispatchMode',
+            reviewer_entity_id: 'reviewerEntityId',
+            assigned_bots: 'assignedBots',
+            linked_prev_card_id: 'linkedPrevCardId',
+            linked_next_card_id: 'linkedNextCardId',
+            // title/description/priority have no snake variant.
+        };
+        // Auth / routing keys that are legitimately present in the body but are
+        // not card-config fields — never warn on these.
+        const AUTH_PASSTHROUGH = new Set(['deviceId', 'deviceSecret', 'botSecret', 'entityId']);
+
+        const warnings = [];
+        if (req.body && typeof req.body === 'object') {
+            // 1. Fold snake_case aliases in (camelCase wins if both present).
+            for (const [snake, camel] of Object.entries(SNAKE_ALIASES)) {
+                if (Object.prototype.hasOwnProperty.call(req.body, snake) &&
+                    req.body[camel] === undefined) {
+                    req.body[camel] = req.body[snake];
+                }
+            }
+            // 2. Warn on truly-unknown keys (not a known field, alias, or auth key).
+            const known = new Set(KNOWN_CONFIG_FIELDS);
+            for (const key of Object.keys(req.body)) {
+                if (known.has(key) || AUTH_PASSTHROUGH.has(key) ||
+                    Object.prototype.hasOwnProperty.call(SNAKE_ALIASES, key)) {
+                    continue;
+                }
+                // Suggest the closest camelCase config field if the typo looks
+                // like a snake_case attempt at one of ours.
+                const guess = KNOWN_CONFIG_FIELDS.find(
+                    f => f.toLowerCase() === String(key).replace(/_/g, '').toLowerCase()
+                );
+                warnings.push(
+                    `Unknown field '${key}' ignored${guess ? ` — did you mean '${guess}'?` : ''}`
+                );
+            }
+        }
+
         const { deviceId, title, description, priority, assignedBots, reviewerEntityId, requiresScreenshotReview, requiresInteractionReview, requiresPreflightReview, dispatchMode, requiresPrRework, reworkPrNumber, linkedPrevCardId, linkedNextCardId } = req.body;
         const cardId = req.params.id;
 
@@ -2232,7 +2300,12 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             }
 
             if (updates.length === 0) {
-                return res.status(400).json({ success: false, error: 'Nothing to update' });
+                // Surface any unknown-field warnings here too, so a caller whose
+                // ONLY body key was a typo (nothing valid to update) still sees
+                // WHY nothing happened instead of a bare "Nothing to update".
+                const nothing = { success: false, error: 'Nothing to update' };
+                if (warnings.length > 0) nothing.warnings = warnings;
+                return res.status(400).json(nothing);
             }
 
             updates.push(`updated_at = NOW()`);
@@ -2356,7 +2429,9 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 }
             }
 
-            res.json({ success: true, card: serializeCard(result.rows[0]) });
+            const okResponse = { success: true, card: serializeCard(result.rows[0]) };
+            if (warnings.length > 0) okResponse.warnings = warnings;
+            res.json(okResponse);
         } catch (err) {
             console.error('[Kanban] Update card error:', err);
             res.status(err.status || 500).json({ success: false, error: err.message });
