@@ -140,10 +140,21 @@ describe('processDeviceStaleCards — escalation gate invariants', () => {
         expect(l1Idx).toBeGreaterThan(gateIdx);
         // The escalation block closes before the L1 push (the L1 push is not nested
         // inside the gate): there is a `}` between the last escalation `continue`
-        // and the L1 push.
+        // and the L1 push. (card_f52ef42e inserts a soft-flag `continue` guard
+        // between the gate close and the L1 push — still OUTSIDE the gate, so the
+        // invariant holds; the assertion just allows that intervening guard.)
         const l2BranchIdx = body.indexOf('fireLevelTwoEscalation');
         const between = body.slice(l2BranchIdx, l1Idx);
-        expect(between).toMatch(/}\s*}\s*\/\/ Level 1 candidate/);
+        // Gate closes (`} }`) somewhere before the L1 push comment.
+        expect(between).toMatch(/}\s*}/);
+        expect(between).toMatch(/\/\/ Level 1 candidate/);
+        // And the soft-flag skip (if present) sits OUTSIDE the escalationAllowed gate.
+        const gateCloseIdx = body.indexOf('if (escalationAllowed) {');
+        const softSkipIdx = body.indexOf('done_gate_soft_flagged === true) continue');
+        if (softSkipIdx !== -1) {
+            expect(softSkipIdx).toBeGreaterThan(gateCloseIdx);
+            expect(softSkipIdx).toBeLessThan(l1Idx);
+        }
     });
 });
 

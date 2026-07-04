@@ -143,6 +143,20 @@ const DEFAULTS = {
     // disables it (then the textarea keeps its native resize:vertical fallback).
     // Pure front-end affordance — no server behavior rides on this flag.
     action_request_reply_resize_enabled: true,
+    // Done-evidence gate mode (owner decision card_f52ef42e). String enum:
+    //   'soft' (DEFAULT, Hank's choice) — a →done/→review move with incomplete
+    //           deliverables is NEVER hard-blocked. The kanban move-hook allows the
+    //           move, posts a ⚠️ soft-warning comment, flags the card
+    //           (done_gate_soft_flagged) and suppresses its auto-escalation so the
+    //           evidence-incomplete card doesn't re-nudge as if stuck. Zero
+    //           false-block ("軟 gate：無交付物只掛 ⚠️ chip + 擋自動升級，不硬擋移動").
+    //   'hard' — the legacy hard-block behaviour, byte-for-byte (backward compat):
+    //           the move is REJECTED with PREFLIGHT_GATE_FAILED until evidence is
+    //           complete. Set per-device via PUT /api/device-preferences.
+    // NOTE: this is a STRING enum, not a boolean — coerced to 'soft' unless the
+    // value is EXACTLY 'hard' (see coerceValue) so a junk/serialized value fails
+    // SAFE toward the zero-false-block default Hank chose.
+    done_gate_mode: 'soft',
 };
 
 const ENTITY_IDLE_AFTER_SECONDS_MIN = 15;
@@ -255,6 +269,12 @@ function coerceValue(key, raw) {
     }
     if (key === 'action_request_timeout_policy') {
         return ACTION_REQUEST_TIMEOUT_POLICIES.has(raw) ? raw : def;
+    }
+    // Done-gate mode (card_f52ef42e): string enum, NOT boolean. Coerce to the
+    // 'soft' default unless the value is EXACTLY 'hard' — a junk / serialized
+    // value fails SAFE toward the zero-false-block default Hank chose.
+    if (key === 'done_gate_mode') {
+        return raw === 'hard' ? 'hard' : 'soft';
     }
     if (key === 'kanban_nudge_statuses') {
         if (!Array.isArray(raw)) return [...def];
