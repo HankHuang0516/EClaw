@@ -1074,6 +1074,10 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             requirePrLink: row.requires_pr_link === true,
             gated: !!row.gated,
             gateReason: row.gate_reason || null,
+            // SOFT done-gate flag (card_f52ef42e): TRUE when this card moved to
+            // review/done with incomplete deliverables under soft mode. Drives a ⚠️
+            // chip in the UI and suppresses the card's auto-escalation.
+            doneGateSoftFlagged: !!row.done_gate_soft_flagged,
             reopenedAt: row.reopened_at ? new Date(row.reopened_at).getTime() : null,
             reopenedBy: row.reopened_by != null ? parseInt(row.reopened_by) : null,
             reopenReason: row.reopen_reason || null,
@@ -2480,8 +2484,25 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 });
             }
 
+            // Done-gate MODE (owner decision card_f52ef42e). 'soft' (DEFAULT, Hank's
+            // choice) = never hard-block a review/done move on incomplete evidence;
+            // allow the move, ⚠️ flag it, suppress its auto-escalation. 'hard' =
+            // legacy hard-block, byte-for-byte. Resolved once per move; a prefs error
+            // fails SAFE toward 'soft' (the zero-false-block default).
+            let doneGateMode = 'soft';
+            try {
+                const _p = await devicePrefs.getPrefs(deviceId);
+                doneGateMode = _p && _p.done_gate_mode === 'hard' ? 'hard' : 'soft';
+            } catch (_) { doneGateMode = 'soft'; }
+            const softGate = doneGateMode !== 'hard';
+            // Accumulated soft-warning items (only used when softGate). Applied after
+            // the move UPDATE succeeds — a ⚠️ comment + done_gate_soft_flagged=true.
+            const softWarnItems = [];
+
             // Screenshot-review gate: block review/done transitions if no image attached.
             // Skip when card.requires_screenshot_review is explicitly false.
+            // SOFT mode: never hard-block — record the missing-screenshot finding and
+            // let the move through (the card is flagged + ⚠️'d below).
             if ((newStatus === 'review' || newStatus === 'done') && card.requires_screenshot_review !== false) {
                 const shot = await pool.query(
                     `SELECT COUNT(*)::int AS cnt FROM kanban_files
@@ -2489,12 +2510,16 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     [cardId]
                 );
                 if ((shot.rows[0]?.cnt || 0) === 0) {
-                    return res.status(400).json({
-                        success: false,
-                        error: 'Screenshot review required',
-                        hint: `此卡開啟了「截圖審查」，需先附上任務完成截圖才能移到 ${STATUS_LABELS[newStatus] || newStatus}。請用 POST /api/mission/card/${cardId}/file 帶 { url, filename, mimeType: "image/png" } 上傳 R2 截圖 URL。`,
-                        code: 'SCREENSHOT_REQUIRED'
-                    });
+                    if (softGate) {
+                        softWarnItems.push('截圖附件');
+                    } else {
+                        return res.status(400).json({
+                            success: false,
+                            error: 'Screenshot review required',
+                            hint: `此卡開啟了「截圖審查」，需先附上任務完成截圖才能移到 ${STATUS_LABELS[newStatus] || newStatus}。請用 POST /api/mission/card/${cardId}/file 帶 { url, filename, mimeType: "image/png" } 上傳 R2 截圖 URL。`,
+                            code: 'SCREENSHOT_REQUIRED'
+                        });
+                    }
                 }
             }
 
@@ -2540,6 +2565,14 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     files: filesRes.rows,
                     severity: (card.priority || 'P2'),
                     painTags,
+                    // Screenshot expectation keys off the EXPLICIT UI signal
+                    // (requires_screenshot_review), NOT painTag inference
+                    // (card_f52ef42e): pure-backend cards whose painTag happens to be
+                    // delivery_reliability were wrongly told "UI card requires a
+                    // screenshot". Passing an explicit boolean makes inferIsUiCard
+                    // honour it and never fall back to painTags — a backend card
+                    // (requires_screenshot_review=false) never gets a screenshot demand.
+                    isUiCard: card.requires_screenshot_review === true,
                     // Per-card PR-link opt-in (owner directive 2026-07-03). The
                     // PR-link sub-check enforces ONLY when this card explicitly
                     // opted in (requires_pr_link=true, set at create or via
@@ -2550,8 +2583,14 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     // cite, so they skip the PR-link sub-check even if opted in.
                     // The 6-item evidence checklist is always enforced.
                     isAutomation: card.is_automation === true || card.is_auto_generated === true,
+                    // SOFT GATE (card_f52ef42e): in soft mode evaluateDoneGate never
+                    // returns allowed:false — it rolls findings into verdict.softWarning
+                    // and we allow the move, ⚠️ flag + suppress escalation below.
+                    softMode: softGate,
                 });
                 if (!verdict.allowed) {
+                    // Reachable only in HARD mode (soft mode always allows). Legacy
+                    // hard-block preserved byte-for-byte for backward compat.
                     return res.status(400).json({
                         success: false,
                         error: verdict.error,
@@ -2560,22 +2599,52 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                         missingItems: verdict.missingItems,
                     });
                 }
+                // SOFT mode: fold the gate's soft-warning findings into the combined
+                // list applied after the move UPDATE. Items are internal sentinels
+                // (preflight_comment / jest_output_artifact / …); they are mapped to
+                // human labels when the ⚠️ comment is built below.
+                if (verdict.softWarning && Array.isArray(verdict.softWarning.missing)) {
+                    for (const it of verdict.softWarning.missing) {
+                        if (!softWarnItems.includes(it)) softWarnItems.push(it);
+                    }
+                }
             }
 
             // gated launch-gate auto-resets when status leaves backlog (only meaningful in backlog).
             const clearGate = oldStatus === 'backlog' && newStatus !== 'backlog' && card.gated === true;
 
+            // SOFT done-gate (card_f52ef42e): flag the card when it moved with
+            // incomplete deliverables so the stale-scan suppresses its
+            // auto-escalation ("擋自動升級"). Any move recomputes the flag — a move
+            // that IS complete (or in hard mode) clears a prior soft flag to FALSE.
+            const softFlagged = softGate && softWarnItems.length > 0;
+
             const result = await pool.query(
                 `UPDATE kanban_cards
                  SET status = $1, assigned_bots = $2::jsonb, status_changed_at = NOW(),
-                     last_stale_nudge_at = NULL, updated_at = NOW()
+                     last_stale_nudge_at = NULL, done_gate_soft_flagged = $5, updated_at = NOW()
                      ${clearGate ? ', gated = FALSE, gate_reason = NULL' : ''}
                  WHERE id = $3 AND device_id = $4
                  RETURNING *`,
-                [newStatus, JSON.stringify(bots), cardId, deviceId]
+                [newStatus, JSON.stringify(bots), cardId, deviceId, softFlagged]
             );
 
             const updatedCard = serializeCard(result.rows[0]);
+
+            // ⚠️ Soft-gate warning comment (card_f52ef42e) — record what's incomplete
+            // so a reviewer can find evidence-incomplete cards. Never blocks the move.
+            if (softFlagged) {
+                const SOFT_LABELS = {
+                    preflight_comment: 'OODA-R preflight 留言',
+                    jest_output_artifact: 'jest/測試 log 附件',
+                    screenshot_artifact: '截圖附件',
+                    截圖附件: '截圖附件',
+                    'PR link': 'PR 連結',
+                };
+                const labels = [...new Set(softWarnItems.map(x => SOFT_LABELS[x] || x))];
+                await addSystemComment(cardId, deviceId,
+                    `⚠️ 軟 gate：移入 ${STATUS_LABELS[newStatus] || newStatus} 但交付物不完整 — 缺 ${labels.join('、')}；未硬擋（zero false-block），供審視。已暫停此卡自動升級。`);
+            }
 
             if (clearGate) {
                 await addSystemComment(cardId, deviceId,
@@ -4041,7 +4110,17 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             // an automation card and skip-automation is on. The card still falls
             // through to the L1 push below so it isn't forgotten — only the
             // priority-bump / P0-stalled-ping / auto-block escalations are skipped.
-            const escalationAllowed = autoEscalateEnabled && !(skipAutomationEscalation && isAutomationCard(card));
+            //
+            // SOFT done-gate (card_f52ef42e / Hank "擋自動升級"): a card that moved to
+            // review/done with incomplete deliverables under the soft gate is flagged
+            // done_gate_soft_flagged=TRUE. It was ALLOWED through on purpose (owner
+            // decision, zero false-block), so it must NOT auto-escalate/re-nudge as if
+            // it were stuck — the incompleteness is already recorded in a ⚠️ comment
+            // for a reviewer. Suppress only the L2/L3 ladder here; the flag is a plain
+            // boolean read from the same SELECT * row, so this is failure-isolated.
+            const escalationAllowed = autoEscalateEnabled
+                && !(skipAutomationEscalation && isAutomationCard(card))
+                && card.done_gate_soft_flagged !== true;
 
             if (escalationAllowed) {
                 if (elapsedMs >= blockAfterMs && card.status !== 'blocked' && sinceLast > intervalMs) {
@@ -4053,6 +4132,10 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     if (fired) continue;
                 }
             }
+            // SOFT done-gate (card_f52ef42e): a soft-flagged card was deliberately let
+            // through with incomplete deliverables and is already ⚠️-recorded for a
+            // reviewer — don't re-nudge it (L1) as if stuck either. Skip it entirely.
+            if (card.done_gate_soft_flagged === true) continue;
             // Level 1 candidate if enough interval has passed.
             if (sinceLast > intervalMs) level1Pending.push(card);
         }

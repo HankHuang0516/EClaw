@@ -60,6 +60,17 @@ const UI_PAIN_TAGS = Object.freeze(['ux_feedback', 'redirect_deeplink', 'deliver
  * @property {boolean} [isUiCard]            explicit override; if undefined, painTags is inspected
  * @property {string[]} [painTags]           used to infer isUiCard when not passed
  * @property {boolean} [strictArtifacts]     default true when severity/files provided; false otherwise
+ * @property {boolean} [softMode]            SOFT GATE (owner decision card_f52ef42e, DEFAULT for the
+ *                                           kanban callsite via device pref done_gate_mode='soft').
+ *                                           When TRUE, the gate NEVER returns allowed:false — every
+ *                                           finding that would hard-block (missing preflight / missing
+ *                                           6-item evidence / missing jest artifact / missing screenshot /
+ *                                           missing PR link when opted-in) is instead ALLOWED and rolled
+ *                                           up into `softWarning` (allowed:true + softWarning:{missing[],
+ *                                           summary}). Zero false-block. Callers post a ⚠️ card comment +
+ *                                           flag the card so it can be reviewed, and suppress its
+ *                                           auto-escalation. When FALSE (done_gate_mode='hard'), behaviour
+ *                                           is byte-for-byte the legacy hard-block (backward compat).
  * @property {boolean} [requirePrLink]       per-card opt-in for the PR-link sub-check. DEFAULT false
  *                                           (NOT blocking) — owner directive 2026-07-03: "PR link 是
  *                                           option 且默認不阻擋". The PR-link requirement is enforced
@@ -82,6 +93,10 @@ const UI_PAIN_TAGS = Object.freeze(['ux_feedback', 'redirect_deeplink', 'deliver
  * @property {string} [error]
  * @property {string} [hint]
  * @property {string[]} [missingItems]
+ * @property {{missing:string[], summary:string}} [softWarning]
+ *           SOFT mode only. Present (with allowed:true) when the card is evidence-incomplete
+ *           but was NOT hard-blocked. `missing` mirrors the missingItems a hard block would
+ *           have carried; `summary` is a human ⚠️ line the caller posts as a card comment.
  */
 
 function tsOf(c) {
@@ -115,6 +130,23 @@ function evaluateDoneGate(input) {
     if (oldStatus === 'done') return { allowed: true };
     if (requiresPreflightReview === false) return { allowed: true };
 
+    // SOFT GATE (owner decision card_f52ef42e). When on, a would-be block is
+    // ALLOWED and collected instead. `block(verdict)` is the single choke-point:
+    // in hard mode it returns the legacy rejection unchanged; in soft mode it
+    // records the finding into softFindings and returns null so evaluation
+    // continues (so ALL incomplete items are surfaced in one ⚠️, not just the
+    // first). A caller that never sets softMode gets byte-for-byte legacy output.
+    const softMode = input.softMode === true;
+    const softFindings = [];
+    const block = (verdict) => {
+        if (!softMode) return verdict;
+        // Accumulate for the soft warning; never block.
+        for (const it of (verdict.missingItems || [verdict.error])) {
+            if (it && !softFindings.includes(it)) softFindings.push(it);
+        }
+        return null;
+    };
+
     const list = Array.isArray(comments) ? comments : [];
 
     // 1. Preflight marker
@@ -129,12 +161,18 @@ function evaluateDoneGate(input) {
         }
     }
     if (preflightIdx === -1) {
-        return {
+        const b = block({
             allowed: false,
             code: 'PREFLIGHT_GATE_FAILED',
             error: 'Preflight comment missing',
             hint: '此卡尚未跑過 OODA-R preflight。先把卡片移到 in_progress 觸發 auto-fire（或手動貼上 composer 模板）再 move to done。',
-        };
+            missingItems: ['preflight_comment'],
+        });
+        if (b) return b;
+        // Soft mode + no preflight: nothing after the (absent) preflight to scan,
+        // so we can't evaluate the evidence/artifact checks meaningfully. Surface
+        // the one finding and allow.
+        return { allowed: true, softWarning: buildSoftWarning(softFindings) };
     }
 
     // 2. Evidence comment with all 5 (or 6) checklist items
@@ -175,7 +213,7 @@ function evaluateDoneGate(input) {
 
     if (evidenceComment === null) {
         const bm = bestMissing.map(x => x === '__USER_POV__' ? `User POV / 用戶角度` : x);
-        return {
+        const b = block({
             allowed: false,
             code: 'PREFLIGHT_GATE_FAILED',
             error: useV2
@@ -183,11 +221,19 @@ function evaluateDoneGate(input) {
                 : 'Evidence comment must cite all 5 checklist items',
             hint: `缺少: ${bm.join(', ')}. 在 evidence comment 內逐項補上 (照 composer template 順序). 若此卡為 trivial dep-bump / doc-only, PUT /card/:id 把 requiresPreflightReview 設 false.`,
             missingItems: bm,
-        };
+        });
+        if (b) return b;
+        // Soft mode: evidence checklist incomplete — recorded above. Continue to
+        // the artifact checks below (guarded for the null evidenceComment).
     }
 
-    // v1 path: text-only, allow now.
-    if (!useV2) return { allowed: true };
+    // v1 path: text-only. Hard mode allows outright; soft mode may still carry a
+    // finding from a missing evidence comment above, so fold it into the warning.
+    if (!useV2) {
+        return softFindings.length
+            ? { allowed: true, softWarning: buildSoftWarning(softFindings) }
+            : { allowed: true };
+    }
 
     // 3. v2 — PR link in evidence. Owner directive 2026-07-03: this is now a
     // PER-CARD OPT-IN that DEFAULTS OFF ("PR link 是 option 且默認不阻擋").
@@ -202,14 +248,18 @@ function evaluateDoneGate(input) {
     // 6-item evidence checklist above (Scope/Acceptance/Test plan/Evidence plan/
     // Out-of-scope/User POV) is STILL enforced regardless of requirePrLink.
     const prLinkRequired = input.requirePrLink === true && !input.isAutomation;
-    if (prLinkRequired && !PR_LINK_PATTERN.test(evidenceComment.text)) {
-        return {
+    // evidenceComment may be null in soft mode (missing evidence comment recorded
+    // above); an absent comment cannot carry a PR link, so treat it as missing.
+    const hasPrLink = evidenceComment != null && PR_LINK_PATTERN.test(evidenceComment.text);
+    if (prLinkRequired && !hasPrLink) {
+        const b = block({
             allowed: false,
             code: 'PREFLIGHT_GATE_FAILED',
             error: 'Evidence comment must include a GitHub PR link',
             hint: 'Include a https://github.com/<owner>/<repo>/pull/<N> URL in the evidence comment so the PR can be linked back.',
             missingItems: ['PR link'],
-        };
+        });
+        if (b) return b;
     }
 
     // 4. v2 — artifact attachments after preflight
@@ -238,25 +288,45 @@ function evaluateDoneGate(input) {
     const requiresScreenshot = isUi && (severity === 'P0' || severity === 'P1');
 
     if (requiresJest && !hasJestLog) {
-        return {
+        const b = block({
             allowed: false,
             code: 'PREFLIGHT_GATE_FAILED',
             error: 'Required artifact missing: jest output / log file',
             hint: 'Upload the jest verbose output (or other test log) via POST /api/mission/card/:id/file with mimeType: "text/plain" AFTER the preflight comment. Text-claim of "tests passed" is insufficient.',
             missingItems: ['jest_output_artifact'],
-        };
+        });
+        if (b) return b;
     }
     if (requiresScreenshot && !hasScreenshot) {
-        return {
+        const b = block({
             allowed: false,
             code: 'PREFLIGHT_GATE_FAILED',
             error: `${severity} UI card requires a screenshot artifact`,
             hint: 'Upload a post-deploy screenshot via POST /api/mission/card/:id/file with mimeType: "image/png". User-visible UI changes must include a screenshot capturing the actual rendered result.',
             missingItems: ['screenshot_artifact'],
-        };
+        });
+        if (b) return b;
     }
 
+    // Soft mode: if any finding accumulated, allow WITH a warning; else a clean pass.
+    if (softFindings.length) return { allowed: true, softWarning: buildSoftWarning(softFindings) };
     return { allowed: true };
+}
+
+// Human ⚠️ line the kanban callsite posts as a soft-warning card comment
+// (card_f52ef42e). Kept in the gate module so the wording stays with the checks
+// that produce it. Maps the internal sentinels to reader-friendly labels.
+const SOFT_LABELS = Object.freeze({
+    preflight_comment: 'OODA-R preflight 留言',
+    jest_output_artifact: 'jest/測試 log 附件',
+    screenshot_artifact: '截圖附件',
+    'PR link': 'PR 連結',
+});
+function buildSoftWarning(findings) {
+    const missing = Array.isArray(findings) ? findings.slice() : [];
+    const labels = missing.map(m => SOFT_LABELS[m] || m);
+    const summary = `⚠️ 軟 gate：移入 done 但交付物不完整 — 缺 ${labels.join('、') || '(未知項目)'}；未硬擋（zero false-block），供審視。`;
+    return { missing, summary };
 }
 
 module.exports = {
@@ -266,4 +336,5 @@ module.exports = {
     PR_LINK_PATTERN,
     UI_PAIN_TAGS,
     evaluateDoneGate,
+    buildSoftWarning,
 };

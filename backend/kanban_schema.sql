@@ -78,6 +78,15 @@ ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_preflight_review BOOL
 -- turns enforcement on. Automation/ops cards stay exempt even when opted in.
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_pr_link BOOLEAN DEFAULT FALSE;
 
+-- Done-gate SOFT mode flag (2026-07-04, owner decision card_f52ef42e). Set TRUE
+-- when a card is moved to review/done under the SOFT done-gate (device pref
+-- done_gate_mode='soft', the default) with incomplete deliverables: the move is
+-- ALLOWED (zero false-block) but the card is flagged + a ⚠️ soft-warning comment is
+-- posted. The stale-scan then SUPPRESSES this card's auto-escalation (L2/L3 ladder)
+-- so an evidence-incomplete card doesn't re-nudge as if stuck ("擋自動升級"). Cleared
+-- to FALSE on any subsequent /move (the card left the soft-flagged state).
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS done_gate_soft_flagged BOOLEAN DEFAULT FALSE;
+
 -- Backlog launch-gate (2026-05-20): when gated=true, L1/L2/L3 staleness escalation
 -- skips this card so launch-pending drafts don't auto-bounce backlog→blocked.
 -- App layer auto-resets gated=false on any status change out of backlog.
