@@ -13,10 +13,13 @@ import com.google.firebase.messaging.RemoteMessage
 import com.hank.clawlive.ChatActivity
 import com.hank.clawlive.FeedbackHistoryActivity
 import com.hank.clawlive.MainActivity
+import com.hank.clawlive.MissionControlActivity
 import com.hank.clawlive.R
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.location.LocationHelper
+import com.hank.clawlive.ui.nav.EClawNativeNavBridge
+import org.json.JSONObject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -142,6 +145,24 @@ class ClawFcmService : FirebaseMessagingService() {
                 Intent(this, ChatActivity::class.java)
             "feedback_reply", "feedback_resolved" ->
                 Intent(this, FeedbackHistoryActivity::class.java)
+            // Task-completed pushes deep-link straight to the finished card
+            // instead of dumping the user on the home screen (card_92c17b66).
+            // The backend carries the card id in data.metadata.cardId (and,
+            // redundantly, in data.link=/portal/kanban.html?card=<id>). We hand
+            // it to MissionControlActivity as a native-nav intent extra; that
+            // Activity loads mission.html then replays the intent via
+            // window.eclawHandleNativeNavigateIntent once the WebView is ready,
+            // which opens the specific kanban card. Works on cold start
+            // (onCreate reads the extra) and warm resume (onNewIntent) because
+            // the intent also clears-top + single-top the running instance.
+            "kanban_done", "kanban_done_auto" -> {
+                val cardId = extractCardId(data)
+                Intent(this, MissionControlActivity::class.java).apply {
+                    if (cardId != null) {
+                        putExtra(EClawNativeNavBridge.EXTRA_NAV_INTENT, buildCardNavIntentJson(cardId))
+                    }
+                }
+            }
             "app_update" -> {
                 val storeUrl = data["link"]
                     ?: "https://play.google.com/store/apps/details?id=com.hank.clawlive"
@@ -149,7 +170,15 @@ class ClawFcmService : FirebaseMessagingService() {
             }
             else ->
                 Intent(this, MainActivity::class.java)
-        }.apply { flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK }
+        }.apply {
+            // CLEAR_TOP + SINGLE_TOP so a running MissionControl/Chat instance is
+            // reused and receives the deep-link extra via onNewIntent rather than
+            // being recreated (neither Activity declares a singleTop launchMode;
+            // the in-app nav bridge relies on the same per-intent flags).
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
 
         val pi = PendingIntent.getActivity(
             this, System.currentTimeMillis().toInt(), targetIntent,
@@ -168,4 +197,46 @@ class ClawFcmService : FirebaseMessagingService() {
 
         nm.notify(System.currentTimeMillis().toInt(), notif)
     }
+
+    /**
+     * Pull the kanban card id out of an FCM data payload. The backend puts it in
+     * `metadata.cardId` (JSON-encoded string) and, redundantly, in the deep-link
+     * `link=/portal/kanban.html?card=<id>`. Prefer metadata; fall back to parsing
+     * the link so a payload shape change on one side doesn't break the deep link.
+     * Returns null when neither is present (caller then just opens Mission
+     * Control without a card focus — still better than the home screen).
+     */
+    private fun extractCardId(data: Map<String, String>): String? {
+        // 1) metadata JSON → cardId
+        data["metadata"]?.let { raw ->
+            try {
+                val id = JSONObject(raw).optString("cardId", "").trim()
+                if (id.isNotEmpty()) return id
+            } catch (e: Exception) {
+                Timber.w(e, "[FCM] kanban_done metadata parse failed: $raw")
+            }
+        }
+        // 2) link → ?card=<id> (value may be url-encoded but card ids are safe chars)
+        data["link"]?.let { link ->
+            try {
+                val id = Uri.parse(link).getQueryParameter("card")?.trim()
+                if (!id.isNullOrEmpty()) return id
+            } catch (e: Exception) {
+                Timber.w(e, "[FCM] kanban_done link parse failed: $link")
+            }
+        }
+        return null
+    }
+
+    /**
+     * Build the native-nav intent JSON that the portal pages understand. mission.html
+     * (loaded by MissionControlActivity) requires BOTH `target=="card"` and `cardId`;
+     * kanban.html only needs `cardId`. Emitting both keeps either page working.
+     */
+    private fun buildCardNavIntentJson(cardId: String): String =
+        JSONObject()
+            .put("targetTab", "mission")
+            .put("target", "card")
+            .put("cardId", cardId)
+            .toString()
 }
