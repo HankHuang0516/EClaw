@@ -2570,6 +2570,16 @@ app.use('/api/files', filesModule.router);
 const petdxRoute = require('./petdex-route');
 app.use('/api/petdx', petdxRoute.createRouter({ log: serverLog }));
 
+// ============================================
+// WISHLIST BRIDGE (thin SSRF-safe proxy, external Wishlist app)
+// ============================================
+// Proxies public search/list (no key) and merchant add-item (merchant key read
+// from the vault by NAME at request time). Upstream host is a hard-coded literal
+// (never from the request); named UA curl/8.4.0 on every outbound call. Degrades
+// gracefully when the merchant key is missing/locked (502 + reason).
+const wishlistRoute = require('./wishlist-route');
+app.use('/api/wishlist-bridge', wishlistRoute.createRouter({ log: serverLog }));
+
 // Daily cleanup of expired files (runs at 03:17 server time)
 const nodeCron = require('node-cron');
 nodeCron.schedule('17 3 * * *', () => {
