@@ -466,6 +466,65 @@ async function initKanbanDatabase() {
     }
 }
 
+// ── Dispatch capability guard (card_f5023a5204ef729dfa98abda) ──
+// The platform keeps dispatching visual/screenshot tasks (destructive-modal
+// E2E, UI review, simulator review) to entity #6, but #6's environment has NO
+// usable browser tool (Copilot Computer Use is declined; the browser plugin
+// errors), so those cards dead-end and bounce back to #2. This is a conservative,
+// config-driven registry of entities KNOWN to lack a usable browser today.
+//
+// ⚠️ This is a documented constant map reflecting the CURRENT known reality from
+// card_f5023a5 — it is NOT a real per-entity capability model. When entities gain
+// a proper `capabilities` field (per-entity flag), replace this Set with a lookup
+// of that flag. Bias: a false "incapable" merely posts a non-blocking heads-up
+// (the safe direction); it NEVER rejects an assignment. #2 has Playwright.
+const BROWSER_INCAPABLE_ENTITIES = new Set([6]);
+function isBrowserCapableEntity(entityId) {
+    return !BROWSER_INCAPABLE_ENTITIES.has(Number(entityId));
+}
+
+// Reuse the SAME UI/UX detection the done-gate / review-reminder / move-handler
+// use (kanban.js `_uiTitleHit` / `_uxTitleHit`), so the dispatch guard fires on
+// exactly the cards the done-gate will later HARD-require vision/interaction
+// evidence for. Keep these regexes in ONE place so the two never diverge.
+const UI_TITLE_KEYWORDS_RE = /\bUI\b|\bUIUX\b|介面|畫面|外觀|縮圖|按鈕|版面|排版|配色|破圖|樣式|圖示|\bmodal\b|\bdialog\b|\bbutton\b|\bicon\b|\bthumbnail\b|\bcss\b/i;
+const UX_TITLE_KEYWORDS_RE = /\bUX\b|拖曳|拖移|手勢|滑動|長按|操作流程|互動|\bgesture\b|\bswipe\b|\bscroll\b|\bdrag\b|\bnavigation\b/i;
+
+// True when a card needs a browser/screenshot to verify: explicit
+// requires_screenshot_review / requires_interaction_review flags, OR the
+// title+description read as UI/UX. Accepts a serialized card (camelCase) or a
+// raw DB row (snake_case) so both the create path (`card`) and the PUT path
+// (`updated.*`) can call it.
+function cardNeedsVisualVerification(card) {
+    if (!card || typeof card !== 'object') return false;
+    const screenshot = card.requiresScreenshotReview === true || card.requires_screenshot_review === true;
+    const interaction = card.requiresInteractionReview === true || card.requires_interaction_review === true;
+    if (screenshot || interaction) return true;
+    const text = String(card.title || '') + ' ' + String(card.description || '');
+    return UI_TITLE_KEYWORDS_RE.test(text) || UX_TITLE_KEYWORDS_RE.test(text);
+}
+
+// Build the non-blocking capability-mismatch warning IFF the card needs visual
+// verification AND *every* assigned entity is browser-incapable. Returns the
+// warning string, or null when no warning is warranted (card is non-visual, no
+// assignees, or at least one assignee HAS a browser). Never throws.
+function buildDispatchCapabilityWarning(card, assignedBots) {
+    try {
+        if (!cardNeedsVisualVerification(card)) return null;
+        const ids = (Array.isArray(assignedBots) ? assignedBots : [])
+            .map(Number)
+            .filter(Number.isFinite);
+        if (ids.length === 0) return null;
+        // Only warn when NOBODY assigned can drive a browser — if a capable
+        // entity is on the card, the work can land, so stay quiet (anti-noise).
+        if (ids.some(isBrowserCapableEntity)) return null;
+        const who = ids.map(id => `#${id}`).join(', ');
+        return `⚠️ 派工能力提醒：此卡需要瀏覽器/截圖驗證，但指派的實體(${who})沒有可用的瀏覽器工具 → 建議改派 #2(有 Playwright) 或由 #2 協作。`;
+    } catch (_) {
+        return null;
+    }
+}
+
 /**
  * Factory: receives in-memory devices object from index.js
  */
@@ -1385,6 +1444,18 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     status: statusLabel(lang, cardStatus)
                 });
                 notifyEntities(deviceId, bots, msg, { description, cardId: card.id, dispatcherEntityId: createdBy });
+            }
+
+            // ── Dispatch capability guard (card_f5023a5) ──
+            // If this card needs browser/screenshot verification but EVERY assigned
+            // entity lacks a usable browser tool (e.g. #6), post a NON-BLOCKING system
+            // comment suggesting a browser-capable entity (#2/Playwright), so the card
+            // does not silently dead-end and bounce back. Never rejects the assignment.
+            try {
+                const capWarn = buildDispatchCapabilityWarning(card, bots);
+                if (capWarn) await addSystemComment(card.id, deviceId, capWarn);
+            } catch (capErr) {
+                console.error('[Kanban] dispatch-capability-guard (create) failed:', capErr.message);
             }
 
             if (awardEntityXP) {
@@ -2426,6 +2497,25 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     }
                 } catch (notifyErr) {
                     console.error('[Kanban] assign-notify failed:', notifyErr.message);
+                }
+            }
+
+            // ── Dispatch capability guard (card_f5023a5) ──
+            // A reassignment that puts a browser/screenshot card entirely onto
+            // browser-incapable entities (e.g. #6) would dead-end. When assigned_bots
+            // was touched, evaluate the RESULTING set: if the card needs visual
+            // verification and no assignee can drive a browser, post a NON-BLOCKING
+            // system comment + surface it in the API `warnings`. Never rejects.
+            if (assignedBots !== undefined && Array.isArray(assignedBots)) {
+                try {
+                    const updated = result.rows[0];
+                    const capWarn = buildDispatchCapabilityWarning(updated, updated.assigned_bots);
+                    if (capWarn) {
+                        await addSystemComment(cardId, deviceId, capWarn);
+                        warnings.push(capWarn);
+                    }
+                } catch (capErr) {
+                    console.error('[Kanban] dispatch-capability-guard (update) failed:', capErr.message);
                 }
             }
 
@@ -5459,4 +5549,9 @@ module.exports._private = {
     SCHEDULE_USAGE_THRESHOLD_MAX,
     DEFAULT_SKIP_5H_PCT,
     DEFAULT_SKIP_7D_PCT,
+    // card_f5023a5 dispatch capability guard
+    BROWSER_INCAPABLE_ENTITIES,
+    isBrowserCapableEntity,
+    cardNeedsVisualVerification,
+    buildDispatchCapabilityWarning,
 };
