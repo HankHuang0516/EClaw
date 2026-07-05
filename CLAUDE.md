@@ -91,6 +91,7 @@ EClaw/
 │   ├── entity-status.js       # Per-entity error counters + operation log + quote service
 │   ├── entity-walk-config.js  # Per-entity wallpaper walk configuration (weights + negative actions)
 │   ├── wishlist-route.js      # Wishlist bridge: SSRF-safe proxy to external Wishlist app
+│   ├── wishlist-matchmaking.js # Wishlist matchmaking: pure-EClaw b2b handshake (P2)
 │   ├── openapi.yaml          # OpenAPI 3.0 specification
 │   ├── auth_schema.sql       # User accounts + auth SQL schema
 │   ├── mission_schema.sql    # Mission dashboard SQL schema
@@ -349,6 +350,8 @@ EClaw/
 | `/api/idle-dispatch/*` | api_idle_dispatch.js | Idle dispatch API (queue status, manual drain) |
 | `/api/agent-improvement/*` | agent-improvement.js | OODA-R episode ingestion, preflight composer, episode listing |
 | `/api/entity-status/*` | entity-status.js | Per-entity error counters, operation log, quote service |
+| `/api/wishlist-bridge/*` | wishlist-route.js | SSRF-safe thin proxy to external Wishlist app |
+| `/api/wishlist-matchmaking/*` | wishlist-matchmaking.js | B2B matchmaking handshake (search, invite, accept, decline, contact) |
 | `/api/health`, `/api/version` | index.js | Health check and version |
 | `/c/:code` | index.js | Shareable chat link (read-only view) |
 | `/`, `/landing`, `/llms.txt` | index.js | Landing page, SEO, AI search discovery |
@@ -1361,13 +1364,19 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Vault Key Reference GET-Only (v1.1190)**: Key Reference GET-only — stop resurrecting deleted vault keys (P1) (#3901)
 - **Mission Card Deep-Link Fix (v1.1190)**: Stop mission.html card deep-link self-looping the native bridge (#3898)
 - **Android Wallpaper Walk Config (v1.1190)**: Drive wallpaper walk actions from server config (#3902)
+- **Chat Inbox Prompt Readability (v1.1190)**: 需要你 inbox prompt must be fully readable, not line-clamped (#3906)
+
+### Recent Features (v1.1190.x+, 2026-07-05 – 2026-07-06)
+
+- **Wishlist Matchmaking P2 (v1.1190)**: Pure-EClaw public-code b2b matchmaking handshake — `wishlist-matchmaking.js` module; 7 endpoints (`POST /api/wishlist-matchmaking/{search,invite,accept,decline,contact/request,contact/release,connect}`); governance (owner opt-in + kill-switch + per-entity quota + reachability); dual lightweight consent for contact exchange; deterministic matchId (sha256); sanitized untrusted listing text; all delivery via existing cross-speak b2b protocol (#3904)
+- **Wishlist Matchmaking Security Review (v1.1190)**: Close 2 HIGH + 2 MED + 1 LOW privacy defects — H1: stop leaking raw intent to seller envelope; H2: strip proxy_end_user_id before b2b send; M1: scrub contact PII keys from auto-exchange; M2: cap note length to prevent oversized envelopes; L1: normalize publicCode case before hashing matchId
 - **App Version**: Updated to 1.1.15 (versionCode 126)
 
 ---
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~6238 test cases across 454 Jest files + 79 integration tests).
+**~480 total API routes** across all modules (430 excluding Article Publisher), **~85% covered** by Jest + integration tests (~6274 test cases across 456 Jest files + 79 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
