@@ -230,6 +230,11 @@ function createRouter({ log, fetchImpl, mintAgentToken, authenticateCaller, rate
             name: body.name,
             notes: body.notes,
             price: body.price,
+            // Price-aware matchmaking (card_e1b8af79): a seller's ASKING price +
+            // currency. The upstream validates them (finite/>=0/bounded, allowlisted
+            // currency) — never trusted here; this is match metadata only (官方不介入).
+            askPrice: body.askPrice,
+            priceCurrency: body.priceCurrency,
         };
         const upstreamUrl = `${WISHLIST_BASE}/api/items/upsert-listing`;
         try {

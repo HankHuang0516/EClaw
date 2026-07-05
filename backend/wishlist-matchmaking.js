@@ -132,6 +132,87 @@ function sanitizeUntrusted(raw, maxLen = 200) {
     return s;
 }
 
+// ── Price-aware matchmaking (card_e1b8af79) ─────────────────────────────────
+//
+// Hank's confirmed defaults:
+//   - Price is OPTIONAL: only filter on price when BOTH sides have one; if either
+//     side lacks a price, fall back to name/tags-only match (do NOT exclude).
+//   - Currency default TWD; if the two sides' currencies DIFFER, treat as "cannot
+//     compare" → fall back to name-only (NO FX — we never convert).
+//   - Compatibility: buyer's max/willing price >= seller's asking price.
+//
+// Price is an ADDITIONAL match filter, never a bypass, and no money flows through
+// the platform (官方不介入) — this is match metadata only.
+
+// Bound prices defensively so an absurd upstream value can't poison a comparison.
+// Matches the wishlist-app writer's MAX_PRICE (1e12).
+const MM_MAX_PRICE = 1_000_000_000_000;
+const MM_DEFAULT_CURRENCY = 'TWD';
+
+/**
+ * Coerce an untrusted price to a valid non-negative bounded number, or null when
+ * it is absent/invalid. We treat an INVALID price (NaN / negative / absurd) the
+ * same as ABSENT for filtering — a garbage price must never make an incompatible
+ * pair look compatible; it just drops us into the name-only fallback. (The write
+ * path already rejects invalid prices at 400; this is defense-in-depth for values
+ * arriving from the catalogue / a counterparty.)
+ */
+function coercePrice(raw) {
+    if (raw === undefined || raw === null || raw === '') return null;
+    if (typeof raw !== 'number' && typeof raw !== 'string') return null;
+    const n = typeof raw === 'number' ? raw : Number(String(raw).trim());
+    if (!Number.isFinite(n) || n < 0 || n > MM_MAX_PRICE) return null;
+    return n;
+}
+
+/** Normalise a currency code to a short upper-case token, or '' if unusable. */
+function normalizeCurrency(raw) {
+    if (raw === undefined || raw === null || raw === '') return MM_DEFAULT_CURRENCY;
+    if (typeof raw !== 'string') return '';
+    const c = raw.trim().toUpperCase();
+    // Short allowlist-shaped guard: 3–4 letters. Anything else is "unusable" and
+    // routes to the name-only fallback (never crashes, never compares garbage).
+    return /^[A-Z]{3,4}$/.test(c) ? c : '';
+}
+
+/**
+ * Decide whether a (buyer, seller) pair is price-compatible ENOUGH to proceed to
+ * an invite. Returns { compatible, reason }:
+ *   - compatible=true, reason='no_price_fallback'        — one/both sides lack a
+ *     usable price → name/tags-only match (do NOT exclude).
+ *   - compatible=true, reason='currency_mismatch_fallback' — both priced but in
+ *     DIFFERENT currencies → cannot compare (no FX) → name-only fallback.
+ *   - compatible=true, reason='price_compatible'         — both priced, same
+ *     currency, buyerMax >= sellerAsk.
+ *   - compatible=false, reason='price_incompatible'      — both priced, same
+ *     currency, buyerMax < sellerAsk → NO invite.
+ *
+ * Inputs are untrusted; coercePrice/normalizeCurrency validate them. A missing
+ * currency on one side while the other is present is a mismatch → fallback.
+ */
+function priceCompat({ buyerMaxPrice, buyerCurrency, sellerAskPrice, sellerCurrency } = {}) {
+    const buyerMax = coercePrice(buyerMaxPrice);
+    const sellerAsk = coercePrice(sellerAskPrice);
+
+    // OPTIONAL: only filter when BOTH sides have a usable price.
+    if (buyerMax === null || sellerAsk === null) {
+        return { compatible: true, reason: 'no_price_fallback' };
+    }
+
+    const buyerCur = normalizeCurrency(buyerCurrency);
+    const sellerCur = normalizeCurrency(sellerCurrency);
+    // Unusable currency on either side, or the two differ → cannot compare (no FX).
+    if (!buyerCur || !sellerCur || buyerCur !== sellerCur) {
+        return { compatible: true, reason: 'currency_mismatch_fallback' };
+    }
+
+    // Both priced, same currency: buyer's max must cover the seller's ask.
+    if (buyerMax >= sellerAsk) {
+        return { compatible: true, reason: 'price_compatible' };
+    }
+    return { compatible: false, reason: 'price_incompatible' };
+}
+
 /**
  * Cheap keyword rerank (LLM optional / off by default — keep it cheap). Scores
  * each item by overlap of query tokens against the item name+notes, with a small
@@ -170,8 +251,8 @@ function tokenize(s) {
 
 // ── Envelope builders (P0 protocol; all public-code keyed) ──────────────────
 
-function buildInviteEnvelope({ matchId, fromPublicCode, toPublicCode, itemId, itemName, note }) {
-    return {
+function buildInviteEnvelope({ matchId, fromPublicCode, toPublicCode, itemId, itemName, note, buyerMaxPrice, sellerAskPrice, priceCurrency }) {
+    const env = {
         type: ENVELOPE_TYPES.INVITE,
         matchId,
         fromPublicCode: normalizeCode(fromPublicCode),
@@ -181,6 +262,20 @@ function buildInviteEnvelope({ matchId, fromPublicCode, toPublicCode, itemId, it
         itemName: sanitizeUntrusted(itemName, 120),
         note: sanitizeUntrusted(note, 200),
     };
+    // Price-aware matchmaking (card_e1b8af79): carry the price BASIS so the
+    // recipient can judge the offer. Only include validated, present values; a
+    // garbage/absent price is simply omitted (never echoes untrusted junk). No
+    // money moves through here — this is match metadata only.
+    const buyerMax = coercePrice(buyerMaxPrice);
+    const sellerAsk = coercePrice(sellerAskPrice);
+    const cur = normalizeCurrency(priceCurrency);
+    if (buyerMax !== null || sellerAsk !== null) {
+        env.price = {};
+        if (buyerMax !== null) env.price.buyerMaxPrice = buyerMax;
+        if (sellerAsk !== null) env.price.sellerAskPrice = sellerAsk;
+        if (cur) env.price.currency = cur;
+    }
+    return env;
 }
 
 function buildAcceptEnvelope({ matchId, fromPublicCode, toPublicCode }) {
@@ -475,6 +570,11 @@ function createRouter(opts = {}) {
                 itemName: r.cleanName,
                 sellerPublicCode: normalizeCode((r.item && (r.item.publicCode || r.item.ownerPublicCode)) || ''),
                 score: r.score,
+                // Price-aware matchmaking (card_e1b8af79): surface the seller's ask so
+                // the buyer's agent can pass buyerMaxPrice/sellerAskPrice into /invite.
+                // coercePrice returns null for absent/invalid (name-only fallback).
+                sellerAskPrice: coercePrice(r.item && r.item.askPrice),
+                priceCurrency: (function () { const c = normalizeCurrency(r.item && r.item.priceCurrency); return c || null; })(),
             }));
 
         return res.status(200).json({
@@ -509,6 +609,29 @@ function createRouter(opts = {}) {
         }
         if (sellerCode === caller.publicCode) {
             return res.status(400).json({ error: 'cannot invite yourself' });
+        }
+
+        // (a0) PRICE-COMPAT FILTER (card_e1b8af79). Only filter when BOTH sides have
+        // a usable price in the SAME currency; otherwise fall back to name/tags-only
+        // (never exclude). This is an ADDITIONAL filter, never a bypass — it can only
+        // BLOCK a send, never enable one a governance gate would stop. Running it
+        // BEFORE opt-in/quota means a price-incompatible pair never consumes quota.
+        //   - buyer's max/willing price = the buyer (caller) supplies buyerMaxPrice.
+        //   - seller's asking price = sellerAskPrice (from the seller listing search
+        //     result the buyer is inviting on).
+        const priceDecision = priceCompat({
+            buyerMaxPrice: req.body.buyerMaxPrice,
+            buyerCurrency: req.body.buyerCurrency || req.body.priceCurrency,
+            sellerAskPrice: req.body.sellerAskPrice,
+            sellerCurrency: req.body.sellerCurrency || req.body.priceCurrency,
+        });
+        if (!priceDecision.compatible) {
+            metricBlock('price_incompatible');
+            // NO send. The buyer's max is below the seller's ask (same currency).
+            return res.status(409).json({
+                error: 'buyer max price is below the seller asking price',
+                reason: 'price_incompatible',
+            });
         }
 
         // (a) Buyer's OWN kill-switch / opt-in. Matchmaking must not fire unless
@@ -568,6 +691,10 @@ function createRouter(opts = {}) {
             itemId,
             itemName: req.body.itemName,
             note: req.body.note,
+            // Carry the price BASIS so the recipient can judge the offer.
+            buyerMaxPrice: req.body.buyerMaxPrice,
+            sellerAskPrice: req.body.sellerAskPrice,
+            priceCurrency: req.body.priceCurrency || req.body.buyerCurrency || req.body.sellerCurrency,
         });
 
         try {
@@ -939,7 +1066,13 @@ module.exports = {
     isKillSwitchOn,
     createQuotaTracker,
     createMatchStore,
+    // price-aware matchmaking (card_e1b8af79)
+    priceCompat,
+    coercePrice,
+    normalizeCurrency,
     // constants
+    MM_MAX_PRICE,
+    MM_DEFAULT_CURRENCY,
     ENVELOPE_TYPES,
     SAFETY_DISCLAIMER,
     CONTACT_PII_KEYS,
