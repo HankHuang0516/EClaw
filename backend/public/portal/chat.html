@@ -541,6 +541,14 @@
             min-width: 0; max-width: 100%;
         }
         .action-request-decision-block.is-recommendation { border-left-color: var(--primary, #5b6cff); }
+        /* Wishlist trade-invite offer rows (card_647fc0ba Scope B). */
+        .action-request-decision-block.is-trade-invite { border-left-color: #f59e0b; }
+        .action-request-invite-row {
+            display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; min-width: 0; max-width: 100%;
+        }
+        .action-request-invite-value {
+            color: var(--text, #ffffff); font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; min-width: 0;
+        }
         .action-request-decision-label {
             color: var(--text-secondary, #AAAAAA); font-size: 11px; font-weight: 700;
             text-transform: uppercase; letter-spacing: 0.4px;
@@ -7894,6 +7902,8 @@
                 review: '👁️',
                 clarify: '❓',
                 consensus: '🤝',
+                // Wishlist × EClaw matchmaking invite (card_647fc0ba Scope B).
+                wishlist_trade_invite: '🎁',
             };
             const meta = {
                 raw,
@@ -8389,6 +8399,41 @@
                         now: Date.now(),
                     });
                     if (ratifyBadge) item.appendChild(ratifyBadge);
+                }
+
+                // Wishlist trade-invite (card_647fc0ba Scope B): render the offer as
+                // labelled rows — item name, price, and who's offering. ALL fields are
+                // UNTRUSTED (catalogue item name / counterparty public code) so every
+                // value goes through textContent, never innerHTML. The price is
+                // assembled from numeric/coerced fields + an allowlisted currency code.
+                if (dc && dc.invite && typeof dc.invite === 'object' && !Array.isArray(dc.invite)) {
+                    const inv = dc.invite;
+                    const wrap = document.createElement('div');
+                    wrap.className = 'action-request-decision-block is-trade-invite';
+                    const addRow = (labelKey, labelFallback, value) => {
+                        if (value == null || String(value).trim() === '') return;
+                        const row = document.createElement('div');
+                        row.className = 'action-request-invite-row';
+                        const lbl = document.createElement('span');
+                        lbl.className = 'action-request-decision-label';
+                        lbl.textContent = t(labelKey, labelFallback);
+                        const val = document.createElement('span');
+                        val.className = 'action-request-invite-value';
+                        val.textContent = String(value); // UNTRUSTED → textContent
+                        row.appendChild(lbl);
+                        row.appendChild(val);
+                        wrap.appendChild(row);
+                    };
+                    addRow('action_request_invite_item', 'Item', inv.itemName);
+                    // Price string: prefer seller ask, else buyer max; only when numeric.
+                    const priceNum = (typeof inv.sellerAskPrice === 'number') ? inv.sellerAskPrice
+                        : (typeof inv.buyerMaxPrice === 'number') ? inv.buyerMaxPrice : null;
+                    if (priceNum != null && isFinite(priceNum)) {
+                        const cur = (typeof inv.currency === 'string' && /^[A-Z]{3,4}$/.test(inv.currency)) ? inv.currency + ' ' : '';
+                        addRow('action_request_invite_price', 'Price', cur + priceNum);
+                    }
+                    addRow('action_request_invite_from', 'Offered by', inv.fromPublicCode);
+                    if (wrap.childNodes.length > 0) item.appendChild(wrap);
                 }
 
                 // Block 1 — what was done (commander text → textContent, XSS-safe).
