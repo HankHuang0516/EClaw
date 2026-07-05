@@ -7,21 +7,22 @@
  *   - every outbound fetch sets a named User-Agent `curl/8.4.0` (an empty/default
  *     UA trips the Cloudflare edge UA filter — CF error 1010).
  *
- * The merchant API key required by write calls is read from the EClaw vault BY
- * NAME (`WISHLIST_MERCHANT_KEY`) at request time via an injectable
- * getVaultValue(name). That key is currently ABSENT from the vault, so the proxy
- * degrades gracefully: a missing key surfaces as 502 {error, reason:'missing
- * key'}, and a locked vault (HTTP 403) surfaces as reason:'locked' — never a
- * crash, and the secret is never logged or echoed.
+ * NO MERCHANT KEY (owner directive, card_e30cf03d). The write path no longer
+ * reads a shared `WISHLIST_MERCHANT_KEY` from the vault. Instead the proxy proves
+ * the caller's EClaw identity and forwards a SHORT-LIVED, single-purpose EClaw
+ * identity token; the wishlist backend calls BACK to EClaw to verify that token
+ * before it writes. Nothing shared and nothing long-lived crosses to the wishlist
+ * service — the caller's long-lived botSecret is swapped for the token INSIDE
+ * EClaw (via the injected `mintAgentToken`) and only the token is forwarded.
  *
- * CONFUSED-DEPUTY GUARD (security-review HIGH #2): the proxy holds the merchant
- * key, so an UNAUTHENTICATED write endpoint would let any anonymous caller
- * borrow merchant authority. Therefore the write path REQUIRES the caller to
- * prove they are a real EClaw entity (deviceId + entityId + botSecret) via the
- * injected `authenticateCaller`, and the listing is ALWAYS written under the
- * caller's OWN resolved publicCode — a caller can never write under a code they
- * do not control. The write is routed to the wishlist `/api/items/upsert-listing`
- * endpoint (which independently re-verifies the code), NOT the blind createItem
+ * CONFUSED-DEPUTY GUARD (security-review HIGH #2): an UNAUTHENTICATED write
+ * endpoint would let any anonymous caller borrow EClaw's authority. Therefore the
+ * write path REQUIRES the caller to prove they are a real EClaw entity
+ * (deviceId + entityId + botSecret) via the injected `authenticateCaller`, and
+ * the listing is ALWAYS written under the caller's OWN resolved publicCode — a
+ * caller can never write under a code they do not control. The write is routed to
+ * the wishlist `/api/items/upsert-listing` endpoint (which independently
+ * verifies the identity token AND re-verifies the code), NOT the blind createItem
  * path (security-review HIGH #1). Read endpoints (search/items/public) stay open.
  */
 
@@ -35,67 +36,30 @@ const WISHLIST_BASE = 'https://' + WISHLIST_HOST;
 // Named UA — a default/empty UA can trip the CDN edge UA filter (CF 1010).
 const OUTBOUND_UA = 'curl/8.4.0';
 
-// The vault key NAME the proxy reads at request time (never its value here).
-const MERCHANT_KEY_NAME = 'WISHLIST_MERCHANT_KEY';
+// Header the wishlist backend reads to verify the forwarded EClaw identity token.
+const AGENT_TOKEN_HEADER = 'x-eclaw-agent-token';
 
-// Default vault reader: GET https://eclawbot.com/api/device-vars with the
-// mission bot creds from process.env (read at call time; NEVER hardcoded).
-// Returns the string value for `name`, or throws a distinct error:
-//   - message contains 'locked'      when the HTTP status was 403
-//   - message contains 'missing key' when success:false or the key is absent
-function defaultGetVaultValue(doFetch) {
-    return async function getVaultValue(name) {
-        const deviceId = process.env.ECLAW_WISHLIST_DEVICE_ID;
-        const botSecret = process.env.ECLAW_WISHLIST_BOT_SECRET;
-        const entityId = process.env.ECLAW_WISHLIST_ENTITY_ID;
-        if (!deviceId || !botSecret || !entityId) {
-            throw new Error('vault creds not configured');
-        }
-        const params = new URLSearchParams({
-            deviceId,
-            botSecret,
-            entityId: String(entityId),
-        });
-        const resp = await doFetch(`https://eclawbot.com/api/device-vars?${params.toString()}`, {
-            method: 'GET',
-            headers: {
-                'User-Agent': OUTBOUND_UA,
-                'Accept': 'application/json',
-            },
-        });
-        let body = null;
-        try {
-            body = await resp.json();
-        } catch (_e) {
-            body = null;
-        }
-        if (resp.status === 403) {
-            throw new Error(`vault locked: cannot read ${name} (locked)`);
-        }
-        if (!resp.ok || !body || body.success === false) {
-            throw new Error(`vault read failed for ${name}: missing key`);
-        }
-        const vars = body.vars || {};
-        if (vars[name] == null || vars[name] === '') {
-            throw new Error(`vault has no value for ${name}: missing key`);
-        }
-        return vars[name];
-    };
-}
-
-function createRouter({ log, fetchImpl, getVaultValue, authenticateCaller, rateLimit, now } = {}) {
+function createRouter({ log, fetchImpl, mintAgentToken, authenticateCaller, rateLimit, now } = {}) {
     const router = express.Router();
     const logger = typeof log === 'function' ? log : () => {};
     const doFetch = fetchImpl || globalThis.fetch;
-    const readVaultValue =
-        typeof getVaultValue === 'function' ? getVaultValue : defaultGetVaultValue(doFetch);
+    // Mint a short-lived EClaw identity token for an ALREADY-authenticated caller
+    // (publicCode → token). Injected at mount (wired to agent-identity.signAgentToken
+    // + the process signing secret) and faked in tests. If not provided the write
+    // path fails CLOSED (no token = no cross-service write). The token is what the
+    // wishlist backend calls back to EClaw to verify — the long-lived botSecret is
+    // NEVER forwarded off-box.
+    const mintToken =
+        typeof mintAgentToken === 'function'
+            ? mintAgentToken
+            : async () => { throw new Error('token minting not configured'); };
     const clock = typeof now === 'function' ? now : () => Date.now();
 
     // Caller authentication for the write path. Must resolve { ok, publicCode }
     // ONLY when the (deviceId, entityId, botSecret) triple proves a real, bound
     // EClaw entity; otherwise { ok:false }. Injected at mount (wired to the live
     // devices map + authEntityAccess) and faked in tests. If not provided, the
-    // write path fails CLOSED (no auth = no merchant-key borrow).
+    // write path fails CLOSED (no auth = no authority borrow).
     const authCaller =
         typeof authenticateCaller === 'function'
             ? authenticateCaller
@@ -212,8 +176,9 @@ function createRouter({ log, fetchImpl, getVaultValue, authenticateCaller, rateL
         const body = req.body || {};
         const { deviceId, entityId, botSecret } = body;
 
-        // (1) Authenticate the caller as a real EClaw entity BEFORE any vault
-        // read or upstream call. No creds ⇒ 401; bad creds ⇒ 403; fail closed.
+        // (1) Authenticate the caller as a real EClaw entity BEFORE minting a
+        // token or making an upstream call. No creds ⇒ 401; bad creds ⇒ 403;
+        // fail closed.
         if (!deviceId || entityId === undefined || entityId === null || !botSecret) {
             return res.status(401).json({
                 error: 'caller authentication required (deviceId, entityId, botSecret)',
@@ -241,20 +206,23 @@ function createRouter({ log, fetchImpl, getVaultValue, authenticateCaller, rateL
             });
         }
 
-        // (3) Read the merchant key from the vault by NAME. Degrade gracefully:
-        // missing key / locked vault → 502 with a distinct reason (never crash).
-        let merchantKey;
+        // (3) Swap the (already-verified) caller identity for a SHORT-LIVED EClaw
+        // identity token, INSIDE EClaw. This is what gets forwarded — the caller's
+        // long-lived botSecret never leaves the box. The wishlist backend calls
+        // BACK to EClaw to verify this token before it writes. NO merchant key.
+        let agentToken;
         try {
-            merchantKey = await readVaultValue(MERCHANT_KEY_NAME);
+            const minted = await mintToken({ publicCode: callerCode });
+            agentToken = minted && minted.token;
+            if (!agentToken) throw new Error('empty token');
         } catch (err) {
-            const msg = (err && err.message) || '';
-            const reason = /locked/i.test(msg) ? 'locked' : 'missing key';
-            logger('warn', 'wishlist-route', `[wishlist] merchant key unavailable (${reason})`);
-            return res.status(502).json({ error: 'wishlist merchant key unavailable', reason });
+            logger('warn', 'wishlist-route', `[wishlist] identity token mint failed: ${err.message}`);
+            return res.status(502).json({ error: 'identity token unavailable' });
         }
 
         // Forward ONLY the safe listing fields; force publicCode to callerCode so
-        // the upstream verifier binds the write to the authenticated identity.
+        // the upstream verifier binds the write to the authenticated identity. The
+        // token is sent in a header (verify-then-discard on the wishlist side).
         const payload = {
             publicCode: callerCode,
             wishlistId: body.wishlistId,
@@ -270,7 +238,7 @@ function createRouter({ log, fetchImpl, getVaultValue, authenticateCaller, rateL
                 headers: {
                     'User-Agent': OUTBOUND_UA,
                     'Content-Type': 'application/json',
-                    'x-merchant-api-key': merchantKey,
+                    [AGENT_TOKEN_HEADER]: agentToken,
                     'Accept': 'application/json',
                 },
                 body: JSON.stringify(payload),
@@ -313,4 +281,4 @@ function extractClaimedCode(raw) {
     return /^[a-z0-9]{6}$/.test(v) ? v : null;
 }
 
-module.exports = { createRouter, WISHLIST_HOST, MERCHANT_KEY_NAME, extractClaimedCode };
+module.exports = { createRouter, WISHLIST_HOST, AGENT_TOKEN_HEADER, extractClaimedCode };
