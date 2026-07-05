@@ -1075,14 +1075,24 @@ a:hover { text-decoration: underline; }
     flex-shrink: 0;
 }
 
-/* Danger button (destructive actions) */
+/* Danger button (destructive actions)
+   WCAG 2.1 AA: white-on-danger must reach >= 4.5:1 for this most
+   safety-critical control. Old #e53e3e was 4.13:1 (fail). The shades
+   below are scoped to the BUTTON fill only — the --danger accent token
+   (borders/icons/text elsewhere) is intentionally left untouched.
+     base   #c53030  -> 5.47:1 (AA pass)
+     hover  #b52b2b  -> 6.28:1
+     active #a52020  -> 7.43:1 */
 .btn-danger {
-    background: #e53e3e;
+    background: #c53030;
     color: #fff;
     border: none;
 }
 .btn-danger:hover {
-    background: #c53030;
+    background: #b52b2b;
+}
+.btn-danger:active {
+    background: #a52020;
 }
 
 /* ==========================================
