@@ -213,7 +213,7 @@ function createRouter(opts = {}) {
     // (buyer,item,seller) SYMMETRICALLY regardless of who initiated. P3 owns this
     // dedup at the shared store (P2's internal matchId is keyed on ITS caller, which
     // differs by direction), checking BEFORE the send and stamping AFTER a real send.
-    async function sendGovernedInvite(caller, { fromPublicCode, toPublicCode, buyerPublicCode, sellerPublicCode, itemId, itemName, note, bypassFriendsOnly, rescan }) {
+    async function sendGovernedInvite(caller, { fromPublicCode, toPublicCode, buyerPublicCode, sellerPublicCode, itemId, itemName, note, bypassFriendsOnly, rescan, buyerMaxPrice, buyerCurrency, sellerAskPrice, sellerCurrency }) {
         const from = mm.normalizeCode(fromPublicCode);
         const to = mm.normalizeCode(toPublicCode);
         const buyer = mm.normalizeCode(buyerPublicCode);
@@ -224,6 +224,21 @@ function createRouter(opts = {}) {
         }
         if (!mm.isValidPublicCode(to) || to === from) {
             return { ok: false, reason: 'invalid_or_self_target' };
+        }
+
+        // PRICE-COMPAT FILTER (card_e1b8af79). Only filters when BOTH the buyer's max
+        // and the seller's ask are present in the SAME currency; otherwise falls back
+        // to name/tags-only (never excludes). An ADDITIONAL filter, never a bypass —
+        // it can only BLOCK a send. Enforced here (before we consume anything) AND
+        // again inside P2 handleInvite (defense-in-depth via the wired governedInvite).
+        const priceDecision = mm.priceCompat({
+            buyerMaxPrice,
+            buyerCurrency,
+            sellerAskPrice,
+            sellerCurrency,
+        });
+        if (!priceDecision.compatible) {
+            return { ok: false, reason: 'price_incompatible' };
         }
 
         // Canonical dedup pre-check on the SHARED store (symmetric across directions).
@@ -246,6 +261,12 @@ function createRouter(opts = {}) {
             itemId,
             itemName,
             note,
+            // Price BASIS threaded to P2 so the invite envelope carries it AND P2
+            // re-checks price-compat on the real control path (never trusts P3 alone).
+            buyerMaxPrice,
+            buyerCurrency,
+            sellerAskPrice,
+            sellerCurrency,
             bypassFriendsOnly: !!bypassFriendsOnly,
             rescan: !!rescan,
         });
@@ -337,6 +358,10 @@ function createRouter(opts = {}) {
                 itemName: r.cleanName,
                 sellerPublicCode: mm.normalizeCode((r.item && (r.item.publicCode || r.item.ownerPublicCode)) || ''),
                 score: r.score,
+                // Price-aware matchmaking (card_e1b8af79): surface the seller's ask so
+                // the caller's agent can supply the price basis on the follow-up invite.
+                sellerAskPrice: mm.coercePrice(r.item && r.item.askPrice),
+                priceCurrency: mm.normalizeCurrency(r.item && r.item.priceCurrency) || null,
             }));
 
         return res.status(200).json({
@@ -387,6 +412,11 @@ function createRouter(opts = {}) {
             return res.status(502).json({ error: 'buyer search failed', reason: 'search_error' });
         }
 
+        // The SELLER's own asking price for THIS listing (caller-supplied). Optional;
+        // absent → every match falls back to name-only (price never excludes).
+        const sellerAskPrice = req.body.askPrice;
+        const sellerCurrency = req.body.priceCurrency;
+
         // Rank buyer wishes against the listing (reuse P2 rerank). Each candidate is
         // a buyer entity whose wish matches. We invite the BUYER, from the SELLER.
         const ranked = mm.rerank(listingText, items).filter((r) => r.score > 0).slice(0, 10);
@@ -402,6 +432,11 @@ function createRouter(opts = {}) {
                 skipped.push({ buyerPublicCode: buyerCode || null, reason: 'invalid_or_self' });
                 continue;
             }
+
+            // The matched BUYER's intended/max price comes from THEIR wish item (the
+            // search result). Absent/invalid → price-compat falls back to name-only.
+            const buyerMaxPrice = r.item && r.item.maxPrice;
+            const buyerCurrency = r.item && r.item.priceCurrency;
 
             // Canonical matchId (buyer,item,seller) for reporting; sendGovernedInvite
             // owns the authoritative dedup on the SHARED store using this same key, so
@@ -424,6 +459,12 @@ function createRouter(opts = {}) {
                     itemId,
                     itemName: r.cleanName,
                     note: mm.sanitizeUntrusted(req.body.note, 200),
+                    // Price basis: buyer max from the matched wish, seller ask from
+                    // the caller's own listing. price-compat filters this pair.
+                    buyerMaxPrice,
+                    buyerCurrency,
+                    sellerAskPrice,
+                    sellerCurrency,
                     bypassFriendsOnly: false,
                 });
                 if (!sent.ok) {
@@ -516,6 +557,13 @@ function createRouter(opts = {}) {
                     itemId,
                     itemName: mm.sanitizeUntrusted(w.itemName, 120),
                     note: mm.sanitizeUntrusted(w.note, 200),
+                    // Price basis: the caller's own wish declares its max price + the
+                    // seller listing's asking price it is reaching out about. Both
+                    // caller-supplied per wish; price-compat filters the pair.
+                    buyerMaxPrice: w.maxPrice,
+                    buyerCurrency: w.buyerCurrency || w.priceCurrency,
+                    sellerAskPrice: w.sellerAskPrice,
+                    sellerCurrency: w.sellerCurrency || w.priceCurrency,
                     bypassFriendsOnly: false,
                     rescan: true,
                 });

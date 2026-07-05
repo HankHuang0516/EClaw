@@ -3029,7 +3029,7 @@ const wishlistMatchmakingP3 = require('./wishlist-matchmaking-p3');
 // the invite target (P2's `sellerPublicCode` body field is just "the target").
 // The canonical (buyer,item,seller) dedup is owned by the P3 module on the shared
 // store; this function only performs the governed send.
-function runP2InviteInProcess({ callerCreds, toPublicCode, itemId, itemName, note, bypassFriendsOnly }) {
+function runP2InviteInProcess({ callerCreds, toPublicCode, itemId, itemName, note, bypassFriendsOnly, buyerMaxPrice, buyerCurrency, sellerAskPrice, sellerCurrency }) {
     return new Promise((resolve) => {
         if (!callerCreds || !callerCreds.deviceId || callerCreds.entityId === undefined || callerCreds.entityId === null || !callerCreds.botSecret) {
             return resolve({ status: 'blocked', reason: 'caller_creds_missing' });
@@ -3049,6 +3049,12 @@ function runP2InviteInProcess({ callerCreds, toPublicCode, itemId, itemName, not
                 itemId,
                 itemName,
                 note,
+                // Price basis (card_e1b8af79): P2 handleInvite re-runs price-compat on
+                // the REAL control path and carries the basis in the invite envelope.
+                buyerMaxPrice,
+                buyerCurrency,
+                sellerAskPrice,
+                sellerCurrency,
             },
             headers: {},
             get() { return undefined; },
@@ -3104,8 +3110,8 @@ app.use('/api/wishlist-matchmaking-p3', wishlistMmRateLimit, wishlistGaSendGateP
     // Reuse P2's ENTIRE governed invite path in-process. No re-implementation.
     // The invite is driven with the AUTHENTICATED CALLER as the P2 principal (its
     // own verified creds), inviting `toPublicCode`. NEVER another entity's secret.
-    governedInvite: async ({ callerCreds, toPublicCode, itemId, itemName, note, bypassFriendsOnly }) =>
-        runP2InviteInProcess({ callerCreds, toPublicCode, itemId, itemName, note, bypassFriendsOnly }),
+    governedInvite: async ({ callerCreds, toPublicCode, itemId, itemName, note, bypassFriendsOnly, buyerMaxPrice, buyerCurrency, sellerAskPrice, sellerCurrency }) =>
+        runP2InviteInProcess({ callerCreds, toPublicCode, itemId, itemName, note, bypassFriendsOnly, buyerMaxPrice, buyerCurrency, sellerAskPrice, sellerCurrency }),
     // SHARE the P2 match store so P3 dedup is symmetric with P2 (matchId identity).
     matchStore: wishlistMatchmakingRouter._store,
 }));
