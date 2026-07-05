@@ -1,48 +1,60 @@
 /**
- * wishlist-matchmaking-p3 — photo-recognition path + seller-initiated matchmaking
- * + periodic rescan/dedup (card_496f752a622b722f82843d4e, P3).
+ * wishlist-matchmaking-p3 — caller-recognised photo path + seller-initiated
+ * matchmaking + periodic rescan/dedup (card_496f752a622b722f82843d4e, P3).
+ *
+ * ARCHITECTURE PRINCIPLE — 官方不介入 (the platform stays out of the loop).
+ * (Hank, 2026-07-05, card_e61aa62a). The platform does NOT run compute for agents,
+ * does NOT act on their behalf, and does NOT subsidise. EClaw = MATCHING + standard
+ * STORAGE only. Each party's OWN Agent brings its own vision and calls this API with
+ * its own identity. Concretely for P3:
+ *   - There is NO server-side vision / LLM call in matchmaking. Photo recognition is
+ *     the CALLER's job: the buyer's / seller's own Agent runs its own vision and
+ *     submits the ALREADY-RECOGNISED item (name/tags). The platform never reads a
+ *     vision provider key and never bills a recognition.
+ *   - A listing PHOTO uses EClaw's EXISTING standard storage (`/api/files` → R2 →
+ *     fileId), referenced by fileId, device-scoped ownership. P3 never intakes raw
+ *     image bytes and never fetches a cross-device file.
  *
  * Builds STRICTLY on top of P2 (backend/wishlist-matchmaking.js) — it does NOT
  * fork it. Every buyer↔seller send still goes through P2's ONE egress
- * (`sendB2bMessage`) via P2's own invite path; P3 only adds three new front doors
- * that feed into that same governed handshake:
+ * (`sendB2bMessage`) via P2's own invite path; P3 only adds three front doors that
+ * feed into that same governed handshake:
  *
  *   1. PHOTO PATH  (POST /photo-search)
- *      A buyer OR a seller uploads a photo. EClaw's OWN Claude vision
- *      (self-hosted, billed on the entity-2 ANTHROPIC budget — NOT the counterparty's
- *      user-auth, so it is never blocked by their session) extracts an item
- *      name + tags. That extracted text is fed into P2's /search (the P1 SSRF-safe
- *      bridge). A per-window VISION COST CAP (D4b) bounds spend; over the cap →
- *      fail-closed 429, no vision call, no charge.
+ *      A buyer OR a seller has ALREADY recognised an item with THEIR OWN Agent's
+ *      vision and submits the result ({itemName, tags}). Optionally they reference a
+ *      listing photo they already uploaded to EClaw's standard storage by `fileId`
+ *      (device-scoped; owner only). P3 sanitises the caller-supplied recognised text
+ *      and feeds it into P2's /search (the P1 SSRF-safe bridge). READ/PLAN only —
+ *      NO b2b send here, NO vision here.
  *
  *   2. SELLER-INITIATED MATCHMAKING  (POST /seller-listing-scan)
- *      A seller has listed an item (written through the P1/write-auth
- *      authenticated path — P3 never writes the listing itself). P3 reverse-searches
- *      the buyer wishlist catalogue for that item and, for each matched buyer,
- *      fires P2's fully-governed invite (opt-in/kill-switch/quota/reachability all
- *      enforced) FROM the seller TO the buyer. matchId dedups repeat scans.
+ *      A seller has listed an item (written through the P1/write-auth authenticated
+ *      path — P3 never writes the listing itself). P3 reverse-searches the buyer
+ *      wishlist catalogue for that item and, for each matched buyer, fires P2's
+ *      fully-governed invite (opt-in/kill-switch/quota/reachability all enforced)
+ *      FROM the seller TO the buyer. matchId dedups repeat scans.
  *
  *   3. PERIODIC RESCAN / DEDUP  (POST /rescan  — cron-callable)
- *      The authenticated caller (a buyer/agent) re-checks its OWN still-unmatched
- *      wishes; for each new (buyer,item,seller) triple, send EXACTLY ONE invite
- *      ever. Idempotency key is matchId = P2.computeMatchId(buyer,item,seller); a
- *      triple whose matchId is already in the shared match store is skipped, so
- *      re-running is a no-op. The invite is always sent FROM the authenticated
- *      caller — a rescan CANNOT invite on behalf of a code the caller doesn't
- *      control (see OPEN PRODUCT QUESTION: a central multi-buyer scheduler would
- *      need a privileged impersonation capability we deliberately do NOT grant here).
+ *      The AUTHENTICATED caller (a buyer/agent) re-checks its OWN still-unmatched
+ *      wishes; for each new (buyer,item,seller) triple, send EXACTLY ONE invite ever.
+ *      Idempotency key is matchId = P2.computeMatchId(buyer,item,seller); a triple
+ *      whose matchId is already in the shared match store is skipped, so re-running
+ *      is a no-op. The invite is ALWAYS sent FROM the authenticated caller — a rescan
+ *      CANNOT invite on behalf of a code the caller doesn't control. There is NO
+ *      central/privileged multi-buyer scheduler (「官方不介入」): each buyer's own
+ *      Agent calls /rescan itself with its own identity.
  *
  * SECURITY (the class that bit P1 & P2):
  *   - Every new send binds `from` to the caller's VERIFIED publicCode (P2's
- *     authenticateCaller → resolved publicCode). A body-supplied `fromPublicCode`
- *     is REJECTED unless it equals the caller's own code — the invite is ALWAYS
- *     sent FROM the authenticated caller. No impersonation, in any flow.
- *   - Auth/verify happens BEFORE any privileged read (vision key, catalogue search).
- *   - Vision provider key is read SERVER-SIDE by NAME from the vault, never taken
- *     from the request, never logged, never returned. If the key is absent or the
- *     upstream is down → fail-closed (503/429), never a silent fallback that leaks.
- *   - Untrusted photo-derived text is sanitised with P2.sanitizeUntrusted before it
- *     can enter an envelope or a downstream prompt (prompt-injection defence).
+ *     authenticateCaller → resolved publicCode). A body-supplied `fromPublicCode` is
+ *     REJECTED unless it equals the caller's own code — the invite is ALWAYS sent
+ *     FROM the authenticated caller. No impersonation, in any flow.
+ *   - Auth/verify happens BEFORE any privileged read (catalogue search, file lookup).
+ *   - Untrusted caller-supplied recognised text is sanitised with P2.sanitizeUntrusted
+ *     before it can enter an envelope or a search intent (prompt-injection defence).
+ *   - A referenced listing `fileId` is resolved ONLY as the OWNER device's file
+ *     (device-scoped); a caller can never reference another device's file (no IDOR).
  *   - No cross-owner PII: P3 only reaches P2's INVITE stage. Contact exchange stays
  *     behind P2's dual human-marked consent gate — P3 has no contact path at all.
  *
@@ -53,20 +65,8 @@
 const express = require('express');
 const mm = require('./wishlist-matchmaking'); // P2 — reuse, do not fork
 
-// ── Vision cost cap (D4b) ────────────────────────────────────────────────────
-// Photo recognition calls EClaw's own Claude vision. Each call costs tokens on
-// the entity-2 ANTHROPIC budget, so a SEPARATE rolling-window cap bounds how many
-// recognitions can run per caller-device before we fail closed. Deliberately small.
-const VISION_CALL_CAP_DEFAULT = 20;              // recognitions / device / window
-const VISION_WINDOW_MS_DEFAULT = 60 * 60 * 1000; // 1h rolling window
-
-// Reasonable bounds on an uploaded image we will forward to vision (defence in
-// depth against a huge / hostile payload; the real byte transfer already happened
-// via /api/files/upload, we only receive a reference + small metadata here).
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8 MiB
-const ACCEPTED_MIME = Object.freeze(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
-
-// How many recognised tags we keep, and their max length (sanitised).
+// How many recognised tags we keep, and their max length (sanitised). The caller's
+// own Agent produced these; we treat them as UNTRUSTED text regardless.
 const MAX_TAGS = 12;
 const MAX_TAG_LEN = 40;
 const MAX_ITEMNAME_LEN = 120;
@@ -74,15 +74,15 @@ const MAX_ITEMNAME_LEN = 120;
 // ── Pure helpers (exported for direct unit tests) ────────────────────────────
 
 /**
- * Normalise + sanitise the structured result coming back from the (untrusted)
- * vision model. The model output is treated as HOSTILE text — a crafted photo
- * could carry an adversarial "itemName" trying to inject downstream. We reuse
- * P2.sanitizeUntrusted (control-char / injection-lead-in strip + length cap) on
- * every string before it leaves this function.
+ * Normalise + sanitise the structured recognised item the CALLER submitted. The
+ * caller's Agent ran its own vision; we still treat the result as HOSTILE text — a
+ * crafted photo (or a crafted caller) could carry an adversarial "itemName" trying
+ * to inject downstream. We reuse P2.sanitizeUntrusted (control-char / injection-
+ * lead-in strip + length cap) on every string before it leaves this function.
  *
  * Returns { itemName, tags:[...] } — both sanitised, tags deduped + bounded.
  */
-function normalizeVisionResult(raw) {
+function normalizeRecognizedItem(raw) {
     const obj = raw && typeof raw === 'object' ? raw : {};
     const itemName = mm.sanitizeUntrusted(obj.itemName || obj.name || '', MAX_ITEMNAME_LEN);
     const rawTags = Array.isArray(obj.tags) ? obj.tags : [];
@@ -102,56 +102,14 @@ function normalizeVisionResult(raw) {
 
 /**
  * Build the free-text search intent fed into P2's catalogue search from a
- * recognised photo. itemName leads; a bounded set of tags follows. Everything is
- * already sanitised by normalizeVisionResult; we just join + cap.
+ * caller-recognised item. itemName leads; a bounded set of tags follows. Everything
+ * is already sanitised by normalizeRecognizedItem; we just join + cap.
  */
-function buildIntentFromVision({ itemName, tags }) {
+function buildIntentFromRecognized({ itemName, tags }) {
     const parts = [];
     if (itemName) parts.push(itemName);
     if (Array.isArray(tags) && tags.length) parts.push(tags.join(' '));
     return mm.sanitizeUntrusted(parts.join(' ').trim(), 200);
-}
-
-/** True iff an uploaded-image descriptor is acceptable to forward to vision. */
-function isAcceptableImage({ mimeType, size } = {}) {
-    if (!mimeType || typeof mimeType !== 'string') return false;
-    if (!ACCEPTED_MIME.includes(mimeType.toLowerCase())) return false;
-    const n = Number(size);
-    if (!Number.isFinite(n) || n <= 0 || n > MAX_IMAGE_BYTES) return false;
-    return true;
-}
-
-/**
- * Separate rolling-window cost cap for vision recognitions. Same shape as P2's
- * quota tracker but a DISTINCT counter (photo cost must not be masked by, or
- * starve, ordinary invite quota). Returns { remaining, consume, cap, windowMs }.
- */
-function createVisionCostGuard({ max, windowMs, now } = {}) {
-    const cap = Number.isFinite(Number(max)) ? Number(max) : VISION_CALL_CAP_DEFAULT;
-    const win = Number.isFinite(Number(windowMs)) ? Number(windowMs) : VISION_WINDOW_MS_DEFAULT;
-    const clock = typeof now === 'function' ? now : () => Date.now();
-    const hits = new Map(); // deviceId -> [timestamps]
-
-    function remaining(deviceId) {
-        const t = clock();
-        const start = t - win;
-        const arr = (hits.get(deviceId) || []).filter((ts) => ts > start);
-        return Math.max(0, cap - arr.length);
-    }
-    // Returns true if a recognition is ALLOWED (and records it); false if over cap.
-    function consume(deviceId) {
-        const t = clock();
-        const start = t - win;
-        const arr = (hits.get(deviceId) || []).filter((ts) => ts > start);
-        if (arr.length >= cap) {
-            hits.set(deviceId, arr);
-            return false;
-        }
-        arr.push(t);
-        hits.set(deviceId, arr);
-        return true;
-    }
-    return { remaining, consume, cap, windowMs: win };
 }
 
 /**
@@ -168,40 +126,38 @@ function rescanMatchId(buyerPublicCode, itemId, sellerPublicCode) {
 
 /**
  * createRouter injectables (wired in index.js; faked in tests). P3 reuses the P2
- * primitives directly and adds only vision + reverse-search:
+ * primitives directly and adds only caller-recognised intake + reverse-search:
  *
  *   authenticateCaller({deviceId,entityId,botSecret}) -> {ok, publicCode} | {ok:false}
  *        SAME verifier as P2 / write-auth. The ONLY identity source. Fail closed.
- *   recognizeItem({imageData?, fileId?, mimeType, size, deviceId}) -> Promise<{itemName,tags}>
- *        SERVER-SIDE vision. Wired in index.js to EClaw's OWN Claude vision with the
- *        provider key read by NAME from the vault. It MUST NOT accept a key from the
- *        caller. Throws on upstream failure so the route can fail closed.
- *        Supported photo input in this release is caller-supplied base64
- *        (`imageData`); a server-side fetch-by-`fileId` (device-scoped R2 fetch) is
- *        a documented follow-up — a fileId-only request currently throws here and the
- *        route fails closed (502), it does NOT silently succeed.
  *   searchItems(intent) -> Promise<{items:[...]}> | Promise<[...]>   (P1 bridge, same as P2)
- *   governedInvite({caller, fromPublicCode, toPublicCode, itemId, itemName, note, bypassFriendsOnly})
+ *   resolveOwnedFile({fileId, deviceId}) -> Promise<{fileId, mimeType?, ...} | null>   (optional)
+ *        DEVICE-SCOPED file metadata lookup for a referenced listing photo. Wired in
+ *        index.js to EClaw's standard /api/files store (r2_files WHERE file_id=? AND
+ *        device_id=?). MUST return null for a file the caller's device does not own
+ *        (no cross-device read / IDOR). Optional: photo-search works without a fileId
+ *        (the recognised item alone drives the search). There is NO server-side
+ *        vision — the platform never reads image bytes for recognition.
+ *   governedInvite({callerCreds, fromPublicCode, toPublicCode, itemId, itemName, note, bypassFriendsOnly})
  *        -> Promise<{status, matchId, deduped, reason?}>
  *        Runs P2's FULL governed invite path (opt-in/kill-switch/quota/reachability).
  *        Wired in index.js to call the P2 invite logic so P3 never re-implements
- *        governance. `caller` is the AUTHENTICATED request principal; `fromPublicCode`
- *        is who the invite is sent AS (must be a code the caller is entitled to drive
- *        — the wired impl verifies this) and `toPublicCode` is whom to invite. The
- *        matchId is always P2.computeMatchId(buyer,item,seller) regardless of who
- *        initiated, so dedup is symmetric.
+ *        governance. `callerCreds` is the AUTHENTICATED request principal's OWN creds;
+ *        `fromPublicCode` is who the invite is sent AS (forced to the caller) and
+ *        `toPublicCode` is whom to invite. The matchId is always
+ *        P2.computeMatchId(buyer,item,seller) regardless of who initiated, so dedup
+ *        is symmetric.
  *   matchStore  — the SHARED P2 match store (dedup across P2 + P3). REQUIRED for
  *        rescan idempotency; if absent P3 makes its own (still correct within P3).
- *   visionCost:{max,windowMs} ; log ; now
+ *   log ; now
  */
 function createRouter(opts = {}) {
     const {
         authenticateCaller,
-        recognizeItem,
         searchItems,
+        resolveOwnedFile,
         governedInvite,
         matchStore,
-        visionCost,
         log,
         now,
     } = opts;
@@ -210,11 +166,6 @@ function createRouter(opts = {}) {
     const logger = typeof log === 'function' ? log : () => {};
     const clock = typeof now === 'function' ? now : () => Date.now();
     const store = matchStore || mm.createMatchStore();
-    const visionGuard = createVisionCostGuard({
-        max: visionCost && visionCost.max,
-        windowMs: visionCost && visionCost.windowMs,
-        now: clock,
-    });
     const authCaller =
         typeof authenticateCaller === 'function'
             ? authenticateCaller
@@ -316,74 +267,56 @@ function createRouter(opts = {}) {
     }
 
     // ── (1) PHOTO PATH ────────────────────────────────────────────────────────
-    // POST /photo-search — a buyer OR seller uploads a photo; EClaw's own vision
-    // extracts item name/tags; that intent is fed into the P1-backed catalogue
-    // search. This is the READ/PLAN step (mirrors P2 /search) — NO b2b send here.
-    // Vision cost is capped (D4b): over the cap → 429, and the vision call never
-    // runs (so no spend, no upstream hit).
+    // POST /photo-search — a buyer OR seller submits an item ALREADY RECOGNISED by
+    // THEIR OWN Agent's vision ({itemName, tags}) — 官方不介入, the platform runs no
+    // vision. Optionally the caller references a listing photo they already uploaded
+    // to EClaw's standard storage by `fileId` (device-scoped; owner only). The
+    // recognised text is sanitised and fed into the P1-backed catalogue search. This
+    // is the READ/PLAN step (mirrors P2 /search) — NO b2b send here.
     router.post('/photo-search', async (req, res) => {
         const caller = await requireCaller(req.body);
         if (!caller.ok) return res.status(caller.status).json({ error: caller.reason });
 
-        // Validate the image descriptor BEFORE spending the cost budget or calling
-        // vision. A caller cannot smuggle a non-image or an oversize payload.
-        const image = {
-            fileId: typeof req.body.fileId === 'string' ? req.body.fileId : undefined,
-            imageData: typeof req.body.imageData === 'string' ? req.body.imageData : undefined,
-            mimeType: req.body.mimeType,
-            size: req.body.size,
-        };
-        if (!image.fileId && !image.imageData) {
-            return res.status(400).json({ error: 'fileId or imageData is required' });
-        }
-        if (!isAcceptableImage(image)) {
-            return res.status(400).json({
-                error: 'image must be jpeg/png/webp/gif and <= 8MiB',
-                reason: 'bad_image',
-            });
-        }
-        if (typeof recognizeItem !== 'function') {
-            // Fail CLOSED — no vision wired means no recognition.
-            return res.status(503).json({ error: 'photo recognition unavailable', reason: 'no_vision' });
-        }
-
-        // (D4b) Cost cap — consume BEFORE the vision call. Over cap → fail closed,
-        // vision never runs, nothing is billed.
-        if (!visionGuard.consume(caller.deviceId)) {
-            return res.status(429).json({
-                error: 'photo recognition cost cap reached; try again later',
-                reason: 'vision_cost_cap',
-            });
-        }
-
-        // SERVER-SIDE vision. The provider key is resolved inside recognizeItem
-        // (index.js), never taken from the request. Any failure → fail closed.
-        let recognised;
-        try {
-            const rawVision = await recognizeItem({
-                fileId: image.fileId,
-                imageData: image.imageData,
-                mimeType: String(image.mimeType).toLowerCase(),
-                size: Number(image.size),
-                deviceId: caller.deviceId,
-            });
-            recognised = normalizeVisionResult(rawVision);
-        } catch (err) {
-            logger('warn', 'wishlist-matchmaking-p3', `vision recognition failed: ${err.message}`);
-            return res.status(502).json({ error: 'photo recognition failed', reason: 'vision_error' });
-        }
+        // The caller's own Agent already recognised the item. We accept the result
+        // (name/tags) and treat it as UNTRUSTED — sanitise before any use.
+        const recognised = normalizeRecognizedItem(
+            (req.body && typeof req.body.recognizedItem === 'object' && req.body.recognizedItem)
+            || { itemName: req.body && (req.body.itemName || req.body.name), tags: req.body && req.body.tags }
+        );
         if (!recognised.itemName && recognised.tags.length === 0) {
-            return res.status(200).json({
-                recognised: { itemName: '', tags: [] },
-                intent: '',
-                candidates: [],
-                matchFound: false,
-                reason: 'no_recognition',
+            return res.status(400).json({
+                error: 'recognizedItem is required — the caller Agent must submit its own recognised {itemName, tags} (the platform runs no vision)',
+                reason: 'no_recognized_item',
             });
+        }
+
+        // OPTIONAL listing-photo reference. If the caller references a fileId it must
+        // be a file OWNED by the caller's device (device-scoped; no cross-device read
+        // / IDOR). We only VERIFY ownership + surface the reference — the image bytes
+        // are never fetched for recognition (the caller already recognised it).
+        let listingPhoto = null;
+        const fileId = req.body && typeof req.body.fileId === 'string' ? req.body.fileId : null;
+        if (fileId) {
+            if (typeof resolveOwnedFile !== 'function') {
+                return res.status(503).json({ error: 'file storage unavailable', reason: 'no_file_store' });
+            }
+            let meta;
+            try {
+                meta = await resolveOwnedFile({ fileId, deviceId: caller.deviceId });
+            } catch (err) {
+                logger('warn', 'wishlist-matchmaking-p3', `owned-file lookup failed: ${err.message}`);
+                return res.status(502).json({ error: 'file lookup failed', reason: 'file_error' });
+            }
+            if (!meta) {
+                // Not found OR not owned by this device — same fail-closed response so
+                // a caller cannot probe another device's files (no IDOR oracle).
+                return res.status(404).json({ error: 'file not found for this device', reason: 'file_not_owned' });
+            }
+            listingPhoto = { fileId: meta.fileId || fileId, mimeType: meta.mimeType || meta.mime_type || undefined };
         }
 
         // Feed the recognised, sanitised intent into the P1-backed catalogue search.
-        const intent = buildIntentFromVision(recognised);
+        const intent = buildIntentFromRecognized(recognised);
         let items = [];
         try {
             const rawSearch = await searchItems(intent);
@@ -410,10 +343,10 @@ function createRouter(opts = {}) {
 
         return res.status(200).json({
             recognised,
+            listingPhoto,
             intent,
             candidates,
             matchFound: candidates.length > 0,
-            visionRemaining: visionGuard.remaining(caller.deviceId),
         });
     });
 
@@ -521,17 +454,17 @@ function createRouter(opts = {}) {
     });
 
     // ── (3) PERIODIC RESCAN / DEDUP ─────────────────────────────────────────────
-    // POST /rescan — cron-callable. The authenticated caller re-checks its OWN
+    // POST /rescan — cron-callable. The AUTHENTICATED caller re-checks its OWN
     // still-unmatched wishes (each wish: {itemId, sellerPublicCode, itemName?}) and
     // sends EXACTLY ONE invite per (caller-as-buyer, item, seller) triple ever.
     // Idempotent: re-running is a no-op because matchId (buyer,item,seller) is
     // already in the shared store.
     //
-    // Auth + impersonation guard: the invite is sent FROM the authenticated caller
-    // (the buyer / wish owner). A wish that names a different buyer is REJECTED —
-    // a rescan can NEVER invite on behalf of a code the caller doesn't control.
-    // (OPEN PRODUCT QUESTION: a central multi-buyer scheduler would need a
-    // privileged impersonation capability, which we deliberately do not grant here.)
+    // 官方不介入: this acts ONLY as the authenticated caller. There is NO central /
+    // privileged multi-buyer scheduler — each buyer's own Agent calls /rescan itself.
+    // The invite is sent FROM the authenticated caller (the buyer / wish owner). A
+    // wish that names a different buyer is REJECTED — a rescan can NEVER invite on
+    // behalf of a code the caller doesn't control.
     router.post('/rescan', async (req, res) => {
         const caller = await requireCaller(req.body);
         if (!caller.ok) return res.status(caller.status).json({ error: caller.reason });
@@ -616,24 +549,17 @@ function createRouter(opts = {}) {
         });
     });
 
-    // Expose the store + guard for the mount + tests.
+    // Expose the store for the mount + tests.
     router._store = store;
-    router._visionGuard = visionGuard;
     return router;
 }
 
 module.exports = {
     createRouter,
     // pure helpers
-    normalizeVisionResult,
-    buildIntentFromVision,
-    isAcceptableImage,
-    createVisionCostGuard,
+    normalizeRecognizedItem,
+    buildIntentFromRecognized,
     rescanMatchId,
     // constants
-    VISION_CALL_CAP_DEFAULT,
-    VISION_WINDOW_MS_DEFAULT,
-    MAX_IMAGE_BYTES,
-    ACCEPTED_MIME,
     MAX_TAGS,
 };

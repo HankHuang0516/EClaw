@@ -2782,59 +2782,28 @@ const wishlistMatchmakingRouter = wishlistMatchmaking.createRouter({
 app.use('/api/wishlist-matchmaking', wishlistMatchmakingRouter);
 
 // ============================================
-// WISHLIST MATCHMAKING P3 (photo recognition + seller-initiated + rescan/dedup)
+// WISHLIST MATCHMAKING P3 (caller-recognised photo + seller-initiated + rescan/dedup)
 // ============================================
-// card_496f752a622b722f82843d4e. Three new front doors that all feed into P2's
-// SAME governed handshake — P3 never forks P2 or bypasses its governance:
-//   1. /photo-search  : EClaw's OWN Claude vision extracts an item name/tags from
-//      an uploaded photo (billed on THIS device's ANTHROPIC budget, so it is never
-//      blocked by the counterparty's user-auth), feeds the intent into the P1
-//      bridge search. A per-window VISION COST CAP (D4b) bounds spend; over the cap
-//      → fail-closed, no vision call.
+// card_496f752a622b722f82843d4e ; reworked per card_e61aa62a (「官方不介入」 — the
+// platform stays out of the loop: it does NOT run compute for agents, does NOT act on
+// their behalf, does NOT subsidise; EClaw = MATCHING + standard STORAGE only). Three
+// front doors that all feed into P2's SAME governed handshake — P3 never forks P2 or
+// bypasses its governance:
+//   1. /photo-search  : the CALLER's OWN Agent already ran its OWN vision and submits
+//      the recognised item ({itemName, tags}). The PLATFORM RUNS NO VISION. P3
+//      sanitises the caller-supplied text and feeds it into the P1 bridge search.
+//      An optional listing photo is referenced by `fileId` in EClaw's STANDARD
+//      storage (/api/files → R2), resolved DEVICE-SCOPED (owner only).
 //   2. /seller-listing-scan : a seller reverse-searches buyer wishlists for a
 //      listing it already wrote via the authenticated write path, and invites each
 //      matched buyer via P2's fully-governed invite.
 //   3. /rescan : the caller re-checks its OWN unmatched wishes and sends EXACTLY
-//      ONE invite per (buyer,item,seller) via matchId dedup (shared P2 store).
+//      ONE invite per (buyer,item,seller) via matchId dedup (shared P2 store). NO
+//      central multi-buyer scheduler — acts only as the authenticated caller.
 // SECURITY: every invite binds `from` to the verified caller (no impersonation);
-// vision key is read server-side by NAME from the vault, never from the request,
-// never logged; upstream/verify failures fail closed.
+// NO vision provider key is ever read or logged for matchmaking (the dependency is
+// gone); a referenced fileId resolves ONLY as the owner device's file (no IDOR).
 const wishlistMatchmakingP3 = require('./wishlist-matchmaking-p3');
-const wishlistVision = require('./wishlist-vision');
-
-// Resolve EClaw's OWN vision provider key SERVER-SIDE. Prefer a vault key by NAME
-// (WISHLIST_VISION_API_KEY on the entity-2 commander device) so it can be rotated
-// without a redeploy; fall back to the process ANTHROPIC_API_KEY (EClaw's own key —
-// "自有、不重複計費"). The key is NEVER read from a request and NEVER logged.
-const WISHLIST_VISION_KEY_NAME = 'WISHLIST_VISION_API_KEY';
-async function getVisionApiKey() {
-    try {
-        const commanderDeviceId = process.env.ECLAW_COMMANDER_DEVICE_ID || null;
-        if (commanderDeviceId) {
-            const vaulted = await getDeviceVarForEmbedding(commanderDeviceId, WISHLIST_VISION_KEY_NAME);
-            if (vaulted) return vaulted;
-        }
-    } catch (_e) { /* fall through to process env */ }
-    return process.env.ANTHROPIC_API_KEY || null;
-}
-
-// Fetch an uploaded image's bytes SERVER-SIDE by fileId and return base64.
-//
-// The supported photo-input path in this release is caller-supplied base64
-// (`imageData`) — the agent already holds the bytes it uploaded. A server-side
-// fetch-by-fileId path (DB lookup of the r2_key + signed-URL GET, scoped to the
-// owning device) is a bounded follow-up; until it is wired we return null so a
-// fileId-only request fails closed with a clear `no image bytes` signal rather than
-// silently succeeding. This never fetches a caller-supplied URL (SSRF-safe by
-// construction — there is no URL taken from the request here).
-async function fetchImageBase64ByFileId(_fileId) {
-    return null;
-}
-
-// Thin adapter: recognise via the vision module using EClaw's own key.
-async function recognizeWishlistItemWithVision({ apiKey, base64, mimeType }) {
-    return wishlistVision.recognizeWishlistItemWithVision({ apiKey, base64, mimeType });
-}
 
 // Run a P2 governed invite IN-PROCESS through the already-mounted P2 router so P3
 // reuses ALL of P2's governance (opt-in / kill-switch / quota / reachability) with
@@ -2907,21 +2876,14 @@ app.use('/api/wishlist-matchmaking-p3', wishlistMatchmakingP3.createRouter({
         if (!resp.ok) throw new Error(`search upstream HTTP ${resp.status}`);
         return resp.json();
     },
-    // SERVER-SIDE photo recognition via EClaw's OWN Claude vision (anthropic-client).
-    // The provider key is read from process env / vault by NAME (getVisionApiKey);
-    // it is NEVER taken from the request, never returned, never logged. The uploaded
-    // image is fetched from R2 by fileId (server-side) or accepted as caller base64.
-    // Any failure throws → the P3 route fails closed (502/503).
-    recognizeItem: async ({ fileId, imageData, mimeType }) => {
-        const apiKey = await getVisionApiKey();
-        if (!apiKey) throw new Error('vision provider key unavailable');
-        let b64 = imageData;
-        if (!b64 && fileId) {
-            b64 = await fetchImageBase64ByFileId(fileId);
-        }
-        if (!b64) throw new Error('no image bytes');
-        return recognizeWishlistItemWithVision({ apiKey, base64: b64, mimeType });
-    },
+    // Resolve an OPTIONAL referenced listing photo in EClaw's STANDARD storage,
+    // SCOPED TO THE OWNER DEVICE. 官方不介入: there is NO server-side vision here —
+    // the caller's own Agent already recognised the item; this only VERIFIES the
+    // caller owns the referenced fileId (device_id match enforced in SQL, same scope
+    // as GET /api/files/:id) so a caller can never reference another device's file
+    // (no IDOR / cross-device read). Returns null for a file the device does not own.
+    resolveOwnedFile: async ({ fileId, deviceId }) =>
+        require('./files').getOwnedFileMeta({ fileId, deviceId }),
     // Reuse P2's ENTIRE governed invite path in-process. No re-implementation.
     // The invite is driven with the AUTHENTICATED CALLER as the P2 principal (its
     // own verified creds), inviting `toPublicCode`. NEVER another entity's secret.

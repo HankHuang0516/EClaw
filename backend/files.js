@@ -583,6 +583,30 @@ module.exports.uploadBufferToR2 = async function uploadBufferToR2({
 
 module.exports.sniffMimeFromExtension = sniffMimeFromExtension;
 
+// Resolve a file's metadata SCOPED TO THE OWNER DEVICE. Returns { fileId, filename,
+// size, mimeType, r2Key } for a file this device owns (and not yet expired), or null
+// otherwise. The device scope is enforced in SQL (`AND device_id = $2`) exactly like
+// the GET /:fileId route, so a caller can NEVER reference another device's file
+// (no IDOR / cross-device read). Used by the wishlist P3 photo path to verify a
+// referenced listing photo without ever fetching the bytes for server-side vision
+// (官方不介入 — the platform runs no vision; storage is device-scoped).
+module.exports.getOwnedFileMeta = async function getOwnedFileMeta({ fileId, deviceId } = {}) {
+    if (!fileId || !deviceId) return null;
+    const result = await pool.query(
+        'SELECT file_id, filename, size, mime_type, r2_key FROM r2_files WHERE file_id = $1 AND device_id = $2 AND expires_at > NOW()',
+        [fileId, deviceId]
+    );
+    if (!result.rows.length) return null;
+    const f = result.rows[0];
+    return {
+        fileId: f.file_id,
+        filename: f.filename,
+        size: f.size,
+        mimeType: f.mime_type,
+        r2Key: f.r2_key,
+    };
+};
+
 // Export cleanup function for daily cron
 module.exports.cleanupExpiredFiles = async function () {
     const expired = await pool.query(
