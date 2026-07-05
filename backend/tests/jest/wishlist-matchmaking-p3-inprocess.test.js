@@ -113,7 +113,7 @@ function build({ buyerOptIn = true } = {}) {
     p3app.use('/p3', p3.createRouter({
         authenticateCaller: auth(),
         searchItems: async () => ({ items: [{ id: 5, name: 'thing', publicCode: BUYER.publicCode }] }),
-        recognizeItem: async () => ({ itemName: 'thing', tags: [] }),
+        // No recognizeItem / vision injectable — 官方不介入, the platform runs no vision.
         governedInvite: async (a) => runP2InviteInProcess(a),
         matchStore: p2Router._store, // SHARED store (index.js shares wishlistMatchmakingRouter._store)
     }));
