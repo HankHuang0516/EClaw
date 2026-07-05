@@ -372,11 +372,36 @@ function createRouter(opts = {}) {
         now,
         quota,
         matchStore,
+        // (P4 GA hardening) OPTIONAL metrics sink. If injected it receives
+        // observability signals on the REAL control path: inc(name) on a sent /
+        // deduped / accepted / declined / contact-released invite, and
+        // recordBlock(reason) on every governance rejection. It is a pure
+        // side-observer — a throwing or absent metrics object never changes an
+        // outcome (calls are guarded + swallowed). Backwards-compatible: P0-P3
+        // tests that pass no `metrics` see identical behaviour.
+        metrics,
+        // (P4 GA hardening) OPTIONAL offline-fallback hook. Called ONLY on a
+        // TRANSIENT invite-delivery failure (sendB2bMessage threw AFTER every
+        // governance gate already passed — the target was momentarily
+        // undeliverable, NOT opted-out). It receives the fully-resolved,
+        // already-governed invite so the caller's own retry buffer can re-drive the
+        // SAME governed send later. It NEVER fires for a governance rejection (those
+        // returned earlier) and NEVER bypasses a gate. Returning truthy → the invite
+        // is reported as `queued`. Guarded: a throwing/absent hook falls back to the
+        // original 502 so behaviour without the hook is byte-identical.
+        onDeliveryFailure,
     } = opts;
 
     const router = express.Router();
     const logger = typeof log === 'function' ? log : () => {};
     const clock = typeof now === 'function' ? now : () => Date.now();
+    // Guarded metric helpers — never let observability change a control outcome.
+    const metricInc = (name) => {
+        try { if (metrics && typeof metrics.inc === 'function') metrics.inc(name); } catch (_e) { /* non-critical */ }
+    };
+    const metricBlock = (reason) => {
+        try { if (metrics && typeof metrics.recordBlock === 'function') metrics.recordBlock(reason); } catch (_e) { /* non-critical */ }
+    };
     const store = matchStore || createMatchStore();
     const quotaTracker = createQuotaTracker({
         max: quota && quota.max,
@@ -490,9 +515,11 @@ function createRouter(opts = {}) {
         // the buyer's owner opted in.
         const buyerPrefs = await prefsFor(caller.deviceId);
         if (isKillSwitchOn(buyerPrefs)) {
+            metricBlock('killswitch');
             return res.status(403).json({ error: 'matchmaking disabled by kill-switch', reason: 'killswitch' });
         }
         if (!isOptedIn(buyerPrefs)) {
+            metricBlock('opt_in_off');
             return res.status(403).json({ error: 'matchmaking not enabled for this owner', reason: 'opt_in_off' });
         }
 
@@ -508,9 +535,11 @@ function createRouter(opts = {}) {
         const sellerRoster = typeof getRosterEntry === 'function' ? getRosterEntry(sellerCode) : null;
         const sellerPrefs = await prefsFor(sellerResolved.deviceId);
         if (isKillSwitchOn(sellerPrefs)) {
+            metricBlock('target_killswitch');
             return res.status(403).json({ error: 'target has matchmaking disabled', reason: 'target_killswitch' });
         }
         if (!isReachableTarget({ rosterEntry: sellerRoster, prefs: sellerPrefs })) {
+            metricBlock('unreachable');
             return res.status(409).json({
                 error: 'seller has not opted into matchmaking',
                 reason: 'unreachable',
@@ -522,11 +551,13 @@ function createRouter(opts = {}) {
         // (c) Idempotency: a replayed invite for the same match does NOT re-send.
         const existing = store.get(matchId);
         if (existing && existing.inviteSent) {
+            metricInc('invites_deduped');
             return res.status(200).json({ matchId, deduped: true, status: existing.status || 'invited' });
         }
 
         // (d) Quota — separate counter from CROSS_SPEAK_MAX_MESSAGES.
         if (!quotaTracker.consume(caller.deviceId, caller.entityId)) {
+            metricBlock('quota');
             return res.status(429).json({ error: 'matchmaking invite quota exceeded', reason: 'quota' });
         }
 
@@ -551,6 +582,41 @@ function createRouter(opts = {}) {
             });
         } catch (err) {
             logger('warn', 'wishlist-matchmaking', `invite send failed: ${err.message}`);
+            // (P4) Offline / non-EClaw fallback: a TRANSIENT delivery failure (all
+            // governance already passed) is enqueued for a bounded retry instead of
+            // being silently dropped — closing the C0b gap. The quota was already
+            // consumed, so we record the match as pending-retry to keep dedup honest.
+            let queued = false;
+            if (typeof onDeliveryFailure === 'function') {
+                try {
+                    queued = !!(await onDeliveryFailure({
+                        matchId,
+                        callerCreds: { deviceId: caller.deviceId, entityId: caller.entityId },
+                        buyerPublicCode: caller.publicCode,
+                        sellerPublicCode: sellerCode,
+                        toPublicCode: sellerCode,
+                        itemId,
+                        itemName: req.body.itemName,
+                        note: req.body.note,
+                        error: err.message,
+                    }));
+                } catch (_e) { queued = false; }
+            }
+            if (queued) {
+                store.upsert(matchId, {
+                    matchId,
+                    buyerPublicCode: caller.publicCode,
+                    buyerDeviceId: caller.deviceId,
+                    buyerEntityId: caller.entityId,
+                    sellerPublicCode: sellerCode,
+                    sellerDeviceId: sellerResolved.deviceId,
+                    sellerEntityId: sellerResolved.entityId,
+                    itemId: itemId == null ? null : itemId,
+                    inviteSent: false,
+                    status: 'queued_offline',
+                });
+                return res.status(202).json({ matchId, status: 'queued_offline', queued: true });
+            }
             return res.status(502).json({ error: 'invite delivery failed' });
         }
 
@@ -566,6 +632,7 @@ function createRouter(opts = {}) {
             inviteSent: true,
             status: 'invited',
         });
+        metricInc('invites_sent');
         logger('info', 'wishlist-matchmaking', `invite sent match=${matchId} ${caller.publicCode}->${sellerCode}`);
         return res.status(200).json({ matchId, status: 'invited', deduped: false });
     }
@@ -613,6 +680,7 @@ function createRouter(opts = {}) {
             return res.status(502).json({ error: 'accept delivery failed' });
         }
         store.upsert(matchId, { accepted: true, status: 'accepted' });
+        metricInc('accepts');
         return res.status(200).json({ matchId, status: 'accepted', deduped: false });
     });
 
@@ -647,6 +715,7 @@ function createRouter(opts = {}) {
             return res.status(502).json({ error: 'decline delivery failed' });
         }
         store.upsert(matchId, { status: 'declined' });
+        metricInc('declines');
         return res.status(200).json({ matchId, status: 'declined' });
     });
 
@@ -832,6 +901,7 @@ function createRouter(opts = {}) {
         }
 
         store.upsert(matchId, { status: 'contact_released', contactReleased: true });
+        metricInc('contacts_released');
         return res.status(200).json({ matchId, status: 'contact_released' });
     });
 
