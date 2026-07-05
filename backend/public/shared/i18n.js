@@ -300340,7 +300340,7 @@ const TRANSLATIONS = {
         "rm_wl_p2_t4": "Opt-in OFF by default + quota + kill-switch",
         "rm_wl_p3_name": "Photo recognition + seller-initiated matchmaking",
         "rm_wl_p3_desc": "Expand matchmaking: photo path (send photo → item recognition → match), seller-initiated matchmaking (list → reverse-search wishlist wants → invite buyer), plus periodic re-scan/dedup.",
-        "rm_wl_p3_t1": "Photo path: the CALLER's own agent runs its OWN vision and submits the recognised item name/tags → feed into P1 search (platform runs NO vision — 官方不介入); a listing photo is a device-scoped fileId in EClaw standard storage (/api/files → R2)",
+        "rm_wl_p3_t1": "Photo path: the CALLER's own agent runs its OWN vision and submits the recognised item name/tags → feed into P1 search (platform runs NO vision — it stays out of the loop); a listing photo is a device-scoped fileId in EClaw standard storage (/api/files → R2)",
         "rm_wl_p3_t2": "Seller-initiated: merchant listing → reverse-search wishlist wants → send invite to buyer (still via P0 protocol)",
         "rm_wl_p3_t3": "Periodic re-scan loop: invite new sellers exactly once, dedup via matchId=hash(...), idempotent re-query (no central scheduler — each agent self-calls with its own identity)",
         "rm_wl_p4_name": "GA hardening + dark-launch → default-on",
