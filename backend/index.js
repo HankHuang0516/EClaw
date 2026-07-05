@@ -2597,6 +2597,147 @@ app.use('/api/wishlist-bridge', wishlistRoute.createRouter({
     },
 }));
 
+// ============================================
+// WISHLIST MATCHMAKING (P2 — pure-EClaw public-code b2b handshake)
+// ============================================
+// card_e44c2ea87013225b94769ae5. A buyer entity's free-text intent → search (P1
+// bridge) → rerank → invite/accept/decline/contact handshake, ALL keyed by public
+// code and delivered ONLY through the existing cross-speak deliver path (no side
+// channels). Governance: owner opt-in (wishlist_matchmaking_enabled, default OFF)
+// + a global kill-switch + a SEPARATE invite quota + reachability (online AND
+// opted-in). Contact PII is released only after BOTH owners approve in 需要你.
+const wishlistMatchmaking = require('./wishlist-matchmaking');
+app.use('/api/wishlist-matchmaking', wishlistMatchmaking.createRouter({
+    log: serverLog,
+    // Same caller-auth as the wishlist-bridge write path: prove a real bound
+    // entity via {deviceId,entityId,botSecret} → resolve to its OWN publicCode.
+    authenticateCaller: async ({ deviceId, entityId, botSecret }) => {
+        const device = devices[deviceId];
+        if (!device) return { ok: false, reason: 'device_not_found' };
+        const auth = authEntityAccess(device, null, botSecret, entityId);
+        if (auth.error) return { ok: false, reason: auth.error };
+        const entity = auth.entity;
+        if (!entity || !entity.isBound || !entity.publicCode) {
+            return { ok: false, reason: 'entity_not_bound' };
+        }
+        return { ok: true, publicCode: entity.publicCode };
+    },
+    // Search via the P1 SSRF-safe bridge upstream (in-process; no HTTP hop).
+    searchItems: async (query) => {
+        const resp = await globalThis.fetch(
+            `https://${wishlistRoute.WISHLIST_HOST}/api/items/search?q=${encodeURIComponent(query)}`,
+            { method: 'GET', headers: { 'User-Agent': 'curl/8.4.0', 'Accept': 'application/json' }, redirect: 'manual' }
+        );
+        if (!resp.ok) throw new Error(`search upstream HTTP ${resp.status}`);
+        return resp.json();
+    },
+    // publicCode → { deviceId, entityId, entity } (in-memory index).
+    resolvePublicCode: (code) => {
+        const target = publicCodeIndex[code];
+        if (!target) return null;
+        const device = devices[target.deviceId];
+        const entity = device && device.entities[target.entityId];
+        return { deviceId: target.deviceId, entityId: target.entityId, entity: entity || null };
+    },
+    // Roster entry for the reachability filter (state/lastUpdated/isBound/publicCode).
+    getRosterEntry: (code) => {
+        const target = publicCodeIndex[code];
+        if (!target) return null;
+        const device = devices[target.deviceId];
+        const entity = device && device.entities[target.entityId];
+        if (!entity) return null;
+        return {
+            publicCode: entity.publicCode || null,
+            entityId: entity.entityId,
+            state: entity.state,
+            lastUpdated: entity.lastUpdated,
+            isBound: !!entity.isBound,
+        };
+    },
+    getDevicePrefs: (deviceId) => devicePrefs.getPrefs(deviceId),
+    // The ONLY egress: deliver the b2b envelope through the existing cross-speak
+    // deliver point, keyed by public code. Applies the target's friends_only rule
+    // UNLESS bypassFriendsOnly (matchmaking /connect for an opted-in target).
+    sendB2bMessage: async ({ fromDeviceId, fromEntityId, fromPublicCode, toPublicCode, envelope, bypassFriendsOnly }) => {
+        const target = resolveSpeakToTarget(toPublicCode, fromDeviceId);
+        if (!target) throw new Error('target public code not found');
+        const senderDevice = devices[fromDeviceId];
+        const fromEntity = senderDevice && senderDevice.entities[fromEntityId];
+        const targetDevice = devices[target.deviceId];
+        const toEntity = targetDevice && targetDevice.entities[target.entityId];
+        if (!fromEntity || !toEntity) throw new Error('sender or target entity missing');
+        // friends_only (owner rule) — respected for a normal invite, skipped for a
+        // governed /connect to an opted-in target.
+        if (!bypassFriendsOnly) {
+            const xd = await crossDeviceSettings.getSettings(target.deviceId, target.entityId);
+            if (xd.friends_only && !(await db.isFriend(target.deviceId, fromPublicCode))) {
+                throw new Error('friends_only');
+            }
+        }
+        // Envelope travels as a structured b2b message (JSON text). It is NOT a
+        // heartbeat/ack, so the deliver-time low-signal filter passes it through.
+        const text = JSON.stringify(envelope);
+        return deliverToEntity({
+            senderDeviceId: fromDeviceId,
+            fromId: fromEntityId,
+            fromEntity,
+            targetDeviceId: target.deviceId,
+            toId: target.entityId,
+            toEntity,
+            text,
+            mediaType: null,
+            mediaUrl: null,
+            expectsReply: envelope && envelope.type === 'wishlist_trade_invite',
+            isBroadcast: false,
+            isCrossDevice: fromDeviceId !== target.deviceId,
+        });
+    },
+    // Per-owner 需要你 for the dual-consent gate. type 'approval'; decision_context
+    // pins it as an owner-only decision so the inbox surfaces it.
+    createOwnerActionRequest: async ({ deviceId, fromEntityId, prompt, options, decisionContext }) => {
+        if (!agentActionRequestsModule || typeof agentActionRequestsModule.createActionRequest !== 'function') {
+            throw new Error('action-requests module unavailable');
+        }
+        return agentActionRequestsModule.createActionRequest({
+            deviceId,
+            fromEntityId,
+            type: 'approval',
+            prompt,
+            options,
+            decisionContext,
+        });
+    },
+    // Read a consent request's approval. approved = resolved AND the owner chose
+    // the approve option (index 0) or an answer text that reads as approval.
+    getActionRequestStatus: async (requestId, deviceId) => {
+        if (!agentActionRequestsModule || typeof agentActionRequestsModule.getRequestStatus !== 'function') {
+            throw new Error('action-requests module unavailable');
+        }
+        const r = await agentActionRequestsModule.getRequestStatus(requestId, deviceId);
+        if (!r || !r.found) return { status: 'unknown', approved: false };
+        const approved = r.status === 'resolved' && answerIsApproval(r.answer);
+        return { status: r.status, approved };
+    },
+}));
+
+// Interpret a 需要你 answer as approval for the dual-consent gate. Approve =
+// option index 0 (our options are ['同意釋出 / Approve', '拒絕 / Decline']) OR an
+// answer text that clearly reads as approve. Anything else (incl. decline) → false.
+function answerIsApproval(answer) {
+    if (answer == null) return false;
+    let a = answer;
+    if (typeof a === 'string') {
+        try { a = JSON.parse(a); } catch (_) { a = { text: answer }; }
+    }
+    if (a && typeof a === 'object') {
+        if (Number(a.optionIndex) === 0 || Number(a.selectedOptionIndex) === 0) return true;
+        const t = String(a.text || a.answer || a.value || '').toLowerCase();
+        if (/\bapprove\b|同意|approved|approve release|release/.test(t) && !/decline|拒絕|deny/.test(t)) return true;
+        return false;
+    }
+    return false;
+}
+
 // Daily cleanup of expired files (runs at 03:17 server time)
 const nodeCron = require('node-cron');
 nodeCron.schedule('17 3 * * *', () => {

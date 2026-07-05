@@ -157,6 +157,17 @@ const DEFAULTS = {
     // value is EXACTLY 'hard' (see coerceValue) so a junk/serialized value fails
     // SAFE toward the zero-false-block default Hank chose.
     done_gate_mode: 'soft',
+    // Wishlist × EClaw 代理撮合 (card_e44c2ea87013225b94769ae5, P2). Owner OPT-IN for
+    // the bot-to-bot wishlist matchmaking handshake. ⚠️ DEFAULT FALSE — matchmaking
+    // must NOT fire (no invite sent, and this device is not a reachable target) unless
+    // the owner explicitly opts in. Same string-safe boolean coercion as the other
+    // routing/auto-merge gates: a bare `!!raw` would turn the string 'false' true →
+    // fail-OPEN, wrong for a gate governing unsolicited cross-owner introductions.
+    wishlist_matchmaking_enabled: false,
+    // Global kill-switch for ALL wishlist-matchmaking sends on this device. When true,
+    // every matchmaking send (invite/accept/decline/contact) is refused regardless of
+    // the opt-in flag. DEFAULT FALSE (not killed). Same string-safe coercion.
+    wishlist_matchmaking_killswitch: false,
 };
 
 const ENTITY_IDLE_AFTER_SECONDS_MIN = 15;
@@ -208,6 +219,8 @@ function coerceValue(key, raw) {
         || key === 'action_request_ratify_enabled'
         || key === 'commander_forward_fallback_enabled'
         || key === 'waiting_state_surfacer_enabled'
+        || key === 'wishlist_matchmaking_enabled'
+        || key === 'wishlist_matchmaking_killswitch'
         || key === 'action_request_reply_resize_enabled') {
         // 計畫E: ratify master switch — same string-safe boolean coercion (a bare
         // `!!raw` would turn the string 'false' true, fail-OPEN for an auto-merge gate).

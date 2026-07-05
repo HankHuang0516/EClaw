@@ -905,6 +905,21 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         return rowToApi(row);
     }
 
+    // Read a single request's status + answer (device-scoped). Exposed so an
+    // external gate (e.g. wishlist matchmaking's dual-consent release) can ask
+    // "has THIS owner approved?" without re-implementing the row read. Returns
+    // { found, status, answer } or { found:false } when the id/device don't match.
+    async function getRequestStatus(requestId, deviceId) {
+        if (!requestId || !deviceId) return { found: false };
+        const r = await pool.query(
+            'SELECT id, status, answer FROM agent_action_requests WHERE id = $1 AND device_id = $2',
+            [requestId, deviceId]
+        );
+        const row = r.rows && r.rows[0];
+        if (!row) return { found: false };
+        return { found: true, status: row.status, answer: row.answer };
+    }
+
     // Owner-decision lifecycle (子6a): when a kanban card leaves review/blocked,
     // dismiss any still-pending OWNER-DECISION request(s) for it. We only touch
     // rows the move-hook created — decision_context IS NOT NULL — so an agent's
@@ -1886,6 +1901,8 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         // owner-only review/blocked card into this inbox via the SAME INSERT +
         // 'emitted' socket emit the HTTP route uses. Caller validates inputs.
         createActionRequest,
+        // Single-row status reader (wishlist matchmaking dual-consent release gate).
+        getRequestStatus,
         // Owner-decision lifecycle (子6a): kanban calls this when a card leaves
         // review/blocked to auto-dismiss its pending owner-decision request(s) +
         // emit the 'dismissed' socket event.
