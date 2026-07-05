@@ -168,6 +168,19 @@ const DEFAULTS = {
     // every matchmaking send (invite/accept/decline/contact) is refused regardless of
     // the opt-in flag. DEFAULT FALSE (not killed). Same string-safe coercion.
     wishlist_matchmaking_killswitch: false,
+    // 需要你 owner-decision inbox MOBILE PUSH (card_c7baa7ae). When ON, creating an
+    // OWNER-FACING decision inbox item (decision_context.ownerOnly === true) ALSO
+    // fires a mobile push to THIS owner's device tokens (reusing notifyDevice →
+    // sendWebPush/sendFcm fan-out over device_fcm_tokens). The portal socket +
+    // inbox row are created regardless; the push is purely ADDITIVE. Bot-to-bot
+    // negotiation / non-owner action-requests NEVER push (the gate is ownerOnly,
+    // not merely "has options"). ⚠️ DEFAULT-ON (Hank asked opt-in default-enable so
+    // owner decisions reach the phone out of the box): an UNSET pref ENABLES the
+    // push; only an explicit `false` / string 'false' disables it (then the inbox
+    // item + socket still fire, just no phone buzz). Same string-safe boolean
+    // coercion as action_request_reply_resize_enabled (a bare `!!raw` would turn the
+    // string 'false' true). Consumed by createActionRequest in agent-action-requests.js.
+    needyou_push_enabled: true,
 };
 
 const ENTITY_IDLE_AFTER_SECONDS_MIN = 15;
@@ -221,6 +234,7 @@ function coerceValue(key, raw) {
         || key === 'waiting_state_surfacer_enabled'
         || key === 'wishlist_matchmaking_enabled'
         || key === 'wishlist_matchmaking_killswitch'
+        || key === 'needyou_push_enabled'
         || key === 'action_request_reply_resize_enabled') {
         // 計畫E: ratify master switch — same string-safe boolean coercion (a bare
         // `!!raw` would turn the string 'false' true, fail-OPEN for an auto-merge gate).
