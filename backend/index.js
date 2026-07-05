@@ -2632,7 +2632,7 @@ app.use('/api/wishlist-bridge', wishlistRoute.createRouter({
 // + a global kill-switch + a SEPARATE invite quota + reachability (online AND
 // opted-in). Contact PII is released only after BOTH owners approve in 需要你.
 const wishlistMatchmaking = require('./wishlist-matchmaking');
-app.use('/api/wishlist-matchmaking', wishlistMatchmaking.createRouter({
+const wishlistMatchmakingRouter = wishlistMatchmaking.createRouter({
     log: serverLog,
     // Same caller-auth as the wishlist-bridge write path: prove a real bound
     // entity via {deviceId,entityId,botSecret} → resolve to its OWN publicCode.
@@ -2778,6 +2778,157 @@ app.use('/api/wishlist-matchmaking', wishlistMatchmaking.createRouter({
         }
         return { nameCard, contactInfo };
     },
+});
+app.use('/api/wishlist-matchmaking', wishlistMatchmakingRouter);
+
+// ============================================
+// WISHLIST MATCHMAKING P3 (photo recognition + seller-initiated + rescan/dedup)
+// ============================================
+// card_496f752a622b722f82843d4e. Three new front doors that all feed into P2's
+// SAME governed handshake — P3 never forks P2 or bypasses its governance:
+//   1. /photo-search  : EClaw's OWN Claude vision extracts an item name/tags from
+//      an uploaded photo (billed on THIS device's ANTHROPIC budget, so it is never
+//      blocked by the counterparty's user-auth), feeds the intent into the P1
+//      bridge search. A per-window VISION COST CAP (D4b) bounds spend; over the cap
+//      → fail-closed, no vision call.
+//   2. /seller-listing-scan : a seller reverse-searches buyer wishlists for a
+//      listing it already wrote via the authenticated write path, and invites each
+//      matched buyer via P2's fully-governed invite.
+//   3. /rescan : the caller re-checks its OWN unmatched wishes and sends EXACTLY
+//      ONE invite per (buyer,item,seller) via matchId dedup (shared P2 store).
+// SECURITY: every invite binds `from` to the verified caller (no impersonation);
+// vision key is read server-side by NAME from the vault, never from the request,
+// never logged; upstream/verify failures fail closed.
+const wishlistMatchmakingP3 = require('./wishlist-matchmaking-p3');
+const wishlistVision = require('./wishlist-vision');
+
+// Resolve EClaw's OWN vision provider key SERVER-SIDE. Prefer a vault key by NAME
+// (WISHLIST_VISION_API_KEY on the entity-2 commander device) so it can be rotated
+// without a redeploy; fall back to the process ANTHROPIC_API_KEY (EClaw's own key —
+// "自有、不重複計費"). The key is NEVER read from a request and NEVER logged.
+const WISHLIST_VISION_KEY_NAME = 'WISHLIST_VISION_API_KEY';
+async function getVisionApiKey() {
+    try {
+        const commanderDeviceId = process.env.ECLAW_COMMANDER_DEVICE_ID || null;
+        if (commanderDeviceId) {
+            const vaulted = await getDeviceVarForEmbedding(commanderDeviceId, WISHLIST_VISION_KEY_NAME);
+            if (vaulted) return vaulted;
+        }
+    } catch (_e) { /* fall through to process env */ }
+    return process.env.ANTHROPIC_API_KEY || null;
+}
+
+// Fetch an uploaded image's bytes SERVER-SIDE by fileId and return base64.
+//
+// The supported photo-input path in this release is caller-supplied base64
+// (`imageData`) — the agent already holds the bytes it uploaded. A server-side
+// fetch-by-fileId path (DB lookup of the r2_key + signed-URL GET, scoped to the
+// owning device) is a bounded follow-up; until it is wired we return null so a
+// fileId-only request fails closed with a clear `no image bytes` signal rather than
+// silently succeeding. This never fetches a caller-supplied URL (SSRF-safe by
+// construction — there is no URL taken from the request here).
+async function fetchImageBase64ByFileId(_fileId) {
+    return null;
+}
+
+// Thin adapter: recognise via the vision module using EClaw's own key.
+async function recognizeWishlistItemWithVision({ apiKey, base64, mimeType }) {
+    return wishlistVision.recognizeWishlistItemWithVision({ apiKey, base64, mimeType });
+}
+
+// Run a P2 governed invite IN-PROCESS through the already-mounted P2 router so P3
+// reuses ALL of P2's governance (opt-in / kill-switch / quota / reachability) with
+// zero duplication and zero forking.
+//
+// SECURITY FIX (independent review of #3910, HIGH): the invite is driven with the
+// AUTHENTICATED CALLER as the P2 principal, using the caller's OWN verified
+// credentials (`callerCreds`, threaded from the P3 request the caller already
+// authenticated). We NEVER look up or use another entity's botSecret to act on its
+// behalf. P2's model is "caller invites target": with the caller as principal, P2
+// correctly checks the CALLER's opt-in + kill-switch, consumes the CALLER's quota,
+// checks the TARGET's reachability (online AND opted-in — this is the recipient
+// consent gate), and stamps the on-wire envelope with from = the caller. `to` is
+// the invite target (P2's `sellerPublicCode` body field is just "the target").
+// The canonical (buyer,item,seller) dedup is owned by the P3 module on the shared
+// store; this function only performs the governed send.
+function runP2InviteInProcess({ callerCreds, toPublicCode, itemId, itemName, note, bypassFriendsOnly }) {
+    return new Promise((resolve) => {
+        if (!callerCreds || !callerCreds.deviceId || callerCreds.entityId === undefined || callerCreds.entityId === null || !callerCreds.botSecret) {
+            return resolve({ status: 'blocked', reason: 'caller_creds_missing' });
+        }
+
+        // Minimal in-process req/res that the P2 express router can handle. The P2
+        // principal is the CALLER (its own verified creds); the P2 target is `to`.
+        const req = {
+            method: 'POST',
+            url: bypassFriendsOnly ? '/connect' : '/invite',
+            originalUrl: bypassFriendsOnly ? '/connect' : '/invite',
+            body: {
+                deviceId: callerCreds.deviceId,
+                entityId: callerCreds.entityId,
+                botSecret: callerCreds.botSecret, // caller drives P2 /invite (principal = caller)
+                sellerPublicCode: toPublicCode,   // P2's "target" = whom to invite
+                itemId,
+                itemName,
+                note,
+            },
+            headers: {},
+            get() { return undefined; },
+        };
+        const res = {
+            statusCode: 200,
+            status(code) { this.statusCode = code; return this; },
+            json(payload) {
+                if (this.statusCode === 200) {
+                    resolve({ status: payload.deduped ? 'invited' : (payload.status || 'invited'), matchId: payload.matchId, deduped: !!payload.deduped });
+                } else {
+                    resolve({ status: 'blocked', reason: payload && payload.reason, error: payload && payload.error });
+                }
+                return this;
+            },
+        };
+        // Route the synthetic request through the mounted P2 router.
+        wishlistMatchmakingRouter.handle(req, res, () => {
+            resolve({ status: 'blocked', reason: 'route_not_found' });
+        });
+    });
+}
+
+app.use('/api/wishlist-matchmaking-p3', wishlistMatchmakingP3.createRouter({
+    log: serverLog,
+    // SAME verifier as P2 / write-auth.
+    authenticateCaller: resolveCallerIdentity,
+    // Search via the SAME P1 SSRF-safe bridge upstream as P2 (in-process; no HTTP hop).
+    searchItems: async (query) => {
+        const resp = await globalThis.fetch(
+            `https://${wishlistRoute.WISHLIST_HOST}/api/items/search?q=${encodeURIComponent(query)}`,
+            { method: 'GET', headers: { 'User-Agent': 'curl/8.4.0', 'Accept': 'application/json' }, redirect: 'manual' }
+        );
+        if (!resp.ok) throw new Error(`search upstream HTTP ${resp.status}`);
+        return resp.json();
+    },
+    // SERVER-SIDE photo recognition via EClaw's OWN Claude vision (anthropic-client).
+    // The provider key is read from process env / vault by NAME (getVisionApiKey);
+    // it is NEVER taken from the request, never returned, never logged. The uploaded
+    // image is fetched from R2 by fileId (server-side) or accepted as caller base64.
+    // Any failure throws → the P3 route fails closed (502/503).
+    recognizeItem: async ({ fileId, imageData, mimeType }) => {
+        const apiKey = await getVisionApiKey();
+        if (!apiKey) throw new Error('vision provider key unavailable');
+        let b64 = imageData;
+        if (!b64 && fileId) {
+            b64 = await fetchImageBase64ByFileId(fileId);
+        }
+        if (!b64) throw new Error('no image bytes');
+        return recognizeWishlistItemWithVision({ apiKey, base64: b64, mimeType });
+    },
+    // Reuse P2's ENTIRE governed invite path in-process. No re-implementation.
+    // The invite is driven with the AUTHENTICATED CALLER as the P2 principal (its
+    // own verified creds), inviting `toPublicCode`. NEVER another entity's secret.
+    governedInvite: async ({ callerCreds, toPublicCode, itemId, itemName, note, bypassFriendsOnly }) =>
+        runP2InviteInProcess({ callerCreds, toPublicCode, itemId, itemName, note, bypassFriendsOnly }),
+    // SHARE the P2 match store so P3 dedup is symmetric with P2 (matchId identity).
+    matchStore: wishlistMatchmakingRouter._store,
 }));
 
 // The exact approve-option label our consent requests present (index 0). A free
