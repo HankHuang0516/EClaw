@@ -160,6 +160,66 @@
         .usage-badge.unlimited { color: var(--success); }
 
         /* ── Filter Chips ── */
+        /* Fuzzy history-message search box (card_bdc741f6) — lives at the top of
+           the 篩選條件 filter panel; styled to match the chip UI. */
+        .chat-search-box {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 10px;
+            margin-bottom: 8px;
+            height: 34px;
+            border-radius: 18px;
+            background: var(--card, #fff);
+            border: 1px solid var(--card-border, #d0d4dc);
+            transition: border-color 0.2s;
+        }
+        .chat-search-box:focus-within {
+            border-color: var(--primary, #4a7dff);
+        }
+        .chat-search-icon {
+            font-size: 13px;
+            flex: none;
+            opacity: 0.7;
+        }
+        .chat-search-input {
+            flex: 1;
+            min-width: 0;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: var(--text, #222);
+            font-size: 13px;
+            line-height: 1;
+            padding: 0;
+        }
+        .chat-search-input::placeholder {
+            color: var(--text-muted, #8a8f98);
+        }
+        .chat-search-clear {
+            flex: none;
+            border: none;
+            background: transparent;
+            color: var(--text-muted, #8a8f98);
+            cursor: pointer;
+            font-size: 12px;
+            line-height: 1;
+            padding: 4px 6px;
+            border-radius: 50%;
+        }
+        .chat-search-clear:hover {
+            color: var(--text, #222);
+            background: var(--card-border, #e5e7eb);
+        }
+        .chat-search-clear[hidden] { display: none; }
+        /* Highlighted match inside a rendered message bubble. */
+        mark.chat-search-hl {
+            background: #ffe066;
+            color: inherit;
+            border-radius: 2px;
+            padding: 0 1px;
+        }
+
         .chip-group-wrapper {
             display: flex;
             gap: 6px;
@@ -3871,6 +3931,20 @@
                 </div>
                 <div class="filter-summary-anchor" id="filterSummaryAnchor" style="position:relative;"></div>
                 <div class="filter-bar-legacy" id="filterBarLegacy">
+                <!-- Fuzzy history-message search (card_bdc741f6). Filters the in-memory
+                     allMessages window (already client-loaded, ≤500) and highlights the
+                     matched substring in results. Composes with the chip filters below. -->
+                <div class="chat-search-box" role="search">
+                    <span class="chat-search-icon" aria-hidden="true">🔍</span>
+                    <input type="text" id="messageSearchInput" class="chat-search-input"
+                        autocomplete="off" spellcheck="false"
+                        placeholder="搜尋歷史訊息…" data-i18n-placeholder="chat_search_placeholder"
+                        aria-label="搜尋訊息" data-i18n-aria-label="chat_search_label"
+                        oninput="onMessageSearchInput(this.value)">
+                    <button type="button" id="messageSearchClear" class="chat-search-clear" hidden
+                        aria-label="清除搜尋" data-i18n-aria-label="chat_search_clear"
+                        onclick="clearMessageSearch()">✕</button>
+                </div>
                 <div class="chip-group-wrapper">
                     <div class="chip-group" id="filterChips">
                         <button class="filter-chip active" data-filter="all" onclick="setFilter('all')" data-i18n="chat_filter_all">All</button>
@@ -4280,6 +4354,12 @@
         let boundEntities = [];
         let boundEntityIds = new Set();
         let currentFilter = 'all';
+        // Fuzzy history-message search (card_bdc741f6). Case-insensitive, tokenized
+        // substring match over message text, applied on top of the chip filters.
+        // Composes with `currentFilter` inside getFilteredMessages().
+        let messageSearchQuery = '';        // raw text currently in the search box
+        let messageSearchTokens = [];       // lowercased, whitespace-split tokens
+        let _messageSearchDebounce = null;  // debounce timer handle (~250ms)
         let refreshInterval = null;
         let isFirstLoad = true;
         let contacts = [];           // from /api/contacts
@@ -4939,6 +5019,8 @@
                                 const isActive = c.classList.contains('active');
                                 if (cat in sysCatDefault && sysCatDefault[cat] !== isActive) n++;
                             });
+                            // An active history search counts as one filter (card_bdc741f6).
+                            if (typeof messageSearchTokens !== 'undefined' && messageSearchTokens.length > 0) n++;
                             return n;
                         },
                         i18nKey: 'chat_filter',
@@ -6178,31 +6260,149 @@
             });
         }
 
+        // ── History-message fuzzy search (card_bdc741f6) ──
+        // Debounced input handler. Keeps the raw query + a tokenized lowercased
+        // form, toggles the clear button, refreshes the summary count, and
+        // re-renders the (chip + search)-filtered list.
+        function onMessageSearchInput(value) {
+            const raw = value == null ? '' : String(value);
+            clearTimeout(_messageSearchDebounce);
+            _messageSearchDebounce = setTimeout(() => {
+                applyMessageSearch(raw);
+            }, 250);
+        }
+
+        function applyMessageSearch(raw) {
+            messageSearchQuery = (raw || '').trim();
+            messageSearchTokens = messageSearchQuery
+                ? messageSearchQuery.toLowerCase().split(/\s+/).filter(Boolean)
+                : [];
+            const clearBtn = document.getElementById('messageSearchClear');
+            if (clearBtn) clearBtn.hidden = messageSearchQuery.length === 0;
+            try { if (window.__filterSummary) window.__filterSummary.refresh(); } catch (e) {}
+            if (typeof renderMessages === 'function') renderMessages(false);
+        }
+
+        function clearMessageSearch() {
+            const input = document.getElementById('messageSearchInput');
+            if (input) input.value = '';
+            clearTimeout(_messageSearchDebounce);
+            applyMessageSearch('');
+            if (input) { try { input.focus(); } catch (e) {} }
+        }
+
+        // Returns true when the message text matches the active search query.
+        // No active query → always true (search is a no-op, chips fully govern).
+        // Fuzzy = case-insensitive substring; multi-token = ALL tokens must
+        // appear somewhere in the text (AND, order-independent).
+        function messageMatchesSearch(msg) {
+            if (messageSearchTokens.length === 0) return true;
+            const hay = String((msg && msg.text) || '').toLowerCase();
+            if (!hay) return false;
+            return messageSearchTokens.every(tok => hay.includes(tok));
+        }
+
+        // Wrap each occurrence of any search token (case-insensitive) inside the
+        // TEXT NODES of every .chat-bubble in `root` with <mark class="chat-search-hl">.
+        // XSS-safe by construction: we only ever read Node.nodeValue (plain text)
+        // and build the <mark> via document.createElement + textContent — no HTML
+        // is ever parsed from message content or the query, so a message
+        // containing "<script>" is highlighted as literal text, never executed.
+        function highlightSearchMatches(root, tokens) {
+            if (!root || !Array.isArray(tokens) || tokens.length === 0) return;
+            // Build one case-insensitive regex that matches any token. Escape
+            // regex metacharacters so a query like "a.b" or "$5" is literal.
+            const escapeRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const pattern = tokens
+                .filter(Boolean)
+                .sort((a, b) => b.length - a.length) // longer tokens first → greedier match
+                .map(escapeRe)
+                .join('|');
+            if (!pattern) return;
+            let re;
+            try { re = new RegExp('(' + pattern + ')', 'gi'); } catch (e) { return; }
+
+            const bubbles = root.querySelectorAll('.chat-bubble');
+            bubbles.forEach(bubble => {
+                // Collect candidate text nodes first (mutating during walk is unsafe).
+                const walker = document.createTreeWalker(bubble, NodeFilter.SHOW_TEXT, {
+                    acceptNode(node) {
+                        if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+                        const p = node.parentNode;
+                        if (!p) return NodeFilter.FILTER_REJECT;
+                        const tag = p.nodeName;
+                        // Never touch already-highlighted marks or code/script/style.
+                        if (tag === 'MARK' || tag === 'SCRIPT' || tag === 'STYLE') return NodeFilter.FILTER_REJECT;
+                        if (p.classList && p.classList.contains('chat-search-hl')) return NodeFilter.FILTER_REJECT;
+                        return re.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    }
+                });
+                const targets = [];
+                let n;
+                while ((n = walker.nextNode())) targets.push(n);
+
+                targets.forEach(textNode => {
+                    const text = textNode.nodeValue;
+                    re.lastIndex = 0;
+                    let match;
+                    let lastIndex = 0;
+                    const frag = document.createDocumentFragment();
+                    let matched = false;
+                    while ((match = re.exec(text)) !== null) {
+                        matched = true;
+                        const start = match.index;
+                        const end = start + match[0].length;
+                        if (start > lastIndex) {
+                            frag.appendChild(document.createTextNode(text.slice(lastIndex, start)));
+                        }
+                        const mark = document.createElement('mark');
+                        mark.className = 'chat-search-hl';
+                        mark.textContent = match[0]; // literal matched text — no HTML parse
+                        frag.appendChild(mark);
+                        lastIndex = end;
+                        if (match.index === re.lastIndex) re.lastIndex++; // guard zero-width
+                    }
+                    if (!matched) return;
+                    if (lastIndex < text.length) {
+                        frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+                    }
+                    if (textNode.parentNode) textNode.parentNode.replaceChild(frag, textNode);
+                });
+            });
+        }
+
         function getFilteredMessages() {
-            if (currentFilter === 'all') return allMessages;
+            // Compose the active search on top of whatever the chips select, so
+            // the two never break each other (clearing the box restores the chip
+            // view; changing chips keeps the search applied).
+            const searchGate = (list) => (
+                messageSearchTokens.length === 0 ? list : list.filter(messageMatchesSearch)
+            );
+
+            if (currentFilter === 'all') return searchGate(allMessages);
 
             if (currentFilter === 'my' || currentFilter === 'user') {
                 // "My messages" / "@user" both show only messages the user
                 // personally originated (is_from_user), excluding received
                 // cross-device messages and entity-bot replies. The @user chip
                 // (card_cb3e56b1) is the smart-named variant of this filter.
-                return allMessages.filter(m => m.is_from_user && !isIncomingCrossDevice(m));
+                return searchGate(allMessages.filter(m => m.is_from_user && !isIncomingCrossDevice(m)));
             }
 
             // xdevice-CODE filter: show messages involving this cross-device code
             if (currentFilter.startsWith('xdevice-')) {
                 const code = currentFilter.substring(8);
-                return allMessages.filter(m => {
+                return searchGate(allMessages.filter(m => {
                     if (!m.source) return false;
                     const parsed = parseEntitySource(m.source);
                     if (!parsed || !parsed.crossDevice) return false;
                     return parsed.fromPublicCode === code || (parsed.targets || []).includes(code);
-                });
+                }));
             }
 
             // entity-N filter: also include mission_notify messages that target this entity
             const entityId = parseInt(currentFilter.split('-')[1]);
-            return allMessages.filter(m => {
+            return searchGate(allMessages.filter(m => {
                 if (m.entity_id === entityId) return true;
                 if (m.source && m.source.startsWith('mission_notify:')) {
                     const targets = m.source.split(':')[1].split(',').map(Number);
@@ -6214,7 +6414,7 @@
                     return true;
                 }
                 return false;
-            });
+            }));
         }
 
         // ── Group Broadcast Messages ──
@@ -6517,11 +6717,21 @@
                 : '';
 
             if (filtered.length === 0) {
+                // Distinct empty state when an active search matched nothing
+                // (card_bdc741f6) — clearing the box restores the full list.
+                const isSearchEmpty = messageSearchTokens.length > 0;
+                const emptyIcon = isSearchEmpty ? '🔍' : '💬';
+                const emptyTitle = isSearchEmpty
+                    ? (i18n.t('chat_search_no_results') || 'No matching messages found')
+                    : (i18n.t('chat_empty') || 'No messages yet');
+                const emptyHint = isSearchEmpty
+                    ? escapeHtml(messageSearchQuery)
+                    : (i18n.t('chat_empty_hint') || 'Send a message to start a conversation with your AI agents. Try saying hello! 👋');
                 container.innerHTML = deepLinkMissingHtml + sysHiddenBannerHtml + `
                     <div class="chat-empty">
-                        <div class="chat-empty-icon">💬</div>
-                        <div class="chat-empty-title" data-i18n="chat_empty">${escapeHtml(i18n.t('chat_empty') || 'No messages yet')}</div>
-                        <div class="chat-empty-hint" data-i18n="chat_empty_hint">${escapeHtml(i18n.t('chat_empty_hint') || 'Send a message to start a conversation with your AI agents. Try saying hello! 👋')}</div>
+                        <div class="chat-empty-icon">${emptyIcon}</div>
+                        <div class="chat-empty-title">${escapeHtml(emptyTitle)}</div>
+                        <div class="chat-empty-hint">${escapeHtml(emptyHint)}</div>
                     </div>`;
                 restoreChatScrollAnchor(container, scrollLock, { forceBottom: shouldFollowBottom });
                 return;
@@ -6872,6 +7082,15 @@
                         ${receipt ? `<div class="chat-receipt">${receipt}</div>` : ''}
                     </div>`;
             }).join('');
+
+            // Highlight the active search match inside each rendered bubble
+            // (card_bdc741f6). Operates on TEXT NODES only — never re-parses HTML
+            // from message content — so it can't inject markup (XSS-safe). The
+            // <mark> wrapper is built with the DOM API, and matched text is moved
+            // as a text node, so a message like "<img onerror=...>" stays inert.
+            if (messageSearchTokens.length > 0) {
+                highlightSearchMatches(container, messageSearchTokens);
+            }
 
             // Auto-follow only on first load or when the user was already at
             // the bottom. Otherwise preserve the same visible message anchor;

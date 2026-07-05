@@ -338494,6 +338494,10 @@ const TRANSLATIONS = {
         "chat_filter_summary_label": "Filters",
         "chat_filter_summary_count": "Filters ({n})",
         "chat_filter_summary_close": "Close filter panel",
+        "chat_search_placeholder": "Search history…",
+        "chat_search_label": "Search messages",
+        "chat_search_clear": "Clear search",
+        "chat_search_no_results": "No matching messages found",
 
 
 
@@ -964154,6 +964158,10 @@ const TRANSLATIONS = {
         "chat_filter_summary_label": "篩選條件",
         "chat_filter_summary_count": "篩選條件 ({n})",
         "chat_filter_summary_close": "關閉篩選面板",
+        "chat_search_placeholder": "搜尋歷史訊息…",
+        "chat_search_label": "搜尋訊息",
+        "chat_search_clear": "清除搜尋",
+        "chat_search_no_results": "找不到符合的訊息",
 
 
 
@@ -1295768,6 +1295776,10 @@ const TRANSLATIONS = {
         "chat_filter_summary_label": "筛选条件",
         "chat_filter_summary_count": "筛选条件 ({n})",
         "chat_filter_summary_close": "关闭筛选面板",
+        "chat_search_placeholder": "搜索历史消息…",
+        "chat_search_label": "搜索消息",
+        "chat_search_clear": "清除搜索",
+        "chat_search_no_results": "找不到符合的消息",
 
 
 
