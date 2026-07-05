@@ -2577,6 +2577,35 @@ app.use('/api/petdx', petdxRoute.createRouter({ log: serverLog }));
 // from the vault by NAME at request time). Upstream host is a hard-coded literal
 // (never from the request); named UA curl/8.4.0 on every outbound call. Degrades
 // gracefully when the merchant key is missing/locked (502 + reason).
+// ============================================
+// AGENT IDENTITY (cross-service "prove you are a real EClaw agent")
+// ============================================
+// card_e30cf03d. Owner directive: the Wishlist write path must NOT use a shared
+// merchant key. Instead an EClaw agent proves its own EClaw identity and the
+// wishlist backend verifies it against EClaw before writing. This router mints a
+// short-lived, single-purpose identity token (POST /token) for an authenticated
+// caller and verifies a token OR a transient botSecret triple (POST /verify).
+const agentIdentity = require('./agent-identity');
+// Shared caller-auth: resolve {deviceId,entityId,botSecret} → the entity's OWN
+// publicCode (never a client-supplied one), or fail closed.
+const resolveCallerIdentity = async ({ deviceId, entityId, botSecret }) => {
+    const device = devices[deviceId];
+    if (!device) return { ok: false, reason: 'device_not_found' };
+    const auth = authEntityAccess(device, null, botSecret, entityId);
+    if (auth.error) return { ok: false, reason: auth.error };
+    const entity = auth.entity;
+    if (!entity || !entity.isBound || !entity.publicCode) {
+        return { ok: false, reason: 'entity_not_bound' };
+    }
+    return { ok: true, publicCode: entity.publicCode };
+};
+app.use('/api/agent-identity', agentIdentity.createRouter({
+    log: serverLog,
+    authenticateCaller: resolveCallerIdentity,
+    // HMAC the token with the process signing secret (same one used elsewhere).
+    getSecret: () => JWT_SECRET_FALLBACK,
+}));
+
 const wishlistRoute = require('./wishlist-route');
 app.use('/api/wishlist-bridge', wishlistRoute.createRouter({
     log: serverLog,
@@ -2584,17 +2613,13 @@ app.use('/api/wishlist-bridge', wishlistRoute.createRouter({
     // validate the caller's own botSecret against their entity, and return that
     // entity's own publicCode so the listing is bound to the authenticated
     // identity. Never trusts a client-supplied code.
-    authenticateCaller: async ({ deviceId, entityId, botSecret }) => {
-        const device = devices[deviceId];
-        if (!device) return { ok: false, reason: 'device_not_found' };
-        const auth = authEntityAccess(device, null, botSecret, entityId);
-        if (auth.error) return { ok: false, reason: auth.error };
-        const entity = auth.entity;
-        if (!entity || !entity.isBound || !entity.publicCode) {
-            return { ok: false, reason: 'entity_not_bound' };
-        }
-        return { ok: true, publicCode: entity.publicCode };
-    },
+    authenticateCaller: resolveCallerIdentity,
+    // NO merchant key (card_e30cf03d). Instead swap the verified caller's own
+    // publicCode for a short-lived EClaw identity token that gets forwarded to the
+    // wishlist backend; the wishlist backend calls back to /api/agent-identity/verify
+    // to confirm it. The long-lived botSecret never leaves EClaw.
+    mintAgentToken: async ({ publicCode }) =>
+        agentIdentity.signAgentToken({ publicCode, secret: JWT_SECRET_FALLBACK }),
 }));
 
 // ============================================
@@ -2611,17 +2636,7 @@ app.use('/api/wishlist-matchmaking', wishlistMatchmaking.createRouter({
     log: serverLog,
     // Same caller-auth as the wishlist-bridge write path: prove a real bound
     // entity via {deviceId,entityId,botSecret} → resolve to its OWN publicCode.
-    authenticateCaller: async ({ deviceId, entityId, botSecret }) => {
-        const device = devices[deviceId];
-        if (!device) return { ok: false, reason: 'device_not_found' };
-        const auth = authEntityAccess(device, null, botSecret, entityId);
-        if (auth.error) return { ok: false, reason: auth.error };
-        const entity = auth.entity;
-        if (!entity || !entity.isBound || !entity.publicCode) {
-            return { ok: false, reason: 'entity_not_bound' };
-        }
-        return { ok: true, publicCode: entity.publicCode };
-    },
+    authenticateCaller: resolveCallerIdentity,
     // Search via the P1 SSRF-safe bridge upstream (in-process; no HTTP hop).
     searchItems: async (query) => {
         const resp = await globalThis.fetch(
