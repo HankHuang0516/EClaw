@@ -282,3 +282,43 @@ describe('需要你 inbox ratify badge (計畫E, buildRatifyBadge)', () => {
         expect(i18nJs).toContain('"action_request_ratify_default_agree_badge"');
     });
 });
+
+describe('需要你 inbox prompt is fully readable, not clamped (card_2e969ff3)', () => {
+    // Regression guard: the decision PROMPT was clamped with `-webkit-line-clamp:5;
+    // overflow:hidden`, cutting long prompts off with an invisible ellipsis that no
+    // ordinary scroll could reveal — the owner could only see the rest by dragging a
+    // text selection (Android, screenshot-confirmed). The sections below it rendered
+    // fully. The prompt must show the whole text and, if capped, scroll with a normal
+    // drag — never re-introduce a line-clamp on the prompt.
+    function promptRule() {
+        const m = chatHtml.match(/\.action-request-prompt\s*\{([^}]*)\}/);
+        expect(m).toBeTruthy();
+        return m[1];
+    }
+
+    test('the prompt is NOT line-clamped (no -webkit-line-clamp / -webkit-box clip)', () => {
+        const rule = promptRule();
+        expect(rule).not.toMatch(/-webkit-line-clamp/);
+        expect(rule).not.toMatch(/-webkit-box-orient/);
+        expect(rule).not.toMatch(/display:\s*-webkit-box/);
+    });
+
+    test('a long prompt scrolls with a normal drag (max-height + overflow-y:auto, not overflow:hidden)', () => {
+        const rule = promptRule();
+        expect(rule).toMatch(/max-height:\s*\d/);
+        expect(rule).toMatch(/overflow-y:\s*auto/);
+        // must not silently clip: no bare `overflow: hidden` on the prompt.
+        expect(rule).not.toMatch(/overflow:\s*hidden/);
+    });
+
+    test('the prompt scroll is touch-friendly and does not chain to the overlay body', () => {
+        const rule = promptRule();
+        expect(rule).toMatch(/overscroll-behavior:\s*contain/);
+        expect(rule).toMatch(/-webkit-overflow-scrolling:\s*touch/);
+    });
+
+    test('the mobile fixed-overlay inbox body still scrolls (PR #3869 not regressed)', () => {
+        expect(chatHtml).toMatch(/\.action-request-inbox\.is-open\s*\{[^}]*position:\s*fixed/);
+        expect(chatHtml).toMatch(/\.action-request-inbox\.is-open\s+\.action-request-inbox-body\s*\{[^}]*overflow-y:\s*auto/);
+    });
+});
