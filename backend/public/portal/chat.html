@@ -435,9 +435,21 @@
             border: 1px solid rgba(45,212,191,0.65); color: #2dd4bf; background: rgba(20,184,166,0.12);
             max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
+        /* The prompt is the owner's DECISION QUESTION — it must always be fully
+           readable. It was previously clamped with `-webkit-line-clamp:5;
+           overflow:hidden`, which cut long prompts off with an invisible ellipsis
+           ("…可合併。我不…") that no normal scroll could reveal — the ONLY way to see
+           the rest was to drag a text selection (the browser auto-scrolls the
+           selection). The sections below (做了什麼/選項/回覆) rendered fully because
+           they are separate elements outside the clamped box (card_2e969ff3). Fix:
+           no clamp — show the whole prompt. A generous max-height + native scroll
+           caps a pathologically long prompt so it can't push the options off-screen,
+           but it scrolls with an ordinary drag (overscroll-behavior:contain keeps
+           the mobile fixed-overlay body from also scrolling). */
         .action-request-prompt {
-            color: var(--text, #ffffff); overflow-wrap: anywhere;
-            display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;
+            color: var(--text, #ffffff); overflow-wrap: anywhere; white-space: pre-wrap;
+            max-height: 46vh; overflow-y: auto;
+            overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
         }
         .action-request-type-hint { color: var(--text-secondary, #AAAAAA); font-size: 12px; line-height: 1.45; }
         .action-request-options, .action-request-actions { display: flex; flex-wrap: wrap; gap: 6px; }
