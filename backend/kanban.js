@@ -2999,6 +2999,14 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                             options: ['核可', '退回', '延後'], // RECORD-ONLY — no auto-execute
                             relatedCardId: cardId,
                             decisionContext: {
+                                // ownerOnly: this move-hook ONLY reaches here when the
+                                // classifier verdict.ownerOnly is true (guarded above),
+                                // so stamp the marker into the stored decision_context.
+                                // This makes the row a genuine owner-facing decision for
+                                // downstream consumers — the 需要你 mobile push gate
+                                // (card_c7baa7ae) and waiting-state.js — instead of
+                                // relying on a flag that was checked but never persisted.
+                                ownerOnly: true,
                                 whatWasDone,
                                 recommendation: whatWasDone,
                                 evidence,

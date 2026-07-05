@@ -536,7 +536,7 @@ function rowToApi(row) {
 /**
  * Factory. Matches the kanban/scheduled-messages module style so index.js wires it the same way.
  */
-module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, getDevicePrefs } = {}) {
+module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, getDevicePrefs, notifyDevice } = {}) {
     const router = express.Router();
 
     // How the worker reads a device's timeout policy + minutes. Defaults to the
@@ -600,6 +600,70 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
                 });
             }
         } catch (_) { /* socket failure must never break the HTTP response */ }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // 需要你 OWNER-DECISION MOBILE PUSH (card_c7baa7ae) — the DELIVERY-leak fix
+    // ──────────────────────────────────────────────────────────────────────
+    // Historically createActionRequest ONLY emitted the portal socket, so an
+    // owner-facing decision died silently in a collapsed inbox on the phone.
+    // We ADDITIVELY fire a mobile push via the injected `notifyDevice` — the same
+    // owner-device path chat/kanban use (socket + sendWebPush + sendFcm fan-out
+    // over device_fcm_tokens / APNs). Targeting is the OWNER's own deviceId, so it
+    // reaches the owner's phone(s) ONLY — never broadcast, never a bot.
+    //
+    // HARD SPAM GATE (err toward UNDER-pushing): push ONLY when this is a genuine
+    // OWNER-FACING decision — decision_context present AND ownerOnly === true. A
+    // bot-to-bot negotiation/consensus item, routine status, or any non-owner
+    // action-request has NO ownerOnly flag → it must NEVER buzz the owner's phone.
+    //
+    // Opt-in pref `needyou_push_enabled` (device-preferences, DEFAULT ON): when a
+    // device sets it to false the push is skipped (the inbox row + socket above
+    // still fire). Fully fire-and-forget + try/catch: a push/pref failure here can
+    // NEVER break inbox-item creation (the caller already committed the INSERT and
+    // emitted the socket before we run).
+    function isOwnerDecision(decisionContext) {
+        return !!decisionContext
+            && typeof decisionContext === 'object'
+            && decisionContext.ownerOnly === true;
+    }
+
+    async function maybePushOwnerDecision(row, decisionContext) {
+        try {
+            if (typeof notifyDevice !== 'function') return;          // push path not wired (e.g. tests without it)
+            if (!row || !row.device_id) return;
+            if (!isOwnerDecision(decisionContext)) return;           // SPAM GATE — owner-only decisions only
+
+            // Opt-in pref (default ON): only an explicit false disables the push.
+            let prefs = {};
+            try { prefs = (await readDevicePrefs(row.device_id)) || {}; } catch (_) { prefs = {}; }
+            if (prefs.needyou_push_enabled === false) return;
+
+            // Reuse the rich-card-question notification category: semantically these
+            // are the SAME blocking-style "an agent needs the owner to pick" asks, so
+            // they share the owner's existing Settings mute toggle for that category.
+            const rawPrompt = typeof row.prompt === 'string' ? row.prompt : '';
+            const body = rawPrompt.length > 240 ? `${rawPrompt.slice(0, 239)}…` : rawPrompt;
+            const notification = {
+                type: 'action_request',
+                category: 'rich_card_question',
+                title: '需要你決策',
+                body,
+                link: 'chat.html', // 需要你 inbox lives on the chat page
+                metadata: {
+                    requestId: String(row.id),
+                    fromEntityId: row.from_entity_id ?? null,
+                    relatedCardId: row.related_card_id ?? null,
+                    ownerDecision: true,
+                },
+            };
+            // Fire-and-forget: notifyDevice already log-and-continues internally, but
+            // wrap the await so a rejected promise can't bubble into createActionRequest.
+            await notifyDevice(row.device_id, notification);
+        } catch (e) {
+            // NEVER let a push failure break inbox-item creation.
+            log('warn', `owner-decision push failed (non-blocking): ${e && e.message}`, { deviceId: row && row.device_id });
+        }
     }
 
     // Best-effort: notify the emitting agent that its request was answered.
@@ -918,6 +982,11 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
         );
         const row = result.rows[0];
         emitChanged(deviceId, 'emitted', row.id, row.from_entity_id);
+        // 需要你 owner-decision MOBILE PUSH (card_c7baa7ae): ADDITIVE to the socket
+        // above — buzz the owner's phone ONLY for a genuine owner-only decision, and
+        // only when needyou_push_enabled (default ON). Fully failure-isolated: a
+        // push/pref error can never fail this create (the INSERT already committed).
+        await maybePushOwnerDecision(row, decisionContext);
         // ON-ARRIVAL negotiation open (需要你 negotiation): best-effort, AFTER the
         // committed INSERT + 'emitted'. A prefs/push error here must NOT fail request
         // creation — fully wrapped in try/catch. Only fires when isNegotiable (device

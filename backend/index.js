@@ -2021,6 +2021,12 @@ try {
         unifiedPush,
         serverLog,
         io, // real-time inbox push: emits 'action_request:changed' to device:<id> (card_8151054f)
+        // 需要你 owner-decision MOBILE PUSH (card_c7baa7ae): reuse the existing owner-
+        // device notify path (socket + sendWebPush + sendFcm fan-out over
+        // device_fcm_tokens) so an owner-only inbox item ALSO buzzes the owner's
+        // phone. notifyDevice is a hoisted async function declaration (defined far
+        // below) — safe to reference here. Gated ownerOnly + pref inside the module.
+        notifyDevice,
     });
     app.use('/api/action-requests', agentActionRequestsModule.router);
     console.log('[AgentActionRequests] Module loaded successfully');
