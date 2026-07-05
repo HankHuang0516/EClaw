@@ -129,7 +129,7 @@ describe('governance: owner opt-in (default OFF)', () => {
         const { app, sent } = buildApp({
             prefs: {
                 [BUYER.deviceId]: { wishlist_matchmaking_enabled: true },
-                [SELLER.deviceId]: {}, // seller not opted in
+                [SELLER.deviceId]: {}, // seller not opted in ⇒ the ONLY thing that blocks
             },
         });
         const res = await post(app, '/invite').send({
@@ -140,7 +140,11 @@ describe('governance: owner opt-in (default OFF)', () => {
         expect(sent).toHaveLength(0);
     });
 
-    it('target OFFLINE (stale lastUpdated) ⇒ unreachable ⇒ 409, no send', async () => {
+    // NEW CONTRACT (owner directive 「不建議使用心跳新鮮度來阻擋撮合，opt-in 阻擋合理」):
+    // reachability is OPT-IN ONLY. An opted-in target whose roster liveness is stale
+    // / offline / SLEEPING is STILL reachable — the invite MUST fire (durable/async).
+    // Only opt-in OFF (or kill-switch / quota) blocks the send.
+    it('opted-in target with STALE (offline) roster ⇒ invite STILL sent (liveness no longer gates)', async () => {
         const { app, sent } = buildApp({
             roster: {
                 [SELLER.publicCode]: {
@@ -152,9 +156,51 @@ describe('governance: owner opt-in (default OFF)', () => {
         const res = await post(app, '/invite').send({
             ...BUYER, sellerPublicCode: SELLER.publicCode, itemId: 1, itemName: 'x',
         });
-        expect(res.status).toBe(409);
-        expect(res.body.reason).toBe('unreachable');
-        expect(sent).toHaveLength(0);
+        expect(res.status).toBe(200);
+        expect(res.body.status).toBe('invited');
+        expect(sent).toHaveLength(1);
+    });
+
+    it('opted-in target in SLEEPING state ⇒ invite STILL sent (SLEEPING ≠ opted-out)', async () => {
+        const { app, sent } = buildApp({
+            roster: {
+                [SELLER.publicCode]: {
+                    publicCode: SELLER.publicCode, entityId: SELLER.entityId,
+                    state: 'SLEEPING', lastUpdated: Date.now(), isBound: true,
+                },
+            },
+        });
+        const res = await post(app, '/invite').send({
+            ...BUYER, sellerPublicCode: SELLER.publicCode, itemId: 1, itemName: 'x',
+        });
+        expect(res.status).toBe(200);
+        expect(sent).toHaveLength(1);
+    });
+
+    it('opted-in target with NO roster entry at all ⇒ invite STILL sent (roster absent ≠ opted-out)', async () => {
+        const { app, sent } = buildApp({
+            roster: {}, // getRosterEntry returns null for the seller
+        });
+        const res = await post(app, '/invite').send({
+            ...BUYER, sellerPublicCode: SELLER.publicCode, itemId: 1, itemName: 'x',
+        });
+        expect(res.status).toBe(200);
+        expect(sent).toHaveLength(1);
+    });
+
+    it('isReachableTarget is opt-in ONLY — ignores roster liveness/state entirely', () => {
+        // opted-in ⇒ reachable regardless of roster staleness/state/absence.
+        expect(mm.isReachableTarget({ prefs: { wishlist_matchmaking_enabled: true } })).toBe(true);
+        expect(mm.isReachableTarget({
+            rosterEntry: { state: 'FAILED', lastUpdated: 0, isBound: true, publicCode: 'sellrx' },
+            prefs: { wishlist_matchmaking_enabled: true },
+        })).toBe(true);
+        expect(mm.isReachableTarget({ rosterEntry: null, prefs: { wishlist_matchmaking_enabled: true } })).toBe(true);
+        // opt-in OFF ⇒ NOT reachable, even with a perfectly fresh/online roster.
+        expect(mm.isReachableTarget({
+            rosterEntry: { state: 'ACTIVE', lastUpdated: Date.now(), isBound: true, publicCode: 'sellrx' },
+            prefs: {},
+        })).toBe(false);
     });
 });
 
