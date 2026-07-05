@@ -367,12 +367,15 @@ describe('D5: dual consent gates contact release', () => {
         const r = await post(app, '/contact/request').send({ ...BUYER, matchId });
         expect(r.status).toBe(200);
         expect(r.body.status).toBe('contact_pending');
-        // exactly two action-requests, one targeting each owner device.
-        const devices = actionRequests.map((a) => a.deviceId).sort();
+        // The consent requests are the crossOwnerPii ones — filter them out from the
+        // seller-owner invite card (card_647fc0ba Scope B) that /invite now also
+        // creates. Exactly two consent action-requests, one per owner device.
+        const consentReqs = actionRequests.filter((a) => a.decisionContext && a.decisionContext.crossOwnerPii === true);
+        const devices = consentReqs.map((a) => a.deviceId).sort();
         expect(devices).toEqual([BUYER.deviceId, SELLER.deviceId].sort());
         // each is owner-only + carries the disclaimer + the matchId + the HUMAN-ONLY
         // markers that make isNegotiable exclude it and require a human resolve.
-        for (const a of actionRequests) {
+        for (const a of consentReqs) {
             expect(a.decisionContext.ownerOnly).toBe(true);
             expect(a.decisionContext.matchId).toBe(matchId);
             expect(a.decisionContext.disclaimer).toMatch(/only introduces, does not endorse/);
