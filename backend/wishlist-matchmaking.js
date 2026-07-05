@@ -351,6 +351,9 @@ function createMatchStore() {
  *   sendB2bMessage({fromDeviceId,fromEntityId,fromPublicCode,toPublicCode,envelope}) -> Promise<{success}>
  *   createOwnerActionRequest({deviceId,fromEntityId,prompt,options,decisionContext}) -> Promise<{id}>
  *   getActionRequestStatus(requestId, deviceId) -> Promise<{status, approved}>
+ *       (approved is TRUE only when the HUMAN owner resolved a crossOwnerPii consent)
+ *   getPartyContact({deviceId,entityId,publicCode}) -> Promise<{nameCard, contactInfo}>
+ *       (resolved SERVER-SIDE from the owner's trusted records; never the request body)
  *   authenticateCaller({deviceId,entityId,botSecret}) -> { ok, publicCode } | { ok:false }
  *   log(level,cat,msg) ; now() ; quota:{max,windowMs}
  */
@@ -363,6 +366,9 @@ function createRouter(opts = {}) {
         sendB2bMessage,
         createOwnerActionRequest,
         getActionRequestStatus,
+        // (MED #4) resolves { nameCard, contactInfo } for a party SERVER-SIDE from
+        // that owner's own trusted record — never from the caller's request body.
+        getPartyContact,
         authenticateCaller,
         log,
         now,
@@ -681,6 +687,13 @@ function createRouter(opts = {}) {
             source: 'wishlist_matchmaking',
             matchId,
             disclaimer: SAFETY_DISCLAIMER,
+            // HUMAN-ONLY markers (security review HIGH #1 + #2): this consent releases
+            // real contact PII across two owners. crossOwnerPii makes isNegotiable
+            // EXCLUDE it (no bot /vote can synthesize+resolve it), and the release gate
+            // requires resolved_by_user — so only the HUMAN owner can approve. Neither
+            // may be dropped or a bot could self-approve a cross-owner PII release.
+            crossOwnerPii: true,
+            humanOnly: true,
             whatWasDone: 'Two entities matched on a wishlist trade and both accepted; contact exchange needs owner approval.',
         };
 
@@ -724,6 +737,15 @@ function createRouter(opts = {}) {
         const matchId = typeof req.body.matchId === 'string' ? req.body.matchId : '';
         const match = store.get(matchId);
         if (!match) return res.status(404).json({ error: 'unknown matchId' });
+        // (MED #3) party-membership auth — same as /accept, /decline, /contact/request:
+        // only the buyer or the seller of THIS match may trigger a release. Without
+        // this any bound bot could fire a release (and, pre-MED#4, inject its own PII).
+        if (
+            normalizeCode(caller.publicCode) !== match.sellerPublicCode &&
+            normalizeCode(caller.publicCode) !== match.buyerPublicCode
+        ) {
+            return res.status(403).json({ error: 'not a party to this match' });
+        }
         if (!match.buyerConsentReqId || !match.sellerConsentReqId) {
             return res.status(409).json({ error: 'contact consent has not been requested for this match' });
         }
@@ -736,6 +758,8 @@ function createRouter(opts = {}) {
         try {
             const b = await getActionRequestStatus(match.buyerConsentReqId, match.buyerDeviceId);
             const s = await getActionRequestStatus(match.sellerConsentReqId, match.sellerDeviceId);
+            // approved requires BOTH resolved AND resolved by the HUMAN owner — the
+            // injected getActionRequestStatus enforces resolved_by_user (HIGH #1).
             buyerApproved = !!(b && b.approved);
             sellerApproved = !!(s && s.approved);
         } catch (err) {
@@ -753,29 +777,53 @@ function createRouter(opts = {}) {
             });
         }
 
-        // Both approved → build + send the contact (name-card + optional PII) to
-        // BOTH parties, each stamped with the disclaimer.
-        const buyerContact = sanitizeContactInfo(req.body.buyerContactInfo);
-        const sellerContact = sanitizeContactInfo(req.body.sellerContactInfo);
-        const buyerCard = req.body.buyerNameCard;
-        const sellerCard = req.body.sellerNameCard;
+        // (MED #4) Both approved → resolve each party's contact + name-card
+        // SERVER-SIDE from that owner's own trusted record. The caller does NOT get
+        // to choose the bytes (a caller-supplied contact/nameCard could inject a
+        // phishing payload decoupled from what the owner approved). getPartyContact
+        // is injected + bound to the owner's device; req.body contact fields are
+        // IGNORED entirely.
+        if (typeof getPartyContact !== 'function') {
+            return res.status(502).json({ error: 'contact source unavailable' });
+        }
+        let buyerParty;
+        let sellerParty;
+        try {
+            buyerParty = await getPartyContact({
+                deviceId: match.buyerDeviceId, entityId: match.buyerEntityId, publicCode: match.buyerPublicCode,
+            });
+            sellerParty = await getPartyContact({
+                deviceId: match.sellerDeviceId, entityId: match.sellerEntityId, publicCode: match.sellerPublicCode,
+            });
+        } catch (err) {
+            logger('warn', 'wishlist-matchmaking', `party contact resolve failed: ${err.message}`);
+            return res.status(502).json({ error: 'could not resolve party contact' });
+        }
 
         try {
-            // seller's card+contact → buyer
+            // seller's OWN card+contact → buyer
             await sendB2bMessage({
                 fromDeviceId: match.sellerDeviceId,
                 fromEntityId: match.sellerEntityId,
                 fromPublicCode: match.sellerPublicCode,
                 toPublicCode: match.buyerPublicCode,
-                envelope: buildContactEnvelope({ matchId, nameCard: sellerCard, contactInfo: sellerContact }),
+                envelope: buildContactEnvelope({
+                    matchId,
+                    nameCard: sellerParty && sellerParty.nameCard,
+                    contactInfo: sellerParty && sellerParty.contactInfo,
+                }),
             });
-            // buyer's card+contact → seller
+            // buyer's OWN card+contact → seller
             await sendB2bMessage({
                 fromDeviceId: match.buyerDeviceId,
                 fromEntityId: match.buyerEntityId,
                 fromPublicCode: match.buyerPublicCode,
                 toPublicCode: match.sellerPublicCode,
-                envelope: buildContactEnvelope({ matchId, nameCard: buyerCard, contactInfo: buyerContact }),
+                envelope: buildContactEnvelope({
+                    matchId,
+                    nameCard: buyerParty && buyerParty.nameCard,
+                    contactInfo: buyerParty && buyerParty.contactInfo,
+                }),
             });
         } catch (err) {
             logger('warn', 'wishlist-matchmaking', `contact release send failed: ${err.message}`);

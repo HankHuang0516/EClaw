@@ -120,8 +120,12 @@ describe('Fix B — bot resolve/dismiss scoped to own emitted requests', () => {
             const upd = findUpdate('resolved');
             expect(upd).toBeTruthy();
             expect(upd[0]).not.toMatch(/from_entity_id/);
-            // params for the user path: [answerJson, id, deviceId] only (no entity restriction)
-            expect(upd[1]).toHaveLength(3);
+            // params for the user path: [answerJson, id, deviceId, resolved_by_user=true]
+            // — NO entity restriction, and the human-resolve marker is recorded
+            // (wishlist matchmaking dual-consent gate, security review HIGH #1).
+            expect(upd[1]).toHaveLength(4);
+            expect(upd[0]).toMatch(/resolved_by_user = \$\d+/);
+            expect(upd[1][upd[1].length - 1]).toBe(true); // resolved by the HUMAN owner
         });
     });
 

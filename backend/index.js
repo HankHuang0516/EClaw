@@ -2707,35 +2707,100 @@ app.use('/api/wishlist-matchmaking', wishlistMatchmaking.createRouter({
             decisionContext,
         });
     },
-    // Read a consent request's approval. approved = resolved AND the owner chose
-    // the approve option (index 0) or an answer text that reads as approval.
+    // Read a consent request's approval for the cross-owner PII-release gate.
+    // approved requires ALL of (security review HIGH #1 + LOW #5):
+    //   1. status === 'resolved',
+    //   2. resolved by the HUMAN owner (resolved_by_user === true) — a bot
+    //      self-resolving its own emitted consent does NOT count,
+    //   3. this is genuinely a cross-owner-PII consent (decision_context.crossOwnerPii)
+    //      — so this permissive "approve" reading can never leak onto an unrelated
+    //      request type,
+    //   4. the answer strictly reads as APPROVE (answerIsApproval), never a negative.
     getActionRequestStatus: async (requestId, deviceId) => {
         if (!agentActionRequestsModule || typeof agentActionRequestsModule.getRequestStatus !== 'function') {
             throw new Error('action-requests module unavailable');
         }
         const r = await agentActionRequestsModule.getRequestStatus(requestId, deviceId);
         if (!r || !r.found) return { status: 'unknown', approved: false };
-        const approved = r.status === 'resolved' && answerIsApproval(r.answer);
-        return { status: r.status, approved };
+        const dc = (r.decisionContext && typeof r.decisionContext === 'object') ? r.decisionContext : {};
+        const isCrossOwnerPii = dc.crossOwnerPii === true;
+        const approved =
+            r.status === 'resolved' &&
+            r.resolvedByUser === true &&
+            isCrossOwnerPii &&
+            answerIsApproval(r.answer);
+        return { status: r.status, approved, resolvedByUser: r.resolvedByUser === true };
+    },
+    // (MED #4) Resolve a party's contact + name-card SERVER-SIDE from that owner's
+    // OWN trusted records — NEVER from the caller's request body:
+    //   - nameCard: publicCode + displayName (entity.name) + caps (interview
+    //     capabilities), read from the live entity record.
+    //   - contactInfo: the owner-controlled `WISHLIST_CONTACT_INFO` vault var (a JSON
+    //     object the owner sets themselves; respects vault lock; decrypted here).
+    //     Absent/locked/invalid → {} (name-card still exchanges; no PII).
+    // The caller cannot influence any of these bytes, so a caller-injected phishing
+    // contact/nameCard is impossible.
+    getPartyContact: async ({ deviceId, entityId, publicCode }) => {
+        const device = devices[deviceId];
+        const entity = device && device.entities && device.entities[entityId];
+        const caps = (entity && entity.identity && Array.isArray(entity.identity.interviewCapabilities))
+            ? entity.identity.interviewCapabilities.map((c) => String(c)).slice(0, 10)
+            : [];
+        const nameCard = {
+            publicCode: (entity && entity.publicCode) || publicCode || '',
+            displayName: (entity && (entity.name || entity.character)) || '',
+            caps,
+        };
+        let contactInfo = {};
+        try {
+            const raw = await getDeviceVarForEmbedding(deviceId, 'WISHLIST_CONTACT_INFO');
+            if (raw) {
+                const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) contactInfo = parsed;
+            }
+        } catch (_e) {
+            contactInfo = {};
+        }
+        return { nameCard, contactInfo };
     },
 }));
 
-// Interpret a 需要你 answer as approval for the dual-consent gate. Approve =
-// option index 0 (our options are ['同意釋出 / Approve', '拒絕 / Decline']) OR an
-// answer text that clearly reads as approve. Anything else (incl. decline) → false.
+// The exact approve-option label our consent requests present (index 0). A free
+// text answer counts as approve ONLY when it matches this label or a strict
+// positive allowlist AND contains no negative token (security review LOW #5).
+const CONTACT_APPROVE_LABEL = '同意釋出 / Approve';
+// Positive allowlist — the WHOLE (trimmed) answer must be one of these to approve
+// via free text. Deliberately narrow: a sentence like "approve? no" is NOT here.
+const CONTACT_APPROVE_ALLOWLIST = new Set([
+    '同意釋出 / approve', '同意釋出', '同意', 'approve', 'approved', 'approve release', 'yes', '是',
+]);
+// Any of these anywhere in the answer VETOES approval (fail-closed).
+const CONTACT_DECLINE_RE = /decline|reject|denied?|拒絕|不同意|不要|\bno\b|\bnot\b|別|否/i;
+
+// Interpret a 需要你 answer as approval for the cross-owner PII-release gate.
+// Approve ⇔ option index 0 (the exact approve option) OR the WHOLE answer text is
+// an allow-listed approve phrase with NO negative token. Everything else → false.
+// This is intentionally strict: it releases PII, so ambiguity must fail closed.
 function answerIsApproval(answer) {
     if (answer == null) return false;
     let a = answer;
     if (typeof a === 'string') {
         try { a = JSON.parse(a); } catch (_) { a = { text: answer }; }
     }
-    if (a && typeof a === 'object') {
-        if (Number(a.optionIndex) === 0 || Number(a.selectedOptionIndex) === 0) return true;
-        const t = String(a.text || a.answer || a.value || '').toLowerCase();
-        if (/\bapprove\b|同意|approved|approve release|release/.test(t) && !/decline|拒絕|deny/.test(t)) return true;
-        return false;
+    if (!a || typeof a !== 'object') return false;
+    // A selected option index is authoritative: 0 = approve, anything else = not.
+    const oi = a.optionIndex ?? a.selectedOptionIndex;
+    if (oi != null && oi !== '') {
+        return Number(oi) === 0;
     }
-    return false;
+    // Free-text path: whole answer must be an allow-listed approve phrase (or the
+    // exact label) AND carry no negative token.
+    const raw = String(a.text ?? a.answer ?? a.value ?? '').trim();
+    if (!raw) return false;
+    if (CONTACT_DECLINE_RE.test(raw)) return false; // any negation vetoes
+    const norm = raw.toLowerCase();
+    if (norm === CONTACT_APPROVE_LABEL.toLowerCase()) return true;
+    return CONTACT_APPROVE_ALLOWLIST.has(norm);
 }
 
 // Daily cleanup of expired files (runs at 03:17 server time)
@@ -12915,7 +12980,10 @@ app.post('/api/client/speak', idempotencyMiddleware, clientSpeakDedupeMiddleware
         if (arReqId && ambiguousTarget) {
             serverLog('info', 'agent_action_requests', 'speak auto-resolve skipped: reply targets multiple/mismatched requests (ambiguous)', { deviceId });
         } else if (arReqId && agentActionRequestsModule && typeof agentActionRequestsModule.resolveActionRequest === 'function') {
-            const row = await agentActionRequestsModule.resolveActionRequest(deviceId, arReqId, { text: text || '' }, device);
+            // /api/client/speak requires deviceSecret (the HUMAN owner), so a
+            // smart-quote reply that auto-resolves a consent counts as human approval
+            // (dual-consent gate, security review HIGH #1) → pass isUserResolve=true.
+            const row = await agentActionRequestsModule.resolveActionRequest(deviceId, arReqId, { text: text || '' }, device, null, true);
             if (row) {
                 clientSpeakResponse.actionRequestResolved = { requestId: row.id };
                 serverLog('info', 'agent_action_requests', `auto-resolve via speak id=${row.id} from=${row.from_entity_id}`, { deviceId });

@@ -160,6 +160,13 @@ function isNegotiable(row, prefs, boundEntityCount) {
     const opts = row.options;
     if (!Array.isArray(opts) || opts.length < 2) return false;
     if (Number(boundEntityCount) < clampMinEntities(prefs.consensus_min_entities)) return false;
+    // HUMAN-ONLY exclusion (security review HIGH #2): a cross-owner PII-release
+    // consent (wishlist matchmaking) has options.length === 2 and would otherwise be
+    // broadcast to bots as a /vote — the emitting agent then synthesizes + resolves
+    // it, bypassing the human. Such a request marks decision_context.crossOwnerPii
+    // (or humanOnly). NEVER open a negotiation round for it; only the human may decide.
+    const dc = (row.decision_context && typeof row.decision_context === 'object') ? row.decision_context : null;
+    if (dc && (dc.crossOwnerPii === true || dc.humanOnly === true)) return false;
     return true;
 }
 
@@ -320,6 +327,22 @@ async function initAgentActionRequestsDatabase() {
         );
     } catch (err) {
         console.error('[AgentActionRequests] decision_context migration skipped:', err.message);
+    }
+
+    // ── Idempotent migration: resolved_by_user (wishlist matchmaking dual-consent) ──
+    // TRUE only when a request was resolved by the HUMAN owner (deviceSecret / the
+    // isUser path), FALSE when resolved by a bot (botSecret self-resolve), NULL when
+    // never resolved. A cross-owner-PII-release consent (decision_context.crossOwnerPii)
+    // counts as approved ONLY when resolved_by_user IS TRUE — closing the "an agent
+    // self-approves its own consent" hole (security review HIGH #1). Additive +
+    // reversible; ADD COLUMN IF NOT EXISTS is a no-op once present. Never crashes init.
+    try {
+        await pool.query(
+            `ALTER TABLE agent_action_requests
+                ADD COLUMN IF NOT EXISTS resolved_by_user BOOLEAN DEFAULT NULL`
+        );
+    } catch (err) {
+        console.error('[AgentActionRequests] resolved_by_user migration skipped:', err.message);
     }
 
     // ── Idempotent migration: negotiation/consensus workflow (需要你 negotiation) ──
@@ -608,7 +631,7 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
     // same device (which would also forge a push-back to that other entity). The
     // human/deviceSecret (isUser) path and the /api/client/speak USER auto-resolve
     // path pass null (default) — the user owns the whole device inbox.
-    async function resolveActionRequest(deviceId, requestId, answer, device, restrictToEntityId = null) {
+    async function resolveActionRequest(deviceId, requestId, answer, device, restrictToEntityId = null, isUserResolve = null) {
         if (!deviceId || !UUID_RE.test(String(requestId))) return null;
         // Cross-target integrity guard: never write an answer that was composed for
         // a DIFFERENT request onto this one. If the answer self-describes a target
@@ -624,8 +647,17 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
             return null;
         }
         const params = [answer !== undefined ? JSON.stringify(answer) : null, requestId, deviceId];
+        // resolved_by_user: record WHO resolved (human owner vs bot) so a cross-owner
+        // PII-release consent can require the HUMAN (security review HIGH #1). Only
+        // written when the caller passes an explicit boolean; all existing callers
+        // pass null → the column keeps its DEFAULT NULL and behaviour is unchanged.
+        let resolvedByUserSet = '';
+        if (isUserResolve === true || isUserResolve === false) {
+            params.push(isUserResolve);
+            resolvedByUserSet = `, resolved_by_user = $${params.length}`;
+        }
         let sql = `UPDATE agent_action_requests
-                SET status = 'resolved', answer = $1::jsonb, resolved_at = NOW()
+                SET status = 'resolved', answer = $1::jsonb, resolved_at = NOW()${resolvedByUserSet}
               WHERE id = $2 AND device_id = $3 AND status = 'pending'`;
         if (restrictToEntityId != null) {
             params.push(restrictToEntityId);
@@ -912,12 +944,19 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
     async function getRequestStatus(requestId, deviceId) {
         if (!requestId || !deviceId) return { found: false };
         const r = await pool.query(
-            'SELECT id, status, answer FROM agent_action_requests WHERE id = $1 AND device_id = $2',
+            'SELECT id, status, answer, resolved_by_user, decision_context FROM agent_action_requests WHERE id = $1 AND device_id = $2',
             [requestId, deviceId]
         );
         const row = r.rows && r.rows[0];
         if (!row) return { found: false };
-        return { found: true, status: row.status, answer: row.answer };
+        return {
+            found: true,
+            status: row.status,
+            answer: row.answer,
+            // TRUE only when the HUMAN owner resolved (security review HIGH #1).
+            resolvedByUser: row.resolved_by_user === true,
+            decisionContext: row.decision_context || null,
+        };
     }
 
     // Owner-decision lifecycle (子6a): when a kanban card leaves review/blocked,
@@ -1391,7 +1430,8 @@ module.exports = function (devices, { pushToBot, unifiedPush, serverLog, io, get
             // A botSecret holder may only resolve its OWN emitted requests; the
             // human (isUser/deviceSecret) owns the whole device inbox (finding #3).
             const restrictToEntityId = auth.isUser ? null : auth.entityId;
-            const row = await resolveActionRequest(deviceId, id, answer, device, restrictToEntityId);
+            // Record whether the HUMAN owner resolved (dual-consent gate, HIGH #1).
+            const row = await resolveActionRequest(deviceId, id, answer, device, restrictToEntityId, !!auth.isUser);
             if (!row) {
                 return res.status(404).json({ success: false, error: 'Not found or already resolved/dismissed' });
             }

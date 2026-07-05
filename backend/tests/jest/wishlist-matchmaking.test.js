@@ -62,7 +62,7 @@ function buildApp(over = {}) {
 
     let arId = 0;
     const opts = {
-        authenticateCaller: fakeAuth(),
+        authenticateCaller: over.authenticateCaller || fakeAuth(),
         searchItems: over.searchItems || (async () => ({ items: [] })),
         resolvePublicCode: (code) => resolveMap[code] || null,
         getRosterEntry: (code) => roster[code] || null,
@@ -77,7 +77,15 @@ function buildApp(over = {}) {
         getActionRequestStatus: async (requestId) => ({
             status: arApproval.get(requestId) ? 'resolved' : 'pending',
             approved: !!arApproval.get(requestId),
+            resolvedByUser: !!arApproval.get(requestId),
         }),
+        // (MED #4) server-side contact source, keyed by owner device — the ONLY
+        // place the released bytes come from. Overridable per-test.
+        getPartyContact: over.getPartyContact || (async ({ deviceId, entityId, publicCode }) => ({
+            nameCard: { publicCode, displayName: `Owner-${deviceId}`, caps: ['trade'] },
+            contactInfo: deviceId === BUYER.deviceId ? { email: 'buyer@trusted.example' }
+                : deviceId === SELLER.deviceId ? { email: 'seller@trusted.example' } : {},
+        })),
         quota: over.quota,
         now: over.now,
         matchStore: over.matchStore,
@@ -316,11 +324,14 @@ describe('D5: dual consent gates contact release', () => {
         // exactly two action-requests, one targeting each owner device.
         const devices = actionRequests.map((a) => a.deviceId).sort();
         expect(devices).toEqual([BUYER.deviceId, SELLER.deviceId].sort());
-        // each is owner-only + carries the disclaimer + the matchId.
+        // each is owner-only + carries the disclaimer + the matchId + the HUMAN-ONLY
+        // markers that make isNegotiable exclude it and require a human resolve.
         for (const a of actionRequests) {
             expect(a.decisionContext.ownerOnly).toBe(true);
             expect(a.decisionContext.matchId).toBe(matchId);
             expect(a.decisionContext.disclaimer).toMatch(/only introduces, does not endorse/);
+            expect(a.decisionContext.crossOwnerPii).toBe(true);
+            expect(a.decisionContext.humanOnly).toBe(true);
         }
     });
 
@@ -349,17 +360,19 @@ describe('D5: dual consent gates contact release', () => {
         expect(sent.length).toBe(beforeSent);
     });
 
-    it('BOTH approve ⇒ contact released to BOTH parties, each with the disclaimer', async () => {
+    it('BOTH approve ⇒ contact released to BOTH parties from the SERVER-SIDE source (req.body IGNORED)', async () => {
         const { app, sent, actionRequests, arApproval, matchId } = await seedAcceptedMatch();
         await post(app, '/contact/request').send({ ...BUYER, matchId });
-        for (const a of actionRequests) arApproval.set(a.id, true); // both approve
+        for (const a of actionRequests) arApproval.set(a.id, true); // both human-approve
         const beforeSent = sent.length;
+        // (MED #4) The caller tries to inject a PHISHING contact + name-card via the
+        // body. The release MUST ignore it and use the trusted server-side source.
         const rel = await post(app, '/contact/release').send({
             ...BUYER, matchId,
-            buyerNameCard: { publicCode: BUYER.publicCode, displayName: 'Buyer', caps: ['trade'] },
-            sellerNameCard: { publicCode: SELLER.publicCode, displayName: 'Seller', caps: ['trade'] },
-            buyerContactInfo: { email: 'buyer@x.com' },
-            sellerContactInfo: { email: 'seller@y.com' },
+            buyerNameCard: { publicCode: BUYER.publicCode, displayName: 'PHISH', caps: ['evil'] },
+            sellerNameCard: { publicCode: SELLER.publicCode, displayName: 'PHISH', caps: ['evil'] },
+            buyerContactInfo: { email: 'attacker@evil.example' },
+            sellerContactInfo: { email: 'attacker@evil.example' },
         });
         expect(rel.status).toBe(200);
         expect(rel.body.status).toBe('contact_released');
@@ -369,9 +382,42 @@ describe('D5: dual consent gates contact release', () => {
             expect(s.envelope.type).toBe('wishlist_trade_contact');
             expect(s.envelope.disclaimer).toMatch(/only introduces, does not endorse/);
         }
-        // The buyer receives the SELLER's contact (and vice versa).
+        // The buyer receives the SELLER's TRUSTED contact — NOT the attacker's bytes.
         const toBuyer = contactSends.find((s) => s.toPublicCode === BUYER.publicCode);
-        expect(toBuyer.envelope.contactInfo).toEqual({ email: 'seller@y.com' });
+        expect(toBuyer.envelope.contactInfo).toEqual({ email: 'seller@trusted.example' });
+        expect(JSON.stringify(contactSends)).not.toContain('attacker@evil.example');
+        expect(JSON.stringify(contactSends)).not.toContain('PHISH');
+    });
+
+    it('(MED #3) /contact/release from a NON-PARTY (but verified) caller ⇒ 403, no contact sent', async () => {
+        // A third bound entity that authenticates fine but is NOT the buyer/seller.
+        const STRANGER = { deviceId: 'dev-stranger', entityId: 4, botSecret: 'STRANGER_SECRET', publicCode: 'strngr' };
+        const sharedStore = mm.createMatchStore();
+        const ctx = buildApp({
+            matchStore: sharedStore,
+            // Auth stub that ALSO recognises the stranger as a real verified entity.
+            authenticateCaller: async ({ deviceId, botSecret }) => {
+                if (deviceId === BUYER.deviceId && botSecret === BUYER.botSecret) return { ok: true, publicCode: BUYER.publicCode };
+                if (deviceId === SELLER.deviceId && botSecret === SELLER.botSecret) return { ok: true, publicCode: SELLER.publicCode };
+                if (deviceId === STRANGER.deviceId && botSecret === STRANGER.botSecret) return { ok: true, publicCode: STRANGER.publicCode };
+                return { ok: false };
+            },
+        });
+        const { app, sent, actionRequests, arApproval } = ctx;
+        // Seed an accepted, both-approved match on this shared store.
+        const inv = await post(app, '/invite').send({ ...BUYER, sellerPublicCode: SELLER.publicCode, itemId: 77, itemName: 'Lens' });
+        const matchId = inv.body.matchId;
+        await post(app, '/accept').send({ ...SELLER, matchId });
+        await post(app, '/contact/request').send({ ...BUYER, matchId });
+        for (const a of actionRequests) arApproval.set(a.id, true); // both approved
+        const beforeSent = sent.length;
+        // The stranger (verified entity, code 'strngr') tries to trigger release.
+        const rel = await request(app)
+            .post('/api/wishlist-matchmaking/contact/release')
+            .send({ ...STRANGER, matchId });
+        expect(rel.status).toBe(403); // not a party
+        expect(rel.body.error).toMatch(/not a party/i);
+        expect(sent.length).toBe(beforeSent); // nothing leaked
     });
 
     it('contact/request before accept ⇒ 409 (needs an accepted match first)', async () => {
@@ -472,5 +518,18 @@ describe('bot-callable /connect bypasses friends_only for opted-in targets', () 
         const res = await post(app, '/connect').send({ ...BUYER, sellerPublicCode: SELLER.publicCode, itemId: 12 });
         expect(res.status).toBe(403);
         expect(sent).toHaveLength(0);
+    });
+
+    it('(e) /connect to a NON-opted-in TARGET ⇒ refused (409 unreachable), no send', async () => {
+        const { app, sent } = buildApp({
+            prefs: {
+                [BUYER.deviceId]: { wishlist_matchmaking_enabled: true }, // buyer opted in
+                [SELLER.deviceId]: {}, // TARGET not opted in
+            },
+        });
+        const res = await post(app, '/connect').send({ ...BUYER, sellerPublicCode: SELLER.publicCode, itemId: 13 });
+        expect(res.status).toBe(409);
+        expect(res.body.reason).toBe('unreachable');
+        expect(sent).toHaveLength(0); // friends_only bypass NEVER reaches a non-opted-in target
     });
 });
