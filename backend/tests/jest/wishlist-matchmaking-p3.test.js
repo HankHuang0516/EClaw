@@ -49,17 +49,16 @@ function fakeAuth() {
     };
 }
 
-// A REAL P2 governed invite sink. We build a P2 router with a capturing
-// sendB2bMessage, and expose a `governedInvite({caller, fromPublicCode, toPublicCode,
-// buyerPublicCode, sellerPublicCode, ...})` that runs the SAME governance P2's /invite
-// runs — opt-in / kill-switch / quota / reachability — against the shared store.
+// A REAL P2 governed invite sink that MIRRORS the index.js wiring EXACTLY after the
+// security fix: the invite is driven with the AUTHENTICATED CALLER as the P2
+// principal, using the caller's OWN creds (callerCreds), inviting `toPublicCode` as
+// the target. It NEVER swaps to another entity's creds. This runs P2's real
+// governance — the caller's opt-in/kill-switch, the caller's quota, and the TARGET's
+// reachability (online AND opted-in) — against the shared store.
 //
-// It does this by invoking the P2 router's POST /invite through supertest with the
-// caller's creds so the whole real control path executes. The from-binding is P2's
-// own (caller = buyer). To keep matchId canonical (buyer,item,seller) across BOTH
-// initiators, the sink chooses whose creds drive the P2 invite based on the canonical
-// buyer, matching how index.js wires it.
-function buildRealInviteSink({ prefs, roster, resolveMap, sent, quota }) {
+// `botSecretReads` records every entity botSecret this sink ever touches, so a test
+// can assert the send path never reads an entity's secret other than the caller's.
+function buildRealInviteSink({ prefs, roster, resolveMap, sent, quota, botSecretReads }) {
     const store = mm.createMatchStore();
     const p2app = express();
     p2app.use(express.json());
@@ -74,26 +73,18 @@ function buildRealInviteSink({ prefs, roster, resolveMap, sent, quota }) {
         quota,
     }));
 
-    // credsFor maps a publicCode back to that entity's creds (buyer drives P2 /invite).
-    const credsByCode = {
-        [SELLER.publicCode]: SELLER,
-        [BUYER.publicCode]: BUYER,
-        [BUYER2.publicCode]: BUYER2,
-    };
-
-    // governedInvite: run the REAL P2 /invite. P2 treats the CALLER as buyer and the
-    // body sellerPublicCode as the target. To keep canonical (buyer,item,seller)
-    // ordering, we drive P2 /invite AS the canonical buyer, inviting the canonical
-    // seller. (This mirrors index.js: the wired sink always sends buyer->seller so the
-    // matchId is symmetric regardless of which P3 front door initiated.)
-    async function governedInvite({ buyerPublicCode, sellerPublicCode, itemId, itemName, note, bypassFriendsOnly }) {
-        const buyerCreds = credsByCode[buyerPublicCode];
-        if (!buyerCreds) return { status: 'error', reason: 'unknown_buyer' };
+    // governedInvite mirrors index.js runP2InviteInProcess: caller drives P2 /invite
+    // with its OWN creds; target = toPublicCode. No other-entity secret is read.
+    async function governedInvite({ callerCreds, toPublicCode, itemId, itemName, note, bypassFriendsOnly }) {
+        if (!callerCreds || !callerCreds.deviceId || !callerCreds.botSecret) {
+            return { status: 'blocked', reason: 'caller_creds_missing' };
+        }
+        if (botSecretReads) botSecretReads.push(callerCreds.botSecret); // the ONLY secret used
         const res = await request(p2app).post(`/mm/${bypassFriendsOnly ? 'connect' : 'invite'}`).send({
-            deviceId: buyerCreds.deviceId,
-            entityId: buyerCreds.entityId,
-            botSecret: buyerCreds.botSecret,
-            sellerPublicCode,
+            deviceId: callerCreds.deviceId,
+            entityId: callerCreds.entityId,
+            botSecret: callerCreds.botSecret, // caller = P2 principal
+            sellerPublicCode: toPublicCode,   // P2 target = whom to invite
             itemId,
             itemName,
             note,
@@ -129,7 +120,8 @@ function buildApp(over = {}) {
         [BUYER2.publicCode]: { deviceId: BUYER2.deviceId, entityId: BUYER2.entityId, entity: {} },
     };
 
-    const sink = buildRealInviteSink({ prefs, roster, resolveMap, sent, quota: over.quota });
+    const botSecretReads = [];
+    const sink = buildRealInviteSink({ prefs, roster, resolveMap, sent, quota: over.quota, botSecretReads });
 
     const opts = {
         authenticateCaller: over.authenticateCaller || fakeAuth(),
@@ -148,7 +140,17 @@ function buildApp(over = {}) {
     const app = express();
     app.use(express.json());
     app.use('/api/wishlist-matchmaking-p3', router);
-    return { app, sent, visionCalls, searchCalls, store: sink.store, router };
+    // p2app exposed so a test can drive a DIRECT P2 invite (to assert quota isolation).
+    return { app, sent, visionCalls, searchCalls, store: sink.store, router, botSecretReads, p2app: sink.p2app };
+}
+
+// Drive a DIRECT P2 /invite as `who` inviting `target` — used to assert that a
+// seller-scan did NOT consume the buyer's quota (the buyer's own invite still works).
+async function directP2Invite(p2app, who, target, itemId) {
+    return request(p2app).post('/mm/invite').send({
+        deviceId: who.deviceId, entityId: who.entityId, botSecret: who.botSecret,
+        sellerPublicCode: target.publicCode, itemId,
+    });
 }
 
 const post = (app, p) => request(app).post(`/api/wishlist-matchmaking-p3${p}`);
@@ -214,6 +216,39 @@ describe('photo path — recognition → P1 search', () => {
         expect(res.body.reason).toBe('no_vision');
     });
 
+    // LOW (review): fileId-only photo input is NOT supported in this release
+    // (server-side R2 fetch is a documented follow-up). The REAL index.js
+    // recognizeItem adapter resolves imageData || fetchImageBase64ByFileId(fileId);
+    // fetchImageBase64ByFileId currently returns null, so a fileId-only request
+    // throws 'no image bytes' → the route fails closed with 502. This recognizer
+    // MIRRORS that exact adapter so the base64-first / fileId-unsupported divergence
+    // is asserted, not hidden. base64 works; fileId-only → 502.
+    describe('fileId photo input is unsupported (fails closed) — mirrors index.js adapter', () => {
+        // Faithful copy of the index.js recognizeItem adapter's bytes-resolution.
+        const fetchImageBase64ByFileId = async () => null; // matches index.js (follow-up)
+        const realAdapterRecognizer = async ({ fileId, imageData, mimeType }) => {
+            const apiKey = 'server-side-key'; // getVisionApiKey() — present in this test
+            if (!apiKey) throw new Error('vision provider key unavailable');
+            let b64 = imageData;
+            if (!b64 && fileId) b64 = await fetchImageBase64ByFileId(fileId);
+            if (!b64) throw new Error('no image bytes');
+            return { itemName: 'ok', tags: [] };
+        };
+
+        it('fileId-only (no base64) ⇒ 502 fail-closed', async () => {
+            const { app } = buildApp({ recognizeItem: realAdapterRecognizer });
+            const res = await post(app, '/photo-search').send({ ...BUYER, fileId: 'file-abc', mimeType: 'image/jpeg', size: 4096 });
+            expect(res.status).toBe(502);
+            expect(res.body.reason).toBe('vision_error');
+        });
+
+        it('base64 (imageData) ⇒ 200 (the supported path)', async () => {
+            const { app } = buildApp({ recognizeItem: realAdapterRecognizer });
+            const res = await post(app, '/photo-search').send({ ...BUYER, imageData: 'aGVsbG8=', mimeType: 'image/jpeg', size: 4096 });
+            expect(res.status).toBe(200);
+        });
+    });
+
     it('hostile recognised itemName is SANITISED before it can inject downstream', async () => {
         const searchCalls = [];
         const { app } = buildApp({
@@ -238,47 +273,128 @@ describe('photo path — recognition → P1 search', () => {
 // ── SELLER-INITIATED MATCHMAKING ────────────────────────────────────────────────
 
 describe('seller-initiated matchmaking (real governed invite)', () => {
+    const matchWish = (buyer, itemId = 42, name = 'Sony WH-1000XM5') =>
+        ({ searchItems: async () => ({ items: [{ id: itemId, name, publicCode: buyer.publicCode }] }) });
+
     it('seller scan ⇒ invites matched buyer via the REAL governed path (send fires)', async () => {
-        const { app, sent } = buildApp({
-            // reverse buyer search returns a buyer whose wish matches the listing
-            searchItems: async () => ({ items: [{ id: 42, name: 'Sony WH-1000XM5', publicCode: BUYER.publicCode }] }),
-        });
-        const res = await post(app, '/seller-listing-scan').send({
-            ...SELLER, itemId: 42, itemName: 'Sony WH-1000XM5',
-        });
+        const { app, sent } = buildApp(matchWish(BUYER));
+        const res = await post(app, '/seller-listing-scan').send({ ...SELLER, itemId: 42, itemName: 'Sony WH-1000XM5' });
         expect(res.status).toBe(200);
         expect(res.body.invitedCount).toBe(1);
         expect(res.body.invited[0].buyerPublicCode).toBe(BUYER.publicCode);
-        // The REAL P2 sink actually delivered a b2b invite envelope.
         expect(sent).toHaveLength(1);
         expect(sent[0].envelope.type).toBe('wishlist_trade_invite');
     });
 
-    it('matched buyer NOT opted-in ⇒ invite blocked, NO send', async () => {
+    // REGRESSION 1 (the HIGH): the on-wire envelope must be FROM THE SELLER (caller),
+    // NOT the buyer. This is the impersonation defect the review reproduced.
+    it('send envelope fromPublicCode === seller (caller), NOT the buyer', async () => {
+        const { app, sent } = buildApp(matchWish(BUYER));
+        await post(app, '/seller-listing-scan').send({ ...SELLER, itemId: 42, itemName: 'x' }).expect(200);
+        expect(sent).toHaveLength(1);
+        expect(sent[0].fromPublicCode).toBe(SELLER.publicCode);   // NOT buyerx
+        expect(sent[0].fromPublicCode).not.toBe(BUYER.publicCode);
+        expect(sent[0].envelope.fromPublicCode).toBe(SELLER.publicCode);
+        expect(sent[0].toPublicCode).toBe(BUYER.publicCode);      // invite goes TO the buyer
+    });
+
+    // REGRESSION 2: target buyer OFFLINE/unreachable ⇒ NOTHING sent. Before the fix,
+    // the buyer was P2's caller so only the seller's reachability was checked and an
+    // invite fired to an offline buyer.
+    it('sends NOTHING when the target buyer is offline/unreachable', async () => {
         const { app, sent } = buildApp({
-            prefs: {
-                [SELLER.deviceId]: { wishlist_matchmaking_enabled: true },
-                [BUYER.deviceId]: {}, // buyer opt-in OFF (default)
+            ...matchWish(BUYER),
+            roster: {
+                [SELLER.publicCode]: { publicCode: SELLER.publicCode, entityId: SELLER.entityId, state: 'IDLE', lastUpdated: Date.now(), isBound: true },
+                // buyer is stale/offline: lastUpdated far in the past
+                [BUYER.publicCode]: { publicCode: BUYER.publicCode, entityId: BUYER.entityId, state: 'IDLE', lastUpdated: Date.now() - 60 * 60 * 1000, isBound: true },
             },
-            searchItems: async () => ({ items: [{ id: 42, name: 'x', publicCode: BUYER.publicCode }] }),
         });
         const res = await post(app, '/seller-listing-scan').send({ ...SELLER, itemId: 42, itemName: 'x' });
         expect(res.status).toBe(200);
         expect(res.body.invitedCount).toBe(0);
-        expect(res.body.skipped.some((s) => s.reason === 'opt_in_off')).toBe(true);
-        expect(sent).toHaveLength(0); // governance blocked it
+        expect(res.body.skipped.some((s) => s.reason === 'unreachable')).toBe(true);
+        expect(sent).toHaveLength(0);
     });
 
-    it('re-running the scan ⇒ deduped, NO second send (matchId idempotency)', async () => {
+    // REGRESSION 4: target buyer NOT opted-in ⇒ NOTHING sent (recipient consent gate,
+    // enforced by P2's isReachableTarget which requires the target opted-in).
+    it('sends NOTHING when the target buyer has not opted in', async () => {
         const { app, sent } = buildApp({
-            searchItems: async () => ({ items: [{ id: 42, name: 'x', publicCode: BUYER.publicCode }] }),
+            ...matchWish(BUYER),
+            prefs: {
+                [SELLER.deviceId]: { wishlist_matchmaking_enabled: true },
+                [BUYER.deviceId]: {}, // buyer opt-in OFF
+            },
         });
+        const res = await post(app, '/seller-listing-scan').send({ ...SELLER, itemId: 42, itemName: 'x' });
+        expect(res.status).toBe(200);
+        expect(res.body.invitedCount).toBe(0);
+        expect(sent).toHaveLength(0);
+    });
+
+    // REGRESSION 4b: the SELLER (caller) not opted-in ⇒ NOTHING sent.
+    it('sends NOTHING when the seller/caller has not opted in', async () => {
+        const { app, sent } = buildApp({
+            ...matchWish(BUYER),
+            prefs: {
+                [SELLER.deviceId]: {}, // seller opt-in OFF
+                [BUYER.deviceId]: { wishlist_matchmaking_enabled: true },
+            },
+        });
+        const res = await post(app, '/seller-listing-scan').send({ ...SELLER, itemId: 42, itemName: 'x' });
+        expect(res.status).toBe(200);
+        expect(res.body.invitedCount).toBe(0);
+        expect(res.body.skipped.some((s) => s.reason === 'opt_in_off')).toBe(true); // seller's own opt-in
+        expect(sent).toHaveLength(0);
+    });
+
+    // REGRESSION 3: quota is the SELLER's, NOT the buyer's. A seller scan must not
+    // drain a matched buyer's matchmaking quota (the DoS the review flagged): the
+    // buyer's own subsequent /invite still succeeds.
+    it('consumes the SELLER quota, not the buyer quota (buyer\'s own invite still works)', async () => {
+        // quota max 1 per entity/device.
+        const { app, sent, p2app } = buildApp({ ...matchWish(BUYER), quota: { max: 1 } });
+        // Seller scan burns ONE invite — it must be the SELLER's quota.
+        await post(app, '/seller-listing-scan').send({ ...SELLER, itemId: 42, itemName: 'x' }).expect(200);
+        expect(sent).toHaveLength(1);
+        // The buyer's OWN direct P2 invite (to a fresh target) must STILL succeed —
+        // proving its quota was not drained by the seller scan.
+        const res = await directP2Invite(p2app, BUYER, BUYER2, 99);
+        expect(res.status).toBe(200); // buyer quota intact
+        expect(sent).toHaveLength(2);
+        // And a SECOND seller scan (different buyer target) is now quota-blocked —
+        // proving the seller's quota is what the first scan consumed.
+        const app2Sent = sent.length;
+        const res2 = await post(app, '/seller-listing-scan').send({
+            ...SELLER, itemId: 77, itemName: 'y',
+        });
+        // No matching buyer wish this time (default search returns none) → no send
+        // anyway; but assert the seller's quota state by a direct seller invite:
+        const sellerDirect = await directP2Invite(p2app, SELLER, BUYER2, 55);
+        expect(sellerDirect.status).toBe(429); // seller quota already spent by the scan
+        expect(res2.status).toBe(200);
+        expect(sent.length).toBe(app2Sent); // seller-blocked, no extra send
+    });
+
+    // REGRESSION 5: no code path reads another entity's botSecret — the only secret
+    // the send path ever touches is the authenticated caller's own.
+    it('never reads another entity\'s botSecret (only the caller\'s own)', async () => {
+        const { app, botSecretReads } = buildApp(matchWish(BUYER));
+        await post(app, '/seller-listing-scan').send({ ...SELLER, itemId: 42, itemName: 'x' }).expect(200);
+        // Every secret used to drive P2 was the SELLER's (the caller) — never the buyer's.
+        expect(botSecretReads.length).toBeGreaterThan(0);
+        expect(botSecretReads.every((s) => s === SELLER.botSecret)).toBe(true);
+        expect(botSecretReads).not.toContain(BUYER.botSecret);
+    });
+
+    it('re-running the scan ⇒ deduped, NO second send (canonical matchId idempotency)', async () => {
+        const { app, sent } = buildApp(matchWish(BUYER));
         await post(app, '/seller-listing-scan').send({ ...SELLER, itemId: 42, itemName: 'x' }).expect(200);
         expect(sent).toHaveLength(1);
         const res2 = await post(app, '/seller-listing-scan').send({ ...SELLER, itemId: 42, itemName: 'x' });
         expect(res2.status).toBe(200);
-        // Either the P3-level dedup or the P2-level dedup catches it; NO new send.
-        expect(sent).toHaveLength(1);
+        expect(sent).toHaveLength(1); // canonical dedup on the shared store
     });
 });
 

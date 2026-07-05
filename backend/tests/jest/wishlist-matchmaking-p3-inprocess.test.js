@@ -65,23 +65,26 @@ function build({ buyerOptIn = true } = {}) {
         sendB2bMessage: async (m) => { sent.push(m); return { success: true }; },
     });
 
-    // ── EXACT COPY of index.js runP2InviteInProcess (buyer drives P2 /invite) ──
-    function runP2InviteInProcess({ buyerPublicCode, sellerPublicCode, itemId, itemName, note, bypassFriendsOnly }) {
+    // ── EXACT COPY of index.js runP2InviteInProcess AFTER the security fix ──
+    // The CALLER drives P2 /invite with its OWN creds (callerCreds); the target is
+    // `toPublicCode`. NEVER looks up another entity's botSecret. `botSecretReads`
+    // records every secret this glue touches so a test can assert isolation.
+    const botSecretReads = [];
+    function runP2InviteInProcess({ callerCreds, toPublicCode, itemId, itemName, note, bypassFriendsOnly }) {
         return new Promise((resolve) => {
-            const buyerTarget = publicCodeIndex[buyerPublicCode];
-            if (!buyerTarget) return resolve({ status: 'blocked', reason: 'buyer_not_found' });
-            const buyerDevice = devices[buyerTarget.deviceId];
-            const buyerEntity = buyerDevice && buyerDevice.entities[buyerTarget.entityId];
-            if (!buyerEntity || !buyerEntity.botSecret) return resolve({ status: 'blocked', reason: 'buyer_secret_unavailable' });
+            if (!callerCreds || !callerCreds.deviceId || callerCreds.entityId === undefined || callerCreds.entityId === null || !callerCreds.botSecret) {
+                return resolve({ status: 'blocked', reason: 'caller_creds_missing' });
+            }
+            botSecretReads.push(callerCreds.botSecret); // the ONLY secret the glue uses
             const req = {
                 method: 'POST',
                 url: bypassFriendsOnly ? '/connect' : '/invite',
                 originalUrl: bypassFriendsOnly ? '/connect' : '/invite',
                 body: {
-                    deviceId: buyerTarget.deviceId,
-                    entityId: buyerTarget.entityId,
-                    botSecret: buyerEntity.botSecret,
-                    sellerPublicCode,
+                    deviceId: callerCreds.deviceId,
+                    entityId: callerCreds.entityId,
+                    botSecret: callerCreds.botSecret, // caller = P2 principal
+                    sellerPublicCode: toPublicCode,   // P2 target = whom to invite
                     itemId,
                     itemName,
                     note,
@@ -115,17 +118,24 @@ function build({ buyerOptIn = true } = {}) {
         matchStore: p2Router._store, // SHARED store (index.js shares wishlistMatchmakingRouter._store)
     }));
 
-    return { p3app, p2Router, sent };
+    return { p3app, p2Router, sent, botSecretReads };
 }
 
 describe('in-process P2 invite wiring (router.handle)', () => {
-    it('seller scan delivers a real P2 invite envelope via router.handle + shared store', async () => {
-        const { p3app, sent } = build();
+    it('seller scan delivers a real P2 invite envelope via router.handle, FROM the seller', async () => {
+        const { p3app, sent, botSecretReads } = build();
         const res = await request(p3app).post('/p3/seller-listing-scan').send({ ...SELLER, itemId: 5, itemName: 'thing' });
         expect(res.status).toBe(200);
         expect(res.body.invitedCount).toBe(1);
         expect(sent).toHaveLength(1);
         expect(sent[0].envelope.type).toBe('wishlist_trade_invite');
+        // THE FIX, verified on the REAL router.handle glue: envelope from = seller,
+        // to = buyer, and the ONLY botSecret the glue touched was the seller's own.
+        expect(sent[0].fromPublicCode).toBe(SELLER.publicCode);
+        expect(sent[0].fromPublicCode).not.toBe(BUYER.publicCode);
+        expect(sent[0].toPublicCode).toBe(BUYER.publicCode);
+        expect(botSecretReads.every((s) => s === SELLER.botSecret)).toBe(true);
+        expect(botSecretReads).not.toContain(BUYER.botSecret);
     });
 
     it('governance fires through the in-process path: buyer opt-in OFF ⇒ blocked, no send', async () => {

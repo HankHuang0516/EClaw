@@ -173,10 +173,13 @@ function rescanMatchId(buyerPublicCode, itemId, sellerPublicCode) {
  *   authenticateCaller({deviceId,entityId,botSecret}) -> {ok, publicCode} | {ok:false}
  *        SAME verifier as P2 / write-auth. The ONLY identity source. Fail closed.
  *   recognizeItem({imageData?, fileId?, mimeType, size, deviceId}) -> Promise<{itemName,tags}>
- *        SERVER-SIDE vision. Wired in index.js to EClaw's OWN Claude vision
- *        (callAnthropic) with the provider key read by NAME from the vault. It
- *        MUST NOT accept a key from the caller. Throws on upstream failure so the
- *        route can fail closed.
+ *        SERVER-SIDE vision. Wired in index.js to EClaw's OWN Claude vision with the
+ *        provider key read by NAME from the vault. It MUST NOT accept a key from the
+ *        caller. Throws on upstream failure so the route can fail closed.
+ *        Supported photo input in this release is caller-supplied base64
+ *        (`imageData`); a server-side fetch-by-`fileId` (device-scoped R2 fetch) is
+ *        a documented follow-up — a fileId-only request currently throws here and the
+ *        route fails closed (502), it does NOT silently succeed.
  *   searchItems(intent) -> Promise<{items:[...]}> | Promise<[...]>   (P1 bridge, same as P2)
  *   governedInvite({caller, fromPublicCode, toPublicCode, itemId, itemName, note, bypassFriendsOnly})
  *        -> Promise<{status, matchId, deduped, reason?}>
@@ -239,41 +242,76 @@ function createRouter(opts = {}) {
             ok: true,
             deviceId,
             entityId,
+            // The caller's OWN verified credentials, threaded to the governed invite
+            // so the invite is driven with the caller as the P2 principal — NEVER by
+            // looking up another entity's secret. This is the fix for the P1/P2
+            // "verified ≠ wired principal" defect: the identity we verified here IS
+            // the identity that drives the on-wire send.
+            botSecret,
             publicCode: mm.normalizeCode(caller.publicCode),
         };
     }
 
-    // Send a governed invite with a HARD from-binding: the invite is ALWAYS sent
-    // FROM the authenticated caller's own publicCode. A body-supplied / computed
-    // `fromPublicCode` that is NOT the caller's own code is REJECTED (this is the
-    // P1/P2 defect class — never let a caller act as an identity it doesn't hold).
-    // On rejection returns { ok:false, reason:'from_not_caller' } and sends nothing.
-    // Canonical roles: `buyerPublicCode`/`sellerPublicCode` fix the matchId order
-    // (buyer,item,seller) for SYMMETRIC dedup regardless of who initiated, while
-    // `from`/`to` control the actual b2b delivery direction. `from` MUST be the
-    // authenticated caller.
+    // Send a governed invite with a HARD principal-binding: the invite is ALWAYS
+    // driven with the AUTHENTICATED CALLER as the P2 principal (its own verified
+    // creds), so the on-wire envelope's `from` is the caller and P2 checks the
+    // CALLER's opt-in + consumes the CALLER's quota + checks the TARGET's
+    // reachability. A `fromPublicCode` that is NOT the caller's own code is REJECTED
+    // — this closes the P1/P2 "verified ≠ wired principal" defect (never look up or
+    // use another entity's botSecret to act on its behalf).
+    //
+    // Canonical dedup: `buyerPublicCode`/`sellerPublicCode` fix the matchId order
+    // (buyer,item,seller) SYMMETRICALLY regardless of who initiated. P3 owns this
+    // dedup at the shared store (P2's internal matchId is keyed on ITS caller, which
+    // differs by direction), checking BEFORE the send and stamping AFTER a real send.
     async function sendGovernedInvite(caller, { fromPublicCode, toPublicCode, buyerPublicCode, sellerPublicCode, itemId, itemName, note, bypassFriendsOnly, rescan }) {
         const from = mm.normalizeCode(fromPublicCode);
         const to = mm.normalizeCode(toPublicCode);
-        // Impersonation guard — fail closed.
+        const buyer = mm.normalizeCode(buyerPublicCode);
+        const seller = mm.normalizeCode(sellerPublicCode);
+        // Principal-binding guard — fail closed. `from` MUST be the verified caller.
         if (from !== caller.publicCode) {
             return { ok: false, reason: 'from_not_caller' };
         }
         if (!mm.isValidPublicCode(to) || to === from) {
             return { ok: false, reason: 'invalid_or_self_target' };
         }
+
+        // Canonical dedup pre-check on the SHARED store (symmetric across directions).
+        const canonicalMatchId = mm.computeMatchId(buyer, itemId, seller);
+        const existing = store.get(canonicalMatchId);
+        if (existing && existing.inviteSent) {
+            return { ok: true, result: { status: 'invited', matchId: canonicalMatchId, deduped: true } };
+        }
+
         const result = await governedInvite({
             caller,
+            // The caller's OWN verified credentials drive the P2 principal. The wired
+            // impl uses THESE — it never resolves another entity's secret.
+            callerCreds: { deviceId: caller.deviceId, entityId: caller.entityId, botSecret: caller.botSecret },
             fromPublicCode: caller.publicCode, // force the verified identity
             toPublicCode: to,
-            buyerPublicCode: mm.normalizeCode(buyerPublicCode),
-            sellerPublicCode: mm.normalizeCode(sellerPublicCode),
+            buyerPublicCode: buyer,
+            sellerPublicCode: seller,
+            canonicalMatchId,
             itemId,
             itemName,
             note,
             bypassFriendsOnly: !!bypassFriendsOnly,
             rescan: !!rescan,
         });
+
+        // Stamp the canonical key after a REAL send so a cross-direction replay dedups.
+        if (result && (result.status === 'invited') && !result.deduped) {
+            store.upsert(canonicalMatchId, {
+                matchId: canonicalMatchId,
+                buyerPublicCode: buyer,
+                sellerPublicCode: seller,
+                itemId: itemId == null ? null : itemId,
+                inviteSent: true,
+                status: 'invited',
+            });
+        }
         return { ok: true, result };
     }
 
@@ -434,22 +472,18 @@ function createRouter(opts = {}) {
                 continue;
             }
 
-            // matchId dedup: (buyer,item,seller). computeMatchId order in P2 is
-            // (buyer,item,seller) — so a SELLER-initiated invite dedups against a
-            // BUYER-initiated one for the same triple. Exactly-once.
+            // Canonical matchId (buyer,item,seller) for reporting; sendGovernedInvite
+            // owns the authoritative dedup on the SHARED store using this same key, so
+            // a SELLER-initiated invite dedups symmetrically against a BUYER-initiated
+            // one for the same triple. Exactly-once.
             const matchId = mm.computeMatchId(buyerCode, itemId, caller.publicCode);
-            const existing = store.get(matchId);
-            if (existing && existing.inviteSent) {
-                skipped.push({ buyerPublicCode: buyerCode, matchId, reason: 'deduped' });
-                continue;
-            }
 
-            // Fire P2's FULL governed invite (seller → buyer). All P2 governance
-            // (buyer/seller opt-in, kill-switch, quota, reachability) runs inside
-            // governedInvite; P3 adds nothing that bypasses it. bypassFriendsOnly is
-            // false — a seller-initiated cold invite still respects friends_only.
-            // Delivery: from = authenticated seller (caller), to = matched buyer.
+            // Fire P2's FULL governed invite with the SELLER (caller) as the P2
+            // principal — so P2 checks the SELLER's opt-in, consumes the SELLER's
+            // quota, and checks the TARGET (buyer)'s reachability (online AND
+            // opted-in). Delivery: from = authenticated seller (caller), to = buyer.
             // Canonical roles for matchId: buyer = matched buyer, seller = caller.
+            // bypassFriendsOnly is false — a cold seller invite respects friends_only.
             try {
                 const sent = await sendGovernedInvite(caller, {
                     fromPublicCode: caller.publicCode,  // send AS the authenticated seller

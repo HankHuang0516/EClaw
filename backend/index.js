@@ -2837,36 +2837,37 @@ async function recognizeWishlistItemWithVision({ apiKey, base64, mimeType }) {
 }
 
 // Run a P2 governed invite IN-PROCESS through the already-mounted P2 router so P3
-// reuses ALL of P2's governance (opt-in / kill-switch / quota / reachability /
-// dedup) with zero duplication and zero forking. We drive the P2 router's /invite
-// (or /connect) handler as the CANONICAL BUYER inviting the CANONICAL SELLER — this
-// keeps the matchId order (buyer,item,seller) symmetric no matter which P3 front
-// door initiated, and shares the P2 match store for cross-flow dedup.
+// reuses ALL of P2's governance (opt-in / kill-switch / quota / reachability) with
+// zero duplication and zero forking.
 //
-// The buyer-drives-invite wiring means the buyer's own botSecret is needed to
-// satisfy P2's caller-auth. P3 only ever asks to invite AS the authenticated caller
-// (its impersonation guard already enforced from === caller before calling this),
-// so we look up the buyer entity's live botSecret server-side; if the buyer is not
-// the request principal (only possible for a future privileged scheduler, which we
-// do not grant), we fail closed.
-function runP2InviteInProcess({ buyerPublicCode, sellerPublicCode, itemId, itemName, note, bypassFriendsOnly }) {
+// SECURITY FIX (independent review of #3910, HIGH): the invite is driven with the
+// AUTHENTICATED CALLER as the P2 principal, using the caller's OWN verified
+// credentials (`callerCreds`, threaded from the P3 request the caller already
+// authenticated). We NEVER look up or use another entity's botSecret to act on its
+// behalf. P2's model is "caller invites target": with the caller as principal, P2
+// correctly checks the CALLER's opt-in + kill-switch, consumes the CALLER's quota,
+// checks the TARGET's reachability (online AND opted-in — this is the recipient
+// consent gate), and stamps the on-wire envelope with from = the caller. `to` is
+// the invite target (P2's `sellerPublicCode` body field is just "the target").
+// The canonical (buyer,item,seller) dedup is owned by the P3 module on the shared
+// store; this function only performs the governed send.
+function runP2InviteInProcess({ callerCreds, toPublicCode, itemId, itemName, note, bypassFriendsOnly }) {
     return new Promise((resolve) => {
-        const buyerTarget = publicCodeIndex[buyerPublicCode];
-        if (!buyerTarget) return resolve({ status: 'blocked', reason: 'buyer_not_found' });
-        const buyerDevice = devices[buyerTarget.deviceId];
-        const buyerEntity = buyerDevice && buyerDevice.entities[buyerTarget.entityId];
-        if (!buyerEntity || !buyerEntity.botSecret) return resolve({ status: 'blocked', reason: 'buyer_secret_unavailable' });
+        if (!callerCreds || !callerCreds.deviceId || callerCreds.entityId === undefined || callerCreds.entityId === null || !callerCreds.botSecret) {
+            return resolve({ status: 'blocked', reason: 'caller_creds_missing' });
+        }
 
-        // Minimal in-process req/res that the P2 express router can handle.
+        // Minimal in-process req/res that the P2 express router can handle. The P2
+        // principal is the CALLER (its own verified creds); the P2 target is `to`.
         const req = {
             method: 'POST',
             url: bypassFriendsOnly ? '/connect' : '/invite',
             originalUrl: bypassFriendsOnly ? '/connect' : '/invite',
             body: {
-                deviceId: buyerTarget.deviceId,
-                entityId: buyerTarget.entityId,
-                botSecret: buyerEntity.botSecret, // buyer drives P2 /invite (caller = buyer)
-                sellerPublicCode,
+                deviceId: callerCreds.deviceId,
+                entityId: callerCreds.entityId,
+                botSecret: callerCreds.botSecret, // caller drives P2 /invite (principal = caller)
+                sellerPublicCode: toPublicCode,   // P2's "target" = whom to invite
                 itemId,
                 itemName,
                 note,
@@ -2922,8 +2923,10 @@ app.use('/api/wishlist-matchmaking-p3', wishlistMatchmakingP3.createRouter({
         return recognizeWishlistItemWithVision({ apiKey, base64: b64, mimeType });
     },
     // Reuse P2's ENTIRE governed invite path in-process. No re-implementation.
-    governedInvite: async ({ buyerPublicCode, sellerPublicCode, itemId, itemName, note, bypassFriendsOnly }) =>
-        runP2InviteInProcess({ buyerPublicCode, sellerPublicCode, itemId, itemName, note, bypassFriendsOnly }),
+    // The invite is driven with the AUTHENTICATED CALLER as the P2 principal (its
+    // own verified creds), inviting `toPublicCode`. NEVER another entity's secret.
+    governedInvite: async ({ callerCreds, toPublicCode, itemId, itemName, note, bypassFriendsOnly }) =>
+        runP2InviteInProcess({ callerCreds, toPublicCode, itemId, itemName, note, bypassFriendsOnly }),
     // SHARE the P2 match store so P3 dedup is symmetric with P2 (matchId identity).
     matchStore: wishlistMatchmakingRouter._store,
 }));
