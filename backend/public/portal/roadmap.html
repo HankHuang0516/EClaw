@@ -1043,25 +1043,25 @@
                 </ul>
             </div>
 
-            <div class="rm-phase todo" data-card-id="wishlist-phase-3-vision">
-                <h3>Phase 3 — <span data-i18n="rm_wl_p3_name">照片辨識 + 賣家發起式撮合</span> <span class="rm-status-badge todo" data-i18n="rm_planned">Planned</span></h3>
-                <div class="rm-phase-desc" data-i18n="rm_wl_p3_desc">擴充撮合能力：照片路徑 (傳照片 → 品項辨識 → 撮合)、賣家發起式撮合 (上架 → 反向搜尋 wishlist 想要清單 → 邀請買家)，以及週期性重掃/去重。</div>
+            <div class="rm-phase done" data-card-id="wishlist-phase-3-vision">
+                <h3>Phase 3 — <span data-i18n="rm_wl_p3_name">照片辨識 + 賣家發起式撮合</span> <span class="rm-status-badge done" data-i18n="rm_done">Done</span></h3>
+                <div class="rm-phase-desc" data-i18n="rm_wl_p3_desc">擴充撮合能力：照片路徑 (呼叫方 agent 自帶 vision 辨識 → 餵入 P1 搜尋)、賣家發起式撮合 (上架 → 反向搜尋 wishlist 想要清單 → 邀請買家)，以及週期性重掃/去重。架構原則「官方不介入」：平台不替 agent 跑運算、不代行、不補貼。</div>
                 <ul class="rm-tasks">
-                    <li data-i18n="rm_wl_p3_t1">照片路徑：EClaw Claude vision 抽取品名/標籤 → 餵入 P1 搜尋 (含 vision 成本上限，跑在 entity-2 預算上)</li>
+                    <li data-i18n="rm_wl_p3_t1">照片路徑：呼叫方自己的 agent 跑自己的 vision，送出已辨識的品名/標籤 (平台不跑 vision)；上架照片以 device-scoped fileId 存 EClaw 標準儲存 (/api/files → R2)</li>
                     <li data-i18n="rm_wl_p3_t2">賣家發起式：merchant 上架 → 反向搜尋 wishlist 想要清單 → 對買家發 invite (仍走 P0 協定)</li>
-                    <li data-i18n="rm_wl_p3_t3">週期性重掃迴圈：對新賣家「剛好一次」發邀請，以 matchId=hash(...) 去重、冪等重查</li>
+                    <li data-i18n="rm_wl_p3_t3">週期性重掃迴圈：對新賣家「剛好一次」發邀請，以 matchId=hash(...) 去重、冪等重查 (無中央排程，各 agent 以自身身分自呼叫)</li>
                 </ul>
             </div>
 
-            <div class="rm-phase todo" data-card-id="wishlist-phase-4-ga">
-                <h3>Phase 4 — <span data-i18n="rm_wl_p4_name">GA 硬化 + dark-launch → default-on</span> <span class="rm-status-badge todo" data-i18n="rm_planned">Planned</span></h3>
-                <div class="rm-phase-desc" data-i18n="rm_wl_p4_desc">GA 上線硬化：指標、濫用/rate-limit、離線賣家 fallback、結構化邀請原語升級，dark-launch → 待真實庫存出現後預設開啟。</div>
+            <div class="rm-phase in_progress" data-card-id="wishlist-phase-4-ga">
+                <h3>Phase 4 — <span data-i18n="rm_wl_p4_name">GA 硬化 + dark-launch → default-on</span> <span class="rm-status-badge in_progress" data-i18n="rm_in_progress">In Progress</span></h3>
+                <div class="rm-phase-desc" data-i18n="rm_wl_p4_desc">GA 上線硬化：指標、濫用/rate-limit、離線賣家 fallback，dark-launch → 待真實庫存出現後預設開啟。加固只加防線、不弱化任何既有控制 (opt-in 預設關 / kill-switch / 配額 / 雙人拍板 / from-binding / device-scoped fileId / opt-in reachability)。</div>
                 <ul class="rm-tasks">
-                    <li data-i18n="rm_wl_p4_t1">指標：撮合品質 / 邀請送達率 / 接受率 / 成本 metrics</li>
-                    <li data-i18n="rm_wl_p4_t2">濫用防護：對上架文字/照片做 prompt-injection 硬化與清洗；rate-limit 調校</li>
-                    <li data-i18n="rm_wl_p4_t3">離線/非 EClaw 賣家 fallback：wishlist-native 通知或排隊重試</li>
-                    <li data-i18n="rm_wl_p4_t4">結構化邀請原語升級 (rich-card ask_id callback 或 A2A tasks/send push)，取代 v1 free-form 信封</li>
-                    <li data-i18n="rm_wl_p4_t5">Dark-launch → wishlist 有真實庫存後才 default-on</li>
+                    <li data-i18n="rm_wl_p4_t1">指標：邀請送達 / 攔截 / 去重 / 接受 / 拒絕 / 聯絡釋出計數 + 分因攔截 (killswitch/quota/rate-limit/abuse/GA-gate/unreachable)，唯讀 /metrics 快照 ✅</li>
+                    <li data-i18n="rm_wl_p4_t2">濫用防護：對上架文字/照片做 prompt-injection 清洗 (延用 P2 sanitizer)；per-caller/per-IP rate-limit (獨立於商業配額) ✅</li>
+                    <li data-i18n="rm_wl_p4_t3">離線/非 EClaw 賣家 fallback：暫時無法送達 → 有界重試佇列 (指數退避 + dead-letter，無中央排程) ✅</li>
+                    <li data-i18n="rm_wl_p4_t4">結構化邀請原語升級 (rich-card ask_id callback 或 A2A tasks/send push)，取代 v1 free-form 信封 — 後續卡 (v1 信封已完整治理，非阻擋)</li>
+                    <li data-i18n="rm_wl_p4_t5">Dark-launch → 全域 rollout flag (env WISHLIST_MATCHMAKING_GA_ENABLED，預設關)；wishlist 有真實庫存後才 default-on ✅</li>
                 </ul>
             </div>
         </div>
