@@ -8,7 +8,7 @@
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
 - **Current version**: 1.1190.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
-- **Android app version**: 1.0.96 (versionCode 104); `LATEST_APP_VERSION` constant in `backend/index.js`
+- **Android app version**: 1.1.15 (versionCode 126); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
 ---
@@ -89,6 +89,8 @@ EClaw/
 │   │   ├── heartbeat.js       # Anti-laziness sweeper (2h prompt, 24h escalate)
 │   │   └── audit-rules.js     # Compliance + multi-tenant audit rules (9 rules)
 │   ├── entity-status.js       # Per-entity error counters + operation log + quote service
+│   ├── entity-walk-config.js  # Per-entity wallpaper walk configuration (weights + negative actions)
+│   ├── wishlist-route.js      # Wishlist bridge: SSRF-safe proxy to external Wishlist app
 │   ├── openapi.yaml          # OpenAPI 3.0 specification
 │   ├── auth_schema.sql       # User accounts + auth SQL schema
 │   ├── mission_schema.sql    # Mission dashboard SQL schema
@@ -178,7 +180,7 @@ EClaw/
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
 │   ├── tests/                # Regression + integration tests (79 files)
-│   ├── tests/jest/           # Jest unit tests (418 files, CI-run via `npm test`)
+│   ├── tests/jest/           # Jest unit tests (454 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -1345,11 +1347,27 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **AI Support Admin Guard**: Guard `resolveIsAdmin` against non-uuid principals (#3665)
 - **Device TTS Delivery Awareness**: POST /api/device/tts now reports `delivered:false` + `warning:"tts_not_delivered"` when device offline and no FCM token, instead of silent fire-and-forget (#3662)
 
+### Recent Features (v1.1190.x+, 2026-07-04 – 2026-07-05)
+
+- **Wishlist Bridge Proxy (v1.1190)**: SSRF-safe thin proxy to external Wishlist app — `wishlist-route.js` with hardcoded upstream host; 3 endpoints (GET /search, GET /items/public, POST /listings); confused-deputy guard requiring caller auth + ownership binding on write path; vault-first merchant key resolution (#3903)
+- **Action Request Pending Count (v1.1190)**: `GET /api/action-requests/pending-count` for home-screen widget / icon badge (#3893)
+- **Entity Walk Config API (v1.1190)**: Self-sovereign wallpaper walk-config API — weights + negative-action opt-in; `entity-walk-config.js` module (#3895)
+- **Capability-Aware Dispatch Guard (v1.1190)**: Kanban warns on browser/screenshot cards assigned to browser-incapable entities (#3897)
+- **Done-Gate Vision Evidence (v1.1190)**: HARD-enforce vision/interaction evidence for UI/UX cards; auto-detect UI/UX cards from title/description keywords + attached image (#3890–#3891)
+- **Kanban PUT Snake-Case Aliases (v1.1190)**: PUT /card/:id tolerates snake_case field aliases + warns on unknown fields (#3894)
+- **ShowConfirm Typed DELETE (v1.1190)**: `confirmPhrase` gate for destructive modals; account deletion requires typed "DELETE" (#3887)
+- **Chat Image Thumbnails (v1.1190)**: Inline image thumbnails + always-visible card attachments + corner close (#3889)
+- **PetDX Sprite ORB Fix (v1.1190)**: Proxy community sprites same-origin to defeat Chrome ORB (#3888)
+- **Vault Key Reference GET-Only (v1.1190)**: Key Reference GET-only — stop resurrecting deleted vault keys (P1) (#3901)
+- **Mission Card Deep-Link Fix (v1.1190)**: Stop mission.html card deep-link self-looping the native bridge (#3898)
+- **Android Wallpaper Walk Config (v1.1190)**: Drive wallpaper walk actions from server config (#3902)
+- **App Version**: Updated to 1.1.15 (versionCode 126)
+
 ---
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~5994 test cases across 431 Jest files + 79 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~6238 test cases across 454 Jest files + 79 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1442,7 +1460,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
 | Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
 
-### Jest Unit Tests (CI-run, `npm test`, 418 files)
+### Jest Unit Tests (CI-run, `npm test`, 454 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -1525,7 +1543,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (418 files)
+cd backend && npm test                  # Jest unit tests (454 files)
 cd backend && npm run lint              # ESLint
 ```
 
