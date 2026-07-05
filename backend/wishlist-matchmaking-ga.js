@@ -71,6 +71,11 @@ const METRICS = Object.freeze({
     OFFLINE_RETRIED: 'offline_retried',
     OFFLINE_DELIVERED: 'offline_delivered',
     OFFLINE_DEAD_LETTERED: 'offline_dead_lettered',
+    // (MED#2) enqueue rejected because a queue cap was hit — a memory-DoS guard.
+    OFFLINE_QUEUE_FULL: 'offline_queue_full',
+    // (MED#1) a queued retry was dead-lettered because the target became opted-out /
+    // killswitched / unreachable AFTER enqueue (the "stop reaching me" control wins).
+    OFFLINE_REVOKED: 'offline_revoked',
 });
 
 // Reason string (from a P2/P3 blocked result) → the fine-grained block counter.
@@ -180,9 +185,15 @@ function createRateLimiter({ max, windowMs, now, metrics, disabled } = {}) {
         return { allowed: true, remaining: Math.max(0, cap - arr.length), retryAfterMs: 0 };
     }
 
+    // (LOW#3) This limiter runs PRE-auth (in front of the router), so req.body.deviceId
+    // is attacker-controlled and NOT verified — keying on it would let an unauth
+    // attacker rotate deviceId for a fresh bucket each request, diluting the cap. The
+    // velocity key is therefore anchored on the IP, which an attacker can't rotate for
+    // free at scale, so an unauth flood from one IP is capped no matter how many
+    // deviceIds it invents. (Per-CALLER business fairness — one entity vs. another —
+    // is separately enforced POST-auth by the P2 invite quota, keyed on the verified
+    // deviceId; this pre-auth layer's job is only to blunt raw request velocity.)
     function keyFor(req) {
-        const deviceId = req && req.body && req.body.deviceId;
-        if (deviceId) return `dev:${deviceId}`;
         const ip = (req && (req.ip || (req.headers && req.headers['x-forwarded-for']))) || 'noip';
         return `ip:${ip}`;
     }
@@ -250,6 +261,11 @@ function gaGate({ env, metrics } = {}) {
 
 const OFFLINE_MAX_ATTEMPTS_DEFAULT = 3;
 const OFFLINE_BASE_BACKOFF_MS_DEFAULT = 60 * 1000; // 1 min, exponential
+// (MED#2) buffer-size caps — this queue lives in process memory, so an attacker (or
+// a bug) that enqueues without bound is a memory-DoS. A TOTAL cap bounds the whole
+// buffer; a PER-DEVICE cap stops one caller from starving/evicting everyone else.
+const OFFLINE_MAX_QUEUE_SIZE_DEFAULT = 5000;
+const OFFLINE_MAX_PER_DEVICE_DEFAULT = 100;
 
 /**
  * A bounded, per-caller retry buffer for a governed send that could not be
@@ -264,29 +280,57 @@ const OFFLINE_BASE_BACKOFF_MS_DEFAULT = 60 * 1000; // 1 min, exponential
  * wishlist-native channel) short-circuits straight to dead-letter — no wasted
  * retries. A transient failure backs off exponentially up to maxAttempts.
  */
-function createOfflineFallbackQueue({ sender, maxAttempts, baseBackoffMs, now, metrics, onDeadLetter } = {}) {
+function createOfflineFallbackQueue({ sender, maxAttempts, baseBackoffMs, now, metrics, onDeadLetter, maxQueueSize, maxPerDevice } = {}) {
     const deliver = typeof sender === 'function' ? sender : async () => ({ delivered: false });
     const maxA = Number.isFinite(Number(maxAttempts)) ? Number(maxAttempts) : OFFLINE_MAX_ATTEMPTS_DEFAULT;
     const backoff = Number.isFinite(Number(baseBackoffMs)) ? Number(baseBackoffMs) : OFFLINE_BASE_BACKOFF_MS_DEFAULT;
     const clock = typeof now === 'function' ? now : () => Date.now();
     const deadLetterCb = typeof onDeadLetter === 'function' ? onDeadLetter : () => {};
+    const maxSize = Number.isFinite(Number(maxQueueSize)) ? Number(maxQueueSize) : OFFLINE_MAX_QUEUE_SIZE_DEFAULT;
+    const maxPerDev = Number.isFinite(Number(maxPerDevice)) ? Number(maxPerDevice) : OFFLINE_MAX_PER_DEVICE_DEFAULT;
     const jobs = new Map(); // jobKey -> record
+    const perDevice = new Map(); // fromDeviceId -> live job count
     let seq = 0;
 
     function nextDelayMs(attempts) {
         return backoff * Math.pow(2, Math.max(0, attempts - 1));
     }
 
+    function deviceKeyOf(payload) {
+        const d = payload && payload.fromDeviceId;
+        return d ? String(d) : '__nodev__';
+    }
+    function bump(devKey, delta) {
+        const n = (perDevice.get(devKey) || 0) + delta;
+        if (n <= 0) perDevice.delete(devKey);
+        else perDevice.set(devKey, n);
+    }
+
     // Enqueue a job. jobKey de-dups so the same undeliverable (buyer,item,seller)
     // enqueued twice is ONE job (idempotent, mirrors matchId dedup upstream).
+    //
+    // (MED#2) Buffer caps enforced BEFORE insert: an over-total or over-per-device
+    // enqueue is REJECTED (not inserted, no eviction of an existing job) and a
+    // queue-full metric is incremented. The dedup fast-path returns first so a
+    // replay of an already-queued job is never counted against the cap.
     function enqueue({ jobKey, payload }) {
         const key = jobKey || `job-${++seq}`;
         if (jobs.has(key)) return { queued: true, jobKey: key, deduped: true };
+        const devKey = deviceKeyOf(payload);
+        if (jobs.size >= maxSize) {
+            if (metrics) metrics.inc(METRICS.OFFLINE_QUEUE_FULL);
+            return { queued: false, jobKey: key, reason: 'queue_full' };
+        }
+        if ((perDevice.get(devKey) || 0) >= maxPerDev) {
+            if (metrics) metrics.inc(METRICS.OFFLINE_QUEUE_FULL);
+            return { queued: false, jobKey: key, reason: 'device_queue_full' };
+        }
         const t = clock();
         jobs.set(key, {
             jobKey: key, payload, attempts: 0, status: 'queued',
-            enqueuedAt: t, nextAttemptAt: t, lastError: null,
+            enqueuedAt: t, nextAttemptAt: t, lastError: null, devKey,
         });
+        bump(devKey, 1);
         if (metrics) metrics.inc(METRICS.OFFLINE_QUEUED);
         return { queued: true, jobKey: key, deduped: false };
     }
@@ -315,16 +359,24 @@ function createOfflineFallbackQueue({ sender, maxAttempts, baseBackoffMs, now, m
                 if (metrics) metrics.inc(METRICS.OFFLINE_DELIVERED);
                 summary.delivered += 1;
                 jobs.delete(rec.jobKey);
+                bump(rec.devKey, -1);
                 continue;
             }
             rec.lastError = (result && result.error) || 'undelivered';
             const permanent = !!(result && result.permanent);
-            if (permanent || rec.attempts >= maxA) {
+            // (MED#1) `revoked` marks a job the sender refused because the target
+            // became opted-out / killswitched / unreachable after enqueue — a
+            // permanent dead-letter that ALSO bumps a dedicated metric so operators
+            // can see the "stop reaching me" control taking effect.
+            const revoked = !!(result && result.revoked);
+            if (permanent || revoked || rec.attempts >= maxA) {
                 rec.status = 'dead_letter';
                 if (metrics) metrics.inc(METRICS.OFFLINE_DEAD_LETTERED);
+                if (revoked && metrics) metrics.inc(METRICS.OFFLINE_REVOKED);
                 summary.deadLettered += 1;
-                try { deadLetterCb({ ...rec, permanent }); } catch (_e) { /* non-critical */ }
+                try { deadLetterCb({ ...rec, permanent, revoked }); } catch (_e) { /* non-critical */ }
                 jobs.delete(rec.jobKey);
+                bump(rec.devKey, -1);
                 continue;
             }
             rec.nextAttemptAt = t + nextDelayMs(rec.attempts);
@@ -337,10 +389,10 @@ function createOfflineFallbackQueue({ sender, maxAttempts, baseBackoffMs, now, m
     function stats() {
         let queued = 0;
         for (const rec of jobs.values()) if (rec.status === 'queued') queued += 1;
-        return { queued, total: jobs.size };
+        return { queued, total: jobs.size, maxSize, maxPerDevice: maxPerDev, devices: perDevice.size };
     }
 
-    return { enqueue, drain, stats, _jobs: jobs, maxAttempts: maxA };
+    return { enqueue, drain, stats, _jobs: jobs, _perDevice: perDevice, maxAttempts: maxA, maxSize, maxPerDevice: maxPerDev };
 }
 
 module.exports = {
@@ -360,4 +412,6 @@ module.exports = {
     createOfflineFallbackQueue,
     OFFLINE_MAX_ATTEMPTS_DEFAULT,
     OFFLINE_BASE_BACKOFF_MS_DEFAULT,
+    OFFLINE_MAX_QUEUE_SIZE_DEFAULT,
+    OFFLINE_MAX_PER_DEVICE_DEFAULT,
 };

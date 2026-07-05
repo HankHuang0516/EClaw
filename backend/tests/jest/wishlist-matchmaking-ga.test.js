@@ -378,3 +378,127 @@ describe('offline / non-EClaw fallback queue', () => {
         expect(queue.stats().total).toBe(1);
     });
 });
+
+// ═════════════════════════════════════════════════════════════════════════════
+// 6) MED#1 — a queued retry re-runs the TARGET's governance before re-driving:
+//    a seller who flips killswitch / opts-out AFTER enqueue is NOT delivered; the
+//    job dead-letters (revoked). Uses the REAL P2 predicates (mm.isKillSwitchOn /
+//    mm.isReachableTarget) composed exactly as index.js wires them — no re-impl.
+// ═════════════════════════════════════════════════════════════════════════════
+describe('MED#1: offline drain re-checks target governance (stop-reaching-me wins)', () => {
+    // A faithful copy of index.js's governance re-check, driven by a live prefs map.
+    // (index.js reads devicePrefs.getPrefs; here we read the same-shaped map.)
+    // The queue invokes sender(rec.payload), so the arg IS the enqueued payload.
+    function makeGovernedSender({ prefs, roster, delivered }) {
+        return async (payload) => {
+            const to = (payload && payload.toPublicCode) || '';
+            const p = prefs[to] || {};
+            const rosterEntry = roster ? roster[to] || null : null;
+            // SAME predicates the P2 router applies at invite time.
+            if (mm.isKillSwitchOn(p)) return { delivered: false, permanent: true, revoked: true, error: 'target_killswitch' };
+            if (!mm.isReachableTarget({ rosterEntry, prefs: p })) return { delivered: false, permanent: true, revoked: true, error: 'unreachable' };
+            delivered.push(to);
+            return { delivered: true };
+        };
+    }
+
+    it('seller flips killswitch ON after enqueue ⇒ drain does NOT deliver, job dead-letters (revoked)', async () => {
+        const metrics = ga.createMetrics();
+        const delivered = [];
+        // At enqueue time the seller was reachable (opted-in, no killswitch).
+        const prefs = { [SELLER.publicCode]: { wishlist_matchmaking_enabled: true } };
+        const queue = ga.createOfflineFallbackQueue({
+            metrics,
+            sender: makeGovernedSender({ prefs, delivered }),
+        });
+        queue.enqueue({ jobKey: `mm-${SELLER.publicCode}`, payload: { toPublicCode: SELLER.publicCode, fromDeviceId: BUYER.deviceId } });
+
+        // Seller flips the "stop reaching me" kill-switch AFTER enqueue.
+        prefs[SELLER.publicCode].wishlist_matchmaking_killswitch = true;
+
+        const sum = await queue.drain();
+        expect(delivered).toHaveLength(0);          // NOT delivered
+        expect(sum.delivered).toBe(0);
+        expect(sum.deadLettered).toBe(1);            // dead-lettered, not retried
+        const c = metrics.snapshot().counters;
+        expect(c.offline_revoked).toBe(1);
+        expect(c.offline_dead_lettered).toBe(1);
+        // Re-draining does nothing (not retried forever).
+        expect((await queue.drain()).retried).toBe(0);
+        expect(queue.stats().queued).toBe(0);
+    });
+
+    it('seller opts OUT after enqueue ⇒ unreachable ⇒ dead-letters, no delivery', async () => {
+        const metrics = ga.createMetrics();
+        const delivered = [];
+        const prefs = { [SELLER.publicCode]: { wishlist_matchmaking_enabled: true } };
+        const queue = ga.createOfflineFallbackQueue({ metrics, sender: makeGovernedSender({ prefs, delivered }) });
+        queue.enqueue({ jobKey: 'j', payload: { toPublicCode: SELLER.publicCode, fromDeviceId: BUYER.deviceId } });
+        prefs[SELLER.publicCode].wishlist_matchmaking_enabled = false; // opt OUT
+        const sum = await queue.drain();
+        expect(delivered).toHaveLength(0);
+        expect(sum.deadLettered).toBe(1);
+        expect(metrics.snapshot().counters.offline_revoked).toBe(1);
+    });
+
+    it('still-opted-in seller ⇒ retry DELIVERS (governance re-check is not a blanket block)', async () => {
+        const delivered = [];
+        const prefs = { [SELLER.publicCode]: { wishlist_matchmaking_enabled: true } };
+        const queue = ga.createOfflineFallbackQueue({ sender: makeGovernedSender({ prefs, delivered }) });
+        queue.enqueue({ jobKey: 'ok', payload: { toPublicCode: SELLER.publicCode, fromDeviceId: BUYER.deviceId } });
+        const sum = await queue.drain();
+        expect(delivered).toEqual([SELLER.publicCode]);
+        expect(sum.delivered).toBe(1);
+    });
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// 7) MED#2 — the queue is size-bounded (memory-DoS guard): a TOTAL cap and a
+//    PER-DEVICE cap both reject over-cap enqueues + increment offline_queue_full.
+// ═════════════════════════════════════════════════════════════════════════════
+describe('MED#2: offline queue is size-bounded', () => {
+    it('filling to the TOTAL cap ⇒ next enqueue rejected + offline_queue_full metric', () => {
+        const metrics = ga.createMetrics();
+        const queue = ga.createOfflineFallbackQueue({ metrics, maxQueueSize: 3, maxPerDevice: 100, sender: async () => ({ delivered: false }) });
+        for (let i = 0; i < 3; i++) {
+            expect(queue.enqueue({ jobKey: `j${i}`, payload: { fromDeviceId: `d${i}` } }).queued).toBe(true);
+        }
+        const over = queue.enqueue({ jobKey: 'j-over', payload: { fromDeviceId: 'dX' } });
+        expect(over.queued).toBe(false);
+        expect(over.reason).toBe('queue_full');
+        expect(metrics.snapshot().counters.offline_queue_full).toBe(1);
+        expect(queue.stats().total).toBe(3); // NOT grown past the cap
+    });
+
+    it('one fromDeviceId hitting its PER-DEVICE cap is rejected while ANOTHER caller still enqueues', () => {
+        const metrics = ga.createMetrics();
+        const queue = ga.createOfflineFallbackQueue({ metrics, maxQueueSize: 1000, maxPerDevice: 2, sender: async () => ({ delivered: false }) });
+        // caller A fills its per-device budget (2)
+        expect(queue.enqueue({ jobKey: 'a1', payload: { fromDeviceId: 'A' } }).queued).toBe(true);
+        expect(queue.enqueue({ jobKey: 'a2', payload: { fromDeviceId: 'A' } }).queued).toBe(true);
+        const aOver = queue.enqueue({ jobKey: 'a3', payload: { fromDeviceId: 'A' } });
+        expect(aOver.queued).toBe(false);
+        expect(aOver.reason).toBe('device_queue_full');
+        // caller B is unaffected — no cross-caller starvation.
+        expect(queue.enqueue({ jobKey: 'b1', payload: { fromDeviceId: 'B' } }).queued).toBe(true);
+        expect(metrics.snapshot().counters.offline_queue_full).toBe(1);
+    });
+
+    it('a drained (delivered/dead-lettered) job frees the per-device budget', async () => {
+        let online = false;
+        let t = 0;
+        const queue = ga.createOfflineFallbackQueue({
+            maxPerDevice: 1, baseBackoffMs: 10, now: () => t,
+            sender: async () => (online ? { delivered: true } : { delivered: false }),
+        });
+        expect(queue.enqueue({ jobKey: 'x1', payload: { fromDeviceId: 'A' } }).queued).toBe(true);
+        // A is at its cap of 1 → second rejected
+        expect(queue.enqueue({ jobKey: 'x2', payload: { fromDeviceId: 'A' } }).queued).toBe(false);
+        // deliver x1 → frees A's budget
+        online = true;
+        await queue.drain();
+        expect(queue.stats().queued).toBe(0);
+        // now A can enqueue again
+        expect(queue.enqueue({ jobKey: 'x3', payload: { fromDeviceId: 'A' } }).queued).toBe(true);
+    });
+});

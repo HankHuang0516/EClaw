@@ -2672,6 +2672,37 @@ async function wishlistMmSendB2bMessage({ fromDeviceId, fromEntityId, fromPublic
     });
 }
 
+// (MED#1) Re-evaluate a matchmaking TARGET's own governance for the offline-retry
+// path. Returns a non-empty REASON string when the target must NOT be reached
+// (killswitch ON, opted OUT, or unreachable-by-opt-in) — i.e. the "stop reaching me"
+// control was toggled AFTER the invite was enqueued — else null (still reachable).
+// Reads ONLY the target's own device prefs + roster; never a botSecret. Mirrors the
+// exact predicates P2 handleInvite applies (isKillSwitchOn / isReachableTarget).
+async function isMatchmakingTargetRevoked(toPublicCode) {
+    try {
+        const code = wishlistMatchmaking.normalizeCode(toPublicCode);
+        const resolved = publicCodeIndex[code];
+        if (!resolved || !resolved.deviceId) return 'target_not_found';
+        const device = devices[resolved.deviceId];
+        const entity = device && device.entities && device.entities[resolved.entityId];
+        const rosterEntry = entity ? {
+            publicCode: entity.publicCode || null,
+            entityId: entity.entityId,
+            state: entity.state,
+            lastUpdated: entity.lastUpdated,
+            isBound: !!entity.isBound,
+        } : null;
+        const prefs = (await devicePrefs.getPrefs(resolved.deviceId)) || {};
+        if (wishlistMatchmaking.isKillSwitchOn(prefs)) return 'target_killswitch';
+        if (!wishlistMatchmaking.isReachableTarget({ rosterEntry, prefs })) return 'unreachable';
+        return null;
+    } catch (_e) {
+        // Fail SAFE toward NOT delivering: if we can't confirm the target still
+        // consents, treat it as revoked rather than risk an unwanted send.
+        return 'governance_recheck_failed';
+    }
+}
+
 // ── P4 GA hardening (card_bdf2f1f549aaf71238048b01) ──────────────────────────
 // Additive-only defense layered ON TOP of P0-P3: it never weakens opt-in /
 // kill-switch / quota / consent / from-binding / IDOR / opt-in-reachability.
@@ -2709,11 +2740,25 @@ const wishlistMatchmakingOfflineQueue = wishlistMatchmakingGa.createOfflineFallb
     // does NOT re-authenticate and therefore NEVER stores or reads a botSecret
     // (security guardrail: never read another entity's secret). We STILL re-check
     // the global GA gate so dark-launch can freeze retries too.
-    sender: async (job) => {
-        const p = (job && job.payload) || {};
+    // NOTE: the queue invokes `sender(rec.payload)` — so `payload` IS the enqueued
+    // payload object (fromDeviceId / toPublicCode / envelope / …), NOT a wrapper.
+    sender: async (payload) => {
+        const p = payload || {};
         if (!wishlistMatchmakingGa.isGaEnabled()) {
             wishlistMatchmakingMetrics.inc(wishlistMatchmakingGa.METRICS.BLOCK_GA_GATE);
             return { delivered: false, permanent: true, error: 'ga_disabled' };
+        }
+        // (MED#1) Re-run the TARGET's matchmaking governance BEFORE re-driving. The
+        // raw egress (wishlistMmSendB2bMessage → deliverToEntity) carries NO
+        // matchmaking gates — those live in P2 handleInvite, which the drain bypasses.
+        // A seller who flips killswitch ON, opts OUT, or is no longer reachable-by-
+        // opt-in AFTER enqueue MUST NOT receive the retry (HARD RULE 3 "stop reaching
+        // me"). Such a job is `revoked` → dead-lettered, not retried forever. This
+        // re-check reads only the target's OWN device prefs — no botSecret, no
+        // impersonation. It re-uses the SAME predicates P2's router uses.
+        const revoked = await isMatchmakingTargetRevoked(p.toPublicCode);
+        if (revoked) {
+            return { delivered: false, permanent: true, revoked: true, error: revoked };
         }
         try {
             await wishlistMmSendB2bMessage({
