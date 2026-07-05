@@ -149,7 +149,7 @@ function rescanMatchId(buyerPublicCode, itemId, sellerPublicCode) {
  *        is symmetric.
  *   matchStore  — the SHARED P2 match store (dedup across P2 + P3). REQUIRED for
  *        rescan idempotency; if absent P3 makes its own (still correct within P3).
- *   log ; now
+ *   log
  */
 function createRouter(opts = {}) {
     const {
@@ -159,12 +159,10 @@ function createRouter(opts = {}) {
         governedInvite,
         matchStore,
         log,
-        now,
     } = opts;
 
     const router = express.Router();
     const logger = typeof log === 'function' ? log : () => {};
-    const clock = typeof now === 'function' ? now : () => Date.now();
     const store = matchStore || mm.createMatchStore();
     const authCaller =
         typeof authenticateCaller === 'function'
