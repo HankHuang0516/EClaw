@@ -304,3 +304,86 @@ describe('kanban_nudge_per_entity_overrides', () => {
         });
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// Wishlist matchmaking UX prefs (card_647fc0ba): contact_release_requires_human
+// + default_currency — defaults + coercion via the REAL updatePrefs/getPrefs
+// round-trip against a tiny in-memory pool (models the jsonb merge upsert).
+// ════════════════════════════════════════════════════════════════
+describe('wishlist matchmaking UX prefs (card_647fc0ba)', () => {
+    // Build a fake pool that persists ONE device row and honours the module's
+    // `prefs || $2::jsonb` merge (whole-object concat is fine here since updatePrefs
+    // always writes the fully-filtered patch).
+    function makePool() {
+        const store = new Map();
+        return {
+            query: async (sql, params) => {
+                const s = String(sql);
+                if (/CREATE TABLE/.test(s)) return { rows: [], rowCount: 0 };
+                if (/INSERT INTO device_preferences/.test(s)) {
+                    const [deviceId, prefsJson] = params;
+                    const incoming = JSON.parse(prefsJson);
+                    const prev = store.get(deviceId) || {};
+                    store.set(deviceId, { ...prev, ...incoming });
+                    return { rows: [], rowCount: 1 };
+                }
+                if (/SELECT prefs FROM device_preferences/.test(s)) {
+                    const [deviceId] = params;
+                    if (!store.has(deviceId)) return { rows: [], rowCount: 0 };
+                    return { rows: [{ prefs: store.get(deviceId) }], rowCount: 1 };
+                }
+                return { rows: [], rowCount: 0 };
+            },
+        };
+    }
+
+    it('DEFAULTS: contact_release_requires_human=false, default_currency="" (auto)', () => {
+        expect(devicePrefsModule.DEFAULTS.contact_release_requires_human).toBe(false);
+        expect(devicePrefsModule.DEFAULTS.default_currency).toBe('');
+    });
+
+    it('exposes the shared currency allowlist (aligned with wishlist-app)', () => {
+        for (const c of ['TWD', 'USD', 'JPY', 'EUR', 'GBP', 'CNY', 'HKD', 'KRW', 'SGD', 'AUD', 'CAD']) {
+            expect(devicePrefsModule.ALLOWED_CURRENCIES.has(c)).toBe(true);
+        }
+        expect(devicePrefsModule.ALLOWED_CURRENCIES.has('XXX')).toBe(false);
+    });
+
+    it('contact_release_requires_human: string "false" stays false (fail-safe coercion)', async () => {
+        await devicePrefsModule.initTable(makePool());
+        await devicePrefsModule.updatePrefs('d1', { contact_release_requires_human: 'false' });
+        let p = await devicePrefsModule.getPrefs('d1');
+        expect(p.contact_release_requires_human).toBe(false);
+        await devicePrefsModule.updatePrefs('d1', { contact_release_requires_human: true });
+        p = await devicePrefsModule.getPrefs('d1');
+        expect(p.contact_release_requires_human).toBe(true);
+        await devicePrefsModule.updatePrefs('d1', { contact_release_requires_human: 'true' });
+        p = await devicePrefsModule.getPrefs('d1');
+        expect(p.contact_release_requires_human).toBe(true);
+    });
+
+    it('default_currency: allowlisted code upper-cased; junk / unusable → "" (auto)', async () => {
+        await devicePrefsModule.initTable(makePool());
+        await devicePrefsModule.updatePrefs('d2', { default_currency: 'usd' });
+        expect((await devicePrefsModule.getPrefs('d2')).default_currency).toBe('USD');
+        await devicePrefsModule.updatePrefs('d2', { default_currency: 'JPY' });
+        expect((await devicePrefsModule.getPrefs('d2')).default_currency).toBe('JPY');
+        // Unusable / not-allowlisted / non-string → coerced back to '' (AUTO).
+        await devicePrefsModule.updatePrefs('d2', { default_currency: 'BITCOIN' });
+        expect((await devicePrefsModule.getPrefs('d2')).default_currency).toBe('');
+        await devicePrefsModule.updatePrefs('d2', { default_currency: '   ' });
+        expect((await devicePrefsModule.getPrefs('d2')).default_currency).toBe('');
+        await devicePrefsModule.updatePrefs('d2', { default_currency: 123 });
+        expect((await devicePrefsModule.getPrefs('d2')).default_currency).toBe('');
+        // Explicit clear back to auto.
+        await devicePrefsModule.updatePrefs('d2', { default_currency: '' });
+        expect((await devicePrefsModule.getPrefs('d2')).default_currency).toBe('');
+    });
+
+    it('an unset device gets the safe defaults (opt-in mode, auto currency)', async () => {
+        await devicePrefsModule.initTable(makePool());
+        const p = await devicePrefsModule.getPrefs('never-set');
+        expect(p.contact_release_requires_human).toBe(false);
+        expect(p.default_currency).toBe('');
+    });
+});
