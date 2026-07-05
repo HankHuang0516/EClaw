@@ -2631,9 +2631,131 @@ app.use('/api/wishlist-bridge', wishlistRoute.createRouter({
 // channels). Governance: owner opt-in (wishlist_matchmaking_enabled, default OFF)
 // + a global kill-switch + a SEPARATE invite quota + reachability (online AND
 // opted-in). Contact PII is released only after BOTH owners approve in 需要你.
+// The ONLY matchmaking egress (shared by the P2 router + the P4 offline-fallback
+// retry). Delivers the b2b envelope through the existing cross-speak deliver point,
+// keyed by public code; applies the target's friends_only rule UNLESS
+// bypassFriendsOnly (a governed /connect to an opted-in target). Hoisted function
+// declaration so the offline queue (defined below) can reference it before this
+// point in source order.
+async function wishlistMmSendB2bMessage({ fromDeviceId, fromEntityId, fromPublicCode, toPublicCode, envelope, bypassFriendsOnly }) {
+    const target = resolveSpeakToTarget(toPublicCode, fromDeviceId);
+    if (!target) throw new Error('target public code not found');
+    const senderDevice = devices[fromDeviceId];
+    const fromEntity = senderDevice && senderDevice.entities[fromEntityId];
+    const targetDevice = devices[target.deviceId];
+    const toEntity = targetDevice && targetDevice.entities[target.entityId];
+    if (!fromEntity || !toEntity) throw new Error('sender or target entity missing');
+    // friends_only (owner rule) — respected for a normal invite, skipped for a
+    // governed /connect to an opted-in target.
+    if (!bypassFriendsOnly) {
+        const xd = await crossDeviceSettings.getSettings(target.deviceId, target.entityId);
+        if (xd.friends_only && !(await db.isFriend(target.deviceId, fromPublicCode))) {
+            throw new Error('friends_only');
+        }
+    }
+    // Envelope travels as a structured b2b message (JSON text). It is NOT a
+    // heartbeat/ack, so the deliver-time low-signal filter passes it through.
+    const text = JSON.stringify(envelope);
+    return deliverToEntity({
+        senderDeviceId: fromDeviceId,
+        fromId: fromEntityId,
+        fromEntity,
+        targetDeviceId: target.deviceId,
+        toId: target.entityId,
+        toEntity,
+        text,
+        mediaType: null,
+        mediaUrl: null,
+        expectsReply: envelope && envelope.type === 'wishlist_trade_invite',
+        isBroadcast: false,
+        isCrossDevice: fromDeviceId !== target.deviceId,
+    });
+}
+
+// ── P4 GA hardening (card_bdf2f1f549aaf71238048b01) ──────────────────────────
+// Additive-only defense layered ON TOP of P0-P3: it never weakens opt-in /
+// kill-switch / quota / consent / from-binding / IDOR / opt-in-reachability.
+//   • metrics       — in-process observability counters (sent/blocked/deduped/
+//                     accept/decline/contact + per-reason breakdown), read-only
+//                     snapshot at GET /api/wishlist-matchmaking/metrics.
+//   • rate limiter  — per-caller/per-IP request-velocity cap (DISTINCT from the
+//                     business quota); mounted in FRONT of both routers so a
+//                     spam/quota-probe/malformed flood is 429'd before routing.
+//   • GA rollout gate — GLOBAL dark-launch flag (env WISHLIST_MATCHMAKING_GA_ENABLED,
+//                     default OFF). SEND routes are gated on top of per-owner
+//                     opt-in; read routes (search/metrics) stay open in dark-launch.
+//   • offline queue — bounded per-caller retry buffer for an undeliverable send
+//                     (C0b gap). NO central scheduler (官方不介入).
+const wishlistMatchmakingGa = require('./wishlist-matchmaking-ga');
+const wishlistMatchmakingMetrics = wishlistMatchmakingGa.createMetrics();
+// Request-velocity limiter. Keyed by deviceId (IP fallback). Honours the same
+// NODE_ENV=test disable switch as the other limiters so unit tests aren't throttled.
+const wishlistMatchmakingRateLimiter = wishlistMatchmakingGa.createRateLimiter({
+    metrics: wishlistMatchmakingMetrics,
+    disabled: rateLimitDisabled,
+});
+// Offline / non-EClaw seller fallback (C0b gap). A bounded per-caller retry buffer
+// for a governed send that could not be delivered right now. Its `sender` re-drives
+// the SAME governed P2 invite with the SAME caller principal (runP2InviteInProcess,
+// a hoisted fn declared below) — NO central scheduler and NO platform impersonation
+// (官方不介入). drain() is invoked by the caller's own Agent / an external cron; there
+// is no internal timer. A permanently-undeliverable target (opted-out / not an EClaw
+// entity with no wishlist-native channel) is dead-lettered, not retried forever.
+const wishlistMatchmakingOfflineQueue = wishlistMatchmakingGa.createOfflineFallbackQueue({
+    metrics: wishlistMatchmakingMetrics,
+    // Re-drive a previously-governed invite that hit a TRANSIENT delivery error.
+    // Governance already ran at enqueue (target opted-in, quota consumed, GA gate
+    // passed) so the retry re-uses P2's ONE egress (sendB2bMessage) directly — it
+    // does NOT re-authenticate and therefore NEVER stores or reads a botSecret
+    // (security guardrail: never read another entity's secret). We STILL re-check
+    // the global GA gate so dark-launch can freeze retries too.
+    sender: async (job) => {
+        const p = (job && job.payload) || {};
+        if (!wishlistMatchmakingGa.isGaEnabled()) {
+            wishlistMatchmakingMetrics.inc(wishlistMatchmakingGa.METRICS.BLOCK_GA_GATE);
+            return { delivered: false, permanent: true, error: 'ga_disabled' };
+        }
+        try {
+            await wishlistMmSendB2bMessage({
+                fromDeviceId: p.fromDeviceId,
+                fromEntityId: p.fromEntityId,
+                fromPublicCode: p.fromPublicCode,
+                toPublicCode: p.toPublicCode,
+                envelope: p.envelope,
+                bypassFriendsOnly: false,
+            });
+            return { delivered: true };
+        } catch (err) {
+            // friends_only / target-not-found are PERMANENT for a cold retry; a
+            // generic transport error is transient and backs off.
+            const msg = err && err.message ? String(err.message) : 'undelivered';
+            const permanent = msg === 'friends_only' || msg.includes('not found') || msg.includes('missing');
+            return { delivered: false, permanent, error: msg };
+        }
+    },
+    onDeadLetter: (rec) => {
+        serverLog('warn', 'wishlist_matchmaking_ga', `offline invite dead-lettered after ${rec.attempts} attempts (${rec.permanent ? 'permanent' : 'exhausted'})`, {
+            action: 'offline_fallback_dead_letter',
+            result: rec.permanent ? 'permanent' : 'exhausted',
+        });
+    },
+});
+// GA send-gate + rate-limit middleware, shared by both routers.
+const wishlistGaSendGate = wishlistMatchmakingGa.gaGate({ metrics: wishlistMatchmakingMetrics });
+const wishlistMmRateLimit = wishlistMatchmakingRateLimiter.middleware();
+// Read-only paths that stay reachable even in dark-launch (search + metrics).
+const WISHLIST_MM_READONLY_PATHS = new Set(['/search', '/photo-search', '/metrics']);
+// A path-scoped GA gate: block only SEND-capable routes; let read/plan through.
+const wishlistGaSendGateScoped = (req, res, next) => {
+    if (WISHLIST_MM_READONLY_PATHS.has(req.path)) return next();
+    return wishlistGaSendGate(req, res, next);
+};
+
 const wishlistMatchmaking = require('./wishlist-matchmaking');
 const wishlistMatchmakingRouter = wishlistMatchmaking.createRouter({
     log: serverLog,
+    // (P4) observability sink — pure side-observer on the real control path.
+    metrics: wishlistMatchmakingMetrics,
     // Same caller-auth as the wishlist-bridge write path: prove a real bound
     // entity via {deviceId,entityId,botSecret} → resolve to its OWN publicCode.
     authenticateCaller: resolveCallerIdentity,
@@ -2673,40 +2795,10 @@ const wishlistMatchmakingRouter = wishlistMatchmaking.createRouter({
     // The ONLY egress: deliver the b2b envelope through the existing cross-speak
     // deliver point, keyed by public code. Applies the target's friends_only rule
     // UNLESS bypassFriendsOnly (matchmaking /connect for an opted-in target).
-    sendB2bMessage: async ({ fromDeviceId, fromEntityId, fromPublicCode, toPublicCode, envelope, bypassFriendsOnly }) => {
-        const target = resolveSpeakToTarget(toPublicCode, fromDeviceId);
-        if (!target) throw new Error('target public code not found');
-        const senderDevice = devices[fromDeviceId];
-        const fromEntity = senderDevice && senderDevice.entities[fromEntityId];
-        const targetDevice = devices[target.deviceId];
-        const toEntity = targetDevice && targetDevice.entities[target.entityId];
-        if (!fromEntity || !toEntity) throw new Error('sender or target entity missing');
-        // friends_only (owner rule) — respected for a normal invite, skipped for a
-        // governed /connect to an opted-in target.
-        if (!bypassFriendsOnly) {
-            const xd = await crossDeviceSettings.getSettings(target.deviceId, target.entityId);
-            if (xd.friends_only && !(await db.isFriend(target.deviceId, fromPublicCode))) {
-                throw new Error('friends_only');
-            }
-        }
-        // Envelope travels as a structured b2b message (JSON text). It is NOT a
-        // heartbeat/ack, so the deliver-time low-signal filter passes it through.
-        const text = JSON.stringify(envelope);
-        return deliverToEntity({
-            senderDeviceId: fromDeviceId,
-            fromId: fromEntityId,
-            fromEntity,
-            targetDeviceId: target.deviceId,
-            toId: target.entityId,
-            toEntity,
-            text,
-            mediaType: null,
-            mediaUrl: null,
-            expectsReply: envelope && envelope.type === 'wishlist_trade_invite',
-            isBroadcast: false,
-            isCrossDevice: fromDeviceId !== target.deviceId,
-        });
-    },
+    // Extracted to a named fn (wishlistMmSendB2bMessage, hoisted below) so the P4
+    // offline-fallback queue can re-drive the SAME egress on a retry WITHOUT
+    // re-authenticating (no botSecret stored) — governance already ran at enqueue.
+    sendB2bMessage: (m) => wishlistMmSendB2bMessage(m),
     // Per-owner 需要你 for the dual-consent gate. type 'approval'; decision_context
     // pins it as an owner-only decision so the inbox surfaces it.
     createOwnerActionRequest: async ({ deviceId, fromEntityId, prompt, options, decisionContext }) => {
@@ -2778,8 +2870,80 @@ const wishlistMatchmakingRouter = wishlistMatchmaking.createRouter({
         }
         return { nameCard, contactInfo };
     },
+    // (P4) Offline / non-EClaw seller fallback (C0b gap). Fires ONLY on a TRANSIENT
+    // delivery failure — every governance gate already passed. We build the SAME
+    // governed invite envelope and enqueue it for a bounded retry keyed by matchId
+    // (idempotent). We do NOT store any botSecret — the retry re-uses the raw egress
+    // wishlistMmSendB2bMessage, which needs only the resolved deviceIds + envelope.
+    onDeliveryFailure: async (ctx) => {
+        try {
+            const buyerResolved = resolveCallerToResolvedIds(ctx.buyerPublicCode, ctx.callerCreds);
+            const envelope = wishlistMatchmaking.buildInviteEnvelope({
+                matchId: ctx.matchId,
+                fromPublicCode: ctx.buyerPublicCode,
+                toPublicCode: ctx.sellerPublicCode,
+                itemId: ctx.itemId,
+                itemName: ctx.itemName,
+                note: ctx.note,
+            });
+            const r = wishlistMatchmakingOfflineQueue.enqueue({
+                jobKey: `mm-offline-${ctx.matchId}`,
+                payload: {
+                    fromDeviceId: (ctx.callerCreds && ctx.callerCreds.deviceId) || (buyerResolved && buyerResolved.deviceId),
+                    fromEntityId: (ctx.callerCreds && ctx.callerCreds.entityId) != null ? ctx.callerCreds.entityId : (buyerResolved && buyerResolved.entityId),
+                    fromPublicCode: ctx.buyerPublicCode,
+                    toPublicCode: ctx.sellerPublicCode,
+                    envelope,
+                },
+            });
+            return !!(r && r.queued);
+        } catch (_e) {
+            return false;
+        }
+    },
 });
-app.use('/api/wishlist-matchmaking', wishlistMatchmakingRouter);
+// Small helper: best-effort resolve a publicCode → {deviceId,entityId}, preferring
+// the caller's own creds when they match (used only to fill the offline retry's
+// sender identity — never to look up another entity's secret).
+function resolveCallerToResolvedIds(publicCode, callerCreds) {
+    if (callerCreds && callerCreds.deviceId && callerCreds.entityId != null) {
+        return { deviceId: callerCreds.deviceId, entityId: callerCreds.entityId };
+    }
+    const target = publicCodeIndex[wishlistMatchmaking.normalizeCode(publicCode)];
+    return target ? { deviceId: target.deviceId, entityId: target.entityId } : null;
+}
+// Read-only metrics snapshot — observability dashboard for GA (card_bdf2f1f5 §1).
+// Admin-gated (same ADMIN_DEVICE_IDS gate as other operator surfaces) so raw
+// counts aren't public; no secrets are ever in the payload. Registered BEFORE the
+// router mount so the router's catch-all can't shadow it.
+app.get('/api/wishlist-matchmaking/metrics', (req, res) => {
+    const gate = requireAdmin(req);
+    if (!gate.ok) return res.status(gate.status).json({ success: false, error: gate.error });
+    return res.status(200).json({
+        success: true,
+        gaEnabled: wishlistMatchmakingGa.isGaEnabled(),
+        ...wishlistMatchmakingMetrics.snapshot(),
+        offlineQueue: wishlistMatchmakingOfflineQueue.stats(),
+    });
+});
+// Drain the offline-fallback retry queue (C0b). Admin/cron-invoked — there is NO
+// internal timer (官方不介入: no platform-side background compute driving agents).
+// Re-drives ONLY the SAME governed sends already enqueued after a transient failure.
+app.post('/api/wishlist-matchmaking/offline/drain', async (req, res) => {
+    const gate = requireAdmin(req);
+    if (!gate.ok) return res.status(gate.status).json({ success: false, error: gate.error });
+    try {
+        const summary = await wishlistMatchmakingOfflineQueue.drain();
+        return res.status(200).json({ success: true, ...summary, queue: wishlistMatchmakingOfflineQueue.stats() });
+    } catch (err) {
+        serverLog('warn', 'wishlist_matchmaking_ga', `offline drain failed: ${err && err.message}`, { action: 'offline_fallback_drain', result: 'error' });
+        return res.status(500).json({ success: false, error: 'drain failed' });
+    }
+});
+// Middleware order: rate-limit (velocity) → GA send-gate (dark-launch) → router
+// (which runs opt-in/kill-switch/quota/consent/reachability). Each layer only
+// ADDS a rejection; none can enable a send a lower gate would block.
+app.use('/api/wishlist-matchmaking', wishlistMmRateLimit, wishlistGaSendGateScoped, wishlistMatchmakingRouter);
 
 // ============================================
 // WISHLIST MATCHMAKING P3 (caller-recognised photo + seller-initiated + rescan/dedup)
@@ -2863,7 +3027,15 @@ function runP2InviteInProcess({ callerCreds, toPublicCode, itemId, itemName, not
     });
 }
 
-app.use('/api/wishlist-matchmaking-p3', wishlistMatchmakingP3.createRouter({
+// P3 send routes (/seller-listing-scan, /rescan) go through the SAME GA gate +
+// rate limiter as P2. /photo-search is read/plan-only (no send) so it stays open in
+// dark-launch — same read-only carve-out as P2's /search.
+const WISHLIST_MM_P3_READONLY_PATHS = new Set(['/photo-search']);
+const wishlistGaSendGateP3Scoped = (req, res, next) => {
+    if (WISHLIST_MM_P3_READONLY_PATHS.has(req.path)) return next();
+    return wishlistGaSendGate(req, res, next);
+};
+app.use('/api/wishlist-matchmaking-p3', wishlistMmRateLimit, wishlistGaSendGateP3Scoped, wishlistMatchmakingP3.createRouter({
     log: serverLog,
     // SAME verifier as P2 / write-auth.
     authenticateCaller: resolveCallerIdentity,

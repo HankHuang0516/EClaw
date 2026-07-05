@@ -380,6 +380,16 @@ function createRouter(opts = {}) {
         // outcome (calls are guarded + swallowed). Backwards-compatible: P0-P3
         // tests that pass no `metrics` see identical behaviour.
         metrics,
+        // (P4 GA hardening) OPTIONAL offline-fallback hook. Called ONLY on a
+        // TRANSIENT invite-delivery failure (sendB2bMessage threw AFTER every
+        // governance gate already passed — the target was momentarily
+        // undeliverable, NOT opted-out). It receives the fully-resolved,
+        // already-governed invite so the caller's own retry buffer can re-drive the
+        // SAME governed send later. It NEVER fires for a governance rejection (those
+        // returned earlier) and NEVER bypasses a gate. Returning truthy → the invite
+        // is reported as `queued`. Guarded: a throwing/absent hook falls back to the
+        // original 502 so behaviour without the hook is byte-identical.
+        onDeliveryFailure,
     } = opts;
 
     const router = express.Router();
@@ -572,6 +582,41 @@ function createRouter(opts = {}) {
             });
         } catch (err) {
             logger('warn', 'wishlist-matchmaking', `invite send failed: ${err.message}`);
+            // (P4) Offline / non-EClaw fallback: a TRANSIENT delivery failure (all
+            // governance already passed) is enqueued for a bounded retry instead of
+            // being silently dropped — closing the C0b gap. The quota was already
+            // consumed, so we record the match as pending-retry to keep dedup honest.
+            let queued = false;
+            if (typeof onDeliveryFailure === 'function') {
+                try {
+                    queued = !!(await onDeliveryFailure({
+                        matchId,
+                        callerCreds: { deviceId: caller.deviceId, entityId: caller.entityId },
+                        buyerPublicCode: caller.publicCode,
+                        sellerPublicCode: sellerCode,
+                        toPublicCode: sellerCode,
+                        itemId,
+                        itemName: req.body.itemName,
+                        note: req.body.note,
+                        error: err.message,
+                    }));
+                } catch (_e) { queued = false; }
+            }
+            if (queued) {
+                store.upsert(matchId, {
+                    matchId,
+                    buyerPublicCode: caller.publicCode,
+                    buyerDeviceId: caller.deviceId,
+                    buyerEntityId: caller.entityId,
+                    sellerPublicCode: sellerCode,
+                    sellerDeviceId: sellerResolved.deviceId,
+                    sellerEntityId: sellerResolved.entityId,
+                    itemId: itemId == null ? null : itemId,
+                    inviteSent: false,
+                    status: 'queued_offline',
+                });
+                return res.status(202).json({ matchId, status: 'queued_offline', queued: true });
+            }
             return res.status(502).json({ error: 'invite delivery failed' });
         }
 
