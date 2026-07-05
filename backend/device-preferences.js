@@ -5,6 +5,16 @@
 
 const KanbanStatus = require('./public/shared/kanban-status.js');
 
+// Currency allowlist for the `default_currency` pref (card_647fc0ba). Kept
+// byte-for-byte in sync with wishlist-app's ALLOWED_CURRENCIES
+// (server/src/lib/matchmakingPrice.ts) and EClaw's wishlist-matchmaking.js
+// ALLOWED_CURRENCIES so an unusable code falls back identically on both ends.
+// An allowlist (not a regex) so an attacker can't smuggle control chars / long
+// strings into the currency field.
+const ALLOWED_CURRENCIES = new Set([
+    'TWD', 'USD', 'JPY', 'EUR', 'GBP', 'CNY', 'HKD', 'KRW', 'SGD', 'AUD', 'CAD',
+]);
+
 const DEFAULTS = {
     broadcast_recipient_info: true,
     remote_control_enabled: false,
@@ -168,6 +178,32 @@ const DEFAULTS = {
     // every matchmaking send (invite/accept/decline/contact) is refused regardless of
     // the opt-in flag. DEFAULT FALSE (not killed). Same string-safe coercion.
     wishlist_matchmaking_killswitch: false,
+    // Contact-PII release consent mode (card_647fc0ba, Hank 拍板 2026-07-05). Governs
+    // WHO may consent for THIS owner's OWN side of a matchmaking contact-exchange:
+    //   OFF (default) — the owner's authorised Agent (botSecret bound to that entity)
+    //                   may consent on this owner's behalf; resolving the consent
+    //                   inbox item with the entity's botSecret counts as approval.
+    //   ON            — only the real human (deviceSecret → resolved_by_user=true) may
+    //                   approve this owner's release; an Agent botSecret resolve does
+    //                   NOT count.
+    // 🔒 This ONLY changes agent-vs-human for a party's OWN consent. It NEVER relaxes
+    // the structural invariants: each party still consents only for its own verified
+    // identity, no cross-party approval, no single caller approving both sides (the
+    // resolve chokepoint restrictToEntityId + dual-gate enforce this). DEFAULT FALSE
+    // because Hank chose "授權 Agent 可代同意" as the out-of-box behaviour. Same
+    // string-safe boolean coercion (a bare `!!raw` would turn the string 'false' true
+    // → would silently DROP the human gate, the fail-DANGEROUS direction for a
+    // PII-release control, so we coerce strictly). Consumed by getActionRequestStatus
+    // in index.js (the /contact/release gate).
+    contact_release_requires_human: false,
+    // Default currency for wishlist matchmaking prices (card_647fc0ba, Hank 拍板
+    // 2026-07-05). Priority for a price's currency: ① the item's own currency ＞
+    // ② THIS pref (explicit owner choice) ＞ ③ locale-derived (interface language →
+    // currency map, fallback USD). '' (empty) = AUTO = let ③ derive from locale; a
+    // non-empty value must be an allowlisted code (same allowlist as wishlist-app),
+    // else it is coerced back to '' (AUTO) so an unusable code falls back identically
+    // on both ends. NOT a boolean — see coerceValue's default_currency branch.
+    default_currency: '',
     // 需要你 owner-decision inbox MOBILE PUSH (card_c7baa7ae). When ON, creating an
     // OWNER-FACING decision inbox item (decision_context.ownerOnly === true) ALSO
     // fires a mobile push to THIS owner's device tokens (reusing notifyDevice →
@@ -234,6 +270,7 @@ function coerceValue(key, raw) {
         || key === 'waiting_state_surfacer_enabled'
         || key === 'wishlist_matchmaking_enabled'
         || key === 'wishlist_matchmaking_killswitch'
+        || key === 'contact_release_requires_human'
         || key === 'needyou_push_enabled'
         || key === 'action_request_reply_resize_enabled') {
         // 計畫E: ratify master switch — same string-safe boolean coercion (a bare
@@ -302,6 +339,16 @@ function coerceValue(key, raw) {
     // value fails SAFE toward the zero-false-block default Hank chose.
     if (key === 'done_gate_mode') {
         return raw === 'hard' ? 'hard' : 'soft';
+    }
+    // default_currency (card_647fc0ba): '' = AUTO (locale-derived); any non-empty
+    // value must be an allowlisted code (case-insensitive), else coerce back to ''
+    // (AUTO) so an unusable code falls back identically on both ends. Never stores a
+    // junk / long / control-char code.
+    if (key === 'default_currency') {
+        if (raw === undefined || raw === null || raw === '') return '';
+        if (typeof raw !== 'string') return '';
+        const c = raw.trim().toUpperCase();
+        return ALLOWED_CURRENCIES.has(c) ? c : '';
     }
     if (key === 'kanban_nudge_statuses') {
         if (!Array.isArray(raw)) return [...def];
@@ -445,6 +492,7 @@ async function getEffectivePrefsForEntity(deviceId, entityId) {
 
 module.exports = {
     DEFAULTS,
+    ALLOWED_CURRENCIES,
     NUDGE_ENTITY_OVERRIDE_KEYS,
     initTable,
     getPrefs,

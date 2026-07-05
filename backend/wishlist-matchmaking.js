@@ -147,7 +147,63 @@ function sanitizeUntrusted(raw, maxLen = 200) {
 // Bound prices defensively so an absurd upstream value can't poison a comparison.
 // Matches the wishlist-app writer's MAX_PRICE (1e12).
 const MM_MAX_PRICE = 1_000_000_000_000;
-const MM_DEFAULT_CURRENCY = 'TWD';
+// Ultimate fallback when neither the item, the owner's default_currency pref, nor
+// the owner's interface locale yields a usable currency (card_647fc0ba, Hank 拍板
+// 2026-07-05: 「都沒設→用跟介面語言對應的幣別，不再硬預設 TWD」+ sensible fallback USD).
+const MM_FALLBACK_CURRENCY = 'USD';
+
+// Currency allowlist — kept byte-for-byte in sync with wishlist-app's
+// ALLOWED_CURRENCIES (server/src/lib/matchmakingPrice.ts) and EClaw's
+// device-preferences.js so an unusable code falls back identically on BOTH ends
+// (review LOW: same allowlist both sides). An allowlist (not a regex) so an
+// attacker can't smuggle control chars / long strings into the currency field.
+const ALLOWED_CURRENCIES = new Set([
+    'TWD', 'USD', 'JPY', 'EUR', 'GBP', 'CNY', 'HKD', 'KRW', 'SGD', 'AUD', 'CAD',
+]);
+
+// Locale/interface-language → currency map (card_647fc0ba priority ③). Keyed by
+// the leading language subtag (case-insensitive), so 'zh-TW', 'zh_Hant', 'zh' all
+// map to TWD. Anything not listed → MM_FALLBACK_CURRENCY (USD).
+const LOCALE_TO_CURRENCY = {
+    zh: 'TWD',
+    en: 'USD',
+    ja: 'JPY',
+    ko: 'KRW',
+};
+
+/**
+ * Map an interface locale/language tag to a currency code, or '' when the tag is
+ * absent/unrecognised (caller then applies MM_FALLBACK_CURRENCY). Reads only the
+ * leading subtag so 'zh-TW' / 'zh_Hant' / 'ZH' all resolve to TWD.
+ */
+function localeToCurrency(locale) {
+    if (typeof locale !== 'string' || !locale.trim()) return '';
+    const lead = locale.trim().toLowerCase().split(/[-_]/)[0];
+    return LOCALE_TO_CURRENCY[lead] || '';
+}
+
+/**
+ * Resolve the effective currency for a price by Hank's settled priority
+ * (card_647fc0ba):
+ *   ① the item's own / caller-supplied currency (raw)  ＞
+ *   ② the owner's default_currency pref (ownerDefault)  ＞
+ *   ③ the owner's interface-locale-derived currency (locale → LOCALE_TO_CURRENCY) ＞
+ *   ④ MM_FALLBACK_CURRENCY (USD).
+ * Each candidate is validated through the SAME allowlist (normalizeCurrency); an
+ * unusable candidate is skipped so the chain continues rather than storing garbage.
+ * Always returns an allowlisted code (never '' — this is the resolved default used
+ * to STAMP a price, distinct from normalizeCurrency which may return '' for an
+ * unusable raw value at comparison time).
+ */
+function resolveCurrency({ raw, ownerDefault, locale } = {}) {
+    const fromRaw = normalizeCurrency(raw);
+    if (fromRaw) return fromRaw;
+    const fromPref = normalizeCurrency(ownerDefault);
+    if (fromPref) return fromPref;
+    const fromLocale = normalizeCurrency(localeToCurrency(locale));
+    if (fromLocale) return fromLocale;
+    return MM_FALLBACK_CURRENCY;
+}
 
 /**
  * Coerce an untrusted price to a valid non-negative bounded number, or null when
@@ -165,14 +221,21 @@ function coercePrice(raw) {
     return n;
 }
 
-/** Normalise a currency code to a short upper-case token, or '' if unusable. */
+/**
+ * Normalise a currency code to an allowlisted upper-case token, or '' if unusable.
+ * ⚠️ card_647fc0ba: an ABSENT value now returns '' (NOT a hardcoded TWD) — the
+ * locale-aware default is applied by resolveCurrency() at the price-stamping points
+ * where owner context (default_currency pref + interface locale) is available. At
+ * comparison time (priceCompat) an unusable/absent code routes to the name-only
+ * fallback (never crashes, never compares garbage). Validates against the SAME
+ * allowlist as wishlist-app + device-preferences.js (review LOW alignment), so an
+ * unusable code falls back identically on both ends.
+ */
 function normalizeCurrency(raw) {
-    if (raw === undefined || raw === null || raw === '') return MM_DEFAULT_CURRENCY;
+    if (raw === undefined || raw === null || raw === '') return '';
     if (typeof raw !== 'string') return '';
     const c = raw.trim().toUpperCase();
-    // Short allowlist-shaped guard: 3–4 letters. Anything else is "unusable" and
-    // routes to the name-only fallback (never crashes, never compares garbage).
-    return /^[A-Z]{3,4}$/.test(c) ? c : '';
+    return ALLOWED_CURRENCIES.has(c) ? c : '';
 }
 
 /**
@@ -190,7 +253,14 @@ function normalizeCurrency(raw) {
  * Inputs are untrusted; coercePrice/normalizeCurrency validate them. A missing
  * currency on one side while the other is present is a mismatch → fallback.
  */
-function priceCompat({ buyerMaxPrice, buyerCurrency, sellerAskPrice, sellerCurrency } = {}) {
+function priceCompat({
+    buyerMaxPrice, buyerCurrency, sellerAskPrice, sellerCurrency,
+    // card_647fc0ba: when a side's currency is ABSENT, derive it from THAT side's
+    // owner context (default_currency pref → interface locale → USD) instead of the
+    // old hardcoded TWD. Purely additive — the price filter can still only BLOCK a
+    // send, never enable one a governance gate would stop.
+    buyerDefaultCurrency, buyerLocale, sellerDefaultCurrency, sellerLocale,
+} = {}) {
     const buyerMax = coercePrice(buyerMaxPrice);
     const sellerAsk = coercePrice(sellerAskPrice);
 
@@ -199,8 +269,11 @@ function priceCompat({ buyerMaxPrice, buyerCurrency, sellerAskPrice, sellerCurre
         return { compatible: true, reason: 'no_price_fallback' };
     }
 
-    const buyerCur = normalizeCurrency(buyerCurrency);
-    const sellerCur = normalizeCurrency(sellerCurrency);
+    // Resolve each side's currency by the settled priority: the price's own currency
+    // ＞ that owner's default_currency pref ＞ that owner's locale ＞ USD. resolveCurrency
+    // always returns an allowlisted code, so both sides are comparable.
+    const buyerCur = resolveCurrency({ raw: buyerCurrency, ownerDefault: buyerDefaultCurrency, locale: buyerLocale });
+    const sellerCur = resolveCurrency({ raw: sellerCurrency, ownerDefault: sellerDefaultCurrency, locale: sellerLocale });
     // Unusable currency on either side, or the two differ → cannot compare (no FX).
     if (!buyerCur || !sellerCur || buyerCur !== sellerCur) {
         return { compatible: true, reason: 'currency_mismatch_fallback' };
@@ -485,6 +558,11 @@ function createRouter(opts = {}) {
         // is reported as `queued`. Guarded: a throwing/absent hook falls back to the
         // original 502 so behaviour without the hook is byte-identical.
         onDeliveryFailure,
+        // (card_647fc0ba) OPTIONAL: resolve an owner's interface locale/language tag
+        // (e.g. 'zh-TW','en') for the currency-default derivation (priority ③). A
+        // missing/absent hook → '' → resolveCurrency falls through to USD. Guarded so
+        // a throwing/absent hook never changes a control outcome.
+        getOwnerLocale,
     } = opts;
 
     const router = express.Router();
@@ -514,6 +592,95 @@ function createRouter(opts = {}) {
             return (await getDevicePrefs(deviceId)) || {};
         } catch (_e) {
             return {};
+        }
+    }
+
+    // Owner interface locale for the currency-default derivation (card_647fc0ba
+    // priority ③). Guarded: any failure/absence → '' so resolveCurrency falls
+    // through to the owner's default_currency pref, then USD.
+    async function localeFor(deviceId) {
+        if (typeof getOwnerLocale !== 'function') return '';
+        try {
+            const l = await getOwnerLocale(deviceId);
+            return typeof l === 'string' ? l : '';
+        } catch (_e) {
+            return '';
+        }
+    }
+
+    // Resolve the currency to STAMP on a price from a caller-supplied raw value +
+    // that owner's device (default_currency pref) + interface locale. Always an
+    // allowlisted code (never '').
+    async function currencyFor(deviceId, rawCurrency) {
+        const prefs = await prefsFor(deviceId);
+        const locale = await localeFor(deviceId);
+        return resolveCurrency({
+            raw: rawCurrency,
+            ownerDefault: prefs && prefs.default_currency,
+            locale,
+        });
+    }
+
+    // (card_647fc0ba Scope B) Create the SELLER OWNER's 需要你 invite card for a sent
+    // invite. Best-effort + fully guarded: any failure is logged and swallowed so the
+    // already-delivered invite is never failed by an inbox hiccup. The untrusted item
+    // name is sanitised here for the prompt string AND carried as a structured
+    // decisionContext field (invite.itemName/price/currency/fromPublicCode) so the
+    // portal renders each field XSS-safely with textContent. Options are the seller
+    // owner's Accept/Decline — the DECISION is theirs, resolved with THEIR OWN
+    // identity (deviceSecret human, or their bound Agent's botSecret when their pref
+    // allows), never a cross-party approval.
+    async function createInviteInboxItem({
+        matchId, sellerDeviceId, sellerEntityId,
+        buyerPublicCode, itemName, buyerMaxPrice, sellerAskPrice, currency,
+    }) {
+        if (typeof createOwnerActionRequest !== 'function') return null;
+        try {
+            const cleanItem = sanitizeUntrusted(itemName, 120) || '(未命名品項 / unnamed item)';
+            const buyerMax = coercePrice(buyerMaxPrice);
+            const sellerAsk = coercePrice(sellerAskPrice);
+            const cur = normalizeCurrency(currency);
+            // Prefer the seller's ask for the headline price; fall back to the buyer's
+            // max. Absent → no price shown (the card still renders name + offerer).
+            const headlinePrice = sellerAsk != null ? sellerAsk : (buyerMax != null ? buyerMax : null);
+            const priceStr = headlinePrice != null
+                ? `${cur ? cur + ' ' : ''}${headlinePrice}`
+                : '';
+            const fromCode = normalizeCode(buyerPublicCode);
+            const prompt = priceStr
+                ? `撮合邀請：${fromCode} 想與你交易〈${cleanItem}〉／${priceStr}。是否接受？`
+                : `撮合邀請：${fromCode} 想與你交易〈${cleanItem}〉。是否接受？`;
+            // Option 0 = Accept, 1 = Decline (index-authoritative; answerIsApproval
+            // reads optionIndex 0 = approve). Bilingual labels for the inbox.
+            const options = ['接受 / Accept', '拒絕 / Decline'];
+            const decisionContext = {
+                ownerOnly: true,
+                source: 'wishlist_matchmaking',
+                kind: 'trade_invite',
+                matchId,
+                // Structured, untrusted fields the portal renders XSS-safely. NO PII
+                // here — only the public offerer code + catalogue item + price basis.
+                invite: {
+                    itemName: cleanItem,
+                    fromPublicCode: fromCode,
+                    currency: cur || null,
+                    sellerAskPrice: sellerAsk != null ? sellerAsk : null,
+                    buyerMaxPrice: buyerMax != null ? buyerMax : null,
+                },
+                recommendedOptionIndex: null,
+                whatWasDone: `另一位主人的代理想與你交易一件心願單品項；接受後才會進一步協商聯絡方式。`,
+            };
+            return await createOwnerActionRequest({
+                deviceId: sellerDeviceId,
+                fromEntityId: sellerEntityId,
+                type: ENVELOPE_TYPES.INVITE, // 'wishlist_trade_invite'
+                prompt,
+                options,
+                decisionContext,
+            });
+        } catch (err) {
+            logger('warn', 'wishlist-matchmaking', `invite inbox create failed (non-fatal): ${err.message}`);
+            return null;
         }
     }
 
@@ -611,6 +778,12 @@ function createRouter(opts = {}) {
             return res.status(400).json({ error: 'cannot invite yourself' });
         }
 
+        // Buyer's owner context for the currency-default derivation (card_647fc0ba):
+        // default_currency pref + interface locale, used to fill a MISSING buyer
+        // currency by locale instead of the old hardcoded TWD.
+        const buyerPrefs = await prefsFor(caller.deviceId);
+        const buyerLocale = await localeFor(caller.deviceId);
+
         // (a0) PRICE-COMPAT FILTER (card_e1b8af79). Only filter when BOTH sides have
         // a usable price in the SAME currency; otherwise fall back to name/tags-only
         // (never exclude). This is an ADDITIONAL filter, never a bypass — it can only
@@ -618,12 +791,16 @@ function createRouter(opts = {}) {
         // BEFORE opt-in/quota means a price-incompatible pair never consumes quota.
         //   - buyer's max/willing price = the buyer (caller) supplies buyerMaxPrice.
         //   - seller's asking price = sellerAskPrice (from the seller listing search
-        //     result the buyer is inviting on).
+        //     result the buyer is inviting on; its currency rides along from the
+        //     catalogue). A MISSING currency now derives from that owner's default /
+        //     locale (card_647fc0ba) rather than defaulting to TWD.
         const priceDecision = priceCompat({
             buyerMaxPrice: req.body.buyerMaxPrice,
             buyerCurrency: req.body.buyerCurrency || req.body.priceCurrency,
             sellerAskPrice: req.body.sellerAskPrice,
             sellerCurrency: req.body.sellerCurrency || req.body.priceCurrency,
+            buyerDefaultCurrency: buyerPrefs && buyerPrefs.default_currency,
+            buyerLocale,
         });
         if (!priceDecision.compatible) {
             metricBlock('price_incompatible');
@@ -635,8 +812,7 @@ function createRouter(opts = {}) {
         }
 
         // (a) Buyer's OWN kill-switch / opt-in. Matchmaking must not fire unless
-        // the buyer's owner opted in.
-        const buyerPrefs = await prefsFor(caller.deviceId);
+        // the buyer's owner opted in. (buyerPrefs fetched above for currency default.)
         if (isKillSwitchOn(buyerPrefs)) {
             metricBlock('killswitch');
             return res.status(403).json({ error: 'matchmaking disabled by kill-switch', reason: 'killswitch' });
@@ -684,6 +860,16 @@ function createRouter(opts = {}) {
             return res.status(429).json({ error: 'matchmaking invite quota exceeded', reason: 'quota' });
         }
 
+        // Resolve the currency to STAMP on the invite (card_647fc0ba priority: the
+        // caller-supplied currency ＞ the buyer owner's default_currency pref ＞ the
+        // buyer owner's locale ＞ USD). Always an allowlisted code so the recipient's
+        // UI + the seller-owner invite card show a concrete currency, never a blank.
+        const inviteCurrency = resolveCurrency({
+            raw: req.body.priceCurrency || req.body.buyerCurrency || req.body.sellerCurrency,
+            ownerDefault: buyerPrefs && buyerPrefs.default_currency,
+            locale: buyerLocale,
+        });
+
         const envelope = buildInviteEnvelope({
             matchId,
             fromPublicCode: caller.publicCode,
@@ -694,7 +880,7 @@ function createRouter(opts = {}) {
             // Carry the price BASIS so the recipient can judge the offer.
             buyerMaxPrice: req.body.buyerMaxPrice,
             sellerAskPrice: req.body.sellerAskPrice,
-            priceCurrency: req.body.priceCurrency || req.body.buyerCurrency || req.body.sellerCurrency,
+            priceCurrency: inviteCurrency,
         });
 
         try {
@@ -761,6 +947,29 @@ function createRouter(opts = {}) {
         });
         metricInc('invites_sent');
         logger('info', 'wishlist-matchmaking', `invite sent match=${matchId} ${caller.publicCode}->${sellerCode}`);
+
+        // (card_647fc0ba Scope B) Surface the invite in the SELLER OWNER's 需要你
+        // inbox as a durable action-request so the human sees「UserA 想賣你 …／$…，
+        // 〔接受〕〔拒絕〕」even while offline (it stays until answered). Purely
+        // ADDITIVE — the b2b envelope above is the machine handshake; this is the
+        // human-visible surface. Best-effort: a failed inbox create must NEVER fail
+        // the (already-delivered) invite. The item name/price are UNTRUSTED → carried
+        // as structured decisionContext fields the portal renders XSS-safely with
+        // textContent; the accept/decline are the seller-owner's OWN decision, which
+        // the emitting seller entity picks up (action_request_resolved push-back) to
+        // drive the real /accept|/decline handshake with its OWN identity — no client
+        // ever holds the bot identity, and no cross-party approval is possible.
+        await createInviteInboxItem({
+            matchId,
+            sellerDeviceId: sellerResolved.deviceId,
+            sellerEntityId: sellerResolved.entityId,
+            buyerPublicCode: caller.publicCode,
+            itemName: req.body.itemName,
+            buyerMaxPrice: req.body.buyerMaxPrice,
+            sellerAskPrice: req.body.sellerAskPrice,
+            currency: inviteCurrency,
+        });
+
         return res.status(200).json({ matchId, status: 'invited', deduped: false });
     }
 
@@ -1070,9 +1279,14 @@ module.exports = {
     priceCompat,
     coercePrice,
     normalizeCurrency,
+    // locale-derived currency default (card_647fc0ba)
+    resolveCurrency,
+    localeToCurrency,
+    ALLOWED_CURRENCIES,
+    LOCALE_TO_CURRENCY,
     // constants
     MM_MAX_PRICE,
-    MM_DEFAULT_CURRENCY,
+    MM_FALLBACK_CURRENCY,
     ENVELOPE_TYPES,
     SAFETY_DISCLAIMER,
     CONTACT_PII_KEYS,

@@ -1034,6 +1034,18 @@
                 </label>
             </div>
             <div class="setting-row">
+                <!-- HELP-KEY: needyou_push_help -->
+                <div class="setting-row-label">
+                    <span data-i18n="needyou_push_label">Needs-you mobile push</span>
+                    <small style="display:block;color:var(--text-muted);font-size:11px;" data-i18n="needyou_push_desc">Buzz your phone when an owner decision lands in your Needs-you inbox. Default is on.</small>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggleNeedyouPush" aria-label="Enable Needs-you mobile push"
+                           onchange="saveNeedyouPushPref(this.checked)">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-row">
                 <!-- HELP-KEY: action_request_timeout_policy_help -->
                 <div class="setting-row-label">
                     <span data-i18n="action_request_timeout_policy_label">Unanswered request policy</span>
@@ -1152,6 +1164,61 @@
                        style="width:110px;text-align:right;"
                        onchange="saveConsensusMinEntities(this.value)"
                        aria-label="Consensus minimum entities">
+            </div>
+        </div>
+
+        <!-- Wishlist × EClaw Matchmaking Card (card_647fc0ba) -->
+        <div class="card" id="wishlistMatchmakingSettingsCard">
+            <div class="card-title">
+                <span>🤝 <span data-i18n="wishlist_matchmaking_title">Wishlist matchmaking</span></span>
+            </div>
+            <p class="section-desc" data-i18n="wishlist_matchmaking_desc">Let your agent quietly match your wishlist with other owners. Nothing is shared until you approve. Off by default.</p>
+            <div class="setting-row">
+                <!-- HELP-KEY: wishlist_matchmaking_participate_help -->
+                <div class="setting-row-label">
+                    <span data-i18n="wishlist_matchmaking_participate_label">Participate in matchmaking</span>
+                    <small style="display:block;color:var(--text-muted);font-size:11px;" data-i18n="wishlist_matchmaking_participate_desc">Opt in to send and receive trade-match invites. Default is off — you turn it on.</small>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggleWishlistMatchmaking" aria-label="Participate in wishlist matchmaking"
+                           onchange="saveWishlistMatchmakingPref(this.checked)">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-row">
+                <!-- HELP-KEY: contact_release_requires_human_help -->
+                <div class="setting-row-label">
+                    <span data-i18n="contact_release_requires_human_label">Contact release needs a real person</span>
+                    <small style="display:block;color:var(--text-muted);font-size:11px;" data-i18n="contact_release_requires_human_desc">When on, only you (not your agent) may approve releasing your contact info. Off = your authorised agent may approve on your behalf. Default is off.</small>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggleContactReleaseRequiresHuman" aria-label="Require a human to approve contact release"
+                           onchange="saveContactReleaseRequiresHumanPref(this.checked)">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="setting-row">
+                <!-- HELP-KEY: wishlist_default_currency_help -->
+                <div class="setting-row-label">
+                    <span data-i18n="wishlist_default_currency_label">Default currency</span>
+                    <small style="display:block;color:var(--text-muted);font-size:11px;" data-i18n="wishlist_default_currency_desc">Currency used when a price has none. Leave on Auto to follow your app language.</small>
+                </div>
+                <select id="wishlistDefaultCurrency" class="policy-select" style="width:auto;min-width:140px;"
+                        onchange="saveWishlistDefaultCurrency(this.value)"
+                        aria-label="Default matchmaking currency">
+                    <option value="" data-i18n="wishlist_default_currency_auto">Auto (by language)</option>
+                    <option value="TWD">TWD</option>
+                    <option value="USD">USD</option>
+                    <option value="JPY">JPY</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="CNY">CNY</option>
+                    <option value="HKD">HKD</option>
+                    <option value="KRW">KRW</option>
+                    <option value="SGD">SGD</option>
+                    <option value="AUD">AUD</option>
+                    <option value="CAD">CAD</option>
+                </select>
             </div>
         </div>
 
@@ -2981,6 +3048,7 @@
                 if (toggle) toggle.checked = prefs.broadcast_recipient_info !== false;
                 applyChatAvatarSizePref(prefs);
                 applyActionRequestPrefs(prefs);
+                applyWishlistMatchmakingPrefs(prefs);
                 applyEntityActivityPrefs(prefs);
                 applyKanbanNudgePrefs(prefs);
                 applyUsageWarningPrefs(prefs);
@@ -3101,6 +3169,49 @@
             if (cGrace) cGrace.value = String(normalizeConsensusSynthesisGraceMinutes(prefs.consensus_synthesis_grace_minutes));
             const cMin = document.getElementById('consensusMinEntities');
             if (cMin) cMin.value = String(normalizeConsensusMinEntities(prefs.consensus_min_entities));
+            // 需要你 mobile push (card_c7baa7ae): DEFAULT-ON — only explicit false opts out.
+            const needyouPush = document.getElementById('toggleNeedyouPush');
+            if (needyouPush) needyouPush.checked = prefs.needyou_push_enabled !== false;
+        }
+
+        async function saveNeedyouPushPref(enabled) {
+            await saveActionRequestPrefPatch({ needyou_push_enabled: !!enabled });
+        }
+
+        // ── Wishlist × EClaw matchmaking prefs (card_647fc0ba) ──────────────────
+        const WISHLIST_CURRENCY_OPTIONS = ['TWD', 'USD', 'JPY', 'EUR', 'GBP', 'CNY', 'HKD', 'KRW', 'SGD', 'AUD', 'CAD'];
+        function normalizeWishlistCurrency(value) {
+            // '' = auto (locale-derived); any other value must be an allowlisted code
+            // (matches backend coercion), else fall back to '' (auto).
+            if (value == null) return '';
+            const c = String(value).trim().toUpperCase();
+            if (c === '') return '';
+            return WISHLIST_CURRENCY_OPTIONS.includes(c) ? c : '';
+        }
+
+        function applyWishlistMatchmakingPrefs(prefs = {}) {
+            // Participate in matchmaking: DEFAULT OFF — opt-in only.
+            const participate = document.getElementById('toggleWishlistMatchmaking');
+            if (participate) participate.checked = prefs.wishlist_matchmaking_enabled === true;
+            // Contact release requires a real human: DEFAULT OFF (= authorised Agent
+            // may consent). Only an explicit true flips it on.
+            const releaseHuman = document.getElementById('toggleContactReleaseRequiresHuman');
+            if (releaseHuman) releaseHuman.checked = prefs.contact_release_requires_human === true;
+            // Default currency: '' = auto (locale-derived).
+            const currency = document.getElementById('wishlistDefaultCurrency');
+            if (currency) currency.value = normalizeWishlistCurrency(prefs.default_currency);
+        }
+
+        async function saveWishlistMatchmakingPref(enabled) {
+            await saveActionRequestPrefPatch({ wishlist_matchmaking_enabled: !!enabled });
+        }
+
+        async function saveContactReleaseRequiresHumanPref(enabled) {
+            await saveActionRequestPrefPatch({ contact_release_requires_human: !!enabled });
+        }
+
+        async function saveWishlistDefaultCurrency(value) {
+            await saveActionRequestPrefPatch({ default_currency: normalizeWishlistCurrency(value) });
         }
 
         async function saveActionRequestRealtimePref(enabled) {
@@ -3146,7 +3257,10 @@
         async function saveActionRequestPrefPatch(patch) {
             try {
                 const data = await apiCall('PUT', '/api/device-preferences', { prefs: patch });
-                if (data && data.prefs) applyActionRequestPrefs(data.prefs);
+                if (data && data.prefs) {
+                    applyActionRequestPrefs(data.prefs);
+                    applyWishlistMatchmakingPrefs(data.prefs);
+                }
             } catch (e) {
                 await loadDevicePreferences();
                 showToast(i18n.t('toast_preference_update_failed'), 'error');
@@ -3157,6 +3271,7 @@
             if (!data || !data.prefs) return;
             applyChatAvatarSizePref(data.prefs);
             applyActionRequestPrefs(data.prefs);
+            applyWishlistMatchmakingPrefs(data.prefs);
             applyEntityActivityPrefs(data.prefs);
             applyKanbanNudgePrefs(data.prefs);
             applyUsageWarningPrefs(data.prefs);

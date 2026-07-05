@@ -2843,6 +2843,22 @@ const wishlistMatchmakingRouter = wishlistMatchmaking.createRouter({
         };
     },
     getDevicePrefs: (deviceId) => devicePrefs.getPrefs(deviceId),
+    // (card_647fc0ba priority ③) Resolve an owner's interface language for the
+    // currency-default derivation. Reads user_accounts.language (the same column the
+    // usage-warning prefix uses). Best-effort: any error / no row → '' so
+    // resolveCurrency falls through to the owner's default_currency pref, then USD.
+    getOwnerLocale: async (deviceId) => {
+        try {
+            if (!chatPool || !deviceId) return '';
+            const r = await chatPool.query(
+                'SELECT language FROM user_accounts WHERE device_id = $1 LIMIT 1',
+                [deviceId]
+            );
+            return (r.rows[0] && r.rows[0].language) ? String(r.rows[0].language) : '';
+        } catch (_e) {
+            return '';
+        }
+    },
     // The ONLY egress: deliver the b2b envelope through the existing cross-speak
     // deliver point, keyed by public code. Applies the target's friends_only rule
     // UNLESS bypassFriendsOnly (matchmaking /connect for an opted-in target).
@@ -2852,14 +2868,20 @@ const wishlistMatchmakingRouter = wishlistMatchmaking.createRouter({
     sendB2bMessage: (m) => wishlistMmSendB2bMessage(m),
     // Per-owner 需要你 for the dual-consent gate. type 'approval'; decision_context
     // pins it as an owner-only decision so the inbox surfaces it.
-    createOwnerActionRequest: async ({ deviceId, fromEntityId, prompt, options, decisionContext }) => {
+    createOwnerActionRequest: async ({ deviceId, fromEntityId, type, prompt, options, decisionContext }) => {
         if (!agentActionRequestsModule || typeof agentActionRequestsModule.createActionRequest !== 'function') {
             throw new Error('action-requests module unavailable');
         }
+        // Default 'approval' (the dual-consent request); the invite inbox card
+        // (card_647fc0ba Scope B) passes an explicit 'wishlist_trade_invite' so the
+        // portal can special-case it. Only allow the known matchmaking types through
+        // — never let a caller-influenced value pick an arbitrary type.
+        const ALLOWED_AR_TYPES = new Set(['approval', 'wishlist_trade_invite']);
+        const arType = ALLOWED_AR_TYPES.has(type) ? type : 'approval';
         return agentActionRequestsModule.createActionRequest({
             deviceId,
             fromEntityId,
-            type: 'approval',
+            type: arType,
             prompt,
             options,
             decisionContext,
@@ -2868,12 +2890,26 @@ const wishlistMatchmakingRouter = wishlistMatchmaking.createRouter({
     // Read a consent request's approval for the cross-owner PII-release gate.
     // approved requires ALL of (security review HIGH #1 + LOW #5):
     //   1. status === 'resolved',
-    //   2. resolved by the HUMAN owner (resolved_by_user === true) — a bot
-    //      self-resolving its own emitted consent does NOT count,
-    //   3. this is genuinely a cross-owner-PII consent (decision_context.crossOwnerPii)
+    //   2. this is genuinely a cross-owner-PII consent (decision_context.crossOwnerPii)
     //      — so this permissive "approve" reading can never leak onto an unrelated
     //      request type,
-    //   4. the answer strictly reads as APPROVE (answerIsApproval), never a negative.
+    //   3. the answer strictly reads as APPROVE (answerIsApproval), never a negative,
+    //   4. WHO may consent for THIS owner's OWN side is governed by that owner's
+    //      `contact_release_requires_human` pref (card_647fc0ba, Hank 拍板 2026-07-05):
+    //        • pref ON  → require resolved_by_user === true (the real human owner,
+    //                     deviceSecret) — an Agent botSecret resolve does NOT count.
+    //        • pref OFF (default) → the owner's authorised Agent may consent, so an
+    //                     Agent-resolved approval (resolved_by_user === false) ALSO
+    //                     counts. This does NOT weaken the structural invariants: the
+    //                     resolve chokepoint (agent-action-requests.js) already binds a
+    //                     botSecret resolve to from_entity_id === that entity, and this
+    //                     consent row was emitted with from_entity_id = THAT owner's OWN
+    //                     entity — so only THAT party's own verified identity can ever
+    //                     agent-resolve THIS party's consent. No cross-party approval,
+    //                     no single caller approving both sides (each side is a distinct
+    //                     row on a distinct device, and the dual-gate requires both).
+    // Fail SAFE: any error reading the pref → treat as requires-human (the stricter,
+    // PII-protecting direction).
     getActionRequestStatus: async (requestId, deviceId) => {
         if (!agentActionRequestsModule || typeof agentActionRequestsModule.getRequestStatus !== 'function') {
             throw new Error('action-requests module unavailable');
@@ -2882,12 +2918,28 @@ const wishlistMatchmakingRouter = wishlistMatchmaking.createRouter({
         if (!r || !r.found) return { status: 'unknown', approved: false };
         const dc = (r.decisionContext && typeof r.decisionContext === 'object') ? r.decisionContext : {};
         const isCrossOwnerPii = dc.crossOwnerPii === true;
+
+        // Resolve THIS owner's contact-release consent mode. Default = requires human
+        // (fail-safe) if the pref can't be read; only an explicit OFF relaxes to
+        // agent-may-consent.
+        let requiresHuman = true;
+        try {
+            const prefs = await devicePrefs.getPrefs(deviceId);
+            requiresHuman = !(prefs && prefs.contact_release_requires_human === false);
+        } catch (_e) {
+            requiresHuman = true;
+        }
+        // When the pref allows an Agent to consent, a valid Agent resolve counts even
+        // though resolved_by_user is false. When it requires a human, only
+        // resolved_by_user === true counts.
+        const identityOk = requiresHuman ? (r.resolvedByUser === true) : (r.status === 'resolved');
+
         const approved =
             r.status === 'resolved' &&
-            r.resolvedByUser === true &&
             isCrossOwnerPii &&
+            identityOk &&
             answerIsApproval(r.answer);
-        return { status: r.status, approved, resolvedByUser: r.resolvedByUser === true };
+        return { status: r.status, approved, resolvedByUser: r.resolvedByUser === true, requiresHuman };
     },
     // (MED #4) Resolve a party's contact + name-card SERVER-SIDE from that owner's
     // OWN trusted records — NEVER from the caller's request body:

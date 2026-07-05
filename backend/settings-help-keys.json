@@ -55,6 +55,11 @@
       "help_key": "consensus_window_minutes_help"
     },
     {
+      "field_key": "contact_release_requires_human",
+      "label_key": "contact_release_requires_human_label",
+      "help_key": "contact_release_requires_human_help"
+    },
+    {
       "field_key": "entity_idle_after_seconds",
       "label_key": "entity_idle_after_seconds_label",
       "help_key": "entity_idle_after_seconds_help"
@@ -145,6 +150,11 @@
       "help_key": "kanban_nudge_statuses_help"
     },
     {
+      "field_key": "needyou_push",
+      "label_key": "needyou_push_label",
+      "help_key": "needyou_push_help"
+    },
+    {
       "field_key": "prompt_policy_claude_override",
       "label_key": "prompt_policy_claude_override_label",
       "help_key": "prompt_policy_claude_override_help"
@@ -218,6 +228,16 @@
       "field_key": "usage_warning_enable",
       "label_key": "usage_warning_enable_label",
       "help_key": "usage_warning_enable_help"
+    },
+    {
+      "field_key": "wishlist_default_currency",
+      "label_key": "wishlist_default_currency_label",
+      "help_key": "wishlist_default_currency_help"
+    },
+    {
+      "field_key": "wishlist_matchmaking_participate",
+      "label_key": "wishlist_matchmaking_participate_label",
+      "help_key": "wishlist_matchmaking_participate_help"
     }
   ]
 }
