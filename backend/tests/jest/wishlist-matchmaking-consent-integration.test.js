@@ -128,12 +128,23 @@ function answerIsApproval(answer) {
     const allow = new Set(['同意釋出 / approve', '同意釋出', '同意', 'approve', 'approved', 'approve release', 'yes', '是']);
     return norm === '同意釋出 / approve' || allow.has(norm);
 }
+// Per-device contact_release_requires_human pref map the gate consults. Mutable so
+// a test can flip a party's consent mode. Absent entry / undefined → default
+// requires-human (fail-safe), matching index.js when the pref can't be read.
+const releasePrefByDevice = new Map();
+// getActionRequestStatus wired EXACTLY like the NEW index.js pref-gated gate under
+// test (card_647fc0ba Scope C):
+//   approved = resolved AND crossOwnerPii AND answerIsApproval AND identityOk, where
+//   identityOk = requiresHuman ? resolved_by_user===true : status==='resolved'.
 async function realGetActionRequestStatus(requestId, deviceId) {
     const r = await aar.getRequestStatus(requestId, deviceId);
     if (!r || !r.found) return { status: 'unknown', approved: false };
     const dc = (r.decisionContext && typeof r.decisionContext === 'object') ? r.decisionContext : {};
-    const approved = r.status === 'resolved' && r.resolvedByUser === true && dc.crossOwnerPii === true && answerIsApproval(r.answer);
-    return { status: r.status, approved, resolvedByUser: r.resolvedByUser === true };
+    // Default requires-human unless the pref is EXPLICITLY false (fail-safe).
+    const requiresHuman = releasePrefByDevice.get(deviceId) !== false;
+    const identityOk = requiresHuman ? (r.resolvedByUser === true) : (r.status === 'resolved');
+    const approved = r.status === 'resolved' && dc.crossOwnerPii === true && identityOk && answerIsApproval(r.answer);
+    return { status: r.status, approved, resolvedByUser: r.resolvedByUser === true, requiresHuman };
 }
 
 // Real matchmaking router wired to the REAL consent create + status + a trusted
@@ -175,7 +186,7 @@ async function resolveConsent(reqId, deviceId, answer, { asUser, asEntityId }) {
     return aar.resolveActionRequest(deviceId, reqId, answer, device, restrict, asUser);
 }
 
-beforeEach(() => { rows.clear(); seq = 0; });
+beforeEach(() => { rows.clear(); seq = 0; releasePrefByDevice.clear(); });
 
 async function seedBothApprovedPending() {
     const { app, sent } = buildApp();
@@ -187,8 +198,9 @@ async function seedBothApprovedPending() {
 }
 
 describe('DUAL consent — REAL resolve path (HIGH #1)', () => {
-    it('(a) AGENT self-resolves its OWN consent ⇒ NOT approved ⇒ release stays gated', async () => {
+    it('(a) pref requires-human (default): AGENT self-resolve ⇒ NOT approved ⇒ gated', async () => {
         const { app, sent, matchId, buyerReqId, sellerReqId } = await seedBothApprovedPending();
+        // Default: neither device has contact_release_requires_human=false ⇒ human required.
         const before = sent.length;
         // Each emitting agent resolves its own consent as a BOT (botSecret path):
         // from_entity_id === restrictToEntityId, isUserResolve=false.
@@ -197,13 +209,66 @@ describe('DUAL consent — REAL resolve path (HIGH #1)', () => {
         expect(rb).not.toBeNull(); // the resolve itself succeeds (status→resolved)
         expect(rs).not.toBeNull();
         expect(rb.resolved_by_user).toBe(false); // but NOT by a human
-        // The release gate must therefore refuse.
+        // The release gate must therefore refuse (pref defaults to requires-human).
         const rel = await P(app, '/contact/release').send({ ...BUYER, matchId });
         expect(rel.status).toBe(409);
         expect(rel.body.reason).toBe('dual_consent_pending');
         expect(rel.body.buyerApproved).toBe(false);
         expect(rel.body.sellerApproved).toBe(false);
         expect(sent.length).toBe(before); // NOTHING leaked
+    });
+
+    it('(a2) pref OFF for BOTH parties: authorised AGENT consent COUNTS ⇒ release fires (Hank 授權 Agent 可代同意)', async () => {
+        const { app, sent, matchId, buyerReqId, sellerReqId } = await seedBothApprovedPending();
+        // Both owners set contact_release_requires_human=false ⇒ their Agent may consent.
+        releasePrefByDevice.set(BUYER.deviceId, false);
+        releasePrefByDevice.set(SELLER.deviceId, false);
+        const before = sent.length;
+        // Each party's OWN bound entity agent-resolves its OWN consent (botSecret path,
+        // restrictToEntityId = that entity). No cross-party, no human.
+        const rb = await resolveConsent(buyerReqId, BUYER.deviceId, { text: 'approve', optionIndex: 0 }, { asUser: false, asEntityId: BUYER.entityId });
+        const rs = await resolveConsent(sellerReqId, SELLER.deviceId, { text: 'approve', optionIndex: 0 }, { asUser: false, asEntityId: SELLER.entityId });
+        expect(rb.resolved_by_user).toBe(false);
+        expect(rs.resolved_by_user).toBe(false);
+        const rel = await P(app, '/contact/release').send({ ...BUYER, matchId });
+        expect(rel.status).toBe(200);
+        expect(rel.body.status).toBe('contact_released');
+        expect(sent.slice(before)).toHaveLength(2); // both parties' trusted contact exchanged
+    });
+
+    it('(a3) MIXED prefs: seller requires-human, buyer allows Agent ⇒ seller Agent-resolve does NOT count ⇒ gated', async () => {
+        const { app, sent, matchId, buyerReqId, sellerReqId } = await seedBothApprovedPending();
+        releasePrefByDevice.set(BUYER.deviceId, false); // buyer: Agent may consent
+        // seller: default (requires human)
+        const before = sent.length;
+        const rb = await resolveConsent(buyerReqId, BUYER.deviceId, { text: 'approve', optionIndex: 0 }, { asUser: false, asEntityId: BUYER.entityId });
+        const rs = await resolveConsent(sellerReqId, SELLER.deviceId, { text: 'approve', optionIndex: 0 }, { asUser: false, asEntityId: SELLER.entityId });
+        expect(rb.resolved_by_user).toBe(false);
+        expect(rs.resolved_by_user).toBe(false);
+        const rel = await P(app, '/contact/release').send({ ...BUYER, matchId });
+        expect(rel.status).toBe(409); // seller side still needs a human ⇒ gated
+        expect(rel.body.buyerApproved).toBe(true);   // buyer's Agent consent counted
+        expect(rel.body.sellerApproved).toBe(false); // seller's Agent consent did NOT
+        expect(sent.length).toBe(before); // NOTHING leaked
+    });
+
+    it('(a4) SECURITY INVARIANT: even with pref OFF, a party CANNOT resolve the OTHER party\'s consent (no cross-party)', async () => {
+        const { app, sent, matchId, buyerReqId, sellerReqId } = await seedBothApprovedPending();
+        releasePrefByDevice.set(BUYER.deviceId, false);
+        releasePrefByDevice.set(SELLER.deviceId, false);
+        const before = sent.length;
+        // The BUYER entity tries to agent-resolve the SELLER's consent (cross-party).
+        // The consent row lives on SELLER.deviceId with from_entity_id = SELLER.entityId;
+        // a botSecret resolve restricts to the caller's OWN entity id → the chokepoint
+        // refuses (restrict != from_entity_id ⇒ no row updated).
+        const cross = await resolveConsent(sellerReqId, SELLER.deviceId, { optionIndex: 0 }, { asUser: false, asEntityId: BUYER.entityId });
+        expect(cross).toBeNull(); // cross-party resolve did NOT take effect
+        // Buyer legitimately resolves its own; seller stays effectively unresolved.
+        await resolveConsent(buyerReqId, BUYER.deviceId, { optionIndex: 0 }, { asUser: false, asEntityId: BUYER.entityId });
+        const rel = await P(app, '/contact/release').send({ ...BUYER, matchId });
+        expect(rel.status).toBe(409); // seller side never got a valid own-identity consent
+        expect(rel.body.sellerApproved).toBe(false);
+        expect(sent.length).toBe(before);
     });
 
     it('(b) BOTH resolved by the HUMAN owner (deviceSecret) ⇒ approved ⇒ release fires', async () => {
