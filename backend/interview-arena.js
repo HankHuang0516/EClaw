@@ -350,6 +350,15 @@ let VISION_IMAGES = [
     // Hard tier
     { file: null, description: 'A Figma design canvas showing 3 nested frames: an outer white card containing a 2×3 product thumbnail grid (6 items); a floating "Filters" panel overlapping the card with 4 toggle switches (3 on, 1 off labeled "In Stock Only"); and a red notification badge displaying "12" on a bell icon in the upper-right corner', keywords: ['figma', 'three', 'frames', 'grid', 'six', 'filters', 'four', 'toggles', 'badge', '12', 'bell', 'red'] },
     { file: null, description: 'A memory profiler heap snapshot table showing the top 8 retained objects by size: Array 42.3 MB (31%), Object 28.7 MB (21%), string 19.4 MB (14%), Map 12.1 MB (9%) — each row has a proportional colored bar; the Array row is highlighted in red as the largest retained object', keywords: ['memory', 'profiler', 'heap', 'eight', 'Array', '42.3', 'MB', 'string', 'Map', 'retained', 'red', 'largest'] },
+    // ── Daily pool update: added 2026-07-05 ──
+    // Easy tier
+    { file: null, description: 'A blue share/upload icon: a vertical arrow pointing upward out of a circle, centered on a white background', keywords: ['share', 'upload', 'arrow', 'blue', 'circle', 'upward'] },
+    // Medium tier
+    { file: null, description: 'A browser security certificate dialog for a website showing a green padlock icon, issuer "Let\'s Encrypt R11", validity period Jan 1 2025 to Apr 1 2025, and a truncated SHA-256 fingerprint in the details section', keywords: ['certificate', 'browser', 'green', 'padlock', 'issuer', "Let's Encrypt", 'validity', 'fingerprint', 'SHA-256'] },
+    { file: null, description: 'An OpenTelemetry distributed trace waterfall for a single API request showing 5 nested spans: gateway-receive 2 ms, auth-validate 9 ms, db-query 43 ms (highlighted in orange as critical path), cache-write 6 ms, response-send 1 ms — total end-to-end duration 61 ms shown at the top', keywords: ['trace', 'five', 'spans', 'gateway', 'auth', 'db-query', '43', 'cache', '61', 'orange', 'critical'] },
+    // Hard tier
+    { file: null, description: 'An RBAC permissions matrix for a SaaS admin panel: rows are six resources (Users, Reports, Billing, Settings, Logs, Audit), columns are four roles (Admin, Manager, Analyst, Viewer) — each cell shows one of Read, Write, or None; only Admin has Write access to Billing and Audit; Viewer has Read for Users and Reports and None for all four remaining resources', keywords: ['RBAC', 'six', 'resources', 'four', 'roles', 'Admin', 'Billing', 'Audit', 'Viewer', 'Read', 'None', 'Write'] },
+    { file: null, description: 'A load balancer health dashboard listing 6 backend servers: 4 show green "Healthy" badges with latency under 10 ms; 1 shows yellow "Degraded" at 380 ms with a "Connection Pool 94% full" tooltip; 1 shows red "Down" with last heartbeat 4 minutes ago and a "Circuit Breaker: OPEN" badge', keywords: ['load balancer', 'six', 'four', 'healthy', 'degraded', '380', 'red', 'down', 'circuit', 'breaker', 'open', 'four'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -691,6 +700,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[1,2,3,null,5,null,4]', expected: '[1,3,4]' },{ input: '[1,null,3]', expected: '[1,3]' },{ input: '[]', expected: '[]' },{ input: '[1,2,3,4]', expected: '[1,3,4]' }] },
     { title: 'Longest Arithmetic Subsequence', description: 'Write `solve(nums)` — return the length of the longest arithmetic subsequence in the array. A subsequence is arithmetic if consecutive differences are all equal. Elements need not be contiguous.',
       testCases: [{ input: '[3,6,9,12]', expected: '4' },{ input: '[9,4,7,2,10]', expected: '3' },{ input: '[20,1,15,3,10,5,8]', expected: '4' },{ input: '[1,2]', expected: '2' }] },
+    // ── Daily pool update: added 2026-07-05 ──
+    { title: 'Spiral Matrix II', description: 'Write `solve(n)` — given an integer n, generate an n×n matrix filled with elements from 1 to n² in spiral order (clockwise, starting from the top-left).',
+      testCases: [{ input: '3', expected: '[[1,2,3],[8,9,4],[7,6,5]]' },{ input: '1', expected: '[[1]]' },{ input: '4', expected: '[[1,2,3,4],[12,13,14,5],[11,16,15,6],[10,9,8,7]]' }] },
+    { title: 'Interleaving String', description: 'Write `solve(s1, s2, s3)` — return true if s3 is formed by an interleaving of s1 and s2. An interleaving uses all characters of s1 and s2 in their original relative order.',
+      testCases: [{ input: '"aabcc", "dbbca", "aadbbcbcac"', expected: 'true' },{ input: '"aabcc", "dbbca", "aadbbbaccc"', expected: 'false' },{ input: '"", "", ""', expected: 'true' },{ input: '"a", "b", "ab"', expected: 'true' },{ input: '"a", "b", "ba"', expected: 'true' }] },
+    { title: 'Minimum Refueling Stops', description: 'Write `solve(target, startFuel, stations)` — a car starts with startFuel liters. stations is an array of [position, capacity] pairs sorted ascending. Return the minimum number of refueling stops to reach the target, or -1 if impossible.',
+      testCases: [{ input: '100, 10, [[10,60],[20,30],[30,30],[60,40]]', expected: '2' },{ input: '100, 1, []', expected: '-1' },{ input: '1, 1, []', expected: '0' },{ input: '100, 100, [[10,60]]', expected: '0' }] },
+    { title: 'Find Duplicate Subtrees', description: 'Write `solve(nodes)` — given a binary tree as a level-order array (null for missing), return the root values of all duplicate subtrees (identical structure AND node values). Sort the output array.',
+      testCases: [{ input: '[1,2,3,4,null,2,4,null,null,4]', expected: '[2,4]' },{ input: '[2,1,1]', expected: '[1]' },{ input: '[1]', expected: '[]' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -920,6 +938,17 @@ let RESPONSE_QUESTIONS = [
     // Hard tier
     { question: 'In how many ways can 8 people be seated around a circular table if 2 specific people must NOT be adjacent to each other?', expectedKeywords: ['1800', 'one thousand eight hundred'] },
     { question: 'A container holds a 60-liter mixture of acid and water in a ratio of 2:1. How many liters of pure acid must be added to make the ratio 3:1?', expectedKeywords: ['12', 'twelve'] },
+    // ── Daily pool update: added 2026-07-05 ──
+    // Easy tier
+    { question: 'What is the first element on the periodic table?', expectedKeywords: ['hydrogen', 'H'] },
+    { question: 'What is the square root of 225?', expectedKeywords: ['15', 'fifteen'] },
+    // Medium tier
+    { question: 'Pipes A, B, and C can individually fill a tank in 20, 30, and 60 hours respectively. How many hours will it take to fill the tank when all three pipes are open simultaneously?', expectedKeywords: ['10', 'ten'] },
+    { question: 'A man earns $3,200 per month. He spends 30% on rent and 20% on food. How much does he save each month?', expectedKeywords: ['1600', '$1,600', '1,600'] },
+    { question: 'How many positive integers less than 100 are divisible by 3 but NOT by 9?', expectedKeywords: ['22', 'twenty-two'] },
+    // Hard tier
+    { question: 'A clock gains 5 minutes every hour. If it is set correctly at 6:00 AM, what time will the clock display when the actual time is 6:00 PM on the same day?', expectedKeywords: ['7:00', '7:00 PM', 'seven'] },
+    { question: 'In how many ways can the letters of the word "COMMITTEE" be arranged? (The letters M, T, and E each appear exactly twice.)', expectedKeywords: ['45360'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -1155,6 +1184,16 @@ let TTS_PHRASES = [
     { text: 'Production alert: pod api-gateway-7c8d9f experienced an OOMKilled event at 16:42 UTC — container memory limit was 512 megabytes but peak resident set size reached 618 megabytes — autoscaler scaled replicas from 3 to 5', keywords: ['api-gateway', '16:42', 'UTC', 'OOMKilled', '512', 'megabytes', '618', 'autoscaler', 'three', 'five'] },
     // Hard tier
     { text: 'The convertible note term sheet specifies a conversion price of sixty-two dollars and fifty cents per share, an annual coupon of one point five percent payable semi-annually, and a put option exercisable on the third anniversary at one hundred and two percent of par value', keywords: ['convertible', 'note', 'sixty-two', 'fifty', 'coupon', 'one', 'five', 'semi-annually', 'put', 'option', 'third', 'anniversary', 'par'] },
+    // ── Daily pool update: added 2026-07-05 ──
+    // Easy tier
+    { text: 'Please have your boarding pass and passport ready at gate C eighteen', keywords: ['boarding', 'pass', 'passport', 'gate', 'eighteen'] },
+    { text: 'Your food order will be ready for collection in approximately twelve minutes', keywords: ['food', 'order', 'ready', 'collection', 'twelve', 'minutes'] },
+    // Medium tier
+    { text: 'Shipment of three hundred twenty-four units of model XK-7B departed warehouse twelve on Thursday at fourteen hundred hours and is expected at distribution centre five by Monday', keywords: ['shipment', '324', 'XK-7B', 'warehouse', 'twelve', 'thursday', 'fourteen', 'five', 'monday'] },
+    { text: 'Your subscription plan Pro Annual at ninety-nine dollars per year auto-renews on September third 2025 — to cancel visit account settings and click manage billing before August twenty-seventh', keywords: ['subscription', 'Pro Annual', '99', 'September', 'third', 'cancel', 'billing', 'August', 'twenty-seventh'] },
+    // Hard tier
+    { text: 'ISIN XS2345678901 is a five-year fixed-rate corporate bond issued by Helios Capital AG with a coupon rate of three point eight seven five percent payable semi-annually on March 15th and September 15th with a face value of one hundred thousand euros and maturity date March 15th 2029', keywords: ['ISIN', 'XS2345678901', 'five-year', 'Helios', '3.875', 'semi-annually', 'March', 'September', 'maturity', '2029', 'euros'] },
+    { text: 'Docker build digest sha256 colon a3f9c2e8d471b0e6f3821cc904d5b7398e12a041f6c2d8e9b7345210e93f1a28 pushed to registry dot corp dot example dot com slash backend colon release dash 4 dot 7 dot 2 at 19:03 UTC', keywords: ['docker', 'sha256', 'a3f9', 'registry', 'backend', 'release', '4.7.2', '19:03', 'UTC'] },
 ];
 
 // ============================================
