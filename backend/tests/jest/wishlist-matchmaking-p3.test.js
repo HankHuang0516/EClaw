@@ -298,23 +298,30 @@ describe('seller-initiated matchmaking (real governed invite)', () => {
         expect(sent[0].toPublicCode).toBe(BUYER.publicCode);      // invite goes TO the buyer
     });
 
-    // REGRESSION 2: target buyer OFFLINE/unreachable ⇒ NOTHING sent. Before the fix,
-    // the buyer was P2's caller so only the seller's reachability was checked and an
-    // invite fired to an offline buyer.
-    it('sends NOTHING when the target buyer is offline/unreachable', async () => {
+    // NEW CONTRACT (owner directive 「不建議使用心跳新鮮度來阻擋撮合，opt-in 阻擋合理」):
+    // reachability is OPT-IN ONLY. A target buyer that is opted-in but OFFLINE (stale
+    // roster) is STILL reachable — the seller-scan invite MUST fire through P2's
+    // governed sink (invites are async/durable). This was formerly REGRESSION 2
+    // (offline ⇒ nothing sent); the liveness gate has been removed. Note the seller-
+    // scan still binds `from` to the SELLER (caller) — see the impersonation test
+    // above — so this inversion does NOT relax the P3 principal-binding fix.
+    it('opted-in buyer that is OFFLINE (stale roster) ⇒ invite STILL sent (liveness no longer gates)', async () => {
         const { app, sent } = buildApp({
             ...matchWish(BUYER),
             roster: {
                 [SELLER.publicCode]: { publicCode: SELLER.publicCode, entityId: SELLER.entityId, state: 'IDLE', lastUpdated: Date.now(), isBound: true },
-                // buyer is stale/offline: lastUpdated far in the past
+                // buyer is stale/offline: lastUpdated far in the past — no longer a block.
                 [BUYER.publicCode]: { publicCode: BUYER.publicCode, entityId: BUYER.entityId, state: 'IDLE', lastUpdated: Date.now() - 60 * 60 * 1000, isBound: true },
             },
         });
         const res = await post(app, '/seller-listing-scan').send({ ...SELLER, itemId: 42, itemName: 'x' });
         expect(res.status).toBe(200);
-        expect(res.body.invitedCount).toBe(0);
-        expect(res.body.skipped.some((s) => s.reason === 'unreachable')).toBe(true);
-        expect(sent).toHaveLength(0);
+        expect(res.body.invitedCount).toBe(1);
+        expect((res.body.skipped || []).some((s) => s.reason === 'unreachable')).toBe(false);
+        expect(sent).toHaveLength(1);
+        // principal-binding preserved: the send is FROM the seller (caller), TO the buyer.
+        expect(sent[0].fromPublicCode).toBe(SELLER.publicCode);
+        expect(sent[0].toPublicCode).toBe(BUYER.publicCode);
     });
 
     // REGRESSION 4: target buyer NOT opted-in ⇒ NOTHING sent (recipient consent gate,

@@ -24,8 +24,11 @@
  *      (`wishlist_matchmaking_enabled`, default OFF), a global kill-switch
  *      (`wishlist_matchmaking_killswitch`) disables ALL sends, and a per-entity
  *      quota (separate counter from CROSS_SPEAK_MAX_MESSAGES) caps invites.
- *   3. Reachability — an invite is only sent to a target that is BOTH online (per
- *      the /api/entities roster) AND opted-in.
+ *   3. Reachability — an invite is only sent to a target whose owner OPTED IN.
+ *      Reachability is opt-in ONLY: it does NOT depend on the roster's current
+ *      liveness (invites are async/durable, so an opted-in but momentarily idle or
+ *      SLEEPING party still receives them). The kill-switch is the "stop reaching
+ *      me" control; heartbeat freshness is not.
  *   4. Dual lightweight consent (D5) — the agent name-card (publicCode/displayName/
  *      caps) may auto-exchange, but ANY real contact info (email/phone/…) is
  *      released ONLY after BOTH owners approve it in their 需要你 inbox. A contact
@@ -249,30 +252,25 @@ function sanitizeContactInfo(contactInfo) {
     return out;
 }
 
-// ── Reachability (online AND opted-in) ──────────────────────────────────────
+// ── Reachability (opt-in ONLY — NOT liveness) ───────────────────────────────
 
 /**
- * True iff the target public code is BOTH online (per the roster) AND its owner
- * device has opted into matchmaking. rosterEntry is one /api/entities record;
- * prefs is that owner device's preferences.
+ * True iff the target's owner device has opted into matchmaking. Reachability is
+ * OPT-IN ONLY — it does NOT depend on the roster's current liveness (owner spec,
+ * 2026-07: 「不建議使用心跳新鮮度來阻擋撮合，opt-in 阻擋合理」).
+ *
+ * Matchmaking invites are asynchronous, durable action-requests: an opted-in
+ * seller/buyer that is momentarily idle (heartbeat stale) or SLEEPING (idle-20min-
+ * no-work) is STILL reachable — it receives the invite and responds whenever next
+ * active. Blocking on current liveness only produced false-negatives (a real
+ * opted-in party idle for a few minutes got silently skipped). SLEEPING/FAILED/
+ * stale-heartbeat none mean "opted out", so none may gate matchmaking.
+ *
+ * The kill-switch (checked separately by the caller) is the intentional per-owner
+ * "stop reaching me" control — liveness is not.
  */
-function isReachableTarget({ rosterEntry, prefs, now, onlineWindowMs = 5 * 60 * 1000 }) {
-    if (!rosterEntry || !rosterEntry.isBound || !rosterEntry.publicCode) return false;
-    if (!isOnline(rosterEntry, now, onlineWindowMs)) return false;
-    if (!isOptedIn(prefs)) return false;
-    return true;
-}
-
-function isOnline(rosterEntry, now, onlineWindowMs) {
-    if (!rosterEntry) return false;
-    const state = rosterEntry.state;
-    // SLEEPING/FAILED are not reachable for an unsolicited invite.
-    const reachableState = state === 'BUSY' || state === 'ACTIVE' || state === 'IDLE' || state === 'REVIEW';
-    if (!reachableState) return false;
-    const last = Number(rosterEntry.lastUpdated);
-    if (!Number.isFinite(last)) return false;
-    const t = typeof now === 'function' ? now() : Date.now();
-    return t - last <= onlineWindowMs;
+function isReachableTarget({ rosterEntry, prefs }) {
+    return isOptedIn(prefs);
 }
 
 function isOptedIn(prefs) {
@@ -499,7 +497,10 @@ function createRouter(opts = {}) {
         }
 
         // (b) Resolve the seller + its owner device, then enforce reachability:
-        // the seller must be BOTH online AND opted-in.
+        // the seller must be opted-in. Reachability is OPT-IN ONLY — NOT current
+        // liveness. Invites are durable/async, so an opted-in seller that is idle
+        // or SLEEPING still receives the invite (blocking on liveness only caused
+        // false-negatives).
         const sellerResolved = typeof resolvePublicCode === 'function' ? resolvePublicCode(sellerCode) : null;
         if (!sellerResolved || !sellerResolved.deviceId) {
             return res.status(404).json({ error: 'seller public code not found' });
@@ -509,9 +510,9 @@ function createRouter(opts = {}) {
         if (isKillSwitchOn(sellerPrefs)) {
             return res.status(403).json({ error: 'target has matchmaking disabled', reason: 'target_killswitch' });
         }
-        if (!isReachableTarget({ rosterEntry: sellerRoster, prefs: sellerPrefs, now: clock })) {
+        if (!isReachableTarget({ rosterEntry: sellerRoster, prefs: sellerPrefs })) {
             return res.status(409).json({
-                error: 'seller is not reachable (must be online and opted-in)',
+                error: 'seller has not opted into matchmaking',
                 reason: 'unreachable',
             });
         }
@@ -864,7 +865,6 @@ module.exports = {
     buildDeclineEnvelope,
     buildContactEnvelope,
     isReachableTarget,
-    isOnline,
     isOptedIn,
     isKillSwitchOn,
     createQuotaTracker,
