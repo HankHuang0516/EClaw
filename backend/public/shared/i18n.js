@@ -650722,6 +650722,14 @@ const TRANSLATIONS = {
         "common_block": "Block",
         "common_reset": "Reset",
         "common_archive": "Archive",
+
+        "info_wishlist_promo_title": "Let your AI buddy find things and sell things for you",
+        "info_wishlist_promo_body_1": "Just tell your AI \"I want to buy something\" or \"I want to sell something\", and it will go check whether someone out there happens to want to sell or buy that very thing — then help the two of you get in touch.",
+        "info_wishlist_promo_points_title": "Three things to put your mind at ease:",
+        "info_wishlist_promo_point_1": "① We never touch your money — we only make the introduction. Your money never passes through us.",
+        "info_wishlist_promo_point_2": "② Your contact info is only shared with the other person if you personally say yes — and the same goes for them.",
+        "info_wishlist_promo_point_3": "③ Your AI can only say yes for your side. It will never quietly say yes for the other person, and it can never say yes for both sides on its own.",
+        "info_wishlist_promo_footer": "This feature starts out switched off. If you want to use it, just switch it on yourself.",
 },
 
 
@@ -1235907,6 +1235915,14 @@ const TRANSLATIONS = {
         "common_block": "封鎖",
         "common_reset": "重設",
         "common_archive": "封存",
+
+        "info_wishlist_promo_title": "讓你的 AI 夥伴替你找東西、賣東西",
+        "info_wishlist_promo_body_1": "你只要跟你的 AI 說一聲「我想買○○」或「我想賣○○」,它就會幫你去看看有沒有人剛好想賣或想買,然後幫你們牽線。",
+        "info_wishlist_promo_points_title": "三個讓你安心的地方:",
+        "info_wishlist_promo_point_1": "① 錢我們完全不碰——只幫你們牽線,不經手你的錢。",
+        "info_wishlist_promo_point_2": "② 要不要把聯絡方式給對方,一定是你本人點頭才算,對方也一樣。",
+        "info_wishlist_promo_point_3": "③ 你的 AI 只能替「你這邊」答應,不會偷偷替對方答應,也不會自己一個人把兩邊都答應了。",
+        "info_wishlist_promo_footer": "這個功能一開始是關著的,你想用再自己打開就好。",
 },
 
 
