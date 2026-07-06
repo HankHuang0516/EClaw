@@ -178,6 +178,39 @@ function _tFb(k, fb) {
 
 let _eclawDialogId = 0;
 
+// ─── Dialog stack + focus restore (card_8903c41d) ───
+// Every showConfirm/showPrompt attaches its own document-level capture keydown
+// handler, so with STACKED dialogs one Esc used to fire every handler and close
+// the whole stack at once. The shared LIFO stack below makes each handler act
+// only while its own overlay is the TOP entry — one Esc closes only the
+// top-most dialog; the next Esc closes the next one. Entries are the overlay
+// elements; cleanup splices its own entry out so out-of-order closes (backdrop
+// tap / a button click on a lower dialog) keep the stack consistent.
+const _eclawDialogStack = [];
+function _eclawDialogIsTop(overlay) {
+    return _eclawDialogStack[_eclawDialogStack.length - 1] === overlay;
+}
+function _eclawDialogStackRemove(overlay) {
+    const i = _eclawDialogStack.indexOf(overlay);
+    if (i !== -1) _eclawDialogStack.splice(i, 1);
+}
+
+// WAI-ARIA APG dialog pattern: when a dialog closes, focus must return to the
+// element that invoked it. Capture document.activeElement at open; the returned
+// restorer, called after the overlay is removed, focuses that element back IF
+// it is still in the DOM and focusable — otherwise it leaves focus where the
+// browser put it (the previous fallback behaviour). With stacked dialogs this
+// chains naturally: closing the top dialog restores focus into the one below.
+function _eclawCaptureRestoreFocus() {
+    const el = (typeof document !== 'undefined') ? document.activeElement : null;
+    return () => {
+        if (!el || el === document.body || typeof el.focus !== 'function') return;
+        const connected = ('isConnected' in el) ? el.isConnected : (document.contains && document.contains(el));
+        if (!connected) return;
+        try { el.focus(); } catch (_) { /* became unfocusable — keep fallback */ }
+    };
+}
+
 // Body scroll-lock for modal dialogs (showConfirm / showPrompt). Without it the
 // page behind a destructive confirm still scrolls (wheel/touch AND programmatic),
 // so the user can lose the dialog out of view or mis-tap a moved control.
@@ -285,6 +318,8 @@ function showConfirm({ message, title, confirmText, cancelText, danger, itemName
     }
     return new Promise((resolve) => {
         const t = _tFb;
+        // Record the invoking element BEFORE the dialog steals focus (card_8903c41d).
+        const restoreFocus = _eclawCaptureRestoreFocus();
         const overlay = document.createElement('div');
         overlay.className = 'dialog-overlay eclaw-confirm-overlay';
         const dialogId = ++_eclawDialogId;
@@ -321,7 +356,8 @@ function showConfirm({ message, title, confirmText, cancelText, danger, itemName
         _eclawEnsureDialogAnimStyle();
         document.body.appendChild(overlay);
         _eclawLockBodyScroll();
-        const cleanup = (result) => { document.removeEventListener('keydown', _keyHandler, true); overlay.remove(); _eclawUnlockBodyScroll(); resolve(result); };
+        _eclawDialogStack.push(overlay);
+        const cleanup = (result) => { _eclawDialogStackRemove(overlay); document.removeEventListener('keydown', _keyHandler, true); overlay.remove(); _eclawUnlockBodyScroll(); restoreFocus(); resolve(result); };
         const okBtn = overlay.querySelector('.eclaw-confirm-ok');
         const phraseInput = needsPhrase ? overlay.querySelector('.eclaw-confirm-phrase-input') : null;
         const phraseMatches = () => !needsPhrase || (phraseInput && phraseInput.value.trim() === phrase);
@@ -347,6 +383,10 @@ function showConfirm({ message, title, confirmText, cancelText, danger, itemName
             overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); });
         }
         const _keyHandler = (e) => {
+            // LIFO gate (card_8903c41d): document-level handlers of EVERY open
+            // dialog fire on the same keydown — only the top-most may act, so
+            // one Esc closes one dialog and Enter/Tab can't leak to the stack.
+            if (!_eclawDialogIsTop(overlay)) return;
             if (e.key === 'Escape') cleanup(false);
             // Enter semantics (WAI-ARIA APG: a focused button reacts to Enter
             // and Space identically). Non-danger: Enter confirms. Danger: Enter
@@ -410,6 +450,8 @@ function showConfirm({ message, title, confirmText, cancelText, danger, itemName
 function showPrompt({ message, title, defaultValue, placeholder, confirmText, cancelText } = {}) {
     return new Promise((resolve) => {
         const t = _tFb;
+        // Record the invoking element BEFORE the dialog steals focus (card_8903c41d).
+        const restoreFocus = _eclawCaptureRestoreFocus();
         const overlay = document.createElement('div');
         overlay.className = 'dialog-overlay eclaw-confirm-overlay';
         const dialogId = ++_eclawDialogId;
@@ -432,15 +474,17 @@ function showPrompt({ message, title, defaultValue, placeholder, confirmText, ca
         _eclawEnsureDialogAnimStyle();
         document.body.appendChild(overlay);
         _eclawLockBodyScroll();
+        _eclawDialogStack.push(overlay);
         const input = overlay.querySelector('.eclaw-prompt-input');
         input.focus();
         input.select();
-        const cleanup = (result) => { document.removeEventListener('keydown', _escHandler, true); overlay.remove(); _eclawUnlockBodyScroll(); resolve(result); };
+        const cleanup = (result) => { _eclawDialogStackRemove(overlay); document.removeEventListener('keydown', _escHandler, true); overlay.remove(); _eclawUnlockBodyScroll(); restoreFocus(); resolve(result); };
         overlay.querySelector('.eclaw-confirm-ok').addEventListener('click', () => cleanup(input.value));
         overlay.querySelector('.eclaw-confirm-cancel').addEventListener('click', () => cleanup(null));
         overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(null); });
         input.addEventListener('keydown', (e) => { if (e.key === 'Enter') cleanup(input.value); });
-        const _escHandler = (e) => { if (e.key === 'Escape') cleanup(null); };
+        // LIFO gate — see showConfirm's _keyHandler (card_8903c41d).
+        const _escHandler = (e) => { if (!_eclawDialogIsTop(overlay)) return; if (e.key === 'Escape') cleanup(null); };
         // Document-level capture so Esc works even when focus left the dialog. Removed in cleanup.
         document.addEventListener('keydown', _escHandler, true);
     });
