@@ -244,20 +244,32 @@ describe('需要你 inbox 篩選條件 facet (計畫C, card_2a6f260f)', () => {
     });
 });
 
-describe('需要你 inbox related-card chip (計畫D, card_df646877)', () => {
-    test('the chip renders ONLY when a request has relatedCardId and opens the card via openKanbanCard', () => {
+describe('需要你 inbox related-card chip (計畫D, card_df646877; popup card_29f507ef)', () => {
+    test('the chip renders ONLY when a request has relatedCardId and pops the card detail subview', () => {
         const fn = chatHtml.slice(chatHtml.indexOf('function renderActionRequestInbox('), chatHtml.indexOf('function collectActionRequestReplyContexts('));
         // gated on relatedCardId — absent → no chip, no layout shift
         expect(fn).toContain('if (request.relatedCardId) {');
         expect(fn).toContain("cardLink.className = 'action-request-action action-request-card-link';");
         expect(fn).toContain("cardLink.textContent = t('action_request_card_link', '🗂 Task card');");
-        // clicking deep-links to the kanban card via the shared open mechanism
-        expect(fn).toContain('openKanbanCard(request.relatedCardId, event)');
+        // card_29f507ef: clicking pops the card detail subview in place (the shared
+        // entityPreviewModal smart-chip popup), NOT a deep-link away from the inbox
+        expect(fn).toContain('openActionRequestCardPopup(request.relatedCardId, event)');
+        expect(fn).not.toContain('openKanbanCard(request.relatedCardId, event)');
         // the chip lives in the actions row (after Show source, before Dismiss)
         expect(fn.indexOf('action-request-card-link')).toBeLessThan(fn.indexOf("dismiss.className = 'action-request-action danger';"));
     });
 
-    test('openKanbanCard exists as the shared deep-link entry', () => {
+    test('openActionRequestCardPopup routes to the shared entityPreviewModal (openEntityModal) with a deep-link fallback', () => {
+        const start = chatHtml.indexOf('function openActionRequestCardPopup(cardId, event)');
+        expect(start).toBeGreaterThan(-1);
+        const fn = chatHtml.slice(start, chatHtml.indexOf('async function fetchCardData(', start));
+        // primary path: the SAME popup component chat-message card chips use
+        expect(fn).toContain("openEntityModal('card', id)");
+        // defensive fallback keeps the chip alive if the modal helper is missing
+        expect(fn).toContain('openKanbanCard(id, event)');
+    });
+
+    test('openKanbanCard still exists as the shared deep-link entry (used inside the popup)', () => {
         expect(chatHtml).toMatch(/function openKanbanCard\(cardId, event\)/);
     });
 
