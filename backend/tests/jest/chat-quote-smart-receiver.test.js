@@ -195,7 +195,7 @@ describe('chat_receiver_hint_auto — i18n key parity across 12 locales', () => 
     // 12 locales the dispatch covers minus it.
     const EXPECTED = {
         en: 'auto',
-        zh: '自动',
+        zh: '自動',
         'zh-TW': '自動',
         ja: '自動',
         ko: '자동',
