@@ -25,6 +25,11 @@ const BACKEND_DIR = path.join(REPO_ROOT, 'backend');
 const PUBLIC_DIR = path.join(BACKEND_DIR, 'public');
 const I18N_FILE = path.join(PUBLIC_DIR, 'shared', 'i18n.js');
 const SETTINGS_HELP_REGISTRY_FILE = path.join(BACKEND_DIR, 'settings-help-keys.json');
+// Locales that are Traditional-Chinese dictionaries and must never contain
+// Simplified-distinguishing characters (card_2f3a43d6: 161 Simplified keys —
+// incl. every dialog_* destructive-confirm key — leaked into `zh`).
+const ZH_SIMPLIFIED_CHARS_FILE = path.join(__dirname, 'i18n-zh-simplified-chars.json');
+const SIMPLIFIED_GATED_LOCALES = ['zh', 'zh-TW'];
 const COVERAGE_WARN_THRESHOLD = 0.8;
 const SETTINGS_HELP_CANONICAL_LOCALES = new Set(['en', 'zh']);
 const SETTINGS_HELP_STUB_LOCALES = new Set(['zh-TW']);
@@ -142,6 +147,41 @@ function loadOrphanBaseline() {
     }
 }
 
+// --- Simplified-char gate for Traditional-Chinese locales --------------------
+// `zh` is the canonical Traditional dictionary (zh-TW falls back to it, see
+// i18n.t). Simplified values leaking in render 简体 on a 繁體 UI — worst on
+// destructive dialogs (dialog_confirm was 确认). The distinguishing-char set
+// (chars valid ONLY in Simplified text, per OpenCC tables) is snapshot in
+// i18n-zh-simplified-chars.json; any gated-locale value containing one fails.
+function loadZhSimplifiedCharSet(filePath = ZH_SIMPLIFIED_CHARS_FILE) {
+    const raw = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    if (typeof raw.chars !== 'string' || raw.chars.length === 0) {
+        throw new Error(`Invalid simplified-char data file: ${filePath}`);
+    }
+    // supplementalChars: de-facto Simplified chars the pure OpenCC derivation
+    // misses because ST self-maps them (e.g. 确→確 确). See data file docs.
+    return new Set([...raw.chars, ...(raw.supplementalChars || '')]);
+}
+
+function collectSimplifiedCharOffenders(translations, simpChars, locales = SIMPLIFIED_GATED_LOCALES) {
+    const offenders = [];
+    for (const locale of locales) {
+        const dict = translations[locale];
+        if (!dict || typeof dict !== 'object') continue;
+        for (const [key, value] of Object.entries(dict)) {
+            if (typeof value !== 'string') continue;
+            const hits = new Set();
+            for (const ch of value) {
+                if (simpChars.has(ch)) hits.add(ch);
+            }
+            if (hits.size > 0) {
+                offenders.push({ locale, key, chars: [...hits].join(''), preview: value.slice(0, 60).replace(/\n/g, ' ') });
+            }
+        }
+    }
+    return offenders;
+}
+
 function loadSettingsHelpRegistry(filePath = SETTINGS_HELP_REGISTRY_FILE) {
     try {
         const raw = JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -256,6 +296,30 @@ function main() {
         console.log(`[i18n-check] ℹ  ${fixed.length} baseline orphan(s) were cleaned up — regenerate baseline via: node backend/scripts/i18n-check.js --update-baseline`);
     }
 
+    // 1c. Reject Simplified-Chinese characters in Traditional-Chinese locales.
+    // `zh` is the canonical Traditional dict (zh-TW/zh-CN fall back to it);
+    // Simplified values here render 简体 on a 繁體 UI — the dialog_confirm=确认
+    // class of bug (card_2f3a43d6, 161 keys). Hard gate so it cannot recur.
+    let simpCharSet;
+    try {
+        simpCharSet = loadZhSimplifiedCharSet();
+    } catch (err) {
+        console.error('FATAL: could not load simplified-char data file:', err.message);
+        process.exit(1);
+    }
+    const simpOffenders = collectSimplifiedCharOffenders(TRANSLATIONS, simpCharSet);
+    if (simpOffenders.length > 0) {
+        console.error(`\n❌ FAIL: ${simpOffenders.length} key(s) in Traditional-Chinese locale(s) contain Simplified-Chinese characters:\n`);
+        for (const o of simpOffenders) {
+            console.error(`  • ${o.locale}.${o.key} [${o.chars}]: ${JSON.stringify(o.preview)}`);
+        }
+        console.error('\nThe `zh` / `zh-TW` dictionaries are Traditional Chinese. Rewrite these values in Traditional');
+        console.error('(copy the zh-TW value if one exists, or convert via OpenCC s2twp). Distinguishing-char set:');
+        console.error(`backend/scripts/${path.basename(ZH_SIMPLIFIED_CHARS_FILE)}.`);
+        process.exit(1);
+    }
+    console.log(`[i18n-check] Simplified-char gate: 0 offenders across ${SIMPLIFIED_GATED_LOCALES.join(', ')}`);
+
     // 2. Scan references
     const htmlFiles = walk(PUBLIC_DIR, ['.html']);
     const jsFiles = walk(PUBLIC_DIR, ['.js']).filter(f => f !== I18N_FILE);
@@ -340,8 +404,11 @@ if (require.main === module) main();
 
 module.exports = {
     collectSettingsHelpFanoutGaps,
+    collectSimplifiedCharOffenders,
     findOrphanKeys,
     formatSettingsHelpFanoutWarnings,
     loadOrphanBaseline,
     loadSettingsHelpRegistry,
+    loadZhSimplifiedCharSet,
+    SIMPLIFIED_GATED_LOCALES,
 };
