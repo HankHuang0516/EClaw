@@ -203,6 +203,13 @@ function makeInbox(opts = {}) {
     // showToast spy — tests assert error toasts are/aren't raised.
     const showToast = opts.showToast || jest.fn();
 
+    // card_29f507ef: the 🗂 任務卡 chip pops the shared entityPreviewModal via
+    // openEntityModal('card', id) — spied so the click test proves the wiring.
+    // openKanbanCard remains only as openActionRequestCardPopup's defensive
+    // fallback (modal helper missing) — also a spy.
+    const openEntityModal = opts.openEntityModal !== undefined ? opts.openEntityModal : jest.fn();
+    const openKanbanCard = opts.openKanbanCard || jest.fn();
+
     const i18nStub = {
         t(key, vars) {
             const dict = {
@@ -289,6 +296,8 @@ function makeInbox(opts = {}) {
         extractFunction('actionRequestMatchesFilter'),
         // 計畫E ratify-loop badge builder (renamed from actionRequestRatificationBadgeMeta on main).
         extractFunction('buildRatifyBadge'),
+        // card_29f507ef: the REAL chip-click handler (popup-first, deep-link fallback).
+        extractFunction('openActionRequestCardPopup'),
         extractFunction('renderActionRequestInbox'),
         // The inbox render entry point loadActionRequests/dismissActionRequest
         // funnel through (replaced EclawGreeting.maybeShow; card_cc9700b7).
@@ -301,12 +310,10 @@ function makeInbox(opts = {}) {
     const socketSrc = chatHtml.slice(socketStart, socketEnd);
 
     // Stubs for helpers the spliced bodies reference but we don't exercise.
+    // (openEntityModal / openKanbanCard are injected as sandbox params — spies.)
     const stubs = `
         function renderReplyPreviews() {}
         function recomputeAutoReceivers() {}
-        // 計畫D: the 🗂 任務卡 chip click handler calls openKanbanCard — not invoked
-        // during render, stubbed so a click test could spy on it if needed.
-        function openKanbanCard() {}
         const CHAT_MESSAGE_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     `;
 
@@ -337,14 +344,16 @@ function makeInbox(opts = {}) {
     const factory = new Function(
         'document', 'window', 'i18n', 'localStorage',
         'apiCall', 'currentUser', 'showToast',
+        'openEntityModal', 'openKanbanCard',
         body
     );
     const api = factory(
         document, windowStub, i18nStub, localStorageStub,
-        apiCallMock, currentUser, showToast
+        apiCallMock, currentUser, showToast,
+        openEntityModal, openKanbanCard
     );
 
-    return { api, banner, document, localStorage: localStorageStub, apiCall: apiCallMock, showToast, currentUser };
+    return { api, banner, document, localStorage: localStorageStub, apiCall: apiCallMock, showToast, currentUser, openEntityModal, openKanbanCard };
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -693,7 +702,7 @@ describe('計畫C — 需要你 inbox 篩選條件 facet (All / Consensus)', () 
     });
 });
 
-describe('計畫D — 需要你 inbox 🗂 任務卡 deep-link chip', () => {
+describe('計畫D — 需要你 inbox 🗂 任務卡 chip (popup per card_29f507ef)', () => {
     test('renders the card chip ONLY when relatedCardId is present', () => {
         const { api, banner } = makeInbox();
         api.setActionRequests([
@@ -705,7 +714,9 @@ describe('計畫D — 需要你 inbox 🗂 任務卡 deep-link chip', () => {
         const links = findAllByClass(banner, 'action-request-card-link');
         expect(links.length).toBe(1);
         expect(links[0]._text).toBe('🗂 Task card');
+        // a REAL <button> → natively keyboard-activatable (Enter/Space)
         expect(links[0].tagName).toBe('BUTTON');
+        expect(links[0].type).toBe('button');
     });
 
     test('no card chip at all when no request carries relatedCardId (no layout change)', () => {
@@ -713,6 +724,49 @@ describe('計畫D — 需要你 inbox 🗂 任務卡 deep-link chip', () => {
         api.setActionRequests([makeRequest(REQ_A), makeRequest(REQ_B)]);
         api.renderActionRequestInbox(banner);
         expect(findAllByClass(banner, 'action-request-card-link').length).toBe(0);
+    });
+
+    // card_29f507ef (Hank 2026-07-06): 「任務chip要能在需要你收件夾中可以點擊彈跳出
+    // 任務子卡」 — clicking the chip must POP UP the card detail subview (the shared
+    // entityPreviewModal, openEntityModal('card', id)), not deep-link away.
+    test('clicking the chip opens the card DETAIL POPUP (openEntityModal card,<id>) — no deep-link away', () => {
+        const { api, banner, openEntityModal, openKanbanCard } = makeInbox();
+        api.setActionRequests([makeRequest(REQ_A, { relatedCardId: 'card_29f507ef' })]);
+        api.renderActionRequestInbox(banner);
+
+        const chip = findByClass(banner, 'action-request-card-link');
+        expect(chip).not.toBeNull();
+        chip.click();
+
+        expect(openEntityModal).toHaveBeenCalledTimes(1);
+        expect(openEntityModal).toHaveBeenCalledWith('card', 'card_29f507ef');
+        // the inbox stays put — no board navigation on the primary path
+        expect(openKanbanCard).not.toHaveBeenCalled();
+    });
+
+    test('chip click prevents the default action (stays inside the chat surface)', () => {
+        const { api, banner, openEntityModal } = makeInbox();
+        api.setActionRequests([makeRequest(REQ_A, { relatedCardId: 'card_29f507ef' })]);
+        api.renderActionRequestInbox(banner);
+
+        const chip = findByClass(banner, 'action-request-card-link');
+        const preventDefault = jest.fn();
+        (chip._listeners.click || []).forEach(cb => cb({ target: chip, preventDefault }));
+
+        expect(preventDefault).toHaveBeenCalled();
+        expect(openEntityModal).toHaveBeenCalledWith('card', 'card_29f507ef');
+    });
+
+    test('fallback: openEntityModal unavailable → chip still works via openKanbanCard deep-link', () => {
+        // openEntityModal: null → typeof !== 'function' inside the sandbox.
+        const { api, banner, openKanbanCard } = makeInbox({ openEntityModal: null });
+        api.setActionRequests([makeRequest(REQ_A, { relatedCardId: 'card_29f507ef' })]);
+        api.renderActionRequestInbox(banner);
+
+        findByClass(banner, 'action-request-card-link').click();
+
+        expect(openKanbanCard).toHaveBeenCalledTimes(1);
+        expect(openKanbanCard.mock.calls[0][0]).toBe('card_29f507ef');
     });
 });
 

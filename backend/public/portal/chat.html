@@ -8560,16 +8560,18 @@
                     actions.appendChild(anchor);
                 }
                 // 計畫D (card_df646877): OPTIONAL 🗂 任務卡 chip — only when the request
-                // carries a relatedCardId. Clicking deep-links to the kanban card via
-                // the shared openKanbanCard() (SmartRouter split / native app /
-                // standalone fallbacks). Absent relatedCardId → no chip, no layout shift.
+                // carries a relatedCardId. card_29f507ef (Hank 2026-07-06): clicking now
+                // POPS UP the card detail subview in place (title/status/comments via the
+                // shared entityPreviewModal smart-chip popup) instead of deep-linking away —
+                // the popup itself carries the 📋 Open-in-Kanban link for board navigation.
+                // Absent relatedCardId → no chip, no layout shift.
                 if (request.relatedCardId) {
                     const cardLink = document.createElement('button');
                     cardLink.type = 'button';
                     cardLink.className = 'action-request-action action-request-card-link';
                     cardLink.textContent = t('action_request_card_link', '🗂 Task card');
                     cardLink.title = t('action_request_card_link_title', 'Open linked card {card}', { card: String(request.relatedCardId) });
-                    cardLink.addEventListener('click', (event) => openKanbanCard(request.relatedCardId, event));
+                    cardLink.addEventListener('click', (event) => openActionRequestCardPopup(request.relatedCardId, event));
                     actions.appendChild(cardLink);
                 }
                 const dismiss = document.createElement('button');
@@ -11841,6 +11843,24 @@
             const url = getKanbanCardUrl(id);
             const opened = window.open(url, '_blank', 'noopener');
             if (!opened) window.location.href = url;
+        }
+
+        // card_29f507ef (Hank 2026-07-06): the 需要你 inbox 🗂 任務卡 chip pops the
+        // card DETAIL subview in place — the same entityPreviewModal smart-chip
+        // popup chat-message card chips use (openEntityModal→fetchCardData:
+        // title/status/comments/screenshots) — instead of deep-linking to the
+        // board. The popup keeps the 📋 Open-in-Kanban link for owners who do
+        // want the board. Falls back to the legacy openKanbanCard deep-link only
+        // if the modal helper is somehow unavailable, so the chip is never dead.
+        function openActionRequestCardPopup(cardId, event) {
+            if (event && typeof event.preventDefault === 'function') event.preventDefault();
+            const id = String(cardId || '').trim();
+            if (!id) return;
+            if (typeof openEntityModal === 'function') {
+                openEntityModal('card', id);
+                return;
+            }
+            openKanbanCard(id, event);
         }
 
         async function fetchCardData(auth, cardId) {
