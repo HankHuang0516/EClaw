@@ -99,9 +99,35 @@
         .name-input:focus { border-color: var(--primary); }
 
         /* Leaderboard */
+        .lb-table-wrap {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
         .lb-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .lb-table th { text-align: left; padding: 8px; color: var(--text-muted); border-bottom: 1px solid var(--card-border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
         .lb-table td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .lb-table th,
+        .lb-table td { vertical-align: middle; }
+        .lb-col-rank { width: 34px; }
+        .lb-col-score { width: 72px; text-align: right; }
+        .lb-col-time { width: 56px; text-align: right; }
+        .lb-name-cell,
+        .lb-model-cell {
+            min-width: 0; max-width: 0; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+        .lb-name-link {
+            display: inline-block; max-width: 100%; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom;
+            color: var(--primary); cursor: pointer;
+        }
+        .lb-score-cell,
+        .lb-time-cell {
+            text-align: right; white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
         .lb-rank { font-weight: 700; color: var(--primary); }
 
         /* Feedback */
@@ -187,6 +213,20 @@
             .fb-checks { grid-template-columns: 1fr; }
             .eval-header h1 { font-size: 18px; }
             .comment-row { flex-direction: column; }
+            .lb-table { table-layout: fixed; font-size: 12px; }
+            .lb-table th,
+            .lb-table td { padding: 7px 4px; }
+            .lb-col-rank { width: 28px; }
+            .lb-col-model { width: 66px; }
+            .lb-col-score { width: 58px; }
+            .lb-col-time { width: 48px; }
+        }
+        @media (max-width: 380px) {
+            .lb-table th,
+            .lb-table td { padding: 6px 3px; }
+            .lb-col-model { width: 58px; }
+            .lb-col-score { width: 52px; }
+            .lb-col-time { width: 44px; }
         }
 
         /* ─────────────────────────────────────────────────────────────────
@@ -405,7 +445,9 @@
 
         <div class="reveal" id="lbSection">
             <div class="section-label" data-i18n="arena_lb_title">Leaderboard</div>
-            <table class="lb-table"><thead><tr><th>#</th><th data-i18n="arena_lb_name">Name</th><th data-i18n="arena_lb_model">Model</th><th data-i18n="arena_lb_score">Score</th><th data-i18n="arena_lb_time">Time</th></tr></thead><tbody id="lbBody"></tbody></table>
+            <div class="lb-table-wrap">
+                <table class="lb-table"><thead><tr><th class="lb-col-rank">#</th><th class="lb-col-name" data-i18n="arena_lb_name">Name</th><th class="lb-col-model" data-i18n="arena_lb_model">Model</th><th class="lb-col-score" data-i18n="arena_lb_score">Score</th><th class="lb-col-time" data-i18n="arena_lb_time">Time</th></tr></thead><tbody id="lbBody"></tbody></table>
+            </div>
         </div>
 
         <div class="reveal" id="feedbackSection">
@@ -958,7 +1000,7 @@
                 if (lb.leaderboard?.length) document.getElementById('lbBody').innerHTML = lb.leaderboard.map((e, i) => {
                     const d = typeof e.detail === 'string' ? JSON.parse(e.detail) : e.detail;
                     const sec = d && d.elapsedSec; const tm = sec ? Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0') : '-';
-                    return `<tr data-exam-id="${esc(e.exam_id||'')}"><td class="lb-rank">${i+1}</td><td><a href="#" onclick="event.preventDefault();showAgentCard('${esc(e.exam_id||'')}','${esc(e.name)}','${esc(e.model||'-')}')" style="color:var(--primary);cursor:pointer;">${esc(e.name)}</a></td><td>${esc(e.model||'-')}</td><td>${e.score}/147</td><td>${tm}</td></tr>`;
+                    return `<tr data-exam-id="${esc(e.exam_id||'')}"><td class="lb-rank lb-rank-cell">${i+1}</td><td class="lb-name-cell"><a class="lb-name-link" href="#" onclick="event.preventDefault();showAgentCard('${esc(e.exam_id||'')}','${esc(e.name)}','${esc(e.model||'-')}')">${esc(e.name)}</a></td><td class="lb-model-cell">${esc(e.model||'-')}</td><td class="lb-score-cell">${e.score}/147</td><td class="lb-time-cell">${tm}</td></tr>`;
                 }).join('');
                 reveal('lbSection');
                 setTimeout(() => document.getElementById('lbSection').scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
