@@ -100,6 +100,7 @@ dependencies {
     // Google Play Core In-App Update (Settings update-available chip — card_28a8290a)
     implementation(libs.play.app.update)
     implementation(libs.play.app.update.ktx)
+    implementation(libs.shortcut.badger)
 
     // Room Database for chat history
     implementation(libs.room.runtime)

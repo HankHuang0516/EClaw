@@ -9,6 +9,7 @@ export type SocketEvent =
   | 'entity:update'
   | 'chat:message'
   | 'notification'
+  | 'action_request:changed'
   | 'screen:request'
   | 'control:command';
 
@@ -80,6 +81,7 @@ class SocketService {
       'entity:update',
       'chat:message',
       'notification',
+      'action_request:changed',
     ];
 
     domainEvents.forEach((event) => {
