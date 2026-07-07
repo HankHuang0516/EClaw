@@ -42,7 +42,15 @@ jest.mock('expo-notifications', () => ({
 }));
 
 jest.mock('expo-device', () => ({ isDevice: true }));
-jest.mock('react-native', () => ({ Platform: { OS: 'ios' } }));
+const mockSetPendingCount = jest.fn(() => Promise.resolve(true));
+jest.mock('react-native', () => ({
+  Platform: { OS: 'ios' },
+  NativeModules: {
+    NeedsYouWidgetStore: {
+      setPendingCount: mockSetPendingCount,
+    },
+  },
+}));
 
 import fs from 'fs';
 import path from 'path';
@@ -53,6 +61,7 @@ describe('Needs-you pending badge sync', () => {
   beforeEach(() => {
     mockGet.mockClear();
     mockSetBadgeCountAsync.mockClear();
+    mockSetPendingCount.mockClear();
   });
 
   test('actionRequestApi uses the pending-count endpoint', async () => {
@@ -64,12 +73,14 @@ describe('Needs-you pending badge sync', () => {
     mockGet.mockResolvedValueOnce({ data: { success: true, count: 7 } });
     await expect(notificationService.syncNeedsYouBadgeCount()).resolves.toBe(7);
     expect(mockSetBadgeCountAsync).toHaveBeenCalledWith(7);
+    expect(mockSetPendingCount).toHaveBeenCalledWith(7);
   });
 
   test('syncNeedsYouBadgeCount clamps invalid counts to zero', async () => {
     mockGet.mockResolvedValueOnce({ data: { success: true, count: -4 } });
     await expect(notificationService.syncNeedsYouBadgeCount()).resolves.toBe(0);
     expect(mockSetBadgeCountAsync).toHaveBeenCalledWith(0);
+    expect(mockSetPendingCount).toHaveBeenCalledWith(0);
   });
 
   test('RootLayout refreshes badge on socket, notification, foreground, and interval', () => {

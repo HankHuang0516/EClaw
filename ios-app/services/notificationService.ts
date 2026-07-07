@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import { actionRequestApi, deviceApi } from './api';
+import { syncNeedsYouWidgetCount } from './needsYouWidgetStore';
 
 // Configure notification display behavior
 Notifications.setNotificationHandler({
@@ -113,6 +114,7 @@ class NotificationService {
       const raw = Number(res.data?.count ?? 0);
       const count = Number.isFinite(raw) ? Math.max(0, Math.floor(raw)) : 0;
       await this.setBadgeCount(count);
+      await syncNeedsYouWidgetCount(count);
       return count;
     } catch (error) {
       console.warn('[NOTIF] Failed to sync Needs-you badge count:', error);
@@ -124,6 +126,7 @@ class NotificationService {
   async clearAllNotifications(): Promise<void> {
     await Notifications.dismissAllNotificationsAsync();
     await Notifications.setBadgeCountAsync(0);
+    await syncNeedsYouWidgetCount(0);
   }
 }
 
