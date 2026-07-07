@@ -1535,6 +1535,18 @@
         }
 
         /* ── Media in Chat ── */
+        .chat-photo-shell,
+        .chat-inline-img-shell {
+            display: block;
+            margin-top: 6px;
+        }
+
+        .chat-photo-shell .chat-photo,
+        .chat-inline-img-shell .chat-inline-img {
+            display: block;
+            margin-top: 0;
+        }
+
         .chat-photo {
             max-width: 240px;
             max-height: 200px;
@@ -1579,6 +1591,9 @@
             display: block;
         }
         .chat-photo-grid-cell:hover img { opacity: 0.9; }
+        .chat-photo-grid-cell.chat-media-broken {
+            cursor: default;
+        }
         .chat-photo-grid-more {
             position: absolute;
             inset: 0;
@@ -1602,6 +1617,57 @@
             object-fit: contain;
         }
         .chat-inline-img:hover { opacity: 0.9; }
+
+        .chat-media-error {
+            width: 100%;
+            min-width: 160px;
+            min-height: 92px;
+            border: 1px dashed rgba(229, 62, 62, 0.45);
+            border-radius: 8px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            background: rgba(229, 62, 62, 0.08);
+            color: var(--danger, #e53e3e);
+            cursor: pointer;
+            font: inherit;
+            text-align: center;
+        }
+
+        .chat-media-error[hidden] {
+            display: none;
+        }
+
+        .chat-photo-grid-cell .chat-media-error {
+            position: absolute;
+            inset: 0;
+            min-width: 0;
+            min-height: 0;
+            border-radius: 0;
+            border: 0;
+            padding: 6px;
+            font-size: 11px;
+        }
+
+        .chat-media-error-icon {
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .chat-media-error-title {
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .chat-media-error-action {
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1.2;
+        }
 
         .chat-voice {
             display: flex;
@@ -3732,6 +3798,40 @@
             text-align: center;
             padding: 24px 0;
             color: #f87171;
+        }
+        .mention-profile-avatar-shell {
+            width: 48px;
+            height: 48px;
+            margin-right: 12px;
+            flex: 0 0 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mention-profile-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+        }
+        .mention-avatar-error {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 1px dashed rgba(229, 62, 62, 0.5);
+            background: rgba(229, 62, 62, 0.1);
+            color: var(--danger, #e53e3e);
+            cursor: pointer;
+            font: inherit;
+            font-size: 18px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mention-avatar-error[hidden] {
+            display: none;
         }
         #entityPreviewModal .entity-modal-close {
             background: none;
@@ -6572,6 +6672,72 @@
             }).catch(() => {});
         }
 
+        function mediaUiText(key, fallback) {
+            const value = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t(key) : key;
+            return value && value !== key ? value : fallback;
+        }
+
+        function renderChatMediaErrorHtml(compact = false) {
+            const failed = escapeHtml(mediaUiText('chat_photo_load_failed', 'Photo load failed'));
+            const retry = escapeHtml(mediaUiText('chat_photo_retry', 'Click to retry'));
+            return `<button type="button" class="chat-media-error broken retry${compact ? ' compact' : ''}" hidden onclick="retryChatMedia(this);event.stopPropagation()" aria-label="${failed} — ${retry}">`
+                + `<span class="chat-media-error-icon">&#9888;</span>`
+                + `<span class="chat-media-error-title">${failed}</span>`
+                + `<span class="chat-media-error-action">${retry}</span>`
+                + `</button>`;
+        }
+
+        function handleChatMediaError(img) {
+            if (!img) return;
+            const backupSrc = img.dataset.backupSrc || '';
+            if (backupSrc && img.dataset.triedBackup !== '1') {
+                img.dataset.triedBackup = '1';
+                img.src = backupSrc;
+                return;
+            }
+            const host = img.closest('.chat-photo-shell, .chat-photo-grid-cell, .chat-inline-img-shell');
+            if (!host) return;
+            img.hidden = true;
+            host.classList.add('chat-media-broken');
+            const error = host.querySelector('.chat-media-error');
+            if (error) error.hidden = false;
+        }
+
+        function retryChatMedia(btn) {
+            const host = btn && btn.closest('.chat-photo-shell, .chat-photo-grid-cell, .chat-inline-img-shell');
+            if (!host) return;
+            const img = host.querySelector('img[data-media-src]');
+            if (!img) return;
+            btn.hidden = true;
+            host.classList.remove('chat-media-broken');
+            img.hidden = false;
+            img.dataset.triedBackup = '';
+            const src = img.dataset.mediaSrc || img.getAttribute('src');
+            img.removeAttribute('src');
+            window.requestAnimationFrame(() => { img.src = src; });
+        }
+
+        function handleMentionAvatarError(img) {
+            if (!img) return;
+            const host = img.closest('.mention-profile-avatar-shell');
+            if (!host) return;
+            img.hidden = true;
+            const error = host.querySelector('.mention-avatar-error');
+            if (error) error.hidden = false;
+        }
+
+        function retryMentionAvatar(btn) {
+            const host = btn && btn.closest('.mention-profile-avatar-shell');
+            if (!host) return;
+            const img = host.querySelector('img[data-avatar-src]');
+            if (!img) return;
+            btn.hidden = true;
+            img.hidden = false;
+            const src = img.dataset.avatarSrc || img.getAttribute('src');
+            img.removeAttribute('src');
+            window.requestAnimationFrame(() => { img.src = src; });
+        }
+
         // ── Render Messages ──
         // ── Typing Indicator ──
         let typingTimeout = null;
@@ -6819,18 +6985,21 @@
                     const cells = urls.slice(0, visibleCount).map((url, i) => {
                         const showMore = overflow > 0 && i === visibleCount - 1;
                         const moreOverlay = showMore ? `<div class="chat-photo-grid-more">+${overflow}</div>` : '';
-                        return `<div class="chat-photo-grid-cell" onclick="openLightbox('${escapeHtml(url)}')">`
-                            + `<img class="chat-photo" src="${escapeHtml(url)}" alt="Photo" loading="lazy" onerror="this.style.display='none'">`
+                        const safeUrl = escapeHtml(url);
+                        return `<div class="chat-photo-grid-cell" data-media-src="${safeUrl}" onclick="if(!this.classList.contains('chat-media-broken')) openLightbox((this.querySelector('img')||this).src || this.dataset.mediaSrc)">`
+                            + `<img class="chat-photo" src="${safeUrl}" data-media-src="${safeUrl}" alt="Photo" loading="lazy" onerror="handleChatMediaError(this)">`
+                            + renderChatMediaErrorHtml(true)
                             + moreOverlay
                             + `</div>`;
                     }).join('');
                     mediaHtml = `<div class="chat-photo-grid count-${visibleCount}">${cells}</div>`;
                 } else if (msg.media_type === 'photo' && msg.media_url) {
                     const backupSrc = msg.backup_url ? escapeHtml(msg.backup_url) : '';
-                    const onerrorFallback = backupSrc
-                        ? `onerror="if(!this.dataset.retried){this.dataset.retried='1';this.src='${backupSrc}'}else{this.style.display='none'}"`
-                        : `onerror="this.style.display='none'"`;
-                    mediaHtml = `<img class="chat-photo" src="${escapeHtml(msg.media_url)}" alt="Photo" onclick="openLightbox('${escapeHtml(msg.media_url)}')" loading="lazy" ${onerrorFallback}>`;
+                    const safeUrl = escapeHtml(msg.media_url);
+                    mediaHtml = `<div class="chat-photo-shell" data-media-src="${safeUrl}" onclick="if(!this.classList.contains('chat-media-broken')) openLightbox((this.querySelector('img')||this).src || this.dataset.mediaSrc)">`
+                        + `<img class="chat-photo" src="${safeUrl}" data-media-src="${safeUrl}"${backupSrc ? ` data-backup-src="${backupSrc}"` : ''} alt="Photo" loading="lazy" onerror="handleChatMediaError(this)">`
+                        + renderChatMediaErrorHtml(false)
+                        + `</div>`;
                 } else if (msg.media_type === 'video' && msg.media_url) {
                     mediaHtml = `<video class="chat-video" src="${escapeHtml(msg.media_url)}" controls preload="metadata"
                         onclick="event.stopPropagation();"
@@ -6907,8 +7076,9 @@
                 // the attachment card rendered above is the safe surface for that file.
                 const firstUrlIsR2 = firstUrl && window.R2LinkRender && R2LinkRender.isR2Url(firstUrl);
                 const firstUrlIsImage = firstUrl && !firstUrlIsR2 && isImageUrl(firstUrl);
+                const inlineSafeUrl = firstUrlIsImage ? escapeHtml(firstUrl) : '';
                 const inlineImgHtml = firstUrlIsImage
-                    ? `<img class="chat-inline-img" src="${escapeHtml(firstUrl)}" alt="" loading="lazy" onclick="openLightbox('${escapeHtml(firstUrl)}')" onerror="this.style.display='none'">`
+                    ? `<div class="chat-inline-img-shell" data-media-src="${inlineSafeUrl}" onclick="if(!this.classList.contains('chat-media-broken')) openLightbox((this.querySelector('img')||this).src || this.dataset.mediaSrc)"><img class="chat-inline-img" src="${inlineSafeUrl}" data-media-src="${inlineSafeUrl}" alt="" loading="lazy" onerror="handleChatMediaError(this)">${renderChatMediaErrorHtml(false)}</div>`
                     : '';
                 const previewId = firstUrl && !firstUrlIsImage && !firstUrlIsR2 ? `lp-${msg.id || Math.random().toString(36).slice(2)}` : '';
 
@@ -11264,8 +11434,14 @@
                 titleEl.textContent = e.name || publicCode;
 
                 const stateColor = e.state === 'IDLE' ? '#4ade80' : e.state === 'BUSY' ? '#fbbf24' : '#94a3b8';
-                const avatarHtml = e.avatar
-                    ? `<img src="${escapeHtml(e.avatar)}" style="width:48px;height:48px;border-radius:50%;margin-right:12px;object-fit:cover;" onerror="this.style.display='none'">`
+                const avatarFailed = escapeHtml(mediaUiText('mention_avatar_load_failed', 'Avatar load failed'));
+                const avatarRetry = escapeHtml(mediaUiText('mention_avatar_retry', 'Click to retry'));
+                const safeAvatar = e.avatar ? escapeHtml(e.avatar) : '';
+                const avatarHtml = safeAvatar
+                    ? `<span class="mention-profile-avatar-shell">`
+                        + `<img class="mention-profile-avatar" src="${safeAvatar}" data-avatar-src="${safeAvatar}" alt="" onerror="handleMentionAvatarError(this)">`
+                        + `<button type="button" class="mention-avatar-error broken retry" hidden onclick="retryMentionAvatar(this);event.stopPropagation()" title="${avatarFailed} — ${avatarRetry}" aria-label="${avatarFailed} — ${avatarRetry}">&#9888;</button>`
+                        + `</span>`
                     : '';
 
                 let html = `<div style="display:flex;align-items:center;margin-bottom:16px;">
