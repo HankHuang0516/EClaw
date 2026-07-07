@@ -15644,7 +15644,11 @@ app.post('/api/contacts', async (req, res) => {
     });
     if (!card) return res.status(500).json({ success: false, error: 'Failed to add card' });
 
-    res.json({ success: true, contact: enrichCardHolderEntry(card) });
+    // card_7ced13ac: align with the 5 read-path siblings (/contacts /recent
+    // /search /friends /friend-requests) which all enrich petdxAvatarUrl. The
+    // sync enrichCardHolderEntry omits it, so the freshly-added row flashed
+    // from the partner avatar to the emoji fallback until reload.
+    res.json({ success: true, contact: (await enrichCardHolderEntriesWithPetdx([card]))[0] });
 });
 
 /**
