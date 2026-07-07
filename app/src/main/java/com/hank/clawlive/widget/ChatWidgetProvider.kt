@@ -6,10 +6,12 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.view.View
 import android.widget.RemoteViews
 import com.hank.clawlive.ChatActivity
 import com.hank.clawlive.R
 import com.hank.clawlive.data.local.ChatPreferences
+import com.hank.clawlive.data.repository.ActionRequestBadgeSync
 
 /**
  * Simple 1x1 resizable chat widget
@@ -26,6 +28,14 @@ class ChatWidgetProvider : AppWidgetProvider() {
 
         appWidgetIds.forEach { appWidgetId ->
             updateAppWidget(context, appWidgetManager, appWidgetId, chatPrefs)
+        }
+        ActionRequestBadgeSync.refreshAsync(context)
+    }
+
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        if (intent.action == ACTION_RENDER_BADGE) {
+            renderAllWidgets(context)
         }
     }
 
@@ -59,6 +69,20 @@ class ChatWidgetProvider : AppWidgetProvider() {
         }
         views.setTextColor(R.id.widget_text, textColor)
 
+        val pendingCount = ActionRequestBadgeSync.getCachedCount(context)
+        if (pendingCount > 0) {
+            val displayCount = ActionRequestBadgeSync.formatCount(pendingCount)
+            val badgeText = context.getString(R.string.widget_needs_you_count, displayCount)
+            views.setViewVisibility(R.id.widget_pending_badge, View.VISIBLE)
+            views.setTextViewText(R.id.widget_pending_badge, badgeText)
+            views.setContentDescription(
+                R.id.widget_pending_badge,
+                context.getString(R.string.widget_needs_you_count_desc, displayCount)
+            )
+        } else {
+            views.setViewVisibility(R.id.widget_pending_badge, View.GONE)
+        }
+
         // On Click -> Launch ChatActivity floating dialog
         views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
         views.setOnClickPendingIntent(R.id.widget_send_btn, pendingIntent)
@@ -67,18 +91,25 @@ class ChatWidgetProvider : AppWidgetProvider() {
     }
 
     companion object {
+        private const val ACTION_RENDER_BADGE = "com.hank.clawlive.widget.RENDER_BADGE"
+
         fun updateWidgets(context: Context) {
             val intent = Intent(context, ChatWidgetProvider::class.java).apply {
-                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                action = ACTION_RENDER_BADGE
             }
+            context.sendBroadcast(intent)
+        }
 
+        private fun renderAllWidgets(context: Context) {
             val widgetManager = AppWidgetManager.getInstance(context)
             val widgetIds = widgetManager.getAppWidgetIds(
                 ComponentName(context, ChatWidgetProvider::class.java)
             )
-
-            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds)
-            context.sendBroadcast(intent)
+            val chatPrefs = ChatPreferences.getInstance(context)
+            val provider = ChatWidgetProvider()
+            widgetIds.forEach { appWidgetId ->
+                provider.updateAppWidget(context, widgetManager, appWidgetId, chatPrefs)
+            }
         }
     }
 }

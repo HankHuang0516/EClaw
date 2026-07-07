@@ -26,6 +26,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
+import com.hank.clawlive.data.repository.ActionRequestBadgeSync
 import com.hank.clawlive.fcm.ClawFcmService
 import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
@@ -183,6 +184,7 @@ class MainActivity : AppCompatActivity() {
         // Record HOME as the current tab so process-death restart doesn't jump
         // to a stale non-home tab when the user deliberately navigated back here.
         navResume.onNavigatedTo(NavItem.HOME)
+        ActionRequestBadgeSync.refreshAsync(this)
     }
 
     override fun onPause() {

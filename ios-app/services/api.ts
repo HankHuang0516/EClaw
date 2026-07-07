@@ -358,6 +358,12 @@ export const notificationApi = {
     apiClient.put('/api/notification-preferences', prefs),
 };
 
+// ── Action Request APIs ("需要你" HITL inbox) ──────────────────
+
+export const actionRequestApi = {
+  getPendingCount: () => apiClient.get('/api/action-requests/pending-count'),
+};
+
 // ── Subscription APIs ────────────────────────────────────────
 
 export const subscriptionApi = {

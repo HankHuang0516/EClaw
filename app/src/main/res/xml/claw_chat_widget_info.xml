@@ -7,7 +7,7 @@
     android:minResizeWidth="40dp"
     android:minResizeHeight="40dp"
     android:resizeMode="horizontal|vertical"
-    android:updatePeriodMillis="86400000"
+    android:updatePeriodMillis="1800000"
     android:description="@string/app_name"
     android:initialLayout="@layout/widget_claw_chat"
     android:widgetCategory="home_screen">

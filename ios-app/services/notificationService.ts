@@ -1,22 +1,25 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
-import { deviceApi } from './api';
+import { actionRequestApi, deviceApi } from './api';
 
 // Configure notification display behavior
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
   }),
 });
 
 export interface PushNotificationPayload {
-  type: 'bot_reply' | 'broadcast' | 'speak_to' | 'feedback_reply' | 'app_update';
+  type: 'bot_reply' | 'broadcast' | 'speak_to' | 'feedback_reply' | 'app_update' | 'action_request';
   entityId?: string;
   message?: string;
   title?: string;
+  category?: string;
 }
 
 class NotificationService {
@@ -79,7 +82,7 @@ class NotificationService {
     handler: (payload: PushNotificationPayload, notificationId: string) => void
   ): () => void {
     const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = response.notification.request.content.data as PushNotificationPayload;
+      const data = response.notification.request.content.data as unknown as PushNotificationPayload;
       const notificationId = response.notification.request.identifier;
       handler(data, notificationId);
     });
@@ -92,7 +95,7 @@ class NotificationService {
     handler: (payload: PushNotificationPayload) => void
   ): () => void {
     const subscription = Notifications.addNotificationReceivedListener((notification) => {
-      const data = notification.request.content.data as PushNotificationPayload;
+      const data = notification.request.content.data as unknown as PushNotificationPayload;
       handler(data);
     });
 
@@ -102,6 +105,20 @@ class NotificationService {
   /** Set app badge count */
   async setBadgeCount(count: number): Promise<void> {
     await Notifications.setBadgeCountAsync(count);
+  }
+
+  /** Refresh the app icon badge from the "需要你" pending-count endpoint. */
+  async refreshActionRequestBadgeCount(): Promise<number | null> {
+    try {
+      const response = await actionRequestApi.getPendingCount();
+      const rawCount = Number(response.data?.count ?? 0);
+      const count = Number.isFinite(rawCount) ? Math.max(0, Math.floor(rawCount)) : 0;
+      await this.setBadgeCount(count);
+      return count;
+    } catch (error) {
+      console.error('[NOTIF] Failed to refresh action-request badge count:', error);
+      return null;
+    }
   }
 
   /** Clear all notifications */

@@ -816,6 +816,10 @@ If you have any questions, please contact us via our official email.
     <string name="fcm_channel_system_desc">System notifications</string>
     <string name="fcm_channel_feedback_name">Feedback Updates</string>
     <string name="fcm_channel_feedback_desc">Feedback status updates</string>
+    <string name="fcm_channel_action_requests_name">Needs you</string>
+    <string name="fcm_channel_action_requests_desc">Pending action-request badge updates</string>
+    <string name="needs_you_badge_notification_title">Needs you</string>
+    <string name="needs_you_badge_notification_body">%1$s pending item(s)</string>
 
     <!-- Broadcast Settings -->
     <string name="broadcast_settings_title">Broadcast Settings</string>
@@ -904,6 +908,9 @@ If you have any questions, please contact us via our official email.
 
     <!-- Widget -->
     <string name="widget_chat_hint">Tap to chat with entities...</string>
+    <string name="widget_needs_you_preview">Needs 1</string>
+    <string name="widget_needs_you_count">Needs %1$s</string>
+    <string name="widget_needs_you_count_desc">Needs you pending items: %1$s</string>
 
     <!-- Soul Templates (names and descriptions) -->
     <string name="soul_name_friendly">Friendly Assistant</string>

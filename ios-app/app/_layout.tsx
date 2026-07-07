@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { PaperProvider, MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
-import { useColorScheme, View, ActivityIndicator, LogBox } from 'react-native';
+import { AppState, useColorScheme, View, ActivityIndicator, LogBox } from 'react-native';
 
 // Silence dev warnings overlay so it doesn't cover the tab bar.
 LogBox.ignoreAllLogs();
@@ -70,8 +70,26 @@ export default function RootLayout() {
 
     socketService.connect();
     notificationService.registerForPushNotifications();
+    notificationService.refreshActionRequestBadgeCount();
+
+    const unsubscribeActionRequests = socketService.on('action_request:changed', () => {
+      notificationService.refreshActionRequestBadgeCount();
+    });
+    const unsubscribeForegroundNotification = notificationService.setForegroundNotificationHandler((payload) => {
+      if (payload.type === 'action_request') {
+        notificationService.refreshActionRequestBadgeCount();
+      }
+    });
+    const appStateSubscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        notificationService.refreshActionRequestBadgeCount();
+      }
+    });
 
     return () => {
+      unsubscribeActionRequests();
+      unsubscribeForegroundNotification();
+      appStateSubscription.remove();
       socketService.disconnect();
     };
   }, [deviceId, authToken]);

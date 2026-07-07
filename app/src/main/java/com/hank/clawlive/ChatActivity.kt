@@ -20,6 +20,7 @@ import com.google.android.material.button.MaterialButton
 import com.hank.clawlive.data.local.ChatPreferences
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.remote.TelemetryHelper
+import com.hank.clawlive.data.repository.ActionRequestBadgeSync
 import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.NavItem
@@ -110,6 +111,7 @@ class ChatActivity : AppCompatActivity() {
         RecordingIndicatorHelper.attach(this)
         // Persist current tab so process-death restart can restore here (card_489a8836).
         navResume.onNavigatedTo(NavItem.CHAT)
+        ActionRequestBadgeSync.refreshAsync(this)
     }
 
     override fun onPause() {

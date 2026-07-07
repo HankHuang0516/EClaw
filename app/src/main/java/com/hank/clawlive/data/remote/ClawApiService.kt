@@ -448,6 +448,12 @@ interface ClawApiService {
         @Query("deviceSecret") deviceSecret: String
     ): NotificationCountResponse
 
+    @GET("api/action-requests/pending-count")
+    suspend fun getActionRequestPendingCount(
+        @Query("deviceId") deviceId: String,
+        @Query("deviceSecret") deviceSecret: String
+    ): ActionRequestPendingCountResponse
+
     @POST("api/notifications/read")
     suspend fun markNotificationRead(@Body body: Map<String, String>): ApiResponse
 
@@ -891,6 +897,13 @@ data class NotificationItem(
 data class NotificationCountResponse(
     val success: Boolean,
     val count: Int = 0,
+    val error: String? = null
+)
+
+data class ActionRequestPendingCountResponse(
+    val success: Boolean,
+    val count: Int = 0,
+    val deviceId: String? = null,
     val error: String? = null
 )
 

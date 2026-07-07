@@ -805,6 +805,9 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="webhook_test_success">Webhook 测试通过！机器人已就绪~</string>
     <string name="webhook_testing">正在测试 Webhook 连接，准备好后会通知你，先别发消息哦~</string>
     <string name="widget_chat_hint">点击与角色聊天...</string>
+    <string name="widget_needs_you_preview">需要你 1</string>
+    <string name="widget_needs_you_count">需要你 %1$s</string>
+    <string name="widget_needs_you_count_desc">需要你处理的项目：%1$s</string>
     <string name="xd_allowed_media">允许的媒体类型</string>
     <string name="xd_blacklist">黑名单（公开代码）</string>
     <string name="xd_codes_sep">以逗号分隔的公开代码</string>

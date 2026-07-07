@@ -17,6 +17,7 @@ import com.hank.clawlive.MissionControlActivity
 import com.hank.clawlive.R
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.remote.NetworkModule
+import com.hank.clawlive.data.repository.ActionRequestBadgeSync
 import com.hank.clawlive.location.LocationHelper
 import com.hank.clawlive.ui.nav.EClawNativeNavBridge
 import org.json.JSONObject
@@ -31,6 +32,7 @@ class ClawFcmService : FirebaseMessagingService() {
         const val CHANNEL_CHAT = "eclaw_chat"
         const val CHANNEL_SYSTEM = "eclaw_system"
         const val CHANNEL_FEEDBACK = "eclaw_feedback"
+        const val CHANNEL_ACTION_REQUESTS = "eclaw_action_requests"
 
         fun createChannels(context: Context) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -44,6 +46,14 @@ class ClawFcmService : FirebaseMessagingService() {
             nm.createNotificationChannel(NotificationChannel(
                 CHANNEL_FEEDBACK, context.getString(R.string.fcm_channel_feedback_name), NotificationManager.IMPORTANCE_DEFAULT
             ).apply { description = context.getString(R.string.fcm_channel_feedback_desc) })
+            nm.createNotificationChannel(NotificationChannel(
+                CHANNEL_ACTION_REQUESTS,
+                context.getString(R.string.fcm_channel_action_requests_name),
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = context.getString(R.string.fcm_channel_action_requests_desc)
+                setShowBadge(true)
+            })
         }
     }
 
@@ -81,6 +91,9 @@ class ClawFcmService : FirebaseMessagingService() {
         val title = data["title"] ?: message.notification?.title ?: "E-Claw"
         val body = data["body"] ?: message.notification?.body ?: ""
         val category = data["category"] ?: "system"
+        if (data["type"] == "action_request" || data["metadata"]?.contains("\"ownerDecision\":true") == true) {
+            ActionRequestBadgeSync.refreshAsync(applicationContext)
+        }
 
         // TTS category: start TtsService to speak aloud instead of showing notification
         if (category == "tts") {

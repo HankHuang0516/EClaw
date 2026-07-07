@@ -896,6 +896,9 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="webhook_test_success">Webhook 測試通過！Bot 已就緒~</string>
     <string name="webhook_testing">正在測試 Webhook 連線，好了會通知你，先別傳訊息喔~</string>
     <string name="widget_chat_hint">點擊與角色聊天...</string>
+    <string name="widget_needs_you_preview">需要你 1</string>
+    <string name="widget_needs_you_count">需要你 %1$s</string>
+    <string name="widget_needs_you_count_desc">需要你處理的項目：%1$s</string>
     <string name="xd_allowed_media">允許的媒體類型</string>
     <string name="xd_blacklist">黑名單（公開代碼）</string>
     <string name="xd_codes_sep">以逗號分隔的公開代碼</string>

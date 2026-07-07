@@ -5,13 +5,16 @@ import android.content.Context
 import com.google.firebase.messaging.FirebaseMessaging
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.remote.NetworkModule
+import com.hank.clawlive.data.remote.SocketManager
 import com.hank.clawlive.data.remote.TelemetryHelper
+import com.hank.clawlive.data.repository.ActionRequestBadgeSync
 import com.hank.clawlive.debug.CrashLogManager
 import com.hank.clawlive.fcm.ClawFcmService
 import com.hank.clawlive.debug.FileTimberTree
 import com.hank.clawlive.integrity.PlayIntegrityReporter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.OutputStreamWriter
@@ -21,6 +24,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 class ClawApplication : Application() {
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onCreate() {
         super.onCreate()
@@ -96,7 +100,20 @@ class ClawApplication : Application() {
         // Console can monitor genuine installs without adding user-visible work.
         reportPlayIntegrityStartup()
 
+        // 8. Keep "需要你" widget/icon badge current at startup and whenever the
+        // already-established native socket reports inbox changes.
+        ActionRequestBadgeSync.refreshAsync(this)
+        observeActionRequestBadgeChanges()
+
         Timber.i("ClawApplication initialized")
+    }
+
+    private fun observeActionRequestBadgeChanges() {
+        applicationScope.launch {
+            SocketManager.actionRequestChangedFlow.collect {
+                ActionRequestBadgeSync.refreshAsync(this@ClawApplication)
+            }
+        }
     }
 
     private fun reportPlayIntegrityStartup() {
