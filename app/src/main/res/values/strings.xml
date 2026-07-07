@@ -904,6 +904,11 @@ If you have any questions, please contact us via our official email.
 
     <!-- Widget -->
     <string name="widget_chat_hint">Tap to chat with entities...</string>
+    <plurals name="widget_needyou_pending">
+        <item quantity="one">Needs you: %d pending</item>
+        <item quantity="other">Needs you: %d pending</item>
+    </plurals>
+    <string name="widget_needyou_badge_content_description">Needs-you pending count</string>
 
     <!-- Soul Templates (names and descriptions) -->
     <string name="soul_name_friendly">Friendly Assistant</string>

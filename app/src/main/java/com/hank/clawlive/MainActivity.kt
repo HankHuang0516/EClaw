@@ -27,6 +27,7 @@ import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.fcm.ClawFcmService
+import com.hank.clawlive.needyou.NeedYouIndicatorSync
 import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.NavItem
@@ -92,6 +93,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         observeLocationRequests()
+        observeActionRequestChanges()
 
         ClawFcmService.createChannels(this)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -180,6 +182,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         TelemetryHelper.trackPageView(this, "main")
         RecordingIndicatorHelper.attach(this)
+        NeedYouIndicatorSync.refreshAsync(this, "main_resume")
         // Record HOME as the current tab so process-death restart doesn't jump
         // to a stale non-home tab when the user deliberately navigated back here.
         navResume.onNavigatedTo(NavItem.HOME)
@@ -198,6 +201,14 @@ class MainActivity : AppCompatActivity() {
                 com.hank.clawlive.location.LocationHelper.fetchAndReportAsync(
                     applicationContext, requestId
                 )
+            }
+        }
+    }
+
+    private fun observeActionRequestChanges() {
+        lifecycleScope.launch {
+            com.hank.clawlive.data.remote.SocketManager.actionRequestChangedFlow.collect {
+                NeedYouIndicatorSync.refreshAsync(this@MainActivity, "socket_action_request_changed")
             }
         }
     }

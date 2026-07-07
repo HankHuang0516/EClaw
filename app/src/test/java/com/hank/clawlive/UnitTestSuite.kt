@@ -32,6 +32,7 @@ import org.junit.runners.Suite
     NotificationPreferenceCatalogTest::class,
     SettingsManifestResolverTest::class,
     SettingsManifestSyncTest::class,
+    NeedYouIndicatorStaticTest::class,
     FcmChannelCreationTest::class,
     KanbanDoneDeepLinkTest::class
 )

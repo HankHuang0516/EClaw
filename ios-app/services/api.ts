@@ -358,6 +358,11 @@ export const notificationApi = {
     apiClient.put('/api/notification-preferences', prefs),
 };
 
+export const actionRequestApi = {
+  getPendingCount: () =>
+    apiClient.get<{ success: boolean; count: number; deviceId?: string }>('/api/action-requests/pending-count'),
+};
+
 // ── Subscription APIs ────────────────────────────────────────
 
 export const subscriptionApi = {

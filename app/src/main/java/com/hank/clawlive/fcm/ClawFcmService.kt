@@ -18,6 +18,7 @@ import com.hank.clawlive.R
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.location.LocationHelper
+import com.hank.clawlive.needyou.NeedYouIndicatorSync
 import com.hank.clawlive.ui.nav.EClawNativeNavBridge
 import org.json.JSONObject
 import kotlinx.coroutines.CoroutineScope
@@ -81,6 +82,11 @@ class ClawFcmService : FirebaseMessagingService() {
         val title = data["title"] ?: message.notification?.title ?: "E-Claw"
         val body = data["body"] ?: message.notification?.body ?: ""
         val category = data["category"] ?: "system"
+        val type = data["type"]
+
+        if (category == "rich_card_question" || type == "action_request") {
+            NeedYouIndicatorSync.refreshAsync(applicationContext, "fcm_action_request")
+        }
 
         // TTS category: start TtsService to speak aloud instead of showing notification
         if (category == "tts") {
