@@ -67,7 +67,7 @@ function isNeedsYouNotification(payload: unknown): boolean {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? MD3DarkTheme : MD3LightTheme;
-  const { initialize, deviceId, authToken } = useAuthStore();
+  const { initialize, deviceId, deviceSecret } = useAuthStore();
 
   // Initialize auth on startup
   useEffect(() => {
@@ -76,7 +76,7 @@ export default function RootLayout() {
 
   // Connect Socket.IO and register for notifications when authenticated
   useEffect(() => {
-    if (!deviceId && !authToken) return;
+    if (!deviceId || !deviceSecret) return;
 
     socketService.connect();
     notificationService.registerForPushNotifications();
@@ -106,7 +106,7 @@ export default function RootLayout() {
       clearInterval(badgeInterval);
       socketService.disconnect();
     };
-  }, [deviceId, authToken]);
+  }, [deviceId, deviceSecret]);
 
   return (
     <SafeAreaProvider>

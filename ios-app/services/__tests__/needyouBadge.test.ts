@@ -85,6 +85,8 @@ describe('Needs-you pending badge sync', () => {
 
   test('RootLayout refreshes badge on socket, notification, foreground, and interval', () => {
     const root = fs.readFileSync(path.join(__dirname, '../../app/_layout.tsx'), 'utf8');
+    expect(root).toContain('deviceSecret');
+    expect(root).toContain('if (!deviceId || !deviceSecret) return;');
     expect(root).toContain("socketService.on('action_request:changed'");
     expect(root).toContain("socketService.on('notification'");
     expect(root).toContain("AppState.addEventListener('change'");
