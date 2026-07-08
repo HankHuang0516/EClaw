@@ -1870,6 +1870,11 @@ try {
         pushToBot,
         orgChart: orgChartModule,
         notifyDevice,
+        // Cold-start readiness thunk (card_0f406678e04b7246b24e4a50). Late-bound
+        // to `persistenceReady` (declared above at module load) so card
+        // detail-by-id can return the 503 "Server starting up" path instead of a
+        // possibly-wrong row during warmup. Same convention as passiveHealth.init.
+        isReady: () => persistenceReady,
         emitDevicePreferences: (deviceId, prefs) => {
             io.to(`device:${deviceId}`).emit('device:preferences', { deviceId, prefs });
         },
