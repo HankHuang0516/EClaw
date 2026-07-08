@@ -528,8 +528,21 @@ function buildDispatchCapabilityWarning(card, assignedBots) {
 /**
  * Factory: receives in-memory devices object from index.js
  */
-function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback, saveChatMessage, getMissionApiHints, pushToBot, orgChart, notifyDevice, emitDevicePreferences, createActionRequest, dismissActionRequestsForCard, dismissSurfacerActionRequestsForCard } = {}) {
+function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback, saveChatMessage, getMissionApiHints, pushToBot, orgChart, notifyDevice, emitDevicePreferences, createActionRequest, dismissActionRequestsForCard, dismissSurfacerActionRequestsForCard, isReady } = {}) {
     const router = express.Router();
+
+    // Readiness thunk (late-bound to index.js `persistenceReady`). During a
+    // Railway cold-start the in-memory persistence + DB reads can be
+    // half-initialised — the same window in which the global /api gate returns
+    // "Server starting up". Card detail-by-id reads the kanban Postgres pool
+    // directly (NOT gated by that middleware in every replica), so a request
+    // that slips through during warmup could resolve to / return a stale or
+    // wrong row with 200 + success:true. Callers can't detect that (unlike a
+    // 503). `isCardStoreReady()` lets read handlers mirror the 503 path instead
+    // of trusting a not-ready data source. Defaults to ready when the dep is
+    // absent (e.g. tests / older mounts) so behaviour is unchanged there.
+    // See card_0f406678e04b7246b24e4a50.
+    const isCardStoreReady = () => (typeof isReady === 'function' ? !!isReady() : true);
 
     // Health check
     router.get("/kanban-health", (req, res) => res.json({ ok: true, module: "kanban", cron: !!CronExpressionParser }));
@@ -2031,6 +2044,14 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         const { deviceId } = { ...req.query, ...req.body };
         const rawId = req.params.id;
 
+        // Cold-start readiness guard (card_0f406678e04b7246b24e4a50). If
+        // persistence/data isn't ready yet, mirror the global /api gate's 503
+        // instead of serving a possibly-wrong row from a half-initialised store.
+        // A 503 is retryable; a 200 with the wrong card is silently corrupting.
+        if (!isCardStoreReady()) {
+            return res.status(503).json({ success: false, message: 'Server starting up — please retry in a few seconds' });
+        }
+
         try {
             // Resolve short-ID prefixes to the full card ID, scoped to this device.
             // Users commonly mention cards in chat with 8-hex shorthand (e.g. `card_7b7dd9e3`);
@@ -2069,6 +2090,26 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             );
 
             if (cardResult.rows.length === 0) {
+                return res.status(404).json({ success: false, error: 'Card not found' });
+            }
+
+            // Belt-and-suspenders id-mismatch assertion (card_0f406678e04b7246b24e4a50).
+            // The exact-match query above is keyed on `cardId`, so a correctly-
+            // functioning DB always returns the requested row. But during a
+            // cold-start / not-ready window a request has (once, in prod)
+            // returned a *different* card's full JSON with 200 + success:true.
+            // Never hand the caller a row whose id doesn't match what they asked
+            // for: an orchestrator can't tell 200-wrong-card from 200-right-card,
+            // so a wrong SOP/evidence read or a close-out written to the wrong
+            // card would go undetected. `cardId` is either `rawId` verbatim or a
+            // short-ID that legitimately resolved to a longer full id; accept
+            // only an exact match or that valid shorthand expansion. Otherwise
+            // fail closed with 404 (never a wrong 200).
+            const returnedId = cardResult.rows[0].id;
+            const isExactRequested = returnedId === rawId;
+            const isResolvedFromShorthand = returnedId === cardId && cardId !== rawId;
+            if (!isExactRequested && !isResolvedFromShorthand) {
+                console.error('[Kanban] Card id mismatch — refusing to return wrong card:', { rawId, cardId, returnedId, deviceId });
                 return res.status(404).json({ success: false, error: 'Card not found' });
             }
 
