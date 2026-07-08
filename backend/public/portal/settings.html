@@ -837,6 +837,9 @@
                 <span class="info-label" data-i18n="settings_device_secret">Device Secret</span>
                 <span class="info-value-mono-group">
                     <span class="info-value mono" id="accountDeviceSecret">--</span>
+                    <button class="settings-icon-btn" id="btnRevealDeviceSecret" type="button"
+                        onclick="toggleDeviceSecretReveal()" aria-pressed="false"
+                        data-i18n-title="common_toggle_visibility" title="顯示/隱藏">👁</button>
                     <button class="settings-icon-btn" onclick="copyDeviceSecret()"
                         data-i18n-title="common_copy" title="複製">📋</button>
                 </span>
@@ -2160,10 +2163,45 @@
             return id.substring(0, 8) + '·····' + id.slice(-4);
         }
 
+        // card_c7917c15: the Device Secret must never sit in the DOM as (even
+        // partial) plaintext — the old mask showed first-8/last-4, which leaks
+        // through shoulder-surfing / screenshots / screen shares. Display is
+        // FULLY masked by default (fixed-width dots: leaks neither content nor
+        // length); 👁 click-to-reveal auto re-masks after ~10s and whenever the
+        // tab/window loses focus. Copy buttons keep copying the real value
+        // from the in-memory variable, so UX is unchanged.
+        const DEVICE_SECRET_MASK = '••••••••••••••••';
+        const DEVICE_SECRET_REVEAL_MS = 10000;
+        let _secretRemaskTimer = null;
+
         function maskSecret(s) {
-            if (!s || s.length < 12) return s || '--';
-            return s.substring(0, 8) + '··············' + s.slice(-4);
+            if (!s) return '--';
+            return DEVICE_SECRET_MASK;
         }
+
+        function setDeviceSecretVisible(visible) {
+            const el = document.getElementById('accountDeviceSecret');
+            const btn = document.getElementById('btnRevealDeviceSecret');
+            if (!el) return;
+            if (_secretRemaskTimer) { clearTimeout(_secretRemaskTimer); _secretRemaskTimer = null; }
+            const show = !!visible && !!_fullDeviceSecret;
+            el.textContent = _fullDeviceSecret ? (show ? _fullDeviceSecret : maskSecret(_fullDeviceSecret)) : '--';
+            el.dataset.revealed = show ? 'true' : 'false';
+            if (btn) {
+                btn.textContent = show ? '🙈' : '👁';
+                btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+            }
+            if (show) {
+                _secretRemaskTimer = setTimeout(() => setDeviceSecretVisible(false), DEVICE_SECRET_REVEAL_MS);
+            }
+        }
+
+        function remaskDeviceSecretOnBlur() {
+            const el = document.getElementById('accountDeviceSecret');
+            if (el && el.dataset.revealed === 'true') setDeviceSecretVisible(false);
+        }
+        window.addEventListener('blur', remaskDeviceSecretOnBlur);
+        document.addEventListener('visibilitychange', () => { if (document.hidden) remaskDeviceSecretOnBlur(); });
 
         function toggleDeviceIdReveal() {
             const el = document.getElementById('accountDeviceId');
@@ -2182,17 +2220,8 @@
 
         function toggleDeviceSecretReveal() {
             const el = document.getElementById('accountDeviceSecret');
-            const btn = document.getElementById('btnRevealDeviceSecret');
             if (!el || !_fullDeviceSecret) return;
-            if (el.dataset.revealed === 'true') {
-                el.textContent = maskSecret(_fullDeviceSecret);
-                el.dataset.revealed = 'false';
-                btn.textContent = '👁';
-            } else {
-                el.textContent = _fullDeviceSecret;
-                el.dataset.revealed = 'true';
-                btn.textContent = '🙈';
-            }
+            setDeviceSecretVisible(el.dataset.revealed !== 'true');
         }
 
         async function copyDeviceSecret() {
@@ -2256,7 +2285,7 @@
                     u.deviceSecret = data.newDeviceSecret;
                     localStorage.setItem('user', JSON.stringify(u));
                 } catch (_) { }
-                document.getElementById('accountDeviceSecret').textContent = maskSecret(data.newDeviceSecret);
+                setDeviceSecretVisible(false);
                 document.getElementById('rotateRevealDeviceId').textContent = _fullDeviceId;
                 document.getElementById('rotateRevealSecret').textContent = data.newDeviceSecret;
                 closeRotateSecretConfirm();
@@ -2375,7 +2404,7 @@
             _fullDeviceId = user.deviceId || '';
             document.getElementById('accountDeviceId').textContent = maskDeviceId(_fullDeviceId);
             _fullDeviceSecret = user.deviceSecret || '';
-            document.getElementById('accountDeviceSecret').textContent = maskSecret(_fullDeviceSecret);
+            setDeviceSecretVisible(false);
 
             // Connected accounts
             const providers = [];
