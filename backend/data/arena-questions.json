@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-03T19:23:43.647Z",
+  "updatedAt": "2026-07-08T19:15:24.550Z",
   "targetDifficulty": 70,
   "pools": {
     "arena_vision": [
@@ -1978,6 +1978,49 @@
           "Gwei",
           "confirmed",
           "142"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A REST endpoint reference card for GET /api/products showing 4 query parameters (page: integer, limit: 1–50, sort: asc|desc, category: string), 2 required headers (Authorization: Bearer and Accept: application/json), and an example response listing 3 product objects — the second product has \"in_stock\": false highlighted in orange",
+        "keywords": [
+          "REST",
+          "query",
+          "parameters",
+          "four",
+          "headers",
+          "two",
+          "three",
+          "products",
+          "in_stock",
+          "orange"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A grocery store receipt from FreshMart dated July 8 2026 showing 7 line items: apples $3.49, milk $2.89, bread $1.99, cheese $4.75, eggs $2.29, orange juice $3.99, butter $3.49 — subtotal $22.89 with a 5% discount coupon reducing the total to $21.75",
+        "keywords": [
+          "FreshMart",
+          "seven",
+          "22.89",
+          "discount",
+          "21.75",
+          "coupon"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A corporate balance sheet showing current assets $450K, non-current assets $1.2M, total assets $1.65M, current liabilities $180K, long-term debt $320K, total liabilities $500K, and total equity $1.15M — two line items are marked with red asterisks indicating items under external audit review",
+        "keywords": [
+          "balance",
+          "assets",
+          "1.65",
+          "liabilities",
+          "500K",
+          "equity",
+          "1.15",
+          "audit",
+          "two"
         ]
       }
     ],
@@ -4183,6 +4226,60 @@
             "expected": "[[1,3],[2,3]]"
           }
         ]
+      },
+      {
+        "title": "First Non-Repeating Character",
+        "description": "Write `solve(s)` — return the 0-based index of the first character in string `s` that does not repeat anywhere in the string. Return -1 if no such character exists.",
+        "testCases": [
+          {
+            "input": "\"leetcode\"",
+            "expected": "0"
+          },
+          {
+            "input": "\"loveleetcode\"",
+            "expected": "2"
+          },
+          {
+            "input": "\"aabb\"",
+            "expected": "-1"
+          }
+        ]
+      },
+      {
+        "title": "Maximum Gap",
+        "description": "Write `solve(nums)` — given an unsorted integer array `nums`, return the maximum absolute difference between successive elements in its sorted form. Return 0 if `nums` has fewer than 2 elements.",
+        "testCases": [
+          {
+            "input": "[3,6,9,1]",
+            "expected": "3"
+          },
+          {
+            "input": "[10]",
+            "expected": "0"
+          },
+          {
+            "input": "[1,10000000]",
+            "expected": "9999999"
+          }
+        ]
+      },
+      {
+        "title": "Implement Stack Using Queues",
+        "description": "Write `solve(ops)` — simulate a stack using queues. `ops` is an array of strings: \"push X\" pushes integer X; \"pop\" removes and returns the top element; \"top\" returns the top element without removing it; \"empty\" returns \"true\" or \"false\". Return all non-push operation results joined by commas.",
+        "testCases": [
+          {
+            "input": "[\"push 1\",\"push 2\",\"top\",\"pop\",\"empty\"]",
+            "expected": "2,2,false"
+          },
+          {
+            "input": "[\"push 5\",\"pop\",\"empty\"]",
+            "expected": "5,true"
+          },
+          {
+            "input": "[\"push 3\",\"push 4\",\"push 5\",\"pop\",\"top\"]",
+            "expected": "5,4"
+          }
+        ]
       }
     ],
     "arena_response_time": [
@@ -5281,6 +5378,27 @@
           "288π",
           "288pi",
           "904"
+        ]
+      },
+      {
+        "question": "A factory currently produces 240 units per day operating 8 hours per day. If the factory needs to produce a total of 900 units in 3 working days without changing the number of hours worked per day, by what percentage must the hourly production rate increase? Give your answer as a whole number.",
+        "expectedKeywords": [
+          "25",
+          "percent"
+        ]
+      },
+      {
+        "question": "A school has 320 students. 45% play soccer, 35% play basketball, and 15% play both sports. How many students play neither soccer nor basketball?",
+        "expectedKeywords": [
+          "112",
+          "students"
+        ]
+      },
+      {
+        "question": "A tank can be emptied by a drain pipe in 6 hours and filled by an inlet pipe in 8 hours. If both pipes are open simultaneously when the tank is full, how many hours will it take for the tank to be completely empty?",
+        "expectedKeywords": [
+          "24",
+          "hours"
         ]
       }
     ],
@@ -7026,6 +7144,43 @@
           "three",
           "percent",
           "minimum"
+        ]
+      },
+      {
+        "text": "The API gateway load balancer config has a maximum timeout of 45 seconds and a rate limit of 1200 requests per minute",
+        "keywords": [
+          "API",
+          "gateway",
+          "load",
+          "balancer",
+          "45",
+          "seconds",
+          "1200",
+          "requests"
+        ]
+      },
+      {
+        "text": "Payment reference TRX-9471-2B confirms wire transfer of twelve thousand four hundred fifty dollars to account ending 8823",
+        "keywords": [
+          "TRX",
+          "9471",
+          "twelve",
+          "thousand",
+          "four",
+          "hundred",
+          "fifty",
+          "8823"
+        ]
+      },
+      {
+        "text": "Gamma radiation exposure threshold is 0.05 millisieverts per hour according to IAEA Safety Standard RS-G-1.1",
+        "keywords": [
+          "gamma",
+          "radiation",
+          "0.05",
+          "millisieverts",
+          "IAEA",
+          "RS-G"
         ]
       }
     ]
