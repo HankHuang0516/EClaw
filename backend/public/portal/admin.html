@@ -1068,7 +1068,7 @@
                         '<td>' + usersAvg5hCell + '</td>' +
                         '<td style="display:flex;gap:4px;flex-wrap:wrap;">' +
                             '<button class="btn btn-sm" onclick="editBot(\'' + escapeHtml(b.botId) + '\')" style="font-size:11px;">' + i18n.t('admin_btn_edit_bot') + '</button>' +
-                            '<button class="btn btn-danger btn-sm" onclick="confirmRemoveBot(\'' + escapeHtml(b.botId) + '\', \'' + escapeHtml(b.status) + '\')" style="font-size:11px;">' + i18n.t('admin_btn_remove_bot') + '</button>' +
+                            '<button class="btn btn-danger btn-sm" onclick="removeBot(\'' + escapeHtml(b.botId) + '\', \'' + escapeHtml(b.status) + '\', this)" style="font-size:11px;">' + i18n.t('admin_btn_remove_bot') + '</button>' +
                         '</td>' +
                         '</tr>';
                 }
@@ -1697,39 +1697,33 @@
             });
         }
 
-        function confirmRemoveBot(botId, status) {
-            const isAssigned = status === 'assigned';
-            const overlay = document.createElement('div');
-            overlay.className = 'create-bot-overlay';
-            overlay.innerHTML =
-                '<div class="create-bot-dialog">' +
-                '<h3>' + i18n.t('admin_dlg_remove_bot_title') + '</h3>' +
-                '<p style="color:var(--text-secondary);font-size:14px;margin:0 0 8px 0;">' +
-                i18n.t('admin_dlg_remove_bot_desc', { botId: botId }) +
-                '</p>' +
-                (isAssigned ? '<p style="color:var(--warning);font-size:13px;margin:0 0 8px 0;">' + i18n.t('admin_dlg_remove_bot_warn_assigned') + '</p>' : '') +
-                '<div class="dialog-actions">' +
-                '<button class="btn btn-outline" onclick="this.closest(\'.create-bot-overlay\').remove()">' + i18n.t('admin_dlg_cancel') + '</button>' +
-                '<button class="btn btn-danger" id="btnConfirmRemoveBot" onclick="removeBot(\'' + botId + '\', ' + isAssigned + ', this)">' + i18n.t('admin_btn_remove_bot') + '</button>' +
-                '</div>' +
-                '</div>';
-            document.body.appendChild(overlay);
-
-            overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) overlay.remove();
+        // Destructive-confirm gate lives INSIDE removeBot (card_00f9b4d3): the shared
+        // showConfirm modal (shared/api.js — a11y'd destructive family: danger styling,
+        // safe Cancel default focus, Esc, itemName strip) must resolve true before the
+        // DELETE fires. removeBot is a global inline-onclick handler, so gating at the
+        // top of the handler (same pattern as the revoke handlers above) guarantees NO
+        // call path can reach the API without a confirmation.
+        async function removeBot(botId, status, btnEl) {
+            const isAssigned = status === 'assigned' || status === true;
+            const message = i18n.t('admin_dlg_remove_bot_desc', { botId: botId })
+                + (isAssigned ? ' ' + i18n.t('admin_dlg_remove_bot_warn_assigned') : '');
+            const confirmed = await showConfirm({
+                title: i18n.t('admin_dlg_remove_bot_title'),
+                message: message,
+                confirmText: i18n.t('admin_btn_remove_bot'),
+                danger: true,
+                itemName: botId,
             });
-        }
+            if (!confirmed) return;
 
-        async function removeBot(botId, isAssigned, btnEl) {
-            btnEl.disabled = true;
-            btnEl.textContent = i18n.t('admin_dlg_removing');
+            if (btnEl) {
+                btnEl.disabled = true;
+                btnEl.textContent = i18n.t('admin_dlg_removing');
+            }
 
             try {
                 const url = '/api/admin/official-bot/' + encodeURIComponent(botId) + (isAssigned ? '?force=true' : '');
                 await apiCall('DELETE', url);
-
-                const overlay = btnEl.closest('.create-bot-overlay');
-                if (overlay) overlay.remove();
 
                 showToast(i18n.t('admin_msg_bot_removed'), 'success');
 
@@ -1737,8 +1731,10 @@
                 render();
             } catch (e) {
                 showToast(e.message, 'error');
-                btnEl.disabled = false;
-                btnEl.textContent = i18n.t('admin_btn_remove_bot');
+                if (btnEl) {
+                    btnEl.disabled = false;
+                    btnEl.textContent = i18n.t('admin_btn_remove_bot');
+                }
             }
         }
 

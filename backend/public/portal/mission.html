@@ -2494,7 +2494,20 @@
 
         function copyNotePageLink() {
             if (!viewerNoteId) return;
-            const pc = (boundEntities.find(e => e.publicCode) || {}).publicCode;
+            // card_091d24a5: bind the share link to the ACTIVE entity's public
+            // code, not bound[0] (/api/entities sorts ascending, so bound[0] is
+            // always the lowest entityId → wrong link on multi-entity devices).
+            // Same pattern as the exam.html fix (card_cea91e58): prefer the
+            // shared active-entity key; fall back to the first bound entity
+            // with a code only when it's unset / unbound / has no public code.
+            // (Notes carry no entity attribution, so active entity is the best
+            // owner signal for the copied link.)
+            let activeId = NaN;
+            try { activeId = Number(localStorage.getItem('eclaw_petdex_active_entity_id')); } catch (_) { /* private mode */ }
+            const activeEntity = Number.isFinite(activeId)
+                ? boundEntities.find(e => Number(e.entityId || e.id) === activeId && e.publicCode)
+                : null;
+            const pc = ((activeEntity || boundEntities.find(e => e.publicCode)) || {}).publicCode;
             if (!pc) { showToast(i18n.t('mc_note_no_public_code') || 'No public code available', 'error'); return; }
             const url = `https://eclawbot.com/p/${pc}/${viewerNoteId}`;
             const btn = document.getElementById('wvCopyLinkBtn');

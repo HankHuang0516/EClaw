@@ -70,12 +70,23 @@ function getAdminDeviceIds() {
 }
 
 /**
- * Check admin-device gate. Extracts deviceId from query / body / x-device-id header
- * (mirroring existing auth param conventions) and verifies it's in ADMIN_DEVICE_IDS.
+ * Check admin-device gate. Extracts deviceId/deviceSecret from query / body /
+ * x-device-* headers (mirroring existing auth param conventions), verifies the
+ * deviceId is in ADMIN_DEVICE_IDS, then proves possession of the matching
+ * deviceSecret with a constant-time compare (card_bb9f0e5c: deviceId is NOT a
+ * secret — it appears in logs/URLs/portal pages — so allowlist membership alone
+ * is no authentication). Missing or mismatched deviceSecret → 401. Fail closed.
+ *
+ * opts.verifyDeviceSecret=false skips ONLY the secret-proof step, for callers
+ * that layer their own credential verification immediately after the allowlist
+ * check (e.g. /api/monitoring/rental-health accepts deviceSecret OR
+ * entityId+botSecret). Never use it on an endpoint that does not verify a
+ * secret itself.
+ *
  * Returns { ok: true, deviceId } on success, or { ok: false, status, error } on failure.
  * Never throws — caller writes the response.
  */
-function requireAdmin(req) {
+function requireAdmin(req, opts = {}) {
     const deviceId = (req.query && req.query.deviceId)
         || (req.body && req.body.deviceId)
         || req.headers['x-device-id'];
@@ -88,6 +99,18 @@ function requireAdmin(req) {
     }
     if (!adminSet.has(deviceId)) {
         return { ok: false, status: 403, error: 'admin access required' };
+    }
+    if (opts.verifyDeviceSecret !== false) {
+        const deviceSecret = (req.query && req.query.deviceSecret)
+            || (req.body && req.body.deviceSecret)
+            || req.headers['x-device-secret'];
+        if (!deviceSecret) {
+            return { ok: false, status: 401, error: 'deviceSecret required for admin-gated endpoint' };
+        }
+        const device = devices[deviceId];
+        if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+            return { ok: false, status: 401, error: 'invalid credentials' };
+        }
     }
     return { ok: true, deviceId };
 }
@@ -1870,6 +1893,11 @@ try {
         pushToBot,
         orgChart: orgChartModule,
         notifyDevice,
+        // Cold-start readiness thunk (card_0f406678e04b7246b24e4a50). Late-bound
+        // to `persistenceReady` (declared above at module load) so card
+        // detail-by-id can return the 503 "Server starting up" path instead of a
+        // possibly-wrong row during warmup. Same convention as passiveHealth.init.
+        isReady: () => persistenceReady,
         emitDevicePreferences: (deviceId, prefs) => {
             io.to(`device:${deviceId}`).emit('device:preferences', { deviceId, prefs });
         },
@@ -2592,6 +2620,7 @@ app.use('/api/petdx', petdxRoute.createRouter({ log: serverLog }));
 // short-lived, single-purpose identity token (POST /token) for an authenticated
 // caller and verifies a token OR a transient botSecret triple (POST /verify).
 const agentIdentity = require('./agent-identity');
+const getAgentIdentitySigningSecret = () => agentIdentity.readSigningSecretFromEnv(process.env);
 // Shared caller-auth: resolve {deviceId,entityId,botSecret} → the entity's OWN
 // publicCode (never a client-supplied one), or fail closed.
 const resolveCallerIdentity = async ({ deviceId, entityId, botSecret }) => {
@@ -2608,8 +2637,9 @@ const resolveCallerIdentity = async ({ deviceId, entityId, botSecret }) => {
 app.use('/api/agent-identity', agentIdentity.createRouter({
     log: serverLog,
     authenticateCaller: resolveCallerIdentity,
-    // HMAC the token with the process signing secret (same one used elsewhere).
-    getSecret: () => JWT_SECRET_FALLBACK,
+    // Dedicated signing secret only; missing env fails loud with 500 instead of
+    // silently reusing JWT_SECRET for this cross-service trust plane.
+    getSecret: getAgentIdentitySigningSecret,
 }));
 
 const wishlistRoute = require('./wishlist-route');
@@ -2625,7 +2655,7 @@ app.use('/api/wishlist-bridge', wishlistRoute.createRouter({
     // wishlist backend; the wishlist backend calls back to /api/agent-identity/verify
     // to confirm it. The long-lived botSecret never leaves EClaw.
     mintAgentToken: async ({ publicCode }) =>
-        agentIdentity.signAgentToken({ publicCode, secret: JWT_SECRET_FALLBACK }),
+        agentIdentity.signAgentToken({ publicCode, secret: getAgentIdentitySigningSecret() }),
 }));
 
 // ============================================
@@ -7846,7 +7876,10 @@ app.get('/api/monitoring/rental-health', async (req, res) => {
     const providedKey = req.query.key || req.headers['x-monitoring-key'];
     const keyOk = monitoringKey && providedKey && safeEqual(monitoringKey, String(providedKey));
     if (!keyOk) {
-        const gate = requireAdmin(req);
+        // verifyDeviceSecret:false — allowlist check only; this endpoint verifies
+        // its own secret proof right below (deviceSecret OR entityId+botSecret,
+        // both constant-time), preserving the documented dual-credential contract.
+        const gate = requireAdmin(req, { verifyDeviceSecret: false });
         if (!gate.ok) return res.status(gate.status).json({ success: false, error: gate.error });
         const { deviceSecret, botSecret, entityId } = req.query;
         if (!deviceSecret && !botSecret) {
@@ -10568,7 +10601,10 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
                     if (_r.rows[0] && _r.rows[0].language) _lang = _r.rows[0].language;
                 } catch (_) { /* keep en */ }
                 const _uw = require('./lib/usage-warning');
-                const _prefix = await _uw.getWarningPrefix(chatPool, deviceId, _cfg, _lang);
+                // Entity-scoped (card_2f6a5659): pass the SPEAKING entity so #2's
+                // Claude quota warning can't ride #6's Codex heartbeat on a
+                // multi-entity device — lookup prefers this entity's snapshot row.
+                const _prefix = await _uw.getWarningPrefix(chatPool, deviceId, _cfg, _lang, eId);
                 if (_prefix) {
                     finalMessage = _prefix + '\n\n' + finalMessage;
                 }
@@ -15644,7 +15680,11 @@ app.post('/api/contacts', async (req, res) => {
     });
     if (!card) return res.status(500).json({ success: false, error: 'Failed to add card' });
 
-    res.json({ success: true, contact: enrichCardHolderEntry(card) });
+    // card_7ced13ac: align with the 5 read-path siblings (/contacts /recent
+    // /search /friends /friend-requests) which all enrich petdxAvatarUrl. The
+    // sync enrichCardHolderEntry omits it, so the freshly-added row flashed
+    // from the partner avatar to the emoji fallback until reload.
+    res.json({ success: true, contact: (await enrichCardHolderEntriesWithPetdx([card]))[0] });
 });
 
 /**

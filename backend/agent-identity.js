@@ -51,6 +51,15 @@ const DEFAULT_TOKEN_TTL_MS = 5 * 60 * 1000;
 // (e.g. after a secret rotation or a format change) — verification pins it.
 const TOKEN_VERSION = 'v1';
 
+// Dedicated secret only. Do not silently reuse JWT_SECRET: these tokens are a
+// separate cross-service trust plane and should fail loud when not configured.
+const SIGNING_SECRET_ENV = 'AGENT_IDENTITY_SECRET';
+
+const DEFAULT_BOT_SECRET_RATE_LIMIT = {
+    max: 10,
+    windowMs: 60 * 1000,
+};
+
 // Public codes are 6 lowercase-alnum chars (channel-api generatePublicCode).
 const PUBLIC_CODE_PATTERN = /^[a-z0-9]{6}$/;
 
@@ -83,7 +92,7 @@ function signAgentToken({ publicCode, secret, ttlMs = DEFAULT_TOKEN_TTL_MS, now 
     if (!PUBLIC_CODE_PATTERN.test(String(publicCode || ''))) {
         throw new Error('signAgentToken: invalid publicCode');
     }
-    if (!secret) {
+    if (typeof secret !== 'string' || secret.trim().length === 0) {
         throw new Error('signAgentToken: signing secret required');
     }
     const exp = now + ttlMs;
@@ -104,7 +113,7 @@ function signAgentToken({ publicCode, secret, ttlMs = DEFAULT_TOKEN_TTL_MS, now 
  *   reason ∈ 'bad_format' | 'bad_version' | 'bad_signature' | 'expired' | 'bad_claim'
  */
 function verifyAgentTokenSig({ token, secret, now = Date.now() }) {
-    if (typeof token !== 'string' || !secret) {
+    if (typeof token !== 'string' || typeof secret !== 'string' || secret.trim().length === 0) {
         return { ok: false, reason: 'bad_format' };
     }
     const parts = token.split('.');
@@ -142,6 +151,85 @@ function verifyAgentTokenSig({ token, secret, now = Date.now() }) {
     return { ok: true, publicCode: String(payload.pc) };
 }
 
+function readSigningSecretFromEnv(env = process.env) {
+    const secret = env && env[SIGNING_SECRET_ENV];
+    const trimmedSecret = typeof secret === 'string' ? secret.trim() : '';
+    if (!trimmedSecret) return null;
+    // Fail loud if an operator wires this trust plane to the general session JWT
+    // secret. agent-identity tokens must have their own HMAC key.
+    if (typeof env.JWT_SECRET === 'string' && trimmedSecret === env.JWT_SECRET.trim()) return null;
+    return secret;
+}
+
+function normalizeRateLimitConfig(config) {
+    if (config === false) return { disabled: true };
+    const source = config || {};
+    const max = Number.isFinite(Number(source.max))
+        ? Math.max(1, Number(source.max))
+        : DEFAULT_BOT_SECRET_RATE_LIMIT.max;
+    const windowMs = Number.isFinite(Number(source.windowMs))
+        ? Math.max(1000, Number(source.windowMs))
+        : DEFAULT_BOT_SECRET_RATE_LIMIT.windowMs;
+    return { disabled: false, max, windowMs };
+}
+
+function clientIp(req) {
+    return req.ip
+        || (req.socket && req.socket.remoteAddress)
+        || (req.connection && req.connection.remoteAddress)
+        || 'unknown';
+}
+
+function createBotSecretLimiter({ config, now }) {
+    const settings = normalizeRateLimitConfig(config);
+    const hits = new Map();
+    const clock = typeof now === 'function' ? now : () => Date.now();
+
+    function prune(key) {
+        const t = clock();
+        const windowStart = t - settings.windowMs;
+        const arr = (hits.get(key) || []).filter((ts) => ts > windowStart);
+        hits.set(key, arr);
+        return arr;
+    }
+
+    function keysFor(req, body) {
+        const keys = [`ip:${clientIp(req)}`];
+        if (body && body.deviceId && body.entityId !== undefined && body.entityId !== null) {
+            keys.push(`entity:${String(body.deviceId)}:${String(body.entityId)}`);
+        }
+        return keys;
+    }
+
+    function overKey(key) {
+        const arr = prune(key);
+        return arr.length >= settings.max;
+    }
+
+    function recordKey(key) {
+        const arr = prune(key);
+        if (arr.length >= settings.max) {
+            return true;
+        }
+        arr.push(clock());
+        hits.set(key, arr);
+        return false;
+    }
+
+    return {
+        isLimited(req, body) {
+            if (settings.disabled) return false;
+            return keysFor(req, body).some(overKey);
+        },
+        recordFailure(req, body) {
+            if (settings.disabled) return false;
+            const keys = keysFor(req, body);
+            return keys.some(recordKey);
+        },
+        settings,
+    };
+}
+
 /**
  * Build the agent-identity router.
  *
@@ -150,7 +238,8 @@ function verifyAgentTokenSig({ token, secret, now = Date.now() }) {
  *       { ok:false, reason }.  Wired in index.js to authEntityAccess + the live
  *       devices map. This is the ONLY place a long-lived botSecret is checked;
  *       it is never stored or logged here.
- *   - getSecret() → the HMAC signing secret (defaults to process JWT secret).
+ *   - getSecret() → dedicated HMAC signing secret (defaults to
+ *       AGENT_IDENTITY_SECRET; never falls back to JWT_SECRET).
  *   - ttlMs / now — token lifetime + clock (injectable for tests).
  *   - log — serverLog-style (level, tag, msg). Never receives a secret/token.
  *
@@ -166,10 +255,11 @@ function verifyAgentTokenSig({ token, secret, now = Date.now() }) {
  *                 The wishlist backend calls BACK here to check an agent identity
  *                 before a write. Response carries { valid, publicCode } only.
  */
-function createRouter({ authenticateCaller, getSecret, ttlMs, now, log } = {}) {
+function createRouter({ authenticateCaller, getSecret, ttlMs, now, log, botSecretRateLimit } = {}) {
     const router = express.Router();
     const logger = typeof log === 'function' ? log : () => {};
     const clock = typeof now === 'function' ? now : () => Date.now();
+    const botSecretLimiter = createBotSecretLimiter({ config: botSecretRateLimit, now: clock });
     const tokenTtl = Number.isFinite(ttlMs) ? ttlMs : DEFAULT_TOKEN_TTL_MS;
     const authCaller =
         typeof authenticateCaller === 'function'
@@ -179,13 +269,26 @@ function createRouter({ authenticateCaller, getSecret, ttlMs, now, log } = {}) {
     const readSecret =
         typeof getSecret === 'function'
             ? getSecret
-            : () => process.env.JWT_SECRET || null;
+            : () => readSigningSecretFromEnv();
+
+    function rateLimited(res) {
+        res.set('Retry-After', String(Math.ceil(botSecretLimiter.settings.windowMs / 1000)));
+        return res.status(429).json({ valid: false, reason: 'rate_limited' });
+    }
 
     // Mint a short-lived token for an already-authenticated caller.
     router.post('/token', async (req, res) => {
         const { deviceId, entityId, botSecret } = req.body || {};
         if (!deviceId || entityId === undefined || entityId === null || !botSecret) {
             return res.status(400).json({ valid: false, reason: 'missing_credentials' });
+        }
+        const secret = readSecret();
+        if (!secret) {
+            logger('error', 'agent-identity', '[agent-identity] no signing secret configured');
+            return res.status(500).json({ valid: false, reason: 'server_misconfigured' });
+        }
+        if (botSecretLimiter.isLimited(req, req.body || {})) {
+            return rateLimited(res);
         }
         let caller;
         try {
@@ -195,12 +298,8 @@ function createRouter({ authenticateCaller, getSecret, ttlMs, now, log } = {}) {
             return res.status(502).json({ valid: false, reason: 'auth_unavailable' });
         }
         if (!caller || !caller.ok || !caller.publicCode) {
+            botSecretLimiter.recordFailure(req, req.body || {});
             return res.status(403).json({ valid: false, reason: 'not_verified' });
-        }
-        const secret = readSecret();
-        if (!secret) {
-            logger('error', 'agent-identity', '[agent-identity] no signing secret configured');
-            return res.status(500).json({ valid: false, reason: 'server_misconfigured' });
         }
         let minted;
         try {
@@ -246,6 +345,9 @@ function createRouter({ authenticateCaller, getSecret, ttlMs, now, log } = {}) {
         if (!deviceId || entityId === undefined || entityId === null || !botSecret) {
             return res.status(400).json({ valid: false, reason: 'missing_credentials' });
         }
+        if (botSecretLimiter.isLimited(req, body)) {
+            return rateLimited(res);
+        }
         let caller;
         try {
             caller = await authCaller({ deviceId, entityId, botSecret });
@@ -254,6 +356,7 @@ function createRouter({ authenticateCaller, getSecret, ttlMs, now, log } = {}) {
             return res.status(502).json({ valid: false, reason: 'auth_unavailable' });
         }
         if (!caller || !caller.ok || !caller.publicCode) {
+            botSecretLimiter.recordFailure(req, body);
             return res.status(200).json({ valid: false, reason: 'not_verified' });
         }
         // Secret verified → discarded. Only the resolved public code is returned.
@@ -267,7 +370,9 @@ module.exports = {
     createRouter,
     signAgentToken,
     verifyAgentTokenSig,
+    readSigningSecretFromEnv,
     DEFAULT_TOKEN_TTL_MS,
     TOKEN_VERSION,
+    SIGNING_SECRET_ENV,
     PUBLIC_CODE_PATTERN,
 };

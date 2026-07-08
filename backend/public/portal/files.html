@@ -293,6 +293,48 @@
             opacity: 0.5;
         }
 
+        .file-thumb.file-thumb-broken {
+            background: rgba(229, 62, 62, 0.08);
+        }
+
+        .file-thumb-error {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            background: rgba(229, 62, 62, 0.08);
+            color: var(--error, #e53e3e);
+            cursor: pointer;
+            font: inherit;
+            text-align: center;
+        }
+
+        .file-thumb-error[hidden] {
+            display: none;
+        }
+
+        .file-thumb-error-icon {
+            font-size: 26px;
+            line-height: 1;
+        }
+
+        .file-thumb-error-title {
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .file-thumb-error-action {
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1.2;
+        }
+
         /* Delete button on file card */
         .file-delete-btn {
             position: absolute;
@@ -792,6 +834,40 @@
             return value && value !== key ? value : (fallback || key);
         }
 
+        function renderFileThumbErrorHtml() {
+            const failed = escapeHtml(tr('files_photo_load_failed', 'Photo load failed'));
+            const retry = escapeHtml(tr('files_photo_retry', 'Click to retry'));
+            return '<button type="button" class="file-thumb-error broken retry" hidden onclick="retryFileThumb(this, event)" aria-label="' + failed + ' — ' + retry + '">' +
+                '<span class="file-thumb-error-icon">&#9888;</span>' +
+                '<span class="file-thumb-error-title">' + failed + '</span>' +
+                '<span class="file-thumb-error-action">' + retry + '</span>' +
+                '</button>';
+        }
+
+        function handleFileThumbError(img) {
+            if (!img) return;
+            const thumb = img.closest('.file-thumb');
+            if (!thumb) return;
+            img.hidden = true;
+            thumb.classList.add('file-thumb-broken');
+            const error = thumb.querySelector('.file-thumb-error');
+            if (error) error.hidden = false;
+        }
+
+        function retryFileThumb(btn, event) {
+            if (event) event.stopPropagation();
+            const thumb = btn && btn.closest('.file-thumb');
+            if (!thumb) return;
+            const img = thumb.querySelector('img[data-file-src]');
+            if (!img) return;
+            btn.hidden = true;
+            thumb.classList.remove('file-thumb-broken');
+            img.hidden = false;
+            const src = img.dataset.fileSrc || img.getAttribute('src');
+            img.removeAttribute('src');
+            window.requestAnimationFrame(() => { img.src = src; });
+        }
+
         // --- Folder Management (localStorage) ---
         function getFileFolders() {
             try { return JSON.parse(localStorage.getItem('eclaw_file_folders') || '[]'); }
@@ -1228,7 +1304,8 @@
                     return '<div ' + cardAttrs + '>' +
                         deleteBtn + quoteBtn +
                         '<div class="file-thumb">' +
-                        '<img src="' + escapeHtml(file.url) + '" alt="photo" loading="lazy" onerror="this.parentElement.innerHTML=\'<div class=file-thumb-icon>🖼️</div>\'">' +
+                        '<img src="' + escapeHtml(file.url) + '" data-file-src="' + escapeHtml(file.url) + '" alt="photo" loading="lazy" onerror="handleFileThumbError(this)">' +
+                        renderFileThumbErrorHtml() +
                         entityBadgesHtml +
                         '</div>' +
                         '<div class="file-info">' +

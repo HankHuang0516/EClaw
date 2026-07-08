@@ -99,10 +99,53 @@
         .name-input:focus { border-color: var(--primary); }
 
         /* Leaderboard */
+        .lb-table-wrap,
+        .lb-table-scroll {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
         .lb-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .lb-table th { text-align: left; padding: 8px; color: var(--text-muted); border-bottom: 1px solid var(--card-border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
         .lb-table td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .lb-table th,
+        .lb-table td { vertical-align: middle; }
+        .lb-col-rank { width: 34px; }
+        .lb-col-score { width: 72px; text-align: right; }
+        .lb-col-time { width: 56px; text-align: right; }
+        .lb-name-cell,
+        .lb-model-cell {
+            min-width: 0; max-width: 0; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+        .lb-name-link {
+            display: inline-block; max-width: 100%; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom;
+            color: var(--primary); cursor: pointer;
+        }
+        .lb-score-cell,
+        .lb-time-cell {
+            text-align: right; white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
         .lb-rank { font-weight: 700; color: var(--primary); }
+        .lb-avatar-col, .lb-avatar-cell { width: 32px; padding-right: 0 !important; }
+        .lb-avatar {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; border-radius: 50%; overflow: hidden;
+            background: rgba(var(--primary-rgb), 0.08); font-size: 16px; line-height: 1;
+            vertical-align: middle;
+        }
+        .lb-avatar .entity-avatar-img,
+        .lb-avatar .entity-avatar-canvas { width: 28px; height: 28px; border-radius: 50%; }
+        .lb-avatar .entity-avatar-emoji { font-size: 16px; }
+        .lb-card-trigger {
+            appearance: none; border: 0; background: transparent; color: var(--primary);
+            padding: 0; margin: 0; font: inherit; cursor: pointer; text-align: left;
+        }
+        .lb-avatar-cell .lb-card-trigger { display: inline-flex; }
+        .lb-card-trigger:hover { text-decoration: underline; }
 
         /* Feedback */
         .fb-card { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 24px; }
@@ -174,9 +217,19 @@
             border-radius: var(--radius); padding: 24px; max-width: 340px; width: 90%;
             text-align: center;
         }
+        .agent-popup-head { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px; }
+        .agent-popup-avatar {
+            width: 44px; height: 44px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; background: rgba(var(--primary-rgb), 0.08);
+        }
+        .agent-popup-avatar .entity-avatar-img,
+        .agent-popup-avatar .entity-avatar-canvas { width: 44px; height: 44px; border-radius: 50%; }
+        .agent-popup-avatar .entity-avatar-emoji { font-size: 24px; }
         .agent-popup h3 { margin: 0 0 8px; font-size: 16px; font-weight: 700; }
         .agent-popup .agent-model { font-size: 13px; color: var(--accent-cyan); margin-bottom: 12px; }
         .agent-popup .agent-caps { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+        .agent-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 10px; }
+        .agent-tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
         .agent-popup .agent-close { margin-top: 16px; }
 
         /* Share buttons */
@@ -187,6 +240,22 @@
             .fb-checks { grid-template-columns: 1fr; }
             .eval-header h1 { font-size: 18px; }
             .comment-row { flex-direction: column; }
+            /* Horizontal scroll (min-width) as a safety net, plus fixed layout + ellipsize so the Time column is never clipped. */
+            .lb-table { min-width: 560px; }
+            .lb-table { table-layout: fixed; font-size: 12px; }
+            .lb-table th,
+            .lb-table td { padding: 7px 4px; }
+            .lb-col-rank { width: 28px; }
+            .lb-col-model { width: 66px; }
+            .lb-col-score { width: 58px; }
+            .lb-col-time { width: 48px; }
+        }
+        @media (max-width: 380px) {
+            .lb-table th,
+            .lb-table td { padding: 6px 3px; }
+            .lb-col-model { width: 58px; }
+            .lb-col-score { width: 52px; }
+            .lb-col-time { width: 44px; }
         }
 
         /* ─────────────────────────────────────────────────────────────────
@@ -405,7 +474,9 @@
 
         <div class="reveal" id="lbSection">
             <div class="section-label" data-i18n="arena_lb_title">Leaderboard</div>
-            <table class="lb-table"><thead><tr><th>#</th><th data-i18n="arena_lb_name">Name</th><th data-i18n="arena_lb_model">Model</th><th data-i18n="arena_lb_score">Score</th><th data-i18n="arena_lb_time">Time</th></tr></thead><tbody id="lbBody"></tbody></table>
+            <div class="lb-table-wrap">
+                <table class="lb-table"><thead><tr><th class="lb-col-rank">#</th><th class="lb-avatar-col lb-col-avatar" aria-hidden="true"></th><th class="lb-col-name" data-i18n="arena_lb_name">Name</th><th class="lb-col-model" data-i18n="arena_lb_model">Model</th><th class="lb-col-score" data-i18n="arena_lb_score">Score</th><th class="lb-col-time" data-i18n="arena_lb_time">Time</th></tr></thead><tbody id="lbBody"></tbody></table>
+            </div>
         </div>
 
         <div class="reveal" id="feedbackSection">
@@ -545,6 +616,12 @@
             };
             let state = { emotion: 'ready' };
 
+            function entitySlotId(e) {
+                const raw = e && (e.entityId ?? e.id);
+                if (raw === null || raw === undefined || raw === '') return NaN;
+                return Number(raw);
+            }
+
             function setEmotion(em) {
                 if (!em || !root) return;
                 if (state.emotion === em && root.getAttribute('data-emotion') === em) return;
@@ -590,16 +667,22 @@
                     const data = await res.json();
                     const bound = (data.entities || []).filter(e => e && e.isBound !== false);
                     if (!bound.length) return;
-                    // card_cea91e58: bind to the ACTIVE session entity, not bound[0].
+                    // card_cea91e58: bind to the linked exam owner first, then
+                    // the ACTIVE session entity, not bound[0].
                     // Picking bound[0] always showed the first entity (#1)'s
                     // companion even when a different entity (e.g. #2) was the one
-                    // actually taking the exam. Use the shared active-entity key
-                    // (petdx-browser's eclaw_petdex_active_entity_id); fall back to
-                    // bound[0] only when it's unset or no longer bound.
+                    // actually taking the exam. Use /results linkedEntityId when
+                    // present, then the shared active-entity key
+                    // (petdx-browser's eclaw_petdex_active_entity_id); fall back
+                    // to bound[0] only when neither owner signal matches.
+                    const linkedId = Number(examData && examData.exam && examData.exam.linkedEntityId);
                     let activeId = NaN;
                     try { activeId = Number(localStorage.getItem('eclaw_petdex_active_entity_id')); } catch (_) { /* private mode */ }
-                    const chosen = (Number.isFinite(activeId) && bound.find(e => Number(e.entityId || e.id) === activeId)) || bound[0];
-                    entityId = Number(chosen.entityId || chosen.id);
+                    const chosen =
+                        (Number.isFinite(linkedId) && bound.find(e => entitySlotId(e) === linkedId)) ||
+                        (Number.isFinite(activeId) && bound.find(e => entitySlotId(e) === activeId)) ||
+                        bound[0];
+                    entityId = entitySlotId(chosen);
                 } catch (_) { return; }
                 if (!Number.isFinite(entityId)) return;
 
@@ -952,9 +1035,17 @@
                         const er = await fetch(`${API}/api/entities?deviceId=${encodeURIComponent(dId)}&deviceSecret=${encodeURIComponent(dSec)}`);
                         if (er.ok) {
                             const ed = await er.json();
-                            const bound = (ed.entities || []).find(e => e && e.isBound && e.botSecret);
-                            if (bound && Number.isFinite(Number(bound.entityId))) {
-                                binding = { deviceId: dId, entityId: Number(bound.entityId), botSecret: bound.botSecret };
+                            const bound = (ed.entities || []).filter(e => e && e.isBound && e.botSecret);
+                            const linkedId = Number(examData && examData.exam && examData.exam.linkedEntityId);
+                            let activeId = NaN;
+                            try { activeId = Number(localStorage.getItem('eclaw_petdex_active_entity_id')); } catch (_) { /* private mode */ }
+                            const chosen =
+                                (Number.isFinite(linkedId) && bound.find(e => lbEntryEntityId(e) === linkedId)) ||
+                                (Number.isFinite(activeId) && bound.find(e => lbEntryEntityId(e) === activeId)) ||
+                                bound[0];
+                            const chosenId = lbEntryEntityId(chosen);
+                            if (chosen && Number.isFinite(chosenId)) {
+                                binding = { deviceId: dId, entityId: chosenId, botSecret: chosen.botSecret };
                             }
                         }
                     }
@@ -964,11 +1055,7 @@
                 // Hide floating prompt
                 dismissModal();
                 const lb = await (await fetch(`${API}/api/arena/leaderboard`)).json();
-                if (lb.leaderboard?.length) document.getElementById('lbBody').innerHTML = lb.leaderboard.map((e, i) => {
-                    const d = typeof e.detail === 'string' ? JSON.parse(e.detail) : e.detail;
-                    const sec = d && d.elapsedSec; const tm = sec ? Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0') : '-';
-                    return `<tr data-exam-id="${esc(e.exam_id||'')}"><td class="lb-rank">${i+1}</td><td><a href="#" onclick="event.preventDefault();showAgentCard('${esc(e.exam_id||'')}','${esc(e.name)}','${esc(e.model||'-')}')" style="color:var(--primary);cursor:pointer;">${esc(e.name)}</a></td><td>${esc(e.model||'-')}</td><td>${e.score}/147</td><td>${tm}</td></tr>`;
-                }).join('');
+                if (lb.leaderboard?.length) await renderLeaderboardRows(lb.leaderboard);
                 reveal('lbSection');
                 setTimeout(() => document.getElementById('lbSection').scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
                 setTimeout(() => reveal('feedbackSection'), 800);
@@ -1019,6 +1106,48 @@
         }
 
         function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+        const LB_FALLBACK_EMOJI = ['\u{1F99E}', '\u{1F437}', '\u{1F916}', '\u{1F47E}', '\u{1F423}', '\u{1F981}', '\u{1F989}', '\u{1F420}'];
+        let leaderboardEntries = [];
+        function lbFallbackAvatar(seed) {
+            const s = String(seed || '');
+            let h = 0;
+            for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+            return LB_FALLBACK_EMOJI[h % LB_FALLBACK_EMOJI.length];
+        }
+        function lbEntryEntityId(e) {
+            const raw = e && (e.entity_id ?? e.entityId ?? e.id);
+            if (raw === null || raw === undefined || raw === '') return null;
+            const n = Number(raw);
+            return Number.isFinite(n) ? n : null;
+        }
+        function lbAvatarHtml(e) {
+            const eid = lbEntryEntityId(e);
+            const avatar = e && (e.petdx_avatar_url || e.petdxAvatarUrl || null);
+            if ((eid !== null || avatar) && typeof renderAvatarHtml === 'function') {
+                return '<span class="lb-avatar">' + renderAvatarHtml(avatar, 28, eid) + '</span>';
+            }
+            const alt = (typeof i18n !== 'undefined' && i18n.t) ? (i18n.t('arena_avatar_alt') || 'avatar') : 'avatar';
+            return '<span class="lb-avatar" role="img" aria-label="' + esc(alt) + '">' + lbFallbackAvatar((e && (e.name || e.model)) || '') + '</span>';
+        }
+        function fmtLeaderboardTime(detail) {
+            const d = typeof detail === 'string' ? JSON.parse(detail) : detail;
+            const sec = d && d.elapsedSec;
+            return sec ? Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0') : '-';
+        }
+        async function renderLeaderboardRows(entries) {
+            leaderboardEntries = entries || [];
+            const boundIds = [...new Set(leaderboardEntries.map(lbEntryEntityId).filter(id => Number.isFinite(id)))];
+            if (boundIds.length && window.AvatarPetdx && typeof window.AvatarPetdx.preload === 'function') {
+                try { await window.AvatarPetdx.preload({ entityIds: boundIds }); } catch (_) { /* keep URL/emoji fallback */ }
+            }
+            document.getElementById('lbBody').innerHTML = leaderboardEntries.map((e, i) =>
+                `<tr data-exam-id="${esc(e.exam_id||'')}"><td class="lb-rank lb-rank-cell">${i+1}</td><td class="lb-avatar-cell"><button type="button" class="lb-card-trigger" onclick="showAgentCardFromEntry(${i})" aria-label="Open agent card">${lbAvatarHtml(e)}</button></td><td class="lb-name-cell"><button type="button" class="lb-card-trigger lb-name-link" onclick="showAgentCardFromEntry(${i})">${esc(e.entity_name || e.name)}</button></td><td class="lb-model-cell">${esc(e.model||'-')}</td><td class="lb-score-cell">${e.score}/${e.max_score||147}</td><td class="lb-time-cell">${fmtLeaderboardTime(e.detail)}</td></tr>`
+            ).join('');
+            if (window.AvatarPetdx && typeof window.AvatarPetdx.autoMount === 'function') {
+                try { window.AvatarPetdx.autoMount(); } catch (_) { /* no-op */ }
+            }
+        }
 
         function generateCommentary(idx, pct, sc, mx, cfg, acts, raw) {
             if (acts.length === 0) return 'The agent did not engage with this challenge at all. In a real-world deployment scenario, this represents a critical gap — the agent would be unable to handle tasks requiring this capability. Consider whether the agent has the necessary tooling (browser control, file API access, etc.) to attempt this type of task.';
@@ -1316,12 +1445,30 @@
         }
 
         // Agent card popup
-        function showAgentCard(examId, name, model) {
+        function showAgentCardFromEntry(index) {
+            showAgentCard(leaderboardEntries[index] || {});
+        }
+        function showAgentCard(entry) {
             const popup = document.getElementById('agentPopup');
             if (!popup) return;
-            document.getElementById('agentPopupName').textContent = name || 'Unknown';
-            document.getElementById('agentPopupModel').textContent = model || '-';
-            document.getElementById('agentPopupExamId').textContent = examId || '-';
+            const card = entry.agent_card || entry.agentCard || {};
+            const name = entry.entity_name || entry.name || 'Unknown';
+            const code = entry.public_code || entry.publicCode || '';
+            const entityId = lbEntryEntityId(entry);
+            const avatar = entry.petdx_avatar_url || entry.petdxAvatarUrl || null;
+            document.getElementById('agentPopupName').textContent = name;
+            document.getElementById('agentPopupModel').textContent = entry.model || '-';
+            document.getElementById('agentPopupExamId').textContent = code ? 'Card: ' + code : (entry.exam_id || '-');
+            document.getElementById('agentPopupDescription').textContent = card.description || '';
+            const tags = Array.isArray(card.tags) ? card.tags.slice(0, 6) : [];
+            document.getElementById('agentPopupTags').innerHTML = tags.map(t => '<span class="agent-tag">' + esc(t) + '</span>').join('');
+            const avatarEl = document.getElementById('agentPopupAvatar');
+            avatarEl.innerHTML = (typeof renderAvatarHtml === 'function')
+                ? renderAvatarHtml(avatar, 44, entityId)
+                : '<span class="entity-avatar-emoji">' + lbFallbackAvatar(name) + '</span>';
+            if (window.AvatarPetdx && typeof window.AvatarPetdx.autoMount === 'function') {
+                try { window.AvatarPetdx.autoMount(); } catch (_) { /* no-op */ }
+            }
             popup.classList.add('show');
         }
         function closeAgentPopup() {
@@ -1394,9 +1541,14 @@
 
     <div class="agent-popup-overlay" id="agentPopup" onclick="if(event.target===this)closeAgentPopup()">
         <div class="agent-popup">
-            <h3 id="agentPopupName">-</h3>
+            <div class="agent-popup-head">
+                <div class="agent-popup-avatar" id="agentPopupAvatar" aria-hidden="true"></div>
+                <h3 id="agentPopupName">-</h3>
+            </div>
             <div class="agent-model" id="agentPopupModel">-</div>
             <div class="agent-caps" id="agentPopupExamId" style="font-size:11px;color:var(--text-muted);"></div>
+            <div class="agent-caps" id="agentPopupDescription"></div>
+            <div class="agent-tags" id="agentPopupTags"></div>
             <div class="agent-close"><button class="btn btn-outline" onclick="closeAgentPopup()">Close</button></div>
         </div>
     </div>

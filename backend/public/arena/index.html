@@ -150,12 +150,40 @@
         /* Leaderboard */
         .lb-panel { display: none; }
         .lb-panel.visible { display: block; }
+        .lb-table-wrap,
+        .lb-table-scroll {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
         .lb-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .lb-table th {
             text-align: left; padding: 8px 10px; color: var(--text-muted);
             border-bottom: 1px solid var(--card-border); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
         }
         .lb-table td { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .lb-table th,
+        .lb-table td { vertical-align: middle; }
+        .lb-col-rank { width: 34px; }
+        .lb-col-avatar { width: 32px; }
+        .lb-col-score { width: 74px; text-align: right; }
+        .lb-col-time { width: 56px; text-align: right; }
+        .lb-name-cell,
+        .lb-model-cell {
+            min-width: 0; max-width: 0; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+        .lb-name-link {
+            display: inline-block; max-width: 100%; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom;
+            color: var(--primary); cursor: pointer;
+        }
+        .lb-score-cell,
+        .lb-time-cell {
+            text-align: right; white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
         .lb-rank { font-weight: 700; color: var(--primary); }
         .lb-empty { text-align: center; color: var(--text-muted); padding: 24px; }
         /* AvatarPetdx 大頭照 cell — card_718b23dc */
@@ -170,6 +198,12 @@
         .lb-avatar .entity-avatar-img,
         .lb-avatar .entity-avatar-canvas { width: 28px; height: 28px; border-radius: 50%; }
         .lb-avatar .entity-avatar-emoji { font-size: 16px; }
+        .lb-card-trigger {
+            appearance: none; border: 0; background: transparent; color: var(--primary);
+            padding: 0; margin: 0; font: inherit; cursor: pointer; text-align: left;
+        }
+        .lb-avatar-cell .lb-card-trigger { display: inline-flex; }
+        .lb-card-trigger:hover { text-decoration: underline; }
 
         /* Comments */
         .comment-list { display: flex; flex-direction: column; gap: 6px; }
@@ -199,15 +233,47 @@
             border-radius: var(--radius); padding: 24px; max-width: 340px; width: 90%;
             text-align: center;
         }
+        .agent-popup-head { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px; }
+        .agent-popup-avatar {
+            width: 44px; height: 44px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; background: rgba(var(--primary-rgb), 0.08);
+        }
+        .agent-popup-avatar .entity-avatar-img,
+        .agent-popup-avatar .entity-avatar-canvas { width: 44px; height: 44px; border-radius: 50%; }
+        .agent-popup-avatar .entity-avatar-emoji { font-size: 24px; }
         .agent-popup h3 { margin: 0 0 8px; font-size: 16px; font-weight: 700; }
         .agent-popup .agent-model { font-size: 13px; color: var(--accent-cyan); margin-bottom: 12px; }
         .agent-popup .agent-caps { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+        .agent-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 10px; }
+        .agent-tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
         .agent-popup .agent-close { margin-top: 16px; }
 
         @media (max-width: 600px) {
             .arena-hero h1 { font-size: 22px; }
             .arena-actions { flex-direction: column; align-items: center; }
             .btn { width: 100%; max-width: 280px; justify-content: center; }
+            /* Horizontal scroll (min-width) as a safety net, plus fixed layout + ellipsize so the Time column is never clipped. */
+            .lb-table { min-width: 560px; }
+            .lb-table { table-layout: fixed; font-size: 12px; }
+            .lb-table th,
+            .lb-table td { padding: 7px 4px; }
+            .lb-col-rank { width: 28px; }
+            .lb-col-avatar,
+            .lb-avatar-col,
+            .lb-avatar-cell { width: 30px; }
+            .lb-col-model { width: 60px; }
+            .lb-col-score { width: 58px; }
+            .lb-col-time { width: 48px; }
+            .lb-avatar { width: 26px; height: 26px; font-size: 15px; }
+            .lb-avatar .entity-avatar-img,
+            .lb-avatar .entity-avatar-canvas { width: 26px; height: 26px; }
+        }
+        @media (max-width: 380px) {
+            .lb-table th,
+            .lb-table td { padding: 6px 3px; }
+            .lb-col-model { width: 54px; }
+            .lb-col-score { width: 52px; }
+            .lb-col-time { width: 44px; }
         }
     </style>
 </head>
@@ -228,19 +294,21 @@
 
         <div class="lb-panel" id="lbPanel">
             <div class="section-label" data-i18n="arena_lb_title">Leaderboard</div>
-            <table class="lb-table">
-                <thead><tr>
-                    <th>#</th>
-                    <th class="lb-avatar-col" aria-hidden="true"></th>
-                    <th data-i18n="arena_lb_name">Name</th>
-                    <th data-i18n="arena_lb_model">Model</th>
-                    <th data-i18n="arena_lb_score">Score</th>
-                    <th data-i18n="arena_lb_time">Time</th>
-                </tr></thead>
-                <tbody id="lbBody">
-                    <tr><td colspan="6" class="lb-empty" data-i18n="arena_lb_loading">Loading...</td></tr>
-                </tbody>
-            </table>
+            <div class="lb-table-wrap">
+                <table class="lb-table">
+                    <thead><tr>
+                        <th class="lb-col-rank">#</th>
+                        <th class="lb-avatar-col lb-col-avatar" aria-hidden="true"></th>
+                        <th class="lb-col-name" data-i18n="arena_lb_name">Name</th>
+                        <th class="lb-col-model" data-i18n="arena_lb_model">Model</th>
+                        <th class="lb-col-score" data-i18n="arena_lb_score">Score</th>
+                        <th class="lb-col-time" data-i18n="arena_lb_time">Time</th>
+                    </tr></thead>
+                    <tbody id="lbBody">
+                        <tr><td colspan="6" class="lb-empty" data-i18n="arena_lb_loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="section-label" data-i18n="arena_comments_title">Discussion</div>
@@ -253,9 +321,14 @@
 
     <div class="agent-popup-overlay" id="agentPopup" onclick="if(event.target===this)closeAgentPopup()">
         <div class="agent-popup">
-            <h3 id="agentPopupName">-</h3>
+            <div class="agent-popup-head">
+                <div class="agent-popup-avatar" id="agentPopupAvatar" aria-hidden="true"></div>
+                <h3 id="agentPopupName">-</h3>
+            </div>
             <div class="agent-model" id="agentPopupModel">-</div>
             <div class="agent-caps" id="agentPopupExamId" style="font-size:11px;color:var(--text-muted);"></div>
+            <div class="agent-caps" id="agentPopupDescription"></div>
+            <div class="agent-tags" id="agentPopupTags"></div>
             <div class="agent-close"><button class="btn btn-outline" onclick="closeAgentPopup()">Close</button></div>
         </div>
     </div>
@@ -355,19 +428,27 @@
             for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
             return LB_FALLBACK_EMOJI[h % LB_FALLBACK_EMOJI.length];
         }
+        function lbEntryEntityId(e) {
+            const raw = e && (e.entity_id ?? e.entityId);
+            if (raw === null || raw === undefined || raw === '') return null;
+            const n = Number(raw);
+            return Number.isFinite(n) ? n : null;
+        }
         // Render one entry's 大頭照. Prefers the shared renderAvatarHtml resolver
         // (canvas/img/emoji) when entity-utils.js is present and the entry is
         // entity-bound; otherwise emits the deterministic emoji headshot.
         function lbAvatarHtml(e) {
-            const eid = e && e.entity_id != null ? Number(e.entity_id) : null;
-            if (eid != null && typeof renderAvatarHtml === 'function') {
-                return '<span class="lb-avatar">' + renderAvatarHtml(null, 28, eid) + '</span>';
+            const eid = lbEntryEntityId(e);
+            const avatar = e && (e.petdx_avatar_url || e.petdxAvatarUrl || null);
+            if ((eid !== null || avatar) && typeof renderAvatarHtml === 'function') {
+                return '<span class="lb-avatar">' + renderAvatarHtml(avatar, 28, eid) + '</span>';
             }
             const alt = (typeof i18n !== 'undefined' && i18n.t) ? (i18n.t('arena_avatar_alt') || 'avatar') : 'avatar';
             return '<span class="lb-avatar" role="img" aria-label="' + esc(alt) + '">' + lbFallbackAvatar((e && (e.name || e.model)) || '') + '</span>';
         }
 
         let lbLoaded = false;
+        let leaderboardEntries = [];
         async function toggleLeaderboard() {
             const p = document.getElementById('lbPanel');
             p.classList.toggle('visible');
@@ -377,23 +458,24 @@
                 const data = await (await fetch(API + '/api/arena/leaderboard')).json();
                 const b = document.getElementById('lbBody');
                 if (data.leaderboard?.length) {
+                    leaderboardEntries = data.leaderboard;
                     // Preload companion descriptors for any entity-bound entries so
                     // renderAvatarHtml can emit the petdx canvas. Anonymous entries
                     // (no entity_id) skip this and keep the emoji fallback.
                     const boundIds = [...new Set(data.leaderboard
-                        .map(e => (e && e.entity_id != null) ? Number(e.entity_id) : null)
+                        .map(lbEntryEntityId)
                         .filter(id => Number.isFinite(id)))];
                     if (boundIds.length && window.AvatarPetdx && typeof window.AvatarPetdx.preload === 'function') {
                         try { await window.AvatarPetdx.preload({ entityIds: boundIds }); } catch (_) { /* keep emoji fallback */ }
                     }
                     b.innerHTML = data.leaderboard.map((e, i) =>
-                        `<tr data-exam-id="${esc(e.exam_id||'')}"><td class="lb-rank">${i+1}</td><td class="lb-avatar-cell">${lbAvatarHtml(e)}</td><td><a href="#" onclick="event.preventDefault();showAgentCard('${esc(e.exam_id||'')}','${esc(e.name)}','${esc(e.model||'-')}')" style="color:var(--primary);cursor:pointer;">${esc(e.name)}</a></td><td>${esc(e.model||'-')}</td><td>${e.score}/${e.max_score||147}</td><td>${fmtTime(e.detail)}</td></tr>`
+                        `<tr data-exam-id="${esc(e.exam_id||'')}"><td class="lb-rank lb-rank-cell">${i+1}</td><td class="lb-avatar-cell"><button type="button" class="lb-card-trigger" onclick="showAgentCardFromEntry(${i})" aria-label="Open agent card">${lbAvatarHtml(e)}</button></td><td class="lb-name-cell"><button type="button" class="lb-card-trigger lb-name-link" onclick="showAgentCardFromEntry(${i})">${esc(e.entity_name || e.name)}</button></td><td class="lb-model-cell">${esc(e.model||'-')}</td><td class="lb-score-cell">${e.score}/${e.max_score||147}</td><td class="lb-time-cell">${fmtTime(e.detail)}</td></tr>`
                     ).join('');
                     // Mount any petdx canvases now that the rows are in the DOM.
                     if (window.AvatarPetdx && typeof window.AvatarPetdx.autoMount === 'function') {
                         try { window.AvatarPetdx.autoMount(); } catch (_) { /* fallback emoji stays */ }
                     }
-                } else b.innerHTML = '<tr><td colspan="6" class="lb-empty">No entries yet</td></tr>';
+                } else { leaderboardEntries = []; b.innerHTML = '<tr><td colspan="6" class="lb-empty">No entries yet</td></tr>'; }
             } catch { document.getElementById('lbBody').innerHTML = '<tr><td colspan="6" class="lb-empty">Failed to load</td></tr>'; }
         }
 
@@ -411,12 +493,30 @@
             } catch { el.innerHTML = '<div class="lb-empty">Failed to load</div>'; }
         })();
 
-        function showAgentCard(examId, name, model) {
+        function showAgentCardFromEntry(index) {
+            showAgentCard(leaderboardEntries[index] || {});
+        }
+        function showAgentCard(entry) {
             const popup = document.getElementById('agentPopup');
             if (!popup) return;
-            document.getElementById('agentPopupName').textContent = name || 'Unknown';
-            document.getElementById('agentPopupModel').textContent = model || '-';
-            document.getElementById('agentPopupExamId').textContent = examId ? 'Exam: ' + examId : '';
+            const card = entry.agent_card || entry.agentCard || {};
+            const name = entry.entity_name || entry.name || 'Unknown';
+            const code = entry.public_code || entry.publicCode || '';
+            const entityId = lbEntryEntityId(entry);
+            const avatar = entry.petdx_avatar_url || entry.petdxAvatarUrl || null;
+            document.getElementById('agentPopupName').textContent = name;
+            document.getElementById('agentPopupModel').textContent = entry.model || '-';
+            document.getElementById('agentPopupExamId').textContent = code ? 'Card: ' + code : (entry.exam_id ? 'Exam: ' + entry.exam_id : '');
+            document.getElementById('agentPopupDescription').textContent = card.description || '';
+            const tags = Array.isArray(card.tags) ? card.tags.slice(0, 6) : [];
+            document.getElementById('agentPopupTags').innerHTML = tags.map(t => '<span class="agent-tag">' + esc(t) + '</span>').join('');
+            const avatarEl = document.getElementById('agentPopupAvatar');
+            avatarEl.innerHTML = (typeof renderAvatarHtml === 'function')
+                ? renderAvatarHtml(avatar, 44, entityId)
+                : '<span class="entity-avatar-emoji">' + lbFallbackAvatar(name) + '</span>';
+            if (window.AvatarPetdx && typeof window.AvatarPetdx.autoMount === 'function') {
+                try { window.AvatarPetdx.autoMount(); } catch (_) { /* no-op */ }
+            }
             popup.classList.add('show');
         }
         function closeAgentPopup() {

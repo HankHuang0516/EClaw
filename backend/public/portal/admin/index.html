@@ -180,7 +180,7 @@
             }
         }
 
-        function getAuthQuery() {
+        function getAdminCredentials() {
             const u = window.currentUser || {};
             let deviceId = u.deviceId;
             let deviceSecret = u.deviceSecret;
@@ -190,15 +190,20 @@
                     deviceSecret = deviceSecret || localStorage.getItem('deviceSecret');
                 } catch (_) { /* ignore */ }
             }
-            if (!deviceId) return null;
-            return `deviceId=${encodeURIComponent(deviceId)}`;
+            if (!deviceId || !deviceSecret) return null;
+            return { deviceId, deviceSecret };
         }
 
         async function verifyAdminGate() {
-            const auth = getAuthQuery();
-            if (!auth) return false;
+            const creds = getAdminCredentials();
+            if (!creds) return false;
             try {
-                const res = await fetch(`/api/admin/ping?${auth}`, { credentials: 'include' });
+                // deviceSecret goes in a header (not the query string) so it never
+                // lands in access logs / browser history (card_bb9f0e5c).
+                const res = await fetch(`/api/admin/ping?deviceId=${encodeURIComponent(creds.deviceId)}`, {
+                    credentials: 'include',
+                    headers: { 'X-Device-Secret': creds.deviceSecret }
+                });
                 return res.status === 200;
             } catch (_) { return false; }
         }

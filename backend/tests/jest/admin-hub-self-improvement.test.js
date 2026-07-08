@@ -40,10 +40,12 @@ describe('admin hub self-improvement surface', () => {
         expect(adminHubSrc).toContain('Globe-user: <which role/capability is affected globally; no hardcoded device/entity/user>');
         expect(adminHubSrc).toContain('Setup: <required admin permission/API/runtime condition; graceful degradation if missing>');
         expect(adminHubSrc).toContain('? icon UX: <What this state means / Needs / Next step>');
-        const selfImprovementSlice = adminHubSrc.slice(
-            adminHubSrc.indexOf('id="adminSelfImprovementCard"'),
-            adminHubSrc.indexOf('function getAdminCredentials')
-        );
+        const cardStart = adminHubSrc.indexOf('id="adminSelfImprovementCard"');
+        let cardEnd = adminHubSrc.indexOf('function getAdminCredentials');
+        if (cardEnd < 0) cardEnd = adminHubSrc.indexOf('function getAuthQuery');
+        expect(cardStart).toBeGreaterThanOrEqual(0);
+        expect(cardEnd).toBeGreaterThan(cardStart);
+        const selfImprovementSlice = adminHubSrc.slice(cardStart, cardEnd);
         expect(selfImprovementSlice).not.toMatch(/botSecret|deviceSecret|DATABASE_URL|CLOUDFLARE_API_TOKEN/);
     });
 });
