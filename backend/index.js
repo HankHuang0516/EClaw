@@ -32,6 +32,7 @@ const orgChartModule = require('./org-chart');
 const crossDeviceSettings = require('./entity-cross-device-settings');
 const walkConfig = require('./entity-walk-config');
 const feedbackEmail = require('./feedback-email');
+const reviewXp = require('./review-xp'); // review-economy XP rules (card_1d071107)
 const chatEmbedding = require('./chat-embedding');
 const embeddingClient = require('./embedding-client');
 const multer = require('multer');
@@ -6733,7 +6734,12 @@ const XP_AMOUNTS = {
     PLAYER_SCOLD: -15,       // User scolds bot via keyword
     ENTITY_PRAISE: 10,       // Other entity praises this entity
     ENTITY_SCOLD: -10,       // Other entity scolds this entity
-    MISSED_SCHEDULE: -10     // Bot didn't respond to scheduled task
+    MISSED_SCHEDULE: -10,    // Bot didn't respond to scheduled task
+    // Base XP for a completed independent code review (card_1d071107). A plain
+    // review that finds nothing wrong still earns this base; the reward economy
+    // only *multiplies* it (×5) when the review catches a verified real defect.
+    // Single source of truth for the base + multiplier lives in review-xp.js.
+    REVIEW_COMPLETED: reviewXp.REVIEW_BASE_XP
 };
 
 // Keyword detection for praise/scold
