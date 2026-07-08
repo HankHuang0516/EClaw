@@ -68,7 +68,8 @@
       "expo-sharing",
       "expo-sqlite",
       "expo-apple-authentication",
-      "expo-web-browser"
+      "expo-web-browser",
+      "./plugins/withNeedsYouWidget"
     ],
     "experiments": {
       "typedRoutes": true

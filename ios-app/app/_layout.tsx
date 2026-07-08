@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { PaperProvider, MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
-import { useColorScheme, View, ActivityIndicator, LogBox } from 'react-native';
+import { useColorScheme, View, ActivityIndicator, LogBox, AppState } from 'react-native';
 
 // Silence dev warnings overlay so it doesn't cover the tab bar.
 LogBox.ignoreAllLogs();
@@ -54,10 +54,20 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function isNeedsYouNotification(payload: unknown): boolean {
+  if (!payload || typeof payload !== 'object') return false;
+  const p = payload as { category?: unknown; type?: unknown; metadata?: unknown };
+  if (p.category === 'rich_card_question' || p.type === 'action_request') return true;
+  if (p.metadata && typeof p.metadata === 'object') {
+    return (p.metadata as { ownerDecision?: unknown }).ownerDecision === true;
+  }
+  return false;
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? MD3DarkTheme : MD3LightTheme;
-  const { initialize, deviceId, authToken } = useAuthStore();
+  const { initialize, deviceId, deviceSecret } = useAuthStore();
 
   // Initialize auth on startup
   useEffect(() => {
@@ -66,15 +76,37 @@ export default function RootLayout() {
 
   // Connect Socket.IO and register for notifications when authenticated
   useEffect(() => {
-    if (!deviceId && !authToken) return;
+    if (!deviceId || !deviceSecret) return;
 
     socketService.connect();
     notificationService.registerForPushNotifications();
+    notificationService.syncNeedsYouBadgeCount();
+
+    const offActionRequest = socketService.on('action_request:changed', () => {
+      notificationService.syncNeedsYouBadgeCount();
+    });
+    const offNotification = socketService.on('notification', (payload) => {
+      if (isNeedsYouNotification(payload)) {
+        notificationService.syncNeedsYouBadgeCount();
+      }
+    });
+    const appStateSubscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        notificationService.syncNeedsYouBadgeCount();
+      }
+    });
+    const badgeInterval = setInterval(() => {
+      notificationService.syncNeedsYouBadgeCount();
+    }, 5 * 60 * 1000);
 
     return () => {
+      offActionRequest();
+      offNotification();
+      appStateSubscription.remove();
+      clearInterval(badgeInterval);
       socketService.disconnect();
     };
-  }, [deviceId, authToken]);
+  }, [deviceId, deviceSecret]);
 
   return (
     <SafeAreaProvider>

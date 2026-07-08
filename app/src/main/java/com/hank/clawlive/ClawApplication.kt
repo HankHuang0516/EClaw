@@ -10,6 +10,7 @@ import com.hank.clawlive.debug.CrashLogManager
 import com.hank.clawlive.fcm.ClawFcmService
 import com.hank.clawlive.debug.FileTimberTree
 import com.hank.clawlive.integrity.PlayIntegrityReporter
+import com.hank.clawlive.needyou.NeedYouIndicatorSync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -91,6 +92,10 @@ class ClawApplication : Application() {
         // the device would stay unregistered forever. Pulling the current token at startup
         // and POSTing it unconditionally fixes that class of silent failures.
         refreshAndRegisterFcmToken()
+
+        // Keep the home-screen widget + supported launcher badges aligned with
+        // the server-side 需要你 unresolved count as soon as the process wakes.
+        NeedYouIndicatorSync.refreshAsync(this, "app_start")
 
         // 7. Report a Play Integrity startup signal in release builds so Play
         // Console can monitor genuine installs without adding user-visible work.

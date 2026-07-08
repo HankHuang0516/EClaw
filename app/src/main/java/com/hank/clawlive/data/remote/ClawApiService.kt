@@ -448,6 +448,12 @@ interface ClawApiService {
         @Query("deviceSecret") deviceSecret: String
     ): NotificationCountResponse
 
+    @GET("api/action-requests/pending-count")
+    suspend fun getActionRequestPendingCount(
+        @Query("deviceId") deviceId: String,
+        @Query("deviceSecret") deviceSecret: String
+    ): ActionRequestPendingCountResponse
+
     @POST("api/notifications/read")
     suspend fun markNotificationRead(@Body body: Map<String, String>): ApiResponse
 

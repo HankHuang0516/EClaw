@@ -68,6 +68,13 @@ data class GenericResponse(
     @SerializedName("message") val message: String? = null
 )
 
+data class ActionRequestPendingCountResponse(
+    @SerializedName("success") val success: Boolean = false,
+    @SerializedName("count") val count: Int = 0,
+    @SerializedName("deviceId") val deviceId: String? = null,
+    @SerializedName("error") val error: String? = null
+)
+
 // Avatar upload response (includes Flickr URL)
 data class AvatarUploadResponse(
     @SerializedName("success") val success: Boolean = false,
