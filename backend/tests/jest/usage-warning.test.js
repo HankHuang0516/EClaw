@@ -18,6 +18,8 @@ const {
     pickClaudeLivePct,
     withinCooldown,
     resolveCooldownMs,
+    getWarningPrefix,
+    _resetCooldownState,
 } = require('../../lib/usage-warning');
 
 const DEFAULT_CFG = { enabled: true, threshold_5h_pct: 15, threshold_7d_pct: 5 };
@@ -156,6 +158,100 @@ describe('withinCooldown / resolveCooldownMs (card_a69e8ffa)', () => {
     });
     test('cooldown_min: 0 → every breach allowed (no suppression)', () => {
         expect(withinCooldown(NOW - 1, NOW, resolveCooldownMs({ cooldown_min: 0 }))).toBe(false);
+    });
+});
+
+describe('getWarningPrefix — entity-scoped attribution (card_2f6a5659)', () => {
+    /**
+     * Fake pool that EMULATES the usage_snapshots table semantics for both
+     * query shapes the module can send:
+     *   - device-only  (params [deviceId])         → latest row by captured_at
+     *   - entity-scoped (params [deviceId, eid])   → WHERE entity_id = eid OR NULL,
+     *                                                 ORDER BY (entity_id = eid) DESC, captured_at DESC
+     * Because the emulation is faithful to the SQL semantics (not to the code
+     * under test), these tests FAIL on the old device-only lookup and PASS on
+     * the entity-scoped one.
+     */
+    function mkSnapshotPool(rows) {
+        return {
+            query: jest.fn().mockImplementation(async (sql, params) => {
+                if (!/FROM\s+usage_snapshots/i.test(sql)) return { rows: [], rowCount: 0 };
+                let cand = rows.filter(r => r.device_id === params[0]);
+                if (params.length >= 2) {
+                    const eid = params[1];
+                    cand = cand
+                        .filter(r => r.entity_id === eid || r.entity_id == null)
+                        .sort((a, b) =>
+                            ((b.entity_id === eid) - (a.entity_id === eid)) ||
+                            (Date.parse(b.captured_at) - Date.parse(a.captured_at)));
+                } else {
+                    cand = cand.slice().sort((a, b) => Date.parse(b.captured_at) - Date.parse(a.captured_at));
+                }
+                return { rows: cand.slice(0, 1), rowCount: Math.min(1, cand.length) };
+            }),
+        };
+    }
+
+    const DEV = 'dev-usage-scope';
+    // #2's Claude snapshot: 7d used 100% → remaining 0 ≤ 5 → breach.
+    const entity2Breach = (ageMs = 60_000) => ({
+        device_id: DEV, entity_id: 2, captured_at: fresh(ageMs),
+        claude_json: { live: { five_hour_pct: 10, seven_day_pct: 100 } }, codex_json: null,
+    });
+
+    beforeEach(() => _resetCooldownState());
+
+    test('latest row belongs to entity 2 → entity 6 transform gets NO prefix (the card_2f6a5659 bug)', async () => {
+        const pool = mkSnapshotPool([entity2Breach()]);
+        const prefix = await getWarningPrefix(pool, DEV, DEFAULT_CFG, 'en', 6, NOW);
+        expect(prefix).toBeNull();
+    });
+
+    test('same table → entity 2 (the actual owner of the breach) still gets the prefix', async () => {
+        const pool = mkSnapshotPool([entity2Breach()]);
+        const prefix = await getWarningPrefix(pool, DEV, DEFAULT_CFG, 'en', 2, NOW);
+        expect(prefix).toContain('System notice');
+        expect(prefix).toContain('0%'); // 7d remaining
+    });
+
+    test('legacy unscoped row (entity_id IS NULL) still warns any entity — daemon back-compat', async () => {
+        const pool = mkSnapshotPool([{
+            device_id: DEV, entity_id: null, captured_at: fresh(60_000),
+            claude_json: { live: { seven_day_pct: 97 } }, codex_json: null,
+        }]);
+        const prefix = await getWarningPrefix(pool, DEV, DEFAULT_CFG, 'en', 6, NOW);
+        expect(prefix).toContain('System notice');
+    });
+
+    test('entity-scoped row is preferred over a NEWER unscoped row', async () => {
+        const pool = mkSnapshotPool([
+            entity2Breach(10 * 60_000),                       // older, breaching, entity 2
+            { device_id: DEV, entity_id: null, captured_at: fresh(1_000),
+              claude_json: { live: { five_hour_pct: 5, seven_day_pct: 5 } }, codex_json: null }, // newer, healthy
+        ]);
+        // ORDER BY (entity_id = $2) DESC → entity-2 row wins despite being older.
+        const prefix = await getWarningPrefix(pool, DEV, DEFAULT_CFG, 'en', 2, NOW);
+        expect(prefix).toContain('System notice');
+    });
+
+    test('cooldown is per-entity: #2 warning does not suppress #6, but does suppress #2 itself', async () => {
+        const entity6Breach = {
+            device_id: DEV, entity_id: 6, captured_at: fresh(60_000),
+            claude_json: { live: { seven_day_pct: 98 } }, codex_json: null,
+        };
+        const pool = mkSnapshotPool([entity2Breach(), entity6Breach]);
+        expect(await getWarningPrefix(pool, DEV, DEFAULT_CFG, 'en', 2, NOW)).toContain('System notice');
+        // Within the same cooldown window:
+        expect(await getWarningPrefix(pool, DEV, DEFAULT_CFG, 'en', 2, NOW + 1_000)).toBeNull();
+        expect(await getWarningPrefix(pool, DEV, DEFAULT_CFG, 'en', 6, NOW + 1_000)).toContain('System notice');
+    });
+
+    test('no entityId (legacy caller) falls back to device-latest lookup', async () => {
+        const pool = mkSnapshotPool([entity2Breach()]);
+        const prefix = await getWarningPrefix(pool, DEV, DEFAULT_CFG, 'en', null, NOW);
+        expect(prefix).toContain('System notice');
+        // and the SQL sent was the single-param shape
+        expect(pool.query.mock.calls[0][1]).toEqual([DEV]);
     });
 });
 
