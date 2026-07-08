@@ -40,10 +40,17 @@ describe('admin hub self-improvement surface', () => {
         expect(adminHubSrc).toContain('Globe-user: <which role/capability is affected globally; no hardcoded device/entity/user>');
         expect(adminHubSrc).toContain('Setup: <required admin permission/API/runtime condition; graceful degradation if missing>');
         expect(adminHubSrc).toContain('? icon UX: <What this state means / Needs / Next step>');
-        const selfImprovementSlice = adminHubSrc.slice(
-            adminHubSrc.indexOf('id="adminSelfImprovementCard"'),
-            adminHubSrc.indexOf('function getAuthQuery')
-        );
+        const cardStart = adminHubSrc.indexOf('id="adminSelfImprovementCard"');
+        // End the slice at the admin-credentials plumbing that follows the card
+        // (renamed getAuthQuery -> getAdminCredentials in card_bb9f0e5c). Fall back
+        // to the old name, and assert the bounds are sane so a future rename fails
+        // LOUD here instead of silently ballooning the slice to EOF (indexOf -> -1,
+        // which slice() treats as "up to the last char" and sweeps in the creds fns).
+        let cardEnd = adminHubSrc.indexOf('function getAdminCredentials');
+        if (cardEnd < 0) cardEnd = adminHubSrc.indexOf('function getAuthQuery');
+        expect(cardStart).toBeGreaterThanOrEqual(0);
+        expect(cardEnd).toBeGreaterThan(cardStart);
+        const selfImprovementSlice = adminHubSrc.slice(cardStart, cardEnd);
         expect(selfImprovementSlice).not.toMatch(/botSecret|deviceSecret|DATABASE_URL|CLOUDFLARE_API_TOKEN/);
     });
 });

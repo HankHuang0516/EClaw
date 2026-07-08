@@ -237,7 +237,22 @@ describe('GET /api/monitoring/rental-health auth', () => {
     });
 });
 
+// card_bb9f0e5c: deviceId alone is NOT a credential. Every requireAdmin-gated
+// endpoint must demand deviceSecret proof (constant-time) — allowlisted
+// deviceId with a missing/wrong secret is a 401.
 describe('GET /api/admin/ping', () => {
+    const { devices } = require('../../index');
+
+    beforeEach(() => {
+        devices['admin-device-1'] = { deviceSecret: 'admin-secret-xyz', entities: {} };
+        devices['admin-device-2'] = { deviceSecret: 'admin-secret-abc', entities: {} };
+    });
+
+    afterEach(() => {
+        delete devices['admin-device-1'];
+        delete devices['admin-device-2'];
+    });
+
     it('rejects missing deviceId with 401', async () => {
         const res = await request(app).get('/api/admin/ping');
         expect(res.status).toBe(401);
@@ -248,16 +263,84 @@ describe('GET /api/admin/ping', () => {
         expect(res.status).toBe(403);
     });
 
-    it('accepts admin deviceId and echoes it back', async () => {
+    it('rejects admin deviceId WITHOUT deviceSecret with 401 (deviceId is not a secret)', async () => {
         const res = await request(app).get('/api/admin/ping?deviceId=admin-device-1');
+        expect(res.status).toBe(401);
+        expect(res.body.success).toBe(false);
+    });
+
+    it('rejects admin deviceId with WRONG deviceSecret with 401', async () => {
+        const res = await request(app)
+            .get('/api/admin/ping?deviceId=admin-device-1&deviceSecret=wrong-secret');
+        expect(res.status).toBe(401);
+    });
+
+    it('accepts admin deviceId + matching deviceSecret and echoes deviceId back', async () => {
+        const res = await request(app)
+            .get('/api/admin/ping?deviceId=admin-device-1&deviceSecret=admin-secret-xyz');
         expect(res.status).toBe(200);
         expect(res.body).toMatchObject({ success: true, admin: true, deviceId: 'admin-device-1' });
     });
 
-    it('accepts deviceId via x-device-id header', async () => {
-        const res = await request(app).get('/api/admin/ping').set('X-Device-Id', 'admin-device-2');
+    it('accepts credentials via x-device-id + x-device-secret headers', async () => {
+        const res = await request(app)
+            .get('/api/admin/ping')
+            .set('X-Device-Id', 'admin-device-2')
+            .set('X-Device-Secret', 'admin-secret-abc');
         expect(res.status).toBe(200);
         expect(res.body.deviceId).toBe('admin-device-2');
+    });
+
+    it('rejects x-device-id header without x-device-secret with 401', async () => {
+        const res = await request(app).get('/api/admin/ping').set('X-Device-Id', 'admin-device-2');
+        expect(res.status).toBe(401);
+    });
+});
+
+describe('wishlist-matchmaking admin endpoints require deviceSecret proof (card_bb9f0e5c)', () => {
+    const { devices } = require('../../index');
+
+    beforeEach(() => {
+        devices['admin-device-1'] = { deviceSecret: 'admin-secret-xyz', entities: {} };
+    });
+
+    afterEach(() => {
+        delete devices['admin-device-1'];
+    });
+
+    it('GET /api/wishlist-matchmaking/metrics rejects admin deviceId without deviceSecret (401)', async () => {
+        const res = await request(app)
+            .get('/api/wishlist-matchmaking/metrics?deviceId=admin-device-1');
+        expect(res.status).toBe(401);
+        expect(res.body.success).toBe(false);
+    });
+
+    it('GET /api/wishlist-matchmaking/metrics rejects wrong deviceSecret (401)', async () => {
+        const res = await request(app)
+            .get('/api/wishlist-matchmaking/metrics?deviceId=admin-device-1&deviceSecret=wrong');
+        expect(res.status).toBe(401);
+    });
+
+    it('GET /api/wishlist-matchmaking/metrics accepts matching deviceSecret (200)', async () => {
+        const res = await request(app)
+            .get('/api/wishlist-matchmaking/metrics?deviceId=admin-device-1&deviceSecret=admin-secret-xyz');
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+
+    it('POST /api/wishlist-matchmaking/offline/drain rejects admin deviceId without deviceSecret (401)', async () => {
+        const res = await request(app)
+            .post('/api/wishlist-matchmaking/offline/drain')
+            .send({ deviceId: 'admin-device-1' });
+        expect(res.status).toBe(401);
+    });
+
+    it('POST /api/wishlist-matchmaking/offline/drain accepts matching deviceSecret in body (200)', async () => {
+        const res = await request(app)
+            .post('/api/wishlist-matchmaking/offline/drain')
+            .send({ deviceId: 'admin-device-1', deviceSecret: 'admin-secret-xyz' });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
     });
 });
 

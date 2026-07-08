@@ -70,12 +70,23 @@ function getAdminDeviceIds() {
 }
 
 /**
- * Check admin-device gate. Extracts deviceId from query / body / x-device-id header
- * (mirroring existing auth param conventions) and verifies it's in ADMIN_DEVICE_IDS.
+ * Check admin-device gate. Extracts deviceId/deviceSecret from query / body /
+ * x-device-* headers (mirroring existing auth param conventions), verifies the
+ * deviceId is in ADMIN_DEVICE_IDS, then proves possession of the matching
+ * deviceSecret with a constant-time compare (card_bb9f0e5c: deviceId is NOT a
+ * secret — it appears in logs/URLs/portal pages — so allowlist membership alone
+ * is no authentication). Missing or mismatched deviceSecret → 401. Fail closed.
+ *
+ * opts.verifyDeviceSecret=false skips ONLY the secret-proof step, for callers
+ * that layer their own credential verification immediately after the allowlist
+ * check (e.g. /api/monitoring/rental-health accepts deviceSecret OR
+ * entityId+botSecret). Never use it on an endpoint that does not verify a
+ * secret itself.
+ *
  * Returns { ok: true, deviceId } on success, or { ok: false, status, error } on failure.
  * Never throws — caller writes the response.
  */
-function requireAdmin(req) {
+function requireAdmin(req, opts = {}) {
     const deviceId = (req.query && req.query.deviceId)
         || (req.body && req.body.deviceId)
         || req.headers['x-device-id'];
@@ -88,6 +99,18 @@ function requireAdmin(req) {
     }
     if (!adminSet.has(deviceId)) {
         return { ok: false, status: 403, error: 'admin access required' };
+    }
+    if (opts.verifyDeviceSecret !== false) {
+        const deviceSecret = (req.query && req.query.deviceSecret)
+            || (req.body && req.body.deviceSecret)
+            || req.headers['x-device-secret'];
+        if (!deviceSecret) {
+            return { ok: false, status: 401, error: 'deviceSecret required for admin-gated endpoint' };
+        }
+        const device = devices[deviceId];
+        if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+            return { ok: false, status: 401, error: 'invalid credentials' };
+        }
     }
     return { ok: true, deviceId };
 }
@@ -7851,7 +7874,10 @@ app.get('/api/monitoring/rental-health', async (req, res) => {
     const providedKey = req.query.key || req.headers['x-monitoring-key'];
     const keyOk = monitoringKey && providedKey && safeEqual(monitoringKey, String(providedKey));
     if (!keyOk) {
-        const gate = requireAdmin(req);
+        // verifyDeviceSecret:false — allowlist check only; this endpoint verifies
+        // its own secret proof right below (deviceSecret OR entityId+botSecret,
+        // both constant-time), preserving the documented dual-credential contract.
+        const gate = requireAdmin(req, { verifyDeviceSecret: false });
         if (!gate.ok) return res.status(gate.status).json({ success: false, error: gate.error });
         const { deviceSecret, botSecret, entityId } = req.query;
         if (!deviceSecret && !botSecret) {
