@@ -48,7 +48,13 @@ function withNeedsYouWidget(config, props = {}) {
     linkBuildSource(project, iosRoot, path.join(projectName, options.nativeModuleExternFile));
     ensureSwiftBuildSettings(project, project.getFirstTarget().uuid);
 
-    writeWidgetFiles({ iosRoot, bundleIdentifier, options });
+    const appVersion = projectConfig.exp?.version || config.version || '1.0';
+    const buildNumber =
+      projectConfig.exp?.ios?.buildNumber ||
+      config.ios?.buildNumber ||
+      '1';
+
+    writeWidgetFiles({ iosRoot, bundleIdentifier, options, appVersion, buildNumber });
     const widgetTarget = ensureWidgetTarget(project, bundleIdentifier, options);
     ensureSwiftBuildSettings(project, widgetTarget.uuid);
     ensureWidgetBuildSettings(project, widgetTarget.uuid, bundleIdentifier, options);
@@ -71,11 +77,13 @@ function writeNativeModuleFiles({ iosRoot, projectName, options }) {
   );
 }
 
-function writeWidgetFiles({ iosRoot, bundleIdentifier, options }) {
+function writeWidgetFiles({ iosRoot, bundleIdentifier, options, appVersion, buildNumber }) {
   const widgetRoot = path.join(iosRoot, options.widgetDirectory);
   const replacements = {
     ...buildReplacements(options),
     __WIDGET_BUNDLE_IDENTIFIER__: `${bundleIdentifier}.${options.widgetTargetName}`,
+    __WIDGET_SHORT_VERSION__: appVersion,
+    __WIDGET_BUILD_VERSION__: buildNumber,
   };
   writeTemplate(
     'NeedsYouWidget.swift',

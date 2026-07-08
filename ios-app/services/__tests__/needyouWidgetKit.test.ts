@@ -20,6 +20,9 @@ describe('Needs-you WidgetKit prebuild wiring', () => {
     expect(plugin).toContain("PBXFrameworksBuildPhase");
     expect(plugin).toContain("WidgetKit.framework");
     expect(plugin).toContain("NeedsYouWidgetStore.swift");
+    expect(plugin).toContain("__WIDGET_SHORT_VERSION__");
+    expect(plugin).toContain("__WIDGET_BUILD_VERSION__");
+    expect(plugin).toContain("projectConfig.exp?.ios?.buildNumber");
   });
 
   test('native store writes pending count to the WidgetKit app group', () => {
@@ -42,5 +45,14 @@ describe('Needs-you WidgetKit prebuild wiring', () => {
     expect(widget).toContain('pendingCountKey');
     expect(widget).toContain('Needs you');
     expect(widget).toContain('All clear');
+  });
+
+  test('WidgetKit Info.plist keeps extension version aligned with app config', () => {
+    const plist = fs.readFileSync(
+      path.join(repoRoot, 'plugins/needs-you-widget/NeedsYouWidget-Info.plist'),
+      'utf8'
+    );
+    expect(plist).toContain('__WIDGET_SHORT_VERSION__');
+    expect(plist).toContain('__WIDGET_BUILD_VERSION__');
   });
 });
