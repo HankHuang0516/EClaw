@@ -19,6 +19,7 @@ const {
     createRouter,
     signAgentToken,
     verifyAgentTokenSig,
+    SIGNING_SECRET_ENV,
     TOKEN_VERSION,
 } = require('../../agent-identity');
 
@@ -129,6 +130,128 @@ describe('POST /token (mint)', () => {
         expect(res.status).toBe(502);
         expect(res.body.valid).toBe(false);
     });
+
+    it('500 when the dedicated signing secret is missing, even if JWT_SECRET exists', async () => {
+        const originalAgentSecret = process.env[SIGNING_SECRET_ENV];
+        const originalJwtSecret = process.env.JWT_SECRET;
+        try {
+            delete process.env[SIGNING_SECRET_ENV];
+            process.env.JWT_SECRET = 'jwt-secret-must-not-be-used';
+
+            const app = express();
+            app.use(express.json());
+            app.use('/api/agent-identity', createRouter({ authenticateCaller: fakeAuth('tbwb9e') }));
+            const res = await request(app).post('/api/agent-identity/token').send(CALLER);
+
+            expect(res.status).toBe(500);
+            expect(res.body).toEqual({ valid: false, reason: 'server_misconfigured' });
+        } finally {
+            if (originalAgentSecret === undefined) delete process.env[SIGNING_SECRET_ENV];
+            else process.env[SIGNING_SECRET_ENV] = originalAgentSecret;
+            if (originalJwtSecret === undefined) delete process.env.JWT_SECRET;
+            else process.env.JWT_SECRET = originalJwtSecret;
+        }
+    });
+
+    it('500 before caller auth when signing secret is missing, so misconfig is not a botSecret oracle', async () => {
+        const originalAgentSecret = process.env[SIGNING_SECRET_ENV];
+        const originalJwtSecret = process.env.JWT_SECRET;
+        let authCalls = 0;
+        try {
+            delete process.env[SIGNING_SECRET_ENV];
+            process.env.JWT_SECRET = 'jwt-secret-must-not-be-used';
+
+            const app = express();
+            app.use(express.json());
+            app.use('/api/agent-identity', createRouter({
+                authenticateCaller: async () => {
+                    authCalls += 1;
+                    return { ok: false, reason: 'not_verified' };
+                },
+            }));
+            const res = await request(app)
+                .post('/api/agent-identity/token')
+                .send({ ...CALLER, botSecret: 'WRONG' });
+
+            expect(res.status).toBe(500);
+            expect(res.body).toEqual({ valid: false, reason: 'server_misconfigured' });
+            expect(authCalls).toBe(0);
+        } finally {
+            if (originalAgentSecret === undefined) delete process.env[SIGNING_SECRET_ENV];
+            else process.env[SIGNING_SECRET_ENV] = originalAgentSecret;
+            if (originalJwtSecret === undefined) delete process.env.JWT_SECRET;
+            else process.env.JWT_SECRET = originalJwtSecret;
+        }
+    });
+
+    it('500 when AGENT_IDENTITY_SECRET is explicitly reused from JWT_SECRET', async () => {
+        const originalAgentSecret = process.env[SIGNING_SECRET_ENV];
+        const originalJwtSecret = process.env.JWT_SECRET;
+        try {
+            process.env[SIGNING_SECRET_ENV] = 'shared-secret-is-not-dedicated';
+            process.env.JWT_SECRET = 'shared-secret-is-not-dedicated';
+
+            const app = express();
+            app.use(express.json());
+            app.use('/api/agent-identity', createRouter({ authenticateCaller: fakeAuth('tbwb9e') }));
+            const res = await request(app).post('/api/agent-identity/token').send(CALLER);
+
+            expect(res.status).toBe(500);
+            expect(res.body).toEqual({ valid: false, reason: 'server_misconfigured' });
+        } finally {
+            if (originalAgentSecret === undefined) delete process.env[SIGNING_SECRET_ENV];
+            else process.env[SIGNING_SECRET_ENV] = originalAgentSecret;
+            if (originalJwtSecret === undefined) delete process.env.JWT_SECRET;
+            else process.env.JWT_SECRET = originalJwtSecret;
+        }
+    });
+
+    it('does not consume the botSecret oracle limiter on successful token mints', async () => {
+        const app = appWith({
+            authenticateCaller: fakeAuth('tbwb9e'),
+            botSecretRateLimit: { max: 1, windowMs: 60000 },
+        });
+
+        const r1 = await request(app).post('/api/agent-identity/token').send(CALLER);
+        const r2 = await request(app).post('/api/agent-identity/token').send(CALLER);
+
+        expect(r1.status).toBe(200);
+        expect(r2.status).toBe(200);
+    });
+
+    it('429: rate-limits repeated botSecret mint attempts to defang oracle probing', async () => {
+        const app = appWith({
+            authenticateCaller: fakeAuth('tbwb9e'),
+            botSecretRateLimit: { max: 2, windowMs: 60000 },
+        });
+
+        const r1 = await request(app).post('/api/agent-identity/token').send({ ...CALLER, botSecret: 'WRONG1' });
+        const r2 = await request(app).post('/api/agent-identity/token').send({ ...CALLER, botSecret: 'WRONG2' });
+        const r3 = await request(app).post('/api/agent-identity/token').send({ ...CALLER, botSecret: 'WRONG3' });
+
+        expect(r1.status).toBe(403);
+        expect(r2.status).toBe(403);
+        expect(r3.status).toBe(429);
+        expect(r3.body).toEqual({ valid: false, reason: 'rate_limited' });
+    });
+
+    it('429: does not re-check authenticateCaller once botSecret probing is limited', async () => {
+        let authCalls = 0;
+        const app = appWith({
+            authenticateCaller: async () => {
+                authCalls += 1;
+                return { ok: false, reason: 'not_verified' };
+            },
+            botSecretRateLimit: { max: 1, windowMs: 60000 },
+        });
+
+        const r1 = await request(app).post('/api/agent-identity/token').send({ ...CALLER, botSecret: 'WRONG1' });
+        const r2 = await request(app).post('/api/agent-identity/token').send({ ...CALLER, botSecret: 'WRONG2' });
+
+        expect(r1.status).toBe(403);
+        expect(r2.status).toBe(429);
+        expect(authCalls).toBe(1);
+    });
 });
 
 describe('POST /verify', () => {
@@ -145,6 +268,28 @@ describe('POST /verify', () => {
         const res = await request(app).post('/api/agent-identity/verify').send({ token: 'v1.forged.sig' });
         expect(res.status).toBe(200);
         expect(res.body.valid).toBe(false);
+    });
+
+    it('500 when token verification has no dedicated signing secret, even if JWT_SECRET exists', async () => {
+        const originalAgentSecret = process.env[SIGNING_SECRET_ENV];
+        const originalJwtSecret = process.env.JWT_SECRET;
+        try {
+            delete process.env[SIGNING_SECRET_ENV];
+            process.env.JWT_SECRET = 'jwt-secret-must-not-be-used';
+
+            const app = express();
+            app.use(express.json());
+            app.use('/api/agent-identity', createRouter({ authenticateCaller: fakeAuth('tbwb9e') }));
+            const res = await request(app).post('/api/agent-identity/verify').send({ token: 'v1.forged.sig' });
+
+            expect(res.status).toBe(500);
+            expect(res.body).toEqual({ valid: false, reason: 'server_misconfigured' });
+        } finally {
+            if (originalAgentSecret === undefined) delete process.env[SIGNING_SECRET_ENV];
+            else process.env[SIGNING_SECRET_ENV] = originalAgentSecret;
+            if (originalJwtSecret === undefined) delete process.env.JWT_SECRET;
+            else process.env.JWT_SECRET = originalJwtSecret;
+        }
     });
 
     it('botSecret path (fallback): a good triple → { valid:true, publicCode }', async () => {
@@ -168,6 +313,36 @@ describe('POST /verify', () => {
         const res = await request(app).post('/api/agent-identity/verify').send(CALLER);
         expect(res.status).toBe(502);
         expect(res.body.valid).toBe(false);
+    });
+
+    it('429: rate-limits repeated transient botSecret verify attempts', async () => {
+        const app = appWith({
+            authenticateCaller: fakeAuth('tbwb9e'),
+            botSecretRateLimit: { max: 1, windowMs: 60000 },
+        });
+
+        const r1 = await request(app).post('/api/agent-identity/verify').send({ ...CALLER, botSecret: 'WRONG1' });
+        const r2 = await request(app).post('/api/agent-identity/verify').send({ ...CALLER, botSecret: 'WRONG2' });
+
+        expect(r1.status).toBe(200);
+        expect(r1.body.valid).toBe(false);
+        expect(r2.status).toBe(429);
+        expect(r2.body).toEqual({ valid: false, reason: 'rate_limited' });
+    });
+
+    it('does not consume the botSecret oracle limiter on successful transient verifies', async () => {
+        const app = appWith({
+            authenticateCaller: fakeAuth('tbwb9e'),
+            botSecretRateLimit: { max: 1, windowMs: 60000 },
+        });
+
+        const r1 = await request(app).post('/api/agent-identity/verify').send(CALLER);
+        const r2 = await request(app).post('/api/agent-identity/verify').send(CALLER);
+
+        expect(r1.status).toBe(200);
+        expect(r1.body).toEqual({ valid: true, publicCode: 'tbwb9e' });
+        expect(r2.status).toBe(200);
+        expect(r2.body).toEqual({ valid: true, publicCode: 'tbwb9e' });
     });
 
     it('fails closed when authenticateCaller is not wired at all', async () => {
