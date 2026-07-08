@@ -10568,7 +10568,10 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
                     if (_r.rows[0] && _r.rows[0].language) _lang = _r.rows[0].language;
                 } catch (_) { /* keep en */ }
                 const _uw = require('./lib/usage-warning');
-                const _prefix = await _uw.getWarningPrefix(chatPool, deviceId, _cfg, _lang);
+                // Entity-scoped (card_2f6a5659): pass the SPEAKING entity so #2's
+                // Claude quota warning can't ride #6's Codex heartbeat on a
+                // multi-entity device — lookup prefers this entity's snapshot row.
+                const _prefix = await _uw.getWarningPrefix(chatPool, deviceId, _cfg, _lang, eId);
                 if (_prefix) {
                     finalMessage = _prefix + '\n\n' + finalMessage;
                 }

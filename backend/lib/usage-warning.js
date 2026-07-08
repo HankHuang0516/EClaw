@@ -5,6 +5,13 @@
  * remaining quota crossed the per-device threshold, and formats an i18n
  * system-warning prefix that /api/transform prepends to outbound messages.
  *
+ * Entity attribution (card_2f6a5659): the lookup is ENTITY-scoped. Multiple
+ * entities share one device (e.g. #2 Claude + #6 Codex on 480def4c…), so the
+ * "latest row by device_id" heuristic attributed #2's Claude quota warning to
+ * #6's heartbeat. We now prefer the row captured for the SPEAKING entity and
+ * only fall back to legacy unscoped rows (entity_id IS NULL) — mirroring
+ * backend/kanban.js getEntityUsagePct().
+ *
  * Spec: device opts in via usage_warning_config pref
  *   { enabled: bool, threshold_5h_pct: 0..100, threshold_7d_pct: 0..100 }
  *
@@ -19,10 +26,16 @@
 const STALE_THRESHOLD_MS = 6 * 60 * 60 * 1000;  // 6 hours
 const DEFAULT_COOLDOWN_MS = 30 * 60 * 1000;     // 30 min — one warning per device per window
 
-// Per-device last-attached timestamp (ms epoch). In-memory is sufficient: a missed
-// cooldown across a process restart at most lets one extra warning through, which is
-// harmless. Keyed by deviceId.
+// Per-device/entity last-attached timestamp (ms epoch). In-memory is sufficient:
+// a missed cooldown across a process restart at most lets one extra warning
+// through, which is harmless. Keyed by `${deviceId}::${entityId}` (entity-scoped
+// warnings must not suppress a DIFFERENT entity's legitimate warning on the same
+// device — card_2f6a5659); unscoped callers fall back to the bare deviceId key.
 const _lastWarnedAt = new Map();
+
+function cooldownKey(deviceId, entityId) {
+    return Number.isFinite(entityId) ? `${deviceId}::${entityId}` : String(deviceId);
+}
 
 const WARNING_TEMPLATES = {
     'zh': '⚠️ 系統訊息：本 Agent 5h 剩餘 {five}% / 7d 剩餘 {seven}%。已達警戒閾值。',
@@ -133,22 +146,38 @@ function resolveCooldownMs(config) {
 /**
  * Convenience wrapper: query the latest snapshot, decide, format.
  * Returns the warning prefix string, or null if no warning should be attached.
- * Applies a per-device cooldown so the prefix piggybacks at most once per window
- * instead of riding every message (card_a69e8ffa). Never throws — quota warnings
- * must not break the message-send path.
+ * Applies a per-device/entity cooldown so the prefix piggybacks at most once per
+ * window instead of riding every message (card_a69e8ffa). Never throws — quota
+ * warnings must not break the message-send path.
+ *
+ * @param {number|null} entityId — the entity currently SPEAKING through
+ *   /api/transform. When finite, the snapshot lookup is entity-scoped
+ *   (prefer entity_id = entityId, fall back to legacy entity_id IS NULL rows)
+ *   so one entity's quota warning never rides another entity's message on the
+ *   same device (card_2f6a5659 — #2's Claude warning prefixed #6's heartbeat).
+ *   Pattern mirrors backend/kanban.js getEntityUsagePct().
  */
-async function getWarningPrefix(pool, deviceId, config, lang, nowMs = Date.now()) {
+async function getWarningPrefix(pool, deviceId, config, lang, entityId = null, nowMs = Date.now()) {
     if (!pool || !deviceId) return null;
     if (!config || config.enabled === false) return null;
     try {
-        const r = await pool.query(
-            `SELECT captured_at, claude_json, codex_json
-             FROM usage_snapshots
-             WHERE device_id = $1
-             ORDER BY captured_at DESC
-             LIMIT 1`,
-            [deviceId]
-        );
+        // NOTE: Number(null) === 0, so guard null/undefined explicitly —
+        // a legacy unscoped caller must NOT be misread as entity 0.
+        const eid = (entityId === null || entityId === undefined) ? NaN : Number(entityId);
+        const useEid = Number.isFinite(eid);
+        const sql = useEid
+            ? `SELECT captured_at, claude_json, codex_json
+               FROM usage_snapshots
+               WHERE device_id = $1 AND (entity_id = $2 OR entity_id IS NULL)
+               ORDER BY (entity_id = $2) DESC, captured_at DESC
+               LIMIT 1`
+            : `SELECT captured_at, claude_json, codex_json
+               FROM usage_snapshots
+               WHERE device_id = $1
+               ORDER BY captured_at DESC
+               LIMIT 1`;
+        const params = useEid ? [deviceId, eid] : [deviceId];
+        const r = await pool.query(sql, params);
         const row = r.rows[0] || null;
         const snapshot = row ? {
             captured_at: row.captured_at instanceof Date ? row.captured_at.toISOString() : row.captured_at,
@@ -157,12 +186,14 @@ async function getWarningPrefix(pool, deviceId, config, lang, nowMs = Date.now()
         } : null;
         const decision = shouldWarnNow(snapshot, config, nowMs);
         if (!decision.warn) return null;
-        // Cooldown: suppress if we already attached a warning for this device
-        // inside the window — keeps it a one-off piggyback, not a per-message echo.
-        if (withinCooldown(_lastWarnedAt.get(deviceId), nowMs, resolveCooldownMs(config))) {
+        // Cooldown: suppress if we already attached a warning for this
+        // device+entity inside the window — keeps it a one-off piggyback,
+        // not a per-message echo.
+        const ck = cooldownKey(deviceId, useEid ? eid : null);
+        if (withinCooldown(_lastWarnedAt.get(ck), nowMs, resolveCooldownMs(config))) {
             return null;
         }
-        _lastWarnedAt.set(deviceId, nowMs);
+        _lastWarnedAt.set(ck, nowMs);
         return formatWarningText(lang, decision.five_hour_remaining_pct, decision.seven_day_remaining_pct);
     } catch (err) {
         // Quota warnings are advisory — swallow errors so we never block delivery.
