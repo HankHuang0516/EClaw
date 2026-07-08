@@ -23,6 +23,7 @@ import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.NavItem
+import com.hank.clawlive.ui.NavResumeController
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import com.hank.clawlive.ui.chat.ChatJsBridge
 import com.hank.clawlive.ui.chat.ChatWebViewManager
@@ -33,6 +34,15 @@ class ChatActivity : AppCompatActivity() {
 
     private val deviceManager: DeviceManager by lazy { DeviceManager.getInstance(this) }
     private val chatPrefs: ChatPreferences by lazy { ChatPreferences.getInstance(this) }
+
+    private val navResume: NavResumeController by lazy {
+        val prefs = getSharedPreferences("nav_resume_prefs", MODE_PRIVATE)
+        NavResumeController(object : NavResumeController.Store {
+            override fun readLastNav(): String? = prefs.getString("last_nav", null)
+            override fun writeLastNav(name: String) { prefs.edit().putString("last_nav", name).apply() }
+            override fun clearLastNav() { prefs.edit().remove("last_nav").apply() }
+        })
+    }
 
     private lateinit var webView: WebView
     private lateinit var loadingIndicator: ProgressBar
@@ -98,6 +108,8 @@ class ChatActivity : AppCompatActivity() {
         super.onResume()
         TelemetryHelper.trackPageView(this, "chat")
         RecordingIndicatorHelper.attach(this)
+        // Persist current tab so process-death restart can restore here (card_489a8836).
+        navResume.onNavigatedTo(NavItem.CHAT)
     }
 
     override fun onPause() {

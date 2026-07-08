@@ -12,16 +12,20 @@ appcompat = "1.6.1"
 material = "1.11.0"
 securityCrypto = "1.1.0-alpha06"
 activityKtx = "1.8.2"
-billing = "7.0.0"
+billing = "9.1.0"
 room = "2.7.0"
 glide = "4.16.0"
 markwon = "4.6.2"
 firebaseBom = "33.7.0"
 googleServices = "4.4.2"
+firebaseCrashlyticsPlugin = "3.0.2"
 credentialManager = "1.5.0-beta01"
 googleId = "1.1.1"
 facebookSdk = "17.0.0"
 playServicesLocation = "21.3.0"
+playIntegrity = "1.6.0"
+playAppUpdate = "2.1.0"
+shortcutBadger = "1.1.22"
 
 [libraries]
 billing = { group = "com.android.billingclient", name = "billing-ktx", version.ref = "billing" }
@@ -56,6 +60,7 @@ markwon-core = { group = "io.noties.markwon", name = "core", version.ref = "mark
 # Firebase
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging-ktx" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 
 # Glide Image Loading
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
@@ -72,8 +77,15 @@ facebook-login = { group = "com.facebook.android", name = "facebook-login", vers
 # Google Play Services Location
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
+# Google Play Integrity
+play-integrity = { group = "com.google.android.play", name = "integrity", version.ref = "playIntegrity" }
+play-app-update = { group = "com.google.android.play", name = "app-update", version.ref = "playAppUpdate" }
+play-app-update-ktx = { group = "com.google.android.play", name = "app-update-ktx", version.ref = "playAppUpdate" }
+shortcut-badger = { group = "me.leolin", name = "ShortcutBadger", version.ref = "shortcutBadger" }
+
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlinKapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
 googleServices = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+firebaseCrashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlyticsPlugin" }

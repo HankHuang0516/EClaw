@@ -7,7 +7,10 @@ import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.debug.CrashLogManager
+import com.hank.clawlive.fcm.ClawFcmService
 import com.hank.clawlive.debug.FileTimberTree
+import com.hank.clawlive.integrity.PlayIntegrityReporter
+import com.hank.clawlive.needyou.NeedYouIndicatorSync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -42,9 +45,23 @@ class ClawApplication : Application() {
                 trySyncFlushCrashToServer(throwable, recentLines)
             } catch (_: Exception) {
                 // Must not throw — always let default handler run
-            } finally {
-                defaultHandler?.uncaughtException(thread, throwable)
             }
+            // BLK-FGS recovery (card_f9b2cc2d): a foreground-service-policy throwable
+            // (ForegroundServiceStartNotAllowed / DidNotStartInTime / RemoteServiceException
+            // with an FGS message) is a recoverable OS policy rejection, NOT a real
+            // app crash. The call sites are now guarded, but as belt-and-braces: if
+            // one still reaches here, letting the default handler run would kill this
+            // shared process and take the live wallpaper down with it (pure black,
+            // needs app restart). Swallow ONLY this narrow class so the process — and
+            // the wallpaper engine — survive; it was already logged + recorded above.
+            if (isRecoverableForegroundServiceCrash(throwable)) {
+                try {
+                    com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().recordException(throwable)
+                } catch (_: Throwable) {}
+                Timber.e(throwable, "[App] swallowed recoverable FGS crash (${throwable.javaClass.simpleName}) — keeping process + wallpaper alive")
+                return@setDefaultUncaughtExceptionHandler
+            }
+            defaultHandler?.uncaughtException(thread, throwable)
         }
 
         // 4. Initialize TelemetryHelper early (centralized here)
@@ -53,6 +70,22 @@ class ClawApplication : Application() {
         // 5. Upload any pending crash logs from previous session
         uploadPendingCrashLogs()
 
+        // 5b. Create notification channels at process startup (card_caa6307).
+        // CRITICAL for "task completed" pushes: the backend sends a HYBRID FCM
+        // message (android.notification block + data block) with
+        // channelId="eclaw_chat". When the app is backgrounded or killed, the
+        // Android system tray auto-displays the android.notification block
+        // WITHOUT calling ClawFcmService.onMessageReceived(). On Android O+,
+        // posting to a channel that does NOT exist at delivery time is silently
+        // dropped — no error, no display. An FCM push can cold-start the app
+        // process (which is why the token re-registers below), running
+        // Application.onCreate but NOT MainActivity.onCreate, where channels
+        // used to be created exclusively. That left "eclaw_chat" missing on the
+        // exact code path the system uses to display the notification → silent.
+        // createNotificationChannel is idempotent, so MainActivity's call (kept
+        // for safety) is a harmless no-op once this has run.
+        ClawFcmService.createChannels(this)
+
         // 6. Self-heal FCM token registration on every launch.
         // onNewToken() only fires when the token changes (install / clear-data / reinstall).
         // If the very first registration failed (e.g. before deviceSecret was provisioned),
@@ -60,7 +93,25 @@ class ClawApplication : Application() {
         // and POSTing it unconditionally fixes that class of silent failures.
         refreshAndRegisterFcmToken()
 
+        // Keep the home-screen widget + supported launcher badges aligned with
+        // the server-side 需要你 unresolved count as soon as the process wakes.
+        NeedYouIndicatorSync.refreshAsync(this, "app_start")
+
+        // 7. Report a Play Integrity startup signal in release builds so Play
+        // Console can monitor genuine installs without adding user-visible work.
+        reportPlayIntegrityStartup()
+
         Timber.i("ClawApplication initialized")
+    }
+
+    private fun reportPlayIntegrityStartup() {
+        if (BuildConfig.DEBUG) {
+            Timber.d("[PlayIntegrity] Skipping startup report in debug build")
+            return
+        }
+        CoroutineScope(Dispatchers.IO).launch {
+            PlayIntegrityReporter.getInstance(this@ClawApplication).reportStartup()
+        }
     }
 
     private fun refreshAndRegisterFcmToken() {
@@ -175,4 +226,30 @@ class ClawApplication : Application() {
 
     private fun escapeJson(s: String): String =
         s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r")
+
+    /**
+     * BLK-FGS (card_f9b2cc2d): true only for the narrow class of foreground-service
+     * policy rejections that are recoverable — swallowing these keeps the shared
+     * process (and the live wallpaper engine) alive instead of dying to a pure-black
+     * screen. Walks the cause chain; matches by class name so it works across API
+     * levels (ForegroundServiceStartNotAllowedException, RemoteServiceException$
+     * ForegroundServiceDidNotStartInTimeException, etc.) without compile-time deps.
+     */
+    private fun isRecoverableForegroundServiceCrash(t: Throwable?): Boolean {
+        var cur = t
+        var depth = 0
+        while (cur != null && depth < 8) {
+            val name = cur.javaClass.name
+            val msg = cur.message ?: ""
+            if (name.contains("ForegroundServiceStartNotAllowedException") ||
+                name.contains("ForegroundServiceDidNotStartInTimeException") ||
+                (name.contains("RemoteServiceException") && msg.contains("ForegroundService"))
+            ) {
+                return true
+            }
+            cur = cur.cause
+            depth++
+        }
+        return false
+    }
 }

@@ -7,8 +7,8 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.1185.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
-- **Android app version**: 1.0.91 (versionCode 99); `LATEST_APP_VERSION` constant in `backend/index.js`
+- **Current version**: 1.1190.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Android app version**: 1.1.15 (versionCode 126); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
 ---
@@ -18,7 +18,7 @@
 ```
 EClaw/
 ├── backend/                  # Node.js Express server (deployed to Railway)
-│   ├── index.js              # Main server (~23,940 lines) — all API routes
+│   ├── index.js              # Main server (~24,656 lines) — all API routes
 │   ├── db.js                 # PostgreSQL connection pool + schema creation
 │   ├── auth.js               # Auth module (JWT, OAuth, OIDC, RBAC)
 │   ├── mission.js            # Mission Control dashboard system
@@ -89,6 +89,8 @@ EClaw/
 │   │   ├── heartbeat.js       # Anti-laziness sweeper (2h prompt, 24h escalate)
 │   │   └── audit-rules.js     # Compliance + multi-tenant audit rules (9 rules)
 │   ├── entity-status.js       # Per-entity error counters + operation log + quote service
+│   ├── entity-walk-config.js  # Per-entity wallpaper walk configuration (weights + negative actions)
+│   ├── wishlist-route.js      # Wishlist bridge: SSRF-safe proxy to external Wishlist app
 │   ├── openapi.yaml          # OpenAPI 3.0 specification
 │   ├── auth_schema.sql       # User accounts + auth SQL schema
 │   ├── mission_schema.sql    # Mission dashboard SQL schema
@@ -177,8 +179,8 @@ EClaw/
 │   │   │   └── og-image.png       # Open Graph social sharing image
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
-│   ├── tests/                # Regression + integration tests (59 files)
-│   ├── tests/jest/           # Jest unit tests (285 files, CI-run via `npm test`)
+│   ├── tests/                # Regression + integration tests (79 files)
+│   ├── tests/jest/           # Jest unit tests (454 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -241,7 +243,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~23,940 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~24,656 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -1193,11 +1195,179 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Plaza vs Rental Naming Clarity (v1.1189)**: AGENT_CARD_INCOMPLETE + Plaza vs Rental naming clarity (#3366)
 - **Interview Arena Mobile Layout Fix (v1.1189)**: Mobile 390x844 layout for Interview Arena leaderboard slide (#3365)
 
+### Recent Features (v1.1190.x+)
+
+- **Desktop App (Tauri 2)**: Full desktop application scaffold with OAuth PKCE flow, OS credential store (Keychain/Credential Manager), device binding, 30s onboarding wizard, auto-update + rollback, installer CI workflow (#3511-#3538)
+- **PetDX Companion Avatar System (Plan-3)**: 6-phase companion avatar implementation — store-on-create contract, sharp dependency, frame-extract util, R2 avatar.webp route, backfill migration, single-frame store on create (#3527-#3535)
+- **FCM Push Fix (P1)**: Define missing `buildFcmNotificationData` — Android push was silently dead (#3530)
+- **Message Lifecycle Engine**: Phase 2 Step 3 — state-machine transition engine + DB store + dual-write + debug endpoint + divergence detector (#3450)
+- **Per-Device Cron Scheduling**: Devices run their own assigned crons instead of global schedule (#3458)
+- **Settings Manifest**: `/api/settings-manifest` auto-sync seam for structured device settings (Stage 1 backend) (#3464)
+- **Hermes Per-Org Credential Scope**: Entity org grants for multi-tenant Hermes credential isolation (#3445)
+- **OODA-R Rule Promotion Engine**: Rule promotion from episode-derived lessons to production rules + public roadmap live tracker (#3449)
+- **Per-Entity Git Author**: Tier 1 per-entity git author identity + prs_merged author-source (#3476)
+- **E2E Matrix Complete**: Cross-surface E2E matrix with login_refresh + message_send drivers (5/5) + hard CI gate (#3439, #3447, #3454)
+- **Admin Self-Improvement Hub**: Admin hub loop for continuous improvement feedback (#3543)
+- **Companion API Enhancements**: Additional companion management endpoints (#3559)
+- **Transform Entity ID Fix**: Quiet default entityId zero correction for edge cases (#3561)
+- **OpenAPI /api/version Update**: Document `appVersion` query param + update object response (#2962)
+- **Android Notification Settings Sync**: Sync notification preferences with web portal (#3555)
+- **Portal 401 Graceful Guard**: Authenticated UIUX sweep — graceful degradation on expired sessions (#3554)
+- **App Version**: Updated to 1.0.93 (versionCode 101)
+
+### Recent Features (v1.1190.x+, 2026-06-22+)
+
+- **Reconnect Overlay (Portal + Android)**: Portal keeps session on transport disconnect + shows reconnect overlay (#3618); Android WebViewClient transport-error overlay (#3630)
+- **Chat SendTo Picker**: Multi-select send-to picker with smart-filter UX (#3632); partner avatars + a11y aria-label (#3637); PetDX avatar sprite over emoji fallback (#3642)
+- **Cron Usage-Threshold Skip**: Skip dispatch when entity usage exceeds threshold (#3626); schedule editor usage-threshold sliders (#3625); `cron_skip_*` i18n keys for 15 locales (#3634)
+- **Push Health Check**: Round-trip push health check + dead-subscription cleanup (#3628)
+- **Web Push Auto-Enable**: Global autoEnable on dashboard/index/chat (#3616)
+- **Wallpaper Kanban v2**: Kanban v2 assets — Caveat font + whiteboard + layout settings (#3627); wallpaper polish + walking motion + interactions (#3612, #3615, #3617, #3620, #3635, #3636, #3638)
+- **Kanban Stale Escalation Fix**: Exempt single-shot future-runAt cards from stale escalation (#3611)
+- **Routing Chip Fix**: Fix routing-chip detail modal rendering "undefined" (#3631)
+- **i18n Expansion**: 6 `usage_warning` keys for 14 locales (#3608)
+- **App Version**: Updated to 1.0.96 (versionCode 104)
+
+### Recent Features (v1.1190.x+, 2026-06-08 – 2026-06-21)
+
+- **Vault Optimistic Concurrency (P0 hotfix)**: `expectedUpdatedAt` ETag on `POST /api/device-vars` prevents lost-update races; `409 Conflict` on stale writes; strict-mode no-etag guard prevents zombification by legacy clients; defensive `new Date()` fix for fatal restart loop incident (#3422-#3427, #3432)
+- **Interview Arena Scoring Integration**: Bind interview score to entity, display on namecard + plaza (#3435); stage-by-stage exam animations with entity avatar (#3431); interview retest countdown + 5-tier color severity on namecard (#3436)
+- **Entity Mention Push Notifications**: `@<username>` entity mention triggers APP + Web push + setting toggle (#3430); rich-card UX question triggers push + setting toggle (#3437)
+- **Chat Routing Chip Org Modal**: Click routing chip opens org structure + hierarchy modal (#3434); routing chip fallback to org-chart commander or hide when route unknown (#3377)
+- **User Display Name**: `user_display_name` column on user accounts + portal settings UI (#3429)
+- **Usage Warning Toggle**: Usage-remaining warning toggle + per-message system warning in settings (#3414)
+- **Safety Hardening (06/16 RCA)**: Extract `safeUpdatedAtToISO` helper + global `unhandledRejection` guard + CI ban on bare `new Date(val)` (#3433)
+- **PetDX Companion Refactor**: Companion selection SoT migrated from vault keys to DB (`companion_select_log`); one-time vault cleanup for residual `PETDX_*` keys (#3410-#3412)
+- **Bridge-Watcher Cron**: 5-minute cron for elicitation detection + auto-GC (#3396); silent close path + AE pre-flight + per-osascript timeout (#3413)
+- **Merged-PR Count Widget**: Merged-PR count + smart-link widget on entity cards (#3394)
+- **Message Lifecycle Engine Phase 2**: DB schema + `lifecycle_event_log` (Step 1, #3385); Redis deadline wheel + sweeper + cold-start scan (Step 2, #3388)
+- **Roadmap Live Status**: `roadmap.html` reads live status from kanban cards (Phase 4 #9 Part A, #3384)
+- **Redirect Phase D**: Migrate 15 router-eligible legacy nav hops to `buildWebUrl` (#3373)
+- **Portal A11y Labels**: Add accessible labels to visible form controls (#3386)
+- **Kanban Auto-Review Inference**: Infer `autoReviewOnTransform aboutCardId` from `card_<hex>` mention in message text (#3425)
+- **DB pgcrypto Bootstrap**: Bootstrap pgcrypto extension so `gen_random_bytes()` works for id DEFAULTs (#3428)
+- **SpeakTo Routing Audit Log**: Add audit log for speakTo routing decisions (card_488f05)
+- **Heartbeat Severity Gate**: Auto-block restricted to P0/P1 stale in_progress cards only (#3564)
+
+### Recent Features (v1.1190.x+, 2026-06-23 – 2026-06-25)
+
+- **Chat Multi-Quote Accumulation**: Quotes accumulate (unlimited) instead of overwriting; entity receives every quote; per-quote remove chip in reply bar (#3697)
+- **Kanban Auto-P0 Escalation Toggle**: API-controllable `kanban_auto_escalate_enabled` + `kanban_auto_escalate_skip_automation` device preferences; default-skip cron cards from stale escalation (#3706)
+- **Audit Operability Dimension**: 7 portal-scoped static rules (R1–R7) for human operability self-improvement; PR-diff preflight integration (#3707)
+- **Wallpaper Black-Screen NPE Fix**: Guard null `fromCharacter` in render loop — stop black-screen NPE (v1.1.9) (#3713)
+- **Wallpaper Process-Death Fix**: Close v1.1.7 black-screen process-death paths — v1.1.8 (#3702)
+- **Mission Note/Add Fix**: `note/add` reads `deviceId` from merged query+body like `authenticate()` — fixes null device_id 500 (#3696)
+- **Feedback Photo Metadata Safety**: Feedback photo metadata safety copy for EXIF strip (#3711)
+
+### Recent Features (v1.1190.x+, 2026-06-25 – 2026-06-26)
+
+- **Action Requests ("需要你" HITL Inbox)**: Full HITL (Human-in-the-Loop) action request system — `agent-action-requests.js` backend model with `agent_action_requests` table; `POST /api/action-requests/emit` + `GET /api/action-requests/list` + `POST /api/action-requests/:id/resolve` API; auto-resolve on smart-quote reply via `/api/client/speak`; consensus type + real-time Socket.IO push (`action_request:new`, `action_request:resolved`); timeout-policy worker (a/b/c/d enforcement + consensus auto-execute); frontend socket live-refresh + consensus UI + settings panel; default-collapsed summary + lifecycle hardening (#3726–#3741)
+- **Kanban Notify on Assign/Comment**: Notify agents on (re)assign + @-mentioned comment with latest comment context (#3727)
+- **Kanban Debug Flag**: Gate verbose `[Kanban]` console.log behind `KANBAN_DEBUG` flag (#3725)
+- **iOS Update-Chip Fixes**: Send `appVersion` to `/api/version` so update-chip can trigger (#3720); declare `itms-apps` in `LSApplicationQueriesSchemes` for deep-link (#3723)
+- **Portal QA/UIUX Sweep**: i18n fallback + a11y labels (#3721)
+- **Idle Dispatch Guard**: Guard non-integer `botId` before SQL int cast (#3715)
+
+### Recent Features (v1.1190.x+, 2026-06-30 – 2026-07-03)
+
+- **Multi-Device Push Fix (v1.1190)**: Stop phone/emulator FCM tokens clobbering each other (#3808); multi-device APNs tokens + admin-broadcast fan-out fix (#3810)
+- **Channel Account Fix (v1.1190)**: Allow many `channel_accounts` per device on fresh DBs (#3811)
+- **Audit False-Positive Fix (v1.1190)**: Kill recurring weekly false-positives in compliance rules (#3813)
+- **iOS Rotate Secret + Switch Device**: Stage 3 native Rotate Secret + Switch Device (#3743)
+- **Android Rotate Secret + Switch Device**: Stage 3 native Rotate Secret + Switch Device (#3742)
+- **Portal Refs Popover Auth Test**: Assert refs popover header auth (#3806)
+- **A11y: showConfirm Enter Key (v1.1190)**: Enter activates focused Confirm button per WAI-ARIA APG (#3814)
+- **Portal A11y Sweep (v1.1190)**: aria-labels + keyboard operability sweep across portal pages (#3812)
+- **AI Support Error Surface Fix**: Never surface upstream auth/API errors to users; proxy env-token precedence (#3847)
+- **Kanban Bot Routing Fix**: Route bot completion reports to dispatcher, not fail-safe to human (#3848)
+- **Device Vars Merge Fix**: Merge must not drop owner (null-source) keys; additive patch mode (#3849)
+- **Card Holder Loading Fix**: Don't gate card rendering behind avatar preload (stuck loading) (#3850)
+- **Action Request Mobile Overflow Fix**: 需要你 inbox mobile text overflow + tofu icons (#3851)
+- **Action Request Sequential Reply Fix**: Stage one item at a time, don't discard (#3852)
+- **Device Vars Value Endpoint**: `GET /api/device-vars/value` — read one vault value by name (botSecret auth) (#3853)
+- **Action Request Batch Reply**: Stage multiple items with individual answers, one Send resolves each (#3854)
+- **Task Chip Screenshot Strip Fix**: Restore card screenshot/thumbnail strip in task-card chip popover (#3855)
+- **Avatar Emoji Fallback Fix**: Card-holder my-cards emoji fallback + exam wrong-entity avatar (#3856)
+- **Avatar onerror Fix**: `renderAvatarHtml` URL branch had no onerror → broken images across ~10 portal pages (#3857)
+- **Mission Note Undo Toast**: Single-note delete gets an undo toast (parity with bulk) (#3858)
+- **Kanban Deep-Link Fix**: Deep-link opens out-of-slice cards (#3863)
+- **Stale Escalation Supervisor Fix**: Stale-card escalations reach supervisor, not only stuck assignee (#3864)
+- **Destructive Confirm Thumb Zone**: Keep destructive Confirm out of phone thumb zone (#3865)
+- **需要你 Inbox Scroll Fix**: Inbox scrolls tall items; owner couldn't scroll to read (#3866)
+- **Task-Load Census**: Task-load census in stale nudges (#3867)
+- **Waiting-State Surfacer**: Inbox waiting-state surfacer (dark-launch, default off) (#3868)
+- **需要你 Mobile Full-Screen**: Inbox opens as full-screen scrollable overlay on mobile (#3869)
+- **Done-Gate Automation Exempt**: Exempt automation/ops cards from PR-link requirement (#3870)
+- **Commander-Forward Fallback**: Commander-forward fallback routing (dark-launch, default off) (#3871)
+- **Done-Gate PR-Link Opt-In**: PR-link enforcement is per-card opt-in option (default off) (#3872)
+- **AI Chat Resize Grip**: Resizable AI chat panel with grip + saved size (#3873-#3876)
+- **Card Holder Avatar Enrichment**: Enrichment falls to descriptor/petdx-sprite before emoji (#3877)
+- **Routing Heartbeat Filter**: Drop low-signal heartbeats on direct b2b deliver path (#3878)
+
+### Recent Features (v1.1190.x+, 2026-06-28 – 2026-06-29)
+
+- **Ratify Settings UI (v1.1190)**: 計畫E ratify-loop settings UI — enable toggle + grace (hours/minutes) + N cap + read-only guardrails card; settings-help invariant with HELP-KEY annotations; registry keys[] placement fix; default-ON copy alignment (#3802+)
+- **Real-Activity Entity State (v1.1190)**: Server-authoritative entity state (BUSY/REVIEW/FAILED/IDLE/SLEEPING) driven by real activity — stages 0-2 (#3797); stale-card watcher exempt parked backlog (#3796); open assigned cards never shows asleep (#3795)
+- **Mobile Bottom-Sheet Safe Area (v1.1190)**: Mobile destructive bottom-sheet pads safe-area-inset-bottom (#3802)
+- **Android versionCode 125 / versionName 1.1.14**: Wallpaper settings + walking behavior release (#3801)
+- **Action Request Negotiation/Consensus**: 需要你 negotiation/consensus workflow — vote → synthesize → surface (#3789); one reply resolves exactly ONE request fix (#3787)
+- **Wallpaper FSM Stage 3**: Client consumes server-authoritative activity state, fixes error→false-sleep (#3791); drag-to-reposition HARD PIN + desync fix (#3790); reconnect free-walking + de-dupe walking toggles (#3785)
+- **Vault Security Leak Fix**: Stop leaking whole vault to every agent message (#3792)
+- **Chat Reconnecting Banner Fix**: Clear false 'reconnecting' banner when messaging works (#3794)
+
+### Recent Features (v1.1190.x+, 2026-06-27 – 2026-06-28)
+
+- **Owner-Decision Classifier + Inbox UI (v1.1190)**: Server-side `owner-decision` classifier for action requests — auto-tags requests requiring human owner decisions (#3756); portal inbox renders `decision_context` with what-was-done + evidence chips + recommendation (#3757)
+- **Org-Fwd Suppression System (v1.1190)**: Multi-phase suppression of machine-noise in org-chart forwarding — suppress `#N_PERMISSION_HANDOFF` + Codex heartbeat echoes (#3758); cover `#N_UPPER_HANDOFF` + `#5` watchdog-narration heartbeat echoes (#3760); robust shape-heuristic for peer watchdog heartbeat echoes (#3761); drop bare 緊急/urgent from F7 exclusion to stop passive-watchdog reflood (#3770)
+- **Suppression Transparency + B2B Quota (v1.1190)**: Suppression transparency feed + b2b quota countdown for org-fwd (#3759); chat-UI suppression transparency feed + b2b quota countdown (#3762)
+- **Org-Fwd Classifier Hardening (v1.1190)**: Harden owner-decision classifier + suppression per PR audit (#3763)
+- **Action Requests Enhancements (v1.1190)**: `PUT /api/action-requests/:id` edit endpoint (#3750); related-card chip + consensus-discussion filter (#3753)
+- **Chat EclawGreeting Removal (v1.1190)**: Remove EclawGreeting — 需要你 inbox fully replaces greeting as the primary chat entry point (#3751)
+- **Chat Staged Reply Fix (v1.1190)**: Restore staged reply on send-abort paths (#3747)
+- **Chat Action-Request Inbox Tests (v1.1190)**: Behavioral tests for 需要你 action-request inbox (#3749)
+- **Trust Index Fix (v1.1190)**: Drop non-IMMUTABLE `NOW()` from `idx_blacklist_active` index definition (#3754)
+- **Arena Daily Pool Update**: Daily question pool update for interview arena (target difficulty 70/100)
+
+### Recent Features (v1.1190.x+, 2026-06-22 – 2026-06-23)
+
+- **Community Filter URL Persistence**: community.html search/sort/rate filters persisted in URL for reload/back/share (#3694)
+- **Publisher Auth Guard**: `checkAuth` guard in publisher.html init prevents auth.js 522 from bricking page at "Loading" (#3692)
+- **TTS Foreground Service Fix**: `startForeground` on every start + `START_NOT_STICKY` — fix `ForegroundServiceDidNotStartInTimeException` killing wallpaper process (#3691, #3674)
+- **Kanban Nudge Lifecycle Directive**: Nudge carries explicit task-lifecycle directive, not just tool-list (#3690)
+- **Wallpaper Stability v1.1.x**: Loading-wallpaper placeholder (#3678); resilient per-stage render (#3683); resume watchdog + surface-valid draw gate + Crashlytics (#3682); multi-level loading markers (#3680); wrap early render stages (#3686); spritesheet LOADING visibility fix (#3689); residual black on app-switch fix (#3669)
+- **Chat Mobile Greeting Fix**: Keep mobile greeting topic inline (#3688)
+- **Destructive Confirm itemName**: Pass `itemName` to destructive `showConfirm` callers for context (#3685)
+- **Point-Edit Graceful Degrade**: Graceful-degrade + single-line log when Chromium executable missing (#3679)
+- **Push Log Severity Fix**: Downgrade unbound-entity skip log from warn to debug (#3677)
+- **Audit Rules Hardening**: Companion rating-cache RMW + harden 5 weekly-audit rules (#3676)
+- **Android Restore Last Page**: Restore last page on app resume instead of dashboard (#3671)
+- **Chat FROM Pill Fix**: FROM pill shows sender not commanderFloor (#3670)
+- **Wallpaper Bubble Duration**: Raise bubble-duration slider max 20s → 10min (#3668)
+- **Duplicate SendTo Control Fix**: Remove duplicate sendto control — hidden target-bar beat `hidden` via CSS (#3667)
+- **AI Support Admin Guard**: Guard `resolveIsAdmin` against non-uuid principals (#3665)
+- **Device TTS Delivery Awareness**: POST /api/device/tts now reports `delivered:false` + `warning:"tts_not_delivered"` when device offline and no FCM token, instead of silent fire-and-forget (#3662)
+
+### Recent Features (v1.1190.x+, 2026-07-04 – 2026-07-05)
+
+- **Wishlist Bridge Proxy (v1.1190)**: SSRF-safe thin proxy to external Wishlist app — `wishlist-route.js` with hardcoded upstream host; 3 endpoints (GET /search, GET /items/public, POST /listings); confused-deputy guard requiring caller auth + ownership binding on write path; vault-first merchant key resolution (#3903)
+- **Action Request Pending Count (v1.1190)**: `GET /api/action-requests/pending-count` for home-screen widget / icon badge (#3893)
+- **Entity Walk Config API (v1.1190)**: Self-sovereign wallpaper walk-config API — weights + negative-action opt-in; `entity-walk-config.js` module (#3895)
+- **Capability-Aware Dispatch Guard (v1.1190)**: Kanban warns on browser/screenshot cards assigned to browser-incapable entities (#3897)
+- **Done-Gate Vision Evidence (v1.1190)**: HARD-enforce vision/interaction evidence for UI/UX cards; auto-detect UI/UX cards from title/description keywords + attached image (#3890–#3891)
+- **Kanban PUT Snake-Case Aliases (v1.1190)**: PUT /card/:id tolerates snake_case field aliases + warns on unknown fields (#3894)
+- **ShowConfirm Typed DELETE (v1.1190)**: `confirmPhrase` gate for destructive modals; account deletion requires typed "DELETE" (#3887)
+- **Chat Image Thumbnails (v1.1190)**: Inline image thumbnails + always-visible card attachments + corner close (#3889)
+- **PetDX Sprite ORB Fix (v1.1190)**: Proxy community sprites same-origin to defeat Chrome ORB (#3888)
+- **Vault Key Reference GET-Only (v1.1190)**: Key Reference GET-only — stop resurrecting deleted vault keys (P1) (#3901)
+- **Mission Card Deep-Link Fix (v1.1190)**: Stop mission.html card deep-link self-looping the native bridge (#3898)
+- **Android Wallpaper Walk Config (v1.1190)**: Drive wallpaper walk actions from server config (#3902)
+- **App Version**: Updated to 1.1.15 (versionCode 126)
+
 ---
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~4729 test cases across 338 Jest files + 79 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~6238 test cases across 454 Jest files + 79 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1290,7 +1460,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
 | Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
 
-### Jest Unit Tests (CI-run, `npm test`, 285 files)
+### Jest Unit Tests (CI-run, `npm test`, 454 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -1373,7 +1543,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (285 files)
+cd backend && npm test                  # Jest unit tests (454 files)
 cd backend && npm run lint              # ESLint
 ```
 

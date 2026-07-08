@@ -18,11 +18,13 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.repository.CompanionRepository
+import com.hank.clawlive.data.repository.WalkConfigRepository
 import com.hank.clawlive.service.ClawWallpaperService
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import com.hank.clawlive.ui.WallpaperPreviewView
@@ -41,7 +43,12 @@ class WallpaperPreviewActivity : AppCompatActivity() {
     private lateinit var previewView: WallpaperPreviewView
     private lateinit var switchCustomLayout: MaterialSwitch
     private lateinit var switchBackground: MaterialSwitch
+    private lateinit var switchWalking: MaterialSwitch
+    private lateinit var btnCustomLayoutHelp: TextView
+    private lateinit var btnBackgroundHelp: TextView
+    private lateinit var btnWalkingHelp: TextView
     private lateinit var switchUsageOverlay: MaterialSwitch
+    private lateinit var btnUsageOverlayHelp: TextView
     private lateinit var checkUsageClaude: CheckBox
     private lateinit var checkUsageCodex: CheckBox
     private lateinit var checkUsageSession: CheckBox
@@ -49,6 +56,7 @@ class WallpaperPreviewActivity : AppCompatActivity() {
     private lateinit var checkReset5h: CheckBox
     private lateinit var checkResetWeekly: CheckBox
     private lateinit var btnSelectPhoto: MaterialButton
+    private lateinit var btnMoreWallpaperSettings: MaterialButton
     private lateinit var btnReset: MaterialButton
     private lateinit var btnSetWallpaper: MaterialButton
     private lateinit var btnBack: ImageButton
@@ -64,7 +72,9 @@ class WallpaperPreviewActivity : AppCompatActivity() {
     private val deviceManager by lazy { DeviceManager.getInstance(this) }
     private val layoutPrefs by lazy { LayoutPreferences.getInstance(this) }
     private val companionRepository by lazy { CompanionRepository(api, this) }
+    private val walkConfigRepository by lazy { WalkConfigRepository(this) }
     private val companionJobs = mutableMapOf<Int, Job>()
+    private val walkConfigJobs = mutableMapOf<Int, Job>()
 
     // Photo picker launcher
     private val photoPickerLauncher = registerForActivityResult(
@@ -124,7 +134,10 @@ class WallpaperPreviewActivity : AppCompatActivity() {
     override fun onDestroy() {
         companionJobs.values.forEach { it.cancel() }
         companionJobs.clear()
+        walkConfigJobs.values.forEach { it.cancel() }
+        walkConfigJobs.clear()
         companionRepository.release()
+        walkConfigRepository.release()
         previewView.onCustomLayoutEnabled = null
         super.onDestroy()
     }
@@ -133,7 +146,12 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         previewView = findViewById(R.id.wallpaperPreviewView)
         switchCustomLayout = findViewById(R.id.switchCustomLayout)
         switchBackground = findViewById(R.id.switchBackground)
+        switchWalking = findViewById(R.id.switchWalking)
+        btnCustomLayoutHelp = findViewById(R.id.btnCustomLayoutHelp)
+        btnBackgroundHelp = findViewById(R.id.btnBackgroundHelp)
+        btnWalkingHelp = findViewById(R.id.btnWalkingHelp)
         switchUsageOverlay = findViewById(R.id.switchUsageOverlay)
+        btnUsageOverlayHelp = findViewById(R.id.btnUsageOverlayHelp)
         checkUsageClaude = findViewById(R.id.checkUsageClaude)
         checkUsageCodex = findViewById(R.id.checkUsageCodex)
         checkUsageSession = findViewById(R.id.checkUsageSession)
@@ -141,6 +159,7 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         checkReset5h = findViewById(R.id.checkReset5h)
         checkResetWeekly = findViewById(R.id.checkResetWeekly)
         btnSelectPhoto = findViewById(R.id.btnSelectPhoto)
+        btnMoreWallpaperSettings = findViewById(R.id.btnMoreWallpaperSettings)
         btnReset = findViewById(R.id.btnReset)
         btnSetWallpaper = findViewById(R.id.btnSetWallpaper)
         btnBack = findViewById(R.id.btnBack)
@@ -159,6 +178,7 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         }
         switchCustomLayout.isChecked = layoutPrefs.useCustomLayout
         switchBackground.isChecked = layoutPrefs.useBackgroundImage
+        switchWalking.isChecked = layoutPrefs.wallpaperWalkingEnabled
         switchUsageOverlay.isChecked = layoutPrefs.usageOverlayEnabled
         checkUsageClaude.isChecked = layoutPrefs.usageOverlayShowClaude
         checkUsageCodex.isChecked = layoutPrefs.usageOverlayShowCodex
@@ -233,6 +253,24 @@ class WallpaperPreviewActivity : AppCompatActivity() {
             openPhotoPicker()
         }
 
+        btnMoreWallpaperSettings.setOnClickListener {
+            startActivity(Intent(this, WallpaperMoreSettingsActivity::class.java))
+        }
+
+        btnCustomLayoutHelp.setOnClickListener {
+            showSettingHelp(
+                getString(R.string.use_custom_layout),
+                getString(R.string.wallpaper_custom_layout_help)
+            )
+        }
+
+        btnBackgroundHelp.setOnClickListener {
+            showSettingHelp(
+                getString(R.string.custom_background),
+                getString(R.string.wallpaper_background_help)
+            )
+        }
+
         switchCustomLayout.setOnCheckedChangeListener { _, isChecked ->
             layoutPrefs.useCustomLayout = isChecked
             val message = getString(if (isChecked) R.string.custom_layout_enabled else R.string.custom_layout_using_preset)
@@ -247,6 +285,29 @@ class WallpaperPreviewActivity : AppCompatActivity() {
             if (!isChecked) {
                 Toast.makeText(this, getString(R.string.background_disabled), Toast.LENGTH_SHORT).show()
             }
+        }
+
+        switchWalking.setOnCheckedChangeListener { _, isChecked ->
+            previewView.setWalkingEnabled(isChecked)
+            val message = getString(
+                if (isChecked) R.string.wallpaper_walking_enabled
+                else R.string.wallpaper_walking_disabled
+            )
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        }
+
+        btnWalkingHelp.setOnClickListener {
+            showSettingHelp(
+                getString(R.string.wallpaper_walking_title),
+                getString(R.string.wallpaper_walking_help)
+            )
+        }
+
+        btnUsageOverlayHelp.setOnClickListener {
+            showSettingHelp(
+                getString(R.string.wallpaper_usage_overlay),
+                getString(R.string.wallpaper_usage_overlay_help)
+            )
         }
 
         switchUsageOverlay.setOnCheckedChangeListener { _, isChecked ->
@@ -282,6 +343,14 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         settingsCollapseHandle.setOnClickListener {
             setSettingsCollapsed(!settingsCollapsed)
         }
+    }
+
+    private fun showSettingHelp(title: String, message: String) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
     private fun setSettingsCollapsed(collapsed: Boolean) {
@@ -363,6 +432,7 @@ class WallpaperPreviewActivity : AppCompatActivity() {
 
                 previewView.setEntities(boundEntities)
                 loadCompanions(boundEntities)
+                loadWalkConfigs(boundEntities)
 
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load entities")
@@ -407,6 +477,30 @@ class WallpaperPreviewActivity : AppCompatActivity() {
             companionJobs[entityId] = lifecycleScope.launch {
                 companionRepository.getCompanionFlow(entityId, secret).collect {
                     previewView.invalidate()
+                }
+            }
+        }
+    }
+
+    private fun loadWalkConfigs(entities: List<com.hank.clawlive.data.model.EntityStatus>) {
+        val active = entities.mapNotNull { entity ->
+            entity.botSecret?.let { secret -> entity.entityId to secret }
+        }
+        val activeIds = active.map { it.first }.toSet()
+        walkConfigRepository.pruneTo(activeIds)
+        previewView.setWalkActionConfigs(walkConfigRepository.cachedMap())
+
+        walkConfigJobs.keys.toList().forEach { entityId ->
+            if (entityId !in activeIds) {
+                walkConfigJobs.remove(entityId)?.cancel()
+            }
+        }
+
+        for ((entityId, secret) in active) {
+            if (walkConfigJobs[entityId]?.isActive == true) continue
+            walkConfigJobs[entityId] = lifecycleScope.launch {
+                walkConfigRepository.getWalkConfigFlow(entityId, secret).collect {
+                    previewView.setWalkActionConfigs(walkConfigRepository.cachedMap())
                 }
             }
         }

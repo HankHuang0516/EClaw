@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.hank.clawlive.data.local.DeviceManager
+import com.hank.clawlive.data.local.WallpaperEntitySnapshotCache
+import com.hank.clawlive.data.local.WallpaperSpritesheetDiskCache
 import com.hank.clawlive.data.model.CompanionDetail
 import com.hank.clawlive.data.remote.ClawApiService
 import com.hank.clawlive.data.remote.NetworkModule
@@ -17,6 +19,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Request
+import retrofit2.HttpException
 import timber.log.Timber
 import java.util.concurrent.ConcurrentHashMap
 
@@ -40,9 +43,40 @@ class CompanionRepository(
     private val context: Context
 ) {
     private val deviceManager = DeviceManager.getInstance(context)
+    private val snapshotCache = WallpaperEntitySnapshotCache.getInstance(context)
+    private val diskSheetCache = WallpaperSpritesheetDiskCache.getInstance(context)
     private val descriptorCache = ConcurrentHashMap<Int, CompanionDetail>()
     private val sheetCache = SheetBitmapCache(maxEntries = 8)
-    private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    // BLK-OOM (card_f9b2cc2d): a CoroutineExceptionHandler so ANY uncaught throwable
+    // on this IO scope (incl. OutOfMemoryError) is contained here and never reaches
+    // the process-killing default uncaught handler (which would black the wallpaper).
+    private val ioScope = CoroutineScope(
+        Dispatchers.IO + SupervisorJob() + kotlinx.coroutines.CoroutineExceptionHandler { _, e ->
+            Timber.e(e, "[CompanionRepo] contained uncaught on ioScope (${e.javaClass.simpleName})")
+        }
+    )
+
+    init {
+        val restored = snapshotCache.loadCompanionMap()
+        descriptorCache.putAll(restored)
+        // card_f9b2cc2d v1.1.6: warm the spritesheet bitmap cache for restored
+        // companions so the first frames after a cold engine (re)create paint the
+        // real avatar instead of a blank LOADING gap. Without this the renderer
+        // sees "spritesheet descriptor present, sheet absent" → DrawResult.LOADING
+        // and, with no custom background, a pure-black wallpaper until the lazy
+        // per-frame load happens to land. Best-effort, off the main thread.
+        if (restored.isNotEmpty()) {
+            ioScope.launch {
+                restored.values.forEach { companion ->
+                    if (companion.assetType == "spritesheet") {
+                        companion.spritesheetUrl()?.takeIf { it.isNotBlank() }?.let { url ->
+                            runCatching { sheetCache.getOrLoad(url) { loadBitmap(url) } }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     /** Returns the cached companion for an entity, or null until a fetch lands. */
     fun cached(entityId: Int): CompanionDetail? = descriptorCache[entityId]
@@ -57,10 +91,10 @@ class CompanionRepository(
         if (url.isNullOrBlank()) return null
         sheetCache.peek(url)?.let { return it }
         if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
-            ioScope.launch { sheetCache.getOrLoad(url) { fetchBitmap(url) } }
+            ioScope.launch { sheetCache.getOrLoad(url) { loadBitmap(url) } }
             return null
         }
-        return sheetCache.getOrLoad(url) { fetchBitmap(url) }
+        return sheetCache.getOrLoad(url) { loadBitmap(url) }
     }
 
     /**
@@ -73,6 +107,11 @@ class CompanionRepository(
         botSecret: String,
         intervalMs: Long = 30_000
     ): Flow<CompanionDetail?> = flow {
+        // Stagger companion pollers so per-entity fetches don't all fire at t=0
+        // on resume (the burst that trips the device-level rate limit).
+        // Each entity gets a random 2–8s head-start delay.
+        delay((2_000L..8_000L).random())
+        var backoffMs = intervalMs
         while (true) {
             try {
                 val resp = api.getCurrentCompanion(
@@ -80,6 +119,7 @@ class CompanionRepository(
                     botSecret = botSecret,
                     entityId = entityId
                 )
+                backoffMs = intervalMs
                 val companion = resp.selection?.companion
                 if (companion != null) {
                     // Preload the spritesheet BEFORE swapping the descriptor.
@@ -95,7 +135,7 @@ class CompanionRepository(
                             true // descriptor is malformed; let renderer's UNSUPPORTED path handle it
                         } else {
                             withContext(Dispatchers.IO) {
-                                sheetCache.getOrLoad(sheetUrl) { fetchBitmap(sheetUrl) } != null
+                                sheetCache.getOrLoad(sheetUrl) { loadBitmap(sheetUrl) } != null
                             }
                         }
                     } else {
@@ -103,16 +143,26 @@ class CompanionRepository(
                     }
                     if (sheetReady) {
                         descriptorCache[entityId] = companion
+                        snapshotCache.saveCompanion(entityId, companion)
                         Timber.d("Companion fetched for entity $entityId: ${companion.id} (${companion.assetType})")
                     } else {
                         Timber.w("Spritesheet preload failed for entity $entityId (${companion.spritesheetUrl()}); keeping previous companion to avoid default-lobster flicker")
                     }
                 }
                 emit(companion)
+            } catch (e: HttpException) {
+                if (e.code() == 429) {
+                    backoffMs = minOf(backoffMs * 2, 300_000L).coerceAtLeast(60_000L)
+                    Timber.w("Companion flow entity $entityId 429 rate-limited — backing off ${backoffMs}ms")
+                } else {
+                    backoffMs = intervalMs
+                    Timber.w(e, "Companion fetch failed for entity $entityId")
+                }
             } catch (e: Exception) {
+                backoffMs = intervalMs
                 Timber.w(e, "Companion fetch failed for entity $entityId")
             }
-            delay(intervalMs)
+            delay(backoffMs)
         }
     }
 
@@ -121,6 +171,11 @@ class CompanionRepository(
         ioScope.cancel()
         descriptorCache.clear()
         sheetCache.clear()
+    }
+
+    private fun loadBitmap(url: String): Bitmap? {
+        diskSheetCache.load(url)?.let { return it }
+        return fetchBitmap(url)
     }
 
     private fun fetchBitmap(url: String): Bitmap? {
@@ -136,10 +191,17 @@ class CompanionRepository(
                 val opts = BitmapFactory.Options().apply {
                     inPreferredConfig = Bitmap.Config.ARGB_8888
                 }
-                BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
+                BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)?.also {
+                    diskSheetCache.save(url, bytes)
+                }
             }
-        } catch (e: Exception) {
-            Timber.e(e, "Spritesheet decode failed for $url")
+        } catch (e: Throwable) {
+            // BLK-OOM (card_f9b2cc2d): BitmapFactory throws java.lang.OutOfMemoryError
+            // (an Error, NOT an Exception) on an oversized/corrupt sheet. Catching only
+            // Exception let it escape this IO coroutine → ClawApplication uncaught handler
+            // → process death → pure-black wallpaper. Catch Throwable; null falls back to
+            // the already-guarded LOADING/procedural render.
+            Timber.e(e, "Spritesheet decode failed for $url (${e.javaClass.simpleName})")
             null
         }
     }

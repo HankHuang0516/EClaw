@@ -57,8 +57,11 @@ describe('kanban nudge stop-mode preferences', () => {
 
         expect(body).toMatch(/function filterNudgeStoppedRecipients\(ids\)/);
         expect(body).toMatch(/if \(effectiveFor\(n\)\.stopMode\) continue/);
-        expect(body).toMatch(/fireBlockEscalation\(card, filterNudgeStoppedRecipients\(buildEscalationRecipients\(card\)\)\)/);
-        expect(body).toMatch(/fireLevelTwoEscalation\(card, filterNudgeStoppedRecipients\(buildEscalationRecipients\(card\)\)\)/);
+        // buildEscalationRecipients became async (card_3ce0080a: resolves a
+        // supervisor via org-chart / commander fallback) — the recipient list is
+        // still wrapped by filterNudgeStoppedRecipients, now with an await.
+        expect(body).toMatch(/fireBlockEscalation\(card, filterNudgeStoppedRecipients\(await buildEscalationRecipients\(card\)\)\)/);
+        expect(body).toMatch(/fireLevelTwoEscalation\(card, filterNudgeStoppedRecipients\(await buildEscalationRecipients\(card\)\)\)/);
     });
 
     test('nudge delivery helpers accept filtered recipient lists and record only those recipients', () => {
@@ -67,10 +70,13 @@ describe('kanban nudge stop-mode preferences', () => {
         const l3 = extractFunctionBody(kanbanSrc, 'async function fireBlockEscalation(card, recipientIds = null)');
 
         expect(l1).toMatch(/const bots = Array\.isArray\(recipientIds\) \? recipientIds : \(card\.assigned_bots \|\| \[\]\)/);
-        expect(l1).toMatch(/notifyEntities\(card\.device_id, bots/);
+        // fireLevelOneNudge now notifies PER-BOT so it can prepend a per-entity
+        // task-load census (feat/kanban-nudge-task-census) — the notify target is
+        // a single-id array [bid] inside a loop, not the whole `bots` list.
+        expect(l1).toMatch(/notifyEntities\(card\.device_id, \[bid\], finalMsg/);
         expect(l1).toMatch(/recordEntityNudge\(card\.device_id, bots\)/);
-        expect(l2).toMatch(/const recipients = Array\.isArray\(recipientIds\) \? recipientIds : buildEscalationRecipients\(card\)/);
-        expect(l3).toMatch(/const recipients = Array\.isArray\(recipientIds\) \? recipientIds : buildEscalationRecipients\(card\)/);
+        expect(l2).toMatch(/const recipients = Array\.isArray\(recipientIds\) \? recipientIds : await buildEscalationRecipients\(card\)/);
+        expect(l3).toMatch(/const recipients = Array\.isArray\(recipientIds\) \? recipientIds : await buildEscalationRecipients\(card\)/);
     });
 });
 

@@ -129,6 +129,29 @@ describe('info page hash tab routing', () => {
         expect(validTabs).toEqual(tabIds);
         expect(validTabs).toContain('boundaries');
     });
+
+    test('guide deep links activate the guide tab and mobile picker stays in sync', () => {
+        const source = fs.readFileSync(INFO_JS, 'utf8');
+        const css = fs.readFileSync(path.join(PORTAL_DIR, 'shared/info.css'), 'utf8');
+
+        expect(source).toContain("const tabName = isChannelPlugin ? 'channel-plugins' : 'guide';");
+        expect(source).toContain('function buildInfoTabPicker');
+        expect(source).toContain('function updateInfoTabState(target)');
+        expect(source).toContain("tab.hidden");
+        expect(source).toContain("select.addEventListener('change', () => switchInfoTab(select.value))");
+        expect(css).toMatch(/\.info-tabs\s*\{[\s\S]*flex-wrap:\s*wrap/);
+        expect(css).toMatch(/\.info-tabs\s*\{[\s\S]*overflow-x:\s*visible/);
+        expect(css).toMatch(/\.info-tab-picker\s*\{[\s\S]*display:\s*none/);
+        expect(css).toMatch(/@media\s*\(max-width:\s*768px\)\s*\{[\s\S]*\.info-tabs\s*\{\s*display:\s*none;\s*\}/);
+        expect(css).toMatch(/@media\s*\(max-width:\s*768px\)\s*\{[\s\S]*\.info-tab-picker\s*\{[\s\S]*display:\s*grid/);
+    });
+});
+
+describe('info page embed smoke cleanliness', () => {
+    test('youtube embeds avoid unsupported allow tokens in Chromium smoke', () => {
+        const html = fs.readFileSync(INFO_HTML, 'utf8');
+        expect(html).not.toContain('web-share');
+    });
 });
 
 describe('info-public-pages debug endpoint registration', () => {

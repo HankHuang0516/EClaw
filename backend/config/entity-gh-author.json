@@ -1,0 +1,73 @@
+{
+  "_comment": "Option B — per-entity merged-PR attribution by COMMIT AUTHOR IDENTITY (card_8a25 follow-up). Because every EClaw PR is squash-merged through ONE shared GitHub account (HankHuang0516), GitHub-login counting (entity-gh-login.json) cannot distinguish entities. This file maps entityId -> the git author identities (names/emails/Co-Authored-By trailers) each entity actually commits with, so counts are per-entity. The canonical scheme is `entity-<N>@bots.eclaw` (see docs/specs/per-entity-git-author-spec.md §3-5); the extra emails/names are historical identities derived from real git history of HankHuang0516/EClaw so existing work still attributes. byDevice overrides byEntityId. An entity with NO author identity (only the canonical email, zero history) still renders gracefully (0 with author-source active) instead of the GitHub-login setup hint. Matching is case-insensitive. NOTE: GitHub's commit-search index only covers TOP-LEVEL commit author/committer email, NOT Co-Authored-By trailers — see entity-gh-stats.js header for the accuracy/perf trade-off. coAuthorTrailers is retained for the (heavier) commit-body attribution path and for documentation of the canonical trailer form.",
+  "_repo": "HankHuang0516/EClaw",
+  "byEntityId": {
+    "1": {
+      "label": "Mac_F (Planner)",
+      "names": ["Mac_F", "Mac_F Entity #1", "Entity #1 (Auto)"],
+      "emails": [
+        "entity-1@bots.eclaw",
+        "mac_f@eclawbot.com",
+        "mac-f@eclaw.local",
+        "mac_f@openclaw.local",
+        "mac_f@example.com",
+        "entity1@eclaw.bot"
+      ],
+      "coAuthorTrailers": ["entity-1@bots.eclaw"]
+    },
+    "2": {
+      "label": "LOBSTER / Mac_ClaudeAce主管",
+      "names": ["LOBSTER", "Mac_ClaudeAce #2", "Mac_ClaudeAce (Entity #2)", "EClaw #2 Mac_ClaudeAce主管"],
+      "emails": [
+        "entity-2@bots.eclaw",
+        "entity2@eclawbot.com",
+        "lobster@eclawbot.com",
+        "lobster@eclaw.local"
+      ],
+      "coAuthorTrailers": ["entity-2@bots.eclaw"]
+    },
+    "3": {
+      "label": "Mac_E",
+      "names": ["Mac_E", "Mac_E (Entity #3)", "Mac_E (Entity 3)", "Mac_E Entity3"],
+      "emails": [
+        "entity-3@bots.eclaw",
+        "mac_e@eclawbot.com",
+        "mac-e@eclawbot.com",
+        "mac_e@eclaw.ai",
+        "mac-e@eclaw.com"
+      ],
+      "coAuthorTrailers": ["entity-3@bots.eclaw"]
+    },
+    "4": {
+      "label": "Eclaw_Office",
+      "names": ["Eclaw_Office", "EClaw #4 Eclaw_Office"],
+      "emails": ["entity-4@bots.eclaw"],
+      "coAuthorTrailers": ["entity-4@bots.eclaw"]
+    },
+    "5": {
+      "label": "Hermes",
+      "names": ["Hermes Agent", "Hermes", "Hermes (#5)", "Hermes Bot"],
+      "emails": [
+        "entity-5@bots.eclaw",
+        "hermes@eclaw.bot",
+        "hermes@eclawbot.com",
+        "hermes-daemon@eclawbot.com",
+        "hermes-bot@eclawbot.com"
+      ],
+      "coAuthorTrailers": ["entity-5@bots.eclaw"]
+    },
+    "6": {
+      "label": "Codex / Agent #6 (i18n Translator)",
+      "names": ["Agent #6 (i18n Translator)", "OpenClaw Codex", "Codex #6", "EClaw #6 Codex", "Entity #6"],
+      "emails": [
+        "entity-6@bots.eclaw",
+        "agent-6@eclaw.bot",
+        "codex@openclaw.local",
+        "codex@eclawbot.com",
+        "codex@eclaw.local"
+      ],
+      "coAuthorTrailers": ["entity-6@bots.eclaw"]
+    }
+  },
+  "byDevice": {}
+}

@@ -16,6 +16,11 @@ function loadPublisherKey() {
     const lines = fs.readFileSync(envPath, 'utf8').split('\n');
     for (const line of lines) {
         const trimmed = line.trim();
+        // Accept both the legacy hyphenated key and the shell-safe identifier.
+        // The hyphenated form makes backend/.env un-sourceable in zsh/bash
+        // (invalid identifier -> "command not found" that ECHOES the secret to
+        // stderr), so .env now uses X_PUBLISHER_KEY (card follow-up 2026-07-06).
+        if (trimmed.startsWith('X_PUBLISHER_KEY=')) return trimmed.slice('X_PUBLISHER_KEY='.length).trim();
         if (trimmed.startsWith('X-Publisher-Key=')) return trimmed.slice('X-Publisher-Key='.length).trim();
     }
     return '';

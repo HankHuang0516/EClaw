@@ -11,5 +11,8 @@ data class MultiEntityResponse(
     @SerializedName("totalSlots")
     val totalSlots: Int = 1,
     val entityIds: List<Int> = emptyList(),
-    val serverReady: Boolean = true
+    val serverReady: Boolean = true,
+    val fromOfflineCache: Boolean = false,
+    val offlineReason: String? = null,
+    val cachedAt: Long? = null
 )

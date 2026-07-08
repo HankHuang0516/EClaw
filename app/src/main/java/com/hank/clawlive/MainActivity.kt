@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -26,10 +27,14 @@ import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.fcm.ClawFcmService
+import com.hank.clawlive.needyou.NeedYouIndicatorSync
 import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.NavItem
+import com.hank.clawlive.ui.NavResumeController
 import com.hank.clawlive.ui.RecordingIndicatorHelper
+import com.hank.clawlive.ui.reconnect.ReconnectBackoff
+import com.hank.clawlive.ui.reconnect.ReconnectOverlayController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -46,6 +51,17 @@ class MainActivity : AppCompatActivity() {
 
     private val deviceManager: DeviceManager by lazy { DeviceManager.getInstance(this) }
     private var webView: WebView? = null
+    private var reconnectOverlay: ReconnectOverlayController? = null
+
+    /** Persists and restores the last-active tab across process-death restarts. */
+    private val navResume: NavResumeController by lazy {
+        val prefs = getSharedPreferences("nav_resume_prefs", MODE_PRIVATE)
+        NavResumeController(object : NavResumeController.Store {
+            override fun readLastNav(): String? = prefs.getString("last_nav", null)
+            override fun writeLastNav(name: String) { prefs.edit().putString("last_nav", name).apply() }
+            override fun clearLastNav() { prefs.edit().remove("last_nav").apply() }
+        })
+    }
 
     private val notifPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -61,13 +77,23 @@ class MainActivity : AppCompatActivity() {
 
         // TTS foreground service (bot voice replies)
         val ttsIntent = Intent(this, com.hank.clawlive.service.TtsService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(ttsIntent)
-        } else {
-            startService(ttsIntent)
+        // BLK-FGS (card_f9b2cc2d): a foreground-service start must never crash the
+        // process — it shares the process with the live wallpaper engine, so an
+        // uncaught ForegroundServiceStartNotAllowedException here turns the
+        // wallpaper pure-black until app restart.
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(ttsIntent)
+            } else {
+                startService(ttsIntent)
+            }
+        } catch (t: Throwable) {
+            Timber.e(t, "[Main] tts startForegroundService refused (${t.javaClass.simpleName})")
+            try { com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().recordException(t) } catch (_: Throwable) {}
         }
 
         observeLocationRequests()
+        observeActionRequestChanges()
 
         ClawFcmService.createChannels(this)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -81,11 +107,47 @@ class MainActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_main)
 
+        // Process-death restore: if the user was on a non-HOME tab when the OS
+        // killed the process, re-launch that tab Activity so they land back there
+        // instead of the dashboard. Skip when a deep-link intent is present — the
+        // App Link target always takes priority over the saved tab.
+        if (intent?.data == null) {
+            restoreLastNavIfNeeded()
+        }
+
         BottomNavHelper.setup(this, NavItem.HOME)
         AiChatFabHelper.setup(this, "home")
         setupWindowInsets()
         registerDeviceThenLoadWebView()
         checkForAppUpdate()
+    }
+
+    /**
+     * On process-death restart, re-launch the last-active tab Activity so the
+     * user is not always dropped onto the dashboard (card_489a8836).
+     * Uses FLAG_ACTIVITY_REORDER_TO_FRONT to avoid duplicating the Activity if
+     * Android already has a saved instance in the back-stack restoration path.
+     */
+    private fun restoreLastNavIfNeeded() {
+        val item = navResume.restoredNavItem() ?: return
+        val targetClass: Class<*> = when (item) {
+            NavItem.CHAT -> ChatActivity::class.java
+            NavItem.MISSION -> MissionControlActivity::class.java
+            NavItem.SETTINGS -> SettingsActivity::class.java
+            NavItem.CARDS -> {
+                // CARDS uses WebViewActivity with a specific URL; handled by BottomNavHelper.
+                // Re-route to home for CARDS since there is no standalone CARDS Activity class.
+                return
+            }
+            NavItem.HOME -> return
+        }
+        Timber.d("[NavResume] Process-death restore → re-launching $item")
+        val intent = Intent(this, targetClass).apply {
+            flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+        }
+        startActivity(intent)
+        @Suppress("DEPRECATION")
+        overridePendingTransition(0, 0)
     }
 
     private fun registerDeviceThenLoadWebView() {
@@ -120,6 +182,10 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         TelemetryHelper.trackPageView(this, "main")
         RecordingIndicatorHelper.attach(this)
+        NeedYouIndicatorSync.refreshAsync(this, "main_resume")
+        // Record HOME as the current tab so process-death restart doesn't jump
+        // to a stale non-home tab when the user deliberately navigated back here.
+        navResume.onNavigatedTo(NavItem.HOME)
     }
 
     override fun onPause() {
@@ -135,6 +201,14 @@ class MainActivity : AppCompatActivity() {
                 com.hank.clawlive.location.LocationHelper.fetchAndReportAsync(
                     applicationContext, requestId
                 )
+            }
+        }
+    }
+
+    private fun observeActionRequestChanges() {
+        lifecycleScope.launch {
+            com.hank.clawlive.data.remote.SocketManager.actionRequestChangedFlow.collect {
+                NeedYouIndicatorSync.refreshAsync(this@MainActivity, "socket_action_request_changed")
             }
         }
     }
@@ -249,6 +323,21 @@ class MainActivity : AppCompatActivity() {
                     super.onPageFinished(view, url)
                     Timber.d("[Home] WebView page loaded: $url")
                     injectCredentials(view)
+                    reconnectOverlay?.onPageFinished()
+                }
+
+                override fun onReceivedError(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                    error: WebResourceError?
+                ) {
+                    super.onReceivedError(view, request, error)
+                    if (request?.isForMainFrame != true) return
+                    val code = error?.errorCode ?: WebViewClient.ERROR_UNKNOWN
+                    if (!ReconnectBackoff.isTransportError(code)) return
+                    val failingUrl = request.url?.toString()
+                    Timber.w("[Home] main-frame transport error code=$code url=$failingUrl — showing reconnect overlay")
+                    reconnectOverlay?.onTransportError(failingUrl)
                 }
             }
             webChromeClient = WebChromeClient()
@@ -256,6 +345,7 @@ class MainActivity : AppCompatActivity() {
 
         container.addView(wv)
         webView = wv
+        reconnectOverlay = ReconnectOverlayController(this, container, wv, tag = "Home")
 
         // DeviceManager auto-generates these on first access — they are never null.
         // registerDeviceThenLoadWebView() already inserted them into the backend's
@@ -318,6 +408,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        reconnectOverlay?.destroy()
+        reconnectOverlay = null
         webView?.destroy()
         webView = null
         Timber.d("[Home] onDestroy: WebView cleaned up")

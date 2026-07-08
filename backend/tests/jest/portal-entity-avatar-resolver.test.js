@@ -90,6 +90,20 @@ describe('portal entity-utils — Phase 0 petdx-aware resolver chain', () => {
         expect(ctx.renderAvatarHtml(ctx.getAvatarForEntity(1), 20, 1)).toContain('src="' + PETDX_LOBSTER_URL + '"');
     });
 
+    test('card_430579ee: URL-avatar <img> carries an onerror fallback (no bare broken-image glyph across portal pages)', () => {
+        const ctx = loadResolver();
+        ctx.updateEntityMaps([{ entityId: 1, character: 'LOBSTER', avatar: null,
+            petdxAvatarUrl: PETDX_LOBSTER_URL }]);
+        const html = ctx.renderAvatarHtml(ctx.getAvatarForEntity(1), 20, 1);
+        // FAIL-ON-OLD: the plain <img> branch had NO onerror, so a 404 / expired R2
+        // URL / ORB-block showed the browser's broken-image glyph (破圖) on ~10 pages.
+        expect(html).toMatch(/<img[^>]*onerror=/);
+        // the failure degrades to the emoji (a signal), not a broken image
+        expect(html).toContain(LOBSTER);
+        // the wrapper keeps data-entity-id so click delegates still resolve entityId
+        expect(html).toMatch(/data-entity-id="1"/);
+    });
+
     test('default-emoji avatar dropped from _entityAvatarMap (§0.4 invariant) so petdx wins', () => {
         const ctx = loadResolver();
         // Stale entity carries the lobster emoji as its "avatar" — must NOT beat petdxAvatarUrl

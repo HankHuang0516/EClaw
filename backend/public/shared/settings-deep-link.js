@@ -20,6 +20,14 @@
                 if (header) header.setAttribute('aria-expanded', 'true');
             },
         },
+        'action_requests': {
+            cardId: 'actionRequestSettingsCard',
+            expand: null,
+        },
+        'action-requests': {
+            cardId: 'actionRequestSettingsCard',
+            expand: null,
+        },
     };
 
     function readFocusKey() {

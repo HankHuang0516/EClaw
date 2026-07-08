@@ -11,6 +11,7 @@ const path = require('path');
 
 const PORTAL_DIR = path.resolve(__dirname, '../../public/portal');
 const AI_CHAT_JS = path.resolve(__dirname, '../../public/portal/shared/ai-chat.js');
+const STYLE_CSS = path.resolve(__dirname, '../../public/portal/shared/style.css');
 
 const PAGES_WITH_AI_CHAT = [
     'admin.html',
@@ -81,5 +82,34 @@ describe('AI Chat Widget WebView Guard (#419)', () => {
         expect(code).not.toMatch(/flushDebugToServer/);
         expect(code).not.toMatch(/background:\s*red/);
         expect(code).not.toMatch(/_debugLogs/);
+    });
+
+    test('ai-chat.js exposes per-window resize state and controls', () => {
+        const code = fs.readFileSync(AI_CHAT_JS, 'utf-8');
+        expect(code).toMatch(/WINDOW_STATE_KEY\s*=\s*'eclaw_ai_chat_window_state_v1'/);
+        expect(code).toMatch(/function getWindowStateId/);
+        expect(code).toMatch(/function setupPanelWindowControls/);
+        expect(code).toMatch(/function isCompactPanelViewport/);
+        expect(code).toMatch(/ai-chat-resize-toggle-btn/);
+        expect(code).toMatch(/ai-chat-resize-grip/);
+        expect(code).toMatch(/pointerdown/);
+        expect(code).toMatch(/resizeEnabled/);
+    });
+
+    test('ai-chat.js keeps CSS responsive sizing until a window size is saved', () => {
+        const code = fs.readFileSync(AI_CHAT_JS, 'utf-8');
+        expect(code).toMatch(/function applyPanelSize/);
+        expect(code).toMatch(/panel\.style\.width\s*=\s*''/);
+        expect(code).toMatch(/panel\.style\.height\s*=\s*''/);
+        expect(code).toMatch(/isCompactPanelViewport\(\)\s*\|\|/);
+        expect(code).toMatch(/const size = clampPanelSize\(windowState\.width, windowState\.height\)/);
+    });
+
+    test('ai-chat resize CSS includes desktop grip and disable/mobile fallback', () => {
+        const css = fs.readFileSync(STYLE_CSS, 'utf-8');
+        expect(css).toMatch(/\.ai-chat-resize-grip\s*\{/);
+        expect(css).toMatch(/cursor:\s*nwse-resize/);
+        expect(css).toMatch(/\.ai-chat-resize-disabled\s+\.ai-chat-resize-grip\s*\{\s*display:\s*none/);
+        expect(css).toMatch(/@media\s*\(max-width:\s*640px\)[\s\S]*\.ai-chat-resize-grip[\s\S]*display:\s*none/);
     });
 });

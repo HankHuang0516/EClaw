@@ -31,11 +31,18 @@ describe('showConfirm — destructive-modal safe default focus', () => {
         );
     });
 
-    test('Enter on a destructive confirm does NOT commit', () => {
-        // Enter handler must skip cleanup(true) when danger is set. The
-        // previous unconditional `cleanup(true)` shipped destructive ops on
-        // any keyboard-focused Enter, which violated the safety invariant.
-        expect(apiJs).toMatch(/if\s*\(\s*e\.key\s*===\s*['"]Enter['"]\s*\)\s*cleanup\(\s*!danger/);
+    test('Enter on a destructive confirm commits ONLY when Confirm is focused (stray Enter cancels)', () => {
+        // WAI-ARIA APG: a focused button reacts to Enter and Space identically.
+        // Danger Enter falls through to the Confirm button's native activation
+        // ONLY when it is the active element; when focus is on Cancel or the
+        // safe default, a stray Enter still resolves false. The danger branch
+        // must therefore guard cleanup(false) on the "not the OK button" check
+        // and must NOT unconditionally cleanup(true). Behaviour verified live
+        // via Playwright (Enter@Confirm->true, Enter@Cancel->false, Space@Confirm->true);
+        // card_d2506588cee92488f50cbe5e.
+        expect(apiJs).toMatch(
+            /document\.activeElement\s*!==\s*overlay\.querySelector\(\s*['"]\.eclaw-confirm-ok['"]\s*\)[\s\S]{0,80}cleanup\(\s*false\s*\)/
+        );
     });
 
     test('Esc still cancels regardless of danger flag', () => {
@@ -45,12 +52,7 @@ describe('showConfirm — destructive-modal safe default focus', () => {
     });
 
     test('non-danger confirm keeps Enter=confirm ergonomics', () => {
-        // The fix must preserve the snappy OK-flow for non-destructive
-        // dialogs — Enter should still resolve true when danger is falsy.
-        // We assert via the same `cleanup(!danger ? true : false)` expression
-        // — when danger is false, the inner ternary evaluates to true.
-        const enterLine = apiJs.match(/e\.key\s*===\s*['"]Enter['"][^;]*;?/);
-        expect(enterLine).not.toBeNull();
-        expect(enterLine[0]).toMatch(/!danger\s*\?\s*true\s*:\s*false/);
+        // Non-destructive dialogs keep the snappy OK-flow: Enter resolves true.
+        expect(apiJs).toMatch(/if\s*\(\s*!danger\s*\)\s*\{\s*cleanup\(\s*true\s*\)\s*;?\s*\}/);
     });
 });

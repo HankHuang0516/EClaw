@@ -38,6 +38,13 @@ ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS schedule_timezone VARCHAR(64) 
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS schedule_last_run_at TIMESTAMPTZ DEFAULT NULL;
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS schedule_next_run_at TIMESTAMPTZ DEFAULT NULL;
 
+-- Per-card usage-quota guard for recurring cron schedules (card_c2635849,
+-- parent card_ad507345). When a scheduled card fires, the scheduler skips
+-- child-card dispatch if ANY assigned entity's rolling 5h or 7d usage%
+-- strictly exceeds these thresholds. Range [50, 99]; defaults 85 / 95.
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS schedule_skip_if_5h_pct_over SMALLINT DEFAULT 85;
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS schedule_skip_if_7d_pct_over SMALLINT DEFAULT 95;
+
 CREATE INDEX IF NOT EXISTS idx_kanban_cards_schedule ON kanban_cards(schedule_enabled, schedule_next_run_at)
     WHERE schedule_enabled = true;
 
@@ -56,10 +63,38 @@ ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS reviewer_entity_id INTEGER DEF
 -- without at least one image/* file attached via POST /api/mission/card/:id/file.
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_screenshot_review BOOLEAN DEFAULT TRUE;
 
+-- HARD UX-interaction evidence opt-in (2026-07-04, card_5d50ee10): when TRUE the
+-- OODA-R done-gate hard-requires a [UX-OPERATED] attestation comment (≥15 chars of
+-- the flow operated) PLUS an interaction artifact before a card can move to done —
+-- and this check blocks EVEN IN SOFT MODE (soft mode must not suppress it). DEFAULT
+-- FALSE. Card-type detection is also automatic (painTags interaction/gesture/flow/
+-- ux/navigation/drag/scroll), so this flag is an explicit override, not the only
+-- trigger. Settable via PUT /card/:id {requiresInteractionReview}.
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_interaction_review BOOLEAN DEFAULT FALSE;
+
 -- OODA-R Phase 1 #3c done-gate (2026-06-07): cards with this flag cannot move to done
 -- without a composer-marker preflight comment AND a 5-item evidence comment.
 -- Bypass: flip to FALSE via PUT /card/:id for trivial dep-bumps / doc renames.
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_preflight_review BOOLEAN DEFAULT TRUE;
+
+-- Per-card PR-link opt-in (2026-07-03, owner directive "PR link 是 option 且默認不阻擋"):
+-- when TRUE, the done-gate additionally requires the evidence comment to cite a
+-- https://github.com/<owner>/<repo>/pull/<N> link. DEFAULT FALSE = NOT blocking, so
+-- by default no card needs a PR link at done. Set at card creation via
+-- POST /card {requirePrLink} or later via PUT /card/:id/config {requirePrLink};
+-- also settable on automation母卡 (parent cron cards). Supersedes the old
+-- automation-only PR-link exemption — everything is exempt by default, opting in
+-- turns enforcement on. Automation/ops cards stay exempt even when opted in.
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_pr_link BOOLEAN DEFAULT FALSE;
+
+-- Done-gate SOFT mode flag (2026-07-04, owner decision card_f52ef42e). Set TRUE
+-- when a card is moved to review/done under the SOFT done-gate (device pref
+-- done_gate_mode='soft', the default) with incomplete deliverables: the move is
+-- ALLOWED (zero false-block) but the card is flagged + a ⚠️ soft-warning comment is
+-- posted. The stale-scan then SUPPRESSES this card's auto-escalation (L2/L3 ladder)
+-- so an evidence-incomplete card doesn't re-nudge as if stuck ("擋自動升級"). Cleared
+-- to FALSE on any subsequent /move (the card left the soft-flagged state).
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS done_gate_soft_flagged BOOLEAN DEFAULT FALSE;
 
 -- Backlog launch-gate (2026-05-20): when gated=true, L1/L2/L3 staleness escalation
 -- skips this card so launch-pending drafts don't auto-bounce backlog→blocked.

@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -18,8 +19,11 @@ import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.NavItem
+import com.hank.clawlive.ui.NavResumeController
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import com.hank.clawlive.ui.nav.EClawNativeNavBridge
+import com.hank.clawlive.ui.reconnect.ReconnectBackoff
+import com.hank.clawlive.ui.reconnect.ReconnectOverlayController
 import timber.log.Timber
 
 /**
@@ -32,8 +36,18 @@ class MissionControlActivity : AppCompatActivity() {
 
     private val deviceManager: DeviceManager by lazy { DeviceManager.getInstance(this) }
     private var webView: WebView? = null
+    private var reconnectOverlay: ReconnectOverlayController? = null
     private var pendingNavIntent: String? = null
     private var pageReady: Boolean = false
+
+    private val navResume: NavResumeController by lazy {
+        val prefs = getSharedPreferences("nav_resume_prefs", MODE_PRIVATE)
+        NavResumeController(object : NavResumeController.Store {
+            override fun readLastNav(): String? = prefs.getString("last_nav", null)
+            override fun writeLastNav(name: String) { prefs.edit().putString("last_nav", name).apply() }
+            override fun clearLastNav() { prefs.edit().remove("last_nav").apply() }
+        })
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +71,8 @@ class MissionControlActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         RecordingIndicatorHelper.attach(this)
+        // Persist current tab so process-death restart can restore here (card_489a8836).
+        navResume.onNavigatedTo(NavItem.MISSION)
     }
 
     override fun onPause() {
@@ -105,6 +121,21 @@ class MissionControlActivity : AppCompatActivity() {
                     view?.evaluateJavascript(EClawNativeNavBridge.JS_SHIM, null)
                     pageReady = true
                     deliverPendingNavIntent()
+                    reconnectOverlay?.onPageFinished()
+                }
+
+                override fun onReceivedError(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                    error: WebResourceError?
+                ) {
+                    super.onReceivedError(view, request, error)
+                    if (request?.isForMainFrame != true) return
+                    val code = error?.errorCode ?: WebViewClient.ERROR_UNKNOWN
+                    if (!ReconnectBackoff.isTransportError(code)) return
+                    val failingUrl = request.url?.toString()
+                    Timber.w("[Mission] main-frame transport error code=$code url=$failingUrl — showing reconnect overlay")
+                    reconnectOverlay?.onTransportError(failingUrl)
                 }
             }
             webChromeClient = WebChromeClient()
@@ -116,6 +147,7 @@ class MissionControlActivity : AppCompatActivity() {
 
         container.addView(wv)
         webView = wv
+        reconnectOverlay = ReconnectOverlayController(this, container, wv, tag = "Mission")
 
         val deviceId = deviceManager.deviceId
         val deviceSecret = deviceManager.deviceSecret
@@ -172,6 +204,8 @@ class MissionControlActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        reconnectOverlay?.destroy()
+        reconnectOverlay = null
         webView?.destroy()
         webView = null
         Timber.d("[Mission] onDestroy: WebView cleaned up")

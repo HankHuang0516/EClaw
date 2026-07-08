@@ -3,7 +3,7 @@
 //
 // Detects cards that are silently stuck:
 //   - in_progress > 2h with no new comment      → post a "what's next?" prompt
-//   - in_progress > 24h with no new comment     → move to blocked + system note
+//   - P0/P1 in_progress > 24h with no new comment → move to blocked + system note
 //
 // Pure-function selectors + a single startSweeper() that wires the interval.
 // The selectors are the unit-testable seam; the action layer below them is
@@ -14,6 +14,7 @@
 const PROMPT_AFTER_MS = 2 * 60 * 60 * 1000;       // 2h
 const ESCALATE_AFTER_MS = 24 * 60 * 60 * 1000;    // 24h
 const SWEEP_INTERVAL_MS = 5 * 60 * 1000;          // 5min
+const ESCALATE_SEVERITIES = new Set(['P0', 'P1']);
 
 /**
  * @typedef {Object} CardActivity
@@ -21,6 +22,8 @@ const SWEEP_INTERVAL_MS = 5 * 60 * 1000;          // 5min
  * @property {string} deviceId
  * @property {string} title
  * @property {string} status              expect 'in_progress'
+ * @property {string} [priority]          Kanban severity: P0/P1/P2/P3
+ * @property {string} [severity]          Alias accepted by tests/callers
  * @property {string|number|Date} statusChangedAt
  * @property {string|number|Date|null} lastNonSystemCommentAt   null if none
  * @property {string|number|Date|null} lastHeartbeatPromptAt    null if never
@@ -32,6 +35,15 @@ function tsOf(v) {
     if (typeof v === 'number') return v;
     if (v instanceof Date) return v.getTime();
     return Date.parse(v) || 0;
+}
+
+function severityOf(card) {
+    const raw = card && (card.severity || card.priority);
+    return ((raw || 'P2') + '').trim().toUpperCase();
+}
+
+function allowsEscalation(card) {
+    return ESCALATE_SEVERITIES.has(severityOf(card));
 }
 
 /**
@@ -49,7 +61,7 @@ function classifyCard(card, nowMs) {
     if (lastActivityTs === 0) return 'idle';
 
     const age = nowMs - lastActivityTs;
-    if (age >= ESCALATE_AFTER_MS) {
+    if (age >= ESCALATE_AFTER_MS && allowsEscalation(card)) {
         // Dedupe: don't escalate twice (most recent escalate within 12h → already handled).
         const lastEsc = tsOf(card.lastEscalateAt);
         if (lastEsc > 0 && (nowMs - lastEsc) < (12 * 60 * 60 * 1000)) return 'idle';
@@ -104,6 +116,7 @@ function startSweeper({ pool, addSystemComment, moveCard, getNow }, intervalMs =
                     c.device_id AS "deviceId",
                     c.title AS "title",
                     c.status AS "status",
+                    c.priority AS "priority",
                     c.status_changed_at AS "statusChangedAt",
                     (SELECT MAX(created_at)
                        FROM kanban_comments

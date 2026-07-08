@@ -14,18 +14,24 @@
 
     const STORAGE_KEY = 'eclaw_ai_chat_history';
     const PENDING_KEY = 'eclaw_ai_chat_pending';
+    const WINDOW_STATE_KEY = 'eclaw_ai_chat_window_state_v1';
     const MAX_HISTORY = 20;
     const MAX_IMAGES = 3;
     const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB after compression
     const MAX_IMAGE_DIM = 1024; // max width/height for compression
     const POLL_INTERVAL = 3000; // 3 seconds
     const POLL_MAX_DURATION = 150000; // 2.5 minutes
+    const DEFAULT_PANEL_SIZE = { width: 380, height: 520 };
+    const MIN_PANEL_SIZE = { width: 300, height: 360 };
+    const PANEL_VIEWPORT_MARGIN = 16;
+    const COMPACT_PANEL_BREAKPOINT = 640;
 
     let chatHistory = [];
     let isOpen = false;
     let isLoading = false;
     let pendingImages = []; // { data: base64, mimeType: string }
     let pollTimer = null;
+    let windowState = { resizeEnabled: true };
 
     // ── localStorage ──────────────────────────
     function loadHistory() {
@@ -48,6 +54,168 @@
     function getCurrentPage() {
         const m = window.location.pathname.match(/\/([^/]+)\.html/);
         return m ? m[1] : 'unknown';
+    }
+
+    function getWindowStateId() {
+        return window.location.pathname || getCurrentPage();
+    }
+
+    function readWindowStates() {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(WINDOW_STATE_KEY) || '{}');
+            return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch (_) {
+            return {};
+        }
+    }
+
+    function loadWindowState() {
+        const state = readWindowStates()[getWindowStateId()] || {};
+        return {
+            resizeEnabled: state.resizeEnabled !== false,
+            width: Number.isFinite(Number(state.width)) ? Number(state.width) : undefined,
+            height: Number.isFinite(Number(state.height)) ? Number(state.height) : undefined,
+        };
+    }
+
+    function saveWindowState(patch) {
+        windowState = Object.assign({}, windowState, patch || {});
+        try {
+            const all = readWindowStates();
+            all[getWindowStateId()] = {
+                resizeEnabled: windowState.resizeEnabled !== false,
+                width: Number.isFinite(Number(windowState.width)) ? Math.round(Number(windowState.width)) : undefined,
+                height: Number.isFinite(Number(windowState.height)) ? Math.round(Number(windowState.height)) : undefined,
+            };
+            localStorage.setItem(WINDOW_STATE_KEY, JSON.stringify(all));
+        } catch (_) {}
+    }
+
+    function clampPanelSize(width, height) {
+        const viewportWidth = Math.max(0, window.innerWidth || DEFAULT_PANEL_SIZE.width);
+        const viewportHeight = Math.max(0, window.innerHeight || DEFAULT_PANEL_SIZE.height);
+        const maxWidth = Math.max(260, viewportWidth - PANEL_VIEWPORT_MARGIN);
+        const maxHeight = Math.max(300, viewportHeight - PANEL_VIEWPORT_MARGIN);
+        const minWidth = Math.min(MIN_PANEL_SIZE.width, maxWidth);
+        const minHeight = Math.min(MIN_PANEL_SIZE.height, maxHeight);
+        return {
+            width: Math.round(Math.min(Math.max(Number(width) || DEFAULT_PANEL_SIZE.width, minWidth), maxWidth)),
+            height: Math.round(Math.min(Math.max(Number(height) || DEFAULT_PANEL_SIZE.height, minHeight), maxHeight)),
+        };
+    }
+
+    function isCompactPanelViewport() {
+        if (window.matchMedia && window.matchMedia(`(max-width: ${COMPACT_PANEL_BREAKPOINT}px)`).matches) return true;
+        return (window.innerWidth || 0) <= COMPACT_PANEL_BREAKPOINT;
+    }
+
+    function applyPanelSize(panel) {
+        if (!panel) return;
+        if (isCompactPanelViewport() || !Number.isFinite(Number(windowState.width)) || !Number.isFinite(Number(windowState.height))) {
+            panel.style.width = '';
+            panel.style.height = '';
+            return;
+        }
+        const size = clampPanelSize(windowState.width, windowState.height);
+        panel.style.width = size.width + 'px';
+        panel.style.height = size.height + 'px';
+    }
+
+    function syncResizeControls(panel) {
+        if (!panel) return;
+        const enabled = windowState.resizeEnabled !== false;
+        const btn = panel.querySelector('.ai-chat-resize-toggle-btn');
+        panel.classList.toggle('ai-chat-resize-disabled', !enabled);
+        if (btn) {
+            btn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+            btn.setAttribute('aria-label', enabled ? 'Disable window resizing' : 'Enable window resizing');
+            btn.title = enabled ? 'Disable window resizing' : 'Enable window resizing';
+        }
+    }
+
+    function startPanelResize(event) {
+        if (windowState.resizeEnabled === false) return;
+        if (event.button !== undefined && event.button !== 0) return;
+        const panel = event.currentTarget && event.currentTarget.closest
+            ? event.currentTarget.closest('.ai-chat-panel')
+            : document.getElementById('aiChatPanel');
+        if (!panel) return;
+        event.preventDefault();
+
+        const rect = panel.getBoundingClientRect();
+        const startX = event.clientX;
+        const startY = event.clientY;
+        const startWidth = rect.width;
+        const startHeight = rect.height;
+        panel.classList.add('ai-chat-resizing');
+
+        const onPointerMove = (moveEvent) => {
+            const size = clampPanelSize(
+                startWidth + (startX - moveEvent.clientX),
+                startHeight + (startY - moveEvent.clientY)
+            );
+            panel.style.width = size.width + 'px';
+            panel.style.height = size.height + 'px';
+        };
+
+        const onPointerUp = () => {
+            panel.classList.remove('ai-chat-resizing');
+            const finalRect = panel.getBoundingClientRect();
+            saveWindowState(clampPanelSize(finalRect.width, finalRect.height));
+            document.removeEventListener('pointermove', onPointerMove);
+            document.removeEventListener('pointerup', onPointerUp);
+            document.removeEventListener('pointercancel', onPointerUp);
+        };
+
+        document.addEventListener('pointermove', onPointerMove);
+        document.addEventListener('pointerup', onPointerUp);
+        document.addEventListener('pointercancel', onPointerUp);
+    }
+
+    function adjustPanelSizeByKeyboard(event) {
+        if (windowState.resizeEnabled === false) return;
+        const delta = event.shiftKey ? 40 : 20;
+        let widthDelta = 0;
+        let heightDelta = 0;
+        if (event.key === 'ArrowLeft') widthDelta = delta;
+        else if (event.key === 'ArrowRight') widthDelta = -delta;
+        else if (event.key === 'ArrowUp') heightDelta = delta;
+        else if (event.key === 'ArrowDown') heightDelta = -delta;
+        else return;
+
+        event.preventDefault();
+        const panel = event.currentTarget && event.currentTarget.closest
+            ? event.currentTarget.closest('.ai-chat-panel')
+            : document.getElementById('aiChatPanel');
+        const rect = panel ? panel.getBoundingClientRect() : DEFAULT_PANEL_SIZE;
+        const size = clampPanelSize(rect.width + widthDelta, rect.height + heightDelta);
+        if (panel) {
+            panel.style.width = size.width + 'px';
+            panel.style.height = size.height + 'px';
+        }
+        saveWindowState(size);
+    }
+
+    function setupPanelWindowControls(panel) {
+        windowState = loadWindowState();
+        applyPanelSize(panel);
+        syncResizeControls(panel);
+
+        const toggle = panel.querySelector('.ai-chat-resize-toggle-btn');
+        if (toggle) {
+            toggle.addEventListener('click', () => {
+                saveWindowState({ resizeEnabled: windowState.resizeEnabled === false });
+                syncResizeControls(panel);
+            });
+        }
+
+        const grip = panel.querySelector('.ai-chat-resize-grip');
+        if (grip) {
+            grip.addEventListener('pointerdown', startPanelResize);
+            grip.addEventListener('keydown', adjustPanelSizeByKeyboard);
+        }
+
+        window.addEventListener('resize', () => applyPanelSize(panel));
     }
 
     // ── Image Utilities ──────────────────────
@@ -161,6 +329,14 @@
                     <span class="ai-chat-header-title">E-Claw AI</span>
                 </div>
                 <div class="ai-chat-header-right">
+                    <button class="ai-chat-resize-toggle-btn" type="button" aria-pressed="true" title="Disable window resizing" aria-label="Disable window resizing">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M15 3h6v6"></path>
+                            <path d="M21 3l-7 7"></path>
+                            <path d="M9 21H3v-6"></path>
+                            <path d="M3 21l7-7"></path>
+                        </svg>
+                    </button>
                     <button class="ai-chat-clear-btn" title="Clear history">\u{1F5D1}\uFE0F</button>
                     <button class="ai-chat-close-btn" title="Close">&times;</button>
                 </div>
@@ -177,13 +353,14 @@
                 </button>
                 <textarea id="aiChatInput" class="ai-chat-input" rows="1"
                           placeholder="Ask a question..." maxlength="2000"></textarea>
-                <button id="aiChatSend" class="ai-chat-send-btn" disabled>
+                <button id="aiChatSend" class="ai-chat-send-btn" aria-label="Send message" disabled>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="22" y1="2" x2="11" y2="13"></line>
                         <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                     </svg>
                 </button>
-            </div>`;
+            </div>
+            <div class="ai-chat-resize-grip" role="separator" aria-orientation="vertical" aria-label="Resize chat window" title="Drag to resize" tabindex="0"></div>`;
 
         // Inject CSS for image features
         const style = document.createElement('style');
@@ -268,6 +445,10 @@
                 color: var(--text-secondary, #888);
                 animation: ai-chat-pulse 1.5s ease-in-out infinite;
             }
+            .ai-chat-resizing,
+            .ai-chat-resizing * {
+                user-select: none;
+            }
             @keyframes ai-chat-pulse {
                 0%, 100% { opacity: 0.6; }
                 50% { opacity: 1; }
@@ -277,6 +458,7 @@
 
         document.body.appendChild(fab);
         document.body.appendChild(panel);
+        setupPanelWindowControls(panel);
 
         // Events
         panel.querySelector('.ai-chat-close-btn').addEventListener('click', toggleChat);

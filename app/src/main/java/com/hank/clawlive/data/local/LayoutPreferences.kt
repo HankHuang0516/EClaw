@@ -2,6 +2,7 @@ package com.hank.clawlive.data.local
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.provider.Settings
 
 /**
  * Entity Layout Types for wallpaper positioning
@@ -25,13 +26,24 @@ enum class UsageOverlayPosition {
 }
 
 /**
+ * How kanban cards are materialized as wallpaper objects.
+ */
+enum class WallpaperKanbanObjectStyle {
+    SMART_MIX,
+    FOLDER,
+    BOOK_NOTEBOOK,
+    CLIPBOARD,
+    STORAGE_BOX,
+    STICKY_CARD
+}
+
+/**
  * Manages entity layout preferences
  */
-class LayoutPreferences private constructor(context: Context) {
-
-    private val prefs: SharedPreferences = context.getSharedPreferences(
-        PREFS_NAME, Context.MODE_PRIVATE
-    )
+class LayoutPreferences private constructor(
+    private val prefs: SharedPreferences,
+    private val appContext: Context?
+) {
 
     var entityLayout: EntityLayout
         get() {
@@ -176,20 +188,30 @@ class LayoutPreferences private constructor(context: Context) {
     }
 
     /**
-     * Clear custom position for an entity
+     * Clear custom position for an entity (also drops its pin so a cleared
+     * position is never left "pinned" to a stale spot).
      */
     fun clearCustomPosition(entityId: Int) {
-        prefs.edit().remove("${KEY_CUSTOM_POS_PREFIX}$entityId").apply()
+        prefs.edit()
+            .remove("${KEY_CUSTOM_POS_PREFIX}$entityId")
+            .remove("${KEY_PINNED_PREFIX}$entityId")
+            .apply()
     }
 
     /**
-     * Clear all custom positions (reset to defaults)
+     * Clear all custom positions (reset to defaults).
+     *
+     * Scans the actual stored keys instead of a hardcoded 0..7 slot range. The
+     * old range silently skipped entity ids >= 8 (e.g. entity #10) so their
+     * custom_pos / pin orphaned forever — the configured-vs-displayed desync for
+     * high-id entities (card wallpaper-drag-pin, B3). Also clears the matching
+     * pin so a reset truly returns the entity to free/default layout.
      */
     fun clearAllCustomPositions() {
         val editor = prefs.edit()
-        for (i in 0..7) {
-            editor.remove("${KEY_CUSTOM_POS_PREFIX}$i")
-        }
+        prefs.all.keys
+            .filter { it.startsWith(KEY_CUSTOM_POS_PREFIX) || it.startsWith(KEY_PINNED_PREFIX) }
+            .forEach { editor.remove(it) }
         editor.apply()
     }
 
@@ -209,14 +231,70 @@ class LayoutPreferences private constructor(context: Context) {
     }
 
     /**
-     * Clear all custom scales (reset to defaults)
+     * Clear all custom scales (reset to defaults).
+     *
+     * Key-scan (not 0..7) so entity ids >= 8 (e.g. entity #10) are cleared too
+     * — same #10-orphan fix as [clearAllCustomPositions] (card wallpaper-drag-pin, B3).
      */
     fun clearAllEntityScales() {
         val editor = prefs.edit()
-        for (i in 0..7) {
-            editor.remove("${KEY_ENTITY_SCALE_PREFIX}$i")
-        }
+        prefs.all.keys
+            .filter { it.startsWith(KEY_ENTITY_SCALE_PREFIX) }
+            .forEach { editor.remove(it) }
         editor.apply()
+    }
+
+    // ============================================================
+    // PINNED POSITION (HARD PIN) — owner decision: a dragged/dropped
+    // position becomes a LOCK. A pinned entity stops EXACTLY at its
+    // custom_pos and does not wander/retarget/gather around it. The flag
+    // is per-entity and read by the wander loop (WallpaperWanderController)
+    // and the renderer.
+    // ============================================================
+
+    /** Whether [entityId] is pinned (held exactly at its custom position). */
+    fun isPinned(entityId: Int): Boolean {
+        return prefs.getBoolean("${KEY_PINNED_PREFIX}$entityId", false)
+    }
+
+    /** Set or clear the pin for [entityId]. */
+    fun setPinned(entityId: Int, pinned: Boolean) {
+        if (pinned) {
+            prefs.edit().putBoolean("${KEY_PINNED_PREFIX}$entityId", true).apply()
+        } else {
+            prefs.edit().remove("${KEY_PINNED_PREFIX}$entityId").apply()
+        }
+    }
+
+    /** All currently-pinned entity ids (scans actual keys; not slot-limited). */
+    fun getPinnedEntityIds(): Set<Int> {
+        return prefs.all.keys
+            .filter { it.startsWith(KEY_PINNED_PREFIX) && prefs.getBoolean(it, false) }
+            .mapNotNull { it.removePrefix(KEY_PINNED_PREFIX).toIntOrNull() }
+            .toSet()
+    }
+
+    /** True if ANY entity has a saved custom position or pin. */
+    fun hasAnyCustomOrPinnedPosition(): Boolean {
+        return prefs.all.keys.any {
+            (it.startsWith(KEY_CUSTOM_POS_PREFIX)) ||
+                (it.startsWith(KEY_PINNED_PREFIX) && prefs.getBoolean(it, false))
+        }
+    }
+
+    /**
+     * Atomically pin [entityId] at (xPercent,yPercent): persist the custom
+     * position, set the pin, and enable custom layout so the renderer honors it.
+     * This is the single write the live-wallpaper drag commit performs.
+     */
+    fun pinAt(entityId: Int, xPercent: Float, yPercent: Float) {
+        val x = xPercent.coerceIn(0.05f, 0.95f)
+        val y = yPercent.coerceIn(0.05f, 0.95f)
+        prefs.edit()
+            .putString("${KEY_CUSTOM_POS_PREFIX}$entityId", "$x,$y")
+            .putBoolean("${KEY_PINNED_PREFIX}$entityId", true)
+            .putBoolean(KEY_USE_CUSTOM_LAYOUT, true)
+            .apply()
     }
 
     /**
@@ -224,13 +302,15 @@ class LayoutPreferences private constructor(context: Context) {
      * @param permutation order[newSlot] = oldSlot (same semantics as the reorder API)
      */
     fun migrateEntityOrder(permutation: IntArray) {
-        // 1. Snapshot old positions and scales
+        // 1. Snapshot old positions, scales, and pins
         val oldPositions = mutableMapOf<Int, String?>()
         val oldScales = mutableMapOf<Int, Float?>()
+        val oldPinned = mutableMapOf<Int, Boolean>()
         for (oldSlot in permutation) {
             oldPositions[oldSlot] = prefs.getString("${KEY_CUSTOM_POS_PREFIX}$oldSlot", null)
             val scaleKey = "${KEY_ENTITY_SCALE_PREFIX}$oldSlot"
             oldScales[oldSlot] = if (prefs.contains(scaleKey)) prefs.getFloat(scaleKey, 1.0f) else null
+            oldPinned[oldSlot] = prefs.getBoolean("${KEY_PINNED_PREFIX}$oldSlot", false)
         }
 
         // 2. Apply to new slots
@@ -250,6 +330,12 @@ class LayoutPreferences private constructor(context: Context) {
                 editor.putFloat("${KEY_ENTITY_SCALE_PREFIX}$newSlot", scale)
             } else {
                 editor.remove("${KEY_ENTITY_SCALE_PREFIX}$newSlot")
+            }
+            // Pin (HARD PIN follows the entity through a reorder)
+            if (oldPinned[oldSlot] == true) {
+                editor.putBoolean("${KEY_PINNED_PREFIX}$newSlot", true)
+            } else {
+                editor.remove("${KEY_PINNED_PREFIX}$newSlot")
             }
         }
 
@@ -284,6 +370,157 @@ class LayoutPreferences private constructor(context: Context) {
         get() = prefs.getInt(KEY_SERVER_ENTITY_LIMIT, 4)
         set(value) {
             prefs.edit().putInt(KEY_SERVER_ENTITY_LIMIT, value.coerceIn(4, 8)).apply()
+        }
+
+    /**
+     * Device-level wallpaper walking toggle. This intentionally lives in the
+     * wallpaper/layout preference file rather than per-entity state: one device
+     * can choose whether its wallpaper entities wander without changing server
+     * or entity settings for other devices.
+     */
+    var wallpaperWalkingEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_WALKING_ENABLED, true) && !isAnimatorDurationDisabled()
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_WALKING_ENABLED, value).apply()
+        }
+
+    var wallpaperPurposefulWalkingEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_PURPOSEFUL_WALKING_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_PURPOSEFUL_WALKING_ENABLED, value).apply()
+        }
+
+    var wallpaperEntityInteractionsEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_ENTITY_INTERACTIONS_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_ENTITY_INTERACTIONS_ENABLED, value).apply()
+        }
+
+    var wallpaperSpeechBubblesEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_SPEECH_BUBBLES_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_SPEECH_BUBBLES_ENABLED, value).apply()
+        }
+
+    var wallpaperBubbleDurationSeconds: Int
+        get() = prefs.getInt(
+            KEY_WALLPAPER_BUBBLE_DURATION_SECONDS,
+            WALLPAPER_BUBBLE_DURATION_DEFAULT_SECONDS
+        ).coerceIn(
+            WALLPAPER_BUBBLE_DURATION_MIN_SECONDS,
+            WALLPAPER_BUBBLE_DURATION_MAX_SECONDS
+        )
+        set(value) {
+            prefs.edit().putInt(
+                KEY_WALLPAPER_BUBBLE_DURATION_SECONDS,
+                value.coerceIn(
+                    WALLPAPER_BUBBLE_DURATION_MIN_SECONDS,
+                    WALLPAPER_BUBBLE_DURATION_MAX_SECONDS
+                )
+            ).apply()
+        }
+
+    val wallpaperBubbleDurationMs: Long
+        get() = wallpaperBubbleDurationSeconds * 1_000L
+
+    var wallpaperCollisionReactionDurationSeconds: Int
+        get() = prefs.getInt(
+            KEY_WALLPAPER_COLLISION_REACTION_DURATION_SECONDS,
+            WALLPAPER_COLLISION_REACTION_DURATION_DEFAULT_SECONDS
+        ).coerceIn(
+            WALLPAPER_COLLISION_REACTION_DURATION_MIN_SECONDS,
+            WALLPAPER_COLLISION_REACTION_DURATION_MAX_SECONDS
+        )
+        set(value) {
+            prefs.edit().putInt(
+                KEY_WALLPAPER_COLLISION_REACTION_DURATION_SECONDS,
+                value.coerceIn(
+                    WALLPAPER_COLLISION_REACTION_DURATION_MIN_SECONDS,
+                    WALLPAPER_COLLISION_REACTION_DURATION_MAX_SECONDS
+                )
+            ).apply()
+        }
+
+    val wallpaperCollisionReactionDurationMs: Long
+        get() = wallpaperCollisionReactionDurationSeconds * 1_000L
+
+    var wallpaperBubblePulseEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_BUBBLE_PULSE_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_BUBBLE_PULSE_ENABLED, value).apply()
+        }
+
+    var wallpaperBubbleOverlayAvoidanceEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_BUBBLE_OVERLAY_AVOIDANCE_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_BUBBLE_OVERLAY_AVOIDANCE_ENABLED, value).apply()
+        }
+
+    var wallpaperStateAuraEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_STATE_AURA_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_STATE_AURA_ENABLED, value).apply()
+        }
+
+    var wallpaperGroundShadowEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_GROUND_SHADOW_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_GROUND_SHADOW_ENABLED, value).apply()
+        }
+
+    var wallpaperAdaptiveEffectsEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_ADAPTIVE_EFFECTS_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_ADAPTIVE_EFFECTS_ENABLED, value).apply()
+        }
+
+    var wallpaperOfflineEntityCacheEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_OFFLINE_ENTITY_CACHE_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_OFFLINE_ENTITY_CACHE_ENABLED, value).apply()
+        }
+
+    var wallpaperKanbanTasksEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_KANBAN_TASKS_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_KANBAN_TASKS_ENABLED, value).apply()
+        }
+
+    var wallpaperKanbanAutomationBoardEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_KANBAN_AUTOMATION_BOARD_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_KANBAN_AUTOMATION_BOARD_ENABLED, value).apply()
+        }
+
+    var wallpaperKanbanPrivacyModeEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_KANBAN_PRIVACY_MODE_ENABLED, false)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_KANBAN_PRIVACY_MODE_ENABLED, value).apply()
+        }
+
+    var wallpaperKanbanObjectStyle: WallpaperKanbanObjectStyle
+        get() {
+            val name = prefs.getString(KEY_WALLPAPER_KANBAN_OBJECT_STYLE, WallpaperKanbanObjectStyle.SMART_MIX.name)
+            return try {
+                WallpaperKanbanObjectStyle.valueOf(name ?: WallpaperKanbanObjectStyle.SMART_MIX.name)
+            } catch (e: Exception) {
+                WallpaperKanbanObjectStyle.SMART_MIX
+            }
+        }
+        set(value) {
+            prefs.edit().putString(KEY_WALLPAPER_KANBAN_OBJECT_STYLE, value.name).apply()
+        }
+
+    var wallpaperKanbanAssetWhiteboardEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_KANBAN_ASSET_WHITEBOARD_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_KANBAN_ASSET_WHITEBOARD_ENABLED, value).apply()
+        }
+
+    var wallpaperKanbanHandwrittenBoardTextEnabled: Boolean
+        get() = prefs.getBoolean(KEY_WALLPAPER_KANBAN_HANDWRITTEN_BOARD_TEXT_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_WALLPAPER_KANBAN_HANDWRITTEN_BOARD_TEXT_ENABLED, value).apply()
         }
 
     var usageOverlayEnabled: Boolean
@@ -419,6 +656,19 @@ class LayoutPreferences private constructor(context: Context) {
         }
     }
 
+    private fun isAnimatorDurationDisabled(): Boolean {
+        val ctx = appContext ?: return false
+        return try {
+            Settings.Global.getFloat(
+                ctx.contentResolver,
+                Settings.Global.ANIMATOR_DURATION_SCALE,
+                1f
+            ) == 0f
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     companion object {
         private const val PREFS_NAME = "entity_layout_prefs"
         private const val KEY_LAYOUT = "layout_type"
@@ -429,10 +679,29 @@ class LayoutPreferences private constructor(context: Context) {
         private const val KEY_USE_CUSTOM_LAYOUT = "use_custom_layout"
         private const val KEY_CUSTOM_POS_PREFIX = "custom_pos_"
         private const val KEY_ENTITY_SCALE_PREFIX = "entity_scale_"
+        private const val KEY_PINNED_PREFIX = "pinned_"
         private const val KEY_USE_BACKGROUND_IMAGE = "use_background_image"
         private const val KEY_BACKGROUND_URI = "background_image_uri"
         private const val KEY_DEBUG_ENTITY_LIMIT = "debug_entity_limit"
         private const val KEY_SERVER_ENTITY_LIMIT = "server_entity_limit"
+        private const val KEY_WALLPAPER_WALKING_ENABLED = "wallpaper_walking_enabled"
+        private const val KEY_WALLPAPER_PURPOSEFUL_WALKING_ENABLED = "wallpaper_purposeful_walking_enabled"
+        private const val KEY_WALLPAPER_ENTITY_INTERACTIONS_ENABLED = "wallpaper_entity_interactions_enabled"
+        private const val KEY_WALLPAPER_SPEECH_BUBBLES_ENABLED = "wallpaper_speech_bubbles_enabled"
+        private const val KEY_WALLPAPER_BUBBLE_DURATION_SECONDS = "wallpaper_bubble_duration_seconds"
+        private const val KEY_WALLPAPER_COLLISION_REACTION_DURATION_SECONDS = "wallpaper_collision_reaction_duration_seconds"
+        private const val KEY_WALLPAPER_BUBBLE_PULSE_ENABLED = "wallpaper_bubble_pulse_enabled"
+        private const val KEY_WALLPAPER_BUBBLE_OVERLAY_AVOIDANCE_ENABLED = "wallpaper_bubble_overlay_avoidance_enabled"
+        private const val KEY_WALLPAPER_STATE_AURA_ENABLED = "wallpaper_state_aura_enabled"
+        private const val KEY_WALLPAPER_GROUND_SHADOW_ENABLED = "wallpaper_ground_shadow_enabled"
+        private const val KEY_WALLPAPER_ADAPTIVE_EFFECTS_ENABLED = "wallpaper_adaptive_effects_enabled"
+        private const val KEY_WALLPAPER_OFFLINE_ENTITY_CACHE_ENABLED = "wallpaper_offline_entity_cache_enabled"
+        private const val KEY_WALLPAPER_KANBAN_TASKS_ENABLED = "wallpaper_kanban_tasks_enabled"
+        private const val KEY_WALLPAPER_KANBAN_AUTOMATION_BOARD_ENABLED = "wallpaper_kanban_automation_board_enabled"
+        private const val KEY_WALLPAPER_KANBAN_PRIVACY_MODE_ENABLED = "wallpaper_kanban_privacy_mode_enabled"
+        private const val KEY_WALLPAPER_KANBAN_OBJECT_STYLE = "wallpaper_kanban_object_style"
+        private const val KEY_WALLPAPER_KANBAN_ASSET_WHITEBOARD_ENABLED = "wallpaper_kanban_asset_whiteboard_enabled"
+        private const val KEY_WALLPAPER_KANBAN_HANDWRITTEN_BOARD_TEXT_ENABLED = "wallpaper_kanban_handwritten_board_text_enabled"
         private const val KEY_USAGE_OVERLAY_ENABLED = "usage_overlay_enabled"
         private const val KEY_USAGE_OVERLAY_POSITION = "usage_overlay_position"
         private const val KEY_USAGE_OVERLAY_CENTER = "usage_overlay_center"
@@ -450,6 +719,17 @@ class LayoutPreferences private constructor(context: Context) {
         const val RESET_WINDOW_WEEKLY = "weekly"
         const val RESET_WINDOW_5H_WEEKLY = "5h_weekly"
 
+        const val WALLPAPER_BUBBLE_DURATION_MIN_SECONDS = 1
+        // Max raised 20s → 600s (10 min) per Hank request (card_c421110c). This
+        // single constant drives both the setter clamp (coerceIn below) and the
+        // WallpaperMoreSettings slider's valueTo, so the slider now reaches 10 min;
+        // secondsLabel() already renders ≥60s as "N 分鐘 / N 分 M 秒".
+        const val WALLPAPER_BUBBLE_DURATION_MAX_SECONDS = 600
+        const val WALLPAPER_BUBBLE_DURATION_DEFAULT_SECONDS = 5
+        const val WALLPAPER_COLLISION_REACTION_DURATION_MIN_SECONDS = 1
+        const val WALLPAPER_COLLISION_REACTION_DURATION_MAX_SECONDS = 20
+        const val WALLPAPER_COLLISION_REACTION_DURATION_DEFAULT_SECONDS = 5
+
         // Display mode constants
         const val MODE_SINGLE = 1
         const val MODE_DUAL = 2
@@ -460,8 +740,20 @@ class LayoutPreferences private constructor(context: Context) {
 
         fun getInstance(context: Context): LayoutPreferences {
             return instance ?: synchronized(this) {
-                instance ?: LayoutPreferences(context.applicationContext).also { instance = it }
+                instance ?: LayoutPreferences(
+                    context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE),
+                    context.applicationContext
+                ).also { instance = it }
             }
         }
+
+        /**
+         * Build a standalone instance backed by the supplied [SharedPreferences]
+         * for unit tests (no Android Context / animator-scale probe). Does NOT
+         * touch the process-wide singleton.
+         */
+        @JvmStatic
+        fun forTesting(prefs: SharedPreferences): LayoutPreferences =
+            LayoutPreferences(prefs, null)
     }
 }

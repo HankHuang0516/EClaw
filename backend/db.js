@@ -290,6 +290,76 @@ async function createTables() {
         `);
         console.log('[DynamicEntity] DB migration: next_entity_id column ensured on devices table');
 
+        // Push tokens (card_caa6307 follow-up): fcm_token (Android) + apns_token (iOS).
+        // Previously these were created lazily at runtime in index.js only when the FIRST
+        // token of each platform was registered (ALTER ... ADD COLUMN IF NOT EXISTS with a
+        // swallowed .catch). On a fresh DB (e.g. the 2026-04 pgvector migration) any query
+        // referencing apns_token before an iOS device ever registered errored with
+        // "column apns_token does not exist". Ensure both columns exist at startup so the
+        // schema never drifts regardless of registration traffic.
+        await client.query(`
+            ALTER TABLE devices ADD COLUMN IF NOT EXISTS fcm_token TEXT
+        `);
+        await client.query(`
+            ALTER TABLE devices ADD COLUMN IF NOT EXISTS apns_token TEXT
+        `);
+        console.log('[Push] DB migration: fcm_token + apns_token columns ensured on devices table');
+
+        // Multi-device FCM tokens (push notification clobber fix, 2026-06-29).
+        // The legacy single devices.fcm_token column means MULTIPLE physical devices
+        // sharing one deviceId (e.g. owner's phone + a desktop emulator) each register
+        // their token under the same deviceId and OVERWRITE each other — only the
+        // last-registered device receives pushes. Mirror the multi-row push_subscriptions
+        // design: one row per (device_id, token) so notifyDevice can fan out to ALL of a
+        // device's tokens. Backfill the current single-column token so no device regresses.
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS device_fcm_tokens (
+                device_id   TEXT   NOT NULL,
+                token       TEXT   NOT NULL,
+                platform    TEXT   NOT NULL DEFAULT 'fcm',
+                updated_at  BIGINT,
+                PRIMARY KEY (device_id, token)
+            )
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_device_fcm_tokens_device ON device_fcm_tokens(device_id)
+        `);
+        await client.query(`
+            INSERT INTO device_fcm_tokens (device_id, token, platform, updated_at)
+            SELECT device_id, fcm_token, 'fcm', $1 FROM devices WHERE fcm_token IS NOT NULL
+            ON CONFLICT (device_id, token) DO NOTHING
+        `, [Date.now()]);
+        console.log('[Push] DB migration: device_fcm_tokens multi-token table ensured + backfilled');
+
+        // Multi-device APNs tokens (push clobber fix — sibling of device_fcm_tokens, 2026-06-29).
+        // `devices.apns_token` has the identical single-column clobber as fcm_token had: a
+        // user with an iPhone AND an iPad sharing one deviceId would have the second device's
+        // APNs token OVERWRITE the first, so only the last-registered iOS device could ever
+        // receive a native push. Mirror the FCM fix with one row per (device_id, token).
+        // NOTE: there is currently NO APNs SEND path in the backend (apns_token is write-only:
+        // registered + read by the diagnostic status endpoint, never sent to). This table +
+        // upsert is preventive parity so that WHENEVER a native APNs sender is built it is
+        // already clobber-safe — it MUST read getDeviceApnsTokens() and delete only single
+        // dead-token rows, never the whole device. Backfill the legacy column so nothing regresses.
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS device_apns_tokens (
+                device_id   TEXT   NOT NULL,
+                token       TEXT   NOT NULL,
+                platform    TEXT   NOT NULL DEFAULT 'apns',
+                updated_at  BIGINT,
+                PRIMARY KEY (device_id, token)
+            )
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_device_apns_tokens_device ON device_apns_tokens(device_id)
+        `);
+        await client.query(`
+            INSERT INTO device_apns_tokens (device_id, token, platform, updated_at)
+            SELECT device_id, apns_token, 'apns', $1 FROM devices WHERE apns_token IS NOT NULL
+            ON CONFLICT (device_id, token) DO NOTHING
+        `, [Date.now()]);
+        console.log('[Push] DB migration: device_apns_tokens multi-token table ensured + backfilled');
+
         // Official bot bindings (free bot multi-device tracking)
         await client.query(`
             CREATE TABLE IF NOT EXISTS official_bot_bindings (
@@ -471,7 +541,15 @@ async function createTables() {
                 ON device_vars_audit (device_id, created_at DESC)
         `);
 
-        // Channel accounts (OpenClaw channel plugin integration)
+        // Channel accounts (OpenClaw channel plugin integration).
+        // A device is meant to have MANY channel accounts (one per plugin) — row identity is
+        // `channel_api_key UNIQUE` (a fresh key is generated per /provision). Do NOT declare
+        // UNIQUE(device_id): the original schema had it, and the idempotent DROP CONSTRAINT
+        // migration above (channel_accounts_device_id_key) removes it from EXISTING DBs — but
+        // that DROP runs *before* this CREATE, so on a FRESH DB (table not yet present) the
+        // drop is a no-op and a re-declared UNIQUE(device_id) here would survive forever,
+        // making a 2nd /provision fail-loud with a unique violation (audit spinoff card_4d9786fc).
+        // Omitting it here fixes fresh DBs; the DROP above still cleans up legacy DBs.
         await client.query(`
             CREATE TABLE IF NOT EXISTS channel_accounts (
                 id SERIAL PRIMARY KEY,
@@ -482,8 +560,7 @@ async function createTables() {
                 callback_token TEXT,
                 status TEXT DEFAULT 'active',
                 created_at BIGINT NOT NULL,
-                updated_at BIGINT NOT NULL,
-                UNIQUE(device_id)
+                updated_at BIGINT NOT NULL
             )
         `);
         await client.query(`CREATE INDEX IF NOT EXISTS idx_channel_api_key ON channel_accounts(channel_api_key)`);

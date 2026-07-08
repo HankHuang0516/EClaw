@@ -4,15 +4,17 @@ import android.content.Context
 import com.hank.clawlive.R
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.LayoutPreferences
+import com.hank.clawlive.data.local.WallpaperEntitySnapshotCache
 import com.hank.clawlive.data.model.AgentStatus
-import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.model.MultiEntityResponse
 import com.hank.clawlive.data.model.UsageSnapshotLatest
+import com.hank.clawlive.data.model.WallpaperKanbanCard
 import com.hank.clawlive.data.remote.ClawApiService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import retrofit2.HttpException
 import timber.log.Timber
 
 class StateRepository(
@@ -20,6 +22,7 @@ class StateRepository(
     private val context: Context
 ) {
     private val layoutPrefs = LayoutPreferences.getInstance(context)
+    private val wallpaperSnapshotCache = WallpaperEntitySnapshotCache.getInstance(context)
     private val deviceManager = DeviceManager.getInstance(context)
     private val chatRepository = ChatRepository.getInstance(context)
 
@@ -28,6 +31,15 @@ class StateRepository(
      * Now uses deviceId for v5 matrix architecture.
      */
     fun getStatusFlow(intervalMs: Long = 5_000): Flow<AgentStatus> = flow {
+        var backoffMs = intervalMs
+        // FSM Stage 3 (server-authoritative): remember the last state the SERVER
+        // reported so a transport/poll failure can re-show it instead of
+        // synthesizing SLEEPING. The old code mapped every network error →
+        // CharacterState.SLEEPING, which made a brief offline blip look like the
+        // entity fell asleep. SLEEPING must come ONLY from the server's
+        // deterministic evaluator (backend/lib/entity-activity.js), never a fetch
+        // failure. See ActivityStatePolicy.stateOnPollError.
+        var lastStatus: AgentStatus? = null
         while (true) {
             try {
                 val status = api.getAgentStatus(
@@ -36,19 +48,37 @@ class StateRepository(
                     entityId = 0,
                     appVersion = deviceManager.appVersion
                 )
+                backoffMs = intervalMs
+                lastStatus = status
                 emit(status)
                 Timber.d("API Status fetched: ${status.character} - ${status.state}")
+            } catch (e: HttpException) {
+                if (e.code() == 429) {
+                    backoffMs = minOf(backoffMs * 2, 300_000L).coerceAtLeast(60_000L)
+                    Timber.w("Status flow 429 rate-limited — backing off ${backoffMs}ms")
+                } else {
+                    backoffMs = intervalMs
+                    Timber.e(e, "Error fetching from API")
+                }
+                emit(statusOnPollError(lastStatus))
             } catch (e: Exception) {
+                backoffMs = intervalMs
                 Timber.e(e, "Error fetching from API")
-                emit(
-                    AgentStatus(
-                        message = "Lost: ${e.message}\nRetrying...",
-                        state = CharacterState.SLEEPING
-                    )
-                )
+                emit(statusOnPollError(lastStatus))
             }
-            delay(intervalMs)
+            delay(backoffMs)
         }
+    }
+
+    /**
+     * Status to emit when a single-entity poll fails. FSM Stage 3 invariant:
+     * keep the last SERVER-known activity state (or a neutral IDLE when nothing
+     * has been received yet) — a transport failure must NEVER drive the entity
+     * to SLEEPING. The decision lives in the pure-Kotlin [ActivityStatePolicy].
+     */
+    private fun statusOnPollError(lastStatus: AgentStatus?): AgentStatus {
+        val safeState = ActivityStatePolicy.stateOnPollError(lastStatus?.state)
+        return (lastStatus ?: AgentStatus()).copy(state = safeState)
     }
 
     /**
@@ -57,6 +87,7 @@ class StateRepository(
      * Also processes entity messages for chat history.
      */
     fun getMultiEntityStatusFlow(intervalMs: Long = 5_000): Flow<MultiEntityResponse> = flow {
+        var backoffMs = intervalMs
         while (true) {
             try {
                 // v5: Filter by deviceId on server side
@@ -123,26 +154,85 @@ class StateRepository(
 
                 // Persist server-provided entity limit for EntityChipHelper
                 layoutPrefs.serverEntityLimit = response.totalSlots
+                wallpaperSnapshotCache.saveEntities(filteredEntities, response.totalSlots)
 
+                backoffMs = intervalMs
                 emit(filteredResponse)
                 Timber.d("Multi-entity status: ${filteredEntities.size} entities for device ${deviceManager.deviceId}")
-            } catch (e: Exception) {
-                Timber.e(e, "Error fetching multi-entity status")
-                // Fallback to single error entity
-                emit(
-                    MultiEntityResponse(
-                        entities = listOf(
-                            EntityStatus(
-                                entityId = 0,
-                                message = "Connection error: ${e.message}",
-                                state = CharacterState.SLEEPING
-                            )
-                        ),
-                        activeCount = 1
+            } catch (e: HttpException) {
+                // FSM Stage 3 invariant (already satisfied here): a poll failure
+                // re-shows the last server-known entities from the offline cache
+                // (each carrying its last server-evaluated `state`) or an empty
+                // list — it NEVER synthesizes SLEEPING. Unlike getStatusFlow, the
+                // multi-entity path was already free of the error→false-sleep bug.
+                if (e.code() == 429) {
+                    backoffMs = minOf(backoffMs * 2, 300_000L).coerceAtLeast(60_000L)
+                    Timber.w("Multi-entity status 429 rate-limited — backing off ${backoffMs}ms")
+                } else {
+                    backoffMs = intervalMs
+                    Timber.e(e, "Error fetching multi-entity status")
+                }
+                val cached = if (layoutPrefs.wallpaperOfflineEntityCacheEnabled) {
+                    wallpaperSnapshotCache.loadEntities()
+                } else {
+                    null
+                }
+                if (cached != null && cached.entities.isNotEmpty()) {
+                    emit(
+                        MultiEntityResponse(
+                            entities = cached.entities,
+                            activeCount = cached.entities.size,
+                            totalSlots = cached.totalSlots,
+                            serverReady = false,
+                            fromOfflineCache = true,
+                            offlineReason = e.javaClass.simpleName,
+                            cachedAt = cached.cachedAt
+                        )
                     )
-                )
+                    Timber.w("Using wallpaper offline entity cache: count=${cached.entities.size}, cachedAt=${cached.cachedAt}")
+                } else {
+                    emit(
+                        MultiEntityResponse(
+                            entities = emptyList(),
+                            activeCount = 0,
+                            serverReady = false,
+                            offlineReason = e.javaClass.simpleName
+                        )
+                    )
+                }
+            } catch (e: Exception) {
+                backoffMs = intervalMs
+                Timber.e(e, "Error fetching multi-entity status")
+                val cached = if (layoutPrefs.wallpaperOfflineEntityCacheEnabled) {
+                    wallpaperSnapshotCache.loadEntities()
+                } else {
+                    null
+                }
+                if (cached != null && cached.entities.isNotEmpty()) {
+                    emit(
+                        MultiEntityResponse(
+                            entities = cached.entities,
+                            activeCount = cached.entities.size,
+                            totalSlots = cached.totalSlots,
+                            serverReady = false,
+                            fromOfflineCache = true,
+                            offlineReason = e.javaClass.simpleName,
+                            cachedAt = cached.cachedAt
+                        )
+                    )
+                    Timber.w("Using wallpaper offline entity cache: count=${cached.entities.size}, cachedAt=${cached.cachedAt}")
+                } else {
+                    emit(
+                        MultiEntityResponse(
+                            entities = emptyList(),
+                            activeCount = 0,
+                            serverReady = false,
+                            offlineReason = e.javaClass.simpleName
+                        )
+                    )
+                }
             }
-            delay(intervalMs)
+            delay(backoffMs)
         }
     }
 
@@ -151,7 +241,11 @@ class StateRepository(
      * overlay. Keeps the last good value on transient network failures.
      */
     fun getUsageSnapshotFlow(intervalMs: Long = 30_000): Flow<UsageSnapshotLatest?> = flow {
+        // Stagger: usage starts 1s after subscribe so it doesn't collide with
+        // the entity-status flow that fires at t=0 on resume.
+        delay(1_000L)
         var lastSnapshot: UsageSnapshotLatest? = null
+        var backoffMs = intervalMs
         while (true) {
             if (!layoutPrefs.usageOverlayEnabled) {
                 lastSnapshot = null
@@ -165,6 +259,7 @@ class StateRepository(
                     deviceId = deviceManager.deviceId,
                     deviceSecret = deviceManager.deviceSecret ?: ""
                 )
+                backoffMs = intervalMs
                 if (response.success) {
                     lastSnapshot = response.latest
                     emit(lastSnapshot)
@@ -173,11 +268,69 @@ class StateRepository(
                     Timber.w("Usage snapshot unavailable: ${response.error}")
                     emit(lastSnapshot)
                 }
+            } catch (e: HttpException) {
+                if (e.code() == 429) {
+                    backoffMs = minOf(backoffMs * 2, 300_000L).coerceAtLeast(60_000L)
+                    Timber.w("Usage snapshot 429 rate-limited — backing off ${backoffMs}ms")
+                } else {
+                    backoffMs = intervalMs
+                    Timber.e(e, "Error fetching usage snapshot")
+                }
+                emit(lastSnapshot)
             } catch (e: Exception) {
+                backoffMs = intervalMs
                 Timber.e(e, "Error fetching usage snapshot")
                 emit(lastSnapshot)
             }
-            delay(intervalMs)
+            delay(backoffMs)
+        }
+    }
+
+    fun getWallpaperKanbanCardsFlow(intervalMs: Long = 60_000): Flow<List<WallpaperKanbanCard>> = flow {
+        // Stagger: kanban starts 2s after subscribe so it doesn't collide with
+        // the entity-status and usage flows that fire at t=0 and t=1s on resume.
+        delay(2_000L)
+        var lastCards: List<WallpaperKanbanCard> = emptyList()
+        var backoffMs = intervalMs
+        while (true) {
+            if (!layoutPrefs.wallpaperKanbanTasksEnabled && !layoutPrefs.wallpaperKanbanAutomationBoardEnabled) {
+                lastCards = emptyList()
+                emit(lastCards)
+                delay(intervalMs)
+                continue
+            }
+
+            try {
+                val response = api.getWallpaperKanbanCards(
+                    deviceId = deviceManager.deviceId,
+                    deviceSecret = deviceManager.deviceSecret ?: "",
+                    automation = "all",
+                    includeArchived = false
+                )
+                backoffMs = intervalMs
+                if (response.success) {
+                    lastCards = response.cards
+                    emit(lastCards)
+                    Timber.d("Wallpaper kanban cards fetched: ${lastCards.size}")
+                } else {
+                    emit(lastCards)
+                    Timber.w("Wallpaper kanban cards unavailable")
+                }
+            } catch (e: HttpException) {
+                if (e.code() == 429) {
+                    backoffMs = minOf(backoffMs * 2, 300_000L).coerceAtLeast(60_000L)
+                    Timber.w("Kanban cards 429 rate-limited — backing off ${backoffMs}ms")
+                } else {
+                    backoffMs = intervalMs
+                    Timber.e(e, "Error fetching wallpaper kanban cards")
+                }
+                emit(lastCards)
+            } catch (e: Exception) {
+                backoffMs = intervalMs
+                Timber.e(e, "Error fetching wallpaper kanban cards")
+                emit(lastCards)
+            }
+            delay(backoffMs)
         }
     }
 

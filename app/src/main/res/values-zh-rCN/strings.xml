@@ -295,6 +295,9 @@
     <string name="chat_load_image_failed">载入图片失败</string>
     <string name="wallpaper_no_bound_entities">无已绑定实体</string>
     <string name="claw_renderer_loading_entities">正在加载实体…</string>
+    <string name="claw_renderer_loading_wallpaper">正在加载壁纸…</string>
+    <string name="claw_wallpaper_loading_marker">加载中… (%1$s)</string>
+    <string name="claw_wallpaper_render_error">壁纸重绘错误，已上报</string>
     <string name="claw_renderer_no_entities_connected">无已连接实体</string>
     <string name="claw_renderer_open_app_to_bind">打开 E-Claw 应用进行绑定</string>
     <string name="claw_renderer_with_openclaw_bot">OpenClaw 机器人的实体</string>
@@ -749,6 +752,10 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="update_later">稍后再说</string>
     <string name="update_message">新版本 (v%s) 已推出，立即更新以获得最佳体验！</string>
     <string name="update_now">立即更新</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">关于此更新</string>
+    <string name="update_help_body">你的版本 %1$s → 最新 %2$s。点「立即更新」直接在 App 内更新（约 30 秒，无需离开 App）。若无法在 App 内更新，将改为打开 Play 商店。</string>
+    <string name="update_store_unavailable">无法打开商店进行更新，请改到 Google Play 更新。</string>
     <string name="update_title">有新版本可用</string>
     <string name="upload">上传</string>
     <string name="upload_error">上传失败</string>
@@ -768,7 +775,19 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="wallpaper_usage_engine_claude">Claude</string>
     <string name="wallpaper_usage_engine_codex">Codex</string>
     <string name="wallpaper_usage_items">显示项目</string>
+    <string name="wallpaper_walking_title">行走功能</string>
+    <string name="wallpaper_walking_settings_desc">让壁纸实体会走动；搭配「有意识地行走」可选择只在聊天时移动或自由漫游。</string>
+    <string name="wallpaper_walking_help_button">关于壁纸行走功能</string>
+    <string name="wallpaper_walking_help">说明：这是壁纸走动的总开关。当「有意识地行走」开启(默认)时，实体平时待在各自原位，只有 speak-to、@all 或 broadcast 聊天事件发生时才移动；sender 与 receiver 会保持一个实体单位间距聚集到中间，消息气泡 TTL 结束后回到原位。当「有意识地行走」关闭时，实体会一直自由走动，每隔几秒做一个随机目标动作(拜访同伴、巡逻、回到活动区)。\n\n需要：已开启实时壁纸、至少一个已绑定实体、方向性行走动画可用。\n\n测试：关闭「有意识地行走」观察实体自由漫游；或保持开启并发送 speak-to/broadcast 观察聚集后回家。</string>
+    <string name="wallpaper_custom_layout_help_button">关于自定义布局</string>
+    <string name="wallpaper_custom_layout_help">可拖拽实体并保存壁纸原位；有意识地行走与看板任务物件都会以这些原位作为来源。</string>
+    <string name="wallpaper_background_help_button">关于自定义背景</string>
+    <string name="wallpaper_background_help">使用你选择的本机照片作为实时壁纸背景；App 会保留读取权限，重启后仍能还原背景。</string>
+    <string name="wallpaper_walking_enabled">行走功能已开启</string>
+    <string name="wallpaper_walking_disabled">行走功能已关闭</string>
     <string name="wallpaper_usage_overlay">用量显示</string>
+    <string name="wallpaper_usage_overlay_help_button">关于用量显示</string>
+    <string name="wallpaper_usage_overlay_help">在壁纸上显示最新 Claude/Codex 用量快照；下方显示项目与时间窗勾选框控制哪些用量计数可见。</string>
     <string name="wallpaper_usage_overlay_syncing">用量同步中...</string>
     <string name="wallpaper_usage_overlay_title">用量</string>
     <string name="wallpaper_usage_position">位置</string>
@@ -786,6 +805,11 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="webhook_test_success">Webhook 测试通过！机器人已就绪~</string>
     <string name="webhook_testing">正在测试 Webhook 连接，准备好后会通知你，先别发消息哦~</string>
     <string name="widget_chat_hint">点击与角色聊天...</string>
+    <plurals name="widget_needyou_pending">
+        <item quantity="one">需要你 待处理 %d</item>
+        <item quantity="other">需要你 待处理 %d</item>
+    </plurals>
+    <string name="widget_needyou_badge_content_description">需要你待处理数量</string>
     <string name="xd_allowed_media">允许的媒体类型</string>
     <string name="xd_blacklist">黑名单（公开代码）</string>
     <string name="xd_codes_sep">以逗号分隔的公开代码</string>
@@ -841,6 +865,27 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="ecoin_unit">e币</string>
     <string name="org_chart_sheet_title">组织图</string>
     <string name="settings_delete_account">删除账户</string>
+    <!-- 设置自动同步（manifest 第二阶段） -->
+    <string name="settings_more_section_title">更多设置</string>
+    <string name="settings_open_on_web">在网页打开</string>
+    <string name="settings_feature_help_title">关于此设置</string>
+    <string name="settings_feature_web_help">此设置会在网页视图中打开，因为此 App 版本尚未内置原生界面。更新 App 即可获得原生界面，或现在直接在网页中使用。</string>
+    <string name="settings_feature_gated_help">此设置的原生版本需要较新的 App 版本。更新 App 即可获得原生界面，或现在直接在网页中打开。</string>
+    <string name="settings_feature_gated_badge">更新 App 以使用原生版</string>
+    <!-- 设置第三阶段原生：更换密钥 + 切换设备 (card_c3b13f64) -->
+    <string name="settings_rotate_device_secret">更换设备密钥</string>
+    <string name="settings_rotate_device_secret_hint">若当前的设备密钥已泄露，可重新生成一组新密钥。其他会话需使用新密钥才能登录。</string>
+    <string name="settings_rotate_secret_confirm_title">确定要更换设备密钥？</string>
+    <string name="settings_rotate_secret_confirm_btn">更换</string>
+    <string name="settings_rotate_secret_success">设备密钥已更换，新密钥已保存在此设备。</string>
+    <string name="settings_rotate_secret_failed">无法更换设备密钥，请重试。</string>
+    <string name="settings_switch_device">切换设备</string>
+    <string name="settings_switch_device_confirm">切换</string>
+    <string name="settings_switch_device_hint">将此 App 登录到另一个设备 ID。若您有第二个拥有自己实体的管理员账号，此功能很有用。</string>
+    <string name="settings_device_id">设备 ID</string>
+    <string name="settings_device_secret">设备密钥</string>
+    <string name="settings_switch_device_success_title">已切换设备</string>
+    <string name="settings_switch_device_success_msg">当前登录身份：%s\nApp 将重新启动以载入此设备。</string>
     <string name="settings_invite">邀请好友</string>
     <string name="settings_my_rentals">我的租借</string>
     <string name="settings_wallet">钱包</string>
@@ -890,6 +935,40 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="wallpaper_settings_expand_action">展开设置面板</string>
     <string name="wallpaper_settings_collapse_action">收起设置面板</string>
     <string name="wallpaper_settings_collapse_caret_up">▲</string>
+    <string name="wallpaper_more_settings">更多壁纸设置</string>
+    <string name="wallpaper_more_settings_desc">进阶壁纸动画与断网行为。新的增强功能默认全部启用。</string>
+    <string name="wallpaper_setting_speech_bubbles">消息气泡</string>
+    <string name="wallpaper_setting_speech_bubbles_desc">在伙伴旁显示实体状态与最近消息。</string>
+    <string name="wallpaper_setting_bubble_duration">消息气泡停留时间</string>
+    <string name="wallpaper_setting_bubble_duration_desc">调整壁纸气泡存在时间，可从 1 秒到 10 分钟；聊天聚集会在这个 TTL 结束后回到原位。</string>
+    <string name="wallpaper_setting_bubble_duration_value">%1$d 秒</string>
+    <string name="wallpaper_setting_bubble_duration_minutes_value">%1$d 分钟</string>
+    <string name="wallpaper_setting_bubble_duration_minutes_seconds_value">%1$d 分 %2$d 秒</string>
+    <string name="wallpaper_setting_conscious_walking">有意识地行走</string>
+    <string name="wallpaper_setting_conscious_walking_desc">开启：只有 speak-to、@all 与 broadcast 聊天事件会让实体移动；sender 与 receiver 会保持一个实体单位间距聚集到中间，气泡 TTL 结束后回到各自原位。关闭：实体会自由漫游，并做拜访同伴、巡逻等目标动作。</string>
+    <string name="wallpaper_setting_entity_interactions">实体互动</string>
+    <string name="wallpaper_setting_entity_interactions_desc">伙伴碰到彼此时会一起播放同一个随机动作：挥手、跳跃、失败或审视。</string>
+    <string name="wallpaper_setting_collision_duration">碰撞动作持续时间</string>
+    <string name="wallpaper_setting_collision_duration_desc">控制碰撞后共同动画的持续时间，可从 1 到 20 秒。</string>
+    <string name="wallpaper_setting_bubble_pulse">气泡脉冲</string>
+    <string name="wallpaper_setting_bubble_pulse_desc">气泡内容更新时短暂高亮伙伴。</string>
+    <string name="wallpaper_setting_bubble_avoidance">智能气泡避让</string>
+    <string name="wallpaper_setting_bubble_avoidance_desc">让气泡避开用量面板与状态标签。</string>
+    <string name="wallpaper_setting_state_aura">状态光晕</string>
+    <string name="wallpaper_setting_state_aura_desc">用色彩光晕快速识别伙伴状态。</string>
+    <string name="wallpaper_setting_ground_shadow">地面阴影</string>
+    <string name="wallpaper_setting_ground_shadow_desc">在伙伴下方绘制深度，让移动更稳定。</string>
+    <string name="wallpaper_setting_adaptive_effects">自适应特效</string>
+    <string name="wallpaper_setting_adaptive_effects_desc">渲染不稳定时自动降低高成本特效。</string>
+    <string name="wallpaper_setting_offline_cache">断网外观缓存</string>
+    <string name="wallpaper_setting_offline_cache_desc">网络中断时保留最后一次真实伙伴外观，不退回默认外观。</string>
+    <string name="wallpaper_setting_kanban_tasks">看板任务物件</string>
+    <string name="wallpaper_setting_kanban_tasks_desc">将指派中的看板任务以文件夹物件显示在对应实体原位附近；done 与 archived 只播放完成/移除动画后消失。</string>
+    <string name="wallpaper_setting_kanban_automation_board">自动化白板</string>
+    <string name="wallpaper_setting_kanban_automation_board_desc">将自动化卡片显示在对应实体上方的底层白板，依下一次触发时间由近到远排序。</string>
+    <string name="wallpaper_setting_kanban_privacy">看板隐私模式</string>
+    <string name="wallpaper_setting_kanban_privacy_desc">隐藏壁纸上的任务名称与敏感排程细节；文件夹状态与动画仍会显示。</string>
+    <string name="wallpaper_setting_help_content_description">%1$s 详情</string>
     <!-- Health-checking status shown on entity avatar while passive health-check runs -->
     <string name="health_checking">健检中</string>
 </resources>

@@ -92,10 +92,15 @@
         if (inflightByEntityId.has(eid)) return inflightByEntityId.get(eid);
 
         const params = new URLSearchParams({ deviceId, entityId: String(eid) });
-        if (deviceSecret) params.set('deviceSecret', deviceSecret);
-        else if (botSecret) params.set('botSecret', botSecret);
+        // The secret travels in a request header (X-Device-Secret /
+        // X-Bot-Secret), never in the URL query, so it doesn't leak into
+        // browser history / access logs / the Referer header.
+        const headers = {};
+        if (deviceSecret) headers['X-Device-Secret'] = deviceSecret;
+        else if (botSecret) headers['X-Bot-Secret'] = botSecret;
         const p = fetch('/api/companion/current?' + params.toString(), {
-            credentials: 'same-origin'
+            credentials: 'same-origin',
+            headers
         }).then(async (r) => {
             if (!r.ok) {
                 // Preserve last good descriptor across transient API failures

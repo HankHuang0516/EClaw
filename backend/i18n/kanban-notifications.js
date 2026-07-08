@@ -14,7 +14,9 @@ const TRANSLATIONS = {
         scheduleRecurringWithStatus: '🗓️ Schedule triggered: [{title}]\nStatus: {from} → {to}, please continue this task',
         reviewerNotify: '🔍 Task completed, awaiting review: [{title}]\nBot #{entityId} reported: {reply}\nIf there are issues, please create a new card.',
         reviewerMovedToReview: '🔍 Pending review: [{title}]\nMoved from {from} to Review. Please review.',
-        reviewerNoReply: '(no reply content)'
+        reviewerNoReply: '(no reply content)',
+        assignedToYou: '📌 Assigned to you: [{title}]\nPlease begin this task.',
+        commentMention: '💬 You were @-mentioned on: [{title}]\nPlease check the latest comment below.'
     },
     zh: {
         statusLabels: { backlog: '待辦池', todo: '待辦', in_progress: '進行中', review: '審查', done: '完成', blocked: '已封鎖' },
@@ -27,7 +29,9 @@ const TRANSLATIONS = {
         scheduleRecurringWithStatus: '🗓️ 排程觸發：[{title}]\n狀態: {from} → {to}，請繼續推進此任務',
         reviewerNotify: '🔍 任務完成待審：[{title}]\nBot #{entityId} 已完成並回報：{reply}\n如有問題請重新建卡指派。',
         reviewerMovedToReview: '🔍 待審：[{title}]\n已從 {from} 移到審查階段，請審。',
-        reviewerNoReply: '（無回覆內容）'
+        reviewerNoReply: '（無回覆內容）',
+        assignedToYou: '📌 指派給你：[{title}]\n請開始執行此任務。',
+        commentMention: '💬 有人在留言 @ 你：[{title}]\n請查看下方最新留言。'
     },
     'zh-CN': {
         statusLabels: { backlog: '待办池', todo: '待办', in_progress: '进行中', review: '审查', done: '完成', blocked: '已封锁' },

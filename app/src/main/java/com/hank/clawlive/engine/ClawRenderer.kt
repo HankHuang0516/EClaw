@@ -17,8 +17,11 @@ import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.CompanionDetail
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.model.UsageSnapshotLatest
+import com.hank.clawlive.data.model.WalkActionConfig
+import com.hank.clawlive.data.model.WallpaperKanbanCard
 import com.hank.clawlive.data.repository.CompanionRepository
 import timber.log.Timber
+import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -31,6 +34,98 @@ class ClawRenderer(
     private val layoutPrefs = LayoutPreferences.getInstance(context)
     private val spritesheetDrawer = companionRepository?.let { SpritesheetCompanionDrawer(it) }
     private val usageOverlayRenderer = UsageOverlayRenderer(context, layoutPrefs)
+    private val kanbanRenderer = WallpaperKanbanRenderer(context, layoutPrefs)
+    private val wanderController = WallpaperWanderController()
+    private val interactionController = WallpaperInteractionController()
+    private val speechBubbleController = SpeechBubbleController()
+    private val renderDiagnostics = WallpaperRenderDiagnostics()
+    private val lastBubbleMessageByEntity = mutableMapOf<Int, String>()
+    private val lastBubbleDurationByEntity = mutableMapOf<Int, Long>()
+    private val bubblePulseStartedByEntity = mutableMapOf<Int, Long>()
+
+    // Last on-screen pixel center each entity was drawn at this frame. Exposed so
+    // the wallpaper Engine can hit-test a touch to the nearest entity for the
+    // live drag-to-reposition (HARD PIN) gesture. (card wallpaper-drag-pin)
+    private val lastRenderedPositionsByEntity = mutableMapOf<Int, Pair<Float, Float>>()
+    private var lastDrawWidthPx: Float = 0f
+    private var lastDrawHeightPx: Float = 0f
+
+    // Transient live-drag state: while the user drags an entity, it is drawn at
+    // the finger and excluded from wander/pin so it follows freely; on lift the
+    // Engine persists the drop point as the entity's pinned custom position.
+    private var draggingEntityId: Int? = null
+    private var dragPosPx: Pair<Float, Float>? = null
+    private var walkActionConfigsByEntity: Map<Int, WalkActionConfig> = emptyMap()
+
+    /** Pixel centers each entity was last drawn at (entityId -> x,y). */
+    fun lastRenderedPositions(): Map<Int, Pair<Float, Float>> = lastRenderedPositionsByEntity.toMap()
+
+    /** Canvas width/height of the most recent frame (for hit-radius math). */
+    fun lastDrawWidth(): Float = lastDrawWidthPx
+    fun lastDrawHeight(): Float = lastDrawHeightPx
+
+    fun setWalkActionConfigs(configs: Map<Int, WalkActionConfig>) {
+        walkActionConfigsByEntity = configs
+    }
+
+    /** Begin dragging [entityId]: stop its wander and draw it at the finger. */
+    fun beginDrag(entityId: Int, xPx: Float, yPx: Float) {
+        draggingEntityId = entityId
+        dragPosPx = xPx to yPx
+        wanderController.stop(entityId)
+    }
+
+    /** Update the in-flight drag position (finger move). */
+    fun updateDragPosition(xPx: Float, yPx: Float) {
+        if (draggingEntityId != null) dragPosPx = xPx to yPx
+    }
+
+    /** End the drag (the Engine has persisted the pin). */
+    fun endDrag() {
+        draggingEntityId = null
+        dragPosPx = null
+    }
+
+    // card_f9b2cc2d v1.1.6 regression fix. A spritesheet whose bitmap is not in
+    // sheetCache returns DrawResult.LOADING, which historically painted NOTHING
+    // (to avoid a companion-switch flash to the default lobster, card_9e52c7b).
+    // But after a cold engine (re)create — CompanionRepository restores the
+    // spritesheet DESCRIPTOR from snapshot but not the sheet bitmap — or a cache
+    // eviction / failed reload, that LOADING persists for many ticks (or forever
+    // if the sheet can never be fetched). With no custom background the canvas is
+    // solid black, so invisible entities = the "pure black, no text, no
+    // exception" resume bug. We keep a short no-paint grace for genuinely brief
+    // loads (no flash), but once an entity has been continuously LOADING past the
+    // grace window we draw the procedural fallback so an entity is NEVER
+    // invisible for more than ~0.75s, regardless of why the sheet is missing.
+    private val spritesheetLoadingSinceMs = mutableMapOf<Int, Long>()
+    private val spritesheetStuckReported = mutableSetOf<Int>()
+
+    private data class BubbleDrawTarget(
+        val entity: EntityStatus,
+        val centerX: Float,
+        val centerY: Float,
+        val scale: Float
+    )
+
+    private data class RoutingCandidate(
+        val receiverEntityId: Int,
+        val fromEntityId: Int,
+        val text: String,
+        val timestamp: Long,
+        val routingMode: String?,
+        val routingEventId: String?,
+        val broadcastTargetIds: List<Int>
+    )
+
+    private data class ActiveConversationGroup(
+        val key: String,
+        val entityIds: Set<Int>,
+        val expiresAtMs: Long
+    )
+
+    private val activeConversationGroups = mutableMapOf<String, ActiveConversationGroup>()
+    private val seenConversationKeys = linkedSetOf<String>()
 
     // Background image cache
     private var cachedBackgroundBitmap: Bitmap? = null
@@ -100,6 +195,30 @@ class ClawRenderer(
     // Health-checking 「健檢中」label paint
     private val healthLabelPaint = TextPaint().apply {
         color = Color.parseColor("#22D3EE")
+        textAlign = Paint.Align.CENTER
+        isAntiAlias = true
+        isFakeBoldText = true
+    }
+
+    private val shadowPaint = Paint().apply {
+        style = Paint.Style.FILL
+        color = Color.BLACK
+        isAntiAlias = true
+    }
+
+    private val stateAuraPaint = Paint().apply {
+        style = Paint.Style.FILL
+        isAntiAlias = true
+    }
+
+    private val bubblePulsePaint = Paint().apply {
+        style = Paint.Style.STROKE
+        isAntiAlias = true
+        strokeCap = Paint.Cap.ROUND
+    }
+
+    private val interactionTextPaint = TextPaint().apply {
+        color = Color.WHITE
         textAlign = Paint.Align.CENTER
         isAntiAlias = true
         isFakeBoldText = true
@@ -269,6 +388,52 @@ class ClawRenderer(
         Timber.d("ClawRenderer resources released")
     }
 
+    // card_f9b2cc2d resilient-render fix. The wallpaper went pure black on resume
+    // because drawMultiEntity drew the background and then THREW while rendering an
+    // entity/stage (e.g. a recycled bitmap or a transient null after an
+    // app-switch); the exception propagated out and the engine posted only the
+    // half-drawn black frame. A single bad entity or sub-stage must never blank the
+    // whole wallpaper. Each entity and each render stage is now wrapped so a failure
+    // is contained (that one entity/stage is skipped this frame) and the rest of the
+    // frame still draws. Failures are recorded to Crashlytics once per distinct
+    // stage key so we still learn the exact cause without per-frame spam.
+    private val reportedRenderErrors = HashSet<String>()
+    private fun reportRenderStageError(stage: String, e: Throwable) {
+        Timber.e(e, "render stage failed: $stage")
+        if (reportedRenderErrors.add(stage)) {
+            try {
+                com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().apply {
+                    setCustomKey("render_stage", stage)
+                    recordException(e)
+                }
+            } catch (_: Exception) { /* crashlytics unavailable — Timber already logged */ }
+        }
+    }
+
+    // card_f9b2cc2d v1.1.6: a spritesheet stuck in LOADING past the grace window
+    // (sheet genuinely unavailable) fell back to the procedural drawer instead of
+    // staying invisible. Record the field cause once per stuck episode (cleared
+    // when the entity next draws a real frame) so we learn WHICH sheet/companion
+    // is failing without per-frame Crashlytics spam.
+    private fun reportSpritesheetStuckLoading(entityId: Int, companion: CompanionDetail?, loadingMs: Long) {
+        if (!spritesheetStuckReported.add(entityId)) return
+        Timber.w("Spritesheet stuck LOADING ${loadingMs}ms for entity $entityId (companion=${companion?.id}) → procedural fallback")
+        try {
+            com.google.firebase.crashlytics.FirebaseCrashlytics.getInstance().apply {
+                setCustomKey("stuck_entity_id", entityId)
+                setCustomKey("stuck_loading_ms", loadingMs)
+                setCustomKey("stuck_companion_id", companion?.id ?: "null")
+                recordException(
+                    IllegalStateException(
+                        "wallpaper spritesheet stuck LOADING ${loadingMs}ms entity=$entityId → procedural fallback (card_f9b2cc2d)"
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "stuck-loading crashlytics report failed")
+        }
+    }
+
     // ============================================
     // MULTI-ENTITY RENDERING
     // ============================================
@@ -283,16 +448,25 @@ class ClawRenderer(
         count: Int,
         entities: List<EntityStatus>? = null
     ): List<Pair<Float, Float>> {
-        // Check if custom layout mode is enabled and we have entity info
-        if (layoutPrefs.useCustomLayout && entities != null) {
-            return entities.map { entity ->
+        // Honor custom positions when custom layout is on OR when ANY entity has a
+        // saved custom_pos / pin (B2: a pinned/configured position must be honored
+        // even if useCustomLayout was never explicitly toggled — otherwise a pin
+        // would be silently ignored). An entity with no saved position falls back
+        // to the SHARED grid default (B1) — identical to the settings preview —
+        // instead of the old screen-center, which made no-custom-pos entities
+        // (e.g. entity #10) stack at the center on the live wallpaper while the
+        // editor showed them in a grid.
+        if (entities != null &&
+            (layoutPrefs.useCustomLayout || layoutPrefs.hasAnyCustomOrPinnedPosition())
+        ) {
+            val count = entities.size
+            return entities.mapIndexed { index, entity ->
                 val customPos = layoutPrefs.getCustomPosition(entity.entityId)
                 if (customPos != null) {
-                    // Convert percentage to actual coordinates
                     Pair(customPos.first * width, customPos.second * height)
                 } else {
-                    // Fallback to center if no custom position set
-                    Pair(width / 2f, height / 2f)
+                    val (px, py) = WallpaperLayoutDefaults.resolveBasePositionPercent(index, count)
+                    Pair(px * width, py * height)
                 }
             }
         }
@@ -428,7 +602,8 @@ class ClawRenderer(
         canvas: Canvas,
         entities: List<EntityStatus>,
         loading: Boolean = false,
-        usageSnapshot: UsageSnapshotLatest? = null
+        usageSnapshot: UsageSnapshotLatest? = null,
+        kanbanCards: List<WallpaperKanbanCard> = emptyList()
     ) {
         multiDrawCount++
         val width = canvas.width.toFloat()
@@ -437,16 +612,38 @@ class ClawRenderer(
         if (multiDrawCount <= 5) {
         }
 
-        // Background: draw custom image or solid black
+        // Background: draw custom image or solid black. card_f9b2cc2d v1.1.5:
+        // wrapped — a recycled/failed bg bitmap on resume must NOT throw out of
+        // drawMultiEntity (which would hit the caller's red-error fallback). On
+        // failure paint a deliberate dark surface and report the stage.
+        try {
         val backgroundBitmap = getBackgroundBitmap(width.toInt(), height.toInt())
         if (backgroundBitmap != null) {
             canvas.drawBitmap(backgroundBitmap, 0f, 0f, backgroundPaint)
-            if (multiDrawCount <= 3) {
-            }
+        } else if (layoutPrefs.useBackgroundImage && layoutPrefs.backgroundImageUri != null) {
+            // A background image IS configured but hasn't loaded yet / failed to decode
+            // (the brief render gap after a resume, or slow/failed storage access).
+            // Show a "Loading wallpaper…" placeholder on a dark surface instead of a
+            // confusing pure-black screen (card_43f365e2, Hank-direct). Don't return —
+            // fall through so the entities-empty text below still overlays on top.
+            canvas.drawColor(0xFF0B1220.toInt()) // dark navy — reads as a deliberate surface, not a black/crash screen
+            val prevSize = textPaint.textSize
+            val prevColor = textPaint.color
+            textPaint.textSize = 32f
+            textPaint.color = Color.WHITE
+            canvas.drawText(
+                context.getString(R.string.claw_renderer_loading_wallpaper),
+                width / 2f, height / 2f, textPaint
+            )
+            textPaint.textSize = prevSize
+            textPaint.color = prevColor
         } else {
+            // User intentionally chose a solid-black / no-image wallpaper — keep pure black.
             canvas.drawColor(Color.BLACK)
-            if (multiDrawCount <= 3) {
-            }
+        }
+        } catch (e: Exception) {
+            try { canvas.drawColor(0xFF0B1220.toInt()) } catch (_: Exception) {}
+            reportRenderStageError("background", e)
         }
 
         if (entities.isEmpty()) {
@@ -470,20 +667,367 @@ class ClawRenderer(
             return
         }
 
-        val positions = calculateEntityPositions(width, height, entities.size, entities)
+        // card_f9b2cc2d v1.1.5: wrap the whole layout-compute + entity render so a
+        // throw in any early stage (positions / wander / interaction) can't escape
+        // to the caller's red-error fallback — the background is already painted above.
+        try {
+        val basePositions = calculateEntityPositions(width, height, entities.size, entities)
         val baseScale = getScaleFactor(entities.size)
+        val nowMs = System.currentTimeMillis()
+        if (layoutPrefs.wallpaperSpeechBubblesEnabled) {
+            syncSpeechBubbles(entities, nowMs)
+        } else {
+            clearSpeechBubbles()
+        }
+        val conversationEntityIds = refreshConversationGroups(entities, nowMs)
+        val kanbanActionStates = if (
+            layoutPrefs.wallpaperKanbanTasksEnabled ||
+            layoutPrefs.wallpaperKanbanAutomationBoardEnabled
+        ) {
+            kanbanRenderer.update(kanbanCards, nowMs)
+        } else {
+            kanbanRenderer.update(emptyList(), nowMs)
+            emptyMap()
+        }
+        val walkingEnabled = layoutPrefs.wallpaperWalkingEnabled
+        val maxEntityScale = entities.maxOfOrNull { layoutPrefs.getEntityScale(it.entityId).toDouble() }?.toFloat() ?: 1f
+        // HARD PIN: pinned entities are LOCKED at their configured position. The
+        // entity currently being live-dragged is excluded so it follows the
+        // finger; its pin is re-applied on drop.
+        val pinnedIds = entities.asSequence()
+            .map { it.entityId }
+            .filter { layoutPrefs.isPinned(it) && it != draggingEntityId }
+            .toSet()
+        val positions = wanderController.positionsFor(
+            basePositions = basePositions,
+            entities = entities,
+            width = width,
+            height = height,
+            enabled = walkingEnabled,
+            purposeful = layoutPrefs.wallpaperPurposefulWalkingEnabled,
+            nowMs = nowMs,
+            conversationEntityIds = conversationEntityIds,
+            entityUnitPx = 300f * baseScale * maxEntityScale,
+            pinnedEntityIds = pinnedIds,
+            walkActionConfigsByEntity = walkActionConfigsByEntity
+        )
+        val interactionState = interactionController.apply(
+            positions = positions,
+            entities = entities,
+            width = width,
+            height = height,
+            enabled = layoutPrefs.wallpaperEntityInteractionsEnabled,
+            nowMs = nowMs,
+            reactionDurationMs = layoutPrefs.wallpaperCollisionReactionDurationMs
+        )
+        try {
+            kanbanRenderer.drawBackground(
+                canvas = canvas,
+                entities = entities,
+                basePositions = basePositions,
+                baseScale = baseScale,
+                nowMs = nowMs
+            )
+        } catch (e: Exception) {
+            reportRenderStageError("kanbanBackground", e)
+        }
+        if (layoutPrefs.wallpaperAdaptiveEffectsEnabled) {
+            renderDiagnostics.recordFrame(
+                walkingEntityCount = entities.count { wanderController.isWalking(it.entityId) },
+                activeBubbleCount = speechBubbleController.activeCount(nowMs)
+            )
+        }
+        val bubbleAvoidBounds = if (layoutPrefs.wallpaperBubbleOverlayAvoidanceEnabled) {
+            usageOverlayRenderer.getBounds(
+                canvas.width,
+                canvas.height,
+                usageSnapshot
+            )
+        } else {
+            null
+        }
 
+        val bubbleDrawTargets = mutableListOf<BubbleDrawTarget>()
+        lastRenderedPositionsByEntity.clear()
+        lastDrawWidthPx = width
+        lastDrawHeightPx = height
         entities.forEachIndexed { index, entity ->
-            if (index < positions.size) {
-                val (cx, cy) = positions[index]
+            if (index < interactionState.positions.size) {
+                val drag = if (entity.entityId == draggingEntityId) dragPosPx else null
+                val (cx, cy) = drag ?: interactionState.positions[index]
+                val interactionPose = interactionState.posesByEntity[entity.entityId]
+                val drawCy = cy - (if (drag != null) 0f else (interactionPose?.liftPx ?: 0f))
+                lastRenderedPositionsByEntity[entity.entityId] = cx to drawCy
                 // Apply per-entity scale multiplier on top of base scale
                 val entityScale = layoutPrefs.getEntityScale(entity.entityId)
                 val finalScale = baseScale * entityScale
-                drawSingleEntityAt(canvas, entity, cx, cy, finalScale, width)
+                val facingDirection = interactionPose?.facingDirection
+                    ?: wanderController.facingDirection(entity.entityId)
+                val actionState = kanbanActionStates[entity.entityId]
+                    ?: interactionState.actionStatesByEntity[entity.entityId]
+                val ambientActionKey = if (actionState == null) {
+                    wanderController.actionStateKey(entity.entityId)
+                } else {
+                    null
+                }
+                val spritesheetState = actionState?.wallpaperActionKey
+                    ?: ambientActionKey
+                    ?: if (
+                        wanderController.isWalking(entity.entityId) &&
+                        entity.state.canUseAmbientWalkingAnimation
+                    ) {
+                        walkingSpritesheetStateFor(facingDirection)
+                    } else {
+                        entity.state.wallpaperActionKey
+                    }
+                try {
+                    drawSingleEntityAt(
+                        canvas,
+                        entity,
+                        cx,
+                        drawCy,
+                        finalScale,
+                        spritesheetState,
+                        nowMs,
+                        facingDirection,
+                        shouldMirrorSpritesheetForFacing(spritesheetState)
+                    )
+                    bubbleDrawTargets.add(BubbleDrawTarget(entity, cx, drawCy, finalScale))
+                } catch (e: Exception) {
+                    // card_f9b2cc2d: one bad entity must not blank the whole wallpaper.
+                    reportRenderStageError("entity:${entity.entityId}", e)
+                }
             }
         }
 
-        usageOverlayRenderer.draw(canvas, usageSnapshot)
+        try {
+            interactionState.effects.forEach { effect ->
+                drawInteractionEffect(canvas, effect, baseScale, nowMs)
+            }
+        } catch (e: Exception) {
+            reportRenderStageError("interactionEffects", e)
+        }
+
+        try {
+            usageOverlayRenderer.draw(canvas, usageSnapshot)
+        } catch (e: Exception) {
+            reportRenderStageError("usageOverlay", e)
+        }
+
+        bubbleDrawTargets.forEach { target ->
+            try {
+                drawSpeechBubbleForEntity(
+                    canvas = canvas,
+                    entity = target.entity,
+                    centerX = target.centerX,
+                    centerY = target.centerY,
+                    scale = target.scale,
+                    screenWidth = width,
+                    nowMs = nowMs,
+                    avoidBounds = bubbleAvoidBounds
+                )
+            } catch (e: Exception) {
+                reportRenderStageError("bubble:${target.entity.entityId}", e)
+            }
+        }
+        } catch (e: Exception) {
+            // card_f9b2cc2d v1.1.5: any uncaught throw in the layout-compute /
+            // entity-render section is contained here (background already painted)
+            // so draw() never re-throws into the red-error fallback. The stage key
+            // names it in Crashlytics for a precise follow-up.
+            reportRenderStageError("layout", e)
+        }
+    }
+
+    private fun syncSpeechBubbles(entities: List<EntityStatus>, nowMs: Long) {
+        val liveEntityIds = entities.map { it.entityId }.toSet()
+        val staleEntityIds = lastBubbleMessageByEntity.keys - liveEntityIds
+        staleEntityIds.forEach { speechBubbleController.clear(it) }
+        lastBubbleMessageByEntity.keys.retainAll(liveEntityIds)
+        lastBubbleDurationByEntity.keys.retainAll(liveEntityIds)
+        bubblePulseStartedByEntity.keys.retainAll(liveEntityIds)
+        val preferredTtlMs = layoutPrefs.wallpaperBubbleDurationMs
+
+        entities.forEach { entity ->
+            val displayText = if (isAmbient) getStateEmoji(entity.state) else entity.message.trim()
+            if (displayText.isBlank()) {
+                lastBubbleMessageByEntity.remove(entity.entityId)
+                lastBubbleDurationByEntity.remove(entity.entityId)
+                bubblePulseStartedByEntity.remove(entity.entityId)
+                speechBubbleController.clear(entity.entityId)
+                return@forEach
+            }
+
+            val messageChanged = lastBubbleMessageByEntity[entity.entityId] != displayText
+            val durationChanged = lastBubbleDurationByEntity[entity.entityId] != preferredTtlMs
+            if (messageChanged || durationChanged) {
+                speechBubbleController.show(
+                    entity.entityId,
+                    displayText,
+                    nowMs,
+                    preferredTtlMs = preferredTtlMs
+                )
+                lastBubbleMessageByEntity[entity.entityId] = displayText
+                lastBubbleDurationByEntity[entity.entityId] = preferredTtlMs
+                if (messageChanged) {
+                    bubblePulseStartedByEntity[entity.entityId] = nowMs
+                }
+            }
+        }
+    }
+
+    private fun clearSpeechBubbles() {
+        lastBubbleMessageByEntity.keys.toList().forEach { speechBubbleController.clear(it) }
+        lastBubbleMessageByEntity.clear()
+        lastBubbleDurationByEntity.clear()
+        bubblePulseStartedByEntity.clear()
+    }
+
+    private fun refreshConversationGroups(entities: List<EntityStatus>, nowMs: Long): Set<Int> {
+        activeConversationGroups.keys.toList().forEach { key ->
+            if ((activeConversationGroups[key]?.expiresAtMs ?: 0L) <= nowMs) {
+                activeConversationGroups.remove(key)
+            }
+        }
+        if (!layoutPrefs.wallpaperPurposefulWalkingEnabled || !layoutPrefs.wallpaperSpeechBubblesEnabled) {
+            activeConversationGroups.clear()
+            return emptySet()
+        }
+
+        val entityIds = entities.map { it.entityId }.toSet()
+        val candidates = entities.flatMap { entity ->
+            entity.messageQueue.orEmpty().mapNotNull { queueItem ->
+                val text = queueItem.text?.trim().orEmpty()
+                if (text.isBlank()) return@mapNotNull null
+                // Gson can bypass Kotlin null-safety: user/scheduled messages lack
+                // fromCharacter (backend only sets it on entity-to-entity messages), so a
+                // null slips into this non-null-typed field. Calling .isBlank() directly
+                // threw NPE on every draw frame → blank/black wallpaper (card_f22e489c).
+                // Mirror the same defensive guard StateRepository already uses.
+                @Suppress("SENSELESS_COMPARISON")
+                if (queueItem.fromCharacter == null || queueItem.fromCharacter.isBlank()) return@mapNotNull null
+                if (queueItem.fromEntityId !in entityIds) return@mapNotNull null
+                if (queueItem.fromEntityId == entity.entityId && queueItem.routingMode != "broadcast") {
+                    return@mapNotNull null
+                }
+                val timestamp = queueItem.timestamp.takeIf { it > 0L } ?: nowMs
+                if (nowMs - timestamp > CONVERSATION_EVENT_STALE_MS) return@mapNotNull null
+                RoutingCandidate(
+                    receiverEntityId = entity.entityId,
+                    fromEntityId = queueItem.fromEntityId,
+                    text = text,
+                    timestamp = timestamp,
+                    routingMode = queueItem.routingMode,
+                    routingEventId = queueItem.routingEventId,
+                    broadcastTargetIds = queueItem.broadcastTargetIds.orEmpty()
+                )
+            }
+        }
+        candidates
+            .groupBy { it.routingEventId ?: fallbackConversationKey(it) }
+            .forEach { (key, group) ->
+                if (key in seenConversationKeys || group.isEmpty()) return@forEach
+                val groupEntityIds = buildSet {
+                    group.forEach { candidate ->
+                        add(candidate.fromEntityId)
+                        add(candidate.receiverEntityId)
+                        candidate.broadcastTargetIds.filter { it in entityIds }.forEach { add(it) }
+                    }
+                }.intersect(entityIds)
+                if (groupEntityIds.size < 2) return@forEach
+                val expiresAt = group.maxOfOrNull {
+                    speechBubbleController.expiresAt(it.receiverEntityId, nowMs) ?: (nowMs + layoutPrefs.wallpaperBubbleDurationMs)
+                } ?: (nowMs + layoutPrefs.wallpaperBubbleDurationMs)
+                activeConversationGroups[key] = ActiveConversationGroup(
+                    key = key,
+                    entityIds = groupEntityIds,
+                    expiresAtMs = expiresAt
+                )
+                rememberConversationKey(key)
+            }
+
+        return activeConversationGroups.values
+            .filter { it.expiresAtMs > nowMs }
+            .flatMap { it.entityIds }
+            .toSet()
+    }
+
+    private fun fallbackConversationKey(candidate: RoutingCandidate): String {
+        val bucket = candidate.timestamp / CONVERSATION_GROUP_WINDOW_MS
+        return "${candidate.fromEntityId}:${candidate.text.hashCode()}:$bucket:${candidate.routingMode.orEmpty()}"
+    }
+
+    private fun rememberConversationKey(key: String) {
+        seenConversationKeys.add(key)
+        while (seenConversationKeys.size > MAX_SEEN_CONVERSATIONS) {
+            val iterator = seenConversationKeys.iterator()
+            if (!iterator.hasNext()) return
+            iterator.next()
+            iterator.remove()
+        }
+    }
+
+    private fun shouldMirrorSpritesheetForFacing(spritesheetState: String): Boolean {
+        return spritesheetState != CharacterState.RUNNING_LEFT.wallpaperActionKey &&
+            spritesheetState != CharacterState.RUNNING_RIGHT.wallpaperActionKey
+    }
+
+    private fun walkingSpritesheetStateFor(facingDirection: WalkFacingDirection): String {
+        return when (facingDirection) {
+            WalkFacingDirection.LEFT -> CharacterState.RUNNING_LEFT.wallpaperActionKey
+            WalkFacingDirection.RIGHT -> CharacterState.RUNNING_RIGHT.wallpaperActionKey
+        }
+    }
+
+    private fun characterDrawY(
+        entity: EntityStatus,
+        centerY: Float,
+        scale: Float,
+        nowMs: Long
+    ): Float {
+        val time = nowMs - startTime
+        val bobOffset = if (entity.state.pausesAmbientWander) {
+            0f
+        } else {
+            val speed = if (entity.state.busyLike) 0.01f else 0.003f
+            (sin(time * speed) * 30 * scale).toFloat()
+        }
+        return centerY + bobOffset
+    }
+
+    private fun drawSpeechBubbleForEntity(
+        canvas: Canvas,
+        entity: EntityStatus,
+        centerX: Float,
+        centerY: Float,
+        scale: Float,
+        screenWidth: Float,
+        nowMs: Long,
+        avoidBounds: RectF? = null
+    ) {
+        if (!layoutPrefs.wallpaperSpeechBubblesEnabled) return
+        val charY = characterDrawY(entity, centerY, scale, nowMs)
+        val radius = 150f * scale
+        val bubblePlacement = speechBubbleController.placementFor(
+            entityId = entity.entityId,
+            entityXPct = (centerX / canvas.width.toFloat()).coerceIn(0f, 1f),
+            entityYPct = (charY / canvas.height.toFloat()).coerceIn(0f, 1f),
+            spriteHeightPct = ((radius * 2f) / canvas.height.toFloat()).coerceIn(0.02f, 0.9f),
+            nowMs = nowMs
+        ) ?: return
+        val renderBubblePlacement = if (bubblePlacement.flippedBelow && !isAmbient) {
+            val labelClearancePct = ((88f * scale) / canvas.height.toFloat()).coerceIn(0f, 0.12f)
+            bubblePlacement.copy(
+                anchorYPct = (bubblePlacement.anchorYPct + labelClearancePct).coerceIn(0f, 1f)
+            )
+        } else {
+            bubblePlacement
+        }
+        val pulseAgeMs = bubblePulseStartedByEntity[entity.entityId]?.let { nowMs - it } ?: Long.MAX_VALUE
+        if (layoutPrefs.wallpaperBubblePulseEnabled) {
+            drawBubblePulse(canvas, entity, centerX, charY, radius, scale, pulseAgeMs, renderBubblePlacement.alpha)
+        }
+        drawMessageBubble(canvas, entity, renderBubblePlacement, scale, screenWidth, avoidBounds)
     }
 
     /**
@@ -495,19 +1039,23 @@ class ClawRenderer(
         centerX: Float,
         centerY: Float,
         scale: Float,
-        screenWidth: Float
+        spritesheetState: String = entity.state.wallpaperActionKey,
+        nowMs: Long = System.currentTimeMillis(),
+        facingDirection: WalkFacingDirection = WalkFacingDirection.RIGHT,
+        mirrorSpritesheetForFacing: Boolean = true
     ) {
-        // Calculate Animation (Bobbing)
-        val time = System.currentTimeMillis() - startTime
-        val bobOffset = if (entity.state == CharacterState.SLEEPING) {
-            0f
-        } else {
-            val speed = if (entity.state == CharacterState.BUSY) 0.01f else 0.003f
-            (sin(time * speed) * 30 * scale).toFloat()
-        }
-
-        val charY = centerY + bobOffset
+        val time = nowMs - startTime
+        val charY = characterDrawY(entity, centerY, scale, nowMs)
         val radius = 150f * scale
+        val quietEffects = layoutPrefs.wallpaperAdaptiveEffectsEnabled &&
+            renderDiagnostics.shouldReduceEffects(entity.entityId)
+
+        if (layoutPrefs.wallpaperGroundShadowEnabled) {
+            drawGroundShadow(canvas, centerX, charY, radius, scale, time)
+        }
+        if (layoutPrefs.wallpaperStateAuraEnabled && !quietEffects) {
+            drawStateAura(canvas, entity, centerX, charY, radius, scale, time)
+        }
 
         // Health-checking: pulsing/glowing ring around the creature while the
         // passive health-check/repair runs (parity with Web .health-checking
@@ -526,23 +1074,51 @@ class ClawRenderer(
         // (card_9e52c7b405d0fdd3aad0d2e3). A blank gap for one 33 ms tick is
         // invisible; a wrong-character flash is not.
         val companion = companionRepository?.cached(entity.entityId)
-        val drawResult = if (companion != null && companion.assetType == "spritesheet") {
+        val attemptedSpritesheet = companion != null && companion.assetType == "spritesheet"
+        val drawResult = if (attemptedSpritesheet) {
             spritesheetDrawer?.draw(
-                canvas, companion, entity.entityId, entity.state.toString(), centerX, charY, scale
+                canvas,
+                companion,
+                entity.entityId,
+                spritesheetState,
+                centerX,
+                charY,
+                scale,
+                facingDirection,
+                mirrorSpritesheetForFacing
             ) ?: SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED
         } else SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED
-
-        when (drawResult) {
-            SpritesheetCompanionDrawer.DrawResult.DRAWN,
-            SpritesheetCompanionDrawer.DrawResult.LOADING -> Unit
-            SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED,
-            SpritesheetCompanionDrawer.DrawResult.ERROR ->
-                drawLobsterAtPosition(canvas, centerX, charY, entity, scale, companion)
+        if (attemptedSpritesheet && layoutPrefs.wallpaperAdaptiveEffectsEnabled) {
+            renderDiagnostics.recordCompanionDraw(entity.entityId, drawResult.toDiagnosticsOutcome())
         }
 
-        // Draw message bubble (ABOVE the entity)
-        // Anchor point is top of the character + margin
-        drawMessageBubble(canvas, entity, centerX, charY - radius - (20f * scale), scale, screenWidth)
+        when (drawResult) {
+            SpritesheetCompanionDrawer.DrawResult.DRAWN -> {
+                // Healthy frame — clear this entity's LOADING-grace tracker.
+                spritesheetLoadingSinceMs.remove(entity.entityId)
+                spritesheetStuckReported.remove(entity.entityId)
+            }
+            SpritesheetCompanionDrawer.DrawResult.LOADING -> {
+                // Sheet not yet in cache. A brief load paints nothing this tick
+                // (no flash to the default lobster). But a SUSTAINED LOADING —
+                // cold snapshot restore, cache eviction, or a reload that never
+                // lands — must not leave the entity invisible (the pure-black
+                // bug). Once continuously LOADING past the grace window, draw the
+                // procedural fallback (color-matched via the companion descriptor)
+                // so an entity is never invisible for more than the grace.
+                // (card_f9b2cc2d v1.1.6)
+                val since = spritesheetLoadingSinceMs.getOrPut(entity.entityId) { nowMs }
+                if (shouldFallbackForStuckSpritesheet(since, nowMs)) {
+                    reportSpritesheetStuckLoading(entity.entityId, companion, nowMs - since)
+                    drawLobsterAtPosition(canvas, centerX, charY, entity, scale, companion, facingDirection)
+                }
+            }
+            SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED,
+            SpritesheetCompanionDrawer.DrawResult.ERROR -> {
+                spritesheetLoadingSinceMs.remove(entity.entityId)
+                drawLobsterAtPosition(canvas, centerX, charY, entity, scale, companion, facingDirection)
+            }
+        }
 
         // Draw Name and Status Group BELOW the entity
         if (!isAmbient) {
@@ -608,6 +1184,106 @@ class ClawRenderer(
             // Moving Zzz slightly up so it doesn't overlap too much with the center face features
             canvas.drawText("Zzz...", centerX + radius * 0.7f, charY - radius * 0.8f, textPaint)
         }
+    }
+
+    private fun drawGroundShadow(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        radius: Float,
+        scale: Float,
+        time: Long
+    ) {
+        val walkPulse = (sin(time * 0.008f) * 0.5f + 0.5f).toFloat()
+        val shadowWidth = radius * (0.78f + 0.05f * walkPulse)
+        val shadowHeight = (18f * scale).coerceAtLeast(6f)
+        shadowPaint.alpha = (52 + 18 * walkPulse).toInt().coerceIn(0, 96)
+        canvas.drawOval(
+            RectF(
+                cx - shadowWidth,
+                cy + radius * 0.72f,
+                cx + shadowWidth,
+                cy + radius * 0.72f + shadowHeight
+            ),
+            shadowPaint
+        )
+        shadowPaint.alpha = 255
+    }
+
+    private fun drawInteractionEffect(
+        canvas: Canvas,
+        effect: WallpaperInteractionController.InteractionEffect,
+        scale: Float,
+        nowMs: Long
+    ) {
+        if (isAmbient) return
+        val alpha = effect.alpha(nowMs)
+        if (alpha <= 0f) return
+        interactionTextPaint.textSize = (30f * scale * effect.scale(nowMs)).coerceIn(18f, 46f)
+        interactionTextPaint.alpha = (alpha * 210f).toInt().coerceIn(0, 230)
+        interactionTextPaint.color = when (effect.kind) {
+            WallpaperInteractionController.InteractionKind.GREETING -> Color.rgb(96, 165, 250)
+            WallpaperInteractionController.InteractionKind.SPARK -> Color.rgb(250, 204, 21)
+            WallpaperInteractionController.InteractionKind.BUMP -> Color.rgb(45, 212, 191)
+        }
+        canvas.drawText(effect.label, effect.centerX, effect.centerY, interactionTextPaint)
+        interactionTextPaint.alpha = 255
+    }
+
+    private fun drawStateAura(
+        canvas: Canvas,
+        entity: EntityStatus,
+        cx: Float,
+        cy: Float,
+        radius: Float,
+        scale: Float,
+        time: Long
+    ) {
+        if (isAmbient) return
+        val accent = when {
+            entity.state == CharacterState.IDLE && wanderController.isWalking(entity.entityId) -> Color.rgb(45, 212, 191)
+            entity.state.busyLike -> Color.rgb(59, 130, 246)
+            entity.state == CharacterState.EATING -> Color.rgb(34, 197, 94)
+            entity.state.excitedLike -> Color.rgb(245, 158, 11)
+            entity.state == CharacterState.FAILED -> Color.rgb(248, 113, 113)
+            entity.state == CharacterState.REVIEW -> Color.rgb(168, 85, 247)
+            entity.state.pausesAmbientWander -> Color.rgb(99, 102, 241)
+            else -> return
+        }
+        val pulse = (sin(time * 0.0045f) * 0.5f + 0.5f).toFloat()
+        stateAuraPaint.color = accent
+        stateAuraPaint.alpha = (18 + 30 * pulse).toInt().coerceIn(0, 72)
+        canvas.drawCircle(cx, cy, radius * (1.04f + 0.08f * pulse) + 8f * scale, stateAuraPaint)
+        stateAuraPaint.alpha = 255
+    }
+
+    private fun drawBubblePulse(
+        canvas: Canvas,
+        entity: EntityStatus,
+        cx: Float,
+        cy: Float,
+        radius: Float,
+        scale: Float,
+        ageMs: Long,
+        bubbleAlpha: Float
+    ) {
+        if (isAmbient || ageMs !in 0L..BUBBLE_PULSE_MS) return
+        val progress = ageMs.toFloat() / BUBBLE_PULSE_MS.toFloat()
+        bubblePulsePaint.color = stateAccentColor(entity.state)
+        bubblePulsePaint.strokeWidth = (3f * scale).coerceAtLeast(1.5f)
+        bubblePulsePaint.alpha = ((1f - progress) * bubbleAlpha * 130f).toInt().coerceIn(0, 160)
+        canvas.drawCircle(cx, cy, radius * (0.92f + 0.22f * progress), bubblePulsePaint)
+        bubblePulsePaint.alpha = 255
+    }
+
+    private fun stateAccentColor(state: CharacterState): Int = when {
+        state == CharacterState.FAILED -> Color.rgb(248, 113, 113)
+        state == CharacterState.REVIEW -> Color.rgb(168, 85, 247)
+        state.pausesAmbientWander -> Color.rgb(129, 140, 248)
+        state.excitedLike -> Color.rgb(251, 146, 60)
+        state.busyLike -> Color.rgb(96, 165, 250)
+        state == CharacterState.EATING -> Color.rgb(74, 222, 128)
+        else -> Color.rgb(45, 212, 191)
     }
 
     /**
@@ -678,183 +1354,168 @@ class ClawRenderer(
         canvas.drawText("#$entityId", x, y + (10f * scale), badgeTextPaint)
     }
 
-    /**
-     * Draw message bubble with semi-transparent background.
-     */
-    /**
-     * Draw message bubble with semi-transparent background.
-     * Positioned ABOVE the anchor point (bottom of bubble -> anchor).
-     */
-    /**
-     * Draw message bubble with semi-transparent background.
-     * Positioned ABOVE the anchor point (bottom of bubble -> anchor).
-     */
-    /**
-     * Draw message bubble with semi-transparent background.
-     * Positioned ABOVE the anchor point (bottom of bubble -> anchor).
-     */
     private fun drawMessageBubble(
         canvas: Canvas,
         entity: EntityStatus,
-        centerX: Float,
-        anchorBottomY: Float,
+        placement: SpeechBubbleController.BubblePlacement,
         scale: Float,
-        screenWidth: Float
+        screenWidth: Float,
+        avoidBounds: RectF? = null
     ) {
-        val message = entity.message ?: ""
-        if (message.isEmpty() && isAmbient) return
+        val displayText = placement.text
+        if (displayText.isBlank()) return
 
-        // 1. Setup Text Paint
         textPaint.textSize = (32f * scale).coerceAtLeast(16f)
         textPaint.color = Color.WHITE
-        // FORCE LEFT ALIGNMENT for bubble text to prevent overflow
+        val alpha = (placement.alpha * 255f).toInt().coerceIn(0, 255)
+        if (alpha <= 0) return
+
         val originalAlign = textPaint.textAlign
+        val originalTextAlpha = textPaint.alpha
+        val originalBubbleAlpha = bubblePaint.alpha
+        val originalStrokeAlpha = bubbleStrokePaint.alpha
         textPaint.textAlign = Paint.Align.LEFT
+        textPaint.alpha = alpha
 
-        val displayText = if (isAmbient) {
-            getStateEmoji(entity.state)
-        } else {
-            message
-        }
-
-        // 2. Define Layout Constraints
         val padH = 16f * scale
         val padV = 16f * scale
         val screenHeight = canvas.height.toFloat()
-        val screenMargin = 40f * scale // Safety margin from top/bottom
-        
-        // Calculate max available height for text
-        // (Screen Height - Margins - Padding)
+        val screenMargin = 40f * scale
+        val tailHeight = 20f * scale
+
         val maxAvailableHeight = screenHeight - (screenMargin * 2) - (padV * 2)
-        
         val maxWidth = (screenWidth * 0.8f).coerceIn(200f, 800f)
         val maxTextWidth = (maxWidth - padH * 2).toInt().coerceAtLeast(1)
-        
-        // Calculate Max Lines to fit in screen
         val lineHeight = textPaint.fontSpacing
         val maxLines = (maxAvailableHeight / lineHeight).toInt().coerceAtLeast(1)
 
-        // 3. Create StaticLayout
         val layoutBuilder = android.text.StaticLayout.Builder.obtain(
             displayText, 0, displayText.length, textPaint, maxTextWidth
         )
-            .setAlignment(android.text.Layout.Alignment.ALIGN_NORMAL) 
+            .setAlignment(android.text.Layout.Alignment.ALIGN_NORMAL)
             .setLineSpacing(4f, 1.0f)
             .setIncludePad(true)
             .setMaxLines(maxLines)
             .setEllipsize(android.text.TextUtils.TruncateAt.END)
-        
+
         val layout = layoutBuilder.build()
 
-        // 4. Calculate Dimensions
         var widestLineWidth = 0f
         for (i in 0 until layout.lineCount) {
-             val lineWidth = layout.getLineWidth(i)
-             if (lineWidth > widestLineWidth) {
-                 widestLineWidth = lineWidth
-             }
+            val lineWidth = layout.getLineWidth(i)
+            if (lineWidth > widestLineWidth) {
+                widestLineWidth = lineWidth
+            }
         }
-        
-        val contentWidth = widestLineWidth
-        // Ensure minimum width for the tail connection
-        val minContentWidth = 40f * scale 
-        val finalContentWidth = contentWidth.coerceAtLeast(minContentWidth)
-        
+
+        val finalContentWidth = widestLineWidth.coerceAtLeast(40f * scale)
         val bubbleWidth = finalContentWidth + padH * 2
         val bubbleHeight = layout.height.toFloat() + padV * 2
-
-        // 5. Calculate Positioning (Smart Constraints)
-        val idealTop = anchorBottomY - bubbleHeight
-        
-        // If idealTop is above the screen margin, shift it down to the margin.
-        // This might cause it to overlap the character, but text legibility is priority.
-        val bubbleTop = if (idealTop < screenMargin) {
-            screenMargin
+        val anchorX = placement.anchorXPct * screenWidth
+        val anchorY = placement.anchorYPct * screenHeight
+        val idealTop = if (placement.flippedBelow) {
+            anchorY + tailHeight
         } else {
-            idealTop
+            anchorY - tailHeight - bubbleHeight
         }
-        
+        val maxTop = (screenHeight - screenMargin - bubbleHeight).coerceAtLeast(screenMargin)
+        var bubbleTop = idealTop.coerceIn(screenMargin, maxTop)
+        val maxLeft = (screenWidth - screenMargin - bubbleWidth).coerceAtLeast(screenMargin)
+        val bubbleLeft = (anchorX - bubbleWidth / 2f).coerceIn(screenMargin, maxLeft)
+        val bubbleRight = bubbleLeft + bubbleWidth
+        avoidBounds?.let { avoid ->
+            val avoidPadding = 10f * scale
+            val paddedAvoid = RectF(avoid).apply {
+                inset(-avoidPadding, -avoidPadding)
+            }
+            val currentRect = RectF(bubbleLeft, bubbleTop, bubbleRight, bubbleTop + bubbleHeight)
+            if (RectF.intersects(currentRect, paddedAvoid)) {
+                val candidates = listOf(
+                    paddedAvoid.bottom + avoidPadding,
+                    paddedAvoid.top - avoidPadding - bubbleHeight,
+                    maxTop,
+                    screenMargin
+                )
+                    .map { it.coerceIn(screenMargin, maxTop) }
+                    .distinct()
+                    .filter { candidateTop ->
+                        !RectF.intersects(
+                            RectF(bubbleLeft, candidateTop, bubbleRight, candidateTop + bubbleHeight),
+                            paddedAvoid
+                        )
+                    }
+                bubbleTop = candidates.minByOrNull { abs(it - idealTop) } ?: bubbleTop
+            }
+        }
         val bubbleBottom = bubbleTop + bubbleHeight
-        val bubbleLeft = centerX - bubbleWidth / 2
-        val bubbleRight = centerX + bubbleWidth / 2
-        
-        // Check if shifted significantly (tail would be disconnected/weird)
-        // If the bubble bottom is significantly below the anchor point, we should hide the tail?
-        // Actually, if bubbleTop != idealTop, it means we shifted.
-        val isShifted = bubbleTop > idealTop + 1f // allowance for float error
+        val isShifted = abs(bubbleTop - idealTop) > tailHeight * 0.6f
 
-        // 6. Draw Bubble Shape (Unified Path)
         val cornerRadius = 24f * scale
-        
-        // Tail geometry
         val tailWidth = 20f * scale
-        val tailHeight = 20f * scale
-        val tailTipX = centerX
-        val tailTipY = bubbleBottom + tailHeight
-        val tailBaseLeft = centerX - (tailWidth / 2) + (5f * scale)
-        val tailBaseRight = centerX + (tailWidth / 2)
-        
+        val tailBaseX = anchorX.coerceIn(bubbleLeft + cornerRadius, bubbleRight - cornerRadius)
         val path = android.graphics.Path()
-        
+
+        path.addRoundRect(
+            RectF(bubbleLeft, bubbleTop, bubbleRight, bubbleBottom),
+            cornerRadius,
+            cornerRadius,
+            android.graphics.Path.Direction.CW
+        )
         if (!isAmbient && !isShifted) {
-             // WITH TAIL
-            path.moveTo(tailBaseRight, bubbleBottom)
-            path.lineTo(bubbleRight - cornerRadius, bubbleBottom)
-            path.arcTo(RectF(bubbleRight - cornerRadius * 2, bubbleBottom - cornerRadius * 2, bubbleRight, bubbleBottom), 90f, -90f)
-            path.lineTo(bubbleRight, bubbleTop + cornerRadius)
-            path.arcTo(RectF(bubbleRight - cornerRadius * 2, bubbleTop, bubbleRight, bubbleTop + cornerRadius * 2), 0f, -90f)
-            path.lineTo(bubbleLeft + cornerRadius, bubbleTop)
-            path.arcTo(RectF(bubbleLeft, bubbleTop, bubbleLeft + cornerRadius * 2, bubbleTop + cornerRadius * 2), 270f, -90f)
-            path.lineTo(bubbleLeft, bubbleBottom - cornerRadius)
-            path.arcTo(RectF(bubbleLeft, bubbleBottom - cornerRadius * 2, bubbleLeft + cornerRadius * 2, bubbleBottom), 180f, -90f)
-            path.lineTo(tailBaseLeft, bubbleBottom)
-            path.quadTo(centerX - (tailWidth * 0.2f), bubbleBottom + (tailHeight * 0.6f), tailTipX, tailTipY)
-            path.quadTo(centerX + (tailWidth * 0.4f), bubbleBottom + (tailHeight * 0.3f), tailBaseRight, bubbleBottom)
-        } else {
-            // NO TAIL (Rounded Rect only) - used when shifted or ambient
-            path.addRoundRect(RectF(bubbleLeft, bubbleTop, bubbleRight, bubbleBottom), cornerRadius, cornerRadius, android.graphics.Path.Direction.CW)
+            if (placement.flippedBelow) {
+                path.moveTo(tailBaseX - tailWidth / 2f, bubbleTop)
+                path.quadTo(tailBaseX - tailWidth * 0.2f, bubbleTop - tailHeight * 0.55f, anchorX, anchorY)
+                path.quadTo(tailBaseX + tailWidth * 0.2f, bubbleTop - tailHeight * 0.55f, tailBaseX + tailWidth / 2f, bubbleTop)
+            } else {
+                path.moveTo(tailBaseX + tailWidth / 2f, bubbleBottom)
+                path.quadTo(tailBaseX + tailWidth * 0.2f, bubbleBottom + tailHeight * 0.55f, anchorX, anchorY)
+                path.quadTo(tailBaseX - tailWidth * 0.2f, bubbleBottom + tailHeight * 0.55f, tailBaseX - tailWidth / 2f, bubbleBottom)
+            }
         }
-        
         path.close()
 
-        // Set Paint Colors
-        val bubblesColor = when (entity.state) {
-            CharacterState.SLEEPING -> Color.argb(230, 50, 50, 80)
-            CharacterState.EXCITED -> Color.argb(230, 255, 100, 50)
-            CharacterState.BUSY -> Color.argb(230, 50, 100, 150)
-            CharacterState.EATING -> Color.argb(230, 80, 150, 50)
+        val bubblesColor = when {
+            entity.state == CharacterState.FAILED -> Color.argb(230, 120, 45, 45)
+            entity.state == CharacterState.REVIEW -> Color.argb(230, 80, 55, 135)
+            entity.state.pausesAmbientWander -> Color.argb(230, 50, 50, 80)
+            entity.state.excitedLike -> Color.argb(230, 255, 100, 50)
+            entity.state.busyLike -> Color.argb(230, 50, 100, 150)
+            entity.state == CharacterState.EATING -> Color.argb(230, 80, 150, 50)
             else -> Color.argb(230, 40, 40, 40)
         }
         bubblePaint.color = bubblesColor
-        
+        bubblePaint.alpha = (Color.alpha(bubblesColor) * placement.alpha).toInt().coerceIn(0, 255)
         bubbleStrokePaint.strokeWidth = 4f * scale
         bubbleStrokePaint.color = Color.WHITE
+        bubbleStrokePaint.alpha = (210f * placement.alpha).toInt().coerceIn(0, 255)
 
-        // Draw Fill
         canvas.drawPath(path, bubblePaint)
-        
-        // Draw Border
         canvas.drawPath(path, bubbleStrokePaint)
 
-        // 7. Draw Text
         canvas.save()
         canvas.translate(bubbleLeft + padH, bubbleTop + padV)
         layout.draw(canvas)
         canvas.restore()
-        
-        // Restore original alignment (CENTER)
+
         textPaint.textAlign = originalAlign
+        textPaint.alpha = originalTextAlpha
+        bubblePaint.alpha = originalBubbleAlpha
+        bubbleStrokePaint.alpha = originalStrokeAlpha
     }
 
     /**
      * Get emoji for state.
      */
-    private fun getStateEmoji(state: CharacterState): String = when (state) {
-        CharacterState.IDLE -> "😐"
-        CharacterState.SLEEPING -> "😴"
-        CharacterState.EXCITED -> "🎉"
-        CharacterState.BUSY -> "💼"
-        CharacterState.EATING -> "🍽️"
+    private fun getStateEmoji(state: CharacterState): String = when {
+        state == CharacterState.IDLE -> "😐"
+        state == CharacterState.SLEEPING || state == CharacterState.WAITING -> "😴"
+        state == CharacterState.FAILED -> "⚠️"
+        state == CharacterState.REVIEW -> "🔎"
+        state == CharacterState.WAVING || state == CharacterState.HAPPY -> "👋"
+        state.excitedLike -> "🎉"
+        state.busyLike -> "💼"
+        state == CharacterState.EATING -> "🍽️"
+        else -> "😐"
     }
 
     /**
@@ -871,13 +1532,18 @@ class ClawRenderer(
         cy: Float,
         entity: EntityStatus,
         scale: Float,
-        companion: CompanionDetail? = null
+        companion: CompanionDetail? = null,
+        facingDirection: WalkFacingDirection = WalkFacingDirection.RIGHT
     ) {
         // SVG scale (original is 4x, now multiply by entity scale)
         val svgScale = 4f * scale
 
         canvas.save()
-        canvas.translate(cx - (60 * svgScale), cy - (60 * svgScale))
+        canvas.translate(cx, cy)
+        if (facingDirection == WalkFacingDirection.LEFT) {
+            canvas.scale(-1f, 1f)
+        }
+        canvas.translate(-(60 * svgScale), -(60 * svgScale))
         canvas.scale(svgScale, svgScale)
 
         // Colors
@@ -1053,7 +1719,7 @@ class ClawRenderer(
             isAntiAlias = true
         }
 
-        val defaultLid = if (entity.state == CharacterState.SLEEPING) 1.0f else 0f
+        val defaultLid = if (entity.state == CharacterState.SLEEPING || entity.state == CharacterState.WAITING) 1.0f else 0f
         val lidFactor = (entity.parts?.get("EYE_LID") as? Double)?.toFloat() ?: defaultLid
         val browAngle = (entity.parts?.get("EYE_ANGLE") as? Double)?.toFloat() ?: 0f
 
@@ -1089,6 +1755,19 @@ class ClawRenderer(
         }
     }
 
+    fun diagnosticsSnapshotForTest(): WallpaperRenderDiagnostics.Snapshot {
+        return renderDiagnostics.snapshot()
+    }
+
+    private fun SpritesheetCompanionDrawer.DrawResult.toDiagnosticsOutcome(): WallpaperRenderDiagnostics.CompanionDrawOutcome {
+        return when (this) {
+            SpritesheetCompanionDrawer.DrawResult.DRAWN -> WallpaperRenderDiagnostics.CompanionDrawOutcome.DRAWN
+            SpritesheetCompanionDrawer.DrawResult.LOADING -> WallpaperRenderDiagnostics.CompanionDrawOutcome.LOADING
+            SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED -> WallpaperRenderDiagnostics.CompanionDrawOutcome.UNSUPPORTED
+            SpritesheetCompanionDrawer.DrawResult.ERROR -> WallpaperRenderDiagnostics.CompanionDrawOutcome.ERROR
+        }
+    }
+
     // ============================================
     // BACKWARD COMPATIBLE SINGLE ENTITY
     // ============================================
@@ -1100,5 +1779,33 @@ class ClawRenderer(
         // Convert to EntityStatus and use multi-entity renderer
         val entityStatus = EntityStatus.fromAgentStatus(status, 0)
         drawMultiEntity(canvas, listOf(entityStatus))
+    }
+
+    companion object {
+        private const val BUBBLE_PULSE_MS = 720L
+        private const val CONVERSATION_GROUP_WINDOW_MS = 2_000L
+        private const val CONVERSATION_EVENT_STALE_MS = 120_000L
+        private const val MAX_SEEN_CONVERSATIONS = 128
+
+        /**
+         * card_f9b2cc2d v1.1.6: how long a spritesheet may stay in LOADING (and
+         * paint nothing) before the renderer falls back to the procedural drawer
+         * so the entity is never invisible. Short enough the user never sees a
+         * long black gap; long enough a quick disk-decode load doesn't flash the
+         * procedural lobster (preserves the no-flash intent of card_9e52c7b).
+         */
+        const val SPRITESHEET_LOADING_GRACE_MS = 750L
+
+        /**
+         * Pure decision for the LOADING grace window (unit-tested without a
+         * Context). Returns true once a spritesheet has been continuously LOADING
+         * for at least [graceMs]. [loadingSinceMs] is the wall-clock ms when
+         * LOADING first began for this entity (0 means "not currently tracked").
+         */
+        fun shouldFallbackForStuckSpritesheet(
+            loadingSinceMs: Long,
+            nowMs: Long,
+            graceMs: Long = SPRITESHEET_LOADING_GRACE_MS
+        ): Boolean = loadingSinceMs > 0L && nowMs - loadingSinceMs >= graceMs
     }
 }

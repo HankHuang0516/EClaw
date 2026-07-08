@@ -74,7 +74,9 @@
         .lock-btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
+            min-height: 28px;
             padding: 6px 14px;
             border-radius: var(--radius-pill);
             font-size: 13px;
@@ -235,6 +237,47 @@
             margin-bottom: 12px;
         }
 
+        .env-state-panel {
+            display: grid;
+            grid-template-columns: minmax(120px, 0.8fr) minmax(140px, 1fr) minmax(180px, 1.4fr);
+            gap: 10px;
+            margin-bottom: 12px;
+            padding: 12px;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.10), rgba(16, 185, 129, 0.08));
+        }
+
+        .env-state-panel[data-state="locked"] {
+            background: linear-gradient(135deg, rgba(244, 67, 54, 0.12), rgba(255, 176, 32, 0.08));
+        }
+
+        .env-state-item {
+            min-width: 0;
+        }
+
+        .env-state-label {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--text-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .env-state-value {
+            display: block;
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .env-state-hint {
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
         .mc-empty {
             text-align: center;
             color: var(--text-muted);
@@ -282,9 +325,48 @@
         }
 
         @media (max-width: 640px) {
+            .page-header {
+                align-items: stretch;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .header-actions {
+                width: 100%;
+            }
+
+            .header-actions .lock-btn,
+            .header-actions .btn {
+                flex: 1 1 0;
+                justify-content: center;
+            }
+
             .sub-tab {
                 padding: 8px 12px;
                 font-size: 13px;
+            }
+
+            .env-state-panel {
+                grid-template-columns: 1fr;
+            }
+
+            .var-row {
+                flex-wrap: wrap;
+            }
+
+            .var-row-key {
+                flex: 1 1 100%;
+                max-width: none;
+                border-right: 0;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .var-row-val {
+                min-width: 0;
+            }
+
+            .var-row-actions {
+                padding: 6px 8px;
             }
         }
     </style>
@@ -297,7 +379,7 @@
         <div class="page-header">
             <h1 class="page-title" data-i18n="env_title">🔐 Env Variables</h1>
             <div class="header-actions">
-                <button class="lock-btn unlocked" id="lockBtn" onclick="toggleLock()">
+                <button class="lock-btn unlocked" id="lockBtn" onclick="toggleLock()" aria-pressed="false" aria-label="Vault readable; bots can read variables">
                     <span id="lockIcon">🔓</span>
                     <span id="lockLabel" data-i18n="env_lock_readable">Bot 可讀取</span>
                 </button>
@@ -339,6 +421,22 @@
                 <span data-i18n="env_locked_banner">🔒 Locked — Bot cannot read any variables</span>
             </div>
 
+            <!-- Secret-safe state summary -->
+            <div class="env-state-panel" id="envSummary" role="status" aria-live="polite" aria-atomic="true" data-state="loading">
+                <div class="env-state-item">
+                    <span class="env-state-label">Vault / 保管庫</span>
+                    <strong class="env-state-value" id="envSummaryCount">Loading keys / 載入 key</strong>
+                </div>
+                <div class="env-state-item">
+                    <span class="env-state-label">Bot access / Bot 存取</span>
+                    <strong class="env-state-value" id="envSummaryMode">Checking access / 檢查權限</strong>
+                </div>
+                <div class="env-state-item">
+                    <span class="env-state-label">Value safety / 值安全</span>
+                    <span class="env-state-hint" id="envSummaryHint">Secret values stay hidden in this summary. / 密鑰值不會顯示在摘要中。</span>
+                </div>
+            </div>
+
             <!-- Vars card -->
             <div class="card vars-card" id="varsCard">
                 <div class="vars-notice" data-i18n="env_notice">🔐 Values are encrypted (AES-256) and stored on the server. Bots can read these variables when invoked.</div>
@@ -352,7 +450,7 @@
                     When receiving messages, the push notification lists available key names (values are hidden). Bots call this command to get actual values:
                 </div>
                 <div style="position:relative;">
-                    <div id="botCurlHint" style="margin-top:8px;padding:10px 12px;background:var(--input-bg);border-radius:var(--radius-sm);font-family:monospace;font-size:11px;color:var(--text-secondary);word-break:break-all;">
+                    <div id="botCurlHint" style="margin-top:8px;padding:10px 44px 10px 12px;background:var(--input-bg);border-radius:var(--radius-sm);font-family:monospace;font-size:11px;color:var(--text-secondary);word-break:break-all;">
                         載入中...
                     </div>
                     <button id="btnRevealCurlId" onclick="toggleCurlHintReveal()"
@@ -418,23 +516,49 @@
                 btn.className = 'lock-btn locked';
                 icon.textContent = '🔒';
                 label.textContent = i18n.t('env_lock_unreadable');
+                btn.setAttribute('aria-pressed', 'true');
+                btn.setAttribute('aria-label', 'Vault locked; bots cannot read variables');
                 banner.classList.add('visible');
                 card.classList.add('locked-state');
                 addBtn.disabled = true;
+                addBtn.setAttribute('aria-disabled', 'true');
             } else {
                 btn.className = 'lock-btn unlocked';
                 icon.textContent = '🔓';
                 label.textContent = i18n.t('env_lock_readable');
+                btn.setAttribute('aria-pressed', 'false');
+                btn.setAttribute('aria-label', 'Vault readable; bots can read variables');
                 banner.classList.remove('visible');
                 card.classList.remove('locked-state');
                 addBtn.disabled = false;
+                addBtn.setAttribute('aria-disabled', 'false');
             }
+        }
+
+        function renderEnvSummary(keys, locked) {
+            const summary = document.getElementById('envSummary');
+            if (!summary) return;
+            const countEl = document.getElementById('envSummaryCount');
+            const modeEl = document.getElementById('envSummaryMode');
+            const hintEl = document.getElementById('envSummaryHint');
+            const count = Array.isArray(keys) ? keys.length : 0;
+            summary.dataset.state = locked ? 'locked' : (count > 0 ? 'ready' : 'empty');
+            countEl.textContent = count === 1
+                ? '1 key saved / 已儲存 1 組 key'
+                : `${count} keys saved / 已儲存 ${count} 組 key`;
+            modeEl.textContent = locked ? 'Locked / bots blocked / 已鎖定' : 'Readable / bots allowed / 可讀取';
+            hintEl.textContent = locked
+                ? 'Values stay encrypted; bot reads are blocked. / 值仍加密保存，Bot 讀取已阻擋。'
+                : (count > 0
+                    ? 'Secret values stay hidden in this list. / 清單只顯示 key 名稱，不顯示密鑰值。'
+                    : 'No vault keys saved yet. / 尚未儲存 vault key。');
         }
 
         function renderVars() {
             const el = document.getElementById('varsList');
             const vars = loadLocalVars();
             const keys = Object.keys(vars).sort();
+            renderEnvSummary(keys, isLocked());
             if (!keys.length) {
                 el.innerHTML = `<div class="env-empty-hint">
                     <div class="env-empty-icon">🔑</div>
@@ -447,9 +571,9 @@
                     <div class="var-row-key">${esc(k)}</div>
                     <div class="var-row-val" id="varVal_${esc(k)}">••••••••</div>
                     <div class="var-row-actions">
-                        <button class="var-action-btn" onclick="copyVarRef(this,'${esc(k)}')" title="Copy {{${esc(k)}}} reference">📎</button>
-                        <button class="var-action-btn" onclick="toggleVarVal('${esc(k)}')" title="${esc(i18n.t('common_toggle_visibility'))}">👁</button>
-                        <button class="var-action-btn" onclick="showVarDialog('${esc(k)}')" title="${esc(i18n.t('common_edit'))}">✏️</button>
+                        <button class="var-action-btn" onclick="copyVarRef(this,'${esc(k)}')" title="Copy {{${esc(k)}}} reference" aria-label="Copy reference for ${esc(k)}">📎</button>
+                        <button class="var-action-btn" onclick="toggleVarVal('${esc(k)}')" title="${esc(i18n.t('common_toggle_visibility'))}" aria-label="${esc(i18n.t('common_toggle_visibility'))} ${esc(k)}">👁</button>
+                        <button class="var-action-btn" onclick="showVarDialog('${esc(k)}')" title="${esc(i18n.t('common_edit'))}" aria-label="${esc(i18n.t('common_edit'))} ${esc(k)}">✏️</button>
                         <button class="var-action-btn delete" onclick="deleteVar('${esc(k)}')" title="${esc(i18n.t('common_delete'))}" aria-label="${esc(i18n.t('common_delete'))} ${esc(k)}">🗑</button>
                     </div>
                 </div>`).join('');
@@ -603,7 +727,7 @@
         function toggleLock() {
             const nowLocked = !isLocked();
             localStorage.setItem(lockKey(), String(nowLocked));
-            renderLockState();
+            renderAll();
             syncVarsToServer(); // sync lock state + vars to server
         }
 

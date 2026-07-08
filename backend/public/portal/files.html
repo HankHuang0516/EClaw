@@ -198,6 +198,50 @@
             color: var(--primary);
         }
 
+        .file-result-panel {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 0 0 14px;
+            padding: 10px 12px;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            background: color-mix(in srgb, var(--card) 76%, transparent);
+        }
+
+        .file-result-summary {
+            font-size: 13px;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .file-active-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+            min-height: 0;
+        }
+
+        .file-active-filter {
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding: 3px 8px;
+            border-radius: var(--radius-pill);
+            background: rgba(14, 165, 233, 0.12);
+            border: 1px solid rgba(14, 165, 233, 0.35);
+            color: var(--text-secondary);
+            font-size: 11px;
+        }
+
+        #clearFileFilters:disabled {
+            opacity: 0.45;
+            cursor: default;
+        }
+
         /* File grid */
         .file-grid {
             display: grid;
@@ -247,6 +291,48 @@
         .file-thumb-icon {
             font-size: 40px;
             opacity: 0.5;
+        }
+
+        .file-thumb.file-thumb-broken {
+            background: rgba(229, 62, 62, 0.08);
+        }
+
+        .file-thumb-error {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            background: rgba(229, 62, 62, 0.08);
+            color: var(--error, #e53e3e);
+            cursor: pointer;
+            font: inherit;
+            text-align: center;
+        }
+
+        .file-thumb-error[hidden] {
+            display: none;
+        }
+
+        .file-thumb-error-icon {
+            font-size: 26px;
+            line-height: 1;
+        }
+
+        .file-thumb-error-title {
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .file-thumb-error-action {
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1.2;
         }
 
         /* Delete button on file card */
@@ -521,6 +607,21 @@
 
         /* Responsive */
         @media (max-width: 640px) {
+            .page-header {
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .file-result-panel {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            #clearFileFilters {
+                width: 100%;
+                justify-content: center;
+            }
+
             .file-grid {
                 grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
                 gap: 8px;
@@ -650,7 +751,7 @@
 
         <!-- Folder Filter Bar -->
         <div class="folder-filter-bar" id="folderFilterBar">
-            <div class="folder-chip active" data-folder="all" onclick="setFolderFilter('all')" data-i18n="files_folder_all">All</div>
+            <div class="folder-chip active" data-folder="all" onclick="setFolderFilter('all')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" role="button" tabindex="0" data-i18n="files_folder_all">All</div>
             <!-- dynamic folder chips + add button rendered by JS -->
         </div>
 
@@ -658,6 +759,16 @@
         <div class="file-stats" id="fileStats">
             <div class="spinner" style="width:14px;height:14px;border-width:2px;vertical-align:middle;display:inline-block;"></div>
             <span data-i18n="files_loading">Loading files...</span>
+        </div>
+
+        <div class="file-result-panel" id="fileResultPanel" role="status" aria-live="polite">
+            <div>
+                <div class="file-result-summary" id="fileResultSummary">
+                    <span data-i18n="files_loading">Loading files...</span>
+                </div>
+                <div class="file-active-filters" id="fileActiveFilters"></div>
+            </div>
+            <button class="btn btn-outline btn-sm" id="clearFileFilters" type="button" onclick="clearFileFilters()" data-i18n="community_result_clear_filters" disabled>Clear filters</button>
         </div>
 
         <!-- File Grid -->
@@ -671,8 +782,9 @@
         <!-- Empty State -->
         <div class="empty-state" id="emptyState" style="display:none;">
             <div style="font-size:48px;margin-bottom:12px;">📁</div>
-            <div style="font-size:16px;color:var(--text-secondary);margin-bottom:4px;" data-i18n="files_empty_title">No files yet</div>
-            <div data-i18n="files_empty_desc">Photos and voice messages from your chats will appear here.</div>
+            <div id="emptyTitle" style="font-size:16px;color:var(--text-secondary);margin-bottom:4px;" data-i18n="files_empty_title">No files yet</div>
+            <div id="emptyDesc" data-i18n="files_empty_desc">Photos and voice messages from your chats will appear here.</div>
+            <button class="btn btn-outline btn-sm" id="emptyClearFileFilters" type="button" onclick="clearFileFilters()" data-i18n="community_result_clear_filters" style="display:none;margin-top:12px;">Clear filters</button>
         </div>
 
         <!-- Load More -->
@@ -717,6 +829,45 @@
         let hasMore = false;
         let oldestTimestamp = null;
 
+        function tr(key, fallback) {
+            const value = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t(key) : key;
+            return value && value !== key ? value : (fallback || key);
+        }
+
+        function renderFileThumbErrorHtml() {
+            const failed = escapeHtml(tr('files_photo_load_failed', 'Photo load failed'));
+            const retry = escapeHtml(tr('files_photo_retry', 'Click to retry'));
+            return '<button type="button" class="file-thumb-error broken retry" hidden onclick="retryFileThumb(this, event)" aria-label="' + failed + ' — ' + retry + '">' +
+                '<span class="file-thumb-error-icon">&#9888;</span>' +
+                '<span class="file-thumb-error-title">' + failed + '</span>' +
+                '<span class="file-thumb-error-action">' + retry + '</span>' +
+                '</button>';
+        }
+
+        function handleFileThumbError(img) {
+            if (!img) return;
+            const thumb = img.closest('.file-thumb');
+            if (!thumb) return;
+            img.hidden = true;
+            thumb.classList.add('file-thumb-broken');
+            const error = thumb.querySelector('.file-thumb-error');
+            if (error) error.hidden = false;
+        }
+
+        function retryFileThumb(btn, event) {
+            if (event) event.stopPropagation();
+            const thumb = btn && btn.closest('.file-thumb');
+            if (!thumb) return;
+            const img = thumb.querySelector('img[data-file-src]');
+            if (!img) return;
+            btn.hidden = true;
+            thumb.classList.remove('file-thumb-broken');
+            img.hidden = false;
+            const src = img.dataset.fileSrc || img.getAttribute('src');
+            img.removeAttribute('src');
+            window.requestAnimationFrame(() => { img.src = src; });
+        }
+
         // --- Folder Management (localStorage) ---
         function getFileFolders() {
             try { return JSON.parse(localStorage.getItem('eclaw_file_folders') || '[]'); }
@@ -739,7 +890,7 @@
         function renderFolderChips() {
             const bar = document.getElementById('folderFilterBar');
             const folders = getFileFolders();
-            let html = '<div class="folder-chip' + (currentFolderFilter === null ? ' active' : '') + '" data-folder="all" onclick="setFolderFilter(\'all\')" data-i18n="files_folder_all">' + i18n.t('files_folder_all') + '</div>';
+            let html = '<div class="folder-chip' + (currentFolderFilter === null ? ' active' : '') + '" data-folder="all" onclick="setFolderFilter(\'all\')" data-i18n="files_folder_all">' + tr('files_folder_all', 'All') + '</div>';
             folders.forEach(f => {
                 const isActive = currentFolderFilter === f;
                 html += '<div class="folder-chip' + (isActive ? ' active' : '') + '" data-folder="' + escapeHtml(f) + '" onclick="setFolderFilter(\'' + escapeHtml(f).replace(/'/g, "\\'") + '\')">' +
@@ -747,7 +898,7 @@
                     '<span class="folder-close" onclick="event.stopPropagation();deleteFolder(\'' + escapeHtml(f).replace(/'/g, "\\'") + '\')">&times;</span>' +
                     '</div>';
             });
-            html += '<div class="folder-add-btn" onclick="addFolder()" data-i18n="files_folder_add">' + i18n.t('files_folder_add') + '</div>';
+            html += '<div class="folder-add-btn" onclick="addFolder()" data-i18n="files_folder_add">' + tr('files_folder_add', '+ Folder') + '</div>';
             bar.innerHTML = html;
         }
 
@@ -756,6 +907,104 @@
             renderFolderChips();
             renderFiles();
             updateStats();
+        }
+
+        function getDisplayFiles() {
+            if (currentFolderFilter === null) return allFiles;
+            return allFiles.filter(f => getFileFolder(f.id) === currentFolderFilter);
+        }
+
+        function hasActiveFileFilters() {
+            return currentTypeFilter !== 'all'
+                || currentEntityFilter !== null
+                || currentTimeFilter !== 'all'
+                || currentFolderFilter !== null;
+        }
+
+        function getActiveFileFilterLabels() {
+            const labels = [];
+            if (currentTypeFilter !== 'all') {
+                labels.push(currentTypeFilter === 'photo'
+                    ? tr('files_filter_photos', 'Photos')
+                    : tr('files_filter_voice', 'Voice'));
+            }
+            if (currentEntityFilter !== null) {
+                labels.push(getEntityName(currentEntityFilter));
+            }
+            if (currentTimeFilter !== 'all') {
+                const chip = document.querySelector('.time-filter-bar .time-chip[data-time="' + currentTimeFilter + '"]');
+                labels.push(chip ? chip.textContent.trim() : currentTimeFilter);
+            }
+            if (currentFolderFilter !== null) {
+                labels.push('📁 ' + currentFolderFilter);
+            }
+            return labels;
+        }
+
+        function syncFilterControls() {
+            document.querySelectorAll('.filter-bar > .filter-chip').forEach(c => {
+                c.classList.toggle('active', c.dataset.type === currentTypeFilter);
+            });
+            document.querySelectorAll('.time-filter-bar .time-chip').forEach(c => {
+                c.classList.toggle('active', c.dataset.time === currentTimeFilter);
+            });
+            renderEntityFilters();
+            renderFolderChips();
+        }
+
+        function updateFileResultContext(displayFiles = getDisplayFiles()) {
+            const summary = document.getElementById('fileResultSummary');
+            const filters = document.getElementById('fileActiveFilters');
+            const clearBtn = document.getElementById('clearFileFilters');
+            const emptyTitle = document.getElementById('emptyTitle');
+            const emptyDesc = document.getElementById('emptyDesc');
+            const emptyClearBtn = document.getElementById('emptyClearFileFilters');
+            const activeLabels = getActiveFileFilterLabels();
+            const hasActive = hasActiveFileFilters();
+            const photoCount = displayFiles.filter(f => f.type === 'photo').length;
+            const voiceCount = displayFiles.filter(f => f.type === 'voice').length;
+
+            if (summary) {
+                summary.innerHTML = '<strong>' + displayFiles.length + '</strong> ' + tr('files_stats_total', 'files') +
+                    ' — ' + photoCount + ' ' + tr('files_type_photo', 'Photo') +
+                    ', ' + voiceCount + ' ' + tr('files_type_voice', 'Voice');
+            }
+            if (filters) {
+                filters.innerHTML = activeLabels.map(label =>
+                    '<span class="file-active-filter">' + escapeHtml(label) + '</span>'
+                ).join('');
+            }
+            if (clearBtn) {
+                clearBtn.disabled = !hasActive;
+            }
+            if (emptyTitle && emptyDesc) {
+                emptyTitle.textContent = hasActive
+                    ? tr('faq_no_results', 'No matching results found.')
+                    : tr('files_empty_title', 'No files yet');
+                emptyDesc.textContent = hasActive
+                    ? activeLabels.join(' / ')
+                    : tr('files_empty_desc', 'Photos and voice messages from your chats will appear here.');
+            }
+            if (emptyClearBtn) {
+                emptyClearBtn.style.display = hasActive ? '' : 'none';
+            }
+        }
+
+        function clearFileFilters() {
+            const hadServerFilters = currentTypeFilter !== 'all'
+                || currentEntityFilter !== null
+                || currentTimeFilter !== 'all';
+            currentTypeFilter = 'all';
+            currentEntityFilter = null;
+            currentTimeFilter = 'all';
+            currentFolderFilter = null;
+            syncFilterControls();
+            if (hadServerFilters) {
+                loadFiles();
+            } else {
+                renderFiles();
+                updateStats();
+            }
         }
 
         async function addFolder() {
@@ -773,7 +1022,7 @@
         }
 
         async function deleteFolder(name) {
-            if (!await showConfirm({ message: i18n.t('files_folder_delete_confirm').replace('%1$s', name), danger: true })) return;
+            if (!await showConfirm({ message: i18n.t('files_folder_delete_confirm').replace('%1$s', name), confirmText: i18n.t('common_delete'), danger: true, itemName: name })) return;
             const folders = getFileFolders().filter(f => f !== name);
             saveFileFolders(folders);
             // Remove folder assignments
@@ -902,9 +1151,7 @@
 
         function setTimeFilter(filter) {
             currentTimeFilter = filter;
-            document.querySelectorAll('.time-filter-bar .time-chip').forEach(c => {
-                c.classList.toggle('active', c.dataset.time === filter);
-            });
+            syncFilterControls();
             loadFiles();
         }
 
@@ -1027,10 +1274,8 @@
             grid.classList.toggle('list-view', currentViewMode === 'list');
 
             // Apply folder filter
-            let displayFiles = allFiles;
-            if (currentFolderFilter !== null) {
-                displayFiles = allFiles.filter(f => getFileFolder(f.id) === currentFolderFilter);
-            }
+            let displayFiles = getDisplayFiles();
+            updateFileResultContext(displayFiles);
 
             if (displayFiles.length === 0) {
                 grid.innerHTML = '';
@@ -1059,7 +1304,8 @@
                     return '<div ' + cardAttrs + '>' +
                         deleteBtn + quoteBtn +
                         '<div class="file-thumb">' +
-                        '<img src="' + escapeHtml(file.url) + '" alt="photo" loading="lazy" onerror="this.parentElement.innerHTML=\'<div class=file-thumb-icon>🖼️</div>\'">' +
+                        '<img src="' + escapeHtml(file.url) + '" data-file-src="' + escapeHtml(file.url) + '" alt="photo" loading="lazy" onerror="handleFileThumbError(this)">' +
+                        renderFileThumbErrorHtml() +
                         entityBadgesHtml +
                         '</div>' +
                         '<div class="file-info">' +
@@ -1095,15 +1341,13 @@
 
         function updateStats() {
             const stats = document.getElementById('fileStats');
-            let displayFiles = allFiles;
-            if (currentFolderFilter !== null) {
-                displayFiles = allFiles.filter(f => getFileFolder(f.id) === currentFolderFilter);
-            }
+            let displayFiles = getDisplayFiles();
             const photoCount = displayFiles.filter(f => f.type === 'photo').length;
             const voiceCount = displayFiles.filter(f => f.type === 'voice').length;
-            stats.innerHTML = '<strong>' + displayFiles.length + '</strong> ' + i18n.t('files_stats_total') +
-                ' — ' + photoCount + ' ' + i18n.t('files_type_photo') +
-                ', ' + voiceCount + ' ' + i18n.t('files_type_voice');
+            stats.innerHTML = '<strong>' + displayFiles.length + '</strong> ' + tr('files_stats_total', 'files') +
+                ' — ' + photoCount + ' ' + tr('files_type_photo', 'Photo') +
+                ', ' + voiceCount + ' ' + tr('files_type_voice', 'Voice');
+            updateFileResultContext(displayFiles);
         }
 
         // --- Preview ---
@@ -1225,10 +1469,15 @@
         async function deleteFile(idx) {
             const file = allFiles[idx];
             if (!file) return;
-            if (!await showConfirm({ message: i18n.t('files_delete_confirm', 'Are you sure you want to delete this file?'), danger: true })) return;
+            if (!await showConfirm({ message: i18n.t('files_delete_confirm', 'Are you sure you want to delete this file?'), confirmText: i18n.t('common_delete'), danger: true, itemName: file.text || file.url })) return;
 
             try {
-                const resp = await apiCall('/api/device/files/' + file.id + '?deviceId=' + encodeURIComponent(deviceId) + '&deviceSecret=' + encodeURIComponent(deviceSecret), { method: 'DELETE' });
+                const resp = await apiCall(
+                    'DELETE',
+                    '/api/device/files/' + encodeURIComponent(file.id) +
+                        '?deviceId=' + encodeURIComponent(currentUser.deviceId) +
+                        '&deviceSecret=' + encodeURIComponent(currentUser.deviceSecret)
+                );
                 if (resp.success) {
                     allFiles.splice(idx, 1);
                     renderFiles();

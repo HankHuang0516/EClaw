@@ -4,7 +4,7 @@
  * acks) up the org chart and into the user's channel.
  */
 
-const { isLowSignalFwd, ORG_FWD_MIN_BODY_LEN } = require('../../org-fwd-filter');
+const { isLowSignalFwd, classifyLowSignalFwd, ORG_FWD_MIN_BODY_LEN } = require('../../org-fwd-filter');
 const { tKanban, statusLabel, TRANSLATIONS } = require('../../i18n/kanban-notifications');
 
 describe('isLowSignalFwd()', () => {
@@ -161,6 +161,206 @@ describe('isLowSignalFwd()', () => {
         });
     });
 
+    describe('Codex/openclaw runtime machine-noise forwards (card_77c4b9e2)', () => {
+        // Repro (2026-06-26): #6's codex runtime auto-emitted #6_PERMISSION_HANDOFF
+        // every ~1min from a benign post-exec cleanup WARN, plus periodic status
+        // heartbeats. These were org-forwarded up to #2 and flooded the user's
+        // chat because ORG_FWD_NOISE_PATTERNS had no matching entry.
+        const HANDOFF = `#6_PERMISSION_HANDOFF
+- Blocker: Codex runtime output reported permission_or_login: WARN codex_rmcp_client::stdio_server_launcher: Failed to terminate MCP process group 64526: Operation not permitted (os error 1)
+- Next step: grant the required permission/login through an approved channel`;
+        const HEARTBEAT = `Codex #6 status heartbeat
+- Task: [task in progress - preview redacted to prevent secret leak]
+- Elapsed: 30s
+- Progress: bridge is still alive, codex exec is still running`;
+
+        it('suppresses raw #N_PERMISSION_HANDOFF (pre-prefix, as orgChartForward sees it)', () => {
+            expect(isLowSignalFwd(HANDOFF)).toBe(true);
+            expect(isLowSignalFwd('#1_PERMISSION_HANDOFF\n- Next step: grant')).toBe(true);
+        });
+
+        it('suppresses the already-wrapped "[📢 FWD from #N] #N_PERMISSION_HANDOFF" variant', () => {
+            expect(isLowSignalFwd(`[📢 FWD from #6] ${HANDOFF}`)).toBe(true);
+        });
+
+        it('suppresses "Codex #N status heartbeat" (with and without the entity number)', () => {
+            expect(isLowSignalFwd(HEARTBEAT)).toBe(true);
+            expect(isLowSignalFwd(`[📢 FWD from #6] ${HEARTBEAT}`)).toBe(true);
+            expect(isLowSignalFwd('Codex status heartbeat\n- Elapsed: 30s\n- Progress: still running')).toBe(true);
+        });
+
+        it('suppresses Codex bridge error / watchdog / bridge status + EClaw progress update', () => {
+            expect(isLowSignalFwd('Codex bridge error: socket closed unexpectedly, retrying')).toBe(true);
+            expect(isLowSignalFwd('Codex watchdog recovery window is 45m 0s only if heartbeats stop')).toBe(true);
+            expect(isLowSignalFwd('Codex bridge status: reconnected after transient drop')).toBe(true);
+            expect(isLowSignalFwd('EClaw progress update — still polling, nothing new')).toBe(true);
+        });
+
+        it('does NOT suppress a real permission request or prose that merely mentions handoff/heartbeat', () => {
+            // Critical false-positive guard: a genuine gate / real work forwards.
+            expect(isLowSignalFwd('Need you to grant GitHub repo scope for the private mirror before I can push')).toBe(false);
+            expect(isLowSignalFwd('I finished the permission-handoff refactor PR #3120, ready for review')).toBe(false);
+            expect(isLowSignalFwd('Heartbeat metrics dashboard shipped — p99 latency down 40%')).toBe(false);
+        });
+    });
+
+    describe('Chinese bot-to-bot ack / peer-heartbeat-echo noise (card_59f41e5b)', () => {
+        // Repro: peers bounce "[📢 FWD from #N] 收到 🦞" / "已收到。" /
+        // "收到，#6 仍在跑 …" keep-alive echoes that org-forward up and flood the
+        // user's chat. These are pure acks / status echoes with no decision
+        // content and must be suppressed before the upward forward.
+        it('suppresses the peer-status-echo "[📢 FWD from #5] 收到，#6 仍在跑。🦞"', () => {
+            expect(isLowSignalFwd('[📢 FWD from #5] 收到，#6 仍在跑。🦞')).toBe(true);
+        });
+
+        it('suppresses pure acks "[📢 FWD from #6] 收到 🦞" / "已收到。"', () => {
+            expect(isLowSignalFwd('[📢 FWD from #6] 收到 🦞')).toBe(true);
+            expect(isLowSignalFwd('[📢 FWD from #6] 已收到。')).toBe(true);
+            expect(isLowSignalFwd('已收到。')).toBe(true);
+            expect(isLowSignalFwd('收到，了解。')).toBe(true);
+            expect(isLowSignalFwd('好的 🦞')).toBe(true);
+        });
+
+        it('suppresses the watchdog/last-output peer heartbeat echo', () => {
+            expect(isLowSignalFwd('收到，#6 last output 9m29s 前，watchdog 35m 餘量。🦞')).toBe(true);
+            // Robust heuristic (card_59f41e5b fix-forward) requires the 🦞 sign-off
+            // as a false-positive guard, so a heartbeat echo with bridge-alive
+            // narration now carries the mascot it always has in production.
+            expect(isLowSignalFwd('[📢 FWD from #6] 收到，#5 bridge alive，窗口 40m 仍可守。🦞')).toBe(true);
+            expect(isLowSignalFwd('已收到，#1 還在跑')).toBe(true);
+        });
+
+        it('suppresses a standalone lobster mascot 🦞 (with and without FWD wrapper)', () => {
+            expect(isLowSignalFwd('🦞')).toBe(true);
+            expect(isLowSignalFwd('[📢 FWD from #5] 🦞')).toBe(true);
+            expect(isLowSignalFwd('   🦞   ')).toBe(true);
+        });
+
+        it('CRITICAL false-positive guard: a real "收到 + actionable" report still forwards', () => {
+            // The existing guard the whole feature hinges on — a status report
+            // that begins with 收到 but carries a card id + ETA must NOT be eaten.
+            expect(isLowSignalFwd('收到，正在處理 card_a60568c，預計 30 分鐘內回報')).toBe(false);
+            expect(isLowSignalFwd('收到你的 PR #3758，我來 review')).toBe(false);
+            expect(isLowSignalFwd('了解了，這個 bug 根因是 X，我修')).toBe(false);
+            expect(isLowSignalFwd('收到，#6 仍在跑，但我發現 card_123 卡住了，需要你決定')).toBe(false);
+            expect(isLowSignalFwd('好的，我先把 deploy 跑起來再回報結果')).toBe(false);
+        });
+    });
+
+    describe('extended HANDOFF token + #5 watchdog-narration heartbeat coverage (card_59f41e5b)', () => {
+        // Fix-forward extending PR #3758/#3759: two machine-noise variants were
+        // verified slipping through live (classifyLowSignalFwd === null) on the
+        // deployed /api/suppression-log.
+        //   GAP 1: #6 now also emits #6_RESOURCE_HANDOFF (same class as
+        //          #N_PERMISSION_HANDOFF) → generalize to #N_<UPPER>_HANDOFF.
+        //   GAP 2: #5's live watchdog narration uses tokens (僅餘 / 即將觸發 /
+        //          到期 / resource handoff / 接近 / 警戒線 …) missing from the
+        //          heartbeat whitelist, incl. a #N-led variant (no 收到 prefix).
+
+        it('GAP1: generalized #N_<UPPER>_HANDOFF (RESOURCE_HANDOFF and others) is suppressed', () => {
+            // raw (pre-prefix) and FWD-wrapped, with multi-line blocker bodies
+            expect(isLowSignalFwd('#1_RESOURCE_HANDOFF\n- Blocker: still waiting')).toBe(true);
+            expect(classifyLowSignalFwd('#1_RESOURCE_HANDOFF\n- Blocker: still waiting')).toBe('permission_handoff');
+            expect(classifyLowSignalFwd('[📢 FWD from #6] #6_RESOURCE_HANDOFF\n- Blocker: codex exec is still running, but no stdout/stderr has been observed for 45m 29s.')).toBe('permission_handoff');
+            // pre-existing PERMISSION_HANDOFF still covered by the generalized token
+            expect(classifyLowSignalFwd('[📢 FWD from #6] #6_PERMISSION_HANDOFF\n- Blocker: ...')).toBe('permission_handoff');
+        });
+
+        it('GAP2-A: 收到-led watchdog narration (僅餘 / 即將觸發 / handoff) is a heartbeat echo', () => {
+            expect(isLowSignalFwd('收到，#6 last output 42m29s 前，watchdog 僅餘 2m30s，即將觸發 handoff。🦞')).toBe(true);
+            expect(classifyLowSignalFwd('收到，#6 last output 42m29s 前，watchdog 僅餘 2m30s，即將觸發 handoff。🦞')).toBe('heartbeat');
+        });
+
+        it('GAP2-B: #N-led watchdog narration (no 收到 prefix) is a heartbeat echo', () => {
+            expect(isLowSignalFwd('#6 watchdog 45m 到期，已進 resource handoff。等 #6 或 owner 決定處置。🦞')).toBe(true);
+            expect(classifyLowSignalFwd('#6 watchdog 45m 到期，已進 resource handoff。等 #6 或 owner 決定處置。🦞')).toBe('heartbeat');
+            expect(classifyLowSignalFwd('[📢 FWD from #5] #6 watchdog 45m 到期，已進 resource handoff。🦞')).toBe('heartbeat');
+        });
+
+        it('GAP2-C: 收到-led near-threshold heartbeat (接近 / 警戒線) is a heartbeat echo', () => {
+            expect(isLowSignalFwd('收到，#6 仍在跑，但接近警戒線。🦞')).toBe(true);
+            expect(classifyLowSignalFwd('收到，#6 仍在跑，但接近警戒線。🦞')).toBe('heartbeat');
+        });
+
+        it('CRITICAL false-positive guards: real work still forwards (classify === null)', () => {
+            // 收到-led real reports
+            expect(classifyLowSignalFwd('收到，正在處理 card_a60568c，預計 30 分鐘內回報')).toBeNull();
+            expect(classifyLowSignalFwd('收到你的 PR #3758，我來 review')).toBeNull();
+            expect(classifyLowSignalFwd('了解了，這個 bug 根因是 X，我修')).toBeNull();
+            // #N-led real work — the new sibling pattern must NOT swallow these
+            expect(classifyLowSignalFwd('#6 的 avatar bug 我修好了，PR #3760 待 review')).toBeNull();
+            expect(classifyLowSignalFwd('#6 watchdog dashboard 重構完成，PR #3761')).toBeNull();
+            // a heartbeat echo with an appended escalation must still forward
+            expect(classifyLowSignalFwd('收到，#6 仍在跑，但我發現 card_123 卡住了，需要你決定')).toBeNull();
+        });
+    });
+
+    describe('robust watchdog-narration heartbeat heuristic (card_59f41e5b fix-forward)', () => {
+        // The `$`-anchored whitelist approach was fragile: #5's LLM kept inventing
+        // narration words ("沉默超 1h", "Codex 沉默中") absent from the whitelist,
+        // so the echo slipped through (verified live: classifyLowSignalFwd("收到，
+        // #6 last output 66m29s 前，bridge alive，沉默超 1h。等 owner 處置。🦞")
+        // === null). The replacement is a SHAPE heuristic: ack/#N start + a
+        // heartbeat-domain keyword + a 🦞 sign-off + no actionable marker. It does
+        // NOT enumerate the body vocabulary, so new narration words don't leak.
+
+        it('MUST-SUPPRESS: watchdog narration with novel words (沉默超 1h / Codex 沉默中)', () => {
+            expect(classifyLowSignalFwd('收到，#6 last output 66m29s 前，bridge alive，沉默超 1h。等 owner 處置。🦞')).toBe('heartbeat');
+            expect(classifyLowSignalFwd('收到，#6 last output 54m29s 前，bridge alive，Codex 沉默中。等 owner 處理 handoff。🦞')).toBe('heartbeat');
+            expect(classifyLowSignalFwd('#6 watchdog 45m 到期，已進 resource handoff。等 #6 或 owner 決定處置。🦞')).toBe('heartbeat');
+            expect(classifyLowSignalFwd('[📢 FWD from #5] 收到，#6 仍在跑，但接近警戒線。🦞')).toBe('heartbeat');
+        });
+
+        it('MUST-FORWARD: real work / escalations still forward (classify === null)', () => {
+            // no heartbeat keyword → forwards
+            expect(classifyLowSignalFwd('收到，正在處理 card_a60568c，預計 30 分鐘內回報')).toBeNull();
+            expect(classifyLowSignalFwd('收到你的 PR #3758，我來 review')).toBeNull();
+            expect(classifyLowSignalFwd('#6 的 avatar bug 我修好了，PR #3760 待 review')).toBeNull();
+            // has watchdog keyword BUT actionable (完成/PR) + no 🦞 → forwards
+            expect(classifyLowSignalFwd('#6 watchdog dashboard 重構完成，PR #3761')).toBeNull();
+            // no 🦞 sign-off → forwards
+            expect(classifyLowSignalFwd('了解了，這個 bug 根因是 X，我修')).toBeNull();
+            // heartbeat keyword but appended escalation (card_ / 我發現) → forwards
+            expect(classifyLowSignalFwd('收到，#6 仍在跑，但我發現 card_123 卡住了，需要你決定')).toBeNull();
+            // does not start with an ack/#N token → forwards
+            expect(classifyLowSignalFwd('好的，我先把 deploy 跑起來再回報結果')).toBeNull();
+        });
+    });
+
+    describe('classifyLowSignalFwd() reason labels (card_59f41e5b)', () => {
+        it('labels each noise category for the suppression-transparency log', () => {
+            expect(classifyLowSignalFwd('Unexpected end of JSON input')).toBe('json_crash');
+            expect(classifyLowSignalFwd('[Hermes 回應超時]')).toBe('timeout_marker');
+            expect(classifyLowSignalFwd('[📢 FWD from #6] 收到 🦞')).toBe('ack');
+            expect(classifyLowSignalFwd('已收到。')).toBe('ack');
+            expect(classifyLowSignalFwd('📌 狀態更新：待辦 → 進行中')).toBe('kanban_echo');
+            expect(classifyLowSignalFwd('[📢 FWD from #1] MODEL_HEALTH/ACK ok')).toBe('model_health');
+            expect(classifyLowSignalFwd('#6_PERMISSION_HANDOFF\n- Next step: grant')).toBe('permission_handoff');
+            expect(classifyLowSignalFwd('Codex #6 status heartbeat\n- Elapsed: 30s')).toBe('heartbeat');
+            expect(classifyLowSignalFwd('收到，#6 仍在跑。🦞')).toBe('heartbeat');
+            expect(classifyLowSignalFwd('🦞')).toBe('lobster');
+            expect(classifyLowSignalFwd('short')).toBe('low_signal');
+        });
+
+        it('returns null for real signal (forwards)', () => {
+            expect(classifyLowSignalFwd('收到，正在處理 card_a60568c，預計 30 分鐘內回報')).toBeNull();
+            expect(classifyLowSignalFwd('Card 7a03c4 moved to in_progress, ETA 2h')).toBeNull();
+        });
+
+        it('isLowSignalFwd === (classifyLowSignalFwd != null) for a spread of inputs', () => {
+            const samples = [
+                null, '', '   ', 'ack', '🦞', '已收到。',
+                '收到，正在處理 card_a60568c，預計 30 分鐘內回報',
+                'Card 7a03c4 moved to in_progress, ETA 2h',
+                '#6_PERMISSION_HANDOFF\n- Next step: grant',
+                'meaningful !',
+            ];
+            for (const s of samples) {
+                expect(isLowSignalFwd(s)).toBe(classifyLowSignalFwd(s) != null);
+            }
+        });
+    });
+
     describe('real messages must pass through (no false positives)', () => {
         it('lets normal status reports through', () => {
             expect(isLowSignalFwd('Card 7a03c4 moved to in_progress, ETA 2h')).toBe(false);
@@ -180,6 +380,42 @@ describe('isLowSignalFwd()', () => {
 
         it('lets a long ack with context through', () => {
             expect(isLowSignalFwd('收到，正在處理 card_a60568c，預計 30 分鐘內回報')).toBe(false);
+        });
+    });
+});
+
+describe('audit card_c6731c2f regressions', () => {
+    describe('F7 — real 🦞-signed owner escalations must FORWARD (never eaten)', () => {
+        it('forwards an active owner-ping asking for a rollback decision', () => {
+            expect(isLowSignalFwd('收到，#6 watchdog 觸發了，請 owner 盡快決定要不要 rollback🦞')).toBe(false);
+        });
+        it('forwards an active resource / authorization escalation', () => {
+            expect(isLowSignalFwd('已收到，#1 還在跑，但 resource 快爆了，需要你授權加額度🦞')).toBe(false);
+        });
+        it('still SUPPRESSES a passive watchdog-narration heartbeat (bot waiting, not asking)', () => {
+            expect(classifyLowSignalFwd('收到，#6 last output 66m29s 前，bridge alive，沉默超 1h。等 owner 處置。🦞')).toBe('heartbeat');
+        });
+        // card_8008278a: bare 緊急/urgent were REMOVED from the forward-exclusion —
+        // #5's PASSIVE narration "…沉默 9h，等 owner 緊急處置🦞" repeats every ~15min
+        // and the bare 緊急 forced every copy to FORWARD (flood). It is passive
+        // watchdog status (等 owner 緊急處置), not an active ask, so it must SUPPRESS.
+        it('SUPPRESSES the repeating passive "等 owner 緊急處置" watchdog narration (flood fix)', () => {
+            expect(classifyLowSignalFwd('收到，#6 last output 565m58s，bridge alive，沉默 9h25m，heartbeat 延遲。等 owner 緊急處置。🦞')).toBe('heartbeat');
+        });
+        it('STILL forwards an active ask even though 緊急 is no longer a marker (請 owner / 授權 carry it)', () => {
+            expect(isLowSignalFwd('收到，#6 緊急！請 owner 盡快決定要不要 rollback🦞')).toBe(false);
+            expect(isLowSignalFwd('已收到 #1 緊急，需要你授權加額度🦞')).toBe(false);
+        });
+    });
+
+    describe('F4 — Codex status-heartbeat regex is not quadratic on long whitespace', () => {
+        it('classifies a real heartbeat and resists a pathological space run within budget', () => {
+            expect(classifyLowSignalFwd('Codex #5 status heartbeat')).toBe('heartbeat');
+            const evil = 'Codex ' + ' '.repeat(50000) + 'X';
+            const t0 = Date.now();
+            isLowSignalFwd(evil);
+            // was O(n^2): ~150ms at 20k spaces and climbing; the \s? bound keeps it flat.
+            expect(Date.now() - t0).toBeLessThan(250);
         });
     });
 });

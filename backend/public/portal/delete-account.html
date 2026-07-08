@@ -11,6 +11,7 @@
     <link rel="canonical" href="https://eclawbot.com/portal/delete-account.html">
     <style>
         body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+        main { width: 100%; }
         .container { width: 100%; max-width: 440px; }
         .logo { text-align: center; margin-bottom: 32px; }
         .logo-icon { font-size: 48px; }
@@ -25,6 +26,8 @@
         .data-list li { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
         .btn { display: block; width: 100%; padding: 12px; border-radius: var(--radius-sm); border: none; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.15s; text-align: center; }
         .btn:hover { opacity: 0.85; }
+        .btn:disabled,
+        .btn[aria-disabled="true"] { cursor: not-allowed; opacity: 0.55; }
         .btn-google { background: #fff; color: #3c4043; border: 1px solid #dadce0; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-delete { background: var(--danger); color: #fff; margin-top: 12px; }
         .btn-cancel { background: var(--input-bg); color: var(--text-secondary); border: 1px solid var(--card-border); margin-top: 8px; }
@@ -36,6 +39,7 @@
         .user-email { font-size: 13px; color: var(--text-secondary); }
         .warning-box { background: rgba(211,47,47,0.08); border: 1px solid rgba(211,47,47,0.3); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 20px; font-size: 13px; color: #d32f2f; line-height: 1.5; }
         .msg { margin-top: 12px; font-size: 13px; text-align: center; min-height: 20px; }
+        .msg[hidden] { display: none; }
         .msg.error { color: #d32f2f; }
         .msg.success { color: #2e7d32; }
         #stepSign { display: block; }
@@ -45,6 +49,35 @@
         .confirm-checkbox { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 20px; }
         .confirm-checkbox input[type=checkbox] { margin-top: 2px; flex-shrink: 0; width: 16px; height: 16px; cursor: pointer; }
         .confirm-checkbox label { font-size: 13px; color: var(--text-secondary); line-height: 1.5; cursor: pointer; }
+        .delete-readiness {
+            border-left: 3px solid #f59e0b;
+            background: rgba(245,158,11,0.08);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            margin: -6px 0 16px;
+            font-size: 13px;
+            line-height: 1.45;
+            color: var(--text-secondary);
+        }
+        .delete-readiness strong {
+            display: block;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+        .delete-readiness[data-state="ready"] {
+            border-left-color: #2e7d32;
+            background: rgba(46,125,50,0.08);
+        }
+        .delete-readiness[data-state="ready"] strong { color: #2e7d32; }
+        @media (max-width: 520px) {
+            body { align-items: flex-start; padding: 16px; }
+            .logo { margin-bottom: 20px; }
+            .logo-icon { font-size: 40px; }
+            .card { padding: 22px; }
+            .user-info { align-items: flex-start; }
+            .user-email { word-break: break-word; }
+            .btn { min-height: 44px; }
+        }
     </style>
 </head>
 <body>
@@ -57,31 +90,32 @@
 
         <!-- Step 1: Sign in -->
         <div class="card" id="stepSign">
-            <h1 data-i18n="delete_account_title">Delete Account</h1>
+            <h1 id="signHeading" tabindex="-1" data-i18n="delete_account_title">Delete Account</h1>
             <p class="subtitle" data-i18n="delete_account_subtitle">Sign in with your Google account to verify your identity and permanently delete your EClawbot account.</p>
 
-            <div class="data-list">
-                <p data-i18n="delete_account_data_label">Data that will be deleted:</p>
+            <div class="data-list" aria-labelledby="deletedDataTitle">
+                <p id="deletedDataTitle" data-i18n="delete_account_data_label">Data that will be deleted:</p>
                 <ul>
                     <li data-i18n="delete_account_data_account">Account info (email, name, profile)</li>
                     <li data-i18n="delete_account_data_chat">Chat history with all entities</li>
                     <li data-i18n="delete_account_data_mission">Kanban board data (cards, notes, rules, soul)</li>
+                    <li data-i18n="delete_account_data_schedules">Schedules and execution history</li>
                     <li data-i18n="delete_account_data_vars">Encrypted environment variables</li>
                     <li data-i18n="delete_account_data_bots">Bot bindings and entity configurations</li>
                     <li data-i18n="delete_account_data_telemetry">Device telemetry data</li>
                 </ul>
             </div>
 
-            <button class="btn btn-google" onclick="signInWithGoogle()">
+            <button type="button" class="btn btn-google" onclick="signInWithGoogle()" aria-describedby="signMsg">
                 <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/><path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/></svg>
                 <span data-i18n="delete_account_google_btn">Continue with Google</span>
             </button>
-            <div class="msg error" id="signMsg"></div>
+            <div class="msg error" id="signMsg" role="alert" aria-live="assertive" aria-atomic="true" hidden></div>
         </div>
 
         <!-- Step 2: Confirm deletion -->
-        <div class="card" id="stepConfirm">
-            <h1 data-i18n="delete_account_confirm_title">Confirm Deletion</h1>
+        <div class="card" id="stepConfirm" aria-live="polite">
+            <h1 id="confirmHeading" tabindex="-1" data-i18n="delete_account_confirm_title">Confirm Deletion</h1>
             <div class="user-info">
                 <div class="user-avatar" id="userAvatar">🦞</div>
                 <div>
@@ -90,24 +124,29 @@
                 </div>
             </div>
 
-            <div class="warning-box" data-i18n="delete_account_warning">
+            <div class="warning-box" id="deleteWarning" role="note" data-i18n="delete_account_warning">
                 ⚠ This action is permanent and cannot be undone. All your data will be deleted immediately.
             </div>
 
             <div class="confirm-checkbox">
-                <input type="checkbox" id="confirmCheck" onchange="updateDeleteBtn()">
+                <input type="checkbox" id="confirmCheck" onchange="updateDeleteBtn()" aria-describedby="deleteWarning deleteReadinessText">
                 <label for="confirmCheck" data-i18n="delete_account_confirm_label">I understand that deleting my account is permanent and all my data will be erased.</label>
             </div>
 
-            <button class="btn btn-delete" id="deleteBtn" onclick="deleteAccount()" disabled data-i18n="delete_account_btn">Delete My Account</button>
-            <button class="btn btn-cancel" onclick="cancelDelete()" data-i18n="common_cancel">Cancel</button>
-            <div class="msg" id="deleteMsg"></div>
+            <div class="delete-readiness" id="deleteReadiness" role="status" aria-live="polite" aria-atomic="true" data-state="locked">
+                <strong id="deleteReadinessTitle" data-i18n="delete_account_ready_locked_title">Deletion is locked</strong>
+                <span id="deleteReadinessText" data-i18n="delete_account_ready_locked">Check the confirmation box to enable the final delete button.</span>
+            </div>
+
+            <button type="button" class="btn btn-delete" id="deleteBtn" onclick="deleteAccount()" disabled aria-disabled="true" aria-describedby="deleteWarning deleteReadinessText" data-i18n="delete_account_btn">Delete My Account</button>
+            <button type="button" class="btn btn-cancel" onclick="cancelDelete()" data-i18n="common_cancel">Cancel</button>
+            <div class="msg" id="deleteMsg" role="alert" aria-live="assertive" aria-atomic="true" hidden></div>
         </div>
 
         <!-- Step 3: Done -->
         <div class="card" id="stepDone">
-            <div class="success-icon">✅</div>
-            <h1 style="text-align:center;" data-i18n="delete_account_done_title">Account Deleted</h1>
+            <div class="success-icon" aria-hidden="true">✅</div>
+            <h1 id="doneHeading" tabindex="-1" style="text-align:center;" data-i18n="delete_account_done_title">Account Deleted</h1>
             <p class="subtitle" style="text-align:center;" data-i18n="delete_account_done_msg">Your EClawbot account and all associated data have been permanently deleted. You will no longer receive any communications from us.</p>
             <div class="divider"></div>
             <p style="font-size:13px;color:var(--text-secondary);text-align:center;" data-i18n="delete_account_done_hint">If you change your mind, you can always create a new account in the EClawbot App.</p>
@@ -165,12 +204,17 @@
                 document.getElementById('userName').textContent = user.displayName || user.email || i18n.t('common_unknown');
                 document.getElementById('userEmail').textContent = user.email || '';
                 const avatarEl = document.getElementById('userAvatar');
+                avatarEl.textContent = '🦞';
                 if (user.avatarUrl) {
-                    avatarEl.innerHTML = `<img src="${user.avatarUrl}" alt="avatar">`;
+                    avatarEl.innerHTML = `<img src="${user.avatarUrl}" alt="">`;
                 }
 
+                showSignMsg('');
+                document.getElementById('confirmCheck').checked = false;
+                updateDeleteBtn();
                 document.getElementById('stepSign').style.display = 'none';
                 document.getElementById('stepConfirm').style.display = 'block';
+                focusHeading('confirmHeading');
             } catch (e) {
                 showSignMsg(e.message || i18n.t('delete_account_err_signin_failed'));
             }
@@ -178,12 +222,42 @@
 
         function updateDeleteBtn() {
             const checked = document.getElementById('confirmCheck').checked;
-            document.getElementById('deleteBtn').disabled = !checked;
+            const btn = document.getElementById('deleteBtn');
+            const readiness = document.getElementById('deleteReadiness');
+            const readinessTitle = document.getElementById('deleteReadinessTitle');
+            const readinessText = document.getElementById('deleteReadinessText');
+            btn.disabled = !checked;
+            btn.setAttribute('aria-disabled', String(!checked));
+            readiness.dataset.state = checked ? 'ready' : 'locked';
+            readinessTitle.textContent = i18n.t(checked ? 'delete_account_ready_enabled_title' : 'delete_account_ready_locked_title');
+            readinessText.textContent = i18n.t(checked ? 'delete_account_ready_enabled' : 'delete_account_ready_locked');
         }
 
         async function deleteAccount() {
+            if (!document.getElementById('confirmCheck').checked) {
+                updateDeleteBtn();
+                return;
+            }
+            // Final typed-confirmation gate (card_5abe811): account deletion is the single most
+            // irreversible action in the product (wipes the account + all data), so it must not
+            // be committable by one tap. Require the user to type DELETE. Fail-safe: if the shared
+            // dialog helper is unavailable, fall through to the original readiness-checkbox gate.
+            if (typeof showConfirm === 'function') {
+                const warn = (document.getElementById('deleteWarning')?.textContent || '').trim();
+                const confirmed = await showConfirm({
+                    danger: true,
+                    title: i18n.t('delete_account_title'),
+                    message: warn || i18n.t('delete_account_ready_enabled'),
+                    confirmPhrase: 'DELETE',
+                    confirmText: i18n.t('delete_account_btn')
+                });
+                if (!confirmed) return;
+            }
             const btn = document.getElementById('deleteBtn');
             btn.disabled = true;
+            btn.setAttribute('aria-disabled', 'true');
+            btn.setAttribute('aria-busy', 'true');
+            document.getElementById('stepConfirm').setAttribute('aria-busy', 'true');
             btn.textContent = i18n.t('delete_account_deleting');
             showDeleteMsg('', '');
             hideDebugLog();
@@ -195,11 +269,16 @@
                 if (!resp.ok || !data.success) {
                     throw new Error(data.error || i18n.t('delete_account_err_delete_failed'));
                 }
+                btn.removeAttribute('aria-busy');
+                document.getElementById('stepConfirm').removeAttribute('aria-busy');
                 document.getElementById('stepConfirm').style.display = 'none';
                 document.getElementById('stepDone').style.display = 'block';
+                focusHeading('doneHeading');
             } catch (e) {
-                btn.disabled = false;
                 btn.textContent = i18n.t('delete_account_btn');
+                btn.removeAttribute('aria-busy');
+                document.getElementById('stepConfirm').removeAttribute('aria-busy');
+                updateDeleteBtn();
                 showDeleteMsg(e.message || i18n.t('delete_account_err_delete_failed'), 'error');
             }
         }
@@ -225,20 +304,33 @@
             document.getElementById('stepConfirm').style.display = 'none';
             document.getElementById('stepSign').style.display = 'block';
             document.getElementById('confirmCheck').checked = false;
+            showDeleteMsg('', '');
+            hideDebugLog();
             updateDeleteBtn();
+            focusHeading('signHeading');
         }
 
         function showSignMsg(msg) {
-            document.getElementById('signMsg').textContent = msg;
+            const el = document.getElementById('signMsg');
+            el.textContent = msg;
+            el.hidden = !msg;
         }
 
         function showDeleteMsg(msg, type) {
             const el = document.getElementById('deleteMsg');
             el.textContent = msg;
             el.className = 'msg' + (type ? ' ' + type : '');
+            el.hidden = !msg;
+        }
+
+        function focusHeading(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            requestAnimationFrame(() => el.focus({ preventScroll: true }));
         }
 
         loadConfig();
+        updateDeleteBtn();
     </script>
     <script src="../shared/telemetry.js"></script>
     <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>

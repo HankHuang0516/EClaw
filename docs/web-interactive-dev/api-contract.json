@@ -1,0 +1,245 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/HankHuang0516/web-interactive-dev/blob/main/docs/api-contract.json",
+  "title": "web-interactive-dev DiffEnvelope v1",
+  "description": "Normative contract for the JSON returned by InteractiveDevSession.exportDiff(). See docs/spec.md §3.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "session", "edits"],
+  "properties": {
+    "version": {
+      "const": "web-interactive-dev/v1",
+      "description": "Schema version. Hard-pinned in v1 — Agents check this before parsing."
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "createdAt", "source"],
+      "properties": {
+        "id":        { "type": "string", "pattern": "^wid_[a-f0-9]{8,}$" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "source":    { "$ref": "#/$defs/SourceInput" }
+      }
+    },
+    "edits": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Edit" }
+    }
+  },
+  "$defs": {
+    "SourceInput": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "byteLength"],
+          "properties": {
+            "kind":       { "const": "html-paste" },
+            "uriHint":    { "type": "string", "maxLength": 256 },
+            "byteLength": { "type": "integer", "minimum": 0 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "url"],
+          "properties": {
+            "kind":       { "const": "html-url" },
+            "url":        { "type": "string", "format": "uri" },
+            "byteLength": { "type": "integer", "minimum": 0 }
+          }
+        }
+      ]
+    },
+
+    "TargetLocator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selector", "selectorKind", "confidence"],
+      "properties": {
+        "selector":     { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "selectorKind": { "enum": ["css", "data-id", "xpath"] },
+        "fallbackText": { "type": "string", "maxLength": 240 },
+        "rect": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y", "w", "h"],
+          "properties": {
+            "x": { "type": "integer" },
+            "y": { "type": "integer" },
+            "w": { "type": "integer", "minimum": 0 },
+            "h": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "confidence":   { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+
+    "Edit": {
+      "oneOf": [
+        { "$ref": "#/$defs/TextEdit" },
+        { "$ref": "#/$defs/StyleEdit" },
+        { "$ref": "#/$defs/AttributeEdit" },
+        { "$ref": "#/$defs/ReplaceEdit" },
+        { "$ref": "#/$defs/RemoveEdit" }
+      ]
+    },
+
+    "EditCommon": {
+      "type": "object",
+      "required": ["id", "kind", "target"],
+      "properties": {
+        "id":     { "type": "string", "pattern": "^edit_[a-zA-Z0-9_]{1,32}$" },
+        "kind":   { "enum": ["text", "style", "attribute", "replace", "remove"] },
+        "target": { "$ref": "#/$defs/TargetLocator" },
+        "intent": { "type": "string", "maxLength": 280 }
+      }
+    },
+
+    "TextEdit": {
+      "allOf": [
+        { "$ref": "#/$defs/EditCommon" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "id", "target", "before", "after"],
+          "properties": {
+            "kind":   { "const": "text" },
+            "id":     {},
+            "target": {},
+            "intent": {},
+            "before": {
+              "type": "object", "additionalProperties": false,
+              "required": ["textContent"],
+              "properties": { "textContent": { "type": "string" } }
+            },
+            "after": {
+              "type": "object", "additionalProperties": false,
+              "required": ["textContent"],
+              "properties": { "textContent": { "type": "string" } }
+            }
+          }
+        }
+      ]
+    },
+
+    "StyleEdit": {
+      "allOf": [
+        { "$ref": "#/$defs/EditCommon" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "id", "target", "before", "after"],
+          "properties": {
+            "kind":   { "const": "style" },
+            "id":     {},
+            "target": {},
+            "intent": {},
+            "before": { "$ref": "#/$defs/StylePayload" },
+            "after":  { "$ref": "#/$defs/StylePayload" }
+          }
+        }
+      ]
+    },
+
+    "StylePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "style": {
+          "type": "object",
+          "description": "CSS property → value (allowlisted set per spec §2.3).",
+          "additionalProperties": { "type": ["string", "null"] }
+        },
+        "customCss": {
+          "type": "string",
+          "description": "Opaque CSS text for properties outside the allowlist.",
+          "maxLength": 4096
+        }
+      }
+    },
+
+    "AttributeEdit": {
+      "allOf": [
+        { "$ref": "#/$defs/EditCommon" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "id", "target", "before", "after"],
+          "properties": {
+            "kind":   { "const": "attribute" },
+            "id":     {},
+            "target": {},
+            "intent": {},
+            "before": { "$ref": "#/$defs/AttributePayload" },
+            "after":  { "$ref": "#/$defs/AttributePayload" }
+          }
+        }
+      ]
+    },
+
+    "AttributePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attributes"],
+      "properties": {
+        "attributes": {
+          "type": "object",
+          "description": "attribute name → value. null in 'after' means remove.",
+          "additionalProperties": { "type": ["string", "null"] }
+        }
+      }
+    },
+
+    "ReplaceEdit": {
+      "allOf": [
+        { "$ref": "#/$defs/EditCommon" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "id", "target", "before", "after"],
+          "properties": {
+            "kind":   { "const": "replace" },
+            "id":     {},
+            "target": {},
+            "intent": {},
+            "before": {
+              "type": "object", "additionalProperties": false,
+              "required": ["outerHTML"],
+              "properties": { "outerHTML": { "type": "string", "maxLength": 16384 } }
+            },
+            "after": {
+              "type": "object", "additionalProperties": false,
+              "required": ["outerHTML"],
+              "properties": { "outerHTML": { "type": "string", "maxLength": 16384 } }
+            }
+          }
+        }
+      ]
+    },
+
+    "RemoveEdit": {
+      "allOf": [
+        { "$ref": "#/$defs/EditCommon" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "id", "target", "before", "after"],
+          "properties": {
+            "kind":   { "const": "remove" },
+            "id":     {},
+            "target": {},
+            "intent": {},
+            "before": {
+              "type": "object", "additionalProperties": false,
+              "required": ["outerHTML"],
+              "properties": { "outerHTML": { "type": "string", "maxLength": 16384 } }
+            },
+            "after":  { "type": "null" }
+          }
+        }
+      ]
+    }
+  }
+}

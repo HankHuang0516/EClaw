@@ -295,6 +295,9 @@
     <string name="chat_load_image_failed">画像の読み込みに失敗しました</string>
     <string name="wallpaper_no_bound_entities">バインドされたエンティティがありません</string>
     <string name="claw_renderer_loading_entities">エンティティを読み込み中…</string>
+    <string name="claw_renderer_loading_wallpaper">壁紙を読み込み中…</string>
+    <string name="claw_wallpaper_loading_marker">読み込み中… (%1$s)</string>
+    <string name="claw_wallpaper_render_error">壁紙の再描画エラー（報告済み）</string>
     <string name="claw_renderer_no_entities_connected">接続されたエンティティがありません</string>
     <string name="claw_renderer_open_app_to_bind">バインドするにはE-Clawアプリを開く</string>
     <string name="claw_renderer_with_openclaw_bot">OpenClawボットのエンティティ</string>
@@ -745,6 +748,10 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="update_later">後で</string>
     <string name="update_message">新しいバージョン (v%s) が利用可能です。最高の体験のためにアップデートしてください！</string>
     <string name="update_now">今すぐ更新</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">このアップデートについて</string>
+    <string name="update_help_body">現在のバージョン %1$s → 最新 %2$s。「今すぐ更新」をタップすると、アプリ内でそのまま更新できます（約30秒、アプリを離れる必要はありません）。アプリ内更新ができない場合は Play ストアが開きます。</string>
+    <string name="update_store_unavailable">ストアを開いて更新できませんでした。Google Play から更新してください。</string>
     <string name="update_title">アップデートがあります</string>
     <string name="upload">アップロード</string>
     <string name="upload_error">アップロードに失敗しました</string>

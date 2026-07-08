@@ -33,6 +33,7 @@ const { execFile } = require('child_process');
 const { promisify } = require('util');
 const { Pool } = require('pg');
 const safeEqual = require('./safe-equal');
+const extractCreds = require('./extract-creds');
 
 const execFileAsync = promisify(execFile);
 
@@ -368,8 +369,10 @@ function readCache() {
 // botSecret + entityId) both work. Refs reads are device-scoped, so any valid
 // credential pair for the device is accepted.
 function authDevice(devices, req) {
-    const params = { ...(req.query || {}), ...(req.body || {}) };
-    const { deviceId, deviceSecret, botSecret, entityId } = params;
+    // Secrets may arrive via query/body (legacy) OR via X-Device-Secret /
+    // X-Bot-Secret headers (secret-leakage hardening — keeps secrets out of
+    // URLs/logs). extractCreds keeps query/body precedence for back-compat.
+    const { deviceId, deviceSecret, botSecret, entityId } = extractCreds(req);
     if (!deviceId) return null;
     const device = devices?.[deviceId];
     if (!device) return null;

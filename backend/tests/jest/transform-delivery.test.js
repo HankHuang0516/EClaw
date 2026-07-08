@@ -99,6 +99,31 @@ describe('Transform + speakTo', () => {
         expect(res.body.delivery.results[0].success).toBe(true);
     });
 
+    it('exposes speakTo routing metadata for wallpaper motion', async () => {
+        const message = 'Wallpaper speakTo route metadata';
+        const res = await post('/api/transform')
+            .send({
+                deviceId,
+                entityId: 0,
+                botSecret: botSecret0,
+                message,
+                state: 'IDLE',
+                speakTo: [code1]
+            });
+        expect(res.status).toBe(200);
+
+        const entRes = await request(app).get('/api/entities')
+            .query({ deviceId, deviceSecret })
+            .set('Host', 'localhost')
+            .set('Accept-Encoding', 'identity');
+        const target = (entRes.body.entities || []).find(e => e.entityId === 1);
+        const queued = (target.messageQueue || []).find(m => m.text === message);
+        expect(queued).toBeDefined();
+        expect(queued.routingMode).toBe('speakTo');
+        expect(queued.routingEventId).toEqual(expect.any(String));
+        expect(queued.broadcastTargetIds).toBeNull();
+    });
+
     it('returns per-target error for invalid publicCode', async () => {
         const res = await post('/api/transform')
             .send({
@@ -182,6 +207,31 @@ describe('Transform + broadcast', () => {
         expect(res.body.delivery.broadcast).toBe(true);
         expect(res.body.delivery.sentCount).toBe(2); // entities 1 and 2
         expect(res.body.delivery.targets).toHaveLength(2);
+    });
+
+    it('exposes broadcast routing metadata for wallpaper motion', async () => {
+        const message = 'Wallpaper broadcast route metadata';
+        const res = await post('/api/transform')
+            .send({
+                deviceId,
+                entityId: 0,
+                botSecret: botSecret0,
+                message,
+                state: 'IDLE',
+                broadcast: true
+            });
+        expect(res.status).toBe(200);
+
+        const entRes = await request(app).get('/api/entities')
+            .query({ deviceId, deviceSecret })
+            .set('Host', 'localhost')
+            .set('Accept-Encoding', 'identity');
+        const target = (entRes.body.entities || []).find(e => e.entityId === 1);
+        const queued = (target.messageQueue || []).find(m => m.text === message);
+        expect(queued).toBeDefined();
+        expect(queued.routingMode).toBe('broadcast');
+        expect(queued.routingEventId).toEqual(expect.any(String));
+        expect(queued.broadcastTargetIds).toEqual(expect.arrayContaining([1, 2]));
     });
 });
 
@@ -359,10 +409,11 @@ describe('Transform entityId auto-detect', () => {
     const deviceId = 'transform-autoid-test';
     const deviceSecret = `secret-${deviceId}`;
     let botSecret0;
+    let botSecret1;
 
     beforeAll(async () => {
         botSecret0 = await bindEntity(deviceId, deviceSecret, 0);
-        await bindEntity(deviceId, deviceSecret, 1);
+        botSecret1 = await bindEntity(deviceId, deviceSecret, 1);
     });
 
     it('works without entityId (auto-detect from botSecret)', async () => {
@@ -392,6 +443,29 @@ describe('Transform entityId auto-detect', () => {
         expect(res.body.entityId).toBe(0); // corrected
         expect(res.body.warnings).toBeDefined();
         expect(res.body.warnings.some(w => w.includes('Auto-corrected'))).toBe(true);
+    });
+
+    it('silently auto-corrects legacy entityId zero default', async () => {
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        try {
+            const res = await post('/api/transform')
+                .send({
+                    deviceId,
+                    entityId: '0',  // legacy/default caller value — botSecret belongs to entity 1
+                    botSecret: botSecret1,
+                    message: 'Legacy zero default test',
+                    state: 'IDLE'
+                });
+            expect(res.status).toBe(200);
+            expect(res.body.success).toBe(true);
+            expect(res.body.entityId).toBe(1); // corrected from botSecret
+            expect(res.body.warnings || []).not.toEqual(expect.arrayContaining([
+                expect.stringContaining('entityId mismatch')
+            ]));
+            expect(warnSpy.mock.calls.some(args => String(args[0]).includes('[Transform] Device'))).toBe(false);
+        } finally {
+            warnSpy.mockRestore();
+        }
     });
 
     it('rejects invalid botSecret', async () => {

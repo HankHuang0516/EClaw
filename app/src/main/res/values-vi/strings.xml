@@ -295,6 +295,9 @@
     <string name="chat_load_image_failed">Tải hình ảnh thất bại</string>
     <string name="wallpaper_no_bound_entities">Không có thực thể được liên kết</string>
     <string name="claw_renderer_loading_entities">Đang tải thực thể…</string>
+    <string name="claw_renderer_loading_wallpaper">Đang tải hình nền…</string>
+    <string name="claw_wallpaper_loading_marker">Đang tải… (%1$s)</string>
+    <string name="claw_wallpaper_render_error">Lỗi vẽ lại hình nền (đã báo cáo)</string>
     <string name="claw_renderer_no_entities_connected">Không có thực thể kết nối</string>
     <string name="claw_renderer_open_app_to_bind">Mở app E-Claw để liên kết</string>
     <string name="claw_renderer_with_openclaw_bot">thực thể với bot OpenClaw</string>
@@ -745,6 +748,10 @@ Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua
     <string name="update_later">Để sau</string>
     <string name="update_message">Phiên bản mới (v%s) đã sẵn sàng. Cập nhật để có trải nghiệm tốt nhất!</string>
     <string name="update_now">Cập nhật ngay</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">Giới thiệu về bản cập nhật này</string>
+    <string name="update_help_body">Phiên bản của bạn %1$s → mới nhất %2$s. Nhấn "Cập nhật ngay" để cập nhật ngay trong ứng dụng (khoảng 30 giây, không cần rời ứng dụng). Nếu không cập nhật được trong ứng dụng, Cửa hàng Play sẽ mở ra.</string>
+    <string name="update_store_unavailable">Không mở được cửa hàng để cập nhật. Vui lòng cập nhật từ Google Play.</string>
     <string name="update_title">Có bản cập nhật mới</string>
     <string name="upload">Tải lên</string>
     <string name="upload_error">Tải lên thất bại</string>

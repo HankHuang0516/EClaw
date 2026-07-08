@@ -1,5 +1,6 @@
 package com.hank.clawlive
 
+import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
@@ -12,6 +13,9 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts.StartIntentSenderForResult
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -49,15 +53,28 @@ import com.facebook.login.LoginManager
 import com.facebook.login.LoginResult
 import com.hank.clawlive.settings.NotificationPreferenceCatalog
 import com.hank.clawlive.settings.NotificationPreferenceCategory
+import com.hank.clawlive.settings.DynamicSettingsRow
+import com.hank.clawlive.settings.SettingsManifestSync
+import com.hank.clawlive.settings.UpdateChipDecision
+import com.google.android.play.core.appupdate.AppUpdateManager
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.appupdate.AppUpdateOptions
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.EntityChipHelper
 import com.hank.clawlive.ui.NavItem
+import com.hank.clawlive.ui.NavResumeController
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import kotlinx.coroutines.launch
 import timber.log.Timber
+
+private const val PLAY_STORE_FALLBACK_URL =
+    "https://play.google.com/store/apps/details?id=com.hank.clawlive"
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -65,6 +82,31 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var usageManager: UsageManager
     private val layoutPrefs: LayoutPreferences by lazy { LayoutPreferences.getInstance(this) }
     private val deviceManager: DeviceManager by lazy { DeviceManager.getInstance(this) }
+    private val navResume: NavResumeController by lazy {
+        val prefs = getSharedPreferences("nav_resume_prefs", MODE_PRIVATE)
+        NavResumeController(object : NavResumeController.Store {
+            override fun readLastNav(): String? = prefs.getString("last_nav", null)
+            override fun writeLastNav(name: String) { prefs.edit().putString("last_nav", name).apply() }
+            override fun clearLastNav() { prefs.edit().remove("last_nav").apply() }
+        })
+    }
+
+    // ── Settings update-available chip (card_28a8290a) ──
+    private val appUpdateManager: AppUpdateManager by lazy { AppUpdateManagerFactory.create(this) }
+    // Receives the result of the Play Core In-App Update IMMEDIATE flow.
+    private val updateFlowLauncher: ActivityResultLauncher<IntentSenderRequest> =
+        registerForActivityResult(StartIntentSenderForResult()) { result ->
+            if (result.resultCode != RESULT_OK) {
+                // User cancelled the full-screen IMMEDIATE update, or it failed to
+                // launch/download. Offer the Play Store as a manual fallback rather
+                // than leaving them stuck.
+                Timber.w("[UpdateChip] In-app update flow result=${result.resultCode} — offering store fallback")
+                openStoreFallback()
+            }
+        }
+    // Cached store URL from the last /api/version response (Play Store deep link).
+    private var updateStoreUrl: String = PLAY_STORE_FALLBACK_URL
+    private var updateLatestVersion: String = ""
 
     // UI elements
     private lateinit var cardSubscription: MaterialCardView
@@ -170,12 +212,14 @@ class SettingsActivity : AppCompatActivity() {
         observeSubscriptionState()
         updateEntityCount()
         displayAppVersion()
+        checkForUpdateChip()
         setupDeveloperCollapsible()
         setupNotifCollapsible()
         setupBroadcastSettingsCollapsible()
         setupRemoteControlCollapsible()
         setupLangCollapsible()
         setupChannelApiCollapsible()
+        loadSettingsManifest()
     }
 
     private fun setupEdgeToEdgeInsets() {
@@ -207,6 +251,8 @@ class SettingsActivity : AppCompatActivity() {
         updateEntityCount()
         loadAccountStatus()
         updateCrashLogBadge()
+        // Persist current tab so process-death restart can restore here (card_489a8836).
+        navResume.onNavigatedTo(NavItem.SETTINGS)
     }
 
     override fun onPause() {
@@ -305,6 +351,17 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.btnKanbanNudge).setOnClickListener {
             TelemetryHelper.trackAction("settings_kanban_nudge")
             WebViewActivity.launch(this, "https://eclawbot.com/portal/settings.html?focus=kanban-nudge", getString(R.string.kanban_nudge_settings_title))
+        }
+
+        // Stage 3 native — Rotate Secret + Switch Device (card_c3b13f64)
+        findViewById<MaterialButton>(R.id.rowRotateSecret).setOnClickListener {
+            TelemetryHelper.trackAction("settings_rotate_secret")
+            showRotateSecretDialog()
+        }
+
+        findViewById<MaterialButton>(R.id.rowSwitchDevice).setOnClickListener {
+            TelemetryHelper.trackAction("settings_switch_device")
+            showSwitchDeviceDialog()
         }
 
         findViewById<MaterialButton>(R.id.btnWallet).setOnClickListener {
@@ -970,6 +1027,199 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
+    // ============================================
+    // STAGE 3 NATIVE: ROTATE SECRET + SWITCH DEVICE (card_c3b13f64)
+    // ============================================
+
+    /**
+     * Rotate the device secret. Destructive: the current secret is invalidated and a
+     * new one is issued (manifest field `validation.confirm = true`), so other
+     * sessions must re-enter the new value to sign in. On success the new secret
+     * returned ONCE is persisted locally via [DeviceManager.setCredentials] (keeping
+     * the same deviceId). Never logs the secret in plaintext.
+     */
+    private fun showRotateSecretDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.settings_rotate_secret_confirm_title))
+            .setMessage(getString(R.string.settings_rotate_device_secret_hint))
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(getString(R.string.settings_rotate_secret_confirm_btn)) { _, _ ->
+                lifecycleScope.launch {
+                    try {
+                        val response = NetworkModule.api.rotateDeviceSecret(
+                            com.hank.clawlive.data.remote.RotateSecretRequest(
+                                deviceId = deviceManager.deviceId,
+                                deviceSecret = deviceManager.deviceSecret
+                            )
+                        )
+                        if (response.success && !response.newDeviceSecret.isNullOrBlank()) {
+                            // Persist the new secret ONCE (returned only here); keep the
+                            // same deviceId. Mirrors the account-login persistence seam.
+                            deviceManager.setCredentials(deviceManager.deviceId, response.newDeviceSecret)
+                            TelemetryHelper.trackAction("settings_rotate_secret_success")
+                            Toast.makeText(
+                                this@SettingsActivity,
+                                getString(R.string.settings_rotate_secret_success),
+                                Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            Toast.makeText(
+                                this@SettingsActivity,
+                                response.error ?: getString(R.string.unknown_error),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    } catch (e: Exception) {
+                        Timber.e(e, "Rotate device secret failed")
+                        TelemetryHelper.trackError(e, mapOf("action" to "rotate_secret"))
+                        val errorMsg = try {
+                            val errorBody = (e as? retrofit2.HttpException)?.response()?.errorBody()?.string()
+                            val json = com.google.gson.JsonParser.parseString(errorBody ?: "").asJsonObject
+                            json.get("error")?.asString ?: e.message
+                        } catch (_: Exception) { e.message }
+                        Toast.makeText(
+                            this@SettingsActivity,
+                            errorMsg ?: getString(R.string.settings_rotate_secret_failed),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+            .show()
+    }
+
+    /**
+     * Sign this device into a different Device ID / Device Secret pair via
+     * POST /api/auth/device-login. On success the canonical creds from the response
+     * are persisted via [DeviceManager.setCredentials] and the app is restarted to
+     * pick them up — mirroring [showAccountLoginDialog]'s post-login restart. The
+     * secret field uses a password input and is never logged in plaintext.
+     */
+    private fun showSwitchDeviceDialog() {
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dpToPx(24), dpToPx(16), dpToPx(24), dpToPx(8))
+        }
+
+        val deviceIdInput = TextInputLayout(this).apply {
+            hint = getString(R.string.settings_device_id)
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+        }
+        val deviceIdEdit = TextInputEditText(this)
+        deviceIdEdit.inputType = android.text.InputType.TYPE_CLASS_TEXT
+        deviceIdInput.addView(deviceIdEdit)
+        layout.addView(deviceIdInput)
+
+        val deviceSecretInput = TextInputLayout(this).apply {
+            hint = getString(R.string.settings_device_secret)
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+            endIconMode = TextInputLayout.END_ICON_PASSWORD_TOGGLE
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            lp.topMargin = dpToPx(12)
+            layoutParams = lp
+        }
+        val deviceSecretEdit = TextInputEditText(this)
+        deviceSecretEdit.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        deviceSecretInput.addView(deviceSecretEdit)
+        layout.addView(deviceSecretInput)
+
+        val hintText = TextView(this).apply {
+            text = getString(R.string.settings_switch_device_hint)
+            setTextColor(0x99FFFFFF.toInt())
+            textSize = 12f
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            lp.topMargin = dpToPx(8)
+            layoutParams = lp
+        }
+        layout.addView(hintText)
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.settings_switch_device))
+            .setView(layout)
+            .setPositiveButton(getString(R.string.settings_switch_device_confirm), null)
+            .setNegativeButton(R.string.cancel, null)
+            .create()
+
+        dialog.show()
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val deviceId = deviceIdEdit.text?.toString()?.trim() ?: ""
+            val deviceSecret = deviceSecretEdit.text?.toString()?.trim() ?: ""
+
+            if (deviceId.isEmpty() || deviceSecret.isEmpty()) {
+                Toast.makeText(this, getString(R.string.bind_email_fill_all), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).text = getString(R.string.account_login_logging_in)
+
+            lifecycleScope.launch {
+                try {
+                    val response = NetworkModule.api.deviceLogin(
+                        com.hank.clawlive.data.remote.DeviceLoginRequest(
+                            deviceId = deviceId,
+                            deviceSecret = deviceSecret
+                        )
+                    )
+                    val user = response.user
+                    if (response.success && user?.deviceId != null && user.deviceSecret != null) {
+                        // Overwrite local credentials with the switched device's creds.
+                        deviceManager.setCredentials(user.deviceId, user.deviceSecret)
+                        // Restore language preference from server, if provided.
+                        user.language?.let { lang ->
+                            val localeTag = when (lang) {
+                                "zh" -> "zh-TW"
+                                "zh-CN" -> "zh-CN"
+                                "id" -> "in"
+                                else -> lang
+                            }
+                            AppCompatDelegate.setApplicationLocales(
+                                LocaleListCompat.forLanguageTags(localeTag)
+                            )
+                        }
+                        dialog.dismiss()
+                        TelemetryHelper.trackAction("settings_switch_device_success")
+
+                        // Show success and prompt restart (same mechanism as account login).
+                        AlertDialog.Builder(this@SettingsActivity)
+                            .setTitle(getString(R.string.settings_switch_device_success_title))
+                            .setMessage(getString(R.string.settings_switch_device_success_msg, user.email ?: user.deviceId))
+                            .setPositiveButton(getString(R.string.account_login_restart)) { _, _ ->
+                                val intent = packageManager.getLaunchIntentForPackage(packageName)
+                                intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                startActivity(intent)
+                                Runtime.getRuntime().exit(0)
+                            }
+                            .setCancelable(false)
+                            .show()
+                    } else {
+                        Toast.makeText(this@SettingsActivity, response.error ?: getString(R.string.unknown_error), Toast.LENGTH_SHORT).show()
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).text = getString(R.string.settings_switch_device_confirm)
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Switch device failed")
+                    TelemetryHelper.trackError(e, mapOf("action" to "switch_device"))
+                    val errorMsg = try {
+                        val errorBody = (e as? retrofit2.HttpException)?.response()?.errorBody()?.string()
+                        val json = com.google.gson.JsonParser.parseString(errorBody ?: "").asJsonObject
+                        json.get("error")?.asString ?: e.message
+                    } catch (_: Exception) { e.message }
+                    Toast.makeText(this@SettingsActivity, errorMsg ?: getString(R.string.unknown_error), Toast.LENGTH_SHORT).show()
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).text = getString(R.string.settings_switch_device_confirm)
+                }
+            }
+        }
+    }
+
     private fun displayAppVersion() {
         try {
             val pInfo = packageManager.getPackageInfo(packageName, 0)
@@ -979,6 +1229,264 @@ class SettingsActivity : AppCompatActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    // ============================================
+    // UPDATE-AVAILABLE CHIP + PLAY CORE IN-APP UPDATE (card_28a8290a)
+    // ============================================
+
+    /**
+     * Decide whether to show the "update available" chip next to the version row.
+     *
+     * Reuses the EXISTING version-fetch seam: GET /api/version via
+     * [NetworkModule.api.checkAppVersion] (the same call MainActivity uses for its
+     * launch-time update dialog). The backend compares the client version against
+     * LATEST_APP_VERSION server-side and returns `update.available` + latestVersion +
+     * storeUrl. We additionally cross-check locally via [UpdateChipDecision] so a
+     * stale flag can never produce a *false* update prompt.
+     *
+     * Graceful degradation (spec Acceptance): any failure / null update block / blank
+     * version leaves the chip GONE — never crash, never a false "update now" prompt.
+     */
+    private fun checkForUpdateChip() {
+        val installedVersion = deviceManager.appVersion
+        if (installedVersion.isBlank() || installedVersion == "unknown") return
+
+        lifecycleScope.launch {
+            val versionInfo = runCatching {
+                NetworkModule.api.checkAppVersion(installedVersion)
+            }.getOrElse { e ->
+                Timber.d(e, "[UpdateChip] /api/version fetch failed — chip stays hidden")
+                return@launch
+            }
+
+            val update = versionInfo.update
+            val show = UpdateChipDecision.shouldShowChip(
+                available = update?.available,
+                installedVersion = installedVersion,
+                latestVersion = update?.latestVersion
+            )
+            if (!show || update == null) return@launch
+
+            updateStoreUrl = update.storeUrl.ifBlank { PLAY_STORE_FALLBACK_URL }
+            updateLatestVersion = update.latestVersion
+            showUpdateChip(installedVersion, update.latestVersion, update.releaseNotes)
+        }
+    }
+
+    private fun showUpdateChip(currentVersion: String, latestVersion: String, releaseNotes: String?) {
+        val row = findViewById<LinearLayout>(R.id.updateChipRow)
+        val chip = findViewById<Chip>(R.id.chipUpdateAvailable)
+        val help = findViewById<ImageButton>(R.id.btnUpdateHelp)
+
+        chip.setOnClickListener { startInAppUpdate() }
+        help.setOnClickListener { showUpdateHelpDialog(currentVersion, latestVersion, releaseNotes) }
+        row.visibility = View.VISIBLE
+    }
+
+    /**
+     * Launch the Play Core In-App Update IMMEDIATE flow: full-screen update UI,
+     * background download, then restart — the user stays in-app (~30s). If Play
+     * reports no immediate update is available (e.g. sideloaded build, Play absent,
+     * or update not yet rolled out to this device) we fall back to the store.
+     */
+    private fun startInAppUpdate() {
+        val infoTask = runCatching { appUpdateManager.appUpdateInfo }.getOrElse { e ->
+            Timber.w(e, "[UpdateChip] appUpdateInfo unavailable — store fallback")
+            openStoreFallback()
+            return
+        }
+        infoTask
+            .addOnSuccessListener { info ->
+                val canImmediate = info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE &&
+                    info.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
+                if (canImmediate) {
+                    runCatching {
+                        appUpdateManager.startUpdateFlowForResult(
+                            info,
+                            updateFlowLauncher,
+                            AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()
+                        )
+                    }.onFailure { e ->
+                        Timber.w(e, "[UpdateChip] startUpdateFlowForResult failed — store fallback")
+                        openStoreFallback()
+                    }
+                } else {
+                    Timber.d("[UpdateChip] Play immediate update not available — store fallback")
+                    openStoreFallback()
+                }
+            }
+            .addOnFailureListener { e ->
+                Timber.w(e, "[UpdateChip] appUpdateInfo failed — store fallback")
+                openStoreFallback()
+            }
+    }
+
+    /**
+     * Store fallback chain: market://details deep link (opens the Play app directly),
+     * then the https://play.google.com/... web URL if the Play Store app is absent.
+     */
+    private fun openStoreFallback() {
+        val marketUri = Uri.parse("market://details?id=$packageName")
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, marketUri))
+        } catch (e: ActivityNotFoundException) {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(updateStoreUrl)))
+            } catch (e2: Exception) {
+                Timber.e(e2, "[UpdateChip] No store available to open")
+                Toast.makeText(this, getString(R.string.update_store_unavailable), Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun showUpdateHelpDialog(currentVersion: String, latestVersion: String, releaseNotes: String?) {
+        val message = buildString {
+            append(getString(R.string.update_help_body, currentVersion, latestVersion))
+            if (!releaseNotes.isNullOrBlank()) {
+                append("\n\n")
+                append(releaseNotes)
+            }
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.update_help_title))
+            .setMessage(message)
+            .setPositiveButton(getString(R.string.update_now)) { _, _ -> startInAppUpdate() }
+            .setNegativeButton(getString(R.string.update_later), null)
+            .show()
+    }
+
+    // ============================================
+    // SETTINGS AUTO-SYNC (manifest Stage 2)
+    // ============================================
+
+    /**
+     * Fetch GET /api/settings-manifest at launch and surface any settings feature
+     * that this binary does NOT already render natively — opening its web fallback in
+     * a WebView. This is the zero-rebuild auto-sync seam (docs/specs/settings-manifest-spec.md):
+     * a NEW web-only settings feature appears here on day one; a native feature gated
+     * out by the running app version shows a "?" help row pointing at the web.
+     *
+     * Graceful degradation: any failure (offline / 5xx / parse) is logged and the
+     * static settings screen is left exactly as-is — never crash, never blank.
+     */
+    private fun loadSettingsManifest() {
+        // Spec §4 / Stage-2 requirement: send the REAL installed version so the
+        // backend's minAppVersion gate is correct. BuildConfig.VERSION_NAME is the
+        // compile-time-pinned gradle versionName and is always present; it can't throw
+        // the way packageManager.getPackageInfo can on edge devices.
+        val appVersion = BuildConfig.VERSION_NAME.takeIf { it.isNotBlank() }
+
+        lifecycleScope.launch {
+            val resp = runCatching {
+                NetworkModule.api.getSettingsManifest(appVersion = appVersion, platform = "android")
+            }.getOrElse { e ->
+                Timber.w(e, "[SettingsManifest] fetch failed — keeping static settings screen")
+                return@launch
+            }
+
+            if (!resp.success || resp.manifest == null) {
+                Timber.w("[SettingsManifest] non-success response (error=${resp.error}) — keeping static screen")
+                return@launch
+            }
+
+            val rows = runCatching {
+                SettingsManifestSync.planDynamicRows(resp.manifest, appVersion)
+            }.getOrElse { e ->
+                Timber.w(e, "[SettingsManifest] plan failed — keeping static screen")
+                return@launch
+            }
+
+            renderManifestExtraRows(rows)
+        }
+    }
+
+    private fun renderManifestExtraRows(rows: List<DynamicSettingsRow>) {
+        val container = findViewById<LinearLayout>(R.id.settingsManifestExtraContainer)
+        container.removeAllViews()
+        if (rows.isEmpty()) {
+            container.visibility = View.GONE
+            return
+        }
+        container.visibility = View.VISIBLE
+
+        // Section header so the synced rows are visually grouped.
+        container.addView(TextView(this).apply {
+            text = getString(R.string.settings_more_section_title)
+            setTextColor(getColor(R.color.text_white_50))
+            textSize = 13f
+            val vpad = dpToPx(8)
+            setPadding(0, vpad * 2, 0, vpad)
+        })
+
+        rows.forEach { row -> container.addView(buildManifestRow(row)) }
+        TelemetryHelper.trackAction("settings_manifest_extra_rows_${rows.size}")
+    }
+
+    /** Build one tappable row for a manifest feature that opens its web fallback. */
+    private fun buildManifestRow(row: DynamicSettingsRow): View {
+        val rowLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            val vpad = dpToPx(12)
+            setPadding(0, vpad, 0, vpad)
+            isClickable = true
+            setOnClickListener { openManifestWebFallback(row) }
+        }
+
+        val label = TextView(this).apply {
+            text = row.name
+            setTextColor(getColor(android.R.color.white))
+            textSize = 16f
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        rowLayout.addView(label)
+
+        if (row.gated) {
+            // Gated state: badge + "?" help (what / needs / next step), per spec §4.
+            label.append("  ⓘ")
+            val badge = TextView(this).apply {
+                text = getString(R.string.settings_feature_gated_badge)
+                setTextColor(getColor(R.color.text_white_50))
+                textSize = 11f
+                setPadding(dpToPx(8), 0, dpToPx(8), 0)
+            }
+            rowLayout.addView(badge)
+        }
+
+        val help = ImageView(this).apply {
+            setImageResource(android.R.drawable.ic_menu_help)
+            setColorFilter(getColor(R.color.text_white_50))
+            val sz = dpToPx(20)
+            layoutParams = LinearLayout.LayoutParams(sz, sz).apply {
+                marginStart = dpToPx(8)
+            }
+            isClickable = true
+            setOnClickListener { showManifestRowHelp(row) }
+        }
+        rowLayout.addView(help)
+
+        return rowLayout
+    }
+
+    /** "?" affordance: what this setting is, what it needs, and the next step. */
+    private fun showManifestRowHelp(row: DynamicSettingsRow) {
+        val msg = if (row.gated) {
+            getString(R.string.settings_feature_gated_help)
+        } else {
+            getString(R.string.settings_feature_web_help)
+        }
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.settings_feature_help_title))
+            .setMessage(msg)
+            .setPositiveButton(R.string.settings_open_on_web) { _, _ -> openManifestWebFallback(row) }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun openManifestWebFallback(row: DynamicSettingsRow) {
+        TelemetryHelper.trackAction("settings_manifest_web_${row.key}")
+        WebViewActivity.launch(this, row.webFallback, row.name)
     }
 
     // ============================================

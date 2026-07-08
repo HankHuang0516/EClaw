@@ -18,8 +18,12 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
-const { syncPetdexCatalog, R2_KEY_PREFIX, PROXY_PATH_PREFIX } = require('./petdex-bridge');
+const {
+    syncPetdexCatalog, R2_KEY_PREFIX, PROXY_PATH_PREFIX,
+    rewriteCommunitySpriteUrl, rewriteDescriptorSpriteUrl,
+} = require('./petdex-bridge');
 const { extractFrameZero } = require('./companion-avatar-util');
+const extractCreds = require('./extract-creds');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -161,7 +165,9 @@ function rowToCompanionCard(row) {
         id: row.id,
         name: row.name,
         version: row.version,
-        avatarUrl: row.avatar_url,
+        // Rewrite external community-CDN URLs to the same-origin proxy so the
+        // browser doesn't ORB-block them (no-op for R2/proxy/null URLs).
+        avatarUrl: rewriteCommunitySpriteUrl(row.avatar_url),
         thumbnailUrl: row.thumbnail_url,
         author: row.author_entity_id != null
             ? { entityId: row.author_entity_id }
@@ -185,10 +191,18 @@ function rowToCompanionCard(row) {
     // so cards can animate without a follow-up /:id fetch per tile. Procedural
     // cards already work off the renderer-key heuristic in petdx-browser.html.
     if (row.asset_type === 'spritesheet') {
-        card.assetUrl = row.asset_url;
+        card.assetUrl = rewriteCommunitySpriteUrl(row.asset_url);
         const d = row.descriptor || {};
-        if (d.asset) card.asset = d.asset;
+        // descriptor.asset.url is the URL the renderer actually loads — rewrite
+        // it too (clone, never mutate the row) so the grid fetches same-origin.
+        if (d.asset) {
+            const rewritten = rewriteDescriptorSpriteUrl(d);
+            card.asset = rewritten.asset;
+        }
         if (d.stateAssets) card.stateAssets = d.stateAssets;
+        // Surface `kind` so the grid's synthetic descriptor can pick the right
+        // emoji fallback (🐾/🧑/🎯) instead of always defaulting to 🦞.
+        if (d.kind) card.kind = d.kind;
     }
     return card;
 }
@@ -196,8 +210,11 @@ function rowToCompanionCard(row) {
 function rowToCompanionDetail(row) {
     return {
         ...rowToCompanionCard(row),
-        descriptor: row.descriptor,
-        assetUrl: row.asset_url,
+        // The modal renders straight off detail.descriptor — rewrite its
+        // asset.url (and assetUrl) to the same-origin proxy too, or the
+        // bigger preview ORB-blocks even though the grid card is fixed.
+        descriptor: rewriteDescriptorSpriteUrl(row.descriptor),
+        assetUrl: rewriteCommunitySpriteUrl(row.asset_url),
         license: row.license,
         i18nData: row.i18n_data,
         publishedAt: row.published_at,
@@ -275,10 +292,14 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
     // `req.botAuth.entityId` may be null on device-only auth — `scope=mine`
     // still requires botSecret because it filters by author entity.
     function authReader(req, res, next) {
-        const deviceId = req.query.deviceId || req.body?.deviceId;
-        const deviceSecret = req.query.deviceSecret || req.body?.deviceSecret;
-        const botSecret = req.query.botSecret || req.body?.botSecret;
-        const entityIdRaw = req.query.entityId || req.body?.entityId;
+        // Accepts secrets via query/body (legacy) OR X-Device-Secret /
+        // X-Bot-Secret headers (secret-leakage hardening). Additive: query/body
+        // still take precedence so existing callers are unaffected.
+        const creds = extractCreds(req);
+        const deviceId = creds.deviceId;
+        const deviceSecret = creds.deviceSecret;
+        const botSecret = creds.botSecret;
+        const entityIdRaw = creds.entityId;
         const entityId = entityIdRaw != null ? parseInt(entityIdRaw, 10) : null;
 
         if (!deviceId || (!deviceSecret && !botSecret)) {
@@ -681,9 +702,11 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
     });
 
     // ── POST /api/companion/:id/rating ────────────────────────────
-    // Body: { stars: 1..5 }. Upsert per (device, entity). Recompute
-    // companions.rating_avg + rating_count atomically (well, two queries —
-    // good enough for v1; trigger upgrade can come with comment moderation).
+    // Body: { stars: 1..5 }. Upsert per (device, entity), then recompute the
+    // denormalized companions.rating_avg + rating_count. The upsert + recompute
+    // run in one transaction under a `SELECT … FOR UPDATE` lock on the cache row
+    // so concurrent raters of the same companion serialize and cannot lost-update
+    // the cached aggregate (weekly-audit RMW finding card_f9b2cc2d triage).
     router.post('/:id/rating', authReader, async (req, res) => {
         const { id } = req.params;
         if (!/^[a-z0-9-]{1,80}$/i.test(id)) {
@@ -712,48 +735,65 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
             }
 
             const now = Date.now();
-            const existsRes = await pool.query(
-                `SELECT id FROM companion_ratings
-                  WHERE companion_id = $1
-                    AND device_id = $2
-                    AND entity_id IS NOT DISTINCT FROM $3`,
-                [id, req.botAuth.deviceId, req.botAuth.entityId]
-            );
-            if (existsRes.rowCount > 0) {
-                await pool.query(
-                    `UPDATE companion_ratings
-                        SET stars = $1, updated_at = $2
-                      WHERE id = $3`,
-                    [stars, now, existsRes.rows[0].id]
-                );
-            } else {
-                await pool.query(
-                    `INSERT INTO companion_ratings
-                        (device_id, entity_id, companion_id, stars, created_at, updated_at)
-                     VALUES ($1, $2, $3, $4, $5, $5)`,
-                    [req.botAuth.deviceId, req.botAuth.entityId, id, stars, now]
-                );
-            }
+            const client = await pool.connect();
+            let ratingCount, ratingAvg;
+            try {
+                await client.query('BEGIN');
+                // Serialize concurrent raters of THIS companion on the cache row,
+                // so the recompute-and-write below cannot lost-update.
+                await client.query('SELECT 1 FROM companions WHERE id = $1 FOR UPDATE', [id]);
 
-            const aggRes = await pool.query(
-                `SELECT COUNT(*)::int AS n, AVG(stars)::real AS avg
-                   FROM companion_ratings WHERE companion_id = $1`,
-                [id]
-            );
-            const { n, avg } = aggRes.rows[0];
-            await pool.query(
-                `UPDATE companions
-                    SET rating_count = $1, rating_avg = $2
-                  WHERE id = $3`,
-                [n, avg, id]
-            );
+                const existsRes = await client.query(
+                    `SELECT id FROM companion_ratings
+                      WHERE companion_id = $1
+                        AND device_id = $2
+                        AND entity_id IS NOT DISTINCT FROM $3`,
+                    [id, req.botAuth.deviceId, req.botAuth.entityId]
+                );
+                if (existsRes.rowCount > 0) {
+                    await client.query(
+                        `UPDATE companion_ratings
+                            SET stars = $1, updated_at = $2
+                          WHERE id = $3`,
+                        [stars, now, existsRes.rows[0].id]
+                    );
+                } else {
+                    await client.query(
+                        `INSERT INTO companion_ratings
+                            (device_id, entity_id, companion_id, stars, created_at, updated_at)
+                         VALUES ($1, $2, $3, $4, $5, $5)`,
+                        [req.botAuth.deviceId, req.botAuth.entityId, id, stars, now]
+                    );
+                }
+
+                // Recompute the denormalized cache in a single atomic statement —
+                // the COUNT/AVG aggregate is evaluated inside the same UPDATE (no
+                // SELECT-then-UPDATE round-trip), under the row lock above.
+                const upd = await client.query(
+                    `UPDATE companions c
+                        SET rating_count = sub.n, rating_avg = sub.avg
+                       FROM (SELECT COUNT(*)::int AS n, AVG(stars)::real AS avg
+                               FROM companion_ratings WHERE companion_id = $1) sub
+                      WHERE c.id = $1
+                  RETURNING sub.n AS n, sub.avg AS avg`,
+                    [id]
+                );
+                await client.query('COMMIT');
+                ratingCount = upd.rows[0]?.n ?? 0;
+                ratingAvg = upd.rows[0]?.avg ?? null;
+            } catch (txErr) {
+                await client.query('ROLLBACK').catch(() => {});
+                throw txErr;
+            } finally {
+                client.release();
+            }
 
             res.json({
                 success: true,
                 companionId: id,
                 stars,
-                ratingAvg: avg,
-                ratingCount: n,
+                ratingAvg,
+                ratingCount,
             });
         } catch (err) {
             log('error', 'companion', `[Companion] rating post failed: ${err.message}`);

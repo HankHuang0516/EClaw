@@ -189,7 +189,11 @@
     async function navigateCardDependency(cardId, direction) {
         try {
             // Fetch dependency data for the card
-            const response = await fetch(`/api/mission/card/${cardId}/dependencies?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+            // deviceSecret travels in the X-Device-Secret header (not the URL
+            // query) to keep it out of browser history / access logs / Referer.
+            const response = await fetch(`/api/mission/card/${cardId}/dependencies?deviceId=${encodeURIComponent(currentUser.deviceId)}`, {
+                headers: { 'X-Device-Secret': currentUser.deviceSecret },
+            });
             const data = await response.json();
 
             if (!data.success || !data.dependencies || data.dependencies.length === 0) {
@@ -207,7 +211,10 @@
                 openEntityModal('card', targetCard.cardId);
             } else if (direction === 1) {
                 // Fetch dependents (what depends on this card)
-                const depResponse = await fetch(`/api/mission/card/${cardId}/dependents?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+                // deviceSecret travels in the X-Device-Secret header (see above).
+                const depResponse = await fetch(`/api/mission/card/${cardId}/dependents?deviceId=${encodeURIComponent(currentUser.deviceId)}`, {
+                    headers: { 'X-Device-Secret': currentUser.deviceSecret },
+                });
                 const depData = await depResponse.json();
 
                 if (depData.success && depData.dependents && depData.dependents.length > 0) {

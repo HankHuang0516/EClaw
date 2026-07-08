@@ -163,6 +163,18 @@ class WallpaperPreviewUiTest {
     }
 
     @Test
+    fun testMoreWallpaperSettingsButtonIsClickable() {
+        ActivityScenario.launch(WallpaperPreviewActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val button = activity.findViewById<View>(R.id.btnMoreWallpaperSettings)
+                assertNotNull("More wallpaper settings button should exist", button)
+                assertTrue("More wallpaper settings button should be clickable", button.isClickable)
+                assertTrue("More wallpaper settings button should be visible", button.visibility == View.VISIBLE)
+            }
+        }
+    }
+
+    @Test
     fun testPreviewViewIsFullScreen() {
         ActivityScenario.launch(WallpaperPreviewActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
@@ -367,6 +379,32 @@ class WallpaperPreviewUiTest {
                     "Current locked entity should scale even when pinch starts away from it",
                     preview.getEntityScaleForTest(1) > beforeEntity1 + 0.05f
                 )
+            }
+        }
+    }
+
+    @Test
+    fun testEntityTapUsesRenderedWalkingPositionForHitTarget() {
+        ActivityScenario.launch(WallpaperPreviewActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val prefs = LayoutPreferences.getInstance(activity)
+                prefs.clearAllCustomPositions()
+                prefs.clearAllEntityScales()
+
+                val preview = activity.findViewById<WallpaperPreviewView>(R.id.wallpaperPreviewView)
+                preview.setEntities(
+                    listOf(
+                        EntityStatus(entityId = 0, name = "Walker", isBound = true)
+                    )
+                )
+
+                val renderedX = preview.width * 0.72f
+                val renderedY = preview.height * 0.46f
+                preview.setRenderedEntityCenterForTest(0, renderedX, renderedY)
+
+                dispatchTap(preview, renderedX, renderedY)
+
+                assertEquals("entity:0", preview.getLockedTargetForTest())
             }
         }
     }

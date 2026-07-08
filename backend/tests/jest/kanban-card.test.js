@@ -52,6 +52,53 @@ const put = (path) => request(app).put(path);
 
 const AUTH = { deviceId: 'test-dev', deviceSecret: 'test-secret' };
 
+/**
+ * Given an INSERT SQL string + column name, return the 0-based index into
+ * the params array. The column list and VALUES placeholder list can drift
+ * (some columns use NOW() / DEFAULT and don't consume a $N slot), so we
+ * count $N references in VALUES rather than naively zipping the lists.
+ * Adding columns at the end (like card_c2635849's schedule_skip_* pair)
+ * does not shift earlier assertions.
+ */
+function columnParamIndex(sql, columnName) {
+    // Extract balanced parenthesis groups — the VALUES clause may contain
+    // nested parens (NOW(), $7::jsonb, etc.) so a lazy regex on `)` matches
+    // too early. Walk the string tracking depth.
+    function takeBalanced(src, startIdx) {
+        let depth = 0;
+        let start = -1;
+        for (let i = startIdx; i < src.length; i++) {
+            if (src[i] === '(') {
+                if (depth === 0) start = i + 1;
+                depth++;
+            } else if (src[i] === ')') {
+                depth--;
+                if (depth === 0) return { body: src.slice(start, i), end: i };
+            }
+        }
+        return null;
+    }
+    const colKeyword = sql.indexOf('INSERT INTO kanban_cards');
+    if (colKeyword < 0) return -1;
+    const colGroup = takeBalanced(sql, colKeyword);
+    if (!colGroup) return -1;
+    const valKeyword = sql.indexOf('VALUES', colGroup.end);
+    if (valKeyword < 0) return -1;
+    const valGroup = takeBalanced(sql, valKeyword);
+    if (!valGroup) return -1;
+    const cols = colGroup.body.split(',').map(s => s.trim());
+    const values = valGroup.body.split(',').map(s => s.trim());
+    if (cols.length !== values.length) return -1;
+    for (let i = 0; i < cols.length; i++) {
+        if (cols[i] === columnName) {
+            const m = values[i].match(/^\$(\d+)/);
+            if (!m) return -1;  // column uses NOW()/DEFAULT, no param
+            return parseInt(m[1], 10) - 1;
+        }
+    }
+    return -1;
+}
+
 // ════════════════════════════════════════════════════════════════
 // POST /card — Create card requires assignedBots
 // ════════════════════════════════════════════════════════════════
@@ -82,7 +129,7 @@ describe('POST /card — assignedBots validation', () => {
         });
 
         const res = await post('/api/mission/card')
-            .send({ ...AUTH, title: 'Test card', assignedBots: [0], chatAnchorMessageId: 'msg-test-anchor' });
+            .send({ ...AUTH, title: 'Test card', assignedBots: [0], chatAnchorMessageId: 'aaaaaaaa-1111-2222-3333-444444444444' });
         expect(res.status).not.toBe(400);
     });
 
@@ -91,6 +138,44 @@ describe('POST /card — assignedBots validation', () => {
             .send({ ...AUTH, title: 'No anchor', assignedBots: [0] });
         expect(res.status).toBe(400);
         expect(res.body.errorKey).toBe('kb_anchor_required');
+    });
+
+    // card_1356eaf3: non-UUID chat_anchor placeholders (e.g. the ErrLog/cron
+    // creator's "cron-auto") must be treated as "no anchor" at the write boundary
+    // so they never reach the DB and pollute the mind-map chat-hub projection.
+    it('rejects USER-filed card with a non-UUID chatAnchorMessageId placeholder (card_1356eaf3)', async () => {
+        const res = await post('/api/mission/card')
+            .send({ ...AUTH, title: 'cron card', assignedBots: [0], chatAnchorMessageId: 'cron-auto' });
+        expect(res.status).toBe(400);
+        expect(res.body.errorKey).toBe('kb_anchor_required');
+    });
+
+    // A bot/cron-filed card (entityId > 0) with a placeholder anchor is accepted,
+    // but the placeholder is dropped to NULL rather than persisted verbatim.
+    it('drops non-UUID chatAnchorMessageId to NULL for bot-filed cards (card_1356eaf3)', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{
+                id: 'cron-1', device_id: 'test-dev', title: 'cron card',
+                description: '', priority: 'P2', status: 'backlog',
+                assigned_bots: [0], created_by: 1, chat_anchor_message_id: null,
+                created_at: new Date(), updated_at: new Date(),
+                status_changed_at: new Date(), archived: false,
+            }],
+        });
+        const res = await post('/api/mission/card')
+            .send({ ...AUTH, title: 'cron card', assignedBots: [0], entityId: 1, chatAnchorMessageId: 'cron-auto' });
+        expect(res.status).not.toBe(400);
+        const insertCall = mockQuery.mock.calls.find(c => /INSERT INTO kanban_cards/.test(c[0]));
+        expect(insertCall).toBeTruthy();
+        // chat_anchor_message_id index: build a (column → $N) map from the
+        // SQL, then convert $N to a params array index. This is robust to
+        // adding new columns / SQL-literal placeholders like NOW() that
+        // don't consume a param slot.
+        const sql = insertCall[0];
+        const params = insertCall[1];
+        const idx = columnParamIndex(sql, 'chat_anchor_message_id');
+        expect(idx).toBeGreaterThanOrEqual(0);
+        expect(params[idx]).toBe(null);
     });
 
     it('allows bot-filed card (entityId > 0) without chatAnchorMessageId', async () => {
@@ -116,7 +201,7 @@ describe('POST /card — assignedBots validation', () => {
                 id: 3, device_id: 'test-dev', title: 'From mindmap',
                 description: '', priority: 'P2', status: 'backlog',
                 assigned_bots: [0], created_by: 0,
-                chat_anchor_message_id: 'msg-test-anchor',
+                chat_anchor_message_id: 'aaaaaaaa-1111-2222-3333-444444444444',
                 chat_anchor_coord: { x: 142.5, y: -87.3 },
                 created_at: new Date(), updated_at: new Date(),
                 status_changed_at: new Date(), archived: false,
@@ -124,7 +209,7 @@ describe('POST /card — assignedBots validation', () => {
         });
         const res = await post('/api/mission/card').send({
             ...AUTH, title: 'From mindmap', assignedBots: [0],
-            chatAnchorMessageId: 'msg-test-anchor',
+            chatAnchorMessageId: 'aaaaaaaa-1111-2222-3333-444444444444',
             chatAnchorCoord: { x: 142.5, y: -87.3 },
         });
         expect(res.status).not.toBe(400);
@@ -210,7 +295,7 @@ describe('POST /card — assignedBots validation', () => {
                 id: 4, device_id: 'test-dev', title: 'Bad coord',
                 description: '', priority: 'P2', status: 'backlog',
                 assigned_bots: [0], created_by: 0,
-                chat_anchor_message_id: 'msg-test-anchor',
+                chat_anchor_message_id: 'aaaaaaaa-1111-2222-3333-444444444444',
                 chat_anchor_coord: null,
                 created_at: new Date(), updated_at: new Date(),
                 status_changed_at: new Date(), archived: false,
@@ -218,15 +303,112 @@ describe('POST /card — assignedBots validation', () => {
         });
         const res = await post('/api/mission/card').send({
             ...AUTH, title: 'Bad coord', assignedBots: [0],
-            chatAnchorMessageId: 'msg-test-anchor',
+            chatAnchorMessageId: 'aaaaaaaa-1111-2222-3333-444444444444',
             chatAnchorCoord: { x: 'not-a-number', y: null },
         });
         expect(res.status).not.toBe(400);
         const insertCall = mockQuery.mock.calls.find(c => /INSERT INTO kanban_cards/.test(c[0]));
+        const sql = insertCall[0];
         const params = insertCall[1];
-        // The coord param immediately precedes dispatch_mode; null when invalid.
-        expect(params[params.length - 2]).toBe(null);
-        expect(params[params.length - 1]).toBe('immediate');
+        // Map column→$N→params index so adding columns (e.g.
+        // schedule_skip_if_*_pct_over) or NOW()-literal columns don't shift
+        // these assertions.
+        const coordIdx = columnParamIndex(sql, 'chat_anchor_coord');
+        const dispatchIdx = columnParamIndex(sql, 'dispatch_mode');
+        expect(coordIdx).toBeGreaterThanOrEqual(0);
+        expect(dispatchIdx).toBeGreaterThanOrEqual(0);
+        expect(params[coordIdx]).toBe(null);
+        expect(params[dispatchIdx]).toBe('immediate');
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
+// POST /card + PUT /card/:id/config — per-card requirePrLink option
+// (owner directive 2026-07-03: PR link is opt-in, default off)
+// ════════════════════════════════════════════════════════════════
+describe('requirePrLink per-card option', () => {
+    const anchor = 'aaaaaaaa-1111-2222-3333-444444444444';
+
+    function insertCall() {
+        return mockQuery.mock.calls.find(c => /INSERT INTO kanban_cards/.test(c[0]));
+    }
+    function configUpdateCall() {
+        return mockQuery.mock.calls.find(c => /UPDATE kanban_cards SET/.test(c[0]) && /requires_pr_link/.test(c[0]));
+    }
+
+    it('POST /card persists requires_pr_link=true when requirePrLink:true', async () => {
+        const res = await post('/api/mission/card').send({
+            ...AUTH, title: 'Opt-in card', assignedBots: [0],
+            chatAnchorMessageId: anchor, requirePrLink: true,
+        });
+        expect(res.status).not.toBe(400);
+        const call = insertCall();
+        const idx = columnParamIndex(call[0], 'requires_pr_link');
+        expect(idx).toBeGreaterThanOrEqual(0);
+        expect(call[1][idx]).toBe(true);
+    });
+
+    it('POST /card defaults requires_pr_link=false when option absent', async () => {
+        const res = await post('/api/mission/card').send({
+            ...AUTH, title: 'Default card', assignedBots: [0],
+            chatAnchorMessageId: anchor,
+        });
+        expect(res.status).not.toBe(400);
+        const call = insertCall();
+        const idx = columnParamIndex(call[0], 'requires_pr_link');
+        expect(idx).toBeGreaterThanOrEqual(0);
+        expect(call[1][idx]).toBe(false);
+    });
+
+    it('POST /card treats non-true value as false (only === true / "true" opts in)', async () => {
+        const res = await post('/api/mission/card').send({
+            ...AUTH, title: 'Weird value', assignedBots: [0],
+            chatAnchorMessageId: anchor, requirePrLink: 0,
+        });
+        expect(res.status).not.toBe(400);
+        const call = insertCall();
+        const idx = columnParamIndex(call[0], 'requires_pr_link');
+        expect(call[1][idx]).toBe(false);
+    });
+
+    it('PUT /card/:id/config accepts requirePrLink:true and writes requires_pr_link', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{
+                id: 'card-x', device_id: 'test-dev', title: 'C',
+                priority: 'P2', status: 'todo', assigned_bots: [0],
+                created_by: 0, requires_pr_link: true,
+                created_at: new Date(), updated_at: new Date(),
+                status_changed_at: new Date(), archived: false,
+            }],
+        });
+        const res = await put('/api/mission/card/card-x/config').send({
+            ...AUTH, requirePrLink: true,
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.card.requirePrLink).toBe(true);
+        const call = configUpdateCall();
+        expect(call).toBeTruthy();
+        // the boolean param is coerced via !!requirePrLink
+        expect(call[1]).toContain(true);
+    });
+
+    it('PUT /card/:id/config accepts requirePrLink:false to turn enforcement off', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{
+                id: 'card-y', device_id: 'test-dev', title: 'C',
+                priority: 'P2', status: 'todo', assigned_bots: [0],
+                created_by: 0, requires_pr_link: false,
+                created_at: new Date(), updated_at: new Date(),
+                status_changed_at: new Date(), archived: false,
+            }],
+        });
+        const res = await put('/api/mission/card/card-y/config').send({
+            ...AUTH, requirePrLink: false,
+        });
+        expect(res.status).toBe(200);
+        const call = configUpdateCall();
+        expect(call).toBeTruthy();
+        expect(call[0]).toMatch(/requires_pr_link\s*=\s*\$\d+/);
     });
 });
 
@@ -372,7 +554,7 @@ describe('POST /card — inline automation + schedule', () => {
             ...AUTH, title: 'Auto task', assignedBots: [0],
             isAutomation: true,
             schedule: { type: 'recurring', cron: '0 */4 * * *' },
-            chatAnchorMessageId: 'msg-test-anchor',
+            chatAnchorMessageId: 'aaaaaaaa-1111-2222-3333-444444444444',
         });
 
         expect(res.status).toBe(200);
@@ -392,7 +574,7 @@ describe('POST /card — inline automation + schedule', () => {
         const res = await post('/api/mission/card').send({
             ...AUTH, title: 'Auto task', assignedBots: [0],
             schedule: { type: 'recurring', cron: '0 9 * * *' },
-            chatAnchorMessageId: 'msg-test-anchor',
+            chatAnchorMessageId: 'aaaaaaaa-1111-2222-3333-444444444444',
         });
 
         expect(res.status).toBe(200);

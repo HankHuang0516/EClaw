@@ -189,12 +189,19 @@ async function testToolbarStyleDuplicateDelete(page) {
     await cta.click();
     await expectToolbarVisible(page);
 
-    page.once('dialog', dialog => dialog.accept('rebeccapurple'));
     await page.locator('[data-chip="style"]').click();
+    const colorInput = page.locator('.eclaw-hover-click-toolbar__subpanel [data-style-key="color"]');
+    await colorInput.waitFor({ state: 'visible', timeout: 2000 });
+    await colorInput.evaluate((el) => {
+        el.value = '#663399';
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+    });
     await page.waitForFunction(() => document.getElementById('summary').textContent.includes('button#primaryAction (color)'));
     const color = await cta.evaluate(el => getComputedStyle(el).color);
-    assert(color === 'rgb(102, 51, 153)', `Style chip should apply rebeccapurple, got ${color}`);
-    assert((await page.locator('#log').textContent()).includes('rebeccapurple'), 'style mutation should render unified diff text');
+    assert(color === 'rgb(102, 51, 153)', `Style chip should apply #663399, got ${color}`);
+    const diffText = await page.locator('#log').textContent();
+    assert(/color|663399|102,\s*51,\s*153/i.test(diffText), `style mutation should render unified diff text, got: ${diffText}`);
 
     await page.locator('[data-chip="duplicate"]').click();
     await page.waitForFunction(() => document.querySelectorAll('#primaryCard #primaryAction').length === 2);
@@ -263,8 +270,14 @@ async function testPortalImportDomSelectFlow(page) {
     await importedButton.click();
     await expectToolbarVisible(page);
 
-    page.once('dialog', dialog => dialog.accept('#123456'));
     await page.locator('.eclaw-hover-click-toolbar').last().locator('[data-chip="style"]').click();
+    const colorInput = page.locator('.eclaw-hover-click-toolbar').last().locator('.eclaw-hover-click-toolbar__subpanel [data-style-key="color"]');
+    await colorInput.waitFor({ state: 'visible', timeout: 2000 });
+    await colorInput.evaluate((el) => {
+        el.value = '#123456';
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+    });
     await page.waitForFunction(() => window.__importE2E.lastDiff && window.__importE2E.lastDiff.unified.includes('/portal/import-fixture.html'));
     assert(await importedButton.evaluate(el => getComputedStyle(el).color === 'rgb(18, 52, 86)'), 'imported DOM target should accept toolbar style mutation');
 

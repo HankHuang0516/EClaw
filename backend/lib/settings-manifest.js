@@ -26,8 +26,42 @@
  * automatically (native if its version qualifies, else WebView fallback) with
  * no app store release.
  *
- * Stage 2 (apps consume this manifest — needs a build) and Stage 3 (full
- * dynamic schema registry incl. field-level declarations) are follow-ups.
+ * Stage 2 (apps consume this manifest — needs a build) is a follow-up.
+ *
+ * STAGE 3 (this slice — backend only, NO app build): the JSON-schema-lite
+ * FIELD REGISTRY, restructured per #6's AUTHORITATIVE design ruling into a
+ * NESTED `schema` wrapper. Each feature may declare a `schema` object so an app
+ * can render the *contents* of a settings screen — not just whether it is native
+ * — directly from the manifest. The schema is:
+ *   schema: {
+ *     version,                // int — breaking field-format version for this feature
+ *     renderer,               // 'form' (the only renderer today)
+ *     dataSource: {           // where the app reads/writes the values
+ *       read:  { method, path, auth, responsePath },  // GET/POST endpoint + JSON path to values
+ *       write: { method, path, auth, requestPath },    // PUT/POST endpoint + JSON path for payload
+ *     },
+ *     fields: [               // order-preserving field descriptors
+ *       {
+ *         key,                // stable per-feature field id, never renamed
+ *         type,               // boolean | string | number | enum | multi_enum | action
+ *         control,            // UI hint: switch | slider | text | textarea | password
+ *                             //   | select | multiselect | stepper | button
+ *         label: {i18n, fallback},  // Globe-user: i18n is the canonical key, fallback the EN default
+ *         help:  {i18n, fallback},  // optional, same shape
+ *         scope,              // device | entity | user — what the value is keyed to
+ *         default,            // default value (omit for type:'action')
+ *         writeAliases,       // optional: API payload key(s) when they differ from `key`
+ *         validation,         // type-specific: number {min,max,step,unit};
+ *                             //   enum/multi_enum {options:[{value,label}]}; string {maxLength};
+ *                             //   any {required}
+ *       }
+ *     ]
+ *   }
+ * `dataSource` endpoints are the REAL settings read/write APIs (see the table in
+ * docs/specs/settings-manifest-spec.md §6). A pure-action feature (rotate_secret,
+ * switch_device) carries only `dataSource.write` — there is no value to read.
+ * `schema` is emitted verbatim on every platform (it is NOT version-gated; the
+ * native version downgrade only touches `native`).
  *
  * Pure function: no I/O, no globals, no device/entity/locale hardcoding.
  */
@@ -65,6 +99,10 @@ function portalFocus(key) {
  *         channel_api (Android read-only → "partial"), notifications
  *         (iOS fewer categories → "partial").
  */
+// JSON-schema-lite field-registry version. Bump on any breaking change to the
+// `fields` descriptor format (not on simply adding/removing a field).
+const FIELD_SCHEMA_VERSION = 1;
+
 const FEATURES = [
     {
         key: 'account_identity',
@@ -72,6 +110,33 @@ const FEATURES = [
         enabled: true,
         native: { android: true, ios: true },
         minAppVersion: { android: '1.0.0', ios: '1.0.0' },
+        // #6 nested schema: device user-profile read/write. The manifest field
+        // key is `user_display_name`; the API payload key is `userDisplayName`
+        // → writeAliases bridges the two.
+        schema: {
+            version: FIELD_SCHEMA_VERSION,
+            renderer: 'form',
+            dataSource: {
+                read: { method: 'GET', path: '/api/device/user-profile', auth: 'device', responsePath: 'profile' },
+                write: { method: 'PUT', path: '/api/device/user-profile', auth: 'device', requestPath: 'profile' },
+            },
+            fields: [
+                {
+                    key: 'user_display_name',
+                    type: 'string',
+                    control: 'text',
+                    label: { i18n: 'settings_user_display_name_title', fallback: 'My Display Name' },
+                    help: {
+                        i18n: 'settings_user_display_name_desc',
+                        fallback: 'The name shown in chat headers in place of "Device Owner". Leave blank to use the default.',
+                    },
+                    scope: 'user',
+                    default: '',
+                    writeAliases: ['userDisplayName'],
+                    validation: { required: false, maxLength: 64 },
+                },
+            ],
+        },
     },
     {
         key: 'channel_api',
@@ -116,6 +181,120 @@ const FEATURES = [
         enabled: true,
         native: { android: true, ios: true },
         minAppVersion: { android: '1.0.0', ios: '1.0.0' },
+        // #6 nested schema: chat_avatar_size persists in device-preferences
+        // (prefs.chat_avatar_size). Manifest field key `avatar_size` →
+        // API payload key `chat_avatar_size` via writeAliases.
+        schema: {
+            version: FIELD_SCHEMA_VERSION,
+            renderer: 'form',
+            dataSource: {
+                read: { method: 'GET', path: '/api/device-preferences', auth: 'device', responsePath: 'prefs' },
+                write: { method: 'PUT', path: '/api/device-preferences', auth: 'device', requestPath: 'prefs' },
+            },
+            fields: [
+                {
+                    key: 'avatar_size',
+                    type: 'enum',
+                    control: 'select',
+                    label: { i18n: 'settings_chat_avatar_size', fallback: 'Avatar Size' },
+                    help: {
+                        i18n: 'settings_chat_avatar_size_desc',
+                        fallback: 'Applies to chat list, chat header, and message avatars',
+                    },
+                    scope: 'device',
+                    default: 'medium',
+                    writeAliases: ['chat_avatar_size'],
+                    validation: {
+                        required: true,
+                        options: [
+                            { value: 'small', label: { i18n: 'settings_chat_avatar_size_small', fallback: 'Small' } },
+                            { value: 'medium', label: { i18n: 'settings_chat_avatar_size_medium', fallback: 'Medium' } },
+                            { value: 'large', label: { i18n: 'settings_chat_avatar_size_large', fallback: 'Large' } },
+                        ],
+                    },
+                },
+            ],
+        },
+    },
+    {
+        key: 'action_requests',
+        name: 'Needs-you Requests',
+        enabled: true,
+        // Web-only configuration surface today; native apps can open the focused
+        // settings card until an app-rendered field registry consumer ships.
+        native: { android: false, ios: false },
+        minAppVersion: { android: '0.0.0', ios: '0.0.0' },
+        schema: {
+            version: FIELD_SCHEMA_VERSION,
+            renderer: 'form',
+            dataSource: {
+                read: { method: 'GET', path: '/api/device-preferences', auth: 'device', responsePath: 'prefs' },
+                write: { method: 'PUT', path: '/api/device-preferences', auth: 'device', requestPath: 'prefs' },
+            },
+            fields: [
+                {
+                    key: 'action_request_realtime',
+                    type: 'boolean',
+                    control: 'switch',
+                    label: { i18n: 'action_request_realtime_label', fallback: 'Live refresh inbox' },
+                    help: {
+                        i18n: 'action_request_realtime_desc',
+                        fallback: 'Refresh the inbox immediately when agents emit, resolve, or dismiss requests.',
+                    },
+                    scope: 'device',
+                    default: true,
+                    validation: { required: false },
+                },
+                {
+                    // 需要你 reply-input drag-to-resize grip (card_c44c318). DEFAULT-ON.
+                    key: 'action_request_reply_resize_enabled',
+                    type: 'boolean',
+                    control: 'switch',
+                    label: { i18n: 'action_request_reply_resize_label', fallback: 'Resizable reply box' },
+                    help: {
+                        i18n: 'action_request_reply_resize_desc',
+                        fallback: 'Add a drag/keyboard handle to the Needs-you reply box so you can make it taller. Default is on.',
+                    },
+                    scope: 'device',
+                    default: true,
+                    validation: { required: false },
+                },
+                {
+                    key: 'action_request_timeout_policy',
+                    type: 'enum',
+                    control: 'select',
+                    label: { i18n: 'action_request_timeout_policy_label', fallback: 'Unanswered request policy' },
+                    help: {
+                        i18n: 'action_request_timeout_policy_desc',
+                        fallback: 'Choose what the timeout worker does when a Needs-you request stays unanswered past the deadline.',
+                    },
+                    scope: 'device',
+                    default: 'keep',
+                    validation: {
+                        required: false,
+                        options: [
+                            { value: 'keep', label: { i18n: 'action_request_timeout_keep', fallback: 'A. Keep pending' } },
+                            { value: 'auto_dismiss', label: { i18n: 'action_request_timeout_auto_dismiss', fallback: 'B. Auto-dismiss' } },
+                            { value: 'safe_default', label: { i18n: 'action_request_timeout_safe_default', fallback: 'C. Safe default' } },
+                            { value: 'consensus', label: { i18n: 'action_request_timeout_consensus', fallback: 'D. Start consensus' } },
+                        ],
+                    },
+                },
+                {
+                    key: 'action_request_timeout_minutes',
+                    type: 'number',
+                    control: 'stepper',
+                    label: { i18n: 'action_request_timeout_minutes_label', fallback: 'Timeout duration' },
+                    help: {
+                        i18n: 'action_request_timeout_minutes_desc',
+                        fallback: 'Minutes before the selected unanswered-request policy runs.',
+                    },
+                    scope: 'device',
+                    default: 1440,
+                    validation: { required: false, min: 5, max: 43200, step: 5, unit: 'minute' },
+                },
+            ],
+        },
     },
     {
         key: 'rental_management',
@@ -133,6 +312,105 @@ const FEATURES = [
         // "partial"; Android has the full set.
         native: { android: true, ios: 'partial' },
         minAppVersion: { android: '1.0.0', ios: '1.0.0' },
+        // #6 nested schema: per-category notification preference toggles
+        // (persisted per-device via /api/notification-preferences, prefs object).
+        // Several manifest field keys differ from the real notif pref key →
+        // writeAliases bridges them: feedback → [feedback_resolved, feedback_reply]
+        // (one toggle governs both feedback categories), todo → todo_done,
+        // rich_card → rich_card_question.
+        schema: {
+            version: FIELD_SCHEMA_VERSION,
+            renderer: 'form',
+            dataSource: {
+                read: { method: 'GET', path: '/api/notification-preferences', auth: 'device', responsePath: 'prefs' },
+                write: { method: 'PUT', path: '/api/notification-preferences', auth: 'device', requestPath: 'prefs' },
+            },
+            fields: [
+                {
+                    key: 'bot_reply',
+                    type: 'boolean',
+                    control: 'switch',
+                    label: { i18n: 'notif_pref_bot_reply', fallback: 'Bot Replies' },
+                    scope: 'device',
+                    default: true,
+                    validation: { required: false },
+                },
+                {
+                    key: 'broadcast',
+                    type: 'boolean',
+                    control: 'switch',
+                    label: { i18n: 'notif_pref_broadcast', fallback: 'Broadcasts' },
+                    scope: 'device',
+                    default: true,
+                    validation: { required: false },
+                },
+                {
+                    key: 'speak_to',
+                    type: 'boolean',
+                    control: 'switch',
+                    label: { i18n: 'notif_pref_speak_to', fallback: 'Entity Messages' },
+                    scope: 'device',
+                    default: true,
+                    validation: { required: false },
+                },
+                {
+                    key: 'feedback',
+                    type: 'boolean',
+                    control: 'switch',
+                    label: { i18n: 'notif_pref_feedback', fallback: 'Feedback Updates' },
+                    scope: 'device',
+                    default: true,
+                    writeAliases: ['feedback_resolved', 'feedback_reply'],
+                    validation: { required: false },
+                },
+                {
+                    key: 'todo',
+                    type: 'boolean',
+                    control: 'switch',
+                    label: { i18n: 'notif_pref_todo', fallback: 'TODO Completed' },
+                    scope: 'device',
+                    default: true,
+                    writeAliases: ['todo_done'],
+                    validation: { required: false },
+                },
+                {
+                    key: 'scheduled',
+                    type: 'boolean',
+                    control: 'switch',
+                    label: { i18n: 'notif_pref_scheduled', fallback: 'Scheduled Messages' },
+                    scope: 'device',
+                    default: true,
+                    validation: { required: false },
+                },
+                {
+                    key: 'user_mention',
+                    type: 'boolean',
+                    control: 'switch',
+                    label: { i18n: 'notif_pref_user_mention', fallback: '@Mention pings' },
+                    help: {
+                        i18n: 'notif_pref_user_mention_help',
+                        fallback: 'Get pinged when someone @-mentions you in chat.',
+                    },
+                    scope: 'device',
+                    default: true,
+                    validation: { required: false },
+                },
+                {
+                    key: 'rich_card',
+                    type: 'boolean',
+                    control: 'switch',
+                    label: { i18n: 'notif_pref_rich_card', fallback: 'Rich-card questions' },
+                    help: {
+                        i18n: 'notif_pref_rich_card_help',
+                        fallback: 'Notify when a bot asks a question via an interactive rich card.',
+                    },
+                    scope: 'device',
+                    default: true,
+                    writeAliases: ['rich_card_question'],
+                    validation: { required: false },
+                },
+            ],
+        },
     },
     {
         key: 'developer_broadcast',
@@ -156,6 +434,45 @@ const FEATURES = [
         // Web-only configuration surface today.
         native: { android: false, ios: false },
         minAppVersion: { android: '0.0.0', ios: '0.0.0' },
+        // #6 nested schema: real number settings persisted via
+        // /api/device-preferences (prefs). Field keys match the API prefs keys
+        // exactly, so no writeAliases are needed.
+        schema: {
+            version: FIELD_SCHEMA_VERSION,
+            renderer: 'form',
+            dataSource: {
+                read: { method: 'GET', path: '/api/device-preferences', auth: 'device', responsePath: 'prefs' },
+                write: { method: 'PUT', path: '/api/device-preferences', auth: 'device', requestPath: 'prefs' },
+            },
+            fields: [
+                {
+                    key: 'kanban_nudge_batch_size',
+                    type: 'number',
+                    control: 'slider',
+                    label: { i18n: 'kanban_nudge_batch_label', fallback: 'Cards per cycle' },
+                    help: {
+                        i18n: 'kanban_nudge_batch_help',
+                        fallback: 'Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity.',
+                    },
+                    scope: 'device',
+                    default: 5,
+                    validation: { required: false, min: 1, max: 20, step: 1, unit: 'cards' },
+                },
+                {
+                    key: 'kanban_nudge_interval_minutes',
+                    type: 'number',
+                    control: 'slider',
+                    label: { i18n: 'kanban_nudge_interval_label', fallback: 'Interval' },
+                    help: {
+                        i18n: 'kanban_nudge_interval_help',
+                        fallback: 'Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set.',
+                    },
+                    scope: 'device',
+                    default: 180,
+                    validation: { required: false, min: 0, max: 1440, step: 1, unit: 'minutes' },
+                },
+            ],
+        },
     },
     {
         key: 'passive_health',
@@ -209,6 +526,30 @@ const FEATURES = [
         // HIGH drift: missing from BOTH native apps → web fallback only.
         native: { android: false, ios: false },
         minAppVersion: { android: '0.0.0', ios: '0.0.0' },
+        // #6 nested schema: pure write-only action — no value to read, so
+        // dataSource carries only `write` (POST /api/device/rotate-secret).
+        // type:'action' fields carry no `default`.
+        schema: {
+            version: FIELD_SCHEMA_VERSION,
+            renderer: 'form',
+            dataSource: {
+                write: { method: 'POST', path: '/api/device/rotate-secret', auth: 'device' },
+            },
+            fields: [
+                {
+                    key: 'rotate_device_secret',
+                    type: 'action',
+                    control: 'button',
+                    label: { i18n: 'settings_rotate_device_secret', fallback: 'Rotate Device Secret' },
+                    help: {
+                        i18n: 'settings_rotate_device_secret_hint',
+                        fallback: 'Generate a new Device Secret if the current one has leaked. Other sessions will need the new value to sign in.',
+                    },
+                    scope: 'device',
+                    validation: { confirm: true },
+                },
+            ],
+        },
     },
     {
         key: 'switch_device',
@@ -217,6 +558,51 @@ const FEATURES = [
         // HIGH drift: missing from BOTH native apps → web fallback only.
         native: { android: false, ios: false },
         minAppVersion: { android: '0.0.0', ios: '0.0.0' },
+        // #6 nested schema: pure write-only action — the two text inputs ARE the
+        // request payload for POST /api/auth/device-login (deviceId/deviceSecret).
+        // Manifest field keys differ from the API body keys → writeAliases.
+        // dataSource carries only `write`; nothing to read.
+        schema: {
+            version: FIELD_SCHEMA_VERSION,
+            renderer: 'form',
+            dataSource: {
+                write: { method: 'POST', path: '/api/auth/device-login', auth: 'device' },
+            },
+            fields: [
+                {
+                    key: 'device_id',
+                    type: 'string',
+                    control: 'text',
+                    label: { i18n: 'settings_device_id', fallback: 'Device ID' },
+                    scope: 'device',
+                    default: '',
+                    writeAliases: ['deviceId'],
+                    validation: { required: true },
+                },
+                {
+                    key: 'device_secret',
+                    type: 'string',
+                    control: 'password',
+                    label: { i18n: 'settings_device_secret', fallback: 'Device Secret' },
+                    scope: 'device',
+                    default: '',
+                    writeAliases: ['deviceSecret'],
+                    validation: { required: true },
+                },
+                {
+                    key: 'switch_device',
+                    type: 'action',
+                    control: 'button',
+                    label: { i18n: 'settings_switch_device_confirm', fallback: 'Switch' },
+                    help: {
+                        i18n: 'settings_switch_device_hint',
+                        fallback: 'Sign this browser into a different Device ID. Useful if you have a second admin account with its own entities.',
+                    },
+                    scope: 'device',
+                    validation: { confirm: true },
+                },
+            ],
+        },
     },
     {
         key: 'logout',
@@ -281,7 +667,7 @@ function buildSettingsManifest(appVersion, platform) {
 
     const features = FEATURES.map((f) => {
         const native = resolveNative(f, appVersion, plat);
-        return {
+        const entry = {
             key: f.key,
             name: f.name,
             enabled: f.enabled,
@@ -291,13 +677,26 @@ function buildSettingsManifest(appVersion, platform) {
             webFallback: portalFocus(f.key),
             minAppVersion: (f.minAppVersion && f.minAppVersion[plat]) || '0.0.0',
         };
+        // Stage-3 field registry — restructured per #6's ruling into a NESTED
+        // `schema` wrapper ({version, renderer, dataSource:{read,write}, fields}).
+        // Emitted verbatim (NOT affected by the native version gate). Features
+        // with no settable fields yet emit `schema: null`. The per-feature schema
+        // version lives at `schema.version`; the manifest envelope keeps a
+        // top-level `schemaVersion` so consumers can detect the field format
+        // independently of any single feature.
+        entry.schema = f.schema || null;
+        return entry;
     });
 
     return {
         platform: plat,
         appVersion: appVersion || null,
         generatedAt: new Date().toISOString(),
+        // `stage` stays 1 for backward compatibility (Stage-2 apps key off it).
+        // The field-registry layer advertises itself via `schemaVersion` so a
+        // consumer can detect the Stage-3 field format independently.
         stage: 1,
+        schemaVersion: FIELD_SCHEMA_VERSION,
         features,
     };
 }
@@ -307,6 +706,7 @@ module.exports = {
     // exported for tests / Stage-2 reuse
     FEATURES,
     SUPPORTED_PLATFORMS,
+    FIELD_SCHEMA_VERSION,
     compareVersions,
     portalFocus,
 };

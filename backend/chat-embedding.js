@@ -73,8 +73,20 @@ async function initSchema(pool) {
     }
     try {
         // HNSW is fast; falls back to sequential scan if index not present. Safe either way.
-        await pool.query(`CREATE INDEX IF NOT EXISTS idx_chat_embedding_hnsw
-            ON chat_messages USING hnsw (embedding vector_cosine_ops)`);
+        // Build single-threaded: a parallel index build (max_parallel_maintenance_workers>0)
+        // allocates a ~60MB dynamic-shared-memory segment in the container's /dev/shm, which is
+        // too small on hosted PG (Railway ~64MB) and fails with "could not resize shared memory
+        // segment ... No space left on device". Pinning the setting to 0 on the build connection
+        // avoids /dev/shm entirely so the index actually builds (was perpetually falling back to
+        // seq-scan). Use a dedicated client so the SET applies to the same session as the build.
+        const idxClient = await pool.connect();
+        try {
+            await idxClient.query('SET max_parallel_maintenance_workers = 0');
+            await idxClient.query(`CREATE INDEX IF NOT EXISTS idx_chat_embedding_hnsw
+                ON chat_messages USING hnsw (embedding vector_cosine_ops)`);
+        } finally {
+            idxClient.release();
+        }
     } catch (err) {
         console.warn('[ChatEmbedding] HNSW index creation failed (search still works, just slower):', err.message);
     }

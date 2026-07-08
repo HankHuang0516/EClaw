@@ -83,6 +83,84 @@ async function initNotificationTables(chatPool) {
             ON push_subscriptions(device_id)
         `);
 
+        // Push health-check columns (card_0a5d4a97). Mirrors the
+        // 20260621_push_ack_log migration so cold-boot envs that initialize
+        // via this module path (instead of running migrations explicitly)
+        // still get the columns. Default is_active=TRUE so any pre-existing
+        // rows remain in rotation; the cron only flips it after 3+
+        // consecutive failed runs.
+        await pool.query(`
+            ALTER TABLE push_subscriptions
+                ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE
+        `).catch(() => {});
+        await pool.query(`
+            ALTER TABLE push_subscriptions
+                ADD COLUMN IF NOT EXISTS consecutive_failures INTEGER NOT NULL DEFAULT 0
+        `).catch(() => {});
+        await pool.query(`
+            ALTER TABLE push_subscriptions
+                ADD COLUMN IF NOT EXISTS last_health_sent_at TIMESTAMPTZ
+        `).catch(() => {});
+        await pool.query(`
+            ALTER TABLE push_subscriptions
+                ADD COLUMN IF NOT EXISTS last_health_acked_at TIMESTAMPTZ
+        `).catch(() => {});
+        await pool.query(`
+            ALTER TABLE push_subscriptions
+                ADD COLUMN IF NOT EXISTS deactivated_at TIMESTAMPTZ
+        `).catch(() => {});
+        await pool.query(`
+            ALTER TABLE push_subscriptions
+                ADD COLUMN IF NOT EXISTS deactivated_reason VARCHAR(64)
+        `).catch(() => {});
+        await pool.query(`
+            CREATE INDEX IF NOT EXISTS idx_push_subscriptions_active
+            ON push_subscriptions(is_active)
+            WHERE is_active = TRUE
+        `).catch(() => {});
+
+        // push_health_run: one row per cron tick rollup.
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS push_health_run (
+                run_id VARCHAR(48) PRIMARY KEY,
+                started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                finished_at TIMESTAMPTZ,
+                sent_count INTEGER NOT NULL DEFAULT 0,
+                delivered_count INTEGER NOT NULL DEFAULT 0,
+                acked_count_60s INTEGER NOT NULL DEFAULT 0,
+                dead_count INTEGER NOT NULL DEFAULT 0,
+                error_count INTEGER NOT NULL DEFAULT 0,
+                reason VARCHAR(32) NOT NULL DEFAULT 'cron'
+            )
+        `);
+        await pool.query(`
+            CREATE INDEX IF NOT EXISTS idx_push_health_run_started
+            ON push_health_run(started_at DESC)
+        `);
+
+        // push_ack_log: one row per service-worker ack. subscription_id is
+        // nullable so a SW that fires an ack after the row was deleted between
+        // send and ack still lands cleanly (the row is then attributable to
+        // the run via nonce alone).
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS push_ack_log (
+                id BIGSERIAL PRIMARY KEY,
+                nonce VARCHAR(64) NOT NULL,
+                subscription_id INTEGER,
+                run_id VARCHAR(48),
+                acked_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        `);
+        // Dedup the same SW retrying an ack (Chrome occasionally re-delivers).
+        await pool.query(`
+            CREATE UNIQUE INDEX IF NOT EXISTS uq_push_ack_log_nonce_sub
+            ON push_ack_log(nonce, COALESCE(subscription_id, 0))
+        `);
+        await pool.query(`
+            CREATE INDEX IF NOT EXISTS idx_push_ack_log_run
+            ON push_ack_log(run_id, acked_at)
+        `);
+
         console.log('[Notifications] Tables ready');
     } catch (err) {
         console.error('[Notifications] Failed to init tables:', err.message);
@@ -452,14 +530,21 @@ function buildRichCardNotification(card, ctx = {}) {
 async function savePushSubscription(deviceId, subscription, userAgent) {
     if (!pool) return false;
     try {
-        await pool.query(
+        // RETURNING id (card_0a5d4a97) so the route can echo the
+        // subscription id back to the client SW for round-trip ack
+        // attribution. Existing callers that just check truthiness still
+        // see truthy. The previous boolean shape is preserved as `.ok` for
+        // any test that relies on it.
+        const res = await pool.query(
             `INSERT INTO push_subscriptions (device_id, endpoint, p256dh, auth, user_agent, created_at)
              VALUES ($1, $2, $3, $4, $5, $6)
              ON CONFLICT (endpoint)
-             DO UPDATE SET device_id = $1, p256dh = $3, auth = $4, user_agent = $5`,
+             DO UPDATE SET device_id = $1, p256dh = $3, auth = $4, user_agent = $5
+             RETURNING id`,
             [deviceId, subscription.endpoint, subscription.keys.p256dh, subscription.keys.auth, userAgent || null, Date.now()]
         );
-        return true;
+        const id = res && res.rows && res.rows[0] && res.rows[0].id;
+        return { ok: true, id: id || null };
     } catch (err) {
         console.warn('[Notifications] Failed to save push sub:', err.message);
         return false;

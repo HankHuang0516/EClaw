@@ -109,6 +109,21 @@
                 android:textColor="@android:color/white"
                 android:textSize="16sp" />
 
+            <TextView
+                android:id="@+id/btnCustomLayoutHelp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/wallpaper_custom_layout_help_button"
+                android:gravity="center"
+                android:minWidth="40dp"
+                android:minHeight="40dp"
+                android:text="?"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
             <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/switchCustomLayout"
                 android:layout_width="wrap_content"
@@ -132,8 +147,61 @@
                 android:textColor="@android:color/white"
                 android:textSize="16sp" />
 
+            <TextView
+                android:id="@+id/btnBackgroundHelp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/wallpaper_background_help_button"
+                android:gravity="center"
+                android:minWidth="40dp"
+                android:minHeight="40dp"
+                android:text="?"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
             <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/switchBackground"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
+        <!-- Walking Toggle -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/wallpaper_walking_title"
+                android:textColor="@android:color/white"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/btnWalkingHelp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/wallpaper_walking_help_button"
+                android:gravity="center"
+                android:minWidth="40dp"
+                android:minHeight="40dp"
+                android:text="?"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switchWalking"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
 
@@ -161,6 +229,21 @@
                     android:text="@string/wallpaper_usage_overlay"
                     android:textColor="@android:color/white"
                     android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/btnUsageOverlayHelp"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/wallpaper_usage_overlay_help_button"
+                    android:gravity="center"
+                    android:minWidth="40dp"
+                    android:minHeight="40dp"
+                    android:text="?"
+                    android:textColor="@android:color/white"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
 
                 <com.google.android.material.materialswitch.MaterialSwitch
                     android:id="@+id/switchUsageOverlay"
@@ -269,6 +352,14 @@
             </LinearLayout>
 
         </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnMoreWallpaperSettings"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:text="@string/wallpaper_more_settings" />
 
         <!-- Select Photo Button (only visible when background enabled) -->
         <com.google.android.material.button.MaterialButton

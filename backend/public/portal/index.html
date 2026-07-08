@@ -296,7 +296,7 @@
             <button type="submit" class="btn btn-primary btn-block" id="loginBtn" style="margin-top:16px"
                 data-i18n="login_btn_login">Login</button>
             <p style="text-align:center;margin-top:16px;font-size:13px;">
-                <a href="#" onclick="showTab('forgot');return false;" data-i18n="login_link_forgot">Forgot password?</a>
+                <a href="#" onclick="showTab('forgot');return false;" style="display:inline-flex;align-items:center;min-height:28px;" data-i18n="login_link_forgot">Forgot password?</a>
             </p>
             <div style="display:flex;align-items:center;gap:12px;margin:20px 0 12px;">
                 <div style="flex:1;height:1px;background:var(--card-border)"></div>
@@ -424,6 +424,7 @@
         </select>
     </div>
     <script src="shared/api.js"></script>
+    <script src="shared/reconnect-overlay.js" defer></script>
     <!-- IMPORTANT: Check path for i18n.js relative to portal/index.html. it is in ../shared/i18n.js since index.html is in portal/ -->
     <script src="../shared/i18n.js"></script>
     <script src="../shared/transition-overlay.js"></script>
@@ -809,6 +810,7 @@
         // Load OAuth config on page load
         loadOAuthConfig();
     </script>
+    <script src="/shared/webpush-auto.js" defer></script>
     </main>
 </body>
 

@@ -30,6 +30,28 @@
             font-weight: 600;
             letter-spacing: 0.5px;
         }
+        .rm-jump-strip {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin: -8px 0 22px;
+        }
+        .rm-jump-link {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 3px;
+            min-height: 56px;
+            padding: 10px 12px;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            background: var(--card);
+            color: var(--text);
+            text-decoration: none;
+        }
+        .rm-jump-link:hover { border-color: var(--primary); }
+        .rm-jump-label { font-size: 13px; font-weight: 700; line-height: 1.25; }
+        .rm-jump-meta { color: var(--text-secondary); font-size: 11px; line-height: 1.25; }
         .rm-section {
             background: var(--card);
             border: 1px solid var(--card-border);
@@ -93,9 +115,16 @@
         .rm-econ-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .rm-econ-table th, .rm-econ-table td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--card-border); }
         .rm-econ-table th { font-weight: 600; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.5px; }
+        .rm-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: var(--radius-sm);
+        }
+        .rm-table-wrap .rm-econ-table { min-width: 520px; }
         .rm-flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
-        .rm-flow-step { padding: 8px 14px; border-radius: var(--radius-sm); background: var(--input-bg); border: 1px solid var(--card-border); font-size: 12px; font-weight: 600; }
-        .rm-flow-arrow { color: var(--text-secondary); font-size: 16px; }
+        .rm-flow-step { min-height: 34px; padding: 8px 14px; border-radius: var(--radius-sm); background: var(--input-bg); border: 1px solid var(--card-border); font-size: 12px; font-weight: 600; line-height: 1.35; }
+        .rm-flow-arrow { color: var(--text-secondary); font-size: 16px; flex: 0 0 auto; }
         .rm-flow-step.active { background: #6d28d9; color: #fff; border-color: #6d28d9; }
         .rm-flow-step.end { background: #10b981; color: #fff; border-color: #10b981; }
         /* Live-status overlays (populated by injectLiveCardStatus script at end of body) */
@@ -289,9 +318,28 @@
             font-size: 10px;
         }
         @media (max-width: 720px) {
+            .rm-hero { padding: 30px 20px; }
+            .rm-jump-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .rm-hermes-showcase,
             .rm-hermes-proof-body {
                 grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 560px) {
+            .rm-section { padding: 18px; }
+            .rm-jump-strip { grid-template-columns: 1fr; }
+            .rm-flow {
+                align-items: stretch;
+                gap: 6px;
+            }
+            .rm-flow-step {
+                flex: 1 1 100%;
+                text-align: center;
+            }
+            .rm-flow-arrow {
+                width: 100%;
+                text-align: center;
+                transform: rotate(90deg);
             }
         }
     </style>
@@ -321,6 +369,25 @@
             <div class="rm-subtitle" data-i18n="rm_hero_subtitle">Rent premium AI bots on-demand. Earn e-coin by sharing your idle bot capacity.</div>
             <div class="rm-badge">Codename: BRM</div>
         </div>
+
+        <nav class="rm-jump-strip" aria-label="Roadmap sections">
+            <a class="rm-jump-link" href="#ai-agent-self-improvement">
+                <span class="rm-jump-label">AI self-improvement</span>
+                <span class="rm-jump-meta">Live OODA-R tracker</span>
+            </a>
+            <a class="rm-jump-link" href="#rental-marketplace-roadmap">
+                <span class="rm-jump-label">Rental marketplace</span>
+                <span class="rm-jump-meta">BRM phases 0-5</span>
+            </a>
+            <a class="rm-jump-link" href="#hermes-channel-roadmap">
+                <span class="rm-jump-label">Hermes channel</span>
+                <span class="rm-jump-meta">Reliability proof</span>
+            </a>
+            <a class="rm-jump-link" href="#desktop-configuration-roadmap">
+                <span class="rm-jump-label">Desktop setup</span>
+                <span class="rm-jump-meta">One-click config</span>
+            </a>
+        </nav>
 
         <!-- ═══════════════════════════════════════════════════════════
              AI Agent 自發性自我改進 Roadmap (kickoff 2026-06-07)
@@ -396,6 +463,13 @@
                 .rm-oodar-badge.todo { background:var(--card); color:var(--text-secondary); border:1px solid var(--card-border); }
                 .rm-oodar-row a.rm-oodar-pr { flex:0 0 auto; font-size:11px; color:var(--primary); text-decoration:none; }
                 .rm-oodar-live-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981; margin-right:4px; vertical-align:middle; }
+                @media (max-width: 560px) {
+                    .rm-oodar-row { align-items:flex-start; flex-wrap:wrap; }
+                    .rm-oodar-row .rm-oodar-title { flex-basis:calc(100% - 34px); }
+                    .rm-oodar-row .rm-oodar-when,
+                    .rm-oodar-row .rm-oodar-badge,
+                    .rm-oodar-row a.rm-oodar-pr { margin-left:32px; }
+                }
             </style>
 
             <h3 style="font-size:14px;font-weight:700;margin:14px 0 8px;">🗺️ 9-item delivery roadmap (4 phases)</h3>
@@ -467,20 +541,20 @@
         <div class="rm-section">
             <h2>⚙️ <span data-i18n="rm_how_title">How It Works</span></h2>
             <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;" data-i18n="rm_flow_owner">Owner (Listing) Flow</h3>
-            <div class="rm-flow">
-                <div class="rm-flow-step" data-i18n="rm_step_bind">Bind Bot</div><div class="rm-flow-arrow">→</div>
-                <div class="rm-flow-step" data-i18n="rm_step_rate">Set Rate</div><div class="rm-flow-arrow">→</div>
-                <div class="rm-flow-step active" data-i18n="rm_step_interview">Interview (Auto)</div><div class="rm-flow-arrow">→</div>
-                <div class="rm-flow-step" data-i18n="rm_step_publish">Publish</div><div class="rm-flow-arrow">→</div>
-                <div class="rm-flow-step end" data-i18n="rm_step_earn">Earn e-coin</div>
+            <div class="rm-flow" role="list" aria-label="Owner listing flow">
+                <div class="rm-flow-step" role="listitem" data-i18n="rm_step_bind">Bind Bot</div><div class="rm-flow-arrow" aria-hidden="true">→</div>
+                <div class="rm-flow-step" role="listitem" data-i18n="rm_step_rate">Set Rate</div><div class="rm-flow-arrow" aria-hidden="true">→</div>
+                <div class="rm-flow-step active" role="listitem" data-i18n="rm_step_interview">Interview (Auto)</div><div class="rm-flow-arrow" aria-hidden="true">→</div>
+                <div class="rm-flow-step" role="listitem" data-i18n="rm_step_publish">Publish</div><div class="rm-flow-arrow" aria-hidden="true">→</div>
+                <div class="rm-flow-step end" role="listitem" data-i18n="rm_step_earn">Earn e-coin</div>
             </div>
             <h3 style="font-size:14px;font-weight:700;margin:16px 0 8px;" data-i18n="rm_flow_renter">Renter (Rental) Flow</h3>
-            <div class="rm-flow">
-                <div class="rm-flow-step" data-i18n="rm_step_browse">Browse Marketplace</div><div class="rm-flow-arrow">→</div>
-                <div class="rm-flow-step" data-i18n="rm_step_view">View Agent Card</div><div class="rm-flow-arrow">→</div>
-                <div class="rm-flow-step active" data-i18n="rm_step_deposit">Pay Deposit</div><div class="rm-flow-arrow">→</div>
-                <div class="rm-flow-step" data-i18n="rm_step_chat">Chat & Use</div><div class="rm-flow-arrow">→</div>
-                <div class="rm-flow-step end" data-i18n="rm_step_settle">End & Settle</div>
+            <div class="rm-flow" role="list" aria-label="Renter contract flow">
+                <div class="rm-flow-step" role="listitem" data-i18n="rm_step_browse">Browse Marketplace</div><div class="rm-flow-arrow" aria-hidden="true">→</div>
+                <div class="rm-flow-step" role="listitem" data-i18n="rm_step_view">View Agent Card</div><div class="rm-flow-arrow" aria-hidden="true">→</div>
+                <div class="rm-flow-step active" role="listitem" data-i18n="rm_step_deposit">Pay Deposit</div><div class="rm-flow-arrow" aria-hidden="true">→</div>
+                <div class="rm-flow-step" role="listitem" data-i18n="rm_step_chat">Chat & Use</div><div class="rm-flow-arrow" aria-hidden="true">→</div>
+                <div class="rm-flow-step end" role="listitem" data-i18n="rm_step_settle">End & Settle</div>
             </div>
         </div>
 
@@ -519,6 +593,7 @@
         <!-- Top-up Tiers -->
         <div class="rm-section">
             <h2>💰 <span data-i18n="rm_tiers_title">Top-up Tiers</span></h2>
+            <div class="rm-table-wrap" tabindex="0" aria-label="Top-up tier table">
             <table class="rm-econ-table">
                 <thead><tr>
                     <th data-i18n="rm_tier_col">Tier</th><th>USD</th>
@@ -534,17 +609,19 @@
                     <tr><td data-i18n="rm_tier_premium">Premium</td><td>$20</td><td>60,000</td><td>+15% (9,000)</td><td>69,000</td></tr>
                 </tbody>
             </table>
+            </div>
         </div>
 
         <!-- Contract Lifecycle -->
         <div class="rm-section">
             <h2>🔄 <span data-i18n="rm_contract_title">Contract Lifecycle</span></h2>
-            <div class="rm-flow" style="justify-content:center;">
-                <div class="rm-flow-step active">active</div><div class="rm-flow-arrow">→</div>
-                <div class="rm-flow-step">suspended</div><div class="rm-flow-arrow">→</div>
-                <div class="rm-flow-step end">ended_*</div>
+            <div class="rm-flow" role="list" aria-label="Contract lifecycle states" style="justify-content:center;">
+                <div class="rm-flow-step active" role="listitem">active</div><div class="rm-flow-arrow" aria-hidden="true">→</div>
+                <div class="rm-flow-step" role="listitem">suspended</div><div class="rm-flow-arrow" aria-hidden="true">→</div>
+                <div class="rm-flow-step end" role="listitem">ended_*</div>
             </div>
             <h3 style="font-size:14px;font-weight:700;margin:16px 0 10px;" data-i18n="rm_deposit_title">Deposit Disposition</h3>
+            <div class="rm-table-wrap" tabindex="0" aria-label="Deposit disposition table">
             <table class="rm-econ-table">
                 <thead><tr>
                     <th data-i18n="rm_dep_reason">End Reason</th>
@@ -558,6 +635,7 @@
                     <tr><td data-i18n="rm_dep_violation">5 violations</td><td>70%</td><td>30%</td></tr>
                 </tbody>
             </table>
+            </div>
         </div>
 
         <!-- Core Systems -->
@@ -594,7 +672,7 @@
         </div>
 
         <!-- Development Roadmap -->
-        <div class="rm-section">
+        <div class="rm-section" id="rental-marketplace-roadmap">
             <h2>🗺️ <span data-i18n="rm_dev_title">Development Roadmap</span></h2>
 
             <div class="rm-phase done" data-card-id="rental-phase-0-wallet">
@@ -676,7 +754,7 @@
         </div>
 
         <!-- Hermes Channel Stability Roadmap -->
-        <div class="rm-section">
+        <div class="rm-section" id="hermes-channel-roadmap">
             <h2>🤖 <span data-i18n="rm_hermes_title">Hermes Channel — Stable Operation Roadmap</span></h2>
             <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;" data-i18n="rm_hermes_desc">Hermes (#5) is a NousResearch Hermes Agent connected via Eclaw's webhook channel. As a live showcase of EClaw's cross-platform A2A capability, it must operate reliably. Below is the roadmap to achieve and maintain stable co-working status.</p>
 
@@ -762,7 +840,7 @@
                 <div class="rm-phase-desc" data-i18n="rm_h3_desc">Hermes can operate on private repositories. Aligned with <a href="info.html#guide/card_f531861e" style="color:var(--primary);">card_f531861e</a> (claude-cli-proxy vault integration). Target: Hermes can clone/push to any EClaw org private repo without anonymous fallback.</div>
                 <ul class="rm-tasks">
                     <li class="done" data-i18n="rm_h3_t1">claude-cli-proxy reads GIT_HUB2 from vault (card_f531861e ✅ done; backend/hermes-org-token.js shipped) — Hermes git operations use authenticated context instead of anonymous fallback</li>
-                    <li class="todo" data-i18n="rm_h3_t2">Per-org credential scope: Hermes receives org-specific token; cannot access repos outside assigned orgs</li>
+                    <li class="done" data-i18n="rm_h3_t2">Per-org credential scope: Hermes receives org-specific token; cannot access repos outside assigned orgs (card_1242aaa5 ✅ done; backend/hermes-org-token.js + claude-cli-proxy org-token path shipped)</li>
                     <li class="partial" data-i18n="rm_h3_t3">Hermes tested against a private test repo — clone, branch, commit, push, PR all succeed</li>
                 </ul>
             </div>
@@ -839,7 +917,7 @@
         </div>
 
         <!-- Desktop One-Click Configuration Roadmap -->
-        <div class="rm-section">
+        <div class="rm-section" id="desktop-configuration-roadmap">
             <h2>🖥️ <span data-i18n="rm_desktop_title">EClaw 電腦版一鍵配置 Roadmap</span></h2>
             <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;" data-i18n="rm_desktop_desc">目標：實現 30 秒內完成所有 Agent 綁定配置的桌面應用程式</p>
 
@@ -927,6 +1005,67 @@
             </div>
         </div>
 
+        <!-- wishlist × EClaw Matchmaking Roadmap -->
+        <div class="rm-section" id="wishlist-matchmaking-roadmap">
+            <h2>🤝 <span data-i18n="rm_wl_title">wishlist × EClaw 代理撮合 (無金流, agent 牽線)</span></h2>
+            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;" data-i18n="rm_wl_desc">Agent 只牽線、不交易、不收付款：買方 agent ↔ 賣方 agent 全部走「純 EClaw public-code b2b 協定」跨裝置握手 (invite → accept → contact)，把 wishlist 想要/擁有清單撮合起來。身分對應 = EClaw public code；聯絡資訊外送前須人工「需要你」確認。Hank 已拍板 C0=種資料，早期不 hold。</p>
+
+            <div class="rm-phase todo" data-card-id="wishlist-phase-0-foundation">
+                <h3>Phase 0 — <span data-i18n="rm_wl_p0_name">地基 + go 訊號</span> <span class="rm-status-badge todo" data-i18n="rm_planned">Planned</span></h3>
+                <div class="rm-phase-desc" data-i18n="rm_wl_p0_desc">種市場、驗活 wishlist prod API、定義 public-code b2b 撮合協定信封，並實證跨裝置邀請真的送達另一台裝置。</div>
+                <ul class="rm-tasks">
+                    <li data-i18n="rm_wl_p0_t1">以 Merchant key 種擬真樣本 (想要/擁有，含 proxy_end_user_id="eclaw:&lt;publicCode&gt;")，讓 /api/items/public 非空</li>
+                    <li data-i18n="rm_wl_p0_t2">curl 驗活 wishlist prod API：讀取/建立→讀回，確認 ?q= 目前被忽略</li>
+                    <li data-i18n="rm_wl_p0_t3">文件化 invite / accept / decline / contact 協定信封 (皆以 public code 為 key，承載於 /api/transform)</li>
+                    <li data-i18n="rm_wl_p0_t4">兩裝置 /api/transform speakTo 往返，證明邀請帶 push 落到另一台裝置</li>
+                </ul>
+            </div>
+
+            <div class="rm-phase todo" data-card-id="wishlist-phase-1-bridge">
+                <h3>Phase 1 — <span data-i18n="rm_wl_p1_name">clone wishlist + 帳號橋接 + 搜尋</span> <span class="rm-status-badge todo" data-i18n="rm_planned">Planned</span></h3>
+                <div class="rm-phase-desc" data-i18n="rm_wl_p1_desc">對 wishlist repo 做真實程式工作：EClaw 帳號橋接 (public-code → wishlist user 綠色通道)、net-new 搜尋端點、讀寫路徑，以及 EClaw 端 backend client。</div>
+                <ul class="rm-tasks">
+                    <li data-i18n="rm_wl_p1_t1">git clone wishlist-app，實作 EClaw 帳號橋接：public code → wishlist user (綠色通道，讓 EClaw agent 成一等公民)</li>
+                    <li data-i18n="rm_wl_p1_t2">net-new GET /api/items/search?q= 搜尋端點</li>
+                    <li data-i18n="rm_wl_p1_t3">撮合流程需要的讀 / 列 / upsert 路徑 (賣家/商家上架寫入)</li>
+                    <li data-i18n="rm_wl_p1_t4">EClaw 端對應 backend client (金鑰自 vault 名稱參照，永不回顯)</li>
+                </ul>
+            </div>
+
+            <div class="rm-phase todo" data-card-id="wishlist-phase-2-handshake">
+                <h3>Phase 2 — <span data-i18n="rm_wl_p2_name">端到端 b2b 撮合握手</span> <span class="rm-status-badge todo" data-i18n="rm_planned">Planned</span></h3>
+                <div class="rm-phase-desc" data-i18n="rm_wl_p2_desc">純 EClaw public-code b2b 握手端到端：買家詢問 → 找品項+賣家 → 雙邊輕量同意 → 交換名片/聯絡。預設 opt-in OFF，含配額與 kill-switch，無任何側門。</div>
+                <ul class="rm-tasks">
+                    <li data-i18n="rm_wl_p2_t1">買家文字意圖 → search(P1) → LLM 重排 → 找不到則 add；產生 matchId 去重</li>
+                    <li data-i18n="rm_wl_p2_t2">用 P0 信封在 /api/transform 跑 invite / accept / decline / contact 完整握手，全部以 public code 為 key</li>
+                    <li data-i18n="rm_wl_p2_t3">雙邊輕量同意：agent 名片可自動；真實聯絡資訊須先過雙方 owner「需要你」人工確認</li>
+                    <li data-i18n="rm_wl_p2_t4">預設 opt-in OFF + 配額 + kill-switch</li>
+                </ul>
+            </div>
+
+            <div class="rm-phase done" data-card-id="wishlist-phase-3-vision">
+                <h3>Phase 3 — <span data-i18n="rm_wl_p3_name">照片辨識 + 賣家發起式撮合</span> <span class="rm-status-badge done" data-i18n="rm_done">Done</span></h3>
+                <div class="rm-phase-desc" data-i18n="rm_wl_p3_desc">擴充撮合能力：照片路徑 (呼叫方 agent 自帶 vision 辨識 → 餵入 P1 搜尋)、賣家發起式撮合 (上架 → 反向搜尋 wishlist 想要清單 → 邀請買家)，以及週期性重掃/去重。架構原則「官方不介入」：平台不替 agent 跑運算、不代行、不補貼。</div>
+                <ul class="rm-tasks">
+                    <li data-i18n="rm_wl_p3_t1">照片路徑：呼叫方自己的 agent 跑自己的 vision，送出已辨識的品名/標籤 (平台不跑 vision)；上架照片以 device-scoped fileId 存 EClaw 標準儲存 (/api/files → R2)</li>
+                    <li data-i18n="rm_wl_p3_t2">賣家發起式：merchant 上架 → 反向搜尋 wishlist 想要清單 → 對買家發 invite (仍走 P0 協定)</li>
+                    <li data-i18n="rm_wl_p3_t3">週期性重掃迴圈：對新賣家「剛好一次」發邀請，以 matchId=hash(...) 去重、冪等重查 (無中央排程，各 agent 以自身身分自呼叫)</li>
+                </ul>
+            </div>
+
+            <div class="rm-phase in_progress" data-card-id="wishlist-phase-4-ga">
+                <h3>Phase 4 — <span data-i18n="rm_wl_p4_name">GA 硬化 + dark-launch → default-on</span> <span class="rm-status-badge in_progress" data-i18n="rm_in_progress">In Progress</span></h3>
+                <div class="rm-phase-desc" data-i18n="rm_wl_p4_desc">GA 上線硬化：指標、濫用/rate-limit、離線賣家 fallback，dark-launch → 待真實庫存出現後預設開啟。加固只加防線、不弱化任何既有控制 (opt-in 預設關 / kill-switch / 配額 / 雙人拍板 / from-binding / device-scoped fileId / opt-in reachability)。</div>
+                <ul class="rm-tasks">
+                    <li data-i18n="rm_wl_p4_t1">指標：邀請送達 / 攔截 / 去重 / 接受 / 拒絕 / 聯絡釋出計數 + 分因攔截 (killswitch/quota/rate-limit/abuse/GA-gate/unreachable)，唯讀 /metrics 快照 ✅</li>
+                    <li data-i18n="rm_wl_p4_t2">濫用防護：對上架文字/照片做 prompt-injection 清洗 (延用 P2 sanitizer)；per-caller/per-IP rate-limit (獨立於商業配額) ✅</li>
+                    <li data-i18n="rm_wl_p4_t3">離線/非 EClaw 賣家 fallback：暫時無法送達 → 有界重試佇列 (指數退避 + dead-letter，無中央排程) ✅</li>
+                    <li data-i18n="rm_wl_p4_t4">結構化邀請原語升級 (rich-card ask_id callback 或 A2A tasks/send push)，取代 v1 free-form 信封 — 後續卡 (v1 信封已完整治理，非阻擋)</li>
+                    <li data-i18n="rm_wl_p4_t5">Dark-launch → 全域 rollout flag (env WISHLIST_MATCHMAKING_GA_ENABLED，預設關)；wishlist 有真實庫存後才 default-on ✅</li>
+                </ul>
+            </div>
+        </div>
+
         <!-- Technical Highlights -->
         <div class="rm-section">
             <h2>🏗️ <span data-i18n="rm_tech_title">Technical Highlights</span></h2>
@@ -1002,7 +1141,11 @@
                 host.innerHTML = '';
                 for (const it of items) {
                     const row = document.createElement('div');
+                    const status = it.status || 'todo';
+                    const statusLabel = STATUS_LABEL[status] || status;
                     row.className = 'rm-oodar-row';
+                    row.setAttribute('data-status', status);
+                    row.setAttribute('aria-label', `${it.num}. ${it.title}: ${statusLabel}${it.live ? ' from kanban' : ' fallback status'}`);
                     const num = document.createElement('span');
                     num.className = 'rm-oodar-num';
                     num.textContent = it.num;
@@ -1010,14 +1153,15 @@
                     title.className = 'rm-oodar-title';
                     title.textContent = it.title;
                     const badge = document.createElement('span');
-                    badge.className = 'rm-oodar-badge ' + (it.status || 'todo');
+                    badge.className = 'rm-oodar-badge ' + status;
+                    badge.setAttribute('aria-label', statusLabel);
                     if (it.live) {
                         const dot = document.createElement('span');
                         dot.className = 'rm-oodar-live-dot';
                         dot.title = 'live from kanban';
                         badge.appendChild(dot);
                     }
-                    badge.appendChild(document.createTextNode(STATUS_LABEL[it.status] || it.status || ''));
+                    badge.appendChild(document.createTextNode(statusLabel));
                     row.appendChild(num);
                     row.appendChild(title);
                     if (it.updatedAt) {

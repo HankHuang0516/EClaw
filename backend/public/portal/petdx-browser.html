@@ -58,6 +58,8 @@
         display: flex; flex-wrap: wrap; gap: 6px; padding-top: 8px;
     }
     .chip {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-height: 28px;
         background: var(--panel); border: 1px solid var(--border);
         color: var(--text); padding: 4px 10px; border-radius: 999px;
         font-size: 12px; cursor: pointer;
@@ -67,6 +69,7 @@
     .chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
     .chip-group { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
     .chip-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 0 4px; }
+    .login-warn a { display: inline-flex; align-items: center; min-height: 28px; }
     main {
         max-width: 1280px; margin: 0 auto; padding: 16px;
     }
@@ -197,7 +200,7 @@
         <select id="entity-selector" class="entity-selector" title="切換要更換伙伴的對象 / Switch which entity's companion you're changing">
             <option value="">🖥️ 全裝置 / Device-wide</option>
         </select>
-        <input id="search" class="search" type="search" placeholder="搜尋伙伴名稱或描述 / Search…" autocomplete="off">
+        <input id="search" class="search" type="search" placeholder="搜尋伙伴名稱或描述 / Search…" autocomplete="off" aria-label="搜尋伙伴名稱或描述 / Search companions">
     </div>
     <div class="filters" id="filters"></div>
 </div>
@@ -343,6 +346,40 @@
         }
     }
 
+    // ── Load-failure sort demotion ────────────────────────────────
+    // Under 熱門/最新, a spritesheet whose sprite fails to load (404 or an
+    // ORB-blocked community CDN URL) is stably demoted below cards that
+    // render, so the first rows aren't all broken avatars. We probe with a
+    // throwaway Image (the browser dedupes the request against the renderer's
+    // own load) and re-sort the grid on the first failure. Only applied to the
+    // popular/recent paths; rating/favorites keep their exact server order.
+    function setupLoadDemotion(node, card, grid) {
+        const url = card && card.asset && card.asset.url;
+        if (!card || card.assetType !== 'spritesheet' || !url) return;
+        const probe = new Image();
+        probe.onerror = () => {
+            if (node.dataset.loadFailed === '1') return;
+            node.dataset.loadFailed = '1';
+            demoteFailedCards(grid);
+        };
+        probe.src = url;
+    }
+
+    function demoteFailedCards(grid) {
+        // Stable secondary sort: load-ok/pending cards keep the server's
+        // primary order (original index); failed cards sink to the end, also
+        // in their original relative order. appendChild on an existing child
+        // MOVES it — no re-render, the live renderer canvases are preserved.
+        const nodes = Array.from(grid.children);
+        nodes.sort((a, b) => {
+            const fa = a.dataset.loadFailed === '1' ? 1 : 0;
+            const fb = b.dataset.loadFailed === '1' ? 1 : 0;
+            if (fa !== fb) return fa - fb;
+            return (Number(a.dataset.idx) || 0) - (Number(b.dataset.idx) || 0);
+        });
+        nodes.forEach(n => grid.appendChild(n));
+    }
+
     // ── Filter UI ─────────────────────────────────────────────────
     function renderFilters() {
         const root = document.getElementById('filters');
@@ -464,9 +501,13 @@
             return;
         }
 
-        items.forEach(card => {
+        // 熱門/最新 demote sprites that fail to load below ones that render.
+        const demoteOnLoadFail = filterState.sort === 'popular' || filterState.sort === 'recent';
+        items.forEach((card, idx) => {
             const node = renderCardNode(card);
+            node.dataset.idx = String(idx);
             grid.appendChild(node);
+            if (demoteOnLoadFail) setupLoadDemotion(node, card, grid);
         });
         renderPagination();
         syncUrlPage();
@@ -569,6 +610,11 @@
                 name: card.name,
                 assetType: 'spritesheet',
                 asset: card.asset,
+                // Carry kind + category so a sprite that fails to load (e.g. an
+                // ORB-blocked community CDN URL) draws the matching emoji
+                // fallback (🐾/🧑/🎯) instead of always defaulting to 🦞.
+                kind: card.kind,
+                category: card.category,
                 supportedStates: card.supportedStates && card.supportedStates.length
                     ? card.supportedStates
                     : ['IDLE'],

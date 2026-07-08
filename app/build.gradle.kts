@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlinAndroid)
     id("kotlin-kapt")
     alias(libs.plugins.googleServices)
+    alias(libs.plugins.firebaseCrashlytics)
 }
 
 android {
@@ -20,17 +21,22 @@ android {
         applicationId = "com.hank.clawlive"
         minSdk = 24
         targetSdk = 35
-        versionCode = 101
-        versionName = "1.0.93"
+        versionCode = 127
+        versionName = "1.1.16"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    val keystorePropertiesFile = rootProject.file("keystore.properties")
+    val keystoreProperties = Properties()
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    }
+    val hasReleaseSigning = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+        .all { key -> (keystoreProperties[key] as? String)?.isNotBlank() == true }
+
     signingConfigs {
         create("release") {
-            val keystorePropertiesFile = rootProject.file("keystore.properties")
-            val keystoreProperties = Properties()
-            if (keystorePropertiesFile.exists()) {
-                keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+            if (hasReleaseSigning) {
                 storeFile = file(keystoreProperties["storeFile"] as String)
                 storePassword = keystoreProperties["storePassword"] as String
                 keyAlias = keystoreProperties["keyAlias"] as String
@@ -43,7 +49,10 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("release")
+            // CI/fork builds do not have the upload keystore. Use debug signing
+            // there so release compilation is still testable; Play upload must
+            // run on a machine with keystore.properties.
+            signingConfig = signingConfigs.getByName(if (hasReleaseSigning) "release" else "debug")
         }
     }
 
@@ -86,6 +95,12 @@ dependencies {
 
     // Google Play Billing for subscriptions
     implementation(libs.billing)
+    implementation(libs.play.integrity)
+
+    // Google Play Core In-App Update (Settings update-available chip — card_28a8290a)
+    implementation(libs.play.app.update)
+    implementation(libs.play.app.update.ktx)
+    implementation(libs.shortcut.badger)
 
     // Room Database for chat history
     implementation(libs.room.runtime)
@@ -105,6 +120,11 @@ dependencies {
     // Firebase Cloud Messaging (FCM) for push notifications
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+
+    // Firebase Crashlytics — captures the wallpaper resume black-screen
+    // non-fatals (card_f9b2cc2d). Same project as FCM (eclaw-cc72a); no
+    // google-services.json change, so push is unaffected.
+    implementation(libs.firebase.crashlytics)
 
     // Google Sign-In (Credential Manager)
     implementation(libs.credentials)

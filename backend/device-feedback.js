@@ -12,6 +12,8 @@
  *   5. POST /api/feedback/:id/create-issue creates a GitHub issue
  */
 
+const sharp = require('sharp');
+
 const LOG_WINDOW_MS = 5 * 60 * 1000; // capture last 5 minutes of logs
 
 // ============================================
@@ -1051,6 +1053,46 @@ function clearMark(deviceId) {
 
 const MAX_PHOTOS_PER_FEEDBACK = 5;
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB per photo
+const FEEDBACK_PHOTO_FORMATS = {
+    'image/jpeg': 'jpeg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/gif': 'gif'
+};
+
+async function stripFeedbackPhotoMetadata(photoBuffer, contentType) {
+    const format = FEEDBACK_PHOTO_FORMATS[contentType];
+    if (!format) {
+        return { error: `Unsupported file type: ${contentType || 'unknown'}` };
+    }
+
+    try {
+        let image = sharp(photoBuffer, {
+            animated: contentType === 'image/gif' || contentType === 'image/webp',
+            limitInputPixels: 40_000_000
+        }).rotate();
+
+        if (format === 'jpeg') {
+            image = image.jpeg({ quality: 90, mozjpeg: true });
+        } else if (format === 'png') {
+            image = image.png();
+        } else if (format === 'webp') {
+            image = image.webp({ quality: 90 });
+        } else if (format === 'gif') {
+            image = image.gif();
+        }
+
+        const buffer = await image.toBuffer();
+        if (buffer.length > MAX_PHOTO_SIZE) {
+            return { error: `Processed photo exceeds ${Math.round(MAX_PHOTO_SIZE / 1024 / 1024)}MB limit` };
+        }
+
+        return { buffer, contentType };
+    } catch (err) {
+        console.error('[Feedback] Photo metadata strip error:', err.message);
+        return { error: 'Could not process photo safely' };
+    }
+}
 
 /**
  * Create feedback_photos table (called during init).
@@ -1091,11 +1133,16 @@ async function saveFeedbackPhoto(pool, feedbackId, photoBuffer, contentType, fil
             return { error: `Maximum ${MAX_PHOTOS_PER_FEEDBACK} photos per feedback` };
         }
 
+        const sanitizedPhoto = await stripFeedbackPhotoMetadata(photoBuffer, contentType);
+        if (sanitizedPhoto.error) {
+            return { error: sanitizedPhoto.error };
+        }
+
         const result = await pool.query(
             `INSERT INTO feedback_photos (feedback_id, photo_data, content_type, file_name, created_at)
              VALUES ($1, $2, $3, $4, $5)
              RETURNING id, feedback_id, file_name, created_at`,
-            [feedbackId, photoBuffer, contentType, fileName || 'photo', Date.now()]
+            [feedbackId, sanitizedPhoto.buffer, sanitizedPhoto.contentType, fileName || 'photo', Date.now()]
         );
         return result.rows[0];
     } catch (err) {
@@ -1228,6 +1275,7 @@ module.exports = {
     // Photos
     MAX_PHOTOS_PER_FEEDBACK,
     MAX_PHOTO_SIZE,
+    stripFeedbackPhotoMetadata,
     saveFeedbackPhoto,
     getFeedbackPhotos,
     getFeedbackPhoto,

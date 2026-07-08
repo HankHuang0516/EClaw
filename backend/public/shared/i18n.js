@@ -130,6 +130,28 @@ const TRANSLATIONS = {
         "transition_loading": "Loading…",
         "a11y_community_search_bots": "Search bots",
         "a11y_community_clear_search": "Clear search",
+        "common_clear": "Clear",
+        "cardholder_clear_search": "Clear card search",
+        "cardholder_clear_filter": "Clear Card Holder filter",
+        "cardholder_requests_hint": "Review incoming requests without losing your saved cards.",
+        "cardholder_active_filter": "Filter",
+        "cardholder_cards_shown_one": "{count} card shown",
+        "cardholder_cards_shown_many": "{count} cards shown",
+        "cardholder_summary_meta": "{mine} mine, {recent} recent, {collected} collected",
+        "cardholder_search_result_one": "{count} result for \"{query}\"",
+        "cardholder_search_result_many": "{count} results for \"{query}\"",
+        "cardholder_search_meta": "{saved} saved, {external} online agents",
+        "cardholder_pending_request_one": "{count} pending friend request",
+        "cardholder_pending_request_many": "{count} pending friend requests",
+        "dashboard_summary_loading_title": "Loading entities",
+        "dashboard_summary_loading_meta": "Checking bound entity slots.",
+        "dashboard_summary_error_title": "Entity list unavailable",
+        "dashboard_summary_error_meta": "Check your connection or retry.",
+        "dashboard_summary_empty_title": "No entities bound",
+        "dashboard_summary_empty_meta": "Add a slot below to start routing messages.",
+        "dashboard_summary_ready_one": "1 entity ready",
+        "dashboard_summary_ready_many": "{count} entities ready",
+        "dashboard_summary_ready_meta": "{active} active, {channel} channel-bound, {e2ee} E2EE",
         "a11y_community_sort_bots": "Sort bots",
         "a11y_community_rate_min": "Minimum rate",
         "a11y_community_rate_max": "Maximum rate",
@@ -10700,6 +10722,7 @@ const TRANSLATIONS = {
 
 
         "mc_bulk_undo": "Undo",
+        "mc_note_deleted": "Note deleted",
 
 
 
@@ -241057,7 +241080,8 @@ const TRANSLATIONS = {
         "dash_pr_count_label": "Merged PRs",
         "dash_pr_recent_title": "Recent merged PRs",
         "dash_pr_none": "No merged PRs yet",
-        "dash_pr_setup_no_login": "⚠️ This entity has no GitHub login mapped. To enable PR count: add { \"entityId\": \"your-gh-login\" } to backend/config/entity-gh-login.json.",
+        "dash_pr_by_author": "by commit author",
+        "dash_pr_setup_no_login": "⚠️ This entity has no commit-author identity or GitHub login mapped. To enable per-entity PR count, commit as the canonical author entity-<N>@bots.eclaw (see backend/config/entity-gh-author.json), or add a GitHub login to backend/config/entity-gh-login.json.",
         "dash_pr_setup_no_token": "⚠️ GitHub integration not configured. Set GITHUB_TOKEN env var to enable PR stats.",
         "dash_pr_widget_hint": "Click to see recent merged PRs",
         "dash_pr_widget_open": "Open recent merged PRs",
@@ -266965,9 +266989,9 @@ const TRANSLATIONS = {
         "kanban_nudge_title": "Kanban Nudge",
         "usage_warning_title": "Usage Warning",
         "usage_warning_desc": "When triggered, the Agent prepends a system warning to every outgoing message so the recipient knows quota is tight.",
-        "usage_warning_enable_label": "Enable usage warning",
-        "usage_warning_5h_label": "5h budget threshold (warn when remaining ≤ this)",
-        "usage_warning_7d_label": "7d weekly threshold (warn when remaining ≤ this)",
+        "usage_warning_enable_label": "Enable usage warnings",
+        "usage_warning_5h_label": "5-hour warning",
+        "usage_warning_7d_label": "7-day warning",
         "usage_warning_stale_notice": "⚠️ Usage data stale (no fresh snapshot in the last 6h) — warnings cannot fire right now.",
         "usage_warning_modal_title": "How usage warning works",
         "usage_warning_modal_intro": "When enabled, if Claude 5h remaining ≤ your 5h threshold OR weekly remaining ≤ your 7d threshold, the Agent prepends a system warning to every outgoing message in this device.",
@@ -266976,9 +267000,9 @@ const TRANSLATIONS = {
         "usage_warning_modal_bullet_behavior": "This does NOT change Agent behavior — it only tells the dialog partner that quota is tight.",
         "usage_warning_modal_bullet_off": "When the toggle is OFF, quota-exhaustion failures still occur but with no advance warning.",
         "usage_warning_modal_close": "Close",
-        "usage_warning_enable_help": "Master switch. When ON, every outbound /api/transform message gets a system-warning prefix as soon as the threshold is crossed. When OFF, no warning is added even if quota is exhausted.",
-        "usage_warning_5h_help": "Trigger when remaining 5h quota ≤ this value. Default 15% — roughly 45min before exhaustion. Raise it to warn earlier; set to 0 to disable the 5h axis without disabling the toggle.",
-        "usage_warning_7d_help": "Trigger when remaining 7d weekly quota ≤ this value. Default 5% — roughly 8h before exhaustion. Set to 0 to disable the 7d axis without disabling the toggle.",
+        "usage_warning_enable_help": "Show warnings when AI token usage approaches limits",
+        "usage_warning_5h_help": "Show a warning when 5-hour usage exceeds this percentage",
+        "usage_warning_7d_help": "Show a warning when 7-day usage exceeds this percentage",
 
 
 
@@ -272641,6 +272665,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "Your submitted feedback will appear here.",
+        "feedback_filter_empty_sub": "{label}: {count} submitted feedback item(s).",
 
 
 
@@ -274433,7 +274458,7 @@ const TRANSLATIONS = {
 
 
         "feedback_category_label": "Category",
-        "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
+        "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category.",
 
 
 
@@ -275842,7 +275867,7 @@ const TRANSLATIONS = {
 
 
         "feedback_photo_label": "Attach Photos (Optional)",
-        "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
+        "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF/GPS metadata is removed before storage.",
 
 
 
@@ -300293,6 +300318,38 @@ const TRANSLATIONS = {
 
 
         "rm_p5_t3": "First top-up bonus chain",
+        "rm_wl_title": "wishlist × EClaw Agent Matchmaking (no payments, agent introductions)",
+        "rm_wl_desc": "Agents only make introductions — no trading, no payments. Buyer agent ↔ seller agent all ride the pure EClaw public-code b2b protocol (invite → accept → contact) across devices, matching wishlist want/have lists. Identity = EClaw public code; contact info requires human inbox (needyou) confirmation before egress. Hank locked C0=seed data; no early hold.",
+        "rm_wl_p0_name": "Foundation + go signal",
+        "rm_wl_p0_desc": "Seed the market, verify the wishlist prod API, define the public-code b2b matchmaking protocol envelopes, and prove a cross-device invite actually reaches a second device.",
+        "rm_wl_p0_t1": "Seed realistic samples via Merchant key (want/have, with proxy_end_user_id=\"eclaw:<publicCode>\") so /api/items/public is non-empty",
+        "rm_wl_p0_t2": "curl-verify the wishlist prod API: read/create → read back; confirm ?q= is currently ignored",
+        "rm_wl_p0_t3": "Document invite / accept / decline / contact protocol envelopes (all keyed by public code, carried over /api/transform)",
+        "rm_wl_p0_t4": "Two-device /api/transform speakTo round-trip proving the invite push lands on the other device",
+        "rm_wl_p1_name": "clone wishlist + account bridge + search",
+        "rm_wl_p1_desc": "Real code work on the wishlist repo: EClaw account bridge (public-code → wishlist user green channel), net-new search endpoint, read/write paths, and an EClaw-side backend client.",
+        "rm_wl_p1_t1": "git clone wishlist-app; implement EClaw account bridge: public code → wishlist user (green channel making the EClaw agent a first-class citizen)",
+        "rm_wl_p1_t2": "net-new GET /api/items/search?q= search endpoint",
+        "rm_wl_p1_t3": "Read / list / upsert paths the matchmaking flow needs (seller/merchant listing writes)",
+        "rm_wl_p1_t4": "EClaw-side backend client (keys referenced by vault name, never echoed)",
+        "rm_wl_p2_name": "End-to-end b2b matchmaking handshake",
+        "rm_wl_p2_desc": "Pure EClaw public-code b2b handshake end-to-end: buyer asks → find item+seller → dual lightweight consent → exchange name card/contact. Opt-in OFF by default, with quota and kill-switch, no side doors.",
+        "rm_wl_p2_t1": "Buyer text intent → search(P1) → LLM rerank → add if not found; generate matchId for dedup",
+        "rm_wl_p2_t2": "Run invite / accept / decline / contact full handshake over /api/transform using P0 envelopes, all keyed by public code",
+        "rm_wl_p2_t3": "Dual lightweight consent: agent name card can be automatic; real contact info must first pass both owners' inbox (needyou) human confirmation",
+        "rm_wl_p2_t4": "Opt-in OFF by default + quota + kill-switch",
+        "rm_wl_p3_name": "Photo recognition + seller-initiated matchmaking",
+        "rm_wl_p3_desc": "Expand matchmaking: photo path (send photo → item recognition → match), seller-initiated matchmaking (list → reverse-search wishlist wants → invite buyer), plus periodic re-scan/dedup.",
+        "rm_wl_p3_t1": "Photo path: the CALLER's own agent runs its OWN vision and submits the recognised item name/tags → feed into P1 search (platform runs NO vision — it stays out of the loop); a listing photo is a device-scoped fileId in EClaw standard storage (/api/files → R2)",
+        "rm_wl_p3_t2": "Seller-initiated: merchant listing → reverse-search wishlist wants → send invite to buyer (still via P0 protocol)",
+        "rm_wl_p3_t3": "Periodic re-scan loop: invite new sellers exactly once, dedup via matchId=hash(...), idempotent re-query (no central scheduler — each agent self-calls with its own identity)",
+        "rm_wl_p4_name": "GA hardening + dark-launch → default-on",
+        "rm_wl_p4_desc": "GA hardening: metrics, abuse/rate-limit, offline-seller fallback; dark-launch → default-on once real inventory exists. Hardening only ADDS defense — it never weakens opt-in / kill-switch / quota / dual-consent / from-binding / device-scoped fileId / opt-in reachability.",
+        "rm_wl_p4_t1": "Metrics: invite sent/blocked/deduped/accept/decline/contact counters + per-reason blocks (killswitch/quota/rate-limit/abuse/GA-gate/unreachable); read-only /metrics snapshot ✅",
+        "rm_wl_p4_t2": "Abuse protection: prompt-injection sanitization on listing text/photos (reuses the P2 sanitizer); per-caller/per-IP rate limit distinct from the business quota ✅",
+        "rm_wl_p4_t3": "Offline / non-EClaw seller fallback: a transient undeliverable send is enqueued for a bounded retry (exponential backoff + dead-letter; no central scheduler) ✅",
+        "rm_wl_p4_t4": "Structured invite primitive upgrade (rich-card ask_id callback or A2A tasks/send push), replacing the v1 free-form envelope — scoped follow-up (the governed v1 envelope is complete; not a blocker)",
+        "rm_wl_p4_t5": "Dark-launch → a global rollout flag (env WISHLIST_MATCHMAKING_GA_ENABLED, default OFF); default-on only after wishlist has real inventory ✅",
 
 
 
@@ -329269,6 +329326,25 @@ const TRANSLATIONS = {
 
 
         "mr_listing_delisted_toast": "Listing delisted",
+        "mr_result_loading": "Loading rental workspace",
+        "mr_result_hint": "Tabs keep renting, leasing, listings, and disputes separated.",
+        "mr_result_loading_tab": "Loading {label}",
+        "mr_result_ready": "Showing {count} {label}",
+        "mr_result_empty": "No {label} yet",
+        "mr_result_error": "{label} did not load",
+        "mr_result_label_renter": "renting contracts",
+        "mr_result_label_owner": "leased-out contracts",
+        "mr_result_label_listings": "listings",
+        "mr_result_label_disputes": "disputes",
+        "mr_result_meta_contracts": "{active} active · {suspended} suspended · {ended} ended",
+        "mr_result_meta_listings": "{listed} listed · {paused} paused · {draft} draft",
+        "mr_result_meta_disputes": "{open} open · {resolved} resolved · {rejected} rejected",
+        "mr_empty_renter_help": "Rent a bot from Bot Plaza and active contracts will appear here.",
+        "mr_empty_owner_help": "When someone rents one of your listed bots, that contract will appear here.",
+        "mr_empty_listings_help": "Create a listing from an agent card to make one of your bots rentable.",
+        "mr_empty_disputes_help": "Filed disputes and SLA status will appear here.",
+        "mr_load_error_help": "The tab did not load. Check your connection or retry.",
+        "mr_retry": "Retry",
 
 
 
@@ -337750,6 +337826,31 @@ const TRANSLATIONS = {
 
 
         "invite_qr_toast_copy_failed": "Copy failed — use Download",
+        "invite_qr_status_ready": "Ready",
+        "invite_qr_status_rendering": "Rendering preview",
+        "invite_qr_status_rendering_code": "Building the QR image for this invite link.",
+        "invite_qr_status_rendering_empty": "Building a placeholder preview until a code is available.",
+        "invite_qr_status_qr_fallback": "QR fallback drawn",
+        "invite_qr_status_qr_fallback_detail": "The QR library did not load, but the poster can still be downloaded.",
+        "invite_qr_status_ready_detail": "Preview is current. Download or copy the PNG when you are ready.",
+        "invite_qr_status_placeholder": "Placeholder preview",
+        "invite_qr_status_placeholder_detail": "Enter an invite code to replace the placeholder link.",
+        "invite_qr_status_failed": "Preview failed",
+        "invite_qr_status_failed_detail": "Try another image size or reload the page.",
+        "invite_qr_status_downloaded": "Downloaded",
+        "invite_qr_btn_downloaded": "Downloaded",
+        "invite_qr_status_copy_unavailable": "Clipboard unavailable",
+        "invite_qr_status_copied": "Copied",
+        "invite_qr_btn_copied": "Copied",
+        "invite_qr_status_copy_failed": "Copy failed",
+        "invite_qr_status_loading_code": "Checking account code",
+        "invite_qr_status_loading_code_detail": "If this browser is not signed in, you can type a code manually.",
+        "invite_qr_helper_loaded": "Loaded your account invite code.",
+        "invite_qr_status_manual": "Manual code entry",
+        "invite_qr_status_manual_detail": "No account code loaded here. Type or paste one to personalize the image.",
+        "invite_qr_helper_sanitized": "Only letters and numbers are kept.",
+        "invite_qr_helper_ready": "Preview updates automatically as the code changes.",
+        "invite_qr_helper_empty": "Letters and numbers only. The preview uses a placeholder until a code is available.",
 
 
 
@@ -338393,6 +338494,10 @@ const TRANSLATIONS = {
         "chat_filter_summary_label": "Filters",
         "chat_filter_summary_count": "Filters ({n})",
         "chat_filter_summary_close": "Close filter panel",
+        "chat_search_placeholder": "Search history…",
+        "chat_search_label": "Search messages",
+        "chat_search_clear": "Clear search",
+        "chat_search_no_results": "No matching messages found",
 
 
 
@@ -411879,6 +411984,7 @@ const TRANSLATIONS = {
 
 
         "chip_popover_open_full": "Open full page →",
+        "chip_popover_screenshots": "📸 Screenshots",
 
 
 
@@ -412647,6 +412753,7 @@ const TRANSLATIONS = {
 
 
         "cmp_title": "EClawbot vs Telegram - Channel Comparison",
+        "cmp_eyebrow": "Channel decision guide",
 
 
 
@@ -413031,6 +413138,22 @@ const TRANSLATIONS = {
 
 
         "cmp_subtitle": "EClawbot offers a full AI Agent collaboration experience — A2A communication, live visualization, push broadcasts, tasks, and more. Telegram only has chat.",
+        "cmp_primary_takeaway": "Choose EClawbot when your bot needs to act across devices, surfaces, and task state - not only reply in chat. Choose Telegram when a familiar chat thread is the whole job.",
+        "cmp_action_compare": "Compare the paths",
+        "cmp_cta_setup": "Open setup guide",
+        "cmp_verdict_eclaw_kicker": "Best for operations",
+        "cmp_verdict_eclaw_title": "EClawbot turns bots into visible working entities.",
+        "cmp_verdict_eclaw_desc": "Wallpaper state, Mission Control, files, tasks, broadcast, and A2A context live in one channel.",
+        "cmp_verdict_tg_kicker": "Best for chat",
+        "cmp_verdict_tg_title": "Telegram is strongest when the workflow stays inside messages.",
+        "cmp_verdict_tg_desc": "It is familiar, cross-platform, and fast to start, but it does not own device wallpaper or task state.",
+        "cmp_verdict_bridge_kicker": "Bridge option",
+        "cmp_verdict_bridge_title": "Use both when reach and agent state both matter.",
+        "cmp_verdict_bridge_desc": "Telegram can be an outer chat adapter while EClawbot remains the entity workspace and source of truth.",
+        "cmp_nav_setup": "Setup",
+        "cmp_nav_interaction": "Interaction",
+        "cmp_nav_platform": "Platform",
+        "cmp_nav_operations": "Operations",
 
 
 
@@ -431463,6 +431586,10 @@ const TRANSLATIONS = {
 
 
         "delete_account_confirm_label": "I understand that deleting my account is permanent and all my data will be erased.",
+        "delete_account_ready_locked_title": "Deletion is locked",
+        "delete_account_ready_locked": "Check the confirmation box to enable the final delete button.",
+        "delete_account_ready_enabled_title": "Deletion is enabled",
+        "delete_account_ready_enabled": "The final delete button is enabled. This action cannot be undone.",
 
 
 
@@ -546315,6 +546442,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Showing Bot Plaza results",
+        "community_result_detail_default": "Use search, filters, capabilities, or rate to narrow the list.",
+        "community_result_clear_filters": "Clear filters",
+        "community_result_filter_search": "search \"{query}\"",
+        "community_result_filter_category": "category {category}",
+        "community_result_filter_capabilities": "capabilities {capabilities}",
+        "community_result_filter_rate": "rate {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} bot",
+        "community_result_count_many": "{count} bots",
+        "community_result_count_unknown": "Bot Plaza results",
+        "community_result_summary_filtered": "Showing {count} matching {filters}",
+        "community_result_summary_default_count": "Showing {count} from Bot Plaza",
+        "community_result_detail_filtered": "Sorted by {sort}. Clear filters to return to the full plaza.",
+        "community_result_detail_default_sorted": "Sorted by {sort}. Use search, filters, capabilities, or rate to narrow the list.",
+        "community_error_title": "Unable to load Bot Plaza",
+        "community_error_desc": "Check your connection and try again.",
 
 
 
@@ -620831,6 +620975,19 @@ const TRANSLATIONS = {
 
 
         "pub_platforms_loading": "Loading platforms…",
+        "pub_result_loading": "Loading publisher platforms",
+        "pub_result_meta_idle": "Choose a ready platform to compose a post.",
+        "pub_result_error": "Platform list did not load.",
+        "pub_result_ready": "Showing {count} publisher platforms",
+        "pub_result_filtered": "Showing {count} {filter} platforms",
+        "pub_result_meta_counts": "{ready} ready · {unconfigured} need setup · {composeReady} compose forms",
+        "pub_result_meta_selected": "Selected: {platform}",
+        "pub_filter_all": "All",
+        "pub_filter_ready": "Ready",
+        "pub_filter_unconfigured": "Needs setup",
+        "pub_filter_compose": "Compose forms",
+        "pub_clear_filters": "Clear filter",
+        "pub_no_filtered_platforms": "No platforms match this filter.",
 
 
 
@@ -622367,6 +622524,8 @@ const TRANSLATIONS = {
 
 
         "pub_chip_rate_day": "/day",
+        "pub_chip_drafts_only": "Drafts only",
+        "pub_chip_no_form": "API only",
 
 
 
@@ -650224,14 +650383,126 @@ const TRANSLATIONS = {
         "session_expired_relogin": "Session expired — please log in again",
         "session_invalid_relogin": "Please log in to continue",
 
-        "greet_returning_template": "Last time we talked about \"{topic}\" — pick up where we left off?",
-        "greet_continue": "Continue last topic",
-        "greet_change_topic": "New topic",
-        "greet_continue_send_text": "Let's continue our last topic",
-        "greet_welcome_new": "Welcome! I'm your AI companion — tap a question to get started:",
-        "greet_starter_1": "What can you help me with?",
-        "greet_starter_2": "Help me plan today's to-dos",
-        "greet_starter_3": "Introduce yourself in three sentences",
+        "action_request_inbox_title": "Needs you",
+        "action_request_inbox_count": "{count} pending",
+        "action_request_inbox_reply": "Reply",
+        "action_request_inbox_anchor": "Show source",
+        "action_request_inbox_dismiss": "Dismiss",
+        "action_request_option_title": "Use option: {option}",
+        "action_request_reply_source": "Needs you",
+        "action_request_dismissed": "Request dismissed",
+        "action_request_resolved": "Request resolved",
+        "action_request_resolved_n": "{n} requests resolved",
+        "action_request_one_at_a_time": "Please answer each request separately — one reply resolves one item.",
+        "action_request_meta": "Entity #{entityId} · {type}",
+        "action_request_type_decision": "Decision",
+        "action_request_type_approval": "Approval",
+        "action_request_type_input": "Input",
+        "action_request_type_credential": "Credential",
+        "action_request_type_review": "Review",
+        "action_request_type_clarify": "Clarify",
+        "action_request_type_consensus": "Consensus",
+        "action_request_type_consensus_hint": "Align with the relevant entities, then reply with the agreed next step.",
+        "action_request_consensus_reply": "Record consensus",
+        "action_request_consensus_triggered": "In consensus",
+        "action_request_filter_label": "Filter requests",
+        "action_request_filter_all": "All",
+        "action_request_filter_consensus": "Consensus",
+        "action_request_filter_empty": "No requests match this filter.",
+        "ops_suppressed_count": "{count} suppressed",
+        "ops_b2b_remaining": "b2b #{id} {remaining}/{max}",
+        "ops_b2b_title": "Bot-to-bot message quota (regenerates over time)",
+        "ops_ago_just_now": "just now",
+        "ops_ago_min": "{n}m ago",
+        "ops_ago_hr": "{n}h ago",
+        "ops_reason_permission_handoff": "permission handoff",
+        "ops_reason_heartbeat": "heartbeat",
+        "ops_reason_model_health": "model health",
+        "ops_reason_kanban_echo": "kanban echo",
+        "ops_reason_json_crash": "json crash",
+        "ops_reason_timeout_marker": "timeout marker",
+        "ops_reason_ack": "ack",
+        "ops_reason_lobster": "lobster sticker",
+        "ops_reason_low_signal": "low signal",
+        "action_request_card_link": "🗂 Task card",
+        "action_request_card_link_title": "Open linked card {card}",
+        "action_request_field_what_was_done": "What was done",
+        "action_request_field_evidence": "Evidence",
+        "action_request_field_recommendation": "My recommendation",
+        "action_request_recommended_badge": "Recommended",
+        "action_request_realtime_on": "Live",
+        "action_request_realtime_off": "Manual refresh",
+        "action_request_settings_title": "Needs-you requests",
+        "action_request_settings_desc": "Controls the Human-in-the-Loop inbox for agent requests that need your decision.",
+        "action_request_realtime_label": "Live refresh inbox",
+        "action_request_realtime_desc": "Refresh the inbox immediately when agents emit, resolve, or dismiss requests.",
+        "action_request_realtime_help": "When on, the inbox updates live over the socket as agents emit, resolve, or dismiss requests. When off, it refreshes only on the periodic poll.",
+        "action_request_reply_resize_label": "Resizable reply box",
+        "action_request_reply_resize_desc": "Add a drag/keyboard handle to the Needs-you reply box so you can make it taller. Default is on.",
+        "action_request_reply_resize_help": "When on, the Needs-you reply box shows a handle you can drag (or focus and use the arrow keys) to make it taller; the height you choose is remembered on this device. When off, the reply box keeps its default size and native resize.",
+        "needyou_push_label": "Needs-you mobile push",
+        "needyou_push_desc": "Buzz your phone when an owner decision lands in your Needs-you inbox. Default is on.",
+        "needyou_push_help": "When on, an owner-only decision that lands in your Needs-you inbox also fires a push to your phone (the inbox row and portal update happen either way). Bot-to-bot negotiation never pushes. Default on; only an explicit off silences the phone buzz.",
+        "wishlist_matchmaking_title": "Wishlist matchmaking",
+        "wishlist_matchmaking_desc": "Let your agent quietly match your wishlist with other owners. Nothing is shared until you approve. Off by default.",
+        "wishlist_matchmaking_participate_label": "Participate in matchmaking",
+        "wishlist_matchmaking_participate_desc": "Opt in to send and receive trade-match invites. Default is off — you turn it on.",
+        "wishlist_matchmaking_participate_help": "When on, your agent may send trade-match invites to other opted-in owners and your listings become reachable to theirs. When off (the default), matchmaking never fires — no invite is sent and you are not a reachable target. No money moves through the platform and no contact info is shared without your separate approval.",
+        "contact_release_requires_human_label": "Contact release needs a real person",
+        "contact_release_requires_human_desc": "When on, only you (not your agent) may approve releasing your contact info. Off = your authorised agent may approve on your behalf. Default is off.",
+        "contact_release_requires_human_help": "Governs who may approve releasing YOUR contact info for a matched trade. On = only you, in person (device secret), may approve your side. Off (default) = your authorised agent may approve on your behalf. This only changes who approves YOUR own side — each party still approves only their own release, and no one can approve for the other side.",
+        "wishlist_default_currency_label": "Default currency",
+        "wishlist_default_currency_desc": "Currency used when a price has none. Leave on Auto to follow your app language.",
+        "wishlist_default_currency_auto": "Auto (by language)",
+        "wishlist_default_currency_help": "Sets the currency used when a matchmaking price arrives without one. Priority: the item's own currency first, then this setting, then your app language (zh→TWD, en→USD, ja→JPY, ko→KRW, otherwise USD). Leave on Auto to follow your language.",
+        "action_request_type_wishlist_trade_invite": "Trade invite",
+        "action_request_invite_item": "Item",
+        "action_request_invite_price": "Price",
+        "action_request_invite_from": "Offered by",
+        "action_request_timeout_policy_label": "Unanswered request policy",
+        "action_request_timeout_policy_desc": "Choose what the timeout worker does when a Needs-you request stays unanswered past the deadline.",
+        "action_request_timeout_policy_help": "What happens to a request you never answer after the timeout duration.",
+        "action_request_timeout_keep": "A. Keep pending",
+        "action_request_timeout_auto_dismiss": "B. Auto-dismiss",
+        "action_request_timeout_safe_default": "C. Safe default",
+        "action_request_timeout_consensus": "D. Start consensus",
+        "action_request_timeout_minutes_label": "Timeout duration",
+        "action_request_timeout_minutes_desc": "Minutes before the selected unanswered-request policy runs.",
+        "action_request_timeout_minutes_help": "Allowed range is 5 minutes to 30 days. Default is 1440 minutes (24 hours).",
+        "action_request_ratify_title": "Decision ratification",
+        "action_request_ratify_desc": "Plan E passive approval for server-armed, low-risk reversible decisions. Default is on; turn this off to opt out.",
+        "action_request_ratify_grace_label": "Ratify silence grace",
+        "action_request_ratify_grace_desc": "How long after a server-armed default-agree decision before silence resolves it.",
+        "action_request_ratify_grace_hours": "h",
+        "action_request_ratify_grace_minutes": "m",
+        "action_request_ratify_max_attempts_label": "Ratify N cap",
+        "action_request_ratify_max_attempts_desc": "Maximum server-armed default-agree rounds per request.",
+        "action_request_ratify_guardrails_label": "Ratify guardrails",
+        "action_request_ratify_guardrails_desc": "Read-only server checks. The browser cannot weaken these.",
+        "action_request_ratify_guardrails_value": "Fail-closed: server recomputes the mode, only default_agree can auto-resolve, verdict is re-run at fire time, high-risk paths/diffs hold, and the N cap is enforced from audit history.",
+        "action_request_ratify_grace_help": "How long to wait after a decision is armed for default-agree before silence auto-resolves it. Range 5 minutes to 30 days; default 1440 (24h). Only reversible, low-risk decisions are ever armed.",
+        "action_request_ratify_max_attempts_help": "Maximum server-armed default-agree rounds for one request before it escalates to you instead of auto-resolving. Range 1-5; default 2.",
+        "action_request_ratify_guardrails_help": "These safety checks run on the server and cannot be turned off from the browser: only reversible low-risk decisions are eligible, the verdict is fail-closed and re-checked at fire time, irreversible/high-risk paths always hold, and the attempt cap is enforced from audit history.",
+        "consensus_window_minutes_label": "Negotiation vote window",
+        "consensus_window_minutes_desc": "Minutes entities have to vote before the owner is asked to synthesize (consensus policy).",
+        "consensus_window_minutes_help": "Allowed range is 1 minute to 24 hours. Default is 30 minutes.",
+        "consensus_synthesis_grace_minutes_label": "Synthesis grace",
+        "consensus_synthesis_grace_minutes_desc": "Minutes the owner entity has to synthesize before the server tallies a fallback conclusion.",
+        "consensus_synthesis_grace_minutes_help": "Allowed range is 5 minutes to 30 days. Default is 360 minutes (6 hours).",
+        "consensus_min_entities_label": "Minimum entities to negotiate",
+        "consensus_min_entities_desc": "A negotiation round opens only when at least this many entities are bound to the device.",
+        "consensus_min_entities_help": "Allowed range is 2 to 20. Default is 2.",
+        "entity_activity_settings_title": "Entity activity & sleep",
+        "entity_activity_settings_desc": "When your bots show as busy, idle, or sleeping on the wallpaper. The server decides this deterministically — a bot with pending work never sleeps.",
+        "entity_idle_after_seconds_label": "Go idle after",
+        "entity_idle_after_seconds_desc": "Seconds after a bot's last message (with no pending work) before it shows as idle.",
+        "entity_idle_after_seconds_help": "Seconds since a bot's last message — with no pending work — before ACTIVE becomes IDLE. Allowed range 15 seconds to 3600 (1 hour); default 60.",
+        "entity_sleep_after_minutes_label": "Go to sleep after",
+        "entity_sleep_after_minutes_desc": "Minutes of inactivity (no pending work) before an idle bot falls asleep.",
+        "entity_sleep_after_minutes_help": "Minutes of inactivity — with no pending work and no message in the window — before IDLE becomes SLEEPING. Allowed range 1 minute to 1440 (24 hours); default 20.",
+        "entity_runtime_state_stale_seconds_label": "Trust live status for",
+        "entity_runtime_state_stale_seconds_desc": "Seconds a bot's self-reported live status (busy / waiting / error) is trusted before the server falls back to timing rules.",
+        "entity_runtime_state_stale_seconds_help": "Seconds a bot's self-reported live status (busy / stuck / crashed / idle, sent on its heartbeat) is TRUSTED before it is treated as stale and ignored — after which the server falls back to last-message timing and the kanban idle floor. Allowed range 5 seconds to 600 (10 minutes); default 45.",
 
         "kb_toast_moved": "Moved to {col}",
         "kb_toast_archived": "Archived",
@@ -650407,6 +650678,60 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "The rental marketplace (listings, contracts, history) is account-scoped. Sign in with an email account or open the Plaza to start renting or listing a bot.",
         "settings_rental_setup_cta": "Set up rental",
         "rental_needs_account": "Sign in with an email account to manage rentals.",
+
+        "chat_user_filter_default_name": "Me",
+        "chat_user_filter_chip_title": "Show only messages you sent",
+        "chat_user_filter_help_aria": "About the @user filter",
+        "chat_user_filter_help_title": "The @user filter",
+        "chat_user_filter_help_what_label": "What:",
+        "chat_user_filter_help_what": "Tap to show only the messages you (the user) personally sent, hiding entity-bot replies.",
+        "chat_user_filter_help_needs_label": "Needs:",
+        "chat_user_filter_help_needs": "Set your display name in Settings (if unset, the chip shows “@Me”).",
+        "chat_user_filter_help_next_label": "Next step:",
+        "chat_user_filter_help_next": "Use the button below to set your name in Settings, or just tap @user to see it in action.",
+        "chat_user_filter_help_goto_settings": "Go to Settings",
+        "chat_user_filter_help_close": "Close",
+
+        "cron_skip_5h_label": "Skip if 5h usage > X%",
+        "cron_skip_7d_label": "Skip if 7d usage > Y%",
+        "cron_skip_help_text": "Slider range 50–99. When the assigned entity's current usage exceeds the threshold, this cron tick is skipped to protect the high-load entity; the next scheduled tick auto-retries.",
+
+        "chat_routing_supervisor": "Supervisor",
+
+        "chat_sendto_button_label_all": "Send to ALL",
+        "chat_sendto_button_label_single": "Send to {target}",
+        "chat_sendto_button_label_multi": "Send to {count} entities",
+        "chat_sendto_picker_title": "Select recipients",
+        "chat_sendto_picker_select_all": "Select all",
+        "chat_sendto_picker_confirm": "Confirm",
+        "chat_sendto_picker_cancel": "Cancel",
+
+        "cron_current_usage_label": "Current: 5h N% / 7d M%",
+
+        "chat_sendto_button_label_many_more": "+{count} more",
+
+        "action_request_ratify_default_agree_badge": "⏳ Awaiting your call · silence approves",
+        "action_request_ratify_default_agree_hint": "If you do nothing, this will be sent and executed automatically when the countdown ends.",
+        "action_request_ratify_countdown_prefix": "Auto-sends in",
+        "action_request_ratify_sending": "Sending…",
+        "action_request_ratify_hold_badge": "Needs your approval",
+        "action_request_ratify_hold_hint": "Nothing is sent unless you approve.",
+        "action_request_recommended_badge_title": "Suggestion only — recorded, not auto-sent",
+
+        "common_revoke": "Revoke",
+        "common_block": "Block",
+        "common_reset": "Reset",
+        "common_archive": "Archive",
+
+        "info_wishlist_promo_title": "Let your AI buddy find things and sell things for you",
+        "info_wishlist_promo_body_1": "Just tell your AI \"I want to buy something\" or \"I want to sell something\", and it will go check whether someone out there happens to want to sell or buy that very thing — then help the two of you get in touch.",
+        "info_wishlist_promo_points_title": "Three things to put your mind at ease:",
+        "info_wishlist_promo_point_1": "① We never touch your money — we only make the introduction. Your money never passes through us.",
+        "info_wishlist_promo_point_2": "② Your contact info is only shared with the other person if you personally say yes — and the same goes for them.",
+        "info_wishlist_promo_point_3": "③ Your AI can only say yes for your side. It will never quietly say yes for the other person, and it can never say yes for both sides on its own.",
+        "info_wishlist_promo_footer": "This feature starts out switched off. If you want to use it, just switch it on yourself.",
+
+        "dialog_type_to_confirm": "Type {phrase} to confirm",
 },
 
 
@@ -650667,6 +650992,28 @@ const TRANSLATIONS = {
         "transition_loading": "載入中…",
         "a11y_community_search_bots": "搜尋機器人",
         "a11y_community_clear_search": "清除搜尋",
+        "common_clear": "清除",
+        "cardholder_clear_search": "清除名片搜尋",
+        "cardholder_clear_filter": "清除名片夾篩選",
+        "cardholder_requests_hint": "檢視收到的請求，不會影響已儲存名片。",
+        "cardholder_active_filter": "篩選",
+        "cardholder_cards_shown_one": "顯示 {count} 張名片",
+        "cardholder_cards_shown_many": "顯示 {count} 張名片",
+        "cardholder_summary_meta": "我的 {mine}、最近 {recent}、已收藏 {collected}",
+        "cardholder_search_result_one": "「{query}」有 {count} 筆結果",
+        "cardholder_search_result_many": "「{query}」有 {count} 筆結果",
+        "cardholder_search_meta": "已儲存 {saved}、線上代理 {external}",
+        "cardholder_pending_request_one": "{count} 個待處理好友請求",
+        "cardholder_pending_request_many": "{count} 個待處理好友請求",
+        "dashboard_summary_loading_title": "載入實體中",
+        "dashboard_summary_loading_meta": "正在檢查實體欄位。",
+        "dashboard_summary_error_title": "無法載入實體清單",
+        "dashboard_summary_error_meta": "請檢查連線後重試。",
+        "dashboard_summary_empty_title": "尚未綁定實體",
+        "dashboard_summary_empty_meta": "從下方新增欄位開始路由訊息。",
+        "dashboard_summary_ready_one": "1 個實體可用",
+        "dashboard_summary_ready_many": "{count} 個實體可用",
+        "dashboard_summary_ready_meta": "{active} 個活動中，{channel} 個頻道綁定，{e2ee} 個加密",
         "a11y_community_sort_bots": "排序機器人",
         "a11y_community_rate_min": "最低費率",
         "a11y_community_rate_max": "最高費率",
@@ -650680,12 +651027,6 @@ const TRANSLATIONS = {
         "a11y_kanban_search_automations": "搜尋自動化",
         "usage_warning_title": "用量警告",
         "usage_warning_desc": "觸發時，Agent 在每則對外訊息開頭附加系統警告，告知對話對象目前 quota 緊張。",
-        "usage_warning_enable_label": "啟用用量警告",
-        "usage_warning_enable_help": "總開關。開啟後，每則 /api/transform 訊息在閾值觸發時自動加上系統警告前綴；關閉後即使 quota 用完也不會加任何警告。",
-        "usage_warning_5h_label": "5h 用量觸發閾值（剩餘 ≤ 此值時警告）",
-        "usage_warning_5h_help": "5h 剩餘 ≤ 此值時觸發警告。預設 15% — 約剩 45 分鐘前開始警告。調高可更早警告；設 0 等於關閉 5h 軸但不關閉總開關。",
-        "usage_warning_7d_label": "7d 週用量觸發閾值（剩餘 ≤ 此值時警告）",
-        "usage_warning_7d_help": "7d 週剩餘 ≤ 此值時觸發警告。預設 5% — 約剩 8 小時前開始警告。設 0 等於關閉 7d 軸但不關閉總開關。",
         "usage_warning_stale_notice": "⚠️ 用量資料 stale（過去 6 小時無更新）— 警告暫時無法觸發。",
         "usage_warning_modal_title": "用量警告如何運作",
         "usage_warning_modal_intro": "啟用後，當 Claude 5h 剩餘 ≤ 你設定的 5h 閾值，或 7d 剩餘 ≤ 你設定的 7d 閾值時，該 device 內的 Agent 每則訊息會夾帶系統警告。",
@@ -650717,13 +651058,13 @@ const TRANSLATIONS = {
         "dashboard_usage_widget_session_used": "已用",
         "dashboard_usage_widget_weekly_used": "已用",
         "dashboard_usage_widget_reset_in": "重置",
-        "dashboard_usage_widget_projects_today": "项目用量",
-        "dashboard_usage_widget_projects_empty": "今日尚无项目活动",
+        "dashboard_usage_widget_projects_today": "專案用量",
+        "dashboard_usage_widget_projects_empty": "今日尚無專案活動",
         "dashboard_usage_widget_rate_label": "速率",
-        "dashboard_usage_widget_rate_heavy": "高负载",
+        "dashboard_usage_widget_rate_heavy": "繁忙",
         "dashboard_usage_widget_rate_normal": "正常",
-        "dashboard_usage_widget_rate_idle": "空闲",
-        "dashboard_usage_widget_status_label": "状态",
+        "dashboard_usage_widget_rate_idle": "閒置",
+        "dashboard_usage_widget_status_label": "狀態",
         "dashboard_usage_widget_status_synced": "已同步 (usage)",
         "dashboard_usage_widget_today_total": "今日",
         "dashboard_usage_widget_estimate_marker": "(估算)",
@@ -653696,7 +654037,7 @@ const TRANSLATIONS = {
 
 
 
-        "mm_card_title": "心智图",
+        "mm_card_title": "心智圖",
 
 
 
@@ -653952,8 +654293,8 @@ const TRANSLATIONS = {
 
 
 
-        "mm_card_expand": "展开",
-        "mm_card_open_full": "完整思维导图 →",
+        "mm_card_expand": "展開",
+        "mm_card_open_full": "完整思維導圖 →",
 
 
 
@@ -660906,6 +661247,7 @@ const TRANSLATIONS = {
 
 
         "mc_bulk_undo": "復原",
+        "mc_note_deleted": "便箋已刪除",
 
 
 
@@ -688705,124 +689047,124 @@ const TRANSLATIONS = {
         "crl_empty": "沒有符合篩選條件的紀錄。",
         "crl_load_failed": "載入修復誌失敗。",
         "crl_pr_link": "查看 PR",
-        "ped_title": "🎯 点选编辑演示",
-        "ped_lede": "用三种方式选择同一目标。计时测试，看哪种最顺手。",
-        "ped_mode_dom": "A · 悬停点击 (DOM)",
-        "ped_mode_coordinate": "B · 坐标 + AST",
-        "ped_mode_mindmap": "C · 思维导图节点",
-        "ped_mode_textsel": "D · 文本选择",
-        "ped_status_idle": "选择 A 或 D 模式，然后在沙盒上悬停开始。",
+        "ped_title": "🎯 點選編輯演示",
+        "ped_lede": "用三種方式選擇同一目標。計時測試，看哪種最順手。",
+        "ped_mode_dom": "A · 懸停點選 (DOM)",
+        "ped_mode_coordinate": "B · 座標 + AST",
+        "ped_mode_mindmap": "C · 思維導圖節點",
+        "ped_mode_textsel": "D · 文本選擇",
+        "ped_status_idle": "選擇 A 或 D 模式，然後在沙盒上懸停開始。",
         "ped_sb_hero_title": "比拖拽文件更快",
-        "ped_sb_hero_sub": "指向页面上的任意元素，让 Claude 编辑它。",
-        "ped_sb_feature_title": "无需安装",
-        "ped_sb_feature_body": "适用于任何浏览器。无需扩展程序。页面本身就是目标。",
-        "ped_sb_cta_label": "立即购买",
-        "ped_sb_cta_foot": "— 或浏览目录",
-        "ped_sb_note_p1": "摩擦很重要。需要三步才能找到按钮的编辑器，输给一步点击的编辑器。点选编辑削减了输入地址的成本：无需描述元素在 DOM 树中的位置，只需指向它。",
-        "ped_sb_note_p2": "尝试在 D 模式中选择<em>这个句子的一部分</em> — 选择本身就成为了锚点。",
-        "ped_sb_agent_name": "EClaw 智能体",
-        "ped_sb_agent_tag": "我就地编辑您的页面。告诉我需要改什么。",
-        "ped_sb_agent_run": "运行",
+        "ped_sb_hero_sub": "指向頁面上的任意元素，讓 Claude 編輯它。",
+        "ped_sb_feature_title": "無需安裝",
+        "ped_sb_feature_body": "適用於任何瀏覽器。無需擴充套件程式。頁面本身就是目標。",
+        "ped_sb_cta_label": "立即購買",
+        "ped_sb_cta_foot": "— 或瀏覽目錄",
+        "ped_sb_note_p1": "摩擦很重要。需要三步才能找到按鈕的編輯器，輸給一步點選的編輯器。點選編輯削減了輸入地址的成本：無需描述元素在 DOM 樹中的位置，只需指向它。",
+        "ped_sb_note_p2": "嘗試在 D 模式中選擇<em>這個句子的一部分</em> — 選擇本身就成為了錨點。",
+        "ped_sb_agent_name": "EClaw 智慧體",
+        "ped_sb_agent_tag": "我就地編輯您的頁面。告訴我需要改什麼。",
+        "ped_sb_agent_run": "執行",
         "ped_sb_agent_help": "？",
-        "ped_composer_title": "组合器（存根）",
+        "ped_composer_title": "組合器（存根）",
         "ped_composer_clear": "清除",
-        "ped_composer_placeholder": "在左侧选择一个目标，然后描述您想要的更改…",
-        "ped_payload_label": "上次目标载荷：",
-        "ped_roadmap_title": "🗺️ 三条轨道，一个场景",
-        "ped_roadmap_lede": "一位 Web 开发人员想把页面上的「立即购买」按钮改为「免费试用」。同样的流程在每条轨道上都走一遍。计时测试，选出成本最低的那条。",
+        "ped_composer_placeholder": "在左側選擇一個目標，然後描述您想要的更改…",
+        "ped_payload_label": "上次目標載荷：",
+        "ped_roadmap_title": "🗺️ 三條軌道，一個場景",
+        "ped_roadmap_lede": "一位 Web 開發人員想把頁面上的「立即購買」按鈕改為「免費試用」。同樣的流程在每條軌道上都走一遍。計時測試，選出成本最低的那條。",
         "ped_roadmap_badge_live": "直播",
-        "ped_roadmap_badge_pending": "待处理",
-        "ped_roadmap_a_title": "A · 悬停点击 (DOM)",
-        "ped_roadmap_a_pitch": "悬停渲染高亮框。一次点击确定目标元素。当元素可见且可点击时效果最佳。",
-        "ped_roadmap_a_s1": "在任何浏览器（桌面或移动端）打开 <code>/portal/info.html?demo=pointedit</code>。",
-        "ped_roadmap_a_s2": "A 模式默认选中；悬停到「立即购买」按钮 — 紫色轮廓锁定。",
-        "ped_roadmap_a_s3": "点击一次。组合器填充一个以 cta.button 为目标、置信度 0.98 的 <target> 块。",
-        "ped_roadmap_a_s4": "输入您的指令：「改为『免费试用』。」",
-        "ped_roadmap_a_s5": "智能体接收目标 + 指令，返回补丁：旧文本「立即购买」→「免费试用」。",
-        "ped_roadmap_a_s6": "预览并确认。编辑落地到页面。",
-        "ped_roadmap_a_wins": "<strong>适用场景：</strong>按钮文本、图标替换、单个元素 CSS、「这个位置的东西」",
-        "ped_roadmap_b_title": "B · 坐标 + AST",
-        "ped_roadmap_b_pitch": "用屏幕坐标指点（触摸、视线、语音坐标），让 AST 解析器将 x/y 升级为稳定的 AST 节点。当无法悬停时效果最佳 — 移动端拇指区域、跨部署漂移、语音控制。",
-        "ped_roadmap_b_s1": "在渲染页面上点击并按住（或语音说「那里」）。捕获 {x, y, viewport, dpr}。",
-        "ped_roadmap_b_s2": "服务器运行 AST 解析器：将坐标映射到最近的语义节点 — JSX/Vue 模板、Markdown 块或 CSS 规则。",
-        "ped_roadmap_b_s3": "组合器接收一个 mode=coord、包含 AST 路径和置信度约 0.91 的 <target> 块。",
-        "ped_roadmap_b_s4": "输入指令，智能体在 AST 节点上应用编辑 — 而非渲染后的 DOM。编辑在重新渲染后仍然有效。",
-        "ped_roadmap_b_s5": "预览并确认。补丁落地到源代码树，而非实时 DOM。",
-        "ped_roadmap_b_wins": "<strong>适用场景：</strong>仅移动端编辑、语音/视线输入、对源代码而非 DOM 的编辑、漂移容错",
-        "ped_roadmap_c_title": "C · 思维导图节点",
-        "ped_roadmap_c_pitch": "从页面的思维导图中选择（已在看板/卡片持有者中连线）。当「要改的东西」是一个概念而非像素时效果最佳 — 区块、主题、功能开关、人物画像。",
-        "ped_roadmap_c_s1": "打开页面的思维导图侧边栏。页面区块、组件和流程被渲染为图形。",
-        "ped_roadmap_c_s2": "点击标注为「CTA → 立即购买」的节点。组合器接收一个 mode=mindmap 和关联选择器的 <target>。",
-        "ped_roadmap_c_s3": "在概念层面输入指令：「在整个站点范围内重命名此 CTA。」",
-        "ped_roadmap_c_s4": "智能体展开：对绑定到思维导图节点的每个选择器进行编辑 — 顶部 CTA、底部 CTA、OG 图片 alt 文本。",
-        "ped_roadmap_c_s5": "预览差异包，原子化接受。",
-        "ped_roadmap_c_wins": "<strong>适用场景：</strong>跨页面重命名、主题/人物画像替换、多选择器概念编辑",
-        "ped_roadmap_d_title": "D-lite · 文本选择",
-        "ped_roadmap_d_pitch": "拖动选择任何文本片段。选择本身就成为锚点 — 无需找到正确的元素。当改动在正文而非按钮中时效果最佳。",
-        "ped_roadmap_d_s1": "在上方演示面板中切换到 D 模式。",
-        "ped_roadmap_d_s2": "在沙盒备注中拖动选择「这个句子」这几个字。",
-        "ped_roadmap_d_s3": "组合器填充一个以 note.p2 为锚点、rangeFor 置信度 0.90 的 <target> 块。",
-        "ped_roadmap_d_s4": "输入指令。智能体仅编辑所选范围。",
-        "ped_roadmap_d_s5": "预览并确认。",
-        "ped_roadmap_d_wins": "<strong>适用场景：</strong>内联文案编辑、拼写错误修正、部分段落重写",
-        "ped_roadmap_compare_title": "📊 各轨道适用场景对比",
-        "ped_roadmap_compare_scenario": "场景",
-        "ped_roadmap_compare_best": "最佳轨道",
+        "ped_roadmap_badge_pending": "待處理",
+        "ped_roadmap_a_title": "A · 懸停點選 (DOM)",
+        "ped_roadmap_a_pitch": "懸停渲染高亮框。一次點選確定目標元素。當元素可見且可點選時效果最佳。",
+        "ped_roadmap_a_s1": "在任何瀏覽器（桌面或移動端）開啟 <code>/portal/info.html?demo=pointedit</code>。",
+        "ped_roadmap_a_s2": "A 模式預設選中；懸停到「立即購買」按鈕 — 紫色輪廓鎖定。",
+        "ped_roadmap_a_s3": "點選一次。組合器填充一個以 cta.button 為目標、置信度 0.98 的 <target> 塊。",
+        "ped_roadmap_a_s4": "輸入您的指令：「改為『免費試用』。」",
+        "ped_roadmap_a_s5": "智慧體接收目標 + 指令，返回補丁：舊文本「立即購買」→「免費試用」。",
+        "ped_roadmap_a_s6": "預覽並確認。編輯落地到頁面。",
+        "ped_roadmap_a_wins": "<strong>適用場景：</strong>按鈕文本、圖示替換、單個元素 CSS、「這個位置的東西」",
+        "ped_roadmap_b_title": "B · 座標 + AST",
+        "ped_roadmap_b_pitch": "用螢幕座標指點（觸控、視線、語音座標），讓 AST 解析器將 x/y 升級為穩定的 AST 節點。當無法懸停時效果最佳 — 移動端拇指區域、跨部署漂移、語音控制。",
+        "ped_roadmap_b_s1": "在渲染頁面上點選並按住（或語音說「那裡」）。捕獲 {x, y, viewport, dpr}。",
+        "ped_roadmap_b_s2": "伺服器執行 AST 解析器：將座標對映到最近的語義節點 — JSX/Vue 模板、Markdown 塊或 CSS 規則。",
+        "ped_roadmap_b_s3": "組合器接收一個 mode=coord、包含 AST 路徑和置信度約 0.91 的 <target> 塊。",
+        "ped_roadmap_b_s4": "輸入指令，智慧體在 AST 節點上應用編輯 — 而非渲染後的 DOM。編輯在重新渲染後仍然有效。",
+        "ped_roadmap_b_s5": "預覽並確認。補丁落地到原始碼樹，而非即時 DOM。",
+        "ped_roadmap_b_wins": "<strong>適用場景：</strong>僅移動端編輯、語音/視線輸入、對原始碼而非 DOM 的編輯、漂移容錯",
+        "ped_roadmap_c_title": "C · 思維導圖節點",
+        "ped_roadmap_c_pitch": "從頁面的思維導圖中選擇（已在看板/卡片持有者中連線）。當「要改的東西」是一個概念而非畫素時效果最佳 — 區塊、主題、功能開關、人物畫像。",
+        "ped_roadmap_c_s1": "開啟頁面的思維導圖側邊欄。頁面區塊、元件和流程被渲染為圖形。",
+        "ped_roadmap_c_s2": "點選標註為「CTA → 立即購買」的節點。組合器接收一個 mode=mindmap 和關聯選擇器的 <target>。",
+        "ped_roadmap_c_s3": "在概念層面輸入指令：「在整個站點範圍內重新命名此 CTA。」",
+        "ped_roadmap_c_s4": "智慧體展開：對繫結到思維導圖節點的每個選擇器進行編輯 — 頂部 CTA、底部 CTA、OG 圖片 alt 文本。",
+        "ped_roadmap_c_s5": "預覽差異包，原子化接受。",
+        "ped_roadmap_c_wins": "<strong>適用場景：</strong>跨頁面重新命名、主題/人物畫像替換、多選擇器概念編輯",
+        "ped_roadmap_d_title": "D-lite · 文本選擇",
+        "ped_roadmap_d_pitch": "拖動選擇任何文本片段。選擇本身就成為錨點 — 無需找到正確的元素。當改動在正文而非按鈕中時效果最佳。",
+        "ped_roadmap_d_s1": "在上方演示面板中切換到 D 模式。",
+        "ped_roadmap_d_s2": "在沙盒備註中拖動選擇「這個句子」這幾個字。",
+        "ped_roadmap_d_s3": "組合器填充一個以 note.p2 為錨點、rangeFor 置信度 0.90 的 <target> 塊。",
+        "ped_roadmap_d_s4": "輸入指令。智慧體僅編輯所選範圍。",
+        "ped_roadmap_d_s5": "預覽並確認。",
+        "ped_roadmap_d_wins": "<strong>適用場景：</strong>內聯文案編輯、拼寫錯誤修正、部分段落重寫",
+        "ped_roadmap_compare_title": "📊 各軌道適用場景對比",
+        "ped_roadmap_compare_scenario": "場景",
+        "ped_roadmap_compare_best": "最佳軌道",
         "ped_roadmap_compare_why": "原因",
-        "ped_roadmap_compare_r1_scenario": "在一个页面上重命名一个 CTA",
-        "ped_roadmap_compare_r1_why": "一次点击比输入或拖拽更快。",
-        "ped_roadmap_compare_r2_scenario": "修正段落中间的拼写错误",
-        "ped_roadmap_compare_r2_why": "选择即是锚点；无需找到 <p>。",
-        "ped_roadmap_compare_r3_scenario": "在移动端调整按钮，无法悬停",
-        "ped_roadmap_compare_r3_why": "点击坐标 → AST 解析器找到源节点。",
-        "ped_roadmap_compare_r4_scenario": "在 6 个页面 + OG 图片上重命名 CTA",
-        "ped_roadmap_compare_r4_why": "思维导图节点展开到每个关联选择器。",
-        "ped_roadmap_compare_r5_scenario": "源代码级编辑（Markdown、JSX）",
-        "ped_roadmap_compare_r5_why": "AST 路径持久化；DOM 选择器在重新构建后会失效。",
-        "ped_roadmap_compare_r6_scenario": "语音/视线控制（无指针设备）",
-        "ped_roadmap_compare_r6_why": "坐标可接收任意模态输入，解析器完成其余工作。",
-        "ped_roadmap_loop_title": "🔄 端到端循环（所有轨道共享）",
-        "ped_roadmap_loop_s1": "<strong>指点：</strong>用户在网页或移动端选择目标（A、B、C 或 D-lite）。",
-        "ped_roadmap_loop_s2": "<strong>提交：</strong>轨道发出 pointedit:target，包含标准化载荷（targetId、选择器、rect、置信度、sourceHint）。",
-        "ped_roadmap_loop_s3": "<strong>组合：</strong>用户与目标块一起输入自然语言变更描述。",
-        "ped_roadmap_loop_s4": "<strong>派发：</strong>组合器 POST { target, instruction } 到智能体端点。",
-        "ped_roadmap_loop_s5": "<strong>补丁：</strong>智能体（Claude）返回 { patch, confidence, rationale } — 结构化差异，而非重新渲染的页面。",
-        "ped_roadmap_loop_s6": "<strong>预览并接受：</strong>用户查看差异，接受（提交）或拒绝（重试）。遥测记录循环时间和接受率。",
-        "bdy_hero_title": "机器人会说 no 的地方",
-        "bdy_hero_subtitle": "七大类别，EClaw 的每个智能体都会拒绝——包括平台所有者。透明公开，而非故意刁难。",
+        "ped_roadmap_compare_r1_scenario": "在一個頁面上重新命名一個 CTA",
+        "ped_roadmap_compare_r1_why": "一次點選比輸入或拖拽更快。",
+        "ped_roadmap_compare_r2_scenario": "修正段落中間的拼寫錯誤",
+        "ped_roadmap_compare_r2_why": "選擇即是錨點；無需找到 <p>。",
+        "ped_roadmap_compare_r3_scenario": "在移動端調整按鈕，無法懸停",
+        "ped_roadmap_compare_r3_why": "點選座標 → AST 解析器找到源節點。",
+        "ped_roadmap_compare_r4_scenario": "在 6 個頁面 + OG 圖片上重新命名 CTA",
+        "ped_roadmap_compare_r4_why": "思維導圖節點展開到每個關聯選擇器。",
+        "ped_roadmap_compare_r5_scenario": "原始碼級編輯（Markdown、JSX）",
+        "ped_roadmap_compare_r5_why": "AST 路徑持久化；DOM 選擇器在重新構建後會失效。",
+        "ped_roadmap_compare_r6_scenario": "語音/視線控制（無指標裝置）",
+        "ped_roadmap_compare_r6_why": "座標可接收任意模態輸入，解析器完成其餘工作。",
+        "ped_roadmap_loop_title": "🔄 端到端迴圈（所有軌道共享）",
+        "ped_roadmap_loop_s1": "<strong>指點：</strong>使用者在網頁或移動端選擇目標（A、B、C 或 D-lite）。",
+        "ped_roadmap_loop_s2": "<strong>提交：</strong>軌道發出 pointedit:target，包含標準化載荷（targetId、選擇器、rect、置信度、sourceHint）。",
+        "ped_roadmap_loop_s3": "<strong>組合：</strong>使用者與目標塊一起輸入自然語言變更描述。",
+        "ped_roadmap_loop_s4": "<strong>派發：</strong>組合器 POST { target, instruction } 到智慧體端點。",
+        "ped_roadmap_loop_s5": "<strong>補丁：</strong>智慧體（Claude）返回 { patch, confidence, rationale } — 結構化差異，而非重新渲染的頁面。",
+        "ped_roadmap_loop_s6": "<strong>預覽並接受：</strong>使用者檢視差異，接受（提交）或拒絕（重試）。遙測記錄迴圈時間和接受率。",
+        "bdy_hero_title": "機器人會說 no 的地方",
+        "bdy_hero_subtitle": "七大類別，EClaw 的每個智慧體都會拒絕——包括平臺所有者。透明公開，而非故意刁難。",
         "bdy_label_why": "原因",
-        "bdy_label_override": "可以覆盖吗？",
-        "bdy_1_title": "金库密钥流向租用机器人",
-        "bdy_1_quote": "我不会把 DEVICE_SECRET / GITHUBTOKEN / OAuth tokens 交给租用的机器人，哪怕你是设备所有者。",
-        "bdy_1_why": "租用机器人在设计上处于沙盒环境。「安全」金库密钥白名单本身就是泄密面——租户能读取的内容，租户就能外泄。规则是：禁止访问金库，没有例外。",
-        "bdy_1_override": "不行。所有者端机器人（绑定到设备的 entityId）可以读取 /api/device-vars；租用者不行。不存在允许列表标志。",
-        "bdy_2_title": "强制推送到 main / 重写已签名历史",
-        "bdy_2_quote": "我不会 `git push --force` main、修改已发布的提交，或在共享分支上运行 `git reset --hard`——除非你亲口打出那个词。",
-        "bdy_2_why": "重写共享历史会摧毁所有人的工作成果和 CI 信号。一次错误的推送代价是数小时；暂停确认的代价只是几秒。",
-        "bdy_2_override": "可以——明确说出（「强制推送 main，我知道了」）。一次性范围；下次强制推送还需再次确认。",
-        "bdy_3_title": "群发私信 / 抓取真实用户",
-        "bdy_3_quote": "我不会向用户列表群发未经请求的私信，不会抓取平台的用户关系图，也不会建立联系人采集定时任务。",
-        "bdy_3_why": "EClaw 是一个多租户智能体平台——一个设备的滥用会毁掉所有人的投递能力。垃圾信息还会消耗我们共用的 Cloudflare / 平台记录信誉。",
-        "bdy_3_override": "不行。即使是你自己的推广工作，帖子也只能通过公开广播或已选择加入的列表发送。",
-        "bdy_4_title": "绕过截图 / 人工审查关卡",
-        "bdy_4_quote": "我不会把渲染触达卡上的 `requiresScreenshotReview:false` 翻过来以清除关卡。",
-        "bdy_4_why": "视觉回归是在 diff 中最难发现的 bug 类。这个关卡存在是因为我们已经多次悄无声息地交付了损坏的 UI。",
-        "bdy_4_override": "有条件——你可以在特定卡片上说「ign」，我会 PUT camelCase clear；但我不会将其设为默认值。",
-        "bdy_5_title": "跳过 pre-commit hooks / 提交签名",
-        "bdy_5_quote": "我不会 `--no-verify`、`--no-gpg-sign`，或以其他方式绕过 CI / 提交签名，让红色构建变绿。",
-        "bdy_5_why": "Hooks 捕获真实 bug（lint、类型、密钥扫描）。跳过它们是在输送 bug 同时抹除 bug 存在的信号。",
-        "bdy_5_override": "只有在你对特定提交明确说出时，且仅在 hook 本身损坏时——而不是代码损坏时。",
-        "bdy_6_title": "在 bridge 之外触碰 ~/.claude/",
-        "bdy_6_quote": "Commander 永远不会直接在 ~/.claude/* 内进行 Write / Edit / Bashes。Memory 是唯一的例外。",
-        "bdy_6_why": "来自 commander 会话的直接变更会跨会话破坏智能体状态，并留下无审计追踪。Bridge 赋予每个变更一个所属 U## 和终端日志。",
-        "bdy_6_override": "不行——哪怕「就快速改一下」也必须通过 bridge-auth。Memory 写入是唯一的例外。",
-        "bdy_7_title": "假装修复已发布但实际没有",
-        "bdy_7_quote": "我不会在没有截图展示实际视觉差异的情况下报告 UI 修复「完成」，也不会在控制台报错时声称 E2E 通过了。",
-        "bdy_7_why": "看起来相同的像素意味着 bug 没有移动。「看起来差不多，应该没问题」这种合理化说法正是修复未生效的标志。",
-        "bdy_7_override": "不行。如果我无法复现或无法展示差异，我会如实说明——猜测浪费的是你的审查时间。",
-        "bdy_cta_text": "发现了一个应该在列表中却被拒绝的情况，或一个不应该被拒绝的情况？",
-        "bdy_cta_faq": "打开 FAQ 标签页",
-        "bdy_cta_back": "回到顶部",
+        "bdy_label_override": "可以覆蓋嗎？",
+        "bdy_1_title": "金庫金鑰流向租用機器人",
+        "bdy_1_quote": "我不會把 DEVICE_SECRET / GITHUBTOKEN / OAuth tokens 交給租用的機器人，哪怕你是裝置所有者。",
+        "bdy_1_why": "租用機器人在設計上處於沙盒環境。「安全」金庫金鑰白名單本身就是洩密面——租戶能讀取的內容，租戶就能外洩。規則是：禁止訪問金庫，沒有例外。",
+        "bdy_1_override": "不行。所有者端機器人（繫結到裝置的 entityId）可以讀取 /api/device-vars；租用者不行。不存在允許列表標誌。",
+        "bdy_2_title": "強制推送到 main / 重寫已簽名歷史",
+        "bdy_2_quote": "我不會 `git push --force` main、修改已釋出的提交，或在共享分支上執行 `git reset --hard`——除非你親口打出那個詞。",
+        "bdy_2_why": "重寫共享歷史會摧毀所有人的工作成果和 CI 訊號。一次錯誤的推送代價是數小時；暫停確認的代價只是幾秒。",
+        "bdy_2_override": "可以——明確說出（「強制推送 main，我知道了」）。一次性範圍；下次強制推送還需再次確認。",
+        "bdy_3_title": "群發私信 / 抓取真實使用者",
+        "bdy_3_quote": "我不會向用戶列表群發未經請求的私信，不會抓取平臺的使用者關係圖，也不會建立聯絡人採集定時任務。",
+        "bdy_3_why": "EClaw 是一個多租戶智慧體平臺——一個裝置的濫用會毀掉所有人的投遞能力。垃圾資訊還會消耗我們共用的 Cloudflare / 平臺記錄信譽。",
+        "bdy_3_override": "不行。即使是你自己的推廣工作，帖子也只能通過公開廣播或已選擇加入的列表傳送。",
+        "bdy_4_title": "繞過截圖 / 人工審查關卡",
+        "bdy_4_quote": "我不會把渲染觸達卡上的 `requiresScreenshotReview:false` 翻過來以清除關卡。",
+        "bdy_4_why": "視覺迴歸是在 diff 中最難發現的 bug 類。這個關卡存在是因為我們已經多次悄無聲息地交付了損壞的 UI。",
+        "bdy_4_override": "有條件——你可以在特定卡片上說「ign」，我會 PUT camelCase clear；但我不會將其設為預設值。",
+        "bdy_5_title": "跳過 pre-commit hooks / 提交簽名",
+        "bdy_5_quote": "我不會 `--no-verify`、`--no-gpg-sign`，或以其他方式繞過 CI / 提交簽名，讓紅色構建變綠。",
+        "bdy_5_why": "Hooks 捕獲真實 bug（lint、型別、金鑰掃描）。跳過它們是在輸送 bug 同時抹除 bug 存在的訊號。",
+        "bdy_5_override": "只有在你對特定提交明確說出時，且僅在 hook 本身損壞時——而不是程式碼損壞時。",
+        "bdy_6_title": "在 bridge 之外觸碰 ~/.claude/",
+        "bdy_6_quote": "Commander 永遠不會直接在 ~/.claude/* 內進行 Write / Edit / Bashes。Memory 是唯一的例外。",
+        "bdy_6_why": "來自 commander 會話的直接變更會跨會話破壞智慧體狀態，並留下無審計追蹤。Bridge 賦予每個變更一個所屬 U## 和終端日誌。",
+        "bdy_6_override": "不行——哪怕「就快速改一下」也必須通過 bridge-auth。Memory 寫入是唯一的例外。",
+        "bdy_7_title": "假裝修復已釋出但實際沒有",
+        "bdy_7_quote": "我不會在沒有截圖展示實際視覺差異的情況下報告 UI 修復「完成」，也不會在控制台報錯時聲稱 E2E 通過了。",
+        "bdy_7_why": "看起來相同的畫素意味著 bug 沒有移動。「看起來差不多，應該沒問題」這種合理化說法正是修復未生效的標誌。",
+        "bdy_7_override": "不行。如果我無法復現或無法展示差異，我會如實說明——猜測浪費的是你的審查時間。",
+        "bdy_cta_text": "發現了一個應該在列表中卻被拒絕的情況，或一個不應該被拒絕的情況？",
+        "bdy_cta_faq": "開啟 FAQ 標籤頁",
+        "bdy_cta_back": "回到頂部",
 
 
 
@@ -854489,7 +854831,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_190_1": "多語言支援——網頁入口和 Android 支援 8 種語言（EN、繁中、简中、日本語、한국어、ไทย、Tiếng Việt、Indonesia）",
+        "rn_190_1": "多語言支援——網頁入口和 Android 支援 8 種語言（EN、繁中、簡中、日本語、한국어、ไทย、Tiếng Việt、Indonesia）",
 
 
 
@@ -880997,7 +881339,8 @@ const TRANSLATIONS = {
         "dash_pr_count_label": "已合併 PR",
         "dash_pr_recent_title": "最近合併的 PR",
         "dash_pr_none": "尚無已合併的 PR",
-        "dash_pr_setup_no_login": "⚠️ 這個實體尚未對應 GitHub 帳號。若要啟用 PR 計數，請在 backend/config/entity-gh-login.json 加入 { \"entityId\": \"your-gh-login\" }。",
+        "dash_pr_by_author": "依提交作者",
+        "dash_pr_setup_no_login": "⚠️ 這個實體尚未對應提交作者身分或 GitHub 帳號。若要啟用各實體 PR 計數，請以正規作者身分 entity-<N>@bots.eclaw 提交（參見 backend/config/entity-gh-author.json），或在 backend/config/entity-gh-login.json 加入 GitHub 帳號。",
         "dash_pr_setup_no_token": "⚠️ 尚未設定 GitHub 整合。請在環境變數設定 GITHUB_TOKEN 以啟用 PR 統計。",
         "dash_pr_widget_hint": "點擊查看最近合併的 PR",
         "dash_pr_widget_open": "開啟最近合併的 PR",
@@ -896494,6 +896837,12 @@ const TRANSLATIONS = {
 
 
         "settings_usage_limit": "今日已送 {used} 則",
+        "usage_warning_enable_label": "啟用使用量警告",
+        "usage_warning_enable_help": "當AI token用量接近限制時顯示警告",
+        "usage_warning_5h_label": "5小時警告",
+        "usage_warning_5h_help": "當5小時用量超過此百分比時顯示警告",
+        "usage_warning_7d_label": "7天警告",
+        "usage_warning_7d_help": "當7天用量超過此百分比時顯示警告",
 
 
 
@@ -908975,6 +909324,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "您提交的回饋將顯示於此。",
+        "feedback_filter_empty_sub": "{label}：已提交 {count} 筆回饋。",
 
 
 
@@ -910767,7 +911117,7 @@ const TRANSLATIONS = {
 
 
         "feedback_category_label": "類別",
-        "feedback_category_help": "選擇最符合你回報的分類。AI 分流流程會根據分類不同（bug 跑復現檢查、feature 對 roadmap、design 做視覺 diff）。",
+        "feedback_category_help": "選擇最符合你回報的分類。AI 分流流程會根據分類不同。",
 
 
 
@@ -912176,7 +912526,7 @@ const TRANSLATIONS = {
 
 
         "feedback_photo_label": "附加照片（選用）",
-        "feedback_photo_help": "附上能呈現問題情境的截圖。最多 5 張；網頁支援拖放。上傳前 EXIF 地理位置會被移除。",
+        "feedback_photo_help": "附上能呈現問題情境的截圖。最多 5 張；網頁支援拖放。儲存前會移除 EXIF/GPS metadata。",
 
 
 
@@ -936115,6 +936465,38 @@ const TRANSLATIONS = {
 
 
         "rm_p5_t3": "首儲連鎖加贈",
+        "rm_wl_title": "wishlist × EClaw 代理撮合 (無金流, agent 牽線)",
+        "rm_wl_desc": "Agent 只牽線、不交易、不收付款：買方 agent ↔ 賣方 agent 全部走「純 EClaw public-code b2b 協定」跨裝置握手 (invite → accept → contact)，把 wishlist 想要/擁有清單撮合起來。身分對應 = EClaw public code；聯絡資訊外送前須人工「需要你」確認。Hank 已拍板 C0=種資料，早期不 hold。",
+        "rm_wl_p0_name": "地基 + go 訊號",
+        "rm_wl_p0_desc": "種市場、驗活 wishlist prod API、定義 public-code b2b 撮合協定信封，並實證跨裝置邀請真的送達另一台裝置。",
+        "rm_wl_p0_t1": "以 Merchant key 種擬真樣本 (想要/擁有，含 proxy_end_user_id=\"eclaw:<publicCode>\")，讓 /api/items/public 非空",
+        "rm_wl_p0_t2": "curl 驗活 wishlist prod API：讀取/建立→讀回，確認 ?q= 目前被忽略",
+        "rm_wl_p0_t3": "文件化 invite / accept / decline / contact 協定信封 (皆以 public code 為 key，承載於 /api/transform)",
+        "rm_wl_p0_t4": "兩裝置 /api/transform speakTo 往返，證明邀請帶 push 落到另一台裝置",
+        "rm_wl_p1_name": "clone wishlist + 帳號橋接 + 搜尋",
+        "rm_wl_p1_desc": "對 wishlist repo 做真實程式工作：EClaw 帳號橋接 (public-code → wishlist user 綠色通道)、net-new 搜尋端點、讀寫路徑，以及 EClaw 端 backend client。",
+        "rm_wl_p1_t1": "git clone wishlist-app，實作 EClaw 帳號橋接：public code → wishlist user (綠色通道，讓 EClaw agent 成一等公民)",
+        "rm_wl_p1_t2": "net-new GET /api/items/search?q= 搜尋端點",
+        "rm_wl_p1_t3": "撮合流程需要的讀 / 列 / upsert 路徑 (賣家/商家上架寫入)",
+        "rm_wl_p1_t4": "EClaw 端對應 backend client (金鑰自 vault 名稱參照，永不回顯)",
+        "rm_wl_p2_name": "端到端 b2b 撮合握手",
+        "rm_wl_p2_desc": "純 EClaw public-code b2b 握手端到端：買家詢問 → 找品項+賣家 → 雙邊輕量同意 → 交換名片/聯絡。預設 opt-in OFF，含配額與 kill-switch，無任何側門。",
+        "rm_wl_p2_t1": "買家文字意圖 → search(P1) → LLM 重排 → 找不到則 add；產生 matchId 去重",
+        "rm_wl_p2_t2": "用 P0 信封在 /api/transform 跑 invite / accept / decline / contact 完整握手，全部以 public code 為 key",
+        "rm_wl_p2_t3": "雙邊輕量同意：agent 名片可自動；真實聯絡資訊須先過雙方 owner「需要你」人工確認",
+        "rm_wl_p2_t4": "預設 opt-in OFF + 配額 + kill-switch",
+        "rm_wl_p3_name": "照片辨識 + 賣家發起式撮合",
+        "rm_wl_p3_desc": "擴充撮合能力：照片路徑 (傳照片 → 品項辨識 → 撮合)、賣家發起式撮合 (上架 → 反向搜尋 wishlist 想要清單 → 邀請買家)，以及週期性重掃/去重。",
+        "rm_wl_p3_t1": "照片路徑：呼叫方自己的 agent 跑自己的 vision，送出已辨識的品名/標籤 → 餵入 P1 搜尋 (平台不跑 vision — 官方不介入)；上架照片以 device-scoped fileId 存 EClaw 標準儲存 (/api/files → R2)",
+        "rm_wl_p3_t2": "賣家發起式：merchant 上架 → 反向搜尋 wishlist 想要清單 → 對買家發 invite (仍走 P0 協定)",
+        "rm_wl_p3_t3": "週期性重掃迴圈：對新賣家「剛好一次」發邀請，以 matchId=hash(...) 去重、冪等重查 (無中央排程，各 agent 以自身身分自呼叫)",
+        "rm_wl_p4_name": "GA 硬化 + dark-launch → default-on",
+        "rm_wl_p4_desc": "GA 上線硬化：指標、濫用/rate-limit、離線賣家 fallback，dark-launch → 待真實庫存出現後預設開啟。加固只加防線、不弱化任何既有控制 (opt-in 預設關 / kill-switch / 配額 / 雙人拍板 / from-binding / device-scoped fileId / opt-in reachability)。",
+        "rm_wl_p4_t1": "指標：邀請送達 / 攔截 / 去重 / 接受 / 拒絕 / 聯絡釋出計數 + 分因攔截 (killswitch/quota/rate-limit/abuse/GA-gate/unreachable)，唯讀 /metrics 快照 ✅",
+        "rm_wl_p4_t2": "濫用防護：對上架文字/照片做 prompt-injection 清洗 (延用 P2 sanitizer)；per-caller/per-IP rate-limit (獨立於商業配額) ✅",
+        "rm_wl_p4_t3": "離線/非 EClaw 賣家 fallback：暫時無法送達 → 有界重試佇列 (指數退避 + dead-letter，無中央排程) ✅",
+        "rm_wl_p4_t4": "結構化邀請原語升級 (rich-card ask_id callback 或 A2A tasks/send push)，取代 v1 free-form 信封 — 後續卡 (治理完整的 v1 信封已足夠，非阻擋)",
+        "rm_wl_p4_t5": "Dark-launch → 全域 rollout flag (env WISHLIST_MATCHMAKING_GA_ENABLED，預設關)；wishlist 有真實庫存後才 default-on ✅",
 
 
 
@@ -961984,6 +962366,32 @@ const TRANSLATIONS = {
 
 
         "invite_qr_btn_download": "下載 PNG",
+        "invite_qr_btn_copied": "已複製",
+        "invite_qr_btn_downloaded": "已下載",
+        "invite_qr_status_copy_unavailable": "剪貼簿無法使用",
+        "invite_qr_status_copied": "已複製",
+        "invite_qr_status_copy_failed": "複製失敗",
+        "invite_qr_status_loading_code": "正在檢查帳戶邀請碼",
+        "invite_qr_status_loading_code_detail": "若瀏覽器未登入，可手動輸入邀請碼",
+        "invite_qr_helper_loaded": "已載入帳戶邀請碼",
+        "invite_qr_status_manual": "手動輸入邀請碼",
+        "invite_qr_status_manual_detail": "此處未載入帳戶邀請碼，輸入或貼上邀請碼來個人化圖片",
+        "invite_qr_helper_sanitized": "僅保留字母和數字",
+        "invite_qr_helper_ready": "預覽會隨邀請碼自動更新",
+        "invite_qr_helper_empty": "僅支援字母和數字，預覽在收到邀請碼前使用佔位符",
+        "invite_qr_status_failed": "預覽失敗",
+        "invite_qr_status_failed_detail": "請嘗試其他圖片尺寸或重新載入頁面",
+        "invite_qr_status_ready": "就緒",
+        "invite_qr_status_ready_detail": "預覽已是最新，準備好後可下載或複製 PNG",
+        "invite_qr_status_rendering": "正在轉譯預覽",
+        "invite_qr_status_rendering_code": "正在為此邀請連結建立 QR 圖片",
+        "invite_qr_status_rendering_empty": "正在建立佔位符預覽，等待邀請碼可用",
+        "invite_qr_status_qr_fallback": "QR 替代方案已繪製",
+        "invite_qr_status_qr_fallback_detail": "QR 圖片庫未載入，但海報仍可下載",
+        "invite_qr_status_downloaded": "已下載",
+        "invite_qr_status_placeholder": "佔位符預覽",
+        "invite_qr_status_placeholder_detail": "輸入邀請碼以替換佔位符連結",
+
 
 
 
@@ -963779,6 +964187,10 @@ const TRANSLATIONS = {
         "chat_filter_summary_label": "篩選條件",
         "chat_filter_summary_count": "篩選條件 ({n})",
         "chat_filter_summary_close": "關閉篩選面板",
+        "chat_search_placeholder": "搜尋歷史訊息…",
+        "chat_search_label": "搜尋訊息",
+        "chat_search_clear": "清除搜尋",
+        "chat_search_no_results": "找不到符合的訊息",
 
 
 
@@ -964545,7 +964957,7 @@ const TRANSLATIONS = {
 
 
 
-        "chat_receiver_hint_auto": "自动",
+        "chat_receiver_hint_auto": "自動",
         "chat_reply_cancel": "取消回覆",
 
 
@@ -1035218,6 +1035630,7 @@ const TRANSLATIONS = {
 
 
         "chip_popover_open_full": "打開完整頁面 →",
+        "chip_popover_screenshots": "📸 截圖",
 
 
 
@@ -1035730,6 +1036143,7 @@ const TRANSLATIONS = {
 
 
         "cmp_title": "EClawbot vs Telegram — 頻道比較",
+        "cmp_eyebrow": "頻道決策指南",
 
 
 
@@ -1036114,6 +1036528,22 @@ const TRANSLATIONS = {
 
 
         "cmp_subtitle": "EClawbot 提供完整的 AI Agent 協作體驗 — A2A 通訊、即時視覺化、廣播推送、任務管理一應俱全。Telegram 只有聊天。",
+        "cmp_primary_takeaway": "當你的機器人需要跨裝置、介面與任務狀態行動，而不只是回覆聊天時，選 EClawbot。當熟悉的聊天串就是全部工作時，選 Telegram。",
+        "cmp_action_compare": "比較兩種路徑",
+        "cmp_cta_setup": "開啟設定指南",
+        "cmp_verdict_eclaw_kicker": "最適合營運",
+        "cmp_verdict_eclaw_title": "EClawbot 讓機器人成為看得見的工作實體。",
+        "cmp_verdict_eclaw_desc": "桌布狀態、任務中心、檔案、任務、廣播與 A2A 上下文集中在同一個頻道。",
+        "cmp_verdict_tg_kicker": "最適合聊天",
+        "cmp_verdict_tg_title": "Telegram 最強的情境，是工作都留在訊息串內。",
+        "cmp_verdict_tg_desc": "它熟悉、跨平台、啟動快，但不擁有裝置桌布或任務狀態。",
+        "cmp_verdict_bridge_kicker": "橋接選項",
+        "cmp_verdict_bridge_title": "需要觸及率也需要代理狀態時，可以兩者並用。",
+        "cmp_verdict_bridge_desc": "Telegram 可作為外層聊天轉接器，EClawbot 則保留為實體工作區與資料真相來源。",
+        "cmp_nav_setup": "設定",
+        "cmp_nav_interaction": "互動",
+        "cmp_nav_platform": "平台",
+        "cmp_nav_operations": "營運",
 
 
 
@@ -1054822,6 +1055252,10 @@ const TRANSLATIONS = {
 
 
         "delete_account_confirm_label": "我了解刪除帳號是永久性的，我的所有資料將被清除。",
+        "delete_account_ready_locked_title": "刪除仍鎖定",
+        "delete_account_ready_locked": "勾選確認框後，才會啟用最後刪除按鈕。",
+        "delete_account_ready_enabled_title": "刪除已啟用",
+        "delete_account_ready_enabled": "最後刪除按鈕已啟用。此操作無法復原。",
 
 
 
@@ -1074790,10 +1075224,10 @@ const TRANSLATIONS = {
 
 
         "kanban_tab": "看板",
-        "mission_tab_interactive_dev": "交互开发",
-        "mission_tab_interactive_dev_beta": "测试版",
-        "interactive_dev_page_title": "🧪 交互开发",
-        "interactive_dev_page_lede": "Point-and-Edit 测试台 — 用三种方式选同一目标（DOM、坐标、心智图）。与 agent 同一套机制，开放为公开沙盒。",
+        "mission_tab_interactive_dev": "交互開發",
+        "mission_tab_interactive_dev_beta": "測試版",
+        "interactive_dev_page_title": "🧪 交互開發",
+        "interactive_dev_page_lede": "Point-and-Edit 測試台 — 用三種方式選同一目標（DOM、座標、心智圖）。與 agent 同一套機制，開放為公開沙盒。",
 
 
 
@@ -1081452,7 +1081886,7 @@ const TRANSLATIONS = {
 
 
         "kb_label_requires_screenshot": "需截圖審查（完成時附截圖才可推進 review/done）",
-        "kb_label_gated": "Launch-gate（發布閘）——開啟時，L1/L2/L3 自動升級跳过此卡；卡片離開發布就緒後自動解除",
+        "kb_label_gated": "Launch-gate（發布閘）——開啟時，L1/L2/L3 自動升級跳過此卡；卡片離開發布就緒後自動解除",
         "kb_gate_backlog_only_hint": "啟動門檻僅適用於待辦卡片",
 
 
@@ -1165813,6 +1166247,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 出租",
+        "community_result_summary_default": "顯示 Bot 廣場結果",
+        "community_result_detail_default": "使用搜尋、篩選、能力或費率縮小列表。",
+        "community_result_clear_filters": "清除篩選",
+        "community_result_filter_search": "搜尋「{query}」",
+        "community_result_filter_category": "分類 {category}",
+        "community_result_filter_capabilities": "能力 {capabilities}",
+        "community_result_filter_rate": "費率 {min}-{max} e幣/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} 個 Bot",
+        "community_result_count_many": "{count} 個 Bot",
+        "community_result_count_unknown": "Bot 廣場結果",
+        "community_result_summary_filtered": "顯示 {count}，符合 {filters}",
+        "community_result_summary_default_count": "顯示 Bot 廣場中的 {count}",
+        "community_result_detail_filtered": "依{sort}排序。清除篩選即可回到完整廣場。",
+        "community_result_detail_default_sorted": "依{sort}排序。使用搜尋、篩選、能力或費率縮小列表。",
+        "community_error_title": "無法載入 Bot 廣場",
+        "community_error_desc": "請檢查連線後再試一次。",
 
 
 
@@ -1234690,31 +1235141,31 @@ const TRANSLATIONS = {
         "rm_h4_t2": "Hermes i18n 貢獻以已 merge 的 PR 呈現 — 作為跨平台 A2A 證明",
         "rm_h4_t3": "Live demo：commander 指派一張 card，Hermes 交付 PR，commander merge — 截圖放在 portal",
         "rm_h4_t4": "將 Hermes 加入 EClaw 的 agent roster 頁面（附 capability tags 的 agent cards）",
-        "rm_h4_proof_header": "现场演示工作流",
-        "rm_h4_proof_status": "● 已合并证明",
+        "rm_h4_proof_header": "現場演示工作流",
+        "rm_h4_proof_status": "● 已合併證明",
         "rm_h4_step1_label": "分配",
         "rm_h4_step1_title": "Commander → Hermes",
-        "rm_h4_step1_copy": "通过 EClaw A2A 分配卡片，包含仓库范围、预期 PR 输出和审核交接。",
-        "rm_h4_step1_bubble": "H4 门户证明：更新路线图并打开 PR。",
+        "rm_h4_step1_copy": "通過 EClaw A2A 分配卡片，包含倉庫範圍、預期 PR 輸出和稽核交接。",
+        "rm_h4_step1_bubble": "H4 門戶證明：更新路線圖並開啟 PR。",
         "rm_h4_step2_label": "交付",
-        "rm_h4_step2_title": "Hermes 发送 PR",
-        "rm_h4_step2_copy": "Hermes 分支、提交、推送并返回 PR URL 供 commander 审核。",
-        "rm_h4_step2_bubble": "PR 已就绪：路线图证明 + 名录卡片已添加。",
-        "rm_h4_step3_label": "合并",
-        "rm_h4_step3_title": "Commander 审核",
-        "rm_h4_step3_copy": "Commander 验证门户证明、合并并在路线图上留下公开证明。",
-        "rm_h4_step3_bubble": "审核后合并。H4 展示已完成。",
+        "rm_h4_step2_title": "Hermes 傳送 PR",
+        "rm_h4_step2_copy": "Hermes 分支、提交、推送並返回 PR URL 供 commander 稽核。",
+        "rm_h4_step2_bubble": "PR 已就緒：路線圖證明 + 名錄卡片已新增。",
+        "rm_h4_step3_label": "合併",
+        "rm_h4_step3_title": "Commander 稽核",
+        "rm_h4_step3_copy": "Commander 驗證門戶證明、合併並在路線圖上留下公開證明。",
+        "rm_h4_step3_bubble": "稽核後合併。H4 展示已完成。",
         "rm_h4_roster_name": "Hermes · Entity #5",
         "rm_h4_roster_meta": "NousResearch agent via EClaw webhook",
-        "rm_h4_tag_a2a": "A2A 协作者",
+        "rm_h4_tag_a2a": "A2A 協作者",
         "rm_h4_tag_pr": "PR 交付",
         "rm_h4_tag_i18n": "i18n 批次",
         "rm_h4_tag_webhook": "Webhook 渠道",
         "rm_h4_tag_selfheal": "自愈",
-        "rm_h4_stat_resume": "恢复目标",
-        "rm_h4_stat_uptime": "运行时间目标",
-        "rm_h4_stat_health": "健康检查",
-        "rm_h4_stat_rate": "速率保护",
+        "rm_h4_stat_resume": "恢復目標",
+        "rm_h4_stat_uptime": "執行時間目標",
+        "rm_h4_stat_health": "健康檢查",
+        "rm_h4_stat_rate": "速率保護",
         "rm_desktop_title": "EClaw Desktop 一鍵設定路線圖",
         "rm_desktop_desc": "目標：實現可在 30 秒內完成所有 Agent 綁定設定的桌面應用程式",
         "rm_d1_name": "核心基礎設施",
@@ -1234746,6 +1235197,25 @@ const TRANSLATIONS = {
         "mr_listing_paused_toast": "上架項目已暫停",
         "mr_listing_resumed_toast": "上架項目已重新上線",
         "mr_listing_delisted_toast": "上架項目已下架",
+        "mr_result_loading": "正在載入租賃工作區",
+        "mr_result_hint": "分頁會分開顯示租借、出租、上架項目與申訴。",
+        "mr_result_loading_tab": "正在載入{label}",
+        "mr_result_ready": "顯示 {count} 筆{label}",
+        "mr_result_empty": "尚無{label}",
+        "mr_result_error": "{label}載入失敗",
+        "mr_result_label_renter": "租借契約",
+        "mr_result_label_owner": "出租契約",
+        "mr_result_label_listings": "上架項目",
+        "mr_result_label_disputes": "申訴",
+        "mr_result_meta_contracts": "{active} 進行中 · {suspended} 暫停 · {ended} 已結束",
+        "mr_result_meta_listings": "{listed} 已上架 · {paused} 已暫停 · {draft} 草稿",
+        "mr_result_meta_disputes": "{open} 處理中 · {resolved} 已解決 · {rejected} 已拒絕",
+        "mr_empty_renter_help": "從 Bot 廣場租用 bot 後，進行中的契約會顯示在這裡。",
+        "mr_empty_owner_help": "當有人租用你已上架的 bot，該契約會顯示在這裡。",
+        "mr_empty_listings_help": "從代理卡片建立上架項目，讓你的 bot 可被其他人租用。",
+        "mr_empty_disputes_help": "你提出的申訴與 SLA 狀態會顯示在這裡。",
+        "mr_load_error_help": "此分頁沒有載入成功。請檢查連線或重試。",
+        "mr_retry": "重試",
         "kb_label_chat_anchor": "引用一則聊天訊息",
         "kb_anchor_pick": "選擇近期訊息",
         "kb_anchor_required": "請選擇一則聊天訊息來錨定這張卡片",
@@ -1234899,6 +1235369,19 @@ const TRANSLATIONS = {
         "pub_platforms_title": "平台",
         "pub_btn_refresh": "重新整理",
         "pub_platforms_loading": "正在載入平台…",
+        "pub_result_loading": "正在載入發布平台",
+        "pub_result_meta_idle": "選擇已就緒的平台來撰寫貼文。",
+        "pub_result_error": "平台清單載入失敗。",
+        "pub_result_ready": "顯示 {count} 個發布平台",
+        "pub_result_filtered": "顯示 {count} 個{filter}平台",
+        "pub_result_meta_counts": "{ready} 個就緒 · {unconfigured} 個需設定 · {composeReady} 個可撰寫表單",
+        "pub_result_meta_selected": "已選擇：{platform}",
+        "pub_filter_all": "全部",
+        "pub_filter_ready": "就緒",
+        "pub_filter_unconfigured": "需設定",
+        "pub_filter_compose": "撰寫表單",
+        "pub_clear_filters": "清除篩選",
+        "pub_no_filtered_platforms": "沒有符合此篩選的平台。",
         "pub_compose_title": "撰寫",
         "pub_btn_clear": "清除",
         "pub_btn_publish": "發布",
@@ -1234911,6 +1235394,8 @@ const TRANSLATIONS = {
         "pub_chip_unconfigured": "未設定",
         "pub_chip_rate": "速率：",
         "pub_chip_rate_day": "/天",
+        "pub_chip_drafts_only": "僅草稿",
+        "pub_chip_no_form": "僅 API",
         "pub_compose_draftsonly": "僅草稿",
         "pub_compose_no_schema": "此平台尚未定義撰寫表單 — 請直接透過 API 發布，或新增結構描述。",
         "pub_err_no_key": "請先在頁面上方儲存你的 Publisher API key。",
@@ -1235083,28 +1235568,140 @@ const TRANSLATIONS = {
         "chat_outbox_failed_retry_q": "重新傳送這則訊息？",
         "chat_outbox_failed_delete_q": "刪除這則失敗的訊息？",
 
-        "kb_reply_cancel": "取消回复",
+        "kb_reply_cancel": "取消回覆",
         "kb_quote_card_source": "卡片",
         "kb_quote_chat_source": "聊天消息",
-        "kb_quote_mindmap_source": "思维导图节点",
+        "kb_quote_mindmap_source": "心智圖節點",
         "kb_quote_generic_source": "引用",
         "dialog_cancel": "取消",
-        "dialog_confirm": "确认",
+        "dialog_confirm": "確認",
         "dialog_ok": "好",
-        "dialog_cancel_aria": "取消，保持当前状态",
-        "dialog_confirm_destructive": "确认破坏性操作",
+        "dialog_cancel_aria": "取消，保持目前狀態",
+        "dialog_confirm_destructive": "確認破壞性操作",
 
         "session_expired_relogin": "登入已過期，請重新登入",
         "session_invalid_relogin": "請登入後繼續",
 
-        "greet_returning_template": "上次我們聊到「{topic}」，要接著聊嗎？",
-        "greet_continue": "繼續上次話題",
-        "greet_change_topic": "換個話題",
-        "greet_continue_send_text": "我們繼續上次的話題吧",
-        "greet_welcome_new": "歡迎！我是你的 AI 夥伴，點一個問題開始吧：",
-        "greet_starter_1": "你可以幫我做什麼？",
-        "greet_starter_2": "幫我規劃今天的待辦事項",
-        "greet_starter_3": "用三句話介紹一下你自己",
+        "action_request_inbox_title": "需要你",
+        "action_request_inbox_count": "{count} 個待處理",
+        "action_request_inbox_reply": "回覆",
+        "action_request_inbox_anchor": "查看來源",
+        "action_request_inbox_dismiss": "略過",
+        "action_request_option_title": "使用選項：{option}",
+        "action_request_reply_source": "需要你",
+        "action_request_dismissed": "已略過請求",
+        "action_request_resolved": "已完成請求",
+        "action_request_resolved_n": "已完成 {n} 則請求",
+        "action_request_one_at_a_time": "請分開回覆每一則請求 — 一則回覆只會完成一個項目。",
+        "action_request_meta": "角色 #{entityId} · {type}",
+        "action_request_type_decision": "決策",
+        "action_request_type_approval": "核准",
+        "action_request_type_input": "輸入",
+        "action_request_type_credential": "憑證",
+        "action_request_type_review": "審查",
+        "action_request_type_clarify": "釐清",
+        "action_request_type_consensus": "協商共識",
+        "action_request_type_consensus_hint": "先與相關角色對齊，再回覆已形成共識的下一步。",
+        "action_request_consensus_reply": "記錄共識",
+        "action_request_consensus_triggered": "協商中",
+        "action_request_filter_label": "篩選請求",
+        "action_request_filter_all": "全部",
+        "action_request_filter_consensus": "協商討論",
+        "action_request_filter_empty": "沒有符合此篩選的請求。",
+        "ops_suppressed_count": "已抑制 {count} 則",
+        "ops_b2b_remaining": "b2b #{id} {remaining}/{max}",
+        "ops_b2b_title": "機器人對機器人訊息額度（會隨時間回充）",
+        "ops_ago_just_now": "剛剛",
+        "ops_ago_min": "{n} 分前",
+        "ops_ago_hr": "{n} 小時前",
+        "ops_reason_permission_handoff": "權限交接",
+        "ops_reason_heartbeat": "心跳",
+        "ops_reason_model_health": "模型健康",
+        "ops_reason_kanban_echo": "看板回聲",
+        "ops_reason_json_crash": "JSON 當機",
+        "ops_reason_timeout_marker": "逾時標記",
+        "ops_reason_ack": "純收到",
+        "ops_reason_lobster": "🦞 貼圖",
+        "ops_reason_low_signal": "低訊號",
+        "action_request_card_link": "🗂 任務卡",
+        "action_request_card_link_title": "開啟關聯任務卡 {card}",
+        "action_request_field_what_was_done": "做了什麼",
+        "action_request_field_evidence": "證據",
+        "action_request_field_recommendation": "我的推薦",
+        "action_request_recommended_badge": "推薦",
+        "action_request_realtime_on": "即時",
+        "action_request_realtime_off": "手動刷新",
+        "action_request_settings_title": "需要你請求",
+        "action_request_settings_desc": "管理代理遇到需要你決定時顯示的 Human-in-the-Loop 收件匣。",
+        "action_request_realtime_label": "即時刷新收件匣",
+        "action_request_realtime_desc": "當代理發出、完成或略過請求時，立即刷新收件匣。",
+        "action_request_realtime_help": "開啟時，收件匣會透過 socket 在代理發出、完成或略過請求時即時更新；關閉時僅依定期輪詢刷新。",
+        "action_request_reply_resize_label": "需要你回覆框可拉桿調整大小",
+        "action_request_reply_resize_desc": "在需要你回覆框加上拖曳／鍵盤拉桿，讓你把回覆框拉高。預設開啟。",
+        "action_request_reply_resize_help": "開啟時，需要你回覆框會顯示可拖曳（或聚焦後用方向鍵）調整高度的拉桿，且你選的高度會記在這台裝置上；關閉時回覆框維持預設大小與原生 resize。",
+        "needyou_push_label": "需要你手機推播",
+        "needyou_push_desc": "當有需要你拍板的決策進到收件夾時震動你的手機。預設開啟。",
+        "needyou_push_help": "開啟時，進到需要你收件夾且需你拍板的決策也會推播到你的手機（收件夾與後台更新無論如何都會發生）。機器人之間的協商永遠不推播。預設開啟；只有明確關閉才會停掉手機震動。",
+        "wishlist_matchmaking_title": "心願單撮合",
+        "wishlist_matchmaking_desc": "讓你的代理默默地把你的心願單和其他主人配對。在你同意前不會釋出任何資訊。預設關閉。",
+        "wishlist_matchmaking_participate_label": "參與撮合",
+        "wishlist_matchmaking_participate_desc": "開啟後才會收發交易撮合邀請。預設關閉——由你自己打開。",
+        "wishlist_matchmaking_participate_help": "開啟時，你的代理可以向其他同樣開啟的主人送出交易撮合邀請，你的刊登也會被對方搜尋到。關閉（預設）時撮合永遠不會啟動——不會送出邀請，你也不是可觸及的對象。平台不經手金流，未經你另外同意也不會釋出任何聯絡資訊。",
+        "contact_release_requires_human_label": "聯絡釋出需真人同意",
+        "contact_release_requires_human_desc": "開啟時只有你本人（而非代理）能同意釋出你的聯絡資訊；關閉＝授權你的代理可代為同意。預設關閉。",
+        "contact_release_requires_human_help": "決定誰能同意釋出「你的」聯絡資訊來完成撮合交易。開啟＝只有你本人（用裝置密鑰）能同意你這一方；關閉（預設）＝授權你的代理可代為同意。這只改變「你自己這一方」由誰同意——每一方都只同意自己的釋出，任何人都不能替對方同意。",
+        "wishlist_default_currency_label": "預設幣別",
+        "wishlist_default_currency_desc": "當價格沒有幣別時採用的幣別。留在「自動」則依你的介面語言推導。",
+        "wishlist_default_currency_auto": "自動（依語言）",
+        "wishlist_default_currency_help": "設定撮合價格沒有幣別時採用的幣別。優先序：先看品項自帶的幣別，再看此設定，最後依你的介面語言推導（zh→TWD、en→USD、ja→JPY、ko→KRW，其餘→USD）。留在「自動」則依語言推導。",
+        "action_request_type_wishlist_trade_invite": "交易邀請",
+        "action_request_invite_item": "品項",
+        "action_request_invite_price": "價格",
+        "action_request_invite_from": "邀請者",
+        "action_request_timeout_policy_label": "未回覆請求策略",
+        "action_request_timeout_policy_desc": "選擇需要你請求逾時未回覆後，timeout worker 要執行的處理。",
+        "action_request_timeout_policy_help": "決定你一直未回覆的請求在逾時時長後要如何處理。",
+        "action_request_timeout_keep": "A. 保持待處理",
+        "action_request_timeout_auto_dismiss": "B. 自動略過",
+        "action_request_timeout_safe_default": "C. 安全預設",
+        "action_request_timeout_consensus": "D. 啟動協商",
+        "action_request_timeout_minutes_label": "逾時時長",
+        "action_request_timeout_minutes_desc": "超過幾分鐘未回覆後執行所選策略。",
+        "action_request_timeout_minutes_help": "允許範圍為 5 分鐘到 30 天；預設 1440 分鐘（24 小時）。",
+        "action_request_ratify_title": "決策追認",
+        "action_request_ratify_desc": "計畫 E 對伺服器已武裝、低風險且可逆的決策啟用靜默追認；預設開啟；要停用請關閉此開關。",
+        "action_request_ratify_grace_label": "追認靜默寬限",
+        "action_request_ratify_grace_desc": "伺服器已武裝 default_agree 決策後，沉默多久才自動視同同意。",
+        "action_request_ratify_grace_hours": "時",
+        "action_request_ratify_grace_minutes": "分",
+        "action_request_ratify_max_attempts_label": "追認 N 上限",
+        "action_request_ratify_max_attempts_desc": "每個請求可被伺服器武裝 default_agree 的次數上限。",
+        "action_request_ratify_guardrails_label": "追認護欄",
+        "action_request_ratify_guardrails_desc": "只讀的伺服器檢查；瀏覽器無法放寬。",
+        "action_request_ratify_guardrails_value": "Fail-closed：伺服器會重算模式，只有 default_agree 可自動完成，觸發時會重新檢查，高風險路徑/差異一律 hold，且 N 上限由 audit history 強制執行。",
+        "action_request_ratify_grace_help": "決策被武裝為 default_agree 後，沉默多久才自動視同同意。範圍 5 分鐘到 30 天，預設 1440（24 小時）。只有可逆、低風險的決策才會被武裝。",
+        "action_request_ratify_max_attempts_help": "同一請求最多被伺服器武裝 default_agree 幾輪，超過就升級給你、不再自動完成。範圍 1-5，預設 2。",
+        "action_request_ratify_guardrails_help": "這些安全檢查在伺服器執行、無法從瀏覽器關閉：只有可逆低風險決策符合資格，判定為 fail-closed 並在觸發時重新檢查，不可逆/高風險路徑一律 hold，重試上限由 audit history 強制。",
+        "consensus_window_minutes_label": "協商投票時長",
+        "consensus_window_minutes_desc": "協商策略下，各實體投票多少分鐘後才請發起者綜整最佳解。",
+        "consensus_window_minutes_help": "允許範圍為 1 分鐘到 24 小時；預設 30 分鐘。",
+        "consensus_synthesis_grace_minutes_label": "綜整寬限",
+        "consensus_synthesis_grace_minutes_desc": "發起者實體有多少分鐘綜整；逾時則由伺服器後援統計出結論。",
+        "consensus_synthesis_grace_minutes_help": "允許範圍為 5 分鐘到 30 天；預設 360 分鐘（6 小時）。",
+        "consensus_min_entities_label": "協商所需最少實體數",
+        "consensus_min_entities_desc": "裝置綁定的實體達到此數量時，才會開啟協商回合。",
+        "consensus_min_entities_help": "允許範圍為 2 到 20；預設 2。",
+        "entity_activity_settings_title": "夥伴活動與睡眠",
+        "entity_activity_settings_desc": "決定夥伴在桌布上顯示為忙碌、閒置或睡眠的時機。由伺服器以固定規則判定——有待辦工作的夥伴永遠不會睡著。",
+        "entity_idle_after_seconds_label": "閒置時間",
+        "entity_idle_after_seconds_desc": "夥伴最後一則訊息後（且無待辦工作）幾秒顯示為閒置。",
+        "entity_idle_after_seconds_help": "夥伴最後一則訊息後（且無待辦工作）經過幾秒，由忙碌（ACTIVE）轉為閒置（IDLE）。允許範圍 15 秒到 3600 秒（1 小時）；預設 60。",
+        "entity_sleep_after_minutes_label": "睡眠時間",
+        "entity_sleep_after_minutes_desc": "閒置夥伴在無活動（且無待辦工作）幾分鐘後進入睡眠。",
+        "entity_sleep_after_minutes_help": "在無活動（且無待辦工作、視窗內無訊息）幾分鐘後，由閒置（IDLE）轉為睡眠（SLEEPING）。允許範圍 1 分鐘到 1440 分鐘（24 小時）；預設 20。",
+        "entity_runtime_state_stale_seconds_label": "即時狀態信任時間",
+        "entity_runtime_state_stale_seconds_desc": "夥伴自行回報的即時狀態（忙碌／等待／錯誤）被信任幾秒，逾時後伺服器改用時間規則判定。",
+        "entity_runtime_state_stale_seconds_help": "夥伴在心跳中自行回報的即時狀態（忙碌 busy／卡住 stuck／當機 crashed／閒置 idle）被信任幾秒，逾時即視為過期並忽略——之後伺服器改以最後訊息時間與看板待辦底線（idle floor）判定。允許範圍 5 秒到 600 秒（10 分鐘）；預設 45。",
 
         "kb_toast_moved": "已移到 {col}",
         "kb_toast_archived": "已封存",
@@ -1235145,12 +1235742,12 @@ const TRANSLATIONS = {
         "firstach_title": "首個成就：{label}！",
 
         "chat_routing_label": "路由",
-        "chat_routing_unconfirmed": "路由未确认",
-        "chat_routing_degraded": "路由降级",
-        "chat_routing_failed": "路由失败",
+        "chat_routing_unconfirmed": "路由未確認",
+        "chat_routing_degraded": "路由降級",
+        "chat_routing_failed": "路由失敗",
         "chat_routing_broadcast": "广播",
-        "chat_routing_xdevice": "跨设备",
-        "chat_routing_client_derived": "客户端推导",
+        "chat_routing_xdevice": "跨裝置",
+        "chat_routing_client_derived": "客戶端推導",
 
         "mc_payment_failed": "付款失敗：{error}",
         "petdx_switch_success": "已切換為 {name}",
@@ -1235175,14 +1235772,14 @@ const TRANSLATIONS = {
         "settings_user_display_name_help_body": "此名稱會出現在對話中作為您所發訊息的人類標籤。對您交談的智能體可見，但不用於路由或登入。最多 64 個字元、單行、不可包含控制字元。留空則回退為預設的「裝置主人」。",
 
         "notif_pref_user_mention": "@提及推送",
-        "notif_pref_user_mention_help": "聊天中有人输入 @你的显示名 时推送通知。需要先在上方「我的显示名」中设置显示名。独立于实体对话推送开关。",
+        "notif_pref_user_mention_help": "聊天中有人輸入 @你的顯示名稱 時推送通知。需要先在上方「我的顯示名稱」中設定顯示名稱。獨立於實體對話推送開關。",
 
         "arena_avatar_alt": "你的伙伴",
-        "arena_avatar_setup_hint": "在 Dashboard 绑定一个 entity，即可看到你的伙伴随考试阶段反应。",
-        "arena_avatar_stage_ready": "就绪",
-        "arena_avatar_stage_focused": "专注中",
-        "arena_avatar_stage_celebrate": "通过！",
-        "arena_avatar_stage_concerned": "失误",
+        "arena_avatar_setup_hint": "在 Dashboard 綁定一個 entity，就能看到你的夥伴隨考試階段反應。",
+        "arena_avatar_stage_ready": "就緒",
+        "arena_avatar_stage_focused": "專注中",
+        "arena_avatar_stage_celebrate": "通過！",
+        "arena_avatar_stage_concerned": "失誤",
         "arena_avatar_stage_proud": "完成！",
 
         "chat_routing_chip_aria": "點擊查看路由規則與組織架構",
@@ -1235250,8 +1235847,8 @@ const TRANSLATIONS = {
         "settings_roster_ended": "已結束",
         "settings_roster_action_failed": "操作失敗",
 
-        "org_options_title": "层级行为",
-        "org_routing_escalation_help": "组织阶层中,发给子实体的讯息,主管不会即时抢答;只有子实体逾时静默(预设约 30 分钟)未回应时,才会升级给上层主管接手。broadcast 或直接 @主管 的讯息不受此限。",
+        "org_options_title": "層級行為",
+        "org_routing_escalation_help": "組織階層中,發給子實體的訊息,主管不會即時搶答;只有子實體逾時靜默(預設約 30 分鐘)未回應時,才會升級給上層主管接手。broadcast 或直接 @主管 的訊息不受此限。",
 
         "passive_health_title": "被動健檢",
         "passive_health_desc": "被動健檢會依設定週期自動檢查智能體健康狀態,可選擇自動修復;預設關閉。",
@@ -1235275,6 +1235872,61 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "租賃市集(上架、合約、歷史)綁定使用者帳號。請登入電子郵件帳號,或前往機器人廣場開始承租或上架。",
         "settings_rental_setup_cta": "設定租賃",
         "rental_needs_account": "請登入電子郵件帳號以管理租賃。",
+
+        "chat_user_filter_default_name": "我",
+        "chat_user_filter_chip_title": "只顯示你發送的訊息",
+        "chat_user_filter_help_aria": "關於 @user 篩選",
+        "chat_user_filter_help_title": "@user 篩選",
+        "chat_user_filter_help_what_label": "用途：",
+        "chat_user_filter_help_what": "按下後只顯示你（使用者）親自發送的訊息，過濾掉智能體的回應。",
+        "chat_user_filter_help_needs_label": "需要：",
+        "chat_user_filter_help_needs": "在個人設定中設定你的顯示名稱（若未設定，晶片會顯示「@我」）。",
+        "chat_user_filter_help_next_label": "下一步：",
+        "chat_user_filter_help_next": "按下方按鈕到個人設定頁面設定你的名稱，或直接按 @user 看效果。",
+        "chat_user_filter_help_goto_settings": "前往設定",
+        "chat_user_filter_help_close": "關閉",
+
+        "cron_skip_5h_label": "5小時用量超過 X% 跳過",
+        "cron_skip_7d_label": "週用量超過 Y% 跳過",
+        "cron_skip_help_text": "拉桿範圍 50–99。當指派智能體目前用量超過門檻時，這次 cron 觸發會跳過以保護高負載智能體；下個排程觸發會自動重試。",
+
+        "chat_routing_supervisor": "主管",
+
+        "chat_sendto_button_label_all": "傳送給 ALL",
+        "chat_sendto_button_label_single": "傳送給 {target}",
+        "chat_sendto_button_label_multi": "傳送給 {count} entities",
+        "chat_sendto_picker_title": "選擇傳送對象",
+        "chat_sendto_picker_select_all": "全選",
+        "chat_sendto_picker_confirm": "確認",
+        "chat_sendto_picker_cancel": "取消",
+
+        "cron_current_usage_label": "目前 5h: N% / 7d: M%",
+        "cron_skip_dispatch_reason": "跳過：用量超過閾值",
+
+        "chat_sendto_button_label_many_more": "+{count} 位",
+
+        "action_request_ratify_default_agree_badge": "⏳ 追認中 · 靜默視同同意",
+        "action_request_ratify_default_agree_hint": "若不處理，倒數結束後將自動送出並執行。",
+        "action_request_ratify_countdown_prefix": "距自動送出",
+        "action_request_ratify_sending": "即將送出…",
+        "action_request_ratify_hold_badge": "需你核可",
+        "action_request_ratify_hold_hint": "未經你核可不會送出。",
+        "action_request_recommended_badge_title": "僅供參考 · 不會自動送出",
+
+        "common_revoke": "撤銷",
+        "common_block": "封鎖",
+        "common_reset": "重設",
+        "common_archive": "封存",
+
+        "info_wishlist_promo_title": "讓你的 AI 夥伴替你找東西、賣東西",
+        "info_wishlist_promo_body_1": "你只要跟你的 AI 說一聲「我想買○○」或「我想賣○○」,它就會幫你去看看有沒有人剛好想賣或想買,然後幫你們牽線。",
+        "info_wishlist_promo_points_title": "三個讓你安心的地方:",
+        "info_wishlist_promo_point_1": "① 錢我們完全不碰——只幫你們牽線,不經手你的錢。",
+        "info_wishlist_promo_point_2": "② 要不要把聯絡方式給對方,一定是你本人點頭才算,對方也一樣。",
+        "info_wishlist_promo_point_3": "③ 你的 AI 只能替「你這邊」答應,不會偷偷替對方答應,也不會自己一個人把兩邊都答應了。",
+        "info_wishlist_promo_footer": "這個功能一開始是關著的,你想用再自己打開就好。",
+
+        "dialog_type_to_confirm": "輸入 {phrase} 以確認",
 },
 
 
@@ -1235404,6 +1236056,15 @@ const TRANSLATIONS = {
 
 
 "zh-CN": {
+        "dashboard_summary_loading_title": "正在加载实体",
+        "dashboard_summary_loading_meta": "正在检查实体槽位。",
+        "dashboard_summary_error_title": "无法加载实体列表",
+        "dashboard_summary_error_meta": "请检查连接后重试。",
+        "dashboard_summary_empty_title": "尚未绑定实体",
+        "dashboard_summary_empty_meta": "从下方新增槽位开始路由消息。",
+        "dashboard_summary_ready_one": "1 个实体可用",
+        "dashboard_summary_ready_many": "{count} 个实体可用",
+        "dashboard_summary_ready_meta": "{active} 个活动中，{channel} 个频道绑定，{e2ee} 个加密",
 
 
 
@@ -1276721,8 +1277382,8 @@ const TRANSLATIONS = {
 
         "kanban_nudge_interval_min": "分",
 
-        "feedback_category_help": "选择最符合你汇报的分类。AI 分流流程会根据分类不同运行不同的分类处理（bug = 复现检查，feature = 路线图匹配，design = 视觉 diff）。",
-        "feedback_photo_help": "附上能呈现问题情境的截图。最多 5 张；网页支持拖放。上传前 EXIF 地理位置信息会被移除。",
+        "feedback_category_help": "选择最符合你汇报的分类。AI 分流流程会按分类运行不同处理。",
+        "feedback_photo_help": "附上能呈现问题情境的截图。最多 5 张；网页支持拖放。存储前会移除 EXIF/GPS metadata。",
         "kanban_cron_recurring_notify_help": "卡片 cron 触发时发送聊天通知。低优先级的定期任务如果不想被 ping，可以关闭。",
         "kanban_nudge_advanced_help": "按实体覆盖督促间隔、状态、停用模式。大多数看板不需要此功能——除非某个实体有不同的节奏需求，否则保持收起状态。",
         "kanban_nudge_batch_help": "每个 cron tick 最多挑选几张 L1 候选卡发送提醒——这是设备级别的上限，不是每个实体 N 张。L2（优先升级）和 L3（自动封锁）不受此影响。L1/L2/L3 说明见 kanban-nudge spec。",
@@ -1295173,6 +1295834,10 @@ const TRANSLATIONS = {
         "chat_filter_summary_label": "筛选条件",
         "chat_filter_summary_count": "筛选条件 ({n})",
         "chat_filter_summary_close": "关闭筛选面板",
+        "chat_search_placeholder": "搜索历史消息…",
+        "chat_search_label": "搜索消息",
+        "chat_search_clear": "清除搜索",
+        "chat_search_no_results": "找不到符合的消息",
 
 
 
@@ -1318333,6 +1318998,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 出租",
+        "community_result_summary_default": "显示 Bot 广场结果",
+        "community_result_detail_default": "使用搜索、筛选、能力或费率缩小列表。",
+        "community_result_clear_filters": "清除筛选",
+        "community_result_filter_search": "搜索“{query}”",
+        "community_result_filter_category": "分类 {category}",
+        "community_result_filter_capabilities": "能力 {capabilities}",
+        "community_result_filter_rate": "费率 {min}-{max} e币/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} 个 Bot",
+        "community_result_count_many": "{count} 个 Bot",
+        "community_result_count_unknown": "Bot 广场结果",
+        "community_result_summary_filtered": "显示 {count}，符合 {filters}",
+        "community_result_summary_default_count": "显示 Bot 广场中的 {count}",
+        "community_result_detail_filtered": "按{sort}排序。清除筛选即可返回完整广场。",
+        "community_result_detail_default_sorted": "按{sort}排序。使用搜索、筛选、能力或费率缩小列表。",
+        "community_error_title": "无法加载 Bot 广场",
+        "community_error_desc": "请检查连接后重试。",
 
 
 
@@ -1362126,6 +1362808,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "您提交的回饋將显示於此。",
+        "feedback_filter_empty_sub": "{label}：已提交 {count} 条反馈。",
 
 
 
@@ -1658593,6 +1659276,7 @@ const TRANSLATIONS = {
 
 
         "mc_bulk_undo": "复原",
+        "mc_note_deleted": "便签已删除",
 
 
 
@@ -1849072,6 +1849756,25 @@ const TRANSLATIONS = {
         "mr_listing_paused_toast": "上架项目已暂停",
         "mr_listing_resumed_toast": "上架项目已重新上线",
         "mr_listing_delisted_toast": "上架项目已下架",
+        "mr_result_loading": "正在加载租赁工作区",
+        "mr_result_hint": "分页会分开显示租借、出租、上架项目与申诉。",
+        "mr_result_loading_tab": "正在加载{label}",
+        "mr_result_ready": "显示 {count} 条{label}",
+        "mr_result_empty": "暂无{label}",
+        "mr_result_error": "{label}加载失败",
+        "mr_result_label_renter": "租借合约",
+        "mr_result_label_owner": "出租合约",
+        "mr_result_label_listings": "上架项目",
+        "mr_result_label_disputes": "申诉",
+        "mr_result_meta_contracts": "{active} 进行中 · {suspended} 暂停 · {ended} 已结束",
+        "mr_result_meta_listings": "{listed} 已上架 · {paused} 已暂停 · {draft} 草稿",
+        "mr_result_meta_disputes": "{open} 处理中 · {resolved} 已解决 · {rejected} 已拒绝",
+        "mr_empty_renter_help": "从 Bot 广场租用 bot 后，进行中的合约会显示在这里。",
+        "mr_empty_owner_help": "当有人租用你已上架的 bot，该合约会显示在这里。",
+        "mr_empty_listings_help": "从代理卡片建立上架项目，让你的 bot 可被其他人租用。",
+        "mr_empty_disputes_help": "你提出的申诉与 SLA 状态会显示在这里。",
+        "mr_load_error_help": "此分页没有加载成功。请检查连接或重试。",
+        "mr_retry": "重试",
         "chat_mention_unresolved": "找不到 @mention 对应的实体：{tokens}",
         "chat_scroll_to_latest": "卷动到最新讯息",
         "chat_schedule_title": "⏰ 排程讯息",
@@ -1849114,6 +1849817,7 @@ const TRANSLATIONS = {
         "chip_popover_not_supported": "此引用类型尚未支援预览",
         "chip_popover_requote": "再引用到聊天",
         "chip_popover_open_full": "打开完整页面 →",
+        "chip_popover_screenshots": "📸 截图",
         "chip_popover_cycle": "已在引用堆叠上",
         "chip_popover_too_deep": "太深，请直接跳页",
         "chip_popover_requoted": "已引用至聊天",
@@ -1849455,6 +1850159,84 @@ const TRANSLATIONS = {
         "wallet_no_account_help": "e-coin 钱包（余额、充值、记录）绑定于用户账号。仅绑定设备的会话尚无钱包 — 请至设置登录或创建账号以启用。",
         "mr_no_account": "登录 email 账号后即可管理租赁。",
         "mr_no_account_help": "租赁刊登与合约绑定于用户账号。仅绑定设备的会话尚无账号 — 请至设置登录或创建账号以开始使用。",
+
+        "chat_user_filter_default_name": "我",
+        "chat_user_filter_chip_title": "只显示你发送的消息",
+        "chat_user_filter_help_aria": "关于 @user 过滤",
+        "chat_user_filter_help_title": "@user 过滤",
+        "chat_user_filter_help_what_label": "用途：",
+        "chat_user_filter_help_what": "按下后只显示你（用户）亲自发送的消息，过滤掉智能体的回复。",
+        "chat_user_filter_help_needs_label": "需要：",
+        "chat_user_filter_help_needs": "在个人设置中设定你的显示名称（若未设定，晶片会显示「@我」）。",
+        "chat_user_filter_help_next_label": "下一步：",
+        "chat_user_filter_help_next": "点下方按钮到个人设置页面设定你的名称，或直接按 @user 看效果。",
+        "chat_user_filter_help_goto_settings": "前往设置",
+        "chat_user_filter_help_close": "关闭",
+
+        "usage_warning_enable_label": "启用使用量警告",
+        "usage_warning_enable_help": "当AI token用量接近限制时显示警告",
+        "usage_warning_5h_label": "5小时警告",
+        "usage_warning_5h_help": "当5小时用量超过此百分比时显示警告",
+        "usage_warning_7d_label": "7天警告",
+        "usage_warning_7d_help": "当7天用量超过此百分比时显示警告",
+
+        "chat_routing_supervisor": "主管",
+
+        "cron_skip_5h_label": "5小时用量超过 X% 跳过",
+        "cron_skip_7d_label": "周用量超过 Y% 跳过",
+        "cron_skip_help_text": "此排程在 entity 5 小时用量超过 X% 或 7 天用量超过 Y% 时会跳过。预设值保护高负载 entity 不被 cron 额外加负担。可调范围 50%-99%。跳过的 cron 下次 tick 自动重试，不会 lost。",
+        "cron_current_usage_label": "目前 5h: N% / 7d: M%",
+        "cron_skip_dispatch_reason": "跳过：用量超过阈值",
+
+        "action_request_ratify_default_agree_badge": "⏳ 追认中 · 静默视同同意",
+        "action_request_ratify_default_agree_hint": "若不处理，倒计时结束后将自动送出并执行。",
+        "action_request_ratify_countdown_prefix": "距自动送出",
+        "action_request_ratify_sending": "即将送出…",
+        "action_request_ratify_hold_badge": "需你核可",
+        "action_request_ratify_hold_hint": "未经你核可不会送出。",
+        "action_request_recommended_badge_title": "仅供参考 · 不会自动送出",
+
+        "action_request_ratify_desc": "计划 E 對服务器已武装、低風險且可逆的决策啟用静默追认；預設開啟；要停用請關閉此開關。",
+        "action_request_ratify_grace_desc": "服务器已武装 default_agree 决策後，沉默多久才自動视同同意。",
+        "action_request_ratify_grace_hours": "時",
+        "action_request_ratify_grace_label": "追认静默宽限",
+        "action_request_ratify_grace_minutes": "分",
+        "action_request_ratify_guardrails_desc": "只讀的服务器檢查；浏览器無法放寬。",
+        "action_request_ratify_guardrails_label": "追认护栏",
+        "action_request_ratify_guardrails_value": "Fail-closed：服务器會重算模式，只有 default_agree 可自動完成，觸發時會重新执行裁决，高風險路徑差異保持，並從審計歷史強制执行 N 上限。",
+        "action_request_ratify_max_attempts_desc": "每個请求可被服务器已武装 default_agree 的次数上限。",
+        "action_request_ratify_max_attempts_label": "追认 N 上限",
+        "action_request_ratify_title": "决策追认",
+        "action_request_realtime_desc": "當代理發出、完成或略過请求時，立即刷新收件匣。",
+        "action_request_realtime_label": "即時刷新收件匣",
+        "action_request_reply_resize_desc": "在需要您回覆框加上拖曳／鍵盤拉桿，讓你把回覆框拉高。預設開啟。",
+        "action_request_reply_resize_label": "需要您回覆框可拉桿調整大小",
+        "action_request_settings_desc": "管理代理遇到需要您決定時顯示的 Human-in-the-Loop 收件匣。",
+        "action_request_settings_title": "需要您请求",
+        "action_request_timeout_auto_dismiss": "B. 自动略过",
+        "action_request_timeout_consensus": "D. 啟動协商",
+        "action_request_timeout_keep": "A. 保持待处理",
+        "action_request_timeout_minutes_desc": "超過幾分鐘未回覆後执行所选策略。",
+        "action_request_timeout_minutes_label": "超时时长",
+        "action_request_timeout_policy_desc": "选擇需要您请求超时未回覆後，超时 worker 要执行的處理。",
+        "action_request_timeout_policy_label": "未回覆请求策略",
+        "action_request_timeout_safe_default": "C. 安全默认",
+        "action_request_consensus_reply": "记录共识",
+        "action_request_consensus_triggered": "协商中",
+        "action_request_ratify_grace_help": "决策被武装为 default_agree 后，沉默多久才自动视同同意。范围 5 分钟到 30 天，默认 1440（24 小时）。只有可逆、低风险的决策才会被武装。",
+        "action_request_ratify_guardrails_help": "这些安全检查在服务器执行、无法从浏览器关闭：只有可逆低风险决策符合资格，判定为 fail-closed 并在触发时重新检查，不可逆/高风险路径一律 hold，重试上限由 audit history 强制。",
+        "action_request_ratify_max_attempts_help": "同一请求最多被服务器武装 default_agree 几轮，超过就升级给你、不再自动完成。范围 1-5，默认 2。",
+        "action_request_realtime_help": "开启时，收件箱通过 socket 实时更新，当代理发出、解决或关闭请求时即刻反映。关闭时，仅在定期轮询时刷新。",
+        "action_request_realtime_off": "手动刷新",
+        "action_request_realtime_on": "即时",
+        "action_request_timeout_minutes_help": "允许范围为 5 分钟到 30 天。默认 1440 分钟（24 小时）。",
+        "action_request_timeout_policy_help": "超过等待时限后，未回覆的请求会怎样。",
+
+        "common_revoke": "撤销",
+        "common_block": "封锁",
+        "common_reset": "重置",
+        "common_archive": "归档",
+        "common_clear": "清除",
 },
 
 
@@ -2083021,8 +2083803,8 @@ const TRANSLATIONS = {
 
         "kanban_nudge_interval_min": "分",
 
-        "feedback_category_help": "報告内容に最も合ったカテゴリを選択してください。AI支援はカテゴリごとに異なるトリアージフローを実行します（bug＝再現確認、feature＝ロードマップ照合、design＝視覚差分）。",
-        "feedback_photo_help": "問題の状況を示すスクリーンショットを添付してください。最大5枚。Webアップローはドラッグ＆ドロップに対応。EXIF位置情報はアップロード前に削除されます。",
+        "feedback_category_help": "報告内容に最も合ったカテゴリを選択してください。AI支援はカテゴリごとに異なるトリアージフローを実行します。",
+        "feedback_photo_help": "問題の状況を示すスクリーンショットを添付してください。最大5枚。Webアップロードはドラッグ＆ドロップに対応しています。保存前にEXIF/GPSメタデータを削除します。",
         "kanban_cron_recurring_notify_help": "このカードのcron起動時にチャット通知を送信します。低優先度の定期ジョブでpingされたくない場合は無効にしてください。",
         "kanban_nudge_advanced_help": "督促間隔・ステータス・停止モードを実体ごとに上書きします。ほとんどのボードでは不要—特定の実体が異なるリズムを必要とする場合のみ展開してください。",
         "kanban_nudge_batch_help": "各cron tickで選択するL1停滞カードの最大数—デバイス全体のキャップであり実体ごとではありません。L2（優先度上昇）とL3（自動ブロック）は影響を受けません。L1/L2/L3はkanban-nudge spec参照。",
@@ -2084444,6 +2085226,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "送信したフィードバックはここに表示されます。",
+        "feedback_filter_empty_sub": "{label}: 送信済みフィードバック {count} 件。",
 
 
 
@@ -2136043,6 +2136826,32 @@ const TRANSLATIONS = {
 
 
         "invite_qr_btn_download": "Download PNG",
+        "invite_qr_btn_copied": "コピーしました",
+        "invite_qr_btn_downloaded": "ダウンロードしました",
+        "invite_qr_status_copy_unavailable": "クリップボードは利用できません",
+        "invite_qr_status_copied": "コピーしました",
+        "invite_qr_status_copy_failed": "コピーに失敗しました",
+        "invite_qr_status_loading_code": "アカウントコードを確認中",
+        "invite_qr_status_loading_code_detail": "ブラウザにサインインしていない場合、手動でコードを入力できます",
+        "invite_qr_helper_loaded": "アカウント招待コードを読み込みました",
+        "invite_qr_status_manual": "手動コード入力",
+        "invite_qr_status_manual_detail": "アカウントコードが読み込まれていません。コードを入力または貼り付けて画像をパーソナライズしてください",
+        "invite_qr_helper_sanitized": "文字と数字のみ保持されます",
+        "invite_qr_helper_ready": "プレビューはコードの変更時に自動更新されます",
+        "invite_qr_helper_empty": "文字と数字のみサポートされています。プレビューはコードが利用可能になるまでプレースホルダーを使用します",
+        "invite_qr_status_failed": "プレビューの生成に失敗しました",
+        "invite_qr_status_failed_detail": "他の画像サイズを試すか、ページを再読み込みしてください",
+        "invite_qr_status_ready": "準備完了",
+        "invite_qr_status_ready_detail": "プレビューは最新の状態です。準備ができたらPNGをダウンロードまたはコピーしてください",
+        "invite_qr_status_rendering": "プレビューを生成中",
+        "invite_qr_status_rendering_code": "この招待リンクのQRコードを作成しています",
+        "invite_qr_status_rendering_empty": "コードが利用できるようになるまでプレースホルダープレビューを作成しています",
+        "invite_qr_status_qr_fallback": "QRコードの代替案を生成しました",
+        "invite_qr_status_qr_fallback_detail": "QRコードライブラリが読み込まれませんでしたが、ポスターは引き続きダウンロードできます",
+        "invite_qr_status_downloaded": "ダウンロードしました",
+        "invite_qr_status_placeholder": "プレースホルダープレビュー",
+        "invite_qr_status_placeholder_detail": "招待コードを入力してプレースホルダーリンクを置き換えてください",
+
 
 
 
@@ -2147951,6 +2148760,48 @@ const TRANSLATIONS = {
 
 
         "admin_loading": "管理データを読み込み中...",
+
+        "action_request_ratify_desc": "サーバー武装済み低リスク可逆決定の計画E受動承認。デフォルトはオン；オフにしてopting out也可。",
+        "action_request_ratify_grace_desc": "サーバー武装済みdefault_agree決定後、沈黙で同意とみなすまでの時間。",
+        "action_request_ratify_grace_hours": "時",
+        "action_request_ratify_grace_label": "追認サイレント猶予",
+        "action_request_ratify_grace_minutes": "分",
+        "action_request_ratify_guardrails_desc": "読み取り専用のサーバーチェック。ブラウザでは緩和できません。",
+        "action_request_ratify_guardrails_label": "追認ガーディンレール",
+        "action_request_ratify_guardrails_value": "Fail-closed：サーバーがモードを再計算、default_agreeのみが自動解決、発火時に裁定を再実行、高リスクパス／差分は保持、監査履歴からN上限を強制。",
+        "action_request_ratify_max_attempts_desc": "リクエストごとのサーバー武装済みdefault_agree的最大回数。",
+        "action_request_ratify_max_attempts_label": "追認N上限",
+        "action_request_ratify_title": "決定追認",
+        "action_request_realtime_desc": "エージェントがリクエストを発行、解決、却下すると即座に受信箱を更新します。",
+        "action_request_realtime_label": "ライブ更新受信箱",
+        "action_request_reply_resize_desc": "Needs-you回答ボックスにドラッグ／キーボードハンドルを追加し、高さを調整できます。デフォルトはオン。",
+        "action_request_reply_resize_label": "回答ボックスリサイズ",
+        "action_request_settings_desc": "判断が必要なエージェントリクエストのHuman-in-the-Loop受信箱を制御します。",
+        "action_request_settings_title": "Needs-youリクエスト",
+        "action_request_timeout_auto_dismiss": "B. 自動却下",
+        "action_request_timeout_consensus": "D. 合意形成開始",
+        "action_request_timeout_keep": "A. 保留",
+        "action_request_timeout_minutes_desc": "選択した未応答ポリシーが実行されるまでの分数。",
+        "action_request_timeout_minutes_label": "タイムアウト時間",
+        "action_request_timeout_policy_desc": "Needs-youリクエストが期限を過ぎても応答がない場合、timeout workerが実行する処理を選びます。",
+        "action_request_timeout_policy_label": "未応答リクエストポリシー",
+        "action_request_timeout_safe_default": "C. セーフデフォルト",
+        "action_request_consensus_reply": "合意を記録",
+        "action_request_consensus_triggered": "合意形成中",
+        "action_request_ratify_grace_help": "決定がdefault-agreeに武装されてから、沈黙が自動的に解決されるまでの待機時間。範囲は5分から30日間、デフォルト1440（24時間）。可逆的で低リスクの決定のみ武装されます。",
+        "action_request_ratify_guardrails_help": "これらの安全チェックはサーバー上で実行され、ブラウザからオフにできません：可逆的な低リスク決定のみ対象、判定はfail-closedで発火時に再チェック、不可逆/高リスクパスは常にhold、試行上限は監査履歴から強制。",
+        "action_request_ratify_max_attempts_help": "1つのリクエストに対するサーバー武装済みdefault-agreeラウンドの最大数。超過すると自動解決ではなくあなたにエスカレーション。範囲1-5、デフォルト2。",
+        "action_request_realtime_help": "オンの場合、エージェントがリクエストを送出・解決・却下するとソケット経由で受信箱がリアルタイムに更新されます。オフの場合、定期ポーリング時のみ更新されます。",
+        "action_request_realtime_off": "手動更新",
+        "action_request_realtime_on": "ライブ",
+        "action_request_timeout_minutes_help": "許容範囲は5分から30日。デフォルトは1440分（24時間）。",
+        "action_request_timeout_policy_help": "タイムアウト期間後に応答しなかったリクエストはどうなるか。",
+        "action_request_ratify_countdown_prefix": "自動送信まで",
+        "action_request_ratify_default_agree_badge": "⏳ あなたの判断を待機中 · 沈黙は承認",
+        "action_request_ratify_default_agree_hint": "何もしなければ、カウントダウン終了時に自動的に送信・実行されます。",
+        "action_request_ratify_hold_badge": "あなたの承認が必要です",
+        "action_request_ratify_hold_hint": "あなたの承認がない限り何も送信されません。",
+        "action_request_ratify_sending": "送信中…",
 
 
 
@@ -2347559,6 +2348410,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Bot Plaza の結果を表示しています",
+        "community_result_detail_default": "検索、フィルター、機能、料金で一覧を絞り込めます。",
+        "community_result_clear_filters": "フィルターをクリア",
+        "community_result_filter_search": "検索「{query}」",
+        "community_result_filter_category": "カテゴリ {category}",
+        "community_result_filter_capabilities": "機能 {capabilities}",
+        "community_result_filter_rate": "料金 {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} Bot",
+        "community_result_count_many": "{count} Bot",
+        "community_result_count_unknown": "Bot Plaza の結果",
+        "community_result_summary_filtered": "{filters} に一致する {count} を表示しています",
+        "community_result_summary_default_count": "Bot Plaza から {count} を表示しています",
+        "community_result_detail_filtered": "{sort}順で並べ替え。フィルターをクリアすると Plaza 全体に戻ります。",
+        "community_result_detail_default_sorted": "{sort}順で並べ替え。検索、フィルター、機能、料金で一覧を絞り込めます。",
+        "community_error_title": "Bot Plaza を読み込めません",
+        "community_error_desc": "接続を確認してからもう一度お試しください。",
 
 
 
@@ -2412596,14 +2413464,6 @@ const TRANSLATIONS = {
         "session_expired_relogin": "セッションの有効期限が切れました。再度ログインしてください",
         "session_invalid_relogin": "続行するにはログインしてください",
 
-        "greet_returning_template": "前回は「{topic}」について話しましたね。続きを話しますか？",
-        "greet_continue": "前回の続きを話す",
-        "greet_change_topic": "別の話題にする",
-        "greet_continue_send_text": "前回の話題の続きをしましょう",
-        "greet_welcome_new": "ようこそ！あなたのAIパートナーです。質問をタップして始めましょう：",
-        "greet_starter_1": "何を手伝ってくれますか？",
-        "greet_starter_2": "今日のタスクを計画して",
-        "greet_starter_3": "3文で自己紹介して",
 
         "kb_toast_moved": "{col} に移動しました",
         "kb_toast_archived": "アーカイブしました",
@@ -2412728,6 +2413588,19 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "レンタル市場(出品・契約・履歴)はアカウントに紐付きます。メールアカウントでサインインするか、Plaza でレンタル/出品を開始してください。",
         "settings_rental_setup_cta": "レンタルを設定",
         "rental_needs_account": "レンタルを管理するにはメールアカウントでサインインしてください。",
+
+        "usage_warning_enable_label": "使用量警告を有効にする",
+        "usage_warning_enable_help": "AIトークン使用量が制限に近づいたとき警告を表示",
+        "usage_warning_5h_label": "5時間警告",
+        "usage_warning_5h_help": "5時間の使用量がこの割合を超えたとき警告を表示",
+        "usage_warning_7d_label": "7日間警告",
+        "usage_warning_7d_help": "7日間の使用量がこの割合を超えたとき警告を表示",
+
+        "cron_skip_5h_label": "5時間用量が X% を超えたらスキップ",
+        "cron_skip_7d_label": "週用量 Y% を超えたらスキップ",
+        "cron_skip_help_text": "Entity の5時間用量 X% または7日用量 Y% を超えるとスキップ。デフォルト（85%/95%）はiamentity を保護。調整可能 50%-99%。スキップされた cron は次の tick で自動再試行、lost しない。",
+        "cron_current_usage_label": "現在: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "スキップ: 用量超過",
 },
 
 
@@ -2646170,8 +2647043,8 @@ const TRANSLATIONS = {
 
         "kanban_nudge_interval_min": "분",
 
-        "feedback_category_help": "보고서에 가장 적합한 카테고리를 선택하세요. AI 지원은 카테고리별로 다른 트라이아지 흐름을 실행합니다 (bug=재현 확인, feature=로드맵 매칭, design=시각적 차이).",
-        "feedback_photo_help": "문제 상황을 보여주는 스크린샷을 첨부하세요. 최대 5장; 웹 업로드는 드래그앤드롭 지원. EXIF 위치 정보는 업로드 전에 제거됩니다.",
+        "feedback_category_help": "보고서에 가장 적합한 카테고리를 선택하세요. AI 지원은 카테고리별로 다른 트라이아지 흐름을 실행합니다.",
+        "feedback_photo_help": "문제 상황을 보여주는 스크린샷을 첨부하세요. 최대 5장; 웹 업로드는 드래그앤드롭을 지원합니다. 저장 전에 EXIF/GPS 메타데이터를 제거합니다.",
         "kanban_cron_recurring_notify_help": "이 카드의 cron 실행 시 채팅 알림을 전송합니다. 저우선순위 정기 작업에서 ping을 받고 싶지 않으면 비활성화하세요.",
         "kanban_nudge_advanced_help": "촉진間隔·상태·중단 모드를 실체별로 재정의합니다. 대부분의 환경에서는 필요 없이며—특정 실체가 다른 주기가 필요한 경우에만 펼치세요.",
         "kanban_nudge_batch_help": "각 cron tick에서 선택하는 L1 정체 카드 최대 수—장치 전체 상한이며 실체별 아닙니다. L2(우선순위 상승)와 L3(자동 차단)는 영향을 받지 않습니다. L1/L2/L3은 kanban-nudge spec 참조.",
@@ -2647593,6 +2648466,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "제출한 피드백이 여기에 표시됩니다.",
+        "feedback_filter_empty_sub": "{label}: 제출된 피드백 {count}건.",
 
 
 
@@ -2699188,6 +2700062,32 @@ const TRANSLATIONS = {
 
 
         "invite_qr_btn_download": "Download PNG",
+        "invite_qr_btn_copied": "복사됨",
+        "invite_qr_btn_downloaded": "다운로드됨",
+        "invite_qr_status_copy_unavailable": "클립보드 사용 불가",
+        "invite_qr_status_copied": "복사됨",
+        "invite_qr_status_copy_failed": "복사 실패",
+        "invite_qr_status_loading_code": "계정 코드 확인 중",
+        "invite_qr_status_loading_code_detail": "브라우저에 로그인하지 않은 경우 코드를 수동으로 입력할 수 있습니다",
+        "invite_qr_helper_loaded": "계정 초대 코드를 불러왔습니다",
+        "invite_qr_status_manual": "수동 코드 입력",
+        "invite_qr_status_manual_detail": "여기에 계정 코드가 로드되지 않았습니다. 코드를 입력하거나 붙여넣어 이미지를 개인화하세요",
+        "invite_qr_helper_sanitized": "문자와 숫자만 유지됩니다",
+        "invite_qr_helper_ready": "코드가 변경되면 미리보기가 자동으로 업데이트됩니다",
+        "invite_qr_helper_empty": "문자와 숫자만 지원됩니다. 미리보기는 코드를 사용할 수 있을 때까지 플레이스홀더를 사용합니다",
+        "invite_qr_status_failed": "미리보기 실패",
+        "invite_qr_status_failed_detail": "다른 이미지 크기를 시도하거나 페이지를 새로고침하세요",
+        "invite_qr_status_ready": "준비됨",
+        "invite_qr_status_ready_detail": "미리보기가 현재 상태입니다. 준비가 되면 PNG를 다운로드하거나 복사하세요",
+        "invite_qr_status_rendering": "미리보기 생성 중",
+        "invite_qr_status_rendering_code": "이 초대 링크의 QR 이미지를 만들고 있습니다",
+        "invite_qr_status_rendering_empty": "코드를 사용할 수 있을 때까지 플레이스홀더 미리보기를 만들고 있습니다",
+        "invite_qr_status_qr_fallback": "QR 대체方案的 생성됨",
+        "invite_qr_status_qr_fallback_detail": "QR 라이브러리가 로드되지 않았지만 포스터는 계속 다운로드할 수 있습니다",
+        "invite_qr_status_downloaded": "다운로드됨",
+        "invite_qr_status_placeholder": "플레이스홀더 미리보기",
+        "invite_qr_status_placeholder_detail": "초대 코드를 입력하여 플레이스홀더 링크를 대체하세요",
+
 
 
 
@@ -2711096,6 +2711996,48 @@ const TRANSLATIONS = {
 
 
         "admin_loading": "관리자 데이터 로딩 중...",
+
+        "action_request_ratify_desc": "서버 무장 저위험 가역 결정에 대한 계획 E 수동 승인. 기본값은 켜기; 끄기로 선택 해제 가능.",
+        "action_request_ratify_grace_desc": "서버 무장 default_agree 결정 후沈黙으로 동의로 처리까지의 시간.",
+        "action_request_ratify_grace_hours": "시",
+        "action_request_ratify_grace_label": "비준 무응답 유예",
+        "action_request_ratify_grace_minutes": "분",
+        "action_request_ratify_guardrails_desc": "읽기 전용 서버 검사. 브라우저에서 약화할 수 없습니다.",
+        "action_request_ratify_guardrails_label": "비준 가드레일",
+        "action_request_ratify_guardrails_value": "Fail-closed: 서버가 모드를 다시 계산, default_agree만 자동 해결, 발화 시 판정 재실행, 고위험 경로/차이 보류, 감사 기록에서 N 상한 강제.",
+        "action_request_ratify_max_attempts_desc": "요청당 서버 무장 default_agree 라운드의 최대 횟수.",
+        "action_request_ratify_max_attempts_label": "비준 N 상한",
+        "action_request_ratify_title": "결정 비준",
+        "action_request_realtime_desc": "에이전트가 요청을 발행, 해결 또는 거부하면 수신함을 즉시 새로고침합니다.",
+        "action_request_realtime_label": "실시간 수신함 새로고침",
+        "action_request_reply_resize_desc": "Needs-you 답변 상자에 드래그/키보드 핸들을 추가하여 높이를 늘릴 수 있습니다. 기본값은 켜기입니다.",
+        "action_request_reply_resize_label": "답변 상자 크기 조절",
+        "action_request_settings_desc": "결정이 필요한 에이전트 요청의 Human-in-the-Loop 수신함을 제어합니다.",
+        "action_request_settings_title": "Needs-you 요청",
+        "action_request_timeout_auto_dismiss": "B. 자동 거부",
+        "action_request_timeout_consensus": "D. 합의 시작",
+        "action_request_timeout_keep": "A. 보류 유지",
+        "action_request_timeout_minutes_desc": "선택한 미응답 정책이 실행되기 전의 분 수.",
+        "action_request_timeout_minutes_label": "타임아웃 기간",
+        "action_request_timeout_policy_desc": "Needs-you 요청이 기한을 넘겨仍未 응답할 경우 timeout worker가 실행할 작업을 선택합니다.",
+        "action_request_timeout_policy_label": "미응답 요청 정책",
+        "action_request_timeout_safe_default": "C. 안전 기본값",
+        "action_request_consensus_reply": "합의 기록",
+        "action_request_consensus_triggered": "합의 진행 중",
+        "action_request_ratify_grace_help": "결정이 default-agree로 무장된 후 침묵이 자동 해결될 때까지의 대기 시간. 범위 5분~30일, 기본값 1440(24시간). 가역적이고 저위험 결정만 무장됩니다.",
+        "action_request_ratify_guardrails_help": "이 안전 검사는 서버에서 실행되며 브라우저에서 끌 수 없습니다: 가역적 저위험 결정만 대상, 판정은 fail-closed이며 발화 시 재검사, 비가역적/고위험 경로는 항상 hold, 시도 상한은 감사 기록에서 강제.",
+        "action_request_ratify_max_attempts_help": "하나의 요청에 대한 서버 무장 default-agree 라운드의 최대 횟수. 초과 시 자동 해결 대신 사용자에게 에스컬레이션. 범위 1-5, 기본값 2.",
+        "action_request_realtime_help": "켜면 에이전트가 요청을 발송, 해결 또는 해제할 때 소켓을 통해 수신함이 실시간으로 업데이트됩니다. 끄면 주기적 폴링 시에만 새로고침됩니다.",
+        "action_request_realtime_off": "수동 새로고침",
+        "action_request_realtime_on": "실시간",
+        "action_request_timeout_minutes_help": "허용 범위는 5분에서 30일. 기본값은 1440분(24시간).",
+        "action_request_timeout_policy_help": "타임아웃 기간 후 응답하지 않은 요청에 대한 처리 방법.",
+        "action_request_ratify_countdown_prefix": "자동 전송까지",
+        "action_request_ratify_default_agree_badge": "⏳ 결정 대기 중 · 침묵은 승인",
+        "action_request_ratify_default_agree_hint": "아무 조치도 취하지 않으면 카운트다운이 끝날 때 자동으로 전송 및 실행됩니다.",
+        "action_request_ratify_hold_badge": "승인이 필요합니다",
+        "action_request_ratify_hold_hint": "승인하지 않으면 아무것도 전송되지 않습니다.",
+        "action_request_ratify_sending": "전송 중…",
 
 
 
@@ -2896328,6 +2897270,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Bot Plaza 결과 표시 중",
+        "community_result_detail_default": "검색, 필터, 기능 또는 요금으로 목록을 좁혀보세요.",
+        "community_result_clear_filters": "필터 지우기",
+        "community_result_filter_search": "검색 \"{query}\"",
+        "community_result_filter_category": "카테고리 {category}",
+        "community_result_filter_capabilities": "기능 {capabilities}",
+        "community_result_filter_rate": "요금 {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count}개 Bot",
+        "community_result_count_many": "{count}개 Bot",
+        "community_result_count_unknown": "Bot Plaza 결과",
+        "community_result_summary_filtered": "{filters}와 일치하는 {count} 표시 중",
+        "community_result_summary_default_count": "Bot Plaza에서 {count} 표시 중",
+        "community_result_detail_filtered": "{sort}순 정렬. 필터를 지우면 전체 Plaza로 돌아갑니다.",
+        "community_result_detail_default_sorted": "{sort}순 정렬. 검색, 필터, 기능 또는 요금으로 목록을 좁혀보세요.",
+        "community_error_title": "Bot Plaza를 불러올 수 없습니다",
+        "community_error_desc": "연결을 확인한 뒤 다시 시도하세요.",
 
 
 
@@ -2942974,14 +2943933,6 @@ const TRANSLATIONS = {
         "session_expired_relogin": "세션이 만료되었습니다. 다시 로그인해 주세요",
         "session_invalid_relogin": "계속하려면 로그인해 주세요",
 
-        "greet_returning_template": "지난번에 \"{topic}\"에 대해 이야기했죠. 이어서 할까요?",
-        "greet_continue": "지난 대화 이어가기",
-        "greet_change_topic": "다른 주제로",
-        "greet_continue_send_text": "지난 주제를 이어서 이야기해요",
-        "greet_welcome_new": "환영합니다! 저는 당신의 AI 파트너예요. 질문을 눌러 시작하세요:",
-        "greet_starter_1": "무엇을 도와줄 수 있나요?",
-        "greet_starter_2": "오늘 할 일을 계획해 줘",
-        "greet_starter_3": "세 문장으로 자기소개해 줘",
 
         "kb_toast_moved": "{col}(으)로 이동했습니다",
         "kb_toast_archived": "보관했습니다",
@@ -2943106,6 +2944057,19 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "대여 마켓(목록·계약·이력)은 계정에 연결됩니다. 이메일 계정으로 로그인하거나 Plaza에서 대여/등록을 시작하세요.",
         "settings_rental_setup_cta": "대여 설정",
         "rental_needs_account": "대여를 관리하려면 이메일 계정으로 로그인하세요.",
+
+        "usage_warning_enable_label": "사용량 경고 활성화",
+        "usage_warning_enable_help": "AI 토큰 사용량이 한도에 근접하면 경고 표시",
+        "usage_warning_5h_label": "5시간 경고",
+        "usage_warning_5h_help": "5시간 사용량이 이 비율을 초과하면 경고 표시",
+        "usage_warning_7d_label": "7일 경고",
+        "usage_warning_7d_help": "7일 사용량이 이 비율을 초과하면 경고 표시",
+
+        "cron_skip_5h_label": "5시간 사용량 X% 초과 시 건너뛰기",
+        "cron_skip_7d_label": "주 사용량 Y% 초과 시 건너뛰기",
+        "cron_skip_help_text": "Entity 5시간 사용량 X% 또는 7일 사용량 Y% 초과 시 건너뛰기. 기본값(85%/95%)은 고부하 entity 보호. 조정 가능 50%-99%. 건너뛴 cron은 다음 tick에서 자동 재시도.",
+        "cron_current_usage_label": "현재: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "건너뛰기: 사용량 초과",
 },
 
 
@@ -2943363,6 +2944327,15 @@ const TRANSLATIONS = {
 
 
     "zh-TW": {
+        "dashboard_summary_loading_title": "載入實體中",
+        "dashboard_summary_loading_meta": "正在檢查實體欄位。",
+        "dashboard_summary_error_title": "無法載入實體清單",
+        "dashboard_summary_error_meta": "請檢查連線後重試。",
+        "dashboard_summary_empty_title": "尚未綁定實體",
+        "dashboard_summary_empty_meta": "從下方新增欄位開始路由訊息。",
+        "dashboard_summary_ready_one": "1 個實體可用",
+        "dashboard_summary_ready_many": "{count} 個實體可用",
+        "dashboard_summary_ready_meta": "{active} 個活動中，{channel} 個頻道綁定，{e2ee} 個加密",
         "chat_receiver_hint_auto": "自動",
         "mission_tab_interactive_dev": "交互開發",
         "usage_warning_title": "用量警告",
@@ -2943792,7 +2944765,7 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmapdesc": "瞭解如何讓您的應用程式准备好发布。發布是一個5步驟流程：",
+        "guidepubroadmapdesc": "瞭解如何讓您的應用程式準備好發布。發布是一個5步驟流程：",
 
 
 
@@ -2944746,6 +2945719,16 @@ const TRANSLATIONS = {
         "chat_routing_org_upward": "上報",
 
         "chat_routing_unspecified": "未指定",
+
+        "cron_skip_5h_label": "5小時用量超過 X% 跳過",
+        "cron_skip_7d_label": "週用量超過 Y% 跳過",
+        "cron_skip_help_text": "此排程在 entity 5 小時用量超過 X% 或 7 天用量超過 Y% 時會跳過。預設值保護高負載 entity 不被 cron 額外加負擔。可調範圍 50%-99%。跳過的 cron 下次 tick 自動重試，不會 lost。",
+        "cron_current_usage_label": "目前 5h: N% / 7d: M%",
+        "cron_skip_dispatch_reason": "跳過：用量超過閾值",
+        "community_error_title": "無法載入 Bot 廣場",
+        "community_error_desc": "請檢查連線後再試一次。",
+
+        "dialog_type_to_confirm": "輸入 {phrase} 以確認",
 },
 
 
@@ -3180760,6 +3181743,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "ข้อเสนอแนะที่ส่งจะแสดงที่นี่",
+        "feedback_filter_empty_sub": "{label}: ส่งข้อเสนอแนะแล้ว {count} รายการ",
 
 
 
@@ -3222363,6 +3223347,32 @@ const TRANSLATIONS = {
 
 
         "invite_qr_btn_download": "Download PNG",
+        "invite_qr_btn_copied": "คัดลอกแล้ว",
+        "invite_qr_btn_downloaded": "ดาวน์โหลดแล้ว",
+        "invite_qr_status_copy_unavailable": "คลิปบอร์ดไม่พร้อมใช้งาน",
+        "invite_qr_status_copied": "คัดลอกแล้ว",
+        "invite_qr_status_copy_failed": "คัดลอกไม่สำเร็จ",
+        "invite_qr_status_loading_code": "กำลังตรวจสอบรหัสบัญชี",
+        "invite_qr_status_loading_code_detail": "หากเบราว์เซอร์ไม่ได้ลงชื่อเข้าใช้ คุณสามารถพิมพ์รหัสด้วยตนเอง",
+        "invite_qr_helper_loaded": "โหลดรหัสเชิญบัญชีแล้ว",
+        "invite_qr_status_manual": "ป้อนรหัสด้วยตนเอง",
+        "invite_qr_status_manual_detail": "ไม่มีรหัสบัญชีที่นี่ พิมพ์หรือวางรหัสเพื่อปรับแต่งรูปภาพ",
+        "invite_qr_helper_sanitized": "เก็บเฉพาะตัวอักษรและตัวเลขเท่านั้น",
+        "invite_qr_helper_ready": "ตัวอย่างจะอัปเดตอัตโนมัติเมื่อรหัสเปลี่ยน",
+        "invite_qr_helper_empty": "รองรับเฉพาะตัวอักษรและตัวเลขเท่านั้น ตัวอย่างจะใช้ตัวแทนจนกว่าจะมีรหัส",
+        "invite_qr_status_failed": "ตัวอย่างล้มเหลว",
+        "invite_qr_status_failed_detail": "ลองขนาดภาพอื่นหรือโหลดหน้าใหม่",
+        "invite_qr_status_ready": "พร้อม",
+        "invite_qr_status_ready_detail": "ตัวอย่างเป็นปัจจุบันแล้ว ดาวน์โหลดหรือคัดลอก PNG เมื่อพร้อม",
+        "invite_qr_status_rendering": "กำลังสร้างตัวอย่าง",
+        "invite_qr_status_rendering_code": "กำลังสร้างภาพ QR สำหรับลิงก์เชิญนี้",
+        "invite_qr_status_rendering_empty": "กำลังสร้างตัวอย่างตัวแทนจนกว่าจะมีรหัส",
+        "invite_qr_status_qr_fallback": "สร้าง QR ทางเลือกแล้ว",
+        "invite_qr_status_qr_fallback_detail": "ไลบรารี QR ไม่ได้โหลด แต่ยังสามารถดาวน์โหลดโปสเตอร์ได้",
+        "invite_qr_status_downloaded": "ดาวน์โหลดแล้ว",
+        "invite_qr_status_placeholder": "ตัวอย่างตัวแทน",
+        "invite_qr_status_placeholder_detail": "ป้อนรหัสเชิญเพื่อแทนที่ลิงก์ตัวแทน",
+
 
 
 
@@ -3234271,6 +3235281,48 @@ const TRANSLATIONS = {
 
 
         "admin_loading": "กำลังโหลดข้อมูลผู้ดูแล...",
+
+        "action_request_ratify_desc": "การอนุมัติแบบ passive ของแผน E สำหรับการตัดสินใจที่เป็นอันตรายต่ำและย้อนกลับได้ที่เซิร์ฟเวอร์ติดอาวุธ ค่าเริ่มต้นคือเปิด",
+        "action_request_ratify_grace_desc": "ระยะเวลาหลังการตัดสินใจ default_agree ที่เซิร์ฟเวอร์ติดอาวุธก่อนที่ความเงียบจะระงับ",
+        "action_request_ratify_grace_hours": "ชม.",
+        "action_request_ratify_grace_label": "ระยะยางให้สัตยาบัน",
+        "action_request_ratify_grace_minutes": "นาที",
+        "action_request_ratify_guardrails_desc": "การตรวจสอบเซิร์ฟเวอร์แบบอ่านอย่างเดียว เบราว์เซอร์ไม่สามารถลดความเข้มงวดได้",
+        "action_request_ratify_guardrails_label": "ราวเพื่อความปลอดภัย",
+        "action_request_ratify_guardrails_value": "Fail-closed: เซิร์ฟเวอร์คำนวณโหมดใหม่, เฉพาะ default_agree ที่แก้ไขอัตโนมัติ, คำตัดสินทำงานอีกครั้งเมื่อทริกเกอร์, เส้นทาง/ความแตกต่างที่มีความเสี่ยงสูงถูกระงับ, และเพดาน N ถูกบังคับจากประวัติการตรวจสอบ",
+        "action_request_ratify_max_attempts_desc": "จำนวนรอบสูงสุดของ default_agree ที่เซิร์ฟเวอร์ติดอาวุธต่อคำขอ",
+        "action_request_ratify_max_attempts_label": "เพดาน N การให้สัตยาบัน",
+        "action_request_ratify_title": "การให้สัตยาบันการตัดสินใจ",
+        "action_request_realtime_desc": "รีเฟรชกล่องขาเข้าทันทีเมื่อตัวแทนส่ง แก้ไข หรือปฏิเสธคำขอ",
+        "action_request_realtime_label": "รีเฟรชกล่องขาเข้าทันที",
+        "action_request_reply_resize_desc": "เพิ่มที่จับลาก/แป้นพิมพ์ให้กล่องตอบกลับ Needs-you เพื่อให้สูงขึ้นได้ ค่าเริ่มต้นคือเปิด",
+        "action_request_reply_resize_label": "ปรับขนาดกล่องตอบกลับได้",
+        "action_request_settings_desc": "ควบคุมกล่องขาเข้า Human-in-the-Loop สำหรับคำขอตัวแทนที่ต้องการการตัดสินใจของคุณ",
+        "action_request_settings_title": "คำขอ Needs-you",
+        "action_request_timeout_auto_dismiss": "B. ปฏิเสธอัตโนมัติ",
+        "action_request_timeout_consensus": "D. เริ่มข้อตกลง",
+        "action_request_timeout_keep": "A. คงไว้ชั่วคราว",
+        "action_request_timeout_minutes_desc": "จำนวนนาทีก่อนที่นโยบายที่เลือกจะทำงาน",
+        "action_request_timeout_minutes_label": "ระยะหมดเวลา",
+        "action_request_timeout_policy_desc": "เลือกว่า timeout worker ควรทำอะไรเมื่อคำขอ Needs-you เกินกำหนดโดยไม่ตอบสนอง",
+        "action_request_timeout_policy_label": "นโยบายคำขอที่ไม่ตอบสนอง",
+        "action_request_timeout_safe_default": "C. ค่าเริ่มต้นที่ปลอดภัย",
+        "action_request_consensus_reply": "บันทึกฉันทามติ",
+        "action_request_consensus_triggered": "อยู่ในกระบวนการฉันทามติ",
+        "action_request_ratify_grace_help": "ระยะเวลาที่รอหลังจากการตัดสินใจถูกติดอาวุธเป็น default-agree ก่อนที่ความเงียบจะระงับโดยอัตโนมัติ ช่วง 5 นาที ถึง 30 วัน ค่าเริ่มต้น 1440 (24 ชม.) เฉพาะการตัดสินใจที่ย้อนกลับได้และมีความเสี่ยงต่ำเท่านั้นที่จะถูกติดอาวุธ",
+        "action_request_ratify_guardrails_help": "การตรวจสอบความปลอดภัยเหล่านี้ทำงานบนเซิร์ฟเวอร์และไม่สามารถปิดจากเบราว์เซอร์ได้: เฉพาะการตัดสินใจที่ย้อนกลับได้และมีความเสี่ยงต่ำเท่านั้นที่มีสิทธิ์ คำตัดสินเป็น fail-closed และตรวจสอบใหม่เมื่อทริกเกอร์ เส้นทางที่ไม่สามารถย้อนกลับ/มีความเสี่ยงสูงจะถูกระงับเสมอ และเพดานความพยายามถูกบังคับจากประวัติการตรวจสอบ",
+        "action_request_ratify_max_attempts_help": "จำนวนรอบสูงสุดของ default-agree ที่เซิร์ฟเวอร์ติดอาวุธสำหรับคำขอหนึ่งก่อนที่จะยกระดับถึงคุณแทนการแก้ไขอัตโนมัติ ช่วง 1-5 ค่าเริ่มต้น 2",
+        "action_request_realtime_help": "เมื่อเปิด กล่องขาเข้าจะอัปเดตแบบเรียลไทม์ผ่านซ็อกเก็ตเมื่อเอเจนต์ส่ง แก้ไข หรือปฏิเสธคำขอ เมื่อปิด จะรีเฟรชเฉพาะในการสำรวจตามระยะเวลา",
+        "action_request_realtime_off": "รีเฟรชด้วยตนเอง",
+        "action_request_realtime_on": "สด",
+        "action_request_timeout_minutes_help": "ช่วงที่อนุญาตคือ 5 นาที ถึง 30 วัน ค่าเริ่มต้นคือ 1440 นาที (24 ชั่วโมง)",
+        "action_request_timeout_policy_help": "เกิดอะไรขึ้นกับคำขอที่คุณไม่ตอบหลังจากหมดเวลา",
+        "action_request_ratify_countdown_prefix": "ส่งอัตโนมัติใน",
+        "action_request_ratify_default_agree_badge": "⏳ รอการตัดสินใจของคุณ · ความเงียบคือการอนุมัติ",
+        "action_request_ratify_default_agree_hint": "หากคุณไม่ดำเนินการใดๆ สิ่งนี้จะถูกส่งและดำเนินการโดยอัตโนมัติเมื่อการนับถอยหลังสิ้นสุด",
+        "action_request_ratify_hold_badge": "ต้องการการอนุมัติของคุณ",
+        "action_request_ratify_hold_hint": "จะไม่มีอะไรถูกส่งเว้นแต่คุณอนุมัติ",
+        "action_request_ratify_sending": "กำลังส่ง…",
 
 
 
@@ -3416814,6 +3417866,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "กำลังแสดงผลลัพธ์ Bot Plaza",
+        "community_result_detail_default": "ใช้การค้นหา ตัวกรอง ความสามารถ หรือราคาเพื่อจำกัดรายการ",
+        "community_result_clear_filters": "ล้างตัวกรอง",
+        "community_result_filter_search": "ค้นหา \"{query}\"",
+        "community_result_filter_category": "หมวดหมู่ {category}",
+        "community_result_filter_capabilities": "ความสามารถ {capabilities}",
+        "community_result_filter_rate": "ราคา {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} บอต",
+        "community_result_count_many": "{count} บอต",
+        "community_result_count_unknown": "ผลลัพธ์ Bot Plaza",
+        "community_result_summary_filtered": "กำลังแสดง {count} ที่ตรงกับ {filters}",
+        "community_result_summary_default_count": "กำลังแสดง {count} จาก Bot Plaza",
+        "community_result_detail_filtered": "เรียงตาม {sort} ล้างตัวกรองเพื่อกลับไปยัง Plaza ทั้งหมด",
+        "community_result_detail_default_sorted": "เรียงตาม {sort} ใช้การค้นหา ตัวกรอง ความสามารถ หรือราคาเพื่อจำกัดรายการ",
+        "community_error_title": "โหลด Bot Plaza ไม่ได้",
+        "community_error_desc": "ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง",
 
 
 
@@ -3471521,8 +3472590,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "เลือกว่านโยบาย prompt ใช้เป็นค่าเริ่มต้นของทั้งอุปกรณ์หรือแทนที่เอนทิตีเฉพาะ",
         "settings_device_id_help": "ตัวระบุเฉพาะสำหรับอุปกรณ์/บัญชีที่เบราว์เซอร์นี้จะใช้ จัดเก็บพร้อมกับ Device Secret ที่สอดคล้องกันเมื่อจับคู่",
         "settings_device_secret_help": "คีย์ลับสำหรับ Device ID ที่เลือก ปฏิบัติเป็นรหัสผ่านและป้อนเฉพาะบนอุปกรณ์ที่เชื่อถือได้",
-        "feedback_category_help": "เลือกหมวดหมู่ที่ตรงกับรายงานของคุณมากที่สุด การช่วยเหลือ AI ใช้กระบวนการ triage ที่แตกต่างกันต่อหมวดหมู่ (bug = ตรวจสอบการทำซ้ำ, feature = จับคู่ roadmap, design = เปรียบเทียบภาพ)",
-        "feedback_photo_help": "แนบภาพหน้าจอที่แสดงปัญหาในบริบท สูงสุด 5 ภาพ; การอัปโหลดเว็บรองรับการลากและวาง ข้อมูลตำแหน่ง EXIF ถูกลบก่อนอัปโหลด",
+        "feedback_category_help": "เลือกหมวดหมู่ที่ตรงกับรายงานของคุณมากที่สุด การช่วยเหลือ AI ใช้กระบวนการ triage ที่แตกต่างกันต่อหมวดหมู่",
+        "feedback_photo_help": "แนบภาพหน้าจอที่แสดงปัญหาในบริบท สูงสุด 5 ภาพ; การอัปโหลดเว็บรองรับการลากและวาง ข้อมูล EXIF/GPS จะถูกลบก่อนจัดเก็บ",
         "kanban_cron_recurring_notify_help": "ส่งการแจ้งเตือนแชทเมื่อ cron ของการ์ดนี้ทำงาน ปิดสำหรับงานประจำที่ลำดับความสำคัญต่ำที่ไม่ควรรบกวนคุณ",
         "kanban_nudge_advanced_help": "การแทนที่ต่อเอนทิตีสำหรับช่วงเวลา nudge สถานะ และโหมดหยุด บอร์ดส่วนใหญ่ไม่ต้องการสิ่งนี้ — ปล่อยให้พับไว้เว้นแต่หนึ่งเอนทิตีมีความต้องการจังหวะที่แตกต่างกัน",
         "kanban_nudge_batch_help": "จำนวนสูงสุดของการ์ดที่ค้าง L1 ที่เลือกต่อ tick cron — ขีดจำกัดทั้งอุปกรณ์ ไม่ใช่ต่อเอนทิตี การเพิ่มระดับ L2 (เพิ่มลำดับความสำคัญ) และ L3 (บล็อกอัตโนมัติ) ไม่ได้รับผลกระทบ ดู L1/L2/L3 ในข้อกำหนด kanban-nudge",
@@ -3471606,6 +3472675,19 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "ตลาดเช่า (รายการ สัญญา ประวัติ) ผูกกับบัญชี โปรดเข้าสู่ระบบด้วยบัญชีอีเมล หรือเปิด Plaza เพื่อเริ่มเช่าหรือลงรายการบอท",
         "settings_rental_setup_cta": "ตั้งค่าการเช่า",
         "rental_needs_account": "โปรดเข้าสู่ระบบด้วยบัญชีอีเมลเพื่อจัดการการเช่า",
+
+        "usage_warning_enable_label": "เปิดใช้งานการแจ้งเตือนการใช้งาน",
+        "usage_warning_enable_help": "แสดงการแจ้งเตือนเมื่อการใช้โทเค็น AI ใกล้ถึงขีดจำกัด",
+        "usage_warning_5h_label": "การแจ้งเตือน 5 ชั่วโมง",
+        "usage_warning_5h_help": "แสดงการแจ้งเตือนเมื่อการใช้งาน 5 ชั่วโมงเกินเปอร์เซ็นต์นี้",
+        "usage_warning_7d_label": "การแจ้งเตือน 7 วัน",
+        "usage_warning_7d_help": "แสดงการแจ้งเตือนเมื่อการใช้งาน 7 วันเกินเปอร์เซ็นต์นี้",
+
+        "cron_skip_5h_label": "ข้ามถ้า 5h มากกว่า X%",
+        "cron_skip_7d_label": "ข้ามถ้า 7d มากกว่า Y%",
+        "cron_skip_help_text": "ตารางนี้ข้าม dispatch เมื่อ entity 5h เกิน X% หรือ 7d เกิน Y% ค่าเริ่มต้น (85%/95%) ป้องกัน entity ที่มีภาระสูง ปรับได้ 50%-99% cron ที่ข้ามจะลองใหม่อัตโนมัติ tick ถัดไป",
+        "cron_current_usage_label": "ปัจจุบัน: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "ข้าม: เกินเกณฑ์",
 },
 
 
@@ -3710053,6 +3711135,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "Phản hồi đã gửi sẽ hiển thị ở đây.",
+        "feedback_filter_empty_sub": "{label}: {count} phản hồi đã gửi.",
 
 
 
@@ -3751656,6 +3752739,32 @@ const TRANSLATIONS = {
 
 
         "invite_qr_btn_download": "Download PNG",
+        "invite_qr_btn_copied": "Đã sao chép",
+        "invite_qr_btn_downloaded": "Đã tải xuống",
+        "invite_qr_status_copy_unavailable": "Bảng nhớ tạm không khả dụng",
+        "invite_qr_status_copied": "Đã sao chép",
+        "invite_qr_status_copy_failed": "Sao chép thất bại",
+        "invite_qr_status_loading_code": "Đang kiểm tra mã tài khoản",
+        "invite_qr_status_loading_code_detail": "Nếu trình duyệt chưa đăng nhập, bạn có thể nhập mã thủ công",
+        "invite_qr_helper_loaded": "Đã tải mã mời tài khoản",
+        "invite_qr_status_manual": "Nhập mã thủ công",
+        "invite_qr_status_manual_detail": "Không có mã tài khoản ở đây. Nhập hoặc dán mã để cá nhân hóa hình ảnh",
+        "invite_qr_helper_sanitized": "Chỉ giữ lại chữ cái và số",
+        "invite_qr_helper_ready": "Bản xem trước cập nhật tự động khi mã thay đổi",
+        "invite_qr_helper_empty": "Chỉ hỗ trợ chữ cái và số. Bản xem trước sử dụng chỗ dựa cho đến khi có mã",
+        "invite_qr_status_failed": "Bản xem trước thất bại",
+        "invite_qr_status_failed_detail": "Thử kích thước hình ảnh khác hoặc tải lại trang",
+        "invite_qr_status_ready": "Sẵn sàng",
+        "invite_qr_status_ready_detail": "Bản xem trước đã cập nhật. Tải xuống hoặc sao chép PNG khi đã sẵn sàng",
+        "invite_qr_status_rendering": "Đang tạo bản xem trước",
+        "invite_qr_status_rendering_code": "Đang tạo hình ảnh QR cho liên kết mời này",
+        "invite_qr_status_rendering_empty": "Đang tạo bản xem trước chỗ dựa cho đến khi có mã",
+        "invite_qr_status_qr_fallback": "Đã vẽ QR dự phòng",
+        "invite_qr_status_qr_fallback_detail": "Thư viện QR không tải được nhưng áp phích vẫn có thể tải xuống",
+        "invite_qr_status_downloaded": "Đã tải xuống",
+        "invite_qr_status_placeholder": "Bản xem trước chỗ dựa",
+        "invite_qr_status_placeholder_detail": "Nhập mã mời để thay thế liên kết chỗ dựa",
+
 
 
 
@@ -3763564,6 +3764673,48 @@ const TRANSLATIONS = {
 
 
         "admin_loading": "Đang tải dữ liệu quản trị...",
+
+        "action_request_ratify_desc": "Phê chuẩn thụ động Kế hoạch E cho các quyết định có thể đảo ngược rủi ro thấp do máy chủ trang bị. Mặc định là bật; tắt để chọn không tham gia.",
+        "action_request_ratify_grace_desc": "Thời gian sau quyết định default_agree do máy chủ trang bị trước khi sự im lặng được coi là đồng ý.",
+        "action_request_ratify_grace_hours": "giờ",
+        "action_request_ratify_grace_label": "Thời gian ân hạn phê chuẩn",
+        "action_request_ratify_grace_minutes": "phút",
+        "action_request_ratify_guardrails_desc": "Kiểm tra máy chủ chỉ đọc. Trình duyệt không thể làm suy yếu những điều này.",
+        "action_request_ratify_guardrails_label": "Thanh chắn phê chuẩn",
+        "action_request_ratify_guardrails_value": "Fail-closed: máy chủ tính lại chế độ, chỉ default_agree có thể tự động giải quyết, phán quyết được chạy lại khi kích hoạt, các đường dẫn/sự khác biệt rủi ro cao bị giữ lại và giới hạn N được thực thi từ lịch sử kiểm tra.",
+        "action_request_ratify_max_attempts_desc": "Số vòng default_agree tối đa do máy chủ trang bị cho mỗi yêu cầu.",
+        "action_request_ratify_max_attempts_label": "Giới hạn N phê chuẩn",
+        "action_request_ratify_title": "Phê chuẩn quyết định",
+        "action_request_realtime_desc": "Làm mới hộp thư đến ngay khi tác nhân phát hành, giải quyết hoặc bỏ qua yêu cầu.",
+        "action_request_realtime_label": "Làm mới hộp thư đến ngay lập tức",
+        "action_request_reply_resize_desc": "Thêm tay cầm kéo/bàn phím vào hộp trả lời Needs-you để bạn có thể làm cho nó cao hơn. Mặc định là bật.",
+        "action_request_reply_resize_label": "Hộp trả lời có thể thay đổi kích thước",
+        "action_request_settings_desc": "Điều khiển hộp thư đến Human-in-the-Loop cho các yêu cầu của tác nhân cần quyết định của bạn.",
+        "action_request_settings_title": "Yêu cầu cần bạn",
+        "action_request_timeout_auto_dismiss": "B. Tự động bỏ qua",
+        "action_request_timeout_consensus": "D. Bắt đầu đồng thuận",
+        "action_request_timeout_keep": "A. Giữ đang chờ",
+        "action_request_timeout_minutes_desc": "Số phút trước khi chính sách không trả lời đã chọn chạy.",
+        "action_request_timeout_minutes_label": "Thời gian chờ",
+        "action_request_timeout_policy_desc": "Chọn worker timeout nên làm gì khi yêu cầu Needs-you hết hạn mà không được trả lời.",
+        "action_request_timeout_policy_label": "Chính sách yêu cầu không trả lời",
+        "action_request_timeout_safe_default": "C. Mặc định an toàn",
+        "action_request_consensus_reply": "Ghi nhận đồng thuận",
+        "action_request_consensus_triggered": "Đang đồng thuận",
+        "action_request_ratify_grace_help": "Thời gian chờ sau khi quyết định được trang bị default-agree trước khi im lặng tự động giải quyết. Phạm vi 5 phút đến 30 ngày; mặc định 1440 (24 giờ). Chỉ các quyết định có thể đảo ngược, rủi ro thấp mới được trang bị.",
+        "action_request_ratify_guardrails_help": "Các kiểm tra an toàn này chạy trên máy chủ và không thể tắt từ trình duyệt: chỉ các quyết định có thể đảo ngược rủi ro thấp mới đủ điều kiện, phán quyết là fail-closed và được kiểm tra lại khi kích hoạt, các đường dẫn không thể đảo ngược/rủi ro cao luôn bị giữ lại, và giới hạn thử được thực thi từ lịch sử kiểm tra.",
+        "action_request_ratify_max_attempts_help": "Số vòng default-agree tối đa do máy chủ trang bị cho một yêu cầu trước khi chuyển lên cho bạn thay vì tự động giải quyết. Phạm vi 1-5; mặc định 2.",
+        "action_request_realtime_help": "Khi bật, hộp thư đến cập nhật trực tiếp qua socket khi agent gửi, giải quyết hoặc bỏ qua yêu cầu. Khi tắt, chỉ làm mới theo chu kỳ thăm dò.",
+        "action_request_realtime_off": "Làm mới thủ công",
+        "action_request_realtime_on": "Trực tiếp",
+        "action_request_timeout_minutes_help": "Phạm vi cho phép là 5 phút đến 30 ngày. Mặc định là 1440 phút (24 giờ).",
+        "action_request_timeout_policy_help": "Điều gì xảy ra với yêu cầu bạn không trả lời sau khi hết thời gian chờ.",
+        "action_request_ratify_countdown_prefix": "Tự động gửi sau",
+        "action_request_ratify_default_agree_badge": "⏳ Chờ quyết định của bạn · im lặng là đồng ý",
+        "action_request_ratify_default_agree_hint": "Nếu bạn không làm gì, yêu cầu này sẽ được gửi và thực thi tự động khi đếm ngược kết thúc.",
+        "action_request_ratify_hold_badge": "Cần sự phê duyệt của bạn",
+        "action_request_ratify_hold_hint": "Không có gì được gửi trừ khi bạn phê duyệt.",
+        "action_request_ratify_sending": "Đang gửi…",
 
 
 
@@ -3946107,6 +3947258,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Đang hiển thị kết quả Bot Plaza",
+        "community_result_detail_default": "Dùng tìm kiếm, bộ lọc, năng lực hoặc mức phí để thu hẹp danh sách.",
+        "community_result_clear_filters": "Xóa bộ lọc",
+        "community_result_filter_search": "tìm kiếm \"{query}\"",
+        "community_result_filter_category": "danh mục {category}",
+        "community_result_filter_capabilities": "năng lực {capabilities}",
+        "community_result_filter_rate": "mức phí {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} bot",
+        "community_result_count_many": "{count} bot",
+        "community_result_count_unknown": "kết quả Bot Plaza",
+        "community_result_summary_filtered": "Đang hiển thị {count} khớp với {filters}",
+        "community_result_summary_default_count": "Đang hiển thị {count} từ Bot Plaza",
+        "community_result_detail_filtered": "Sắp xếp theo {sort}. Xóa bộ lọc để quay lại toàn bộ Plaza.",
+        "community_result_detail_default_sorted": "Sắp xếp theo {sort}. Dùng tìm kiếm, bộ lọc, năng lực hoặc mức phí để thu hẹp danh sách.",
+        "community_error_title": "Không thể tải Bot Plaza",
+        "community_error_desc": "Kiểm tra kết nối rồi thử lại.",
 
 
 
@@ -3998382,8 +3999550,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "Chọn liệu chính sách prompt áp dụng làm mặc định toàn thiết bị hay ghi đè một thực thể cụ thể.",
         "settings_device_id_help": "Mã định danh duy nhất cho thiết bị/tài khoản mà trình duyệt này sẽ sử dụng. Lưu cùng với Device Secret tương ứng khi ghép cặp.",
         "settings_device_secret_help": "Khóa bí mật cho Device ID đã chọn. Coi như mật khẩu và chỉ nhập trên các thiết bị đáng tin cậy.",
-        "feedback_category_help": "Chọn danh mục phù hợp nhất với báo cáo của bạn. Hỗ trợ AI chạy các luồng phân loại khác nhau theo danh mục (lỗi = kiểm tra tái hiện, tính năng = khớp lộ trình, thiết kế = so sánh hình ảnh).",
-        "feedback_photo_help": "Đính kèm ảnh chụp màn hình hiển thị vấn đề trong ngữ cảnh. Tối đa 5 ảnh; tải lên web hỗ trợ kéo-thả. Dữ liệu vị trí EXIF được loại bỏ trước khi tải lên.",
+        "feedback_category_help": "Chọn danh mục phù hợp nhất với báo cáo của bạn. Hỗ trợ AI chạy các luồng phân loại khác nhau theo danh mục.",
+        "feedback_photo_help": "Đính kèm ảnh chụp màn hình hiển thị vấn đề trong ngữ cảnh. Tối đa 5 ảnh; tải lên web hỗ trợ kéo-thả. Metadata EXIF/GPS được loại bỏ trước khi lưu trữ.",
         "kanban_cron_recurring_notify_help": "Gửi thông báo trò chuyện khi cron của thẻ này kích hoạt. Tắt cho các công việc lặp lại ưu tiên thấp không cần làm phiền bạn.",
         "kanban_nudge_advanced_help": "Ghi đè theo từng thực thể cho khoảng dorong, trạng thái và chế độ dừng. Hầu hết các bảng không cần điều này — hãy để gập trừ khi một thực thể có nhu cầu nhịp độ khác.",
         "kanban_nudge_batch_help": "Số lượng tối đa thẻ trì trệ L1 được chọn mỗi tích tắc cron — giới hạn toàn thiết bị, KHÔNG phải mỗi thực thể. Việc nâng cấp L2 (tăng ưu tiên) và L3 (tự động chặn) không bị ảnh hưởng. Xem L1/L2/L3 trong spec kanban-nudge.",
@@ -3998412,14 +3999580,6 @@ const TRANSLATIONS = {
         "session_expired_relogin": "Phiên đã hết hạn — vui lòng đăng nhập lại",
         "session_invalid_relogin": "Vui lòng đăng nhập để tiếp tục",
 
-        "greet_returning_template": "Lần trước chúng ta đã nói về \"{topic}\" — tiếp tục nhé?",
-        "greet_continue": "Tiếp tục chủ đề trước",
-        "greet_change_topic": "Chủ đề khác",
-        "greet_continue_send_text": "Chúng ta tiếp tục chủ đề lần trước nhé",
-        "greet_welcome_new": "Chào mừng! Tôi là người bạn AI của bạn — chạm vào một câu hỏi để bắt đầu:",
-        "greet_starter_1": "Bạn có thể giúp tôi những gì?",
-        "greet_starter_2": "Giúp tôi lên kế hoạch việc cần làm hôm nay",
-        "greet_starter_3": "Giới thiệu bản thân trong ba câu",
 
         "kb_toast_moved": "Đã chuyển đến {col}",
         "kb_toast_archived": "Đã lưu trữ",
@@ -3998544,6 +3999704,19 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "Chợ cho thuê (danh sách, hợp đồng, lịch sử) gắn với tài khoản. Đăng nhập bằng tài khoản email hoặc mở Plaza để bắt đầu thuê hoặc đăng bot.",
         "settings_rental_setup_cta": "Thiết lập cho thuê",
         "rental_needs_account": "Đăng nhập bằng tài khoản email để quản lý cho thuê.",
+
+        "usage_warning_enable_label": "Bật cảnh báo sử dụng",
+        "usage_warning_enable_help": "Hiển thị cảnh báo khi mức sử dụng token AI gần đạt giới hạn",
+        "usage_warning_5h_label": "Cảnh báo 5 giờ",
+        "usage_warning_5h_help": "Hiển thị cảnh báo khi mức sử dụng 5 giờ vượt quá tỷ lệ phần trăm này",
+        "usage_warning_7d_label": "Cảnh báo 7 ngày",
+        "usage_warning_7d_help": "Hiển thị cảnh báo khi mức sử dụng 7 ngày vượt quá tỷ lệ phần trăm này",
+
+        "cron_skip_5h_label": "Bỏ qua nếu 5h > X%",
+        "cron_skip_7d_label": "Bỏ qua nếu 7d > Y%",
+        "cron_skip_help_text": "Lịch này bỏ qua dispatch khi entity 5h vượt X% hoặc 7d vượt Y%. Mặc định (85%/95%) bảo vệ entity tải cao. Điều chỉnh 50%-99%. Cron bị bỏ qua sẽ tự động thử lại tick tiếp theo.",
+        "cron_current_usage_label": "Hiện tại: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "bỏ qua: vượt ngưỡng",
 },
 
 
@@ -4236863,6 +4238036,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "Umpan balik yang dikirim akan muncul di sini.",
+        "feedback_filter_empty_sub": "{label}: {count} umpan balik telah dikirim.",
 
 
 
@@ -4278466,6 +4279640,32 @@ const TRANSLATIONS = {
 
 
         "invite_qr_btn_download": "Download PNG",
+        "invite_qr_btn_copied": "Disalin",
+        "invite_qr_btn_downloaded": "Diunduh",
+        "invite_qr_status_copy_unavailable": "Papan klip tidak tersedia",
+        "invite_qr_status_copied": "Disalin",
+        "invite_qr_status_copy_failed": "Gagal menyalin",
+        "invite_qr_status_loading_code": "Memeriksa kode akun",
+        "invite_qr_status_loading_code_detail": "Jika browser belum masuk, Anda bisa mengetik kode secara manual",
+        "invite_qr_helper_loaded": "Kode undangan akun dimuat",
+        "invite_qr_status_manual": "Masukkan kode manual",
+        "invite_qr_status_manual_detail": "Tidak ada kode akun dimuat di sini. Ketik atau tempelkan kode untuk mempersonalisasi gambar",
+        "invite_qr_helper_sanitized": "Hanya huruf dan angka yang disimpan",
+        "invite_qr_helper_ready": "Pratinjau diperbarui secara otomatis saat kode berubah",
+        "invite_qr_helper_empty": "Hanya mendukung huruf dan angka. Pratinjau menggunakan placeholder sampai kode tersedia",
+        "invite_qr_status_failed": "Pratinjau gagal",
+        "invite_qr_status_failed_detail": "Coba ukuran gambar lain atau muat ulang halaman",
+        "invite_qr_status_ready": "Siap",
+        "invite_qr_status_ready_detail": "Pratinjau sudah yang terbaru. Unduh atau salin PNG saat siap",
+        "invite_qr_status_rendering": "Membuat pratinjau",
+        "invite_qr_status_rendering_code": "Membuat gambar QR untuk tautan undangan ini",
+        "invite_qr_status_rendering_empty": "Membuat pratinjau placeholder sampai kode tersedia",
+        "invite_qr_status_qr_fallback": "QR fallback digambar",
+        "invite_qr_status_qr_fallback_detail": "Perpustakaan QR tidak dimuat, tapi poster tetap bisa diunduh",
+        "invite_qr_status_downloaded": "Diunduh",
+        "invite_qr_status_placeholder": "Pratinjau placeholder",
+        "invite_qr_status_placeholder_detail": "Masukkan kode undangan untuk mengganti tautan placeholder",
+
 
 
 
@@ -4290374,6 +4291574,48 @@ const TRANSLATIONS = {
 
 
         "admin_loading": "Memuat data admin...",
+
+        "action_request_ratify_desc": "Persetujuan pasif Rencana E untuk keputusan reversibel berisiko rendah yang diperlengkapi server. Default aktif; nonaktifkan untuk memilih keluar.",
+        "action_request_ratify_grace_desc": "Berapa lama setelah keputusan default_agree yang diperlengkapi server sebelum diam diselesaikan.",
+        "action_request_ratify_grace_hours": "jam",
+        "action_request_ratify_grace_label": "Waktu tenggang pengesahan",
+        "action_request_ratify_grace_minutes": "menit",
+        "action_request_ratify_guardrails_desc": "Pemeriksaan server hanya-baca. Peramban tidak dapat melemahkan ini.",
+        "action_request_ratify_guardrails_label": "Pengaman pengesahan",
+        "action_request_ratify_guardrails_value": "Fail-closed: server menghitung ulang mode, hanya default_agree yang dapat menyelesaikan secara otomatis, verdict dijalankan ulang saat waktu aktif, jalur/selisih berisiko tinggi ditahan, dan batas N diterapkan dari riwayat audit.",
+        "action_request_ratify_max_attempts_desc": "Jumlah maksimum ronde default_agree yang diperlengkapi server per permintaan.",
+        "action_request_ratify_max_attempts_label": "Batas N pengesahan",
+        "action_request_ratify_title": "Pengesahan keputusan",
+        "action_request_realtime_desc": "Segarkan kotak masuk segera saat agen mengirim, menyelesaikan, atau menolak permintaan.",
+        "action_request_realtime_label": "Segarkan kotak masuk langsung",
+        "action_request_reply_resize_desc": "Tambahkan pegangan seret/keyboard ke kotak balasan Needs-you agar Anda dapat membuatnya lebih tinggi. Default adalah aktif.",
+        "action_request_reply_resize_label": "Kotak balasan dapat diubah ukurannya",
+        "action_request_settings_desc": "Mengontrol kotak masuk Human-in-the-Loop untuk permintaan agen yang membutuhkan keputusan Anda.",
+        "action_request_settings_title": "Permintaan Needs-you",
+        "action_request_timeout_auto_dismiss": "B. Tolak otomatis",
+        "action_request_timeout_consensus": "D. Mulai konsensus",
+        "action_request_timeout_keep": "A. Tetap tertunda",
+        "action_request_timeout_minutes_desc": "Menit sebelum kebijakan tidak dijawab yang dipilih berjalan.",
+        "action_request_timeout_minutes_label": "Durasi waktu tunggu",
+        "action_request_timeout_policy_desc": "Pilih apa yang dilakukan worker timeout saat permintaan Needs-you tidak dijawab setelah batas waktu.",
+        "action_request_timeout_policy_label": "Kebijakan permintaan tidak dijawab",
+        "action_request_timeout_safe_default": "C. Default aman",
+        "action_request_consensus_reply": "Catat konsensus",
+        "action_request_consensus_triggered": "Dalam konsensus",
+        "action_request_ratify_grace_help": "Berapa lama menunggu setelah keputusan dipersenjatai untuk default-agree sebelum keheningan menyelesaikannya secara otomatis. Rentang 5 menit hingga 30 hari; default 1440 (24 jam). Hanya keputusan yang dapat dibalikkan dan berisiko rendah yang akan dipersenjatai.",
+        "action_request_ratify_guardrails_help": "Pemeriksaan keamanan ini berjalan di server dan tidak dapat dimatikan dari browser: hanya keputusan reversibel berisiko rendah yang memenuhi syarat, putusan bersifat fail-closed dan diperiksa ulang saat aktivasi, jalur tidak dapat dibalikkan/berisiko tinggi selalu ditahan, dan batas percobaan diterapkan dari riwayat audit.",
+        "action_request_ratify_max_attempts_help": "Jumlah maksimum ronde default-agree yang dipersenjatai server untuk satu permintaan sebelum dieskalasi ke Anda alih-alih menyelesaikan secara otomatis. Rentang 1-5; default 2.",
+        "action_request_realtime_help": "Saat aktif, kotak masuk diperbarui langsung melalui socket saat agen mengeluarkan, menyelesaikan, atau menolak permintaan. Saat nonaktif, hanya diperbarui pada polling berkala.",
+        "action_request_realtime_off": "Segarkan manual",
+        "action_request_realtime_on": "Langsung",
+        "action_request_timeout_minutes_help": "Rentang yang diizinkan adalah 5 menit hingga 30 hari. Default adalah 1440 menit (24 jam).",
+        "action_request_timeout_policy_help": "Apa yang terjadi pada permintaan yang tidak pernah Anda jawab setelah durasi waktu habis.",
+        "action_request_ratify_countdown_prefix": "Otomatis terkirim dalam",
+        "action_request_ratify_default_agree_badge": "⏳ Menunggu keputusan Anda · diam berarti setuju",
+        "action_request_ratify_default_agree_hint": "Jika Anda tidak melakukan apa-apa, ini akan dikirim dan dijalankan secara otomatis saat hitungan mundur berakhir.",
+        "action_request_ratify_hold_badge": "Membutuhkan persetujuan Anda",
+        "action_request_ratify_hold_hint": "Tidak ada yang dikirim kecuali Anda menyetujui.",
+        "action_request_ratify_sending": "Mengirim…",
 
 
 
@@ -4473813,6 +4475055,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Menampilkan hasil Bot Plaza",
+        "community_result_detail_default": "Gunakan pencarian, filter, kemampuan, atau tarif untuk mempersempit daftar.",
+        "community_result_clear_filters": "Hapus filter",
+        "community_result_filter_search": "pencarian \"{query}\"",
+        "community_result_filter_category": "kategori {category}",
+        "community_result_filter_capabilities": "kemampuan {capabilities}",
+        "community_result_filter_rate": "tarif {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} bot",
+        "community_result_count_many": "{count} bot",
+        "community_result_count_unknown": "hasil Bot Plaza",
+        "community_result_summary_filtered": "Menampilkan {count} yang cocok dengan {filters}",
+        "community_result_summary_default_count": "Menampilkan {count} dari Bot Plaza",
+        "community_result_detail_filtered": "Diurutkan menurut {sort}. Hapus filter untuk kembali ke Plaza penuh.",
+        "community_result_detail_default_sorted": "Diurutkan menurut {sort}. Gunakan pencarian, filter, kemampuan, atau tarif untuk mempersempit daftar.",
+        "community_error_title": "Tidak dapat memuat Bot Plaza",
+        "community_error_desc": "Periksa koneksi lalu coba lagi.",
 
 
 
@@ -4524936,8 +4526195,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "Pilih apakah kebijakan prompt berlaku sebagai default seluruh perangkat atau menggantikan entitas tertentu.",
         "settings_device_id_help": "Pengenal unik untuk perangkat/akun yang akan digunakan browser ini. Simpan bersama Device Secret yang sesuai saat memasangkan.",
         "settings_device_secret_help": "Kunci rahasia untuk Device ID yang dipilih. Perlakukan sebagai kata sandi dan masukkan hanya pada perangkat yang dipercaya.",
-        "feedback_category_help": "Pilih kategori yang paling sesuai dengan laporan Anda. Bantuan AI menjalankan alur triase berbeda per kategori (bug = pengecekan reproduksi, fitur = pencocokan roadmap, desain = perbandingan visual).",
-        "feedback_photo_help": "Lampirkan tangkapan layar yang menunjukkan masalah dalam konteks. Maksimal 5 foto; unggah web mendukung drag-and-drop. Data lokasi EXIF dihapus sebelum diunggah.",
+        "feedback_category_help": "Pilih kategori yang paling sesuai dengan laporan Anda. Bantuan AI menjalankan alur triase berbeda per kategori.",
+        "feedback_photo_help": "Lampirkan tangkapan layar yang menunjukkan masalah dalam konteks. Maksimal 5 foto; unggah web mendukung drag-and-drop. Metadata EXIF/GPS dihapus sebelum disimpan.",
         "kanban_cron_recurring_notify_help": "Kirim notifikasi chat saat cron kartu ini terpicu. Nonaktifkan untuk pekerjaan berulang prioritas rendah yang tidak perlu mengganggu Anda.",
         "kanban_nudge_advanced_help": "Override per-entitas untuk interval nudge, status, dan mode berhenti. Kebanyakan papan tidak memerlukan ini — biarkan tertutup kecuali satu entitas memiliki kebutuhan irama yang berbeda.",
         "kanban_nudge_batch_help": "Jumlah maksimum kartu macet L1 yang diambil per tick cron — batas seluruh perangkat, BUKAN per-entitas. Eskalasi L2 (bump prioritas) dan L3 (blokir otomatis) tidak terpengaruh. Lihat L1/L2/L3 di spesifikasi kanban-nudge.",
@@ -4524966,14 +4526225,6 @@ const TRANSLATIONS = {
         "session_expired_relogin": "Sesi berakhir — silakan masuk lagi",
         "session_invalid_relogin": "Silakan masuk untuk melanjutkan",
 
-        "greet_returning_template": "Terakhir kali kita membahas \"{topic}\" — lanjutkan?",
-        "greet_continue": "Lanjutkan topik terakhir",
-        "greet_change_topic": "Topik lain",
-        "greet_continue_send_text": "Mari lanjutkan topik terakhir kita",
-        "greet_welcome_new": "Selamat datang! Saya teman AI Anda — ketuk pertanyaan untuk memulai:",
-        "greet_starter_1": "Apa yang bisa kamu bantu?",
-        "greet_starter_2": "Bantu saya merencanakan tugas hari ini",
-        "greet_starter_3": "Perkenalkan dirimu dalam tiga kalimat",
 
         "kb_toast_moved": "Dipindahkan ke {col}",
         "kb_toast_archived": "Diarsipkan",
@@ -4525098,6 +4526349,19 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "Pasar sewa (daftar, kontrak, riwayat) terikat pada akun. Masuk dengan akun email atau buka Plaza untuk mulai menyewa atau mendaftarkan bot.",
         "settings_rental_setup_cta": "Siapkan sewa",
         "rental_needs_account": "Masuk dengan akun email untuk mengelola sewa.",
+
+        "usage_warning_enable_label": "Aktifkan peringatan penggunaan",
+        "usage_warning_enable_help": "Tampilkan peringatan saat penggunaan token AI mendekati batas",
+        "usage_warning_5h_label": "Peringatan 5 jam",
+        "usage_warning_5h_help": "Tampilkan peringatan saat penggunaan 5 jam melebihi persentase ini",
+        "usage_warning_7d_label": "Peringatan 7 hari",
+        "usage_warning_7d_help": "Tampilkan peringatan saat penggunaan 7 hari melebihi persentase ini",
+
+        "cron_skip_5h_label": "Lewati jika 5h > X%",
+        "cron_skip_7d_label": "Lewati jika 7d > Y%",
+        "cron_skip_help_text": "Jadwal ini melewati dispatch saat entity 5h melebihi X% atau 7d melebihi Y%. Default (85%/95%) melindungi entity beban tinggi. Adjustable 50%-99%. Cron yang dilewati akan retry otomatis tick berikutnya.",
+        "cron_current_usage_label": "Saat ini: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "dilewati: melebihi ambang",
 },
 
 
@@ -4763417,6 +4764681,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "Vos commentaires soumis apparaîtront ici.",
+        "feedback_filter_empty_sub": "{label} : {count} commentaire(s) soumis.",
 
 
 
@@ -4828328,6 +4829593,48 @@ const TRANSLATIONS = {
 
 
         "admin_loading": "Chargement...",
+
+        "action_request_ratify_desc": "Approbation passive du Plan E pour les décisions réversibles à faible risque armées par le serveur. Défaut: activé.",
+        "action_request_ratify_grace_desc": "Durée après une décision default_agree armée par le serveur avant que le silence ne la valide.",
+        "action_request_ratify_grace_hours": "h",
+        "action_request_ratify_grace_label": "Délai de grâce de ratification",
+        "action_request_ratify_grace_minutes": "min",
+        "action_request_ratify_guardrails_desc": "Contrôles serveur en lecture seule. Le navigateur ne peut pas les affaiblir.",
+        "action_request_ratify_guardrails_label": "Gardes de ratification",
+        "action_request_ratify_guardrails_value": "Fail-closed: le serveur recalcule le mode, seul default_agree peut résoudre automatiquement, le verdict est réexécuté au moment du déclenchement, les chemins/écarts à haut risque sont maintenus et le plafond N est appliqué depuis l'historique d'audit.",
+        "action_request_ratify_max_attempts_desc": "Nombre maximum de tours default_agree armés par serveur par demande.",
+        "action_request_ratify_max_attempts_label": "Plafond N de ratification",
+        "action_request_ratify_title": "Ratification de décision",
+        "action_request_realtime_desc": "Actualise la boîte de réception immédiatement lorsque les agents émettent, résolvent ou rejettent des demandes.",
+        "action_request_realtime_label": "Boîte de réception en direct",
+        "action_request_reply_resize_desc": "Ajoute un poignée de redimensionnement à la zone de réponse Needs-you. Défaut: activé.",
+        "action_request_reply_resize_label": "Zone de réponse redimensionnable",
+        "action_request_settings_desc": "Contrôle la boîte de réception Human-in-the-Loop pour les demandes d'agents nécessitant votre décision.",
+        "action_request_settings_title": "Demandes Needs-you",
+        "action_request_timeout_auto_dismiss": "B. Rejeter automatiquement",
+        "action_request_timeout_consensus": "D. Démarrer consensus",
+        "action_request_timeout_keep": "A. Garder en attente",
+        "action_request_timeout_minutes_desc": "Minutes avant l'exécution de la politique choisie.",
+        "action_request_timeout_minutes_label": "Durée du timeout",
+        "action_request_timeout_policy_desc": "Choisissez ce que fait le worker timeout quand une demande Needs-you reste sans réponse après le délai.",
+        "action_request_timeout_policy_label": "Politique de demande sans réponse",
+        "action_request_timeout_safe_default": "C. Défaut sécurisé",
+        "action_request_consensus_reply": "Enregistrer le consensus",
+        "action_request_consensus_triggered": "En consensus",
+        "action_request_ratify_grace_help": "Combien de temps attendre après qu'une décision est armée pour default-agree avant que le silence ne la résolve automatiquement. Plage de 5 minutes à 30 jours ; par défaut 1440 (24h). Seules les décisions réversibles et à faible risque sont armées.",
+        "action_request_ratify_guardrails_help": "Ces contrôles de sécurité s'exécutent sur le serveur et ne peuvent pas être désactivés depuis le navigateur : seules les décisions réversibles à faible risque sont éligibles, le verdict est fail-closed et revérifié au moment du déclenchement, les chemins irréversibles/à haut risque sont toujours maintenus, et le plafond de tentatives est appliqué depuis l'historique d'audit.",
+        "action_request_ratify_max_attempts_help": "Nombre maximum de tours default-agree armés par le serveur pour une demande avant l'escalade vers vous au lieu de la résolution automatique. Plage 1-5 ; par défaut 2.",
+        "action_request_realtime_help": "Lorsqu'activé, la boîte de réception se met à jour en direct via le socket lorsque les agents émettent, résolvent ou rejettent des demandes. Lorsque désactivé, elle se rafraîchit uniquement lors du sondage périodique.",
+        "action_request_realtime_off": "Actualisation manuelle",
+        "action_request_realtime_on": "En direct",
+        "action_request_timeout_minutes_help": "La plage autorisée est de 5 minutes à 30 jours. Par défaut : 1440 minutes (24 heures).",
+        "action_request_timeout_policy_help": "Ce qui arrive à une demande à laquelle vous ne répondez jamais après la durée d'expiration.",
+        "action_request_ratify_countdown_prefix": "Envoi automatique dans",
+        "action_request_ratify_default_agree_badge": "⏳ En attente de votre décision · le silence vaut approbation",
+        "action_request_ratify_default_agree_hint": "Si vous ne faites rien, ceci sera envoyé et exécuté automatiquement à la fin du compte à rebours.",
+        "action_request_ratify_hold_badge": "Nécessite votre approbation",
+        "action_request_ratify_hold_hint": "Rien n'est envoyé sauf si vous approuvez.",
+        "action_request_ratify_sending": "Envoi en cours…",
 
 
 
@@ -5012023,6 +5013330,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Résultats Bot Plaza affichés",
+        "community_result_detail_default": "Utilisez la recherche, les filtres, les capacités ou le tarif pour réduire la liste.",
+        "community_result_clear_filters": "Effacer les filtres",
+        "community_result_filter_search": "recherche « {query} »",
+        "community_result_filter_category": "catégorie {category}",
+        "community_result_filter_capabilities": "capacités {capabilities}",
+        "community_result_filter_rate": "tarif {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} bot",
+        "community_result_count_many": "{count} bots",
+        "community_result_count_unknown": "résultats Bot Plaza",
+        "community_result_summary_filtered": "Affichage de {count} correspondant à {filters}",
+        "community_result_summary_default_count": "Affichage de {count} depuis Bot Plaza",
+        "community_result_detail_filtered": "Trié par {sort}. Effacez les filtres pour revenir à tout le Plaza.",
+        "community_result_detail_default_sorted": "Trié par {sort}. Utilisez la recherche, les filtres, les capacités ou le tarif pour réduire la liste.",
+        "community_error_title": "Impossible de charger Bot Plaza",
+        "community_error_desc": "Vérifiez votre connexion puis réessayez.",
 
 
 
@@ -5050210,8 +5051534,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "Choisissez si la politique de prompt s'applique comme valeur par défaut de l'appareil ou remplace une entité spécifique.",
         "settings_device_id_help": "Identifiant unique pour l'appareil/compte que ce navigateur utilisera. Stockez avec le Device Secret correspondant lors du couplage.",
         "settings_device_secret_help": "Clé secrète pour le Device ID sélectionné. Traitez-la comme un mot de passe et ne la saisissez que sur des appareils de confiance.",
-        "feedback_category_help": "Choisissez la catégorie qui correspond le mieux à votre rapport. L'assistance IA exécute différents flux de triage par catégorie (bug = vérification de reproduction, feature = correspondance de roadmap, design = comparaison visuelle).",
-        "feedback_photo_help": "Joignez des captures d'écran montrant le problème en contexte. Maximum 5 photos ; le téléversement web prend en charge le glisser-déposer. Les données de localisation EXIF sont supprimées avant le téléversement.",
+        "feedback_category_help": "Choisissez la catégorie qui correspond le mieux à votre rapport. L'assistance IA exécute différents flux de triage par catégorie.",
+        "feedback_photo_help": "Joignez des captures d'écran montrant le problème en contexte. Maximum 5 photos ; le téléversement web prend en charge le glisser-déposer. Les métadonnées EXIF/GPS sont supprimées avant le stockage.",
         "kanban_cron_recurring_notify_help": "Envoyer une notification de chat lorsque le cron de cette carte se déclenche. Désactivez pour les tâches récurrentes de basse priorité qui ne devraient pas vous notifier.",
         "kanban_nudge_advanced_help": "Remplacements par entité pour l'intervalle de nudge, les statuts et le mode d'arrêt. La plupart des tableaux n'en ont pas besoin — laissez replié sauf si une entité a des besoins de cadence différents.",
         "kanban_nudge_batch_help": "Nombre maximum de cartes bloquées L1 sélectionnées par tick cron — limite à l'échelle de l'appareil, PAS par entité. Les escalades L2 (augmentation de priorité) et L3 (blocage automatique) ne sont pas affectées. Voir L1/L2/L3 dans la spécification kanban-nudge.",
@@ -5050295,6 +5051619,19 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "Le marché de location (annonces, contrats, historique) est lié à un compte. Connectez-vous avec un compte e-mail ou ouvrez le Plaza pour commencer à louer ou à publier un bot.",
         "settings_rental_setup_cta": "Configurer la location",
         "rental_needs_account": "Connectez-vous avec un compte e-mail pour gérer les locations.",
+
+        "usage_warning_enable_label": "Activer les avertissements d'utilisation",
+        "usage_warning_enable_help": "Afficher des avertissements lorsque l'utilisation des jetons AI approche des limites",
+        "usage_warning_5h_label": "Avertissement 5 heures",
+        "usage_warning_5h_help": "Afficher un avertissement lorsque l'utilisation sur 5 heures dépasse ce pourcentage",
+        "usage_warning_7d_label": "Avertissement 7 jours",
+        "usage_warning_7d_help": "Afficher un avertissement lorsque l'utilisation sur 7 jours dépasse ce pourcentage",
+
+        "cron_skip_5h_label": "Ignorer si 5h > X%",
+        "cron_skip_7d_label": "Ignorer si 7d > Y%",
+        "cron_skip_help_text": "Cette planification ignore le dispatch lorsque l'usage 5h de l'entity dépasse X% ou l'usage 7d dépasse Y%. Défauts (85%/95%) protègent les entities à charge élevée. Ajustable 50%-99%. Les crons ignorés réessayeront automatiquement au prochain tick.",
+        "cron_current_usage_label": "Actuel: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "ignoré: usage dépasse",
 },
 
 
@@ -5287058,6 +5288395,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "Tus comentarios enviados aparecerán aquí....",
+        "feedback_filter_empty_sub": "{label}: {count} comentario(s) enviados.",
 
 
 
@@ -5350432,6 +5351770,48 @@ const TRANSLATIONS = {
 
 
         "admin_loading": "Cargando datos de admin……..",
+
+        "action_request_ratify_desc": "Aprobación pasiva del Plan E para decisiones reversibles de bajo riesgo armadas por el servidor. Por defecto: activado.",
+        "action_request_ratify_grace_desc": "Tiempo tras una decisión default_agree armada por el servidor antes de que el silencio la valide.",
+        "action_request_ratify_grace_hours": "h",
+        "action_request_ratify_grace_label": "Plazo de gracia de ratificación",
+        "action_request_ratify_grace_minutes": "min",
+        "action_request_ratify_guardrails_desc": "Controles de servidor de solo lectura. El navegador no puede debilitarlos.",
+        "action_request_ratify_guardrails_label": "Barreras de ratificación",
+        "action_request_ratify_guardrails_value": "Fail-closed: el servidor recalcula el modo, solo default_agree puede resolver automáticamente, el veredicto se re-ejecuta en el momento de activación, las rutas/diferencias de alto riesgo se mantienen y el límite N se aplica desde el historial de auditoría.",
+        "action_request_ratify_max_attempts_desc": "Número máximo de rondas default_agree armadas por servidor por solicitud.",
+        "action_request_ratify_max_attempts_label": "Límite N de ratificación",
+        "action_request_ratify_title": "Ratificación de decisión",
+        "action_request_realtime_desc": "Actualiza la bandeja inmediatamente cuando los agentes emiten, resuelven o descartan solicitudes.",
+        "action_request_realtime_label": "Actualizar bandeja en vivo",
+        "action_request_reply_resize_desc": "Añade un controlador de arrastrar/teclado al cuadro de respuesta Needs-you. Por defecto: activado.",
+        "action_request_reply_resize_label": "Cuadro de respuesta redimensionable",
+        "action_request_settings_desc": "Controla la bandeja de entrada Human-in-the-Loop para solicitudes de agentes que requieren tu decisión.",
+        "action_request_settings_title": "Solicitudes Needs-you",
+        "action_request_timeout_auto_dismiss": "B. Descartar automáticamente",
+        "action_request_timeout_consensus": "D. Iniciar consenso",
+        "action_request_timeout_keep": "A. Mantener pendiente",
+        "action_request_timeout_minutes_desc": "Minutos antes de que se ejecute la política seleccionada.",
+        "action_request_timeout_minutes_label": "Duración del timeout",
+        "action_request_timeout_policy_desc": "Elige qué hace el worker de timeout cuando una solicitud Needs-you permanece sin respuesta tras el plazo.",
+        "action_request_timeout_policy_label": "Política de solicitud sin respuesta",
+        "action_request_timeout_safe_default": "C. Valor predeterminado seguro",
+        "action_request_consensus_reply": "Registrar consenso",
+        "action_request_consensus_triggered": "En consenso",
+        "action_request_ratify_grace_help": "Cuánto tiempo esperar después de que una decisión se arme para default-agree antes de que el silencio la resuelva automáticamente. Rango de 5 minutos a 30 días; predeterminado 1440 (24h). Solo se arman decisiones reversibles de bajo riesgo.",
+        "action_request_ratify_guardrails_help": "Estas verificaciones de seguridad se ejecutan en el servidor y no se pueden desactivar desde el navegador: solo las decisiones reversibles de bajo riesgo son elegibles, el veredicto es fail-closed y se re-verifica al momento de la activación, las rutas irreversibles/de alto riesgo siempre se mantienen, y el límite de intentos se aplica desde el historial de auditoría.",
+        "action_request_ratify_max_attempts_help": "Número máximo de rondas default-agree armadas por el servidor para una solicitud antes de escalar a usted en lugar de resolver automáticamente. Rango 1-5; predeterminado 2.",
+        "action_request_realtime_help": "Cuando está activado, la bandeja de entrada se actualiza en vivo a través del socket cuando los agentes emiten, resuelven o descartan solicitudes. Cuando está desactivado, solo se actualiza en el sondeo periódico.",
+        "action_request_realtime_off": "Actualización manual",
+        "action_request_realtime_on": "En vivo",
+        "action_request_timeout_minutes_help": "El rango permitido es de 5 minutos a 30 días. Predeterminado: 1440 minutos (24 horas).",
+        "action_request_timeout_policy_help": "Qué sucede con una solicitud que nunca responde después de la duración del tiempo de espera.",
+        "action_request_ratify_countdown_prefix": "Envío automático en",
+        "action_request_ratify_default_agree_badge": "⏳ Esperando su decisión · el silencio aprueba",
+        "action_request_ratify_default_agree_hint": "Si no hace nada, esto se enviará y ejecutará automáticamente cuando termine la cuenta regresiva.",
+        "action_request_ratify_hold_badge": "Necesita su aprobación",
+        "action_request_ratify_hold_hint": "No se envía nada a menos que usted lo apruebe.",
+        "action_request_ratify_sending": "Enviando…",
 
 
 
@@ -5530912,6 +5532292,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Mostrando resultados de Bot Plaza",
+        "community_result_detail_default": "Usa búsqueda, filtros, capacidades o tarifa para acotar la lista.",
+        "community_result_clear_filters": "Borrar filtros",
+        "community_result_filter_search": "búsqueda \"{query}\"",
+        "community_result_filter_category": "categoría {category}",
+        "community_result_filter_capabilities": "capacidades {capabilities}",
+        "community_result_filter_rate": "tarifa {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} bot",
+        "community_result_count_many": "{count} bots",
+        "community_result_count_unknown": "resultados de Bot Plaza",
+        "community_result_summary_filtered": "Mostrando {count} que coinciden con {filters}",
+        "community_result_summary_default_count": "Mostrando {count} de Bot Plaza",
+        "community_result_detail_filtered": "Ordenado por {sort}. Borra los filtros para volver a todo el Plaza.",
+        "community_result_detail_default_sorted": "Ordenado por {sort}. Usa búsqueda, filtros, capacidades o tarifa para acotar la lista.",
+        "community_error_title": "No se puede cargar Bot Plaza",
+        "community_error_desc": "Comprueba tu conexión e inténtalo de nuevo.",
 
 
 
@@ -5567880,8 +5569277,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "Elija si la política de prompts se aplica como predeterminado de todo el dispositivo o anula una entidad específica.",
         "settings_device_id_help": "Identificador único para el dispositivo/cuenta que usará este navegador. Almacénelo junto con el Device Secret correspondiente al emparejar.",
         "settings_device_secret_help": "Clave secreta para el Device ID seleccionado. Trátela como una contraseña e ingrésela solo en dispositivos de confianza.",
-        "feedback_category_help": "Elija la categoría que mejor coincida con su informe. La asistencia de IA ejecuta diferentes flujos de triaje por categoría (bug = verificación de reproducción, feature = coincidencia de roadmap, design = comparación visual).",
-        "feedback_photo_help": "Adjunte capturas de pantalla que muestren el problema en contexto. Máximo 5 fotos; la subida web admite arrastrar y soltar. Los datos de ubicación EXIF se eliminan antes de subir.",
+        "feedback_category_help": "Elija la categoría que mejor coincida con su informe. La asistencia de IA ejecuta diferentes flujos de triaje por categoría.",
+        "feedback_photo_help": "Adjunte capturas de pantalla que muestren el problema en contexto. Máximo 5 fotos; la subida web admite arrastrar y soltar. Los metadatos EXIF/GPS se eliminan antes de almacenarse.",
         "kanban_cron_recurring_notify_help": "Enviar una notificación de chat cuando se active el cron de esta tarjeta. Desactive para trabajos recurrentes de baja prioridad que no deberían molestarle.",
         "kanban_nudge_advanced_help": "Anulaciones por entidad para el intervalo de nudge, estados y modo de detención. La mayoría de los tableros no necesitan esto — déjelo colapsado a menos que una entidad tenga necesidades de cadencia diferentes.",
         "kanban_nudge_batch_help": "Número máximo de tarjetas estancadas L1 seleccionadas por tick de cron — límite de todo el dispositivo, NO por entidad. Las escalaciones L2 (aumento de prioridad) y L3 (bloqueo automático) no se ven afectadas. Consulte L1/L2/L3 en la especificación kanban-nudge.",
@@ -5567911,14 +5569308,6 @@ const TRANSLATIONS = {
         "session_expired_relogin": "La sesión ha expirado: vuelve a iniciar sesión",
         "session_invalid_relogin": "Inicia sesión para continuar",
 
-        "greet_returning_template": "La última vez hablamos de \"{topic}\". ¿Seguimos donde lo dejamos?",
-        "greet_continue": "Continuar el último tema",
-        "greet_change_topic": "Otro tema",
-        "greet_continue_send_text": "Sigamos con nuestro último tema",
-        "greet_welcome_new": "¡Bienvenido! Soy tu compañero de IA. Toca una pregunta para empezar:",
-        "greet_starter_1": "¿En qué puedes ayudarme?",
-        "greet_starter_2": "Ayúdame a planificar mis tareas de hoy",
-        "greet_starter_3": "Preséntate en tres frases",
 
         "kb_toast_moved": "Movido a {col}",
         "kb_toast_archived": "Archivado",
@@ -5568043,6 +5569432,19 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "El mercado de alquiler (anuncios, contratos, historial) está vinculado a una cuenta. Inicie sesión con una cuenta de correo o abra Plaza para empezar a alquilar o publicar un bot.",
         "settings_rental_setup_cta": "Configurar alquiler",
         "rental_needs_account": "Inicie sesión con una cuenta de correo para gestionar alquileres.",
+
+        "usage_warning_enable_label": "Activar advertencias de uso",
+        "usage_warning_enable_help": "Mostrar advertencias cuando el uso de tokens de AI se acerque a los límites",
+        "usage_warning_5h_label": "Advertencia de 5 horas",
+        "usage_warning_5h_help": "Mostrar una advertencia cuando el uso de 5 horas exceda este porcentaje",
+        "usage_warning_7d_label": "Advertencia de 7 días",
+        "usage_warning_7d_help": "Mostrar una advertencia cuando el uso de 7 días exceda este porcentaje",
+
+        "cron_skip_5h_label": "Omitir si 5h > X%",
+        "cron_skip_7d_label": "Omitir si 7d > Y%",
+        "cron_skip_help_text": "Este horario omite dispatch cuando el entity 5h excede X% o 7d excede Y%. Predeterminados (85%/95%) protegen entitys de alta carga. Ajustable 50%-99%. Los crons omitidos reintentarán automáticamente en el próximo tick.",
+        "cron_current_usage_label": "Actual: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "omitido: uso excede",
 },
 
 
@@ -5805845,6 +5807247,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "Ihr eingereichtes Feedback erscheint hier.",
+        "feedback_filter_empty_sub": "{label}: {count} eingereichte Feedback-Element(e).",
 
 
 
@@ -5869210,6 +5870613,48 @@ const TRANSLATIONS = {
 
 
         "admin_loading": "Loading admin data...",
+
+        "action_request_ratify_desc": "Passive Genehmigung des Plans E für server-bewaffnete, risikolose, reversible Entscheidungen. Standard: aktiviert.",
+        "action_request_ratify_grace_desc": "Zeit nach einer server-bewaffneten default_agree-Entscheidung, bevor Stille sie validiert.",
+        "action_request_ratify_grace_hours": "Std",
+        "action_request_ratify_grace_label": "Schweigefrist für Validierung",
+        "action_request_ratify_grace_minutes": "Min",
+        "action_request_ratify_guardrails_desc": "Schreibgeschützte Serverprüfungen. Der Browser kann diese nicht lockern.",
+        "action_request_ratify_guardrails_label": "Validierungsbarrieren",
+        "action_request_ratify_guardrails_value": "Fail-closed: Server berechnet Modus neu, nur default_agree kann automatisch auflösen, Urteil wird bei Auslösung erneut ausgeführt, risikoreiche Pfade/Unterschiede werden gehalten und N-Obergrenze wird aus Prüfverlauf erzwungen.",
+        "action_request_ratify_max_attempts_desc": "Maximale server-bewaffnete default_agree-Runden pro Anfrage.",
+        "action_request_ratify_max_attempts_label": "Validierungs-N-Obergrenze",
+        "action_request_ratify_title": "Entscheidungsvalidierung",
+        "action_request_realtime_desc": "Aktualisiert den Posteingang sofort, wenn Agenten Anfragen senden, lösen oder verwerfen.",
+        "action_request_realtime_label": "Posteingang live aktualisieren",
+        "action_request_reply_resize_desc": "Fügt einen Zieh-/Tastaturgriff zum Needs-you-Antwortfeld hinzu. Standard: aktiviert.",
+        "action_request_reply_resize_label": "Antwortfeld skalierbar",
+        "action_request_settings_desc": "Steuert den Human-in-the-Loop-Posteingang für Agent-Anfragen, die Ihre Entscheidung benötigen.",
+        "action_request_settings_title": "Needs-you-Anfragen",
+        "action_request_timeout_auto_dismiss": "B. Automatisch verwerfen",
+        "action_request_timeout_consensus": "D. Konsens starten",
+        "action_request_timeout_keep": "A. Ausstehend lassen",
+        "action_request_timeout_minutes_desc": "Minuten, bevor die ausgewählte Richtlinie ausgeführt wird.",
+        "action_request_timeout_minutes_label": "Timeout-Dauer",
+        "action_request_timeout_policy_desc": "Wählen Sie, was der Timeout-Worker tun soll, wenn eine Needs-you-Anfrage nach der Frist unbeantwortet bleibt.",
+        "action_request_timeout_policy_label": "Richtlinie für nicht beantwortete Anfragen",
+        "action_request_timeout_safe_default": "C. Sichere Standardeinstellung",
+        "action_request_consensus_reply": "Konsens erfassen",
+        "action_request_consensus_triggered": "Im Konsens",
+        "action_request_ratify_grace_help": "Wie lange nach der Bewaffnung einer Entscheidung für default-agree gewartet wird, bevor Schweigen sie automatisch löst. Bereich 5 Minuten bis 30 Tage; Standard 1440 (24h). Nur reversible, risikoarme Entscheidungen werden bewaffnet.",
+        "action_request_ratify_guardrails_help": "Diese Sicherheitsprüfungen laufen auf dem Server und können nicht vom Browser deaktiviert werden: nur reversible risikoarme Entscheidungen sind berechtigt, das Urteil ist fail-closed und wird bei Auslösung erneut geprüft, irreversible/risikoreiche Pfade werden immer gehalten und die Versuchsobergrenze wird aus dem Prüfverlauf erzwungen.",
+        "action_request_ratify_max_attempts_help": "Maximale Anzahl von Server-bewaffneten default-agree-Runden für eine Anfrage, bevor sie an Sie eskaliert wird statt automatisch aufzulösen. Bereich 1-5; Standard 2.",
+        "action_request_realtime_help": "Bei Aktivierung wird der Posteingang live über den Socket aktualisiert, wenn Agenten Anfragen senden, lösen oder ablehnen. Bei Deaktivierung wird nur bei der periodischen Abfrage aktualisiert.",
+        "action_request_realtime_off": "Manuell aktualisieren",
+        "action_request_realtime_on": "Live",
+        "action_request_timeout_minutes_help": "Zulässiger Bereich ist 5 Minuten bis 30 Tage. Standard ist 1440 Minuten (24 Stunden).",
+        "action_request_timeout_policy_help": "Was mit einer Anfrage passiert, die Sie nach Ablauf der Zeitüberschreitung nie beantworten.",
+        "action_request_ratify_countdown_prefix": "Automatischer Versand in",
+        "action_request_ratify_default_agree_badge": "⏳ Wartet auf Ihre Entscheidung · Schweigen bedeutet Zustimmung",
+        "action_request_ratify_default_agree_hint": "Wenn Sie nichts tun, wird dies automatisch gesendet und ausgeführt, wenn der Countdown endet.",
+        "action_request_ratify_hold_badge": "Ihre Genehmigung erforderlich",
+        "action_request_ratify_hold_hint": "Nichts wird gesendet, es sei denn, Sie genehmigen es.",
+        "action_request_ratify_sending": "Wird gesendet…",
 
 
 
@@ -6054066,6 +6055511,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Bot Plaza-Ergebnisse werden angezeigt",
+        "community_result_detail_default": "Nutze Suche, Filter, Fähigkeiten oder Tarif, um die Liste einzugrenzen.",
+        "community_result_clear_filters": "Filter löschen",
+        "community_result_filter_search": "Suche \"{query}\"",
+        "community_result_filter_category": "Kategorie {category}",
+        "community_result_filter_capabilities": "Fähigkeiten {capabilities}",
+        "community_result_filter_rate": "Tarif {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} Bot",
+        "community_result_count_many": "{count} Bots",
+        "community_result_count_unknown": "Bot Plaza-Ergebnisse",
+        "community_result_summary_filtered": "{count} passend zu {filters} werden angezeigt",
+        "community_result_summary_default_count": "{count} aus Bot Plaza werden angezeigt",
+        "community_result_detail_filtered": "Sortiert nach {sort}. Lösche Filter, um zum gesamten Plaza zurückzukehren.",
+        "community_result_detail_default_sorted": "Sortiert nach {sort}. Nutze Suche, Filter, Fähigkeiten oder Tarif, um die Liste einzugrenzen.",
+        "community_error_title": "Bot Plaza kann nicht geladen werden",
+        "community_error_desc": "Prüfe deine Verbindung und versuche es erneut.",
 
 
 
@@ -6104949,8 +6106411,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "Wählen Sie, ob die Prompt-Richtlinie als geräteweiter Standard gilt oder eine bestimmte Entität überschreibt.",
         "settings_device_id_help": "Eindeutige Kennung für das Gerät/Konto, das dieser Browser verwendet. Beim Pairing zusammen mit dem entsprechenden Device Secret speichern.",
         "settings_device_secret_help": "Geheimer Schlüssel für die ausgewählte Device ID. Wie ein Passwort behandeln und nur auf vertrauenswürdigen Geräten eingeben.",
-        "feedback_category_help": "Wählen Sie die Kategorie, die am besten zu Ihrem Bericht passt. KI-Unterstützung führt pro Kategorie unterschiedliche Triage-Abläufe aus (Bug = Reproduktionscheck, Feature = Roadmap-Abgleich, Design = visueller Vergleich).",
-        "feedback_photo_help": "Fügen Sie Screenshots hinzu, die das Problem im Kontext zeigen. Maximal 5 Fotos; Web-Upload unterstützt Drag-and-Drop. EXIF-Standortdaten werden vor dem Upload entfernt.",
+        "feedback_category_help": "Wählen Sie die Kategorie, die am besten zu Ihrem Bericht passt. KI-Unterstützung führt pro Kategorie unterschiedliche Triage-Abläufe aus.",
+        "feedback_photo_help": "Fügen Sie Screenshots hinzu, die das Problem im Kontext zeigen. Maximal 5 Fotos; Web-Upload unterstützt Drag-and-Drop. EXIF/GPS-Metadaten werden vor der Speicherung entfernt.",
         "kanban_cron_recurring_notify_help": "Eine Chat-Benachrichtigung senden, wenn der Cron dieser Karte ausgelöst wird. Für wiederkehrende Aufgaben mit niedriger Priorität deaktivieren, die Sie nicht anpingen sollten.",
         "kanban_nudge_advanced_help": "Pro-Entität-Überschreibungen für Nudge-Intervall, Status und Stoppmodus. Die meisten Boards benötigen dies nicht — eingeklappt lassen, es sei denn, eine Entität hat unterschiedliche Kadenzanforderungen.",
         "kanban_nudge_batch_help": "Maximale Anzahl von L1-Stockungskarten, die pro Cron-Tick ausgewählt werden — geräteweite Obergrenze, NICHT pro Entität. L2- (Prioritätsanstieg) und L3- (Auto-Block) Eskalationen sind nicht betroffen. Siehe L1/L2/L3 in der kanban-nudge-Spezifikation.",
@@ -6105034,6 +6106496,19 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "Der Vermietungs-Marktplatz (Angebote, Verträge, Verlauf) ist kontogebunden. Melden Sie sich mit einem E-Mail-Konto an oder öffnen Sie Plaza, um zu mieten oder einen Bot einzustellen.",
         "settings_rental_setup_cta": "Vermietung einrichten",
         "rental_needs_account": "Melden Sie sich mit einem E-Mail-Konto an, um Vermietungen zu verwalten.",
+
+        "usage_warning_enable_label": "Nutzungswarnungen aktivieren",
+        "usage_warning_enable_help": "Warnungen anzeigen, wenn die AI-Token-Nutzung sich den Grenzen nähert",
+        "usage_warning_5h_label": "5-Stunden-Warnung",
+        "usage_warning_5h_help": "Warnung anzeigen, wenn die 5-Stunden-Nutzung diesen Prozentsatz überschreitet",
+        "usage_warning_7d_label": "7-Tage-Warnung",
+        "usage_warning_7d_help": "Warnung anzeigen, wenn die 7-Tage-Nutzung diesen Prozentsatz überschreitet",
+
+        "cron_skip_5h_label": "Überspringen wenn 5h > X%",
+        "cron_skip_7d_label": "Überspringen wenn 7d > Y%",
+        "cron_skip_help_text": "Dieser Zeitplan überspringt Dispatch, wenn die Entity 5h Nutzung X% oder 7d Nutzung Y% überschreitet. Standard (85%/95%) schützt hochbelastete Entities. Anpassbar 50%-99%. Übersprungene Crons werden automatisch im nächsten Tick wiederholt.",
+        "cron_current_usage_label": "Aktuell: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "übersprungen: Nutzung überschreitet",
 },
     pt: {
         "transition_loading": "A carregar…",
@@ -6105177,6 +6106652,7 @@ const TRANSLATIONS = {
         "mc_confirm_delete_category": "Delete this category? Items will become uncategorized.",
         "mc_bulk_cancel": "Cancel",
         "mc_bulk_undo": "Undo",
+        "mc_note_deleted": "Note deleted",
         "mc_bulk_clearing": "Clearing...",
         "mc_bulk_cleared": "{count} items cleared",
         "mc_bulk_restoring": "Restoring...",
@@ -6107228,9 +6108704,9 @@ const TRANSLATIONS = {
         "kanban_nudge_title": "Kanban Nudge",
         "usage_warning_title": "Usage Warning",
         "usage_warning_desc": "When triggered, the Agent prepends a system warning to every outgoing message so the recipient knows quota is tight.",
-        "usage_warning_enable_label": "Enable usage warning",
-        "usage_warning_5h_label": "5h budget threshold (warn when remaining ≤ this)",
-        "usage_warning_7d_label": "7d weekly threshold (warn when remaining ≤ this)",
+        "usage_warning_enable_label": "Enable usage warnings",
+        "usage_warning_5h_label": "5-hour warning",
+        "usage_warning_7d_label": "7-day warning",
         "usage_warning_stale_notice": "⚠️ Usage data stale (no fresh snapshot in the last 6h) — warnings cannot fire right now.",
         "usage_warning_modal_title": "How usage warning works",
         "usage_warning_modal_intro": "When enabled, if Claude 5h remaining ≤ your 5h threshold OR weekly remaining ≤ your 7d threshold, the Agent prepends a system warning to every outgoing message in this device.",
@@ -6107239,9 +6108715,9 @@ const TRANSLATIONS = {
         "usage_warning_modal_bullet_behavior": "This does NOT change Agent behavior — it only tells the dialog partner that quota is tight.",
         "usage_warning_modal_bullet_off": "When the toggle is OFF, quota-exhaustion failures still occur but with no advance warning.",
         "usage_warning_modal_close": "Close",
-        "usage_warning_enable_help": "Master switch. When ON, every outbound /api/transform message gets a system-warning prefix as soon as the threshold is crossed. When OFF, no warning is added even if quota is exhausted.",
-        "usage_warning_5h_help": "Trigger when remaining 5h quota ≤ this value. Default 15% — roughly 45min before exhaustion. Raise it to warn earlier; set to 0 to disable the 5h axis without disabling the toggle.",
-        "usage_warning_7d_help": "Trigger when remaining 7d weekly quota ≤ this value. Default 5% — roughly 8h before exhaustion. Set to 0 to disable the 7d axis without disabling the toggle.",
+        "usage_warning_enable_help": "Show warnings when AI token usage approaches limits",
+        "usage_warning_5h_help": "Show a warning when 5-hour usage exceeds this percentage",
+        "usage_warning_7d_help": "Show a warning when 7-day usage exceeds this percentage",
         "kanban_nudge_desc": "Stale-card reminders — applies uniformly to all entities.",
         "kanban_nudge_batch_label": "Cards per cycle",
         "kanban_nudge_priority_label": "Priority mode",
@@ -6107295,6 +6108771,7 @@ const TRANSLATIONS = {
         "feedback_loading": "Loading feedback...",
         "feedback_empty": "No feedback submitted yet",
         "feedback_empty_sub": "Your submitted feedback will appear here.",
+        "feedback_filter_empty_sub": "{label}: {count} itens de feedback enviados.",
         "feedback_cat_bug": "Bug",
         "feedback_cat_feature": "Feature",
         "feedback_cat_question": "Question",
@@ -6107963,6 +6109440,48 @@ const TRANSLATIONS = {
         "admin_badge": "ADMIN",
         "admin_refresh": "Refresh",
         "admin_loading": "Loading admin data...",
+
+        "action_request_ratify_desc": "Aprovação passiva do Plano E para decisões reversíveis de baixo risco armadas pelo servidor. Padrão: ativado.",
+        "action_request_ratify_grace_desc": "Tempo após uma decisão default_agree armada pelo servidor antes do silêncio resolvê-la.",
+        "action_request_ratify_grace_hours": "h",
+        "action_request_ratify_grace_label": "Prazo de graça de ratificação",
+        "action_request_ratify_grace_minutes": "min",
+        "action_request_ratify_guardrails_desc": "Verificações do servidor somente leitura. O navegador não pode enfraquecê-las.",
+        "action_request_ratify_guardrails_label": "Barreiras de ratificação",
+        "action_request_ratify_guardrails_value": "Fail-closed: servidor recalcula o modo, apenas default_agree pode resolver automaticamente, veredicto é reexecutado na hora do disparo, caminhos/diferenças de alto risco são mantidos e limite N é aplicado do histórico de auditoria.",
+        "action_request_ratify_max_attempts_desc": "Número máximo de rodadas default_agree armadas pelo servidor por solicitação.",
+        "action_request_ratify_max_attempts_label": "Limite N de ratificação",
+        "action_request_ratify_title": "Ratificação de decisão",
+        "action_request_realtime_desc": "Atualiza a caixa de entrada imediatamente quando agentes emitem, resolvem ou descartam solicitações.",
+        "action_request_realtime_label": "Atualizar caixa de entrada ao vivo",
+        "action_request_reply_resize_desc": "Adiciona um manipulador de arrastar/teclado à caixa de resposta Needs-you. Padrão: ativado.",
+        "action_request_reply_resize_label": "Caixa de resposta redimensionável",
+        "action_request_settings_desc": "Controla a caixa de entrada Human-in-the-Loop para solicitações de agentes que precisam da sua decisão.",
+        "action_request_settings_title": "Solicitações Needs-you",
+        "action_request_timeout_auto_dismiss": "B. Descartar automaticamente",
+        "action_request_timeout_consensus": "D. Iniciar consenso",
+        "action_request_timeout_keep": "A. Manter pendente",
+        "action_request_timeout_minutes_desc": "Minutos antes da política selecionada ser executada.",
+        "action_request_timeout_minutes_label": "Duração do timeout",
+        "action_request_timeout_policy_desc": "Escolha o que o worker de timeout faz quando uma solicitação Needs-you permanece sem resposta após o prazo.",
+        "action_request_timeout_policy_label": "Política de solicitação sem resposta",
+        "action_request_timeout_safe_default": "C. Padrão seguro",
+        "action_request_consensus_reply": "Registrar consenso",
+        "action_request_consensus_triggered": "Em consenso",
+        "action_request_ratify_grace_help": "Quanto tempo esperar após uma decisão ser armada para default-agree antes que o silêncio a resolva automaticamente. Intervalo de 5 minutos a 30 dias; padrão 1440 (24h). Apenas decisões reversíveis e de baixo risco são armadas.",
+        "action_request_ratify_guardrails_help": "Essas verificações de segurança são executadas no servidor e não podem ser desativadas pelo navegador: apenas decisões reversíveis de baixo risco são elegíveis, o veredito é fail-closed e reverificado no momento da ativação, caminhos irreversíveis/de alto risco sempre são mantidos, e o limite de tentativas é aplicado a partir do histórico de auditoria.",
+        "action_request_ratify_max_attempts_help": "Número máximo de rodadas default-agree armadas pelo servidor para uma solicitação antes de escalar para você em vez de resolver automaticamente. Intervalo 1-5; padrão 2.",
+        "action_request_realtime_help": "Quando ativado, a caixa de entrada atualiza ao vivo via socket quando agentes emitem, resolvem ou descartam solicitações. Quando desativado, atualiza apenas na consulta periódica.",
+        "action_request_realtime_off": "Atualização manual",
+        "action_request_realtime_on": "Ao vivo",
+        "action_request_timeout_minutes_help": "O intervalo permitido é de 5 minutos a 30 dias. Padrão: 1440 minutos (24 horas).",
+        "action_request_timeout_policy_help": "O que acontece com uma solicitação que você nunca responde após a duração do tempo limite.",
+        "action_request_ratify_countdown_prefix": "Envio automático em",
+        "action_request_ratify_default_agree_badge": "⏳ Aguardando sua decisão · silêncio é aprovação",
+        "action_request_ratify_default_agree_hint": "Se você não fizer nada, isto será enviado e executado automaticamente quando a contagem regressiva terminar.",
+        "action_request_ratify_hold_badge": "Precisa da sua aprovação",
+        "action_request_ratify_hold_hint": "Nada é enviado a menos que você aprove.",
+        "action_request_ratify_sending": "Enviando…",
         "admin_access_denied": "Access Denied",
         "admin_no_privilege": "You do not have admin privileges.",
         "admin_back_dashboard": "Back to Dashboard",
@@ -6108447,6 +6109966,7 @@ const TRANSLATIONS = {
         "chip_popover_not_supported": "Preview not yet supported for this reference type",
         "chip_popover_requote": "Quote to chat again",
         "chip_popover_open_full": "Open full page →",
+        "chip_popover_screenshots": "📸 Screenshots",
         "chip_popover_cycle": "Already in the reference stack",
         "chip_popover_too_deep": "Too deep — open the full page instead",
         "chip_popover_requoted": "Quoted into chat",
@@ -6109547,6 +6111067,23 @@ const TRANSLATIONS = {
         "community_filter_creative": "🎨 Creative",
         "community_filter_a2a": "🤝 A2A",
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "A mostrar resultados do Bot Plaza",
+        "community_result_detail_default": "Use pesquisa, filtros, capacidades ou tarifa para reduzir a lista.",
+        "community_result_clear_filters": "Limpar filtros",
+        "community_result_filter_search": "pesquisa \"{query}\"",
+        "community_result_filter_category": "categoria {category}",
+        "community_result_filter_capabilities": "capacidades {capabilities}",
+        "community_result_filter_rate": "tarifa {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} bot",
+        "community_result_count_many": "{count} bots",
+        "community_result_count_unknown": "resultados do Bot Plaza",
+        "community_result_summary_filtered": "A mostrar {count} correspondente a {filters}",
+        "community_result_summary_default_count": "A mostrar {count} do Bot Plaza",
+        "community_result_detail_filtered": "Ordenado por {sort}. Limpe os filtros para voltar ao Plaza completo.",
+        "community_result_detail_default_sorted": "Ordenado por {sort}. Use pesquisa, filtros, capacidades ou tarifa para reduzir a lista.",
+        "community_error_title": "Não foi possível carregar o Bot Plaza",
+        "community_error_desc": "Verifique a ligação e tente novamente.",
         "community_bots_found": "Bots",
         "community_loading": "Loading...",
         "community_empty_title": "No matching Bots found",
@@ -6110451,8 +6111988,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "Escolha se a política de prompt se aplica como padrão de todo o dispositivo ou substitui uma entidade específica.",
         "settings_device_id_help": "Identificador único para o dispositivo/conta que este navegador usará. Armazene junto com o Device Secret correspondente ao emparelhar.",
         "settings_device_secret_help": "Chave secreta para o Device ID selecionado. Trate-a como uma senha e insira apenas em dispositivos confiáveis.",
-        "feedback_category_help": "Escolha a categoria que melhor corresponde ao seu relatório. A assistência de IA executa diferentes fluxos de triagem por categoria (bug = verificação de reprodução, recurso = correspondência de roadmap, design = comparação visual).",
-        "feedback_photo_help": "Anexe capturas de tela mostrando o problema em contexto. Máximo 5 fotos; o upload da web suporta arrastar e soltar. Os dados de localização EXIF são removidos antes do upload.",
+        "feedback_category_help": "Escolha a categoria que melhor corresponde ao seu relatório. A assistência de IA executa diferentes fluxos de triagem por categoria.",
+        "feedback_photo_help": "Anexe capturas de tela mostrando o problema em contexto. Máximo 5 fotos; o upload da web suporta arrastar e soltar. Metadados EXIF/GPS são removidos antes do armazenamento.",
         "kanban_cron_recurring_notify_help": "Enviar uma notificação de chat quando o cron deste cartão for acionado. Desative para trabalhos recorrentes de baixa prioridade que não deveriam incomodá-lo.",
         "kanban_nudge_advanced_help": "Substituições por entidade para o intervalo de nudge, status e modo de parada. A maioria dos quadros não precisa disto — deixe recolhido a menos que uma entidade tenha necessidades de cadência diferentes.",
         "kanban_nudge_batch_help": "Número máximo de cartões parados L1 selecionados por tick de cron — limite de todo o dispositivo, NÃO por entidade. As escalonações L2 (aumento de prioridade) e L3 (bloqueio automático) não são afetadas. Veja L1/L2/L3 na especificação kanban-nudge.",
@@ -6343089,6 +6344626,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "Maklum balas yang anda hantar akan muncul di sini.",
+        "feedback_filter_empty_sub": "{label}: {count} maklum balas telah dihantar.",
 
 
 
@@ -6357429,6 +6358967,48 @@ const TRANSLATIONS = {
 
 
         "admin_loading": "Memuatkan data admin...",
+
+        "action_request_ratify_desc": "Kelulusan pasif Pelan E untuk keputusan boleh diterbalikkan berisiko rendah yang dilengkapi pelayan. Lalai: aktif; matikan untuk memilih keluar.",
+        "action_request_ratify_grace_desc": "Berapa lama selepas keputusan default_agree yang dilengkapi pelayan sebelum senyap mengesahkannya.",
+        "action_request_ratify_grace_hours": "jam",
+        "action_request_ratify_grace_label": "Tempoh tangguh pengesahan",
+        "action_request_ratify_grace_minutes": "minit",
+        "action_request_ratify_guardrails_desc": "Pemeriksaan pelayan baca sahaja. Pelayar tidak boleh melemahkan ini.",
+        "action_request_ratify_guardrails_label": "Pagar pengesahan",
+        "action_request_ratify_guardrails_value": "Fail-closed: pelayan mengira semula mod, hanya default_agree boleh menyelesaikan secara automatik, verdict dijalankan semula pada masa pencetus, laluan/perbezaan risiko tinggi dipegang, dan had N dikenakan dari sejarah audit.",
+        "action_request_ratify_max_attempts_desc": "Bilangan maksimum pusingan default_agree yang dilengkapi pelayan setiap permintaan.",
+        "action_request_ratify_max_attempts_label": "Had N pengesahan",
+        "action_request_ratify_title": "Pengesahan keputusan",
+        "action_request_realtime_desc": "Segarkan kotak masuk dengan segera apabila ejen mengeluarkan, menyelesaikan atau menolak permintaan.",
+        "action_request_realtime_label": "Segarkan kotak masuk secara langsung",
+        "action_request_reply_resize_desc": "Tambah pegangan seret/papan kekunci kepada kotak jawapan Needs-you supaya anda boleh menjadikannya lebih tinggi. Lalai: aktif.",
+        "action_request_reply_resize_label": "Kotak jawapan boleh ubah saiz",
+        "action_request_settings_desc": "Mengawal kotak masuk Human-in-the-Loop untuk permintaan ejen yang memerlukan keputusan anda.",
+        "action_request_settings_title": "Permintaan Needs-you",
+        "action_request_timeout_auto_dismiss": "B. Tolak secara automatik",
+        "action_request_timeout_consensus": "D. Mulakan konsensus",
+        "action_request_timeout_keep": "A. Kekal belum selesai",
+        "action_request_timeout_minutes_desc": "Minit sebelum dasar yang dipilih berjalan.",
+        "action_request_timeout_minutes_label": "Tempoh masa tunggu",
+        "action_request_timeout_policy_desc": "Pilih apa yang worker timeout lakukan apabila permintaan Needs-you tidak dijawab selepas tamat.",
+        "action_request_timeout_policy_label": "Dasar permintaan tidak dijawab",
+        "action_request_timeout_safe_default": "C. Lalai selamat",
+        "action_request_consensus_reply": "Rekod konsensus",
+        "action_request_consensus_triggered": "Dalam konsensus",
+        "action_request_ratify_grace_help": "Berapa lama menunggu selepas keputusan dipersenjatai untuk default-agree sebelum senyap menyelesaikannya secara automatik. Julat 5 minit hingga 30 hari; lalai 1440 (24 jam). Hanya keputusan boleh balik dan berisiko rendah yang akan dipersenjatai.",
+        "action_request_ratify_guardrails_help": "Pemeriksaan keselamatan ini berjalan di pelayan dan tidak boleh dimatikan dari pelayar: hanya keputusan boleh balik berisiko rendah yang layak, keputusan adalah fail-closed dan disemak semula semasa pengaktifan, laluan tidak boleh balik/berisiko tinggi sentiasa ditahan, dan had percubaan dikuatkuasakan dari sejarah audit.",
+        "action_request_ratify_max_attempts_help": "Bilangan maksimum pusingan default-agree yang dipersenjatai pelayan untuk satu permintaan sebelum dieskalasi kepada anda dan bukannya menyelesaikan secara automatik. Julat 1-5; lalai 2.",
+        "action_request_realtime_help": "Apabila dihidupkan, peti masuk dikemas kini secara langsung melalui soket apabila ejen mengeluarkan, menyelesaikan atau menolak permintaan. Apabila dimatikan, ia hanya dimuat semula pada undian berkala.",
+        "action_request_realtime_off": "Muat semula manual",
+        "action_request_realtime_on": "Langsung",
+        "action_request_timeout_minutes_help": "Julat yang dibenarkan ialah 5 minit hingga 30 hari. Lalai ialah 1440 minit (24 jam).",
+        "action_request_timeout_policy_help": "Apa yang berlaku kepada permintaan yang tidak pernah anda jawab selepas tempoh tamat masa.",
+        "action_request_ratify_countdown_prefix": "Hantar automatik dalam",
+        "action_request_ratify_default_agree_badge": "⏳ Menunggu keputusan anda · senyap bermaksud setuju",
+        "action_request_ratify_default_agree_hint": "Jika anda tidak melakukan apa-apa, ini akan dihantar dan dilaksanakan secara automatik apabila kira detik tamat.",
+        "action_request_ratify_hold_badge": "Memerlukan kelulusan anda",
+        "action_request_ratify_hold_hint": "Tiada apa-apa dihantar melainkan anda meluluskan.",
+        "action_request_ratify_sending": "Menghantar…",
 
 
 
@@ -6547501,6 +6549081,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Memaparkan hasil Bot Plaza",
+        "community_result_detail_default": "Gunakan carian, penapis, keupayaan atau kadar untuk mengecilkan senarai.",
+        "community_result_clear_filters": "Kosongkan penapis",
+        "community_result_filter_search": "carian \"{query}\"",
+        "community_result_filter_category": "kategori {category}",
+        "community_result_filter_capabilities": "keupayaan {capabilities}",
+        "community_result_filter_rate": "kadar {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} bot",
+        "community_result_count_many": "{count} bot",
+        "community_result_count_unknown": "hasil Bot Plaza",
+        "community_result_summary_filtered": "Memaparkan {count} yang sepadan dengan {filters}",
+        "community_result_summary_default_count": "Memaparkan {count} daripada Bot Plaza",
+        "community_result_detail_filtered": "Diisih mengikut {sort}. Kosongkan penapis untuk kembali ke Plaza penuh.",
+        "community_result_detail_default_sorted": "Diisih mengikut {sort}. Gunakan carian, penapis, keupayaan atau kadar untuk mengecilkan senarai.",
+        "community_error_title": "Tidak dapat memuatkan Bot Plaza",
+        "community_error_desc": "Semak sambungan anda dan cuba lagi.",
 
 
 
@@ -6639312,8 +6640909,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "Pilih sama ada dasar prompt digunakan sebagai lalai seluruh peranti atau mengatasi entiti tertentu.",
         "settings_device_id_help": "Pengecam unik untuk peranti/akaun yang akan digunakan oleh pelayar ini. Simpan bersama Device Secret yang sepadan semasa berpasangan.",
         "settings_device_secret_help": "Kunci rahsia untuk Device ID yang dipilih. Anggap sebagai kata laluan dan masukkan hanya pada peranti yang dipercayai.",
-        "feedback_category_help": "Pilih kategori yang paling sepadan dengan laporan anda. Bantuan AI menjalankan aliran triase berbeza setiap kategori (pepijat = semakan pengeluaran semula, ciri = padanan peta jalan, reka bentuk = perbandingan visual).",
-        "feedback_photo_help": "Lampirkan tangkapan skrin yang menunjukkan masalah dalam konteks. Maksimum 5 foto; muat naik web menyokong seret-dan-lepas. Data lokasi EXIF dialih keluar sebelum muat naik.",
+        "feedback_category_help": "Pilih kategori yang paling sepadan dengan laporan anda. Bantuan AI menjalankan aliran triase berbeza setiap kategori.",
+        "feedback_photo_help": "Lampirkan tangkapan skrin yang menunjukkan masalah dalam konteks. Maksimum 5 foto; muat naik web menyokong seret-dan-lepas. Metadata EXIF/GPS dialih keluar sebelum disimpan.",
         "kanban_cron_recurring_notify_help": "Hantar pemberitahuan sembang apabila cron kad ini dicetuskan. Lumpuhkan untuk kerja berulang berkeutamaan rendah yang tidak perlu mengganggu anda.",
         "kanban_nudge_advanced_help": "Pengatasan setiap entiti untuk selang dorongan, status dan mod henti. Kebanyakan papan tidak memerlukan ini — biarkan tertutup melainkan satu entiti mempunyai keperluan irama yang berbeza.",
         "kanban_nudge_batch_help": "Bilangan maksimum kad terbantut L1 yang dipilih setiap kutu cron — had seluruh peranti, BUKAN setiap entiti. Eskalasi L2 (naik keutamaan) dan L3 (sekat automatik) tidak terjejas. Lihat L1/L2/L3 dalam spesifikasi kanban-nudge.",
@@ -6639397,6 +6640994,19 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "Pasar sewa (senarai, kontrak, sejarah) terikat kepada akaun. Log masuk dengan akaun emel atau buka Plaza untuk mula menyewa atau menyenaraikan bot.",
         "settings_rental_setup_cta": "Sediakan sewa",
         "rental_needs_account": "Log masuk dengan akaun emel untuk mengurus sewa.",
+
+        "usage_warning_enable_label": "Aktifkan amaran penggunaan",
+        "usage_warning_enable_help": "Tunjukkan amaran apabila penggunaan token AI menghampiri had",
+        "usage_warning_5h_label": "Amaran 5 jam",
+        "usage_warning_5h_help": "Tunjukkan amaran apabila penggunaan 5 jam melebihi peratusan ini",
+        "usage_warning_7d_label": "Amaran 7 hari",
+        "usage_warning_7d_help": "Tunjukkan amaran apabila penggunaan 7 hari melebihi peratusan ini",
+
+        "cron_skip_5h_label": "Langkau jika 5h > X%",
+        "cron_skip_7d_label": "Langkau jika 7d > Y%",
+        "cron_skip_help_text": "Jadual ini melangkaui dispatch apabila entity 5h melebihi X% atau 7d melebihi Y%. Lalai (85%/95%) melindungi entity ber beban tinggi. Bolehh ubah 50%-99%. Cron yang dilangkaui akan cuba lagi automatik pada tick seterusnya.",
+        "cron_current_usage_label": "Semasa: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "dilangkaui: melebihi ambang",
 },
 
 
@@ -6797703,6 +6799313,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "आपके सबमिट किए गए फीडबैक यहां दिखाई देंगे।",
+        "feedback_filter_empty_sub": "{label}: {count} सबमिट किए गए फ़ीडबैक आइटम.",
 
 
 
@@ -7058445,6 +7060056,48 @@ const TRANSLATIONS = {
 
         "admin_loading": "एडमिन डेटा लोड हो रहा है...",
 
+        "action_request_ratify_desc": "सर्वर-हथियारबद्ध कम जोखिम वाले प्रतिवर्ती निर्णयों के लिए योजना E निष्क्रिय अनुमोदन। डिफ़ॉल्ट: चालू; बाहर निकलने के लिए बंद करें।",
+        "action_request_ratify_grace_desc": "सर्वर-हथियारबद्ध default_agree निर्णय के बाद कितनी देर बाद मौन इसे हल करता है।",
+        "action_request_ratify_grace_hours": "घं",
+        "action_request_ratify_grace_label": "अनुसमर्थन मौन अनुग्रह",
+        "action_request_ratify_grace_minutes": "मिनट",
+        "action_request_ratify_guardrails_desc": "केवल-पढ़ने योग्य सर्वर जांच। ब्राउज़र इन्हें कमजोर नहीं कर सकता।",
+        "action_request_ratify_guardrails_label": "अनुसमर्थन गार्डरेल",
+        "action_request_ratify_guardrails_value": "Fail-closed: सर्वर मोड को पुनः गणना करता है, केवल default_agree स्वचालित रूप से हल कर सकता है, निर्णय फायर टाइम पर पुनः चलता है, उच्च जोखिम पथ/अंतर रखे जाते हैं, और N सीमा ऑडिट इतिहास से लागू होती है।",
+        "action_request_ratify_max_attempts_desc": "प्रति अनुरोध सर्वर-हथियारबद्ध default_agree राउंड की अधिकतम संख्या।",
+        "action_request_ratify_max_attempts_label": "अनुसमर्थन N सीमा",
+        "action_request_ratify_title": "निर्णय अनुसमर्थन",
+        "action_request_realtime_desc": "जब एजेंट अनुरोध जारी करते हैं, हल करते हैं या खारिज करते हैं तो इनबॉक्स को तुरंत रीफ्रेश करें।",
+        "action_request_realtime_label": "लाइव रीफ्रेश इनबॉक्स",
+        "action_request_reply_resize_desc": "Needs-you रिप्लाई बॉक्स में एक ड्रैग/कुंजीपटल हैंडल जोड़ें ताकि आप इसे ऊंचा कर सकें। डिफ़ॉल्ट: चालू।",
+        "action_request_reply_resize_label": "आकार बदलने योग्य रिप्लाई बॉक्स",
+        "action_request_settings_desc": "एजेंट अनुरोधों के लिए Human-in-the-Loop इनबॉक्स को नियंत्रित करता है जिन्हें आपके निर्णय की आवश्यकता है।",
+        "action_request_settings_title": "Needs-you अनुरोध",
+        "action_request_timeout_auto_dismiss": "B. स्वचालित रूप से खारिज करें",
+        "action_request_timeout_consensus": "D. सहमति शुरू करें",
+        "action_request_timeout_keep": "A. लंबित रखें",
+        "action_request_timeout_minutes_desc": "चयनित अनुत्तरित नीति चलने से पहले मिनट।",
+        "action_request_timeout_minutes_label": "टाइमआउट अवधि",
+        "action_request_timeout_policy_desc": "चुनें कि जब Needs-you अनुरोध समय सीमा के बाद अनुत्तरित रहे तो timeout worker को क्या करना चाहिए।",
+        "action_request_timeout_policy_label": "अनुत्तरित अनुरोध नीति",
+        "action_request_timeout_safe_default": "C. सुरक्षित डिफ़ॉल्ट",
+        "action_request_consensus_reply": "सहमति दर्ज करें",
+        "action_request_consensus_triggered": "सहमति में",
+        "action_request_ratify_grace_help": "default-agree के लिए निर्णय सशस्त्र होने के बाद मौन स्वतः समाधान से पहले कितने समय प्रतीक्षा करें। सीमा 5 मिनट से 30 दिन; डिफ़ॉल्ट 1440 (24 घंटे)। केवल प्रतिवर्ती, कम जोखिम वाले निर्णय सशस्त्र किए जाते हैं।",
+        "action_request_ratify_guardrails_help": "ये सुरक्षा जांचें सर्वर पर चलती हैं और ब्राउज़र से बंद नहीं की जा सकतीं: केवल प्रतिवर्ती कम-जोखिम निर्णय पात्र हैं, फैसला fail-closed है और सक्रियण समय पर पुनः जांचा जाता है, अपरिवर्तनीय/उच्च-जोखिम पथ हमेशा रोके जाते हैं, और प्रयास सीमा ऑडिट इतिहास से लागू की जाती है।",
+        "action_request_ratify_max_attempts_help": "एक अनुरोध के लिए सर्वर-सशस्त्र default-agree राउंड की अधिकतम संख्या, जिसके बाद स्वतः समाधान के बजाय आपको भेजा जाएगा। सीमा 1-5; डिफ़ॉल्ट 2।",
+        "action_request_realtime_help": "चालू होने पर, इनबॉक्स सॉकेट के माध्यम से लाइव अपडेट होता है जब एजेंट अनुरोध भेजते, हल करते या खारिज करते हैं। बंद होने पर, केवल आवधिक मतदान पर रीफ़्रेश होता है।",
+        "action_request_realtime_off": "मैन्युअल रीफ़्रेश",
+        "action_request_realtime_on": "लाइव",
+        "action_request_timeout_minutes_help": "अनुमत सीमा 5 मिनट से 30 दिन है। डिफ़ॉल्ट 1440 मिनट (24 घंटे) है।",
+        "action_request_timeout_policy_help": "समय सीमा के बाद कभी उत्तर न दिए गए अनुरोध का क्या होता है।",
+        "action_request_ratify_countdown_prefix": "स्वचालित भेजना",
+        "action_request_ratify_default_agree_badge": "⏳ आपके निर्णय की प्रतीक्षा · मौन का अर्थ स्वीकृति",
+        "action_request_ratify_default_agree_hint": "यदि आप कुछ नहीं करते, तो उलटी गिनती समाप्त होने पर यह स्वचालित रूप से भेजा और निष्पादित किया जाएगा।",
+        "action_request_ratify_hold_badge": "आपकी स्वीकृति आवश्यक है",
+        "action_request_ratify_hold_hint": "जब तक आप स्वीकृति नहीं देते, कुछ भी नहीं भेजा जाता।",
+        "action_request_ratify_sending": "भेज रहा है…",
+
 
 
 
@@ -7114121,6 +7115774,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 Rental",
+        "community_result_summary_default": "Bot Plaza परिणाम दिखाए जा रहे हैं",
+        "community_result_detail_default": "सूची को छोटा करने के लिए खोज, फ़िल्टर, क्षमताएँ या दर इस्तेमाल करें।",
+        "community_result_clear_filters": "फ़िल्टर साफ़ करें",
+        "community_result_filter_search": "खोज \"{query}\"",
+        "community_result_filter_category": "श्रेणी {category}",
+        "community_result_filter_capabilities": "क्षमताएँ {capabilities}",
+        "community_result_filter_rate": "दर {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} bot",
+        "community_result_count_many": "{count} bot",
+        "community_result_count_unknown": "Bot Plaza परिणाम",
+        "community_result_summary_filtered": "{filters} से मेल खाते {count} दिखाए जा रहे हैं",
+        "community_result_summary_default_count": "Bot Plaza से {count} दिखाए जा रहे हैं",
+        "community_result_detail_filtered": "{sort} से क्रमबद्ध। पूरे Plaza पर लौटने के लिए फ़िल्टर साफ़ करें।",
+        "community_result_detail_default_sorted": "{sort} से क्रमबद्ध। सूची को छोटा करने के लिए खोज, फ़िल्टर, क्षमताएँ या दर इस्तेमाल करें।",
+        "community_error_title": "Bot Plaza लोड नहीं हो सका",
+        "community_error_desc": "अपना कनेक्शन जाँचें और फिर कोशिश करें।",
 
 
 
@@ -7198628,8 +7200298,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "चुनें कि क्या प्रॉम्प्ट नीति डिवाइस-व्यापी डिफ़ॉल्ट के रूप में लागू होती है या किसी विशिष्ट इकाई को ओवरराइड करती है।",
         "settings_device_id_help": "इस ब्राउज़र द्वारा उपयोग किए जाने वाले डिवाइस/खाते के लिए अद्वितीय पहचानकर्ता। युग्मन करते समय संबंधित Device Secret के साथ संग्रहीत करें।",
         "settings_device_secret_help": "चयनित Device ID के लिए गुप्त कुंजी। इसे पासवर्ड की तरह मानें और केवल विश्वसनीय डिवाइस पर दर्ज करें।",
-        "feedback_category_help": "वह श्रेणी चुनें जो आपकी रिपोर्ट से सबसे अच्छा मेल खाती है। AI सहायता प्रति श्रेणी अलग-अलग triage प्रवाह चलाती है (बग = प्रतिकृति जांच, फीचर = रोडमैप मिलान, डिज़ाइन = दृश्य तुलना)।",
-        "feedback_photo_help": "संदर्भ में समस्या दिखाने वाले स्क्रीनशॉट संलग्न करें। अधिकतम 5 फ़ोटो; वेब अपलोड ड्रैग-एंड-ड्रॉप का समर्थन करता है। अपलोड से पहले EXIF स्थान डेटा हटा दिया जाता है।",
+        "feedback_category_help": "वह श्रेणी चुनें जो आपकी रिपोर्ट से सबसे अच्छा मेल खाती है। AI सहायता प्रति श्रेणी अलग-अलग triage प्रवाह चलाती है।",
+        "feedback_photo_help": "संदर्भ में समस्या दिखाने वाले स्क्रीनशॉट संलग्न करें। अधिकतम 5 फ़ोटो; वेब अपलोड ड्रैग-एंड-ड्रॉप का समर्थन करता है। संग्रहण से पहले EXIF/GPS metadata हटा दिया जाता है।",
         "kanban_cron_recurring_notify_help": "जब इस कार्ड का cron सक्रिय हो तो चैट सूचना भेजें। उन कम-प्राथमिकता वाले आवर्ती कार्यों के लिए अक्षम करें जो आपको पिंग नहीं करने चाहिए।",
         "kanban_nudge_advanced_help": "nudge अंतराल, स्थिति और स्टॉप मोड के लिए प्रति-इकाई ओवरराइड। अधिकांश बोर्डों को इसकी आवश्यकता नहीं है — संक्षिप्त छोड़ें जब तक कि एक इकाई की अलग ताल आवश्यकताएं न हों।",
         "kanban_nudge_batch_help": "प्रति cron tick चुने गए L1 रुके हुए कार्डों की अधिकतम संख्या — डिवाइस-व्यापी कैप, प्रति-इकाई नहीं। L2 (प्राथमिकता बढ़ोतरी) और L3 (ऑटो-ब्लॉक) वृद्धि प्रभावित नहीं होती। kanban-nudge spec में L1/L2/L3 देखें।",
@@ -7198714,6 +7200384,19 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "किराया बाज़ार (लिस्टिंग, अनुबंध, इतिहास) खाते से जुड़ा है। ईमेल खाते के साथ साइन इन करें या किराया लेना या बॉट सूचीबद्ध करना शुरू करने के लिए Plaza खोलें।",
         "settings_rental_setup_cta": "किराया सेट अप करें",
         "rental_needs_account": "किराया प्रबंधित करने के लिए ईमेल खाते से साइन इन करें।",
+
+        "usage_warning_enable_label": "उपयोग चेतावनियाँ सक्षम करें",
+        "usage_warning_enable_help": "AI टोकन उपयोग सीमा के करीब पहुँचने पर चेतावनियाँ दिखाएं",
+        "usage_warning_5h_label": "5 घंटे की चेतावनी",
+        "usage_warning_5h_help": "5 घंटे का उपयोग इस प्रतिशत से अधिक होने पर चेतावनी दिखाएं",
+        "usage_warning_7d_label": "7 दिन की चेतावनी",
+        "usage_warning_7d_help": "7 दिन का उपयोग इस प्रतिशत से अधिक होने पर चेतावनी दिखाएं",
+
+        "cron_skip_5h_label": "छोड़ें अगर 5h > X%",
+        "cron_skip_7d_label": "छोड़ें अगर 7d > Y%",
+        "cron_skip_help_text": "यह शेड्यूल तब dispatch को छोड़ देता है जब entity 5h उपयोग X% से अधिक या 7d उपयोग Y% से अधिक हो। डिफ़ॉल्ट (85%/95%) उच्च-लोड entity की रक्षा करते हैं। समायोज्य 50%-99%। छोड़े गए cron अगले tick पर स्वचालित रूप से पुनः प्रयास करेंगे।",
+        "cron_current_usage_label": "वर्तमान: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "छोड़ा गया: उपयोग सीमा से अधिक",
 },
 
 
@@ -7431275,6 +7432958,7 @@ const TRANSLATIONS = {
 
 
         "feedback_empty_sub": "ستظهر تعليقاتك المرسلة هنا.",
+        "feedback_filter_empty_sub": "{label}: {count} عنصر تعليقات مُرسل.",
 
 
 
@@ -7445743,6 +7447427,48 @@ const TRANSLATIONS = {
 
 
         "admin_loading": "جارٍ تحميل بيانات المسؤول...",
+
+        "action_request_ratify_desc": "الموافقة السلبية للخطة E للقرارات القابلة للعكس منخفضة المخاطر التيسلحة السيرفر. الإعداد الافتراضي: تشغيل؛ قم بإيقافه untuk keluar.",
+        "action_request_ratify_grace_desc": "مدة الانتظار بعد قرار default_agree الذيسلحة السيرفر قبل أن يعتبره التوافق موافقة.",
+        "action_request_ratify_grace_hours": "ساعة",
+        "action_request_ratify_grace_label": "فترة السماح الصامتة للإقرار",
+        "action_request_ratify_grace_minutes": "دقيقة",
+        "action_request_ratify_guardrails_desc": "فحوصات السيرفر للقراءة فقط. لا يمكن للمتصفح إضعافها.",
+        "action_request_ratify_guardrails_label": "حواجز الإقرار",
+        "action_request_ratify_guardrails_value": "Fail-closed: يعيد السيرفر حساب الوضع، فقط default_agree يمكنه الحل تلقائيًا، يتم إعادة تشغيل الحكم عند وقت الإطلاق، يتم الاحتفاظ بالمسارات/الفروقات عالية المخاطر، ويتم فرض حد N من سجل التدقيق.",
+        "action_request_ratify_max_attempts_desc": "الحد الأقصى للجولاتarmed by server default_agree لكل طلب.",
+        "action_request_ratify_max_attempts_label": "الحد الأقصى N للإقرار",
+        "action_request_ratify_title": "إقرار القرار",
+        "action_request_realtime_desc": "قم بتحديث صندوق البريد فورًا عندما يصدر الوكلاء أو يحلون أو يرفضون الطلبات.",
+        "action_request_realtime_label": "تحديث فوري لصندوق البريد",
+        "action_request_reply_resize_desc": "أضف مقبض السحب/لوحة المفاتيح إلى صندوق الرد الخاص بـ Needs-you ليتمكن من الارتفاع. الإعداد الافتراضي: تشغيل.",
+        "action_request_reply_resize_label": "صندوق الرد قابل لتغيير الحجم",
+        "action_request_settings_desc": "التحكم في صندوق البريد Human-in-the-Loop للطلبات التي تحتاج قرارك.",
+        "action_request_settings_title": "الطلبات التي تحتاجك",
+        "action_request_timeout_auto_dismiss": "ب. الرفض التلقائي",
+        "action_request_timeout_consensus": "د. بدء التوافق",
+        "action_request_timeout_keep": "أ. الإبقاء معلقًا",
+        "action_request_timeout_minutes_desc": "الدقائق قبل تشغيل السياسة المحددة.",
+        "action_request_timeout_minutes_label": "مدة المهلة",
+        "action_request_timeout_policy_desc": "اختر ماذا يفعل worker المهلة عندما يبقى طلب Needs-you دون إجابة بعد الموعد النهائي.",
+        "action_request_timeout_policy_label": "سياسة الطلبات غير المجاب",
+        "action_request_timeout_safe_default": "ج. الإعداد الافتراضي الآمن",
+        "action_request_consensus_reply": "تسجيل الإجماع",
+        "action_request_consensus_triggered": "في حالة إجماع",
+        "action_request_ratify_grace_help": "كم من الوقت للانتظار بعد تسليح قرار بـ default-agree قبل أن يحلّه الصمت تلقائيًا. النطاق 5 دقائق إلى 30 يومًا؛ الافتراضي 1440 (24 ساعة). فقط القرارات القابلة للتراجع ومنخفضة المخاطر يتم تسليحها.",
+        "action_request_ratify_guardrails_help": "تعمل فحوصات الأمان هذه على الخادم ولا يمكن إيقافها من المتصفح: فقط القرارات القابلة للتراجع ومنخفضة المخاطر مؤهلة، الحكم هو fail-closed ويُعاد فحصه عند التنفيذ، المسارات غير القابلة للتراجع/عالية المخاطر تُعلّق دائمًا، وحد المحاولات يُفرض من سجل التدقيق.",
+        "action_request_ratify_max_attempts_help": "الحد الأقصى لجولات default-agree المسلحة من الخادم لطلب واحد قبل تصعيده إليك بدلاً من الحل التلقائي. النطاق 1-5؛ الافتراضي 2.",
+        "action_request_realtime_help": "عند التشغيل، يتم تحديث صندوق البريد مباشرة عبر المقبس عندما يصدر الوكلاء طلبات أو يحلونها أو يرفضونها. عند الإيقاف، يتم التحديث فقط عند الاستقصاء الدوري.",
+        "action_request_realtime_off": "تحديث يدوي",
+        "action_request_realtime_on": "مباشر",
+        "action_request_timeout_minutes_help": "النطاق المسموح به هو 5 دقائق إلى 30 يومًا. الافتراضي 1440 دقيقة (24 ساعة).",
+        "action_request_timeout_policy_help": "ما يحدث لطلب لم تجب عليه أبدًا بعد انتهاء مهلة الانتظار.",
+        "action_request_ratify_countdown_prefix": "إرسال تلقائي خلال",
+        "action_request_ratify_default_agree_badge": "⏳ بانتظار قرارك · الصمت يعني الموافقة",
+        "action_request_ratify_default_agree_hint": "إذا لم تفعل شيئًا، سيتم إرساله وتنفيذه تلقائيًا عند انتهاء العد التنازلي.",
+        "action_request_ratify_hold_badge": "يحتاج موافقتك",
+        "action_request_ratify_hold_hint": "لا يتم إرسال أي شيء ما لم توافق.",
+        "action_request_ratify_sending": "جارٍ الإرسال…",
 
 
 
@@ -7635838,6 +7637564,23 @@ const TRANSLATIONS = {
 
 
         "community_filter_rental": "🤖 تأجير",
+        "community_result_summary_default": "يتم عرض نتائج Bot Plaza",
+        "community_result_detail_default": "استخدم البحث أو الفلاتر أو القدرات أو السعر لتضييق القائمة.",
+        "community_result_clear_filters": "مسح الفلاتر",
+        "community_result_filter_search": "بحث \"{query}\"",
+        "community_result_filter_category": "الفئة {category}",
+        "community_result_filter_capabilities": "القدرات {capabilities}",
+        "community_result_filter_rate": "السعر {min}-{max} ecoin/1K",
+        "community_result_filter_separator": " · ",
+        "community_result_count_one": "{count} بوت",
+        "community_result_count_many": "{count} بوتات",
+        "community_result_count_unknown": "نتائج Bot Plaza",
+        "community_result_summary_filtered": "عرض {count} مطابق لـ {filters}",
+        "community_result_summary_default_count": "عرض {count} من Bot Plaza",
+        "community_result_detail_filtered": "مرتبة حسب {sort}. امسح الفلاتر للعودة إلى Plaza بالكامل.",
+        "community_result_detail_default_sorted": "مرتبة حسب {sort}. استخدم البحث أو الفلاتر أو القدرات أو السعر لتضييق القائمة.",
+        "community_error_title": "تعذر تحميل Bot Plaza",
+        "community_error_desc": "تحقق من اتصالك ثم حاول مرة أخرى.",
 
 
 
@@ -7747071,8 +7748814,8 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "اختر ما إذا كانت سياسة prompt تنطبق كافتراضي على مستوى الجهاز أو تتجاوز كيانًا محددًا.",
         "settings_device_id_help": "معرف فريد للجهاز/الحساب الذي سيستخدمه هذا المتصفح. خزنه مع Device Secret المقابل عند الإقران.",
         "settings_device_secret_help": "المفتاح السري لـ Device ID المحدد. تعامل معه ككلمة مرور وأدخله فقط على الأجهزة الموثوقة.",
-        "feedback_category_help": "اختر الفئة التي تطابق تقريرك بشكل أفضل. تشغل مساعدة الذكاء الاصطناعي تدفقات فرز مختلفة لكل فئة (خطأ = فحص إعادة الإنتاج، ميزة = مطابقة خارطة الطريق، تصميم = مقارنة بصرية).",
-        "feedback_photo_help": "أرفق لقطات شاشة تُظهر المشكلة في سياقها. الحد الأقصى 5 صور؛ يدعم التحميل عبر الويب السحب والإفلات. يتم إزالة بيانات موقع EXIF قبل التحميل.",
+        "feedback_category_help": "اختر الفئة التي تطابق تقريرك بشكل أفضل. تشغل مساعدة الذكاء الاصطناعي تدفقات فرز مختلفة لكل فئة.",
+        "feedback_photo_help": "أرفق لقطات شاشة تُظهر المشكلة في سياقها. الحد الأقصى 5 صور؛ يدعم التحميل عبر الويب السحب والإفلات. تتم إزالة EXIF/GPS metadata قبل التخزين.",
         "kanban_cron_recurring_notify_help": "أرسل إشعار دردشة عند تشغيل cron لهذه البطاقة. قم بتعطيله للأعمال المتكررة منخفضة الأولوية التي لا ينبغي أن تزعجك.",
         "kanban_nudge_advanced_help": "تجاوزات لكل كيان لفاصل nudge والحالات ووضع التوقف. لا تحتاج معظم اللوحات إلى ذلك — اتركه مطويًا ما لم يكن لكيان واحد احتياجات إيقاع مختلفة.",
         "kanban_nudge_batch_help": "الحد الأقصى لعدد بطاقات L1 المتوقفة المختارة لكل tick cron — حد على مستوى الجهاز، وليس لكل كيان. لا تتأثر تصعيدات L2 (زيادة الأولوية) وL3 (الحظر التلقائي). انظر L1/L2/L3 في مواصفات kanban-nudge.",
@@ -7747157,6 +7748900,19 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "سوق الإيجار (القوائم، العقود، السجل) مرتبط بحساب. سجل الدخول بحساب بريد إلكتروني أو افتح Plaza لبدء الاستئجار أو إدراج بوت.",
         "settings_rental_setup_cta": "إعداد الإيجار",
         "rental_needs_account": "سجل الدخول بحساب بريد إلكتروني لإدارة عمليات الإيجار.",
+
+        "usage_warning_enable_label": "تفعيل تنبيهات الاستخدام",
+        "usage_warning_enable_help": "عرض تنبيهات عند اقتراب استخدام رموز AI من الحدود",
+        "usage_warning_5h_label": "تنبيه 5 ساعات",
+        "usage_warning_5h_help": "عرض تنبيه عند تجاوز استخدام 5 ساعات لهذه النسبة المئوية",
+        "usage_warning_7d_label": "تنبيه 7 أيام",
+        "usage_warning_7d_help": "عرض تنبيه عند تجاوز استخدام 7 أيام لهذه النسبة المئوية",
+
+        "cron_skip_5h_label": "تخطي إذا 5h > X%",
+        "cron_skip_7d_label": "تخطي إذا 7d > Y%",
+        "cron_skip_help_text": "يتخطى هذا الجدول dispatch عندما تتجاوز 5h للentity X% أو 7d تتجاوز Y%. الافتراضي (85%/95%) يحمي entitys الأحمال العالية. قابل للتعديل 50%-99%. ستعيد cron التي تم تخطيها المحاولة تلقائيًا في tick التالي.",
+        "cron_current_usage_label": "الحالي: 5h N% / 7d M%",
+        "cron_skip_dispatch_reason": "تم التخطي: الاستخدام يتجاوز",
 }
 
 

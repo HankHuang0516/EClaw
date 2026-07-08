@@ -81,10 +81,15 @@ export function createWebhookHandler(
       const rt = getPluginRuntime();
       const client = getClient(accountId);
       const conversationId = msg.conversationId || `${msg.deviceId}:${msg.entityId}`;
+      const replyTarget = conversationId || msg.from || accountId;
 
       const directAck = String(msg.text || '').match(/^ECLAW_HEALTHCHECK\s+([A-Za-z0-9_-]+)(?=\s|$)/m);
       if (directAck) {
         if (client) {
+          // /api/client/speak writes a "Received" echo around webhook delivery.
+          // A short delay keeps the synthetic ACK as the final visible state
+          // without occupying the model reply path.
+          await new Promise((resolve) => setTimeout(resolve, 3000));
           await client.sendMessage(`ACK ${directAck[1]}`, 'IDLE');
         }
         return;
@@ -172,9 +177,10 @@ export function createWebhookHandler(
         Provider: 'eclaw',
         OriginatingChannel: 'eclaw',
         AccountId: accountId,
-        From: msg.from,
-        To: conversationId,
-        OriginatingTo: msg.from,
+        From: replyTarget,
+        To: replyTarget,
+        OriginatingTo: replyTarget,
+        SenderName: msg.from,
         SessionKey: conversationId,
         Body: body,
         RawBody: body,

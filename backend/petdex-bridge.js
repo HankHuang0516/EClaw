@@ -17,14 +17,59 @@
  *     row 3 waving (4f), row 4 jumping (5f), row 5 failed (8f),
  *     row 6 waiting (6f), row 7 running (6f), row 8 review (6f).
  *
- * Our state mapping (EClaw companion state → Petdex animation row):
+ * Our state mapping (EClaw companion state / native Petdex action → Petdex animation row):
  *   IDLE → 0(idle), BUSY → 7(running), WALKING → 1(running-right),
- *   SLEEPING → 6(waiting), EXCITED → 4(jumping), HAPPY → 3(waving).
+ *   SLEEPING → 6(waiting), EXCITED → 4(jumping), HAPPY → 3(waving),
+ *   plus native Petdex actions idle/running-right/running-left/waving/jumping/
+ *   failed/waiting/running/review.
  */
 
 const MANIFEST_URL = 'https://petdex.crafter.run/api/manifest';
 const R2_KEY_PREFIX = 'petdx-sprites';
 const PROXY_PATH_PREFIX = '/api/petdx';
+
+// ── Community sprite same-origin proxy (ORB fix) ─────────────────────
+// Community/partner pets whose sprite bytes failed to self-host in R2
+// (needs_recovery) keep the EXTERNAL CDN URL `https://assets.petdex.dev/
+// pets/<slug>/sprite.webp`. The browser ORB-blocks that cross-origin webp
+// (Chrome Opaque Response Blocking — curl 200, browser net::ERR_BLOCKED_BY_ORB),
+// so the companion browser renders the 🦞 fallback for every partner. We
+// rewrite those URLs to a same-origin proxy path served by petdex-route.js;
+// a same-origin response is outside ORB's scope. SSRF-safe: the proxy host
+// + path shape are hard literals and only a charset-validated slug varies.
+const COMMUNITY_SPRITE_HOST = 'assets.petdex.dev';
+const COMMUNITY_PROXY_PATH_PREFIX = `${PROXY_PATH_PREFIX}/community`;
+const COMMUNITY_SLUG_PATTERN = /^[a-z0-9_-]+$/i;
+const COMMUNITY_SPRITE_URL_RE =
+    /^https?:\/\/assets\.petdex\.dev\/pets\/([a-z0-9_-]+)\/sprite\.webp(?:[?#].*)?$/i;
+
+// Extract the slug from an external community sprite URL, or null if the URL
+// is not an exact assets.petdex.dev/pets/<slug>/sprite.webp shape.
+function communitySpriteSlugFromUrl(url) {
+    if (typeof url !== 'string') return null;
+    const m = url.match(COMMUNITY_SPRITE_URL_RE);
+    return m ? m[1] : null;
+}
+
+// Rewrite an external community sprite URL to the same-origin proxy path.
+// Non-matching URLs (already proxied, R2-hosted, avatar.webp, null) pass
+// through unchanged — the rewrite is a no-op for everything but the ORB case.
+function rewriteCommunitySpriteUrl(url) {
+    const slug = communitySpriteSlugFromUrl(url);
+    return slug ? `${COMMUNITY_PROXY_PATH_PREFIX}/${slug}/sprite.webp` : url;
+}
+
+// Apply the rewrite to descriptor.asset.url (the URL the renderer actually
+// loads), returning a shallow clone so callers never mutate the DB row's
+// descriptor. Returns the input untouched when nothing needs rewriting.
+function rewriteDescriptorSpriteUrl(descriptor) {
+    if (!descriptor || typeof descriptor !== 'object') return descriptor;
+    const asset = descriptor.asset;
+    if (!asset || typeof asset.url !== 'string') return descriptor;
+    const rewritten = rewriteCommunitySpriteUrl(asset.url);
+    if (rewritten === asset.url) return descriptor;
+    return { ...descriptor, asset: { ...asset, url: rewritten } };
+}
 
 // Animation table — rows + per-frame durations in milliseconds. The idle row
 // uses variable durations per frame (matches petdex desktop); all other rows
@@ -48,6 +93,15 @@ const STATE_TO_ANIMATION = {
     SLEEPING: 'waiting',
     EXCITED:  'jumping',
     HAPPY:    'waving',
+    idle:     'idle',
+    'running-right': 'running-right',
+    'running-left':  'running-left',
+    waving:   'waving',
+    jumping:  'jumping',
+    failed:   'failed',
+    waiting:  'waiting',
+    running:  'running',
+    review:   'review',
 };
 
 const KIND_TO_CATEGORY = {
@@ -328,4 +382,11 @@ module.exports = {
     MANIFEST_URL,
     R2_KEY_PREFIX,
     PROXY_PATH_PREFIX,
+    COMMUNITY_SPRITE_HOST,
+    COMMUNITY_PROXY_PATH_PREFIX,
+    COMMUNITY_SLUG_PATTERN,
+    COMMUNITY_SPRITE_URL_RE,
+    communitySpriteSlugFromUrl,
+    rewriteCommunitySpriteUrl,
+    rewriteDescriptorSpriteUrl,
 };

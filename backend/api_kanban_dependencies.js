@@ -17,6 +17,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const safeEqual = require('./safe-equal');
+const extractCreds = require('./extract-creds');
 const { detectDependencyCycle } = require('./kanban-dependencies');
 
 const VALID_DEPENDENCY_TYPES = new Set(['blocks', 'requires', 'related']);
@@ -47,8 +48,10 @@ module.exports = function (devices, options = {}) {
     }
 
     function authenticate(req, res) {
-        const params = { ...req.query, ...req.body };
-        const { deviceId, deviceSecret, botSecret, entityId } = params;
+        // Accepts secrets via query/body (legacy) OR X-Device-Secret /
+        // X-Bot-Secret headers (secret-leakage hardening). Additive: query/body
+        // still take precedence so existing callers are unaffected.
+        const { deviceId, deviceSecret, botSecret, entityId } = extractCreds(req);
 
         if (!deviceId) {
             res.status(400).json({ success: false, error: 'Missing deviceId' });

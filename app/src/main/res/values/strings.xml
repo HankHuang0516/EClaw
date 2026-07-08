@@ -46,6 +46,13 @@
     <string name="settings_my_rentals">My Rentals</string>
     <string name="settings_invite">Invite Friends</string>
     <string name="settings_delete_account">Delete Account</string>
+    <!-- Settings auto-sync (manifest Stage 2) -->
+    <string name="settings_more_section_title">More Settings</string>
+    <string name="settings_open_on_web">Open on web</string>
+    <string name="settings_feature_help_title">About this setting</string>
+    <string name="settings_feature_web_help">This setting opens in a web view because a native screen isn\'t in this app version yet. Update the app to get the native screen, or use it on the web now.</string>
+    <string name="settings_feature_gated_help">A native version of this setting needs a newer app version. Update the app to get the native screen, or open it on the web now.</string>
+    <string name="settings_feature_gated_badge">Update app for native</string>
     <string name="usage_title">Today\'s Usage</string>
     <string name="premium_badge">PREMIUM</string>
     <string name="sends_today">sends today</string>
@@ -85,7 +92,19 @@
     <string name="browse_companions">Browse Companions</string>
     <string name="drag_to_position">Drag entities to position them</string>
     <string name="pinch_to_resize">Drag to move; pinch entities or usage to resize</string>
+    <string name="wallpaper_walking_title">Walking Feature</string>
+    <string name="wallpaper_walking_settings_desc">Lets wallpaper entities walk. Pair with Conscious walking to pick event-only or free roaming.</string>
+    <string name="wallpaper_walking_help_button">About wallpaper walking</string>
+    <string name="wallpaper_walking_help">What: this is the master switch for wallpaper movement. With Conscious walking ON (default), entities stay at their home positions and only move for a speak-to, @all, or broadcast conversation — the sender and receivers gather at the center with one-entity spacing, then return home when the message bubble TTL ends. With Conscious walking OFF, entities roam freely all the time, doing a random goal action (visit a peer, patrol, return home) every few seconds.\n\nNeeds: live wallpaper enabled, at least one bound entity, and directional walking animation available.\n\nTest: turn Conscious walking off and watch entities wander; or leave it on and send a speak-to/broadcast to watch them gather and return.</string>
+    <string name="wallpaper_custom_layout_help_button">About custom layout</string>
+    <string name="wallpaper_custom_layout_help">Lets you drag entities to persistent wallpaper home positions. Conscious walking and kanban task objects use these home positions as their source of truth.</string>
+    <string name="wallpaper_background_help_button">About custom background</string>
+    <string name="wallpaper_background_help">Uses a selected local photo as the live wallpaper background. The app keeps read permission so the wallpaper can restore the image after restart.</string>
+    <string name="wallpaper_walking_enabled">Walking feature enabled</string>
+    <string name="wallpaper_walking_disabled">Walking feature disabled</string>
     <string name="wallpaper_usage_overlay">Usage Overlay</string>
+    <string name="wallpaper_usage_overlay_help_button">About usage overlay</string>
+    <string name="wallpaper_usage_overlay_help">Shows the latest Claude/Codex usage snapshot on the wallpaper. The item and window checkboxes control which usage counters are visible.</string>
     <string name="wallpaper_usage_overlay_title">Usage</string>
     <string name="wallpaper_usage_overlay_syncing">Usage syncing...</string>
     <string name="wallpaper_usage_position">Position</string>
@@ -112,6 +131,52 @@
     <string name="wallpaper_settings_expand_action">Expand settings panel</string>
     <string name="wallpaper_settings_collapse_caret_down">▼</string>
     <string name="wallpaper_settings_collapse_caret_up">▲</string>
+    <string name="wallpaper_more_settings">More wallpaper settings</string>
+    <string name="wallpaper_more_settings_desc">Advanced wallpaper animation and offline behavior. New enhancements are enabled by default.</string>
+    <string name="wallpaper_setting_speech_bubbles">Message bubbles</string>
+    <string name="wallpaper_setting_speech_bubbles_desc">Show entity status and recent messages near each companion.</string>
+    <string name="wallpaper_setting_bubble_duration">Message bubble duration</string>
+    <string name="wallpaper_setting_bubble_duration_desc">Controls how long wallpaper bubbles stay visible, from 1 second to 10 minutes. Conversation walking returns home when this TTL ends.</string>
+    <string name="wallpaper_setting_bubble_duration_value">%1$d sec</string>
+    <string name="wallpaper_setting_bubble_duration_minutes_value">%1$d min</string>
+    <string name="wallpaper_setting_bubble_duration_minutes_seconds_value">%1$d min %2$d sec</string>
+    <string name="wallpaper_setting_conscious_walking">Conscious walking</string>
+    <string name="wallpaper_setting_conscious_walking_desc">On: entities only move for speak-to, @all, and broadcast conversations — the sender and receivers gather at the center with one-entity spacing, then return home when the bubble TTL ends. Off: entities roam freely with goal actions like visiting peers and patrolling.</string>
+    <string name="wallpaper_setting_entity_interactions">Entity interactions</string>
+    <string name="wallpaper_setting_entity_interactions_desc">Let companions react when they bump into each other. Both entities play the same random action: wave, jump, fail, or review.</string>
+    <string name="wallpaper_setting_collision_duration">Collision action duration</string>
+    <string name="wallpaper_setting_collision_duration_desc">Controls how long the shared collision animation lasts, from 1 to 20 seconds.</string>
+    <string name="wallpaper_setting_bubble_pulse">Bubble pulse</string>
+    <string name="wallpaper_setting_bubble_pulse_desc">Briefly highlight a companion when its bubble changes.</string>
+    <string name="wallpaper_setting_bubble_avoidance">Smart bubble avoidance</string>
+    <string name="wallpaper_setting_bubble_avoidance_desc">Keep bubbles away from usage panels and status labels.</string>
+    <string name="wallpaper_setting_state_aura">State aura</string>
+    <string name="wallpaper_setting_state_aura_desc">Use color glows to show the companion state at a glance.</string>
+    <string name="wallpaper_setting_ground_shadow">Ground shadow</string>
+    <string name="wallpaper_setting_ground_shadow_desc">Draw depth under companions so movement feels anchored.</string>
+    <string name="wallpaper_setting_adaptive_effects">Adaptive effects</string>
+    <string name="wallpaper_setting_adaptive_effects_desc">Automatically reduce expensive effects when rendering is unstable.</string>
+    <string name="wallpaper_setting_offline_cache">Offline appearance cache</string>
+    <string name="wallpaper_setting_offline_cache_desc">Keep the last real companion appearance during network outages instead of falling back to defaults.</string>
+    <string name="wallpaper_setting_kanban_tasks">Kanban task objects</string>
+    <string name="wallpaper_setting_kanban_tasks_desc">Show active assigned kanban tasks as tangible desktop objects around each entity home. Done and archived cards only play the completion/removal animation, then disappear.</string>
+    <string name="wallpaper_setting_kanban_object_style">Task object style</string>
+    <string name="wallpaper_setting_kanban_object_style_desc">Choose how active tasks appear on the wallpaper. Smart mix is the only mode that automatically maps kanban status to different object types.</string>
+    <string name="wallpaper_kanban_object_style_smart_mix">Smart mix</string>
+    <string name="wallpaper_kanban_object_style_folder">Folders</string>
+    <string name="wallpaper_kanban_object_style_book_notebook">Books / notebooks</string>
+    <string name="wallpaper_kanban_object_style_clipboard">Clipboards</string>
+    <string name="wallpaper_kanban_object_style_storage_box">Boxes / storage</string>
+    <string name="wallpaper_kanban_object_style_sticky_card">Sticky notes / cards</string>
+    <string name="wallpaper_setting_kanban_automation_board">Automation whiteboards</string>
+    <string name="wallpaper_setting_kanban_automation_board_desc">Show automation cards on a background whiteboard above the assigned entity, ordered by nearest next trigger time.</string>
+    <string name="wallpaper_setting_kanban_asset_whiteboard">Asset whiteboard</string>
+    <string name="wallpaper_setting_kanban_asset_whiteboard_desc">Use a bundled whiteboard-style asset with a physical stand. Layout stays anchored to the assigned entity even when boards avoid collisions.</string>
+    <string name="wallpaper_setting_kanban_handwritten_board_text">Handwritten board text</string>
+    <string name="wallpaper_setting_kanban_handwritten_board_text_desc">Use the bundled Caveat handwriting font for automation whiteboard text. Privacy mode still hides task names and schedule details.</string>
+    <string name="wallpaper_setting_kanban_privacy">Kanban privacy mode</string>
+    <string name="wallpaper_setting_kanban_privacy_desc">Hide task names and sensitive schedule details on the wallpaper. Folder states and animations remain visible.</string>
+    <string name="wallpaper_setting_help_content_description">%1$s details</string>
     <string name="back">Back</string>
     
     <!-- Layout Editor -->
@@ -552,6 +617,22 @@
     <string name="account_login_success_msg">Account restored: %s\nThe app will restart to load your data.</string>
     <string name="account_login_restart">Restart Now</string>
 
+    <!-- Settings Stage 3 native: Rotate Secret + Switch Device (card_c3b13f64) -->
+    <!-- i18n keys mirror the settings-manifest schema field i18n names. -->
+    <string name="settings_rotate_device_secret">Rotate Device Secret</string>
+    <string name="settings_rotate_device_secret_hint">Generate a new Device Secret if the current one has leaked. Other sessions will need the new value to sign in.</string>
+    <string name="settings_rotate_secret_confirm_title">Rotate Device Secret?</string>
+    <string name="settings_rotate_secret_confirm_btn">Rotate</string>
+    <string name="settings_rotate_secret_success">Device Secret rotated. The new secret has been saved on this device.</string>
+    <string name="settings_rotate_secret_failed">Could not rotate Device Secret. Please try again.</string>
+    <string name="settings_switch_device">Switch Device</string>
+    <string name="settings_switch_device_confirm">Switch</string>
+    <string name="settings_switch_device_hint">Sign this app into a different Device ID. Useful if you have a second admin account with its own entities.</string>
+    <string name="settings_device_id">Device ID</string>
+    <string name="settings_device_secret">Device Secret</string>
+    <string name="settings_switch_device_success_title">Device Switched</string>
+    <string name="settings_switch_device_success_msg">Now signed in as: %s\nThe app will restart to load this device.</string>
+
     <!-- Privacy Policy -->
     <string name="privacy_policy_title">Privacy Policy</string>
     <string name="delete_account">Delete Account</string>
@@ -613,6 +694,9 @@ If you have any questions, please contact us via our official email.
     <string name="chat_load_image_failed">Failed to load image</string>
     <string name="wallpaper_no_bound_entities">No bound entities</string>
     <string name="claw_renderer_loading_entities">Loading entities…</string>
+    <string name="claw_renderer_loading_wallpaper">Loading wallpaper…</string>
+    <string name="claw_wallpaper_loading_marker">Loading… (%1$s)</string>
+    <string name="claw_wallpaper_render_error">Wallpaper redraw error — reported</string>
     <string name="claw_renderer_no_entities_connected">No entities connected</string>
     <string name="claw_renderer_open_app_to_bind">Open E-Claw app to bind</string>
     <string name="claw_renderer_with_openclaw_bot">entities with OpenClaw bot</string>
@@ -820,6 +904,11 @@ If you have any questions, please contact us via our official email.
 
     <!-- Widget -->
     <string name="widget_chat_hint">Tap to chat with entities...</string>
+    <plurals name="widget_needyou_pending">
+        <item quantity="one">Needs you: %d pending</item>
+        <item quantity="other">Needs you: %d pending</item>
+    </plurals>
+    <string name="widget_needyou_badge_content_description">Needs-you pending count</string>
 
     <!-- Soul Templates (names and descriptions) -->
     <string name="soul_name_friendly">Friendly Assistant</string>
@@ -849,6 +938,10 @@ If you have any questions, please contact us via our official email.
     <string name="update_message">A new version (v%s) is available. Update for the best experience!</string>
     <string name="update_now">Update Now</string>
     <string name="update_later">Later</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">About this update</string>
+    <string name="update_help_body">Your version %1$s → latest %2$s. Tap "Update Now" to update right inside the app (about 30 seconds, no need to leave). If in-app update isn\'t available, the Play Store opens instead.</string>
+    <string name="update_store_unavailable">Couldn\'t open the store to update. Please update from Google Play.</string>
 
     <!-- Card Holder (shared by MainActivity agent-card editor) -->
     <string name="card_holder_capabilities">Capabilities</string>
@@ -1006,4 +1099,10 @@ If you have any questions, please contact us via our official email.
     <string name="custom_layout_using_preset">Using preset layout</string>
     <!-- Health-checking status shown on entity avatar while passive health-check runs -->
     <string name="health_checking">Health-checking</string>
+
+    <!-- Native WebView reconnect-overlay banner (card_323b95f2 / parent card_93d56b5d).
+         Shown when the WebView main frame fails to load due to transient transport
+         errors (ERR_INTERNET_DISCONNECTED etc.). Web layer counterpart shipped in PR #3618. -->
+    <string name="reconnect_banner_title">Reconnecting…</string>
+    <string name="reconnect_banner_subtitle">Will resume automatically once you\'re back online — no need to sign in again.</string>
 </resources>

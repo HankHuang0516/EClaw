@@ -519,6 +519,9 @@
     <string name="chat_load_image_failed">Impossibile caricare l\'immagine</string>
     <string name="wallpaper_no_bound_entities">Nessuna entità vincolata</string>
     <string name="claw_renderer_loading_entities">Caricamento entità…</string>
+    <string name="claw_renderer_loading_wallpaper">Caricamento sfondo…</string>
+    <string name="claw_wallpaper_loading_marker">Caricamento… (%1$s)</string>
+    <string name="claw_wallpaper_render_error">Errore di ridisegno dello sfondo (segnalato)</string>
     <string name="claw_renderer_no_entities_connected">Nessuna entità collegata</string>
     <string name="claw_renderer_open_app_to_bind">Apri l\'app E-Claw per associare</string>
     <string name="claw_renderer_with_openclaw_bot">entità con il bot OpenClaw</string>
@@ -713,6 +716,10 @@
     <string name="update_title">Aggiornamento disponibile</string>
     <string name="update_message">Una nuova versione (v%s) è disponibile. </string>
     <string name="update_now">Aggiorna ora</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">Informazioni su questo aggiornamento</string>
+    <string name="update_help_body">La tua versione %1$s → ultima %2$s. Tocca "Aggiorna ora" per aggiornare direttamente nell\'app (circa 30 secondi, senza uscire). Se l\'aggiornamento in-app non è disponibile, si apre il Play Store.</string>
+    <string name="update_store_unavailable">Impossibile aprire lo store per l\'aggiornamento. Aggiorna da Google Play.</string>
     <string name="update_later">Dopo</string>
     <string name="card_holder_capabilities">Capacità</string>
     <string name="card_holder_tags">Tag</string>

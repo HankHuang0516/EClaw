@@ -18,7 +18,7 @@ const sitePageviews = require('./site-pageviews');
 const feedbackModule = require('./device-feedback');
 const chatIntegrity = require('./chat-integrity');
 const communitySsr = require('./community-ssr');
-const { isLowSignalFwd } = require('./org-fwd-filter');
+const { isLowSignalFwd, classifyLowSignalFwd } = require('./org-fwd-filter');
 const orgFwdEscalation = require('./org-fwd-escalation');
 const { buildOrgEntitySessionKey, isOrgEntitySessionKey } = require('./session-scope');
 const { assignDefaultCompanionIfMissing } = require('./petdx-phase0-hook');
@@ -27,8 +27,10 @@ const JWT_SECRET_FALLBACK = process.env.JWT_SECRET || require('crypto').randomBy
 
 const notifModule = require('./notifications');
 const devicePrefs = require('./device-preferences');
+const entityActivity = require('./lib/entity-activity');
 const orgChartModule = require('./org-chart');
 const crossDeviceSettings = require('./entity-cross-device-settings');
+const walkConfig = require('./entity-walk-config');
 const feedbackEmail = require('./feedback-email');
 const chatEmbedding = require('./chat-embedding');
 const embeddingClient = require('./embedding-client');
@@ -40,8 +42,10 @@ const compression = require('compression');
 
 const safeEqual = require('./safe-equal');
 const { safeUpdatedAtToISO } = require('./safe-date');
+const { mergeDeviceVars } = require('./lib/device-vars-merge');
 const { createHermesHealthMonitor, hermesLog } = require('./hermes-health-check');
 const { createSettingsHelpInvariantCron } = require('./settings-help-invariant-cron');
+const { createPushHealthCheckCron } = require('./push-health-check-cron');
 
 // ============================================
 // ADMIN DEVICE GATE
@@ -1129,7 +1133,7 @@ function ensureOneEmptySlot(device) {
 
 // Latest app version - update this with each release
 // Bot will warn users if their app version is older than this
-const LATEST_APP_VERSION = "1.0.93";
+const LATEST_APP_VERSION = "1.0.96";
 const FORCE_UPDATE_BELOW = null; // Set to version string (e.g. "1.0.30") to force-update anything below
 const APP_RELEASE_NOTES = process.env.APP_RELEASE_NOTES || null;
 
@@ -1203,6 +1207,20 @@ function getBotToBotRemaining(deviceId, entityId) {
     return Math.max(0, BOT2BOT_MAX_MESSAGES - botToBotCounter[key].count);
 }
 
+// Time (ms) until this entity's bucket regenerates its NEXT token — feeds the
+// front-end b2b quota countdown chip (card_59f41e5b). Returns 0 when there is
+// nothing pending to regenerate (no bucket, or a full bucket at count 0). The
+// bucket is regenerated first so the value reflects the current moment; if the
+// regen drained it back to full we again return 0 (no pending countdown).
+function getBotToBotNextRegenMs(deviceId, entityId) {
+    const key = `${deviceId}:${entityId}`;
+    const bucket = botToBotCounter[key];
+    if (!bucket || bucket.count === 0) return 0;
+    _regenBotToBotTokens(bucket);
+    if (bucket.count === 0) return 0;
+    return Math.max(0, BOT2BOT_REGEN_INTERVAL_MS - (Date.now() - bucket.lastRegenAt));
+}
+
 // Reset bot-to-bot counter when human sends a message (called from /api/client/speak)
 function resetBotToBotCounter(deviceId) {
     const prefix = `${deviceId}:`;
@@ -1214,6 +1232,36 @@ function resetBotToBotCounter(deviceId) {
     }
     // Also clear broadcast dedup cache for this device so human-initiated broadcasts work fresh
     delete recentBroadcasts[deviceId];
+}
+
+// ── Suppression transparency ring buffer (card_59f41e5b) ──
+// orgChartForward() drops low-signal machine noise (ack/heartbeat echoes, JSON
+// crash fragments, kanban-notice echoes — see org-fwd-filter.js) before it can
+// flood the user's channel. Instead of dropping SILENTLY, each suppressed
+// forward is recorded here and pushed live to the dashboard, so the user can
+// see WHAT was filtered and WHY ("drop-but-surface"). In-memory only (not
+// persisted); per-device array capped at SUPPRESSION_LOG_CAP, oldest dropped.
+// Shape: suppressionLog[deviceId] = [{ ts, fromEntityId, reason, snippet }] (oldest-first).
+const suppressionLog = {};
+const SUPPRESSION_LOG_CAP = 50;
+
+function recordSuppressedForward(deviceId, item) {
+    if (!deviceId) return null;
+    const rec = {
+        ts: Date.now(),
+        fromEntityId: item && item.fromEntityId != null ? item.fromEntityId : null,
+        reason: (item && item.reason) || 'low_signal',
+        snippet: String((item && item.snippet) || '').slice(0, 80),
+    };
+    const arr = suppressionLog[deviceId] || (suppressionLog[deviceId] = []);
+    arr.push(rec);
+    if (arr.length > SUPPRESSION_LOG_CAP) arr.splice(0, arr.length - SUPPRESSION_LOG_CAP);
+    // Live UI: notify the dashboard suppression-transparency drawer. Must target
+    // the `device:${deviceId}` room the portal/app socket actually joins (see the
+    // socket connection handler) — emitting to a bare `deviceId` room hit nobody,
+    // so the chat ops-strip live feed silently never fired (audit card_c6731c2f F9).
+    if (io) io.to(`device:${deviceId}`).emit('suppression:logged', { deviceId, item: rec, count: arr.length });
+    return rec;
 }
 
 function checkCrossSpeakRateLimit(deviceId, entityId) {
@@ -1567,7 +1615,8 @@ app.get('/api/help', (req, res) => {
         vault:      ['vault','device-vars','devicevars','secret','api key','apikey','金鑰','密鑰','秘密','保險箱','audit','審計','variables','環境變數','환경 변수','보관소','감사','シークレット','金庫','監査','bí mật','kho','giám sát','rahasia','brankas','audit log'],
         analytics:  ['analytics','growth','metrics','signup','retention','kpi','viral','k-value','成長','指標','留存','分析','회귀','분석','지표','メトリクス','分析','指標'],
         usage:      ['usage','spend','token spend','token','claude usage','codex usage','snapshot','timeline','daemon','widget','usage widget','dashboard widget','dashboard usage widget','5h','5-hour','five hour','gauge','用量','花費','token 花費','token 用量','使用量','消費','儀表板用量','用量小工具','5小時','コスト','使用量','使用ウィジェット','사용량','비용','사용량 위젯'],
-        remote_control: ['remote control','screen control','screen capture','screen image','device control','tap','swipe','long press','launch app','stop app','mobile-use','mobile use','minitap','遠端控制','螢幕控制','畫面控制','點擊','滑動','長按','啟動 app','關閉 app','操作 app','遥控','屏幕控制','リモート制御','画面制御','タップ','スワイプ','長押し','앱 실행','앱 종료','원격 제어','화면 제어','탭']
+        remote_control: ['remote control','screen control','screen capture','screen image','device control','tap','swipe','long press','launch app','stop app','mobile-use','mobile use','minitap','遠端控制','螢幕控制','畫面控制','點擊','滑動','長按','啟動 app','關閉 app','操作 app','遥控','屏幕控制','リモート制御','画面制御','タップ','スワイプ','長押し','앱 실행','앱 종료','원격 제어','화면 제어','탭'],
+        action_requests: ['action request','action-request','actionrequest','action_request','需要你','hitl','human in the loop','human-in-the-loop','ask user','ask the user','詢問使用者','需要決定','需要你決定','需要協助','編輯請求','edit request','edit action request','resolve request','dismiss request','inbox','需要你 inbox','請求收件匣']
     };
 
     const matched = Object.entries(INTENT_MAP).find(([category, kws]) =>
@@ -1622,7 +1671,9 @@ app.get('/api/help', (req, res) => {
         ],
         vault: [
             { title: 'Read vault key names (bot side)', curl: `curl -s "${apiBase}/api/device-vars?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
-            { title: 'Merge single key (owner, DEVICE_SECRET required)', curl: `curl -s -X POST "${apiBase}/api/device-vars" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","deviceSecret":"DEVICE_SECRET","source":"web","vars":{"KEY":"VALUE"}}'` },
+            { title: 'Read ONE value by name (bot side) — value returns ONLY in the response body, so you never have to paste a secret into chat/logs', curl: `curl -s "${apiBase}/api/device-vars/value?name=KEY&deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
+            { title: 'Add/update single key — SAFE additive patch (drops nothing; use this for programmatic single-key writes)', curl: `curl -s -X POST "${apiBase}/api/device-vars" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","deviceSecret":"DEVICE_SECRET","source":"web","patch":true,"vars":{"KEY":"VALUE"}}'` },
+            { title: 'Full source-sync (editor): REPLACES all keys of this source with the set below; keys of this source you OMIT are deleted (owner/other-source keys preserved). Send the COMPLETE set.', curl: `curl -s -X POST "${apiBase}/api/device-vars" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","deviceSecret":"DEVICE_SECRET","source":"web","vars":{"KEY1":"V1","KEY2":"V2"}}'` },
             { title: 'Delete single key (owner)', curl: `curl -s -X DELETE "${apiBase}/api/device-vars/KEY?deviceId=${deviceId}&deviceSecret=DEVICE_SECRET"` },
             { title: 'WIPE all keys (owner, requires explicit confirm)', curl: `curl -s -X DELETE "${apiBase}/api/device-vars?deviceId=${deviceId}&deviceSecret=DEVICE_SECRET&confirm=YES_DELETE_ALL_VAULT"` },
             { title: 'Audit log — who touched the vault (owner)', curl: `curl -s "${apiBase}/api/device-vars/audit?deviceId=${deviceId}&deviceSecret=DEVICE_SECRET&limit=50"` },
@@ -1649,6 +1700,13 @@ app.get('/api/help', (req, res) => {
             { title: 'GET channel repair log (public; filter channel/kind/limit)', curl: `curl -s "${apiBase}/api/channel-repair-log?limit=50"  # &channel=openclaw-channel-eclaw&kind=fix` },
             { title: 'POST a repair record (auth: deviceSecret OR entityId+botSecret; never include secrets)', curl: `curl -s -X POST "${apiBase}/api/channel-repair-log" -H "Content-Type: application/json" -d ${d},"channel_type":"openclaw-channel-eclaw","entity_refs":"#1","kind":"fix","title":"...","detail":"...","status":"mitigated","occurred_at":"2026-06-08T05:33:00Z","source":"monitor"}'` }
         ],
+        action_requests: [
+            { title: 'Emit a 需要你 request (ask the user/agent to decide/approve/fill-in; relatedCardId optionally links a kanban card → 🗂 任務卡 chip)', curl: `curl -s -X POST "${apiBase}/api/action-requests" -H "Content-Type: application/json" -d ${d},"type":"decision","prompt":"QUESTION_TEXT","options":["A","B"],"relatedCardId":"card_XXXXXXXX"}'` },
+            { title: 'List requests for this device (status: pending|resolved|dismissed|all)', curl: `curl -s "${apiBase}/api/action-requests?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&status=pending"` },
+            { title: 'Edit an existing request — prompt/options/type/relatedCardId (cross-agent, audited; send any subset; relatedCardId:null clears the card link)', curl: `curl -s -X PUT "${apiBase}/api/action-requests/REQUEST_ID" -H "Content-Type: application/json" -d ${d},"prompt":"NEW_QUESTION_TEXT","options":["A","B","C"],"type":"approval","relatedCardId":"card_XXXXXXXX"}'` },
+            { title: 'Resolve (answer) a pending request', curl: `curl -s -X POST "${apiBase}/api/action-requests/REQUEST_ID/resolve" -H "Content-Type: application/json" -d ${d},"answer":"YOUR_ANSWER"}'` },
+            { title: 'Dismiss a pending request', curl: `curl -s -X POST "${apiBase}/api/action-requests/REQUEST_ID/dismiss" -H "Content-Type: application/json" -d ${d}}'` }
+        ],
         remote_control: [
             { title: 'Screen capture (UI tree, long-poll ≤5s)', curl: `curl -s -X POST "${apiBase}/api/device/screen-capture" -H "Content-Type: application/json" -d ${d}}'` },
             { title: 'Send tap', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"tap","params":{"x":100,"y":200}}'` },
@@ -1670,7 +1728,7 @@ app.get('/api/help', (req, res) => {
     res.json({
         intent,
         matched_category: matched,
-        tip: `Use ?intent=KEYWORD to discover APIs. Categories: messaging, kanban, schedule, notes, search, files, entities, vault, analytics, usage, remote_control`,
+        tip: `Use ?intent=KEYWORD to discover APIs. Categories: messaging, kanban, schedule, notes, search, files, entities, vault, analytics, usage, remote_control, action_requests`,
         curl_examples: curlBlock
     });
 });
@@ -1815,6 +1873,31 @@ try {
         emitDevicePreferences: (deviceId, prefs) => {
             io.to(`device:${deviceId}`).emit('device:preferences', { deviceId, prefs });
         },
+        // Owner-decision inbox auto-surface (子3/子4): late-bound thunk because the
+        // action-requests module is constructed AFTER kanban below. By the time a
+        // /card/:id/move request runs, agentActionRequestsModule is wired. Returns
+        // a resolved null when the module is unavailable so the hook stays a no-op.
+        createActionRequest: (...args) => (
+            agentActionRequestsModule && typeof agentActionRequestsModule.createActionRequest === 'function'
+                ? agentActionRequestsModule.createActionRequest(...args)
+                : Promise.resolve(null)
+        ),
+        // Owner-decision lifecycle (子6a): auto-dismiss a card's pending owner-
+        // decision request(s) when it leaves review/blocked. Late-bound thunk for
+        // the same construction-order reason as createActionRequest above.
+        dismissActionRequestsForCard: (...args) => (
+            agentActionRequestsModule && typeof agentActionRequestsModule.dismissActionRequestsForCard === 'function'
+                ? agentActionRequestsModule.dismissActionRequestsForCard(...args)
+                : Promise.resolve([])
+        ),
+        // Waiting-state surfacer (phases 2-3 of card_76b073959c279d6204d9fd42):
+        // NARROWER dismiss the surfacer uses so it only touches its own rows
+        // (decision_context.surfacer === true). Late-bound thunk, same reason.
+        dismissSurfacerActionRequestsForCard: (...args) => (
+            agentActionRequestsModule && typeof agentActionRequestsModule.dismissSurfacerActionRequestsForCard === 'function'
+                ? agentActionRequestsModule.dismissSurfacerActionRequestsForCard(...args)
+                : Promise.resolve([])
+        ),
     });
     app.use('/api/mission', kanbanModule.router);
     console.log('[Kanban] Module loaded successfully');
@@ -1928,6 +2011,28 @@ try {
 } catch (err) {
     console.error('[ScheduledMessages] Failed to load module:', err.message);
     scheduledMessagesModule = { initDatabase: () => {}, startPoller: () => {}, stopPoller: () => {} };
+}
+
+// Agent Action Requests — the "需要你" HITL inbox (card_a03d9d09 / card_edeb190b)
+let agentActionRequestsModule;
+try {
+    agentActionRequestsModule = require('./agent-action-requests')(devices, {
+        pushToBot,
+        unifiedPush,
+        serverLog,
+        io, // real-time inbox push: emits 'action_request:changed' to device:<id> (card_8151054f)
+        // 需要你 owner-decision MOBILE PUSH (card_c7baa7ae): reuse the existing owner-
+        // device notify path (socket + sendWebPush + sendFcm fan-out over
+        // device_fcm_tokens) so an owner-only inbox item ALSO buzzes the owner's
+        // phone. notifyDevice is a hoisted async function declaration (defined far
+        // below) — safe to reference here. Gated ownerOnly + pref inside the module.
+        notifyDevice,
+    });
+    app.use('/api/action-requests', agentActionRequestsModule.router);
+    console.log('[AgentActionRequests] Module loaded successfully');
+} catch (err) {
+    console.error('[AgentActionRequests] Failed to load module:', err.message);
+    agentActionRequestsModule = { initDatabase: () => {} };
 }
 
 // ============================================
@@ -2433,6 +2538,12 @@ const botTools = require('./bot-tools');
 app.use('/api/bot', botTools.router);
 
 // ============================================
+// GOOGLE PLAY INTEGRITY — Android anti-abuse signal bridge
+// ============================================
+const playIntegrity = require('./play-integrity');
+app.use('/api/play-integrity', playIntegrity.createRouter({ devices, audit: serverLog }));
+
+// ============================================
 // COMPANION (Petdx 伙伴瀏覽器 / 社群伙伴貢獻系統)
 // ============================================
 const companionModule = require('./companion-api')({
@@ -2465,6 +2576,642 @@ app.use('/api/files', filesModule.router);
 const petdxRoute = require('./petdex-route');
 app.use('/api/petdx', petdxRoute.createRouter({ log: serverLog }));
 
+// ============================================
+// WISHLIST BRIDGE (thin SSRF-safe proxy, external Wishlist app)
+// ============================================
+// Proxies public search/list (no key) and merchant add-item (merchant key read
+// from the vault by NAME at request time). Upstream host is a hard-coded literal
+// (never from the request); named UA curl/8.4.0 on every outbound call. Degrades
+// gracefully when the merchant key is missing/locked (502 + reason).
+// ============================================
+// AGENT IDENTITY (cross-service "prove you are a real EClaw agent")
+// ============================================
+// card_e30cf03d. Owner directive: the Wishlist write path must NOT use a shared
+// merchant key. Instead an EClaw agent proves its own EClaw identity and the
+// wishlist backend verifies it against EClaw before writing. This router mints a
+// short-lived, single-purpose identity token (POST /token) for an authenticated
+// caller and verifies a token OR a transient botSecret triple (POST /verify).
+const agentIdentity = require('./agent-identity');
+// Shared caller-auth: resolve {deviceId,entityId,botSecret} → the entity's OWN
+// publicCode (never a client-supplied one), or fail closed.
+const resolveCallerIdentity = async ({ deviceId, entityId, botSecret }) => {
+    const device = devices[deviceId];
+    if (!device) return { ok: false, reason: 'device_not_found' };
+    const auth = authEntityAccess(device, null, botSecret, entityId);
+    if (auth.error) return { ok: false, reason: auth.error };
+    const entity = auth.entity;
+    if (!entity || !entity.isBound || !entity.publicCode) {
+        return { ok: false, reason: 'entity_not_bound' };
+    }
+    return { ok: true, publicCode: entity.publicCode };
+};
+app.use('/api/agent-identity', agentIdentity.createRouter({
+    log: serverLog,
+    authenticateCaller: resolveCallerIdentity,
+    // HMAC the token with the process signing secret (same one used elsewhere).
+    getSecret: () => JWT_SECRET_FALLBACK,
+}));
+
+const wishlistRoute = require('./wishlist-route');
+app.use('/api/wishlist-bridge', wishlistRoute.createRouter({
+    log: serverLog,
+    // Wire the write path to REAL caller authentication (security-review HIGH #2):
+    // validate the caller's own botSecret against their entity, and return that
+    // entity's own publicCode so the listing is bound to the authenticated
+    // identity. Never trusts a client-supplied code.
+    authenticateCaller: resolveCallerIdentity,
+    // NO merchant key (card_e30cf03d). Instead swap the verified caller's own
+    // publicCode for a short-lived EClaw identity token that gets forwarded to the
+    // wishlist backend; the wishlist backend calls back to /api/agent-identity/verify
+    // to confirm it. The long-lived botSecret never leaves EClaw.
+    mintAgentToken: async ({ publicCode }) =>
+        agentIdentity.signAgentToken({ publicCode, secret: JWT_SECRET_FALLBACK }),
+}));
+
+// ============================================
+// WISHLIST MATCHMAKING (P2 — pure-EClaw public-code b2b handshake)
+// ============================================
+// card_e44c2ea87013225b94769ae5. A buyer entity's free-text intent → search (P1
+// bridge) → rerank → invite/accept/decline/contact handshake, ALL keyed by public
+// code and delivered ONLY through the existing cross-speak deliver path (no side
+// channels). Governance: owner opt-in (wishlist_matchmaking_enabled, default OFF)
+// + a global kill-switch + a SEPARATE invite quota + reachability (online AND
+// opted-in). Contact PII is released only after BOTH owners approve in 需要你.
+// The ONLY matchmaking egress (shared by the P2 router + the P4 offline-fallback
+// retry). Delivers the b2b envelope through the existing cross-speak deliver point,
+// keyed by public code; applies the target's friends_only rule UNLESS
+// bypassFriendsOnly (a governed /connect to an opted-in target). Hoisted function
+// declaration so the offline queue (defined below) can reference it before this
+// point in source order.
+async function wishlistMmSendB2bMessage({ fromDeviceId, fromEntityId, fromPublicCode, toPublicCode, envelope, bypassFriendsOnly }) {
+    const target = resolveSpeakToTarget(toPublicCode, fromDeviceId);
+    if (!target) throw new Error('target public code not found');
+    const senderDevice = devices[fromDeviceId];
+    const fromEntity = senderDevice && senderDevice.entities[fromEntityId];
+    const targetDevice = devices[target.deviceId];
+    const toEntity = targetDevice && targetDevice.entities[target.entityId];
+    if (!fromEntity || !toEntity) throw new Error('sender or target entity missing');
+    // friends_only (owner rule) — respected for a normal invite, skipped for a
+    // governed /connect to an opted-in target.
+    if (!bypassFriendsOnly) {
+        const xd = await crossDeviceSettings.getSettings(target.deviceId, target.entityId);
+        if (xd.friends_only && !(await db.isFriend(target.deviceId, fromPublicCode))) {
+            throw new Error('friends_only');
+        }
+    }
+    // Envelope travels as a structured b2b message (JSON text). It is NOT a
+    // heartbeat/ack, so the deliver-time low-signal filter passes it through.
+    const text = JSON.stringify(envelope);
+    return deliverToEntity({
+        senderDeviceId: fromDeviceId,
+        fromId: fromEntityId,
+        fromEntity,
+        targetDeviceId: target.deviceId,
+        toId: target.entityId,
+        toEntity,
+        text,
+        mediaType: null,
+        mediaUrl: null,
+        expectsReply: envelope && envelope.type === 'wishlist_trade_invite',
+        isBroadcast: false,
+        isCrossDevice: fromDeviceId !== target.deviceId,
+    });
+}
+
+// (MED#1) Re-evaluate a matchmaking TARGET's own governance for the offline-retry
+// path. Returns a non-empty REASON string when the target must NOT be reached
+// (killswitch ON, opted OUT, or unreachable-by-opt-in) — i.e. the "stop reaching me"
+// control was toggled AFTER the invite was enqueued — else null (still reachable).
+// Reads ONLY the target's own device prefs + roster; never a botSecret. Mirrors the
+// exact predicates P2 handleInvite applies (isKillSwitchOn / isReachableTarget).
+async function isMatchmakingTargetRevoked(toPublicCode) {
+    try {
+        const code = wishlistMatchmaking.normalizeCode(toPublicCode);
+        const resolved = publicCodeIndex[code];
+        if (!resolved || !resolved.deviceId) return 'target_not_found';
+        const device = devices[resolved.deviceId];
+        const entity = device && device.entities && device.entities[resolved.entityId];
+        const rosterEntry = entity ? {
+            publicCode: entity.publicCode || null,
+            entityId: entity.entityId,
+            state: entity.state,
+            lastUpdated: entity.lastUpdated,
+            isBound: !!entity.isBound,
+        } : null;
+        const prefs = (await devicePrefs.getPrefs(resolved.deviceId)) || {};
+        if (wishlistMatchmaking.isKillSwitchOn(prefs)) return 'target_killswitch';
+        if (!wishlistMatchmaking.isReachableTarget({ rosterEntry, prefs })) return 'unreachable';
+        return null;
+    } catch (_e) {
+        // Fail SAFE toward NOT delivering: if we can't confirm the target still
+        // consents, treat it as revoked rather than risk an unwanted send.
+        return 'governance_recheck_failed';
+    }
+}
+
+// ── P4 GA hardening (card_bdf2f1f549aaf71238048b01) ──────────────────────────
+// Additive-only defense layered ON TOP of P0-P3: it never weakens opt-in /
+// kill-switch / quota / consent / from-binding / IDOR / opt-in-reachability.
+//   • metrics       — in-process observability counters (sent/blocked/deduped/
+//                     accept/decline/contact + per-reason breakdown), read-only
+//                     snapshot at GET /api/wishlist-matchmaking/metrics.
+//   • rate limiter  — per-caller/per-IP request-velocity cap (DISTINCT from the
+//                     business quota); mounted in FRONT of both routers so a
+//                     spam/quota-probe/malformed flood is 429'd before routing.
+//   • GA rollout gate — GLOBAL dark-launch flag (env WISHLIST_MATCHMAKING_GA_ENABLED,
+//                     default OFF). SEND routes are gated on top of per-owner
+//                     opt-in; read routes (search/metrics) stay open in dark-launch.
+//   • offline queue — bounded per-caller retry buffer for an undeliverable send
+//                     (C0b gap). NO central scheduler (官方不介入).
+const wishlistMatchmakingGa = require('./wishlist-matchmaking-ga');
+const wishlistMatchmakingMetrics = wishlistMatchmakingGa.createMetrics();
+// Request-velocity limiter. Keyed by deviceId (IP fallback). Honours the same
+// NODE_ENV=test disable switch as the other limiters so unit tests aren't throttled.
+const wishlistMatchmakingRateLimiter = wishlistMatchmakingGa.createRateLimiter({
+    metrics: wishlistMatchmakingMetrics,
+    disabled: rateLimitDisabled,
+});
+// Offline / non-EClaw seller fallback (C0b gap). A bounded per-caller retry buffer
+// for a governed send that could not be delivered right now. Its `sender` re-drives
+// the SAME governed P2 invite with the SAME caller principal (runP2InviteInProcess,
+// a hoisted fn declared below) — NO central scheduler and NO platform impersonation
+// (官方不介入). drain() is invoked by the caller's own Agent / an external cron; there
+// is no internal timer. A permanently-undeliverable target (opted-out / not an EClaw
+// entity with no wishlist-native channel) is dead-lettered, not retried forever.
+const wishlistMatchmakingOfflineQueue = wishlistMatchmakingGa.createOfflineFallbackQueue({
+    metrics: wishlistMatchmakingMetrics,
+    // Re-drive a previously-governed invite that hit a TRANSIENT delivery error.
+    // Governance already ran at enqueue (target opted-in, quota consumed, GA gate
+    // passed) so the retry re-uses P2's ONE egress (sendB2bMessage) directly — it
+    // does NOT re-authenticate and therefore NEVER stores or reads a botSecret
+    // (security guardrail: never read another entity's secret). We STILL re-check
+    // the global GA gate so dark-launch can freeze retries too.
+    // NOTE: the queue invokes `sender(rec.payload)` — so `payload` IS the enqueued
+    // payload object (fromDeviceId / toPublicCode / envelope / …), NOT a wrapper.
+    sender: async (payload) => {
+        const p = payload || {};
+        if (!wishlistMatchmakingGa.isGaEnabled()) {
+            wishlistMatchmakingMetrics.inc(wishlistMatchmakingGa.METRICS.BLOCK_GA_GATE);
+            return { delivered: false, permanent: true, error: 'ga_disabled' };
+        }
+        // (MED#1) Re-run the TARGET's matchmaking governance BEFORE re-driving. The
+        // raw egress (wishlistMmSendB2bMessage → deliverToEntity) carries NO
+        // matchmaking gates — those live in P2 handleInvite, which the drain bypasses.
+        // A seller who flips killswitch ON, opts OUT, or is no longer reachable-by-
+        // opt-in AFTER enqueue MUST NOT receive the retry (HARD RULE 3 "stop reaching
+        // me"). Such a job is `revoked` → dead-lettered, not retried forever. This
+        // re-check reads only the target's OWN device prefs — no botSecret, no
+        // impersonation. It re-uses the SAME predicates P2's router uses.
+        const revoked = await isMatchmakingTargetRevoked(p.toPublicCode);
+        if (revoked) {
+            return { delivered: false, permanent: true, revoked: true, error: revoked };
+        }
+        try {
+            await wishlistMmSendB2bMessage({
+                fromDeviceId: p.fromDeviceId,
+                fromEntityId: p.fromEntityId,
+                fromPublicCode: p.fromPublicCode,
+                toPublicCode: p.toPublicCode,
+                envelope: p.envelope,
+                bypassFriendsOnly: false,
+            });
+            return { delivered: true };
+        } catch (err) {
+            // friends_only / target-not-found are PERMANENT for a cold retry; a
+            // generic transport error is transient and backs off.
+            const msg = err && err.message ? String(err.message) : 'undelivered';
+            const permanent = msg === 'friends_only' || msg.includes('not found') || msg.includes('missing');
+            return { delivered: false, permanent, error: msg };
+        }
+    },
+    onDeadLetter: (rec) => {
+        serverLog('warn', 'wishlist_matchmaking_ga', `offline invite dead-lettered after ${rec.attempts} attempts (${rec.permanent ? 'permanent' : 'exhausted'})`, {
+            action: 'offline_fallback_dead_letter',
+            result: rec.permanent ? 'permanent' : 'exhausted',
+        });
+    },
+});
+// GA send-gate + rate-limit middleware, shared by both routers.
+const wishlistGaSendGate = wishlistMatchmakingGa.gaGate({ metrics: wishlistMatchmakingMetrics });
+const wishlistMmRateLimit = wishlistMatchmakingRateLimiter.middleware();
+// Read-only paths that stay reachable even in dark-launch (search + metrics).
+const WISHLIST_MM_READONLY_PATHS = new Set(['/search', '/photo-search', '/metrics']);
+// A path-scoped GA gate: block only SEND-capable routes; let read/plan through.
+const wishlistGaSendGateScoped = (req, res, next) => {
+    if (WISHLIST_MM_READONLY_PATHS.has(req.path)) return next();
+    return wishlistGaSendGate(req, res, next);
+};
+
+const wishlistMatchmaking = require('./wishlist-matchmaking');
+const wishlistMatchmakingRouter = wishlistMatchmaking.createRouter({
+    log: serverLog,
+    // (P4) observability sink — pure side-observer on the real control path.
+    metrics: wishlistMatchmakingMetrics,
+    // Same caller-auth as the wishlist-bridge write path: prove a real bound
+    // entity via {deviceId,entityId,botSecret} → resolve to its OWN publicCode.
+    authenticateCaller: resolveCallerIdentity,
+    // Search via the P1 SSRF-safe bridge upstream (in-process; no HTTP hop).
+    searchItems: async (query) => {
+        const resp = await globalThis.fetch(
+            `https://${wishlistRoute.WISHLIST_HOST}/api/items/search?q=${encodeURIComponent(query)}`,
+            { method: 'GET', headers: { 'User-Agent': 'curl/8.4.0', 'Accept': 'application/json' }, redirect: 'manual' }
+        );
+        if (!resp.ok) throw new Error(`search upstream HTTP ${resp.status}`);
+        return resp.json();
+    },
+    // publicCode → { deviceId, entityId, entity } (in-memory index).
+    resolvePublicCode: (code) => {
+        const target = publicCodeIndex[code];
+        if (!target) return null;
+        const device = devices[target.deviceId];
+        const entity = device && device.entities[target.entityId];
+        return { deviceId: target.deviceId, entityId: target.entityId, entity: entity || null };
+    },
+    // Roster entry for the reachability filter (state/lastUpdated/isBound/publicCode).
+    getRosterEntry: (code) => {
+        const target = publicCodeIndex[code];
+        if (!target) return null;
+        const device = devices[target.deviceId];
+        const entity = device && device.entities[target.entityId];
+        if (!entity) return null;
+        return {
+            publicCode: entity.publicCode || null,
+            entityId: entity.entityId,
+            state: entity.state,
+            lastUpdated: entity.lastUpdated,
+            isBound: !!entity.isBound,
+        };
+    },
+    getDevicePrefs: (deviceId) => devicePrefs.getPrefs(deviceId),
+    // (card_647fc0ba priority ③) Resolve an owner's interface language for the
+    // currency-default derivation. Reads user_accounts.language (the same column the
+    // usage-warning prefix uses). Best-effort: any error / no row → '' so
+    // resolveCurrency falls through to the owner's default_currency pref, then USD.
+    getOwnerLocale: async (deviceId) => {
+        try {
+            if (!chatPool || !deviceId) return '';
+            const r = await chatPool.query(
+                'SELECT language FROM user_accounts WHERE device_id = $1 LIMIT 1',
+                [deviceId]
+            );
+            return (r.rows[0] && r.rows[0].language) ? String(r.rows[0].language) : '';
+        } catch (_e) {
+            return '';
+        }
+    },
+    // The ONLY egress: deliver the b2b envelope through the existing cross-speak
+    // deliver point, keyed by public code. Applies the target's friends_only rule
+    // UNLESS bypassFriendsOnly (matchmaking /connect for an opted-in target).
+    // Extracted to a named fn (wishlistMmSendB2bMessage, hoisted below) so the P4
+    // offline-fallback queue can re-drive the SAME egress on a retry WITHOUT
+    // re-authenticating (no botSecret stored) — governance already ran at enqueue.
+    sendB2bMessage: (m) => wishlistMmSendB2bMessage(m),
+    // Per-owner 需要你 for the dual-consent gate. type 'approval'; decision_context
+    // pins it as an owner-only decision so the inbox surfaces it.
+    createOwnerActionRequest: async ({ deviceId, fromEntityId, type, prompt, options, decisionContext }) => {
+        if (!agentActionRequestsModule || typeof agentActionRequestsModule.createActionRequest !== 'function') {
+            throw new Error('action-requests module unavailable');
+        }
+        // Default 'approval' (the dual-consent request); the invite inbox card
+        // (card_647fc0ba Scope B) passes an explicit 'wishlist_trade_invite' so the
+        // portal can special-case it. Only allow the known matchmaking types through
+        // — never let a caller-influenced value pick an arbitrary type.
+        const ALLOWED_AR_TYPES = new Set(['approval', 'wishlist_trade_invite']);
+        const arType = ALLOWED_AR_TYPES.has(type) ? type : 'approval';
+        return agentActionRequestsModule.createActionRequest({
+            deviceId,
+            fromEntityId,
+            type: arType,
+            prompt,
+            options,
+            decisionContext,
+        });
+    },
+    // Read a consent request's approval for the cross-owner PII-release gate.
+    // approved requires ALL of (security review HIGH #1 + LOW #5):
+    //   1. status === 'resolved',
+    //   2. this is genuinely a cross-owner-PII consent (decision_context.crossOwnerPii)
+    //      — so this permissive "approve" reading can never leak onto an unrelated
+    //      request type,
+    //   3. the answer strictly reads as APPROVE (answerIsApproval), never a negative,
+    //   4. WHO may consent for THIS owner's OWN side is governed by that owner's
+    //      `contact_release_requires_human` pref (card_647fc0ba, Hank 拍板 2026-07-05):
+    //        • pref ON  → require resolved_by_user === true (the real human owner,
+    //                     deviceSecret) — an Agent botSecret resolve does NOT count.
+    //        • pref OFF (default) → the owner's authorised Agent may consent, so an
+    //                     Agent-resolved approval (resolved_by_user === false) ALSO
+    //                     counts. This does NOT weaken the structural invariants: the
+    //                     resolve chokepoint (agent-action-requests.js) already binds a
+    //                     botSecret resolve to from_entity_id === that entity, and this
+    //                     consent row was emitted with from_entity_id = THAT owner's OWN
+    //                     entity — so only THAT party's own verified identity can ever
+    //                     agent-resolve THIS party's consent. No cross-party approval,
+    //                     no single caller approving both sides (each side is a distinct
+    //                     row on a distinct device, and the dual-gate requires both).
+    // Fail SAFE: any error reading the pref → treat as requires-human (the stricter,
+    // PII-protecting direction).
+    getActionRequestStatus: async (requestId, deviceId) => {
+        if (!agentActionRequestsModule || typeof agentActionRequestsModule.getRequestStatus !== 'function') {
+            throw new Error('action-requests module unavailable');
+        }
+        const r = await agentActionRequestsModule.getRequestStatus(requestId, deviceId);
+        if (!r || !r.found) return { status: 'unknown', approved: false };
+        const dc = (r.decisionContext && typeof r.decisionContext === 'object') ? r.decisionContext : {};
+        const isCrossOwnerPii = dc.crossOwnerPii === true;
+
+        // Resolve THIS owner's contact-release consent mode. Default = requires human
+        // (fail-safe) if the pref can't be read; only an explicit OFF relaxes to
+        // agent-may-consent.
+        let requiresHuman = true;
+        try {
+            const prefs = await devicePrefs.getPrefs(deviceId);
+            requiresHuman = !(prefs && prefs.contact_release_requires_human === false);
+        } catch (_e) {
+            requiresHuman = true;
+        }
+        // When the pref allows an Agent to consent, a valid Agent resolve counts even
+        // though resolved_by_user is false. When it requires a human, only
+        // resolved_by_user === true counts.
+        const identityOk = requiresHuman ? (r.resolvedByUser === true) : (r.status === 'resolved');
+
+        const approved =
+            r.status === 'resolved' &&
+            isCrossOwnerPii &&
+            identityOk &&
+            answerIsApproval(r.answer);
+        return { status: r.status, approved, resolvedByUser: r.resolvedByUser === true, requiresHuman };
+    },
+    // (MED #4) Resolve a party's contact + name-card SERVER-SIDE from that owner's
+    // OWN trusted records — NEVER from the caller's request body:
+    //   - nameCard: publicCode + displayName (entity.name) + caps (interview
+    //     capabilities), read from the live entity record.
+    //   - contactInfo: the owner-controlled `WISHLIST_CONTACT_INFO` vault var (a JSON
+    //     object the owner sets themselves; respects vault lock; decrypted here).
+    //     Absent/locked/invalid → {} (name-card still exchanges; no PII).
+    // The caller cannot influence any of these bytes, so a caller-injected phishing
+    // contact/nameCard is impossible.
+    getPartyContact: async ({ deviceId, entityId, publicCode }) => {
+        const device = devices[deviceId];
+        const entity = device && device.entities && device.entities[entityId];
+        const caps = (entity && entity.identity && Array.isArray(entity.identity.interviewCapabilities))
+            ? entity.identity.interviewCapabilities.map((c) => String(c)).slice(0, 10)
+            : [];
+        const nameCard = {
+            publicCode: (entity && entity.publicCode) || publicCode || '',
+            displayName: (entity && (entity.name || entity.character)) || '',
+            caps,
+        };
+        let contactInfo = {};
+        try {
+            const raw = await getDeviceVarForEmbedding(deviceId, 'WISHLIST_CONTACT_INFO');
+            if (raw) {
+                const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) contactInfo = parsed;
+            }
+        } catch (_e) {
+            contactInfo = {};
+        }
+        return { nameCard, contactInfo };
+    },
+    // (P4) Offline / non-EClaw seller fallback (C0b gap). Fires ONLY on a TRANSIENT
+    // delivery failure — every governance gate already passed. We build the SAME
+    // governed invite envelope and enqueue it for a bounded retry keyed by matchId
+    // (idempotent). We do NOT store any botSecret — the retry re-uses the raw egress
+    // wishlistMmSendB2bMessage, which needs only the resolved deviceIds + envelope.
+    onDeliveryFailure: async (ctx) => {
+        try {
+            const buyerResolved = resolveCallerToResolvedIds(ctx.buyerPublicCode, ctx.callerCreds);
+            const envelope = wishlistMatchmaking.buildInviteEnvelope({
+                matchId: ctx.matchId,
+                fromPublicCode: ctx.buyerPublicCode,
+                toPublicCode: ctx.sellerPublicCode,
+                itemId: ctx.itemId,
+                itemName: ctx.itemName,
+                note: ctx.note,
+            });
+            const r = wishlistMatchmakingOfflineQueue.enqueue({
+                jobKey: `mm-offline-${ctx.matchId}`,
+                payload: {
+                    fromDeviceId: (ctx.callerCreds && ctx.callerCreds.deviceId) || (buyerResolved && buyerResolved.deviceId),
+                    fromEntityId: (ctx.callerCreds && ctx.callerCreds.entityId) != null ? ctx.callerCreds.entityId : (buyerResolved && buyerResolved.entityId),
+                    fromPublicCode: ctx.buyerPublicCode,
+                    toPublicCode: ctx.sellerPublicCode,
+                    envelope,
+                },
+            });
+            return !!(r && r.queued);
+        } catch (_e) {
+            return false;
+        }
+    },
+});
+// Small helper: best-effort resolve a publicCode → {deviceId,entityId}, preferring
+// the caller's own creds when they match (used only to fill the offline retry's
+// sender identity — never to look up another entity's secret).
+function resolveCallerToResolvedIds(publicCode, callerCreds) {
+    if (callerCreds && callerCreds.deviceId && callerCreds.entityId != null) {
+        return { deviceId: callerCreds.deviceId, entityId: callerCreds.entityId };
+    }
+    const target = publicCodeIndex[wishlistMatchmaking.normalizeCode(publicCode)];
+    return target ? { deviceId: target.deviceId, entityId: target.entityId } : null;
+}
+// Read-only metrics snapshot — observability dashboard for GA (card_bdf2f1f5 §1).
+// Admin-gated (same ADMIN_DEVICE_IDS gate as other operator surfaces) so raw
+// counts aren't public; no secrets are ever in the payload. Registered BEFORE the
+// router mount so the router's catch-all can't shadow it.
+app.get('/api/wishlist-matchmaking/metrics', (req, res) => {
+    const gate = requireAdmin(req);
+    if (!gate.ok) return res.status(gate.status).json({ success: false, error: gate.error });
+    return res.status(200).json({
+        success: true,
+        gaEnabled: wishlistMatchmakingGa.isGaEnabled(),
+        ...wishlistMatchmakingMetrics.snapshot(),
+        offlineQueue: wishlistMatchmakingOfflineQueue.stats(),
+    });
+});
+// Drain the offline-fallback retry queue (C0b). Admin/cron-invoked — there is NO
+// internal timer (官方不介入: no platform-side background compute driving agents).
+// Re-drives ONLY the SAME governed sends already enqueued after a transient failure.
+app.post('/api/wishlist-matchmaking/offline/drain', async (req, res) => {
+    const gate = requireAdmin(req);
+    if (!gate.ok) return res.status(gate.status).json({ success: false, error: gate.error });
+    try {
+        const summary = await wishlistMatchmakingOfflineQueue.drain();
+        return res.status(200).json({ success: true, ...summary, queue: wishlistMatchmakingOfflineQueue.stats() });
+    } catch (err) {
+        serverLog('warn', 'wishlist_matchmaking_ga', `offline drain failed: ${err && err.message}`, { action: 'offline_fallback_drain', result: 'error' });
+        return res.status(500).json({ success: false, error: 'drain failed' });
+    }
+});
+// Middleware order: rate-limit (velocity) → GA send-gate (dark-launch) → router
+// (which runs opt-in/kill-switch/quota/consent/reachability). Each layer only
+// ADDS a rejection; none can enable a send a lower gate would block.
+app.use('/api/wishlist-matchmaking', wishlistMmRateLimit, wishlistGaSendGateScoped, wishlistMatchmakingRouter);
+
+// ============================================
+// WISHLIST MATCHMAKING P3 (caller-recognised photo + seller-initiated + rescan/dedup)
+// ============================================
+// card_496f752a622b722f82843d4e ; reworked per card_e61aa62a (「官方不介入」 — the
+// platform stays out of the loop: it does NOT run compute for agents, does NOT act on
+// their behalf, does NOT subsidise; EClaw = MATCHING + standard STORAGE only). Three
+// front doors that all feed into P2's SAME governed handshake — P3 never forks P2 or
+// bypasses its governance:
+//   1. /photo-search  : the CALLER's OWN Agent already ran its OWN vision and submits
+//      the recognised item ({itemName, tags}). The PLATFORM RUNS NO VISION. P3
+//      sanitises the caller-supplied text and feeds it into the P1 bridge search.
+//      An optional listing photo is referenced by `fileId` in EClaw's STANDARD
+//      storage (/api/files → R2), resolved DEVICE-SCOPED (owner only).
+//   2. /seller-listing-scan : a seller reverse-searches buyer wishlists for a
+//      listing it already wrote via the authenticated write path, and invites each
+//      matched buyer via P2's fully-governed invite.
+//   3. /rescan : the caller re-checks its OWN unmatched wishes and sends EXACTLY
+//      ONE invite per (buyer,item,seller) via matchId dedup (shared P2 store). NO
+//      central multi-buyer scheduler — acts only as the authenticated caller.
+// SECURITY: every invite binds `from` to the verified caller (no impersonation);
+// NO vision provider key is ever read or logged for matchmaking (the dependency is
+// gone); a referenced fileId resolves ONLY as the owner device's file (no IDOR).
+const wishlistMatchmakingP3 = require('./wishlist-matchmaking-p3');
+
+// Run a P2 governed invite IN-PROCESS through the already-mounted P2 router so P3
+// reuses ALL of P2's governance (opt-in / kill-switch / quota / reachability) with
+// zero duplication and zero forking.
+//
+// SECURITY FIX (independent review of #3910, HIGH): the invite is driven with the
+// AUTHENTICATED CALLER as the P2 principal, using the caller's OWN verified
+// credentials (`callerCreds`, threaded from the P3 request the caller already
+// authenticated). We NEVER look up or use another entity's botSecret to act on its
+// behalf. P2's model is "caller invites target": with the caller as principal, P2
+// correctly checks the CALLER's opt-in + kill-switch, consumes the CALLER's quota,
+// checks the TARGET's reachability (online AND opted-in — this is the recipient
+// consent gate), and stamps the on-wire envelope with from = the caller. `to` is
+// the invite target (P2's `sellerPublicCode` body field is just "the target").
+// The canonical (buyer,item,seller) dedup is owned by the P3 module on the shared
+// store; this function only performs the governed send.
+function runP2InviteInProcess({ callerCreds, toPublicCode, itemId, itemName, note, bypassFriendsOnly, buyerMaxPrice, buyerCurrency, sellerAskPrice, sellerCurrency }) {
+    return new Promise((resolve) => {
+        if (!callerCreds || !callerCreds.deviceId || callerCreds.entityId === undefined || callerCreds.entityId === null || !callerCreds.botSecret) {
+            return resolve({ status: 'blocked', reason: 'caller_creds_missing' });
+        }
+
+        // Minimal in-process req/res that the P2 express router can handle. The P2
+        // principal is the CALLER (its own verified creds); the P2 target is `to`.
+        const req = {
+            method: 'POST',
+            url: bypassFriendsOnly ? '/connect' : '/invite',
+            originalUrl: bypassFriendsOnly ? '/connect' : '/invite',
+            body: {
+                deviceId: callerCreds.deviceId,
+                entityId: callerCreds.entityId,
+                botSecret: callerCreds.botSecret, // caller drives P2 /invite (principal = caller)
+                sellerPublicCode: toPublicCode,   // P2's "target" = whom to invite
+                itemId,
+                itemName,
+                note,
+                // Price basis (card_e1b8af79): P2 handleInvite re-runs price-compat on
+                // the REAL control path and carries the basis in the invite envelope.
+                buyerMaxPrice,
+                buyerCurrency,
+                sellerAskPrice,
+                sellerCurrency,
+            },
+            headers: {},
+            get() { return undefined; },
+        };
+        const res = {
+            statusCode: 200,
+            status(code) { this.statusCode = code; return this; },
+            json(payload) {
+                if (this.statusCode === 200) {
+                    resolve({ status: payload.deduped ? 'invited' : (payload.status || 'invited'), matchId: payload.matchId, deduped: !!payload.deduped });
+                } else {
+                    resolve({ status: 'blocked', reason: payload && payload.reason, error: payload && payload.error });
+                }
+                return this;
+            },
+        };
+        // Route the synthetic request through the mounted P2 router.
+        wishlistMatchmakingRouter.handle(req, res, () => {
+            resolve({ status: 'blocked', reason: 'route_not_found' });
+        });
+    });
+}
+
+// P3 send routes (/seller-listing-scan, /rescan) go through the SAME GA gate +
+// rate limiter as P2. /photo-search is read/plan-only (no send) so it stays open in
+// dark-launch — same read-only carve-out as P2's /search.
+const WISHLIST_MM_P3_READONLY_PATHS = new Set(['/photo-search']);
+const wishlistGaSendGateP3Scoped = (req, res, next) => {
+    if (WISHLIST_MM_P3_READONLY_PATHS.has(req.path)) return next();
+    return wishlistGaSendGate(req, res, next);
+};
+app.use('/api/wishlist-matchmaking-p3', wishlistMmRateLimit, wishlistGaSendGateP3Scoped, wishlistMatchmakingP3.createRouter({
+    log: serverLog,
+    // SAME verifier as P2 / write-auth.
+    authenticateCaller: resolveCallerIdentity,
+    // Search via the SAME P1 SSRF-safe bridge upstream as P2 (in-process; no HTTP hop).
+    searchItems: async (query) => {
+        const resp = await globalThis.fetch(
+            `https://${wishlistRoute.WISHLIST_HOST}/api/items/search?q=${encodeURIComponent(query)}`,
+            { method: 'GET', headers: { 'User-Agent': 'curl/8.4.0', 'Accept': 'application/json' }, redirect: 'manual' }
+        );
+        if (!resp.ok) throw new Error(`search upstream HTTP ${resp.status}`);
+        return resp.json();
+    },
+    // Resolve an OPTIONAL referenced listing photo in EClaw's STANDARD storage,
+    // SCOPED TO THE OWNER DEVICE. 官方不介入: there is NO server-side vision here —
+    // the caller's own Agent already recognised the item; this only VERIFIES the
+    // caller owns the referenced fileId (device_id match enforced in SQL, same scope
+    // as GET /api/files/:id) so a caller can never reference another device's file
+    // (no IDOR / cross-device read). Returns null for a file the device does not own.
+    resolveOwnedFile: async ({ fileId, deviceId }) =>
+        require('./files').getOwnedFileMeta({ fileId, deviceId }),
+    // Reuse P2's ENTIRE governed invite path in-process. No re-implementation.
+    // The invite is driven with the AUTHENTICATED CALLER as the P2 principal (its
+    // own verified creds), inviting `toPublicCode`. NEVER another entity's secret.
+    governedInvite: async ({ callerCreds, toPublicCode, itemId, itemName, note, bypassFriendsOnly, buyerMaxPrice, buyerCurrency, sellerAskPrice, sellerCurrency }) =>
+        runP2InviteInProcess({ callerCreds, toPublicCode, itemId, itemName, note, bypassFriendsOnly, buyerMaxPrice, buyerCurrency, sellerAskPrice, sellerCurrency }),
+    // SHARE the P2 match store so P3 dedup is symmetric with P2 (matchId identity).
+    matchStore: wishlistMatchmakingRouter._store,
+}));
+
+// The exact approve-option label our consent requests present (index 0). A free
+// text answer counts as approve ONLY when it matches this label or a strict
+// positive allowlist AND contains no negative token (security review LOW #5).
+const CONTACT_APPROVE_LABEL = '同意釋出 / Approve';
+// Positive allowlist — the WHOLE (trimmed) answer must be one of these to approve
+// via free text. Deliberately narrow: a sentence like "approve? no" is NOT here.
+const CONTACT_APPROVE_ALLOWLIST = new Set([
+    '同意釋出 / approve', '同意釋出', '同意', 'approve', 'approved', 'approve release', 'yes', '是',
+]);
+// Any of these anywhere in the answer VETOES approval (fail-closed).
+const CONTACT_DECLINE_RE = /decline|reject|denied?|拒絕|不同意|不要|\bno\b|\bnot\b|別|否/i;
+
+// Interpret a 需要你 answer as approval for the cross-owner PII-release gate.
+// Approve ⇔ option index 0 (the exact approve option) OR the WHOLE answer text is
+// an allow-listed approve phrase with NO negative token. Everything else → false.
+// This is intentionally strict: it releases PII, so ambiguity must fail closed.
+function answerIsApproval(answer) {
+    if (answer == null) return false;
+    let a = answer;
+    if (typeof a === 'string') {
+        try { a = JSON.parse(a); } catch (_) { a = { text: answer }; }
+    }
+    if (!a || typeof a !== 'object') return false;
+    // A selected option index is authoritative: 0 = approve, anything else = not.
+    const oi = a.optionIndex ?? a.selectedOptionIndex;
+    if (oi != null && oi !== '') {
+        return Number(oi) === 0;
+    }
+    // Free-text path: whole answer must be an allow-listed approve phrase (or the
+    // exact label) AND carry no negative token.
+    const raw = String(a.text ?? a.answer ?? a.value ?? '').trim();
+    if (!raw) return false;
+    if (CONTACT_DECLINE_RE.test(raw)) return false; // any negation vetoes
+    const norm = raw.toLowerCase();
+    if (norm === CONTACT_APPROVE_LABEL.toLowerCase()) return true;
+    return CONTACT_APPROVE_ALLOWLIST.has(norm);
+}
+
 // Daily cleanup of expired files (runs at 03:17 server time)
 const nodeCron = require('node-cron');
 nodeCron.schedule('17 3 * * *', () => {
@@ -2484,6 +3231,34 @@ const settingsHelpInvariantCron = createSettingsHelpInvariantCron({
     audit: serverLog,
 });
 
+// Push round-trip health-check cron (card_0a5d4a97). chatPool is created
+// later in this file (~line 19979); we pass a getPool closure so the cron
+// resolves the real pool only at tick time. sendNotification +
+// reportFakechat are wired to live values via factories so the same
+// closures work whether boot order changes or the test harness mocks them.
+// (Late binding also matters because notifyDevice + chatPool are forward
+// references at this point.)
+const pushHealthCheckCron = createPushHealthCheckCron({
+    getPool: () => chatPool,
+    // web-push instance + reportFakechat are wired after chatPool exists,
+    // via pushHealthCheckCron._state below. We do it via closure rebinding
+    // (setSendNotification / setReportFakechat) to keep the test contract
+    // (sendNotification/wait/reportFakechat as constructor args) simple.
+    sendNotification: (subscription, payload, opts) =>
+        webpush.sendNotification(subscription, payload, opts),
+    reportFakechat: async (line) => {
+        // Lightweight fakechat report — uses the same log channel as the
+        // other cron modules so we don't multiply infra. The fakechat dispatch
+        // proper happens via the bot reply loop reading server_logs; the
+        // serverLog write here is enough to surface the run.
+        serverLog('info', 'push_health_check_report', line, {
+            action: 'push_health_check_report',
+            result: 'reported',
+        });
+    },
+    audit: serverLog,
+});
+
 missionModule.initMissionDatabase();
 kanbanModule.initKanbanDatabase();
 kanbanModule.startBackgroundTimers();
@@ -2492,6 +3267,9 @@ if (scheduledMessagesModule && scheduledMessagesModule.initDatabase) {
     if (process.env.NODE_ENV !== 'test' && scheduledMessagesModule.startPoller) {
         scheduledMessagesModule.startPoller();
     }
+}
+if (agentActionRequestsModule && agentActionRequestsModule.initDatabase) {
+    agentActionRequestsModule.initDatabase();
 }
 // Wire notification callback (notifyDevice defined later, uses closure)
 missionModule.setNotifyCallback((deviceId, notif) => notifyDevice(deviceId, notif));
@@ -3880,7 +4658,12 @@ app.get('/arena/:sessionToken', async (req, res) => {
     }
 });
 if (process.env.NODE_ENV !== 'test') {
-    setTimeout(() => arenaModule.initArenaDatabase(), 4000);
+    setTimeout(async () => {
+        await arenaModule.initArenaDatabase();
+        if (typeof arenaModule.backfillArenaEntityBindings === 'function') {
+            await arenaModule.backfillArenaEntityBindings();
+        }
+    }, 4000);
 }
 
 // Daily arena question pool update — 03:00 UTC
@@ -5242,16 +6025,21 @@ app.post('/api/admin/push-update', adminAuth, adminCheck, async (req, res) => {
     const targetVersion = version || LATEST_APP_VERSION;
     const notes = releaseNotes || `Version ${targetVersion} is now available!`;
 
-    // Collect all FCM tokens from in-memory devices
+    // Collect EVERY FCM token per device (multi-device fix 2026-06-29). A single deviceId can
+    // have several physical devices registered (phone + emulator + …). The old code took only
+    // device.fcmToken — the single in-memory latest token — so a multi-device user got the
+    // update push on just ONE device: the exact single-token clobber PR #3808 fixed for
+    // sendFcm, still latent here. Reuse getDeviceFcmTokens to fan out to all of them.
     const tokens = [];
-    const deviceIds = [];
-    for (const deviceId in devices) {
-        const device = devices[deviceId];
-        if (device.fcmToken) {
-            tokens.push(device.fcmToken);
-            deviceIds.push(deviceId);
+    const tokenMeta = []; // parallel to tokens: { deviceId, token } → a stale token deletes only its own row
+    const deviceIdList = Object.keys(devices);
+    const perDeviceTokens = await Promise.all(deviceIdList.map(id => getDeviceFcmTokens(id)));
+    deviceIdList.forEach((deviceId, i) => {
+        for (const token of perDeviceTokens[i]) {
+            tokens.push(token);
+            tokenMeta.push({ deviceId, token });
         }
-    }
+    });
 
     if (tokens.length === 0) {
         return res.json({ success: true, sent: 0, failed: 0, total: 0, message: 'No devices with FCM tokens' });
@@ -5264,7 +6052,7 @@ app.post('/api/admin/push-update', adminAuth, adminCheck, async (req, res) => {
     // Send via Firebase sendEachForMulticast (batches of 500)
     for (let i = 0; i < tokens.length; i += 500) {
         const batch = tokens.slice(i, i + 500);
-        const batchDeviceIds = deviceIds.slice(i, i + 500);
+        const batchMeta = tokenMeta.slice(i, i + 500);
         try {
             const response = await firebaseAdmin.messaging().sendEachForMulticast({
                 tokens: batch,
@@ -5287,14 +6075,17 @@ app.post('/api/admin/push-update', adminAuth, adminCheck, async (req, res) => {
             successCount += response.successCount;
             failureCount += response.failureCount;
 
-            // Clean up stale tokens
+            // Clean up stale tokens — delete only THIS dead token's row, never the whole
+            // device (that would wipe a multi-device user's other live tokens = the clobber
+            // bug again). Mirror sendFcm's per-row cleanup.
             response.responses.forEach((resp, idx) => {
                 if (!resp.success && resp.error?.code === 'messaging/registration-token-not-registered') {
-                    const staleDeviceId = batchDeviceIds[idx];
-                    if (devices[staleDeviceId]) {
+                    const { deviceId: staleDeviceId, token: staleToken } = batchMeta[idx];
+                    chatPool.query('DELETE FROM device_fcm_tokens WHERE device_id = $1 AND token = $2', [staleDeviceId, staleToken]).catch(() => {});
+                    if (devices[staleDeviceId]?.fcmToken === staleToken) {
                         delete devices[staleDeviceId].fcmToken;
+                        chatPool.query('UPDATE devices SET fcm_token = NULL WHERE device_id = $1', [staleDeviceId]).catch(() => {});
                     }
-                    chatPool.query('UPDATE devices SET fcm_token = NULL WHERE device_id = $1', [staleDeviceId]).catch(() => {});
                     staleTokensCleaned++;
                 }
             });
@@ -5712,6 +6503,15 @@ function enqueueMessage(toEntity, messageObj, ctx) {
     toEntity.messageQueue.push(messageObj);
     toEntity.lastEnqueuedAt = Date.now();
 
+    // Activity FSM: any inbound (client /api/client/speak OR A2A speakTo) is
+    // "activity" — it resets the sleep anchor and the non-empty queue makes
+    // computePendingWork() true, so the entity cannot be IDLE/SLEEPING while it
+    // owes a reply. Wake a dormant entity immediately (no 5 s loop lag).
+    toEntity.lastActivityAt = Date.now();
+    if (toEntity.state === entityActivity.ACTIVITY.SLEEPING || toEntity.state === entityActivity.ACTIVITY.IDLE) {
+        toEntity.state = entityActivity.ACTIVITY.ACTIVE;
+    }
+
     while (toEntity.messageQueue.length > MESSAGE_QUEUE_CAP) {
         const dropped = toEntity.messageQueue.shift();
         toEntity.deadLetterQueue.push({
@@ -5863,6 +6663,11 @@ function createDefaultEntity(entityId) {
         parts: {},
         lastUpdated: Date.now(),
         lastSeen: null, // Runtime heartbeat timestamp from the entity daemon
+        // Server-authoritative ACTIVITY state machine (lib/entity-activity.js):
+        lastSendAt: null,             // last /api/transform that delivered a message / busy state
+        lastActivityAt: Date.now(),   // last send OR inbound (anchors the sleep timer)
+        overlayState: null,           // active expressive overlay (EXCITED/HAPPY/...) or null
+        overlayUntil: null,           // epoch ms when the overlay reverts to the activity base
         messageQueue: [],
         deadLetterQueue: [], // Phase H1.1: capped overflow buffer for forensics
         lastEnqueuedAt: null, // Phase H1.2: when server last appended to messageQueue
@@ -6115,27 +6920,219 @@ function loadSkillDoc() {
     return "MCP Skill documentation not found.";
 }
 
-// Auto-decay loop for ALL devices' entities
-setInterval(() => {
-    const now = Date.now();
+// ============================================================================
+// Server-authoritative entity ACTIVITY state machine (lib/entity-activity.js)
+// ----------------------------------------------------------------------------
+// Replaces the old "5 min no update → Math.random() > 0.7 → SLEEPING" coin-flip
+// that randomly slept entities (incl. ones with pending work) — the root cause
+// of "entities all sleeping", which blocked walking-emulator QA. Transitions
+// are now DETERMINISTIC. The wake-to-ACTIVE direction is handled by the send
+// endpoints (/api/transform, /api/client/speak → enqueueMessage); this loop
+// only drives the decay direction (ACTIVE → IDLE → SLEEPING) and reverts
+// expired expressive overlays.
+// ============================================================================
+
+// Per-device cache of the two activity thresholds so this 5 s loop NEVER issues
+// a DB query per tick. Refreshed lazily (async, non-blocking) at most once per
+// ACTIVITY_PREFS_TTL_MS per device; the current tick uses the last-known values
+// (or module defaults until the first refresh resolves).
+const activityPrefsCache = new Map(); // deviceId -> { idleAfterMs, sleepAfterMs, fetchedAt }
+const ACTIVITY_PREFS_TTL_MS = 60 * 1000;
+
+// Per-batch cache of which bound entities have OPEN (todo/in_progress) assigned
+// kanban cards. Without this, a bot with a piled-up TASK queue but an empty
+// MESSAGE queue is judged IDLE→SLEEPING and shows "Zzz" on the wallpaper while
+// work is outstanding (card_52b9032216e43e6c75ca2b6a). ONE grouped query for ALL
+// devices, refreshed lazily at most once per TTL — the 5 s activity loop NEVER
+// issues a DB query per entity per tick; each tick reads the last-known cache.
+let pendingKanbanCache = { byDevice: new Map(), fetchedAt: 0 };
+let pendingKanbanRefreshing = false;
+const PENDING_KANBAN_TTL_MS = 30 * 1000;
+
+function refreshPendingKanbanCache(now) {
+    if (!chatPool) return;
+    if (pendingKanbanRefreshing) return;
+    if (pendingKanbanCache.fetchedAt && now - pendingKanbanCache.fetchedAt <= PENDING_KANBAN_TTL_MS) return;
+    pendingKanbanRefreshing = true;
+    // Single grouped read across every device; the status filter hits
+    // idx_kanban_cards_status (device_id, status). bucketPendingKanban (pure)
+    // folds the rows into Map<deviceId, Set<entityId>>.
+    chatPool.query(
+        `SELECT device_id, status, archived, assigned_bots
+           FROM kanban_cards
+          WHERE status IN ('todo', 'in_progress')
+            AND (archived IS NULL OR archived = false)`
+    ).then(res => {
+        pendingKanbanCache = {
+            byDevice: entityActivity.bucketPendingKanban(res.rows),
+            fetchedAt: Date.now(),
+        };
+    }).catch(err => {
+        console.error('[ActivityKanban] pending-kanban refresh failed:', err.message);
+    }).finally(() => { pendingKanbanRefreshing = false; });
+}
+
+function getActivityThresholds(deviceId, now) {
+    const cached = activityPrefsCache.get(deviceId);
+    if (!cached || now - cached.fetchedAt > ACTIVITY_PREFS_TTL_MS) {
+        // Defensive: this runs inside a timer — never let a missing/throwing
+        // getPrefs crash the loop; fall back to last-known / module defaults.
+        try {
+            const p = (devicePrefs && typeof devicePrefs.getPrefs === 'function')
+                ? devicePrefs.getPrefs(deviceId) : null;
+            if (p && typeof p.then === 'function') {
+                p.then(prefs => {
+                    const idleSec = Number(prefs.entity_idle_after_seconds);
+                    const sleepMin = Number(prefs.entity_sleep_after_minutes);
+                    const staleSec = Number(prefs.entity_runtime_state_stale_seconds);
+                    activityPrefsCache.set(deviceId, {
+                        idleAfterMs: (Number.isFinite(idleSec) ? idleSec : 60) * 1000,
+                        sleepAfterMs: (Number.isFinite(sleepMin) ? sleepMin : 20) * 60 * 1000,
+                        runtimeStaleMs: (Number.isFinite(staleSec) ? staleSec : 45) * 1000,
+                        fetchedAt: Date.now(),
+                    });
+                }).catch(() => { /* keep last-known / defaults */ });
+            }
+        } catch (_) { /* keep last-known / defaults */ }
+    }
+    if (cached) return {
+        idleAfterMs: cached.idleAfterMs,
+        sleepAfterMs: cached.sleepAfterMs,
+        runtimeStaleMs: cached.runtimeStaleMs,
+    };
+    return {
+        idleAfterMs: entityActivity.DEFAULT_IDLE_AFTER_MS,
+        sleepAfterMs: entityActivity.DEFAULT_SLEEP_AFTER_MS,
+        runtimeStaleMs: entityActivity.DEFAULT_RUNTIME_STALE_MS,
+    };
+}
+
+// Apply one deterministic activity evaluation to a single entity (mutates
+// entity.state/message/overlay). Pure decision-making lives in
+// lib/entity-activity.js; this wrapper applies the transition rules.
+function evaluateEntityActivity(entity, now, idleAfterMs, sleepAfterMs, runtimeStaleMs) {
+    if (!entity) return false;
+    const A = entityActivity.ACTIVITY;
+    let changed = false;
+
+    // 1. Active expressive overlay → keep showing it (its server TTL guarantees
+    //    it can't get stuck; it reverts below once expired). An agent-declared
+    //    EXCITED/HAPPY/REVIEW/FAILED celebration/pose ALWAYS wins over the
+    //    runtimeState-derived base for its TTL.
+    if (entityActivity.overlayActive(entity, now)) {
+        if (entity.state !== entity.overlayState) {
+            entity.state = entity.overlayState;
+            entity.lastUpdated = now;
+            changed = true;
+        }
+        return changed;
+    }
+    const hadOverlay = !!entity.overlayState;
+    if (hadOverlay) { entity.overlayState = null; entity.overlayUntil = null; }
+
+    const desired = entityActivity.evaluateActivityState(entity, now, { idleAfterMs, sleepAfterMs, runtimeStaleMs });
+    const cur = entity.state;
+
+    if (hadOverlay) {
+        // Overlay just expired → revert to the derived activity base unconditionally.
+        if (cur !== desired) {
+            entity.state = desired;
+            const msg = entityActivity.defaultMessageForState(desired);
+            if (msg) entity.message = msg;
+            entity.lastUpdated = now;
+            changed = true;
+        }
+        return changed;
+    }
+
+    // 2. Normal decay/wake + runtime-driven REVIEW/FAILED. The loop never clobbers
+    //    an agent's busy SUB-state (PROCESSING/WORKING/…) down to plain BUSY — it
+    //    only promotes to ACTIVE from a dormant/derived base. REVIEW (stuck) and
+    //    FAILED (crashed) come from a FRESH, authoritative runtimeState, so they
+    //    are applied whenever the derived state differs.
+    if (desired === A.SLEEPING && cur !== A.SLEEPING) {
+        entity.state = A.SLEEPING;
+        entity.message = 'Zzz...';
+        entity.lastUpdated = now;
+        changed = true;
+    } else if (desired === A.IDLE && cur !== A.IDLE) {
+        entity.state = A.IDLE;
+        entity.message = 'Waiting...';
+        entity.lastUpdated = now;
+        changed = true;
+    } else if (desired === A.REVIEW && cur !== A.REVIEW) {
+        // runtimeState "stuck" — agent waiting at a confirm/prompt. Preserve the
+        // current bubble text (often the prompt itself); only flip the state.
+        entity.state = A.REVIEW;
+        entity.lastUpdated = now;
+        changed = true;
+    } else if (desired === A.FAILED && cur !== A.FAILED) {
+        // runtimeState "crashed"/error. Preserve the bubble text; flip the state.
+        entity.state = A.FAILED;
+        entity.lastUpdated = now;
+        changed = true;
+    } else if (desired === A.ACTIVE
+        && (cur === A.SLEEPING || cur === A.IDLE || cur === A.REVIEW || cur === A.FAILED)) {
+        // Wake back to BUSY from any derived dormant/blocked base (e.g. runtime
+        // flipped stuck→busy, or pendingWork/inbound arrived while idle).
+        entity.state = A.ACTIVE;
+        entity.lastUpdated = now;
+        changed = true;
+    }
+    return changed;
+}
+
+// Evaluate every bound entity once. `optsOverride` lets tests force explicit
+// thresholds (bypassing the per-device pref cache) for deterministic assertions.
+function runEntityActivityEvaluation(now = Date.now(), optsOverride = null) {
+    refreshPendingKanbanCache(now); // non-blocking; this tick uses the last-known cache
     for (const deviceId in devices) {
         const device = devices[deviceId];
+        if (!device || !device.entities) continue;
+        const thresholds = optsOverride || getActivityThresholds(deviceId, now);
+        const openKanban = pendingKanbanCache.byDevice.get(deviceId);
         for (const i of Object.keys(device.entities).map(Number)) {
             const entity = device.entities[i];
             if (!entity || !entity.isBound) continue;
-
-            // Random State Change (Idle vs Sleep) if no updates for 5 minutes
-            if (now - entity.lastUpdated > 300000) {
-                if (Math.random() > 0.7) {
-                    entity.state = "SLEEPING";
-                    entity.message = "Zzz...";
-                } else {
-                    entity.state = "IDLE";
-                    entity.message = "Waiting...";
-                }
-                entity.lastUpdated = now;
+            // Open assigned kanban card (todo/in_progress) → IDLE FLOOR: the
+            // evaluator forbids SLEEPING (so a bot with work never shows asleep)
+            // but no longer fakes BUSY (Stage 0).
+            entity._pendingKanban = !!(openKanban && openKanban.has(entity.entityId));
+            const changed = evaluateEntityActivity(
+                entity, now, thresholds.idleAfterMs, thresholds.sleepAfterMs, thresholds.runtimeStaleMs);
+            // Push the new activity-derived state to live clients (wallpaper /
+            // dashboard) so heartbeat-driven BUSY/REVIEW/FAILED + idle/sleep decay
+            // are real-time, not only visible on the next /api/entities poll. Emit
+            // ONLY on a real state change (bounded: ≤1 per entity per transition)
+            // and never let an emit error crash the activity loop. For leased_out
+            // entities emit STATE ONLY — the bubble text may be renter chat content
+            // that must not leak to the owner (mirrors the transform emit policy).
+            if (changed && io) {
+                try {
+                    const base = {
+                        deviceId, entityId: entity.entityId,
+                        name: entity.name, character: entity.character,
+                        state: entity.state,
+                        parts: entity.parts, lastUpdated: entity.lastUpdated,
+                        xp: entity.xp || 0, level: entity.level || 1,
+                    };
+                    if (entity.rental_status !== 'leased_out') base.message = entity.message;
+                    io.to(`device:${deviceId}`).emit('entity:update', base);
+                } catch (_) { /* never break the activity loop on an emit error */ }
             }
         }
+    }
+}
+
+// NODE_ENV==='test' skips the auto-running timer (mirrors the scheduled-messages
+// poller gate) — tests drive evaluation deterministically via
+// _runEntityActivityEvaluation. The binding-code cleanup runs in either mode.
+const _activityDecayInterval = setInterval(() => {
+    const now = Date.now();
+    try {
+        if (process.env.NODE_ENV !== 'test') runEntityActivityEvaluation(now);
+    } catch (err) {
+        console.error('[ActivityFSM] evaluation tick error:', err && err.message);
     }
 
     // Clean up expired binding codes
@@ -6145,6 +7142,9 @@ setInterval(() => {
         }
     }
 }, 5000);
+if (_activityDecayInterval && typeof _activityDecayInterval.unref === 'function') {
+    _activityDecayInterval.unref(); // don't keep the process / jest alive on this timer
+}
 
 // ============================================
 // ROUTES
@@ -6447,7 +7447,6 @@ app.post('/api/invite/redeem', async (req, res) => {
         return res.status(400).json({ success: false, error: 'code required' });
     }
 
-    const pg = authModule.pool;
     const wallet = walletModule;
     const INVITER_REWARD_MLI = 500 * 1000; // 500 ecoin in mLI
     const INVITEE_REWARD_MLI = 100 * 1000; // 100 ecoin in mLI
@@ -7334,14 +8333,51 @@ async function clearPetdxVaultForEntity(deviceId, entityId, callContext = 'unbin
     }
 }
 
+function isPetdxSpriteProxyUrl(url) {
+    return typeof url === 'string' && /\/api\/petdx\/[a-z0-9][a-z0-9-]{0,128}\/sprite\.(webp|png)(\?|$)/i.test(url);
+}
+
+function petdxDescriptorAvatarUrl(row) {
+    let descriptor = row && row.descriptor;
+    if (!descriptor) return null;
+    if (typeof descriptor === 'string') {
+        try { descriptor = JSON.parse(descriptor); } catch (_) { return null; }
+    }
+    if (typeof descriptor !== 'object') return null;
+    const candidates = [
+        descriptor.avatarUrl,
+        descriptor.avatar && descriptor.avatar.url,
+        descriptor.descriptor && descriptor.descriptor.avatar && descriptor.descriptor.avatar.url,
+    ];
+    for (const c of candidates) {
+        if (typeof c === 'string' && c.trim()) return c.trim();
+    }
+    return null;
+}
+
+function resolvePetdxSelectionAvatarUrl(row, companionId) {
+    if (row && typeof row.avatar_url === 'string' && row.avatar_url.trim()) {
+        return row.avatar_url.trim();
+    }
+    const descriptorUrl = petdxDescriptorAvatarUrl(row);
+    if (descriptorUrl) return descriptorUrl;
+    if (row && row.asset_type === 'spritesheet'
+        && typeof row.asset_url === 'string'
+        && isPetdxSpriteProxyUrl(row.asset_url)) {
+        return row.asset_url.trim();
+    }
+    return `/static/companions/${companionId}/avatar.png`;
+}
+
 // PR-B: read the per-entity companion enrichment straight from the DB source of
 // truth (companion_select_log latest row per entity, JOIN companions for the
 // live avatar) instead of the retired PETDX_CURRENT_/PETDX_AVATAR_ vault mirror.
 // Output shape is unchanged: Map<entityId, {petdxCompanionId, petdxAvatarUrl}>.
-// petdxAvatarUrl prefers the live companions.avatar_url and falls back to the
-// /static/companions/<id>/avatar.png shape the vault used to cache. Tombstoned
-// (origin='unbind-cleared') entities are excluded so a freshly-unbound slot
-// shows no stale companion.
+// petdxAvatarUrl prefers companions.avatar_url, then descriptor avatar URL, then
+// the same-origin /api/petdx sprite URL for crop-aware rendering. The legacy
+// /static/companions/<id>/avatar.png convention remains as the final Phase-0
+// fallback. Tombstoned (origin='unbind-cleared') entities are excluded so a
+// freshly-unbound slot shows no stale companion.
 async function getPetdxEntityEnrichmentMap(deviceId) {
     const out = new Map();
     if (!deviceId) return out;
@@ -7349,7 +8385,8 @@ async function getPetdxEntityEnrichmentMap(deviceId) {
     try {
         const res = await chatPool.query(
             `SELECT DISTINCT ON (l.entity_id)
-                    l.entity_id, l.companion_id, l.origin, c.avatar_url
+                    l.entity_id, l.companion_id, l.origin,
+                    c.avatar_url, c.asset_type, c.asset_url, c.descriptor
                FROM companion_select_log l
                LEFT JOIN companions c ON c.id = l.companion_id
               WHERE l.device_id = $1 AND l.entity_id IS NOT NULL
@@ -7362,9 +8399,7 @@ async function getPetdxEntityEnrichmentMap(deviceId) {
             if (!Number.isFinite(entityId)) continue;
             const companionId = r.companion_id;
             if (!companionId) continue;
-            const avatarUrl = (typeof r.avatar_url === 'string' && r.avatar_url.trim())
-                ? r.avatar_url
-                : `/static/companions/${companionId}/avatar.png`;
+            const avatarUrl = resolvePetdxSelectionAvatarUrl(r, companionId);
             out.set(entityId, { petdxCompanionId: companionId, petdxAvatarUrl: avatarUrl });
         }
     } catch (err) {
@@ -7913,6 +8948,7 @@ app.post('/api/bind', async (req, res) => {
     entity.state = "IDLE";
     entity.message = "Connected!";
     entity.lastUpdated = Date.now();
+    entity.lastActivityAt = Date.now(); // Activity FSM: fresh bind = recently alive (don't sleep instantly)
 
     // Get app version from pending binding (stored when device registered)
     const deviceAppVersion = binding.appVersion || entity.appVersion;
@@ -8130,7 +9166,10 @@ app.get('/api/entities', async (req, res) => {
                         fromCharacter: m.fromCharacter,
                         timestamp: m.timestamp,
                         read: m.read || false,
-                        delivered: m.delivered || false
+                        delivered: m.delivered || false,
+                        routingMode: m.routingMode || null,
+                        routingEventId: m.routingEventId || null,
+                        broadcastTargetIds: Array.isArray(m.broadcastTargetIds) ? m.broadcastTargetIds : null
                     }))
                 };
                 if (includeBotSecret && entity.botSecret) {
@@ -8396,6 +9435,74 @@ app.get('/api/status', (req, res) => {
     });
 });
 
+// Shared read-auth for the transparency GETs below (card_59f41e5b): authorize
+// with the SAME credentials the other mission/status GETs accept —
+// deviceId+deviceSecret (owner) OR deviceId+botSecret+entityId (a bound bot).
+// Returns { ok, status, error } and never leaks which factor failed.
+function authDeviceRead(query) {
+    const { deviceId, deviceSecret, botSecret } = query;
+    const eId = parseInt(query.entityId);
+    if (!deviceId) return { ok: false, status: 400, error: 'deviceId required' };
+    const device = devices[deviceId];
+    if (!device) return { ok: false, status: 404, error: 'Device not found' };
+    const deviceAuthed = !!(deviceSecret && device.deviceSecret && safeEqual(device.deviceSecret, deviceSecret));
+    const botEntity = (botSecret && Number.isInteger(eId) && isValidEntityId(device, eId)) ? device.entities[eId] : null;
+    const botAuthed = !!(botEntity && botEntity.isBound && botEntity.botSecret && safeEqual(botEntity.botSecret, botSecret));
+    if (!deviceAuthed && !botAuthed) return { ok: false, status: 403, error: 'Invalid credentials' };
+    return { ok: true, deviceId, device };
+}
+
+/**
+ * GET /api/suppression-log — "drop-but-surface" transparency feed (card_59f41e5b)
+ * Returns the in-memory ring buffer of low-signal org-chart forwards that were
+ * suppressed for this device (see orgChartForward / org-fwd-filter.js).
+ * Query: deviceId, botSecret, entityId  (or deviceId, deviceSecret)
+ * Response: { success:true, count, items:[{ ts, fromEntityId, reason, snippet }] }
+ *   items are OLDEST-FIRST (append order); `count` === items.length (cap 50).
+ */
+app.get('/api/suppression-log', (req, res) => {
+    const auth = authDeviceRead(req.query);
+    if (!auth.ok) return res.status(auth.status).json({ success: false, message: auth.error });
+    let items = suppressionLog[auth.deviceId] || [];
+    // Scope a bot-authed (entityId-bearing) caller to its OWN suppressed forwards;
+    // the owner deviceSecret path passes no entityId and sees the whole-device feed
+    // (mirrors /api/b2b-status). Audit card_c6731c2f (F10) — a bot should not read
+    // every entity's suppressed-snippet buffer.
+    const scopeId = parseInt(req.query.entityId);
+    if (Number.isInteger(scopeId) && isValidEntityId(auth.device, scopeId)) {
+        items = items.filter(it => Number(it.fromEntityId) === scopeId);
+    }
+    res.json({ success: true, count: items.length, items });
+});
+
+/**
+ * GET /api/b2b-status — bot-to-bot quota + regen countdown (card_59f41e5b)
+ * Feeds the front-end b2b quota countdown chip. Reports, per BOUND entity on
+ * the device (or just the one named by entityId), the remaining b2b tokens, the
+ * bucket capacity, and ms until the next token regenerates.
+ * Query: deviceId, botSecret, entityId  (entityId also scopes the result to one
+ *        entity; omit deviceSecret form to report the whole device)
+ * Response: { success:true, max, entities:[{ entityId, remaining, max, nextRegenMs }] }
+ */
+app.get('/api/b2b-status', (req, res) => {
+    const auth = authDeviceRead(req.query);
+    if (!auth.ok) return res.status(auth.status).json({ success: false, message: auth.error });
+    const { deviceId, device } = auth;
+    const scopeId = parseInt(req.query.entityId);
+    // When deviceSecret-authed and an entityId is given, scope to that one;
+    // bot-authed callers may also pass entityId to scope to themselves.
+    const ids = (Number.isInteger(scopeId) && isValidEntityId(device, scopeId))
+        ? [scopeId]
+        : Object.keys(device.entities).map(Number).filter(id => device.entities[id] && device.entities[id].isBound);
+    const entities = ids.map(id => ({
+        entityId: id,
+        remaining: getBotToBotRemaining(deviceId, id),
+        max: BOT2BOT_MAX_MESSAGES,
+        nextRegenMs: getBotToBotNextRegenMs(deviceId, id),
+    }));
+    res.json({ success: true, max: BOT2BOT_MAX_MESSAGES, entities });
+});
+
 /**
  * POST /api/entity/heartbeat
  * Entity daemon heartbeat. This is intentionally separate from Socket.IO
@@ -8403,7 +9510,7 @@ app.get('/api/status', (req, res) => {
  * Body: { deviceId, entityId, botSecret } or { deviceId, entityId, deviceSecret }
  */
 app.post('/api/entity/heartbeat', async (req, res) => {
-    const { deviceId, entityId, botSecret, deviceSecret } = req.body || {};
+    const { deviceId, entityId, botSecret, deviceSecret, runtimeState } = req.body || {};
 
     if (!deviceId) {
         return res.status(400).json({ success: false, message: 'deviceId required' });
@@ -8430,6 +9537,26 @@ app.post('/api/entity/heartbeat', async (req, res) => {
     }
 
     const status = recordEntityHeartbeat(entity);
+
+    // OPTIONAL real-activity signal from the agent's own runtime (Stage 1/2).
+    // Backward-compatible: when `runtimeState` is absent the heartbeat behaves
+    // exactly as before. The value is validated against a fixed allow-list
+    // (busy|stuck|crashed|idle); anything else is ignored (never stamped) so a
+    // bad client can't wedge an entity into an arbitrary state. The activity FSM
+    // (lib/entity-activity.js) only TRUSTS this stamp while it is fresh
+    // (entity_runtime_state_stale_seconds, default 45 s).
+    let runtimeStateAccepted = null;
+    if (runtimeState !== undefined && runtimeState !== null) {
+        const rs = String(runtimeState).trim().toLowerCase();
+        if (entityActivity.RUNTIME_STATES.has(rs)) {
+            const nowMs = Date.now();
+            entity.runtimeState = rs;
+            entity.lastRuntimeStateAt = nowMs;
+            if (rs === 'busy') entity.lastRuntimeBusyAt = nowMs;
+            runtimeStateAccepted = rs;
+        }
+    }
+
     saveData().catch(err => console.error(`[Heartbeat] saveData failed: ${err.message}`));
 
     res.json({
@@ -8438,6 +9565,7 @@ app.post('/api/entity/heartbeat', async (req, res) => {
         daemonConnected: status.daemonConnected,
         lastSeen: status.lastSeen,
         stale: status.stale,
+        runtimeState: runtimeStateAccepted,
     });
 });
 
@@ -8770,11 +9898,57 @@ async function deliverToEntity(opts) {
         isBroadcast = false,
         broadcastTargetIds,
         broadcastChatMsgId,
+        routingEventId,
         showRecipientInfo = false,
         isCrossDevice = false,
         card = null,
         viaChannel = null
     } = opts;
+
+    // ── Direct-b2b deliver-time low-signal guard (card_39226e06) ──
+    // deliverToEntity is the SINGLE deliver point for direct bot-to-bot messages
+    // (/api/transform speakTo + broadcast): the sender (fromEntity/fromId) and the
+    // recipient (toEntity/toId) are BOTH bound bot entities — a real end user goes
+    // through /api/client/speak, which never calls this function, so user delivery
+    // is untouched by construction.
+    //
+    // The org-fwd low-signal filter (classifyLowSignalFwd) previously ran ONLY
+    // inside orgChartForward(), so #6's routine "Codex #N status heartbeat" noise —
+    // delivered DIRECTLY to #2 via speakTo/transform after Hank set #6→#2 in the
+    // org chart — bypassed it entirely and flooded the commander. Run the SAME
+    // classifier here, before we persist/push to the recipient bot, and DROP only
+    // when it flags the message low-signal. Conservative by design:
+    //   • only affects bot recipients (this fn is entity→entity only),
+    //   • only drops when classifyLowSignalFwd returns non-null (heartbeat / ack /
+    //     kanban-echo / machine-noise) — a substantive report ("已完成任務，PR #1234
+    //     merged…") classifies as null and is delivered normally,
+    //   • fail-safe: if classification throws, we DELIVER (never let the filter eat
+    //     a message on error).
+    // Recorded via the shared drop-but-surface suppression log (card_59f41e5b) so
+    // the dashboard shows what was filtered and why.
+    try {
+        const lowSignalReason = classifyLowSignalFwd(text);
+        if (lowSignalReason) {
+            recordSuppressedForward(targetDeviceId, {
+                fromEntityId: fromId,
+                reason: lowSignalReason,
+                snippet: typeof text === 'string' ? text.slice(0, 80) : '',
+            });
+            console.log(`[b2b-suppress] dropped low-signal direct-b2b deliver Entity ${fromId} -> ${toId} on ${targetDeviceId} (reason=${lowSignalReason}): "${(typeof text === 'string' ? text : '').slice(0, 60)}"`);
+            return {
+                entityId: toId,
+                character: toEntity && toEntity.character,
+                pushed: false,
+                mode: 'suppressed',
+                reason: `low_signal:${lowSignalReason}`,
+                suppressed: true,
+                ...(isCrossDevice ? { publicCode: toEntity && toEntity.publicCode, targetDeviceId } : {})
+            };
+        }
+    } catch (err) {
+        // Fail-safe: classification error → deliver normally (never drop on error).
+        console.error(`[b2b-suppress] classify error, delivering normally: ${err.message}`);
+    }
 
     const sourceLabel = isCrossDevice
         ? `xdevice:${fromEntity.publicCode}:${fromEntity.character}`
@@ -8796,7 +9970,12 @@ async function deliverToEntity(opts) {
         timestamp: Date.now(),
         read: false,
         mediaType: mediaType || null,
-        mediaUrl: mediaUrl || null
+        mediaUrl: mediaUrl || null,
+        routingMode: isBroadcast ? 'broadcast' : (isCrossDevice ? 'xdevice' : 'speakTo'),
+        routingEventId: routingEventId || broadcastChatMsgId || null,
+        broadcastTargetIds: isBroadcast && Array.isArray(broadcastTargetIds)
+            ? broadcastTargetIds
+            : null
     };
     if (isCrossDevice) {
         messageObj.fromPublicCode = fromEntity.publicCode;
@@ -9179,7 +10358,7 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
 
     // Resolve entityId and verify auth
     let eId;
-    let entityIdCorrected = false;
+    let entityIdCorrectionWarning = null;
     if (channelAuthResult) {
         // Channel key path: entityId already validated and entity confirmed in ACL
         eId = parseInt(entityId);
@@ -9211,7 +10390,8 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
                 return res.status(403).json({ success: false, message: "Invalid botSecret — no matching entity found" });
             }
         } else {
-            const requestedId = parseInt(entityId) || 0;
+            const rawRequestedEntityId = entityId;
+            const requestedId = parseInt(rawRequestedEntityId, 10) || 0;
             const requestedEntity = device.entities[requestedId];
             if (requestedEntity && requestedEntity.isBound && requestedEntity.botSecret && safeEqual(requestedEntity.botSecret, botSecret)) {
                 eId = requestedId;
@@ -9222,8 +10402,15 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
                     return res.status(403).json({ success: false, message: "Invalid botSecret" });
                 }
                 eId = correctId;
-                entityIdCorrected = true;
-                console.warn(`[Transform] Device ${deviceId}: entityId=${requestedId} doesn't match botSecret, auto-corrected to ${correctId}`);
+
+                // `entityId: "0"` is a common legacy/default transform caller value.
+                // Treat it like omitted entityId: auto-detect from botSecret without
+                // emitting the high-signal mismatch warning used for genuine wrong IDs.
+                const isDefaultEntityIdFallback = String(rawRequestedEntityId).trim() === '0';
+                if (!isDefaultEntityIdFallback) {
+                    entityIdCorrectionWarning = `entityId mismatch: you provided ${requestedId} but your botSecret belongs to entity ${correctId}. Auto-corrected to ${correctId}.`;
+                    console.warn(`[Transform] Device ${deviceId}: entityId=${requestedId} doesn't match botSecret, auto-corrected to ${correctId}`);
+                }
             }
         }
     }
@@ -9402,6 +10589,35 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
 
     entity.lastUpdated = Date.now();
 
+    // ── Server-authoritative ACTIVITY state machine (lib/entity-activity.js) ──
+    // A transform that DELIVERS a message OR declares a busy-family state marks
+    // the entity ACTIVE (sets lastSendAt + lastActivityAt). Expressive states
+    // (EXCITED/HAPPY/...) become TTL overlays so they can't get stuck. This makes
+    // the legacy `state:"IDLE"` that bots attach to every send advisory only —
+    // the SERVER decides idle/sleep deterministically (no random coin-flip).
+    {
+        const _activityNow = Date.now();
+        const _deliversMessage = finalMessage !== undefined && finalMessage && !isSuppressedMessage;
+        const _declaredBusy = entityActivity.isBusyFamilyState(state);
+        const _declaredExpressive = entityActivity.isExpressiveState(state);
+        if (_deliversMessage || _declaredBusy) {
+            entity.lastSendAt = _activityNow;
+            entity.lastActivityAt = _activityNow;
+            // Wake immediately (no 5 s loop lag) unless an expressive overlay was
+            // declared (handled below). Keep an agent's busy SUB-state if given.
+            if (_declaredBusy) {
+                entity.state = String(state).trim().toUpperCase();
+            } else if (!_declaredExpressive) {
+                entity.state = entityActivity.ACTIVITY.ACTIVE;
+            }
+        }
+        if (_declaredExpressive) {
+            entity.overlayState = String(state).trim().toUpperCase();
+            entity.overlayUntil = _activityNow + entityActivity.OVERLAY_TTL_MS;
+            entity.state = entity.overlayState;
+        }
+    }
+
     // Strip self-targets from speakTo BEFORE computing hasDelivery — otherwise
     // a bot that accidentally speakTo's its own publicCode (or entityId) loses
     // the chat message entirely: hasDelivery=true skips the self save, and the
@@ -9446,7 +10662,17 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
             if (tParse.hasAll && !broadcast && !(speakTo && speakTo.length > 0)) {
                 broadcast = true;
                 routingResolvedVia = 'mention';
-            } else if (tParse.mentions.length > 0 && !broadcast && !(speakTo && speakTo.length > 0)) {
+            } else if (tParse.mentions.length > 0 && !broadcast && !(speakTo && speakTo.length > 0) && channelModule.messageStartsWithMention(finalMessage)) {
+                // ── First-token-only guard (card_2ee0afbb / card_488f05280caf) ──
+                // Only auto-promote an in-text @-mention to speakTo when the
+                // message's FIRST non-whitespace/non-emoji token IS the mention.
+                // A casual mid-body reference ("this is broken, ask @xx to look")
+                // is NOT routing intent — promoting it mis-routes the reply into
+                // the referenced entity's chat history, polluting its context.
+                // The /api/channel path already enforces this (channel-api.js);
+                // /api/transform was missing it, so the two routing seams now
+                // agree. `@all` broadcast (above) is intentionally NOT subject to
+                // this rule — preserves the pre-existing "@all anywhere" convention.
                 speakTo = tParse.mentions.map(m => m.publicCode);
                 routingResolvedVia = 'mention';
             }
@@ -9814,9 +11040,7 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
     }
 
     // ── speakTo / broadcast delivery ──
-    const warnings = entityIdCorrected
-        ? [`entityId mismatch: you provided ${parseInt(entityId) || 0} but your botSecret belongs to entity ${eId}. Auto-corrected to ${eId}.`]
-        : [];
+    const warnings = entityIdCorrectionWarning ? [entityIdCorrectionWarning] : [];
     let deliveryResults = null;
     // Tracks whether the delivery path actually persisted a chat row. If
     // hasDelivery was true but every target fell through (all speakTo codes
@@ -9825,6 +11049,7 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
     // data loss. We flip this flag only when a save happens, then use it below
     // to run a sender-side fallback save.
     let deliverySaved = false;
+    const wallpaperRoutingEventId = `wallpaper_route_${Date.now()}_${deviceId}_${eId}`;
 
     if ((speakTo || broadcast) && finalMessage && !isSuppressedMessage) {
         // If both provided, broadcast takes priority
@@ -9892,6 +11117,7 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
                                     text: deliveryText, mediaType: null, mediaUrl: null,
                                     expectsReply: true, isBroadcast: true,
                                     broadcastTargetIds: targetIds, broadcastChatMsgId,
+                                    routingEventId: broadcastChatMsgId || wallpaperRoutingEventId,
                                     showRecipientInfo,
                                     isCrossDevice: broadcastDeviceId !== deviceId,
                                     card: validatedCard,
@@ -10001,6 +11227,7 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
                     targetDeviceId: target.deviceId, toId: target.entityId, toEntity,
                     text: deliveryText, mediaType: null, mediaUrl: null,
                     expectsReply: true, isBroadcast: false,
+                    routingEventId: wallpaperRoutingEventId,
                     isCrossDevice,
                     card: validatedCard,
                     viaChannel
@@ -11954,6 +13181,10 @@ app.post('/api/client/speak', idempotencyMiddleware, clientSpeakDedupeMiddleware
                 messageObj.delivered = true;
                 console.log(`[Push] ✓ Channel push OK for Device ${deviceId} Entity ${eId}`);
                 serverLog('info', 'client_push', `Entity ${eId} channel push OK`, { deviceId, entityId: eId, metadata: { source, mode: 'channel' } });
+            } else if (pushResult.reason === 'push_timeout') {
+                // Benign async-uncertain (see webhook path below) — info, not warn.
+                console.log(`[Push] ⏳ Channel push timeout for Device ${deviceId} Entity ${eId} — bot may reply async via /api/transform`);
+                serverLog('info', 'client_push', `Entity ${eId} channel push timeout (async-uncertain)`, { deviceId, entityId: eId, metadata: { mode: 'channel' } });
             } else {
                 console.warn(`[Push] ✗ Channel push failed for Device ${deviceId} Entity ${eId}: ${pushResult.reason}`);
                 serverLog('warn', 'client_push', `Entity ${eId} channel push failed: ${pushResult.reason}`, { deviceId, entityId: eId });
@@ -12014,6 +13245,12 @@ app.post('/api/client/speak', idempotencyMiddleware, clientSpeakDedupeMiddleware
                 messageObj.delivered = true;
                 console.log(`[Push] ✓ Successfully pushed to Device ${deviceId} Entity ${eId}`);
                 serverLog('info', 'client_push', `Entity ${eId} push OK`, { deviceId, entityId: eId, metadata: { source, webhookUrl: entity.webhook.url } });
+            } else if (pushResult.reason === 'push_timeout') {
+                // Benign async-uncertain: pushToBot already logged the timeout; the bot
+                // may still reply via /api/transform. Log at info so the prod-log ERROR
+                // monitor doesn't page a benign timeout (card_52ee8e0c et al.).
+                console.log(`[Push] ⏳ Device ${deviceId} Entity ${eId}: push timeout — bot may reply async via /api/transform`);
+                serverLog('info', 'client_push', `Entity ${eId} push timeout (async-uncertain)`, { deviceId, entityId: eId, metadata: { webhookUrl: entity.webhook?.url } });
             } else {
                 console.warn(`[Push] ✗ Failed to push to Device ${deviceId} Entity ${eId}: ${pushResult.reason}`);
                 serverLog('warn', 'client_push', `Entity ${eId} push failed: ${pushResult.reason}`, { deviceId, entityId: eId, metadata: { webhookUrl: entity.webhook?.url } });
@@ -12022,9 +13259,15 @@ app.post('/api/client/speak', idempotencyMiddleware, clientSpeakDedupeMiddleware
             console.warn(`[Push] ✗ No webhook registered for Device ${deviceId} Entity ${eId} - client will show dialog`);
             serverLog('warn', 'client_push', `Entity ${eId} no webhook`, { deviceId, entityId: eId });
         } else {
-            // No condition matched — entity is unbound or in unexpected state (#181 diagnostic)
-            console.warn(`[Push] ✗ Entity ${eId} skipped: bindingType=${entity.bindingType}, webhook=${!!entity.webhook}, isBound=${entity.isBound}`);
-            serverLog('warn', 'client_push', `Entity ${eId} skipped (no push condition matched)`, { deviceId, entityId: eId, metadata: { bindingType: entity.bindingType, hasWebhook: !!entity.webhook, isBound: entity.isBound } });
+            // Entity is UNBOUND (no bot bound to this slot) — there is nothing to
+            // push to, so skipping is expected, not an error. Real delivery gaps
+            // are still surfaced at warn by the branches above (push failed /
+            // bound-but-no-webhook). The #181 diagnostic that justified `warn`
+            // here is resolved; an unbound slot being skipped is a routine no-op,
+            // so log it at debug to keep severity == reality (no false ErrLog
+            // pages, e.g. a released free-bot slot). card_ ErrLog triage.
+            console.debug(`[Push] Entity ${eId} skipped (unbound): bindingType=${entity.bindingType}, webhook=${!!entity.webhook}, isBound=${entity.isBound}`);
+            serverLog('debug', 'client_push', `Entity ${eId} skipped (unbound — no push target)`, { deviceId, entityId: eId, metadata: { bindingType: entity.bindingType, hasWebhook: !!entity.webhook, isBound: entity.isBound } });
         }
 
         // Determine binding type for this entity
@@ -12115,6 +13358,50 @@ app.post('/api/client/speak', idempotencyMiddleware, clientSpeakDedupeMiddleware
     if (mentionWarnings.length > 0) {
         clientSpeakResponse.warnings = (clientSpeakResponse.warnings || []).concat(mentionWarnings);
     }
+
+    // ── "需要你" smart-quote auto-resolve (card_b51598b7) ──
+    // A freeform quoted reply to a pending action-request carries
+    // actionRequest:{ requestId } (the inbox 回覆 button anchored it). The
+    // message above is already saved; now mark that request resolved with the
+    // user's reply text as the answer. Device-scoped + pending-only inside the
+    // helper. Best-effort: a failure here must NEVER break the speak response.
+    try {
+        const ar = req.body && req.body.actionRequest;
+        const arReqId = ar && ar.requestId;
+        // Ambiguity guard (需要你 inbox independence): one human reply must
+        // auto-resolve EXACTLY one inbox item. When the reply bundles MULTIPLE
+        // distinct action-requests (multi-quote → replyContext.requests[]), or its
+        // replyContext target disagrees with actionRequest.requestId, the server
+        // must NOT pick one to auto-resolve — that would write this reply's text
+        // onto a request it was not composed for. Resolve none; the explicit
+        // per-item POST /:id/resolve calls own the disambiguated case.
+        const rc = req.body && req.body.replyContext;
+        let ambiguousTarget = false;
+        if (rc && Array.isArray(rc.requests)) {
+            const ids = new Set(
+                rc.requests.map(r => r && r.requestId).filter(Boolean).map(v => String(v).toLowerCase())
+            );
+            if (ids.size > 1) ambiguousTarget = true;
+            else if (ids.size === 1 && arReqId && !ids.has(String(arReqId).toLowerCase())) ambiguousTarget = true;
+        } else if (rc && rc.requestId && arReqId && String(rc.requestId).toLowerCase() !== String(arReqId).toLowerCase()) {
+            ambiguousTarget = true;
+        }
+        if (arReqId && ambiguousTarget) {
+            serverLog('info', 'agent_action_requests', 'speak auto-resolve skipped: reply targets multiple/mismatched requests (ambiguous)', { deviceId });
+        } else if (arReqId && agentActionRequestsModule && typeof agentActionRequestsModule.resolveActionRequest === 'function') {
+            // /api/client/speak requires deviceSecret (the HUMAN owner), so a
+            // smart-quote reply that auto-resolves a consent counts as human approval
+            // (dual-consent gate, security review HIGH #1) → pass isUserResolve=true.
+            const row = await agentActionRequestsModule.resolveActionRequest(deviceId, arReqId, { text: text || '' }, device, null, true);
+            if (row) {
+                clientSpeakResponse.actionRequestResolved = { requestId: row.id };
+                serverLog('info', 'agent_action_requests', `auto-resolve via speak id=${row.id} from=${row.from_entity_id}`, { deviceId });
+            }
+        }
+    } catch (arErr) {
+        console.error('[AgentActionRequests] speak auto-resolve failed:', arErr.message);
+    }
+
     res.json(clientSpeakResponse);
 });
 
@@ -12482,6 +13769,112 @@ app.delete('/api/entity/cross-device-settings', async (req, res) => {
     } catch (err) {
         console.error('[CrossDeviceSettings] DELETE error:', err.message);
         res.status(500).json({ success: false, message: 'Internal error' });
+    }
+});
+
+// ==========================================================================
+// Entity Walk Config — self-sovereign wallpaper "walking / idle stop-action"
+// weights + negative-action opt-in (card_31f828967b38f61b2043c808).
+//
+// Auth model (self-sovereign, mirrors GET /api/device-vars/value, card_keyref):
+// the WRITE path is proven by botSecret OWNERSHIP — a caller may only set the
+// config for the entity whose botSecret it presents. Cross-entity writes are
+// rejected: even a valid botSecret for entity A cannot write entity B's config.
+// The READ path uses the same botSecret-of-a-bound-entity-on-this-device gate
+// so an entity (or a peer bound on the same device) can read a config; the App
+// drives the wallpaper from these values and MUST exclude negativeActions for
+// entities whose allowNegative is false.
+//
+// Helper: resolve the entity that OWNS a botSecret on this device. Returns the
+// integer entityId, or -1 if the botSecret does not belong to any bound entity
+// (same scan as the device-vars/value handler, index.js ~23024).
+// ==========================================================================
+function resolveBotSecretEntity(device, botSecret, declaredEntityId) {
+    let eId = parseInt(declaredEntityId, 10);
+    let ent = !isNaN(eId) && device.entities && device.entities[eId];
+    if (ent && ent.isBound && safeEqual(ent.botSecret, botSecret)) {
+        return eId;
+    }
+    // Fall back to a scan so a caller that omits/mis-sends entityId is still
+    // authorized iff the botSecret genuinely belongs to a bound entity here.
+    for (const i of Object.keys(device.entities || {}).map(Number)) {
+        const e = device.entities[i];
+        if (e && e.isBound && safeEqual(e.botSecret, botSecret)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/**
+ * GET /api/entity/walk-config?deviceId=&entityId=&botSecret=
+ * Read an entity's wallpaper walk config. Auth = botSecret of a bound entity on
+ * this device (self or a peer bound on the same device may read). Returns a
+ * complete fail-safe shape (allowNegative defaults false, weights {} = equal).
+ */
+app.get('/api/entity/walk-config', async (req, res) => {
+    const { deviceId, botSecret, entityId } = req.query;
+    if (!deviceId || !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and botSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device) {
+        return res.status(404).json({ success: false, error: 'Device not found' });
+    }
+    // Caller must present a botSecret that belongs to SOME bound entity here.
+    const callerEid = resolveBotSecretEntity(device, botSecret, entityId);
+    if (callerEid < 0) {
+        return res.status(403).json({ success: false, error: 'Invalid botSecret' });
+    }
+    // Which entity's config to read: the declared entityId if valid+bound,
+    // else the caller's own entity. (A peer read is allowed; only WRITES are
+    // locked to the caller's own entity.)
+    let targetEid = parseInt(entityId, 10);
+    if (isNaN(targetEid) || !device.entities || !device.entities[targetEid] || !device.entities[targetEid].isBound) {
+        targetEid = callerEid;
+    }
+    try {
+        const config = await walkConfig.getConfig(deviceId, targetEid);
+        return res.json({ success: true, entityId: targetEid, ...config });
+    } catch (err) {
+        console.error('[WalkConfig] GET error:', err.message);
+        return res.status(500).json({ success: false, error: 'Internal error' });
+    }
+});
+
+/**
+ * PUT /api/entity/walk-config { deviceId, entityId, botSecret, weights, allowNegative }
+ * An entity sets ITS OWN config. Self-sovereign auth: the presented botSecret
+ * MUST own the target entityId on this device — cross-entity writes rejected.
+ * Fail-safe: allowNegative defaults false; invalid/omitted weights → {} (equal).
+ */
+app.put('/api/entity/walk-config', async (req, res) => {
+    const { deviceId, botSecret, entityId, weights, allowNegative } = req.body || {};
+    if (!deviceId || !botSecret || entityId === undefined || entityId === null) {
+        return res.status(400).json({ success: false, error: 'deviceId, botSecret, entityId required' });
+    }
+    const device = devices[deviceId];
+    if (!device) {
+        return res.status(404).json({ success: false, error: 'Device not found' });
+    }
+    const targetEid = parseInt(entityId, 10);
+    if (isNaN(targetEid) || !device.entities || !device.entities[targetEid]) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+    // Self-sovereign gate: the botSecret must own EXACTLY this entity. Unlike
+    // the read path, no scan-fallback to another slot — an entity can only
+    // configure ITSELF (reject cross-entity writes explicitly).
+    const target = device.entities[targetEid];
+    if (!target.isBound || !safeEqual(target.botSecret, botSecret)) {
+        return res.status(403).json({ success: false, error: 'Invalid botSecret for this entity' });
+    }
+    try {
+        await walkConfig.setConfig(deviceId, targetEid, { weights, allowNegative });
+        const config = await walkConfig.getConfig(deviceId, targetEid);
+        return res.json({ success: true, entityId: targetEid, ...config });
+    } catch (err) {
+        console.error('[WalkConfig] PUT error:', err.message);
+        return res.status(500).json({ success: false, error: 'Internal error' });
     }
 });
 
@@ -14251,7 +15644,11 @@ app.post('/api/contacts', async (req, res) => {
     });
     if (!card) return res.status(500).json({ success: false, error: 'Failed to add card' });
 
-    res.json({ success: true, contact: enrichCardHolderEntry(card) });
+    // card_7ced13ac: align with the 5 read-path siblings (/contacts /recent
+    // /search /friends /friend-requests) which all enrich petdxAvatarUrl. The
+    // sync enrichCardHolderEntry omits it, so the freshly-added row flashed
+    // from the partner avatar to the emoji fallback until reload.
+    res.json({ success: true, contact: (await enrichCardHolderEntriesWithPetdx([card]))[0] });
 });
 
 /**
@@ -14310,7 +15707,14 @@ app.get('/api/contacts/my-cards', async (req, res) => {
             isPublic: !!ent.isPublic
         });
     }
-    res.json({ success: true, cards });
+    // card_55e811b8: my-cards was the ONLY card-holder path that never enriched
+    // rows with petdxAvatarUrl (recent/search/cross-device all do), so when the
+    // canvas sprite descriptor fails to resolve the front-end had no URL fallback
+    // and dropped straight to the emoji — the recurring "avatar missing smart-
+    // partner appearance" bug. Give my-cards the same same-origin proxy URL
+    // safety net as the other paths.
+    const enrichedCards = await enrichCardHolderEntriesWithPetdx(cards);
+    res.json({ success: true, cards: enrichedCards });
 });
 
 /**
@@ -17893,7 +19297,7 @@ app.delete('/api/bot/register', (req, res) => {
  * Bot checks if its push notifications are still healthy.
  * Query: ?deviceId=xxx&entityId=0&botSecret=xxx
  */
-app.get('/api/bot/push-status', (req, res) => {
+app.get('/api/bot/push-status', async (req, res) => {
     const { deviceId, entityId, botSecret } = req.query;
 
     if (!deviceId) {
@@ -17930,6 +19334,28 @@ app.get('/api/bot/push-status', (req, res) => {
 
     if (entity.pushStatus && !entity.pushStatus.ok) {
         result.action_required = "Push is failing. Re-register webhook via POST /api/bot/register to restore push notifications.";
+    }
+
+    // Round-trip push-health cron snapshot (card_0a5d4a97). Always present
+    // (even if cron disabled) so clients have a stable field shape; values
+    // are null when no run has happened yet.
+    if (pushHealthCheckCron) {
+        const cronStatus = pushHealthCheckCron.getStatus();
+        const counts = await pushHealthCheckCron.getDbCounts();
+        result.lastHealthCronAt = cronStatus.lastRunAt || null;
+        result.lastHealthCronOk = cronStatus.lastOkAt
+            && cronStatus.lastFailureAt
+                ? cronStatus.lastOkAt >= cronStatus.lastFailureAt
+                : !!cronStatus.lastOkAt;
+        result.activeSubscriptions = counts.activeSubscriptions;
+        result.deadSubscriptions = counts.deadSubscriptions;
+        result.last60sAckRate = cronStatus.lastAckRate;   // 0..1 or null
+    } else {
+        result.lastHealthCronAt = null;
+        result.lastHealthCronOk = null;
+        result.activeSubscriptions = null;
+        result.deadSubscriptions = null;
+        result.last60sAckRate = null;
     }
 
     res.json(result);
@@ -18762,13 +20188,17 @@ async function unifiedPush(entity, deviceId, eventType, payload, opts = {}) {
             enrichedMessage = `[SYSTEM:NAME_CHANGED] 你的名字已從「${oldName}」更改為「${newName}」。請記住你現在的名字是「${newName}」。\n\n` + enrichedMessage;
         }
 
-        // 2. Local vars hint
+        // 2. Local vars hint — SECURITY (Hank 2026-06-27): do NOT enumerate vault
+        // key names or embed a device-vars dump curl in agent messages. The old hint
+        // appended a block listing every vault key name plus a ready-to-run
+        // device-vars GET (botSecret in the URL, which returns the WHOLE vault) to
+        // every push — handing every agent a one-tap "exfil all secrets" command and
+        // a prompt-injection target. Signal existence only (count, no names, no curl);
+        // a task needing a specific var fetches it via the owner-authenticated path.
         try {
             const varsMeta = await db.getDeviceVarsMeta(deviceId);
             if (varsMeta && !varsMeta.is_locked && varsMeta.var_keys && varsMeta.var_keys.length > 0) {
-                const varKeys = varsMeta.var_keys.join(', ');
-                const apiBase = process.env.API_BASE || 'https://eclawbot.com';
-                enrichedMessage += `\n\n[Local Variables available: ${varKeys}]\nexec: curl -s "${apiBase}/api/device-vars?deviceId=${deviceId}&botSecret=${entity.botSecret}"`;
+                enrichedMessage += `\n\n[Local config: ${varsMeta.var_keys.length} device variable(s) configured — they are secrets; never print or forward them, and fetch a specific one only via the owner-authenticated device-vars path when a task requires it.]`;
             }
         } catch (_) { /* non-critical */ }
 
@@ -18846,12 +20276,12 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
             const { oldName, newName } = entity.pendingRename;
             messageContent = `[SYSTEM:NAME_CHANGED] 你的名字已從「${oldName}」更改為「${newName}」。請記住你現在的名字是「${newName}」。\n\n` + messageContent;
         }
+        // SECURITY (Hank 2026-06-27): see unifiedPush note — never enumerate vault key
+        // names or embed a device-vars dump curl in agent messages. Signal count only.
         try {
             const varsMeta = await db.getDeviceVarsMeta(deviceId);
             if (varsMeta && !varsMeta.is_locked && varsMeta.var_keys && varsMeta.var_keys.length > 0) {
-                const varKeys = varsMeta.var_keys.join(', ');
-                const apiBase = process.env.API_BASE || 'https://eclawbot.com';
-                messageContent += `\n\n[Local Variables available: ${varKeys}]\nexec: curl -s "${apiBase}/api/device-vars?deviceId=${deviceId}&botSecret=${entity.botSecret}"`;
+                messageContent += `\n\n[Local config: ${varsMeta.var_keys.length} device variable(s) configured — they are secrets; never print or forward them, and fetch a specific one only via the owner-authenticated device-vars path when a task requires it.]`;
             }
         } catch (_) {}
         try {
@@ -19091,13 +20521,19 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
         const isAbort = err.name === 'AbortError' || err.name === 'TimeoutError'
             || /aborted|timeout/i.test(err.message || '');
 
-        // Log severity must match reality (no "benign error"): a gateway timeout is a
-        // known async-uncertain state (bot may still reply via /api/transform), so it is
-        // a WARN, not an ERROR. Reserve console.error + serverLog('error') for hard
-        // failures (ENOTFOUND / ECONNREFUSED / TLS / non-2xx). This stops benign
-        // push-timeout noise (esp. to offline/test devices) from paging as ERROR.
+        // Log severity must match reality (no "benign error"): a gateway timeout is
+        // EXPECTED operation, not a failure — the bot may still reply async via
+        // /api/transform after the 15s push window. So it is INFO, not warn/error.
+        // (A prior pass logged this at console.warn intending "not an ERROR", but the
+        // prod-log monitor buckets stderr — both console.warn AND console.error — as
+        // ERROR, so warn still paged. card_52ee8e0c: this benign push_timeout recurred
+        // as an ErrLog/ERROR card every 6h. Logging at info/console.log keeps it off
+        // stderr; the "which bot went silent" signal is preserved by entity.pushStatus
+        // + the no_reply axis counter below, independent of console level.) Reserve
+        // console.error + serverLog('error') for hard failures (ENOTFOUND /
+        // ECONNREFUSED / TLS / non-2xx).
         if (isAbort) {
-            console.warn(`[Push] ⏳ Device ${deviceId} Entity ${entity.entityId}: push gateway timeout (no 15s ack) — bot may reply async via /api/transform: ${err.message}`);
+            console.log(`[Push] ⏳ Device ${deviceId} Entity ${entity.entityId}: push gateway timeout (no 15s ack) — bot may reply async via /api/transform: ${err.message}`);
         } else {
             console.error(`[Push] ✗ Device ${deviceId} Entity ${entity.entityId}: Push error:`, err.message);
             console.error(`[Push] Full error:`, err);
@@ -19136,7 +20572,12 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
                 || eventType === 'kanban_nudge') {
                 axis = 'system_msg_no_reply';
             }
-            entityStatus.incrementCounter(deviceId, entity.entityId, axis);
+            // card_errctr: thread the real push event type + failure reason into
+            // the error-event history (歷史紀錄) so the timeline is reviewable.
+            entityStatus.incrementCounter(deviceId, entity.entityId, axis, {
+                eventType: eventType || 'push_failure',
+                payloadSnippet: `push failed: ${reasonCode}`,
+            });
         } catch (_) { /* ignore */ }
         return { pushed: false, reason: reasonCode };
     }
@@ -19150,10 +20591,95 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
 const ORG_FWD_PREFIX = '[📢 FWD';
 const ORG_TASK_FWD_PREFIX = '[📋 TASK FWD';
 
+// Commander-class entities, ordered by preference (#2 commander, then #1 deputy).
+// Mirrors kanban.js ESCALATION_SUPERVISOR_ENTITY_IDS — the platform already treats
+// #1/#2 as supervisors. Used as the commander-forward fallback target (below) when
+// no org chart is configured. (card_3ce0080a, Leg-2 Option-1.)
+const COMMANDER_FORWARD_ENTITY_IDS = [2, 1];
+
+/**
+ * Commander-forward fallback (card_3ce0080a, Leg-2 Option-1).
+ *
+ * orgChartForward() below is DORMANT on devices with no org chart: with the
+ * default taskForward:false + an empty hierarchy it returns without forwarding,
+ * so a subordinate's substantive OWN output never reaches a commander (#2). This
+ * fallback — gated behind the DEFAULT-OFF pref commander_forward_fallback_enabled
+ * — forwards that output up to a bound commander-class entity (#2, else #1) even
+ * without a hierarchy. It reuses the SAME low-signal filter and delivery path as
+ * the normal superior-forward so handoff/heartbeat noise is still dropped and no
+ * chat bubble is created.
+ *
+ * Called ONLY from orgChartForward's dormant return points (taskForward off OR no
+ * org-chart superior for this entity). `message` is already known non-low-signal
+ * (classifyLowSignalFwd ran + returned null at the top of orgChartForward) and
+ * `opts.inbound` is already falsy (the inbound branch returns earlier), but both
+ * are re-checked here so the helper is safe in isolation and unit-testable.
+ *
+ * Failure-isolated: any error is swallowed (logged) — a fallback error must never
+ * break the caller. Returns nothing.
+ *
+ * Commander resolution: the first entity id in COMMANDER_FORWARD_ENTITY_IDS ([2,1])
+ * that is bound AND is not the forwarding entity itself AND is not opts.fromEntityId
+ * (the original sender already has the message). Never self-forwards.
+ */
+async function commanderForwardFallback(entity, deviceId, message, opts = {}) {
+    try {
+        // Re-assert the guards (caller already checked, but keep the helper safe
+        // in isolation): only the entity's OWN substantive output, never inbound.
+        if (opts.inbound) return;
+        if (!message || isLowSignalFwd(message)) return;
+
+        const prefs = await devicePrefs.getPrefs(deviceId);
+        if (!prefs || prefs.commander_forward_fallback_enabled !== true) return; // DEFAULT-OFF gate
+
+        const device = devices[deviceId];
+        if (!device || !device.entities) return;
+
+        // Resolve a bound commander that is neither this entity nor the original
+        // sender. Ordered #2-then-#1, mirroring the escalation supervisor fallback.
+        const fromEntityId = opts.fromEntityId != null ? Number(opts.fromEntityId) : null;
+        let commanderId = null;
+        for (const cid of COMMANDER_FORWARD_ENTITY_IDS) {
+            if (cid === entity.entityId) continue;      // never self-forward
+            if (fromEntityId != null && cid === fromEntityId) continue; // sender already has it
+            const cand = device.entities[cid];
+            if (cand && cand.isBound) { commanderId = cid; break; }
+        }
+        if (commanderId == null) return; // no bound commander → no-op
+
+        const commanderEntity = device.entities[commanderId];
+        const prefix = `${ORG_FWD_PREFIX} from #${entity.entityId}] `;
+        const fwdMsg = prefix + message;
+        console.log(`[OrgChart] Commander-forward fallback #${entity.entityId} -> #${commanderId} (no org chart)`);
+        serverLog('info', 'org_forward_fallback', `#${entity.entityId} -> #${commanderId} (commander fallback): "${fwdMsg.slice(0, 80)}"`, { deviceId, entityId: entity.entityId });
+
+        // Silent push — same delivery as the normal superior-forward (no
+        // saveChatMessage → no duplicate chat bubble).
+        unifiedPush(commanderEntity, deviceId, 'org_forward', { message: fwdMsg }, {
+            skipMiddleware: true,
+            from: `entity:${entity.entityId}`,
+        }).catch(err => {
+            console.error(`[OrgChart] Commander-forward fallback to #${commanderId} failed:`, err.message);
+        });
+    } catch (err) {
+        // Failure-isolated: never let the fallback break orgChartForward.
+        console.error('[OrgChart] commanderForwardFallback error:', err.message);
+    }
+}
+
 async function orgChartForward(entity, deviceId, message, opts = {}) {
     if (!message || message.startsWith(ORG_TASK_FWD_PREFIX) || message.startsWith(ORG_FWD_PREFIX)) return;
-    if (isLowSignalFwd(message)) {
-        serverLog('info', 'org_forward_skip', `#${entity.entityId} suppressed low-signal fwd: "${String(message).trim().slice(0, 60)}"`, { deviceId, entityId: entity.entityId });
+    // card_59f41e5b: "drop-but-surface" — classify WHY it's low-signal, drop the
+    // upward forward as before, but ALSO record it + push a live event so the
+    // dashboard can show the user what was filtered (instead of a silent drop).
+    const lowSignalReason = classifyLowSignalFwd(message);
+    if (lowSignalReason) {
+        serverLog('info', 'org_forward_skip', `#${entity.entityId} suppressed low-signal fwd (${lowSignalReason}): "${String(message).trim().slice(0, 60)}"`, { deviceId, entityId: entity.entityId });
+        recordSuppressedForward(deviceId, {
+            fromEntityId: opts.fromEntityId != null ? opts.fromEntityId : (entity.entityId != null ? entity.entityId : null),
+            reason: lowSignalReason,
+            snippet: String(message).trim().slice(0, 80),
+        });
         return;
     }
 
@@ -19197,11 +20723,25 @@ async function orgChartForward(entity, deviceId, message, opts = {}) {
 
     try {
         const orgData = await orgChartModule.getOrgChart(deviceId);
-        if (!orgData.options.taskForward && !orgData.options.allForward) return;
-        if (!orgData.hierarchy || !orgData.hierarchy.USER) return;
+        // Dormant-when-no-org-chart path (card_3ce0080a): with the default
+        // taskForward:false + no configured hierarchy, the org-chart forward does
+        // nothing, so a subordinate's substantive output never reaches a commander.
+        // The DEFAULT-OFF commander_forward_fallback_enabled pref (checked inside the
+        // helper) routes it to a bound commander (#2, else #1) instead. Behavior is
+        // byte-for-byte unchanged while the pref is false (helper no-ops).
+        if (!orgData.options.taskForward && !orgData.options.allForward) {
+            return commanderForwardFallback(entity, deviceId, message, opts);
+        }
+        if (!orgData.hierarchy || !orgData.hierarchy.USER) {
+            return commanderForwardFallback(entity, deviceId, message, opts);
+        }
 
         const superiorId = orgChartModule.getSuperior(orgData.hierarchy, entity.entityId);
-        if (superiorId == null) return;
+        // No org-chart superior for this entity (orphan / not placed in the tree)
+        // → same dormant case; try the commander fallback before giving up.
+        if (superiorId == null) {
+            return commanderForwardFallback(entity, deviceId, message, opts);
+        }
         // USER is the top — not a pushable entity. If direct superior is USER, skip.
         if (superiorId === 'USER') return;
         // Skip if superior is the original sender — they already have the message (prevents speakTo echo)
@@ -20111,7 +21651,7 @@ agentImprovement.initTable(chatPool)
 
 // OODA-R Phase 1 #4 — anti-laziness heartbeat sweeper.
 // in_progress >2h with no new comment → post a "what's next?" prompt;
-// in_progress >24h → move to blocked. Dedupes so it doesn't spam.
+// P0/P1 in_progress >24h → move to blocked. Dedupes so it doesn't spam.
 const heartbeat = require('./agent-improvement/heartbeat');
 heartbeat.startSweeper({
     pool: chatPool,
@@ -20176,6 +21716,7 @@ passiveHealth.startScheduler(3_600_000); // hourly tick; per-device intervalHour
 
 orgChartModule.initTable(chatPool);
 crossDeviceSettings.initTable(chatPool);
+walkConfig.initTable(chatPool);
 chatIntegrity.initIntegrityTable(chatPool);
 articlePublisher.initPublisherTable(chatPool);
 // Wire per-device vault resolver for BYO credentials (Phase 1: X/Twitter)
@@ -21222,8 +22763,11 @@ app.post('/api/push/subscribe', async (req, res) => {
         return res.status(400).json({ success: false, error: 'subscription with endpoint and keys required' });
     }
 
-    const ok = await notifModule.savePushSubscription(deviceId, subscription, req.headers['user-agent']);
-    res.json({ success: ok });
+    const saved = await notifModule.savePushSubscription(deviceId, subscription, req.headers['user-agent']);
+    // saved is either truthy boolean (legacy/mock path) or {ok,id} (live).
+    const ok = !!saved;
+    const subscriptionId = (saved && typeof saved === 'object' && saved.id) ? saved.id : null;
+    res.json({ success: ok, subscriptionId });
 });
 
 app.delete('/api/push/unsubscribe', async (req, res) => {
@@ -21237,11 +22781,81 @@ app.delete('/api/push/unsubscribe', async (req, res) => {
     res.json({ success: true });
 });
 
+// ── Round-trip push health ack (card_0a5d4a97) ─────────────────────────
+// The service worker (backend/public/sw.js) POSTs this endpoint when it
+// receives a `{type:'health',nonce,runId,...}` push. We record the ack so
+// the push-health-check cron can confirm real end-to-end delivery (not
+// just "VAPID-sign+ship" success).
+//
+// Auth model: NOT device-secret-gated. The service worker has no access to
+// deviceSecret; instead, the nonce IS the unguessable token (16 bytes of
+// crypto.randomBytes emitted to exactly one push endpoint). To prevent an
+// attacker from flooding the table with arbitrary nonces, we verify
+// runId belongs to a real recent push_health_run row before inserting.
+// Replays of the same (nonce, subscriptionId) collapse via UNIQUE INDEX.
+app.post('/api/push/ack', async (req, res) => {
+    const body = req.body || {};
+    const nonce = typeof body.nonce === 'string' ? body.nonce.trim() : '';
+    const runIdRaw = typeof body.runId === 'string' ? body.runId.trim() : '';
+    if (!nonce || nonce.length > 64) {
+        return res.status(400).json({ success: false, error: 'nonce required (<=64 chars)' });
+    }
+    // runId is optional but recommended. If absent we still record the nonce
+    // (run-attribution will be NULL and the ack won't count toward a run's
+    // delivery rate, but it's visible in audit).
+    const runId = runIdRaw && runIdRaw.length <= 48 ? runIdRaw : null;
+    // subscriptionId is optional — older SWs (or ones racing a re-subscribe)
+    // may not have it cached. Coerce to int or NULL; never trust client text.
+    let subscriptionId = null;
+    if (body.subscriptionId != null && body.subscriptionId !== '') {
+        const n = Number(body.subscriptionId);
+        if (Number.isInteger(n) && n > 0) subscriptionId = n;
+    }
+    try {
+        // Verify runId exists (within last 24h) before trusting it. If the
+        // client sent a bogus runId we drop it but still log the bare nonce.
+        let resolvedRunId = null;
+        if (runId) {
+            const check = await chatPool.query(
+                `SELECT run_id FROM push_health_run
+                  WHERE run_id = $1
+                    AND started_at > NOW() - INTERVAL '24 hours'`,
+                [runId]
+            );
+            if (check.rowCount > 0) resolvedRunId = runId;
+        }
+        await chatPool.query(
+            `INSERT INTO push_ack_log (nonce, subscription_id, run_id, acked_at)
+             VALUES ($1, $2, $3, NOW())
+             ON CONFLICT DO NOTHING`,
+            [nonce, subscriptionId, resolvedRunId]
+        );
+        return res.json({ success: true });
+    } catch (err) {
+        serverLog('warn', 'push_health_check', `[PushHealth] ack insert failed: ${err && err.message}`, {
+            metadata: { nonce: nonce.slice(0, 8) + '...', subscriptionId },
+        });
+        return res.status(500).json({ success: false, error: 'ack_insert_failed' });
+    }
+});
+
 // Send Web Push to all subscriptions for a device
 async function sendWebPush(deviceId, notif) {
-    if (!process.env.VAPID_PUBLIC_KEY) return;
+    if (!process.env.VAPID_PUBLIC_KEY) {
+        serverLog('warn', 'web_push', 'skip: VAPID not configured', { deviceId, metadata: { category: notif?.category } });
+        return;
+    }
     try {
         const subs = await notifModule.getPushSubscriptions(deviceId);
+        // A device with zero subscriptions silently produced no push and no
+        // log — the exact failure mode behind "手機通知沒收到". Record it so
+        // the owner can be told their phone never registered a subscription.
+        if (!subs.length) {
+            serverLog('warn', 'web_push', 'skip: no push subscriptions for device', { deviceId, metadata: { category: notif?.category } });
+            return;
+        }
+        let sent = 0;
+        let removed = 0;
         for (const sub of subs) {
             try {
                 await webpush.sendNotification(
@@ -21253,14 +22867,20 @@ async function sendWebPush(deviceId, notif) {
                         category: notif.category
                     })
                 );
+                sent++;
             } catch (e) {
                 if (e.statusCode === 410 || e.statusCode === 404) {
                     await notifModule.removePushSubscription(sub.endpoint);
+                    removed++;
+                } else {
+                    serverLog('error', 'web_push', `send failed: ${e.message}`, { deviceId, metadata: { category: notif?.category, statusCode: e.statusCode } });
                 }
             }
         }
+        serverLog('info', 'web_push', 'dispatch complete', { deviceId, metadata: { category: notif?.category, subs: subs.length, sent, removedStale: removed } });
     } catch (err) {
         console.warn('[WebPush] Send failed:', err.message);
+        serverLog('error', 'web_push', `dispatch error: ${err.message}`, { deviceId, metadata: { category: notif?.category } });
     }
 }
 
@@ -21289,16 +22909,35 @@ app.post('/api/device/fcm-token', (req, res) => {
     const changed = prevToken !== resolvedToken;
 
     if (resolvedPlatform === 'apns') {
-        // iOS APNs token
+        // iOS APNs token. Keep the legacy single column = latest token for backward compat,
+        // AND upsert into device_apns_tokens so an iPhone + iPad (or any two iOS devices)
+        // sharing one deviceId each keep their own token instead of clobbering one another —
+        // the same multi-device fix applied to FCM. (No native APNs sender exists yet; this
+        // makes storage clobber-safe ahead of one being built. 2026-06-29.)
         device.apnsToken = resolvedToken;
         chatPool.query('ALTER TABLE devices ADD COLUMN IF NOT EXISTS apns_token TEXT').catch(() => {});
         chatPool.query('UPDATE devices SET apns_token = $1 WHERE device_id = $2', [resolvedToken, deviceId]).catch(() => {});
+        chatPool.query(
+            `INSERT INTO device_apns_tokens (device_id, token, platform, updated_at)
+             VALUES ($1, $2, 'apns', $3)
+             ON CONFLICT (device_id, token) DO UPDATE SET updated_at = EXCLUDED.updated_at`,
+            [deviceId, resolvedToken, Date.now()]
+        ).catch(() => {});
         serverLog('info', 'fcm_token', `APNs token registered`, { deviceId, metadata: { prevPrefix, newPrefix, changed, platform: 'apns' } });
     } else {
-        // Android FCM token (default)
+        // Android FCM token (default). Keep the legacy single column = latest token for
+        // backward compat, AND upsert into device_fcm_tokens so multiple physical devices
+        // on the same deviceId (phone + emulator + …) each keep their own token and ALL
+        // receive pushes instead of clobbering one another (multi-device fix 2026-06-29).
         device.fcmToken = resolvedToken;
         chatPool.query('ALTER TABLE devices ADD COLUMN IF NOT EXISTS fcm_token TEXT').catch(() => {});
         chatPool.query('UPDATE devices SET fcm_token = $1 WHERE device_id = $2', [resolvedToken, deviceId]).catch(() => {});
+        chatPool.query(
+            `INSERT INTO device_fcm_tokens (device_id, token, platform, updated_at)
+             VALUES ($1, $2, 'fcm', $3)
+             ON CONFLICT (device_id, token) DO UPDATE SET updated_at = EXCLUDED.updated_at`,
+            [deviceId, resolvedToken, Date.now()]
+        ).catch(() => {});
         serverLog('info', 'fcm_token', `FCM token registered`, { deviceId, metadata: { prevPrefix, newPrefix, changed, platform: 'fcm' } });
     }
 
@@ -21308,7 +22947,7 @@ app.post('/api/device/fcm-token', (req, res) => {
 // Read-only FCM/APNs registration status. Diagnostic for "no notifications
 // despite enabled" — lets the device owner check whether the token even made
 // it to the backend without exposing the token itself.
-app.get('/api/device/fcm-status', (req, res) => {
+app.get('/api/device/fcm-status', async (req, res) => {
     const { deviceId, deviceSecret } = req.query;
     if (!deviceId || !deviceSecret) {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
@@ -21319,11 +22958,16 @@ app.get('/api/device/fcm-status', (req, res) => {
     }
     const fcm = device.fcmToken || null;
     const apns = device.apnsToken || null;
+    // tokenCount > 1 means multiple physical devices on this deviceId now coexist — which
+    // was impossible under the old single-column schema (they clobbered each other). It is
+    // the at-a-glance "is the multi-device push fix actually working?" signal.
+    const fcmTokens = await getDeviceFcmTokens(deviceId);
+    const apnsTokens = await getDeviceApnsTokens(deviceId);
     res.json({
         success: true,
         firebaseAdminInitialized: !!firebaseAdmin,
-        fcm: { registered: !!fcm, prefix: fcm ? fcm.slice(0, 12) : null },
-        apns: { registered: !!apns, prefix: apns ? apns.slice(0, 12) : null }
+        fcm: { registered: !!fcm, prefix: fcm ? fcm.slice(0, 12) : null, tokenCount: fcmTokens.length },
+        apns: { registered: !!apns, prefix: apns ? apns.slice(0, 12) : null, tokenCount: apnsTokens.length }
     });
 });
 
@@ -21336,9 +22980,58 @@ try {
             credential: firebaseAdmin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT))
         });
         serverLog('info', 'fcm_init', 'Firebase Admin initialized');
+        // Mirror to stdout so boot-log inspection (Railway) can confirm FCM is
+        // live. serverLog only writes to the server_logs DB table, so its
+        // absence from stdout was misread as "FCM never initialized".
+        console.log('[FCM] Firebase Admin initialized');
+    } else {
+        console.log('[FCM] FIREBASE_SERVICE_ACCOUNT not set — Android push disabled');
     }
 } catch (e) {
     serverLog('warn', 'fcm_init', `Firebase Admin init skipped: ${e.message}`);
+    console.warn('[FCM] Firebase Admin init FAILED:', e.message);
+}
+
+// Gather ALL live FCM tokens for a device (multi-device fix 2026-06-29): the union of
+// the in-memory latest token and every row in device_fcm_tokens, deduped. This is why a
+// push reaches the owner's phone AND their emulator/second device instead of only the
+// last one to register. Falls back to the in-memory token alone if the table query fails
+// (e.g. first boot before migration) so delivery never regresses.
+async function getDeviceFcmTokens(deviceId) {
+    const set = new Set();
+    const inMem = devices[deviceId]?.fcmToken;
+    if (inMem) set.add(inMem);
+    try {
+        const r = await chatPool.query(
+            "SELECT token FROM device_fcm_tokens WHERE device_id = $1 AND platform = 'fcm'",
+            [deviceId]
+        );
+        for (const row of r.rows) if (row.token) set.add(row.token);
+    } catch (e) {
+        serverLog('warn', 'fcm_send', `device_fcm_tokens read failed, using in-mem only: ${e.message}`, { deviceId });
+    }
+    return [...set];
+}
+
+// Gather ALL live APNs tokens for a device — sibling of getDeviceFcmTokens (2026-06-29).
+// There is NO native APNs sender wired up yet (apns_token is currently write-only). This
+// helper exists so that whoever builds the iOS native push path fans out to every iOS
+// device on a shared deviceId from day one, and — like sendFcm — deletes only a single
+// dead-token row on failure, never the whole device (re-introducing the clobber bug).
+async function getDeviceApnsTokens(deviceId) {
+    const set = new Set();
+    const inMem = devices[deviceId]?.apnsToken;
+    if (inMem) set.add(inMem);
+    try {
+        const r = await chatPool.query(
+            "SELECT token FROM device_apns_tokens WHERE device_id = $1 AND platform = 'apns'",
+            [deviceId]
+        );
+        for (const row of r.rows) if (row.token) set.add(row.token);
+    } catch (e) {
+        serverLog('warn', 'fcm_send', `device_apns_tokens read failed, using in-mem only: ${e.message}`, { deviceId });
+    }
+    return [...set];
 }
 
 async function sendFcm(deviceId, notif) {
@@ -21346,42 +23039,50 @@ async function sendFcm(deviceId, notif) {
         serverLog('warn', 'fcm_send', 'skip: firebaseAdmin not initialized', { deviceId, metadata: { category: notif?.category } });
         return false;
     }
-    const device = devices[deviceId];
-    const token = device?.fcmToken;
-    if (!token) {
-        serverLog('warn', 'fcm_send', 'skip: no fcmToken for device', { deviceId, metadata: { deviceExists: !!device, category: notif?.category } });
+    const tokens = await getDeviceFcmTokens(deviceId);
+    if (tokens.length === 0) {
+        serverLog('warn', 'fcm_send', 'skip: no fcmToken for device', { deviceId, metadata: { deviceExists: !!devices[deviceId], category: notif?.category } });
         return false;
     }
-    const tokenPrefix = token.slice(0, 12);
     // Silent categories handled by the app's FCM service (start TtsService,
     // fetch GPS, etc). Sending an android.notification for these would make
     // the OS display a visible tray notification when the app is killed.
     const silent = notif.category === 'tts' || notif.category === 'location_request';
-    const fcmMessage = {
-        token,
-        data: notifModule.buildFcmNotificationData(notif),
-        android: { priority: 'high' }
-    };
-    if (!silent) {
-        fcmMessage.android.notification = {
-            title: notif.title || '',
-            body: notif.body || '',
-            channelId: 'eclaw_chat',
-            sound: 'default'
+    let anyOk = false;
+    // Fan out to EVERY registered device sharing this deviceId.
+    for (const token of tokens) {
+        const tokenPrefix = token.slice(0, 12);
+        const fcmMessage = {
+            token,
+            data: notifModule.buildFcmNotificationData(notif),
+            android: { priority: 'high' }
         };
-    }
-    try {
-        const resp = await firebaseAdmin.messaging().send(fcmMessage);
-        serverLog('info', 'fcm_send', 'sent OK', { deviceId, metadata: { tokenPrefix, category: notif?.category, messageId: resp } });
-        return true;
-    } catch (e) {
-        if (e.code === 'messaging/registration-token-not-registered') {
-            delete devices[deviceId]?.fcmToken;
-            chatPool.query('UPDATE devices SET fcm_token = NULL WHERE device_id = $1', [deviceId]).catch(() => {});
+        if (!silent) {
+            fcmMessage.android.notification = {
+                title: notif.title || '',
+                body: notif.body || '',
+                channelId: 'eclaw_chat',
+                sound: 'default'
+            };
         }
-        serverLog('error', 'fcm_send', `send failed: ${e.message}`, { deviceId, metadata: { tokenPrefix, code: e.code } });
-        return false;
+        try {
+            const resp = await firebaseAdmin.messaging().send(fcmMessage);
+            serverLog('info', 'fcm_send', 'sent OK', { deviceId, metadata: { tokenPrefix, category: notif?.category, messageId: resp } });
+            anyOk = true;
+        } catch (e) {
+            if (e.code === 'messaging/registration-token-not-registered') {
+                // Delete only THIS dead token's row — never the whole device (would
+                // wipe the other live devices' tokens, the original clobber bug).
+                chatPool.query('DELETE FROM device_fcm_tokens WHERE device_id = $1 AND token = $2', [deviceId, token]).catch(() => {});
+                if (devices[deviceId]?.fcmToken === token) {
+                    delete devices[deviceId].fcmToken;
+                    chatPool.query('UPDATE devices SET fcm_token = NULL WHERE device_id = $1', [deviceId]).catch(() => {});
+                }
+            }
+            serverLog('error', 'fcm_send', `send failed: ${e.message}`, { deviceId, metadata: { tokenPrefix, code: e.code } });
+        }
     }
+    return anyOk;
 }
 
 // ── Schedule API Routes removed — migrated to Kanban ──
@@ -21629,6 +23330,15 @@ if (process.env.NODE_ENV !== 'test') {
             result: 'schedule_failed',
         });
     }
+    try {
+        pushHealthCheckCron.startCron({ nodeCron });
+    } catch (err) {
+        console.error('[PushHealth] failed to schedule cron:', err && err.message);
+        serverLog('error', 'push_health_check', `[PushHealth] failed to schedule cron: ${err && err.message}`, {
+            action: 'push_health_check',
+            result: 'schedule_failed',
+        });
+    }
 }
 
 // ── Crash handlers: log uncaught errors to /api/logs (category: crash) before dying ──
@@ -21846,6 +23556,11 @@ app.post('/api/device-vars', async (req, res) => {
 
     const isLocked = locked === true;
     const src = (source === 'web' || source === 'app') ? source : null;
+    // patch mode (card_ed04f8aa): purely additive — add/override only the incoming
+    // keys, NEVER drop a key the caller didn't mention. The safe path for
+    // programmatic single-key updates (an agent writing one secret must not risk
+    // the whole vault). Requires a source; ignored in legacy replace mode.
+    const patchMode = req.body.patch === true;
 
     try {
         let merged = incoming;
@@ -21885,68 +23600,12 @@ app.post('/api/device-vars', async (req, res) => {
                 }
             }
 
-            merged = {};
-            mergedSources = {};
-
-            // 1. Keep keys from other source that are NOT in incoming
-            for (const [k, v] of Object.entries(existingVars)) {
-                const keySrc = existingSources[k] || null;
-                if (keySrc && keySrc !== src && !(k in incoming)) {
-                    // Key from the other platform, not present in incoming — preserve it
-                    merged[k] = v;
-                    mergedSources[k] = keySrc;
-                }
-            }
-
-            // 2. Process incoming keys — detect conflicts
-            for (const [k, v] of Object.entries(incoming)) {
-                const existingVal = existingVars[k];
-                const existingSrc = existingSources[k] || null;
-
-                if (existingVal === undefined || existingVal === v || existingSrc === src || !existingSrc) {
-                    // No conflict: new key, same value, same source, or no source info
-                    merged[k] = v;
-                    mergedSources[k] = src;
-                } else {
-                    // Conflict: same key, different value, different source
-                    const _otherSrc = existingSrc;
-                    const webSuffix = '_Web';
-                    const appSuffix = '_APP';
-
-                    // Remove the unsuffixed key from merged (if carried over in step 1)
-                    delete merged[k];
-                    delete mergedSources[k];
-
-                    // Create suffixed keys
-                    const webKey = k + webSuffix;
-                    const appKey = k + appSuffix;
-
-                    if (src === 'web') {
-                        merged[webKey] = v;
-                        mergedSources[webKey] = 'web';
-                        merged[appKey] = existingVal;
-                        mergedSources[appKey] = 'app';
-                    } else {
-                        merged[webKey] = existingVal;
-                        mergedSources[webKey] = 'web';
-                        merged[appKey] = v;
-                        mergedSources[appKey] = 'app';
-                    }
-
-                    conflicts.push({ key: k, webKey, appKey });
-                }
-            }
-
-            // 3. Carry over suffixed keys from existing that still belong to the other source
-            for (const [k, v] of Object.entries(existingVars)) {
-                if (!(k in merged) && (k.endsWith('_Web') || k.endsWith('_APP'))) {
-                    const keySrc = existingSources[k] || null;
-                    if (keySrc && keySrc !== src) {
-                        merged[k] = v;
-                        mergedSources[k] = keySrc;
-                    }
-                }
-            }
+            // Merge semantics live in a pure, unit-tested helper (card_ed04f8aa)
+            // so the 2026-07-02 owner-key-wipe regression is covered without a
+            // live pg pool. See backend/lib/device-vars-merge.js.
+            ({ merged, mergedSources, conflicts } = mergeDeviceVars({
+                existingVars, existingSources, incoming, src, patchMode,
+            }));
         } else {
             // Legacy mode (no source): replace all, no merge.
             // Guard: an empty `incoming` in legacy mode wipes the vault —
@@ -22078,6 +23737,96 @@ app.get('/api/device-vars', async (req, res) => {
         // Log the real exception type so future incidents don't get mis-labelled
         // as "decryption" when it's actually a serialization bug.
         console.error(`[Vars] GET handler failed for ${deviceId}: ${err && err.name}: ${err && err.message}`);
+        return res.status(500).json({ success: false, error: 'Decryption failed' });
+    }
+});
+
+// GET /api/device-vars/value — read ONE vault value BY NAME so the secret
+// value never has to appear in a chat message (owner-decided spec).
+//
+// Auth model (owner-decided, card_keyref): botSecret of a bot bound to this
+// device is sufficient — NO deviceSecret, NO user auth, NO per-key allowlist.
+// We reuse the SAME botSecret→entity validation the names-only GET above uses
+// (`e.isBound && safeEqual(e.botSecret, botSecret)`, index.js ~22752-22756);
+// this variant additionally pins it to the caller's declared entityId so the
+// audit row records which entity read which key. Same 403 error shape on
+// failure ({ success:false, error:'Invalid botSecret' }).
+//
+// The decrypted value travels ONLY in this response body. It is NEVER injected
+// into any push/message/log, and the audit row (action:'bot_read_value')
+// records deviceId/entityId/key name/ip/ua but NOT the value — mirroring the
+// "never stores the value" invariant of logDeviceVarsAudit (db.js:1831).
+// Single-key by-name only: this does not enumerate or bulk-dump values.
+app.get('/api/device-vars/value', async (req, res) => {
+    const { deviceId, botSecret, entityId, name } = req.query;
+    if (!deviceId || !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and botSecret required' });
+    }
+    if (!name || typeof name !== 'string' || !name.trim()) {
+        return res.status(400).json({ success: false, error: 'name required' });
+    }
+    const keyName = name;
+    const device = devices[deviceId];
+    if (!device) {
+        return res.status(404).json({ success: false, error: 'Device not found' });
+    }
+
+    // Reuse the names-only GET bot-auth check: a bound entity whose botSecret
+    // matches. Pin to the declared entityId first (audit accuracy); fall back
+    // to a botSecret scan across the device's slots so a caller that omits or
+    // mis-sends entityId is still authorized iff the botSecret genuinely
+    // belongs to a bound entity on THIS device (mirrors index.js:4247-4260).
+    let eId = parseInt(entityId, 10);
+    let botEntity = !isNaN(eId) && device.entities && device.entities[eId];
+    if (!botEntity || !botEntity.isBound || !safeEqual(botEntity.botSecret, botSecret)) {
+        eId = -1;
+        botEntity = null;
+        for (const i of Object.keys(device.entities || {}).map(Number)) {
+            const e = device.entities[i];
+            if (e && e.isBound && safeEqual(e.botSecret, botSecret)) {
+                eId = i;
+                botEntity = e;
+                break;
+            }
+        }
+    }
+    if (!botEntity) {
+        return res.status(403).json({ success: false, error: 'Invalid botSecret' });
+    }
+
+    const _auditCtx = { ip: req.ip, ua: req.get('user-agent') };
+    const row = await db.getDeviceVars(deviceId);
+    if (!row) {
+        return res.status(404).json({ success: false, error: 'not_found' });
+    }
+
+    // Bots are blocked by the owner's lock flag (same as names-only GET).
+    if (row.is_locked) {
+        return res.status(403).json({ success: false, error: 'locked', message: 'Variables are locked by owner' });
+    }
+
+    try {
+        // Mirror the names-only GET decryption path exactly (index.js:22773).
+        const vars = decryptVars(row.encrypted_vars, row.iv, row.auth_tag);
+        if (!Object.prototype.hasOwnProperty.call(vars, keyName)) {
+            return res.status(404).json({ success: false, error: 'not_found' });
+        }
+        // Audit BEFORE returning. Value is deliberately excluded — only the key
+        // NAME is recorded (logDeviceVarsAudit never stores values, db.js:1831).
+        if (typeof db.logDeviceVarsAudit === 'function') {
+            db.logDeviceVarsAudit({
+                deviceId,
+                action: 'bot_read_value',
+                keyName,
+                source: `entity:${eId}`,
+                callerIp: _auditCtx.ip,
+                callerUa: _auditCtx.ua,
+            });
+        }
+        // The decrypted value travels ONLY here, in the response body.
+        return res.json({ success: true, name: keyName, value: vars[keyName] });
+    } catch (err) {
+        console.error(`[Vars] value-by-name failed for ${deviceId}: ${err && err.name}: ${err && err.message}`);
         return res.status(500).json({ success: false, error: 'Decryption failed' });
     }
 });
@@ -23937,6 +25686,7 @@ module.exports._ENTITY_HEARTBEAT_STALE_MS = ENTITY_HEARTBEAT_STALE_MS;
 module.exports._getEntityDaemonStatus = getEntityDaemonStatus;
 module.exports._hermesHealthMonitor = hermesHealthMonitor;
 module.exports._settingsHelpInvariantCron = settingsHelpInvariantCron;
+module.exports._pushHealthCheckCron = pushHealthCheckCron;
 module.exports._chatPool = chatPool;
 module.exports._pointEditResolver = pointEditResolver;
 module.exports._ACK_DEFAULT_DEADLINE_MS = ACK_DEFAULT_DEADLINE_MS;
@@ -23958,3 +25708,20 @@ module.exports._officialBorrowTest = {
 };
 module.exports._buildBindFailurePayload = buildBindFailurePayload;
 module.exports._getSilentTransformSuppressionReason = getSilentTransformSuppressionReason;
+// card_59f41e5b — b2b quota countdown + suppression-transparency internals
+module.exports._checkBotToBotRateLimit = checkBotToBotRateLimit;
+module.exports._getBotToBotRemaining = getBotToBotRemaining;
+module.exports._getBotToBotNextRegenMs = getBotToBotNextRegenMs;
+module.exports._BOT2BOT_MAX_MESSAGES = BOT2BOT_MAX_MESSAGES;
+module.exports._BOT2BOT_REGEN_INTERVAL_MS = BOT2BOT_REGEN_INTERVAL_MS;
+module.exports._recordSuppressedForward = recordSuppressedForward;
+module.exports._suppressionLog = suppressionLog;
+module.exports._SUPPRESSION_LOG_CAP = SUPPRESSION_LOG_CAP;
+// Direct-b2b deliver point — exported for the deliver-time low-signal guard test
+// (card_39226e06). This is the single entity→entity delivery fn for
+// /api/transform speakTo + broadcast.
+module.exports._deliverToEntity = deliverToEntity;
+// Server-authoritative entity ACTIVITY state machine (lib/entity-activity.js)
+module.exports._entityActivity = entityActivity;
+module.exports._evaluateEntityActivity = evaluateEntityActivity;
+module.exports._runEntityActivityEvaluation = runEntityActivityEvaluation;

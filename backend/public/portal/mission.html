@@ -559,7 +559,9 @@
         .add-cat-btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 4px;
+            min-height: 28px;
             font-size: 11px;
             color: var(--text-muted);
             background: none;
@@ -1078,7 +1080,16 @@
                 if (intent.target === 'card' && intent.cardId) {
                     const id = String(intent.cardId).trim();
                     if (!id) return false;
-                    if (window.SmartRouter && window.SmartRouter.navigate('card', { cardId: id })) return true;
+                    // eclawHandleNativeNavigateIntent is invoked ONLY by the native
+                    // replay (Android/iOS bridge) while this page is hosted in the
+                    // mission tab's WebView. SmartRouter.navigate('card') maps the
+                    // 'card' target to the 'mission' tab (APP_TARGET_TAB) — i.e. the
+                    // tab we are already on — so in app mode it re-enters the native
+                    // bridge, which re-launches this same Activity (SINGLE_TOP →
+                    // onNewIntent → replay → this handler) in an INFINITE LOOP and the
+                    // card never opens (card_92c17b66 notification deep-link bug).
+                    // Card detail lives in kanban.html, so navigate this WebView there
+                    // directly with the canonical ?card=<id>#<id> deep-link.
                     window.location.href = '/portal/kanban.html?card=' + encodeURIComponent(id) + '#' + encodeURIComponent(id);
                     return true;
                 }
@@ -1698,7 +1709,7 @@
             const catAttr = esc(cat);
             return `<div class="cat-folder" data-section="${section}" data-category="${catAttr}"
                         ondragover="onDropZoneDragOver(event)" ondragleave="onDropZoneDragLeave(event)" ondrop="onCatDrop(event)">
-                <div class="cat-header" onclick="handleCatHeaderClick(this)">
+                <div class="cat-header" role="button" tabindex="0" onclick="handleCatHeaderClick(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                     <span class="cat-chevron ${expanded ? 'open' : ''}">&#9654;</span>
                     <span class="cat-name">${esc(cat)}</span>
                     <span class="cat-count">(${count})</span>
@@ -1818,8 +1829,8 @@
         }
 
         // Unified bulk operation: apply mutation, save immediately, offer undo on success.
-        async function bulkOp({ confirmMsg, applyFn, restoreFn, overlayMsg, successMsg }) {
-            if (!await showConfirm({ message: confirmMsg, danger: true })) return;
+        async function bulkOp({ confirmMsg, confirmText, applyFn, restoreFn, overlayMsg, successMsg }) {
+            if (!await showConfirm({ message: confirmMsg, confirmText, danger: true })) return;
             applyFn();
             showBulkOverlay(overlayMsg);
             try {
@@ -1855,6 +1866,7 @@
 
             await bulkOp({
                 confirmMsg: i18n.t('mc_confirm_clear_category') || `Clear all items in "${cat}"?`,
+                confirmText: i18n.t('common_clear'),
                 applyFn: () => { dashboard[key] = dashboard[key].filter(item => item.category !== cat); },
                 restoreFn: () => { dashboard[key] = backup; },
                 overlayMsg: i18n.t('mc_bulk_clearing') || 'Clearing...',
@@ -1871,6 +1883,7 @@
 
             await bulkOp({
                 confirmMsg: i18n.t('mc_confirm_delete_category') || `Delete category "${cat}"? Items will become uncategorized.`,
+                confirmText: i18n.t('common_delete'),
                 applyFn: () => {
                     const order = getCategoryOrder(section);
                     const idx = order.indexOf(cat);
@@ -2301,12 +2314,24 @@
         }
 
         async function deleteNote(id) {
-            const note = dashboard.notes.find(n => n.id === id);
-            const itemName = note ? (note.title || note.id) : id;
-            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) {
+            const removedIdx = dashboard.notes.findIndex(n => n.id === id);
+            if (removedIdx === -1) return;
+            const note = dashboard.notes[removedIdx];
+            const itemName = note.title || note.id;
+            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) {
+                const removed = note;
                 dashboard.notes = dashboard.notes.filter(n => n.id !== id);
                 markChanged();
                 renderNotes();
+                // card_3ffe8415: single-note delete now offers a ~6s undo toast, the
+                // same safety net bulk delete already had. Confirm PREVENTS mis-taps,
+                // undo RECOVERS from them (Material/HIG) — the two are complementary,
+                // and it was inconsistent that only bulk had the recoverable net.
+                showUndoToast(i18n.t('mc_note_deleted') || 'Note deleted', () => {
+                    dashboard.notes.splice(Math.min(removedIdx, dashboard.notes.length), 0, removed);
+                    markChanged();
+                    renderNotes();
+                });
             }
         }
 
@@ -2319,14 +2344,10 @@
             menu.style.top = e.clientY + 'px';
 
             menu.querySelector('.context-menu-item').onclick = async () => {
-                const note = dashboard.notes.find(n => n.id === id);
-                const itemName = note ? (note.title || note.id) : id;
-                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) {
-                    dashboard.notes = dashboard.notes.filter(n => n.id !== id);
-                    markChanged();
-                    renderNotes();
-                }
                 menu.style.display = 'none';
+                // card_3ffe8415: route through deleteNote so this path also gets the
+                // confirm + undo-toast safety net (was a duplicated no-undo delete).
+                await deleteNote(id);
             };
 
             setTimeout(() => document.addEventListener('click', () => menu.style.display = 'none', { once: true }), 10);
@@ -2473,7 +2494,20 @@
 
         function copyNotePageLink() {
             if (!viewerNoteId) return;
-            const pc = (boundEntities.find(e => e.publicCode) || {}).publicCode;
+            // card_091d24a5: bind the share link to the ACTIVE entity's public
+            // code, not bound[0] (/api/entities sorts ascending, so bound[0] is
+            // always the lowest entityId → wrong link on multi-entity devices).
+            // Same pattern as the exam.html fix (card_cea91e58): prefer the
+            // shared active-entity key; fall back to the first bound entity
+            // with a code only when it's unset / unbound / has no public code.
+            // (Notes carry no entity attribution, so active entity is the best
+            // owner signal for the copied link.)
+            let activeId = NaN;
+            try { activeId = Number(localStorage.getItem('eclaw_petdex_active_entity_id')); } catch (_) { /* private mode */ }
+            const activeEntity = Number.isFinite(activeId)
+                ? boundEntities.find(e => Number(e.entityId || e.id) === activeId && e.publicCode)
+                : null;
+            const pc = ((activeEntity || boundEntities.find(e => e.publicCode)) || {}).publicCode;
             if (!pc) { showToast(i18n.t('mc_note_no_public_code') || 'No public code available', 'error'); return; }
             const url = `https://eclawbot.com/p/${pc}/${viewerNoteId}`;
             const btn = document.getElementById('wvCopyLinkBtn');
@@ -2591,7 +2625,7 @@
         }
 
         async function clearDrawing() {
-            if (!await showConfirm({ message: i18n.t('mc_note_draw_clear_confirm') || 'Clear all drawings?', danger: true })) return;
+            if (!await showConfirm({ message: i18n.t('mc_note_draw_clear_confirm') || 'Clear all drawings?', confirmText: i18n.t('common_clear'), danger: true })) return;
             drawStrokes = [];
             redrawCanvas();
         }
@@ -2884,7 +2918,9 @@
         }
 
         async function deleteNotePage(noteId) {
-            if (!await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) return;
+            const note = dashboard.notes.find(n => n.id === noteId);
+            const itemName = note ? (note.title || note.id) : noteId;
+            if (!await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) return;
             try {
                 await apiCall('DELETE', '/api/mission/note/page', {
                     deviceId: currentUser.deviceId,
@@ -3366,7 +3402,9 @@
         }
 
         async function deleteSkill(id) {
-            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
+            const skill = dashboard.skills.find(s => s.id === id);
+            const itemName = skill ? (skill.title || skill.id) : id;
+            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) {
                 dashboard.skills = dashboard.skills.filter(s => s.id !== id);
                 markChanged();
                 renderSkills();
@@ -3382,7 +3420,9 @@
             menu.style.top = e.clientY + 'px';
 
             menu.querySelector('.context-menu-item').onclick = async () => {
-                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
+                const skill = dashboard.skills.find(s => s.id === id);
+                const itemName = skill ? (skill.title || skill.id) : id;
+                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) {
                     dashboard.skills = dashboard.skills.filter(s => s.id !== id);
                     markChanged();
                     renderSkills();
@@ -3493,7 +3533,9 @@
         }
 
         async function deleteRule(id) {
-            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
+            const rule = dashboard.rules.find(r => r.id === id);
+            const itemName = rule ? (rule.name || rule.id) : id;
+            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) {
                 dashboard.rules = dashboard.rules.filter(r => r.id !== id);
                 markChanged();
                 renderRules();
@@ -3509,7 +3551,9 @@
             menu.style.top = e.clientY + 'px';
 
             menu.querySelector('.context-menu-item').onclick = async () => {
-                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
+                const rule = dashboard.rules.find(r => r.id === id);
+                const itemName = rule ? (rule.name || rule.id) : id;
+                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) {
                     dashboard.rules = dashboard.rules.filter(r => r.id !== id);
                     markChanged();
                     renderRules();
@@ -3542,13 +3586,22 @@
             const vars = loadLocalVars();
             if (Object.keys(vars).length === 0) return;
             try {
-                const result = await apiCall('POST', '/api/device-vars', {
+                // GET first to obtain updatedAt, then POST WITH expectedUpdatedAt so this
+                // background merge can't clobber a concurrent edit (optimistic lock) and
+                // doesn't trip the server's "POST without expectedUpdatedAt" warn
+                // (card_9bd4b4c0). Mirrors chat.html / env-vars.html.
+                const body = {
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret,
                     vars,
                     locked,
                     source: 'web'
-                });
+                };
+                try {
+                    const serverData = await apiCall('GET', `/api/device-vars?deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}`);
+                    if (serverData && serverData.updatedAt) body.expectedUpdatedAt = serverData.updatedAt;
+                } catch (_) { /* non-fatal — proceed without etag (first-time sync) */ }
+                const result = await apiCall('POST', '/api/device-vars', body);
                 if (result && result.mergedVars) {
                     localStorage.setItem(VARS_STORAGE_KEY(), JSON.stringify(result.mergedVars));
                 }
@@ -3697,7 +3750,9 @@
         }
 
         async function deleteSoul(id) {
-            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
+            const soul = dashboard.souls.find(s => s.id === id);
+            const itemName = soul ? (soul.name || soul.id) : id;
+            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) {
                 dashboard.souls = dashboard.souls.filter(s => s.id !== id);
                 markChanged();
                 renderSouls();
@@ -3713,7 +3768,9 @@
             menu.style.top = e.clientY + 'px';
 
             menu.querySelector('.context-menu-item').onclick = async () => {
-                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
+                const soul = dashboard.souls.find(s => s.id === id);
+                const itemName = soul ? (soul.name || soul.id) : id;
+                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, confirmText: i18n.t('common_delete'), danger: true })) {
                     dashboard.souls = dashboard.souls.filter(s => s.id !== id);
                     markChanged();
                     renderSouls();

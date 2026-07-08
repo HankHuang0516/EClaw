@@ -177,8 +177,38 @@ async function checkAuth() {
             console.error('[Auth] iOS WebView device-login failed:', iosErr);
         }
 
-        console.error('[Auth] checkAuth failed, redirecting to login:', e.message || e);
-        window.location.href = 'index.html';
+        // Distinguish transport-level disconnect from auth-level failure.
+        // api.js tags fetch-throw with `networkError:true`; do NOT force logout
+        // on transport blips — show the reconnect overlay and keep session state.
+        // Transient backend unavailability is NOT an auth failure. A cold-start
+        // (Railway redeploy) returns 503 "Server starting up"; an overload returns
+        // 429; a proxy hiccup returns 502/504 or a non-JSON body — none of these
+        // mean the user is logged out. Redirecting to index.html here caused a
+        // CRASH LOOP (card_<dashboard-crash-loop> 2026-06-27): the login page
+        // re-runs checkAuth, hits the same 503, redirects to itself again, forever.
+        // Treat these like a transport blip — keep the session, show the reconnect
+        // overlay (it retries with backoff), and do NOT redirect.
+        const st = e && e.status;
+        const transientStatus = st === 503 || st === 429 || st === 502 || st === 504;
+        const looksTransient = e && typeof e.message === 'string'
+            && /starting up|non-JSON response|temporarily unavailable|service unavailable/i.test(e.message);
+        if (e && (e.networkError || e.name === 'TypeError' || transientStatus || looksTransient
+            || (typeof navigator !== 'undefined' && navigator.onLine === false))) {
+            console.warn('[Auth] checkAuth transient/unavailable — keeping session, showing reconnect overlay (no redirect):', st || e.message || e);
+            try {
+                if (window.__reconnectOverlay && typeof window.__reconnectOverlay.show === 'function') {
+                    window.__reconnectOverlay.show();
+                }
+            } catch (_) { /* overlay optional */ }
+            return null;
+        }
+        // Genuine auth failure (401 etc). Redirect to login — but NEVER from
+        // index.html itself (defense-in-depth: a redirect to the page you are
+        // already on is the loop we are guarding against).
+        const onLoginPage = typeof window !== 'undefined' && window.location
+            && /(?:^|\/)index\.html$/.test(window.location.pathname || '');
+        console.error('[Auth] checkAuth failed (auth), redirecting to login:', st || e.message || e);
+        if (!onLoginPage) window.location.href = 'index.html';
         return null;
     }
 }

@@ -189,6 +189,35 @@ docker compose up -d --no-deps openclaw-f
 docker exec openclaw-project-f openclaw --version
 ```
 
+Known-good recovery for project E / entity #3 after version drift:
+
+```bash
+cd /Users/hank/Desktop/Project/openclaw-docker
+# project E intentionally reuses the same verified runtime image as project F;
+# its MiniMax default model remains controlled by project-e's mounted config.
+docker compose up -d --no-deps --force-recreate openclaw-e
+docker exec openclaw-project-e openclaw --version
+docker exec openclaw-project-e openclaw plugins list --json
+```
+
+Expected post-upgrade state for #3:
+
+- `openclaw --version` reports `OpenClaw 2026.6.1`.
+- The loaded `openclaw-channel` plugin reports version `1.3.0` and is sourced
+  from `/home/node/.openclaw/npm/projects/.../@eclaw/openclaw-channel`.
+- `session.reset` is set to an idle reset window so six-hour fleet monitors do
+  not reuse a stale, task-heavy MiniMax conversation indefinitely.
+- API ACK, model-backed reply-path, and browser UI ACK all pass for entity #3.
+
+If #3 has an older untracked side-loaded extension, `openclaw plugins update`
+will report no install record. Install the tracked npm package instead:
+
+```bash
+docker exec openclaw-project-e \
+  openclaw plugins install @eclaw/openclaw-channel@1.3.0
+docker restart openclaw-project-e
+```
+
 After the recreate, verify startup logs show the intended runtime model, for
 example `agent model: openai-codex/gpt-5.5 (thinking=xhigh, ...)`, then test
 the E-Claw browser chat UI with a fresh nonce. For #1/#3, keep
@@ -196,6 +225,28 @@ the E-Claw browser chat UI with a fresh nonce. For #1/#3, keep
 does not starve the interactive reply path while kanban cards still reach the
 model and can be executed. Use `ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS=1` only for
 agents where kanban is deliberately notification-only.
+
+API `/api/client/speak` health probes may set `from` to a source label such as
+`targeted-model-health`; the channel must not treat that label as the
+message-tool reply target. Current channel builds route replies through the
+stable E-Claw conversation id (`deviceId:entityId`) and declare an E-Claw target
+resolver so OpenClaw's `message` tool can send the reply instead of failing with
+`Unknown target`.
+
+For #1 model-health failures where the runtime eventually replies after the
+monitor has already timed out, inspect `openclaw-project-f` logs for
+`stalled_agent_run activeWorkKind=embedded_run`. Keep project F's
+`diagnostics.stuckSessionWarnMs` and `diagnostics.stuckSessionAbortMs`
+shorter than the monitor model-health window so stale embedded runs are
+reclaimed before new user-to-bot probes queue behind them. The current
+known-good local values are `60000` and `90000` milliseconds.
+
+For project E / entity #3, keep the MiniMax-verified runtime pinned unless its
+own drift check requires an upgrade. If #3's API ACK is healthy but
+model-health times out or the browser UI shows delayed replies while kanban or
+org-forward traffic is active, enable `ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS=1`
+and `ECLAW_SUPPRESS_BACKGROUND_EVENTS=1` only on `openclaw-e`, then recreate
+that service and verify #3 independently.
 
 ## Troubleshooting
 
@@ -357,6 +408,92 @@ When the E-Claw backend restarted (triggered by PostgreSQL DNS failure or Railwa
 
 ---
 
+### 2026-06-22 — Wedged agent session = "passive-health GREEN but no real reply" (false-green)
+
+**Symptom (entity #3 Mac_E / project-e; applies to any openclaw-channel-eclaw runtime):**
+Container `(healthy)`, public `/health` 200, channel `bound=true`, `/api/passive-health/run` reports
+the entity **GREEN**, and `entity-status` `openCount=0` on every axis — yet a **real user message sent
+through the portal chat UI gets NO reply**. This is a *false-green*: every passive signal passes while
+the entity cannot actually answer.
+
+**Root cause:**
+The OpenClaw agent session for that device:entity (`sessionKey=<deviceId>:<entityId>`) is wedged in
+`state=processing` on a model call that never completes. The container logs it explicitly and
+repeatedly:
+```
+[diagnostic] stalled session: sessionId=… sessionKey=…:3 state=processing age=NNNs
+   queueDepth=N reason=active_work_without_progress recovery=none
+```
+New inbound messages queue behind the stuck call (`queueDepth` climbs) and are never processed, so no
+reply is emitted. Passive-health does not read this diagnostic, so it still reports GREEN. Verified
+2026-06-22: the same `sessionId` had been stalling for hours (first seen ~14:35Z, still wedged at
+23:38Z) until detected via portal-UI reply cross-validation.
+
+**RECURRENCE 2026-06-26 (#3 project-e):** same failure mode, with a new wrinkle — the runtime now DOES
+run a watchdog (it logs `recovery=checking` → `stuck session recovery: action=abort_embedded_run`),
+but the soft abort is **ineffective against a wedged embedded-run owner**: every attempt returns
+`aborted=true drained=true forceCleared=false released=0` with
+`lastProgress=embedded_run:recovery_skipped_active_owner`, then the SAME `sessionId`
+(`bf3aff46-…`) is re-detected as stalled ~90s later. It looped this way for ~10,870s (~3h),
+`queueDepth` climbing as my cross-validation message stacked behind the dead work. `docker restart
+openclaw-project-e` cleared it; #3 then replied in the portal UI (`我在線…✅`). Same-image #1
+(project-f) was unaffected by this wedge (its non-reply that run was an unrelated gpt-5.5 provider
+cooldown, `next=none`).
+
+**Containment (used, low-risk, scoped to the one entity):**
+`docker restart openclaw-project-<e|f|c|b>` for the affected runtime only — clears the wedged session;
+the channel reconnects with its existing binding (`Entity N reconnected … publicCode …`). After
+restart the entity replied in the portal UI and echoed the probe nonce. Each `project-<x>` container
+is dedicated to one slot, so this does not touch other entities. NOTE: this was a runtime **session
+wedge, not version drift** — #1 (project-f) and #3 (project-e) run the *identical* image
+(`sha256:fab8dab75f61`) and #1 replied fine throughout.
+
+**Durable fixes (remaining, by layer):**
+1. **OpenClaw runtime (this repo / image):** the stall watchdog now EXISTS but its *soft* abort never
+   clears a wedged owner — it loops `abort_embedded_run` with `forceCleared=false released=0` /
+   `recovery_skipped_active_owner` indefinitely (observed ~3h on the same `sessionId`, 2026-06-26).
+   FIX: after K consecutive failed soft `abort_embedded_run` attempts on the same `sessionId`,
+   ESCALATE to a hard force-clear (`forceCleared=true`) / worker-process recycle that actually
+   releases the lane, so the queue drains without a full container restart. Soft-abort-without-
+   escalation is the bug.
+2. **EClaw passive-health (backend Layer C):** treat a recent, age-growing `stalled session …
+   active_work_without_progress` diagnostic from an openclaw container as **RED** for that entity, so
+   `/api/passive-health/run` stops reporting a wedged entity as healthy. Until this lands, the
+   portal-UI reply cross-validation in the fleet monitor is the only reliable detector.
+
+---
+
 ## License
 
 MIT
+
+---
+
+## Monitor note — 2026-06-29 (#3 Mac_E stalled-session containment)
+
+**Version drift check:** #1 (project-f) and #3 (project-e) both run OpenClaw `2026.6.1`
+(same image), channel-integration repo current. **No drift** — no upgrade required this run.
+
+**#3 incident:** project-e had a wedged embedded agent session
+(`sessionKey=...:3`, `activeWorkKind=embedded_run`) reporting
+`state=processing lastProgressAge=8298s recovery=none`. Passive health-check reported #3
+**GREEN** (false-green) but the portal chat UI produced **no real reply**. The idle-abort
+watchdog only recovers sessions in `state=idle` (abort fires ~age 318s); a session nominally
+`state=processing` with no streaming progress for ~2.3h is **not** caught (`recovery=none`).
+
+**Containment (applied):** `docker restart openclaw-project-e` (scoped to #3 only) → Entity 3
+reconnected channel binding `osbtyh`, model re-attested `minimax-portal/MiniMax-M2.7`
+(thinking=medium), browser-UI re-probe returned a real reply ("我在線…確認正常運作"). Recovered.
+
+**Durable fix still owed (runtime, not done here):**
+1. Stall watchdog must also recover `state=processing` sessions whose `lastProgressAge`
+   exceeds a threshold, not only `state=idle` ones.
+2. Passive-health (`/api/passive-health/run`) must emit **RED** when a session's
+   `lastProgressAge` is high, so a wedged-but-"processing" agent is not reported green.
+Until both land, a host-side log watchdog (grep `recovery=none` + high `lastProgressAge` →
+scoped `docker restart`) is the recommended interim guard.
+
+**#1 Mac_F:** not a channel/version issue — `openai/gpt-5.5` provider cooldown
+(`next=none`, no fallback lane). Browser-UI reply was the rate-limit guard
+("Rate-limited — ready in ~43 min"). Provider-side quota; durable fix = fallback lane /
+2nd Codex account (requires Hank). Restart does not help.

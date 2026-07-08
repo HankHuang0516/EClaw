@@ -470,6 +470,8 @@
             padding: 2px;
         }
         .plaza-view-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 28px; min-height: 28px;
             background: none; border: none; color: var(--text-muted); cursor: pointer;
             padding: 4px 8px; border-radius: 4px; font-size: 14px; transition: all 0.2s;
         }
@@ -838,6 +840,8 @@
             text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px;
         }
         .cap-filter-chip {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-height: 28px;
             padding: 4px 12px; border-radius: var(--radius-pill);
             background: var(--input-bg); border: 1px solid var(--card-border);
             color: var(--text-secondary); font-size: 12px; font-weight: 500;
@@ -881,6 +885,59 @@
         .rate-slider-value {
             font-size: 13px; color: var(--text); font-weight: 600; white-space: nowrap; min-width: 120px; text-align: right;
         }
+        .plaza-result-panel {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 0 0 14px;
+            padding: 12px 14px;
+            background: rgba(79, 195, 247, 0.08);
+            border: 1px solid rgba(79, 195, 247, 0.22);
+            border-radius: var(--radius-sm);
+        }
+        .plaza-result-copy {
+            min-width: 0;
+        }
+        .plaza-result-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.35;
+        }
+        .plaza-result-detail {
+            margin-top: 2px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.45;
+        }
+        .plaza-clear-filters {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 32px;
+            padding: 0 14px;
+            border-radius: var(--radius-pill);
+            border: 1px solid rgba(79, 195, 247, 0.35);
+            background: rgba(79, 195, 247, 0.10);
+            color: var(--accent-cyan);
+            font-size: 12px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: border-color 0.2s, background 0.2s, color 0.2s;
+        }
+        .plaza-clear-filters:hover:not(:disabled),
+        .plaza-clear-filters:focus-visible {
+            border-color: var(--accent-cyan);
+            background: rgba(79, 195, 247, 0.16);
+            color: var(--text);
+        }
+        .plaza-clear-filters:disabled {
+            cursor: default;
+            opacity: 0.55;
+        }
         .rental-cost-box { background: var(--input-bg); border: 1px solid var(--card-border); border-radius: var(--radius-sm); padding: 12px; margin-top: 8px; font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
         .rental-cost-box .cost-line { display: flex; justify-content: space-between; padding: 2px 0; }
         .rental-cost-box .cost-total { font-weight: 700; color: var(--text); font-size: 14px; border-top: 1px solid var(--card-border); margin-top: 6px; padding-top: 6px; }
@@ -901,6 +958,8 @@
             .plaza-hero-title { font-size: 22px; }
             .plaza-filters { gap: 4px; }
             .plaza-chip { min-height: 44px; height: 44px; line-height: 44px; padding: 0 14px; font-size: 12px; }
+            .plaza-result-panel { align-items: stretch; flex-direction: column; }
+            .plaza-clear-filters { width: 100%; }
             .plaza-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
             .bot-card { padding: 12px; }
             .bot-card-avatar { width: 40px; height: 40px; font-size: 22px; }
@@ -1033,6 +1092,15 @@
             <span class="rate-slider-value" id="rateSliderValue">1 – 50 e&#24163;/1K</span>
         </div>
 
+        <!-- Result context -->
+        <div class="plaza-result-panel" id="resultPanel" role="status" aria-live="polite">
+            <div class="plaza-result-copy">
+                <div class="plaza-result-label" id="resultSummary" data-i18n="community_result_summary_default">Showing Bot Plaza results</div>
+                <div class="plaza-result-detail" id="resultDetail" data-i18n="community_result_detail_default">Use search, filters, capabilities, or rate to narrow the list.</div>
+            </div>
+            <button class="plaza-clear-filters" id="clearAllFilters" type="button" onclick="clearAllFilters()" data-i18n="community_result_clear_filters" disabled>Clear filters</button>
+        </div>
+
         <!-- Stats -->
         <div class="plaza-stats">
             <span><span class="count" id="resultCount">0</span> <span data-i18n="community_bots_found">個 Bot</span></span>
@@ -1071,7 +1139,7 @@
     <div class="modal-overlay" id="detailModal" onclick="if(event.target===this)closeDetail()">
         <div style="position:relative;max-width:560px;width:100%;max-height:75vh;">
             <div class="modal-content" id="detailContent" style="max-height:75vh;overflow-y:auto;border-radius:16px;">
-                <button class="modal-close" onclick="closeDetail()">✕</button>
+                <button class="modal-close" aria-label="Close" onclick="closeDetail()">✕</button>
                 <!-- Rendered by JS -->
             </div>
             <!-- gradient now inside modal-content as sticky div -->
@@ -1105,12 +1173,83 @@
     let _rateDebounce = null;
     let loadBotsRequestSeq = 0;
 
+    function compactControlText(text) {
+        return String(text || '')
+            .replace(/[^\p{Letter}\p{Number}\s/_.-]+/gu, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function tr(key, params = {}) {
+        if (typeof i18n !== 'undefined' && typeof i18n.t === 'function') {
+            return i18n.t(key, params);
+        }
+        return key;
+    }
+
+    function currentFilterLabel() {
+        const active = document.querySelector('.plaza-chip.active');
+        const fallback = tr('community_filter_all');
+        return compactControlText(active ? active.textContent : fallback) || fallback;
+    }
+
+    function currentSortLabel() {
+        const selected = document.querySelector('#sortSelect option:checked');
+        return compactControlText(selected ? selected.textContent : currentSort) || currentSort;
+    }
+
+    function formatBotCount(resultCount) {
+        if (typeof resultCount !== 'number') return tr('community_result_count_unknown');
+        return tr(resultCount === 1 ? 'community_result_count_one' : 'community_result_count_many', { count: resultCount });
+    }
+
+    function updateResultPanel(resultCount, options = {}) {
+        const summary = document.getElementById('resultSummary');
+        const detail = document.getElementById('resultDetail');
+        const clearBtn = document.getElementById('clearAllFilters');
+        if (!summary || !detail || !clearBtn) return;
+
+        const activeParts = [];
+        if (searchQuery) activeParts.push(tr('community_result_filter_search', { query: searchQuery }));
+        if (currentFilter !== 'all') activeParts.push(tr('community_result_filter_category', { category: currentFilterLabel() }));
+        if (selectedCaps.size) activeParts.push(tr('community_result_filter_capabilities', { capabilities: Array.from(selectedCaps).join(', ') }));
+        if (rateMin > 1 || rateMax < 50) activeParts.push(tr('community_result_filter_rate', { min: rateMin, max: rateMax }));
+
+        const hasActive = activeParts.length > 0;
+        clearBtn.disabled = !hasActive;
+        if (options.error) {
+            summary.textContent = tr('community_error_title');
+            detail.textContent = tr('community_error_desc');
+            return;
+        }
+
+        const hasCount = typeof resultCount === 'number';
+        const countText = formatBotCount(resultCount);
+        const separator = tr('community_result_filter_separator');
+        summary.textContent = hasActive
+            ? tr('community_result_summary_filtered', { count: countText, filters: activeParts.join(separator) })
+            : (hasCount ? tr('community_result_summary_default_count', { count: countText }) : tr('community_result_summary_default'));
+        detail.textContent = tr(hasActive ? 'community_result_detail_filtered' : 'community_result_detail_default_sorted', {
+            sort: currentSortLabel()
+        });
+    }
+
     /* ══════ Avatar resolution ══════ */
-    // Plaza bots belong to OTHER users, so we can't rely on the per-entity
-    // AvatarPetdx descriptor cache (keyed on the current user's deviceId).
-    // Instead, the server enriches each row with petdxAvatarUrl — the bot
-    // owner's currently selected companion's avatar URL — and we prefer it
-    // over the legacy entities.avatar emoji/upload.
+    // Plaza bots are a MIX of (a) other users' bots — for which we can't
+    // resolve the live AvatarPetdx descriptor cache (keyed on the current
+    // viewer's deviceId), and (b) the viewer's OWN published bots when they
+    // surface in the plaza listing. The server enriches every row with
+    // petdxAvatarUrl — the bot owner's currently selected companion's
+    // avatar URL — and we prefer it over the legacy entities.avatar
+    // emoji/upload as a fast-paint fallback.
+    //
+    // Canonical companion path (own-device rows): after rendering, we
+    // resolve the row's publicCode → entityId via the viewer's bound
+    // entities, then AvatarPetdx.preload(...) caches the live spritesheet
+    // descriptor and re-renders so renderAvatarHtml emits a <canvas>
+    // placeholder instead of a static <img>. autoMount() animates it. This
+    // matches the integration pattern shared with chat.html / dashboard.html
+    // / marketplace.html / mission.html / files.html / card-holder.html.
     function resolveBotAvatar(row) {
         if (!row) return '\u{1F916}';
         if (typeof row.petdxAvatarUrl === 'string' && row.petdxAvatarUrl) {
@@ -1120,32 +1259,64 @@
     }
     // PETDX spritesheets are an 8×9 grid (192×208 per frame). A raw <img src=sprite.webp>
     // shrinks the WHOLE sheet into the avatar box → all poses visible at once (the P0
-    // "大頭貼 mismatched" bug). Crop to frame 0 (idle, top-left) via background-size:
-    // 800% 900% (8 cols × 9 rows → one frame == box) + position 0 0. Interim render fix;
-    // the data-layer fix (store single-frame avatar.webp on companion create, Plan 3) is
-    // tracked separately on card_3144 / the store-on-create chain.
-    function isPetdxSprite(u) {
-        return typeof u === 'string' && /\/api\/petdx\/[^/]+\/sprite\.(webp|png)(\?|$)/i.test(u);
-    }
-    function petdxFrame0Html(url, size) {
-        const s = size || 48;
-        return '<div role="img" aria-label="bot avatar" style="width:' + s + 'px;height:' + s +
-            'px;border-radius:50%;background-image:url(' + esc(url) +
-            ');background-repeat:no-repeat;background-size:800% 900%;background-position:0 0;"></div>';
-    }
-    function botAvatarHtml(avatar, size) {
-        // Single-frame crop for PETDX spritesheet URLs (covers petdxAvatarUrl = sprite.webp).
-        if (isPetdxSprite(avatar)) {
-            return petdxFrame0Html(avatar, size || 48);
-        }
+    // "大頭貼 mismatched" bug). The shared renderAvatarHtml() in entity-utils.js detects
+    // sprite URLs and crops to frame 0 via background-size:800% 900% + position 0 0 (the
+    // isPetdxSprite branch added in PR #3527's shared-fix follow-up). When the entity has
+    // a cached AvatarPetdx descriptor (own-device rows after preload), it instead emits
+    // a <canvas data-petdx-entity-id> placeholder for autoMount() to animate.
+    function botAvatarHtml(avatar, size, entityId) {
         if (typeof renderAvatarHtml === 'function') {
-            return renderAvatarHtml(avatar, size || 48);
+            return renderAvatarHtml(avatar, size || 48, entityId);
         }
         // Fallback if entity-utils.js failed to load (CDN miss, etc.)
         if (typeof avatar === 'string' && /^(https?:\/\/|\/)/.test(avatar)) {
             return '<img src="' + esc(avatar) + '" style="width:' + (size || 48) + 'px;height:' + (size || 48) + 'px;border-radius:50%;object-fit:cover;" alt="">';
         }
         return avatar || '\u{1F916}';
+    }
+
+    // publicCode → entityId map for the viewer's own bound entities. Populated
+    // by preloadOwnEntityAvatars() once per session and used by botAvatarHtml
+    // call sites that have a row.publicCode to thread an entityId into the
+    // shared renderAvatarHtml() so the AvatarPetdx canvas branch can fire.
+    let _ownPublicCodeToEntityId = {};
+    function entityIdForPublicCode(publicCode) {
+        if (!publicCode) return undefined;
+        return _ownPublicCodeToEntityId[publicCode];
+    }
+
+    // Preload AvatarPetdx descriptors for the viewer's own bound entities so
+    // own-device bots that surface in the plaza render the live companion
+    // chibi (canvas) instead of the static sprite-frame fallback. Best-effort
+    // + non-blocking — any failure (no session, no companion, API hiccup)
+    // leaves the petdxAvatarUrl frame-0 crop in place. Mirrors the init
+    // pattern in marketplace.html / kanban.html.
+    async function preloadOwnEntityAvatars() {
+        if (typeof window === 'undefined' || !window.AvatarPetdx) return;
+        try {
+            const user = window.currentUser || null;
+            const deviceId = user?.deviceId
+                || localStorage.getItem('deviceId')
+                || localStorage.getItem('eclaw_device_id');
+            const deviceSecret = user?.deviceSecret
+                || localStorage.getItem('deviceSecret')
+                || localStorage.getItem('eclaw_device_secret');
+            if (!deviceId || !deviceSecret) return;
+            const r = await fetch('/api/entities?deviceId=' + encodeURIComponent(deviceId), { credentials: 'include' });
+            if (!r.ok) return;
+            const data = await r.json();
+            const entities = (data.entities || []).filter(e => e.isBound);
+            if (typeof updateEntityMaps === 'function') updateEntityMaps(entities);
+            _ownPublicCodeToEntityId = {};
+            entities.forEach(e => { if (e.publicCode) _ownPublicCodeToEntityId[e.publicCode] = e.entityId; });
+            const entityIds = entities.map(e => e.entityId).filter(Boolean);
+            if (!entityIds.length) return;
+            await window.AvatarPetdx.preload({ deviceId, deviceSecret, entityIds });
+            // Re-render so own-device cards whose descriptor just resolved
+            // emit the <canvas> placeholder, then autoMount() animates them.
+            if (Array.isArray(allBots) && allBots.length) renderGrid(allBots);
+            window.AvatarPetdx.autoMount();
+        } catch (_) { /* graceful: keep petdxAvatarUrl frame-0 fallback */ }
     }
 
     /* ══════ API ══════ */
@@ -1253,6 +1424,26 @@
     /* ══════ Load ══════ */
     // Default: merge rental listings + community bots in one grid.
     // "出租" filter narrows to rental-only; other filters narrow to community-only.
+    function normalizeCommunityCapabilities(raw) {
+        const labelFor = (value, fallback) => {
+            if (value == null || value === false) return '';
+            if (typeof value === 'string' || typeof value === 'number') return String(value);
+            if (typeof value === 'object') return value.name || value.label || value.id || fallback || '';
+            return fallback || String(value);
+        };
+        if (Array.isArray(raw)) {
+            return raw.map(c => labelFor(c)).filter(Boolean);
+        }
+        if (raw && typeof raw === 'object') {
+            return Object.entries(raw)
+                .filter(([, value]) => !(value && typeof value === 'object' && value.supported === false))
+                .map(([key, value]) => labelFor(value, key))
+                .filter(Boolean);
+        }
+        const label = labelFor(raw);
+        return label ? [label] : [];
+    }
+
     async function loadBots() {
         const requestSeq = ++loadBotsRequestSeq;
         document.getElementById('loading').style.display = 'flex';
@@ -1271,7 +1462,7 @@
                     publicCode: r.publicCode, name: r.name || 'Unnamed',
                     avatar: resolveBotAvatar(r),
                     desc: r.description || '', tags: r.tags || [],
-                    caps: (r.capabilities || []).map(c => c.name || c.id || c),
+                    caps: normalizeCommunityCapabilities(r.capabilities),
                     stars: r.avgRating || 0, reviews: r.messageCount || 0,
                     level: r.level || 1, xp: r.xp || 0,
                     // Arena verified score (card_ad404375). Number fields only —
@@ -1336,7 +1527,8 @@
         } catch (e) {
             if (requestSeq !== loadBotsRequestSeq) return;
             console.error('loadBots:', e);
-            document.getElementById('emptyState').style.display = 'block';
+            allBots = [];
+            renderGrid([], { error: true });
         } finally {
             if (requestSeq === loadBotsRequestSeq) {
                 document.getElementById('loading').style.display = 'none';
@@ -1345,14 +1537,39 @@
     }
 
     /* ══════ Render ══════ */
-    function renderGrid(bots) {
+    function setEmptyStateMode(mode) {
+        const title = document.querySelector('#emptyState .title');
+        const desc = document.querySelector('#emptyState .desc');
+        const titleKey = mode === 'error' ? 'community_error_title' : 'community_empty_title';
+        const descKey = mode === 'error' ? 'community_error_desc' : 'community_empty_desc';
+        if (title) { title.dataset.i18n = titleKey; title.textContent = tr(titleKey); }
+        if (desc) { desc.dataset.i18n = descKey; desc.textContent = tr(descKey); }
+    }
+
+    function renderGrid(bots, options = {}) {
         const grid = document.getElementById('botGrid');
         const empty = document.getElementById('emptyState');
         document.getElementById('loadMore').style.display = 'none';
-        if (!bots.length) { grid.innerHTML = ''; empty.style.display = 'block'; document.getElementById('resultCount').textContent = '0'; return; }
+        if (!bots.length) {
+            grid.innerHTML = '';
+            empty.style.display = 'block';
+            setEmptyStateMode(options.error ? 'error' : 'empty');
+            document.getElementById('resultCount').textContent = '0';
+            updateResultPanel(0, { error: options.error });
+            return;
+        }
         empty.style.display = 'none';
+        setEmptyStateMode('empty');
         document.getElementById('resultCount').textContent = bots.length;
+        updateResultPanel(bots.length);
         grid.innerHTML = bots.map(bot => bot.isRental ? renderRentalCard(bot) : renderCommunityCard(bot)).join('');
+        // Animate any AvatarPetdx canvas placeholders just emitted for
+        // own-device bots whose companion descriptor has been preloaded.
+        // Cross-device bots fall through to the petdxAvatarUrl frame-0 crop
+        // and don't need a mount step. Best-effort + non-blocking.
+        if (typeof window !== 'undefined' && window.AvatarPetdx && typeof window.AvatarPetdx.mount === 'function') {
+            try { window.AvatarPetdx.mount(grid); } catch (_) { /* no-op */ }
+        }
     }
     function renderCommunityCard(bot) {
         // Arena verified score chip (card_ad404375). Number-only fields, so
@@ -1372,11 +1589,12 @@
                 + (pass ? '✓ ' : '• ') + 'Arena ' + bot.arenaScore + '/' + bot.arenaMaxScore + ' (' + pct + '%)'
                 + `</span>`;
         }
+        const eid = entityIdForPublicCode(bot.publicCode);
         return `<div class="bot-card" onclick="openDetail('${bot.publicCode}')">
             <span class="bot-card-level ${lvClass(bot.level)}">Lv.${bot.level}</span>
             <div class="bot-card-header">
                 <div class="bot-card-avatar">
-                    ${botAvatarHtml(bot.avatar, 56)}
+                    ${botAvatarHtml(bot.avatar, 56, eid)}
                 </div>
                 <div class="bot-card-info"><div class="bot-card-name">${esc(bot.name)}${arenaChip}</div></div>
             </div>
@@ -1409,7 +1627,7 @@
         return `<div class="${isRented ? 'bot-card rented' : 'bot-card'}" onclick="${isRented ? '' : "openRentalDetail('" + bot.listingId + "')"}" style="border-left:3px solid ${borderColor};">
             <span class="bot-card-level" style="background:${borderColor};color:#fff;">${isRented ? tt('mp_status_rented','\u5df2\u51fa\u79df') : tt('community_filter_rental','\u51fa\u79df')}</span>
             <div class="bot-card-header">
-                <div class="bot-card-avatar">${botAvatarHtml(bot.avatar, 40)}</div>
+                <div class="bot-card-avatar">${botAvatarHtml(bot.avatar, 40, entityIdForPublicCode(bot.publicCode))}</div>
                 <div class="bot-card-info">
                     <div class="bot-card-name">${esc(bot.name)}</div>
                     ${bot.modelDetected ? `<div style="font-size:11px;color:var(--text-secondary);">\ud83e\udd16 ${esc(bot.modelDetected)}</div>` : ''}
@@ -1437,12 +1655,81 @@
         </div>`;
     }
 
-    function filterAndSort() { loadBots(); }
+    function filterAndSort() { syncFiltersToUrl(); updateResultPanel(); loadBots(); }
+
+    // card_f6b61c8: persist the active filters in the URL (history.replaceState)
+    // so a refresh / back-nav / shared link keeps the user's search+sort+rate
+    // instead of resetting to the default plaza. Only manages its own keys so
+    // unrelated params (embed/tour/bot/#rental) are preserved. Never throws.
+    function syncFiltersToUrl() {
+        try {
+            const p = new URLSearchParams(window.location.search);
+            searchQuery ? p.set('q', searchQuery) : p.delete('q');
+            (currentSort && currentSort !== 'newest') ? p.set('sort', currentSort) : p.delete('sort');
+            (rateMin > 1) ? p.set('rateMin', String(rateMin)) : p.delete('rateMin');
+            (rateMax < 50) ? p.set('rateMax', String(rateMax)) : p.delete('rateMax');
+            const qs = p.toString();
+            history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+        } catch (_) { /* URL sync must never break filtering */ }
+    }
+
+    // card_f6b61c8: on load, restore filters from the URL into state + inputs.
+    // Called before the initial loadBots() so the restored values drive the
+    // first render. Clamps/sanitizes everything; never throws.
+    function restoreFiltersFromUrl() {
+        try {
+            const p = new URLSearchParams(window.location.search);
+            const q = p.get('q');
+            if (q) {
+                searchQuery = q.slice(0, 100);
+                const si = document.getElementById('searchInput');
+                if (si) si.value = searchQuery;
+                const sc = document.getElementById('searchClear');
+                if (sc && searchQuery) sc.classList.add('visible');
+            }
+            const sort = p.get('sort');
+            if (sort) {
+                currentSort = sort;
+                const ss = document.getElementById('sortSelect');
+                if (ss) ss.value = sort;
+            }
+            const rmin = parseInt(p.get('rateMin') || '', 10);
+            const rmax = parseInt(p.get('rateMax') || '', 10);
+            if (!isNaN(rmin)) { rateMin = Math.min(Math.max(rmin, 1), 50); const e = document.getElementById('rateMin'); if (e) e.value = String(rateMin); }
+            if (!isNaN(rmax)) { rateMax = Math.min(Math.max(rmax, 1), 50); const e = document.getElementById('rateMax'); if (e) e.value = String(rateMax); }
+            if (rateMin > rateMax) { const t = rateMin; rateMin = rateMax; rateMax = t; }
+            if (rateMin > 1 || rateMax < 50) {
+                const rv = document.getElementById('rateSliderValue');
+                if (rv) rv.textContent = rateMin + ' – ' + rateMax + ' e幣/1K';
+            }
+        } catch (_) { /* bad URL params must never block the page */ }
+    }
 
     /* ══════ Interactions ══════ */
     function setFilter(f, el) { currentFilter = f; document.querySelectorAll('.plaza-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); filterAndSort(); }
     function handleSort() { currentSort = document.getElementById('sortSelect').value; filterAndSort(); }
     function clearSearch() { document.getElementById('searchInput').value=''; searchQuery=''; document.getElementById('searchClear').classList.remove('visible'); filterAndSort(); }
+    function clearAllFilters() {
+        const searchInput = document.getElementById('searchInput');
+        const searchClear = document.getElementById('searchClear');
+        const rateMinEl = document.getElementById('rateMin');
+        const rateMaxEl = document.getElementById('rateMax');
+        const allChip = document.querySelector('.plaza-chip[data-filter="all"]');
+        if (searchInput) searchInput.value = '';
+        if (searchClear) searchClear.classList.remove('visible');
+        if (rateMinEl) rateMinEl.value = '1';
+        if (rateMaxEl) rateMaxEl.value = '50';
+        document.querySelectorAll('.plaza-chip').forEach(c => c.classList.remove('active'));
+        if (allChip) allChip.classList.add('active');
+        document.querySelectorAll('.cap-filter-chip').forEach(c => c.classList.remove('active'));
+        searchQuery = '';
+        currentFilter = 'all';
+        selectedCaps.clear();
+        rateMin = 1;
+        rateMax = 50;
+        document.getElementById('rateSliderValue').textContent = '1 \u2013 50 e\u5e63/1K';
+        filterAndSort();
+    }
     function setView(v, el) { document.querySelectorAll('.plaza-view-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); document.getElementById('botGrid').style.gridTemplateColumns = v==='list' ? '1fr' : ''; }
     function loadMoreBots() { document.getElementById('loadMore').style.display='none'; }
 
@@ -1494,9 +1781,9 @@
             }
 
             content.innerHTML = `
-                <button class="modal-close" onclick="closeDetail()">✕</button>
+                <button class="modal-close" aria-label="Close" onclick="closeDetail()">✕</button>
                 <div class="detail-header">
-                    <div class="detail-avatar">${botAvatarHtml(resolveBotAvatar(bot), 72)}</div>
+                    <div class="detail-avatar">${botAvatarHtml(resolveBotAvatar(bot), 72, entityIdForPublicCode(bot.publicCode))}</div>
                     <div class="detail-name">${esc(bot.name)}</div>
                     <div class="detail-code" onclick="navigator.clipboard.writeText('${bot.publicCode}')" title="Copy">${bot.publicCode}</div>
                     <div class="detail-desc">${esc(desc)}</div>
@@ -1623,7 +1910,13 @@
                 (l.owner_device_id && l.owner_device_id === (meData.user.deviceId || meData.user.device_id))
             ));
             _rentalWalletBalance = null;
-            if (meData?.user && !isSelfOwned) {
+            // meData.user.id is null for a device-only / globe-user session (no
+            // email account). /api/wallet/balance is account-scoped (walletRoute
+            // → 401 without a userId), so only fetch the balance estimate when a
+            // real account is signed in — otherwise the rental-detail modal logs
+            // a 401. The estimate just stays unset, which is the correct UX for a
+            // not-signed-in viewer. card_01417648.
+            if (meData?.user && meData.user.id && !isSelfOwned) {
                 apiFetch('/api/wallet/balance?deviceId=' + encodeURIComponent(meData.user.deviceId || meData.user.device_id))
                     .then(wb => { const w = wb.wallet || wb; _rentalWalletBalance = parseInt(w.balance_mli, 10) || 0; updateRentalEstimate(rateMli, depositEcoin); })
                     .catch(() => {});
@@ -1643,9 +1936,9 @@
                     : `<div style="margin:12px 20px 0;padding:12px;border-radius:12px;background:#f3f4f6;border:1px solid #d1d5db;color:#4b5563;font-size:13px;line-height:1.45;">⏸ ${ttt('listing_soft_paused_visitor_banner','This bot is temporarily unavailable while the owner fixes health checks. The page remains available, but renting is disabled for now.')}${softPauseEta ? `<div>${ttt('mp_est_total','Estimated')}: ${esc(softPauseEta)}</div>` : ''}</div>`)
                 : '';
             content.innerHTML = `
-                <button class="modal-close" onclick="closeDetail()">\u2715</button>
+                <button class="modal-close" aria-label="Close" onclick="closeDetail()">\u2715</button>
                 <div class="detail-header">
-                    <div class="detail-avatar">${botAvatarHtml(resolveBotAvatar({ petdxAvatarUrl: l.petdx_avatar_url, avatar: l.avatar_url }), 72)}</div>
+                    <div class="detail-avatar">${botAvatarHtml(resolveBotAvatar({ petdxAvatarUrl: l.petdx_avatar_url, avatar: l.avatar_url }), 72, l.owner_entity_id)}</div>
                     <div class="detail-name">${esc(l.title)}</div>
                     ${l.model_detected ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">\ud83e\udd16 ${esc(l.model_detected)}</div>` : ''}
                     <div class="detail-level-xp"><span style="color:#f59e0b;">${stars} (${l.total_rentals || 0} ${ttt('mp_d_rentals','rentals')})</span></div>
@@ -1849,6 +2142,12 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
     function checkModalScroll() { const mc = document.getElementById('detailContent'); if (mc && mc.scrollHeight > mc.clientHeight) mc.classList.add('has-scroll'); }
 
+    // card_f6b61c8: restore filters from the URL before the first render so a
+    // refreshed / shared filtered link returns with the same search+sort+rate.
+    restoreFiltersFromUrl();
+    const sortSelect = document.getElementById('sortSelect');
+    if (sortSelect) sortSelect.value = currentSort;
+
     // Apply i18n translations to static data-i18n elements
     if (typeof i18n !== 'undefined') i18n.apply();
 
@@ -1872,6 +2171,14 @@
         loadBots();
         autoFocusBotFromQuery();
     }
+
+    // Wire the AvatarPetdx companion system (parity with chat / dashboard /
+    // marketplace / mission / files / card-holder). For the viewer's own
+    // bound entities that surface in the plaza, this resolves the live
+    // companion descriptor and animates a <canvas> placeholder via
+    // autoMount(). Cross-device rows keep the petdxAvatarUrl frame-0 crop
+    // path. Non-blocking and idempotent — safe to fire alongside loadBots().
+    preloadOwnEntityAvatars();
 
     // Load invite code non-blocking (hides banner if unauthenticated)
     loadInviteCode();

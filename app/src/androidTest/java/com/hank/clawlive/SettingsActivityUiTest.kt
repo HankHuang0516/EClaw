@@ -67,6 +67,54 @@ class SettingsActivityUiTest {
         }
     }
 
+    /**
+     * Stage-2 manifest auto-sync: the settings screen must inflate and stay usable
+     * regardless of the manifest fetch. The dynamic-rows container exists and — until
+     * the async fetch populates it — is hidden (View.GONE). This is the graceful
+     * failure-fallback contract: an offline / failed / empty manifest leaves the static
+     * settings screen exactly as-is (container hidden), never blank, never crashing.
+     */
+    @Test
+    fun testManifestExtraContainerExistsAndDefaultsHidden() {
+        ActivityScenario.launch(SettingsActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val container = activity.findViewById<View>(R.id.settingsManifestExtraContainer)
+                assertNotNull("Manifest extra-rows container should exist in the layout", container)
+                // Before any rows are rendered (no network in instrumentation), the
+                // container is GONE so the static screen is unchanged.
+                assertEquals(
+                    "Manifest extra container should be hidden until rows are planned",
+                    View.GONE,
+                    container.visibility
+                )
+                // The static screen itself must still be present and functional.
+                assertNotNull("Subscription card should still render", activity.findViewById<View>(R.id.cardSubscription))
+            }
+        }
+    }
+
+    @Test
+    fun testWallpaperEntryIsSingleSettingsSurface() {
+        ActivityScenario.launch(SettingsActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val setWallpaperButton = activity.findViewById<View>(R.id.btnSetWallpaper)
+                assertNotNull("Settings should keep the wallpaper entry point", setWallpaperButton)
+                assertTrue("Wallpaper entry point should remain clickable", setWallpaperButton.isClickable)
+
+                assertEquals(
+                    "Settings should not expose a duplicate wallpaper walking switch",
+                    0,
+                    activity.resources.getIdentifier("switchWallpaperWalking", "id", activity.packageName)
+                )
+                assertEquals(
+                    "Settings should not expose duplicate wallpaper walking help",
+                    0,
+                    activity.resources.getIdentifier("btnWallpaperWalkingHelp", "id", activity.packageName)
+                )
+            }
+        }
+    }
+
     @Test
     fun testSafeInsetsAppliedCorrectly() {
         ActivityScenario.launch(SettingsActivity::class.java).use { scenario ->

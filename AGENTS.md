@@ -20,8 +20,8 @@ These overrides are mandatory for Codex in this repo:
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.1121.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
-- **Android app version**: 1.0.79 (versionCode 85); `LATEST_APP_VERSION` constant in `backend/index.js`
+- **Current version**: 1.1185.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Android app version**: 1.0.93 (versionCode 101); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
 ---
@@ -381,6 +381,8 @@ EClaw/
 - Real-time: Socket.IO via `SocketManager.kt`
 - Push: Firebase Cloud Messaging (`ClawFcmService.kt`)
 - Live Wallpaper: Custom `ClawRenderer` engine
+- Live Wallpaper companion animation: `WallpaperWanderController` owns walking positions/state, `SpeechBubbleController` owns message bubble TTL/anchor/fade math, and `WallpaperRenderDiagnostics` owns in-memory render self-adjustment counters. Keep these pure/testable and do not store message text, secrets, device IDs, or asset URLs in diagnostics.
+- Android emulator validation for wallpaper/companion/admin-sensitive flows must first log in with the user's admin account through a secure local source (for example Keychain or instrumentation args). Never print or commit the password/device secret. After login, run the relevant `connectedDebugAndroidTest` probes against the emulator and state that the emulator was admin-authenticated.
 - Billing: Google Play Billing (`BillingManager.kt`)
 - AI Chat: `AiChatViewModel.kt` manages state (fixes message loss, typing race condition)
 - Bottom nav: FILES tab renamed to CARDS (Card Holder); Files link moved to Settings
@@ -435,6 +437,7 @@ EClaw/
    |-----|----------|---------|--------|
    | Interview start fails with owner_device_not_found | `GET /api/rental/debug/interview-start-fail?deviceId=X&deviceSecret=Y` | 2026-04-12 | Active |
 | Rental contract start returns internal_error during rent/borrow E2E (#2283) | `GET /api/rental/debug/contract-start-fail?deviceId=X&deviceSecret=Y&listingId=Y&renterDeviceId=Z&durationMinutes=30` | 2026-05-01 | Active |
+   | Android App Links domain verification fails for eclawbot.com | `GET /api/debug/android-app-links?deviceId=X&deviceSecret=Y` | 2026-06-19 | Active |
    | Chat first render delayed by cross-device label resolution | `GET /api/debug/chat-render-load-order?deviceId=X&deviceSecret=Y` | 2026-05-01 | Active |
    | Kanban nudges ignored by Codex channel bridge | `GET /api/mission/debug/kanban-codex-nudge?deviceId=X&deviceSecret=Y` | 2026-05-01 | Active |
    | Info public pages: roadmap redirects unauthenticated visitors + release notes show raw Markdown links | `GET /api/debug/info-public-pages?deviceId=X&deviceSecret=Y` | 2026-05-04 | Active |
@@ -556,10 +559,23 @@ EClaw/
 
 ## Git Workflow
 
-- **PR then merge**: When work is complete, push the feature branch, create a PR via GitHub API, then merge it to `main` yourself (squash merge). After merging, check that the CI actions on `main` have not failed.
-- **Workflow**: develop on feature branch → push → create PR → merge PR → **check CI status on main** → **verify production**
-- 工作完成後 push feature branch、建立 PR、自行 merge 到 main，然後確認 main 的 CI actions 沒有 failed。
+- **PR then review**: When work is complete, push the feature branch and create a PR via GitHub API. Codex must not merge to `main` unless the user explicitly authorizes that exact merge in the current thread.
+- **Workflow**: develop on feature branch → push → create PR → **wait for PR CI to pass** → #2/user review → approved merge → **check CI status on main** → **verify production**
+- 工作完成後 push feature branch、建立 PR，交由使用者或 #2 review/merge；Codex 不可自行 merge 到 main，除非本 thread 明確要求。
 - Codex 會在 git push 之前審查你的代碼
+
+### ⚠️ Merge Gate — CI Must Pass Before Merge (MANDATORY)
+
+**任務未結束，直到以下三步全部完成，或清楚回報目前停在 review / merge / deploy 的哪一階段：**
+
+1. **PR CI 全綠** — 用 GitHub check runs 確認所有 check runs 的 `conclusion` 都是 `success`（或 `skipped`）。若有失敗立即修復，不可繞過。
+2. **Approved merge 進 main** — 只有使用者或 #2 明確核准後才可 merge。Draft PR 必須先轉 ready；Codex 不可自行 merge，除非使用者在目前 thread 明確要求。
+3. **確認 main CI 也綠** — merge 後確認最新一次 main workflow run 沒有 failure，並完成 production verification。
+
+**絕對不可以：**
+- 在 CI 還在跑（`in_progress` / `queued`）時就 merge
+- 留著 draft PR 不說明 review/merge 狀態就結束任務
+- 把舊的同類 PR 堆積不關閉 — 同一功能只能有 1 個 open PR，建新 PR 前先關閉舊的
 
 ### ⚠️ Code Review Checklist (MANDATORY — applies to every PR)
 
@@ -1134,6 +1150,14 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | R2 Files | `node backend/tests/test-r2-files.js` | Device ID + Secret | R2 file storage CRUD validation |
 | R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
 | Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
+
+### Android Instrumentation Tests
+
+| Test | Command | Credentials | Description |
+|------|---------|-------------|-------------|
+| Admin emulator login probe | `ANDROID_HOME="$HOME/Library/Android/sdk" ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.hank.clawlive.AdminAccountLoginProbeTest -Pandroid.testInstrumentationRunnerArguments.adminEmail="$ADMIN_EMAIL" -Pandroid.testInstrumentationRunnerArguments.adminPassword="$ADMIN_PASSWORD"` | Admin email/password from secure local source; never print values | Live probe: logs the emulator app into the admin account, stores returned device credentials, and verifies admin/developer role before wallpaper validation |
+| Wallpaper advanced settings/offline cache | `ANDROID_HOME="$HOME/Library/Android/sdk" ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.hank.clawlive.WallpaperOfflineEntityCacheTest,com.hank.clawlive.WallpaperMoreSettingsUiTest,com.hank.clawlive.WallpaperPreviewUiTest#testMoreWallpaperSettingsButtonIsClickable` | Emulator already logged into admin account for end-to-end wallpaper work; no credentials for pure cache/UI cases | Regression: advanced wallpaper switches default on and persist, more-settings entry remains visible/clickable, offline entity cache strips secrets/messages, and spritesheet disk cache survives memory loss |
+| Wallpaper animation visual probes | `ANDROID_HOME="$HOME/Library/Android/sdk" ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.hank.clawlive.WallpaperAnimationVisualProbeTest` | Emulator already logged into admin account | Visual regression: message bubbles, aura, shadow, overlay avoidance, and rendered hit-target alignment remain active with the new default-on controls |
 
 ### Jest Unit Tests (CI-run, `npm test`, 116 files)
 

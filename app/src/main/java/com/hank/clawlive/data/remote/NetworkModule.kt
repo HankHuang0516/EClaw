@@ -6,6 +6,8 @@ import com.google.gson.JsonDeserializer
 import com.google.gson.reflect.TypeToken
 import com.hank.clawlive.BuildConfig
 import com.hank.clawlive.data.model.AgentCardCapability
+import com.hank.clawlive.data.model.CharacterState
+import com.hank.clawlive.data.model.CharacterStateJsonAdapter
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -88,6 +90,7 @@ object NetworkModule {
 
     private val gson = GsonBuilder()
         .registerTypeAdapter(AgentCardCapability::class.java, agentCardCapabilityDeserializer)
+        .registerTypeAdapter(CharacterState::class.java, CharacterStateJsonAdapter())
         .create()
 
     private val retrofit = Retrofit.Builder()

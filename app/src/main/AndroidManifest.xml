@@ -50,7 +50,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTask">
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -118,6 +118,12 @@
             android:exported="false"
             android:label="Wallpaper Preview"
             android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".WallpaperMoreSettingsActivity"
+            android:exported="false"
+            android:label="@string/wallpaper_more_settings"
+            android:parentActivityName=".WallpaperPreviewActivity" />
 
         <activity
             android:name=".ChatActivity"

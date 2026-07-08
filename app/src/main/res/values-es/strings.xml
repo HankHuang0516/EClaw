@@ -307,6 +307,9 @@ Tus comentarios enviados aparecerán aquí.</string>
     <string name="chat_load_image_failed">Error al cargar imagen</string>
     <string name="wallpaper_no_bound_entities">Sin entidades vinculadas</string>
     <string name="claw_renderer_loading_entities">Cargando entidades…</string>
+    <string name="claw_renderer_loading_wallpaper">Cargando fondo de pantalla…</string>
+    <string name="claw_wallpaper_loading_marker">Cargando… (%1$s)</string>
+    <string name="claw_wallpaper_render_error">Error al redibujar el fondo (reportado)</string>
     <string name="claw_renderer_no_entities_connected">No hay entidades conectadas</string>
     <string name="claw_renderer_open_app_to_bind">Abre la app E-Claw para vincular</string>
     <string name="claw_renderer_with_openclaw_bot">entidades con el bot OpenClaw</string>
@@ -763,6 +766,10 @@ Tu suscripción permanece activa y puedes reenlazar en cualquier momento (sujeto
     <string name="update_later">Más Tarde</string>
     <string name="update_message">Una nueva versión (v%s) está disponible. ¡Actualiza para la mejor experiencia!</string>
     <string name="update_now">Actualizar Ahora</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">Acerca de esta actualización</string>
+    <string name="update_help_body">Tu versión %1$s → última %2$s. Toca «Actualizar Ahora» para actualizar dentro de la app (unos 30 segundos, sin salir). Si la actualización en la app no está disponible, se abrirá Play Store.</string>
+    <string name="update_store_unavailable">No se pudo abrir la tienda para actualizar. Actualiza desde Google Play.</string>
     <string name="update_title">Actualización Disponible</string>
     <string name="upload">Subir</string>
     <string name="upload_error">Error al subir</string>

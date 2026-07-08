@@ -132,7 +132,11 @@ describe('POST /api/transform — self-save phantom-row regression (#2282)', () 
             entityId: 2,
             botSecret: botSecret2,
             state: 'IDLE',
-            message: `${tag} @#1 hello`,
+            // card_2ee0afbb defect 2: /api/transform now auto-promotes an
+            // in-text @-mention to speakTo only when it is the FIRST token
+            // (parity with /api/channel). Lead with @#1 so this phantom-row
+            // regression keeps exercising the real-delivery path it targets.
+            message: `@#1 ${tag} hello`,
         });
 
         expect(res.status).toBe(200);

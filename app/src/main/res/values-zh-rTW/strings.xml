@@ -295,6 +295,9 @@
     <string name="chat_load_image_failed">載入圖片失敗</string>
     <string name="wallpaper_no_bound_entities">無已綁定實體</string>
     <string name="claw_renderer_loading_entities">載入實體中…</string>
+    <string name="claw_renderer_loading_wallpaper">載入桌布中…</string>
+    <string name="claw_wallpaper_loading_marker">載入中… (%1$s)</string>
+    <string name="claw_wallpaper_render_error">桌布重繪錯誤，已回報</string>
     <string name="claw_renderer_no_entities_connected">無已連接實體</string>
     <string name="claw_renderer_open_app_to_bind">開啟 E-Claw 應用綁定</string>
     <string name="claw_renderer_with_openclaw_bot">OpenClaw 機器的實體</string>
@@ -692,6 +695,27 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="settings_my_rentals">我的租借</string>
     <string name="settings_invite">邀請好友</string>
     <string name="settings_delete_account">刪除帳戶</string>
+    <!-- 設定自動同步（manifest 第二階段） -->
+    <string name="settings_more_section_title">更多設定</string>
+    <string name="settings_open_on_web">在網頁開啟</string>
+    <string name="settings_feature_help_title">關於此設定</string>
+    <string name="settings_feature_web_help">此設定會在網頁檢視中開啟，因為此 App 版本尚未內建原生畫面。更新 App 即可取得原生畫面，或現在直接在網頁中使用。</string>
+    <string name="settings_feature_gated_help">此設定的原生版本需要較新的 App 版本。更新 App 即可取得原生畫面，或現在直接在網頁中開啟。</string>
+    <string name="settings_feature_gated_badge">更新 App 以使用原生版</string>
+    <!-- 設定第三階段原生：更換密鑰 + 切換裝置 (card_c3b13f64) -->
+    <string name="settings_rotate_device_secret">更換裝置密鑰</string>
+    <string name="settings_rotate_device_secret_hint">若目前的裝置密鑰已外洩，可重新產生一組新密鑰。其他工作階段需使用新密鑰才能登入。</string>
+    <string name="settings_rotate_secret_confirm_title">確定要更換裝置密鑰？</string>
+    <string name="settings_rotate_secret_confirm_btn">更換</string>
+    <string name="settings_rotate_secret_success">裝置密鑰已更換，新密鑰已儲存於此裝置。</string>
+    <string name="settings_rotate_secret_failed">無法更換裝置密鑰，請再試一次。</string>
+    <string name="settings_switch_device">切換裝置</string>
+    <string name="settings_switch_device_confirm">切換</string>
+    <string name="settings_switch_device_hint">將此 App 登入到另一個裝置 ID。若您有第二個擁有自己實體的管理員帳號，此功能很有用。</string>
+    <string name="settings_device_id">裝置 ID</string>
+    <string name="settings_device_secret">裝置密鑰</string>
+    <string name="settings_switch_device_success_title">已切換裝置</string>
+    <string name="settings_switch_device_success_msg">目前登入身分：%s\nApp 將重新啟動以載入此裝置。</string>
     <string name="show_label">顯示</string>
     <string name="sign_in_facebook">使用 Facebook 登入</string>
     <string name="sign_in_google">使用 Google 登入</string>
@@ -761,6 +785,10 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="update_later">稍後再說</string>
     <string name="update_message">新版本 (v%s) 已推出，立即更新以獲得最佳體驗！</string>
     <string name="update_now">立即更新</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">關於此更新</string>
+    <string name="update_help_body">你的版本 %1$s → 最新 %2$s。點「立即更新」直接在 App 內更新（約 30 秒，不用離開 App）。若無法在 App 內更新，將改為開啟 Play 商店。</string>
+    <string name="update_store_unavailable">無法開啟商店進行更新，請改到 Google Play 更新。</string>
     <string name="update_title">有新版本可用</string>
     <string name="upload">上傳</string>
     <string name="upload_error">上傳失敗</string>
@@ -780,7 +808,19 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="wallpaper_usage_engine_claude">Claude</string>
     <string name="wallpaper_usage_engine_codex">Codex</string>
     <string name="wallpaper_usage_items">顯示項目</string>
+    <string name="wallpaper_walking_title">行走功能</string>
+    <string name="wallpaper_walking_settings_desc">讓桌布實體會走動;搭配「有意識地走路」可選擇只在聊天時移動或自由漫遊。</string>
+    <string name="wallpaper_walking_help_button">關於桌布行走功能</string>
+    <string name="wallpaper_walking_help">說明：這是桌布走動的總開關。當「有意識地走路」開啟(預設)時，實體平時待在各自原位，只有 speak-to、@all 或 broadcast 聊天事件發生時才移動;sender 與 receiver 會保持一個實體單位間距聚集到中間，訊息泡泡 TTL 結束後回到原位。當「有意識地走路」關閉時，實體會一直自由走動，每隔幾秒做一個隨機目標動作(拜訪同伴、巡邏、回到活動區)。\n\n需要：已開啟即時桌布、至少一個已綁定實體、方向性走路動畫可用。\n\n測試：關閉「有意識地走路」觀察實體自由漫遊;或保持開啟並傳送 speak-to/broadcast 觀察聚集後回家。</string>
+    <string name="wallpaper_custom_layout_help_button">關於自訂佈局</string>
+    <string name="wallpaper_custom_layout_help">可拖曳實體並保存桌布原位；有意識地走路與看板任務物件都會以這些原位作為來源。</string>
+    <string name="wallpaper_background_help_button">關於自訂背景</string>
+    <string name="wallpaper_background_help">使用你選取的本機照片作為即時桌布背景；App 會保留讀取權限，重啟後仍能還原背景。</string>
+    <string name="wallpaper_walking_enabled">行走功能已開啟</string>
+    <string name="wallpaper_walking_disabled">行走功能已關閉</string>
     <string name="wallpaper_usage_overlay">用量顯示</string>
+    <string name="wallpaper_usage_overlay_help_button">關於用量顯示</string>
+    <string name="wallpaper_usage_overlay_help">在桌布上顯示最新 Claude/Codex 用量快照；下方顯示項目與時間窗勾選框控制哪些用量計數可見。</string>
     <string name="wallpaper_usage_overlay_syncing">用量同步中...</string>
     <string name="wallpaper_usage_overlay_title">用量</string>
     <string name="wallpaper_usage_position">位置</string>
@@ -804,12 +844,63 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="wallpaper_settings_expand_action">展開設定面板</string>
     <string name="wallpaper_settings_collapse_caret_down">▼</string>
     <string name="wallpaper_settings_collapse_caret_up">▲</string>
+    <string name="wallpaper_more_settings">更多桌布設定</string>
+    <string name="wallpaper_more_settings_desc">進階桌布動畫與斷線行為。新的加強功能預設全部啟用。</string>
+    <string name="wallpaper_setting_speech_bubbles">訊息泡泡</string>
+    <string name="wallpaper_setting_speech_bubbles_desc">在夥伴旁顯示實體狀態與最近訊息。</string>
+    <string name="wallpaper_setting_bubble_duration">訊息泡泡停留時間</string>
+    <string name="wallpaper_setting_bubble_duration_desc">調整桌布泡泡存在時間，可從 1 秒到 10 分鐘；聊天聚集會在這個 TTL 結束後回到原位。</string>
+    <string name="wallpaper_setting_bubble_duration_value">%1$d 秒</string>
+    <string name="wallpaper_setting_bubble_duration_minutes_value">%1$d 分鐘</string>
+    <string name="wallpaper_setting_bubble_duration_minutes_seconds_value">%1$d 分 %2$d 秒</string>
+    <string name="wallpaper_setting_conscious_walking">有意識地走路</string>
+    <string name="wallpaper_setting_conscious_walking_desc">開啟：只有 speak-to、@all 與 broadcast 聊天事件會讓實體移動；sender 與 receiver 會保持一個實體單位間距聚集到中間，泡泡 TTL 結束後回到各自原位。關閉：實體會自由漫遊，並做拜訪同伴、巡邏等目標動作。</string>
+    <string name="wallpaper_setting_entity_interactions">實體互動</string>
+    <string name="wallpaper_setting_entity_interactions_desc">夥伴碰到彼此時會一起播放同一個隨機動作：揮手、跳躍、失敗或審視。</string>
+    <string name="wallpaper_setting_collision_duration">碰撞動作持續時間</string>
+    <string name="wallpaper_setting_collision_duration_desc">控制碰撞後共同動畫的持續時間，可從 1 到 20 秒。</string>
+    <string name="wallpaper_setting_bubble_pulse">泡泡脈衝</string>
+    <string name="wallpaper_setting_bubble_pulse_desc">泡泡內容更新時短暫高亮夥伴。</string>
+    <string name="wallpaper_setting_bubble_avoidance">智慧泡泡避讓</string>
+    <string name="wallpaper_setting_bubble_avoidance_desc">讓泡泡避開用量面板與狀態標籤。</string>
+    <string name="wallpaper_setting_state_aura">狀態光暈</string>
+    <string name="wallpaper_setting_state_aura_desc">用色彩光暈快速辨識夥伴狀態。</string>
+    <string name="wallpaper_setting_ground_shadow">地面陰影</string>
+    <string name="wallpaper_setting_ground_shadow_desc">在夥伴下方繪製深度，讓走動更穩定。</string>
+    <string name="wallpaper_setting_adaptive_effects">自適應特效</string>
+    <string name="wallpaper_setting_adaptive_effects_desc">渲染不穩時自動降低昂貴特效。</string>
+    <string name="wallpaper_setting_offline_cache">斷線外觀快取</string>
+    <string name="wallpaper_setting_offline_cache_desc">網路中斷時保留最後一次真實夥伴外觀，不退回預設外觀。</string>
+    <string name="wallpaper_setting_kanban_tasks">看板任務物件</string>
+    <string name="wallpaper_setting_kanban_tasks_desc">將指派中的看板任務以真正的桌面物件顯示在對應實體原位附近；done 與 archived 只播放完成/移除動畫後消失。</string>
+    <string name="wallpaper_setting_kanban_object_style">任務物件樣式</string>
+    <string name="wallpaper_setting_kanban_object_style_desc">選擇桌布上任務要呈現成哪種物件。智慧混合是唯一會依看板狀態自動切換物件類型的模式。</string>
+    <string name="wallpaper_kanban_object_style_smart_mix">智慧混合</string>
+    <string name="wallpaper_kanban_object_style_folder">資料夾</string>
+    <string name="wallpaper_kanban_object_style_book_notebook">書本 / 筆記本</string>
+    <string name="wallpaper_kanban_object_style_clipboard">剪貼板</string>
+    <string name="wallpaper_kanban_object_style_storage_box">紙箱 / 收納盒</string>
+    <string name="wallpaper_kanban_object_style_sticky_card">便利貼 / 卡片</string>
+    <string name="wallpaper_setting_kanban_automation_board">自動化白板</string>
+    <string name="wallpaper_setting_kanban_automation_board_desc">將自動化卡片顯示在對應實體上方的底層白板，依下一次觸發時間由近到遠排序。</string>
+    <string name="wallpaper_setting_kanban_asset_whiteboard">素材白板</string>
+    <string name="wallpaper_setting_kanban_asset_whiteboard_desc">使用 bundled 白板素材與實體支架；即使白板為了避免碰撞而微調，也會維持對應到被指派的實體。</string>
+    <string name="wallpaper_setting_kanban_handwritten_board_text">白板手寫字體</string>
+    <string name="wallpaper_setting_kanban_handwritten_board_text_desc">自動化白板文字使用 bundled Caveat 手寫字體。隱私模式仍會隱藏任務名稱與排程細節。</string>
+    <string name="wallpaper_setting_kanban_privacy">看板隱私模式</string>
+    <string name="wallpaper_setting_kanban_privacy_desc">隱藏桌布上的任務名稱與敏感排程細節；資料夾狀態與動畫仍會顯示。</string>
+    <string name="wallpaper_setting_help_content_description">%1$s 詳情</string>
     <string name="web_portal">網頁入口</string>
     <string name="webhook_error_message">請將以下訊息貼給OpenClaw：\"webhook綁定有錯誤或是沒有使用POST /api/bot/register，請重新讀取\'公開webhook URL\'(gateway config) 以及重新讀取\'gateway token\'，立即呼叫 /api/bot/register: 用剛綁到的 deviceId/entityId/botSecret 再帶上 webhook_url、gateway token 把推播註冊好。\"</string>
     <string name="webhook_error_title">推播通知失敗</string>
     <string name="webhook_test_success">Webhook 測試通過！Bot 已就緒~</string>
     <string name="webhook_testing">正在測試 Webhook 連線，好了會通知你，先別傳訊息喔~</string>
     <string name="widget_chat_hint">點擊與角色聊天...</string>
+    <plurals name="widget_needyou_pending">
+        <item quantity="one">需要你 待處理 %d</item>
+        <item quantity="other">需要你 待處理 %d</item>
+    </plurals>
+    <string name="widget_needyou_badge_content_description">需要你待處理數量</string>
     <string name="xd_allowed_media">允許的媒體類型</string>
     <string name="xd_blacklist">黑名單（公開代碼）</string>
     <string name="xd_codes_sep">以逗號分隔的公開代碼</string>
@@ -890,4 +981,10 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="webview_title_eclawbot_portal">EClawbot 入口網站</string>
     <!-- Health-checking status shown on entity avatar while passive health-check runs -->
     <string name="health_checking">健檢中</string>
+
+    <!-- Native WebView reconnect-overlay banner (card_323b95f2 / parent card_93d56b5d).
+         Shown when the WebView main frame fails to load due to transient transport
+         errors (ERR_INTERNET_DISCONNECTED etc.). Web layer counterpart shipped in PR #3618. -->
+    <string name="reconnect_banner_title">重新連線中…</string>
+    <string name="reconnect_banner_subtitle">連線恢復後自動繼續，不需重新登入</string>
 </resources>

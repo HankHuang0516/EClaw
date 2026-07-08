@@ -135,6 +135,52 @@
         .filter-chip:hover { border-color: var(--primary); color: var(--text); }
         .filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
+        .cardholder-result-panel {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            margin: -4px 0 14px;
+            background: rgba(var(--primary-rgb), 0.08);
+            border: 1px solid rgba(var(--primary-rgb), 0.18);
+            border-radius: 8px;
+        }
+
+        .cardholder-result-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+
+        .cardholder-result-copy strong {
+            font-size: 13px;
+            color: var(--text);
+        }
+
+        .cardholder-result-copy span {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .cardholder-clear-btn {
+            flex-shrink: 0;
+            padding: 6px 10px;
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            background: var(--card);
+            color: var(--text);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .cardholder-clear-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
         /* ── Friend badge ── */
         .friend-badge { display:inline-block; font-size:11px; background:#4caf50; color:#fff; padding:1px 6px; border-radius:10px; margin-left:6px; vertical-align:middle; }
         .req-badge { display:inline-block; font-size:10px; background:#f44336; color:#fff; padding:0 5px; border-radius:8px; min-width:14px; text-align:center; margin-left:4px; vertical-align:middle; }
@@ -607,6 +653,13 @@
 
         @media (max-width: 600px) {
             .search-bar input { width: 120px; }
+            .cardholder-result-panel {
+                align-items: stretch;
+                flex-direction: column;
+            }
+            .cardholder-clear-btn {
+                width: 100%;
+            }
         }
         /* ── Share modal ── */
         .share-modal-content { padding: 20px; max-width: 380px; }
@@ -661,7 +714,7 @@
             <div class="header-actions">
                 <div class="search-bar">
                     <span>&#x1F50D;</span>
-                    <input type="text" id="searchInput" placeholder="Search cards..." data-i18n-placeholder="cardholder_search">
+                    <input type="text" id="searchInput" placeholder="Search cards..." data-i18n-placeholder="cardholder_search" aria-label="Search cards">
                 </div>
             </div>
         </div>
@@ -672,6 +725,14 @@
             <span class="filter-chip" data-filter="friends" onclick="setFilter('friends')" data-i18n="cardholder_filter_friends">Friends</span>
             <span class="filter-chip" data-filter="pinned" onclick="setFilter('pinned')" data-i18n="cardholder_filter_pinned">Pinned</span>
             <span class="filter-chip" data-filter="requests" onclick="setFilter('requests')" data-i18n="cardholder_filter_requests">Requests <span id="requestBadge" class="req-badge" style="display:none">0</span></span>
+        </div>
+
+        <div class="cardholder-result-panel" id="cardholderResultPanel" aria-live="polite">
+            <div class="cardholder-result-copy">
+                <strong id="cardholderResultTitle">Loading cards...</strong>
+                <span id="cardholderResultMeta">Syncing Card Holder sections.</span>
+            </div>
+            <button type="button" class="cardholder-clear-btn" id="cardholderClearBtn" onclick="clearCardholderView()" hidden>Clear</button>
         </div>
 
         <!-- Main scrollable content (3 sections) -->
@@ -757,6 +818,8 @@
         let isSearching = false;
         let searchSaved = [];
         let searchExternal = [];
+        let activeSearchQuery = '';
+        let searchRequestSeq = 0;
         let searchDebounce = null;
 
         // ── Init ──
@@ -785,21 +848,37 @@
         // ── Data loading ──
         async function loadAllData() {
             await Promise.all([loadMyCards(), loadRecent(), loadCollected(), loadFriendRequests()]);
-            // Preload petdx companion descriptors for my own cards so the
-            // avatar canvases mount on first paint. Other-bot cards don't
-            // have a local entityId, so they keep the legacy emoji/img path.
+
+            // Render the cards NOW. Card rendering must NEVER be gated behind
+            // avatar preload (card_415faf19): a single entity whose
+            // /api/companion/current hangs would leave the un-guarded
+            // `await preload()` pending forever → rebuildContent() never runs →
+            // the page sticks on "Loading cards…". This was reproducible on the
+            // admin account (many entities) while ordinary accounts loaded fine.
+            rebuildContent();
+
+            // Progressive avatar enhancement — best-effort, must never block or
+            // throw up the page. Bounded by a timeout so a hung companion fetch
+            // can't stall the mount; autoMount runs after rebuildContent has
+            // created the canvas placeholders.
             if (window.AvatarPetdx && currentUser && currentUser.deviceSecret) {
                 const myEntityIds = myCards.map(c => c.entityId).filter(Boolean);
                 if (myEntityIds.length) {
-                    await window.AvatarPetdx.preload({
-                        deviceId: currentUser.deviceId,
-                        deviceSecret: currentUser.deviceSecret,
-                        entityIds: myEntityIds
-                    });
-                    window.AvatarPetdx.autoMount();
+                    try {
+                        await Promise.race([
+                            window.AvatarPetdx.preload({
+                                deviceId: currentUser.deviceId,
+                                deviceSecret: currentUser.deviceSecret,
+                                entityIds: myEntityIds
+                            }),
+                            new Promise(resolve => setTimeout(resolve, 8000)),
+                        ]);
+                        window.AvatarPetdx.autoMount();
+                    } catch (err) {
+                        console.warn('[card-holder] avatar preload/mount failed (non-fatal):', err && err.message);
+                    }
                 }
             }
-            rebuildContent();
         }
 
         async function loadFriendRequests() {
@@ -875,6 +954,7 @@
                 document.getElementById('mainContent').style.display = 'none';
                 document.getElementById('searchResults').style.display = '';
                 renderSearchResults();
+                updateCardholderSummary();
                 return;
             }
 
@@ -893,6 +973,7 @@
                     html += `<div class="empty-state"><div class="empty-state-icon">\u{1F4EC}</div><div class="empty-state-text">${t('cardholder_no_requests', 'No pending friend requests')}</div></div>`;
                 }
                 container.innerHTML = html;
+                updateCardholderSummary();
                 return;
             }
 
@@ -926,6 +1007,107 @@
             }
 
             container.innerHTML = html;
+            updateCardholderSummary();
+        }
+
+        function formatTemplate(template, values) {
+            return Object.keys(values).reduce((text, key) => {
+                return text.split(`{${key}}`).join(String(values[key]));
+            }, template);
+        }
+
+        function formatCount(count, oneKey, oneFallback, manyKey, manyFallback, values = {}) {
+            const template = t(count === 1 ? oneKey : manyKey, count === 1 ? oneFallback : manyFallback);
+            return formatTemplate(template, { count, ...values });
+        }
+
+        function getFilterLabel(filter) {
+            const labels = {
+                all: t('cardholder_filter_all', 'All'),
+                friends: t('cardholder_filter_friends', 'Friends'),
+                pinned: t('cardholder_filter_pinned', 'Pinned'),
+                requests: t('cardholder_filter_requests', 'Requests')
+            };
+            return labels[filter] || filter;
+        }
+
+        function updateCardholderSummary() {
+            const title = document.getElementById('cardholderResultTitle');
+            const meta = document.getElementById('cardholderResultMeta');
+            const clear = document.getElementById('cardholderClearBtn');
+            if (!title || !meta || !clear) return;
+
+            if (isSearching) {
+                const total = searchSaved.length + searchExternal.length;
+                title.textContent = formatCount(
+                    total,
+                    'cardholder_search_result_one',
+                    '{count} result for "{query}"',
+                    'cardholder_search_result_many',
+                    '{count} results for "{query}"',
+                    { query: activeSearchQuery }
+                );
+                meta.textContent = formatTemplate(t('cardholder_search_meta', '{saved} saved, {external} online agents'), {
+                    saved: searchSaved.length,
+                    external: searchExternal.length
+                });
+                clear.hidden = false;
+                clear.textContent = t('common_clear', 'Clear');
+                clear.setAttribute('aria-label', t('cardholder_clear_search', 'Clear card search'));
+                return;
+            }
+
+            if (currentFilter === 'requests') {
+                title.textContent = formatCount(
+                    friendRequests.length,
+                    'cardholder_pending_request_one',
+                    '{count} pending friend request',
+                    'cardholder_pending_request_many',
+                    '{count} pending friend requests'
+                );
+                meta.textContent = t('cardholder_requests_hint', 'Review incoming requests without losing your saved cards.');
+                clear.hidden = currentFilter === 'all';
+                clear.textContent = t('common_clear', 'Clear');
+                clear.setAttribute('aria-label', t('cardholder_clear_filter', 'Clear Card Holder filter'));
+                return;
+            }
+
+            const filteredRecent = applyContactFilter(recentCards);
+            const filteredCollected = applyContactFilter(collectedCards);
+            const visibleTotal = myCards.length + filteredRecent.length + filteredCollected.length;
+            title.textContent = formatCount(
+                visibleTotal,
+                'cardholder_cards_shown_one',
+                '{count} card shown',
+                'cardholder_cards_shown_many',
+                '{count} cards shown'
+            );
+            meta.textContent = formatTemplate(t('cardholder_summary_meta', '{mine} mine, {recent} recent, {collected} collected'), {
+                mine: myCards.length,
+                recent: filteredRecent.length,
+                collected: filteredCollected.length
+            });
+            if (currentFilter !== 'all') {
+                meta.textContent = `${t('cardholder_active_filter', 'Filter')}: ${getFilterLabel(currentFilter)} · ${meta.textContent}`;
+            }
+            clear.hidden = currentFilter === 'all';
+            clear.textContent = t('common_clear', 'Clear');
+            clear.setAttribute('aria-label', t('cardholder_clear_filter', 'Clear Card Holder filter'));
+        }
+
+        function clearCardholderView() {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = '';
+            searchRequestSeq += 1;
+            isSearching = false;
+            activeSearchQuery = '';
+            searchSaved = [];
+            searchExternal = [];
+            if (currentFilter !== 'all') {
+                setFilter('all');
+                return;
+            }
+            rebuildContent();
         }
 
         // Petdx 夥伴 avatar resolution for CROSS-DEVICE contact rows (audit P3,
@@ -946,7 +1128,11 @@
 
         // ── My Card rendering ──
         function renderMyCardHtml(c) {
-            const avatar = c.avatar || '\u{1F99E}';
+            // card_55e811b8: prefer the same-origin petdx proxy URL (now enriched
+            // onto my-cards rows) so the real smart-partner sprite shows via the
+            // canvas/URL path; emoji is the last resort only when no companion
+            // exists — no more silent instant-fallback to a default glyph.
+            const avatar = c.petdxAvatarUrl || c.avatar || '\u{1F99E}';
             const ac = c.agentCard || {};
             let html = `<div class="card-item" onclick="showMyCardDetail('${escapeAttr(c.publicCode)}')">
                 <div class="card-row">
@@ -1046,6 +1232,8 @@
         document.getElementById('searchInput').addEventListener('input', function() {
             clearTimeout(searchDebounce);
             const query = this.value.trim();
+            activeSearchQuery = query;
+            const requestSeq = ++searchRequestSeq;
             if (!query) {
                 isSearching = false;
                 searchSaved = [];
@@ -1053,19 +1241,38 @@
                 rebuildContent();
                 return;
             }
-            if (query.length < 2) return;
-            searchDebounce = setTimeout(() => performSearch(query), 300);
+            if (query.length < 2) {
+                isSearching = false;
+                searchSaved = [];
+                searchExternal = [];
+                rebuildContent();
+                return;
+            }
+            searchDebounce = setTimeout(() => performSearch(query, requestSeq), 300);
         });
 
-        async function performSearch(query) {
+        function isLatestSearchQuery(query, requestSeq) {
+            return requestSeq === searchRequestSeq && activeSearchQuery === query && query.length >= 2;
+        }
+
+        async function performSearch(query, requestSeq) {
+            if (!isLatestSearchQuery(query, requestSeq)) return;
             try {
                 const data = await apiCall('GET', `/api/contacts/search?deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}&q=${encodeURIComponent(query)}`);
+                if (!isLatestSearchQuery(query, requestSeq)) return;
                 searchSaved = data.saved || data.cards || [];
                 searchExternal = data.external || [];
                 isSearching = true;
+                activeSearchQuery = query;
                 rebuildContent();
             } catch (err) {
                 console.error('Search error:', err);
+                if (!isLatestSearchQuery(query, requestSeq)) return;
+                isSearching = true;
+                activeSearchQuery = query;
+                searchSaved = [];
+                searchExternal = [];
+                rebuildContent();
             }
         }
 
@@ -1114,7 +1321,8 @@
             if (!card) return;
 
             const ac = card.agentCard || {};
-            const avatar = card.avatar || '\u{1F99E}';
+            // card_55e811b8: same as the list view — prefer the enriched proxy URL.
+            const avatar = card.petdxAvatarUrl || card.avatar || '\u{1F99E}';
 
             const content = document.getElementById('detailContent');
             content.innerHTML = `
@@ -1124,7 +1332,7 @@
                         <h3>${escapeHtml(card.name || card.publicCode)}</h3>
                         <span class="agent-code" onclick="copyCode('${escapeAttr(card.publicCode)}')">${escapeHtml(card.publicCode)}</span>
                     </div>
-                    <button class="modal-close" onclick="closeDetail()">&#x2715;</button>
+                    <button class="modal-close" onclick="closeDetail()" aria-label="${t('cardholder_close', 'Close')}">&#x2715;</button>
                 </div>
 
                 <div class="modal-section">
@@ -1232,7 +1440,7 @@
                         ${card.isFriend ? `<span class="friend-badge">${t('cardholder_friend', 'Friend')}</span>` : ''}
                         ${card.blocked ? `<span style="display:inline-block; margin-left:8px; font-size:12px; background:var(--danger); color:#fff; padding:1px 6px; border-radius:4px;">${t('cardholder_blocked_label', 'Blocked')}</span>` : ''}
                     </div>
-                    <button class="modal-close" onclick="closeDetail()">&#x2715;</button>
+                    <button class="modal-close" onclick="closeDetail()" aria-label="${t('cardholder_close', 'Close')}">&#x2715;</button>
                 </div>
 
                 <div class="modal-tabs">
@@ -1502,7 +1710,7 @@
         }
 
         async function toggleBlockFromList(publicCode, currentlyBlocked) {
-            if (!currentlyBlocked && !await showConfirm({ message: t('cardholder_block_confirm', 'Block this agent? They will not be able to send you messages.'), danger: true })) return;
+            if (!currentlyBlocked && !await showConfirm({ message: t('cardholder_block_confirm', 'Block this agent? They will not be able to send you messages.'), confirmText: t('common_block', 'Block'), danger: true, itemName: publicCode })) return;
             try {
                 await apiCall('PATCH', `/api/contacts/${publicCode}`, {
                     deviceId: currentUser.deviceId,
@@ -1541,7 +1749,7 @@
             const card = collectedCards.find(c => c.publicCode === publicCode);
             if (!card) return;
             const newBlocked = !card.blocked;
-            if (newBlocked && !await showConfirm({ message: t('cardholder_block_confirm', 'Block this agent?'), danger: true })) return;
+            if (newBlocked && !await showConfirm({ message: t('cardholder_block_confirm', 'Block this agent?'), confirmText: t('common_block', 'Block'), danger: true, itemName: card.name || card.publicCode })) return;
             try {
                 await apiCall('PATCH', `/api/contacts/${publicCode}`, {
                     deviceId: currentUser.deviceId,
@@ -1579,7 +1787,7 @@
         async function removeCard(publicCode) {
             const card = collectedCards.find(c => c.publicCode === publicCode);
             const name = card ? (card.name || card.publicCode) : publicCode;
-            if (!await showConfirm({ message: t('cardholder_remove_confirm', `Remove ${name} from card holder?`).replace('{name}', name), danger: true })) return;
+            if (!await showConfirm({ message: t('cardholder_remove_confirm', `Remove ${name} from card holder?`).replace('{name}', name), confirmText: t('common_remove', 'Remove'), danger: true, itemName: name })) return;
             try {
                 await apiCall('DELETE', '/api/contacts', {
                     deviceId: currentUser.deviceId,
@@ -1648,7 +1856,7 @@
         }
 
         async function unfriend(publicCode) {
-            if (!await showConfirm({ message: t('cardholder_unfriend_confirm', 'Remove this friend?'), danger: true })) return;
+            if (!await showConfirm({ message: t('cardholder_unfriend_confirm', 'Remove this friend?'), confirmText: t('common_remove', 'Remove'), danger: true, itemName: publicCode })) return;
             try {
                 await apiCall('DELETE', `/api/contacts/${publicCode}/unfriend`, {
                     deviceId: currentUser.deviceId,
@@ -1680,7 +1888,9 @@
         function escapeAttr(s) { return escapeHtml(s); }
 
         function t(key, fallback) {
-            return typeof i18n !== 'undefined' ? i18n.t(key) : fallback;
+            if (typeof i18n === 'undefined') return fallback;
+            const value = i18n.t(key);
+            return value && value !== key ? value : fallback;
         }
 
         function showToast(msg, type = 'success') {

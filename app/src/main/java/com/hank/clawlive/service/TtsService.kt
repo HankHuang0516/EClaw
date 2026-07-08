@@ -37,6 +37,7 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
 
     private var tts: TextToSpeech? = null
     private var ttsReady = false
+    private var isForeground = false
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val utteranceCounter = AtomicInteger(0)
 
@@ -44,12 +45,22 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
         super.onCreate()
         Timber.d("[TTS] Service created")
         createNotificationChannel()
-        startForeground(NOTIFICATION_ID, buildNotification("TTS 語音服務就緒"))
+        if (!ensureForeground()) return
         tts = TextToSpeech(this, this)
         observeTtsFlow()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // card_f9b2cc2d: a service launched via startForegroundService() MUST call
+        // startForeground() within the OS deadline (~5s) on EVERY start command —
+        // not just the first. If it doesn't, the system kills the WHOLE app process
+        // with RemoteServiceException$ForegroundServiceDidNotStartInTimeException,
+        // which takes the live-wallpaper engine (same process) down with it: the
+        // wallpaper goes pure-black and only relaunching the app recovers it.
+        // onCreate covers the first start; this covers sticky/redelivered restarts
+        // (app backgrounded / memory pressure) where onCreate does not re-run.
+        if (!ensureForeground()) return START_NOT_STICKY
+
         // Handle FCM fallback: when the app receives an FCM with category=tts,
         // it can start this service with extras
         intent?.getStringExtra("tts_text")?.let { text ->
@@ -59,7 +70,32 @@ class TtsService : Service(), TextToSpeech.OnInitListener {
             val entityName = intent.getStringExtra("tts_entity_name") ?: "Bot"
             speak(text, lang, speed, pitch, entityName)
         }
-        return START_STICKY
+        // START_NOT_STICKY: do NOT let the system auto-restart this FGS with a null
+        // intent — a sticky restart re-arms the startForeground() deadline and is the
+        // path that produced the DidNotStartInTime process-kill. It is recreated on
+        // the next app launch / TTS event, which is sufficient for voice playback.
+        return START_NOT_STICKY
+    }
+
+    /**
+     * Promote to foreground, fulfilling the startForegroundService() contract.
+     * Idempotent. Returns false (and stops the service) if the platform refuses
+     * the promotion (e.g. ForegroundServiceStartNotAllowedException when started
+     * background-restricted). Crucially it never lets a foreground-service
+     * exception propagate — an uncaught one would crash the process and kill the
+     * live wallpaper too. card_f9b2cc2d.
+     */
+    private fun ensureForeground(): Boolean {
+        if (isForeground) return true
+        return try {
+            startForeground(NOTIFICATION_ID, buildNotification("TTS 語音服務就緒"))
+            isForeground = true
+            true
+        } catch (e: Exception) {
+            Timber.e(e, "[TTS] startForeground failed (${e.javaClass.simpleName}); stopping service instead of crashing the process")
+            try { stopSelf() } catch (_: Exception) {}
+            false
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

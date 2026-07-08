@@ -589,6 +589,9 @@ Jika anda mempunyai sebarang soalan, sila hubungi kami melalui e-mel rasmi kami.
     <string name="chat_load_image_failed">Gagal memuat imej</string>
     <string name="wallpaper_no_bound_entities">Tiada entiti terikat</string>
     <string name="claw_renderer_loading_entities">Memuat entiti…</string>
+    <string name="claw_renderer_loading_wallpaper">Memuat kertas dinding…</string>
+    <string name="claw_wallpaper_loading_marker">Memuat… (%1$s)</string>
+    <string name="claw_wallpaper_render_error">Ralat lukis semula kertas dinding (dilaporkan)</string>
     <string name="claw_renderer_no_entities_connected">Tiada entiti bersambung</string>
     <string name="claw_renderer_open_app_to_bind">Buka app E-Claw untuk mengikat</string>
     <string name="claw_renderer_with_openclaw_bot">entiti dengan bot OpenClaw</string>
@@ -813,6 +816,10 @@ Jika anda mempunyai sebarang soalan, sila hubungi kami melalui e-mel rasmi kami.
     <string name="update_title">Kemas Kini Tersedia</string>
     <string name="update_message">Versi baharu (v%s) tersedia. Kemas kini untuk pengalaman terbaik!</string>
     <string name="update_now">Kemas Kini Sekarang</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">Tentang kemas kini ini</string>
+    <string name="update_help_body">Versi anda %1$s → terkini %2$s. Ketik "Kemas Kini Sekarang" untuk mengemas kini terus dalam apl (kira-kira 30 saat, tanpa keluar apl). Jika kemas kini dalam apl tiada, Gedung Play akan dibuka.</string>
+    <string name="update_store_unavailable">Tidak dapat membuka gedung untuk mengemas kini. Sila kemas kini dari Google Play.</string>
     <string name="update_later">Kemudian</string>
 
     <!-- Card Holder -->    <string name="card_holder_capabilities">Keupayaan</string>

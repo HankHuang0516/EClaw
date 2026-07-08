@@ -257,6 +257,17 @@ export const feedbackApi = {
 
 // ── Auth APIs ────────────────────────────────────────────────
 
+/** Response shape of POST /api/device/rotate-secret. `newDeviceSecret` is the
+ *  rotated secret, returned exactly ONCE — persist it immediately on success. */
+export interface RotateSecretResponse {
+  success: boolean;
+  deviceId?: string;
+  newDeviceSecret?: string;
+  rotatedAt?: string;
+  error?: string;
+  message?: string;
+}
+
 export const authApi = {
   /** Email + password login */
   login: (email: string, password: string) =>
@@ -269,6 +280,15 @@ export const authApi = {
   /** Login with device credentials (returns JWT) */
   deviceLogin: (deviceId: string, deviceSecret: string) =>
     apiClient.post('/api/auth/device-login', { deviceId, deviceSecret }),
+
+  /**
+   * Rotate this device's secret (Stage-3 native; mirrors the manifest
+   * rotate_secret feature → POST /api/device/rotate-secret). The backend returns
+   * the new secret ONCE in `newDeviceSecret`; the caller must persist it locally
+   * (overwriting the stored deviceSecret, same deviceId). 401 on mismatch.
+   */
+  rotateDeviceSecret: (deviceId: string, deviceSecret: string) =>
+    apiClient.post<RotateSecretResponse>('/api/device/rotate-secret', { deviceId, deviceSecret }),
 
   /** Forgot password — sends reset email */
   forgotPassword: (email: string) =>
@@ -336,6 +356,11 @@ export const notificationApi = {
   getPreferences: () => apiClient.get('/api/notification-preferences'),
   updatePreferences: (prefs: object) =>
     apiClient.put('/api/notification-preferences', prefs),
+};
+
+export const actionRequestApi = {
+  getPendingCount: () =>
+    apiClient.get<{ success: boolean; count: number; deviceId?: string }>('/api/action-requests/pending-count'),
 };
 
 // ── Subscription APIs ────────────────────────────────────────
@@ -409,10 +434,31 @@ export const contactsApi = {
     apiClient.get('/api/chat/history-by-code', { params: { publicCode, limit } }),
 };
 
+// ── Settings Manifest (auto-sync seam, Stage 2) ──────────────
+// Public GET — pure capability descriptor, no auth (mirrors /api/version).
+// Sending appVersion + platform lets the backend apply the minAppVersion gate.
+// See backend/lib/settings-manifest.js + docs/specs/settings-manifest-spec.md and
+// the Android ClawApiService.getSettingsManifest reference.
+
+import type { SettingsManifestResponse } from './settingsManifest';
+
+export const settingsManifestApi = {
+  /** Fetch the settings manifest at launch (Stage 2 consume). */
+  get: (appVersion?: string | null, platform: 'ios' | 'android' = 'ios') =>
+    apiClient.get<SettingsManifestResponse>('/api/settings-manifest', {
+      params: { appVersion: appVersion ?? undefined, platform },
+    }),
+};
+
 // ── Misc APIs ────────────────────────────────────────────────
 
 export const miscApi = {
-  getVersion: () => apiClient.get('/api/version'),
+  // Pass the installed appVersion so the backend returns the `update` block.
+  // /api/version only computes `update.available` when `?appVersion=` is present
+  // (backend/index.js app.get('/api/version')); without it res.data.update is
+  // undefined and the Settings update-chip can never trigger (card_1771f826).
+  getVersion: (appVersion?: string | null) =>
+    apiClient.get('/api/version', { params: { appVersion: appVersion ?? undefined } }),
   getFreeBotTos: () => apiClient.get('/api/free-bot-tos'),
   agreeFreeBotTos: () => apiClient.post('/api/free-bot-tos/agree'),
 };

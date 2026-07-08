@@ -41,11 +41,14 @@ const path = require('path');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const safeEqual = require('./safe-equal');
+const extractCreds = require('./extract-creds');
 const { newCardId } = require('./entity-id');
 const { tKanban, statusLabel } = require('./i18n/kanban-notifications');
+const { buildDispatcherRoutingDirective } = require('./lib/kanban-dispatcher-routing');
 const devicePrefs = require('./device-preferences');
 const { emit: emitKanbanEvent } = require('./lib/kanban-events');
 const { resolveEntityHostDevice } = require('./lib/per-device-cron');
+const mentionParser = require('./mention-parser');
 
 // Cache device→language to avoid repeated lookups
 const deviceLangCache = new Map();
@@ -84,6 +87,149 @@ try {
 
 const SCHEDULE_LATE_FIRE_GRACE_MS = 5 * 60 * 1000;
 const SCHEDULE_STALE_EPSILON_MS = 1000;
+
+// Per-card usage-threshold cron skip (card_c2635849, parent card_ad507345).
+// Recurring schedules can skip child-card dispatch when ANY assigned entity's
+// rolling 5h / 7d usage% strictly exceeds the configured cap. Defaults match
+// the standard "quota almost full" markers on the dashboard widget so cards
+// created before this column gain a sensible guard automatically.
+const SCHEDULE_USAGE_THRESHOLD_MIN = 50;
+const SCHEDULE_USAGE_THRESHOLD_MAX = 99;
+const DEFAULT_SKIP_5H_PCT = 85;
+const DEFAULT_SKIP_7D_PCT = 95;
+
+function clampUsageThreshold(value, fallback) {
+    if (value === undefined || value === null || value === '') return fallback;
+    const n = Number(value);
+    if (!Number.isFinite(n)) return fallback;
+    const i = Math.trunc(n);
+    if (i < SCHEDULE_USAGE_THRESHOLD_MIN || i > SCHEDULE_USAGE_THRESHOLD_MAX) return fallback;
+    return i;
+}
+
+function isValidUsageThreshold(value) {
+    // Returns true iff value is a JS number integer in [50, 99]. Used at the
+    // API write boundary so bad input rejects HTTP 400 rather than silently
+    // clamping. Strings (even numeric-looking ones like "85"), booleans,
+    // decimals, NaN, Infinity all reject — clients must send actual integers
+    // so a typo in JSON isn't normalized to a working request.
+    if (typeof value !== 'number') return false;
+    if (!Number.isFinite(value)) return false;
+    if (!Number.isInteger(value)) return false;
+    return value >= SCHEDULE_USAGE_THRESHOLD_MIN && value <= SCHEDULE_USAGE_THRESHOLD_MAX;
+}
+
+/**
+ * Pull the highest "currently used%" signal out of a usage_snapshots row for
+ * one engine + window. The Claude statusLine hook writes the nested shape
+ * `live.rate_limits.{five_hour,seven_day}.used_percentage`, but earlier
+ * callers also produced flat `live.five_hour_pct` (see usage-api.js
+ * `pickClaudeLivePct`). Codex daemon writes the flat shape under
+ * `rate_limits.{five_hour_pct, seven_day_pct}`. Returns null if no signal
+ * is present (caller treats null as 0% to preserve dispatch).
+ */
+function readClaudeLivePct(claudeJson, key) {
+    const live = (claudeJson && claudeJson.live) || null;
+    if (!live) return null;
+    const flatKey = key + '_pct';
+    if (typeof live[flatKey] === 'number') return live[flatKey];
+    const nested = live.rate_limits && live.rate_limits[key];
+    if (nested && typeof nested.used_percentage === 'number') return nested.used_percentage;
+    return null;
+}
+
+function readCodexLivePct(codexJson, key) {
+    const rl = (codexJson && codexJson.rate_limits) || null;
+    if (!rl) return null;
+    const flatKey = key + '_pct';
+    if (typeof rl[flatKey] === 'number') return rl[flatKey];
+    return null;
+}
+
+/**
+ * Look up the latest usage snapshot for a (deviceId, entityId) pair and
+ * extract the 5h / 7d usage% across both Claude + Codex engines. Returns
+ * { five: number|null, seven: number|null } where each is the MAX of the
+ * two engines' current %, or null if nothing is recorded for that window.
+ *
+ * The query prefers the entity-scoped row (entity_id = $2) when present,
+ * but falls back to the device-scoped row (entity_id IS NULL) because the
+ * mac-daemon historically pushed unscoped rows before per-entity routing
+ * landed. This keeps the guard working on legacy devices without forcing
+ * a daemon upgrade.
+ */
+async function getEntityUsagePct(deviceId, entityId) {
+    if (!deviceId) return { five: null, seven: null };
+    try {
+        const eid = Number(entityId);
+        const useEid = Number.isFinite(eid);
+        const sql = useEid
+            ? `SELECT claude_json, codex_json
+                 FROM usage_snapshots
+                 WHERE device_id = $1 AND (entity_id = $2 OR entity_id IS NULL)
+                 ORDER BY (entity_id = $2) DESC, captured_at DESC
+                 LIMIT 1`
+            : `SELECT claude_json, codex_json
+                 FROM usage_snapshots
+                 WHERE device_id = $1
+                 ORDER BY captured_at DESC
+                 LIMIT 1`;
+        const params = useEid ? [deviceId, eid] : [deviceId];
+        const r = await pool.query(sql, params);
+        if (!r.rows.length) return { five: null, seven: null };
+        const row = r.rows[0];
+        const claudeJson = row.claude_json || null;
+        const codexJson = row.codex_json || null;
+        const claude5 = readClaudeLivePct(claudeJson, 'five_hour');
+        const codex5 = readCodexLivePct(codexJson, 'five_hour');
+        const claude7 = readClaudeLivePct(claudeJson, 'seven_day');
+        const codex7 = readCodexLivePct(codexJson, 'seven_day');
+        // Take the worst-case (max) across engines so a saturated Claude
+        // session still trips the guard even when Codex is idle.
+        const maxOrNull = (a, b) => {
+            if (a == null && b == null) return null;
+            if (a == null) return b;
+            if (b == null) return a;
+            return a > b ? a : b;
+        };
+        return { five: maxOrNull(claude5, codex5), seven: maxOrNull(claude7, codex7) };
+    } catch (err) {
+        // Don't block dispatch on infra failures — preserve current behavior
+        // (Mac daemon down, table missing on staging, etc.).
+        console.warn('[Kanban] getEntityUsagePct failed:', err.message);
+        return { five: null, seven: null };
+    }
+}
+
+/**
+ * Decide whether a recurring schedule fire should be skipped due to any
+ * assigned entity exceeding the per-card usage threshold. Returns
+ *   { skip: boolean, reason?: string, entityId?: number, window?: '5h'|'7d',
+ *     pct?: number, limit?: number }
+ * where `skip=true` carries the first offending entity for log/comment text.
+ *
+ * Null usage% is treated as 0% (do NOT skip) so the guard never blocks a
+ * card whose entity simply doesn't have a daemon push yet — preserves the
+ * pre-card_c2635849 dispatch behavior.
+ */
+async function evaluateUsageSkipDecision(card, bots, usageLookup) {
+    const limit5 = clampUsageThreshold(card.schedule_skip_if_5h_pct_over, DEFAULT_SKIP_5H_PCT);
+    const limit7 = clampUsageThreshold(card.schedule_skip_if_7d_pct_over, DEFAULT_SKIP_7D_PCT);
+    const ids = Array.isArray(bots) ? bots : [];
+    // Injectable usage lookup so tests can avoid hitting the real DB; in prod
+    // calls into the entity-scoped usage_snapshots query.
+    const lookup = typeof usageLookup === 'function' ? usageLookup : getEntityUsagePct;
+    for (const botId of ids) {
+        const usage = await lookup(card.device_id, botId);
+        if (usage && usage.five != null && usage.five > limit5) {
+            return { skip: true, entityId: botId, window: '5h', pct: usage.five, limit: limit5 };
+        }
+        if (usage && usage.seven != null && usage.seven > limit7) {
+            return { skip: true, entityId: botId, window: '7d', pct: usage.seven, limit: limit7 };
+        }
+    }
+    return { skip: false };
+}
 
 function asValidDate(value) {
     const date = value instanceof Date ? value : new Date(value);
@@ -171,6 +317,31 @@ function getRecurringScheduleFireDecision(card, now = new Date(), graceMs = SCHE
         reason: 'due',
         previousRun,
     };
+}
+
+/**
+ * Decide whether a due schedule should be AUTO-DISABLED instead of fired.
+ * Returns 'archived' | 'done' | null (null = fire normally).
+ *
+ * Owner-reported re-nudge loop: when the owner archives or marks DONE a
+ * scheduled card (especially a cron母卡), schedule_enabled stays true and
+ * schedule_next_run_at stays in the past. The card then looks "due" on every
+ * tick forever — the server keeps re-spawning child cards and any consumer
+ * (UI badge, an external cron watcher that binds a static card-id snapshot)
+ * keeps treating it as pending and re-nudges. Disabling the schedule the first
+ * time the scheduler sees the card inactive breaks the loop at the source.
+ *
+ * `done` only stops AUTOMATION母卡 (is_automation) and one-shot (`once`) cards.
+ * A normal self-recurring card legitimately cycles done→todo on each fire
+ * (see the recurring branch below), so a plain `done` must NOT disable those.
+ */
+function scheduleAutoDisableReason(card) {
+    if (!card) return null;
+    if (card.archived === true) return 'archived';
+    if (card.status === 'done' && (card.is_automation === true || card.schedule_type === 'once')) {
+        return 'done';
+    }
+    return null;
 }
 
 const pool = new Pool({
@@ -295,10 +466,69 @@ async function initKanbanDatabase() {
     }
 }
 
+// ── Dispatch capability guard (card_f5023a5204ef729dfa98abda) ──
+// The platform keeps dispatching visual/screenshot tasks (destructive-modal
+// E2E, UI review, simulator review) to entity #6, but #6's environment has NO
+// usable browser tool (Copilot Computer Use is declined; the browser plugin
+// errors), so those cards dead-end and bounce back to #2. This is a conservative,
+// config-driven registry of entities KNOWN to lack a usable browser today.
+//
+// ⚠️ This is a documented constant map reflecting the CURRENT known reality from
+// card_f5023a5 — it is NOT a real per-entity capability model. When entities gain
+// a proper `capabilities` field (per-entity flag), replace this Set with a lookup
+// of that flag. Bias: a false "incapable" merely posts a non-blocking heads-up
+// (the safe direction); it NEVER rejects an assignment. #2 has Playwright.
+const BROWSER_INCAPABLE_ENTITIES = new Set([6]);
+function isBrowserCapableEntity(entityId) {
+    return !BROWSER_INCAPABLE_ENTITIES.has(Number(entityId));
+}
+
+// Reuse the SAME UI/UX detection the done-gate / review-reminder / move-handler
+// use (kanban.js `_uiTitleHit` / `_uxTitleHit`), so the dispatch guard fires on
+// exactly the cards the done-gate will later HARD-require vision/interaction
+// evidence for. Keep these regexes in ONE place so the two never diverge.
+const UI_TITLE_KEYWORDS_RE = /\bUI\b|\bUIUX\b|介面|畫面|外觀|縮圖|按鈕|版面|排版|配色|破圖|樣式|圖示|\bmodal\b|\bdialog\b|\bbutton\b|\bicon\b|\bthumbnail\b|\bcss\b/i;
+const UX_TITLE_KEYWORDS_RE = /\bUX\b|拖曳|拖移|手勢|滑動|長按|操作流程|互動|\bgesture\b|\bswipe\b|\bscroll\b|\bdrag\b|\bnavigation\b/i;
+
+// True when a card needs a browser/screenshot to verify: explicit
+// requires_screenshot_review / requires_interaction_review flags, OR the
+// title+description read as UI/UX. Accepts a serialized card (camelCase) or a
+// raw DB row (snake_case) so both the create path (`card`) and the PUT path
+// (`updated.*`) can call it.
+function cardNeedsVisualVerification(card) {
+    if (!card || typeof card !== 'object') return false;
+    const screenshot = card.requiresScreenshotReview === true || card.requires_screenshot_review === true;
+    const interaction = card.requiresInteractionReview === true || card.requires_interaction_review === true;
+    if (screenshot || interaction) return true;
+    const text = String(card.title || '') + ' ' + String(card.description || '');
+    return UI_TITLE_KEYWORDS_RE.test(text) || UX_TITLE_KEYWORDS_RE.test(text);
+}
+
+// Build the non-blocking capability-mismatch warning IFF the card needs visual
+// verification AND *every* assigned entity is browser-incapable. Returns the
+// warning string, or null when no warning is warranted (card is non-visual, no
+// assignees, or at least one assignee HAS a browser). Never throws.
+function buildDispatchCapabilityWarning(card, assignedBots) {
+    try {
+        if (!cardNeedsVisualVerification(card)) return null;
+        const ids = (Array.isArray(assignedBots) ? assignedBots : [])
+            .map(Number)
+            .filter(Number.isFinite);
+        if (ids.length === 0) return null;
+        // Only warn when NOBODY assigned can drive a browser — if a capable
+        // entity is on the card, the work can land, so stay quiet (anti-noise).
+        if (ids.some(isBrowserCapableEntity)) return null;
+        const who = ids.map(id => `#${id}`).join(', ');
+        return `⚠️ 派工能力提醒：此卡需要瀏覽器/截圖驗證，但指派的實體(${who})沒有可用的瀏覽器工具 → 建議改派 #2(有 Playwright) 或由 #2 協作。`;
+    } catch (_) {
+        return null;
+    }
+}
+
 /**
  * Factory: receives in-memory devices object from index.js
  */
-function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback, saveChatMessage, getMissionApiHints, pushToBot, orgChart, notifyDevice, emitDevicePreferences } = {}) {
+function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback, saveChatMessage, getMissionApiHints, pushToBot, orgChart, notifyDevice, emitDevicePreferences, createActionRequest, dismissActionRequestsForCard, dismissSurfacerActionRequestsForCard } = {}) {
     const router = express.Router();
 
     // Health check
@@ -397,8 +627,10 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     }
 
     function authenticate(req, res) {
-        const params = { ...req.query, ...req.body };
-        const { deviceId, deviceSecret, botSecret, entityId } = params;
+        // Accepts secrets via query/body (legacy) OR X-Device-Secret /
+        // X-Bot-Secret headers (secret-leakage hardening). Additive: query/body
+        // still take precedence so existing callers are unaffected.
+        const { deviceId, deviceSecret, botSecret, entityId } = extractCreds(req);
 
         if (!deviceId) {
             res.status(400).json({ success: false, error: 'Missing deviceId' });
@@ -457,7 +689,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         // assuming the card's own device hosts it. Default false keeps every other
         // caller (once-triggers, manual notifies) on the legacy local-only path.
         // See backend/lib/per-device-cron.js + card_1ce50de359411f0d0947399f.
-        const { description, cardId, perDeviceCron = false } = options;
+        const { description, cardId, perDeviceCron = false, dispatcherEntityId } = options;
         if (!pushToChannelCallback && !pushToEntity && !pushToBot) {
             console.warn('[Kanban] No push callback available — notifications will not be delivered');
             return;
@@ -465,6 +697,59 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
         const API_BASE = 'https://eclawbot.com';
         const SOURCE_TAG = 'kanban_notify';
+
+        // ── Latest-comment enrichment (card_cc20541e) ──
+        // Assignment/@-mention notifications carry the most actionable context
+        // when they include the latest留言. Prefer an explicitly-passed
+        // latestComment (the @-mention path already has the text in hand); else,
+        // when a cardId is given, fetch the newest non-system comment row so the
+        // push always reflects the current discussion. Bounded to keep the push
+        // payload sane. Best-effort: a failed fetch must never block the push.
+        const LATEST_COMMENT_MAX = 1500;
+        let latestComment = typeof options.latestComment === 'string' ? options.latestComment : null;
+        if (!latestComment && cardId) {
+            try {
+                const c = await pool.query(
+                    `SELECT text FROM kanban_comments
+                      WHERE card_id = $1 AND is_system = false
+                      ORDER BY created_at DESC
+                      LIMIT 1`,
+                    [cardId]
+                );
+                if (c.rows[0]?.text) latestComment = c.rows[0].text;
+            } catch (e) {
+                console.warn(`[Kanban] latest-comment fetch failed for card ${cardId}:`, e.message);
+            }
+        }
+        if (latestComment && latestComment.length > LATEST_COMMENT_MAX) {
+            latestComment = latestComment.slice(0, LATEST_COMMENT_MAX) + '…';
+        }
+        const commentBlock = latestComment
+            ? `\n\n[LATEST COMMENT]\n${latestComment}\n[/LATEST COMMENT]`
+            : '';
+
+        // ── Dispatcher routing hint (card_e9379868) ──
+        // A kanban notification is a SYSTEM event with no sender entity, so when an
+        // assigned bot replies "task done" in chat, the central router finds no
+        // speakTo/@mention/senderHint and fail-safes the message to a human — the
+        // DISPATCHER (the commander who assigned the card) never receives it and
+        // cannot verify/close the card. Fix: tell the bot exactly who to route its
+        // completion report to. The dispatcher entity lives on the card's own device
+        // (deviceId), so resolve its publicCode here (once) and hand the recipient
+        // both the same-device @#N token and the cross-device @publicCode token
+        // (recipient may be hosted on another device under per-device cron).
+        let dispatcherMeta = null;
+        const dispId = Number(dispatcherEntityId);
+        if (dispId && dispId > 0) {
+            const dispEntity = devices?.[deviceId]?.entities?.[dispId];
+            if (dispEntity?.publicCode) {
+                dispatcherMeta = { entityId: dispId, publicCode: dispEntity.publicCode };
+            } else {
+                // Still emit the @#N token even if publicCode is unavailable — a
+                // same-device reply routes on @#N alone.
+                dispatcherMeta = { entityId: dispId, publicCode: null };
+            }
+        }
 
         for (const eid of entityIds) {
             try {
@@ -531,6 +816,40 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     ? getMissionApiHints(API_BASE, pushDeviceId, pushEid, entity.botSecret)
                     : '';
 
+                // ── 2b. Task-lifecycle directive (card_c0819f4e) ──
+                // The hint block above is a passive TOOL LIST — it shows the
+                // "Move card" curl but never tells the assigned agent that it is
+                // OBLIGATED to advance this card's status when it starts/finishes.
+                // A stateless agent (e.g. Hermes/#5) does the work, reports in
+                // chat, and never moves the card → it sits in todo/in_progress and
+                // re-nudges forever. This directive names the SPECIFIC card id and
+                // states the obligation explicitly, so even an agent with no
+                // persistent todo knows exactly which card to move and that a chat
+                // reply does not close it. Wording is status-agnostic ("if
+                // assigned to you and not yet finished") so it is correct for
+                // nudges, assignments, reopens and reviewer asks alike.
+                const lifecycleDirective = cardId
+                    ? `\n\n[KANBAN LIFECYCLE — ACTION REQUIRED]\n` +
+                      `This notification concerns card ${cardId}. If it is assigned to you and not yet finished:\n` +
+                      `• when you START working, move it to in_progress\n` +
+                      `• when you COMPLETE the work, move it to done (or review if it needs sign-off)\n` +
+                      `Replying in chat does NOT change the card's status — you MUST call the "Move card" tool ` +
+                      `below with CARD_ID=${cardId} and newStatus=in_progress|review|done. ` +
+                      `A card left unmoved keeps re-nudging and auto-escalating.`
+                    : '';
+
+                // ── Dispatcher routing directive (card_e9379868) ──
+                // Tells the assigned bot who to address so its completion report
+                // routes back to the dispatcher instead of fail-safing to a human.
+                const routingDirective = buildDispatcherRoutingDirective({
+                    dispatcherMeta, recipientEntityId: eid, cardId,
+                });
+
+                // Hints + lifecycle + routing directives travel together so the
+                // obligation and the reply-routing target sit right next to the
+                // Move card command in every push path.
+                const missionBlock = kanbanHints + lifecycleDirective + routingDirective;
+
                 // ── 3. Build full message with description ──
                 const descBlock = description
                     ? `\n\n[TASK DESCRIPTION]\n${description}\n[/TASK DESCRIPTION]`
@@ -541,11 +860,11 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     const result = await pushToChannelCallback(pushDeviceId, pushEid, {
                         event: 'kanban_notification',
                         from: 'kanban',
-                        text: message + descBlock,
+                        text: message + descBlock + commentBlock,
                         eclaw_context: {
                             expectsReply: true,
                             silentToken: '[SILENT]',
-                            missionHints: kanbanHints,
+                            missionHints: missionBlock,
                         }
                     }, entity.channelAccountId);
                     console.log(`[Kanban] Channel push to entity ${pushEid}@${pushDeviceId}: ${result.pushed ? 'OK' : result.reason}`);
@@ -555,8 +874,9 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     const pushMsg = [
                         `[KANBAN NOTIFICATION] ${message}`,
                         descBlock,
+                        commentBlock,
                         `[NOTIFICATION — NO REPLY EXPECTED] This is a Kanban task notification. Take action on the card as needed.`,
-                        kanbanHints,
+                        missionBlock,
                     ].filter(Boolean).join('\n');
 
                     const pushResult = await pushToBot(entity, pushDeviceId, 'kanban_notification', { message: pushMsg });
@@ -570,7 +890,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
                 } else if (pushToEntity) {
                     // Legacy fallback
-                    const pushMsg = `[KANBAN NOTIFICATION] ${message}${descBlock}${kanbanHints}`;
+                    const pushMsg = `[KANBAN NOTIFICATION] ${message}${descBlock}${commentBlock}${missionBlock}`;
                     await pushToEntity(pushDeviceId, pushEid, pushMsg);
                     console.log(`[Kanban] Legacy push to entity ${pushEid}@${pushDeviceId}`);
                 }
@@ -579,6 +899,49 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 console.error(`[Kanban] Failed to push to entity ${eid}:`, e.message);
             }
         }
+    }
+
+    // ── @-mention resolution for card comments (card_cc20541e) ──
+    // Reuse the platform's canonical mention parser (backend/mention-parser.js)
+    // so card comments accept the exact same token forms as chat: @#N / @N
+    // (same-device entityId), <@N>, @xxxxxx / <@xxxxxx> (6-char publicCode),
+    // and same-device display names. The parser needs a publicCodeIndex to
+    // resolve publicCode tokens; the kanban module is same-device only, so we
+    // synthesize a minimal index from the card's own device bindings rather
+    // than threading the global index through the factory. Returns an array of
+    // same-device entityIds that were @-mentioned.
+    function resolveCommentMentions(deviceId, text) {
+        if (!text || typeof text !== 'string') return [];
+        const device = devices[deviceId];
+        const entities = device?.entities || {};
+        // Per-device publicCode → { deviceId, entityId } so @xxxxxx resolves
+        // without the global publicCodeIndex (cross-device mentions are out of
+        // scope for kanban notifications — same device only).
+        const localPublicCodeIndex = {};
+        for (const [eidRaw, entity] of Object.entries(entities)) {
+            if (entity?.isBound && entity?.publicCode) {
+                localPublicCodeIndex[entity.publicCode] = { deviceId, entityId: parseInt(eidRaw, 10) };
+            }
+        }
+        let parsed;
+        try {
+            parsed = mentionParser.parseMentions(text, {
+                senderDeviceId: deviceId,
+                devices,
+                publicCodeIndex: localPublicCodeIndex,
+            });
+        } catch (e) {
+            console.warn('[Kanban] mention parse failed:', e.message);
+            return [];
+        }
+        const ids = new Set();
+        for (const m of (parsed.mentions || [])) {
+            // Same-device, bound entity only.
+            if (m && !m.isCrossDevice && m.deviceId === deviceId && Number.isFinite(m.entityId)) {
+                ids.add(Number(m.entityId));
+            }
+        }
+        return [...ids];
     }
 
     // ── Smart-queue notify helpers (card_dfe3b8df Phase 2 + #2307 hotfix) ──
@@ -660,8 +1023,10 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 cardParams.push(cardId);
                 cardWhere += ` AND id = $${cardParams.length}`;
             } else {
+                // Mirror checkStaleCards' candidate set so this diagnostic reflects
+                // what actually gets nudged: backlog is parked → never stale-nudged.
                 cardWhere += `
-                  AND status IN ('backlog', 'todo', 'in_progress', 'review')
+                  AND status IN ('todo', 'in_progress', 'review')
                   AND EXTRACT(EPOCH FROM (NOW() - status_changed_at)) * 1000 > stale_threshold_ms`;
             }
             const cardsRes = await pool.query(
@@ -763,8 +1128,19 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             reviewerEntityId: row.reviewer_entity_id != null ? parseInt(row.reviewer_entity_id) : null,
             requiresScreenshotReview: row.requires_screenshot_review !== false,
             requiresPreflightReview: row.requires_preflight_review !== false,
+            // HARD UX-interaction evidence opt-in (card_5d50ee10). Defaults FALSE;
+            // when TRUE the done-gate hard-requires a [UX-OPERATED] attestation +
+            // an interaction artifact before →done, even in soft mode.
+            requiresInteractionReview: row.requires_interaction_review === true,
+            // Per-card PR-link opt-in (owner directive 2026-07-03). Defaults FALSE
+            // (not blocking); only when TRUE does the done-gate require a PR link.
+            requirePrLink: row.requires_pr_link === true,
             gated: !!row.gated,
             gateReason: row.gate_reason || null,
+            // SOFT done-gate flag (card_f52ef42e): TRUE when this card moved to
+            // review/done with incomplete deliverables under soft mode. Drives a ⚠️
+            // chip in the UI and suppresses the card's auto-escalation.
+            doneGateSoftFlagged: !!row.done_gate_soft_flagged,
             reopenedAt: row.reopened_at ? new Date(row.reopened_at).getTime() : null,
             reopenedBy: row.reopened_by != null ? parseInt(row.reopened_by) : null,
             reopenReason: row.reopen_reason || null,
@@ -794,6 +1170,9 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             timezone: row.schedule_timezone || 'Asia/Taipei',
             lastRunAt: row.schedule_last_run_at ? new Date(row.schedule_last_run_at).getTime() : null,
             nextRunAt: row.schedule_next_run_at ? new Date(row.schedule_next_run_at).getTime() : null,
+            // card_c2635849: per-card usage-quota cron skip thresholds.
+            skipIf5hUsagePctOver: clampUsageThreshold(row.schedule_skip_if_5h_pct_over, DEFAULT_SKIP_5H_PCT),
+            skipIf7dUsagePctOver: clampUsageThreshold(row.schedule_skip_if_7d_pct_over, DEFAULT_SKIP_7D_PCT),
         } : null;
 
         // Automation fields
@@ -856,7 +1235,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         // from req.body alone meant a query-cred caller (deviceId not in body) passed auth
         // then bound NULL device_id into the INSERT → "null value in column device_id ...
         // violates not-null constraint" 500 on card create.
-        const { deviceId, title, description, priority, status, assignedBots, entityId, reviewerEntityId, isAutomation, schedule, requiresScreenshotReview, chatAnchorMessageId, chatAnchorCoord, dispatchMode } = { ...req.query, ...req.body };
+        const { deviceId, title, description, priority, status, assignedBots, entityId, reviewerEntityId, isAutomation, schedule, requiresScreenshotReview, requirePrLink, chatAnchorMessageId, chatAnchorCoord, dispatchMode } = { ...req.query, ...req.body };
 
         if (!deviceId) {
             return res.status(400).json({ success: false, error: 'Missing deviceId' });
@@ -915,6 +1294,12 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         // Inline automation + schedule support
         const wantAutomation = !!isAutomation;
         let schedEnabled = false, schedType = null, schedCron = null, schedRunAt = null, schedTz = 'Asia/Taipei', schedNextRunAt = null;
+        // card_c2635849 per-card usage-skip thresholds. Default to column-level
+        // defaults so cards filed without explicit thresholds still gain the
+        // standard 85/95 guard. Validated here so bad input rejects 400 instead
+        // of silently clamping (matches the PUT /schedule write boundary).
+        let schedSkip5h = DEFAULT_SKIP_5H_PCT;
+        let schedSkip7d = DEFAULT_SKIP_7D_PCT;
 
         if (schedule && typeof schedule === 'object') {
             schedType = (schedule.type === 'once' || schedule.type === 'recurring') ? schedule.type : null;
@@ -942,6 +1327,26 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     return res.status(400).json({ success: false, error: 'Invalid cron expression' });
                 }
             }
+
+            // Optional per-card usage-skip thresholds (50–99 inclusive).
+            if (schedule.skipIf5hUsagePctOver !== undefined) {
+                if (!isValidUsageThreshold(schedule.skipIf5hUsagePctOver)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'schedule.skipIf5hUsagePctOver must be an integer in [50, 99]'
+                    });
+                }
+                schedSkip5h = Number(schedule.skipIf5hUsagePctOver);
+            }
+            if (schedule.skipIf7dUsagePctOver !== undefined) {
+                if (!isValidUsageThreshold(schedule.skipIf7dUsagePctOver)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'schedule.skipIf7dUsagePctOver must be an integer in [50, 99]'
+                    });
+                }
+                schedSkip7d = Number(schedule.skipIf7dUsagePctOver);
+            }
         }
 
         // recurring schedule → auto-promote to automation
@@ -952,14 +1357,29 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             ? false  // Default to disabled for all new cards
             : requiresScreenshotReview !== false;
 
+        // Per-card PR-link opt-in for the done-gate (owner directive 2026-07-03).
+        // DEFAULT false (not blocking) — only an explicit truthy requirePrLink at
+        // create time turns done-gate PR-link enforcement on for this card.
+        const finalRequirePrLink = requirePrLink === true || requirePrLink === 'true';
+
         // Validate dispatch mode
         const finalDispatchMode = (dispatchMode === 'idle_only') ? 'idle_only' : 'immediate';
 
         // Chat-anchor: pin originating chat message + mind-map coord (Phase 1 — persist
         // only; UI picker + validator enforcement land in follow-up PRs). Auto-cards leave
         // both NULL so the UI renders N/A.
-        const anchorMsgId = (typeof chatAnchorMessageId === 'string' && chatAnchorMessageId.trim())
-            ? chatAnchorMessageId.trim().slice(0, 128)
+        //
+        // The anchor MUST be a real chat_messages UUID (or NULL). Automated card
+        // creators (ErrLog/cron, loop-directive, phase4, speakto, …) previously
+        // POSTed literal placeholder strings such as "cron-auto" / "cron-auto-generated"
+        // here; the mind-map graph projection then grouped every card sharing that
+        // value into one bogus "chat #cron-auto" hub node and non-UUID values raised
+        // "invalid input syntax for type uuid" on chat joins. Reject non-UUID anchors
+        // at the write boundary (store NULL) so the placeholder pollution can't recur.
+        const CHAT_ANCHOR_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const anchorMsgId = (typeof chatAnchorMessageId === 'string'
+            && CHAT_ANCHOR_UUID_RE.test(chatAnchorMessageId.trim()))
+            ? chatAnchorMessageId.trim()
             : null;
         let anchorCoord = null;
         if (chatAnchorCoord && typeof chatAnchorCoord === 'object') {
@@ -995,14 +1415,17 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             const result = await pool.query(
                 `INSERT INTO kanban_cards (id, device_id, title, description, priority, status, assigned_bots, created_by, reviewer_entity_id, status_changed_at,
                     is_automation, schedule_enabled, schedule_type, schedule_cron, schedule_run_at, schedule_timezone, schedule_next_run_at, requires_screenshot_review,
-                    chat_anchor_message_id, chat_anchor_coord, dispatch_mode)
+                    chat_anchor_message_id, chat_anchor_coord, dispatch_mode,
+                    schedule_skip_if_5h_pct_over, schedule_skip_if_7d_pct_over, requires_pr_link)
                  VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, NOW(),
                     $10, $11, $12, $13, $14, $15, $16, $17,
-                    $18, $19::jsonb, $20)
+                    $18, $19::jsonb, $20,
+                    $21, $22, $23)
                  RETURNING *`,
                 [newCardId(), deviceId, title.trim(), finalDescription, cardPriority, cardStatus, JSON.stringify(bots), createdBy, reviewer,
                     finalAutomation, schedEnabled, schedType, schedCron, schedRunAt, schedTz, schedNextRunAt, finalRequiresScreenshot,
-                    anchorMsgId, anchorCoord ? JSON.stringify(anchorCoord) : null, finalDispatchMode]
+                    anchorMsgId, anchorCoord ? JSON.stringify(anchorCoord) : null, finalDispatchMode,
+                    schedSkip5h, schedSkip7d, finalRequirePrLink]
             );
 
             const card = serializeCard(result.rows[0]);
@@ -1020,7 +1443,19 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     title: title.trim(),
                     status: statusLabel(lang, cardStatus)
                 });
-                notifyEntities(deviceId, bots, msg, { description, cardId: card.id });
+                notifyEntities(deviceId, bots, msg, { description, cardId: card.id, dispatcherEntityId: createdBy });
+            }
+
+            // ── Dispatch capability guard (card_f5023a5) ──
+            // If this card needs browser/screenshot verification but EVERY assigned
+            // entity lacks a usable browser tool (e.g. #6), post a NON-BLOCKING system
+            // comment suggesting a browser-capable entity (#2/Playwright), so the card
+            // does not silently dead-end and bounce back. Never rejects the assignment.
+            try {
+                const capWarn = buildDispatchCapabilityWarning(card, bots);
+                if (capWarn) await addSystemComment(card.id, deviceId, capWarn);
+            } catch (capErr) {
+                console.error('[Kanban] dispatch-capability-guard (create) failed:', capErr.message);
             }
 
             if (awardEntityXP) {
@@ -1745,7 +2180,75 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     router.put('/card/:id', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] PUT /card/:id called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, title, description, priority, assignedBots, reviewerEntityId, requiresScreenshotReview, requiresPreflightReview, dispatchMode, requiresPrRework, reworkPrNumber, linkedPrevCardId, linkedNextCardId } = req.body;
+
+        // ── footgun #1 (card_c17d3c7bb6e789389edf58f4): snake_case tolerance +
+        // unknown-field warning. This handler destructures a FIXED set of
+        // camelCase config keys below; a caller sending the snake_case spelling
+        // (e.g. `requires_screenshot_review`) — the exact form used in the DB and
+        // in serializeCard output — used to be SILENTLY dropped (no error, no-op,
+        // caller believes it worked). We now:
+        //   1. Alias each known snake_case spelling onto its camelCase key,
+        //      applied ONLY when the camelCase key is absent so an explicit
+        //      camelCase value still wins.
+        //   2. Collect any leftover keys that are neither a known field, a known
+        //      alias, nor an auth passthrough, and surface them as a non-fatal
+        //      `warnings[]` in the response (NEVER 400 — stays backward-compatible;
+        //      it only ADDS a warnings array so a typo is visible not swallowed).
+        // The alias map + KNOWN_FIELDS set below are derived from the fields this
+        // handler ACTUALLY destructures/updates — keep them in sync if the
+        // destructure list changes.
+        const KNOWN_CONFIG_FIELDS = [
+            'title', 'description', 'priority', 'assignedBots', 'reviewerEntityId',
+            'requiresScreenshotReview', 'requiresInteractionReview', 'requiresPreflightReview',
+            'dispatchMode', 'requiresPrRework', 'reworkPrNumber',
+            'linkedPrevCardId', 'linkedNextCardId',
+        ];
+        // snake_case → camelCase for every config field this handler processes.
+        const SNAKE_ALIASES = {
+            requires_screenshot_review: 'requiresScreenshotReview',
+            requires_interaction_review: 'requiresInteractionReview',
+            requires_preflight_review: 'requiresPreflightReview',
+            requires_pr_rework: 'requiresPrRework',
+            rework_pr_number: 'reworkPrNumber',
+            dispatch_mode: 'dispatchMode',
+            reviewer_entity_id: 'reviewerEntityId',
+            assigned_bots: 'assignedBots',
+            linked_prev_card_id: 'linkedPrevCardId',
+            linked_next_card_id: 'linkedNextCardId',
+            // title/description/priority have no snake variant.
+        };
+        // Auth / routing keys that are legitimately present in the body but are
+        // not card-config fields — never warn on these.
+        const AUTH_PASSTHROUGH = new Set(['deviceId', 'deviceSecret', 'botSecret', 'entityId']);
+
+        const warnings = [];
+        if (req.body && typeof req.body === 'object') {
+            // 1. Fold snake_case aliases in (camelCase wins if both present).
+            for (const [snake, camel] of Object.entries(SNAKE_ALIASES)) {
+                if (Object.prototype.hasOwnProperty.call(req.body, snake) &&
+                    req.body[camel] === undefined) {
+                    req.body[camel] = req.body[snake];
+                }
+            }
+            // 2. Warn on truly-unknown keys (not a known field, alias, or auth key).
+            const known = new Set(KNOWN_CONFIG_FIELDS);
+            for (const key of Object.keys(req.body)) {
+                if (known.has(key) || AUTH_PASSTHROUGH.has(key) ||
+                    Object.prototype.hasOwnProperty.call(SNAKE_ALIASES, key)) {
+                    continue;
+                }
+                // Suggest the closest camelCase config field if the typo looks
+                // like a snake_case attempt at one of ours.
+                const guess = KNOWN_CONFIG_FIELDS.find(
+                    f => f.toLowerCase() === String(key).replace(/_/g, '').toLowerCase()
+                );
+                warnings.push(
+                    `Unknown field '${key}' ignored${guess ? ` — did you mean '${guess}'?` : ''}`
+                );
+            }
+        }
+
+        const { deviceId, title, description, priority, assignedBots, reviewerEntityId, requiresScreenshotReview, requiresInteractionReview, requiresPreflightReview, dispatchMode, requiresPrRework, reworkPrNumber, linkedPrevCardId, linkedNextCardId } = req.body;
         const cardId = req.params.id;
 
         try {
@@ -1820,6 +2323,12 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 updates.push(`requires_screenshot_review = $${paramIdx++}`);
                 params.push(!!requiresScreenshotReview);
             }
+            // HARD UX-interaction evidence opt-in (card_5d50ee10). Mirror how
+            // requiresScreenshotReview is handled: coerce to a boolean.
+            if (requiresInteractionReview !== undefined) {
+                updates.push(`requires_interaction_review = $${paramIdx++}`);
+                params.push(!!requiresInteractionReview);
+            }
             if (requiresPreflightReview !== undefined) {
                 updates.push(`requires_preflight_review = $${paramIdx++}`);
                 params.push(!!requiresPreflightReview);
@@ -1862,7 +2371,12 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             }
 
             if (updates.length === 0) {
-                return res.status(400).json({ success: false, error: 'Nothing to update' });
+                // Surface any unknown-field warnings here too, so a caller whose
+                // ONLY body key was a typo (nothing valid to update) still sees
+                // WHY nothing happened instead of a bare "Nothing to update".
+                const nothing = { success: false, error: 'Nothing to update' };
+                if (warnings.length > 0) nothing.warnings = warnings;
+                return res.status(400).json(nothing);
             }
 
             updates.push(`updated_at = NOW()`);
@@ -1954,7 +2468,60 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             }
 
             await bumpVersion(deviceId);
-            res.json({ success: true, card: serializeCard(result.rows[0]) });
+
+            // ── A. Notify on (re)assignment (card_cc20541e) ──
+            // When this PUT ADDS new entity ids to assigned_bots, ping ONLY the
+            // newly-added ids (not the whole assigned set — that would re-spam
+            // unchanged assignees on every edit). Best-effort, fire-and-forget:
+            // a notify failure must never break the 200 response. Mirrors the
+            // create-path notify (line ~1234) so a card assigned via edit gets
+            // the same task brief the create flow would have delivered.
+            if (assignedBots !== undefined && Array.isArray(assignedBots)) {
+                try {
+                    const before = existing.rows[0];
+                    const updated = result.rows[0];
+                    const prevSet = new Set(
+                        (Array.isArray(before.assigned_bots) ? before.assigned_bots : []).map(Number)
+                    );
+                    const newlyAdded = (Array.isArray(updated.assigned_bots) ? updated.assigned_bots : [])
+                        .map(Number)
+                        .filter(id => Number.isFinite(id) && !prevSet.has(id));
+                    if (newlyAdded.length > 0) {
+                        const lang = await getDeviceLanguage(deviceId);
+                        const msg = tKanban(lang, 'assignedToYou', { title: updated.title });
+                        notifyEntities(deviceId, newlyAdded, msg, {
+                            description: updated.description,
+                            cardId: updated.id,
+                            dispatcherEntityId: updated.created_by,
+                        });
+                    }
+                } catch (notifyErr) {
+                    console.error('[Kanban] assign-notify failed:', notifyErr.message);
+                }
+            }
+
+            // ── Dispatch capability guard (card_f5023a5) ──
+            // A reassignment that puts a browser/screenshot card entirely onto
+            // browser-incapable entities (e.g. #6) would dead-end. When assigned_bots
+            // was touched, evaluate the RESULTING set: if the card needs visual
+            // verification and no assignee can drive a browser, post a NON-BLOCKING
+            // system comment + surface it in the API `warnings`. Never rejects.
+            if (assignedBots !== undefined && Array.isArray(assignedBots)) {
+                try {
+                    const updated = result.rows[0];
+                    const capWarn = buildDispatchCapabilityWarning(updated, updated.assigned_bots);
+                    if (capWarn) {
+                        await addSystemComment(cardId, deviceId, capWarn);
+                        warnings.push(capWarn);
+                    }
+                } catch (capErr) {
+                    console.error('[Kanban] dispatch-capability-guard (update) failed:', capErr.message);
+                }
+            }
+
+            const okResponse = { success: true, card: serializeCard(result.rows[0]) };
+            if (warnings.length > 0) okResponse.warnings = warnings;
+            res.json(okResponse);
         } catch (err) {
             console.error('[Kanban] Update card error:', err);
             res.status(err.status || 500).json({ success: false, error: err.message });
@@ -2092,8 +2659,25 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 });
             }
 
+            // Done-gate MODE (owner decision card_f52ef42e). 'soft' (DEFAULT, Hank's
+            // choice) = never hard-block a review/done move on incomplete evidence;
+            // allow the move, ⚠️ flag it, suppress its auto-escalation. 'hard' =
+            // legacy hard-block, byte-for-byte. Resolved once per move; a prefs error
+            // fails SAFE toward 'soft' (the zero-false-block default).
+            let doneGateMode = 'soft';
+            try {
+                const _p = await devicePrefs.getPrefs(deviceId);
+                doneGateMode = _p && _p.done_gate_mode === 'hard' ? 'hard' : 'soft';
+            } catch (_) { doneGateMode = 'soft'; }
+            const softGate = doneGateMode !== 'hard';
+            // Accumulated soft-warning items (only used when softGate). Applied after
+            // the move UPDATE succeeds — a ⚠️ comment + done_gate_soft_flagged=true.
+            const softWarnItems = [];
+
             // Screenshot-review gate: block review/done transitions if no image attached.
             // Skip when card.requires_screenshot_review is explicitly false.
+            // SOFT mode: never hard-block — record the missing-screenshot finding and
+            // let the move through (the card is flagged + ⚠️'d below).
             if ((newStatus === 'review' || newStatus === 'done') && card.requires_screenshot_review !== false) {
                 const shot = await pool.query(
                     `SELECT COUNT(*)::int AS cnt FROM kanban_files
@@ -2101,12 +2685,16 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     [cardId]
                 );
                 if ((shot.rows[0]?.cnt || 0) === 0) {
-                    return res.status(400).json({
-                        success: false,
-                        error: 'Screenshot review required',
-                        hint: `此卡開啟了「截圖審查」，需先附上任務完成截圖才能移到 ${STATUS_LABELS[newStatus] || newStatus}。請用 POST /api/mission/card/${cardId}/file 帶 { url, filename, mimeType: "image/png" } 上傳 R2 截圖 URL。`,
-                        code: 'SCREENSHOT_REQUIRED'
-                    });
+                    if (softGate) {
+                        softWarnItems.push('截圖附件');
+                    } else {
+                        return res.status(400).json({
+                            success: false,
+                            error: 'Screenshot review required',
+                            hint: `此卡開啟了「截圖審查」，需先附上任務完成截圖才能移到 ${STATUS_LABELS[newStatus] || newStatus}。請用 POST /api/mission/card/${cardId}/file 帶 { url, filename, mimeType: "image/png" } 上傳 R2 截圖 URL。`,
+                            code: 'SCREENSHOT_REQUIRED'
+                        });
+                    }
                 }
             }
 
@@ -2144,6 +2732,20 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     );
                 } catch (_) { /* classifier optional; gate falls back */ }
                 const { evaluateDoneGate } = require('./agent-improvement/done-gate');
+                // Broaden UI/UX detection so a manually-created card whose TITLE/description
+                // reads as UI/UX (e.g. "[Bug/UI] ...") but that carries no painTag /
+                // requires_screenshot_review flag / image is still caught by the HARD
+                // vision/interaction gate — the "un-tagged UI card slips through" gap found by
+                // dogfooding (card_5d50ee10 follow-up). Bias toward "needs verification": a false
+                // positive merely asks for a screenshot, the safe direction. Word-boundary UI/UX
+                // + specific UI/UX nouns (EN+ZH) so it does not over-catch generic backend text.
+                // Deliberately excludes the ambiguous `delivery_reliability` painTag (that infra
+                // tag on backend cards caused the old false "UI needs screenshot" demand).
+                const _gateText = String(card.title || '') + ' ' + String(card.description || '');
+                const _uiTitleHit = /\bUI\b|\bUIUX\b|介面|畫面|外觀|縮圖|按鈕|版面|排版|配色|破圖|樣式|圖示|\bmodal\b|\bdialog\b|\bbutton\b|\bicon\b|\bthumbnail\b|\bcss\b/i.test(_gateText);
+                const _uxTitleHit = /\bUX\b|拖曳|拖移|手勢|滑動|長按|操作流程|互動|\bgesture\b|\bswipe\b|\bscroll\b|\bdrag\b|\bnavigation\b/i.test(_gateText);
+                const _hasImageFile = (filesRes.rows || []).some(f => String(f.mime_type || f.mimeType || '').startsWith('image/'));
+                const _uiCardDetected = card.requires_screenshot_review === true || _uiTitleHit || _hasImageFile;
                 const verdict = evaluateDoneGate({
                     oldStatus,
                     newStatus,
@@ -2152,8 +2754,38 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     files: filesRes.rows,
                     severity: (card.priority || 'P2'),
                     painTags,
+                    // Screenshot expectation keys off the EXPLICIT UI signal
+                    // (requires_screenshot_review), NOT painTag inference
+                    // (card_f52ef42e): pure-backend cards whose painTag happens to be
+                    // delivery_reliability were wrongly told "UI card requires a
+                    // screenshot". Passing an explicit boolean makes inferIsUiCard
+                    // honour it and never fall back to painTags — a backend card
+                    // (requires_screenshot_review=false) never gets a screenshot demand.
+                    isUiCard: _uiCardDetected,
+                    // HARD vision/interaction evidence (card_5d50ee10). Automatic
+                    // UI/UX card detection keys off these explicit flags (plus
+                    // painTags / attached images inside the gate). These two hard
+                    // checks BLOCK a →done move even in soft mode.
+                    requiresScreenshotReview: card.requires_screenshot_review === true,
+                    requiresInteractionReview: card.requires_interaction_review === true || _uxTitleHit,
+                    // Per-card PR-link opt-in (owner directive 2026-07-03). The
+                    // PR-link sub-check enforces ONLY when this card explicitly
+                    // opted in (requires_pr_link=true, set at create or via
+                    // PUT /card/:id/config). DEFAULT false → PR link NOT required.
+                    requirePrLink: card.requires_pr_link === true,
+                    // Redundant safety exemption: automation / ops cards (scheduled
+                    // automation母卡 or a cron-spawned [Auto] child) have no PR to
+                    // cite, so they skip the PR-link sub-check even if opted in.
+                    // The 6-item evidence checklist is always enforced.
+                    isAutomation: card.is_automation === true || card.is_auto_generated === true,
+                    // SOFT GATE (card_f52ef42e): in soft mode evaluateDoneGate never
+                    // returns allowed:false — it rolls findings into verdict.softWarning
+                    // and we allow the move, ⚠️ flag + suppress escalation below.
+                    softMode: softGate,
                 });
                 if (!verdict.allowed) {
+                    // Reachable only in HARD mode (soft mode always allows). Legacy
+                    // hard-block preserved byte-for-byte for backward compat.
                     return res.status(400).json({
                         success: false,
                         error: verdict.error,
@@ -2162,22 +2794,84 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                         missingItems: verdict.missingItems,
                     });
                 }
+                // SOFT mode: fold the gate's soft-warning findings into the combined
+                // list applied after the move UPDATE. Items are internal sentinels
+                // (preflight_comment / jest_output_artifact / …); they are mapped to
+                // human labels when the ⚠️ comment is built below.
+                if (verdict.softWarning && Array.isArray(verdict.softWarning.missing)) {
+                    for (const it of verdict.softWarning.missing) {
+                        if (!softWarnItems.includes(it)) softWarnItems.push(it);
+                    }
+                }
             }
 
             // gated launch-gate auto-resets when status leaves backlog (only meaningful in backlog).
             const clearGate = oldStatus === 'backlog' && newStatus !== 'backlog' && card.gated === true;
 
+            // SOFT done-gate (card_f52ef42e): flag the card when it moved with
+            // incomplete deliverables so the stale-scan suppresses its
+            // auto-escalation ("擋自動升級"). Any move recomputes the flag — a move
+            // that IS complete (or in hard mode) clears a prior soft flag to FALSE.
+            const softFlagged = softGate && softWarnItems.length > 0;
+
             const result = await pool.query(
                 `UPDATE kanban_cards
                  SET status = $1, assigned_bots = $2::jsonb, status_changed_at = NOW(),
-                     last_stale_nudge_at = NULL, updated_at = NOW()
+                     last_stale_nudge_at = NULL, done_gate_soft_flagged = $5, updated_at = NOW()
                      ${clearGate ? ', gated = FALSE, gate_reason = NULL' : ''}
                  WHERE id = $3 AND device_id = $4
                  RETURNING *`,
-                [newStatus, JSON.stringify(bots), cardId, deviceId]
+                [newStatus, JSON.stringify(bots), cardId, deviceId, softFlagged]
             );
 
             const updatedCard = serializeCard(result.rows[0]);
+
+            // 🔎 Review-time evidence reminder (Hank 2026-07-04): when a card enters `review`
+            // and auto-detects as UI/UX (same detection the done-gate uses: requires_screenshot_review
+            // / requires_interaction_review / title+description keywords / attached image), remind the
+            // reviewer UP-FRONT what the done-gate will HARD-require, so they gather evidence early
+            // instead of hitting the wall at →done. Non-blocking heads-up; the hard block stays at done.
+            if (newStatus === 'review') {
+                const _rText = String(card.title || '') + ' ' + String(card.description || '');
+                const _uiHit = card.requires_screenshot_review === true
+                    || /\bUI\b|\bUIUX\b|介面|畫面|外觀|縮圖|按鈕|版面|排版|配色|破圖|樣式|圖示|\bmodal\b|\bdialog\b|\bbutton\b|\bicon\b|\bthumbnail\b|\bcss\b/i.test(_rText);
+                const _uxHit = card.requires_interaction_review === true
+                    || /\bUX\b|拖曳|拖移|手勢|滑動|長按|操作流程|互動|\bgesture\b|\bswipe\b|\bscroll\b|\bdrag\b|\bnavigation\b/i.test(_rText);
+                if (_uiHit || _uxHit) {
+                    const [cRes, fRes] = await Promise.all([
+                        pool.query(`SELECT text FROM kanban_comments WHERE card_id = $1 AND device_id = $2`, [cardId, deviceId]),
+                        pool.query(`SELECT mime_type FROM kanban_files WHERE card_id = $1 AND device_id = $2`, [cardId, deviceId]),
+                    ]);
+                    const cmts = cRes.rows.map(r => r.text || '');
+                    const hasImage = fRes.rows.some(r => String(r.mime_type || '').startsWith('image/'));
+                    const hasAnyFile = fRes.rows.length > 0;
+                    const hasVision = cmts.some(t => t.includes('[VISION]'));
+                    const hasUxOp = cmts.some(t => t.includes('[UX-OPERATED]'));
+                    const missing = [];
+                    if (_uiHit && !(hasImage && hasVision)) missing.push('UI：附一張截圖 image + 一則 `[VISION]:<你實際看到什麼>` 留言');
+                    if (_uxHit && !(hasUxOp && hasAnyFile)) missing.push('UX：一則 `[UX-OPERATED]:<操作流程>` 留言 + 互動證據附件');
+                    if (missing.length > 0) {
+                        const kind = _uiHit && _uxHit ? 'UI/UX' : (_uiHit ? 'UI' : 'UX');
+                        await addSystemComment(cardId, deviceId,
+                            `🔎 審查提醒：此卡判定為 ${kind} 卡。移到 done 前需補 → ${missing.join('；')}。缺就會被 done-gate 硬擋（審查不靠自覺）。`);
+                    }
+                }
+            }
+
+            // ⚠️ Soft-gate warning comment (card_f52ef42e) — record what's incomplete
+            // so a reviewer can find evidence-incomplete cards. Never blocks the move.
+            if (softFlagged) {
+                const SOFT_LABELS = {
+                    preflight_comment: 'OODA-R preflight 留言',
+                    jest_output_artifact: 'jest/測試 log 附件',
+                    screenshot_artifact: '截圖附件',
+                    截圖附件: '截圖附件',
+                    'PR link': 'PR 連結',
+                };
+                const labels = [...new Set(softWarnItems.map(x => SOFT_LABELS[x] || x))];
+                await addSystemComment(cardId, deviceId,
+                    `⚠️ 軟 gate：移入 ${STATUS_LABELS[newStatus] || newStatus} 但交付物不完整 — 缺 ${labels.join('、')}；未硬擋（zero false-block），供審視。已暫停此卡自動升級。`);
+            }
 
             if (clearGate) {
                 await addSystemComment(cardId, deviceId,
@@ -2199,7 +2893,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     from: statusLabel(lang, oldStatus),
                     to: statusLabel(lang, newStatus)
                 });
-                notifyEntities(deviceId, bots, msg, { description: card.description, cardId });
+                notifyEntities(deviceId, bots, msg, { description: card.description, cardId, dispatcherEntityId: card.created_by });
             }
 
             // Notify reviewer on /move → review (card_dfb65748c14680560c7bb873).
@@ -2212,6 +2906,134 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     from: statusLabel(lang, oldStatus)
                 });
                 notifyEntities(deviceId, [updatedCard.reviewerEntityId], reviewerMsg, { description: card.description, cardId, role: 'reviewer' });
+            }
+
+            // ── Owner-decision inbox auto-surface (子4) — failure-isolated ──
+            // A parent-child card moving INTO review/blocked is classified for
+            // genuine OWNER-ONLY signals (irreversible data / spend / product
+            // direction / legal-PII / security policy / strategic tradeoff /
+            // explicit flag). If owner-only AND not already surfaced, ONE
+            // record-only「需要你決策」item is opened in the 需要你 inbox with the
+            // commander's last comment as whatWasDone + PR/screenshot evidence.
+            // The option set RECORDS Hank's choice only — NO auto-execute. Mirrors
+            // the OODA-R preflight hook below: self-invoking async IIFE wrapped in
+            // try/catch; a classifier or DB error NEVER blocks or fails the move.
+            if (card.parent_card_id != null && ['review', 'blocked'].includes(newStatus) && oldStatus !== newStatus) {
+                (async () => {
+                    try {
+                        if (typeof createActionRequest !== 'function') return;
+
+                        // Latest non-system (commander) comment + all comment texts.
+                        const cmtRes = await pool.query(
+                            `SELECT text, is_system AS "isSystem", created_at AS "createdAt"
+                             FROM kanban_comments
+                             WHERE card_id = $1 AND device_id = $2
+                             ORDER BY created_at ASC`,
+                            [cardId, deviceId]
+                        );
+                        const comments = cmtRes.rows || [];
+                        const lastHuman = [...comments].reverse().find(c => !c.isSystem);
+                        const whatWasDone = (lastHuman && typeof lastHuman.text === 'string' ? lastHuman.text : '').slice(0, 1000);
+
+                        // Evidence: PR URLs from any comment + image files on the card.
+                        const evidence = [];
+                        const seenPr = new Set();
+                        const PR_RE = /https?:\/\/github\.com\/[^\s)]+\/pull\/\d+/gi;
+                        for (const c of comments) {
+                            const txt = typeof c.text === 'string' ? c.text : '';
+                            let m;
+                            while ((m = PR_RE.exec(txt)) !== null) {
+                                if (!seenPr.has(m[0])) { seenPr.add(m[0]); evidence.push({ label: 'PR', url: m[0], kind: 'pr' }); }
+                            }
+                        }
+                        const filesRes = await pool.query(
+                            `SELECT url, filename FROM kanban_files
+                             WHERE card_id = $1 AND device_id = $2 AND mime_type LIKE 'image/%'
+                             ORDER BY created_at ASC`,
+                            [cardId, deviceId]
+                        );
+                        for (const f of (filesRes.rows || [])) {
+                            evidence.push({ label: f.filename || 'screenshot', url: f.url || null, kind: 'image' });
+                        }
+
+                        // painTags (best-effort) so the classifier can short-circuit
+                        // a pure UI vision-check card.
+                        let painTags = [];
+                        try {
+                            const classifier = require('./agent-improvement/classifier');
+                            painTags = classifier.classifyPainTags(`${card.title || ''}\n\n${card.description || ''}`, undefined);
+                        } catch (_) { /* classifier optional */ }
+
+                        const { classifyCardOwnerDecision } = require('./agent-improvement/owner-decision-classifier');
+                        const verdict = classifyCardOwnerDecision({
+                            title: card.title || '',
+                            description: card.description || '',
+                            latestComment: whatWasDone,
+                            gateReason: card.gate_reason || '',
+                            requiresScreenshotReview: card.requires_screenshot_review === true,
+                            painTags,
+                        });
+                        if (!verdict.ownerOnly) return;
+
+                        // Dedup: skip if a pending request already references this card.
+                        const dup = await pool.query(
+                            `SELECT 1 FROM agent_action_requests
+                             WHERE device_id = $1 AND related_card_id = $2 AND status = 'pending'
+                             LIMIT 1`,
+                            [deviceId, cardId]
+                        );
+                        if (dup.rows.length > 0) return;
+
+                        // from_entity_id: the card's owner/assignee, else the mover, else 0.
+                        const moverId = parseInt(req.body.entityId, 10);
+                        const ownerId = (Array.isArray(bots) && bots.length && Number.isInteger(bots[0]))
+                            ? bots[0]
+                            : (Number.isInteger(moverId) && moverId >= 0 ? moverId : 0);
+
+                        const headline = `需要你決策：「${card.title || cardId}」(${verdict.categories.join(', ') || 'owner-only'})`.slice(0, 2000);
+                        await createActionRequest({
+                            deviceId,
+                            fromEntityId: ownerId,
+                            type: 'decision',
+                            prompt: headline,
+                            options: ['核可', '退回', '延後'], // RECORD-ONLY — no auto-execute
+                            relatedCardId: cardId,
+                            decisionContext: {
+                                // ownerOnly: this move-hook ONLY reaches here when the
+                                // classifier verdict.ownerOnly is true (guarded above),
+                                // so stamp the marker into the stored decision_context.
+                                // This makes the row a genuine owner-facing decision for
+                                // downstream consumers — the 需要你 mobile push gate
+                                // (card_c7baa7ae) and waiting-state.js — instead of
+                                // relying on a flag that was checked but never persisted.
+                                ownerOnly: true,
+                                whatWasDone,
+                                recommendation: whatWasDone,
+                                evidence,
+                                recommendedOptionIndex: 0,
+                            },
+                        });
+                        console.log(`[Kanban] owner-decision surfaced card=${cardId} cats=${verdict.categories.join(',')}`);
+                    } catch (e) {
+                        console.error('[Kanban] owner-decision hook error (non-blocking):', e.message);
+                    }
+                })();
+            }
+
+            // ── Owner-decision lifecycle (子6a) — failure-isolated ──
+            // When a card LEAVES review/blocked, the surfaced decision is moot:
+            // auto-dismiss any pending owner-decision request(s) for it (+ emit the
+            // 'dismissed' socket event via the injected helper). Never blocks the move.
+            if (typeof dismissActionRequestsForCard === 'function'
+                && ['review', 'blocked'].includes(oldStatus)
+                && !['review', 'blocked'].includes(newStatus)) {
+                (async () => {
+                    try {
+                        await dismissActionRequestsForCard(deviceId, cardId);
+                    } catch (e) {
+                        console.error('[Kanban] owner-decision auto-dismiss error (non-blocking):', e.message);
+                    }
+                })();
             }
 
             await bumpVersion(deviceId);
@@ -2292,14 +3114,23 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             // chatty cron/auto-generated children without losing manual closures.
             if (newStatus === 'done' && typeof notifyDevice === 'function') {
                 const isAuto = !!card.is_auto_generated;
+                const doneCategory = isAuto ? 'kanban_done_auto' : 'kanban_done';
+                // Stdout breadcrumb so "手機通知沒收到" can be diagnosed from
+                // Railway logs: confirms the device-push dispatch path was
+                // entered for this owner device + category. The downstream
+                // sendWebPush/sendFcm outcomes log to server_logs (DB), so this
+                // line is the only stdout evidence that the chain even fired.
+                console.log(`[Kanban] move→done device-push dispatch: device=${deviceId} card=${cardId} category=${doneCategory}`);
                 notifyDevice(deviceId, {
                     type: 'kanban',
-                    category: isAuto ? 'kanban_done_auto' : 'kanban_done',
+                    category: doneCategory,
                     title: isAuto ? '✅ 自動任務完成' : '✅ 任務完成',
                     body: card.title,
                     link: `/portal/kanban.html?card=${cardId}`,
                     metadata: { cardId, isAuto, fromStatus: oldStatus }
-                }).catch(() => {});
+                }).catch((e) => {
+                    console.error(`[Kanban] move→done device-push dispatch failed: device=${deviceId} card=${cardId}:`, e.message);
+                });
             }
 
             // If this is an auto-generated child card moving to Done → update parent
@@ -2510,7 +3341,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
         try {
             const cardCheck = await pool.query(
-                `SELECT id, assigned_bots FROM kanban_cards WHERE id = $1 AND device_id = $2`,
+                `SELECT id, title, assigned_bots FROM kanban_cards WHERE id = $1 AND device_id = $2`,
                 [cardId, deviceId]
             );
             if (cardCheck.rows.length === 0) {
@@ -2541,6 +3372,32 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             await bumpVersion(deviceId);
 
             res.json({ success: true, comment });
+
+            // ── B. Notify @-mentioned entities (card_cc20541e) ──
+            // ANTI-SPAM: only an @-mention triggers a push — a plain comment
+            // notifies nobody (the create/move/reopen paths already cover
+            // assignment-time pings). Fired AFTER res.json so notify latency
+            // never delays the comment response; wrapped so a failure can't
+            // surface as an unhandled rejection. The mentioned entity gets the
+            // comment text itself as the actionable brief (latestComment).
+            try {
+                const commentText = result.rows[0].text;
+                const mentionedIds = resolveCommentMentions(deviceId, commentText)
+                    // Don't ping a bot for its OWN comment.
+                    .filter(id => id !== eId);
+                if (mentionedIds.length > 0) {
+                    const lang = await getDeviceLanguage(deviceId);
+                    const msg = tKanban(lang, 'commentMention', { title: cardCheck.rows[0].title });
+                    for (const mentionedId of mentionedIds) {
+                        notifyEntities(deviceId, [mentionedId], msg, {
+                            cardId,
+                            latestComment: commentText,
+                        });
+                    }
+                }
+            } catch (notifyErr) {
+                console.error('[Kanban] comment-mention notify failed:', notifyErr.message);
+            }
         } catch (err) {
             console.error('[Kanban] Add comment error:', err);
             res.status(500).json({ success: false, error: err.message });
@@ -2744,7 +3601,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     router.put('/card/:id/config', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] PUT /card/:id/config called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, staleThresholdMs, doneRetentionMs, isAutomation } = req.body;
+        const { deviceId, staleThresholdMs, doneRetentionMs, isAutomation, requirePrLink } = req.body;
         const cardId = req.params.id;
 
         try {
@@ -2772,6 +3629,14 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 updates.push(`is_automation = $${paramIdx++}`);
                 params.push(!!isAutomation);
                 console.log(`[Kanban] Config: set is_automation=${!!isAutomation} for card ${cardId}`);
+            }
+            // Per-card PR-link opt-in for the done-gate (owner directive 2026-07-03).
+            // Settable/updatable here — including on automation母卡. Default (never
+            // set) is FALSE = not blocking; flip TRUE to make done require a PR link.
+            if (requirePrLink !== undefined) {
+                updates.push(`requires_pr_link = $${paramIdx++}`);
+                params.push(!!requirePrLink);
+                console.log(`[Kanban] Config: set requires_pr_link=${!!requirePrLink} for card ${cardId}`);
             }
 
             if (updates.length === 0) {
@@ -2806,7 +3671,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     router.put('/card/:id/schedule', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] PUT /card/:id/schedule called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, enabled, type, cronExpression, runAt, timezone } = req.body;
+        const { deviceId, enabled, type, cronExpression, runAt, timezone, skipIf5hUsagePctOver, skipIf7dUsagePctOver } = req.body;
         const cardId = req.params.id;
 
         try {
@@ -2849,6 +3714,31 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 }
             }
 
+            // card_c2635849: per-card usage-quota thresholds. Validate at the
+            // write boundary so bad input rejects HTTP 400 instead of silently
+            // clamping. Omitted fields keep the existing column value (NULL →
+            // falls back to default at fire time via clampUsageThreshold).
+            let newSkip5h = existing.rows[0].schedule_skip_if_5h_pct_over;
+            let newSkip7d = existing.rows[0].schedule_skip_if_7d_pct_over;
+            if (skipIf5hUsagePctOver !== undefined) {
+                if (!isValidUsageThreshold(skipIf5hUsagePctOver)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'skipIf5hUsagePctOver must be an integer in [50, 99]'
+                    });
+                }
+                newSkip5h = Number(skipIf5hUsagePctOver);
+            }
+            if (skipIf7dUsagePctOver !== undefined) {
+                if (!isValidUsageThreshold(skipIf7dUsagePctOver)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'skipIf7dUsagePctOver must be an integer in [50, 99]'
+                    });
+                }
+                newSkip7d = Number(skipIf7dUsagePctOver);
+            }
+
             // recurring schedule → auto-promote to automation card
             const autoPromote = schedEnabled && schedType === 'recurring';
 
@@ -2860,9 +3750,11 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     schedule_run_at = $4,
                     schedule_timezone = $5,
                     schedule_next_run_at = $6,
+                    schedule_skip_if_5h_pct_over = $7,
+                    schedule_skip_if_7d_pct_over = $8,
                     ${autoPromote ? 'is_automation = TRUE,' : ''}
                     updated_at = NOW()
-                 WHERE id = $7 AND device_id = $8
+                 WHERE id = $9 AND device_id = $10
                  RETURNING *`,
                 [
                     schedEnabled,
@@ -2871,6 +3763,8 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     schedType === 'once' ? nextRunAt : null,
                     tz,
                     nextRunAt,
+                    newSkip5h,
+                    newSkip7d,
                     cardId,
                     deviceId
                 ]
@@ -3025,7 +3919,15 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
      * #1701: Three escalation levels:
      *   1. Nudge (>staleThreshold, default 3h) — system comment + notification
      *   2. Escalate (>6h) — auto-upgrade priority (P2→P1) + notify reviewer
+     *      Severity gate (card_22ab8c3b path #2, follow-up to PR #3564): a P3
+     *      card in `backlog` is a design-first draft awaiting launch — do NOT
+     *      auto-upgrade it to P2 just because it has been sitting. Returns
+     *      false so the card falls through to the L1 nudge path instead.
      *   3. Block (>12h) — move to blocked status + system comment
+     *      Severity gate (same card): a P0 card means "fix now, supervisor's
+     *      attention" — silently moving it to `blocked` hides it from the
+     *      active board. Instead fire a heightened L1 nudge with a P0-stalled
+     *      prefix + supervisor notification; state stays in_progress.
      * Also checks for orphaned rental bot assignments.
      */
     // Sort stale cards by user-chosen priority mode (see device_preferences.kanban_nudge_priority_mode).
@@ -3049,22 +3951,55 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         try {
             // Fetch stale candidates WITHOUT the global nudge-gap filter; we apply
             // per-device nudge interval + status filter (from device_preferences) below.
-            // backlog (待排程) included here and filtered per-device — users can opt in.
+            // backlog (待排程) is EXCLUDED here: backlog = intentionally parked / "not
+            // now", so a parked card must never be flood re-nudged "please continue"
+            // (owner-reported zombie nudge, card_3e95f4c1: a parked #6 recurring-driver
+            // card and a parked daily-E2E card re-nudged every ~17 min for 7+ hours each).
+            // Only actively-worked statuses (todo / in_progress / review) get stale
+            // nudges; done + archived are already excluded (status filter + the
+            // archived = false guard). This extends the #3781 hygiene that stopped
+            // re-nudging archived/done parents — now to parked backlog cards too.
+            // Backlog cards stay fully visible on the board; this only stops the active
+            // re-nudge pings, not their board presence.
             // Skip recurring-schedule automation parents: their status_changed_at never
             // moves (cron creates child cards instead), so they would always look stale
             // and get escalated to P0 every staleThresholdMs window. Mirrors the same
             // filter used in checkDoneAutoArchive below.
-            // gated=true only suppresses L1/L2/L3 for backlog cards (launch-pending
-            // drafts). Active-status cards (todo/in_progress/review) keep escalating
-            // even if a stale gated flag is left over — defense-in-depth alongside
-            // the API guard + /move auto-reset.
+            // Also skip single-shot (type='once') scheduled cards whose run_at is still
+            // in the future: those cards are deliberately parked in todo waiting for the
+            // scheduled fire time, not stalled. Without this guard, a card scheduled for
+            // tomorrow 10:00 starts firing 🚨 P0 stalled the moment status_changed_at
+            // crosses stale_threshold_ms (typical 3h), 14h before its actual run time.
+            // Once run_at passes (timer fires or window elapses without fire), the card
+            // falls back into stale eligibility — preserves L1/L2/L3 safety rails for
+            // actually-stuck post-runAt cards.
             const result = await pool.query(`
                 SELECT * FROM kanban_cards
                 WHERE archived = false
-                  AND status IN ('backlog', 'todo', 'in_progress', 'review')
+                  AND status IN ('todo', 'in_progress', 'review')
                   AND EXTRACT(EPOCH FROM (NOW() - status_changed_at)) * 1000 > stale_threshold_ms
                   AND (schedule_enabled = false OR schedule_type != 'recurring' OR schedule_enabled IS NULL)
-                  AND (status != 'backlog' OR COALESCE(gated, false) = false)
+                  AND NOT (
+                    schedule_enabled = true
+                    AND schedule_type = 'once'
+                    AND schedule_run_at IS NOT NULL
+                    AND schedule_run_at > NOW()
+                  )
+                  -- Suppress nudges on orphaned children of a stopped parent:
+                  -- if the parent card is archived (any child) or the parent is
+                  -- DONE and this is a cron-spawned child (is_auto_generated),
+                  -- the work-stream was stopped by the owner — re-nudging the
+                  -- entity to finish it just floods the supervisor. The parent's
+                  -- own schedule is auto-disabled in checkScheduleTriggers; this
+                  -- mirrors that for the already-spawned children.
+                  AND NOT EXISTS (
+                    SELECT 1 FROM kanban_cards parent
+                    WHERE parent.id = kanban_cards.parent_card_id
+                      AND (
+                        parent.archived = true
+                        OR (parent.status = 'done' AND kanban_cards.is_auto_generated = true)
+                      )
+                  )
             `);
 
             if (result.rows.length === 0) return;
@@ -3081,10 +4016,179 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
             for (const [deviceId, cards] of byDevice) {
                 await processDeviceStaleCards(deviceId, cards);
+                // Waiting-state surfacer (phases 2-3 of card_76b073959c279d6204d9fd42).
+                // Rides the SAME worker tick (no new cron). Fully gated behind the
+                // default-FALSE waiting_state_surfacer_enabled pref inside the
+                // function → a complete no-op until Hank explicitly enables it.
+                // Failure-isolated: a surfacer error NEVER breaks the stale scan.
+                try {
+                    await surfaceOwnerWaitingStates(deviceId);
+                } catch (e) {
+                    console.error('[Kanban] waiting-state surfacer error (non-blocking):', e.message);
+                }
             }
         } catch (err) {
             console.error('[Kanban] Stale check error:', err.message);
         }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // WAITING-STATE SURFACER (phases 2-3 of card_76b073959c279d6204d9fd42)
+    // ──────────────────────────────────────────────────────────────────────
+    // Hank ONLY monitors the 需要你 (action-request) inbox — he never opens task
+    // cards. This routine generalizes the review/blocked owner-decision move-hook
+    // into a periodic pass that catches EVERY card genuinely WAITING ON THE OWNER
+    // (including in_progress cards blocked on an owner decision) and auto-surfaces
+    // exactly ONE inbox item per card, then auto-dismisses it when the wait clears.
+    //
+    // SAFETY (the #1 risk is flooding the inbox):
+    //   * DARK-LAUNCH: gated behind waiting_state_surfacer_enabled (DEFAULT FALSE).
+    //     When false, this function early-returns BEFORE touching the DB — a
+    //     complete no-op. Nothing changes for anyone until Hank enables it.
+    //   * DEDUP: at most ONE open surfacer item per card. Surfacer items carry
+    //     decision_context.surfacer === true so we find/dedup/dismiss ONLY our own
+    //     rows and never touch ordinary owner-decision or agent action-requests.
+    //   * AUTO-DISMISS: when a card is no longer 'owner'-waiting (wait cleared, or
+    //     it left the waiting statuses entirely), its surfacer item is dismissed
+    //     via dismissSurfacerActionRequestsForCard (surfacer-only guard).
+    async function surfaceOwnerWaitingStates(deviceId) {
+        if (!deviceId) return;
+        if (typeof createActionRequest !== 'function') return;
+
+        // Gate: dark-launch, DEFAULT FALSE. Unset pref → false → complete no-op.
+        const prefs = await devicePrefs.getPrefs(deviceId).catch(() => ({}));
+        if (prefs.waiting_state_surfacer_enabled !== true) return;
+
+        const { classifyCardWaitingState } = require('./waiting-state');
+
+        // Candidate cards: any active card in a status that CAN be owner-waiting
+        // (blocked / review / in_progress). todo/done/backlog/archived excluded.
+        const cardsRes = await pool.query(
+            `SELECT * FROM kanban_cards
+              WHERE device_id = $1
+                AND archived = false
+                AND status IN ('blocked', 'review', 'in_progress')`,
+            [deviceId]
+        );
+        const cards = cardsRes.rows || [];
+
+        // All pending SURFACER items for this device, keyed by related_card_id, so
+        // we can dedup (skip create when one exists) and dismiss (wait cleared /
+        // card gone). We match ONLY our own rows via decision_context.surfacer.
+        const openRes = await pool.query(
+            `SELECT related_card_id AS "cardId"
+               FROM agent_action_requests
+              WHERE device_id = $1
+                AND status = 'pending'
+                AND (decision_context #>> '{surfacer}') = 'true'`,
+            [deviceId]
+        );
+        const openSurfacerCards = new Set(
+            (openRes.rows || []).map(r => r.cardId).filter(id => id != null)
+        );
+
+        const dismiss = (typeof dismissSurfacerActionRequestsForCard === 'function')
+            ? dismissSurfacerActionRequestsForCard
+            : async () => [];
+
+        for (const card of cards) {
+            const cardId = card.id;
+            // Latest non-system comment (the narrow in_progress await-owner marker
+            // lives here) — best-effort; a query error must not abort the pass.
+            let latestComment = '';
+            try {
+                const cmt = await pool.query(
+                    `SELECT text FROM kanban_comments
+                      WHERE card_id = $1 AND device_id = $2 AND is_system = false
+                      ORDER BY created_at DESC LIMIT 1`,
+                    [cardId, deviceId]
+                );
+                latestComment = (cmt.rows[0] && typeof cmt.rows[0].text === 'string') ? cmt.rows[0].text : '';
+            } catch (_) { latestComment = ''; }
+
+            let verdict = null;
+            try {
+                verdict = classifyCardWaitingState(card, {
+                    latestComment,
+                    decisionContext: card.decision_context || null,
+                });
+            } catch (_) { verdict = null; }
+
+            const hasItem = openSurfacerCards.has(cardId);
+
+            if (verdict === 'owner') {
+                // DEDUP: one surfacer item per card. If one exists, leave it.
+                if (hasItem) continue;
+                try {
+                    const reason = describeOwnerWaitReason(card, latestComment);
+                    const headline = `需要你決策：「${card.title || cardId}」(${reason})`.slice(0, 2000);
+                    const from = (Array.isArray(card.assigned_bots) && card.assigned_bots.length
+                        && Number.isInteger(Number(card.assigned_bots[0])))
+                        ? Number(card.assigned_bots[0])
+                        : 0;
+                    await createActionRequest({
+                        deviceId,
+                        fromEntityId: from,
+                        type: 'decision',
+                        prompt: headline,
+                        options: ['核可', '退回', '延後'], // RECORD-ONLY — no auto-execute
+                        relatedCardId: cardId,
+                        decisionContext: {
+                            surfacer: true,          // ← our distinguishing marker
+                            waitingOn: 'owner',
+                            ownerOnly: true,
+                            reason,
+                            whatWasDone: latestComment.slice(0, 1000),
+                            recommendation: latestComment.slice(0, 1000),
+                            evidence: [],
+                            recommendedOptionIndex: 0,
+                            relatedCardId: cardId,
+                        },
+                    });
+                    openSurfacerCards.add(cardId);
+                    console.log(`[Kanban] waiting-state surfaced (owner) card=${cardId} reason=${reason}`);
+                } catch (e) {
+                    console.error(`[Kanban] waiting-state surface create error card=${cardId} (non-blocking):`, e.message);
+                }
+            } else if (hasItem) {
+                // Wait cleared (card no longer owner-waiting) but a surfacer item is
+                // still open → dismiss it (surfacer-only guard in the helper).
+                try {
+                    await dismiss(deviceId, cardId);
+                    openSurfacerCards.delete(cardId);
+                    console.log(`[Kanban] waiting-state auto-dismissed (wait cleared) card=${cardId}`);
+                } catch (e) {
+                    console.error(`[Kanban] waiting-state dismiss error card=${cardId} (non-blocking):`, e.message);
+                }
+            }
+        }
+
+        // Sweep surfacer items whose card is GONE from the candidate set entirely
+        // (moved to done/archived/todo/backlog, or deleted) — those cards never
+        // appear in the loop above, so dismiss their stale surfacer items here.
+        const candidateIds = new Set(cards.map(c => c.id));
+        for (const cardId of openSurfacerCards) {
+            if (candidateIds.has(cardId)) continue;
+            try {
+                await dismiss(deviceId, cardId);
+                console.log(`[Kanban] waiting-state auto-dismissed (card left waiting statuses) card=${cardId}`);
+            } catch (e) {
+                console.error(`[Kanban] waiting-state dismiss(stale) error card=${cardId} (non-blocking):`, e.message);
+            }
+        }
+    }
+
+    // Compact human reason for the surfacer headline / decision_context.
+    function describeOwnerWaitReason(card, latestComment) {  // eslint-disable-line no-unused-vars
+        const status = String(card.status || '').toLowerCase();
+        const config = (card.config && typeof card.config === 'object') ? card.config : {};
+        if (String(config.waitingOn || '').toLowerCase() === 'owner' || config.awaitOwner === true) {
+            return 'config waitingOn=owner';
+        }
+        if (status === 'review') return 'review + ownerOnly';
+        if (status === 'blocked') return `blocked (${card.gate_reason || 'owner-only reason'})`.slice(0, 120);
+        if (status === 'in_progress') return 'in_progress + [await-owner] marker';
+        return 'owner-only';
     }
 
     async function processDeviceStaleCards(deviceId, cards) {
@@ -3100,6 +4204,19 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 ? basePrefs.kanban_nudge_statuses
                 : KanbanStatus.NUDGE_DEFAULT_STATUSES
         );
+
+        // Auto-escalation toggles (card_a0c2bc798affdf0a6310f5bb / Hank-direct).
+        // Master switch defaults true; automation-skip defaults true. Both gate ONLY
+        // the clock-triggered L2/L3 ladder below — L1 standard nudges always run so
+        // skipped cards are never forgotten.
+        const autoEscalateEnabled = basePrefs.kanban_auto_escalate_enabled !== false;            // default true
+        const skipAutomationEscalation = basePrefs.kanban_auto_escalate_skip_automation !== false; // default true
+        // A card counts as "automation" for escalation-skip if it's a cron母卡
+        // (is_automation) OR a cron-spawned child (is_auto_generated, the
+        // "[Auto] … (date)" rows). The child INSERT sets is_auto_generated=true but
+        // NOT is_automation, and the child cards are the ones flooding the supervisor
+        // with "🚨 P0 stalled" pings — so both flags must be checked here.
+        const isAutomationCard = (card) => card.is_automation === true || card.is_auto_generated === true;
 
         // Phase 2 (kanban-nudge-spec.md §6): per-entity overrides.
         // Cached resolution keyed on entityId, computed once per tick.
@@ -3223,14 +4340,37 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 ? Date.now() - new Date(card.last_stale_nudge_at).getTime()
                 : Infinity;
 
-            if (elapsedMs >= blockAfterMs && card.status !== 'blocked' && sinceLast > intervalMs) {
-                await fireBlockEscalation(card, filterNudgeStoppedRecipients(buildEscalationRecipients(card)));
-                continue;
+            // Auto-escalation gate (card_a0c2bc798affdf0a6310f5bb): suppress the
+            // L2/L3 ladder when the master switch is off, or (default) when this is
+            // an automation card and skip-automation is on. The card still falls
+            // through to the L1 push below so it isn't forgotten — only the
+            // priority-bump / P0-stalled-ping / auto-block escalations are skipped.
+            //
+            // SOFT done-gate (card_f52ef42e / Hank "擋自動升級"): a card that moved to
+            // review/done with incomplete deliverables under the soft gate is flagged
+            // done_gate_soft_flagged=TRUE. It was ALLOWED through on purpose (owner
+            // decision, zero false-block), so it must NOT auto-escalate/re-nudge as if
+            // it were stuck — the incompleteness is already recorded in a ⚠️ comment
+            // for a reviewer. Suppress only the L2/L3 ladder here; the flag is a plain
+            // boolean read from the same SELECT * row, so this is failure-isolated.
+            const escalationAllowed = autoEscalateEnabled
+                && !(skipAutomationEscalation && isAutomationCard(card))
+                && card.done_gate_soft_flagged !== true;
+
+            if (escalationAllowed) {
+                if (elapsedMs >= blockAfterMs && card.status !== 'blocked' && sinceLast > intervalMs) {
+                    await fireBlockEscalation(card, filterNudgeStoppedRecipients(await buildEscalationRecipients(card)));
+                    continue;
+                }
+                if (elapsedMs >= escalateAfterMs && sinceLast > intervalMs) {
+                    const fired = await fireLevelTwoEscalation(card, filterNudgeStoppedRecipients(await buildEscalationRecipients(card)));
+                    if (fired) continue;
+                }
             }
-            if (elapsedMs >= escalateAfterMs && sinceLast > intervalMs) {
-                const fired = await fireLevelTwoEscalation(card, filterNudgeStoppedRecipients(buildEscalationRecipients(card)));
-                if (fired) continue;
-            }
+            // SOFT done-gate (card_f52ef42e): a soft-flagged card was deliberately let
+            // through with incomplete deliverables and is already ⚠️-recorded for a
+            // reviewer — don't re-nudge it (L1) as if stuck either. Skip it entirely.
+            if (card.done_gate_soft_flagged === true) continue;
             // Level 1 candidate if enough interval has passed.
             if (sinceLast > intervalMs) level1Pending.push(card);
         }
@@ -3360,14 +4500,66 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         }
     }
 
-    function buildEscalationRecipients(card) {
+    // Commander-class entities, ordered by preference (#2 commander, then #1
+    // deputy). Mirrors REOPEN_SUPERVISOR_ENTITY_IDS — the platform already treats
+    // #1/#2 as supervisors. Used as the fallback escalation target when no reviewer
+    // is set and no org chart is configured.
+    const ESCALATION_SUPERVISOR_ENTITY_IDS = [2, 1];
+
+    /**
+     * Resolve the supervisor an escalation should also reach, so a stuck
+     * subordinate's card doesn't just re-nudge the STUCK assignee forever with no
+     * commander ever intervening (card_3ce0080a). Preference:
+     *   1. org-chart superior of the (first) assignee, if a hierarchy is configured
+     *   2. fallback: a bound commander-class entity (#2 then #1) that isn't itself
+     *      an assignee
+     * Returns an entity id (number) or null. Never returns an assignee.
+     */
+    async function resolveEscalationSupervisor(card, bots) {
+        const assignees = new Set(bots.map(Number));
+        // (1) org-chart superior
+        if (orgChart && bots.length > 0) {
+            try {
+                const orgData = await orgChart.getOrgChart(card.device_id);
+                const sup = orgData && orgData.hierarchy
+                    ? orgChart.getSuperior(orgData.hierarchy, Number(bots[0]))
+                    : null;
+                if (typeof sup === 'number' && !assignees.has(sup)) {
+                    const device = devices[card.device_id];
+                    if (device && device.entities && device.entities[sup] && device.entities[sup].isBound) {
+                        return sup;
+                    }
+                }
+            } catch (err) {
+                // non-fatal: fall through to the commander fallback
+                if (serverLog) serverLog('warn', 'kanban', `[Escalation] org-chart superior lookup failed: ${err.message}`, { deviceId: card.device_id });
+            }
+        }
+        // (2) commander-class fallback
+        const device = devices[card.device_id];
+        if (device && device.entities) {
+            for (const cid of ESCALATION_SUPERVISOR_ENTITY_IDS) {
+                if (assignees.has(cid)) continue;
+                if (device.entities[cid] && device.entities[cid].isBound) return cid;
+            }
+        }
+        return null;
+    }
+
+    async function buildEscalationRecipients(card) {
         const config = card.config || {};
         const esc = config.escalationPolicy || {};
         const notifyEntityId = esc.notifyEntityId || card.reviewer_entity_id;
         const bots = Array.isArray(card.assigned_bots) ? card.assigned_bots : [];
+        // Supervisor visibility (card_3ce0080a): without this, a card whose
+        // reviewer_entity_id is null escalates ONLY to its assignees, so a blocked
+        // subordinate's card re-nudges the stuck bot indefinitely and burns its
+        // tokens with no commander in the loop. Add a resolved supervisor to L2/L3/
+        // P0 escalation recipients (not routine L1 nudges).
+        const supervisorId = await resolveEscalationSupervisor(card, bots);
         const seen = new Set();
         const out = [];
-        for (const id of [notifyEntityId, ...bots]) {
+        for (const id of [notifyEntityId, supervisorId, ...bots]) {
             if (id == null) continue;
             const key = String(id);
             if (seen.has(key)) continue;
@@ -3379,7 +4571,29 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
     async function fireBlockEscalation(card, recipientIds = null) {
         const elapsedHrs = Math.round((Date.now() - new Date(card.status_changed_at).getTime()) / 3600000 * 10) / 10;
-        const recipients = Array.isArray(recipientIds) ? recipientIds : buildEscalationRecipients(card);
+        const recipients = Array.isArray(recipientIds) ? recipientIds : await buildEscalationRecipients(card);
+        // Severity gate (card_22ab8c3b path #2, sibling of PR #3564):
+        // P0 cards are "fix now, supervisor's attention". Auto-moving them to
+        // `blocked` hides them from the active board and clears the in_progress
+        // queue, which is the opposite of what a P0 stall calls for. Instead
+        // fire a heightened L1 nudge with a P0-stalled prefix and notify the
+        // recipient set (including the supervisor reviewer). State is NOT
+        // changed; the card stays in its current column so it remains visible.
+        if (card.priority === 'P0') {
+            await addSystemComment(card.id, card.device_id,
+                `🚨 P0 stalled — 卡片已停滯 ${elapsedHrs} 小時，主管請介入（未自動 blocked，保留 in_progress 可視性）`);
+            await pool.query(
+                `UPDATE kanban_cards SET last_stale_nudge_at = NOW(), updated_at = NOW() WHERE id = $1`,
+                [card.id]
+            );
+            if (recipients.length > 0) {
+                notifyEntities(card.device_id, recipients,
+                    `🚨 P0 stalled 卡片「${card.title}」停滯 ${elapsedHrs}h，主管請介入`,
+                    { cardId: card.id });
+            }
+            if (serverLog) serverLog('warn', 'kanban', `[Stale] P0 card ${card.id} stalled ${elapsedHrs}h — heightened L1 (no auto-block)`, { deviceId: card.device_id });
+            return;
+        }
         await pool.query(
             `UPDATE kanban_cards SET status = 'blocked', status_changed_at = NOW(), last_stale_nudge_at = NOW(), updated_at = NOW() WHERE id = $1`,
             [card.id]
@@ -3396,7 +4610,12 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
     async function fireLevelTwoEscalation(card, recipientIds = null) {
         const elapsedHrs = Math.round((Date.now() - new Date(card.status_changed_at).getTime()) / 3600000 * 10) / 10;
-        const recipients = Array.isArray(recipientIds) ? recipientIds : buildEscalationRecipients(card);
+        const recipients = Array.isArray(recipientIds) ? recipientIds : await buildEscalationRecipients(card);
+        // Severity gate (card_22ab8c3b path #2): P3 cards in `backlog` are
+        // design-first drafts awaiting launch — they sit there on purpose and
+        // must NOT be silently bumped to P2 by clock alone. Skip L2; the L1
+        // nudge cadence still applies if the device opts backlog into nudges.
+        if (card.priority === 'P3' && card.status === 'backlog') return false;
         const PRIORITY_UPGRADE = { P3: 'P2', P2: 'P1', P1: 'P0', P0: 'P0' };
         const newPriority = PRIORITY_UPGRADE[card.priority] || card.priority;
         if (newPriority === card.priority) return false;
@@ -3424,6 +4643,56 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         return true;
     }
 
+    /**
+     * Build a compact one-line "task-load census" for a single entity — how many
+     * OPEN cards it is currently an assignee on, grouped by status, plus the age
+     * of its oldest open card. Prepended to stale nudges (waiting-state awareness,
+     * owner Hank) so the recipient agent is always reminded of its TOTAL
+     * outstanding workload, not just the one card being nudged. Backend-enforced:
+     * the server computes and injects this, the agent doesn't have to remember.
+     *
+     * Returns '' when the entity has no open cards (so the caller emits no census
+     * line) or on any DB error — a census failure must never break the nudge.
+     */
+    async function buildEntityTaskCensus(deviceId, entityId) {
+        try {
+            // Open statuses only — exclude done/backlog/archived (mirrors the
+            // census columns below). assigned_bots is a jsonb array of entity
+            // ids; `@> to_jsonb($n::int)` is the containment filter used
+            // elsewhere in this file (e.g. lines ~4296/4529).
+            const res = await pool.query(
+                `SELECT status, status_changed_at
+                   FROM kanban_cards
+                  WHERE device_id = $1
+                    AND archived = false
+                    AND status IN ('todo','in_progress','review','blocked')
+                    AND assigned_bots @> to_jsonb($2::int)`,
+                [deviceId, Number(entityId)]
+            );
+            const counts = { todo: 0, in_progress: 0, review: 0, blocked: 0 };
+            let oldest = null;
+            for (const row of res.rows) {
+                if (counts[row.status] === undefined) continue;
+                counts[row.status]++;
+                if (row.status_changed_at) {
+                    const t = new Date(row.status_changed_at).getTime();
+                    if (!Number.isNaN(t) && (oldest === null || t < oldest)) oldest = t;
+                }
+            }
+            const total = counts.todo + counts.in_progress + counts.review + counts.blocked;
+            if (total === 0) return '';
+            let staleSeg = '';
+            if (oldest !== null) {
+                const hrs = Math.round((Date.now() - oldest) / 3600000 * 10) / 10;
+                staleSeg = `｜最舊停留${hrs}h`;
+            }
+            return `【#${entityId} 未完成｜待辦${counts.todo}·進行中${counts.in_progress}·審查${counts.review}·封鎖${counts.blocked}${staleSeg}】收到請先盤點：完成的移 done、卡住的升級`;
+        } catch (err) {
+            if (serverLog) serverLog('warn', 'kanban', `[Census] task-load census failed for #${entityId}: ${err.message}`, { deviceId });
+            return '';
+        }
+    }
+
     async function fireLevelOneNudge(card, recipientIds = null) {
         const bots = Array.isArray(recipientIds) ? recipientIds : (card.assigned_bots || []);
         const cardStatusLabel = STATUS_LABELS[card.status] || card.status;
@@ -3443,7 +4712,15 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 status: statusLabel(lang, card.status),
                 hours: elapsedHrs
             });
-            notifyEntities(card.device_id, bots, msg, { description: card.description, cardId: card.id });
+            // Personalize per recipient: each bot gets a census of ITS OWN open
+            // cards prepended, so notifyEntities is called once per bot. If the
+            // census is empty (no open cards / query error) send msg alone with
+            // no stray leading newline.
+            for (const bid of bots) {
+                const censusLine = await buildEntityTaskCensus(card.device_id, bid);
+                const finalMsg = censusLine ? (censusLine + '\n' + msg) : msg;
+                notifyEntities(card.device_id, [bid], finalMsg, { description: card.description, cardId: card.id });
+            }
             await recordEntityNudge(card.device_id, bots);
         }
         console.log(`[Kanban] Nudged card ${card.id} (${card.title}) — ${elapsedHrs}h in ${card.status}`);
@@ -3493,10 +4770,15 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
      */
     async function checkScheduleTriggers() {
         try {
+            // NOTE: archived cards are intentionally INCLUDED here (no
+            // `archived = false` filter) so the self-heal guard below can
+            // auto-disable their stale schedules. Without that, an archived
+            // card keeps schedule_enabled=true + a past schedule_next_run_at
+            // forever, and every consumer (UI badge / external cron watcher)
+            // keeps seeing it as "due" → endless re-nudge.
             const result = await pool.query(`
                 SELECT * FROM kanban_cards
-                WHERE archived = false
-                  AND schedule_enabled = true
+                WHERE schedule_enabled = true
                   AND schedule_next_run_at IS NOT NULL
                   AND schedule_next_run_at <= NOW()
             `);
@@ -3506,6 +4788,26 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             console.log(`[Kanban] Schedule triggers: ${result.rows.length} card(s) due`);
 
             for (const card of result.rows) {
+                // Self-heal: a scheduled card that has been archived (any type),
+                // or a cron母卡/once card the owner marked done, must STOP firing.
+                // Disable the schedule once, log + record it, and skip — this is
+                // the server-side fix for the re-nudge loop (owner directive:
+                // "if a cron's parent card is archived, the cron schedule should
+                // auto-disable and log it, not keep firing").
+                const disableReason = scheduleAutoDisableReason(card);
+                if (disableReason) {
+                    await pool.query(
+                        `UPDATE kanban_cards SET schedule_enabled = false, updated_at = NOW() WHERE id = $1`,
+                        [card.id]
+                    );
+                    try {
+                        await addSystemComment(card.id, card.device_id,
+                            `🛑 排程自動停用 — 卡片已${disableReason === 'archived' ? '封存' : '完成'}，停止觸發 (schedule auto-disabled: ${disableReason})`);
+                    } catch (e) { /* best-effort: comment on an archived card is non-critical */ }
+                    console.log(`[Kanban] Schedule auto-disabled: card ${card.id} (${card.title}) is ${disableReason} → schedule_enabled=false (re-nudge loop broken)`);
+                    continue;
+                }
+
                 const bots = card.assigned_bots || [];
                 const schedType = card.schedule_type;
 
@@ -3574,6 +4876,28 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                             console.log(`[Kanban] Automation skip: active child ${card.active_child_id} still ${activeChild.status}`);
                             continue;
                         }
+                    }
+
+                    // card_c2635849 (parent card_ad507345): per-card usage-quota
+                    // guard. If ANY assigned entity's rolling 5h / 7d usage% is
+                    // above the per-card threshold, skip child dispatch this
+                    // tick. We advance schedule_next_run_at to the next cron
+                    // slot (so the row doesn't fire-spin every poll loop —
+                    // the scheduler scans WHERE next_run_at <= NOW()) but do
+                    // NOT bump schedule_last_run_at — the audit trail should
+                    // show the last *successful* dispatch, not the skip.
+                    const usageBots = card.assigned_bots || [];
+                    const usageDecision = await evaluateUsageSkipDecision(card, usageBots);
+                    if (usageDecision.skip) {
+                        const nextRun = computeNextRun(card.schedule_cron, card.schedule_timezone);
+                        await pool.query(
+                            `UPDATE kanban_cards SET schedule_next_run_at = $1, updated_at = NOW() WHERE id = $2`,
+                            [nextRun, card.id]
+                        );
+                        await addSystemComment(card.id, card.device_id,
+                            `⏭️ 排程觸發跳過 — Entity #${usageDecision.entityId} ${usageDecision.window} 用量 ${usageDecision.pct}% > ${usageDecision.limit}%（下次嘗試: ${nextRun ? nextRun.toISOString() : '未知'}）`);
+                        console.log(`[CronSkip] card_${card.id} entity_${usageDecision.entityId} usage_${usageDecision.window}=${usageDecision.pct}% > ${usageDecision.limit}% — child dispatch skipped`);
+                        continue;
                     }
 
                     // Check idle dispatch mode before creating child card
@@ -4045,6 +5369,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 // Always classified as kanban_done_auto since this branch only
                 // runs for bot-reported IDLE auto-completions.
                 if (typeof notifyDevice === 'function') {
+                    console.log(`[Kanban] auto-done device-push dispatch: device=${deviceId} card=${card.id} category=kanban_done_auto closedBy=${entityId}`);
                     notifyDevice(deviceId, {
                         type: 'kanban',
                         category: 'kanban_done_auto',
@@ -4052,7 +5377,9 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                         body: card.title,
                         link: `/portal/kanban.html?card=${card.id}`,
                         metadata: { cardId: card.id, isAuto: true, autoClosedBy: entityId }
-                    }).catch(() => {});
+                    }).catch((e) => {
+                        console.error(`[Kanban] auto-done device-push dispatch failed: device=${deviceId} card=${card.id}:`, e.message);
+                    });
                 }
 
                 // Award XP for completing task
@@ -4218,5 +5545,21 @@ module.exports._private = {
     computeCronNextRun,
     computeCronPreviousRun,
     getRecurringScheduleFireDecision,
+    scheduleAutoDisableReason,
     SCHEDULE_LATE_FIRE_GRACE_MS,
+    // card_c2635849 cron usage-threshold skip
+    isValidUsageThreshold,
+    clampUsageThreshold,
+    readClaudeLivePct,
+    readCodexLivePct,
+    evaluateUsageSkipDecision,
+    SCHEDULE_USAGE_THRESHOLD_MIN,
+    SCHEDULE_USAGE_THRESHOLD_MAX,
+    DEFAULT_SKIP_5H_PCT,
+    DEFAULT_SKIP_7D_PCT,
+    // card_f5023a5 dispatch capability guard
+    BROWSER_INCAPABLE_ENTITIES,
+    isBrowserCapableEntity,
+    cardNeedsVisualVerification,
+    buildDispatchCapabilityWarning,
 };

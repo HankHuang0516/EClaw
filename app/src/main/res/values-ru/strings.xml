@@ -519,6 +519,9 @@
     <string name="chat_load_image_failed">Не удалось загрузить изображение</string>
     <string name="wallpaper_no_bound_entities">Нет связанных сущностей</string>
     <string name="claw_renderer_loading_entities">Загрузка объектов…</string>
+    <string name="claw_renderer_loading_wallpaper">Загрузка обоев…</string>
+    <string name="claw_wallpaper_loading_marker">Загрузка… (%1$s)</string>
+    <string name="claw_wallpaper_render_error">Ошибка перерисовки обоев (отправлено)</string>
     <string name="claw_renderer_no_entities_connected">Нет подключенных объектов</string>
     <string name="claw_renderer_open_app_to_bind">Откройте приложение E-Claw для привязки.</string>
     <string name="claw_renderer_with_openclaw_bot">сущности с ботом OpenClaw</string>
@@ -713,6 +716,10 @@
     <string name="update_title">Доступно обновление</string>
     <string name="update_message">Доступна новая версия (v%s). </string>
     <string name="update_now">Обновить сейчас</string>
+    <!-- Settings update-available chip (card_28a8290a) -->
+    <string name="update_help_title">Об этом обновлении</string>
+    <string name="update_help_body">Ваша версия %1$s → последняя %2$s. Нажмите «Обновить сейчас», чтобы обновить прямо в приложении (около 30 секунд, не выходя из него). Если обновление в приложении недоступно, откроется Play Маркет.</string>
+    <string name="update_store_unavailable">Не удалось открыть магазин для обновления. Обновите через Google Play.</string>
     <string name="update_later">Позже</string>
     <string name="card_holder_capabilities">Возможности</string>
     <string name="card_holder_tags">Теги</string>

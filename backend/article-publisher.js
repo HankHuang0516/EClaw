@@ -241,12 +241,16 @@ function buildReferralCTA({ format = 'md', locale = 'zh-TW', url = REFERRAL_CTA_
         return `\n<hr/>\n<p><strong>${t.header}</strong></p>\n<p>${t.rewards}</p>\n<p><a href="${url}">${t.cta}</a></p>\n<p><em>${t.disclaimer}</em></p>\n`;
     }
     if (format === 'npf') {
-        // Tumblr Neue Post Format — return array of blocks to append to content array
+        // Tumblr Neue Post Format — return array of blocks to append to content array.
+        // NPF formatting ranges are in UNICODE CODE POINTS, not UTF-16 code units:
+        // `.length` overcounts emoji (surrogate pairs) and Tumblr 400s the whole
+        // post on an out-of-range end (card_2992f6a2). Count via code points.
+        const cp = (str) => [...str].length;
         return [
             { type: 'text', subtype: 'heading2', text: t.header },
             { type: 'text', text: t.rewards },
-            { type: 'text', text: t.cta, formatting: [{ type: 'link', start: 0, end: t.cta.length, url }] },
-            { type: 'text', text: t.disclaimer, formatting: [{ type: 'italic', start: 0, end: t.disclaimer.length }] }
+            { type: 'text', text: t.cta, formatting: [{ type: 'link', start: 0, end: cp(t.cta), url }] },
+            { type: 'text', text: t.disclaimer, formatting: [{ type: 'italic', start: 0, end: cp(t.disclaimer) }] }
         ];
     }
     if (format === 'telegraph-nodes') {

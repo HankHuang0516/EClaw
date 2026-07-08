@@ -11,6 +11,7 @@ import com.hank.clawlive.data.model.CrossSpeakResponse
 import com.hank.clawlive.data.model.ScheduleListResponse
 import com.hank.clawlive.data.model.ScheduleCreateResponse
 import com.hank.clawlive.data.model.ScheduleDeleteResponse
+import com.hank.clawlive.settings.SettingsManifestResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.http.*
@@ -31,9 +32,26 @@ interface ClawApiService {
         @Query("appVersion") appVersion: String? = null
     ): AgentStatus
 
+    // Settings auto-sync seam (Stage 2): fetched at launch so the app surfaces
+    // each enabled settings feature natively or via WebView per `native`.
+    // Public GET — no auth (pure capability descriptor). Sending appVersion +
+    // platform lets the backend apply the minAppVersion version gate.
+    // See backend/lib/settings-manifest.js + docs/specs/settings-manifest-spec.md.
+    @GET("api/settings-manifest")
+    suspend fun getSettingsManifest(
+        @Query("appVersion") appVersion: String? = null,
+        @Query("platform") platform: String = "android"
+    ): SettingsManifestResponse
+
     // Device registration - get binding code
     @POST("api/device/register")
     suspend fun registerDevice(@Body request: RegisterRequest): RegisterResponse
+
+    @POST("api/play-integrity/nonce")
+    suspend fun createPlayIntegrityNonce(@Body body: Map<String, String>): PlayIntegrityNonceResponse
+
+    @POST("api/play-integrity/verdict")
+    suspend fun submitPlayIntegrityVerdict(@Body body: Map<String, String>): PlayIntegrityVerdictResponse
 
     // Device status - using deviceId + secret
     @POST("api/device/status")
@@ -58,6 +76,14 @@ interface ClawApiService {
         @Query("deviceId") deviceId: String,
         @Query("deviceSecret") deviceSecret: String
     ): MultiEntityResponse
+
+    @GET("api/mission/cards")
+    suspend fun getWallpaperKanbanCards(
+        @Query("deviceId") deviceId: String,
+        @Query("deviceSecret") deviceSecret: String,
+        @Query("automation") automation: String = "all",
+        @Query("includeArchived") includeArchived: Boolean = false
+    ): WallpaperKanbanCardsResponse
 
     // Add a new entity slot to the device
     @POST("api/device/add-entity")
@@ -388,6 +414,19 @@ interface ClawApiService {
     @POST("api/auth/app-login")
     suspend fun appLogin(@Body body: Map<String, String>): AppLoginResponse
 
+    // ── Settings Stage 3 native: Rotate Secret + Switch Device (card_c3b13f64) ──
+
+    // Rotate the device secret. The new secret is returned ONCE in the response and
+    // MUST be persisted locally (overwrite the stored deviceSecret) — the old secret
+    // is invalidated server-side. 401 Invalid credentials on mismatch; rate-limited.
+    @POST("api/device/rotate-secret")
+    suspend fun rotateDeviceSecret(@Body request: RotateSecretRequest): RotateSecretResponse
+
+    // Sign this device into a different deviceId/deviceSecret pair. On success the
+    // returned user object carries the canonical creds to persist before restart.
+    @POST("api/auth/device-login")
+    suspend fun deviceLogin(@Body request: DeviceLoginRequest): DeviceLoginResponse
+
     @PATCH("api/auth/language")
     suspend fun updateLanguage(@Body body: Map<String, String>): ApiResponse
 
@@ -408,6 +447,12 @@ interface ClawApiService {
         @Query("deviceId") deviceId: String,
         @Query("deviceSecret") deviceSecret: String
     ): NotificationCountResponse
+
+    @GET("api/action-requests/pending-count")
+    suspend fun getActionRequestPendingCount(
+        @Query("deviceId") deviceId: String,
+        @Query("deviceSecret") deviceSecret: String
+    ): ActionRequestPendingCountResponse
 
     @POST("api/notifications/read")
     suspend fun markNotificationRead(@Body body: Map<String, String>): ApiResponse
@@ -776,6 +821,42 @@ data class AppLoginResponse(
     val email: String? = null,
     val language: String? = null,
     val error: String? = null
+)
+
+// ── Settings Stage 3 native: Rotate Secret + Switch Device (card_c3b13f64) ──
+
+data class RotateSecretRequest(
+    val deviceId: String,
+    val deviceSecret: String
+)
+
+data class RotateSecretResponse(
+    val success: Boolean,
+    val deviceId: String? = null,
+    val newDeviceSecret: String? = null,
+    val rotatedAt: String? = null,
+    val error: String? = null
+)
+
+data class DeviceLoginRequest(
+    val deviceId: String,
+    val deviceSecret: String
+)
+
+data class DeviceLoginResponse(
+    val success: Boolean,
+    val authToken: String? = null,
+    val user: DeviceLoginUser? = null,
+    val error: String? = null
+)
+
+data class DeviceLoginUser(
+    val id: String? = null,
+    val email: String? = null,
+    val deviceId: String? = null,
+    val deviceSecret: String? = null,
+    val language: String? = null,
+    val subscriptionStatus: String? = null
 )
 
 data class OAuthLoginResponse(

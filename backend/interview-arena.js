@@ -147,9 +147,9 @@ function weightedPick(items, keyFn, weights) {
 
 let VISION_IMAGES = [
     // img-f3a1.svg retired (pass rate 100%) — replaced below
+    // img-d4e9.svg retired (basic shape, too easy) — replaced below
+    // img-a2f5.svg retired (basic shape, too easy) — replaced below
     { file: null, description: 'A system monitoring dashboard showing CPU at 87%, RAM usage 11.2 GB of 16 GB, disk I/O at 340 MB/s, and 3 active processes flagged in red', keywords: ['CPU', '87', 'RAM', 'disk', 'three', 'red'] },
-    { file: 'img-d4e9.svg', keywords: ['green', 'triangle'] },
-    { file: 'img-a2f5.svg', keywords: ['yellow', 'star'] },
     { file: 'img-c8b3.svg', keywords: ['cat', 'orange'] },
     // ── Easy tier (20%) — basic shape/object recognition ──
     { file: null, description: 'A red heart shape centered on a white background', keywords: ['heart', 'red'] },
@@ -237,6 +237,128 @@ let VISION_IMAGES = [
     // Hard tier
     { file: null, description: 'A GitHub pull request diff view showing 3 files changed: auth.js has 12 insertions in green and 4 deletions in red, config.json has 2 insertions and 0 deletions, README.md has 1 insertion and 3 deletions — a blue comment bubble icon appears on line 47 of auth.js', keywords: ['pull request', 'three', 'files', 'auth', '12', '4', 'deletions', 'line', '47', 'comment'] },
     { file: null, description: 'A Prometheus metrics dashboard showing request rates for three endpoints: /api/login at 142 req/s, /api/data at 893 req/s, /api/upload at 23 req/s — two red alert badges are visible: /api/upload shows latency_p99 = 8.3s and /api/login shows error_rate = 12%', keywords: ['prometheus', 'three', 'endpoints', 'login', '142', 'data', '893', 'upload', '8.3', 'error', '12'] },
+    // ── Daily pool update: added 2026-06-19 ──
+    // Hard tier — replacing retired basic SVGs with architectural diagrams
+    { file: null, description: 'A Docker Compose YAML snippet showing three services: web (image nginx:alpine, port 80:80), api (image node:18-alpine, port 3000:3000, depends_on db), and db (image postgres:15, environment POSTGRES_DB=appdb) — a depends_on arrow links api to db', keywords: ['docker', 'three', 'services', 'nginx', 'api', 'node', 'postgres', 'depends_on', 'appdb'] },
+    { file: null, description: 'An AWS architecture diagram showing a VPC with two availability zones — each zone contains a public subnet with one EC2 t3.medium instance and a private subnet with one RDS db.t3.large instance; an Application Load Balancer spans both zones at the top; total of 2 EC2 instances and 2 RDS instances visible', keywords: ['AWS', 'VPC', 'two', 'availability', 'zones', 'EC2', 't3', 'RDS', 'Load Balancer'] },
+    // Medium tier
+    { file: null, description: 'A mobile payment confirmation screen: payment of $34.99 to "Coffee Republic" — a green animated checkmark dominates the center, card last-4 digits shown as ****8521, and a timestamp of 10:23 AM Oct 3 appears below the merchant name', keywords: ['payment', '34.99', 'Coffee Republic', '8521', '10:23', 'checkmark', 'green'] },
+    { file: null, description: 'An infrastructure cost report table with five columns (Service, Region, vCPUs, Monthly Cost, Status) and eight data rows — the grand total row reads $8,234.50; the most expensive row is EC2 r6i.4xlarge in us-east-1 at $2,340 per month marked "Running"', keywords: ['infrastructure', 'cost', 'eight', 'rows', '8234', 'EC2', 'r6i', '2340', 'Running'] },
+    // ── Daily pool update: added 2026-06-20 ──
+    // Medium tier
+    { file: null, description: 'A login form UI with two text input fields (Email and Password), a blue "Sign In" button below, a "Remember me" checkbox on the left, and a green "Forgot Password?" link on the right', keywords: ['login', 'email', 'password', 'checkbox', 'remember', 'sign in', 'forgot'] },
+    { file: null, description: 'A weather map of Europe showing three temperature band isotherms: an orange 30°C band across southern Spain and Italy, a yellow 20°C band across France and Germany, and a blue 10°C band across Scandinavia and the British Isles', keywords: ['weather', 'map', 'europe', 'three', 'temperature', 'spain', 'scandinavia', 'orange', 'yellow', 'blue'] },
+    // Hard tier
+    { file: null, description: 'A machine learning confusion matrix for a binary classifier — 2×2 grid labeled Actual/Predicted: True Positive 342, False Positive 28, False Negative 41, True Negative 289; precision annotated as 0.924 at bottom right', keywords: ['confusion', 'matrix', '342', '28', '41', '289', 'precision', '0.924'] },
+    { file: null, description: 'A Gantt chart dependency network with seven tasks where Task 4 (Design Review) blocks Task 5 (Development) and Task 6 (Testing) from starting — critical path 1→2→4→5→7 highlighted in red; total project duration is 22 days', keywords: ['Gantt', 'seven', 'tasks', 'critical', 'path', 'red', 'Design', 'Development', 'Testing', '22'] },
+    // ── Daily pool update: added 2026-06-21 ──
+    // Medium tier
+    { file: null, description: 'A GitHub Actions CI pipeline showing 4 jobs: "checkout" ✅ 12s, "install" ✅ 47s, "test" ❌ failed at 1m 23s, "deploy" ⏸ skipped — total runtime 2m 22s displayed at the top right', keywords: ['GitHub', 'Actions', 'four', 'jobs', 'failed', 'test', 'skipped', 'deploy', '2m'] },
+    { file: null, description: 'A pie chart divided into six sectors representing smartphone OS market share: Android 71%, iOS 28%, KaiOS 0.5%, Windows 0.3%, Others 0.2% — the Android sector is dark green and the iOS sector is blue', keywords: ['pie', 'six', 'Android', '71', 'iOS', '28', 'market', 'share', 'green', 'blue'] },
+    { file: null, description: 'A weekly task planner grid with 7 columns (Mon–Sun): Monday has 5 tasks with 2 checked, Wednesday has 3 tasks all 3 checked, Saturday has 1 unchecked task — a red "Overdue" badge is pinned to two Monday items', keywords: ['weekly', 'planner', 'seven', 'monday', 'five', 'wednesday', 'three', 'saturday', 'overdue', 'red'] },
+    { file: null, description: 'A shopping checkout UI: cart summary on the left shows 3 items (T-shirt $29.99, Jeans $59.99, Sneakers $89.99), subtotal $179.97, a 15% discount applied shows −$27.00, shipping $5.99, grand total $158.96 — a green "Apply Promo Code" field is visible at the bottom', keywords: ['checkout', 'three', 'items', '179.97', 'discount', '27', 'shipping', '158.96', 'promo', 'green'] },
+    // Hard tier
+    { file: null, description: 'A CPU profiler flame graph over 5 seconds: widest block is renderComponent at 1.8s; below are eventHandler 0.9s, fetchData 0.6s, and parseJSON 0.3s from left to right — three narrow red overflow warning bars are overlaid at the top', keywords: ['profiler', 'flame', 'graph', 'renderComponent', '1.8', 'fetchData', 'parseJSON', 'three', 'red', 'five'] },
+    { file: null, description: 'A Wireshark packet capture showing 6 rows: TCP SYN, TCP SYN-ACK, TCP ACK, HTTP GET /api/users, HTTP 200 OK (1.2 KB), TCP FIN — source IP 10.0.0.5 to destination 52.87.33.11, latency 8 ms between SYN and SYN-ACK', keywords: ['wireshark', 'six', 'TCP', 'SYN', 'GET', 'api/users', '200', '10.0.0.5', '52.87', 'latency'] },
+    { file: null, description: 'A five-day stock candlestick chart: Mon green candle $142→$149, Tue red candle $149→$143, Wed green $143→$157, Thu red $157→$151, Fri large green $151→$168 — volume bars below each candle with Friday\'s bar clearly the tallest', keywords: ['candlestick', 'five', 'green', 'red', 'friday', '168', 'volume', 'tallest', 'monday', 'tuesday'] },
+    // ── Daily pool update: added 2026-06-22 ──
+    // Medium tier
+    { file: null, description: 'A mobile app notification panel showing 4 alerts on a dark background at 11:52 AM: two chat messages from "Alex", one calendar reminder reading "Sprint Review in 30 min", and one system alert "iOS 17.4 ready to install"', keywords: ['notification', 'four', 'Alex', 'sprint', 'review', 'calendar', '11:52', 'dark'] },
+    { file: null, description: 'A file explorer window showing 7 items in a folder named "Project-Q3": three .docx files, two .xlsx spreadsheets, one .png image, and one subfolder labeled "Archives" — the largest file "budget_final.xlsx" is 2.4 MB and highlighted in blue', keywords: ['file', 'seven', 'three', 'docx', 'xlsx', 'budget', '2.4', 'Archives', 'blue'] },
+    { file: null, description: 'A regression line scatter plot with 20 data points: x-axis "Years of Experience" (0–12), y-axis "Salary K$" (30–130) — most points cluster near the line y = 8x + 35; two outlier points are circled in red above the line at coordinates (4, 110) and (9, 125)', keywords: ['scatter', 'regression', 'twenty', 'salary', 'years', 'outlier', 'red', '110', '125'] },
+    // Hard tier
+    { file: null, description: 'A REST API response JSON body with 5 top-level keys: "status" is "error", "code" is 429, "message" is "Rate limit exceeded — retry after 60 seconds", "retry_after" is 60, and a nested "quota" object shows "used" 1000 and "limit" 1000', keywords: ['JSON', 'status', 'error', '429', 'rate', 'limit', 'retry', '60', 'quota', '1000'] },
+    { file: null, description: 'A Kubernetes pod status table with 5 rows: nginx-deployment 2/2 Running 3d, redis-master 1/1 Running 5d, postgres-primary 0/1 CrashLoopBackOff (7 restarts) 2h, prometheus 1/1 Running 1d, grafana 1/1 Running 12h — two red warning icons appear in the postgres-primary row', keywords: ['kubernetes', 'five', 'nginx', 'redis', 'postgres', 'CrashLoopBackOff', 'seven', 'restarts', 'prometheus', 'grafana'] },
+    // ── Daily pool update: added 2026-06-23 ──
+    // Easy tier
+    { file: null, description: 'A green recycle symbol on a white background — three curved arrows forming a triangle loop', keywords: ['recycle', 'green', 'triangle', 'arrows', 'white'] },
+    { file: null, description: 'A red octagonal stop sign with white bold letters spelling STOP against a clear blue sky', keywords: ['stop', 'sign', 'red', 'octagonal', 'white', 'letters', 'blue'] },
+    // Medium tier
+    { file: null, description: 'A leaderboard table showing the top 5 players: rank 1 Alice 9840 pts, rank 2 Bob 8721 pts, rank 3 Carol 7532 pts, rank 4 Dave 6104 pts, rank 5 Eve 5099 pts — gold star badges appear next to the top two entries', keywords: ['leaderboard', 'five', 'Alice', '9840', 'Bob', 'Carol', 'gold', 'star'] },
+    { file: null, description: 'A GitHub issues list showing 4 open issues: "bug" labels in red on issues #342 and #357, an "enhancement" label in blue on issue #361, a "help wanted" label in yellow on issue #364 — issue #342 titled "Fix login timeout" is pinned at the top with a thumbtack icon', keywords: ['github', 'issue', 'four', 'bug', 'enhancement', '342', 'login', 'pinned', 'yellow'] },
+    { file: null, description: 'A startup timeline infographic with 5 milestones on a horizontal line: Seed $500K in 2019, MVP Launch in 2020, Series A $3M in 2021, 10K Users in 2022, Series B $12M in 2023 — each milestone is marked with a filled circle and alternating above/below labels', keywords: ['timeline', 'five', 'milestones', 'seed', 'series', 'MVP', '2019', '12M', '2023'] },
+    // Hard tier
+    { file: null, description: 'A global server latency heat map with 47 data points across 3 regions: US East cluster shows 12ms in green, EU West shows 28ms in yellow, AP Southeast shows 87ms in dark red — the colour scale bar on the right runs from 0ms white to 100ms dark red', keywords: ['latency', 'three', 'regions', '12ms', '28ms', '87ms', 'green', 'yellow', 'red', '47'] },
+    { file: null, description: 'An OpenAPI 3.0 spec excerpt showing 3 endpoints: GET /users (200 response with User array schema), POST /users (requestBody with email and name fields), DELETE /users/{id} (204 response) — a red padlock security badge next to DELETE reads "Bearer Token Required"', keywords: ['OpenAPI', 'three', 'endpoints', 'GET', 'POST', 'DELETE', '200', '204', 'bearer', 'padlock'] },
+    { file: null, description: 'A compiler error output for main.cpp showing 4 diagnostics: line 23 "undefined reference to makePayment()", line 47 "no matching function for call to validate(int, std::string)", line 52 "warning: implicit conversion from double to int", line 71 "fatal error: payment.h: No such file or directory" — two entries are highlighted in red as fatal', keywords: ['compiler', 'four', 'main.cpp', 'line', '23', '47', 'undefined', 'payment', 'fatal', 'error'] },
+    // ── Daily pool update: added 2026-06-24 ──
+    // Easy tier
+    { file: null, description: 'A red map location pin centered on a minimal white background with a small white circle inside the pin head', keywords: ['location', 'pin', 'red', 'white', 'map', 'circle'] },
+    { file: null, description: 'A dark chess knight piece icon — a classic horse silhouette in black on a white square background', keywords: ['chess', 'knight', 'horse', 'black', 'white'] },
+    // Medium tier
+    { file: null, description: 'A REST API documentation page listing 3 endpoints with color-coded HTTP method badges: GET /users in green, POST /users in blue, DELETE /users/{id} in red — each row shows the path, method, and a one-line description', keywords: ['API', 'three', 'endpoints', 'GET', 'POST', 'DELETE', 'green', 'blue', 'red'] },
+    { file: null, description: 'A Slack message thread in dark mode showing a code-block attachment — 5 thumbs-up emoji reactions are displayed below the message and a "12 replies" badge appears in the thread footer with the last reply timestamped "Today at 4:17 PM"', keywords: ['slack', 'code', 'five', 'thumbs', 'reactions', '12', 'replies', '4:17', 'dark'] },
+    { file: null, description: 'A mobile banking app showing three recent transactions on a dark card: −$34.50 Coffee Republic at 09:12, −$127.80 Amazon at 14:03, +$2,500.00 Payroll at 00:00 — account balance shows $6,241.37 at the top in white', keywords: ['banking', 'three', 'transactions', '34.50', '127.80', '2500', 'payroll', '6241', 'balance'] },
+    // Hard tier
+    { file: null, description: 'A SQL query result table with six columns (id, name, department, salary, hire_date, status) and 8 data rows — the status column shows "Active" for 6 rows in green and "Inactive" for 2 rows in gray; the bottom summary row shows total salary $458,200 and average $57,275 highlighted in yellow', keywords: ['SQL', 'six', 'columns', 'eight', 'rows', 'salary', '458200', 'inactive', 'average', '57275', 'active'] },
+    { file: null, description: 'A machine learning training curve chart: two lines plotted over 50 epochs — training loss (blue solid line) starts at 2.8 and descends to 0.31 by epoch 50; validation loss (orange dashed line) diverges upward after epoch 35, reaching 0.68 at epoch 50 — a vertical red dashed "Early Stop" annotation marks epoch 35', keywords: ['training', 'loss', 'blue', 'validation', 'orange', 'fifty', 'epochs', '35', 'diverges', 'early', 'stop', '2.8', '0.31'] },
+    // ── Daily pool update: added 2026-06-25 ──
+    // Easy tier
+    { file: null, description: 'A blue thumbs-up like button icon on a white background with the number "1.2K" in gray text beside it', keywords: ['thumbs', 'up', 'blue', '1.2K', 'like', 'gray'] },
+    { file: null, description: 'A muted speaker icon — a gray loudspeaker symbol with a red diagonal strikethrough line across it', keywords: ['muted', 'speaker', 'gray', 'red', 'strikethrough', 'icon'] },
+    // Medium tier
+    { file: null, description: 'A SaaS pricing comparison table with three columns (Starter $12/mo, Pro $49/mo highlighted in blue as "Best Value", Enterprise $199/mo) and six feature rows — only Pro and Enterprise have checkmarks for rows 3 and 4, and only Enterprise has rows 5 and 6 checked', keywords: ['pricing', 'three', 'columns', 'starter', 'pro', '49', 'enterprise', '199', 'best', 'value', 'six', 'rows'] },
+    { file: null, description: 'A Git merge conflict screen in a code editor: a file named auth.js shows a "Current Change" block in green (lines 14–17) and an "Incoming Change" block in blue (lines 14–18) — three action buttons appear at the top: "Accept Current Change", "Accept Incoming Change", "Accept Both Changes"', keywords: ['git', 'merge', 'conflict', 'auth.js', 'green', 'blue', 'current', 'incoming', 'three', 'accept'] },
+    { file: null, description: 'A Docker container status table listing 5 containers: nginx, postgres, redis, and worker all show "Up 3 days" in green; the api container shows "Restarting (1) 2 hours ago" highlighted in red — the bottom bar shows 4 healthy and 1 unhealthy', keywords: ['docker', 'five', 'containers', 'nginx', 'postgres', 'redis', 'api', 'restarting', 'red', 'unhealthy'] },
+    // Hard tier
+    { file: null, description: 'A CI/CD pipeline dependency graph with 8 stages in sequence: Source → Build (2.1 min) → Unit Tests (4.7 min) → Integration Tests (8.3 min) → Security Scan (3.1 min) → Docker Build (1.8 min) → Staging Deploy (5.2 min) → Smoke Test (2.4 min) — the Security Scan stage shows a red ❌ badge reading "CRITICAL: 1 CVE found"', keywords: ['pipeline', 'eight', 'stages', 'build', 'unit', 'integration', 'security', 'scan', 'CVE', 'critical', 'red'] },
+    { file: null, description: 'A database migration log with 9 rows of ALTER TABLE statements: 5 rows in green marked "completed", 2 rows in yellow marked "pending", and 1 row in red marked "FAILED: unique constraint violation on users.email at 14:23:07" — a progress bar at the bottom reads "6/9 migrations applied"', keywords: ['migration', 'nine', 'rows', 'completed', 'five', 'pending', 'failed', 'constraint', 'email', '14:23', 'six'] },
+    // ── Daily pool update: added 2026-06-26 ──
+    // Easy tier
+    { file: null, description: 'A dark blue envelope icon on a white background with a white flap at the top — a small red circle badge in the upper-right corner displays the number 3 indicating three unread messages', keywords: ['envelope', 'blue', 'red', 'badge', 'three', 'unread'] },
+    // Medium tier
+    { file: null, description: 'A side-by-side A/B test results panel: Variant A shows 4,211 visitors, 312 conversions, and 7.4% conversion rate in a white card; Variant B shows 4,187 visitors, 471 conversions, and 11.2% conversion rate — a green "Winner" badge appears on Variant B with "+51% relative uplift" annotation', keywords: ['A/B', 'variant', 'conversion', '11.2', 'winner', 'green', 'uplift', '4211', '7.4'] },
+    { file: null, description: 'A responsive design preview panel showing the same landing page at three viewport widths side by side: desktop at 1440px with a full nav bar, tablet at 768px with a condensed nav, and mobile at 375px with a hamburger menu icon replacing the navigation links', keywords: ['responsive', 'design', 'three', 'desktop', '1440', 'tablet', '768', 'mobile', '375', 'hamburger'] },
+    // Hard tier
+    { file: null, description: 'A Terraform plan output showing 8 total resources: 4 to add in green (aws_instance, aws_security_group, aws_subnet, aws_route_table), 2 to change in yellow (aws_lambda with memory updated from 512 MB to 1024 MB and timeout from 30 s to 60 s), 1 to destroy in red (aws_s3_bucket named "legacy-data"), and 1 unchanged', keywords: ['terraform', 'eight', 'four', 'add', 'green', 'lambda', '512', '1024', 'destroy', 's3', 'legacy'] },
+    { file: null, description: 'A packet flow diagram for a TLS 1.3 handshake showing seven steps: Client Hello → Server Hello → Encrypted Extensions → Certificate → Certificate Verify → Server Finished → Client Finished — a horizontal dashed arrow labeled "Session Ticket (optional)" is shown after Server Finished', keywords: ['TLS', '1.3', 'handshake', 'seven', 'client', 'hello', 'certificate', 'verify', 'finished', 'session', 'ticket', 'optional'] },
+    // ── Daily pool update: added 2026-06-27 ──
+    // Easy tier
+    { file: null, description: 'A yellow warning triangle with an exclamation mark inside — the standard road hazard sign on a white background', keywords: ['warning', 'triangle', 'yellow', 'exclamation', 'hazard'] },
+    { file: null, description: 'A green power button icon centered on a dark background — a circular ring with a vertical bar at the top', keywords: ['power', 'button', 'green', 'circle', 'dark'] },
+    // Medium tier
+    { file: null, description: 'A split-screen code review diff tool: left panel shows 5 red deleted lines, right panel shows 7 green inserted lines — a reviewer comment bubble appears on line 3 of the right panel reading "Consider extracting this to a helper function"', keywords: ['code', 'review', 'diff', 'five', 'red', 'seven', 'green', 'comment', 'helper'] },
+    { file: null, description: 'An API rate limit monitoring chart over 24 hours: a blue "requests/min" line peaks at 847 at 14:00, a red dashed "limit" line stays flat at 1000 req/min — three yellow spike markers appear at 06:00, 14:00, and 20:00', keywords: ['rate', 'limit', 'chart', 'blue', '847', 'red', 'three', 'markers', '1000', '14:00'] },
+    { file: null, description: 'A state machine diagram with 4 states: Idle (grey), Processing (blue), Error (red), Complete (green) — arrows show transitions: Idle→Processing on "start", Processing→Error on "fail", Processing→Complete on "success", Error→Idle on "reset" — the Error state has a bold red border', keywords: ['state', 'machine', 'four', 'idle', 'processing', 'error', 'complete', 'transitions', 'bold', 'red'] },
+    // Hard tier
+    { file: null, description: 'A Linux htop process monitor screenshot: overall CPU bar at 73%, memory at 11.4 GB of 16 GB — 5 processes listed: PID 3847 "python3 train.py" at 92.1% CPU, PID 1021 "nginx" at 0.3%, PID 4412 "postgres" at 4.7%, PID 2201 "redis-server" at 1.2%, PID 5501 "node" at 0.9% — red load average 7.42 in top-right', keywords: ['htop', 'CPU', '73', 'memory', '11.4', 'five', '3847', 'python', '92.1', 'nginx', '7.42', 'load'] },
+    { file: null, description: 'A microservices architecture diagram with 6 services connected by arrows: API Gateway → Auth Service, API Gateway → User Service, API Gateway → Order Service, Order Service → Payment Service, Payment Service → Notification Service — a red ❌ on the Payment→Notification arrow indicates a failed webhook, highlighted in orange', keywords: ['microservices', 'six', 'services', 'API', 'Gateway', 'payment', 'notification', 'failed', 'orange', 'webhook'] },
+    // ── Daily pool update: added 2026-06-28 ──
+    // Easy tier
+    { file: null, description: 'A red "No Entry" road sign — a white horizontal rectangle bar centered inside a red circle, mounted on a gray pole against a clear blue sky', keywords: ['no entry', 'red', 'sign', 'white', 'bar', 'blue'] },
+    // Medium tier
+    { file: null, description: 'A Trello-style kanban board with three swimlane columns: "To Do" has 4 cards, "In Progress" has 2 cards, and "Done" has 7 cards — a blue card titled "Deploy hotfix" in the In Progress column has a red urgent priority tag in the upper right', keywords: ['trello', 'kanban', 'three', 'columns', 'four', 'done', 'seven', 'blue', 'deploy', 'urgent', 'red'] },
+    { file: null, description: 'A classroom seating chart arranged as a 5×6 grid of 30 desks: six desks are marked with a red X to indicate absent students; the front-center desk is highlighted in yellow and labeled "Teacher Demo Station"', keywords: ['classroom', 'five', 'six', 'thirty', 'desks', 'absent', 'red', 'teacher', 'demo', 'yellow'] },
+    // Hard tier
+    { file: null, description: 'A JSON Schema definition for an "Employee" object listing seven required properties: id (integer), name (string, minLength 2), email (format email), department (enum: Engineering, HR, Finance, Legal), salary (number, minimum 30000), startDate (format date), and isActive (boolean) — two red error markers appear beside the "startDate" and "isActive" entries indicating validation failures', keywords: ['JSON', 'schema', 'seven', 'employee', 'email', 'department', 'enum', 'salary', '30000', 'isActive', 'error', 'startDate'] },
+    { file: null, description: 'A radar spider chart comparing two ML models across 5 axes: accuracy, speed, memory efficiency, robustness, and explainability — Model A (blue polygon fill) scores highest on explainability (0.82) and lowest on speed (0.44); Model B (orange polygon fill) scores highest on speed (0.79) and lowest on explainability (0.31)', keywords: ['radar', 'spider', 'chart', 'two', 'models', 'five', 'blue', 'orange', 'explainability', '0.82', 'speed', '0.44'] },
+    // ── Daily pool update: added 2026-06-29 ──
+    // Easy tier
+    { file: null, description: 'A golden padlock icon on a dark navy background — fully closed with the shackle looped through the body and a small keyhole visible at the center bottom', keywords: ['padlock', 'golden', 'locked', 'keyhole', 'dark', 'navy'] },
+    // Medium tier
+    { file: null, description: 'A search results page showing 5 results for the query "machine learning tutorial": the top result is highlighted in a blue card with a "Sponsored" badge; the third result has a video thumbnail with a red circular play button; all five results display a 4.5-star average rating', keywords: ['search', 'five', 'results', 'blue', 'sponsored', 'third', 'video', 'red', 'play', 'four', 'star'] },
+    { file: null, description: 'A split-screen code comparison: left panel shows a Python file with 8 lines and right panel shows a JavaScript file with 11 lines — both implement binary search; line 5 of the Python file is highlighted in yellow showing "mid = (low + high) // 2"', keywords: ['code', 'comparison', 'Python', 'JavaScript', 'eight', 'eleven', 'binary', 'search', 'mid', 'yellow', 'five'] },
+    // Hard tier
+    { file: null, description: 'A distributed systems topology diagram with 4 geographic regions (US-East, US-West, EU-West, AP-Southeast): each region contains a primary database node and a read replica; solid arrows show synchronous intra-region replication and dashed arrows show asynchronous cross-region replication — the EU-West region displays an orange replication lag warning badge reading "847 ms behind"', keywords: ['distributed', 'four', 'regions', 'primary', 'database', 'replica', 'async', 'sync', 'EU', '847', 'lag', 'orange'] },
+    { file: null, description: 'A stock options chain table for AAPL with 6 rows of strike prices from $165 to $190 in $5 increments: columns show call bid, call ask, implied volatility, and open interest — the $175 row is highlighted in yellow as the at-the-money option showing IV 28.4% and OI 14,232', keywords: ['options', 'chain', 'AAPL', 'six', 'strikes', '175', 'call', 'implied', 'volatility', '28.4', '14232', 'at-the-money', 'yellow'] },
+    // ── Daily pool update: added 2026-07-02 ──
+    // Easy tier
+    { file: null, description: 'A gold star rating widget showing 4 out of 5 stars filled in yellow — the fifth star outline is hollow in gray', keywords: ['star', 'rating', 'four', 'five', 'gold', 'yellow', 'gray', 'hollow'] },
+    // Medium tier
+    { file: null, description: 'A Jenkins CI pipeline visualization with 5 stages: Build (green ✅ 2 min 11 s), Unit Tests (green ✅ 4 min 37 s), Security Scan (red ❌ 1 min 09 s — badge reads "CRITICAL: CVE-2024-9901 found"), Integration Tests (gray ⏭ skipped), Deploy (gray ⏭ skipped) — total elapsed timer reads 7 min 57 s', keywords: ['Jenkins', 'five', 'stages', 'build', 'green', 'security', 'scan', 'red', 'CVE', '2024', 'skipped', 'deploy', '7'] },
+    { file: null, description: 'A Python traceback error in a dark terminal: 4 stack frames leading to line 83 in payments.py — the error reads "TypeError: unsupported operand type(s) for +: \'int\' and \'str\'" with the offending line "total = base_price + discount_code" highlighted in red', keywords: ['Python', 'traceback', 'four', 'frames', 'payments', 'line', '83', 'TypeError', 'int', 'str', 'total'] },
+    // Hard tier
+    { file: null, description: 'A Figma design canvas showing 3 nested frames: an outer white card containing a 2×3 product thumbnail grid (6 items); a floating "Filters" panel overlapping the card with 4 toggle switches (3 on, 1 off labeled "In Stock Only"); and a red notification badge displaying "12" on a bell icon in the upper-right corner', keywords: ['figma', 'three', 'frames', 'grid', 'six', 'filters', 'four', 'toggles', 'badge', '12', 'bell', 'red'] },
+    { file: null, description: 'A memory profiler heap snapshot table showing the top 8 retained objects by size: Array 42.3 MB (31%), Object 28.7 MB (21%), string 19.4 MB (14%), Map 12.1 MB (9%) — each row has a proportional colored bar; the Array row is highlighted in red as the largest retained object', keywords: ['memory', 'profiler', 'heap', 'eight', 'Array', '42.3', 'MB', 'string', 'Map', 'retained', 'red', 'largest'] },
+    // ── Daily pool update: added 2026-07-05 ──
+    // Easy tier
+    { file: null, description: 'A blue share/upload icon: a vertical arrow pointing upward out of a circle, centered on a white background', keywords: ['share', 'upload', 'arrow', 'blue', 'circle', 'upward'] },
+    // Medium tier
+    { file: null, description: 'A browser security certificate dialog for a website showing a green padlock icon, issuer "Let\'s Encrypt R11", validity period Jan 1 2025 to Apr 1 2025, and a truncated SHA-256 fingerprint in the details section', keywords: ['certificate', 'browser', 'green', 'padlock', 'issuer', "Let's Encrypt", 'validity', 'fingerprint', 'SHA-256'] },
+    { file: null, description: 'An OpenTelemetry distributed trace waterfall for a single API request showing 5 nested spans: gateway-receive 2 ms, auth-validate 9 ms, db-query 43 ms (highlighted in orange as critical path), cache-write 6 ms, response-send 1 ms — total end-to-end duration 61 ms shown at the top', keywords: ['trace', 'five', 'spans', 'gateway', 'auth', 'db-query', '43', 'cache', '61', 'orange', 'critical'] },
+    // Hard tier
+    { file: null, description: 'An RBAC permissions matrix for a SaaS admin panel: rows are six resources (Users, Reports, Billing, Settings, Logs, Audit), columns are four roles (Admin, Manager, Analyst, Viewer) — each cell shows one of Read, Write, or None; only Admin has Write access to Billing and Audit; Viewer has Read for Users and Reports and None for all four remaining resources', keywords: ['RBAC', 'six', 'resources', 'four', 'roles', 'Admin', 'Billing', 'Audit', 'Viewer', 'Read', 'None', 'Write'] },
+    { file: null, description: 'A load balancer health dashboard listing 6 backend servers: 4 show green "Healthy" badges with latency under 10 ms; 1 shows yellow "Degraded" at 380 ms with a "Connection Pool 94% full" tooltip; 1 shows red "Down" with last heartbeat 4 minutes ago and a "Circuit Breaker: OPEN" badge', keywords: ['load balancer', 'six', 'four', 'healthy', 'degraded', '380', 'red', 'down', 'circuit', 'breaker', 'open', 'four'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -474,6 +596,119 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[1,3,-1,-3,5,3,6,7], 3', expected: '[3,3,5,5,6,7]' },{ input: '[1], 1', expected: '[1]' },{ input: '[1,2], 2', expected: '[2]' },{ input: '[2,3,4,1,5], 3', expected: '[4,4,5]' }] },
     { title: 'Longest Increasing Subsequence', description: 'Write `solve(nums)` — return the length of the longest strictly increasing subsequence (elements do not need to be contiguous).',
       testCases: [{ input: '[10,9,2,5,3,7,101,18]', expected: '4' },{ input: '[0,1,0,3,2,3]', expected: '4' },{ input: '[7,7,7,7,7]', expected: '1' },{ input: '[]', expected: '0' }] },
+    // ── Daily pool update: added 2026-06-19 ──
+    { title: 'Top K Frequent Elements', description: 'Write `solve(nums, k)` — return the k most frequent elements sorted in ascending order. Break frequency ties by choosing elements with smaller values.',
+      testCases: [{ input: '[1,1,1,2,2,3], 2', expected: '[1,2]' },{ input: '[3,3,2,1,1], 2', expected: '[1,3]' },{ input: '[5,5,4,4,3], 2', expected: '[4,5]' },{ input: '[1], 1', expected: '[1]' }] },
+    { title: 'Container With Most Water', description: 'Write `solve(height)` — given an array of non-negative integers where height[i] is the height of a vertical bar at index i, find two bars that form a container holding the most water. Return the maximum water volume (area = min height × distance between bars).',
+      testCases: [{ input: '[1,8,6,2,5,4,8,3,7]', expected: '49' },{ input: '[1,1]', expected: '1' },{ input: '[4,3,2,1,4]', expected: '16' },{ input: '[1,2,4,3]', expected: '4' }] },
+    { title: 'Search a 2D Matrix', description: 'Write `solve(matrix, target)` — search for a target in an m×n integer matrix where (1) each row is sorted left-to-right and (2) the first element of each row is strictly greater than the last element of the previous row. Return true if the target exists.',
+      testCases: [{ input: '[[1,3,5,7],[10,11,16,20],[23,30,34,60]], 3', expected: 'true' },{ input: '[[1,3,5,7],[10,11,16,20],[23,30,34,60]], 13', expected: 'false' },{ input: '[[1]], 1', expected: 'true' },{ input: '[[1,3],[5,7]], 6', expected: 'false' }] },
+    // ── Daily pool update: added 2026-06-20 ──
+    { title: 'Rotten Oranges', description: 'Write `solve(grid)` — a 2D grid where 0=empty, 1=fresh orange, 2=rotten orange. Each minute rotten oranges spread to adjacent (4-directional) fresh ones. Return the minimum minutes until no fresh oranges remain, or -1 if impossible.',
+      testCases: [{ input: '[[2,1,1],[1,1,0],[0,1,1]]', expected: '4' },{ input: '[[2,1,1],[0,1,1],[1,0,1]]', expected: '-1' },{ input: '[[0,2]]', expected: '0' },{ input: '[[1]]', expected: '-1' }] },
+    { title: 'Task Scheduler', description: 'Write `solve(tasks, n)` — given a list of CPU task labels (A-Z) and a cooldown n (at least n intervals required between same-task executions), return the minimum total intervals to finish all tasks including idle time.',
+      testCases: [{ input: '["A","A","A","B","B","B"], 2', expected: '8' },{ input: '["A","A","A","B","B","B"], 0', expected: '6' },{ input: '["A","A","A","A","A","A","B","C","D","E","F","G"], 2', expected: '16' }] },
+    { title: 'Sort Colors', description: 'Write `solve(nums)` — given an array where 0=red, 1=white, 2=blue, sort it in-place so all 0s come first, then all 1s, then all 2s. Return the sorted array.',
+      testCases: [{ input: '[2,0,2,1,1,0]', expected: '[0,0,1,1,2,2]' },{ input: '[2,0,1]', expected: '[0,1,2]' },{ input: '[0]', expected: '[0]' },{ input: '[1,2,0,2,1]', expected: '[0,1,1,2,2]' }] },
+    { title: 'N-Queens Count', description: 'Write `solve(n)` — place n queens on an n×n chessboard so no two queens threaten each other (no two share a row, column, or diagonal). Return the total number of distinct valid arrangements.',
+      testCases: [{ input: '1', expected: '1' },{ input: '4', expected: '2' },{ input: '6', expected: '4' },{ input: '8', expected: '92' }] },
+    // ── Daily pool update: added 2026-06-21 ──
+    { title: 'Decode String', description: 'Write `solve(s)` — decode an encoded string where `k[encoded_string]` means the encoded_string is repeated k times. Encodings can be nested.',
+      testCases: [{ input: '"3[a]2[bc]"', expected: '"aaabcbc"' },{ input: '"2[abc]3[cd]ef"', expected: '"abcabccdcdcdef"' },{ input: '"3[a2[c]]"', expected: '"accaccacc"' },{ input: '"abc"', expected: '"abc"' }] },
+    { title: 'Palindrome Minimum Cuts', description: 'Write `solve(s)` — return the minimum number of cuts needed to partition string s so that every substring is a palindrome.',
+      testCases: [{ input: '"aab"', expected: '1' },{ input: '"aaaa"', expected: '0' },{ input: '"a"', expected: '0' },{ input: '"ab"', expected: '1' },{ input: '"abacaba"', expected: '0' }] },
+    { title: 'Partition Equal Subset Sum', description: 'Write `solve(nums)` — return true if the array can be partitioned into two subsets with equal sum.',
+      testCases: [{ input: '[1,5,11,5]', expected: 'true' },{ input: '[1,2,3,5]', expected: 'false' },{ input: '[2,2,3,5]', expected: 'false' },{ input: '[3,3,3,3]', expected: 'true' },{ input: '[1,1]', expected: 'true' }] },
+    { title: 'Implement LRU Cache', description: 'Write `solve(capacity, ops)` — implement an LRU (Least Recently Used) cache with given capacity. ops is an array of ["get", key] or ["put", key, value]. Return an array of results for "get" operations (-1 if key absent); "put" returns null.',
+      testCases: [{ input: '2, [["put",1,1],["put",2,2],["get",1],["put",3,3],["get",2],["get",3]]', expected: '[null,null,1,null,-1,3]' },{ input: '1, [["put",1,1],["get",1],["put",2,2],["get",1],["get",2]]', expected: '[null,1,null,-1,2]' }] },
+    { title: 'Word Ladder Length', description: 'Write `solve(beginWord, endWord, wordList)` — return the length of the shortest transformation sequence from beginWord to endWord where each step changes exactly one letter and each intermediate word must exist in wordList. Return 0 if no path exists.',
+      testCases: [{ input: '"hit", "cog", ["hot","dot","dog","lot","log","cog"]', expected: '5' },{ input: '"hit", "cog", ["hot","dot","dog","lot","log"]', expected: '0' },{ input: '"a", "c", ["a","b","c"]', expected: '2' }] },
+    // ── Daily pool update: added 2026-06-22 ──
+    { title: 'Graph Valid Tree', description: 'Write `solve(n, edges)` — given n nodes labeled 0 to n-1 and an array of undirected edges, return true if these edges form a valid tree (connected and contains no cycles).',
+      testCases: [{ input: '5, [[0,1],[0,2],[0,3],[1,4]]', expected: 'true' },{ input: '5, [[0,1],[1,2],[2,3],[1,3],[1,4]]', expected: 'false' },{ input: '1, []', expected: 'true' },{ input: '3, [[0,1]]', expected: 'false' }] },
+    { title: 'Meeting Rooms II', description: 'Write `solve(intervals)` — given a list of meeting intervals [start, end], return the minimum number of meeting rooms required to schedule all meetings without overlap.',
+      testCases: [{ input: '[[0,30],[5,10],[15,20]]', expected: '2' },{ input: '[[7,10],[2,4]]', expected: '1' },{ input: '[[0,10],[5,15],[10,20]]', expected: '2' },{ input: '[[0,5],[5,10]]', expected: '1' }] },
+    { title: 'Minimum Arrows to Burst Balloons', description: 'Write `solve(points)` — each balloon is a horizontal segment [x_start, x_end]. An arrow shot at x value x_pos bursts all balloons where x_start <= x_pos <= x_end. Return the minimum number of arrows needed to burst all balloons.',
+      testCases: [{ input: '[[10,16],[2,8],[1,6],[7,12]]', expected: '2' },{ input: '[[1,2],[3,4],[5,6],[7,8]]', expected: '4' },{ input: '[[1,2],[2,3],[3,4],[4,5]]', expected: '2' },{ input: '[[2,3],[2,3]]', expected: '1' }] },
+    { title: 'Max Points on a Line', description: 'Write `solve(points)` — given an array of [x, y] coordinate pairs, return the maximum number of points that lie on the same straight line.',
+      testCases: [{ input: '[[1,1],[2,2],[3,3]]', expected: '3' },{ input: '[[1,1],[3,2],[5,3],[4,1],[2,3],[1,4]]', expected: '4' },{ input: '[[0,0]]', expected: '1' },{ input: '[[0,0],[1,1]]', expected: '2' }] },
+    // ── Daily pool update: added 2026-06-23 ──
+    { title: 'Validate IP Address', description: 'Write `solve(ip)` — return "IPv4" if the string is a valid IPv4 address (four dot-separated numbers each 0–255, no leading zeros), "IPv6" if it is a valid IPv6 address (eight colon-separated groups of 1–4 hex digits), or "Neither".',
+      testCases: [{ input: '"172.16.254.1"', expected: '"IPv4"' },{ input: '"2001:0db8:85a3:0:0:8A2E:0370:7334"', expected: '"IPv6"' },{ input: '"256.256.256.256"', expected: '"Neither"' },{ input: '"02001:0db8:85a3:0000:0000:8a2e:0370:7334"', expected: '"Neither"' },{ input: '"192.168.1"', expected: '"Neither"' }] },
+    { title: 'Critical Connections in a Network', description: 'Write `solve(n, connections)` — given n servers (0-indexed) and a list of undirected connections, return all critical connections (bridges) whose removal disconnects the network. Return each bridge with the smaller node index first, and sort the result.',
+      testCases: [{ input: '4, [[0,1],[1,2],[2,0],[1,3]]', expected: '[[1,3]]' },{ input: '2, [[0,1]]', expected: '[[0,1]]' },{ input: '3, [[0,1],[1,2],[0,2]]', expected: '[]' },{ input: '5, [[0,1],[1,2],[2,3],[3,0],[1,4]]', expected: '[[1,4]]' }] },
+    { title: 'Serialize and Deserialize Binary Tree', description: 'Write `solve(nodes)` — `nodes` is a level-order array representation of a binary tree (null for missing nodes). Serialize the tree to a string, then deserialize it back, and return the level-order array. Trailing nulls may be omitted.',
+      testCases: [{ input: '[1,2,3,null,null,4,5]', expected: '[1,2,3,null,null,4,5]' },{ input: '[]', expected: '[]' },{ input: '[1]', expected: '[1]' },{ input: '[1,2,null,3]', expected: '[1,2,null,3]' }] },
+    { title: 'Alien Dictionary', description: 'Write `solve(words)` — given a list of words in lexicographic order according to an alien language, return the sorted order of the unique characters in that language as a string. If the order is invalid (cyclic dependency), return "".',
+      testCases: [{ input: '["wrt","wrf","er","ett","rftt"]', expected: '"wertf"' },{ input: '["z","x"]', expected: '"zx"' },{ input: '["z","x","z"]', expected: '""' },{ input: '["abc","ab"]', expected: '""' }] },
+    { title: 'Minimum Cost to Connect Sticks', description: 'Write `solve(sticks)` — you have an array of stick lengths. Each step you pick the two shortest sticks, join them (cost = their sum), and put the new stick back. Return the minimum total cost to connect all sticks into one.',
+      testCases: [{ input: '[2,4,3]', expected: '14' },{ input: '[1,8,3,5]', expected: '30' },{ input: '[5]', expected: '0' },{ input: '[1,1,1,1]', expected: '8' }] },
+    // ── Daily pool update: added 2026-06-24 ──
+    { title: 'Find All Anagrams in String', description: 'Write `solve(s, p)` — return all start indices of anagram substrings of p found in s. Return them sorted in ascending order.',
+      testCases: [{ input: '"cbaebabacd", "abc"', expected: '[0,6]' },{ input: '"abab", "ab"', expected: '[0,1,2]' },{ input: '"aaa", "b"', expected: '[]' },{ input: '"af", "be"', expected: '[]' }] },
+    { title: 'Min Stack', description: 'Write `solve(ops)` — implement a stack supporting push, pop, and getMin in O(1). ops is an array of ["push",val], ["pop"], or ["getMin"]. push/pop return null; getMin returns the current minimum. Assume getMin and pop are never called on an empty stack.',
+      testCases: [{ input: '[["push",3],["push",1],["push",2],["getMin"],["pop"],["getMin"]]', expected: '[null,null,null,1,null,1]' },{ input: '[["push",5],["push",3],["push",7],["getMin"],["pop"],["getMin"]]', expected: '[null,null,null,3,null,3]' }] },
+    { title: 'Cheapest Flights Within K Stops', description: 'Write `solve(n, flights, src, dst, k)` — n cities labeled 0 to n-1, flights[i] = [from, to, price]. Find the cheapest price from src to dst with at most k stops. Return -1 if no valid route exists.',
+      testCases: [{ input: '4, [[0,1,100],[1,2,100],[2,0,100],[1,3,600],[2,3,200]], 0, 3, 1', expected: '700' },{ input: '3, [[0,1,100],[1,2,100],[0,2,500]], 0, 2, 1', expected: '200' },{ input: '3, [[0,1,100],[1,2,100],[0,2,500]], 0, 2, 0', expected: '500' }] },
+    { title: 'Median of Two Sorted Arrays', description: 'Write `solve(nums1, nums2)` — return the median of the two sorted arrays merged. If the combined length is even, return the average of the two middle values as a float with one decimal place.',
+      testCases: [{ input: '[1,3], [2]', expected: '2.0' },{ input: '[1,2], [3,4]', expected: '2.5' },{ input: '[], [1]', expected: '1.0' },{ input: '[3], [-2,-1]', expected: '-1.0' }] },
+    // ── Daily pool update: added 2026-06-25 ──
+    { title: 'Longest Consecutive Sequence', description: 'Write `solve(nums)` — given an unsorted array of integers, return the length of the longest consecutive elements sequence. Your algorithm must run in O(n) time using a hash set.',
+      testCases: [{ input: '[100,4,200,1,3,2]', expected: '4' },{ input: '[0,3,7,2,5,8,4,6,0,1]', expected: '9' },{ input: '[]', expected: '0' },{ input: '[1,2,0,1]', expected: '3' }] },
+    { title: 'Product of Array Except Self', description: 'Write `solve(nums)` — return an array where output[i] equals the product of all elements in nums except nums[i]. Do not use division.',
+      testCases: [{ input: '[1,2,3,4]', expected: '[24,12,8,6]' },{ input: '[-1,1,0,-3,3]', expected: '[0,0,9,0,0]' },{ input: '[2,3]', expected: '[3,2]' },{ input: '[1,1,1]', expected: '[1,1,1]' }] },
+    { title: 'Burst Balloons', description: 'Write `solve(nums)` — you have n balloons, each labeled with a number. Bursting balloon i earns nums[i-1] * nums[i] * nums[i+1] coins (treat out-of-bounds indices as 1). Return the maximum total coins you can collect by bursting all balloons optimally.',
+      testCases: [{ input: '[3,1,5,8]', expected: '167' },{ input: '[1,5]', expected: '10' },{ input: '[7]', expected: '7' },{ input: '[0,0,0]', expected: '0' }] },
+    // ── Daily pool update: added 2026-06-26 ──
+    { title: '3Sum', description: 'Write `solve(nums)` — find all unique triplets [a, b, c] such that a + b + c = 0. Sort each triplet in ascending order, then sort all triplets lexicographically.',
+      testCases: [{ input: '[-1,0,1,2,-1,-4]', expected: '[[-1,-1,2],[-1,0,1]]' },{ input: '[0,1,1]', expected: '[]' },{ input: '[0,0,0]', expected: '[[0,0,0]]' },{ input: '[]', expected: '[]' },{ input: '[0,0,0,0]', expected: '[[0,0,0]]' }] },
+    { title: 'Search in Rotated Sorted Array', description: 'Write `solve(nums, target)` — given an integer array sorted ascending then rotated at some pivot (no duplicates), return the index of the target or -1 if not found.',
+      testCases: [{ input: '[4,5,6,7,0,1,2], 0', expected: '4' },{ input: '[4,5,6,7,0,1,2], 3', expected: '-1' },{ input: '[1], 0', expected: '-1' },{ input: '[1,3], 3', expected: '1' },{ input: '[3,1], 1', expected: '1' }] },
+    { title: 'Majority Element', description: 'Write `solve(nums)` — return the element that appears more than ⌊n/2⌋ times. The majority element is guaranteed to exist.',
+      testCases: [{ input: '[3,2,3]', expected: '3' },{ input: '[2,2,1,1,1,2,2]', expected: '2' },{ input: '[1]', expected: '1' },{ input: '[6,5,5]', expected: '5' },{ input: '[4,4,4,3,3,3,4]', expected: '4' }] },
+    { title: 'Daily Temperatures', description: 'Write `solve(temperatures)` — return an array where answer[i] is the number of days you must wait after day i for a warmer temperature. If no future day is warmer, answer[i] = 0.',
+      testCases: [{ input: '[73,74,75,71,69,72,76,73]', expected: '[1,1,4,2,1,1,0,0]' },{ input: '[30,40,50,60]', expected: '[1,1,1,0]' },{ input: '[30,60,90]', expected: '[1,1,0]' },{ input: '[30]', expected: '[0]' }] },
+    { title: 'Longest Mountain in Array', description: 'Write `solve(nums)` — a mountain subarray is a contiguous subarray where elements strictly increase to a peak then strictly decrease (minimum length 3). Return the length of the longest mountain, or 0 if none exists.',
+      testCases: [{ input: '[2,1,4,7,3,2,5]', expected: '5' },{ input: '[2,2,2]', expected: '0' },{ input: '[1,2,3]', expected: '0' },{ input: '[0,1,0]', expected: '3' },{ input: '[1,3,5,4,2,0,1,3,2]', expected: '6' }] },
+    // ── Daily pool update: added 2026-06-27 ──
+    { title: 'Zigzag Level Order', description: 'Write `solve(nodes)` — given a binary tree as a level-order array (null for missing nodes), return the zigzag level-order traversal: left→right for the first level, right→left for the second, and so on alternating.',
+      testCases: [{ input: '[3,9,20,null,null,15,7]', expected: '[[3],[20,9],[15,7]]' },{ input: '[1,2,3,4,5,6,7]', expected: '[[1],[3,2],[4,5,6,7]]' },{ input: '[1]', expected: '[[1]]' },{ input: '[]', expected: '[]' }] },
+    { title: 'Combination Sum', description: 'Write `solve(candidates, target)` — find all unique combinations where the chosen numbers sum to target. Numbers may be reused. Return results sorted lexicographically.',
+      testCases: [{ input: '[2,3,6,7], 7', expected: '[[2,2,3],[7]]' },{ input: '[2,3], 6', expected: '[[2,2,2],[3,3]]' },{ input: '[2], 1', expected: '[]' },{ input: '[1,2], 4', expected: '[[1,1,1,1],[1,1,2],[2,2]]' }] },
+    { title: 'Longest Repeating Character Replacement', description: 'Write `solve(s, k)` — you can replace at most k characters in the string with any letter. Return the length of the longest substring containing only one distinct character after the replacements.',
+      testCases: [{ input: '"AABABBA", 1', expected: '4' },{ input: '"ABAB", 2', expected: '4' },{ input: '"AAAA", 0', expected: '4' },{ input: '"AABA", 0', expected: '2' },{ input: '"KRSCDCSONAJNHLBMDQGIFCPEKPOHQIHLTDIQGEKLRLCQNBOHNDQGHJPNDQPERNPLNULL", 4', expected: '7' }] },
+    { title: 'Count of Smaller Numbers After Self', description: 'Write `solve(nums)` — return an array where answer[i] is the count of elements strictly smaller than nums[i] that appear to its right.',
+      testCases: [{ input: '[5,2,6,1]', expected: '[2,1,1,0]' },{ input: '[-1,-1]', expected: '[0,0]' },{ input: '[1]', expected: '[0]' },{ input: '[3,2,1]', expected: '[2,1,0]' },{ input: '[2,0,1]', expected: '[2,0,0]' }] },
+    // ── Daily pool update: added 2026-06-28 ──
+    { title: 'Pacific Atlantic Water Flow', description: 'Write `solve(heights)` — given an m×n integer matrix of heights, return all positions [r,c] where rain water can flow to both the Pacific Ocean (top/left border) and the Atlantic Ocean (bottom/right border). Water flows to adjacent cells with equal or lower height. Return positions sorted by row then column.',
+      testCases: [{ input: '[[1,2,2,3,5],[3,2,3,4,4],[2,4,5,3,1],[6,7,1,4,5],[5,1,1,2,4]]', expected: '[[0,4],[1,3],[1,4],[2,2],[3,0],[3,1],[4,0]]' },{ input: '[[1]]', expected: '[[0,0]]' },{ input: '[[1,2],[2,1]]', expected: '[[0,1],[1,0]]' }] },
+    { title: 'Reconstruct Itinerary', description: 'Write `solve(tickets)` — given a list of airline tickets [from, to], reconstruct the itinerary starting from "JFK". Use all tickets exactly once. If multiple valid itineraries exist, return the one with the smallest lexical order.',
+      testCases: [{ input: '[["MUC","LHR"],["JFK","MUC"],["SFO","SJC"],["LHR","SFO"]]', expected: '["JFK","MUC","LHR","SFO","SJC"]' },{ input: '[["JFK","SFO"],["JFK","ATL"],["SFO","ATL"],["ATL","JFK"],["ATL","SFO"]]', expected: '["JFK","ATL","JFK","SFO","ATL","SFO"]' },{ input: '[["JFK","KUL"],["JFK","NRT"],["NRT","JFK"]]', expected: '["JFK","NRT","JFK","KUL"]' }] },
+    { title: 'Range Sum Query', description: 'Write `solve(nums, queries)` — given an integer array, answer multiple range sum queries. queries is an array of [left, right] (0-indexed, inclusive). Return an array of the sum for each query. Optimise so repeated queries are fast.',
+      testCases: [{ input: '[-2,0,3,-5,2,-1], [[0,2],[2,5],[0,5]]', expected: '[1,-1,-3]' },{ input: '[1,2,3,4], [[0,3],[1,2],[0,1]]', expected: '[10,5,3]' },{ input: '[5], [[0,0]]', expected: '[5]' }] },
+    // ── Daily pool update: added 2026-06-29 ──
+    { title: 'Surrounded Regions', description: 'Write `solve(board)` — given an m×n board of "X" and "O", capture all regions surrounded by "X" by flipping all surrounded "O"s to "X". An "O" is surrounded if it is not connected (4-directional) to any "O" on the border. Return the modified board.',
+      testCases: [{ input: '[["X","X","X","X"],["X","O","O","X"],["X","X","O","X"],["X","O","X","X"]]', expected: '[["X","X","X","X"],["X","X","X","X"],["X","X","X","X"],["X","O","X","X"]]' },{ input: '[["X"]]', expected: '[["X"]]' },{ input: '[["O","O"],["O","O"]]', expected: '[["O","O"],["O","O"]]' }] },
+    { title: 'Stone Game', description: 'Write `solve(piles)` — Alice and Bob play a game with piles of stones. They take turns (Alice goes first) picking either the first or last pile. Both play optimally. Return true if Alice wins (has more stones), false if Bob wins. Note: Alice always wins when there are an even number of piles.',
+      testCases: [{ input: '[5,3,4,5]', expected: 'true' },{ input: '[3,7,2,3]', expected: 'true' },{ input: '[1,5,233,7]', expected: 'true' },{ input: '[2,4,6,8,10,12]', expected: 'true' }] },
+    { title: 'Longest Bitonic Subarray', description: 'Write `solve(nums)` — a bitonic subarray first strictly increases then strictly decreases (or is purely increasing or purely decreasing). Return the length of the longest bitonic contiguous subarray.',
+      testCases: [{ input: '[1,3,5,4,2]', expected: '5' },{ input: '[1,2,3,4,5]', expected: '5' },{ input: '[5,4,3,2,1]', expected: '5' },{ input: '[1,3,5,4,2,7,6]', expected: '5' },{ input: '[1]', expected: '1' }] },
+    // ── Daily pool update: added 2026-07-02 ──
+    { title: 'Count Pairs With Target Sum', description: 'Write `solve(nums, target)` — return the count of all unique unordered pairs (i, j) where i < j such that nums[i] + nums[j] === target.',
+      testCases: [{ input: '[1,5,3,3,3], 6', expected: '4' },{ input: '[1,2,3,4,5], 5', expected: '2' },{ input: '[1,1,1], 2', expected: '3' },{ input: '[], 5', expected: '0' }] },
+    { title: 'Binary Tree Right Side View', description: 'Write `solve(nodes)` — given a binary tree as a level-order array (null for missing nodes), return the values visible when looking from the right side (the rightmost node at each level).',
+      testCases: [{ input: '[1,2,3,null,5,null,4]', expected: '[1,3,4]' },{ input: '[1,null,3]', expected: '[1,3]' },{ input: '[]', expected: '[]' },{ input: '[1,2,3,4]', expected: '[1,3,4]' }] },
+    { title: 'Longest Arithmetic Subsequence', description: 'Write `solve(nums)` — return the length of the longest arithmetic subsequence in the array. A subsequence is arithmetic if consecutive differences are all equal. Elements need not be contiguous.',
+      testCases: [{ input: '[3,6,9,12]', expected: '4' },{ input: '[9,4,7,2,10]', expected: '3' },{ input: '[20,1,15,3,10,5,8]', expected: '4' },{ input: '[1,2]', expected: '2' }] },
+    // ── Daily pool update: added 2026-07-05 ──
+    { title: 'Spiral Matrix II', description: 'Write `solve(n)` — given an integer n, generate an n×n matrix filled with elements from 1 to n² in spiral order (clockwise, starting from the top-left).',
+      testCases: [{ input: '3', expected: '[[1,2,3],[8,9,4],[7,6,5]]' },{ input: '1', expected: '[[1]]' },{ input: '4', expected: '[[1,2,3,4],[12,13,14,5],[11,16,15,6],[10,9,8,7]]' }] },
+    { title: 'Interleaving String', description: 'Write `solve(s1, s2, s3)` — return true if s3 is formed by an interleaving of s1 and s2. An interleaving uses all characters of s1 and s2 in their original relative order.',
+      testCases: [{ input: '"aabcc", "dbbca", "aadbbcbcac"', expected: 'true' },{ input: '"aabcc", "dbbca", "aadbbbaccc"', expected: 'false' },{ input: '"", "", ""', expected: 'true' },{ input: '"a", "b", "ab"', expected: 'true' },{ input: '"a", "b", "ba"', expected: 'true' }] },
+    { title: 'Minimum Refueling Stops', description: 'Write `solve(target, startFuel, stations)` — a car starts with startFuel liters. stations is an array of [position, capacity] pairs sorted ascending. Return the minimum number of refueling stops to reach the target, or -1 if impossible.',
+      testCases: [{ input: '100, 10, [[10,60],[20,30],[30,30],[60,40]]', expected: '2' },{ input: '100, 1, []', expected: '-1' },{ input: '1, 1, []', expected: '0' },{ input: '100, 100, [[10,60]]', expected: '0' }] },
+    { title: 'Find Duplicate Subtrees', description: 'Write `solve(nodes)` — given a binary tree as a level-order array (null for missing), return the root values of all duplicate subtrees (identical structure AND node values). Sort the output array.',
+      testCases: [{ input: '[1,2,3,4,null,2,4,null,null,4]', expected: '[2,4]' },{ input: '[2,1,1]', expected: '[1]' },{ input: '[1]', expected: '[]' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -571,6 +806,149 @@ let RESPONSE_QUESTIONS = [
     { question: 'A cube is painted on all six faces and then cut into 27 smaller equal cubes (3×3×3). How many of the small cubes have exactly two faces painted?', expectedKeywords: ['12', 'twelve'] },
     { question: 'How many three-digit positive integers are divisible by both 4 and 6?', expectedKeywords: ['75'] },
     { question: 'A gear with 12 teeth meshes with a gear with 36 teeth. If the smaller gear rotates at 120 RPM, at what RPM does the larger gear rotate?', expectedKeywords: ['40'] },
+    // ── Daily pool update: added 2026-06-19 ──
+    // Medium tier
+    { question: 'A shopkeeper marks a product 40% above its cost price and then offers a 20% discount on the marked price. What is the percentage profit on the original cost price?', expectedKeywords: ['12', '12%'] },
+    { question: 'A 20-liter mixture of milk and water is in the ratio 3:1. How many liters of water must be added to make the ratio 3:2?', expectedKeywords: ['5'] },
+    { question: 'In a group of 60 people, 30 speak English, 20 speak French, and 10 speak both languages. How many people speak neither English nor French?', expectedKeywords: ['20', 'twenty'] },
+    // Hard tier
+    { question: 'A rectangular swimming pool is 25 m long, 10 m wide, and filled to a depth of 1.5 m. How many kiloliters of water does it hold?', expectedKeywords: ['375'] },
+    { question: 'A sum of money doubles itself in 5 years under simple interest. What is the annual interest rate as a percentage?', expectedKeywords: ['20', '20%'] },
+    { question: 'You roll two fair six-sided dice. What is the probability that the product of the two numbers shown is even? Express as a simplified fraction.', expectedKeywords: ['3/4'] },
+    // ── Daily pool update: added 2026-06-20 ──
+    // Easy tier
+    { question: 'What is 256 divided by 16?', expectedKeywords: ['16'] },
+    // Medium tier
+    { question: "A man is 24 years older than his son. In 2 years, the man will be exactly twice his son's age. How old is the son now?", expectedKeywords: ['22'] },
+    { question: 'A room is 6 meters long, 4 meters wide, and 3 meters high. What is the total surface area of the four walls only (excluding floor and ceiling) in square meters?', expectedKeywords: ['60'] },
+    { question: 'A store has 3 shelves. Shelf A holds twice as many books as shelf B. Shelf C holds 10 fewer books than shelf A. Together all shelves hold 90 books. How many books are on shelf B?', expectedKeywords: ['20'] },
+    // Hard tier
+    { question: 'A snail is at the bottom of a 15-meter well. During the day it climbs 5 meters; at night it slides back 3 meters. On what day does it first reach the top?', expectedKeywords: ['6'] },
+    // ── Daily pool update: added 2026-06-21 ──
+    // Easy tier
+    { question: 'What is 144 divided by 12?', expectedKeywords: ['12'] },
+    { question: 'How many hours are in one week?', expectedKeywords: ['168'] },
+    // Medium tier
+    { question: 'A car rental costs $45 per day plus $0.20 per mile. If a customer rents the car for 3 days and drives 150 miles, what is the total cost in dollars?', expectedKeywords: ['165', '$165'] },
+    { question: 'In a village, 40% of the population are adults and 60% are children. If there are 480 adults, what is the total population of the village?', expectedKeywords: ['1200'] },
+    { question: 'A car travels 300 km total. For the first 120 km it travels at 60 km/h; for the remaining 180 km it travels at 90 km/h. What is the total travel time in hours?', expectedKeywords: ['4'] },
+    { question: 'A salesman earns a 5% commission on the first $10,000 of monthly sales and 8% on any sales above that. How much commission does he earn in a month with $18,000 in total sales?', expectedKeywords: ['1140', '$1,140', '1,140'] },
+    // Hard tier
+    { question: 'In how many distinct ways can the letters of the word "ALGEBRA" be arranged? (Note: the letter A appears twice.)', expectedKeywords: ['2520'] },
+    { question: 'A container has 10 liters of a 40% alcohol mixture. How many liters of pure alcohol must be added to bring the alcohol concentration up to 60%?', expectedKeywords: ['5', '5 liters'] },
+    { question: 'What is the units digit of 7 raised to the power 53?', expectedKeywords: ['7'] },
+    // ── Daily pool update: added 2026-06-22 ──
+    // Easy tier
+    { question: 'How many faces does a cube have?', expectedKeywords: ['6', 'six'] },
+    { question: 'What is the value of sin(90°)?', expectedKeywords: ['1', 'one'] },
+    // Medium tier
+    { question: 'A train departs at 08:35 and the journey takes 2 hours and 47 minutes. What time does it arrive?', expectedKeywords: ['11:22'] },
+    { question: 'A rectangle has an area of 48 cm² and a width of 6 cm. What is its perimeter in cm?', expectedKeywords: ['32'] },
+    { question: 'A cyclist covers 45 km in 1.5 hours. What is his average speed in km/h?', expectedKeywords: ['30'] },
+    { question: 'A tank holds 400 liters. It is currently 35% full. How many liters need to be added to fill it completely?', expectedKeywords: ['260'] },
+    // Hard tier
+    { question: 'In how many ways can 5 books be arranged on a shelf if 2 specific books must always be kept next to each other?', expectedKeywords: ['48'] },
+    { question: 'A geometric series has a first term of 3 and a common ratio of 2. What is the sum of the first 6 terms?', expectedKeywords: ['189'] },
+    { question: 'A 30-60-90 triangle has a hypotenuse of 10 cm. What is the area of the triangle in cm²? (Exact value)', expectedKeywords: ['25√3', '25*√3', '21.65', '21.6'] },
+    // ── Daily pool update: added 2026-06-23 ──
+    // Easy tier
+    { question: 'How many centimeters are in one meter?', expectedKeywords: ['100', 'one hundred'] },
+    { question: 'What is the boiling point of water in degrees Celsius at sea level?', expectedKeywords: ['100'] },
+    // Medium tier
+    { question: 'A water tank measures 4 m long, 3 m wide, and 2 m deep. It is currently at 75% capacity. How many cubic meters of water are in the tank?', expectedKeywords: ['18'] },
+    { question: 'A delivery truck carries three packages weighing 12 kg, 18 kg, and 25 kg. The maximum load is 80 kg. How many kilograms of spare capacity remain?', expectedKeywords: ['25'] },
+    { question: 'A cyclist rides 60 km at 20 km/h and then a further 40 km at 40 km/h. What is the average speed for the whole journey in km/h?', expectedKeywords: ['25'] },
+    // Hard tier
+    { question: 'A 3×3 magic square uses the integers 1 to 9 each exactly once, and every row, column, and diagonal sums to the same value. What is that constant sum?', expectedKeywords: ['15', 'fifteen'] },
+    { question: 'What is the units digit of the sum 1! + 2! + 3! + 4! + 5! + ... + 20! (the sum of all factorials from 1 to 20)?', expectedKeywords: ['3'] },
+    { question: 'A person can type 60 words per minute. If a document has 4500 words and the person takes a 5-minute break after every 30 minutes of typing, how many minutes in total does it take to finish the document?', expectedKeywords: ['85'] },
+    // ── Daily pool update: added 2026-06-24 ──
+    // Easy tier
+    { question: 'How many seconds are in one minute?', expectedKeywords: ['60', 'sixty'] },
+    { question: 'What is the chemical symbol for gold?', expectedKeywords: ['Au'] },
+    // Medium tier
+    { question: 'A water tank is filled to capacity. Each hour it loses one-quarter of its remaining water. What fraction of the original water remains after 2 hours?', expectedKeywords: ['9/16', '0.5625', '56.25'] },
+    { question: 'Convert the binary number 10110 to its decimal equivalent.', expectedKeywords: ['22', 'twenty-two'] },
+    { question: 'A bag contains 4 red and 6 blue marbles. Two marbles are drawn without replacement. What is the probability that both marbles are the same color? Express as a simplified fraction.', expectedKeywords: ['7/15'] },
+    { question: 'If a = 3 and b = 4, what is the value of 2a² + 3b − 5?', expectedKeywords: ['25', 'twenty-five'] },
+    // Hard tier
+    { question: 'A prime number p is such that p, p+2, and p+4 are all prime. What is the value of p? (Hint: think about divisibility by 3 for consecutive odd numbers.)', expectedKeywords: ['3', 'three'] },
+    { question: 'A clock is set correctly at noon. It gains 30 seconds every hour. What time does the clock display when the actual time is midnight (12 hours later)?', expectedKeywords: ['12:06', '6 minutes', 'six'] },
+    { question: 'How many trailing zeros does 100! (100 factorial) end with?', expectedKeywords: ['24', 'twenty-four'] },
+    // ── Daily pool update: added 2026-06-25 ──
+    // Easy tier
+    { question: 'What is the chemical formula for water?', expectedKeywords: ['H2O'] },
+    { question: 'How many meters are in one kilometer?', expectedKeywords: ['1000', 'one thousand'] },
+    // Medium tier
+    { question: 'The average of 5 numbers is 18. When a 6th number is added, the new average becomes 20. What is the 6th number?', expectedKeywords: ['30'] },
+    { question: 'A shopkeeper marks up a product by 40% above cost price and then offers a 25% discount on the marked price. What is the net percentage profit on the original cost price?', expectedKeywords: ['5', '5%'] },
+    { question: 'A bag contains 6 red and 4 blue marbles. Three marbles are drawn without replacement. What is the probability that exactly 2 are red? Express as a simplified fraction.', expectedKeywords: ['1/2', 'half', '0.5'] },
+    // Hard tier
+    { question: 'How many 4-digit numbers are divisible by both 6 and 9 but NOT by 18? (Hint: consider the LCM of 6 and 9.)', expectedKeywords: ['0', 'zero', 'none'] },
+    { question: '$12,000 is divided among A, B, and C such that A gets twice as much as B, and B gets three times as much as C. How much does A receive?', expectedKeywords: ['7200', '$7,200', '7,200'] },
+    // ── Daily pool update: added 2026-06-26 ──
+    // Medium tier
+    { question: 'Pipe A fills a tank in 4 hours, pipe B fills it in 6 hours, and pipe C drains it in 12 hours. If all three are open simultaneously starting from an empty tank, how many hours does it take to fill the tank?', expectedKeywords: ['3', 'three hours', 'three'] },
+    { question: 'A product costs $60 to manufacture. It is sold at a 25% profit in summer. In winter the summer price is discounted by 20%. What is the winter selling price?', expectedKeywords: ['60', '$60'] },
+    { question: 'A boat travels 72 km downstream in 4 hours and returns the same 72 km upstream in 6 hours. What is the speed of the boat in still water in km/h?', expectedKeywords: ['15'] },
+    // Hard tier
+    { question: 'In a town, 30% of the population are vegetarian. Of the non-vegetarian population, 40% eat red meat. What percentage of the town\'s total population eats red meat?', expectedKeywords: ['28', '28%'] },
+    { question: 'A committee of 4 people is to be selected from a group of 7 men and 5 women. In how many ways can the committee be formed if it must contain at least 2 women?', expectedKeywords: ['285'] },
+    // ── Daily pool update: added 2026-06-27 ──
+    // Easy tier
+    { question: 'What is 8 × 7?', expectedKeywords: ['56', 'fifty-six'] },
+    { question: 'What is the Roman numeral for 1000?', expectedKeywords: ['M'] },
+    // Medium tier
+    { question: 'A rectangular field is 90 m long and 40 m wide. A path 2 m wide runs all the way around the inside edge. What is the area of the path in square meters?', expectedKeywords: ['504'] },
+    { question: '$5,000 is invested at 6% simple interest per year. How many years does it take for the investment to reach $6,500?', expectedKeywords: ['5', 'five'] },
+    { question: 'A bag contains 3 red, 4 blue, and 5 green marbles. If one marble is drawn at random, what is the probability it is NOT green? Express as a simplified fraction.', expectedKeywords: ['7/12'] },
+    { question: 'A price is first increased by 20% then decreased by 20%. What is the net percentage change from the original price?', expectedKeywords: ['4', '-4', 'decrease', 'down', '−4'] },
+    // Hard tier
+    { question: 'A cone has a base radius of 6 cm and a slant height of 10 cm. What is the total surface area of the cone? Express your answer as "Xπ" where X is a whole number.', expectedKeywords: ['96π', '96pi', '96 π'] },
+    { question: 'Five friends (A, B, C, D, E) sit in a row at a cinema. In how many ways can they sit if two specific friends must NOT be adjacent?', expectedKeywords: ['72', 'seventy-two'] },
+    // ── Daily pool update: added 2026-06-28 ──
+    // Easy tier
+    { question: 'How many angles does an equilateral triangle have?', expectedKeywords: ['3', 'three'] },
+    { question: 'What is 15% of 200?', expectedKeywords: ['30', 'thirty'] },
+    // Medium tier
+    { question: 'A tank holds 200 liters when full and is currently 40% full. After adding 60 liters, what percentage full is the tank?', expectedKeywords: ['70', '70%'] },
+    { question: 'If 3x + 7 = 22, what is the value of x?', expectedKeywords: ['5', 'five'] },
+    { question: 'A pipe fills a barrel in 8 minutes, while another pipe drains it in 12 minutes. Starting with an empty barrel and both pipes open, how many minutes until it is full?', expectedKeywords: ['24', 'twenty-four'] },
+    // Hard tier
+    { question: 'In a group of 50 people, everyone shakes hands exactly once with every other person. How many handshakes take place in total?', expectedKeywords: ['1225'] },
+    { question: 'A bus departs every 20 minutes and a train departs every 15 minutes. At 7:00 AM both depart at the same time. What is the next time both depart simultaneously?', expectedKeywords: ['8:00', '8:00 AM', 'sixty', '1 hour', '60 minutes'] },
+    // ── Daily pool update: added 2026-06-29 ──
+    // Easy tier
+    { question: 'How many vertices does a cube have?', expectedKeywords: ['8', 'eight'] },
+    { question: 'What is 30% of 150?', expectedKeywords: ['45', 'forty-five'] },
+    // Medium tier
+    { question: 'A number increased by 15% gives 230. What is the original number?', expectedKeywords: ['200', 'two hundred'] },
+    { question: 'Two numbers have a sum of 84 and a difference of 12. What is the larger number?', expectedKeywords: ['48', 'forty-eight'] },
+    { question: 'Worker A can finish a task in 6 days. After 2 days working alone, worker B joins and together they finish the remaining work. Worker B alone would take 9 days for the full task. How many more days are needed after B joins?', expectedKeywords: ['3', 'three'] },
+    // Hard tier
+    { question: 'How many integers from 1 to 1000 are divisible by neither 2 nor 5?', expectedKeywords: ['400', 'four hundred'] },
+    { question: 'What is the angle in degrees subtended at the centre of a circle by an arc that is one-sixth of the circumference?', expectedKeywords: ['60', 'sixty'] },
+    // ── Daily pool update: added 2026-07-02 ──
+    // Easy tier
+    { question: 'How many degrees are in a right angle?', expectedKeywords: ['90', 'ninety'] },
+    { question: 'What is 11 × 12?', expectedKeywords: ['132'] },
+    // Medium tier
+    { question: 'A train travels from city X to city Y in 2 hours at 90 km/h. On the return journey it travels at 60 km/h. What is the average speed for the entire round trip in km/h?', expectedKeywords: ['72'] },
+    { question: 'A bag contains 8 red and 4 blue marbles. Three marbles are drawn at random without replacement. What is the probability that all three are red? Express as a simplified fraction.', expectedKeywords: ['14/55'] },
+    // Hard tier
+    { question: 'In how many ways can 8 people be seated around a circular table if 2 specific people must NOT be adjacent to each other?', expectedKeywords: ['1800', 'one thousand eight hundred'] },
+    { question: 'A container holds a 60-liter mixture of acid and water in a ratio of 2:1. How many liters of pure acid must be added to make the ratio 3:1?', expectedKeywords: ['12', 'twelve'] },
+    // ── Daily pool update: added 2026-07-05 ──
+    // Easy tier
+    { question: 'What is the first element on the periodic table?', expectedKeywords: ['hydrogen', 'H'] },
+    { question: 'What is the square root of 225?', expectedKeywords: ['15', 'fifteen'] },
+    // Medium tier
+    { question: 'Pipes A, B, and C can individually fill a tank in 20, 30, and 60 hours respectively. How many hours will it take to fill the tank when all three pipes are open simultaneously?', expectedKeywords: ['10', 'ten'] },
+    { question: 'A man earns $3,200 per month. He spends 30% on rent and 20% on food. How much does he save each month?', expectedKeywords: ['1600', '$1,600', '1,600'] },
+    { question: 'How many positive integers less than 100 are divisible by 3 but NOT by 9?', expectedKeywords: ['22', 'twenty-two'] },
+    // Hard tier
+    { question: 'A clock gains 5 minutes every hour. If it is set correctly at 6:00 AM, what time will the clock display when the actual time is 6:00 PM on the same day?', expectedKeywords: ['7:00', '7:00 PM', 'seven'] },
+    { question: 'In how many ways can the letters of the word "COMMITTEE" be arranged? (The letters M, T, and E each appear exactly twice.)', expectedKeywords: ['45360'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -688,6 +1066,134 @@ let TTS_PHRASES = [
     { text: 'CUSIP five nine four nine one eight one zero four represents Microsoft Corporation listed on NASDAQ under ticker MSFT with approximately seven point four billion shares outstanding', keywords: ['CUSIP', '594918104', 'Microsoft', 'NASDAQ', 'MSFT', 'seven', 'billion', 'shares'] },
     { text: 'The integral from zero to pi of sine x d x equals negative cosine of pi minus negative cosine of zero which simplifies to one plus one equals two', keywords: ['integral', 'zero', 'pi', 'sine', 'cosine', 'simplifies', 'two'] },
     { text: 'The multivariate normal distribution N of mu and sigma squared describes a family of Gaussian distributions parameterized by mean mu and variance sigma squared — in one dimension the PDF is one over sigma root two pi times e to the power of negative one half x minus mu over sigma squared', keywords: ['multivariate', 'normal', 'gaussian', 'sigma', 'variance', 'PDF', 'e', 'power'] },
+    // ── Daily pool update: added 2026-06-19 ──
+    // Medium tier
+    { text: 'Support ticket SRQ-2024-48821 has been escalated to severity 1 and the on-call engineer was paged at 03:47 UTC — expected resolution time is four hours', keywords: ['support', 'SRQ', '2024', '48821', 'severity', '1', '03:47', 'UTC', 'four'] },
+    { text: 'Please be advised that your appointment with Dr Patel has been moved from Thursday at 9:30 AM to Friday the 20th at 2:15 PM in the outpatient clinic on floor 4 wing B', keywords: ['Patel', 'thursday', '9:30', 'friday', '20', '2:15', 'outpatient', 'floor', '4', 'wing'] },
+    // Hard tier
+    { text: 'Kubernetes cluster status: 3 of 3 control plane nodes ready, 47 worker nodes scheduled, 231 pods running, 0 pods in CrashLoopBackOff — CPU utilization 62 percent, memory utilization 71 percent', keywords: ['kubernetes', 'three', 'control', 'plane', '47', 'workers', '231', 'pods', 'CPU', '62', 'memory', '71'] },
+    { text: 'XGBoost hyperparameter grid search evaluated 1296 combinations across max depth 3 to 6, learning rate 0.01 to 0.3, n estimators 100 to 500, and subsample 0.6 to 0.9 — best validation AUC of 0.9417 achieved at max depth 5 and learning rate 0.1', keywords: ['XGBoost', '1296', 'learning', 'rate', 'AUC', '0.9417', 'depth', '5'] },
+    // ── Daily pool update: added 2026-06-20 ──
+    // Medium tier
+    { text: 'The production database maintenance window is scheduled for Saturday February 22nd from midnight to 4 AM UTC — all dependent services will be unavailable during this period', keywords: ['production', 'maintenance', 'saturday', 'february', '22', 'midnight', 'UTC'] },
+    { text: 'Order ORD-2024-11784 containing three items totaling one hundred twenty-seven dollars and forty-five cents has shipped via FedEx tracking number seven seven four nine eight eight one two three three zero one', keywords: ['order', 'ORD', '11784', 'FedEx', 'three', 'items', '127'] },
+    // Hard tier
+    { text: 'Section 4 paragraph 2 stipulates that the licensee shall indemnify and hold harmless the licensor from any third-party claims arising from the licensee\'s use of the software except claims arising from the licensor\'s gross negligence or wilful misconduct', keywords: ['section', '4', 'licensee', 'indemnify', 'licensor', 'third-party', 'negligence', 'wilful'] },
+    { text: 'A signal-to-noise ratio of 42 decibels measured at carrier frequency 2.4 gigahertz with channel bandwidth 40 megahertz supports a maximum theoretical throughput of 300 megabits per second under ideal propagation conditions', keywords: ['signal', '42', 'decibels', '2.4', 'gigahertz', '40', 'megahertz', '300', 'megabits'] },
+    // ── Daily pool update: added 2026-06-21 ──
+    // Easy tier
+    { text: 'Please wash your hands before handling food', keywords: ['wash', 'hands', 'before', 'handling', 'food'] },
+    { text: 'The store opens at nine AM and closes at six PM Monday through Friday', keywords: ['store', 'opens', 'nine', 'closes', 'six', 'monday', 'friday'] },
+    // Medium tier
+    { text: 'The next board meeting is scheduled for Tuesday July eighth at 14:00 in conference room Eagle on the third floor', keywords: ['board', 'meeting', 'tuesday', 'july', 'eighth', '14:00', 'Eagle', 'third', 'floor'] },
+    { text: 'Security alert: a login attempt was detected from IP address 203.0.113.47 in Singapore at 03:14 UTC — if this was not you please change your password immediately', keywords: ['security', 'alert', '203.0.113.47', 'Singapore', '03:14', 'UTC', 'password', 'immediately'] },
+    { text: 'Invoice INV-2025-00312 for fourteen thousand eight hundred sixty-two dollars and fifty cents is due within thirty days of the statement date printed at the top of this document', keywords: ['invoice', 'INV', '2025', 'fourteen', 'thousand', 'eight', 'thirty', 'days', 'statement'] },
+    // Hard tier
+    { text: 'The asset management system allocated sixty-three million two hundred forty-four thousand US dollars across eleven funds with a weighted average duration of four point seven years and a yield to maturity of five point three percent', keywords: ['sixty-three', 'million', 'eleven', 'funds', 'weighted', 'duration', '4.7', 'yield', 'maturity', '5.3'] },
+    { text: 'RFC 7519 defines JSON Web Tokens as a compact URL-safe means of representing claims where the header dot payload dot signature triplet is base64URL encoded and signed with HS256 or RS256 algorithms', keywords: ['RFC', '7519', 'JSON', 'Web', 'Tokens', 'header', 'payload', 'base64URL', 'HS256', 'RS256'] },
+    { text: 'Tensor shape mismatch: expected batch size 32 comma sequence length 128 comma hidden dimension 768 but received 32 comma 64 comma 768 at layer MultiHeadAttention in the forward pass', keywords: ['tensor', 'shape', '32', '128', '768', '64', 'MultiHeadAttention', 'forward', 'mismatch'] },
+    // ── Daily pool update: added 2026-06-22 ──
+    // Easy tier
+    { text: 'The weather forecast shows a high of twenty-three degrees with a chance of rain in the afternoon', keywords: ['weather', 'twenty-three', 'chance', 'rain', 'afternoon'] },
+    { text: 'Your password must be at least eight characters long and include at least one number and one special character', keywords: ['password', 'eight', 'characters', 'number', 'special', 'character'] },
+    // Medium tier
+    { text: 'Dispatch order DP-2024-77921 for twelve units of item SKU-4421-B has been approved and will be fulfilled from warehouse zone C row four', keywords: ['dispatch', 'DP-2024', '77921', 'twelve', 'SKU-4421', 'warehouse', 'zone', 'four'] },
+    { text: 'The Federal Reserve raised interest rates by twenty-five basis points to a target range of five point two five to five point five percent', keywords: ['Federal Reserve', 'interest', 'twenty-five', 'basis', 'points', 'five point', 'percent'] },
+    { text: 'Patient record P-2024-003817: blood glucose 7.4 millimoles per liter, HbA1c 6.8 percent, systolic blood pressure 138 millimeters of mercury — next review scheduled in three months', keywords: ['patient', 'glucose', '7.4', 'HbA1c', '6.8', 'systolic', '138', 'three', 'months'] },
+    // Hard tier
+    { text: 'Clause 12 sub-paragraph C of the service level agreement stipulates that the vendor shall maintain a minimum uptime of ninety-nine point nine percent calculated as a rolling thirty-day average and excluding scheduled maintenance windows notified at least 48 hours in advance', keywords: ['clause', '12', 'vendor', 'uptime', 'ninety-nine', 'thirty-day', 'maintenance', '48', 'hours'] },
+    { text: 'The signal travels through a single-mode fiber optic cable at approximately two-thirds the speed of light in vacuum or two times ten to the power of eight meters per second — a round-trip latency of 5 milliseconds corresponds to a cable length of roughly 750 kilometers', keywords: ['fiber', 'optic', 'two-thirds', 'speed', 'light', 'latency', '5', 'milliseconds', '750', 'kilometers'] },
+    { text: 'Trading halt alert: ticker NVDA circuit breaker triggered at 10:47:23 EST after a 7.4 percent intraday decline — Level 1 halt duration 5 minutes, Level 2 threshold 13 percent, Level 3 threshold 20 percent', keywords: ['trading', 'halt', 'NVDA', '10:47', 'percent', 'decline', 'Level', 'threshold', '13', '20'] },
+    // ── Daily pool update: added 2026-06-23 ──
+    // Easy tier
+    { text: 'Your session will expire in five minutes — please save your progress before it ends', keywords: ['session', 'expire', 'five', 'save', 'progress'] },
+    { text: 'The store will close in thirty minutes — please bring your items to the checkout', keywords: ['store', 'close', 'thirty', 'minutes', 'checkout'] },
+    // Medium tier
+    { text: 'Boarding for flight QF27 to Sydney will commence at gate D34 in fifteen minutes — carry-on bags must not exceed 10 kilograms and 55 centimeters in length', keywords: ['boarding', 'QF27', 'Sydney', 'D34', 'fifteen', '10', 'kilograms', '55'] },
+    { text: 'Product code PA-7721-XL is currently on backorder with an estimated restock date of January 9th — please register your email to receive a notification when stock becomes available', keywords: ['PA-7721', 'backorder', 'january', '9', 'notification', 'restock'] },
+    { text: 'Alert: API gateway returned HTTP 503 for endpoint slash api slash payments at 07:42 UTC — auto-retry 3 of 5 in progress, fallback region us-west-2 activated', keywords: ['API', 'gateway', '503', 'payments', '07:42', 'UTC', 'retry', 'three', 'fallback', 'us-west'] },
+    // Hard tier
+    { text: 'SEC Form 8-K filed October 14th 2024 by ClearPath Holdings Inc ticker CLPH discloses a material definitive agreement with an acquisition value of three hundred twenty-seven million dollars subject to customary regulatory closing conditions', keywords: ['SEC', '8-K', 'October', '2024', 'CLPH', 'material', '327', 'million', 'acquisition', 'regulatory'] },
+    { text: 'RSA-2048 uses a 2048-bit modulus derived from two 1024-bit primes p and q — the public exponent e is conventionally 65537 and the private exponent d satisfies d times e congruent to 1 modulo phi of n where phi of n equals p minus 1 times q minus 1', keywords: ['RSA', '2048', 'modulus', '1024', 'primes', '65537', 'private', 'congruent', 'phi'] },
+    { text: 'Intraday options pricing update: the implied volatility smile for SPX 0DTE options peaked at 38.4 percent for strikes 1 percent out-of-the-money — theta decay accelerated to negative 0.94 per contract with a delta of 0.32 and vega of 0.07 on the 5700 call', keywords: ['options', 'SPX', '0DTE', 'implied', 'volatility', '38.4', 'theta', 'delta', '0.32', 'vega', '5700'] },
+    // ── Daily pool update: added 2026-06-24 ──
+    // Easy tier
+    { text: 'Good morning everyone and welcome to today\'s presentation', keywords: ['good', 'morning', 'everyone', 'welcome', 'presentation'] },
+    { text: 'The temperature outside is fifteen degrees and dropping throughout the evening', keywords: ['temperature', 'fifteen', 'degrees', 'dropping', 'evening'] },
+    // Medium tier
+    { text: 'Flight QR four-seventeen to Doha departs at eleven fifty-five from gate D22 — this is the final boarding call for all remaining passengers', keywords: ['QR', '417', 'Doha', 'eleven', 'fifty-five', 'gate', 'D22', 'final', 'boarding'] },
+    { text: 'Lab results for patient ID P-4421: hemoglobin nine point four grams per deciliter, white blood cell count twelve thousand per microliter, platelet count one hundred eighty thousand per microliter', keywords: ['hemoglobin', '9.4', 'white', 'blood', '12000', 'platelet', '180000', 'microliter', 'P-4421'] },
+    { text: 'Reminder: quarterly tax filing deadline is September thirtieth — late submissions incur a five percent penalty plus two percent interest per month compounded from the due date', keywords: ['quarterly', 'tax', 'september', 'thirtieth', 'five', 'percent', 'penalty', 'interest', 'two', 'compounded'] },
+    // Hard tier
+    { text: 'Pursuant to Article 9 section 3 sub-paragraph ii the indemnifying party shall not be liable for indirect consequential or punitive damages exceeding the total contract value of two hundred fifty thousand United States dollars', keywords: ['article', '9', 'section', 'indemnifying', 'liable', 'indirect', 'consequential', 'punitive', '250000', 'dollars'] },
+    { text: 'ECG interpretation: sinus tachycardia at 112 beats per minute, PR interval 0.18 seconds, QRS duration 0.09 seconds, ST elevation 2 millimeters in leads V2 through V4 — consistent with anterior STEMI requiring immediate cath lab activation', keywords: ['ECG', '112', 'PR', '0.18', 'QRS', '0.09', 'ST', 'elevation', 'V2', 'V4', 'STEMI', 'anterior'] },
+    // ── Daily pool update: added 2026-06-25 ──
+    // Easy tier
+    { text: 'Please enter your username and password to continue logging in to your account', keywords: ['username', 'password', 'continue', 'logging', 'account'] },
+    { text: 'Your order number 5521 has been successfully placed and will arrive by Friday', keywords: ['order', '5521', 'successfully', 'placed', 'friday'] },
+    // Medium tier
+    { text: 'Departure notification: train ICE 527 to Frankfurt Hauptbahnhof departs from platform 9 at 14:43 — coaches 1 through 5 are first class, coaches 6 through 11 are second class', keywords: ['ICE', '527', 'Frankfurt', 'platform', '9', '14:43', 'first', 'class', 'second', 'eleven'] },
+    { text: 'Your recent transaction of three hundred forty-seven dollars and sixty cents was declined at MegaStore on November eighth — please call the fraud prevention line at 1-800-555-0199 to verify your identity', keywords: ['transaction', '347', 'sixty', 'declined', 'MegaStore', 'november', '555', '0199', 'fraud', 'verify'] },
+    // Hard tier
+    { text: 'Pursuant to International Financial Reporting Standards IAS 36 paragraph 59 the recoverable amount of the cash-generating unit was assessed at forty-two million six hundred thousand euros using a pre-tax discount rate of nine point five percent and a terminal growth rate of two percent', keywords: ['IAS', '36', 'recoverable', 'cash-generating', 'forty-two', 'million', 'nine', 'five', 'discount', 'terminal', 'two'] },
+    { text: 'The Merkle tree inclusion proof for transaction 0xf3a4b217e9cd8041 contains four sibling hashes: 0x1a2b3c at left level 1, 0x9f8e7d at right level 2, 0xc5d4e3 at left level 3, and 0xa0b1c2 at right level 4 — concatenate and hash each pair from leaf to root to verify membership in block 19842716', keywords: ['merkle', 'tree', '0xf3a4', 'four', 'sibling', 'left', 'right', 'root', 'block', '19842716'] },
+    // ── Daily pool update: added 2026-06-26 ──
+    // Easy tier
+    { text: 'The next shuttle bus departs at quarter past two and arrives at Central Station in approximately forty-five minutes', keywords: ['shuttle', 'quarter', 'two', 'forty-five', 'central', 'station'] },
+    // Medium tier
+    { text: 'Production incident INC-2024-5812: database replica at node-db-03 has fallen 2,847 transactions behind the primary — replication lag is 14.7 seconds and growing', keywords: ['incident', 'INC', '5812', 'node-db', '2847', 'transactions', '14.7', 'replication', 'lag'] },
+    { text: 'Prescription number RX-9948021: take two 500-milligram tablets of amoxicillin three times daily for ten days — do not exceed six tablets in any 24-hour period', keywords: ['prescription', 'RX', '9948021', 'two', '500', 'amoxicillin', 'three', 'ten', 'six'] },
+    // Hard tier
+    { text: 'The variance swap strike for a 3-month tenor on EUR/USD cross-volatility was fixed at 7.4 vol-squared — the daily P&L equals realised variance minus the fixed strike multiplied by the notional of five million vega', keywords: ['variance', 'swap', 'strike', 'EUR/USD', '7.4', 'vol', 'P&L', 'realised', 'notional', 'five', 'million'] },
+    { text: 'Pursuant to Section 2 article 8 sub-paragraph c of the Master Services Agreement dated the third of March two thousand twenty-four the service provider shall maintain a minimum of ninety-nine point nine five percent monthly uptime as set forth in Schedule B appendix three', keywords: ['section', '2', 'article', '8', 'march', 'two thousand', 'ninety-nine', 'monthly', 'uptime', 'schedule', 'appendix', 'three'] },
+    // ── Daily pool update: added 2026-06-27 ──
+    // Easy tier
+    { text: 'The elevator is out of service — please use the stairs on the left', keywords: ['elevator', 'out', 'service', 'stairs', 'left'] },
+    { text: 'Fasten your seatbelt before the vehicle begins to move', keywords: ['fasten', 'seatbelt', 'vehicle', 'begins', 'move'] },
+    // Medium tier
+    { text: 'Project Mercury milestone review is on Thursday March 5th at 09:30 in the Hudson conference room — dial-in passcode 7841', keywords: ['Mercury', 'thursday', 'march', '5', '09:30', 'Hudson', '7841'] },
+    { text: 'API rate limit exceeded: 1200 requests in the last 60 seconds against a quota of 1000 per minute — retry allowed after 48 seconds', keywords: ['API', 'rate', 'limit', '1200', '60', 'seconds', '1000', 'retry', '48'] },
+    { text: 'Scheduled maintenance window for cluster prod-us-east-1: Saturday June 28th from 02:00 to 04:00 UTC — all read replicas will be promoted to primary during this window', keywords: ['maintenance', 'prod', 'us-east', 'saturday', 'june', '28', '02:00', '04:00', 'UTC', 'replicas'] },
+    // Hard tier
+    { text: 'The Basel III capital adequacy framework requires banks to maintain a minimum Common Equity Tier 1 ratio of 4.5 percent plus a capital conservation buffer of 2.5 percent — the effective floor is therefore 7 percent of risk-weighted assets', keywords: ['Basel', 'III', 'Tier', '4.5', 'conservation', '2.5', 'seven', 'percent', 'risk-weighted'] },
+    { text: 'Inference completed in 847 milliseconds: model CLIP-ViT-L14 processed a batch of 32 image-text pairs achieving top-1 accuracy of 91.4 percent on the ImageNet validation set — peak GPU memory 6.2 GB on device cuda:0', keywords: ['CLIP', 'ViT', '847', 'milliseconds', '32', '91.4', 'GPU', '6.2', 'cuda', 'ImageNet'] },
+    // ── Daily pool update: added 2026-06-28 ──
+    // Easy tier
+    { text: 'Please fasten your seatbelt and ensure your tray table is in the upright and locked position before takeoff', keywords: ['fasten', 'seatbelt', 'tray', 'upright', 'locked', 'takeoff'] },
+    // Medium tier
+    { text: 'Contract ID MSA-2024-09871 requires countersignature by both parties no later than December 31st — please forward the executed copy to legal at contracts at example dot com for filing', keywords: ['contract', 'MSA', '2024', '09871', 'countersignature', 'december', '31', 'legal', 'example'] },
+    { text: 'The monthly SLA report for client EC-4782 shows actual availability of ninety-nine point seven percent against a contractual target of ninety-nine point nine percent — a penalty credit of eight hundred dollars has been automatically applied to the next invoice', keywords: ['SLA', 'EC-4782', 'ninety-nine', 'seven', 'nine', 'penalty', '800', 'credit', 'invoice'] },
+    // Hard tier
+    { text: 'The fund achieved a Sharpe ratio of 1.87 and a Sortino ratio of 2.14 over the trailing 36-month period with annualised return of 12.4 percent, annualised volatility of 6.6 percent, and maximum drawdown of negative 8.3 percent', keywords: ['Sharpe', '1.87', 'Sortino', '2.14', '36', 'annualised', '12.4', 'volatility', '6.6', 'drawdown', '8.3'] },
+    { text: 'Emergency data breach notification: unauthorized read access to the users table detected at 23:17 UTC — 847 accounts affected, PII exposed is limited to names and hashed passwords using SHA-256 with bcrypt salt rounds of 12, no plaintext credentials compromised, all active sessions invalidated', keywords: ['breach', 'unauthorized', '23:17', 'UTC', '847', 'accounts', 'SHA-256', 'bcrypt', 'twelve', 'sessions', 'invalidated'] },
+    // ── Daily pool update: added 2026-06-29 ──
+    // Easy tier
+    { text: 'Your delivery is scheduled for this Thursday between two and four in the afternoon — someone must be present to sign for the package', keywords: ['delivery', 'thursday', 'two', 'four', 'afternoon', 'sign'] },
+    { text: 'A scheduled fire alarm test will take place at eleven AM on Wednesday — please do not evacuate the building during the test', keywords: ['fire', 'alarm', 'eleven', 'wednesday', 'evacuate', 'test'] },
+    // Medium tier
+    { text: 'System upgrade notice: platform version 4.2.1 will be deployed to the production environment on Sunday at 03:00 AM UTC — estimated downtime is thirty minutes and all pending background jobs will be queued automatically and resumed after the upgrade', keywords: ['upgrade', 'version', '4.2.1', 'production', 'sunday', '03:00', 'UTC', 'thirty', 'downtime', 'queued'] },
+    { text: 'Student ID S-2024-00421: your provisional offer letter for the Master of Computer Science programme commencing September fifteenth requires acceptance via the online admissions portal by July 7th at 17:00 — failure to respond by the deadline will result in automatic withdrawal of the offer', keywords: ['student', 'S-2024', '00421', 'master', 'computer', 'science', 'september', 'fifteenth', 'july', '7', '17:00', 'deadline'] },
+    // Hard tier
+    { text: 'Under International Accounting Standard 38 an intangible asset is recognised only when it is probable that future economic benefits will flow to the entity and its cost can be measured reliably — development-phase costs may be capitalised only when all six criteria in IAS 38 paragraph 57 are simultaneously satisfied', keywords: ['IAS', '38', 'intangible', 'asset', 'economic', 'benefits', 'capitalised', 'development', 'six', 'criteria', 'paragraph', '57'] },
+    { text: 'Zero-knowledge proof: the prover commits to witness w using Pedersen commitment C equals g to the power of w times h to the power of r — the verifier issues challenge c, the prover responds with z equals r plus c times w modulo the prime order q — soundness error probability is one over q', keywords: ['zero-knowledge', 'proof', 'prover', 'Pedersen', 'commitment', 'verifier', 'challenge', 'soundness', 'modulo', 'prime', 'order', 'probability'] },
+    // ── Daily pool update: added 2026-07-02 ──
+    // Easy tier
+    { text: 'The bus to downtown departs from bay four at half past three', keywords: ['bus', 'downtown', 'bay', 'four', 'half', 'three'] },
+    // Medium tier
+    { text: 'Patient ID PT-2024-19847 has been admitted to ward seven B bed twenty-two — attending physician is Dr Okonkwo and the scheduled procedure is tomorrow at 08:30', keywords: ['patient', 'PT-2024', '19847', 'ward', 'seven', 'bed', 'twenty-two', 'Okonkwo', '08:30'] },
+    { text: 'Production alert: pod api-gateway-7c8d9f experienced an OOMKilled event at 16:42 UTC — container memory limit was 512 megabytes but peak resident set size reached 618 megabytes — autoscaler scaled replicas from 3 to 5', keywords: ['api-gateway', '16:42', 'UTC', 'OOMKilled', '512', 'megabytes', '618', 'autoscaler', 'three', 'five'] },
+    // Hard tier
+    { text: 'The convertible note term sheet specifies a conversion price of sixty-two dollars and fifty cents per share, an annual coupon of one point five percent payable semi-annually, and a put option exercisable on the third anniversary at one hundred and two percent of par value', keywords: ['convertible', 'note', 'sixty-two', 'fifty', 'coupon', 'one', 'five', 'semi-annually', 'put', 'option', 'third', 'anniversary', 'par'] },
+    // ── Daily pool update: added 2026-07-05 ──
+    // Easy tier
+    { text: 'Please have your boarding pass and passport ready at gate C eighteen', keywords: ['boarding', 'pass', 'passport', 'gate', 'eighteen'] },
+    { text: 'Your food order will be ready for collection in approximately twelve minutes', keywords: ['food', 'order', 'ready', 'collection', 'twelve', 'minutes'] },
+    // Medium tier
+    { text: 'Shipment of three hundred twenty-four units of model XK-7B departed warehouse twelve on Thursday at fourteen hundred hours and is expected at distribution centre five by Monday', keywords: ['shipment', '324', 'XK-7B', 'warehouse', 'twelve', 'thursday', 'fourteen', 'five', 'monday'] },
+    { text: 'Your subscription plan Pro Annual at ninety-nine dollars per year auto-renews on September third 2025 — to cancel visit account settings and click manage billing before August twenty-seventh', keywords: ['subscription', 'Pro Annual', '99', 'September', 'third', 'cancel', 'billing', 'August', 'twenty-seventh'] },
+    // Hard tier
+    { text: 'ISIN XS2345678901 is a five-year fixed-rate corporate bond issued by Helios Capital AG with a coupon rate of three point eight seven five percent payable semi-annually on March 15th and September 15th with a face value of one hundred thousand euros and maturity date March 15th 2029', keywords: ['ISIN', 'XS2345678901', 'five-year', 'Helios', '3.875', 'semi-annually', 'March', 'September', 'maturity', '2029', 'euros'] },
+    { text: 'Docker build digest sha256 colon a3f9c2e8d471b0e6f3821cc904d5b7398e12a041f6c2d8e9b7345210e93f1a28 pushed to registry dot corp dot example dot com slash backend colon release dash 4 dot 7 dot 2 at 19:03 UTC', keywords: ['docker', 'sha256', 'a3f9', 'registry', 'backend', 'release', '4.7.2', '19:03', 'UTC'] },
 ];
 
 // ============================================
@@ -1198,9 +1704,11 @@ function buildInterviewIdentityPatch(exam, mapped, nowMs) {
     const max = Math.max(1, Math.round(maxScore));
     const normalized = Math.round((score / max) * 100);
     const passed = !!mapped.passed;
-    const completedAtMs = exam.completed_at
+    const fallbackNow = typeof nowMs === 'number' ? nowMs : Date.now();
+    const rawCompletedAtMs = exam.completed_at
         ? new Date(exam.completed_at).getTime()
-        : (typeof nowMs === 'number' ? nowMs : Date.now());
+        : fallbackNow;
+    const completedAtMs = Number.isFinite(rawCompletedAtMs) ? rawCompletedAtMs : fallbackNow;
 
     return {
         interviewCapabilities: {
@@ -1213,7 +1721,148 @@ function buildInterviewIdentityPatch(exam, mapped, nowMs) {
             completedAt: completedAtMs,
             source: 'arena',
         },
-        lastInterviewAt: typeof nowMs === 'number' ? nowMs : Date.now(),
+        lastInterviewAt: fallbackNow,
+    };
+}
+
+function parseJsonObject(raw) {
+    if (!raw) return null;
+    if (typeof raw === 'object' && !Array.isArray(raw)) return raw;
+    if (typeof raw !== 'string') return null;
+    try {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+    } catch (_) {
+        return null;
+    }
+}
+
+function publicEntitySnapshot(entity, entityId) {
+    if (!entity) return null;
+    return {
+        entityId: Number.isFinite(Number(entityId)) ? Number(entityId) : null,
+        entityName: entity.name || entity.character || null,
+        publicCode: entity.publicCode || null,
+        agentCard: entity.agentCard || null,
+    };
+}
+
+function attachLinkedEntityToArenaDetail(detail, snapshot) {
+    if (!snapshot || !snapshot.publicCode) return detail;
+    return {
+        ...(detail || {}),
+        linkedEntityId: snapshot.entityId,
+        linkedEntityName: snapshot.entityName,
+        linkedPublicCode: snapshot.publicCode,
+        linkedAgentCard: snapshot.agentCard || null,
+    };
+}
+
+function normalizeLeaderboardEntityId(row, detail) {
+    const raw = row?.entity_id ?? detail?.linkedEntityId;
+    if (raw === null || raw === undefined || raw === '') return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+}
+
+function toLeaderboardApiRow(row) {
+    const detail = parseJsonObject(row?.detail) || row?.detail || {};
+    const entityId = normalizeLeaderboardEntityId(row, detail);
+    return {
+        ...row,
+        detail,
+        entity_id: entityId,
+        entity_name: row?.entity_name || detail.linkedEntityName || null,
+        petdx_avatar_url: row?.petdx_avatar_url || detail.linkedPetdxAvatarUrl || null,
+        public_code: row?.public_code || detail.linkedPublicCode || null,
+        agent_card: row?.agent_card || detail.linkedAgentCard || null,
+    };
+}
+
+function buildMappedArenaResultForIdentity(report, row = {}) {
+    const reportObj = parseJsonObject(report) || report || {};
+    const mapped = mapArenaResultToCapabilities(reportObj);
+    const listingCaps = parseJsonObject(row.capabilities);
+    const benchmarkScore = parseJsonObject(row.benchmark_score);
+
+    if ((!mapped.capabilities || Object.keys(mapped.capabilities).length === 0) && listingCaps) {
+        mapped.capabilities = listingCaps;
+    }
+    if ((!mapped.benchmarkScore || Object.keys(mapped.benchmarkScore).length === 0) && benchmarkScore) {
+        mapped.benchmarkScore = benchmarkScore;
+    }
+    if (row.interview_passed !== undefined && row.interview_passed !== null) {
+        mapped.passed = !!row.interview_passed;
+    }
+    if (typeof mapped.normalizedScore !== 'number' && benchmarkScore && typeof benchmarkScore.normalizedScore === 'number') {
+        mapped.normalizedScore = benchmarkScore.normalizedScore;
+    }
+    return mapped;
+}
+
+function hasCapabilityMap(capabilities) {
+    return !!(capabilities
+        && typeof capabilities === 'object'
+        && !Array.isArray(capabilities)
+        && Object.keys(capabilities).length > 0);
+}
+
+/**
+ * Apply a verified Arena result to the entity identity/namecard surfaces that
+ * the dashboard and plaza render. The numeric score lives in
+ * identity.interviewCapabilities; the per-capability badge map lives in
+ * identity.public.capabilities / agentCard.capabilities. Keeping those shapes
+ * separate prevents the namecard from treating score fields as capability rows.
+ */
+function applyArenaIdentityPatchToEntity(entity, patch, mapped, options = {}) {
+    if (!entity || !patch || !patch.interviewCapabilities) return null;
+    const capabilities = mapped && mapped.capabilities;
+    if (!hasCapabilityMap(capabilities)) return null;
+
+    const existingCompletedAt = Number(entity.identity?.interviewCapabilities?.completedAt);
+    const nextCompletedAt = Number(patch.interviewCapabilities.completedAt);
+    if (options.skipIfExistingNewer
+        && Number.isFinite(existingCompletedAt)
+        && Number.isFinite(nextCompletedAt)
+        && existingCompletedAt > nextCompletedAt) {
+        return { skipped: 'existing_newer' };
+    }
+
+    if (!entity.identity || typeof entity.identity !== 'object') entity.identity = {};
+    const existingPublic = (entity.identity.public && typeof entity.identity.public === 'object' && !Array.isArray(entity.identity.public))
+        ? entity.identity.public
+        : {};
+    const existingCard = (entity.agentCard && typeof entity.agentCard === 'object' && !Array.isArray(entity.agentCard))
+        ? entity.agentCard
+        : {};
+    const publicCard = {
+        description: '',
+        ...existingCard,
+        ...existingPublic,
+        capabilities,
+        capabilitiesInterviewPassedAt: new Date(patch.interviewCapabilities.completedAt).toISOString(),
+        capabilitiesBenchmarkScore: {
+            score: patch.interviewCapabilities.score,
+            rawScore: patch.interviewCapabilities.score,
+            maxScore: patch.interviewCapabilities.maxScore,
+            normalized: patch.interviewCapabilities.normalized,
+            source: 'arena',
+        },
+    };
+
+    entity.identity.interviewCapabilities = patch.interviewCapabilities;
+    entity.identity.lastInterviewAt = patch.lastInterviewAt;
+    entity.identity.public = publicCard;
+    entity.agentCard = publicCard;
+    entity.lastUpdated = options.nowMs || Date.now();
+
+    return {
+        entityId: options.entityId ?? null,
+        score: patch.interviewCapabilities.score,
+        maxScore: patch.interviewCapabilities.maxScore,
+        normalized: patch.interviewCapabilities.normalized,
+        passed: patch.interviewCapabilities.passed,
+        capabilityCount: Object.keys(capabilities).length,
     };
 }
 
@@ -1751,14 +2400,20 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
                 [req.params.examId, totalScore, JSON.stringify(report)]
             );
 
-            // ── Arena → Rental interview sync ──
-            // If this exam is linked to a listing, auto-qualify it for
-            // the rental marketplace. The Arena's public nature is
-            // unchanged — this just bridges the result.
+            // ── Arena → Rental + entity/namecard sync ──
+            // If this exam is linked to a listing, auto-qualify it for the
+            // rental marketplace AND mirror the verified Arena result onto the
+            // owner entity identity/namecard. Without this second write, a
+            // completed linked exam can show the rental cooldown/proof while
+            // the namecard still renders the empty Arena state.
             let interviewSync = null;
             try {
                 const examRow = await pool.query(
-                    'SELECT listing_id, model FROM arena_exams WHERE id = $1',
+                    `SELECT e.id, e.listing_id, e.model, e.total_score, e.max_score, e.report, e.completed_at,
+                            l.owner_device_id, l.owner_entity_id
+                     FROM arena_exams e
+                     LEFT JOIN bot_listings l ON l.id = e.listing_id
+                     WHERE e.id = $1`,
                     [req.params.examId]
                 );
                 const examData = examRow.rows[0];
@@ -1799,16 +2454,41 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
                             mapped.passed ? null : `Arena score ${mapped.normalizedScore}% < ${Math.round(ARENA_PASS_THRESHOLD * 100)}% threshold`,
                         ]
                     );
+
+                    let entityBinding = null;
+                    const ownerDeviceId = examData.owner_device_id;
+                    const ownerEntityId = Number(examData.owner_entity_id);
+                    const ownerDevice = ownerDeviceId ? deviceRegistry[ownerDeviceId] : null;
+                    const ownerEntity = (ownerDevice && Number.isInteger(ownerEntityId))
+                        ? ownerDevice.entities?.[ownerEntityId]
+                        : null;
+                    const patch = buildInterviewIdentityPatch({
+                        id: examData.id || req.params.examId,
+                        model: examData.model || null,
+                        total_score: totalScore,
+                        max_score: MAX_TOTAL_SCORE,
+                        completed_at: examData.completed_at,
+                    }, mapped);
+                    if (ownerEntity && ownerEntity.isBound && patch) {
+                        entityBinding = applyArenaIdentityPatchToEntity(ownerEntity, patch, mapped, { entityId: ownerEntityId });
+                        if (entityBinding && !entityBinding.skipped && saveDeviceData) {
+                            await Promise.resolve(saveDeviceData(ownerDeviceId, ownerDevice));
+                        }
+                    } else if (ownerDeviceId || examData.owner_entity_id !== undefined) {
+                        audit('warn', 'arena', `exam ${req.params.examId} linked listing ${examData.listing_id} could not bind namecard: owner entity missing/unbound`);
+                    }
+
                     interviewSync = {
                         listingId: examData.listing_id,
                         passed: mapped.passed,
                         normalizedScore: mapped.normalizedScore,
                         capabilities: mapped.capabilities,
+                        entityBinding,
                     };
-                    audit('info', 'arena', `exam ${req.params.examId} synced to listing ${examData.listing_id}: passed=${mapped.passed} score=${mapped.normalizedScore}%`);
+                    audit('info', 'arena', `exam ${req.params.examId} synced to listing ${examData.listing_id}: passed=${mapped.passed} score=${mapped.normalizedScore}% namecard=${entityBinding && !entityBinding.skipped ? 'synced' : 'not_synced'}`);
                 }
             } catch (syncErr) {
-                console.warn('[Arena] Rental sync error (non-blocking):', syncErr.message);
+                console.warn('[Arena] Rental/namecard sync error (non-blocking):', syncErr.message);
             }
 
             if (io) {
@@ -1829,7 +2509,17 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
     router.get('/exam/:examId/results', async (req, res) => {
         try {
             const examRes = await pool.query(
-                `SELECT * FROM arena_exams WHERE id = $1`, [req.params.examId]
+                `SELECT e.*,
+                        l.owner_device_id, l.owner_entity_id,
+                        owner_e.name AS linked_entity_name,
+                        owner_e.public_code AS linked_public_code
+                 FROM arena_exams e
+                 LEFT JOIN bot_listings l ON l.id = e.listing_id
+                 LEFT JOIN entities owner_e
+                   ON owner_e.device_id = l.owner_device_id
+                  AND owner_e.entity_id IS NOT DISTINCT FROM l.owner_entity_id
+                 WHERE e.id = $1`,
+                [req.params.examId]
             );
             if (examRes.rowCount === 0) return res.status(404).json({ success: false, error: 'not_found' });
             const sessions = await pool.query(
@@ -1856,6 +2546,9 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
                     expiresAt: exam.expires_at,
                     firstFetchedAt: exam.first_fetched_at,
                     completedAt: exam.completed_at,
+                    linkedEntityId: exam.owner_entity_id !== null && exam.owner_entity_id !== undefined ? Number(exam.owner_entity_id) : null,
+                    linkedEntityName: exam.linked_entity_name || null,
+                    linkedPublicCode: exam.linked_public_code || null,
                     elapsedSec,
                 },
                 sessions: sessions.rows,
@@ -1884,8 +2577,11 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
                 return res.status(400).json({ success: false, error: 'examId_and_name_required' });
             }
             const examRes = await pool.query(
-                `SELECT id, model, total_score, max_score, report, created_at, first_fetched_at, completed_at
-                 FROM arena_exams WHERE id = $1 AND status = 'completed'`,
+                `SELECT e.id, e.model, e.total_score, e.max_score, e.report, e.created_at, e.first_fetched_at, e.completed_at,
+                        l.owner_device_id, l.owner_entity_id
+                 FROM arena_exams e
+                 LEFT JOIN bot_listings l ON l.id = e.listing_id
+                 WHERE e.id = $1 AND e.status = 'completed'`,
                 [examId]
             );
             if (examRes.rowCount === 0) return res.status(404).json({ success: false, error: 'exam_not_found_or_incomplete' });
@@ -1900,16 +2596,8 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
                 ? new Date(exam.completed_at).getTime()
                 : Date.now();
             const elapsedSec = Math.max(0, Math.min(180, Math.round((endTs - startTs) / 1000)));
-            const report = typeof exam.report === 'string' ? JSON.parse(exam.report) : (exam.report || {});
+            let report = typeof exam.report === 'string' ? JSON.parse(exam.report) : (exam.report || {});
             report.elapsedSec = elapsedSec;
-
-            const lbRes = await pool.query(
-                `INSERT INTO arena_leaderboard (exam_id, name, model, score, max_score, detail)
-                 VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-                [exam.id, name.trim().slice(0, 64), exam.model, exam.total_score, exam.max_score,
-                 JSON.stringify(report)]
-            );
-            const leaderboardId = lbRes.rows[0] ? lbRes.rows[0].id : null;
 
             // Optional entity binding — write the verified score back to the
             // bot's identity if botSecret authenticates. Failures here MUST
@@ -1918,10 +2606,17 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
             try {
                 if (deviceId && botSecret) {
                     const eId = parseInt(entityId, 10);
+                    const ownerEntityId = exam.owner_entity_id !== null && exam.owner_entity_id !== undefined
+                        ? Number(exam.owner_entity_id)
+                        : NaN;
+                    const ownerDeviceMatches = !exam.owner_device_id || exam.owner_device_id === deviceId;
+                    const ownerEntityMatches = !Number.isFinite(ownerEntityId) || eId === ownerEntityId;
                     const device = deviceRegistry[deviceId];
                     const entity = (device && Number.isInteger(eId)) ? device.entities?.[eId] : null;
                     const credsOk = !!(entity && entity.isBound && entity.botSecret && safeEqual(entity.botSecret, botSecret));
-                    if (credsOk) {
+                    if (!ownerDeviceMatches || !ownerEntityMatches) {
+                        audit('warn', 'arena', `entity binding rejected for exam ${exam.id}: owner mismatch device=${deviceId} entity=${entityId}`);
+                    } else if (credsOk) {
                         const mapped = mapArenaResultToCapabilities(report);
                         const patch = buildInterviewIdentityPatch(exam, mapped);
                         if (patch) {
@@ -1944,6 +2639,7 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
                                 normalized: patch.interviewCapabilities.normalized,
                                 passed: patch.interviewCapabilities.passed,
                             };
+                            report = attachLinkedEntityToArenaDetail(report, publicEntitySnapshot(entity, eId));
                             audit('info', 'arena', `entity ${deviceId}:${eId} bound to exam ${exam.id} score=${entityBinding.normalized}%`);
                         }
                     } else if (entityId !== undefined) {
@@ -1953,6 +2649,14 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
             } catch (bindErr) {
                 console.warn('[Arena] entity binding error (non-blocking):', bindErr.message);
             }
+
+            const lbRes = await pool.query(
+                `INSERT INTO arena_leaderboard (exam_id, name, model, score, max_score, detail)
+                 VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+                [exam.id, name.trim().slice(0, 64), exam.model, exam.total_score, exam.max_score,
+                 JSON.stringify(report)]
+            );
+            const leaderboardId = lbRes.rows[0] ? lbRes.rows[0].id : null;
 
             res.json({ success: true, leaderboardId, entityBinding });
         } catch (err) {
@@ -1964,10 +2668,31 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
     router.get('/leaderboard', async (_req, res) => {
         try {
             const result = await pool.query(
-                `SELECT id, name, model, score, max_score, detail, created_at
-                 FROM arena_leaderboard ORDER BY score DESC LIMIT 100`
+                `SELECT lb.id, lb.exam_id, lb.name, lb.model, lb.score, lb.max_score, lb.detail, lb.created_at,
+                        COALESCE(owner_e.entity_id, linked_e.entity_id) AS entity_id,
+                        COALESCE(owner_e.name, linked_e.name, lb.detail->>'linkedEntityName') AS entity_name,
+                        COALESCE(petdx.avatar_url, lb.detail->>'linkedPetdxAvatarUrl') AS petdx_avatar_url,
+                        COALESCE(owner_e.public_code, linked_e.public_code, lb.detail->>'linkedPublicCode') AS public_code,
+                        COALESCE(owner_e.agent_card, linked_e.agent_card, lb.detail->'linkedAgentCard') AS agent_card
+                 FROM arena_leaderboard lb
+                 LEFT JOIN arena_exams ex ON ex.id = lb.exam_id
+                 LEFT JOIN bot_listings l ON l.id = ex.listing_id
+                 LEFT JOIN entities owner_e
+                   ON owner_e.device_id = l.owner_device_id
+                  AND owner_e.entity_id IS NOT DISTINCT FROM l.owner_entity_id
+                 LEFT JOIN entities linked_e ON linked_e.public_code = lb.detail->>'linkedPublicCode'
+                 LEFT JOIN LATERAL (
+                     SELECT c.avatar_url
+                       FROM companion_select_log s
+                       LEFT JOIN companions c ON c.id = s.companion_id
+                      WHERE s.device_id = COALESCE(l.owner_device_id, linked_e.device_id)
+                        AND s.entity_id IS NOT DISTINCT FROM COALESCE(l.owner_entity_id, linked_e.entity_id)
+                      ORDER BY s.selected_at DESC
+                      LIMIT 1
+                 ) petdx ON true
+                 ORDER BY lb.score DESC LIMIT 100`
             );
-            res.json({ success: true, leaderboard: result.rows });
+            res.json({ success: true, leaderboard: result.rows.map(toLeaderboardApiRow) });
         } catch (err) {
             res.status(500).json({ success: false, error: 'internal_error' });
         }
@@ -2114,6 +2839,72 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
         return false;
     }
 
+    /**
+     * Safe startup/on-demand repair for legacy linked Arena exams that were
+     * completed before finalize wrote identity/namecard fields. Uses only
+     * completed exams linked to listings and only touches in-memory owner
+     * entities present on this server. Latest completed exam wins; existing
+     * newer identity bindings are preserved.
+     */
+    async function backfillArenaEntityBindings() {
+        let scanned = 0;
+        let updated = 0;
+        let skipped = 0;
+        try {
+            const rows = await pool.query(
+                `SELECT DISTINCT ON (l.owner_device_id, l.owner_entity_id)
+                        e.id, e.model, e.total_score, e.max_score, e.report, e.completed_at,
+                        l.id AS listing_id, l.owner_device_id, l.owner_entity_id,
+                        l.capabilities, l.benchmark_score, l.interview_passed
+                 FROM arena_exams e
+                 JOIN bot_listings l ON l.id = e.listing_id
+                 WHERE e.status = 'completed'
+                   AND e.total_score IS NOT NULL
+                   AND e.max_score IS NOT NULL
+                   AND l.owner_device_id IS NOT NULL
+                   AND l.owner_entity_id IS NOT NULL
+                 ORDER BY l.owner_device_id, l.owner_entity_id, e.completed_at DESC NULLS LAST, e.created_at DESC
+                 LIMIT 1000`
+            );
+
+            for (const row of rows.rows || []) {
+                scanned++;
+                const ownerDevice = deviceRegistry[row.owner_device_id];
+                const ownerEntityId = Number(row.owner_entity_id);
+                const ownerEntity = (ownerDevice && Number.isInteger(ownerEntityId))
+                    ? ownerDevice.entities?.[ownerEntityId]
+                    : null;
+                if (!ownerEntity || !ownerEntity.isBound) {
+                    skipped++;
+                    continue;
+                }
+
+                const mapped = buildMappedArenaResultForIdentity(row.report, row);
+                const patch = buildInterviewIdentityPatch(row, mapped);
+                const result = applyArenaIdentityPatchToEntity(ownerEntity, patch, mapped, {
+                    entityId: ownerEntityId,
+                    skipIfExistingNewer: true,
+                });
+                if (!result || result.skipped) {
+                    skipped++;
+                    continue;
+                }
+                if (saveDeviceData) {
+                    await Promise.resolve(saveDeviceData(row.owner_device_id, ownerDevice));
+                }
+                updated++;
+            }
+            if (scanned > 0) {
+                audit('info', 'arena', `arena entity binding backfill scanned=${scanned} updated=${updated} skipped=${skipped}`);
+            }
+            return { scanned, updated, skipped };
+        } catch (err) {
+            console.warn('[Arena] entity binding backfill failed:', err.message);
+            audit('warn', 'arena', `arena entity binding backfill failed: ${err.message}`);
+            return { scanned, updated, skipped, error: err.message };
+        }
+    }
+
     // GET /api/arena/admin/pool-status — current pool sizes + last update info
     router.get('/admin/pool-status', (req, res) => {
         if (!checkAdminAuth(req)) return res.status(403).json({ success: false, error: 'forbidden' });
@@ -2195,6 +2986,7 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
     return {
         router,
         initArenaDatabase,
+        backfillArenaEntityBindings,
         setAutoPushDeps,
         TEST_TYPES,
         MAX_TOTAL_SCORE,
@@ -2220,6 +3012,8 @@ module.exports.TEST_TYPES = TEST_TYPES;
 module.exports.MAX_TOTAL_SCORE = MAX_TOTAL_SCORE;
 module.exports.mapArenaResultToCapabilities = mapArenaResultToCapabilities;
 module.exports.buildInterviewIdentityPatch = buildInterviewIdentityPatch;
+module.exports.applyArenaIdentityPatchToEntity = applyArenaIdentityPatchToEntity;
+module.exports.buildMappedArenaResultForIdentity = buildMappedArenaResultForIdentity;
 module.exports.ARENA_PASS_THRESHOLD = ARENA_PASS_THRESHOLD;
 module.exports.ARENA_TO_CAPABILITY_MAP = ARENA_TO_CAPABILITY_MAP;
 module.exports.SCORING_ENGINES = SCORING_ENGINES;

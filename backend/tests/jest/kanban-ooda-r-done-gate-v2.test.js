@@ -10,6 +10,7 @@ const {
     PREFLIGHT_MARKER,
     USER_POV_ALIASES,
     PR_LINK_PATTERN,
+    VISION_TOKEN,
 } = require('../../agent-improvement/done-gate');
 
 const {
@@ -90,13 +91,20 @@ describe('evaluateDoneGate v2 — artifact requirements', () => {
         expect(v.missingItems).toEqual(['screenshot_artifact']);
     });
 
-    test('P0 UI card: jest log + screenshot both → pass', () => {
+    test('P0 UI card: jest log + screenshot + [VISION] attestation → pass', () => {
+        // card_5d50ee10: a card with an image is now auto-classified UI and ALSO
+        // needs a [VISION] attestation of what was seen. jest + screenshot alone is
+        // no longer sufficient — the reviewer must state what they observed.
+        const visionComment = mkComment(
+            `${VISION_TOKEN} verified the rendered dialog: the confirm button is blue and centered, no overflow`,
+            { t: '2026-06-07T02:30:00Z' }
+        );
         const v = evaluateDoneGate({
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true,
             severity: 'P0',
             painTags: ['ux_feedback'],
-            comments: baseComments,
+            comments: [...baseComments, visionComment],
             files: [
                 mkFile('jest_out.txt', 'text/plain'),
                 mkFile('proof.png', 'image/png'),
@@ -135,6 +143,10 @@ describe('evaluateDoneGate v2 — artifact requirements', () => {
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true,
             severity: 'P2',
+            // card_5d50ee10: an attached image would auto-classify this as a UI card
+            // (→ [VISION] demand). Pin isUiCard:false so this test keeps proving the
+            // ORIGINAL point in isolation: an image alone is not a jest/test log.
+            isUiCard: false,
             painTags: ['task_context'],
             comments: baseComments,
             files: [mkFile('screen.png', 'image/png')],
@@ -159,7 +171,9 @@ describe('evaluateDoneGate v2 — artifact requirements', () => {
 describe('evaluateDoneGate v2 — PR link requirement', () => {
     const baseFiles = [{ filename: 'jest.txt', mime_type: 'text/plain', created_at: '2026-06-07T03:00:00Z' }];
 
-    test('rejected when no github.com pull/N link in evidence', () => {
+    // 2026-07-03: PR link is now a per-card opt-in that defaults OFF — pass
+    // requirePrLink:true to exercise the enforced-when-opted-in path.
+    test('rejected when opted-in (requirePrLink) but no github.com pull/N link in evidence', () => {
         const v = evaluateDoneGate({
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true,
@@ -170,6 +184,7 @@ describe('evaluateDoneGate v2 — PR link requirement', () => {
                 mkComment(evidence({ pr: false }), { isSystem: false, t: '2026-06-07T02:00:00Z' }),
             ],
             files: baseFiles,
+            requirePrLink: true,
         });
         expect(v.allowed).toBe(false);
         expect(v.missingItems).toEqual(['PR link']);
@@ -300,6 +315,7 @@ describe('heartbeat — classifyCard', () => {
     test('escalate_due at >24h', () => {
         const v = classifyCard({
             status: 'in_progress',
+            priority: 'P1',
             statusChangedAt: new Date(now - 25 * 60 * 60 * 1000).toISOString(),
             lastNonSystemCommentAt: null,
             lastEscalateAt: null,
@@ -307,9 +323,22 @@ describe('heartbeat — classifyCard', () => {
         expect(v).toBe('escalate_due');
     });
 
+    test('escalation severity gate keeps P2 stale cards in prompt path', () => {
+        const v = classifyCard({
+            status: 'in_progress',
+            priority: 'P2',
+            statusChangedAt: new Date(now - 25 * 60 * 60 * 1000).toISOString(),
+            lastNonSystemCommentAt: null,
+            lastHeartbeatPromptAt: null,
+            lastEscalateAt: null,
+        }, now);
+        expect(v).toBe('prompt_due');
+    });
+
     test('escalate suppressed if already escalated within 12h', () => {
         const v = classifyCard({
             status: 'in_progress',
+            priority: 'P1',
             statusChangedAt: new Date(now - 25 * 60 * 60 * 1000).toISOString(),
             lastNonSystemCommentAt: null,
             lastEscalateAt: new Date(now - 6 * 60 * 60 * 1000).toISOString(),
@@ -340,7 +369,7 @@ describe('heartbeat — classifyBatch', () => {
             { status: 'todo' },
             { status: 'in_progress', statusChangedAt: new Date(now - 30 * 60 * 1000).toISOString() }, // fresh
             { status: 'in_progress', statusChangedAt: new Date(now - 3 * 60 * 60 * 1000).toISOString() }, // prompt
-            { status: 'in_progress', statusChangedAt: new Date(now - 26 * 60 * 60 * 1000).toISOString() }, // escalate
+            { status: 'in_progress', priority: 'P1', statusChangedAt: new Date(now - 26 * 60 * 60 * 1000).toISOString() }, // escalate
         ];
         const { prompt, escalate } = classifyBatch(cards, now);
         expect(prompt.length).toBe(1);
@@ -385,13 +414,14 @@ describe('evaluateDoneGate v2 — evidence comment selection (card_4c3a75bc)', (
         expect(v.allowed).toBe(true);
     });
 
-    test('still fails when NO complete comment carries a PR link', () => {
+    test('opted-in: still fails when NO complete comment carries a PR link', () => {
         const v = evaluateDoneGate({
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true,
             severity: 'P2', painTags: ['task_context'],
             comments: [preflight, completeNoPr],
             files: [jest],
+            requirePrLink: true,
         });
         expect(v.allowed).toBe(false);
         expect(v.missingItems).toEqual(['PR link']);

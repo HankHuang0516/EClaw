@@ -887,7 +887,14 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
     // ============================================
     router.post('/note/add', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const { deviceId, entityId, title, content, category, anchor } = req.body;
+        // Resolve deviceId from the SAME merged source authenticate() uses
+        // ({ ...req.query, ...req.body }). Reading req.body alone let a caller
+        // that passed deviceId via the query string clear auth yet reach the
+        // INSERT with deviceId=undefined → "null value in column device_id
+        // violates not-null constraint" (500). authenticate() guarantees a
+        // truthy deviceId in the merged params, so it can never be null here.
+        const params = { ...req.query, ...req.body };
+        const { deviceId, entityId, title, content, category, anchor } = params;
         const linkedCardIdsInput = normalizeLinkedCardIds(req.body.linkedCardIds);
 
         if (!title) {

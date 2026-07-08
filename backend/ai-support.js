@@ -5,6 +5,7 @@
 // ============================================
 const express = require('express');
 const safeEqual = require('./safe-equal');
+const { sanitizeProxyResponse } = require('./ai-support-sanitize');
 
 // Lazy-load Anthropic client (only when ANTHROPIC_API_KEY is set)
 let _anthropicClient = null;
@@ -13,6 +14,17 @@ function getAnthropicClient() {
         _anthropicClient = require('./anthropic-client');
     }
     return _anthropicClient;
+}
+
+// user_accounts.id is a Postgres `uuid`. Some callers in this file authenticate
+// by device secret only (no account) and synthesize a non-account principal
+// `req.user.userId = \`device_<deviceId>\``. Feeding that into a `WHERE id = $1`
+// uuid query throws `invalid input syntax for type uuid` and spams ERROR logs,
+// even though such device sessions can never be a user_accounts admin. Gate any
+// admin lookup on this so non-uuid principals short-circuit before the query.
+const ACCOUNT_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isAccountUuid(userId) {
+    return typeof userId === 'string' && ACCOUNT_UUID_RE.test(userId);
 }
 
 module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstructions, feedbackModule }) {
@@ -62,7 +74,12 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
     // `try{...} catch (_) {}` blocks which hid schema drift on user_accounts
     // (e.g. is_admin column rename would lock every admin out invisibly).
     async function resolveIsAdmin(userId) {
-        if (!userId) return false;
+        // Non-account principals (notably the device-secret `device_<deviceId>`
+        // synthetic ids set below) are never user_accounts admins and would
+        // throw `invalid input syntax for type uuid` against the uuid `id`
+        // column — short-circuit before the query instead of catching+logging
+        // a guaranteed miss as an ERROR.
+        if (!isAccountUuid(userId)) return false;
         try {
             const r = await chatPool.query('SELECT is_admin FROM user_accounts WHERE id = $1', [userId]);
             return r.rows[0]?.is_admin || false;
@@ -836,38 +853,10 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
 
     const toolHandlers = buildToolHandlers();
 
-    // ── Sanitize raw Claude CLI session JSON ─────
-    // The proxy sometimes returns raw Claude CLI session output (e.g. {"type":"result","subtype":"error_max_turns",...})
-    // instead of clean text. Detect and replace with user-friendly message.
-    function sanitizeProxyResponse(responseText) {
-        if (!responseText || typeof responseText !== 'string') {
-            return responseText || 'Sorry, I could not generate a response. Please try again.';
-        }
-
-        const trimmed = responseText.trim();
-        // Detect raw JSON session results
-        if (trimmed.startsWith('{') && trimmed.includes('"type"')) {
-            try {
-                const parsed = JSON.parse(trimmed);
-                if (parsed.type === 'result' || parsed.subtype || parsed.session_id) {
-                    console.warn(`[AI Chat] Raw session JSON detected (subtype: ${parsed.subtype}), sanitizing`);
-                    if (parsed.result_text) {
-                        return parsed.result_text;
-                    } else if (parsed.subtype === 'error_max_turns') {
-                        return 'Sorry, this question was too complex for me to fully analyze. Could you try asking a more specific question?';
-                    } else if (parsed.subtype === 'error_tool_execution') {
-                        return 'I encountered an error while looking into your issue. Please try again.';
-                    } else {
-                        return 'Sorry, I was unable to process your request. Please try rephrasing your question.';
-                    }
-                }
-            } catch (_) {
-                // Not valid JSON, leave as-is
-            }
-        }
-
-        return responseText;
-    }
+    // ── Sanitize proxy responses ─────
+    // Raw CLI session JSON *and* plain-text upstream auth/API errors must never
+    // reach a user verbatim. Logic lives in ./ai-support-sanitize (unit-tested);
+    // see card_747b9500 (2026-07-02 "Failed to authenticate. API Error: 401" leak).
 
     // ── Log Query to DB ─────────────────────────
     function logSupportQuery(deviceId, entityId, result) {
@@ -1827,3 +1816,6 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
 
     return { router, initSupportTable, closeIssue };
 };
+
+// Exported for unit testing the admin-principal guard (see resolveIsAdmin).
+module.exports.isAccountUuid = isAccountUuid;

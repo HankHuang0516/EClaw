@@ -25,6 +25,11 @@
     "rental-phase-3-trust": null,
     "rental-phase-4-risk": null,
     "rental-phase-5-growth": null,
+    "wishlist-phase-0-foundation": "card_420ccb34a2ee62a8347c0c49",
+    "wishlist-phase-1-bridge": "card_a65013361361469fababf22d",
+    "wishlist-phase-2-handshake": "card_e44c2ea87013225b94769ae5",
+    "wishlist-phase-3-vision": "card_496f752a622b722f82843d4e",
+    "wishlist-phase-4-ga": "card_bdf2f1f549aaf71238048b01",
     "demo-missing-card-example": "card_thisdoesnotexist0000000000"
   }
 }

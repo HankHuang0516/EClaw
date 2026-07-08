@@ -5,6 +5,16 @@
 
 const KanbanStatus = require('./public/shared/kanban-status.js');
 
+// Currency allowlist for the `default_currency` pref (card_647fc0ba). Kept
+// byte-for-byte in sync with wishlist-app's ALLOWED_CURRENCIES
+// (server/src/lib/matchmakingPrice.ts) and EClaw's wishlist-matchmaking.js
+// ALLOWED_CURRENCIES so an unusable code falls back identically on both ends.
+// An allowlist (not a regex) so an attacker can't smuggle control chars / long
+// strings into the currency field.
+const ALLOWED_CURRENCIES = new Set([
+    'TWD', 'USD', 'JPY', 'EUR', 'GBP', 'CNY', 'HKD', 'KRW', 'SGD', 'AUD', 'CAD',
+]);
+
 const DEFAULTS = {
     broadcast_recipient_info: true,
     remote_control_enabled: false,
@@ -21,6 +31,19 @@ const DEFAULTS = {
     // Stop-mode pauses stale-card nudges for an entity without changing card ownership.
     // Exposed through per-entity overrides; device default remains false.
     kanban_nudge_stop_mode: false,
+    // Auto-escalation master switch (card_a0c2bc798affdf0a6310f5bb / Hank-direct).
+    // Governs the clock-triggered L2/L3 ladder: priority-bump (L2),
+    // P0-stalled supervisor ping + auto-block (L3). When false, ONLY L1 standard
+    // nudges fire — no priority changes, no supervisor pings, no auto-block.
+    // Device-wide settable via PUT /api/device-preferences.
+    kanban_auto_escalate_enabled: true,
+    // When true (default), automation cards NEVER auto-escalate even if the master
+    // switch above is on. "Automation card" = cron母卡 (is_automation=true) OR a
+    // cron-spawned child card (is_auto_generated=true, the "[Auto] … (date)" rows).
+    // This is the cron-noise fix: those child cards never have their own owner
+    // working them, so the L2/L3 ladder fired "🚨 P0 stalled 主管請介入" every
+    // interval. They still get L1 nudges so the work isn't forgotten.
+    kanban_auto_escalate_skip_automation: true,
     // Phase 2 (card_e066cb6b / kanban-nudge-spec.md §6): per-entity overrides on top
     // of the device-wide defaults above. Shape: { "<entityId>": { ...partialPrefs } }.
     // Only the keys in NUDGE_ENTITY_OVERRIDE_KEYS may be overridden — batch_size and
@@ -35,7 +58,190 @@ const DEFAULTS = {
     // Shape: { enabled: bool, threshold_5h_pct: 0-100, threshold_7d_pct: 0-100 }
     // Trigger logic: warn if (5h_remaining ≤ threshold_5h_pct) OR (7d_remaining ≤ threshold_7d_pct).
     usage_warning_config: { enabled: true, threshold_5h_pct: 15, threshold_7d_pct: 5 },
+    // "需要你" HITL inbox (card_8151054f). Backend stub defaults only — the full
+    // settings UI is a separate PR (#6). The backend ALWAYS emits the
+    // 'action_request:changed' socket event; the frontend gates live-refresh
+    // display on this flag. timeout policy = what to do with an un-answered
+    // request after a deadline (consumed by a future settings/timeout PR).
+    action_request_realtime: true,
+    // What to do with a "需要你" request the user never answers, once it is older
+    // than action_request_timeout_minutes. Consumed by the timeout worker in
+    // backend/agent-action-requests.js (card_ce0d685b):
+    //   'keep'         → never auto-act (device is a no-op for the worker)
+    //   'auto_dismiss' → mark dismissed + tell the emitter it was skipped
+    //   'safe_default' → resolve with a safe-default answer; agent continues
+    //   'consensus'    → trigger ONE bot-to-bot consensus round; the emitting
+    //                    agent synthesizes the entities' replies and resolves via
+    //                    the existing resolve API → auto-executes the decision
+    //                    (Hank's decision: no user confirmation gate).
+    action_request_timeout_policy: 'keep', // 'keep' | 'auto_dismiss' | 'safe_default' | 'consensus'
+    // Deadline (minutes) after which the policy above fires. Default 1440 (24h).
+    // Clamped to [5, 43200] (5 min .. 30 days).
+    action_request_timeout_minutes: 1440,
+    // 計畫E ratify-loop. Master switch for the worker's independent ratify pass:
+    // when on, the pass may passively default-agree (silence ⇒ the agent's
+    // server-armed decided option ships) on requests whose
+    // decision_context.ratify.mode was recomputed to 'default_agree'.
+    // ⚠️ DEFAULT-ON (card_c3d48c4607ee753b2c98e04b) — a GLOBAL flip from the prior
+    // dark-launch DEFAULT FALSE. An UNSET pref now ENABLES the pass; only an
+    // explicit `false` disables it. WHAT may auto-ratify is unchanged (the
+    // fail-closed green-light predicate in runRatifyPass still gates every row).
+    // Consumed by runRatifyPass in agent-action-requests.js.
+    action_request_ratify_enabled: true,
+    // Silence grace (minutes) before an armed default_agree ratify auto-resolves,
+    // anchored to when it was armed (decision_context.ratify.armedAt), not emit
+    // time. Default 1440 (24h); persistence clamps [5, 43200] like the timeout
+    // deadline; the worker re-clamps [60, 10080] defensively.
+    action_request_ratify_grace_minutes: 1440,
+    // 計畫E adjustable N-cap (card_c3d48c4607ee753b2c98e04b). Server-enforced max
+    // number of armed default_agree rounds per request (audit-trail reconstructed,
+    // not agent self-report). Default 2; clamped [1, 5]. Consumed by
+    // recomputeRatifyMode (agent-action-requests.js).
+    action_request_ratify_max_attempts: 2,
+    // 需要你 negotiation workflow (owner-approved build). When the timeout policy is
+    // 'consensus', a 需要你 item with options>=2 (+ enough bound entities) opens a
+    // bot-to-bot negotiation round: entities vote, the task-owner entity synthesizes
+    // a best answer, it is surfaced (never auto-executed), the owner disposes.
+    //   consensus_window_minutes           — collection window (vote phase). [1,1440], default 30.
+    //   consensus_synthesis_grace_minutes  — owner-synth grace before server fallback. [5,43200], default 360.
+    //   consensus_min_entities             — min bound entities required to negotiate. [2,20], default 2.
+    consensus_window_minutes: 30,
+    consensus_synthesis_grace_minutes: 360,
+    consensus_min_entities: 2,
+    // Server-authoritative entity ACTIVITY state machine (lib/entity-activity.js).
+    // Deterministic decay thresholds (replaces the old random sleep coin-flip).
+    // entity_idle_after_seconds: seconds since the last SEND (no pending work)
+    //   before ACTIVE → IDLE. Default 60; clamped [15, 3600].
+    entity_idle_after_seconds: 60,
+    // entity_sleep_after_minutes: minutes of inactivity (no pending work, no
+    //   message in the window) before IDLE → SLEEPING. Default 20; clamped [1, 1440].
+    entity_sleep_after_minutes: 20,
+    // entity_runtime_state_stale_seconds: how long a heartbeat-reported
+    //   runtimeState (busy|stuck|crashed|idle) is TRUSTED by the activity machine
+    //   before it is treated as stale and ignored (the evaluator then falls back
+    //   to lastSend / kanban-floor heuristics). Default 45; clamped [5, 600].
+    entity_runtime_state_stale_seconds: 45,
+    // Commander-forward fallback (card_3ce0080a, Leg-2 Option-1). orgChartForward
+    // in index.js is DORMANT on devices with no org chart: with the default
+    // taskForward:false + an empty hierarchy it forwards NOTHING, so a
+    // subordinate's substantive output never reaches a commander (#2). When this
+    // pref is TRUE, a subordinate's substantive (non-low-signal) OWN output is
+    // forwarded up to a bound commander-class entity (#2, else #1) even without an
+    // org chart configured — reusing the same low-signal filter so handoff/
+    // heartbeat noise is still dropped.
+    // ⚠️ DEFAULT FALSE (dark-launch). This touches message routing, so it is
+    // gated OFF until explicitly enabled per-device via PUT /api/device-preferences.
+    // Same string-safe boolean coercion as the auto-escalate toggles (a bare
+    // `!!raw` would turn the string 'false' true → fail-OPEN, wrong for a routing gate).
+    commander_forward_fallback_enabled: false,
+    // Waiting-state surfacer (phases 2-3 of card_76b073959c279d6204d9fd42).
+    // DARK-LAUNCH: DEFAULT FALSE. When true, the kanban worker's stale-scan pass
+    // also runs a "waiting-state surfacer" that auto-opens a 需要你 inbox item for
+    // every card genuinely WAITING ON THE OWNER (blocked with an owner-only
+    // reason / review + ownerOnly / explicit config.waitingOn='owner' /
+    // in_progress with an explicit [await-owner] marker), and auto-dismisses that
+    // item when the wait clears. Strictly de-duplicated (≤1 surfacer item/card).
+    // Until explicitly enabled, the surfacer is a complete no-op — nothing
+    // changes for anyone. Consumed by surfaceOwnerWaitingStates in kanban.js.
+    waiting_state_surfacer_enabled: false,
+    // 需要你 reply-input drag-to-resize grip (card_c44c318865d2aa77376e9746).
+    // When on, the per-item action-request answer box (.reply-preview-chip-answer
+    // in chat.html) gets a drag/keyboard "拉桿" resize handle (shared/resize-grip.js)
+    // so the tiny rows=1 box can be made taller; the chosen height persists per
+    // device (localStorage). ⚠️ DEFAULT-ON (Hank asked default-enable, pending #6
+    // design sign-off): an UNSET pref ENABLES the grip; only an explicit `false`
+    // disables it (then the textarea keeps its native resize:vertical fallback).
+    // Pure front-end affordance — no server behavior rides on this flag.
+    action_request_reply_resize_enabled: true,
+    // Done-evidence gate mode (owner decision card_f52ef42e). String enum:
+    //   'soft' (DEFAULT, Hank's choice) — a →done/→review move with incomplete
+    //           deliverables is NEVER hard-blocked. The kanban move-hook allows the
+    //           move, posts a ⚠️ soft-warning comment, flags the card
+    //           (done_gate_soft_flagged) and suppresses its auto-escalation so the
+    //           evidence-incomplete card doesn't re-nudge as if stuck. Zero
+    //           false-block ("軟 gate：無交付物只掛 ⚠️ chip + 擋自動升級，不硬擋移動").
+    //   'hard' — the legacy hard-block behaviour, byte-for-byte (backward compat):
+    //           the move is REJECTED with PREFLIGHT_GATE_FAILED until evidence is
+    //           complete. Set per-device via PUT /api/device-preferences.
+    // NOTE: this is a STRING enum, not a boolean — coerced to 'soft' unless the
+    // value is EXACTLY 'hard' (see coerceValue) so a junk/serialized value fails
+    // SAFE toward the zero-false-block default Hank chose.
+    done_gate_mode: 'soft',
+    // Wishlist × EClaw 代理撮合 (card_e44c2ea87013225b94769ae5, P2). Owner OPT-IN for
+    // the bot-to-bot wishlist matchmaking handshake. ⚠️ DEFAULT FALSE — matchmaking
+    // must NOT fire (no invite sent, and this device is not a reachable target) unless
+    // the owner explicitly opts in. Same string-safe boolean coercion as the other
+    // routing/auto-merge gates: a bare `!!raw` would turn the string 'false' true →
+    // fail-OPEN, wrong for a gate governing unsolicited cross-owner introductions.
+    wishlist_matchmaking_enabled: false,
+    // Global kill-switch for ALL wishlist-matchmaking sends on this device. When true,
+    // every matchmaking send (invite/accept/decline/contact) is refused regardless of
+    // the opt-in flag. DEFAULT FALSE (not killed). Same string-safe coercion.
+    wishlist_matchmaking_killswitch: false,
+    // Contact-PII release consent mode (card_647fc0ba, Hank 拍板 2026-07-05). Governs
+    // WHO may consent for THIS owner's OWN side of a matchmaking contact-exchange:
+    //   OFF (default) — the owner's authorised Agent (botSecret bound to that entity)
+    //                   may consent on this owner's behalf; resolving the consent
+    //                   inbox item with the entity's botSecret counts as approval.
+    //   ON            — only the real human (deviceSecret → resolved_by_user=true) may
+    //                   approve this owner's release; an Agent botSecret resolve does
+    //                   NOT count.
+    // 🔒 This ONLY changes agent-vs-human for a party's OWN consent. It NEVER relaxes
+    // the structural invariants: each party still consents only for its own verified
+    // identity, no cross-party approval, no single caller approving both sides (the
+    // resolve chokepoint restrictToEntityId + dual-gate enforce this). DEFAULT FALSE
+    // because Hank chose "授權 Agent 可代同意" as the out-of-box behaviour. Same
+    // string-safe boolean coercion (a bare `!!raw` would turn the string 'false' true
+    // → would silently DROP the human gate, the fail-DANGEROUS direction for a
+    // PII-release control, so we coerce strictly). Consumed by getActionRequestStatus
+    // in index.js (the /contact/release gate).
+    contact_release_requires_human: false,
+    // Default currency for wishlist matchmaking prices (card_647fc0ba, Hank 拍板
+    // 2026-07-05). Priority for a price's currency: ① the item's own currency ＞
+    // ② THIS pref (explicit owner choice) ＞ ③ locale-derived (interface language →
+    // currency map, fallback USD). '' (empty) = AUTO = let ③ derive from locale; a
+    // non-empty value must be an allowlisted code (same allowlist as wishlist-app),
+    // else it is coerced back to '' (AUTO) so an unusable code falls back identically
+    // on both ends. NOT a boolean — see coerceValue's default_currency branch.
+    default_currency: '',
+    // 需要你 owner-decision inbox MOBILE PUSH (card_c7baa7ae). When ON, creating an
+    // OWNER-FACING decision inbox item (decision_context.ownerOnly === true) ALSO
+    // fires a mobile push to THIS owner's device tokens (reusing notifyDevice →
+    // sendWebPush/sendFcm fan-out over device_fcm_tokens). The portal socket +
+    // inbox row are created regardless; the push is purely ADDITIVE. Bot-to-bot
+    // negotiation / non-owner action-requests NEVER push (the gate is ownerOnly,
+    // not merely "has options"). ⚠️ DEFAULT-ON (Hank asked opt-in default-enable so
+    // owner decisions reach the phone out of the box): an UNSET pref ENABLES the
+    // push; only an explicit `false` / string 'false' disables it (then the inbox
+    // item + socket still fire, just no phone buzz). Same string-safe boolean
+    // coercion as action_request_reply_resize_enabled (a bare `!!raw` would turn the
+    // string 'false' true). Consumed by createActionRequest in agent-action-requests.js.
+    needyou_push_enabled: true,
 };
+
+const ENTITY_IDLE_AFTER_SECONDS_MIN = 15;
+const ENTITY_IDLE_AFTER_SECONDS_MAX = 3600;
+const ENTITY_SLEEP_AFTER_MINUTES_MIN = 1;
+const ENTITY_SLEEP_AFTER_MINUTES_MAX = 1440;
+const ENTITY_RUNTIME_STATE_STALE_SECONDS_MIN = 5;
+const ENTITY_RUNTIME_STATE_STALE_SECONDS_MAX = 600;
+
+const ACTION_REQUEST_TIMEOUT_POLICIES = new Set(['keep', 'auto_dismiss', 'safe_default', 'consensus']);
+const ACTION_REQUEST_TIMEOUT_MINUTES_MIN = 5;
+const ACTION_REQUEST_TIMEOUT_MINUTES_MAX = 43200; // 30 days
+
+// 計畫E adjustable N-cap (card_c3d48c4607ee753b2c98e04b): max armed default_agree
+// rounds per request. Persistence clamp [1,5]; invalid → default 2.
+const ACTION_REQUEST_RATIFY_MAX_ATTEMPTS_MIN = 1;
+const ACTION_REQUEST_RATIFY_MAX_ATTEMPTS_MAX = 5;
+
+// 需要你 negotiation tunables (clamp ranges; defaults live in DEFAULTS above).
+const CONSENSUS_WINDOW_MIN_MIN = 1;
+const CONSENSUS_WINDOW_MIN_MAX = 1440;
+const CONSENSUS_SYNTH_GRACE_MIN = 5;
+const CONSENSUS_SYNTH_GRACE_MAX = 43200;
+const CONSENSUS_MIN_ENTITIES_MIN = 2;
+const CONSENSUS_MIN_ENTITIES_MAX = 20;
 
 // Spec: docs/specs/kanban-nudge-spec.md §6 — restricted override key set.
 const NUDGE_ENTITY_OVERRIDE_KEYS = [
@@ -55,16 +261,94 @@ const NUDGE_STATUS_OPTIONS = new Set(KanbanStatus.NUDGEABLE_STATUSES);
 
 function coerceValue(key, raw) {
     const def = DEFAULTS[key];
+    // Auto-escalation toggles accept a real boolean OR the string 'true'/'false'
+    // (a bare `!!raw` would coerce the string 'false' to true — wrong for an API
+    // that may serialize the flag as a query/JSON string).
+    if (key === 'kanban_auto_escalate_enabled' || key === 'kanban_auto_escalate_skip_automation'
+        || key === 'action_request_ratify_enabled'
+        || key === 'commander_forward_fallback_enabled'
+        || key === 'waiting_state_surfacer_enabled'
+        || key === 'wishlist_matchmaking_enabled'
+        || key === 'wishlist_matchmaking_killswitch'
+        || key === 'contact_release_requires_human'
+        || key === 'needyou_push_enabled'
+        || key === 'action_request_reply_resize_enabled') {
+        // 計畫E: ratify master switch — same string-safe boolean coercion (a bare
+        // `!!raw` would turn the string 'false' true, fail-OPEN for an auto-merge gate).
+        // commander_forward_fallback_enabled (card_3ce0080a) shares the coercion for
+        // the same fail-OPEN reason: it is a message-routing gate that MUST stay off
+        // unless the value is a real true / the string 'true'.
+        // waiting_state_surfacer_enabled is dark-launch DEFAULT FALSE: the string
+        // 'false' must stay false so an accidental serialized flag never flips the
+        // inbox-flood risk open.
+        return raw === true || raw === 'true';
+    }
     if (typeof def === 'boolean') return !!raw;
+    if (key === 'action_request_timeout_minutes' || key === 'action_request_ratify_grace_minutes') {
+        // parseInt-style coercion + clamp to [5, 43200]; invalid → default 1440.
+        const n = parseInt(raw, 10);
+        if (!Number.isFinite(n)) return def;
+        return Math.max(ACTION_REQUEST_TIMEOUT_MINUTES_MIN, Math.min(ACTION_REQUEST_TIMEOUT_MINUTES_MAX, n));
+    }
+    // 計畫E adjustable N-cap — parseInt-style coercion + clamp [1,5]; junk → default 2.
+    if (key === 'action_request_ratify_max_attempts') {
+        const n = parseInt(raw, 10);
+        if (!Number.isFinite(n)) return def;
+        return Math.max(ACTION_REQUEST_RATIFY_MAX_ATTEMPTS_MIN, Math.min(ACTION_REQUEST_RATIFY_MAX_ATTEMPTS_MAX, n));
+    }
+    // 需要你 negotiation tunables — parseInt-style coercion + per-key clamp; junk → default.
+    if (key === 'consensus_window_minutes') {
+        const n = parseInt(raw, 10);
+        if (!Number.isFinite(n)) return def;
+        return Math.max(CONSENSUS_WINDOW_MIN_MIN, Math.min(CONSENSUS_WINDOW_MIN_MAX, n));
+    }
+    if (key === 'consensus_synthesis_grace_minutes') {
+        const n = parseInt(raw, 10);
+        if (!Number.isFinite(n)) return def;
+        return Math.max(CONSENSUS_SYNTH_GRACE_MIN, Math.min(CONSENSUS_SYNTH_GRACE_MAX, n));
+    }
+    if (key === 'consensus_min_entities') {
+        const n = parseInt(raw, 10);
+        if (!Number.isFinite(n)) return def;
+        return Math.max(CONSENSUS_MIN_ENTITIES_MIN, Math.min(CONSENSUS_MIN_ENTITIES_MAX, n));
+    }
     if (typeof def === 'number') {
         const n = Number(raw);
         if (!Number.isFinite(n)) return def;
         if (key === 'kanban_nudge_batch_size') return Math.max(1, Math.min(20, Math.round(n)));
         if (key === 'kanban_nudge_interval_minutes') return Math.max(5, Math.min(24 * 60, Math.round(n)));
+        if (key === 'entity_idle_after_seconds') {
+            return Math.max(ENTITY_IDLE_AFTER_SECONDS_MIN, Math.min(ENTITY_IDLE_AFTER_SECONDS_MAX, Math.round(n)));
+        }
+        if (key === 'entity_sleep_after_minutes') {
+            return Math.max(ENTITY_SLEEP_AFTER_MINUTES_MIN, Math.min(ENTITY_SLEEP_AFTER_MINUTES_MAX, Math.round(n)));
+        }
+        if (key === 'entity_runtime_state_stale_seconds') {
+            return Math.max(ENTITY_RUNTIME_STATE_STALE_SECONDS_MIN, Math.min(ENTITY_RUNTIME_STATE_STALE_SECONDS_MAX, Math.round(n)));
+        }
         return n;
     }
     if (key === 'kanban_nudge_priority_mode') {
         return NUDGE_PRIORITY_MODES.has(raw) ? raw : def;
+    }
+    if (key === 'action_request_timeout_policy') {
+        return ACTION_REQUEST_TIMEOUT_POLICIES.has(raw) ? raw : def;
+    }
+    // Done-gate mode (card_f52ef42e): string enum, NOT boolean. Coerce to the
+    // 'soft' default unless the value is EXACTLY 'hard' — a junk / serialized
+    // value fails SAFE toward the zero-false-block default Hank chose.
+    if (key === 'done_gate_mode') {
+        return raw === 'hard' ? 'hard' : 'soft';
+    }
+    // default_currency (card_647fc0ba): '' = AUTO (locale-derived); any non-empty
+    // value must be an allowlisted code (case-insensitive), else coerce back to ''
+    // (AUTO) so an unusable code falls back identically on both ends. Never stores a
+    // junk / long / control-char code.
+    if (key === 'default_currency') {
+        if (raw === undefined || raw === null || raw === '') return '';
+        if (typeof raw !== 'string') return '';
+        const c = raw.trim().toUpperCase();
+        return ALLOWED_CURRENCIES.has(c) ? c : '';
     }
     if (key === 'kanban_nudge_statuses') {
         if (!Array.isArray(raw)) return [...def];
@@ -208,6 +492,7 @@ async function getEffectivePrefsForEntity(deviceId, entityId) {
 
 module.exports = {
     DEFAULTS,
+    ALLOWED_CURRENCIES,
     NUDGE_ENTITY_OVERRIDE_KEYS,
     initTable,
     getPrefs,

@@ -30,6 +30,7 @@
             color: var(--primary);
         }
 
+
         .entity-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -238,6 +239,15 @@
         }
 
         @media (max-width: 640px) {
+            .page-header {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .page-header > div {
+                width: 100%;
+                justify-content: space-between;
+            }
             .entity-grid {
                 grid-template-columns: 1fr;
             }
@@ -2074,6 +2084,7 @@
             </button>
         </div>
 
+
         <!-- Tab: Entity Cards Grid -->
         <div class="entity-grid" id="entityGrid" data-tab-content="entities">
             <div class="empty-state" id="loadingState">
@@ -2257,7 +2268,7 @@
 
         <!-- Add Entity Section -->
         <div class="card" id="addEntityCard">
-            <div class="add-entity-header" onclick="toggleAddEntity()">
+            <div class="add-entity-header" onclick="toggleAddEntity()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                 <div class="card-title" style="margin-bottom:0;" data-i18n="dash_add_entity">
                     Add Entity
                 </div>
@@ -2302,7 +2313,7 @@
 
                 <!-- EClaw Channel Promotion -->
                 <div class="channel-promo" id="channelPromo">
-                    <div class="channel-promo-header" onclick="toggleChannelPromo()">
+                    <div class="channel-promo-header" onclick="toggleChannelPromo()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                         <span class="channel-promo-icon">⚡</span>
                         <span data-i18n="dash_channel_promo">Try EClaw Channel? More native, faster</span>
                         <span class="channel-promo-arrow" id="channelPromoArrow">›</span>
@@ -2426,7 +2437,7 @@
 
         <!-- Official Borrow Section -->
         <div class="card" id="borrowCard">
-            <div class="add-entity-header" onclick="toggleBorrow()">
+            <div class="add-entity-header" onclick="toggleBorrow()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
                 <div class="card-title" style="margin-bottom:0;">
                     <span data-i18n="borrow_title">Official Bot Rental</span>
                     <span class="beta-badge">BETA</span>
@@ -2574,6 +2585,7 @@
     <script src="https://js.tappaysdk.com/sdk/tpdirect/v5.17.0" async></script>
 
     <script src="shared/api.js"></script>
+    <script src="shared/reconnect-overlay.js" defer></script>
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
     <script src="/shared-core/route-registry.js"></script>
@@ -2627,6 +2639,7 @@
             div.textContent = str;
             return div.innerHTML;
         }
+
 
         // getAvatarForEntity is provided by shared/entity-utils.js
 
@@ -3326,6 +3339,18 @@
             }
         }
 
+        // Footer/link label for the PR modal. Author-attribution (option B) has no
+        // single gh_login, so prefer the entity label / canonical author email;
+        // login-attribution keeps the @login form.
+        function prAttributionLabel(data) {
+            if (data && data.attribution === 'author') {
+                return data.entity_label
+                    || (data.author_emails && data.author_emails[0])
+                    || (i18n.t('dash_pr_by_author') || 'by commit author');
+            }
+            return '@' + ((data && data.gh_login) || '');
+        }
+
         function paintPrWidget(el, data) {
             const countEl = el.querySelector('.pr-count');
             const linkEl = el.querySelector('.pr-link');
@@ -3388,7 +3413,7 @@
                 body = '<div class="pr-empty">' + i18n.t('dash_pr_none') + '</div>';
                 if (data.actions_url) {
                     foot = '<a href="' + escapeHtml(data.actions_url) + '" target="_blank" rel="noopener noreferrer">'
-                        + escapeHtml('@' + (data.gh_login || '')) + ' · ' + i18n.t('dash_pr_view_all') + ' &#x2197;</a>';
+                        + escapeHtml(prAttributionLabel(data)) + ' · ' + i18n.t('dash_pr_view_all') + ' &#x2197;</a>';
                 }
             } else {
                 body = data.recent_prs.map(pr => {
@@ -3402,7 +3427,7 @@
                         + '</div></a>';
                 }).join('');
                 foot = '<a href="' + escapeHtml(data.actions_url) + '" target="_blank" rel="noopener noreferrer">'
-                    + escapeHtml('@' + data.gh_login) + ' · ' + i18n.t('dash_pr_view_all') + ' &#x2197;</a>';
+                    + escapeHtml(prAttributionLabel(data)) + ' · ' + i18n.t('dash_pr_view_all') + ' &#x2197;</a>';
             }
 
             overlay.innerHTML =
@@ -3524,7 +3549,7 @@
         }
 
         async function resetXdSettings(entityId) {
-            if (!await showConfirm({ message: i18n.t('dash_xd_reset_confirm'), danger: true })) return;
+            if (!await showConfirm({ message: i18n.t('dash_xd_reset_confirm'), confirmText: i18n.t('common_reset'), danger: true, itemName: entityId })) return;
             try {
                 var data = await apiCall('DELETE', '/api/entity/cross-device-settings', {
                     deviceId: currentUser.deviceId,
@@ -3773,7 +3798,7 @@
         }
 
         async function deleteIdentity(entityId) {
-            if (!await showConfirm({ message: i18n.t('dash_id_clear_confirm') + entityId + '?', danger: true })) return;
+            if (!await showConfirm({ message: i18n.t('dash_id_clear_confirm') + entityId + '?', confirmText: i18n.t('common_clear'), danger: true, itemName: entityId })) return;
             try {
                 var data = await apiCall('DELETE', '/api/entity/identity', {
                     deviceId: currentUser.deviceId,
@@ -4847,7 +4872,7 @@
 
         async function resetOrgChart() {
             const t = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t.bind(i18n) : (k, fb) => fb || k;
-            if (!await showConfirm({ message: t('org_reset_confirm', 'Reset organization chart to saved default?'), danger: true })) return;
+            if (!await showConfirm({ message: t('org_reset_confirm', 'Reset organization chart to saved default?'), confirmText: t('common_reset', 'Reset'), danger: true })) return;
             const validIds = entities.filter(e => e.isBound).map(e => e.entityId);
             const validSet = new Set(validIds);
             const saved = loadOrgChartDefault();
@@ -6416,6 +6441,7 @@
         }
     })();
     </script>
+    <script src="/shared/webpush-auto.js" defer></script>
     </main>
 </body>
 
