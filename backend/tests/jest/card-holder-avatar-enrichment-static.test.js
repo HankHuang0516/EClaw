@@ -69,11 +69,17 @@ describe('exam.html binds the top-right avatar to the ACTIVE entity, not bound[0
     const html = read('public/arena/exam.html');
 
     it('uses the shared active-entity localStorage key and only falls back to bound[0]', () => {
+        expect(html).toContain('linkedEntityId');
         expect(html).toContain('eclaw_petdex_active_entity_id');
-        // the active-entity find must be present (fallback to bound[0] is fine)
-        expect(html).toMatch(/bound\.find\(e => Number\(e\.entityId \|\| e\.id\) === activeId\)/);
+        // the linked-owner / active-entity find must be present (fallback to bound[0] is fine)
+        expect(html).toMatch(/bound\.find\(e => entitySlotId\(e\) === linkedId\)/);
+        expect(html).toMatch(/bound\.find\(e => entitySlotId\(e\) === activeId\)/);
         // FAIL-ON-OLD: old code did `entityId = Number(bound[0].entityId || bound[0].id)`
         // as the ONLY selection — assert it's no longer the sole binding.
         expect(html).not.toMatch(/if \(!bound\.length\) return;\s*\n\s*entityId = Number\(bound\[0\]/);
+        // FAIL-ON-OLD: `entityId || id` treats legitimate slot 0 as missing.
+        expect(html).toContain('e.entityId ?? e.id');
+        expect(html).not.toContain('e.entityId || e.id');
+        expect(html).not.toContain('chosen.entityId || chosen.id');
     });
 });

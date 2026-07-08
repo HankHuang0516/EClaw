@@ -1737,6 +1737,48 @@ function parseJsonObject(raw) {
     }
 }
 
+function publicEntitySnapshot(entity, entityId) {
+    if (!entity) return null;
+    return {
+        entityId: Number.isFinite(Number(entityId)) ? Number(entityId) : null,
+        entityName: entity.name || entity.character || null,
+        publicCode: entity.publicCode || null,
+        agentCard: entity.agentCard || null,
+    };
+}
+
+function attachLinkedEntityToArenaDetail(detail, snapshot) {
+    if (!snapshot || !snapshot.publicCode) return detail;
+    return {
+        ...(detail || {}),
+        linkedEntityId: snapshot.entityId,
+        linkedEntityName: snapshot.entityName,
+        linkedPublicCode: snapshot.publicCode,
+        linkedAgentCard: snapshot.agentCard || null,
+    };
+}
+
+function normalizeLeaderboardEntityId(row, detail) {
+    const raw = row?.entity_id ?? detail?.linkedEntityId;
+    if (raw === null || raw === undefined || raw === '') return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+}
+
+function toLeaderboardApiRow(row) {
+    const detail = parseJsonObject(row?.detail) || row?.detail || {};
+    const entityId = normalizeLeaderboardEntityId(row, detail);
+    return {
+        ...row,
+        detail,
+        entity_id: entityId,
+        entity_name: row?.entity_name || detail.linkedEntityName || null,
+        petdx_avatar_url: row?.petdx_avatar_url || detail.linkedPetdxAvatarUrl || null,
+        public_code: row?.public_code || detail.linkedPublicCode || null,
+        agent_card: row?.agent_card || detail.linkedAgentCard || null,
+    };
+}
+
 function buildMappedArenaResultForIdentity(report, row = {}) {
     const reportObj = parseJsonObject(report) || report || {};
     const mapped = mapArenaResultToCapabilities(reportObj);
@@ -2467,7 +2509,17 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
     router.get('/exam/:examId/results', async (req, res) => {
         try {
             const examRes = await pool.query(
-                `SELECT * FROM arena_exams WHERE id = $1`, [req.params.examId]
+                `SELECT e.*,
+                        l.owner_device_id, l.owner_entity_id,
+                        owner_e.name AS linked_entity_name,
+                        owner_e.public_code AS linked_public_code
+                 FROM arena_exams e
+                 LEFT JOIN bot_listings l ON l.id = e.listing_id
+                 LEFT JOIN entities owner_e
+                   ON owner_e.device_id = l.owner_device_id
+                  AND owner_e.entity_id IS NOT DISTINCT FROM l.owner_entity_id
+                 WHERE e.id = $1`,
+                [req.params.examId]
             );
             if (examRes.rowCount === 0) return res.status(404).json({ success: false, error: 'not_found' });
             const sessions = await pool.query(
@@ -2494,6 +2546,9 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
                     expiresAt: exam.expires_at,
                     firstFetchedAt: exam.first_fetched_at,
                     completedAt: exam.completed_at,
+                    linkedEntityId: exam.owner_entity_id !== null && exam.owner_entity_id !== undefined ? Number(exam.owner_entity_id) : null,
+                    linkedEntityName: exam.linked_entity_name || null,
+                    linkedPublicCode: exam.linked_public_code || null,
                     elapsedSec,
                 },
                 sessions: sessions.rows,
@@ -2522,8 +2577,11 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
                 return res.status(400).json({ success: false, error: 'examId_and_name_required' });
             }
             const examRes = await pool.query(
-                `SELECT id, model, total_score, max_score, report, created_at, first_fetched_at, completed_at
-                 FROM arena_exams WHERE id = $1 AND status = 'completed'`,
+                `SELECT e.id, e.model, e.total_score, e.max_score, e.report, e.created_at, e.first_fetched_at, e.completed_at,
+                        l.owner_device_id, l.owner_entity_id
+                 FROM arena_exams e
+                 LEFT JOIN bot_listings l ON l.id = e.listing_id
+                 WHERE e.id = $1 AND e.status = 'completed'`,
                 [examId]
             );
             if (examRes.rowCount === 0) return res.status(404).json({ success: false, error: 'exam_not_found_or_incomplete' });
@@ -2538,16 +2596,8 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
                 ? new Date(exam.completed_at).getTime()
                 : Date.now();
             const elapsedSec = Math.max(0, Math.min(180, Math.round((endTs - startTs) / 1000)));
-            const report = typeof exam.report === 'string' ? JSON.parse(exam.report) : (exam.report || {});
+            let report = typeof exam.report === 'string' ? JSON.parse(exam.report) : (exam.report || {});
             report.elapsedSec = elapsedSec;
-
-            const lbRes = await pool.query(
-                `INSERT INTO arena_leaderboard (exam_id, name, model, score, max_score, detail)
-                 VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-                [exam.id, name.trim().slice(0, 64), exam.model, exam.total_score, exam.max_score,
-                 JSON.stringify(report)]
-            );
-            const leaderboardId = lbRes.rows[0] ? lbRes.rows[0].id : null;
 
             // Optional entity binding — write the verified score back to the
             // bot's identity if botSecret authenticates. Failures here MUST
@@ -2556,10 +2606,17 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
             try {
                 if (deviceId && botSecret) {
                     const eId = parseInt(entityId, 10);
+                    const ownerEntityId = exam.owner_entity_id !== null && exam.owner_entity_id !== undefined
+                        ? Number(exam.owner_entity_id)
+                        : NaN;
+                    const ownerDeviceMatches = !exam.owner_device_id || exam.owner_device_id === deviceId;
+                    const ownerEntityMatches = !Number.isFinite(ownerEntityId) || eId === ownerEntityId;
                     const device = deviceRegistry[deviceId];
                     const entity = (device && Number.isInteger(eId)) ? device.entities?.[eId] : null;
                     const credsOk = !!(entity && entity.isBound && entity.botSecret && safeEqual(entity.botSecret, botSecret));
-                    if (credsOk) {
+                    if (!ownerDeviceMatches || !ownerEntityMatches) {
+                        audit('warn', 'arena', `entity binding rejected for exam ${exam.id}: owner mismatch device=${deviceId} entity=${entityId}`);
+                    } else if (credsOk) {
                         const mapped = mapArenaResultToCapabilities(report);
                         const patch = buildInterviewIdentityPatch(exam, mapped);
                         if (patch) {
@@ -2582,6 +2639,7 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
                                 normalized: patch.interviewCapabilities.normalized,
                                 passed: patch.interviewCapabilities.passed,
                             };
+                            report = attachLinkedEntityToArenaDetail(report, publicEntitySnapshot(entity, eId));
                             audit('info', 'arena', `entity ${deviceId}:${eId} bound to exam ${exam.id} score=${entityBinding.normalized}%`);
                         }
                     } else if (entityId !== undefined) {
@@ -2591,6 +2649,14 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
             } catch (bindErr) {
                 console.warn('[Arena] entity binding error (non-blocking):', bindErr.message);
             }
+
+            const lbRes = await pool.query(
+                `INSERT INTO arena_leaderboard (exam_id, name, model, score, max_score, detail)
+                 VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+                [exam.id, name.trim().slice(0, 64), exam.model, exam.total_score, exam.max_score,
+                 JSON.stringify(report)]
+            );
+            const leaderboardId = lbRes.rows[0] ? lbRes.rows[0].id : null;
 
             res.json({ success: true, leaderboardId, entityBinding });
         } catch (err) {
@@ -2602,10 +2668,31 @@ module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData 
     router.get('/leaderboard', async (_req, res) => {
         try {
             const result = await pool.query(
-                `SELECT id, name, model, score, max_score, detail, created_at
-                 FROM arena_leaderboard ORDER BY score DESC LIMIT 100`
+                `SELECT lb.id, lb.exam_id, lb.name, lb.model, lb.score, lb.max_score, lb.detail, lb.created_at,
+                        COALESCE(owner_e.entity_id, linked_e.entity_id) AS entity_id,
+                        COALESCE(owner_e.name, linked_e.name, lb.detail->>'linkedEntityName') AS entity_name,
+                        COALESCE(petdx.avatar_url, lb.detail->>'linkedPetdxAvatarUrl') AS petdx_avatar_url,
+                        COALESCE(owner_e.public_code, linked_e.public_code, lb.detail->>'linkedPublicCode') AS public_code,
+                        COALESCE(owner_e.agent_card, linked_e.agent_card, lb.detail->'linkedAgentCard') AS agent_card
+                 FROM arena_leaderboard lb
+                 LEFT JOIN arena_exams ex ON ex.id = lb.exam_id
+                 LEFT JOIN bot_listings l ON l.id = ex.listing_id
+                 LEFT JOIN entities owner_e
+                   ON owner_e.device_id = l.owner_device_id
+                  AND owner_e.entity_id IS NOT DISTINCT FROM l.owner_entity_id
+                 LEFT JOIN entities linked_e ON linked_e.public_code = lb.detail->>'linkedPublicCode'
+                 LEFT JOIN LATERAL (
+                     SELECT c.avatar_url
+                       FROM companion_select_log s
+                       LEFT JOIN companions c ON c.id = s.companion_id
+                      WHERE s.device_id = COALESCE(l.owner_device_id, linked_e.device_id)
+                        AND s.entity_id IS NOT DISTINCT FROM COALESCE(l.owner_entity_id, linked_e.entity_id)
+                      ORDER BY s.selected_at DESC
+                      LIMIT 1
+                 ) petdx ON true
+                 ORDER BY lb.score DESC LIMIT 100`
             );
-            res.json({ success: true, leaderboard: result.rows });
+            res.json({ success: true, leaderboard: result.rows.map(toLeaderboardApiRow) });
         } catch (err) {
             res.status(500).json({ success: false, error: 'internal_error' });
         }
