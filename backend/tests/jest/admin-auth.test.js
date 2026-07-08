@@ -165,6 +165,8 @@ jest.mock('../../subscription', () => {
     });
 });
 
+const fs = require('fs');
+const path = require('path');
 const request = require('supertest');
 let app;
 
@@ -181,6 +183,114 @@ afterAll(async () => {
     const { httpServer } = require('../../index');
     await new Promise(resolve => httpServer.close(resolve));
     jest.resetModules();
+});
+
+// ════════════════════════════════════════════════════════════════
+// Admin-device gate must prove possession of deviceSecret
+// (card_bb9f0e5c — deviceId is not a secret; allowlist membership
+// alone must never authenticate an admin endpoint)
+// ════════════════════════════════════════════════════════════════
+describe('requireAdmin — deviceSecret proof required', () => {
+    const adminDeviceId = 'jest-admin-device';
+    const adminDeviceSecret = 'jest-admin-device-secret';
+    let originalAdminDeviceIds;
+
+    const makeReq = ({ query = {}, body = {}, headers = {} } = {}) => ({
+        query,
+        body,
+        headers,
+    });
+
+    beforeEach(() => {
+        originalAdminDeviceIds = process.env.ADMIN_DEVICE_IDS;
+        process.env.ADMIN_DEVICE_IDS = adminDeviceId;
+        app.devices[adminDeviceId] = {
+            deviceSecret: adminDeviceSecret,
+            entities: {},
+        };
+    });
+
+    afterEach(() => {
+        if (originalAdminDeviceIds === undefined) {
+            delete process.env.ADMIN_DEVICE_IDS;
+        } else {
+            process.env.ADMIN_DEVICE_IDS = originalAdminDeviceIds;
+        }
+        delete app.devices[adminDeviceId];
+    });
+
+    it('rejects an allowlisted deviceId without deviceSecret', () => {
+        const gate = app._requireAdmin(makeReq({
+            query: { deviceId: adminDeviceId },
+        }));
+
+        expect(gate).toMatchObject({
+            ok: false,
+            status: 401,
+            error: 'deviceSecret required for admin-gated endpoint',
+        });
+    });
+
+    it('rejects an allowlisted deviceId with the wrong deviceSecret', () => {
+        const gate = app._requireAdmin(makeReq({
+            query: { deviceId: adminDeviceId, deviceSecret: 'wrong-secret' },
+        }));
+
+        expect(gate).toMatchObject({
+            ok: false,
+            status: 401,
+            error: 'invalid credentials',
+        });
+    });
+
+    it('rejects an allowlisted deviceId whose device record is missing (no oracle)', () => {
+        delete app.devices[adminDeviceId];
+        const gate = app._requireAdmin(makeReq({
+            query: { deviceId: adminDeviceId, deviceSecret: adminDeviceSecret },
+        }));
+
+        expect(gate).toMatchObject({ ok: false, status: 401, error: 'invalid credentials' });
+    });
+
+    it('accepts only the matching deviceSecret for an allowlisted deviceId', () => {
+        const gate = app._requireAdmin(makeReq({
+            headers: {
+                'x-device-id': adminDeviceId,
+                'x-device-secret': adminDeviceSecret,
+            },
+        }));
+
+        expect(gate).toEqual({ ok: true, deviceId: adminDeviceId });
+    });
+
+    it('still rejects non-allowlisted deviceIds with 403 even with a secret', () => {
+        const gate = app._requireAdmin(makeReq({
+            query: { deviceId: 'not-an-admin', deviceSecret: 'whatever' },
+        }));
+
+        expect(gate).toMatchObject({ ok: false, status: 403 });
+    });
+
+    it('opts.verifyDeviceSecret:false skips only the secret step (rental-health layers its own proof)', () => {
+        const gate = app._requireAdmin(
+            makeReq({ query: { deviceId: adminDeviceId } }),
+            { verifyDeviceSecret: false }
+        );
+
+        expect(gate).toEqual({ ok: true, deviceId: adminDeviceId });
+    });
+
+    it('compares deviceSecret with safeEqual (constant-time) in the requireAdmin gate', () => {
+        const src = fs.readFileSync(path.join(__dirname, '../../index.js'), 'utf8');
+        const start = src.indexOf('function requireAdmin');
+        const end = src.indexOf('const app = express()', start);
+        const requireAdminBody = src.slice(start, end);
+
+        // The secret proof must go through the timing-safe helper — a plain
+        // `===` compare here would be a timing-oracle regression.
+        expect(requireAdminBody).toMatch(/safeEqual\(device\.deviceSecret,\s*deviceSecret\)/);
+        expect(requireAdminBody).not.toMatch(/device\.deviceSecret\s*===/);
+    });
 });
 
 // ════════════════════════════════════════════════════════════════
