@@ -99,7 +99,8 @@
         .name-input:focus { border-color: var(--primary); }
 
         /* Leaderboard */
-        .lb-table-wrap {
+        .lb-table-wrap,
+        .lb-table-scroll {
             width: 100%;
             max-width: 100%;
             overflow-x: auto;
@@ -239,6 +240,8 @@
             .fb-checks { grid-template-columns: 1fr; }
             .eval-header h1 { font-size: 18px; }
             .comment-row { flex-direction: column; }
+            /* Horizontal scroll (min-width) as a safety net, plus fixed layout + ellipsize so the Time column is never clipped. */
+            .lb-table { min-width: 560px; }
             .lb-table { table-layout: fixed; font-size: 12px; }
             .lb-table th,
             .lb-table td { padding: 7px 4px; }

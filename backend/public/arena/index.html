@@ -150,7 +150,8 @@
         /* Leaderboard */
         .lb-panel { display: none; }
         .lb-panel.visible { display: block; }
-        .lb-table-wrap {
+        .lb-table-wrap,
+        .lb-table-scroll {
             width: 100%;
             max-width: 100%;
             overflow-x: auto;
@@ -251,6 +252,8 @@
             .arena-hero h1 { font-size: 22px; }
             .arena-actions { flex-direction: column; align-items: center; }
             .btn { width: 100%; max-width: 280px; justify-content: center; }
+            /* Horizontal scroll (min-width) as a safety net, plus fixed layout + ellipsize so the Time column is never clipped. */
+            .lb-table { min-width: 560px; }
             .lb-table { table-layout: fixed; font-size: 12px; }
             .lb-table th,
             .lb-table td { padding: 7px 4px; }
