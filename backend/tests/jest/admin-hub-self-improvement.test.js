@@ -42,7 +42,7 @@ describe('admin hub self-improvement surface', () => {
         expect(adminHubSrc).toContain('? icon UX: <What this state means / Needs / Next step>');
         const selfImprovementSlice = adminHubSrc.slice(
             adminHubSrc.indexOf('id="adminSelfImprovementCard"'),
-            adminHubSrc.indexOf('function getAuthQuery')
+            adminHubSrc.indexOf('function getAdminCredentials')
         );
         expect(selfImprovementSlice).not.toMatch(/botSecret|deviceSecret|DATABASE_URL|CLOUDFLARE_API_TOKEN/);
     });

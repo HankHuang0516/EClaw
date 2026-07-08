@@ -8,7 +8,7 @@
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
 - **Current version**: 1.1190.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
-- **Android app version**: 1.1.15 (versionCode 126); `LATEST_APP_VERSION` constant in `backend/index.js`
+- **Android app version**: 1.1.16 (versionCode 127); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
 ---
@@ -180,7 +180,7 @@ EClaw/
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
 │   ├── tests/                # Regression + integration tests (79 files)
-│   ├── tests/jest/           # Jest unit tests (454 files, CI-run via `npm test`)
+│   ├── tests/jest/           # Jest unit tests (467 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -1361,13 +1361,25 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Vault Key Reference GET-Only (v1.1190)**: Key Reference GET-only — stop resurrecting deleted vault keys (P1) (#3901)
 - **Mission Card Deep-Link Fix (v1.1190)**: Stop mission.html card deep-link self-looping the native bridge (#3898)
 - **Android Wallpaper Walk Config (v1.1190)**: Drive wallpaper walk actions from server config (#3902)
-- **App Version**: Updated to 1.1.15 (versionCode 126)
+- **App Version**: Updated to 1.1.16 (versionCode 127)
+
+### Recent Features (v1.1190.x+, 2026-07-07 – 2026-07-09)
+
+- **Agent Identity Token Signing Hardening (v1.1190)**: Harden agent identity token signing (#3947)
+- **Admin requireAdmin Secret Proof (v1.1190)**: `requireAdmin` now requires `deviceSecret` proof with constant-time comparison (#3946)
+- **Kanban Cold-Start Wrong-Card Guard (v1.1190)**: Guard GET /api/mission/card/:id against cold-start wrong-card scenarios (#3945)
+- **Arena Leaderboard Mobile Time Fix (v1.1190)**: Keep Arena leaderboard time visible on mobile layout (#3941)
+- **Usage-Warning Entity Scope (v1.1190)**: Entity-scoped usage attribution — entity #2's claude warning no longer leaks to other entities (#3943)
+- **Settings Device-Secret Masked (v1.1190)**: Settings page device-secret masked by default; notelink active-entity verified (#3929)
+- **Arena Entity Cards on Leaderboard (v1.1190)**: Show entity cards on interview arena leaderboard (#3940)
+- **Media Load Failure Surface (v1.1190)**: Surface media load failures in portal (#3939)
+- **Needs-You Widget + App Badge Sync (v1.1190)**: Sync needs-you widget and app badges (#3944)
 
 ---
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~6238 test cases across 454 Jest files + 79 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~6486 test cases across 467 Jest files + 79 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1460,7 +1472,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
 | Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
 
-### Jest Unit Tests (CI-run, `npm test`, 454 files)
+### Jest Unit Tests (CI-run, `npm test`, 467 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -1543,7 +1555,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (454 files)
+cd backend && npm test                  # Jest unit tests (467 files)
 cd backend && npm run lint              # ESLint
 ```
 
