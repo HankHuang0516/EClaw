@@ -99,10 +99,36 @@
         .name-input:focus { border-color: var(--primary); }
 
         /* Leaderboard */
-        .lb-table-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .lb-table-wrap,
+        .lb-table-scroll {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
         .lb-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .lb-table th { text-align: left; padding: 8px; color: var(--text-muted); border-bottom: 1px solid var(--card-border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
         .lb-table td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .lb-table th,
+        .lb-table td { vertical-align: middle; }
+        .lb-col-rank { width: 34px; }
+        .lb-col-score { width: 72px; text-align: right; }
+        .lb-col-time { width: 56px; text-align: right; }
+        .lb-name-cell,
+        .lb-model-cell {
+            min-width: 0; max-width: 0; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+        .lb-name-link {
+            display: inline-block; max-width: 100%; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom;
+            color: var(--primary); cursor: pointer;
+        }
+        .lb-score-cell,
+        .lb-time-cell {
+            text-align: right; white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
         .lb-rank { font-weight: 700; color: var(--primary); }
         .lb-avatar-col, .lb-avatar-cell { width: 32px; padding-right: 0 !important; }
         .lb-avatar {
@@ -214,6 +240,22 @@
             .fb-checks { grid-template-columns: 1fr; }
             .eval-header h1 { font-size: 18px; }
             .comment-row { flex-direction: column; }
+            /* Horizontal scroll (min-width) as a safety net, plus fixed layout + ellipsize so the Time column is never clipped. */
+            .lb-table { min-width: 560px; }
+            .lb-table { table-layout: fixed; font-size: 12px; }
+            .lb-table th,
+            .lb-table td { padding: 7px 4px; }
+            .lb-col-rank { width: 28px; }
+            .lb-col-model { width: 66px; }
+            .lb-col-score { width: 58px; }
+            .lb-col-time { width: 48px; }
+        }
+        @media (max-width: 380px) {
+            .lb-table th,
+            .lb-table td { padding: 6px 3px; }
+            .lb-col-model { width: 58px; }
+            .lb-col-score { width: 52px; }
+            .lb-col-time { width: 44px; }
         }
 
         /* ─────────────────────────────────────────────────────────────────
@@ -285,7 +327,6 @@
                 width: 36px; height: 36px; font-size: 26px; line-height: 36px;
             }
             .arena-companion-caption { font-size: 9px; padding: 1px 6px; min-width: 50px; }
-            .lb-table { min-width: 560px; }
         }
 
         /* Resting state — gentle pulse so the avatar feels alive even when idle */
@@ -433,7 +474,9 @@
 
         <div class="reveal" id="lbSection">
             <div class="section-label" data-i18n="arena_lb_title">Leaderboard</div>
-            <div class="lb-table-scroll"><table class="lb-table"><thead><tr><th>#</th><th class="lb-avatar-col" aria-hidden="true"></th><th data-i18n="arena_lb_name">Name</th><th data-i18n="arena_lb_model">Model</th><th data-i18n="arena_lb_score">Score</th><th data-i18n="arena_lb_time">Time</th></tr></thead><tbody id="lbBody"></tbody></table></div>
+            <div class="lb-table-wrap">
+                <table class="lb-table"><thead><tr><th class="lb-col-rank">#</th><th class="lb-avatar-col lb-col-avatar" aria-hidden="true"></th><th class="lb-col-name" data-i18n="arena_lb_name">Name</th><th class="lb-col-model" data-i18n="arena_lb_model">Model</th><th class="lb-col-score" data-i18n="arena_lb_score">Score</th><th class="lb-col-time" data-i18n="arena_lb_time">Time</th></tr></thead><tbody id="lbBody"></tbody></table>
+            </div>
         </div>
 
         <div class="reveal" id="feedbackSection">
@@ -1099,7 +1142,7 @@
                 try { await window.AvatarPetdx.preload({ entityIds: boundIds }); } catch (_) { /* keep URL/emoji fallback */ }
             }
             document.getElementById('lbBody').innerHTML = leaderboardEntries.map((e, i) =>
-                `<tr data-exam-id="${esc(e.exam_id||'')}"><td class="lb-rank">${i+1}</td><td class="lb-avatar-cell"><button type="button" class="lb-card-trigger" onclick="showAgentCardFromEntry(${i})" aria-label="Open agent card">${lbAvatarHtml(e)}</button></td><td><button type="button" class="lb-card-trigger" onclick="showAgentCardFromEntry(${i})">${esc(e.entity_name || e.name)}</button></td><td>${esc(e.model||'-')}</td><td>${e.score}/${e.max_score||147}</td><td>${fmtLeaderboardTime(e.detail)}</td></tr>`
+                `<tr data-exam-id="${esc(e.exam_id||'')}"><td class="lb-rank lb-rank-cell">${i+1}</td><td class="lb-avatar-cell"><button type="button" class="lb-card-trigger" onclick="showAgentCardFromEntry(${i})" aria-label="Open agent card">${lbAvatarHtml(e)}</button></td><td class="lb-name-cell"><button type="button" class="lb-card-trigger lb-name-link" onclick="showAgentCardFromEntry(${i})">${esc(e.entity_name || e.name)}</button></td><td class="lb-model-cell">${esc(e.model||'-')}</td><td class="lb-score-cell">${e.score}/${e.max_score||147}</td><td class="lb-time-cell">${fmtLeaderboardTime(e.detail)}</td></tr>`
             ).join('');
             if (window.AvatarPetdx && typeof window.AvatarPetdx.autoMount === 'function') {
                 try { window.AvatarPetdx.autoMount(); } catch (_) { /* no-op */ }
