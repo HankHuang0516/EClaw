@@ -2620,6 +2620,7 @@ app.use('/api/petdx', petdxRoute.createRouter({ log: serverLog }));
 // short-lived, single-purpose identity token (POST /token) for an authenticated
 // caller and verifies a token OR a transient botSecret triple (POST /verify).
 const agentIdentity = require('./agent-identity');
+const getAgentIdentitySigningSecret = () => agentIdentity.readSigningSecretFromEnv(process.env);
 // Shared caller-auth: resolve {deviceId,entityId,botSecret} → the entity's OWN
 // publicCode (never a client-supplied one), or fail closed.
 const resolveCallerIdentity = async ({ deviceId, entityId, botSecret }) => {
@@ -2636,8 +2637,9 @@ const resolveCallerIdentity = async ({ deviceId, entityId, botSecret }) => {
 app.use('/api/agent-identity', agentIdentity.createRouter({
     log: serverLog,
     authenticateCaller: resolveCallerIdentity,
-    // HMAC the token with the process signing secret (same one used elsewhere).
-    getSecret: () => JWT_SECRET_FALLBACK,
+    // Dedicated signing secret only; missing env fails loud with 500 instead of
+    // silently reusing JWT_SECRET for this cross-service trust plane.
+    getSecret: getAgentIdentitySigningSecret,
 }));
 
 const wishlistRoute = require('./wishlist-route');
@@ -2653,7 +2655,7 @@ app.use('/api/wishlist-bridge', wishlistRoute.createRouter({
     // wishlist backend; the wishlist backend calls back to /api/agent-identity/verify
     // to confirm it. The long-lived botSecret never leaves EClaw.
     mintAgentToken: async ({ publicCode }) =>
-        agentIdentity.signAgentToken({ publicCode, secret: JWT_SECRET_FALLBACK }),
+        agentIdentity.signAgentToken({ publicCode, secret: getAgentIdentitySigningSecret() }),
 }));
 
 // ============================================
