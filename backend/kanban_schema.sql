@@ -274,6 +274,12 @@ ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS rework_pr_number VARCHAR(64) D
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS linked_prev_card_id VARCHAR(48) DEFAULT NULL;
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS linked_next_card_id VARCHAR(48) DEFAULT NULL;
 
+-- Review-economy XP idempotency ledger (card_1d071107). Records which reviewer
+-- entities have already been awarded the verified-defect ×5 XP for THIS card so
+-- the same reviewer + same card cannot double-award. JSONB object keyed by
+-- reviewer entity id → award metadata { xp, at, prNumber }.
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS review_xp_awarded JSONB DEFAULT '{}'::jsonb;
+
 CREATE INDEX IF NOT EXISTS idx_kanban_cards_pending_dispatch ON kanban_cards(device_id, pending_dispatch, dispatch_mode)
     WHERE pending_dispatch = TRUE;
 
