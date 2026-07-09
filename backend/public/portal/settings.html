@@ -1916,22 +1916,9 @@
         </div>
     </div>
 
-    <!-- Rotate Device Secret: Confirm -->
-    <div class="dialog-overlay" id="rotateSecretConfirmDialog" style="display:none">
-        <div class="dialog">
-            <div class="dialog-title" data-i18n="settings_rotate_confirm_title">Rotate Device Secret?</div>
-            <p style="font-size:14px;line-height:1.55;" data-i18n="settings_rotate_confirm_body">
-                This immediately invalidates the current Device Secret. Any other device or browser tab still using the old value will need to sign in again with the new one.
-            </p>
-            <p style="font-size:13px;color:var(--danger);line-height:1.5;" data-i18n="settings_rotate_confirm_warn">
-                ⚠ The new secret is shown only once. Back it up before closing the next dialog.
-            </p>
-            <div class="dialog-actions">
-                <button class="btn btn-outline" onclick="closeRotateSecretConfirm()" data-i18n="common_cancel">Cancel</button>
-                <button class="btn btn-danger" id="btnConfirmRotate" onclick="performRotateSecret()" data-i18n="settings_rotate_confirm_ok">Rotate Now</button>
-            </div>
-        </div>
-    </div>
+    <!-- Rotate Device Secret: the destructive CONFIRM gate now routes through the
+         shared showConfirm() component (see openRotateSecretDialog); the bespoke
+         confirm overlay was removed so it can't drift from the a11y-hardened one. -->
 
     <!-- Rotate Device Secret: Reveal (shown once after successful rotate) -->
     <div class="dialog-overlay" id="rotateSecretRevealDialog" style="display:none">
@@ -1954,10 +1941,14 @@
         </div>
     </div>
 
-    <!-- Switch Device Dialog -->
+    <!-- Switch Device Dialog. This is a destructive path (signs this browser out of
+         the current device) but it hosts a form with two inputs, so it can't route
+         through showConfirm; instead it carries the same a11y contract inline —
+         role=alertdialog + aria-modal + aria-labelledby, plus a JS focus-trap and
+         focus-restore wired in openSwitchDeviceDialog/closeSwitchDeviceDialog. card_dc05cb99 -->
     <div class="dialog-overlay" id="switchDeviceDialog" style="display:none">
-        <div class="dialog" style="max-width:480px;width:92%;">
-            <div class="dialog-title" data-i18n="settings_switch_device_title">Switch Device</div>
+        <div class="dialog" style="max-width:480px;width:92%;" role="alertdialog" aria-modal="true" aria-labelledby="switchDeviceDialogTitle">
+            <div class="dialog-title" id="switchDeviceDialogTitle" data-i18n="settings_switch_device_title">Switch Device</div>
             <p style="font-size:13px;color:var(--text-secondary);line-height:1.55;"
                 data-i18n="settings_switch_device_body">
                 Enter the Device ID and Device Secret of the account you want to sign into. This browser will be signed out of the current device.
@@ -2252,18 +2243,32 @@
         // ── Rotate Device Secret ─────────────────────────────────────────
         let _rotatedSecretCache = null;
 
-        function openRotateSecretDialog() {
+        // The destructive CONFIRM gate is delegated to the shared showConfirm()
+        // component (a11y-hardened: role=alertdialog, aria-modal, aria-labelledby,
+        // safe default focus on Cancel, Tab/Shift-Tab focus-trap, focus-restore to
+        // the opener) so this irreversible path inherits the same guarantees as
+        // every other destructive confirm. The one-time secret-reveal dialog that
+        // follows a successful rotation stays bespoke (it shows the new secret and
+        // offers copy/backup, which showConfirm cannot host). card_dc05cb99
+        async function openRotateSecretDialog() {
             if (!_fullDeviceId || !_fullDeviceSecret) return;
-            document.getElementById('rotateSecretConfirmDialog').style.display = 'flex';
-        }
-
-        function closeRotateSecretConfirm() {
-            document.getElementById('rotateSecretConfirmDialog').style.display = 'none';
+            const t = (typeof i18n !== 'undefined' && i18n.t) ? (k, fb) => {
+                const v = i18n.t(k); return (v === k || !v) ? fb : v;
+            } : (k, fb) => fb;
+            const body = t('settings_rotate_confirm_body', 'This immediately invalidates the current Device Secret. Any other device or browser tab still using the old value will need to sign in again with the new one.');
+            const warn = t('settings_rotate_confirm_warn', '⚠ The new secret is shown only once. Back it up before closing the next dialog.');
+            const ok = await showConfirm({
+                title: t('settings_rotate_confirm_title', 'Rotate Device Secret?'),
+                message: `${body}\n\n${warn}`,
+                confirmText: t('settings_rotate_confirm_ok', 'Rotate Now'),
+                cancelText: t('common_cancel', 'Cancel'),
+                danger: true,
+                itemName: maskDeviceId(_fullDeviceId),
+            });
+            if (ok) await performRotateSecret();
         }
 
         async function performRotateSecret() {
-            const btn = document.getElementById('btnConfirmRotate');
-            btn.disabled = true;
             try {
                 const res = await fetch('/api/device/rotate-secret', {
                     method: 'POST',
@@ -2288,13 +2293,10 @@
                 setDeviceSecretVisible(false);
                 document.getElementById('rotateRevealDeviceId').textContent = _fullDeviceId;
                 document.getElementById('rotateRevealSecret').textContent = data.newDeviceSecret;
-                closeRotateSecretConfirm();
                 document.getElementById('rotateSecretRevealDialog').style.display = 'flex';
             } catch (e) {
                 console.error('rotate-secret failed:', e);
                 alert('Network error during rotation');
-            } finally {
-                btn.disabled = false;
             }
         }
 
@@ -2327,10 +2329,54 @@
             setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
 
+        // ── Focus-trap for bespoke (non-showConfirm) modal dialogs ────────────
+        // WAI-ARIA APG dialog pattern: while a modal is open, Tab / Shift+Tab must
+        // cycle among the dialog's own focusable controls (never onto the page
+        // behind it), and on close focus must return to the element that opened it.
+        // The shared showConfirm() already does this; this helper gives the same
+        // contract to bespoke dialogs that host custom content (e.g. a form) and so
+        // can't route through showConfirm. Returns a release() that removes the
+        // key handler and restores focus to the opener. card_dc05cb99
+        function eclawTrapDialogFocus(dialogEl, { initialFocus } = {}) {
+            const opener = (typeof document !== 'undefined') ? document.activeElement : null;
+            const isVisible = (el) => !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
+            const focusables = () => Array.from(dialogEl.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )).filter((el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true' && isVisible(el));
+            const onKeydown = (e) => {
+                if (e.key !== 'Tab') return;
+                const items = focusables();
+                if (items.length === 0) { e.preventDefault(); return; }
+                const first = items[0];
+                const last = items[items.length - 1];
+                const active = document.activeElement;
+                if (e.shiftKey) {
+                    if (active === first || !dialogEl.contains(active)) { e.preventDefault(); last.focus(); }
+                } else {
+                    if (active === last || !dialogEl.contains(active)) { e.preventDefault(); first.focus(); }
+                }
+            };
+            document.addEventListener('keydown', onKeydown, true);
+            // Move initial focus inside the dialog so the trap has an anchor and a
+            // screen reader announces the dialog. Default to the first focusable.
+            const target = initialFocus || focusables()[0];
+            if (target && typeof target.focus === 'function') {
+                setTimeout(() => { try { target.focus(); } catch (_) { } }, 0);
+            }
+            return function release() {
+                document.removeEventListener('keydown', onKeydown, true);
+                if (opener && opener !== document.body && typeof opener.focus === 'function') {
+                    const connected = ('isConnected' in opener) ? opener.isConnected : (document.contains && document.contains(opener));
+                    if (connected) { try { opener.focus(); } catch (_) { } }
+                }
+            };
+        }
+
         // ── Switch Device ─────────────────────────────────────────────────
         // Short-term fix for Issue #1773: allow signing this browser into a
         // different Device ID (e.g. a second admin account whose entities live
         // on a separate device row). Long-term account-merge is out of scope.
+        let _switchDeviceReleaseFocus = null;
         function openSwitchDeviceDialog() {
             const dlg = document.getElementById('switchDeviceDialog');
             document.getElementById('switchDeviceIdInput').value = '';
@@ -2339,11 +2385,15 @@
             err.style.display = 'none';
             err.textContent = '';
             dlg.style.display = 'flex';
-            setTimeout(() => document.getElementById('switchDeviceIdInput').focus(), 50);
+            if (_switchDeviceReleaseFocus) { _switchDeviceReleaseFocus(); _switchDeviceReleaseFocus = null; }
+            _switchDeviceReleaseFocus = eclawTrapDialogFocus(dlg, {
+                initialFocus: document.getElementById('switchDeviceIdInput'),
+            });
         }
 
         function closeSwitchDeviceDialog() {
             document.getElementById('switchDeviceDialog').style.display = 'none';
+            if (_switchDeviceReleaseFocus) { _switchDeviceReleaseFocus(); _switchDeviceReleaseFocus = null; }
         }
 
         async function performSwitchDevice() {
@@ -4615,7 +4665,14 @@
         // ============================================
         document.addEventListener('click', function (e) {
             if (e.target.classList.contains('dialog-overlay')) {
-                e.target.style.display = 'none';
+                // Route the switch-device overlay through its own close so the
+                // a11y focus-trap is released and focus returns to the opener;
+                // other overlays keep the plain hide. card_dc05cb99
+                if (e.target.id === 'switchDeviceDialog') {
+                    closeSwitchDeviceDialog();
+                } else {
+                    e.target.style.display = 'none';
+                }
             }
         });
 
