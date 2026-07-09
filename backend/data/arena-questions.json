@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-03T19:23:43.647Z",
+  "updatedAt": "2026-07-09T19:12:24.008Z",
   "targetDifficulty": 70,
   "pools": {
     "arena_vision": [
@@ -1978,6 +1978,85 @@
           "Gwei",
           "confirmed",
           "142"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A traffic signal mounted on a vertical pole showing the green light illuminated at the bottom position, yellow light unlit in the middle, and red light unlit at the top",
+        "keywords": [
+          "traffic",
+          "signal",
+          "green",
+          "bottom",
+          "yellow",
+          "red",
+          "pole"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A product inventory table showing SKU A1047 with 384 units in stock at $12.50 per unit, with 3 items highlighted in red as out-of-stock",
+        "keywords": [
+          "A1047",
+          "384",
+          "12.50",
+          "three",
+          "out-of-stock",
+          "red"
+        ]
+      },
+      {
+        "file": null,
+        "description": "An apartment floor plan showing a master bedroom of 18 m², two secondary bedrooms each 12 m², a kitchen of 15 m², and a living room of 28 m²",
+        "keywords": [
+          "master",
+          "bedroom",
+          "18",
+          "12",
+          "kitchen",
+          "15",
+          "living",
+          "28"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A network topology diagram with 4 routers arranged in a ring, each router connected to 3 switches, and each switch supporting 2 servers",
+        "keywords": [
+          "four",
+          "routers",
+          "ring",
+          "three",
+          "switches",
+          "two",
+          "servers"
+        ]
+      },
+      {
+        "file": null,
+        "description": "An ECG waveform printout showing sinus rhythm at 72 BPM, PR interval 0.16 seconds, QRS complex 0.08 seconds, and two premature ventricular contractions highlighted in red",
+        "keywords": [
+          "ECG",
+          "72",
+          "BPM",
+          "0.16",
+          "QRS",
+          "0.08",
+          "two",
+          "red"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A molecular diagram of the reaction 2H₂ + O₂ → 2H₂O, showing 4 hydrogen atoms and 2 oxygen atoms on the left and 2 water molecules on the right",
+        "keywords": [
+          "hydrogen",
+          "oxygen",
+          "water",
+          "four",
+          "two",
+          "molecules",
+          "reaction"
         ]
       }
     ],
@@ -4183,6 +4262,66 @@
             "expected": "[[1,3],[2,3]]"
           }
         ]
+      },
+      {
+        "title": "Minimum Coins to Make Change",
+        "description": "You have unlimited coins with denominations [1, 5, 10]. What is the minimum number of coins needed to make exactly 27 cents? Return just the number.",
+        "testCases": [
+          {
+            "input": "coins=[1,5,10], amount=27",
+            "expected": "5"
+          }
+        ]
+      },
+      {
+        "title": "Count Pairs with Target Sum",
+        "description": "Given the array [3, 5, 2, 7, 1, 6] and target sum 8, count how many unique index pairs (i, j) with i < j satisfy arr[i] + arr[j] == 8. Return the count.",
+        "testCases": [
+          {
+            "input": "[3,5,2,7,1,6], target=8",
+            "expected": "3"
+          }
+        ]
+      },
+      {
+        "title": "Maximum Sliding Window Sum",
+        "description": "Given the array [2, 1, 5, 1, 3, 2] and window size k=3, find the maximum sum of any contiguous subarray of exactly 3 elements.",
+        "testCases": [
+          {
+            "input": "[2,1,5,1,3,2], k=3",
+            "expected": "9"
+          }
+        ]
+      },
+      {
+        "title": "Longest Common Subsequence Length",
+        "description": "Find the length of the Longest Common Subsequence (LCS) of the strings 'ABCBDAB' and 'BDCABA'. Return just the length as a number.",
+        "testCases": [
+          {
+            "input": "s1='ABCBDAB', s2='BDCABA'",
+            "expected": "4"
+          }
+        ]
+      },
+      {
+        "title": "Valid Parentheses Completion",
+        "description": "The string '(()(' is missing some closing brackets. What is the minimum number of closing brackets ')' that must be appended to make it a valid parentheses string?",
+        "testCases": [
+          {
+            "input": "'(()('",
+            "expected": "2"
+          }
+        ]
+      },
+      {
+        "title": "Grid Paths Count (DP)",
+        "description": "A robot starts at the top-left corner of a 3×3 grid. It can only move right or down. How many distinct paths lead from the top-left to the bottom-right corner?",
+        "testCases": [
+          {
+            "input": "3x3 grid, move right or down only",
+            "expected": "6"
+          }
+        ]
       }
     ],
     "arena_response_time": [
@@ -5281,6 +5420,55 @@
           "288π",
           "288pi",
           "904"
+        ]
+      },
+      {
+        "question": "A store buys a jacket for $45 and marks it up by 30%. During a sale the marked price is reduced by 20%. What is the final sale price in dollars? Round to the nearest cent.",
+        "expectedKeywords": [
+          "46.80",
+          "$46.80",
+          "46.8"
+        ]
+      },
+      {
+        "question": "A car travels at 80 km/h for 2.5 hours then at 60 km/h for 1.5 hours. What is the average speed in km/h for the entire journey?",
+        "expectedKeywords": [
+          "72.5"
+        ]
+      },
+      {
+        "question": "In a class of 40 students, 60% passed mathematics and 70% passed science. If 10 students failed both subjects, how many students passed both mathematics and science?",
+        "expectedKeywords": [
+          "22",
+          "twenty-two"
+        ]
+      },
+      {
+        "question": "What is the remainder when 2^100 is divided by 7? (Hint: find the pattern of powers of 2 modulo 7.)",
+        "expectedKeywords": [
+          "2",
+          "two"
+        ]
+      },
+      {
+        "question": "A frog starts on lily pad 1 and wants to reach lily pad 8. From any pad n it can jump to n+1 or n+2. How many distinct paths can it take to reach lily pad 8?",
+        "expectedKeywords": [
+          "21",
+          "twenty-one"
+        ]
+      },
+      {
+        "question": "An investor buys 200 shares at $15 each and 300 shares at $20 each. The entire portfolio drops by 10%. What is the total dollar loss?",
+        "expectedKeywords": [
+          "900",
+          "$900"
+        ]
+      },
+      {
+        "question": "How many prime numbers are there strictly between 50 and 80?",
+        "expectedKeywords": [
+          "7",
+          "seven"
         ]
       }
     ],
@@ -7026,6 +7214,80 @@
           "three",
           "percent",
           "minimum"
+        ]
+      },
+      {
+        "text": "The patient's blood pressure measured one hundred twenty over eighty millimeters of mercury this morning",
+        "keywords": [
+          "blood",
+          "pressure",
+          "120",
+          "80",
+          "millimeters",
+          "mercury"
+        ]
+      },
+      {
+        "text": "Flight UA four seven two one departs from gate thirty-seven B at fourteen fifty-five with boarding beginning at fourteen twenty-five for zones three through seven",
+        "keywords": [
+          "UA",
+          "4721",
+          "37B",
+          "fourteen",
+          "fifty-five",
+          "twenty-five",
+          "three",
+          "seven"
+        ]
+      },
+      {
+        "text": "The thirty-year mortgage has a principal of three hundred fifty thousand dollars at an annual interest rate of four point seven five percent",
+        "keywords": [
+          "thirty",
+          "350000",
+          "three",
+          "hundred",
+          "fifty",
+          "four",
+          "seven",
+          "five"
+        ]
+      },
+      {
+        "text": "Laboratory specimen batch LB-2024-88712 contains forty-seven samples stored at minus eighty degrees Celsius requiring six thousand RPM centrifugation for fifteen minutes",
+        "keywords": [
+          "LB",
+          "2024",
+          "88712",
+          "forty-seven",
+          "minus",
+          "eighty",
+          "six",
+          "thousand",
+          "fifteen"
+        ]
+      },
+      {
+        "text": "Order number eight four seven three two ships to ZIP code nine four one zero seven via FedEx Ground with a declared value of four hundred twelve dollars and fifty cents",
+        "keywords": [
+          "84732",
+          "94107",
+          "FedEx",
+          "Ground",
+          "412",
+          "fifty"
+        ]
+      },
+      {
+        "text": "Pursuant to section seven hundred and two of the Federal Rules of Evidence the expert witness testimony on gas chromatography-mass spectrometry results has been admitted",
+        "keywords": [
+          "seven",
+          "hundred",
+          "Federal",
+          "Evidence",
+          "expert",
+          "chromatography",
+          "spectrometry"
         ]
       }
     ]
