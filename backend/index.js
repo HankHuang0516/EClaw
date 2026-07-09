@@ -22246,7 +22246,20 @@ app.put('/api/device/user-profile', async (req, res) => {
 // ============================================
 
 app.get('/api/device/org-chart', async (req, res) => {
-    const deviceId = authDevice(req);
+    // Reading the org-chart (hierarchy/roster: who reports to whom) is a
+    // bot-readable operation — a bot needs it to resolve its superior/subordinates
+    // for routing (card_dfdd58f2). Accept EITHER owner deviceSecret OR a bound
+    // entity's botSecret+entityId via the shared authDeviceRead() idiom (same as
+    // /api/suppression-log, /api/b2b-status). The WRITE path (PUT below) still
+    // requires deviceSecret — this only broadens the read.
+    let deviceId = null;
+    const auth = authDeviceRead(req.query);
+    if (auth.ok) {
+        deviceId = auth.deviceId;
+    } else if (req.user && req.user.deviceId) {
+        // Fallback: JWT cookie (web portal) — preserves existing portal callers.
+        deviceId = req.user.deviceId;
+    }
     if (!deviceId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
     const orgChart = await orgChartModule.getOrgChart(deviceId);
