@@ -45,19 +45,29 @@ const USER_POV_ALIASES = Object.freeze(['User POV', '用戶角度', 'User perspe
 
 const PR_LINK_PATTERN = /https?:\/\/github\.com\/[\w.\-]+\/[\w.\-]+\/pull\/\d+/i;
 
-const UI_PAIN_TAGS = Object.freeze(['ux_feedback', 'redirect_deeplink', 'delivery_reliability']);
-
 // ── HARD vision/interaction evidence (card_5d50ee10, P0) ────────────────────
 // A class of "card marked done but has a visible bug the owner had to find"
 // failures came from reviewers closing UI/UX cards without proving they actually
 // LOOKED at / OPERATED the surface. These two checks are the whole point: they
 // HARD-BLOCK a →done move EVEN IN SOFT MODE (soft mode must NOT suppress them).
 //
-// Card-type detection is AUTOMATIC and does NOT rely on anyone remembering a flag:
-//   UI card  = requiresScreenshotReview===true OR painTag ∈ UI_CARD_PAIN_TAGS
-//              OR any attached file is an image.
-//   UX card  = requiresInteractionReview===true OR painTag ∈ UX_CARD_PAIN_TAGS.
-// The explicit `isUiCard` override still works (it forces the UI branch on/off).
+// Card-type detection keys off the card's EXPLICIT UI/UX flags — NOT painTag
+// inference (card_b76e6590, Hank 2026-07-09):
+//   UI card  = isUiCard===true (explicit override) OR requiresScreenshotReview===true.
+//   UX card  = requiresInteractionReview===true.
+// painTag is DELIBERATELY NOT a UI/UX signal here. The old code inferred UI-ness
+// from painTags such as `delivery_reliability` / `ux_feedback` (assigned by the
+// keyword classifier to any card mentioning "delivery"/"retry"/"回饋"/"bugfix"),
+// so pure-backend cron cards and semantic-a11y cards — which carry
+// requires_screenshot_review=false — were mis-classified as UI cards and
+// HARD-BLOCKED demanding an impossible/low-value screenshot (mis-fired 3× in one
+// session: a visual-patrol cron, the daily rebalance cron, an a11y card). The
+// explicit requires_screenshot_review column is the single source of truth for
+// "does this card need a human to LOOK at a rendered surface"; a card with it
+// false/absent is never demanded a screenshot regardless of how UI-ish its
+// title/painTag reads. An attached image no longer auto-promotes a card to UI
+// either — a backend card may legitimately attach a diagram without owing a
+// [VISION] attestation.
 //
 // UI-vision evidence  = (a) an image/* attachment AFTER the preflight comment
 //                     + (b) a comment carrying `[VISION]` followed by ≥15 chars
@@ -65,11 +75,17 @@ const UI_PAIN_TAGS = Object.freeze(['ux_feedback', 'redirect_deeplink', 'deliver
 // UX-interaction evidence = a comment carrying `[UX-OPERATED]` + ≥15 chars of the
 //                       flow operated, AND ≥1 artifact (any file, image or not)
 //                       as interaction evidence.
-const UI_CARD_PAIN_TAGS = Object.freeze(['ui', 'uiux', 'ui_ux', 'frontend', 'delivery_reliability', 'visual']);
-const UX_CARD_PAIN_TAGS = Object.freeze(['interaction', 'gesture', 'flow', 'ux', 'navigation', 'drag', 'scroll']);
 
 const VISION_TOKEN = '[VISION]';
 const UX_OPERATED_TOKEN = '[UX-OPERATED]';
+// Semantic-evidence token (card_b76e6590, Hank 2026-07-09 "語意卡可用測試證據替代
+// 截圖"). For a NON-UI card (requires_screenshot_review=false), a comment carrying
+// this token + a red→green test attestation stands in for the jest-log FILE
+// artifact — so a pure-backend / a11y card that verified via a programmatic test
+// can close without uploading a log file OR a screenshot. It NEVER applies to UI
+// cards (their independent vision block is untouched) and never substitutes for
+// the P0/P1 UI screenshot.
+const TEST_ATTESTATION_TOKEN = '[TEST]';
 // Reviewer must write a non-trivial description AFTER the token (≥ this many
 // trimmed chars) so the token can't be dropped in bare.
 const MIN_ATTESTATION_CHARS = 15;
@@ -93,8 +109,10 @@ function attestationAfter(text, token) {
  *           kanban_files rows for the card. When omitted, file checks are skipped (v1 compat).
  * @property {('P0'|'P1'|'P2'|'P3')} [severity]
  *           when omitted, defaults to 'P2' (mid-tier requirements)
- * @property {boolean} [isUiCard]            explicit override; if undefined, painTags is inspected
- * @property {string[]} [painTags]           used to infer isUiCard when not passed
+ * @property {boolean} [isUiCard]            explicit override; if undefined, requiresScreenshotReview
+ *                                           decides (card_b76e6590 — painTag is NOT consulted).
+ * @property {string[]} [painTags]           episode pain taxonomy tags; used only for the OODA-R
+ *                                           episode record — NOT for UI-card / vision inference.
  * @property {boolean} [strictArtifacts]     default true when severity/files provided; false otherwise
  * @property {boolean} [softMode]            SOFT GATE (owner decision card_f52ef42e, DEFAULT for the
  *                                           kanban callsite via device pref done_gate_mode='soft').
@@ -143,36 +161,38 @@ function tsOf(c) {
     return Date.parse(v) || 0;
 }
 
+// UI-card detection for the P0/P1 screenshot-artifact tier (step 4 below).
+// EXPLICIT signal only (card_b76e6590): the reviewer's isUiCard override, else
+// the card's requires_screenshot_review column. painTag is NOT consulted — a
+// backend card whose painTag reads UI-ish (delivery_reliability / ux_feedback)
+// must not be forced to attach a screenshot.
 function inferIsUiCard(input) {
     if (typeof input.isUiCard === 'boolean') return input.isUiCard;
-    const pt = Array.isArray(input.painTags) ? input.painTags : [];
-    return pt.some(t => UI_PAIN_TAGS.includes(t));
+    return input.requiresScreenshotReview === true;
 }
 
 function mimeOf(f) {
     return (f.mimeType || f.mime_type || '').toString().toLowerCase();
 }
 
-// AUTOMATIC UI-card detection for the HARD vision check (card_5d50ee10). Wider
-// than inferIsUiCard's painTag set: also honours the explicit override, the
-// requiresScreenshotReview signal, the expanded UI_CARD_PAIN_TAGS list, AND any
-// attached image (a card that has a screenshot is de-facto a UI card). This must
-// NOT rely on someone remembering to set a flag.
-function detectUiCard(input, files) {
+// UI-card detection for the HARD vision check (card_5d50ee10, refined
+// card_b76e6590). Keys off the EXPLICIT UI signal ONLY:
+//   1. the reviewer's `isUiCard` override (forces the branch on/off), else
+//   2. requiresScreenshotReview === true (the card's explicit screenshot-review
+//      column — the single source of truth for "needs a human to LOOK").
+// It deliberately does NOT infer UI-ness from painTags (which mis-flagged
+// backend cron / a11y cards, card_b76e6590) NOR from an attached image (a
+// backend card may attach a diagram without owing a [VISION] attestation).
+function detectUiCard(input) {
     if (typeof input.isUiCard === 'boolean') return input.isUiCard;
-    if (input.requiresScreenshotReview === true) return true;
-    const pt = Array.isArray(input.painTags) ? input.painTags : [];
-    if (pt.some(t => UI_CARD_PAIN_TAGS.includes(t))) return true;
-    const fs = Array.isArray(files) ? files : [];
-    if (fs.some(f => mimeOf(f).startsWith('image/'))) return true;
-    return false;
+    return input.requiresScreenshotReview === true;
 }
 
-// AUTOMATIC UX-card detection for the HARD interaction check (card_5d50ee10).
+// UX-card detection for the HARD interaction check (card_5d50ee10, refined
+// card_b76e6590). Keys off the EXPLICIT requiresInteractionReview flag only —
+// painTag is not consulted.
 function detectUxCard(input) {
-    if (input.requiresInteractionReview === true) return true;
-    const pt = Array.isArray(input.painTags) ? input.painTags : [];
-    return pt.some(t => UX_CARD_PAIN_TAGS.includes(t));
+    return input.requiresInteractionReview === true;
 }
 
 /**
@@ -237,7 +257,7 @@ function evaluateDoneGate(input) {
             if (c && typeof c.text === 'string' && !c.isSystem) commentsAfterPre.push(c);
         }
 
-        const isUi = detectUiCard(input, files);
+        const isUi = detectUiCard(input);
         const isUx = detectUxCard(input);
 
         if (isUi) {
@@ -409,6 +429,23 @@ function evaluateDoneGate(input) {
 
     const isUi = inferIsUiCard(input);
 
+    // Semantic-evidence path (card_b76e6590, Hank 2026-07-09). For a NON-UI card
+    // (requires_screenshot_review=false → isUi=false), a `[TEST]` red→green
+    // attestation comment (≥MIN_ATTESTATION_CHARS after the token, posted after
+    // preflight, non-system) counts as programmatic verification IN LIEU of the
+    // jest-log FILE artifact. This lets a pure-backend / a11y card close on a
+    // real test proof without owing an uploadable log file OR a screenshot. It is
+    // scoped to non-UI cards ONLY — a UI card must still upload real artifacts and
+    // is independently governed by the HARD vision block above.
+    const hasTestAttestation = !isUi && (() => {
+        for (let i = preflightIdx + 1; i < list.length; i++) {
+            const c = list[i];
+            if (!c || typeof c.text !== 'string' || c.isSystem) continue;
+            if (attestationAfter(c.text, TEST_ATTESTATION_TOKEN).length >= MIN_ATTESTATION_CHARS) return true;
+        }
+        return false;
+    })();
+
     // Severity tier:
     //   P0: jest log + (screenshot if UI)
     //   P1: jest log + (screenshot if UI)
@@ -418,12 +455,12 @@ function evaluateDoneGate(input) {
     const requiresJest = true;
     const requiresScreenshot = isUi && (severity === 'P0' || severity === 'P1');
 
-    if (requiresJest && !hasJestLog) {
+    if (requiresJest && !hasJestLog && !hasTestAttestation) {
         const b = block({
             allowed: false,
             code: 'PREFLIGHT_GATE_FAILED',
             error: 'Required artifact missing: jest output / log file',
-            hint: 'Upload the jest verbose output (or other test log) via POST /api/mission/card/:id/file with mimeType: "text/plain" AFTER the preflight comment. Text-claim of "tests passed" is insufficient.',
+            hint: `Upload the jest verbose output (or other test log) via POST /api/mission/card/:id/file with mimeType: "text/plain" AFTER the preflight comment. Text-claim of "tests passed" is insufficient. (Non-UI cards may instead post a "${TEST_ATTESTATION_TOKEN}" comment with a red→green test attestation of ≥${MIN_ATTESTATION_CHARS} chars.)`,
             missingItems: ['jest_output_artifact'],
         });
         if (b) return hardVisionUxBlock || b;
@@ -468,12 +505,17 @@ module.exports = {
     REQUIRED_EVIDENCE_ITEMS,
     USER_POV_ALIASES,
     PR_LINK_PATTERN,
-    UI_PAIN_TAGS,
-    UI_CARD_PAIN_TAGS,
-    UX_CARD_PAIN_TAGS,
     VISION_TOKEN,
     UX_OPERATED_TOKEN,
+    TEST_ATTESTATION_TOKEN,
     MIN_ATTESTATION_CHARS,
     evaluateDoneGate,
     buildSoftWarning,
+    // Classifier predicates exposed for unit tests (card_b76e6590): they decide
+    // whether the HARD vision / interaction evidence check applies, keyed off the
+    // card's EXPLICIT requires_screenshot_review / requires_interaction_review
+    // flags (NOT painTag inference).
+    detectUiCard,
+    detectUxCard,
+    inferIsUiCard,
 };

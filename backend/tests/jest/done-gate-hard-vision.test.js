@@ -123,7 +123,10 @@ describe('HARD vision evidence — UI cards blocked EVEN IN SOFT MODE without im
         expect(v.missingItems).toBeUndefined();
     });
 
-    test('automatic UI detection: painTag "frontend" alone triggers the vision check', () => {
+    test('explicit UI detection: painTag "frontend" alone does NOT trigger the vision check (card_b76e6590)', () => {
+        // card_b76e6590 (Hank 2026-07-09): painTag is NOT a UI signal. A card with a
+        // UI-ish painTag but NO explicit requires_screenshot_review is a backend card
+        // — no image / [VISION] demanded. With a jest log it passes clean.
         const v = evaluateDoneGate({
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true, severity: 'P2',
@@ -132,21 +135,37 @@ describe('HARD vision evidence — UI cards blocked EVEN IN SOFT MODE without im
             files: [jestFile],
             softMode: true,
         });
+        expect(v.allowed).toBe(true);
+        expect(v.softWarning).toBeUndefined();
+    });
+
+    test('explicit requiresScreenshotReview triggers the vision check (the real UI signal)', () => {
+        const v = evaluateDoneGate({
+            oldStatus: 'in_progress', newStatus: 'done',
+            requiresPreflightReview: true, severity: 'P2',
+            requiresScreenshotReview: true,   // explicit UI signal
+            comments: [preflight, fullEvidence],   // no image, no [VISION]
+            files: [jestFile],
+            softMode: true,
+        });
         expect(v.allowed).toBe(false);
         expect(v.missingItems).toContain('vision_screenshot_artifact');
     });
 
-    test('automatic UI detection: an attached image makes it a UI card (needs [VISION])', () => {
+    test('an attached image does NOT auto-promote a backend card to UI (card_b76e6590)', () => {
+        // A backend card may legitimately attach a diagram/chart without owing a
+        // [VISION] attestation. No explicit flag + no requires_screenshot_review →
+        // not a UI card, even with an image present.
         const v = evaluateDoneGate({
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true, severity: 'P2',
-            // no explicit flag, no UI painTag — but an image is attached
+            // no explicit UI flag — an attached image alone is not a UI signal
             comments: [preflight, fullEvidence],
             files: [jestFile, imageFile],
             softMode: true,
         });
-        expect(v.allowed).toBe(false);
-        expect(v.missingItems).toContain('vision_attestation');
+        expect(v.allowed).toBe(true);
+        expect(v.softWarning).toBeUndefined();
     });
 });
 
@@ -192,11 +211,32 @@ describe('HARD interaction evidence — UX cards blocked EVEN IN SOFT MODE witho
         expect(v.missingItems).toBeUndefined();
     });
 
-    test('UX card whose ONLY artifact is an image is ALSO auto-classified UI → needs [VISION] too', () => {
-        // Automatic detection: an attached image makes any card a UI card. So a UX
-        // card whose interaction artifact is a screenshot must additionally carry a
-        // [VISION] attestation. Without it, the vision check blocks first.
+    test('UX card whose ONLY artifact is an image is NOT auto-classified UI (card_b76e6590) → no [VISION] hard-block', () => {
+        // card_b76e6590: an attached image no longer auto-promotes a card to UI. A
+        // pure UX card (requiresInteractionReview only, no requiresScreenshotReview)
+        // whose interaction artifact is a screenshot satisfies the UX evidence with
+        // just [UX-OPERATED] + the artifact — NO [VISION] is owed, so it is NOT
+        // HARD-BLOCKED. (It still soft-warns on the missing jest log — an image is
+        // not a test log — but that is a soft flag, never a hard vision block.)
         const v = evaluateDoneGate(uxBase({
+            comments: [preflight, fullEvidence, uxOperatedComment],
+            files: [imageFile],
+            softMode: true,
+        }));
+        expect(v.allowed).toBe(true);
+        // crucially NOT hard-blocked on the vision sentinels
+        expect(v.missingItems).toBeUndefined();
+        expect(v.softWarning.missing).not.toContain('vision_attestation');
+        expect(v.softWarning.missing).not.toContain('vision_screenshot_artifact');
+        expect(v.softWarning.missing).toContain('jest_output_artifact');
+    });
+
+    test('UX card ALSO flagged requiresScreenshotReview must carry BOTH [UX-OPERATED] and [VISION]', () => {
+        // When a card is EXPLICITLY both (requiresInteractionReview + requiresScreenshotReview),
+        // both hard checks apply. With the image + [UX-OPERATED] but no [VISION], the
+        // vision check blocks first.
+        const v = evaluateDoneGate(uxBase({
+            requiresScreenshotReview: true,
             comments: [preflight, fullEvidence, uxOperatedComment],
             files: [imageFile],
             softMode: true,
@@ -205,8 +245,9 @@ describe('HARD interaction evidence — UX cards blocked EVEN IN SOFT MODE witho
         expect(v.missingItems).toContain('vision_attestation');
     });
 
-    test('UX card operated with an image artifact + a [VISION] attestation → allowed (dual-classified)', () => {
+    test('explicitly dual-flagged card operated with an image + a [VISION] attestation → allowed', () => {
         const v = evaluateDoneGate(uxBase({
+            requiresScreenshotReview: true,
             comments: [preflight, fullEvidence, uxOperatedComment, visionComment],
             files: [imageFile],
             softMode: true,
@@ -214,11 +255,26 @@ describe('HARD interaction evidence — UX cards blocked EVEN IN SOFT MODE witho
         expect(v.allowed).toBe(true);
     });
 
-    test('automatic UX detection: painTag "scroll" alone triggers the interaction check', () => {
+    test('explicit UX detection: painTag "scroll" alone does NOT trigger the interaction check (card_b76e6590)', () => {
+        // painTag is not a UX signal. No explicit requiresInteractionReview → not a
+        // UX card; with a jest log it passes clean.
         const v = evaluateDoneGate({
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true, severity: 'P2',
             painTags: ['scroll'],
+            comments: [preflight, fullEvidence],   // no [UX-OPERATED]
+            files: [jestFile],
+            softMode: true,
+        });
+        expect(v.allowed).toBe(true);
+        expect(v.softWarning).toBeUndefined();
+    });
+
+    test('explicit requiresInteractionReview triggers the interaction check (the real UX signal)', () => {
+        const v = evaluateDoneGate({
+            oldStatus: 'in_progress', newStatus: 'done',
+            requiresPreflightReview: true, severity: 'P2',
+            requiresInteractionReview: true,   // explicit UX signal
             comments: [preflight, fullEvidence],   // no [UX-OPERATED]
             files: [jestFile],
             softMode: true,

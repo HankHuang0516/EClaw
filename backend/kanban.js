@@ -2784,20 +2784,17 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     );
                 } catch (_) { /* classifier optional; gate falls back */ }
                 const { evaluateDoneGate } = require('./agent-improvement/done-gate');
-                // Broaden UI/UX detection so a manually-created card whose TITLE/description
-                // reads as UI/UX (e.g. "[Bug/UI] ...") but that carries no painTag /
-                // requires_screenshot_review flag / image is still caught by the HARD
-                // vision/interaction gate — the "un-tagged UI card slips through" gap found by
-                // dogfooding (card_5d50ee10 follow-up). Bias toward "needs verification": a false
-                // positive merely asks for a screenshot, the safe direction. Word-boundary UI/UX
-                // + specific UI/UX nouns (EN+ZH) so it does not over-catch generic backend text.
-                // Deliberately excludes the ambiguous `delivery_reliability` painTag (that infra
-                // tag on backend cards caused the old false "UI needs screenshot" demand).
-                const _gateText = String(card.title || '') + ' ' + String(card.description || '');
-                const _uiTitleHit = /\bUI\b|\bUIUX\b|介面|畫面|外觀|縮圖|按鈕|版面|排版|配色|破圖|樣式|圖示|\bmodal\b|\bdialog\b|\bbutton\b|\bicon\b|\bthumbnail\b|\bcss\b/i.test(_gateText);
-                const _uxTitleHit = /\bUX\b|拖曳|拖移|手勢|滑動|長按|操作流程|互動|\bgesture\b|\bswipe\b|\bscroll\b|\bdrag\b|\bnavigation\b/i.test(_gateText);
-                const _hasImageFile = (filesRes.rows || []).some(f => String(f.mime_type || f.mimeType || '').startsWith('image/'));
-                const _uiCardDetected = card.requires_screenshot_review === true || _uiTitleHit || _hasImageFile;
+                // UI/UX card detection keys off the card's EXPLICIT flags ONLY
+                // (card_b76e6590, Hank 2026-07-09). The old code additionally
+                // inferred UI-ness from a title/description keyword regex + any
+                // attached image, so a pure-backend cron card or a semantic-a11y
+                // card (requires_screenshot_review=false) whose TITLE happened to
+                // read UI-ish (e.g. mentions "button"/"delivery") was wrongly
+                // HARD-BLOCKED demanding an impossible screenshot (mis-fired 3× in
+                // one session). requires_screenshot_review is the single source of
+                // truth for "does a human need to LOOK at a rendered surface"; a
+                // card with it false/absent is NEVER treated as a UI card.
+                const _uiCardDetected = card.requires_screenshot_review === true;
                 const verdict = evaluateDoneGate({
                     oldStatus,
                     newStatus,
@@ -2807,19 +2804,18 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     severity: (card.priority || 'P2'),
                     painTags,
                     // Screenshot expectation keys off the EXPLICIT UI signal
-                    // (requires_screenshot_review), NOT painTag inference
-                    // (card_f52ef42e): pure-backend cards whose painTag happens to be
-                    // delivery_reliability were wrongly told "UI card requires a
-                    // screenshot". Passing an explicit boolean makes inferIsUiCard
-                    // honour it and never fall back to painTags — a backend card
-                    // (requires_screenshot_review=false) never gets a screenshot demand.
+                    // (requires_screenshot_review), NOT painTag / title inference
+                    // (card_f52ef42e + card_b76e6590): pure-backend & a11y cards
+                    // were wrongly told "UI card requires a screenshot". Passing an
+                    // explicit boolean makes detectUiCard honour it — a backend card
+                    // (requires_screenshot_review=false) never gets a vision demand.
                     isUiCard: _uiCardDetected,
-                    // HARD vision/interaction evidence (card_5d50ee10). Automatic
-                    // UI/UX card detection keys off these explicit flags (plus
-                    // painTags / attached images inside the gate). These two hard
-                    // checks BLOCK a →done move even in soft mode.
+                    // HARD vision/interaction evidence (card_5d50ee10). UI/UX card
+                    // detection keys off these EXPLICIT flags only. These two hard
+                    // checks BLOCK a →done move even in soft mode — for genuine UI
+                    // cards (requires_screenshot_review=true), unchanged.
                     requiresScreenshotReview: card.requires_screenshot_review === true,
-                    requiresInteractionReview: card.requires_interaction_review === true || _uxTitleHit,
+                    requiresInteractionReview: card.requires_interaction_review === true,
                     // Per-card PR-link opt-in (owner directive 2026-07-03). The
                     // PR-link sub-check enforces ONLY when this card explicitly
                     // opted in (requires_pr_link=true, set at create or via
@@ -2879,16 +2875,16 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             const updatedCard = serializeCard(result.rows[0]);
 
             // 🔎 Review-time evidence reminder (Hank 2026-07-04): when a card enters `review`
-            // and auto-detects as UI/UX (same detection the done-gate uses: requires_screenshot_review
-            // / requires_interaction_review / title+description keywords / attached image), remind the
-            // reviewer UP-FRONT what the done-gate will HARD-require, so they gather evidence early
-            // instead of hitting the wall at →done. Non-blocking heads-up; the hard block stays at done.
+            // and is a UI/UX card, remind the reviewer UP-FRONT what the done-gate will
+            // HARD-require, so they gather evidence early instead of hitting the wall at →done.
+            // Detection keys off the card's EXPLICIT flags ONLY (requires_screenshot_review /
+            // requires_interaction_review) — the SAME source of truth the done-gate now uses
+            // (card_b76e6590). A title-keyword heuristic here would warn "you'll be hard-blocked"
+            // for a backend card the gate no longer blocks — a misleading nudge — so it is dropped.
+            // Non-blocking heads-up; the hard block stays at done.
             if (newStatus === 'review') {
-                const _rText = String(card.title || '') + ' ' + String(card.description || '');
-                const _uiHit = card.requires_screenshot_review === true
-                    || /\bUI\b|\bUIUX\b|介面|畫面|外觀|縮圖|按鈕|版面|排版|配色|破圖|樣式|圖示|\bmodal\b|\bdialog\b|\bbutton\b|\bicon\b|\bthumbnail\b|\bcss\b/i.test(_rText);
-                const _uxHit = card.requires_interaction_review === true
-                    || /\bUX\b|拖曳|拖移|手勢|滑動|長按|操作流程|互動|\bgesture\b|\bswipe\b|\bscroll\b|\bdrag\b|\bnavigation\b/i.test(_rText);
+                const _uiHit = card.requires_screenshot_review === true;
+                const _uxHit = card.requires_interaction_review === true;
                 if (_uiHit || _uxHit) {
                     const [cRes, fRes] = await Promise.all([
                         pool.query(`SELECT text FROM kanban_comments WHERE card_id = $1 AND device_id = $2`, [cardId, deviceId]),
