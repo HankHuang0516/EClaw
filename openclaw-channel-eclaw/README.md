@@ -248,6 +248,36 @@ org-forward traffic is active, enable `ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS=1`
 and `ECLAW_SUPPRESS_BACKGROUND_EVENTS=1` only on `openclaw-e`, then recreate
 that service and verify #3 independently.
 
+### Frozen-session false-green (project E / #3) — fleet-monitor active pre-scan probe
+
+Recurring class: a MiniMax context-overflow leaves entity #3's OpenClaw session as
+a FROZEN `embedded_run` (`state=processing`, `recovery=none`, `lastProgressAge`
+climbing for hours). Passive health reports GREEN, but the entity produces no real
+reply — a false-green. Containment is a scoped `docker restart openclaw-project-e`
+(binding auto-restores; does not touch #1/#4/#5).
+
+The fleet monitor already auto-contains this via `check_openclaw_stalls` +
+`stall_3 -> restart_container`, BUT a frozen session emits **zero** `stalled
+session` diagnostics until new traffic arrives, so the passive log-scan had nothing
+to grep in-window and false-greened it on multiple consecutive runs
+(2026-06-29 / 07-03 / 07-04 / 07-08).
+
+Durable mitigation shipped 2026-07-08 in `monitor-eclaw-once.sh`
+(`nudge_openclaw_sessions`, called at the top of `check_openclaw_stalls`): before
+the log-scan the monitor sends ONE lightweight `/api/client/speak` liveness probe
+to openclaw entities 1/3/4/5, waits a few seconds, then scans — forcing any frozen
+session to re-log its `stalled session` line in-window so the existing detector +
+`restart_container` optimization self-heal it unattended. Controls (respects the
+deliberate no-chat-noise passive ACK design): env-gated `ECLAW_STALL_ACTIVE_PROBE`
+(default `1`; set `0` to disable) and throttled to at most once per
+`ECLAW_STALL_PROBE_MIN_INTERVAL_SECS` (default `1800`) via a timestamp file, so
+frequent monitor runs do not spam. Remaining deeper fixes (still owed to
+EClaw Layer C): (1) OpenClaw runtime should `abort_and_requeue` a model call stuck
+in `active_work_without_progress` instead of `recovery=none`, and fire compaction
+BEFORE the prompt exceeds the MiniMax window; (2) `/api/passive-health/run` should
+read an age-growing `stalled session` diagnostic as RED so every consumer sees the
+wedge, not just the fleet monitor.
+
 ## Troubleshooting
 
 ### `Config invalid: channels.eclaw unknown channel id`
