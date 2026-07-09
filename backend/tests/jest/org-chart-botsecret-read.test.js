@@ -51,9 +51,18 @@ describe('GET /api/device/org-chart — botSecret read (card_dfdd58f2)', () => {
     const deviceId = 'orgchart-botread-dev';
     const deviceSecret = `secret-${deviceId}`;
     let botSecret;
+    // A DIFFERENT device's validly-bound bot — proves a foreign botSecret cannot
+    // read THIS device's org-chart (confused-deputy negative). authDeviceRead is
+    // SHARED by /api/suppression-log + /api/b2b-status, so pinning cross-device
+    // scoping here guards the whole helper against an unguarded global-resolve
+    // refactor, not just this endpoint.
+    const foreignDeviceId = 'orgchart-foreign-dev';
+    const foreignDeviceSecret = `secret-${foreignDeviceId}`;
+    let foreignBotSecret;
 
     beforeAll(async () => {
         botSecret = await bindEntity(deviceId, deviceSecret, 0);
+        foreignBotSecret = await bindEntity(foreignDeviceId, foreignDeviceSecret, 0);
     });
 
     it('binds an entity and yields a botSecret (harness sanity)', () => {
@@ -97,6 +106,16 @@ describe('GET /api/device/org-chart — botSecret read (card_dfdd58f2)', () => {
         expect(res.status).toBe(401);
         expect(res.body.success).toBe(false);
     });
+
+    it("rejects a DIFFERENT device's botSecret against this device (confused-deputy → Unauthorized)", async () => {
+        // foreignBotSecret is a valid secret for foreignDeviceId, but must NOT
+        // read THIS device's hierarchy: authDeviceRead resolves the bot via
+        // devices[queriedDeviceId].entities[eId] and safeEqual's against THAT
+        // device's stored secret, so a cross-device secret never matches → 401.
+        const res = await get(`/api/device/org-chart?deviceId=${deviceId}&botSecret=${foreignBotSecret}&entityId=0`);
+        expect(res.status).toBe(401);
+        expect(res.body.success).toBe(false);
+    });
 });
 
 describe('PUT /api/device/org-chart — write STILL requires deviceSecret (card_dfdd58f2)', () => {
@@ -111,6 +130,18 @@ describe('PUT /api/device/org-chart — write STILL requires deviceSecret (card_
     it('rejects a PUT authenticated with botSecret only (write NOT broadened → 401)', async () => {
         const res = await put('/api/device/org-chart')
             .send({ deviceId, botSecret, entityId: 0, hierarchy: { USER: [0] } });
+        expect(res.status).toBe(401);
+        expect(res.body.success).toBe(false);
+    });
+
+    it('rejects a PUT with botSecret in the QUERY string (write-lock covers the query channel too → 401)', async () => {
+        // Tripwire for the exact regression this PR's GET fix demonstrates:
+        // swapping authDevice → authDeviceRead(req.query). If a future author
+        // mirrors that on the PUT, a query-string botSecret would silently gain
+        // write access. Pin it: the write path must reject botSecret via the
+        // query channel as well as the body channel.
+        const res = await put(`/api/device/org-chart?deviceId=${deviceId}&botSecret=${botSecret}&entityId=0`)
+            .send({ hierarchy: { USER: [0] } });
         expect(res.status).toBe(401);
         expect(res.body.success).toBe(false);
     });
