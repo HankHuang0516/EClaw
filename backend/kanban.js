@@ -13,6 +13,9 @@
  * Status transition:
  *   POST   /card/:id/move  — Move card to new status + reassign
  *   POST   /card/:id/reopen — Explicitly reopen Done card with reason + audit
+ *   POST   /card/:id/review-verdict — record an independent review's verdict;
+ *          a verified-real-defect review pays the reviewer base × 5 XP
+ *          (card_1d071107). The review workflow MUST call this.
  *
  * Comments (留言板):
  *   GET    /card/:id/comments
@@ -49,6 +52,9 @@ const devicePrefs = require('./device-preferences');
 const { emit: emitKanbanEvent } = require('./lib/kanban-events');
 const { resolveEntityHostDevice } = require('./lib/per-device-cron');
 const mentionParser = require('./mention-parser');
+// Review-economy XP rules (card_1d071107): a verified-real-defect review pays
+// the reviewer base × 5. Pure module (no I/O) — safe to require at module top.
+const reviewXp = require('./review-xp');
 
 // Cache device→language to avoid repeated lookups
 const deviceLangCache = new Map();
@@ -1161,6 +1167,11 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             reworkPrNumber: row.rework_pr_number || null,
             linkedPrevCardId: row.linked_prev_card_id || null,
             linkedNextCardId: row.linked_next_card_id || null,
+            // Review-economy XP ledger (card_1d071107): reviewer entity id →
+            // { xp, at, prNumber } for reviewers already paid the verified-defect
+            // ×5. Used for idempotency; a plain object even when the column is NULL.
+            reviewXpAwarded: (row.review_xp_awarded && typeof row.review_xp_awarded === 'object')
+                ? row.review_xp_awarded : {},
             // Aggregated counts (if present from JOIN)
             commentCount: parseInt(row.comment_count) || 0,
             noteCount: parseInt(row.note_count) || 0,
@@ -2773,20 +2784,17 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     );
                 } catch (_) { /* classifier optional; gate falls back */ }
                 const { evaluateDoneGate } = require('./agent-improvement/done-gate');
-                // Broaden UI/UX detection so a manually-created card whose TITLE/description
-                // reads as UI/UX (e.g. "[Bug/UI] ...") but that carries no painTag /
-                // requires_screenshot_review flag / image is still caught by the HARD
-                // vision/interaction gate — the "un-tagged UI card slips through" gap found by
-                // dogfooding (card_5d50ee10 follow-up). Bias toward "needs verification": a false
-                // positive merely asks for a screenshot, the safe direction. Word-boundary UI/UX
-                // + specific UI/UX nouns (EN+ZH) so it does not over-catch generic backend text.
-                // Deliberately excludes the ambiguous `delivery_reliability` painTag (that infra
-                // tag on backend cards caused the old false "UI needs screenshot" demand).
-                const _gateText = String(card.title || '') + ' ' + String(card.description || '');
-                const _uiTitleHit = /\bUI\b|\bUIUX\b|介面|畫面|外觀|縮圖|按鈕|版面|排版|配色|破圖|樣式|圖示|\bmodal\b|\bdialog\b|\bbutton\b|\bicon\b|\bthumbnail\b|\bcss\b/i.test(_gateText);
-                const _uxTitleHit = /\bUX\b|拖曳|拖移|手勢|滑動|長按|操作流程|互動|\bgesture\b|\bswipe\b|\bscroll\b|\bdrag\b|\bnavigation\b/i.test(_gateText);
-                const _hasImageFile = (filesRes.rows || []).some(f => String(f.mime_type || f.mimeType || '').startsWith('image/'));
-                const _uiCardDetected = card.requires_screenshot_review === true || _uiTitleHit || _hasImageFile;
+                // UI/UX card detection keys off the card's EXPLICIT flags ONLY
+                // (card_b76e6590, Hank 2026-07-09). The old code additionally
+                // inferred UI-ness from a title/description keyword regex + any
+                // attached image, so a pure-backend cron card or a semantic-a11y
+                // card (requires_screenshot_review=false) whose TITLE happened to
+                // read UI-ish (e.g. mentions "button"/"delivery") was wrongly
+                // HARD-BLOCKED demanding an impossible screenshot (mis-fired 3× in
+                // one session). requires_screenshot_review is the single source of
+                // truth for "does a human need to LOOK at a rendered surface"; a
+                // card with it false/absent is NEVER treated as a UI card.
+                const _uiCardDetected = card.requires_screenshot_review === true;
                 const verdict = evaluateDoneGate({
                     oldStatus,
                     newStatus,
@@ -2796,19 +2804,18 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     severity: (card.priority || 'P2'),
                     painTags,
                     // Screenshot expectation keys off the EXPLICIT UI signal
-                    // (requires_screenshot_review), NOT painTag inference
-                    // (card_f52ef42e): pure-backend cards whose painTag happens to be
-                    // delivery_reliability were wrongly told "UI card requires a
-                    // screenshot". Passing an explicit boolean makes inferIsUiCard
-                    // honour it and never fall back to painTags — a backend card
-                    // (requires_screenshot_review=false) never gets a screenshot demand.
+                    // (requires_screenshot_review), NOT painTag / title inference
+                    // (card_f52ef42e + card_b76e6590): pure-backend & a11y cards
+                    // were wrongly told "UI card requires a screenshot". Passing an
+                    // explicit boolean makes detectUiCard honour it — a backend card
+                    // (requires_screenshot_review=false) never gets a vision demand.
                     isUiCard: _uiCardDetected,
-                    // HARD vision/interaction evidence (card_5d50ee10). Automatic
-                    // UI/UX card detection keys off these explicit flags (plus
-                    // painTags / attached images inside the gate). These two hard
-                    // checks BLOCK a →done move even in soft mode.
+                    // HARD vision/interaction evidence (card_5d50ee10). UI/UX card
+                    // detection keys off these EXPLICIT flags only. These two hard
+                    // checks BLOCK a →done move even in soft mode — for genuine UI
+                    // cards (requires_screenshot_review=true), unchanged.
                     requiresScreenshotReview: card.requires_screenshot_review === true,
-                    requiresInteractionReview: card.requires_interaction_review === true || _uxTitleHit,
+                    requiresInteractionReview: card.requires_interaction_review === true,
                     // Per-card PR-link opt-in (owner directive 2026-07-03). The
                     // PR-link sub-check enforces ONLY when this card explicitly
                     // opted in (requires_pr_link=true, set at create or via
@@ -2868,16 +2875,16 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             const updatedCard = serializeCard(result.rows[0]);
 
             // 🔎 Review-time evidence reminder (Hank 2026-07-04): when a card enters `review`
-            // and auto-detects as UI/UX (same detection the done-gate uses: requires_screenshot_review
-            // / requires_interaction_review / title+description keywords / attached image), remind the
-            // reviewer UP-FRONT what the done-gate will HARD-require, so they gather evidence early
-            // instead of hitting the wall at →done. Non-blocking heads-up; the hard block stays at done.
+            // and is a UI/UX card, remind the reviewer UP-FRONT what the done-gate will
+            // HARD-require, so they gather evidence early instead of hitting the wall at →done.
+            // Detection keys off the card's EXPLICIT flags ONLY (requires_screenshot_review /
+            // requires_interaction_review) — the SAME source of truth the done-gate now uses
+            // (card_b76e6590). A title-keyword heuristic here would warn "you'll be hard-blocked"
+            // for a backend card the gate no longer blocks — a misleading nudge — so it is dropped.
+            // Non-blocking heads-up; the hard block stays at done.
             if (newStatus === 'review') {
-                const _rText = String(card.title || '') + ' ' + String(card.description || '');
-                const _uiHit = card.requires_screenshot_review === true
-                    || /\bUI\b|\bUIUX\b|介面|畫面|外觀|縮圖|按鈕|版面|排版|配色|破圖|樣式|圖示|\bmodal\b|\bdialog\b|\bbutton\b|\bicon\b|\bthumbnail\b|\bcss\b/i.test(_rText);
-                const _uxHit = card.requires_interaction_review === true
-                    || /\bUX\b|拖曳|拖移|手勢|滑動|長按|操作流程|互動|\bgesture\b|\bswipe\b|\bscroll\b|\bdrag\b|\bnavigation\b/i.test(_rText);
+                const _uiHit = card.requires_screenshot_review === true;
+                const _uxHit = card.requires_interaction_review === true;
                 if (_uiHit || _uxHit) {
                     const [cRes, fRes] = await Promise.all([
                         pool.query(`SELECT text FROM kanban_comments WHERE card_id = $1 AND device_id = $2`, [cardId, deviceId]),
@@ -3315,6 +3322,156 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             res.json({ success: true, card: updatedCard, transition: { from: 'done', to: targetStatus }, reopened: true });
         } catch (err) {
             console.error('[Kanban] Reopen card error:', err);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ============================================
+    // POST /card/:id/review-verdict — record an independent review's verdict
+    // and, when it caught a REAL verified defect, pay the reviewer base × 5 XP.
+    // ============================================
+    //
+    // card_1d071107 (Hank directive 2026-07-05): 「審查抓出問題可以獲得五倍的經驗值」.
+    // This is the explicit hook the review workflow calls after it finishes an
+    // INDEPENDENT review of a card's PR. There is no pre-existing "review verdict"
+    // event in the platform, so this endpoint IS the trigger — the review
+    // workflow MUST call it for the multiplier to fire. It never fires on its own.
+    //
+    // The ×5 is paid to the REVIEWING entity iff evaluateReviewDefectAward()
+    // qualifies the input: (verdict DO-NOT-MERGE/request-changes/reject OR a
+    // confirmed HIGH/MED/CRITICAL finding) AND prSentBack === true (the PR was
+    // consequently sent back for changes rather than merged as-is). A completed
+    // review that finds nothing still earns the flat base (multiplier 1).
+    //
+    // Abuse guard: the award is idempotent per (card, reviewer) via the
+    // review_xp_awarded JSONB ledger — the same reviewer cannot be paid the
+    // verified-defect XP twice for the same card. A self-review (reviewer is one
+    // of the card's assignees) never earns the multiplier.
+    router.post('/card/:id/review-verdict', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const params = { ...req.query, ...req.body };
+        const cardId = req.params.id;
+        const { deviceId, verdict, severity, findings, prSentBack, prNumber } = params;
+        const reviewerEntityId = Number.parseInt(params.reviewerEntityId ?? params.entityId, 10);
+
+        if (!Number.isInteger(reviewerEntityId) || reviewerEntityId < 0) {
+            return res.status(400).json({ success: false, error: 'reviewerEntityId (or entityId) is required', code: 'REVIEWER_REQUIRED' });
+        }
+
+        try {
+            const existing = await pool.query(
+                `SELECT * FROM kanban_cards WHERE id = $1 AND device_id = $2 AND archived = false`,
+                [cardId, deviceId]
+            );
+            if (existing.rows.length === 0) {
+                return res.status(404).json({ success: false, error: 'Card not found or archived' });
+            }
+            const card = existing.rows[0];
+
+            // The reviewing entity is INDEPENDENT of the authors iff it is not one
+            // of the card's assignees. Pass an author id to the evaluator so a
+            // self-review can never earn the multiplier. When the reviewer is one
+            // of the assignees we set authorEntityId === reviewerEntityId to force
+            // the self-review branch.
+            const assignees = Array.isArray(card.assigned_bots) ? card.assigned_bots.map(Number) : [];
+            const isSelfReview = assignees.includes(reviewerEntityId);
+
+            // Normalize prSentBack from the several truthy encodings a caller
+            // might send (bool true, "true", "1", 1).
+            const prSentBackBool = prSentBack === true || prSentBack === 'true' || prSentBack === '1' || prSentBack === 1;
+
+            const decision = reviewXp.evaluateReviewDefectAward({
+                verdict,
+                severity,
+                findings: Array.isArray(findings) ? findings : undefined,
+                prSentBack: prSentBackBool,
+                reviewerEntityId,
+                authorEntityId: isSelfReview ? reviewerEntityId : null,
+                baseXp: reviewXp.REVIEW_BASE_XP,
+            });
+
+            // Idempotency ledger: reviewer id → award metadata. A prior
+            // verified-defect payout for THIS (card, reviewer) blocks a re-award.
+            const ledger = (card.review_xp_awarded && typeof card.review_xp_awarded === 'object')
+                ? { ...card.review_xp_awarded } : {};
+            const ledgerKey = String(reviewerEntityId);
+            const alreadyAwardedMultiplier = ledger[ledgerKey] && ledger[ledgerKey].multiplier === reviewXp.REVIEW_VERIFIED_DEFECT_XP_MULTIPLIER;
+
+            let awarded = false;
+            let xpResult = null;
+            let awardXp = 0;
+
+            if (decision.qualified && alreadyAwardedMultiplier) {
+                // Verified defect, but this reviewer was already paid for this card
+                // → do not double-award. Report the no-op honestly.
+                return res.json({
+                    success: true,
+                    cardId,
+                    reviewerEntityId,
+                    awarded: false,
+                    duplicate: true,
+                    multiplier: decision.multiplier,
+                    reason: 'already_awarded',
+                });
+            }
+
+            if (typeof awardEntityXP === 'function') {
+                awardXp = decision.awardXp;
+                if (awardXp > 0) {
+                    try {
+                        xpResult = await awardEntityXP(
+                            deviceId,
+                            reviewerEntityId,
+                            awardXp,
+                            decision.qualified ? 'review_verified_defect_x5' : 'review_completed'
+                        );
+                        awarded = true;
+                    } catch (e) {
+                        console.error('[Kanban] review-verdict awardEntityXP error:', e.message);
+                    }
+                }
+            }
+
+            // Persist the ledger entry ONLY for the qualified ×5 payout — that is
+            // the payout the abuse-guard protects. A plain base review can be
+            // re-submitted (it is cheap and self-limiting), but the ×5 is capped
+            // to once per (card, reviewer).
+            if (awarded && decision.qualified) {
+                ledger[ledgerKey] = {
+                    xp: awardXp,
+                    multiplier: decision.multiplier,
+                    at: new Date().toISOString(),
+                    prNumber: prNumber != null ? String(prNumber) : null,
+                };
+                await pool.query(
+                    `UPDATE kanban_cards SET review_xp_awarded = $1::jsonb, updated_at = NOW()
+                     WHERE id = $2 AND device_id = $3`,
+                    [JSON.stringify(ledger), cardId, deviceId]
+                );
+            }
+
+            // Audit breadcrumb on the card so the reward is visible + traceable.
+            if (awarded) {
+                const line = decision.qualified
+                    ? `🏅 審查獎勵：#${reviewerEntityId} 獨立審查抓出真缺陷（${(verdict || severity || 'defect')}${prNumber ? `, PR #${prNumber}` : ''}）→ +${awardXp} XP（base×${decision.multiplier}）`
+                    : `📝 審查完成：#${reviewerEntityId} → +${awardXp} XP（未抓出可驗證缺陷，無倍率）`;
+                try { await addSystemComment(cardId, deviceId, line); } catch (_) { /* non-blocking */ }
+            }
+
+            return res.json({
+                success: true,
+                cardId,
+                reviewerEntityId,
+                awarded,
+                qualified: decision.qualified,
+                multiplier: decision.multiplier,
+                awardXp,
+                reason: decision.reason,
+                selfReview: isSelfReview,
+                xp: xpResult,
+            });
+        } catch (err) {
+            console.error('[Kanban] review-verdict error:', err);
             res.status(500).json({ success: false, error: err.message });
         }
     });

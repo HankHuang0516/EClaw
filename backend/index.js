@@ -32,6 +32,7 @@ const orgChartModule = require('./org-chart');
 const crossDeviceSettings = require('./entity-cross-device-settings');
 const walkConfig = require('./entity-walk-config');
 const feedbackEmail = require('./feedback-email');
+const reviewXp = require('./review-xp'); // review-economy XP rules (card_1d071107)
 const chatEmbedding = require('./chat-embedding');
 const embeddingClient = require('./embedding-client');
 const multer = require('multer');
@@ -6733,7 +6734,12 @@ const XP_AMOUNTS = {
     PLAYER_SCOLD: -15,       // User scolds bot via keyword
     ENTITY_PRAISE: 10,       // Other entity praises this entity
     ENTITY_SCOLD: -10,       // Other entity scolds this entity
-    MISSED_SCHEDULE: -10     // Bot didn't respond to scheduled task
+    MISSED_SCHEDULE: -10,    // Bot didn't respond to scheduled task
+    // Base XP for a completed independent code review (card_1d071107). A plain
+    // review that finds nothing wrong still earns this base; the reward economy
+    // only *multiplies* it (×5) when the review catches a verified real defect.
+    // Single source of truth for the base + multiplier lives in review-xp.js.
+    REVIEW_COMPLETED: reviewXp.REVIEW_BASE_XP
 };
 
 // Keyword detection for praise/scold
@@ -22240,7 +22246,20 @@ app.put('/api/device/user-profile', async (req, res) => {
 // ============================================
 
 app.get('/api/device/org-chart', async (req, res) => {
-    const deviceId = authDevice(req);
+    // Reading the org-chart (hierarchy/roster: who reports to whom) is a
+    // bot-readable operation — a bot needs it to resolve its superior/subordinates
+    // for routing (card_dfdd58f2). Accept EITHER owner deviceSecret OR a bound
+    // entity's botSecret+entityId via the shared authDeviceRead() idiom (same as
+    // /api/suppression-log, /api/b2b-status). The WRITE path (PUT below) still
+    // requires deviceSecret — this only broadens the read.
+    let deviceId = null;
+    const auth = authDeviceRead(req.query);
+    if (auth.ok) {
+        deviceId = auth.deviceId;
+    } else if (req.user && req.user.deviceId) {
+        // Fallback: JWT cookie (web portal) — preserves existing portal callers.
+        deviceId = req.user.deviceId;
+    }
     if (!deviceId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
     const orgChart = await orgChartModule.getOrgChart(deviceId);

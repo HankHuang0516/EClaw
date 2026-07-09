@@ -79,22 +79,26 @@ describe('evaluateDoneGate v2 — artifact requirements', () => {
     });
 
     test('P0 UI card: jest log only is NOT enough, requires screenshot too', () => {
+        // card_b76e6590: a UI card is signalled EXPLICITLY (requiresScreenshotReview),
+        // not by painTag. With a jest log but NO image, the HARD vision block fires
+        // first and demands the screenshot artifact (vision_screenshot_artifact) —
+        // the same "a UI card cannot close without a screenshot" guarantee, now
+        // carried by the stronger vision sentinel.
         const v = evaluateDoneGate({
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true,
             severity: 'P0',
-            painTags: ['ux_feedback'],
+            requiresScreenshotReview: true,
             comments: baseComments,
             files: [mkFile('jest_out.txt', 'text/plain')],
         });
         expect(v.allowed).toBe(false);
-        expect(v.missingItems).toEqual(['screenshot_artifact']);
+        expect(v.missingItems).toContain('vision_screenshot_artifact');
     });
 
     test('P0 UI card: jest log + screenshot + [VISION] attestation → pass', () => {
-        // card_5d50ee10: a card with an image is now auto-classified UI and ALSO
-        // needs a [VISION] attestation of what was seen. jest + screenshot alone is
-        // no longer sufficient — the reviewer must state what they observed.
+        // card_b76e6590: a card with an EXPLICIT requiresScreenshotReview is a UI
+        // card and needs an image + a [VISION] attestation of what was seen.
         const visionComment = mkComment(
             `${VISION_TOKEN} verified the rendered dialog: the confirm button is blue and centered, no overflow`,
             { t: '2026-06-07T02:30:00Z' }
@@ -103,7 +107,7 @@ describe('evaluateDoneGate v2 — artifact requirements', () => {
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true,
             severity: 'P0',
-            painTags: ['ux_feedback'],
+            requiresScreenshotReview: true,
             comments: [...baseComments, visionComment],
             files: [
                 mkFile('jest_out.txt', 'text/plain'),
@@ -114,13 +118,19 @@ describe('evaluateDoneGate v2 — artifact requirements', () => {
     });
 
     test('P3 UI card: screenshot is OPTIONAL (severity tier)', () => {
+        // Explicit UI card, P3 tier: the severity-tier screenshot is optional, but a
+        // UI card still owes the HARD vision evidence (image + [VISION]).
+        const visionComment = mkComment(
+            `${VISION_TOKEN} the P3 tweak rendered correctly with no visible regression`,
+            { t: '2026-06-07T02:30:00Z' }
+        );
         const v = evaluateDoneGate({
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true,
             severity: 'P3',
-            painTags: ['ux_feedback'],
-            comments: baseComments,
-            files: [mkFile('jest_out.txt', 'text/plain')],
+            requiresScreenshotReview: true,
+            comments: [...baseComments, visionComment],
+            files: [mkFile('jest_out.txt', 'text/plain'), mkFile('proof.png', 'image/png')],
         });
         expect(v.allowed).toBe(true);
     });

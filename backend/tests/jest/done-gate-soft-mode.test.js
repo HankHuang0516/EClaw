@@ -88,10 +88,11 @@ describe('SOFT done-gate — (a) incomplete card moves to done, NOT blocked, ⚠
 });
 
 describe('SOFT done-gate — (b) pure-backend card gets NO screenshot demand/block', () => {
-    // The painTag delivery_reliability WOULD infer isUiCard=true (bug the callsite
-    // fixes by passing isUiCard=requires_screenshot_review). Prove that an explicit
-    // isUiCard:false overrides the painTag inference and never demands a screenshot,
-    // in BOTH modes, for a P0 card (the tier that would otherwise require a shot).
+    // card_b76e6590: painTag is no longer a UI signal, so a backend card carrying
+    // delivery_reliability is NOT inferred as a UI card at all. Explicit
+    // isUiCard:false is belt-and-suspenders (still honoured). Prove neither the
+    // painTag nor the override demands a screenshot, in BOTH modes, for a P0 card
+    // (the tier that would otherwise require a shot).
     test('soft: P0 backend card (isUiCard:false, delivery_reliability) → clean pass, no screenshot warning', () => {
         const v = evaluateDoneGate({
             oldStatus: 'in_progress', newStatus: 'done',
@@ -121,13 +122,13 @@ describe('SOFT done-gate — (b) pure-backend card gets NO screenshot demand/blo
         expect(v.allowed).toBe(true);
     });
 
-    test('regression guard: WITHOUT the explicit isUiCard, the painTag alone infers UI → hard-blocked', () => {
-        // card_5d50ee10 tightened this: delivery_reliability is a UI_CARD_PAIN_TAG,
-        // so the HARD vision check now fires FIRST (even before the old severity-tier
-        // screenshot check), demanding both an image and a [VISION] attestation. The
-        // card is still blocked — now on the stronger vision sentinels. The callsite
-        // avoids this false-positive by passing an explicit isUiCard=false for
-        // backend cards (see the two tests above).
+    test('regression guard (card_b76e6590): painTag alone does NOT infer UI — no vision demand even WITHOUT explicit isUiCard', () => {
+        // card_b76e6590 (Hank 2026-07-09) reverses the old card_5d50ee10 behaviour:
+        // `delivery_reliability` is no longer treated as a UI signal. The done-gate
+        // keys UI-ness off the EXPLICIT requires_screenshot_review flag ONLY, so a
+        // pure-backend card carrying that painTag but no explicit flag is NOT a UI
+        // card and is NEVER demanded a screenshot / [VISION]. With a jest log present
+        // it passes clean — the callsite no longer needs the isUiCard=false crutch.
         const v = evaluateDoneGate({
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true,
@@ -137,8 +138,8 @@ describe('SOFT done-gate — (b) pure-backend card gets NO screenshot demand/blo
             files: [jestFile],
             softMode: false,
         });
-        expect(v.allowed).toBe(false);
-        expect(v.missingItems).toEqual(['vision_screenshot_artifact', 'vision_attestation']);
+        expect(v.allowed).toBe(true);
+        expect(v.missingItems).toBeUndefined();
     });
 });
 
@@ -169,15 +170,22 @@ describe('SOFT done-gate — (c) HARD mode preserves the legacy hard-block byte-
     });
 
     test('P0 UI card missing screenshot → rejected (no softMode)', () => {
+        // A genuine UI card is signalled EXPLICITLY (requiresScreenshotReview),
+        // not by painTag (card_b76e6590). With no image, the HARD vision block
+        // hard-rejects (even in hard mode) demanding the screenshot artifact — the
+        // "UI card cannot close without a screenshot" guarantee, now carried by the
+        // vision sentinel.
         const v = evaluateDoneGate({
             oldStatus: 'in_progress', newStatus: 'done',
             requiresPreflightReview: true,
-            severity: 'P0', painTags: ['ux_feedback'],
-            comments: [preflight, fullEvidence], files: [jestFile],
+            severity: 'P0',
+            requiresScreenshotReview: true,
+            comments: [preflight, fullEvidence],
+            files: [jestFile],
             softMode: false,
         });
         expect(v.allowed).toBe(false);
-        expect(v.missingItems).toEqual(['screenshot_artifact']);
+        expect(v.missingItems).toContain('vision_screenshot_artifact');
     });
 });
 
