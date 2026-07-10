@@ -151,6 +151,21 @@ describe('resolveSelfReplyRoutingMeta — org-parent vs user, never "?"', () => 
         const meta = await resolve(child, 'dev1', 3, 'ok');
         expect(meta.mode).toBe('toUser');
     });
+
+    test('disconnected sub-tree (superior chain never reaches USER) → toUser, chip does not lie (card_d199b41c mirror walk)', async () => {
+        // 3→2→5→(orphan): 5 is not under USER, so orgChartForward would DROP the
+        // message (reachesUser=false). Opt1 default-on (both options off + a
+        // configured hierarchy) would otherwise stamp org_upward — the reaches-USER
+        // walk must prevent that so the chip matches the real (non-)route.
+        const resolve = makeResolver({
+            hierarchy: { USER: [10], 2: [3], 5: [2] },
+            options: {},
+            entities: { 3: child, 2: parent, 5: { name: 'Orphan', isBound: true }, 10: parent },
+        });
+        const meta = await resolve(child, 'dev1', 3, 'status');
+        expect(meta.mode).toBe('toUser');
+        expect(meta.to_is_user).toBe(true);
+    });
 });
 
 describe('backend self-save wiring (static surface)', () => {
