@@ -17,11 +17,14 @@ function TabIcon({ name, color }: { name: IconName; color: string }) {
 
 function TabLabel({
   color,
+  focused,
   children,
 }: {
   color: string;
+  focused: boolean;
   children: ReactNode;
 }) {
+  if (!focused) return null;
   return (
     <Text
       numberOfLines={1}
@@ -68,8 +71,8 @@ export default function TabLayout() {
           tabBarIcon: ({ focused, color }) => (
             <TabIcon name={focused ? 'home' : 'home-outline'} color={color} />
           ),
-          tabBarLabel: ({ color }) => (
-            <TabLabel color={color}>{t('tabs.home')}</TabLabel>
+          tabBarLabel: ({ color, focused }) => (
+            <TabLabel color={color} focused={focused}>{t('tabs.home')}</TabLabel>
           ),
         }}
       />
@@ -80,8 +83,8 @@ export default function TabLayout() {
           tabBarIcon: ({ focused, color }) => (
             <TabIcon name={focused ? 'chat' : 'chat-outline'} color={color} />
           ),
-          tabBarLabel: ({ color }) => (
-            <TabLabel color={color}>{t('tabs.chat')}</TabLabel>
+          tabBarLabel: ({ color, focused }) => (
+            <TabLabel color={color} focused={focused}>{t('tabs.chat')}</TabLabel>
           ),
         }}
       />
@@ -92,8 +95,8 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <TabIcon name="target" color={color} />
           ),
-          tabBarLabel: ({ color }) => (
-            <TabLabel color={color}>{t('tabs.mission')}</TabLabel>
+          tabBarLabel: ({ color, focused }) => (
+            <TabLabel color={color} focused={focused}>{t('tabs.mission')}</TabLabel>
           ),
         }}
       />
@@ -104,8 +107,8 @@ export default function TabLayout() {
           tabBarIcon: ({ focused, color }) => (
             <TabIcon name={focused ? 'card-account-details' : 'card-account-details-outline'} color={color} />
           ),
-          tabBarLabel: ({ color }) => (
-            <TabLabel color={color}>{t('tabs.cards')}</TabLabel>
+          tabBarLabel: ({ color, focused }) => (
+            <TabLabel color={color} focused={focused}>{t('tabs.cards')}</TabLabel>
           ),
         }}
       />
@@ -116,8 +119,8 @@ export default function TabLayout() {
           tabBarIcon: ({ focused, color }) => (
             <TabIcon name={focused ? 'cog' : 'cog-outline'} color={color} />
           ),
-          tabBarLabel: ({ color }) => (
-            <TabLabel color={color}>{t('tabs.settings')}</TabLabel>
+          tabBarLabel: ({ color, focused }) => (
+            <TabLabel color={color} focused={focused}>{t('tabs.settings')}</TabLabel>
           ),
         }}
       />
