@@ -4774,9 +4774,11 @@
             }
         }
 
-        // Mirror of backend org-chart.js getSuperior(): the direct parent entity id
-        // of `entityId` in the cached hierarchy, or 'USER' (reports to owner) or null
-        // (not placed). card_a0485399.
+        // Direct parent entity id of `entityId` in the cached hierarchy, or 'USER'
+        // (reports to owner) or null (not placed). Follows backend org-chart.js
+        // getSuperior(); coerces children via Number defensively (served hierarchies
+        // are already numeric via pruneHierarchy, so this only hardens the client
+        // against a malformed payload). card_a0485399.
         function orgSuperiorOf(entityId) {
             const h = orgChartHierarchy;
             if (!h || typeof h !== 'object') return null;
@@ -11641,11 +11643,10 @@
                 };
             }
 
-            // Floor: org-chart commander id (chip-path floor — chat-html cache).
-            const commanderFloor = (typeof orgChartCommanderId !== 'undefined'
-                && orgChartCommanderId != null
-                && (fallbackId == null || Number(orgChartCommanderId) !== Number(fallbackId)))
-                ? ('#' + orgChartCommanderId) : null;
+            // card_a0485399: NO #USER[0] commander floor here — flooring the
+            // to-side to hierarchy.USER[0] painted a wrong "#10" on the pill. A
+            // truly-unknown side now falls to the neutral label below (the upstream
+            // stub already carries the sender's real superior id when resolvable).
 
             // Neutral last resort: a sender-side label distinct from the
             // generic "Unspecified" so we never paint the same word on BOTH
@@ -11658,7 +11659,6 @@
                 || safeFallbackName
                 || (fallbackId != null && Number.isFinite(Number(fallbackId)) ? '#' + fallbackId : null)
                 || (!isBadName(fallbackCode) ? '#' + fallbackCode : null)
-                || commanderFloor
                 || neutral;
 
             const code = (sum && !isBadName(sum.publicCode)) ? '#' + sum.publicCode

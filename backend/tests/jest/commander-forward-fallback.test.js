@@ -201,8 +201,8 @@ describe('source invariants — orgChartForward wiring', () => {
             indexSrc,
             'async function orgChartForward(entity, deviceId, message, opts = {})'
         );
-        // taskForward/allForward-off return → fallback
-        expect(fwdSrc).toMatch(/!orgData\.options\.taskForward && !orgData\.options\.allForward\)\s*\{\s*return commanderForwardFallback/);
+        // taskForward off AND no effective up-forward (Opt1 forwardAllUp, card_d199b41c) → fallback
+        expect(fwdSrc).toMatch(/!orgData\.options\.taskForward && !forwardAllUp\)\s*\{\s*return commanderForwardFallback/);
         // no superior for this entity → fallback
         expect(fwdSrc).toMatch(/superiorId == null\)\s*\{\s*return commanderForwardFallback/);
     });

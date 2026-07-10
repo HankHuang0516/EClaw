@@ -40,9 +40,10 @@ describe('routing chip — commander fallback (card_29eed229d389e53bfae7d954)', 
         expect(chipFn).not.toBeNull();
     });
 
-    test('reads cached commander via module-level orgChartCommanderId', () => {
-        // The cache is checked inside the chip — proves the fallback is wired.
-        expect(positiveBranch).toMatch(/orgChartCommanderId/);
+    test('resolves the to-side floor via the sender\'s real superior (card_a0485399, not #USER[0])', () => {
+        // The positive branch floors an unknown to-side to degradedTargetFor(sender)
+        // — the sender's real org-chart superior — never a blanket #USER[0] commander.
+        expect(positiveBranch).toMatch(/degradedTargetFor/);
     });
 
     test('hides chip entirely when both sides remain unknown', () => {
@@ -87,9 +88,10 @@ describe('org-chart commander loader (cache source of truth)', () => {
         expect(loader).not.toBeNull();
         const body = loader[0];
         expect(body).toMatch(/\/api\/device\/org-chart/);
-        // The commander is the first entry under hierarchy.USER (matches
-        // dashboard.html's renderOrgChart() canonical layout).
-        expect(body).toMatch(/orgChart\?\.hierarchy\?\.USER/);
+        // Caches the full hierarchy (card_a0485399) for per-entity superior
+        // resolution, and still derives the legacy commander (first under USER).
+        expect(body).toMatch(/data\?\.orgChart\?\.hierarchy/);
+        expect(body).toMatch(/orgChartHierarchy\?\.USER/);
         expect(body).toMatch(/orgChartCommanderId\s*=\s*top/);
     });
 

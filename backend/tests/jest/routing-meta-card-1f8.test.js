@@ -126,11 +126,11 @@ describe('card_1f8 — frontend: sender-fallback chip when source unparseable', 
         // No literal "→ ?" anywhere in the fallback block.
         expect(head).not.toMatch(/→\s*\?/);
         expect(head).not.toMatch(/to_entity_id\s*:\s*null\s*\}.*→ \?/);
-        // The degraded chip consults the cached org-chart commander as the
-        // upper-level fallback target.
+        // The degraded chip resolves THIS sender's real org-chart superior
+        // (card_a0485399 — never a blanket #USER[0] commander) as the target.
         const degradedBlock = head.split('msg.is_from_bot && msg.entity_id != null').pop() || '';
-        expect(degradedBlock).toMatch(/orgChartCommanderId/);
-        // and falls back to a localized User label, not '?'.
+        expect(degradedBlock).toMatch(/degradedTargetFor/);
+        // and falls back to a localized User label (top-level → owner), not '?'.
         expect(degradedBlock).toMatch(/chat_routing_to_user/);
     });
 

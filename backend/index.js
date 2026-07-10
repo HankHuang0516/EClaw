@@ -20888,8 +20888,20 @@ async function resolveSelfReplyRoutingMeta(entity, deviceId, eId, message) {
             // A real entity superior (not USER, not orphan) AND auto-forward
             // configured means the reply genuinely routes upward.
             if (superiorId != null && superiorId !== 'USER') {
+                // Mirror orgChartForward's reaches-USER walk (index.js ~20794): a
+                // disconnected sub-tree whose chain never reaches USER is NOT routed
+                // upward, so the chip must not claim an org_upward route that never
+                // fires (card_ecda7243 principle; Opt1 default-on widened this path).
+                let walkId = superiorId;
+                let reachesUser = false;
+                const visited = new Set();
+                while (walkId != null && !visited.has(walkId)) {
+                    visited.add(walkId);
+                    if (walkId === 'USER') { reachesUser = true; break; }
+                    walkId = orgChartModule.getSuperior(hierarchy, walkId);
+                }
                 const superiorEntity = device.entities?.[superiorId];
-                if (superiorEntity && superiorEntity.isBound) {
+                if (reachesUser && superiorEntity && superiorEntity.isBound) {
                     // Mirror orgChartForward's Opt1 default-on decision so the
                     // routing chip reflects the ACTUAL upward route (card_d199b41c).
                     let willForward = orgChartModule.effectiveAllForward(hierarchy, options);
