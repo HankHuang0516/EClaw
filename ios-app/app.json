@@ -2,7 +2,7 @@
   "expo": {
     "name": "E-Claw",
     "slug": "eclawbot",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "eclawbot",
@@ -28,7 +28,7 @@
         "ITSAppUsesNonExemptEncryption": false,
         "LSApplicationQueriesSchemes": ["itms-apps"]
       },
-      "buildNumber": "3"
+      "buildNumber": "11"
     },
     "android": {
       "adaptiveIcon": {
