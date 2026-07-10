@@ -28,7 +28,7 @@ function loadUsageHelpers(localStorage = makeLocalStorage()) {
     };
 
     return vm.runInNewContext(
-        helperCode + '\n({ normalizeCodexRateLimits, isValidCodexRateLimits, resolveCodexRateLimits, withResolvedCodexRateLimits });',
+        helperCode + '\n({ normalizeCodexRateLimits, isValidCodexRateLimits, isUntrustedZeroCodexRateLimits, resolveCodexRateLimits, withResolvedCodexRateLimits });',
         context
     );
 }
@@ -83,6 +83,57 @@ describe('Dashboard usage widget Codex rate limits', () => {
             primary: { used_percent: 0.0, window_minutes: 0, resets_at: 1780000200 },
             secondary: null,
             plan_type: 'pro'
+        })).toEqual(valid);
+    });
+
+    test('does not treat unattributed zero Codex limits as valid quota truth', () => {
+        const helpers = loadUsageHelpers();
+
+        expect(helpers.isUntrustedZeroCodexRateLimits({
+            five_hour_pct: 0,
+            five_hour_resets_at: 1780000000,
+            seven_day_pct: 0,
+            seven_day_resets_at: 1780500000,
+            plan_type: null,
+            updated_at: '2026-07-10T09:47:04.965Z'
+        })).toBe(true);
+        expect(helpers.isValidCodexRateLimits({
+            five_hour_pct: 0,
+            five_hour_resets_at: 1780000000,
+            seven_day_pct: 0,
+            seven_day_resets_at: 1780500000,
+            plan_type: null,
+            updated_at: '2026-07-10T09:47:04.965Z'
+        })).toBe(false);
+        expect(helpers.isValidCodexRateLimits({
+            five_hour_pct: 0,
+            five_hour_resets_at: 1780000000,
+            seven_day_pct: 0,
+            seven_day_resets_at: 1780500000,
+            plan_type: 'prolite',
+            updated_at: '2026-07-10T09:47:04.965Z'
+        })).toBe(true);
+    });
+
+    test('keeps previous nonzero Codex limits when a device-latest row reports unattributed zero', () => {
+        const helpers = loadUsageHelpers();
+        const valid = {
+            five_hour_pct: 94,
+            five_hour_resets_at: 1783677455,
+            seven_day_pct: 17,
+            seven_day_resets_at: 1784244512,
+            plan_type: 'prolite',
+            updated_at: '2026-07-10T09:48:18.522Z'
+        };
+
+        expect(helpers.resolveCodexRateLimits(valid)).toEqual(valid);
+        expect(helpers.resolveCodexRateLimits({
+            five_hour_pct: 0,
+            five_hour_resets_at: 1783694855,
+            seven_day_pct: 0,
+            seven_day_resets_at: 1784281655,
+            plan_type: null,
+            updated_at: '2026-07-10T09:48:01.464Z'
         })).toEqual(valid);
     });
 
