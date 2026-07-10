@@ -4858,11 +4858,25 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             // census columns below). assigned_bots is a jsonb array of entity
             // ids; `@> to_jsonb($n::int)` is the containment filter used
             // elsewhere in this file (e.g. lines ~4296/4529).
+            //
+            // Exclude automation PARENT cards (is_automation = true) so the
+            // census matches what the entity actually sees on its board. The
+            // board endpoint (GET /api/mission/cards) hides automation cards by
+            // default (see the `automation` filter, default `AND (is_automation
+            // = false OR is_automation IS NULL)`), but the census used to count
+            // them — so a recurring cron母卡 that an older stale-auto-blocker had
+            // parked in 'blocked' months ago showed up as a phantom "封鎖9" in
+            // every nudge while being invisible on the board (owner-reported
+            // 2026-07-10: "封鎖9張怎麼回事" — 9 automation parents, 0 real blocked
+            // cards). Automation CHILDREN (is_auto_generated, is_automation =
+            // false) are the real spawned work and STILL count — only the
+            // schedule-definition parents are filtered here.
             const res = await pool.query(
                 `SELECT status, status_changed_at
                    FROM kanban_cards
                   WHERE device_id = $1
                     AND archived = false
+                    AND (is_automation = false OR is_automation IS NULL)
                     AND status IN ('todo','in_progress','review','blocked')
                     AND assigned_bots @> to_jsonb($2::int)`,
                 [deviceId, Number(entityId)]
