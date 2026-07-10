@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-03T19:23:43.647Z",
+  "updatedAt": "2026-07-10",
   "targetDifficulty": 70,
   "pools": {
     "arena_vision": [
@@ -1978,6 +1978,91 @@
           "Gwei",
           "confirmed",
           "142"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A 4×4 checkerboard grid: squares alternate red and blue, starting with red at top-left. Row 1: red, blue, red, blue. Row 2: blue, red, blue, red. Rows 3 and 4 repeat the same alternating pattern.",
+        "keywords": [
+          "8 red",
+          "8 blue",
+          "alternating",
+          "checkerboard",
+          "4×4",
+          "16 squares",
+          "red",
+          "blue"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A horizontal bar chart titled 'Monthly Sales Q1 2024': January bar reaches 45 units, February bar reaches 38 units, March bar reaches 62 units. All bars are blue. The x-axis runs from 0 to 70.",
+        "keywords": [
+          "January",
+          "45",
+          "February",
+          "38",
+          "March",
+          "62",
+          "Q1",
+          "2024",
+          "highest",
+          "lowest",
+          "monthly"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A two-circle Venn diagram: left circle labeled 'Fruits' contains apple, mango, kiwi (exclusive area); right circle labeled 'Round Foods' contains donut, meatball, egg (exclusive area); the intersection contains orange and grape.",
+        "keywords": [
+          "orange",
+          "grape",
+          "intersection",
+          "apple",
+          "mango",
+          "kiwi",
+          "donut",
+          "meatball",
+          "egg",
+          "2",
+          "two",
+          "Fruits",
+          "Round Foods"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A star network topology diagram: a central switch labeled SWITCH-01 connects via cables to 6 nodes — Workstation-A, Workstation-B, Workstation-C, FileServer-1, PrintServer-2, and NAS-01. Total of 6 straight cables radiating from center.",
+        "keywords": [
+          "star",
+          "SWITCH-01",
+          "6",
+          "six",
+          "Workstation-A",
+          "Workstation-B",
+          "Workstation-C",
+          "FileServer-1",
+          "PrintServer-2",
+          "NAS-01",
+          "central",
+          "topology"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A finite state machine diagram with 4 states: q0 (initial, marked with arrow), q1, q2, and q3 (accepting, double circle). Transitions: q0→q1 on '0', q0→q2 on '1', q1→q3 on '1', q2→q3 on '0', q3→q0 on '0' or '1'.",
+        "keywords": [
+          "q0",
+          "q1",
+          "q2",
+          "q3",
+          "4 states",
+          "initial",
+          "accepting",
+          "transition",
+          "state machine",
+          "q3",
+          "double circle"
         ]
       }
     ],
@@ -4183,6 +4268,128 @@
             "expected": "[[1,3],[2,3]]"
           }
         ]
+      },
+      {
+        "title": "Valid Parentheses",
+        "description": "Write `solve(s)` — given a string containing only '(', ')', '{', '}', '[', ']', return true if the brackets are valid (properly opened and closed in order), false otherwise.",
+        "testCases": [
+          {
+            "input": "\"()\"",
+            "expected": "true"
+          },
+          {
+            "input": "\"()[]{}\"",
+            "expected": "true"
+          },
+          {
+            "input": "\"(]\"",
+            "expected": "false"
+          },
+          {
+            "input": "\"([)]\"",
+            "expected": "false"
+          },
+          {
+            "input": "\"{[]}\"",
+            "expected": "true"
+          },
+          {
+            "input": "\"\"",
+            "expected": "true"
+          }
+        ]
+      },
+      {
+        "title": "Longest Common Prefix",
+        "description": "Write `solve(strs)` — find the longest common prefix string among an array of strings. Return an empty string if there is no common prefix.",
+        "testCases": [
+          {
+            "input": "[\"flower\",\"flow\",\"flight\"]",
+            "expected": "\"fl\""
+          },
+          {
+            "input": "[\"dog\",\"racecar\",\"car\"]",
+            "expected": "\"\""
+          },
+          {
+            "input": "[\"interview\",\"inter\",\"internal\"]",
+            "expected": "\"inter\""
+          },
+          {
+            "input": "[\"a\"]",
+            "expected": "\"a\""
+          },
+          {
+            "input": "[\"abc\",\"abc\",\"abc\"]",
+            "expected": "\"abc\""
+          }
+        ]
+      },
+      {
+        "title": "Maximum Subarray",
+        "description": "Write `solve(nums)` — find the contiguous subarray (containing at least one number) which has the largest sum and return that sum.",
+        "testCases": [
+          {
+            "input": "[-2,1,-3,4,-1,2,1,-5,4]",
+            "expected": "6"
+          },
+          {
+            "input": "[1]",
+            "expected": "1"
+          },
+          {
+            "input": "[5,4,-1,7,8]",
+            "expected": "23"
+          },
+          {
+            "input": "[-1,-2,-3,-4]",
+            "expected": "-1"
+          },
+          {
+            "input": "[0,0,0]",
+            "expected": "0"
+          }
+        ]
+      },
+      {
+        "title": "Group Anagrams",
+        "description": "Write `solve(strs)` — group an array of strings by anagrams. Sort each group alphabetically, then sort all groups by their first element alphabetically.",
+        "testCases": [
+          {
+            "input": "[\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"]",
+            "expected": "[[\"ate\",\"eat\",\"tea\"],[\"bat\"],[\"nat\",\"tan\"]]"
+          },
+          {
+            "input": "[\"\"]",
+            "expected": "[[\"\"]]"
+          },
+          {
+            "input": "[\"a\"]",
+            "expected": "[[\"a\"]]"
+          }
+        ]
+      },
+      {
+        "title": "Merge Intervals",
+        "description": "Write `solve(intervals)` — merge all overlapping intervals and return the resulting non-overlapping intervals sorted by start time.",
+        "testCases": [
+          {
+            "input": "[[1,3],[2,6],[8,10],[15,18]]",
+            "expected": "[[1,6],[8,10],[15,18]]"
+          },
+          {
+            "input": "[[1,4],[4,5]]",
+            "expected": "[[1,5]]"
+          },
+          {
+            "input": "[[1,4],[0,4]]",
+            "expected": "[[0,4]]"
+          },
+          {
+            "input": "[[1,4],[2,3]]",
+            "expected": "[[1,4]]"
+          }
+        ]
       }
     ],
     "arena_response_time": [
@@ -5281,6 +5488,43 @@
           "288π",
           "288pi",
           "904"
+        ]
+      },
+      {
+        "question": "What is 15% of 200?",
+        "expectedKeywords": [
+          "30",
+          "thirty"
+        ]
+      },
+      {
+        "question": "A farmer has chickens and rabbits. He counts 20 heads and 56 legs. How many rabbits does he have?",
+        "expectedKeywords": [
+          "8",
+          "eight",
+          "rabbits"
+        ]
+      },
+      {
+        "question": "What is the missing number in the sequence: 1, 4, 9, 16, __, 36?",
+        "expectedKeywords": [
+          "25",
+          "twenty-five"
+        ]
+      },
+      {
+        "question": "A bag contains 5 red balls and 3 blue balls. You draw two balls without replacement. What is the probability that both are red? Express as a simplified fraction.",
+        "expectedKeywords": [
+          "5/14",
+          "10/28",
+          "5 out of 14"
+        ]
+      },
+      {
+        "question": "How many different 3-digit numbers can be formed using the digits 1, 2, 3, 4, 5 if no digit is repeated?",
+        "expectedKeywords": [
+          "60",
+          "sixty"
         ]
       }
     ],
@@ -7026,6 +7270,66 @@
           "three",
           "percent",
           "minimum"
+        ]
+      },
+      {
+        "text": "The capital of France is Paris.",
+        "keywords": [
+          "capital",
+          "France",
+          "Paris"
+        ]
+      },
+      {
+        "text": "The server processes forty-two thousand requests per second with an average latency of eight point three milliseconds.",
+        "keywords": [
+          "42,000",
+          "forty-two thousand",
+          "8.3",
+          "eight point three",
+          "milliseconds",
+          "requests per second"
+        ]
+      },
+      {
+        "text": "Please ship the package to 1847 Oak Ridge Boulevard, Suite 304, Denver, Colorado, zip code 80203.",
+        "keywords": [
+          "1847",
+          "Oak Ridge",
+          "Boulevard",
+          "Suite 304",
+          "Denver",
+          "Colorado",
+          "80203"
+        ]
+      },
+      {
+        "text": "Interest rate of three point seven five percent per annum compounded quarterly on the principal amount of fifty thousand dollars.",
+        "keywords": [
+          "3.75",
+          "three point seven five",
+          "quarterly",
+          "50,000",
+          "fifty thousand",
+          "compounded",
+          "per annum"
+        ]
+      },
+      {
+        "text": "Configuration hash SHA-256 colon d4e8 f1a3 b9c2 7065 3f2a 1b8c 4d9e 6f0a expiration timestamp Unix one seven five three eight one two eight zero zero.",
+        "keywords": [
+          "SHA-256",
+          "d4e8",
+          "f1a3",
+          "b9c2",
+          "7065",
+          "3f2a",
+          "1b8c",
+          "4d9e",
+          "6f0a",
+          "1753812800",
+          "expiration",
+          "timestamp"
         ]
       }
     ]
