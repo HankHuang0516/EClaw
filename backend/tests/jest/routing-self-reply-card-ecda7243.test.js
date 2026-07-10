@@ -28,6 +28,9 @@ const path = require('path');
 const indexJs = fs.readFileSync(path.join(__dirname, '..', '..', 'index.js'), 'utf8');
 const chatHtml = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'portal', 'chat.html'), 'utf8');
 const i18nJs = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'shared', 'i18n.js'), 'utf8');
+// card_d199b41c: the resolver now consults effectiveAllForward for the Opt1
+// default-on decision — inject the REAL helpers so the mirror matches production.
+const realOrgChart = require('../../org-chart');
 
 // ── Build a runnable resolveSelfReplyRoutingMeta over injected module deps ──
 function makeResolver({ hierarchy, options, entities, hasOpenTask = false, lowSignal = false }) {
@@ -45,6 +48,9 @@ function makeResolver({ hierarchy, options, entities, hasOpenTask = false, lowSi
             }
             return null;
         },
+        // Real Opt1 helpers (card_d199b41c) so willForward mirrors production.
+        effectiveAllForward: realOrgChart.effectiveAllForward,
+        isHierarchyConfigured: realOrgChart.isHierarchyConfigured,
     };
     const devices = { dev1: { entities } };
     const chatPool = { query: async () => ({ rows: hasOpenTask ? [{ '?column?': 1 }] : [] }) };
@@ -145,6 +151,21 @@ describe('resolveSelfReplyRoutingMeta — org-parent vs user, never "?"', () => 
         const meta = await resolve(child, 'dev1', 3, 'ok');
         expect(meta.mode).toBe('toUser');
     });
+
+    test('disconnected sub-tree (superior chain never reaches USER) → toUser, chip does not lie (card_d199b41c mirror walk)', async () => {
+        // 3→2→5→(orphan): 5 is not under USER, so orgChartForward would DROP the
+        // message (reachesUser=false). Opt1 default-on (both options off + a
+        // configured hierarchy) would otherwise stamp org_upward — the reaches-USER
+        // walk must prevent that so the chip matches the real (non-)route.
+        const resolve = makeResolver({
+            hierarchy: { USER: [10], 2: [3], 5: [2] },
+            options: {},
+            entities: { 3: child, 2: parent, 5: { name: 'Orphan', isBound: true }, 10: parent },
+        });
+        const meta = await resolve(child, 'dev1', 3, 'status');
+        expect(meta.mode).toBe('toUser');
+        expect(meta.to_is_user).toBe(true);
+    });
 });
 
 describe('backend self-save wiring (static surface)', () => {
@@ -174,10 +195,11 @@ describe('frontend chip never renders bare "?" (static surface)', () => {
         expect(chipBody).not.toMatch(/→\s*\?/);
     });
 
-    test('degraded fallback uses org commander or localized User label', () => {
+    test('degraded fallback resolves the sender\'s real superior or localized User label', () => {
         const head = chipBody.split('// Positive:')[0];
         const degraded = head.split('msg.is_from_bot && msg.entity_id != null').pop() || '';
-        expect(degraded).toMatch(/orgChartCommanderId/);
+        // card_a0485399: per-entity superior (degradedTargetFor), never #USER[0].
+        expect(degraded).toMatch(/degradedTargetFor/);
         expect(degraded).toMatch(/chat_routing_to_user/);
     });
 

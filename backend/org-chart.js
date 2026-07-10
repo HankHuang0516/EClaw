@@ -49,6 +49,43 @@ function getSuperior(hierarchy, entityId) {
 }
 
 /**
+ * Is a REAL org-chart hierarchy configured for this device? True when there is a
+ * USER root with at least one report (a real tree exists), false for an empty {}
+ * or a bare USER:[] with no children. Pure — no I/O.
+ */
+function isHierarchyConfigured(hierarchy) {
+    return !!(hierarchy && Array.isArray(hierarchy.USER) && hierarchy.USER.length > 0);
+}
+
+/**
+ * Opt1 (card_d199b41c, owner-ratified 2026-07-10): decide whether a subordinate's
+ * OWN output should auto-forward upward to its superior ("forward everything"
+ * semantics), given the device's hierarchy + options.
+ *
+ * Background: the org structure does NOT drive chat delivery by itself; up-forward
+ * used to require the explicit (default-OFF) `allForward` option, so an
+ * un-@mentioned subordinate→supervisor report was silently dropped by the routing
+ * fail-safe (a COMMON systemic gap; #6 was just the visible case). Opt1 makes
+ * up-forward the DEFAULT whenever a real hierarchy is configured — WITHOUT
+ * overriding an explicit forward-mode choice:
+ *   - allForward explicitly ON              → true  (forward everything; unchanged)
+ *   - taskForward ON (allForward off)       → false (task-gated path; caller keeps it)
+ *   - both OFF (the default) + hierarchy set → true  (Opt1 default-on)
+ *   - both OFF + no hierarchy configured     → false (dormant / commander fallback)
+ *
+ * Low-signal machine noise (heartbeat/ack) is still dropped by classifyLowSignalFwd
+ * at the callsite, so this does not forward spam. The human-safety fail-safe and
+ * the disconnected-branch / superior-binding checks in orgChartForward are
+ * unchanged. Pure function — unit-testable in isolation.
+ */
+function effectiveAllForward(hierarchy, options) {
+    const opts = options || {};
+    if (opts.allForward) return true;        // explicit "forward everything"
+    if (opts.taskForward) return false;      // explicit task-only choice is respected
+    return isHierarchyConfigured(hierarchy); // Opt1: default-on when a hierarchy exists
+}
+
+/**
  * Get direct subordinates of an entity (or "USER").
  */
 function getSubordinates(hierarchy, parentId) {
@@ -393,6 +430,8 @@ module.exports = {
     updateOrgChart,
     getSuperior,
     getSubordinates,
+    isHierarchyConfigured,
+    effectiveAllForward,
     buildDefault,
     pruneHierarchy,
     validateHierarchy,
