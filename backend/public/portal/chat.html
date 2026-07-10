@@ -11643,10 +11643,17 @@
                 };
             }
 
-            // card_a0485399: NO #USER[0] commander floor here — flooring the
-            // to-side to hierarchy.USER[0] painted a wrong "#10" on the pill. A
-            // truly-unknown side now falls to the neutral label below (the upstream
-            // stub already carries the sender's real superior id when resolvable).
+            // Floor: org-chart commander id (chip-path floor — chat-html cache).
+            // NOTE (card_a0485399): this deep last-resort floor is reached only when
+            // a pill has NO sum/name/id/code at all — the inline routing chip's
+            // #10 bug lived upstream (degraded stub target) and is fixed there; the
+            // stub now carries the sender's real superior so this floor is not hit
+            // on the reported path. Left intact as the modal's established
+            // "never-undefined" floor (card_f15eda1e/card_29eed229 regression).
+            const commanderFloor = (typeof orgChartCommanderId !== 'undefined'
+                && orgChartCommanderId != null
+                && (fallbackId == null || Number(orgChartCommanderId) !== Number(fallbackId)))
+                ? ('#' + orgChartCommanderId) : null;
 
             // Neutral last resort: a sender-side label distinct from the
             // generic "Unspecified" so we never paint the same word on BOTH
@@ -11659,6 +11666,7 @@
                 || safeFallbackName
                 || (fallbackId != null && Number.isFinite(Number(fallbackId)) ? '#' + fallbackId : null)
                 || (!isBadName(fallbackCode) ? '#' + fallbackCode : null)
+                || commanderFloor
                 || neutral;
 
             const code = (sum && !isBadName(sum.publicCode)) ? '#' + sum.publicCode
