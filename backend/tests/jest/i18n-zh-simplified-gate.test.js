@@ -58,6 +58,15 @@ describe('Simplified-distinguishing character set', () => {
         }
     });
 
+    test('covers 广 (supplemental — 廣; OpenCC ST self-maps it so the pure derivation misses it)', () => {
+        // Gate hole found 2026-07-10: chat_routing_broadcast=广播 slipped into
+        // TRANSLATIONS.zh and stayed CI-green because 广 was in neither the
+        // derived `chars` nor `supplementalChars`. It has no modern-Traditional
+        // usage (廣 is the Traditional form), so it belongs in supplementalChars.
+        expect(simpChars.has('广')).toBe(true);
+        expect(simpChars.has('廣')).toBe(false); // Traditional form must stay out.
+    });
+
     test('does NOT contain Traditional or Taiwan-standard chars', () => {
         // 確認/圖 are Traditional; 群/秘/台 are Taiwan-standard forms that a
         // naive OpenCC key-scan would false-positive on (羣/祕 variants).
@@ -146,5 +155,16 @@ describe('production TRANSLATIONS', () => {
         expect(TRANSLATIONS.en.dialog_type_to_confirm).toBe('Type {phrase} to confirm');
         expect(TRANSLATIONS.zh.dialog_type_to_confirm).toBe('輸入 {phrase} 以確認');
         expect(TRANSLATIONS['zh-TW'].dialog_type_to_confirm).toBe('輸入 {phrase} 以確認');
+    });
+
+    test('routing-chip keys are Traditional + present in zh (vision-review 2026-07-10)', () => {
+        // The zh block (Traditional default) had broadcast=广播 (Simplified) and
+        // was MISSING org_upward + to_user entirely, so the chip rendered the
+        // en fallback "Escalated"/"User" in an otherwise-Traditional UI. Pin the
+        // corrected values so a regression re-fails here.
+        const TRANSLATIONS = loadRealTranslations();
+        expect(TRANSLATIONS.zh.chat_routing_broadcast).toBe('廣播');
+        expect(TRANSLATIONS.zh.chat_routing_org_upward).toBe('上報');
+        expect(TRANSLATIONS.zh.chat_routing_to_user).toBe('用戶');
     });
 });

@@ -1235745,7 +1235745,9 @@ const TRANSLATIONS = {
         "chat_routing_unconfirmed": "路由未確認",
         "chat_routing_degraded": "路由降級",
         "chat_routing_failed": "路由失敗",
-        "chat_routing_broadcast": "广播",
+        "chat_routing_broadcast": "廣播",
+        "chat_routing_org_upward": "上報",
+        "chat_routing_to_user": "用戶",
         "chat_routing_xdevice": "跨裝置",
         "chat_routing_client_derived": "客戶端推導",
 

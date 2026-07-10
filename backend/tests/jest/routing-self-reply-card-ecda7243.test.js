@@ -210,11 +210,19 @@ describe('frontend chip never renders bare "?" (static surface)', () => {
     });
 });
 
-describe('i18n keys present (en + zh-CN + zh-TW parity)', () => {
-    test('chat_routing_to_user defined in 3 locales', () => {
-        expect((i18nJs.match(/"chat_routing_to_user"\s*:\s*"[^"]+"/g) || [])).toHaveLength(3);
+describe('i18n keys present (en + zh + zh-CN + zh-TW parity)', () => {
+    // Vision-review 2026-07-10 (card_09fe0b34): these keys were originally only
+    // in en/zh-CN/zh-TW (3 locales) — the `zh` block (the Traditional DEFAULT
+    // the UI resolves to, i18n.locale==='zh') was MISSING them, so the routing
+    // chip rendered the en fallback "Escalated"/"User" in an otherwise-Traditional
+    // UI. The fix adds them to `zh` → 4 locales. Pin 4 AND assert `zh` presence
+    // so the render gap can't silently reopen.
+    test('chat_routing_to_user defined in 4 locales incl. zh', () => {
+        expect((i18nJs.match(/"chat_routing_to_user"\s*:\s*"[^"]+"/g) || [])).toHaveLength(4);
     });
-    test('chat_routing_org_upward defined in 3 locales', () => {
-        expect((i18nJs.match(/"chat_routing_org_upward"\s*:\s*"[^"]+"/g) || [])).toHaveLength(3);
+    test('chat_routing_org_upward defined in 4 locales incl. zh', () => {
+        expect((i18nJs.match(/"chat_routing_org_upward"\s*:\s*"[^"]+"/g) || [])).toHaveLength(4);
     });
+    // The exact Traditional zh values (用戶/上報) + the 广→廣 fix are pinned in
+    // i18n-zh-simplified-gate.test.js against the parsed TRANSLATIONS object.
 });
