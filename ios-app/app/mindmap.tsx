@@ -1,11 +1,11 @@
 import React from 'react';
 import PortalStackScreen from '../components/PortalStackScreen';
 
-export default function MyRentalsScreen() {
+export default function MindmapScreen() {
   return (
     <PortalStackScreen
-      title="My Rentals"
-      url="https://eclawbot.com/portal/my-rentals.html"
+      title="Mindmap"
+      url="https://eclawbot.com/portal/mindmap.html?perfFixture=52"
     />
   );
 }

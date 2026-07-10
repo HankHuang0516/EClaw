@@ -37,13 +37,14 @@ The chain published in the 2026-05-30 amendment placed
 is hereby reversed:
 
 ```
-1. _entityAvatarMap[entityId]                          // explicit non-default avatar (URL or user-set emoji)
-2. localStorage[`eclaw_avatar_${entityId}`]            // user-set custom emoji
-3. AvatarPetdx.descriptorAvatarUrl(entityId)           // CHANGED: live cached descriptor URL — source of truth
-4. _entityPetdxAvatarMap[entityId]                     // CHANGED: vault PETDX_AVATAR — fast-paint mirror / boot fallback
-5. _characterEmoji(entityId)                           // PR #3027 stopgap (kept until §0.6)
-6. ENTITY_CHARS_DEFAULT[entityId]                      // legacy emoji fallback
-7. final emoji fallback                                // DEFAULT_CHARACTER_EMOJI
+1. _entityAvatarMap[entityId] when it is a URL          // explicit uploaded/photo avatar
+2. localStorage[`eclaw_avatar_${entityId}`]             // current-browser user override
+3. AvatarPetdx.descriptorAvatarUrl(entityId)            // live cached descriptor URL — source of truth
+4. _entityPetdxAvatarMap[entityId]                      // vault PETDX_AVATAR — fast-paint mirror / boot fallback
+5. _entityAvatarMap[entityId] when it is emoji/text     // server legacy/custom fallback only
+6. _characterEmoji(entityId)                            // PR #3027 stopgap (kept until §0.6)
+7. ENTITY_CHARS_DEFAULT[entityId]                       // legacy emoji fallback
+8. final emoji fallback                                 // DEFAULT_CHARACTER_EMOJI
 ```
 
 Step 4 stays in the chain because at first paint `AvatarPetdx.preload()`
@@ -53,6 +54,14 @@ Without step 4 the first paint flickers to a character emoji and then
 swaps to the descriptor URL once preload returns. Step 4 is exactly a
 "fast-paint mirror" of whatever the descriptor will eventually report —
 and the §0.4a invariant below is what keeps it from going stale.
+
+2026-07-10 clarification: server-side emoji avatars must not override a
+selected companion. Live entities #1/#2/#3 reproduced this stale-data class:
+their `/api/entities` rows still carried old emoji avatars while
+`/api/companion/current` correctly returned spritesheet companions. Emoji/text
+from `_entityAvatarMap` is therefore only a fallback after descriptor and
+enrichment fail. LocalStorage remains above the companion layers because it is
+the current browser's immediate user override, not cross-device server state.
 
 Implementation: shipped in PR #3046 (commit on `main` 2026-05-31 ~09:13
 TW). This amendment is the spec-side companion to that fix.

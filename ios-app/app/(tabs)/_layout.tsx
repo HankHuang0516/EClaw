@@ -1,26 +1,20 @@
 import { Tabs } from 'expo-router';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text } from 'react-native';
 
 type IconName = keyof typeof MaterialCommunityIcons.glyphMap;
 
-function TabIcon({ name, focused }: { name: IconName; focused: boolean }) {
-  const theme = useTheme();
-  return (
-    <MaterialCommunityIcons
-      name={name}
-      size={24}
-      color={focused ? theme.colors.primary : theme.colors.onSurfaceVariant}
-    />
-  );
+const TAB_BACKGROUND = '#0D0D1A';
+const TAB_BORDER = '#242033';
+const TAB_ACTIVE = '#FFFFFF';
+const TAB_INACTIVE = '#AAAAAA';
+
+function TabIcon({ name, color }: { name: IconName; color: string }) {
+  return <MaterialCommunityIcons name={name} size={24} color={color} />;
 }
 
-// Only the focused tab shows its label, so on narrow devices the 5 icons
-// always fit even in ja / ko where labels are wider. Inactive tabs render
-// nothing below the icon; the active label shrinks to a single line via
-// adjustsFontSizeToFit so 3-char CJK labels never truncate.
 function TabLabel({
   color,
   focused,
@@ -28,7 +22,7 @@ function TabLabel({
 }: {
   color: string;
   focused: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   if (!focused) return null;
   return (
@@ -36,7 +30,7 @@ function TabLabel({
       numberOfLines={1}
       adjustsFontSizeToFit
       minimumFontScale={0.7}
-      style={{ color, fontSize: 10, textAlign: 'center' }}
+      style={{ color, fontSize: 10, textAlign: 'center', marginTop: 0 }}
     >
       {children}
     </Text>
@@ -45,16 +39,15 @@ function TabLabel({
 
 export default function TabLayout() {
   const { t } = useTranslation();
-  const theme = useTheme();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
+        tabBarActiveTintColor: TAB_ACTIVE,
+        tabBarInactiveTintColor: TAB_INACTIVE,
         tabBarStyle: {
-          backgroundColor: theme.colors.surface,
-          borderTopColor: theme.colors.outline,
+          backgroundColor: TAB_BACKGROUND,
+          borderTopColor: TAB_BORDER,
           // Without explicit height + safe-area padding the bar was collapsing to a
           // ~1-2pt strip at the bottom (home-indicator area consumed all space), making
           // every tab button unhittable. Pin a usable tap target.
@@ -67,9 +60,7 @@ export default function TabLayout() {
           marginTop: 0,
         },
         tabBarLabelPosition: 'below-icon',
-        headerStyle: { backgroundColor: theme.colors.surface },
-        headerTintColor: theme.colors.onSurface,
-        headerShown: true,
+        headerShown: false,
       }}
     >
       <Tabs.Screen
@@ -77,8 +68,8 @@ export default function TabLayout() {
         options={{
           title: t('tabs.home'),
           headerTitle: t('home.title'),
-          tabBarIcon: ({ focused }) => (
-            <TabIcon name={focused ? 'home' : 'home-outline'} focused={focused} />
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon name={focused ? 'home' : 'home-outline'} color={color} />
           ),
           tabBarLabel: ({ color, focused }) => (
             <TabLabel color={color} focused={focused}>{t('tabs.home')}</TabLabel>
@@ -89,8 +80,8 @@ export default function TabLayout() {
         name="chat"
         options={{
           title: t('tabs.chat'),
-          tabBarIcon: ({ focused }) => (
-            <TabIcon name={focused ? 'chat' : 'chat-outline'} focused={focused} />
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon name={focused ? 'chat' : 'chat-outline'} color={color} />
           ),
           tabBarLabel: ({ color, focused }) => (
             <TabLabel color={color} focused={focused}>{t('tabs.chat')}</TabLabel>
@@ -101,8 +92,8 @@ export default function TabLayout() {
         name="mission"
         options={{
           title: t('tabs.mission'),
-          tabBarIcon: ({ focused }) => (
-            <TabIcon name={focused ? 'target' : 'target'} focused={focused} />
+          tabBarIcon: ({ color }) => (
+            <TabIcon name="target" color={color} />
           ),
           tabBarLabel: ({ color, focused }) => (
             <TabLabel color={color} focused={focused}>{t('tabs.mission')}</TabLabel>
@@ -113,8 +104,8 @@ export default function TabLayout() {
         name="cards"
         options={{
           title: t('tabs.cards'),
-          tabBarIcon: ({ focused }) => (
-            <TabIcon name={focused ? 'card-account-details' : 'card-account-details-outline'} focused={focused} />
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon name={focused ? 'card-account-details' : 'card-account-details-outline'} color={color} />
           ),
           tabBarLabel: ({ color, focused }) => (
             <TabLabel color={color} focused={focused}>{t('tabs.cards')}</TabLabel>
@@ -125,8 +116,8 @@ export default function TabLayout() {
         name="settings"
         options={{
           title: t('tabs.settings'),
-          tabBarIcon: ({ focused }) => (
-            <TabIcon name={focused ? 'cog' : 'cog-outline'} focused={focused} />
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon name={focused ? 'cog' : 'cog-outline'} color={color} />
           ),
           tabBarLabel: ({ color, focused }) => (
             <TabLabel color={color} focused={focused}>{t('tabs.settings')}</TabLabel>

@@ -1,9 +1,6 @@
 import React, { useMemo } from 'react';
-import { StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import WebViewScreen from '../components/WebViewScreen';
+import PortalStackScreen from '../components/PortalStackScreen';
 import { useAuthStore } from '../store/authStore';
 
 export default function OrgChartScreen() {
@@ -18,14 +15,5 @@ export default function OrgChartScreen() {
     return base;
   }, [deviceId, deviceSecret]);
 
-  return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <Stack.Screen options={{ title: t('home.org_chart') }} />
-      <WebViewScreen url={url} />
-    </SafeAreaView>
-  );
+  return <PortalStackScreen title={t('home.org_chart')} url={url} />;
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0D0D1A' },
-});
