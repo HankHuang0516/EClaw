@@ -92,22 +92,31 @@ function _petdxDescriptorAvatarUrl(entityId) {
  * in the chain as a fast-paint fallback for the brief window before
  * AvatarPetdx.preload() resolves.
  *
- *   1. _entityAvatarMap (explicit non-default avatar — URL or user-set emoji)
- *   2. localStorage user override
+ * A second stale-data class appeared once live entities #1/#2/#3 kept old
+ * server-side emoji avatars (🐻/🐱/🐱) while their selected companions were
+ * Zoro/Tomori/zhenyan-king spritesheets. Treat server emoji avatars as a
+ * fallback, not as a companion override. The current-device localStorage
+ * override still wins so a just-picked emoji remains visible in that browser.
+ *
+ *   1. _entityAvatarMap URL (explicit uploaded/photo avatar)
+ *   2. localStorage user override (current browser)
  *   3. AvatarPetdx.descriptorAvatarUrl(entityId) — live cached companion URL
  *   4. _entityPetdxAvatarMap (PETDX_AVATAR_<id> from /api/entities enrichment) — fast-paint fallback
- *   5. live character → emoji (PR #3027 stopgap, kept until §0.6 quarantine ends)
- *   6. legacy ENTITY_CHARS_DEFAULT
- *   7. final emoji fallback
+ *   5. _entityAvatarMap emoji/text (server-side legacy/custom fallback)
+ *   6. live character → emoji (PR #3027 stopgap, kept until §0.6 quarantine ends)
+ *   7. legacy ENTITY_CHARS_DEFAULT
+ *   8. final emoji fallback
  */
 function getAvatarForEntity(entityId) {
-    if (_entityAvatarMap[entityId]) return _entityAvatarMap[entityId];
+    const explicitAvatar = _entityAvatarMap[entityId];
+    if (explicitAvatar && isAvatarUrl(explicitAvatar)) return explicitAvatar;
     const saved = localStorage.getItem('eclaw_avatar_' + entityId);
     if (saved) return saved;
     const fromDescriptor = _petdxDescriptorAvatarUrl(entityId);
     if (fromDescriptor) return fromDescriptor;
     const fromEnrichment = _petdxAvatarUrl(entityId);
     if (fromEnrichment) return fromEnrichment;
+    if (explicitAvatar) return explicitAvatar;
     const fromCharacter = _characterEmoji(entityId);
     if (fromCharacter) return fromCharacter;
     const char = ENTITY_CHARS_DEFAULT[entityId];

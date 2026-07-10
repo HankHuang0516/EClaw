@@ -1,16 +1,11 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import WebViewScreen from '../../components/WebViewScreen';
+import PortalTabScreen from '../../components/PortalTabScreen';
 
 export default function ChatScreen() {
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <WebViewScreen url="https://eclawbot.com/portal/chat.html" tabId="chat" />
-    </SafeAreaView>
+    <PortalTabScreen
+      url="https://eclawbot.com/portal/chat.html"
+      tabId="chat"
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0D0D1A' },
-});

@@ -1,13 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator, BackHandler } from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useAuthStore } from '../store/authStore';
 
+export type TabId = 'home' | 'chat' | 'mission' | 'cards' | 'settings';
+
 interface WebViewScreenProps {
   url: string;
-  tabId?: 'chat' | 'mission' | 'home' | 'cards' | 'settings';
+  tabId?: TabId;
+}
+
+function appendWebViewParams(url: string, params: string[]) {
+  const hashIndex = url.indexOf('#');
+  const base = hashIndex >= 0 ? url.slice(0, hashIndex) : url;
+  const hash = hashIndex >= 0 ? url.slice(hashIndex) : '';
+  const sep = base.includes('?') ? '&' : '?';
+  return `${base}${sep}${params.join('&')}${hash}`;
 }
 
 // Short-term chrome-hide for #1770 — the full native rewrite is a separate
@@ -69,6 +79,20 @@ function buildInjectedJs(tabId?: string) {
         (document.head || document.documentElement).appendChild(style);
       } catch (_) {}
     }
+    try {
+      var hash = String(window.location.hash || '').replace(/^#/, '');
+      if (hash) {
+        var scrollToHash = function() {
+          try {
+            var target = document.getElementById(hash) || document.querySelector('[name="' + hash.replace(/"/g, '\\\\"') + '"]');
+            if (target && target.scrollIntoView) target.scrollIntoView({ block: 'start', inline: 'nearest' });
+          } catch (_) {}
+        };
+        setTimeout(scrollToHash, 400);
+        setTimeout(scrollToHash, 1400);
+        setTimeout(scrollToHash, 3000);
+      }
+    } catch (_) {}
   } catch(e) {
     if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
       window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'auth-diag-error', err: String(e) }));
@@ -94,7 +118,7 @@ true;
 }
 
 type NativeNavIntent = {
-  targetTab?: 'chat' | 'mission';
+  targetTab?: TabId;
   target?: 'thread' | 'message' | 'card' | 'quote';
   threadId?: string;
   messageId?: string;
@@ -104,12 +128,19 @@ type NativeNavIntent = {
 
 type RegisteredWebView = { ref: React.RefObject<WebView | null>; ready: boolean };
 
-const registeredWebViews: Partial<Record<string, RegisteredWebView>> = {};
+const registeredWebViews: Partial<Record<TabId, RegisteredWebView>> = {};
 let pendingIntent: NativeNavIntent | null = null;
 let pendingIntentTimer: ReturnType<typeof setTimeout> | null = null;
 
-function routeForTab(tab: string) {
-  return tab === 'chat' ? '/(tabs)/chat' : tab === 'mission' ? '/(tabs)/mission' : '/(tabs)';
+function routeForTab(tab: TabId) {
+  const routes: Record<TabId, string> = {
+    home: '/(tabs)',
+    chat: '/(tabs)/chat',
+    mission: '/(tabs)/mission',
+    cards: '/(tabs)/cards',
+    settings: '/(tabs)/settings',
+  };
+  return routes[tab];
 }
 
 function intentScript(intent: NativeNavIntent) {
@@ -123,6 +154,12 @@ function intentScript(intent: NativeNavIntent) {
           window.location.href = '/portal/chat.html?messageId=' + encodeURIComponent(intent.messageId || intent.quote.messageId);
         } else if (intent.targetTab === 'mission' && intent.cardId) {
           window.location.href = '/portal/kanban.html?card=' + encodeURIComponent(intent.cardId) + '#' + encodeURIComponent(intent.cardId);
+        } else if (intent.targetTab === 'home') {
+          window.location.href = '/portal/dashboard.html';
+        } else if (intent.targetTab === 'cards') {
+          window.location.href = '/portal/card-holder.html';
+        } else if (intent.targetTab === 'settings') {
+          window.location.href = '/portal/settings.html';
         }
       } catch (e) { console.warn('[EClawNativeNav] consume failed', e); }
     })();
@@ -173,12 +210,11 @@ export default function WebViewScreen({ url, tabId }: WebViewScreenProps) {
     };
   }, [tabId]);
 
-  const sep = url.includes('?') ? '&' : '?';
   const qs: string[] = ['embed=1', 'hideChrome=1'];
   if (deviceId) qs.push(`deviceId=${encodeURIComponent(deviceId)}`);
   if (deviceSecret) qs.push(`deviceSecret=${encodeURIComponent(deviceSecret)}`);
   if (authToken) qs.push(`authToken=${encodeURIComponent(authToken)}`);
-  const fullUrl = `${url}${sep}${qs.join('&')}`;
+  const fullUrl = appendWebViewParams(url, qs);
 
   return (
     <View style={styles.container}>

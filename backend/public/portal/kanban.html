@@ -1380,6 +1380,8 @@
             handleHashDeepLink();
             window.addEventListener('hashchange', handleHashDeepLink);
 
+            openAutomationSetupFromHash();
+
             // Phase 4 mindmap write-side handoff: a node's ➕ action stashes
             // {x,y,title} into localStorage and navigates here. We open the
             // new-card dialog with title pre-filled and the coord wired into
@@ -1418,6 +1420,35 @@
                 if (m) { commentAnchor = m[1]; break; }
             }
             return { cardId: head, commentAnchor };
+        }
+
+        function openAutomationSetupFromHash() {
+            const params = new URLSearchParams(window.location.search || '');
+            const rawHash = (window.location.hash || '').replace(/^#/, '');
+            if (rawHash !== 'automationSetup' && params.get('automationSetup') !== '1') return;
+
+            openNewCard({ title: t('kb_auto_screenshot_prefill_title', 'Daily agent status sweep') });
+            const desc = document.getElementById('newDesc');
+            if (desc && !desc.value) {
+                desc.value = t(
+                    'kb_auto_screenshot_prefill_desc',
+                    'Recurring check for active tasks, blockers, and next actions.'
+                );
+            }
+            const status = document.getElementById('newStatus');
+            if (status) {
+                status.value = 'backlog';
+                applyNewGateState();
+            }
+            const automation = document.getElementById('newIsAutomation');
+            if (automation) {
+                automation.checked = true;
+                toggleAutoFields();
+            }
+            setTimeout(() => {
+                const fields = document.getElementById('autoFields');
+                if (fields) fields.scrollIntoView({ block: 'center', behavior: 'instant' });
+            }, 120);
         }
 
         async function handleHashDeepLink() {

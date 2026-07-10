@@ -112,11 +112,40 @@ describe('portal entity-utils — Phase 0 petdx-aware resolver chain', () => {
         expect(ctx.getAvatarForEntity(1)).toBe(PETDX_LOBSTER_URL);
     });
 
-    test('user-set custom emoji avatar still beats petdx idle frame', () => {
+    test('server-side emoji avatar does not beat selected petdx companion', () => {
         const ctx = loadResolver();
         ctx.updateEntityMaps([{ entityId: 1, character: 'LOBSTER', avatar: '\u{1F431}',
             petdxAvatarUrl: PETDX_LOBSTER_URL }]);
-        expect(ctx.getAvatarForEntity(1)).toBe('\u{1F431}');
+        expect(ctx.getAvatarForEntity(1)).toBe(PETDX_LOBSTER_URL);
+    });
+
+    test('live #1/#2/#3 stale server emojis do not beat selected petdx companions', () => {
+        const ctx = loadResolver();
+        const rows = [
+            { entityId: 1, character: 'LOBSTER', avatar: '\u{1F43B}', petdxAvatarUrl: '/api/petdx/zoro/sprite.webp' },
+            { entityId: 2, character: 'LOBSTER', avatar: '\u{1F431}', petdxAvatarUrl: '/api/petdx/tomori-2/sprite.webp' },
+            { entityId: 3, character: 'LOBSTER', avatar: '\u{1F431}', petdxAvatarUrl: '/api/petdx/zhenyan-king/sprite.webp' },
+        ];
+        ctx.updateEntityMaps(rows);
+        for (const row of rows) {
+            expect(ctx.getAvatarForEntity(row.entityId)).toBe(row.petdxAvatarUrl);
+        }
+    });
+
+    test('current-browser localStorage emoji override still beats petdx idle frame', () => {
+        const ctx = loadResolver();
+        ctx.updateEntityMaps([{ entityId: 1, character: 'LOBSTER', avatar: '\u{1F431}',
+            petdxAvatarUrl: PETDX_LOBSTER_URL }]);
+        ctx.localStorage.setItem('eclaw_avatar_1', '\u{1F98A}');
+        expect(ctx.getAvatarForEntity(1)).toBe('\u{1F98A}');
+    });
+
+    test('explicit server URL avatar still beats petdx idle frame', () => {
+        const ctx = loadResolver();
+        const PHOTO_URL = 'https://cdn.example.test/avatar.jpg';
+        ctx.updateEntityMaps([{ entityId: 1, character: 'LOBSTER', avatar: PHOTO_URL,
+            petdxAvatarUrl: PETDX_LOBSTER_URL }]);
+        expect(ctx.getAvatarForEntity(1)).toBe(PHOTO_URL);
     });
 
     test('AvatarPetdx.descriptorAvatarUrl is consulted when enrichment is absent', () => {

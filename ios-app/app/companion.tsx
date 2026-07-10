@@ -1,11 +1,11 @@
 import React from 'react';
 import PortalStackScreen from '../components/PortalStackScreen';
 
-export default function MyRentalsScreen() {
+export default function CompanionScreen() {
   return (
     <PortalStackScreen
-      title="My Rentals"
-      url="https://eclawbot.com/portal/my-rentals.html"
+      title="Companion"
+      url="https://eclawbot.com/portal/petdx-browser.html"
     />
   );
 }

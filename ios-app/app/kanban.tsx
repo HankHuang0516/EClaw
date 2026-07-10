@@ -1,11 +1,11 @@
 import React from 'react';
 import PortalStackScreen from '../components/PortalStackScreen';
 
-export default function MyRentalsScreen() {
+export default function KanbanScreen() {
   return (
     <PortalStackScreen
-      title="My Rentals"
-      url="https://eclawbot.com/portal/my-rentals.html"
+      title="Kanban"
+      url="https://eclawbot.com/portal/kanban.html#automationSetup"
     />
   );
 }

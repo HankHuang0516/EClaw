@@ -44,15 +44,20 @@
 ```
 ios-app/
 ├── app/                          # Expo Router 頁面
-│   ├── _layout.tsx               # Root layout（auth gate, headerShown: true default）
+│   ├── _layout.tsx               # Root layout（auth gate）
 │   ├── (tabs)/                   # Tab Bar 五大主頁（對齊 Android BottomNavHelper）
-│   │   ├── _layout.tsx           # Tab Bar 配置（height:83, paddingBottom:34）
-│   │   ├── index.tsx             # 🏠 首頁（Entity 列表 + Edit Mode + Org Chart 入口，對齊 Android MainActivity）
+│   │   ├── _layout.tsx           # 深色沉浸式 Tab Bar（無 native header）
+│   │   ├── index.tsx             # 🏠 WebView dashboard.html（對齊 Android MainActivity）
 │   │   ├── chat.tsx              # 💬 聊天（WebView chat.html，對齊 Android ChatActivity）
 │   │   ├── mission.tsx           # 📋 Mission Control（WebView mission.html）
-│   │   ├── cards.tsx             # 🎴 Card Holder（名片夾）
-│   │   └── settings.tsx          # ⚙️ 設定
+│   │   ├── cards.tsx             # 🎴 WebView card-holder.html（對齊 Android CARDS）
+│   │   └── settings.tsx          # ⚙️ WebView settings.html
 │   ├── org-chart.tsx             # 🗂️ Org Chart modal（WebView dashboard.html?view=orgchart，從首頁 header 入口打開）
+│   ├── usage.tsx                 # WebView dashboard.html#usageWidget
+│   ├── companion.tsx             # WebView petdx-browser.html
+│   ├── mindmap.tsx               # WebView mindmap.html?perfFixture=52
+│   ├── plaza.tsx                 # WebView community.html#rental
+│   ├── kanban.tsx                # WebView kanban.html#automationSetup
 │   ├── ai-chat.tsx               # 🤖 AI 助理
 │   ├── wallet.tsx                # 💰 錢包（iOS 必須 native + IAP）
 │   ├── my-rentals.tsx            # 租借管理（我的租賃）
@@ -62,9 +67,11 @@ ios-app/
 │   ├── invite.tsx                # 邀請碼
 │   └── official-borrow.tsx       # 官方 Bot 借用
 ├── components/                   # 共用元件
-│   ├── EntityCard.tsx            # Entity 卡片（對齊 Android item_agent_card.xml）
-│   ├── WebViewScreen.tsx         # WebView 包裝器（auth 注入 + embed=1）
-│   └── BindingCodeCard.tsx       # Binding code 顯示卡
+│   ├── PortalTabScreen.tsx       # 五個主 tab 共用 WebView shell
+│   ├── PortalStackScreen.tsx     # Secondary portal route 共用深色 WebView shell
+│   ├── WebViewScreen.tsx         # WebView 包裝器（auth 注入 + embed/hideChrome + native tab bridge）
+│   ├── EntityCard.tsx            # 舊原生首頁元件，非主要 tab 入口
+│   └── BindingCodeCard.tsx       # 舊原生首頁元件，非主要 tab 入口
 ├── services/                     # API wrapper + Socket + Telemetry
 ├── store/                        # Context providers
 ├── hooks/                        # Custom hooks
@@ -76,19 +83,21 @@ ios-app/
 
 > **已移除**：`chat/[entityId].tsx`、`schedule.tsx`、`entity-manager.tsx`、`card-holder.tsx`、`(tabs)/dashboard.tsx` 已廢棄。聊天由 chat tab WebView 處理；Org Chart 由首頁 header button 開啟 `/org-chart` modal。
 
+App Store capture deep links may use deterministic portal anchors or fixtures when they only change presentation. The current capture routes open a mindmap graph fixture, the rental filter, and the Kanban nudge settings; none of these routes submit cards, create rentals, or mutate backend data by themselves.
+
 ### 2.3 Tab Bar 五大主頁（不可變更，對齊 Android `BottomNavHelper`）
 
 | Tab | 圖示 | 路由 | 內容 |
 |-----|------|------|------|
-| 🏠 首頁 | `home` | `(tabs)/index` | Entity 列表 + Edit Mode + Org Chart 入口（詳見 §3.4） |
-| 💬 聊天 | `chat` | `(tabs)/chat` | WebView 載入 chat.html（詳見 §3.5） |
-| 📋 任務 | `target` | `(tabs)/mission` | Mission Control（notes + kanban 入口） |
-| 🎴 名片 | `card-account-details` | `(tabs)/cards` | Card Holder（名片夾） |
-| ⚙️ 設定 | `cog` | `(tabs)/settings` | 設定 + wallet + my-rentals 入口 |
+| 🏠 首頁 | `home` | `(tabs)/index` | WebView 載入 `/portal/dashboard.html`（詳見 §3.4） |
+| 💬 聊天 | `chat` | `(tabs)/chat` | WebView 載入 `/portal/chat.html`（詳見 §3.5） |
+| 📋 任務 | `target` | `(tabs)/mission` | WebView 載入 `/portal/mission.html` |
+| 🎴 名片 | `card-account-details` | `(tabs)/cards` | WebView 載入 `/portal/card-holder.html` |
+| ⚙️ 設定 | `cog` | `(tabs)/settings` | WebView 載入 `/portal/settings.html` |
 
-> **重要**：聊天 tab 必須與 Android `ChatActivity` 體驗一致 — 直接載入 WebView chat.html，tab bar 始終可見。不得使用原生列表 → push stack screen 的二層導航（會讓 tab bar 消失）。
+> **重要**：五個主 tab 必須全部與 Android 的 app shell 體驗一致 — 由 Expo tab shell 承載 portal WebView，tab bar 始終可見，不得在主 tab 重新建立第二套原生 RN UI。
 
-> **v1.3.0 對齊修正**：Android `BottomNavHelper` 只有 5 tab（HOME / MISSION / CHAT / CARDS / SETTINGS），沒有獨立 Dashboard/Org Chart tab。Org Chart 由首頁 top bar 的 `btnDashboard` 按鈕觸發 `OrgChartBottomSheetFragment`（WebView 載入 `dashboard.html?view=orgchart`）。iOS 移除 `(tabs)/dashboard.tsx`，改為首頁 header button + `/org-chart` modal 路由。
+> **v1.4.0 對齊修正**：Home/Cards/Settings 不再使用原生 RN route。iOS 五個 bottom tab 全部走 `PortalTabScreen` + `WebViewScreen`，並由 `WebViewScreen` 注入 `embed=1`、`hideChrome=1`、auth credentials 和 `EClawNativeNav`。
 
 ---
 
@@ -107,17 +116,19 @@ ios-app/
 | 需相機/檔案存取 | ✅ 透過 Expo API | ⚠️ 權限問題 |
 | 跨裝置訊息預覽 | ✅ | ❌ 會失去推播整合 |
 
+> **主 tab 覆寫規則**：不論上表一般決策，iOS bottom tabs 在目前版本一律選 WebView，因為 Android 已將主要資訊架構收斂到 portal WebView；新增主 tab 或修改現有主 tab 時，必須先確認對應 portal URL 與 Android 入口。
+
 ### 3.2 現況分類
 
 | 功能 | 實作方式 | 對齊 Android | 上架前優先級 |
 |------|---------|-------------|-------------|
-| 首頁 Entity 列表 + Edit Mode | Native | ✅ 對齊 MainActivity（詳見 §3.4） | P0 |
-| Org Chart（組織圖） | 首頁 header button → modal WebView (`dashboard.html?view=orgchart`) | ✅ 對齊 Android `btnDashboard` + `OrgChartBottomSheetFragment` | P0 |
+| 首頁 Dashboard / Entity 管理 | WebView `dashboard.html` | ✅ 對齊 Android MainActivity WebView（詳見 §3.4） | P0 |
+| Org Chart（組織圖） | `dashboard.html` 內 portal 入口 / `/org-chart` WebView fallback | ✅ 與 Android 共用 `dashboard.html` | P0 |
 | **聊天** | **WebView chat.html** | ✅ 對齊 ChatActivity（詳見 §3.5） | P0 |
 | AI 助理 | Native | ✅ | — |
 | Mission Control | WebView mission.html | ✅ | — |
-| Card Holder | Native | ✅ 對齊 CardHolderActivity（詳見 §3.6） | — |
-| 設定 | Native | 🟡 需移除「管理實體」入口（詳見 §3.7） | P0 |
+| Card Holder | WebView `card-holder.html` | ✅ 對齊 Android CARDS WebView（詳見 §3.6） | — |
+| 設定 | WebView `settings.html` | ✅ 由 portal 與 Android settings surface 收斂 | P0 |
 | **Wallet** | WebView | 🔴 **必改 Native + IAP** | P0 |
 | My Rentals | WebView wrapper | 🟡 可保留但加 native entry | P1 |
 | Community / Marketplace | WebView | 🟡 可保留但加 native entry | P1 |
@@ -148,111 +159,17 @@ ios-app/
 
 ### 3.4 首頁 UX 規範（對齊 Android `MainActivity`）
 
-首頁是使用者最常見的畫面，必須與 Android 體驗一致。
+首頁由 `PortalTabScreen` 載入 `/portal/dashboard.html`。Entity 列表、Edit Mode、Org Chart 入口、Entity 卡片、綁定碼、空狀態與輪詢行為都由 portal dashboard 擁有；iOS 不再維護第二套 RN 原生首頁。
 
-#### 3.4.0 Header（對齊 Android `activity_main.xml` topBar）
+| 項目 | iOS | Android | 備註 |
+|------|-----|---------|------|
+| Host | `WebViewScreen` | `MainActivity` WebView | 兩者都附加 app UA 與 credentials |
+| URL | `/portal/dashboard.html?embed=1&hideChrome=1` | `/portal/dashboard.html?embed=1` | iOS 額外用 `hideChrome=1` 隱藏 portal 外層 chrome |
+| Header | 無 native header | 無額外 native page header | 由 portal dashboard 自己呈現頁內操作 |
+| Tab bar | Expo Tabs 常駐 | `BottomNavHelper` 常駐 | 五個 tab 保持同一 app shell |
+| Org Chart | dashboard 內入口 / `/org-chart` fallback | dashboard / org chart WebView | 共用 portal contract |
 
-```
-┌──────────────────────────────────────────────┐
-│  EClawbot                          🗂️  ✏️    │  ← header
-├──────────────────────────────────────────────┤
-│                                              │
-│  [ Entity 卡片列表 ]                          │
-│                                              │
-```
-
-| 元素 | 對齊 Android | 說明 |
-|------|-------------|------|
-| 標題 | `R.string.main_title` = "EClawbot" | 不使用 `tabs.home`，與 Android `TextView android:text="@string/main_title"` 一致 |
-| 🗂️ Org Chart button | `btnDashboard` → `OrgChartBottomSheetFragment` | `sitemap-outline` icon；點擊導航到 `/org-chart` modal（WebView 載 `dashboard.html?embed=1&view=orgchart&deviceId=…&deviceSecret=…`） |
-| ✏️ Edit button | `btnEditMode` → `toggleEditMode()` | `pencil-outline` / `pencil` icon；點擊切換 Edit Mode state |
-
-Edit Mode 開啟時：
-- Icon 從 `pencil-outline` 切換到 `pencil`（高亮色 primary）
-- 每張 entity 卡片右上角顯示小叉叉（✕）可直接刪除
-- （P2 backlog：拖曳排序 handle，與 Android `ItemTouchHelper` 等價）
-
-Edit Mode 關閉時：回到一般長按觸發 ActionSheet 的行為。
-
-#### 3.4.1 Entity 卡片（對齊 `item_agent_card.xml`）
-
-每張 Entity 卡片顯示以下資訊：
-
-```
-┌──────────────────────────────────────────────┐
-│  🦞  │ Bot Name                    │ 🟢 IDLE │
-│ (56) │ #0                ⚡Channel │         │
-│      ├──────────────────────────────┤         │
-│      │ Lv.5 ████░░░░ 245/300 XP    │         │
-│      ├──────────────────────────────┤         │
-│      │ "Hello! I'm ready..."  14:23 │         │
-└──────────────────────────────────────────────┘
-  tap avatar → picker    tap name → rename
-  long press → ActionSheet (Refresh/AgentCard/Delete)
-```
-
-| 欄位 | 來源 | 說明 |
-|------|------|------|
-| Avatar | `entity.avatarUrl` 或 emoji fallback | 56dp 圓形 |
-| 名稱 | `entity.name` 或 `{character} #{entityId}` | 最多 1 行 |
-| 狀態 Badge | `entity.state`（IDLE/BUSY/ERROR） | 色彩：IDLE=綠, BUSY=黃, ERROR=紅 |
-| Channel Badge | `entity.channelBound` | 條件顯示「⚡ Channel」 |
-| E2EE Badge | `entity.encryptionStatus === 'e2ee'` | 條件顯示「🔒 E2EE」 |
-| XP / Level Bar | `entity.xp`, `entity.level` | 進度條 + `Lv.X` 標籤 |
-| 最後訊息 | `entity.message` | 最多 3 行，右下角顯示時間 HH:mm |
-| Edit Actions | 長按觸發 ActionSheet | Refresh / Agent Card / Cross-Device / 刪除 |
-
-#### 3.4.2 點擊行為
-
-Entity 卡片**不是導航入口**（不導向聊天頁），而是資訊展示 + 管理。要聊天 → 點底部 Chat tab。
-
-| 手勢 | 動作 | 對齊 Android |
-|------|------|-------------|
-| **點擊 Avatar** | 開啟頭像選擇器（emoji 或照片上傳） | ✅ 對齊 Android `showAvatarPicker()` |
-| **點擊名稱** | 開啟重新命名 Dialog | ✅ 對齊 Android `showRenameDialog()` |
-| **長按卡片** | 顯示 ActionSheet：Refresh Connection / Agent Card / Cross-Device / 刪除 | ✅ 對齊 Android Edit Mode overflow menu |
-
-> **v1.3.0 更新**：iOS 已實作 Edit Mode toggle（header pencil icon）對齊 Android `btnEditMode`。Edit Mode 開啟時每張卡片顯示刪除叉叉，一般長按 ActionSheet 保留做為快速功能入口。拖曳排序（drag-to-reorder）仍列入 P2 backlog，RN 實作成本高。
-
-> **重要**：Entity 卡片**不顯示** `chevron-right` 箭頭（Android 也沒有）。卡片是管理用途，不是聊天入口。
-
-#### 3.4.3 新增 Entity 區塊
-
-位於 entity 列表下方，可摺疊（對齊 Android 的 collapsible Add Entity section）：
-
-```
-┌──────────────────────────────────────────────┐
-│ ＋ 新增 Entity                           ▼   │  ← 摺疊標題
-├──────────────────────────────────────────────┤
-│ 選擇 Slot:                                   │
-│ [0] [1] [2] [3] [4] ...                      │  ← Chip 單選
-│                                              │
-│ Binding Code:                                │
-│            1 2 3 4                           │  ← 大字 monospace
-│ 剩餘 4:32                                    │  ← 倒數計時
-│                                              │
-│ [產生綁定碼]  [複製指令]                       │  ← 按鈕列
-│                                              │
-│ [官方 Bot 借用]                               │  ← 全寬按鈕
-└──────────────────────────────────────────────┘
-```
-
-#### 3.4.4 空狀態
-
-當 `entities.length === 0`：
-- 隱藏 entity 列表
-- 自動展開「新增 Entity」區塊
-- 顯示引導文字 + 顯眼的「產生綁定碼」CTA 按鈕
-- 對齊 Android 的 `emptyStateContainer` 行為
-
-#### 3.4.5 Entity 數量顯示
-
-列表底部顯示 `X / 20 entities`（對齊 Android `tvEntityCount`）。
-
-#### 3.4.6 輪詢更新
-
-- 每 15 秒呼叫 `GET /api/device/entities` 刷新
-- **空回應保護**（對齊 Android issue #16/#29）：若回應為空但本地有已知 entities，跳過此次更新
+> **不得恢復原生 Home route**：`(tabs)/index.tsx` 只能是 `/portal/dashboard.html` 的 WebView wrapper。若 dashboard 需要調整外觀或功能，修改 `backend/public/portal/dashboard.html` 與共享 portal 資源，再由 iOS/Android WebView 同步受益。
 
 ### 3.5 聊天 UX 規範（對齊 Android `ChatActivity`）
 
@@ -262,9 +179,6 @@ Entity 卡片**不是導航入口**（不導向聊天頁），而是資訊展示
 
 ```
 ┌──────────────────────────────────────────────┐
-│ 💬 聊天                           (header)   │
-├──────────────────────────────────────────────┤
-│                                              │
 │  ┌─ WebView: chat.html ──────────────────┐  │
 │  │ [Entity A] [Entity B] [All]  ← chips  │  │
 │  │                                        │  │
@@ -273,7 +187,6 @@ Entity 卡片**不是導航入口**（不導向聊天頁），而是資訊展示
 │  │                                        │  │
 │  │ [  Type message...        ] [Send]     │  │
 │  └────────────────────────────────────────┘  │
-│                                              │
 ├──────────────────────────────────────────────┤
 │  🏠    💬    📋    🎴    ⚙️   (tab bar)     │
 └──────────────────────────────────────────────┘
@@ -297,9 +210,10 @@ Entity 卡片**不是導航入口**（不導向聊天頁），而是資訊展示
 // (tabs)/chat.tsx — 簡化為 WebView wrapper
 export default function ChatScreen() {
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <WebViewScreen url="https://eclawbot.com/portal/chat.html" />
-    </SafeAreaView>
+    <PortalTabScreen
+      url="https://eclawbot.com/portal/chat.html"
+      tabId="chat"
+    />
   );
 }
 ```
@@ -319,58 +233,44 @@ export default function ChatScreen() {
 
 > **不需要**從首頁傳遞 entityId 到 chat tab。Android 也沒有此機制。
 
-### 3.6 名片夾 UX 規範（對齊 Android `CardHolderActivity`）
+### 3.6 名片夾 UX 規範（對齊 Android CARDS WebView）
 
 #### 3.6.1 核心架構
 
-名片夾 tab 使用 **Native RN** 實作（與 Android 一致），三區佈局：
+名片夾 tab 使用 `PortalTabScreen` 載入 `/portal/card-holder.html`。三區佈局與 Bot Plaza 入口都由 portal 擁有，避免 iOS/Android 各自維護不同的名片夾 UI。
 
 | 區塊 | 說明 | API |
 |------|------|-----|
-| My Cards | 自己的 agent cards（有 publicCode 的 entity） | `contactsApi.myCards()` |
-| Recent | 最近互動的聯絡人，按 `lastInteractedAt` 排序 | `contactsApi.recent()` |
-| Collected | 所有收藏的聯絡人，支援搜尋/篩選 | `contactsApi.list()` |
+| My Cards | 自己的 agent cards（有 publicCode 的 entity） | portal 呼叫 contacts API |
+| Recent | 最近互動的聯絡人，按 `lastInteractedAt` 排序 | portal 呼叫 contacts API |
+| Collected | 所有收藏的聯絡人，支援搜尋/篩選 | portal 呼叫 contacts API |
 
 #### 3.6.2 與 Android 的對齊點
 
 | 項目 | Android | iOS 現況 | 一致性 |
 |------|---------|---------|--------|
-| 三區佈局 | ✅ My Cards / Recent / Collected | ✅ | ✅ |
-| My Card 編輯 | ✅ Edit mode（pencil icon toggle） | ✅ | ✅ |
-| 搜尋 | ✅ ≥2 字觸發 | ✅ | ✅ |
-| Filter chips | ✅ All / Friends / Pinned | ✅ All / Pinned / Blocked | ⚠️ 略有差異 |
-| Detail dialog | ✅ 含 Chat History tab | ✅ | ✅ |
-| Pin/Block/Remove | ✅ | ✅ | ✅ |
-| Bot Plaza tab | ✅ WebView community.html | ❌ 無 | ⚠️ P2 |
+| Host | `WebViewActivity` CARDS | `PortalTabScreen` | ✅ |
+| URL | `/portal/card-holder.html?embed=1` | `/portal/card-holder.html?embed=1&hideChrome=1` | ✅ |
+| 三區佈局 | portal `card-holder.html` | portal `card-holder.html` | ✅ |
+| Bot Plaza tab | portal iframe / sub-tab | portal iframe / sub-tab | ✅ |
 
-> **card-holder.tsx（獨立頁面）已廢棄**。功能與 Cards tab 重複，不再使用。
+> **不得恢復原生 Cards route**：`(tabs)/cards.tsx` 只能是 `/portal/card-holder.html` 的 WebView wrapper。Card Holder 外觀、搜尋、filter、Bot Plaza、Chat History 等都應在 portal page 修正。
 
-### 3.7 設定 UX 規範（對齊 Android `SettingsActivity`）
+### 3.7 設定 UX 規範（WebView parity）
 
-#### 3.7.1 Android Settings 包含的項目
+#### 3.7.1 Settings tab 核心架構
 
-| 項目 | Android SettingsActivity |
-|------|------------------------|
-| 帳號狀態 | ✅ Email 綁定、Google/FB 登入、複製 credentials |
-| 訂閱/用量 | ✅ 顯示用量 |
-| 錢包/儲值 | ✅ Wallet、Top-up |
-| 租賃管理 | ✅ My Rentals |
-| 邀請好友 | ✅ Invite Friends |
-| 檔案管理 | ✅ File Manager |
-| 意見回饋 | ✅ Feedback |
-| 隱私權政策 | ✅ Privacy Policy |
-| 語言選擇 | ✅ 8 語言 |
-| Channel API | ✅ 狀態 + 管理 |
-| 刪除帳號 | ✅ |
-| **管理實體** | ❌ **沒有** |
+Settings tab 使用 `PortalTabScreen` 載入 `/portal/settings.html`，讓帳號、語言、通知、Channel API、檔案、回饋、刪帳等入口與 portal 共用。需要 Apple 原生能力的流程仍可由 settings page 導向 iOS native route。
 
-#### 3.7.2 iOS Settings 必要修正
+| 項目 | iOS 主 tab | 備註 |
+|------|------------|------|
+| 帳號狀態 | WebView settings page | auth credentials 由 `WebViewScreen` 注入 |
+| 語言/通知/Channel API | WebView settings page | 與 portal 共用 |
+| Wallet / IAP | WebView 入口可導向 native Apple IAP route | 不得在 WebView 內處理外部付款 |
+| 檔案/回饋/邀請 | WebView 入口或 existing native route | 入口由 portal 決定 |
+| 管理實體 | dashboard WebView | 不在 Settings 建立獨立 Entity Manager |
 
-- ❌ **移除「管理實體」(`Manage Entities`) 入口** — Android 沒有此功能在 Settings
-- ❌ **移除 `entity-manager` 路由** — Android 無獨立 EntityManagerActivity
-- ✅ 實體管理功能已併入首頁（tap avatar、tap name、long press ActionSheet）
-
-> **重要**：Android 的實體管理**全部在首頁 Edit Mode 完成**，不在 Settings。iOS 必須對齊此行為。
+> **不得恢復原生 Settings 主 tab**：`(tabs)/settings.tsx` 只能是 `/portal/settings.html` 的 WebView wrapper。需要 native capability 時，從 portal entry 導向獨立 native route，不要把 bottom tab 本身改回 native list。
 
 ---
 
@@ -622,17 +522,17 @@ const API_BASE = __DEV__
 | 功能 | Web | Android | iOS | 備註 |
 |------|-----|---------|-----|------|
 | Entity CRUD | ✅ | ✅ | ✅ | |
-| **首頁 Entity Card** | ✅ Dashboard | ✅ item_agent_card | 🟡 需豐富化 | 缺 XP bar、狀態 badge、最後訊息（§3.4） |
-| **聊天** | ✅ chat.html | ✅ WebView chat | 🟡 **改為 WebView** | 已定義 §3.5，需實作 |
+| **首頁 Entity Card** | ✅ Dashboard | ✅ Dashboard WebView | ✅ Dashboard WebView | 由 `portal/dashboard.html` 共用（§3.4） |
+| **聊天** | ✅ chat.html | ✅ WebView chat | ✅ WebView chat | 已定義 §3.5 |
 | AI 助理 | ✅ | ✅ | ✅ | |
 | Mission Control | ✅ | ✅ | ✅ WebView | |
 | Kanban | ✅ | ⚠️ WebView | ⚠️ WebView | 可接受 |
-| Card Holder | ✅ | ✅ | ✅ | |
+| Card Holder | ✅ | ✅ WebView | ✅ WebView | `portal/card-holder.html` 共用（§3.6） |
 | Wallet | ✅ | ✅ Google Play | 🔴 **需 IAP** | |
 | BRM Marketplace | ✅ | ⚠️ WebView | ⚠️ WebView | 可接受 |
 | My Rentals | ✅ | ⚠️ WebView | ⚠️ WebView | 可接受 |
 | Arena 面試 | ✅ | ❌ | ❌ | 上架前需 WebView wrapper |
-| Org Chart | ✅ | ✅ WebView (`DashboardActivity`) | ✅ WebView (`(tabs)/dashboard`) | 三平台共用 `portal/dashboard.html`，drag/drop + 4 模式一致 |
+| Org Chart | ✅ | ✅ WebView (`dashboard.html`) | ✅ WebView (`dashboard.html`) | 三平台共用 `portal/dashboard.html`，drag/drop + 4 模式一致 |
 
 ### 8.2 差異可接受的項目
 
