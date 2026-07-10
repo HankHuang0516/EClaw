@@ -27,6 +27,14 @@ function makeMockPool() {
                 const prefs = prefsStore[deviceId] || null;
                 return Promise.resolve({ rows: prefs ? [{ prefs }] : [] });
             }
+            // usage warning source self-repair: INSERT ... usage_warning_config
+            // params: [deviceId, mergedJson, ts]
+            if (/INSERT INTO device_preferences/i.test(sql) && /usage_warning_config/i.test(sql)) {
+                const deviceId = params[0];
+                const merged = JSON.parse(params[1]);
+                prefsStore[deviceId] = { ...(prefsStore[deviceId] || {}), usage_warning_config: merged };
+                return Promise.resolve({ rows: [] });
+            }
             // updateSettings: INSERT ... ON CONFLICT — params: [deviceId, mergedJson, ts]
             if (/INSERT INTO device_preferences/i.test(sql)) {
                 const deviceId = params[0];
@@ -231,6 +239,52 @@ describe('disabled-device no-op', () => {
             .get('/api/passive-health/settings')
             .query({ deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
         expect(typeof get.body.settings.lastRunAt).toBe('number');
+    });
+});
+
+describe('usage display source self-repair', () => {
+    function buildAppWithProvider(provider) {
+        mockPool = makeMockPool();
+        logCalls = [];
+        passiveHealth.init({
+            pool: mockPool,
+            devices: freshDevices(),
+            entityStatus: {
+                logOperation: (...args) => { logCalls.push(args); return Promise.resolve(); },
+            },
+            feedbackModule: { saveFeedback: jest.fn().mockResolvedValue(null) },
+            deriveChannelProvider: () => provider,
+            getChannelAccountById: jest.fn().mockResolvedValue({ id: 10, callback_url: 'https://codex.eclawbot.com/eclaw-webhook' }),
+            isReady: () => true,
+            selfBaseUrl: 'http://localhost:3999',
+        });
+    }
+
+    it('runEntity repairs Codex channel usage_warning_config.entity_engines', async () => {
+        const origFetch = global.fetch;
+        global.fetch = jest.fn().mockResolvedValue({ ok: true });
+        try {
+            buildAppWithProvider('codex');
+            const result = await passiveHealth.runEntity(DEVICE_ID, DEVICE_SECRET, 2, { autoRepair: true });
+            expect(result.usageDisplayRepair).toMatchObject({ changed: true, engine: 'codex', entityId: 2 });
+            expect(prefsStore[DEVICE_ID].usage_warning_config.entity_engines).toEqual({ '2': 'codex' });
+            expect(logCalls.some(call => call[2] === 'usage_warning_self_repair')).toBe(true);
+        } finally {
+            global.fetch = origFetch;
+        }
+    });
+
+    it('does not rewrite usage source for unmanaged providers', async () => {
+        const origFetch = global.fetch;
+        global.fetch = jest.fn().mockResolvedValue({ ok: true });
+        try {
+            buildAppWithProvider('openclaw');
+            const result = await passiveHealth.runEntity(DEVICE_ID, DEVICE_SECRET, 2, { autoRepair: true });
+            expect(result.usageDisplayRepair).toMatchObject({ changed: false, reason: 'provider_not_managed', provider: 'openclaw' });
+            expect(prefsStore[DEVICE_ID]).toBeUndefined();
+        } finally {
+            global.fetch = origFetch;
+        }
     });
 });
 

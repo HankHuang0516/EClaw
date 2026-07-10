@@ -52,12 +52,15 @@ const DEFAULTS = {
     // 排程觸發母卡 self-recurring (no子卡, only re-trigger self): notify on each fire?
     // Default true — these fire less often (one per cron tick) and the user usually wants to know.
     kanban_cron_recurring_notify: true,
-    // Usage warning (card_9cd84ee7d830b2f76c595f6c): when Claude 5h/7d remaining
-    // drops below the thresholds, each outbound Agent message is prepended with
-    // a system warning so the dialog partner knows quota is tight.
-    // Shape: { enabled: bool, threshold_5h_pct: 0-100, threshold_7d_pct: 0-100 }
+    // Usage warning (card_9cd84ee7d830b2f76c595f6c): when the speaking Agent's
+    // 5h/7d remaining quota drops below the thresholds, each outbound Agent
+    // message is prepended with a system warning so the dialog partner knows
+    // quota is tight. entity_engines pins channel entities to the right quota
+    // source when one device hosts both Claude and Codex channels.
+    // Shape: { enabled: bool, threshold_5h_pct: 0-100, threshold_7d_pct: 0-100,
+    //          entity_engines: { "<entityId>": "claude" | "codex" } }
     // Trigger logic: warn if (5h_remaining ≤ threshold_5h_pct) OR (7d_remaining ≤ threshold_7d_pct).
-    usage_warning_config: { enabled: true, threshold_5h_pct: 15, threshold_7d_pct: 5 },
+    usage_warning_config: { enabled: true, threshold_5h_pct: 15, threshold_7d_pct: 5, entity_engines: {} },
     // "需要你" HITL inbox (card_8151054f). Backend stub defaults only — the full
     // settings UI is a separate PR (#6). The backend ALWAYS emits the
     // 'action_request:changed' socket event; the frontend gates live-refresh
@@ -376,10 +379,20 @@ function coerceValue(key, raw) {
             if (!Number.isFinite(n)) return fallback;
             return Math.max(0, Math.min(100, Math.round(n)));
         };
+        const entityEngines = {};
+        if (raw.entity_engines && typeof raw.entity_engines === 'object' && !Array.isArray(raw.entity_engines)) {
+            for (const [entityId, engine] of Object.entries(raw.entity_engines)) {
+                const n = Number(entityId);
+                if (Number.isFinite(n) && n >= 0 && (engine === 'claude' || engine === 'codex')) {
+                    entityEngines[String(n)] = engine;
+                }
+            }
+        }
         return {
             enabled,
             threshold_5h_pct: 'threshold_5h_pct' in raw ? clampPct(raw.threshold_5h_pct, d.threshold_5h_pct) : d.threshold_5h_pct,
             threshold_7d_pct: 'threshold_7d_pct' in raw ? clampPct(raw.threshold_7d_pct, d.threshold_7d_pct) : d.threshold_7d_pct,
+            entity_engines: entityEngines,
         };
     }
     if (key === 'kanban_nudge_per_entity_overrides') {

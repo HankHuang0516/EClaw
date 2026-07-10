@@ -9064,10 +9064,10 @@ app.post('/api/bind', async (req, res) => {
 /**
  * Classify a channel callback_url into one of the known provider buckets
  * so bots can route dispatches differently (OpenClaw vs Claude Code vs
- * Hermes vs a custom webhook). Heuristic-only — the plugin never tells
+ * Hermes vs Codex vs a custom webhook). Heuristic-only — the plugin never tells
  * us directly what it is, so we read the URL the plugin registered.
  *
- * Returns: 'openclaw' | 'claude' | 'hermes' | 'custom' | null
+ * Returns: 'openclaw' | 'claude' | 'hermes' | 'codex' | 'custom' | null
  * null means the entity is channel-bound but /register hasn't happened
  * yet (callback_url still NULL in channel_accounts).
  */
@@ -9085,6 +9085,7 @@ function deriveChannelProvider(callbackUrl) {
     const hay = `${host}${path}`;
     if (hay.includes('openclaw')) return 'openclaw';
     if (hay.includes('hermes')) return 'hermes';
+    if (hay.includes('codex')) return 'codex';
     if (hay.includes('claude') || hay.includes('claude-code')) return 'claude';
     return 'custom';
 }
@@ -10583,10 +10584,11 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
         routingResolvedVia = null;
     }
     // Usage warning prefix (card_9cd84ee7d830b2f76c595f6c; card_a69e8ffa refinement).
-    // When the device opted in and the latest usage_snapshots row shows
-    // Claude 5h/7d remaining ≤ thresholds, prepend a system warning so the
-    // user knows quota is tight. Best-effort: any failure here (no snapshot /
-    // stale / DB hiccup) silently skips — never blocks delivery.
+    // When the device opted in and the latest usage_snapshots row shows the
+    // speaking entity's provider-specific 5h/7d remaining ≤ thresholds, prepend
+    // a system warning so the user knows quota is tight. Best-effort: any
+    // failure here (no snapshot / stale / DB hiccup) silently skips — never
+    // blocks delivery.
     // Gate to USER-FACING pushes only: skip bot-to-bot directed messages
     // (speakTo targets another entity). Riding bot-to-bot acks made the warning
     // surface via org-chart-forward as a standalone conversational line to the

@@ -1,7 +1,7 @@
 /**
  * Usage Warning Module (card_9cd84ee7d830b2f76c595f6c)
  *
- * Reads the latest usage_snapshots row for a device, decides whether the
+ * Reads the latest usage_snapshots row for a device/entity, decides whether the
  * remaining quota crossed the per-device threshold, and formats an i18n
  * system-warning prefix that /api/transform prepends to outbound messages.
  *
@@ -12,8 +12,14 @@
  * only fall back to legacy unscoped rows (entity_id IS NULL) — mirroring
  * backend/kanban.js getEntityUsagePct().
  *
+ * Source attribution (card_usage_codex_source): usage snapshots may carry both
+ * Claude and Codex quota blocks for the same device. The speaking entity's
+ * provider decides which source is authoritative via
+ * usage_warning_config.entity_engines["<entityId>"] = "claude" | "codex".
+ *
  * Spec: device opts in via usage_warning_config pref
- *   { enabled: bool, threshold_5h_pct: 0..100, threshold_7d_pct: 0..100 }
+ *   { enabled: bool, threshold_5h_pct: 0..100, threshold_7d_pct: 0..100,
+ *     entity_engines?: { "<entityId>": "claude" | "codex" } }
  *
  * Trigger:  (5h_remaining ≤ threshold_5h_pct) OR (7d_remaining ≤ threshold_7d_pct)
  * Stale:    captured_at older than 6h → skip (no false-positive warnings)
@@ -58,6 +64,33 @@ function pickClaudeLivePct(live, key) {
 }
 
 /**
+ * Pull Codex used-percent quota from the daemon snapshot shape.
+ * backend/tooling/eclaw-usage-daemon/codex_loader.py writes:
+ *   codex_json.rate_limits.five_hour_pct / seven_day_pct
+ * These are USED percentages, matching the Claude picker contract.
+ */
+function pickCodexPct(codexJson, key) {
+    if (!codexJson || typeof codexJson !== 'object') return null;
+    const rateLimits = codexJson.rate_limits || {};
+    const flatKey = key + '_pct';
+    if (typeof rateLimits[flatKey] === 'number') return rateLimits[flatKey];
+    const nested = rateLimits[key];
+    if (nested && typeof nested.used_percentage === 'number') return nested.used_percentage;
+    if (nested && typeof nested.used_percent === 'number') return nested.used_percent;
+    return null;
+}
+
+function resolveEntityEngine(config, entityId) {
+    const cfg = config || {};
+    const engines = cfg.entity_engines;
+    if (!engines || typeof engines !== 'object' || Array.isArray(engines)) return 'claude';
+    const eid = (entityId === null || entityId === undefined) ? NaN : Number(entityId);
+    if (!Number.isFinite(eid)) return 'claude';
+    const raw = engines[String(eid)];
+    return raw === 'codex' ? 'codex' : 'claude';
+}
+
+/**
  * Pure decision function: should we attach the warning right now?
  *
  * @param {object|null} snapshot — { claude_json, codex_json, captured_at } or null
@@ -70,37 +103,51 @@ function pickClaudeLivePct(live, key) {
  *   disabled:    bool — user opted out
  *   five_hour_remaining_pct, seven_day_remaining_pct (number|null)
  */
-function shouldWarnNow(snapshot, config, nowMs = Date.now()) {
+function shouldWarnNow(snapshot, config, nowMs = Date.now(), engine = 'claude') {
     const cfg = config || {};
+    const sourceEngine = engine === 'codex' ? 'codex' : 'claude';
     const enabled = cfg.enabled !== false;
     const t5 = Number.isFinite(cfg.threshold_5h_pct) ? cfg.threshold_5h_pct : 15;
     const t7 = Number.isFinite(cfg.threshold_7d_pct) ? cfg.threshold_7d_pct : 5;
 
     if (!enabled) {
         return { warn: false, disabled: true, stale: false, no_snapshot: false,
-                 five_hour_remaining_pct: null, seven_day_remaining_pct: null };
+                 engine: sourceEngine, five_hour_remaining_pct: null, seven_day_remaining_pct: null };
     }
     if (!snapshot) {
         return { warn: false, disabled: false, stale: false, no_snapshot: true,
-                 five_hour_remaining_pct: null, seven_day_remaining_pct: null };
+                 engine: sourceEngine, five_hour_remaining_pct: null, seven_day_remaining_pct: null };
     }
 
     const capturedAtMs = snapshot.captured_at ? Date.parse(snapshot.captured_at) : NaN;
     if (!Number.isFinite(capturedAtMs) || (nowMs - capturedAtMs) > STALE_THRESHOLD_MS) {
         return { warn: false, disabled: false, stale: true, no_snapshot: false,
-                 five_hour_remaining_pct: null, seven_day_remaining_pct: null };
+                 engine: sourceEngine, five_hour_remaining_pct: null, seven_day_remaining_pct: null };
     }
 
-    const live = (snapshot.claude_json && snapshot.claude_json.live) || {};
-    const used5 = pickClaudeLivePct(live, 'five_hour');
-    const used7 = pickClaudeLivePct(live, 'seven_day');
+    let used5 = null;
+    let used7 = null;
+    if (sourceEngine === 'codex') {
+        const rateLimits = snapshot.codex_json && snapshot.codex_json.rate_limits;
+        const updatedAtMs = rateLimits && rateLimits.updated_at ? Date.parse(rateLimits.updated_at) : NaN;
+        if (Number.isFinite(updatedAtMs) && (nowMs - updatedAtMs) > STALE_THRESHOLD_MS) {
+            return { warn: false, disabled: false, stale: true, no_snapshot: false,
+                     engine: sourceEngine, five_hour_remaining_pct: null, seven_day_remaining_pct: null };
+        }
+        used5 = pickCodexPct(snapshot.codex_json, 'five_hour');
+        used7 = pickCodexPct(snapshot.codex_json, 'seven_day');
+    } else {
+        const live = (snapshot.claude_json && snapshot.claude_json.live) || {};
+        used5 = pickClaudeLivePct(live, 'five_hour');
+        used7 = pickClaudeLivePct(live, 'seven_day');
+    }
 
     const rem5 = (typeof used5 === 'number') ? Math.max(0, 100 - used5) : null;
     const rem7 = (typeof used7 === 'number') ? Math.max(0, 100 - used7) : null;
 
     if (rem5 == null && rem7 == null) {
         return { warn: false, disabled: false, stale: false, no_snapshot: true,
-                 five_hour_remaining_pct: null, seven_day_remaining_pct: null };
+                 engine: sourceEngine, five_hour_remaining_pct: null, seven_day_remaining_pct: null };
     }
 
     const breach5 = rem5 != null && rem5 <= t5;
@@ -111,6 +158,7 @@ function shouldWarnNow(snapshot, config, nowMs = Date.now()) {
         disabled: false,
         stale: false,
         no_snapshot: false,
+        engine: sourceEngine,
         five_hour_remaining_pct: rem5,
         seven_day_remaining_pct: rem7,
     };
@@ -184,7 +232,8 @@ async function getWarningPrefix(pool, deviceId, config, lang, entityId = null, n
             claude_json: row.claude_json,
             codex_json:  row.codex_json,
         } : null;
-        const decision = shouldWarnNow(snapshot, config, nowMs);
+        const engine = resolveEntityEngine(config, useEid ? eid : null);
+        const decision = shouldWarnNow(snapshot, config, nowMs, engine);
         if (!decision.warn) return null;
         // Cooldown: suppress if we already attached a warning for this
         // device+entity inside the window — keeps it a one-off piggyback,
@@ -209,6 +258,8 @@ module.exports = {
     DEFAULT_COOLDOWN_MS,
     WARNING_TEMPLATES,
     pickClaudeLivePct,
+    pickCodexPct,
+    resolveEntityEngine,
     shouldWarnNow,
     formatWarningText,
     withinCooldown,

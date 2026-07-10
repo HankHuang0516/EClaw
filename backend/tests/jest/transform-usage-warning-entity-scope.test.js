@@ -108,7 +108,7 @@ beforeEach(() => {
     // test starts from "never warned".
     installQueryImpl();
     devicePrefs.getPrefs.mockResolvedValue({
-        usage_warning_config: { enabled: true, threshold_5h_pct: 15, threshold_7d_pct: 5 },
+        usage_warning_config: { enabled: true, threshold_5h_pct: 15, threshold_7d_pct: 5, entity_engines: { '6': 'codex' } },
     });
     usageWarning._resetCooldownState();
     SNAPSHOT_ROWS.length = 0;
@@ -174,5 +174,29 @@ describe('POST /api/transform — usage warning entity attribution (card_2f6a565
         });
         expect(res6.status).toBe(200);
         expect(res6.body.currentState.message).toBe(HEARTBEAT);
+    });
+
+    test('entity 6 mapped to Codex ignores Claude quota breach in the same snapshot row', async () => {
+        SNAPSHOT_ROWS.length = 0;
+        SNAPSHOT_ROWS.push({
+            device_id: DEVICE_ID,
+            entity_id: 6,
+            captured_at: new Date(Date.now() - 60_000).toISOString(),
+            claude_json: { live: { five_hour_pct: 99, seven_day_pct: 100 } },
+            codex_json: { rate_limits: { five_hour_pct: 10, seven_day_pct: 20, updated_at: new Date(Date.now() - 30_000).toISOString() } },
+        });
+
+        const res = await post('/api/transform').send({
+            deviceId: DEVICE_ID,
+            entityId: 6,
+            botSecret: botSecret6,
+            state: 'IDLE',
+            message: HEARTBEAT,
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.currentState.message).toBe(HEARTBEAT);
+        expect(res.body.currentState.message).not.toContain('System notice');
+        expect(res.body.currentState.message).not.toContain('⚠️');
     });
 });

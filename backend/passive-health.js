@@ -73,6 +73,7 @@ const OPEN_FAIL_THRESHOLD = 3;
 const STUCK_PENDING_THRESHOLD = 3;
 const HEARTBEAT_STALE_MS = 300_000; // 5 min — matches index.js ENTITY_HEARTBEAT_STALE_MS default
 const HEALTH_PROBE_TIMEOUT_MS = 4_000;
+const USAGE_WARNING_ENGINES = new Set(['claude', 'codex']);
 
 function init(opts) {
     pool = opts.pool || null;
@@ -161,6 +162,76 @@ async function updateSettings(deviceId, patch) {
         console.error('[PassiveHealth] updateSettings error:', err.message);
     }
     return merged;
+}
+
+function normalizeUsageWarningEngine(provider) {
+    return USAGE_WARNING_ENGINES.has(provider) ? provider : null;
+}
+
+function parsePrefs(raw) {
+    if (!raw) return {};
+    if (typeof raw === 'string') {
+        try { return JSON.parse(raw) || {}; } catch { return {}; }
+    }
+    return (typeof raw === 'object' && !Array.isArray(raw)) ? raw : {};
+}
+
+function normalizeEntityEngines(raw) {
+    const out = {};
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+    for (const [entityId, engine] of Object.entries(raw)) {
+        const n = Number(entityId);
+        if (Number.isFinite(n) && n >= 0 && USAGE_WARNING_ENGINES.has(engine)) {
+            out[String(n)] = engine;
+        }
+    }
+    return out;
+}
+
+async function repairUsageWarningEngine(deviceId, entityId, provider) {
+    const engine = normalizeUsageWarningEngine(provider);
+    const eid = Number(entityId);
+    if (!pool || !deviceId) return { changed: false, reason: 'pool_unavailable' };
+    if (!Number.isFinite(eid) || eid < 0) return { changed: false, reason: 'invalid_entity_id' };
+    if (!engine) return { changed: false, reason: 'provider_not_managed', provider: provider || null };
+
+    try {
+        const r = await pool.query(
+            'SELECT prefs FROM device_preferences WHERE device_id = $1',
+            [deviceId]
+        );
+        const prefs = parsePrefs(r.rows[0] && r.rows[0].prefs);
+        const currentCfg = (prefs.usage_warning_config && typeof prefs.usage_warning_config === 'object' && !Array.isArray(prefs.usage_warning_config))
+            ? prefs.usage_warning_config : {};
+        const entityEngines = normalizeEntityEngines(currentCfg.entity_engines);
+        const key = String(eid);
+        if (entityEngines[key] === engine) {
+            return { changed: false, reason: 'already_current', engine, entityId: eid };
+        }
+        const previous = entityEngines[key] || null;
+        entityEngines[key] = engine;
+        const nextCfg = {
+            ...currentCfg,
+            enabled: currentCfg.enabled !== false,
+            threshold_5h_pct: Number.isFinite(currentCfg.threshold_5h_pct) ? currentCfg.threshold_5h_pct : 15,
+            threshold_7d_pct: Number.isFinite(currentCfg.threshold_7d_pct) ? currentCfg.threshold_7d_pct : 5,
+            entity_engines: entityEngines,
+        };
+
+        await pool.query(`
+            INSERT INTO device_preferences (device_id, prefs, updated_at)
+            VALUES ($1, jsonb_build_object('usage_warning_config', $2::jsonb), $3)
+            ON CONFLICT (device_id) DO UPDATE
+            SET prefs = jsonb_set(
+                    COALESCE(device_preferences.prefs, '{}'::jsonb),
+                    '{usage_warning_config}', $2::jsonb, true),
+                updated_at = $3
+        `, [deviceId, JSON.stringify(nextCfg), Date.now()]);
+        return { changed: true, engine, previous, entityId: eid };
+    } catch (err) {
+        console.error('[PassiveHealth] repairUsageWarningEngine error:', err.message);
+        return { changed: false, reason: 'error', error: err.message };
+    }
 }
 
 // ── Eligibility ───────────────────────────────────────────────────────────────
@@ -457,8 +528,15 @@ async function runEntity(deviceId, deviceSecret, entityId, settings) {
                 : `Passive health: unhealthy (${health.failingSignals.join(', ')})`,
             { healthy: health.healthy, readiness: health.readiness, canReply: health.canReply, callbackActive: health.callbackActive, failingSignals: health.failingSignals, provider: health.provider, signals: health.signals });
 
+        const usageDisplayRepair = await repairUsageWarningEngine(deviceId, entityId, health.provider);
+        if (usageDisplayRepair.changed) {
+            await logEvent(deviceId, entityId, 'usage_warning_self_repair',
+                `Usage display source repaired: entity #${entityId} → ${usageDisplayRepair.engine}`,
+                { engine: usageDisplayRepair.engine, previous: usageDisplayRepair.previous });
+        }
+
         if (health.healthy || !settings.autoRepair) {
-            return { entityId, eligible: true, healthy: health.healthy, readiness: health.readiness, canReply: health.canReply, callbackActive: health.callbackActive, repaired: false, failingSignals: health.failingSignals };
+            return { entityId, eligible: true, healthy: health.healthy, readiness: health.readiness, canReply: health.canReply, callbackActive: health.callbackActive, repaired: false, usageDisplayRepair, failingSignals: health.failingSignals };
         }
 
         // No callback registered is NOT self-repairable — the callback must be
@@ -469,7 +547,7 @@ async function runEntity(deviceId, deviceSecret, entityId, settings) {
             await logEvent(deviceId, entityId, 'self_repair',
                 bug.filed ? `No-callback bug filed (feedback #${bug.feedbackId}) — re-bind required, not self-repairable` : `No-callback bug filing failed: ${bug.reason}`,
                 { filed: bug.filed, feedbackId: bug.feedbackId, issueUrl: bug.issueUrl, reason: 'no_callback', failingSignals: health.failingSignals });
-            return { entityId, eligible: true, healthy: false, readiness: health.readiness, canReply: false, callbackActive: false, repaired: false, bugFiled: bug.filed, feedbackId: bug.feedbackId, failingSignals: health.failingSignals };
+            return { entityId, eligible: true, healthy: false, readiness: health.readiness, canReply: false, callbackActive: false, repaired: false, bugFiled: bug.filed, feedbackId: bug.feedbackId, usageDisplayRepair, failingSignals: health.failingSignals };
         }
 
         // Unhealthy + autoRepair → up to 3 repair attempts, spaced past the cooldown.
@@ -495,7 +573,7 @@ async function runEntity(deviceId, deviceSecret, entityId, settings) {
         }
 
         if (recovered) {
-            return { entityId, eligible: true, healthy: false, repaired: true, failingSignals: health.failingSignals };
+            return { entityId, eligible: true, healthy: false, repaired: true, usageDisplayRepair, failingSignals: health.failingSignals };
         }
 
         // Still unhealthy after all attempts → file a bug.
@@ -504,7 +582,7 @@ async function runEntity(deviceId, deviceSecret, entityId, settings) {
             bug.filed ? `Bug filed after ${MAX_REPAIR_ATTEMPTS} failed repairs (feedback #${bug.feedbackId})` : `Bug filing failed: ${bug.reason}`,
             { filed: bug.filed, feedbackId: bug.feedbackId, issueUrl: bug.issueUrl, failingSignals: health.failingSignals });
 
-        return { entityId, eligible: true, healthy: false, repaired: false, bugFiled: bug.filed, feedbackId: bug.feedbackId, failingSignals: health.failingSignals };
+        return { entityId, eligible: true, healthy: false, repaired: false, bugFiled: bug.filed, feedbackId: bug.feedbackId, usageDisplayRepair, failingSignals: health.failingSignals };
     } finally {
         // Clear the transient flag + push the cleared state, but hold it visible for a
         // minimum duration so the 健檢中 animation is perceptible even on a fast healthy
@@ -698,7 +776,8 @@ module.exports = {
     computePassiveHealth,
     runEntity,
     runDeviceSweep,
+    repairUsageWarningEngine,
     SETTINGS_DEFAULTS,
     MAX_REPAIR_ATTEMPTS,
-    _internal: { collectHeartbeatSignal, authDevice },
+    _internal: { collectHeartbeatSignal, authDevice, normalizeUsageWarningEngine, normalizeEntityEngines },
 };
