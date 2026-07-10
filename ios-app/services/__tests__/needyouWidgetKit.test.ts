@@ -9,6 +9,23 @@ describe('Needs-you WidgetKit prebuild wiring', () => {
     expect(appJson.expo.plugins).toContain('./plugins/withNeedsYouWidget');
   });
 
+  test('app config declares the WidgetKit extension for EAS credentials', () => {
+    const appJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'app.json'), 'utf8'));
+    const appExtensions =
+      appJson.expo.extra?.eas?.build?.experimental?.ios?.appExtensions || [];
+    expect(appExtensions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          targetName: 'NeedsYouWidgetExtension',
+          bundleIdentifier: 'com.eclawbot.app.NeedsYouWidgetExtension',
+          entitlements: expect.objectContaining({
+            'com.apple.security.application-groups': ['group.com.eclawbot.app.needyou'],
+          }),
+        }),
+      ])
+    );
+  });
+
   test('config plugin creates WidgetKit extension and shared app group', () => {
     const plugin = fs.readFileSync(path.join(repoRoot, 'plugins/withNeedsYouWidget.js'), 'utf8');
     expect(plugin).toContain("withEntitlementsPlist");
