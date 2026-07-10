@@ -20765,13 +20765,19 @@ async function orgChartForward(entity, deviceId, message, opts = {}) {
 
     try {
         const orgData = await orgChartModule.getOrgChart(deviceId);
-        // Dormant-when-no-org-chart path (card_3ce0080a): with the default
-        // taskForward:false + no configured hierarchy, the org-chart forward does
-        // nothing, so a subordinate's substantive output never reaches a commander.
-        // The DEFAULT-OFF commander_forward_fallback_enabled pref (checked inside the
-        // helper) routes it to a bound commander (#2, else #1) instead. Behavior is
-        // byte-for-byte unchanged while the pref is false (helper no-ops).
-        if (!orgData.options.taskForward && !orgData.options.allForward) {
+        // Opt1 (card_d199b41c, owner-ratified 2026-07-10): up-forward defaults ON
+        // when a real hierarchy is configured, even if the allForward option was
+        // never explicitly set — so a subordinate's un-@mentioned report reaches
+        // its superior instead of being dropped. An explicit taskForward-only
+        // choice is still respected (effectiveAllForward → false). See org-chart.js.
+        const forwardAllUp = orgChartModule.effectiveAllForward(orgData.hierarchy, orgData.options);
+        // Dormant-when-no-org-chart path (card_3ce0080a): with taskForward off AND
+        // no effective up-forward (no allForward, no configured hierarchy), the
+        // org-chart forward does nothing, so a subordinate's substantive output
+        // never reaches a commander. The DEFAULT-OFF commander_forward_fallback_enabled
+        // pref (checked inside the helper) routes it to a bound commander (#2, else
+        // #1) instead. Byte-for-byte unchanged while the pref is false (helper no-ops).
+        if (!orgData.options.taskForward && !forwardAllUp) {
             return commanderForwardFallback(entity, deviceId, message, opts);
         }
         if (!orgData.hierarchy || !orgData.hierarchy.USER) {
@@ -20809,8 +20815,9 @@ async function orgChartForward(entity, deviceId, message, opts = {}) {
         let shouldForward = false;
         let prefix = '';
 
-        if (orgData.options.allForward) {
-            // Option 3: forward everything
+        if (forwardAllUp) {
+            // Option 3 (allForward) OR Opt1 default-on (hierarchy configured):
+            // forward everything up to the superior.
             shouldForward = true;
             prefix = `${ORG_FWD_PREFIX} from #${entity.entityId}] `;
         } else if (orgData.options.taskForward && chatPool) {
@@ -20883,7 +20890,9 @@ async function resolveSelfReplyRoutingMeta(entity, deviceId, eId, message) {
             if (superiorId != null && superiorId !== 'USER') {
                 const superiorEntity = device.entities?.[superiorId];
                 if (superiorEntity && superiorEntity.isBound) {
-                    let willForward = !!options.allForward;
+                    // Mirror orgChartForward's Opt1 default-on decision so the
+                    // routing chip reflects the ACTUAL upward route (card_d199b41c).
+                    let willForward = orgChartModule.effectiveAllForward(hierarchy, options);
                     if (!willForward && options.taskForward && chatPool) {
                         try {
                             const taskCheck = await chatPool.query(
