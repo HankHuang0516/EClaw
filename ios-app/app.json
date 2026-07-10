@@ -77,7 +77,24 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "9e492c28-9aa9-4bab-997d-780d7eb500ed"
+        "projectId": "9e492c28-9aa9-4bab-997d-780d7eb500ed",
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "NeedsYouWidgetExtension",
+                  "bundleIdentifier": "com.eclawbot.app.NeedsYouWidgetExtension",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.eclawbot.app.needyou"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
       }
     }
   }
