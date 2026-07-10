@@ -12,6 +12,7 @@ describe('device-preferences usage_warning_config', () => {
             enabled: true,
             threshold_5h_pct: 15,
             threshold_7d_pct: 5,
+            entity_engines: {},
         });
     });
 
@@ -27,13 +28,15 @@ describe('device-preferences usage_warning_config', () => {
 
         const cases = [
             { in: { enabled: false, threshold_5h_pct: 200, threshold_7d_pct: -3 },
-              out: { enabled: false, threshold_5h_pct: 100, threshold_7d_pct: 0 } },
+              out: { enabled: false, threshold_5h_pct: 100, threshold_7d_pct: 0, entity_engines: {} } },
             { in: { enabled: true, threshold_5h_pct: 25.6 },
-              out: { enabled: true, threshold_5h_pct: 26, threshold_7d_pct: 5 /* keep default */ } },
+              out: { enabled: true, threshold_5h_pct: 26, threshold_7d_pct: 5 /* keep default */, entity_engines: {} } },
             { in: { threshold_7d_pct: 'oops' },
-              out: { enabled: true /* keep default */, threshold_5h_pct: 15, threshold_7d_pct: 5 } },
+              out: { enabled: true /* keep default */, threshold_5h_pct: 15, threshold_7d_pct: 5, entity_engines: {} } },
             { in: 'not-an-object',
-              out: { enabled: true, threshold_5h_pct: 15, threshold_7d_pct: 5 } },
+              out: { enabled: true, threshold_5h_pct: 15, threshold_7d_pct: 5, entity_engines: {} } },
+            { in: { entity_engines: { '6': 'codex', '2': 'claude', '-1': 'codex', bad: 'codex', '7': 'openclaw' } },
+              out: { enabled: true, threshold_5h_pct: 15, threshold_7d_pct: 5, entity_engines: { '2': 'claude', '6': 'codex' } } },
         ];
 
         for (const c of cases) {

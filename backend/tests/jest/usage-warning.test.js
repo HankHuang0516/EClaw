@@ -16,13 +16,15 @@ const {
     shouldWarnNow,
     formatWarningText,
     pickClaudeLivePct,
+    pickCodexPct,
+    resolveEntityEngine,
     withinCooldown,
     resolveCooldownMs,
     getWarningPrefix,
     _resetCooldownState,
 } = require('../../lib/usage-warning');
 
-const DEFAULT_CFG = { enabled: true, threshold_5h_pct: 15, threshold_7d_pct: 5 };
+const DEFAULT_CFG = { enabled: true, threshold_5h_pct: 15, threshold_7d_pct: 5, entity_engines: {} };
 const NOW = 1781500000000;
 const fresh = (msAgo) => new Date(NOW - msAgo).toISOString();
 
@@ -56,6 +58,32 @@ describe('pickClaudeLivePct', () => {
     });
 });
 
+describe('pickCodexPct / resolveEntityEngine', () => {
+    test('reads Codex rate_limits flat shape', () => {
+        const codex = { rate_limits: { five_hour_pct: 42, seven_day_pct: 17 } };
+        expect(pickCodexPct(codex, 'five_hour')).toBe(42);
+        expect(pickCodexPct(codex, 'seven_day')).toBe(17);
+    });
+
+    test('reads Codex nested used percentage shape', () => {
+        const codex = { rate_limits: { five_hour: { used_percentage: 4 } } };
+        expect(pickCodexPct(codex, 'five_hour')).toBe(4);
+    });
+
+    test('invalid Codex shape returns null', () => {
+        expect(pickCodexPct(null, 'five_hour')).toBeNull();
+        expect(pickCodexPct({ rate_limits: { five_hour_pct: 'oops' } }, 'five_hour')).toBeNull();
+    });
+
+    test('entity_engines selects codex only for explicitly mapped entities', () => {
+        const cfg = { ...DEFAULT_CFG, entity_engines: { '6': 'codex', bad: 'codex', '7': 'openclaw' } };
+        expect(resolveEntityEngine(cfg, 6)).toBe('codex');
+        expect(resolveEntityEngine(cfg, '6')).toBe('codex');
+        expect(resolveEntityEngine(cfg, 2)).toBe('claude');
+        expect(resolveEntityEngine(null, 6)).toBe('claude');
+    });
+});
+
 describe('shouldWarnNow — trigger logic (card acceptance #3/#4)', () => {
     test('5h used 86% (remaining 14%) WARNS at default 15% threshold', () => {
         const out = shouldWarnNow(mkSnap({ five: 86, seven: 30 }), DEFAULT_CFG, NOW);
@@ -82,6 +110,38 @@ describe('shouldWarnNow — trigger logic (card acceptance #3/#4)', () => {
         const out = shouldWarnNow(mkSnap({ five: 85, seven: 50 }), DEFAULT_CFG, NOW);
         // 5h_remaining = 15, threshold 15 → 15 ≤ 15 → warn
         expect(out.warn).toBe(true);
+    });
+
+    test('codex engine ignores breaching Claude live quota and uses Codex rate_limits', () => {
+        const out = shouldWarnNow({
+            captured_at: fresh(60_000),
+            claude_json: { live: { five_hour_pct: 99, seven_day_pct: 100 } },
+            codex_json: { rate_limits: { five_hour_pct: 10, seven_day_pct: 20, updated_at: fresh(30_000) } },
+        }, DEFAULT_CFG, NOW, 'codex');
+        expect(out.warn).toBe(false);
+        expect(out.engine).toBe('codex');
+        expect(out.five_hour_remaining_pct).toBe(90);
+        expect(out.seven_day_remaining_pct).toBe(80);
+    });
+
+    test('codex engine warns when Codex weekly quota breaches threshold', () => {
+        const out = shouldWarnNow({
+            captured_at: fresh(60_000),
+            claude_json: { live: { five_hour_pct: 10, seven_day_pct: 10 } },
+            codex_json: { rate_limits: { five_hour_pct: 20, seven_day_pct: 99, updated_at: fresh(30_000) } },
+        }, DEFAULT_CFG, NOW, 'codex');
+        expect(out.warn).toBe(true);
+        expect(out.seven_day_remaining_pct).toBe(1);
+    });
+
+    test('codex rate_limits updated_at older than 6h is stale even when snapshot row is fresh', () => {
+        const out = shouldWarnNow({
+            captured_at: fresh(60_000),
+            claude_json: { live: { five_hour_pct: 10, seven_day_pct: 10 } },
+            codex_json: { rate_limits: { five_hour_pct: 99, seven_day_pct: 99, updated_at: fresh(STALE_THRESHOLD_MS + 60_000) } },
+        }, DEFAULT_CFG, NOW, 'codex');
+        expect(out.warn).toBe(false);
+        expect(out.stale).toBe(true);
     });
 });
 
@@ -221,6 +281,29 @@ describe('getWarningPrefix — entity-scoped attribution (card_2f6a5659)', () =>
         }]);
         const prefix = await getWarningPrefix(pool, DEV, DEFAULT_CFG, 'en', 6, NOW);
         expect(prefix).toContain('System notice');
+    });
+
+    test('mapped Codex entity reads codex_json and does not inherit Claude 0% remaining from the same row', async () => {
+        const pool = mkSnapshotPool([{
+            device_id: DEV, entity_id: 6, captured_at: fresh(60_000),
+            claude_json: { live: { five_hour_pct: 99, seven_day_pct: 100 } },
+            codex_json: { rate_limits: { five_hour_pct: 10, seven_day_pct: 20, updated_at: fresh(30_000) } },
+        }]);
+        const cfg = { ...DEFAULT_CFG, entity_engines: { '6': 'codex' } };
+        const prefix = await getWarningPrefix(pool, DEV, cfg, 'en', 6, NOW);
+        expect(prefix).toBeNull();
+    });
+
+    test('mapped Codex entity still warns when codex_json breaches', async () => {
+        const pool = mkSnapshotPool([{
+            device_id: DEV, entity_id: 6, captured_at: fresh(60_000),
+            claude_json: { live: { five_hour_pct: 10, seven_day_pct: 10 } },
+            codex_json: { rate_limits: { five_hour_pct: 10, seven_day_pct: 99, updated_at: fresh(30_000) } },
+        }]);
+        const cfg = { ...DEFAULT_CFG, entity_engines: { '6': 'codex' } };
+        const prefix = await getWarningPrefix(pool, DEV, cfg, 'en', 6, NOW);
+        expect(prefix).toContain('System notice');
+        expect(prefix).toContain('1%');
     });
 
     test('entity-scoped row is preferred over a NEWER unscoped row', async () => {

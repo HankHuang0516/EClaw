@@ -22,11 +22,12 @@ function slice(anchor, span = 2000) {
 }
 
 describe('deriveChannelProvider helper', () => {
-    it('is defined in index.js and covers the four known providers', () => {
+    it('is defined in index.js and covers the known providers', () => {
         const block = slice('function deriveChannelProvider', 800);
         expect(block).toMatch(/'openclaw'/);
         expect(block).toMatch(/'claude'/);
         expect(block).toMatch(/'hermes'/);
+        expect(block).toMatch(/'codex'/);
         expect(block).toMatch(/'custom'/);
     });
 
@@ -54,6 +55,8 @@ describe('deriveChannelProvider helper', () => {
         ['https://example.com/claude-code/webhook', 'claude'],
         ['https://claude.ai/relay', 'claude'],
         ['https://hermes.example.com/hook', 'hermes'],
+        ['https://codex.eclawbot.com/eclaw-webhook', 'codex'],
+        ['https://eclawbot.com/codex-eclaw-bridge/hook', 'codex'],
         ['https://a.eclawbot.com/eclaw-webhook', 'custom'],
         ['not a url', 'custom'],
     ])('%s -> %s', (url, expected) => {
