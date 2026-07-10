@@ -13,6 +13,7 @@ const NEEDS_YOU_WIDGET_CONFIG = {
   widgetDirectory: 'NeedsYouWidget',
   nativeModuleFile: 'NeedsYouWidgetStore.swift',
   nativeModuleExternFile: 'NeedsYouWidgetStoreBridge.m',
+  developmentTeam: 'KLBQRT47CT',
   pendingCountKey: 'pendingCount',
   updatedAtKey: 'updatedAt',
 };
@@ -138,6 +139,7 @@ function ensureWidgetBuildSettings(project, targetUuid, bundleIdentifier, option
   updateTargetBuildSettings(project, targetUuid, (settings) => {
     settings.APPLICATION_EXTENSION_API_ONLY = 'YES';
     settings.CODE_SIGN_ENTITLEMENTS = `${options.widgetDirectory}/NeedsYouWidget.entitlements`;
+    settings.DEVELOPMENT_TEAM = options.developmentTeam;
     settings.INFOPLIST_FILE = `${options.widgetDirectory}/NeedsYouWidget-Info.plist`;
     settings.IPHONEOS_DEPLOYMENT_TARGET = settings.IPHONEOS_DEPLOYMENT_TARGET || '15.1';
     settings.LD_RUNPATH_SEARCH_PATHS =

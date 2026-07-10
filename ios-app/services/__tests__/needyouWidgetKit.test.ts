@@ -23,6 +23,8 @@ describe('Needs-you WidgetKit prebuild wiring', () => {
     expect(plugin).toContain("__WIDGET_SHORT_VERSION__");
     expect(plugin).toContain("__WIDGET_BUILD_VERSION__");
     expect(plugin).toContain("projectConfig.exp?.ios?.buildNumber");
+    expect(plugin).toContain("developmentTeam: 'KLBQRT47CT'");
+    expect(plugin).toContain('settings.DEVELOPMENT_TEAM = options.developmentTeam');
   });
 
   test('native store writes pending count to the WidgetKit app group', () => {
