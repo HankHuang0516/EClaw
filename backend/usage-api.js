@@ -27,6 +27,8 @@ const pool = new Pool({
 const MAX_TIMELINE_HOURS = 720;            // 30 days
 const SNAPSHOT_BODY_LIMIT = '200kb';
 const FUTURE_SKEW_TOLERANCE_MS = 5 * 60 * 1000;  // accept ≤5min clock skew
+const CODEX_RATE_LIMIT_REPAIR_LOOKBACK_MS = 6 * 60 * 60 * 1000;
+const CODEX_RATE_LIMIT_REPAIR_SCAN_ROWS = 40;
 
 // ============================================
 // SCHEMA BOOTSTRAP — idempotent, safe to call on every boot.
@@ -128,6 +130,96 @@ function pickClaudeLivePct(live, key) {
     const nested = live.rate_limits && live.rate_limits[key];
     if (nested && typeof nested.used_percentage === 'number') return nested.used_percentage;
     return null;
+}
+
+function numberOrNull(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+}
+
+function normalizeCodexRateLimits(rateLimits) {
+    if (!rateLimits || typeof rateLimits !== 'object' || Array.isArray(rateLimits)) return null;
+
+    if (rateLimits.primary || rateLimits.secondary) {
+        const primary = rateLimits.primary && typeof rateLimits.primary === 'object' ? rateLimits.primary : {};
+        const secondary = rateLimits.secondary && typeof rateLimits.secondary === 'object' ? rateLimits.secondary : {};
+        return {
+            five_hour_pct: numberOrNull(primary.used_percent),
+            five_hour_resets_at: numberOrNull(primary.resets_at),
+            seven_day_pct: numberOrNull(secondary.used_percent),
+            seven_day_resets_at: numberOrNull(secondary.resets_at),
+            plan_type: typeof rateLimits.plan_type === 'string' && rateLimits.plan_type ? rateLimits.plan_type : null,
+            updated_at: typeof rateLimits.updated_at === 'string' ? rateLimits.updated_at : ''
+        };
+    }
+
+    return {
+        five_hour_pct: numberOrNull(rateLimits.five_hour_pct),
+        five_hour_resets_at: numberOrNull(rateLimits.five_hour_resets_at),
+        seven_day_pct: numberOrNull(rateLimits.seven_day_pct),
+        seven_day_resets_at: numberOrNull(rateLimits.seven_day_resets_at),
+        plan_type: typeof rateLimits.plan_type === 'string' && rateLimits.plan_type ? rateLimits.plan_type : null,
+        updated_at: typeof rateLimits.updated_at === 'string' ? rateLimits.updated_at : ''
+    };
+}
+
+function isUntrustedZeroCodexRateLimits(rateLimits) {
+    const normalized = normalizeCodexRateLimits(rateLimits);
+    return !!normalized
+        && normalized.five_hour_pct === 0
+        && normalized.seven_day_pct === 0
+        && !normalized.plan_type;
+}
+
+function isUsableCodexRateLimits(rateLimits) {
+    const normalized = normalizeCodexRateLimits(rateLimits);
+    return !!normalized
+        && Number.isFinite(normalized.five_hour_pct)
+        && Number.isFinite(normalized.seven_day_pct)
+        && !isUntrustedZeroCodexRateLimits(normalized);
+}
+
+function mergeCodexRateLimits(latest, sourceRow) {
+    if (!latest || !sourceRow) return latest;
+    const sourceLimits = normalizeCodexRateLimits(sourceRow.codex_json && sourceRow.codex_json.rate_limits);
+    if (!isUsableCodexRateLimits(sourceLimits)) return latest;
+    return {
+        ...latest,
+        codex_json: {
+            ...(latest.codex_json || {}),
+            rate_limits: sourceLimits,
+            rate_limits_source: {
+                repaired: true,
+                entityId: sourceRow.entity_id == null ? null : sourceRow.entity_id,
+                snapshotId: sourceRow.id == null ? null : String(sourceRow.id),
+                captured_at: sourceRow.captured_at || null
+            }
+        }
+    };
+}
+
+async function repairLatestCodexRateLimits(poolClient, deviceId, latest) {
+    const currentLimits = latest && latest.codex_json && latest.codex_json.rate_limits;
+    if (!latest || isUsableCodexRateLimits(currentLimits)) return latest;
+
+    const since = new Date(Date.now() - CODEX_RATE_LIMIT_REPAIR_LOOKBACK_MS).toISOString();
+    try {
+        const rowsQ = await poolClient.query(
+            `SELECT id, entity_id, captured_at, codex_json
+             FROM usage_snapshots
+             WHERE device_id = $1 AND captured_at >= $2
+             ORDER BY captured_at DESC
+             LIMIT $3`,
+            [deviceId, since, CODEX_RATE_LIMIT_REPAIR_SCAN_ROWS]
+        );
+        const rows = Array.isArray(rowsQ.rows) ? rowsQ.rows : [];
+        const source = rows.find(row => isUsableCodexRateLimits(row.codex_json && row.codex_json.rate_limits));
+        return source ? mergeCodexRateLimits(latest, source) : latest;
+    } catch (err) {
+        console.warn('[UsageAPI] Codex rate-limit repair skipped:', err && err.message);
+        return latest;
+    }
 }
 
 function sumEngineSessions(engineJson) {
@@ -285,7 +377,8 @@ module.exports = function(devices) {
                 [deviceId]
             );
 
-            const latest = latestQ.rows[0] || null;
+            const latestRaw = latestQ.rows[0] || null;
+            const latest = await repairLatestCodexRateLimits(pool, deviceId, latestRaw);
 
             const now = Date.now();
             const dayMs  = 24 * 60 * 60 * 1000;
@@ -402,6 +495,18 @@ module.exports = function(devices) {
 
     return {
         router,
-        _internal: { authenticate, sumEngineSessions, aggregateOverRange, pickClaudeLivePct, MAX_TIMELINE_HOURS, SNAPSHOT_BODY_LIMIT }
+        _internal: {
+            authenticate,
+            sumEngineSessions,
+            aggregateOverRange,
+            pickClaudeLivePct,
+            normalizeCodexRateLimits,
+            isUntrustedZeroCodexRateLimits,
+            isUsableCodexRateLimits,
+            mergeCodexRateLimits,
+            repairLatestCodexRateLimits,
+            MAX_TIMELINE_HOURS,
+            SNAPSHOT_BODY_LIMIT
+        }
     };
 };

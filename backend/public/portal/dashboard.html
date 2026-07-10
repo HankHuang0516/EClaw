@@ -5905,13 +5905,14 @@
             const fill = document.getElementById(fillId);
             const pctEl = document.getElementById(pctId);
             const resetEl = document.getElementById(resetId);
-            const clamped = Math.max(0, Math.min(100, Number(pct) || 0));
+            const hasPct = Number.isFinite(Number(pct));
+            const clamped = hasPct ? Math.max(0, Math.min(100, Number(pct))) : 0;
             if (fill) fill.style.width = clamped + '%';
             if (pctEl) {
                 while (pctEl.firstChild) pctEl.removeChild(pctEl.firstChild);
                 const usedWord = t(usedKey, 'used');
-                pctEl.appendChild(document.createTextNode(clamped + '% ' + usedWord));
-                if (isEst) {
+                pctEl.appendChild(document.createTextNode((hasPct ? clamped + '%' : '--') + ' ' + usedWord));
+                if (hasPct && isEst) {
                     const mark = document.createElement('span');
                     mark.className = 'uw-est-mark';
                     mark.textContent = ' ' + t('dashboard_usage_widget_estimate_marker', '(est)');
@@ -5971,7 +5972,16 @@
             const normalized = normalizeCodexRateLimits(rl);
             return !!normalized
                 && Number.isFinite(normalized.five_hour_pct)
-                && Number.isFinite(normalized.seven_day_pct);
+                && Number.isFinite(normalized.seven_day_pct)
+                && !isUntrustedZeroCodexRateLimits(normalized);
+        }
+
+        function isUntrustedZeroCodexRateLimits(rl) {
+            const normalized = normalizeCodexRateLimits(rl);
+            return !!normalized
+                && normalized.five_hour_pct === 0
+                && normalized.seven_day_pct === 0
+                && !normalized.plan_type;
         }
 
         function readCachedCodexRateLimits() {
@@ -6091,7 +6101,7 @@
                     'dashboard_usage_widget_session_used');
             } else {
                 paintBar('codexSessFill', 'codexSessPct', 'codexSessReset',
-                    0, false, null, 'h',
+                    null, false, null, 'h',
                     'dashboard_usage_widget_session_used');
             }
             // Weekly (7d)
@@ -6104,7 +6114,7 @@
                     'dashboard_usage_widget_weekly_used');
             } else {
                 paintBar('codexWeekFill', 'codexWeekPct', 'codexWeekReset',
-                    0, false, null, 'd',
+                    null, false, null, 'd',
                     'dashboard_usage_widget_weekly_used');
             }
         }
@@ -6261,7 +6271,7 @@
             }
         }
 
-        window.refreshUsageWidget = function () { loadUsageWidget(); };
+        window.refreshUsageWidget = function () { return loadUsageWidget(); };
 
         // ── Usage timeline modal (card_fb8a5a39ebe67581a66c6061) ──
         // Click the usage widget (not its buttons) → modal with two vanilla-SVG
