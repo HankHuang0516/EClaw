@@ -68,6 +68,21 @@ describe('buildEntityTaskCensus — source invariants', () => {
         expect(body).toMatch(/try \{/);
         expect(body).toMatch(/catch \(err\)/);
     });
+
+    test('census query EXCLUDES automation parent cards (aligns with the board default view)', () => {
+        // Regression: 2026-07-10 owner-reported phantom "封鎖9" — 9 recurring
+        // automation母卡 an older stale-auto-blocker had parked in 'blocked' were
+        // counted by the census while being HIDDEN from the board (GET
+        // /api/mission/cards defaults to excluding is_automation cards). The census
+        // must apply the SAME is_automation filter so its counts match what the
+        // entity actually sees on its board. Fails on the pre-fix query (no
+        // is_automation clause); passes once the filter is added.
+        const body = extractFunctionBody(
+            kanbanSrc,
+            'async function buildEntityTaskCensus(deviceId, entityId)'
+        );
+        expect(body).toMatch(/is_automation = false OR is_automation IS NULL/);
+    });
 });
 
 describe('buildEntityTaskCensus — behavioural', () => {
