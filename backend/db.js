@@ -736,6 +736,25 @@ async function createTables() {
         await client.query(`CREATE INDEX IF NOT EXISTS idx_scheduled_messages_pending ON scheduled_messages (scheduled_at) WHERE sent_at IS NULL AND cancelled_at IS NULL`);
         await client.query(`CREATE INDEX IF NOT EXISTS idx_scheduled_messages_device ON scheduled_messages (device_id, chat_entity_id)`);
 
+        // App-Bot daily quota (情緒價值 App pipeline — card I2). One row per
+        // (app_id, device_id, quota_date); messages_used counts LLM calls that
+        // fired that UTC day, bonus_from_ads is extra quota earned via rewarded
+        // ads. The effective daily limit = app.dailyQuota + bonus_from_ads.
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS app_bot_quota (
+                id SERIAL PRIMARY KEY,
+                app_id TEXT NOT NULL,
+                device_id TEXT NOT NULL,
+                quota_date DATE NOT NULL,
+                messages_used INTEGER NOT NULL DEFAULT 0,
+                bonus_from_ads INTEGER NOT NULL DEFAULT 0,
+                created_at TIMESTAMPTZ DEFAULT NOW(),
+                updated_at TIMESTAMPTZ DEFAULT NOW(),
+                UNIQUE(app_id, device_id, quota_date)
+            )
+        `);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_app_bot_quota_lookup ON app_bot_quota (app_id, device_id, quota_date)`);
+
         console.log('[DB] Database tables ready');
         client.release();
     } catch (err) {
@@ -2614,6 +2633,82 @@ async function upsertCommunityRating(publicCode, deviceId, stars) {
     }
 }
 
+// ============================================
+// App-Bot daily quota (情緒價值 App pipeline — card I2)
+// ============================================
+
+/**
+ * Read the current quota row for (appId, deviceId, quotaDate).
+ * @returns {Promise<{messages_used:number, bonus_from_ads:number} | null>}
+ *          null when there is no row yet OR when the DB is unavailable.
+ */
+async function getAppBotQuota(appId, deviceId, quotaDate) {
+    if (!pool) return null;
+    try {
+        const result = await pool.query(
+            `SELECT messages_used, bonus_from_ads
+             FROM app_bot_quota
+             WHERE app_id = $1 AND device_id = $2 AND quota_date = $3`,
+            [appId, deviceId, quotaDate]
+        );
+        if (result.rows.length === 0) return null;
+        return {
+            messages_used: result.rows[0].messages_used,
+            bonus_from_ads: result.rows[0].bonus_from_ads
+        };
+    } catch (err) {
+        console.error('[DB] getAppBotQuota error:', err.message);
+        return null;
+    }
+}
+
+/**
+ * Increment messages_used for the day by `count` (upsert). Called AFTER a
+ * successful LLM reply so a failed inference never burns quota.
+ * @returns {Promise<boolean>} true on success.
+ */
+async function incrementAppBotQuotaUsage(appId, deviceId, quotaDate, count = 1) {
+    if (!pool) return false;
+    try {
+        await pool.query(
+            `INSERT INTO app_bot_quota (app_id, device_id, quota_date, messages_used)
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT (app_id, device_id, quota_date)
+             DO UPDATE SET messages_used = app_bot_quota.messages_used + $4,
+                           updated_at = NOW()`,
+            [appId, deviceId, quotaDate, count]
+        );
+        return true;
+    } catch (err) {
+        console.error('[DB] incrementAppBotQuotaUsage error:', err.message);
+        return false;
+    }
+}
+
+/**
+ * Grant extra quota for the day via a rewarded ad (upsert). Reserved for a
+ * later card (rewarded-ad flow); exported now so the schema + write path ship
+ * together.
+ * @returns {Promise<boolean>} true on success.
+ */
+async function addAppBotAdBonus(appId, deviceId, quotaDate, bonus) {
+    if (!pool) return false;
+    try {
+        await pool.query(
+            `INSERT INTO app_bot_quota (app_id, device_id, quota_date, bonus_from_ads)
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT (app_id, device_id, quota_date)
+             DO UPDATE SET bonus_from_ads = app_bot_quota.bonus_from_ads + $4,
+                           updated_at = NOW()`,
+            [appId, deviceId, quotaDate, bonus]
+        );
+        return true;
+    } catch (err) {
+        console.error('[DB] addAppBotAdBonus error:', err.message);
+        return false;
+    }
+}
+
 module.exports = {
     initDatabase,
     saveDeviceData,
@@ -2724,4 +2819,8 @@ module.exports = {
     logInviteClick,
     getInviteClickStats,
     getInviteClickStatsForOwner,
+    // App-Bot daily quota (情緒價值 App pipeline — card I2)
+    getAppBotQuota,
+    incrementAppBotQuotaUsage,
+    addAppBotAdBonus,
 };
