@@ -9275,6 +9275,10 @@ function deriveChannelProvider(callbackUrl) {
  * Get bound entities for a specific device.
  * Auth: deviceId+deviceSecret OR JWT cookie (web portal)
  */
+// Throttle the "0 bound entities" warn — unbound devices poll continuously
+const ZERO_ENTITY_POLL_WARN_INTERVAL_MS = 30 * 60 * 1000;
+const zeroEntityPollWarnAt = new Map();
+
 app.get('/api/entities', async (req, res) => {
     const filterDeviceId = req.query.deviceId;
     const deviceSecret = req.query.deviceSecret;
@@ -9411,10 +9415,16 @@ app.get('/api/entities', async (req, res) => {
         }
 
         if (entities.length === 0) {
-            serverLog('warn', 'entity_poll', `Device ${authedDeviceId} returned 0 bound entities (device exists, slots: ${allSlotStates.join(',')})`, {
-                deviceId: authedDeviceId,
-                metadata: { totalDeviceSlots: Object.keys(device.entities).length, persistenceReady, slots: allSlotStates }
-            });
+            // Throttle per device: unbound devices poll every few seconds and
+            // this warn was 89% of the warn channel, drowning real warnings.
+            const lastWarn = zeroEntityPollWarnAt.get(authedDeviceId) || 0;
+            if (Date.now() - lastWarn > ZERO_ENTITY_POLL_WARN_INTERVAL_MS) {
+                zeroEntityPollWarnAt.set(authedDeviceId, Date.now());
+                serverLog('warn', 'entity_poll', `Device ${authedDeviceId} returned 0 bound entities (device exists, slots: ${allSlotStates.join(',')})`, {
+                    deviceId: authedDeviceId,
+                    metadata: { totalDeviceSlots: Object.keys(device.entities).length, persistenceReady, slots: allSlotStates }
+                });
+            }
         } else if (entities.length < Object.keys(device.entities).length) {
             serverLog('info', 'entity_poll', `Device ${authedDeviceId} returned ${entities.length}/${Object.keys(device.entities).length} bound entities (slots: ${allSlotStates.join(',')})`, {
                 deviceId: authedDeviceId,

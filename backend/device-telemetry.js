@@ -93,11 +93,16 @@ async function ensureSizeCache(pool, deviceId) {
 /**
  * Prune oldest entries until the device is under its quota.
  */
-async function pruneIfNeeded(pool, deviceId) {
+async function pruneIfNeeded(pool, deviceId, incomingBytes = 0, incomingEntries = 0) {
     if (!pool) return;
     const cache = await ensureSizeCache(pool, deviceId);
-    if (cache.totalBytes <= MAX_BUFFER_BYTES && cache.entryCount <= MAX_ENTRIES) return;
+    // Include the size of what the caller is about to insert — a buffer
+    // sitting just under the cap must still make room, otherwise every
+    // new entry overflows and gets dropped while prune never triggers.
+    if (cache.totalBytes + incomingBytes <= MAX_BUFFER_BYTES &&
+        cache.entryCount + incomingEntries <= MAX_ENTRIES) return;
 
+    const prevEntryCount = cache.entryCount;
     try {
         // Delete oldest PRUNE_BATCH entries and recalculate
         await pool.query(
@@ -116,16 +121,21 @@ async function pruneIfNeeded(pool, deviceId) {
              FROM device_telemetry WHERE device_id = $1`,
             [deviceId]
         );
-        sizeCache[deviceId] = {
-            totalBytes: parseInt(r.rows[0].total) || 0,
-            entryCount: parseInt(r.rows[0].cnt) || 0
-        };
+        // Mutate in place — appendEntries holds a reference to this object;
+        // reassigning would leave its post-prune capacity check reading stale
+        // full-buffer numbers and dropping every new entry.
+        cache.totalBytes = parseInt(r.rows[0].total) || 0;
+        cache.entryCount = parseInt(r.rows[0].cnt) || 0;
         if (process.env.DEBUG === 'true') console.log(`[Telemetry] Pruned ${PRUNE_BATCH} entries for ${deviceId}, now ${sizeCache[deviceId].entryCount} entries / ${(sizeCache[deviceId].totalBytes / 1024).toFixed(1)} KB`);
         if (_serverLog) _serverLog('info', 'telemetry', `[Telemetry] Pruned ${PRUNE_BATCH} entries for ${deviceId}, now ${sizeCache[deviceId].entryCount} entries / ${(sizeCache[deviceId].totalBytes / 1024).toFixed(1)} KB`, { deviceId });
 
-        // Recurse if still over quota
-        if (sizeCache[deviceId].totalBytes > MAX_BUFFER_BYTES || sizeCache[deviceId].entryCount > MAX_ENTRIES) {
-            await pruneIfNeeded(pool, deviceId);
+        // Recurse if still no room — but only if the last pass actually
+        // deleted something, so an oversized incoming entry (or an empty
+        // table) can never spin forever.
+        const stillNoRoom = cache.totalBytes + incomingBytes > MAX_BUFFER_BYTES ||
+                            cache.entryCount + incomingEntries > MAX_ENTRIES;
+        if (stillNoRoom && cache.entryCount < prevEntryCount && cache.entryCount > 0) {
+            await pruneIfNeeded(pool, deviceId, incomingBytes, incomingEntries);
         }
     } catch (err) {
         console.error('[Telemetry] Prune error:', err.message);
@@ -189,9 +199,10 @@ async function appendEntries(pool, deviceId, entries) {
         const rowJson  = JSON.stringify({ ts, type, action, page, input, output, duration, meta });
         const sizeBytes = Buffer.byteLength(rowJson, 'utf8');
 
-        // Will this exceed the cap? Prune first.
+        // Will this exceed the cap? Prune first, telling prune how much
+        // room the incoming entry needs.
         if (cache.totalBytes + sizeBytes > MAX_BUFFER_BYTES || cache.entryCount >= MAX_ENTRIES) {
-            await pruneIfNeeded(pool, deviceId);
+            await pruneIfNeeded(pool, deviceId, sizeBytes, 1);
         }
 
         // If still over after pruning, drop entry
