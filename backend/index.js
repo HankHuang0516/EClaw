@@ -22,6 +22,8 @@ const { isLowSignalFwd, classifyLowSignalFwd } = require('./org-fwd-filter');
 const orgFwdEscalation = require('./org-fwd-escalation');
 const { buildOrgEntitySessionKey, isOrgEntitySessionKey } = require('./session-scope');
 const { assignDefaultCompanionIfMissing } = require('./petdx-phase0-hook');
+const { getPersona } = require('./app-bots-config'); // 情緒價值 App pipeline (card I2)
+const { callAnthropic } = require('./anthropic-client'); // App-Bot LLM kernel (card I2)
 // JWT secret: fail-safe random per process if env var is missing (tokens signed in one process won't verify in another)
 const JWT_SECRET_FALLBACK = process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
 
@@ -625,6 +627,93 @@ setInterval(() => {
         if (now - entry.ts > DNS_RESOLVE_CACHE_TTL) dnsResolveCache.delete(h);
     }
 }, 1800000).unref();
+
+// ============================================
+// APP-BOT GATEWAY (情緒價值 App pipeline — card I2)
+// POST /api/app-bot/chat — server-side kernel for a family of mobile apps.
+// Client sends { appId, personaId, deviceId, message }; server injects the
+// per-persona system prompt, calls Anthropic, enforces a per-(appId,deviceId)
+// daily message quota, and returns { reply, quotaRemaining }.
+//
+// SECURITY INVARIANTS:
+//  - ANTHROPIC_API_KEY and the persona system prompts stay server-side and are
+//    NEVER echoed to the client.
+//  - The LLM call MUST NOT fire once the daily quota is exhausted (cost guard).
+// ============================================
+
+// ── App-Bot chat rate limiter (in-memory, per IP sliding window) ──
+const appBotChatRateLimits = {};
+const APP_BOT_CHAT_RATE_WINDOW = 60 * 1000; // 60s
+const APP_BOT_CHAT_RATE_MAX = 60; // max requests per window per IP
+function appBotChatRateLimit(req, res, next) {
+    // Skip rate limiting in test environment
+    if (process.env.NODE_ENV === 'test') return next();
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    if (!appBotChatRateLimits[ip] || now - appBotChatRateLimits[ip].start > APP_BOT_CHAT_RATE_WINDOW) {
+        appBotChatRateLimits[ip] = { start: now, count: 1 };
+    } else {
+        appBotChatRateLimits[ip].count++;
+    }
+    if (appBotChatRateLimits[ip].count > APP_BOT_CHAT_RATE_MAX) {
+        return res.status(429).json({ success: false, error: 'rate_limited' });
+    }
+    next();
+}
+// Clean up stale IP buckets every 5 minutes
+setInterval(() => {
+    const now = Date.now();
+    for (const ip in appBotChatRateLimits) {
+        if (now - appBotChatRateLimits[ip].start > APP_BOT_CHAT_RATE_WINDOW) delete appBotChatRateLimits[ip];
+    }
+}, 5 * 60 * 1000).unref();
+
+app.post('/api/app-bot/chat', appBotChatRateLimit, async (req, res) => {
+    const { appId, personaId, deviceId, message } = req.body || {};
+
+    // Validate inputs
+    if (typeof appId !== 'string' || typeof personaId !== 'string' ||
+        typeof deviceId !== 'string' || typeof message !== 'string' ||
+        !appId || !personaId || !deviceId || !message.trim()) {
+        return res.status(400).json({ success: false, error: 'appId, personaId, deviceId and message are required' });
+    }
+    if (message.length > 2000) {
+        return res.status(400).json({ success: false, error: 'message too long (max 2000 chars)' });
+    }
+
+    // Resolve persona server-side. Do NOT reveal which of appId/personaId was
+    // wrong (avoid leaking the valid namespace to probing clients).
+    const resolved = getPersona(appId, personaId);
+    if (!resolved) {
+        return res.status(403).json({ success: false, error: 'unknown_app_or_persona' });
+    }
+    const { app: appCfg, persona } = resolved;
+
+    // Quota check (UTC day). CRITICAL: the LLM must NOT fire when exhausted.
+    const today = new Date().toISOString().slice(0, 10);
+    const q = (await db.getAppBotQuota(appId, deviceId, today)) || { messages_used: 0, bonus_from_ads: 0 };
+    const limit = appCfg.dailyQuota + q.bonus_from_ads;
+    const remaining = limit - q.messages_used;
+    if (remaining <= 0) {
+        return res.status(429).json({ success: false, error: 'daily_quota_exceeded', needAd: true, quotaRemaining: 0 });
+    }
+
+    // Generate reply. Persona prompt stays server-side; only the text comes back.
+    let reply;
+    try {
+        const result = await callAnthropic(persona.systemPrompt, [{ role: 'user', content: message }]);
+        reply = (result.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+    } catch (err) {
+        // Never leak the underlying error (may reference the API key / provider).
+        console.error('[AppBot] inference error:', err.message);
+        return res.status(502).json({ success: false, error: 'inference_failed' });
+    }
+
+    // Only burn quota after a successful inference.
+    await db.incrementAppBotQuotaUsage(appId, deviceId, today, 1);
+
+    return res.status(200).json({ success: true, reply, quotaRemaining: remaining - 1 });
+});
 
 // Shareable chat link: /c/<publicCode>
 // Logged-in users → redirect to chat.html with contact filter
