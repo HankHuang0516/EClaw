@@ -150,21 +150,26 @@ describe('Mention feature — Fix A: displayText propagation (regression)', () =
     test('channel push uses pushText (not raw text)', () => {
         // After unifiedPush refactoring, the client/speak channel path calls
         // unifiedPush with message: pushText, which internally calls pushToChannelCallback.
+        // Post-vault-keyref (card_247a3a68) the local name may be
+        // `entityPushText` — a per-target derivative of `pushText` used to
+        // pick the [[VAULT_KEYREF]] hint form for channel-bound receivers.
+        // Both names are acceptable; raw `text` is not.
         const speakIdx = indexJs.indexOf("app.post('/api/client/speak'");
         expect(speakIdx).toBeGreaterThan(0);
-        // Check that unifiedPush is called with pushText in the channel path
         const channelSection = indexJs.indexOf("entity.bindingType === 'channel'", speakIdx);
         expect(channelSection).toBeGreaterThan(speakIdx);
         const nextElse = indexJs.indexOf('} else if (entity.webhook)', channelSection);
         const channelSnippet = indexJs.slice(channelSection, nextElse);
-        expect(channelSnippet).toContain('message: pushText');
+        expect(channelSnippet).toMatch(/message:\s+(?:entityPushText|pushText)\b/);
     });
 
     test('OpenClaw webhook pushMsg uses pushText in Content: line', () => {
         // The instruction-first push format builds a pushMsg string that
         // includes `Content: ${text}` — this must be updated to pushText
-        // so the LLM sees human-readable @name instead of raw tokens.
-        expect(indexJs).toContain('Content: ${pushText}');
+        // (or its per-target derivative `entityPushText`, post
+        // card_247a3a68) so the LLM sees human-readable @name instead of
+        // raw tokens and never the raw `${text}`.
+        expect(indexJs).toMatch(/Content:\s*\$\{(entityPushText|pushText)\}/);
         // The raw `${text}` form must not appear in the OpenClaw Content line
         expect(indexJs).not.toMatch(/pushMsg\s*\+=\s*`Content: \$\{text\}/);
     });
