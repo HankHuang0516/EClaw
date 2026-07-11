@@ -1,15 +1,19 @@
 /**
- * Tests for POST /api/app-bot/chat (情緒價值 App pipeline — card I2).
+ * Tests for POST /api/app-bot/chat — the async gateway contract (option B,
+ * card_6d0f2746 / card_12e6d33b). The old synchronous callAnthropic behavior
+ * was replaced: replies now come from an external EClaw inference entity, so
+ * a valid request creates a job + dispatches (no server LLM call, no reply in
+ * the response body). This file keeps the core validation + quota-guard
+ * coverage; the full callback/result flow lives in app-bot-async.test.js.
  *
- * Verifies the server-side app-bot gateway:
- *  - input validation (missing appId → 400, over-long message → 400)
- *  - unknown app/persona → 403
- *  - happy path → 200 with reply + numeric quotaRemaining, quota incremented once
- *  - quota exhausted → 429 with needAd, AND the LLM is NOT called (cost guard)
- *
- * anthropic-client.callAnthropic and the two db quota helpers are mocked so we
- * control the response + quota state per-test and assert the side effects.
+ * The inference config is frozen from env at require time → set before require.
+ * db quota + job helpers are mocked; the dispatch is spied so nothing real fires.
  */
+
+process.env.APP_BOT_INFERENCE_DEVICE_ID = 'inf-device';
+process.env.APP_BOT_INFERENCE_ENTITY_ID = '2';
+process.env.APP_BOT_INFERENCE_BOT_SECRET = 'inf-bot-secret';
+process.env.APP_BOT_INFERENCE_PUBLIC_CODE = 'infpub';
 
 // ── Standard pg mock (matches other Jest tests) ──
 jest.mock('pg', () => ({
@@ -28,14 +32,7 @@ jest.mock('../../flickr', () => ({
     uploadToFlickr: jest.fn(),
 }));
 
-// ── Mock the Anthropic client so no real network / API key is used ──
-jest.mock('../../anthropic-client', () => ({
-    callAnthropic: jest.fn().mockResolvedValue({
-        content: [{ type: 'text', text: '嗨,我在聽。' }],
-    }),
-}));
-
-// ── Mock db: only the app-bot quota helpers matter for these tests ──
+// ── Mock db: app-bot quota + job helpers ──
 jest.mock('../../db', () => ({
     initDatabase: jest.fn().mockResolvedValue(true),
     saveDeviceData: jest.fn().mockResolvedValue(true),
@@ -49,88 +46,103 @@ jest.mock('../../db', () => ({
     deleteOfficialBot: jest.fn().mockResolvedValue(true),
     loadSubscriptions: jest.fn().mockResolvedValue({}),
     saveSubscription: jest.fn().mockResolvedValue(true),
-    // App-Bot quota helpers (controlled per-test)
     getAppBotQuota: jest.fn().mockResolvedValue(null),
     incrementAppBotQuotaUsage: jest.fn().mockResolvedValue(true),
     addAppBotAdBonus: jest.fn().mockResolvedValue(true),
+    createAppBotJob: jest.fn().mockResolvedValue(true),
+    getAppBotJob: jest.fn().mockResolvedValue(null),
+    completeAppBotJob: jest.fn().mockResolvedValue(null),
+    sweepTimedOutAppBotJobs: jest.fn().mockResolvedValue(0),
     pool: { query: jest.fn().mockResolvedValue({ rows: [] }) },
 }));
 
 const request = require('supertest');
 const app = require('../../index');
 const db = require('../../db');
-const { callAnthropic } = require('../../anthropic-client');
+
+const DEVICE_ID = 'chat-device-1';
+const DEVICE_SECRET = 'chat-device-secret-1';
+
+beforeAll(() => {
+    app.devices[DEVICE_ID] = {
+        deviceId: DEVICE_ID,
+        deviceSecret: DEVICE_SECRET,
+        entities: {},
+    };
+});
 
 describe('POST /api/app-bot/chat', () => {
+    let dispatchSpy;
     beforeEach(() => {
         jest.clearAllMocks();
-        // Default: no prior usage today (getAppBotQuota returns null → treated as fresh)
         db.getAppBotQuota.mockResolvedValue(null);
+        db.createAppBotJob.mockResolvedValue(true);
         db.incrementAppBotQuotaUsage.mockResolvedValue(true);
-        callAnthropic.mockResolvedValue({ content: [{ type: 'text', text: '嗨,我在聽。' }] });
+        dispatchSpy = jest.spyOn(app, '_dispatchAppBotJob').mockResolvedValue({ pushed: true });
+    });
+    afterEach(() => {
+        dispatchSpy.mockRestore();
     });
 
-    it('missing appId → 400', async () => {
-        const res = await request(app)
-            .post('/api/app-bot/chat')
-            .send({ personaId: 'default', deviceId: 'dev-1', message: 'hi' });
+    const validBody = (over = {}) => ({
+        appId: 'nighthollow', personaId: 'default',
+        deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, message: '今天好累',
+        ...over,
+    });
+
+    it('missing appId → 400 (no dispatch)', async () => {
+        const res = await request(app).post('/api/app-bot/chat')
+            .send({ personaId: 'default', deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, message: 'hi' });
         expect(res.status).toBe(400);
         expect(res.body.success).toBe(false);
-        expect(callAnthropic).not.toHaveBeenCalled();
+        expect(dispatchSpy).not.toHaveBeenCalled();
     });
 
     it('message too long (>2000) → 400', async () => {
-        const res = await request(app)
-            .post('/api/app-bot/chat')
-            .send({ appId: 'nighthollow', personaId: 'default', deviceId: 'dev-1', message: 'x'.repeat(2001) });
+        const res = await request(app).post('/api/app-bot/chat')
+            .send(validBody({ message: 'x'.repeat(2001) }));
         expect(res.status).toBe(400);
-        expect(res.body.success).toBe(false);
-        expect(callAnthropic).not.toHaveBeenCalled();
+        expect(dispatchSpy).not.toHaveBeenCalled();
     });
 
     it('unknown app/persona → 403 (does not disclose which)', async () => {
-        const res = await request(app)
-            .post('/api/app-bot/chat')
-            .send({ appId: 'no-such-app', personaId: 'default', deviceId: 'dev-1', message: 'hi' });
+        const res = await request(app).post('/api/app-bot/chat')
+            .send(validBody({ appId: 'no-such-app' }));
         expect(res.status).toBe(403);
         expect(res.body.error).toBe('unknown_app_or_persona');
-        expect(callAnthropic).not.toHaveBeenCalled();
+        expect(dispatchSpy).not.toHaveBeenCalled();
 
-        // Also an unknown persona on a valid app → same 403.
-        const res2 = await request(app)
-            .post('/api/app-bot/chat')
-            .send({ appId: 'nighthollow', personaId: 'no-such-persona', deviceId: 'dev-1', message: 'hi' });
+        const res2 = await request(app).post('/api/app-bot/chat')
+            .send(validBody({ personaId: 'no-such-persona' }));
         expect(res2.status).toBe(403);
         expect(res2.body.error).toBe('unknown_app_or_persona');
     });
 
-    it('valid request → 200 with reply, numeric quotaRemaining, quota incremented once', async () => {
-        const res = await request(app)
-            .post('/api/app-bot/chat')
-            .send({ appId: 'nighthollow', personaId: 'default', deviceId: 'dev-1', message: '今天好累' });
+    it('valid request → 200 with jobId + pending, job created, dispatch once, quota NOT incremented', async () => {
+        const res = await request(app).post('/api/app-bot/chat').send(validBody());
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
-        expect(res.body.reply).toBe('嗨,我在聽。');
-        expect(typeof res.body.quotaRemaining).toBe('number');
-        expect(callAnthropic).toHaveBeenCalledTimes(1);
-        // System prompt (persona) is passed server-side, never exposed in body.
+        expect(typeof res.body.jobId).toBe('string');
+        expect(res.body.status).toBe('pending');
+        expect(db.createAppBotJob).toHaveBeenCalledTimes(1);
+        expect(dispatchSpy).toHaveBeenCalledTimes(1);
+        // Persona (system prompt) is dispatched server-side, never in the body.
         expect(JSON.stringify(res.body)).not.toContain('深夜樹洞');
-        expect(db.incrementAppBotQuotaUsage).toHaveBeenCalledTimes(1);
+        // Quota is burned on the callback, not on dispatch.
+        expect(db.incrementAppBotQuotaUsage).not.toHaveBeenCalled();
     });
 
-    it('quota exhausted → 429 needAd, LLM NOT called, quota NOT incremented', async () => {
+    it('quota exhausted → 429 needAd, dispatch NOT called, quota NOT incremented', async () => {
         // nighthollow dailyQuota is 8; simulate all 8 already used, no ad bonus.
         db.getAppBotQuota.mockResolvedValue({ messages_used: 8, bonus_from_ads: 0 });
-
-        const res = await request(app)
-            .post('/api/app-bot/chat')
-            .send({ appId: 'nighthollow', personaId: 'default', deviceId: 'dev-1', message: '再聊一句' });
-
+        const res = await request(app).post('/api/app-bot/chat').send(validBody({ message: '再聊一句' }));
         expect(res.status).toBe(429);
         expect(res.body.needAd).toBe(true);
         expect(res.body.quotaRemaining).toBe(0);
-        // The most important invariants: no LLM spend, no quota mutation on reject.
-        expect(callAnthropic).not.toHaveBeenCalled();
+        // The core invariants carried over from the old sync contract: no spend,
+        // no quota mutation, and now also no job created on reject.
+        expect(dispatchSpy).not.toHaveBeenCalled();
+        expect(db.createAppBotJob).not.toHaveBeenCalled();
         expect(db.incrementAppBotQuotaUsage).not.toHaveBeenCalled();
     });
 });

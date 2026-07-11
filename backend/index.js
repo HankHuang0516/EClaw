@@ -22,8 +22,7 @@ const { isLowSignalFwd, classifyLowSignalFwd } = require('./org-fwd-filter');
 const orgFwdEscalation = require('./org-fwd-escalation');
 const { buildOrgEntitySessionKey, isOrgEntitySessionKey } = require('./session-scope');
 const { assignDefaultCompanionIfMissing } = require('./petdx-phase0-hook');
-const { getPersona } = require('./app-bots-config'); // 情緒價值 App pipeline (card I2)
-const { callAnthropic } = require('./anthropic-client'); // App-Bot LLM kernel (card I2)
+const { getPersona, APP_BOT_INFERENCE, isInferenceConfigured } = require('./app-bots-config'); // 情緒價值 App pipeline (card I2 / option B)
 // JWT secret: fail-safe random per process if env var is missing (tokens signed in one process won't verify in another)
 const JWT_SECRET_FALLBACK = process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
 
@@ -629,16 +628,28 @@ setInterval(() => {
 }, 1800000).unref();
 
 // ============================================
-// APP-BOT GATEWAY (情緒價值 App pipeline — card I2)
-// POST /api/app-bot/chat — server-side kernel for a family of mobile apps.
-// Client sends { appId, personaId, deviceId, message }; server injects the
-// per-persona system prompt, calls Anthropic, enforces a per-(appId,deviceId)
-// daily message quota, and returns { reply, quotaRemaining }.
+// APP-BOT GATEWAY (情緒價值 App pipeline — card_6d0f2746 / card_12e6d33b, option B)
+//
+// The app's message is answered by an external EClaw bot ENTITY (async), NOT a
+// server-side LLM call — prod has no ANTHROPIC_API_KEY, so a synchronous
+// callAnthropic 502s. Async job/callback model (modeled on the ACK system):
+//   1. POST /api/app-bot/chat — auth the BOUND device (deviceSecret), quota
+//      check, create an app_bot_job row, DISPATCH a JSON envelope to the
+//      inference entity via the same deliverToEntity path speakTo uses, and
+//      return { jobId, status:'pending' }. Quota is NOT burned here.
+//   2. POST /api/app-bot/chat/callback — the inference entity POSTs its reply;
+//      we complete the job (idempotent) and burn quota ONCE on the transition.
+//   3. GET  /api/app-bot/chat/result — the app polls its own job for the reply.
+//   4. A 60s sweeper flips pending jobs past deadline to 'timeout'.
 //
 // SECURITY INVARIANTS:
-//  - ANTHROPIC_API_KEY and the persona system prompts stay server-side and are
-//    NEVER echoed to the client.
-//  - The LLM call MUST NOT fire once the daily quota is exhausted (cost guard).
+//  - The persona system prompt is dispatched to the inference entity, never
+//    echoed back to the requesting client.
+//  - Dispatch MUST NOT fire once the daily quota is exhausted (cost guard).
+//  - Quota is burned only on a successful callback (a lost/timed-out job never
+//    costs the user a message).
+//  - Callback is gated on the configured inference-entity identity; a device
+//    can only read its OWN jobs.
 // ============================================
 
 // ── App-Bot chat rate limiter (in-memory, per IP sliding window) ──
@@ -668,17 +679,89 @@ setInterval(() => {
     }
 }, 5 * 60 * 1000).unref();
 
+// How long the app-bot waits for the inference entity to reply before the job
+// is swept to 'timeout' (45s). deadline_ms is an absolute epoch ms.
+const APP_BOT_JOB_TTL_MS = 45_000;
+const APP_BOT_JOB_SWEEP_INTERVAL_MS = 60_000;
+
+/**
+ * Dispatch an app-bot job to the configured inference entity by REUSING the
+ * same deliverToEntity delivery path speakTo uses (index.js /api/transform).
+ * The delivered text is a JSON envelope the inference agent parses and replies
+ * to via /api/app-bot/chat/callback. Extracted + exported so tests can spy it.
+ *
+ * The requesting bound device is the logical sender (senderDeviceId=deviceId);
+ * we synthesize a minimal gateway sender entity so deliverToEntity's push path
+ * (which reads fromEntity.character/publicCode/name) has what it needs — the
+ * requesting app device is not itself a bound bot entity.
+ *
+ * @throws if the inference target can't be resolved or delivery fails; the
+ *         caller marks the job failed and returns 503 dispatch_failed.
+ */
+async function dispatchAppBotJob({ jobId, deviceId, persona, message }) {
+    // Resolve the inference entity via its publicCode, exactly like speakTo.
+    const target = resolveSpeakToTarget(APP_BOT_INFERENCE.publicCode, deviceId);
+    if (!target) throw new Error('inference_target_unresolved');
+    const tDevice = devices[target.deviceId];
+    if (!tDevice) throw new Error('inference_device_not_found');
+    const toEntity = tDevice.entities[target.entityId];
+    if (!toEntity || !toEntity.isBound) throw new Error('inference_entity_not_bound');
+
+    // Structured envelope the inference agent parses. NOTE: the persona system
+    // prompt is intentionally delivered to the (trusted) inference entity — that
+    // is how it adopts the correct voice — but it is never returned to the app.
+    const envelope = JSON.stringify({
+        appBotJob: {
+            jobId,
+            systemPrompt: persona.systemPrompt,
+            userMessage: message,
+            callbackUrl: '/api/app-bot/chat/callback'
+        }
+    });
+
+    // Synthetic gateway sender — the app device is not a bound bot entity, so we
+    // supply the minimal shape deliverToEntity reads for its push/trace path.
+    const fromEntity = {
+        entityId: 0,
+        name: 'AppBot Gateway',
+        character: 'appbot',
+        publicCode: null,
+        level: 1,
+        isBound: true
+    };
+
+    return deliverToEntity({
+        senderDeviceId: deviceId, fromId: 0, fromEntity,
+        targetDeviceId: target.deviceId, toId: target.entityId, toEntity,
+        text: envelope, mediaType: null, mediaUrl: null,
+        expectsReply: true, isBroadcast: false,
+        isCrossDevice: target.deviceId !== deviceId
+    });
+}
+// Attach to the express `app` (which becomes module.exports at file end) so the
+// route can call app._dispatchAppBotJob(...) and tests can jest.spyOn it. NOTE:
+// `module.exports = app` at the end of the file would wipe a plain
+// `module.exports._dispatchAppBotJob`, so we hang it off `app` directly.
+app._dispatchAppBotJob = dispatchAppBotJob;
+
 app.post('/api/app-bot/chat', appBotChatRateLimit, async (req, res) => {
-    const { appId, personaId, deviceId, message } = req.body || {};
+    const { appId, personaId, deviceId, deviceSecret, message } = req.body || {};
 
     // Validate inputs
     if (typeof appId !== 'string' || typeof personaId !== 'string' ||
-        typeof deviceId !== 'string' || typeof message !== 'string' ||
-        !appId || !personaId || !deviceId || !message.trim()) {
-        return res.status(400).json({ success: false, error: 'appId, personaId, deviceId and message are required' });
+        typeof deviceId !== 'string' || typeof deviceSecret !== 'string' ||
+        typeof message !== 'string' ||
+        !appId || !personaId || !deviceId || !deviceSecret || !message.trim()) {
+        return res.status(400).json({ success: false, error: 'appId, personaId, deviceId, deviceSecret and message are required' });
     }
     if (message.length > 2000) {
         return res.status(400).json({ success: false, error: 'message too long (max 2000 chars)' });
+    }
+
+    // Auth the bound device (handshake identity). safeEqual is constant-time.
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        return res.status(403).json({ success: false, error: 'invalid_device' });
     }
 
     // Resolve persona server-side. Do NOT reveal which of appId/personaId was
@@ -689,30 +772,113 @@ app.post('/api/app-bot/chat', appBotChatRateLimit, async (req, res) => {
     }
     const { app: appCfg, persona } = resolved;
 
-    // Quota check (UTC day). CRITICAL: the LLM must NOT fire when exhausted.
+    // No inference entity configured → 503 (NOT 502; Cloudflare swallows 502).
+    if (!isInferenceConfigured()) {
+        return res.status(503).json({ success: false, error: 'inference_unavailable' });
+    }
+
+    // Quota check (UTC day). CRITICAL: dispatch must NOT fire when exhausted.
     const today = new Date().toISOString().slice(0, 10);
     const q = (await db.getAppBotQuota(appId, deviceId, today)) || { messages_used: 0, bonus_from_ads: 0 };
-    const limit = appCfg.dailyQuota + q.bonus_from_ads;
-    const remaining = limit - q.messages_used;
+    const remaining = (appCfg.dailyQuota + q.bonus_from_ads) - q.messages_used;
     if (remaining <= 0) {
         return res.status(429).json({ success: false, error: 'daily_quota_exceeded', needAd: true, quotaRemaining: 0 });
     }
 
-    // Generate reply. Persona prompt stays server-side; only the text comes back.
-    let reply;
+    // Create the job row, then dispatch. Quota is burned on the callback, not here.
+    const jobId = crypto.randomUUID();
+    const deadlineMs = Date.now() + APP_BOT_JOB_TTL_MS;
+    await db.createAppBotJob(jobId, appId, personaId, deviceId, message, deadlineMs);
+
     try {
-        const result = await callAnthropic(persona.systemPrompt, [{ role: 'user', content: message }]);
-        reply = (result.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+        await app._dispatchAppBotJob({ jobId, deviceId, persona, message });
     } catch (err) {
-        // Never leak the underlying error (may reference the API key / provider).
-        console.error('[AppBot] inference error:', err.message);
-        return res.status(502).json({ success: false, error: 'inference_failed' });
+        console.error('[AppBot] dispatch error:', err.message);
+        // Mark the freshly-created job failed so the poller sees a terminal state.
+        try { await db.completeAppBotJob(jobId, null); } catch (_) { /* best-effort */ }
+        return res.status(503).json({ success: false, error: 'dispatch_failed' });
     }
 
-    // Only burn quota after a successful inference.
-    await db.incrementAppBotQuotaUsage(appId, deviceId, today, 1);
+    return res.status(200).json({ success: true, jobId, status: 'pending', pollAfterMs: 800 });
+});
 
-    return res.status(200).json({ success: true, reply, quotaRemaining: remaining - 1 });
+// POST /api/app-bot/chat/callback — the inference entity posts the reply.
+// Auth = the configured inference-entity identity (deviceId + entityId + botSecret).
+app.post('/api/app-bot/chat/callback', async (req, res) => {
+    const { deviceId, entityId, botSecret, jobId, reply } = req.body || {};
+
+    // Gate on the configured inference entity. All three must match.
+    const isInferenceEntity =
+        isInferenceConfigured() &&
+        deviceId === APP_BOT_INFERENCE.deviceId &&
+        Number(entityId) === APP_BOT_INFERENCE.entityId &&
+        typeof botSecret === 'string' &&
+        typeof APP_BOT_INFERENCE.botSecret === 'string' &&
+        safeEqual(APP_BOT_INFERENCE.botSecret, botSecret);
+    if (!isInferenceEntity) {
+        return res.status(403).json({ success: false, error: 'not_inference_entity' });
+    }
+    // Defense-in-depth: if the entity is present in memory, also verify its live
+    // botSecret. The config match above is the operative gate; this only tightens
+    // it when the entity happens to be loaded (never loosens it).
+    const infDevice = devices[deviceId];
+    const infEntity = infDevice && infDevice.entities[Number(entityId)];
+    if (infEntity && infEntity.botSecret && !safeEqual(infEntity.botSecret, botSecret)) {
+        return res.status(403).json({ success: false, error: 'not_inference_entity' });
+    }
+
+    if (typeof jobId !== 'string' || !jobId ||
+        typeof reply !== 'string' || reply.length > 8000) {
+        return res.status(400).json({ success: false, error: 'jobId and reply (<=8000 chars) required' });
+    }
+
+    const job = await db.getAppBotJob(jobId);
+    if (!job) return res.status(404).json({ success: false, error: 'job_not_found' });
+    if (job.status !== 'pending') {
+        return res.status(200).json({ success: true, alreadyResolved: true });
+    }
+
+    // Atomic pending→completed transition. Only THIS call that flips it burns quota.
+    const updated = await db.completeAppBotJob(jobId, reply);
+    if (!updated) {
+        // Lost the race — another callback (or the sweeper) resolved it first.
+        return res.status(200).json({ success: true, alreadyResolved: true });
+    }
+    await db.incrementAppBotQuotaUsage(job.app_id, job.device_id, new Date().toISOString().slice(0, 10), 1);
+
+    return res.status(200).json({ success: true });
+});
+
+// GET /api/app-bot/chat/result — the app polls its own job for the reply.
+app.get('/api/app-bot/chat/result', async (req, res) => {
+    const { jobId, deviceId, deviceSecret } = req.query || {};
+    if (typeof jobId !== 'string' || !jobId ||
+        typeof deviceId !== 'string' || !deviceId ||
+        typeof deviceSecret !== 'string' || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'jobId, deviceId and deviceSecret required' });
+    }
+
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        return res.status(403).json({ success: false, error: 'invalid_device' });
+    }
+
+    const job = await db.getAppBotJob(jobId);
+    if (!job) return res.status(404).json({ success: false, error: 'job_not_found' });
+    // A device can only read its own jobs.
+    if (job.device_id !== deviceId) {
+        return res.status(403).json({ success: false, error: 'not_your_job' });
+    }
+
+    if (job.status === 'completed') {
+        return res.status(200).json({ success: true, status: 'completed', reply: job.reply });
+    }
+    const notes = {
+        pending: 'still waiting for the reply',
+        timeout: 'the reply took too long — please try again',
+        failed: 'the request could not be dispatched — please try again'
+    };
+    return res.status(200).json({ success: true, status: job.status, note: notes[job.status] || null });
 });
 
 // Shareable chat link: /c/<publicCode>
@@ -21745,6 +21911,20 @@ idempotencyKeys.ensureTable(chatPool).then(() => {
         console.error('[PendingAck] Table init error:', err.message);
     }
 })();
+
+// App-Bot async job timeout sweeper (option B — card_6d0f2746). Every 60s flip
+// pending jobs past their 45s deadline to 'timeout' so the poller sees a terminal
+// state instead of hanging forever. Idempotent (only pending rows). Skipped under
+// test so Jest suites don't leave a live timer running.
+if (process.env.NODE_ENV !== 'test') {
+    setInterval(async () => {
+        try {
+            await db.sweepTimedOutAppBotJobs(Date.now());
+        } catch (err) {
+            console.error('[AppBotJob] sweeper error:', err.message);
+        }
+    }, APP_BOT_JOB_SWEEP_INTERVAL_MS).unref();
+}
 
 feedbackModule.initFeedbackTable(chatPool);
 feedbackModule.initFeedbackPhotosTable(chatPool);
