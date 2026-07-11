@@ -1,0 +1,29 @@
+{
+  "name": "emo-admob-ssv",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Server-side verifier for Google AdMob rewarded-ad SSV callbacks (I3, emotional-value app pipeline).",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "jest --colors=false",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "keywords": [
+    "admob",
+    "ssv",
+    "server-side-verification",
+    "rewarded-ad"
+  ],
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.0",
+    "express": "^4.19.2",
+    "jest": "^29.7.0",
+    "typescript": "^5.4.5"
+  }
+}
