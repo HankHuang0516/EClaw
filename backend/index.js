@@ -13262,22 +13262,30 @@ app.post('/api/client/speak', idempotencyMiddleware, clientSpeakDedupeMiddleware
         pushText = pushText ? `${pushText}\n${hints}` : hints;
     }
 
-    // ── Vault variable interpolation: {{KEY_NAME}} → actual value ──
-    // Resolve {{KEY_NAME}} tokens in pushText only (bot-facing).
-    // Original text (with {{KEY_NAME}}) is stored in chat_messages for privacy.
-    const vaultTokenRe = /\{\{(\w+)\}\}/g;
-    if (vaultTokenRe.test(pushText)) {
+    // ── Vault variable interpolation: {{KEY_NAME}} → per-target resolution ──
+    // Channel-bound (keyref-first) agents receive `[[VAULT_KEYREF name=KEY]]`
+    // and resolve the value on-demand via GET /api/device-vars/value
+    // (owner-decided spec, card_247a3a68 / card_keyref). Legacy webhook agents
+    // (openclaw, discord) keep receiving the expanded value inline for
+    // backward compat — they predate the keyref endpoint. Chat_messages
+    // always stores the literal `{{KEY_NAME}}` for privacy regardless.
+    // Fetch vault once per request; per-target form is picked inside the
+    // fan-out loop below via resolveVaultTokensForEntity().
+    const pushTextHasVaultTokens = /\{\{(\w+)\}\}/.test(pushText);
+    let vaultVarsForInterp = null;
+    if (pushTextHasVaultTokens) {
         try {
             const varsRow = await db.getDeviceVars(deviceId);
             if (varsRow && !varsRow.is_locked) {
-                const vars = decryptVars(varsRow.encrypted_vars, varsRow.iv, varsRow.auth_tag);
-                pushText = pushText.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-                    return vars[key] !== undefined ? String(vars[key]) : match;
-                });
+                vaultVarsForInterp = decryptVars(varsRow.encrypted_vars, varsRow.iv, varsRow.auth_tag);
             }
         } catch (varsErr) {
             console.warn(`[VaultInterp] Failed to resolve vars for ${deviceId}:`, varsErr.message);
         }
+    }
+    function resolveVaultTokensForEntity(text, entity) {
+        if (!pushTextHasVaultTokens) return text;
+        return resolveVaultTokens(text, vaultVarsForInterp, entity);
     }
 
     // Determine target entity IDs
@@ -13387,11 +13395,15 @@ app.post('/api/client/speak', idempotencyMiddleware, clientSpeakDedupeMiddleware
         // Push to bot — unifiedPush for channel, traditional webhook for others
         let pushResult = { pushed: false, reason: "no_webhook" };
 
+        // Per-target vault interpolation: keyref-first agents get the hint
+        // form; legacy webhooks get the expanded value (see block above).
+        const entityPushText = resolveVaultTokensForEntity(pushText, entity);
+
         if (entity.bindingType === 'channel') {
             // Channel plugin: use unifiedPush (applies middleware + routes to channel callback)
             console.log(`[Push] Attempting channel push via unifiedPush for Device ${deviceId} Entity ${eId}`);
             pushResult = await unifiedPush(entity, deviceId, 'new_message', {
-                message: pushText,
+                message: entityPushText,
                 from: source,
                 mediaType: mediaType || null,
                 mediaUrl: mediaUrl || null,
@@ -13445,7 +13457,7 @@ app.post('/api/client/speak', idempotencyMiddleware, clientSpeakDedupeMiddleware
                 }
                 pushMsg += `[MESSAGE] Device ${deviceId} Entity ${eId}\n`;
                 pushMsg += `From: ${source}\n`;
-                pushMsg += `Content: ${pushText}`;
+                pushMsg += `Content: ${entityPushText}`;
                 if (mediaType === 'photo') {
                     pushMsg += `\n[Attachment: Photo]\nmedia_type: photo\nmedia_url: ${mediaUrl}`;
                     const bkUrl = getBackupUrl(mediaUrl);
@@ -15159,8 +15171,31 @@ const DEFAULT_PROMPT_POLICY_TASK_PROTOCOL = {
 const PLATFORM_PROMPT_POLICY_SECTION = [
     'Follow EClaw channel routing, auth, and safety rules.',
     'Never reveal device secrets, bot secrets, API keys, database URLs, or tokens.',
-    'For long-running work, keep the user updated with concrete progress and blockers.'
+    'For long-running work, keep the user updated with concrete progress and blockers.',
+    'Vault references arrive as `[[VAULT_KEYREF name=NAME]]` — never treat that token as a value. If you need the value, fetch it just-in-time via `GET /api/device-vars/value?name=NAME&deviceId=YOUR_DEVICE_ID&botSecret=YOUR_BOT_SECRET&entityId=YOUR_ENTITY_ID` and use it only in the outbound call; never quote it back into chat or logs.'
 ].join('\n');
+
+/**
+ * resolveVaultTokens — per-entity `{{VAR}}` interpolation.
+ * Channel-bound (keyref-first) agents get `[[VAULT_KEYREF name=VAR]]`.
+ * Legacy webhook agents get the expanded value inline (back-compat).
+ * If varsMap is null (locked vault / fetch failed) the token stays literal
+ * on the legacy path too — that is safer than leaking a stale/other value.
+ * See card_247a3a68 (owner-decided P0 spec 2026-07-11) for the rationale.
+ */
+function resolveVaultTokens(pushText, varsMap, entity) {
+    if (!pushText || !/\{\{(\w+)\}\}/.test(pushText)) return pushText;
+    if (entity && entity.bindingType === 'channel') {
+        return pushText.replace(/\{\{(\w+)\}\}/g, (_m, key) => `[[VAULT_KEYREF name=${key}]]`);
+    }
+    if (!varsMap) return pushText;
+    return pushText.replace(/\{\{(\w+)\}\}/g, (match, key) => (
+        varsMap[key] !== undefined ? String(varsMap[key]) : match
+    ));
+}
+// Note: the actual test export (`module.exports._resolveVaultTokens = ...`)
+// lives BELOW the `module.exports = app` reassignment near the end of this
+// file so it survives the reset. Do not add another export line here.
 
 function asPromptPolicyLines(value, fieldName, maxItems = PROMPT_POLICY_MAX_ITEMS) {
     if (value === undefined) return { lines: undefined };
@@ -16597,28 +16632,32 @@ app.post('/api/client/cross-speak', async (req, res) => {
     resetBotToBotCounter(deviceId);
 
     // ── Vault variable interpolation for cross-speak ──
+    // Same rules as /api/client/speak: channel-bound (keyref-first) receivers
+    // get `[[VAULT_KEYREF name=KEY]]` (fetch value via GET /api/device-vars/value);
+    // legacy webhook receivers get the expanded value inline for back-compat.
+    // Chat_messages always stores the literal `{{KEY_NAME}}` regardless.
     let pushText = text;
-    // Surface structured attachments as filename-only hints (same rationale as
-    // /api/client/speak — keep signed URL out of push text / DB).
     if (validatedAttachments && validatedAttachments.length > 0) {
         const hints = validatedAttachments
             .map(a => `[📎 ${a.filename || a.fileId}]`)
             .join(' ');
         pushText = pushText ? `${pushText}\n${hints}` : hints;
     }
-    const vaultTokenReXD = /\{\{(\w+)\}\}/g;
-    if (vaultTokenReXD.test(text)) {
-        try {
-            const varsRow = await db.getDeviceVars(deviceId);
-            if (varsRow && !varsRow.is_locked) {
-                const vars = decryptVars(varsRow.encrypted_vars, varsRow.iv, varsRow.auth_tag);
-                pushText = text.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-                    return vars[key] !== undefined ? String(vars[key]) : match;
-                });
+    if (/\{\{(\w+)\}\}/.test(pushText)) {
+        let varsMap = null;
+        // Only pay the DB fetch when the receiver actually needs the value
+        // (channel-bound receivers get the hint form and don't need it).
+        if (!(toEntity && toEntity.bindingType === 'channel')) {
+            try {
+                const varsRow = await db.getDeviceVars(deviceId);
+                if (varsRow && !varsRow.is_locked) {
+                    varsMap = decryptVars(varsRow.encrypted_vars, varsRow.iv, varsRow.auth_tag);
+                }
+            } catch (varsErr) {
+                console.warn(`[VaultInterp:CrossSpeak] Failed to resolve vars for ${deviceId}:`, varsErr.message);
             }
-        } catch (varsErr) {
-            console.warn(`[VaultInterp:CrossSpeak] Failed to resolve vars for ${deviceId}:`, varsErr.message);
         }
+        pushText = resolveVaultTokens(pushText, varsMap, toEntity);
     }
 
     const senderName = isOwnerMode ? (req.user && req.user.email ? req.user.email.split('@')[0] : 'User') : (fromEntity.name || fromEntity.publicCode);
@@ -25931,6 +25970,7 @@ module.exports._petdxPhase0 = {
     getPetdxEntityEnrichmentMap,
 };
 module.exports._enqueueMessage = enqueueMessage;
+module.exports._resolveVaultTokens = resolveVaultTokens;
 module.exports._MESSAGE_QUEUE_CAP = MESSAGE_QUEUE_CAP;
 module.exports._DEAD_LETTER_CAP = DEAD_LETTER_CAP;
 module.exports._clampQueuesOnLoad = clampQueuesOnLoad;
