@@ -1,0 +1,33 @@
+{
+  "name": "@eclaw/emo-moderation",
+  "version": "0.1.0",
+  "description": "Server-side moderation + crisis-referral flow for EClaw 情緒價值 App pipeline. Wraps OpenAI Moderation, maps categories to actions, exposes crisis response builder + age-appropriateness helper.",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "files": [
+    "src/",
+    "resources/",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "jest --colors=false",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "moderation",
+    "openai",
+    "crisis-referral",
+    "self-harm",
+    "content-safety",
+    "eclaw",
+    "emotional-value"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "typescript": "^5.4.5"
+  }
+}

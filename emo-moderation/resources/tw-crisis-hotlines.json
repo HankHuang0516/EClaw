@@ -1,0 +1,83 @@
+{
+  "$comment": "Locale-keyed crisis hotline registry for EClaw emotional-value app pipeline. Keys are BCP-47-ish locale prefixes; matcher does startsWith case-insensitively. 'default' is the fallback used when no locale prefix matches.",
+  "version": 1,
+  "updatedAt": "2026-07-11",
+  "locales": {
+    "zh-TW": {
+      "region": "Taiwan",
+      "regionLocal": "臺灣",
+      "primary": {
+        "name": "安心專線",
+        "nameEn": "MOHW Care Line",
+        "number": "1925",
+        "hours": "24h",
+        "cost": "free"
+      },
+      "alternates": [
+        {
+          "name": "生命線",
+          "nameEn": "Lifeline Taiwan",
+          "number": "1995",
+          "hours": "24h",
+          "cost": "free"
+        },
+        {
+          "name": "張老師專線",
+          "nameEn": "Teacher Chang Foundation",
+          "number": "1980",
+          "hours": "daily 09:00–21:00",
+          "cost": "free"
+        }
+      ]
+    },
+    "zh-HK": {
+      "region": "Hong Kong",
+      "regionLocal": "香港",
+      "primary": {
+        "name": "生命熱線",
+        "nameEn": "Suicide Prevention Services",
+        "number": "2382-0000",
+        "hours": "24h",
+        "cost": "free"
+      },
+      "alternates": []
+    },
+    "en-HK": {
+      "region": "Hong Kong",
+      "regionLocal": "Hong Kong",
+      "primary": {
+        "name": "Suicide Prevention Services",
+        "nameEn": "Suicide Prevention Services",
+        "number": "2382-0000",
+        "hours": "24h",
+        "cost": "free"
+      },
+      "alternates": []
+    },
+    "en-SG": {
+      "region": "Singapore",
+      "regionLocal": "Singapore",
+      "primary": {
+        "name": "Samaritans of Singapore (SOS)",
+        "nameEn": "Samaritans of Singapore",
+        "number": "1767",
+        "hours": "24h",
+        "cost": "free"
+      },
+      "alternates": []
+    },
+    "default": {
+      "region": "International",
+      "regionLocal": "International",
+      "primary": {
+        "name": "Find A Helpline",
+        "nameEn": "Find A Helpline",
+        "number": null,
+        "url": "https://findahelpline.com",
+        "hours": "varies",
+        "cost": "free"
+      },
+      "alternates": []
+    }
+  }
+}

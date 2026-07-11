@@ -1,0 +1,229 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`emo-moderation.screen (stub-driven fixture matrix) fixture crisis_selfharm_broad_enSG → expected action + snapshot 1`] = `
+{
+  "action": "crisis_referral",
+  "hotlineNumber": "1767",
+  "locale": "en-SG",
+  "matchedCategories": [
+    "self-harm",
+  ],
+  "name": "crisis_selfharm_broad_enSG",
+  "reason": "matched:self-harm",
+}
+`;
+
+exports[`emo-moderation.screen (stub-driven fixture matrix) fixture crisis_selfharm_broad_unknownLocale → expected action + snapshot 1`] = `
+{
+  "action": "crisis_referral",
+  "hotlineNumber": null,
+  "locale": "default",
+  "matchedCategories": [
+    "self-harm",
+  ],
+  "name": "crisis_selfharm_broad_unknownLocale",
+  "reason": "matched:self-harm",
+}
+`;
+
+exports[`emo-moderation.screen (stub-driven fixture matrix) fixture crisis_selfharm_broad_zhHK → expected action + snapshot 1`] = `
+{
+  "action": "crisis_referral",
+  "hotlineNumber": "2382-0000",
+  "locale": "zh-HK",
+  "matchedCategories": [
+    "self-harm",
+  ],
+  "name": "crisis_selfharm_broad_zhHK",
+  "reason": "matched:self-harm",
+}
+`;
+
+exports[`emo-moderation.screen (stub-driven fixture matrix) fixture crisis_selfharm_broad_zhTW → expected action + snapshot 1`] = `
+{
+  "action": "crisis_referral",
+  "hotlineNumber": "1925",
+  "locale": "zh-TW",
+  "matchedCategories": [
+    "self-harm",
+  ],
+  "name": "crisis_selfharm_broad_zhTW",
+  "reason": "matched:self-harm",
+}
+`;
+
+exports[`emo-moderation.screen (stub-driven fixture matrix) fixture hard_block_hate_threatening → expected action + snapshot 1`] = `
+{
+  "action": "hard_block",
+  "hotlineNumber": null,
+  "locale": null,
+  "matchedCategories": [
+    "hate/threatening",
+  ],
+  "name": "hard_block_hate_threatening",
+  "reason": "matched:hate/threatening",
+}
+`;
+
+exports[`emo-moderation.screen (stub-driven fixture matrix) fixture hard_block_selfharm_instructions → expected action + snapshot 1`] = `
+{
+  "action": "hard_block",
+  "hotlineNumber": null,
+  "locale": null,
+  "matchedCategories": [
+    "self-harm/instructions",
+  ],
+  "name": "hard_block_selfharm_instructions",
+  "reason": "matched:self-harm/instructions",
+}
+`;
+
+exports[`emo-moderation.screen (stub-driven fixture matrix) fixture hard_block_selfharm_intent → expected action + snapshot 1`] = `
+{
+  "action": "hard_block",
+  "hotlineNumber": null,
+  "locale": null,
+  "matchedCategories": [
+    "self-harm/intent",
+  ],
+  "name": "hard_block_selfharm_intent",
+  "reason": "matched:self-harm/intent",
+}
+`;
+
+exports[`emo-moderation.screen (stub-driven fixture matrix) fixture hard_block_sexual_minors → expected action + snapshot 1`] = `
+{
+  "action": "hard_block",
+  "hotlineNumber": null,
+  "locale": null,
+  "matchedCategories": [
+    "sexual/minors",
+  ],
+  "name": "hard_block_sexual_minors",
+  "reason": "matched:sexual/minors",
+}
+`;
+
+exports[`emo-moderation.screen (stub-driven fixture matrix) fixture hard_block_violence_graphic → expected action + snapshot 1`] = `
+{
+  "action": "hard_block",
+  "hotlineNumber": null,
+  "locale": null,
+  "matchedCategories": [
+    "violence/graphic",
+  ],
+  "name": "hard_block_violence_graphic",
+  "reason": "matched:violence/graphic",
+}
+`;
+
+exports[`emo-moderation.screen (stub-driven fixture matrix) fixture pass_emotional_but_safe → expected action + snapshot 1`] = `
+{
+  "action": "pass",
+  "hotlineNumber": null,
+  "locale": null,
+  "matchedCategories": [],
+  "name": "pass_emotional_but_safe",
+  "reason": "not_flagged",
+}
+`;
+
+exports[`emo-moderation.screen (stub-driven fixture matrix) fixture pass_empty → expected action + snapshot 1`] = `
+{
+  "action": "pass",
+  "hotlineNumber": null,
+  "locale": null,
+  "matchedCategories": [],
+  "name": "pass_empty",
+  "reason": "empty_input",
+}
+`;
+
+exports[`emo-moderation.screen (stub-driven fixture matrix) fixture pass_neutral → expected action + snapshot 1`] = `
+{
+  "action": "pass",
+  "hotlineNumber": null,
+  "locale": null,
+  "matchedCategories": [],
+  "name": "pass_neutral",
+  "reason": "not_flagged",
+}
+`;
+
+exports[`emo-moderation.screen (stub-driven fixture matrix) fixture precedence_crisis_over_soft → expected action + snapshot 1`] = `
+{
+  "action": "crisis_referral",
+  "hotlineNumber": "1925",
+  "locale": "zh-TW",
+  "matchedCategories": [
+    "self-harm",
+  ],
+  "name": "precedence_crisis_over_soft",
+  "reason": "matched:self-harm",
+}
+`;
+
+exports[`emo-moderation.screen (stub-driven fixture matrix) fixture precedence_hardblock_over_crisis → expected action + snapshot 1`] = `
+{
+  "action": "hard_block",
+  "hotlineNumber": null,
+  "locale": null,
+  "matchedCategories": [
+    "self-harm/intent",
+  ],
+  "name": "precedence_hardblock_over_crisis",
+  "reason": "matched:self-harm/intent",
+}
+`;
+
+exports[`emo-moderation.screen (stub-driven fixture matrix) fixture soft_flag_harassment → expected action + snapshot 1`] = `
+{
+  "action": "soft_flag",
+  "hotlineNumber": null,
+  "locale": null,
+  "matchedCategories": [
+    "harassment",
+  ],
+  "name": "soft_flag_harassment",
+  "reason": "matched:harassment",
+}
+`;
+
+exports[`emo-moderation.screen (stub-driven fixture matrix) fixture soft_flag_hate → expected action + snapshot 1`] = `
+{
+  "action": "soft_flag",
+  "hotlineNumber": null,
+  "locale": null,
+  "matchedCategories": [
+    "hate",
+  ],
+  "name": "soft_flag_hate",
+  "reason": "matched:hate",
+}
+`;
+
+exports[`emo-moderation.screen (stub-driven fixture matrix) fixture soft_flag_sexual → expected action + snapshot 1`] = `
+{
+  "action": "soft_flag",
+  "hotlineNumber": null,
+  "locale": null,
+  "matchedCategories": [
+    "sexual",
+  ],
+  "name": "soft_flag_sexual",
+  "reason": "matched:sexual",
+}
+`;
+
+exports[`emo-moderation.screen (stub-driven fixture matrix) fixture soft_flag_violence → expected action + snapshot 1`] = `
+{
+  "action": "soft_flag",
+  "hotlineNumber": null,
+  "locale": null,
+  "matchedCategories": [
+    "violence",
+  ],
+  "name": "soft_flag_violence",
+  "reason": "matched:violence",
+}
+`;
