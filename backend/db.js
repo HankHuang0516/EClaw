@@ -755,28 +755,6 @@ async function createTables() {
         `);
         await client.query(`CREATE INDEX IF NOT EXISTS idx_app_bot_quota_lookup ON app_bot_quota (app_id, device_id, quota_date)`);
 
-        // App-Bot async job (情緒價值 App pipeline — card_6d0f2746 / card_12e6d33b,
-        // option B). One row per /api/app-bot/chat request. The gateway dispatches
-        // the (persona prompt + user message) to an external EClaw inference entity
-        // and returns a jobId; the entity later POSTs its reply to the callback,
-        // which flips status pending→completed and stores the reply. A 60s sweeper
-        // flips pending rows past deadline_ms to 'timeout'. Modeled on pending_ack.
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS app_bot_job (
-                job_id UUID PRIMARY KEY,
-                app_id TEXT NOT NULL,
-                persona_id TEXT NOT NULL,
-                device_id TEXT NOT NULL,
-                message TEXT NOT NULL,
-                reply TEXT,
-                status TEXT NOT NULL DEFAULT 'pending',
-                deadline_ms BIGINT NOT NULL,
-                created_at TIMESTAMPTZ DEFAULT NOW(),
-                completed_at TIMESTAMPTZ
-            )
-        `);
-        await client.query(`CREATE INDEX IF NOT EXISTS idx_app_bot_job_device ON app_bot_job(device_id, status)`);
-
         console.log('[DB] Database tables ready');
         client.release();
     } catch (err) {
@@ -2731,89 +2709,6 @@ async function addAppBotAdBonus(appId, deviceId, quotaDate, bonus) {
     }
 }
 
-// ─── App-Bot async job helpers (option B; modeled on pending_ack) ───
-
-/**
- * Insert a new pending app-bot job.
- * @returns {Promise<boolean>} true on success, false when DB unavailable / on error.
- */
-async function createAppBotJob(jobId, appId, personaId, deviceId, message, deadlineMs) {
-    if (!pool) return false;
-    try {
-        await pool.query(
-            `INSERT INTO app_bot_job (job_id, app_id, persona_id, device_id, message, status, deadline_ms)
-             VALUES ($1, $2, $3, $4, $5, 'pending', $6)`,
-            [jobId, appId, personaId, deviceId, message, deadlineMs]
-        );
-        return true;
-    } catch (err) {
-        console.error('[DB] createAppBotJob error:', err.message);
-        return false;
-    }
-}
-
-/**
- * Read a single app-bot job by id.
- * @returns {Promise<object|null>} the row or null (not found / DB down / error).
- */
-async function getAppBotJob(jobId) {
-    if (!pool) return null;
-    try {
-        const result = await pool.query(
-            `SELECT job_id, app_id, persona_id, device_id, message, reply, status, deadline_ms
-             FROM app_bot_job WHERE job_id = $1`,
-            [jobId]
-        );
-        return result.rows.length ? result.rows[0] : null;
-    } catch (err) {
-        console.error('[DB] getAppBotJob error:', err.message);
-        return null;
-    }
-}
-
-/**
- * Idempotently complete a pending job: set status='completed', store the reply.
- * Only transitions rows that are still 'pending' (a second call is a no-op).
- * @returns {Promise<object|null>} the updated row when THIS call transitioned it,
- *          or null when nothing was transitioned (already resolved / not found / error).
- */
-async function completeAppBotJob(jobId, reply) {
-    if (!pool) return null;
-    try {
-        const result = await pool.query(
-            `UPDATE app_bot_job
-                SET status = 'completed', reply = $2, completed_at = NOW()
-              WHERE job_id = $1 AND status = 'pending'
-              RETURNING job_id, app_id, persona_id, device_id, message, reply, status, deadline_ms`,
-            [jobId, reply]
-        );
-        return result.rows.length ? result.rows[0] : null;
-    } catch (err) {
-        console.error('[DB] completeAppBotJob error:', err.message);
-        return null;
-    }
-}
-
-/**
- * Flip pending jobs past their deadline to 'timeout'. Idempotent (only pending rows).
- * @returns {Promise<number>} number of rows timed out.
- */
-async function sweepTimedOutAppBotJobs(nowMs) {
-    if (!pool) return 0;
-    try {
-        const result = await pool.query(
-            `UPDATE app_bot_job
-                SET status = 'timeout'
-              WHERE status = 'pending' AND deadline_ms < $1`,
-            [nowMs]
-        );
-        return result.rowCount || 0;
-    } catch (err) {
-        console.error('[DB] sweepTimedOutAppBotJobs error:', err.message);
-        return 0;
-    }
-}
-
 module.exports = {
     initDatabase,
     saveDeviceData,
@@ -2927,9 +2822,5 @@ module.exports = {
     // App-Bot daily quota (情緒價值 App pipeline — card I2)
     getAppBotQuota,
     incrementAppBotQuotaUsage,
-    createAppBotJob,
-    getAppBotJob,
-    completeAppBotJob,
-    sweepTimedOutAppBotJobs,
     addAppBotAdBonus,
 };
