@@ -714,8 +714,17 @@
         .chat-msg.grouped .chat-meta {
             display: none;
         }
+        /* Per-bubble feedback survives adjacent-merge (Hank 2026-07-12):
+           every bubble needs its own 👍/👎 so users can react on a specific line,
+           not just the last of a merged run. Trim vertical spacing so a stack
+           of reactions on grouped siblings stays visually calm. */
         .chat-msg.grouped .chat-reactions {
-            display: none;
+            margin-top: 1px;
+            opacity: 0.75;
+        }
+        .chat-msg.grouped .chat-reactions:hover,
+        .chat-msg.grouped .chat-reactions:focus-within {
+            opacity: 1;
         }
         /* Date separator */
         .chat-date-sep {
