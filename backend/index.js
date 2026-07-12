@@ -24827,6 +24827,57 @@ app.post('/api/chat/integrity-report', async (req, res) => {
     }
 });
 
+// Truncate a quoted bubble to a compact excerpt for the feedback notification.
+// Keeps enough context to identify which bubble was reacted to without dumping
+// the whole message back into the entity's inbox.
+function excerptForReactionQuote(text, maxChars = 60) {
+    if (!text) return '';
+    const trimmed = String(text).trim().replace(/\s+/g, ' ');
+    if (trimmed.length <= maxChars) return trimmed;
+    return trimmed.slice(0, maxChars - 1) + '…';
+}
+
+// Notify a bot entity when a user reacts to one of its messages. Enqueues a
+// system-authored message into the entity's queue and persists it to the chat
+// transcript so the bot picks it up on its next poll AND sees it in chat_history.
+// Not a chat push (no webhook fire, no bot-to-bot quota) — the entity learns
+// via its normal inbox, which is the same channel it uses to notice XP-affecting
+// events (per Hank 2026-07-12: 「後台 push 引用聊天泡泡+簡短一段話…+ 經驗值的增/減」).
+async function notifyEntityOfReaction({ deviceId, entityId, quotedText, verdictText, xpDelta, reason }) {
+    if (!deviceId || entityId == null) return { pushed: false, reason: 'missing_target' };
+    const device = devices[deviceId];
+    const entity = device && device.entities && device.entities[entityId];
+    if (!entity) return { pushed: false, reason: 'entity_not_found' };
+
+    const excerpt = excerptForReactionQuote(quotedText);
+    const xpLabel = xpDelta === 0
+        ? ''
+        : ` (${xpDelta > 0 ? '+' : ''}${xpDelta} XP)`;
+    const body = excerpt
+        ? `[使用者回饋] ${verdictText}你剛才那則：「${excerpt}」${xpLabel}`
+        : `[使用者回饋] ${verdictText}你剛才那則${xpLabel}`;
+
+    try {
+        enqueueMessage(entity, {
+            text: body,
+            from: 'system',
+            timestamp: Date.now(),
+            read: false,
+            mediaType: null,
+            mediaUrl: null,
+            kind: 'user_reaction',
+            reactionMeta: { reason, xpDelta },
+        }, 'user_reaction');
+        // Persist to the chat transcript with source='system' so it renders in
+        // review UIs and is visible when the bot reads its own chat_history.
+        await saveChatMessage(deviceId, entityId, body, 'system', true, false);
+        return { pushed: true, reason: 'enqueued' };
+    } catch (err) {
+        console.warn('[Reactions] notifyEntityOfReaction failed', err && err.message);
+        return { pushed: false, reason: 'enqueue_failed' };
+    }
+}
+
 /**
  * POST /api/message/:messageId/react
  * Toggle like/dislike on a bot message. Awards/deducts XP accordingly.
@@ -24850,9 +24901,11 @@ app.post('/api/message/:messageId/react', async (req, res) => {
     }
 
     try {
-        // Verify message exists, belongs to this device, and is from bot
+        // Verify message exists, belongs to this device, and is from bot.
+        // Also select `text` so we can quote the bubble content back to the entity
+        // when we notify it about the user's reaction (see notifyEntityOfReaction below).
         const msgResult = await chatPool.query(
-            'SELECT id, device_id, entity_id, is_from_bot FROM chat_messages WHERE id = $1',
+            'SELECT id, device_id, entity_id, is_from_bot, text FROM chat_messages WHERE id = $1',
             [messageId]
         );
         if (msgResult.rows.length === 0) {
@@ -24924,9 +24977,28 @@ app.post('/api/message/:messageId/react', async (req, res) => {
 
         // Award/deduct XP
         let xpResult = null;
+        let feedbackNotified = null;
         if (xpDelta !== 0 && msg.entity_id != null) {
             const reason = reaction === 'like' ? 'message_liked' : reaction === 'dislike' ? 'message_disliked' : 'reaction_removed';
             xpResult = awardEntityXP(deviceId, msg.entity_id, xpDelta, reason);
+
+            // Tell the entity WHICH message the user reacted to + the verdict + XP delta.
+            // 「認同 / 不認同」labels chosen from Hank's spec 2026-07-12; oldReaction
+            // present means the user flipped their reaction rather than a fresh
+            // like/dislike, and 'reaction_removed' means they cleared it — each
+            // gets its own verdict phrase so the entity can distinguish.
+            let verdictText;
+            if (reaction === 'like') verdictText = '使用者認同';
+            else if (reaction === 'dislike') verdictText = '使用者不認同';
+            else verdictText = '使用者收回了對';
+            feedbackNotified = await notifyEntityOfReaction({
+                deviceId,
+                entityId: msg.entity_id,
+                quotedText: msg.text,
+                verdictText,
+                xpDelta,
+                reason,
+            });
         }
 
         // Get updated counts
@@ -24940,7 +25012,8 @@ app.post('/api/message/:messageId/react', async (req, res) => {
             reaction,
             like_count: updatedCounts.rows[0]?.like_count || 0,
             dislike_count: updatedCounts.rows[0]?.dislike_count || 0,
-            xpResult
+            xpResult,
+            feedbackNotified,
         };
 
         // Emit Socket.IO event for real-time UI update
