@@ -368,6 +368,15 @@ let VISION_IMAGES = [
     // Hard tier
     { file: null, description: 'A star network topology diagram: a central switch labeled SWITCH-01 connects via cables to 6 nodes — Workstation-A, Workstation-B, Workstation-C, FileServer-1, PrintServer-2, and NAS-01. Total of 6 straight cables radiating from center.', keywords: ['star', 'SWITCH-01', '6', 'six', 'Workstation-A', 'Workstation-B', 'Workstation-C', 'FileServer-1', 'PrintServer-2', 'NAS-01', 'central', 'topology'] },
     { file: null, description: 'A finite state machine diagram with 4 states: q0 (initial, marked with arrow), q1, q2, and q3 (accepting, double circle). Transitions: q0→q1 on "0", q0→q2 on "1", q1→q3 on "1", q2→q3 on "0", q3→q0 on "0" or "1".', keywords: ['q0', 'q1', 'q2', 'q3', '4 states', 'initial', 'accepting', 'transition', 'state machine', 'q3', 'double circle'] },
+    // ── Daily pool update: added 2026-07-12 ──
+    // Easy tier
+    { file: null, description: 'A black opened umbrella centered on a plain yellow background', keywords: ['umbrella', 'black', 'yellow', 'open'] },
+    // Medium tier
+    { file: null, description: 'A smart thermostat display showing set temperature 68°F, current temperature 72°F, mode HEAT with a small orange flame icon lit at the bottom', keywords: ['thermostat', '68', '72', 'heat', 'flame', 'orange'] },
+    { file: null, description: 'A parking garage sign reading Level 3 in white text on a blue panel, with 47 open spaces remaining and a white arrow pointing left', keywords: ['parking', 'level', 'three', '47', 'arrow', 'left', 'blue'] },
+    // Hard tier
+    { file: null, description: 'An airport departures board listing five flights: UA-118 to Denver on time at gate B7, DL-2044 to Atlanta delayed 25 minutes at gate C2, AA-901 to Miami now boarding at gate A5, LH-431 to Frankfurt cancelled, and EK-236 to Dubai on time at gate D9', keywords: ['departures', 'five', 'UA-118', 'Denver', 'delayed', 'Atlanta', '25', 'boarding', 'Miami', 'cancelled', 'Frankfurt'] },
+    { file: null, description: 'An electricity bill summary panel: previous meter reading 42,318 kWh, current reading 43,102 kWh, usage 784 kWh billed at $0.14 per kWh, total due $109.76 by August 5th — the total is highlighted in a red box', keywords: ['electricity', '784', 'kWh', '0.14', '109.76', 'august', '5', 'red', '43,102'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -720,17 +729,30 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[1,2,3,4,null,2,4,null,null,4]', expected: '[2,4]' },{ input: '[2,1,1]', expected: '[1]' },{ input: '[1]', expected: '[]' }] },
     // ── Daily pool update: added 2026-07-10 ──
     // Medium tier
-    { title: 'Valid Parentheses', description: "Write `solve(s)` — given a string containing only '(', ')', '{', '}', '[', ']', return true if the brackets are valid (properly opened and closed in order), false otherwise.",
-      testCases: [{ input: '"()"', expected: 'true' },{ input: '"()[]{}"', expected: 'true' },{ input: '"(]"', expected: 'false' },{ input: '"([)]"', expected: 'false' },{ input: '"{[]}"', expected: 'true' },{ input: '""', expected: 'true' }] },
+    { title: 'Single Number', description: 'Write `solve(nums)` — every element appears exactly twice except for one element which appears once. Return that single element.',
+      testCases: [{ input: '[2,2,1]', expected: '1' },{ input: '[4,1,2,1,2]', expected: '4' },{ input: '[1]', expected: '1' },{ input: '[-1,-1,7]', expected: '7' }] },
     { title: 'Longest Common Prefix', description: 'Write `solve(strs)` — find the longest common prefix string among an array of strings. Return an empty string if there is no common prefix.',
       testCases: [{ input: '["flower","flow","flight"]', expected: '"fl"' },{ input: '["dog","racecar","car"]', expected: '""' },{ input: '["interview","inter","internal"]', expected: '"inter"' },{ input: '["a"]', expected: '"a"' },{ input: '["abc","abc","abc"]', expected: '"abc"' }] },
     { title: 'Maximum Subarray', description: 'Write `solve(nums)` — find the contiguous subarray (containing at least one number) which has the largest sum and return that sum.',
       testCases: [{ input: '[-2,1,-3,4,-1,2,1,-5,4]', expected: '6' },{ input: '[1]', expected: '1' },{ input: '[5,4,-1,7,8]', expected: '23' },{ input: '[-1,-2,-3,-4]', expected: '-1' },{ input: '[0,0,0]', expected: '0' }] },
     // Hard tier
-    { title: 'Group Anagrams', description: 'Write `solve(strs)` — group an array of strings by anagrams. Sort each group alphabetically, then sort all groups by their first element alphabetically.',
-      testCases: [{ input: '["eat","tea","tan","ate","nat","bat"]', expected: '[["ate","eat","tea"],["bat"],["nat","tan"]]' },{ input: '[""]', expected: '[[""]]' },{ input: '["a"]', expected: '[["a"]]' }] },
+    { title: 'Missing Number', description: 'Write `solve(nums)` — given an array containing n distinct numbers taken from the range [0, n], return the one number in the range that is missing from the array.',
+      testCases: [{ input: '[3,0,1]', expected: '2' },{ input: '[0,1]', expected: '2' },{ input: '[9,6,4,2,3,5,7,0,1]', expected: '8' },{ input: '[0]', expected: '1' }] },
     { title: 'Merge Intervals', description: 'Write `solve(intervals)` — merge all overlapping intervals and return the resulting non-overlapping intervals sorted by start time.',
       testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,4],[0,4]]', expected: '[[0,4]]' },{ input: '[[1,4],[2,3]]', expected: '[[1,4]]' }] },
+    // ── Daily pool update: added 2026-07-12 ──
+    // Medium tier
+    { title: 'Move Zeroes', description: 'Write `solve(nums)` — move all 0s to the end of the array while maintaining the relative order of the non-zero elements. Return the resulting array.',
+      testCases: [{ input: '[0,1,0,3,12]', expected: '[1,3,12,0,0]' },{ input: '[0]', expected: '[0]' },{ input: '[1,2]', expected: '[1,2]' },{ input: '[0,0,1]', expected: '[1,0,0]' }] },
+    { title: 'First Unique Character', description: 'Write `solve(s)` — return the index of the first non-repeating character in the string, or -1 if none exists.',
+      testCases: [{ input: '"leetcode"', expected: '0' },{ input: '"loveleetcode"', expected: '2' },{ input: '"aabb"', expected: '-1' },{ input: '""', expected: '-1' }] },
+    { title: 'Squares of Sorted Array', description: 'Write `solve(nums)` — given an integer array sorted in non-decreasing order, return an array of the squares of each number, also sorted in non-decreasing order.',
+      testCases: [{ input: '[-4,-1,0,3,10]', expected: '[0,1,9,16,100]' },{ input: '[-7,-3,2,3,11]', expected: '[4,9,9,49,121]' },{ input: '[1]', expected: '[1]' },{ input: '[-5,-2]', expected: '[4,25]' }] },
+    // Hard tier
+    { title: 'Gas Station', description: 'Write `solve(gas, cost)` — there are n gas stations in a circle. gas[i] is fuel available at station i; cost[i] is fuel needed to travel to station i+1. Return the starting station index from which you can complete one full circuit, or -1 if impossible. The answer is guaranteed unique when it exists.',
+      testCases: [{ input: '[1,2,3,4,5], [3,4,5,1,2]', expected: '3' },{ input: '[2,3,4], [3,4,3]', expected: '-1' },{ input: '[5], [4]', expected: '0' },{ input: '[3,1,1], [1,2,2]', expected: '0' }] },
+    { title: 'Koko Eating Bananas', description: 'Write `solve(piles, h)` — Koko can eat at speed k bananas per hour. Each hour she picks one pile and eats up to k bananas from it. Return the minimum integer speed k so she can finish all piles within h hours.',
+      testCases: [{ input: '[3,6,7,11], 8', expected: '4' },{ input: '[30,11,23,4,20], 5', expected: '30' },{ input: '[30,11,23,4,20], 6', expected: '23' },{ input: '[1], 1', expected: '1' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -973,13 +995,22 @@ let RESPONSE_QUESTIONS = [
     { question: 'In how many ways can the letters of the word "COMMITTEE" be arranged? (The letters M, T, and E each appear exactly twice.)', expectedKeywords: ['45360'] },
     // ── Daily pool update: added 2026-07-10 ──
     // Easy tier
-    { question: 'What is 15% of 200?', expectedKeywords: ['30', 'thirty'] },
+    { question: 'What is 25% of 80?', expectedKeywords: ['20', 'twenty'] },
     // Medium tier
     { question: 'A farmer has chickens and rabbits. He counts 20 heads and 56 legs. How many rabbits does he have?', expectedKeywords: ['8', 'eight', 'rabbits'] },
     { question: 'What is the missing number in the sequence: 1, 4, 9, 16, __, 36?', expectedKeywords: ['25', 'twenty-five'] },
     // Hard tier
     { question: 'A bag contains 5 red balls and 3 blue balls. You draw two balls without replacement. What is the probability that both are red? Express as a simplified fraction.', expectedKeywords: ['5/14', '10/28', '5 out of 14'] },
     { question: 'How many different 3-digit numbers can be formed using the digits 1, 2, 3, 4, 5 if no digit is repeated?', expectedKeywords: ['60', 'sixty'] },
+    // ── Daily pool update: added 2026-07-12 ──
+    // Easy tier
+    { question: 'How many sides does a pentagon have?', expectedKeywords: ['5', 'five'] },
+    // Medium tier
+    { question: 'A recipe for 4 people requires 300 grams of flour. How many grams of flour are needed for 10 people?', expectedKeywords: ['750'] },
+    { question: 'A phone battery drains from 100% to 40% after 3 hours of use. At the same rate, how many more hours until the battery is completely empty?', expectedKeywords: ['2', 'two'] },
+    // Hard tier
+    { question: 'Using each of the digits 1 through 9 exactly once, three 3-digit numbers are formed. What is the smallest possible sum of the three numbers?', expectedKeywords: ['774'] },
+    { question: 'Two candles of equal length are lit at the same time. One burns out completely in 4 hours, the other in 3 hours. After how many hours is the slower candle exactly twice as long as the faster one? (Assume each burns at a constant rate.)', expectedKeywords: ['2.4', '12/5'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -1234,6 +1265,15 @@ let TTS_PHRASES = [
     // Hard tier
     { text: 'Interest rate of three point seven five percent per annum compounded quarterly on the principal amount of fifty thousand dollars.', keywords: ['3.75', 'three point seven five', 'quarterly', '50,000', 'fifty thousand', 'compounded', 'per annum'] },
     { text: 'Configuration hash SHA-256 colon d4e8 f1a3 b9c2 7065 3f2a 1b8c 4d9e 6f0a expiration timestamp Unix one seven five three eight one two eight zero zero.', keywords: ['SHA-256', 'd4e8', 'f1a3', 'b9c2', '7065', '3f2a', '1b8c', '4d9e', '6f0a', '1753812800', 'expiration', 'timestamp'] },
+    // ── Daily pool update: added 2026-07-12 ──
+    // Easy tier
+    { text: 'Please take the second exit at the roundabout and continue straight for two miles', keywords: ['second', 'exit', 'roundabout', 'two', 'miles'] },
+    // Medium tier
+    { text: 'Your reservation for four guests at Bella Vista is confirmed for Saturday March 22nd at 7:30 PM — confirmation code BV-8194', keywords: ['reservation', 'four', 'Bella Vista', 'saturday', 'march', '22', '7:30', 'BV-8194'] },
+    { text: 'Bus route 47 toward Riverside Park is running eight minutes late due to roadworks on Fifth Avenue between Main Street and Elm Street', keywords: ['route', '47', 'Riverside', 'eight', 'late', 'roadworks', 'Fifth', 'Elm'] },
+    // Hard tier
+    { text: 'The mitochondrial DNA analysis identified haplogroup variant m.3243A greater than G with a heteroplasmy level of thirty-four percent across five hundred twelve sequenced reads', keywords: ['mitochondrial', 'haplogroup', '3243', 'heteroplasmy', 'thirty-four', '512', 'sequenced'] },
+    { text: 'Payroll run PR-2026-07 processed one thousand four hundred eighty-three employees with gross pay of two million six hundred forty thousand dollars, total withholdings of six hundred twelve thousand dollars, and twenty-seven exceptions flagged for manual review', keywords: ['payroll', 'PR-2026', '1483', 'two million', 'six hundred', 'withholdings', 'twenty-seven', 'exceptions'] },
 ];
 
 // ============================================

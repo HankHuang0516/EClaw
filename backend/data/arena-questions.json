@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-10",
+  "updatedAt": "2026-07-12",
   "targetDifficulty": 70,
   "pools": {
     "arena_vision": [
@@ -2063,6 +2063,73 @@
           "state machine",
           "q3",
           "double circle"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A black opened umbrella centered on a plain yellow background",
+        "keywords": [
+          "umbrella",
+          "black",
+          "yellow",
+          "open"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A smart thermostat display showing set temperature 68°F, current temperature 72°F, mode HEAT with a small orange flame icon lit at the bottom",
+        "keywords": [
+          "thermostat",
+          "68",
+          "72",
+          "heat",
+          "flame",
+          "orange"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A parking garage sign reading Level 3 in white text on a blue panel, with 47 open spaces remaining and a white arrow pointing left",
+        "keywords": [
+          "parking",
+          "level",
+          "three",
+          "47",
+          "arrow",
+          "left",
+          "blue"
+        ]
+      },
+      {
+        "file": null,
+        "description": "An airport departures board listing five flights: UA-118 to Denver on time at gate B7, DL-2044 to Atlanta delayed 25 minutes at gate C2, AA-901 to Miami now boarding at gate A5, LH-431 to Frankfurt cancelled, and EK-236 to Dubai on time at gate D9",
+        "keywords": [
+          "departures",
+          "five",
+          "UA-118",
+          "Denver",
+          "delayed",
+          "Atlanta",
+          "25",
+          "boarding",
+          "Miami",
+          "cancelled",
+          "Frankfurt"
+        ]
+      },
+      {
+        "file": null,
+        "description": "An electricity bill summary panel: previous meter reading 42,318 kWh, current reading 43,102 kWh, usage 784 kWh billed at $0.14 per kWh, total due $109.76 by August 5th — the total is highlighted in a red box",
+        "keywords": [
+          "electricity",
+          "784",
+          "kWh",
+          "0.14",
+          "109.76",
+          "august",
+          "5",
+          "red",
+          "43,102"
         ]
       }
     ],
@@ -4270,32 +4337,24 @@
         ]
       },
       {
-        "title": "Valid Parentheses",
-        "description": "Write `solve(s)` — given a string containing only '(', ')', '{', '}', '[', ']', return true if the brackets are valid (properly opened and closed in order), false otherwise.",
+        "title": "Single Number",
+        "description": "Write `solve(nums)` — every element appears exactly twice except for one element which appears once. Return that single element.",
         "testCases": [
           {
-            "input": "\"()\"",
-            "expected": "true"
+            "input": "[2,2,1]",
+            "expected": "1"
           },
           {
-            "input": "\"()[]{}\"",
-            "expected": "true"
+            "input": "[4,1,2,1,2]",
+            "expected": "4"
           },
           {
-            "input": "\"(]\"",
-            "expected": "false"
+            "input": "[1]",
+            "expected": "1"
           },
           {
-            "input": "\"([)]\"",
-            "expected": "false"
-          },
-          {
-            "input": "\"{[]}\"",
-            "expected": "true"
-          },
-          {
-            "input": "\"\"",
-            "expected": "true"
+            "input": "[-1,-1,7]",
+            "expected": "7"
           }
         ]
       },
@@ -4352,20 +4411,24 @@
         ]
       },
       {
-        "title": "Group Anagrams",
-        "description": "Write `solve(strs)` — group an array of strings by anagrams. Sort each group alphabetically, then sort all groups by their first element alphabetically.",
+        "title": "Missing Number",
+        "description": "Write `solve(nums)` — given an array containing n distinct numbers taken from the range [0, n], return the one number in the range that is missing from the array.",
         "testCases": [
           {
-            "input": "[\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"]",
-            "expected": "[[\"ate\",\"eat\",\"tea\"],[\"bat\"],[\"nat\",\"tan\"]]"
+            "input": "[3,0,1]",
+            "expected": "2"
           },
           {
-            "input": "[\"\"]",
-            "expected": "[[\"\"]]"
+            "input": "[0,1]",
+            "expected": "2"
           },
           {
-            "input": "[\"a\"]",
-            "expected": "[[\"a\"]]"
+            "input": "[9,6,4,2,3,5,7,0,1]",
+            "expected": "8"
+          },
+          {
+            "input": "[0]",
+            "expected": "1"
           }
         ]
       },
@@ -4388,6 +4451,116 @@
           {
             "input": "[[1,4],[2,3]]",
             "expected": "[[1,4]]"
+          }
+        ]
+      },
+      {
+        "title": "Move Zeroes",
+        "description": "Write `solve(nums)` — move all 0s to the end of the array while maintaining the relative order of the non-zero elements. Return the resulting array.",
+        "testCases": [
+          {
+            "input": "[0,1,0,3,12]",
+            "expected": "[1,3,12,0,0]"
+          },
+          {
+            "input": "[0]",
+            "expected": "[0]"
+          },
+          {
+            "input": "[1,2]",
+            "expected": "[1,2]"
+          },
+          {
+            "input": "[0,0,1]",
+            "expected": "[1,0,0]"
+          }
+        ]
+      },
+      {
+        "title": "First Unique Character",
+        "description": "Write `solve(s)` — return the index of the first non-repeating character in the string, or -1 if none exists.",
+        "testCases": [
+          {
+            "input": "\"leetcode\"",
+            "expected": "0"
+          },
+          {
+            "input": "\"loveleetcode\"",
+            "expected": "2"
+          },
+          {
+            "input": "\"aabb\"",
+            "expected": "-1"
+          },
+          {
+            "input": "\"\"",
+            "expected": "-1"
+          }
+        ]
+      },
+      {
+        "title": "Squares of Sorted Array",
+        "description": "Write `solve(nums)` — given an integer array sorted in non-decreasing order, return an array of the squares of each number, also sorted in non-decreasing order.",
+        "testCases": [
+          {
+            "input": "[-4,-1,0,3,10]",
+            "expected": "[0,1,9,16,100]"
+          },
+          {
+            "input": "[-7,-3,2,3,11]",
+            "expected": "[4,9,9,49,121]"
+          },
+          {
+            "input": "[1]",
+            "expected": "[1]"
+          },
+          {
+            "input": "[-5,-2]",
+            "expected": "[4,25]"
+          }
+        ]
+      },
+      {
+        "title": "Gas Station",
+        "description": "Write `solve(gas, cost)` — there are n gas stations in a circle. gas[i] is fuel available at station i; cost[i] is fuel needed to travel to station i+1. Return the starting station index from which you can complete one full circuit, or -1 if impossible. The answer is guaranteed unique when it exists.",
+        "testCases": [
+          {
+            "input": "[1,2,3,4,5], [3,4,5,1,2]",
+            "expected": "3"
+          },
+          {
+            "input": "[2,3,4], [3,4,3]",
+            "expected": "-1"
+          },
+          {
+            "input": "[5], [4]",
+            "expected": "0"
+          },
+          {
+            "input": "[3,1,1], [1,2,2]",
+            "expected": "0"
+          }
+        ]
+      },
+      {
+        "title": "Koko Eating Bananas",
+        "description": "Write `solve(piles, h)` — Koko can eat at speed k bananas per hour. Each hour she picks one pile and eats up to k bananas from it. Return the minimum integer speed k so she can finish all piles within h hours.",
+        "testCases": [
+          {
+            "input": "[3,6,7,11], 8",
+            "expected": "4"
+          },
+          {
+            "input": "[30,11,23,4,20], 5",
+            "expected": "30"
+          },
+          {
+            "input": "[30,11,23,4,20], 6",
+            "expected": "23"
+          },
+          {
+            "input": "[1], 1",
+            "expected": "1"
           }
         ]
       }
@@ -5491,10 +5664,10 @@
         ]
       },
       {
-        "question": "What is 15% of 200?",
+        "question": "What is 25% of 80?",
         "expectedKeywords": [
-          "30",
-          "thirty"
+          "20",
+          "twenty"
         ]
       },
       {
@@ -5525,6 +5698,39 @@
         "expectedKeywords": [
           "60",
           "sixty"
+        ]
+      },
+      {
+        "question": "How many sides does a pentagon have?",
+        "expectedKeywords": [
+          "5",
+          "five"
+        ]
+      },
+      {
+        "question": "A recipe for 4 people requires 300 grams of flour. How many grams of flour are needed for 10 people?",
+        "expectedKeywords": [
+          "750"
+        ]
+      },
+      {
+        "question": "A phone battery drains from 100% to 40% after 3 hours of use. At the same rate, how many more hours until the battery is completely empty?",
+        "expectedKeywords": [
+          "2",
+          "two"
+        ]
+      },
+      {
+        "question": "Using each of the digits 1 through 9 exactly once, three 3-digit numbers are formed. What is the smallest possible sum of the three numbers?",
+        "expectedKeywords": [
+          "774"
+        ]
+      },
+      {
+        "question": "Two candles of equal length are lit at the same time. One burns out completely in 4 hours, the other in 3 hours. After how many hours is the slower candle exactly twice as long as the faster one? (Assume each burns at a constant rate.)",
+        "expectedKeywords": [
+          "2.4",
+          "12/5"
         ]
       }
     ],
@@ -7330,6 +7536,67 @@
           "1753812800",
           "expiration",
           "timestamp"
+        ]
+      },
+      {
+        "text": "Please take the second exit at the roundabout and continue straight for two miles",
+        "keywords": [
+          "second",
+          "exit",
+          "roundabout",
+          "two",
+          "miles"
+        ]
+      },
+      {
+        "text": "Your reservation for four guests at Bella Vista is confirmed for Saturday March 22nd at 7:30 PM — confirmation code BV-8194",
+        "keywords": [
+          "reservation",
+          "four",
+          "Bella Vista",
+          "saturday",
+          "march",
+          "22",
+          "7:30",
+          "BV-8194"
+        ]
+      },
+      {
+        "text": "Bus route 47 toward Riverside Park is running eight minutes late due to roadworks on Fifth Avenue between Main Street and Elm Street",
+        "keywords": [
+          "route",
+          "47",
+          "Riverside",
+          "eight",
+          "late",
+          "roadworks",
+          "Fifth",
+          "Elm"
+        ]
+      },
+      {
+        "text": "The mitochondrial DNA analysis identified haplogroup variant m.3243A greater than G with a heteroplasmy level of thirty-four percent across five hundred twelve sequenced reads",
+        "keywords": [
+          "mitochondrial",
+          "haplogroup",
+          "3243",
+          "heteroplasmy",
+          "thirty-four",
+          "512",
+          "sequenced"
+        ]
+      },
+      {
+        "text": "Payroll run PR-2026-07 processed one thousand four hundred eighty-three employees with gross pay of two million six hundred forty thousand dollars, total withholdings of six hundred twelve thousand dollars, and twenty-seven exceptions flagged for manual review",
+        "keywords": [
+          "payroll",
+          "PR-2026",
+          "1483",
+          "two million",
+          "six hundred",
+          "withholdings",
+          "twenty-seven",
+          "exceptions"
         ]
       }
     ]
