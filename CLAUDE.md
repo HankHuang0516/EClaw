@@ -180,7 +180,7 @@ EClaw/
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
 │   ├── tests/                # Regression + integration tests (79 files)
-│   ├── tests/jest/           # Jest unit tests (488 files, CI-run via `npm test`)
+│   ├── tests/jest/           # Jest unit tests (491 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -1388,11 +1388,20 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **iOS App Store 1.0.1 Prep**: Build prep (#3973); WidgetKit extension development team + EAS credentials declaration (#3974–#3975); tabs aligned with portal webviews (#3970)
 - **Android Play Asset Pipeline**: Play Store asset generation pipeline (#3981)
 
+### Recent Features (v1.1190.x+, 2026-07-10 – 2026-07-12)
+
+- **App-Bot Chat Gateway (I2)**: `POST /api/app-bot/chat` gateway with per-device daily quota; rebuilt to async job/callback model with bound-device auth, then simplified to route inference through the user's bound free MiniMax bot (validated) (#3978–#3980)
+- **AdMob Rewarded-Ad SSV (I3)**: Server-side verification module for AdMob rewarded-ad callbacks (#3982)
+- **Emo-Moderation (I4)**: Server-side moderation + crisis-referral flow for companion chat (#3983)
+- **Vault Keyref Hint (P1)**: Channel agents receive `[[VAULT_KEYREF]]` hint instead of raw vault value (card_247a3a68) (#3984)
+- **Android Play Asset Pipeline**: Scripted Play Store asset generation pipeline (#3981)
+- **Chat Reactions Hardening**: Per-bubble 👍👎 survives adjacent-message merge (#3987); like/dislike feedback pushed to the bot entity so agents learn from reactions (#3988)
+
 ---
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~6674 test cases across 488 Jest files + 79 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~6686 test cases across 491 Jest files + 79 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1485,7 +1494,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
 | Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
 
-### Jest Unit Tests (CI-run, `npm test`, 488 files)
+### Jest Unit Tests (CI-run, `npm test`, 491 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -1564,13 +1573,14 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Kanban OODA-R Preflight Hook | `tests/jest/kanban-ooda-r-preflight-hook.test.js` | Preflight auto-fire on card→in_progress transition |
 | Content Import | `tests/jest/content-import.test.js` | Content import URL allowlist, SSRF guard, CORS proxy, iframe sandbox |
 | Channel Repair Log | `tests/jest/channel-repair-log.test.js` | Channel repair log GET/POST, auth, validation, secret scrub |
+| E2E Matrix Sweep | `tests/jest/e2e-matrix-sweep-leftovers.test.js` | Regression #3985: pre-run sweep archives leftover E2E-MATRIX marker cards from previous runs, skips current run + real cards, never throws |
 | Telemetry Prune Stale-Cache | `tests/jest/device-telemetry-prune-stale-cache.test.js` | Regression: full telemetry buffer must prune (with incoming headroom) and accept new entries — was permanently dropping everything once ~full |
 | Entity Poll Warn Throttle | `tests/jest/entity-poll-warn-throttle.test.js` | Regression: "0 bound entities" entity_poll warn is throttled per device (30 min) so it can't drown the warn channel |
 
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (488 files)
+cd backend && npm test                  # Jest unit tests (491 files)
 cd backend && npm run lint              # ESLint
 ```
 

@@ -20,6 +20,7 @@ const { chromium } = require('playwright');
 
 const { PLATFORMS, FLOWS } = require('./matrix-def.js');
 const { DRIVERS } = require('./drivers.js');
+const { sweepLeftoverMarkerCards } = require('./sweep-leftovers.js');
 
 const BASE = process.env.MATRIX_BASE || 'https://eclawbot.com';
 const ARTIFACT_DIR = process.env.MATRIX_ARTIFACT_DIR || path.join(os.tmpdir(), 'eclaw-e2e-matrix');
@@ -30,6 +31,14 @@ async function run() {
     fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
     // Run-scoped token for write-flow markers (data isolation + self-clean).
     const runId = process.env.MATRIX_RUN_ID || ('r' + Date.now().toString(36));
+    // #3985: archive marker cards a previous run's deferred cleanup left behind,
+    // BEFORE this run seeds its own. Best-effort — never reds the gate.
+    await sweepLeftoverMarkerCards({
+        base: BASE,
+        deviceId: process.env.MATRIX_TEST_DEVICE_ID,
+        deviceSecret: process.env.MATRIX_TEST_DEVICE_SECRET,
+        runId,
+    });
     const browser = await chromium.launch({ executablePath: CHROMIUM_EXECUTABLE });
     const results = [];
 
