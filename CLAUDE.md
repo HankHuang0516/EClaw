@@ -1573,6 +1573,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Kanban OODA-R Preflight Hook | `tests/jest/kanban-ooda-r-preflight-hook.test.js` | Preflight auto-fire on card→in_progress transition |
 | Content Import | `tests/jest/content-import.test.js` | Content import URL allowlist, SSRF guard, CORS proxy, iframe sandbox |
 | Channel Repair Log | `tests/jest/channel-repair-log.test.js` | Channel repair log GET/POST, auth, validation, secret scrub |
+| E2E Matrix Sweep | `tests/jest/e2e-matrix-sweep-leftovers.test.js` | Regression #3985: pre-run sweep archives leftover E2E-MATRIX marker cards from previous runs, skips current run + real cards, never throws |
 | Telemetry Prune Stale-Cache | `tests/jest/device-telemetry-prune-stale-cache.test.js` | Regression: full telemetry buffer must prune (with incoming headroom) and accept new entries — was permanently dropping everything once ~full |
 | Entity Poll Warn Throttle | `tests/jest/entity-poll-warn-throttle.test.js` | Regression: "0 bound entities" entity_poll warn is throttled per device (30 min) so it can't drown the warn channel |
 
