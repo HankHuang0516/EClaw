@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-18T23:49:11.722Z",
+  "updatedAt": "2026-07-19T00:00:00.000Z",
   "targetDifficulty": 70,
   "pools": {
     "arena_vision": [
@@ -2195,6 +2195,78 @@
           "db",
           "query",
           "OpenTelemetry"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A blue bicycle icon inside a white circle centered on a green square background",
+        "keywords": [
+          "bicycle",
+          "blue",
+          "circle",
+          "green",
+          "white"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A hotel booking summary card: check-in Friday August 8, check-out Monday August 11, 2 adults and 1 child, room type Deluxe King, total $642 — a yellow banner reads \"Free cancellation until Aug 1\"",
+        "keywords": [
+          "booking",
+          "august",
+          "8",
+          "11",
+          "deluxe",
+          "king",
+          "642",
+          "cancellation",
+          "yellow"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A podcast player screen: episode 47 titled \"Deep Work\" is playing at 23:14 of 58:40 total, playback speed is set to 1.5x, and a sleep timer shows 30 minutes remaining",
+        "keywords": [
+          "podcast",
+          "47",
+          "Deep Work",
+          "23:14",
+          "58:40",
+          "1.5",
+          "sleep",
+          "30"
+        ]
+      },
+      {
+        "file": null,
+        "description": "A firewall rule table with five rows: rule 10 ALLOW tcp/443 from any, rule 20 ALLOW tcp/22 from 10.0.0.0/8, rule 30 DENY udp/53 from 192.168.1.0/24, rule 40 ALLOW icmp from any, rule 50 DENY all — rule 30 is highlighted in red with a \"shadowed rule\" warning icon",
+        "keywords": [
+          "firewall",
+          "five",
+          "rules",
+          "443",
+          "22",
+          "deny",
+          "53",
+          "192.168",
+          "shadowed",
+          "red"
+        ]
+      },
+      {
+        "file": null,
+        "description": "An oscilloscope display showing a sine wave at 2 volts per division and 5 milliseconds per division — the waveform peaks at 3 divisions above center (6 volts amplitude) and the on-screen frequency readout shows 50 Hz",
+        "keywords": [
+          "oscilloscope",
+          "sine",
+          "2",
+          "volts",
+          "5",
+          "milliseconds",
+          "three",
+          "6",
+          "50",
+          "Hz"
         ]
       }
     ],
@@ -4730,6 +4802,116 @@
             "expected": "false"
           }
         ]
+      },
+      {
+        "title": "Reverse Integer",
+        "description": "Write `solve(x)` — reverse the digits of a signed integer, keeping the sign. Leading zeros in the result are dropped.",
+        "testCases": [
+          {
+            "input": "123",
+            "expected": "321"
+          },
+          {
+            "input": "-120",
+            "expected": "-21"
+          },
+          {
+            "input": "0",
+            "expected": "0"
+          },
+          {
+            "input": "1200",
+            "expected": "21"
+          }
+        ]
+      },
+      {
+        "title": "Word Search",
+        "description": "Write `solve(board, word)` — given an m×n grid of letters, return true if the word can be constructed from sequentially adjacent cells (horizontally or vertically neighboring). The same cell may not be used more than once.",
+        "testCases": [
+          {
+            "input": "[[\"A\",\"B\",\"C\",\"E\"],[\"S\",\"F\",\"C\",\"S\"],[\"A\",\"D\",\"E\",\"E\"]], \"ABCCED\"",
+            "expected": "true"
+          },
+          {
+            "input": "[[\"A\",\"B\",\"C\",\"E\"],[\"S\",\"F\",\"C\",\"S\"],[\"A\",\"D\",\"E\",\"E\"]], \"SEE\"",
+            "expected": "true"
+          },
+          {
+            "input": "[[\"A\",\"B\",\"C\",\"E\"],[\"S\",\"F\",\"C\",\"S\"],[\"A\",\"D\",\"E\",\"E\"]], \"ABCB\"",
+            "expected": "false"
+          },
+          {
+            "input": "[[\"A\"]], \"A\"",
+            "expected": "true"
+          }
+        ]
+      },
+      {
+        "title": "Subarray Sum Equals K",
+        "description": "Write `solve(nums, k)` — return the total number of contiguous subarrays whose elements sum to exactly k. Use a prefix-sum hash map for O(n) time.",
+        "testCases": [
+          {
+            "input": "[1,1,1], 2",
+            "expected": "2"
+          },
+          {
+            "input": "[1,2,3], 3",
+            "expected": "2"
+          },
+          {
+            "input": "[1,-1,0], 0",
+            "expected": "3"
+          },
+          {
+            "input": "[3,4,7,2,-3,1,4,2], 7",
+            "expected": "4"
+          }
+        ]
+      },
+      {
+        "title": "Perfect Squares",
+        "description": "Write `solve(n)` — return the least number of perfect square numbers (1, 4, 9, 16, ...) that sum to n.",
+        "testCases": [
+          {
+            "input": "12",
+            "expected": "3"
+          },
+          {
+            "input": "13",
+            "expected": "2"
+          },
+          {
+            "input": "1",
+            "expected": "1"
+          },
+          {
+            "input": "7",
+            "expected": "4"
+          }
+        ]
+      },
+      {
+        "title": "Insert Interval",
+        "description": "Write `solve(intervals, newInterval)` — intervals is a sorted list of non-overlapping [start, end] pairs. Insert newInterval, merging any overlaps, and return the resulting sorted non-overlapping list.",
+        "testCases": [
+          {
+            "input": "[[1,3],[6,9]], [2,5]",
+            "expected": "[[1,5],[6,9]]"
+          },
+          {
+            "input": "[[1,2],[3,5],[6,7],[8,10],[12,16]], [4,8]",
+            "expected": "[[1,2],[3,10],[12,16]]"
+          },
+          {
+            "input": "[], [5,7]",
+            "expected": "[[5,7]]"
+          },
+          {
+            "input": "[[1,5]], [2,3]",
+            "expected": "[[1,5]]"
+          }
+        ]
       }
     ],
     "arena_response_time": [
@@ -5955,6 +6137,53 @@
         "expectedKeywords": [
           "2",
           "two"
+        ]
+      },
+      {
+        "question": "How many edges does a cube have?",
+        "expectedKeywords": [
+          "12",
+          "twelve"
+        ]
+      },
+      {
+        "question": "What is the sum of the first 20 positive even integers (2 + 4 + ... + 40)?",
+        "expectedKeywords": [
+          "420"
+        ]
+      },
+      {
+        "question": "A password consists of 2 different letters chosen from A, B, C, D, E (order matters) followed by one digit from 0-9. How many distinct passwords are possible?",
+        "expectedKeywords": [
+          "200",
+          "two hundred"
+        ]
+      },
+      {
+        "question": "If today is Wednesday, what day of the week will it be exactly 100 days from now?",
+        "expectedKeywords": [
+          "friday"
+        ]
+      },
+      {
+        "question": "In a single-elimination knockout tournament with 64 players, how many matches are played in total to decide the champion?",
+        "expectedKeywords": [
+          "63",
+          "sixty-three"
+        ]
+      },
+      {
+        "question": "What is the smallest positive integer that leaves a remainder of 2 when divided by 5 and a remainder of 3 when divided by 7?",
+        "expectedKeywords": [
+          "17",
+          "seventeen"
+        ]
+      },
+      {
+        "question": "A clock shows 2:20. What is the exact angle in degrees between the hour and minute hands?",
+        "expectedKeywords": [
+          "50",
+          "fifty"
         ]
       }
     ],
@@ -7889,8 +8118,70 @@
           "secret",
           "verify"
         ]
+      },
+      {
+        "text": "Please recycle plastic bottles and paper in the blue bin outside the main entrance",
+        "keywords": [
+          "recycle",
+          "plastic",
+          "paper",
+          "blue",
+          "bin",
+          "entrance"
+        ]
+      },
+      {
+        "text": "Train number 4207 to Kyoto departs from platform 11 at 16:05 and calls at Nagoya and Maibara before its final stop",
+        "keywords": [
+          "4207",
+          "Kyoto",
+          "platform",
+          "11",
+          "16:05",
+          "Nagoya",
+          "Maibara"
+        ]
+      },
+      {
+        "text": "Your account balance is two thousand three hundred fifteen dollars and seven cents as of Friday July eighteenth",
+        "keywords": [
+          "balance",
+          "2315",
+          "two thousand",
+          "seven",
+          "cents",
+          "friday",
+          "july",
+          "eighteenth"
+        ]
+      },
+      {
+        "text": "The enzyme catalase decomposes hydrogen peroxide H2O2 into water and oxygen at a turnover rate of roughly forty thousand reactions per second per enzyme molecule",
+        "keywords": [
+          "catalase",
+          "hydrogen",
+          "peroxide",
+          "H2O2",
+          "oxygen",
+          "forty thousand",
+          "turnover"
+        ]
+      },
+      {
+        "text": "Latitude forty-eight point eight five six six north and longitude two point three five two two east mark the center of Paris near Notre-Dame cathedral",
+        "keywords": [
+          "latitude",
+          "48.8566",
+          "forty-eight",
+          "longitude",
+          "2.3522",
+          "north",
+          "east",
+          "Paris",
+          "Notre-Dame"
+        ]
       }
     ]
   },
-  "note": "Daily pool update — target difficulty 70/100. Added 5 vision, 5 coding, 8 response, 6 tts questions."
+  "note": "Daily pool update — target difficulty 70/100. Added 5 vision, 5 coding, 7 response, 5 tts questions."
 }
