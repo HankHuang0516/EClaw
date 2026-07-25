@@ -23689,6 +23689,37 @@ app.post('/api/device-vars', async (req, res) => {
                     });
                 }
             }
+
+            // Shrink guard (2026-07-25): the empty-payload guard above only
+            // catches `{vars:{}}`. A NON-empty legacy payload still silently
+            // deletes every key it omits — writing one key into an 18-key vault
+            // destroyed the other 17 (audit id 2495: before=18 after=1). That is
+            // the same class of loss as the 04-23 wipe, just through the door the
+            // 04-23 fix left open, and it is the shape every "agent stores one
+            // secret" script naturally produces.
+            //
+            // Refuse when a legacy write would drop pre-existing keys, unless the
+            // caller proves intent one of two ways:
+            //   - expectedUpdatedAt  → they demonstrably read current state (the
+            //     optimistic-concurrency block above already verified it matches)
+            //   - confirm:"REPLACE_ALL" → explicit "yes, delete the rest"
+            const _existingRow = await loadExistingRowOnce();
+            const _existingKeys = (_existingRow && Array.isArray(_existingRow.var_keys))
+                ? _existingRow.var_keys : [];
+            const _dropped = _existingKeys.filter(k => !Object.prototype.hasOwnProperty.call(incoming, k));
+            const _confirmedReplace = confirm === 'REPLACE_ALL' || confirm === 'REPLACE_ALL_EMPTY';
+            if (_dropped.length > 0 && !expectedUpdatedAt && !_confirmedReplace) {
+                serverLog('warn', 'device_vars', `[Vars] refused legacy shrinking replace for ${deviceId}: would drop ${_dropped.length} of ${_existingKeys.length} keys`, { deviceId, metadata: { existingKeyCount: _existingKeys.length, incomingKeyCount: Object.keys(incoming).length, droppedCount: _dropped.length, ip: _auditCtx.ip, ua: _auditCtx.ua } });
+                db.logDeviceVarsAudit({ deviceId, action: 'refuse_shrink', source: 'legacy', callerIp: _auditCtx.ip, callerUa: _auditCtx.ua, beforeCount: _existingKeys.length, afterCount: _existingKeys.length });
+                return res.status(409).json({
+                    success: false,
+                    error: 'refuse_legacy_shrink',
+                    message: `Refusing legacy replace: would delete ${_dropped.length} of ${_existingKeys.length} existing keys that are absent from this payload. To ADD or UPDATE without touching the rest, send {"source":"web","patch":true,"vars":{...}}. To intentionally replace the whole vault, resend with confirm:"REPLACE_ALL" (or echo expectedUpdatedAt from GET).`,
+                    droppedKeys: _dropped,
+                    existingKeyCount: _existingKeys.length,
+                });
+            }
+
             for (const k of Object.keys(incoming)) {
                 mergedSources[k] = null;
             }

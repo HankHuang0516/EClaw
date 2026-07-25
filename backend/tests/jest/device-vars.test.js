@@ -233,6 +233,60 @@ describe('POST /api/device-vars — legacy empty-wipe guard', () => {
         expect(res.body.success).toBe(true);
     });
 
+    it('refuses legacy NON-empty replace that would drop existing keys (2026-07-25 incident)', async () => {
+        // The empty-guard above only catches {vars:{}}. Writing a single key in
+        // legacy mode silently deleted the other 17 (audit id 2495, 18 → 1).
+        const devId = `vars-post-shrink-${Date.now()}`;
+        const secret = await registerDevice(devId);
+        db.getDeviceVars.mockResolvedValueOnce({
+            vars: { A: '1', B: '2', C: '3' },
+            var_keys: ['A', 'B', 'C'],
+        });
+        const res = await post('/api/device-vars').send({
+            deviceId: devId,
+            deviceSecret: secret,
+            vars: { NEW_KEY: 'v' },
+        });
+        expect(res.status).toBe(409);
+        expect(res.body.success).toBe(false);
+        expect(res.body.error).toBe('refuse_legacy_shrink');
+        expect(res.body.droppedKeys.sort()).toEqual(['A', 'B', 'C']);
+        expect(res.body.message).toMatch(/patch/);
+    });
+
+    it('allows legacy non-empty replace that only ADDS keys (drops nothing)', async () => {
+        const devId = `vars-post-additive-${Date.now()}`;
+        const secret = await registerDevice(devId);
+        db.getDeviceVars.mockResolvedValueOnce({
+            vars: { A: '1' },
+            var_keys: ['A'],
+        });
+        const res = await post('/api/device-vars').send({
+            deviceId: devId,
+            deviceSecret: secret,
+            vars: { A: '1', B: '2' },
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+
+    it('allows legacy shrinking replace with confirm:"REPLACE_ALL" (explicit intent)', async () => {
+        const devId = `vars-post-shrink-confirm-${Date.now()}`;
+        const secret = await registerDevice(devId);
+        db.getDeviceVars.mockResolvedValueOnce({
+            vars: { A: '1', B: '2' },
+            var_keys: ['A', 'B'],
+        });
+        const res = await post('/api/device-vars').send({
+            deviceId: devId,
+            deviceSecret: secret,
+            vars: { ONLY: 'v' },
+            confirm: 'REPLACE_ALL',
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+
     it('refuses merge-mode source:"web" with empty vars against non-empty vault (2026-04-24 incident)', async () => {
         // Audit event #25 showed 17 keys → 0 via Android WebView POST
         // {vars:{},source:'web'}. Merge branch now refuses empty incoming
