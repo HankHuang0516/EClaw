@@ -29,6 +29,7 @@ import org.junit.runners.Suite
     SpritesheetLoadingGraceTest::class,
     CompanionDescriptorAnimationTest::class,
     CompanionAssetUrlTest::class,
+    AndroidSdkPolicyTest::class,
     CompanionCacheInvalidationStaticTest::class,
     NavResumeControllerTest::class,
     NotificationPreferenceCatalogTest::class,
