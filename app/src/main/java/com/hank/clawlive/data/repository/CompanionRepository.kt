@@ -23,6 +23,24 @@ import retrofit2.HttpException
 import timber.log.Timber
 import java.util.concurrent.ConcurrentHashMap
 
+private const val COMPANION_ASSET_BASE_URL = "https://eclawbot.com"
+
+internal fun resolveCompanionAssetUrl(rawUrl: String?): String? {
+    val url = rawUrl?.trim().orEmpty()
+    if (url.isBlank()) return null
+    if (url.startsWith("http://", ignoreCase = true) || url.startsWith("https://", ignoreCase = true)) {
+        return url
+    }
+    if (url.startsWith("//")) {
+        return "https:$url"
+    }
+    return if (url.startsWith("/")) {
+        "$COMPANION_ASSET_BASE_URL$url"
+    } else {
+        "$COMPANION_ASSET_BASE_URL/$url"
+    }
+}
+
 /**
  * Fetches the per-entity current companion (Petdx) and decodes spritesheet
  * bitmaps for the renderer. Two caches:
@@ -69,7 +87,7 @@ class CompanionRepository(
             ioScope.launch {
                 restored.values.forEach { companion ->
                     if (companion.assetType == "spritesheet") {
-                        companion.spritesheetUrl()?.takeIf { it.isNotBlank() }?.let { url ->
+                        resolveCompanionAssetUrl(companion.spritesheetUrl())?.let { url ->
                             runCatching { sheetCache.getOrLoad(url) { loadBitmap(url) } }
                         }
                     }
@@ -100,13 +118,13 @@ class CompanionRepository(
      * tick (33ms later) will find the bitmap and paint it.
      */
     fun getSheet(url: String?): Bitmap? {
-        if (url.isNullOrBlank()) return null
-        sheetCache.peek(url)?.let { return it }
+        val sheetUrl = resolveCompanionAssetUrl(url) ?: return null
+        sheetCache.peek(sheetUrl)?.let { return it }
         if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
-            ioScope.launch { sheetCache.getOrLoad(url) { loadBitmap(url) } }
+            ioScope.launch { sheetCache.getOrLoad(sheetUrl) { loadBitmap(sheetUrl) } }
             return null
         }
-        return sheetCache.getOrLoad(url) { loadBitmap(url) }
+        return sheetCache.getOrLoad(sheetUrl) { loadBitmap(sheetUrl) }
     }
 
     /**
@@ -142,8 +160,8 @@ class CompanionRepository(
                     // and the old renderer fell back to procedural lobster
                     // for that whole window, producing the visible flicker.
                     val sheetReady = if (companion.assetType == "spritesheet") {
-                        val sheetUrl = companion.spritesheetUrl()
-                        if (sheetUrl.isNullOrBlank()) {
+                        val sheetUrl = resolveCompanionAssetUrl(companion.spritesheetUrl())
+                        if (sheetUrl == null) {
                             true // descriptor is malformed; let renderer's UNSUPPORTED path handle it
                         } else {
                             withContext(Dispatchers.IO) {
@@ -189,8 +207,9 @@ class CompanionRepository(
     }
 
     private fun loadBitmap(url: String): Bitmap? {
-        diskSheetCache.load(url)?.let { return it }
-        return fetchBitmap(url)
+        val sheetUrl = resolveCompanionAssetUrl(url) ?: return null
+        diskSheetCache.load(sheetUrl)?.let { return it }
+        return fetchBitmap(sheetUrl)
     }
 
     private fun fetchBitmap(url: String): Bitmap? {
