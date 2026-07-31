@@ -11,7 +11,7 @@ plugins {
 
 android {
     namespace = "com.hank.clawlive"
-    compileSdk = 35
+    compileSdk = 36
 
     buildFeatures {
         buildConfig = true
@@ -20,7 +20,7 @@ android {
     defaultConfig {
         applicationId = "com.hank.clawlive"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 127
         versionName = "1.1.16"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
