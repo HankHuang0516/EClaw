@@ -308,8 +308,10 @@ class ClawWallpaperService : WallpaperService() {
                 e.botSecret?.let { secret -> e.entityId to secret }
             }
             val activeIds = active.map { it.first }.toSet()
+            companionRepository.pruneTo(activeIds)
             companionJobs.keys.toList().forEach { id ->
                 if (id !in activeIds) {
+                    companionRepository.clearCompanion(id)
                     companionJobs.remove(id)?.cancel()
                 }
             }

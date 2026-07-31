@@ -465,9 +465,11 @@ class WallpaperPreviewActivity : AppCompatActivity() {
             entity.botSecret?.let { secret -> entity.entityId to secret }
         }
         val activeIds = active.map { it.first }.toSet()
+        companionRepository.pruneTo(activeIds)
 
         companionJobs.keys.toList().forEach { entityId ->
             if (entityId !in activeIds) {
+                companionRepository.clearCompanion(entityId)
                 companionJobs.remove(entityId)?.cancel()
             }
         }

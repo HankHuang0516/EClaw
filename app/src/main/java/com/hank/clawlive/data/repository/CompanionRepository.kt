@@ -81,6 +81,18 @@ class CompanionRepository(
     /** Returns the cached companion for an entity, or null until a fetch lands. */
     fun cached(entityId: Int): CompanionDetail? = descriptorCache[entityId]
 
+    /** Clear stale companion state after unbind, tombstone, or a missing current selection. */
+    fun clearCompanion(entityId: Int) {
+        descriptorCache.remove(entityId)
+        snapshotCache.removeCompanion(entityId)
+    }
+
+    /** Keep companion caches aligned with the currently bound wallpaper entities. */
+    fun pruneTo(activeEntityIds: Set<Int>) {
+        descriptorCache.keys.removeIf { it !in activeEntityIds }
+        snapshotCache.pruneCompanionsTo(activeEntityIds)
+    }
+
     /**
      * Returns a decoded spritesheet bitmap. The wallpaper draw loop runs on
      * the Main thread, so we never block here: a cache miss schedules an
@@ -141,13 +153,16 @@ class CompanionRepository(
                     } else {
                         true // non-spritesheet (procedural) — no preload needed
                     }
+                    descriptorCache[entityId] = companion
+                    snapshotCache.saveCompanion(entityId, companion)
                     if (sheetReady) {
-                        descriptorCache[entityId] = companion
-                        snapshotCache.saveCompanion(entityId, companion)
                         Timber.d("Companion fetched for entity $entityId: ${companion.id} (${companion.assetType})")
                     } else {
-                        Timber.w("Spritesheet preload failed for entity $entityId (${companion.spritesheetUrl()}); keeping previous companion to avoid default-lobster flicker")
+                        Timber.w("Spritesheet preload failed for entity $entityId (${companion.spritesheetUrl()}); published descriptor so stale companion is not retained")
                     }
+                } else {
+                    clearCompanion(entityId)
+                    Timber.d("Companion cleared for entity $entityId: no current selection")
                 }
                 emit(companion)
             } catch (e: HttpException) {

@@ -428,7 +428,7 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
             // for the descriptor payload. LEFT JOIN so a deleted companion
             // returns selection=null instead of erroring.
             const selectSql = `
-                SELECT s.companion_id, s.selected_at, s.source,
+                SELECT s.companion_id, s.selected_at, s.source, s.origin,
                        c.id, c.name, c.version, c.author_entity_id, c.descriptor,
                        c.asset_type, c.asset_url, c.avatar_url, c.thumbnail_url,
                        c.supported_states, c.scope, c.status, c.license,
@@ -439,7 +439,7 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
              LEFT JOIN companions c ON c.id = s.companion_id
                  WHERE s.device_id = $1
                    AND s.entity_id IS NOT DISTINCT FROM $2
-              ORDER BY s.selected_at DESC
+              ORDER BY s.selected_at DESC, s.id DESC
                  LIMIT 1
             `;
             const favSql = `
@@ -456,7 +456,7 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
             ]);
 
             let selection = null;
-            if (selRes.rowCount > 0 && selRes.rows[0].id) {
+            if (selRes.rowCount > 0 && selRes.rows[0].origin !== 'unbind-cleared' && selRes.rows[0].id) {
                 const r = selRes.rows[0];
                 selection = {
                     selectedAt: Number(r.selected_at),
