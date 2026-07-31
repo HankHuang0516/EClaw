@@ -1176,6 +1176,104 @@ describe('companion-api: POST /:id/review', () => {
     });
 });
 
+describe('companion-api: GET /current tombstone handling', () => {
+    beforeEach(() => __mockQuery.mockReset());
+
+    test('latest unbind-cleared row returns selection=null so wallpaper drops stale appearance', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({
+                rowCount: 1,
+                rows: [{
+                    companion_id: 'petdx-old',
+                    selected_at: 1785477600000,
+                    source: 'api',
+                    origin: 'unbind-cleared',
+                    id: 'petdx-old',
+                    name: 'Old Companion',
+                    version: '1.0.0',
+                    author_entity_id: null,
+                    descriptor: { asset: { renderer: 'old-procedural' } },
+                    asset_type: 'procedural',
+                    asset_url: null,
+                    avatar_url: '/old.png',
+                    thumbnail_url: null,
+                    supported_states: ['IDLE'],
+                    scope: 'system',
+                    status: 'published',
+                    license: 'EClaw-default',
+                    category: 'animal',
+                    mood: null,
+                    color: null,
+                    tags: [],
+                    i18n_data: null,
+                    download_count: 0,
+                    favorite_count: 0,
+                    rating_avg: null,
+                    rating_count: 0,
+                    comment_count: 0,
+                    published_at: null,
+                }],
+            })
+            .mockResolvedValueOnce({ rows: [] });
+
+        const res = await request(makeApp())
+            .get('/api/companion/current')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY });
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.selection).toBeNull();
+        expect(__mockQuery.mock.calls[0][0]).toMatch(/s\.origin/);
+        expect(__mockQuery.mock.calls[0][0]).toMatch(/ORDER BY s\.selected_at DESC, s\.id DESC/);
+    });
+
+    test('newer user-selected row after rebind/select returns the new companion', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({
+                rowCount: 1,
+                rows: [{
+                    companion_id: 'petdx-new',
+                    selected_at: 1785477600001,
+                    source: 'app',
+                    origin: 'user-selected',
+                    id: 'petdx-new',
+                    name: 'New Companion',
+                    version: '1.0.0',
+                    author_entity_id: null,
+                    descriptor: { asset: { renderer: 'new-procedural' } },
+                    asset_type: 'procedural',
+                    asset_url: null,
+                    avatar_url: '/new.png',
+                    thumbnail_url: null,
+                    supported_states: ['IDLE'],
+                    scope: 'system',
+                    status: 'published',
+                    license: 'EClaw-default',
+                    category: 'animal',
+                    mood: null,
+                    color: '#00AAFF',
+                    tags: [],
+                    i18n_data: null,
+                    download_count: 0,
+                    favorite_count: 0,
+                    rating_avg: null,
+                    rating_count: 0,
+                    comment_count: 0,
+                    published_at: null,
+                }],
+            })
+            .mockResolvedValueOnce({ rows: [] });
+
+        const res = await request(makeApp())
+            .get('/api/companion/current')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY });
+
+        expect(res.status).toBe(200);
+        expect(res.body.selection.companion.id).toBe('petdx-new');
+        expect(res.body.selection.source).toBe('app');
+    });
+});
+
 describe('companion-api: DELETE /:id', () => {
     beforeEach(() => __mockQuery.mockReset());
 

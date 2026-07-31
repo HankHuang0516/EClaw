@@ -446,6 +446,7 @@ EClaw/
    | Info Integration slide lists unsupported integrations and fake platform/SLA stats | `GET /api/debug/info-integration-slide?deviceId=X&deviceSecret=Y` | 2026-05-05 | Active |
    | Info Guide mobile renders too many sidebar sections/cards/slides as one long vertical wall | `GET /api/debug/info-guide-mobile-layout?deviceId=X&deviceSecret=Y` | 2026-05-05 | Active |
    | Chat @mention autocomplete dropdown uses legacy avatar instead of Petdx companion appearance | `GET /api/debug/mention-autocomplete-avatar?deviceId=X&deviceSecret=Y` | 2026-05-12 | Active |
+   | Android wallpaper keeps stale companion appearance after unbind/rebind/select | `GET /api/debug/wallpaper-companion-stale?deviceId=X&deviceSecret=Y&entityId=N` | 2026-07-31 | Active |
    | Codex channel A2A loop from operational bridge errors | `GET /api/debug/a2a-loop-guard?deviceId=X&deviceSecret=Y` | 2026-05-02 | Active |
 
 6. **Demand Elegance (Balanced)** — 在保持 minimal change 的前提下，追求可讀、一致的程式風格；不為了「漂亮」而過度重構，但也不容忍明顯的 code smell 在新增的程式碼中出現。

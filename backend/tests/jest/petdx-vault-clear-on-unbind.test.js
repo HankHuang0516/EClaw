@@ -108,4 +108,19 @@ describe('clearPetdxVaultForEntity — static invariants', () => {
             expect(!!d && (e !== undefined && e !== null)).toBeFalsy();
         }
     });
+
+    it('debug endpoint exists for wallpaper stale companion diagnostics', () => {
+        const fs = require('fs');
+        const src = fs.readFileSync(require.resolve('../../index'), 'utf8');
+        const i = src.indexOf("app.get('/api/debug/wallpaper-companion-stale'");
+        expect(i).toBeGreaterThan(-1);
+        const body = src.slice(i, i + 7200);
+        expect(body).toMatch(/deviceId and deviceSecret required/);
+        expect(body).toMatch(/companion_select_log/);
+        expect(body).toMatch(/PETDX_TOMBSTONE_ORIGIN/);
+        expect(body).toMatch(/getPetdxEntityEnrichmentMap/);
+        expect(body).toMatch(/clearCachedCompanionWhenCurrentNull/);
+        expect(body).not.toMatch(/botSecret\s*:/);
+        expect(body).not.toMatch(/deviceSecret\s*:/);
+    });
 });
