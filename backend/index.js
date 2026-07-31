@@ -3871,6 +3871,144 @@ app.get('/api/debug/mention-autocomplete-avatar', async (req, res) => {
     }
 });
 
+// Temporary diagnostic endpoint for the 2026-07-31 Android wallpaper companion
+// stale-appearance bug. It compares the latest companion_select_log row, the
+// tombstone interpretation, and /api/entities Petdx enrichment for one entity.
+// Auth is device-owner only; response never includes deviceSecret, botSecret, or
+// raw companion descriptors.
+app.get('/api/debug/wallpaper-companion-stale', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const entityIdRaw = req.query?.entityId;
+    const timestamp = new Date().toISOString();
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({
+                success: false,
+                bug: 'wallpaper-companion-stale',
+                error: 'deviceId and deviceSecret required',
+                timestamp,
+            });
+        }
+
+        const eId = entityIdRaw === undefined || entityIdRaw === null || entityIdRaw === ''
+            ? 0
+            : parseInt(entityIdRaw, 10);
+        if (!Number.isFinite(eId) || eId < 0) {
+            return res.status(400).json({
+                success: false,
+                bug: 'wallpaper-companion-stale',
+                error: 'valid entityId required',
+                timestamp,
+            });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({
+                success: false,
+                bug: 'wallpaper-companion-stale',
+                error: 'Invalid credentials',
+                timestamp,
+            });
+        }
+
+        const latestSelection = pool ? await pool.query(
+            `SELECT s.companion_id, s.selected_at, s.source, s.origin,
+                    c.id IS NOT NULL AS companion_exists,
+                    c.asset_type, c.asset_url IS NOT NULL AS has_asset_url,
+                    c.avatar_url IS NOT NULL AS has_avatar_url,
+                    c.status, c.scope
+               FROM companion_select_log s
+          LEFT JOIN companions c ON c.id = s.companion_id
+              WHERE s.device_id = $1 AND s.entity_id = $2
+           ORDER BY s.selected_at DESC, s.id DESC
+              LIMIT 5`,
+            [deviceId, eId]
+        ).catch((err) => ({ rows: [], _error: err.message })) : { rows: [] };
+
+        const latestRows = (latestSelection.rows || []).map((row, index) => ({
+            rank: index + 1,
+            companionId: row.companion_id || null,
+            selectedAt: row.selected_at == null ? null : Number(row.selected_at),
+            source: row.source || null,
+            origin: row.origin || null,
+            tombstoned: row.origin === PETDX_TOMBSTONE_ORIGIN,
+            companionExists: !!row.companion_exists,
+            assetType: row.asset_type || null,
+            hasAssetUrl: !!row.has_asset_url,
+            hasAvatarUrl: !!row.has_avatar_url,
+            status: row.status || null,
+            scope: row.scope || null,
+        }));
+        const newest = latestRows[0] || null;
+        const enrichmentMap = await getPetdxEntityEnrichmentMap(deviceId);
+        const enriched = enrichmentMap.get(eId) || null;
+        const memEntity = memDevice?.entities ? memDevice.entities[eId] : null;
+
+        res.json({
+            success: true,
+            bug: 'wallpaper-companion-stale',
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                entity: {
+                    entityId: eId,
+                    inMemoryPresent: !!memEntity,
+                    inMemoryBound: !!memEntity?.isBound,
+                    hasBotSecret: !!memEntity?.botSecret,
+                    character: memEntity?.character || null,
+                    avatarShape: typeof memEntity?.avatar === 'string'
+                        ? (memEntity.avatar.startsWith('http') ? 'url' : 'emoji_or_text')
+                        : (memEntity?.avatar == null ? null : typeof memEntity.avatar),
+                },
+                companionSelection: {
+                    latest: newest,
+                    recent: latestRows,
+                    queryError: latestSelection._error || null,
+                    currentShouldBeNull: !!(newest && newest.tombstoned),
+                    currentCompanionId: newest && !newest.tombstoned && newest.companionExists
+                        ? newest.companionId
+                        : null,
+                },
+                entitiesEnrichment: enriched ? {
+                    petdxCompanionId: enriched.petdxCompanionId,
+                    hasPetdxAvatarUrl: !!enriched.petdxAvatarUrl,
+                } : null,
+                expectedAndroidBehavior: {
+                    clearCachedCompanionWhenCurrentNull: true,
+                    pruneCompanionCacheWhenEntityUnboundOrRemoved: true,
+                    pollerEndpoint: '/api/companion/current',
+                },
+            },
+            timestamp,
+        });
+    } catch (err) {
+        console.error('[Debug wallpaper-companion-stale] failed:', err);
+        res.status(500).json({
+            success: false,
+            bug: 'wallpaper-companion-stale',
+            error: err.message,
+            timestamp,
+        });
+    }
+});
+
 // Temporary diagnostic endpoint for public Info-page regressions:
 // - roadmap.html must not redirect unauthenticated visitors to index.html
 // - release notes must render Markdown links instead of raw `(https://...)`

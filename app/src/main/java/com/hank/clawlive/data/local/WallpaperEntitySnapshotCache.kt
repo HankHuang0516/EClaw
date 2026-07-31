@@ -61,6 +61,21 @@ class WallpaperEntitySnapshotCache private constructor(context: Context) {
         prefs.edit().putString(KEY_COMPANIONS_JSON, gson.toJson(companions)).apply()
     }
 
+    fun removeCompanion(entityId: Int) {
+        val companions = loadCompanionMap().toMutableMap()
+        if (companions.remove(entityId) != null) {
+            prefs.edit().putString(KEY_COMPANIONS_JSON, gson.toJson(companions)).apply()
+        }
+    }
+
+    fun pruneCompanionsTo(activeEntityIds: Set<Int>) {
+        val companions = loadCompanionMap().toMutableMap()
+        val changed = companions.keys.retainAll(activeEntityIds)
+        if (changed) {
+            prefs.edit().putString(KEY_COMPANIONS_JSON, gson.toJson(companions)).apply()
+        }
+    }
+
     fun loadCompanionMap(): Map<Int, CompanionDetail> {
         val json = prefs.getString(KEY_COMPANIONS_JSON, null) ?: return emptyMap()
         return try {
