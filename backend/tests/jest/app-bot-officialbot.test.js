@@ -198,6 +198,31 @@ describe('POST /api/app-bot/chat (bound free-bot relay)', () => {
         expect(JSON.stringify(res.body)).not.toContain(PERSONA_FRAGMENT);
     });
 
+    it('Dream Buddy → injects its persona into the existing slot-0 bot', async () => {
+        app.devices[DEVICE_ID].entities[0] = {
+            entityId: 0,
+            isBound: true,
+            botSecret: 'slot0-bot-secret',
+            webhook: { type: 'openclaw', url: 'https://bot.example/hook' },
+        };
+
+        const res = await request(app).post('/api/app-bot/chat').send(validBody({
+            appId: 'dream-buddy',
+            personaId: 'dream-buddy',
+            message: '我夢見一隻會飛的鯨魚',
+        }));
+
+        expect(res.status).toBe(200);
+        expect(dispatchSpy).toHaveBeenCalledTimes(1);
+        const arg = dispatchSpy.mock.calls[0][0];
+        expect(arg.entityId).toBe(0);
+        expect(arg.bot).toBe(app.devices[DEVICE_ID].entities[0]);
+        expect(arg.prePrompt).toContain('夢話夥伴');
+        expect(arg.prePrompt).toContain('半夢半醒');
+        expect(arg.prePrompt).toContain('我夢見一隻會飛的鯨魚');
+        expect(JSON.stringify(res.body)).not.toContain('半夢半醒');
+    });
+
     it('dispatch throws → 503 dispatch_failed, quota NOT incremented', async () => {
         dispatchSpy.mockRejectedValue(new Error('push failed'));
         const res = await request(app).post('/api/app-bot/chat').send(validBody());

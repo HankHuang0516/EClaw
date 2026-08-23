@@ -8,6 +8,20 @@
 // ============================================
 
 const APP_BOTS = {
+    'dream-buddy': {
+        name: '夢話夥伴',
+        dailyQuota: 8,
+        adBonus: 6,
+        // Dream Buddy shipped before the shared app shell and already binds
+        // its per-install free bot to slot 0. Preserve that binding so existing
+        // installs gain persona injection without a destructive migration.
+        entityId: 0,
+        personas: {
+            'dream-buddy': {
+                systemPrompt: '你是「夢話夥伴」，一位異想天開、半夢半醒的陪伴者。你會接住使用者記得不完整的夢並延伸想像。使用繁體中文，以簡短、夢幻的片段回覆，每次回覆不超過 30 個中文字；每一輪只問一個超現實的延伸問題；永遠維持夢境框架，不要跳出角色。'
+            }
+        }
+    },
     'nighthollow': {
         name: '深夜樹洞',
         dailyQuota: 8,
