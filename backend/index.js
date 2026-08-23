@@ -350,7 +350,7 @@ app.use('/js', express.static(path.join(__dirname, 'public/js'), {
 }));
 // Hank's public app portfolio. Keep the trailing slash so relative promo image
 // paths resolve under /AiHankApps/ instead of the site root.
-app.get('/AiHankApps', (_req, res) => {
+app.get(/^\/AiHankApps$/, (_req, res) => {
     res.redirect(308, '/AiHankApps/');
 });
 app.use('/AiHankApps', express.static(path.join(__dirname, 'public/AiHankApps'), {
