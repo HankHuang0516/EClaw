@@ -15,6 +15,7 @@ const userMentionScanner = require('./user-mention-scanner');
 const pushContext = require('./push-context');
 const telemetry = require('./device-telemetry');
 const sitePageviews = require('./site-pageviews');
+const appPortfolioCommunity = require('./app-portfolio-community');
 const feedbackModule = require('./device-feedback');
 const chatIntegrity = require('./chat-integrity');
 const communitySsr = require('./community-ssr');
@@ -248,7 +249,8 @@ const ALLOWED_ORIGINS = [
     'https://eclawbot.com',
     'https://www.eclawbot.com',
     'https://eclaw.up.railway.app',
-    'https://minigame.eclawbot.com'
+    'https://minigame.eclawbot.com',
+    'https://eclw.twopiggyhavefun.chatgpt.site'
 ];
 app.use(cors({
     origin: (origin, cb) => {
@@ -710,12 +712,13 @@ setInterval(() => {
  * @param {object}  a
  * @param {string}  a.deviceId  the requesting bound device (also the bot's device)
  * @param {object}  a.device    devices[deviceId]
- * @param {object}  a.bot       device.entities[1] (bound slot-1 free bot)
+ * @param {number}  a.entityId  app-configured bound free-bot slot
+ * @param {object}  a.bot       device.entities[entityId]
  * @param {string}  a.prePrompt server-built persona pre-prompt wrapping the msg
  * @throws if delivery fails; the caller returns 503 dispatch_failed.
  */
-async function dispatchAppBotMessage({ deviceId, device, bot, prePrompt }) {
-    const eId = 1;
+async function dispatchAppBotMessage({ deviceId, device, entityId, bot, prePrompt }) {
+    const eId = entityId;
 
     // 1) Enqueue into the bot's poll queue (same as client/speak). A bot that
     //    polls /api/client/pending picks the message up here.
@@ -778,13 +781,15 @@ app.post('/api/app-bot/chat', appBotChatRateLimit, async (req, res) => {
     }
     const { app: appCfg, persona } = resolved;
 
-    // The install must have a bound official bot at slot 1 (onboarding step).
-    const bot = device.entities && device.entities[1];
+    // Most app-shell installs use slot 1. Legacy apps may declare a different
+    // existing slot in the server-side registry to avoid a binding migration.
+    const botEntityId = Number.isInteger(appCfg.entityId) ? appCfg.entityId : 1;
+    const bot = device.entities && device.entities[botEntityId];
     if (!bot || !bot.isBound || !bot.webhook) {
         return res.status(409).json({
             success: false,
             error: 'bot_not_bound',
-            hint: 'complete onboarding: agree free-bot TOS + bind-free at entityId 1'
+            hint: `complete onboarding: agree free-bot TOS + bind-free at entityId ${botEntityId}`
         });
     }
 
@@ -805,7 +810,13 @@ app.post('/api/app-bot/chat', appBotChatRateLimit, async (req, res) => {
     // Relay to the slot-1 bound bot via the reused client-speak delivery path.
     // Cloudflare swallows 502, so a dispatch failure surfaces as 503.
     try {
-        await app._dispatchAppBotMessage({ deviceId, device, bot, prePrompt });
+        await app._dispatchAppBotMessage({
+            deviceId,
+            device,
+            entityId: botEntityId,
+            bot,
+            prePrompt,
+        });
     } catch (err) {
         console.error('[AppBot] dispatch error:', err.message);
         return res.status(503).json({ success: false, error: 'dispatch_failed' });
@@ -25776,6 +25787,8 @@ function authenticateDeviceOrBot({ deviceId, deviceSecret, botSecret, entityId }
     }
     return false;
 }
+
+app.use('/api/app-portfolio', appPortfolioCommunity.createRouter(() => chatPool));
 
 /**
  * GET /api/analytics/site-pageviews
