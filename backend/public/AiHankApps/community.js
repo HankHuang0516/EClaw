@@ -202,6 +202,30 @@
     });
   }
 
+  function normalizeStoreControls(card) {
+    const cardText = card.textContent;
+    const readyWords = '正式版|已發布|已可發布';
+    [...card.querySelectorAll('a')].forEach(link => {
+      const text = link.textContent.trim();
+      const platform = text.includes('Google Play') ? 'Google Play' : text.includes('App Store') ? 'App Store' : null;
+      if (!platform) return;
+      const platformStatus = new RegExp(`${platform}\\s*[：:]?[^・\\n]*(${readyWords})`).test(cardText);
+      const linkStatus = new RegExp(readyWords).test(text);
+      if (platformStatus || linkStatus) {
+        link.textContent = platform === 'Google Play' ? '▶ Google Play' : '● App Store';
+        return;
+      }
+      const development = document.createElement('span');
+      development.className = 'store-development';
+      development.textContent = `${platform} 開發中`;
+      link.replaceWith(development);
+    });
+    [...card.querySelectorAll('p, .store-status, .availability, .release-status')].forEach(node => {
+      const text = node.textContent.trim();
+      if (text.includes('Google Play：') || text.includes('App Store：')) node.remove();
+    });
+  }
+
   function reorderCategories() {
     const priority = new Map([['遊戲', 0], ['公益', 1], ['生活', 2]]);
     const headings = [...document.querySelectorAll('h2')];
@@ -227,6 +251,7 @@
     findCards().forEach(({ card, heading, config }) => {
       if (!card || card.dataset.communityReady) return;
       card.dataset.communityReady = 'true';
+      normalizeStoreControls(card);
       addGallery(card, heading, config);
       addCommunity(card, config);
     });

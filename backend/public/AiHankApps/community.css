@@ -63,6 +63,18 @@
   gap: 10px;
 }
 
+.store-development {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 7px 13px;
+  border: 1px dashed rgba(75, 72, 61, .3);
+  border-radius: 10px;
+  color: #888477;
+  background: rgba(239, 236, 224, .55);
+  font-size: 13px;
+}
+
 .like-button,
 .discussion-toggle,
 .comment-submit {
