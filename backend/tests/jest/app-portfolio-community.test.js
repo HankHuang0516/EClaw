@@ -1,4 +1,4 @@
-const community = require('../app-portfolio-community');
+const community = require('../../app-portfolio-community');
 
 describe('app portfolio community validation', () => {
     test('accepts only portfolio app ids', () => {
