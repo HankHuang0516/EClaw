@@ -348,6 +348,22 @@ app.use('/js', express.static(path.join(__dirname, 'public/js'), {
         }
     }
 }));
+// Hank's public app portfolio. Keep the trailing slash so relative promo image
+// paths resolve under /AiHankApps/ instead of the site root.
+app.get('/AiHankApps', (_req, res) => {
+    res.redirect(308, '/AiHankApps/');
+});
+app.use('/AiHankApps', express.static(path.join(__dirname, 'public/AiHankApps'), {
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) {
+            res.set('Cache-Control', 'public, max-age=600, must-revalidate');
+        } else {
+            res.set('Cache-Control', 'public, max-age=604800, immutable');
+        }
+    }
+}));
 // Landing page
 app.get(['/landing', '/landing.html'], (req, res) => {
     res.set('Cache-Control', 'public, max-age=3600');
