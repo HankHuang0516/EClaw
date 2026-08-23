@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>我的APP作品集</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --paper: #f3ede3;
+        --paper-deep: #ede3d4;
+        --ink: #2f2f2f;
+        --ink-soft: #5f5b55;
+        --line: rgba(90, 90, 90, 0.18);
+        --leaf: #58755f;
+        --leaf-soft: #7f9f7b;
+        --line-soft: #d9ccb9;
+        --shadow: 0 16px 40px rgba(44, 40, 35, 0.12);
+        --radius: 18px;
+        --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+        --font-display: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        background: #f9f4ec;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--ink);
+        font-family: var(--font-body);
+        background:
+          radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.6), transparent 45%),
+          repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.2) 0 2px, transparent 2px 6px),
+          linear-gradient(140deg, var(--paper), var(--paper-deep));
+      }
+
+      .grain {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.12;
+        background:
+          radial-gradient(rgba(255, 255, 255, 0.6) 1px, transparent 1px),
+          radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px);
+        background-size: 3px 3px, 5px 5px;
+        mix-blend-mode: soft-light;
+      }
+
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 24px 16px 72px;
+      }
+
+      header {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.72);
+        backdrop-filter: blur(4px);
+        box-shadow: var(--shadow);
+        position: relative;
+        padding: 28px;
+        overflow: hidden;
+      }
+
+      header::before {
+        content: "";
+        position: absolute;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        border: 1px solid rgba(88, 117, 95, 0.28);
+        top: -90px;
+        right: -90px;
+        background: linear-gradient(140deg, rgba(88, 117, 95, 0.16), rgba(255, 255, 255, 0));
+      }
+
+      header::after {
+        content: "";
+        position: absolute;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        border: 1px dashed rgba(88, 117, 95, 0.22);
+        left: -60px;
+        bottom: -90px;
+      }
+
+      .hero {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: clamp(1.8rem, 3.2vw, 2.9rem);
+        letter-spacing: 0.02em;
+      }
+
+      .sub {
+        margin: 2px 0 0;
+        color: var(--ink-soft);
+        font-size: 0.98rem;
+        max-width: 60ch;
+      }
+
+      .note {
+        margin-top: 12px;
+        font-size: 0.86rem;
+        color: #7a6f63;
+        border-left: 3px solid var(--leaf);
+        padding-left: 10px;
+      }
+
+      .chips {
+        margin-top: 14px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .chip {
+        border: 1px solid var(--line);
+        background: #fbf7ee;
+        color: #3d3a35;
+        border-radius: 999px;
+        padding: 8px 14px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: transform 0.2s ease, background 0.2s ease;
+      }
+
+      .chip:hover {
+        transform: translateY(-1px);
+      }
+
+      .chip.active {
+        background: #dce9de;
+        border-color: rgba(88, 117, 95, 0.5);
+      }
+
+      .topline {
+        margin-top: 20px;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+      }
+
+      .topline input {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #fff;
+        padding: 11px 13px;
+        font-size: 0.98rem;
+        color: var(--ink);
+      }
+
+      .topline input::placeholder {
+        color: #a1998d;
+      }
+
+      .sort-control {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #777064;
+        font-size: 0.84rem;
+        white-space: nowrap;
+      }
+
+      .sort-control select {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--ink);
+        padding: 10px 28px 10px 11px;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .stats {
+        margin-top: 16px;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+      }
+
+      .stat {
+        border: 1px solid var(--line);
+        background: #fefcf8;
+        border-radius: 12px;
+        padding: 12px;
+        text-align: center;
+      }
+
+      .stat span {
+        display: block;
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 1.3rem;
+      }
+
+      .grid {
+        margin-top: 18px;
+        display: block;
+      }
+
+      .category-section {
+        margin-top: 28px;
+      }
+
+      .category-section:first-child {
+        margin-top: 0;
+      }
+
+      .category-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+        padding: 0 2px 8px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .category-heading h2 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: 1.25rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+      }
+
+      .category-heading span {
+        color: #887e71;
+        font-size: 0.8rem;
+      }
+
+      .category-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 12px;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 14px;
+        background: rgba(255, 255, 255, 0.83);
+        box-shadow: 0 8px 18px rgba(58, 52, 40, 0.07);
+        position: relative;
+        min-height: 196px;
+      }
+
+      .card::after {
+        content: "";
+        position: absolute;
+        right: 12px;
+        top: 12px;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        border: 1px dashed rgba(88, 117, 95, 0.32);
+      }
+
+      .promo-media {
+        margin: 12px 0 12px;
+        height: 148px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+        background: #eee5d8;
+      }
+
+      .promo-media img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .card-head {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .app-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        display: grid;
+        place-items: center;
+        background: linear-gradient(145deg, #f5efe4, #efdfc8);
+        overflow: hidden;
+        color: #4f4b44;
+        font-size: 0.86rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        flex: 0 0 52px;
+      }
+
+      .app-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      h3 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .meta {
+        margin-top: 2px;
+        color: #777064;
+        font-size: 0.82rem;
+      }
+
+      .desc {
+        margin: 10px 0 12px;
+        color: #4e4a44;
+        line-height: 1.45;
+        font-size: 0.92rem;
+      }
+
+      .store-links {
+        display: grid;
+        gap: 8px;
+        margin-top: 4px;
+      }
+
+      .store-link {
+        width: fit-content;
+        text-decoration: none;
+        color: #2f3830;
+        border: 1px solid #bfc7b8;
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-size: 0.88rem;
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        background: #f9fbf7;
+      }
+
+      .store-link.google {
+        border-color: rgba(88, 117, 95, 0.5);
+      }
+
+      .store-link.apple {
+        border-color: rgba(88, 117, 95, 0.4);
+      }
+
+      .store-link small {
+        font-size: 0.74rem;
+        color: #6f6b64;
+      }
+
+      .status {
+        margin-top: 10px;
+        font-size: 0.8rem;
+        color: #6f6b64;
+      }
+
+      .status.warn {
+        color: #a26c31;
+      }
+
+      .empty {
+        margin-top: 24px;
+        border: 1px dashed var(--line);
+        border-radius: var(--radius);
+        background: #fff9ed;
+        padding: 24px;
+        text-align: center;
+        color: #6f665d;
+      }
+
+      footer {
+        text-align: center;
+        margin-top: 32px;
+        color: #847a70;
+        font-size: 0.88rem;
+      }
+
+      @media (min-width: 900px) {
+        header {
+          padding: 34px;
+        }
+        .hero {
+          grid-template-columns: 1.45fr 1fr;
+          align-items: center;
+        }
+        .stats {
+          margin-left: auto;
+        }
+      }
+
+      @media (max-width: 620px) {
+        .topline {
+          grid-template-columns: 1fr;
+        }
+
+        .sort-control {
+          justify-content: space-between;
+        }
+
+        .sort-control select {
+          flex: 1;
+          max-width: 220px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <main class="wrap">
+      <header>
+        <div class="hero">
+          <section>
+            <h1>我的APP作品集</h1>
+            <div class="chips" id="categoryChips"></div>
+          </section>
+          <section>
+            <section class="stats" id="stats"></section>
+          </section>
+        </div>
+
+        <div class="topline">
+          <input id="searchInput" type="search" placeholder="輸入 app 名稱、分類、或描述關鍵字" aria-label="搜尋 App" />
+          <label class="sort-control" for="sortSelect">
+            排序
+            <select id="sortSelect" aria-label="選擇 App 排序方式">
+              <option value="category">先按 App 類型</option>
+              <option value="name">按 App 名稱</option>
+            </select>
+          </label>
+        </div>
+      </header>
+
+      <section class="grid" id="appGrid" aria-live="polite"></section>
+      <section class="empty" id="emptyState" hidden>沒有符合的 App，試著換個關鍵字吧。</section>
+
+      <footer>更新：2026-08-23</footer>
+    </main>
+
+    <script>
+      const GOOGLE_PLAY_STORE_PREFIX = 'https://play.google.com/store/apps/details?id=';
+      const APP_STORE_PREFIX = 'https://apps.apple.com/app/id';
+
+      const appList = [
+        { name: 'EClawbot', iconText: 'EC', icon: 'https://play-lh.googleusercontent.com/19ahKzTjrkEiBCnAiaNYhN_lm0VnWjCCBjUB_imqbSkkbvSX132lkVZ9bVA3fxwfIWCSK476f6Xt8Qvs4aQLJA=s0', promo: 'promo/eclawbot.jpg', category: '工具', desc: '連接 AI agent 與協作服務的行動工具。', source: 'Android / iOS', googlePackage: 'com.hank.clawlive', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hank.clawlive`, googleStatus: '正式版', iosId: '6762198865', iosUrl: `${APP_STORE_PREFIX}6762198865`, iosStatus: '已可發佈' },
+        { name: '活字戰紀：雙城烽火', iconText: '活字', icon: 'https://play-lh.googleusercontent.com/DtJazCL4QiazSvgV4081ZnByB6gNVAimrGn31UPOTnleGDpJ7ALOSDfii-PXjr-SDtSxBLeJnsOY-hmr_226cA=s0', promo: 'promo/typeforge.jpg', aliases: 'Typeforge: Twin Cities', category: '遊戲', desc: '以文字與城市為核心的策略冒險作品。', source: 'Android / iOS', googlePackage: 'com.hankhuang.wordcivilization', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hankhuang.wordcivilization`, googleStatus: '正式版', iosId: '6792162295', iosUrl: `${APP_STORE_PREFIX}6792162295`, iosStatus: '已可發佈' },
+        { name: 'Weesh', iconText: 'WE', icon: 'https://play-lh.googleusercontent.com/zrDZEH8l5npjJdV37cvlbLNEifq6R49LRPM5CWLt_zzeK0pheBVHkRMyAZ-0byCUwTJXRzATPltGzMTFNE4lYA=s0', promo: 'promo/weesh.jpg', aliases: 'WeeshGifts', category: '社交', desc: '把心意整理成輕巧、好分享的禮物體驗。', source: 'Android / iOS', googlePackage: 'com.hank_huang0516.snack425e646aa6a74ad8a964aadeb4741fc1', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hank_huang0516.snack425e646aa6a74ad8a964aadeb4741fc1`, googleStatus: '正式版', iosId: '6468950847', iosUrl: `${APP_STORE_PREFIX}6468950847`, iosStatus: '已可發佈' },
+        { name: '世界末日了沒', iconText: '世末', icon: 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/9b/a6/ee/9ba6ee46-d71b-bdbf-6eb1-34288e0161d8/AppIcon-0-0-1x_U007epad-0-1-85-220.png/512x512bb.jpg', promo: 'promo/doomsday.jpg', category: '遊戲', desc: '面對未知日常的生存倒數與選擇。', source: 'Android / iOS', googlePackage: 'com.hankhuang.doomsday', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hankhuang.doomsday`, googleStatus: '草稿・內部測試', iosId: '6795006218', iosUrl: `${APP_STORE_PREFIX}6795006218`, iosStatus: '等待審查' },
+        { name: '夢話夥伴', iconText: '夢話', icon: 'https://play-lh.googleusercontent.com/uIIqGzRT6gmM6K1xS_Rc8g1VWOPgPWsnxVbh0hK1HvU1rbj8RnwevJ7T3vBtjRG5xKhuMCoeAopm0TsYE1jGSA=s0', promo: 'promo/dreambuddy.jpg', aliases: '陪你入眠的 AI 夥伴', category: 'AI', desc: '在夜裡陪你說話、整理心情的 AI 夥伴。', source: 'Android', googlePackage: 'com.hankhuang.dreambuddy', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hankhuang.dreambuddy`, googleStatus: '正式版', iosStatus: 'iOS 尚未建立' },
+        { name: '房東投報快算', iconText: '房東', icon: 'https://play-lh.googleusercontent.com/_VHMIDHTOVJsemsyO4-0Mw1MnYvlc4eWupMFjWi0LogzI8OwcE7fmQICq9OFT3V3q57ff0aVfrE8lCEyBUkJ_Q=s0', promo: 'promo/property.jpg', category: '金融', desc: '快速估算租賃物件的投報與現金流。', source: 'Android', googlePackage: 'com.hank_huang0516_2.PropertyInvestmentCalculator', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hank_huang0516_2.PropertyInvestmentCalculator`, googleStatus: '正式版', iosStatus: 'iOS 尚未建立' },
+        { name: '活字戰記：巔峰之戰', iconText: '巔峰', category: '遊戲', desc: '活字世界的進階戰場與巔峰挑戰。', source: 'Android', googlePackage: 'com.hankhuang.wordcivilization.summitbattle', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hankhuang.wordcivilization.summitbattle`, googleStatus: '草稿・內部測試', iosStatus: 'iOS 尚未建立' },
+        { name: '浪浪地圖', iconText: '浪浪', icon: 'https://play-lh.googleusercontent.com/YmqbLcgXj4RwHXHUg4ptIv3dlTwB8EAOC_-qRmgOOrgdSS8divnRRNUiQYJIiUbQAqLqY4vSrEr-BTgPyX1y=s0', promo: 'promo/straymap.jpg', aliases: 'Stray Map', category: '公益', desc: '把街頭動物與友善地點放進同一張地圖。', source: 'Android / iOS', googlePackage: 'app.straymap.mobile', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}app.straymap.mobile`, googleStatus: '正式版', iosId: '6802017209', iosUrl: `${APP_STORE_PREFIX}6802017209`, iosStatus: '等待審查' },
+        { name: '睡公園：免費生存地圖', iconText: '睡公', icon: 'https://play-lh.googleusercontent.com/DQGRcX2aZ_YYFUSPEHZtUzvfnh2ddjVjqmq5I2TU1tgXVvefkpSyff7_FlRduiZVW_7U-Rlyzcpg6SIfQLmPcY0=s0', promo: 'promo/sleeppark.jpg', category: '生活', desc: '為需要休息的人整理可使用的城市空間。', source: 'Android / iOS', googlePackage: 'com.hankhuang.sleeppark', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hankhuang.sleeppark`, googleStatus: '正式版', iosId: '6792406616', iosUrl: `${APP_STORE_PREFIX}6792406616`, iosStatus: '等待審查' },
+        { name: '這樣出門', iconText: '這樣', icon: 'https://play-lh.googleusercontent.com/39Z0aRQXIDURF9EV6wqmAuAA-wtaH7gXYRTzyHZ2jMirdC5In3fCf9mxY35QZNiNMt1z9Q5EZoznhbf2Ms71yw=s0', promo: 'promo/chumen.jpg', category: '生活', desc: '出門前，把物品、路線與心情準備好。', source: 'Android / iOS', googlePackage: 'com.hankhuang.chumen', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hankhuang.chumen`, googleStatus: '正式版', iosId: '6795006771', iosUrl: `${APP_STORE_PREFIX}6795006771`, iosStatus: '等待審查' },
+        { name: '遺名之歌', iconText: '遺名', category: '內容', desc: '寫給記憶、名字與那些不該被遺忘的故事。', source: 'Android / iOS', googlePackage: 'com.twopigs.echoesofnames', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.twopigs.echoesofnames`, googleStatus: '草稿・內部測試', iosId: '6794847015', iosUrl: `${APP_STORE_PREFIX}6794847015`, iosStatus: '等待開發者發佈' },
+      ];
+
+      const grid = document.getElementById('appGrid');
+      const emptyState = document.getElementById('emptyState');
+      const chips = document.getElementById('categoryChips');
+      const searchInput = document.getElementById('searchInput');
+      const sortSelect = document.getElementById('sortSelect');
+      const stats = document.getElementById('stats');
+
+      const categories = ['全部', ...new Set(appList.map((app) => app.category))];
+      let activeCategory = '全部';
+
+      function renderChips() {
+        chips.innerHTML = '';
+        categories.forEach((cat) => {
+          const btn = document.createElement('button');
+          btn.className = `chip ${cat === activeCategory ? 'active' : ''}`;
+          btn.textContent = cat;
+          btn.addEventListener('click', () => {
+            activeCategory = cat;
+            renderChips();
+            renderGrid();
+          });
+          chips.appendChild(btn);
+        });
+      }
+
+      function renderStats(visibleCount) {
+        const total = appList.length;
+        const catCount = categories.length - 1;
+        stats.innerHTML = `
+          <div class="stat"><span>${total}</span><small>作品總數</small></div>
+          <div class="stat"><span>${catCount}</span><small>主題分類</small></div>
+          <div class="stat"><span>${visibleCount}</span><small>目前顯示</small></div>
+        `;
+      }
+
+      function fallbackIcon(text) {
+        const span = document.createElement('span');
+        span.className = 'app-icon';
+        span.textContent = text.slice(0, 2).toUpperCase();
+        return span;
+      }
+
+      function createStoreLink(url, platform, status) {
+        const anchor = document.createElement(url ? 'a' : 'span');
+        anchor.className = `store-link ${platform}${url ? '' : ' unavailable'}`;
+        if (url) {
+          anchor.href = url;
+          anchor.target = '_blank';
+          anchor.rel = 'noreferrer';
+        }
+
+        if (platform === 'google') {
+          anchor.innerHTML = `▶ Google Play <small>${status}</small>`;
+        } else {
+          anchor.innerHTML = ` App Store <small>${status}</small>`;
+        }
+
+        return anchor;
+      }
+
+      function createIcon(app) {
+        const iconWrap = document.createElement('span');
+        iconWrap.className = 'app-icon';
+
+        if (!app.icon) {
+          iconWrap.textContent = app.name.slice(0, 2);
+          return iconWrap;
+        }
+
+        const img = document.createElement('img');
+        img.src = app.icon;
+        img.loading = 'lazy';
+        img.alt = `${app.name} icon`;
+        img.addEventListener('error', () => {
+          iconWrap.textContent = app.iconText || app.name.slice(0, 2);
+        });
+        iconWrap.appendChild(img);
+
+        return iconWrap;
+      }
+
+      function createIcon(app) {
+        const iconWrap = document.createElement('span');
+        iconWrap.className = 'app-icon';
+        iconWrap.setAttribute('aria-label', `${app.name} 文字圖示`);
+
+        if (!app.icon) {
+          iconWrap.textContent = app.iconText || app.name.slice(0, 2);
+          return iconWrap;
+        }
+
+        const img = document.createElement('img');
+        img.src = app.icon;
+        img.loading = 'lazy';
+        img.alt = `${app.name} icon`;
+        img.addEventListener('error', () => {
+          iconWrap.textContent = app.iconText || app.name.slice(0, 2);
+        });
+        iconWrap.appendChild(img);
+
+        return iconWrap;
+      }
+
+    function createPromo(app) {
+      if (!app.promo) return null;
+      const media = document.createElement('figure');
+      media.className = 'promo-media';
+      const img = document.createElement('img');
+      img.src = app.promo;
+      img.alt = `${app.name} 商店宣傳圖`;
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.addEventListener('error', () => media.remove());
+      media.appendChild(img);
+      return media;
+    }
+
+    function createCard(app) {
+        const card = document.createElement('article');
+        card.className = 'card';
+
+        const head = document.createElement('div');
+        head.className = 'card-head';
+
+        const icon = createIcon(app);
+        const textWrap = document.createElement('div');
+        const title = document.createElement('h3');
+        title.textContent = app.name;
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.textContent = `${app.category} ・ ${app.source}`;
+
+        textWrap.appendChild(title);
+        textWrap.appendChild(meta);
+        head.appendChild(icon);
+        head.appendChild(textWrap);
+
+        const desc = document.createElement('p');
+        desc.className = 'desc';
+        desc.textContent = app.desc;
+
+        const storeLinks = document.createElement('div');
+        storeLinks.className = 'store-links';
+        storeLinks.appendChild(createStoreLink(app.googleUrl, 'google', app.googleStatus));
+        storeLinks.appendChild(createStoreLink(app.iosUrl, 'apple', app.iosStatus));
+
+        const status = document.createElement('div');
+        status.className = 'status';
+        status.classList.toggle('warn', `${app.googleStatus} ${app.iosStatus}`.includes('草稿') || `${app.googleStatus} ${app.iosStatus}`.includes('等待') || `${app.googleStatus} ${app.iosStatus}`.includes('尚未'));
+        status.textContent = `Google Play：${app.googleStatus} ・ App Store：${app.iosStatus}`;
+
+      card.appendChild(head);
+      const promo = createPromo(app);
+      if (promo) {
+        card.appendChild(promo);
+      }
+      card.appendChild(desc);
+        card.appendChild(storeLinks);
+        card.appendChild(status);
+
+        return card;
+      }
+
+      function renderGrid() {
+        const q = searchInput.value.trim().toLowerCase();
+        const filtered = appList.filter((app) => {
+          const target = `${app.name} ${app.aliases || ''} ${app.googlePackage || ''} ${app.desc} ${app.category}`.toLowerCase();
+          const hitCat = activeCategory === '全部' || app.category === activeCategory;
+          return hitCat && target.includes(q);
+        });
+
+        filtered.sort((a, b) => {
+          if (sortSelect.value === 'name') {
+            return a.name.localeCompare(b.name, 'zh-Hant');
+          }
+          return a.category.localeCompare(b.category, 'zh-Hant') || a.name.localeCompare(b.name, 'zh-Hant');
+        });
+
+        grid.innerHTML = '';
+        renderStats(filtered.length);
+
+        if (!filtered.length) {
+          emptyState.hidden = false;
+          return;
+        }
+        emptyState.hidden = true;
+
+      const grouped = new Map();
+      filtered.forEach((app) => {
+        if (!grouped.has(app.category)) grouped.set(app.category, []);
+        grouped.get(app.category).push(app);
+      });
+
+      grouped.forEach((apps, category) => {
+        const section = document.createElement('section');
+        section.className = 'category-section';
+
+        const heading = document.createElement('div');
+        heading.className = 'category-heading';
+
+        const title = document.createElement('h2');
+        title.textContent = category;
+
+        const count = document.createElement('span');
+        count.textContent = `${apps.length} 個作品`;
+
+        heading.appendChild(title);
+        heading.appendChild(count);
+
+        const categoryGrid = document.createElement('div');
+        categoryGrid.className = 'category-grid';
+        apps.forEach((app) => categoryGrid.appendChild(createCard(app)));
+
+        section.appendChild(heading);
+        section.appendChild(categoryGrid);
+        grid.appendChild(section);
+      });
+      }
+
+      searchInput.addEventListener('input', renderGrid);
+      sortSelect.addEventListener('change', renderGrid);
+
+      renderChips();
+      renderGrid();
+    </script>
+  </body>
+</html>
