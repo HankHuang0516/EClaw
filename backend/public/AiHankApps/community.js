@@ -202,10 +202,56 @@
     });
   }
 
+  function normalizeStoreControls(card) {
+    const cardText = card.textContent;
+    const readyWords = '正式版|已發布|已可發布';
+    [...card.querySelectorAll('a')].forEach(link => {
+      const text = link.textContent.trim();
+      const platform = text.includes('Google Play') ? 'Google Play' : text.includes('App Store') ? 'App Store' : null;
+      if (!platform) return;
+      const platformStatus = new RegExp(`${platform}\\s*[：:]?[^・\\n]*(${readyWords})`).test(cardText);
+      const linkStatus = new RegExp(readyWords).test(text);
+      if (platformStatus || linkStatus) {
+        link.textContent = platform === 'Google Play' ? '▶ Google Play' : '● App Store';
+        return;
+      }
+      const development = document.createElement('span');
+      development.className = 'store-development';
+      development.textContent = `${platform} 開發中`;
+      link.replaceWith(development);
+    });
+    [...card.querySelectorAll('p, .store-status, .availability, .release-status')].forEach(node => {
+      const text = node.textContent.trim();
+      if (text.includes('Google Play：') || text.includes('App Store：')) node.remove();
+    });
+  }
+
+  function reorderCategories() {
+    const priority = new Map([['遊戲', 0], ['公益', 1], ['生活', 2]]);
+    const headings = [...document.querySelectorAll('h2')];
+    const sections = headings.map(heading => ({
+      heading,
+      section: heading.closest('.category-section, section')
+    })).filter(item => item.section);
+    if (!sections.length) return;
+    const parent = sections[0].section.parentElement;
+    if (!parent || sections.some(item => item.section.parentElement !== parent)) return;
+    sections.sort((a, b) => {
+      const rank = item => {
+        const name = [...priority.keys()].find(key => item.heading.textContent.trim().startsWith(key));
+        return name ? priority.get(name) : Number.MAX_SAFE_INTEGER;
+      };
+      return rank(a) - rank(b);
+    });
+    sections.forEach(item => parent.appendChild(item.section));
+  }
+
   function enhance() {
+    reorderCategories();
     findCards().forEach(({ card, heading, config }) => {
       if (!card || card.dataset.communityReady) return;
       card.dataset.communityReady = 'true';
+      normalizeStoreControls(card);
       addGallery(card, heading, config);
       addCommunity(card, config);
     });
