@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Google Play">
+  <path fill="#00d7ff" d="M80 50 280 256 80 462c-12-9-18-22-18-39V89c0-17 6-30 18-39Z"/>
+  <path fill="#00f076" d="m80 50 250 140-50 66Z"/>
+  <path fill="#ffdb3b" d="m280 256 50 66L80 462Z"/>
+  <path fill="#ff3b48" d="m330 190 103 58c13 7 13 9 0 16l-103 58-50-66Z"/>
+</svg>
