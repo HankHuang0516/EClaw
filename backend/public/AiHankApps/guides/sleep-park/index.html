@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10271b">
+  <meta name="description" content="睡公園 App 完整使用指南：找公園、飲水機、公廁、免費 Wi-Fi 與圖書館。">
+  <title>睡公園｜完整使用指南</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #10271b;
+      --paper: #f1ead8;
+      --leaf: #72d58f;
+      --leaf-dark: #194d31;
+      --sun: #f2c866;
+      --coffee: #8a542d;
+      --mist: #cce0d2;
+      --line: rgba(16, 39, 27, .2);
+      --shadow: 0 22px 60px rgba(16, 39, 27, .16);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 8%, rgba(114, 213, 143, .28), transparent 26rem),
+        radial-gradient(circle at 90% 26%, rgba(242, 200, 102, .25), transparent 30rem),
+        var(--paper);
+      font-family: "Noto Serif TC", serif;
+      line-height: 1.75;
+    }
+
+    a { color: inherit; }
+    img { max-width: 100%; display: block; }
+    button, select { font: inherit; }
+
+    .grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .13;
+      z-index: 50;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");
+    }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 12px clamp(18px, 5vw, 72px);
+      color: #eff8ef;
+      background: rgba(16, 39, 27, .94);
+      border-bottom: 1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(15px);
+    }
+
+    .brand { font-weight: 900; letter-spacing: .08em; white-space: nowrap; }
+    .brand span { color: var(--leaf); }
+    .nav-links { display: flex; gap: 18px; font-size: 13px; }
+    .nav-links a { text-decoration: none; opacity: .78; }
+    .nav-links a:hover { opacity: 1; color: var(--sun); }
+
+    .hero {
+      min-height: 86vh;
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(300px, .72fr);
+      align-items: center;
+      gap: clamp(30px, 7vw, 110px);
+      padding: clamp(60px, 9vw, 130px) clamp(20px, 7vw, 110px);
+      overflow: hidden;
+    }
+
+    .eyebrow, .step-no, .mini-label {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow { color: var(--leaf-dark); }
+    h1 {
+      max-width: 760px;
+      margin: 18px 0 24px;
+      font-size: clamp(48px, 8.5vw, 128px);
+      line-height: .95;
+      letter-spacing: -.06em;
+    }
+    h1 em { color: var(--leaf-dark); font-style: normal; }
+    .hero-copy { max-width: 650px; font-size: clamp(17px, 2vw, 22px); }
+    .hero-copy strong { background: linear-gradient(transparent 55%, rgba(242,200,102,.65) 55%); }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 19px;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 700;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .cta.primary { color: white; background: var(--ink); }
+    .cta:hover { transform: translateY(-3px); box-shadow: 0 8px 0 rgba(16,39,27,.13); }
+
+    .phone-stage { position: relative; display: grid; place-items: center; }
+    .phone-stage::before {
+      content: "";
+      position: absolute;
+      width: min(44vw, 470px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: var(--sun);
+      transform: rotate(-8deg);
+      box-shadow: 30px 24px 0 var(--leaf);
+    }
+    .phone {
+      position: relative;
+      width: min(72vw, 310px);
+      padding: 9px;
+      border: 3px solid var(--ink);
+      border-radius: 38px;
+      background: var(--ink);
+      box-shadow: var(--shadow);
+      transform: rotate(3deg);
+      animation: rise .8s cubic-bezier(.2,.8,.2,1) both;
+    }
+    .phone img { border-radius: 29px; aspect-ratio: 1284/2778; object-fit: cover; }
+    @keyframes rise { from { opacity: 0; transform: translateY(50px) rotate(8deg); } }
+
+    .ticker {
+      overflow: hidden;
+      padding: 12px 0;
+      color: white;
+      background: var(--leaf-dark);
+      border-block: 1px solid var(--ink);
+      font-family: "IBM Plex Mono", monospace;
+      white-space: nowrap;
+    }
+    .ticker div { display: inline-block; min-width: 100%; animation: marquee 24s linear infinite; }
+    @keyframes marquee { to { transform: translateX(-100%); } }
+
+    .section { padding: clamp(70px, 10vw, 140px) clamp(20px, 7vw, 110px); }
+    .section-head { display: grid; grid-template-columns: .75fr 1.25fr; gap: 30px; margin-bottom: 54px; }
+    .section h2 { margin: 0; font-size: clamp(38px, 6vw, 76px); line-height: 1.08; letter-spacing: -.045em; }
+    .section-intro { max-width: 700px; margin: 0; font-size: 18px; }
+
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .step {
+      min-height: 270px;
+      padding: 26px;
+      border: 1px solid var(--ink);
+      background: rgba(255,255,255,.32);
+      box-shadow: 8px 8px 0 var(--ink);
+    }
+    .step:nth-child(2) { background: var(--mist); transform: translateY(20px); }
+    .step:nth-child(3) { background: var(--sun); }
+    .step h3 { margin: 44px 0 10px; font-size: 25px; }
+
+    .features { background: var(--ink); color: #f4f0e4; }
+    .feature-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .feature-card {
+      min-height: 230px;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 22px;
+      background: linear-gradient(145deg, rgba(255,255,255,.08), transparent);
+    }
+    .feature-card .icon { font-size: 42px; }
+    .feature-card h3 { margin: 30px 0 8px; color: var(--leaf); }
+    .feature-card p { margin: 0; font-size: 14px; opacity: .76; }
+
+    .walkthrough { display: grid; gap: 80px; }
+    .walk-row { display: grid; grid-template-columns: minmax(260px,.8fr) 1.2fr; gap: clamp(30px, 8vw, 120px); align-items: center; }
+    .walk-row:nth-child(even) .screen { order: 2; }
+    .screen {
+      width: min(100%, 360px);
+      justify-self: center;
+      padding: 8px;
+      border-radius: 35px;
+      background: var(--ink);
+      box-shadow: var(--shadow);
+    }
+    .screen img { border-radius: 27px; }
+    .walk-copy h3 { margin: 8px 0 14px; font-size: clamp(30px, 4vw, 54px); line-height: 1.12; }
+    .walk-copy ol { padding-left: 1.3em; }
+    .walk-copy li { margin: 9px 0; }
+
+    .market-band {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 26px;
+      padding: clamp(34px, 6vw, 72px);
+      background: var(--sun);
+      border-block: 2px solid var(--ink);
+    }
+    .market-band h2 { margin: 0; font-size: clamp(36px, 6vw, 76px); line-height: 1; }
+    .markets { display: flex; flex-wrap: wrap; align-content: center; gap: 9px; }
+    .market-chip { padding: 7px 13px; border: 1px solid var(--ink); border-radius: 999px; background: rgba(255,255,255,.35); }
+
+    .language-demo { display: grid; grid-template-columns: .85fr 1.15fr; gap: 40px; align-items: start; }
+    .setting-box {
+      position: sticky;
+      top: 90px;
+      padding: 30px;
+      color: white;
+      background: var(--leaf-dark);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+    }
+    .setting-box label { display: block; margin-bottom: 10px; font-weight: 700; }
+    .setting-box select { width: 100%; padding: 13px; border: 0; border-radius: 14px; background: white; color: var(--ink); }
+    .lang-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .lang-item { padding: 18px; border-bottom: 1px solid var(--line); }
+    .lang-item b { display: block; font-size: 20px; }
+    .lang-item span { font-family: "IBM Plex Mono", monospace; font-size: 12px; opacity: .6; }
+
+    .privacy-grid, .faq-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+    .note, details {
+      padding: 24px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.38);
+    }
+    .note h3 { margin-top: 0; }
+    details summary { cursor: pointer; font-weight: 900; }
+    details p { margin-bottom: 0; }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 35px clamp(20px, 7vw, 110px);
+      color: rgba(255,255,255,.72);
+      background: var(--ink);
+      font-size: 13px;
+    }
+
+    .reveal { animation: reveal linear both; animation-timeline: view(); animation-range: entry 5% cover 28%; }
+    @keyframes reveal { from { opacity: 0; transform: translateY(28px); } }
+
+    @media (max-width: 920px) {
+      .hero, .section-head, .market-band, .language-demo { grid-template-columns: 1fr; }
+      .hero { padding-top: 70px; }
+      .phone-stage { margin-top: 25px; }
+      .steps { grid-template-columns: 1fr; }
+      .step:nth-child(2) { transform: none; }
+      .feature-grid { grid-template-columns: repeat(2, 1fr); }
+      .walk-row { grid-template-columns: 1fr; }
+      .walk-row:nth-child(even) .screen { order: initial; }
+      .setting-box { position: static; }
+    }
+
+    @media (max-width: 620px) {
+      .nav-links { display: none; }
+      .feature-grid, .lang-list, .privacy-grid, .faq-grid { grid-template-columns: 1fr; }
+      .feature-card { min-height: 185px; }
+      .hero { min-height: auto; }
+      footer { flex-direction: column; }
+    }
+  </style>
+  <link rel="stylesheet" href="https://eclawbot.com/AiHankApps/guide-store-bar.css">
+  <script defer src="https://eclawbot.com/AiHankApps/guide-store-bar.js" data-portfolio-download-bar data-app="睡公園：免費生存地圖" data-google="https://play.google.com/store/apps/details?id=com.hankhuang.sleeppark" data-apple="https://apps.apple.com/app/id6792406616"></script>
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+
+  <nav class="nav" aria-label="主要導覽">
+    <div class="brand">📦 <span>睡公園</span> 使用指南</div>
+    <div class="nav-links">
+      <a href="#start">快速開始</a>
+      <a href="#features">找什麼</a>
+      <a href="#language">語言</a>
+      <a href="#faq">常見問題</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <div class="eyebrow">Sleep Park · Complete Field Manual</div>
+      <h1>城市很貴，<br><em>公園免費。</em></h1>
+      <p class="hero-copy">「睡公園」是一張全球可用的免費生存地圖。它會利用你的目前位置，找出附近的<strong>公園、飲水機、公廁、免費 Wi-Fi 與圖書館</strong>。</p>
+      <div class="actions">
+        <a class="cta primary" href="#start">三步開始使用 ↓</a>
+        <a class="cta" href="#privacy">了解位置與資料</a>
+      </div>
+    </div>
+    <div class="phone-stage" aria-label="睡公園 App 畫面">
+      <div class="phone">
+        <img src="assets/01-nearby-parks.png" alt="睡公園地圖首頁，顯示附近公園與設施">
+      </div>
+    </div>
+  </header>
+
+  <div class="ticker" aria-hidden="true"><div>🌳 公園　·　🚰 飲水機　·　🚻 公廁　·　📶 免費 Wi-Fi　·　📚 圖書館　·　🌏 全球 OpenStreetMap 資料　·　📍 依裝置位置搜尋　·　</div></div>
+
+  <main>
+    <section class="section" id="start">
+      <div class="section-head reveal">
+        <h2>第一次使用，<br>只要三步。</h2>
+        <p class="section-intro">不需要註冊帳號，也不用先建立個人資料。開啟 App、允許定位、選好想找的設施，就能開始。</p>
+      </div>
+      <div class="steps">
+        <article class="step reveal">
+          <div class="step-no">Step 01 / 定位</div>
+          <h3>允許使用目前位置</h3>
+          <p>首次開啟時，系統會詢問位置權限。允許後，藍色圓點會標出你的所在位置。</p>
+        </article>
+        <article class="step reveal">
+          <div class="step-no">Step 02 / 篩選</div>
+          <h3>選擇要找的設施</h3>
+          <p>點選上方圓角標籤。亮綠色代表已選取；可同時搜尋多種設施。</p>
+        </article>
+        <article class="step reveal">
+          <div class="step-no">Step 03 / 搜尋</div>
+          <h3>按下「搜尋這區」</h3>
+          <p>App 會依目前地圖範圍搜尋，並以圖示標出所有找到的地點。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section features" id="features">
+      <div class="section-head reveal">
+        <h2>你可以找什麼？</h2>
+        <p class="section-intro">所有地點資料來自 OpenStreetMap 社群。資料完整度會因城市而異，你也可以拖動地圖探索其他國家。</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card reveal"><div class="icon">🌳</div><h3>公園</h3><p>尋找附近綠地、散步空間與可以喘口氣的地方。</p></article>
+        <article class="feature-card reveal"><div class="icon">🚰</div><h3>飲水機</h3><p>找到標記為可飲用水的公共補水地點。</p></article>
+        <article class="feature-card reveal"><div class="icon">🚻</div><h3>公廁</h3><p>快速查看附近公共廁所，點擊圖示可看名稱。</p></article>
+        <article class="feature-card reveal"><div class="icon">📶</div><h3>免費 Wi-Fi</h3><p>搜尋 OpenStreetMap 上標記提供無線網路的地點。</p></article>
+        <article class="feature-card reveal"><div class="icon">📚</div><h3>圖書館</h3><p>找一個能閱讀、休息，通常也有冷氣的室內空間。</p></article>
+      </div>
+    </section>
+
+    <section class="section walkthrough">
+      <article class="walk-row reveal">
+        <div class="screen"><img src="assets/02-public-resources.png" alt="公共資源篩選畫面"></div>
+        <div class="walk-copy">
+          <div class="mini-label">01 · 設施篩選</div>
+          <h3>亮綠色，代表正在找。</h3>
+          <ol>
+            <li>點一次設施標籤即可選取。</li>
+            <li>再點一次可以取消。</li>
+            <li>至少保留一種設施，才能開始搜尋。</li>
+            <li>圖示旁的數字代表這次找到的數量。</li>
+          </ol>
+        </div>
+      </article>
+
+      <article class="walk-row reveal">
+        <div class="screen"><img src="assets/03-search-this-area.png" alt="拖動地圖後搜尋這區"></div>
+        <div class="walk-copy">
+          <div class="mini-label">02 · 探索其他區域</div>
+          <h3>拖到哪裡，就搜尋哪裡。</h3>
+          <ol>
+            <li>用手指拖動地圖到想查看的城市或街區。</li>
+            <li>使用右下角的 ＋／－ 調整範圍。</li>
+            <li>按「搜尋這區」，結果會依新地圖中心更新。</li>
+            <li>想回到自己身邊時，按「我的位置」。</li>
+          </ol>
+        </div>
+      </article>
+
+    </section>
+
+    <section class="market-band reveal" aria-labelledby="market-title">
+      <div>
+        <div class="mini-label">Local Market Mood</div>
+        <h2 id="market-title">股市笑話，<br>也會入境隨俗。</h2>
+      </div>
+      <div>
+        <p>App 會依裝置地區顯示當地代表性股票指數。這只是首頁氣氛資訊，不是投資建議；取得失敗時會自動隱藏，不影響地圖。</p>
+        <div class="markets">
+          <span class="market-chip">🇹🇼 TAIEX</span><span class="market-chip">🇯🇵 Nikkei 225</span><span class="market-chip">🇰🇷 KOSPI</span><span class="market-chip">🇹🇭 SET</span><span class="market-chip">🇻🇳 VN-Index</span><span class="market-chip">🇮🇩 IDX</span><span class="market-chip">🇨🇳 SSE</span><span class="market-chip">🇺🇸 S&amp;P 500</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="language">
+      <div class="section-head reveal">
+        <h2>跟隨裝置，<br>也能自己選。</h2>
+        <p class="section-intro">預設選擇「自動（跟隨裝置）」。如果想固定使用另一種語言，可在 App 上方設定區的下拉選單調整；選擇會保存在這台裝置。</p>
+      </div>
+      <div class="language-demo reveal">
+        <div class="setting-box">
+          <label for="demo-language">⚙️ 語言示意選單</label>
+          <select id="demo-language">
+            <option>自動（跟隨裝置）</option><option>繁體中文</option><option>简体中文</option><option>English</option><option>日本語</option><option>한국어</option><option>ไทย</option><option>Tiếng Việt</option><option>Bahasa Indonesia</option>
+          </select>
+          <p>切換後，按鈕、狀態訊息、地圖彈窗與股市幽默句會立即更新。</p>
+        </div>
+        <div class="lang-list">
+          <div class="lang-item"><b>繁體中文</b><span>zh-TW</span></div>
+          <div class="lang-item"><b>简体中文</b><span>zh-CN</span></div>
+          <div class="lang-item"><b>English</b><span>en</span></div>
+          <div class="lang-item"><b>日本語</b><span>ja</span></div>
+          <div class="lang-item"><b>한국어</b><span>ko</span></div>
+          <div class="lang-item"><b>ไทย</b><span>th</span></div>
+          <div class="lang-item"><b>Tiếng Việt</b><span>vi</span></div>
+          <div class="lang-item"><b>Bahasa Indonesia</b><span>id</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="privacy">
+      <div class="section-head reveal">
+        <h2>位置、資料<br>與使用界線。</h2>
+        <p class="section-intro">睡公園不需要帳號。位置用於把地圖移到你身邊並搜尋附近設施；如果拒絕定位，仍可手動拖動地圖搜尋其他區域。</p>
+      </div>
+      <div class="privacy-grid">
+        <article class="note reveal"><h3>📍 位置權限</h3><p>只有在 App 使用期間取得目前位置。藍色定位點與精度範圍只用於地圖操作。</p></article>
+        <article class="note reveal"><h3>🗺️ 地圖資料</h3><p>公園與公共設施來自 OpenStreetMap。缺漏或錯誤可能源自社群資料尚未更新。</p></article>
+        <article class="note reveal"><h3>📢 廣告</h3><p>底部可能顯示 Google AdMob 橫幅廣告。廣告不會遮住主要搜尋功能。</p></article>
+        <article class="note reveal"><h3>⚠️ 現場為準</h3><p>App 不保證地點開放、安全、免費或適合過夜。請遵守當地法律、管理規則與現場公告。</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="faq">
+      <div class="section-head reveal"><h2>常見問題。</h2><p class="section-intro">找不到地點、定位不動或付款中斷時，可以先從這裡排除。</p></div>
+      <div class="faq-grid">
+        <details class="reveal"><summary>為什麼附近沒有搜尋結果？</summary><p>確認至少選了一種設施，稍微放大地圖後再搜尋。部分城市的 OpenStreetMap 公共設施資料較少。</p></details>
+        <details class="reveal"><summary>定位失敗怎麼辦？</summary><p>到手機系統設定，確認已允許睡公園在使用 App 期間存取位置。室內定位較不準時，可到戶外再試。</p></details>
+        <details class="reveal"><summary>可以查看其他國家嗎？</summary><p>可以。直接拖動地圖到其他國家或城市，再按「搜尋這區」。設施 API 沒有限定台灣。</p></details>
+        <details class="reveal"><summary>股市數字為什麼沒出現？</summary><p>可能是休市、網路中斷或行情服務暫時不可用。股市列會隱藏，但地圖仍可正常使用。</p></details>
+        <details class="reveal"><summary>拒絕定位後還能使用嗎？</summary><p>可以。拖動地圖到想找的區域，再按「搜尋這區」即可；只是無法顯示你的藍色定位點。</p></details>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div>📦 睡公園 · 免費生存地圖</div>
+    <div>地圖資料 © OpenStreetMap contributors · 投資一定有風險，睡公園沒有。</div>
+  </footer>
+</body>
+</html>
