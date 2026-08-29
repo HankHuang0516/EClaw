@@ -15,3 +15,14 @@ Every APP listed in the portfolio must receive a dedicated introduction site.
 - Root-relative `/assets/...` URLs are prohibited because they resolve against `https://eclawbot.com/assets/` instead of the introduction-site directory.
 - Run `node scripts/check-ai-hank-intro-sites.mjs` before publishing.
 - After production deployment, verify the page and every referenced local asset return HTTP 200.
+
+
+## Persistent header: three required elements
+
+Every APP introduction or strategy page must keep a polished header visible at the top. It is incomplete unless all three elements are present together:
+
+1. The APP title.
+2. Quick navigation links to the page's main sections.
+3. Google Play and App Store download actions.
+
+A published or release-ready platform must link to its real store page. A platform still in development must show a disabled development state and must not use a fake store link.

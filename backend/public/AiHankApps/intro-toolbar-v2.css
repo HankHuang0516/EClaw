@@ -24,8 +24,10 @@
 .portfolio-intro-toolbar__nav a:hover { color: #1d3c2c; background: rgba(64, 101, 78, .1); }
 .portfolio-intro-toolbar__stores { display: flex; gap: 7px; }
 .portfolio-intro-toolbar__stores a { display: inline-flex; min-height: 36px; align-items: center; gap: 7px; padding: 7px 11px; border: 1px solid rgba(37, 53, 44, .2); border-radius: 11px; background: rgba(255,255,255,.84); color: #1d2922; text-decoration: none; box-shadow: inset 0 1px 0 #fff, 0 5px 14px rgba(32,45,37,.06); transition: .2s ease; }
+.portfolio-intro-toolbar__stores .is-disabled { display: inline-flex; min-height: 36px; align-items: center; gap: 7px; padding: 7px 11px; border: 1px dashed rgba(37, 53, 44, .24); border-radius: 11px; background: rgba(245,243,237,.76); color: #68736c; box-shadow: none; cursor: not-allowed; }
 .portfolio-intro-toolbar__stores a:hover { transform: translateY(-2px); border-color: #5b7164; box-shadow: 0 8px 20px rgba(32,45,37,.12); }
 .portfolio-intro-toolbar__stores svg { width: 18px; height: 18px; flex: 0 0 18px; fill: #202923; }
+.portfolio-intro-toolbar__stores .is-disabled svg { opacity: .48; filter: grayscale(1); }
 .portfolio-intro-toolbar__stores span { display: grid; font-size: 11px; font-weight: 750; line-height: 1.02; white-space: nowrap; }
 .portfolio-intro-toolbar__stores small { margin-bottom: 1px; color: #778179; font-size: 6px; letter-spacing: .05em; }
 body:has(.portfolio-intro-toolbar) > .nav { display: none !important; }
