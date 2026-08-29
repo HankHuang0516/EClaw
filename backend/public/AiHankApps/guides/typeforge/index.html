@@ -151,6 +151,99 @@
     .strategy-grid p { margin: 0; color: #d6c9b4; }
     .checklist { columns: 2; column-gap: 42px; }
     .checklist li { break-inside: avoid; margin-bottom: 12px; }
+    .guide-database-section {
+      background:
+        linear-gradient(145deg, rgba(242, 225, 188, .62), rgba(255, 252, 243, .96) 34%),
+        var(--paper);
+    }
+    .database-lead {
+      max-width: 880px;
+      margin: 0 0 22px;
+      color: var(--ink-soft);
+      font-size: 16px;
+      line-height: 1.85;
+    }
+    .database-facts {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+    .database-facts span {
+      display: flex;
+      min-height: 58px;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 8px;
+      border: 1px solid rgba(81, 60, 36, .16);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .66);
+      color: var(--ink-soft);
+      font-size: 13px;
+      text-align: center;
+    }
+    .database-facts strong {
+      color: var(--vermilion);
+      font-family: "Noto Serif TC", serif;
+      font-size: 21px;
+      font-weight: 700;
+    }
+    .guide-frame-shell {
+      overflow: hidden;
+      border: 1px solid rgba(81, 60, 36, .22);
+      border-radius: 18px;
+      background: #f4f6f5;
+      box-shadow: 0 20px 55px rgba(67, 49, 28, .13);
+    }
+    .guide-frame-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 13px 18px;
+      border-bottom: 1px solid rgba(81, 60, 36, .16);
+      background: rgba(255, 252, 243, .95);
+      color: var(--ink);
+    }
+    .guide-frame-head span {
+      font-family: "Noto Serif TC", serif;
+      font-weight: 700;
+      letter-spacing: .06em;
+    }
+    .guide-frame-head small {
+      color: var(--ink-soft);
+    }
+    .guide-database-frame {
+      display: block;
+      width: 100%;
+      height: 920px;
+      border: 0;
+      background: #f4f6f5;
+    }
+    @media (max-width: 1050px) {
+      .database-facts {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 650px) {
+      .database-lead {
+        font-size: 14px;
+      }
+      .database-facts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .guide-frame-head {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .guide-database-frame {
+        height: min(760px, calc(100vh - 150px));
+        min-height: 620px;
+      }
+    }
+
     .download { display: grid; grid-template-columns: 1fr auto; gap: 34px; align-items: center; padding: clamp(54px,7vw,94px) clamp(22px,8vw,124px); border-block: 1px solid var(--line); background: var(--paper-deep); }
     .download h2 { margin: 0; font-size: clamp(38px,5vw,70px); line-height: 1.1; }
     .download p { margin: 12px 0 0; color: #5b4e3e; }
@@ -247,130 +340,34 @@
       <div class="gameplay-art"><img src="./promo/06.jpg" alt="活字戰紀佈陣守線遊戲畫面"></div>
     </section>
 
-    <section class="section guide-section" id="guide">
+    <section class="section guide-database-section" id="guide">
       <div class="section-head">
-        <div><span class="section-kicker">Complete Guide · Version VI</span><h2>完整攻略，<br>從第一字到無盡戰線。</h2></div>
-        <p class="section-intro">原有《河谷篇》第六版攻略已完整併入 APP 介紹頁。真正要管理的不只是火力，而是字庫、人口、糧食、勞力、金幣、科技與英雄席位之間的取捨。</p>
+        <span>完整攻略資料庫</span>
+        <span class="section-rule"></span>
       </div>
-      <nav class="guide-index" aria-label="攻略章節">
-        <a href="#guide-loop">核心循環</a><a href="#guide-recipes">合成配方</a><a href="#guide-map">地圖敵潮</a><a href="#guide-heroes">英雄與商店</a><a href="#guide-route">推薦路線</a><a href="#advanced">隱藏攻略</a><a href="#checklist">每輪檢查</a>
-      </nav>
+      <p class="database-lead">舊版完整互動攻略已全數移植。可直接搜尋英雄、兵種、建築、道具與配方，並查閱價格、專武、動畫及任意波次資料。</p>
 
-      <div class="guide-chapters">
-        <article class="guide-card" id="guide-loop">
-          <h3>一局的核心循環</h3>
-          <p>每輪用補進字庫的活字合成部署印、把單位放到能覆蓋路線的位置、支付維持與研究成本，再依敵人改道即時換陣。第 12 輪只是第一卷首領，之後敵潮會持續增強直到人口歸零。</p>
-          <ul>
-            <li><b>字庫：</b>基礎字與未部署印共用容量，部署後離開字庫，收回才重新占用。</li>
-            <li><b>人口：</b>敵人突破終點時扣除，降至零即結束文明。</li>
-            <li><b>糧食與勞力：</b>合成、部署、攻擊維持與研究都會持續消耗。</li>
-            <li><b>金幣：</b>前 12 輪每輪 1 金，13 至 24 輪每輪 2 金，此後每 12 輪再增加。</li>
-            <li><b>科技與英雄：</b>研究提高全軍火力；英雄席位可透過文明中心、英令碑與道具擴充。</li>
-          </ul>
-        </article>
-        <article class="guide-card">
-          <h3>活字、部署與合印</h3>
-          <ul>
-            <li>每輪補 2 枚活字，常規供應為人、木、石、火、土、水、糧、規則；第 6 輪起有機率取得稀有字「傳」。</li>
-            <li>合成槽可放 2 至 4 枚字或儲備印，配方會消耗全部投入素材，產物先進入字庫。</li>
-            <li>戰鬥與倒數期間仍能合成、部署、移動、收回及使用道具。</li>
-            <li>同概念、同階、未英雄化單位可合印；原地合印會保留位置、擊殺、經驗與已付成本。</li>
-            <li>木牆可放自由碰撞格並迫使敵人改道，但出口必須仍在主力射程中。</li>
-          </ul>
-        </article>
-
-        <article class="guide-card wide" id="guide-recipes">
-          <h3>關鍵配方與戰術定位</h3>
-          <div class="table-wrap"><table><thead><tr><th>配方或升階</th><th>結果</th><th>用途</th></tr></thead><tbody>
-            <tr><td>木＋石</td><td>工具</td><td>每輪提供勞力，也是獵手前置。</td></tr>
-            <tr><td>人＋木＋石＋火</td><td>聚落</td><td>部署後增加人口、儲糧與字庫容量。</td></tr>
-            <tr><td>人＋工具</td><td>獵手</td><td>高地單體火力，可升弓手與火箭手。</td></tr>
-            <tr><td>人＋石</td><td>投石手</td><td>範圍清群，可升砲石手。</td></tr>
-            <tr><td>人＋木</td><td>矛衛</td><td>直線貫穿，可升弩手並銜接床弩。</td></tr>
-            <tr><td>人＋土</td><td>陷阱師</td><td>控制快敵與首領，可升網手。</td></tr>
-            <tr><td>人＋陶器</td><td>戰鼓手</td><td>強化附近單位，可升旗手。</td></tr>
-            <tr><td>人＋規則 → 人＋法律</td><td>法律 → 學者</td><td>研究與制度路線的起點。</td></tr>
-            <tr><td>學者＋工具＋規則</td><td>學院</td><td>第 6 輪起建立中期科技核心。</td></tr>
-            <tr><td>秘法師＋霜法師</td><td>秘法塔</td><td>第 14 輪起提供大範圍陸海空火力。</td></tr>
-            <tr><td>傳＋法律＋石＋規則</td><td>英令碑</td><td>第 8 輪起，首次部署增加英雄席位。</td></tr>
-            <tr><td>舟×2 → 戰槳船×2</td><td>戰槳船 → 巡防艦</td><td>第 21 輪後的補給、貫穿與海防重砲。</td></tr>
-          </tbody></table></div>
-        </article>
-
-        <article class="guide-card wide" id="guide-map">
-          <h3>地圖展開與敵潮對策</h3>
-          <div class="phase-grid">
-            <div class="phase"><b>第 1 輪</b>單一入口與 11 個部署位，先建立單體、清群與緩速三種職能。</div>
-            <div class="phase"><b>第 7 輪</b>山脊與外關開放；結束第 6 輪會取得一次性勞力與石材援助。</div>
-            <div class="phase"><b>第 13 輪</b>遠台、河口洲與市集中心加入，地面戰線擴為三組路線。</div>
-            <div class="phase"><b>第 21 輪</b>三個水寨／泊地開放，固定格增至 22，船團正式加入敵潮。</div>
-          </div>
-          <div class="table-wrap"><table><thead><tr><th>敵種</th><th>特徵</th><th>可靠對策</th></tr></thead><tbody>
-            <tr><td>群襲</td><td>血少、速度快、數量多</td><td>範圍、貫穿與木牆聚路。</td></tr>
-            <tr><td>重甲</td><td>血厚、突破傷害高</td><td>單體主攻、緩速與科技加成。</td></tr>
-            <tr><td>飛行</td><td>直線飛向聚落，不走地面彎路</td><td>遊俠、長弓、床弩與秘法。</td></tr>
-            <tr><td>船團</td><td>沿西側水路進攻</td><td>戰槳船、巡防艦與霜法師。</td></tr>
-            <tr><td>首領</td><td>每 6 輪出現並持續升階</td><td>控制、先清護衛、把最後一擊留給英雄候選者。</td></tr>
-          </tbody></table></div>
-        </article>
-
-        <article class="guide-card" id="guide-heroes">
-          <h3>英雄、研究與補給</h3>
-          <ul>
-            <li>英雄化需要指定輪數、擊殺與首領戰功；原地完成並保留防線位置。</li>
-            <li>英雄依最後一擊取得經驗，最高 Lv.10；高階單位通常要求更多首領戰功。</li>
-            <li>研究啟動時扣糧、每輪扣勞；缺勞會暫停但保留進度。前 24 級每級約提升全軍 2.5% 火力。</li>
-            <li>村邑、城邑、都城首次升格部署都能增加席位，毋須只等待稀有字「傳」。</li>
-          </ul>
-        </article>
-        <article class="guide-card">
-          <h3>錢包、商店與背包</h3>
-          <ul>
-            <li>本局金幣在文明終結時存入跨局錢包，同一局不會重複結算。</li>
-            <li>每期商店與抽獎只能擇一，商品與機會保留到下一次文明終結返回首頁。</li>
-            <li>背包預設 20 格；主動道具最多 2 件、被動最多 5 件，開局後配置鎖定。</li>
-            <li>主動道具包含烈焰壺、霜時計、戰鼓令、生命旗、補給箱；未裝備道具可按售價 30% 賣出。</li>
-          </ul>
-        </article>
-
-        <article class="guide-card wide" id="guide-route">
-          <h3>推薦開局與中期轉型</h3>
-          <div class="phase-grid">
-            <div class="phase"><b>第 1 輪前</b>木＋石做工具，再以人＋工具做獵手；第二戰力補投石、矛衛或陷阱，保留下一輪維持費。</div>
-            <div class="phase"><b>第 6 輪首領</b>一名緩速、一個單體主攻、一個清群，再用木牆延長有效射程。</div>
-            <div class="phase"><b>第 7 至 20 輪</b>保留機動空位，原地合印維持火力，建立糧源、勞力源與研究設施，並準備對空。</div>
-            <div class="phase"><b>第 21 輪後</b>提前準備兩艘舟，水路開放後合成戰槳船；五路戰場需要互補核心、控制、對空與海防。</div>
-          </div>
-        </article>
+      <div class="database-facts" aria-label="攻略資料庫收錄內容">
+        <span><strong>3</strong> 種玩法</span>
+        <span><strong>48</strong> 波資料</span>
+        <span><strong>50</strong> 位英雄</span>
+        <span><strong>50</strong> 把專武</span>
+        <span><strong>44</strong> 種兵種與設施</span>
+        <span><strong>56</strong> 種道具與價格</span>
       </div>
 
-      <aside class="strategy-band" id="advanced">
-        <span class="section-kicker">Hidden Strategy</span>
-        <h3>無焰五路聯防</h3>
-        <p>不把資源全壓在火箭手或秘法塔，而以旗手增益、弩手貫穿、霜法師控場、戰槳船海防與學院科技形成可旋轉的多路網。這套打法更難操作，但能適應抽字、維持費與路線的變化。</p>
-        <div class="strategy-grid">
-          <article><h4>兩兵線一後勤</h4><p>開局以矛衛作貫穿主線、陷阱師作控制線，工具提供勞力；聚落完整四字到齊且資源足夠時才合成。</p></article>
-          <article><h4>可旋轉三軍核</h4><p>旗手站中心、弩手站最長直段、網手站前一格。換路時先移主攻，再移控制，最後才搬增益核心。</p></article>
-          <article><h4>兩核一游擊</h4><p>北線以英雄弩手、旗手、霜法師處理重甲與首領；南線以砲石手、戰鼓手清群，游擊位依飛行與快敵換路。</p></article>
-          <article><h4>第 21 輪海防</h4><p>第 20 輪前準備兩艘舟，開水路後合成戰槳船；霜法師兼顧岸路與水路，補給不足時不要急升巡防艦。</p></article>
-          <article><h4>研究不是永遠開啟</h4><p>有兩輪維持費餘量才立項；大規模合印前可暫停，把勞力留給重組。科技進度不會因暫停清零。</p></article>
-          <article><h4>空位也是資源</h4><p>不要填滿所有部署格。空位讓核心能依敵潮旋轉，也讓部署印離開字庫，保留下一輪補字空間。</p></article>
+      <div class="guide-frame-shell">
+        <div class="guide-frame-head">
+          <span>活字戰紀完整互動攻略</span>
+          <small>可搜尋、切換分類、查看詳情與英雄 GIF</small>
         </div>
-      </aside>
-
-      <article class="guide-card wide" id="checklist" style="margin-top:18px">
-        <h3>每輪檢查表</h3>
-        <ol class="checklist">
-          <li>下一輪是群襲、重甲、飛行、船團還是首領？</li>
-          <li>每個攻擊單位的糧食與勞力維持費能否支付？</li>
-          <li>哪一段路缺少範圍、貫穿、緩速或對空覆蓋？</li>
-          <li>應保留兩個射擊點，還是原地合印成高階核心？</li>
-          <li>聚落或糧倉收回後，字庫是否會溢位？</li>
-          <li>哪名英雄候選者最接近輪數、擊殺與首領門檻？</li>
-          <li>研究應繼續消耗勞力，還是暫停以補充軍力？</li>
-          <li>主動道具是否能保留給首領或人口危機？</li>
-        </ol>
-      </article>
+        <iframe
+          class="guide-database-frame"
+          src="./database/"
+          title="活字戰紀：雙城烽火完整攻略資料庫"
+          loading="lazy"
+        ></iframe>
+      </div>
     </section>
 
     <section class="download" id="download">
@@ -379,6 +376,6 @@
     </section>
   </main>
 
-  <footer><span>活字戰紀：雙城烽火｜APP 介紹與完整攻略</span><span>商店宣傳圖與第六版攻略已完整收錄於本頁</span></footer>
+  <footer><span>活字戰紀：雙城烽火｜APP 介紹與完整攻略</span><span>完整舊版攻略資料庫、英雄動畫、道具價格與兵種資料已收錄於本頁</span></footer>
 </body>
 </html>
