@@ -2,6 +2,12 @@
 
 Every APP listed in the portfolio must receive a dedicated introduction site.
 
+## Content preservation
+
+- Standardizing an introduction page must merge the existing material into the new presentation; it must never replace a complete guide with a shorter generic summary.
+- Original workflows, safety guidance, FAQs, feature explanations, screenshots, and support details remain part of the APP record unless the product itself makes them inaccurate.
+- Pages with recovered long-form material are protected by `scripts/check-ai-hank-intro-sites.mjs`. Removing a protected section requires an intentional update to both the page and its preservation markers.
+
 ## Presentation rules
 
 - The portfolio card keeps the icon, short description, store buttons, status, likes, comments, and a top-right introduction link.

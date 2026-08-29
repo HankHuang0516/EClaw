@@ -1,0 +1,49 @@
+.recovered-guide{padding:96px 0;border-top:1px solid var(--line)}
+.recovery-heading{display:grid;grid-template-columns:.72fr 1.28fr;gap:40px;align-items:end;margin-bottom:42px}
+.recovery-heading h2{margin:0;font-family:var(--serif);font-size:clamp(2rem,4vw,3.65rem);font-weight:600;line-height:1.2}
+.recovery-heading p{max-width:720px;margin:0;color:var(--muted);line-height:1.85}
+.recovery-kicker{display:block;margin-bottom:12px;color:#718177;font-size:.72rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.recovery-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.recovery-card{padding:25px;border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.76);color:var(--ink);box-shadow:0 15px 34px rgba(46,61,51,.06)}
+.recovery-card span{display:block;margin-bottom:22px;color:#87958b;font-size:.72rem;font-weight:700;letter-spacing:.14em}
+.recovery-card h3{margin:0 0 10px;font-family:var(--serif);font-size:1.16rem}
+.recovery-card p,.recovery-card li{color:var(--muted);line-height:1.75}
+.recovery-card p{margin:0}
+.recovery-card ul{margin:12px 0 0;padding-left:20px}
+.recovery-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;counter-reset:step}
+.recovery-step{position:relative;padding:25px;border-radius:20px;background:#314b3d;color:#fff}
+.recovery-step:before{counter-increment:step;content:"0" counter(step);display:block;margin-bottom:30px;color:#bfd2c5;font-size:.72rem;letter-spacing:.15em}
+.recovery-step h3{margin:0 0 9px;font-family:var(--serif)}
+.recovery-step p{margin:0;color:#d9e3dc;line-height:1.7}
+.recovery-story{display:grid;grid-template-columns:minmax(260px,.82fr) minmax(0,1.18fr);gap:clamp(30px,6vw,76px);align-items:center;margin-top:58px;padding:38px;border:1px solid var(--line);border-radius:28px;background:rgba(255,255,255,.6)}
+.recovery-story.reverse .recovery-media{order:2}
+.recovery-copy h3{margin:0 0 14px;font-family:var(--serif);font-size:clamp(1.55rem,3vw,2.35rem);line-height:1.3}
+.recovery-copy>p{color:var(--muted);line-height:1.85}
+.recovery-media{display:grid;place-items:center}
+.recovery-media img{display:block;width:min(100%,360px);height:auto;max-height:660px;object-fit:contain;border-radius:22px;box-shadow:0 24px 58px rgba(38,55,43,.17)}
+.recovery-media.wide img{width:min(100%,520px)}
+.recovery-list{display:grid;gap:10px;margin-top:20px}
+.recovery-list article{padding:15px 17px;border-left:3px solid var(--moss);border-radius:0 12px 12px 0;background:rgba(223,233,223,.56)}
+.recovery-list b{display:block;margin-bottom:4px;font-family:var(--serif)}
+.recovery-list p{margin:0;color:var(--muted);font-size:.9rem;line-height:1.65}
+.recovery-compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px}
+.recovery-panel{padding:28px;border:1px solid var(--line);border-radius:24px;background:rgba(255,255,255,.7)}
+.recovery-panel h3{margin:0 0 10px;font-family:var(--serif);font-size:1.35rem}
+.recovery-panel p,.recovery-panel li{color:var(--muted);line-height:1.75}
+.recovery-panel ul{margin:14px 0 0;padding-left:20px}
+.recovery-safety{padding:42px;border-radius:30px;background:#243b31;color:#fff}
+.recovery-safety h2{margin:0 0 15px;font-family:var(--serif);font-size:clamp(2rem,4vw,3.4rem)}
+.recovery-safety>p{max-width:850px;color:#cfddd4;line-height:1.85}
+.recovery-warning{margin:28px 0;padding:22px;border:1px solid rgba(255,255,255,.2);border-radius:18px;background:rgba(255,255,255,.08)}
+.recovery-warning b{display:block;margin-bottom:8px;font-family:var(--serif);font-size:1.15rem}
+.recovery-warning p{margin:0;color:#e4ece7;line-height:1.78}
+.recovery-faq{display:grid;gap:8px}
+.recovery-faq details{border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.67)}
+.recovery-faq summary{padding:18px 20px;cursor:pointer;font-family:var(--serif);font-weight:700}
+.recovery-faq details p{margin:0;padding:0 20px 20px;color:var(--muted);line-height:1.8}
+.recovery-badges{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:28px}
+.recovery-badges div{padding:20px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.65)}
+.recovery-badges b{display:block;margin-bottom:6px;font-family:var(--serif)}
+.recovery-badges p{margin:0;color:var(--muted);font-size:.86rem;line-height:1.6}
+@media(max-width:900px){.recovery-heading{grid-template-columns:1fr}.recovery-grid{grid-template-columns:repeat(2,1fr)}.recovery-steps{grid-template-columns:repeat(2,1fr)}.recovery-story{grid-template-columns:1fr}.recovery-story.reverse .recovery-media{order:0}.recovery-badges{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.recovered-guide{padding:68px 0}.recovery-grid,.recovery-steps,.recovery-compare,.recovery-badges{grid-template-columns:1fr}.recovery-story{margin-top:34px;padding:18px;border-radius:20px}.recovery-safety{padding:28px 20px;border-radius:22px}.recovery-media img{max-height:560px}}
