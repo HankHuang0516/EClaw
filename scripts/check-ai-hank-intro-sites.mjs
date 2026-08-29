@@ -6,6 +6,26 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const publicRoot = path.join(root, 'backend', 'public');
 const guidesRoot = path.join(publicRoot, 'AiHankApps', 'guides');
 const failures = [];
+const preservedContent = {
+  chumen: [
+    'id="full-features"',
+    'id="how"',
+    'id="commute-widgets"',
+    'id="faq"',
+    '一句話出門建議',
+    '依時段自動切換',
+    '公車多久到、',
+  ],
+  'stray-map': [
+    'id="start"',
+    'id="full-features"',
+    'id="safety"',
+    'id="faq"',
+    '搜尋與過濾，',
+    '嚴禁濫用資訊或傷害動物',
+    '8 種語言',
+  ],
+};
 
 for (const entry of fs.readdirSync(guidesRoot, { withFileTypes: true })) {
   if (!entry.isDirectory()) continue;
@@ -18,6 +38,10 @@ for (const entry of fs.readdirSync(guidesRoot, { withFileTypes: true })) {
   }
   if (/(?:src|href)=["']\/assets\//.test(html)) {
     failures.push(`${entry.name}: root-relative /assets/ reference is not subpath-safe`);
+  }
+
+  for (const marker of preservedContent[entry.name] || []) {
+    if (!html.includes(marker)) failures.push(`${entry.name}: missing preserved content ${marker}`);
   }
 
   for (const match of html.matchAll(/(?:src|href)=["']([^"']+)["']/g)) {
