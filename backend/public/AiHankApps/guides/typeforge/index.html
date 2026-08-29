@@ -1,18 +1,223 @@
 <!doctype html>
-<html lang="zh-Hant">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#17201e" />
-    <meta name="description" content="《活字戰紀：雙城烽火》英雄、專武、兵種、道具與波次資料站" />
-    <link rel="icon" type="image/png" href="/assets/app-icon.png" />
-    <title>活字戰紀遊戲資料站</title>
-    <script type="module" crossorigin src="/assets/index-CglZncbv.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-Dpfimgg9.css">
-    <link rel="stylesheet" href="https://eclawbot.com/AiHankApps/guide-store-bar.css">
-  <script defer src="https://eclawbot.com/AiHankApps/guide-store-bar.js" data-portfolio-download-bar data-app="活字戰紀：雙城烽火" data-google="https://play.google.com/store/apps/details?id=com.hankhuang.wordcivilization" data-apple="https://apps.apple.com/app/id6792162295"></script>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#201d17">
+  <meta name="description" content="活字戰紀：雙城烽火 APP 介紹。以活字合成文明、部署英雄與工事，在雙城烽火中守住最後防線。">
+  <title>活字戰紀：雙城烽火｜APP 介紹</title>
+  <link rel="icon" href="./assets/app-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://eclawbot.com/AiHankApps/intro-toolbar-v2.css">
+  <script defer src="https://eclawbot.com/AiHankApps/intro-toolbar-v2.js"
+    data-intro-toolbar
+    data-app="活字戰紀：雙城烽火"
+    data-google="https://play.google.com/store/apps/details?id=com.hankhuang.wordcivilization"
+    data-apple="https://apps.apple.com/app/id6792162295"
+    data-shortcuts="遊戲特色:#features|宣傳圖鑑:#gallery|戰鬥玩法:#gameplay|立即下載:#download"></script>
+  <style>
+    :root {
+      --ink: #201d17;
+      --paper: #f2ead8;
+      --paper-deep: #e6d8bd;
+      --vermillion: #a43c29;
+      --gold: #c59a43;
+      --moss: #4d5940;
+      --line: rgba(49, 39, 26, .22);
+      --shadow: 0 26px 70px rgba(39, 31, 20, .18);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 5% 4%, rgba(197,154,67,.18), transparent 26rem),
+        radial-gradient(circle at 95% 24%, rgba(77,89,64,.14), transparent 28rem),
+        repeating-linear-gradient(0deg, rgba(68,52,31,.025) 0 1px, transparent 1px 5px),
+        var(--paper);
+      font-family: "IBM Plex Sans TC", sans-serif;
+      line-height: 1.75;
+    }
+    img { display: block; max-width: 100%; }
+    a { color: inherit; }
+    section[id] { scroll-margin-top: 100px; }
+    .hero {
+      position: relative;
+      min-height: 86vh;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(340px, .72fr);
+      align-items: center;
+      gap: clamp(38px, 8vw, 118px);
+      overflow: hidden;
+      padding: clamp(76px, 10vw, 145px) clamp(22px, 8vw, 124px);
+      border-bottom: 1px solid var(--line);
+    }
+    .hero::before {
+      content: "活";
+      position: absolute;
+      right: -2vw;
+      top: -12vw;
+      color: rgba(164,60,41,.055);
+      font-family: "Noto Serif TC", serif;
+      font-size: min(52vw, 760px);
+      font-weight: 900;
+      line-height: 1;
+      pointer-events: none;
+    }
+    .hero-copy { position: relative; z-index: 2; max-width: 780px; }
+    .app-lockup { display: flex; align-items: center; gap: 16px; }
+    .app-lockup img { width: 76px; height: 76px; border: 1px solid rgba(255,255,255,.7); border-radius: 20px; box-shadow: 0 12px 30px rgba(45,32,20,.2); }
+    .eyebrow { color: var(--vermillion); font-size: 11px; font-weight: 700; letter-spacing: .2em; }
+    .app-lockup strong { display: block; margin-top: 4px; font-family: "Noto Serif TC", serif; font-size: 20px; }
+    h1, h2, h3 { font-family: "Noto Serif TC", serif; }
+    h1 { margin: 32px 0 25px; font-size: clamp(54px, 8.8vw, 126px); line-height: .94; letter-spacing: -.065em; }
+    h1 span { color: var(--vermillion); }
+    .hero-lede { max-width: 680px; margin: 0; font-size: clamp(17px, 2vw, 22px); }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 11px; margin-top: 34px; }
+    .hero-actions a { padding: 12px 19px; border: 1px solid var(--ink); border-radius: 999px; text-decoration: none; font-weight: 700; transition: .2s ease; }
+    .hero-actions .primary { color: #fff9ea; background: var(--ink); }
+    .hero-actions a:hover { transform: translateY(-3px); box-shadow: 0 9px 0 rgba(32,29,23,.1); }
+    .hero-visual { position: relative; z-index: 1; min-height: 650px; }
+    .poster { position: absolute; width: min(290px, 72%); overflow: hidden; border: 8px solid #242018; border-radius: 30px; background: #242018; box-shadow: var(--shadow); }
+    .poster img { width: 100%; height: auto; border-radius: 20px; }
+    .poster:first-child { left: 0; top: 0; transform: rotate(-5deg); }
+    .poster:last-child { right: 0; bottom: 0; transform: rotate(6deg); }
+    .seal { position: absolute; left: 44%; top: 45%; z-index: 4; display: grid; width: 94px; height: 94px; place-items: center; border: 2px solid #f6dfb4; background: var(--vermillion); color: #fff5dc; font-family: "Noto Serif TC", serif; font-size: 25px; font-weight: 900; transform: rotate(-8deg); box-shadow: 0 14px 35px rgba(98,36,25,.28); }
+    .ticker { overflow: hidden; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.15); background: var(--ink); color: #f6ebd2; white-space: nowrap; }
+    .ticker div { width: max-content; animation: ticker 30s linear infinite; font-size: 13px; letter-spacing: .1em; }
+    @keyframes ticker { to { transform: translateX(-50%); } }
+    .section { padding: clamp(80px, 11vw, 150px) clamp(22px, 8vw, 124px); }
+    .section-head { display: grid; grid-template-columns: minmax(250px,.75fr) minmax(0,1.25fr); gap: 44px; align-items: end; margin-bottom: 58px; }
+    .section-kicker { color: var(--vermillion); font-size: 11px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+    .section h2 { margin: 10px 0 0; font-size: clamp(40px, 6vw, 78px); line-height: 1.08; letter-spacing: -.05em; }
+    .section-intro { max-width: 720px; margin: 0; color: #5c5142; font-size: 18px; }
+    .feature-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; }
+    .feature-card { min-height: 280px; padding: 26px; border: 1px solid var(--line); background: rgba(255,252,244,.62); box-shadow: 8px 8px 0 rgba(50,42,30,.09); }
+    .feature-card:nth-child(2) { background: #e6ddc7; transform: translateY(20px); }
+    .feature-card:nth-child(3) { background: #d8dfd1; }
+    .feature-card:nth-child(4) { background: #ead2c5; transform: translateY(20px); }
+    .feature-no { color: var(--vermillion); font-size: 11px; font-weight: 700; letter-spacing: .15em; }
+    .feature-card h3 { margin: 55px 0 12px; font-size: 25px; }
+    .feature-card p { margin: 0; color: #5c5142; }
+    .gallery-section { color: #f7edd9; background: #211e18; }
+    .gallery-section .section-intro { color: #c8bba5; }
+    .gallery-section .section-kicker { color: #dc9075; }
+    .gallery-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 18px; }
+    .gallery-grid figure { margin: 0; padding: 10px; border: 1px solid rgba(255,255,255,.15); border-radius: 22px; background: rgba(255,255,255,.055); }
+    .gallery-grid img { width: 100%; aspect-ratio: 221 / 480; border-radius: 14px; object-fit: contain; background: #11100d; }
+    .gallery-grid figcaption { display: flex; justify-content: space-between; gap: 10px; padding: 11px 4px 2px; color: #d6c9b4; font-size: 12px; }
+    .gallery-grid figcaption span { color: #dc9075; }
+    .gameplay { display: grid; grid-template-columns: .88fr 1.12fr; gap: clamp(48px, 8vw, 118px); align-items: center; }
+    .gameplay-copy h2 { margin: 12px 0 20px; font-size: clamp(42px, 6vw, 80px); line-height: 1.06; letter-spacing: -.055em; }
+    .gameplay-list { display: grid; gap: 12px; margin-top: 30px; }
+    .gameplay-list article { display: grid; grid-template-columns: 48px 1fr; gap: 14px; padding: 18px 0; border-top: 1px solid var(--line); }
+    .gameplay-list b { display: grid; width: 42px; height: 42px; place-items: center; border: 1px solid var(--ink); border-radius: 50%; font-family: "Noto Serif TC", serif; }
+    .gameplay-list h3 { margin: 0 0 5px; font-size: 19px; }
+    .gameplay-list p { margin: 0; color: #655947; }
+    .gameplay-art { position: relative; min-height: 690px; display: grid; place-items: center; }
+    .gameplay-art::before { content: ""; position: absolute; width: min(520px,90%); aspect-ratio: 1; border-radius: 50%; background: var(--gold); box-shadow: 34px 28px 0 var(--moss); }
+    .gameplay-art img { position: relative; width: min(330px,72%); border: 8px solid var(--ink); border-radius: 30px; box-shadow: var(--shadow); transform: rotate(4deg); }
+    .download { display: grid; grid-template-columns: 1fr auto; gap: 34px; align-items: center; padding: clamp(54px,7vw,94px) clamp(22px,8vw,124px); border-block: 1px solid var(--line); background: var(--paper-deep); }
+    .download h2 { margin: 0; font-size: clamp(38px,5vw,70px); line-height: 1.1; }
+    .download p { margin: 12px 0 0; color: #5b4e3e; }
+    .download a { padding: 15px 24px; border-radius: 999px; background: var(--vermillion); color: #fff7e9; text-decoration: none; font-weight: 700; box-shadow: 0 12px 28px rgba(164,60,41,.22); }
+    footer { display: flex; justify-content: space-between; gap: 24px; padding: 32px clamp(22px,8vw,124px); background: var(--ink); color: #bdb19d; font-size: 12px; }
+    @media (max-width: 1050px) {
+      .hero, .gameplay { grid-template-columns: 1fr; }
+      .hero-visual { width: min(660px,100%); margin-inline: auto; }
+      .feature-grid, .gallery-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .section-head { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 650px) {
+      .hero { padding-top: 58px; }
+      .hero-visual { min-height: 500px; }
+      .poster { width: 58%; border-width: 6px; }
+      .seal { left: 38%; top: 42%; width: 76px; height: 76px; font-size: 20px; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .feature-card:nth-child(2), .feature-card:nth-child(4) { transform: none; }
+      .gallery-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+      .gallery-grid figure { padding: 6px; border-radius: 15px; }
+      .gallery-grid img { border-radius: 10px; }
+      .gameplay-art { min-height: 540px; }
+      .download { grid-template-columns: 1fr; }
+      footer { flex-direction: column; }
+    }
+  </style>
 </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<body>
+  <header class="hero" id="top">
+    <div class="hero-copy">
+      <div class="app-lockup">
+        <img src="./assets/app-icon.png" alt="活字戰紀：雙城烽火 App icon">
+        <div><span class="eyebrow">TYPEFORGE · TWIN CITIES</span><strong>活字戰紀：雙城烽火</strong></div>
+      </div>
+      <h1>以活字，<br><span>鑄文明。</span></h1>
+      <p class="hero-lede">合成單位、工事與英雄，在雙城競爭、合作守城與無盡敵潮中部署你的文明防線。每一枚字，都是下一場戰役的可能。</p>
+      <div class="hero-actions"><a class="primary" href="#gallery">查看完整宣傳圖</a><a href="#features">認識遊戲特色</a></div>
+    </div>
+    <div class="hero-visual" aria-label="活字戰紀遊戲宣傳畫面">
+      <div class="poster"><img src="./promo/01.jpg" alt="雙城開戰宣傳圖"></div>
+      <div class="poster"><img src="./promo/02.jpg" alt="召喚英雄宣傳圖"></div>
+      <div class="seal">雙城</div>
+    </div>
+  </header>
+
+  <div class="ticker" aria-hidden="true"><div>活字成軍　・　合印升階　・　召喚英雄　・　道具逆轉　・　雙城開戰　・　活字成軍　・　合印升階　・　召喚英雄　・　道具逆轉　・　雙城開戰　・　</div></div>
+
+  <main>
+    <section class="section" id="features">
+      <div class="section-head">
+        <div><span class="section-kicker">Core Experience</span><h2>你的每一次選字，<br>都會改寫戰局。</h2></div>
+        <p class="section-intro">從一枚活字開始，逐步合成兵種、工事與英雄。你需要在有限資源、雙城戰線與不斷逼近的敵潮之間，做出真正有重量的部署。</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card"><span class="feature-no">01 / TYPE</span><h3>活字成軍</h3><p>收集並配置活字，讓文字不只是資源，而是能上場迎敵的文明力量。</p></article>
+        <article class="feature-card"><span class="feature-no">02 / FUSE</span><h3>合印升階</h3><p>組合活字與兵種，解鎖更高階單位，在關鍵時刻扭轉戰線。</p></article>
+        <article class="feature-card"><span class="feature-no">03 / HERO</span><h3>召喚英雄</h3><p>依東西方文明選擇英雄與能力，建立屬於你的防守節奏。</p></article>
+        <article class="feature-card"><span class="feature-no">04 / CITY</span><h3>雙城烽火</h3><p>競爭、合作、守城與無盡模式交錯，讓每一局都有不同壓力與故事。</p></article>
+      </div>
+    </section>
+
+    <section class="section gallery-section" id="gallery">
+      <div class="section-head">
+        <div><span class="section-kicker">Store Gallery</span><h2>八張宣傳圖，<br>完整看見戰場。</h2></div>
+        <p class="section-intro">商店中的完整宣傳素材集中在這裡，不裁切、不塞進作品集小卡，讓角色、地圖、合成與戰術畫面保留原本比例。</p>
+      </div>
+      <div class="gallery-grid">
+        <figure><img src="./promo/01.jpg" alt="雙城開戰"><figcaption>雙城開戰 <span>01 / 08</span></figcaption></figure>
+        <figure><img src="./promo/02.jpg" alt="召喚英雄"><figcaption>召喚英雄 <span>02 / 08</span></figcaption></figure>
+        <figure><img src="./promo/03.jpg" alt="活字成軍"><figcaption>活字成軍 <span>03 / 08</span></figcaption></figure>
+        <figure><img src="./promo/04.jpg" alt="合印升階"><figcaption>合印升階 <span>04 / 08</span></figcaption></figure>
+        <figure><img src="./promo/05.jpg" alt="道具逆轉"><figcaption>道具逆轉 <span>05 / 08</span></figcaption></figure>
+        <figure><img src="./promo/06.jpg" alt="佈陣守線"><figcaption>佈陣守線 <span>06 / 08</span></figcaption></figure>
+        <figure><img src="./promo/07.jpg" alt="英雄與裝備"><figcaption>英雄與裝備 <span>07 / 08</span></figcaption></figure>
+        <figure><img src="./promo/08.jpg" alt="文明戰場"><figcaption>文明戰場 <span>08 / 08</span></figcaption></figure>
+      </div>
+    </section>
+
+    <section class="section gameplay" id="gameplay">
+      <div class="gameplay-copy">
+        <span class="section-kicker">How It Plays</span>
+        <h2>先讀戰場，<br>再落下一字。</h2>
+        <p>戰鬥不是單純堆疊數值。你需要看懂敵潮、地形、城防與合成路線，在最少步數內建立最有效率的文明防線。</p>
+        <div class="gameplay-list">
+          <article><b>一</b><div><h3>觀察敵潮</h3><p>確認敵人方向、屬性與抵達時間，先找出最危險的缺口。</p></div></article>
+          <article><b>二</b><div><h3>配置活字</h3><p>選擇當下需要的兵種、工事或資源，保留下一次合成的空間。</p></div></article>
+          <article><b>三</b><div><h3>合成與逆轉</h3><p>升階單位、啟動英雄或使用道具，在壓力最高時改變戰局。</p></div></article>
+        </div>
+      </div>
+      <div class="gameplay-art"><img src="./promo/06.jpg" alt="活字戰紀佈陣守線遊戲畫面"></div>
+    </section>
+
+    <section class="download" id="download">
+      <div><h2>準備好，鑄出你的文明。</h2><p>上方常駐列提供 Google Play 與 App Store 雙平台下載入口。</p></div>
+      <a href="#top">回到頁首查看下載連結 ↑</a>
+    </section>
+  </main>
+
+  <footer><span>活字戰紀：雙城烽火｜APP 介紹</span><span>商店宣傳圖已完整收錄於本頁</span></footer>
+</body>
 </html>
