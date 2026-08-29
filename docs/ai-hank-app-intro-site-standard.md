@@ -26,3 +26,7 @@ Every APP introduction or strategy page must keep a polished header visible at t
 3. Google Play and App Store download actions.
 
 A published or release-ready platform must link to its real store page. A platform still in development must show a disabled development state and must not use a fake store link.
+
+## Static asset cache versioning
+
+Cloudflare serves `/AiHankApps` static assets with a seven-day immutable cache. Whenever a shared CSS or JavaScript file changes, every HTML reference to that asset must also change by adding or updating a version query such as `?v=<release-id>`. A deployment is not complete until the production HTML points at the new versioned URL and the returned asset contains the expected release marker. This prevents successfully deployed HTML from executing a stale toolbar or community script.
