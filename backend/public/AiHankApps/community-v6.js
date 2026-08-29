@@ -3,17 +3,16 @@
 
   // Intro-site policy: every published APP should receive a guide URL; cards with one keep promotional media on that dedicated site.
   const apps = {
-    'EClawbot': { id: 'eclawbot', shots: ['eclawbot/01.jpg','eclawbot/02.jpg','eclawbot/03.jpg','eclawbot/04.jpg','eclawbot/05.jpg','eclawbot/06.jpg'] },
+    'EClawbot': { id: 'eclawbot', guide: 'guides/eclawbot/', shots: ['eclawbot/01.jpg','eclawbot/02.jpg','eclawbot/03.jpg','eclawbot/04.jpg','eclawbot/05.jpg','eclawbot/06.jpg'] },
     '活字戰紀：雙城烽火': { id: 'typeforge-twin-cities', guide: 'https://eclawbot.com/AiHankApps/guides/typeforge/', guideLabel: '查看 APP 介紹', shots: ['typeforge/01.jpg','typeforge/02.jpg','typeforge/03.jpg','typeforge/04.jpg','typeforge/05.jpg','typeforge/06.jpg','typeforge/07.jpg','typeforge/08.jpg'] },
-    'Weesh': { id: 'weesh', shots: ['weesh/01.png','weesh/02.png','weesh/03.png','weesh/04.png','weesh/05.png'] },
-    '世界末日了沒': { id: 'doomsday-index', shots: ['doomsday/01.jpg','doomsday/02.jpg','doomsday/03.jpg','doomsday/04.jpg'] },
-    '夢話夥伴': { id: 'dreambuddy', shots: ['dreambuddy/01.jpg','dreambuddy/02.jpg','dreambuddy/03.jpg'] },
-    '房東投報快算': { id: 'property-roi', shots: ['property/01.jpg','property/02.jpg','property/03.jpg','property/04.jpg'] },
+    'Weesh': { id: 'weesh', guide: 'guides/weesh/', shots: ['weesh/01.png','weesh/02.png','weesh/03.png','weesh/04.png','weesh/05.png'] },
+    '世界末日了沒': { id: 'doomsday-index', guide: 'guides/doomsday/', shots: ['doomsday/01.jpg','doomsday/02.jpg','doomsday/03.jpg','doomsday/04.jpg'] },
+    '夢話夥伴': { id: 'dreambuddy', guide: 'guides/dreambuddy/', shots: ['dreambuddy/01.jpg','dreambuddy/02.jpg','dreambuddy/03.jpg'] },
+    '房東投報快算': { id: 'property-roi', guide: 'guides/property/', shots: ['property/01.jpg','property/02.jpg','property/03.jpg','property/04.jpg'] },
     '活字戰記：巔峰之戰': { id: 'summit-battle', shots: [] },
-    '浪浪地圖': { id: 'stray-map', guide: 'https://stray-map-guide.twopiggyhavefun.chatgpt.site/', guideLabel: '查看 APP 介紹', shots: ['straymap/01.jpg','straymap/02.jpg','straymap/03.jpg','straymap/04.jpg','straymap/05.jpg','straymap/06.jpg','straymap/07.jpg','straymap/08.jpg','straymap/09.jpg','straymap/10.jpg','straymap/11.jpg','straymap/12.jpg','straymap/13.jpg'] },
+    '浪浪地圖': { id: 'stray-map', guide: 'guides/stray-map/', guideLabel: '查看 APP 介紹', shots: ['straymap/01.jpg','straymap/02.jpg','straymap/03.jpg','straymap/04.jpg','straymap/05.jpg','straymap/06.jpg','straymap/07.jpg','straymap/08.jpg','straymap/09.jpg','straymap/10.jpg','straymap/11.jpg','straymap/12.jpg','straymap/13.jpg'] },
     '睡公園：免費生存地圖': { id: 'sleep-park', guide: 'https://eclawbot.com/AiHankApps/guides/sleep-park/', guideLabel: '查看 APP 介紹', shots: ['sleeppark/01.jpg','sleeppark/02.jpg','sleeppark/03.jpg','sleeppark/04.jpg'] },
-    '這樣出門': { id: 'chumen', guide: 'https://zhe-yang-chu-men-hank.twopiggyhavefun.chatgpt.site/', guideLabel: '查看 APP 介紹', shots: ['chumen/01.jpg','chumen/02.jpg','chumen/03.jpg','chumen/04.jpg','chumen/05.jpg'] },
-    '遺名之歌': { id: 'echoes-of-names', shots: [] }
+    '這樣出門': { id: 'chumen', guide: 'guides/chumen/', guideLabel: '查看 APP 介紹', shots: ['chumen/01.jpg','chumen/02.jpg','chumen/03.jpg','chumen/04.jpg','chumen/05.jpg'] }
   };
 
   const apiBase = location.hostname === 'eclawbot.com' || location.hostname === 'www.eclawbot.com'
@@ -96,7 +95,7 @@
   }
 
   function addGuideLink(card, heading, config) {
-    if (!config.guide) return;
+    if (!config.guide || card.querySelector('.guide-link')) return;
     const actions = document.createElement('div');
     actions.className = 'guide-actions';
     const link = document.createElement('a');
@@ -221,33 +220,6 @@
     });
   }
 
-  const publicAppStoreApps = new Set(['eclawbot', 'typeforge-twin-cities', 'weesh', 'doomsday-index', 'stray-map', 'sleep-park']);
-
-  function normalizeStoreControls(card, appId) {
-    const cardText = card.textContent;
-    const readyWords = '正式版|已發布|已可發布';
-    [...card.querySelectorAll('a')].forEach(link => {
-      const text = link.textContent.trim();
-      const platform = text.includes('Google Play') ? 'Google Play' : text.includes('App Store') ? 'App Store' : null;
-      if (!platform) return;
-      const platformStatus = new RegExp(`${platform}\\s*[：:]?[^・\\n]*(${readyWords})`).test(cardText);
-      const linkStatus = new RegExp(readyWords).test(text);
-      const publiclyReleased = platform === 'App Store' && publicAppStoreApps.has(appId);
-      if (platformStatus || linkStatus || publiclyReleased) {
-        link.textContent = platform === 'Google Play' ? '▶ Google Play' : '● App Store';
-        return;
-      }
-      const development = document.createElement('span');
-      development.className = 'store-development';
-      development.textContent = `${platform} 開發中`;
-      link.replaceWith(development);
-    });
-    [...card.querySelectorAll('p, .store-status, .availability, .release-status')].forEach(node => {
-      const text = node.textContent.trim();
-      if (text.includes('Google Play：') || text.includes('App Store：')) node.remove();
-    });
-  }
-
   function reorderCategories() {
     const priority = new Map([['遊戲', 0], ['公益', 1], ['生活', 2]]);
     const headings = [...document.querySelectorAll('h2')];
@@ -273,7 +245,6 @@
     findCards().forEach(({ card, heading, config }) => {
       if (!card || card.dataset.communityReady) return;
       card.dataset.communityReady = 'true';
-      normalizeStoreControls(card, config.id);
       addGallery(card, heading, config);
       addGuideLink(card, heading, config);
       addCommunity(card, config);
