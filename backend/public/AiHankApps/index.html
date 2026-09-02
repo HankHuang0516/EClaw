@@ -268,24 +268,15 @@
         min-height: 196px;
       }
 
-      .guide-link {
+      .card::after {
+        content: "";
         position: absolute;
-        right: 0;
-        top: 0;
-        padding: 8px 11px;
-        border: 1px solid rgba(88, 117, 95, 0.42);
-        border-radius: 999px;
-        background: rgba(244, 249, 244, 0.94);
-        color: #355241;
-        font-size: 0.76rem;
-        font-weight: 700;
-        text-decoration: none;
-        white-space: nowrap;
-      }
-
-      .guide-link:hover {
-        border-color: #58755f;
-        background: #edf5ed;
+        right: 12px;
+        top: 12px;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        border: 1px dashed rgba(88, 117, 95, 0.32);
       }
 
       .promo-media {
@@ -310,11 +301,6 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        min-height: 52px;
-      }
-
-      .card-head:has(.guide-link) {
-        padding-right: 116px;
       }
 
       .app-icon {
@@ -385,22 +371,9 @@
         border-color: rgba(88, 117, 95, 0.4);
       }
 
-      .store-link img {
-        width: 17px;
-        height: 17px;
-        object-fit: contain;
-      }
-
       .store-link small {
         font-size: 0.74rem;
         color: #6f6b64;
-      }
-
-      .store-link.unavailable {
-        border-style: dashed;
-        background: #f5f2eb;
-        color: #777168;
-        cursor: not-allowed;
       }
 
       .status {
@@ -498,16 +471,16 @@
       const APP_STORE_PREFIX = 'https://apps.apple.com/app/id';
 
       const appList = [
-        { name: 'EClawbot', iconText: 'EC', icon: 'https://play-lh.googleusercontent.com/19ahKzTjrkEiBCnAiaNYhN_lm0VnWjCCBjUB_imqbSkkbvSX132lkVZ9bVA3fxwfIWCSK476f6Xt8Qvs4aQLJA=s0', promo: 'promo/eclawbot.jpg', guideUrl: 'guides/eclawbot/', category: '工具', desc: '管理多個 AI 代理人，整合即時對話、A2A 任務轉派、組織圖、看板與跨裝置協作。', source: 'Android / iOS', googlePackage: 'com.hank.clawlive', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hank.clawlive`, googleStatus: '正式版', iosId: '6762198865', iosUrl: `${APP_STORE_PREFIX}6762198865`, iosStatus: '已可發佈' },
-        { name: '活字戰紀：雙城烽火', iconText: '活字', icon: 'https://play-lh.googleusercontent.com/DtJazCL4QiazSvgV4081ZnByB6gNVAimrGn31UPOTnleGDpJ7ALOSDfii-PXjr-SDtSxBLeJnsOY-hmr_226cA=s0', promo: 'promo/typeforge.jpg', guideUrl: 'guides/typeforge/', aliases: 'Typeforge: Twin Cities', category: '遊戲', desc: '以活字合成單位、工事與英雄，在雙城競爭、合作守城與無盡敵潮中部署文明防線。', source: 'Android / iOS', googlePackage: 'com.hankhuang.wordcivilization', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hankhuang.wordcivilization`, googleStatus: '正式版', iosId: '6792162295', iosUrl: `${APP_STORE_PREFIX}6792162295`, iosStatus: '已可發佈' },
-        { name: 'Weesh', iconText: 'WE', icon: 'https://play-lh.googleusercontent.com/zrDZEH8l5npjJdV37cvlbLNEifq6R49LRPM5CWLt_zzeK0pheBVHkRMyAZ-0byCUwTJXRzATPltGzMTFNE4lYA=s0', promo: 'promo/weesh.jpg', guideUrl: 'guides/weesh/', aliases: 'WeeshGifts', category: '社交', desc: '建立自己的願望清單，也能查看朋友想要的禮物並直接代為下單，減少送錯禮的困擾。', source: 'Android / iOS', googlePackage: 'com.hank_huang0516.snack425e646aa6a74ad8a964aadeb4741fc1', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hank_huang0516.snack425e646aa6a74ad8a964aadeb4741fc1`, googleStatus: '正式版', iosId: '6468950847', iosUrl: `${APP_STORE_PREFIX}6468950847`, iosStatus: '已可發佈' },
-        { name: '世界末日了沒', iconText: '世末', icon: 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/9b/a6/ee/9ba6ee46-d71b-bdbf-6eb1-34288e0161d8/AppIcon-0-0-1x_U007epad-0-1-85-220.png/512x512bb.jpg', promo: 'promo/doomsday.jpg', guideUrl: 'guides/doomsday/', category: '生活', desc: '整合地震、地磁風暴、太陽閃焰、市場恐慌、太空站與疫情資料，計算 0–100 末日指數與 30 天趨勢。', source: 'Android / iOS', googlePackage: 'com.hankhuang.doomsday', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hankhuang.doomsday`, googleStatus: '草稿・內部測試', iosId: '6795006218', iosUrl: `${APP_STORE_PREFIX}6795006218`, iosStatus: '已可發佈' },
-        { name: '夢話夥伴', iconText: '夢話', icon: 'https://play-lh.googleusercontent.com/uIIqGzRT6gmM6K1xS_Rc8g1VWOPgPWsnxVbh0hK1HvU1rbj8RnwevJ7T3vBtjRG5xKhuMCoeAopm0TsYE1jGSA=s0', promo: 'promo/dreambuddy.jpg', guideUrl: 'guides/dreambuddy/', aliases: '陪你入眠的 AI 夥伴', category: 'AI', desc: '陪你在半夢半醒間說出夢的片段，並將對話整理成當晚的夢日誌。', source: 'Android', googlePackage: 'com.hankhuang.dreambuddy', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hankhuang.dreambuddy`, googleStatus: '正式版', iosStatus: 'iOS 尚未建立' },
-        { name: '房東投報快算', iconText: '房東', icon: 'https://play-lh.googleusercontent.com/_VHMIDHTOVJsemsyO4-0Mw1MnYvlc4eWupMFjWi0LogzI8OwcE7fmQICq9OFT3V3q57ff0aVfrE8lCEyBUkJ_Q=s0', promo: 'promo/property.jpg', guideUrl: 'guides/property/', category: '金融', desc: '輸入房屋投資數據，快速計算年化報酬率，方便房東評估物件投報。', source: 'Android', googlePackage: 'com.hank_huang0516_2.PropertyInvestmentCalculator', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hank_huang0516_2.PropertyInvestmentCalculator`, googleStatus: '正式版', iosStatus: 'iOS 尚未建立' },
+        { name: 'EClawbot', iconText: 'EC', icon: 'https://play-lh.googleusercontent.com/19ahKzTjrkEiBCnAiaNYhN_lm0VnWjCCBjUB_imqbSkkbvSX132lkVZ9bVA3fxwfIWCSK476f6Xt8Qvs4aQLJA=s0', promo: 'promo/eclawbot.jpg', category: '工具', desc: '管理多個 AI 代理人，整合即時對話、A2A 任務轉派、組織圖、看板與跨裝置協作。', source: 'Android / iOS', googlePackage: 'com.hank.clawlive', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hank.clawlive`, googleStatus: '正式版', iosId: '6762198865', iosUrl: `${APP_STORE_PREFIX}6762198865`, iosStatus: '已可發佈' },
+        { name: '活字戰紀：雙城烽火', iconText: '活字', icon: 'https://play-lh.googleusercontent.com/DtJazCL4QiazSvgV4081ZnByB6gNVAimrGn31UPOTnleGDpJ7ALOSDfii-PXjr-SDtSxBLeJnsOY-hmr_226cA=s0', promo: 'promo/typeforge.jpg', aliases: 'Typeforge: Twin Cities', category: '遊戲', desc: '以活字合成單位、工事與英雄，在雙城競爭、合作守城與無盡敵潮中部署文明防線。', source: 'Android / iOS', googlePackage: 'com.hankhuang.wordcivilization', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hankhuang.wordcivilization`, googleStatus: '正式版', iosId: '6792162295', iosUrl: `${APP_STORE_PREFIX}6792162295`, iosStatus: '已可發佈' },
+        { name: 'Weesh', iconText: 'WE', icon: 'https://play-lh.googleusercontent.com/zrDZEH8l5npjJdV37cvlbLNEifq6R49LRPM5CWLt_zzeK0pheBVHkRMyAZ-0byCUwTJXRzATPltGzMTFNE4lYA=s0', promo: 'promo/weesh.jpg', aliases: 'WeeshGifts', category: '社交', desc: '建立自己的願望清單，也能查看朋友想要的禮物並直接代為下單，減少送錯禮的困擾。', source: 'Android / iOS', googlePackage: 'com.hank_huang0516.snack425e646aa6a74ad8a964aadeb4741fc1', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hank_huang0516.snack425e646aa6a74ad8a964aadeb4741fc1`, googleStatus: '正式版', iosId: '6468950847', iosUrl: `${APP_STORE_PREFIX}6468950847`, iosStatus: '已可發佈' },
+        { name: '世界末日了沒', iconText: '世末', icon: 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/9b/a6/ee/9ba6ee46-d71b-bdbf-6eb1-34288e0161d8/AppIcon-0-0-1x_U007epad-0-1-85-220.png/512x512bb.jpg', promo: 'promo/doomsday.jpg', category: '生活', desc: '整合地震、地磁風暴、太陽閃焰、市場恐慌、太空站與疫情資料，計算 0–100 末日指數與 30 天趨勢。', source: 'Android / iOS', googlePackage: 'com.hankhuang.doomsday', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hankhuang.doomsday`, googleStatus: '草稿・內部測試', iosId: '6795006218', iosUrl: `${APP_STORE_PREFIX}6795006218`, iosStatus: '等待審查' },
+        { name: '夢話夥伴', iconText: '夢話', icon: 'https://play-lh.googleusercontent.com/uIIqGzRT6gmM6K1xS_Rc8g1VWOPgPWsnxVbh0hK1HvU1rbj8RnwevJ7T3vBtjRG5xKhuMCoeAopm0TsYE1jGSA=s0', promo: 'promo/dreambuddy.jpg', aliases: '陪你入眠的 AI 夥伴', category: 'AI', desc: '陪你在半夢半醒間說出夢的片段，並將對話整理成當晚的夢日誌。', source: 'Android', googlePackage: 'com.hankhuang.dreambuddy', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hankhuang.dreambuddy`, googleStatus: '正式版', iosStatus: 'iOS 尚未建立' },
+        { name: '房東投報快算', iconText: '房東', icon: 'https://play-lh.googleusercontent.com/_VHMIDHTOVJsemsyO4-0Mw1MnYvlc4eWupMFjWi0LogzI8OwcE7fmQICq9OFT3V3q57ff0aVfrE8lCEyBUkJ_Q=s0', promo: 'promo/property.jpg', category: '金融', desc: '輸入房屋投資數據，快速計算年化報酬率，方便房東評估物件投報。', source: 'Android', googlePackage: 'com.hank_huang0516_2.PropertyInvestmentCalculator', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hank_huang0516_2.PropertyInvestmentCalculator`, googleStatus: '正式版', iosStatus: 'iOS 尚未建立' },
         { name: '活字戰記：巔峰之戰', iconText: '巔峰', category: '遊戲', desc: '從《雙城烽火》連結帳號，進行 1v1 或四人混戰、守城交鋒、戰鑄裝備與天梯競賽。', source: 'Android', googlePackage: 'com.hankhuang.wordcivilization.summitbattle', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hankhuang.wordcivilization.summitbattle`, googleStatus: '草稿・內部測試', iosStatus: 'iOS 尚未建立' },
-        { name: '浪浪地圖', iconText: '浪浪', icon: 'https://play-lh.googleusercontent.com/YmqbLcgXj4RwHXHUg4ptIv3dlTwB8EAOC_-qRmgOOrgdSS8divnRRNUiQYJIiUbQAqLqY4vSrEr-BTgPyX1y=s0', promo: 'promo/straymap.jpg', guideUrl: 'guides/stray-map/', aliases: 'Stray Map', category: '公益', desc: '看見、記錄並持續更新世界各地的流浪動物目擊資訊。', source: 'Android / iOS', googlePackage: 'app.straymap.mobile', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}app.straymap.mobile`, googleStatus: '正式版', iosId: '6802017209', iosUrl: `${APP_STORE_PREFIX}6802017209`, iosStatus: '等待審查' },
-        { name: '睡公園：免費生存地圖', iconText: '睡公', icon: 'https://play-lh.googleusercontent.com/DQGRcX2aZ_YYFUSPEHZtUzvfnh2ddjVjqmq5I2TU1tgXVvefkpSyff7_FlRduiZVW_7U-Rlyzcpg6SIfQLmPcY0=s0', promo: 'promo/sleeppark.jpg', guideUrl: 'guides/sleep-park/', category: '生活', desc: '整合台股大盤與地圖，協助尋找附近公園、飲水機、公廁、免費 Wi-Fi 與圖書館等免費資源。', source: 'Android / iOS', googlePackage: 'com.hankhuang.sleeppark', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hankhuang.sleeppark`, googleStatus: '正式版', iosId: '6792406616', iosUrl: `${APP_STORE_PREFIX}6792406616`, iosStatus: '等待審查' },
-        { name: '這樣出門', iconText: '這樣', icon: 'https://play-lh.googleusercontent.com/39Z0aRQXIDURF9EV6wqmAuAA-wtaH7gXYRTzyHZ2jMirdC5In3fCf9mxY35QZNiNMt1z9Q5EZoznhbf2Ms71yw=s0', promo: 'promo/chumen.jpg', guideUrl: 'guides/chumen/', category: '生活', desc: '整合天氣、空氣品質、YouBike 與公車資訊，在同一頁提供即時出門建議。', source: 'Android / iOS', googlePackage: 'com.hankhuang.chumen', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hankhuang.chumen`, googleStatus: '正式版', iosId: '6795006771', iosUrl: `${APP_STORE_PREFIX}6795006771`, iosStatus: '正在等待審查' },
+        { name: '浪浪地圖', iconText: '浪浪', icon: 'https://play-lh.googleusercontent.com/YmqbLcgXj4RwHXHUg4ptIv3dlTwB8EAOC_-qRmgOOrgdSS8divnRRNUiQYJIiUbQAqLqY4vSrEr-BTgPyX1y=s0', promo: 'promo/straymap.jpg', aliases: 'Stray Map', category: '公益', desc: '看見、記錄並持續更新世界各地的流浪動物目擊資訊。', source: 'Android / iOS', googlePackage: 'app.straymap.mobile', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}app.straymap.mobile`, googleStatus: '正式版', iosId: '6802017209', iosUrl: `${APP_STORE_PREFIX}6802017209`, iosStatus: '等待審查' },
+        { name: '睡公園：免費生存地圖', iconText: '睡公', icon: 'https://play-lh.googleusercontent.com/DQGRcX2aZ_YYFUSPEHZtUzvfnh2ddjVjqmq5I2TU1tgXVvefkpSyff7_FlRduiZVW_7U-Rlyzcpg6SIfQLmPcY0=s0', promo: 'promo/sleeppark.jpg', category: '生活', desc: '整合台股大盤與地圖，協助尋找附近公園、飲水機、公廁、免費 Wi-Fi 與圖書館等免費資源。', source: 'Android / iOS', googlePackage: 'com.hankhuang.sleeppark', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hankhuang.sleeppark`, googleStatus: '正式版', iosId: '6792406616', iosUrl: `${APP_STORE_PREFIX}6792406616`, iosStatus: '等待審查' },
+        { name: '這樣出門', iconText: '這樣', icon: 'https://play-lh.googleusercontent.com/39Z0aRQXIDURF9EV6wqmAuAA-wtaH7gXYRTzyHZ2jMirdC5In3fCf9mxY35QZNiNMt1z9Q5EZoznhbf2Ms71yw=s0', promo: 'promo/chumen.jpg', category: '生活', desc: '整合天氣、空氣品質、YouBike 與公車資訊，在同一頁提供即時出門建議。', source: 'Android / iOS', googlePackage: 'com.hankhuang.chumen', googleUrl: `${GOOGLE_PLAY_STORE_PREFIX}com.hankhuang.chumen`, googleStatus: '正式版', iosId: '6795006771', iosUrl: `${APP_STORE_PREFIX}6795006771`, iosStatus: '正在等待審查' },
       ];
 
       const grid = document.getElementById('appGrid');
@@ -517,13 +490,7 @@
       const sortSelect = document.getElementById('sortSelect');
       const stats = document.getElementById('stats');
 
-      const categoryPriority = ['遊戲', '公益', '生活'];
-      const categoryRank = (category) => {
-        const index = categoryPriority.indexOf(category);
-        return index === -1 ? categoryPriority.length : index;
-      };
-      const categories = ['全部', ...new Set(appList.map((app) => app.category))
-        .values()].sort((a, b) => categoryRank(a) - categoryRank(b) || a.localeCompare(b, 'zh-Hant'));
+      const categories = ['全部', ...new Set(appList.map((app) => app.category))];
       let activeCategory = '全部';
 
       function renderChips() {
@@ -559,22 +526,20 @@
       }
 
       function createStoreLink(url, platform, status) {
-        const available = Boolean(url && /正式版|已可發佈|已可發布|已發佈|已發布/.test(status || ''));
-        const anchor = document.createElement(available ? 'a' : 'span');
-        anchor.className = `store-link ${platform}${available ? '' : ' unavailable'}`;
-        if (available) {
+        const anchor = document.createElement(url ? 'a' : 'span');
+        anchor.className = `store-link ${platform}${url ? '' : ' unavailable'}`;
+        if (url) {
           anchor.href = url;
           anchor.target = '_blank';
           anchor.rel = 'noreferrer';
-        } else {
-          anchor.setAttribute('aria-disabled', 'true');
         }
-        const label = platform === 'google' ? 'Google Play' : 'App Store';
-        const icon = platform === 'google' ? 'google-play-icon.svg' : 'app-store-icon.svg';
-        const pending = /等待審查|審查中/.test(status || '') ? '審查中' : '開發中';
-        anchor.innerHTML = available
-          ? label
-          : `<img src="${icon}" alt="" aria-hidden="true"> ${label} <small>${pending}</small>`;
+
+        if (platform === 'google') {
+          anchor.innerHTML = `▶ Google Play <small>${status}</small>`;
+        } else {
+          anchor.innerHTML = ` App Store <small>${status}</small>`;
+        }
+
         return anchor;
       }
 
@@ -622,7 +587,7 @@
       }
 
     function createPromo(app) {
-      if (!app.promo || app.guideUrl) return null;
+      if (!app.promo) return null;
       const media = document.createElement('figure');
       media.className = 'promo-media';
       const img = document.createElement('img');
@@ -654,14 +619,6 @@
         textWrap.appendChild(meta);
         head.appendChild(icon);
         head.appendChild(textWrap);
-        if (app.guideUrl) {
-          const guide = document.createElement('a');
-          guide.className = 'guide-link';
-          guide.href = app.guideUrl;
-          guide.textContent = '查看 APP 介紹';
-          guide.setAttribute('aria-label', `查看 ${app.name} APP 介紹`);
-          head.appendChild(guide);
-        }
 
         const desc = document.createElement('p');
         desc.className = 'desc';
@@ -672,6 +629,11 @@
         storeLinks.appendChild(createStoreLink(app.googleUrl, 'google', app.googleStatus));
         storeLinks.appendChild(createStoreLink(app.iosUrl, 'apple', app.iosStatus));
 
+        const status = document.createElement('div');
+        status.className = 'status';
+        status.classList.toggle('warn', `${app.googleStatus} ${app.iosStatus}`.includes('草稿') || `${app.googleStatus} ${app.iosStatus}`.includes('等待') || `${app.googleStatus} ${app.iosStatus}`.includes('尚未'));
+        status.textContent = `Google Play：${app.googleStatus} ・ App Store：${app.iosStatus}`;
+
       card.appendChild(head);
       const promo = createPromo(app);
       if (promo) {
@@ -679,6 +641,7 @@
       }
       card.appendChild(desc);
         card.appendChild(storeLinks);
+        card.appendChild(status);
 
         return card;
       }
@@ -695,7 +658,7 @@
           if (sortSelect.value === 'name') {
             return a.name.localeCompare(b.name, 'zh-Hant');
           }
-          return categoryRank(a.category) - categoryRank(b.category) || a.category.localeCompare(b.category, 'zh-Hant') || a.name.localeCompare(b.name, 'zh-Hant');
+          return a.category.localeCompare(b.category, 'zh-Hant') || a.name.localeCompare(b.name, 'zh-Hant');
         });
 
         grid.innerHTML = '';
@@ -745,11 +708,11 @@
       renderChips();
       renderGrid();
     </script>
-    <script src="community-v6.js?v=55d03f4"></script>
-    <a
-      href="reports/"
-      aria-label="查看 APP 趨勢週報"
-      style="position:fixed;right:22px;bottom:22px;z-index:9999;display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border:1px solid rgba(67,93,75,.45);border-radius:999px;background:rgba(255,253,247,.94);box-shadow:0 10px 30px rgba(54,45,31,.14);color:#3f5c49;font:500 15px 'Noto Sans TC',sans-serif;text-decoration:none;backdrop-filter:blur(12px)"
-    >趨勢週報 <span aria-hidden="true">↗</span></a>
+    <script src="community-v6.js"></script>
+  <a
+    href="./reports/"
+    aria-label="查看 APP 趨勢週報"
+    style="position:fixed;right:22px;bottom:22px;z-index:9999;display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border:1px solid rgba(67,93,75,.45);border-radius:999px;background:rgba(255,253,247,.94);box-shadow:0 10px 30px rgba(54,45,31,.14);color:#3f5c49;font:500 15px 'Noto Sans TC',sans-serif;text-decoration:none;backdrop-filter:blur(12px)"
+  >趨勢週報 <span aria-hidden="true">↗</span></a>
 </body>
 </html>
