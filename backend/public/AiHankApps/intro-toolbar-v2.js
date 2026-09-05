@@ -4,10 +4,12 @@
   if (!script || !Object.prototype.hasOwnProperty.call(script.dataset, 'introToolbar')) return;
 
   const app = script.dataset.app || 'APP';
-  const google = script.dataset.google;
-  const apple = script.dataset.apple;
-  const googleStatus = script.dataset.googleStatus || (google ? '正式版' : '開發中');
-  const appleStatus = script.dataset.appleStatus || (apple ? '已發佈' : '開發中');
+  const catalog = window.AIHANK_APP_CATALOG?.apps || [];
+  const record = catalog.find(item => item.name === app || (item.googleUrl && item.googleUrl === script.dataset.google));
+  const google = record ? record.googleUrl : script.dataset.google;
+  const apple = record ? record.iosUrl : script.dataset.apple;
+  const googleStatus = record ? (record.publicGoogle ? '正式版' : '開發中') : (script.dataset.googleStatus || '開發中');
+  const appleStatus = record ? (record.publicApple ? '已上架' : '開發中') : (script.dataset.appleStatus || '開發中');
   const shortcuts = (script.dataset.shortcuts || '').split('|').map((entry) => {
     const splitAt = entry.lastIndexOf(':');
     return splitAt > 0 ? { label: entry.slice(0, splitAt), href: entry.slice(splitAt + 1) } : null;
@@ -39,7 +41,7 @@
 
   const stores = document.createElement('div');
   stores.className = 'portfolio-intro-toolbar__stores';
-  const isReleased = (status, url) => Boolean(url && /正式版|已可發佈|已可發布|已發佈|已發布/.test(status));
+  const isReleased = (status, url) => Boolean(url && ['正式版', '已上架', '已可發佈', '已可發布', '已發佈', '已發布'].includes(status));
   const storeAction = (platform, url, status, mark, caption, label) => {
     const available = isReleased(status, url);
     const action = document.createElement(available ? 'a' : 'span');

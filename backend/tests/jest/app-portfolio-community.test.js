@@ -4,6 +4,12 @@ describe('app portfolio community validation', () => {
     test('accepts only portfolio app ids', () => {
         expect(community.isValidAppId('eclawbot')).toBe(true);
         expect(community.isValidAppId('unknown-app')).toBe(false);
+        const catalog = require('../../public/AiHankApps/app-catalog.json');
+        for (const app of catalog.apps) {
+            expect(community.isValidAppId(app.communityId)).toBe(true);
+        }
+        expect(catalog.apps.map(app => app.communityId)).toEqual(expect.arrayContaining(['anthill', 'paper-flick-soldiers', 'rebound']));
+        expect(catalog.apps.some(app => app.googlePackage === 'com.twopigs.echoesofnames')).toBe(false);
     });
 
     test('hashes valid visitor ids without storing raw ids', () => {

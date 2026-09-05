@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const express = require('express');
 
 const APP_IDS = new Set([
+    ...require('./public/AiHankApps/app-catalog.json').apps.map(app => app.communityId),
     'eclawbot',
     'typeforge-twin-cities',
     'weesh',

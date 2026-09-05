@@ -733,10 +733,10 @@
           name.textContent = app.name;
           var values = [
             ["分類", app.category],
-            ["雙平台歷史下載", number.format(app.downloadsHistory)],
-            ["AdMob 七日", money.format(app.admobRevenue)],
+            ["雙平台歷史下載", app.downloadsHistory === null ? "尚無數據" : number.format(app.downloadsHistory)],
+            ["AdMob 七日", app.admobRevenue === null ? "尚無數據" : money.format(app.admobRevenue)],
             ["評分", app.rating === null ? "尚無" : app.rating.toFixed(1)],
-            ["當機／ANR", number.format(app.crashReports)]
+            ["當機／ANR", app.crashReports === null ? "尚無數據" : number.format(app.crashReports)]
           ];
           row.appendChild(name);
           values.forEach(function (value) {
