@@ -206,7 +206,9 @@
       "publicApple": false,
       "googleStoreName": "REBOUND Prototype",
       "iosStoreName": "REBOUND：元素戰機",
-      "checkedAt": "2026-09-05T11:18:38.611Z"
+      "checkedAt": "2026-09-05T11:18:38.611Z",
+      "guide": "https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site/",
+      "guideLabel": "完整攻略"
     },
     {
       "name": "睡公園：免費生存地圖",

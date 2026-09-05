@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-05T12:11:27.636Z",
+  "catalogCheckedAt": "2026-09-05T11:18:38.611Z",
+  "guides": [
+    {
+      "id": "eclawbot",
+      "name": "EClawbot",
+      "renderedHash": "91820a8bef40a8553cd12a00faa6a765d5535be458b8e421fa175788ad3271e1"
+    },
+    {
+      "id": "typeforge-twin-cities",
+      "name": "活字戰紀：雙城烽火",
+      "renderedHash": "5599cd4a20aa1667e631f6098438a2e30e36c129b62189fe3f4577cb35f08491"
+    },
+    {
+      "id": "weesh",
+      "name": "Weesh",
+      "renderedHash": "941fa49d2bc29dbe4ee07685aa4a7210b8e5d9f4f05cf0ecc078717f8fd93b41"
+    },
+    {
+      "id": "doomsday-index",
+      "name": "世界末日了沒",
+      "renderedHash": "af50d09811609e1df01867afe6dfc81af3021fc12a5d682037a827d9a2337d83"
+    },
+    {
+      "id": "dreambuddy",
+      "name": "夢話夥伴",
+      "renderedHash": "ce47b109fc416351e8ad5e016b9c3f7b5039e4346148daa1ec310bab7a9c2a73"
+    },
+    {
+      "id": "property-roi",
+      "name": "房東投報快算",
+      "renderedHash": "e36d4e4609597108e5bcef322a9faf7e89744997c81de3f2c4a8c7e27f6f48ca"
+    },
+    {
+      "id": "stray-map",
+      "name": "浪浪地圖",
+      "renderedHash": "d81e8c010cd3a0cf0cfe14c5265d02ba75232e60e6c9054c75fb4da1b499ec0d"
+    },
+    {
+      "id": "sleep-park",
+      "name": "睡公園：免費生存地圖",
+      "renderedHash": "298c3bef31747614f504367daa1631d3ec68706291631a5eb09c95712b6f5bad"
+    },
+    {
+      "id": "chumen",
+      "name": "這樣出門",
+      "renderedHash": "2696e6be75ad5ef22ea703055c0a9bfd9e24817e07a41754c45e02ad5959de1e"
+    },
+    {
+      "id": "rebound",
+      "name": "REBOUND：元素戰機",
+      "renderedHash": "024e2afebca47cc1896ff1b915323d6db18e4e59af92cce6177d40d56c33cb57",
+      "externalProof": {
+        "url": "https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site",
+        "gameVersion": "0.51.0",
+        "dataHash": "e8a931c79b1b5d72a27621966e5226e70598c2dc38a22232d54920301137489e"
+      }
+    }
+  ]
+}

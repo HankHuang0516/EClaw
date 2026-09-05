@@ -35,7 +35,7 @@
     return [...document.querySelectorAll('h3')].map(heading => {
       const name = heading.textContent.trim();
       const record = typeof appList !== 'undefined' ? appList.find(app => app.name === name) : null;
-      const config = apps[name] || (record?.communityId ? { id: record.communityId, shots: [] } : null);
+      const config = apps[name] || (record?.communityId ? { id: record.communityId, shots: [], guide: record.guide, guideLabel: record.guideLabel } : null);
       if (!config) return null;
       return { heading, config, card: heading.closest('article, .app-card, .card') || heading.parentElement.parentElement };
     }).filter(Boolean);
