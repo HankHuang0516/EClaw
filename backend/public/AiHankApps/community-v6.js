@@ -33,7 +33,9 @@
 
   function findCards() {
     return [...document.querySelectorAll('h3')].map(heading => {
-      const config = apps[heading.textContent.trim()];
+      const name = heading.textContent.trim();
+      const record = typeof appList !== 'undefined' ? appList.find(app => app.name === name) : null;
+      const config = apps[name] || (record?.communityId ? { id: record.communityId, shots: [] } : null);
       if (!config) return null;
       return { heading, config, card: heading.closest('article, .app-card, .card') || heading.parentElement.parentElement };
     }).filter(Boolean);
@@ -100,7 +102,7 @@
     actions.className = 'guide-actions';
     const link = document.createElement('a');
     link.className = 'guide-link';
-    link.href = config.guide;
+    link.href = new URL(config.guide, 'https://eclawbot.com/AiHankApps/').href;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     const label = config.guideLabel || '查看 APP 介紹';
