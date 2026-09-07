@@ -130,6 +130,7 @@ async function addComment(pool, appId, hash, nickname, content) {
 
 function createRouter(getPool) {
     const router = express.Router();
+    router.use('/traffic', require('./app-portfolio-analytics').createRouter(getPool));
     router.use(express.json({ limit: '8kb' }));
 
     router.use('/apps/:appId', (req, res, next) => {
