@@ -256,3 +256,14 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', enhance);
   else enhance();
 })();
+
+// Shared portfolio/intro telemetry. Keep this hook during source synchronization.
+(() => {
+  if (document.querySelector('script[data-portfolio-traffic-loader]')) return;
+  const source = document.currentScript;
+  if (!source) return;
+  const tracker = document.createElement('script');
+  tracker.src = new URL('portfolio-analytics.js?v=traffic-20260907', source.src).href;
+  tracker.dataset.portfolioTrafficLoader = 'true';
+  document.head.appendChild(tracker);
+})();
