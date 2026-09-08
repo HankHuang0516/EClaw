@@ -1,0 +1,48 @@
+name: AiHankApps Report CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/public/AiHankApps/reports/**'
+      - 'backend/public/AiHankApps/app-catalog.json'
+      - 'tools/aihankapps-reporting/**'
+      - '.github/workflows/aihankapps-report-ci.yml'
+      - '.github/workflows/pr-ci-hard-gate.yml'
+  push:
+    branches: ['**']
+    paths:
+      - 'backend/public/AiHankApps/reports/**'
+      - 'backend/public/AiHankApps/app-catalog.json'
+      - 'tools/aihankapps-reporting/**'
+      - '.github/workflows/aihankapps-report-ci.yml'
+      - '.github/workflows/pr-ci-hard-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  reports:
+    name: AiHankApps report regression and release integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Historical ingestion and failed-publication regression tests
+        run: node --test tools/aihankapps-reporting/scripts/*.test.mjs
+      - name: Verify public artifact hashes, catalog parity and renderer source
+        run: |
+          node --input-type=module <<'JS'
+          import {readFile} from 'node:fs/promises';
+          import {validateRelease} from './tools/aihankapps-reporting/scripts/report-release.mjs';
+          const root = 'backend/public/AiHankApps';
+          const catalog = JSON.parse(await readFile(root + '/app-catalog.json', 'utf8'));
+          await validateRelease(root + '/reports', catalog);
+          const source = await readFile('tools/aihankapps-reporting/reports/report-view.mjs', 'utf8');
+          const expected = '// Generated from report-view.mjs; do not edit directly.\n(function () {\n' + source.replace(/^export /gm, '') + '\n})();\n';
+          if (await readFile(root + '/reports/report-view.js', 'utf8') !== expected) throw new Error('Published renderer differs from tested source');
+          console.log('Report regression source and complete public release match.');
+          JS
