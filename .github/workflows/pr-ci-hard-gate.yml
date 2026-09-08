@@ -45,6 +45,15 @@ jobs:
 
             const groups = [
               {
+                label: 'AiHankApps Report CI',
+                when: path =>
+                  path.startsWith('backend/public/AiHankApps/reports/') ||
+                  path === 'backend/public/AiHankApps/app-catalog.json' ||
+                  path.startsWith('tools/aihankapps-reporting/') ||
+                  ['.github/workflows/aihankapps-report-ci.yml', '.github/workflows/pr-ci-hard-gate.yml'].includes(path),
+                checks: ['AiHankApps report regression and release integrity']
+              },
+              {
                 label: 'Backend CI',
                 when: path => path === 'i18n.js' || path.startsWith('backend/') || path === '.github/workflows/backend-ci.yml',
                 checks: ['ESLint', 'i18n syntax check', 'Jest unit tests']

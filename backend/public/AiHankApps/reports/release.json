@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-08T01:54:17.109Z",
+  "day": "2026-09-08",
+  "catalogHash": "e4e4f9db41497b0f291f1ded010972568e82095f93829dcaad9a2189917a0fbe",
+  "contentHash": "ed1107512e12f3a4b8ca944e6c0dad2711bc0456b07da515309abcd3c6c6e01c",
+  "files": {
+    "index.html": "73cfcba06aad0a2ed3156a70ca18ebbc4d5a29b9fa4414fb5924bf8ab63ab695",
+    "data.js": "7778a2ff3ceb54ab81df586df57599aaf1002101d6bfa2774983f846aa79498e",
+    "report-view.js": "f915f7d62b1473b1a0b1d8aedea05ecc327729a107f9e0077da941a7c5a0f5bf"
+  }
+}
