@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { fingerprint } from './report-core.mjs';
 import { atomicWrite } from './report-storage.mjs';
-import { requireFresh, validateRelease, applyRelease, requirePreservedHistory } from './report-release.mjs';
+import { requireFresh, validateRelease, applyRelease, requirePreservedHistory, versionReportIndex } from './report-release.mjs';
 
 const catalog = { apps: [{ communityId: 'one', name: 'One', category: 'Life' }] };
 async function fixture(fn) {
@@ -52,4 +52,15 @@ test('history ledger blocks deleted or overwritten source files but permits new 
   requirePreservedHistory(previous, { files: [...previous.files, { file: 'apple/new.tsv', digest: 'new' }] });
   assert.throws(() => requirePreservedHistory(previous, { files: [] }), /disappeared/);
   assert.throws(() => requirePreservedHistory(previous, { files: [{ file: 'apple/day.tsv', digest: 'changed' }] }), /modified/);
+});
+test('report index cache-busts immutable data with the validated content hash', () => {
+  assert.equal(
+    versionReportIndex('<script src="./data.js"></script>', 'abc123'),
+    '<script src="./data.js?v=abc123"></script>',
+  );
+  assert.equal(
+    versionReportIndex('<script src="./data.js?v=old"></script>', 'new456'),
+    '<script src="./data.js?v=new456"></script>',
+  );
+  assert.throws(() => versionReportIndex('<script src="./other.js"></script>', 'abc123'), /missing/);
 });

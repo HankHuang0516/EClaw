@@ -12,6 +12,12 @@ const SOURCE = '/Users/hank/Desktop/Project/app-showcase-site';
 const ROOT = '/Users/hank/.local/share/AiHankApps/analytics';
 const TARGETS = [join(SOURCE, 'reports'), join(SOURCE, 'public/reports'), '/Users/hank/Desktop/Project/EClaw-ai-hank-apps-route/backend/public/AiHankApps/reports'];
 
+export function versionReportIndex(index, contentHash) {
+  const pattern = /src=(['"])\.\/data\.js(?:\?v=[^'"]+)?\1/;
+  if (!pattern.test(index)) throw new Error('Report index is missing the data.js script');
+  return index.replace(pattern, `src="./data.js?v=${contentHash}"`);
+}
+
 export function requirePreservedHistory(previous, current) {
   const files = new Map(current.files.map(file => [file.file, file.digest]));
   for (const file of previous.files || []) {
@@ -52,7 +58,8 @@ export async function prepareRelease({ root = ROOT, source = SOURCE, now = new D
   requirePreservedHistory(previous, audit);
   const view = await readFile(join(source, 'reports/report-view.mjs'), 'utf8');
   await atomicWrite(join(directory, 'report-view.js'), '// Generated from report-view.mjs; do not edit directly.\n(function () {\n' + view.replace(/^export /gm, '') + '\n})();\n');
-  await atomicWrite(join(directory, 'index.html'), await readFile(join(source, 'reports/index.html')));
+  const index = versionReportIndex(await readFile(join(source, 'reports/index.html'), 'utf8'), result.contentHash);
+  await atomicWrite(join(directory, 'index.html'), index);
   const hashes = {};
   for (const file of FILES) hashes[file] = sha(await readFile(join(directory, file)));
   const release = { schemaVersion: 2, generatedAt: now, day, catalogHash: fingerprint(catalog), contentHash: result.contentHash, files: hashes };
