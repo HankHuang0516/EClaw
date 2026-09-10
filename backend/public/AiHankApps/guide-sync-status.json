@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-09T01:18:09.110Z",
-  "catalogCheckedAt": "2026-09-09T01:05:09.552Z",
+  "checkedAt": "2026-09-10T01:15:40.149Z",
+  "catalogCheckedAt": "2026-09-10T01:02:46.186Z",
   "guides": [
     {
       "id": "eclawbot",
@@ -36,7 +36,7 @@
     {
       "id": "stray-map",
       "name": "浪浪地圖",
-      "renderedHash": "3e20acde99d6691f94ea19cfa321bd49be66b0b84414c07b73c7e9f5bd650cc2"
+      "renderedHash": "a5ba48aec9dc567c87a8b3f6abe92787a8f3da69c7527375154a54e641e08459"
     },
     {
       "id": "sleep-park",
@@ -51,11 +51,11 @@
     {
       "id": "rebound",
       "name": "REBOUND：元素戰機",
-      "renderedHash": "f19b8c3fedb91b47b543e60063e68f55fb7b3332f4ea2d1d75f0c36fbc581e69",
+      "renderedHash": "d38d0926a408536e225dd7bcc5dbc8a2924787bc209df841de98cd2e9353738e",
       "externalProof": {
         "url": "https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site",
         "gameVersion": "0.52.0",
-        "dataHash": "4366be0cbb9f3561519dd1d2a16180f5da0024fee80a664d50de79ba222dceb9"
+        "dataHash": "79871c3bc507f813545bb57101b711689f1501ed295ca08c44cce40a766cd705"
       }
     }
   ]
