@@ -51,8 +51,12 @@ describe('AiHankApps portfolio route', () => {
         const scriptResponse = await request(routeApp).get('/AiHankApps/reports/report-view.js');
         const imageResponse = await request(routeApp).get('/AiHankApps/promo/eclawbot.jpg');
 
-        expect(dataResponse.headers['cache-control']).toBe('no-cache');
-        expect(releaseResponse.headers['cache-control']).toBe('no-cache');
+        expect(dataResponse.headers['cache-control']).toBe('no-store, no-cache, max-age=0, must-revalidate');
+        expect(dataResponse.headers['cdn-cache-control']).toBe('no-store');
+        expect(dataResponse.headers['cloudflare-cdn-cache-control']).toBe('no-store');
+        expect(releaseResponse.headers['cache-control']).toBe('no-store, no-cache, max-age=0, must-revalidate');
+        expect(releaseResponse.headers['cdn-cache-control']).toBe('no-store');
+        expect(releaseResponse.headers['cloudflare-cdn-cache-control']).toBe('no-store');
         expect(scriptResponse.headers['cache-control']).toBe('public, max-age=600, must-revalidate');
         expect(imageResponse.headers['cache-control']).toBe('public, max-age=604800, immutable');
     });
