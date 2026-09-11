@@ -16,6 +16,7 @@ const pushContext = require('./push-context');
 const telemetry = require('./device-telemetry');
 const sitePageviews = require('./site-pageviews');
 const appPortfolioCommunity = require('./app-portfolio-community');
+const { setAiHankAppsCacheHeaders } = require('./aihankapps-cache-policy');
 const feedbackModule = require('./device-feedback');
 const chatIntegrity = require('./chat-integrity');
 const communitySsr = require('./community-ssr');
@@ -358,13 +359,7 @@ app.get(/^\/AiHankApps$/, (_req, res) => {
 app.use('/AiHankApps', express.static(path.join(__dirname, 'public/AiHankApps'), {
     etag: true,
     lastModified: true,
-    setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.html')) {
-            res.set('Cache-Control', 'public, max-age=600, must-revalidate');
-        } else {
-            res.set('Cache-Control', 'public, max-age=604800, immutable');
-        }
-    }
+    setHeaders: setAiHankAppsCacheHeaders
 }));
 // Landing page
 app.get(['/landing', '/landing.html'], (req, res) => {
