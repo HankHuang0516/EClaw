@@ -7,7 +7,9 @@ function setAiHankAppsCacheHeaders(res, filePath) {
     // These files are replaced in place by the daily publication pipeline.
     // They must revalidate so a new release manifest can never point at stale data.
     if (extension === '.html' || extension === '.json' || basename === 'data.js') {
-        res.set('Cache-Control', 'no-cache');
+        res.set('Cache-Control', 'no-store, no-cache, max-age=0, must-revalidate');
+        res.set('CDN-Cache-Control', 'no-store');
+        res.set('Cloudflare-CDN-Cache-Control', 'no-store');
         return;
     }
 
