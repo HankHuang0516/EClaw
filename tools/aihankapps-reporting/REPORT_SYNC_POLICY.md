@@ -36,6 +36,21 @@ Google history from 2023-01, Apple from 2026-08-01, AdMob from 2026-01-01, the
 configured historical windows. Retain older already-stored data indefinitely.
 These are collected-history totals, not a claim of complete lifetime coverage.
 
+## Public APP trends experience
+
+- The user-facing report name is `APP 趨勢`; it is refreshed by the daily 09:00
+  Asia/Taipei synchronization rather than presented as a weekly-only report.
+- Historical charts expose separate daily-change and per-APP cumulative views.
+  Never combine Google user installs and Apple first-download units into one
+  people count. The selected metric remains explicit.
+- Time controls live on the chart: wheel zoom and horizontal range selection
+  update the visible window. Display granularity changes automatically between
+  daily, weekly, monthly, quarterly and yearly buckets. Start and end dates are
+  derived read-only labels, not manual inputs.
+- Missing values must explain their cause. Use `不適用` for a platform the APP
+  does not support, a source-specific pending label for delayed/absent official
+  reports, and numeric zero only when an official observation confirms zero.
+
 ## Release sequence
 
 1. Complete the daily path; retain the returned private release directory.
