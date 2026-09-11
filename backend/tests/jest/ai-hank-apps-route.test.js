@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const request = require('supertest');
+const { setAiHankAppsCacheHeaders } = require('../../aihankapps-cache-policy');
 
 const backendDir = path.resolve(__dirname, '../..');
 const serverSource = fs.readFileSync(path.join(backendDir, 'index.js'), 'utf8');
@@ -12,10 +13,13 @@ describe('AiHankApps portfolio route', () => {
         expect(serverSource).toContain("app.get(/^\\/AiHankApps$/");
         expect(serverSource).toContain("res.redirect(308, '/AiHankApps/')");
         expect(serverSource).toContain("app.use('/AiHankApps', express.static");
+        expect(serverSource).toContain('setHeaders: setAiHankAppsCacheHeaders');
 
         const routeApp = express();
         routeApp.get(/^\/AiHankApps$/, (_req, res) => res.redirect(308, '/AiHankApps/'));
-        routeApp.use('/AiHankApps', express.static(portfolioDir));
+        routeApp.use('/AiHankApps', express.static(portfolioDir, {
+            setHeaders: setAiHankAppsCacheHeaders
+        }));
 
         const bareResponse = await request(routeApp).get('/AiHankApps');
         expect(bareResponse.status).toBe(308);
@@ -34,5 +38,22 @@ describe('AiHankApps portfolio route', () => {
         expect(html).toContain('我的APP作品集');
         expect(html).toContain("promo/eclawbot.jpg");
         expect(fs.existsSync(path.join(portfolioDir, 'promo', 'eclawbot.jpg'))).toBe(true);
+    });
+
+    test('revalidates mutable reports while retaining long-lived media caching', async () => {
+        const routeApp = express();
+        routeApp.use('/AiHankApps', express.static(portfolioDir, {
+            setHeaders: setAiHankAppsCacheHeaders
+        }));
+
+        const dataResponse = await request(routeApp).get('/AiHankApps/reports/data.js');
+        const releaseResponse = await request(routeApp).get('/AiHankApps/reports/release.json');
+        const scriptResponse = await request(routeApp).get('/AiHankApps/reports/report-view.js');
+        const imageResponse = await request(routeApp).get('/AiHankApps/promo/eclawbot.jpg');
+
+        expect(dataResponse.headers['cache-control']).toBe('no-cache');
+        expect(releaseResponse.headers['cache-control']).toBe('no-cache');
+        expect(scriptResponse.headers['cache-control']).toBe('public, max-age=600, must-revalidate');
+        expect(imageResponse.headers['cache-control']).toBe('public, max-age=604800, immutable');
     });
 });
