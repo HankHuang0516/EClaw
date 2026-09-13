@@ -89,6 +89,42 @@ export function aggregateGoogle(snapshots, catalog) {
   return { installs: sort(installs), stability: sort(stability), ratings: sort(ratings), duplicateCount: selected.duplicateCount, unmapped: [...unmapped].sort() };
 }
 
+function vitalsDate(row) {
+  const value = row.startTime || row.start_time;
+  if (!value) throw new Error('Google vitals row missing start time');
+  if (typeof value === 'string') return isoDate(value.slice(0, 10));
+  const year = Number(value.year), month = Number(value.month), day = Number(value.day);
+  return isoDate(`${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
+}
+
+function vitalsValue(row, type) {
+  const expected = `${type}Rate`;
+  const metric = (row.metrics || []).find(item => item.metric === expected);
+  if (!metric) throw new Error(`Google vitals row missing ${expected}`);
+  const raw = metric.decimalValue?.value ?? metric.decimalValue ?? metric.decimal_value?.value ?? metric.decimal_value;
+  const value = numeric(raw);
+  if (value === null || value < 0) throw new Error('Invalid Google vitals rate');
+  return value;
+}
+
+export function aggregateGoogleVitals(snapshots, catalog) {
+  const index = catalogIndex(catalog), candidates = [], unmapped = new Set();
+  for (const snapshot of snapshots) {
+    if (!['crash', 'anr'].includes(snapshot.type) || !snapshot.package || !Number.isFinite(snapshot.rank)) throw new Error('Invalid Google vitals snapshot identity');
+    const id = index.google.get(snapshot.package);
+    if (!id) unmapped.add(snapshot.package);
+    const dates = new Set();
+    for (const row of snapshot.response?.rows || []) {
+      const date = vitalsDate(row);
+      if (dates.has(date) || date < snapshot.from || date > snapshot.to) throw new Error('Google vitals duplicate or out-of-range date');
+      dates.add(date);
+      if (id) candidates.push({ key: `${snapshot.type}|${id}|${date}`, rank: snapshot.rank, value: { id, type: snapshot.type, date, value: vitalsValue(row, snapshot.type) } });
+    }
+  }
+  const selected = selectSnapshots(candidates);
+  return { points: selected.selected.map(item => item.value).sort((a, b) => a.id.localeCompare(b.id) || a.type.localeCompare(b.type) || a.date.localeCompare(b.date)), duplicateCount: selected.duplicateCount, unmapped: [...unmapped].sort() };
+}
+
 export function periodTotal(points, start, end) {
   start = isoDate(start); end = isoDate(end);
   if (start > end) throw new Error('Reversed aggregate period');

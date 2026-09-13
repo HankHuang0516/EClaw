@@ -13,15 +13,23 @@ export function expectedApplePending(program, args, error) {
   return program === 'asc' && args[0] === 'analytics' && args[1] === 'sales' && args.includes('--allow-missing') && error.code === 4 && /Report is not available yet\./.test(String(error.stderr || ''));
 }
 async function command(program, args) {
-  try {
-    const result = await execute(program, args, { timeout: 180000, maxBuffer: 20 * 1024 * 1024,
-      env: { ...process.env, GPLAY_PROFILE: 'aihankapps', ASC_PROFILE: 'Hank App Store Release', GPLAY_NO_UPDATE: '1', GPLAY_TIMEOUT: '60s' } });
-    return result.stdout;
-  } catch (error) {
-    // asc's --allow-missing handles absent past reports but currently still exits
-    // 4 for Apple's explicit not-yet-published response. This is not a zero day.
-    if (expectedApplePending(program, args, error)) return JSON.stringify({ available: false, reason: 'report-not-published' });
-    throw new Error(`${program} report request failed; previous publication retained`);
+  const attempts = program === 'gplay' ? 3 : 1;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const result = await execute(program, args, { timeout: 180000, maxBuffer: 20 * 1024 * 1024,
+        env: { ...process.env, GPLAY_PROFILE: 'aihankapps', ASC_PROFILE: 'Hank App Store Release', GPLAY_NO_UPDATE: '1', GPLAY_TIMEOUT: '60s' } });
+      return result.stdout;
+    } catch (error) {
+      // asc's --allow-missing handles absent past reports but currently still exits
+      // 4 for Apple's explicit not-yet-published response. This is not a zero day.
+      if (expectedApplePending(program, args, error)) return JSON.stringify({ available: false, reason: 'report-not-published' });
+      if (attempt < attempts) {
+        await new Promise(resolveDelay => setTimeout(resolveDelay, attempt * 1500));
+        continue;
+      }
+      const detail = String(error.stderr || error.message || '').replace(/\s+/g, ' ').trim().slice(0, 400);
+      throw new Error(`${program} report request failed after ${attempts} attempt${attempts === 1 ? '' : 's'}; previous publication retained${detail ? `: ${detail}` : ''}`);
+    }
   }
 }
 
@@ -65,6 +73,18 @@ export async function collectHistory({ day, root, catalogPath, output, weekly = 
           await appendSnapshot(join(root, 'history/google-play/snapshots', day, runId, kind, app.googlePackage, basename(file.path)), bytes);
         }
         checks.push({ source: 'google', id: app.communityId, kind, status: overviewFiles ? 'available' : 'not-yet-available', overviewFiles });
+      }
+      // Play Developer Reporting freshness trails store reports by one day.
+      // Query through D-2 so a normal daily run never fails on yesterday's unavailable boundary.
+      const vitalsEnd = new Date(Date.parse(day) - 2 * 86400000).toISOString().slice(0, 10);
+      const vitalsStart = new Date(Date.parse(vitalsEnd) - 34 * 86400000).toISOString().slice(0, 10);
+      for (const type of ['crash', 'anr']) {
+        const raw = await run('gplay', ['vitals', 'crashes', 'query', '--package', app.googlePackage, '--type', type, '--from', vitalsStart, '--to', vitalsEnd, '--paginate']);
+        const response = JSON.parse(raw || '{}') || {};
+        if (response.rows !== undefined && !Array.isArray(response.rows)) throw new Error('Google vitals response rows are invalid');
+        const envelope = { schemaVersion: 1, collectedAt, package: app.googlePackage, id: app.communityId, type, from: vitalsStart, to: vitalsEnd, response };
+        await appendSnapshot(join(root, 'history/google-play-vitals/snapshots', day, runId, type, `${app.googlePackage}.json`), JSON.stringify(envelope));
+        checks.push({ source: 'google-vitals', id: app.communityId, kind: `${type}Rate`, status: response.rows?.length ? 'available' : 'sample-insufficient', rows: response.rows?.length || 0 });
       }
     }
     const windowStart = new Date(Date.parse(day) - 35 * 86400000).toISOString().slice(0, 10);

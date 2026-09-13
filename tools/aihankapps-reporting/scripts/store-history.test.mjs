@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { aggregateApple, aggregateGoogle, catalogIndex, periodTotal } from './store-history.mjs';
+import { aggregateApple, aggregateGoogle, aggregateGoogleVitals, catalogIndex, periodTotal } from './store-history.mjs';
 import { fingerprint } from './report-core.mjs';
 
 const catalog = { apps: [
@@ -60,6 +60,18 @@ test('Google rejects duplicate dates, wrong month and wrong package', () => {
 test('stability preserves separate count units and unknown values', () => {
   const snapshot = { ...googleSnapshot([{ Date: '2026-09-01', 'Package Name': 'app.one', 'Daily Crashes': '0', 'Daily ANRs': '' }]), kind: 'crashes' };
   assert.deepEqual(aggregateGoogle([snapshot], catalog).stability, [{ id: 'one', date: '2026-09-01', crashes: 0, anrs: null }]);
+});
+test('vitals rates keep crash and ANR separate and prefer the newest snapshot', () => {
+  const row = (metric, value) => ({ startTime: { year: 2026, month: 9, day: 1 }, metrics: [{ metric, decimalValue: { value } }] });
+  const snapshots = [
+    { rank: 1, from: '2026-09-01', to: '2026-09-01', id: 'one', package: 'app.one', type: 'crash', response: { rows: [row('crashRate', '0.20')] } },
+    { rank: 2, from: '2026-09-01', to: '2026-09-01', id: 'one', package: 'app.one', type: 'crash', response: { rows: [row('crashRate', '0.10')] } },
+    { rank: 2, from: '2026-09-01', to: '2026-09-01', id: 'one', package: 'app.one', type: 'anr', response: { rows: [row('anrRate', '0.05')] } },
+  ];
+  assert.deepEqual(aggregateGoogleVitals(snapshots, catalog).points, [
+    { id: 'one', date: '2026-09-01', type: 'anr', value: 0.05 },
+    { id: 'one', date: '2026-09-01', type: 'crash', value: 0.1 },
+  ]);
 });
 test('period summaries distinguish missing, zero and partial coverage', () => {
   assert.deepEqual(periodTotal([], '2026-09-01', '2026-09-02'), { value: null, coveredDays: 0, expectedDays: 2, complete: false });

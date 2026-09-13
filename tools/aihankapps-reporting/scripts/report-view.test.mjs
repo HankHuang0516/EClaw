@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { automaticGranularity, chartBuckets, formatValue, missingReason, sortApps } from '../reports/report-view.mjs';
+import { automaticGranularity, chartBuckets, combinedAcquisition, formatValue, missingReason, sortApps } from '../reports/report-view.mjs';
 const app = (id, points) => ({ id, name: id, googleInstalls: { points, historyTotal: points.length ? points.reduce((sum, p) => sum + (p.value || 0), 0) : null } });
 test('view distinguishes unknown, zero and small revenue without dollar stability units', () => {
-  assert.equal(formatValue(null, 'crashes'), '官方資料待補');
-  assert.equal(formatValue(0, 'crashes'), '0');
+  assert.equal(formatValue(null, 'crashRate'), '官方資料待補');
+  assert.equal(formatValue(0, 'crashRate'), '0%');
   assert.ok(formatValue(0.000001, 'admobRevenue').includes('0.0001'));
-  assert.ok(!formatValue(1, 'crashes').includes('$'));
+  assert.ok(!formatValue(1, 'crashRate').includes('$'));
 });
 test('chart preserves missing calendar buckets instead of drawing fabricated zero', () => {
   const buckets = chartBuckets([app('one', [{ date: '2026-09-01', value: 0 }, { date: '2026-09-03', value: 4 }])], 'googleInstalls', 'day', '2026-09-01', '2026-09-03');
@@ -33,7 +33,14 @@ test('missing reasons distinguish unsupported platforms from delayed reports', (
   const androidOnly = { platforms: { google: true, apple: false } };
   assert.equal(missingReason(androidOnly, 'appleDownloads'), '不適用');
   assert.equal(missingReason(androidOnly, 'googleInstalls'), '官方報表尚未涵蓋');
-  assert.equal(missingReason(androidOnly, 'crashes'), '穩定性報表待補');
+  assert.equal(missingReason(androidOnly, 'crashRate'), '樣本量不足，Google 尚未提供率');
+});
+test('cross-platform visual total combines only observed source rows', () => {
+  const value = combinedAcquisition({
+    googleInstalls: { points: [{ date: '2026-09-01', value: 2 }] },
+    appleDownloads: { points: [{ date: '2026-09-01', value: 3 }, { date: '2026-09-02', value: 1 }] },
+  });
+  assert.deepEqual(value.points, [{ date: '2026-09-01', value: 5 }, { date: '2026-09-02', value: 1 }]);
 });
 test('every numeric sort keeps unknown last in both directions', () => {
   const apps = [app('missing', []), app('zero', [{ date: '2026-09-01', value: 0 }]), app('two', [{ date: '2026-09-01', value: 2 }])];

@@ -1,7 +1,7 @@
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { join, basename } from 'node:path';
 import { decodeReport, parseDelimited, fingerprint, normalizeAdmob, mergeAdmobSnapshots, daysBetween } from './report-core.mjs';
-import { aggregateApple, aggregateGoogle } from './store-history.mjs';
+import { aggregateApple, aggregateGoogle, aggregateGoogleVitals } from './store-history.mjs';
 
 async function files(directory) {
   const result = [];
@@ -12,6 +12,10 @@ async function files(directory) {
     else if (entry.isFile()) result.push(path);
   }
   return result.sort();
+}
+
+async function optionalFiles(directory) {
+  try { return await files(directory); } catch (error) { if (error.code === 'ENOENT') return []; throw error; }
 }
 
 async function provenance(path, envelope) {
@@ -37,7 +41,7 @@ function delimited(bytes, delimiter, columns) {
 }
 
 export async function loadReportHistory(root, catalog) {
-  const apple = [], google = [], admob = [], audit = [];
+  const apple = [], google = [], googleVitals = [], admob = [], audit = [];
   const pairedApple = new Map();
   for (const path of await files(join(root, 'app-store/sales'))) {
     const match = path.match(/(\d{4}-\d{2}-\d{2})\.tsv(?:\.gz)?$/);
@@ -60,6 +64,14 @@ export async function loadReportHistory(root, catalog) {
     google.push({ kind: match[1], package: match[2], month: `${match[3]}-${match[4]}`, rank: source.rank, rows });
     audit.push({ source: 'google', file: path.slice(root.length + 1), ...source, digest: fingerprint(rows) });
   }
+  for (const path of await optionalFiles(join(root, 'google-play-vitals'))) {
+    if (!path.endsWith('.json')) continue;
+    const envelope = JSON.parse(await readFile(path, 'utf8'));
+    if (envelope.schemaVersion !== 1 || !['crash', 'anr'].includes(envelope.type) || !envelope.package || !Array.isArray(envelope.response?.rows ?? [])) throw new Error('Invalid Google vitals history envelope');
+    const source = await provenance(path, envelope);
+    googleVitals.push({ ...envelope, rank: source.rank });
+    audit.push({ source: 'google-vitals', file: path.slice(root.length + 1), ...source, digest: fingerprint(envelope.response) });
+  }
   for (const path of await files(join(root, 'admob'))) {
     if (!path.endsWith('.json')) continue;
     const text = await readFile(path, 'utf8');
@@ -81,7 +93,7 @@ export async function loadReportHistory(root, catalog) {
     }
   }
   return {
-    apple: aggregateApple(apple, catalog), google: aggregateGoogle(google, catalog), revenue,
-    audit: { files: audit, sourceFiles: { apple: apple.length, google: google.length, admob: admob.length }, preservedCurrencies: [...new Set(admob.map(x => x.report.currency))].sort() },
+    apple: aggregateApple(apple, catalog), google: aggregateGoogle(google, catalog), googleVitals: aggregateGoogleVitals(googleVitals, catalog), revenue,
+    audit: { files: audit, sourceFiles: { apple: apple.length, google: google.length, googleVitals: googleVitals.length, admob: admob.length }, preservedCurrencies: [...new Set(admob.map(x => x.report.currency))].sort() },
   };
 }

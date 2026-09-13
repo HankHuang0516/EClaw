@@ -15,6 +15,7 @@ async function fixture(fn) {
     command: async (program, args) => {
       calls.push({ program, args });
       if (program === 'gplay') {
+        if (args[0] === 'vitals') return '{}';
         const kind = args[args.indexOf('--type') + 1];
         if (kind !== 'installs') return JSON.stringify({ files: [] });
         const path = join(args[args.indexOf('--dir') + 1], 'installs_app.one_202609_overview.csv');
@@ -30,7 +31,7 @@ async function fixture(fn) {
 test('daily collection downloads Google history and classifies unavailable Apple reports without fabricating rows', () => fixture(async (options, deps, calls) => {
   const result = await collectHistory(options, deps);
   assert.equal(result.status, 'succeeded');
-  assert.equal(calls.filter(call => call.program === 'gplay').length, 3);
+  assert.equal(calls.filter(call => call.program === 'gplay').length, 5);
   assert.equal(calls.filter(call => call.program === 'asc').length, 35);
   assert.ok(result.checks.filter(check => check.source === 'apple').every(check => check.status === 'not-yet-available'));
   assert.equal(JSON.parse(await readFile(options.output, 'utf8')).status, 'succeeded');
@@ -49,10 +50,10 @@ test('failed required API call cannot publish successful collection receipt', ()
 }));
 test('actual gplay null empty list requires matching package/type/range metadata', () => fixture(async (options, deps) => {
   const original = deps.command;
-  deps.command = async (program, args) => program === 'gplay' ? JSON.stringify({ files: null, package: 'app.one', type: args[args.indexOf('--type') + 1], from: '2026-08', to: '2026-09' }) : original(program, args);
+  deps.command = async (program, args) => program === 'gplay' && args[0] !== 'vitals' ? JSON.stringify({ files: null, package: 'app.one', type: args[args.indexOf('--type') + 1], from: '2026-08', to: '2026-09' }) : original(program, args);
   const result = await collectHistory(options, deps);
   assert.ok(result.checks.filter(check => check.source === 'google').every(check => check.status === 'not-yet-available'));
-  deps.command = async () => JSON.stringify({ files: null, package: 'wrong' });
+  deps.command = async (program, args) => program === 'gplay' && args[0] === 'vitals' ? '{}' : JSON.stringify({ files: null, package: 'wrong' });
   await assert.rejects(collectHistory(options, deps), /manifest missing files/);
 }));
 test('Apple explicit pending publication is unavailable, not an authentication bypass', () => {
@@ -62,3 +63,9 @@ test('Apple explicit pending publication is unavailable, not an authentication b
   assert.equal(expectedApplePending('asc', args, { code: 1, stderr: 'Report is not available yet.' }), false);
   assert.equal(expectedApplePending('gplay', args, { code: 4, stderr: 'Report is not available yet.' }), false);
 });
+test('Google vitals null response is preserved as sample-insufficient rather than zero', () => fixture(async (options, deps) => {
+  const original = deps.command;
+  deps.command = async (program, args) => program === 'gplay' && args[0] === 'vitals' ? 'null' : original(program, args);
+  const result = await collectHistory(options, deps);
+  assert.ok(result.checks.filter(check => check.source === 'google-vitals').every(check => check.status === 'sample-insufficient' && check.rows === 0));
+}));
