@@ -9,6 +9,7 @@ function fixture() {
     history: {
       apple: { points: [{ id: 'one', date: '2026-09-01', value: 2 }], days: ['2026-09-01'], unmapped: [] },
       google: { installs: [{ id: 'one', date: '2026-09-01', value: 0 }], ratings: [], stability: [], unmapped: [] },
+      googleVitals: { points: [], unmapped: [] },
       revenue: { currency: 'TWD', days: ['2026-09-01'], rows: [{ date: '2026-09-01', appId, platform: 'IOS', micros: 123456 }] },
     },
   };
@@ -49,7 +50,11 @@ test('model blocks currency, publisher and platform identity mismatches', () => 
 test('frozen build is reproducible and does not turn absent stability into money or zero', () => {
   assert.deepEqual(buildReportModel(fixture()), buildReportModel(fixture()));
   const result = buildReportModel(fixture());
-  assert.equal(result.units.crashes, 'events');
+  assert.equal(result.units.crashes, 'legacy-events');
+  assert.equal(result.units.crashRate, 'percent-of-distinct-users');
+  assert.equal(result.units.anrRate, 'percent-of-distinct-users');
   assert.equal(result.totals.crashes.historyTotal, null);
   assert.equal(result.totals.anrs.historyTotal, null);
+  assert.equal(result.totals.crashRate.historyMax, null);
+  assert.equal(result.totals.anrRate.historyMax, null);
 });

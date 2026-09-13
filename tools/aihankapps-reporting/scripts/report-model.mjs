@@ -44,6 +44,16 @@ function metric(points, start, end) {
   };
 }
 
+function rateMetric(points, start, end) {
+  const sorted = points.map(point => ({ date: point.date, value: point.value })).sort((a, b) => a.date.localeCompare(b.date));
+  if (new Set(sorted.map(point => point.date)).size !== sorted.length) throw new Error('Duplicate rate date');
+  for (const point of sorted) if (point.date > end || (point.value !== null && (!Number.isFinite(point.value) || point.value < 0))) throw new Error('Invalid rate observation');
+  const recent = sorted.filter(point => point.date >= start && point.date <= end && point.value !== null);
+  return { points: sorted, historyLatest: sorted.at(-1)?.value ?? null, historyMax: sorted.length ? Math.max(...sorted.map(point => point.value)) : null,
+    historyStart: sorted[0]?.date || null, historyEnd: sorted.at(-1)?.date || null,
+    last7: { value: recent.length ? Math.max(...recent.map(point => point.value)) : null, coveredDays: recent.length, expectedDays: 7, complete: recent.length === 7 } };
+}
+
 export function buildReportModel({ catalog, history, inventory, reviews = null, generatedAt, end, identities }) {
   if (!Number.isFinite(Date.parse(generatedAt))) throw new Error('Missing build timestamp');
   end = isoDate(end);
@@ -69,6 +79,7 @@ export function buildReportModel({ catalog, history, inventory, reviews = null, 
   const appMetrics = (points, id) => metric(points.filter(point => point.id === id && point.date <= end), start, end);
   const apps = [...catalog.apps].sort((a, b) => priority(a.category) - priority(b.category) || a.name.localeCompare(b.name, 'zh-TW')).map(app => {
     const stability = history.google.stability.filter(point => point.id === app.communityId && point.date <= end);
+    const vitals = (history.googleVitals?.points || []).filter(point => point.id === app.communityId && point.date <= end);
     const ratings = history.google.ratings.filter(point => point.id === app.communityId && point.date <= end && point.value !== null).sort((a, b) => a.date.localeCompare(b.date));
     return {
       id: app.communityId, name: app.name, category: app.category,
@@ -76,6 +87,8 @@ export function buildReportModel({ catalog, history, inventory, reviews = null, 
       googleInstalls: appMetrics(history.google.installs, app.communityId),
       appleDownloads: appMetrics(history.apple.points, app.communityId),
       admobRevenue: metric(revenue.has(app.communityId) ? moneyPoints(revenue.get(app.communityId)) : [], start, end),
+      crashRate: rateMetric(vitals.filter(point => point.type === 'crash'), start, end),
+      anrRate: rateMetric(vitals.filter(point => point.type === 'anr'), start, end),
       crashes: metric(stability.map(point => ({ date: point.date, value: point.crashes })), start, end),
       anrs: metric(stability.map(point => ({ date: point.date, value: point.anrs })), start, end),
       googleRating: ratings.length ? { date: ratings.at(-1).date, value: ratings.at(-1).value } : null,
@@ -97,12 +110,19 @@ export function buildReportModel({ catalog, history, inventory, reviews = null, 
       complete: expectedAppDays > 0 && observedAppDays === expectedAppDays };
     return result;
   };
+  const aggregateRate = field => {
+    const points = apps.flatMap(app => app[field].points);
+    const recent = points.filter(point => point.date >= start && point.date <= end && point.value !== null);
+    const expectedAppDays = apps.filter(app => app.platforms.google).length * 7;
+    return { points: [], historyLatest: null, historyMax: points.length ? Math.max(...points.map(point => point.value)) : null, historyStart: null, historyEnd: null,
+      last7: { value: recent.length ? Math.max(...recent.map(point => point.value)) : null, observedAppDays: recent.length, expectedAppDays, complete: expectedAppDays > 0 && recent.length === expectedAppDays } };
+  };
   const model = {
     schemaVersion: 2, mode: 'real', generatedAt, catalogCheckedAt: catalog.checkedAt || null,
     period: { start, end, days: daysBetween(start, end).length }, currency: 'TWD',
-    units: { googleInstalls: 'daily-user-installs', appleDownloads: 'first-download-units', admobRevenue: 'TWD', crashes: 'events', anrs: 'events' },
+    units: { googleInstalls: 'daily-user-installs', appleDownloads: 'first-download-units', admobRevenue: 'TWD', crashRate: 'percent-of-distinct-users', anrRate: 'percent-of-distinct-users', crashes: 'legacy-events', anrs: 'legacy-events' },
     apps, reviews,
-    totals: { googleInstalls: aggregate('googleInstalls'), appleDownloads: aggregate('appleDownloads'), admobRevenue: metric(moneyPoints(publisher), start, end), unallocatedRevenue: metric(moneyPoints(unallocated), start, end), crashes: aggregate('crashes'), anrs: aggregate('anrs') },
+    totals: { googleInstalls: aggregate('googleInstalls'), appleDownloads: aggregate('appleDownloads'), admobRevenue: metric(moneyPoints(publisher), start, end), unallocatedRevenue: metric(moneyPoints(unallocated), start, end), crashRate: aggregateRate('crashRate'), anrRate: aggregateRate('anrRate'), crashes: aggregate('crashes'), anrs: aggregate('anrs') },
     coverage: {
       appleDays: history.apple.days, revenueDays,
       googleInstallAppCount: apps.filter(app => app.googleInstalls.points.length).length,
@@ -114,7 +134,7 @@ export function buildReportModel({ catalog, history, inventory, reviews = null, 
       'Google daily user installs and Apple first-download units are separate metrics, not unique people across platforms.',
       'Totals are observed values only; missing days remain unknown, not zero. Historical totals cover collected reports, not guaranteed lifetime totals.',
       'AdMob estimated revenue is TWD. Unallocated legacy revenue remains visible in account totals rather than being guessed or discarded.',
-      'Crash and ANR figures are event counts, not money or crash-free percentages. Missing stability data does not mean no crashes.',
+      'Crash rate and ANR rate are Google Play percentages of distinct users. Small samples may produce no official row and must remain unknown, not zero.',
     ],
   };
   return { ...model, contentHash: fingerprint(model) };

@@ -15,11 +15,21 @@ const report = (currency = 'TWD', day = 1) => [
 async function fixture(fn) {
   const root = await mkdtemp(join(tmpdir(), 'aihank-history-'));
   try {
-    for (const dir of ['app-store/sales', 'google-play', 'admob']) await mkdir(join(root, dir), { recursive: true });
+    for (const dir of ['app-store/sales', 'google-play', 'google-play-vitals', 'admob']) await mkdir(join(root, dir), { recursive: true });
     await writeFile(join(root, 'app-store/sales/2026-09-01.tsv'), tsv);
     await writeFile(join(root, 'app-store/sales/2026-09-01.tsv.gz'), gzipSync(tsv));
     await writeFile(join(root, 'google-play/installs_app.one_202609_overview.csv'), 'Date,Package name,Daily User Installs\n2026-09-01,app.one,3\n');
     await writeFile(join(root, 'admob/one.json'), JSON.stringify(report()));
+    await writeFile(join(root, 'google-play-vitals/crash.json'), JSON.stringify({
+      schemaVersion: 1,
+      collectedAt: '2026-09-08T00:00:00Z',
+      package: 'app.one',
+      id: 'one',
+      type: 'crash',
+      from: '2026-09-01',
+      to: '2026-09-07',
+      response: { rows: [{ startTime: { year: 2026, month: 9, day: 1 }, metrics: [{ metric: 'crashRate', decimalValue: { value: '0.25' } }] }] },
+    }));
     await fn(root);
   } finally { await rm(root, { recursive: true, force: true }); }
 }
@@ -28,7 +38,8 @@ test('loader handles real source formats and records private provenance', () => 
   assert.equal(result.apple.points[0].value, 2);
   assert.equal(result.apple.duplicateCount, 1);
   assert.equal(result.google.installs[0].value, 3);
-  assert.equal(result.audit.files.length, 4);
+  assert.equal(result.googleVitals.points[0].value, 0.25);
+  assert.equal(result.audit.files.length, 5);
   assert.equal(result.revenue.currency, 'TWD');
 }));
 test('conflicting Apple compressed pair fails closed regardless of mtime', () => fixture(async root => {

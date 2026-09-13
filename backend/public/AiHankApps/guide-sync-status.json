@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-11T02:50:33.130Z",
-  "catalogCheckedAt": "2026-09-11T02:47:56.704Z",
+  "checkedAt": "2026-09-13T14:32:23.577Z",
+  "catalogCheckedAt": "2026-09-13T14:22:59.469Z",
   "guides": [
     {
       "id": "eclawbot",
@@ -46,16 +46,16 @@
     {
       "id": "chumen",
       "name": "這樣出門",
-      "renderedHash": "e52463e3d397956b3656310fa5826f7c9db35bceb79cf9da615a09bb8c866a69"
+      "renderedHash": "dae6f2eb41c070e83086847056157bc77468d29f2dc02b6daa1bf92996e3528a"
     },
     {
       "id": "rebound",
       "name": "REBOUND：元素戰機",
-      "renderedHash": "d38d0926a408536e225dd7bcc5dbc8a2924787bc209df841de98cd2e9353738e",
+      "renderedHash": "907316c099085e48f0685c5c6f136cdf5f89205216c93a64d4740023a7454da5",
       "externalProof": {
         "url": "https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site",
         "gameVersion": "0.52.0",
-        "dataHash": "79871c3bc507f813545bb57101b711689f1501ed295ca08c44cce40a766cd705"
+        "dataHash": "d0fa7f1ddb48f5c7a09c55a0f8f1886aaa585268289d1c750631a0603f4b02c9"
       }
     }
   ]

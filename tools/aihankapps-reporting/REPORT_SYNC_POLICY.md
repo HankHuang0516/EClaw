@@ -18,7 +18,7 @@ manually fabricate an API response when a required step fails.
   snapshots replace prior versions, rather than being summed together.
 - An explicit official report-not-published response is unavailable, not zero.
   Authentication errors, incomplete responses, wrong schemas and corrupted files
-  stop publication. A missing crash report does not mean no crashes.
+  stop publication. Missing crash-rate or ANR-rate rows mean the official sample threshold was not met; they never mean zero.
 - All canonical catalog apps appear in reports, including newly added apps with
   unknown metrics. Keep names, categories and community IDs identical.
 - Google user installs, Apple first-download units and crash/ANR events have
@@ -35,6 +35,15 @@ of Apple/AdMob reports so delayed reports are retried. Monday collection request
 Google history from 2023-01, Apple from 2026-08-01, AdMob from 2026-01-01, the
 configured historical windows. Retain older already-stored data indefinitely.
 These are collected-history totals, not a claim of complete lifetime coverage.
+
+## Stability-rate and trend presentation
+
+- Public stability metrics use Google Play Developer Reporting API crash rate and ANR rate, expressed as percentages of distinct users. Legacy crash/ANR event counts remain private migration history only.
+- Vitals responses are stored as append-only dated snapshots. Empty API rows are preserved as sample-insufficient evidence and are never converted to zero.
+- Daily stability queries end at D-2 because Google Play Developer Reporting freshness trails store reports; using D-1 is a fail-closed scheduling error, not a zero-rate observation.
+- Summary cards with no current official value are hidden. Per-app tables retain the field and explain why it is unavailable.
+- Google user installs and Apple first downloads may be combined only as an explicitly labeled cross-platform visual trend. Their definitions differ, missing source dates are not zero-filled, and the result must not be described as unique people.
+- Chart time range is controlled directly by zoom and drag. Granularity automatically switches among day, week, month, quarter, and year.
 
 ## Public APP trends experience
 
