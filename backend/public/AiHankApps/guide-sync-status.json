@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-13T14:32:23.577Z",
-  "catalogCheckedAt": "2026-09-13T14:22:59.469Z",
+  "checkedAt": "2026-09-14T01:16:07.971Z",
+  "catalogCheckedAt": "2026-09-14T01:05:09.872Z",
   "guides": [
     {
       "id": "eclawbot",
@@ -51,11 +51,11 @@
     {
       "id": "rebound",
       "name": "REBOUND：元素戰機",
-      "renderedHash": "907316c099085e48f0685c5c6f136cdf5f89205216c93a64d4740023a7454da5",
+      "renderedHash": "6498a7490ffd21cd67418da305183c1c497550734c2a9712e2a9a6afe6f60fc5",
       "externalProof": {
         "url": "https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site",
         "gameVersion": "0.52.0",
-        "dataHash": "d0fa7f1ddb48f5c7a09c55a0f8f1886aaa585268289d1c750631a0603f4b02c9"
+        "dataHash": "d99a129960b51d98b2b08e8e5468779d897ffca9afce09d213a721e877038aed"
       }
     }
   ]

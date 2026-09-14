@@ -32,6 +32,7 @@ test('daily collection downloads Google history and classifies unavailable Apple
   const result = await collectHistory(options, deps);
   assert.equal(result.status, 'succeeded');
   assert.equal(calls.filter(call => call.program === 'gplay').length, 5);
+  assert.ok(calls.filter(call => call.program === 'gplay' && call.args[0] === 'vitals').every(call => call.args[call.args.indexOf('--to') + 1] === '2026-09-05'));
   assert.equal(calls.filter(call => call.program === 'asc').length, 35);
   assert.ok(result.checks.filter(check => check.source === 'apple').every(check => check.status === 'not-yet-available'));
   assert.equal(JSON.parse(await readFile(options.output, 'utf8')).status, 'succeeded');

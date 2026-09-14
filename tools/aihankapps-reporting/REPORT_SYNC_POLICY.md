@@ -40,7 +40,7 @@ These are collected-history totals, not a claim of complete lifetime coverage.
 
 - Public stability metrics use Google Play Developer Reporting API crash rate and ANR rate, expressed as percentages of distinct users. Legacy crash/ANR event counts remain private migration history only.
 - Vitals responses are stored as append-only dated snapshots. Empty API rows are preserved as sample-insufficient evidence and are never converted to zero.
-- Daily stability queries end at D-2 because Google Play Developer Reporting freshness trails store reports; using D-1 is a fail-closed scheduling error, not a zero-rate observation.
+- Daily stability queries end at D-3 because Google rejects an inclusive end date equal to its D-2 freshness boundary; later dates are a fail-closed scheduling error, not a zero-rate observation.
 - Summary cards with no current official value are hidden. Per-app tables retain the field and explain why it is unavailable.
 - Google user installs and Apple first downloads may be combined only as an explicitly labeled cross-platform visual trend. Their definitions differ, missing source dates are not zero-filled, and the result must not be described as unique people.
 - Chart time range is controlled directly by zoom and drag. Granularity automatically switches among day, week, month, quarter, and year.
