@@ -74,9 +74,9 @@ export async function collectHistory({ day, root, catalogPath, output, weekly = 
         }
         checks.push({ source: 'google', id: app.communityId, kind, status: overviewFiles ? 'available' : 'not-yet-available', overviewFiles });
       }
-      // Play Developer Reporting freshness trails store reports by one day.
-      // Query through D-2 so a normal daily run never fails on yesterday's unavailable boundary.
-      const vitalsEnd = new Date(Date.parse(day) - 2 * 86400000).toISOString().slice(0, 10);
+      // Google rejects an inclusive end date equal to its freshness boundary.
+      // At the 09:00 Taipei run that boundary is normally D-2, so query through D-3.
+      const vitalsEnd = new Date(Date.parse(day) - 3 * 86400000).toISOString().slice(0, 10);
       const vitalsStart = new Date(Date.parse(vitalsEnd) - 34 * 86400000).toISOString().slice(0, 10);
       for (const type of ['crash', 'anr']) {
         const raw = await run('gplay', ['vitals', 'crashes', 'query', '--package', app.googlePackage, '--type', type, '--from', vitalsStart, '--to', vitalsEnd, '--paginate']);
