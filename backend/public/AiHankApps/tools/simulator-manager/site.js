@@ -6,7 +6,7 @@ const copy = {
 const normalize = value => value && value.toLowerCase().startsWith("zh") ? "zh-Hant" : "en";
 const query = new URLSearchParams(location.search).get("lang");
 let lang = query ? normalize(query) : (localStorage.getItem("simManagerLang") || normalize(navigator.languages?.[0] || navigator.language));
-function applyLanguage(next){lang=normalize(next);localStorage.setItem("simManagerLang",lang);document.documentElement.lang=lang;document.querySelectorAll("[data-i18n]").forEach(el=>{const value=copy[lang][el.dataset.i18n];if(value!==undefined)el.innerHTML=value});document.querySelectorAll("[data-lang]").forEach(button=>button.classList.toggle("active",button.dataset.lang===lang));document.title=lang==="zh-Hant"?"Simulator Manager — Codex 共用模擬器管理工具":"Simulator Manager — Shared mobile testing for Codex"}
+function applyLanguage(next){lang=normalize(next);localStorage.setItem("simManagerLang",lang);document.documentElement.lang=lang;document.querySelectorAll("[data-sm-i18n]").forEach(el=>{const value=copy[lang][el.dataset.smI18n];if(value!==undefined)el.innerHTML=value});document.querySelectorAll("[data-lang]").forEach(button=>button.classList.toggle("active",button.dataset.lang===lang));document.title=lang==="zh-Hant"?"Simulator Manager — Codex 共用模擬器管理工具":"Simulator Manager — Shared mobile testing for Codex"}
 document.querySelectorAll("[data-lang]").forEach(button=>button.addEventListener("click",()=>applyLanguage(button.dataset.lang)));
 document.querySelectorAll("[data-copy]").forEach(button=>button.addEventListener("click",()=>copyText(button.dataset.copy)));
 document.querySelectorAll("[data-copy-key]").forEach(button=>button.addEventListener("click",()=>copyText(copy[lang][button.dataset.copyKey])));
