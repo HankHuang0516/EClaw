@@ -66,10 +66,19 @@
     </section>
 
     <section class="section shell install" id="install">
-      <div><p class="kicker" data-sm-i18n="installKicker">INSTALL</p><h2 data-sm-i18n="installTitle">One command. One sentence in Codex.</h2><p data-sm-i18n="installBody">The installer adds the CLI, Skill, public marketplace, and Plugin to your user account. It uses no sudo and refuses to replace active or unmanaged installations.</p></div>
+      <div><p class="kicker" data-sm-i18n="installKicker">INSTALL</p><h2 data-sm-i18n="installTitle">One command. One sentence in Codex.</h2><p data-sm-i18n="installBody">The installer adds the CLI, Skill, public marketplace, and Plugin, creates an Applications entry, then opens the floating dashboard and Quick Start. It uses no sudo and refuses to replace active or unmanaged installations.</p></div>
       <div class="terminal"><div class="terminal-bar"><span>Terminal</span><button type="button" class="copy" data-copy="curl -fsSL https://raw.githubusercontent.com/HankHuang0516/simulator-manager/main/install-tool.sh | sh" data-sm-i18n="copy">Copy</button></div><code>curl -fsSL https://raw.githubusercontent.com/<br class="mobile-break">HankHuang0516/simulator-manager/main/install-tool.sh | sh</code></div>
       <div class="prompt"><span data-sm-i18n="thenSay">Then start a new task and say</span><b data-sm-i18n="prompt">Use simulator-manager for this project.</b><button type="button" class="copy" data-copy-key="prompt" data-sm-i18n="copy">Copy</button></div>
       <div class="download-row"><a class="button primary" href="https://github.com/HankHuang0516/simulator-manager/releases/latest/download/simulator-manager-tool.zip" data-sm-i18n="downloadZip">Download ZIP</a><a class="text-link" href="https://github.com/HankHuang0516/simulator-manager/releases/latest/download/simulator-manager-tool.zip.sha256" data-sm-i18n="checksum">SHA-256 checksum</a><a class="text-link" href="https://github.com/HankHuang0516/simulator-manager/blob/main/README.md" data-sm-i18n="docs">Full documentation</a></div>
+    </section>
+
+    <section class="section shell onboarding">
+      <div><p class="kicker" data-sm-i18n="afterInstallKicker">AFTER INSTALL</p><h2 data-sm-i18n="afterInstallTitle">The dashboard opens. Quick Start takes it from there.</h2><p data-sm-i18n="afterInstallBody">A five-step guide explains when Codex should request a simulator, how automatic release works, and what happens when a task bypasses the shared lane.</p></div>
+      <div class="onboarding-grid">
+        <article><span>1</span><h3 data-sm-i18n="entryTitle">A visible app entry</h3><p data-sm-i18n="entryBody">Open Simulator Manager from Applications or the macOS menu bar at any time.</p></article>
+        <article><span>2</span><h3 data-sm-i18n="guideTitle">Built-in lessons</h3><p data-sm-i18n="guideBody">Replay Quick Start from the dashboard’s question-mark button whenever a task needs the rules.</p></article>
+        <article><span>3</span><h3 data-sm-i18n="coachTitle">Task-specific coaching</h3><p data-sm-i18n="coachBody">Registered tasks that use simctl, adb, emulator, or simulator tests outside a lease receive a safe managed replacement.</p></article>
+      </div>
     </section>
 
     <section class="section shell modes">
