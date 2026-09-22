@@ -29,11 +29,29 @@ test('cumulative chart keeps an observed running total without inventing missing
   assert.deepEqual(buckets.map(bucket => bucket.values[0].value), [2, 2, 6]);
   assert.deepEqual(buckets.map(bucket => bucket.values[0].coveredDays), [1, 0, 1]);
 });
+test('zoomed cumulative totals retain earlier history and remain separate for each APP', () => {
+  const apps = [
+    app('one', [{ date: '2026-08-31', value: 10 }, { date: '2026-09-02', value: 3 }]),
+    app('two', [{ date: '2026-09-01', value: 5 }, { date: '2026-09-03', value: 2 }]),
+    app('unknown', []),
+  ];
+  const buckets = chartBuckets(apps, 'googleInstalls', 'day', '2026-09-02', '2026-09-03', { cumulative: true });
+  assert.deepEqual(buckets.map(bucket => bucket.values.map(value => value.value)), [[13, 5, null], [13, 7, null]]);
+  assert.deepEqual(buckets.map(bucket => bucket.values.map(value => value.coveredDays)), [[1, 0, 0], [0, 1, 0]]);
+});
+test('quarter zoom uses calendar quarters and period-end cumulative totals', () => {
+  assert.equal(automaticGranularity('2023-01-01', '2026-09-15'), 'quarter');
+  const apps = [app('one', [{ date: '2026-03-31', value: 2 }, { date: '2026-04-01', value: 3 }])];
+  const buckets = chartBuckets(apps, 'googleInstalls', 'quarter', '2026-03-31', '2026-04-01', { cumulative: true });
+  assert.deepEqual(buckets.map(bucket => [bucket.label, bucket.values[0].value]), [['2026 Q1', 2], ['2026 Q2', 5]]);
+});
 test('missing reasons distinguish unsupported platforms from delayed reports', () => {
   const androidOnly = { platforms: { google: true, apple: false } };
   assert.equal(missingReason(androidOnly, 'appleDownloads'), '不適用');
   assert.equal(missingReason(androidOnly, 'googleInstalls'), '官方報表尚未涵蓋');
   assert.equal(missingReason(androidOnly, 'crashRate'), '樣本量不足，Google 尚未提供率');
+  assert.equal(missingReason(androidOnly, 'rating'), 'Google 評分報表尚未涵蓋');
+  assert.equal(missingReason({ platforms: { google: false, apple: true } }, 'rating'), '不適用');
 });
 test('cross-platform visual total combines only observed source rows', () => {
   const value = combinedAcquisition({
