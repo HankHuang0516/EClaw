@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-15T01:02:24.802Z",
+  "checkedAt": "2026-09-22T01:05:00.066Z",
   "country": "TW",
   "apps": [
     {
       "name": "浪浪地圖",
       "iconText": "浪浪",
-      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/16/dc/e9/16dce9d5-d5d2-bf73-388d-3cd4e7cc1c21/AppIcon-0-0-1x_U007epad-0-1-85-220.png/512x512bb.jpg",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/41/27/27/4127277f-1f0f-3226-fdca-ad617e5d03a7/AppIcon-0-0-1x_U007epad-0-1-85-220.png/512x512bb.jpg",
       "promo": "promo/straymap.jpg",
       "aliases": "Stray Map",
       "category": "公益",
@@ -23,8 +23,8 @@
       "publicApple": true,
       "googleStoreName": "浪浪地圖",
       "iosStoreName": "浪浪地圖 Stray Map",
-      "iosVersion": "1.2.1",
-      "checkedAt": "2026-09-15T01:02:24.802Z"
+      "iosVersion": "1.2.4",
+      "checkedAt": "2026-09-22T01:05:00.066Z"
     },
     {
       "name": "EClawbot",
@@ -46,7 +46,7 @@
       "googleStoreName": "EClawbot (OpenClaw)",
       "iosStoreName": "Eclawbot",
       "iosVersion": "1.0.1",
-      "checkedAt": "2026-09-15T01:02:24.802Z"
+      "checkedAt": "2026-09-22T01:05:00.066Z"
     },
     {
       "name": "Weesh",
@@ -69,7 +69,7 @@
       "googleStoreName": "Weesh",
       "iosStoreName": "WeeshGifts",
       "iosVersion": "1.14",
-      "checkedAt": "2026-09-15T01:02:24.802Z"
+      "checkedAt": "2026-09-22T01:05:00.066Z"
     },
     {
       "name": "房東投報快算",
@@ -87,7 +87,7 @@
       "publicGoogle": true,
       "publicApple": false,
       "googleStoreName": "房東投報快算",
-      "checkedAt": "2026-09-15T01:02:24.802Z"
+      "checkedAt": "2026-09-22T01:05:00.066Z"
     },
     {
       "name": "Anthill：螞蟻群體模擬",
@@ -104,7 +104,7 @@
       "publicGoogle": false,
       "publicApple": false,
       "googleStoreName": "Anthill：螞蟻群體模擬",
-      "checkedAt": "2026-09-15T01:02:24.802Z"
+      "checkedAt": "2026-09-22T01:05:00.066Z"
     },
     {
       "name": "這樣出門",
@@ -125,7 +125,7 @@
       "publicApple": true,
       "googleStoreName": "這樣出門",
       "iosStoreName": "這樣出門",
-      "checkedAt": "2026-09-15T01:02:24.802Z",
+      "checkedAt": "2026-09-22T01:05:00.066Z",
       "iosVersion": "1.4"
     },
     {
@@ -148,7 +148,7 @@
       "googleStoreName": "世界末日了沒",
       "iosStoreName": "世界末日了沒",
       "iosVersion": "1.0.8",
-      "checkedAt": "2026-09-15T01:02:24.802Z"
+      "checkedAt": "2026-09-22T01:05:00.066Z"
     },
     {
       "name": "夢話夥伴",
@@ -170,7 +170,7 @@
       "publicApple": false,
       "googleStoreName": "夢話夥伴 — 陪你入眠的 AI 夥伴",
       "iosStoreName": "夢話夥伴 — 陪你入眠的 AI 夥伴",
-      "checkedAt": "2026-09-15T01:02:24.802Z"
+      "checkedAt": "2026-09-22T01:05:00.066Z"
     },
     {
       "name": "紙上彈兵",
@@ -179,7 +179,7 @@
       "communityId": "paper-flick-soldiers",
       "iconText": "紙上",
       "icon": "icons/paper-flick-soldiers.png",
-      "source": "Android",
+      "source": "Android / iOS",
       "googlePackage": "com.hankhuang.paperflicksoldiers",
       "googleUrl": "https://play.google.com/store/apps/details?id=com.hankhuang.paperflicksoldiers",
       "googleStatus": "開發中",
@@ -187,7 +187,10 @@
       "publicGoogle": false,
       "publicApple": false,
       "googleStoreName": "紙上彈兵",
-      "checkedAt": "2026-09-15T01:02:24.802Z"
+      "checkedAt": "2026-09-22T01:05:00.066Z",
+      "iosId": "6814515567",
+      "iosUrl": "https://apps.apple.com/tw/app/id6814515567",
+      "iosStoreName": "紙上彈兵"
     },
     {
       "name": "REBOUND：元素戰機",
@@ -207,7 +210,7 @@
       "publicApple": false,
       "googleStoreName": "REBOUND：元素戰機",
       "iosStoreName": "REBOUND：元素戰機",
-      "checkedAt": "2026-09-15T01:02:24.802Z",
+      "checkedAt": "2026-09-22T01:05:00.066Z",
       "guide": "https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site/",
       "guideLabel": "完整攻略"
     },
@@ -231,7 +234,7 @@
       "googleStoreName": "睡公園：免費生存地圖",
       "iosStoreName": "睡公園",
       "iosVersion": "1.3",
-      "checkedAt": "2026-09-15T01:02:24.802Z"
+      "checkedAt": "2026-09-22T01:05:00.066Z"
     },
     {
       "name": "活字戰紀：雙城烽火",
@@ -254,7 +257,7 @@
       "googleStoreName": "活字戰紀：雙城烽火",
       "iosStoreName": "活字戰紀：雙城烽火",
       "iosVersion": "1.2.13",
-      "checkedAt": "2026-09-15T01:02:24.802Z"
+      "checkedAt": "2026-09-22T01:05:00.066Z"
     },
     {
       "name": "活字戰記：巔峰之戰",
@@ -270,7 +273,7 @@
       "publicGoogle": false,
       "publicApple": false,
       "googleStoreName": "活字戰記：巔峰之戰",
-      "checkedAt": "2026-09-15T01:02:24.802Z"
+      "checkedAt": "2026-09-22T01:05:00.066Z"
     }
   ]
 }

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Simulator Manager — Shared mobile testing for Codex</title>
+  <meta name="description" content="A local Codex Tool that safely coordinates iOS Simulators and Android Emulators across sessions.">
+  <meta name="theme-color" content="#07121f">
+  <meta property="og:title" content="Simulator Manager">
+  <meta property="og:description" content="Your session. Your simulator. A fair share of the Mac.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://eclawbot.com/AiHankApps/tools/simulator-manager/">
+  <link rel="canonical" href="https://eclawbot.com/AiHankApps/tools/simulator-manager/">
+  <link rel="stylesheet" href="site.css">
+  <script src="site.js" defer></script>
+</head>
+<body>
+  <div class="aurora a1"></div><div class="aurora a2"></div>
+  <nav class="nav shell" aria-label="Main navigation">
+    <a class="brand" href="./"><span class="mark"><i></i><b></b></span><span>Simulator Manager</span></a>
+    <div class="nav-actions">
+      <div class="language" aria-label="Language"><button type="button" data-lang="en">EN</button><button type="button" data-lang="zh-Hant">中文</button></div>
+      <a class="ghost" href="https://github.com/HankHuang0516/simulator-manager">GitHub</a>
+    </div>
+  </nav>
+
+  <main>
+    <section class="hero shell">
+      <div class="eyebrow"><span class="live-dot"></span><span data-i18n="eyebrow">Local Codex Tool · macOS</span></div>
+      <h1 data-i18n="headline">Your session.<br><span>Your simulator.</span></h1>
+      <p class="lead" data-i18n="lead">A fair, pressure-aware control plane for iOS Simulators and Android Emulators across every Codex task on your Mac.</p>
+      <div class="hero-actions">
+        <a class="button primary" href="https://github.com/HankHuang0516/simulator-manager/releases/latest/download/simulator-manager-tool.zip" data-i18n="download">Download Tool</a>
+        <a class="button secondary" href="#install" data-i18n="installNow">Install in one command</a>
+      </div>
+      <p class="compat" data-i18n="compat">macOS 13+ · Python 3.9+ · Xcode or Android SDK when needed</p>
+      <div class="dashboard" aria-label="Simulator Manager status preview">
+        <div class="dash-top"><div><span class="traffic red"></span><span class="traffic yellow"></span><span class="traffic green"></span></div><strong>Simulator Manager</strong><span class="status"><i></i><span data-i18n="healthy">Healthy</span></span></div>
+        <div class="metrics">
+          <article><small data-i18n="pressure">HOST PRESSURE</small><strong class="cyan" data-i18n="dynamic">Dynamic</strong><span data-i18n="privateReady">3 private slots ready</span></article>
+          <article><small data-i18n="activeLease">ACTIVE LEASE</small><strong>01:42</strong><span>iOS · task-weesh</span></article>
+          <article><small data-i18n="queue">FIFO QUEUE</small><strong>2</strong><span data-i18n="yieldIn">Safe yield in 38s</span></article>
+        </div>
+        <div class="lanes">
+          <div class="lane"><span class="device ios">iOS</span><div><b>task-weesh</b><small>iPhone 17 Pro · Private</small></div><em class="running" data-i18n="running">RUNNING</em></div>
+          <div class="lane"><span class="device android">A</span><div><b>task-anthill</b><small>Pixel API 36 · Private</small></div><em data-i18n="queued">QUEUED</em></div>
+          <div class="lane"><span class="device gui">GUI</span><div><b>task-rebound</b><small data-i18n="foregroundLane">Foreground desktop lane</small></div><em data-i18n="waiting">WAITING</em></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section shell" id="how">
+      <div class="section-copy"><p class="kicker" data-i18n="howKicker">HOW IT WORKS</p><h2 data-i18n="howTitle">Codex asks. The manager schedules. Your test runs safely.</h2><p data-i18n="howBody">Builds and unit tests stay on the host. Only runtime or UI checks enter the managed lane, use one exact device, then release automatically.</p></div>
+      <div class="flow" role="img" aria-label="Codex request flows through Simulator Manager into a private or shared device">
+        <div class="flow-card"><span>1</span><b>Codex</b><small data-i18n="flowRequest">Requests runtime validation</small></div><div class="arrow">→</div>
+        <div class="flow-card manager"><span>2</span><b>Manager</b><small data-i18n="flowSchedule">Checks pressure + FIFO</small></div><div class="arrow">→</div>
+        <div class="flow-card"><span>3</span><b data-i18n="flowDevice">Assigned device</b><small data-i18n="flowRelease">Runs, verifies, releases</small></div>
+      </div>
+    </section>
+
+    <section class="section shell cards">
+      <article><div class="icon blue">◇</div><h3 data-i18n="privateTitle">Private by default</h3><p data-i18n="privateBody">Each session and project keeps a stable simulator environment and device data.</p></article>
+      <article><div class="icon green">↯</div><h3 data-i18n="fairTitle">Fair under load</h3><p data-i18n="fairBody">A 10-minute total budget, bounded renewals, and 2-minute slices when someone waits.</p></article>
+      <article><div class="icon purple">⌁</div><h3 data-i18n="pressureTitle">Pressure aware</h3><p data-i18n="pressureBody">Concurrency steps down gradually to Traditional FIFO before the Mac becomes overloaded.</p></article>
+      <article><div class="icon orange">✓</div><h3 data-i18n="releaseTitle">Guaranteed release</h3><p data-i18n="releaseBody">Supervised work releases on success, failure, interruption, timeout, or safe yield.</p></article>
+    </section>
+
+    <section class="section shell install" id="install">
+      <div><p class="kicker" data-i18n="installKicker">INSTALL</p><h2 data-i18n="installTitle">One command. One sentence in Codex.</h2><p data-i18n="installBody">The installer adds the CLI, Skill, public marketplace, and Plugin to your user account. It uses no sudo and refuses to replace active or unmanaged installations.</p></div>
+      <div class="terminal"><div class="terminal-bar"><span>Terminal</span><button type="button" class="copy" data-copy="curl -fsSL https://raw.githubusercontent.com/HankHuang0516/simulator-manager/main/install-tool.sh | sh" data-i18n="copy">Copy</button></div><code>curl -fsSL https://raw.githubusercontent.com/<br class="mobile-break">HankHuang0516/simulator-manager/main/install-tool.sh | sh</code></div>
+      <div class="prompt"><span data-i18n="thenSay">Then start a new task and say</span><b data-i18n="prompt">Use simulator-manager for this project.</b><button type="button" class="copy" data-copy-key="prompt" data-i18n="copy">Copy</button></div>
+      <div class="download-row"><a class="button primary" href="https://github.com/HankHuang0516/simulator-manager/releases/latest/download/simulator-manager-tool.zip" data-i18n="downloadZip">Download ZIP</a><a class="text-link" href="https://github.com/HankHuang0516/simulator-manager/releases/latest/download/simulator-manager-tool.zip.sha256" data-i18n="checksum">SHA-256 checksum</a><a class="text-link" href="https://github.com/HankHuang0516/simulator-manager/blob/main/README.md" data-i18n="docs">Full documentation</a></div>
+    </section>
+
+    <section class="section shell modes">
+      <div class="mode active"><p class="kicker" data-i18n="default">DEFAULT</p><h3 data-i18n="dynamicTitle">Dynamic Simulator Pool</h3><p data-i18n="dynamicBody">Creates stable private iOS and Android environments lazily. Parallel work is admitted only while host resources allow it.</p></div>
+      <div class="mode"><p class="kicker" data-i18n="fallback">AUTOMATIC FALLBACK</p><h3 data-i18n="traditionalTitle">Traditional FIFO</h3><p data-i18n="traditionalBody">When pressure rises, work uses a bounded shared pool in queue order. Existing private data and active work stay protected.</p></div>
+    </section>
+
+    <section class="section shell privacy" id="privacy"><div class="lock">⌾</div><div><h2 data-i18n="privacyTitle">Local by design</h2><p data-i18n="privacyBody">Scheduling state, device identities, and test output stay on your Mac. Simulator Manager has no account, cloud service, analytics, or telemetry.</p></div></section>
+  </main>
+
+  <footer class="shell"><span>Simulator Manager · MIT License</span><div><a href="https://github.com/HankHuang0516/simulator-manager">Source</a><a href="https://eclawbot.com/AiHankApps/" data-i18n="portfolio">AI Hank Apps</a></div></footer>
+  <div class="toast" role="status" aria-live="polite" data-i18n="copied">Copied</div>
+</body>
+</html>

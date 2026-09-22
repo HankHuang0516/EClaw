@@ -95,7 +95,7 @@ export function chartBuckets(apps, field, granularity, start, end, options = {})
 export function missingReason(app, field) {
   if (field === 'appleDownloads' && !app.platforms.apple) return '不適用';
   if (['googleInstalls', 'crashRate', 'anrRate', 'rating'].includes(field) && !app.platforms.google) return '不適用';
-  if (field === 'rating') return '商店尚無公開評分';
+  if (field === 'rating') return 'Google 評分報表尚未涵蓋';
   if (field === 'admobRevenue') return '尚無可歸屬廣告資料';
   if (field === 'crashRate' || field === 'anrRate') return '樣本量不足，Google 尚未提供率';
   return '官方報表尚未涵蓋';
