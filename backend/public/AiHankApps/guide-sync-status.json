@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-08T01:56:05.891Z",
-  "catalogCheckedAt": "2026-09-08T01:46:02.605Z",
+  "checkedAt": "2026-09-23T05:18:28.225Z",
+  "catalogCheckedAt": "2026-09-23T05:14:18.723Z",
   "guides": [
     {
       "id": "eclawbot",
@@ -36,7 +36,7 @@
     {
       "id": "stray-map",
       "name": "浪浪地圖",
-      "renderedHash": "3e20acde99d6691f94ea19cfa321bd49be66b0b84414c07b73c7e9f5bd650cc2"
+      "renderedHash": "57118c3f540e7b3a4aeb1ab142eb8df015cb3e3ae3759008e858750bdb0bd510"
     },
     {
       "id": "sleep-park",
@@ -46,16 +46,21 @@
     {
       "id": "chumen",
       "name": "這樣出門",
-      "renderedHash": "e52463e3d397956b3656310fa5826f7c9db35bceb79cf9da615a09bb8c866a69"
+      "renderedHash": "dae6f2eb41c070e83086847056157bc77468d29f2dc02b6daa1bf92996e3528a"
+    },
+    {
+      "id": "piggy-growth",
+      "name": "錢錢長大了",
+      "renderedHash": "24de74c32fada051e0db0fd30858fbdf266cb99e3edac5ca7ce011cc74b6764a"
     },
     {
       "id": "rebound",
       "name": "REBOUND：元素戰機",
-      "renderedHash": "f19b8c3fedb91b47b543e60063e68f55fb7b3332f4ea2d1d75f0c36fbc581e69",
+      "renderedHash": "df33e2cb272647f5f02f032ce65a29f79ff991e10a33701c35f756d4a29b9884",
       "externalProof": {
         "url": "https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site",
         "gameVersion": "0.52.0",
-        "dataHash": "4366be0cbb9f3561519dd1d2a16180f5da0024fee80a664d50de79ba222dceb9"
+        "dataHash": "b1e5df77b2bcd5fa2b2f6f03145366765a076ba3e1a15df08d7daa46364f17ac"
       }
     }
   ]
