@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-22T03:56:21.320Z",
-  "catalogCheckedAt": "2026-09-22T01:05:00.066Z",
+  "checkedAt": "2026-09-23T05:18:28.225Z",
+  "catalogCheckedAt": "2026-09-23T05:14:18.723Z",
   "guides": [
     {
       "id": "eclawbot",
@@ -47,6 +47,11 @@
       "id": "chumen",
       "name": "這樣出門",
       "renderedHash": "dae6f2eb41c070e83086847056157bc77468d29f2dc02b6daa1bf92996e3528a"
+    },
+    {
+      "id": "piggy-growth",
+      "name": "錢錢長大了",
+      "renderedHash": "24de74c32fada051e0db0fd30858fbdf266cb99e3edac5ca7ce011cc74b6764a"
     },
     {
       "id": "rebound",
