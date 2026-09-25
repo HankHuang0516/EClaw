@@ -349,6 +349,7 @@
       .rebound-gift code { display: inline-block; margin: 4px 0; padding: 8px 12px; border: 1px solid #a6e5db; border-radius: 8px; background: #092535; color: #bfffee; font-size: 1.15rem; font-weight: 700; letter-spacing: 0.08em; user-select: all; }
       .rebound-gift .gift-count { font-weight: 700; color: #bfffee; }
       .rebound-gift .gift-updated { font-size: 0.82rem; color: #c4d9d9; }
+      .rebound-gift .gift-countdown { color: #ffe3a7; font-weight: 700; font-variant-numeric: tabular-nums; }
 
       .store-links {
         display: grid;
@@ -467,13 +468,14 @@
         </div>
       </header>
 
-      <section class="rebound-gift" aria-labelledby="reboundGiftTitle">
-        <h2 id="reboundGiftTitle">REBOUND 限量活動禮包</h2>
-        <p>Android 版限定，100 份、每位玩家限領一次，送完即止。於遊戲商城點選「輸入兌換碼」：</p>
-        <code>RB2026C4782CEF7E</code>
-        <p>禮包包含火花 ×5,000、自動射擊卡 ×1、復活卡／戰利品加成卡／火花加成卡／技能樹重置卡各 ×20，以及永久移除廣告。</p>
+      <section class="rebound-gift" aria-labelledby="reboundGiftTitle" data-ends-at="2026-10-25T16:00:00Z">
+        <h2 id="reboundGiftTitle">中秋新人大禮包</h2>
+        <p>Android 與 iOS 共用 100 份名額。活動期間首次連線的帳號依順序自動收到遊戲郵件，每個帳號限寄一次；請至遊戲信箱領取，無需輸入兌換碼。送完或到期即止。</p>
+        <p>禮包包含火花 500 點、戰機復活卡／1H 戰利品加倍卡／1H 火花加倍卡／技能樹重置卡各 1 張，以及永久自動射擊。商品標價換算約 NT$285（500 火花按 1,000 點售價比例估算，非現金價值）。</p>
+        <p>活動至 2026/10/25 23:59（台北時間），10/26 00:00 起停止寄送。</p>
+        <p class="gift-countdown" id="reboundCountdown" role="timer">倒數計算中…</p>
         <p class="gift-count" id="reboundRemaining" aria-live="polite">剩餘名額查詢中…</p>
-        <p class="gift-updated" id="reboundUpdated">數量依正式兌換紀錄更新，每 15 秒重新查詢。</p>
+        <p class="gift-updated" id="reboundUpdated">數量依遊戲郵件寄送及領取紀錄更新，每 15 秒重新查詢。</p>
       </section>
 
       <section class="grid" id="appGrid" aria-live="polite"></section>
@@ -725,6 +727,21 @@
       renderGrid();
     </script>
     <script>
+      const reboundGiftEndsAt = Date.parse(document.querySelector('.rebound-gift').dataset.endsAt);
+      function updateReboundCountdown() {
+        const countdown = document.getElementById('reboundCountdown');
+        const remaining = Math.max(0, reboundGiftEndsAt - Date.now());
+        if (remaining === 0) {
+          countdown.textContent = '活動已結束';
+          document.getElementById('reboundRemaining').textContent = '兌換期限已截止';
+          return;
+        }
+        const days = Math.floor(remaining / 86400000);
+        const hours = Math.floor(remaining / 3600000) % 24;
+        const minutes = Math.floor(remaining / 60000) % 60;
+        const seconds = Math.floor(remaining / 1000) % 60;
+        countdown.textContent = `距離活動結束：${days} 天 ${String(hours).padStart(2, '0')} 時 ${String(minutes).padStart(2, '0')} 分 ${String(seconds).padStart(2, '0')} 秒`;
+      }
       async function updateReboundGiftCount() {
         const count = document.getElementById('reboundRemaining');
         const updated = document.getElementById('reboundUpdated');
@@ -732,15 +749,17 @@
           const response = await fetch('https://rebound-api-production-801c.up.railway.app/v1/campaigns/public-gift', { cache: 'no-store' });
           if (!response.ok) throw new Error('Campaign status unavailable');
           const data = await response.json();
-          if (data.code !== 'RB2026C4782CEF7E' || !Number.isInteger(data.remaining) || !Number.isInteger(data.total)) throw new Error('Invalid campaign status');
-          count.textContent = data.remaining === 0 ? '已兌換完畢' : `剩餘 ${data.remaining} / ${data.total} 份${data.available ? '' : '（活動暫停）'}`;
-          updated.textContent = `台灣時間 ${new Date(data.checked_at).toLocaleTimeString('zh-TW', { timeZone: 'Asia/Taipei' })} 更新；每 15 秒重新查詢。`;
+          if (!Number.isInteger(data.remaining) || !Number.isInteger(data.total) || !Number.isInteger(data.issued) || !Number.isInteger(data.claimed)) throw new Error('Invalid campaign status');
+          count.textContent = Date.now() >= reboundGiftEndsAt ? '活動已結束' : data.remaining === 0 ? '名額已滿' : `剩餘 ${data.remaining} / ${data.total} 份${data.available ? '' : '（活動暫停）'}`;
+          updated.textContent = `已寄送 ${data.issued} 份 · 郵件已領取 ${data.claimed} 份；台灣時間 ${new Date(data.checked_at).toLocaleTimeString('zh-TW', { timeZone: 'Asia/Taipei' })} 更新，每 15 秒重新查詢。`;
         } catch (_error) {
-          count.textContent = '剩餘名額暫時無法取得';
-          updated.textContent = '請稍後重試；兌換結果以遊戲內顯示為準。';
+          count.textContent = Date.now() >= reboundGiftEndsAt ? '活動已結束' : '剩餘名額暫時無法取得';
+          updated.textContent = '請稍後重試；實際寄送與領取以遊戲信箱為準。';
         }
       }
       updateReboundGiftCount();
+      updateReboundCountdown();
+      setInterval(updateReboundCountdown, 1000);
       setInterval(() => { if (!document.hidden) updateReboundGiftCount(); }, 15000);
       document.addEventListener('visibilitychange', () => { if (!document.hidden) updateReboundGiftCount(); });
     </script>
