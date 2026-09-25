@@ -343,6 +343,13 @@
         font-size: 0.92rem;
       }
 
+      .rebound-gift { margin: 18px 0 24px; padding: 20px 24px; border: 1px solid #75a1af; border-radius: 18px; background: linear-gradient(120deg, #102b42, #174b56); color: #f1fbf8; box-shadow: 0 12px 28px rgba(18, 58, 72, 0.2); }
+      .rebound-gift h2 { margin: 0 0 10px; font-size: 1.28rem; }
+      .rebound-gift p { margin: 8px 0; line-height: 1.55; }
+      .rebound-gift code { display: inline-block; margin: 4px 0; padding: 8px 12px; border: 1px solid #a6e5db; border-radius: 8px; background: #092535; color: #bfffee; font-size: 1.15rem; font-weight: 700; letter-spacing: 0.08em; user-select: all; }
+      .rebound-gift .gift-count { font-weight: 700; color: #bfffee; }
+      .rebound-gift .gift-updated { font-size: 0.82rem; color: #c4d9d9; }
+
       .store-links {
         display: grid;
         gap: 8px;
@@ -459,6 +466,15 @@
           </label>
         </div>
       </header>
+
+      <section class="rebound-gift" aria-labelledby="reboundGiftTitle">
+        <h2 id="reboundGiftTitle">REBOUND 限量活動禮包</h2>
+        <p>Android 版限定，100 份、每位玩家限領一次，送完即止。於遊戲商城點選「輸入兌換碼」：</p>
+        <code>RB2026C4782CEF7E</code>
+        <p>禮包包含火花 ×5,000、自動射擊卡 ×1、復活卡／戰利品加成卡／火花加成卡／技能樹重置卡各 ×20，以及永久移除廣告。</p>
+        <p class="gift-count" id="reboundRemaining" aria-live="polite">剩餘名額查詢中…</p>
+        <p class="gift-updated" id="reboundUpdated">數量依正式兌換紀錄更新，每 15 秒重新查詢。</p>
+      </section>
 
       <section class="grid" id="appGrid" aria-live="polite"></section>
       <section class="empty" id="emptyState" hidden>沒有符合的 App，試著換個關鍵字吧。</section>
@@ -707,6 +723,26 @@
 
       renderChips();
       renderGrid();
+    </script>
+    <script>
+      async function updateReboundGiftCount() {
+        const count = document.getElementById('reboundRemaining');
+        const updated = document.getElementById('reboundUpdated');
+        try {
+          const response = await fetch('https://rebound-api-production-801c.up.railway.app/v1/campaigns/public-gift', { cache: 'no-store' });
+          if (!response.ok) throw new Error('Campaign status unavailable');
+          const data = await response.json();
+          if (data.code !== 'RB2026C4782CEF7E' || !Number.isInteger(data.remaining) || !Number.isInteger(data.total)) throw new Error('Invalid campaign status');
+          count.textContent = data.remaining === 0 ? '已兌換完畢' : `剩餘 ${data.remaining} / ${data.total} 份${data.available ? '' : '（活動暫停）'}`;
+          updated.textContent = `台灣時間 ${new Date(data.checked_at).toLocaleTimeString('zh-TW', { timeZone: 'Asia/Taipei' })} 更新；每 15 秒重新查詢。`;
+        } catch (_error) {
+          count.textContent = '剩餘名額暫時無法取得';
+          updated.textContent = '請稍後重試；兌換結果以遊戲內顯示為準。';
+        }
+      }
+      updateReboundGiftCount();
+      setInterval(() => { if (!document.hidden) updateReboundGiftCount(); }, 15000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) updateReboundGiftCount(); });
     </script>
     <script src="community-v6.js?v=traffic-20260907"></script>
   <a
