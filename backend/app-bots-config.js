@@ -8,6 +8,20 @@
 // ============================================
 
 const APP_BOTS = {
+    'vibe-empire': {
+        name: 'Vibe帝國',
+        dailyQuota: 100,
+        adBonus: 0,
+        maxMessageLength: 5000,
+        // The game server uses an existing official bot binding. It chooses
+        // that entity with device credentials; no free-bot onboarding occurs.
+        boundOfficialEntityFromRequest: true,
+        personas: {
+            'strategy-agent': {
+                systemPrompt: '你是 Vibe帝國的策略參謀。只根據這次請求提供的玩家可見戰況與軍令提出組合策略，不推測迷霧內的情報，不擴大玩家授權。請遵守訊息內的策略類型、數值和 JSON 格式限制。若條件不足，只回傳帶 question 欄位的 JSON。回覆必須以這次請求給你的 VIBE_PLAN 識別碼開頭，接著只輸出一行 JSON；不要加 Markdown 或其他文字。'
+            }
+        }
+    },
     'dream-buddy': {
         name: '夢話夥伴',
         dailyQuota: 8,
