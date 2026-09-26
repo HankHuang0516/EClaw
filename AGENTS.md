@@ -6,7 +6,7 @@
 
 These overrides are mandatory for Codex in this repo:
 
-1. **No direct production/main pushes** — never push directly to `main`, never merge to production, and never trigger Railway production deploy unless the user explicitly asks for that exact action in the current thread.
+1. **No direct production/main pushes** — never push directly to `main`. For a PR whose changes are exclusively required for Dream Buddy (夢話夥伴) or VibeEmpire (Vibe 帝國), Codex may squash-merge the PR and allow or trigger its Railway production deployment without asking for additional authorization, after the PR-first workflow, required CI gates, and self-review have passed. This exception includes the backend integration needed by those two apps, but does not cover mixed PRs with unrelated changes. For every other PR, never merge to production or trigger a Railway production deploy unless the user explicitly asks for that exact action in the current thread.
 2. **PR-first workflow** — all code/docs changes must happen on a feature branch, be pushed to GitHub, and go through a pull request before merge.
 3. **CI gates before merge** — do not merge a PR until required GitHub Actions checks have completed successfully, or until the user explicitly accepts a known failing/pre-existing check after being told the concrete failure.
 4. **Production verification after merge** — after any approved merge to `main`, verify production health, critical affected pages/API routes, and the relevant regression tests before reporting done.
@@ -570,7 +570,7 @@ EClaw/
 **任務未結束，直到以下三步全部完成，或清楚回報目前停在 review / merge / deploy 的哪一階段：**
 
 1. **PR CI 全綠** — 用 GitHub check runs 確認所有 check runs 的 `conclusion` 都是 `success`（或 `skipped`）。若有失敗立即修復，不可繞過。
-2. **Approved merge 進 main** — 只有使用者或 #2 明確核准後才可 merge。Draft PR 必須先轉 ready；Codex 不可自行 merge，除非使用者在目前 thread 明確要求。
+2. **Approved merge 進 main** — Dream Buddy／VibeEmpire 專屬 PR 在 PR-first、必要 CI 和自審完成後可直接 merge；其他 PR 只有使用者或 #2 明確核准後才可 merge。Draft PR 必須先轉 ready；混有無關改動的 PR 不適用上述例外。
 3. **確認 main CI 也綠** — merge 後確認最新一次 main workflow run 沒有 failure，並完成 production verification。
 
 **絕對不可以：**

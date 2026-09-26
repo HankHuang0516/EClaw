@@ -45,6 +45,7 @@ jest.mock('../../db', () => ({
     deleteOfficialBot: jest.fn().mockResolvedValue(true),
     loadSubscriptions: jest.fn().mockResolvedValue({}),
     saveSubscription: jest.fn().mockResolvedValue(true),
+    getOfficialBinding: jest.fn().mockResolvedValue(null),
     // App-Bot quota helpers (controlled per-test)
     getAppBotQuota: jest.fn().mockResolvedValue(null),
     incrementAppBotQuotaUsage: jest.fn().mockResolvedValue(true),
@@ -83,6 +84,7 @@ describe('POST /api/app-bot/chat (bound free-bot relay)', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         seedBoundDevice();
+        db.getOfficialBinding.mockResolvedValue(null);
         db.getAppBotQuota.mockResolvedValue(null);
         db.incrementAppBotQuotaUsage.mockResolvedValue(true);
         // Spy the internal relay so no real delivery fires; resolves OK by default.
@@ -221,6 +223,79 @@ describe('POST /api/app-bot/chat (bound free-bot relay)', () => {
         expect(arg.prePrompt).toContain('半夢半醒');
         expect(arg.prePrompt).toContain('我夢見一隻會飛的鯨魚');
         expect(JSON.stringify(res.body)).not.toContain('半夢半醒');
+    });
+
+    it('VibeEmpire → relays a longer strategy context to its selected official bot', async () => {
+        const { officialBots, officialBindingsCache, getBindingCacheKey } = app._officialBorrowTest;
+        const botId = 'vibe-official-test';
+        officialBots[botId] = {
+            bot_id: botId, bot_type: 'personal', status: 'assigned',
+            webhook_url: 'https://bot.example/hook', token: 'test-token',
+        };
+        const entityId = 11;
+        app.devices[DEVICE_ID].entities[entityId] = {
+            entityId, isBound: true, botSecret: 'test-bot-secret',
+            webhook: { url: 'https://bot.example/hook', token: 'test-token', sessionKey: 'vibe-session' },
+        };
+        const binding = { bot_id: botId, device_id: DEVICE_ID, entity_id: entityId, session_key: 'vibe-session', bound_at: Date.now() };
+        officialBindingsCache[getBindingCacheKey(DEVICE_ID, entityId)] = binding;
+        db.getOfficialBinding.mockResolvedValue(binding);
+        try {
+            const message = 'VIBE_PLAN:abc123\n' + '戰況'.repeat(1100);
+            const res = await request(app).post('/api/app-bot/chat').send(validBody({
+                appId: 'vibe-empire', personaId: 'strategy-agent', entityId, message,
+            }));
+            expect(res.status).toBe(200);
+            expect(dispatchSpy).toHaveBeenCalledTimes(1);
+            const sent = dispatchSpy.mock.calls[0][0];
+            expect(sent.entityId).toBe(entityId);
+            expect(sent.prePrompt).toContain('Vibe帝國的策略參謀');
+            expect(sent.prePrompt).toContain(message);
+            expect(JSON.stringify(res.body)).not.toContain('Vibe帝國的策略參謀');
+            expect(db.incrementAppBotQuotaUsage).toHaveBeenCalledWith('vibe-empire', DEVICE_ID, expect.any(String), 1);
+            dispatchSpy.mockClear();
+            db.incrementAppBotQuotaUsage.mockClear();
+            db.getAppBotQuota.mockResolvedValue({ messages_used: 100, bonus_from_ads: 0 });
+            const exhausted = await request(app).post('/api/app-bot/chat').send(validBody({
+                appId: 'vibe-empire', personaId: 'strategy-agent', entityId, message: '再次規劃',
+            }));
+            expect(exhausted.status).toBe(429);
+            expect(exhausted.body.needAd).toBe(false);
+            expect(dispatchSpy).not.toHaveBeenCalled();
+            expect(db.incrementAppBotQuotaUsage).not.toHaveBeenCalled();
+        } finally {
+            delete officialBots[botId];
+            delete officialBindingsCache[getBindingCacheKey(DEVICE_ID, entityId)];
+        }
+    });
+
+    it('VibeEmpire → rejects an entity without an official bot binding', async () => {
+        app.devices[DEVICE_ID].entities[11] = {
+            entityId: 11, isBound: true, botSecret: 'custom-bot-secret',
+            webhook: { url: 'https://other.example/hook' },
+        };
+        const res = await request(app).post('/api/app-bot/chat').send(validBody({
+            appId: 'vibe-empire', personaId: 'strategy-agent', entityId: 11, message: '增加村民',
+        }));
+        expect(res.status).toBe(409);
+        expect(res.body.error).toBe('official_bot_not_bound');
+        expect(dispatchSpy).not.toHaveBeenCalled();
+        expect(db.incrementAppBotQuotaUsage).not.toHaveBeenCalled();
+    });
+
+    it('VibeEmpire → requires a numeric entity ID and caps its strategy message', async () => {
+        const body = validBody({ appId: 'vibe-empire', personaId: 'strategy-agent' });
+        const missing = await request(app).post('/api/app-bot/chat').send(body);
+        expect(missing.status).toBe(400);
+        expect(missing.body.error).toBe('valid entityId required');
+
+        const oversized = await request(app).post('/api/app-bot/chat').send({
+            ...body, entityId: 1, message: 'x'.repeat(5001),
+        });
+        expect(oversized.status).toBe(400);
+        expect(oversized.body.error).toContain('5000');
+        expect(dispatchSpy).not.toHaveBeenCalled();
+        expect(db.incrementAppBotQuotaUsage).not.toHaveBeenCalled();
     });
 
     it('dispatch throws → 503 dispatch_failed, quota NOT incremented', async () => {
