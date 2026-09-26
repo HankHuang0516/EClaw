@@ -15,6 +15,7 @@ const APP_IDS = new Set([
     'chumen',
     'echoes-of-names',
 ]);
+const BETA_CONTINUATION = new Set(['yes', 'maybe', 'no']);
 
 let readyPool = null;
 let readyPromise = null;
@@ -31,6 +32,20 @@ function visitorHash(value) {
 function cleanText(value, maxLength) {
     if (typeof value !== 'string') return '';
     return value.replace(/\r\n?/g, '\n').trim().slice(0, maxLength);
+}
+
+function cleanBetaFeedback(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const submissionId = typeof value.submissionId === 'string' ? value.submissionId.trim().toLowerCase() : '';
+    const rating = Number(value.rating);
+    const continuation = typeof value.continuation === 'string' ? value.continuation.trim() : '';
+    const version = cleanText(value.version, 32);
+    const platform = cleanText(value.platform, 32);
+    const comment = cleanText(value.comment, 500);
+    if (!/^[a-f0-9]{32,64}$/.test(submissionId)) return null;
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) return null;
+    if (!BETA_CONTINUATION.has(continuation) || !version || !platform) return null;
+    return { submissionId, rating, continuation, comment, version, platform };
 }
 
 function ensureTables(pool) {
@@ -57,6 +72,21 @@ function ensureTables(pool) {
             )
         `);
         await pool.query('CREATE INDEX IF NOT EXISTS idx_app_portfolio_comments_app_time ON app_portfolio_comments (app_id, created_at DESC)');
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS app_portfolio_beta_feedback (
+                id                BIGSERIAL   PRIMARY KEY,
+                app_id            TEXT        NOT NULL,
+                submission_id     VARCHAR(64) NOT NULL,
+                rating            SMALLINT    NOT NULL CHECK (rating BETWEEN 1 AND 5),
+                continuation      VARCHAR(8)  NOT NULL CHECK (continuation IN ('yes', 'maybe', 'no')),
+                comment           VARCHAR(500) NOT NULL DEFAULT '',
+                app_version       VARCHAR(32) NOT NULL,
+                platform          VARCHAR(32) NOT NULL,
+                created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                UNIQUE (app_id, submission_id)
+            )
+        `);
+        await pool.query('CREATE INDEX IF NOT EXISTS idx_app_portfolio_beta_feedback_app_time ON app_portfolio_beta_feedback (app_id, created_at DESC)');
     })().catch((error) => {
         readyPromise = null;
         throw error;
@@ -128,6 +158,26 @@ async function addComment(pool, appId, hash, nickname, content) {
     return inserted.rows[0];
 }
 
+async function addBetaFeedback(pool, appId, feedback) {
+    await ensureTables(pool);
+    const inserted = await pool.query(`
+        INSERT INTO app_portfolio_beta_feedback
+            (app_id, submission_id, rating, continuation, comment, app_version, platform)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (app_id, submission_id) DO NOTHING
+        RETURNING id::text AS "receiptId"
+    `, [appId, feedback.submissionId, feedback.rating, feedback.continuation,
+        feedback.comment, feedback.version, feedback.platform]);
+    if (inserted.rowCount) return { receiptId: inserted.rows[0].receiptId, duplicate: false };
+    const existing = await pool.query(`
+        SELECT id::text AS "receiptId"
+        FROM app_portfolio_beta_feedback
+        WHERE app_id = $1 AND submission_id = $2
+    `, [appId, feedback.submissionId]);
+    if (!existing.rowCount) throw new Error('feedback_receipt_missing');
+    return { receiptId: existing.rows[0].receiptId, duplicate: true };
+}
+
 function createRouter(getPool) {
     const router = express.Router();
     router.use('/traffic', require('./app-portfolio-analytics').createRouter(getPool));
@@ -177,6 +227,20 @@ function createRouter(getPool) {
         }
     });
 
+    router.post('/apps/:appId/beta-feedback', async (req, res) => {
+        const feedback = cleanBetaFeedback(req.body);
+        if (!feedback) {
+            return res.status(400).json({ success: false, error: '回饋格式不完整。' });
+        }
+        try {
+            const receipt = await addBetaFeedback(getPool(), req.params.appId, feedback);
+            res.status(receipt.duplicate ? 200 : 201).json({ success: true, ...receipt });
+        } catch (error) {
+            console.error('[AppPortfolio] beta feedback failed:', error.message);
+            res.status(503).json({ success: false, error: '目前無法接收回饋，請稍後再試。' });
+        }
+    });
+
     return router;
 }
 
@@ -185,9 +249,11 @@ module.exports = {
     isValidAppId,
     visitorHash,
     cleanText,
+    cleanBetaFeedback,
     ensureTables,
     getCommunity,
     toggleLike,
     addComment,
+    addBetaFeedback,
     createRouter,
 };
