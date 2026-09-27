@@ -40,6 +40,19 @@ describe('AiHankApps portfolio route', () => {
         expect(fs.existsSync(path.join(portfolioDir, 'promo', 'eclawbot.jpg'))).toBe(true);
     });
 
+    test('REBOUND card, campaign and report use the public store name', () => {
+        const catalog = JSON.parse(fs.readFileSync(path.join(portfolioDir, 'app-catalog.json'), 'utf8'));
+        const rebound = catalog.apps.find(app => app.communityId === 'rebound');
+        expect(rebound).toBeDefined();
+        expect(rebound.name).toBe(rebound.googleStoreName);
+        expect(rebound.name).toBe(rebound.iosStoreName);
+
+        const html = fs.readFileSync(path.join(portfolioDir, 'index.html'), 'utf8');
+        const report = fs.readFileSync(path.join(portfolioDir, 'reports', 'data.js'), 'utf8');
+        expect(html).toContain(`${rebound.name}｜中秋新人大禮包`);
+        expect(report).toContain(`"id":"rebound","name":"${rebound.name}"`);
+    });
+
     test('revalidates mutable reports while retaining long-lived media caching', async () => {
         const routeApp = express();
         routeApp.use('/AiHankApps', express.static(portfolioDir, {
