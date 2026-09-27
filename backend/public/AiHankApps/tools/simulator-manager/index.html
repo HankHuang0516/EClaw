@@ -11,14 +11,14 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://eclawbot.com/AiHankApps/tools/simulator-manager/">
   <link rel="canonical" href="https://eclawbot.com/AiHankApps/tools/simulator-manager/">
-  <link rel="icon" type="image/png" href="simulator-manager-icon.png?v=3.6.1">
-  <link rel="stylesheet" href="site.css?v=3.6.1">
-  <script src="site.js?v=3.6.1" defer></script>
+  <link rel="icon" type="image/png" href="simulator-manager-icon.png?v=4.0.0">
+  <link rel="stylesheet" href="site.css?v=4.0.0">
+  <script src="site.js?v=4.0.0" defer></script>
 </head>
 <body>
   <div class="aurora a1"></div><div class="aurora a2"></div>
   <nav class="nav shell" aria-label="Main navigation">
-    <a class="brand" href="./"><img class="brand-icon" src="simulator-manager-icon.png?v=3.6.1" alt=""><span>Simulator Manager</span></a>
+    <a class="brand" href="./"><img class="brand-icon" src="simulator-manager-icon.png?v=4.0.0" alt=""><span>Simulator Manager</span></a>
     <div class="nav-actions">
       <div class="language" aria-label="Language"><button type="button" data-lang="en">EN</button><button type="button" data-lang="zh-Hant">中文</button></div>
       <a class="ghost" href="https://github.com/HankHuang0516/simulator-manager">GitHub</a>
@@ -27,9 +27,9 @@
 
   <main>
     <section class="hero shell">
-      <img class="hero-app-icon" src="simulator-manager-icon.png?v=3.6.1" alt="Simulator Manager app icon">
+      <img class="hero-app-icon" src="simulator-manager-icon.png?v=4.0.0" alt="Simulator Manager app icon">
       <div class="eyebrow"><span class="live-dot"></span><span data-sm-i18n="eyebrow">Local Codex Tool · macOS</span></div>
-      <h1 data-sm-i18n="headline">Your session.<br><span>Your simulator.</span></h1>
+      <h1 data-sm-i18n="headline">One pool.<br><span>Every session.</span></h1>
       <p class="lead" data-sm-i18n="lead">A fair, pressure-aware control plane for iOS Simulators and Android Emulators across every Codex task on your Mac.</p>
       <div class="hero-actions">
         <a class="button primary" href="https://github.com/HankHuang0516/simulator-manager/releases/latest/download/simulator-manager-tool.zip" data-sm-i18n="download">Download Tool</a>
@@ -39,21 +39,21 @@
       <div class="dashboard" aria-label="Simulator Manager status preview">
         <div class="dash-top"><div><span class="traffic red"></span><span class="traffic yellow"></span><span class="traffic green"></span></div><strong>Simulator Manager</strong><span class="status"><i></i><span data-sm-i18n="healthy">Healthy</span></span></div>
         <div class="metrics">
-          <article><small data-sm-i18n="pressure">HOST PRESSURE</small><strong class="cyan" data-sm-i18n="dynamic">Dynamic</strong><span data-sm-i18n="privateReady">3 private slots ready</span></article>
+          <article><small data-sm-i18n="pressure">HOST PRESSURE</small><strong class="cyan" data-sm-i18n="dynamic">Shared</strong><span data-sm-i18n="privateReady">Shared devices ready</span></article>
           <article><small data-sm-i18n="activeLease">ACTIVE LEASE</small><strong>01:42</strong><span>iOS · task-weesh</span></article>
           <article><small data-sm-i18n="queue">FIFO QUEUE</small><strong>2</strong><span data-sm-i18n="yieldIn">Safe yield in 38s</span></article>
         </div>
         <div class="lanes">
-          <div class="lane"><span class="device ios">iOS</span><div><b>task-weesh</b><small>iPhone 17 Pro · Private</small></div><em class="running" data-sm-i18n="running">RUNNING</em></div>
-          <div class="lane"><span class="device android">A</span><div><b>task-anthill</b><small>Pixel API 36 · Private</small></div><em data-sm-i18n="queued">QUEUED</em></div>
+          <div class="lane"><span class="device ios">iOS</span><div><b>task-weesh</b><small>iPhone · Shared</small></div><em class="running" data-sm-i18n="running">RUNNING</em></div>
+          <div class="lane"><span class="device android">A</span><div><b>task-anthill</b><small>Pixel · Shared group ×2</small></div><em data-sm-i18n="queued">QUEUED</em></div>
           <div class="lane"><span class="device gui">GUI</span><div><b>task-rebound</b><small data-sm-i18n="foregroundLane">Foreground desktop lane</small></div><em data-sm-i18n="waiting">WAITING</em></div>
         </div>
       </div>
     </section>
 
     <section class="section shell" id="how">
-      <div class="section-copy"><p class="kicker" data-sm-i18n="howKicker">HOW IT WORKS</p><h2 data-sm-i18n="howTitle">Codex asks. The manager schedules. Your test runs safely.</h2><p data-sm-i18n="howBody">Builds and unit tests stay on the host. Only runtime or UI checks enter the managed lane, use one exact device, then release automatically.</p></div>
-      <div class="flow" role="img" aria-label="Codex request flows through Simulator Manager into a private or shared device">
+      <div class="section-copy"><p class="kicker" data-sm-i18n="howKicker">HOW IT WORKS</p><h2 data-sm-i18n="howTitle">Codex asks. The manager schedules. Your test runs safely.</h2><p data-sm-i18n="howBody">Builds and unit tests stay on the host. Runtime checks borrow one device or an atomic multiplayer group, then release automatically.</p></div>
+      <div class="flow" role="img" aria-label="Codex request flows through Simulator Manager into one or more shared devices">
         <div class="flow-card"><span>1</span><b>Codex</b><small data-sm-i18n="flowRequest">Requests runtime validation</small></div><div class="arrow">→</div>
         <div class="flow-card manager"><span>2</span><b>Manager</b><small data-sm-i18n="flowSchedule">Checks pressure + FIFO</small></div><div class="arrow">→</div>
         <div class="flow-card"><span>3</span><b data-sm-i18n="flowDevice">Assigned device</b><small data-sm-i18n="flowRelease">Runs, verifies, releases</small></div>
@@ -61,9 +61,9 @@
     </section>
 
     <section class="section shell cards">
-      <article><div class="icon blue">◇</div><h3 data-sm-i18n="privateTitle">Private by default</h3><p data-sm-i18n="privateBody">Each session and project keeps a stable simulator environment and device data.</p></article>
+      <article><div class="icon blue">◇</div><h3 data-sm-i18n="privateTitle">Warm shared devices</h3><p data-sm-i18n="privateBody">Tasks borrow manager-owned devices in turn. Apps and data remain for the next borrower.</p></article>
       <article><div class="icon green">↯</div><h3 data-sm-i18n="fairTitle">Fair under load</h3><p data-sm-i18n="fairBody">A 40-minute total budget supports long tests; a waiting task still triggers a safe yield at 2 minutes.</p></article>
-      <article><div class="icon purple">⌁</div><h3 data-sm-i18n="pressureTitle">Pressure aware</h3><p data-sm-i18n="pressureBody">Concurrency steps down gradually to Traditional FIFO before the Mac becomes overloaded.</p></article>
+      <article><div class="icon purple">⌁</div><h3 data-sm-i18n="pressureTitle">Multiplayer ready</h3><p data-sm-i18n="pressureBody">Request two or more same-platform devices as one atomic FIFO group.</p></article>
       <article><div class="icon orange">✓</div><h3 data-sm-i18n="releaseTitle">Guaranteed release</h3><p data-sm-i18n="releaseBody">Supervised work releases on success, failure, interruption, timeout, or safe yield.</p></article>
     </section>
 
@@ -85,8 +85,8 @@
     </section>
 
     <section class="section shell modes">
-      <div class="mode active"><p class="kicker" data-sm-i18n="default">DEFAULT</p><h3 data-sm-i18n="dynamicTitle">Dynamic Simulator Pool</h3><p data-sm-i18n="dynamicBody">Creates stable private iOS and Android environments lazily. Parallel work is admitted only while host resources allow it.</p></div>
-      <div class="mode"><p class="kicker" data-sm-i18n="fallback">AUTOMATIC FALLBACK</p><h3 data-sm-i18n="traditionalTitle">Traditional FIFO</h3><p data-sm-i18n="traditionalBody">When pressure rises, work uses a bounded shared pool in queue order. Existing private data and active work stay protected.</p></div>
+      <div class="mode active"><p class="kicker" data-sm-i18n="default">DEFAULT</p><h3 data-sm-i18n="dynamicTitle">Warm shared pool</h3><p data-sm-i18n="dynamicBody">Manager-owned devices stay warm and retain data for the next borrower.</p></div>
+      <div class="mode"><p class="kicker" data-sm-i18n="fallback">MULTIPLAYER</p><h3 data-sm-i18n="traditionalTitle">Atomic device groups</h3><p data-sm-i18n="traditionalBody">Request N devices together; the task waits without holding a partial group, then releases every device after testing.</p></div>
     </section>
 
     <section class="section shell privacy" id="privacy"><div class="lock">⌾</div><div><h2 data-sm-i18n="privacyTitle">Local by design</h2><p data-sm-i18n="privacyBody">Scheduling state, device identities, and test output stay on your Mac. Simulator Manager has no account, cloud service, analytics, or telemetry.</p></div></section>
