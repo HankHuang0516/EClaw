@@ -295,6 +295,33 @@
       "guide": "https://eclawbot.com/AiHankApps/guides/piggy-growth/",
       "guideLabel": "查看 APP 介紹",
       "checkedAt": "2026-09-26T01:03:18.144Z"
+    },
+    {
+      "name": "Vibe帝國",
+      "iconText": "Vibe",
+      "icon": "icons/vibe-empire.png",
+      "aliases": "Vibe帝國 · 共治軍令",
+      "category": "遊戲",
+      "desc": "30 秒同步回合的網頁策略遊戲，結合文明英雄、卡牌部署與即時戰場。",
+      "source": "Web",
+      "communityId": "vibe-empire",
+      "webStatus": "開發中",
+      "publicWeb": false,
+      "checkedAt": "2026-09-27T00:53:39.649Z"
+    },
+    {
+      "name": "Simulator Manager｜模擬器分配器",
+      "iconText": "SIM",
+      "icon": "icons/simulator-manager.png",
+      "aliases": "sim-manager Codex Skill Plugin",
+      "category": "工具",
+      "desc": "在 Mac 上公平分配 iOS 與 Android 模擬器，支援 Codex 工作階段排隊、共用裝置及多人測試。",
+      "source": "macOS / CLI",
+      "communityId": "simulator-manager",
+      "guide": "https://eclawbot.com/AiHankApps/tools/simulator-manager/",
+      "guideLabel": "查看工具介紹",
+      "releaseUrl": "https://github.com/HankHuang0516/simulator-manager/releases/tag/v4.0.0",
+      "checkedAt": "2026-09-27T00:59:32.445Z"
     }
   ]
 }
