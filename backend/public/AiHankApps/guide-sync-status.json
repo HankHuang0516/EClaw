@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-27T02:17:06.445Z",
+  "checkedAt": "2026-09-27T02:50:25.150Z",
   "catalogCheckedAt": "2026-09-27T02:12:21.413Z",
   "guides": [
     {
@@ -55,8 +55,8 @@
     },
     {
       "id": "rebound",
-      "name": "元素戰機350",
-      "renderedHash": "c3b41b161740f966851764e67455be0e45cf3dbd5495203b6d96972c39bab303",
+      "name": "REBOUND：元素戰機",
+      "renderedHash": "6c3c25b38a5679541bf1639e7b87cd85f09dfdbcb903f0332603d22dae1f9bbe",
       "externalProof": {
         "url": "https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site",
         "gameVersion": "0.59.0",

@@ -194,7 +194,7 @@
       "iosVersion": "1.0.0"
     },
     {
-      "name": "元素戰機350",
+      "name": "REBOUND：元素戰機",
       "category": "遊戲",
       "desc": "彈射、融合七元素，突破 100 波的賽博龐克球體戰鬥。",
       "communityId": "rebound",
@@ -214,7 +214,8 @@
       "checkedAt": "2026-09-27T02:12:21.413Z",
       "guide": "https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site/",
       "guideLabel": "完整攻略",
-      "iosVersion": "1.1.1"
+      "iosVersion": "1.1.1",
+      "aliases": "元素戰機350"
     },
     {
       "name": "睡公園：免費生存地圖",
