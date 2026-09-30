@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-29T01:15:38.509Z",
-  "catalogCheckedAt": "2026-09-29T01:03:59.656Z",
+  "checkedAt": "2026-09-30T01:15:44.700Z",
+  "catalogCheckedAt": "2026-09-30T01:04:23.596Z",
   "guides": [
     {
       "id": "eclawbot",
@@ -16,7 +16,7 @@
     {
       "id": "weesh",
       "name": "Weesh",
-      "renderedHash": "202b6e4ef8bbeeb445b05e3beeb119b3823d62c8e168e4ed9a71d8c739985d9e"
+      "renderedHash": "c0197cb23f946034e1b449a058352f7d2b5a3a49815da3acc5be440eabee9ea0"
     },
     {
       "id": "doomsday-index",
