@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-01T02:09:08.304Z",
+  "checkedAt": "2026-10-01T04:55:17.404Z",
   "catalogCheckedAt": "2026-10-01T01:57:58.045Z",
   "guides": [
     {
       "id": "eclawbot",
       "name": "EClawbot",
-      "renderedHash": "c8b8d796e536ceb0fdd986163669efb70f8ff99bc709dd9cc22790d14a06880a"
+      "renderedHash": "dbca49166775ec74a3650815e1ad961ae6002c1db5caad6f429fbe68ad751385"
     },
     {
       "id": "typeforge-twin-cities",
