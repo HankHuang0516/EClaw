@@ -300,24 +300,32 @@
         z-index: 1;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 16px;
+      }
+
+      .card-head > div:not(.guide-actions) {
+        min-width: 0;
+      }
+
+      .card-head h3 {
+        overflow-wrap: anywhere;
       }
 
       .app-icon {
         position: relative;
-        width: 52px;
-        height: 52px;
-        border-radius: 10px;
+        width: 104px;
+        height: 104px;
+        border-radius: 20px;
         border: 1px solid var(--line);
         display: grid;
         place-items: center;
         background: linear-gradient(145deg, #f5efe4, #efdfc8);
         overflow: hidden;
         color: #4f4b44;
-        font-size: 0.86rem;
+        font-size: 1.72rem;
         font-weight: 600;
         text-transform: uppercase;
-        flex: 0 0 52px;
+        flex: 0 0 104px;
       }
 
       .app-icon img {
@@ -329,14 +337,14 @@
       .app-icon::after {
         content: '';
         position: absolute;
-        right: 1px;
-        bottom: 1px;
-        width: 22px;
-        height: 22px;
+        right: 2px;
+        bottom: 2px;
+        width: 44px;
+        height: 44px;
         background-position: center;
         background-repeat: no-repeat;
         background-size: contain;
-        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .72));
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .72));
         pointer-events: none;
       }
 

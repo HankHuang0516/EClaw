@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-10-01T23:58:56.919Z",
+  "goldenSha256": "8d823da91c8e3da9d79828b402ede75e6224a539011fcf5c09ba619192f4cc70",
+  "configSha256": "8a20240da391c14b457769b7d229dcf2d9dbbc30e984c71daf7c97e0c2c7ab4a",
+  "actualSha256": "0a4d0c996906d4ef05e3897be35933a81c511d3fc3a14eeea353d87c5f267f71",
+  "htmlHash": "e4f09c3e7312abc4c91b635de3e2d32149f48b2534d5d4c3155f5dcd6d6d9f72",
+  "files": {
+    "index.html": "e4f09c3e7312abc4c91b635de3e2d32149f48b2534d5d4c3155f5dcd6d6d9f72",
+    "report-view.js": "15fc3705ec1b9a54287fe5e49b0697b53ff6ee251b321ce7489dd1f3a85b3d73",
+    "data.js": "560736ce53293498ce3b09104b0e192d1b326e55022e6f3d73eb88bfe631a983"
+  },
+  "rawSimilarity": 0.8151186907504456,
+  "maskedSimilarity": 0.9007300479127358,
+  "excludedFraction": 0.24697558085123697,
+  "threshold": 0.9,
+  "geometryErrors": [],
+  "functionalChecksPassed": true,
+  "passed": true,
+  "metric": "masked RGB SSIM, 11px box window, 1px Gaussian prefilter",
+  "dynamicRegions": [
+    {
+      "reason": "sync timestamp and real-data badge text",
+      "rect": [
+        1028,
+        54,
+        470,
+        28
+      ]
+    },
+    {
+      "reason": "observed download values and coverage, not mock totals",
+      "rect": [
+        97,
+        170,
+        273,
+        64
+      ]
+    },
+    {
+      "reason": "observed ad revenue and coverage",
+      "rect": [
+        469,
+        170,
+        270,
+        64
+      ]
+    },
+    {
+      "reason": "observed review count and coverage",
+      "rect": [
+        842,
+        170,
+        270,
+        64
+      ]
+    },
+    {
+      "reason": "unavailable stability values and honest sample status",
+      "rect": [
+        1206,
+        174,
+        285,
+        64
+      ]
+    },
+    {
+      "reason": "real-data chart axis values",
+      "rect": [
+        36,
+        338,
+        72,
+        241
+      ]
+    },
+    {
+      "reason": "actual history range and bucket labels",
+      "rect": [
+        78,
+        578,
+        1407,
+        28
+      ]
+    },
+    {
+      "reason": "date range and automatic granularity text",
+      "rect": [
+        55,
+        657,
+        345,
+        25
+      ]
+    },
+    {
+      "reason": "reference hover tooltip content and data-dependent location",
+      "rect": [
+        1215,
+        328,
+        209,
+        128
+      ]
+    },
+    {
+      "reason": "first review text, icon, rating and date",
+      "rect": [
+        57,
+        796,
+        310,
+        110
+      ]
+    },
+    {
+      "reason": "second review text, icon, rating and date",
+      "rect": [
+        423,
+        796,
+        310,
+        110
+      ]
+    },
+    {
+      "reason": "third review text, icon, rating and date",
+      "rect": [
+        796,
+        796,
+        310,
+        110
+      ]
+    },
+    {
+      "reason": "fourth review text, icon, rating and date",
+      "rect": [
+        1151,
+        796,
+        310,
+        110
+      ]
+    },
+    {
+      "reason": "review source coverage text",
+      "rect": [
+        32,
+        988,
+        800,
+        27
+      ]
+    }
+  ],
+  "seriesMask": {
+    "region": [
+      94,
+      351,
+      1370,
+      221
+    ],
+    "saturationMinimum": 0.16,
+    "dilationPx": 3
+  }
+}

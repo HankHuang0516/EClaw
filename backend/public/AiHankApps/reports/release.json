@@ -1,12 +1,12 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-01T02:00:35.297Z",
-  "day": "2026-10-01",
-  "catalogHash": "24524515331b244be8799fb1c194c45f92aab300038bcadf0af9eec9482901dc",
-  "contentHash": "81bce1d28ac09943e148ac5ccbf4f0a906e5316bf728e0526c2fc100d05aa93b",
+  "generatedAt": "2026-10-01T23:58:27.101Z",
+  "day": "2026-10-02",
+  "catalogHash": "9b335c3c6b9159e9e79d4fb3324e1f70cdfbc9204d11c63bb78b0432565eddca",
+  "contentHash": "cc7f9e20e88ed5ec79203cdcc392943191ba3ab3f9357c0cabfc630f5b01a847",
   "files": {
-    "index.html": "d4ca7e51561d82cda29432b7b185678295f6a8516a142835d4d94277e6bd4ad5",
-    "data.js": "a820b690688b79342f531236de458daf086b859d592d26fac2791f5089b132c0",
-    "report-view.js": "8b1b2a5db009b191f9cc9ec45095ff295ca4a34427b6cd738bbf1d27f4ea3cdb"
+    "index.html": "e4f09c3e7312abc4c91b635de3e2d32149f48b2534d5d4c3155f5dcd6d6d9f72",
+    "data.js": "560736ce53293498ce3b09104b0e192d1b326e55022e6f3d73eb88bfe631a983",
+    "report-view.js": "15fc3705ec1b9a54287fe5e49b0697b53ff6ee251b321ce7489dd1f3a85b3d73"
   }
 }

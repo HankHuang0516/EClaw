@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
+import { resolve } from 'node:path';
 import { loadReportHistory } from './load-report-history.mjs';
 import { buildReportModel } from './report-model.mjs';
 import { atomicWrite } from './report-storage.mjs';
@@ -12,10 +13,11 @@ export async function buildReport({ historyRoot, catalogPath, inventoryPath, out
   const inventory = envelope.inventory || envelope.apps || (Array.isArray(envelope) ? envelope : null);
   if (!Array.isArray(inventory)) throw new Error('Missing AdMob inventory');
   const history = await loadReportHistory(historyRoot, catalog);
-  const reviews = reviewSnapshot ? await loadReviewCounts(reviewSnapshot, catalog) : null;
+  const reviews = reviewSnapshot ? await loadReviewCounts(reviewSnapshot, catalog, { archiveRoot: resolve(historyRoot, '../raw') }) : null;
   const report = buildReportModel({ catalog, history, inventory, reviews, end, generatedAt });
   if (auditOutput) await atomicWrite(auditOutput, JSON.stringify(history.audit, null, 2) + '\n');
-  // Public artifact contains only explicit aggregate fields, never raw reports.
+  // Public output includes allowlisted public review text, never raw responses,
+  // pagination credentials, reviewer device metadata or private collection paths.
   await atomicWrite(output, `window.AIHANK_REPORT = ${JSON.stringify(report)};\n`, { mode: 0o644 });
   return { output, apps: report.apps.length, contentHash: report.contentHash, period: report.period };
 }
