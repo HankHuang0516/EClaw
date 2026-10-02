@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { buildReport } from './build-report.mjs';
 import { atomicWrite } from './report-storage.mjs';
 import { fingerprint, isoDate } from './report-core.mjs';
+import { requireGoldenScore } from './golden-release-gate.mjs';
 
 const FILES = ['index.html', 'data.js', 'report-view.js'];
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -120,7 +121,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const [mode, directory] = process.argv.slice(2);
     const catalog = JSON.parse(await readFile(join(SOURCE, 'app-catalog.json'), 'utf8'));
     if (mode === '--prepare') console.log(JSON.stringify(await prepareRelease()));
-    else if (mode === '--apply' && directory) console.log(JSON.stringify(await applyRelease(directory, TARGETS, catalog)));
+    else if (mode === '--apply' && directory) {
+      await requireGoldenScore(directory);
+      console.log(JSON.stringify(await applyRelease(directory, TARGETS, catalog)));
+    }
     else if (mode === '--check') {
       const releases = [];
       for (const target of TARGETS) releases.push(await validateRelease(target, catalog));

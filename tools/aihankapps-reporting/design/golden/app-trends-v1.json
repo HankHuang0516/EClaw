@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "name": "APP Trends approved Golden v1",
+  "image": "app-trends-v1.png",
+  "viewport": {
+    "width": 1536,
+    "height": 1024,
+    "deviceScaleFactor": 1
+  },
+  "metric": "masked RGB SSIM, 11px box window, 1px Gaussian prefilter",
+  "threshold": 0.9,
+  "rawFloor": 0.8,
+  "maximumExcludedFraction": 0.25,
+  "geometryTolerancePx": 8,
+  "geometry": {
+    ".topbar": [
+      0,
+      0,
+      1536,
+      46
+    ],
+    ".page-heading": [
+      32,
+      46,
+      1472,
+      80
+    ],
+    ".chart-card": [
+      32,
+      264,
+      1472,
+      432
+    ],
+    ".reviews-panel": [
+      32,
+      710,
+      1472,
+      268
+    ]
+  },
+  "dynamicRegions": [
+    {
+      "reason": "sync timestamp and real-data badge text",
+      "rect": [
+        1028,
+        54,
+        470,
+        28
+      ]
+    },
+    {
+      "reason": "observed download values and coverage, not mock totals",
+      "rect": [
+        97,
+        170,
+        273,
+        64
+      ]
+    },
+    {
+      "reason": "observed ad revenue and coverage",
+      "rect": [
+        469,
+        170,
+        270,
+        64
+      ]
+    },
+    {
+      "reason": "observed review count and coverage",
+      "rect": [
+        842,
+        170,
+        270,
+        64
+      ]
+    },
+    {
+      "reason": "unavailable stability values and honest sample status",
+      "rect": [
+        1206,
+        174,
+        285,
+        64
+      ]
+    },
+    {
+      "reason": "real-data chart axis values",
+      "rect": [
+        36,
+        338,
+        72,
+        241
+      ]
+    },
+    {
+      "reason": "actual history range and bucket labels",
+      "rect": [
+        78,
+        578,
+        1407,
+        28
+      ]
+    },
+    {
+      "reason": "date range and automatic granularity text",
+      "rect": [
+        55,
+        657,
+        345,
+        25
+      ]
+    },
+    {
+      "reason": "reference hover tooltip content and data-dependent location",
+      "rect": [
+        1215,
+        328,
+        209,
+        128
+      ]
+    },
+    {
+      "reason": "first review text, icon, rating and date",
+      "rect": [
+        57,
+        796,
+        310,
+        110
+      ]
+    },
+    {
+      "reason": "second review text, icon, rating and date",
+      "rect": [
+        423,
+        796,
+        310,
+        110
+      ]
+    },
+    {
+      "reason": "third review text, icon, rating and date",
+      "rect": [
+        796,
+        796,
+        310,
+        110
+      ]
+    },
+    {
+      "reason": "fourth review text, icon, rating and date",
+      "rect": [
+        1151,
+        796,
+        310,
+        110
+      ]
+    },
+    {
+      "reason": "review source coverage text",
+      "rect": [
+        32,
+        988,
+        800,
+        27
+      ]
+    }
+  ],
+  "seriesMask": {
+    "region": [
+      94,
+      351,
+      1370,
+      221
+    ],
+    "saturationMinimum": 0.16,
+    "dilationPx": 3
+  },
+  "notes": "No resizing, image replacement, fake reviews, fake traffic or mock financial values. Raw SSIM and excluded area are always disclosed. Masks and thresholds are fixed before scoring. Mobile layout and interactions are separate functional checks, not a fabricated mobile Golden score. Revision 2 narrows exclusions only; no excluded pixel is added and no threshold is relaxed. The old mask configuration hash and failed result remain in score history. Revision 3 narrows each review exclusion width from 327px to 310px. Revision 4 narrows the footer exclusion width from 1090px to 800px. No excluded pixel is added."
+}

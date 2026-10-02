@@ -1,5 +1,16 @@
 # Report synchronization and release policy
 
+## AiHankApps deployment approval scope
+
+Hank authorized on 2026-09-25 that deployments confined to
+`https://eclawbot.com/AiHankApps/` and its descendant paths do not need a
+second, separate review by #2 Claude. This is a path-scoped exception, not
+permission to skip the first content review, report/guide synchronization,
+required CI, a pull request, GitHub branch-protection approvals, or production
+verification. If GitHub reports `REVIEW_REQUIRED`, obtain the required approval;
+do not use an admin bypass or claim that the EClaw domain has been deployed.
+Changes outside `/AiHankApps/` follow the normal EClaw review process.
+
 ## Required daily path
 
 Run `zsh scripts/run-daily-report.zsh` from the canonical portfolio. It collects
@@ -30,6 +41,15 @@ manually fabricate an API response when a required step fails.
 
 ## Daily versus weekly history
 
+Google review CLI pagination may return a resource array or JSON null. Keep
+`reviews.json` byte-for-byte unchanged. Nonempty resource arrays require validated
+review identities; null/empty arrays require a separate successful nonpaginated
+API first page with no reviews, error, unknown schema, or next page. Append private
+normalized/proof sidecars and a package-bound SHA-256 receipt, verifying all hashes
+again while reading. Missing, altered, or unverified current responses block release;
+unverified historical responses remain explicitly partial, never confirmed zero.
+Confirmed empty counts describe the current API-visible window, not lifetime totals.
+
 Daily collection refreshes current/previous Google months and the past 35 days
 of Apple/AdMob reports so delayed reports are retried. Monday collection requests
 Google history from 2023-01, Apple from 2026-08-01, AdMob from 2026-01-01, the
@@ -41,7 +61,9 @@ These are collected-history totals, not a claim of complete lifetime coverage.
 - Public stability metrics use Google Play Developer Reporting API crash rate and ANR rate, expressed as percentages of distinct users. Legacy crash/ANR event counts remain private migration history only.
 - Vitals responses are stored as append-only dated snapshots. Empty API rows are preserved as sample-insufficient evidence and are never converted to zero.
 - Daily stability queries end at D-3 because Google rejects an inclusive end date equal to its D-2 freshness boundary; later dates are a fail-closed scheduling error, not a zero-rate observation.
-- Summary cards with no current official value are hidden. Per-app tables retain the field and explain why it is unavailable.
+- Golden summary cards retain their layout when official values are missing, but
+  explain sample insufficiency or unavailable data instead of displaying zero.
+  Per-app tables also retain these explanations.
 - Google user installs and Apple first downloads may be combined only as an explicitly labeled cross-platform visual trend. Their definitions differ, missing source dates are not zero-filled, and the result must not be described as unique people.
 - Chart time range is controlled directly by zoom and drag. Granularity automatically switches among day, week, month, quarter, and year.
 
@@ -66,7 +88,10 @@ These are collected-history totals, not a claim of complete lifetime coverage.
 2. Follow GUIDE_SYNC_POLICY.md and merge current registered guide sources.
    Preserve all recovered original introduction/guide content. Publish changed
    standalone guides first and perform the existing real guide freshness checks.
-3. Run `node scripts/report-release.mjs --apply RELEASE_DIRECTORY`. It validates
+3. Complete the Golden comparison in GOLDEN_UI_POLICY.md and retain a passing
+   `golden-score.json` inside the exact private release directory. A missing,
+   failing, stale or artifact-mismatched result must stop publication.
+   Run `node scripts/report-release.mjs --apply RELEASE_DIRECTORY`. It validates
    the catalog and every artifact hash, then applies the identical report bundle
    to root reports, public/reports and the EClaw deployment route. A copy error
    rolls back every touched target. Rebuild if the catalog changed in step 2.
@@ -82,9 +107,31 @@ fails. Never bypass a gate, publish an empty replacement or erase history to mak
 the next run green. Public release.json contains only aggregate artifact hashes;
 source-audit.json and collection logs stay private.
 
+## Public review preservation
+
+Read all available official review pages during daily collection. Preserve and
+deduplicate previously collected public review text by APP, source and review ID;
+latest official content wins. Publish only allowlisted review fields, never raw
+responses, account tokens, device metadata or visitor identifiers. Merge public
+portfolio comments through GET-only cursor pagination at display time. Website
+comments have no star rating. Search and issue-keyword filters do not represent a
+confirmed incident. Incomplete or failed sources must remain explicitly marked.
+
 ## Current integration status
 
 The full daily path completed successfully on 2026-09-08. Private legacy
 wrappers and existing 09:00 automation app now use the canonical scripts.
 All report regression tests and local release-integrity checks passed.
 Public CI, merge and deployment are still pending; this is not deployment evidence.
+
+## Public review pagination contract
+
+The existing read-only `GET /api/app-portfolio/community/:appId` accepts optional
+`before` as a canonical positive decimal string bounded by signed 64-bit IDs.
+Invalid/repeated cursors return 400 before database access. Results retain public
+comment fields and the full `commentCount`, with at most 50 comments and a nullable
+`nextCursor` for older comments. Preserve bigint IDs as strings. Database failures
+return unavailable, not a successful empty list. The APP trends client follows
+cursors, rejects cycles, deduplicates IDs, and exposes partial coverage on failure.
+No new authentication, write operation, production test data, or private fields
+are introduced by pagination.

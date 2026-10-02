@@ -1,0 +1,844 @@
+{
+  "viewport": {
+    "width": 1536,
+    "height": 1024,
+    "scale": 1
+  },
+  "capturedAt": "2026-10-01T13:38:46.629Z",
+  "files": {
+    "index.html": "3aa8a814b88dd790024c81b2a52e59da70900e677a666d9d634c9a942edf3aec",
+    "report-view.js": "f043bb4ef76ff08b6053600ae77b654cc2594fcedc89f13042e3b8fb0dcc74c1",
+    "data.js": "148884adc66903533ef5cf2fd8babf54febe3c2e2b244039ef8c652e85e34b13"
+  },
+  "htmlHash": "3aa8a814b88dd790024c81b2a52e59da70900e677a666d9d634c9a942edf3aec",
+  "geometry": {
+    ".topbar": {
+      "x": 0,
+      "y": 0,
+      "width": 1536,
+      "height": 46
+    },
+    ".page-heading": {
+      "x": 32,
+      "y": 46,
+      "width": 1472,
+      "height": 80
+    },
+    ".metrics": null,
+    ".chart-card": {
+      "x": 32,
+      "y": 264,
+      "width": 1472,
+      "height": 432
+    },
+    ".reviews-panel": {
+      "x": 32,
+      "y": 710,
+      "width": 1472,
+      "height": 268
+    }
+  },
+  "checks": {
+    "hoverTooltip": true,
+    "hoverAppName": "浪浪地圖固定2026-09-30累計 33 次Google Play 8 · App Store 25本區間 0/1 日有資料 · 缺資料未補零",
+    "clickPinsTooltip": true,
+    "escapeClosesTooltip": true,
+    "keyboardAppSwitch": true,
+    "keyboardPinsTooltip": true,
+    "wheelChangesRange": true,
+    "dragPansRange": true,
+    "fullHistoryAccessible": true,
+    "dailyMode": "true",
+    "ratesCannotAccumulate": true,
+    "stabilityNotMoney": true,
+    "allAppsInPicker": true,
+    "clearAppsRemovesLines": true,
+    "selectAllRestoresLines": true,
+    "allTableFieldsSortable": true,
+    "allAppSeries": [
+      {
+        "id": "typeforge-twin-cities",
+        "name": "活字戰紀：雙城烽火",
+        "status": "plotted",
+        "samples": [
+          {
+            "fraction": 0.1,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "活字戰紀：雙城烽火",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.5,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "活字戰紀：雙城烽火",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.9,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "活字戰紀：雙城烽火",
+            "clickPins": true
+          }
+        ]
+      },
+      {
+        "id": "summit-battle",
+        "name": "活字戰記：巔峰之戰",
+        "status": "plotted",
+        "samples": [
+          {
+            "fraction": 0.1,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 374.53846153846155
+            },
+            "hoverMatches": true,
+            "tooltipName": "活字戰記：巔峰之戰",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.5,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 374.53846153846155
+            },
+            "hoverMatches": true,
+            "tooltipName": "活字戰記：巔峰之戰",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.9,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 374.53846153846155
+            },
+            "hoverMatches": true,
+            "tooltipName": "活字戰記：巔峰之戰",
+            "clickPins": true
+          }
+        ]
+      },
+      {
+        "id": "paper-flick-soldiers",
+        "name": "紙上彈兵",
+        "status": "plotted",
+        "samples": [
+          {
+            "fraction": 0.1,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "紙上彈兵",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.5,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "紙上彈兵",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.9,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "紙上彈兵",
+            "clickPins": true
+          }
+        ]
+      },
+      {
+        "id": "anthill",
+        "name": "Anthill：螞蟻群體模擬",
+        "status": "no plotted data",
+        "pathNodeCount": 1,
+        "noSyntheticLine": true
+      },
+      {
+        "id": "rebound",
+        "name": "REBOUND：元素戰機",
+        "status": "plotted",
+        "samples": [
+          {
+            "fraction": 0.1,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "REBOUND：元素戰機",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.5,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "REBOUND：元素戰機",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.9,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "REBOUND：元素戰機",
+            "clickPins": true
+          }
+        ]
+      },
+      {
+        "id": "vibe-empire",
+        "name": "Vibe帝國",
+        "status": "no plotted data",
+        "pathNodeCount": 1,
+        "noSyntheticLine": true
+      },
+      {
+        "id": "stray-map",
+        "name": "浪浪地圖",
+        "status": "plotted",
+        "samples": [
+          {
+            "fraction": 0.1,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "浪浪地圖",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.5,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "浪浪地圖",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.9,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "浪浪地圖",
+            "clickPins": true
+          }
+        ]
+      },
+      {
+        "id": "doomsday-index",
+        "name": "世界末日了沒",
+        "status": "plotted",
+        "samples": [
+          {
+            "fraction": 0.1,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "世界末日了沒",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.5,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "世界末日了沒",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.9,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "世界末日了沒",
+            "clickPins": true
+          }
+        ]
+      },
+      {
+        "id": "chumen",
+        "name": "這樣出門",
+        "status": "plotted",
+        "samples": [
+          {
+            "fraction": 0.1,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "這樣出門",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.5,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "這樣出門",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.9,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "這樣出門",
+            "clickPins": true
+          }
+        ]
+      },
+      {
+        "id": "sleep-park",
+        "name": "睡公園：免費生存地圖",
+        "status": "plotted",
+        "samples": [
+          {
+            "fraction": 0.1,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "睡公園：免費生存地圖",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.5,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "睡公園：免費生存地圖",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.9,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "睡公園：免費生存地圖",
+            "clickPins": true
+          }
+        ]
+      },
+      {
+        "id": "property-roi",
+        "name": "房東投報快算",
+        "status": "plotted",
+        "samples": [
+          {
+            "fraction": 0.1,
+            "position": {
+              "x": 341.50725467799424,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "房東投報快算",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.5,
+            "position": {
+              "x": 834.6337783770734,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "房東投報快算",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.9,
+            "position": {
+              "x": 1327.7603325509892,
+              "y": 165.16483516483515
+            },
+            "hoverMatches": true,
+            "tooltipName": "房東投報快算",
+            "clickPins": true
+          }
+        ]
+      },
+      {
+        "id": "dreambuddy",
+        "name": "夢話夥伴",
+        "status": "plotted",
+        "samples": [
+          {
+            "fraction": 0.1,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 374.53846153846155
+            },
+            "hoverMatches": true,
+            "tooltipName": "夢話夥伴",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.5,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 374.53846153846155
+            },
+            "hoverMatches": true,
+            "tooltipName": "夢話夥伴",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.9,
+            "position": {
+              "x": 1451.0420168067226,
+              "y": 374.53846153846155
+            },
+            "hoverMatches": true,
+            "tooltipName": "夢話夥伴",
+            "clickPins": true
+          }
+        ]
+      },
+      {
+        "id": "piggy-growth",
+        "name": "錢錢長大了",
+        "status": "no plotted data",
+        "pathNodeCount": 1,
+        "noSyntheticLine": true
+      },
+      {
+        "id": "eclawbot",
+        "name": "EClawbot",
+        "status": "plotted",
+        "samples": [
+          {
+            "fraction": 0.1,
+            "position": {
+              "x": 1227.6687798166142,
+              "y": 322.91430529919296
+            },
+            "hoverMatches": true,
+            "tooltipName": "EClawbot",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.5,
+            "position": {
+              "x": 1320.4291840027026,
+              "y": 244.40685414743947
+            },
+            "hoverMatches": true,
+            "tooltipName": "EClawbot",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.9,
+            "position": {
+              "x": 1424.7215100884105,
+              "y": 180.75820880931812
+            },
+            "hoverMatches": true,
+            "tooltipName": "EClawbot",
+            "clickPins": true
+          }
+        ]
+      },
+      {
+        "id": "simulator-manager",
+        "name": "Simulator Manager｜模擬器分配器",
+        "status": "no plotted data",
+        "pathNodeCount": 1,
+        "noSyntheticLine": true
+      },
+      {
+        "id": "weesh",
+        "name": "Weesh",
+        "status": "plotted",
+        "samples": [
+          {
+            "fraction": 0.1,
+            "position": {
+              "x": 232.65688349619634,
+              "y": 297.58132867498716
+            },
+            "hoverMatches": true,
+            "tooltipName": "Weesh",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.5,
+            "position": {
+              "x": 783.6655287114846,
+              "y": 269.85164835164835
+            },
+            "hoverMatches": true,
+            "tooltipName": "Weesh",
+            "clickPins": true
+          },
+          {
+            "fraction": 0.9,
+            "position": {
+              "x": 1333.2076486112023,
+              "y": 235.20765904017856
+            },
+            "hoverMatches": true,
+            "tooltipName": "Weesh",
+            "clickPins": true
+          }
+        ]
+      }
+    ],
+    "tooltipBoundaryPinControl": true,
+    "allAppsHitTestingPassed": true,
+    "reviewFilter": "沒有符合篩選條件的公開評論。",
+    "reviewAuthorMetadata": [
+      {
+        "text": "Hank · 2026-08-28",
+        "visible": true,
+        "insideCard": true,
+        "fits": true
+      }
+    ],
+    "reviewMetadataReadable": true,
+    "reviewExpandControlsPassed": true,
+    "reviewExpandButtonCount": 1,
+    "mobileOverflow": false,
+    "mobileComponents": [
+      {
+        "width": 320,
+        "overflow": false,
+        "navigation": [
+          {
+            "label": "APP 趨勢",
+            "fragments": 1
+          },
+          {
+            "label": "總覽",
+            "fragments": 1
+          },
+          {
+            "label": "歷史趨勢",
+            "fragments": 1
+          },
+          {
+            "label": "評論中心",
+            "fragments": 1
+          }
+        ],
+        "values": [
+          {
+            "value": "457",
+            "fits": true
+          },
+          {
+            "value": "NT$2.9008",
+            "fits": true
+          },
+          {
+            "value": "1",
+            "fits": true
+          }
+        ],
+        "labels": [
+          {
+            "text": "0",
+            "xFont": 12,
+            "yFont": 12,
+            "ratio": 1
+          },
+          {
+            "text": "75.25",
+            "xFont": 12,
+            "yFont": 12,
+            "ratio": 1
+          },
+          {
+            "text": "150.5",
+            "xFont": 12,
+            "yFont": 12,
+            "ratio": 1
+          },
+          {
+            "text": "225.75",
+            "xFont": 12,
+            "yFont": 12,
+            "ratio": 1
+          },
+          {
+            "text": "301",
+            "xFont": 12,
+            "yFont": 12,
+            "ratio": 1
+          },
+          {
+            "text": "8/1",
+            "xFont": 12,
+            "yFont": 12,
+            "ratio": 1
+          },
+          {
+            "text": "8/22",
+            "xFont": 12,
+            "yFont": 12,
+            "ratio": 1
+          },
+          {
+            "text": "9/12",
+            "xFont": 12,
+            "yFont": 12,
+            "ratio": 1
+          },
+          {
+            "text": "9/30",
+            "xFont": 12,
+            "yFont": 12,
+            "ratio": 1
+          }
+        ]
+      },
+      {
+        "width": 390,
+        "overflow": false,
+        "navigation": [
+          {
+            "label": "APP 趨勢",
+            "fragments": 1
+          },
+          {
+            "label": "總覽",
+            "fragments": 1
+          },
+          {
+            "label": "歷史趨勢",
+            "fragments": 1
+          },
+          {
+            "label": "評論中心",
+            "fragments": 1
+          }
+        ],
+        "values": [
+          {
+            "value": "457",
+            "fits": true
+          },
+          {
+            "value": "NT$2.9008",
+            "fits": true
+          },
+          {
+            "value": "1",
+            "fits": true
+          }
+        ],
+        "labels": [
+          {
+            "text": "0",
+            "xFont": 12,
+            "yFont": 12,
+            "ratio": 1
+          },
+          {
+            "text": "75.25",
+            "xFont": 12,
+            "yFont": 12,
+            "ratio": 1
+          },
+          {
+            "text": "150.5",
+            "xFont": 12,
+            "yFont": 12,
+            "ratio": 1
+          },
+          {
+            "text": "225.75",
+            "xFont": 12,
+            "yFont": 12,
+            "ratio": 1
+          },
+          {
+            "text": "301",
+            "xFont": 12,
+            "yFont": 12,
+            "ratio": 1
+          },
+          {
+            "text": "8/1",
+            "xFont": 12,
+            "yFont": 12,
+            "ratio": 1
+          },
+          {
+            "text": "8/22",
+            "xFont": 12,
+            "yFont": 12,
+            "ratio": 1
+          },
+          {
+            "text": "9/12",
+            "xFont": 12,
+            "yFont": 12,
+            "ratio": 1
+          },
+          {
+            "text": "9/30",
+            "xFont": 12,
+            "yFont": 12,
+            "ratio": 1
+          }
+        ]
+      },
+      {
+        "width": 768,
+        "overflow": false,
+        "navigation": [
+          {
+            "label": "APP 趨勢",
+            "fragments": 1
+          },
+          {
+            "label": "總覽",
+            "fragments": 1
+          },
+          {
+            "label": "歷史趨勢",
+            "fragments": 1
+          },
+          {
+            "label": "評論中心",
+            "fragments": 1
+          }
+        ],
+        "values": [
+          {
+            "value": "457",
+            "fits": true
+          },
+          {
+            "value": "NT$2.9008",
+            "fits": true
+          },
+          {
+            "value": "1",
+            "fits": true
+          }
+        ],
+        "labels": [
+          {
+            "text": "0",
+            "xFont": 12,
+            "yFont": 12.043956043956044,
+            "ratio": 0.9963503649635037
+          },
+          {
+            "text": "75.25",
+            "xFont": 12,
+            "yFont": 12.043956043956044,
+            "ratio": 0.9963503649635037
+          },
+          {
+            "text": "150.5",
+            "xFont": 12,
+            "yFont": 12.043956043956044,
+            "ratio": 0.9963503649635037
+          },
+          {
+            "text": "225.75",
+            "xFont": 12,
+            "yFont": 12.043956043956044,
+            "ratio": 0.9963503649635037
+          },
+          {
+            "text": "301",
+            "xFont": 12,
+            "yFont": 12.043956043956044,
+            "ratio": 0.9963503649635037
+          },
+          {
+            "text": "8/1",
+            "xFont": 12,
+            "yFont": 12.043956043956044,
+            "ratio": 0.9963503649635037
+          },
+          {
+            "text": "8/14",
+            "xFont": 12,
+            "yFont": 12.043956043956044,
+            "ratio": 0.9963503649635037
+          },
+          {
+            "text": "8/27",
+            "xFont": 12,
+            "yFont": 12.043956043956044,
+            "ratio": 0.9963503649635037
+          },
+          {
+            "text": "9/9",
+            "xFont": 12,
+            "yFont": 12.043956043956044,
+            "ratio": 0.9963503649635037
+          },
+          {
+            "text": "9/22",
+            "xFont": 12,
+            "yFont": 12.043956043956044,
+            "ratio": 0.9963503649635037
+          },
+          {
+            "text": "9/30",
+            "xFont": 12,
+            "yFont": 12.043956043956044,
+            "ratio": 0.9963503649635037
+          }
+        ]
+      }
+    ],
+    "mobileNavigationSingleLine": true,
+    "mobileMetricValuesFit": true,
+    "mobileChartLabelsReadable": true,
+    "mobileTapPinsTooltip": true
+  },
+  "errors": [],
+  "community": "整合 16 款 APP · 已讀 0 則商店評論、1 則作品集留言 · 非商店歷年總数"
+}

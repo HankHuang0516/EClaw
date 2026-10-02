@@ -94,9 +94,13 @@ function ensureTables(pool) {
     return readyPromise;
 }
 
-async function getCommunity(pool, appId, hash) {
+function validCommentCursor(value) {
+    return value === undefined || (typeof value === 'string' && /^[1-9]\d{0,18}$/.test(value) && BigInt(value) <= 9223372036854775807n);
+}
+
+async function getCommunity(pool, appId, hash, beforeId = null) {
     await ensureTables(pool);
-    const [likes, liked, comments] = await Promise.all([
+    const [likes, liked, comments, total] = await Promise.all([
         pool.query('SELECT COUNT(*)::int AS count FROM app_portfolio_likes WHERE app_id = $1', [appId]),
         hash
             ? pool.query('SELECT EXISTS(SELECT 1 FROM app_portfolio_likes WHERE app_id = $1 AND visitor_hash = $2) AS liked', [appId, hash])
@@ -104,16 +108,18 @@ async function getCommunity(pool, appId, hash) {
         pool.query(`
             SELECT id::text, nickname, content, created_at AS "createdAt"
             FROM app_portfolio_comments
-            WHERE app_id = $1
-            ORDER BY created_at DESC
-            LIMIT 50
-        `, [appId]),
+            WHERE app_id = $1 AND ($2::bigint IS NULL OR id < $2::bigint)
+            ORDER BY id DESC
+            LIMIT 51
+        `, [appId, beforeId]),
+        pool.query('SELECT COUNT(*)::int AS count FROM app_portfolio_comments WHERE app_id = $1', [appId]),
     ]);
     return {
         likeCount: Number(likes.rows[0]?.count || 0),
         liked: Boolean(liked.rows[0]?.liked),
-        commentCount: comments.rows.length,
-        comments: comments.rows,
+        commentCount: Number(total.rows[0]?.count || 0),
+        comments: comments.rows.slice(0, 50),
+        nextCursor: comments.rows.length > 50 ? comments.rows[49].id : null,
     };
 }
 
@@ -189,8 +195,9 @@ function createRouter(getPool) {
     });
 
     router.get('/apps/:appId/community', async (req, res) => {
+        if (!validCommentCursor(req.query.before)) return res.status(400).json({ success: false, error: 'invalid-comment-cursor', message: '留言分頁格式不正確。' });
         try {
-            const data = await getCommunity(getPool(), req.params.appId, visitorHash(req.query.visitorId));
+            const data = await getCommunity(getPool(), req.params.appId, visitorHash(req.query.visitorId), req.query.before || null);
             res.json({ success: true, ...data });
         } catch (error) {
             console.error('[AppPortfolio] community read failed:', error.message);
@@ -252,6 +259,7 @@ module.exports = {
     cleanBetaFeedback,
     ensureTables,
     getCommunity,
+    validCommentCursor,
     toggleLike,
     addComment,
     addBetaFeedback,

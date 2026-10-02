@@ -1,0 +1,290 @@
+[
+  {
+    "width": 320,
+    "overflow": false,
+    "navigation": [
+      {
+        "label": "APP 趨勢",
+        "fragments": 1
+      },
+      {
+        "label": "總覽",
+        "fragments": 1
+      },
+      {
+        "label": "歷史趨勢",
+        "fragments": 1
+      },
+      {
+        "label": "評論中心",
+        "fragments": 1
+      }
+    ],
+    "values": [
+      {
+        "value": "458",
+        "fits": true
+      },
+      {
+        "value": "NT$2.9008",
+        "fits": true
+      },
+      {
+        "value": "1",
+        "fits": true
+      }
+    ],
+    "labels": [
+      {
+        "text": "0",
+        "xFont": 12,
+        "yFont": 12,
+        "ratio": 1
+      },
+      {
+        "text": "75.25",
+        "xFont": 12,
+        "yFont": 12,
+        "ratio": 1
+      },
+      {
+        "text": "150.5",
+        "xFont": 12,
+        "yFont": 12,
+        "ratio": 1
+      },
+      {
+        "text": "225.75",
+        "xFont": 12,
+        "yFont": 12,
+        "ratio": 1
+      },
+      {
+        "text": "301",
+        "xFont": 12,
+        "yFont": 12,
+        "ratio": 1
+      },
+      {
+        "text": "8/2",
+        "xFont": 12,
+        "yFont": 12,
+        "ratio": 1
+      },
+      {
+        "text": "8/23",
+        "xFont": 12,
+        "yFont": 12,
+        "ratio": 1
+      },
+      {
+        "text": "9/13",
+        "xFont": 12,
+        "yFont": 12,
+        "ratio": 1
+      },
+      {
+        "text": "10/1",
+        "xFont": 12,
+        "yFont": 12,
+        "ratio": 1
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "overflow": false,
+    "navigation": [
+      {
+        "label": "APP 趨勢",
+        "fragments": 1
+      },
+      {
+        "label": "總覽",
+        "fragments": 1
+      },
+      {
+        "label": "歷史趨勢",
+        "fragments": 1
+      },
+      {
+        "label": "評論中心",
+        "fragments": 1
+      }
+    ],
+    "values": [
+      {
+        "value": "458",
+        "fits": true
+      },
+      {
+        "value": "NT$2.9008",
+        "fits": true
+      },
+      {
+        "value": "1",
+        "fits": true
+      }
+    ],
+    "labels": [
+      {
+        "text": "0",
+        "xFont": 12,
+        "yFont": 12,
+        "ratio": 1
+      },
+      {
+        "text": "75.25",
+        "xFont": 12,
+        "yFont": 12,
+        "ratio": 1
+      },
+      {
+        "text": "150.5",
+        "xFont": 12,
+        "yFont": 12,
+        "ratio": 1
+      },
+      {
+        "text": "225.75",
+        "xFont": 12,
+        "yFont": 12,
+        "ratio": 1
+      },
+      {
+        "text": "301",
+        "xFont": 12,
+        "yFont": 12,
+        "ratio": 1
+      },
+      {
+        "text": "8/2",
+        "xFont": 12,
+        "yFont": 12,
+        "ratio": 1
+      },
+      {
+        "text": "8/23",
+        "xFont": 12,
+        "yFont": 12,
+        "ratio": 1
+      },
+      {
+        "text": "9/13",
+        "xFont": 12,
+        "yFont": 12,
+        "ratio": 1
+      },
+      {
+        "text": "10/1",
+        "xFont": 12,
+        "yFont": 12,
+        "ratio": 1
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "overflow": false,
+    "navigation": [
+      {
+        "label": "APP 趨勢",
+        "fragments": 1
+      },
+      {
+        "label": "總覽",
+        "fragments": 1
+      },
+      {
+        "label": "歷史趨勢",
+        "fragments": 1
+      },
+      {
+        "label": "評論中心",
+        "fragments": 1
+      }
+    ],
+    "values": [
+      {
+        "value": "458",
+        "fits": true
+      },
+      {
+        "value": "NT$2.9008",
+        "fits": true
+      },
+      {
+        "value": "1",
+        "fits": true
+      }
+    ],
+    "labels": [
+      {
+        "text": "0",
+        "xFont": 12,
+        "yFont": 12.043956043956044,
+        "ratio": 0.9963503649635037
+      },
+      {
+        "text": "75.25",
+        "xFont": 12,
+        "yFont": 12.043956043956044,
+        "ratio": 0.9963503649635037
+      },
+      {
+        "text": "150.5",
+        "xFont": 12,
+        "yFont": 12.043956043956044,
+        "ratio": 0.9963503649635037
+      },
+      {
+        "text": "225.75",
+        "xFont": 12,
+        "yFont": 12.043956043956044,
+        "ratio": 0.9963503649635037
+      },
+      {
+        "text": "301",
+        "xFont": 12,
+        "yFont": 12.043956043956044,
+        "ratio": 0.9963503649635037
+      },
+      {
+        "text": "8/2",
+        "xFont": 12,
+        "yFont": 12.043956043956044,
+        "ratio": 0.9963503649635037
+      },
+      {
+        "text": "8/15",
+        "xFont": 12,
+        "yFont": 12.043956043956044,
+        "ratio": 0.9963503649635037
+      },
+      {
+        "text": "8/28",
+        "xFont": 12,
+        "yFont": 12.043956043956044,
+        "ratio": 0.9963503649635037
+      },
+      {
+        "text": "9/10",
+        "xFont": 12,
+        "yFont": 12.043956043956044,
+        "ratio": 0.9963503649635037
+      },
+      {
+        "text": "9/23",
+        "xFont": 12,
+        "yFont": 12.043956043956044,
+        "ratio": 0.9963503649635037
+      },
+      {
+        "text": "10/1",
+        "xFont": 12,
+        "yFont": 12.043956043956044,
+        "ratio": 0.9963503649635037
+      }
+    ]
+  }
+]
