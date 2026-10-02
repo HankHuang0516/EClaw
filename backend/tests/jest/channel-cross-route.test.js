@@ -76,6 +76,29 @@ describe('POST /api/channel/message — cross-device routing', () => {
         if (entity) entity.messageQueue = [];
     });
 
+    it('an explicit customer reply neither reaches nor consumes a later queued customer', async () => {
+        const { devices, _chatPool, _createDefaultEntity, _publicCodeIndex } = app;
+        const original = 'ch-xroute-original-customer';
+        devices[original] = { deviceSecret: 'fixture-original-owner', entities: { 0: {
+            ..._createDefaultEntity(0), isBound: true, publicCode: 'cust01', name: 'Original customer'
+        } } };
+        _publicCodeIndex.cust01 = { deviceId: original, entityId: 0 };
+        const host = devices[DEVICE_A].entities[0];
+        injectCrossDeviceMessage(host, DEVICE_B, devices[DEVICE_B].entities[0].publicCode);
+        _chatPool.query.mockClear();
+        const response = await post('/api/channel/message').send({
+            channel_api_key: CHANNEL_API_KEY, deviceId: DEVICE_A, entityId: 0,
+            botSecret: botSecretA, message: 'Answer belonging only to the original customer', speakTo: ['cust01']
+        });
+        expect(response.status).toBe(200);
+        expect(host.messageQueue.some(m => m.crossDevice && m.fromDeviceId === DEVICE_B)).toBe(true);
+        const savedDevices = _chatPool.query.mock.calls.filter(([sql]) => /INSERT INTO chat_messages/.test(sql)).map(([, params]) => params[0]);
+        expect(savedDevices).not.toContain(DEVICE_B);
+        expect(savedDevices).toContain(original);
+        delete _publicCodeIndex.cust01;
+        delete devices[original];
+    });
+
     it('auto-routes first reply and consumes cross-device message', async () => {
         const { devices } = require('../../index');
         const entity = devices[DEVICE_A].entities[0];

@@ -152,6 +152,8 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
     // Late-bound org chart forward hook (set after orgChartForward defined in index.js)
     let orgChartForwardFn = null;
     function setOrgChartForward(fn) { orgChartForwardFn = fn; }
+    let codexCardActionHandler = null;
+    function setCodexCardActionHandler(fn) { codexCardActionHandler = fn; }
     const router = express.Router();
 
     // ── In-memory test sink (for self-testing without ngrok) ──
@@ -949,7 +951,9 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
                 } else {
                     serverLog('warn', 'cross_speak_push', `[EXPLICIT_ROUTE] targetDeviceId ${targetDeviceId} not found`, { deviceId, entityId: eId });
                 }
-            } else if (!suppressA2AForward && hasCrossRoute) {
+            } else if (!suppressA2AForward && hasCrossRoute && !hasDelivery) {
+                // An explicitly addressed reply must never also be forwarded
+                // to a later queued cross-device sender or consume its inquiry.
                 const replySource = `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`;
                 const senderEntityId = pendingCross.fromEntityId >= 0 ? pendingCross.fromEntityId : 0;
                 await saveChatMessage(pendingCross.fromDeviceId, senderEntityId, message, replySource, false, true);
@@ -1281,6 +1285,18 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
                 });
             }
 
+            // Local Codex helpers poll for card actions instead of requiring an
+            // inbound public webhook. Their approvals are exclusively owner scoped.
+            let codexHandled = false;
+            if (codexCardActionHandler) {
+                codexHandled = await codexCardActionHandler({
+                    deviceId, entityId: eId, askId: ask_id, actionId: action_id,
+                    answers: req.body.answers,
+                    ownerAuthenticated: !!((deviceSecret && safeEqual(device.deviceSecret, deviceSecret))
+                        || req.user?.deviceId === deviceId)
+                });
+            }
+
             // Mark message as resolved
             if (chatPool) {
                 try {
@@ -1308,7 +1324,7 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
             }
 
             // Push a card_action webhook back to the channel bot (fire-and-forget)
-            pushToChannelCallback(deviceId, eId, {
+            if (!codexHandled) pushToChannelCallback(deviceId, eId, {
                 event: 'card_action',
                 from: 'user',
                 ask_id,
@@ -1332,7 +1348,7 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
             });
         } catch (err) {
             console.error('[Channel] card-action error:', err.message);
-            return res.status(500).json({ success: false, message: 'Internal error' });
+            return res.status(err.status || 500).json({ success: false, message: err.status ? err.message : 'Internal error' });
         }
     });
 
@@ -1765,6 +1781,7 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
         pushToChannelCallback,
         setKanbanAutoReview,
         setOrgChartForward,
+        setCodexCardActionHandler,
         verifyChannelKey,
         // Pure first-token-mention helper, also exposed on the factory object
         // below. Surfaced on the instance so /api/transform (index.js) can

@@ -1,0 +1,14 @@
+{
+  "name": "eclawbot-codex-plugin-development",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test test/package.test.mjs",
+    "test:runtime": "node --test test/runtime.test.mjs",
+    "validate": "node scripts/package.mjs --check",
+    "package": "node scripts/package.mjs",
+    "package:submission": "node scripts/package.mjs --submission"
+  }
+}
