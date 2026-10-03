@@ -1845,6 +1845,7 @@ app.get('/api/help', (req, res) => {
 
     // Intent category matching — zh/en + ja/ko/th/vi/id/fr/es/ms (by @Mac_F)
     const INTENT_MAP = {
+        codex_plugin: ['codex plugin','codex entity','codex integration','codex 外掛','codex 實體','codex 綁定','codex runtime'],
         messaging:  ['speakto','broadcast','發訊','reply','transform','message','send','私訊','廣播','メッセージ','送信','메시지','전송','ส่งข้อความ','ข้อความ','ส่ง','gửi tin nhắn','tin nhắn','gửi','phát sóng','kirım pesan','pesan','mengirim','envoyer message','diffusion','enviar mensaje','transmitir','hantar mesej','mesej','menghantar'],
         kanban:     ['card','看板','任務','move','派任','assign','kanban','卡片','create task','建立任務','カード','タスク','칸반','카드','작업','กระดาน','บัตร','จัดการงาน','bảng','thẻ','quản lý công việc','papan','kartu','manajemen tugas','tableau','carte','gestion tâches','tablero','tarjeta','gestión tareas','kad','pengurusan tugas','history','archived','archive','restore','封存','歷史','還原','漏斗','過濾','filter','funnel'],
         schedule:   ['排程','schedule','暫停','pause','cron','recurring','stop schedule','disable','enable','スケジュール','予約','一時停止','크론','일정','예약','일시 중지','กำหนดการ','ตารางเวลา','หยุดชั่วคราว','lịch trình','đặt lịch','tạm dừng','jadwal','penjadwalan','jeda','planification','programmation','programación','jadual'],
@@ -1866,6 +1867,16 @@ app.get('/api/help', (req, res) => {
     const d = `'{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${eId}`; // shared body prefix
 
     const APIS = {
+        codex_plugin: [
+            { title: 'Discover OAuth resource and issuer metadata (public)', curl: `curl -s "${apiBase}/.well-known/oauth-protected-resource"\ncurl -s "${apiBase}/.well-known/oauth-authorization-server"` },
+            { title: 'Register a public OAuth client (PKCE S256; exact HTTPS redirect)', curl: `curl -s -X POST "${apiBase}/api/codex/oauth/register" -H "Content-Type: application/json" -d '{"redirect_uris":["https://YOUR_CLIENT_HOST/callback"],"token_endpoint_auth_method":"none","grant_types":["authorization_code","refresh_token"],"response_types":["code"],"scope":"codex:read codex:manage"}'` },
+            { title: 'OAuth consent and token lifecycle (host-managed; never use botSecret)', curl: `# GET ${apiBase}/api/codex/oauth/authorize with response_type=code, client_id, redirect_uri, resource=${apiBase}/mcp, scope, state, code_challenge and code_challenge_method=S256.\n# POST ${apiBase}/api/codex/oauth/authorize with the owner-session-bound csrf_token and decision=approve|deny.\n# POST ${apiBase}/api/codex/oauth/token (form): grant_type=authorization_code + client_id + code + redirect_uri + code_verifier + resource; or refresh_token grant + client_id + refresh_token + resource.\n# POST ${apiBase}/api/codex/oauth/revoke (form): client_id + token + token_type_hint. The OAuth client securely manages these values.` },
+            { title: 'List plugin tools (owner OAuth access token; JSON-RPC transport)', curl: `curl -s -X POST "${apiBase}/mcp" -H "Authorization: Bearer OAUTH_ACCESS_TOKEN" -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'` },
+            { title: 'Enroll the exact local thread (helper-generated SHA256 hash only)', curl: `curl -s -X POST "${apiBase}/api/codex/runtime/enroll" -H "Content-Type: application/json" -d '{"bindingId":"BINDING_UUID","tokenHash":"LOCAL_HELPER_SHA256_HASH","threadId":"BOUND_THREAD_ID","workspace":"/absolute/project"}'` },
+            { title: 'Inspect enrollment and poll durable messages (binding runtime bearer)', curl: `curl -s "${apiBase}/api/codex/runtime/enrollment?bindingId=BINDING_UUID&enrollmentId=ENROLLMENT_UUID" -H "Authorization: Bearer LOCAL_RUNTIME_TOKEN"\ncurl -s "${apiBase}/api/codex/runtime/poll?bindingId=BINDING_UUID" -H "Authorization: Bearer LOCAL_RUNTIME_TOKEN"` },
+            { title: 'Local helper reply / acknowledgement / heartbeat / owner approval', curl: `# POST ${apiBase}/api/codex/runtime/reply {bindingId,message,replyTo:MESSAGE_UUID}\n# POST ${apiBase}/api/codex/runtime/ack {bindingId,messageIds:[MESSAGE_UUID]}\n# POST ${apiBase}/api/codex/runtime/heartbeat {bindingId,state:online|offline|busy}\n# POST ${apiBase}/api/codex/runtime/approval {bindingId,askId,title,body,buttons:[{id,label}]}\n# Each uses Authorization: Bearer LOCAL_RUNTIME_TOKEN. Customers cannot approve; routing comes from the stored inbound job.` },
+            { title: 'Development diagnostics (owner credential + non-production gate)', curl: `curl -s "${apiBase}/api/debug/codex-plugin?deviceId=${deviceId}&deviceSecret=OWNER_DEVICE_SECRET&limit=30"` }
+        ],
         messaging: [
             { title: 'Send private message (speakTo)', curl: `curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${botSecret}","message":"TEXT","state":"IDLE","speakTo":["TARGET_PUBLIC_CODE"]}'` },
             { title: 'Broadcast to all entities', curl: `curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${botSecret}","message":"TEXT","state":"IDLE","broadcast":true}'` }
@@ -1968,7 +1979,7 @@ app.get('/api/help', (req, res) => {
     res.json({
         intent,
         matched_category: matched,
-        tip: `Use ?intent=KEYWORD to discover APIs. Categories: messaging, kanban, schedule, notes, search, files, entities, vault, analytics, usage, remote_control, action_requests`,
+        tip: `Use ?intent=KEYWORD to discover APIs. Categories: codex_plugin, messaging, kanban, schedule, notes, search, files, entities, vault, analytics, usage, remote_control, action_requests`,
         curl_examples: curlBlock
     });
 });
@@ -13562,6 +13573,9 @@ app.post('/api/client/speak', idempotencyMiddleware, clientSpeakDedupeMiddleware
         const messageObj = {
             text: text,
             from: source,
+            // Proven by this route's owner-secret gate; never inferred from the
+            // caller-controlled source label by a remote Codex helper.
+            codexOwner: true,
             timestamp: Date.now(),
             read: false,
             mediaType: mediaType || null,
@@ -22281,6 +22295,76 @@ const channelModule = require('./channel-api')(devices, {
     chatPool
 });
 app.use('/api/channel', channelModule.router);
+
+// Public plugin control plane. Inference and subscription credentials stay in
+// the user's local Codex process; this server only links entities and messages.
+const codexPluginBase = (process.env.CODEX_PLUGIN_BASE_URL || 'https://eclawbot.com').replace(/\/$/, '');
+const codexPluginOAuth = require('./codex-plugin-oauth').createCodexPluginOAuth({
+    pool: authModule.pool, devices, authMiddleware: authModule.authMiddleware,
+    baseUrl: codexPluginBase, serverLog
+});
+const codexPluginOAuthReady = codexPluginOAuth.initDatabase();
+codexPluginOAuthReady.catch(() => serverLog('error', 'codex_plugin', 'Codex OAuth storage unavailable'));
+const codexPlugin = require('./codex-plugin').createCodexPlugin({
+    pool: authModule.pool, devices, db, oauth: codexPluginOAuth,
+    baseUrl: codexPluginBase, saveData, io, serverLog,
+    persistDevice: async deviceId => {
+        if (!await db.saveDeviceData(deviceId, devices[deviceId])) throw new Error('Owner persistence unavailable');
+    },
+    invokeApi: async (route, body) => {
+        // Fixed loopback destination and fixed server-owned API paths. No client
+        // supplied URLs, credential-bearing redirects, or raw response errors.
+        const response = await fetch(`http://127.0.0.1:${process.env.PORT || 3000}${route}`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body), redirect: 'error', signal: AbortSignal.timeout(45000)
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error('EClaw channel operation failed');
+        return result;
+    },
+    sendOwnerNotice: async (binding, message, card = null) => {
+        const entity = devices[binding.device_id]?.entities?.[binding.entity_id];
+        if (!entity) throw new Error('Owner entity unavailable');
+        // Save directly to the owner's transcript so approvals do not consume
+        // customer auto-routing hints or forward local commands to a customer.
+        const id = await saveChatMessage(binding.device_id, binding.entity_id, message,
+            `entity:${binding.entity_id}:${entity.character}`, false, true,
+            null, null, null, null, null, null, card, null, 'codex');
+        if (!id) throw new Error('Owner message was not persisted');
+        if (card) notifyRichCardQuestion(binding.device_id, card, {
+            questionText: message, fromName: entity.name || 'Codex',
+            fromEntityId: binding.entity_id, toEntityId: binding.entity_id
+        });
+    }
+});
+const codexPluginReady = Promise.all([codexPlugin.ready, codexPluginOAuthReady]);
+codexPluginReady.catch(() => {});
+async function codexPluginReadyGate(_req, res, next) {
+    if (!persistenceReady) return res.status(503).json({ success: false, error: 'persistence_initializing' });
+    try { await codexPluginReady; next(); }
+    catch (_) { res.status(503).json({ success: false, error: 'codex_unavailable' }); }
+}
+app.get('/.well-known/oauth-protected-resource', (_req, res) => res.json({
+    resource: `${codexPluginBase}/mcp`, authorization_servers: [codexPluginBase],
+    scopes_supported: ['codex:read', 'codex:manage']
+}));
+app.get('/.well-known/oauth-authorization-server', (_req, res) => res.json(codexPluginOAuth.metadata));
+app.use('/api/codex/oauth', codexPluginReadyGate, codexPluginOAuth.router);
+app.use('/api/codex/runtime', codexPluginReadyGate, codexPlugin.runtimeRouter);
+app.all('/mcp', codexPluginReadyGate, codexPlugin.mcpHandler);
+channelModule.setCodexCardActionHandler(codexPlugin.handleCardAction);
+app.get('/api/debug/codex-plugin', codexPluginReadyGate, async (req, res) => {
+    // Registered after the shared production /api/debug gate. Owner-scoped
+    // access adds a second guard and never returns authentication material.
+    const { deviceId, deviceSecret, limit = '30' } = req.query;
+    if (!devices[deviceId] || !safeEqual(devices[deviceId].deviceSecret, deviceSecret)) {
+        return res.status(403).json({ success: false, error: 'invalid_credentials' });
+    }
+    const count = Number(limit);
+    if (!Number.isInteger(count) || count < 1 || count > 100) return res.status(400).json({ success: false, error: 'invalid_limit' });
+    try { res.json({ success: true, ...await codexPlugin.diagnostics(deviceId, count) }); }
+    catch (_) { res.status(503).json({ success: false, error: 'codex_unavailable' }); }
+});
 
 // Wire auto-push deps into arena module — MUST be after channelModule init to avoid TDZ
 if (typeof arenaModule.setAutoPushDeps === 'function') {

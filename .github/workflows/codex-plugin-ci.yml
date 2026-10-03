@@ -1,0 +1,43 @@
+name: Codex Plugin CI
+
+on:
+  push:
+    paths: ['codex-plugin/**', 'backend/codex-plugin*', 'backend/tests/test-codex-plugin-local.mjs', '.github/workflows/codex-plugin-ci.yml']
+  pull_request:
+    branches: [main]
+    paths: ['codex-plugin/**', 'backend/codex-plugin*', 'backend/tests/test-codex-plugin-local.mjs', '.github/workflows/codex-plugin-ci.yml']
+
+jobs:
+  local-contract:
+    name: Local helper backend contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+        working-directory: backend
+      - run: node --test tests/test-codex-plugin-local.mjs
+        working-directory: backend
+  plugin:
+    name: Plugin runtime and packaging
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Install backend test dependencies for contract fixture
+        working-directory: backend
+        run: npm ci
+      - name: Test local runtime and deterministic packaging
+        working-directory: codex-plugin
+        run: node --test test/*.test.mjs
+      - name: Validate development package
+        working-directory: codex-plugin
+        run: node scripts/package.mjs --check

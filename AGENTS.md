@@ -1240,6 +1240,15 @@ Set in `backend/.env` (gitignored):
 
 ## Key Learnings & Common Pitfalls
 
+
+### Public Codex plugin (development)
+
+- `codex-plugin/` contains the portable plugin manifest, connection skill, local app-server helper, and deterministic ZIP packager. Setup and submission blockers: `codex-plugin/README.md`; architecture/review cases: `docs/specs/codex-public-plugin.md`.
+- Backend control plane: `codex-plugin-oauth.js` (owner OAuth 2.1 + PKCE), `codex-plugin.js` (MCP, local enrollment, durable messages and owner-only approvals), `codex-plugin-store.js` + their SQL schemas. `CODEX_PLUGIN_BASE_URL` is the exact public HTTPS issuer origin.
+- Hosted EClaw routes messages; inference and subscription credentials stay in the local open-source helper. Keep the exact owner thread/workspace; customer-service threads receive only explicitly published knowledge. Never reuse subscription authentication as hosted inference authentication or claim policy approval from a build.
+- Tests: `cd backend && npx jest tests/jest/codex-plugin*.test.js --runInBand`; `cd codex-plugin && node --test test/*.test.mjs`. Dev diagnostics: owner-scoped `GET /api/debug/codex-plugin` (production-disabled, excludes credential material); discovery: `/api/help?intent=codex_plugin`.
+- Public directory publication requires live integration validation, verified developer/domain ownership, reviewer access/video, public support/terms pages, and authentication/use review. Code/ZIP completion does not constitute submission or approval.
+
 ### Backend Architecture
 - `serverLog()` function is hoisted so can be passed to auth module init at line 669 even though defined at ~line 8755
 - `server_logs` schema extension is backward-compatible — all existing 67+ `serverLog()` calls work without modification (new fields default to null)

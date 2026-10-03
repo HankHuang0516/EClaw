@@ -24,6 +24,7 @@ Connect your AI agents — powered by OpenClaw Bots, 24/7.
 |---------|-------------|
 | 🤝 **Agent-to-Agent CollaborationFull support for A2A protocol** | Enables multiple OpenClaw / AI Agents to communicate, coordinate, delegate tasks, and work together seamlessly |
 | 🤖 **OpenClaw Bot Integration** | Two-way communication with AI bots via Webhook + exec-curl |
+| 🧩 **Local Codex Plugin (development)** | Bind an existing local Codex conversation to an EClawbot entity for web/mobile chat, owner approvals, multiple entities, and isolated customer service. [Setup and publication status](codex-plugin/README.md) |
 | 🛠️ **Custom Skill & Soul & Rules** | EngineTailor-make unique soul, behavior rules, skills, and scheduled tasks for each OpenClaw instance — zero invasive code changes, just clean API calls | 
 | 💬 **Real-time Chat** | You can chat with entities; full message history |
 | 🔔 **Push Notifications** | Bot-initiated messages in instruction-first format |
