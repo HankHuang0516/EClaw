@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="《紙上彈兵》1.0.0 官方支援、聯絡方式、隱私說明與 App Review 操作指南。"
+    />
+    <title>紙上彈兵｜官方支援與 App Review 指南</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #f3ead8;
+        --paper-soft: #fbf7ee;
+        --ink: #28231d;
+        --muted: #6c6256;
+        --red: #8d352e;
+        --line: #d8c8ae;
+        --gold: #b1843f;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 10% 0%, rgba(255, 255, 255, 0.82), transparent 34rem),
+          repeating-linear-gradient(0deg, rgba(95, 72, 40, 0.025) 0 1px, transparent 1px 5px),
+          var(--paper);
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", sans-serif;
+        line-height: 1.7;
+      }
+
+      main {
+        width: min(920px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 48px 0 72px;
+      }
+
+      header, section {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(251, 247, 238, 0.92);
+        box-shadow: 0 16px 44px rgba(63, 45, 26, 0.09);
+      }
+
+      header { padding: clamp(28px, 6vw, 56px); }
+      section { margin-top: 20px; padding: 28px; }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        color: var(--red);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h1, h2 { font-family: "Noto Serif TC", "Songti TC", serif; }
+      h1 { margin: 0; font-size: clamp(2.1rem, 7vw, 4.2rem); line-height: 1.1; }
+      h2 { margin: 0 0 14px; font-size: 1.45rem; }
+      p { margin: 0.6rem 0; }
+      ul, ol { padding-left: 1.35rem; }
+      li + li { margin-top: 0.45rem; }
+
+      .lead { max-width: 720px; color: var(--muted); font-size: 1.08rem; }
+      .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+      .tag {
+        padding: 6px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: white;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+      .grid section { margin: 0; }
+
+      a { color: var(--red); font-weight: 700; }
+      a:focus-visible, video:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; }
+
+      video {
+        display: block;
+        width: 100%;
+        margin-top: 16px;
+        border: 1px solid #2b2118;
+        border-radius: 12px;
+        background: #17120e;
+      }
+
+      .english {
+        border-left: 4px solid var(--gold);
+        padding-left: 18px;
+      }
+
+      footer { padding-top: 24px; color: var(--muted); font-size: 0.9rem; text-align: center; }
+
+      @media (max-width: 680px) {
+        main { width: min(100% - 20px, 920px); padding-top: 18px; }
+        .grid { grid-template-columns: 1fr; }
+        section { padding: 22px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="eyebrow">Official Support · App Review</p>
+        <h1>紙上彈兵</h1>
+        <p class="lead">
+          在紙頁戰場拖曳、彈射英雄，以同一次行動完成移動與攻擊的離線單機策略遊戲。
+          本頁提供 1.0.0 正式版的支援聯絡方式、隱私說明與審查操作指南。
+        </p>
+        <div class="meta" aria-label="版本資訊">
+          <span class="tag">正式版 1.0.0／Android BETA 1.0.4</span>
+          <span class="tag">iOS build 9</span>
+          <span class="tag">Android BETA versionCode 13</span>
+          <span class="tag">開發者：HankHuang / AiHankApps</span>
+        </div>
+      </header>
+
+      <div class="grid" style="margin-top: 20px">
+        <section>
+          <h2>客服與聯絡方式</h2>
+          <p>需要協助、回報問題或詢問隱私事項，請直接來信：</p>
+          <p><a href="mailto:twopiggyhavefun@gmail.com">twopiggyhavefun@gmail.com</a></p>
+          <p>應用程式識別碼：<br /><code>com.hankhuang.paperflicksoldiers</code></p>
+        </section>
+
+        <section>
+          <h2>資料與隱私</h2>
+          <ul>
+            <li>不需建立帳號或登入。</li>
+            <li>不含廣告、App 內購買或付費解鎖。</li>
+            <li>不含廣告、Google Analytics、跨應用程式追蹤或玩家帳號識別。</li>
+            <li>Android 1.0.3 以上使用 Firebase Crashlytics NDK 傳送當機記錄、診斷資料與安裝識別碼，僅用於穩定性修復。</li>
+            <li>Android 1.0.4 以上可自願送出私人 BETA 回饋：評分、續作意願、選填留言、版本與平台；不傳送帳號或裝置／廣告識別碼。</li>
+            <li>BETA 回饋可稍後或略過，不影響進度、功能與獎勵。</li>
+            <li>不出售資料，也不將診斷資料用於廣告。</li>
+            <li>進度僅儲存在裝置本機。</li>
+          </ul>
+          <p><a href="../../privacy/">閱讀完整隱私權政策</a></p>
+        </section>
+      </div>
+
+      <section>
+        <h2>App Review 操作指南</h2>
+        <ol>
+          <li>啟動遊戲後點選「新遊戲」。不需要測試帳號、密碼或特殊設定。</li>
+          <li>在世界地圖選擇主線或支線關卡。</li>
+          <li>進入陣前準備，切換武將並拖曳角色完成移動佈陣。</li>
+          <li>進入戰鬥後，拖曳英雄設定方向與力道；放開後角色移動並攻擊。</li>
+          <li>趙雲能量充足時可施放「七進七出」，查看完整技能與連續斬殺演出。</li>
+        </ol>
+        <p>
+          遊戲在所有上架地區的功能與內容一致，沒有區域限定差異；不屬於醫療、金融、博弈、保險或法律等受監管服務。
+        </p>
+      </section>
+
+      <section>
+        <h2>功能展示影片</h2>
+        <p>
+          下方影片展示 1.0.0 版本的世界地圖、主線／支線選擇、陣前準備、切換武將、移動佈陣、戰鬥與技能演出。
+          影片為遊戲畫面展示；本作沒有登入、付款、使用者內容或敏感權限流程。
+        </p>
+        <video controls preload="metadata" playsinline>
+          <source src="media/paper-flick-soldiers-review-demo-v1.mp4" type="video/mp4" />
+          您的瀏覽器不支援影片播放。
+        </video>
+        <p><a href="media/paper-flick-soldiers-review-demo-v1.mp4">直接開啟或下載審查展示影片</a></p>
+      </section>
+
+      <section class="english" lang="en">
+        <h2>English review summary</h2>
+        <p>
+          Paper Flick Soldiers is a single-player tactical flick game with no account, login, demo credentials,
+          purchases, advertising, Google Analytics, or cross-app tracking. Android 1.0.3 and later use Firebase
+          Crashlytics NDK to transmit crash logs, diagnostics, and an installation identifier solely for stability fixes.
+        </p>
+        <p>
+          To review: launch the app, choose New Game, select a main or side mission on the world map, switch and position
+          heroes during preparation, then drag and release a hero to move and attack. The app functions consistently in
+          every supported storefront region.
+        </p>
+        <p>Support: <a href="mailto:twopiggyhavefun@gmail.com">twopiggyhavefun@gmail.com</a></p>
+      </section>
+
+      <footer>© 2026 HankHuang / AiHankApps · 紙上彈兵 1.0.0</footer>
+    </main>
+  </body>
+</html>
