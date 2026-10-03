@@ -63,6 +63,27 @@
   gap: 10px;
 }
 
+.guide-actions { margin-top: 14px; }
+
+.guide-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid #606957;
+  border-radius: 999px;
+  color: #fff;
+  background: #606957;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-decoration: none;
+  transition: transform .2s ease, background .2s ease;
+}
+
+.guide-link:hover { transform: translateY(-1px); background: #4e5747; }
+
 .store-development {
   display: inline-flex;
   align-items: center;

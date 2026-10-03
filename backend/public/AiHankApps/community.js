@@ -3,7 +3,7 @@
 
   const apps = {
     'EClawbot': { id: 'eclawbot', shots: ['eclawbot/01.jpg','eclawbot/02.jpg','eclawbot/03.jpg','eclawbot/04.jpg','eclawbot/05.jpg','eclawbot/06.jpg'] },
-    '活字戰紀：雙城烽火': { id: 'typeforge-twin-cities', shots: ['typeforge/01.jpg','typeforge/02.jpg','typeforge/03.jpg','typeforge/04.jpg','typeforge/05.jpg','typeforge/06.jpg','typeforge/07.jpg','typeforge/08.jpg'] },
+    '活字戰紀：雙城烽火': { id: 'typeforge-twin-cities', guide: 'https://eclawbot.com/AiHankApps/guides/typeforge/', shots: ['typeforge/01.jpg','typeforge/02.jpg','typeforge/03.jpg','typeforge/04.jpg','typeforge/05.jpg','typeforge/06.jpg','typeforge/07.jpg','typeforge/08.jpg'] },
     'Weesh': { id: 'weesh', shots: ['weesh/01.png','weesh/02.png','weesh/03.png','weesh/04.png','weesh/05.png'] },
     '世界末日了沒': { id: 'doomsday-index', shots: ['doomsday/01.jpg','doomsday/02.jpg','doomsday/03.jpg','doomsday/04.jpg'] },
     '夢話夥伴': { id: 'dreambuddy', shots: ['dreambuddy/01.jpg','dreambuddy/02.jpg','dreambuddy/03.jpg'] },
@@ -92,6 +92,21 @@
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || '目前無法連線，請稍後再試。');
     return data;
+  }
+
+  function addGuideLink(card, heading, config) {
+    if (!config.guide) return;
+    const actions = document.createElement('div');
+    actions.className = 'guide-actions';
+    const link = document.createElement('a');
+    link.className = 'guide-link';
+    link.href = config.guide;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.setAttribute('aria-label', `開啟${heading.textContent.trim()}完整攻略`);
+    link.textContent = '閱讀完整攻略';
+    actions.appendChild(link);
+    card.appendChild(actions);
   }
 
   function addCommunity(card, config) {
@@ -202,7 +217,9 @@
     });
   }
 
-  function normalizeStoreControls(card) {
+  const publicAppStoreApps = new Set(['eclawbot', 'typeforge-twin-cities', 'weesh', 'doomsday-index', 'stray-map', 'sleep-park']);
+
+  function normalizeStoreControls(card, appId) {
     const cardText = card.textContent;
     const readyWords = '正式版|已發布|已可發布';
     [...card.querySelectorAll('a')].forEach(link => {
@@ -211,7 +228,8 @@
       if (!platform) return;
       const platformStatus = new RegExp(`${platform}\\s*[：:]?[^・\\n]*(${readyWords})`).test(cardText);
       const linkStatus = new RegExp(readyWords).test(text);
-      if (platformStatus || linkStatus) {
+      const publiclyReleased = platform === 'App Store' && publicAppStoreApps.has(appId);
+      if (platformStatus || linkStatus || publiclyReleased) {
         link.textContent = platform === 'Google Play' ? '▶ Google Play' : '● App Store';
         return;
       }
@@ -251,8 +269,9 @@
     findCards().forEach(({ card, heading, config }) => {
       if (!card || card.dataset.communityReady) return;
       card.dataset.communityReady = 'true';
-      normalizeStoreControls(card);
+      normalizeStoreControls(card, config.id);
       addGallery(card, heading, config);
+      addGuideLink(card, heading, config);
       addCommunity(card, config);
     });
   }

@@ -202,7 +202,9 @@
     });
   }
 
-  function normalizeStoreControls(card) {
+  const publicAppStoreApps = new Set(['eclawbot', 'typeforge-twin-cities', 'weesh', 'doomsday-index', 'stray-map', 'sleep-park']);
+
+  function normalizeStoreControls(card, appId) {
     const cardText = card.textContent;
     const readyWords = '正式版|已發布|已可發布';
     [...card.querySelectorAll('a')].forEach(link => {
@@ -211,7 +213,8 @@
       if (!platform) return;
       const platformStatus = new RegExp(`${platform}\\s*[：:]?[^・\\n]*(${readyWords})`).test(cardText);
       const linkStatus = new RegExp(readyWords).test(text);
-      if (platformStatus || linkStatus) {
+      const publiclyReleased = platform === 'App Store' && publicAppStoreApps.has(appId);
+      if (platformStatus || linkStatus || publiclyReleased) {
         link.textContent = platform === 'Google Play' ? '▶ Google Play' : '● App Store';
         return;
       }
@@ -251,7 +254,7 @@
     findCards().forEach(({ card, heading, config }) => {
       if (!card || card.dataset.communityReady) return;
       card.dataset.communityReady = 'true';
-      normalizeStoreControls(card);
+      normalizeStoreControls(card, config.id);
       addGallery(card, heading, config);
       addCommunity(card, config);
     });
