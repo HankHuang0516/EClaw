@@ -459,7 +459,8 @@
             // link can't turn login into an open redirect.
             const returnTo = new URLSearchParams(window.location.search).get('return_to');
             if (returnTo && !returnTo.startsWith('//')
-                && /^\/(r\/|portal\/(dashboard|chat|kanban|mission|settings)\.html)/.test(returnTo)) {
+                && (/^\/(r\/|portal\/(dashboard|chat|kanban|mission|settings)\.html)/.test(returnTo)
+                    || returnTo === '/AiHankApps/dot-progress/')) {
                 window.location.href = returnTo;
                 return;
             }

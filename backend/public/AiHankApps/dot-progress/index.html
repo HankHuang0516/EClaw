@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>dot 專案進度 · AiHankApps</title>
+  <link rel="stylesheet" href="progress.css">
+  <script src="i18n.js" defer></script>
+  <script src="progress.js" defer></script>
+</head>
+<body>
+  <main class="wrap">
+    <nav class="nav">
+      <a class="brand" href="../">AiHankApps <span aria-hidden="true">↗</span></a>
+      <div class="nav-actions"><a href="../reports/" data-i18n="dot_progress_trends">APP 趨勢</a><label class="language"><span class="sr-only" data-i18n="dot_progress_language">語言</span><select id="language"><option value="zh-TW">繁體中文</option><option value="en">English</option><option value="zh-CN">简体中文</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="th">ไทย</option><option value="vi">Tiếng Việt</option><option value="id">Bahasa Indonesia</option><option value="fr">Français</option><option value="es">Español</option><option value="de">Deutsch</option><option value="ms">Bahasa Melayu</option><option value="hi">हिन्दी</option><option value="ar">العربية</option></select></label></div>
+    </nav>
+    <header class="hero">
+      <div class="eyebrow"><span class="dot" aria-hidden="true"></span> DOT / PROJECT JOURNAL</div>
+      <h1 data-i18n="dot_progress_title">把進度，慢慢做成成果。</h1>
+      <p class="lead" data-i18n="dot_progress_intro">這裡記錄 dot 已完成的交辦成果。每一筆摘要，都保留完成日期。</p>
+      <div class="hero-bottom"><span class="pill" data-i18n="dot_progress_public">公開成果</span><span class="muted" data-i18n="dot_progress_scope">已確認完成的項目；不代表所有專案都已完成。</span></div>
+    </header>
+    <section class="section" aria-labelledby="completed-heading">
+      <div class="section-heading"><div><span class="eyebrow" data-i18n="dot_progress_archive">COMPLETED / 成果記錄</span><h2 id="completed-heading" data-i18n="dot_progress_completed">已完成的交辦</h2></div><span class="count" id="completed-count">—</span></div>
+      <p id="public-message" role="status" data-i18n="dot_progress_loading">載入中…</p>
+      <div id="completed-list" class="completed-list"></div>
+      <button id="public-retry" class="secondary" hidden data-i18n="dot_progress_retry">重新載入</button>
+    </section>
+    <section class="admin-gate section" aria-labelledby="admin-heading">
+      <div class="section-heading"><div><span class="eyebrow" data-i18n="dot_progress_workspace">WORKSPACE / 管理工作區</span><h2 id="admin-heading" data-i18n="dot_progress_admin">接下來，要完成的事</h2></div><button id="logout" class="secondary" hidden data-i18n="dot_progress_logout">登出</button></div>
+      <div id="gate"><p id="gate-message" class="muted" data-i18n="dot_progress_checking">確認登入狀態…</p><a id="login" class="button" href="/portal/?return_to=%2FAiHankApps%2Fdot-progress%2F" hidden data-i18n="dot_progress_login">使用 EClaw 管理者登入</a><p id="return-hint" class="small" hidden data-i18n="dot_progress_return">登入後回到此頁，查看管理工作區。</p><button id="session-retry" class="secondary" hidden data-i18n="dot_progress_check_login">重新確認登入</button></div>
+      <div id="private-workspace" hidden>
+        <p class="small" data-i18n="dot_progress_private_note">目標、卡點、下一步和留言僅限 EClaw 管理者。儲存修改不會自動發布公開摘要。</p>
+        <div class="filters" id="filters"><button data-filter="pending" class="active" aria-pressed="true" data-i18n="dot_progress_pending">進行中</button><button data-filter="completed" aria-pressed="false" data-i18n="dot_progress_completed">已完成的交辦</button><button data-filter="all" aria-pressed="false" data-i18n="dot_progress_all">全部</button></div>
+        <p id="admin-message" role="status"></p>
+        <div id="project-list" class="project-list"></div>
+        <details class="import-panel"><summary data-i18n="dot_progress_import">匯入先前記錄</summary><p class="small" data-i18n="dot_progress_import_note">舊站留言與修改尚未匯出。可選擇自己提供的 JSON 檔案，先預覽再匯入；不會自動讀取舊站。</p><form id="import-form"><label><span data-i18n="dot_progress_import_file">JSON 檔案</span><input id="import-file" type="file" accept="application/json,.json" required></label><button type="submit" data-i18n="dot_progress_preview">預覽匯入</button></form><div id="import-preview"></div><button id="import-apply" hidden data-i18n="dot_progress_apply">確認匯入</button><p id="import-message" role="status"></p></details>
+      </div>
+    </section>
+    <footer><span data-i18n="dot_progress_footer">一件一件完成，留下真實的進展。</span><a href="../" data-i18n="dot_progress_portfolio">返回 APP 作品集</a></footer>
+  </main>
+</body>
+</html>

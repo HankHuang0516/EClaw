@@ -20,6 +20,8 @@ Connect your AI agents — powered by OpenClaw Bots, 24/7.
 
 ## Features
 
+The AiHankApps portfolio includes [dot project progress](docs/dot-progress.md): public completed summaries and a persistent workspace restricted by existing EClaw admin sessions.
+
 | Feature | Description |
 |---------|-------------|
 | 🤝 **Agent-to-Agent CollaborationFull support for A2A protocol** | Enables multiple OpenClaw / AI Agents to communicate, coordinate, delegate tasks, and work together seamlessly |

@@ -1845,6 +1845,7 @@ app.get('/api/help', (req, res) => {
 
     // Intent category matching — zh/en + ja/ko/th/vi/id/fr/es/ms (by @Mac_F)
     const INTENT_MAP = {
+        dot_progress: ['dot progress', 'dot-progress', 'dot 專案進度', '專案進度'],
         messaging:  ['speakto','broadcast','發訊','reply','transform','message','send','私訊','廣播','メッセージ','送信','메시지','전송','ส่งข้อความ','ข้อความ','ส่ง','gửi tin nhắn','tin nhắn','gửi','phát sóng','kirım pesan','pesan','mengirim','envoyer message','diffusion','enviar mensaje','transmitir','hantar mesej','mesej','menghantar'],
         kanban:     ['card','看板','任務','move','派任','assign','kanban','卡片','create task','建立任務','カード','タスク','칸반','카드','작업','กระดาน','บัตร','จัดการงาน','bảng','thẻ','quản lý công việc','papan','kartu','manajemen tugas','tableau','carte','gestion tâches','tablero','tarjeta','gestión tareas','kad','pengurusan tugas','history','archived','archive','restore','封存','歷史','還原','漏斗','過濾','filter','funnel'],
         schedule:   ['排程','schedule','暫停','pause','cron','recurring','stop schedule','disable','enable','スケジュール','予約','一時停止','크론','일정','예약','일시 중지','กำหนดการ','ตารางเวลา','หยุดชั่วคราว','lịch trình','đặt lịch','tạm dừng','jadwal','penjadwalan','jeda','planification','programmation','programación','jadual'],
@@ -1866,6 +1867,15 @@ app.get('/api/help', (req, res) => {
     const d = `'{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${eId}`; // shared body prefix
 
     const APIS = {
+        dot_progress: [
+            { title: 'Public completed summaries (no private task fields)', curl: `curl -s "${apiBase}/api/dot-progress/public"` },
+            { title: 'Session role flags (existing portal cookie; no secrets returned)', curl: `curl -s "${apiBase}/api/dot-progress/session" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Private projects (existing admin portal session required; bot credentials do not grant access)', curl: `curl -s "${apiBase}/api/dot-progress/projects" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Edit private project with optimistic version', curl: `curl -s -X PATCH "${apiBase}/api/dot-progress/projects/PROJECT_ID" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" -d '{"version":1,"nextStep":"NEXT_STEP"}'` },
+            { title: 'Read project comments and history (admin session)', curl: `curl -s "${apiBase}/api/dot-progress/projects/PROJECT_ID/comments" --cookie /LOCAL/PORTAL_COOKIE_FILE\n# History: /api/dot-progress/projects/PROJECT_ID/history` },
+            { title: 'Add an idempotent project comment (admin session)', curl: `curl -s -X POST "${apiBase}/api/dot-progress/projects/PROJECT_ID/comments" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" -d '{"body":"COMMENT","requestId":"UNIQUE_REQUEST_ID"}'` },
+            { title: 'Preview user-provided JSON import; applying requires mode apply (admin session)', curl: `curl -s -X POST "${apiBase}/api/dot-progress/import" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" --data-binary @/LOCAL/PROGRESS_PREVIEW_REQUEST.json\n# Body: {"mode":"preview","data":{"projects":[...]}}. Use the page to validate a local export before applying.` }
+        ],
         messaging: [
             { title: 'Send private message (speakTo)', curl: `curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${botSecret}","message":"TEXT","state":"IDLE","speakTo":["TARGET_PUBLIC_CODE"]}'` },
             { title: 'Broadcast to all entities', curl: `curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${botSecret}","message":"TEXT","state":"IDLE","broadcast":true}'` }
@@ -17430,6 +17440,7 @@ app.use('/api/debug', (req, res, next) => {
     }
     next();
 });
+app.use('/api/debug/dot-progress', require('./dot-progress').createDebugRouter(() => chatPool, authModule));
 
 /**
  * GET /api/debug/devices
@@ -25798,6 +25809,7 @@ function authenticateDeviceOrBot({ deviceId, deviceSecret, botSecret, entityId }
 }
 
 app.use('/api/app-portfolio', appPortfolioCommunity.createRouter(() => chatPool));
+app.use('/api/dot-progress', require('./dot-progress').createRouter(() => chatPool, authModule));
 
 /**
  * GET /api/analytics/site-pageviews
