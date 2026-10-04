@@ -7,7 +7,7 @@ The `simplify` skill was unavailable in the complete skill catalog and installed
 - Reuse existing portal cookie/session and server admin middleware. No authentication configuration, new token, admin grant, entity registration or callback changes.
 - Reuse the existing PostgreSQL pool and static AiHankApps routing/cache policy. No new service or browser storage of private records.
 - Shared request, safe text-node, form, busy-button and transaction helpers cover edits, comments, history and import.
-- Dedicated page vocabulary avoids loading the large portal dictionary on a public portfolio page. The same 70 keys are registered in every existing Web locale for strict repository i18n checks.
+- Dedicated page vocabulary avoids loading the large portal dictionary on a public portfolio page. The same 70 keys are covered in every existing Web locale for strict repository i18n checks; zh-TW inherits the identical canonical zh values.
 
 ## Quality
 
@@ -33,3 +33,5 @@ The `simplify` skill was unavailable in the complete skill catalog and installed
 - ESLint: no errors; existing warnings remain. Strict i18n reference check passes.
 - Full local suite: 494 of 497 suites passed together; three transient socket/timeout suites passed individually on retry (42 tests). Initial in-band attempt hit its heap limit after 217 passing suites; the bounded worker run completed. Required PR CI must still pass before merge.
 - Production admin operations and initial private import require a normal existing authenticated UI session. No cookie/token values are retrieved for this workflow. Previous private Site history has not been exported or claimed migrated.
+
+- PR CI found a redundant zh-TW override expansion that violated the established small-override invariant. Removed identical new overrides and reused canonical zh fallback; the guard was kept intact.
