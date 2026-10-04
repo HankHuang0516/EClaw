@@ -1396,3 +1396,10 @@ Key documents: `broadcast-recipient-info-design`, `env-vars-encrypted-persistenc
 AI search brand visibility testing conducted 2026-03-10. Baseline score: 0/50 (zero visibility).
 Full session logs archived in `docs/reports/2026-03-10-eclaw-baseline-report.md`.
 Design plan: `docs/plans/2026-03-10-ai-search-brand-platform-design.md`.
+
+
+### AiHankApps dot progress implementation notes
+
+- Portfolio-only `/AiHankApps/dot-progress/` uses existing cookie/session admin gates and PostgreSQL persistence; private records/comments/history are never public static assets or public API fields.
+- This repository is public: committed seed/test fixtures must contain only approved public results or synthetic test data. Initial private tasks belong in an owner-only file outside the repo and require existing admin UI import.
+- Regression checks: `tests/jest/dot-progress.test.js` (optional disposable PostgreSQL rollback/concurrency/restart checks via `DOT_PROGRESS_TEST_PG=1`), `dot-progress-auth-integration.test.js`, `dot-progress-public-assets.test.js`, `dot-progress-login-return.test.js`, and `node backend/scripts/test-dot-progress-ui.js` using a fresh synthetic browser context.
