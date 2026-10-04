@@ -35,3 +35,6 @@ The `simplify` skill was unavailable in the complete skill catalog and installed
 - Production admin operations and initial private import require a normal existing authenticated UI session. No cookie/token values are retrieved for this workflow. Previous private Site history has not been exported or claimed migrated.
 
 - PR CI found a redundant zh-TW override expansion that violated the established small-override invariant. Removed identical new overrides and reused canonical zh fallback; the guard was kept intact.
+
+- Complete Linux/Node20 PR CI after the fallback fix passed all 498 suites (6754 passed tests, 18 skipped). Local full macOS runs also completed, but intermittent unrelated socket/time-out failures remained (initial bounded 494/497, later Node25 495/498, Node20 496/498); no tests were suppressed.
+- Live matrix exposed a removed personal profile fixture (404) across three redirect cells. The driver now uses the existing configured CI public entity profile (200), preserving its failure assertions and all required checks.
