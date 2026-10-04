@@ -1,14 +1,14 @@
 (function () {
   'use strict';
   const API = '/api/dot-progress';
-  const state = { isAdmin: false, projects: [], filter: 'pending', epoch: 0, importData: null, importGeneration:0, checking: false, loggingOut:false };
+  const state = { isAdmin: false, projects: [], filter: 'pending', epoch: 0, importData: null, importGeneration:0, checking: false, loggingOut:false, drafts:new Map(), frozenForms:0 };
   const $ = id => document.getElementById(id);
   const tr = key => window.dotI18n.t('dot_progress_' + key);
   const text = (tag,value,className) => { const node=document.createElement(tag); node.textContent=value == null ? '' : String(value); if(className) node.className=className; return node; };
   const action = (key,handler,secondary=false) => { const node=text('button',tr(key),secondary?'secondary':'');node.type='button';if(handler)node.addEventListener('click',handler);return node; };
   const message = (node,key,error=false) => {node.textContent=key?tr(key):'';node.classList.toggle('error',error);node.classList.add('message');};
   function clearPrivate() {
-    state.isAdmin=false;state.projects=[];state.importData=null;state.epoch++;state.importGeneration++;
+    state.isAdmin=false;state.projects=[];state.importData=null;state.epoch++;state.importGeneration++;state.drafts.clear();window.dotDecisions.clear();window.dotReview.clear();
     $('project-list').replaceChildren();$('import-preview').replaceChildren();$('import-form').reset();$('import-apply').hidden=true;$('import-message').textContent='';$('admin-message').textContent='';
     $('private-workspace').hidden=true;$('logout').hidden=true;$('gate').hidden=false;
   }
@@ -19,8 +19,8 @@
     try {
       const response=await fetch(path.startsWith('/api/')?path:API+path,{credentials:'same-origin',cache:'no-store',...options,headers:{'Content-Type':'application/json',...(options.headers||{})},signal:abort.signal});
       if((response.status===401||response.status===403)&&privateCall){clearPrivate();message($('gate-message'),response.status===401?'expires':'forbidden',true);$('login').hidden=false;$('return-hint').hidden=false;}
-      if(!response.ok)throw Object.assign(new Error('request_failed'),{status:response.status});
-      const data=await response.json();
+      let data;try{data=await response.json();}catch(_error){data={};}
+      if(!response.ok)throw Object.assign(new Error('request_failed'),{status:response.status,code:typeof data.error==='string'&&/^[a-z_]+$/.test(data.error)?data.error:undefined});
       if(data.success===false)throw new Error('request_failed');
       if(privateCall&&(epoch!==state.epoch||!state.isAdmin))throw new Error('session_changed');
       return data;
@@ -29,6 +29,12 @@
   async function busy(button,work,statusNode) {
     if(button.disabled)return;button.disabled=true;
     try{await work();}catch(error){if(statusNode&&statusNode.isConnected)message(statusNode,error.status===409?'conflict':'error',true);}finally{if(button.isConnected)button.disabled=false;}
+  }
+  async function freeze(form, work) {
+    state.frozenForms++;$('language').disabled=true;
+    const controls=Array.from(form.querySelectorAll('input,textarea,select'));
+    const disabled=controls.map(node=>node.disabled);controls.forEach(node=>node.disabled=true);
+    try{return await work();}finally{controls.forEach((node,index)=>{if(node.isConnected)node.disabled=disabled[index];});state.frozenForms=Math.max(0,state.frozenForms-1);$('language').disabled=state.frozenForms>0;}
   }
   async function loadPublic() {
     $('public-retry').hidden=true;message($('public-message'),'loading');
@@ -82,7 +88,7 @@
     const revision={...project};
     const detail=section('edit');const form=document.createElement('form');
     field(form,'project_title',project.title,{name:'title',required:true,max:160});
-    const label=text('label','');label.append(text('span',tr('status')));const select=document.createElement('select');select.name='status';['active','blocked','paused','completed'].forEach(status=>{const option=text('option',tr(status));option.value=status;select.append(option);});select.value=project.status;label.append(select);form.append(label);
+    const label=text('label','');label.append(text('span',tr('status')));const select=document.createElement('select');select.name='status';['active','blocked','paused','completed','cancelled','archived'].forEach(status=>{const option=text('option',tr(status));option.value=status;select.append(option);});select.value=project.status;label.append(select);form.append(label);
     field(form,'goal',project.summary,{name:'summary',multiline:true,max:4000});field(form,'blockers',project.blockers,{multiline:true,max:4000});field(form,'next',project.nextStep,{name:'nextStep',multiline:true,max:4000});
     const save=action('save');save.type='submit';const status=text('p','');status.setAttribute('role','status');form.append(save,status);
     form.addEventListener('submit',event=>{event.preventDefault();busy(save,async()=>{
@@ -92,6 +98,7 @@
   }
   function publicationEditor(card,project) {
     const revision={...project};
+    if(['cancelled','archived'].includes(project.status)){card.append(text('p',tr('decision_terminal'),'small'));return;}
     const detail=section('publication');detail.append(text('p',tr('publication_note'),'small'));const form=document.createElement('form');
     field(form,'public_title',project.publicTitle,{name:'publicTitle',required:true,max:160});field(form,'public_summary',project.publicSummary,{name:'publicSummary',required:true,multiline:true,max:400});field(form,'date',project.completedAt,{name:'completedAt',required:true,type:'date'});
     const buttons=text('div','', 'actions');const publish=action('publish');publish.type='submit';buttons.append(publish);const status=text('p','');status.setAttribute('role','status');
@@ -131,16 +138,52 @@
       });message(status,'');
     },status),true);detail.append(load,list,status);card.append(detail);
   }
-  function renderProjects() {
-    $('project-list').replaceChildren();
-    const projects=state.projects.filter(project=>state.filter==='all'||(state.filter==='completed'?project.status==='completed':project.status!=='completed'));
-    message($('admin-message'),projects.length?'':'empty_projects');
-    projects.forEach(project=>{
-      const card=text('article','', 'project');const heading=text('div','', 'toolbar');heading.append(text('h3',project.title),text('span',tr(project.status),'status '+project.status));card.append(heading,text('p',project.summary,'project-summary'));
-      const meta=text('div','', 'project-meta');meta.append(row('blockers',project.blockers),row('next',project.nextStep));card.append(meta);projectEditor(card,project);publicationEditor(card,project);comments(card,project);history(card,project);$('project-list').append(card);
+  function rememberProjectForms() {
+    $('project-list').querySelectorAll('.project').forEach(card=>{
+      // Decisions maintain their own revision-bound drafts. Project drafts are restored only within the same version.
+      card.querySelectorAll('form').forEach((form,index)=>{
+        if(form.closest('.decision-section'))return;
+        const key=card.dataset.projectId+':'+card.dataset.projectVersion+':'+index;
+        state.drafts.set(key,Array.from(form.elements).filter(node=>node.name).map(node=>[node.name,node.value]));
+      });
     });
   }
-  $('filters').addEventListener('click',event=>{const button=event.target.closest('button[data-filter]');if(!button)return;state.filter=button.dataset.filter;$('filters').querySelectorAll('button').forEach(item=>{item.classList.toggle('active',item===button);item.setAttribute('aria-pressed',String(item===button));});renderProjects();});
+  function updateVisibility() {
+    let visible=0;
+    $('project-list').querySelectorAll('.project').forEach(card=>{
+      const project=state.projects.find(item=>item.id===card.dataset.projectId);
+      const terminal=['completed','cancelled','archived'].includes(project.status);
+      const show=state.filter==='all'||(state.filter==='completed'?project.status==='completed':state.filter==='terminal'?['cancelled','archived'].includes(project.status):state.filter==='decisions'?!['cancelled','archived'].includes(project.status)&&window.dotDecisions.hasPending(project.id):!terminal);
+      card.hidden=!show;if(show)visible++;
+    });
+    message($('admin-message'),visible?'':'empty_projects');
+  }
+  function renderProjects() {
+    rememberProjectForms();
+    $('project-list').replaceChildren();
+    state.projects.forEach(project=>{
+      const card=text('article','', 'project');card.dataset.projectId=project.id;card.dataset.projectVersion=project.version;
+      const heading=text('div','', 'toolbar');heading.append(text('h3',project.title),text('span',tr(project.status),'status '+project.status));card.append(heading,text('p',project.summary,'project-summary'));
+      const meta=text('div','', 'project-meta');meta.append(row('blockers',project.blockers),row('next',project.nextStep));card.append(meta);projectEditor(card,project);publicationEditor(card,project);comments(card,project);history(card,project);
+      card.querySelectorAll('form').forEach((form,index)=>{const values=state.drafts.get(project.id+':'+project.version+':'+index);if(values)values.forEach(([name,value])=>{const node=form.elements.namedItem(name);if(node)node.value=value;});});
+      window.dotDecisions.mount(project,card,{request,tr,text,action,field,message,busy,freeze,formatTime,onChange:updateVisibility});
+      $('project-list').append(card);
+    });
+    updateVisibility();
+  }
+  $('filters').addEventListener('click',async event=>{
+    const button=event.target.closest('button[data-filter]');if(!button||button.disabled)return;
+    if(button.dataset.filter==='decisions'){
+      button.disabled=true;
+      try{await Promise.all(state.projects.map(project=>window.dotDecisions.load(project.id)));}
+      catch(_error){if(state.isAdmin)message($('admin-message'),'error',true);return;}
+      finally{if(button.isConnected)button.disabled=false;}
+      if(!state.isAdmin)return;
+    }
+    state.filter=button.dataset.filter;
+    $('filters').querySelectorAll('button').forEach(item=>{item.classList.toggle('active',item===button);item.setAttribute('aria-pressed',String(item===button));});
+    updateVisibility();
+  });
   $('import-file').addEventListener('change',()=>{state.importGeneration++;state.importData=null;$('import-preview').replaceChildren();$('import-apply').hidden=true;message($('import-message'),'');});
   $('import-form').addEventListener('submit',event=>{event.preventDefault();const button=event.submitter;busy(button,async()=>{
     state.importData=null;$('import-apply').hidden=true;$('import-preview').replaceChildren();
@@ -163,10 +206,11 @@
     finally{clearPrivate();state.loggingOut=false;message($('gate-message'),failed?'error':'login_needed',failed);$('login').hidden=false;$('return-hint').hidden=false;$('session-retry').hidden=false;}
   });
   $('public-retry').addEventListener('click',loadPublic);$('session-retry').addEventListener('click',checkSession);
-  $('language').addEventListener('change',event=>{window.dotI18n.setLocale(event.target.value);if(state.isAdmin)renderProjects();loadPublic();});
+  $('language').addEventListener('change',event=>{window.dotI18n.setLocale(event.target.value);if(state.isAdmin){renderProjects();window.dotReview.translate();}loadPublic();});
   window.addEventListener('focus',checkSession);
   window.addEventListener('pageshow',event=>{if(event.persisted){clearPrivate();checkSession();}});
   window.addEventListener('pagehide',()=>{clearPrivate();});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkSession();});
+  window.dotReview.init({request,tr,text,action,field,message,busy,freeze,formatTime});
   window.dotI18n.apply();loadPublic();checkSession();
 })();
