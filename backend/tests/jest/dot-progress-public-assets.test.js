@@ -2,6 +2,18 @@ const fs = require('fs');
 const path = require('path');
 const seed = require('../../dot-progress-seed.json');
 
+test('every progress asset URL changes when the client bundle changes', () => {
+    const crypto = require('crypto');
+    const directory = path.join(__dirname, '../../public/AiHankApps/dot-progress');
+    const assets = fs.readdirSync(directory).filter(name => /\.(?:css|js)$/.test(name)).sort();
+    const hash = crypto.createHash('sha256');
+    for (const name of assets) hash.update(name).update('\0').update(fs.readFileSync(path.join(directory, name))).update('\0');
+    const version = hash.digest('hex').slice(0, 16);
+    const html = fs.readFileSync(path.join(directory, 'index.html'), 'utf8');
+    const urls = [...html.matchAll(/(?:href|src)="([^"?]+\.(?:css|js)(?:\?[^" ]*)?)"/g)].map(match => match[1]);
+    expect(urls.sort()).toEqual(assets.map(name => `${name}?v=${version}`).sort());
+});
+
 test('the public repository seed contains only approved completed summaries', () => {
     expect(seed).toHaveLength(3);
     for (const row of seed) {

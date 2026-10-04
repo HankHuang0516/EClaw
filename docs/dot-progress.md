@@ -2,6 +2,8 @@
 
 `/AiHankApps/dot-progress/` is linked beside APP 趨勢 in the portfolio. This portfolio-only page uses the existing EClaw portal session and server admin role. It does not create accounts, change admin configuration, connect entities, or ingest all Codex conversations. Entity connections are managed separately from progress records.
 
+HTML uses the existing no-store browser/CDN policy. Its six local scripts/styles share a content-derived bundle version in their URLs, so a normal reload fetches the current release even when older unversioned files remain in the browser cache. When any bundle asset changes, refresh the version in all six HTML references; the public-assets regression verifies it against the SHA-256 digest of sorted asset names and bytes, each followed by a NUL separator (first 16 hex characters).
+
 Only explicitly completed public titles, short summaries and dates are returned by `GET /api/dot-progress/public`. Private goals, blockers, next steps, decisions, comments, IDs, actor records and edit history never belong in that projection or static public assets. Public summary fields are separate from internal text and require completion plus a date. Changing a task to completed keeps its history; publishing a summary is an explicit admin choice. `cancelled` and `archived` are private terminal states, distinct from completion. Moving out of completion clears the public summary; records, comments and history remain available to administrators.
 
 `GET /api/dot-progress/session` returns only authenticated/admin flags. All routes below require the existing `authMiddleware` and `adminMiddleware`; bot/device credentials grant no access:

@@ -9,12 +9,22 @@ const http=require('node:http');
 const {chromium}=require('playwright');
 const STATIC=path.resolve(__dirname,'../public/AiHankApps/dot-progress');
 const CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const ASSETS=fs.readdirSync(STATIC).filter(name=>/\.(css|js)$/.test(name)).sort();
+const assetCalls=[];
 let role='anonymous';let conflict=false;let updates=0;let imports=0;let commentWrites=0;let calls=[];let previewDelay=0;
 const initial={id:'fixture-project',title:'Synthetic admin task',status:'active',summary:'PRIVATE_GOAL_SENTINEL',blockers:'PRIVATE_BLOCKER_SENTINEL',nextStep:'Verify the UI',publicTitle:'',publicSummary:'',completedAt:'',version:1};
 let project={...initial};const comments=[];const decisions=[];const reviewEntries=[];let decisionWrites=0;let reviewWrites=0;let decisionDelay=180;let decisionGetDelay=0;let reviewDelay=180;
 const server=http.createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
   const send=(code,data)=>{res.writeHead(code,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(data));};
+  if(url.pathname==='/cache-fixture'){
+    res.writeHead(200,{'Content-Type':'text/html','Cache-Control':'no-store'});
+    res.end(ASSETS.map(name=>name.endsWith('.css')?`<link rel="stylesheet" href="/AiHankApps/dot-progress/${name}">`:`<script src="/AiHankApps/dot-progress/${name}"></script>`).join(''));return;
+  }
+  if(ASSETS.includes(path.basename(url.pathname))){
+    assetCalls.push(url.pathname+url.search);
+    if(!url.search){res.writeHead(200,{'Content-Type':url.pathname.endsWith('.css')?'text/css':'application/javascript','Cache-Control':'public, max-age=14400'});res.end('/* synthetic cached previous release */');return;}
+  }
   if(url.pathname.startsWith('/api/')){
     let body='';for await(const chunk of req)body+=chunk;
     const data=body?JSON.parse(body):{};calls.push({path:url.pathname,method:req.method,data});
@@ -80,7 +90,10 @@ const server=http.createServer(async(req,res)=>{
   const browser=await chromium.launch({headless:true,...(process.env.DOT_CHROME_PATH?{executablePath:process.env.DOT_CHROME_PATH}:fs.existsSync(CHROME)?{executablePath:CHROME}:{})});
   try{
     const page=await browser.newPage({viewport:{width:390,height:844}});const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.goto(base+'/cache-fixture');
+    assert.equal(assetCalls.length,ASSETS.length,'Warm browser caches all previous unversioned assets');
     await page.goto(base+'/AiHankApps/dot-progress/');await page.locator('#login').waitFor({state:'visible'});
+    assert.equal(assetCalls.filter(url=>url.includes('?v=')).length,ASSETS.length,'New HTML fetches the complete current bundle despite a warm previous-release cache');
     assert.equal(calls.filter(c=>c.path==='/api/dot-progress/projects').length,0,'Anonymous visitors must not request private records');
     assert(!await page.locator('body').innerText().then(t=>t.includes('PRIVATE_')));
     assert.equal(await page.locator('#completed-list script').count(),0,'Public strings must not become executable HTML');
