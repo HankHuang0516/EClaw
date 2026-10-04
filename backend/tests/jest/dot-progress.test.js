@@ -114,7 +114,7 @@ describe('dot progress backend security and persistence', () => {
         expect(() => progress.normalize({ ...entry, completedAt: '2026-02-30' })).toThrow('invalid_date');
         expect(() => progress.normalize({ ...entry, publicTitle: '' })).toThrow('publication_requires_completion');
         expect(() => progress.normalize({ ...entry, publicSummary: 'a'.repeat(401) })).toThrow('invalid_text');
-        expect(() => progress.normalize({ ...entry, status: 'active' })).toThrow('publication_requires_completion');
+        expect(progress.normalize({ ...entry, status: 'active' }).publicSummary).toBe('');
     });
 
     test('comments persist and retry is idempotent; reuse with different body conflicts', async () => {

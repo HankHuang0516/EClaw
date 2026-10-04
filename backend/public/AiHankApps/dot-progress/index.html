@@ -7,6 +7,9 @@
   <title>dot 專案進度 · AiHankApps</title>
   <link rel="stylesheet" href="progress.css">
   <script src="i18n.js" defer></script>
+  <script src="decision-i18n.js" defer></script>
+  <script src="decisions.js" defer></script>
+  <script src="review.js" defer></script>
   <script src="progress.js" defer></script>
 </head>
 <body>
@@ -32,7 +35,8 @@
       <div id="gate"><p id="gate-message" class="muted" data-i18n="dot_progress_checking">確認登入狀態…</p><a id="login" class="button" href="/portal/?return_to=%2FAiHankApps%2Fdot-progress%2F" hidden data-i18n="dot_progress_login">使用 EClaw 管理者登入</a><p id="return-hint" class="small" hidden data-i18n="dot_progress_return">登入後回到此頁，查看管理工作區。</p><button id="session-retry" class="secondary" hidden data-i18n="dot_progress_check_login">重新確認登入</button></div>
       <div id="private-workspace" hidden>
         <p class="small" data-i18n="dot_progress_private_note">目標、卡點、下一步和留言僅限 EClaw 管理者。儲存修改不會自動發布公開摘要。</p>
-        <div class="filters" id="filters"><button data-filter="pending" class="active" aria-pressed="true" data-i18n="dot_progress_pending">進行中</button><button data-filter="completed" aria-pressed="false" data-i18n="dot_progress_completed">已完成的交辦</button><button data-filter="all" aria-pressed="false" data-i18n="dot_progress_all">全部</button></div>
+        <div class="private-toolbar"><button id="review-toggle" class="secondary" data-i18n="dot_progress_review_title">專案回顧</button></div>
+        <div class="filters" id="filters"><button data-filter="pending" class="active" aria-pressed="true" data-i18n="dot_progress_pending">進行中</button><button data-filter="decisions" aria-pressed="false" data-i18n="dot_progress_decisions">待決策</button><button data-filter="completed" aria-pressed="false" data-i18n="dot_progress_completed">已完成的交辦</button><button data-filter="terminal" aria-pressed="false" data-i18n="dot_progress_terminal">已取消／歸檔</button><button data-filter="all" aria-pressed="false" data-i18n="dot_progress_all">全部</button></div>
         <p id="admin-message" role="status"></p>
         <div id="project-list" class="project-list"></div>
         <details class="import-panel"><summary data-i18n="dot_progress_import">匯入先前記錄</summary><p class="small" data-i18n="dot_progress_import_note">舊站留言與修改尚未匯出。可選擇自己提供的 JSON 檔案，先預覽再匯入；不會自動讀取舊站。</p><form id="import-form"><label><span data-i18n="dot_progress_import_file">JSON 檔案</span><input id="import-file" type="file" accept="application/json,.json" required></label><button type="submit" data-i18n="dot_progress_preview">預覽匯入</button></form><div id="import-preview"></div><button id="import-apply" hidden data-i18n="dot_progress_apply">確認匯入</button><p id="import-message" role="status"></p></details>

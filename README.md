@@ -20,7 +20,7 @@ Connect your AI agents — powered by OpenClaw Bots, 24/7.
 
 ## Features
 
-The AiHankApps portfolio includes [dot project progress](docs/dot-progress.md): public completed summaries and a persistent workspace restricted by existing EClaw admin sessions.
+The AiHankApps portfolio includes [dot project progress](docs/dot-progress.md): public completed summaries and a persistent workspace restricted by existing EClaw admin sessions, including versioned private decisions, a sourced project review sidebar and separate cancelled/archived states.
 
 | Feature | Description |
 |---------|-------------|
