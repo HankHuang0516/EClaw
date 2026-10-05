@@ -148,6 +148,7 @@ CREATE TABLE IF NOT EXISTS dot_progress_schedule (
     version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+ALTER TABLE dot_progress_schedule ADD COLUMN IF NOT EXISTS row_order JSONB NOT NULL DEFAULT '[]'::jsonb;
 CREATE TABLE IF NOT EXISTS dot_progress_schedule_revisions (
     id BIGSERIAL PRIMARY KEY,
     date TEXT NOT NULL REFERENCES dot_progress_schedule(date),

@@ -52,7 +52,7 @@ describe('private independent planned schedule', () => {
     test('absent board is version zero without writes; explicit save stores canonical planning and immutable history', async () => {
         const { app, pool } = setup();
         const empty = await admin(request(app).get(`${base}/schedule?date=${day}`));
-        expect(empty.body).toEqual({ success: true, schedule: { date: day, version: 0, rows: [], updatedAt: null } });
+        expect(empty.body).toEqual({ success: true, schedule: { date: day, version: 0, rows: [], rowOrder: [], updatedAt: null } });
         expect((await pool.query('SELECT COUNT(*) AS count FROM dot_progress_schedule')).rows[0].count).toBe(0);
         const first = await put(app);
         expect(first).toMatchObject({ date: day, version: 1, rows: [{ plannedStart: '2040-07-19T02:00:00.000Z', plannedEnd: '2040-07-19T03:00:00.000Z' }] });
@@ -74,6 +74,70 @@ describe('private independent planned schedule', () => {
         expect(otherActor.status).toBe(200); expect(otherActor.body.schedule.version).toBe(4);
         const restarted = setup(pool); expect(await put(restarted.app)).toEqual(first);
         expect((await admin(request(restarted.app).get(`${base}/schedule/${day}/history`))).body.history.map(entry => entry.version)).toEqual([4, 3, 2, 1]);
+    });
+
+    test('display ordering references virtual actual IDs without creating plan rows and omitted order preserves it', async () => {
+        const { app, pool } = setup(); const entry = await actual(app); const before = await snapshots(pool);
+        const ordered = await put(app, input({ rows: [], rowOrder: [entry.id] }));
+        expect(ordered.rows).toEqual([]); expect(ordered.rowOrder).toEqual([entry.id]);
+        expect(await snapshots(pool)).toEqual(before);
+        const saved = await put(app, input({ version: 1, requestId: 'synthetic-save-ordered-plan' }));
+        expect(saved.rowOrder).toEqual([entry.id]); expect(saved.rows).toHaveLength(1);
+        const reordered = await put(app, input({ version: 2, requestId: 'synthetic-order-only', rows: saved.rows, rowOrder: [saved.rows[0].id, entry.id] }));
+        expect(reordered.rows).toEqual(saved.rows);
+        const removed = await put(app, input({ version: 3, requestId: 'synthetic-remove-plan-keep-order', rows: [] }));
+        expect(removed.rows).toEqual([]); expect(removed.rowOrder).toEqual(reordered.rowOrder);
+        const cleared = await put(app, input({ version: 4, requestId: 'synthetic-clear-order', rows: saved.rows, rowOrder: [] }));
+        expect(cleared.rowOrder).toEqual([]); expect(cleared.rows).toEqual(saved.rows);
+        const restarted = setup(pool); expect(await put(restarted.app, input({ rows: [], rowOrder: [entry.id] }))).toEqual(ordered);
+        expect((await admin(request(restarted.app).get(`${base}/schedule?date=${day}`))).body.schedule).toEqual(cleared);
+    });
+
+    test('archiving and restoring one row retains status, dates, links, other rows and audit history', async () => {
+        const { app, pool } = setup(); const entry = await actual(app);
+        const first = await put(app, input({ rows: [row({ status: 'active', actualIds: [entry.id] }), row({ id: 'synthetic-unselected', status: 'waiting', plannedStart: null, plannedEnd: null })], rowOrder: ['synthetic-unselected', 'synthetic-row'] }));
+        const before = await snapshots(pool);
+        expect((await admin(request(app).put(`${base}/schedule/${day}`)).send(input({ version: 1, requestId: 'synthetic-forged-archive', rows: [{ ...first.rows[0], archived: true, goal: 'Simultaneous synthetic edit.' }, first.rows[1]] }))).body.error).toBe('invalid_archive_transition');
+        const archiveInput = input({ version: 1, requestId: 'synthetic-archive-row', rows: first.rows.map((value, i) => i === 0 ? { ...value, archived: true } : value) });
+        const archived = await put(app, archiveInput);
+        expect(archived.rows[0]).toEqual({ ...first.rows[0], archived: true });
+        expect(archived.rows[1]).toEqual(first.rows[1]); expect(archived.rowOrder).toEqual(first.rowOrder);
+        expect(await put(app, archiveInput)).toEqual(archived);
+        expect((await admin(request(app).put(`${base}/schedule/${day}`)).send(input({ version: 2, requestId: 'synthetic-forged-restore', rows: [{ ...archived.rows[0], archived: false, status: 'done' }, archived.rows[1]] }))).body.error).toBe('invalid_archive_transition');
+        const restored = await put(app, input({ version: 2, requestId: 'synthetic-restore-row', rows: archived.rows.map(value => ({ ...value, archived: false })) }));
+        expect(restored.rows).toEqual(first.rows); expect(restored.rowOrder).toEqual(first.rowOrder);
+        expect(await snapshots(pool)).toEqual(before);
+        const history = (await admin(request(app).get(`${base}/schedule/${day}/history`))).body.history;
+        expect(history[0].changes).toEqual({ before: archived, after: restored });
+        expect(history[1].changes).toEqual({ before: first, after: archived });
+        const restarted = setup(pool); expect((await admin(request(restarted.app).get(`${base}/schedule?date=${day}`))).body.schedule).toEqual(restored);
+    });
+
+    test('legacy request/receipt stays exact when order is absent and archived false canonicalizes away', async () => {
+        const { app, pool } = setup(); const first = await put(app);
+        const { rowOrder: _newField, ...legacyReceipt } = first;
+        await pool.query('UPDATE dot_progress_schedule_requests SET response_schedule=$1::jsonb WHERE actor_id=$2 AND request_id=$3', [JSON.stringify(legacyReceipt), 'synthetic-admin', input().requestId]);
+        const payload = (await pool.query('SELECT request_payload FROM dot_progress_schedule_requests')).rows[0].request_payload;
+        expect(payload).toEqual({ date: day, version: 0, rows: first.rows });
+        expect(payload).not.toHaveProperty('rowOrder'); expect(payload.rows[0]).not.toHaveProperty('archived');
+        const restarted = setup(pool);
+        expect(await put(restarted.app)).toEqual(legacyReceipt);
+        expect(await put(restarted.app, input({ rows: [row({ archived: false })] }))).toEqual(legacyReceipt);
+        expect((await admin(request(restarted.app).get(`${base}/schedule?date=${day}`))).body.schedule.rowOrder).toEqual([]);
+    });
+
+    test('invalid display order and archive values cannot bypass gates, versions or receipt conflicts', async () => {
+        const { app } = setup(); const entry = await actual(app);
+        expect((await admin(request(app).put(`${base}/schedule/${day}`)).send(input({ rows: [row({ archived: true })] }))).body.error).toBe('invalid_archive_transition');
+        for (const rowOrder of [null, 'invalid', ['bad id'], [123], [entry.id, entry.id], Array.from({ length: 551 }, (_, i) => `synthetic-order-${i}`)]) expect((await admin(request(app).put(`${base}/schedule/${day}`)).send(input({ rowOrder }))).status).toBe(400);
+        expect((await admin(request(app).put(`${base}/schedule/${day}`)).send(input({ rowOrder: ['synthetic-unknown-order'] }))).status).toBe(404);
+        for (const archived of [null, 'true', 1, {}, []]) expect((await admin(request(app).put(`${base}/schedule/${day}`)).send(input({ rows: [row({ archived })] }))).status).toBe(400);
+        const body = input({ rows: [], rowOrder: [entry.id] }); await put(app, body);
+        expect((await admin(request(app).put(`${base}/schedule/${day}`)).send({ ...body, rowOrder: [] })).body.error).toBe('request_id_conflict');
+        expect((await admin(request(app).put(`${base}/schedule/${day}`)).send({ ...body, requestId: 'synthetic-stale-order' })).body.error).toBe('version_conflict');
+        expect((await request(app).put(`${base}/schedule/${day}`).send(body)).status).toBe(401);
+        expect((await request(app).put(`${base}/schedule/${day}`).set('x-test-role', 'member').send(body)).status).toBe(403);
+        expect((await admin(request(app).put(`${base}/schedule/${day}`)).set('Origin', 'https://synthetic-other.invalid').send(body)).status).toBe(403);
     });
 
     test('linked actual milestones/projects are read-only and references must exist and be unique', async () => {
@@ -187,6 +251,19 @@ realPg('actual PostgreSQL additive migration, absent-board races, receipts, roll
         const third = await put(app, failed); expect(third.version).toBe(3);
         const restarted = setup(pool); expect(await put(restarted.app, body)).toEqual(first); expect(await put(restarted.app, failed)).toEqual(third);
         expect((await admin(request(restarted.app).get(`${base}/schedule/${day}/history`))).body.history.map(entry => entry.version)).toEqual([3, 2, 1]);
+        // Simulate the previous schema/receipt shape, then apply only the additive column migration.
+        await pool.query('ALTER TABLE dot_progress_schedule DROP COLUMN row_order');
+        const { rowOrder: _newField, ...legacyReceipt } = first;
+        await pool.query('UPDATE dot_progress_schedule_requests SET response_schedule=$1::jsonb WHERE actor_id=$2 AND request_id=$3', [JSON.stringify(legacyReceipt), 'synthetic-admin', body.requestId]);
+        const migrated = setup(pool); expect(await put(migrated.app, body)).toEqual(legacyReceipt);
+        expect((await admin(request(migrated.app).get(`${base}/schedule?date=${day}`))).body.schedule).toEqual(third);
+        const fourth = await put(migrated.app, input({ version: 3, requestId: 'synthetic-order-migrated', rows: [], rowOrder: [entry.id] }));
+        expect(fourth.rows).toEqual([]); expect(fourth.rowOrder).toEqual([entry.id]);
+        const planned = await put(migrated.app, input({ version: 4, requestId: 'synthetic-plan-migrated', rows: [row({ actualIds: [entry.id] })] }));
+        const fifth = await put(migrated.app, input({ version: 5, requestId: 'synthetic-archive-migrated', rows: [{ ...planned.rows[0], archived: true }] }));
+        expect(fifth.rowOrder).toEqual([entry.id]); expect(fifth.rows[0].archived).toBe(true);
+        const finalRestart = setup(pool); expect(await put(finalRestart.app, body)).toEqual(legacyReceipt);
+        expect((await admin(request(finalRestart.app).get(`${base}/schedule?date=${day}`))).body.schedule).toEqual(fifth);
         expect(await snapshots(pool)).toEqual(before);
     } finally { await pool.end(); await owner.query(`DROP SCHEMA ${name} CASCADE`); await owner.end(); }
 }, 20000);
