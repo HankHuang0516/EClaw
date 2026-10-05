@@ -119,6 +119,8 @@ CREATE TABLE IF NOT EXISTS dot_progress_timeline (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CHECK (ended_at >= started_at)
 );
+-- Additive migration preserves existing intervals and their retry receipts.
+ALTER TABLE dot_progress_timeline ALTER COLUMN started_at DROP NOT NULL;
 CREATE TABLE IF NOT EXISTS dot_progress_timeline_revisions (
     id BIGSERIAL PRIMARY KEY,
     timeline_id TEXT NOT NULL REFERENCES dot_progress_timeline(id),

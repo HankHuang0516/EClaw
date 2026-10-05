@@ -66,6 +66,71 @@ describe('private persistent history timeline', () => {
         expect((await admin(request(app).get(`${base}/timeline`))).body.entries[0].version).toBe(3);
     });
 
+    test('omitted goals preserve the pre-goal create payload and its exact receipt across router restart', async () => {
+        const { app, pool } = setup(); const entry = await create(app);
+        const { requestId, ...oldData } = fixture();
+        oldData.startedAt = '2040-07-19T02:00:00.000Z'; oldData.endedAt = '2040-07-19T02:30:00.000Z';
+        expect(progress.normalizeTimelineInput(fixture())).toEqual({ ...oldData, requestId });
+        const receipt = (await pool.query('SELECT request_payload,response_entry FROM dot_progress_timeline_requests WHERE actor_id=$1 AND request_id=$2', ['synthetic-admin', requestId])).rows[0];
+        expect(receipt).toEqual({ request_payload: { operation: 'create', data: oldData }, response_entry: entry });
+        expect(entry).not.toHaveProperty('goal');
+        const restarted = setup(pool); expect(await create(restarted.app)).toEqual(entry);
+        expect((await pool.query('SELECT COUNT(*) AS count FROM dot_progress_timeline_requests')).rows[0].count).toBe(1);
+    });
+
+    test('explicit safe goals persist, revise, deduplicate and stay private without filling legacy records', async () => {
+        const { app, pool } = setup();
+        const input = { ...fixture(), goal: 'Synthetic measurable goal.' };
+        const first = await create(app, input); expect(first.goal).toBe(input.goal);
+        expect(await create(app, input)).toEqual(first);
+        expect((await admin(request(app).post(`${base}/timeline`)).send({ ...input, goal: 'Other synthetic goal.' })).body.error).toBe('request_id_conflict');
+        const patch = { version: 1, requestId: 'synthetic-goal-update', goal: 'Synthetic revised goal.' };
+        const revised = await admin(request(app).patch(`${base}/timeline/${first.id}`)).send(patch);
+        expect(revised.status).toBe(200); expect(revised.body.entry.goal).toBe(patch.goal);
+        expect((await admin(request(app).patch(`${base}/timeline/${first.id}`)).send(patch)).body.entry).toEqual(revised.body.entry);
+        const third = await admin(request(app).patch(`${base}/timeline/${first.id}`)).send({ version: 2, requestId: 'synthetic-goal-keep', result: 'Synthetic result revised.' });
+        expect(third.body.entry.goal).toBe(patch.goal);
+        const h = await history(app, first.id);
+        expect(h.history[1].changes).toEqual({ before: first, after: revised.body.entry });
+        const restarted = setup(pool);
+        expect((await admin(request(restarted.app).get(`${base}/timeline`))).body.entries[0].goal).toBe(patch.goal);
+        expect(JSON.stringify((await request(app).get(`${base}/public`)).body)).not.toContain('goal');
+        for (const goal of ['', '   ', null, 42, 'x'.repeat(4001), 'synthetic@example.invalid', 'apiKey=synthetic-not-real', '/Users/synthetic/private.txt', 'https://example.invalid/?token=synthetic']) {
+            expect((await admin(request(app).post(`${base}/timeline`)).send({ ...fixture('synthetic-invalid-goal'), goal })).status).toBe(400);
+            expect((await admin(request(app).patch(`${base}/timeline/${first.id}`)).send({ version: 3, requestId: 'synthetic-invalid-goal', goal })).status).toBe(400);
+        }
+    });
+
+    test('unknown-start milestones require known ends, filter by Taipei end date, and convert with versioned history', async () => {
+        const { app, pool } = setup();
+        const input = { ...fixture('synthetic-milestone-midnight'), startedAt: null, endedAt: '2040-07-19T00:00:00+08:00' };
+        const first = await create(app, input); expect(first.startedAt).toBeNull(); expect(first).not.toHaveProperty('duration');
+        expect(await create(app, input)).toEqual(first);
+        await create(app, { ...input, requestId: 'synthetic-milestone-next', endedAt: '2040-07-20T00:00:00+08:00' });
+        await create(app, fixture('synthetic-regular-interval'));
+        let list = await admin(request(app).get(`${base}/timeline?date=2040-07-19`));
+        expect(list.body.total).toBe(2); expect(list.body.entries[0]).toEqual(first);
+        expect((await admin(request(app).get(`${base}/timeline?date=2040-07-18`))).body.total).toBe(0);
+        expect((await admin(request(app).get(`${base}/timeline?date=2040-07-20`))).body.entries[0].startedAt).toBeNull();
+        const patch = { version: 1, requestId: 'synthetic-milestone-convert', startedAt: '2040-07-18T23:30:00+08:00' };
+        const converted = await admin(request(app).patch(`${base}/timeline/${first.id}`)).send(patch);
+        expect(converted.status).toBe(200); expect(converted.body.entry.version).toBe(2);
+        expect((await admin(request(app).patch(`${base}/timeline/${first.id}`)).send(patch)).body.entry).toEqual(converted.body.entry);
+        expect((await admin(request(app).patch(`${base}/timeline/${first.id}`)).send({ ...patch, requestId: 'synthetic-stale-milestone' })).status).toBe(409);
+        const reverted = await admin(request(app).patch(`${base}/timeline/${first.id}`)).send({ version: 2, requestId: 'synthetic-milestone-unknown', startedAt: null });
+        expect(reverted.status).toBe(200); expect(reverted.body.entry.startedAt).toBeNull();
+        const h = await history(app, first.id); expect(h.history[1].changes).toEqual({ before: first, after: converted.body.entry });
+        const restarted = setup(pool); expect(await create(restarted.app, input)).toEqual(first);
+        list = await admin(request(restarted.app).get(`${base}/timeline?date=2040-07-19`)); expect(list.body.entries[0]).toEqual(reverted.body.entry);
+        for (const endedAt of [null, undefined, '', '2040-02-30T00:00:00Z']) {
+            expect((await admin(request(app).post(`${base}/timeline`)).send({ ...input, endedAt })).status).toBe(400);
+        }
+        const missingStart = { ...input }; delete missingStart.startedAt;
+        expect((await admin(request(app).post(`${base}/timeline`)).send(missingStart)).status).toBe(400);
+        expect((await request(app).post(`${base}/timeline`).send(input)).status).toBe(401);
+        expect((await request(app).post(`${base}/timeline`).set('x-test-role', 'member').send(input)).status).toBe(403);
+    });
+
     test('malformed driver update timestamps return null without crashing the timeline read', async () => {
         const { app, pool } = setup(); const entry = await create(app);
         const connect = pool.connect.bind(pool);
@@ -188,7 +253,7 @@ realPg('real PostgreSQL timeline concurrency, exact receipts, revision/receipt r
     const pool = new Pool({ ...config, options: `-c search_path=${name}` });
     try {
         const { app } = setup(pool); const pair = await Promise.all([create(app), create(app)]); expect(pair[0]).toEqual(pair[1]); const first = pair[0];
-        const patch = { version: 1, requestId: 'synthetic-update-0001', result: 'Synthetic changed.' };
+        const patch = { version: 1, requestId: 'synthetic-update-0001', result: 'Synthetic changed.', goal: 'Synthetic persisted goal.' };
         const updates = await Promise.all([1, 2].map(() => admin(request(app).patch(`${base}/timeline/${first.id}`)).send(patch)));
         expect(updates.map(r => r.status)).toEqual([200, 200]); expect(updates[0].body.entry).toEqual(updates[1].body.entry);
         const race = await Promise.all(['a', 'b'].map(key => admin(request(app).patch(`${base}/timeline/${first.id}`)).send({ version: 2, requestId: `synthetic-race-${key}`, result: `Synthetic result ${key}` })));
@@ -204,5 +269,20 @@ realPg('real PostgreSQL timeline concurrency, exact receipts, revision/receipt r
         expect((await admin(request(app).patch(`${base}/timeline/${first.id}`)).send({ version: 3, requestId: 'rollback-request-0001', result: 'Synthetic successful retry.' })).body.entry.version).toBe(4);
         const restarted = setup(pool); expect((await history(restarted.app, first.id)).total).toBe(4); expect(await create(restarted.app)).toEqual(first);
         expect((await admin(request(restarted.app).get(`${base}/timeline?date=2040-07-19`))).body.total).toBe(1);
+        expect((await admin(request(restarted.app).get(`${base}/timeline`))).body.entries[0].goal).toBe(patch.goal);
+        expect((await history(restarted.app, first.id)).history.find(row => row.version === 2).changes.after.goal).toBe(patch.goal);
+        // Model a pre-milestone schema, then exercise the locked additive migration.
+        await pool.query('ALTER TABLE dot_progress_timeline ALTER COLUMN started_at SET NOT NULL');
+        const migrated = setup(pool);
+        expect((await admin(request(migrated.app).get(`${base}/timeline`))).body.entries[0].version).toBe(4);
+        expect(await create(migrated.app)).toEqual(first);
+        const milestoneInput = { ...fixture('synthetic-pg-milestone'), startedAt: null, endedAt: '2040-07-20T00:00:00+08:00' };
+        const milestone = await create(migrated.app, milestoneInput);
+        expect(milestone.startedAt).toBeNull();
+        expect((await admin(request(migrated.app).get(`${base}/timeline?date=2040-07-19`))).body.total).toBe(1);
+        expect((await admin(request(migrated.app).get(`${base}/timeline?date=2040-07-20`))).body.entries[0]).toEqual(milestone);
+        const afterMigrationRestart = setup(pool); expect(await create(afterMigrationRestart.app, milestoneInput)).toEqual(milestone);
+        const conversion = await admin(request(afterMigrationRestart.app).patch(`${base}/timeline/${milestone.id}`)).send({ version: 1, requestId: 'synthetic-pg-milestone-convert', startedAt: '2040-07-19T23:30:00+08:00' });
+        expect(conversion.status).toBe(200); expect((await history(afterMigrationRestart.app, milestone.id)).history[0].changes.before.startedAt).toBeNull();
     } finally { await pool.end(); await owner.query(`DROP SCHEMA ${name} CASCADE`); await owner.end(); }
 }, 20000);

@@ -84,7 +84,7 @@ test('timeline translations share one canonical table across every effective web
     vm.runInNewContext(fs.readFileSync(path.join(directory, 'timeline-i18n.js'), 'utf8'), local);
     const table = local.window.dotTimelineTranslations;
     const keys = Object.keys(table.en).sort();
-    expect(keys).toHaveLength(40);
+    expect(keys).toHaveLength(48);
     const noop = () => {};
     const shared = {window: {location: {search: ''}}, document: {querySelectorAll: () => [], documentElement: {}, addEventListener: noop, getElementById: () => null}, navigator: {language: 'en'}, localStorage: {getItem: noop, setItem: noop}, setTimeout: noop, console: {log: noop, warn: noop, error: noop}};
     vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../../public/shared/i18n.js'), 'utf8') + '\n_result = TRANSLATIONS;', shared);
