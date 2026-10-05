@@ -6,7 +6,7 @@ The final implementation gives only the approved original v5 Demo a lasting no-l
 
 Existing auth/admin/cross-origin guards protect all management actions; normal startup/rate gates remain. The bounded upload parser checks authorization first. The terminal resource gate precedes pageview/static routes and fails closed. Exact archive/commit verification plus complete original-dist mapping prevent replacement bytes, renamed payloads and serving hosting/receipt/manifest. No new dependency, Site, Git credential, account or bot binding is introduced.
 
-Immutable assets, random hashed capabilities, server-only identity, NULL expiry and revocation persist in PostgreSQL. Transactions handle duplicate issuance, concurrent intents and rollback. Every HTML/data/script/image GET or HEAD rechecks permission; revocation blocks later reads. CSP permits the original OpenStreetMap tile host only. No inquiry, selection or decision causes a real send.
+Immutable assets, random hashed capabilities, server-only identity, NULL expiry and revocation persist in PostgreSQL. Transactions handle duplicate issuance, concurrent intents and rollback. Every HTML/data/script/image GET or HEAD rechecks permission; revocation blocks later reads. The original import remains unchanged; the separately reviewed offline-map response adapter removes external tile requests and the tile-host CSP allowance. No inquiry, selection or decision causes a real send.
 
 ## Interaction and efficiency
 
@@ -17,7 +17,7 @@ The six shared content-versioned URLs refresh together. Every canonical translat
 ## Evidence and release checks
 
 - Focused ZIP/backend checks: 12/12 including real disposable PostgreSQL concurrency, rollback and restart.
-- Exact original ZIP: CRC, manifest and source identity checked privately; all 11 served bytes match original files.
+- Original import baseline: CRC, manifest and source identity checked privately; all 11 stored bytes match original files. Runtime adaptation subsequently changes only the map response, as documented in `taaze-demo-map-adapter-review.md`.
 - Fresh original-flow browser at 390/1280: covers/notices/ISBN, filters/search/details, illustrative map, unsent inquiry, display-choice/reset, no script/console errors or send requests; all-resource revocation passed locally.
 - Synthetic normal manager: explicit JSON/ZIP transport, role boundaries, double click, one-time URL handling, indefinite-link display, uncertain retry/revocation, session cleanup and locale switching.
 - Asset/i18n regression, strict reference check, syntax, diff check and whole-backend lint are required before PR; normal required CI before merge.

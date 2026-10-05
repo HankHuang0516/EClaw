@@ -167,7 +167,7 @@ describe('revocable lasting server-checked demo shares', () => {
         const renamed = fixture(); renamed.files[1].path = 'renamed.js';
         expect((await admin(request(app).post(`${base}/bundle`)).send(renamed)).status).toBe(400);
         const csp = (await request(app).get(share.path)).headers['content-security-policy'];
-        expect(csp).toContain("img-src 'self' data: https://tile.openstreetmap.org"); expect(csp).not.toContain('unsafe-eval'); expect(csp).not.toContain('https:;');
+        expect(csp).toContain("img-src 'self' data:;"); expect(csp).not.toContain('openstreetmap'); expect(csp).not.toContain('unsafe-eval'); expect(csp).not.toContain('https:;');
     });
     test('rejects ZIP CRC damage, symlinks/special files, traversal, duplicates, encryption, descriptors and decompression overflow', async () => {
         const { app } = setup();

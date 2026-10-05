@@ -3,6 +3,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { createHash, randomBytes, randomUUID } = require('crypto');
+const { adaptDemoMap } = require('./taaze-demo-map-adapter');
 const schema = fs.readFileSync(path.join(__dirname, 'taaze_demo_share_schema.sql'), 'utf8');
 const DEMO_ID = 'taaze-three-item-v5';
 const SOURCE_SHA256 = '8d945ff62116e8053dc2a9c2a52ffe5aa767a78f36cc843295faa0dd0c69f34b';
@@ -118,7 +119,7 @@ function bundleInput(input) {
     return { files, digest };
 }
 function privateHeaders(_req, res, next) {
-    res.set({ 'Cache-Control': 'private, no-store', 'CDN-Cache-Control': 'no-store', 'Surrogate-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'X-Robots-Tag': 'noindex, nofollow, noarchive', 'X-Content-Type-Options': 'nosniff' });
+    res.set({ 'Cache-Control': 'private, no-store, no-transform', 'CDN-Cache-Control': 'no-store', 'Surrogate-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'X-Robots-Tag': 'noindex, nofollow, noarchive', 'X-Content-Type-Options': 'nosniff' });
     next();
 }
 function adminWriteOrigin(req, res, next) {
@@ -138,7 +139,7 @@ function contentPolicy(contentType, body) {
             if (!/(?:^|\s)src\s*=/i.test(match[1])) scripts.push(`'sha256-${createHash('sha256').update(match[2].replace(/\r\n?/g, '\n')).digest('base64')}'`);
         }
     }
-    return `default-src 'none'; script-src 'self' ${scripts.join(' ')}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; font-src 'self'; connect-src https://eclawbot.com/AiHankApps/taaze-demo/; form-action 'none'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'`;
+    return `default-src 'none'; script-src 'self' ${scripts.join(' ')}; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src https://eclawbot.com/AiHankApps/taaze-demo/; form-action 'none'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'`;
 }
 function createRouters(getPool, auth) {
     if (!auth?.authMiddleware || !auth?.adminMiddleware) throw new Error('Demo shares require existing admin auth');
@@ -222,8 +223,9 @@ function createRouters(getPool, auth) {
             const result = await pool.query('SELECT a.content_type, a.body FROM taaze_demo_assets a JOIN taaze_demo_shares s ON s.bundle_id=a.bundle_id WHERE s.token_hash=$1 AND s.bundle_id=$2 AND s.revoked_at IS NULL AND (s.expires_at IS NULL OR s.expires_at>NOW()) AND a.path=$3 LIMIT 1', [hash(token), DEMO_ID, asset]);
             if (!result.rows.length) return deny();
             const row = result.rows[0];
+            const body = asset === 'map.js' ? adaptDemoMap(row.body) : row.body;
             res.set('Content-Security-Policy', contentPolicy(row.content_type, row.body));
-            res.type(row.content_type).send(row.body);
+            res.type(row.content_type).send(body);
         } catch (_err) { return deny(); }
     });
     debugRouter.use(privateHeaders, (_req, res, next) => {
