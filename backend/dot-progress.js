@@ -147,14 +147,15 @@ function canonical(value) {
     return JSON.stringify(value);
 }
 function scheduleInput(input, date) {
-    strictBody(input, ['requestId', 'version', 'rows']);
+    strictBody(input, ['requestId', 'version', 'rows', 'rowOrder']);
     const token = requestId(input.requestId);
     if (!Number.isSafeInteger(input.version) || input.version < 0) throw fault(400, 'invalid_version');
     if (!Array.isArray(input.rows) || input.rows.length > 50) throw fault(400, 'invalid_schedule_rows');
     const rowIds = new Set(); const actualIds = new Set();
     const lower = Date.parse(`${date}T00:00:00+08:00`); const upper = lower + 86400000;
     const rows = input.rows.map(row => {
-        strictBody(row, ['id', 'projectId', 'projectLabel', 'goal', 'plannedStart', 'plannedEnd', 'status', 'actualIds']);
+        strictBody(row, ['id', 'projectId', 'projectLabel', 'goal', 'plannedStart', 'plannedEnd', 'status', 'actualIds', 'archived']);
+        if (row.archived !== undefined && typeof row.archived !== 'boolean') throw fault(400, 'invalid_archived');
         if (typeof row.id !== 'string' || !ID.test(row.id) || rowIds.has(row.id)) throw fault(400, 'invalid_schedule_id');
         rowIds.add(row.id);
         if (row.projectId !== null && (typeof row.projectId !== 'string' || !ID.test(row.projectId))) throw fault(400, 'invalid_id');
@@ -171,9 +172,10 @@ function scheduleInput(input, date) {
             if (typeof id !== 'string' || !ID.test(id) || actualIds.has(id) || actualIds.size >= 500) throw fault(400, 'invalid_actual_ids');
             actualIds.add(id);
         }
-        return { id: row.id, projectId: row.projectId, projectLabel: timelineText(row.projectLabel, 160, true), goal: timelineText(row.goal, 4000, true), plannedStart, plannedEnd, status: row.status, actualIds: [...row.actualIds] };
+        return { id: row.id, projectId: row.projectId, projectLabel: timelineText(row.projectLabel, 160, true), goal: timelineText(row.goal, 4000, true), plannedStart, plannedEnd, status: row.status, actualIds: [...row.actualIds], ...(row.archived === true ? { archived: true } : {}) };
     });
-    return { requestId: token, version: input.version, rows };
+    if (input.rowOrder !== undefined && (!Array.isArray(input.rowOrder) || input.rowOrder.length > 550 || input.rowOrder.some(id => typeof id !== 'string' || !ID.test(id)) || new Set(input.rowOrder).size !== input.rowOrder.length)) throw fault(400, 'invalid_row_order');
+    return { requestId: token, version: input.version, rows, ...(input.rowOrder === undefined ? {} : { rowOrder: [...input.rowOrder] }) };
 }
 
 function createRouter(getPool, auth) {
@@ -328,12 +330,13 @@ function createRouter(getPool, auth) {
         await client.query('INSERT INTO dot_progress_timeline_requests(actor_id, request_id, request_payload, response_entry) VALUES ($1,$2,$3::jsonb,$4::jsonb)', [String(actorId), token, JSON.stringify(payload), JSON.stringify(after)]);
     }
     function scheduleRecord(date, row) {
-        return row ? { date, version: row.version, rows: row.rows, updatedAt: safeUpdatedAtToISO(row) } : { date, version: 0, rows: [], updatedAt: null };
+        return row ? { date, version: row.version, rows: row.rows, rowOrder: row.row_order || [], updatedAt: safeUpdatedAtToISO(row) } : { date, version: 0, rows: [], rowOrder: [], updatedAt: null };
     }
-    async function scheduleReferences(client, rows) {
+    async function scheduleReferences(client, rows, rowOrder = []) {
+        const rowIds = new Set(rows.map(row => row.id));
         for (const [table, ids, code] of [
             ['dot_progress_projects', [...new Set(rows.map(row => row.projectId).filter(Boolean))], 'project_not_found'],
-            ['dot_progress_timeline', rows.flatMap(row => row.actualIds), 'timeline_not_found']
+            ['dot_progress_timeline', [...new Set([...rows.flatMap(row => row.actualIds), ...rowOrder.filter(id => !rowIds.has(id))])], 'timeline_not_found']
         ]) {
             if (!ids.length) continue;
             const found = await client.query(`SELECT id FROM ${table} WHERE id IN (${ids.map((_, i) => `$${i + 1}`).join(',')})`, ids);
@@ -554,7 +557,7 @@ function createRouter(getPool, auth) {
     }));
     router.put('/schedule/:date', withError(async (req, res) => {
         const date = timelineDate(req.params.date); const input = scheduleInput(req.body, date);
-        const payload = { date, version: input.version, rows: input.rows };
+        const payload = { date, version: input.version, rows: input.rows, ...(input.rowOrder === undefined ? {} : { rowOrder: input.rowOrder }) };
         const pool = await database(); const actor = String(req.user.userId);
         const schedule = await transaction(pool, async client => {
             // Also serializes the absent version-zero row and request-ID races.
@@ -567,10 +570,21 @@ function createRouter(getPool, auth) {
             const prior = (await client.query('SELECT * FROM dot_progress_schedule WHERE date=$1 FOR UPDATE', [date])).rows[0];
             const before = scheduleRecord(date, prior);
             if (input.version !== before.version) throw fault(409, 'version_conflict');
-            await scheduleReferences(client, input.rows);
+            const priorRows = new Map(before.rows.map(row => [row.id, row]));
+            for (const row of input.rows) {
+                const old = priorRows.get(row.id);
+                if (!old && row.archived === true) throw fault(400, 'invalid_archive_transition');
+                if (old && (old.archived === true) !== (row.archived === true)) {
+                    const { archived: _oldFlag, ...oldData } = old;
+                    const { archived: _newFlag, ...newData } = row;
+                    if (canonical(oldData) !== canonical(newData)) throw fault(400, 'invalid_archive_transition');
+                }
+            }
+            await scheduleReferences(client, input.rows, input.rowOrder);
+            const rowOrder = input.rowOrder ?? before.rowOrder;
             const result = prior
-                ? await client.query('UPDATE dot_progress_schedule SET rows=$2::jsonb,version=version+1,updated_at=clock_timestamp() WHERE date=$1 RETURNING *', [date, JSON.stringify(input.rows)])
-                : await client.query('INSERT INTO dot_progress_schedule(date,rows) VALUES ($1,$2::jsonb) RETURNING *', [date, JSON.stringify(input.rows)]);
+                ? await client.query('UPDATE dot_progress_schedule SET rows=$2::jsonb,row_order=$3::jsonb,version=version+1,updated_at=clock_timestamp() WHERE date=$1 RETURNING *', [date, JSON.stringify(input.rows), JSON.stringify(rowOrder)])
+                : await client.query('INSERT INTO dot_progress_schedule(date,rows,row_order) VALUES ($1,$2::jsonb,$3::jsonb) RETURNING *', [date, JSON.stringify(input.rows), JSON.stringify(rowOrder)]);
             const after = scheduleRecord(date, result.rows[0]);
             await client.query('INSERT INTO dot_progress_schedule_revisions(date,version,actor_id,changes) VALUES ($1,$2,$3,$4::jsonb)', [date, after.version, actor, JSON.stringify({ before, after })]);
             await client.query('INSERT INTO dot_progress_schedule_requests(actor_id,request_id,request_payload,response_schedule) VALUES ($1,$2,$3::jsonb,$4::jsonb)', [actor, input.requestId, JSON.stringify(payload), JSON.stringify(after)]);
