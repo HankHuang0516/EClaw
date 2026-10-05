@@ -1,14 +1,14 @@
 (function () {
   'use strict';
   const API = '/api/dot-progress';
-  const state = { isAdmin: false, projects: [], filter: 'pending', epoch: 0, importData: null, importGeneration:0, checking: false, loggingOut:false, drafts:new Map(), frozenForms:0 };
+  const state = { isAdmin: false, projects: [], filter: 'pending', epoch: 0, importData: null, importGeneration:0, checking: false, loggingOut:false, drafts:new Map(), frozenForms:0, pushes:new Map() };
   const $ = id => document.getElementById(id);
   const tr = key => window.dotI18n.t('dot_progress_' + key);
   const text = (tag,value,className) => { const node=document.createElement(tag); node.textContent=value == null ? '' : String(value); if(className) node.className=className; return node; };
   const action = (key,handler,secondary=false) => { const node=text('button',tr(key),secondary?'secondary':'');node.type='button';if(handler)node.addEventListener('click',handler);return node; };
   const message = (node,key,error=false) => {node.textContent=key?tr(key):'';node.classList.toggle('error',error);node.classList.add('message');};
   function clearPrivate() {
-    state.isAdmin=false;state.projects=[];state.importData=null;state.epoch++;state.importGeneration++;state.drafts.clear();window.dotDecisions.clear();window.dotReview.clear();
+    state.isAdmin=false;state.projects=[];state.importData=null;state.epoch++;state.importGeneration++;state.drafts.clear();state.pushes.clear();window.dotDecisions.clear();window.dotReview.clear();
     $('project-list').replaceChildren();$('import-preview').replaceChildren();$('import-form').reset();$('import-apply').hidden=true;$('import-message').textContent='';$('admin-message').textContent='';
     $('private-workspace').hidden=true;$('logout').hidden=true;$('gate').hidden=false;
   }
@@ -79,27 +79,27 @@
     recovery=action('latest',()=>busy(recovery,async()=>{
       const response=await request('/projects',{},true);const latest=response.projects.find(item=>item.id===project.id);if(!latest)throw new Error('missing');
       project.version=latest.version;
-      const current=text('div','', 'project-summary');current.append(text('strong',tr('latest')+' · '+tr('version')+' '+latest.version),text('p',[latest.title,tr('status')+': '+tr(latest.status),latest.summary,tr('blockers')+': '+latest.blockers,tr('next')+': '+latest.nextStep,tr('public_title')+': '+latest.publicTitle,tr('public_summary')+': '+latest.publicSummary,tr('date')+': '+latest.completedAt].join('\n')));
+      const current=text('div','', 'project-summary');current.append(text('strong',tr('latest')+' · '+tr('version')+' '+latest.version),text('p',[latest.title,tr('status')+': '+tr(latest.status),latest.summary,tr('blockers')+': '+latest.blockers,tr('completed_work')+': '+(latest.completedWork||tr('not_recorded')),tr('next')+': '+latest.nextStep,tr('public_title')+': '+latest.publicTitle,tr('public_summary')+': '+latest.publicSummary,tr('date')+': '+latest.completedAt].join('\n')));
       recovery.replaceWith(current);message(errorNode,'draft');
       // Explicit next submit applies the retained draft against the version displayed above.
     },errorNode),true);recovery.dataset.recovery='true';form.append(recovery);
   }
   function projectEditor(card,project) {
     const revision={...project};
-    const detail=section('edit');const form=document.createElement('form');
+    const detail=section('edit');detail.className='project-edit';const form=document.createElement('form');form.dataset.projectFormKey='edit';
     field(form,'project_title',project.title,{name:'title',required:true,max:160});
     const label=text('label','');label.append(text('span',tr('status')));const select=document.createElement('select');select.name='status';['active','blocked','paused','completed','cancelled','archived'].forEach(status=>{const option=text('option',tr(status));option.value=status;select.append(option);});select.value=project.status;label.append(select);form.append(label);
-    field(form,'goal',project.summary,{name:'summary',multiline:true,max:4000});field(form,'blockers',project.blockers,{multiline:true,max:4000});field(form,'next',project.nextStep,{name:'nextStep',multiline:true,max:4000});
+    field(form,'goal',project.summary,{name:'summary',multiline:true,max:4000});field(form,'completed_work',project.completedWork,{name:'completedWork',multiline:true,max:4000});field(form,'blockers',project.blockers,{multiline:true,max:4000});field(form,'next',project.nextStep,{name:'nextStep',multiline:true,max:4000});
     const save=action('save');save.type='submit';const status=text('p','');status.setAttribute('role','status');form.append(save,status);
     form.addEventListener('submit',event=>{event.preventDefault();busy(save,async()=>{
-      try {await request('/projects/'+encodeURIComponent(project.id),{method:'PATCH',body:JSON.stringify({version:revision.version,...formValues(form,['title','status','summary','blockers','nextStep'])})},true);await reloadProjects();}
+      try {await request('/projects/'+encodeURIComponent(project.id),{method:'PATCH',body:JSON.stringify({version:revision.version,...formValues(form,['title','status','summary','completedWork','blockers','nextStep'])})},true);await reloadProjects();}
       catch(error){if(error.status===409){message(status,'conflict',true);addConflictRecovery(card,form,status,revision);}else throw error;}
     },status);});detail.append(form);card.append(detail);
   }
   function publicationEditor(card,project) {
     const revision={...project};
     if(['cancelled','archived'].includes(project.status)){card.append(text('p',tr('decision_terminal'),'small'));return;}
-    const detail=section('publication');detail.append(text('p',tr('publication_note'),'small'));const form=document.createElement('form');
+    const detail=section('publication');detail.className='project-publication';detail.append(text('p',tr('publication_note'),'small'));const form=document.createElement('form');form.dataset.projectFormKey='publication';
     field(form,'public_title',project.publicTitle,{name:'publicTitle',required:true,max:160});field(form,'public_summary',project.publicSummary,{name:'publicSummary',required:true,multiline:true,max:400});field(form,'date',project.completedAt,{name:'completedAt',required:true,type:'date'});
     const buttons=text('div','', 'actions');const publish=action('publish');publish.type='submit';buttons.append(publish);const status=text('p','');status.setAttribute('role','status');
     if(project.publicSummary){const remove=action('unpublish',()=>busy(remove,async()=>{await request('/projects/'+encodeURIComponent(project.id),{method:'PATCH',body:JSON.stringify({version:revision.version,publicSummary:''})},true);await reloadProjects();},status),true);buttons.append(remove);}
@@ -109,12 +109,12 @@
     },status);});detail.append(form);card.append(detail);
   }
   function comments(card,project) {
-    const detail=section('comments');const list=text('div','');const status=text('p','');status.setAttribute('role','status');const load=action('load',()=>busy(load,async()=>{
+    const detail=section('comments');detail.className='project-comments';const list=text('div','');const status=text('p','');status.setAttribute('role','status');const load=action('load',()=>busy(load,async()=>{
       const data=await request('/projects/'+encodeURIComponent(project.id)+'/comments',{},true);list.replaceChildren();
       if(!data.comments.length)list.append(text('p',tr('empty_comments'),'small'));
       data.comments.forEach(item=>{const entry=text('div','', 'comment');entry.append(text('p',item.body),text('time',formatTime(item.createdAt)));list.append(entry);});message(status,'');
     },status),true);
-    detail.append(load,list);const form=document.createElement('form');const input=field(form,'comment_body','',{name:'body',required:true,multiline:true,max:4000});const send=action('send');send.type='submit';form.append(send,status);
+    detail.append(load,list);const form=document.createElement('form');form.dataset.projectFormKey='comments';const input=field(form,'comment_body','',{name:'body',required:true,multiline:true,max:4000});const send=action('send');send.type='submit';form.append(send,status);
     let requestId=null;
     input.addEventListener('input',()=>{requestId=null;});
     form.addEventListener('submit',event=>{event.preventDefault();busy(send,async()=>{
@@ -126,27 +126,80 @@
   }
   function formatTime(value){const date=new Date(value);return Number.isNaN(date.getTime())?'':date.toLocaleString(window.dotI18n.locale);}
   function history(card,project) {
-    const detail=section('history');const list=text('div','');const status=text('p','');const load=action('load',()=>busy(load,async()=>{
+    const detail=section('history');detail.className='project-history';const list=text('div','');const status=text('p','');const load=action('load',()=>busy(load,async()=>{
       const data=await request('/projects/'+encodeURIComponent(project.id)+'/history',{},true);list.replaceChildren();
       if(!data.history.length)list.append(text('p',tr('empty_history'),'small'));
       data.history.forEach(item=>{
         const entry=text('div','', 'history-row');entry.append(text('strong',tr('version')+' '+item.version),text('time',' · '+formatTime(item.createdAt)));
         const after=item.changes&&item.changes.after;
         const before=item.changes&&item.changes.before;
-        if(before){entry.append(text('p',tr('version')+' '+Math.max(0,item.version-1)+'\n'+[before.title,tr('status')+': '+tr(before.status),before.summary,tr('blockers')+': '+before.blockers,tr('next')+': '+before.nextStep].join('\n')));}
-        entry.append(text('p',after?[after.title,tr('status')+': '+tr(after.status),after.summary,tr('blockers')+': '+after.blockers,tr('next')+': '+after.nextStep].join('\n'):tr('history_'+(item.action==='import'?'import':item.action==='seed'?'seed':'change'))));list.append(entry);
+        if(before){entry.append(text('p',tr('version')+' '+Math.max(0,item.version-1)+'\n'+[before.title,tr('status')+': '+tr(before.status),before.summary,tr('completed_work')+': '+(before.completedWork||tr('not_recorded')),tr('blockers')+': '+before.blockers,tr('next')+': '+before.nextStep].join('\n')));}
+        entry.append(text('p',after?[after.title,tr('status')+': '+tr(after.status),after.summary,tr('completed_work')+': '+(after.completedWork||tr('not_recorded')),tr('blockers')+': '+after.blockers,tr('next')+': '+after.nextStep].join('\n'):tr('history_'+(item.action==='import'?'import':item.action==='seed'?'seed':'change'))));list.append(entry);
       });message(status,'');
     },status),true);detail.append(load,list,status);card.append(detail);
   }
   function rememberProjectForms() {
     $('project-list').querySelectorAll('.project').forEach(card=>{
-      // Decisions maintain their own revision-bound drafts. Project drafts are restored only within the same version.
-      card.querySelectorAll('form').forEach((form,index)=>{
-        if(form.closest('.decision-section'))return;
-        const key=card.dataset.projectId+':'+card.dataset.projectVersion+':'+index;
+      card.querySelectorAll('form[data-project-form-key]').forEach(form=>{
+        const key=card.dataset.projectId+':'+card.dataset.projectVersion+':'+form.dataset.projectFormKey;
         state.drafts.set(key,Array.from(form.elements).filter(node=>node.name).map(node=>[node.name,node.value]));
       });
     });
+  }
+  function workflowBlock(key, value, className) {
+    const block=text('section','', 'workflow-block '+className);
+    block.append(text('h4',tr(key)),text('p',value ? String(value).slice(0,160)+(String(value).length>160?'…':'') : tr('not_recorded'),'workflow-preview'));
+    return block;
+  }
+  function originalDetails(card, project) {
+    const detail=section('original_detail');detail.className='project-original';
+    detail.append(text('p',project.summary,'project-summary'));
+    ['completedWork','blockers','nextStep'].forEach((name,index)=>detail.append(row(['completed_work','blockers','next'][index],project[name]||tr('not_recorded'))));
+    card.append(detail);
+  }
+  function mountPush(card, project) {
+    let op=state.pushes.get(project.id);
+    const storedCount=Number.isSafeInteger(project.pushCount)&&project.pushCount>=0?project.pushCount:0;
+    if(!op){op={queue:[],running:false,failed:false,count:storedCount,last:project.lastPushedAt||null,epoch:state.epoch,view:null};state.pushes.set(project.id,op);}
+    else if(storedCount>op.count){op.count=storedCount;op.last=project.lastPushedAt||null;}
+    project.pushCount=op.count;project.lastPushedAt=op.last;
+    const bar=text('div','','push-bar');const push=action('push');push.className='push-button';
+    const metrics=text('div','','push-metrics');const count=text('strong','');count.className='push-count';const last=text('span','','small push-last');metrics.append(count,last);
+    const feedback=text('p','','message push-message');feedback.setAttribute('role','status');const retry=action('push_retry',()=>{if(op.running||!op.failed)return;op.failed=false;run();},true);retry.classList.add('push-retry');
+    bar.append(push,metrics);card.append(bar,feedback,retry);op.view={count,last,feedback,retry};
+    function paint(){
+      if(op.epoch!==state.epoch||!state.isAdmin)return;
+      const view=op.view;if(!view||!view.count.isConnected)return;
+      view.count.textContent=tr('push_count')+' '+op.count;
+      view.last.textContent=tr('push_last')+': '+(op.last?formatTime(op.last):tr('not_recorded'));
+      view.retry.hidden=!op.failed;view.retry.disabled=op.running;
+      view.feedback.textContent=op.failed?tr('push_uncertain'):op.queue.length?tr('push_waiting')+' '+op.queue.length:'';
+      view.feedback.classList.toggle('error',op.failed);
+    }
+    async function run(){
+      if(op.running||op.failed||op.epoch!==state.epoch||!state.isAdmin)return;
+      op.running=true;paint();
+      try{
+        while(op.queue.length&&op.epoch===state.epoch&&state.isAdmin){
+          const requestId=op.queue[0];
+          try{
+            const result=await request('/projects/'+encodeURIComponent(project.id)+'/push',{method:'POST',body:JSON.stringify({requestId})},true);
+            if(!Number.isSafeInteger(result.pushCount)||result.pushCount<0||typeof result.lastPushedAt!=='string'||Number.isNaN(Date.parse(result.lastPushedAt)))throw new Error('invalid_push_receipt');
+            if(result.pushCount>=op.count){op.count=result.pushCount;op.last=result.lastPushedAt;}
+            const current=state.projects.find(row=>row.id===project.id);if(current){current.pushCount=op.count;current.lastPushedAt=op.last;}
+            op.queue.shift();paint();
+          }catch(_error){if(op.epoch===state.epoch&&state.isAdmin){op.failed=true;paint();}break;}
+        }
+      }finally{op.running=false;paint();}
+    }
+    push.addEventListener('click',()=>{
+      if(!state.isAdmin||op.epoch!==state.epoch)return;
+      // Every intentional click is a distinct operation; an uncertain retry keeps this original ID.
+      op.queue.push(window.crypto.randomUUID());paint();run();
+    });
+    paint();
+    // A remounted card points the existing operation at these new display nodes without resetting its queue.
+    queueMicrotask(paint);
   }
   function updateVisibility() {
     let visible=0;
@@ -163,10 +216,14 @@
     $('project-list').replaceChildren();
     state.projects.forEach(project=>{
       const card=text('article','', 'project');card.dataset.projectId=project.id;card.dataset.projectVersion=project.version;
-      const heading=text('div','', 'toolbar');heading.append(text('h3',project.title),text('span',tr(project.status),'status '+project.status));card.append(heading,text('p',project.summary,'project-summary'));
-      const meta=text('div','', 'project-meta');meta.append(row('blockers',project.blockers),row('next',project.nextStep));card.append(meta);projectEditor(card,project);publicationEditor(card,project);comments(card,project);history(card,project);
-      card.querySelectorAll('form').forEach((form,index)=>{const values=state.drafts.get(project.id+':'+project.version+':'+index);if(values)values.forEach(([name,value])=>{const node=form.elements.namedItem(name);if(node)node.value=value;});});
-      window.dotDecisions.mount(project,card,{request,tr,text,action,field,message,busy,freeze,formatTime,onChange:updateVisibility});
+      const heading=text('div','', 'toolbar project-heading');heading.append(text('h3',project.title),text('span',tr('phase')+': '+tr(project.status),'status '+project.status));card.append(heading);
+      mountPush(card,project);
+      const workflow=text('div','','project-workflow');workflow.append(workflowBlock('completed_work',project.completedWork,'workflow-completed'),workflowBlock('blockers',project.blockers,'workflow-blockers'),workflowBlock('next',project.nextStep,'workflow-next'));
+      card.append(workflow);
+      const decisions=text('div','','workflow-decisions');
+      window.dotDecisions.mount(project,decisions,{request,tr,text,action,field,message,busy,freeze,formatTime,onChange:updateVisibility});card.append(decisions);
+      const detailArea=text('div','','project-detail-area');originalDetails(detailArea,project);projectEditor(detailArea,project);publicationEditor(detailArea,project);comments(detailArea,project);history(detailArea,project);card.append(detailArea);
+      card.querySelectorAll('form[data-project-form-key]').forEach(form=>{const values=state.drafts.get(project.id+':'+project.version+':'+form.dataset.projectFormKey);if(values)values.forEach(([name,value])=>{const node=form.elements.namedItem(name);if(node)node.value=value;});});
       $('project-list').append(card);
     });
     updateVisibility();
@@ -209,6 +266,9 @@
   $('language').addEventListener('change',event=>{window.dotI18n.setLocale(event.target.value);if(state.isAdmin){renderProjects();window.dotReview.translate();}loadPublic();});
   window.addEventListener('focus',checkSession);
   window.addEventListener('pageshow',event=>{if(event.persisted){clearPrivate();checkSession();}});
+  window.addEventListener('beforeunload',event=>{
+    if(state.isAdmin&&Array.from(state.pushes.values()).some(op=>op.queue.length)){event.preventDefault();event.returnValue='';}
+  });
   window.addEventListener('pagehide',()=>{clearPrivate();});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkSession();});
   window.dotReview.init({request,tr,text,action,field,message,busy,freeze,formatTime});

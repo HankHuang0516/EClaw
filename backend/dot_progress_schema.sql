@@ -90,3 +90,19 @@ CREATE TABLE IF NOT EXISTS dot_progress_review_comments (
 );
 CREATE INDEX IF NOT EXISTS dot_progress_review_recent ON dot_progress_review(created_at, id);
 CREATE INDEX IF NOT EXISTS dot_progress_review_comments_lookup ON dot_progress_review_comments(review_id, id);
+-- Push signals are independent from editable project data and its version.
+CREATE TABLE IF NOT EXISTS dot_progress_push_state (
+    project_id TEXT PRIMARY KEY REFERENCES dot_progress_projects(id),
+    push_count INTEGER NOT NULL DEFAULT 0 CHECK (push_count >= 0),
+    last_pushed_at TIMESTAMPTZ
+);
+CREATE TABLE IF NOT EXISTS dot_progress_push_requests (
+    id BIGSERIAL PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES dot_progress_projects(id),
+    actor_id TEXT NOT NULL,
+    request_id TEXT NOT NULL,
+    push_count INTEGER NOT NULL CHECK (push_count > 0),
+    pushed_at TIMESTAMPTZ NOT NULL,
+    UNIQUE(project_id, actor_id, request_id)
+);
+CREATE INDEX IF NOT EXISTS dot_progress_push_requests_recent ON dot_progress_push_requests(id);

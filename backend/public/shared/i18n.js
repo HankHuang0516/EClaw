@@ -127,6 +127,18 @@ const TRANSLATIONS = {
 
 
     en: {
+        "dot_progress_push": "Push forward",
+        "dot_progress_push_count": "Pushes recorded",
+        "dot_progress_push_last": "Last pushed",
+        "dot_progress_push_retry": "Retry original push",
+        "dot_progress_push_waiting": "Waiting to record",
+        "dot_progress_push_uncertain": "Result unconfirmed. Retry the original operation without duplicating it; later clicks remain queued.",
+        "dot_progress_phase": "Current phase",
+        "dot_progress_completed_work": "Completed work",
+        "dot_progress_not_recorded": "Not recorded yet",
+        "dot_progress_original_detail": "Full text and editing",
+        "dot_progress_need_decision": "Needs your decision",
+
         "dot_progress_review_date_label": "Original record date",
         "dot_progress_review_entry_title": "Retrospective title",
         "dot_progress_review_date_hint": "YYYY-MM-DD / ISO timestamp with timezone",
@@ -651120,6 +651132,18 @@ const TRANSLATIONS = {
 
 
     zh: {
+        "dot_progress_push": "推進",
+        "dot_progress_push_count": "已推進",
+        "dot_progress_push_last": "最近推進",
+        "dot_progress_push_retry": "重試原操作",
+        "dot_progress_push_waiting": "等待記錄",
+        "dot_progress_push_uncertain": "尚未確認結果；重試原操作會保留同一次記錄。後續點擊已排隊。",
+        "dot_progress_phase": "目前階段",
+        "dot_progress_completed_work": "已完成",
+        "dot_progress_not_recorded": "尚未記錄",
+        "dot_progress_original_detail": "完整原文與編輯",
+        "dot_progress_need_decision": "需要你決策",
+
         "dot_progress_review_date_label": "原記錄日期",
         "dot_progress_review_entry_title": "回顧標題",
         "dot_progress_review_date_hint": "YYYY-MM-DD／含時區 ISO 時間",
@@ -1236320,6 +1236344,18 @@ const TRANSLATIONS = {
 
 
 "zh-CN": {
+        "dot_progress_push": "推进",
+        "dot_progress_push_count": "已推进",
+        "dot_progress_push_last": "最近推进",
+        "dot_progress_push_retry": "重试原操作",
+        "dot_progress_push_waiting": "等待记录",
+        "dot_progress_push_uncertain": "尚未确认结果；重试原操作会保留同一次记录。后续点击已排队。",
+        "dot_progress_phase": "当前阶段",
+        "dot_progress_completed_work": "已完成",
+        "dot_progress_not_recorded": "尚未记录",
+        "dot_progress_original_detail": "完整原文与编辑",
+        "dot_progress_need_decision": "需要你决策",
+
         "dot_progress_review_date_label": "原记录日期",
         "dot_progress_review_entry_title": "回顾标题",
         "dot_progress_review_date_hint": "YYYY-MM-DD／含时区 ISO 时间",
@@ -1850910,6 +1850946,18 @@ const TRANSLATIONS = {
 
 
     ja: {
+        "dot_progress_push": "進める",
+        "dot_progress_push_count": "記録済み",
+        "dot_progress_push_last": "最終記録",
+        "dot_progress_push_retry": "元の操作を再試行",
+        "dot_progress_push_waiting": "記録待ち",
+        "dot_progress_push_uncertain": "結果未確認です。元の操作を重複せず再試行できます。以降のクリックは待機中です。",
+        "dot_progress_phase": "現在の段階",
+        "dot_progress_completed_work": "完了した作業",
+        "dot_progress_not_recorded": "未記録",
+        "dot_progress_original_detail": "全文と編集",
+        "dot_progress_need_decision": "あなたの判断が必要",
+
         "dot_progress_review_date_label": "元の記録日",
         "dot_progress_review_entry_title": "振り返りのタイトル",
         "dot_progress_review_date_hint": "YYYY-MM-DD／タイムゾーン付き ISO",
@@ -2414426,6 +2414474,18 @@ const TRANSLATIONS = {
 
 
     ko: {
+        "dot_progress_push": "추진",
+        "dot_progress_push_count": "추진 기록",
+        "dot_progress_push_last": "최근 추진",
+        "dot_progress_push_retry": "기존 작업 재시도",
+        "dot_progress_push_waiting": "기록 대기",
+        "dot_progress_push_uncertain": "결과 미확인입니다. 같은 작업을 중복 없이 재시도하세요. 이후 클릭은 대기 중입니다.",
+        "dot_progress_phase": "현재 단계",
+        "dot_progress_completed_work": "완료 작업",
+        "dot_progress_not_recorded": "아직 기록 없음",
+        "dot_progress_original_detail": "전체 원문 및 편집",
+        "dot_progress_need_decision": "결정 필요",
+
         "dot_progress_review_date_label": "원래 기록 날짜",
         "dot_progress_review_entry_title": "회고 제목",
         "dot_progress_review_date_hint": "YYYY-MM-DD／시간대 포함 ISO",
@@ -2946707,6 +2946767,18 @@ const TRANSLATIONS = {
 
 
     th: {
+        "dot_progress_push": "เดินหน้า",
+        "dot_progress_push_count": "จำนวนครั้งที่บันทึก",
+        "dot_progress_push_last": "ครั้งล่าสุด",
+        "dot_progress_push_retry": "ลองรายการเดิมอีกครั้ง",
+        "dot_progress_push_waiting": "รอบันทึก",
+        "dot_progress_push_uncertain": "ยังไม่ยืนยันผล ลองรายการเดิมอีกครั้งโดยไม่บันทึกซ้ำ การคลิกถัดไปรออยู่",
+        "dot_progress_phase": "ขั้นตอนปัจจุบัน",
+        "dot_progress_completed_work": "งานที่เสร็จแล้ว",
+        "dot_progress_not_recorded": "ยังไม่บันทึก",
+        "dot_progress_original_detail": "ข้อความเต็มและแก้ไข",
+        "dot_progress_need_decision": "ต้องการการตัดสินใจ",
+
         "dot_progress_review_date_label": "วันที่บันทึกเดิม",
         "dot_progress_review_entry_title": "ชื่อการทบทวน",
         "dot_progress_review_date_hint": "YYYY-MM-DD／ISO พร้อมเขตเวลา",
@@ -3473818,6 +3473890,18 @@ const TRANSLATIONS = {
 
 
     vi: {
+        "dot_progress_push": "Thúc đẩy",
+        "dot_progress_push_count": "Lần đã ghi",
+        "dot_progress_push_last": "Lần gần nhất",
+        "dot_progress_push_retry": "Thử lại thao tác gốc",
+        "dot_progress_push_waiting": "Đang chờ ghi",
+        "dot_progress_push_uncertain": "Chưa xác nhận kết quả. Thử lại thao tác gốc không ghi trùng; lần bấm sau đang chờ.",
+        "dot_progress_phase": "Giai đoạn hiện tại",
+        "dot_progress_completed_work": "Đã hoàn thành",
+        "dot_progress_not_recorded": "Chưa ghi nhận",
+        "dot_progress_original_detail": "Nội dung đầy đủ và chỉnh sửa",
+        "dot_progress_need_decision": "Cần bạn quyết định",
+
         "dot_progress_review_date_label": "Ngày bản ghi gốc",
         "dot_progress_review_entry_title": "Tiêu đề nhìn lại",
         "dot_progress_review_date_hint": "YYYY-MM-DD／ISO có múi giờ",
@@ -4000999,6 +4001083,18 @@ const TRANSLATIONS = {
 
 
     id: {
+        "dot_progress_push": "Dorong",
+        "dot_progress_push_count": "Dorongan tercatat",
+        "dot_progress_push_last": "Terakhir didorong",
+        "dot_progress_push_retry": "Ulangi operasi awal",
+        "dot_progress_push_waiting": "Menunggu pencatatan",
+        "dot_progress_push_uncertain": "Hasil belum pasti. Ulangi operasi awal tanpa duplikasi; klik berikutnya tetap antre.",
+        "dot_progress_phase": "Tahap saat ini",
+        "dot_progress_completed_work": "Pekerjaan selesai",
+        "dot_progress_not_recorded": "Belum dicatat",
+        "dot_progress_original_detail": "Teks lengkap dan edit",
+        "dot_progress_need_decision": "Perlu keputusan Anda",
+
         "dot_progress_review_date_label": "Tanggal catatan asli",
         "dot_progress_review_entry_title": "Judul tinjauan",
         "dot_progress_review_date_hint": "YYYY-MM-DD／ISO dengan zona waktu",
@@ -4527796,6 +4527892,18 @@ const TRANSLATIONS = {
 
 
     fr: {
+        "dot_progress_push": "Faire avancer",
+        "dot_progress_push_count": "Avancées enregistrées",
+        "dot_progress_push_last": "Dernière avancée",
+        "dot_progress_push_retry": "Réessayer la même action",
+        "dot_progress_push_waiting": "En attente",
+        "dot_progress_push_uncertain": "Résultat non confirmé. Réessayez sans doublon ; les clics suivants restent en attente.",
+        "dot_progress_phase": "Phase actuelle",
+        "dot_progress_completed_work": "Travail terminé",
+        "dot_progress_not_recorded": "Pas encore renseigné",
+        "dot_progress_original_detail": "Texte complet et édition",
+        "dot_progress_need_decision": "Votre décision attendue",
+
         "dot_progress_review_date_label": "Date du relevé original",
         "dot_progress_review_entry_title": "Titre de rétrospective",
         "dot_progress_review_date_hint": "YYYY-MM-DD／ISO avec fuseau",
@@ -5053218,6 +5053326,18 @@ const TRANSLATIONS = {
 
 
     es: {
+        "dot_progress_push": "Impulsar",
+        "dot_progress_push_count": "Impulsos registrados",
+        "dot_progress_push_last": "Último impulso",
+        "dot_progress_push_retry": "Reintentar la misma acción",
+        "dot_progress_push_waiting": "Pendientes",
+        "dot_progress_push_uncertain": "Resultado sin confirmar. Reintenta sin duplicarlo; los clics posteriores siguen en cola.",
+        "dot_progress_phase": "Fase actual",
+        "dot_progress_completed_work": "Trabajo completado",
+        "dot_progress_not_recorded": "Aún sin registrar",
+        "dot_progress_original_detail": "Texto completo y edición",
+        "dot_progress_need_decision": "Necesita tu decisión",
+
         "dot_progress_review_date_label": "Fecha del registro original",
         "dot_progress_review_entry_title": "Título de revisión",
         "dot_progress_review_date_hint": "YYYY-MM-DD／ISO con zona",
@@ -5571183,6 +5571303,18 @@ const TRANSLATIONS = {
 
 
     de: {
+        "dot_progress_push": "Vorantreiben",
+        "dot_progress_push_count": "Erfasste Impulse",
+        "dot_progress_push_last": "Letzter Impuls",
+        "dot_progress_push_retry": "Ursprünglichen Impuls wiederholen",
+        "dot_progress_push_waiting": "Wartend",
+        "dot_progress_push_uncertain": "Ergebnis unbestätigt. Original ohne Duplikat wiederholen; weitere Klicks bleiben in der Warteschlange.",
+        "dot_progress_phase": "Aktuelle Phase",
+        "dot_progress_completed_work": "Erledigt",
+        "dot_progress_not_recorded": "Noch nicht erfasst",
+        "dot_progress_original_detail": "Volltext und Bearbeitung",
+        "dot_progress_need_decision": "Ihre Entscheidung gefragt",
+
         "dot_progress_review_date_label": "Originaldatum",
         "dot_progress_review_entry_title": "Rückblicktitel",
         "dot_progress_review_date_hint": "YYYY-MM-DD／ISO mit Zeitzone",
@@ -6113985,6 +6114117,18 @@ const TRANSLATIONS = {
 
 
     ms: {
+        "dot_progress_push": "Majukan",
+        "dot_progress_push_count": "Dorongan direkod",
+        "dot_progress_push_last": "Dorongan terakhir",
+        "dot_progress_push_retry": "Cuba semula tindakan asal",
+        "dot_progress_push_waiting": "Menunggu rekod",
+        "dot_progress_push_uncertain": "Hasil belum disahkan. Cuba semula tanpa pendua; klik berikut masih beratur.",
+        "dot_progress_phase": "Fasa semasa",
+        "dot_progress_completed_work": "Kerja selesai",
+        "dot_progress_not_recorded": "Belum direkod",
+        "dot_progress_original_detail": "Teks penuh dan suntingan",
+        "dot_progress_need_decision": "Perlu keputusan anda",
+
         "dot_progress_review_date_label": "Tarikh rekod asal",
         "dot_progress_review_entry_title": "Tajuk ulasan",
         "dot_progress_review_date_hint": "YYYY-MM-DD／ISO dengan zon waktu",
@@ -6643070,6 +6643214,18 @@ const TRANSLATIONS = {
 
 
     hi: {
+        "dot_progress_push": "आगे बढ़ाएँ",
+        "dot_progress_push_count": "दर्ज प्रयास",
+        "dot_progress_push_last": "अंतिम प्रयास",
+        "dot_progress_push_retry": "मूल प्रयास दोहराएँ",
+        "dot_progress_push_waiting": "दर्ज होने की प्रतीक्षा",
+        "dot_progress_push_uncertain": "परिणाम अपुष्ट है। मूल प्रयास बिना दोहराव के फिर करें; बाद के क्लिक कतार में हैं।",
+        "dot_progress_phase": "वर्तमान चरण",
+        "dot_progress_completed_work": "पूरा हुआ काम",
+        "dot_progress_not_recorded": "अभी दर्ज नहीं",
+        "dot_progress_original_detail": "पूरा पाठ और संपादन",
+        "dot_progress_need_decision": "आपका निर्णय आवश्यक",
+
         "dot_progress_review_date_label": "मूल रिकॉर्ड तारीख",
         "dot_progress_review_entry_title": "समीक्षा शीर्षक",
         "dot_progress_review_date_hint": "YYYY-MM-DD／समय क्षेत्र सहित ISO",
@@ -7202612,6 +7202768,18 @@ const TRANSLATIONS = {
 
 
     ar: {
+        "dot_progress_push": "دفع للأمام",
+        "dot_progress_push_count": "الدفعات المسجلة",
+        "dot_progress_push_last": "آخر دفعة",
+        "dot_progress_push_retry": "إعادة محاولة العملية الأصلية",
+        "dot_progress_push_waiting": "بانتظار التسجيل",
+        "dot_progress_push_uncertain": "النتيجة غير مؤكدة. أعد العملية الأصلية دون تكرار السجل؛ النقرات التالية في الانتظار.",
+        "dot_progress_phase": "المرحلة الحالية",
+        "dot_progress_completed_work": "العمل المكتمل",
+        "dot_progress_not_recorded": "لم يُسجل بعد",
+        "dot_progress_original_detail": "النص الكامل والتحرير",
+        "dot_progress_need_decision": "بحاجة إلى قرارك",
+
         "dot_progress_review_date_label": "تاريخ السجل الأصلي",
         "dot_progress_review_entry_title": "عنوان المراجعة",
         "dot_progress_review_date_hint": "YYYY-MM-DD／ISO مع المنطقة الزمنية",

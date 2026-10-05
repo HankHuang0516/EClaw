@@ -7,7 +7,7 @@ const path = require('path');
 const { randomUUID } = require('crypto');
 const seed = require('./dot-progress-seed.json');
 const schema = fs.readFileSync(path.join(__dirname, 'dot_progress_schema.sql'), 'utf8');
-const FIELDS = ['title', 'status', 'summary', 'blockers', 'nextStep', 'publicTitle', 'publicSummary', 'completedAt'];
+const FIELDS = ['title', 'status', 'summary', 'blockers', 'nextStep', 'completedWork', 'publicTitle', 'publicSummary', 'completedAt'];
 const STATUSES = ['active', 'blocked', 'paused', 'completed', 'cancelled', 'archived'];
 const ID = /^[a-z0-9][a-z0-9-]{0,79}$/;
 const REQUEST_ID = /^[a-zA-Z0-9_-]{8,100}$/;
@@ -22,8 +22,8 @@ function normalize(input, prior = null) {
     if (Object.keys(input).some(k => ![...FIELDS, 'id', 'version', 'comments'].includes(k))) throw fault(400, 'unknown_field');
     const data = {};
     for (const key of FIELDS) {
-        const value = input[key] === undefined ? (prior ? prior[key] : '') : input[key];
-        data[key] = text(value, ['summary', 'blockers', 'nextStep'].includes(key) ? 4000 : key === 'publicSummary' ? 400 : 160, key === 'title');
+        const value = input[key] === undefined ? (prior?.[key] ?? '') : input[key];
+        data[key] = text(value, ['summary', 'blockers', 'nextStep', 'completedWork'].includes(key) ? 4000 : key === 'publicSummary' ? 400 : 160, key === 'title');
     }
     if (!STATUSES.includes(data.status)) throw fault(400, 'invalid_status');
     if (data.status !== 'completed') data.publicSummary = '';
@@ -31,7 +31,10 @@ function normalize(input, prior = null) {
     if (data.publicSummary && (!data.publicTitle || !data.completedAt || data.status !== 'completed')) throw fault(400, 'publication_requires_completion');
     return data;
 }
-function rowProject(row) { return { id: row.id, ...row.data, version: row.version }; }
+function rowProject(row) {
+    return { id: row.id, ...row.data, completedWork: row.data.completedWork ?? '', version: row.version,
+        pushCount: row.push_count ?? 0, lastPushedAt: row.last_pushed_at ?? null };
+}
 function publicProject(row) {
     const d = row.data;
     if (d.status !== 'completed' || !d.publicTitle || !d.publicSummary || !d.completedAt) return null;
@@ -124,7 +127,12 @@ function createRouter(getPool, auth) {
         const result = await client.query('UPDATE dot_progress_projects SET data = $2::jsonb, version = version + 1, updated_at = NOW() WHERE id = $1 AND version = $3 RETURNING id, data, version', [id, JSON.stringify(data), input.version]);
         if (!result.rows.length) throw fault(409, 'version_conflict');
         await appendHistory(client, id, result.rows[0].version, action, { before: prior.data, after: data });
-        return rowProject(result.rows[0]);
+        const stats = await pushStats(client, id);
+        return rowProject({ ...result.rows[0], push_count: stats.pushCount, last_pushed_at: stats.lastPushedAt });
+    }
+    async function pushStats(client, projectId) {
+        const result = await client.query('SELECT push_count, last_pushed_at FROM dot_progress_push_state WHERE project_id=$1', [projectId]);
+        return { pushCount: result.rows[0]?.push_count ?? 0, lastPushedAt: result.rows[0]?.last_pushed_at ?? null };
     }
     async function addComment(client, projectId, authorId, input) {
         const { body, requestId } = commentInput(input);
@@ -222,8 +230,30 @@ function createRouter(getPool, auth) {
     });
     router.get('/projects', withError(async (_req, res) => {
         const pool = await database();
-        const result = await pool.query('SELECT id, data, version FROM dot_progress_projects ORDER BY updated_at DESC, id');
+        const result = await pool.query('SELECT p.id, p.data, p.version, COALESCE(s.push_count,0) AS push_count, s.last_pushed_at FROM dot_progress_projects p LEFT JOIN dot_progress_push_state s ON s.project_id=p.id ORDER BY p.updated_at DESC, p.id');
         res.json({ success: true, projects: result.rows.map(rowProject) });
+    }));
+    // A push is an admin signal only. It never edits status/version, adopts a
+    // decision, publishes text, executes work or contacts an entity/service.
+    router.post('/projects/:id/push', withError(async (req, res) => {
+        const input = strictBody(req.body, ['requestId']);
+        const token = requestId(input.requestId);
+        const pool = await database();
+        const stats = await transaction(pool, async client => {
+            if (!await findProject(client, req.params.id, true)) throw fault(404, 'project_not_found');
+            // Shared project lock serializes signals, edits and cancellation.
+            // Ledger + counter update commit together, so retries cannot count
+            // twice and a failed receipt write cannot leave an extra increment.
+            const prior = await client.query('SELECT id FROM dot_progress_push_requests WHERE project_id=$1 AND actor_id=$2 AND request_id=$3', [req.params.id, String(req.user.userId), token]);
+            if (prior.rows[0]) return pushStats(client, req.params.id);
+            await client.query('INSERT INTO dot_progress_push_state(project_id) VALUES ($1) ON CONFLICT (project_id) DO NOTHING', [req.params.id]);
+            const result = await client.query('UPDATE dot_progress_push_state SET push_count=push_count+1, last_pushed_at=clock_timestamp() WHERE project_id=$1 RETURNING push_count, last_pushed_at', [req.params.id]);
+            const row = result.rows[0];
+            if (!row) throw fault(503, 'progress_unavailable');
+            await client.query('INSERT INTO dot_progress_push_requests(project_id, actor_id, request_id, push_count, pushed_at) VALUES ($1,$2,$3,$4,$5)', [req.params.id, String(req.user.userId), token, row.push_count, row.last_pushed_at]);
+            return { pushCount: row.push_count, lastPushedAt: row.last_pushed_at };
+        });
+        res.json({ success: true, ...stats });
     }));
     router.patch('/projects/:id', withError(async (req, res) => {
         const pool = await database();
@@ -385,7 +415,7 @@ function createRouter(getPool, auth) {
             seen.add(entry.id);
             if (entry.version !== undefined && (!Number.isSafeInteger(entry.version) || entry.version < 0)) throw fault(400, 'invalid_version');
             if (entry.comments !== undefined && (!Array.isArray(entry.comments) || entry.comments.length > 100)) throw fault(400, 'invalid_import_comments');
-            return { id: entry.id, ...normalize(entry), version: entry.version, comments: (entry.comments || []).map(commentInput) };
+            return { id: entry.id, ...normalize(entry), completedWork: entry.completedWork === undefined ? undefined : text(entry.completedWork, 4000), version: entry.version, comments: (entry.comments || []).map(commentInput) };
         });
         if (mode === 'preview') return res.json({ success: true, mode, count: entries.length, projects: entries });
         const pool = await database();
@@ -428,7 +458,7 @@ function createDebugRouter(getPool, auth) {
         try {
             const pool = getPool();
             if (!pool) throw new Error('unavailable');
-            const [projects, comments, history, recent, decisions, decisionComments, decisionEvents, recentDecisionEvents, reviews, reviewComments] = await Promise.all([
+            const [projects, comments, history, recent, decisions, decisionComments, decisionEvents, recentDecisionEvents, reviews, reviewComments, pushRequests, recentPushes] = await Promise.all([
                 pool.query('SELECT COUNT(*) AS count FROM dot_progress_projects'),
                 pool.query('SELECT COUNT(*) AS count FROM dot_progress_comments'),
                 pool.query('SELECT COUNT(*) AS count FROM dot_progress_history'),
@@ -438,10 +468,12 @@ function createDebugRouter(getPool, auth) {
                 pool.query('SELECT COUNT(*) AS count FROM dot_progress_decision_events'),
                 pool.query('SELECT version, recommendation_version AS "recommendationVersion", action, created_at AS "createdAt" FROM dot_progress_decision_events ORDER BY id DESC LIMIT 20'),
                 pool.query('SELECT COUNT(*) AS count FROM dot_progress_review'),
-                pool.query('SELECT COUNT(*) AS count FROM dot_progress_review_comments')
+                pool.query('SELECT COUNT(*) AS count FROM dot_progress_review_comments'),
+                pool.query('SELECT COUNT(*) AS count FROM dot_progress_push_requests'),
+                pool.query('SELECT push_count AS "pushCount", pushed_at AS "pushedAt" FROM dot_progress_push_requests ORDER BY id DESC LIMIT 20')
             ]);
             res.json({ success: true, counts: { projects: Number(projects.rows[0].count), comments: Number(comments.rows[0].count), history: Number(history.rows[0].count) }, recentHistory: recent.rows,
-                decisionCounts: { decisions: Number(decisions.rows[0].count), comments: Number(decisionComments.rows[0].count), events: Number(decisionEvents.rows[0].count) }, recentDecisionEvents: recentDecisionEvents.rows.slice().reverse(), reviewCounts: { entries: Number(reviews.rows[0].count), comments: Number(reviewComments.rows[0].count) } });
+                decisionCounts: { decisions: Number(decisions.rows[0].count), comments: Number(decisionComments.rows[0].count), events: Number(decisionEvents.rows[0].count) }, recentDecisionEvents: recentDecisionEvents.rows.slice().reverse(), reviewCounts: { entries: Number(reviews.rows[0].count), comments: Number(reviewComments.rows[0].count) }, pushCounts: { requests: Number(pushRequests.rows[0].count) }, recentPushes: recentPushes.rows.slice().reverse() });
         } catch (_err) { res.status(503).json({ success: false, error: 'progress_unavailable' }); }
     });
     return router;
