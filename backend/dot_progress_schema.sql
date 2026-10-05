@@ -106,3 +106,36 @@ CREATE TABLE IF NOT EXISTS dot_progress_push_requests (
     UNIQUE(project_id, actor_id, request_id)
 );
 CREATE INDEX IF NOT EXISTS dot_progress_push_requests_recent ON dot_progress_push_requests(id);
+CREATE TABLE IF NOT EXISTS dot_progress_timeline (
+    id TEXT PRIMARY KEY,
+    project_id TEXT REFERENCES dot_progress_projects(id),
+    project_label TEXT NOT NULL,
+    started_at TIMESTAMPTZ NOT NULL,
+    ended_at TIMESTAMPTZ NOT NULL,
+    data JSONB NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+    actor_id TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CHECK (ended_at >= started_at)
+);
+CREATE TABLE IF NOT EXISTS dot_progress_timeline_revisions (
+    id BIGSERIAL PRIMARY KEY,
+    timeline_id TEXT NOT NULL REFERENCES dot_progress_timeline(id),
+    version INTEGER NOT NULL,
+    actor_id TEXT NOT NULL,
+    changes JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(timeline_id, version)
+);
+CREATE TABLE IF NOT EXISTS dot_progress_timeline_requests (
+    actor_id TEXT NOT NULL,
+    request_id TEXT NOT NULL,
+    request_payload JSONB NOT NULL,
+    response_entry JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY(actor_id, request_id)
+);
+CREATE INDEX IF NOT EXISTS dot_progress_timeline_dates ON dot_progress_timeline(started_at, id);
+CREATE INDEX IF NOT EXISTS dot_progress_timeline_project ON dot_progress_timeline(project_label, started_at);
+CREATE INDEX IF NOT EXISTS dot_progress_timeline_revision_lookup ON dot_progress_timeline_revisions(timeline_id, version);

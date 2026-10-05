@@ -5,6 +5,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { randomUUID } = require('crypto');
+const { safeUpdatedAtToISO } = require('./safe-date');
 const seed = require('./dot-progress-seed.json');
 const schema = fs.readFileSync(path.join(__dirname, 'dot_progress_schema.sql'), 'utf8');
 const FIELDS = ['title', 'status', 'summary', 'blockers', 'nextStep', 'completedWork', 'publicTitle', 'publicSummary', 'completedAt'];
@@ -66,6 +67,82 @@ function reviewInput(input) {
     if (!/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2}))?$/.test(occurredAt)
         || Number.isNaN(Date.parse(occurredAt)) || new Date(`${occurredAt.slice(0, 10)}T00:00:00Z`).toISOString().slice(0, 10) !== occurredAt.slice(0, 10)) throw fault(400, 'invalid_date');
     return { kind: input.kind, title: text(input.title, 160, true), body: text(input.body, 4000, true), occurredAt, source: text(input.source, 500, true), scope: text(input.scope, 500, true) };
+}
+const TIMELINE_FIELDS = ['startedAt', 'endedAt', 'projectId', 'projectLabel', 'workType', 'actions', 'result', 'blockers', 'nextStep', 'evidence'];
+const TIMELINE_TYPES = ['implementation', 'validation', 'routine', 'waiting', 'blocked'];
+function publicTimelineEvidence(value) {
+    if (typeof value !== 'string' || value.length > 500 || value !== value.trim() || !/^https:\/\/github\.com\/HankHuang0516\/EClaw\/(?:pull\/[1-9]\d*|actions\/runs\/[1-9]\d*|commit\/[a-fA-F0-9]{7,40})$/.test(value)) throw fault(400, 'unsafe_evidence');
+    return value.replace(/(\/commit\/)([a-fA-F0-9]+)$/, (_all, prefix, hash) => prefix + hash.toLowerCase());
+}
+function timelineText(value, max, required = false) {
+    const clean = text(value, max, required);
+    if (/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(clean)
+        || /\b(?:sk-[A-Za-z0-9_-]{8,}|gh[pousr]_[A-Za-z0-9]{8,}|github_pat_[A-Za-z0-9_]{8,}|AIza[A-Za-z0-9_-]{20,}|AKIA[A-Z0-9]{12,})\b/.test(clean)
+        || /\b(?:api[_-]?key|botSecret|deviceSecret|access[_-]?token|refresh[_-]?token|password|secret|authorization)["']?\s*[:=]\s*\S+/i.test(clean)
+        || /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/.test(clean)
+        || /-----BEGIN [^-]*PRIVATE KEY-----/.test(clean)
+        || /(?:\/(?:Users|home|private|tmp|var|etc|workspace|Volumes|mnt|opt|srv)(?:\/|\b)|~\/|[A-Za-z]:\\|file:\/\/|sediment:\/\/|library-file:|project-file:|skill:\/\/|codex:\/\/|data:|blob:)/i.test(clean)) throw fault(400, 'unsafe_timeline_text');
+    // Links belong in the allowlisted evidence field. The same allowlist also
+    // prevents capability links or signed/private URLs from entering free text.
+    for (const link of clean.match(/https?:\/\/[^\s<>"']+/gi) || []) publicTimelineEvidence(link);
+    return clean;
+}
+function timelineDate(value) {
+    if (typeof value !== 'string' || !/^[1-9]\d{3}-\d{2}-\d{2}$/.test(value)
+        || Number.isNaN(Date.parse(`${value}T00:00:00Z`)) || new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) !== value) throw fault(400, 'invalid_date');
+    return value;
+}
+function timelineTime(value) {
+    // This interval journal has millisecond precision. Reject finer input rather
+    // than silently rounding away an end-before-start or seven-day violation.
+    if (typeof value !== 'string' || value.length > 40 || !/^[1-9]\d{3}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,3})?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/.test(value) || Number.isNaN(Date.parse(value))) throw fault(400, 'invalid_time');
+    timelineDate(value.slice(0, 10));
+    const normalized = new Date(value).toISOString();
+    if (!/^[1-9]\d{3}-/.test(normalized)) throw fault(400, 'invalid_time');
+    return normalized;
+}
+function timelineInput(input, partial = false) {
+    strictBody(input, [...TIMELINE_FIELDS, 'requestId', ...(partial ? ['version'] : [])]);
+    const result = {};
+    for (const key of TIMELINE_FIELDS) {
+        if (partial && input[key] === undefined) continue;
+        const value = input[key];
+        if (['startedAt', 'endedAt'].includes(key)) result[key] = timelineTime(value);
+        else if (key === 'projectId') {
+            if (value !== undefined && value !== null && (typeof value !== 'string' || !ID.test(value))) throw fault(400, 'invalid_id');
+            result[key] = value ?? null;
+        } else if (key === 'workType') {
+            if (!TIMELINE_TYPES.includes(value)) throw fault(400, 'invalid_work_type');
+            result[key] = value;
+        } else if (key === 'evidence') {
+            if (value !== undefined && (!Array.isArray(value) || value.length > 10)) throw fault(400, 'invalid_evidence');
+            result[key] = (value || []).map(item => {
+                strictBody(item, ['label', 'url']);
+                return { label: timelineText(item.label, 160, true), url: publicTimelineEvidence(item.url) };
+            });
+        } else result[key] = timelineText(value === undefined && ['blockers', 'nextStep'].includes(key) ? '' : value, key === 'projectLabel' ? 160 : 4000, ['projectLabel', 'actions', 'result'].includes(key));
+    }
+    if (partial && !Object.keys(result).length) throw fault(400, 'content_required');
+    return result;
+}
+function timelineSpan(data) {
+    const duration = Date.parse(data.endedAt) - Date.parse(data.startedAt);
+    if (duration < 0 || duration > 604800000) throw fault(400, 'invalid_time_span');
+}
+function normalizeTimelineInput(input) {
+    const data = timelineInput(input);
+    timelineSpan(data);
+    return { ...data, requestId: requestId(input.requestId) };
+}
+function timelineOffset(value) {
+    if (value === undefined) return 0;
+    if (typeof value !== 'string' || !/^(?:0|[1-9]\d{0,7})$/.test(value)) throw fault(400, 'invalid_offset');
+    return Number(value);
+}
+function canonical(value) {
+    if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
+    if (value && typeof value === 'object') return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;
+    return JSON.stringify(value);
 }
 
 function createRouter(getPool, auth) {
@@ -198,6 +275,26 @@ function createRouter(getPool, auth) {
     async function reviewView(client, row) {
         const comments = await client.query('SELECT id, body, actor_id AS "actorId", created_at AS "createdAt" FROM dot_progress_review_comments WHERE review_id=$1 ORDER BY id DESC LIMIT 1000', [row.id]);
         return { ...reviewRecord(row), comments: comments.rows.slice().reverse() };
+    }
+    function timelineRecord(row) {
+        return { id: row.id, ...row.data, version: row.version, actorId: row.actor_id,
+            createdAt: new Date(row.created_at).toISOString(), updatedAt: safeUpdatedAtToISO(row) };
+    }
+    async function timelineProject(client, data) {
+        if (data.projectId !== null && !await findProject(client, data.projectId)) throw fault(404, 'project_not_found');
+    }
+    async function timelineReceipt(client, actorId, token, payload) {
+        // Small administrator journal: this feature lock serializes receipt
+        // checks and mutations, including concurrent creation with one click ID.
+        await client.query('SELECT pg_advisory_xact_lock(72140417)');
+        const result = await client.query('SELECT request_payload, response_entry FROM dot_progress_timeline_requests WHERE actor_id=$1 AND request_id=$2', [String(actorId), token]);
+        if (!result.rows[0]) return null;
+        if (canonical(result.rows[0].request_payload) !== canonical(payload)) throw fault(409, 'request_id_conflict');
+        return result.rows[0].response_entry;
+    }
+    async function saveTimelineRevision(client, actorId, token, payload, before, after) {
+        await client.query('INSERT INTO dot_progress_timeline_revisions(timeline_id, version, actor_id, changes) VALUES ($1,$2,$3,$4::jsonb)', [after.id, after.version, String(actorId), JSON.stringify({ before, after })]);
+        await client.query('INSERT INTO dot_progress_timeline_requests(actor_id, request_id, request_payload, response_entry) VALUES ($1,$2,$3::jsonb,$4::jsonb)', [String(actorId), token, JSON.stringify(payload), JSON.stringify(after)]);
     }
 
     router.use((_req, res, next) => {
@@ -405,6 +502,87 @@ function createRouter(getPool, auth) {
         });
         res.json({ success: true, ...result });
     }));
+    router.get('/timeline', withError(async (req, res) => {
+        const query = strictBody(req.query, ['date', 'project', 'offset']);
+        const offset = timelineOffset(query.offset);
+        const terms = [];
+        const params = [];
+        if (query.date !== undefined) {
+            const date = timelineDate(query.date);
+            const start = new Date(`${date}T00:00:00+08:00`).toISOString();
+            const end = new Date(Date.parse(start) + 86400000).toISOString();
+            params.push(start, end);
+            terms.push('(started_at < $2 AND (ended_at > $1 OR (started_at=ended_at AND started_at >= $1)))');
+        }
+        if (query.project !== undefined) {
+            params.push(timelineText(query.project, 160, true));
+            terms.push(`project_label=$${params.length}`);
+        }
+        const where = terms.length ? ` WHERE ${terms.join(' AND ')}` : '';
+        const pool = await database();
+        const page = await transaction(pool, async client => {
+            await client.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+            const count = await client.query(`SELECT COUNT(*) AS total FROM dot_progress_timeline${where}`, params);
+            const rows = await client.query(`SELECT * FROM dot_progress_timeline${where} ORDER BY started_at, id LIMIT 500 OFFSET $${params.length + 1}`, [...params, offset]);
+            const total = Number(count.rows[0].total);
+            return { entries: rows.rows.map(timelineRecord), total, limit: 500, offset, nextOffset: offset + rows.rows.length < total ? offset + rows.rows.length : null };
+        });
+        res.json({ success: true, ...page });
+    }));
+    router.post('/timeline', withError(async (req, res) => {
+        const { requestId: token, ...data } = normalizeTimelineInput(req.body);
+        const payload = { operation: 'create', data };
+        const pool = await database();
+        const entry = await transaction(pool, async client => {
+            const prior = await timelineReceipt(client, req.user.userId, token, payload);
+            if (prior) return prior;
+            await timelineProject(client, data);
+            const result = await client.query('INSERT INTO dot_progress_timeline(id,project_id,project_label,started_at,ended_at,data,actor_id) VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7) RETURNING *', [randomUUID(), data.projectId, data.projectLabel, data.startedAt, data.endedAt, JSON.stringify(data), String(req.user.userId)]);
+            const created = timelineRecord(result.rows[0]);
+            await saveTimelineRevision(client, req.user.userId, token, payload, null, created);
+            return created;
+        });
+        res.json({ success: true, entry });
+    }));
+    router.patch('/timeline/:id', withError(async (req, res) => {
+        if (!ID.test(req.params.id)) throw fault(400, 'invalid_id');
+        const patch = timelineInput(req.body, true);
+        const version = positiveVersion(req.body.version);
+        const token = requestId(req.body.requestId);
+        const payload = { operation: 'update', id: req.params.id, version, data: patch };
+        const pool = await database();
+        const entry = await transaction(pool, async client => {
+            const receipt = await timelineReceipt(client, req.user.userId, token, payload);
+            if (receipt) return receipt;
+            const result = await client.query('SELECT * FROM dot_progress_timeline WHERE id=$1 FOR UPDATE', [req.params.id]);
+            if (!result.rows[0]) throw fault(404, 'timeline_not_found');
+            const prior = result.rows[0];
+            if (prior.version !== version) throw fault(409, 'version_conflict');
+            const data = { ...prior.data, ...patch };
+            timelineSpan(data);
+            await timelineProject(client, data);
+            const updated = await client.query('UPDATE dot_progress_timeline SET project_id=$2,project_label=$3,started_at=$4,ended_at=$5,data=$6::jsonb,version=version+1,actor_id=$7,updated_at=clock_timestamp() WHERE id=$1 RETURNING *', [prior.id, data.projectId, data.projectLabel, data.startedAt, data.endedAt, JSON.stringify(data), String(req.user.userId)]);
+            const after = timelineRecord(updated.rows[0]);
+            await saveTimelineRevision(client, req.user.userId, token, payload, timelineRecord(prior), after);
+            return after;
+        });
+        res.json({ success: true, entry });
+    }));
+    router.get('/timeline/:id/history', withError(async (req, res) => {
+        if (!ID.test(req.params.id)) throw fault(400, 'invalid_id');
+        const query = strictBody(req.query, ['offset']);
+        const offset = timelineOffset(query.offset);
+        const pool = await database();
+        const page = await transaction(pool, async client => {
+            await client.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+            if (!(await client.query('SELECT id FROM dot_progress_timeline WHERE id=$1', [req.params.id])).rows[0]) throw fault(404, 'timeline_not_found');
+            const count = await client.query('SELECT COUNT(*) AS total FROM dot_progress_timeline_revisions WHERE timeline_id=$1', [req.params.id]);
+            const rows = await client.query('SELECT version,actor_id AS "actorId",created_at AS "createdAt",changes FROM dot_progress_timeline_revisions WHERE timeline_id=$1 ORDER BY version DESC LIMIT 100 OFFSET $2', [req.params.id, offset]);
+            const total = Number(count.rows[0].total);
+            return { history: rows.rows, total, limit: 100, offset, nextOffset: offset + rows.rows.length < total ? offset + rows.rows.length : null };
+        });
+        res.json({ success: true, ...page });
+    }));
     router.post('/import', withError(async (req, res) => {
         if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) throw fault(400, 'invalid_import');
         const { mode = 'preview', data } = req.body;
@@ -458,7 +636,7 @@ function createDebugRouter(getPool, auth) {
         try {
             const pool = getPool();
             if (!pool) throw new Error('unavailable');
-            const [projects, comments, history, recent, decisions, decisionComments, decisionEvents, recentDecisionEvents, reviews, reviewComments, pushRequests, recentPushes] = await Promise.all([
+            const [projects, comments, history, recent, decisions, decisionComments, decisionEvents, recentDecisionEvents, reviews, reviewComments, pushRequests, recentPushes, timelineEntries, timelineRevisions, timelineRequests] = await Promise.all([
                 pool.query('SELECT COUNT(*) AS count FROM dot_progress_projects'),
                 pool.query('SELECT COUNT(*) AS count FROM dot_progress_comments'),
                 pool.query('SELECT COUNT(*) AS count FROM dot_progress_history'),
@@ -470,13 +648,16 @@ function createDebugRouter(getPool, auth) {
                 pool.query('SELECT COUNT(*) AS count FROM dot_progress_review'),
                 pool.query('SELECT COUNT(*) AS count FROM dot_progress_review_comments'),
                 pool.query('SELECT COUNT(*) AS count FROM dot_progress_push_requests'),
-                pool.query('SELECT push_count AS "pushCount", pushed_at AS "pushedAt" FROM dot_progress_push_requests ORDER BY id DESC LIMIT 20')
+                pool.query('SELECT push_count AS "pushCount", pushed_at AS "pushedAt" FROM dot_progress_push_requests ORDER BY id DESC LIMIT 20'),
+                pool.query('SELECT COUNT(*) AS count FROM dot_progress_timeline'),
+                pool.query('SELECT COUNT(*) AS count FROM dot_progress_timeline_revisions'),
+                pool.query('SELECT COUNT(*) AS count FROM dot_progress_timeline_requests')
             ]);
             res.json({ success: true, counts: { projects: Number(projects.rows[0].count), comments: Number(comments.rows[0].count), history: Number(history.rows[0].count) }, recentHistory: recent.rows,
-                decisionCounts: { decisions: Number(decisions.rows[0].count), comments: Number(decisionComments.rows[0].count), events: Number(decisionEvents.rows[0].count) }, recentDecisionEvents: recentDecisionEvents.rows.slice().reverse(), reviewCounts: { entries: Number(reviews.rows[0].count), comments: Number(reviewComments.rows[0].count) }, pushCounts: { requests: Number(pushRequests.rows[0].count) }, recentPushes: recentPushes.rows.slice().reverse() });
+                decisionCounts: { decisions: Number(decisions.rows[0].count), comments: Number(decisionComments.rows[0].count), events: Number(decisionEvents.rows[0].count) }, recentDecisionEvents: recentDecisionEvents.rows.slice().reverse(), reviewCounts: { entries: Number(reviews.rows[0].count), comments: Number(reviewComments.rows[0].count) }, pushCounts: { requests: Number(pushRequests.rows[0].count) }, recentPushes: recentPushes.rows.slice().reverse(), timelineCounts: { entries: Number(timelineEntries.rows[0].count), revisions: Number(timelineRevisions.rows[0].count), requests: Number(timelineRequests.rows[0].count) } });
         } catch (_err) { res.status(503).json({ success: false, error: 'progress_unavailable' }); }
     });
     return router;
 }
 
-module.exports = { createRouter, createDebugRouter, normalize, publicProject, commentInput };
+module.exports = { createRouter, createDebugRouter, normalize, publicProject, commentInput, normalizeTimelineInput };

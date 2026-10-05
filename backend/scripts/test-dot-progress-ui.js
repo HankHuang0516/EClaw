@@ -82,7 +82,7 @@ const server=http.createServer(async(req,res)=>{
   }
   const filename=url.pathname==='/AiHankApps/dot-progress/'?'index.html':path.basename(url.pathname);
   const file=path.join(STATIC,filename);
-  if(!['index.html','i18n.js','decision-i18n.js','decisions.js','review.js','progress.js','progress.css'].includes(filename)){res.writeHead(404);res.end();return;}
+  if(!['index.html',...ASSETS].includes(filename)){res.writeHead(404);res.end();return;}
   res.writeHead(200,{'Content-Type':filename.endsWith('.js')?'application/javascript':filename.endsWith('.css')?'text/css':'text/html'});res.end(fs.readFileSync(file));
 });
 (async()=>{

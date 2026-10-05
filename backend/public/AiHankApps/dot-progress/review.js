@@ -3,8 +3,8 @@
   let h, panel, backdrop, list, trigger, creation, feedback, closed=true, entries=[], bound=false, generation=0, exit, reload;
   const drafts=new Map(), requests=new Map();
   function identifier(key,body){const fingerprint=JSON.stringify(body);const prior=requests.get(key);if(prior?.fingerprint===fingerprint)return prior.id;const id=root.crypto.randomUUID();requests.set(key,{fingerprint,id});return id;}
-  function close(){closed=true;panel.hidden=true;backdrop.hidden=true;document.body.classList.remove('review-open');trigger.setAttribute('aria-expanded','false');if(trigger.isConnected&&!trigger.closest('[hidden]'))trigger.focus();}
-  function clear(){generation++;entries=[];drafts.clear();requests.clear();if(panel){close();list.replaceChildren();creation.reset();feedback.textContent='';}}
+  function close(restoreFocus=true){const reading=h.captureReading();closed=true;panel.hidden=true;backdrop.hidden=true;document.body.classList.remove('review-open');trigger.setAttribute('aria-expanded','false');if(restoreFocus!==false&&trigger.isConnected&&!trigger.closest('[hidden]'))trigger.focus({preventScroll:true});h.restoreReading(reading);}
+  function clear(){generation++;entries=[];drafts.clear();requests.clear();if(panel){close(false);conceal(false);list.replaceChildren();creation.reset();feedback.textContent='';}}
   function render(){
     list.replaceChildren();
     if(!entries.length)list.append(h.text('p',h.tr('review_empty'),'small'));
@@ -45,7 +45,7 @@
     trigger.setAttribute('aria-controls',panel.id);trigger.setAttribute('aria-expanded','false');
     if(!bound){bound=true;trigger.addEventListener('click',()=>{
       if(!closed){close();return;}
-      closed=false;panel.hidden=false;backdrop.hidden=false;document.body.classList.add('review-open');trigger.setAttribute('aria-expanded','true');exit.focus();h.busy(reload,load,feedback);
+      const reading=h.captureReading();root.dotTimeline.close(false);closed=false;panel.hidden=false;backdrop.hidden=false;document.body.classList.add('review-open');h.restoreReading(reading);trigger.setAttribute('aria-expanded','true');exit.focus({preventScroll:true});h.busy(reload,load,feedback);
     });
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!closed){event.preventDefault();close();}});}
   }
@@ -56,5 +56,6 @@
     panel.remove();backdrop.remove();
     init(h);values.forEach(([name,value])=>{const node=creation.elements.namedItem(name);if(node)node.value=value;});if(wasOpen){closed=false;panel.hidden=false;backdrop.hidden=false;document.body.classList.add('review-open');}render();
   }
-  root.dotReview={init,clear,translate};
+  function conceal(value){if(panel){panel.style.visibility=backdrop.style.visibility=value?'hidden':'';panel.inert=backdrop.inert=value;}}
+  root.dotReview={init,clear,translate,close,conceal};
 })(window);
