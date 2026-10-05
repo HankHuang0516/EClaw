@@ -34,4 +34,15 @@ describe('progress uses real existing portal auth and fresh admin role checks', 
         expect(response.status).toBe(401);
         expect(response.body.success).toBe(false);
     });
+    test.each([
+        ['get','/timeline'],['post','/timeline'],['patch','/timeline/synthetic-entry'],['get','/timeline/synthetic-entry/history']
+    ])('timeline %s %s requires the existing session and current admin role', async (method, suffix) => {
+        const pathname='/api/dot-progress'+suffix;
+        expect((await request(app)[method](pathname).send({})).status).toBe(401);
+        expect((await request(app)[method](pathname).set('Cookie','eclaw_session=invalid-session').send({})).status).toBe(401);
+        expect((await request(app)[method](pathname).set('Cookie','eclaw_session='+token({expiresIn:-60})).send({})).status).toBe(401);
+        auth.pool.query.mockResolvedValue({rows:[{is_admin:false}]});
+        const revoked=await request(app)[method](pathname).set('Cookie','eclaw_session='+token()).send({});
+        expect(revoked.status).toBe(403);expect(revoked.body.success).toBe(false);
+    });
 });

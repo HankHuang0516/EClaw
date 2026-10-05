@@ -65,7 +65,7 @@
       }
     }
     $('private-workspace').style.visibility='';$('private-workspace').inert=false;
-    state.checking=false;state.isAdmin=false;state.projects=[];state.importData=null;state.epoch++;state.importGeneration++;state.drafts.clear();state.pushes.clear();clearDemoShares();window.dotDecisions.clear();window.dotReview.clear();
+    state.checking=false;state.isAdmin=false;state.projects=[];state.importData=null;state.epoch++;state.importGeneration++;state.drafts.clear();state.pushes.clear();clearDemoShares();window.dotDecisions.clear();window.dotReview.clear();window.dotTimeline.clear();
     $('project-list').replaceChildren();$('import-preview').replaceChildren();$('import-form').reset();$('import-apply').hidden=true;$('import-message').textContent='';$('admin-message').textContent='';
     $('private-workspace').hidden=true;$('logout').hidden=true;$('gate').hidden=false;
   }
@@ -111,7 +111,7 @@
     if(state.checking||state.loggingOut)return;state.checking=true;
     const epoch=state.epoch;const focused=document.activeElement;
     // Conceal existing private content during revalidation without collapsing its geometry.
-    if(state.isAdmin){$('private-workspace').style.visibility='hidden';$('private-workspace').inert=true;}
+    if(state.isAdmin){$('private-workspace').style.visibility='hidden';$('private-workspace').inert=true;window.dotReview.conceal(true);}
     else{$('private-workspace').hidden=true;$('logout').hidden=true;$('gate').hidden=false;}
     $('login').hidden=true;$('session-retry').hidden=true;message($('gate-message'),'checking');
     try {
@@ -120,7 +120,7 @@
       if(!role.authenticated||!role.isAdmin){clearPrivate();message($('gate-message'),role.authenticated?'forbidden':'login_needed');$('login').hidden=false;$('return-hint').hidden=false;return;}
       state.isAdmin=true;
       if(!state.projects.length){const result=await request('/projects',{},true);state.projects=result.projects||[];renderProjects();}
-      $('private-workspace').hidden=false;$('private-workspace').style.visibility='';$('private-workspace').inert=false;$('gate').hidden=true;$('logout').hidden=false;
+      $('private-workspace').hidden=false;$('private-workspace').style.visibility='';$('private-workspace').inert=false;$('gate').hidden=true;$('logout').hidden=false;window.dotReview.conceal(false);
       if(focused&&focused.isConnected&&document.activeElement===document.body)focused.focus({preventScroll:true});
     } catch(error) {
       if(epoch!==state.epoch)return;
@@ -437,7 +437,7 @@
     finally{clearPrivate();state.loggingOut=false;message($('gate-message'),failed?'error':'login_needed',failed);$('login').hidden=false;$('return-hint').hidden=false;$('session-retry').hidden=false;}
   });
   $('public-retry').addEventListener('click',loadPublic);$('session-retry').addEventListener('click',checkSession);
-  $('language').addEventListener('change',event=>{const reading=captureReading();window.dotI18n.setLocale(event.target.value);if(state.isAdmin){renderProjects(reading);window.dotReview.translate();translateDemoShares();}loadPublic();});
+  $('language').addEventListener('change',event=>{const reading=captureReading();window.dotI18n.setLocale(event.target.value);if(state.isAdmin){renderProjects(reading);window.dotReview.translate();window.dotReview.conceal(state.checking);window.dotTimeline.translate();translateDemoShares();}loadPublic();});
   window.addEventListener('focus',checkSession);
   window.addEventListener('pageshow',event=>{if(event.persisted){returnReading=readReturnPosition();returnCancelled=false;if(returnReading)state.filter=returnReading.filter;clearPrivate(true);restoreReturnPosition(Promise.all([loadPublic(),checkSession()]));}});
   window.addEventListener('beforeunload',event=>{
@@ -450,7 +450,8 @@
   ['wheel','touchstart','keydown'].forEach(type=>window.addEventListener(type,event=>{if(type!=='keydown'||['ArrowDown','ArrowUp','PageDown','PageUp','Home','End',' '].includes(event.key))returnCancelled=true;},{passive:true}));
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkSession();});
   const translateDemoShares=initDemoShares();
-  window.dotReview.init({request,tr,text,action,field,message,busy,freeze,formatTime});
+  const sidebarHelpers={request,tr,text,action,field,message,busy,freeze,formatTime,captureReading,restoreReading,session:()=>({isAdmin:state.isAdmin,epoch:state.epoch,projects:state.projects})};
+  window.dotReview.init(sidebarHelpers);window.dotTimeline.init(sidebarHelpers);
   const navigation=window.performance.getEntriesByType('navigation')[0];
   if(navigation&&navigation.type==='back_forward'){returnReading=readReturnPosition();if(returnReading)state.filter=returnReading.filter;}
   $('filters').querySelectorAll('button').forEach(button=>{const active=button.dataset.filter===state.filter;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});

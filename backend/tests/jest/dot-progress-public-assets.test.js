@@ -28,7 +28,7 @@ test('the public repository seed contains only approved completed summaries', ()
 test('static progress bundle obtains private content only through the protected API', () => {
     const directory = path.join(__dirname, '../../public/AiHankApps/dot-progress');
     const names = fs.readdirSync(directory);
-    expect(names.sort()).toEqual(['decision-i18n.js', 'decisions.js', 'i18n.js', 'index.html', 'progress.css', 'progress.js', 'review.js']);
+    expect(names.sort()).toEqual(['decision-i18n.js', 'decisions.js', 'i18n.js', 'index.html', 'progress.css', 'progress.js', 'review.js', 'timeline-i18n.js', 'timeline.js']);
     const script = fs.readFileSync(path.join(directory, 'progress.js'), 'utf8');
     expect(script).toContain("request('/projects'");
     expect(script).not.toContain('dot-progress-seed');
@@ -38,7 +38,7 @@ test('static progress bundle obtains private content only through the protected 
 
 test('decision and review clients contain no credentials or persistent private browser storage', () => {
     const directory = path.join(__dirname, '../../public/AiHankApps/dot-progress');
-    for (const name of ['decisions.js', 'review.js']) {
+    for (const name of ['decisions.js', 'review.js', 'timeline.js']) {
         const script = fs.readFileSync(path.join(directory, name), 'utf8');
         expect(script).not.toMatch(/(?:deviceSecret|botSecret|channelApiKey|localStorage|sessionStorage|innerHTML)/);
     }
@@ -71,6 +71,29 @@ test('shared decision translations match the page-scoped canonical source withou
     for (const [locale, dictionary] of Object.entries(local.window.dotDecisionTranslations)) {
         for (const [key, value] of Object.entries(dictionary)) {
             expect(shared._result[locale][key]).toBe(value);
+            expect(shared._result['zh-TW'][key]).toBeUndefined();
+        }
+    }
+});
+
+
+test('timeline translations share one canonical table across every effective web locale', () => {
+    const vm = require('vm');
+    const directory = path.join(__dirname, '../../public/AiHankApps/dot-progress');
+    const local = {window: {}};
+    vm.runInNewContext(fs.readFileSync(path.join(directory, 'timeline-i18n.js'), 'utf8'), local);
+    const table = local.window.dotTimelineTranslations;
+    const keys = Object.keys(table.en).sort();
+    expect(keys).toHaveLength(40);
+    const noop = () => {};
+    const shared = {window: {location: {search: ''}}, document: {querySelectorAll: () => [], documentElement: {}, addEventListener: noop, getElementById: () => null}, navigator: {language: 'en'}, localStorage: {getItem: noop, setItem: noop}, setTimeout: noop, console: {log: noop, warn: noop, error: noop}};
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../../public/shared/i18n.js'), 'utf8') + '\n_result = TRANSLATIONS;', shared);
+    for (const locale of ['zh','en','zh-CN','ja','ko','th','vi','id','fr','es','de','ms','hi','ar']) {
+        expect(Object.keys(table[locale]).sort()).toEqual(keys);
+        for (const key of keys) {
+            expect(typeof table[locale][key]).toBe('string');
+            expect(table[locale][key].length).toBeGreaterThan(0);
+            expect(shared._result[locale][key]).toBe(table[locale][key]);
             expect(shared._result['zh-TW'][key]).toBeUndefined();
         }
     }
