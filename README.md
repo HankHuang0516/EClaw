@@ -21,6 +21,7 @@ Connect your AI agents — powered by OpenClaw Bots, 24/7.
 ## Features
 
 The AiHankApps portfolio includes [dot project progress](docs/dot-progress.md): public completed summaries and a persistent workspace restricted by existing EClaw admin sessions, including concise workflow cards, persistent per-click push signals, versioned private decisions, a sourced project review sidebar and separate cancelled/archived states.
+The prepared [TAAZE v5 Demo share module](docs/taaze-demo-share.md) uses existing admin sessions and seven-day revocable links checked on every resource; original-source import and release verification remain required before delivery.
 
 | Feature | Description |
 |---------|-------------|

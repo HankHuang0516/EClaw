@@ -268,6 +268,19 @@ app.use(cors({
 }));
 app.use('/api/ai-support/chat', express.json({ limit: '10mb' }));
 app.use('/api/mission/dashboard', express.json({ limit: '5mb' }));
+// Capability paths terminate before analytics/static. Late-bound existing
+// auth/pool are used only after startup, never during router construction.
+const taazeDemoAuth = {
+    authMiddleware: (req, res, next) => authModule.authMiddleware(req, res, next),
+    adminMiddleware: (req, res, next) => authModule.adminMiddleware(req, res, next)
+};
+const taazeDemoModule = require('./taaze-demo-share');
+const taazeDemoRouters = taazeDemoModule.createRouters(() => chatPool, taazeDemoAuth);
+app.use('/AiHankApps/taaze-demo', taazeDemoRouters.publicRouter);
+// Only an authenticated admin can consume the larger original-archive body.
+// Continue to the normal startup/rate gates and late admin router afterward.
+app.post('/api/taaze-demo-share/bundle', cookieParser(), taazeDemoAuth.authMiddleware,
+    taazeDemoAuth.adminMiddleware, taazeDemoModule.adminWriteOrigin, express.json({ limit: '6mb' }));
 app.use(express.json({
     verify: (req, _res, buf) => {
         // Capture raw body for Discord signature verification
@@ -1845,6 +1858,7 @@ app.get('/api/help', (req, res) => {
 
     // Intent category matching — zh/en + ja/ko/th/vi/id/fr/es/ms (by @Mac_F)
     const INTENT_MAP = {
+        taaze_demo_share: ['taaze demo', 'taaze-demo', 'demo share', 'demo 分享', '示範分享'],
         dot_progress: ['dot progress', 'dot-progress', 'dot 專案進度', '專案進度', '待決策', 'pending decision', '催進度', 'push progress'],
         messaging:  ['speakto','broadcast','發訊','reply','transform','message','send','私訊','廣播','メッセージ','送信','메시지','전송','ส่งข้อความ','ข้อความ','ส่ง','gửi tin nhắn','tin nhắn','gửi','phát sóng','kirım pesan','pesan','mengirim','envoyer message','diffusion','enviar mensaje','transmitir','hantar mesej','mesej','menghantar'],
         kanban:     ['card','看板','任務','move','派任','assign','kanban','卡片','create task','建立任務','カード','タスク','칸반','카드','작업','กระดาน','บัตร','จัดการงาน','bảng','thẻ','quản lý công việc','papan','kartu','manajemen tugas','tableau','carte','gestion tâches','tablero','tarjeta','gestión tareas','kad','pengurusan tugas','history','archived','archive','restore','封存','歷史','還原','漏斗','過濾','filter','funnel'],
@@ -1867,6 +1881,12 @@ app.get('/api/help', (req, res) => {
     const d = `'{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${eId}`; // shared body prefix
 
     const APIS = {
+        taaze_demo_share: [
+            { title: 'Private original-v5 bundle and share metadata (existing admin portal session; no bearer URLs returned)', curl: `curl -s "${apiBase}/api/taaze-demo-share" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Import the verified original Sites v5 archive and file mapping; unrelated content is rejected', curl: `curl -s -X POST "${apiBase}/api/taaze-demo-share/bundle" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" --data-binary @/LOCAL/VERIFIED_V5_EXPORT.json` },
+            { title: 'Issue one seven-day link, shown once; forwarded holders can access this demo', curl: `curl -s -X POST "${apiBase}/api/taaze-demo-share/shares" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" -d '{"requestId":"UNIQUE_SHARE_REQUEST_ID"}'\n# A retry with the same ID cannot issue another link. A lost URL cannot be recovered from metadata.` },
+            { title: 'Revoke a share immediately; HTML, data, scripts and images all require a live link', curl: `curl -s -X POST "${apiBase}/api/taaze-demo-share/shares/SHARE_ID/revoke" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" -d '{}'` }
+        ],
         dot_progress: [
             { title: 'Public completed summaries (no private task fields)', curl: `curl -s "${apiBase}/api/dot-progress/public"` },
             { title: 'Session role flags (existing portal cookie; no secrets returned)', curl: `curl -s "${apiBase}/api/dot-progress/session" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
@@ -17450,6 +17470,7 @@ app.use('/api/debug', (req, res, next) => {
     next();
 });
 app.use('/api/debug/dot-progress', require('./dot-progress').createDebugRouter(() => chatPool, authModule));
+app.use('/api/debug/taaze-demo-share', taazeDemoRouters.debugRouter);
 
 /**
  * GET /api/debug/devices
@@ -25819,6 +25840,7 @@ function authenticateDeviceOrBot({ deviceId, deviceSecret, botSecret, entityId }
 
 app.use('/api/app-portfolio', appPortfolioCommunity.createRouter(() => chatPool));
 app.use('/api/dot-progress', require('./dot-progress').createRouter(() => chatPool, authModule));
+app.use('/api/taaze-demo-share', taazeDemoRouters.adminRouter);
 
 /**
  * GET /api/analytics/site-pageviews
