@@ -5,14 +5,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex">
   <title>dot 專案進度 · AiHankApps</title>
-  <link rel="stylesheet" href="progress.css?v=8d1846fc9b044e8b">
-  <script src="i18n.js?v=8d1846fc9b044e8b" defer></script>
-  <script src="decision-i18n.js?v=8d1846fc9b044e8b" defer></script>
-  <script src="decisions.js?v=8d1846fc9b044e8b" defer></script>
-  <script src="review.js?v=8d1846fc9b044e8b" defer></script>
-  <script src="timeline-i18n.js?v=8d1846fc9b044e8b" defer></script>
-  <script src="timeline.js?v=8d1846fc9b044e8b" defer></script>
-  <script src="progress.js?v=8d1846fc9b044e8b" defer></script>
+  <link rel="stylesheet" href="progress.css?v=3463dfb70e1f819d">
+  <script src="i18n.js?v=3463dfb70e1f819d" defer></script>
+  <script src="decision-i18n.js?v=3463dfb70e1f819d" defer></script>
+  <script src="decisions.js?v=3463dfb70e1f819d" defer></script>
+  <script src="review.js?v=3463dfb70e1f819d" defer></script>
+  <script src="timeline-i18n.js?v=3463dfb70e1f819d" defer></script>
+  <script src="timeline.js?v=3463dfb70e1f819d" defer></script>
+  <script src="schedule-i18n.js?v=3463dfb70e1f819d" defer></script>
+  <script src="schedule.js?v=3463dfb70e1f819d" defer></script>
+  <script src="progress.js?v=3463dfb70e1f819d" defer></script>
 </head>
 <body>
   <main class="wrap">
@@ -36,6 +38,7 @@
       <div class="section-heading"><div><span class="eyebrow" data-i18n="dot_progress_workspace">WORKSPACE / 管理工作區</span><h2 id="admin-heading" data-i18n="dot_progress_admin">接下來，要完成的事</h2></div><button id="logout" class="secondary" hidden data-i18n="dot_progress_logout">登出</button></div>
       <div id="gate"><p id="gate-message" class="muted" data-i18n="dot_progress_checking">確認登入狀態…</p><a id="login" class="button" href="/portal/?return_to=%2FAiHankApps%2Fdot-progress%2F" hidden data-i18n="dot_progress_login">使用 EClaw 管理者登入</a><p id="return-hint" class="small" hidden data-i18n="dot_progress_return">登入後回到此頁，查看管理工作區。</p><button id="session-retry" class="secondary" hidden data-i18n="dot_progress_check_login">重新確認登入</button></div>
       <div id="private-workspace" hidden>
+        <section id="workspace-schedule" class="workspace-schedule" aria-label="今日目標甘特圖" data-i18n-title="dot_progress_schedule_title"></section>
         <p class="small" data-i18n="dot_progress_private_note">目標、卡點、下一步和留言僅限 EClaw 管理者。儲存修改不會自動發布公開摘要。</p>
         <div class="private-toolbar"><button id="timeline-toggle" class="secondary" data-i18n="dot_progress_timeline_title">歷史時程表</button><button id="review-toggle" class="secondary" data-i18n="dot_progress_review_title">專案回顧</button></div>
         <div class="filters" id="filters"><button data-filter="pending" class="active" aria-pressed="true" data-i18n="dot_progress_pending">進行中</button><button data-filter="decisions" aria-pressed="false" data-i18n="dot_progress_decisions">待決策</button><button data-filter="completed" aria-pressed="false" data-i18n="dot_progress_completed">已完成的交辦</button><button data-filter="terminal" aria-pressed="false" data-i18n="dot_progress_terminal">已取消／歸檔</button><button data-filter="all" aria-pressed="false" data-i18n="dot_progress_all">全部</button></div>

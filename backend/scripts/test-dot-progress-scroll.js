@@ -22,6 +22,8 @@ const server=http.createServer(async(req,res)=>{
     if(url.pathname==='/api/dot-progress/public'){if(publicDelay)await new Promise(resolve=>setTimeout(resolve,publicDelay));return send(200,{success:true,projects:[{title:'Synthetic public outcome',publicSummary:'Synthetic completed summary.',completedAt:'2026-10-05'}]});}
     if(url.pathname==='/api/auth/logout'){role='anonymous';return send(200,{success:true});}
     if(role!=='admin')return send(401,{success:false,error:'unauthorized'});
+    if(req.method==='GET'&&url.pathname==='/api/dot-progress/schedule')return send(200,{success:true,schedule:{date:url.searchParams.get('date'),version:0,rows:[],updatedAt:null}});
+    if(req.method==='GET'&&url.pathname==='/api/dot-progress/timeline')return send(200,{success:true,entries:[],total:0,limit:500,offset:0,nextOffset:null});
     if(url.pathname==='/api/dot-progress/projects'){if(projectsDelay)await new Promise(resolve=>setTimeout(resolve,projectsDelay));return send(200,{success:true,projects});}
     if(url.pathname.endsWith('/decisions'))return send(200,{success:true,decisions:[]});
     if(url.pathname.endsWith('/push')){const project=projects.find(row=>url.pathname.includes('/'+row.id+'/'));project.pushCount++;project.lastPushedAt=new Date().toISOString();await new Promise(resolve=>setTimeout(resolve,80));return send(200,{success:true,pushCount:project.pushCount,lastPushedAt:project.lastPushedAt});}
