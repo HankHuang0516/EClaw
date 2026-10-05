@@ -26,7 +26,7 @@ The existing user-approved substitute applies while the simplify skill is unavai
 - ✅ A4 Remaining limits: history card indices assume the existing project ordering; a reordered/deleted card falls back to positional behavior. Main project details are retained, while independently loaded decision/audit/sidebar subpanel state and private drafts are not persisted across departure. Fresh Chrome is tested; other browser engines/physical devices were not exercised.
 - ✅ A5 Security: delayed role checks conceal/inert private content; failure/logout removes it immediately. Synthetic assertions verify no project IDs, titles or drafts in history state, no stale private DOM after expiry, unchanged admin-only access and no browser exceptions. No credentials or production records were read or written.
 - ⚠️ B1 `/api/help` NO-OP: no new endpoint or modified response shape.
-- ✅ B2 Related docs: `docs/dot-progress.md`, root README architecture summary and CLAUDE architecture pointer updated; no backend README exists. Earlier review receipts remain historical. No scheduled task refers to this client geometry.
+- ✅ B2 Related docs: `docs/dot-progress.md`, root README architecture summary updated; instruction files remain unchanged; no backend README exists. Earlier review receipts remain historical. No scheduled task refers to this client geometry.
 - ⚠️ B3 i18n NO-OP: no new or changed user-facing strings; existing 12-test i18n-syntax suite passes. Native parity NO-OP: private portfolio browser behavior only.
 - ⚠️ B4 Info/promo NO-OP: no features/info marketing page describes this private reading behavior; portfolio docs updated.
 - ⚠️ B5 Debug NO-OP: client geometry only; existing gated dot-progress debug endpoint retained, with no new security/data/API logic.
@@ -34,3 +34,5 @@ The existing user-approved substitute applies while the simplify skill is unavai
 Result: locally validated, pending required PR CI and parent release approval. Bundle version `e1d4246fc4975cda`. Synthetic evidence `/tmp/dot-progress-scroll-evidence.json`; screenshots `/tmp/dot-progress-scroll-390-fixture.png` and `/tmp/dot-progress-scroll-1280-fixture.png` are local test artifacts, not repository private data.
 
 Combined-main regression additionally runs the synthetic Demo-share UI workflow to ensure manager language/expiry/logout controls remain intact.
+
+Final scope correction: restored CLAUDE.md byte-for-byte to the main base because local instruction/memory files are read-only. No functional assets or bundle version changed; only this scope correction and review receipt changed.
