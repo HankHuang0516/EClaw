@@ -4,6 +4,10 @@
   // Translation source for timeline UI; matching shared dictionary entries are generated from this table.
   const locales=['zh','en','zh-CN','ja','ko','th','vi','id','fr','es','de','ms','hi','ar'];
   const rows={
+    timeline_start_unknown:["開始時間不詳","Start time unknown","开始时间不详","開始時刻不明","시작 시간 미상","ไม่ทราบเวลาเริ่ม","Chưa rõ giờ bắt đầu","Waktu mulai tidak diketahui","Heure de début inconnue","Hora de inicio desconocida","Startzeit unbekannt","Masa mula tidak diketahui","आरंभ समय अज्ञात","وقت البداية غير معروف"],
+    timeline_milestone:["里程碑","Milestone","里程碑","マイルストーン","마일스톤","เหตุการณ์สำคัญ","Cột mốc","Tonggak","Jalon","Hito","Meilenstein","Pencapaian penting","पड़ाव","معلم"],
+    timeline_goal:["目標","Objective","目标","目標","목표","เป้าหมาย","Mục tiêu","Tujuan","Objectif","Objetivo","Ziel","Matlamat","लक्ष्य","الهدف"],
+    timeline_goal_missing:["目標待補","Objective pending","目标待补","目標未入力","목표 미입력","ยังไม่ได้ระบุเป้าหมาย","Chưa bổ sung mục tiêu","Tujuan belum diisi","Objectif à renseigner","Objetivo pendiente","Ziel noch offen","Matlamat belum diisi","लक्ष्य अभी भरना है","الهدف لم يُحدد بعد"],
     timeline_gantt:["當日甘特圖","Daily Gantt chart","当日甘特图","日別ガントチャート","일일 간트 차트","แผนภูมิแกนต์รายวัน","Biểu đồ Gantt trong ngày","Bagan Gantt harian","Diagramme de Gantt du jour","Diagrama de Gantt diario","Gantt-Diagramm des Tages","Carta Gantt harian","दैनिक गैंट चार्ट","مخطط غانت اليومي"],
     timeline_today:["今日","Today","今日","今日","오늘","วันนี้","Hôm nay","Hari ini","Aujourd’hui","Hoy","Heute","Hari ini","आज","اليوم"],
     timeline_gantt_point:["時間點","Time point","时间点","時点","시점","จุดเวลา","Thời điểm","Titik waktu","Instant","Instante","Zeitpunkt","Titik masa","समय बिंदु","نقطة زمنية"],

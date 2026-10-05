@@ -68,7 +68,7 @@ function reviewInput(input) {
         || Number.isNaN(Date.parse(occurredAt)) || new Date(`${occurredAt.slice(0, 10)}T00:00:00Z`).toISOString().slice(0, 10) !== occurredAt.slice(0, 10)) throw fault(400, 'invalid_date');
     return { kind: input.kind, title: text(input.title, 160, true), body: text(input.body, 4000, true), occurredAt, source: text(input.source, 500, true), scope: text(input.scope, 500, true) };
 }
-const TIMELINE_FIELDS = ['startedAt', 'endedAt', 'projectId', 'projectLabel', 'workType', 'actions', 'result', 'blockers', 'nextStep', 'evidence'];
+const TIMELINE_FIELDS = ['startedAt', 'endedAt', 'projectId', 'projectLabel', 'workType', 'actions', 'result', 'blockers', 'nextStep', 'evidence', 'goal'];
 const TIMELINE_TYPES = ['implementation', 'validation', 'routine', 'waiting', 'blocked'];
 function publicTimelineEvidence(value) {
     if (typeof value !== 'string' || value.length > 500 || value !== value.trim() || !/^https:\/\/github\.com\/HankHuang0516\/EClaw\/(?:pull\/[1-9]\d*|actions\/runs\/[1-9]\d*|commit\/[a-fA-F0-9]{7,40})$/.test(value)) throw fault(400, 'unsafe_evidence');
@@ -105,9 +105,10 @@ function timelineInput(input, partial = false) {
     strictBody(input, [...TIMELINE_FIELDS, 'requestId', ...(partial ? ['version'] : [])]);
     const result = {};
     for (const key of TIMELINE_FIELDS) {
-        if (partial && input[key] === undefined) continue;
+        // An omitted optional goal must not alter legacy canonical receipts.
+        if ((partial || key === 'goal') && input[key] === undefined) continue;
         const value = input[key];
-        if (['startedAt', 'endedAt'].includes(key)) result[key] = timelineTime(value);
+        if (['startedAt', 'endedAt'].includes(key)) result[key] = key === 'startedAt' && value === null ? null : timelineTime(value);
         else if (key === 'projectId') {
             if (value !== undefined && value !== null && (typeof value !== 'string' || !ID.test(value))) throw fault(400, 'invalid_id');
             result[key] = value ?? null;
@@ -120,12 +121,13 @@ function timelineInput(input, partial = false) {
                 strictBody(item, ['label', 'url']);
                 return { label: timelineText(item.label, 160, true), url: publicTimelineEvidence(item.url) };
             });
-        } else result[key] = timelineText(value === undefined && ['blockers', 'nextStep'].includes(key) ? '' : value, key === 'projectLabel' ? 160 : 4000, ['projectLabel', 'actions', 'result'].includes(key));
+        } else result[key] = timelineText(value === undefined && ['blockers', 'nextStep'].includes(key) ? '' : value, key === 'projectLabel' ? 160 : 4000, ['projectLabel', 'actions', 'result', 'goal'].includes(key));
     }
     if (partial && !Object.keys(result).length) throw fault(400, 'content_required');
     return result;
 }
 function timelineSpan(data) {
+    if (data.startedAt === null) return; // Known milestone; no start or duration is inferred.
     const duration = Date.parse(data.endedAt) - Date.parse(data.startedAt);
     if (duration < 0 || duration > 604800000) throw fault(400, 'invalid_time_span');
 }
@@ -512,7 +514,7 @@ function createRouter(getPool, auth) {
             const start = new Date(`${date}T00:00:00+08:00`).toISOString();
             const end = new Date(Date.parse(start) + 86400000).toISOString();
             params.push(start, end);
-            terms.push('(started_at < $2 AND (ended_at > $1 OR (started_at=ended_at AND started_at >= $1)))');
+            terms.push('((started_at IS NULL AND ended_at >= $1 AND ended_at < $2) OR (started_at < $2 AND (ended_at > $1 OR (started_at=ended_at AND started_at >= $1))))');
         }
         if (query.project !== undefined) {
             params.push(timelineText(query.project, 160, true));
@@ -523,7 +525,7 @@ function createRouter(getPool, auth) {
         const page = await transaction(pool, async client => {
             await client.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
             const count = await client.query(`SELECT COUNT(*) AS total FROM dot_progress_timeline${where}`, params);
-            const rows = await client.query(`SELECT * FROM dot_progress_timeline${where} ORDER BY started_at, id LIMIT 500 OFFSET $${params.length + 1}`, [...params, offset]);
+            const rows = await client.query(`SELECT * FROM dot_progress_timeline${where} ORDER BY COALESCE(started_at, ended_at), id LIMIT 500 OFFSET $${params.length + 1}`, [...params, offset]);
             const total = Number(count.rows[0].total);
             return { entries: rows.rows.map(timelineRecord), total, limit: 500, offset, nextOffset: offset + rows.rows.length < total ? offset + rows.rows.length : null };
         });
