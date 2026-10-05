@@ -1,14 +1,14 @@
 (function () {
   'use strict';
   const API = '/api/dot-progress';
-  const state = { isAdmin: false, projects: [], filter: 'pending', epoch: 0, importData: null, importGeneration:0, checking: false, loggingOut:false, drafts:new Map(), frozenForms:0, pushes:new Map() };
+  const state = { isAdmin: false, projects: [], filter: 'pending', epoch: 0, importData: null, importGeneration:0, checking: false, loggingOut:false, drafts:new Map(), frozenForms:0, pushes:new Map(), demo:null };
   const $ = id => document.getElementById(id);
   const tr = key => window.dotI18n.t('dot_progress_' + key);
   const text = (tag,value,className) => { const node=document.createElement(tag); node.textContent=value == null ? '' : String(value); if(className) node.className=className; return node; };
   const action = (key,handler,secondary=false) => { const node=text('button',tr(key),secondary?'secondary':'');node.type='button';if(handler)node.addEventListener('click',handler);return node; };
   const message = (node,key,error=false) => {node.textContent=key?tr(key):'';node.classList.toggle('error',error);node.classList.add('message');};
   function clearPrivate() {
-    state.isAdmin=false;state.projects=[];state.importData=null;state.epoch++;state.importGeneration++;state.drafts.clear();state.pushes.clear();window.dotDecisions.clear();window.dotReview.clear();
+    state.isAdmin=false;state.projects=[];state.importData=null;state.epoch++;state.importGeneration++;state.drafts.clear();state.pushes.clear();clearDemoShares();window.dotDecisions.clear();window.dotReview.clear();
     $('project-list').replaceChildren();$('import-preview').replaceChildren();$('import-form').reset();$('import-apply').hidden=true;$('import-message').textContent='';$('admin-message').textContent='';
     $('private-workspace').hidden=true;$('logout').hidden=true;$('gate').hidden=false;
   }
@@ -201,6 +201,107 @@
     // A remounted card points the existing operation at these new display nodes without resetting its queue.
     queueMicrotask(paint);
   }
+  function clearDemoShares() {
+    const demo=state.demo;
+    if(demo){demo.link=null;demo.shares=[];demo.bundle=null;demo.requestId=null;demo.baseline.clear();demo.generation++;demo.fileGeneration++;}
+    $('demo-share-content').querySelectorAll('form').forEach(form=>form.reset());
+    state.demo=null;$('demo-share-content').replaceChildren();$('demo-share-panel').open=false;
+  }
+  function initDemoShares() {
+    const base='/api/taaze-demo-share';
+    const live=share=>!share.revokedAt&&(share.expiresAt===null||Date.parse(share.expiresAt)>Date.now());
+    const expiryText=value=>value===null?tr('demo_no_expiry'):tr('demo_expires')+': '+formatTime(value);
+    const label=(node,key)=>{node.dataset.i18n='dot_progress_'+key;node.textContent=tr(key);return node;};
+    const button=(key,handler)=>label(action(key,handler,true),key);
+    function valid(demo){return state.isAdmin&&state.demo===demo&&demo.epoch===state.epoch;}
+    function status(demo,key,error=false){if(valid(demo)){demo.statusKey=key;demo.statusError=error;message(demo.status,key,error);}}
+    function draw(demo){
+      if(!valid(demo))return;
+      if(demo.statusKey)message(demo.status,demo.statusKey,demo.statusError);
+      demo.metadata.replaceChildren();
+      demo.metadata.append(label(text('p','','small'),demo.bundle?'demo_ready':'demo_unavailable'));
+      demo.issue.disabled=!demo.bundle||demo.uncertain||demo.working;
+      demo.retry.hidden=!demo.uncertain;demo.retry.disabled=demo.working;
+      const unknownActive=demo.shares.some(share=>!demo.baseline.has(share.id)&&live(share));
+      demo.resolve.hidden=!demo.uncertain||!demo.refreshed||unknownActive;demo.resolve.disabled=demo.working;
+      demo.links.replaceChildren();
+      if(demo.link){
+        const link=label(text('a','','button secondary'),'demo_open');link.href=demo.link.path;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
+        demo.links.append(link,text('p',expiryText(demo.link.expiresAt),'small'));
+      }
+      if(!demo.shares.length)demo.metadata.append(label(text('p','','small'),'demo_empty'));
+      demo.shares.forEach(share=>{
+        const entry=text('div','','demo-share-entry');entry.dataset.shareId=share.id;
+        const expired=share.expiresAt!==null&&Date.parse(share.expiresAt)<=Date.now();const summary=text('p',share.id+' · '+tr(share.revokedAt?'demo_revoked':expired?'demo_expired':'demo_active'),'small');
+        entry.append(summary,text('p',expiryText(share.expiresAt),'small'));
+        if(share.revokedAt)entry.append(text('p',tr('demo_revoked')+': '+formatTime(share.revokedAt),'small'));
+        else entry.append(button('demo_revoke',event=>busy(event.currentTarget,async()=>{
+          demo.generation++;
+          const result=await request(base+'/shares/'+encodeURIComponent(share.id)+'/revoke',{method:'POST',body:'{}'},true);
+          if(!valid(demo))return;
+          demo.generation++;const current=demo.shares.find(row=>row.id===share.id);if(current)current.revokedAt=result.share.revokedAt;if(demo.link&&demo.link.id===share.id)demo.link=null;draw(demo);status(demo,'demo_revoke_ok');
+        },demo.status)));
+        demo.metadata.append(entry);
+      });
+      window.dotI18n.apply($('demo-share-content'));
+    }
+    async function load(demo){
+      if(!valid(demo)||demo.loading)return;demo.loading=true;demo.reload.disabled=true;const generation=demo.generation;
+      try{
+        const result=await request(base,{},true);
+        if(!valid(demo)||generation!==demo.generation)return;
+        demo.bundle=result.bundle||null;demo.shares=Array.isArray(result.shares)?result.shares:[];demo.loaded=true;demo.refreshed=demo.uncertain;
+        draw(demo);if(!demo.uncertain)status(demo,'');
+      }catch(_error){status(demo,'error',true);}
+      finally{if(valid(demo)){demo.loading=false;demo.reload.disabled=false;}}
+    }
+    async function issue(demo,retry=false){
+      if(!valid(demo)||demo.working||!demo.bundle||(!retry&&demo.uncertain))return;
+      if(!retry){demo.requestId=window.crypto.randomUUID();demo.baseline=new Set(demo.shares.map(share=>share.id));}
+      if(!demo.requestId)return;
+      demo.working=true;demo.generation++;demo.refreshed=false;draw(demo);
+      try{
+        const result=await request(base+'/shares',{method:'POST',body:JSON.stringify({requestId:demo.requestId})},true);
+        if(!valid(demo))return;
+        const share=result.share;
+        if(!share||typeof share.path!=='string'||!/^\/AiHankApps\/taaze-demo\/[A-Za-z0-9_-]{43}\/$/.test(share.path)||!share.id||(share.expiresAt!==null&&Number.isNaN(Date.parse(share.expiresAt))))throw new Error('invalid_share_receipt');
+        // The capability is retained only for this authorized page session, never recovered from metadata.
+        demo.generation++;demo.link={id:share.id,path:share.path,expiresAt:share.expiresAt};demo.shares.unshift({id:share.id,createdAt:share.createdAt,expiresAt:share.expiresAt,revokedAt:null});demo.requestId=null;demo.uncertain=false;status(demo,'demo_created');
+      }catch(_error){if(valid(demo)){demo.uncertain=true;status(demo,'demo_uncertain',true);}}
+      finally{if(valid(demo)){demo.working=false;draw(demo);}}
+    }
+    function build(){
+      const demo={epoch:state.epoch,generation:0,loaded:false,loading:false,bundle:null,shares:[],link:null,requestId:null,uncertain:false,working:false,baseline:new Set(),refreshed:false,fileGeneration:0};state.demo=demo;
+      const content=$('demo-share-content');content.append(label(text('p','','small'),'demo_note'));
+      demo.status=text('p','','message');demo.status.setAttribute('role','status');demo.metadata=text('div','','demo-share-metadata');demo.links=text('div','','demo-share-links');
+      demo.reload=button('demo_refresh',()=>load(demo));demo.issue=button('demo_create',()=>issue(demo));demo.issue.disabled=true;
+      demo.retry=button('demo_retry',()=>issue(demo,true));demo.retry.hidden=true;
+      demo.resolve=button('demo_resolve',()=>{if(!valid(demo)||!demo.refreshed||demo.working||demo.shares.some(share=>!demo.baseline.has(share.id)&&live(share)))return;demo.uncertain=false;demo.requestId=null;demo.refreshed=false;draw(demo);status(demo,'demo_resolved');});demo.resolve.hidden=true;
+      const actions=text('div','','actions');actions.append(demo.reload,demo.issue,demo.retry,demo.resolve);
+      const form=document.createElement('form');form.className='demo-share-import';const input=field(form,'demo_file','',{name:'bundle',type:'file',required:true});input.accept='.zip,application/zip,application/json,.json';input.previousElementSibling.dataset.i18n='dot_progress_demo_file';
+      const submit=button('demo_import');submit.type='submit';form.append(submit);input.addEventListener('change',()=>{demo.fileGeneration++;status(demo,'');});
+      form.addEventListener('submit',event=>{event.preventDefault();busy(submit,()=>freeze(form,async()=>{
+        if(!valid(demo))return;const file=input.files[0];if(!file||file.size>3*1024*1024){status(demo,'demo_invalid_file',true);return;}
+        const generation=demo.fileGeneration;let payload;
+        try{
+          if(/\.zip$/i.test(file.name)){
+            const bytes=new Uint8Array(await file.arrayBuffer());const chunks=[];
+            for(let start=0;start<bytes.length;start+=16384)chunks.push(String.fromCharCode(...bytes.subarray(start,start+16384)));
+            payload={sourceArchiveBase64:window.btoa(chunks.join('')),sourceCommit:'5ca4b96da5c81448d8ab81f07686df1b4563bbb0'};
+          }else payload=JSON.parse(await file.text());
+        }catch(_error){status(demo,'demo_invalid_file',true);return;}
+        if(!valid(demo)||generation!==demo.fileGeneration)return;
+        if(!payload||typeof payload.sourceArchiveBase64!=='string'||typeof payload.sourceCommit!=='string'||(payload.files!==undefined&&!Array.isArray(payload.files))){status(demo,'demo_invalid_file',true);return;}
+        demo.generation++;
+        const result=await request(base+'/bundle',{method:'POST',body:JSON.stringify(payload)},true);payload=null;
+        if(!valid(demo)||generation!==demo.fileGeneration)return;
+        demo.generation++;demo.bundle=result.bundle;form.reset();draw(demo);status(demo,'demo_imported');
+      }),demo.status);});
+      content.append(actions,demo.links,demo.status,demo.metadata,form);return demo;
+    }
+    $('demo-share-panel').addEventListener('toggle',()=>{if($('demo-share-panel').open&&state.isAdmin){const demo=state.demo||build();if(!demo.loaded)load(demo);}});
+    return ()=>{if(state.demo)draw(state.demo);};
+  }
   function updateVisibility() {
     let visible=0;
     $('project-list').querySelectorAll('.project').forEach(card=>{
@@ -263,7 +364,7 @@
     finally{clearPrivate();state.loggingOut=false;message($('gate-message'),failed?'error':'login_needed',failed);$('login').hidden=false;$('return-hint').hidden=false;$('session-retry').hidden=false;}
   });
   $('public-retry').addEventListener('click',loadPublic);$('session-retry').addEventListener('click',checkSession);
-  $('language').addEventListener('change',event=>{window.dotI18n.setLocale(event.target.value);if(state.isAdmin){renderProjects();window.dotReview.translate();}loadPublic();});
+  $('language').addEventListener('change',event=>{window.dotI18n.setLocale(event.target.value);if(state.isAdmin){renderProjects();window.dotReview.translate();translateDemoShares();}loadPublic();});
   window.addEventListener('focus',checkSession);
   window.addEventListener('pageshow',event=>{if(event.persisted){clearPrivate();checkSession();}});
   window.addEventListener('beforeunload',event=>{
@@ -271,6 +372,7 @@
   });
   window.addEventListener('pagehide',()=>{clearPrivate();});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkSession();});
+  const translateDemoShares=initDemoShares();
   window.dotReview.init({request,tr,text,action,field,message,busy,freeze,formatTime});
   window.dotI18n.apply();loadPublic();checkSession();
 })();
