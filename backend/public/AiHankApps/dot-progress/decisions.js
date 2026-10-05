@@ -181,7 +181,7 @@
   function mount(project, card, shared) {
     helpers=shared;
     const {text,tr,field,action,busy,freeze,message,request}=shared;
-    const section=document.createElement('details');section.className='decision-section';section.append(text('summary',tr('decisions')));
+    const section=document.createElement('details');section.className='decision-section';section.append(text('summary',tr('need_decision')));
     const list=text('div','','decision-list');section.append(list);
     const status=text('p','');status.setAttribute('role','status');
     function render() {

@@ -10,8 +10,9 @@ Only explicitly completed public titles, short summaries and dates are returned 
 
 | Method/path | Contract |
 | --- | --- |
-| GET `/api/dot-progress/projects` | Private rows with optimistic versions |
+| GET `/api/dot-progress/projects` | Private rows with optimistic versions, explicit `completedWork`, `pushCount` and `lastPushedAt` |
 | PATCH `/api/dot-progress/projects/:id` | Changed fields plus current integer `version`; stale version returns 409 |
+| POST `/api/dot-progress/projects/:id/push` | Unique click `requestId`; returns `{success:true,pushCount,lastPushedAt}` without changing project status or version |
 | GET `/api/dot-progress/projects/:id/comments` | Persisted comments |
 | POST `/api/dot-progress/projects/:id/comments` | `body`, unique `requestId`; identical retry returns the existing comment |
 | GET `/api/dot-progress/projects/:id/history` | Versioned before/after history |
@@ -29,7 +30,11 @@ PostgreSQL tables `dot_progress_projects`, `dot_progress_comments`, and `dot_pro
 
 The same initialization adds `dot_progress_decisions`, `dot_progress_decision_comments`, `dot_progress_decision_events`, `dot_progress_review`, and `dot_progress_review_comments` idempotently. It creates no historical permission records or decisions automatically. Existing production data requires no re-import. Decision reads use a consistent database snapshot; mutations lock the project before the decision, so cancellation and adoption cannot race around the closed-project guard.
 
-An import project contains `id`, `title`, `status` (`active`, `blocked`, `paused`, `completed`, `cancelled`, `archived`), `summary`, `blockers`, `nextStep`, `publicTitle`, `publicSummary`, `completedAt` (YYYY-MM-DD or empty), and optionally `version` and `comments` (`body`, `requestId`). Use the current version for an existing project; a new project may omit version or use zero. Decision adoption and audit metadata cannot be imported or forged through generic project PATCH. The old private Site has not been read or altered, and its previous comments/edits are not claimed to be migrated. A user-provided local export can be previewed and applied here.
+An import project contains `id`, `title`, `status` (`active`, `blocked`, `paused`, `completed`, `cancelled`, `archived`), `summary`, `blockers`, `nextStep`, `publicTitle`, `publicSummary`, `completedAt` (YYYY-MM-DD or empty), and optionally `completedWork`, `version` and `comments` (`body`, `requestId`). `completedWork` is explicit private text, limited to 4,000 characters; older records default to an empty string, without inferring completed steps from goals or blockers. Omitting it in a legacy import preserves existing completed-work text; explicitly supplying an empty string clears it. Use the current version for an existing project; a new project may omit version or use zero. Decision adoption and audit metadata cannot be imported or forged through generic project PATCH. The old private Site has not been read or altered, and its previous comments/edits are not claimed to be migrated. A user-provided local export can be previewed and applied here.
+
+Every project, including completed, cancelled and archived records, accepts an administrator push signal. Each actual click receives a distinct `requestId` (8–100 ASCII letters, digits, hyphens or underscores), so two clicks count as two signals. Retrying the same actor/project/click ID counts only once and returns the latest persisted totals. Client-supplied identity, counts, timestamps, versions or action metadata are rejected. The default private fields are `pushCount:0` and `lastPushedAt:null`.
+
+`dot_progress_push_state` stores counters independently from editable project JSON and optimistic versions; `dot_progress_push_requests` records server identity, click ID, ordinal and storage timestamp. The shared project row lock and one transaction protect receipt insertion plus counter increment against concurrent requests and partial failures. Edits, imports and restarts preserve the counters. A push does not change completion, reopen a closed project, adopt a decision, publish a summary, bind a bot, execute work or contact an external service. Public completed summaries continue to expose only title, short summary and date; push counts, timestamps and completed-work details remain private.
 
 Pending decisions are explicitly created only when a user choice blocks progress. Ordinary unperformed work and blockers do not create them. Each suggestion begins with an off adoption switch. The server derives the actor from the existing authenticated account and the time from storage; neither is accepted from a client. Question or suggestion changes increment `recommendationVersion` and invalidate prior adoption. Immutable events preserve earlier content, adoption/withdrawal, operator, time and recommendation version.
 
@@ -41,6 +46,6 @@ The administrator-only Project Review sidebar is a separate, append-only work jo
 
 Responses use `Cache-Control: no-store`. The page clears private memory/DOM at logout and session revalidation; 401/403 returns the login/access gate. Rendering uses text nodes for user content. Login accepts only the exact progress return path, preserving the existing portal redirect behavior.
 
-`GET /api/debug/dot-progress` is mounted behind the existing production-disabled debug namespace and additionally requires the same admin session. It exposes bounded counts and recent history metadata for local diagnostics. It never returns task text, comments, identity, or credentials.
+`GET /api/debug/dot-progress` is mounted behind the existing production-disabled debug namespace and additionally requires the same admin session. It exposes bounded counts and recent history/push metadata for local diagnostics. It never returns task text, comments, identity, click IDs, or credentials.
 
 This feature is scoped to the AiHankApps portfolio; Android/iOS entity-management features and their navigation remain outside this request. Initial records reflect only tasks visible in the source dot. Never import secrets, sensitive health/financial information, chat transcripts, or merchant-private details.
