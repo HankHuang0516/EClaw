@@ -1754,7 +1754,7 @@ Design plan: `docs/plans/2026-03-10-ai-search-brand-platform-design.md`.
 
 ## AiHankApps dot progress
 
-Portfolio page `/AiHankApps/dot-progress/` uses `backend/dot-progress.js` and existing auth/admin middleware. Private seed is outside public assets. PostgreSQL rows, comments and history persist transactionally; public projection includes only explicitly completed title/summary/date. No entity bindings or auth configuration change. Contract and import limitations: `docs/dot-progress.md`.
+Portfolio page `/AiHankApps/dot-progress/` uses `backend/dot-progress.js` and existing auth/admin middleware. Private seed is outside public assets. PostgreSQL rows, comments and history persist transactionally; public projection includes only explicitly completed title/summary/date. No entity bindings or auth configuration change. Contract, import limitations and geometry-only browser-return restoration: `docs/dot-progress.md`.
 
 Private decision records are separate from project imports and public summaries. Server-generated actor/time and recommendation versions invalidate prior adoption when content changes; current-version alternative comments require clarification. Adoption records never authorize external actions. `cancelled`/`archived` preserve audit and remain outside public completion.
 
