@@ -92,6 +92,25 @@ function timelineDate(value) {
         || Number.isNaN(Date.parse(`${value}T00:00:00Z`)) || new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) !== value) throw fault(400, 'invalid_date');
     return value;
 }
+function calendarPeriod(date, view) {
+    timelineDate(date);
+    if (!['day', 'week', 'month'].includes(view)) throw fault(400, 'invalid_view');
+    const anchor = new Date(`${date}T00:00:00Z`); let from = anchor.getTime(); let to;
+    if (view === 'week') { from -= ((anchor.getUTCDay() + 6) % 7) * 86400000; to = from + 7 * 86400000; }
+    else if (view === 'month') {
+        anchor.setUTCDate(1); from = anchor.getTime(); anchor.setUTCMonth(anchor.getUTCMonth() + 1); to = anchor.getTime();
+    } else to = from + 86400000;
+    const minimum = Date.parse('1000-01-01T00:00:00Z'); const maximum = Date.parse('9999-12-31T00:00:00Z');
+    // No unsupported calendar labels or five-digit-year text comparisons.
+    if (from < minimum || to > maximum) throw fault(400, 'invalid_range');
+    return { date, view, from: new Date(from).toISOString().slice(0, 10), to: new Date(to).toISOString().slice(0, 10), startAt: new Date(from - 28800000).toISOString(), endAt: new Date(to - 28800000).toISOString() };
+}
+function periodRowMatches(row, ownerDate, period) {
+    if (row.plannedStart === null && row.plannedEnd === null) return ownerDate >= period.from && ownerDate < period.to;
+    const start = Date.parse(row.plannedStart); const end = Date.parse(row.plannedEnd);
+    const lower = Date.parse(period.startAt); const upper = Date.parse(period.endAt);
+    return start < upper && (end > lower || (start === end && start >= lower));
+}
 function timelineTime(value) {
     // This interval journal has millisecond precision. Reject finer input rather
     // than silently rounding away an end-before-start or seven-day violation.
@@ -630,6 +649,20 @@ function createRouter(getPool, auth) {
         });
         res.json({ success: true, ...result });
     }));
+    router.get('/schedule-period', withError(async (req, res) => {
+        const query = strictBody(req.query, ['date', 'view']); const period = calendarPeriod(query.date, query.view);
+        const minimum = Date.parse('1000-01-01T00:00:00Z'); const maximum = Date.parse('9999-12-31T00:00:00Z');
+        const from = new Date(Math.max(minimum, Date.parse(`${period.from}T00:00:00Z`) - 7 * 86400000)).toISOString().slice(0, 10);
+        const through = new Date(Math.min(maximum, Date.parse(`${period.to}T00:00:00Z`) + 6 * 86400000)).toISOString().slice(0, 10);
+        const pool = await database();
+        const result = await pool.query('SELECT * FROM dot_progress_schedule WHERE date >= $1 AND date <= $2 ORDER BY date', [from, through]);
+        const schedules = result.rows.map(row => {
+            const schedule = scheduleRecord(row.date, row);
+            const matchingRowIds = schedule.rows.filter(entry => periodRowMatches(entry, schedule.date, period)).map(entry => entry.id);
+            return { ...schedule, matchingRowIds };
+        }).filter(schedule => schedule.matchingRowIds.length);
+        res.json({ success: true, period, schedules });
+    }));
     router.get('/schedule', withError(async (req, res) => {
         const query = strictBody(req.query, ['date']); const date = timelineDate(query.date);
         const pool = await database();
@@ -728,14 +761,16 @@ function createRouter(getPool, auth) {
         res.json({ success: true, ...page });
     }));
     router.get('/timeline', withError(async (req, res) => {
-        const query = strictBody(req.query, ['date', 'project', 'offset']);
+        const query = strictBody(req.query, ['date', 'project', 'offset', 'view']);
         const offset = timelineOffset(query.offset);
         const terms = [];
         const params = [];
+        if (query.view !== undefined && query.date === undefined) throw fault(400, 'invalid_date');
         if (query.date !== undefined) {
             const date = timelineDate(query.date);
-            const start = new Date(`${date}T00:00:00+08:00`).toISOString();
-            const end = new Date(Date.parse(start) + 86400000).toISOString();
+            const period = query.view === undefined ? null : calendarPeriod(date, query.view);
+            const start = period ? period.startAt : new Date(`${date}T00:00:00+08:00`).toISOString();
+            const end = period ? period.endAt : new Date(Date.parse(start) + 86400000).toISOString();
             params.push(start, end);
             terms.push('((started_at IS NULL AND ended_at >= $1 AND ended_at < $2) OR (started_at < $2 AND (ended_at > $1 OR (started_at=ended_at AND started_at >= $1))))');
         }

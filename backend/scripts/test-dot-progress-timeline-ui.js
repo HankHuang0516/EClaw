@@ -22,6 +22,10 @@ const server=http.createServer(async(req,res)=>{
     if(url.pathname==='/api/dot-progress/session'){await new Promise(resolve=>setTimeout(resolve,sessionDelay));return role==='anonymous'?send(401,{success:false,error:'unauthorized'}):send(200,{success:true,authenticated:true,isAdmin:role==='admin'});}
     if(url.pathname==='/api/auth/logout'){role='anonymous';return send(200,{success:true});}
     if(role!=='admin')return send(403,{success:false,error:'forbidden'});
+    if(req.method==='GET'&&url.pathname==='/api/dot-progress/schedule-period'){
+      const day=url.searchParams.get('date'),start=Date.parse(day+'T00:00:00+08:00'),end=start+86400000;
+      return send(200,{success:true,period:{date:day,view:'day',from:day,to:new Date(end+28800000).toISOString().slice(0,10),startAt:new Date(start).toISOString(),endAt:new Date(end).toISOString()},schedules:[]});
+    }
     if(url.pathname==='/api/dot-progress/schedule')return send(200,{success:true,schedule:{date:url.searchParams.get('date'),version:0,rows:[],updatedAt:null}});
     if(url.pathname==='/api/dot-progress/projects')return send(200,{success:true,projects:[project]});
     if(url.pathname==='/api/dot-progress/review')return send(200,{success:true,entries:[]});

@@ -36,6 +36,7 @@ describe('progress uses real existing portal auth and fresh admin role checks', 
     });
     test.each([
         ['get','/timeline'],['post','/timeline'],['patch','/timeline/synthetic-entry'],['get','/timeline/synthetic-entry/history'],
+        ['get','/schedule-period?date=2040-07-19&view=week'],
         ['get','/schedule/2040-07-19/recovery-preview?revision=1'],['post','/schedule/2040-07-19/recovery']
     ])('private work %s %s requires the existing session and current admin role', async (method, suffix) => {
         const pathname='/api/dot-progress'+suffix;
