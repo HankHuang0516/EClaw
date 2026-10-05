@@ -1,0 +1,16 @@
+# Workspace schedule history and selective recovery review
+
+The private workspace previously had no normal UI for inspecting retained schedule revisions or distinguishing old derived-row promotion from subsequent intentional edits. This change adds lazy, paginated version/actor/Taipei-time and field-level differences, followed by a read-only preview and explicit selection of eligible saved rows. Recovery creates a new retained version while preserving every other current row and display order. It does not perform a production data repair. This is the authorized manual reuse/quality/efficiency and ten-item review substitute; the unavailable simplify skill was not run.
+
+- ✅ A1 Logic: source-time actual snapshots, selected-date overlap, complete later schedule transitions, edit-then-restore protection, exact selected subset, full-snapshot Undo and concurrency revalidation checked. Native current update timestamps also protect waiting-transaction timestamp races.
+- ✅ A2 Tests: backend 90/90 in one seven-suite run, no skips, including seven actual PostgreSQL cases; current portal auth 11/11; assets/i18n 20/20. Synthetic workspace Chrome 122/122 covers the prior 76 plus 46 recovery/history assertions. Existing UI/push seven groups and scroll/Back/Forward 50/50 at 390/1280 pass.
+- ✅ A3 Shape: strict revision/version/ID inputs; server-derived eligibility; distinct recovery receipt namespace; immutable original reply; no schema expansion.
+- ✅ A4 Scope: no guessed source revision, automatic cleanup, inferred intent, credential extraction or actual/project/push mutation. Owner confirmation starts unchecked; the note explicitly states that legacy history cannot determine insertion intent.
+- ✅ A5 Security: existing administrator/origin/startup/rate/no-store guards, private-memory lifecycle and serial/epoch handling apply to history, preview and recovery. Late history/preview replies cannot revive private data after logout or a date change.
+- ✅ B1 API help: preview and selected recovery use safe synthetic examples, existing auth and explicit fresh-version Undo.
+- ✅ B2 Docs: the schedule guide explains source provenance, protection rules, history bounds, reversible revisions and the owner's normal UI workflow. Its existing README link remains valid.
+- ✅ B3 i18n: 25 new keys; 59 keys across 14 canonical/shared locales (826 values), with old values and zh-TW fallback preserved. A browser using America/New_York still displays explicit Taipei seconds and UTC+08:00.
+- ⚠️ B4 Info/promo NO-OP: private history recovery changes no public portfolio introduction or approved completed summary.
+- ⚠️ B5 Debug NO-OP: no debug route or production diagnostic payload is added.
+
+Frozen ten-asset fingerprint: `2be8de03a3d40ec1`. Relevant lint has zero errors; unchanged index.js and shared-i18n warnings remain. Diff and instruction-file checks pass. Mobile and desktop synthetic recovery screenshots were personally inspected. The dedicated local PostgreSQL was stopped after testing. Release acceptance is performed separately after deployment using anonymous production checks; real source revisions, IDs and reviewed recovery require the owner's existing authenticated UI. No production repair was performed by this worker.

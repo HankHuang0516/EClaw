@@ -177,6 +177,21 @@ function scheduleInput(input, date) {
     if (input.rowOrder !== undefined && (!Array.isArray(input.rowOrder) || input.rowOrder.length > 550 || input.rowOrder.some(id => typeof id !== 'string' || !ID.test(id)) || new Set(input.rowOrder).size !== input.rowOrder.length)) throw fault(400, 'invalid_row_order');
     return { requestId: token, version: input.version, rows, ...(input.rowOrder === undefined ? {} : { rowOrder: [...input.rowOrder] }) };
 }
+function recoveryBoard(value, date) {
+    try {
+        strictBody(value, ['date', 'version', 'rows', 'rowOrder', 'updatedAt']);
+        if (value.date !== date || (value.version === 0 ? value.updatedAt !== null : timelineTime(value.updatedAt) !== value.updatedAt)) throw new Error('invalid');
+        const input = scheduleInput({ requestId: 'recovery-validation', version: value.version, rows: value.rows, ...(value.rowOrder === undefined ? {} : { rowOrder: value.rowOrder }) }, date);
+        if (canonical(input.rows) !== canonical(value.rows) || (value.version === 0 && input.rows.length)) throw new Error('invalid');
+        return { date, version: input.version, rows: input.rows, rowOrder: input.rowOrder || [], updatedAt: value.updatedAt };
+    } catch (_err) { throw fault(409, 'recovery_history_incomplete'); }
+}
+function recoveryRowChanges(before, after) {
+    if (!before && !after) return [];
+    if (!before) return ['added'];
+    if (!after) return ['removed'];
+    return [...new Set([...Object.keys(before), ...Object.keys(after)])].filter(key => canonical(before[key]) !== canonical(after[key])).sort();
+}
 
 function createRouter(getPool, auth) {
     if (!auth || !auth.authMiddleware || !auth.adminMiddleware) throw new Error('Progress requires existing auth middleware');
@@ -342,6 +357,72 @@ function createRouter(getPool, auth) {
             const found = await client.query(`SELECT id FROM ${table} WHERE id IN (${ids.map((_, i) => `$${i + 1}`).join(',')})`, ids);
             if (found.rows.length !== ids.length) throw fault(404, code);
         }
+    }
+    async function recoveryPreview(client, date, sourceRevision, current) {
+        const source = (await client.query('SELECT version,actor_id AS "actorId",created_at AS "createdAt",changes FROM dot_progress_schedule_revisions WHERE date=$1 AND version=$2', [date, sourceRevision])).rows[0];
+        if (!source) throw fault(404, 'source_revision_not_found');
+        const before = recoveryBoard(source.changes?.before, date); const after = recoveryBoard(source.changes?.after, date);
+        if (source.version !== sourceRevision || before.version !== sourceRevision - 1 || after.version !== sourceRevision || sourceRevision > current.version) throw fault(409, 'recovery_history_incomplete');
+        const total = Number((await client.query('SELECT COUNT(*) AS total FROM dot_progress_schedule_revisions WHERE date=$1 AND version>$2', [date, sourceRevision])).rows[0].total);
+        if (total > 1000) throw fault(409, 'recovery_history_limit');
+        if (total !== current.version - sourceRevision) throw fault(409, 'recovery_history_incomplete');
+        const beforeIds = new Set(before.rows.map(row => row.id)); const added = after.rows.filter(row => !beforeIds.has(row.id));
+        const addedIds = added.map(row => row.id); const laterChanges = [];
+        let last = after; let expected = sourceRevision + 1;
+        for (let offset = 0; offset < total; offset += 100) {
+            const page = (await client.query('SELECT version,actor_id AS "actorId",created_at AS "createdAt",changes FROM dot_progress_schedule_revisions WHERE date=$1 AND version>$2 ORDER BY version LIMIT 100 OFFSET $3', [date, sourceRevision, offset])).rows;
+            for (const revision of page) {
+                const prior = recoveryBoard(revision.changes?.before, date); const next = recoveryBoard(revision.changes?.after, date);
+                if (revision.version !== expected || next.version !== expected || canonical(prior) !== canonical(last)) throw fault(409, 'recovery_history_incomplete');
+                const priorRows = new Map(prior.rows.map(row => [row.id, row])); const nextRows = new Map(next.rows.map(row => [row.id, row]));
+                for (const id of addedIds) {
+                    const fields = recoveryRowChanges(priorRows.get(id), nextRows.get(id));
+                    if (fields.length) laterChanges.push({ id, version: revision.version, actorId: revision.actorId, createdAt: revision.createdAt, fields });
+                }
+                last = next; expected++;
+            }
+        }
+        if (expected !== current.version + 1 || canonical(last) !== canonical(recoveryBoard(current, date))) throw fault(409, 'recovery_history_incomplete');
+        const ids = [...new Set(added.flatMap(row => row.actualIds))];
+        if (ids.length > 500) throw fault(409, 'recovery_history_incomplete');
+        let snapshots = []; let actuals = []; let latest = [];
+        if (ids.length) {
+            const placeholders = ids.map((_, i) => `$${i + 1}`).join(',');
+            // Compare timestamps in PostgreSQL, preserving source microseconds.
+            snapshots = (await client.query(`SELECT r.timeline_id,r.version,r.changes FROM dot_progress_timeline_revisions r JOIN (SELECT timeline_id,MAX(version) AS version FROM dot_progress_timeline_revisions WHERE timeline_id IN (${placeholders}) AND created_at <= (SELECT created_at FROM dot_progress_schedule_revisions WHERE date=$${ids.length + 1} AND version=$${ids.length + 2}) GROUP BY timeline_id) s ON r.timeline_id=s.timeline_id AND r.version=s.version`, [...ids, date, sourceRevision])).rows;
+            actuals = (await client.query(`SELECT id,data,version,updated_at <= (SELECT created_at FROM dot_progress_schedule_revisions WHERE date=$${ids.length + 1} AND version=$${ids.length + 2}) AS source_unchanged FROM dot_progress_timeline WHERE id IN (${placeholders})`, [...ids, date, sourceRevision])).rows;
+            latest = (await client.query(`SELECT timeline_id,MAX(version) AS version FROM dot_progress_timeline_revisions WHERE timeline_id IN (${placeholders}) GROUP BY timeline_id`, ids)).rows;
+        }
+        const sourceActuals = new Map(snapshots.map(row => [row.timeline_id, row])); const currentActuals = new Map(actuals.map(row => [row.id, row])); const latestVersions = new Map(latest.map(row => [row.timeline_id, row.version]));
+        const currentRows = new Map(current.rows.map(row => [row.id, row])); const eligible = []; const protectedRows = [];
+        for (const row of added) {
+            const reasons = new Set(); const changes = laterChanges.filter(change => change.id === row.id);
+            if (row.status !== 'planned' || row.plannedStart !== null || row.plannedEnd !== null || !row.actualIds.length || row.id !== row.actualIds[0]) reasons.add('source_not_derived');
+            if (row.archived === true) reasons.add('source_archived');
+            for (const id of row.actualIds) {
+                const historic = sourceActuals.get(id); const entry = historic?.changes?.after; const present = currentActuals.get(id);
+                if (!historic || !entry || !present || entry.id !== id || entry.version !== historic.version) { reasons.add('actual_source_missing'); continue; }
+                let data;
+                try {
+                    const fields = Object.fromEntries(TIMELINE_FIELDS.filter(key => entry[key] !== undefined).map(key => [key, entry[key]]));
+                    const { requestId: _token, ...normalized } = normalizeTimelineInput({ ...fields, requestId: 'recovery-validation' }); data = normalized;
+                } catch (_err) { reasons.add('actual_source_missing'); continue; }
+                if (typeof data.goal !== 'string' || !data.goal.trim() || data.projectId !== row.projectId || data.projectLabel !== row.projectLabel || data.goal !== row.goal) reasons.add('actual_source_mismatch');
+                const lower = Date.parse(`${date}T00:00:00+08:00`); const upper = lower + 86400000;
+                const end = Date.parse(data.endedAt); const start = data.startedAt === null ? null : Date.parse(data.startedAt);
+                if (!(start === null ? end >= lower && end < upper : start < upper && (end > lower || (start === end && start >= lower)))) reasons.add('actual_source_mismatch');
+                // Revision NOW() is transaction start; a waiting edit may execute
+                // later. Its clock_timestamp() update must also predate the source.
+                if (present.source_unchanged !== true || present.version !== historic.version || latestVersions.get(id) !== historic.version || canonical(present.data) !== canonical(data)) reasons.add('actual_changed');
+            }
+            const present = currentRows.get(row.id);
+            if (!present) reasons.add('row_missing');
+            else if (canonical(present) !== canonical(row)) reasons.add('row_changed');
+            if (changes.length) reasons.add('row_changed');
+            if (reasons.size) protectedRows.push({ id: row.id, row, reasons: [...reasons], laterChanges: changes });
+            else eligible.push({ id: row.id, row });
+        }
+        return { date, sourceRevision, source, currentVersion: current.version, addedIds, eligible, protected: protectedRows, laterChanges, historyChecked: { fromVersion: sourceRevision + 1, toVersion: current.version, count: total, limit: 1000, complete: true } };
     }
 
     router.use((_req, res, next) => {
@@ -588,6 +669,49 @@ function createRouter(getPool, auth) {
             const after = scheduleRecord(date, result.rows[0]);
             await client.query('INSERT INTO dot_progress_schedule_revisions(date,version,actor_id,changes) VALUES ($1,$2,$3,$4::jsonb)', [date, after.version, actor, JSON.stringify({ before, after })]);
             await client.query('INSERT INTO dot_progress_schedule_requests(actor_id,request_id,request_payload,response_schedule) VALUES ($1,$2,$3::jsonb,$4::jsonb)', [actor, input.requestId, JSON.stringify(payload), JSON.stringify(after)]);
+            return after;
+        });
+        res.json({ success: true, schedule });
+    }));
+    router.get('/schedule/:date/recovery-preview', withError(async (req, res) => {
+        const date = timelineDate(req.params.date); const query = strictBody(req.query, ['revision']);
+        if (typeof query.revision !== 'string' || !/^[1-9]\d{0,8}$/.test(query.revision)) throw fault(400, 'invalid_version');
+        const pool = await database();
+        const preview = await transaction(pool, async client => {
+            await client.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+            const row = (await client.query('SELECT * FROM dot_progress_schedule WHERE date=$1', [date])).rows[0];
+            if (!row) throw fault(404, 'schedule_not_found');
+            return recoveryPreview(client, date, Number(query.revision), scheduleRecord(date, row));
+        });
+        res.json({ success: true, preview });
+    }));
+    router.post('/schedule/:date/recovery', withError(async (req, res) => {
+        const date = timelineDate(req.params.date); const input = strictBody(req.body, ['requestId', 'version', 'sourceRevision', 'removeIds']);
+        const token = requestId(input.requestId); positiveVersion(input.version); positiveVersion(input.sourceRevision);
+        if (!Array.isArray(input.removeIds) || !input.removeIds.length || input.removeIds.length > 50 || input.removeIds.some(id => typeof id !== 'string' || !ID.test(id)) || new Set(input.removeIds).size !== input.removeIds.length) throw fault(400, 'invalid_remove_ids');
+        const payload = { action: 'recovery', date, version: input.version, sourceRevision: input.sourceRevision, removeIds: [...input.removeIds].sort() };
+        const pool = await database(); const actor = String(req.user.userId);
+        const schedule = await transaction(pool, async client => {
+            // Actual edits already use the first lock; no route holds these in reverse order.
+            await client.query('SELECT pg_advisory_xact_lock(72140417)');
+            await client.query('SELECT pg_advisory_xact_lock(72140418)');
+            const receipt = (await client.query('SELECT request_payload,response_schedule FROM dot_progress_schedule_requests WHERE actor_id=$1 AND request_id=$2', [actor, token])).rows[0];
+            if (receipt) {
+                if (canonical(receipt.request_payload) !== canonical(payload)) throw fault(409, 'request_id_conflict');
+                return receipt.response_schedule;
+            }
+            const row = (await client.query('SELECT * FROM dot_progress_schedule WHERE date=$1 FOR UPDATE', [date])).rows[0];
+            if (!row) throw fault(404, 'schedule_not_found');
+            const before = scheduleRecord(date, row);
+            if (before.version !== input.version) throw fault(409, 'version_conflict');
+            const preview = await recoveryPreview(client, date, input.sourceRevision, before);
+            const eligible = new Set(preview.eligible.map(candidate => candidate.id));
+            if (input.removeIds.some(id => !eligible.has(id))) throw fault(409, 'recovery_not_eligible');
+            const removed = new Set(input.removeIds); const rows = before.rows.filter(candidate => !removed.has(candidate.id));
+            const updated = await client.query('UPDATE dot_progress_schedule SET rows=$2::jsonb,version=version+1,updated_at=clock_timestamp() WHERE date=$1 RETURNING *', [date, JSON.stringify(rows)]);
+            const after = scheduleRecord(date, updated.rows[0]);
+            await client.query('INSERT INTO dot_progress_schedule_revisions(date,version,actor_id,changes) VALUES ($1,$2,$3,$4::jsonb)', [date, after.version, actor, JSON.stringify({ before, after })]);
+            await client.query('INSERT INTO dot_progress_schedule_requests(actor_id,request_id,request_payload,response_schedule) VALUES ($1,$2,$3::jsonb,$4::jsonb)', [actor, token, JSON.stringify(payload), JSON.stringify(after)]);
             return after;
         });
         res.json({ success: true, schedule });
