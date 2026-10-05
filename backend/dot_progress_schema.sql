@@ -141,3 +141,27 @@ CREATE TABLE IF NOT EXISTS dot_progress_timeline_requests (
 CREATE INDEX IF NOT EXISTS dot_progress_timeline_dates ON dot_progress_timeline(started_at, id);
 CREATE INDEX IF NOT EXISTS dot_progress_timeline_project ON dot_progress_timeline(project_label, started_at);
 CREATE INDEX IF NOT EXISTS dot_progress_timeline_revision_lookup ON dot_progress_timeline_revisions(timeline_id, version);
+-- Private planning snapshots are independent of recorded actual work.
+CREATE TABLE IF NOT EXISTS dot_progress_schedule (
+    date TEXT PRIMARY KEY,
+    rows JSONB NOT NULL,
+    version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS dot_progress_schedule_revisions (
+    id BIGSERIAL PRIMARY KEY,
+    date TEXT NOT NULL REFERENCES dot_progress_schedule(date),
+    version INTEGER NOT NULL,
+    actor_id TEXT NOT NULL,
+    changes JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(date, version)
+);
+CREATE TABLE IF NOT EXISTS dot_progress_schedule_requests (
+    actor_id TEXT NOT NULL,
+    request_id TEXT NOT NULL,
+    request_payload JSONB NOT NULL,
+    response_schedule JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY(actor_id, request_id)
+);

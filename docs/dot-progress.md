@@ -25,6 +25,9 @@ Only explicitly completed public titles, short summaries and dates are returned 
 | GET `/api/dot-progress/review` | Private sourced project review records with correction comments, bounded latest entries |
 | POST `/api/dot-progress/review` | `kind` (`permission`, `decision`, `change`), `title`, original `body`, `occurredAt`, `source`, `scope`, unique `requestId` |
 | POST `/api/dot-progress/review/:reviewId/comments` | Append a correction `body` and unique `requestId`; original record remains unchanged |
+| GET `/api/dot-progress/schedule?date=YYYY-MM-DD` | Independent private planned-goal rows for a Taipei date; absent board has version 0 |
+| PUT `/api/dot-progress/schedule/:date` | Full planned rows plus current board version and stable requestId; actual timeline and project/push versions remain unchanged |
+| GET `/api/dot-progress/schedule/:date/history?offset=0` | Retained planned-board revisions and explicit pagination |
 
 PostgreSQL tables `dot_progress_projects`, `dot_progress_comments`, and `dot_progress_history` initialize lazily in a locked transaction. The public repository seed contains only the three approved completed summaries. Private initial tasks must be imported through an authenticated admin session from an owner-only file outside the repository. Initial seed IDs are inserted only when absent; restarts never overwrite edits. Missing/unavailable storage returns 503, without an in-memory fallback. Project updates and their history are atomic. Imports validate bounds, deduplicate IDs, require existing versions and commit all rows/comments atomically.
 
@@ -59,3 +62,6 @@ Returning with browser Back/Forward restores the prior project section after bot
 Synchronous project rerenders preserve the visible project section, main expanded details and an existing form's focus/selection. Draft retention follows the existing project-version rules. Public refresh captures the current reading position when its response arrives, so a user can continue scrolling during the request. Filter choices and ordinary expand/collapse remain user-controlled; push receipts still update only their existing metric nodes. This does not persist private draft contents across navigation or change any push count, API, database or permission.
 
 Regression: `NODE_PATH=<existing backend node_modules> node backend/scripts/test-dot-progress-scroll.js` uses a local synthetic 24-card server and a fresh headless Chrome at 390 and 1280 pixels. `--record` captures measurements without reading-position assertions. No production authentication/profile or private records are used.
+
+
+The [workspace goal Gantt](dot-progress-schedule.md) stays at the top of the confirmed administrator workspace, with project cards below. Actual work records are read only in this chart; planned dates and order live in independent schedule tables. Pointer move/resize/reorder and keyboard/mobile date editing save only the planned board; Undo retains prior planned revisions. Loading the private workspace reads its date-filtered timeline after administrator confirmation, without requiring the history sidebar to open. Anonymous views make no schedule or timeline reads.
