@@ -19,8 +19,9 @@ CREATE TABLE IF NOT EXISTS taaze_demo_shares (
     created_by TEXT NOT NULL,
     request_id TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    expires_at TIMESTAMPTZ NOT NULL,
+    expires_at TIMESTAMPTZ,
     revoked_at TIMESTAMPTZ,
     revoked_by TEXT,
     UNIQUE(created_by, request_id)
 );
+ALTER TABLE taaze_demo_shares ALTER COLUMN expires_at DROP NOT NULL;

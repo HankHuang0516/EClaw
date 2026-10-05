@@ -1884,7 +1884,7 @@ app.get('/api/help', (req, res) => {
         taaze_demo_share: [
             { title: 'Private original-v5 bundle and share metadata (existing admin portal session; no bearer URLs returned)', curl: `curl -s "${apiBase}/api/taaze-demo-share" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
             { title: 'Import the verified original Sites v5 archive and file mapping; unrelated content is rejected', curl: `curl -s -X POST "${apiBase}/api/taaze-demo-share/bundle" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" --data-binary @/LOCAL/VERIFIED_V5_EXPORT.json` },
-            { title: 'Issue one seven-day link, shown once; forwarded holders can access this demo', curl: `curl -s -X POST "${apiBase}/api/taaze-demo-share/shares" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" -d '{"requestId":"UNIQUE_SHARE_REQUEST_ID"}'\n# A retry with the same ID cannot issue another link. A lost URL cannot be recovered from metadata.` },
+            { title: 'Issue one lasting no-login link, shown once and revocable anytime; forwarded holders can access this demo', curl: `curl -s -X POST "${apiBase}/api/taaze-demo-share/shares" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" -d '{"requestId":"UNIQUE_SHARE_REQUEST_ID"}'\n# A retry with the same ID cannot issue another link. A lost URL cannot be recovered from metadata.` },
             { title: 'Revoke a share immediately; HTML, data, scripts and images all require a live link', curl: `curl -s -X POST "${apiBase}/api/taaze-demo-share/shares/SHARE_ID/revoke" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" -d '{}'` }
         ],
         dot_progress: [

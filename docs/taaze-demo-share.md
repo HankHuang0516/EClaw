@@ -1,4 +1,4 @@
-# One-demo, seven-day capability sharing
+# One-demo, lasting capability sharing
 
 This feature is limited to the explicitly approved TAAZE three-item Sites v5 demo. It does not publish the demo on the portfolio homepage or sitemap, change the original Site audience, send mail, create credentials, or grant admin access. A holder can forward a working capability URL. The content must retain the original price/condition/stock verification notices, illustrative map flow and unsent-order behavior.
 
@@ -19,7 +19,7 @@ Only the bundle POST installs a guarded 6 MiB parser before global JSON, using c
 - `POST /api/taaze-demo-share/shares`: `{requestId}` (8–100 ASCII alphanumeric/underscore/hyphen). Requires the verified bundle. Returns `{success:true,share:{id,createdAt,expiresAt,path}}`. `path` contains the only disclosure of a new 256-bit random capability. The database stores its SHA256, not the capability. A repeated request ID returns `share_already_issued` 409, so network retry cannot silently create another share. A lost creation response requires a deliberate new request; revoke the previous listed ID if needed.
 - `POST /api/taaze-demo-share/shares/:id/revoke`: `{}`. Idempotent revocation records server time and existing admin identity.
 
-No client may choose the expiry, source identity, token or actor. The server fixes expiry at creation plus exactly seven days. Admin metadata survives restarts. There is no automatic issue/upload task and no connection to decisions, bot binding, progress approval or messaging.
+No client may choose the expiry, source identity, token or actor. New shares have expiresAt null: no automatic expiry. Every resource still checks revocation on the server. Admin metadata survives restarts. There is no automatic issue/upload task and no connection to decisions, bot binding, progress approval or messaging.
 
 ## Every resource is checked by the server
 
@@ -31,8 +31,10 @@ All responses use browser/CDN `no-store`, `no-referrer`, robots `noindex,nofollo
 
 ## Verification and remaining release gates
 
-`tests/jest/taaze-demo-share.test.js` uses only synthetic TAR/content and a test-only crypto mock for the approved-archive receipt; production has no request, environment or factory option to bypass the pinned SHA. Tests cover source validation and TAR attacks, private import, seven-day expiry, hashed-token storage, duplicate issue IDs, admin/member/anonymous/cross-origin access, correct/wrong/missing capabilities, HTML/data/script/image/HEAD checks, expiration, withdrawal, no static fallthrough, immutability, restart persistence and unavailable-database failure.
+`tests/jest/taaze-demo-share.test.js` uses only synthetic TAR/content and a test-only crypto mock for the approved-archive receipt; production has no request, environment or factory option to bypass the pinned SHA. Tests cover source validation and TAR attacks, private import, no automatic expiry, hashed-token storage, duplicate issue IDs, admin/member/anonymous/cross-origin access, correct/wrong/missing capabilities, HTML/data/script/image/HEAD checks, expiration, withdrawal, no static fallthrough, immutability, restart persistence and unavailable-database failure.
 
-Before delivering an actual link: obtain and inspect the authorized original export; verify path mapping and original notices; import via the normal admin UI; issue one seven-day link; perform a fresh anonymous full demo flow and direct-asset checks; verify homepage/sitemap exclusion; exercise invalid/expired/revoked synthetic links without publishing synthetic assets. No email is sent by this feature.
+Before delivering an actual link: obtain and inspect the authorized original export; verify path mapping and original notices; import via the normal admin UI; issue one lasting link; perform a fresh anonymous full demo flow and direct-asset checks; verify homepage/sitemap exclusion; exercise invalid/expired/revoked synthetic links without publishing synthetic assets. No email is sent by this feature.
 
-The existing admin workspace contains a collapsed Demo manager for the prepared original-export JSON, explicit seven-day issuance and revocation. It never issues a link while source import is missing. Nonproduction/admin-only `GET /api/debug/taaze-demo-share` exposes asset/share counts, without tokens, source bytes or private IDs.
+The existing admin workspace contains a collapsed Demo manager for the prepared original-export JSON, explicit lasting issuance and revocation. It never issues a link while source import is missing. Nonproduction/admin-only `GET /api/debug/taaze-demo-share` exposes asset/share counts, without tokens, source bytes or private IDs.
+
+Latest user requirement (2026-10-05): long-term, no-login, dedicated link with immediate revocation. The earlier seven-day default is superseded. New database shares explicitly store NULL expiry; manager copy and uncertain-issuance handling follow this policy. Source acquisition and actual link delivery are still pending; no source-retrieval credential has been created.

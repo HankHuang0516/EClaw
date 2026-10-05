@@ -158,7 +158,7 @@ function createRouters(getPool, auth) {
             await c.query('SELECT pg_advisory_xact_lock(72140518)');
             if (!(await c.query('SELECT id FROM taaze_demo_bundles WHERE id=$1', [DEMO_ID])).rows.length) throw fault(409, 'bundle_required');
             if ((await c.query('SELECT id FROM taaze_demo_shares WHERE created_by=$1 AND request_id=$2', [req.user.userId, req.body.requestId])).rows.length) throw fault(409, 'share_already_issued');
-            const result = await c.query("INSERT INTO taaze_demo_shares(id,bundle_id,token_hash,created_by,request_id,expires_at) VALUES ($1,$2,$3,$4,$5,NOW() + INTERVAL '7 days') RETURNING created_at AS \"createdAt\", expires_at AS \"expiresAt\"", [id, DEMO_ID, hash(token), req.user.userId, req.body.requestId]);
+            const result = await c.query('INSERT INTO taaze_demo_shares(id,bundle_id,token_hash,created_by,request_id,expires_at) VALUES ($1,$2,$3,$4,$5,NULL) RETURNING created_at AS "createdAt", expires_at AS "expiresAt"', [id, DEMO_ID, hash(token), req.user.userId, req.body.requestId]);
             return result.rows[0];
         });
         // The token is shown once; neither list nor database stores the capability.
@@ -183,7 +183,7 @@ function createRouters(getPool, auth) {
             const asset = decodeURIComponent(parts.join('/') || 'index.html');
             if (!safePath(asset)) return deny();
             const pool = await database();
-            const result = await pool.query('SELECT a.content_type, a.body FROM taaze_demo_assets a JOIN taaze_demo_shares s ON s.bundle_id=a.bundle_id WHERE s.token_hash=$1 AND s.bundle_id=$2 AND s.revoked_at IS NULL AND s.expires_at>NOW() AND a.path=$3 LIMIT 1', [hash(token), DEMO_ID, asset]);
+            const result = await pool.query('SELECT a.content_type, a.body FROM taaze_demo_assets a JOIN taaze_demo_shares s ON s.bundle_id=a.bundle_id WHERE s.token_hash=$1 AND s.bundle_id=$2 AND s.revoked_at IS NULL AND (s.expires_at IS NULL OR s.expires_at>NOW()) AND a.path=$3 LIMIT 1', [hash(token), DEMO_ID, asset]);
             if (!result.rows.length) return deny();
             const row = result.rows[0];
             res.set('Content-Security-Policy', contentPolicy(row.content_type, row.body));

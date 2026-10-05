@@ -4,7 +4,7 @@ Status: local preparation only, awaiting the authorized original Sites v5 export
 
 ## Reuse, access and data
 
-Existing portal auth/admin middleware and cross-origin checks protect every management action. A bounded archive parser runs only after those checks; the admin router retains startup/rate gates. The terminal public router precedes pageview tracking and static fallthrough. The actual archive SHA and source commit are pinned; mappings can select only original archive bytes. PostgreSQL transactions retain immutable assets, hashed capabilities, server expiry and revocation across restarts. Duplicate issue IDs cannot silently create another link.
+Existing portal auth/admin middleware and cross-origin checks protect every management action. A bounded archive parser runs only after those checks; the admin router retains startup/rate gates. The terminal public router precedes pageview tracking and static fallthrough. The actual archive SHA and source commit are pinned; mappings can select only original archive bytes. PostgreSQL transactions retain immutable assets, hashed capabilities, nullable server expiry and revocation across restarts. Duplicate issue IDs cannot silently create another link.
 
 ## UI quality and efficiency
 
@@ -21,3 +21,5 @@ The existing dot-progress manual substitute applies to the manager in that works
 ## Open release checks
 
 Obtain the authorized exact original archive or review a new source delivery with version proof; inspect original notices, assets and relative paths/CSP compatibility; run normal PR/CI/review; import and issue via the existing authenticated UI; verify real anonymous HTML/data/images/full flow and revocation/expiry. The current source download error is `file could not be authorized or resolved`; downloads stopped without a bypass. Deployment, actual source import and real-link creation have not happened.
+
+The subsequent long-term/no-login requirement removes automatic expiry for new shares. Focused synthetic regression verifies NULL expiry remains readable for old creation dates, immediate revocation, nullable-expiry manager receipts, no-expiry display and uncertain-operation guards. This is local preparation only; the original source and production flow remain pending.

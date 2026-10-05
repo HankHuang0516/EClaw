@@ -209,6 +209,8 @@
   }
   function initDemoShares() {
     const base='/api/taaze-demo-share';
+    const live=share=>!share.revokedAt&&(share.expiresAt===null||Date.parse(share.expiresAt)>Date.now());
+    const expiryText=value=>value===null?tr('demo_no_expiry'):tr('demo_expires')+': '+formatTime(value);
     const label=(node,key)=>{node.dataset.i18n='dot_progress_'+key;node.textContent=tr(key);return node;};
     const button=(key,handler)=>label(action(key,handler,true),key);
     function valid(demo){return state.isAdmin&&state.demo===demo&&demo.epoch===state.epoch;}
@@ -220,18 +222,18 @@
       demo.metadata.append(label(text('p','','small'),demo.bundle?'demo_ready':'demo_unavailable'));
       demo.issue.disabled=!demo.bundle||demo.uncertain||demo.working;
       demo.retry.hidden=!demo.uncertain;demo.retry.disabled=demo.working;
-      const unknownActive=demo.shares.some(share=>!demo.baseline.has(share.id)&&!share.revokedAt&&Date.parse(share.expiresAt)>Date.now());
+      const unknownActive=demo.shares.some(share=>!demo.baseline.has(share.id)&&live(share));
       demo.resolve.hidden=!demo.uncertain||!demo.refreshed||unknownActive;demo.resolve.disabled=demo.working;
       demo.links.replaceChildren();
       if(demo.link){
         const link=label(text('a','','button secondary'),'demo_open');link.href=demo.link.path;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
-        demo.links.append(link,text('p',tr('demo_expires')+': '+formatTime(demo.link.expiresAt),'small'));
+        demo.links.append(link,text('p',expiryText(demo.link.expiresAt),'small'));
       }
       if(!demo.shares.length)demo.metadata.append(label(text('p','','small'),'demo_empty'));
       demo.shares.forEach(share=>{
         const entry=text('div','','demo-share-entry');entry.dataset.shareId=share.id;
-        const expired=Date.parse(share.expiresAt)<=Date.now();const summary=text('p',share.id+' · '+tr(share.revokedAt?'demo_revoked':expired?'demo_expired':'demo_active'),'small');
-        entry.append(summary,text('p',tr('demo_expires')+': '+formatTime(share.expiresAt),'small'));
+        const expired=share.expiresAt!==null&&Date.parse(share.expiresAt)<=Date.now();const summary=text('p',share.id+' · '+tr(share.revokedAt?'demo_revoked':expired?'demo_expired':'demo_active'),'small');
+        entry.append(summary,text('p',expiryText(share.expiresAt),'small'));
         if(share.revokedAt)entry.append(text('p',tr('demo_revoked')+': '+formatTime(share.revokedAt),'small'));
         else entry.append(button('demo_revoke',event=>busy(event.currentTarget,async()=>{
           demo.generation++;
@@ -262,7 +264,7 @@
         const result=await request(base+'/shares',{method:'POST',body:JSON.stringify({requestId:demo.requestId})},true);
         if(!valid(demo))return;
         const share=result.share;
-        if(!share||typeof share.path!=='string'||!/^\/AiHankApps\/taaze-demo\/[A-Za-z0-9_-]{43}\/$/.test(share.path)||!share.id||Number.isNaN(Date.parse(share.expiresAt)))throw new Error('invalid_share_receipt');
+        if(!share||typeof share.path!=='string'||!/^\/AiHankApps\/taaze-demo\/[A-Za-z0-9_-]{43}\/$/.test(share.path)||!share.id||(share.expiresAt!==null&&Number.isNaN(Date.parse(share.expiresAt))))throw new Error('invalid_share_receipt');
         // The capability is retained only for this authorized page session, never recovered from metadata.
         demo.generation++;demo.link={id:share.id,path:share.path,expiresAt:share.expiresAt};demo.shares.unshift({id:share.id,createdAt:share.createdAt,expiresAt:share.expiresAt,revokedAt:null});demo.requestId=null;demo.uncertain=false;status(demo,'demo_created');
       }catch(_error){if(valid(demo)){demo.uncertain=true;status(demo,'demo_uncertain',true);}}
@@ -274,7 +276,7 @@
       demo.status=text('p','','message');demo.status.setAttribute('role','status');demo.metadata=text('div','','demo-share-metadata');demo.links=text('div','','demo-share-links');
       demo.reload=button('demo_refresh',()=>load(demo));demo.issue=button('demo_create',()=>issue(demo));demo.issue.disabled=true;
       demo.retry=button('demo_retry',()=>issue(demo,true));demo.retry.hidden=true;
-      demo.resolve=button('demo_resolve',()=>{if(!valid(demo)||!demo.refreshed||demo.working||demo.shares.some(share=>!demo.baseline.has(share.id)&&!share.revokedAt&&Date.parse(share.expiresAt)>Date.now()))return;demo.uncertain=false;demo.requestId=null;demo.refreshed=false;draw(demo);status(demo,'demo_resolved');});demo.resolve.hidden=true;
+      demo.resolve=button('demo_resolve',()=>{if(!valid(demo)||!demo.refreshed||demo.working||demo.shares.some(share=>!demo.baseline.has(share.id)&&live(share)))return;demo.uncertain=false;demo.requestId=null;demo.refreshed=false;draw(demo);status(demo,'demo_resolved');});demo.resolve.hidden=true;
       const actions=text('div','','actions');actions.append(demo.reload,demo.issue,demo.retry,demo.resolve);
       const form=document.createElement('form');form.className='demo-share-import';const input=field(form,'demo_file','',{name:'bundle',type:'file',required:true});input.accept='application/json,.json';input.previousElementSibling.dataset.i18n='dot_progress_demo_file';
       const submit=button('demo_import');submit.type='submit';form.append(submit);input.addEventListener('change',()=>{demo.fileGeneration++;status(demo,'');});

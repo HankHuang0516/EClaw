@@ -45,7 +45,7 @@ function setup(existing) {
 async function importBundle(app) { const r = await admin(request(app).post(`${base}/bundle`)).send(fixture()); expect(r.status).toBe(200); return r.body.bundle; }
 async function issue(app, requestId = 'synthetic-share-0001') { const r = await admin(request(app).post(`${base}/shares`)).send({ requestId }); expect(r.status).toBe(200); return r.body.share; }
 
-describe('bounded seven-day server-checked demo shares', () => {
+describe('revocable lasting server-checked demo shares', () => {
     test('large archive parser rejects unauthorized and cross-site requests before parsing', async () => {
         const { auth } = setup(); const app = express(); let parsed = false;
         app.post(`${base}/bundle`, auth.authMiddleware, auth.adminMiddleware, adminWriteOrigin,
@@ -77,12 +77,15 @@ describe('bounded seven-day server-checked demo shares', () => {
             if (savedRailway === undefined) delete process.env.RAILWAY_ENVIRONMENT; else process.env.RAILWAY_ENVIRONMENT = savedRailway;
         }
     });
-    test('imports privately, issues exactly seven days, stores only token hash and discloses URL once', async () => {
+    test('imports privately, issues without automatic expiry, stores only token hash and discloses URL once', async () => {
         const { app, pool } = setup(); const bundle = await importBundle(app); const share = await issue(app);
-        expect(bundle.fileCount).toBe(4); expect(Date.parse(share.expiresAt) - Date.parse(share.createdAt)).toBe(7 * 86400000);
+        expect(bundle.fileCount).toBe(4); expect(share.expiresAt).toBeNull();
         expect(share.path).toMatch(/^\/AiHankApps\/taaze-demo\/[A-Za-z0-9_-]{43}\/$/);
         const stored = (await pool.query('SELECT * FROM taaze_demo_shares')).rows[0];
         expect(stored.token_hash).toMatch(/^[a-f0-9]{64}$/); expect(JSON.stringify(stored)).not.toContain(share.path.split('/')[3]);
+        expect(stored.expires_at).toBeNull();
+        await pool.query('UPDATE taaze_demo_shares SET created_at=$1 WHERE id=$2', [new Date('2000-01-01'), share.id]);
+        expect((await request(app).get(share.path + 'images/item.png')).status).toBe(200);
         const list = await admin(request(app).get(base)); expect(list.status).toBe(200); expect(JSON.stringify(list.body)).not.toMatch(/token|bodyBase64|Synthetic item/); expect(list.body.shares).toHaveLength(1);
         expect((await admin(request(app).post(`${base}/shares`)).send({ requestId: 'synthetic-share-0001' })).status).toBe(409);
         expect((await pool.query('SELECT * FROM taaze_demo_shares')).rows).toHaveLength(1);
