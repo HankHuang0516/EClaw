@@ -278,14 +278,20 @@
       demo.retry=button('demo_retry',()=>issue(demo,true));demo.retry.hidden=true;
       demo.resolve=button('demo_resolve',()=>{if(!valid(demo)||!demo.refreshed||demo.working||demo.shares.some(share=>!demo.baseline.has(share.id)&&live(share)))return;demo.uncertain=false;demo.requestId=null;demo.refreshed=false;draw(demo);status(demo,'demo_resolved');});demo.resolve.hidden=true;
       const actions=text('div','','actions');actions.append(demo.reload,demo.issue,demo.retry,demo.resolve);
-      const form=document.createElement('form');form.className='demo-share-import';const input=field(form,'demo_file','',{name:'bundle',type:'file',required:true});input.accept='application/json,.json';input.previousElementSibling.dataset.i18n='dot_progress_demo_file';
+      const form=document.createElement('form');form.className='demo-share-import';const input=field(form,'demo_file','',{name:'bundle',type:'file',required:true});input.accept='.zip,application/zip,application/json,.json';input.previousElementSibling.dataset.i18n='dot_progress_demo_file';
       const submit=button('demo_import');submit.type='submit';form.append(submit);input.addEventListener('change',()=>{demo.fileGeneration++;status(demo,'');});
       form.addEventListener('submit',event=>{event.preventDefault();busy(submit,()=>freeze(form,async()=>{
         if(!valid(demo))return;const file=input.files[0];if(!file||file.size>3*1024*1024){status(demo,'demo_invalid_file',true);return;}
         const generation=demo.fileGeneration;let payload;
-        try{payload=JSON.parse(await file.text());}catch(_error){status(demo,'demo_invalid_file',true);return;}
+        try{
+          if(/\.zip$/i.test(file.name)){
+            const bytes=new Uint8Array(await file.arrayBuffer());const chunks=[];
+            for(let start=0;start<bytes.length;start+=16384)chunks.push(String.fromCharCode(...bytes.subarray(start,start+16384)));
+            payload={sourceArchiveBase64:window.btoa(chunks.join('')),sourceCommit:'5ca4b96da5c81448d8ab81f07686df1b4563bbb0'};
+          }else payload=JSON.parse(await file.text());
+        }catch(_error){status(demo,'demo_invalid_file',true);return;}
         if(!valid(demo)||generation!==demo.fileGeneration)return;
-        if(!payload||typeof payload.sourceArchiveBase64!=='string'||typeof payload.sourceCommit!=='string'||!Array.isArray(payload.files)){status(demo,'demo_invalid_file',true);return;}
+        if(!payload||typeof payload.sourceArchiveBase64!=='string'||typeof payload.sourceCommit!=='string'||(payload.files!==undefined&&!Array.isArray(payload.files))){status(demo,'demo_invalid_file',true);return;}
         demo.generation++;
         const result=await request(base+'/bundle',{method:'POST',body:JSON.stringify(payload)},true);payload=null;
         if(!valid(demo)||generation!==demo.fileGeneration)return;

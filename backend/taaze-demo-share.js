@@ -5,7 +5,7 @@ const path = require('path');
 const { createHash, randomBytes, randomUUID } = require('crypto');
 const schema = fs.readFileSync(path.join(__dirname, 'taaze_demo_share_schema.sql'), 'utf8');
 const DEMO_ID = 'taaze-three-item-v5';
-const SOURCE_SHA256 = 'eb5bd290c3fcbf087e077631560e4ba946988160ff546ff929152e74995d1cd9';
+const SOURCE_SHA256 = '8d945ff62116e8053dc2a9c2a52ffe5aa767a78f36cc843295faa0dd0c69f34b';
 const SOURCE_COMMIT = '5ca4b96da5c81448d8ab81f07686df1b4563bbb0';
 const MAX_BYTES = 2 * 1024 * 1024;
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8' };
@@ -23,55 +23,91 @@ function decode(value) {
     if (!body.length || body.length > MAX_BYTES || body.toString('base64') !== value) throw fault(400, 'invalid_base64');
     return body;
 }
-function tarFiles(archive) {
-    const entries = new Map(); let offset = 0; let count = 0;
-    const number = bytes => {
-        const value = bytes.toString('ascii').replace(/\0.*$/, '').trim();
-        if (!/^[0-7]+$/.test(value)) throw fault(400, 'invalid_archive');
-        return parseInt(value, 8);
-    };
-    const string = bytes => bytes.toString('utf8').replace(/\0.*$/, '');
-    while (offset + 512 <= archive.length) {
-        const header = archive.subarray(offset, offset + 512);
-        if (header.every(byte => byte === 0)) {
-            if (archive.length - offset < 1024 || !archive.subarray(offset).every(byte => byte === 0)) throw fault(400, 'invalid_archive');
-            return entries;
+const { inflateRawSync } = require('zlib');
+const DIST_PREFIX = 'original/dist/';
+const CRC_TABLE = Array.from({ length: 256 }, (_, index) => {
+    let crc = index;
+    for (let i = 0; i < 8; i++) crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
+    return crc >>> 0;
+});
+function crc32(body) {
+    let crc = 0xffffffff;
+    for (const byte of body) crc = (crc >>> 8) ^ CRC_TABLE[(crc ^ byte) & 255];
+    return (crc ^ 0xffffffff) >>> 0;
+}
+function zipFiles(archive) {
+    try {
+        let end = archive.length - 22;
+        const minimum = Math.max(0, archive.length - 65557);
+        while (end >= minimum && archive.readUInt32LE(end) !== 0x06054b50) end--;
+        if (end < minimum || end + 22 + archive.readUInt16LE(end + 20) !== archive.length) throw new Error('end');
+        const count = archive.readUInt16LE(end + 10);
+        const centralSize = archive.readUInt32LE(end + 12); const centralOffset = archive.readUInt32LE(end + 16);
+        if (archive.readUInt16LE(end + 4) || archive.readUInt16LE(end + 6) || archive.readUInt16LE(end + 8) !== count || !count || count > 128 || centralOffset + centralSize !== end) throw new Error('central');
+        const entries = new Map(); const ranges = []; let cursor = centralOffset; let total = 0;
+        function extraFields(extra) {
+            let offset = 0;
+            while (offset < extra.length) {
+                if (offset + 4 > extra.length) throw new Error('extra');
+                const id = extra.readUInt16LE(offset); const length = extra.readUInt16LE(offset + 2);
+                if ([0x0001, 0x7075, 0x9901].includes(id) || offset + 4 + length > extra.length) throw new Error('extra');
+                offset += 4 + length;
+            }
         }
-        if (++count > 128) throw fault(400, 'invalid_archive');
-        const checksum = header.reduce((sum, byte, i) => sum + (i >= 148 && i < 156 ? 32 : byte), 0);
-        if (number(header.subarray(148, 156)) !== checksum) throw fault(400, 'invalid_archive');
-        const prefix = string(header.subarray(345, 500));
-        let name = (prefix ? `${prefix}/` : '') + string(header.subarray(0, 100));
-        name = name.replace(/^\.\//, '');
-        const size = number(header.subarray(124, 136));
-        const kind = header[156]; const start = offset + 512;
-        if (!Number.isSafeInteger(size) || size > MAX_BYTES || start + size > archive.length) throw fault(400, 'invalid_archive');
-        offset = start + Math.ceil(size / 512) * 512;
-        if (kind === 53) { // directory
-            if (size || !safePath(name.replace(/\/$/, ''))) throw fault(400, 'invalid_archive');
-            continue;
+        for (let i = 0; i < count; i++) {
+            if (cursor + 46 > end || archive.readUInt32LE(cursor) !== 0x02014b50) throw new Error('entry');
+            const madeBy = archive.readUInt16LE(cursor + 4); const version = archive.readUInt16LE(cursor + 6);
+            const flags = archive.readUInt16LE(cursor + 8); const method = archive.readUInt16LE(cursor + 10);
+            const checksum = archive.readUInt32LE(cursor + 16); const compressedSize = archive.readUInt32LE(cursor + 20); const size = archive.readUInt32LE(cursor + 24);
+            const nameLength = archive.readUInt16LE(cursor + 28); const extraLength = archive.readUInt16LE(cursor + 30); const commentLength = archive.readUInt16LE(cursor + 32);
+            const attributes = archive.readUInt32LE(cursor + 38); const local = archive.readUInt32LE(cursor + 42);
+            const next = cursor + 46 + nameLength + extraLength + commentLength;
+            if (next > end || version > 20 || (flags & ~0x0800) || ![0, 8].includes(method) || archive.readUInt16LE(cursor + 34)) throw new Error('entry');
+            const unixType = (attributes >>> 16) & 0xf000;
+            if ((attributes & 0x10) || ((madeBy >>> 8) === 3 && unixType && unixType !== 0x8000)) throw new Error('file-type');
+            const nameBytes = archive.subarray(cursor + 46, cursor + 46 + nameLength); const name = nameBytes.toString('utf8');
+            if (!safePath(name) || !nameBytes.equals(Buffer.from(name)) || entries.has(name)) throw new Error('path');
+            extraFields(archive.subarray(cursor + 46 + nameLength, cursor + 46 + nameLength + extraLength));
+            total += size;
+            if (size > MAX_BYTES || compressedSize > MAX_BYTES || total > MAX_BYTES || local + 30 > centralOffset || archive.readUInt32LE(local) !== 0x04034b50) throw new Error('bounds');
+            const localNameLength = archive.readUInt16LE(local + 26); const localExtraLength = archive.readUInt16LE(local + 28);
+            const dataStart = local + 30 + localNameLength + localExtraLength; const dataEnd = dataStart + compressedSize;
+            if (dataEnd > centralOffset || archive.readUInt16LE(local + 4) !== version || archive.readUInt16LE(local + 6) !== flags || archive.readUInt16LE(local + 8) !== method || archive.readUInt32LE(local + 10) !== archive.readUInt32LE(cursor + 12) || archive.readUInt32LE(local + 14) !== checksum || archive.readUInt32LE(local + 18) !== compressedSize || archive.readUInt32LE(local + 22) !== size || !nameBytes.equals(archive.subarray(local + 30, local + 30 + localNameLength))) throw new Error('local');
+            extraFields(archive.subarray(local + 30 + localNameLength, dataStart));
+            const compressed = archive.subarray(dataStart, dataEnd);
+            let body;
+            if (method === 0) body = compressed;
+            else {
+                const inflated = inflateRawSync(compressed, { maxOutputLength: Math.max(size, 1), info: true });
+                if (inflated.engine.bytesWritten !== compressed.length) throw new Error('deflate-tail');
+                body = inflated.buffer;
+            }
+            if (body.length !== size || crc32(body) !== checksum) throw new Error('content');
+            entries.set(name, body); ranges.push([local, dataEnd]); cursor = next;
         }
-        // No symlinks/hardlinks, device files, GNU/PAX overrides or sparse entries.
-        if (kind !== 0 && kind !== 48) throw fault(400, 'invalid_archive');
-        if (!safePath(name) || entries.has(name)) throw fault(400, 'invalid_archive');
-        entries.set(name, archive.subarray(start, start + size));
-    }
-    throw fault(400, 'invalid_archive');
+        if (cursor !== end) throw new Error('central-tail');
+        ranges.sort((a, b) => a[0] - b[0]); let expected = 0;
+        for (const [start, stop] of ranges) { if (start !== expected) throw new Error('overlap-or-gap'); expected = stop; }
+        if (expected !== centralOffset) throw new Error('local-tail');
+        return entries;
+    } catch (_err) { throw fault(400, 'invalid_archive'); }
 }
 function bundleInput(input) {
     strict(input, ['sourceArchiveBase64', 'sourceCommit', 'files']);
     // Verify the actual original archive bytes, not an untrusted manifest assertion.
     const archive = decode(input.sourceArchiveBase64);
     if (input.sourceCommit !== SOURCE_COMMIT || hash(archive) !== SOURCE_SHA256) throw fault(400, 'source_mismatch');
-    const sourceFiles = tarFiles(archive);
-    if (!Array.isArray(input.files) || !input.files.length || input.files.length > 64) throw fault(400, 'invalid_files');
+    const sourceFiles = zipFiles(archive);
+    const allowed = [...sourceFiles.keys()].filter(name => name.startsWith(DIST_PREFIX));
+    const mapping = input.files === undefined ? allowed.map(archivePath => ({ archivePath, path: archivePath.slice(DIST_PREFIX.length) })) : input.files;
+    if (!Array.isArray(mapping) || !mapping.length || mapping.length > 64 || mapping.length !== allowed.length) throw fault(400, 'invalid_files');
     let bytes = 0;
     const seen = new Set();
-    const files = input.files.map(file => {
+    const files = mapping.map(file => {
         strict(file, ['path', 'archivePath']);
         if (!safePath(file.path) || !TYPES[path.extname(file.path)] || seen.has(file.path)) throw fault(400, 'invalid_path');
         seen.add(file.path);
-        if (!safePath(file.archivePath) || !sourceFiles.has(file.archivePath)) throw fault(400, 'invalid_source_path');
+        if (!safePath(file.archivePath) || !file.archivePath.startsWith(DIST_PREFIX) || file.path !== file.archivePath.slice(DIST_PREFIX.length) || !sourceFiles.has(file.archivePath)) throw fault(400, 'invalid_source_path');
         const body = sourceFiles.get(file.archivePath); bytes += body.length;
         if (bytes > MAX_BYTES) throw fault(400, 'bundle_too_large');
         return { path: file.path, body, contentType: TYPES[path.extname(file.path)] };
@@ -102,7 +138,7 @@ function contentPolicy(contentType, body) {
             if (!/(?:^|\s)src\s*=/i.test(match[1])) scripts.push(`'sha256-${createHash('sha256').update(match[2].replace(/\r\n?/g, '\n')).digest('base64')}'`);
         }
     }
-    return `default-src 'none'; script-src 'self' ${scripts.join(' ')}; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src https://eclawbot.com/AiHankApps/taaze-demo/; form-action 'none'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'`;
+    return `default-src 'none'; script-src 'self' ${scripts.join(' ')}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; font-src 'self'; connect-src https://eclawbot.com/AiHankApps/taaze-demo/; form-action 'none'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'`;
 }
 function createRouters(getPool, auth) {
     if (!auth?.authMiddleware || !auth?.adminMiddleware) throw new Error('Demo shares require existing admin auth');

@@ -7,7 +7,7 @@ jest.mock('crypto', () => {
         const real = actual.createHash(algorithm); const chunks = [];
         const wrapper = { update(value) { chunks.push(Buffer.from(value)); real.update(value); return wrapper; }, digest(encoding) {
             const input = Buffer.concat(chunks);
-            if (input.length >= 1024 && input.length % 512 === 0 && input.includes(Buffer.from('Synthetic archive marker'))) return 'eb5bd290c3fcbf087e077631560e4ba946988160ff546ff929152e74995d1cd9';
+            if (input.includes(Buffer.from('SYNTHETIC ZIP RECEIPT'))) return '8d945ff62116e8053dc2a9c2a52ffe5aa767a78f36cc843295faa0dd0c69f34b';
             return real.digest(encoding);
         } }; return wrapper;
     } };
@@ -18,16 +18,32 @@ const { newDb } = require('pg-mem');
 const { createRouters, adminWriteOrigin, SOURCE_COMMIT } = require('../../taaze-demo-share');
 const base = '/api/taaze-demo-share';
 const admin = call => call.set('x-test-role', 'admin');
-const file = (path, archivePath = path) => ({ path, archivePath });
-function tar(entries) {
-    return Buffer.concat([...entries.flatMap(([name, text, kind = '0']) => {
-        const body = Buffer.from(text); const header = Buffer.alloc(512);
-        header.write(name); header.write(`${body.length.toString(8).padStart(11, '0')}\0`, 124); header.fill(32, 148, 156); header.write(kind, 156);
-        const checksum = header.reduce((sum, b) => sum + b, 0); header.write(`${checksum.toString(8).padStart(6, '0')}\0 `, 148);
-        return [header, body, Buffer.alloc((512 - body.length % 512) % 512)];
-    }), Buffer.alloc(1024)]);
+const file = (path, archivePath = `original/dist/${path}`) => ({ path, archivePath });
+function crc32(body) {
+    let crc = 0xffffffff;
+    for (const byte of body) {
+        crc ^= byte;
+        for (let bit = 0; bit < 8; bit++) crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
+    }
+    return (crc ^ 0xffffffff) >>> 0;
 }
-const fixture = () => ({ sourceCommit: SOURCE_COMMIT, sourceArchiveBase64: tar([['index.html', '<!doctype html><title>Synthetic archive marker</title><script src="assets/app.js"></script><script>window.syntheticInline=true;</script>'], ['assets/app.js', 'document.title="Synthetic loaded";'], ['data/items.json', '{"items":["Synthetic item"]}'], ['images/item.png', 'synthetic-image-bytes']]).toString('base64'), files: ['index.html', 'assets/app.js', 'data/items.json', 'images/item.png'].map(p => file(p)) });
+function zip(entries, comment = 'SYNTHETIC ZIP RECEIPT') {
+    const locals = []; const centrals = []; let offset = 0;
+    for (const [name, text, options = {}] of entries) {
+        const body = Buffer.from(text); const nameBytes = Buffer.from(name); const method = options.method ?? 8; const extra = options.extra || Buffer.alloc(0);
+        const compressed = method === 8 ? require('zlib').deflateRawSync(body) : body; const checksum = crc32(body);
+        const local = Buffer.alloc(30); local.writeUInt32LE(0x04034b50); local.writeUInt16LE(20, 4); local.writeUInt16LE(options.flags || 0, 6); local.writeUInt16LE(method, 8);
+        local.writeUInt32LE(checksum, 14); local.writeUInt32LE(compressed.length, 18); local.writeUInt32LE(body.length, 22); local.writeUInt16LE(nameBytes.length, 26); local.writeUInt16LE(extra.length, 28);
+        const central = Buffer.alloc(46); central.writeUInt32LE(0x02014b50); central.writeUInt16LE(0x0314, 4); central.writeUInt16LE(20, 6); central.writeUInt16LE(options.flags || 0, 8); central.writeUInt16LE(method, 10);
+        central.writeUInt32LE(checksum, 16); central.writeUInt32LE(compressed.length, 20); central.writeUInt32LE(body.length, 24); central.writeUInt16LE(nameBytes.length, 28); central.writeUInt16LE(extra.length, 30); central.writeUInt32LE(((options.mode ?? 0o600) << 16) >>> 0, 38); central.writeUInt32LE(offset, 42);
+        locals.push(local, nameBytes, extra, compressed); centrals.push(central, nameBytes, extra); offset += local.length + nameBytes.length + extra.length + compressed.length;
+    }
+    const central = Buffer.concat(centrals); const end = Buffer.alloc(22); const commentBytes = Buffer.from(comment);
+    end.writeUInt32LE(0x06054b50); end.writeUInt16LE(entries.length, 8); end.writeUInt16LE(entries.length, 10); end.writeUInt32LE(central.length, 12); end.writeUInt32LE(offset, 16); end.writeUInt16LE(commentBytes.length, 20);
+    return Buffer.concat([...locals, central, end, commentBytes]);
+}
+const syntheticEntries = () => [['original/dist/index.html', '<!doctype html><title>Synthetic archive marker</title><script src="assets/app.js"></script><script>window.syntheticInline=true;</script>', { method: 0 }], ['original/dist/assets/app.js', 'document.title="Synthetic loaded";'], ['original/dist/data/items.json', '{"items":["Synthetic item"]}'], ['original/dist/images/item.png', 'synthetic-image-bytes'], ['original/.openai/hosting.json', '{"synthetic":"private hosting metadata"}'], ['RECOVERY-RECEIPT.json', 'synthetic private receipt'], ['MANIFEST.sha256', 'synthetic private manifest']];
+const fixture = () => ({ sourceCommit: SOURCE_COMMIT, sourceArchiveBase64: zip(syntheticEntries()).toString('base64'), files: ['index.html', 'assets/app.js', 'data/items.json', 'images/item.png'].map(p => file(p)) });
 function setup(existing) {
     const db = newDb({ noAstCoverageCheck: true });
     db.public.registerFunction({ name: 'pg_advisory_xact_lock', args: ['integer'], returns: 'integer', implementation: () => 1 });
@@ -131,16 +147,55 @@ describe('revocable lasting server-checked demo shares', () => {
         const invalid = [ { ...fixture(), sourceCommit: 'unrelated' }, { ...fixture(), sourceArchiveBase64: Buffer.from('wrong archive').toString('base64') }, { ...fixture(), files: [file('../index.html')] }, { ...fixture(), files: [file('/index.html')] }, { ...fixture(), files: [file('index.html'), file('credentials.env')] }, { ...fixture(), files: [file('index.html'), file('index.html')] }, { ...fixture(), files: [file('assets/app.js')] }, { ...fixture(), files: [file('index.html', 'unrelated.html')] }, { ...fixture(), files: [{ path: 'index.html', bodyBase64: 'dW5yZWxhdGVk' }] } ];
         for (const body of invalid) expect((await admin(request(app).post(`${base}/bundle`)).send(body)).status).toBe(400);
         const bundle = await importBundle(app); expect((await admin(request(app).post(`${base}/bundle`)).send(fixture())).body.bundle).toEqual(bundle);
-        expect((await admin(request(app).post(`${base}/bundle`)).send({ ...fixture(), files: [file('index.html', 'assets/app.js')] })).status).toBe(409);
+        const changed = syntheticEntries(); changed[1][1] = 'different synthetic bytes';
+        expect((await admin(request(app).post(`${base}/bundle`)).send({ ...fixture(), sourceArchiveBase64: zip(changed).toString('base64') })).status).toBe(409);
         const share = await issue(app);
         for (const asset of ['%2e%2e%2fsecret', 'assets%2f..%2findex.html', '%252e%252e%252fsecret', 'missing.json', 'images%5citem.png']) expect((await request(app).get(share.path + asset)).status).toBe(404);
         expect((await request(app).post(share.path).send({})).status).toBe(404);
     });
-    test('rejects checksum damage, links, TAR traversal, duplicate paths and missing terminator', async () => {
+    test('ZIP auto-selection preserves original bytes and excludes hosting, receipt and manifest even on explicit requests', async () => {
+        const { app, pool } = setup(); const input = fixture(); delete input.files;
+        const result = await admin(request(app).post(`${base}/bundle`)).send(input); expect(result.status).toBe(200); expect(result.body.bundle.fileCount).toBe(4);
+        const stored = await pool.query('SELECT path, body FROM taaze_demo_assets');
+        for (const [name, body] of syntheticEntries().filter(([name]) => name.startsWith('original/dist/'))) expect(stored.rows.find(row => row.path === name.slice('original/dist/'.length)).body).toEqual(Buffer.from(body));
+        const share = await issue(app);
+        for (const name of ['original/.openai/hosting.json', '.openai/hosting.json', 'RECOVERY-RECEIPT.json', 'MANIFEST.sha256', 'README.txt']) expect((await request(app).get(share.path + name)).status).toBe(404);
+        for (const forbidden of ['original/.openai/hosting.json', 'RECOVERY-RECEIPT.json', 'MANIFEST.sha256']) {
+            const body = fixture(); body.files[1] = file('assets/app.js', forbidden);
+            expect((await admin(request(app).post(`${base}/bundle`)).send(body)).status).toBe(400);
+        }
+        const renamed = fixture(); renamed.files[1].path = 'renamed.js';
+        expect((await admin(request(app).post(`${base}/bundle`)).send(renamed)).status).toBe(400);
+        const csp = (await request(app).get(share.path)).headers['content-security-policy'];
+        expect(csp).toContain("img-src 'self' data: https://tile.openstreetmap.org"); expect(csp).not.toContain('unsafe-eval'); expect(csp).not.toContain('https:;');
+    });
+    test('rejects ZIP CRC damage, symlinks/special files, traversal, duplicates, encryption, descriptors and decompression overflow', async () => {
         const { app } = setup();
-        const inputs = [tar([['index.html', 'Synthetic archive marker', '2']]), tar([['../index.html', 'Synthetic archive marker']]), tar([['index.html', 'Synthetic archive marker'], ['index.html', 'duplicate']]), Buffer.from(fixture().sourceArchiveBase64, 'base64').subarray(0, -1024)];
-        const damaged = Buffer.from(fixture().sourceArchiveBase64, 'base64'); damaged[0] = 88; inputs.push(damaged);
-        for (const archive of inputs) expect((await admin(request(app).post(`${base}/bundle`)).send({ ...fixture(), sourceArchiveBase64: archive.toString('base64') })).status).toBe(400);
+        const inputs = [zip([['original/dist/index.html', 'link', { mode: 0o120777 }]]), zip([['original/dist/index.html', 'device', { mode: 0o020600 }]]), zip([['original/dist/../index.html', 'bad']]), zip([['original/dist/index.html', 'one'], ['original/dist/index.html', 'two']]), zip([['original/dist/index.html', 'encrypted', { flags: 1 }]]), zip([['original/dist/index.html', 'descriptor', { flags: 8 }]]), zip([['original/dist/index.html', 'x'.repeat(2 * 1024 * 1024 + 1)]])];
+        const damaged = Buffer.from(fixture().sourceArchiveBase64, 'base64'); damaged[30 + damaged.readUInt16LE(26)] ^= 1; inputs.push(damaged);
+        for (const archive of inputs) {
+            const r = await admin(request(app).post(`${base}/bundle`)).send({ ...fixture(), sourceArchiveBase64: archive.toString('base64') });
+            expect(r.status).toBe(400); expect(r.body.error).toBe('invalid_archive');
+        }
+    });
+    test('rejects local/central mismatch, malformed EOCD/central bounds, overlaps, ZIP64 and unsupported methods', async () => {
+        const { app } = setup();
+        const initial = Buffer.from(fixture().sourceArchiveBase64, 'base64');
+        const end = initial.length - 22 - Buffer.byteLength('SYNTHETIC ZIP RECEIPT'); const central = initial.readUInt32LE(end + 16);
+        const inputs = [];
+        for (const [position, change] of [[6, 1], [8, 7], [10, 1], [14, 1], [18, 1], [22, 1], [30, 1], [end + 4, 1], [end + 8, 1], [end + 12, 1], [end + 16, 1], [central + 6, 45], [central + 10, 99], [central + 42, 1]]) {
+            const changed = Buffer.from(initial); changed[position] ^= change; inputs.push(changed);
+        }
+        const overflow = Buffer.from(initial); overflow.writeUInt32LE(2 * 1024 * 1024 + 1, central + 24); inputs.push(overflow);
+        // Invalid raw DEFLATE with matching metadata still cannot produce a resource.
+        const deflated = zip([['original/dist/index.html', 'some deflated content']]); deflated[30 + deflated.readUInt16LE(26)] = 255; inputs.push(deflated);
+        const bomb = zip([['original/dist/index.html', 'x'.repeat(10000)]]); const bombEnd = bomb.length - 22 - Buffer.byteLength('SYNTHETIC ZIP RECEIPT'); const bombCentral = bomb.readUInt32LE(bombEnd + 16);
+        bomb.writeUInt32LE(4, 22); bomb.writeUInt32LE(4, bombCentral + 24); inputs.push(bomb);
+        for (const extra of [Buffer.from([1, 0, 0, 0]), Buffer.from([0x75, 0x70, 0, 0]), Buffer.from([0x01, 0x99, 0, 0]), Buffer.from([0x55, 0x54, 9, 0])]) inputs.push(zip([['original/dist/index.html', 'content', { extra }]]));
+        for (const archive of inputs) {
+            const r = await admin(request(app).post(`${base}/bundle`)).send({ ...fixture(), sourceArchiveBase64: archive.toString('base64') });
+            expect(r.status).toBe(400); expect(r.body.error).toBe('invalid_archive');
+        }
     });
     test('links, assets and revocation survive a router restart; unavailable database fails closed', async () => {
         const first = setup(); await importBundle(first.app); const share = await issue(first.app);

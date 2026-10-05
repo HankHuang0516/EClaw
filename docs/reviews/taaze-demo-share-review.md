@@ -1,25 +1,24 @@
-# Prepared Demo share review
+# Original Demo sharing review
 
-Status: local preparation only, awaiting the authorized original Sites v5 export. No real Demo bytes, bearer link, private project prose or credential is committed. This branch must remain undeployed until the original source and full anonymous flow are verified.
+The final implementation gives only the approved original v5 Demo a lasting no-login link, with explicit revocation. The authorized recovery ZIP has been verified privately. No original Demo bytes, bearer URL, private task prose or credential is in this public repository.
 
 ## Reuse, access and data
 
-Existing portal auth/admin middleware and cross-origin checks protect every management action. A bounded archive parser runs only after those checks; the admin router retains startup/rate gates. The terminal public router precedes pageview tracking and static fallthrough. The actual archive SHA and source commit are pinned; mappings can select only original archive bytes. PostgreSQL transactions retain immutable assets, hashed capabilities, nullable server expiry and revocation across restarts. Duplicate issue IDs cannot silently create another link.
+Existing auth/admin/cross-origin guards protect all management actions; normal startup/rate gates remain. The bounded upload parser checks authorization first. The terminal resource gate precedes pageview/static routes and fails closed. Exact archive/commit verification plus complete original-dist mapping prevent replacement bytes, renamed payloads and serving hosting/receipt/manifest. No new dependency, Site, Git credential, account or bot binding is introduced.
 
-## UI quality and efficiency
+Immutable assets, random hashed capabilities, server-only identity, NULL expiry and revocation persist in PostgreSQL. Transactions handle duplicate issuance, concurrent intents and rollback. Every HTML/data/script/image GET or HEAD rechecks permission; revocation blocks later reads. CSP permits the original OpenStreetMap tile host only. No inquiry, selection or decision causes a real send.
 
-The existing dot-progress manual substitute applies to the manager in that workspace; simplify was not run or claimed. The manager starts collapsed, loads metadata only on demand, disables issuance without an imported source, and keeps a new link only in session memory. Lost creation responses retain the original request ID for explicit retry and require revocation/acknowledgement before a fresh intent. Session epochs and cleanup prevent stale metadata or links from reappearing after logout. Existing private requests, busy helpers and canonical translations are reused. Six content-versioned resources update together.
+## Interaction and efficiency
 
-## Checked locally
+The established dot-progress manual substitute applies while simplify is unavailable; simplify was not run or claimed. The manager is collapsed and loads metadata on demand. ZIP selection does not upload; import and issuance each require a separate explicit action. Lost receipts retain the original request ID, and new active indefinite links must be revoked before resolving uncertainty. Capability URLs exist only in session memory and are wiped with private DOM on logout/expiry. Session epochs and metadata generations prevent late responses from restoring private state.
 
-- Final focused backend: 9 passed, with the optional real-PG case skipped in this final run. The earlier separate real-PG run passed concurrency, rollback and new-pool persistence before its disposable server was stopped.
-- Synthetic manager browser: 41 assertions; existing A UI regression: 104 assertions.
-- Assets and i18n: 18 tests; strict i18n passed. Node syntax and diff checks passed. Targeted lint has no errors; existing index unused-argument warning remains.
-- Synthetic 390px and 1280px manager screenshots inspected without overflow.
-- API help documents private metadata/import/issue/revoke; nonproduction admin debug exposes counts only. No homepage or sitemap entry is added.
+The six shared content-versioned URLs refresh together. Every canonical translation is updated, with the existing zh-TW fallback retained. Existing project content, push counts, decisions and history are untouched. The independent scroll fix is reviewed separately.
 
-## Open release checks
+## Evidence and release checks
 
-Obtain the authorized exact original archive or review a new source delivery with version proof; inspect original notices, assets and relative paths/CSP compatibility; run normal PR/CI/review; import and issue via the existing authenticated UI; verify real anonymous HTML/data/images/full flow and revocation/expiry. The current source download error is `file could not be authorized or resolved`; downloads stopped without a bypass. Deployment, actual source import and real-link creation have not happened.
-
-The subsequent long-term/no-login requirement removes automatic expiry for new shares. Focused synthetic regression verifies NULL expiry remains readable for old creation dates, immediate revocation, nullable-expiry manager receipts, no-expiry display and uncertain-operation guards. This is local preparation only; the original source and production flow remain pending.
+- Focused ZIP/backend checks: 12/12 including real disposable PostgreSQL concurrency, rollback and restart.
+- Exact original ZIP: CRC, manifest and source identity checked privately; all 11 served bytes match original files.
+- Fresh original-flow browser at 390/1280: covers/notices/ISBN, filters/search/details, illustrative map, unsent inquiry, display-choice/reset, no script/console errors or send requests; all-resource revocation passed locally.
+- Synthetic normal manager: explicit JSON/ZIP transport, role boundaries, double click, one-time URL handling, indefinite-link display, uncertain retry/revocation, session cleanup and locale switching.
+- Asset/i18n regression, strict reference check, syntax, diff check and whole-backend lint are required before PR; normal required CI before merge.
+- After deploy, import the exact ZIP and create the final link through the existing authenticated manager. Verify its full original flow anonymously, homepage/sitemap exclusion and a separate explicitly revoked QA link. Keep source data/capabilities out of public release evidence. No email is sent.
