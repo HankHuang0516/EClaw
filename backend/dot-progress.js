@@ -4,7 +4,8 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const { randomUUID } = require('crypto');
+const { randomUUID, createHash } = require('crypto');
+const search = require('./dot-progress-search');
 const { safeUpdatedAtToISO } = require('./safe-date');
 const seed = require('./dot-progress-seed.json');
 const schema = fs.readFileSync(path.join(__dirname, 'dot_progress_schema.sql'), 'utf8');
@@ -106,10 +107,26 @@ function calendarPeriod(date, view) {
     return { date, view, from: new Date(from).toISOString().slice(0, 10), to: new Date(to).toISOString().slice(0, 10), startAt: new Date(from - 28800000).toISOString(), endAt: new Date(to - 28800000).toISOString() };
 }
 function periodRowMatches(row, ownerDate, period) {
+    if (row.repeat) return false; // Recurring occurrences are a separate derived projection.
     if (row.plannedStart === null && row.plannedEnd === null) return ownerDate >= period.from && ownerDate < period.to;
     const start = Date.parse(row.plannedStart); const end = Date.parse(row.plannedEnd);
     const lower = Date.parse(period.startAt); const upper = Date.parse(period.endAt);
     return start < upper && (end > lower || (start === end && start >= lower));
+}
+const repeatQuery = "SELECT * FROM dot_progress_schedule WHERE rows @> '[{\"repeat\":{\"frequency\":\"daily\"}}]'::jsonb ORDER BY date";
+function repeatOccurrences(boards, period) {
+    const occurrences = [];
+    for (const board of boards) for (const row of board.rows) {
+        if (!row.repeat) continue;
+        const from = Math.max(Date.parse(period.from + 'T00:00:00Z'), Date.parse(row.repeat.from + 'T00:00:00Z'));
+        const to = Math.min(Date.parse(period.to + 'T00:00:00Z'), row.repeat.until ? Date.parse(row.repeat.until + 'T00:00:00Z') + 86400000 : Infinity);
+        for (let at = from; at < to; at += 86400000) {
+            const date = new Date(at).toISOString().slice(0, 10);
+            const id = createHash('sha256').update(board.date + '\0' + row.id + '\0' + date).digest('hex').slice(0, 32);
+            occurrences.push({ ...row, id: date === board.date ? row.id : 'daily-' + id, ownerDate: date, sourceDate: board.date, sourceRowId: row.id, status: 'planned', actualIds: [], plannedStart: null, plannedEnd: null });
+        }
+    }
+    return occurrences;
 }
 function timelineTime(value) {
     // This interval journal has millisecond precision. Reject finer input rather
@@ -173,7 +190,7 @@ function scheduleInput(input, date) {
     const rowIds = new Set(); const actualIds = new Set();
     const lower = Date.parse(`${date}T00:00:00+08:00`); const upper = lower + 86400000;
     const rows = input.rows.map(row => {
-        strictBody(row, ['id', 'projectId', 'projectLabel', 'goal', 'plannedStart', 'plannedEnd', 'status', 'actualIds', 'archived']);
+        strictBody(row, ['id', 'projectId', 'projectLabel', 'goal', 'plannedStart', 'plannedEnd', 'status', 'actualIds', 'archived', 'repeat']);
         if (row.archived !== undefined && typeof row.archived !== 'boolean') throw fault(400, 'invalid_archived');
         if (typeof row.id !== 'string' || !ID.test(row.id) || rowIds.has(row.id)) throw fault(400, 'invalid_schedule_id');
         rowIds.add(row.id);
@@ -191,7 +208,15 @@ function scheduleInput(input, date) {
             if (typeof id !== 'string' || !ID.test(id) || actualIds.has(id) || actualIds.size >= 500) throw fault(400, 'invalid_actual_ids');
             actualIds.add(id);
         }
-        return { id: row.id, projectId: row.projectId, projectLabel: timelineText(row.projectLabel, 160, true), goal: timelineText(row.goal, 4000, true), plannedStart, plannedEnd, status: row.status, actualIds: [...row.actualIds], ...(row.archived === true ? { archived: true } : {}) };
+        let repeat;
+        if (row.repeat !== undefined) {
+            strictBody(row.repeat, ['frequency', 'from', 'until']);
+            if (row.repeat.frequency !== 'daily' || plannedStart !== null || row.status !== 'planned' || row.actualIds.length) throw fault(400, 'invalid_repeat');
+            const from = timelineDate(row.repeat.from); const until = row.repeat.until === null ? null : timelineDate(row.repeat.until);
+            if (until !== null && until < from) throw fault(400, 'invalid_repeat');
+            repeat = { frequency: 'daily', from, until };
+        }
+        return { id: row.id, projectId: row.projectId, projectLabel: timelineText(row.projectLabel, 160, true), goal: timelineText(row.goal, 4000, true), plannedStart, plannedEnd, status: row.status, actualIds: [...row.actualIds], ...(row.archived === true ? { archived: true } : {}), ...(repeat ? { repeat } : {}) };
     });
     if (input.rowOrder !== undefined && (!Array.isArray(input.rowOrder) || input.rowOrder.length > 550 || input.rowOrder.some(id => typeof id !== 'string' || !ID.test(id)) || new Set(input.rowOrder).size !== input.rowOrder.length)) throw fault(400, 'invalid_row_order');
     return { requestId: token, version: input.version, rows, ...(input.rowOrder === undefined ? {} : { rowOrder: [...input.rowOrder] }) };
@@ -472,6 +497,27 @@ function createRouter(getPool, auth) {
         }
         next();
     });
+    router.get('/search', withError(async (req, res) => {
+        const input = strictBody(req.query, ['query', 'offset']); const query = text(input.query, 200, true); const offset = timelineOffset(input.offset);
+        const pattern = '%' + query.replace(/[\\%_]/g, char => '\\' + char) + '%';
+        const where = " WHERE (content ILIKE $1 OR title ILIKE $1 OR id ILIKE $1 OR date ILIKE $1)";
+        const pool = await database();
+        const result = await transaction(pool, async client => {
+            await client.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+            const count = await client.query(`SELECT COUNT(*) AS total FROM ${search.sql}${where}`, [pattern]);
+            const rows = await client.query(`SELECT * FROM ${search.sql}${where} ORDER BY at DESC,kind,id LIMIT 50 OFFSET $2`, [pattern, offset]);
+            const total = Number(count.rows[0].total);
+            return { entries: rows.rows.map(row => search.hit(row, query)), total, limit: 50, offset, nextOffset: offset + rows.rows.length < total ? offset + rows.rows.length : null };
+        });
+        res.json({ success: true, ...result });
+    }));
+    router.get('/search-item', withError(async (req, res) => {
+        const input = strictBody(req.query, ['kind', 'id']);
+        if (!search.kinds.has(input.kind) || typeof input.id !== 'string' || !ID.test(input.id)) throw fault(400, 'invalid_search_target');
+        const pool = await database(); const result = await pool.query(`SELECT * FROM ${search.sql} WHERE kind=$1 AND id=$2`, [input.kind, input.id]);
+        if (!result.rows[0]) throw fault(404, 'search_target_missing');
+        res.json({ success: true, entry: { ...search.hit(result.rows[0], ''), content: search.content(result.rows[0].content) } });
+    }));
     router.get('/projects', withError(async (_req, res) => {
         const pool = await database();
         const result = await pool.query('SELECT p.id, p.data, p.version, COALESCE(s.push_count,0) AS push_count, s.last_pushed_at FROM dot_progress_projects p LEFT JOIN dot_progress_push_state s ON s.project_id=p.id ORDER BY p.updated_at DESC, p.id');
@@ -617,7 +663,7 @@ function createRouter(getPool, auth) {
         const pool = await database();
         const entries = await transaction(pool, async client => {
             await client.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
-            const result = await client.query('SELECT * FROM dot_progress_review ORDER BY created_at DESC, id DESC LIMIT 250');
+            const result = await client.query("SELECT * FROM dot_progress_review ORDER BY CASE WHEN occurred_at LIKE '____-__-__' THEN CAST(occurred_at || 'T00:00:00+08:00' AS timestamptz) ELSE CAST(occurred_at AS timestamptz) END DESC, created_at DESC, id DESC LIMIT 250");
             return Promise.all(result.rows.map(row => reviewView(client, row)));
         });
         res.json({ success: true, entries });
@@ -655,13 +701,20 @@ function createRouter(getPool, auth) {
         const from = new Date(Math.max(minimum, Date.parse(`${period.from}T00:00:00Z`) - 7 * 86400000)).toISOString().slice(0, 10);
         const through = new Date(Math.min(maximum, Date.parse(`${period.to}T00:00:00Z`) + 6 * 86400000)).toISOString().slice(0, 10);
         const pool = await database();
-        const result = await pool.query('SELECT * FROM dot_progress_schedule WHERE date >= $1 AND date <= $2 ORDER BY date', [from, through]);
-        const schedules = result.rows.map(row => {
-            const schedule = scheduleRecord(row.date, row);
-            const matchingRowIds = schedule.rows.filter(entry => periodRowMatches(entry, schedule.date, period)).map(entry => entry.id);
-            return { ...schedule, matchingRowIds };
-        }).filter(schedule => schedule.matchingRowIds.length);
-        res.json({ success: true, period, schedules });
+        const projection = await transaction(pool, async client => {
+            await client.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+            const result = await client.query('SELECT * FROM dot_progress_schedule WHERE date >= $1 AND date <= $2 ORDER BY date', [from, through]);
+            const rules = (await client.query(repeatQuery)).rows.map(row => scheduleRecord(row.date, row));
+            if (rules.reduce((count, board) => count + board.rows.filter(row => row.repeat).length, 0) > 100) throw fault(409, 'repeat_limit');
+            const schedules = result.rows.map(row => {
+                const schedule = scheduleRecord(row.date, row);
+                const matchingRowIds = schedule.rows.filter(entry => periodRowMatches(entry, schedule.date, period)).map(entry => entry.id);
+                return { ...schedule, matchingRowIds };
+            }).filter(schedule => schedule.matchingRowIds.length);
+            const occurrences = repeatOccurrences(rules, period);
+            return { schedules, ...(occurrences.length ? { occurrences } : {}) };
+        });
+        res.json({ success: true, period, ...projection });
     }));
     router.get('/schedule', withError(async (req, res) => {
         const query = strictBody(req.query, ['date']); const date = timelineDate(query.date);
@@ -695,6 +748,10 @@ function createRouter(getPool, auth) {
                 }
             }
             await scheduleReferences(client, input.rows, input.rowOrder);
+            if (input.rows.some(row => row.repeat)) {
+                const rules = (await client.query(repeatQuery)).rows.filter(board => board.date !== date);
+                if (rules.reduce((count, board) => count + board.rows.filter(row => row.repeat).length, input.rows.filter(row => row.repeat).length) > 100) throw fault(409, 'repeat_limit');
+            }
             const rowOrder = input.rowOrder ?? before.rowOrder;
             const result = prior
                 ? await client.query('UPDATE dot_progress_schedule SET rows=$2::jsonb,row_order=$3::jsonb,version=version+1,updated_at=clock_timestamp() WHERE date=$1 RETURNING *', [date, JSON.stringify(input.rows), JSON.stringify(rowOrder)])
@@ -761,7 +818,8 @@ function createRouter(getPool, auth) {
         res.json({ success: true, ...page });
     }));
     router.get('/timeline', withError(async (req, res) => {
-        const query = strictBody(req.query, ['date', 'project', 'offset', 'view']);
+        const query = strictBody(req.query, ['date', 'project', 'offset', 'view', 'order']);
+        if (query.order !== undefined && !['oldest', 'newest'].includes(query.order)) throw fault(400, 'invalid_order');
         const offset = timelineOffset(query.offset);
         const terms = [];
         const params = [];
@@ -783,11 +841,24 @@ function createRouter(getPool, auth) {
         const page = await transaction(pool, async client => {
             await client.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
             const count = await client.query(`SELECT COUNT(*) AS total FROM dot_progress_timeline${where}`, params);
-            const rows = await client.query(`SELECT * FROM dot_progress_timeline${where} ORDER BY COALESCE(started_at, ended_at), id LIMIT 500 OFFSET $${params.length + 1}`, [...params, offset]);
+            const direction = query.order === 'newest' ? ' DESC' : '';
+            const rows = await client.query(`SELECT * FROM dot_progress_timeline${where} ORDER BY COALESCE(started_at, ended_at)${direction}, id${direction} LIMIT 500 OFFSET $${params.length + 1}`, [...params, offset]);
             const total = Number(count.rows[0].total);
             return { entries: rows.rows.map(timelineRecord), total, limit: 500, offset, nextOffset: offset + rows.rows.length < total ? offset + rows.rows.length : null };
         });
         res.json({ success: true, ...page });
+    }));
+    router.get('/timeline/:id', withError(async (req, res) => {
+        if (!ID.test(req.params.id)) throw fault(400, 'invalid_id');
+        const pool = await database(); const result = await pool.query('SELECT * FROM dot_progress_timeline WHERE id=$1', [req.params.id]);
+        if (!result.rows[0]) throw fault(404, 'timeline_not_found');
+        res.json({ success: true, entry: timelineRecord(result.rows[0]) });
+    }));
+    router.get('/review/:id', withError(async (req, res) => {
+        if (!ID.test(req.params.id)) throw fault(400, 'invalid_id');
+        const pool = await database(); const result = await pool.query('SELECT * FROM dot_progress_review WHERE id=$1', [req.params.id]);
+        if (!result.rows[0]) throw fault(404, 'review_not_found');
+        res.json({ success: true, entry: await reviewView(pool, result.rows[0]) });
     }));
     router.post('/timeline', withError(async (req, res) => {
         const { requestId: token, ...data } = normalizeTimelineInput(req.body);

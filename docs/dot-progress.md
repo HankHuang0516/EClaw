@@ -65,3 +65,11 @@ Regression: `NODE_PATH=<existing backend node_modules> node backend/scripts/test
 
 
 The [workspace goal Gantt](dot-progress-schedule.md) stays at the top of the confirmed administrator workspace, with project cards below. Actual work records are read only in this chart; planned dates and order live in independent schedule tables. Pointer move/resize/reorder and keyboard/mobile date editing save only the planned board; Undo retains prior planned revisions. Loading the private workspace reads its date-filtered timeline after administrator confirmation, without requiring the history sidebar to open. Anonymous views make no schedule or timeline reads.
+
+## Search and source positioning
+
+The page search uses only approved completed summaries for public visitors. The existing administrator session enables explicit full-workspace search across projects, comments, decision records, review entries, timeline records, planned boards and their retained revisions. Lazy or paginated panels need not already be open. Each result shows its source kind, date/version and a safe text snippet; expanding it reads the exact matched source, and Locate opens the current parent with the original retained content alongside it. Changed or absent current content never substitutes for the original match.
+
+`GET /api/dot-progress/search?query=TEXT&offset=0` returns `entries,total,limit:50,offset,nextOffset` under the existing admin/origin/rate/no-store gates. Matching is case-insensitive and literal, including `%` and `_`. `GET /api/dot-progress/search-item?kind=KIND&id=ID` reads exactly one allowed source. Accounts, credentials, request receipts and share capabilities are outside the searchable workspace. Exact current source reads are `GET /api/dot-progress/timeline/:id` and `GET /api/dot-progress/review/:id`.
+
+Search text/results live only in memory. Revalidation conceals private search, and clear, logout, expiry or role loss invalidate late responses. A refreshed public projection clears prior public matches. Full source records are rendered as text, never HTML. Timeline and review sidebars sort by item time newest first; review date-only values mean Taipei midnight and sub-millisecond timestamp ordering is retained in the browser.

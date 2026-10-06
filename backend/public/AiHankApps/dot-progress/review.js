@@ -2,10 +2,12 @@
   'use strict';
   let h, panel, backdrop, list, trigger, creation, feedback, closed=true, entries=[], bound=false, generation=0, exit, reload;
   const drafts=new Map(), requests=new Map();
+  function itemStamp(entry){const value=entry.occurredAt.length===10?entry.occurredAt+'T00:00:00+08:00':entry.occurredAt;const fraction=(value.match(/\.(\d+)/)?.[1]||'').padEnd(9,'0').slice(3,9);return BigInt(Date.parse(value))*1000000n+BigInt(fraction||'0');}
   function identifier(key,body){const fingerprint=JSON.stringify(body);const prior=requests.get(key);if(prior?.fingerprint===fingerprint)return prior.id;const id=root.crypto.randomUUID();requests.set(key,{fingerprint,id});return id;}
   function close(restoreFocus=true){const reading=h.captureReading();closed=true;panel.hidden=true;backdrop.hidden=true;document.body.classList.remove('review-open');trigger.setAttribute('aria-expanded','false');if(restoreFocus!==false&&trigger.isConnected&&!trigger.closest('[hidden]'))trigger.focus({preventScroll:true});h.restoreReading(reading);}
   function clear(){generation++;entries=[];drafts.clear();requests.clear();if(panel){close(false);conceal(false);list.replaceChildren();creation.reset();feedback.textContent='';}}
   function render(){
+    entries.sort((a,b)=>{const left=itemStamp(a),right=itemStamp(b);return left===right?Date.parse(b.createdAt)-Date.parse(a.createdAt)||b.id.localeCompare(a.id):left<right?1:-1;});
     list.replaceChildren();
     if(!entries.length)list.append(h.text('p',h.tr('review_empty'),'small'));
     entries.forEach(entry=>{
@@ -30,7 +32,7 @@
     h=helpers;trigger=document.getElementById('review-toggle');
     panel=document.createElement('aside');panel.id='project-review';panel.className='review-panel';panel.hidden=true;panel.setAttribute('aria-label',h.tr('review_title'));
     backdrop=h.text('div','','review-backdrop');backdrop.hidden=true;backdrop.addEventListener('click',close);
-    const head=h.text('div','','toolbar');head.append(h.text('h2',h.tr('review_title')));exit=h.action('review_close',close,true);head.append(exit);panel.append(head,h.text('p',h.tr('review_note'),'small'));
+    const head=h.text('div','','toolbar');head.append(h.text('h2',h.tr('review_title')));exit=h.action('review_close',close,true);head.append(exit);panel.append(head,h.text('p',h.tr('sort_newest'),'small'),h.text('p',h.tr('review_note'),'small'));
     reload=h.action('retry',()=>h.busy(reload,load,feedback),true);panel.append(reload);
     feedback=h.text('p','');feedback.setAttribute('role','status');panel.append(feedback);
     const create=document.createElement('details');create.append(h.text('summary',h.tr('review_add')));creation=document.createElement('form');
@@ -57,5 +59,11 @@
     init(h);values.forEach(([name,value])=>{const node=creation.elements.namedItem(name);if(node)node.value=value;});if(wasOpen){closed=false;panel.hidden=false;backdrop.hidden=false;document.body.classList.add('review-open');}render();
   }
   function conceal(value){if(panel){panel.style.visibility=backdrop.style.visibility=value?'hidden':'';panel.inert=backdrop.inert=value;}}
-  root.dotReview={init,clear,translate,close,conceal};
+  async function locate(target){
+    if(!h.session().isAdmin||h.session().checking)return;const current=generation,epoch=h.session().epoch;
+    const response=await h.request('/review/'+encodeURIComponent(target.owner||target.id),{},true);if(current!==generation||epoch!==h.session().epoch||!h.session().isAdmin)return;
+    root.dotTimeline.close(false);closed=false;panel.hidden=backdrop.hidden=false;document.body.classList.add('review-open');trigger.setAttribute('aria-expanded','true');install(response.entry);
+    const item=Array.from(list.children).find(node=>node.dataset.reviewId===response.entry.id);if(target.content){const source=h.text('section','','search-source');source.append(h.text('strong',h.tr('search_source')),h.text('p',(target.version?h.tr('version')+' '+target.version+' · ':'')+h.formatTime(target.at),'small'),h.text('p',target.content));item.append(source);}item.classList.add('search-highlight');item.scrollIntoView({block:'start',behavior:'instant'});exit.focus({preventScroll:true});
+  }
+  root.dotReview={init,clear,translate,close,conceal,locate};
 })(window);

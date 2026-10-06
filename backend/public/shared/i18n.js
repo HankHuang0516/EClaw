@@ -127,6 +127,17 @@ const TRANSLATIONS = {
 
 
     en: {
+        "dot_progress_search_title": "Search",
+        "dot_progress_search_hint": "Search content you can access, including records not yet expanded.",
+        "dot_progress_search_locate": "Locate item",
+        "dot_progress_search_source": "Matched source content",
+        "dot_progress_search_empty": "No matching content",
+        "dot_progress_search_clear": "Clear search",
+        "dot_progress_schedule_repeat": "Repeat daily",
+        "dot_progress_schedule_repeat_from": "Repeat start date",
+        "dot_progress_schedule_repeat_until": "Repeat end date (optional)",
+        "dot_progress_sort_newest": "Newest item time first",
+
         "dot_progress_timeline_gantt": "Daily Gantt chart",
         "dot_progress_timeline_today": "Today",
         "dot_progress_timeline_gantt_point": "Time point",
@@ -651274,6 +651285,17 @@ const TRANSLATIONS = {
 
 
     zh: {
+        "dot_progress_search_title": "搜尋",
+        "dot_progress_search_hint": "搜尋有權查看的內容，包括尚未展開的紀錄。",
+        "dot_progress_search_locate": "定位項目",
+        "dot_progress_search_source": "比對的來源內容",
+        "dot_progress_search_empty": "沒有符合的內容",
+        "dot_progress_search_clear": "清除搜尋",
+        "dot_progress_schedule_repeat": "每日重複",
+        "dot_progress_schedule_repeat_from": "重複起始日期",
+        "dot_progress_schedule_repeat_until": "重複結束日期（可留白）",
+        "dot_progress_sort_newest": "依項目時間由新到舊",
+
         "dot_progress_timeline_gantt": "當日甘特圖",
         "dot_progress_timeline_today": "今日",
         "dot_progress_timeline_gantt_point": "時間點",
@@ -1236628,6 +1236650,17 @@ const TRANSLATIONS = {
 
 
 "zh-CN": {
+        "dot_progress_search_title": "搜索",
+        "dot_progress_search_hint": "搜索有权查看的内容，包括尚未展开的记录。",
+        "dot_progress_search_locate": "定位项目",
+        "dot_progress_search_source": "匹配的来源内容",
+        "dot_progress_search_empty": "没有匹配的内容",
+        "dot_progress_search_clear": "清除搜索",
+        "dot_progress_schedule_repeat": "每天重复",
+        "dot_progress_schedule_repeat_from": "重复开始日期",
+        "dot_progress_schedule_repeat_until": "重复结束日期（可留空）",
+        "dot_progress_sort_newest": "按项目时间从新到旧",
+
         "dot_progress_timeline_gantt": "当日甘特图",
         "dot_progress_timeline_today": "今日",
         "dot_progress_timeline_gantt_point": "时间点",
@@ -1851372,6 +1851405,17 @@ const TRANSLATIONS = {
 
 
     ja: {
+        "dot_progress_search_title": "検索",
+        "dot_progress_search_hint": "閲覧権限のある内容を、未展開の記録も含めて検索します。",
+        "dot_progress_search_locate": "項目を表示",
+        "dot_progress_search_source": "一致した元の内容",
+        "dot_progress_search_empty": "一致する内容がありません",
+        "dot_progress_search_clear": "検索をクリア",
+        "dot_progress_schedule_repeat": "毎日繰り返す",
+        "dot_progress_schedule_repeat_from": "繰り返し開始日",
+        "dot_progress_schedule_repeat_until": "繰り返し終了日（任意）",
+        "dot_progress_sort_newest": "項目の日時が新しい順",
+
         "dot_progress_timeline_gantt": "日別ガントチャート",
         "dot_progress_timeline_today": "今日",
         "dot_progress_timeline_gantt_point": "時点",
@@ -2415042,6 +2415086,17 @@ const TRANSLATIONS = {
 
 
     ko: {
+        "dot_progress_search_title": "검색",
+        "dot_progress_search_hint": "아직 펼치지 않은 기록을 포함하여 접근할 수 있는 내용을 검색합니다.",
+        "dot_progress_search_locate": "항목 위치로 이동",
+        "dot_progress_search_source": "일치한 원본 내용",
+        "dot_progress_search_empty": "일치하는 내용이 없습니다",
+        "dot_progress_search_clear": "검색 지우기",
+        "dot_progress_schedule_repeat": "매일 반복",
+        "dot_progress_schedule_repeat_from": "반복 시작 날짜",
+        "dot_progress_schedule_repeat_until": "반복 종료 날짜(선택 사항)",
+        "dot_progress_sort_newest": "항목 시간 기준 최신순",
+
         "dot_progress_timeline_gantt": "일일 간트 차트",
         "dot_progress_timeline_today": "오늘",
         "dot_progress_timeline_gantt_point": "시점",
@@ -2947477,6 +2947532,17 @@ const TRANSLATIONS = {
 
 
     th: {
+        "dot_progress_search_title": "ค้นหา",
+        "dot_progress_search_hint": "ค้นหาเนื้อหาที่คุณมีสิทธิ์ดู รวมถึงบันทึกที่ยังไม่ได้ขยาย",
+        "dot_progress_search_locate": "ไปยังรายการ",
+        "dot_progress_search_source": "เนื้อหาต้นทางที่ตรงกัน",
+        "dot_progress_search_empty": "ไม่มีเนื้อหาที่ตรงกัน",
+        "dot_progress_search_clear": "ล้างการค้นหา",
+        "dot_progress_schedule_repeat": "ทำซ้ำทุกวัน",
+        "dot_progress_schedule_repeat_from": "วันที่เริ่มทำซ้ำ",
+        "dot_progress_schedule_repeat_until": "วันที่สิ้นสุดการทำซ้ำ (ไม่บังคับ)",
+        "dot_progress_sort_newest": "เรียงตามเวลารายการจากใหม่ไปเก่า",
+
         "dot_progress_timeline_gantt": "แผนภูมิแกนต์รายวัน",
         "dot_progress_timeline_today": "วันนี้",
         "dot_progress_timeline_gantt_point": "จุดเวลา",
@@ -3474742,6 +3474808,17 @@ const TRANSLATIONS = {
 
 
     vi: {
+        "dot_progress_search_title": "Tìm kiếm",
+        "dot_progress_search_hint": "Tìm nội dung bạn có quyền xem, kể cả bản ghi chưa mở rộng.",
+        "dot_progress_search_locate": "Đến mục",
+        "dot_progress_search_source": "Nội dung nguồn khớp",
+        "dot_progress_search_empty": "Không có nội dung khớp",
+        "dot_progress_search_clear": "Xóa tìm kiếm",
+        "dot_progress_schedule_repeat": "Lặp hằng ngày",
+        "dot_progress_schedule_repeat_from": "Ngày bắt đầu lặp",
+        "dot_progress_schedule_repeat_until": "Ngày kết thúc lặp (tùy chọn)",
+        "dot_progress_sort_newest": "Thời gian mục mới nhất trước",
+
         "dot_progress_timeline_gantt": "Biểu đồ Gantt trong ngày",
         "dot_progress_timeline_today": "Hôm nay",
         "dot_progress_timeline_gantt_point": "Thời điểm",
@@ -4002077,6 +4002154,17 @@ const TRANSLATIONS = {
 
 
     id: {
+        "dot_progress_search_title": "Cari",
+        "dot_progress_search_hint": "Cari konten yang dapat Anda akses, termasuk catatan yang belum dibuka.",
+        "dot_progress_search_locate": "Temukan item",
+        "dot_progress_search_source": "Konten sumber yang cocok",
+        "dot_progress_search_empty": "Tidak ada konten yang cocok",
+        "dot_progress_search_clear": "Hapus pencarian",
+        "dot_progress_schedule_repeat": "Ulangi setiap hari",
+        "dot_progress_schedule_repeat_from": "Tanggal mulai pengulangan",
+        "dot_progress_schedule_repeat_until": "Tanggal akhir pengulangan (opsional)",
+        "dot_progress_sort_newest": "Waktu item terbaru dahulu",
+
         "dot_progress_timeline_gantt": "Bagan Gantt harian",
         "dot_progress_timeline_today": "Hari ini",
         "dot_progress_timeline_gantt_point": "Titik waktu",
@@ -4529028,6 +4529116,17 @@ const TRANSLATIONS = {
 
 
     fr: {
+        "dot_progress_search_title": "Rechercher",
+        "dot_progress_search_hint": "Recherchez le contenu accessible, y compris les relevés non dépliés.",
+        "dot_progress_search_locate": "Localiser l’élément",
+        "dot_progress_search_source": "Contenu source correspondant",
+        "dot_progress_search_empty": "Aucun contenu correspondant",
+        "dot_progress_search_clear": "Effacer la recherche",
+        "dot_progress_schedule_repeat": "Répéter chaque jour",
+        "dot_progress_schedule_repeat_from": "Début de répétition",
+        "dot_progress_schedule_repeat_until": "Fin de répétition (facultative)",
+        "dot_progress_sort_newest": "Date d’élément la plus récente d’abord",
+
         "dot_progress_timeline_gantt": "Diagramme de Gantt du jour",
         "dot_progress_timeline_today": "Aujourd’hui",
         "dot_progress_timeline_gantt_point": "Instant",
@@ -5054604,6 +5054703,17 @@ const TRANSLATIONS = {
 
 
     es: {
+        "dot_progress_search_title": "Buscar",
+        "dot_progress_search_hint": "Busca contenido al que tienes acceso, incluidos registros sin desplegar.",
+        "dot_progress_search_locate": "Localizar elemento",
+        "dot_progress_search_source": "Contenido de origen coincidente",
+        "dot_progress_search_empty": "No hay contenido coincidente",
+        "dot_progress_search_clear": "Borrar búsqueda",
+        "dot_progress_schedule_repeat": "Repetir a diario",
+        "dot_progress_schedule_repeat_from": "Inicio de repetición",
+        "dot_progress_schedule_repeat_until": "Fin de repetición (opcional)",
+        "dot_progress_sort_newest": "Fecha de elemento más reciente primero",
+
         "dot_progress_timeline_gantt": "Diagrama de Gantt diario",
         "dot_progress_timeline_today": "Hoy",
         "dot_progress_timeline_gantt_point": "Instante",
@@ -5572723,6 +5572833,17 @@ const TRANSLATIONS = {
 
 
     de: {
+        "dot_progress_search_title": "Suchen",
+        "dot_progress_search_hint": "Zugängliche Inhalte einschließlich noch nicht aufgeklappter Einträge suchen.",
+        "dot_progress_search_locate": "Eintrag anzeigen",
+        "dot_progress_search_source": "Passender Quellinhalt",
+        "dot_progress_search_empty": "Keine passenden Inhalte",
+        "dot_progress_search_clear": "Suche löschen",
+        "dot_progress_schedule_repeat": "Täglich wiederholen",
+        "dot_progress_schedule_repeat_from": "Beginn der Wiederholung",
+        "dot_progress_schedule_repeat_until": "Ende der Wiederholung (optional)",
+        "dot_progress_sort_newest": "Neueste Eintragszeit zuerst",
+
         "dot_progress_timeline_gantt": "Gantt-Diagramm des Tages",
         "dot_progress_timeline_today": "Heute",
         "dot_progress_timeline_gantt_point": "Zeitpunkt",
@@ -6115679,6 +6115800,17 @@ const TRANSLATIONS = {
 
 
     ms: {
+        "dot_progress_search_title": "Cari",
+        "dot_progress_search_hint": "Cari kandungan yang boleh diakses, termasuk rekod yang belum dibuka.",
+        "dot_progress_search_locate": "Cari lokasi item",
+        "dot_progress_search_source": "Kandungan sumber sepadan",
+        "dot_progress_search_empty": "Tiada kandungan sepadan",
+        "dot_progress_search_clear": "Kosongkan carian",
+        "dot_progress_schedule_repeat": "Ulang setiap hari",
+        "dot_progress_schedule_repeat_from": "Tarikh mula ulangan",
+        "dot_progress_schedule_repeat_until": "Tarikh akhir ulangan (pilihan)",
+        "dot_progress_sort_newest": "Masa item terkini dahulu",
+
         "dot_progress_timeline_gantt": "Carta Gantt harian",
         "dot_progress_timeline_today": "Hari ini",
         "dot_progress_timeline_gantt_point": "Titik masa",
@@ -6644918,6 +6645050,17 @@ const TRANSLATIONS = {
 
 
     hi: {
+        "dot_progress_search_title": "खोजें",
+        "dot_progress_search_hint": "जिन सामग्रियों तक आपकी पहुँच है उनमें खोजें, जिनमें अभी तक न खोले गए रिकॉर्ड भी शामिल हैं।",
+        "dot_progress_search_locate": "आइटम पर जाएँ",
+        "dot_progress_search_source": "मिलान किया गया स्रोत विवरण",
+        "dot_progress_search_empty": "कोई मिलती हुई सामग्री नहीं",
+        "dot_progress_search_clear": "खोज साफ़ करें",
+        "dot_progress_schedule_repeat": "हर दिन दोहराएँ",
+        "dot_progress_schedule_repeat_from": "दोहराव की शुरुआत की तारीख",
+        "dot_progress_schedule_repeat_until": "दोहराव की अंतिम तारीख (वैकल्पिक)",
+        "dot_progress_sort_newest": "आइटम के समय के अनुसार नवीनतम पहले",
+
         "dot_progress_timeline_gantt": "दैनिक गैंट चार्ट",
         "dot_progress_timeline_today": "आज",
         "dot_progress_timeline_gantt_point": "समय बिंदु",
@@ -7204614,6 +7204757,17 @@ const TRANSLATIONS = {
 
 
     ar: {
+        "dot_progress_search_title": "بحث",
+        "dot_progress_search_hint": "ابحث في المحتوى المتاح لك، بما فيه السجلات التي لم تُوسّع بعد.",
+        "dot_progress_search_locate": "الانتقال إلى العنصر",
+        "dot_progress_search_source": "المحتوى المصدر المطابق",
+        "dot_progress_search_empty": "لا يوجد محتوى مطابق",
+        "dot_progress_search_clear": "مسح البحث",
+        "dot_progress_schedule_repeat": "تكرار يومي",
+        "dot_progress_schedule_repeat_from": "تاريخ بدء التكرار",
+        "dot_progress_schedule_repeat_until": "تاريخ نهاية التكرار (اختياري)",
+        "dot_progress_sort_newest": "الأحدث حسب وقت العنصر أولًا",
+
         "dot_progress_timeline_gantt": "مخطط غانت اليومي",
         "dot_progress_timeline_today": "اليوم",
         "dot_progress_timeline_gantt_point": "نقطة زمنية",
