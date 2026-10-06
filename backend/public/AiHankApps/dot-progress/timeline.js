@@ -4,7 +4,7 @@
   const drafts=new Map(), operations=new Map(), knownLabels=new Set();
   let h, ui, entries=[], generation=0, loadGeneration=0, closed=true, nextOffset=null, total=0, importRows=null, importIndex=0, fileGeneration=0;
   const path='/timeline';
-  const entryOrder=(a,b)=>(a.startedAt||a.endedAt).localeCompare(b.startedAt||b.endedAt)||a.id.localeCompare(b.id);
+  const entryOrder=(a,b)=>(b.startedAt||b.endedAt).localeCompare(a.startedAt||a.endedAt)||b.id.localeCompare(a.id);
   const context=()=>h.session();
   const token=()=>({epoch:context().epoch,generation});
   const valid=t=>context().isAdmin&&t.epoch===context().epoch&&t.generation===generation;
@@ -108,8 +108,8 @@
   function projectFilter(){const value=ui.project.value;const names=new Set([...context().projects.map(project=>project.title),...knownLabels]);if(value)names.add(value);ui.project.replaceChildren(h.text('option',h.tr('all')));ui.project.firstElementChild.value='';Array.from(names).sort().forEach(name=>{const option=h.text('option',name);option.value=name;ui.project.append(option);});ui.project.value=value;}
   async function load(more=false){
     if(!context().isAdmin)return;const current=token();const serial=++loadGeneration;ui.reload.disabled=ui.more.disabled=true;h.message(ui.status,'loading');
-    const date=ui.date.value;const query=new URLSearchParams();if(date)query.set('date',date);if(ui.project.value)query.set('project',ui.project.value);if(more&&nextOffset!==null)query.set('offset',nextOffset);
-    try{const response=await h.request(path+(query.size?'?'+query:''),{},true);if(!valid(current)||serial!==loadGeneration)return;entries=more?[...entries,...response.entries.filter(row=>!entries.some(existing=>existing.id===row.id))]:response.entries;entries.forEach(entry=>knownLabels.add(entry.projectLabel));total=response.total;nextOffset=response.nextOffset;projectFilter();renderList();h.message(ui.status,'');}
+    const date=ui.date.value;const query=new URLSearchParams({order:'newest'});if(date)query.set('date',date);if(ui.project.value)query.set('project',ui.project.value);if(more&&nextOffset!==null)query.set('offset',nextOffset);
+    try{const response=await h.request(path+(query.size?'?'+query:''),{},true);if(!valid(current)||serial!==loadGeneration)return;entries=more?[...entries,...response.entries.filter(row=>!entries.some(existing=>existing.id===row.id))]:response.entries;entries.sort(entryOrder);entries.forEach(entry=>knownLabels.add(entry.projectLabel));total=response.total;nextOffset=response.nextOffset;projectFilter();renderList();h.message(ui.status,'');}
     catch(error){if(valid(current)&&serial===loadGeneration)h.message(ui.status,'error',true);}
     finally{if(valid(current)&&serial===loadGeneration){ui.reload.disabled=ui.more.disabled=false;}}
   }
@@ -128,7 +128,7 @@
     projectFilter();ui.count.textContent=h.tr('timeline_count')+': '+entries.length+' / '+total;ui.more.hidden=nextOffset===null;
   }
   async function refreshTotals(){
-    const current=token(),serial=loadGeneration;const query=new URLSearchParams();if(ui.date.value)query.set('date',ui.date.value);if(ui.project.value)query.set('project',ui.project.value);
+    const current=token(),serial=loadGeneration;const query=new URLSearchParams({order:'newest'});if(ui.date.value)query.set('date',ui.date.value);if(ui.project.value)query.set('project',ui.project.value);
     try{const response=await h.request(path+(query.size?'?'+query:''),{},true);if(!valid(current)||serial!==loadGeneration)return;total=response.total;nextOffset=entries.length<total?0:null;ui.count.textContent=h.tr('timeline_count')+': '+entries.length+' / '+total;ui.more.hidden=nextOffset===null;}
     catch(_error){if(valid(current))h.message(ui.status,'error',true);}
   }
@@ -136,7 +136,7 @@
   function clear(){generation++;loadGeneration++;fileGeneration++;entries=[];drafts.clear();operations.clear();knownLabels.clear();importRows=null;importIndex=0;nextOffset=null;total=0;if(ui){close(false);ui.list.replaceChildren();ui.preview.replaceChildren();ui.creation.reset();ui.creation.elements.startedAt.required=true;ui.importForm.reset();ui.date.value='';ui.project.replaceChildren();const other=h.text('option',h.tr('timeline_project_other'));other.value='';ui.creation.elements.projectId.replaceChildren(other);ui.status.textContent=ui.importStatus.textContent=ui.count.textContent='';ui.apply.hidden=true;ui.panel.querySelectorAll('input,textarea,select,button').forEach(node=>node.disabled=false);}}
   function init(helpers){
     h=helpers;const trigger=document.getElementById('timeline-toggle');const panel=h.text('aside','','timeline-panel');panel.id='project-timeline';panel.hidden=true;panel.setAttribute('aria-label',h.tr('timeline_title'));const backdrop=h.text('div','','timeline-backdrop');backdrop.hidden=true;backdrop.addEventListener('click',()=>close());
-    const head=h.text('div','','toolbar');const exit=button('timeline_close',()=>close());head.append(label('h2','timeline_title'),exit);panel.append(head,label('p','timeline_note','small'));
+    const head=h.text('div','','toolbar');const exit=button('timeline_close',()=>close());head.append(label('h2','timeline_title'),exit);panel.append(head,label('p','sort_newest','small'),label('p','timeline_note','small'));
     const filters=document.createElement('form');filters.className='timeline-filters';const date=field(filters,'timeline_date','',{name:'date',type:'date'});const project=select(filters,'timeline_project','project',[['',h.tr('all')]],'');const reload=button('timeline_filter');reload.type='submit';filters.append(reload);panel.append(filters);
     const status=h.text('p','','message');status.setAttribute('role','status');const count=h.text('p','','small');panel.append(status,count);
     const create=detail('timeline_create','timeline-create');const creation=buildForm({},'create');create.append(creation);panel.append(create);
@@ -160,5 +160,13 @@
     },importStatus));
   }
   function translate(){if(!ui)return;ui.panel.querySelectorAll('[data-timeline-key]').forEach(node=>node.textContent=h.tr(node.dataset.timelineKey));ui.panel.querySelectorAll('[data-timeline-start]').forEach(node=>node.textContent=rangeText({startedAt:node.dataset.timelineStart||null,endedAt:node.dataset.timelineEnd}));ui.panel.querySelectorAll('[data-timeline-version],[data-timeline-at]').forEach(paintAudit);ui.panel.setAttribute('aria-label',h.tr('timeline_title'));projectFilter();updateProjectChoices();for(const form of ui.panel.querySelectorAll('.timeline-form')){const type=form.elements.workType;for(const option of type.options)option.textContent=h.tr('timeline_'+option.value);}ui.count.textContent=h.tr('timeline_count')+': '+entries.length+' / '+total;}
-  root.dotTimeline={init,clear,close,translate};
+  async function locate(target){
+    if(!context().isAdmin||context().checking)return;const current=token();loadGeneration++;ui.date.value=ui.project.value='';
+    const response=await h.request(path+'/'+encodeURIComponent(target.owner||target.id),{},true);if(!valid(current))return;
+    root.dotReview.close(false);closed=false;ui.panel.hidden=ui.backdrop.hidden=false;document.body.classList.add('timeline-open');ui.trigger.setAttribute('aria-expanded','true');entries=[];total=1;nextOffset=null;install(response.entry);
+    const card=ui.list.querySelector('.timeline-entry');card.querySelector('.timeline-content').open=true;
+    if(target.content){const source=h.text('section','','search-source');source.append(label('strong','search_source'),h.text('p',(target.version?h.tr('version')+' '+target.version+' · ':'')+h.formatTime(target.at),'small'),h.text('p',target.content));card.append(source);}
+    card.classList.add('search-highlight');card.scrollIntoView({block:'start',behavior:'instant'});ui.exit.focus({preventScroll:true});
+  }
+  root.dotTimeline={init,clear,close,translate,locate};
 })(window);

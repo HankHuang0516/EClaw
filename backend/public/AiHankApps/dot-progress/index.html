@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex">
   <title>dot 專案進度 · AiHankApps</title>
-  <link rel="stylesheet" href="progress.css?v=d1c38cef712ca339">
-  <script src="i18n.js?v=d1c38cef712ca339" defer></script>
-  <script src="decision-i18n.js?v=d1c38cef712ca339" defer></script>
-  <script src="decisions.js?v=d1c38cef712ca339" defer></script>
-  <script src="review.js?v=d1c38cef712ca339" defer></script>
-  <script src="timeline-i18n.js?v=d1c38cef712ca339" defer></script>
-  <script src="timeline.js?v=d1c38cef712ca339" defer></script>
-  <script src="schedule-i18n.js?v=d1c38cef712ca339" defer></script>
-  <script src="schedule.js?v=d1c38cef712ca339" defer></script>
-  <script src="progress.js?v=d1c38cef712ca339" defer></script>
+  <link rel="stylesheet" href="progress.css?v=43d045284094940a">
+  <script src="i18n.js?v=43d045284094940a" defer></script>
+  <script src="decision-i18n.js?v=43d045284094940a" defer></script>
+  <script src="decisions.js?v=43d045284094940a" defer></script>
+  <script src="review.js?v=43d045284094940a" defer></script>
+  <script src="timeline-i18n.js?v=43d045284094940a" defer></script>
+  <script src="timeline.js?v=43d045284094940a" defer></script>
+  <script src="schedule-i18n.js?v=43d045284094940a" defer></script>
+  <script src="schedule.js?v=43d045284094940a" defer></script>
+  <script src="progress.js?v=43d045284094940a" defer></script>
 </head>
 <body>
   <main class="wrap">
@@ -28,6 +28,12 @@
       <p class="lead" data-i18n="dot_progress_intro">這裡記錄 dot 已完成的交辦成果。每一筆摘要，都保留完成日期。</p>
       <div class="hero-bottom"><span class="pill" data-i18n="dot_progress_public">公開成果</span><span class="muted" data-i18n="dot_progress_scope">已確認完成的項目；不代表所有專案都已完成。</span></div>
     </header>
+    <section id="page-search" class="page-search" aria-labelledby="search-heading">
+      <h2 id="search-heading" data-i18n="dot_progress_search_title">搜尋</h2>
+      <p class="small" data-i18n="dot_progress_search_hint">搜尋有權查看的內容，包括尚未展開的紀錄。</p>
+      <form id="search-form"><label><span class="sr-only" data-i18n="dot_progress_search_title">搜尋</span><input id="search-query" name="query" type="search" maxlength="200" required autocomplete="off"></label><button type="submit" data-i18n="dot_progress_search_title">搜尋</button><button id="search-clear" type="button" class="secondary" data-i18n="dot_progress_search_clear">清除搜尋</button></form>
+      <p id="search-status" role="status"></p><div id="search-results"></div><button id="search-more" class="secondary" hidden data-i18n="dot_progress_timeline_more">載入更多</button>
+    </section>
     <section class="section" aria-labelledby="completed-heading">
       <div class="section-heading"><div><span class="eyebrow" data-i18n="dot_progress_archive">COMPLETED / 成果記錄</span><h2 id="completed-heading" data-i18n="dot_progress_completed">已完成的交辦</h2></div><span class="count" id="completed-count">—</span></div>
       <p id="public-message" role="status" data-i18n="dot_progress_loading">載入中…</p>
