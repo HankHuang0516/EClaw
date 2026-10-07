@@ -177,6 +177,8 @@
       "category": "遊戲",
       "desc": "在紙頁戰場彈射英雄，移動即攻擊，挑戰 16 關歷史戰役。",
       "communityId": "paper-flick-soldiers",
+      "guide": "https://eclawbot.com/AiHankApps/guides/paper-flick-soldiers/",
+      "guideLabel": "查看 APP 介紹",
       "iconText": "紙上",
       "icon": "icons/store-paper-flick-soldiers-9af88bf1827f.jpg",
       "source": "Android / iOS",

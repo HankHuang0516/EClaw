@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-04T01:16:23.882Z",
+  "checkedAt": "2026-10-07T07:10:17.093Z",
   "catalogCheckedAt": "2026-10-04T01:02:59.370Z",
   "guides": [
     {
@@ -36,12 +36,22 @@
     {
       "id": "stray-map",
       "name": "浪浪地圖",
-      "renderedHash": "57118c3f540e7b3a4aeb1ab142eb8df015cb3e3ae3759008e858750bdb0bd510"
+      "renderedHash": "57118c3f540e7b3a4aeb1ab142eb8df015cb3e3ae3759008e858750bdb0bd510",
+      "sourceCheckException": {
+        "reason": "Registered source unavailable on unmounted Hank-2TB; original rendered content and prior upstream hash retained",
+        "approvedAt": "2026-10-07T05:57:00Z",
+        "priorReviewedAt": "2026-09-10T11:59:26.525Z"
+      }
     },
     {
       "id": "sleep-park",
       "name": "睡公園：免費生存地圖",
-      "renderedHash": "69d97ff31c20c809b1c0cf8e7ebf8dffb1ae8d34817096f485c3fac71a905883"
+      "renderedHash": "69d97ff31c20c809b1c0cf8e7ebf8dffb1ae8d34817096f485c3fac71a905883",
+      "sourceCheckException": {
+        "reason": "Registered source unavailable on unmounted Hank-2TB; original rendered content and prior upstream hash retained",
+        "approvedAt": "2026-10-07T05:57:00Z",
+        "priorReviewedAt": "2026-09-07T02:41:14.407Z"
+      }
     },
     {
       "id": "chumen",
@@ -62,6 +72,11 @@
         "gameVersion": "0.59.0",
         "dataHash": "de3d662b47d06f4a953cf4ca335095af24acc351b182153de21398ab0f71b114"
       }
+    },
+    {
+      "id": "paper-flick-soldiers",
+      "name": "紙上彈兵",
+      "renderedHash": "b12755336c095a02b1e51284499ed36084820af916693f61fc38bd1166698972"
     }
   ]
 }

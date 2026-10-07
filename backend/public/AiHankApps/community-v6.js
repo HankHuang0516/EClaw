@@ -253,6 +253,7 @@
     });
   }
 
+  document.addEventListener('aihankapps:rendered', enhance);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', enhance);
   else enhance();
 })();
