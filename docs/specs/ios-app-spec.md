@@ -299,8 +299,8 @@ const colorScheme = useColorScheme(); // 'light' | 'dark'
 
 **App Icon**：
 - 1024×1024 PNG，無透明通道、無圓角（Apple 自動加圓角）
-- 位置：`ios-app/assets/icon.png`
-- 現況：✅ 存在，尺寸正確
+- 無 H 原圖：`ios-app/assets/icon.png`；實際安裝圖示：`ios-app/assets/icon-branded.png`（由 `ios-app/app.json` 選用）
+- 現況：兩張圖均為 1024×1024；右下 H 候選仍待正式審查與送審
 
 **各尺寸**（Expo 會自動產生，不需手動提供）：
 - 20pt (1x/2x/3x), 29pt, 40pt, 60pt, 76pt, 83.5pt, 1024pt
