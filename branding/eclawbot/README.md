@@ -36,16 +36,25 @@ the transparent margin within the H asset makes its visible mark smaller:
 |---|---:|---:|---:|
 | iOS AppIcon | 1024 | `(824, 742, 145, 152)` | 55 / 130 |
 | Android legacy and round | 192 | `(124, 151, 23, 24)` | 45 / 17 |
-| Android adaptive foreground | 432 | `(292, 309, 50, 53)` | 90 / 70 |
+| Android adaptive foreground | 432 | `(296, 194, 46, 48)` | 90 / 190 |
 | Play listing | 512 | `(400, 400, 65, 68)` | 47 / 44 |
 
 The Android boxes scale separately for each resource density. Their sizes
 are smaller than 16% of the full canvas where the original lettering and
-launcher masks leave less usable space. The right-bottom placement was
-visually checked with square, rounded, and circular masks; no text is covered.
+launcher masks leave less usable space. An adaptive layer is 108 dp; the
+launcher exposes its central 72 dp, with an inner 66 dp safe region. The
+adaptive H now sits to the right of the phone, below the right mascot, and
+above the lettering. The rebuild script rejects any nontransparent H pixel
+outside the conservative 66 dp safe circle at every resource density. The
+previous `(292, 309, 50, 53)` candidate was clipped by the actual Android
+launcher; its whole-canvas circle preview was invalid.
 
 Release stages as of 2026-10-07: originals confirmed; source icons updated;
-Android release AAB and iOS production build 1.0.2 (14) built; Android and iOS
-simulator installed icons and exported package icons checked. The main session's
+Android release AAB rebuilt and the corrected Android icon installed on an
+emulator; the app also stayed on its dashboard for 10 seconds after dismissing
+the emulator's notification prompt. The iOS production build 1.0.2 (14) and
+installed iOS icon are unchanged. Android round PNG package bytes differ only
+in fully transparent RGB and render identically; the iOS package export differs
+from a Pillow resize and needs a same-pipeline baseline. The main session's new
 icon evidence review is pending. The Play listing asset is prepared but has not
 been uploaded. No store submission or public release has occurred.

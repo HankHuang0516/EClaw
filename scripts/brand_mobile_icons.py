@@ -7,6 +7,7 @@ receives the H so launcher masks can crop the layers together.
 """
 
 import argparse
+import math
 from pathlib import Path
 
 from PIL import Image, ImageChops
@@ -28,8 +29,14 @@ PLACEMENTS = {
     "ios": (824, 742, 145, 152, 1024),
     "play": (400, 400, 65, 68, 512),
     "legacy": (124, 151, 23, 24, 192),
-    "adaptive": (292, 309, 50, 53, 432),
+    "adaptive": (296, 194, 46, 48, 432),
 }
+
+# Android treats each bitmap as a full 108 dp layer. Launcher masks expose the
+# central 72 dp viewport; the inner 66 dp diameter is the conservative safe
+# region for the watermark across shapes and parallax effects.
+ADAPTIVE_LAYER_DP = 108
+ADAPTIVE_SAFE_RADIUS_DP = 33
 
 
 def scaled_placement(kind: str, size: int) -> tuple[int, int, int, int]:
@@ -41,22 +48,34 @@ def brand(original: Image.Image, watermark: Image.Image, kind: str) -> Image.Ima
     x, y, w, h = scaled_placement(kind, original.width)
     result = original.convert("RGBA")
     patch = watermark.resize((w, h), Image.Resampling.LANCZOS)
+    if kind == "adaptive":
+        check_adaptive_safe_zone(patch, x, y, original.width)
     result.alpha_composite(patch, (x, y))
     return result
+
+
+def check_adaptive_safe_zone(patch: Image.Image, x: int, y: int, size: int) -> None:
+    center = size / 2
+    radius = size * ADAPTIVE_SAFE_RADIUS_DP / ADAPTIVE_LAYER_DP
+    alpha = patch.getchannel("A")
+    for py in range(patch.height):
+        for px in range(patch.width):
+            if alpha.getpixel((px, py)) and math.hypot(x + px + 0.5 - center, y + py + 0.5 - center) > radius:
+                raise ValueError("Adaptive H extends outside Android's 66 dp safe circle")
 
 
 def check_outside(original: Image.Image, branded: Image.Image, kind: str) -> None:
     x, y, w, h = scaled_placement(kind, original.width)
     delta = ImageChops.difference(original.convert("RGBA"), branded.convert("RGBA"))
     delta.paste((0, 0, 0, 0), (x, y, x + w, y + h))
-    if delta.getbbox():
+    if delta.getbbox(alpha_only=False):
         raise ValueError(f"Pixels outside H placement changed: {kind} {original.size}")
 
 
 def write_or_check(result: Image.Image, path: Path, check: bool) -> None:
     if check:
         existing = Image.open(path).convert(result.mode)
-        if existing.size != result.size or ImageChops.difference(existing, result).getbbox():
+        if existing.size != result.size or ImageChops.difference(existing, result).getbbox(alpha_only=False):
             raise ValueError(f"Branded icon is out of date: {path}")
     else:
         result.save(path, optimize=True)
