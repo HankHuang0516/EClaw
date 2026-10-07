@@ -2,8 +2,9 @@
 """Rebuild EClawbot installation icons from preserved, H-free originals.
 
 The selected general italic H is composited only inside the coordinates below.
-Android adaptive art stays in the background layer; its transparent foreground
-receives the H so launcher masks can crop the layers together.
+Android adaptive art is uniformly scaled and moved as one intact background
+layer. Its transparent foreground receives the H so launcher masks crop both
+layers together.
 """
 
 import argparse
@@ -29,8 +30,10 @@ PLACEMENTS = {
     "ios": (824, 742, 145, 152, 1024),
     "play": (400, 400, 65, 68, 512),
     "legacy": (124, 151, 23, 24, 192),
-    "adaptive": (296, 194, 46, 48, 432),
+    "adaptive": (267, 274, 36, 38, 432),
 }
+
+ADAPTIVE_BACKGROUND = (230, 101, 69, 432)
 
 # Android treats each bitmap as a full 108 dp layer. Launcher masks expose the
 # central 72 dp viewport; the inner 66 dp diameter is the conservative safe
@@ -51,6 +54,20 @@ def brand(original: Image.Image, watermark: Image.Image, kind: str) -> Image.Ima
     if kind == "adaptive":
         check_adaptive_safe_zone(patch, x, y, original.width)
     result.alpha_composite(patch, (x, y))
+    return result
+
+
+def reposition_adaptive_background(original: Image.Image) -> Image.Image:
+    source = original.convert("RGBA")
+    size = source.width
+    scaled, x, y, reference = ADAPTIVE_BACKGROUND
+    result = Image.new("RGBA", source.size, source.getpixel((0, 0)))
+    result.alpha_composite(
+        source.resize(
+            (round(scaled * size / reference),) * 2, Image.Resampling.LANCZOS
+        ),
+        (round(x * size / reference), round(y * size / reference)),
+    )
     return result
 
 
@@ -105,6 +122,10 @@ def main() -> None:
             result = brand(original, watermark, "legacy")
             check_outside(original, result, "legacy")
             write_or_check(result, RES / folder / name, args.check)
+
+        background_source = SOURCE / "android" / folder / "ic_launcher_background.png"
+        background = reposition_adaptive_background(Image.open(background_source))
+        write_or_check(background, RES / folder / "ic_launcher_background.png", args.check)
 
         source = SOURCE / "android" / folder / "ic_launcher_foreground.png"
         original = Image.open(source)
