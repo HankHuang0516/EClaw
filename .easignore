@@ -1,0 +1,72 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Node
+node_modules/
+backend/node_modules/
+backend/data/*
+!backend/data/skill-templates.json
+!backend/data/soul-templates.json
+!backend/data/rule-templates.json
+!backend/data/arena-questions.json
+!backend/data/routing-policies/
+!backend/data/routing-policies/*.txt
+backend/.cache/
+dist/
+coverage/
+.env
+*.log
+tappay_secrets.json
+view_icon.html
+automation/
+playwright-report/
+test-results/
+release_v*
+
+# Firebase
+app/google-services.json
+
+# Signing keys & secrets
+*.jks
+keystore.properties
+found_secrets.json
+tappay_dump.txt
+Eclaw_bots_register.txt
+play-service-account.json
+secrets.7z
+.release_*
+
+# Build artifacts
+app/build/
+*.aab
+*.apk
+
+# IDE & tools
+.idea/
+.vscode/
+.claude/
+.codex/
+# .agent/ — tracked (contains release workflow)
+nul
+compile_log.txt
+logs/
+ios-app/*.ipa
+
+# Evidence screenshots (local only)
+docs/evidence/
+# EAS builds from ios-app need app source, not Git history or server media.
+.git/
+/backend/public/

@@ -36,7 +36,7 @@ the transparent margin within the H asset makes its visible mark smaller:
 |---|---:|---:|---:|
 | iOS AppIcon | 1024 | `(824, 742, 145, 152)` | 55 / 130 |
 | Android legacy and round | 192 | `(124, 151, 23, 24)` | 45 / 17 |
-| Android adaptive foreground | 432 | `(300, 310, 40, 42)` | 92 / 80 |
+| Android adaptive foreground | 432 | `(292, 309, 50, 53)` | 90 / 70 |
 | Play listing | 512 | `(400, 400, 65, 68)` | 47 / 44 |
 
 The Android boxes scale separately for each resource density. Their sizes
@@ -45,5 +45,7 @@ launcher masks leave less usable space. The right-bottom placement was
 visually checked with square, rounded, and circular masks; no text is covered.
 
 Release stages as of 2026-10-07: originals confirmed; source icons updated;
-build, installed-icon confirmation, store submission, review, and public release
-remain pending.
+Android release AAB and iOS production build 1.0.2 (14) built; Android installed
+icon and exported package icons checked. The iOS simulator screenshot and main
+session's icon evidence review are pending. The Play listing asset is prepared
+but has not been uploaded. No store submission or public release has occurred.
