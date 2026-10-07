@@ -54,7 +54,9 @@ Android release AAB rebuilt and the corrected Android icon installed on an
 emulator; the app also stayed on its dashboard for 10 seconds after dismissing
 the emulator's notification prompt. The iOS production build 1.0.2 (14) and
 installed iOS icon are unchanged. Android round PNG package bytes differ only
-in fully transparent RGB and render identically; the iOS package export differs
-from a Pillow resize and needs a same-pipeline baseline. The main session's new
-icon evidence review is pending. The Play listing asset is prepared but has not
-been uploaded. No store submission or public release has occurred.
+in fully transparent RGB and render identically. The iOS package export differs
+from a Pillow resize; a matched H-free EAS simulator build shows that both
+package sizes differ only inside the scaled H region, and production/simulator
+candidate exports match each other. The main session's new icon evidence review
+is pending. The Play listing asset is prepared but has not been uploaded. No
+store submission or public release has occurred.
