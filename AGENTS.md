@@ -652,6 +652,8 @@ When implementing or modifying any feature on one platform, ensure the other pla
 Icon source of truth for iOS App Store = **Android launcher icon**:
 `app/src/main/res/mipmap-xxxhdpi/ic_launcher_background.png` (432×432, has alpha). Flatten transparency with the sampled corner color, upscale with LANCZOS to 1024×1024 (no alpha), save to `ios-app/assets/icon.png`. Both stores then show the same brand icon users see on their Android home screen (red pixel creatures + phone + "E‑Claw by OpenClaw" text). `google_play/play_store_icon_512.png` is a *store-listing* variant (single creature on phone), not the launcher — do not use it as iOS icon.
 
+For the lower-right H installation-icon variant, preserve `ios-app/assets/icon.png` as the H-free original and regenerate `ios-app/assets/icon-branded.png` plus Android density icons with `scripts/brand_mobile_icons.py`. `ios-app/app.json` selects the branded install icon. The live Play listing icon may differ from the older repository PNG; use the preserved live H-free source under `branding/eclawbot/original/` when regenerating its separate listing candidate. Verify the exported AAB/AppIcon resources and installed launcher icons before submitting either store build; `branding/eclawbot/README.md` records the exact placements and release stages.
+
 App Store / Play Store listing text (name, subtitle, description, keywords, promo text) must also stay in sync — changes to one store listing require updating the other.
 
 ---
