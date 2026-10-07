@@ -45,7 +45,7 @@ launcher masks leave less usable space. The right-bottom placement was
 visually checked with square, rounded, and circular masks; no text is covered.
 
 Release stages as of 2026-10-07: originals confirmed; source icons updated;
-Android release AAB and iOS production build 1.0.2 (14) built; Android installed
-icon and exported package icons checked. The iOS simulator screenshot and main
-session's icon evidence review are pending. The Play listing asset is prepared
-but has not been uploaded. No store submission or public release has occurred.
+Android release AAB and iOS production build 1.0.2 (14) built; Android and iOS
+simulator installed icons and exported package icons checked. The main session's
+icon evidence review is pending. The Play listing asset is prepared but has not
+been uploaded. No store submission or public release has occurred.
