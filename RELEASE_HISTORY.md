@@ -5,7 +5,7 @@ Track git commits for each release to enable changelog generation via `git diff`
 ---
 
 ## Latest
-v1.1.18 | pending | 2026-10-07 | versionCode 129 | Icon release candidate 🚧 | Adds the selected general italic H to Android launcher and adaptive installation icons. Original artwork is preserved under `branding/eclawbot/original/android/`. Build, installation QA, and Play submission are pending.
+v1.1.18 | pending | 2026-10-07 | versionCode 129 | Icon release candidate 🚧 | Adds the selected general italic H to Android launcher and adaptive installation icons. Original artwork is preserved under `branding/eclawbot/original/android/`. The corrected adaptive H fits the 66dp safe region; signed bundle, installed-icon QA, and a 10-second dashboard launch check passed. Main-session review and Play submission remain pending.
 
 v1.1.17 | pending | 2026-07-31 | versionCode 128 | Production release candidate 🚧 | **Wallpaper companion stale appearance + Play target API compliance release**: ships the live wallpaper stale companion selection/cache fix after unbind/rebind and appearance switching (#4215), Android companion relative asset URL normalization for `/api/...` Petdx spritesheets (#4216), and Google Play target API 36 compliance (#4217). Also syncs Android `versionName`/`versionCode` with backend `LATEST_APP_VERSION` for production review.
 
