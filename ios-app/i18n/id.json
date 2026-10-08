@@ -1,4 +1,34 @@
 {
+  "paperFlickSupport": {
+    "pfs_support_title": "Dukungan resmi dan privasi",
+    "pfs_support_contact": "Dukungan dan pemecahan masalah",
+    "pfs_support_faq": "Pertanyaan yang sering diajukan",
+    "pfs_support_faq_account": "Apakah perlu akun, pembayaran, atau koneksi internet untuk bermain?",
+    "pfs_support_faq_progress": "Apakah progres permainan disinkronkan antarperangkat?",
+    "pfs_support_faq_beta": "Apakah melewatkan masukan Beta memengaruhi permainan?",
+    "pfs_support_privacy": "Data, privasi, dan masukan Beta pribadi",
+    "pfs_support_privacy_link": "Baca kebijakan privasi lengkap",
+    "pfs_support_review": "Panduan App Review",
+    "pfs_support_video": "Video permainan untuk peninjauan",
+    "pfs_support_video_link": "Buka atau unduh video peninjauan"
+  },
+  "portfolioGifts": {
+    "portfolio_gift_entry": "Pengumuman hadiah",
+    "portfolio_gift_details": "Lihat detail hadiah"
+  },
+  "paperBetaAdmin": {
+    "title": "Umpan balik internal",
+    "summary": "Respons",
+    "average": "Nilai rata-rata",
+    "continuation": "Ingin sekuel",
+    "comment": "Komentar",
+    "yes": "Ya",
+    "maybe": "Mungkin",
+    "no": "Tidak",
+    "older": "Respons sebelumnya",
+    "denied": "Login administrator diperlukan",
+    "unavailable": "Umpan balik tidak tersedia; coba lagi nanti"
+  },
   "common": {
     "cancel": "Batal",
     "confirm": "Konfirmasi",

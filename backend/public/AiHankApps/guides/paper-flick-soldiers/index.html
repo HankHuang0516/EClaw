@@ -16,7 +16,8 @@
   <link rel="stylesheet" href="../../intro-toolbar-v2.css?v=55d03f4">
   <link rel="stylesheet" href="../../intro-page.css">
   <script src="../../app-catalog.js?v=paper-flick-intro-20261007"></script>
-  <script defer src="../../intro-toolbar-v2.js?v=traffic-20260907" data-intro-toolbar data-app="紙上彈兵" data-google="https://play.google.com/store/apps/details?id=com.hankhuang.paperflicksoldiers" data-google-status="正式版" data-apple="https://apps.apple.com/tw/app/id6814515567" data-apple-status="已上架" data-shortcuts="介紹:#overview|玩法:#play|戰役:#campaign|宣傳圖:#gallery|下載:#download"></script>
+  <script defer src="/shared/i18n.js"></script>
+  <script defer src="../../intro-toolbar-v2.js?v=traffic-20260907" data-intro-toolbar data-app="紙上彈兵" data-google="https://play.google.com/store/apps/details?id=com.hankhuang.paperflicksoldiers" data-google-status="正式版" data-apple="https://apps.apple.com/tw/app/id6814515567" data-apple-status="已上架" data-shortcuts="介紹:#overview|玩法:#play|戰役:#campaign|宣傳圖:#gallery|下載:#download|支援:#support"></script>
   <style>
     :root{--paper:#f3ead8;--ink:#30271e;--muted:#6f6151;--line:rgba(91,65,36,.2);--moss:#8d352e}
     body{background:radial-gradient(circle at 85% 12%,#ede0bd,transparent 35rem),linear-gradient(120deg,#faf5e9,#efe1cb)}
@@ -37,13 +38,22 @@
     .download-panel{padding:clamp(24px,5vw,50px);border:1px solid var(--line);border-radius:28px;background:rgba(255,249,236,.85)}
     .download-panel p{max-width:44rem;color:var(--muted);line-height:1.8}
     .support-link{display:inline-block;margin-top:22px;color:#8d352e}
+    .paper-support{line-height:1.8}
+    .paper-support h3{margin:30px 0 12px;font-family:var(--serif)}
+    .paper-support a,.paper-support code{overflow-wrap:anywhere}
+    .paper-support a{color:#8d352e}
+    .paper-support details{padding:16px 0;border-bottom:1px solid var(--line)}
+    .paper-support summary{font-weight:700;cursor:pointer}
+    .paper-support .english{margin-top:16px;color:var(--muted)}
+    .paper-support video{display:block;width:100%;max-width:900px;margin-top:18px;border-radius:18px;background:#17120e}
+    .paper-support :focus-visible{outline:3px solid #b1843f;outline-offset:4px}
     section[id],header[id]{scroll-margin-top:110px}
     @media(max-width:700px){.play-steps,.paper-gallery{grid-template-columns:1fr}.hero-art{min-height:350px}section[id],header[id]{scroll-margin-top:190px}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.reveal{animation:none}}
   </style>
 </head>
 <body>
-  <main id="top"><div class="intro-shell">
+  <main id="top"><div class="intro-shell" lang="zh-Hant">
     <header class="intro-hero" id="overview">
       <div class="reveal">
         <p class="eyebrow">單機回合制 · 物理彈射戰略 RPG</p>
@@ -93,7 +103,32 @@
       </div>
     </section>
     <section class="section" id="download">
-      <div class="download-panel reveal"><p class="eyebrow">下一場交鋒，等你放手。</p><h2>把紙頁戰場帶在身上。</h2><p>前往 Google Play 或 App Store 查看目前公開版本；遊戲內容與裝置需求以商店資訊為準。</p><div class="paper-actions"><a class="paper-action primary" href="https://play.google.com/store/apps/details?id=com.hankhuang.paperflicksoldiers" target="_blank" rel="noopener noreferrer">Google Play</a><a class="paper-action" href="https://apps.apple.com/tw/app/id6814515567" target="_blank" rel="noopener noreferrer">App Store</a></div><a class="support-link" href="../../support/paper-flick-soldiers/">官方支援與隱私說明</a></div>
+      <div class="download-panel reveal"><p class="eyebrow">下一場交鋒，等你放手。</p><h2>把紙頁戰場帶在身上。</h2><p>前往 Google Play 或 App Store 查看目前公開版本；遊戲內容與裝置需求以商店資訊為準。</p><div class="paper-actions"><a class="paper-action primary" href="https://play.google.com/store/apps/details?id=com.hankhuang.paperflicksoldiers" target="_blank" rel="noopener noreferrer">Google Play</a><a class="paper-action" href="https://apps.apple.com/tw/app/id6814515567" target="_blank" rel="noopener noreferrer">App Store</a></div><a class="support-link" href="#support" data-i18n="pfs_support_title">官方支援與隱私說明</a></div>
+    </section>
+    <section class="section paper-support" id="support" aria-labelledby="support-title">
+      <div class="section-head"><h2 id="support-title" data-i18n="pfs_support_title">官方支援與隱私說明</h2><p>支援內容提供繁體中文與 English；上方 APP 介紹目前為繁體中文。<span class="english" lang="en">Support information is available below in Traditional Chinese and English. The introduction above is in Traditional Chinese.</span></p></div>
+      <h3 data-i18n="pfs_support_contact">客服與故障回報</h3>
+      <p>需要協助、回報問題或詢問隱私事項，請來信 <a href="mailto:twopiggyhavefun@gmail.com">twopiggyhavefun@gmail.com</a>。請提供遊戲版本、Android／iOS 版本、發生步驟與錯誤畫面；寄送前遮住個人資料。不需提供帳號、密碼或任何金鑰。</p>
+      <p>遇到無法啟動或閃退，可先重新啟動 App／裝置，再確認商店是否有更新。進度只存於裝置本機；刪除 App 或清除資料前，請先聯絡客服，避免失去進度。</p>
+      <p class="english" lang="en">For support, bug reports, or privacy questions, email the address above with the game version, OS version, reproduction steps, and a screenshot with personal information hidden. Never send passwords or keys. Try restarting the app or device and checking for an update. Progress is stored locally; contact support before deleting the app or clearing its data.</p>
+      <p>應用程式識別碼 / App identifier: <code>com.hankhuang.paperflicksoldiers</code></p>
+      <h3 data-i18n="pfs_support_faq">常見問題</h3>
+      <details><summary data-i18n="pfs_support_faq_account">需要帳號、付費或網路才能遊玩嗎？</summary><p>本作是離線單機策略遊戲，不需要帳號或登入，不含廣告、App 內購買或付費解鎖。自願送出 BETA 回饋需要網路；Android 當機診斷也會透過網路傳送。</p><p class="english" lang="en">Gameplay is offline and single-player, with no account, login, ads, in-app purchases, or paid unlocks. Optional Beta feedback and Android crash diagnostics use an internet connection.</p></details>
+      <details><summary data-i18n="pfs_support_faq_progress">進度會在裝置間同步嗎？</summary><p>進度只儲存在目前裝置本機，沒有帳號或雲端進度同步。請勿為了排除問題直接刪除 App 或清除資料。</p><p class="english" lang="en">Progress is stored only on the current device. There is no account or cloud save synchronization. Avoid deleting the app or clearing its data while troubleshooting.</p></details>
+      <details><summary data-i18n="pfs_support_faq_beta">略過 BETA 回饋會影響遊戲嗎？</summary><p>不會。回饋可以稍後填寫或略過，不影響進度、功能或獎勵，也不是商店公開評分。</p><p class="english" lang="en">No. You can postpone or skip Beta feedback without affecting progress, features, or rewards. It is separate from a public store review.</p></details>
+      <h3 id="privacy" data-i18n="pfs_support_privacy">資料、隱私與私人 BETA 回饋</h3>
+      <ul><li>不含 Google Analytics、跨應用程式追蹤或玩家帳號識別。</li><li>Android 1.0.3 以上使用 Firebase Crashlytics NDK 傳送當機記錄、診斷資料與安裝識別碼，僅用於穩定性修復。</li><li>Android 1.0.4 以上可自願透過 HTTPS 送出私人 BETA 回饋：評分、續作意願、選填留言、版本與平台。不傳送帳號、裝置或廣告識別碼；請勿在留言填寫個人資料。</li><li>回饋供開發者與授權管理者於內部查看，不會展示在這個公開介紹頁；不出售資料，也不將診斷資料用於廣告。</li></ul>
+      <p class="english" lang="en">There is no Google Analytics, cross-app tracking, or player account identification. Android 1.0.3+ uses Firebase Crashlytics NDK for crash logs, diagnostics, and an installation identifier, solely to improve stability. Android 1.0.4+ can optionally send private Beta feedback over HTTPS: a rating, sequel preference, optional comment, game version, and platform. The form does not send account, device, or advertising identifiers. Do not include personal information in comments. Feedback is for the developer and authorized administrators and is not displayed on this public page. Data is not sold or used for advertising.</p>
+      <p><a href="../../privacy/" data-i18n="pfs_support_privacy_link">閱讀完整隱私權政策</a></p>
+      <h3 id="review" data-i18n="pfs_support_review">App Review 操作指南</h3>
+      <ol><li>啟動遊戲後點選「新遊戲」。不需要測試帳號、密碼或特殊設定。</li><li>在世界地圖選擇主線或支線關卡。</li><li>進入陣前準備，切換武將並拖曳角色完成移動佈陣。</li><li>進入戰鬥後，拖曳英雄設定方向與力道；放開後角色移動並攻擊。</li><li>趙雲能量充足時可施放「七進七出」，查看完整技能與連續斬殺演出。</li></ol>
+      <p>遊戲在所有上架地區的功能與內容一致，沒有區域限定差異。</p>
+      <p class="english" lang="en">To review: launch the app, choose New Game, select a main or side mission on the world map, switch and position heroes during preparation, then drag and release a hero to move and attack. When Zhao Yun has enough energy, activate his skill. No test account or special settings are required. Functionality is consistent across supported storefront regions.</p>
+      <h3 id="review-video" data-i18n="pfs_support_video">功能展示影片</h3>
+      <p>以下為 1.0.0 版本的審查展示影片，呈現世界地圖、關卡選擇、部署、戰鬥與技能演出。最新公開版本以商店資訊為準。</p>
+      <p class="english" lang="en">This review video shows version 1.0.0: the world map, mission selection, preparation, combat, and skills. Check the stores for the current public version.</p>
+      <video controls preload="none" playsinline aria-label="Paper Flick Soldiers review demo"><source src="../../support/paper-flick-soldiers/media/paper-flick-soldiers-review-demo-v1.mp4" type="video/mp4"></video>
+      <p><a href="../../support/paper-flick-soldiers/media/paper-flick-soldiers-review-demo-v1.mp4" data-i18n="pfs_support_video_link">直接開啟或下載審查展示影片</a></p>
     </section>
     <footer class="intro-footer"><a class="back-link" href="../../">← 回到我的 APP 作品集</a><span>紙上彈兵 · APP Introduction</span></footer>
   </div></main>

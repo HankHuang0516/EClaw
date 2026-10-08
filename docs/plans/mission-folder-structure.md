@@ -71,7 +71,7 @@ Add to `i18n.js`:
 - Integration test for category CRUD lifecycle
 
 ### Step 5: Simplify Skill Review
-- Run simplify skill on all changed UI code before commit
+- Complete the project UI/UX reuse, quality and efficiency review plus applicable tests before commit; record the actual method without requiring a specific skill or Claude Code login
 
 ## Files to Modify
 1. `backend/mission.js` — Bot API category support

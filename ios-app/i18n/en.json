@@ -1,4 +1,34 @@
 {
+  "paperFlickSupport": {
+    "pfs_support_title": "Official support and privacy",
+    "pfs_support_contact": "Support and troubleshooting",
+    "pfs_support_faq": "Frequently asked questions",
+    "pfs_support_faq_account": "Do I need an account, payment, or internet to play?",
+    "pfs_support_faq_progress": "Does progress sync between devices?",
+    "pfs_support_faq_beta": "Does skipping Beta feedback affect the game?",
+    "pfs_support_privacy": "Data, privacy, and private Beta feedback",
+    "pfs_support_privacy_link": "Read the full privacy policy",
+    "pfs_support_review": "App Review instructions",
+    "pfs_support_video": "Gameplay review video",
+    "pfs_support_video_link": "Open or download the review video"
+  },
+  "portfolioGifts": {
+    "portfolio_gift_entry": "Gift announcements",
+    "portfolio_gift_details": "View gift details"
+  },
+  "paperBetaAdmin": {
+    "title": "Private feedback",
+    "summary": "Responses",
+    "average": "Average rating",
+    "continuation": "Want a sequel",
+    "comment": "Comment",
+    "yes": "Yes",
+    "maybe": "Maybe",
+    "no": "No",
+    "older": "Older responses",
+    "denied": "Administrator login required",
+    "unavailable": "Feedback is temporarily unavailable; retry later"
+  },
   "common": {
     "cancel": "Cancel",
     "confirm": "Confirm",

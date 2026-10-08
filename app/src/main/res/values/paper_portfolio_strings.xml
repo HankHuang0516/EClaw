@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="paper_beta_title">Private feedback</string>
+    <string name="paper_beta_summary">Responses</string>
+    <string name="paper_beta_average">Average rating</string>
+    <string name="paper_beta_continuation">Want a sequel</string>
+    <string name="paper_beta_comment">Comment</string>
+    <string name="paper_beta_yes">Yes</string>
+    <string name="paper_beta_maybe">Maybe</string>
+    <string name="paper_beta_no">No</string>
+    <string name="paper_beta_older">Older responses</string>
+    <string name="paper_beta_denied">Administrator login required</string>
+    <string name="paper_beta_unavailable">Feedback is temporarily unavailable; retry later</string>
+    <string name="portfolio_gift_entry">Gift announcements</string>
+    <string name="portfolio_gift_details">View gift details</string>
+    <string name="pfs_support_title">Official support and privacy</string>
+    <string name="pfs_support_contact">Support and troubleshooting</string>
+    <string name="pfs_support_faq">Frequently asked questions</string>
+    <string name="pfs_support_faq_account">Do I need an account, payment, or internet to play?</string>
+    <string name="pfs_support_faq_progress">Does progress sync between devices?</string>
+    <string name="pfs_support_faq_beta">Does skipping Beta feedback affect the game?</string>
+    <string name="pfs_support_privacy">Data, privacy, and private Beta feedback</string>
+    <string name="pfs_support_privacy_link">Read the full privacy policy</string>
+    <string name="pfs_support_review">App Review instructions</string>
+    <string name="pfs_support_video">Gameplay review video</string>
+    <string name="pfs_support_video_link">Open or download the review video</string>
+</resources>

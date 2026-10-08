@@ -127,6 +127,33 @@ const TRANSLATIONS = {
 
 
     en: {
+        pfs_support_title: "Official support and privacy",
+        pfs_support_contact: "Support and troubleshooting",
+        pfs_support_faq: "Frequently asked questions",
+        pfs_support_faq_account: "Do I need an account, payment, or internet to play?",
+        pfs_support_faq_progress: "Does progress sync between devices?",
+        pfs_support_faq_beta: "Does skipping Beta feedback affect the game?",
+        pfs_support_privacy: "Data, privacy, and private Beta feedback",
+        pfs_support_privacy_link: "Read the full privacy policy",
+        pfs_support_review: "App Review instructions",
+        pfs_support_video: "Gameplay review video",
+        pfs_support_video_link: "Open or download the review video",
+
+        portfolio_gift_entry: "Gift announcements",
+        portfolio_gift_details: "View gift details",
+
+        paper_beta_title: "Private feedback",
+        paper_beta_summary: "Responses",
+        paper_beta_average: "Average rating",
+        paper_beta_continuation: "Want a sequel",
+        paper_beta_comment: "Comment",
+        paper_beta_yes: "Yes",
+        paper_beta_maybe: "Maybe",
+        paper_beta_no: "No",
+        paper_beta_older: "Older responses",
+        paper_beta_denied: "Administrator login required",
+        paper_beta_unavailable: "Feedback is temporarily unavailable; retry later",
+
         "dot_progress_search_title": "Search",
         "dot_progress_search_hint": "Search content you can access, including records not yet expanded.",
         "dot_progress_search_locate": "Locate item",
@@ -651285,6 +651312,33 @@ const TRANSLATIONS = {
 
 
     zh: {
+        pfs_support_title: "官方支援與隱私說明",
+        pfs_support_contact: "客服與故障回報",
+        pfs_support_faq: "常見問題",
+        pfs_support_faq_account: "需要帳號、付費或網路才能遊玩嗎？",
+        pfs_support_faq_progress: "進度會在裝置間同步嗎？",
+        pfs_support_faq_beta: "略過 BETA 回饋會影響遊戲嗎？",
+        pfs_support_privacy: "資料、隱私與私人 BETA 回饋",
+        pfs_support_privacy_link: "閱讀完整隱私權政策",
+        pfs_support_review: "App Review 操作指南",
+        pfs_support_video: "功能展示影片",
+        pfs_support_video_link: "直接開啟或下載審查展示影片",
+
+        portfolio_gift_entry: "禮包公告",
+        portfolio_gift_details: "查看禮包詳情",
+
+        paper_beta_title: "內部回饋",
+        paper_beta_summary: "回饋數",
+        paper_beta_average: "平均評分",
+        paper_beta_continuation: "續作意願",
+        paper_beta_comment: "留言",
+        paper_beta_yes: "願意",
+        paper_beta_maybe: "可能",
+        paper_beta_no: "不願意",
+        paper_beta_older: "較早回饋",
+        paper_beta_denied: "需要管理者登入",
+        paper_beta_unavailable: "暫時無法讀取回饋，請稍後重試",
+
         "dot_progress_search_title": "搜尋",
         "dot_progress_search_hint": "搜尋有權查看的內容，包括尚未展開的紀錄。",
         "dot_progress_search_locate": "定位項目",
@@ -1236650,6 +1236704,33 @@ const TRANSLATIONS = {
 
 
 "zh-CN": {
+        pfs_support_title: "官方支持与隐私说明",
+        pfs_support_contact: "客服与故障排查",
+        pfs_support_faq: "常见问题",
+        pfs_support_faq_account: "需要账号、付费或联网才能游玩吗？",
+        pfs_support_faq_progress: "进度会在设备间同步吗？",
+        pfs_support_faq_beta: "跳过 Beta 反馈会影响游戏吗？",
+        pfs_support_privacy: "数据、隐私与私人 Beta 反馈",
+        pfs_support_privacy_link: "阅读完整隐私政策",
+        pfs_support_review: "App Review 操作指南",
+        pfs_support_video: "游戏审核演示视频",
+        pfs_support_video_link: "打开或下载审核演示视频",
+
+        portfolio_gift_entry: "礼包公告",
+        portfolio_gift_details: "查看礼包详情",
+
+        paper_beta_title: "内部反馈",
+        paper_beta_summary: "反馈数",
+        paper_beta_average: "平均评分",
+        paper_beta_continuation: "续作意愿",
+        paper_beta_comment: "留言",
+        paper_beta_yes: "愿意",
+        paper_beta_maybe: "可能",
+        paper_beta_no: "不愿意",
+        paper_beta_older: "较早反馈",
+        paper_beta_denied: "需要管理员登录",
+        paper_beta_unavailable: "暂时无法读取反馈，请稍后重试",
+
         "dot_progress_search_title": "搜索",
         "dot_progress_search_hint": "搜索有权查看的内容，包括尚未展开的记录。",
         "dot_progress_search_locate": "定位项目",
@@ -1851405,6 +1851486,33 @@ const TRANSLATIONS = {
 
 
     ja: {
+        pfs_support_title: "公式サポートとプライバシー",
+        pfs_support_contact: "サポートとトラブルシューティング",
+        pfs_support_faq: "よくある質問",
+        pfs_support_faq_account: "プレイにはアカウント、支払い、またはインターネット接続が必要ですか？",
+        pfs_support_faq_progress: "進行状況はデバイス間で同期されますか？",
+        pfs_support_faq_beta: "Beta のフィードバックを送信しない場合、ゲームに影響しますか？",
+        pfs_support_privacy: "データ、プライバシー、非公開の Beta フィードバック",
+        pfs_support_privacy_link: "プライバシーポリシーの全文を読む",
+        pfs_support_review: "App Review 向けの操作ガイド",
+        pfs_support_video: "審査用のゲームプレイ動画",
+        pfs_support_video_link: "審査用動画を開く、またはダウンロードする",
+
+        portfolio_gift_entry: "ギフトのお知らせ",
+        portfolio_gift_details: "ギフトの詳細を見る",
+
+        paper_beta_title: "内部フィードバック",
+        paper_beta_summary: "回答数",
+        paper_beta_average: "平均評価",
+        paper_beta_continuation: "続編への希望",
+        paper_beta_comment: "コメント",
+        paper_beta_yes: "希望する",
+        paper_beta_maybe: "未定",
+        paper_beta_no: "希望しない",
+        paper_beta_older: "以前の回答",
+        paper_beta_denied: "管理者ログインが必要です",
+        paper_beta_unavailable: "現在読み込めません。後で再試行してください",
+
         "dot_progress_search_title": "検索",
         "dot_progress_search_hint": "閲覧権限のある内容を、未展開の記録も含めて検索します。",
         "dot_progress_search_locate": "項目を表示",
@@ -2415086,6 +2415194,33 @@ const TRANSLATIONS = {
 
 
     ko: {
+        pfs_support_title: "공식 지원 및 개인정보 보호",
+        pfs_support_contact: "고객 지원 및 문제 해결",
+        pfs_support_faq: "자주 묻는 질문",
+        pfs_support_faq_account: "게임을 하려면 계정, 결제 또는 인터넷 연결이 필요한가요?",
+        pfs_support_faq_progress: "게임 진행 상황이 기기 간에 동기화되나요?",
+        pfs_support_faq_beta: "Beta 피드백을 보내지 않으면 게임에 영향이 있나요?",
+        pfs_support_privacy: "데이터, 개인정보 보호 및 비공개 Beta 피드백",
+        pfs_support_privacy_link: "개인정보 처리방침 전문 읽기",
+        pfs_support_review: "App Review 안내",
+        pfs_support_video: "심사용 게임 플레이 영상",
+        pfs_support_video_link: "심사 영상 열기 또는 다운로드",
+
+        portfolio_gift_entry: "선물 공지",
+        portfolio_gift_details: "선물 상세 보기",
+
+        paper_beta_title: "내부 피드백",
+        paper_beta_summary: "응답 수",
+        paper_beta_average: "평균 평점",
+        paper_beta_continuation: "후속작 희망",
+        paper_beta_comment: "의견",
+        paper_beta_yes: "예",
+        paper_beta_maybe: "미정",
+        paper_beta_no: "아니요",
+        paper_beta_older: "이전 응답",
+        paper_beta_denied: "관리자 로그인이 필요합니다",
+        paper_beta_unavailable: "현재 불러올 수 없습니다. 나중에 다시 시도하세요",
+
         "dot_progress_search_title": "검색",
         "dot_progress_search_hint": "아직 펼치지 않은 기록을 포함하여 접근할 수 있는 내용을 검색합니다.",
         "dot_progress_search_locate": "항목 위치로 이동",
@@ -2945872,6 +2946007,9 @@ const TRANSLATIONS = {
 
 
     "zh-TW": {
+
+
+
         "dashboard_summary_loading_title": "載入實體中",
         "dashboard_summary_loading_meta": "正在檢查實體欄位。",
         "dashboard_summary_error_title": "無法載入實體清單",
@@ -2947532,6 +2947670,33 @@ const TRANSLATIONS = {
 
 
     th: {
+        pfs_support_title: "การสนับสนุนอย่างเป็นทางการและความเป็นส่วนตัว",
+        pfs_support_contact: "การสนับสนุนและการแก้ไขปัญหา",
+        pfs_support_faq: "คำถามที่พบบ่อย",
+        pfs_support_faq_account: "ต้องมีบัญชี ชำระเงิน หรือเชื่อมต่ออินเทอร์เน็ตเพื่อเล่นหรือไม่?",
+        pfs_support_faq_progress: "ความคืบหน้าของเกมซิงค์ระหว่างอุปกรณ์หรือไม่?",
+        pfs_support_faq_beta: "การข้ามการส่งความคิดเห็น Beta มีผลต่อเกมหรือไม่?",
+        pfs_support_privacy: "ข้อมูล ความเป็นส่วนตัว และความคิดเห็น Beta แบบไม่เปิดเผย",
+        pfs_support_privacy_link: "อ่านนโยบายความเป็นส่วนตัวฉบับเต็ม",
+        pfs_support_review: "คำแนะนำสำหรับ App Review",
+        pfs_support_video: "วิดีโอสาธิตการเล่นเกมสำหรับการตรวจสอบ",
+        pfs_support_video_link: "เปิดหรือดาวน์โหลดวิดีโอสำหรับการตรวจสอบ",
+
+        portfolio_gift_entry: "ประกาศของขวัญ",
+        portfolio_gift_details: "ดูรายละเอียดของขวัญ",
+
+        paper_beta_title: "ข้อเสนอแนะภายใน",
+        paper_beta_summary: "จำนวนคำตอบ",
+        paper_beta_average: "คะแนนเฉลี่ย",
+        paper_beta_continuation: "ต้องการภาคต่อ",
+        paper_beta_comment: "ความคิดเห็น",
+        paper_beta_yes: "ใช่",
+        paper_beta_maybe: "อาจจะ",
+        paper_beta_no: "ไม่",
+        paper_beta_older: "คำตอบก่อนหน้า",
+        paper_beta_denied: "ต้องเข้าสู่ระบบผู้ดูแล",
+        paper_beta_unavailable: "ไม่สามารถอ่านข้อเสนอแนะได้ในขณะนี้ โปรดลองภายหลัง",
+
         "dot_progress_search_title": "ค้นหา",
         "dot_progress_search_hint": "ค้นหาเนื้อหาที่คุณมีสิทธิ์ดู รวมถึงบันทึกที่ยังไม่ได้ขยาย",
         "dot_progress_search_locate": "ไปยังรายการ",
@@ -3474808,6 +3474973,33 @@ const TRANSLATIONS = {
 
 
     vi: {
+        pfs_support_title: "Hỗ trợ chính thức và quyền riêng tư",
+        pfs_support_contact: "Hỗ trợ và khắc phục sự cố",
+        pfs_support_faq: "Câu hỏi thường gặp",
+        pfs_support_faq_account: "Có cần tài khoản, thanh toán hoặc kết nối internet để chơi không?",
+        pfs_support_faq_progress: "Tiến trình chơi có được đồng bộ giữa các thiết bị không?",
+        pfs_support_faq_beta: "Bỏ qua phản hồi Beta có ảnh hưởng đến trò chơi không?",
+        pfs_support_privacy: "Dữ liệu, quyền riêng tư và phản hồi Beta riêng tư",
+        pfs_support_privacy_link: "Đọc toàn bộ chính sách quyền riêng tư",
+        pfs_support_review: "Hướng dẫn App Review",
+        pfs_support_video: "Video chơi thử dành cho xét duyệt",
+        pfs_support_video_link: "Mở hoặc tải video xét duyệt",
+
+        portfolio_gift_entry: "Thông báo quà tặng",
+        portfolio_gift_details: "Xem chi tiết quà",
+
+        paper_beta_title: "Phản hồi nội bộ",
+        paper_beta_summary: "Số phản hồi",
+        paper_beta_average: "Điểm trung bình",
+        paper_beta_continuation: "Muốn có phần tiếp theo",
+        paper_beta_comment: "Bình luận",
+        paper_beta_yes: "Có",
+        paper_beta_maybe: "Có thể",
+        paper_beta_no: "Không",
+        paper_beta_older: "Phản hồi cũ hơn",
+        paper_beta_denied: "Cần đăng nhập quản trị viên",
+        paper_beta_unavailable: "Chưa thể đọc phản hồi; vui lòng thử lại sau",
+
         "dot_progress_search_title": "Tìm kiếm",
         "dot_progress_search_hint": "Tìm nội dung bạn có quyền xem, kể cả bản ghi chưa mở rộng.",
         "dot_progress_search_locate": "Đến mục",
@@ -4002154,6 +4002346,33 @@ const TRANSLATIONS = {
 
 
     id: {
+        pfs_support_title: "Dukungan resmi dan privasi",
+        pfs_support_contact: "Dukungan dan pemecahan masalah",
+        pfs_support_faq: "Pertanyaan yang sering diajukan",
+        pfs_support_faq_account: "Apakah perlu akun, pembayaran, atau koneksi internet untuk bermain?",
+        pfs_support_faq_progress: "Apakah progres permainan disinkronkan antarperangkat?",
+        pfs_support_faq_beta: "Apakah melewatkan masukan Beta memengaruhi permainan?",
+        pfs_support_privacy: "Data, privasi, dan masukan Beta pribadi",
+        pfs_support_privacy_link: "Baca kebijakan privasi lengkap",
+        pfs_support_review: "Panduan App Review",
+        pfs_support_video: "Video permainan untuk peninjauan",
+        pfs_support_video_link: "Buka atau unduh video peninjauan",
+
+        portfolio_gift_entry: "Pengumuman hadiah",
+        portfolio_gift_details: "Lihat detail hadiah",
+
+        paper_beta_title: "Umpan balik internal",
+        paper_beta_summary: "Respons",
+        paper_beta_average: "Nilai rata-rata",
+        paper_beta_continuation: "Ingin sekuel",
+        paper_beta_comment: "Komentar",
+        paper_beta_yes: "Ya",
+        paper_beta_maybe: "Mungkin",
+        paper_beta_no: "Tidak",
+        paper_beta_older: "Respons sebelumnya",
+        paper_beta_denied: "Login administrator diperlukan",
+        paper_beta_unavailable: "Umpan balik tidak tersedia; coba lagi nanti",
+
         "dot_progress_search_title": "Cari",
         "dot_progress_search_hint": "Cari konten yang dapat Anda akses, termasuk catatan yang belum dibuka.",
         "dot_progress_search_locate": "Temukan item",
@@ -4529116,6 +4529335,33 @@ const TRANSLATIONS = {
 
 
     fr: {
+        pfs_support_title: "Assistance officielle et confidentialité",
+        pfs_support_contact: "Assistance et dépannage",
+        pfs_support_faq: "Questions fréquentes",
+        pfs_support_faq_account: "Faut-il un compte, un paiement ou une connexion Internet pour jouer ?",
+        pfs_support_faq_progress: "La progression se synchronise-t-elle entre les appareils ?",
+        pfs_support_faq_beta: "Ne pas envoyer de commentaires Beta affecte-t-il le jeu ?",
+        pfs_support_privacy: "Données, confidentialité et commentaires Beta privés",
+        pfs_support_privacy_link: "Lire la politique de confidentialité complète",
+        pfs_support_review: "Instructions pour App Review",
+        pfs_support_video: "Vidéo de démonstration du jeu pour l’examen",
+        pfs_support_video_link: "Ouvrir ou télécharger la vidéo d’examen",
+
+        portfolio_gift_entry: "Annonces de cadeaux",
+        portfolio_gift_details: "Voir les détails du cadeau",
+
+        paper_beta_title: "Retours internes",
+        paper_beta_summary: "Réponses",
+        paper_beta_average: "Note moyenne",
+        paper_beta_continuation: "Souhaite une suite",
+        paper_beta_comment: "Commentaire",
+        paper_beta_yes: "Oui",
+        paper_beta_maybe: "Peut-être",
+        paper_beta_no: "Non",
+        paper_beta_older: "Réponses précédentes",
+        paper_beta_denied: "Connexion administrateur requise",
+        paper_beta_unavailable: "Retours indisponibles ; réessayez plus tard",
+
         "dot_progress_search_title": "Rechercher",
         "dot_progress_search_hint": "Recherchez le contenu accessible, y compris les relevés non dépliés.",
         "dot_progress_search_locate": "Localiser l’élément",
@@ -5054703,6 +5054949,33 @@ const TRANSLATIONS = {
 
 
     es: {
+        pfs_support_title: "Soporte oficial y privacidad",
+        pfs_support_contact: "Soporte y solución de problemas",
+        pfs_support_faq: "Preguntas frecuentes",
+        pfs_support_faq_account: "¿Se necesita una cuenta, un pago o conexión a internet para jugar?",
+        pfs_support_faq_progress: "¿Se sincroniza el progreso entre dispositivos?",
+        pfs_support_faq_beta: "¿Omitir los comentarios Beta afecta al juego?",
+        pfs_support_privacy: "Datos, privacidad y comentarios Beta privados",
+        pfs_support_privacy_link: "Leer la política de privacidad completa",
+        pfs_support_review: "Instrucciones para App Review",
+        pfs_support_video: "Vídeo de demostración del juego para la revisión",
+        pfs_support_video_link: "Abrir o descargar el vídeo de revisión",
+
+        portfolio_gift_entry: "Anuncios de regalos",
+        portfolio_gift_details: "Ver detalles del regalo",
+
+        paper_beta_title: "Comentarios internos",
+        paper_beta_summary: "Respuestas",
+        paper_beta_average: "Valoración media",
+        paper_beta_continuation: "Desea una secuela",
+        paper_beta_comment: "Comentario",
+        paper_beta_yes: "Sí",
+        paper_beta_maybe: "Quizás",
+        paper_beta_no: "No",
+        paper_beta_older: "Respuestas anteriores",
+        paper_beta_denied: "Se requiere acceso de administrador",
+        paper_beta_unavailable: "Comentarios no disponibles; inténtalo más tarde",
+
         "dot_progress_search_title": "Buscar",
         "dot_progress_search_hint": "Busca contenido al que tienes acceso, incluidos registros sin desplegar.",
         "dot_progress_search_locate": "Localizar elemento",
@@ -5572833,6 +5573106,33 @@ const TRANSLATIONS = {
 
 
     de: {
+        pfs_support_title: "Offizieller Support und Datenschutz",
+        pfs_support_contact: "Support und Fehlerbehebung",
+        pfs_support_faq: "Häufig gestellte Fragen",
+        pfs_support_faq_account: "Muss ich zum Spielen ein Konto haben, etwas bezahlen oder mit dem Internet verbunden sein?",
+        pfs_support_faq_progress: "Wird der Spielfortschritt zwischen Geräten synchronisiert?",
+        pfs_support_faq_beta: "Wirkt es sich auf das Spiel aus, wenn ich keine Beta-Rückmeldung gebe?",
+        pfs_support_privacy: "Daten, Datenschutz und private Beta-Rückmeldungen",
+        pfs_support_privacy_link: "Vollständige Datenschutzerklärung lesen",
+        pfs_support_review: "Anleitung für App Review",
+        pfs_support_video: "Spielvideo für die Prüfung",
+        pfs_support_video_link: "Prüfungsvideo öffnen oder herunterladen",
+
+        portfolio_gift_entry: "Geschenkankündigungen",
+        portfolio_gift_details: "Geschenkdetails ansehen",
+
+        paper_beta_title: "Internes Feedback",
+        paper_beta_summary: "Antworten",
+        paper_beta_average: "Durchschnittliche Bewertung",
+        paper_beta_continuation: "Wunsch nach Fortsetzung",
+        paper_beta_comment: "Kommentar",
+        paper_beta_yes: "Ja",
+        paper_beta_maybe: "Vielleicht",
+        paper_beta_no: "Nein",
+        paper_beta_older: "Ältere Antworten",
+        paper_beta_denied: "Administrator-Anmeldung erforderlich",
+        paper_beta_unavailable: "Feedback derzeit nicht verfügbar; später erneut versuchen",
+
         "dot_progress_search_title": "Suchen",
         "dot_progress_search_hint": "Zugängliche Inhalte einschließlich noch nicht aufgeklappter Einträge suchen.",
         "dot_progress_search_locate": "Eintrag anzeigen",
@@ -6109959,6 +6110259,33 @@ const TRANSLATIONS = {
         "dot_progress_expires": "Die Sitzung ist abgelaufen. Bitte erneut anmelden.",
 },
     pt: {
+        pfs_support_title: "Suporte oficial e privacidade",
+        pfs_support_contact: "Suporte e resolução de problemas",
+        pfs_support_faq: "Perguntas frequentes",
+        pfs_support_faq_account: "É necessário ter uma conta, pagar ou ter conexão à internet para jogar?",
+        pfs_support_faq_progress: "O progresso é sincronizado entre dispositivos?",
+        pfs_support_faq_beta: "Não enviar comentários Beta afeta o jogo?",
+        pfs_support_privacy: "Dados, privacidade e comentários Beta privados",
+        pfs_support_privacy_link: "Ler a política de privacidade completa",
+        pfs_support_review: "Instruções para App Review",
+        pfs_support_video: "Vídeo de demonstração do jogo para análise",
+        pfs_support_video_link: "Abrir ou baixar o vídeo de análise",
+
+        portfolio_gift_entry: "Anúncios de presentes",
+        portfolio_gift_details: "Ver detalhes do presente",
+
+        paper_beta_title: "Comentários internos",
+        paper_beta_summary: "Respostas",
+        paper_beta_average: "Avaliação média",
+        paper_beta_continuation: "Deseja uma continuação",
+        paper_beta_comment: "Comentário",
+        paper_beta_yes: "Sim",
+        paper_beta_maybe: "Talvez",
+        paper_beta_no: "Não",
+        paper_beta_older: "Respostas anteriores",
+        paper_beta_denied: "Acesso de administrador necessário",
+        paper_beta_unavailable: "Comentários indisponíveis; tente novamente mais tarde",
+
         "transition_loading": "A carregar…",
         "dashboard_usage_widget_title": "Claude Code / Codex usage",
         "dashboard_usage_widget_refresh": "Refresh",
@@ -6115800,6 +6116127,33 @@ const TRANSLATIONS = {
 
 
     ms: {
+        pfs_support_title: "Sokongan rasmi dan privasi",
+        pfs_support_contact: "Sokongan dan penyelesaian masalah",
+        pfs_support_faq: "Soalan lazim",
+        pfs_support_faq_account: "Adakah akaun, bayaran atau sambungan internet diperlukan untuk bermain?",
+        pfs_support_faq_progress: "Adakah kemajuan permainan disegerakkan antara peranti?",
+        pfs_support_faq_beta: "Adakah tidak menghantar maklum balas Beta menjejaskan permainan?",
+        pfs_support_privacy: "Data, privasi dan maklum balas Beta peribadi",
+        pfs_support_privacy_link: "Baca dasar privasi penuh",
+        pfs_support_review: "Panduan App Review",
+        pfs_support_video: "Video permainan untuk semakan",
+        pfs_support_video_link: "Buka atau muat turun video semakan",
+
+        portfolio_gift_entry: "Pengumuman hadiah",
+        portfolio_gift_details: "Lihat butiran hadiah",
+
+        paper_beta_title: "Maklum balas dalaman",
+        paper_beta_summary: "Respons",
+        paper_beta_average: "Penilaian purata",
+        paper_beta_continuation: "Mahukan sekuel",
+        paper_beta_comment: "Ulasan",
+        paper_beta_yes: "Ya",
+        paper_beta_maybe: "Mungkin",
+        paper_beta_no: "Tidak",
+        paper_beta_older: "Respons terdahulu",
+        paper_beta_denied: "Log masuk pentadbir diperlukan",
+        paper_beta_unavailable: "Maklum balas tidak tersedia; cuba lagi kemudian",
+
         "dot_progress_search_title": "Cari",
         "dot_progress_search_hint": "Cari kandungan yang boleh diakses, termasuk rekod yang belum dibuka.",
         "dot_progress_search_locate": "Cari lokasi item",
@@ -6645050,6 +6645404,33 @@ const TRANSLATIONS = {
 
 
     hi: {
+        pfs_support_title: "आधिकारिक सहायता और गोपनीयता",
+        pfs_support_contact: "सहायता और समस्या निवारण",
+        pfs_support_faq: "अक्सर पूछे जाने वाले प्रश्न",
+        pfs_support_faq_account: "क्या खेलने के लिए खाता, भुगतान या इंटरनेट कनेक्शन ज़रूरी है?",
+        pfs_support_faq_progress: "क्या खेल की प्रगति अलग-अलग डिवाइस पर सिंक होती है?",
+        pfs_support_faq_beta: "क्या Beta प्रतिक्रिया न देने से खेल पर असर पड़ता है?",
+        pfs_support_privacy: "डेटा, गोपनीयता और निजी Beta प्रतिक्रिया",
+        pfs_support_privacy_link: "पूरी गोपनीयता नीति पढ़ें",
+        pfs_support_review: "App Review के लिए निर्देश",
+        pfs_support_video: "समीक्षा के लिए गेमप्ले वीडियो",
+        pfs_support_video_link: "समीक्षा वीडियो खोलें या डाउनलोड करें",
+
+        portfolio_gift_entry: "उपहार घोषणाएँ",
+        portfolio_gift_details: "उपहार विवरण देखें",
+
+        paper_beta_title: "आंतरिक प्रतिक्रिया",
+        paper_beta_summary: "प्रतिक्रियाएँ",
+        paper_beta_average: "औसत रेटिंग",
+        paper_beta_continuation: "अगला भाग चाहते हैं",
+        paper_beta_comment: "टिप्पणी",
+        paper_beta_yes: "हाँ",
+        paper_beta_maybe: "शायद",
+        paper_beta_no: "नहीं",
+        paper_beta_older: "पुरानी प्रतिक्रियाएँ",
+        paper_beta_denied: "व्यवस्थापक लॉगिन आवश्यक है",
+        paper_beta_unavailable: "प्रतिक्रिया अभी उपलब्ध नहीं है; बाद में फिर प्रयास करें",
+
         "dot_progress_search_title": "खोजें",
         "dot_progress_search_hint": "जिन सामग्रियों तक आपकी पहुँच है उनमें खोजें, जिनमें अभी तक न खोले गए रिकॉर्ड भी शामिल हैं।",
         "dot_progress_search_locate": "आइटम पर जाएँ",
@@ -7204757,6 +7205138,33 @@ const TRANSLATIONS = {
 
 
     ar: {
+        pfs_support_title: "الدعم الرسمي والخصوصية",
+        pfs_support_contact: "الدعم وحل المشكلات",
+        pfs_support_faq: "الأسئلة الشائعة",
+        pfs_support_faq_account: "هل أحتاج إلى حساب أو دفع رسوم أو اتصال بالإنترنت للعب؟",
+        pfs_support_faq_progress: "هل تتم مزامنة تقدم اللعب بين الأجهزة؟",
+        pfs_support_faq_beta: "هل يؤثر عدم إرسال ملاحظات Beta على اللعبة؟",
+        pfs_support_privacy: "البيانات والخصوصية وملاحظات Beta الخاصة",
+        pfs_support_privacy_link: "قراءة سياسة الخصوصية كاملة",
+        pfs_support_review: "تعليمات App Review",
+        pfs_support_video: "فيديو توضيحي لطريقة اللعب لأغراض المراجعة",
+        pfs_support_video_link: "فتح فيديو المراجعة أو تنزيله",
+
+        portfolio_gift_entry: "إعلانات الهدايا",
+        portfolio_gift_details: "عرض تفاصيل الهدية",
+
+        paper_beta_title: "ملاحظات داخلية",
+        paper_beta_summary: "الردود",
+        paper_beta_average: "متوسط التقييم",
+        paper_beta_continuation: "الرغبة في جزء جديد",
+        paper_beta_comment: "تعليق",
+        paper_beta_yes: "نعم",
+        paper_beta_maybe: "ربما",
+        paper_beta_no: "لا",
+        paper_beta_older: "ردود أقدم",
+        paper_beta_denied: "يلزم تسجيل دخول المسؤول",
+        paper_beta_unavailable: "الملاحظات غير متاحة مؤقتًا؛ حاول لاحقًا",
+
         "dot_progress_search_title": "بحث",
         "dot_progress_search_hint": "ابحث في المحتوى المتاح لك، بما فيه السجلات التي لم تُوسّع بعد.",
         "dot_progress_search_locate": "الانتقال إلى العنصر",

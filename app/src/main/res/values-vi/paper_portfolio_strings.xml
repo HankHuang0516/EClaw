@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="paper_beta_title">Phản hồi nội bộ</string>
+    <string name="paper_beta_summary">Số phản hồi</string>
+    <string name="paper_beta_average">Điểm trung bình</string>
+    <string name="paper_beta_continuation">Muốn có phần tiếp theo</string>
+    <string name="paper_beta_comment">Bình luận</string>
+    <string name="paper_beta_yes">Có</string>
+    <string name="paper_beta_maybe">Có thể</string>
+    <string name="paper_beta_no">Không</string>
+    <string name="paper_beta_older">Phản hồi cũ hơn</string>
+    <string name="paper_beta_denied">Cần đăng nhập quản trị viên</string>
+    <string name="paper_beta_unavailable">Chưa thể đọc phản hồi; vui lòng thử lại sau</string>
+    <string name="portfolio_gift_entry">Thông báo quà tặng</string>
+    <string name="portfolio_gift_details">Xem chi tiết quà</string>
+    <string name="pfs_support_title">Hỗ trợ chính thức và quyền riêng tư</string>
+    <string name="pfs_support_contact">Hỗ trợ và khắc phục sự cố</string>
+    <string name="pfs_support_faq">Câu hỏi thường gặp</string>
+    <string name="pfs_support_faq_account">Có cần tài khoản, thanh toán hoặc kết nối internet để chơi không?</string>
+    <string name="pfs_support_faq_progress">Tiến trình chơi có được đồng bộ giữa các thiết bị không?</string>
+    <string name="pfs_support_faq_beta">Bỏ qua phản hồi Beta có ảnh hưởng đến trò chơi không?</string>
+    <string name="pfs_support_privacy">Dữ liệu, quyền riêng tư và phản hồi Beta riêng tư</string>
+    <string name="pfs_support_privacy_link">Đọc toàn bộ chính sách quyền riêng tư</string>
+    <string name="pfs_support_review">Hướng dẫn App Review</string>
+    <string name="pfs_support_video">Video chơi thử dành cho xét duyệt</string>
+    <string name="pfs_support_video_link">Mở hoặc tải video xét duyệt</string>
+</resources>

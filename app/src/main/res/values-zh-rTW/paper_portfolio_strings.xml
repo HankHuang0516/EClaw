@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="paper_beta_title">內部回饋</string>
+    <string name="paper_beta_summary">回饋數</string>
+    <string name="paper_beta_average">平均評分</string>
+    <string name="paper_beta_continuation">續作意願</string>
+    <string name="paper_beta_comment">留言</string>
+    <string name="paper_beta_yes">願意</string>
+    <string name="paper_beta_maybe">可能</string>
+    <string name="paper_beta_no">不願意</string>
+    <string name="paper_beta_older">較早回饋</string>
+    <string name="paper_beta_denied">需要管理者登入</string>
+    <string name="paper_beta_unavailable">暫時無法讀取回饋，請稍後重試</string>
+    <string name="portfolio_gift_entry">禮包公告</string>
+    <string name="portfolio_gift_details">查看禮包詳情</string>
+    <string name="pfs_support_title">官方支援與隱私說明</string>
+    <string name="pfs_support_contact">客服與故障回報</string>
+    <string name="pfs_support_faq">常見問題</string>
+    <string name="pfs_support_faq_account">需要帳號、付費或網路才能遊玩嗎？</string>
+    <string name="pfs_support_faq_progress">進度會在裝置間同步嗎？</string>
+    <string name="pfs_support_faq_beta">略過 BETA 回饋會影響遊戲嗎？</string>
+    <string name="pfs_support_privacy">資料、隱私與私人 BETA 回饋</string>
+    <string name="pfs_support_privacy_link">閱讀完整隱私權政策</string>
+    <string name="pfs_support_review">App Review 操作指南</string>
+    <string name="pfs_support_video">功能展示影片</string>
+    <string name="pfs_support_video_link">直接開啟或下載審查展示影片</string>
+</resources>
