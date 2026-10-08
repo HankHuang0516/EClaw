@@ -1858,6 +1858,7 @@ app.get('/api/help', (req, res) => {
 
     // Intent category matching — zh/en + ja/ko/th/vi/id/fr/es/ms (by @Mac_F)
     const INTENT_MAP = {
+        paper_beta_feedback: ['paper beta feedback', 'paper-beta-feedback', '紙上彈兵回饋', '纸上弹兵反馈'],
         taaze_demo_share: ['taaze demo', 'taaze-demo', 'demo share', 'demo 分享', '示範分享'],
         dot_progress: ['dot progress', 'dot-progress', 'dot 專案進度', '專案進度', '待決策', 'pending decision', '催進度', 'push progress', 'work timeline', 'work interval', '歷史時程表', '历史时程表', '工作時程', 'gantt', 'schedule', 'planned schedule', '甘特圖', '甘特图', '預計排程', '预计排程'],
         messaging:  ['speakto','broadcast','發訊','reply','transform','message','send','私訊','廣播','メッセージ','送信','메시지','전송','ส่งข้อความ','ข้อความ','ส่ง','gửi tin nhắn','tin nhắn','gửi','phát sóng','kirım pesan','pesan','mengirim','envoyer message','diffusion','enviar mensaje','transmitir','hantar mesej','mesej','menghantar'],
@@ -1881,6 +1882,10 @@ app.get('/api/help', (req, res) => {
     const d = `'{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${eId}`; // shared body prefix
 
     const APIS = {
+        paper_beta_feedback: [
+            { title: 'Private Paper beta feedback (existing portal admin session only; bot credentials grant no access)', curl: `curl -s "${apiBase}/api/admin/paper-beta-feedback" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Local Paper beta diagnostics (existing admin session; disabled in production/Railway)', curl: `curl -s "${apiBase}/api/debug/paper-beta-feedback" --cookie /LOCAL/PORTAL_COOKIE_FILE` }
+        ],
         taaze_demo_share: [
             { title: 'Private original-v5 bundle and share metadata (existing admin portal session; no bearer URLs returned)', curl: `curl -s "${apiBase}/api/taaze-demo-share" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
             { title: 'Import the verified original Sites v5 archive and file mapping; unrelated content is rejected', curl: `curl -s -X POST "${apiBase}/api/taaze-demo-share/bundle" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" --data-binary @/LOCAL/VERIFIED_V5_EXPORT.json` },
@@ -5764,6 +5769,9 @@ app.post('/api/free-bot-tos/agree', async (req, res) => {
 // ============================================
 const adminAuth = authModule.authMiddleware;
 const adminCheck = authModule.adminMiddleware;
+app.use('/api/admin/paper-beta-feedback', require('./paper-beta-admin').createRouter(
+    () => chatPool, adminAuth, adminCheck
+));
 
 /**
  * GET /api/admin/ping
@@ -17484,6 +17492,8 @@ app.use('/api/debug', (req, res, next) => {
     next();
 });
 app.use('/api/debug/dot-progress', require('./dot-progress').createDebugRouter(() => chatPool, authModule));
+app.use('/api/debug/paper-beta-feedback', require('./paper-beta-admin').createDebugRouter(
+    () => chatPool, authModule.authMiddleware, authModule.adminMiddleware));
 app.use('/api/debug/taaze-demo-share', taazeDemoRouters.debugRouter);
 
 /**
