@@ -1,0 +1,53 @@
+/* Keep the existing public campaign beside the catalogue on desktop. */
+.wrap { max-width: 1280px; }
+.portfolio-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 24px; margin-top: 24px; align-items: start; }
+.portfolio-apps { min-width: 0; }
+.portfolio-apps .grid { margin-top: 0; }
+.portfolio-gift-sidebar { position: sticky; top: 24px; min-width: 0; }
+.portfolio-gift-disclosure { border: 1px solid #75a1af; border-radius: 18px; background: #102b42; color: #f1fbf8; overflow: hidden; }
+.portfolio-gift-disclosure > summary { cursor: pointer; padding: 16px; font-weight: 700; }
+.portfolio-gift-disclosure > summary:focus-visible { outline: 3px solid #bfffee; outline-offset: -4px; }
+.gift-disclosure-hint { display: block; margin: 4px 0 0 22px; font-size: .8rem; font-weight: 400; color: #c4d9d9; }
+.portfolio-gift-disclosure[open] .gift-disclosure-hint { display: none; }
+.portfolio-gift-sidebar .rebound-gift { margin: 0; padding: 0 16px 16px; border: 0; border-radius: 0; box-shadow: none; background: transparent; font-size: .88rem; overflow-wrap: anywhere; }
+.portfolio-gift-sidebar .rebound-gift h2 { font-size: 1.05rem; }
+@media (max-width: 979px) {
+  .portfolio-layout { grid-template-columns: minmax(0, 1fr); gap: 18px; margin-top: 18px; }
+  .portfolio-gift-sidebar { position: static; }
+  .portfolio-gift-disclosure > summary { min-height: 64px; }
+}
+@media (max-width: 620px) {
+  .wrap { padding: 16px 12px 112px; }
+  header { padding: 20px; }
+  .category-grid { grid-template-columns: minmax(0, 1fr); }
+  .stats { gap: 6px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .stat { padding: 10px 4px; font-size: .8rem; }
+  .stat { min-width: 0; }
+}
+/* Existing card actions need normal flow once the viewport becomes native mobile. */
+@media (max-width: 800px) {
+  .portfolio-apps .category-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .portfolio-apps .card { min-width: 0; }
+  .portfolio-apps .card.has-traffic .card-head { display: grid; grid-template-columns: 76px minmax(0, 1fr); padding-right: 0; gap: 12px; min-height: 0; }
+  .portfolio-apps .app-icon { width: 76px; height: 76px; }
+  .portfolio-apps .card.has-traffic .guide-actions { position: static; grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-start; margin-top: 0; }
+}
+@media (min-width: 980px) and (max-width: 1150px) {
+  .portfolio-apps .category-grid { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
+.gift-campaign-list { display: grid; gap: 8px; padding: 0 16px 16px; }
+.gift-campaign-list a { display: block; padding: 10px; border: 1px solid #75a1af; border-radius: 8px; color: #bfffee; font-size: .82rem; text-underline-offset: .2em; overflow-wrap: anywhere; }
+.rebound-gift[id] { scroll-margin-top: 24px; }
+
+.portfolio-gift-sidebar .rebound-gift + .rebound-gift { border-top: 1px solid rgba(255,255,255,.15); padding-top: 16px; margin-top: 8px; }
+
+@media (min-width: 980px) {
+  .portfolio-gift-sidebar { max-height: calc(100vh - 48px); max-height: calc(100dvh - 48px); overflow-y: auto; scrollbar-width: thin; }
+}
+.gift-campaign-list a:focus-visible { outline: 3px solid #bfffee; outline-offset: 2px; }
+@media (max-width: 800px) {
+  .portfolio-apps .guide-actions { width: 100%; }
+  .portfolio-apps .portfolio-traffic { position: static; }
+  .portfolio-apps .portfolio-traffic-details { left: 0; right: auto; max-width: 100%; }
+}
