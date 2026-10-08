@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="paper_beta_title">आंतरिक प्रतिक्रिया</string>
+    <string name="paper_beta_summary">प्रतिक्रियाएँ</string>
+    <string name="paper_beta_average">औसत रेटिंग</string>
+    <string name="paper_beta_continuation">अगला भाग चाहते हैं</string>
+    <string name="paper_beta_comment">टिप्पणी</string>
+    <string name="paper_beta_yes">हाँ</string>
+    <string name="paper_beta_maybe">शायद</string>
+    <string name="paper_beta_no">नहीं</string>
+    <string name="paper_beta_older">पुरानी प्रतिक्रियाएँ</string>
+    <string name="paper_beta_denied">व्यवस्थापक लॉगिन आवश्यक है</string>
+    <string name="paper_beta_unavailable">प्रतिक्रिया अभी उपलब्ध नहीं है; बाद में फिर प्रयास करें</string>
+    <string name="portfolio_gift_entry">उपहार घोषणाएँ</string>
+    <string name="portfolio_gift_details">उपहार विवरण देखें</string>
+    <string name="pfs_support_title">आधिकारिक सहायता और गोपनीयता</string>
+    <string name="pfs_support_contact">सहायता और समस्या निवारण</string>
+    <string name="pfs_support_faq">अक्सर पूछे जाने वाले प्रश्न</string>
+    <string name="pfs_support_faq_account">क्या खेलने के लिए खाता, भुगतान या इंटरनेट कनेक्शन ज़रूरी है?</string>
+    <string name="pfs_support_faq_progress">क्या खेल की प्रगति अलग-अलग डिवाइस पर सिंक होती है?</string>
+    <string name="pfs_support_faq_beta">क्या Beta प्रतिक्रिया न देने से खेल पर असर पड़ता है?</string>
+    <string name="pfs_support_privacy">डेटा, गोपनीयता और निजी Beta प्रतिक्रिया</string>
+    <string name="pfs_support_privacy_link">पूरी गोपनीयता नीति पढ़ें</string>
+    <string name="pfs_support_review">App Review के लिए निर्देश</string>
+    <string name="pfs_support_video">समीक्षा के लिए गेमप्ले वीडियो</string>
+    <string name="pfs_support_video_link">समीक्षा वीडियो खोलें या डाउनलोड करें</string>
+</resources>

@@ -851,6 +851,7 @@
     <script src="shared/auth.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
+    <script src="shared/paper-beta-admin.js"></script>
     <script src="../shared/transition-overlay.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
@@ -1270,6 +1271,8 @@
             }
             html += '</div>';
 
+            html += PaperBetaAdmin.section();
+
             // Arena Feedback section
             html += '<div class="section-card">';
             html += '<div class="section-title">Arena Feedback</div>';
@@ -1292,6 +1295,7 @@
 
             // Load optional feedback sections asynchronously
             loadArenaFeedback();
+            PaperBetaAdmin.mount();
             loadMiniGameSubmissions();
             loadMiniGameAnalytics();
         }

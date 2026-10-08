@@ -1,4 +1,34 @@
 {
+  "paperFlickSupport": {
+    "pfs_support_title": "Assistance officielle et confidentialité",
+    "pfs_support_contact": "Assistance et dépannage",
+    "pfs_support_faq": "Questions fréquentes",
+    "pfs_support_faq_account": "Faut-il un compte, un paiement ou une connexion Internet pour jouer ?",
+    "pfs_support_faq_progress": "La progression se synchronise-t-elle entre les appareils ?",
+    "pfs_support_faq_beta": "Ne pas envoyer de commentaires Beta affecte-t-il le jeu ?",
+    "pfs_support_privacy": "Données, confidentialité et commentaires Beta privés",
+    "pfs_support_privacy_link": "Lire la politique de confidentialité complète",
+    "pfs_support_review": "Instructions pour App Review",
+    "pfs_support_video": "Vidéo de démonstration du jeu pour l’examen",
+    "pfs_support_video_link": "Ouvrir ou télécharger la vidéo d’examen"
+  },
+  "portfolioGifts": {
+    "portfolio_gift_entry": "Annonces de cadeaux",
+    "portfolio_gift_details": "Voir les détails du cadeau"
+  },
+  "paperBetaAdmin": {
+    "title": "Retours internes",
+    "summary": "Réponses",
+    "average": "Note moyenne",
+    "continuation": "Souhaite une suite",
+    "comment": "Commentaire",
+    "yes": "Oui",
+    "maybe": "Peut-être",
+    "no": "Non",
+    "older": "Réponses précédentes",
+    "denied": "Connexion administrateur requise",
+    "unavailable": "Retours indisponibles ; réessayez plus tard"
+  },
   "common": {
     "cancel": "Annuler",
     "confirm": "Confirmer",

@@ -1,4 +1,34 @@
 {
+  "paperFlickSupport": {
+    "pfs_support_title": "Hỗ trợ chính thức và quyền riêng tư",
+    "pfs_support_contact": "Hỗ trợ và khắc phục sự cố",
+    "pfs_support_faq": "Câu hỏi thường gặp",
+    "pfs_support_faq_account": "Có cần tài khoản, thanh toán hoặc kết nối internet để chơi không?",
+    "pfs_support_faq_progress": "Tiến trình chơi có được đồng bộ giữa các thiết bị không?",
+    "pfs_support_faq_beta": "Bỏ qua phản hồi Beta có ảnh hưởng đến trò chơi không?",
+    "pfs_support_privacy": "Dữ liệu, quyền riêng tư và phản hồi Beta riêng tư",
+    "pfs_support_privacy_link": "Đọc toàn bộ chính sách quyền riêng tư",
+    "pfs_support_review": "Hướng dẫn App Review",
+    "pfs_support_video": "Video chơi thử dành cho xét duyệt",
+    "pfs_support_video_link": "Mở hoặc tải video xét duyệt"
+  },
+  "portfolioGifts": {
+    "portfolio_gift_entry": "Thông báo quà tặng",
+    "portfolio_gift_details": "Xem chi tiết quà"
+  },
+  "paperBetaAdmin": {
+    "title": "Phản hồi nội bộ",
+    "summary": "Số phản hồi",
+    "average": "Điểm trung bình",
+    "continuation": "Muốn có phần tiếp theo",
+    "comment": "Bình luận",
+    "yes": "Có",
+    "maybe": "Có thể",
+    "no": "Không",
+    "older": "Phản hồi cũ hơn",
+    "denied": "Cần đăng nhập quản trị viên",
+    "unavailable": "Chưa thể đọc phản hồi; vui lòng thử lại sau"
+  },
   "common": {
     "cancel": "Hủy",
     "confirm": "Xác nhận",

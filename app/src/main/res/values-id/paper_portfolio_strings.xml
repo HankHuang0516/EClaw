@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="paper_beta_title">Umpan balik internal</string>
+    <string name="paper_beta_summary">Respons</string>
+    <string name="paper_beta_average">Nilai rata-rata</string>
+    <string name="paper_beta_continuation">Ingin sekuel</string>
+    <string name="paper_beta_comment">Komentar</string>
+    <string name="paper_beta_yes">Ya</string>
+    <string name="paper_beta_maybe">Mungkin</string>
+    <string name="paper_beta_no">Tidak</string>
+    <string name="paper_beta_older">Respons sebelumnya</string>
+    <string name="paper_beta_denied">Login administrator diperlukan</string>
+    <string name="paper_beta_unavailable">Umpan balik tidak tersedia; coba lagi nanti</string>
+    <string name="portfolio_gift_entry">Pengumuman hadiah</string>
+    <string name="portfolio_gift_details">Lihat detail hadiah</string>
+    <string name="pfs_support_title">Dukungan resmi dan privasi</string>
+    <string name="pfs_support_contact">Dukungan dan pemecahan masalah</string>
+    <string name="pfs_support_faq">Pertanyaan yang sering diajukan</string>
+    <string name="pfs_support_faq_account">Apakah perlu akun, pembayaran, atau koneksi internet untuk bermain?</string>
+    <string name="pfs_support_faq_progress">Apakah progres permainan disinkronkan antarperangkat?</string>
+    <string name="pfs_support_faq_beta">Apakah melewatkan masukan Beta memengaruhi permainan?</string>
+    <string name="pfs_support_privacy">Data, privasi, dan masukan Beta pribadi</string>
+    <string name="pfs_support_privacy_link">Baca kebijakan privasi lengkap</string>
+    <string name="pfs_support_review">Panduan App Review</string>
+    <string name="pfs_support_video">Video permainan untuk peninjauan</string>
+    <string name="pfs_support_video_link">Buka atau unduh video peninjauan</string>
+</resources>

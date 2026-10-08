@@ -1,4 +1,34 @@
 {
+  "paperFlickSupport": {
+    "pfs_support_title": "Offizieller Support und Datenschutz",
+    "pfs_support_contact": "Support und Fehlerbehebung",
+    "pfs_support_faq": "Häufig gestellte Fragen",
+    "pfs_support_faq_account": "Muss ich zum Spielen ein Konto haben, etwas bezahlen oder mit dem Internet verbunden sein?",
+    "pfs_support_faq_progress": "Wird der Spielfortschritt zwischen Geräten synchronisiert?",
+    "pfs_support_faq_beta": "Wirkt es sich auf das Spiel aus, wenn ich keine Beta-Rückmeldung gebe?",
+    "pfs_support_privacy": "Daten, Datenschutz und private Beta-Rückmeldungen",
+    "pfs_support_privacy_link": "Vollständige Datenschutzerklärung lesen",
+    "pfs_support_review": "Anleitung für App Review",
+    "pfs_support_video": "Spielvideo für die Prüfung",
+    "pfs_support_video_link": "Prüfungsvideo öffnen oder herunterladen"
+  },
+  "portfolioGifts": {
+    "portfolio_gift_entry": "Geschenkankündigungen",
+    "portfolio_gift_details": "Geschenkdetails ansehen"
+  },
+  "paperBetaAdmin": {
+    "title": "Internes Feedback",
+    "summary": "Antworten",
+    "average": "Durchschnittliche Bewertung",
+    "continuation": "Wunsch nach Fortsetzung",
+    "comment": "Kommentar",
+    "yes": "Ja",
+    "maybe": "Vielleicht",
+    "no": "Nein",
+    "older": "Ältere Antworten",
+    "denied": "Administrator-Anmeldung erforderlich",
+    "unavailable": "Feedback derzeit nicht verfügbar; später erneut versuchen"
+  },
   "common": {
     "cancel": "Abbrechen",
     "confirm": "Bestätigen",

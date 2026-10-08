@@ -1,4 +1,34 @@
 {
+  "paperFlickSupport": {
+    "pfs_support_title": "Officiële ondersteuning en privacy",
+    "pfs_support_contact": "Ondersteuning en probleemoplossing",
+    "pfs_support_faq": "Veelgestelde vragen",
+    "pfs_support_faq_account": "Moet ik om te spelen een account hebben, betalen of verbonden zijn met internet?",
+    "pfs_support_faq_progress": "Wordt de voortgang tussen apparaten gesynchroniseerd?",
+    "pfs_support_faq_beta": "Heeft het overslaan van Beta-feedback invloed op het spel?",
+    "pfs_support_privacy": "Gegevens, privacy en privéfeedback voor Beta",
+    "pfs_support_privacy_link": "Lees het volledige privacybeleid",
+    "pfs_support_review": "Instructies voor App Review",
+    "pfs_support_video": "Spelvideo voor beoordeling",
+    "pfs_support_video_link": "Open of download de beoordelingsvideo"
+  },
+  "portfolioGifts": {
+    "portfolio_gift_entry": "Gift announcements",
+    "portfolio_gift_details": "Cadeaudetails bekijken"
+  },
+  "paperBetaAdmin": {
+    "title": "Interne feedback",
+    "summary": "Reacties",
+    "average": "Gemiddelde beoordeling",
+    "continuation": "Wil een vervolg",
+    "comment": "Opmerking",
+    "yes": "Ja",
+    "maybe": "Misschien",
+    "no": "Nee",
+    "older": "Oudere reacties",
+    "denied": "Beheerderslogin vereist",
+    "unavailable": "Feedback niet beschikbaar; probeer later opnieuw"
+  },
   "common": {
     "cancel": "Annuleren",
     "confirm": "Bevestigen",

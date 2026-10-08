@@ -196,11 +196,11 @@
       "iosVersion": "1.0.6"
     },
     {
-      "name": "REBOUND：元素戰機",
+      "name": "元素戰機350",
       "category": "遊戲",
       "desc": "彈射、融合七元素，突破 100 波的賽博龐克球體戰鬥。",
       "communityId": "rebound",
-      "iconText": "RE",
+      "iconText": "戰機",
       "icon": "icons/store-rebound-40002e891e34.jpg",
       "source": "Android / iOS",
       "googlePackage": "com.hankhuang.reboundprototype",
@@ -211,13 +211,13 @@
       "iosStatus": "已上架",
       "publicGoogle": true,
       "publicApple": true,
-      "googleStoreName": "REBOUND：元素戰機",
-      "iosStoreName": "REBOUND：元素戰機",
+      "googleStoreName": "元素戰機350",
+      "iosStoreName": "元素戰機350",
       "checkedAt": "2026-10-04T01:02:59.370Z",
       "guide": "https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site/",
       "guideLabel": "完整攻略",
       "iosVersion": "1.1.1",
-      "aliases": "元素戰機350"
+      "aliases": "Elemental Fighter 350"
     },
     {
       "name": "睡公園：免費生存地圖",

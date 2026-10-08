@@ -1,4 +1,34 @@
 {
+  "paperFlickSupport": {
+    "pfs_support_title": "Официальная поддержка и конфиденциальность",
+    "pfs_support_contact": "Поддержка и устранение неполадок",
+    "pfs_support_faq": "Часто задаваемые вопросы",
+    "pfs_support_faq_account": "Нужны ли для игры учётная запись, оплата или подключение к интернету?",
+    "pfs_support_faq_progress": "Синхронизируется ли прогресс между устройствами?",
+    "pfs_support_faq_beta": "Повлияет ли на игру отказ от отправки отзывов Beta?",
+    "pfs_support_privacy": "Данные, конфиденциальность и закрытые отзывы Beta",
+    "pfs_support_privacy_link": "Прочитать полную политику конфиденциальности",
+    "pfs_support_review": "Инструкции для App Review",
+    "pfs_support_video": "Демонстрационное видео игрового процесса для проверки",
+    "pfs_support_video_link": "Открыть или скачать видео для проверки"
+  },
+  "portfolioGifts": {
+    "portfolio_gift_entry": "Gift announcements",
+    "portfolio_gift_details": "Посмотреть детали подарка"
+  },
+  "paperBetaAdmin": {
+    "title": "Внутренние отзывы",
+    "summary": "Ответы",
+    "average": "Средняя оценка",
+    "continuation": "Хочет продолжение",
+    "comment": "Комментарий",
+    "yes": "Да",
+    "maybe": "Возможно",
+    "no": "Нет",
+    "older": "Предыдущие ответы",
+    "denied": "Требуется вход администратора",
+    "unavailable": "Отзывы недоступны; повторите позже"
+  },
   "common": {
     "cancel": "Отмена",
     "confirm": "Подтвердить",
