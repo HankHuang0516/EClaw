@@ -1440,3 +1440,5 @@ The owner-authenticated quota/ad-session API and signed AdMob callback are imple
 Dream Buddy AI replies can be flagged inside the app through owner-authenticated `POST /api/app-bot/ads/reports`. The private report stores an existing owned AI-message reference and a reason, never a public issue or automatic notification. Reports appear only in the development-only owner diagnostics; production inspection uses authorized database access. See the integration document for triage.
 
 Dream Buddy SSV failures log only bounded rejection reason codes; callback URLs, signatures, identifiers and arbitrary provider errors stay excluded. Reward verification/credit gates are unchanged.
+
+Signed challenge-free AdMob URL probes are acknowledged before checking reward-unit fields, with credited=false and no database access. Any app-shaped challenge still requires the configured production unit, 6 messages, a valid timestamp and exact-once redemption. Unsigned callbacks remain rejected.

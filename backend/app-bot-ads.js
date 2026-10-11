@@ -208,15 +208,16 @@ module.exports = function createAdsRouter({ getDevices, getPool, isReady = () =>
         const transaction = params.get('transaction_id');
         const session = params.get('custom_data');
         const timestamp = Number(params.get('timestamp'));
+        // Signed URL probes may use diagnostic unit/reward values and omit
+        // an app challenge. A verified signed probe has nothing to redeem:
+        // acknowledge it without touching the database or granting any reward.
+        if (!session || !/^[A-Za-z0-9_-]{32}$/.test(session)) {
+            return res.json({ success: true, credited: false });
+        }
         if (!Object.values(UNITS).includes(unit) || params.get('reward_amount') !== '6' ||
             params.get('reward_item') !== 'messages' || !transaction || transaction.length > 128 ||
             !Number.isSafeInteger(timestamp) || Math.abs(Date.now() - timestamp) > 7 * 24 * 60 * 60 * 1000) {
             return res.status(400).json({ success: false, error: 'invalid_reward' });
-        }
-        // The AdMob URL testing tool may omit an app-issued challenge. Genuine,
-        // signed callbacks without a challenge are acknowledged but never credited.
-        if (!session || !/^[A-Za-z0-9_-]{32}$/.test(session)) {
-            return res.json({ success: true, credited: false });
         }
         let client;
         try {
