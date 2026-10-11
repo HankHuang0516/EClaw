@@ -763,11 +763,12 @@ async function dispatchAppBotMessage({ deviceId, device, entityId, bot, prePromp
 }
 app._dispatchAppBotMessage = dispatchAppBotMessage;
 
-app.use('/api/app-bot/ads', require('./app-bot-ads')({
+const dreamBuddyAds = require('./app-bot-ads')({
     getDevices: () => devices,
     getPool: () => db._getPool(),
     isReady: () => persistenceReady,
-}));
+});
+app.use('/api/app-bot/ads', dreamBuddyAds);
 
 app.post('/api/app-bot/chat', appBotChatRateLimit, async (req, res) => {
     const { appId, personaId, deviceId, deviceSecret, message, entityId } = req.body || {};
@@ -1864,6 +1865,7 @@ app.get('/api/help', (req, res) => {
 
     // Intent category matching — zh/en + ja/ko/th/vi/id/fr/es/ms (by @Mac_F)
     const INTENT_MAP = {
+        dream_buddy_ads: ['dream buddy ads', 'dream-buddy reward', '夢話夥伴廣告', '梦话伙伴广告'],
         paper_beta_feedback: ['paper beta feedback', 'paper-beta-feedback', '紙上彈兵回饋', '纸上弹兵反馈'],
         taaze_demo_share: ['taaze demo', 'taaze-demo', 'demo share', 'demo 分享', '示範分享'],
         dot_progress: ['dot progress', 'dot-progress', 'dot 專案進度', '專案進度', '待決策', 'pending decision', '催進度', 'push progress', 'work timeline', 'work interval', '歷史時程表', '历史时程表', '工作時程', 'gantt', 'schedule', 'planned schedule', '甘特圖', '甘特图', '預計排程', '预计排程'],
@@ -1888,6 +1890,12 @@ app.get('/api/help', (req, res) => {
     const d = `'{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${eId}`; // shared body prefix
 
     const APIS = {
+        dream_buddy_ads: [
+            { title: 'Dream Buddy: owner-authenticated message quota', curl: `curl -s '${apiBase}/api/app-bot/ads/quota?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET'` },
+            { title: 'Dream Buddy: create a 6-message rewarded-ad challenge', curl: `curl -s -X POST '${apiBase}/api/app-bot/ads/sessions?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET' -H 'Content-Type: application/json' -d '{"platform":"ios"}'` },
+            { title: 'Dream Buddy: verify reward status (no local credit)', curl: `curl -s '${apiBase}/api/app-bot/ads/sessions/SESSION_ID?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET'` },
+            { title: 'AdMob signed SSV callback: Google-only; unsigned requests are rejected', curl: `curl -s '${apiBase}/api/app-bot/ads/ssv'` },
+        ],
         paper_beta_feedback: [
             { title: 'Private Paper beta feedback (existing portal admin session only; bot credentials grant no access)', curl: `curl -s "${apiBase}/api/admin/paper-beta-feedback" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
             { title: 'Local Paper beta diagnostics (existing admin session; disabled in production/Railway)', curl: `curl -s "${apiBase}/api/debug/paper-beta-feedback" --cookie /LOCAL/PORTAL_COOKIE_FILE` }
@@ -17507,6 +17515,8 @@ app.use('/api/debug/taaze-demo-share', taazeDemoRouters.debugRouter);
  * Show all devices and their entities (for debugging).
  * Requires admin auth — never expose unauthenticated.
  */
+app.use('/api/debug/dream-buddy-ads', dreamBuddyAds.diagnostics);
+
 app.get('/api/debug/devices', (req, res) => {
     if (!verifyAdmin(req)) {
         return res.status(403).json({ success: false, error: 'Forbidden: admin token required' });

@@ -58,3 +58,28 @@ test('genuine signed URL probes with no app challenge cannot credit rewards', as
     expect(result.body.credited).toBe(false);
     expect(getPool).not.toHaveBeenCalled();
 });
+
+test('reward diagnostics are unavailable in production and Railway environments', async () => {
+    const previousNode = process.env.NODE_ENV;
+    const previousRailway = process.env.RAILWAY_ENVIRONMENT;
+    const getPool = jest.fn();
+    const app = express();
+    app.use('/debug', createRouter({ getDevices: () => ({}), getPool }).diagnostics);
+    try {
+        process.env.NODE_ENV = 'production';
+        expect((await request(app).get('/debug')).status).toBe(404);
+        process.env.NODE_ENV = 'test';
+        process.env.RAILWAY_ENVIRONMENT = 'debug';
+        expect((await request(app).get('/debug')).status).toBe(404);
+        expect(getPool).not.toHaveBeenCalled();
+    } finally {
+        if (previousNode === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = previousNode;
+        if (previousRailway === undefined) delete process.env.RAILWAY_ENVIRONMENT; else process.env.RAILWAY_ENVIRONMENT = previousRailway;
+    }
+});
+test('reward diagnostics require owner credentials and fail closed on database outage', async () => {
+    const app = express();
+    app.use('/debug', createRouter({ getDevices: () => ({ dev: { deviceSecret: 'secret' } }), getPool: () => null }).diagnostics);
+    expect((await request(app).get('/debug?deviceId=dev')).status).toBe(403);
+    expect((await request(app).get('/debug?deviceId=dev').set('X-Device-Secret', 'secret')).status).toBe(503);
+});

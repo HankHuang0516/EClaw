@@ -96,6 +96,32 @@ module.exports = function createAdsRouter({ getDevices, getPool, isReady = () =>
         const row = result.rows[0] || { messages_used: 0, bonus_from_ads: 0 };
         return { day, remaining: Math.max(0, 8 + row.bonus_from_ads - row.messages_used) };
     }
+    // Mounted after the existing /api/debug namespace guard; authenticate the
+    // owner as well, and never expose challenge tokens or signed callback data.
+    const diagnostics = express.Router();
+    diagnostics.use((req, res, next) => {
+        if (process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT) {
+            return res.status(404).json({ success: false, error: 'not_found' });
+        }
+        next();
+    }, authenticate);
+    diagnostics.get('/', async (req, res) => {
+        try {
+            const pool = await poolReady();
+            const sessions = await pool.query(
+                'SELECT platform,created_at,expires_at,redeemed FROM dream_buddy_ad_sessions ' +
+                'WHERE device_id=$1 ORDER BY created_at DESC LIMIT 20', [req.adDeviceId]
+            );
+            const transactions = await pool.query(
+                'SELECT t.quota_date,t.credited_at FROM dream_buddy_ad_transactions t ' +
+                'JOIN dream_buddy_ad_sessions s ON s.session_id=t.session_id ' +
+                'WHERE s.device_id=$1 ORDER BY t.credited_at DESC LIMIT 20', [req.adDeviceId]
+            );
+            res.json({ success: true, quota: await quota(pool, req.adDeviceId),
+                sessions: sessions.rows, transactions: transactions.rows });
+        } catch { res.status(503).json({ success: false, error: 'database_unavailable' }); }
+    });
+    router.diagnostics = diagnostics;
     router.get('/quota', authenticate, async (req, res) => {
         try { res.json({ success: true, ...await quota(await poolReady(), req.adDeviceId) }); }
         catch { res.status(503).json({ success: false, error: 'database_unavailable' }); }

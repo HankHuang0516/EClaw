@@ -26,3 +26,7 @@ Seven focused Jest tests passed on the isolated SSD test copy: signed-byte verif
 Still required before production enablement: real PostgreSQL concurrent/replayed callback tests, required repository CI and review, production deployment/health checks, AdMob SSV URL verification, then actual device rewarded-ad delivery. Passing the unit suite is not evidence of a deployed callback or real Google reward delivery. App-store releases also require current-package H icon inspection and native/chat QA.
 
 Google reference: https://developers.google.com/admob/ios/ssv
+
+## Discovery and diagnostics
+
+`/api/help?intent=dream%20buddy%20ads` exposes the owner-authenticated quota/session contracts and signed Google callback. The existing bot credential gate protects discovery. `GET /api/debug/dream-buddy-ads` is disabled in production and all Railway environments, additionally requires owner credentials, and returns up to 20 owned session/transaction summaries and current quota. Challenge IDs, transaction IDs, signatures, and device secrets are excluded. Database failures return 503 rather than invented quota. Real PostgreSQL transaction tests (7 cases) now pass; live signed Google ad delivery is still required.

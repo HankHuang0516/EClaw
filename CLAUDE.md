@@ -1761,3 +1761,7 @@ Private decision records are separate from project imports and public summaries.
 The earlier dot-progress manual reuse/quality/efficiency review approval remains recorded. On 2026-10-07 the user explicitly authorized replacing this project's mandatory simplify/Claude Code login dependency with the UI/UX Code Review rule above for all project UI surfaces. Record the actual review and tests truthfully; do not claim an unexecuted skill ran.
 
 Project Review is an admin-only append-only work journal with occurrence date, source/scope and correction comments; it never reads assistant internal memory or hidden instructions. Use its normal UI for real records, and retain synthetic fixtures only in the repository.
+
+## Dream Buddy rewarded messages
+
+The owner-authenticated quota/ad-session API and signed AdMob callback are implemented in `backend/app-bot-ads.js`; integration, replay-safe credit and debugging contracts are documented in `backend/docs/dream-buddy-rewarded-ads.md`. Test and debug environments can inspect owner-only summaries through `/api/debug/dream-buddy-ads`; production and Railway disable this route.
