@@ -40,17 +40,37 @@ suite('Dream Buddy real PostgreSQL reward transactions', () => {
             'app_id TEXT NOT NULL,device_id TEXT NOT NULL,quota_date DATE NOT NULL,' +
             'messages_used INTEGER NOT NULL DEFAULT 0,bonus_from_ads INTEGER NOT NULL DEFAULT 0,' +
             'updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),PRIMARY KEY(app_id,device_id,quota_date))');
+        await pool.query('CREATE TABLE chat_messages (id UUID PRIMARY KEY,device_id TEXT NOT NULL,entity_id INTEGER NOT NULL,is_from_bot BOOLEAN NOT NULL)');
         app = express();
         app.use(express.json());
-        app.use('/ads', createRouter({ getDevices: () => devices, getPool: () => pool,
-            loadKeys: async () => new Map([['1', publicKey]]) }));
+        const router = createRouter({ getDevices: () => devices, getPool: () => pool,
+            loadKeys: async () => new Map([['1', publicKey]]) });
+        app.use('/ads', router); app.use('/debug', router.diagnostics);
         expect((await deviceRequest('get', '/ads/quota?deviceId=owner')).status).toBe(200);
     });
     beforeEach(async () => {
-        await pool.query('TRUNCATE dream_buddy_ad_transactions,dream_buddy_ad_sessions,app_bot_quota');
+        await pool.query('TRUNCATE dream_buddy_content_reports,chat_messages,dream_buddy_ad_transactions,dream_buddy_ad_sessions,app_bot_quota');
     });
     afterAll(async () => { if (pool) await pool.end(); });
 
+    test('content reports accept only the owners AI replies and repeated reports are idempotent', async () => {
+        const ownerBot = crypto.randomUUID(), otherBot = crypto.randomUUID(), ownerUser = crypto.randomUUID();
+        await pool.query('INSERT INTO chat_messages VALUES ($1,$4,0,TRUE),($2,$5,0,TRUE),($3,$4,0,FALSE)',
+            [ownerBot, otherBot, ownerUser, 'owner', 'other']);
+        const report = id => deviceRequest('post', '/ads/reports?deviceId=owner').send({ messageId: id, reason: 'offensive' });
+        expect((await report(otherBot)).status).toBe(404);
+        expect((await report(ownerUser)).status).toBe(404);
+        expect((await report(crypto.randomUUID())).status).toBe(404);
+        const first = await report(ownerBot), repeated = await report(ownerBot);
+        expect(first.status).toBe(200);
+        expect(repeated.body.reportId).toBe(first.body.reportId);
+        expect(Object.keys(first.body).sort()).toEqual(['reportId', 'success']);
+        expect((await pool.query('SELECT COUNT(*)::int AS n FROM dream_buddy_content_reports')).rows[0].n).toBe(1);
+        const diagnostics = await deviceRequest('get', '/debug?deviceId=owner');
+        expect(diagnostics.body.reports).toHaveLength(1);
+        expect(diagnostics.body.reports[0].message_id).toBe(ownerBot);
+        expect((await deviceRequest('get', '/debug?deviceId=other', 'other')).body.reports).toEqual([]);
+    });
     test('credits six messages and owner sees redeemed session and quota', async () => {
         const id = await session();
         const response = await callback(id, 'credit-once');

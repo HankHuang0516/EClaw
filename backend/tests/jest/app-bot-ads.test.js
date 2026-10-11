@@ -83,3 +83,19 @@ test('reward diagnostics require owner credentials and fail closed on database o
     expect((await request(app).get('/debug?deviceId=dev')).status).toBe(403);
     expect((await request(app).get('/debug?deviceId=dev').set('X-Device-Secret', 'secret')).status).toBe(503);
 });
+
+
+test('AI reports require owner auth, reject invalid input, and never acknowledge database outages', async () => {
+    const getPool = jest.fn(() => null);
+    const app = express(); app.use(express.json());
+    app.use('/ads', createRouter({ getDevices: () => ({ dev: { deviceSecret: 'secret' } }), getPool }));
+    const report = { messageId: crypto.randomUUID(), reason: 'offensive' };
+    expect((await request(app).post('/ads/reports').send(report)).status).toBe(403);
+    expect((await request(app).post('/ads/reports?deviceId=dev').set('X-Device-Secret', 'secret')
+        .send({ ...report, messageId: 'not-a-server-message' })).status).toBe(400);
+    expect((await request(app).post('/ads/reports?deviceId=dev').set('X-Device-Secret', 'secret')
+        .send({ ...report, reason: 'unrecognized' })).status).toBe(400);
+    expect(getPool).not.toHaveBeenCalled();
+    const response = await request(app).post('/ads/reports?deviceId=dev').set('X-Device-Secret', 'secret').send(report);
+    expect(response.status).toBe(503); expect(response.body.success).toBe(false);
+});

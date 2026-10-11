@@ -1891,6 +1891,7 @@ app.get('/api/help', (req, res) => {
 
     const APIS = {
         dream_buddy_ads: [
+            { title: 'Dream Buddy: privately flag an owned AI reply', curl: `curl -s -X POST '${apiBase}/api/app-bot/ads/reports?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET' -H 'Content-Type: application/json' -d '{"messageId":"SERVER_MESSAGE_UUID","reason":"offensive"}'` },
             { title: 'Dream Buddy: owner-authenticated message quota', curl: `curl -s '${apiBase}/api/app-bot/ads/quota?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET'` },
             { title: 'Dream Buddy: create a 6-message rewarded-ad challenge', curl: `curl -s -X POST '${apiBase}/api/app-bot/ads/sessions?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET' -H 'Content-Type: application/json' -d '{"platform":"ios"}'` },
             { title: 'Dream Buddy: verify reward status (no local credit)', curl: `curl -s '${apiBase}/api/app-bot/ads/sessions/SESSION_ID?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET'` },
