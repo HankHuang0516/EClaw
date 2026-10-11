@@ -378,3 +378,7 @@ See [`CLAUDE.md`](CLAUDE.md) for the full system prompt used in this repo.
 ### Paper Flick Soldiers website support and private Beta feedback
 
 The canonical `/AiHankApps/guides/paper-flick-soldiers/` page includes support, troubleshooting and private Beta disclosure. The legacy support URL redirects there while preserving language and supported anchors. Existing portal account administrators can read the original feedback table at `GET /api/admin/paper-beta-feedback`, with session authentication, fresh database admin-role checks and private/no-store responses. Local-only diagnostics at `/api/debug/paper-beta-feedback` reuse these gates and are disabled in production and Railway. Public pages never read feedback. See `docs/paper-beta-internal-feedback.md`. The portfolio gift sidebar lists each confirmed campaign independently; it does not dispatch gifts.
+
+## Dream Buddy rewarded messages
+
+The owner-authenticated quota/ad-session API and signed AdMob callback are implemented in `backend/app-bot-ads.js`; integration, replay-safe credit and debugging contracts are documented in `backend/docs/dream-buddy-rewarded-ads.md`. Test and debug environments can inspect owner-only summaries through `/api/debug/dream-buddy-ads`; production and Railway disable this route.
