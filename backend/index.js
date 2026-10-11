@@ -14186,6 +14186,13 @@ app.post('/api/entity/speak-to', async (req, res) => {
     res.json(speakToResponse);
 });
 
+function parseCrossDeviceSettingsEntityId(value, device) {
+    const eid = (typeof value === 'number' || (typeof value === 'string' && /^\d+$/.test(value)))
+        ? Number(value)
+        : NaN;
+    return isValidEntityId(device, eid) ? eid : null;
+}
+
 /**
  * GET /api/entity/cross-device-settings
  * Get cross-device message settings for an entity.
@@ -14200,8 +14207,8 @@ app.get('/api/entity/cross-device-settings', async (req, res) => {
     if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
-    const eid = parseInt(entityId, 10);
-    if (isNaN(eid) || eid < 0 || eid > 3) {
+    const eid = parseCrossDeviceSettingsEntityId(entityId, device);
+    if (eid === null) {
         return res.status(400).json({ success: false, message: 'Invalid entityId' });
     }
     try {
@@ -14227,8 +14234,8 @@ app.put('/api/entity/cross-device-settings', async (req, res) => {
     if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
-    const eid = parseInt(entityId, 10);
-    if (isNaN(eid) || eid < 0 || eid > 3) {
+    const eid = parseCrossDeviceSettingsEntityId(entityId, device);
+    if (eid === null) {
         return res.status(400).json({ success: false, message: 'Invalid entityId' });
     }
     try {
@@ -14255,8 +14262,8 @@ app.delete('/api/entity/cross-device-settings', async (req, res) => {
     if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
-    const eid = parseInt(entityId, 10);
-    if (isNaN(eid) || eid < 0 || eid > 3) {
+    const eid = parseCrossDeviceSettingsEntityId(entityId, device);
+    if (eid === null) {
         return res.status(400).json({ success: false, message: 'Invalid entityId' });
     }
     try {
