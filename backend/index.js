@@ -763,6 +763,12 @@ async function dispatchAppBotMessage({ deviceId, device, entityId, bot, prePromp
 }
 app._dispatchAppBotMessage = dispatchAppBotMessage;
 
+app.use('/api/app-bot/ads', require('./app-bot-ads')({
+    getDevices: () => devices,
+    getPool: () => db._getPool(),
+    isReady: () => persistenceReady,
+}));
+
 app.post('/api/app-bot/chat', appBotChatRateLimit, async (req, res) => {
     const { appId, personaId, deviceId, deviceSecret, message, entityId } = req.body || {};
 
@@ -24789,7 +24795,8 @@ async function markMessagesAsRead(deviceId, entityId) {
 // GET /api/chat/history
 // Auth: deviceSecret OR botSecret (bot can only see messages for its own entity)
 app.get('/api/chat/history', async (req, res) => {
-    const { deviceId, deviceSecret, botSecret, limit = 500, before, since } = req.query;
+    const { deviceId, deviceSecret, botSecret } = require('./extract-creds')(req);
+    const { limit = 500, before, since } = req.query;
 
     if (!deviceId) {
         return res.status(400).json({ success: false, error: 'deviceId required' });
