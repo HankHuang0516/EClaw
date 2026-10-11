@@ -40,3 +40,5 @@ Reports remain private in `dream_buddy_content_reports`: report UUID, device ide
 Triage: use existing authorized server database access to read the newest report rows and, if necessary, retrieve the referenced private message under the same device. Review for prohibited AI content and adjust provider filtering/persona safeguards when indicated. Do not export reports or chat text to public issue trackers. A report is an acknowledgement of receipt, not a claim that moderation or deletion has already finished. No new secrets or permissions are introduced.
 
 SSV verification failures now log only an allowlisted reason code (`missing_signature`, `unknown_key`, etc.), never the callback URL, signature, user/device/challenge data, or an arbitrary provider error. This supports diagnosing the official AdMob URL tool without changing rejection or reward gates.
+
+Signed challenge-free AdMob URL probes are acknowledged before checking reward-unit fields, with credited=false and no database access. Any app-shaped challenge still requires the configured production unit, 6 messages, a valid timestamp and exact-once redemption. Unsigned callbacks remain rejected.

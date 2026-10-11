@@ -43,7 +43,7 @@ test('Google test units and mismatched rewards are never credited', async () => 
     const getPool = jest.fn();
     const app = express();
     app.use('/ads', createRouter({ getDevices: () => ({}), getPool, loadKeys }));
-    const base = 'ad_unit=5224354917&reward_amount=6&reward_item=messages&timestamp=' + Date.now() + '&transaction_id=txn';
+    const base = 'ad_unit=5224354917&custom_data=' + 'A'.repeat(32) + '&reward_amount=6&reward_item=messages&timestamp=' + Date.now() + '&transaction_id=txn';
     expect((await request(app).get('/ads/ssv?' + signed(base))).status).toBe(400);
     expect((await request(app).get('/ads/ssv?' + signed(base.replace('5224354917', '6438262242').replace('reward_amount=6', 'reward_amount=60')))).status).toBe(400);
     expect(getPool).not.toHaveBeenCalled();
@@ -117,5 +117,20 @@ test('SSV rejection diagnostics reveal only bounded reason codes and never callb
     expect((await request(failing).get('/ads/ssv?' + signed('ad_unit=6438262242'))).status).toBe(400);
     expect(logRejected).toHaveBeenLastCalledWith('verification_failed');
     expect(JSON.stringify(logRejected.mock.calls)).not.toContain(secret);
+    expect(getPool).not.toHaveBeenCalled();
+});
+
+
+test('signed challenge-free probes acknowledge different unit/reward values without database access', async () => {
+    const getPool = jest.fn(); const app = express();
+    app.use('/ads', createRouter({ getDevices: () => ({}), getPool, loadKeys }));
+    const probe = signed('ad_unit=probe&reward_amount=1&reward_item=probe&timestamp=0&transaction_id=probe');
+    const response = await request(app).get('/ads/ssv?' + probe);
+    expect(response.status).toBe(200); expect(response.body.credited).toBe(false);
+    expect(getPool).not.toHaveBeenCalled();
+    // The same mismatched fields with an app-shaped challenge must still fail.
+    const attempt = signed('ad_unit=probe&custom_data=' + 'A'.repeat(32) +
+        '&reward_amount=1&reward_item=probe&timestamp=' + Date.now() + '&transaction_id=probe');
+    expect((await request(app).get('/ads/ssv?' + attempt)).status).toBe(400);
     expect(getPool).not.toHaveBeenCalled();
 });
