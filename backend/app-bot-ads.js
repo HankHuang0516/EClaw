@@ -32,7 +32,7 @@ async function googleKeys() {
 async function verifyQuery(raw, loadKeys = googleKeys) {
     if (typeof raw !== 'string' || raw.length > 16000) throw new Error('invalid_callback');
     const position = raw.indexOf('&signature=');
-    if (position <= 0) throw new Error('invalid_signature');
+    if (position <= 0) throw new Error('missing_signature');
     const params = new URLSearchParams(raw);
     for (const key of params.keys()) {
         if (params.getAll(key).length !== 1) throw new Error('duplicate_parameter');
@@ -46,7 +46,8 @@ async function verifyQuery(raw, loadKeys = googleKeys) {
     }
     const keys = await loadKeys();
     const key = keys.get(keyId);
-    if (!key || !crypto.verify('sha256', Buffer.from(raw.slice(0, position)),
+    if (!key) throw new Error('unknown_key');
+    if (!crypto.verify('sha256', Buffer.from(raw.slice(0, position)),
         key, Buffer.from(signature, 'base64url'))) throw new Error('invalid_signature');
     return params;
 }
@@ -54,9 +55,11 @@ const equal = (a, b) => typeof a === 'string' && typeof b === 'string' &&
     Buffer.byteLength(a) === Buffer.byteLength(b) &&
     crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
 
-module.exports = function createAdsRouter({ getDevices, getPool, isReady = () => true, loadKeys = googleKeys }) {
+module.exports = function createAdsRouter({ getDevices, getPool, isReady = () => true, loadKeys = googleKeys,
+    logRejected = (reason) => console.warn('[DreamBuddy Ads] SSV verification rejected:', reason) }) {
     const router = express.Router();
     const initializations = new WeakMap();
+    const lastRejections = new Map();
     async function poolReady() {
         const pool = getPool();
         if (!pool) throw new Error('database_unavailable');
@@ -188,7 +191,19 @@ module.exports = function createAdsRouter({ getDevices, getPool, isReady = () =>
     router.get('/ssv', async (req, res) => {
         let params;
         try { params = await verifyQuery(req.originalUrl.split('?')[1], loadKeys); }
-        catch { return res.status(400).json({ success: false, error: 'invalid_callback' }); }
+        catch (error) {
+            // Emit only a bounded failure code. Never log callback URLs, signatures,
+            // challenge/user/device identifiers, or the raw provider error.
+            const reasons = ['invalid_callback', 'missing_signature', 'invalid_signature',
+                'duplicate_parameter', 'unknown_key', 'key_fetch_failed', 'key_response_invalid', 'key_invalid'];
+            const reason = reasons.includes(error.message) ? error.message : 'verification_failed';
+            const last = lastRejections.get(reason) || 0;
+            if (Date.now() - last >= 60000) {
+                lastRejections.set(reason, Date.now());
+                logRejected(reason);
+            }
+            return res.status(400).json({ success: false, error: 'invalid_callback' });
+        }
         const unit = params.get('ad_unit');
         const transaction = params.get('transaction_id');
         const session = params.get('custom_data');
