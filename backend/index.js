@@ -1865,7 +1865,8 @@ app.get('/api/help', (req, res) => {
 
     // Intent category matching — zh/en + ja/ko/th/vi/id/fr/es/ms (by @Mac_F)
     const INTENT_MAP = {
-        dream_buddy_ads: ['dream buddy ads', 'dream-buddy reward', '夢話夥伴廣告', '梦话伙伴广告'],
+        dream_buddy_ads: [
+            { title: 'Dream Buddy: privately flag an owned AI reply', curl: `curl -s -X POST '${apiBase}/api/app-bot/ads/reports?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET' -H 'Content-Type: application/json' -d '{"messageId":"SERVER_MESSAGE_UUID","reason":"offensive"}'` },'dream buddy ads', 'dream-buddy reward', '夢話夥伴廣告', '梦话伙伴广告'],
         paper_beta_feedback: ['paper beta feedback', 'paper-beta-feedback', '紙上彈兵回饋', '纸上弹兵反馈'],
         taaze_demo_share: ['taaze demo', 'taaze-demo', 'demo share', 'demo 分享', '示範分享'],
         dot_progress: ['dot progress', 'dot-progress', 'dot 專案進度', '專案進度', '待決策', 'pending decision', '催進度', 'push progress', 'work timeline', 'work interval', '歷史時程表', '历史时程表', '工作時程', 'gantt', 'schedule', 'planned schedule', '甘特圖', '甘特图', '預計排程', '预计排程'],

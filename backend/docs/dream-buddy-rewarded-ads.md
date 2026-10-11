@@ -30,3 +30,11 @@ Google reference: https://developers.google.com/admob/ios/ssv
 ## Discovery and diagnostics
 
 `/api/help?intent=dream%20buddy%20ads` exposes the owner-authenticated quota/session contracts and signed Google callback. The existing bot credential gate protects discovery. `GET /api/debug/dream-buddy-ads` is disabled in production and all Railway environments, additionally requires owner credentials, and returns up to 20 owned session/transaction summaries and current quota. Challenge IDs, transaction IDs, signatures, and device secrets are excluded. Database failures return 503 rather than invented quota. Real PostgreSQL transaction tests (7 cases) now pass; live signed Google ad delivery is still required.
+
+## Private AI-content reports
+
+`POST /api/app-bot/ads/reports` accepts `messageId` (a server UUID) and `reason` (`offensive`, `unsafe`, `incorrect`, or `other`). Owner credentials are required. The insert selects only entity 0 AI replies belonging to that device. Other-device, user, unknown, or removed messages return 404 without a report. Invalid input returns 400, missing owner authentication 403, database failure 503. A successful database write returns `{ success: true, reportId }`; repeating the same device/message/reason returns the existing report ID. Requests are capped at five per minute per client IP.
+
+Reports remain private in `dream_buddy_content_reports`: report UUID, device identifier, existing chat-message UUID, reason, and timestamp. The endpoint does not invoke `/api/feedback`, create GitHub issues, send mail, or log the transcript. The app explains the transmission before the user submits. The development-only owner diagnostics include the latest 20 reports and preserve their production/Railway denial.
+
+Triage: use existing authorized server database access to read the newest report rows and, if necessary, retrieve the referenced private message under the same device. Review for prohibited AI content and adjust provider filtering/persona safeguards when indicated. Do not export reports or chat text to public issue trackers. A report is an acknowledgement of receipt, not a claim that moderation or deletion has already finished. No new secrets or permissions are introduced.

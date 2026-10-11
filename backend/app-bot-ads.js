@@ -69,7 +69,11 @@ module.exports = function createAdsRouter({ getDevices, getPool, isReady = () =>
                 'CREATE TABLE IF NOT EXISTS dream_buddy_ad_transactions (' +
                 'transaction_id TEXT PRIMARY KEY, session_id TEXT NOT NULL UNIQUE ' +
                 'REFERENCES dream_buddy_ad_sessions(session_id), quota_date DATE NOT NULL,' +
-                'credited_at TIMESTAMPTZ NOT NULL DEFAULT NOW());'
+                'credited_at TIMESTAMPTZ NOT NULL DEFAULT NOW());' +
+                'CREATE TABLE IF NOT EXISTS dream_buddy_content_reports (' +
+                'report_id UUID PRIMARY KEY,device_id TEXT NOT NULL,message_id UUID NOT NULL,' +
+                'reason TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),' +
+                'UNIQUE(device_id,message_id,reason));'
             ).catch((error) => { initializations.delete(pool); throw error; });
             initializations.set(pool, initializing);
         }
@@ -117,8 +121,12 @@ module.exports = function createAdsRouter({ getDevices, getPool, isReady = () =>
                 'JOIN dream_buddy_ad_sessions s ON s.session_id=t.session_id ' +
                 'WHERE s.device_id=$1 ORDER BY t.credited_at DESC LIMIT 20', [req.adDeviceId]
             );
+            const reports = await pool.query(
+                'SELECT report_id,message_id,reason,created_at FROM dream_buddy_content_reports ' +
+                'WHERE device_id=$1 ORDER BY created_at DESC LIMIT 20', [req.adDeviceId]
+            );
             res.json({ success: true, quota: await quota(pool, req.adDeviceId),
-                sessions: sessions.rows, transactions: transactions.rows });
+                sessions: sessions.rows, transactions: transactions.rows, reports: reports.rows });
         } catch { res.status(503).json({ success: false, error: 'database_unavailable' }); }
     });
     router.diagnostics = diagnostics;
@@ -127,6 +135,28 @@ module.exports = function createAdsRouter({ getDevices, getPool, isReady = () =>
         catch { res.status(503).json({ success: false, error: 'database_unavailable' }); }
     });
     const limit = rateLimit({ windowMs: 60000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false });
+    const reportLimit = rateLimit({ windowMs: 60000, limit: 5, standardHeaders: 'draft-8', legacyHeaders: false });
+    router.post('/reports', authenticate, reportLimit, async (req, res) => {
+        const { messageId, reason } = req.body || {};
+        if (typeof messageId !== 'string' || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(messageId) ||
+            !['offensive', 'unsafe', 'incorrect', 'other'].includes(reason)) {
+            return res.status(400).json({ success: false, error: 'invalid_report' });
+        }
+        try {
+            const pool = await poolReady();
+            // Select only an AI reply owned by this device. Keep the existing
+            // private transcript reference; never publish a GitHub issue or logs.
+            const result = await pool.query(
+                'INSERT INTO dream_buddy_content_reports(report_id,device_id,message_id,reason) ' +
+                'SELECT $1,$2,id,$4 FROM chat_messages WHERE id=$3 AND device_id=$2 ' +
+                'AND entity_id=0 AND is_from_bot=TRUE ' +
+                'ON CONFLICT(device_id,message_id,reason) DO UPDATE SET reason=EXCLUDED.reason RETURNING report_id',
+                [crypto.randomUUID(), req.adDeviceId, messageId, reason]
+            );
+            if (!result.rows.length) return res.status(404).json({ success: false, error: 'message_not_found' });
+            res.json({ success: true, reportId: result.rows[0].report_id });
+        } catch { res.status(503).json({ success: false, error: 'database_unavailable' }); }
+    });
     router.post('/sessions', authenticate, limit, async (req, res) => {
         const platform = req.body && req.body.platform;
         if (!Object.hasOwn(UNITS, platform)) return res.status(400).json({ success: false, error: 'invalid_platform' });
