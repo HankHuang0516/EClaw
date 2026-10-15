@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.4-relationship-branches-20261016",
+  "version": "v4.4.1-proposal-boundaries-20261016",
   "date": "2026-10-16",
   "status": "設計確認稿／開發中；人物關係與支線提案，保留兩款可操作前端原型",
-  "contentHash": "8edd6f64802d9fa6c950821769d5bdf5d0b0da1a4754747da63707024da239f7",
+  "contentHash": "5bcbdcd3778726e6720dfc6960f5dd843a14a7d42bd86d88fb755a544f88cc7a",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1667,8 +1667,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 10356,
-      "sha256": "60d6cec883c0886482aca671d7764c07081e23cf682b398ca53c1702761cca87"
+      "bytes": 10358,
+      "sha256": "4a83c588cca334983dc8c196cf427ff6adf461cdb61a04ce5933cf55c3cbc024"
     },
     {
       "path": "interactive-prototype-data.json",
@@ -1702,8 +1702,8 @@
     },
     {
       "path": "new-gameplay-proposals.json",
-      "bytes": 150922,
-      "sha256": "dd90ad4764f3d92a6cf95b78d6993c20f3376c899b1f7e2292e4ceda90bcbb7e"
+      "bytes": 151912,
+      "sha256": "67ba13c122de79e85dae52d5ef6983f5151f28e0febd809259bbdb21132ee3f1"
     },
     {
       "path": "plan.json",
