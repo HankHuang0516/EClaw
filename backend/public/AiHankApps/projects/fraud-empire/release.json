@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.1-connected-proposals-20261015",
+  "version": "v4.2-new-gameplay-proposals-20261015",
   "date": "2026-10-15",
   "status": "設計確認稿／開發中；靜態互動示意，非正式遊戲",
-  "contentHash": "11d1860b5f1122f05924f59ef0144d19faf51f9d14df6e75400fa40747e94b82",
+  "contentHash": "601c867aa63a8694bd37c5a73e98b90802182cd7c1c9661b793a3335fd5a1863",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1657,8 +1657,23 @@
     },
     {
       "path": "index.html",
-      "bytes": 9870,
-      "sha256": "c982deafa5addeb9c5acf0c699c6fa217084dd7c1aef84bd0e9726a3a1b9e505"
+      "bytes": 9988,
+      "sha256": "9dcf9831869de24d4b125c90a1c5948aede989cda4061f2d49d5e94f916979e7"
+    },
+    {
+      "path": "new-gameplay-proposals.css",
+      "bytes": 2810,
+      "sha256": "1d1d70d4ac3fb2d8de4cada5dd910014e83654e3aa61784687a32228b3df234a"
+    },
+    {
+      "path": "new-gameplay-proposals.js",
+      "bytes": 12754,
+      "sha256": "496a953e7eff62065194ff1fb937409bd1233dc711a2ea203e6f512e0422d0df"
+    },
+    {
+      "path": "new-gameplay-proposals.json",
+      "bytes": 150922,
+      "sha256": "dd90ad4764f3d92a6cf95b78d6993c20f3376c899b1f7e2292e4ceda90bcbb7e"
     },
     {
       "path": "plan.json",
@@ -3071,6 +3086,36 @@
       "sha256": "fe30dbc8282d2bb8f6c24089bcd2a34b2e31d79245189b2706f43b26068d197d"
     },
     {
+      "path": "proposal-demos/17727e3739a457a26aa6.png",
+      "bytes": 2158577,
+      "sha256": "17727e3739a457a26aa6f905da5c3a75fab09c1d974d3d4f7b86bf8eb55d0888"
+    },
+    {
+      "path": "proposal-demos/354d7dfb83e67cc0fe8f.png",
+      "bytes": 2206608,
+      "sha256": "354d7dfb83e67cc0fe8f43f83fe74da6943e935bd5c2dd7b5e5d356d02bbb7ce"
+    },
+    {
+      "path": "proposal-demos/5feaace11e62f93d06d1.png",
+      "bytes": 2334519,
+      "sha256": "5feaace11e62f93d06d1832c4ca5da0323b017caa33d6e80ffb3b428354c4417"
+    },
+    {
+      "path": "proposal-demos/70c7a29e9c144633ddbd.png",
+      "bytes": 2508384,
+      "sha256": "70c7a29e9c144633ddbda2a1d7d87b2c8e6d6a880a822a406ee192104c6f074b"
+    },
+    {
+      "path": "proposal-demos/8194977330733cfdc9fb.png",
+      "bytes": 2052735,
+      "sha256": "8194977330733cfdc9fbed67ab0af838108e823b6328688b148be5cb67906a91"
+    },
+    {
+      "path": "proposal-demos/c6ff98fce82e920bb3c6.png",
+      "bytes": 2508326,
+      "sha256": "c6ff98fce82e920bb3c6e60bed619f29676b1d55b7db1c2f8c02bea407eea62b"
+    },
+    {
       "path": "proposal-model.js",
       "bytes": 8782,
       "sha256": "9ec92e5c3d04da14f8e7666aa10b5b7ea24c9ad2c150578b74e275ca748d5cee"
@@ -3160,13 +3205,18 @@
     "wholeFunctionalAtlases": 1,
     "originalReferenceCards": 8,
     "gameplayCategories": 16,
-    "prologues": 1
+    "prologues": 1,
+    "newGameplayCandidates": 17,
+    "newGameplayTextVersion": "v2",
+    "newProposalDemos": 2,
+    "newProposalDemoImages": 6
   },
   "limitations": [
     "所有新增文字、外觀與表情仍為提案，不代表正式劇本或可用sprites。",
     "T01／T03玩家理解性與宿舍場景一致性待來源修正及驗收。",
     "T02首次時間、日期與主線銜接仍待確認；回顧不發資源。",
     "短片、玩法程式、正式存檔及遊戲服務未實作。",
-    "新版17小遊戲、關係樹與支線新增包留下一版，不冒充本版已接。"
+    "完整新17提案與六幅新示意已接入；圖內操作、拖曳、工序與可玩原型仍未實作，日期、成本與新機制未獲正式採納。",
+    "關係樹與支線增補留下一版，不宣稱本版已接入。"
   ]
 }
