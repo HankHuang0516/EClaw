@@ -95,9 +95,9 @@ describe('fraud empire relationship archive and branch editorial integration', (
     for(const arc of enrichment.arcs)for(const id of arc.event_ids)expect(index.events.has(id)).toBe(true);
     expect(enrichment.new_optional_branches).toHaveLength(3); for(const branch of enrichment.new_optional_branches){expect(branch.canonical).toBe(false);expect(branch.rewards).toBeNull();expect(branch.duration_minutes).toBeNull();expect(index.events.has(branch.id)).toBe(false);expect(plan.narrative.branches.some(event=>event.id===branch.id)).toBe(false);}
   });
-  test('integrates 24 exact text revisions while preserving the missing twenty-fifth target as deferred', () => {
-    expect(data.website_revision.matched_text_revisions).toBe(24); expect(data.website_revision.deferred_text_revisions).toBe(1); expect(data.website_revision.mechanics_changed).toBe(false);
-    expect(corrections.corrections).toHaveLength(28); expect(corrections.corrections.find(item=>item.id==='LOG-23').website_integration).toContain('未套用');
+  test('integrates 25 verified text revisions without copying the private frozen narrative into public schema', () => {
+    expect(data.website_revision.matched_text_revisions).toBe(25); expect(data.website_revision.deferred_text_revisions).toBe(0); expect(data.website_revision.mechanics_changed).toBe(false); expect(data.website_revision.deferred_reason).toBeUndefined();
+    expect(corrections.corrections).toHaveLength(28); expect(corrections.corrections.find(item=>item.id==='LOG-23').website_integration).toContain('已核對'); expect(corrections.corrections.find(item=>item.id==='LOG-23').revision_direction).toBe("只培養T13可完成援助：初始智慧10先依學習規則達T13所需25，R2起正常派工建立帳號並累積S13>=10（每日同類上限6，至少跨兩日）；D10/R3/MS07及T13帳號俱備才觸發MS08。四主題各15，或任一主題後BR29每日5至60，再依MS09/MS10及原日期條件取得電話與安排逃離。不需智慧40或T14，不保證D12已完成。"); expect(plan.topics.find(topic=>topic.id==='T13').wisdom_min).toBe(25); expect(plan.topics.find(topic=>topic.id==='T13').rank_min).toBe(2);
     expect(plan.narrative.reachability_checks).toBeUndefined();
     const publicData=JSON.stringify({data,enrichment,corrections,bundle});expect(publicData).not.toMatch(/branch_logic_exact_patches|integration_only_do_not_publish|"expected_old"|"proposed_new"|"json_pointer"|\/Users\/|\/Volumes\//);
   });

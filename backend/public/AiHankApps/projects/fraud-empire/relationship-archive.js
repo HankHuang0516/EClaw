@@ -149,7 +149,7 @@
     footer.replaceChildren(); footer.append(el('h4', '支線增補與待確認的故事方向'));
     if (!state.spoilers) { status(footer, '10 條角色弧／111 句文字提案、28 項易讀修訂與 3 條未採納新支線；內容含劇透，尚未展開。'); return; }
     const pending = accordion(footer, '先看待確認事項：來源缺口、同意與機制界線', true); prose(pending, data.pending_design_questions); prose(pending, enrichment.decisions_pending, '文字增補仍待決策');
-    status(pending, '指定可達性摘要來源欄位缺失：只公開修訂方向，未假稱第 25 條精確補丁已套用。', true);
+    status(pending, '可達性說明已核對並同步：T13 原有智慧 25 要求需先依學習規則達成。本次只補足說明，不新增智慧門檻、日期保證或其他機制。');
     const paths = accordion(footer, '7 條事件路徑：閱讀導航，不是新的線性前置'); for (const path of data.event_paths) { const body = accordion(paths, path.title); for (const key of ['logical_note', 'alternative', 'no_required']) prose(body, path[key], fieldNames[key]); const links = el('div', undefined, 'rel-buttons'); for (const id of path.sequence) eventButton(links, id); body.append(links); }
     const arcs = accordion(footer, '10 條角色弧／完整 111 句增補提案'); for (const arc of enrichment.arcs) renderArc(arcs, arc);
     const proposed = accordion(footer, '3 條新增支線提案／未進入正式事件池'); for (const branch of enrichment.new_optional_branches) { const body = accordion(proposed, branch.id + ' · ' + branch.title); body.parentElement.dataset.proposedBranch = branch.id; status(body, branch.status, true); for (const key of ['story', 'choices', 'follow_through', 'rewards', 'duration_minutes', 'systems_added', 'proposed_conditions', 'canonical']) prose(body, branch[key], fieldNames[key]); for (const line of branch.sample_dialogue) renderLine(body, line); }

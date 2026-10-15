@@ -3,7 +3,7 @@
   "version": "v4.4-relationship-branches-20261016",
   "date": "2026-10-16",
   "status": "設計確認稿／開發中；人物關係與支線提案，保留兩款可操作前端原型",
-  "contentHash": "db27ae0c08a0e375dbf3420bb6ebacabb6e7c01e2837a0b0373871ba374b2498",
+  "contentHash": "a1904ee64e593442525af5c37c0457c953d3f798e565af8ee3daf5280e17e4b9",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -17,8 +17,8 @@
     },
     {
       "path": "branch-logic-corrections.json",
-      "bytes": 20295,
-      "sha256": "ae74d0a56060ab3aeeb4ce294bfdc09aec89235b7ea31be44756e50077a0bc61"
+      "bytes": 20656,
+      "sha256": "28ca7679cb045ccfcf7f937d37d5b915ed1571937ab2f45c040e433575ac8ed3"
     },
     {
       "path": "demo-data.json",
@@ -3207,13 +3207,13 @@
     },
     {
       "path": "relationship-archive.js",
-      "bytes": 32368,
-      "sha256": "10c9674ca63a42ce0bb94535c33223f1e6811eef5352ede6a74f533556336557"
+      "bytes": 32423,
+      "sha256": "53810e39780ee84b31043a3cdb4b804b85fc18cf4b5e86decbe0aec0a031b2d9"
     },
     {
       "path": "relationship-data.json",
-      "bytes": 908875,
-      "sha256": "95131112935c7510b808eca0f950777db1162f029a8e5ed525214e6a45ed4ff0"
+      "bytes": 908655,
+      "sha256": "561b353986a0e6fe268338cc14a5619fb577b982f8ff92120a229a9041b27040"
     },
     {
       "path": "relationship-model.js",
@@ -3270,8 +3270,8 @@
     "proposedCharacterArcs": 10,
     "proposedArcLines": 111,
     "unadoptedNewBranches": 3,
-    "branchTextRevisionsIntegrated": 24,
-    "branchTextRevisionsDeferred": 1
+    "branchTextRevisionsIntegrated": 25,
+    "branchTextRevisionsDeferred": 0
   },
   "limitations": [
     "所有新增文字、外觀與表情仍為提案，不代表正式劇本或可用sprites。",
@@ -3280,6 +3280,6 @@
     "短片、正式玩法程式、正式存檔及遊戲服務未實作；兩款前端原型不等同正式遊戲。",
     "完整新17提案、六幅原圖及兩款實際物件操作原型已接入；其餘15款未實作，日期、成本、平衡與正式機制未獲採納。",
     "關係樹與10條角色弧已接入提案閱讀；111句與3條新支線未採納為正式劇情。",
-    "24條吻合文字修訂已整合；指定可達性摘要來源目標缺失，第25條保留待確認，未新增或改寫正式條件。"
+    "25條文字修訂已核對整合。可達性摘要在匹配指定凍結來源後，只同步既有說明欄位；T13原有智慧25／R2等條件不變，未部署私人原檔或新增投影欄位。其他正式機制與同意細節仍依提案待確認。"
   ]
 }

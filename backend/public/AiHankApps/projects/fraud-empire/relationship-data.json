@@ -25014,13 +25014,6 @@
   "pending_design_questions": [
     {
       "event_ids": [
-        "MS08",
-        "T13"
-      ],
-      "question": "可達性摘要的指定來源欄位未隨現有公開來源提供；僅列修訂方向，未擅自新增或宣稱已套用。"
-    },
-    {
-      "event_ids": [
         "BR24"
       ],
       "question": "NPC「願意／需要時間／不願意」的選取機制未定；事件入口的好感OR不能代替逐人同意。"
@@ -26632,8 +26625,8 @@
   },
   "website_revision": {
     "version": "relationship-branch-v1",
-    "matched_text_revisions": 24,
-    "deferred_text_revisions": 1,
+    "matched_text_revisions": 25,
+    "deferred_text_revisions": 0,
     "mechanics_changed": false,
     "reading_is_not_unlock": true,
     "scope": "以下關係導航預設無劇透；完整原企劃與台詞目錄另屬設計閱讀。"
