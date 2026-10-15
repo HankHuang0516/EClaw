@@ -10,7 +10,7 @@ describe('Fraud Empire new 17 v2 proposals and six illustration-only previews', 
     expect(api.validate(data)).toBe(true);
     expect(data.plan.games.map(game => game.candidate_id)).toEqual(Array.from({ length: 17 }, (_, i) => 'MG-P' + String(i + 1).padStart(2, '0')));
     expect(data.plan.six_revisions).toHaveLength(6);
-    expect(Buffer.byteLength(data.planMarkdown)).toBe(65327);
+    expect(Buffer.byteLength(data.planMarkdown)).toBe(65822);
     expect(crypto.createHash('sha256').update(data.planMarkdown).digest('hex')).toBe(data.planMarkdownSha256);
     expect(data.plan.outside_minigame_count).toHaveLength(2);
     for (const game of data.plan.games) {
