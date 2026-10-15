@@ -8,11 +8,14 @@ const config = JSON.parse(fs.readFileSync(path.join(root, 'demo-data.json'), 'ut
 const script = fs.readFileSync(path.join(root, 'demo.js'), 'utf8');
 
 describe('Fraud Empire bounded static demonstration', () => {
-  test('identifies the preview honestly and leaves future dialogue and portraits unclaimed', () => {
+  test('identifies the preview honestly and links delivered proposals without claiming runtime completion', () => {
     expect(config.status).toBe('靜態互動示意，非正式遊戲');
-    expect(config.portraits).toEqual([]);
-    expect(config.dialogues).toEqual([]);
-    expect(config.completion).toContain('尚未補齊');
+    expect(config.dataSources.portraits).toBe('art-catalog.json');
+    expect(config.dataSources.dialogues).toBe('dialogue-proposals.json');
+    expect(fs.existsSync(path.join(root, config.dataSources.portraits))).toBe(true);
+    expect(fs.existsSync(path.join(root, config.dataSources.dialogues))).toBe(true);
+    expect(config.completion).toContain('仍未完成');
+    expect(config.completion).toContain('不是正式劇本');
     expect(script).not.toMatch(/localStorage|sessionStorage|indexedDB|method\s*:\s*['"]POST|sendBeacon/);
   });
 
@@ -32,11 +35,11 @@ describe('Fraud Empire bounded static demonstration', () => {
     expect(script).toContain('下一步畫面');
   });
 
-  test('keeps the 17-topic catalogue separate from supervisor mode and 3-5 candidate tasks', () => {
+  test('keeps 16 gameplay categories and one prologue separate from 3-5 supervisor tasks', () => {
     expect(script).toContain("state.view === 'topic-overview'");
     expect(script).toContain('item.available_modes.includes(state.mode)).slice(0, state.count)');
     expect(script).toContain('Math.min(5, Math.max(3, Number(value)))');
-    expect(script).toContain('不是 17 題全選任務板');
+    expect(script).toContain('不是全部內容的自由任務板');
     expect(script).toContain('重設');
     expect(script).toContain('返回完整企劃閱讀');
   });

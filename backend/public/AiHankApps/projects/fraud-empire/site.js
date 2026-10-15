@@ -42,7 +42,7 @@
   function clarifications(ref) {return plan.decisions.filter(d=>(d.references||[]).includes(ref)).map(d=>'<div class="notice"><p><b>'+escape(d.status)+' · '+escape(d.title)+'</b><br>'+escape(d.text)+' <a href="#decisions">查看最新決策</a></p></div>').join('');}
   function renderTopic() {
     const t=plan.topics[state.topic];state.step=Math.min(state.step,t.steps.length-1);const s=t.steps[state.step];
-    $('topicIntro').innerHTML='<div class="topic-intro"><p class="eyebrow">'+escape(t.id)+' / 設計提案</p><h3>'+escape(t.name)+'</h3><p>'+escape(t.objective)+'</p><p>'+escape(t.setup)+'</p><div class="tag-row"><span class="tag">代表模式：'+escape(t.mode)+'</span><span class="tag pending">精確成本與收益待確認</span></div></div>'+clarifications(t.id);
+    $('topicIntro').innerHTML='<div class="topic-intro"><p class="eyebrow">'+escape(t.id)+' / 設計提案</p><h3>'+escape(t.name)+'</h3><p>'+escape(t.objective)+'</p><p>'+escape(t.setup)+'</p><div class="tag-row"><span class="tag">代表模式：'+escape(t.content_class==='main_story_prologue'?'主線序章／不進派工':t.mode)+'</span><span class="tag pending">精確成本與收益待確認</span></div></div>'+clarifications(t.id)+(t.content_class==='main_story_prologue'?'<div class="notice"><p>七段一次性主線序章，保留舊ID；不是主管工作。原欄位的安置用字、首次20分鐘與到場日期仍是待確認舊提案；回顧不發任何資源。</p></div>':'');
     $('stepTabs').innerHTML=t.steps.map((x,i)=>'<button type="button" data-step="'+i+'" class="'+(i===state.step?'active':'')+'" aria-label="步驟 '+(i+1)+'：'+escape(x.title)+'" aria-pressed="'+(i===state.step)+'">'+String(i+1).padStart(2,'0')+'</button>').join('');
     $('stepContent').innerHTML=figure(figureById(s.id))+'<article class="step-copy"><p class="eyebrow">'+escape(s.id)+' / 逐步設計說明</p><h3>'+escape(s.title)+'</h3>'+fields(s,['id','title'])+'</article>';
     $('stepCounter').textContent=(state.step+1)+' / '+t.steps.length;$('previousStep').disabled=state.step===0;$('nextStep').disabled=state.step===t.steps.length-1;$('topicDetails').innerHTML=fields(t,['id','name','objective','setup','steps']);
@@ -92,8 +92,9 @@
   async function init() {
     try {
       const response=await fetch('plan.json',{cache:'no-cache'});if(!response.ok)throw Error('Plan unavailable');plan=await response.json();
-      $('heroImage').src=figureById('UX01').src;$('topicSelect').innerHTML=plan.topics.map((t,i)=>'<option value="'+i+'">'+escape(t.id+' · '+t.name)+'</option>').join('');$('sceneSelect').innerHTML=plan.maps.scenes.map((s,i)=>'<option value="'+i+'">'+escape(s.scene_id+' · '+s.name)+'</option>').join('');
+      $('heroImage').src=figureById('UX01').src;$('topicSelect').innerHTML=plan.topics.map((t,i)=>'<option value="'+i+'">'+escape(t.id+' · '+t.name+(t.content_class==='main_story_prologue'?'／主線序章':''))+'</option>').join('');$('sceneSelect').innerHTML=plan.maps.scenes.map((s,i)=>'<option value="'+i+'">'+escape(s.scene_id+' · '+s.name)+'</option>').join('');
       bind();renderChapter();renderTopic();renderStory();renderMap();renderGallery();renderDecisions();document.documentElement.dataset.planReady='true';
+      document.addEventListener('fraud:request-plan',()=>document.dispatchEvent(new CustomEvent('fraud:plan-ready',{detail:plan})));document.dispatchEvent(new CustomEvent('fraud:plan-ready',{detail:plan}));
     }catch(_error){$('chapterContent').innerHTML='<p class="load-error">完整企劃暫時無法載入。請重新整理；不會用空白內容冒充完整企劃。</p>';document.documentElement.dataset.planReady='false';}
   }
   init();
