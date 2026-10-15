@@ -1,14 +1,24 @@
 {
   "schemaVersion": 1,
-  "version": "v4.3-interactive-prototypes-20261016",
+  "version": "v4.4-relationship-branches-20261016",
   "date": "2026-10-16",
-  "status": "設計確認稿／開發中；MG-P01與MG-P02為可操作前端原型，非正式遊戲",
-  "contentHash": "1644128d1226634b09f448d1ec09dec40da79d8ac5c7289446746170e417a8df",
+  "status": "設計確認稿／開發中；人物關係與支線提案，保留兩款可操作前端原型",
+  "contentHash": "8edd6f64802d9fa6c950821769d5bdf5d0b0da1a4754747da63707024da239f7",
   "assets": [
     {
       "path": "art-catalog.json",
       "bytes": 2262043,
       "sha256": "a95f81b8e34792c34b7ee9925ffa5355eddd177bd93b7cff433d19c688c45662"
+    },
+    {
+      "path": "branch-enrichment-proposals.json",
+      "bytes": 58390,
+      "sha256": "778137048ddff3e29c7fddbefbb3bb06fb0bee35cca5ae29e061b6b7ed8bc9e5"
+    },
+    {
+      "path": "branch-logic-corrections.json",
+      "bytes": 20656,
+      "sha256": "28ca7679cb045ccfcf7f937d37d5b915ed1571937ab2f45c040e433575ac8ed3"
     },
     {
       "path": "demo-data.json",
@@ -27,8 +37,8 @@
     },
     {
       "path": "dialogue-proposals.json",
-      "bytes": 1440473,
-      "sha256": "66ca5d893fdd6e1885f5ad412269b9fe2d0b92d041078a5b98388d2356465ad4"
+      "bytes": 1449949,
+      "sha256": "7fe1e0e43afade7e76b5b40d81f6b99a2c9b3c787b02a9e8e856418cd0c7e7e1"
     },
     {
       "path": "downloads/volume-2-full.pdf",
@@ -1657,8 +1667,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 10185,
-      "sha256": "2b9c9b66acb0940a5905ee6bbed3c56e2e88d13cebb2016e929ad2527cc1ab73"
+      "bytes": 10356,
+      "sha256": "60d6cec883c0886482aca671d7764c07081e23cf682b398ca53c1702761cca87"
     },
     {
       "path": "interactive-prototype-data.json",
@@ -1697,8 +1707,8 @@
     },
     {
       "path": "plan.json",
-      "bytes": 691921,
-      "sha256": "82062d00d6de233dfe7b6e81e6fafde12da7a6d337e0e9f0ba5c466802604045"
+      "bytes": 695567,
+      "sha256": "a4abd19dadb43bb2e81f019406bbe601fc78e876793d0385b81df4811e892388"
     },
     {
       "path": "portraits/00ea02ee2c04135de57a.webp",
@@ -3147,8 +3157,8 @@
     },
     {
       "path": "proposals.js",
-      "bytes": 38022,
-      "sha256": "84817d5944856de3c53e9c76557a0e68c9f5431c361c1a4dc4f959062209ae91"
+      "bytes": 40457,
+      "sha256": "dd696606aa47271c8e995eaffa6d42c097b4282ea04400fff9ce4813325bf360"
     },
     {
       "path": "references/006c22ae9b79004aaf8e.webp",
@@ -3191,6 +3201,26 @@
       "sha256": "c357dd515ca5f2b0cf4be9d78c8df6dace40e3a76e3965bb79e033ef0ead65df"
     },
     {
+      "path": "relationship-archive.css",
+      "bytes": 8634,
+      "sha256": "bd4dadc7d7df35bf9e459290dd6d0ec6f64e6cc32f9ff04a751c13c227e2a185"
+    },
+    {
+      "path": "relationship-archive.js",
+      "bytes": 32578,
+      "sha256": "3e62bc8f6fa45160a757b6aeb04f9036036934e5b3389089b0f59ba8a7181fd5"
+    },
+    {
+      "path": "relationship-data.json",
+      "bytes": 908655,
+      "sha256": "561b353986a0e6fe268338cc14a5619fb577b982f8ff92120a229a9041b27040"
+    },
+    {
+      "path": "relationship-model.js",
+      "bytes": 5022,
+      "sha256": "023aabdd90388910b0996303ed9043a3f41a5838c5d8118742ac6d65590d2313"
+    },
+    {
       "path": "site.css",
       "bytes": 16780,
       "sha256": "e5004646d1ba87a184daa267f8f96e8b043119736a5f816819446fdabdfca3fe"
@@ -3231,7 +3261,17 @@
     "newProposalDemos": 2,
     "newProposalDemoImages": 6,
     "interactiveProposalPrototypes": 2,
-    "interactionContractVersion": "dynamic-demo-interaction-contract-1.0"
+    "interactionContractVersion": "dynamic-demo-interaction-contract-1.0",
+    "relationshipIdentities": 39,
+    "relationshipEdges": 55,
+    "relationshipSourceEvents": 214,
+    "existingBranches": 36,
+    "existingRomanceEvents": 8,
+    "proposedCharacterArcs": 10,
+    "proposedArcLines": 111,
+    "unadoptedNewBranches": 3,
+    "branchTextRevisionsIntegrated": 25,
+    "branchTextRevisionsDeferred": 0
   },
   "limitations": [
     "所有新增文字、外觀與表情仍為提案，不代表正式劇本或可用sprites。",
@@ -3239,6 +3279,7 @@
     "T02首次時間、日期與主線銜接仍待確認；回顧不發資源。",
     "短片、正式玩法程式、正式存檔及遊戲服務未實作；兩款前端原型不等同正式遊戲。",
     "完整新17提案、六幅原圖及兩款實際物件操作原型已接入；其餘15款未實作，日期、成本、平衡與正式機制未獲採納。",
-    "關係樹與支線增補留下一版，不宣稱本版已接入。"
+    "關係樹與10條角色弧已接入提案閱讀；111句與3條新支線未採納為正式劇情。",
+    "25條文字修訂已核對整合。可達性摘要在匹配指定凍結來源後，只同步既有說明欄位；T13原有智慧25／R2等條件不變，未部署私人原檔或新增投影欄位。其他正式機制與同意細節仍依提案待確認。"
   ]
 }
