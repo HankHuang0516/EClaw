@@ -1,0 +1,16 @@
+# Workspace plan ordering and archive repair review
+
+A reordered workspace previously promoted all goal-bearing derived actual groups into saved unscheduled plan rows. Ordering now changes a separate rowOrder ID list while retaining saved row data exactly. Existing saved plans can be archived/restored without changing their original status, timestamps or actual references. Cancel editing discards the active draft without a write. This is the manual reuse/quality/efficiency and ten-item review substitute approved for the unavailable simplify skill; simplify was not run.
+
+- ✅ A1 Logic: order-only operations never promote virtual rows; archive transitions require an existing row and unchanged other content; cancel writes nothing; Undo captures rows and rowOrder. Partial unseen order metadata is preserved, with atomic API bounds rather than silent pruning.
+- ✅ A2 Tests: schedule 13/13 including actual PostgreSQL; all 84 related backend cases verified across the broad run and a targeted retry of one transport socket failure. Workspace Chrome 76/76 covers row snapshots, archive/restore/Undo, unrelated rows, cancel/reopen, explicit form focus, dedicated time errors and privacy lifecycle. Integrated results are recorded below.
+- ✅ A3 Shape: optional rowOrder and archived fields are strictly validated. False/absent archive flags retain legacy canonical payloads; omitted order preserves old metadata and remains absent from old receipt payloads. Immutable old receipts are returned exactly.
+- ✅ A4 Scope: no automatic production repair, QA cleanup, inferred goals/times or real-history rewrite. The earlier unintended rows require owner-reviewed revision comparison before recovery; an unscheduled row alone is not evidence of an error.
+- ✅ A5 Security: existing administrator/origin/no-store/rate/startup boundaries remain. Epoch/serial guards, private memory clearing and uncertain retry IDs are retained. No credentials or security settings changed; instruction files remain untouched.
+- ✅ B1 API help: separate order, optional archive flag, preserved content and full-snapshot Undo documented.
+- ✅ B2 Docs: independent schedule guide includes archive/cancel, additive migration, compatibility and reversible history-based recovery. README already links this guide; no entry-point change was necessary. Previous release reviews stay unchanged as historical evidence.
+- ✅ B3 i18n: five new keys; canonical/shared table now 34 keys across 14 locales (476 values), old values unchanged and zh-TW fallback retained. Dedicated plan errors do not mention unrelated work/evidence fields.
+- ⚠️ B4 Info/promo NO-OP: private administrator scheduling changes no public completed summary or generic portfolio introduction.
+- ✅ B5 Debug: no extra route, private payload surface or production diagnostic access added.
+
+Frozen integration evidence: public-assets/i18n Jest 20/20; full UI/push seven workflow groups pass; scroll/Back/Forward 50/50 at 390 and 1280. Relevant lint has zero errors (one unchanged index.js warning). Synthetic Cancel and archive/restore screenshots were personally inspected at mobile/desktop widths. Final ten-asset fingerprint: `1ed8b83ec7cd618a`. Diff and read-only instruction-file checks pass. Production release acceptance is performed separately after deployment.

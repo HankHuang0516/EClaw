@@ -401,6 +401,70 @@ components:
           type: object
 
 paths:
+  /api/admin/paper-beta-feedback:
+    get:
+      tags: [Admin]
+      summary: Read private Paper Flick Soldiers beta feedback
+      description: >-
+        Existing portal session and current user_accounts.is_admin role required.
+        Reads the original app_portfolio_beta_feedback table without copying or
+        writing records. Fixed app scope, fifty newest records per page, no-store.
+        Comments are private administrator data; no submission IDs, account names,
+        email addresses, device IDs or attachments are returned. Bot/device
+        credentials do not grant access. Missing storage returns 503, never an
+        apparently empty feedback list.
+      operationId: getPaperBetaFeedbackAdmin
+      security:
+        - CookieAuth: []
+      parameters:
+        - in: query
+          name: before
+          description: Positive bigint receipt ID from nextCursor; omitted for latest records.
+          schema:
+            type: string
+            pattern: '^[1-9][0-9]{0,18}$'
+      responses:
+        '200':
+          description: Private summary and bounded page from one database snapshot.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  success: {type: boolean}
+                  appId: {type: string, enum: [paper-flick-soldiers]}
+                  summary:
+                    type: object
+                    properties:
+                      total: {type: string}
+                      averageRating: {type: number, nullable: true}
+                      continuation:
+                        type: object
+                        properties:
+                          yes: {type: string}
+                          maybe: {type: string}
+                          no: {type: string}
+                  items:
+                    type: array
+                    maxItems: 50
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        receiptId: {type: string}
+                        rating: {type: integer, minimum: 1, maximum: 5}
+                        continuation: {type: string, enum: [yes, maybe, no]}
+                        comment: {type: string, maxLength: 500}
+                        version: {type: string, maxLength: 32}
+                        platform: {type: string, maxLength: 32}
+                        createdAt: {type: string, format: date-time}
+                  nextCursor: {type: string, nullable: true}
+        '400': {description: Invalid cursor or unsupported query parameter.}
+        '401': {description: Missing, invalid or expired portal session.}
+        '403': {description: Current account is not an administrator.}
+        '500': {description: Current administrator role cannot be verified.}
+        '503': {description: Existing feedback storage cannot be read.}
   # ── Health ──
   /api/health:
     get:

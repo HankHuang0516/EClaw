@@ -1,4 +1,34 @@
 {
+  "paperFlickSupport": {
+    "pfs_support_title": "官方支援與隱私說明",
+    "pfs_support_contact": "客服與故障回報",
+    "pfs_support_faq": "常見問題",
+    "pfs_support_faq_account": "需要帳號、付費或網路才能遊玩嗎？",
+    "pfs_support_faq_progress": "進度會在裝置間同步嗎？",
+    "pfs_support_faq_beta": "略過 BETA 回饋會影響遊戲嗎？",
+    "pfs_support_privacy": "資料、隱私與私人 BETA 回饋",
+    "pfs_support_privacy_link": "閱讀完整隱私權政策",
+    "pfs_support_review": "App Review 操作指南",
+    "pfs_support_video": "功能展示影片",
+    "pfs_support_video_link": "直接開啟或下載審查展示影片"
+  },
+  "portfolioGifts": {
+    "portfolio_gift_entry": "禮包公告",
+    "portfolio_gift_details": "查看禮包詳情"
+  },
+  "paperBetaAdmin": {
+    "title": "內部回饋",
+    "summary": "回饋數",
+    "average": "平均評分",
+    "continuation": "續作意願",
+    "comment": "留言",
+    "yes": "願意",
+    "maybe": "可能",
+    "no": "不願意",
+    "older": "較早回饋",
+    "denied": "需要管理者登入",
+    "unavailable": "暫時無法讀取回饋，請稍後重試"
+  },
   "common": {
     "cancel": "取消",
     "confirm": "確認",

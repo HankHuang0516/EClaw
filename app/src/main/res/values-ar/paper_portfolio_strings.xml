@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="paper_beta_title">ملاحظات داخلية</string>
+    <string name="paper_beta_summary">الردود</string>
+    <string name="paper_beta_average">متوسط التقييم</string>
+    <string name="paper_beta_continuation">الرغبة في جزء جديد</string>
+    <string name="paper_beta_comment">تعليق</string>
+    <string name="paper_beta_yes">نعم</string>
+    <string name="paper_beta_maybe">ربما</string>
+    <string name="paper_beta_no">لا</string>
+    <string name="paper_beta_older">ردود أقدم</string>
+    <string name="paper_beta_denied">يلزم تسجيل دخول المسؤول</string>
+    <string name="paper_beta_unavailable">الملاحظات غير متاحة مؤقتًا؛ حاول لاحقًا</string>
+    <string name="portfolio_gift_entry">إعلانات الهدايا</string>
+    <string name="portfolio_gift_details">عرض تفاصيل الهدية</string>
+    <string name="pfs_support_title">الدعم الرسمي والخصوصية</string>
+    <string name="pfs_support_contact">الدعم وحل المشكلات</string>
+    <string name="pfs_support_faq">الأسئلة الشائعة</string>
+    <string name="pfs_support_faq_account">هل أحتاج إلى حساب أو دفع رسوم أو اتصال بالإنترنت للعب؟</string>
+    <string name="pfs_support_faq_progress">هل تتم مزامنة تقدم اللعب بين الأجهزة؟</string>
+    <string name="pfs_support_faq_beta">هل يؤثر عدم إرسال ملاحظات Beta على اللعبة؟</string>
+    <string name="pfs_support_privacy">البيانات والخصوصية وملاحظات Beta الخاصة</string>
+    <string name="pfs_support_privacy_link">قراءة سياسة الخصوصية كاملة</string>
+    <string name="pfs_support_review">تعليمات App Review</string>
+    <string name="pfs_support_video">فيديو توضيحي لطريقة اللعب لأغراض المراجعة</string>
+    <string name="pfs_support_video_link">فتح فيديو المراجعة أو تنزيله</string>
+</resources>

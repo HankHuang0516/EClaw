@@ -268,6 +268,19 @@ app.use(cors({
 }));
 app.use('/api/ai-support/chat', express.json({ limit: '10mb' }));
 app.use('/api/mission/dashboard', express.json({ limit: '5mb' }));
+// Capability paths terminate before analytics/static. Late-bound existing
+// auth/pool are used only after startup, never during router construction.
+const taazeDemoAuth = {
+    authMiddleware: (req, res, next) => authModule.authMiddleware(req, res, next),
+    adminMiddleware: (req, res, next) => authModule.adminMiddleware(req, res, next)
+};
+const taazeDemoModule = require('./taaze-demo-share');
+const taazeDemoRouters = taazeDemoModule.createRouters(() => chatPool, taazeDemoAuth);
+app.use('/AiHankApps/taaze-demo', taazeDemoRouters.publicRouter);
+// Only an authenticated admin can consume the larger original-archive body.
+// Continue to the normal startup/rate gates and late admin router afterward.
+app.post('/api/taaze-demo-share/bundle', cookieParser(), taazeDemoAuth.authMiddleware,
+    taazeDemoAuth.adminMiddleware, taazeDemoModule.adminWriteOrigin, express.json({ limit: '6mb' }));
 app.use(express.json({
     verify: (req, _res, buf) => {
         // Capture raw body for Discord signature verification
@@ -749,6 +762,13 @@ async function dispatchAppBotMessage({ deviceId, device, entityId, bot, prePromp
     return pushToBot(bot, deviceId, 'new_message', { message: pushMsg });
 }
 app._dispatchAppBotMessage = dispatchAppBotMessage;
+
+const dreamBuddyAds = require('./app-bot-ads')({
+    getDevices: () => devices,
+    getPool: () => db._getPool(),
+    isReady: () => persistenceReady,
+});
+app.use('/api/app-bot/ads', dreamBuddyAds);
 
 app.post('/api/app-bot/chat', appBotChatRateLimit, async (req, res) => {
     const { appId, personaId, deviceId, deviceSecret, message, entityId } = req.body || {};
@@ -1845,6 +1865,10 @@ app.get('/api/help', (req, res) => {
 
     // Intent category matching — zh/en + ja/ko/th/vi/id/fr/es/ms (by @Mac_F)
     const INTENT_MAP = {
+        dream_buddy_ads: ['dream buddy ads', 'dream-buddy reward', '夢話夥伴廣告', '梦话伙伴广告'],
+        paper_beta_feedback: ['paper beta feedback', 'paper-beta-feedback', '紙上彈兵回饋', '纸上弹兵反馈'],
+        taaze_demo_share: ['taaze demo', 'taaze-demo', 'demo share', 'demo 分享', '示範分享'],
+        dot_progress: ['dot progress', 'dot-progress', 'dot 專案進度', '專案進度', '待決策', 'pending decision', '催進度', 'push progress', 'work timeline', 'work interval', '歷史時程表', '历史时程表', '工作時程', 'gantt', 'schedule', 'planned schedule', '甘特圖', '甘特图', '預計排程', '预计排程'],
         messaging:  ['speakto','broadcast','發訊','reply','transform','message','send','私訊','廣播','メッセージ','送信','메시지','전송','ส่งข้อความ','ข้อความ','ส่ง','gửi tin nhắn','tin nhắn','gửi','phát sóng','kirım pesan','pesan','mengirim','envoyer message','diffusion','enviar mensaje','transmitir','hantar mesej','mesej','menghantar'],
         kanban:     ['card','看板','任務','move','派任','assign','kanban','卡片','create task','建立任務','カード','タスク','칸반','카드','작업','กระดาน','บัตร','จัดการงาน','bảng','thẻ','quản lý công việc','papan','kartu','manajemen tugas','tableau','carte','gestion tâches','tablero','tarjeta','gestión tareas','kad','pengurusan tugas','history','archived','archive','restore','封存','歷史','還原','漏斗','過濾','filter','funnel'],
         schedule:   ['排程','schedule','暫停','pause','cron','recurring','stop schedule','disable','enable','スケジュール','予約','一時停止','크론','일정','예약','일시 중지','กำหนดการ','ตารางเวลา','หยุดชั่วคราว','lịch trình','đặt lịch','tạm dừng','jadwal','penjadwalan','jeda','planification','programmation','programación','jadual'],
@@ -1866,6 +1890,55 @@ app.get('/api/help', (req, res) => {
     const d = `'{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${eId}`; // shared body prefix
 
     const APIS = {
+        dream_buddy_ads: [
+            { title: 'Dream Buddy: privately flag an owned AI reply', curl: `curl -s -X POST '${apiBase}/api/app-bot/ads/reports?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET' -H 'Content-Type: application/json' -d '{"messageId":"SERVER_MESSAGE_UUID","reason":"offensive"}'` },
+            { title: 'Dream Buddy: owner-authenticated message quota', curl: `curl -s '${apiBase}/api/app-bot/ads/quota?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET'` },
+            { title: 'Dream Buddy: create a 6-message rewarded-ad challenge', curl: `curl -s -X POST '${apiBase}/api/app-bot/ads/sessions?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET' -H 'Content-Type: application/json' -d '{"platform":"ios"}'` },
+            { title: 'Dream Buddy: verify reward status (no local credit)', curl: `curl -s '${apiBase}/api/app-bot/ads/sessions/SESSION_ID?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET'` },
+            { title: 'AdMob signed SSV callback: Google-only; unsigned requests are rejected', curl: `curl -s '${apiBase}/api/app-bot/ads/ssv'` },
+        ],
+        paper_beta_feedback: [
+            { title: 'Private Paper beta feedback (existing portal admin session only; bot credentials grant no access)', curl: `curl -s "${apiBase}/api/admin/paper-beta-feedback" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Local Paper beta diagnostics (existing admin session; disabled in production/Railway)', curl: `curl -s "${apiBase}/api/debug/paper-beta-feedback" --cookie /LOCAL/PORTAL_COOKIE_FILE` }
+        ],
+        taaze_demo_share: [
+            { title: 'Private original-v5 bundle and share metadata (existing admin portal session; no bearer URLs returned)', curl: `curl -s "${apiBase}/api/taaze-demo-share" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Import the verified original Sites v5 archive and file mapping; unrelated content is rejected', curl: `curl -s -X POST "${apiBase}/api/taaze-demo-share/bundle" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" --data-binary @/LOCAL/VERIFIED_V5_EXPORT.json` },
+            { title: 'Issue one lasting no-login link, shown once and revocable anytime; forwarded holders can access this demo', curl: `curl -s -X POST "${apiBase}/api/taaze-demo-share/shares" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" -d '{"requestId":"UNIQUE_SHARE_REQUEST_ID"}'\n# A retry with the same ID cannot issue another link. A lost URL cannot be recovered from metadata.` },
+            { title: 'Revoke a share immediately; HTML, data, scripts and images all require a live link', curl: `curl -s -X POST "${apiBase}/api/taaze-demo-share/shares/SHARE_ID/revoke" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" -d '{}'` }
+        ],
+        dot_progress: [
+            { title: 'Public completed summaries (no private task fields)', curl: `curl -s "${apiBase}/api/dot-progress/public"` },
+            { title: 'Session role flags (existing portal cookie; no secrets returned)', curl: `curl -s "${apiBase}/api/dot-progress/session" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Private projects (existing admin portal session required; bot credentials do not grant access)', curl: `curl -s "${apiBase}/api/dot-progress/projects" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Search all authorized workspace records including unloaded comments and retained revisions; explicit 50-record pages', curl: `curl -s "${apiBase}/api/dot-progress/search?query=SYNTHETIC_TEXT&offset=0" --cookie /LOCAL/PORTAL_COOKIE_FILE\n# Private admin only. Follow nextOffset. Public visitors search only approved completed summaries locally in the page.` },
+            { title: 'Read one exact search match before locating its current parent or original retained version', curl: `curl -s "${apiBase}/api/dot-progress/search-item?kind=timeline_history&id=RETAINED_REVISION_ID" --cookie /LOCAL/PORTAL_COOKIE_FILE\n# Use the kind and id returned by search. Source kinds: project/comment/project_history/decision/decision_comment/decision_history/review/review_comment/timeline/timeline_history/schedule/schedule_history. Returned content is private and must not be published.` },
+            { title: 'Locate an exact current timeline or review item without loading all pages', curl: `curl -s "${apiBase}/api/dot-progress/timeline/ENTRY_ID" --cookie /LOCAL/PORTAL_COOKIE_FILE\n# Review source: /api/dot-progress/review/REVIEW_ID. Both retain the existing admin session gate.` },
+            { title: 'Edit private project with optimistic version and optional explicit completedWork (active/blocked/paused/completed/cancelled/archived)', curl: `curl -s -X PATCH "${apiBase}/api/dot-progress/projects/PROJECT_ID" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" -d '{"version":1,"nextStep":"NEXT_STEP","completedWork":"VERIFIED_COMPLETED_STEPS"}'` },
+            { title: 'Push project progress once per distinct click (admin session; signal only, no action or reopening)', curl: `curl -s -X POST "${apiBase}/api/dot-progress/projects/PROJECT_ID/push" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" -d '{"requestId":"UNIQUE_CLICK_ID"}'\n# Retry the same click ID after a lost response; use a fresh ID for a new click. Returns pushCount and lastPushedAt without editing the project version.` },
+            { title: 'Read project comments and history (admin session)', curl: `curl -s "${apiBase}/api/dot-progress/projects/PROJECT_ID/comments" --cookie /LOCAL/PORTAL_COOKIE_FILE\n# History: /api/dot-progress/projects/PROJECT_ID/history` },
+            { title: 'Add an idempotent project comment (admin session)', curl: `curl -s -X POST "${apiBase}/api/dot-progress/projects/PROJECT_ID/comments" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" -d '{"body":"COMMENT","requestId":"UNIQUE_REQUEST_ID"}'` },
+            { title: 'Preview user-provided JSON import; applying requires mode apply (admin session)', curl: `curl -s -X POST "${apiBase}/api/dot-progress/import" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" --data-binary @/LOCAL/PROGRESS_PREVIEW_REQUEST.json\n# Body: {"mode":"preview","data":{"projects":[...]}}. Use the page to validate a local export before applying.` },
+            { title: 'Private decision records with versioned suggestions, comments and audit (admin session; never action authorization)', curl: `curl -s "${apiBase}/api/dot-progress/projects/PROJECT_ID/decisions" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Create an explicit decision question and recommendation; adoption starts off', curl: `curl -s -X POST "${apiBase}/api/dot-progress/projects/PROJECT_ID/decisions" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" -d '{"question":"QUESTION","recommendation":"SUGGESTION","requestId":"UNIQUE_REQUEST_ID"}'` },
+            { title: 'Revise a decision; content changes invalidate prior adoption', curl: `curl -s -X PATCH "${apiBase}/api/dot-progress/projects/PROJECT_ID/decisions/DECISION_ID" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" -d '{"version":1,"recommendation":"REVISED_SUGGESTION"}'` },
+            { title: 'Record adoption or withdrawal of the displayed recommendation version; no external action is executed', curl: `curl -s -X POST "${apiBase}/api/dot-progress/projects/PROJECT_ID/decisions/DECISION_ID/adoption" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" -d '{"version":1,"recommendationVersion":1,"adopted":true}'` },
+            { title: 'Save an alternative; current-version comments require clarification before adoption', curl: `curl -s -X POST "${apiBase}/api/dot-progress/projects/PROJECT_ID/decisions/DECISION_ID/comments" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" -d '{"version":1,"recommendationVersion":1,"body":"ALTERNATIVE","requestId":"UNIQUE_REQUEST_ID"}'` },
+            { title: 'Private project review journal: user-visible permission questions, decisions and important changes', curl: `curl -s "${apiBase}/api/dot-progress/review" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Append a sourced review record; no assistant internal memory is accessed', curl: `curl -s -X POST "${apiBase}/api/dot-progress/review" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" -d '{"kind":"permission","title":"RECORD_TITLE","body":"ORIGINAL_WORDS","occurredAt":"2026-10-04","source":"VISIBLE_SOURCE","scope":"PROJECT_SCOPE","requestId":"UNIQUE_REQUEST_ID"}'` },
+            { title: 'Append an idempotent correction to a review record; original words are retained', curl: `curl -s -X POST "${apiBase}/api/dot-progress/review/REVIEW_ID/comments" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" -d '{"body":"CORRECTION","requestId":"UNIQUE_REQUEST_ID"}'` },
+            { title: 'Private work timeline: Taipei date overlap and exact project-label filters; newest sidebar order follows item time', curl: `curl -s "${apiBase}/api/dot-progress/timeline?date=2026-10-05&project=SYNTHETIC_PROJECT&order=newest&offset=0" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Record one verified interval with an optional explicit goal and implementation/validation/routine/waiting/blocked type; retries use the same requestId', curl: `curl -s -X POST "${apiBase}/api/dot-progress/timeline" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" --data-binary @/LOCAL/SAFE_TIMELINE_ENTRY.json\n# Fields: requestId, startedAt (explicit null if unknown), endedAt (required known ISO timestamp with timezone), projectId (nullable), projectLabel, workType, goal (optional explicit objective), actions, result, blockers, nextStep, evidence (optional safe public links). No emails, credentials, capability links or private paths.` },
+            { title: 'Revise a work interval with its current version and a stable update requestId; prior versions remain in history', curl: `curl -s -X PATCH "${apiBase}/api/dot-progress/timeline/ENTRY_ID" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" --data-binary @/LOCAL/SAFE_TIMELINE_UPDATE.json\n# Include version, a fresh update requestId and the changed safe fields (for example goal). Preserve the create requestId payload. A version conflict never overwrites a newer revision.` },
+            { title: 'Read retained work-interval revisions with explicit pagination (existing admin session only)', curl: `curl -s "${apiBase}/api/dot-progress/timeline/ENTRY_ID/history?offset=0" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Read the private planned schedule for one Taipei date; actual work history is separate', curl: `curl -s "${apiBase}/api/dot-progress/schedule?date=2040-07-19" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Read a Taipei calendar period without writing: Monday-start week or calendar month, with full source-day boards and matching row IDs', curl: `curl -s "${apiBase}/api/dot-progress/schedule-period?date=2040-07-19&view=week" --cookie /LOCAL/PORTAL_COOKIE_FILE\n# view: day/week/month. period.from is included; period.to is excluded. Keep schedule.date as the owner date; opening a period does not copy rows or change ownership. Edit via the existing daily board/version, never a combined period payload. Optional occurrences are read-only daily-rule projections with stable ownerDate/id and sourceDate/sourceRowId; first source-day occurrence keeps its original ID.` },
+            { title: 'Read actual intervals and known-endpoint milestones overlapping the same Taipei week/month; pagination and original records remain separate from plans', curl: `curl -s "${apiBase}/api/dot-progress/timeline?date=2040-07-19&view=month&offset=0" --cookie /LOCAL/PORTAL_COOKIE_FILE\n# view requires date; omitted view preserves legacy day filtering. Follow nextOffset; total counts actual records, not completed goals or assumed source capacity.` },
+            { title: 'Save planned goal rows, dates and order with optimistic version and an idempotent requestId; no timeline or push mutation', curl: `curl -s -X PUT "${apiBase}/api/dot-progress/schedule/2040-07-19" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" --data-binary @/LOCAL/SAFE_SCHEDULE.json\n# Fields: version (0 for absent board), requestId, rows, optional rowOrder (saved-row or existing timeline IDs; omitted preserves order). Each row: id, projectId (nullable), projectLabel, goal, plannedStart/plannedEnd (both null or known ISO timestamps with timezone), status (planned/active/waiting/done), actualIds (existing timeline IDs), optional archived (true archives an existing row; preserve all other fields). Ordering changes only rowOrder, never promotes derived rows. Restore by omitting archived; Undo includes rows and rowOrder. Optional repeat: {frequency:"daily",from:"2040-07-20",until:null} requires planned status, both times null and empty actualIds. Up to 100 saved rules across all boards; one rule expands by Taipei civil dates without copying actual records. Keep retries exact; use a fresh requestId for changed content or Undo.` },
+            { title: 'Read retained private planned-schedule revisions; Undo saves a prior board with the current version and a fresh requestId', curl: `curl -s "${apiBase}/api/dot-progress/schedule/2040-07-19/history?offset=0" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Preview an explicitly selected historical schedule revision: exact added IDs, protected later edits and current version; no write', curl: `curl -s "${apiBase}/api/dot-progress/schedule/2040-07-19/recovery-preview?revision=SOURCE_VERSION" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Recover only owner-selected eligible derived rows as a new retained revision; preserve every other row and display order', curl: `curl -s -X POST "${apiBase}/api/dot-progress/schedule/2040-07-19/recovery" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" --data-binary @/LOCAL/SAFE_SCHEDULE_RECOVERY.json\n# Fields: requestId, current version, sourceRevision (the reviewed historical version), removeIds (nonempty unique eligible IDs selected by the owner). The server rechecks complete later history and source-time actual snapshots. Any later row or actual change is protected; stale, incomplete or excessive history fails closed. No automatic cleanup, timeline/push changes or history deletion. Undo uses a fresh ordinary versioned PUT with the retained before rows and rowOrder.` }
+        ],
         messaging: [
             { title: 'Send private message (speakTo)', curl: `curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${botSecret}","message":"TEXT","state":"IDLE","speakTo":["TARGET_PUBLIC_CODE"]}'` },
             { title: 'Broadcast to all entities', curl: `curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${botSecret}","message":"TEXT","state":"IDLE","broadcast":true}'` }
@@ -5711,6 +5784,9 @@ app.post('/api/free-bot-tos/agree', async (req, res) => {
 // ============================================
 const adminAuth = authModule.authMiddleware;
 const adminCheck = authModule.adminMiddleware;
+app.use('/api/admin/paper-beta-feedback', require('./paper-beta-admin').createRouter(
+    () => chatPool, adminAuth, adminCheck
+));
 
 /**
  * GET /api/admin/ping
@@ -17430,12 +17506,18 @@ app.use('/api/debug', (req, res, next) => {
     }
     next();
 });
+app.use('/api/debug/dot-progress', require('./dot-progress').createDebugRouter(() => chatPool, authModule));
+app.use('/api/debug/paper-beta-feedback', require('./paper-beta-admin').createDebugRouter(
+    () => chatPool, authModule.authMiddleware, authModule.adminMiddleware));
+app.use('/api/debug/taaze-demo-share', taazeDemoRouters.debugRouter);
 
 /**
  * GET /api/debug/devices
  * Show all devices and their entities (for debugging).
  * Requires admin auth — never expose unauthenticated.
  */
+app.use('/api/debug/dream-buddy-ads', dreamBuddyAds.diagnostics);
+
 app.get('/api/debug/devices', (req, res) => {
     if (!verifyAdmin(req)) {
         return res.status(403).json({ success: false, error: 'Forbidden: admin token required' });
@@ -24724,7 +24806,8 @@ async function markMessagesAsRead(deviceId, entityId) {
 // GET /api/chat/history
 // Auth: deviceSecret OR botSecret (bot can only see messages for its own entity)
 app.get('/api/chat/history', async (req, res) => {
-    const { deviceId, deviceSecret, botSecret, limit = 500, before, since } = req.query;
+    const { deviceId, deviceSecret, botSecret } = require('./extract-creds')(req);
+    const { limit = 500, before, since } = req.query;
 
     if (!deviceId) {
         return res.status(400).json({ success: false, error: 'deviceId required' });
@@ -25798,6 +25881,8 @@ function authenticateDeviceOrBot({ deviceId, deviceSecret, botSecret, entityId }
 }
 
 app.use('/api/app-portfolio', appPortfolioCommunity.createRouter(() => chatPool));
+app.use('/api/dot-progress', require('./dot-progress').createRouter(() => chatPool, authModule));
+app.use('/api/taaze-demo-share', taazeDemoRouters.adminRouter);
 
 /**
  * GET /api/analytics/site-pageviews

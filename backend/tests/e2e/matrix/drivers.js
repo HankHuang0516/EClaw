@@ -94,7 +94,9 @@ const DRIVERS = {
     // pain 1+5: /r/:target universal entry 302s to the registry web URL with traceId.
     // profile is a non-sensitive target (/p/{publicCode}), so no HMAC sig needed.
     redirect: async (page, { base }) => {
-        const publicCode = process.env.MATRIX_REDIRECT_CODE || 'tbwb9e'; // #1 Mac_F public profile
+        // Follow the existing persistent CI entity fixture. Personal profiles
+        // can be removed/rebound and must not make every redirect cell fail.
+        const publicCode = process.env.MATRIX_REDIRECT_CODE || process.env.MATRIX_TEST_ENTITY_PUBLIC_CODE || 'ldsntq';
         const entry = `${base}/r/profile?publicCode=${publicCode}`;
         const resp = await page.goto(entry, { waitUntil: 'domcontentloaded', timeout: 20000 });
         const finalUrl = page.url();

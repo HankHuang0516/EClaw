@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="paper_beta_title">Internes Feedback</string>
+    <string name="paper_beta_summary">Antworten</string>
+    <string name="paper_beta_average">Durchschnittliche Bewertung</string>
+    <string name="paper_beta_continuation">Wunsch nach Fortsetzung</string>
+    <string name="paper_beta_comment">Kommentar</string>
+    <string name="paper_beta_yes">Ja</string>
+    <string name="paper_beta_maybe">Vielleicht</string>
+    <string name="paper_beta_no">Nein</string>
+    <string name="paper_beta_older">Ältere Antworten</string>
+    <string name="paper_beta_denied">Administrator-Anmeldung erforderlich</string>
+    <string name="paper_beta_unavailable">Feedback derzeit nicht verfügbar; später erneut versuchen</string>
+    <string name="portfolio_gift_entry">Geschenkankündigungen</string>
+    <string name="portfolio_gift_details">Geschenkdetails ansehen</string>
+    <string name="pfs_support_title">Offizieller Support und Datenschutz</string>
+    <string name="pfs_support_contact">Support und Fehlerbehebung</string>
+    <string name="pfs_support_faq">Häufig gestellte Fragen</string>
+    <string name="pfs_support_faq_account">Muss ich zum Spielen ein Konto haben, etwas bezahlen oder mit dem Internet verbunden sein?</string>
+    <string name="pfs_support_faq_progress">Wird der Spielfortschritt zwischen Geräten synchronisiert?</string>
+    <string name="pfs_support_faq_beta">Wirkt es sich auf das Spiel aus, wenn ich keine Beta-Rückmeldung gebe?</string>
+    <string name="pfs_support_privacy">Daten, Datenschutz und private Beta-Rückmeldungen</string>
+    <string name="pfs_support_privacy_link">Vollständige Datenschutzerklärung lesen</string>
+    <string name="pfs_support_review">Anleitung für App Review</string>
+    <string name="pfs_support_video">Spielvideo für die Prüfung</string>
+    <string name="pfs_support_video_link">Prüfungsvideo öffnen oder herunterladen</string>
+</resources>

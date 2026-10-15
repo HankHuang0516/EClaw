@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="paper_beta_title">内部フィードバック</string>
+    <string name="paper_beta_summary">回答数</string>
+    <string name="paper_beta_average">平均評価</string>
+    <string name="paper_beta_continuation">続編への希望</string>
+    <string name="paper_beta_comment">コメント</string>
+    <string name="paper_beta_yes">希望する</string>
+    <string name="paper_beta_maybe">未定</string>
+    <string name="paper_beta_no">希望しない</string>
+    <string name="paper_beta_older">以前の回答</string>
+    <string name="paper_beta_denied">管理者ログインが必要です</string>
+    <string name="paper_beta_unavailable">現在読み込めません。後で再試行してください</string>
+    <string name="portfolio_gift_entry">ギフトのお知らせ</string>
+    <string name="portfolio_gift_details">ギフトの詳細を見る</string>
+    <string name="pfs_support_title">公式サポートとプライバシー</string>
+    <string name="pfs_support_contact">サポートとトラブルシューティング</string>
+    <string name="pfs_support_faq">よくある質問</string>
+    <string name="pfs_support_faq_account">プレイにはアカウント、支払い、またはインターネット接続が必要ですか？</string>
+    <string name="pfs_support_faq_progress">進行状況はデバイス間で同期されますか？</string>
+    <string name="pfs_support_faq_beta">Beta のフィードバックを送信しない場合、ゲームに影響しますか？</string>
+    <string name="pfs_support_privacy">データ、プライバシー、非公開の Beta フィードバック</string>
+    <string name="pfs_support_privacy_link">プライバシーポリシーの全文を読む</string>
+    <string name="pfs_support_review">App Review 向けの操作ガイド</string>
+    <string name="pfs_support_video">審査用のゲームプレイ動画</string>
+    <string name="pfs_support_video_link">審査用動画を開く、またはダウンロードする</string>
+</resources>

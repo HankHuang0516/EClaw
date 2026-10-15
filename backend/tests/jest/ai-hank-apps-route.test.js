@@ -73,4 +73,16 @@ describe('AiHankApps portfolio route', () => {
         expect(scriptResponse.headers['cache-control']).toBe('public, max-age=600, must-revalidate');
         expect(imageResponse.headers['cache-control']).toBe('public, max-age=604800, immutable');
     });
+
+    test('progress HTML always refreshes independently of cached client assets', async () => {
+        const routeApp = express();
+        routeApp.use('/AiHankApps', express.static(portfolioDir, { setHeaders: setAiHankAppsCacheHeaders }));
+        for (const url of ['/AiHankApps/dot-progress/', '/AiHankApps/dot-progress/index.html']) {
+            const response = await request(routeApp).get(url);
+            expect(response.status).toBe(200);
+            expect(response.headers['cache-control']).toBe('no-store, no-cache, max-age=0, must-revalidate');
+            expect(response.headers['cdn-cache-control']).toBe('no-store');
+            expect(response.headers['cloudflare-cdn-cache-control']).toBe('no-store');
+        }
+    });
 });

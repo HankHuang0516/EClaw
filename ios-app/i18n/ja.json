@@ -1,4 +1,34 @@
 {
+  "paperFlickSupport": {
+    "pfs_support_title": "公式サポートとプライバシー",
+    "pfs_support_contact": "サポートとトラブルシューティング",
+    "pfs_support_faq": "よくある質問",
+    "pfs_support_faq_account": "プレイにはアカウント、支払い、またはインターネット接続が必要ですか？",
+    "pfs_support_faq_progress": "進行状況はデバイス間で同期されますか？",
+    "pfs_support_faq_beta": "Beta のフィードバックを送信しない場合、ゲームに影響しますか？",
+    "pfs_support_privacy": "データ、プライバシー、非公開の Beta フィードバック",
+    "pfs_support_privacy_link": "プライバシーポリシーの全文を読む",
+    "pfs_support_review": "App Review 向けの操作ガイド",
+    "pfs_support_video": "審査用のゲームプレイ動画",
+    "pfs_support_video_link": "審査用動画を開く、またはダウンロードする"
+  },
+  "portfolioGifts": {
+    "portfolio_gift_entry": "ギフトのお知らせ",
+    "portfolio_gift_details": "ギフトの詳細を見る"
+  },
+  "paperBetaAdmin": {
+    "title": "内部フィードバック",
+    "summary": "回答数",
+    "average": "平均評価",
+    "continuation": "続編への希望",
+    "comment": "コメント",
+    "yes": "希望する",
+    "maybe": "未定",
+    "no": "希望しない",
+    "older": "以前の回答",
+    "denied": "管理者ログインが必要です",
+    "unavailable": "現在読み込めません。後で再試行してください"
+  },
   "common": {
     "cancel": "キャンセル",
     "confirm": "確認",

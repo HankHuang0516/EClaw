@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=1100" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>我的APP作品集</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -493,6 +493,7 @@
   </style>
     <link rel="icon" type="image/png" href="favicon.png?v=20260823-5">
     <link rel="stylesheet" href="community-v5.css">
+    <link rel="stylesheet" href="gift-sidebar.css?v=20261008">
 </head>
   <body>
     <div class="grain" aria-hidden="true"></div>
@@ -521,25 +522,45 @@
       </header>
 
       <section id="fraudEmpireEntry" aria-label="詐騙帝國完整互動企劃" style="margin:20px 0;padding:22px 26px;border:1px solid #aab5a0;border-radius:16px;background:linear-gradient(115deg,#e3e9dc,#fffaf0)">
-        <a href="projects/fraud-empire/" style="display:flex;align-items:center;justify-content:space-between;gap:24px;color:#354d3b;text-decoration:none">
-          <span><small style="display:block;letter-spacing:.1em;color:#717967">設計確認稿／開發中 · v4</small><strong style="display:block;margin:7px 0;font:600 26px Noto Serif TC,serif">詐騙帝國</strong><span style="font-size:14px;line-height:1.8">直接閱讀完整企劃，逐步看 17 題材、人物關係、地圖與結局。</span></span>
+        <a href="projects/fraud-empire/" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;color:#354d3b;text-decoration:none">
+          <span style="flex:1 1 300px;min-width:0"><small style="display:block;letter-spacing:.1em;color:#717967">設計確認稿／開發中 · v4</small><strong style="display:block;margin:7px 0;font:600 26px Noto Serif TC,serif">詐騙帝國</strong><span style="font-size:14px;line-height:1.8">直接閱讀完整企劃，逐步看 17 題材、人物關係、地圖與結局。</span></span>
           <span style="flex:none;font-size:14px;border-bottom:1px solid #58755f;padding-bottom:4px">進入完整互動企劃 ↗</span>
         </a>
       </section>
 
-      <section class="rebound-gift" aria-labelledby="reboundGiftTitle" data-ends-at="2026-10-25T16:00:00Z">
-        <h2 id="reboundGiftTitle"><a class="gift-site-link" href="https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site/" aria-label="前往REBOUND：元素戰機官方網站">REBOUND：元素戰機｜中秋新人大禮包</a></h2>
-        <p><a class="gift-site-link gift-site-cta" href="https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site/">前往 REBOUND：元素戰機 APP 官方網站 ↗</a></p>
-        <p>Android 與 iOS 共用 100 份名額。活動期間首次連線的帳號依順序自動收到遊戲郵件，每個帳號限寄一次；請至遊戲信箱領取，無需輸入兌換碼。送完或到期即止。</p>
-        <p>禮包包含火花 500 點、戰機復活卡／1H 戰利品加倍卡／1H 火花加倍卡／技能樹重置卡各 1 張，以及永久自動射擊。商品標價換算約 NT$285（500 火花按 1,000 點售價比例估算，非現金價值）。</p>
-        <p>活動至 2026/10/25 23:59（台北時間），10/26 00:00 起停止寄送。</p>
-        <p class="gift-countdown" id="reboundCountdown" role="timer">倒數計算中…</p>
-        <p class="gift-count" id="reboundRemaining" aria-live="polite">剩餘名額查詢中…</p>
-        <p class="gift-updated" id="reboundUpdated">數量依遊戲郵件寄送及領取紀錄更新，每 15 秒重新查詢。</p>
-      </section>
-
-      <section class="grid" id="appGrid" aria-live="polite"></section>
-      <section class="empty" id="emptyState" hidden>沒有符合的 App，試著換個關鍵字吧。</section>
+      <div class="portfolio-layout">
+        <aside class="portfolio-gift-sidebar" aria-labelledby="portfolioGiftEntry">
+          <details id="game-gifts" class="portfolio-gift-disclosure">
+            <summary id="portfolioGiftEntry"><span aria-hidden="true">🎁</span> <span data-gift-i18n="entry">禮包公告</span><span class="gift-disclosure-hint" data-gift-i18n="details">查看禮包詳情</span></summary>
+            <nav id="giftCampaignList" class="gift-campaign-list" aria-labelledby="portfolioGiftEntry"></nav>
+            <section id="elemental-fighter350-paper-celebration-20261007" data-campaign-id="elemental-fighter350-paper-celebration-20261007" class="rebound-gift" aria-labelledby="celebrationGiftTitle" data-ends-at="2026-11-07T10:53:52.797Z">
+              <h2 id="celebrationGiftTitle" data-gift-i18n="celebrationTitle">元素戰機350｜《紙上彈兵》普天同慶禮包</h2>
+              <p data-gift-i18n="issued">Elemental Fighter 350 · 慶祝《紙上彈兵》，禮包已寄進遊戲信箱。</p>
+              <p data-gift-i18n="eligibility">發放開始時的現有有效玩家，每帳號一封；請打開遊戲信箱領取附件。</p>
+              <p data-gift-i18n="contents">火花 6,000 點、戰機復活卡／1H 戰利品加倍卡／1H 火花加倍卡／技能樹重置卡各 1 張。</p>
+              <p data-gift-i18n="value">商品標價換算約 NT$300，非現金價值。</p>
+              <p data-gift-i18n="deadline">2026/10/07 18:53:52 起發放，領取截止為 2026/11/07 18:53:52（台北時間），期限為一個日曆月；到期無法領取。</p>
+              <p class="gift-count" data-gift-i18n="count">已寄出 146 封；這是寄送核對結果，不代表全部已領取。</p>
+              <p class="gift-updated" data-gift-i18n="verified">2026/10/07 18:53:53 核對，寄送失敗 0 封、重複 0 封，已排除 4 個 QA 測試帳號。</p>
+              <p class="gift-countdown" id="celebrationCountdown" role="timer" data-campaign-countdown>倒數計算中…</p>
+            </section>
+            <section id="rebound-autumn-welcome-2026" data-campaign-id="rebound-autumn-welcome-2026" class="rebound-gift" aria-labelledby="reboundGiftTitle" data-ends-at="2026-10-25T16:00:00Z">
+              <h2 id="reboundGiftTitle"><a class="gift-site-link" href="https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site/" aria-label="前往元素戰機350官方網站">元素戰機350｜中秋新人大禮包</a></h2>
+              <p><a class="gift-site-link gift-site-cta" href="https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site/">前往 元素戰機350 APP 官方網站 ↗</a></p>
+              <p>Android 與 iOS 共用 100 份名額。活動期間首次連線的帳號依順序自動收到遊戲郵件，每個帳號限寄一次；請至遊戲信箱領取，無需輸入兌換碼。送完或到期即止。</p>
+              <p>禮包包含火花 500 點、戰機復活卡／1H 戰利品加倍卡／1H 火花加倍卡／技能樹重置卡各 1 張，以及永久自動射擊。商品標價換算約 NT$285（500 火花按 1,000 點售價比例估算，非現金價值）。</p>
+              <p>活動至 2026/10/25 23:59（台北時間），10/26 00:00 起停止寄送。</p>
+              <p class="gift-countdown" id="reboundCountdown" role="timer" data-campaign-countdown>倒數計算中…</p>
+              <p class="gift-count" id="reboundRemaining" aria-live="polite">剩餘名額查詢中…</p>
+              <p class="gift-updated" id="reboundUpdated">數量依遊戲郵件寄送及領取紀錄更新，每 15 秒重新查詢。</p>
+            </section>
+          </details>
+        </aside>
+        <div class="portfolio-apps">
+          <section class="grid" id="appGrid" aria-live="polite"></section>
+          <section class="empty" id="emptyState" hidden>沒有符合的 App，試著換個關鍵字吧。</section>
+        </div>
+      </div>
 
       <footer>更新：2026-10-04</footer>
     </main>
@@ -557,12 +578,12 @@
         { name: '這樣出門', iconText: '這樣', icon: 'icons/store-chumen-51eb4f72a595.jpg', promo: 'promo/chumen.jpg', category: '生活', desc: '目前僅支援台北市、新北市：公車、YouBike、天氣與空氣品質一頁掌握', source: 'Android / iOS', googlePackage: 'com.hankhuang.chumen', googleUrl: 'https://play.google.com/store/apps/details?id=com.hankhuang.chumen', googleStatus: '正式版', iosId: '6795006771', iosUrl: 'https://apps.apple.com/tw/app/id6795006771', iosStatus: '已上架', communityId: 'chumen', publicGoogle: true, publicApple: true, googleStoreName: '這樣出門', iosStoreName: '這樣出門', checkedAt: '2026-10-04T01:02:59.370Z', iosVersion: '1.4.2' },
         { name: '世界末日了沒', iconText: '世末', icon: 'icons/store-doomsday-index-a007ccf73208.jpg', promo: 'promo/doomsday.jpg', category: '生活', desc: '六項即時公開資料，彙整成一眼看懂的 0–100 末日指數', source: 'Android / iOS', googlePackage: 'com.hankhuang.doomsday', googleUrl: 'https://play.google.com/store/apps/details?id=com.hankhuang.doomsday', googleStatus: '正式版', iosId: '6795006218', iosUrl: 'https://apps.apple.com/tw/app/id6795006218', iosStatus: '已上架', communityId: 'doomsday-index', publicGoogle: true, publicApple: true, googleStoreName: '世界末日了沒', iosStoreName: '世界末日了沒', iosVersion: '1.0.8', checkedAt: '2026-10-04T01:02:59.370Z' },
         { name: '夢話夥伴', iconText: '夢話', icon: 'icons/store-dreambuddy-0033e7afc693.png', promo: 'promo/dreambuddy.jpg', aliases: '陪你入眠的 AI 夥伴', category: 'AI', desc: '一個溫柔、半睡半醒的 AI 夥伴，陪你把夢的片段慢慢說完。', source: 'Android / iOS', googlePackage: 'com.hankhuang.dreambuddy', googleUrl: 'https://play.google.com/store/apps/details?id=com.hankhuang.dreambuddy', googleStatus: '正式版', iosStatus: '開發中', communityId: 'dreambuddy', iosId: '6804389322', iosUrl: 'https://apps.apple.com/tw/app/id6804389322', publicGoogle: true, publicApple: false, googleStoreName: '夢話夥伴 — 陪你入眠的 AI 夥伴', iosStoreName: '夢話夥伴 — 陪你入眠的 AI 夥伴', checkedAt: '2026-10-04T01:02:59.370Z' },
-        { name: '紙上彈兵', category: '遊戲', desc: '在紙頁戰場彈射英雄，移動即攻擊，挑戰 16 關歷史戰役。', communityId: 'paper-flick-soldiers', iconText: '紙上', icon: 'icons/store-paper-flick-soldiers-9af88bf1827f.jpg', source: 'Android / iOS', googlePackage: 'com.hankhuang.paperflicksoldiers', googleUrl: 'https://play.google.com/store/apps/details?id=com.hankhuang.paperflicksoldiers', googleStatus: '正式版', iosStatus: '已上架', publicGoogle: true, publicApple: true, googleStoreName: '紙上彈兵', checkedAt: '2026-10-04T01:02:59.370Z', iosId: '6814515567', iosUrl: 'https://apps.apple.com/tw/app/id6814515567', iosStoreName: '紙上彈兵', iosVersion: '1.0.6' },
-        { name: 'REBOUND：元素戰機', category: '遊戲', desc: '彈射、融合七元素，突破 100 波的賽博龐克球體戰鬥。', communityId: 'rebound', iconText: 'RE', icon: 'icons/store-rebound-40002e891e34.jpg', source: 'Android / iOS', googlePackage: 'com.hankhuang.reboundprototype', googleUrl: 'https://play.google.com/store/apps/details?id=com.hankhuang.reboundprototype', googleStatus: '正式版', iosId: '6808690018', iosUrl: 'https://apps.apple.com/tw/app/id6808690018', iosStatus: '已上架', publicGoogle: true, publicApple: true, googleStoreName: 'REBOUND：元素戰機', iosStoreName: 'REBOUND：元素戰機', checkedAt: '2026-10-04T01:02:59.370Z', guide: 'https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site/', guideLabel: '完整攻略', iosVersion: '1.1.1', aliases: '元素戰機350' },
+        { name: '紙上彈兵', category: '遊戲', desc: '在紙頁戰場彈射英雄，移動即攻擊，挑戰 16 關歷史戰役。', communityId: 'paper-flick-soldiers', guide: 'https://eclawbot.com/AiHankApps/guides/paper-flick-soldiers/', guideLabel: '查看 APP 介紹', iconText: '紙上', icon: 'icons/store-paper-flick-soldiers-9af88bf1827f.jpg', source: 'Android / iOS', googlePackage: 'com.hankhuang.paperflicksoldiers', googleUrl: 'https://play.google.com/store/apps/details?id=com.hankhuang.paperflicksoldiers', googleStatus: '正式版', iosStatus: '已上架', publicGoogle: true, publicApple: true, googleStoreName: '紙上彈兵', checkedAt: '2026-10-04T01:02:59.370Z', iosId: '6814515567', iosUrl: 'https://apps.apple.com/tw/app/id6814515567', iosStoreName: '紙上彈兵', iosVersion: '1.0.6' },
+        { name: '元素戰機350', category: '遊戲', desc: '彈射、融合七元素，突破 100 波的賽博龐克球體戰鬥。', communityId: 'rebound', iconText: '戰機', icon: 'icons/store-rebound-40002e891e34.jpg', source: 'Android / iOS', googlePackage: 'com.hankhuang.reboundprototype', googleUrl: 'https://play.google.com/store/apps/details?id=com.hankhuang.reboundprototype', googleStatus: '正式版', iosId: '6808690018', iosUrl: 'https://apps.apple.com/tw/app/id6808690018', iosStatus: '已上架', publicGoogle: true, publicApple: true, googleStoreName: '元素戰機350', iosStoreName: '元素戰機350', checkedAt: '2026-10-04T01:02:59.370Z', guide: 'https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site/', guideLabel: '完整攻略', iosVersion: '1.1.1', aliases: 'Elemental Fighter 350' },
         { name: '睡公園：免費生存地圖', iconText: '睡公', icon: 'icons/store-sleep-park-12c3098680c9.jpg', promo: 'promo/sleeppark.jpg', category: '生活', desc: '股市跌到只剩公園？幫你找公園、飲水機、公廁、免費WiFi，賠錢也能過一天', source: 'Android / iOS', googlePackage: 'com.hankhuang.sleeppark', googleUrl: 'https://play.google.com/store/apps/details?id=com.hankhuang.sleeppark', googleStatus: '正式版', iosId: '6792406616', iosUrl: 'https://apps.apple.com/tw/app/id6792406616', iosStatus: '已上架', communityId: 'sleep-park', publicGoogle: true, publicApple: true, googleStoreName: '睡公園：免費生存地圖', iosStoreName: '睡公園', iosVersion: '1.3', checkedAt: '2026-10-04T01:02:59.370Z' },
         { name: '活字戰紀：雙城烽火', iconText: '活字', icon: 'icons/store-typeforge-twin-cities-b1e6e7dcc4a2.jpg', promo: 'promo/typeforge.jpg', aliases: 'Typeforge: Twin Cities', category: '遊戲', desc: '活字合成塔防：雙城競爭、英雄升格、合作守城與無盡歲輪。', source: 'Android / iOS', googlePackage: 'com.hankhuang.wordcivilization', googleUrl: 'https://play.google.com/store/apps/details?id=com.hankhuang.wordcivilization', googleStatus: '正式版', iosId: '6792162295', iosUrl: 'https://apps.apple.com/tw/app/id6792162295', iosStatus: '已上架', communityId: 'typeforge-twin-cities', publicGoogle: true, publicApple: true, googleStoreName: '活字戰紀：雙城烽火', iosStoreName: '活字戰紀：雙城烽火', iosVersion: '1.2.13', checkedAt: '2026-10-04T01:02:59.370Z' },
         { name: '活字戰記：巔峰之戰', iconText: '巔峰', icon: 'icons/summit-battle-zh-v2.png', category: '遊戲', desc: '從《雙城烽火》連結帳號，進行 1v1 或四人混戰、守城交鋒、戰鑄裝備與天梯競賽。', source: 'Android / iOS', googlePackage: 'com.hankhuang.wordcivilization.summitbattle', googleUrl: 'https://play.google.com/store/apps/details?id=com.hankhuang.wordcivilization.summitbattle', googleStatus: '開發中', iosStatus: '開發中', communityId: 'summit-battle', publicGoogle: false, publicApple: false, googleStoreName: '活字戰記：巔峰之戰', checkedAt: '2026-10-04T01:02:59.370Z', iosId: '6814728151', iosUrl: 'https://apps.apple.com/tw/app/id6814728151', iosStoreName: '活字戰紀：巔峰之戰' },
-        { name: 'Vibe帝國', iconText: 'Vibe', icon: 'icons/vibe-empire.png', aliases: 'Vibe帝國 · 共治軍令', category: '遊戲', desc: '30 秒同步回合的網頁策略遊戲，結合文明英雄、卡牌部署與即時戰場。', source: 'Web', communityId: 'vibe-empire', webStatus: '開發中', publicWeb: false, checkedAt: '2026-10-04T01:02:59.370Z' },
+        { name: 'Vibe帝國', iconText: 'Vibe', icon: 'icons/vibe-empire-zh-81b4f4938045.png', aliases: 'Vibe帝國 · 共治軍令', category: '遊戲', desc: '30 秒同步回合的網頁策略遊戲，結合文明英雄、卡牌部署與即時戰場。', source: 'Web', communityId: 'vibe-empire', webStatus: '開發中', publicWeb: false, checkedAt: '2026-10-04T01:02:59.370Z' },
         { name: '錢錢長大了', iconText: '錢錢', icon: 'https://hank-app01-save-money.netlify.app/icons/icon-512.png', aliases: 'Piggy Growth 爸媽銀行 複利存錢筒', category: '金融', desc: '給孩子使用的爸媽銀行與複利存錢筒，用存款、任務、利息和願望目標培養儲蓄習慣。', source: 'Web', communityId: 'piggy-growth', webUrl: 'https://hank-app01-save-money.netlify.app/', webStatus: '正式版', publicWeb: true, guide: 'https://eclawbot.com/AiHankApps/guides/piggy-growth/', guideLabel: '查看 APP 介紹', checkedAt: '2026-10-04T01:02:59.370Z' },
         { name: 'Simulator Manager｜模擬器分配器', iconText: 'SIM', icon: 'icons/simulator-manager.png', aliases: 'sim-manager Codex Skill Plugin', category: '工具', desc: '在 Mac 上公平分配 iOS 與 Android 模擬器，支援 Codex 工作階段排隊、共用裝置及多人測試。', source: 'macOS / CLI', communityId: 'simulator-manager', guide: 'https://eclawbot.com/AiHankApps/tools/simulator-manager/', guideLabel: '查看工具介紹', releaseUrl: 'https://github.com/HankHuang0516/simulator-manager/releases/tag/v4.0.0', checkedAt: '2026-10-04T01:02:59.370Z' },
       ];
@@ -782,6 +803,7 @@
         section.appendChild(categoryGrid);
         grid.appendChild(section);
       });
+      document.dispatchEvent(new CustomEvent('aihankapps:rendered'));
       }
 
       searchInput.addEventListener('input', renderGrid);
@@ -791,7 +813,7 @@
       renderGrid();
     </script>
     <script>
-      const reboundGiftEndsAt = Date.parse(document.querySelector('.rebound-gift').dataset.endsAt);
+      const reboundGiftEndsAt = Date.parse(document.getElementById('rebound-autumn-welcome-2026').dataset.endsAt);
       function updateReboundCountdown() {
         const countdown = document.getElementById('reboundCountdown');
         const remaining = Math.max(0, reboundGiftEndsAt - Date.now());
@@ -827,11 +849,16 @@
       setInterval(() => { if (!document.hidden) updateReboundGiftCount(); }, 15000);
       document.addEventListener('visibilitychange', () => { if (!document.hidden) updateReboundGiftCount(); });
     </script>
-    <script src="community-v6.js?v=traffic-20260907"></script>
+    <script src="gift-campaigns.js?v=20261008"></script>
+    <script src="gift-sidebar.js?v=20261008"></script>
+    <script src="community-v6.js?v=paper-flick-intro-20261007"></script>
+    <div class="portfolio-shortcuts" style="position:fixed;right:22px;bottom:22px;z-index:9999;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;max-width:calc(100% - 44px)">
+    <a href="dot-progress/" data-i18n="dot_progress_entry" style="display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border:1px solid rgba(67,93,75,.45);border-radius:999px;background:rgba(255,253,247,.94);box-shadow:0 10px 30px rgba(54,45,31,.14);color:#3f5c49;font:500 15px 'Noto Sans TC',sans-serif;text-decoration:none;backdrop-filter:blur(12px)">dot 專案進度</a>
     <a
       href="reports/"
       aria-label="查看 APP 趨勢"
-      style="position:fixed;right:22px;bottom:22px;z-index:9999;display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border:1px solid rgba(67,93,75,.45);border-radius:999px;background:rgba(255,253,247,.94);box-shadow:0 10px 30px rgba(54,45,31,.14);color:#3f5c49;font:500 15px 'Noto Sans TC',sans-serif;text-decoration:none;backdrop-filter:blur(12px)"
+      style="display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border:1px solid rgba(67,93,75,.45);border-radius:999px;background:rgba(255,253,247,.94);box-shadow:0 10px 30px rgba(54,45,31,.14);color:#3f5c49;font:500 15px 'Noto Sans TC',sans-serif;text-decoration:none;backdrop-filter:blur(12px)"
     >APP 趨勢 <span aria-hidden="true">↗</span></a>
+    </div>
 </body>
 </html>

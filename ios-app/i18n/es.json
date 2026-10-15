@@ -1,4 +1,34 @@
 {
+  "paperFlickSupport": {
+    "pfs_support_title": "Soporte oficial y privacidad",
+    "pfs_support_contact": "Soporte y solución de problemas",
+    "pfs_support_faq": "Preguntas frecuentes",
+    "pfs_support_faq_account": "¿Se necesita una cuenta, un pago o conexión a internet para jugar?",
+    "pfs_support_faq_progress": "¿Se sincroniza el progreso entre dispositivos?",
+    "pfs_support_faq_beta": "¿Omitir los comentarios Beta afecta al juego?",
+    "pfs_support_privacy": "Datos, privacidad y comentarios Beta privados",
+    "pfs_support_privacy_link": "Leer la política de privacidad completa",
+    "pfs_support_review": "Instrucciones para App Review",
+    "pfs_support_video": "Vídeo de demostración del juego para la revisión",
+    "pfs_support_video_link": "Abrir o descargar el vídeo de revisión"
+  },
+  "portfolioGifts": {
+    "portfolio_gift_entry": "Anuncios de regalos",
+    "portfolio_gift_details": "Ver detalles del regalo"
+  },
+  "paperBetaAdmin": {
+    "title": "Comentarios internos",
+    "summary": "Respuestas",
+    "average": "Valoración media",
+    "continuation": "Desea una secuela",
+    "comment": "Comentario",
+    "yes": "Sí",
+    "maybe": "Quizás",
+    "no": "No",
+    "older": "Respuestas anteriores",
+    "denied": "Se requiere acceso de administrador",
+    "unavailable": "Comentarios no disponibles; inténtalo más tarde"
+  },
   "common": {
     "cancel": "Cancelar",
     "confirm": "Confirmar",

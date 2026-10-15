@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="paper_beta_title">ข้อเสนอแนะภายใน</string>
+    <string name="paper_beta_summary">จำนวนคำตอบ</string>
+    <string name="paper_beta_average">คะแนนเฉลี่ย</string>
+    <string name="paper_beta_continuation">ต้องการภาคต่อ</string>
+    <string name="paper_beta_comment">ความคิดเห็น</string>
+    <string name="paper_beta_yes">ใช่</string>
+    <string name="paper_beta_maybe">อาจจะ</string>
+    <string name="paper_beta_no">ไม่</string>
+    <string name="paper_beta_older">คำตอบก่อนหน้า</string>
+    <string name="paper_beta_denied">ต้องเข้าสู่ระบบผู้ดูแล</string>
+    <string name="paper_beta_unavailable">ไม่สามารถอ่านข้อเสนอแนะได้ในขณะนี้ โปรดลองภายหลัง</string>
+    <string name="portfolio_gift_entry">ประกาศของขวัญ</string>
+    <string name="portfolio_gift_details">ดูรายละเอียดของขวัญ</string>
+    <string name="pfs_support_title">การสนับสนุนอย่างเป็นทางการและความเป็นส่วนตัว</string>
+    <string name="pfs_support_contact">การสนับสนุนและการแก้ไขปัญหา</string>
+    <string name="pfs_support_faq">คำถามที่พบบ่อย</string>
+    <string name="pfs_support_faq_account">ต้องมีบัญชี ชำระเงิน หรือเชื่อมต่ออินเทอร์เน็ตเพื่อเล่นหรือไม่?</string>
+    <string name="pfs_support_faq_progress">ความคืบหน้าของเกมซิงค์ระหว่างอุปกรณ์หรือไม่?</string>
+    <string name="pfs_support_faq_beta">การข้ามการส่งความคิดเห็น Beta มีผลต่อเกมหรือไม่?</string>
+    <string name="pfs_support_privacy">ข้อมูล ความเป็นส่วนตัว และความคิดเห็น Beta แบบไม่เปิดเผย</string>
+    <string name="pfs_support_privacy_link">อ่านนโยบายความเป็นส่วนตัวฉบับเต็ม</string>
+    <string name="pfs_support_review">คำแนะนำสำหรับ App Review</string>
+    <string name="pfs_support_video">วิดีโอสาธิตการเล่นเกมสำหรับการตรวจสอบ</string>
+    <string name="pfs_support_video_link">เปิดหรือดาวน์โหลดวิดีโอสำหรับการตรวจสอบ</string>
+</resources>

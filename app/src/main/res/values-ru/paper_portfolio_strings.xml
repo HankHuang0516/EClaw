@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="paper_beta_title">Внутренние отзывы</string>
+    <string name="paper_beta_summary">Ответы</string>
+    <string name="paper_beta_average">Средняя оценка</string>
+    <string name="paper_beta_continuation">Хочет продолжение</string>
+    <string name="paper_beta_comment">Комментарий</string>
+    <string name="paper_beta_yes">Да</string>
+    <string name="paper_beta_maybe">Возможно</string>
+    <string name="paper_beta_no">Нет</string>
+    <string name="paper_beta_older">Предыдущие ответы</string>
+    <string name="paper_beta_denied">Требуется вход администратора</string>
+    <string name="paper_beta_unavailable">Отзывы недоступны; повторите позже</string>
+    <string name="portfolio_gift_entry">Gift announcements</string>
+    <string name="portfolio_gift_details">Посмотреть детали подарка</string>
+    <string name="pfs_support_title">Официальная поддержка и конфиденциальность</string>
+    <string name="pfs_support_contact">Поддержка и устранение неполадок</string>
+    <string name="pfs_support_faq">Часто задаваемые вопросы</string>
+    <string name="pfs_support_faq_account">Нужны ли для игры учётная запись, оплата или подключение к интернету?</string>
+    <string name="pfs_support_faq_progress">Синхронизируется ли прогресс между устройствами?</string>
+    <string name="pfs_support_faq_beta">Повлияет ли на игру отказ от отправки отзывов Beta?</string>
+    <string name="pfs_support_privacy">Данные, конфиденциальность и закрытые отзывы Beta</string>
+    <string name="pfs_support_privacy_link">Прочитать полную политику конфиденциальности</string>
+    <string name="pfs_support_review">Инструкции для App Review</string>
+    <string name="pfs_support_video">Демонстрационное видео игрового процесса для проверки</string>
+    <string name="pfs_support_video_link">Открыть или скачать видео для проверки</string>
+</resources>

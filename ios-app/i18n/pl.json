@@ -1,4 +1,34 @@
 {
+  "paperFlickSupport": {
+    "pfs_support_title": "Oficjalna pomoc i prywatność",
+    "pfs_support_contact": "Pomoc i rozwiązywanie problemów",
+    "pfs_support_faq": "Najczęściej zadawane pytania",
+    "pfs_support_faq_account": "Czy do gry trzeba mieć konto, zapłacić lub połączyć się z internetem?",
+    "pfs_support_faq_progress": "Czy postęp synchronizuje się między urządzeniami?",
+    "pfs_support_faq_beta": "Czy pominięcie opinii Beta wpływa na grę?",
+    "pfs_support_privacy": "Dane, prywatność i prywatne opinie Beta",
+    "pfs_support_privacy_link": "Przeczytaj pełną politykę prywatności",
+    "pfs_support_review": "Instrukcje dla App Review",
+    "pfs_support_video": "Film z rozgrywki do oceny",
+    "pfs_support_video_link": "Otwórz lub pobierz film do oceny"
+  },
+  "portfolioGifts": {
+    "portfolio_gift_entry": "Gift announcements",
+    "portfolio_gift_details": "Zobacz szczegóły prezentu"
+  },
+  "paperBetaAdmin": {
+    "title": "Opinie wewnętrzne",
+    "summary": "Odpowiedzi",
+    "average": "Średnia ocena",
+    "continuation": "Chce kontynuacji",
+    "comment": "Komentarz",
+    "yes": "Tak",
+    "maybe": "Może",
+    "no": "Nie",
+    "older": "Starsze odpowiedzi",
+    "denied": "Wymagane logowanie administratora",
+    "unavailable": "Opinie niedostępne; spróbuj później"
+  },
   "common": {
     "cancel": "Anuluj",
     "confirm": "Potwierdź",

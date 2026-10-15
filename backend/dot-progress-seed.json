@@ -1,0 +1,35 @@
+[
+  {
+    "id": "gallery-check",
+    "title": "三本商品圖庫驗收",
+    "status": "completed",
+    "summary": "三本商品圖庫真實 UI 3／3／3 驗收完成。",
+    "blockers": "",
+    "nextStep": "",
+    "publicTitle": "三本商品圖庫驗收",
+    "publicSummary": "三本商品圖庫完成真實 UI 3／3／3 驗收。",
+    "completedAt": "2026-10-04"
+  },
+  {
+    "id": "readonly-lookup",
+    "title": "精確商品唯讀查詢",
+    "status": "completed",
+    "summary": "本人精確商品唯讀查詢驗收完成。",
+    "blockers": "",
+    "nextStep": "",
+    "publicTitle": "精確商品唯讀查詢",
+    "publicSummary": "本人精確商品唯讀查詢驗收完成。",
+    "completedAt": "2026-10-04"
+  },
+  {
+    "id": "archive-consistency",
+    "title": "歸檔日期與檔案整理",
+    "status": "completed",
+    "summary": "100 件／47 來源的歸檔日期與檔案一致性整理完成；不代表有效供給、庫存或權利驗收。",
+    "blockers": "",
+    "nextStep": "",
+    "publicTitle": "歸檔日期與檔案整理",
+    "publicSummary": "100 件、47 來源的歸檔日期與檔案一致性整理完成。",
+    "completedAt": "2026-10-04"
+  }
+]

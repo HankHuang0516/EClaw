@@ -472,14 +472,14 @@ EClaw/
 
    **讀取當前狀態：**
    ```bash
-   curl -s "https://eclawbot.com/api/mission/dashboard?deviceId=480def4c-2183-4d8e-afd0-b131ae89adcc&botSecret=944738a1eece24cf64916beab7ce2640&entityId=2" | python3 -c "import sys,json; notes=json.load(sys.stdin).get('dashboard',{}).get('notes',[]); [print(n['content']) for n in notes if 'claude-code-settings' in n.get('title','')]"
+   curl -s "https://eclawbot.com/api/mission/dashboard?deviceId=480def4c-2183-4d8e-afd0-b131ae89adcc&botSecret=<BOT_SECRET_FROM_PRIVATE_CONFIG>&entityId=2" | python3 -c "import sys,json; notes=json.load(sys.stdin).get('dashboard',{}).get('notes',[]); [print(n['content']) for n in notes if 'claude-code-settings' in n.get('title','')]"
    ```
 
    **更新狀態：**
    ```bash
    curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
      -H "Content-Type: application/json" \
-     -d '{"deviceId":"480def4c-2183-4d8e-afd0-b131ae89adcc","botSecret":"944738a1eece24cf64916beab7ce2640","entityId":2,"title":"⚙️ claude-code-settings","newContent":"reasoning: on"}'
+     -d '{"deviceId":"480def4c-2183-4d8e-afd0-b131ae89adcc","botSecret":"<BOT_SECRET_FROM_PRIVATE_CONFIG>","entityId":2,"title":"⚙️ claude-code-settings","newContent":"reasoning: on"}'
    ```
 
    ### `/reasoning` 指令處理
@@ -515,7 +515,7 @@ EClaw/
    ```bash
    curl -s -X POST "https://eclawbot.com/api/transform" \
      -H "Content-Type: application/json" \
-     -d '{"deviceId":"480def4c-2183-4d8e-afd0-b131ae89adcc","entityId":2,"botSecret":"944738a1eece24cf64916beab7ce2640","message":"MESSAGE_HERE","state":"IDLE","speakTo":["31tlkr"]}'
+     -d '{"deviceId":"480def4c-2183-4d8e-afd0-b131ae89adcc","entityId":2,"botSecret":"<BOT_SECRET_FROM_PRIVATE_CONFIG>","message":"MESSAGE_HERE","state":"IDLE","speakTo":["31tlkr"]}'
    ```
 
    ### Session 初始化
@@ -530,7 +530,7 @@ EClaw/
 
 10. **Chinese Summary on Completion** — 每次任務完成後，用**繁體中文**回報總結，包含：修改了哪些檔案、做了什麼改動、有無需要注意的事項。
 
-12. **UI/UX Simplify Review** — 任何與 UI/UX 渲染相關的修復或改動，在 commit 之前**必須**先執行 `simplify` skill（代碼複用、品質、效率三項審查），根據審查結果修正問題後才能 commit。
+12. **UI/UX Code Review** — 任何與 UI/UX 渲染相關的修復或改動，在 commit 之前**必須**完成代碼複用、品質、效率三項程式審查，修正發現的問題，並完成適用的功能、權限、i18n、UI 與回歸測試；在 PR 記錄實際審查方法與結果。可使用已可用的審查工具或人工程式審查，不強制 `simplify` skill 或 Claude Code 登入；不得宣稱未執行的工具已執行。原有 PR、CI、秘密保護及發布批准要求不變。
 
 13a. **Smart Quote — 所有彈出視窗與卡片** — 任何新增或修改彈出視窗（modal）、側邊卡片（detail panel）、對話框（dialog）時，**必須**加入「引用到聊天」功能，並遵守以下規範：
    - 使用 `quoteToChat(source, title, excerpt)` 函式，絕對不能直接貼入完整內容
@@ -538,7 +538,7 @@ EClaw/
    - 引用 UX 使用現有回覆列（reply bar）`setReplyContext()`，顯示 `📌 source: title: excerpt` 的摘要格式
    - 所有 `message` 事件監聽器**必須**驗證 `e.origin === window.location.origin`，`postMessage` 目標**必須**指定 `window.location.origin`（不可用 `'*'`）
 
-13. **UI/UX I18n Audit** — 任何與 UI/UX 相關的改動，除了執行 `simplify` skill 外，還**必須**確認 i18n 做確實：
+13. **UI/UX I18n Audit** — 任何與 UI/UX 相關的改動，除了完成上述程式審查外，還**必須**確認 i18n 做確實：
     - 所有使用者可見的文字（按鈕、標題、提示、錯誤訊息、placeholder）都使用 `data-i18n` 屬性或 `i18n.t()` 呼叫
     - 新增的 i18n key 必須同步加入所有語言檔案（Web `i18n.js`、Android `strings.xml`、iOS `i18n/`）
     - 不可有 hardcoded 文字殘留在 HTML/Kotlin/React 中
@@ -1750,3 +1750,24 @@ Key documents: `broadcast-recipient-info-design`, `env-vars-encrypted-persistenc
 AI search brand visibility testing conducted 2026-03-10. Baseline score: 0/50 (zero visibility).
 Full session logs archived in `docs/reports/2026-03-10-eclaw-baseline-report.md`.
 Design plan: `docs/plans/2026-03-10-ai-search-brand-platform-design.md`.
+
+
+## AiHankApps dot progress
+
+Portfolio page `/AiHankApps/dot-progress/` uses `backend/dot-progress.js` and existing auth/admin middleware. Private seed is outside public assets. PostgreSQL rows, comments and history persist transactionally; public projection includes only explicitly completed title/summary/date. No entity bindings or auth configuration change. Contract and import limitations: `docs/dot-progress.md`.
+
+Private decision records are separate from project imports and public summaries. Server-generated actor/time and recommendation versions invalidate prior adoption when content changes; current-version alternative comments require clarification. Adoption records never authorize external actions. `cancelled`/`archived` preserve audit and remain outside public completion.
+
+The earlier dot-progress manual reuse/quality/efficiency review approval remains recorded. On 2026-10-07 the user explicitly authorized replacing this project's mandatory simplify/Claude Code login dependency with the UI/UX Code Review rule above for all project UI surfaces. Record the actual review and tests truthfully; do not claim an unexecuted skill ran.
+
+Project Review is an admin-only append-only work journal with occurrence date, source/scope and correction comments; it never reads assistant internal memory or hidden instructions. Use its normal UI for real records, and retain synthetic fixtures only in the repository.
+
+## Dream Buddy rewarded messages
+
+The owner-authenticated quota/ad-session API and signed AdMob callback are implemented in `backend/app-bot-ads.js`; integration, replay-safe credit and debugging contracts are documented in `backend/docs/dream-buddy-rewarded-ads.md`. Test and debug environments can inspect owner-only summaries through `/api/debug/dream-buddy-ads`; production and Railway disable this route.
+
+Dream Buddy AI replies can be flagged inside the app through owner-authenticated `POST /api/app-bot/ads/reports`. The private report stores an existing owned AI-message reference and a reason, never a public issue or automatic notification. Reports appear only in the development-only owner diagnostics; production inspection uses authorized database access. See the integration document for triage.
+
+Dream Buddy SSV failures log only bounded rejection reason codes; callback URLs, signatures, identifiers and arbitrary provider errors stay excluded. Reward verification/credit gates are unchanged.
+
+Signed challenge-free AdMob URL probes are acknowledged before checking reward-unit fields, with credited=false and no database access. Any app-shaped challenge still requires the configured production unit, 6 messages, a valid timestamp and exact-once redemption. Unsigned callbacks remain rejected.

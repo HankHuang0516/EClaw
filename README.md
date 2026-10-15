@@ -20,6 +20,9 @@ Connect your AI agents — powered by OpenClaw Bots, 24/7.
 
 ## Features
 
+The AiHankApps portfolio includes [dot project progress](docs/dot-progress.md): public completed summaries and a persistent workspace restricted by existing EClaw admin sessions, including concise workflow cards, persistent per-click push signals, preserved reading position on browser return, versioned private decisions, a sourced project review sidebar, a [private Taipei work timeline](docs/dot-progress-timeline.md) with idempotent writing and retained revisions, an always-visible [workspace goal Gantt](docs/dot-progress-schedule.md) with independent planned dates, daily recurring objectives, consistent day/week/month projections, ordering and Undo, authorized full-workspace search with exact-source positioning, newest-first sidebars, and separate cancelled/archived states.
+The [TAAZE v5 Demo share module](docs/taaze-demo-share.md) uses existing admin sessions and lasting revocable links checked on every resource; the exact original recovery ZIP is imported privately through the existing admin workspace. A verified map-only response adapter provides an offline flow illustration while preserving the imported original assets.
+
 | Feature | Description |
 |---------|-------------|
 | 🤝 **Agent-to-Agent CollaborationFull support for A2A protocol** | Enables multiple OpenClaw / AI Agents to communicate, coordinate, delegate tasks, and work together seamlessly |
@@ -372,6 +375,16 @@ See [`CLAUDE.md`](CLAUDE.md) for the full system prompt used in this repo.
 
 [MIT License](LICENSE) © 2026 HankHuang0516
 
+### Paper Flick Soldiers website support and private Beta feedback
 
+The canonical `/AiHankApps/guides/paper-flick-soldiers/` page includes support, troubleshooting and private Beta disclosure. The legacy support URL redirects there while preserving language and supported anchors. Existing portal account administrators can read the original feedback table at `GET /api/admin/paper-beta-feedback`, with session authentication, fresh database admin-role checks and private/no-store responses. Local-only diagnostics at `/api/debug/paper-beta-feedback` reuse these gates and are disabled in production and Railway. Public pages never read feedback. See `docs/paper-beta-internal-feedback.md`. The portfolio gift sidebar lists each confirmed campaign independently; it does not dispatch gifts.
 
+## Dream Buddy rewarded messages
 
+The owner-authenticated quota/ad-session API and signed AdMob callback are implemented in `backend/app-bot-ads.js`; integration, replay-safe credit and debugging contracts are documented in `backend/docs/dream-buddy-rewarded-ads.md`. Test and debug environments can inspect owner-only summaries through `/api/debug/dream-buddy-ads`; production and Railway disable this route.
+
+Dream Buddy AI replies can be flagged inside the app through owner-authenticated `POST /api/app-bot/ads/reports`. The private report stores an existing owned AI-message reference and a reason, never a public issue or automatic notification. Reports appear only in the development-only owner diagnostics; production inspection uses authorized database access. See the integration document for triage.
+
+Dream Buddy SSV failures log only bounded rejection reason codes; callback URLs, signatures, identifiers and arbitrary provider errors stay excluded. Reward verification/credit gates are unchanged.
+
+Signed challenge-free AdMob URL probes are acknowledged before checking reward-unit fields, with credited=false and no database access. Any app-shaped challenge still requires the configured production unit, 6 messages, a valid timestamp and exact-once redemption. Unsigned callbacks remain rejected.
