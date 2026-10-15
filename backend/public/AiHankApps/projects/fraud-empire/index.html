@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>詐騙帝國｜v4 完整互動企劃</title>
+  <meta name="description" content="直接閱讀詐騙帝國完整 v4 設計確認稿，逐步看 17 題材、人物關係、故事分支、園區地圖與結局。開發中，非可玩遊戲。">
+  <link rel="canonical" href="https://eclawbot.com/AiHankApps/projects/fraud-empire/">
+  <link rel="icon" href="../../favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="site.css">
+  <script src="site.js" defer></script>
+  <link rel="stylesheet" href="demo.css">
+</head>
+<body>
+  <a class="skip-link" href="#reader">跳到完整企劃</a>
+  <header class="masthead"><a class="portfolio-link" href="../../">← 我的APP作品集</a><a class="wordmark" href="#overview">詐騙帝國 <small>企劃閱覽室</small></a><span class="status-pill">設計確認稿／開發中</span></header>
+  <nav class="section-nav" aria-label="企劃章節"><a href="#overview">開卷</a><a href="#reader">完整章節</a><a href="#topics">17 題材</a><a href="#story">故事與關係</a><a href="#maps">園區地圖</a><a href="#gallery">示意圖鑑</a><a href="#art-overview">美術總覽</a><a href="#decisions">最新決策</a><a href="#backups">文件備份</a></nav>
+  <main>
+    <section class="hero shell" id="overview">
+      <div class="hero-copy"><p class="eyebrow">HANK'S APP COLLECTION · DESIGN ARCHIVE 04</p><p class="edition">V4.0 <span>2026.10.15</span></p><h1>詐騙帝國</h1><p class="hero-line">升遷，不一定是<br>離開這裡的路。</p><p class="lead">白天跟著主管派工，晚上面對同事、情報與自己的去向。從 17 個題材的操作步驟，讀到通往權力或警燈的兩條主路。</p><div class="hero-actions"><a class="button primary" href="#reader">開始閱讀完整企劃 <span>↗</span></a><a class="text-link" href="#topics">逐步看題材</a></div><div class="facts"><span><b>17</b> 題材</span><span><b>119</b> 代表步驟</span><span><b>319</b> AI 示意圖</span></div></div>
+      <div class="hero-art"><div class="folio-tag">01 / 主介面待機</div><button class="image-open hero-image" data-image="UX01" aria-label="放大主介面待機示意圖"><img id="heroImage" alt="詐騙帝國已確認的直向像素主介面示意" width="941" height="1672" fetchpriority="high"></button><p class="image-caption">遊戲介面示意 · 點圖可完整放大 · 非可玩成品</p></div>
+    </section>
+    <aside class="notice shell"><b>先說清楚</b><p>這裡是直接閱讀企劃、翻閱示意圖的網站，不是遊戲或可玩原型，也不代表 APP 已上架或取得正式分級。全員成年、情節虛構；精確數值、日期、門檻及新增事件仍保留提案標示。</p></aside>
+    <section class="section shell" id="reader"><div class="section-heading"><div><p class="eyebrow">01 / THE COMPLETE DESIGN</p><h2>把完整企劃，攤開來讀。</h2></div><p>不用下載文件；選一章就能開始。</p></div><div class="reader-layout"><nav id="chapterTabs" class="chapter-nav" aria-label="完整企劃章節"></nav><article id="chapterContent" class="reading-paper" aria-live="polite"><p>正在載入完整企劃…</p></article></div></section>
+    <section class="section shell" id="topics"><div class="section-heading"><div><p class="eyebrow">02 / SEVENTEEN PERSPECTIVES</p><h2>每一步，都看得見。</h2></div><p>17 題材各有 7 個代表步驟。這是翻閱設計，不是操作遊戲。</p></div><label class="select-label" for="topicSelect">選擇題材<select id="topicSelect"></select></label><div id="topicIntro"></div><nav id="stepTabs" class="step-tabs" aria-label="代表流程步驟"></nav><div id="stepContent" class="step-layout" aria-live="polite"></div><div class="step-controls"><button id="previousStep" class="button" type="button">← 上一步示意</button><span id="stepCounter"></span><button id="nextStep" class="button primary" type="button">下一步示意 →</button></div><details class="design-details"><summary>這個題材的完整規則、結果與長期影響</summary><div id="topicDetails"></div></details></section>
+    <section class="section shell" id="story"><div class="section-heading"><div><p class="eyebrow">03 / PEOPLE, CHOICES & CONSEQUENCES</p><h2>沒有被省略的另一條路。</h2></div><p>讀取前置條件、選擇、結果與回復方式；點選紀錄不會提交遊戲選擇。</p></div><div class="story-toolbar"><label class="select-label" for="storyType">閱讀類別<select id="storyType"><option value="main_events">主線事件</option><option value="branches">支線與隱藏事件</option><option value="romance_events">人物與關係事件</option><option value="escape">逃離終局逐步</option><option value="endings">兩條結局與分鏡</option><option value="intel">情報</option><option value="items">道具</option><option value="relationships">人物關係與其他規則</option></select></label><label class="search-label" for="storySearch">搜尋事件<input id="storySearch" type="search" placeholder="事件名稱、人物或編號"></label></div><div class="story-layout"><nav id="storyList" class="record-list" aria-label="事件紀錄"></nav><article id="storyContent" class="reading-paper" aria-live="polite"></article></div></section>
+    <section class="section shell" id="maps"><div class="section-heading"><div><p class="eyebrow">04 / TEN PLACES TO UNDERSTAND</p><h2>園區裡，每扇門的條件。</h2></div><p>查看場景與設計熱點，不移動角色、不執行遊戲邏輯。</p></div><label class="select-label" for="sceneSelect">選擇區域<select id="sceneSelect"></select></label><div id="mapContent"></div></section>
+    <section class="section shell" id="gallery"><div class="section-heading"><div><p class="eyebrow">05 / A VISUAL COMPANION</p><h2>示意圖，完整呈現。</h2></div><p>319 張原創 AI 示意圖，對應 330 個跨卷圖位。不裁切構圖。</p></div><div class="story-toolbar"><label class="select-label" for="galleryGroup">圖位分類<select id="galleryGroup"><option value="all">所有圖位</option><option value="UX">全域介面</option><option value="T">17 題材步驟</option><option value="MS">主線</option><option value="BR">支線</option><option value="ROM">關係事件</option><option value="M">地圖</option><option value="E_">結局分鏡</option><option value="ESC">逃離步驟</option><option value="IT">道具</option><option value="I">情報</option></select></label><label class="search-label" for="gallerySearch">搜尋圖位<input id="gallerySearch" type="search" placeholder="名稱或圖位編號，例如 UX03"></label></div><p id="galleryCount" class="muted" aria-live="polite"></p><div id="galleryGrid" class="gallery-grid"></div><button id="galleryMore" class="button more-button" type="button">繼續看示意圖</button></section>
+    <section class="section shell" id="art-overview"><div class="section-heading"><div><p class="eyebrow">06 / ART DIRECTION & ASSET STATUS</p><h2>美術總覽，不把示意當成完工。</h2></div><p>完整畫面是情境示意，不代表獨立角色、透明道具或可切分介面素材已製作。</p></div><div id="artOverviewList" class="decision-grid"></div><p class="muted">逐項素材 catalog 尚待正式交付；未製作、規格待確認與短片待製作均保留原狀，不列為已完成。</p></section>
+    <section class="section shell" id="decisions"><div class="section-heading"><div><p class="eyebrow">07 / THE LIVING MARGIN</p><h2>最新決策，與還沒定案的事。</h2></div><p>已指定工具、既有規則說明與待定建議分開呈現。</p></div><div id="decisionList" class="decision-grid"></div></section>
+    <section class="section shell" id="backups"><details class="backup-box"><summary><span class="eyebrow">07 / OPTIONAL BACKUP</span><strong>文件備份</strong><span>網頁已可直接閱讀完整內容，下載只是備份。</span></summary><div id="downloadList"></div><p class="muted">卷 1、卷 3 的公開下載副本仍在整理，原件已保留；不影響本頁的完整企劃、圖位與互動閱讀。未提供的下載不會建立假連結。</p></details></section>
+  </main>
+  <footer class="site-footer shell"><a href="../../">← 返回我的APP作品集</a><p>詐騙帝國 · v4.0 · 設計確認稿／開發中<br>本頁只作企劃展示，不連接真人、真實收款或遊戲帳號。</p></footer>
+  <dialog id="imageDialog" aria-labelledby="dialogTitle"><div class="dialog-bar"><p id="dialogTitle"></p><button id="closeDialog" type="button" aria-label="關閉圖片">✕</button></div><img id="dialogImage" alt=""><div class="dialog-footer"><button id="previousImage" type="button">← 上一張</button><span>AI 示意圖 · 非可玩畫面</span><button id="nextImage" type="button">下一張 →</button></div></dialog>
+  <noscript><p class="shell notice">互動閱覽需要啟用 JavaScript；本頁不會要求登入或安裝遊戲。</p></noscript>
+  <script src="demo.js" defer></script>
+</body>
+</html>
