@@ -26,7 +26,7 @@
   let lockedUntil = 0;
   let state = initialState();
   function initialState() {
-    return { view: 'map', scene: 'M01', mode: '靜態', count: 3, topic: null, step: 0, origin: 'assignment', group: 'main', record: 0, frame: 0, choice: null, art: 0, history: [] };
+    return { view: 'map', scene: 'M01', mode: '靜態', rank: 1, supervisorContext: 'opening', count: 3, topic: null, step: 0, origin: 'assignment', group: 'main', record: 0, frame: 0, companion: 'single', choice: null, art: 0, history: [] };
   }
   function setMode(active) {
     document.body.classList.toggle('demo-mode', active);
@@ -47,6 +47,7 @@
     state = initialState();
     lockedUntil = 0;
     if (plan) render();
+    document.dispatchEvent(new CustomEvent('fraud:demo-reset'));
     document.getElementById('demoLive').textContent = 'Demo 已重設；未建立或刪除任何正式遊戲存檔。';
   });
   window.addEventListener('hashchange', () => setMode(window.location.hash === '#demo'));
@@ -122,9 +123,10 @@
   }
   function records() {
     const n = plan.narrative;
-    return { main: n.main_events, branch: n.branches, romance: n.romance_events, escape: n.escape_sequence.steps, endings: n.endings }[state.group] || [];
+    return { main: n.main_events, branch: n.branches, romance: n.romance_events, escape: n.escape_sequence.steps, endings: n.endings, intel: n.intel, items: n.items }[state.group] || [];
   }
   function currentTopic() { return plan.topics.find(item => item.id === state.topic); }
+  function isPrologue(topic) { return topic.content_class === 'main_story_prologue'; }
   function matchingFigures(record) {
     return plan.figures.filter(item => !item.pendingReplacement && (item.id === record.id || item.id.startsWith(`${record.id}-`)));
   }
@@ -137,7 +139,7 @@
     epoch += 1;
     stage.replaceChildren();
     const tabs = el('div', undefined, 'demo-tabs');
-    for (const [label, action, value] of [['園區場景', 'map', 'M01'], ['派工流程', 'dispatch', ''], ['17 題玩法總覽', 'topic-overview', ''], ['劇情與伴侶', 'story', 'main'], ['結局預覽', 'story', 'endings'], ['全部既有美術', 'art', '']]) {
+    for (const [label, action, value] of [['園區場景', 'map', 'M01'], ['派工流程', 'dispatch', ''], ['16 玩法＋1 序章', 'topic-overview', ''], ['主管語氣', 'supervisor', ''], ['劇情與伴侶', 'story', 'main'], ['結局預覽', 'story', 'endings'], ['全部既有美術', 'art', '']]) {
       tabs.append(button(label, action, value));
     }
     stage.append(tabs);
@@ -176,18 +178,28 @@
       field(panel, '原稿對話節拍', plan.narrative.main_events.find(item => item.id === 'MS02')?.dialogue_beats);
       field(panel, '尚未補齊', config.extensionStatus);
       panel.append(button('查看主管指定模式', 'dispatch', '', true));
+    } else if (state.view === 'supervisor') {
+      heading.textContent = `R${state.rank} · ${state.rank === 1 ? '阿猴' : '林若晴'}的態度漸進`;
+      showImage(canvas, caption, figure('UX19'));
+      select(panel, '主管職階提案預覽（不提交升階）', [1, 2, 3, 4, 5].map(value => ({ value: String(value), label: `R${value} · ${value === 1 ? '阿猴' : '林若晴'}` })), state.rank, 'rank');
+      select(panel, '主管日常語氣情境（獨立片段）', Object.entries({ opening: '開場', assignment: '派工', selection: '選任務', success: '成功後評語', failure: '失敗後評語', rest: '休息', chat: '閒聊', promotion: '入階回應' }).map(([value, label]) => ({ value, label })), state.supervisorContext, 'supervisor-context');
+      field(panel, '不是新增遊戲條件', config.rankToneStatus);
+      field(panel, '原情境優先', '成功與失敗先有原任務結果，重大傷亡與揭露保持嚴肅；本頁不自動判定結果、不追加費用、不取得好感或戀愛資格。R1入階是入職基線，不是虛構晉升。原圖不是各階專屬的新畫面。');
+      panel.append(button('回主管派工情境', 'dispatch', '', true));
     } else if (state.view === 'dispatch') {
-      heading.textContent = `主管指定：${state.mode}`;
+      heading.textContent = `本輪主管指定：${state.mode}`;
       showImage(canvas, caption, figure({ 靜態: 'UX11', 動態: 'UX12', 出差: 'UX13' }[state.mode]));
       field(panel, '既有流程', '正式設計由主管先指定一種模式，玩家再從智慧決定的 3–5 個任務選一項。下列切換只是不同派工情境的展示，不是讓玩家改掉主管命令。');
       select(panel, '指定情境範例 · 主管模式', ['靜態', '動態', '出差'].map(value => ({ value, label: value })), state.mode, 'mode');
+      select(panel, '指定職階情境（不改原圖日期或原有開放條件）', [1, 2, 3, 4, 5].map(value => ({ value: String(value), label: `R${value} · ${value === 1 ? '阿猴' : '林若晴'}` })), state.rank, 'rank');
+      field(panel, '主管語氣漸進接點', config.rankToneStatus || '職階語氣資料待接入；不自行編寫台詞。原圖仍是既有指定情境，不冒充每階主管專屬畫面。');
       select(panel, '指定情境範例 · 任務選項數', [3, 4, 5].map(value => ({ value: String(value), label: `${value} 選 1（智慧對應數值待實作）` })), state.count, 'count');
       panel.append(button(`查看 ${state.count} 個候選任務`, 'tasks', '', true));
     } else if (state.view === 'tasks') {
       heading.textContent = `${state.mode} · ${state.count} 選 1`;
       showImage(canvas, caption, figure({ 3: 'UX14', 4: 'UX15', 5: 'UX16' }[state.count]));
       field(panel, '圖文邊界', '任務名單由現有資料選取；各任務七步圖是其已交付的代表模式。若和本次指定模式不同，會明示切換為代表模式預覽，不假裝已有另一套圖。');
-      const options = plan.topics.filter(item => item.available_modes.includes(state.mode)).slice(0, state.count);
+      const options = plan.topics.filter(item => !isPrologue(item) && item.supervisor_pool_eligible !== false && item.available_modes.includes(state.mode)).slice(0, state.count);
       const list = el('div', undefined, 'demo-choice-grid');
       for (const topic of options) {
         const item = button(`${topic.id} · ${topic.name}`, 'topic', topic.id);
@@ -195,13 +207,16 @@
         list.append(item);
       }
       panel.append(list);
-      field(panel, '不是 17 題全選任務板', '這裡只有主管指定模式下的 3–5 個候選任務。要看其他玩法，請進入上方「17 題玩法總覽」，那是獨立設計預覽，不是本輪派工。');
+      field(panel, '不是全部內容的自由任務板', '這裡只有主管指定模式下的 3–5 個候選任務；T02是主線序章，不進任何模式候選。上方「16 玩法＋1 序章」是獨立設計目錄，不是本輪派工。');
     } else if (state.view === 'topic-overview') {
-      heading.textContent = '17 題玩法總覽 · 獨立預覽';
+      heading.textContent = '16 玩法＋1 主線序章 · 舊版分類';
       showImage(canvas, caption, figure('UX07'));
-      field(panel, '與遊戲派工分開', '此處是所有 17 題材、119 步的設計目錄，不是遊戲任務板。選一題後看其已交付代表模式，每一步均可前後翻閱操作、條件與結果。正式派工仍由主管指定模式，再提供 3–5 選 1。');
+      field(panel, '與遊戲派工分開', '保留17組舊ID、119段圖文：16個玩法分類112步，另有T02主線序章7段。這是既有分類修正，不是未來17個新小遊戲的上限或定案；T16等原故事例外仍保留，不宣稱16項全部可反覆派發。');
+      const prologue = plan.topics.find(isPrologue);
+      if (prologue) { panel.append(el('h4', '主線序章 · 只讀回顧不重發資源'), button(`${prologue.id} · ${prologue.name}／七段序章`, 'preview-topic', prologue.id)); field(panel, '首次時間與劇情銜接仍待確認', plan.prologue.pending); }
+      panel.append(el('h4', '既有16個玩法分類（提案）'));
       const list = el('div', undefined, 'demo-choice-grid');
-      for (const topic of plan.topics) {
+      for (const topic of plan.topics.filter(item => !isPrologue(item))) {
         const item = button(`${topic.id} · ${topic.name}`, 'preview-topic', topic.id);
         item.append(el('small', `${topic.mode}代表情境 · ${topic.steps.length} 步完整圖文`));
         list.append(item);
@@ -212,7 +227,7 @@
       const step = topic.steps[state.step];
       heading.textContent = `${step.id} · ${step.title}`;
       showImage(canvas, caption, figure(step.id));
-      panel.append(el('p', `${state.origin === 'overview' ? '玩法總覽獨立預覽' : `主管指定：${state.mode}`}／本段代表圖：${topic.mode}。${state.mode !== topic.mode ? '本段已切換為獨立代表模式預覽，另一模式美術尚未補齊。' : '本段只示意圖文與操作節點。'}`, 'demo-mode-note'));
+      panel.append(el('p', isPrologue(topic) ? '主線序章／未報到情境。保留原T02追溯ID；不是主管工作，不把受困做成分數。只讀回顧不改時間、物品、關係或資源。首次20分鐘與到場日期仍為待確認舊提案。' : `${state.origin === 'overview' ? '玩法總覽獨立預覽' : `主管指定：${state.mode}`}／本段代表圖：${topic.mode}。${state.mode !== topic.mode ? '本段已切換為獨立代表模式預覽，另一模式美術尚未補齊。' : '本段只示意圖文與操作節點。'}`, 'demo-mode-note'));
       field(panel, '本步操作設計 · 非真正玩法運算', step.instruction || step.action);
       if (step.action !== step.instruction) field(panel, '操作細節', step.action);
       field(panel, '操作前可見狀態', step.visible_before);
@@ -232,16 +247,16 @@
       panel.append(progress);
       const actions = el('div', undefined, 'demo-toolbar');
       if (state.step > 0) actions.append(button('上一步畫面', 'step', state.step - 1));
-      actions.append(state.step < topic.steps.length - 1 ? button('下一步畫面', 'step', state.step + 1, true) : button('查看結果示意', 'result', '', true));
+      actions.append(state.step < topic.steps.length - 1 ? button('下一步畫面', 'step', state.step + 1, true) : button(isPrologue(topic) ? '查看序章收束／回顧' : '查看結果示意', 'result', '', true));
       panel.append(actions);
     } else if (state.view === 'result') {
       const topic = currentTopic();
-      heading.textContent = `${topic.id} · 結果示意`;
+      heading.textContent = `${topic.id} · ${isPrologue(topic) ? '主線序章收束／只讀回顧' : '結果示意'}`;
       showImage(canvas, caption, figure(topic.steps[topic.steps.length - 1].id));
-      field(panel, '完成條件設計', topic.win_condition);
+      field(panel, isPrologue(topic) ? '舊稿完成條件／安置用字待整合' : '完成條件設計', topic.win_condition);
       field(panel, '失敗條件設計', topic.fail_condition);
       field(panel, '本 Demo 實際結果', '僅完成圖文瀏覽。未產生遊戲業績、培養點、經驗、金錢、會員或存檔；重複查看沒有可領取的獎勵。');
-      panel.append(button('返回園區', 'map', 'M01', true), button('回看本玩法', 'step', 0));
+      panel.append(button('返回園區', 'map', 'M01', true), button(isPrologue(topic) ? '回看主線序章' : '回看本玩法', 'step', 0));
     } else if (state.view === 'hotspot') {
       const spot = scene.hotspots.find(item => item.id === state.hotspot);
       heading.textContent = `${scene.name} · ${spot?.label || '熱點'}`;
@@ -251,20 +266,29 @@
       field(panel, '展示範圍', '已走近指定熱點；這裡讀取設計內容，不判定解鎖、不產生道具，不會自動觸發不符合條件的劇情。');
       const availableEvents = plan.narrative.main_events.filter(item => item.scene_id === scene.scene_id);
       for (const record of availableEvents) panel.append(button(`情境預覽：${record.title}`, 'main-record', record.id));
+      for (const acquisition of spot?.acquisition || []) panel.append(button(`取得對話預覽：${acquisition.registry_name}（不發放）`, 'registry-record', acquisition.registry_id));
       panel.append(button('返回此場景', 'map', scene.scene_id, true));
     } else if (state.view === 'story') {
-      const groupLabels = { main: '主線', branch: '支線', romance: '伴侶／友情', escape: '逃離流程', endings: '結局分鏡' };
+      const groupLabels = { main: '主線', branch: '支線', romance: '伴侶／友情', escape: '逃離流程', endings: '結局分鏡', intel: '情報取得', items: '道具取得' };
       const list = records();
       const record = list[state.record] || list[0];
-      heading.textContent = `${record.id} · ${record.title || groupLabels[state.group]}`;
+      heading.textContent = `${record.id} · ${record.title || record.name || groupLabels[state.group]}`;
       select(panel, '劇情類別 · 各自指定情境，不冒充同一天', Object.entries(groupLabels).map(([value, label]) => ({ value, label })), state.group, 'group');
       select(panel, '指定劇情', list.map((item, index) => ({ value: String(index), label: `${item.id} · ${item.title || groupLabels[state.group]}` })), state.record, 'record');
-      const images = matchingFigures(record);
+      let images = matchingFigures(record);
+      if (state.group === 'endings' || state.group === 'escape') {
+        select(panel, '自願同行的獨立情境預覽（不替 NPC 同意）', [{ value: 'single', label: '單人' }, { value: 'xiaoyu', label: '小雨已自願同行的情境' }, { value: 'lin', label: '若晴已自願同行的情境' }], state.companion, 'companion');
+        const suffix = state.companion === 'single' ? 'SINGLE' : state.companion.toUpperCase();
+        if (state.group === 'endings') images = images.filter(item => item.id.includes('-' + suffix + '-'));
+        else if (record.id === 'ESC-S05') images = images.filter(item => item.id === 'ESC-S05-' + (state.companion === 'single' ? 'SOLO' : suffix));
+        else field(panel, '同行狀態不由載入或畫面重設', `目前仍是${{ single: '單人', xiaoyu: '小雨自願同行', lin: '若晴自願同行' }[state.companion]}情境。此步使用既有共用示意，未交付的專屬圖／短片不冒稱完成。`);
+      }
       if (state.frame >= images.length) state.frame = 0;
       showImage(canvas, caption, images[state.frame]);
       field(panel, '對話／分鏡／操作', record.dialogue_beats || record.dialogue_and_actions || record.instruction || record.shots);
       field(panel, '原稿結果設計', record.consequence || record.feedback || record.outcome);
       field(panel, '恢復與回看', record.failure_recovery || record.miss_recovery);
+      field(panel, '用途與取得設計', record.use || record.acquisition);
       if (record.id === 'ESC-S08') field(panel, '勝利提交界線', '正式遊戲由上車確認提交勝利，片尾播完不是門檻。本頁只展示該情境，不產生勝利存檔；影片、離線恢復尚未實作。');
       if (record.choices) {
         const choices = el('div', undefined, 'demo-actions');
@@ -297,6 +321,10 @@
     panel.append(back);
     layout.append(visual, panel);
     stage.append(layout);
+    const currentRecord = state.view === 'story' ? records()[state.record] : null;
+    const context = { view: state.view, sceneId: state.scene, mode: state.mode, rank: state.rank, supervisorContext: state.supervisorContext, topicId: state.topic, stepId: state.view === 'task' ? currentTopic().steps[state.step].id : null, eventId: currentRecord?.id || (state.view === 'conversation' ? 'MS02' : null), group: state.group, companion: state.companion };
+    root.dataset.proposalContext = JSON.stringify(context);
+    document.dispatchEvent(new CustomEvent('fraud:demo-context', { detail: context }));
     if (focus) {
       heading.focus({ preventScroll: true });
       layout.scrollIntoView({ block: 'start' });
@@ -315,17 +343,21 @@
       if (value === 'M02-H01') transition('approach');
       else if (spot.target_scene && plan.maps.scenes.some(item => item.scene_id === spot.target_scene)) transition('map', { scene: spot.target_scene });
       else transition('hotspot', { hotspot: value });
-    } else if (name === 'conversation' || name === 'dispatch' || name === 'tasks' || name === 'result' || name === 'topic-overview') transition(name);
+    } else if (name === 'conversation' || name === 'dispatch' || name === 'tasks' || name === 'result' || name === 'topic-overview' || name === 'supervisor') transition(name);
     else if (name === 'mode') { state.mode = value; render(); }
+    else if (name === 'rank') { state.rank = Math.max(1, Math.min(5, Number(value))); render(); }
+    else if (name === 'supervisor-context') { state.supervisorContext = value; render(); }
     else if (name === 'count') { state.count = Math.min(5, Math.max(3, Number(value))); render(); }
-    else if (name === 'topic') transition('task', { topic: value, step: 0, origin: 'assignment' });
-    else if (name === 'preview-topic') transition('task', { topic: value, mode: plan.topics.find(item => item.id === value).mode, step: 0, origin: 'overview' });
+    else if (name === 'topic') { const topic = plan.topics.find(item => item.id === value); if (topic && !isPrologue(topic) && topic.supervisor_pool_eligible !== false) transition('task', { topic: value, step: 0, origin: 'assignment' }); }
+    else if (name === 'preview-topic') transition('task', { topic: value, mode: plan.topics.find(item => item.id === value).mode || state.mode, step: 0, origin: 'overview' });
     else if (name === 'step') { state.step = Math.min(currentTopic().steps.length - 1, Math.max(0, Number(value))); state.view = 'task'; render(true); }
     else if (name === 'story' || name === 'group') transition('story', { group: value, record: 0, frame: 0, choice: null });
     else if (name === 'record') { state.record = Math.max(0, Math.min(records().length - 1, Number(value))); state.frame = 0; state.choice = null; render(true); }
     else if (name === 'frame') { state.frame = Math.max(0, Number(value)); render(); }
+    else if (name === 'companion') { state.companion = value; state.frame = 0; render(); }
     else if (name === 'choice') { state.choice = value; render(); }
     else if (name === 'main-record') transition('story', { group: 'main', record: plan.narrative.main_events.findIndex(item => item.id === value), frame: 0, choice: null });
+    else if (name === 'registry-record') { const group = value.startsWith('IT') ? 'items' : 'intel'; const list = group === 'items' ? plan.narrative.items : plan.narrative.intel; const index = list.findIndex(item => item.id === value); if (index >= 0) transition('story', { group, record: index, frame: 0, choice: null }); }
     else if (name === 'art') transition('art', { art: 0 });
     else if (name === 'art-index') { state.art = Math.max(0, Number(value)); render(); }
   }
@@ -339,6 +371,24 @@
     const target = event.target.closest('select[data-action]');
     if (!target || !stage.contains(target) || target.dataset.epoch !== String(epoch)) return;
     action(target.dataset.action, target.value);
+  });
+  document.addEventListener('fraud:demo-navigate', event => {
+    if (!plan) return;
+    const ref = event.detail?.sourceId;
+    if (typeof ref !== 'string') return;
+    enter();
+    const supervisor = ref.match(/^SUP-R([1-5])-(opening|assignment|selection|success|failure|rest|chat|promotion)$/);
+    if (supervisor) { transition('supervisor', { rank: Number(supervisor[1]), supervisorContext: supervisor[2] }); return; }
+    const topic = plan.topics.find(item => item.id === ref || item.steps.some(step => step.id === ref));
+    if (topic) { transition(event.detail.view === 'result' ? 'result' : 'task', { topic: topic.id, step: Math.max(0, topic.steps.findIndex(step => step.id === ref)), mode: topic.mode || state.mode, origin: 'overview' }); return; }
+    for (const [group, list] of Object.entries({ main: plan.narrative.main_events, branch: plan.narrative.branches, romance: plan.narrative.romance_events, escape: plan.narrative.escape_sequence.steps, endings: plan.narrative.endings, intel: plan.narrative.intel, items: plan.narrative.items })) {
+      const index = list.findIndex(item => item.id === ref);
+      if (index >= 0) { transition('story', { group, record: index, frame: 0, companion: event.detail.companion || state.companion, choice: null }); return; }
+    }
+    const scene = plan.maps.scenes.find(item => item.scene_id === ref || item.scene_id + '-OVERVIEW' === ref);
+    if (scene) { transition('map', { scene: scene.scene_id }); return; }
+    const image = plan.figures.findIndex(item => item.id === ref);
+    if (image >= 0) transition('art', { art: image });
   });
   Promise.all([fetch('plan.json').then(response => {
     if (!response.ok) throw new Error('plan-unavailable');

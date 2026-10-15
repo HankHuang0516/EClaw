@@ -49,7 +49,8 @@ describe('Fraud Empire public v4 design reader', () => {
         });
         expect(plan.heldDownloadVolumes).toEqual([1, 3]);
         expect(html).not.toMatch(/https:\/\/(?:play\.google\.com|apps\.apple\.com)/);
-        expect(html).toContain('不是遊戲或可玩原型');
+        expect(html).toContain('不是正式遊戲或可安裝 APP');
+        expect(html).toContain('靜態互動示意');
         expect(html).toContain('設計確認稿／開發中');
     });
     test('has direct HTML reading, accessible navigation and a secondary backup section', () => {
