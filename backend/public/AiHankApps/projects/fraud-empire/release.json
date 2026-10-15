@@ -3,7 +3,7 @@
   "version": "v4.4-relationship-branches-20261016",
   "date": "2026-10-16",
   "status": "設計確認稿／開發中；人物關係與支線提案，保留兩款可操作前端原型",
-  "contentHash": "a1904ee64e593442525af5c37c0457c953d3f798e565af8ee3daf5280e17e4b9",
+  "contentHash": "8edd6f64802d9fa6c950821769d5bdf5d0b0da1a4754747da63707024da239f7",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -3207,8 +3207,8 @@
     },
     {
       "path": "relationship-archive.js",
-      "bytes": 32423,
-      "sha256": "53810e39780ee84b31043a3cdb4b804b85fc18cf4b5e86decbe0aec0a031b2d9"
+      "bytes": 32578,
+      "sha256": "3e62bc8f6fa45160a757b6aeb04f9036036934e5b3389089b0f59ba8a7181fd5"
     },
     {
       "path": "relationship-data.json",

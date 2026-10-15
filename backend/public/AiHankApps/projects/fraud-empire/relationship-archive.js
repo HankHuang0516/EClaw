@@ -71,7 +71,8 @@
     const node = index.nodes.get(state.node); nodeDetail.replaceChildren();
     const heading = el('div', undefined, 'rel-person'); addFace(heading, node, true); const copy = el('div'); copy.append(el('p', '唯一身份節點／不是角色複製', 'rel-kicker'), el('h4', model.label(node, state.spoilers))); if (node.age != null) copy.append(el('p', '成年角色／來源年齡 ' + node.age, 'rel-muted')); copy.append(el('p', node.display_note, 'rel-muted')); heading.append(copy); nodeDetail.append(heading);
     if (!state.spoilers) { if (node.id === 'tang') status(nodeDetail, '同一個匿名節點維持 H001；未揭露時不顯示真人表情或真名。'); gate(nodeDetail); return; }
-    prose(nodeDetail, node.description, '角色說明'); prose(nodeDetail, node.appearance_note, '關聯不等於當下在場'); prose(accordion(nodeDetail, '出場與揭露界線／原始規則'), node.reveal_policy);
+    const appearanceNote = node.appearance_note?.replaceAll('dialogue_occurrences', '對話出場紀錄').replaceAll('gameplay_evidence', '玩法出場紀錄');
+    prose(nodeDetail, node.description, '角色說明'); prose(nodeDetail, appearanceNote, '關聯不等於當下在場'); prose(accordion(nodeDetail, '出場與揭露界線／原始規則'), node.reveal_policy);
     if (node.entity_type === 'anonymous_account_role') status(nodeDetail, '只標記功能化名；背後真人、外貌及人數未知，不新增真人身份。');
     const edges = model.nodeEdges(index, node.id), body = accordion(nodeDetail, '關係與跨組連結／' + edges.length + ' 條');
     for (const edge of edges) {
