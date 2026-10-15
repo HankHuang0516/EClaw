@@ -2,6 +2,7 @@
 (() => {
   'use strict';
   const model = globalThis.FraudProposalModel;
+  const conditionalReading = new Map();
   if (!model) {
     document.documentElement.dataset.proposalsReady = 'false';
     document.documentElement.dataset.proposalsError = 'model-unavailable';
@@ -83,6 +84,29 @@
     renderControls(); renderBook(); window.location.hash = 'dialogues'; section.scrollIntoView({ block: 'start' });
   }
   function showPortrait(id) { $('portraitIdentity').value = id; renderPortrait(id); window.location.hash = 'portraits'; $('portraits').scrollIntoView({ block: 'start' }); }
+  function conditionalLine(copy, line) {
+    const metadata = line.presentation_variants, group = el('div', undefined, 'proposal-conditional-preview');
+    group.dataset.presentationGroup = metadata.group; group.dataset.presentationLine = line.stable_id;
+    group.setAttribute('role', 'group'); group.setAttribute('aria-label', line.stable_id + ' 原旗標文字預覽');
+    group.append(el('strong', '選一個既有旗標情境，只改閱讀文字，不寫入遊戲。'));
+    const status = el('p', '', 'proposal-source'); status.dataset.presentationStatus = 'true';
+    function update(value) {
+      conditionalReading.set(metadata.group, value);
+      for (const target of document.querySelectorAll('[data-presentation-group]')) {
+        if (target.dataset.presentationGroup !== metadata.group) continue;
+        const source = bundle.lines.find(item => item.stable_id === target.dataset.presentationLine);
+        const variant = source.presentation_variants.variants.find(item => item.id === value);
+        target.closest('.proposal-line-copy').querySelector('.proposal-line-text').textContent = variant?.text || '';
+        target.querySelector('[data-presentation-status]').textContent = variant ? '僅閱讀情境：' + variant.condition : '尚未指定原旗標情境；不預設已有電話、日期已過或已取得合照，不播放本句。';
+        for (const control of target.querySelectorAll('[data-presentation-variant]')) control.setAttribute('aria-pressed', String(control.dataset.presentationVariant === value));
+      }
+    }
+    for (const variant of metadata.variants) { const control = button(variant.condition, () => update(variant.id)); control.dataset.presentationVariant = variant.id; control.setAttribute('aria-pressed', String(conditionalReading.get(metadata.group) === variant.id)); group.append(control); }
+    group.append(button('清除情境預覽', () => update('')), status); copy.append(group);
+    const selected = metadata.variants.find(variant => variant.id === conditionalReading.get(metadata.group));
+    copy.querySelector('.proposal-line-text').textContent = selected?.text || '';
+    status.textContent = selected ? '僅閱讀情境：' + selected.condition : '尚未指定原旗標情境；不預設已有電話、日期已過或已取得合照，不播放本句。';
+  }
   function lineCard(line, options = {}) {
     const decision = model.portraitFor(art.portraits, line.speaker_id, line.expression, { revealed: options.revealed ?? revealed });
     const card = el('article', undefined, 'proposal-line' + (line.speaker_id === 'system' ? ' is-system' : line.speaker_id === 'narrator' ? ' is-narrator' : ''));
@@ -94,6 +118,7 @@
     }
     const copy = el('div', undefined, 'proposal-line-copy');
     copy.append(el('strong', decision.name + (line.speaker_id === 'system' || line.speaker_id === 'narrator' ? '' : ' · ' + ({ neutral: '平靜', smile: '微笑', angry: '生氣', surprised: '驚訝', sad: '難過', afraid: '害怕', suspicious: '懷疑', determined: '堅定' }[line.expression] || line.expression)), 'proposal-line-name'), el('p', line.text, 'proposal-line-text'));
+    if (line.presentation_variants) conditionalLine(copy, line);
     if (decision.reason) note(copy, decision.reason, 'proposal-source');
     const trace = el('details'); trace.append(el('summary', '逐句編號與適用說明'), el('p', line.stable_id, 'proposal-source'));
     if (line.trigger) note(trace, line.trigger, 'proposal-source');

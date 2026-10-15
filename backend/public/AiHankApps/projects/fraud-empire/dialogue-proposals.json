@@ -3,7 +3,7 @@
   "version": "v4.1-connected-proposals-20261015",
   "status": "新增對話提案待確認；不是正式劇本或程式驗收",
   "lineCount": 1885,
-  "lineDigest": "59c6c51dd04d928c8a8b95775c61c2824e2bee4065c0e3e9a0101e8be207159b",
+  "lineDigest": "9ea12f86f38f8622f21cc5a70dcc31ec0a09b29066a7950a5e884b8c9ecfafb4",
   "lines": [
     {
       "stable_id": "MS01.opening.base.01",
@@ -2670,7 +2670,7 @@
       "choice": null,
       "speaker_id": "lin",
       "expression": "neutral",
-      "text": "這是我們約好的援助標誌。先記住它的樣子。"
+      "text": "這是資料裡那個援助標誌。先記住它的樣子。"
     },
     {
       "stable_id": "I07.closing.base.01",
@@ -3612,7 +3612,24 @@
       "choice": null,
       "speaker_id": "xiaoyu",
       "expression": "determined",
-      "text": "合照放在這裡。我不會陪你把這裡當家。"
+      "text": "合照放在這裡。我不會陪你把這裡當家。",
+      "presentation_variants": {
+        "group": "E_BOSS_photo",
+        "exclusive": true,
+        "formalStateMutation": false,
+        "variants": [
+          {
+            "id": "no_photo",
+            "condition": "未持有 IT08",
+            "text": "信放在這裡。我不會陪你把這裡當家。"
+          },
+          {
+            "id": "has_photo",
+            "condition": "持有 IT08",
+            "text": "合照放在這裡。我不會陪你把這裡當家。"
+          }
+        ]
+      }
     },
     {
       "stable_id": "E_BOSS__xiaoyu.closing.base.01",
@@ -3684,7 +3701,29 @@
       "choice": null,
       "speaker_id": "protagonist",
       "expression": "sad",
-      "text": "電話上的日期過了。我還坐在這裡。"
+      "text": "電話上的日期過了。我還坐在這裡。",
+      "presentation_variants": {
+        "group": "E_BOSS_date",
+        "exclusive": true,
+        "formalStateMutation": false,
+        "variants": [
+          {
+            "id": "no_date",
+            "condition": "尚未選定 escape_date_selected",
+            "text": "她走了。我還坐在這裡。"
+          },
+          {
+            "id": "date_not_passed",
+            "condition": "已選日期，當前 day 尚未超過該日",
+            "text": "電話上的日期還在前面。我已經選擇坐在這裡。"
+          },
+          {
+            "id": "date_passed",
+            "condition": "已選日期，當前 day 已超過該日",
+            "text": "電話上的日期過了。我還坐在這裡。"
+          }
+        ]
+      }
     },
     {
       "stable_id": "E_BOSS__lin.system.unavailable",
@@ -7709,7 +7748,7 @@
       "choice": null,
       "speaker_id": "tang",
       "expression": "neutral",
-      "text": "前天的話，你不必講得很漂亮。"
+      "text": "上次的話，你不必講得很漂亮。"
     },
     {
       "stable_id": "BR29.opening.02",
@@ -7817,7 +7856,24 @@
       "choice": null,
       "speaker_id": "narrator",
       "expression": "neutral",
-      "text": "主角先看王座，再看電話。兩樣都沒有替他開口。"
+      "text": "主角先看王座，再看電話。兩樣都沒有替他開口。",
+      "presentation_variants": {
+        "group": "BR30_route",
+        "exclusive": true,
+        "formalStateMutation": false,
+        "variants": [
+          {
+            "id": "not_ready",
+            "condition": "escape_route_ready 不成立",
+            "text": "主角看著王座，又看向門外。兩個方向都沒有替他開口。"
+          },
+          {
+            "id": "ready",
+            "condition": "escape_route_ready 成立",
+            "text": "主角先看王座，再看電話。兩樣都沒有替他開口。"
+          }
+        ]
+      }
     },
     {
       "stable_id": "BR30.opening.02",
@@ -7853,7 +7909,24 @@
       "choice": "BR30_C02",
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "電話那端有約定。我想核對準備，再決定出發。"
+      "text": "電話那端有約定。我想核對準備，再決定出發。",
+      "presentation_variants": {
+        "group": "BR30_route",
+        "exclusive": true,
+        "formalStateMutation": false,
+        "variants": [
+          {
+            "id": "not_ready",
+            "condition": "escape_route_ready 不成立",
+            "text": "我還沒有約定日期。先看看離開前還要完成什麼。"
+          },
+          {
+            "id": "ready",
+            "condition": "escape_route_ready 成立",
+            "text": "電話那端有約定。我想核對準備，再決定出發。"
+          }
+        ]
+      }
     },
     {
       "stable_id": "BR30.choice.BR30_C02.02",
@@ -25456,7 +25529,7 @@
           "name": "唐澄的自願署名",
           "scene_id": "M02",
           "source": "BR06",
-          "use": "證實隱藏會員身分，開援助對談，不是真實聯絡資料",
+          "use": "記錄唐澄在BR06自願署名的身分資訊；非MS09援助硬門檻。MS09仍依MS08、F_member>=60及原日期／職階／存活條件開放，不是真實聯絡資料。",
           "repeat": "唯一資訊，回顧不重發",
           "miss_recovery": "來源事件保持到終局前；I08為必要主線自動取得"
         },
@@ -26038,7 +26111,7 @@
           "use": "紀念；非逃離必要",
           "acquisition": "點熱點走近 → 點物件／對話 → 確認收下；必要物不佔容量、不會丟失",
           "repeat": "每局一份；紀念物不消耗",
-          "recovery": "未拿保持原場景；電話可由援助對談重新顯示但不複製"
+          "recovery": "未取得時依來源事件及原選項保留取得途徑；已取得只能在道具頁重看，不複製、不重領來源事件獎勵。"
         },
         "opening": [
           {
@@ -26147,7 +26220,7 @@
           "use": "紀念；主線後仍可領",
           "acquisition": "點熱點走近 → 點物件／對話 → 確認收下；必要物不佔容量、不會丟失",
           "repeat": "每局一份；紀念物不消耗",
-          "recovery": "未拿保持原場景；電話可由援助對談重新顯示但不複製"
+          "recovery": "未取得時依來源事件及原選項保留取得途徑；已取得只能在道具頁重看，不複製、不重領來源事件獎勵。"
         },
         "opening": [
           {
@@ -26497,7 +26570,7 @@
           "use": "故事核對；不是真實資料",
           "acquisition": "點熱點走近 → 點物件／對話 → 確認收下；必要物不佔容量、不會丟失",
           "repeat": "每局一份；紀念物不消耗",
-          "recovery": "未拿保持原場景；電話可由援助對談重新顯示但不複製"
+          "recovery": "未取得時依來源事件及原選項保留取得途徑；已取得只能在道具頁重看，不複製、不重領來源事件獎勵。"
         },
         "opening": [
           {
@@ -26581,7 +26654,7 @@
           "use": "可選：牆面每次挑戰首個局部失誤不退格",
           "acquisition": "點熱點走近 → 點物件／對話 → 確認收下；必要物不佔容量、不會丟失",
           "repeat": "每局一份；紀念物不消耗",
-          "recovery": "未拿保持原場景；電話可由援助對談重新顯示但不複製"
+          "recovery": "未取得時依來源事件及原選項保留取得途徑；已取得只能在道具頁重看，不複製、不重領來源事件獎勵。"
         },
         "opening": [
           {
@@ -26665,7 +26738,7 @@
           "use": "小雨或友情尾聲可見紀念物",
           "acquisition": "點熱點走近 → 點物件／對話 → 確認收下；必要物不佔容量、不會丟失",
           "repeat": "每局一份；紀念物不消耗",
-          "recovery": "未拿保持原場景；電話可由援助對談重新顯示但不複製",
+          "recovery": "未取得時依來源事件及原選項保留取得途徑；已取得只能在道具頁重看，不複製、不重領來源事件獎勵。",
           "photo_identity_proposal": "舊合照主角在左、阿凱居中、小雨在右；不是陌生人群照。"
         },
         "opening": [
@@ -26750,7 +26823,7 @@
           "use": "出差故事紀念，非通行證",
           "acquisition": "點熱點走近 → 點物件／對話 → 確認收下；必要物不佔容量、不會丟失",
           "repeat": "每局一份；紀念物不消耗",
-          "recovery": "未拿保持原場景；電話可由援助對談重新顯示但不複製"
+          "recovery": "未取得時依來源事件及原選項保留取得途徑；已取得只能在道具頁重看，不複製、不重領來源事件獎勵。"
         },
         "opening": [
           {
@@ -26832,9 +26905,9 @@
           "scene_id": "M09",
           "source": "MS14",
           "use": "逃離結局圖鑑，不能在局內交易",
-          "acquisition": "點熱點走近 → 點物件／對話 → 確認收下；必要物不佔容量、不會丟失",
+          "acquisition": "ESC-S08／MS14成功提交「上車」時，同一次終局結算記錄IT10；略過影片不漏領，不另走近物件或再次確認拾取。",
           "repeat": "每局一份；紀念物不消耗",
-          "recovery": "未拿保持原場景；電話可由援助對談重新顯示但不複製"
+          "recovery": "成功上車後可在結局圖鑑重看；不返回局內補領、交易或重新結算。"
         },
         "opening": [
           {
@@ -26918,14 +26991,51 @@
               "3秒：主角伸手關掉電話，畫面只剩自己的倒影。"
             ],
             "xiaoyu": [
-              "3秒：小雨把合照放到桌角：「我不會陪你把這裡當家。」",
+              {
+                "group": "E_BOSS_photo",
+                "exclusive": true,
+                "formalStateMutation": false,
+                "variants": [
+                  {
+                    "id": "no_photo",
+                    "condition": "未持有 IT08",
+                    "text": "3秒：小雨把未拆的告別信放到桌角：「我不會陪你把這裡當家。」"
+                  },
+                  {
+                    "id": "has_photo",
+                    "condition": "持有 IT08",
+                    "text": "3秒：小雨把合照放到桌角：「我不會陪你把這裡當家。」"
+                  }
+                ]
+              },
               "4秒：她離開畫面，主角握著未拆的告別信。",
               "3秒：空椅並排。字幕：留下來的是位置，不是兩個人的明天。"
             ],
             "lin": [
               "3秒：若晴摘下主管證：「我拒絕為這個選擇作證。」",
               "4秒：她把自己的責任記錄帶走，鏡頭不承諾她立即安全。",
-              "3秒：主角獨坐最高層，電話上的約定日期已過。"
+              {
+                "group": "E_BOSS_date",
+                "exclusive": true,
+                "formalStateMutation": false,
+                "variants": [
+                  {
+                    "id": "no_date",
+                    "condition": "尚未選定 escape_date_selected",
+                    "text": "3秒：主角獨坐最高層，桌前只剩自己的職位牌。"
+                  },
+                  {
+                    "id": "date_not_passed",
+                    "condition": "已選日期，當前 day 尚未超過該日",
+                    "text": "3秒：主角獨坐最高層，電話上的約定日期仍亮著。"
+                  },
+                  {
+                    "id": "date_passed",
+                    "condition": "已選日期，當前 day 已超過該日",
+                    "text": "3秒：主角獨坐最高層，電話上的約定日期已過。"
+                  }
+                ]
+              }
             ]
           }
         },
@@ -27022,14 +27132,51 @@
               "3秒：主角伸手關掉電話，畫面只剩自己的倒影。"
             ],
             "xiaoyu": [
-              "3秒：小雨把合照放到桌角：「我不會陪你把這裡當家。」",
+              {
+                "group": "E_BOSS_photo",
+                "exclusive": true,
+                "formalStateMutation": false,
+                "variants": [
+                  {
+                    "id": "no_photo",
+                    "condition": "未持有 IT08",
+                    "text": "3秒：小雨把未拆的告別信放到桌角：「我不會陪你把這裡當家。」"
+                  },
+                  {
+                    "id": "has_photo",
+                    "condition": "持有 IT08",
+                    "text": "3秒：小雨把合照放到桌角：「我不會陪你把這裡當家。」"
+                  }
+                ]
+              },
               "4秒：她離開畫面，主角握著未拆的告別信。",
               "3秒：空椅並排。字幕：留下來的是位置，不是兩個人的明天。"
             ],
             "lin": [
               "3秒：若晴摘下主管證：「我拒絕為這個選擇作證。」",
               "4秒：她把自己的責任記錄帶走，鏡頭不承諾她立即安全。",
-              "3秒：主角獨坐最高層，電話上的約定日期已過。"
+              {
+                "group": "E_BOSS_date",
+                "exclusive": true,
+                "formalStateMutation": false,
+                "variants": [
+                  {
+                    "id": "no_date",
+                    "condition": "尚未選定 escape_date_selected",
+                    "text": "3秒：主角獨坐最高層，桌前只剩自己的職位牌。"
+                  },
+                  {
+                    "id": "date_not_passed",
+                    "condition": "已選日期，當前 day 尚未超過該日",
+                    "text": "3秒：主角獨坐最高層，電話上的約定日期仍亮著。"
+                  },
+                  {
+                    "id": "date_passed",
+                    "condition": "已選日期，當前 day 已超過該日",
+                    "text": "3秒：主角獨坐最高層，電話上的約定日期已過。"
+                  }
+                ]
+              }
             ]
           }
         },
@@ -27077,7 +27224,23 @@
         ],
         "variant": "xiaoyu",
         "source_shots": [
-          "3秒：小雨把合照放到桌角：「我不會陪你把這裡當家。」",
+          {
+            "group": "E_BOSS_photo",
+            "exclusive": true,
+            "formalStateMutation": false,
+            "variants": [
+              {
+                "id": "no_photo",
+                "condition": "未持有 IT08",
+                "text": "3秒：小雨把未拆的告別信放到桌角：「我不會陪你把這裡當家。」"
+              },
+              {
+                "id": "has_photo",
+                "condition": "持有 IT08",
+                "text": "3秒：小雨把合照放到桌角：「我不會陪你把這裡當家。」"
+              }
+            ]
+          },
           "4秒：她離開畫面，主角握著未拆的告別信。",
           "3秒：空椅並排。字幕：留下來的是位置，不是兩個人的明天。"
         ],
@@ -27129,14 +27292,51 @@
               "3秒：主角伸手關掉電話，畫面只剩自己的倒影。"
             ],
             "xiaoyu": [
-              "3秒：小雨把合照放到桌角：「我不會陪你把這裡當家。」",
+              {
+                "group": "E_BOSS_photo",
+                "exclusive": true,
+                "formalStateMutation": false,
+                "variants": [
+                  {
+                    "id": "no_photo",
+                    "condition": "未持有 IT08",
+                    "text": "3秒：小雨把未拆的告別信放到桌角：「我不會陪你把這裡當家。」"
+                  },
+                  {
+                    "id": "has_photo",
+                    "condition": "持有 IT08",
+                    "text": "3秒：小雨把合照放到桌角：「我不會陪你把這裡當家。」"
+                  }
+                ]
+              },
               "4秒：她離開畫面，主角握著未拆的告別信。",
               "3秒：空椅並排。字幕：留下來的是位置，不是兩個人的明天。"
             ],
             "lin": [
               "3秒：若晴摘下主管證：「我拒絕為這個選擇作證。」",
               "4秒：她把自己的責任記錄帶走，鏡頭不承諾她立即安全。",
-              "3秒：主角獨坐最高層，電話上的約定日期已過。"
+              {
+                "group": "E_BOSS_date",
+                "exclusive": true,
+                "formalStateMutation": false,
+                "variants": [
+                  {
+                    "id": "no_date",
+                    "condition": "尚未選定 escape_date_selected",
+                    "text": "3秒：主角獨坐最高層，桌前只剩自己的職位牌。"
+                  },
+                  {
+                    "id": "date_not_passed",
+                    "condition": "已選日期，當前 day 尚未超過該日",
+                    "text": "3秒：主角獨坐最高層，電話上的約定日期仍亮著。"
+                  },
+                  {
+                    "id": "date_passed",
+                    "condition": "已選日期，當前 day 已超過該日",
+                    "text": "3秒：主角獨坐最高層，電話上的約定日期已過。"
+                  }
+                ]
+              }
             ]
           }
         },
@@ -27186,7 +27386,28 @@
         "source_shots": [
           "3秒：若晴摘下主管證：「我拒絕為這個選擇作證。」",
           "4秒：她把自己的責任記錄帶走，鏡頭不承諾她立即安全。",
-          "3秒：主角獨坐最高層，電話上的約定日期已過。"
+          {
+            "group": "E_BOSS_date",
+            "exclusive": true,
+            "formalStateMutation": false,
+            "variants": [
+              {
+                "id": "no_date",
+                "condition": "尚未選定 escape_date_selected",
+                "text": "3秒：主角獨坐最高層，桌前只剩自己的職位牌。"
+              },
+              {
+                "id": "date_not_passed",
+                "condition": "已選日期，當前 day 尚未超過該日",
+                "text": "3秒：主角獨坐最高層，電話上的約定日期仍亮著。"
+              },
+              {
+                "id": "date_passed",
+                "condition": "已選日期，當前 day 已超過該日",
+                "text": "3秒：主角獨坐最高層，電話上的約定日期已過。"
+              }
+            ]
+          }
         ],
         "source_variant_policy": [
           "伴侶變體先看唯一partner_plan與仍有效的關係。逃離親密版另需目前雙方同意、高好感、romance_pause=false與自願同行；老闆告別版只需作決定前已有有效伴侶約定，不要求願意逃離或支持接任，不因對方拒絕逃離就抹掉告別關係。",
@@ -28417,7 +28638,7 @@
           "outcome": "IT05；F_lin+3",
           "duration_game_minutes": 10,
           "repeat": "once；回顧無獎",
-          "miss_recovery": "可一直補到終局前；缺少只多一段圖案門操作",
+          "miss_recovery": "可一直補到終局前；有IT05可選大門、保留追逐並跳過ESC-S06攀牆；沒有鑰匙仍可走較難牆側路線及攀牆節拍。",
           "exclusion": "只在明示的關窗或終局後排除；同日競爭社交槽時玩家選先後，另一件保留"
         },
         "trigger": {
@@ -31824,7 +32045,7 @@
               "finale_committed"
             ]
           },
-          "dialogue_and_actions": "唐澄：「前天的話，你不必講得很漂亮。」主角回顧已完成的真誠選擇，補一段不帶條件的關心。",
+          "dialogue_and_actions": "唐澄：「上次的話，你不必講得很漂亮。」主角回顧已完成的真誠選擇，補一段不帶條件的關心。",
           "outcome": "F_member+5，上限60；正式慢速替代路徑，可補足未做的專屬主題，不要求四主題全做",
           "duration_game_minutes": 10,
           "repeat": "每日上限，詳見恢復規則",
@@ -31953,7 +32174,7 @@
               "finale_committed"
             ]
           },
-          "dialogue_and_actions": "主角先看王座再看電話。畫面並列「接任」「赴約」「繼續準備」，不因最高職等自選結局。",
+          "dialogue_and_actions": "主角比較接任與離開的方向。escape_route_ready成立時並列「接任」「赴約」「繼續準備」；尚未完成電話安排時，赴約欄顯示援助準備尚未完成及既有缺口，不宣稱已有電話或日期。本段只供比較，不因最高職等提交結局。",
           "outcome": "route_comparison_seen",
           "duration_game_minutes": 10,
           "repeat": "once；回顧無獎",
@@ -32879,7 +33100,7 @@
           "dialogue_and_actions": "點醫務休息區，選「說明不舒服」「請同事陪我」「先安靜休息」。老周：「你不用先把話說漂亮，才值得有人幫忙。」",
           "outcome": "免費求助不加心情、不重發資源；賭債/佣金/未知物質仍待發生的每個日開負擔改為心情−4且最低留1；未知物質體力改−1且最低0。聚會剩餘疲憊改−2且最低留1。已扣數值不回補，原剩餘日數照走。",
           "duration_game_minutes": 10,
-          "repeat": "once；BR35每個不同風險來源一次；BR36還款可分次但獎勵一次",
+          "repeat": "每個不同風險來源可接受一次照護調整；已處理來源再訪僅回顧、無增益。純support_offered且無風險只顯示支援對話，不生成風險或恢復扣減。",
           "miss_recovery": "每個風險可接受一次照護調整，之後回顧無增益；沒有日期、職階、最低心情或同事好感門檻，可單獨求助。未冒險者照常有普通休息。",
           "exclusion": "不和另一事件同時提交；個別同意及花費確認先顯示",
           "warning": "求助與照護；沒有現實療程或藥物建議。",
@@ -33045,7 +33266,7 @@
           "dialogue_and_actions": "主角向老周和阿標承認拿過不該拿的錢。玩家點「承認」「退還未花部分」「記下餘額」，只處理虛構帳目，不向外部傳送資料。",
           "outcome": "每次退回min(remaining_commission_debt,可用零用錢)，remaining_commission_debt初值30且隨實際退回遞減；首次承認F_zhou+3、F_biao+3，commission_acknowledged=true。餘額0時不再扣錢。",
           "duration_game_minutes": 10,
-          "repeat": "once；BR35每個不同風險來源一次；BR36還款可分次但獎勵一次",
+          "repeat": "同一筆佣金債可分次償還；首次承認好感各+3僅一次，首次實際償清好感各+2僅一次；餘額0再訪不扣錢、不重領。",
           "miss_recovery": "如果無錢仍可先承認，之後工作日取得零用錢再回來補足；不影響基本餐食免費配給或逃離電話。；沒有最低心情、好感、日期或職階門檻。",
           "exclusion": "不和另一事件同時提交；個別同意及花費確認先顯示",
           "warning": "責任與修復；清楚預覽退回數額，不自動奪取食物或所有資產。",
@@ -42072,5 +42293,18 @@
     "prologueSegments": 7,
     "legacyGroups": 17,
     "planningScope": "16玩法＋1序章是舊版的立即分類修正狀態；新版將另案完整規劃17個真正小遊戲，T02仍不占小遊戲名額。16不是未來上限，既有ID不因這項規劃重編。"
+  },
+  "branchEditorial": {
+    "unconditionalLineIds": [
+      "BR29.opening.01",
+      "I07.opening.base.01"
+    ],
+    "conditionalLineIds": [
+      "BR30.opening.01",
+      "BR30.choice.BR30_C02.01",
+      "E_BOSS__lin.closing.base.01",
+      "E_BOSS__xiaoyu.opening.base.01"
+    ],
+    "proposalOnly": true
   }
 }

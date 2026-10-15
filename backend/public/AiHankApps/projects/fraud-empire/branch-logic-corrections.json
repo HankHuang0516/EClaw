@@ -1,0 +1,430 @@
+{
+  "schema_version": "public_branch_logic_corrections.proposal.1.0",
+  "title": "人物關係與故事銜接修訂方向",
+  "status": "供閱讀與確認的修訂方向；尚未表示已套用或可玩驗收",
+  "classification_scope_note": "T02的16玩法＋1序章僅指舊版立即分類；新案17個真小遊戲另案規劃。本稿不替新案定遊戲數、機制或門檻。",
+  "introduction": "這份說明整理支線、援助、同行、戀愛與結局之間容易混淆的地方。能由既有規則判定的矛盾以文案修正處理；尚未決定的機制保持待定。",
+  "scope": {
+    "branches": 36,
+    "romance_events": 8,
+    "main_events": 14,
+    "intel": 8,
+    "items": 10,
+    "ending_routes": 2
+  },
+  "corrections": [
+    {
+      "id": "LOG-01",
+      "title": "鑰匙效果用語相反",
+      "event_ids": [
+        "BR07",
+        "IT05",
+        "ESC-S02",
+        "ESC-S06"
+      ],
+      "status": "文案修訂方向已明列，待整合",
+      "explanation": "BR07稱缺鑰匙只多一段圖案門，與已統一的大門／牆側及攀牆路線不同。",
+      "revision_direction": "以IT05及ESC詳細規則為準；不改可選性、路線或數值。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-02",
+      "title": "自願署名不是援助硬門檻",
+      "event_ids": [
+        "BR06",
+        "BR29",
+        "I01",
+        "MS09"
+      ],
+      "status": "文案修訂方向已明列，待整合",
+      "explanation": "I01.use寫開援助對談，容易誤把BR06變成唯一必要前置，封死BR29慢速路徑。",
+      "revision_direction": "I01只記錄BR06自願署名；MS09仍只依原條件及接受援助選擇，不要求I01。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-03",
+      "title": "餐券地圖仍沿用不消耗模板",
+      "event_ids": [
+        "BR12",
+        "IT04"
+      ],
+      "status": "文案修訂方向已明列，待整合",
+      "explanation": "地圖寫紀念物不消耗，最新道具表已明定一次兌換後消耗。",
+      "revision_direction": "與最新IT04相同，接受與轉送互斥；重看不重領。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-04",
+      "title": "終局回條不能回場拾取",
+      "event_ids": [
+        "MS14",
+        "ESC-S08",
+        "IT10"
+      ],
+      "status": "文案修訂方向已明列，待整合",
+      "explanation": "IT10套用走近取得與未拿留原場景模板，但上車已提交終局，不能再回日循環。",
+      "revision_direction": "成功上車同次記錄IT10；略過影片仍持有；只可圖鑑回顧。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-05",
+      "title": "非電話道具的回復說明誤植",
+      "event_ids": [
+        "IT01",
+        "IT02",
+        "IT06",
+        "IT07",
+        "IT08",
+        "IT09"
+      ],
+      "status": "文案修訂方向已明列，待整合",
+      "explanation": "數個紀念物recovery都誤寫電話援助重顯，沒有相應來源支持。",
+      "revision_direction": "只保留既有來源與唯一物品，不增加援助補發。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-06",
+      "title": "日期與職階必須合併顯示",
+      "event_ids": [
+        "BR12",
+        "BR21",
+        "BR22",
+        "BR31"
+      ],
+      "status": "說明澄清，原觸發條件維持",
+      "explanation": "D3/R2、D8/R3容易被閱讀成D3或D8就會出現；晉升仍要日結與XP。",
+      "revision_direction": "BR12/21顯示原D3 AND R2並旁註日期下界D4；BR22/31原D8 AND R3旁註下界D9。下界不是保證可互動時間，不改任何條件。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-07",
+      "title": "待回覆與完成不能共用一次性標記",
+      "event_ids": [
+        "MS05",
+        "MS06",
+        "MS09",
+        "MS10",
+        "MS12",
+        "MS13"
+      ],
+      "status": "沿用既有規則，避免誤解",
+      "explanation": "repeat=once不是打開或選稍後就completed；否則MS05稍後會偷推MS06，援助與兩個終局也可能被鎖死。",
+      "revision_direction": "保留pending/resolved既有語意：只在相應明確提交後完成；MS12邀請已看不等於boss提交；MS13延期不提交escape。不得以closing文字推定完成。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-08",
+      "title": "空any與字串OR不能讀錯",
+      "event_ids": [
+        "MS08",
+        "BR03",
+        "BR04",
+        "BR05",
+        "BR35",
+        "BR36"
+      ],
+      "status": "沿用既有規則，避免誤解",
+      "explanation": "BR35/36 any=[]表示無額外擇一限制，不應當成永遠false；all內的OR片語也不能拆成全要。",
+      "revision_direction": "展示式統一為全部all AND（any非空時至少一項）AND全部not不存在；all內括號OR保留群組。本文公式是閱讀正規化，非引擎已實作。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-09",
+      "title": "BR30可能沒有電話或日期",
+      "event_ids": [
+        "BR30",
+        "MS12",
+        "MS10"
+      ],
+      "status": "依既有故事狀態分流文字，待整合",
+      "explanation": "BR30由boss_offer_pending即可通過any，因此未做MS08–10的玩家也會進入。現稿無條件描述電話與赴約。",
+      "revision_direction": "依已存在escape_route_ready只替換呈現；未就緒版說仍可了解援助路徑，不直接提供出發確認。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-10",
+      "title": "老闆若晴版不能假設已安排電話",
+      "event_ids": [
+        "E_BOSS",
+        "ROM06",
+        "MS10"
+      ],
+      "status": "依既有故事狀態分流文字，待整合",
+      "explanation": "ROM06與E_BOSS不要求MS10；即使有日期，D20接任時也可能尚未到。原句一定說約定日期已過。",
+      "revision_direction": "保留同一告別結果；依是否已有日期及是否已過分三種鏡頭文字，不加新結局。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-11",
+      "title": "老闆小雨版不能憑空領合照",
+      "event_ids": [
+        "E_BOSS",
+        "ROM02",
+        "BR22",
+        "IT08"
+      ],
+      "status": "依既有故事狀態分流文字，待整合",
+      "explanation": "有效小雨約定不要求IT08。告別版固定擺合照會像憑空生成道具。",
+      "revision_direction": "持IT08保留原鏡頭；未持時只用原結局已有告別信，不發IT08，不提高戀愛門檻。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-12",
+      "title": "每日重談不能固定說前天",
+      "event_ids": [
+        "BR29"
+      ],
+      "status": "文案修訂方向已明列，待整合",
+      "explanation": "玩家可連日或隔很久回來，固定「前天」不一定正確。",
+      "revision_direction": "改「上次」；每日+5與上限60完全不動。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-13",
+      "title": "可選早期符號不能預設電話已約好",
+      "event_ids": [
+        "BR16",
+        "I07",
+        "MS10"
+      ],
+      "status": "文案修訂方向已明列，待整合",
+      "explanation": "BR16最早D9、MS10最早D14；I07新台詞說「我們約好的」把後來電話約定提前。",
+      "revision_direction": "改為資料裡的符號；實際約定與必得I08仍由MS10建立。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-14",
+      "title": "來源事件與取得段共用領取紀錄",
+      "event_ids": [
+        "BR02",
+        "BR12",
+        "BR21",
+        "BR23",
+        "BR24",
+        "MS06",
+        "MS07",
+        "MS09",
+        "MS10",
+        "IT01",
+        "IT02",
+        "IT03",
+        "IT04",
+        "IT06",
+        "I03"
+      ],
+      "status": "沿用既有規則，避免誤解",
+      "explanation": "支線、物件熱點和取得對話是同一來源的不同鏡頭；BR23先領副本也不是第二次主線獎勵。",
+      "revision_direction": "同一物品每局唯一；同一事件結果一次。IT02兩來源、IT06兩來源、IT01在場/缺席、BR13/16替代地點均共用記錄。取得段不另加10分鐘或探索15分鐘。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-15",
+      "title": "社交上限適用範圍不可擴張",
+      "event_ids": [
+        "BR28",
+        "BR29",
+        "BR24"
+      ],
+      "status": "細節仍待決定",
+      "explanation": "BR28有明確每日每人一次／全日最多2次與+5；普通聊天+1是否另設上限仍待確認。「全日社交」與支線通用排除文字可被過度解讀。",
+      "revision_direction": "本稿只強制BR28自身既有限制，不把2次任意套到BR03–06、BR29、照護或全部聊天；普通上限與跨活動共享槽需主企劃決策。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-16",
+      "title": "少數拒絕分支獎勵仍未逐項定義",
+      "event_ids": [
+        "BR06",
+        "BR18",
+        "BR22",
+        "BR25",
+        "BR26",
+        "BR27",
+        "BR34"
+      ],
+      "status": "細節仍待決定",
+      "explanation": "不扣好感不等於自動領整份outcome；BR27兩個成熟回應也未明列完整數值映射。",
+      "revision_direction": "保持既有不懲罰承諾，未明結果顯示待定；不替各選項新造數值或自動套整包。新增文字不改此狀態。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-17",
+      "title": "同行意願與戀愛同意分開",
+      "event_ids": [
+        "BR24",
+        "I03",
+        "ROM01",
+        "ROM02",
+        "ROM05",
+        "ROM06",
+        "ROM04",
+        "ROM08"
+      ],
+      "status": "細節仍待決定",
+      "explanation": "BR24的any為事件層開放條件，未定逐人資格和三種回答算法；不能由好感或玩家點選替NPC同意。",
+      "revision_direction": "維持逐人current意願、唯一partner_plan與既有排他提案；不猜隨機率，不把OR兩人改AND，不因高階朋友口吻自動戀愛。逐人門檻、多友情同行鏡頭規格仍待決。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-18",
+      "title": "道歉不是恢復親密同意",
+      "event_ids": [
+        "ROM03",
+        "ROM04"
+      ],
+      "status": "補充對話待確認",
+      "explanation": "現有修復只有道歉與聽見，不能重設romance_pause或current_mutual_consent。",
+      "revision_direction": "提供獨立自願重談台詞提案；未再次雙方明確同意仍暫停。修復不自動獲teamwork，也不倒退既有線索。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-19",
+      "title": "BR34若晴親密維持不可播放",
+      "event_ids": [
+        "BR34",
+        "ROM05",
+        "ROM06"
+      ],
+      "status": "特定變體暫不開放",
+      "explanation": "局內未來約定不能當成已結束主管權力關係。",
+      "revision_direction": "僅BR34_lin_intimacy_pending demo_playable=false；普通休息及既有小雨自願伴侶提案沿原條件可展示。單身短片收益未定；不得套+6。未做整支禁播，也沒有宣布可玩驗收。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-20",
+      "title": "T17媒體待決不能偽造故事進度",
+      "event_ids": [
+        "BR11",
+        "BR31",
+        "T17"
+      ],
+      "status": "細節仍待決定",
+      "explanation": "BR11需S17>=15、BR31需S17>=10；若媒體證據不可用，不能藉展示自動加熟練或當已看過。",
+      "revision_direction": "保留門檻與待確認媒體fallback。兩支皆不必要於電話或ESC，主要逃離仍可無I06完成。不得把技術失敗記玩家錯誤。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-21",
+      "title": "風險照護與佣金還款不可重領",
+      "event_ids": [
+        "BR31",
+        "BR32",
+        "BR33",
+        "BR34",
+        "BR35",
+        "BR36"
+      ],
+      "status": "沿用既有規則，避免誤解",
+      "explanation": "模板repeat=once可能誤封鎖其他風險的照護或分次還款；再訪也可能重設債務。",
+      "revision_direction": "BR31–34各自選擇一次；BR35每風險來源一次，support_only不產生風險/恢復扣減；BR36同一初始30債逐次扣剩餘，首次承認+3各一次、首次償清+2各一次；賭債35與佣金30分帳。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-22",
+      "title": "出發後仍須完整走到終局",
+      "event_ids": [
+        "MS13",
+        "MS14",
+        "ESC-S08",
+        "E_ESCAPE"
+      ],
+      "status": "沿用既有規則，避免誤解",
+      "explanation": "MS14要求final_choice=escape，卻沿用exclusion=finale_committed；若實作把出發提交設finale_committed，終局本身可能被擋。",
+      "revision_direction": "當前資料未定該旗標生命週期，不能宣稱真死鎖。交接要求終局提交後只封日常與另一主路，已選escape的ESC/MS14仍繼續；成功上車提交勝利與IT10一次。引擎旗標定義仍待工程驗證。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-23",
+      "title": "既有簡短可達性摘要漏掉智慧成長",
+      "event_ids": [
+        "MS08",
+        "BR03",
+        "BR06",
+        "BR29",
+        "T13"
+      ],
+      "status": "文案修訂方向已明列，待整合",
+      "explanation": "摘要初始智慧10直接寫累積S13，容易誤以為不需先達T13智慧25。",
+      "revision_direction": "補回先學習至25及R2帳號取得；不新增門檻，仍不強求智慧40或T14，也不保證D12拿電話。",
+      "website_integration": "指定原來源目標未提供，保留待確認；未套用。"
+    },
+    {
+      "id": "LOG-24",
+      "title": "出差替代來源是地點替代不是條件豁免",
+      "event_ids": [
+        "BR13",
+        "BR16",
+        "IT09",
+        "I07"
+      ],
+      "status": "說明澄清，原觸發條件維持",
+      "explanation": "D9餐廳回顧／D11檔案室同段不能被當成跳過S03/S09及其他原條件的直接領物點。",
+      "revision_direction": "保留原完整AND與any，僅替代地點及最早替代日；一次來源記錄共用，不因出差模式未抽到而永久錯過。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-25",
+      "title": "阿凱記憶的客觀事實與身分邊界",
+      "event_ids": [
+        "MS05",
+        "MS06",
+        "BR01",
+        "BR02",
+        "BR21",
+        "BR22"
+      ],
+      "status": "沿用既有規則，避免誤解",
+      "explanation": "kai_absent不能等同已確認死亡，阿凱不在時不能回話或再選BR28。BR20受威脅匿名成年同事也沒有證據等同T16阿岑。",
+      "revision_direction": "MS06後以缺席／去向未明與已給事件後果呈現，不添加葬禮、死亡或救回線；BR21只顯缺席版，IT01兩版共用一次結果。匿名角色不擅自合併。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-26",
+      "title": "主管朋友式口吻不替代劇情前置",
+      "event_ids": [
+        "MS01",
+        "MS02",
+        "MS04",
+        "MS07",
+        "BR14",
+        "BR27",
+        "BR28",
+        "ROM05",
+        "ROM06"
+      ],
+      "status": "沿用既有規則，避免誤解",
+      "explanation": "職階高日常較親近，不等於得知未發生情報、已取得支線成果或同意戀愛。阿猴在R2後可有支線，但不重新派工。",
+      "revision_direction": "R1阿猴、R2+若晴；採相等職階選一段語氣，回顧保留歷史，重大傷害與責任場景不插入玩笑。BR14保留阿猴個人場景但寫明前主管／同事身分。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-27",
+      "title": "T02改列一次性序章而非派工任務",
+      "event_ids": [
+        "T02",
+        "BR19",
+        "MS03"
+      ],
+      "status": "分類方向已確認，舊資料待同步",
+      "explanation": "最新使用者已指出T02屬主線劇情；舊任務分類不能拿來反覆派工累積S02。",
+      "revision_direction": "依已授權分類修正：16玩法＋1序章（保留T16故事支援例外）；保留T02及七段舊ID追溯。S02一次+2與BR19 S02>=2沿既有提案，不能重派刷值。前日晚間或D1、首次20分鐘及初始耗損仍待確認，不藉此改成零成本或補新數值。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    },
+    {
+      "id": "LOG-28",
+      "title": "T16已處理不等於通用支援旗標",
+      "event_ids": [
+        "T16",
+        "BR20",
+        "BR32",
+        "BR27",
+        "ROM02",
+        "BR35"
+      ],
+      "status": "沿用既有規則，避免誤解",
+      "explanation": "T16只明列支持故事已處理與同意範圍；沒有證據可把它直接映射成support_offered。",
+      "revision_direction": "support_offered目前明列來源為BR20及BR32拒絕／求助；不因T16完成自動開BR27、ROM02或BR35。若日後要統一旗標，需另確認映射。",
+      "website_integration": "已接入本頁閱讀；只修訂已核對的提案文字，原條件／選擇／獎勵與正式狀態不變。"
+    }
+  ]
+}
