@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.2-new-gameplay-proposals-20261015",
-  "date": "2026-10-15",
-  "status": "設計確認稿／開發中；靜態互動示意，非正式遊戲",
-  "contentHash": "601c867aa63a8694bd37c5a73e98b90802182cd7c1c9661b793a3335fd5a1863",
+  "version": "v4.3-interactive-prototypes-20261016",
+  "date": "2026-10-16",
+  "status": "設計確認稿／開發中；MG-P01與MG-P02為可操作前端原型，非正式遊戲",
+  "contentHash": "1644128d1226634b09f448d1ec09dec40da79d8ac5c7289446746170e417a8df",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -12,8 +12,8 @@
     },
     {
       "path": "demo-data.json",
-      "bytes": 1385,
-      "sha256": "46e83704d8acc1471573fb557fca4fdad0b9913d9edde1d3b3d665ff8f53bac3"
+      "bytes": 1765,
+      "sha256": "68906b56576d2c700e9d612c60c75c109aced2bbf71202fa3ee9891373eb62b4"
     },
     {
       "path": "demo.css",
@@ -1657,8 +1657,28 @@
     },
     {
       "path": "index.html",
-      "bytes": 9988,
-      "sha256": "9dcf9831869de24d4b125c90a1c5948aede989cda4061f2d49d5e94f916979e7"
+      "bytes": 10185,
+      "sha256": "2b9c9b66acb0940a5905ee6bbed3c56e2e88d13cebb2016e929ad2527cc1ab73"
+    },
+    {
+      "path": "interactive-prototype-data.json",
+      "bytes": 4687,
+      "sha256": "53cb2eaa02bbd2003c6566e1d42f0b088771342950290e25fc9ded020ec8bbea"
+    },
+    {
+      "path": "interactive-prototype-model.js",
+      "bytes": 16361,
+      "sha256": "71f3d926baf1478e3f5c55ae0f583d30947a2b91ff049982974456cf8888a268"
+    },
+    {
+      "path": "interactive-prototype.css",
+      "bytes": 12971,
+      "sha256": "cb5173b8d8c14e6c054831ba1733f7d5457d5c3c7d29c1db32f28f1816f312f3"
+    },
+    {
+      "path": "interactive-prototype.js",
+      "bytes": 34596,
+      "sha256": "6a5c8b876ab108cba0897d6b19b42441e1fb634f9517317d14ddeb766c756c29"
     },
     {
       "path": "new-gameplay-proposals.css",
@@ -3209,14 +3229,16 @@
     "newGameplayCandidates": 17,
     "newGameplayTextVersion": "v2",
     "newProposalDemos": 2,
-    "newProposalDemoImages": 6
+    "newProposalDemoImages": 6,
+    "interactiveProposalPrototypes": 2,
+    "interactionContractVersion": "dynamic-demo-interaction-contract-1.0"
   },
   "limitations": [
     "所有新增文字、外觀與表情仍為提案，不代表正式劇本或可用sprites。",
     "T01／T03玩家理解性與宿舍場景一致性待來源修正及驗收。",
     "T02首次時間、日期與主線銜接仍待確認；回顧不發資源。",
-    "短片、玩法程式、正式存檔及遊戲服務未實作。",
-    "完整新17提案與六幅新示意已接入；圖內操作、拖曳、工序與可玩原型仍未實作，日期、成本與新機制未獲正式採納。",
+    "短片、正式玩法程式、正式存檔及遊戲服務未實作；兩款前端原型不等同正式遊戲。",
+    "完整新17提案、六幅原圖及兩款實際物件操作原型已接入；其餘15款未實作，日期、成本、平衡與正式機制未獲採納。",
     "關係樹與支線增補留下一版，不宣稱本版已接入。"
   ]
 }

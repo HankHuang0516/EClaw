@@ -3,12 +3,19 @@
   "version": "v4.1-connected-proposals-20261015",
   "status": "靜態互動示意，非正式遊戲",
   "notice": "所有互動只存在本次瀏覽器記憶體；沒有正式遊戲運算、帳號、付款、存檔或獎勵。各段為指定情境預覽，圖中日期／職階以原稿為準，不串作同一天。主管每輪派一種模式，不是整天同模式。",
-  "completion": "已接入39身份表情／功能提案、1885台詞／系統提示ID（原1765加主管120句，12處原句精確提案修訂）與283來源美術總覽；不是正式劇本、透明sprites或已批准外觀。短片、玩法程式、T01／T03理解性、宿舍一致性、等價影片證據與後端存檔仍未完成。",
+  "completion": "已接入39身份表情／功能提案、1885台詞／系統提示ID（原1765加主管120句，12處原句精確提案修訂）與283來源美術總覽；不是正式劇本、透明sprites或已批准外觀。已增加MG-P01／MG-P02兩款可操作前端原型，不代表17款全數實作；短片、正式玩法程式、T01／T03理解性、宿舍一致性、等價影片證據與後端存檔仍未完成。",
   "dataSources": {
     "portraits": "art-catalog.json",
     "dialogues": "dialogue-proposals.json"
   },
   "rankToneSource": "dialogue-proposals.json",
   "rankToneStatus": "五階40組主管語氣與120句具體提案已接入。R1阿猴，R2–R5同一位林若晴；精確階級相等，不串播多階。原任務專屬結果與重大情境優先，獨立成功／失敗語氣預覽不等於任務判定；不新增好感、戀愛、費用或獎勵。回顧保留當時階級，具體措辭待確認。",
-  "extensionStatus": "新增逐句提案見本段下方，所有未確認內容與互斥情境保持標示；不補造台詞或規則。"
+  "extensionStatus": "新增逐句提案見本段下方，所有未確認內容與互斥情境保持標示；不補造台詞或規則。",
+  "interactivePrototype": {
+    "data": "interactive-prototype-data.json",
+    "contract": "dynamic-demo-interaction-contract-1.0",
+    "status": "可操作前端原型／提案，非正式遊戲；機制與平衡仍待確認",
+    "independentScenarios": true,
+    "formalSave": false
+  }
 }

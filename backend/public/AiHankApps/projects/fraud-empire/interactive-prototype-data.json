@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "version": "interactive-prototypes-v1",
+  "status": "可操作前端原型／提案，非正式遊戲；機制與平衡仍待確認",
+  "contractVersion": "dynamic-demo-interaction-contract-1.0",
+  "sessionNotice": "僅本頁暫存，重整／重開會重置；不寫入正式遊戲存檔。",
+  "stepNotice": "示範操作計數，非正式遊戲時間；閱讀暫停",
+  "resourceNotice": "不連動正式遊戲存檔、Q、帳號、金錢、獎勵或養成；本原型獎勵固定 0。",
+  "fixtures": {
+    "MG-P01": {
+      "title": "假兼職｜做完卻領不到的工單",
+      "clock": {
+        "day": 1,
+        "time": "09:00",
+        "paused": true
+      },
+      "jobs": [
+        {
+          "id": "fang_cen",
+          "name": "方岑",
+          "requiredRounds": 2,
+          "progress": 0,
+          "state": "WAITING",
+          "consequence": "工作完成，仍未領薪"
+        },
+        {
+          "id": "mi_luo",
+          "name": "米洛",
+          "requiredRounds": 1,
+          "progress": 0,
+          "state": "WAITING",
+          "consequence": "任務完成／未領薪／遭要求付錢；已退出，損失仍保留"
+        },
+        {
+          "id": "duo_na",
+          "name": "朵娜",
+          "requiredRounds": 1,
+          "progress": 0,
+          "state": "WAITING",
+          "consequence": "工作完成，遇到付款要求；未宣稱已付款"
+        }
+      ],
+      "art": [
+        {
+          "src": "proposal-demos/8194977330733cfdc9fb.png",
+          "width": 941,
+          "height": 1672
+        },
+        {
+          "src": "proposal-demos/17727e3739a457a26aa6.png",
+          "width": 941,
+          "height": 1671
+        },
+        {
+          "src": "proposal-demos/354d7dfb83e67cc0fe8f.png",
+          "width": 941,
+          "height": 1671
+        }
+      ],
+      "officeEnd": 740
+    },
+    "MG-P02": {
+      "title": "假網購票券｜三張票，兩個假象",
+      "clock": {
+        "day": 3,
+        "time": "10:00",
+        "paused": true
+      },
+      "tickets": [
+        {
+          "id": "tao_ke",
+          "name": "陶可",
+          "fixedSeat": "A",
+          "initialComplete": false,
+          "fixedMotif": "月牙缺口",
+          "requiredPiece": "moon",
+          "consequence": "失望｜一起看演出的期待落空。"
+        },
+        {
+          "id": "bi_an",
+          "name": "畢安",
+          "fixedSeat": "A",
+          "initialComplete": true,
+          "fixedMotif": "已裝月亮",
+          "requiredPiece": null,
+          "consequence": "憤怒｜同一個A，也答應了別人。"
+        },
+        {
+          "id": "fu_lin",
+          "name": "芙琳",
+          "fixedSeat": "B",
+          "initialComplete": true,
+          "fixedMotif": "已裝星星",
+          "requiredPiece": null,
+          "consequence": "尚未成行｜有了票面，仍沒有演出可去。"
+        }
+      ],
+      "pieces": [
+        {
+          "id": "moon",
+          "shape": "月牙",
+          "targetTicket": "tao_ke",
+          "role": "correct_piece"
+        },
+        {
+          "id": "cloud",
+          "shape": "雲",
+          "targetTicket": null,
+          "role": "wrong_piece"
+        },
+        {
+          "id": "star",
+          "shape": "星星",
+          "targetTicket": null,
+          "role": "wrong_piece"
+        }
+      ],
+      "expectation": "三人想去同一場演出；桌後有空紙箱與未接線的劇場模型，沒有真實售票網站。",
+      "art": [
+        {
+          "src": "proposal-demos/5feaace11e62f93d06d1.png",
+          "width": 941,
+          "height": 1672
+        },
+        {
+          "src": "proposal-demos/c6ff98fce82e920bb3c6.png",
+          "width": 941,
+          "height": 1672
+        },
+        {
+          "src": "proposal-demos/70c7a29e9c144633ddbd.png",
+          "width": 941,
+          "height": 1672
+        }
+      ],
+      "officeEnd": 640
+    }
+  },
+  "choices": [
+    {
+      "id": "return_marked",
+      "label": "標記矛盾後交回"
+    },
+    {
+      "id": "pause_batch",
+      "label": "整批暫停"
+    }
+  ],
+  "safety": [
+    "真實付款或支付連結",
+    "票券下載／列印／匯出／分享／傳送",
+    "真商標／可用票式／條碼／QR／序號／帳戶／聯絡方式",
+    "任意文字編輯、對買家說詞、招募、挽留、提高假票可信度",
+    "正式遊戲存檔／Q／資源／金錢／獎勵增減",
+    "把提案畫面或測試清單標成已通過實機驗收"
+  ],
+  "approvalBoundary": "這是依契約驗證的兩款前端原型，不代表17款全數實作或正式玩法、資源、日期與成本已批准。"
+}
