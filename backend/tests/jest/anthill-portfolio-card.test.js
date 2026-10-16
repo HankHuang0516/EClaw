@@ -7,26 +7,27 @@ const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 const icon = 'anthill/icon-180-game-h-90e14cf7d5ac.png';
 
 describe('Anthill portfolio icon and card regression', () => {
-  test('both catalog formats use the existing reviewed game-H icon', () => {
+  test('both unchanged catalog formats retain the report-signed Anthill identity', () => {
     const json = JSON.parse(read('app-catalog.json'));
     const script = read('app-catalog.js');
     const js = JSON.parse(script.slice(script.indexOf('=') + 1).trim().replace(/;$/, ''));
     expect(js).toEqual(json);
     expect(json.apps.find(app => app.communityId === 'anthill')).toMatchObject({
-      category: '遊戲', icon, iconWatermark: 'game'
+      category: '遊戲', icon: 'icons/anthill.png'
     });
   });
 
   test('the rendered card uses the same icon without a second CSS watermark', () => {
     const html = read('index.html');
-    expect(html).toContain("icon: '" + icon + "', iconWatermark: 'game'");
-    expect(html).toContain("app.iconWatermark === 'game'");
+    expect(html).toContain("const hasBakedGameH = app.communityId === 'anthill' && app.icon === 'icons/anthill.png';");
+    expect(html).toContain("img.src = hasBakedGameH ? '" + icon + "' : app.icon;");
     expect(html).toContain("? 'app-icon app-icon--watermarked'");
     expect(html).toContain('.app-icon--watermarked::after { content: none; }');
   });
 
   test('the selected existing icon bytes are unchanged', () => {
     const bytes = fs.readFileSync(path.join(root, icon));
+    expect(fs.readFileSync(path.join(root, 'icons/anthill.png'))).toEqual(bytes);
     expect(crypto.createHash('sha256').update(bytes).digest('hex'))
       .toBe('90e14cf7d5acf5bb21e8431f3b82648ebe92ab4ef2cead1a38c2dfd04de1c24b');
   });
