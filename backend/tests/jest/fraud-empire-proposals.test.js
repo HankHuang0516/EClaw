@@ -96,9 +96,9 @@ describe('Fraud Empire proposed dialogue, expressions and connected presentation
   });
   test('pins the whole 654-asset release to exact content hashes', () => {
     const release = JSON.parse(fs.readFileSync(path.join(root, 'release.json'), 'utf8'));
-    expect(release.version).toBe('v4.8-b04-dispatch-ledgers-20261016-r1');
-    expect(release.assets).toHaveLength(659);
-    expect(new Set(release.assets.map(asset => asset.path)).size).toBe(659);
+    expect(release.version).toBe('v4.10-coach-p02-20261016-r1');
+    expect(release.assets).toHaveLength(663);
+    expect(new Set(release.assets.map(asset => asset.path)).size).toBe(663);
     expect(crypto.createHash('sha256').update(JSON.stringify(release.assets)).digest('hex')).toBe(release.contentHash);
     for (const asset of release.assets) {
       const bytes = fs.readFileSync(path.join(root, asset.path));

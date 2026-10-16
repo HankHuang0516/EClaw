@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.8-b04-dispatch-ledgers-20261016-r1",
+  "version": "v4.10-coach-p02-20261016-r1",
   "date": "2026-10-16",
-  "status": "B04-source-bound-first-increment-not-whole-game",
-  "contentHash": "df5706a6cfc709cf41bb27bd458fe30724bc0c9d7e18c9abd6f826e82e738056",
+  "status": "MG-P02-coaching-candidate-player-scene-not-integrated",
+  "contentHash": "161ddfca0308ae21b9e6ef0dc2329a7214bbb64d4fd3938b93954ed88f40a59b",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1692,8 +1692,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 11874,
-      "sha256": "68cf7925a8d453775edbe9b01a34a18802df4295334b28e51f217ca3f8d7435d"
+      "bytes": 12194,
+      "sha256": "fe34492ed58e3a773cb38c3a6737a1df66c5d6f115bbb20809fca2aae80474d0"
     },
     {
       "path": "interaction-coverage.json",
@@ -3281,6 +3281,26 @@
       "sha256": "b9b03581ce25eb09dd1d141ea38e6ae4fae23447c391027835962c575ef6d6c5"
     },
     {
+      "path": "supervisor-coach-locales.js",
+      "bytes": 19457,
+      "sha256": "a41f2cb1d0cff610ca3a8c48259923bad448cdcaf6aa4884615b44d679dc5fa9"
+    },
+    {
+      "path": "supervisor-coach-model.js",
+      "bytes": 9062,
+      "sha256": "5ba179c27cf2a1b5cfa91f4a8161d8ceb491e537b80fe0b3ed5633905a70b3b5"
+    },
+    {
+      "path": "supervisor-coach.css",
+      "bytes": 1733,
+      "sha256": "1e88c49dae775efd9957c2aa0a0e075aae937a7aa163695a5a1ea38a1b4f699c"
+    },
+    {
+      "path": "supervisor-coach.js",
+      "bytes": 10488,
+      "sha256": "3d40603907d796d7be4043e55e250b14ca36400cb13be903195970c30184174c"
+    },
+    {
       "path": "workflows-locales.js",
       "bytes": 20201,
       "sha256": "886c9ebe2ee9122f8b5e759274e349bfe265e868b1fa13dcb66d45aeedc4d759"
@@ -3428,5 +3448,22 @@
       "ja",
       "ko"
     ]
+  },
+  "supervisorCoach": {
+    "games": [
+      "MG-P02"
+    ],
+    "voiceRanks": "R1 Hou; R2-R5 Lin",
+    "relationshipState": "not-connected-no-inferred-affinity",
+    "audioAvailable": false,
+    "playerSceneIntegrated": false,
+    "configurationStatus": "adjustable-interface-proposal-not-game-balance",
+    "formalStateMutation": false,
+    "pendingGameSpecificAdapters": [
+      "MG-P01",
+      "MG-P05",
+      "MG-P06"
+    ],
+    "extensionPoint": "FraudCoachModel.createController; source-specific read/describe/surface bindings required"
   }
 }
