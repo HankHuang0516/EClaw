@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "version": "v4.11-player-demo-20261017-r2",
-  "contentHash": "ae68c10091a90858f740e6ab3b989a9eb2f4d98708f682479e858bdd6c7eff96",
+  "version": "v4.11-player-demo-20261017-r3",
+  "contentHash": "50a12fdba5f00e6d3231e1779abfc84ce364866ac0e81f70b4392a40c159486a",
   "hashScope": "exact-player-runtime-assets-excluding-this-context-and-worker-bootstrap",
   "assets": [
     {
@@ -101,8 +101,8 @@
     },
     {
       "path": "player-bootstrap.js",
-      "bytes": 11383,
-      "sha256": "678a2f5c289b6d8448faee2c65771ad627338243ba434dc4dd349a4018d33046"
+      "bytes": 10427,
+      "sha256": "75ce4ebf63efbc938e02849b646fd878f41ea69aa37c3ecfef057cfc21c86816"
     },
     {
       "path": "player-icon-180.png",
@@ -151,8 +151,8 @@
     },
     {
       "path": "player-scene-view.js",
-      "bytes": 19419,
-      "sha256": "6f7f4f921ae6a3a8412f4a6a55cf0bb36e1daf816dc276a332c6820039cf69f0"
+      "bytes": 35583,
+      "sha256": "3b04819912726950080a6105b01b3635ff9e01b64b25c473c778b71696d2382a"
     },
     {
       "path": "player-updates.js",
