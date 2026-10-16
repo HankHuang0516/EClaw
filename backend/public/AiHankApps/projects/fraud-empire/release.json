@@ -1,14 +1,19 @@
 {
   "schemaVersion": 1,
-  "version": "v4.7-b03-voice-20261016-r2",
+  "version": "v4.7-b03-voice-20261016-r3",
   "date": "2026-10-16",
   "status": "設計確認稿／開發中；B01序章互動與B02部分路徑原型，整份企劃未完成",
-  "contentHash": "cd4b803bc822bf9946c1672eea8533e3aae2f9f7a1854fea81228abc69d3b7e2",
+  "contentHash": "217e60c8b41c162f6822a33e1051c6783d83a609eccdaaf55cf9709db414a0b1",
   "assets": [
     {
       "path": "art-catalog.json",
       "bytes": 2262043,
       "sha256": "a95f81b8e34792c34b7ee9925ffa5355eddd177bd93b7cff433d19c688c45662"
+    },
+    {
+      "path": "b03-locales.js",
+      "bytes": 56344,
+      "sha256": "7fcd971fd314119b1e8280f6fb5f4f1ac1b7884c39d8e8b09cc90eb1ccd1d040"
     },
     {
       "path": "branch-enrichment-proposals.json",
@@ -1687,8 +1692,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 11514,
-      "sha256": "e7032c970ae418cd4af45733ad4e710dc8b64d4bb58f7e5fcccdf70ee04d2bb0"
+      "bytes": 11579,
+      "sha256": "d4777015d2ca3ae2bac447ac7bb26913b29490503a0c75f0a98e5e970c14b3d7"
     },
     {
       "path": "interaction-coverage.json",
@@ -3197,13 +3202,13 @@
     },
     {
       "path": "proposals.css",
-      "bytes": 8120,
-      "sha256": "20e275722c66ffee86dbf1f8be1fbfcd9c00a3f07ef1391abf82d8d0e64385a1"
+      "bytes": 8677,
+      "sha256": "f0594036d9143064edb2fb526ed1f9ced3db0fe35a3c3b7f9839e580731934fc"
     },
     {
       "path": "proposals.js",
-      "bytes": 41175,
-      "sha256": "2951b429f1a926f4b52df362348c51b512357a1893e015fa15ec8d6efd9352e2"
+      "bytes": 43419,
+      "sha256": "459f3417cb3b824ae2dc130c4baf36898beeb4086613548ca8eec3316228e8cc"
     },
     {
       "path": "references/006c22ae9b79004aaf8e.webp",
@@ -3350,6 +3355,22 @@
       "id": "BR36.choice.BR36_C03.02",
       "phoneOwnershipNotAssumed": true,
       "mechanicsChanged": false
+    },
+    "locales": {
+      "languages": [
+        "en",
+        "zh-TW",
+        "zh-CN",
+        "ja",
+        "ko"
+      ],
+      "revisedLines": 112,
+      "systemNotes": 8,
+      "newUIKeys": 6,
+      "completeForChangedScope": true,
+      "missingKeys": [],
+      "fullScriptTranslated": false,
+      "sourceLineDigest": "01f6bbd418a80e552ffd436d7d7943636a2367ace3eaa65aa73f2b3e1afa110c"
     }
   }
 }
