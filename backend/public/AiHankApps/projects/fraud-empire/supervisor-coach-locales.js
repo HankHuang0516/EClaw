@@ -69,7 +69,8 @@
       "followup": "打開「查看 {person} 後續」，先讀同一張原票的後果。",
       "attach": "讀過 {person} 後續了，現在可以夾回原票。",
       "seal": "三人後續都已夾回；按「封存本批一次」，只結算一次。",
-      "result": "本局已封存；返回只回看，不重發結果。"
+      "result": "本局已封存；返回只回看，不重發結果。",
+      "goAssembly": "先切回「拼片」分頁，原票和進度會保留。"
     }
   },
   "en": {
@@ -136,7 +137,8 @@
       "followup": "Open {person}’s follow-up and read the consequence for that original ticket.",
       "attach": "You’ve read {person}’s follow-up. Attach it to the original ticket.",
       "seal": "All three follow-ups are attached. Seal this batch once for a single result.",
-      "result": "This session is sealed. Returning only reviews it; no duplicate result."
+      "result": "This session is sealed. Returning only reviews it; no duplicate result.",
+      "goAssembly": "Return to the assembly tab first; original tickets and progress stay intact."
     }
   },
   "zh-CN": {
@@ -203,7 +205,8 @@
       "followup": "打开「查看 {person} 后续」，先读同一张原票的后果。",
       "attach": "读过 {person} 后续了，现在可以夹回原票。",
       "seal": "三人后续都已夹回；按「封存本批一次」，只结算一次。",
-      "result": "本局已封存；返回只回看，不重发结果。"
+      "result": "本局已封存；返回只回看，不重发结果。",
+      "goAssembly": "先切回「拼片」分页，原票和进度会保留。"
     }
   },
   "ja": {
@@ -270,7 +273,8 @@
       "followup": "{person} のその後を開き、元の券に対応する結果を読む。",
       "attach": "{person} のその後を読んだので、元の券に添付できる。",
       "seal": "3人分を添付済み。この一括分を1回だけ封じ、結果を1回だけ記録する。",
-      "result": "この回は封じてある。戻っても閲覧のみで結果は増えない。"
+      "result": "この回は封じてある。戻っても閲覧のみで結果は増えない。",
+      "goAssembly": "まず「拼片」タブ（組立）へ戻ってください。元の券と進行はそのまま残ります。"
     }
   },
   "ko": {
@@ -337,7 +341,8 @@
       "followup": "{person}의 후속 내용을 열어 원본 표에 해당하는 결과를 읽으세요.",
       "attach": "{person}의 후속 내용을 읽었으니 원본 표에 첨부할 수 있습니다.",
       "seal": "세 사람의 후속 내용을 첨부했습니다. 이번 묶음을 한 번만 봉인해 결과를 한 번만 기록하세요.",
-      "result": "이번 회차는 봉인됐습니다. 돌아가도 읽기만 가능하며 결과는 중복되지 않습니다."
+      "result": "이번 회차는 봉인됐습니다. 돌아가도 읽기만 가능하며 결과는 중복되지 않습니다.",
+      "goAssembly": "먼저 「拼片」(조립) 탭으로 돌아가세요. 원본 표와 진행도는 유지됩니다."
     }
   }
 };
