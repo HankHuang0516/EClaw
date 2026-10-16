@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.5-plan-interaction-b01-20261016",
+  "version": "v4.6-plan-interaction-b02-routes-20261016",
   "date": "2026-10-16",
-  "status": "設計確認稿／開發中；B01獨立T02前端互動，完整企劃其餘批次待實作驗收",
-  "contentHash": "c8cfec4467ca29067d741e26536ac4c51d27e2e5c08677ccc4d76e977389d7a8",
+  "status": "設計確認稿／開發中；B01序章互動與B02部分路徑原型，整份企劃未完成",
+  "contentHash": "608e9b8e185a6a542df6749b27ca48e6f1d38118989de3b72866d6b314c96ad2",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -19,6 +19,26 @@
       "path": "branch-logic-corrections.json",
       "bytes": 20656,
       "sha256": "28ca7679cb045ccfcf7f937d37d5b915ed1571937ab2f45c040e433575ac8ed3"
+    },
+    {
+      "path": "camp-interaction-data.json",
+      "bytes": 67762,
+      "sha256": "bc3cba64ce9c66e1083ecd81257407a37edda3a821f4f08667f27148689ffe59"
+    },
+    {
+      "path": "camp-interaction-model.js",
+      "bytes": 5006,
+      "sha256": "3870f311f597cde382382005428ca4f1acb7e2ad3665f167a9197593012b2741"
+    },
+    {
+      "path": "camp-interaction.css",
+      "bytes": 2047,
+      "sha256": "053b31c56a67fcd22db3f794b03619043a5aa66efdf254cdb2d707e0d672c806"
+    },
+    {
+      "path": "camp-interaction.js",
+      "bytes": 8090,
+      "sha256": "1c953f0fc8e5e611c7e24b1b20238ee6b316e2a217b74d8e8fc669df9293e532"
     },
     {
       "path": "demo-data.json",
@@ -1667,13 +1687,13 @@
     },
     {
       "path": "index.html",
-      "bytes": 10957,
-      "sha256": "576be4da5bde6e0953b12e4eed4f1cdd2c3761798affdbd94315d46fd5521d6a"
+      "bytes": 11478,
+      "sha256": "242859ad50e19e1244240cc2aa6ff5c6ed17e2fb1a163bba8e9fe049dd95318c"
     },
     {
       "path": "interaction-coverage.json",
-      "bytes": 234653,
-      "sha256": "25b77a3b7dc7461da428759721d2b649d25df7f87601f0d7388cdf7ff2c5ed06"
+      "bytes": 239432,
+      "sha256": "2082e715ce40a605d6c4619a69ad5ee5f9fcfabef520d0cf83eb89ff52b7bcd4"
     },
     {
       "path": "interactive-prototype-data.json",
@@ -1727,8 +1747,8 @@
     },
     {
       "path": "plan-interaction.js",
-      "bytes": 11501,
-      "sha256": "3b46c264bfbc41d017c61e36123a59cdc0b7f3d7a992f4e4740ee779c4a6e925"
+      "bytes": 11561,
+      "sha256": "acf237cea453756fd30d385612dc0c1e9ad3ac053987f3707a3bd86a170cb07d"
     },
     {
       "path": "plan.json",
@@ -3300,7 +3320,11 @@
     "wholePlanSourceRecords": 696,
     "independentInteractivePrologues": 1,
     "interactivePrologueSegments": 7,
-    "interactionBatch": "B01"
+    "interactionBatch": "B02-routes-partial",
+    "campScenePreviews": 10,
+    "campRoutableScenes": 9,
+    "campSourceHotspots": 38,
+    "campInventoryAcquisitionImplemented": false
   },
   "limitations": [
     "所有新增文字、外觀與表情仍為提案，不代表正式劇本或可用sprites。",
@@ -3310,7 +3334,8 @@
     "完整新17提案、六幅原圖及兩款實際物件操作原型已接入；其餘15款未實作，日期、成本、平衡與正式機制未獲採納。",
     "關係樹與10條角色弧已接入提案閱讀；111句與3條新支線未採納為正式劇情。",
     "25條文字修訂已核對整合。可達性摘要在匹配指定凍結來源後，只同步既有說明欄位；T13原有智慧25／R2等條件不變，未部署私人原檔或新增投影欄位。其他正式機制與同意細節仍依提案待確認。",
-    "全企劃696筆來源覆蓋記錄不等於完成；本版只完成B01前端互動。B02–B06仍待逐項實作與正式驗收。",
-    "T02首次合計20分鐘、跨日、初值與耗損啟動未定；本批不套全局時鐘或睡眠效果。短片未提供，只提供來源明列的主動略過。"
+    "全企劃696筆來源對照不等於完成。B01功能驗收已通過；本版B02只提供9場景的邏輯路徑／走近，宿舍布局、正式入場、取物及B03–B06仍未完成。",
+    "T02首次合計20分鐘、跨日、初值與耗損啟動未定；本批不套全局時鐘或睡眠效果。短片未提供，只提供來源明列的主動略過。",
+    "既有制式系統文案／角色口吻待B03精修，互動驗收不等同文案品質通過。"
   ]
 }

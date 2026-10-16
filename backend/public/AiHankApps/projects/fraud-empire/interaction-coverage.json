@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "v4.5-plan-interaction-b01-20261016",
+  "version": "v4.6-plan-interaction-b02-routes-20261016",
   "title": "整份企劃互動覆蓋盤點",
   "baseline": {
     "version": "v4.4.1-proposal-boundaries-20261016",
@@ -15,37 +15,44 @@
     {
       "id": "B00",
       "name": "完整覆蓋與來源盤點",
-      "scope": "保留所有章節／來源追溯；不是以目錄代替互動"
+      "scope": "保留所有章節／來源追溯；不是以目錄代替互動",
+      "displayStatus": "已盤點，不是完成的功能數"
     },
     {
       "id": "B01",
       "name": "T02獨立七段互動",
-      "scope": "移動、雙視角、自己的行李、對話、可略過壓迫演出、兩段記憶保存、安置；獨立狀態，不發資源"
+      "scope": "移動、雙視角、自己的行李、對話、可略過壓迫演出、兩段記憶保存、安置；獨立狀態，不發資源",
+      "displayStatus": "v4.5正式功能驗收通過；文案待精修"
     },
     {
       "id": "B02",
       "name": "園區移動／熱點／取物",
-      "scope": "沿原節點與物品來源；宿舍布局未定部分保留"
+      "scope": "沿原節點與物品來源；宿舍布局未定部分保留",
+      "displayStatus": "本版僅路徑／走近提案原型；取物與正式進場未完成"
     },
     {
       "id": "B03",
       "name": "主支線／關係／同伴支持",
-      "scope": "條件、分支互斥、同意與單次狀態；未定親密支線不播放"
+      "scope": "條件、分支互斥、同意與單次狀態；未定親密支線不播放",
+      "displayStatus": "待實作與驗收，不標完成"
     },
     {
       "id": "B04",
       "name": "派工及新舊玩法增量原型",
-      "scope": "保留兩款；其他按明列工序逐款串接，不造智慧分段／門檻／媒體替代"
+      "scope": "保留兩款；其他按明列工序逐款串接，不造智慧分段／門檻／媒體替代",
+      "displayStatus": "待實作與驗收，不標完成"
     },
     {
       "id": "B05",
       "name": "日結／晉升／補給／道具／存讀檔",
-      "scope": "明列規則與提案試算分開；完整時間線不混合未來資源；存讀檔只限明確標示的前端演示快照／重設，非正式存檔服務、帳號或雲端架構。"
+      "scope": "明列規則與提案試算分開；完整時間線不混合未來資源；存讀檔只限明確標示的前端演示快照／重設，非正式存檔服務、帳號或雲端架構。",
+      "displayStatus": "待實作與驗收，不標完成"
     },
     {
       "id": "B06",
       "name": "終局／逃離舞台／回顧",
-      "scope": "兩條主路線、同意與道具分鏡、無獎回顧；無媒體不宣稱已播"
+      "scope": "兩條主路線、同意與道具分鏡、無獎回顧；無媒體不宣稱已播",
+      "displayStatus": "待實作與驗收，不標完成"
     }
   ],
   "pending": [
@@ -78,7 +85,7 @@
     "MG-P10：已有鄭伯／芊芊／羅森與空殼、重複展示文字，但未提供逐人物－固定獎物－領取／退出對照。",
     "MG-P16：已有三張照片、唯一缺角箱與實物點收文字，但未提供逐項實際物資清單與照片對應。"
   ],
-  "completionClaim": "696為來源對照記錄，不是可操作功能完成數；本版只實作B01的1個獨立序章／7段互動，其他尚未完成。",
+  "completionClaim": "696筆仍是來源對照。B01為1個獨立序章／7段互動；B02本批只做9場景路徑與走近熱點，宿舍布局、正式進場及取物未完成；其餘批次待實作。",
   "records": [
     {
       "id": "DOC:core_design:0",
@@ -2467,8 +2474,8 @@
       "entry": "#topics",
       "batch": "B01",
       "source": "plan.json:/topics/T02",
-      "implementation": "frontend-proposal-this-batch",
-      "acceptance": "本版待正式發布驗收收據"
+      "implementation": "frontend-prototype-verified-v45",
+      "acceptance": "正式功能驗收通過；角色與文案品質未通過"
     },
     {
       "id": "T02-S01",
@@ -2477,8 +2484,8 @@
       "entry": "#topics",
       "batch": "B01",
       "source": "plan.json:/topics/T02/steps/T02-S01",
-      "implementation": "frontend-proposal-this-batch",
-      "acceptance": "本版待正式發布驗收收據"
+      "implementation": "frontend-prototype-verified-v45",
+      "acceptance": "正式功能驗收通過；角色與文案品質未通過"
     },
     {
       "id": "T02-S02",
@@ -2487,8 +2494,8 @@
       "entry": "#topics",
       "batch": "B01",
       "source": "plan.json:/topics/T02/steps/T02-S02",
-      "implementation": "frontend-proposal-this-batch",
-      "acceptance": "本版待正式發布驗收收據"
+      "implementation": "frontend-prototype-verified-v45",
+      "acceptance": "正式功能驗收通過；角色與文案品質未通過"
     },
     {
       "id": "T02-S03",
@@ -2497,8 +2504,8 @@
       "entry": "#topics",
       "batch": "B01",
       "source": "plan.json:/topics/T02/steps/T02-S03",
-      "implementation": "frontend-proposal-this-batch",
-      "acceptance": "本版待正式發布驗收收據"
+      "implementation": "frontend-prototype-verified-v45",
+      "acceptance": "正式功能驗收通過；角色與文案品質未通過"
     },
     {
       "id": "T02-S04",
@@ -2507,8 +2514,8 @@
       "entry": "#topics",
       "batch": "B01",
       "source": "plan.json:/topics/T02/steps/T02-S04",
-      "implementation": "frontend-proposal-this-batch",
-      "acceptance": "本版待正式發布驗收收據"
+      "implementation": "frontend-prototype-verified-v45",
+      "acceptance": "正式功能驗收通過；角色與文案品質未通過"
     },
     {
       "id": "T02-S05",
@@ -2517,8 +2524,8 @@
       "entry": "#topics",
       "batch": "B01",
       "source": "plan.json:/topics/T02/steps/T02-S05",
-      "implementation": "frontend-proposal-this-batch",
-      "acceptance": "本版待正式發布驗收收據"
+      "implementation": "frontend-prototype-verified-v45",
+      "acceptance": "正式功能驗收通過；角色與文案品質未通過"
     },
     {
       "id": "T02-S06",
@@ -2527,8 +2534,8 @@
       "entry": "#topics",
       "batch": "B01",
       "source": "plan.json:/topics/T02/steps/T02-S06",
-      "implementation": "frontend-proposal-this-batch",
-      "acceptance": "本版待正式發布驗收收據"
+      "implementation": "frontend-prototype-verified-v45",
+      "acceptance": "正式功能驗收通過；角色與文案品質未通過"
     },
     {
       "id": "T02-S07",
@@ -2537,8 +2544,8 @@
       "entry": "#topics",
       "batch": "B01",
       "source": "plan.json:/topics/T02/steps/T02-S07",
-      "implementation": "frontend-proposal-this-batch",
-      "acceptance": "本版待正式發布驗收收據"
+      "implementation": "frontend-prototype-verified-v45",
+      "acceptance": "正式功能驗收通過；角色與文案品質未通過"
     },
     {
       "id": "T03",
@@ -4327,8 +4334,8 @@
       "entry": "#story",
       "batch": "B02",
       "source": "plan.json:/narrative/intel/I01",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "await-source-event-outcome-integration",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "I02",
@@ -4337,8 +4344,8 @@
       "entry": "#story",
       "batch": "B02",
       "source": "plan.json:/narrative/intel/I02",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "await-source-event-outcome-integration",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "I03",
@@ -4347,8 +4354,8 @@
       "entry": "#story",
       "batch": "B02",
       "source": "plan.json:/narrative/intel/I03",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "await-source-event-outcome-integration",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "I04",
@@ -4357,8 +4364,8 @@
       "entry": "#story",
       "batch": "B02",
       "source": "plan.json:/narrative/intel/I04",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "await-source-event-outcome-integration",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "I05",
@@ -4367,8 +4374,8 @@
       "entry": "#story",
       "batch": "B02",
       "source": "plan.json:/narrative/intel/I05",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "await-source-event-outcome-integration",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "I06",
@@ -4377,8 +4384,8 @@
       "entry": "#story",
       "batch": "B02",
       "source": "plan.json:/narrative/intel/I06",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "await-source-event-outcome-integration",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "I07",
@@ -4387,8 +4394,8 @@
       "entry": "#story",
       "batch": "B02",
       "source": "plan.json:/narrative/intel/I07",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "await-source-event-outcome-integration",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "I08",
@@ -4397,8 +4404,8 @@
       "entry": "#story",
       "batch": "B02",
       "source": "plan.json:/narrative/intel/I08",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "await-source-event-outcome-integration",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "IT01",
@@ -4407,8 +4414,8 @@
       "entry": "#story",
       "batch": "B02",
       "source": "plan.json:/narrative/items/IT01",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "await-source-event-outcome-integration",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "IT02",
@@ -4417,8 +4424,8 @@
       "entry": "#story",
       "batch": "B02",
       "source": "plan.json:/narrative/items/IT02",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "await-source-event-outcome-integration",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "IT03",
@@ -4427,8 +4434,8 @@
       "entry": "#story",
       "batch": "B02",
       "source": "plan.json:/narrative/items/IT03",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "await-source-event-outcome-integration",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "IT04",
@@ -4437,8 +4444,8 @@
       "entry": "#story",
       "batch": "B02",
       "source": "plan.json:/narrative/items/IT04",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "await-source-event-outcome-integration",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "IT05",
@@ -4447,8 +4454,8 @@
       "entry": "#story",
       "batch": "B02",
       "source": "plan.json:/narrative/items/IT05",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "await-source-event-outcome-integration",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "IT06",
@@ -4457,8 +4464,8 @@
       "entry": "#story",
       "batch": "B02",
       "source": "plan.json:/narrative/items/IT06",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "await-source-event-outcome-integration",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "IT07",
@@ -4467,8 +4474,8 @@
       "entry": "#story",
       "batch": "B02",
       "source": "plan.json:/narrative/items/IT07",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "await-source-event-outcome-integration",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "IT08",
@@ -4477,8 +4484,8 @@
       "entry": "#story",
       "batch": "B02",
       "source": "plan.json:/narrative/items/IT08",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "await-source-event-outcome-integration",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "IT09",
@@ -4487,8 +4494,8 @@
       "entry": "#story",
       "batch": "B02",
       "source": "plan.json:/narrative/items/IT09",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "await-source-event-outcome-integration",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "IT10",
@@ -4497,8 +4504,8 @@
       "entry": "#story",
       "batch": "B02",
       "source": "plan.json:/narrative/items/IT10",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "await-source-event-outcome-integration",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "ESC-S01",
@@ -4607,8 +4614,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M01",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "source-route-prototype-this-batch",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M01-H01",
@@ -4617,8 +4624,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M01/hotspots/M01-H01",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M01-H02",
@@ -4627,8 +4634,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M01/hotspots/M01-H02",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M01-H03",
@@ -4637,8 +4644,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M01/hotspots/M01-H03",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M01-H04",
@@ -4647,8 +4654,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M01/hotspots/M01-H04",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M01-H05",
@@ -4657,8 +4664,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M01/hotspots/M01-H05",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M02",
@@ -4667,8 +4674,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M02",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "source-route-prototype-this-batch",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M02-H01",
@@ -4677,8 +4684,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M02/hotspots/M02-H01",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M02-H02",
@@ -4687,8 +4694,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M02/hotspots/M02-H02",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M02-H03",
@@ -4697,8 +4704,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M02/hotspots/M02-H03",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M02-H04",
@@ -4707,8 +4714,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M02/hotspots/M02-H04",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M03",
@@ -4717,8 +4724,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M03",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "held-layout",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M03-H01",
@@ -4727,8 +4734,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M03/hotspots/M03-H01",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "held-layout",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M03-H02",
@@ -4737,8 +4744,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M03/hotspots/M03-H02",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "held-layout",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M03-H03",
@@ -4747,8 +4754,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M03/hotspots/M03-H03",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "held-layout",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M03-H04",
@@ -4757,8 +4764,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M03/hotspots/M03-H04",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "held-layout",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M04",
@@ -4767,8 +4774,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M04",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "source-route-prototype-this-batch",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M04-H01",
@@ -4777,8 +4784,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M04/hotspots/M04-H01",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M04-H02",
@@ -4787,8 +4794,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M04/hotspots/M04-H02",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M04-H03",
@@ -4797,8 +4804,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M04/hotspots/M04-H03",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M04-H04",
@@ -4807,8 +4814,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M04/hotspots/M04-H04",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M05",
@@ -4817,8 +4824,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M05",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "source-route-prototype-this-batch",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M05-H01",
@@ -4827,8 +4834,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M05/hotspots/M05-H01",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M05-H02",
@@ -4837,8 +4844,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M05/hotspots/M05-H02",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M05-H03",
@@ -4847,8 +4854,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M05/hotspots/M05-H03",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M05-H04",
@@ -4857,8 +4864,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M05/hotspots/M05-H04",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M06",
@@ -4867,8 +4874,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M06",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "source-route-prototype-this-batch",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M06-H01",
@@ -4877,8 +4884,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M06/hotspots/M06-H01",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M06-H02",
@@ -4887,8 +4894,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M06/hotspots/M06-H02",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M06-H03",
@@ -4897,8 +4904,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M06/hotspots/M06-H03",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M07",
@@ -4907,8 +4914,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M07",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "source-route-prototype-this-batch",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M07-H01",
@@ -4917,8 +4924,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M07/hotspots/M07-H01",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M07-H02",
@@ -4927,8 +4934,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M07/hotspots/M07-H02",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M07-H03",
@@ -4937,8 +4944,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M07/hotspots/M07-H03",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M07-H04",
@@ -4947,8 +4954,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M07/hotspots/M07-H04",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M08",
@@ -4957,8 +4964,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M08",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "source-route-prototype-this-batch",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M08-H01",
@@ -4967,8 +4974,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M08/hotspots/M08-H01",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M08-H02",
@@ -4977,8 +4984,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M08/hotspots/M08-H02",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M08-H03",
@@ -4987,8 +4994,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M08/hotspots/M08-H03",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M08-H04",
@@ -4997,8 +5004,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M08/hotspots/M08-H04",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M09",
@@ -5007,8 +5014,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M09",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "source-route-prototype-this-batch",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M09-H01",
@@ -5017,8 +5024,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M09/hotspots/M09-H01",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M09-H02",
@@ -5027,8 +5034,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M09/hotspots/M09-H02",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M09-H03",
@@ -5037,8 +5044,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M09/hotspots/M09-H03",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M10",
@@ -5047,8 +5054,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M10",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "source-route-prototype-this-batch",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M10-H01",
@@ -5057,8 +5064,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M10/hotspots/M10-H01",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M10-H02",
@@ -5067,8 +5074,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M10/hotspots/M10-H02",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "M10-H03",
@@ -5077,8 +5084,8 @@
       "entry": "#maps",
       "batch": "B02",
       "source": "plan.json:/maps/scenes/M10/hotspots/M10-H03",
-      "implementation": "planned",
-      "acceptance": "未於本批實作驗收；不可標完成"
+      "implementation": "approach-inspect-only-acquisition-pending",
+      "acceptance": "本批路徑／走近待正式驗收；取物未完成"
     },
     {
       "id": "PERSON:protagonist",
@@ -7040,5 +7047,52 @@
       "implementation": "planned",
       "acceptance": "未於本批實作驗收；不可標完成"
     }
-  ]
+  ],
+  "acquisitionClassification": {
+    "sourceEntries": 18,
+    "knownOutcomesAwaitingEngineering": [
+      "IT01",
+      "I01",
+      "IT02",
+      "I02",
+      "IT03",
+      "I08",
+      "IT04",
+      "I03",
+      "IT06",
+      "I04",
+      "IT05",
+      "IT07",
+      "I05",
+      "IT08",
+      "I06",
+      "I07",
+      "IT09",
+      "IT10"
+    ],
+    "specificAuthorVariantHolds": [
+      {
+        "id": "I03",
+        "sourceEvent": "BR24",
+        "question": "逐人NPC願意／需要時間／不願意的選取機制未定，不能由好感OR代替。"
+      }
+    ],
+    "newerSourceResolved": [
+      "IT05",
+      "IT10"
+    ],
+    "note": "不能把工程尚未串接一概寫成作者待決；本批仍不以站位／閱讀冒充發放。",
+    "sourceAuditBacklog": [
+      {
+        "id": "I01",
+        "engineeringAudit": "先逐choice ID核對dialogue-proposals、branch-logic-corrections與最新敘事原來源；尚未定為作者待決，不提泛稱問題。",
+        "askAuthorNow": false
+      },
+      {
+        "id": "IT08",
+        "engineeringAudit": "先逐choice ID核對dialogue-proposals、branch-logic-corrections與最新敘事原來源；尚未定為作者待決，不提泛稱問題。",
+        "askAuthorNow": false
+      }
+    ]
+  }
 }
