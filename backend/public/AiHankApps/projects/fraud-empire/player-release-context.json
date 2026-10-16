@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "version": "v4.11-player-demo-20261017-r3",
-  "contentHash": "50a12fdba5f00e6d3231e1779abfc84ce364866ac0e81f70b4392a40c159486a",
+  "version": "v4.12-phone-voice-candidates-20261017-r1",
+  "contentHash": "c89133cbbf802e2813e983796dd49dd7f7724cc422e2080cc9fa55b292c26048",
   "hashScope": "exact-player-runtime-assets-excluding-this-context-and-worker-bootstrap",
   "assets": [
     {
@@ -36,8 +36,8 @@
     },
     {
       "path": "play.html",
-      "bytes": 2770,
-      "sha256": "3a50dd01084d31a91b57449ad31f75b245aa2c64d927da8d298e9e0a02e226aa"
+      "bytes": 2867,
+      "sha256": "52376fedaed445f78f83bc7a64edfa6f632824365778dc1d306de1343892eacc"
     },
     {
       "path": "player-assets-registry.js",
@@ -96,13 +96,33 @@
     },
     {
       "path": "player-audio.js",
-      "bytes": 3904,
-      "sha256": "e5bd2fffa5882e2b69e0dfbf2ca75801daabe4cf7e98d2088b1776aef66653ce"
+      "bytes": 4603,
+      "sha256": "16d8a8d9a24ec68763332b86289582e84519ff7536755469ef1c43f23508e3e3"
+    },
+    {
+      "path": "player-audio/ahou-demo-check-01-979a4b171c13.wav",
+      "bytes": 33164,
+      "sha256": "979a4b171c13267cd505d834af6ff343eb5de8c0b40d5d8054a7527d8623ac79"
+    },
+    {
+      "path": "player-audio/ahou-demo-turn-01-96f02d070322.wav",
+      "bytes": 27404,
+      "sha256": "96f02d070322b1b010a8cf2a9cd29c678c05f29885537c88ca7b139613231a2a"
+    },
+    {
+      "path": "player-audio/ahou-eh-two-A-aa1f0ca47221.wav",
+      "bytes": 34124,
+      "sha256": "aa1f0ca472219de2ffe1a605081e56f2dbb023eabdd65a5fddbecd172e3f02b8"
+    },
+    {
+      "path": "player-audio/ahou-eh-two-B-trimmed-404d1da5f474.wav",
+      "bytes": 45644,
+      "sha256": "404d1da5f47456afda651df515d47ddf35ce2458a7c6f4d81b2a9b06b310d6be"
     },
     {
       "path": "player-bootstrap.js",
-      "bytes": 10427,
-      "sha256": "75ce4ebf63efbc938e02849b646fd878f41ea69aa37c3ecfef057cfc21c86816"
+      "bytes": 11716,
+      "sha256": "cb113b6027f94fb203bd962feaa9c591d6ba8a0475558b369494c7d13da96f43"
     },
     {
       "path": "player-icon-180.png",
@@ -123,6 +143,11 @@
       "path": "player-install-contract.js",
       "bytes": 3367,
       "sha256": "7340bda01d969b7c09da94a78f4f73e019021f8fc501468f80a2aef0b98aef0d"
+    },
+    {
+      "path": "player-layout.js",
+      "bytes": 6418,
+      "sha256": "f50edaefb953cd5ac462417b7a41110196e1365eccebf0ffede257fa7aef44ed"
     },
     {
       "path": "player-report.js",
@@ -146,13 +171,13 @@
     },
     {
       "path": "player-scene-view.css",
-      "bytes": 4198,
-      "sha256": "d9def212abc670db230f5343709085db8f132b0cc50405fd9023b945bac36d62"
+      "bytes": 18739,
+      "sha256": "dc97659d3aaee1c533adc5b7249d6c4ac55b278b1a7b3395ee3e47824bb9549a"
     },
     {
       "path": "player-scene-view.js",
-      "bytes": 35583,
-      "sha256": "3b04819912726950080a6105b01b3635ff9e01b64b25c473c778b71696d2382a"
+      "bytes": 43157,
+      "sha256": "447f82880545f755f814254b2a4b939897e96ab0faaf8d2abce2183edfb624e7"
     },
     {
       "path": "player-updates.js",
@@ -160,9 +185,14 @@
       "sha256": "4a2ef11c57b0caf82c1955054a3c006316634c6eae0eaea7a2dc0385c36643ac"
     },
     {
+      "path": "player-voice-packs.js",
+      "bytes": 10731,
+      "sha256": "d6ec018d254dbc46b2f6ae7f7bbae4556e01ce396444174afa54e81627ad14f5"
+    },
+    {
       "path": "player.webmanifest",
-      "bytes": 694,
-      "sha256": "5cad409459c56d93fd911ac7d5a97ee5942d42392ba6b7e8b5a260f20228f06d"
+      "bytes": 723,
+      "sha256": "e29c06b995e44483cd0da61818a5224aad6aaec0963daa976416abe872f5ef83"
     },
     {
       "path": "proposal-demos/17727e3739a457a26aa6.png",
