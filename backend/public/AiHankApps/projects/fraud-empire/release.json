@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.4.1-proposal-boundaries-20261016",
+  "version": "v4.5-plan-interaction-b01-20261016",
   "date": "2026-10-16",
-  "status": "設計確認稿／開發中；人物關係與支線提案，保留兩款可操作前端原型",
-  "contentHash": "5bcbdcd3778726e6720dfc6960f5dd843a14a7d42bd86d88fb755a544f88cc7a",
+  "status": "設計確認稿／開發中；B01獨立T02前端互動，完整企劃其餘批次待實作驗收",
+  "contentHash": "c8cfec4467ca29067d741e26536ac4c51d27e2e5c08677ccc4d76e977389d7a8",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1667,8 +1667,13 @@
     },
     {
       "path": "index.html",
-      "bytes": 10358,
-      "sha256": "4a83c588cca334983dc8c196cf427ff6adf461cdb61a04ce5933cf55c3cbc024"
+      "bytes": 10957,
+      "sha256": "576be4da5bde6e0953b12e4eed4f1cdd2c3761798affdbd94315d46fd5521d6a"
+    },
+    {
+      "path": "interaction-coverage.json",
+      "bytes": 234653,
+      "sha256": "25b77a3b7dc7461da428759721d2b649d25df7f87601f0d7388cdf7ff2c5ed06"
     },
     {
       "path": "interactive-prototype-data.json",
@@ -1704,6 +1709,26 @@
       "path": "new-gameplay-proposals.json",
       "bytes": 151912,
       "sha256": "67ba13c122de79e85dae52d5ef6983f5151f28e0febd809259bbdb21132ee3f1"
+    },
+    {
+      "path": "plan-interaction-data.json",
+      "bytes": 7919,
+      "sha256": "1eebc394b5a5edd1648c38dbb1ea60ea4e3b34bd33a3cbeac39503e51c5e7741"
+    },
+    {
+      "path": "plan-interaction-model.js",
+      "bytes": 7898,
+      "sha256": "efda31071c9b4e7ecf4fc9bdbd6b643b31cdc2dbf210053c0badad4bd9755633"
+    },
+    {
+      "path": "plan-interaction.css",
+      "bytes": 4123,
+      "sha256": "298d6e18e0eba06e8abc8faefab3662d4b152fa58a300880b519d7ff4b053730"
+    },
+    {
+      "path": "plan-interaction.js",
+      "bytes": 11501,
+      "sha256": "3b46c264bfbc41d017c61e36123a59cdc0b7f3d7a992f4e4740ee779c4a6e925"
     },
     {
       "path": "plan.json",
@@ -3271,7 +3296,11 @@
     "proposedArcLines": 111,
     "unadoptedNewBranches": 3,
     "branchTextRevisionsIntegrated": 25,
-    "branchTextRevisionsDeferred": 0
+    "branchTextRevisionsDeferred": 0,
+    "wholePlanSourceRecords": 696,
+    "independentInteractivePrologues": 1,
+    "interactivePrologueSegments": 7,
+    "interactionBatch": "B01"
   },
   "limitations": [
     "所有新增文字、外觀與表情仍為提案，不代表正式劇本或可用sprites。",
@@ -3280,6 +3309,8 @@
     "短片、正式玩法程式、正式存檔及遊戲服務未實作；兩款前端原型不等同正式遊戲。",
     "完整新17提案、六幅原圖及兩款實際物件操作原型已接入；其餘15款未實作，日期、成本、平衡與正式機制未獲採納。",
     "關係樹與10條角色弧已接入提案閱讀；111句與3條新支線未採納為正式劇情。",
-    "25條文字修訂已核對整合。可達性摘要在匹配指定凍結來源後，只同步既有說明欄位；T13原有智慧25／R2等條件不變，未部署私人原檔或新增投影欄位。其他正式機制與同意細節仍依提案待確認。"
+    "25條文字修訂已核對整合。可達性摘要在匹配指定凍結來源後，只同步既有說明欄位；T13原有智慧25／R2等條件不變，未部署私人原檔或新增投影欄位。其他正式機制與同意細節仍依提案待確認。",
+    "全企劃696筆來源覆蓋記錄不等於完成；本版只完成B01前端互動。B02–B06仍待逐項實作與正式驗收。",
+    "T02首次合計20分鐘、跨日、初值與耗損啟動未定；本批不套全局時鐘或睡眠效果。短片未提供，只提供來源明列的主動略過。"
   ]
 }
