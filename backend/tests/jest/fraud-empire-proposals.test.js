@@ -94,11 +94,11 @@ describe('Fraud Empire proposed dialogue, expressions and connected presentation
     for (const p of art.portraits) for (const cell of p.cells) expect(fs.existsSync(path.join(root, cell.src))).toBe(true);
     for (const r of art.references) expect(fs.existsSync(path.join(root, r.src))).toBe(true);
   });
-  test('pins the whole 654-asset release to exact content hashes', () => {
+  test('pins the whole 657-asset release to exact content hashes', () => {
     const release = JSON.parse(fs.readFileSync(path.join(root, 'release.json'), 'utf8'));
-    expect(release.version).toBe('v4.6-plan-interaction-b02-routes-20261016');
-    expect(release.assets).toHaveLength(654);
-    expect(new Set(release.assets.map(asset => asset.path)).size).toBe(654);
+    expect(release.version).toBe('v4.6.1-demo-feedback-20261016');
+    expect(release.assets).toHaveLength(657);
+    expect(new Set(release.assets.map(asset => asset.path)).size).toBe(657);
     expect(crypto.createHash('sha256').update(JSON.stringify(release.assets)).digest('hex')).toBe(release.contentHash);
     for (const asset of release.assets) {
       const bytes = fs.readFileSync(path.join(root, asset.path));

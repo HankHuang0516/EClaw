@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>詐騙帝國｜v4 完整互動企劃</title>
+  <meta name="fraud-demo-report" content="demo-only">
   <meta name="description" content="直接閱讀詐騙帝國完整 v4 設計確認稿，逐步看 16 玩法與 1 主線序章、人物關係、故事分支、園區地圖與結局。開發中，非可玩遊戲。">
   <link rel="canonical" href="https://eclawbot.com/AiHankApps/projects/fraud-empire/">
   <link rel="icon" href="../../favicon.png">
@@ -17,6 +18,7 @@
   <link rel="stylesheet" href="new-gameplay-proposals.css">
   <link rel="stylesheet" href="plan-interaction.css">
   <link rel="stylesheet" href="camp-interaction.css">
+  <link rel="stylesheet" href="demo-feedback.css" data-demo-only>
   <link rel="stylesheet" href="interactive-prototype.css">
   <link rel="stylesheet" href="relationship-archive.css">
 </head>
@@ -26,7 +28,7 @@
   <nav class="section-nav" aria-label="企劃章節"><a href="#overview">開卷</a><a href="#plan-interaction">互動展示</a><a href="#camp-interaction">園區試走</a><a href="#reader">完整章節</a><a href="#topics">16 玩法＋1 序章</a><a href="#story">故事與關係</a><a href="#maps">園區地圖</a><a href="#gallery">示意圖鑑</a><a href="#art-overview">美術總覽</a><a href="#decisions">最新決策</a><a href="#backups">文件備份</a></nav>
   <main>
     <section class="hero shell" id="overview">
-      <div class="hero-copy"><p class="eyebrow">HANK'S APP COLLECTION · DESIGN ARCHIVE 04</p><p class="edition">V4.6 <span>2026.10.16</span></p><h1>詐騙帝國</h1><p class="hero-line">升遷，不一定是<br>離開這裡的路。</p><p class="lead">白天跟著主管派工，晚上面對同事、情報與自己的去向。從 16 個玩法分類與 1 段主線序章的圖文步驟，讀到通往權力或警燈的兩條主路。</p><div class="hero-actions"><a class="button primary" href="#reader">開始閱讀完整企劃 <span>↗</span></a><a class="text-link" href="#topics">逐步看題材</a></div><div class="facts"><span><b>16＋1</b> 玩法／序章</span><span><b>119</b> 代表步驟</span><span><b>319</b> AI 示意圖</span></div></div>
+      <div class="hero-copy"><p class="eyebrow">HANK'S APP COLLECTION · DESIGN ARCHIVE 04</p><p class="edition">V4.6.1 <span>2026.10.16</span></p><h1>詐騙帝國</h1><p class="hero-line">升遷，不一定是<br>離開這裡的路。</p><p class="lead">白天跟著主管派工，晚上面對同事、情報與自己的去向。從 16 個玩法分類與 1 段主線序章的圖文步驟，讀到通往權力或警燈的兩條主路。</p><div class="hero-actions"><a class="button primary" href="#reader">開始閱讀完整企劃 <span>↗</span></a><a class="text-link" href="#topics">逐步看題材</a></div><div class="facts"><span><b>16＋1</b> 玩法／序章</span><span><b>119</b> 代表步驟</span><span><b>319</b> AI 示意圖</span></div></div>
       <div class="hero-art"><div class="folio-tag">01 / 主介面待機</div><button class="image-open hero-image" data-image="UX01" aria-label="放大主介面待機示意圖"><img id="heroImage" alt="詐騙帝國已確認的直向像素主介面示意" width="941" height="1672" fetchpriority="high"></button><p class="image-caption">遊戲介面示意 · 點圖可完整放大 · 非可玩成品</p></div>
     </section>
     <aside class="notice shell"><b>先說清楚</b><p>這裡是企劃閱讀與靜態互動示意，不是正式遊戲或可安裝 APP，也不代表已上架或取得正式分級。全員成年、情節虛構；對話、外觀、精確數值、日期與門檻仍保留提案標示，沒有真實帳號、金流或獎勵。</p></aside>
@@ -40,7 +42,8 @@
     <section class="section shell" id="decisions"><div class="section-heading"><div><p class="eyebrow">07 / THE LIVING MARGIN</p><h2>最新決策，與還沒定案的事。</h2></div><p>已指定工具、既有規則說明與待定建議分開呈現。</p></div><div id="decisionList" class="decision-grid"></div></section>
     <section class="section shell" id="backups"><details class="backup-box"><summary><span class="eyebrow">07 / OPTIONAL BACKUP</span><strong>文件備份</strong><span>網頁已可直接閱讀完整內容，下載只是備份。</span></summary><div id="downloadList"></div><p class="muted">卷 1、卷 3 的公開下載副本仍在整理，原件已保留；不影響本頁的完整企劃、圖位與互動閱讀。未提供的下載不會建立假連結。</p></details></section>
   </main>
-  <footer class="site-footer shell"><a href="../../">← 返回我的APP作品集</a><p>詐騙帝國 · v4.6 · T02互動／園區路徑提案／兩款原型<br>本頁只作企劃展示，不連接真人、真實收款或遊戲帳號。</p></footer>
+  <div id="demoFeedbackHost" data-demo-only></div>
+  <footer class="site-footer shell"><a href="../../">← 返回我的APP作品集</a><p>詐騙帝國 · v4.6.1 · T02互動／園區路徑提案／兩款原型<br>本頁只作企劃展示，不連接真人、真實收款或遊戲帳號。</p></footer>
   <dialog id="imageDialog" aria-labelledby="dialogTitle"><div class="dialog-bar"><p id="dialogTitle"></p><button id="closeDialog" type="button" aria-label="關閉圖片">✕</button></div><img id="dialogImage" alt=""><div class="dialog-footer"><button id="previousImage" type="button">← 上一張</button><span>AI 示意圖 · 非可玩畫面</span><button id="nextImage" type="button">下一張 →</button></div></dialog>
   <noscript><p class="shell notice">互動閱覽需要啟用 JavaScript；本頁不會要求登入或安裝遊戲。</p></noscript>
   <script src="demo.js?v=20261015-41" defer></script>
@@ -55,5 +58,7 @@
   <script src="interactive-prototype.js" defer></script>
   <script src="relationship-model.js" defer></script>
   <script src="relationship-archive.js" defer></script>
+  <script src="demo-feedback-model.js" data-demo-only defer></script>
+  <script src="demo-feedback.js" data-demo-only defer></script>
 </body>
 </html>

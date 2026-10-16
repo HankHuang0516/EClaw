@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.6-plan-interaction-b02-routes-20261016",
+  "version": "v4.6.1-demo-feedback-20261016",
   "date": "2026-10-16",
   "status": "設計確認稿／開發中；B01序章互動與B02部分路徑原型，整份企劃未完成",
-  "contentHash": "608e9b8e185a6a542df6749b27ca48e6f1d38118989de3b72866d6b314c96ad2",
+  "contentHash": "ab3f6f9719785678f4ebebdcdffd29a15afc2e28414ef44ec21e2a1b1c0949ce",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -44,6 +44,21 @@
       "path": "demo-data.json",
       "bytes": 1765,
       "sha256": "68906b56576d2c700e9d612c60c75c109aced2bbf71202fa3ee9891373eb62b4"
+    },
+    {
+      "path": "demo-feedback-model.js",
+      "bytes": 2498,
+      "sha256": "474b081095632f784f9b164abbdfefbe81e6544160789c14a96bec37d532b660"
+    },
+    {
+      "path": "demo-feedback.css",
+      "bytes": 2505,
+      "sha256": "496aca893c9e624fa126a490d9128c5868fbedc075e52b4be3b8be8fdf57f7fa"
+    },
+    {
+      "path": "demo-feedback.js",
+      "bytes": 21932,
+      "sha256": "48605e5f83bb384b6ee11adcba285fcc3d3635e00cfb8c3095e58ec6d971fe34"
     },
     {
       "path": "demo.css",
@@ -1687,8 +1702,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 11478,
-      "sha256": "242859ad50e19e1244240cc2aa6ff5c6ed17e2fb1a163bba8e9fe049dd95318c"
+      "bytes": 11787,
+      "sha256": "7b9a86b796bb7534da1759ff1fbfb96461fa3ca482a8426fb656a89f80469e75"
     },
     {
       "path": "interaction-coverage.json",
@@ -3337,5 +3352,13 @@
     "全企劃696筆來源對照不等於完成。B01功能驗收已通過；本版B02只提供9場景的邏輯路徑／走近，宿舍布局、正式入場、取物及B03–B06仍未完成。",
     "T02首次合計20分鐘、跨日、初值與耗損啟動未定；本批不套全局時鐘或睡眠效果。短片未提供，只提供來源明列的主動略過。",
     "既有制式系統文案／角色口吻待B03精修，互動驗收不等同文案品質通過。"
-  ]
+  ],
+  "demoFeedback": {
+    "audience": "Demo only",
+    "categories": 6,
+    "snapshot": "Only currently displayed/revealed whitelist; frozen when the form opens",
+    "persistence": "Private existing EClaw PostgreSQL; explicit saved row ID required",
+    "publicRead": false,
+    "formalGame": "Remove entry, imports, code and transmission; retain private history"
+  }
 }
