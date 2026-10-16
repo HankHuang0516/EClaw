@@ -95,7 +95,7 @@
       "desc": "觀察螞蟻循著費洛蒙探索、覓食與搬運食物，體驗工蟻、兵蟻分工及蟻群防衛。",
       "communityId": "anthill",
       "iconText": "An",
-      "icon": "icons/anthill.png",
+      "icon": "anthill/icon-180-game-h-90e14cf7d5ac.png",
       "source": "Android",
       "googlePackage": "com.hankhuang.anthill",
       "googleUrl": "https://play.google.com/store/apps/details?id=com.hankhuang.anthill",
@@ -104,7 +104,8 @@
       "publicGoogle": false,
       "publicApple": false,
       "googleStoreName": "Anthill：螞蟻群體模擬",
-      "checkedAt": "2026-10-04T01:02:59.370Z"
+      "checkedAt": "2026-10-04T01:02:59.370Z",
+      "iconWatermark": "game"
     },
     {
       "name": "這樣出門",
