@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.7-b03-voice-20261016-r3",
+  "version": "v4.8-b04-dispatch-ledgers-20261016-r1",
   "date": "2026-10-16",
-  "status": "設計確認稿／開發中；B01序章互動與B02部分路徑原型，整份企劃未完成",
-  "contentHash": "217e60c8b41c162f6822a33e1051c6783d83a609eccdaaf55cf9709db414a0b1",
+  "status": "B04-source-bound-first-increment-not-whole-game",
+  "contentHash": "df5706a6cfc709cf41bb27bd458fe30724bc0c9d7e18c9abd6f826e82e738056",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -12,8 +12,8 @@
     },
     {
       "path": "b03-locales.js",
-      "bytes": 56344,
-      "sha256": "7fcd971fd314119b1e8280f6fb5f4f1ac1b7884c39d8e8b09cc90eb1ccd1d040"
+      "bytes": 56340,
+      "sha256": "b741e106280f9ea0a03566f483b2545161a0f17e4e9e78e5716d409c4c369063"
     },
     {
       "path": "branch-enrichment-proposals.json",
@@ -1692,8 +1692,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 11579,
-      "sha256": "d4777015d2ca3ae2bac447ac7bb26913b29490503a0c75f0a98e5e970c14b3d7"
+      "bytes": 11874,
+      "sha256": "68cf7925a8d453775edbe9b01a34a18802df4295334b28e51f217ca3f8d7435d"
     },
     {
       "path": "interaction-coverage.json",
@@ -1717,8 +1717,8 @@
     },
     {
       "path": "interactive-prototype.js",
-      "bytes": 34596,
-      "sha256": "6a5c8b876ab108cba0897d6b19b42441e1fb634f9517317d14ddeb766c756c29"
+      "bytes": 34831,
+      "sha256": "2458063b870fc2a67819e8be711817a87af400464fde73c84f270ad7e40db8c7"
     },
     {
       "path": "new-gameplay-proposals.css",
@@ -3279,6 +3279,26 @@
       "path": "site.js",
       "bytes": 19166,
       "sha256": "b9b03581ce25eb09dd1d141ea38e6ae4fae23447c391027835962c575ef6d6c5"
+    },
+    {
+      "path": "workflows-locales.js",
+      "bytes": 20201,
+      "sha256": "886c9ebe2ee9122f8b5e759274e349bfe265e868b1fa13dcb66d45aeedc4d759"
+    },
+    {
+      "path": "workflows-model.js",
+      "bytes": 5496,
+      "sha256": "abe5f869a33976d40e4c526c0a1960b140c576d200678770e561d87cfe07fdf9"
+    },
+    {
+      "path": "workflows.css",
+      "bytes": 3355,
+      "sha256": "b79756edc205f9e3aa00d751ff93fb4d424bba77f44122282fa378d018388444"
+    },
+    {
+      "path": "workflows.js",
+      "bytes": 11936,
+      "sha256": "860317c21f643ced2950aa9ba6d15b924b9ff1acfdea93ded781601cd2a361c4"
     }
   ],
   "correction": {
@@ -3371,6 +3391,42 @@
       "missingKeys": [],
       "fullScriptTranslated": false,
       "sourceLineDigest": "01f6bbd418a80e552ffd436d7d7943636a2367ace3eaa65aa73f2b3e1afa110c"
+    },
+    "semanticCorrection": {
+      "issueId": "B03-EN-MS04-C01-02",
+      "stableId": "MS04.choice.C01.02",
+      "sourceDigestUnchanged": true,
+      "mechanicsChanged": false
     }
+  },
+  "workflowPrototype": {
+    "batch": "B04-first-increment",
+    "legacyEnginesPreserved": [
+      "MG-P01",
+      "MG-P02"
+    ],
+    "newPhysicalOperations": [
+      "MG-P05",
+      "MG-P06"
+    ],
+    "mediaCompleteForP06": false,
+    "sourceOnlyDispatchCountScenario": true,
+    "automaticWisdomBands": false,
+    "newMGUnlockGatesDefined": false,
+    "formalResourceCommits": false,
+    "wholePlanComplete": false,
+    "remainingBatches": [
+      "B04 remaining operations",
+      "B05",
+      "B06"
+    ],
+    "localeKeys": 70,
+    "locales": [
+      "en",
+      "zh-TW",
+      "zh-CN",
+      "ja",
+      "ko"
+    ]
   }
 }

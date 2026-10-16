@@ -1,4 +1,4 @@
-/* global document, window, fetch, Image, MutationObserver, performance */
+/* global document, window, fetch, Image, MutationObserver, performance, CustomEvent */
 (() => {
   'use strict';
   const root = document.getElementById('demo'), stage = document.getElementById('demoStage');
@@ -33,6 +33,7 @@
   function leave(remember = false) { active = false; document.documentElement.classList.remove('interactive-prototype-active'); panel.hidden = true; stage.style.removeProperty('display'); resetButton.textContent = '重設 Demo'; if (!remember) lastSurface = 'legacy'; closeDialog(); clearDrag(); }
   function show() { active = true; document.documentElement.classList.add('interactive-prototype-active'); lastSurface = 'interactive'; panel.hidden = false; stage.style.display = 'none'; const reference = document.getElementById('newGameplayDemo'); if (reference) reference.hidden = true; resetButton.textContent = '重玩此 Demo（需確認）'; render(); }
   function enter(id) { if (!states) return; if (id && states[id]) game = id; entering = true; document.getElementById('demoEnter').click(); entering = false; show(); panel.querySelector('select')?.focus({ preventScroll: true }); panel.scrollIntoView({ block: 'start' }); }
+  document.addEventListener('fraud:interactive-open', event => { if (['MG-P01', 'MG-P02'].includes(event.detail?.game)) enter(event.detail.game); });
   document.getElementById('demoEnter').addEventListener('click', () => { if (!entering) leave(); });
   document.getElementById('demoRead').addEventListener('click', () => leave(true));
   document.querySelector('.section-nav')?.addEventListener('click', event => leave(event.target.closest('a')?.getAttribute('href') !== '#demo'));
@@ -214,5 +215,6 @@
     if (actions) { actions.prepend(hero); new MutationObserver(() => { if (actions.firstElementChild !== hero) actions.prepend(hero); }).observe(actions, { childList: true }); }
     window.FraudInteractiveDemo = Object.freeze({ getSnapshot: id => model.clone(states[id || game]), getActiveGame: () => game });
     document.documentElement.dataset.interactiveReady = 'true';
+    document.dispatchEvent(new CustomEvent('fraud:interactive-ready'));
   }).catch(() => { loadNote.textContent = '互動原型資料或美術未能完整載入，不以空白或換圖冒稱可玩；原有六圖參考與閱讀仍可使用。'; loadNote.setAttribute('role', 'alert'); document.documentElement.dataset.interactiveReady = 'false'; });
 })();
