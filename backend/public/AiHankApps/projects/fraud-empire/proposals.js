@@ -118,6 +118,13 @@
     }
     const copy = el('div', undefined, 'proposal-line-copy');
     copy.append(el('strong', decision.name + (line.speaker_id === 'system' || line.speaker_id === 'narrator' ? '' : ' · ' + ({ neutral: '平靜', smile: '微笑', angry: '生氣', surprised: '驚訝', sad: '難過', afraid: '害怕', suspicious: '懷疑', determined: '堅定' }[line.expression] || line.expression)), 'proposal-line-name'), el('p', line.text, 'proposal-line-text'));
+    if (line.system_information) {
+      const system = el('aside', undefined, 'proposal-system-information');
+      system.dataset.systemFor = line.stable_id;
+      system.setAttribute('role', 'note');
+      system.append(el('strong', '系統規則（非角色台詞）'), el('p', line.system_information));
+      copy.append(system);
+    }
     if (line.presentation_variants) conditionalLine(copy, line);
     if (decision.reason) note(copy, decision.reason, 'proposal-source');
     const trace = el('details'); trace.append(el('summary', '逐句編號與適用說明'), el('p', line.stable_id, 'proposal-source'));
@@ -145,7 +152,7 @@
       const filtered = bundle.lines.filter(line => {
         const owner = sourceLineOwners.get(line.stable_id);
         const name = art.portraits.find(p => p.id === canonicalSpeaker(line))?.name || line.speaker_id;
-        return (bookState.speaker === 'all' || canonicalSpeaker(line) === bookState.speaker) && (bookState.kind === 'all' || owner?.kind === bookState.kind) && (!q || `${line.stable_id} ${line.text} ${name} ${owner?.title || ''}`.toLowerCase().includes(q));
+        return (bookState.speaker === 'all' || canonicalSpeaker(line) === bookState.speaker) && (bookState.kind === 'all' || owner?.kind === bookState.kind) && (!q || `${line.stable_id} ${line.text} ${line.system_information || ''} ${name} ${owner?.title || ''}`.toLowerCase().includes(q));
       });
       const pages = Math.max(1, Math.ceil(filtered.length / 50)); bookState.page = Math.max(0, Math.min(pages - 1, bookState.page));
       $('dialogueCount').textContent = `共 ${filtered.length} 筆／全部 ${bundle.lineCount} 筆；第 ${bookState.page + 1}／${pages} 頁。不同情境分開讀，不視作同一段連續對話。`;
@@ -313,10 +320,17 @@
     $('dialogueSummary').after(details);
   }
   const planPromise = new Promise((resolve, reject) => { const timer = window.setTimeout(() => reject(new Error('Core reader unavailable')), 30000); document.addEventListener('fraud:plan-ready', event => { window.clearTimeout(timer); resolve(event.detail); }, { once: true }); document.dispatchEvent(new CustomEvent('fraud:request-plan')); });
-  Promise.all([planPromise, fetch('dialogue-proposals.json').then(r => { if (!r.ok) throw new Error('Dialogues unavailable'); return r.json(); }), fetch('art-catalog.json').then(r => { if (!r.ok) throw new Error('Art catalogue unavailable'); return r.json(); })]).then(([source, dialogue, catalogue]) => {
+  Promise.all([planPromise, fetch('dialogue-proposals.json?v=b03-20261016').then(r => { if (!r.ok) throw new Error('Dialogues unavailable'); return r.json(); }), fetch('art-catalog.json').then(r => { if (!r.ok) throw new Error('Art catalogue unavailable'); return r.json(); })]).then(([source, dialogue, catalogue]) => {
     plan = source; bundle = dialogue; art = catalogue; index = model.makeIndex(bundle);
     sourceLineOwners = new Map(); for (const entry of bundle.entries) for (const group of model.groupsFor(entry, index)) for (const line of group.lines) sourceLineOwners.set(line.stable_id, entry);
     if (bundle.lineCount !== 1885 || index.size !== bundle.lineCount || sourceLineOwners.size !== bundle.lineCount) throw new Error('Dialogue coverage mismatch');
+    if (bundle.voiceRevision) {
+      const quality = el('p', bundle.voiceRevision.qualityNotice, 'proposal-system-information');
+      quality.id = 'b03QualityNotice';
+      quality.setAttribute('role', 'note');
+      $('dialogueSummary').after(quality);
+      document.documentElement.dataset.b03VoiceReady = 'true';
+    }
     summary($('dialogueSummary'), [[bundle.lineCount, '台詞／提示 ID'], [112, '玩法逐步來源'], [7, '主線序章段落'], [39, '身份（含功能化名）']]); renderSupervisorRules(); renderControls(); renderBook(); renderArt();
     const context = $('demo')?.dataset.proposalContext; if (context) mountDialogue(JSON.parse(context)); document.documentElement.dataset.proposalsReady = 'true';
   }).catch(() => { $('dialogueBody').replaceChildren(el('p', '增補資料暫時無法完整載入，沒有用空白資料冒稱完成。核心企劃與既有 Demo 仍可返回閱讀。', 'proposal-empty')); document.documentElement.dataset.proposalsReady = 'false'; });

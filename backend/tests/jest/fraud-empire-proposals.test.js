@@ -13,7 +13,7 @@ describe('Fraud Empire proposed dialogue, expressions and connected presentation
     expect(bundle.lines).toHaveLength(1885);
     expect(index.size).toBe(1885);
     const digest = crypto.createHash('sha256').update(JSON.stringify(bundle.lines.map(l => [l.stable_id, l.speaker_id, l.expression, l.text]).sort((a, b) => a[0].localeCompare(b[0])))).digest('hex');
-    expect(digest).toBe('9ea12f86f38f8622f21cc5a70dcc31ec0a09b29066a7950a5e884b8c9ecfafb4');
+    expect(digest).toBe('8ae35001683c92701143fcce216f030327c838018e7ac508863e6c24103d3928');
     const referenced = new Set(bundle.entries.flatMap(e => model.groupsFor(e, index).flatMap(g => g.lines.map(l => l.stable_id))));
     expect(referenced.size).toBe(1885);
     expect(bundle.entries.filter(e => e.kind === 'gameplay_step')).toHaveLength(112);
@@ -96,7 +96,7 @@ describe('Fraud Empire proposed dialogue, expressions and connected presentation
   });
   test('pins the whole 654-asset release to exact content hashes', () => {
     const release = JSON.parse(fs.readFileSync(path.join(root, 'release.json'), 'utf8'));
-    expect(release.version).toBe('v4.6-plan-interaction-b02-routes-20261016');
+    expect(release.version).toBe('v4.7-b03-voice-20261016');
     expect(release.assets).toHaveLength(654);
     expect(new Set(release.assets.map(asset => asset.path)).size).toBe(654);
     expect(crypto.createHash('sha256').update(JSON.stringify(release.assets)).digest('hex')).toBe(release.contentHash);

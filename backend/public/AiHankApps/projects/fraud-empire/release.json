@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.6-plan-interaction-b02-routes-20261016",
+  "version": "v4.7-b03-voice-20261016",
   "date": "2026-10-16",
   "status": "設計確認稿／開發中；B01序章互動與B02部分路徑原型，整份企劃未完成",
-  "contentHash": "608e9b8e185a6a542df6749b27ca48e6f1d38118989de3b72866d6b314c96ad2",
+  "contentHash": "788bd9cc4bf3ada8674bea0466f868851eb787a08e2d0adfba3344ee046e72f6",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -57,8 +57,8 @@
     },
     {
       "path": "dialogue-proposals.json",
-      "bytes": 1449949,
-      "sha256": "7fe1e0e43afade7e76b5b40d81f6b99a2c9b3c787b02a9e8e856418cd0c7e7e1"
+      "bytes": 1448841,
+      "sha256": "59ac94346d60e3c3de5c3c587f41e0e4e7f5cc8f7de182241e1167ea272cf017"
     },
     {
       "path": "downloads/volume-2-full.pdf",
@@ -1687,8 +1687,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 11478,
-      "sha256": "242859ad50e19e1244240cc2aa6ff5c6ed17e2fb1a163bba8e9fe049dd95318c"
+      "bytes": 11508,
+      "sha256": "207be1fe317ec90438c0c349017c70448c70cc3fe85fc3d0a9438c1be9cd1b55"
     },
     {
       "path": "interaction-coverage.json",
@@ -3197,13 +3197,13 @@
     },
     {
       "path": "proposals.css",
-      "bytes": 7718,
-      "sha256": "ae79f3bde574ad1c448c54a1144fed6bc11ef51cbac767777a811530e1d654dd"
+      "bytes": 8120,
+      "sha256": "20e275722c66ffee86dbf1f8be1fbfcd9c00a3f07ef1391abf82d8d0e64385a1"
     },
     {
       "path": "proposals.js",
-      "bytes": 40457,
-      "sha256": "dd696606aa47271c8e995eaffa6d42c097b4282ea04400fff9ce4813325bf360"
+      "bytes": 41172,
+      "sha256": "accade2670ed6ac4f432b0d35438cb5d8e300462d5b388d319196fbbf669b3d7"
     },
     {
       "path": "references/006c22ae9b79004aaf8e.webp",
@@ -3337,5 +3337,14 @@
     "全企劃696筆來源對照不等於完成。B01功能驗收已通過；本版B02只提供9場景的邏輯路徑／走近，宿舍布局、正式入場、取物及B03–B06仍未完成。",
     "T02首次合計20分鐘、跨日、初值與耗損啟動未定；本批不套全局時鐘或睡眠效果。短片未提供，只提供來源明列的主動略過。",
     "既有制式系統文案／角色口吻待B03精修，互動驗收不等同文案品質通過。"
-  ]
+  ],
+  "b03Voice": {
+    "changedLineCount": 112,
+    "systemInformationCount": 8,
+    "linesTotal": 1885,
+    "lineDigest": "8ae35001683c92701143fcce216f030327c838018e7ac508863e6c24103d3928",
+    "mechanicsChanged": false,
+    "formalAdoption": false,
+    "qualityNotice": "既有制式系統文案／角色口吻待精修，互動驗收通過不等同文案已通過。"
+  }
 }

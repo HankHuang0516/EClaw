@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.1-connected-proposals-20261015",
+  "version": "v4.7-b03-voice-20261016",
   "status": "新增對話提案待確認；不是正式劇本或程式驗收",
   "lineCount": 1885,
-  "lineDigest": "9ea12f86f38f8622f21cc5a70dcc31ec0a09b29066a7950a5e884b8c9ecfafb4",
+  "lineDigest": "8ae35001683c92701143fcce216f030327c838018e7ac508863e6c24103d3928",
   "lines": [
     {
       "stable_id": "MS01.opening.base.01",
@@ -12,7 +12,7 @@
       "choice": null,
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "二十六歲了。這回總該輪到我把日子過好。"
+      "text": "這次應該真的能存到一點錢吧。"
     },
     {
       "stable_id": "MS01.opening.base.02",
@@ -21,7 +21,7 @@
       "choice": null,
       "speaker_id": "hou",
       "expression": "suspicious",
-      "text": "行李放旁邊。站那麼直做什麼，等我替你拉椅子？先坐下。"
+      "text": "行李放那邊。坐下，別擋路。"
     },
     {
       "stable_id": "MS01.choice.C01.01",
@@ -30,7 +30,7 @@
       "choice": "C01",
       "speaker_id": "protagonist",
       "expression": "afraid",
-      "text": "我先把今天弄明白。我的證件什麼時候還？"
+      "text": "那我的證件什麼時候還我？"
     },
     {
       "stable_id": "MS01.choice.C01.02",
@@ -39,7 +39,7 @@
       "choice": "C01",
       "speaker_id": "hou",
       "expression": "neutral",
-      "text": "人剛到，問題倒不少。抽屜的事先放著，看你眼前。"
+      "text": "人剛到，問題倒不少。先看這邊。"
     },
     {
       "stable_id": "MS01.closing.base.01",
@@ -48,7 +48,7 @@
       "choice": null,
       "speaker_id": "protagonist",
       "expression": "sad",
-      "text": "錄取信上沒有寫，門會從外面關上。"
+      "text": "……門怎麼鎖了？"
     },
     {
       "stable_id": "MS01.system.unavailable",
@@ -120,7 +120,7 @@
       "choice": "C02",
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "我要先看懂畫面，不急著交成績。"
+      "text": "我還沒弄懂。先教我一次。"
     },
     {
       "stable_id": "MS02.choice.C02.02",
@@ -129,7 +129,8 @@
       "choice": "C02",
       "speaker_id": "hou",
       "expression": "neutral",
-      "text": "總算知道自己還不會。教學不給分，先把畫面弄懂。"
+      "text": "總算知道要先學了。看這邊。",
+      "system_information": "教學不計分；既有失敗代價不變。"
     },
     {
       "stable_id": "MS02.closing.base.01",
@@ -138,7 +139,7 @@
       "choice": null,
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "螢幕亮了，房間卻沒亮多少。"
+      "text": "……好，先做這個。"
     },
     {
       "stable_id": "MS02.system.unavailable",
@@ -183,7 +184,7 @@
       "choice": null,
       "speaker_id": "xiaoyu",
       "expression": "smile",
-      "text": "又見面了。今天好好認識一下大家，別只記工位號碼。"
+      "text": "又見面了。坐啊，我跟你說一下誰是誰。"
     },
     {
       "stable_id": "MS03.opening.base.03",
@@ -192,7 +193,7 @@
       "choice": null,
       "speaker_id": "zhou",
       "expression": "neutral",
-      "text": "叫我老周。飯涼了先吃，話可以慢慢說。"
+      "text": "叫我老周。你先吃。"
     },
     {
       "stable_id": "MS03.opening.base.04",
@@ -210,7 +211,7 @@
       "choice": null,
       "speaker_id": "bin",
       "expression": "smile",
-      "text": "斌哥。稱呼很響，待遇沒有跟著響。"
+      "text": "叫我斌哥就行。"
     },
     {
       "stable_id": "MS03.choice.C01.01",
@@ -246,7 +247,7 @@
       "choice": "C02",
       "speaker_id": "xiaoyu",
       "expression": "smile",
-      "text": "好。我們的名字又不會過期。"
+      "text": "嗯，你先吃，等一下再說。"
     },
     {
       "stable_id": "MS03.closing.base.01",
@@ -291,7 +292,7 @@
       "choice": null,
       "speaker_id": "hou",
       "expression": "neutral",
-      "text": "便條拿回來。接下來找她，別把什麼都沒看懂那套帶過去。"
+      "text": "便條還我。之後找她。"
     },
     {
       "stable_id": "MS04.opening.base.02",
@@ -300,7 +301,7 @@
       "choice": null,
       "speaker_id": "lin",
       "expression": "neutral",
-      "text": "林若晴。交班先說完整，我不替你猜前因後果。"
+      "text": "林若晴。以後你的工作我排。有問題就說清楚，別要我猜。"
     },
     {
       "stable_id": "MS04.opening.base.03",
@@ -327,7 +328,8 @@
       "choice": "C01",
       "speaker_id": "lin",
       "expression": "neutral",
-      "text": "休息前看時間與消耗預覽，確認了再走。別等狀態不夠才說你沒留意。"
+      "text": "先看清楚，再決定要不要休息。別等撐不住才說。",
+      "system_information": "休息前顯示耗時與消耗預覽，需明確確認；整段只結算一次。"
     },
     {
       "stable_id": "MS04.choice.C02.01",
@@ -336,7 +338,7 @@
       "choice": "C02",
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "先確認派工。之後都由妳處理？"
+      "text": "所以，以後都是妳排工作？"
     },
     {
       "stable_id": "MS04.choice.C02.02",
@@ -345,7 +347,8 @@
       "choice": "C02",
       "speaker_id": "lin",
       "expression": "neutral",
-      "text": "對。第二職階起由我負責，不因任務簡單就換回去。"
+      "text": "對，以後都找我。",
+      "system_information": "R1主管為阿猴；R2起由林若晴負責，不因任務難度換回。"
     },
     {
       "stable_id": "MS04.closing.base.01",
@@ -354,7 +357,7 @@
       "choice": null,
       "speaker_id": "lin",
       "expression": "determined",
-      "text": "規則我會說清楚。你照實回報，不要拿猜的交差。"
+      "text": "做到哪裡就說到哪裡。別拿猜的來交差。"
     },
     {
       "stable_id": "MS04.system.unavailable",
@@ -390,7 +393,7 @@
       "choice": null,
       "speaker_id": "kai",
       "expression": "afraid",
-      "text": "我不想下一個生日，還對著這面牆許願。"
+      "text": "我不想在這裡過生日。真的。"
     },
     {
       "stable_id": "MS05.opening.base.02",
@@ -399,7 +402,7 @@
       "choice": null,
       "speaker_id": "protagonist",
       "expression": "sad",
-      "text": "你說得像在開玩笑，手卻一直抖。"
+      "text": "你手在抖欸。"
     },
     {
       "stable_id": "MS05.choice.C01.01",
@@ -417,7 +420,7 @@
       "choice": "C01",
       "speaker_id": "kai",
       "expression": "neutral",
-      "text": "好。那就先留著，別讓日子替你答。"
+      "text": "好。你先想想。"
     },
     {
       "stable_id": "MS05.choice.C02.01",
@@ -435,7 +438,7 @@
       "choice": "C02",
       "speaker_id": "kai",
       "expression": "determined",
-      "text": "怕就說。我沒資格要你裝勇敢。"
+      "text": "我也怕。"
     },
     {
       "stable_id": "MS05.choice.C03.01",
@@ -453,7 +456,7 @@
       "choice": "C03",
       "speaker_id": "kai",
       "expression": "sad",
-      "text": "我聽見了。這個決定不用你替我背。"
+      "text": "……好。你別勉強。"
     },
     {
       "stable_id": "MS05.closing.base.01",
@@ -519,7 +522,7 @@
       "choice": null,
       "speaker_id": "xiaoyu",
       "expression": "sad",
-      "text": "別讓那張床，最後只剩一個編號。"
+      "text": "他的工牌還在。先別收走，好不好？"
     },
     {
       "stable_id": "MS06.choice.C01.01",
@@ -546,7 +549,7 @@
       "choice": "C02",
       "speaker_id": "protagonist",
       "expression": "sad",
-      "text": "現在看著它，我還是喘不過氣。"
+      "text": "我現在不想碰。"
     },
     {
       "stable_id": "MS06.choice.C02.02",
@@ -555,7 +558,7 @@
       "choice": "C02",
       "speaker_id": "xiaoyu",
       "expression": "neutral",
-      "text": "那就先放著。等你願意，再來拿。"
+      "text": "好，先放著。"
     },
     {
       "stable_id": "MS06.closing.base.01",
@@ -638,7 +641,7 @@
       "choice": null,
       "speaker_id": "lin",
       "expression": "suspicious",
-      "text": "兩份名冊。同一批人，在另一份上消失了。"
+      "text": "這幾個名字，另一份都沒有。你再看一遍。"
     },
     {
       "stable_id": "MS07.opening.base.02",
@@ -665,7 +668,7 @@
       "choice": "C01",
       "speaker_id": "lin",
       "expression": "neutral",
-      "text": "好。你願意先核實，這點我信得過。空白也留著，不能因為難看就填平。"
+      "text": "好，先留著。沒查清楚的地方別補。"
     },
     {
       "stable_id": "MS07.choice.C02.01",
@@ -683,7 +686,7 @@
       "choice": "C02",
       "speaker_id": "lin",
       "expression": "neutral",
-      "text": "資料先留在這裡。我知道你不想再漏掉誰，看清楚再來。"
+      "text": "那就慢慢看。看完再來找我。"
     },
     {
       "stable_id": "MS07.closing.base.01",
@@ -863,7 +866,7 @@
       "choice": "C01",
       "speaker_id": "zhou",
       "expression": "neutral",
-      "text": "回來了？這支舊手機先借你，有事就聯絡外面。"
+      "text": "回來了？手機先借你。要聯絡外面就用這支。"
     },
     {
       "stable_id": "MS09.choice.C01.04",
@@ -872,7 +875,7 @@
       "choice": "C01",
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "謝謝。這次我想把電話打給會聽的人。"
+      "text": "好，謝謝你。"
     },
     {
       "stable_id": "MS09.choice.C02.01",
@@ -949,7 +952,8 @@
       "choice": null,
       "speaker_id": "role_aid_operator",
       "expression": "neutral",
-      "text": "我們會等你的確認。你可以選準備好的那一天。"
+      "text": "你看看哪一天準備得好，選好了再跟我們確認。",
+      "system_information": "最早可選日期為 max(今天+2, D16)，不代填未初始化的日期。"
     },
     {
       "stable_id": "MS10.opening.base.02",
@@ -976,7 +980,7 @@
       "choice": "C01",
       "speaker_id": "role_aid_operator",
       "expression": "neutral",
-      "text": "約定日期與接應標誌會留在紀錄裡，你可以隨時重看。"
+      "text": "日期和接應標誌都記下了。忘了可以再看。"
     },
     {
       "stable_id": "MS10.choice.C02.01",
@@ -994,7 +998,7 @@
       "choice": "C02",
       "speaker_id": "role_aid_operator",
       "expression": "neutral",
-      "text": "好。準備好了再聯絡，不用現在勉強答應。"
+      "text": "好，準備好了再聯絡。"
     },
     {
       "stable_id": "MS10.closing.base.01",
@@ -1161,7 +1165,7 @@
       "choice": null,
       "speaker_id": "role_boss",
       "expression": "smile",
-      "text": "最高的位置，就差你一個點頭。"
+      "text": "這個位置，交給你。你要不要？"
     },
     {
       "stable_id": "MS12.opening.base.02",
@@ -1179,7 +1183,7 @@
       "choice": null,
       "speaker_id": "role_boss",
       "expression": "neutral",
-      "text": "先坐上來，再談下面的事。"
+      "text": "你先接下來。其他的，以後再談。"
     },
     {
       "stable_id": "MS12.choice.C01.01",
@@ -1197,7 +1201,7 @@
       "choice": "C01",
       "speaker_id": "role_boss",
       "expression": "suspicious",
-      "text": "椅子先空著。你倒是很會讓人等。"
+      "text": "行。你倒是很會讓人等。"
     },
     {
       "stable_id": "MS12.choice.C02.01",
@@ -1215,7 +1219,8 @@
       "choice": "C02",
       "speaker_id": "role_boss",
       "expression": "neutral",
-      "text": "那就看清楚。最後一句，要你自己說。"
+      "text": "那就看。看完告訴我。",
+      "system_information": "查看後果不會接任；仍須再次明確確認才提交接任。"
     },
     {
       "stable_id": "MS12.closing.base.01",
@@ -1309,7 +1314,7 @@
       "choice": "C02",
       "speaker_id": "role_aid_operator",
       "expression": "neutral",
-      "text": "收到。依你重新確認的日期安排，援助仍保留。"
+      "text": "好，照你重新確認的日期。準備好了再告訴我們。"
     },
     {
       "stable_id": "MS13.closing.base.01",
@@ -1385,7 +1390,7 @@
       "choice": null,
       "speaker_id": "protagonist",
       "expression": "afraid",
-      "text": "我可以坐下，不用先交一份成績？"
+      "text": "……坐這裡嗎？"
     },
     {
       "stable_id": "MS14.opening.base.03",
@@ -1403,7 +1408,7 @@
       "choice": "C01",
       "speaker_id": "protagonist",
       "expression": "determined",
-      "text": "我要上車。這次，是我要去的地方。"
+      "text": "好，我上車。"
     },
     {
       "stable_id": "MS14.choice.C01.02",
@@ -1457,7 +1462,7 @@
       "choice": null,
       "speaker_id": "xiaoyu",
       "expression": "smile",
-      "text": "跟你說話，我不用一直猜標準答案。"
+      "text": "跟你聊天還滿輕鬆的。"
     },
     {
       "stable_id": "ROM01.opening.base.02",
@@ -1466,7 +1471,7 @@
       "choice": null,
       "speaker_id": "protagonist",
       "expression": "smile",
-      "text": "我也不太擅長把每句話填進格子裡。"
+      "text": "有嗎？我還怕自己話太多。"
     },
     {
       "stable_id": "ROM01.choice.C01.01",
@@ -1475,7 +1480,7 @@
       "choice": "C01",
       "speaker_id": "protagonist",
       "expression": "smile",
-      "text": "我也想更認識你。不是工作表上那些資料。"
+      "text": "我想再多認識妳一點。"
     },
     {
       "stable_id": "ROM01.choice.C01.02",
@@ -1484,7 +1489,7 @@
       "choice": "C01",
       "speaker_id": "xiaoyu",
       "expression": "smile",
-      "text": "那就慢慢來。今天不用把明天都答完。"
+      "text": "好啊，慢慢來。"
     },
     {
       "stable_id": "ROM01.choice.C02.01",
@@ -1502,7 +1507,7 @@
       "choice": "C02",
       "speaker_id": "xiaoyu",
       "expression": "smile",
-      "text": "我也是。能放心說話，就已經很重要。"
+      "text": "好啊，朋友也可以一直聊天。"
     },
     {
       "stable_id": "ROM01.closing.base.01",
@@ -1738,7 +1743,7 @@
       "choice": "C03",
       "speaker_id": "xiaoyu",
       "expression": "determined",
-      "text": "不。你可以說擔心，不能替我決定。這個約定先停下來。"
+      "text": "不行。你不能替我決定。我們之前說好的，先停一下。"
     },
     {
       "stable_id": "ROM03.choice.C03.03",
@@ -1802,7 +1807,7 @@
       "choice": null,
       "speaker_id": "protagonist",
       "expression": "sad",
-      "text": "對不起，我把擔心說成命令了。妳的決定不是我的東西。我會尊重妳，也不催妳立刻原諒。",
+      "text": "對不起，剛才我不該那樣命令妳。接下來妳想怎麼做，我會聽。",
       "trigger": "界線談話可道歉並尊重決定修復；不以羞辱或控制獲益"
     },
     {
@@ -1812,7 +1817,7 @@
       "choice": null,
       "speaker_id": "xiaoyu",
       "expression": "determined",
-      "text": "我聽見了。先從真的讓我做決定開始，不要把道歉當成要我立刻答應。",
+      "text": "我知道了。但我們的事，我還要想一下。",
       "trigger": "界線談話可道歉並尊重決定修復；不以羞辱或控制獲益"
     },
     {
@@ -1940,7 +1945,7 @@
       "choice": "C01",
       "speaker_id": "lin",
       "expression": "determined",
-      "text": "等沒有這層關係，再問我。現在我不會拿主管身分要一個答案。"
+      "text": "等我不再是你主管，再來問我。現在不行。"
     },
     {
       "stable_id": "ROM05.choice.C02.01",
@@ -1958,7 +1963,8 @@
       "choice": "C02",
       "speaker_id": "lin",
       "expression": "neutral",
-      "text": "好。你的分數、食物和該得到的資訊，都不會因此改變。"
+      "text": "好。工作的事照舊。",
+      "system_information": "感情選擇不影響分數、食物或線索。"
     },
     {
       "stable_id": "ROM05.closing.base.01",
@@ -2040,7 +2046,7 @@
       "choice": "C01",
       "speaker_id": "lin",
       "expression": "determined",
-      "text": "我願意。這只是關於未來的約定；等這層權力關係結束，我們再問一次。"
+      "text": "我願意。等我不再是你主管，我們再談要不要在一起。"
     },
     {
       "stable_id": "ROM06.closing.base.01",
@@ -2140,7 +2146,7 @@
       "choice": "C02",
       "speaker_id": "lin",
       "expression": "determined",
-      "text": "我聽到了。這不代表現在替你決定關係，但你若接下，我會離開你的身邊。"
+      "text": "我知道了。但你要是接下來，我就不會留在你身邊。"
     },
     {
       "stable_id": "ROM07.closing.base.01",
@@ -4013,7 +4019,7 @@
       "choice": null,
       "speaker_id": "kai",
       "expression": "neutral",
-      "text": "我算的不是還要交幾張表，是離生日還有幾天。"
+      "text": "我生日快到了。"
     },
     {
       "stable_id": "BR01.opening.02",
@@ -4040,7 +4046,7 @@
       "choice": "BR01_C01",
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "你慢慢說，我記的是你的生日，不是排班。"
+      "text": "奶油歪掉也沒差喔？"
     },
     {
       "stable_id": "BR01.choice.BR01_C01.02",
@@ -4049,7 +4055,7 @@
       "choice": "BR01_C01",
       "speaker_id": "kai",
       "expression": "smile",
-      "text": "那就好。排班表已經管得夠寬了。"
+      "text": "吃起來又沒差。"
     },
     {
       "stable_id": "BR01.choice.BR01_C02.01",
@@ -4283,7 +4289,7 @@
       "choice": "BR03_C01",
       "speaker_id": "tang",
       "expression": "smile",
-      "text": "對。我講的是住過的地方，你有聽進去。"
+      "text": "對，就是那座。"
     },
     {
       "stable_id": "BR03.choice.BR03_C02.01",
@@ -4292,7 +4298,7 @@
       "choice": "BR03_C02",
       "speaker_id": "tang",
       "expression": "neutral",
-      "text": "不是這張。你可以再看一次，不必猜我想聽什麼。"
+      "text": "不是這張。再看一次？"
     },
     {
       "stable_id": "BR03.choice.BR03_C02.02",
@@ -4409,7 +4415,7 @@
       "choice": "BR04_C01",
       "speaker_id": "tang",
       "expression": "neutral",
-      "text": "那就把矛盾留著，別替它補一句好聽的。"
+      "text": "嗯，這兩個確實對不上。"
     },
     {
       "stable_id": "BR04.choice.BR04_C02.01",
@@ -4526,7 +4532,7 @@
       "choice": "BR05_C01",
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "你準備好再回。這句沒有藏一個截止時間。"
+      "text": "沒事，你想好了再回。"
     },
     {
       "stable_id": "BR05.choice.BR05_C01.02",
@@ -4535,7 +4541,7 @@
       "choice": "BR05_C01",
       "speaker_id": "tang",
       "expression": "neutral",
-      "text": "謝謝你沒催。這裡連沉默都常被當成待辦。"
+      "text": "好，謝謝。"
     },
     {
       "stable_id": "BR05.closing.01",
@@ -4616,7 +4622,7 @@
       "choice": null,
       "speaker_id": "tang",
       "expression": "neutral",
-      "text": "叫我唐澄就好。代號留給那張表。"
+      "text": "以後直接叫我唐澄就好。"
     },
     {
       "stable_id": "BR06.opening.02",
@@ -4661,7 +4667,7 @@
       "choice": "BR06_C02",
       "speaker_id": "tang",
       "expression": "neutral",
-      "text": "那就到這裡。信任不是把所有抽屜都打開。"
+      "text": "好，那些先不聊。"
     },
     {
       "stable_id": "BR06.closing.01",
@@ -5111,7 +5117,7 @@
       "choice": null,
       "speaker_id": "biao",
       "expression": "neutral",
-      "text": "擦傷也值得被照顧。人又不是報廢才准送修。"
+      "text": "擦到也是會痛啊。拿著。"
     },
     {
       "stable_id": "BR10.choice.BR10_C01.01",
@@ -5129,7 +5135,7 @@
       "choice": "BR10_C01",
       "speaker_id": "biao",
       "expression": "neutral",
-      "text": "拿穩。別把「撐得住」當成什麼獎狀。"
+      "text": "嗯，收好。"
     },
     {
       "stable_id": "BR10.closing.01",
@@ -5210,7 +5216,7 @@
       "choice": null,
       "speaker_id": "bin",
       "expression": "neutral",
-      "text": "聽兩下。不是叫你鼓掌，是叫這面牆亮燈。"
+      "text": "我拍兩下，你看哪裡亮。"
     },
     {
       "stable_id": "BR11.opening.02",
@@ -5228,7 +5234,7 @@
       "choice": "BR11_C01",
       "speaker_id": "bin",
       "expression": "neutral",
-      "text": "看亮的點，別替沒亮的加戲。"
+      "text": "亮哪個就看哪個，先慢慢來。"
     },
     {
       "stable_id": "BR11.choice.BR11_C01.02",
@@ -5318,7 +5324,7 @@
       "choice": null,
       "speaker_id": "xiaoyu",
       "expression": "neutral",
-      "text": "我多一張共享餐券。你要用嗎？"
+      "text": "我多一張餐券。你要嗎？"
     },
     {
       "stable_id": "BR12.opening.02",
@@ -5327,7 +5333,7 @@
       "choice": null,
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "拿了是不是要記一筆？"
+      "text": "給我喔？"
     },
     {
       "stable_id": "BR12.opening.03",
@@ -5336,7 +5342,7 @@
       "choice": null,
       "speaker_id": "xiaoyu",
       "expression": "neutral",
-      "text": "餐券，不是人情債的借據。"
+      "text": "不然我問誰。"
     },
     {
       "stable_id": "BR12.choice.BR12_C01.01",
@@ -5345,7 +5351,7 @@
       "choice": "BR12_C01",
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "那我收下，等用餐時用。"
+      "text": "那我拿了。謝啦。"
     },
     {
       "stable_id": "BR12.choice.BR12_C01.02",
@@ -5354,7 +5360,7 @@
       "choice": "BR12_C01",
       "speaker_id": "xiaoyu",
       "expression": "neutral",
-      "text": "好。餓的時候，先吃飯。"
+      "text": "嗯，收好。"
     },
     {
       "stable_id": "BR12.choice.BR12_C02.01",
@@ -5372,7 +5378,7 @@
       "choice": "BR12_C02",
       "speaker_id": "xiaoyu",
       "expression": "neutral",
-      "text": "好，我尊重你的意思。"
+      "text": "好，那留給別人。"
     },
     {
       "stable_id": "BR12.closing.01",
@@ -5480,7 +5486,7 @@
       "choice": "BR13_C01",
       "speaker_id": "bin",
       "expression": "neutral",
-      "text": "行。至少別再拿一張紙替我許願。"
+      "text": "喔，紀念票喔。我看錯了。"
     },
     {
       "stable_id": "BR13.closing.01",
@@ -5570,7 +5576,7 @@
       "choice": null,
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "連提示音都像在要求回報。"
+      "text": "一直響，你不煩喔？"
     },
     {
       "stable_id": "BR14.opening.03",
@@ -5579,7 +5585,7 @@
       "choice": null,
       "speaker_id": "hou",
       "expression": "neutral",
-      "text": "它至少可以關。我還得學。"
+      "text": "煩啊。吵了一整天。"
     },
     {
       "stable_id": "BR14.choice.BR14_C01.01",
@@ -5588,7 +5594,7 @@
       "choice": "BR14_C01",
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "先讓這段安靜下來。你也需要休息。"
+      "text": "先讓它安靜一下。"
     },
     {
       "stable_id": "BR14.choice.BR14_C01.02",
@@ -5597,7 +5603,7 @@
       "choice": "BR14_C01",
       "speaker_id": "hou",
       "expression": "neutral",
-      "text": "嗯。現在不用接著講下一件事。"
+      "text": "嗯。先別吵我。"
     },
     {
       "stable_id": "BR14.closing.01",
@@ -5678,7 +5684,7 @@
       "choice": null,
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "這兩張點數紙，怎麼夾在書裡？"
+      "text": "這兩張不是點數紙？你拿來夾書喔？"
     },
     {
       "stable_id": "BR15.opening.02",
@@ -5687,7 +5693,7 @@
       "choice": null,
       "speaker_id": "zhou",
       "expression": "neutral",
-      "text": "正好當書籤。總算做了點不催人的工作。"
+      "text": "不然丟掉也是丟掉。"
     },
     {
       "stable_id": "BR15.choice.BR15_C01.01",
@@ -5696,7 +5702,7 @@
       "choice": "BR15_C01",
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "你以前常看書？"
+      "text": "你以前很常看書？"
     },
     {
       "stable_id": "BR15.choice.BR15_C01.02",
@@ -5705,7 +5711,7 @@
       "choice": "BR15_C01",
       "speaker_id": "zhou",
       "expression": "neutral",
-      "text": "開過小書店。客人讀到哪裡，比他還剩多少點數有意思。"
+      "text": "我以前開過一間小書店。"
     },
     {
       "stable_id": "BR15.choice.BR15_C01.03",
@@ -5714,7 +5720,7 @@
       "choice": "BR15_C01",
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "想聽你說那家店。"
+      "text": "真的？你開書店？"
     },
     {
       "stable_id": "BR15.closing.01",
@@ -5921,7 +5927,7 @@
       "choice": "BR17_C01",
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "不用告訴我。留給你和家人就好。"
+      "text": "好，不問。"
     },
     {
       "stable_id": "BR17.choice.BR17_C01.02",
@@ -5930,7 +5936,7 @@
       "choice": "BR17_C01",
       "speaker_id": "xiaoyu",
       "expression": "neutral",
-      "text": "謝謝。今天我只想說到這裡。"
+      "text": "嗯。先不聊這個。"
     },
     {
       "stable_id": "BR17.closing.01",
@@ -6020,7 +6026,7 @@
       "choice": null,
       "speaker_id": "bin",
       "expression": "smile",
-      "text": "連彩帶都比報表早下班。"
+      "text": "掉了欸。誰黏的啊？"
     },
     {
       "stable_id": "BR18.choice.BR18_C01.01",
@@ -6056,7 +6062,7 @@
       "choice": "BR18_C02",
       "speaker_id": "bin",
       "expression": "neutral",
-      "text": "那就坐著。掌聲不需要人人交作業。"
+      "text": "那你坐著。我也沒什麼好講的。"
     },
     {
       "stable_id": "BR18.closing.01",
@@ -6164,7 +6170,7 @@
       "choice": "BR19_C01",
       "speaker_id": "zhou",
       "expression": "neutral",
-      "text": "騙你的人才該負責。把經過說清楚，不是把責任攬回來。"
+      "text": "是他們騙你。你別一直往自己身上怪。"
     },
     {
       "stable_id": "BR19.closing.01",
@@ -6677,7 +6683,8 @@
       "choice": "BR23_C01",
       "speaker_id": "lin",
       "expression": "neutral",
-      "text": "核對，是為了不要再漏掉誰。這還不是定罪結論。"
+      "text": "先記下這裡。能對上的、還不確定的，分開放。",
+      "system_information": "目前僅核對資料，不構成定罪結論。"
     },
     {
       "stable_id": "BR23.choice.BR23_C02.01",
@@ -7280,7 +7287,7 @@
       "choice": null,
       "speaker_id": "lin",
       "expression": "neutral",
-      "text": "我曾以為坐近一點，就能改得動。"
+      "text": "我那時候覺得，升上去就能改一些事。"
     },
     {
       "stable_id": "BR27.opening.02",
@@ -7289,7 +7296,7 @@
       "choice": null,
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "你指的是離那張桌子更近？"
+      "text": "後來呢？"
     },
     {
       "stable_id": "BR27.opening.03",
@@ -7298,7 +7305,7 @@
       "choice": null,
       "speaker_id": "lin",
       "expression": "sad",
-      "text": "是。後來才發現，桌子也會把人固定住。"
+      "text": "後來……你也看到了。"
     },
     {
       "stable_id": "BR27.choice.BR27_C01.01",
@@ -7307,7 +7314,7 @@
       "choice": "BR27_C01",
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "我聽著。你不用把它說成一段漂亮的經歷。"
+      "text": "嗯，妳說。"
     },
     {
       "stable_id": "BR27.choice.BR27_C01.02",
@@ -7316,7 +7323,7 @@
       "choice": "BR27_C01",
       "speaker_id": "lin",
       "expression": "neutral",
-      "text": "有些決定是我做的。我會把那部分也說出來。"
+      "text": "我做的那幾個決定，也會一起說。"
     },
     {
       "stable_id": "BR27.choice.BR27_C02.01",
@@ -7325,7 +7332,7 @@
       "choice": "BR27_C02",
       "speaker_id": "protagonist",
       "expression": "determined",
-      "text": "我能理解你當時怎麼想，但你做過的決定仍要負責。"
+      "text": "但那些決定，妳也有份。"
     },
     {
       "stable_id": "BR27.choice.BR27_C02.02",
@@ -7334,7 +7341,7 @@
       "choice": "BR27_C02",
       "speaker_id": "lin",
       "expression": "neutral",
-      "text": "我知道。解釋不是把責任推走。"
+      "text": "對。有些是我決定的。"
     },
     {
       "stable_id": "BR27.closing.01",
@@ -7748,7 +7755,7 @@
       "choice": null,
       "speaker_id": "tang",
       "expression": "neutral",
-      "text": "上次的話，你不必講得很漂亮。"
+      "text": "上次那件事，你還想聊嗎？"
     },
     {
       "stable_id": "BR29.opening.02",
@@ -7757,7 +7764,7 @@
       "choice": null,
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "我想再回來問候你，不是把對話補成成績。"
+      "text": "沒什麼特別的，就想找你說說話。"
     },
     {
       "stable_id": "BR29.choice.BR29_C01.01",
@@ -7766,7 +7773,7 @@
       "choice": "BR29_C01",
       "speaker_id": "protagonist",
       "expression": "neutral",
-      "text": "之前聊過的我還記得。今天只想問，你過得怎麼樣？不想答也沒關係。"
+      "text": "今天過得怎麼樣？"
     },
     {
       "stable_id": "BR29.choice.BR29_C01.02",
@@ -7775,7 +7782,7 @@
       "choice": "BR29_C01",
       "speaker_id": "tang",
       "expression": "neutral",
-      "text": "我知道。你願意留這個空間，就不用再把話包得很好看。"
+      "text": "還好。你呢？"
     },
     {
       "stable_id": "BR29.closing.01",
@@ -8781,7 +8788,7 @@
       "choice": null,
       "speaker_id": "zhou",
       "expression": "neutral",
-      "text": "你不用先把話說漂亮，才值得有人幫忙。"
+      "text": "先坐。怎麼了？"
     },
     {
       "stable_id": "BR35.opening.02",
@@ -8799,7 +8806,7 @@
       "choice": null,
       "speaker_id": "zhou",
       "expression": "neutral",
-      "text": "那就從你願意說的開始。也可以先安靜。"
+      "text": "沒關係，慢慢說。"
     },
     {
       "stable_id": "BR35.choice.BR35_C01.01",
@@ -8835,7 +8842,8 @@
       "choice": "BR35_C02",
       "speaker_id": "zhou",
       "expression": "neutral",
-      "text": "可以。求助不用先累積到誰喜歡你。"
+      "text": "好，我陪你一下。",
+      "system_information": "求助不要求好感、職階或日期門檻。免費仍耗時10分鐘；原適用風險、剩餘恢復日數、已扣數值不回補及純support_offered無風險只對話等規則仍完整保留。"
     },
     {
       "stable_id": "BR35.choice.BR35_C03.01",
@@ -8988,7 +8996,7 @@
       "choice": "BR36_C01",
       "speaker_id": "zhou",
       "expression": "neutral",
-      "text": "先把事說清楚。沒錢不妨礙你先承認，欠下的也要繼續記。"
+      "text": "好，你先說。剩下的錢也要記清楚。"
     },
     {
       "stable_id": "BR36.choice.BR36_C02.01",
@@ -9024,7 +9032,7 @@
       "choice": "BR36_C03",
       "speaker_id": "zhou",
       "expression": "neutral",
-      "text": "等有零用錢再來核對。基本餐食和逃離電話，不拿來抵。"
+      "text": "有零用錢再還。吃飯和那支電話照舊，別擔心。"
     },
     {
       "stable_id": "BR36.closing.01",
@@ -22466,7 +22474,7 @@
       "stable_id": "SUP-R3-success.01",
       "speaker_id": "lin",
       "expression": "smile",
-      "text": "這次處理得穩，交接也清楚。這點我信得過你。"
+      "text": "這次沒漏，交接也清楚。做得不錯。"
     },
     {
       "stable_id": "SUP-R3-success.02",
@@ -22664,19 +22672,19 @@
       "stable_id": "SUP-R4-chat.01",
       "speaker_id": "lin",
       "expression": "smile",
-      "text": "你最近敢嫌我的字了。"
+      "text": "你剛剛是不是在嫌我的字？"
     },
     {
       "stable_id": "SUP-R4-chat.02",
       "speaker_id": "protagonist",
       "expression": "smile",
-      "text": "熟了才敢說，之前我以為那是保密措施。"
+      "text": "這個字真的看不懂啊。"
     },
     {
       "stable_id": "SUP-R4-chat.03",
       "speaker_id": "lin",
       "expression": "smile",
-      "text": "少來。下次看不懂，直接問。"
+      "text": "哪個？拿來。"
     },
     {
       "stable_id": "SUP-R4-promotion.01",
@@ -22808,19 +22816,19 @@
       "stable_id": "SUP-R5-chat.01",
       "speaker_id": "lin",
       "expression": "smile",
-      "text": "有時候我想，跟你說話總算不用每句都像在交班。"
+      "text": "今天沒別的事？"
     },
     {
       "stable_id": "SUP-R5-chat.02",
       "speaker_id": "protagonist",
       "expression": "smile",
-      "text": "可妳剛才連嘆氣都分了前後兩段。"
+      "text": "沒事就不能找妳喔？"
     },
     {
       "stable_id": "SUP-R5-chat.03",
       "speaker_id": "lin",
       "expression": "smile",
-      "text": "……這句確實像朋友才敢說的。"
+      "text": "可以。你坐啊。"
     },
     {
       "stable_id": "SUP-R5-promotion.01",
@@ -42306,5 +42314,14 @@
       "E_BOSS__xiaoyu.opening.base.01"
     ],
     "proposalOnly": true
+  },
+  "voiceRevision": {
+    "id": "B03-v1",
+    "changedLineCount": 112,
+    "systemInformationCount": 8,
+    "unchangedOtherLineCount": 1773,
+    "mechanicsChanged": false,
+    "formalAdoption": false,
+    "qualityNotice": "既有制式系統文案／角色口吻待精修，互動驗收通過不等同文案已通過。"
   }
 }
