@@ -1,0 +1,21 @@
+.demo-report-settings { position: fixed; right: 1rem; bottom: 1rem; z-index: 18; max-width: calc(100vw - 2rem); padding: .65rem .9rem; border: 1px solid #a3ad94; border-radius: .7rem; color: #253a31; background: #fffdf5; box-shadow: 0 .3rem 1.5rem #263a2d19; }
+.demo-report-settings summary { cursor: pointer; min-height: 2rem; display: list-item; }
+.demo-report-settings button { margin-top: .6rem; padding: .65rem 1rem; }
+.demo-report-dialog { box-sizing: border-box; width: min(44rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); padding: clamp(1rem, 4vw, 2rem); border: 1px solid #9aab90; border-radius: 1rem; color: #253a31; background: #fffdf5; overflow: auto; }
+.demo-report-dialog::backdrop { background: #14231dcc; }
+.demo-report-dialog h2 { font-size: 1.5rem; margin-top: 0; }
+.demo-report-dialog p { line-height: 1.7; }
+.demo-report-dialog label { display: block; margin: 1rem 0 .35rem; font-weight: 600; }
+.demo-report-dialog select, .demo-report-dialog textarea { box-sizing: border-box; width: 100%; padding: .75rem; border: 1px solid #a3ad94; border-radius: .5rem; color: inherit; background: #fff; font: inherit; }
+.demo-report-dialog textarea { min-height: 8rem; resize: vertical; }
+.demo-report-dialog pre { max-height: 19rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; padding: .8rem; background: #edf0e5; font-size: .8rem; }
+.demo-report-dialog summary { cursor: pointer; padding: .75rem 0; }
+.demo-report-dialog .report-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+.demo-report-dialog button { min-height: 2.75rem; padding: .6rem 1rem; border: 1px solid #768c70; border-radius: .5rem; color: inherit; background: #e5ecd9; font: inherit; cursor: pointer; }
+.demo-report-dialog button:disabled { opacity: .55; cursor: wait; }
+.demo-report-dialog [role="status"] { min-height: 1.75rem; overflow-wrap: anywhere; }
+.demo-report-dialog :focus-visible, .demo-report-settings :focus-visible { outline: 3px solid #476e45; outline-offset: 3px; }
+@media (max-width: 420px) { .demo-report-settings { right: .65rem; bottom: .65rem; } .demo-report-dialog { width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem); } }
+
+.demo-report-modal-entry { flex: none; min-height: 2.75rem; padding: .5rem .75rem; border: 1px solid #819476; border-radius: .5rem; color: #253a31; background: #edf0e5; font: inherit; white-space: nowrap; cursor: pointer; }
+.demo-report-modal-entry:focus-visible { outline: 3px solid #476e45; outline-offset: 3px; }
