@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.7-b03-voice-20261016",
+  "version": "v4.7-b03-voice-20261016-r2",
   "date": "2026-10-16",
   "status": "設計確認稿／開發中；B01序章互動與B02部分路徑原型，整份企劃未完成",
-  "contentHash": "788bd9cc4bf3ada8674bea0466f868851eb787a08e2d0adfba3344ee046e72f6",
+  "contentHash": "cd4b803bc822bf9946c1672eea8533e3aae2f9f7a1854fea81228abc69d3b7e2",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -57,8 +57,8 @@
     },
     {
       "path": "dialogue-proposals.json",
-      "bytes": 1448841,
-      "sha256": "59ac94346d60e3c3de5c3c587f41e0e4e7f5cc8f7de182241e1167ea272cf017"
+      "bytes": 1448850,
+      "sha256": "cc2efc74b4a6e29801a99d196e18973f9a7141999720a5ecdd59a7b89fb28ebe"
     },
     {
       "path": "downloads/volume-2-full.pdf",
@@ -1687,8 +1687,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 11508,
-      "sha256": "207be1fe317ec90438c0c349017c70448c70cc3fe85fc3d0a9438c1be9cd1b55"
+      "bytes": 11514,
+      "sha256": "e7032c970ae418cd4af45733ad4e710dc8b64d4bb58f7e5fcccdf70ee04d2bb0"
     },
     {
       "path": "interaction-coverage.json",
@@ -3202,8 +3202,8 @@
     },
     {
       "path": "proposals.js",
-      "bytes": 41172,
-      "sha256": "accade2670ed6ac4f432b0d35438cb5d8e300462d5b388d319196fbbf669b3d7"
+      "bytes": 41175,
+      "sha256": "2951b429f1a926f4b52df362348c51b512357a1893e015fa15ec8d6efd9352e2"
     },
     {
       "path": "references/006c22ae9b79004aaf8e.webp",
@@ -3342,9 +3342,14 @@
     "changedLineCount": 112,
     "systemInformationCount": 8,
     "linesTotal": 1885,
-    "lineDigest": "8ae35001683c92701143fcce216f030327c838018e7ac508863e6c24103d3928",
+    "lineDigest": "01f6bbd418a80e552ffd436d7d7943636a2367ace3eaa65aa73f2b3e1afa110c",
     "mechanicsChanged": false,
     "formalAdoption": false,
-    "qualityNotice": "既有制式系統文案／角色口吻待精修，互動驗收通過不等同文案已通過。"
+    "qualityNotice": "既有制式系統文案／角色口吻待精修，互動驗收通過不等同文案已通過。",
+    "sourceCorrection": {
+      "id": "BR36.choice.BR36_C03.02",
+      "phoneOwnershipNotAssumed": true,
+      "mechanicsChanged": false
+    }
   }
 }

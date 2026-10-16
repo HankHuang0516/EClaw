@@ -320,7 +320,7 @@
     $('dialogueSummary').after(details);
   }
   const planPromise = new Promise((resolve, reject) => { const timer = window.setTimeout(() => reject(new Error('Core reader unavailable')), 30000); document.addEventListener('fraud:plan-ready', event => { window.clearTimeout(timer); resolve(event.detail); }, { once: true }); document.dispatchEvent(new CustomEvent('fraud:request-plan')); });
-  Promise.all([planPromise, fetch('dialogue-proposals.json?v=b03-20261016').then(r => { if (!r.ok) throw new Error('Dialogues unavailable'); return r.json(); }), fetch('art-catalog.json').then(r => { if (!r.ok) throw new Error('Art catalogue unavailable'); return r.json(); })]).then(([source, dialogue, catalogue]) => {
+  Promise.all([planPromise, fetch('dialogue-proposals.json?v=b03-20261016-r2').then(r => { if (!r.ok) throw new Error('Dialogues unavailable'); return r.json(); }), fetch('art-catalog.json').then(r => { if (!r.ok) throw new Error('Art catalogue unavailable'); return r.json(); })]).then(([source, dialogue, catalogue]) => {
     plan = source; bundle = dialogue; art = catalogue; index = model.makeIndex(bundle);
     sourceLineOwners = new Map(); for (const entry of bundle.entries) for (const group of model.groupsFor(entry, index)) for (const line of group.lines) sourceLineOwners.set(line.stable_id, entry);
     if (bundle.lineCount !== 1885 || index.size !== bundle.lineCount || sourceLineOwners.size !== bundle.lineCount) throw new Error('Dialogue coverage mismatch');

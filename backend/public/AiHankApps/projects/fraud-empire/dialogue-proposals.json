@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.7-b03-voice-20261016",
+  "version": "v4.7-b03-voice-20261016-r2",
   "status": "新增對話提案待確認；不是正式劇本或程式驗收",
   "lineCount": 1885,
-  "lineDigest": "8ae35001683c92701143fcce216f030327c838018e7ac508863e6c24103d3928",
+  "lineDigest": "01f6bbd418a80e552ffd436d7d7943636a2367ace3eaa65aa73f2b3e1afa110c",
   "lines": [
     {
       "stable_id": "MS01.opening.base.01",
@@ -9032,7 +9032,7 @@
       "choice": "BR36_C03",
       "speaker_id": "zhou",
       "expression": "neutral",
-      "text": "有零用錢再還。吃飯和那支電話照舊，別擔心。"
+      "text": "有零用錢再還。吃飯和逃離用的電話，都不拿來抵。"
     },
     {
       "stable_id": "BR36.closing.01",

@@ -562,7 +562,7 @@ const expected = [
   [
     "BR36.choice.BR36_C03.02",
     "zhou",
-    "有零用錢再還。吃飯和那支電話照舊，別擔心。",
+    "有零用錢再還。吃飯和逃離用的電話，都不拿來抵。",
     null
   ],
   [
@@ -688,5 +688,30 @@ describe('B03 guarded narrative integration', () => {
   test('all 1885 stable IDs remain reachable through the unchanged groups', () => { const index = model.makeIndex(bundle); expect(index.size).toBe(1885); expect(new Set(bundle.entries.flatMap(e => model.groupsFor(e, index).flatMap(g => g.lines.map(l => l.stable_id)))).size).toBe(1885); });
   test('rendering shows safe text notes in both reader and compact player', () => { const script = fs.readFileSync(path.join(root, 'proposals.js'), 'utf8'); expect(script).toContain('system.dataset.systemFor = line.stable_id'); expect(script).toContain("el('p', line.system_information)"); expect(script).toContain("lineCard(activeLine, { compact: true, revealed })"); expect(script).not.toMatch(/localStorage|sessionStorage|sendBeacon|method\s*:\s*['"]POST/); });
   test('partial editorial status is truthful and no private profile payload is added', () => { expect(bundle.voiceRevision.changedLineCount).toBe(112); expect(bundle.voiceRevision.unchangedOtherLineCount).toBe(1773); expect(bundle.voiceRevision.formalAdoption).toBe(false); expect(bundle.voiceRevision.qualityNotice).toContain('互動驗收通過不等同文案已通過'); expect(bundle).not.toHaveProperty('privateNewCharacterProfiles'); expect(bundle).not.toHaveProperty('newTrialLines'); });
-  test('independent static release never drags the unreviewed Demo API client', () => { expect(release.version).toBe('v4.7-b03-voice-20261016'); expect(release.assets).toHaveLength(654); expect(release.assets.filter(a => a.path.startsWith('demo-feedback'))).toHaveLength(0); expect(release.contentHash).toBe(hash(release.assets)); const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8'); expect(html).toContain('proposals.js?v=b03-20261016'); expect(html).not.toContain('demo-feedback.js'); });
+  test('independent static release never drags the unreviewed Demo API client', () => { expect(release.version).toBe('v4.7-b03-voice-20261016-r2'); expect(release.assets).toHaveLength(654); expect(release.assets.filter(a => a.path.startsWith('demo-feedback'))).toHaveLength(0); expect(release.contentHash).toBe(hash(release.assets)); const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8'); expect(html).toContain('proposals.js?v=b03-20261016-r2'); expect(html).not.toContain('demo-feedback.js'); });
+});
+
+// Source-condition fixtures, not a newly implemented whole-game state machine.
+describe('BR36 phone entitlement, without ownership presupposition', () => {
+  const find = id => bundle.entries.find(e => e.id === id);
+  test('allowed source prelude BR33 -> BR36 needs no MS09 or IT03', () => {
+    const before = { alive: true, day: 12, rank: 3, MS07: true, mood: 20, F_zhou: 0, MS09: false, help_accepted: false, IT03: false, dirty_commission: false, finale_committed: false };
+    const truths = s => ({ alive: s.alive, 'day>=12': s.day >= 12, 'rank>=3': s.rank >= 3, MS07: s.MS07, 'mood>=20': s.mood >= 20, 'F_zhou>=20': s.F_zhou >= 20, dirty_commission: s.dirty_commission, finale_committed: s.finale_committed });
+    const permits = (id,s) => { const c=find(id).structure.trigger, values=truths(s); return c.all.every(k=>values[k]===true) && (!c.any.length || c.any.some(k=>values[k]===true)) && c.not.every(k=>values[k]!==true); };
+    expect(permits('BR33', before)).toBe(true);
+    expect(find('BR33').structure.source_snapshot.outcome).toContain('dirty_commission=true');
+    const after = { ...before, dirty_commission: true, remaining_commission_debt: 30, pocket: 30 };
+    expect(permits('BR36', after)).toBe(true); expect(after.MS09).toBe(false); expect(after.IT03).toBe(false);
+    expect(JSON.stringify(find('BR36').structure.trigger)).not.toMatch(/MS09|IT03|help_accepted/);
+    expect(find('MS09').structure.source_snapshot.outcome).toContain('IT03');
+    expect(find('MS09').structure.source_snapshot.dialogue_beats.join(' ')).toContain('接受援助後');
+  });
+  test('record-balance queue protects entitlement without claiming a held phone or changing payout rules', () => {
+    const line = model.queueFor(find('BR36'), model.makeIndex(bundle), { choiceIndex: 2 }).lines.find(l => l.stable_id === 'BR36.choice.BR36_C03.02');
+    expect(line.text).toBe('有零用錢再還。吃飯和逃離用的電話，都不拿來抵。');
+    expect(line.text).not.toMatch(/那支電話照舊|已借|已拿到/);
+    expect(find('BR36').structure.source_snapshot.miss_recovery).toContain('不影響基本餐食免費配給或逃離電話');
+    expect(find('BR36').structure.source_snapshot.outcome).toContain('min(remaining_commission_debt,可用零用錢)');
+    expect(find('BR36').structure.submission_policy.duration_game_minutes).toBe(10);
+  });
 });
