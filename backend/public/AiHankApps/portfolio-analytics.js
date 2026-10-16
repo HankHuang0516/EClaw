@@ -23,8 +23,8 @@
     .portfolio-traffic-summary{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;margin-top:18px;color:#425849;font-size:14px}
     .portfolio-traffic-summary small{color:#6d716a;font-size:12px}
     .card.has-traffic::after{display:none!important}
-    .card.has-traffic .card-head{position:relative;min-height:100px;padding-right:172px}
-    .card.has-traffic .guide-actions{position:absolute;right:0;top:0;display:flex;flex-direction:column;align-items:flex-end;gap:7px;z-index:6}
+    .card.has-traffic .card-head{position:relative;display:grid;grid-template-columns:104px minmax(0,1fr);align-items:center;gap:16px;min-height:0;padding-right:0}
+    .card.has-traffic .guide-actions{position:static;grid-column:1/-1;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:7px;z-index:6}
     .portfolio-traffic{position:relative;font:13px/1.5 inherit;color:#344d3e}
     .portfolio-traffic-button{display:flex;align-items:center;gap:6px;border:1px solid #aab9ac;border-radius:18px;background:#f6f8f1;color:inherit;padding:6px 10px;cursor:pointer;font:inherit;white-space:nowrap}
     .portfolio-traffic-button:focus-visible{outline:2px solid #376345;outline-offset:3px}
@@ -34,7 +34,11 @@
     .portfolio-traffic-details th:first-child{text-align:left}
     .portfolio-traffic-details th,.portfolio-traffic-details td{padding:5px 3px}
     .portfolio-traffic-details p{margin:7px 0 0!important;font-size:11px;color:#727970}
-    .card.has-traffic{overflow:visible!important}
+    .card.has-traffic{overflow:visible!important;container-type:inline-size}
+    @container (min-width:540px){
+      .card.has-traffic .card-head{grid-template-columns:104px minmax(0,1fr) auto}
+      .card.has-traffic .guide-actions{grid-column:3;flex-direction:column;align-items:flex-end;max-width:180px}
+    }
   `;
   document.head.appendChild(style);
 
