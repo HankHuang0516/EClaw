@@ -1,14 +1,19 @@
 {
   "schemaVersion": 1,
-  "version": "v4.6-plan-interaction-b02-routes-20261016",
+  "version": "v4.7-b03-voice-20261016-r3",
   "date": "2026-10-16",
   "status": "設計確認稿／開發中；B01序章互動與B02部分路徑原型，整份企劃未完成",
-  "contentHash": "608e9b8e185a6a542df6749b27ca48e6f1d38118989de3b72866d6b314c96ad2",
+  "contentHash": "217e60c8b41c162f6822a33e1051c6783d83a609eccdaaf55cf9709db414a0b1",
   "assets": [
     {
       "path": "art-catalog.json",
       "bytes": 2262043,
       "sha256": "a95f81b8e34792c34b7ee9925ffa5355eddd177bd93b7cff433d19c688c45662"
+    },
+    {
+      "path": "b03-locales.js",
+      "bytes": 56344,
+      "sha256": "7fcd971fd314119b1e8280f6fb5f4f1ac1b7884c39d8e8b09cc90eb1ccd1d040"
     },
     {
       "path": "branch-enrichment-proposals.json",
@@ -57,8 +62,8 @@
     },
     {
       "path": "dialogue-proposals.json",
-      "bytes": 1449949,
-      "sha256": "7fe1e0e43afade7e76b5b40d81f6b99a2c9b3c787b02a9e8e856418cd0c7e7e1"
+      "bytes": 1448850,
+      "sha256": "cc2efc74b4a6e29801a99d196e18973f9a7141999720a5ecdd59a7b89fb28ebe"
     },
     {
       "path": "downloads/volume-2-full.pdf",
@@ -1687,8 +1692,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 11478,
-      "sha256": "242859ad50e19e1244240cc2aa6ff5c6ed17e2fb1a163bba8e9fe049dd95318c"
+      "bytes": 11579,
+      "sha256": "d4777015d2ca3ae2bac447ac7bb26913b29490503a0c75f0a98e5e970c14b3d7"
     },
     {
       "path": "interaction-coverage.json",
@@ -3197,13 +3202,13 @@
     },
     {
       "path": "proposals.css",
-      "bytes": 7718,
-      "sha256": "ae79f3bde574ad1c448c54a1144fed6bc11ef51cbac767777a811530e1d654dd"
+      "bytes": 8677,
+      "sha256": "f0594036d9143064edb2fb526ed1f9ced3db0fe35a3c3b7f9839e580731934fc"
     },
     {
       "path": "proposals.js",
-      "bytes": 40457,
-      "sha256": "dd696606aa47271c8e995eaffa6d42c097b4282ea04400fff9ce4813325bf360"
+      "bytes": 43419,
+      "sha256": "459f3417cb3b824ae2dc130c4baf36898beeb4086613548ca8eec3316228e8cc"
     },
     {
       "path": "references/006c22ae9b79004aaf8e.webp",
@@ -3337,5 +3342,35 @@
     "全企劃696筆來源對照不等於完成。B01功能驗收已通過；本版B02只提供9場景的邏輯路徑／走近，宿舍布局、正式入場、取物及B03–B06仍未完成。",
     "T02首次合計20分鐘、跨日、初值與耗損啟動未定；本批不套全局時鐘或睡眠效果。短片未提供，只提供來源明列的主動略過。",
     "既有制式系統文案／角色口吻待B03精修，互動驗收不等同文案品質通過。"
-  ]
+  ],
+  "b03Voice": {
+    "changedLineCount": 112,
+    "systemInformationCount": 8,
+    "linesTotal": 1885,
+    "lineDigest": "01f6bbd418a80e552ffd436d7d7943636a2367ace3eaa65aa73f2b3e1afa110c",
+    "mechanicsChanged": false,
+    "formalAdoption": false,
+    "qualityNotice": "既有制式系統文案／角色口吻待精修，互動驗收通過不等同文案已通過。",
+    "sourceCorrection": {
+      "id": "BR36.choice.BR36_C03.02",
+      "phoneOwnershipNotAssumed": true,
+      "mechanicsChanged": false
+    },
+    "locales": {
+      "languages": [
+        "en",
+        "zh-TW",
+        "zh-CN",
+        "ja",
+        "ko"
+      ],
+      "revisedLines": 112,
+      "systemNotes": 8,
+      "newUIKeys": 6,
+      "completeForChangedScope": true,
+      "missingKeys": [],
+      "fullScriptTranslated": false,
+      "sourceLineDigest": "01f6bbd418a80e552ffd436d7d7943636a2367ace3eaa65aa73f2b3e1afa110c"
+    }
+  }
 }
