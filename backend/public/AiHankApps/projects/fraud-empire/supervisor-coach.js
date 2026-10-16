@@ -28,9 +28,9 @@
     const reading = Boolean(document.querySelector('dialog[open]') || details.open || panel.querySelector('.proto-hud-description') || descriptor?.reading || document.activeElement?.matches('select,input,textarea,[contenteditable=true]'));
     return { active: active && enabled, terminal: descriptor?.terminal || false, paused: !focused || document.visibilityState !== 'visible' || !intersecting || reading || descriptor?.busy, session: descriptor?.session || null, stage: descriptor?.stage || null, progressKey: descriptor?.progressKey || null, inputKey: descriptor?.inputKey || null, contextKey: JSON.stringify(person), speaker: person, descriptor };
   }
-  function clearLine() { lastLine = null; message.hidden = true; if (line.textContent) line.textContent = ''; }
+  function clearLine() { document.dispatchEvent(new window.CustomEvent('fraud:coach-clear')); lastLine = null; message.hidden = true; if (line.textContent) line.textContent = ''; }
   function updateLine() { if (!lastLine) return; line.textContent = locales.line(language(), lastLine.speaker, lastLine.level, lastLine.serial, lastLine.descriptor); message.dataset.level = lastLine.level; message.dataset.cause = lastLine.cause; message.hidden = false; }
-  const controller = model.createController({ read: source, now: () => performance.now(), schedule: (fn, ms) => window.setTimeout(fn, ms), cancel: id => window.clearTimeout(id), onClear: clearLine, onHint(value) { lastLine = value; updateLine(); } });
+  const controller = model.createController({ read: source, now: () => performance.now(), schedule: (fn, ms) => window.setTimeout(fn, ms), cancel: id => window.clearTimeout(id), onClear: clearLine, onHint(value) { lastLine = value; updateLine(); document.dispatchEvent(new window.CustomEvent('fraud:coach-hint', {detail:{role:value.speaker?.id||null,cause:value.cause}})); } });
   function mount() {
     const board = panel.querySelector('.proto-live-board');
     if (board && coach.nextElementSibling !== board) board.before(coach);

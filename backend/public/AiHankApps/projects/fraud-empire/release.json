@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.10-coach-p02-20261016-r1",
-  "date": "2026-10-16",
-  "status": "MG-P02-coaching-candidate-player-scene-not-integrated",
-  "contentHash": "161ddfca0308ae21b9e6ef0dc2329a7214bbb64d4fd3938b93954ed88f40a59b",
+  "version": "v4.11-player-demo-20261017-r3",
+  "date": "2026-10-17",
+  "status": "playable-P02-PWA-demo-candidate-not-full-game",
+  "contentHash": "0ced4312ab4cd4afeff93ded06a7ddfcfec4e8f35115f6bed9bb2c7d3fd92aec",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -49,6 +49,11 @@
       "path": "demo-data.json",
       "bytes": 1765,
       "sha256": "68906b56576d2c700e9d612c60c75c109aced2bbf71202fa3ee9891373eb62b4"
+    },
+    {
+      "path": "demo-feedback-model.js",
+      "bytes": 2498,
+      "sha256": "474b081095632f784f9b164abbdfefbe81e6544160789c14a96bec37d532b660"
     },
     {
       "path": "demo.css",
@@ -1692,8 +1697,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 12194,
-      "sha256": "fe34492ed58e3a773cb38c3a6737a1df66c5d6f115bbb20809fca2aae80474d0"
+      "bytes": 12362,
+      "sha256": "10f24d3038b1d18464a1afda5ff890f2e41bb86cdcc1bd8aae76da529fe77c4f"
     },
     {
       "path": "interaction-coverage.json",
@@ -1736,6 +1741,11 @@
       "sha256": "67ba13c122de79e85dae52d5ef6983f5151f28e0febd809259bbdb21132ee3f1"
     },
     {
+      "path": "p02-player-restore-candidate.js",
+      "bytes": 35890,
+      "sha256": "c89ff55f13d3e3f1d1ede71f3fdd925239ad24e605d69fb157502ba94a6ffa1d"
+    },
+    {
       "path": "plan-interaction-data.json",
       "bytes": 7919,
       "sha256": "1eebc394b5a5edd1648c38dbb1ea60ea4e3b34bd33a3cbeac39503e51c5e7741"
@@ -1759,6 +1769,156 @@
       "path": "plan.json",
       "bytes": 695567,
       "sha256": "a4abd19dadb43bb2e81f019406bbe601fc78e876793d0385b81df4811e892388"
+    },
+    {
+      "path": "play.html",
+      "bytes": 2770,
+      "sha256": "3a50dd01084d31a91b57449ad31f75b245aa2c64d927da8d298e9e0a02e226aa"
+    },
+    {
+      "path": "player-assets-registry.js",
+      "bytes": 3074,
+      "sha256": "c7cd58a48c5a9ac0aa311d488acaa72faadcb708dfdb7f1ed038ff4c1b7fa5cd"
+    },
+    {
+      "path": "player-assets/player-back-native.png",
+      "bytes": 31883,
+      "sha256": "b576933eaab339d4764f8e7ea1fb1704e55ab2bf1b059c5c7f68fbe0bb6edbea"
+    },
+    {
+      "path": "player-assets/player-back-shadow.png",
+      "bytes": 1068,
+      "sha256": "fcb31d3aa1bdf49a2b2da3ed804d603795aeb95e1d06198f389bf9e23b9a7fb5"
+    },
+    {
+      "path": "player-assets/player-front-native.png",
+      "bytes": 32555,
+      "sha256": "dd5ca661f80619d4c9f62a654da5b489f82da7419dd9ef44164a77bd6abada79"
+    },
+    {
+      "path": "player-assets/player-front-shadow.png",
+      "bytes": 1124,
+      "sha256": "2767154fb7240d564b4c7ebc55b8a1fc4925eaf088ed80e456d72fafe676f309"
+    },
+    {
+      "path": "player-assets/player-left-native.png",
+      "bytes": 30566,
+      "sha256": "d54f0f0777eaf2dcfd592c48a83a62810d29ed8e6e440df52487010fa4b6ec29"
+    },
+    {
+      "path": "player-assets/player-left-shadow.png",
+      "bytes": 1077,
+      "sha256": "9a7ec39d395487440a128e1b00765737746f4b0677f4d2ee2a005377f0c6b344"
+    },
+    {
+      "path": "player-assets/player-right-native.png",
+      "bytes": 30777,
+      "sha256": "a1ea45ed320386a18af49408fdf090a7fac3568be2218a0a78e56919e154fa3c"
+    },
+    {
+      "path": "player-assets/player-right-shadow.png",
+      "bytes": 1121,
+      "sha256": "cc2e57042c111db485ded810069a677120d7bd7781626f275eba4b015c06c929"
+    },
+    {
+      "path": "player-assets/UX02-cleanplate-precise-v3.png",
+      "bytes": 2392142,
+      "sha256": "42c6e80d0465e3bd8dfc12f36bf581c092204a0f2fbe04b898217fa186fc9427"
+    },
+    {
+      "path": "player-assets/UX02-occlusion-combined-v3.png",
+      "bytes": 801955,
+      "sha256": "8f1e382f38115763de56b5e69b833884bc0b986b4d2a171d1704200c896435f9"
+    },
+    {
+      "path": "player-audio.js",
+      "bytes": 3904,
+      "sha256": "e5bd2fffa5882e2b69e0dfbf2ca75801daabe4cf7e98d2088b1776aef66653ce"
+    },
+    {
+      "path": "player-bootstrap.js",
+      "bytes": 10427,
+      "sha256": "75ce4ebf63efbc938e02849b646fd878f41ea69aa37c3ecfef057cfc21c86816"
+    },
+    {
+      "path": "player-cache-manifest.js",
+      "bytes": 7577,
+      "sha256": "c338bc7756eb1892c95bb990b686454aeda8b8656de07a91cdb854e8a6181f38"
+    },
+    {
+      "path": "player-entry-link.js",
+      "bytes": 849,
+      "sha256": "6ea8bd5533135d7651d07aeaef77bbf5db3a8505230be4cb5a649bf558aabf7d"
+    },
+    {
+      "path": "player-icon-180.png",
+      "bytes": 91623,
+      "sha256": "0e578d8f46e995ea49e165cc3bdb7cbfec5ef24299aca3aa1d2735e040c47434"
+    },
+    {
+      "path": "player-icon-192.png",
+      "bytes": 103351,
+      "sha256": "90b135d7b84220ceda4d9323551cfac5391c4556bbad2a701dac18717bb6439d"
+    },
+    {
+      "path": "player-icon-512.png",
+      "bytes": 645548,
+      "sha256": "d0c44c7e7ae3da038af391569c451791da8c31c6e1a5c4167ff47162ef131db6"
+    },
+    {
+      "path": "player-install-contract.js",
+      "bytes": 3367,
+      "sha256": "7340bda01d969b7c09da94a78f4f73e019021f8fc501468f80a2aef0b98aef0d"
+    },
+    {
+      "path": "player-release-context.json",
+      "bytes": 7447,
+      "sha256": "3b5871ca87a7b998a52a759cdeb11f34ffef992491c2e8f866d6dbdd452523ba"
+    },
+    {
+      "path": "player-report.js",
+      "bytes": 13714,
+      "sha256": "bdb6218b4c1572e2fb183168c4e7e28f0d9c03a8a2dddedf1c5979f51e204034"
+    },
+    {
+      "path": "player-save.js",
+      "bytes": 4031,
+      "sha256": "32da39a38d2da93ac0e03925978480b1b134be392b71cc133300fdae8482735b"
+    },
+    {
+      "path": "player-scene-bridge.js",
+      "bytes": 4312,
+      "sha256": "3d797ae616c38694949d6105fde0b85a3df732f51ec2d3eda81b8d964c3ab6a1"
+    },
+    {
+      "path": "player-scene-model.js",
+      "bytes": 13320,
+      "sha256": "b4390c73f0b5dedca36ed859aa140d9ef848974f9a0c606ba7e4b2942599ad20"
+    },
+    {
+      "path": "player-scene-view.css",
+      "bytes": 4198,
+      "sha256": "d9def212abc670db230f5343709085db8f132b0cc50405fd9023b945bac36d62"
+    },
+    {
+      "path": "player-scene-view.js",
+      "bytes": 35583,
+      "sha256": "3b04819912726950080a6105b01b3635ff9e01b64b25c473c778b71696d2382a"
+    },
+    {
+      "path": "player-service-worker.js",
+      "bytes": 5084,
+      "sha256": "682048cdd4626419b0b44d856eb63a33bc8f611237e7178b23dd5c35ccc2d58c"
+    },
+    {
+      "path": "player-updates.js",
+      "bytes": 2691,
+      "sha256": "4a2ef11c57b0caf82c1955054a3c006316634c6eae0eaea7a2dc0385c36643ac"
+    },
+    {
+      "path": "player.webmanifest",
+      "bytes": 694,
+      "sha256": "5cad409459c56d93fd911ac7d5a97ee5942d42392ba6b7e8b5a260f20228f06d"
     },
     {
       "path": "portraits/00ea02ee2c04135de57a.webp",
@@ -3211,6 +3371,11 @@
       "sha256": "459f3417cb3b824ae2dc130c4baf36898beeb4086613548ca8eec3316228e8cc"
     },
     {
+      "path": "prototype-snapshot.js",
+      "bytes": 4324,
+      "sha256": "932b469089862204fc14cefb3b0fe7194d8721254d6aab9c06ee5be1330e59bb"
+    },
+    {
       "path": "references/006c22ae9b79004aaf8e.webp",
       "bytes": 1927662,
       "sha256": "006c22ae9b79004aaf8e440353fd98d0172f95df3fdff671c2118762c6c6b640"
@@ -3282,13 +3447,23 @@
     },
     {
       "path": "supervisor-coach-locales.js",
-      "bytes": 19457,
-      "sha256": "a41f2cb1d0cff610ca3a8c48259923bad448cdcaf6aa4884615b44d679dc5fa9"
+      "bytes": 19976,
+      "sha256": "33c413b5dc1e245310e431531492dae3b4c612007eb27ae9df048922662f8716"
+    },
+    {
+      "path": "supervisor-coach-locales.next.js",
+      "bytes": 19976,
+      "sha256": "33c413b5dc1e245310e431531492dae3b4c612007eb27ae9df048922662f8716"
     },
     {
       "path": "supervisor-coach-model.js",
-      "bytes": 9062,
-      "sha256": "5ba179c27cf2a1b5cfa91f4a8161d8ceb491e537b80fe0b3ed5633905a70b3b5"
+      "bytes": 9132,
+      "sha256": "5a1b26a7727d866bbab61f91d99ef26c6a4deb8df1e21fddf527f6d8ca86d7d4"
+    },
+    {
+      "path": "supervisor-coach-model.next.js",
+      "bytes": 9132,
+      "sha256": "5a1b26a7727d866bbab61f91d99ef26c6a4deb8df1e21fddf527f6d8ca86d7d4"
     },
     {
       "path": "supervisor-coach.css",
@@ -3297,8 +3472,8 @@
     },
     {
       "path": "supervisor-coach.js",
-      "bytes": 10488,
-      "sha256": "3d40603907d796d7be4043e55e250b14ca36400cb13be903195970c30184174c"
+      "bytes": 10684,
+      "sha256": "f48c34ce4551212021b5002a2cbb90437c01645f7b952414c2ee6a491b1c54d3"
     },
     {
       "path": "workflows-locales.js",
@@ -3381,7 +3556,12 @@
     "25條文字修訂已核對整合。可達性摘要在匹配指定凍結來源後，只同步既有說明欄位；T13原有智慧25／R2等條件不變，未部署私人原檔或新增投影欄位。其他正式機制與同意細節仍依提案待確認。",
     "全企劃696筆來源對照不等於完成。B01功能驗收已通過；本版B02只提供9場景的邏輯路徑／走近，宿舍布局、正式入場、取物及B03–B06仍未完成。",
     "T02首次合計20分鐘、跨日、初值與耗損啟動未定；本批不套全局時鐘或睡眠效果。短片未提供，只提供來源明列的主動略過。",
-    "既有制式系統文案／角色口吻待B03精修，互動驗收不等同文案品質通過。"
+    "既有制式系統文案／角色口吻待B03精修，互動驗收不等同文案品質通過。",
+    "本版新增獨立可安裝PWA短段試玩，不等於完整遊戲、原生APK／IPA或正式資源平衡。",
+    "核准美術已整合；聲音尚未主觀驗收，正式資產清單不含未核准音檔，介面使用文字提示。",
+    "桌機與觸控視窗及隔離Chrome實際安裝／離線重開已驗收，未冒稱實體iOS／Android裝機。",
+    "設定回報只在明確送出時傳送；後端PR5222及正式儲存同ID讀回尚待完成，不冒稱已可供研究使用。",
+    "更新改用使用者確認、完整存檔後關閉作品的全部視窗再開啟；不再熱切換或強制重新載入。"
   ],
   "b03Voice": {
     "changedLineCount": 112,
@@ -3456,7 +3636,7 @@
     "voiceRanks": "R1 Hou; R2-R5 Lin",
     "relationshipState": "not-connected-no-inferred-affinity",
     "audioAvailable": false,
-    "playerSceneIntegrated": false,
+    "playerSceneIntegrated": true,
     "configurationStatus": "adjustable-interface-proposal-not-game-balance",
     "formalStateMutation": false,
     "pendingGameSpecificAdapters": [
@@ -3465,5 +3645,73 @@
       "MG-P06"
     ],
     "extensionPoint": "FraudCoachModel.createController; source-specific read/describe/surface bindings required"
+  },
+  "playerSlice": {
+    "entry": "play.html",
+    "runtimeContext": "player-release-context.json",
+    "runtimeContentHash": "50a12fdba5f00e6d3231e1779abfc84ce364866ac0e81f70b4392a40c159486a",
+    "saveContract": "slice-v1-008a59aaddafa283713309e170077d18f6acefc93949826365f11e31928df96d",
+    "approvedArt": "UX02-layer-art-v3-20261016",
+    "scene": "M02",
+    "eligibleTasks": [
+      "T03"
+    ],
+    "games": [
+      "MG-P02"
+    ],
+    "formalResourceCommits": false,
+    "sourceClockPaused": true,
+    "exactSourceResultCount": 1,
+    "awardedReward": 0,
+    "standaloneChromeInstallValidated": true,
+    "offlineCoreValidated": true,
+    "updatePolicy": "explicit-prepare-save-close-all-work-windows-and-reopen;no-forced-activation-or-live-reload",
+    "physicalMobileValidated": false,
+    "acceptedAudioCount": 0,
+    "feedbackProductionReadbackValidated": false,
+    "feedbackBackendPR": 5222,
+    "formalReportClientExcludedRequirement": true,
+    "newUINoticeLocales": [
+      "zh-TW",
+      "en",
+      "zh-CN",
+      "ja",
+      "ko"
+    ],
+    "newNoticeKeys": [
+      "confirmOther",
+      "confirmLoad",
+      "confirmIncompatible",
+      "confirmRestart",
+      "continuePrompt",
+      "savedMessage",
+      "loadedMessage",
+      "deletedMessage",
+      "operationComplete",
+      "notChanged",
+      "installedMessage",
+      "installHelp",
+      "offlinePreparing",
+      "returnBeforeUpdate",
+      "updateDownloading",
+      "noUpdate",
+      "updateNotReady",
+      "updateFetchFailed",
+      "otherWindowMessage",
+      "resumedMessage",
+      "preservedMessage",
+      "preparedNextOpen",
+      "preparingUpdate",
+      "applyingUpdate",
+      "reopeningUpdate",
+      "updateIncomplete",
+      "offlineReady",
+      "offlineWarming",
+      "offlineNotReady",
+      "loadFailure",
+      "loading",
+      "savedScope"
+    ],
+    "preservedP02StoryLanguage": "zh-TW"
   }
 }

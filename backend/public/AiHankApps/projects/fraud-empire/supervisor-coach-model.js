@@ -26,7 +26,7 @@
     const action = (type, payload = {}) => ({ type, ...payload });
     const go = (view, fallback) => s.activeView === view || (view === 'assembly' && s.activeView === 'expectations') ? fallback : [action('navigate', { view })];
     if (terminal) return make('result', 'result', []);
-    if (!s.piecePlacements.moon) return make('assemble', s.selectedPiece === 'moon' ? 'placeMoon' : 'selectMoon', go('assembly', [s.selectedPiece === 'moon' ? action('place_piece', { piece: 'moon', ticket: 'tao_ke' }) : action('select_piece', { piece: 'moon' })]), {}, 'assembly');
+    if (!s.piecePlacements.moon) return make('assemble', !['assembly', 'expectations'].includes(s.activeView) ? 'goAssembly' : s.selectedPiece === 'moon' ? 'placeMoon' : 'selectMoon', go('assembly', [s.selectedPiece === 'moon' ? action('place_piece', { piece: 'moon', ticket: 'tao_ke' }) : action('select_piece', { piece: 'moon' })]), {}, 'assembly');
     const unplaced = s.tickets.find(t => !Object.values(s.boardStacks).some(ids => ids.includes(t.id)));
     if (unplaced) return make('place-' + unplaced.id, s.activeView !== 'board' ? 'goBoard' : s.selectedTicket === unplaced.id ? 'placeTicket' : 'selectTicket', go('board', [s.selectedTicket === unplaced.id ? action('place_ticket', { ticket: unplaced.id, seat: unplaced.fixedSeat }) : action('select_ticket', { ticket: unplaced.id })]), { person: unplaced.name, seat: unplaced.fixedSeat }, 'board');
     if (!s.overlapRevealed) return make('reveal', s.activeView !== 'board' ? 'goBoard' : 'reveal', go('board', [action('reveal_top_A', { ticket: s.boardStacks.A.at(-1) })]), {}, 'board');
