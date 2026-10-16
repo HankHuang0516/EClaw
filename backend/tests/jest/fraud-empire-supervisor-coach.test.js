@@ -32,4 +32,23 @@ describe('MG-P02 source-bound supervisor coach', () => {
   test('reset replaces session ownership, clears hints and prevents stale callbacks',()=>{const f=fixture();const old=[...f.pending.values()][0].fn;f.advance(20000);f.set(fresh('new-session'));expect(f.controller.getStatus().count).toBe(0);expect(f.pending.size).toBe(1);old();expect(f.pending.size).toBe(1);f.advance(19500);expect(f.hints).toHaveLength(1);f.advance(500);expect(f.hints).toHaveLength(2);f.controller.dispose();old();expect(f.pending.size).toBe(0);});
   test('context changes remove old speaker lines and choose the correct current-rank voice',()=>{const f=fixture();f.advance(20000);expect(f.hints[0].speaker.id).toBe('hou');f.context({rank:2,relationship:'strained',relationshipSource:'explicit-test-state'});expect(f.controller.getStatus().count).toBe(0);expect(f.pending.size).toBe(1);f.advance(20000);expect(f.hints[1].speaker.id).toBe('lin');expect(f.hints[1].speaker.tone).toBe('lin2');expect(f.hints[1].speaker.relationship).toBe('strained');f.controller.dispose();});
   test('manual guidance never calls engine.apply or consumes formal state',()=>{const f=fixture(),before=JSON.stringify(f.snapshot());expect(f.controller.manual()).toBe(true);expect(f.hints[0].cause).toBe('manual');expect(JSON.stringify(f.snapshot())).toBe(before);expect(f.pending.size).toBe(1);f.controller.dispose();expect(f.controller.manual()).toBe(false);});
+  test.each(['tao_ke','bi_an','fu_lin','inspect'])('new reading proof %s resets idle/cap without a logical step, clock cost or reward', id => {
+    const f=fixture(), target=id==='inspect'?'inspect':'expectation-'+id;let guard=0;
+    while(f.read().descriptor.stage!==target&&guard++<60)f.progress();expect(f.read().descriptor.stage).toBe(target);
+    f.advance(45000);expect(f.controller.getStatus().count).toBe(2);
+    const before=f.snapshot(), key=f.read().progressKey, step=before.logicalStep, clock=JSON.stringify(before.clock);
+    f.progress();expect(f.snapshot().logicalStep).toBe(step);expect(JSON.stringify(f.snapshot().clock)).toBe(clock);expect(f.snapshot().awardedReward).toBe(0);expect(f.read().progressKey).not.toBe(key);expect(f.controller.getStatus().count).toBe(0);expect(f.controller.getStatus().idleMs).toBe(0);expect(f.pending.size).toBe(1);f.controller.dispose();
+  });
+  test('same-session A-ticket withdrawal replaces stale proof hints and requires fresh reveal and marking',()=>{
+    const f=fixture();let guard=0;while(!f.snapshot().duplicateMarked&&guard++<60)f.progress();expect(f.snapshot().duplicateMarked).toBe(true);const session=f.snapshot().session;
+    f.advance(45000);expect(f.controller.getStatus().count).toBe(2);f.set(apply(f.snapshot(),{type:'take_back_ticket',ticket:'tao_ke'}));expect(f.snapshot().session).toBe(session);expect(f.snapshot().overlapRevealed).toBe(false);expect(f.snapshot().duplicateMarked).toBe(false);expect(f.read().descriptor.stage).toBe('place-tao_ke');expect(f.controller.getStatus().count).toBe(0);
+    f.progress();f.progress();expect(f.read().descriptor.stage).toBe('reveal');expect(f.read().descriptor.nextActions[0]).toEqual({type:'reveal_top_A',ticket:'tao_ke'});f.progress();expect(f.read().descriptor.stage).toBe('mark');expect(f.snapshot().duplicateMarked).toBe(false);expect(f.read().descriptor.nextActions[0].type).toBe('select_pair');f.controller.dispose();
+  });
+  test.each(['view_expectation','inspect_model'])('repeating existing %s proof never reopens an exhausted same-stage hint cap',type=>{
+    const f=fixture();f.set(apply(f.snapshot(),{type:'view_expectation',ticket:'tao_ke'}));f.set(apply(f.snapshot(),{type:'inspect_model'}));let guard=0;while(f.read().descriptor.stage!=='expectation-bi_an'&&guard++<60)f.progress();f.advance(45000);expect(f.controller.getStatus().count).toBe(2);
+    const before=f.snapshot(), key=f.read().progressKey, idle=f.controller.getStatus().idleMs;
+    f.set(apply(before,type==='view_expectation'?{type,ticket:'tao_ke'}:{type}));expect(f.snapshot().revision).toBeGreaterThan(before.revision);expect(f.snapshot().logicalStep).toBe(before.logicalStep);expect(f.read().progressKey).toBe(key);expect(f.controller.getStatus().count).toBe(2);expect(f.controller.getStatus().idleMs).toBe(idle);f.controller.dispose();
+  });
+  test('a revision-only same-view read is not new progress',()=>{const f=fixture();f.advance(45000);const s=f.snapshot(),key=f.read().progressKey;f.set(apply(s,{type:'navigate',view:'assembly'}));expect(f.snapshot().revision).toBe(s.revision+1);expect(f.read().progressKey).toBe(key);expect(f.controller.getStatus().count).toBe(2);f.controller.dispose();});
+
 });
