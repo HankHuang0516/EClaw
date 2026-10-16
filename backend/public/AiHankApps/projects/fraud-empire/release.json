@@ -1,14 +1,19 @@
 {
   "schemaVersion": 1,
-  "version": "v4.6.1-demo-feedback-20261016",
+  "version": "v4.10-coach-p02-20261016-r1",
   "date": "2026-10-16",
-  "status": "設計確認稿／開發中；B01序章互動與B02部分路徑原型，整份企劃未完成",
-  "contentHash": "ab3f6f9719785678f4ebebdcdffd29a15afc2e28414ef44ec21e2a1b1c0949ce",
+  "status": "MG-P02-coaching-candidate-player-scene-not-integrated",
+  "contentHash": "161ddfca0308ae21b9e6ef0dc2329a7214bbb64d4fd3938b93954ed88f40a59b",
   "assets": [
     {
       "path": "art-catalog.json",
       "bytes": 2262043,
       "sha256": "a95f81b8e34792c34b7ee9925ffa5355eddd177bd93b7cff433d19c688c45662"
+    },
+    {
+      "path": "b03-locales.js",
+      "bytes": 56340,
+      "sha256": "b741e106280f9ea0a03566f483b2545161a0f17e4e9e78e5716d409c4c369063"
     },
     {
       "path": "branch-enrichment-proposals.json",
@@ -46,21 +51,6 @@
       "sha256": "68906b56576d2c700e9d612c60c75c109aced2bbf71202fa3ee9891373eb62b4"
     },
     {
-      "path": "demo-feedback-model.js",
-      "bytes": 2498,
-      "sha256": "474b081095632f784f9b164abbdfefbe81e6544160789c14a96bec37d532b660"
-    },
-    {
-      "path": "demo-feedback.css",
-      "bytes": 2505,
-      "sha256": "496aca893c9e624fa126a490d9128c5868fbedc075e52b4be3b8be8fdf57f7fa"
-    },
-    {
-      "path": "demo-feedback.js",
-      "bytes": 21932,
-      "sha256": "48605e5f83bb384b6ee11adcba285fcc3d3635e00cfb8c3095e58ec6d971fe34"
-    },
-    {
       "path": "demo.css",
       "bytes": 4246,
       "sha256": "58cc4c631ebe84c3cf75389fcc0c9c06ea6a4c91e3cad44f4d43031b5095b7ed"
@@ -72,8 +62,8 @@
     },
     {
       "path": "dialogue-proposals.json",
-      "bytes": 1449949,
-      "sha256": "7fe1e0e43afade7e76b5b40d81f6b99a2c9b3c787b02a9e8e856418cd0c7e7e1"
+      "bytes": 1448850,
+      "sha256": "cc2efc74b4a6e29801a99d196e18973f9a7141999720a5ecdd59a7b89fb28ebe"
     },
     {
       "path": "downloads/volume-2-full.pdf",
@@ -1702,8 +1692,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 11787,
-      "sha256": "7b9a86b796bb7534da1759ff1fbfb96461fa3ca482a8426fb656a89f80469e75"
+      "bytes": 12194,
+      "sha256": "fe34492ed58e3a773cb38c3a6737a1df66c5d6f115bbb20809fca2aae80474d0"
     },
     {
       "path": "interaction-coverage.json",
@@ -1727,8 +1717,8 @@
     },
     {
       "path": "interactive-prototype.js",
-      "bytes": 34596,
-      "sha256": "6a5c8b876ab108cba0897d6b19b42441e1fb634f9517317d14ddeb766c756c29"
+      "bytes": 34831,
+      "sha256": "2458063b870fc2a67819e8be711817a87af400464fde73c84f270ad7e40db8c7"
     },
     {
       "path": "new-gameplay-proposals.css",
@@ -3212,13 +3202,13 @@
     },
     {
       "path": "proposals.css",
-      "bytes": 7718,
-      "sha256": "ae79f3bde574ad1c448c54a1144fed6bc11ef51cbac767777a811530e1d654dd"
+      "bytes": 8677,
+      "sha256": "f0594036d9143064edb2fb526ed1f9ced3db0fe35a3c3b7f9839e580731934fc"
     },
     {
       "path": "proposals.js",
-      "bytes": 40457,
-      "sha256": "dd696606aa47271c8e995eaffa6d42c097b4282ea04400fff9ce4813325bf360"
+      "bytes": 43419,
+      "sha256": "459f3417cb3b824ae2dc130c4baf36898beeb4086613548ca8eec3316228e8cc"
     },
     {
       "path": "references/006c22ae9b79004aaf8e.webp",
@@ -3289,6 +3279,46 @@
       "path": "site.js",
       "bytes": 19166,
       "sha256": "b9b03581ce25eb09dd1d141ea38e6ae4fae23447c391027835962c575ef6d6c5"
+    },
+    {
+      "path": "supervisor-coach-locales.js",
+      "bytes": 19457,
+      "sha256": "a41f2cb1d0cff610ca3a8c48259923bad448cdcaf6aa4884615b44d679dc5fa9"
+    },
+    {
+      "path": "supervisor-coach-model.js",
+      "bytes": 9062,
+      "sha256": "5ba179c27cf2a1b5cfa91f4a8161d8ceb491e537b80fe0b3ed5633905a70b3b5"
+    },
+    {
+      "path": "supervisor-coach.css",
+      "bytes": 1733,
+      "sha256": "1e88c49dae775efd9957c2aa0a0e075aae937a7aa163695a5a1ea38a1b4f699c"
+    },
+    {
+      "path": "supervisor-coach.js",
+      "bytes": 10488,
+      "sha256": "3d40603907d796d7be4043e55e250b14ca36400cb13be903195970c30184174c"
+    },
+    {
+      "path": "workflows-locales.js",
+      "bytes": 20201,
+      "sha256": "886c9ebe2ee9122f8b5e759274e349bfe265e868b1fa13dcb66d45aeedc4d759"
+    },
+    {
+      "path": "workflows-model.js",
+      "bytes": 5496,
+      "sha256": "abe5f869a33976d40e4c526c0a1960b140c576d200678770e561d87cfe07fdf9"
+    },
+    {
+      "path": "workflows.css",
+      "bytes": 3355,
+      "sha256": "b79756edc205f9e3aa00d751ff93fb4d424bba77f44122282fa378d018388444"
+    },
+    {
+      "path": "workflows.js",
+      "bytes": 11936,
+      "sha256": "860317c21f643ced2950aa9ba6d15b924b9ff1acfdea93ded781601cd2a361c4"
     }
   ],
   "correction": {
@@ -3353,12 +3383,87 @@
     "T02首次合計20分鐘、跨日、初值與耗損啟動未定；本批不套全局時鐘或睡眠效果。短片未提供，只提供來源明列的主動略過。",
     "既有制式系統文案／角色口吻待B03精修，互動驗收不等同文案品質通過。"
   ],
-  "demoFeedback": {
-    "audience": "Demo only",
-    "categories": 6,
-    "snapshot": "Only currently displayed/revealed whitelist; frozen when the form opens",
-    "persistence": "Private existing EClaw PostgreSQL; explicit saved row ID required",
-    "publicRead": false,
-    "formalGame": "Remove entry, imports, code and transmission; retain private history"
+  "b03Voice": {
+    "changedLineCount": 112,
+    "systemInformationCount": 8,
+    "linesTotal": 1885,
+    "lineDigest": "01f6bbd418a80e552ffd436d7d7943636a2367ace3eaa65aa73f2b3e1afa110c",
+    "mechanicsChanged": false,
+    "formalAdoption": false,
+    "qualityNotice": "既有制式系統文案／角色口吻待精修，互動驗收通過不等同文案已通過。",
+    "sourceCorrection": {
+      "id": "BR36.choice.BR36_C03.02",
+      "phoneOwnershipNotAssumed": true,
+      "mechanicsChanged": false
+    },
+    "locales": {
+      "languages": [
+        "en",
+        "zh-TW",
+        "zh-CN",
+        "ja",
+        "ko"
+      ],
+      "revisedLines": 112,
+      "systemNotes": 8,
+      "newUIKeys": 6,
+      "completeForChangedScope": true,
+      "missingKeys": [],
+      "fullScriptTranslated": false,
+      "sourceLineDigest": "01f6bbd418a80e552ffd436d7d7943636a2367ace3eaa65aa73f2b3e1afa110c"
+    },
+    "semanticCorrection": {
+      "issueId": "B03-EN-MS04-C01-02",
+      "stableId": "MS04.choice.C01.02",
+      "sourceDigestUnchanged": true,
+      "mechanicsChanged": false
+    }
+  },
+  "workflowPrototype": {
+    "batch": "B04-first-increment",
+    "legacyEnginesPreserved": [
+      "MG-P01",
+      "MG-P02"
+    ],
+    "newPhysicalOperations": [
+      "MG-P05",
+      "MG-P06"
+    ],
+    "mediaCompleteForP06": false,
+    "sourceOnlyDispatchCountScenario": true,
+    "automaticWisdomBands": false,
+    "newMGUnlockGatesDefined": false,
+    "formalResourceCommits": false,
+    "wholePlanComplete": false,
+    "remainingBatches": [
+      "B04 remaining operations",
+      "B05",
+      "B06"
+    ],
+    "localeKeys": 70,
+    "locales": [
+      "en",
+      "zh-TW",
+      "zh-CN",
+      "ja",
+      "ko"
+    ]
+  },
+  "supervisorCoach": {
+    "games": [
+      "MG-P02"
+    ],
+    "voiceRanks": "R1 Hou; R2-R5 Lin",
+    "relationshipState": "not-connected-no-inferred-affinity",
+    "audioAvailable": false,
+    "playerSceneIntegrated": false,
+    "configurationStatus": "adjustable-interface-proposal-not-game-balance",
+    "formalStateMutation": false,
+    "pendingGameSpecificAdapters": [
+      "MG-P01",
+      "MG-P05",
+      "MG-P06"
+    ],
+    "extensionPoint": "FraudCoachModel.createController; source-specific read/describe/surface bindings required"
   }
 }

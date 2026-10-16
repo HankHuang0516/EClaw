@@ -13,7 +13,7 @@ describe('Fraud Empire proposed dialogue, expressions and connected presentation
     expect(bundle.lines).toHaveLength(1885);
     expect(index.size).toBe(1885);
     const digest = crypto.createHash('sha256').update(JSON.stringify(bundle.lines.map(l => [l.stable_id, l.speaker_id, l.expression, l.text]).sort((a, b) => a[0].localeCompare(b[0])))).digest('hex');
-    expect(digest).toBe('9ea12f86f38f8622f21cc5a70dcc31ec0a09b29066a7950a5e884b8c9ecfafb4');
+    expect(digest).toBe('01f6bbd418a80e552ffd436d7d7943636a2367ace3eaa65aa73f2b3e1afa110c');
     const referenced = new Set(bundle.entries.flatMap(e => model.groupsFor(e, index).flatMap(g => g.lines.map(l => l.stable_id))));
     expect(referenced.size).toBe(1885);
     expect(bundle.entries.filter(e => e.kind === 'gameplay_step')).toHaveLength(112);
@@ -94,11 +94,11 @@ describe('Fraud Empire proposed dialogue, expressions and connected presentation
     for (const p of art.portraits) for (const cell of p.cells) expect(fs.existsSync(path.join(root, cell.src))).toBe(true);
     for (const r of art.references) expect(fs.existsSync(path.join(root, r.src))).toBe(true);
   });
-  test('pins the whole 657-asset release to exact content hashes', () => {
+  test('pins the whole 654-asset release to exact content hashes', () => {
     const release = JSON.parse(fs.readFileSync(path.join(root, 'release.json'), 'utf8'));
-    expect(release.version).toBe('v4.6.1-demo-feedback-20261016');
-    expect(release.assets).toHaveLength(657);
-    expect(new Set(release.assets.map(asset => asset.path)).size).toBe(657);
+    expect(release.version).toBe('v4.10-coach-p02-20261016-r1');
+    expect(release.assets).toHaveLength(663);
+    expect(new Set(release.assets.map(asset => asset.path)).size).toBe(663);
     expect(crypto.createHash('sha256').update(JSON.stringify(release.assets)).digest('hex')).toBe(release.contentHash);
     for (const asset of release.assets) {
       const bytes = fs.readFileSync(path.join(root, asset.path));

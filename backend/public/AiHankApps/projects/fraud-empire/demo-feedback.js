@@ -224,7 +224,7 @@
           selectedJob: typeof state.selectedJob === 'string' ? state.selectedJob : null,
           selectedPiece: typeof state.selectedPiece === 'string' ? state.selectedPiece : null,
           selectedTicket: typeof state.selectedTicket === 'string' ? state.selectedTicket : null,
-          selectedPieceRotation: typeof piece === 'number' ? piece : typeof piece?.rotation === 'number' ? piece.rotation : null }; 
+          selectedPieceRotation: typeof piece === 'number' ? piece : typeof piece?.rotation === 'number' ? piece.rotation : null };
         snapshot.game.day = state.clock.day;
         snapshot.game.time = state.clock.time;
         snapshot.game.scope = 'prototype-local';

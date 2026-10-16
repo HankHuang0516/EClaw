@@ -15,6 +15,27 @@
   const button = (text, action, cls) => { const n = el('button', text, cls); n.type = 'button'; n.addEventListener('click', action); return n; };
   const change = node => node.dispatchEvent(new Event('change', { bubbles: true }));
   let bundle, art, plan, index;
+  const localeAPI = globalThis.FraudB03Locales;
+  let readingLocale = 'zh-TW', localeReady = false;
+  const voiceUI = () => localeReady ? localeAPI.ui(readingLocale) : { systemRuleHeading: '系統規則（非角色台詞）' };
+  const presentLine = line => localeReady ? localeAPI.forLine(line, readingLocale) : { text: line.text, system_information: line.system_information, translated: false, fallback: false, language: 'zh-Hant' };
+  function updateVoiceQuality() {
+    const quality = $('b03QualityNotice');
+    if (!quality) return;
+    quality.textContent = localeReady ? voiceUI().qualityNotice : bundle.voiceRevision.qualityNotice;
+    quality.lang = localeReady ? readingLocale : 'zh-Hant';
+  }
+  function localeControl(parent, id) {
+    if (!localeReady) return;
+    const panel = el('div', undefined, 'b03-locale-panel'); panel.lang = readingLocale;
+    select(panel, voiceUI().languageLabel, localeAPI.languages, readingLocale, value => {
+      if (!localeAPI.codes.includes(value)) return;
+      readingLocale = value;
+      updateVoiceQuality(); renderControls(); renderBook();
+      if (currentContext) mountDialogue(currentContext);
+    }, id);
+    note(panel, voiceUI().scopeNotice, 'b03-locale-scope'); parent.append(panel);
+  }
   const talkStates = new Map();
   let revealed = false;
   let galleryRevealed = false;
@@ -108,26 +129,43 @@
     status.textContent = selected ? '僅閱讀情境：' + selected.condition : '尚未指定原旗標情境；不預設已有電話、日期已過或已取得合照，不播放本句。';
   }
   function lineCard(line, options = {}) {
+    const display = presentLine(line);
     const decision = model.portraitFor(art.portraits, line.speaker_id, line.expression, { revealed: options.revealed ?? revealed });
     const card = el('article', undefined, 'proposal-line' + (line.speaker_id === 'system' ? ' is-system' : line.speaker_id === 'narrator' ? ' is-narrator' : ''));
-    card.dataset.lineId = line.stable_id;
+    card.dataset.lineId = line.stable_id; card.lang = display.language;
     if (decision.kind === 'image') {
       const face = el('div', undefined, 'proposal-portrait');
       const image = el('img'); image.src = decision.cell.src; image.alt = `${decision.name}／${decision.cell.label}，表情提案`; image.width = decision.cell.width; image.height = decision.cell.height; image.loading = 'lazy';
       face.append(image, el('small', '表情提案')); card.append(face);
     }
     const copy = el('div', undefined, 'proposal-line-copy');
-    copy.append(el('strong', decision.name + (line.speaker_id === 'system' || line.speaker_id === 'narrator' ? '' : ' · ' + ({ neutral: '平靜', smile: '微笑', angry: '生氣', surprised: '驚訝', sad: '難過', afraid: '害怕', suspicious: '懷疑', determined: '堅定' }[line.expression] || line.expression)), 'proposal-line-name'), el('p', line.text, 'proposal-line-text'));
+    copy.append(el('strong', decision.name + (line.speaker_id === 'system' || line.speaker_id === 'narrator' ? '' : ' · ' + ({ neutral: '平靜', smile: '微笑', angry: '生氣', surprised: '驚訝', sad: '難過', afraid: '害怕', suspicious: '懷疑', determined: '堅定' }[line.expression] || line.expression)), 'proposal-line-name'), el('p', display.text, 'proposal-line-text'));
+    copy.querySelector('.proposal-line-name').lang = 'zh-Hant';
+    if (display.fallback) { const fallback = el('small', voiceUI().sourceFallback, 'b03-source-fallback'); fallback.lang = readingLocale; copy.append(fallback); }
+    if (line.system_information) {
+      const system = el('aside', undefined, 'proposal-system-information');
+      system.dataset.systemFor = line.stable_id;
+      system.setAttribute('role', 'note');
+      system.append(el('strong', voiceUI().systemRuleHeading), el('p', display.system_information));
+      copy.append(system);
+    }
     if (line.presentation_variants) conditionalLine(copy, line);
     if (decision.reason) note(copy, decision.reason, 'proposal-source');
     const trace = el('details'); trace.append(el('summary', '逐句編號與適用說明'), el('p', line.stable_id, 'proposal-source'));
     if (line.trigger) note(trace, line.trigger, 'proposal-source');
     if (decision.person) trace.append(button('查看此身份的表情提案', () => showPortrait(decision.person.id)));
     if (!options.compact) { const entry = sourceLineOwners.get(line.stable_id); if (entry) trace.append(button('放回完整對話情境', () => openEntry(entry.id))); }
+    trace.lang = 'zh-Hant';
+    if (display.translated) {
+      const original = el('div', undefined, 'b03-source-original');
+      const label = el('strong', voiceUI().sourceOriginalLabel); label.lang = readingLocale;
+      const source = el('p', line.text); source.lang = 'zh-Hant'; original.append(label, source); trace.append(original);
+    }
     copy.append(trace); card.append(copy); return card;
   }
   function renderControls() {
     const controls = $('dialogueControls'); controls.replaceChildren();
+    localeControl(controls, 'b03ReadingLanguage');
     const searchLabel = el('label', '搜尋台詞、人物或逐句編號'); const input = el('input'); input.type = 'search'; input.id = 'dialogueSearch'; input.placeholder = '例如 IT01、明信片、若晴'; input.value = bookState.query;
     input.addEventListener('input', () => { bookState.query = input.value; bookState.page = 0; renderBook(); }); searchLabel.append(input); controls.append(searchLabel);
     select(controls, '來源類別', [{ value: 'all', label: '所有來源' }, ...Object.entries(kindNames).map(([value, label]) => ({ value, label }))], bookState.kind, value => { bookState.kind = value; bookState.page = 0; renderBook(); }, 'dialogueKind');
@@ -145,7 +183,8 @@
       const filtered = bundle.lines.filter(line => {
         const owner = sourceLineOwners.get(line.stable_id);
         const name = art.portraits.find(p => p.id === canonicalSpeaker(line))?.name || line.speaker_id;
-        return (bookState.speaker === 'all' || canonicalSpeaker(line) === bookState.speaker) && (bookState.kind === 'all' || owner?.kind === bookState.kind) && (!q || `${line.stable_id} ${line.text} ${name} ${owner?.title || ''}`.toLowerCase().includes(q));
+        const display = presentLine(line);
+        return (bookState.speaker === 'all' || canonicalSpeaker(line) === bookState.speaker) && (bookState.kind === 'all' || owner?.kind === bookState.kind) && (!q || `${line.stable_id} ${line.text} ${display.text} ${line.system_information || ''} ${display.system_information || ''} ${name} ${owner?.title || ''}`.toLowerCase().includes(q));
       });
       const pages = Math.max(1, Math.ceil(filtered.length / 50)); bookState.page = Math.max(0, Math.min(pages - 1, bookState.page));
       $('dialogueCount').textContent = `共 ${filtered.length} 筆／全部 ${bundle.lineCount} 筆；第 ${bookState.page + 1}／${pages} 頁。不同情境分開讀，不視作同一段連續對話。`;
@@ -246,6 +285,7 @@
     root.append(el('span', '新增對話提案／待確認', 'demo-badge'), el('h4', entry?.title || '此段沿用原稿設計文字'));
     if (!entry) { note(root, '這個場景沒有新增逐句台詞包。保留原圖、原操作與原回饋，不另外編寫台詞或指派說話者。', 'proposal-source'); return; }
     root.dataset.proposalEntry = entry.id;
+    localeControl(root, 'b03PlayerLanguage');
     if (model.mediaGuard(context)) { note(root, '影片不可用，不是玩家判讀失敗；不扣容錯、不切簡報、不假通關。等價圖文證據尚待確認。這裡只能翻閱設計畫面。', 'proposal-note'); for (const g of model.groupsFor(entry, index, true)) for (const line of g.lines) root.append(lineCard(line, { compact: true })); return; }
     const state = talkState(entry);
     note(root, '指定情境預覽，不把不同日期、職階或互斥回應當作連續遊戲。只瀏覽提案，沒有正式選擇、時間、金錢、物品或獎勵提交。', 'proposal-source');
@@ -313,11 +353,21 @@
     $('dialogueSummary').after(details);
   }
   const planPromise = new Promise((resolve, reject) => { const timer = window.setTimeout(() => reject(new Error('Core reader unavailable')), 30000); document.addEventListener('fraud:plan-ready', event => { window.clearTimeout(timer); resolve(event.detail); }, { once: true }); document.dispatchEvent(new CustomEvent('fraud:request-plan')); });
-  Promise.all([planPromise, fetch('dialogue-proposals.json').then(r => { if (!r.ok) throw new Error('Dialogues unavailable'); return r.json(); }), fetch('art-catalog.json').then(r => { if (!r.ok) throw new Error('Art catalogue unavailable'); return r.json(); })]).then(([source, dialogue, catalogue]) => {
+  Promise.all([planPromise, fetch('dialogue-proposals.json?v=b03-20261016-r3').then(r => { if (!r.ok) throw new Error('Dialogues unavailable'); return r.json(); }), fetch('art-catalog.json').then(r => { if (!r.ok) throw new Error('Art catalogue unavailable'); return r.json(); })]).then(([source, dialogue, catalogue]) => {
     plan = source; bundle = dialogue; art = catalogue; index = model.makeIndex(bundle);
+    localeReady = !!localeAPI && localeAPI.validate(bundle);
+    document.documentElement.dataset.b03LocalesReady = String(localeReady);
     sourceLineOwners = new Map(); for (const entry of bundle.entries) for (const group of model.groupsFor(entry, index)) for (const line of group.lines) sourceLineOwners.set(line.stable_id, entry);
     if (bundle.lineCount !== 1885 || index.size !== bundle.lineCount || sourceLineOwners.size !== bundle.lineCount) throw new Error('Dialogue coverage mismatch');
+    if (bundle.voiceRevision) {
+      const quality = el('p', bundle.voiceRevision.qualityNotice, 'proposal-system-information');
+      quality.id = 'b03QualityNotice';
+      quality.setAttribute('role', 'note');
+      $('dialogueSummary').after(quality);
+      document.documentElement.dataset.b03VoiceReady = 'true';
+    }
     summary($('dialogueSummary'), [[bundle.lineCount, '台詞／提示 ID'], [112, '玩法逐步來源'], [7, '主線序章段落'], [39, '身份（含功能化名）']]); renderSupervisorRules(); renderControls(); renderBook(); renderArt();
+    updateVoiceQuality();
     const context = $('demo')?.dataset.proposalContext; if (context) mountDialogue(JSON.parse(context)); document.documentElement.dataset.proposalsReady = 'true';
   }).catch(() => { $('dialogueBody').replaceChildren(el('p', '增補資料暫時無法完整載入，沒有用空白資料冒稱完成。核心企劃與既有 Demo 仍可返回閱讀。', 'proposal-empty')); document.documentElement.dataset.proposalsReady = 'false'; });
 })();

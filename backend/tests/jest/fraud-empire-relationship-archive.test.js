@@ -49,6 +49,41 @@ const prototypeHashes = [
   }
 ];
 
+
+// B04 may add only these exact, position-bound bridges and their lint declaration.
+// Undo them solely for comparison with the unchanged historical UI digest.
+const approvedPrototypeBridgePatches = [
+  {
+    "name": "CustomEvent lint declaration",
+    "after": "/* global document, window, fetch, Image, MutationObserver, performance, CustomEvent */",
+    "before": "/* global document, window, fetch, Image, MutationObserver, performance */"
+  },
+  {
+    "name": "allowlisted opener at existing entry boundary",
+    "after": "  function enter(id) { if (!states) return; if (id && states[id]) game = id; entering = true; document.getElementById('demoEnter').click(); entering = false; show(); panel.querySelector('select')?.focus({ preventScroll: true }); panel.scrollIntoView({ block: 'start' }); }\n  document.addEventListener('fraud:interactive-open', event => { if (['MG-P01', 'MG-P02'].includes(event.detail?.game)) enter(event.detail.game); });\n  document.getElementById('demoEnter').addEventListener('click', () => { if (!entering) leave(); });",
+    "before": "  function enter(id) { if (!states) return; if (id && states[id]) game = id; entering = true; document.getElementById('demoEnter').click(); entering = false; show(); panel.querySelector('select')?.focus({ preventScroll: true }); panel.scrollIntoView({ block: 'start' }); }\n  document.getElementById('demoEnter').addEventListener('click', () => { if (!entering) leave(); });"
+  },
+  {
+    "name": "ready event after readonly snapshot publication",
+    "after": "    document.documentElement.dataset.interactiveReady = 'true';\n    document.dispatchEvent(new CustomEvent('fraud:interactive-ready'));\n  }).catch(() => { loadNote.textContent = '互動原型資料或美術未能完整載入，不以空白或換圖冒稱可玩；原有六圖參考與閱讀仍可使用。'; loadNote.setAttribute('role', 'alert'); document.documentElement.dataset.interactiveReady = 'false'; });",
+    "before": "    document.documentElement.dataset.interactiveReady = 'true';\n  }).catch(() => { loadNote.textContent = '互動原型資料或美術未能完整載入，不以空白或換圖冒稱可玩；原有六圖參考與閱讀仍可使用。'; loadNote.setAttribute('role', 'alert'); document.documentElement.dataset.interactiveReady = 'false'; });"
+  }
+];
+function assertPreservedPrototypeAsset(asset, bytes) {
+  let original = bytes;
+  if (asset.path === 'interactive-prototype.js') {
+    let text = bytes.toString('utf8');
+    for (const patch of approvedPrototypeBridgePatches) {
+      if (text.split(patch.after).length !== 2) throw new Error('Unexpected prototype bridge: ' + patch.name);
+      text = text.replace(patch.after, patch.before);
+    }
+    original = Buffer.from(text, 'utf8');
+  }
+  if (crypto.createHash('sha256').update(original).digest('hex') !== asset.sha256) {
+    throw new Error('Unexpected preserved prototype change: ' + asset.path);
+  }
+}
+
 describe('fraud empire relationship archive and branch editorial integration', () => {
   test('keeps 39 canonical identities, 55 graph edges and 214 source events with no dangling references', () => {
     expect(model.validate(data, enrichment, corrections)).toBe(true);
@@ -124,8 +159,32 @@ describe('fraud empire relationship archive and branch editorial integration', (
     for(const id of Object.keys(data.events))expect(data.core_links[id]).toBeDefined();
     const ids=new Set(bundle.entries.map(entry=>entry.id));for(const links of Object.values(data.dialogue_links))for(const link of links)expect(ids.has(link.id)).toBe(true);
   });
-  test('preserves every v4.3 prototype source and all six exact proposal PNGs without rerunning its full acceptance suite', () => {
-    expect(prototypeHashes).toHaveLength(10);for(const asset of prototypeHashes){const bytes=fs.readFileSync(path.join(root,asset.path));expect(crypto.createHash('sha256').update(bytes).digest('hex')).toBe(asset.sha256);}
+  test('preserves v4.3 prototype bytes except the exact approved B04 bridges and retains all six exact PNGs', () => {
+    expect(prototypeHashes).toHaveLength(10);for(const asset of prototypeHashes){assertPreservedPrototypeAsset(asset,fs.readFileSync(path.join(root,asset.path)));}
     const ui=fs.readFileSync(path.join(root,'relationship-archive.js'),'utf8');expect(ui).not.toMatch(/localStorage|sessionStorage|indexedDB|sendBeacon|method\s*:\s*['"]POST|eval\(/);
   });
+  test.each([
+    ['unrelated UI body change', text => text.replace('function enter(id)', 'function enter(unexpectedId)')],
+    ['extra UI content', text => text + '\n// unauthorized UI change'],
+    ['broadened opener allowlist', text => text.replace("['MG-P01', 'MG-P02']", "['MG-P01', 'MG-P02', 'MG-P03']")],
+    ['missing opener', text => text.replace(approvedPrototypeBridgePatches[1].after, approvedPrototypeBridgePatches[1].before)],
+    ['missing ready event', text => text.replace(approvedPrototypeBridgePatches[2].after, approvedPrototypeBridgePatches[2].before)],
+    ['duplicate opener', text => text + '\n' + approvedPrototypeBridgePatches[1].after],
+    ['duplicate ready event', text => text + '\n' + approvedPrototypeBridgePatches[2].after],
+    ['moved opener', text => text.replace(approvedPrototypeBridgePatches[1].after, approvedPrototypeBridgePatches[1].before) + '\n' + approvedPrototypeBridgePatches[1].after.split('\n')[1]],
+    ['moved ready event', text => text.replace(approvedPrototypeBridgePatches[2].after, approvedPrototypeBridgePatches[2].before) + '\n' + approvedPrototypeBridgePatches[2].after.split('\n')[1]],
+    ['unapproved globals', text => text.replace(approvedPrototypeBridgePatches[0].after, approvedPrototypeBridgePatches[0].after.replace('CustomEvent', 'CustomEvent, UnapprovedGlobal'))],
+  ])('rejects %s rather than weakening the original UI guard', (_name, mutate) => {
+    const asset = prototypeHashes.find(item => item.path === 'interactive-prototype.js');
+    const actual = fs.readFileSync(path.join(root, asset.path), 'utf8');
+    const changed = mutate(actual);
+    expect(changed).not.toBe(actual);
+    expect(() => assertPreservedPrototypeAsset(asset, Buffer.from(changed, 'utf8'))).toThrow(/Unexpected/);
+  });
+  test.each(prototypeHashes.filter(asset => asset.path !== 'interactive-prototype.js'))('rejects changed preserved bytes in $path', asset => {
+    const changed = Buffer.from(fs.readFileSync(path.join(root, asset.path)));
+    changed[0] ^= 1;
+    expect(() => assertPreservedPrototypeAsset(asset, changed)).toThrow(/Unexpected preserved prototype change/);
+  });
+
 });
