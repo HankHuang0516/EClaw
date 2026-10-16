@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "version": "v4.12-phone-voice-candidates-20261017-r1",
-  "contentHash": "c89133cbbf802e2813e983796dd49dd7f7724cc422e2080cc9fa55b292c26048",
+  "contentHash": "4f5c9a0d4d52e6d8607d2bf5e81db56d0370137a11b949c26d8cb43c88d37d41",
   "hashScope": "exact-player-runtime-assets-excluding-this-context-and-worker-bootstrap",
   "assets": [
     {
@@ -171,13 +171,13 @@
     },
     {
       "path": "player-scene-view.css",
-      "bytes": 18739,
-      "sha256": "dc97659d3aaee1c533adc5b7249d6c4ac55b278b1a7b3395ee3e47824bb9549a"
+      "bytes": 21782,
+      "sha256": "40fcc12e9ec338553da4dad97791c3e90923df276c40bc0b9af19ce35618de73"
     },
     {
       "path": "player-scene-view.js",
-      "bytes": 43157,
-      "sha256": "447f82880545f755f814254b2a4b939897e96ab0faaf8d2abce2183edfb624e7"
+      "bytes": 43281,
+      "sha256": "7ecc2df7504881484d75a1587918d51bd94ff8e622f3ebe747c1652352c916ac"
     },
     {
       "path": "player-updates.js",
