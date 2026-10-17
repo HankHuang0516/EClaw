@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.13-player-reopen-20261017-r2",
+  "version": "v4.13-player-reopen-20261017-r3",
   "date": "2026-10-17",
   "status": "phone-ui-and-user-selectable-candidate-voice-demo",
-  "contentHash": "82a78d810e79a7c8f7cd3d2230a26a62eac00adec5612b94ba51edc1b879150d",
+  "contentHash": "f181f45b5cda9258bbf08b70112b06f746bf7f93811b85edca288dfc1bdaad2f",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1697,8 +1697,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 12375,
-      "sha256": "77cc437e39603be70a3f155a30a35d084fdb8eccbe19ce70f9df2c09e2802676"
+      "bytes": 12417,
+      "sha256": "4cce75933d6c9bc529777433c42c2178f1728479e23d29f27922703277317082"
     },
     {
       "path": "interaction-coverage.json",
@@ -1867,18 +1867,18 @@
     },
     {
       "path": "player-bootstrap.js",
-      "bytes": 15227,
-      "sha256": "e3328e97adbdd3fbd07f569118bbf5fb8dc523fcf8e4b2bb4ee1b1daeee417eb"
+      "bytes": 15179,
+      "sha256": "d6686e135359753e27c699bd14e14da822881fee8ca914435b07e5e9bd4b396b"
     },
     {
       "path": "player-cache-manifest.js",
       "bytes": 10076,
-      "sha256": "3f5a7ff323836392c50168949a114a7baf941d1eaf08c33888e6e6ddfaf7410a"
+      "sha256": "2cefabcc8d46677eca883dd6ee8a3836eabd5f25ae84e1b01aab646387a62bbe"
     },
     {
       "path": "player-entry-link.js",
-      "bytes": 6200,
-      "sha256": "878f554af573afbcc3461d994e4e735fb683cf0444633deacadf0273603b8833"
+      "bytes": 6332,
+      "sha256": "1c2720e9ecfd882f77f01548e2799daff149a1f57704797622510e3bfa3d8b0a"
     },
     {
       "path": "player-entry-opening.css",
@@ -1938,7 +1938,7 @@
     {
       "path": "player-release-context.json",
       "bytes": 9962,
-      "sha256": "8a8945d6062a8b481e9e81298e253fcbb9389259faa64c017994b00d2b2e446c"
+      "sha256": "94e5d4988488ee846075cc61d72f3d47b0c33176311b4b63104697de14ca9aba"
     },
     {
       "path": "player-report.js",
@@ -3726,7 +3726,7 @@
   "playerSlice": {
     "entry": "play.html",
     "runtimeContext": "player-release-context.json",
-    "runtimeContentHash": "ce6f5abaa2718527f095fa764d8b740ec4251e3075d89801b63ae12388af6e73",
+    "runtimeContentHash": "66add0392c205c5a8e87b86dc3d4aa60e00a0fac2fd6acf2b5b31c1ce4fc5931",
     "saveContract": "slice-v1-008a59aaddafa283713309e170077d18f6acefc93949826365f11e31928df96d",
     "approvedArt": "UX02-layer-art-v3-20261016",
     "scene": "M02",
