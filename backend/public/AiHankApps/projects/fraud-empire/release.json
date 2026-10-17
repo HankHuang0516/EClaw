@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.13-player-reopen-20261017-r3",
+  "version": "v4.14-bounded-opening-20261017-r1",
   "date": "2026-10-17",
-  "status": "phone-ui-and-user-selectable-candidate-voice-demo",
-  "contentHash": "f181f45b5cda9258bbf08b70112b06f746bf7f93811b85edca288dfc1bdaad2f",
+  "status": "bounded-opening-and-preserved-player-slice-demo",
+  "contentHash": "ac7cf83ef971039bd9135ff9b8983f338e76ac3c71e99bda0117b85b0b016ea1",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1697,8 +1697,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 12417,
-      "sha256": "4cce75933d6c9bc529777433c42c2178f1728479e23d29f27922703277317082"
+      "bytes": 12419,
+      "sha256": "25ebe0fe4090df6a3ee3f5fafb1c0ff0b6f4f26827af856e13abd9ce6225c2d9"
     },
     {
       "path": "interaction-coverage.json",
@@ -1772,8 +1772,8 @@
     },
     {
       "path": "play.html",
-      "bytes": 3286,
-      "sha256": "2419660b2c3c143a7a94fdc6fb559cf956c249379366db6d55264591a74d11ed"
+      "bytes": 3343,
+      "sha256": "a1c4e0cad61dd7810de58ee2311b0a9febda10bae787a542b42647bcbf68a579"
     },
     {
       "path": "player-assets-registry.js",
@@ -1784,6 +1784,11 @@
       "path": "player-assets/ENTRY-ensemble-base-v1-candidate.png",
       "bytes": 2497466,
       "sha256": "b9493cdaf4fba59509bb4d181e76fe90a148c5d4f642ecaade767563f4bf214a"
+    },
+    {
+      "path": "player-assets/HOME-cleanplate-v1.png",
+      "bytes": 2278056,
+      "sha256": "4339cb82cfb26c0f471ccddd710234797c3cc77ac841fa713cca4243797132a2"
     },
     {
       "path": "player-assets/HOME-opening-v3.png",
@@ -1867,18 +1872,18 @@
     },
     {
       "path": "player-bootstrap.js",
-      "bytes": 15179,
-      "sha256": "d6686e135359753e27c699bd14e14da822881fee8ca914435b07e5e9bd4b396b"
+      "bytes": 15181,
+      "sha256": "cae133d1fd08e8af0245e6e8ebcc2c5715a97e63a6e71948a5c25c419d7648d8"
     },
     {
       "path": "player-cache-manifest.js",
-      "bytes": 10076,
-      "sha256": "2cefabcc8d46677eca883dd6ee8a3836eabd5f25ae84e1b01aab646387a62bbe"
+      "bytes": 10414,
+      "sha256": "230f59162ee49b27ccff35a9d341727cf58ded25edc666b09f594e612fdcd5be"
     },
     {
       "path": "player-entry-link.js",
-      "bytes": 6332,
-      "sha256": "1c2720e9ecfd882f77f01548e2799daff149a1f57704797622510e3bfa3d8b0a"
+      "bytes": 6334,
+      "sha256": "26a82d3747f2f1726fabbb9f9c2bb0901de96cf375019d8017f8e77c2f2cadee"
     },
     {
       "path": "player-entry-opening.css",
@@ -1887,8 +1892,8 @@
     },
     {
       "path": "player-entry-opening.js",
-      "bytes": 14789,
-      "sha256": "116483337b129ecab4e6bb8fa69238a2d6324b0a75ebfd54cb3f544e5794a3d5"
+      "bytes": 14795,
+      "sha256": "abdbda948de8848d81d9ed0cb12d3fb28a05d995993e15610d3edbcb95289b79"
     },
     {
       "path": "player-entry-settings.css",
@@ -1902,13 +1907,13 @@
     },
     {
       "path": "player-home-opening.css",
-      "bytes": 2934,
-      "sha256": "d465beecdccb6a591f288c142699893c83b0540928ab443b5fd8c5b8e560419e"
+      "bytes": 6168,
+      "sha256": "32237344923f163f8c666c1100379f6c4e598fb9da809ec0e971f0e62baee958"
     },
     {
       "path": "player-home-opening.js",
-      "bytes": 4398,
-      "sha256": "0a538beee7261c982d4c49e433ab9843593c8781f6f72eb2a7d6be7b372ce0bc"
+      "bytes": 8138,
+      "sha256": "14a4456d28010b6aa7c414ac744a8777c0fc5cde5bd5b8eb1ad51926012c6586"
     },
     {
       "path": "player-icon-180.png",
@@ -1936,9 +1941,14 @@
       "sha256": "c387b8f60e8ec5141e38a54d4ffeb6a3a8a1899b93e868475cf94915774d0d0b"
     },
     {
+      "path": "player-opening-narrative.js",
+      "bytes": 10224,
+      "sha256": "51ad1b61cda50a29aa6790c6ed999ba6582fe2526fb0bc71cc912cc496048cff"
+    },
+    {
       "path": "player-release-context.json",
-      "bytes": 9962,
-      "sha256": "94e5d4988488ee846075cc61d72f3d47b0c33176311b4b63104697de14ca9aba"
+      "bytes": 10301,
+      "sha256": "f2acbfa2603eb342048b6c3a288a501fec08e644627fb2168d5a8eb20532e140"
     },
     {
       "path": "player-report.js",
@@ -3619,7 +3629,9 @@
     "campScenePreviews": 10,
     "campRoutableScenes": 9,
     "campSourceHotspots": 38,
-    "campInventoryAcquisitionImplemented": false
+    "campInventoryAcquisitionImplemented": false,
+    "boundedHomeOpeningBeats": 7,
+    "wholePrologueComplete": false
   },
   "limitations": [
     "所有新增文字、外觀與表情仍為提案，不代表正式劇本或可用sprites。",
@@ -3726,7 +3738,7 @@
   "playerSlice": {
     "entry": "play.html",
     "runtimeContext": "player-release-context.json",
-    "runtimeContentHash": "66add0392c205c5a8e87b86dc3d4aa60e00a0fac2fd6acf2b5b31c1ce4fc5931",
+    "runtimeContentHash": "7b213e66e83c7b330b8da82f3ae025d9af8bae312f871f51307be4e6cd2bad30",
     "saveContract": "slice-v1-008a59aaddafa283713309e170077d18f6acefc93949826365f11e31928df96d",
     "approvedArt": "UX02-layer-art-v3-20261016",
     "scene": "M02",
@@ -3798,22 +3810,45 @@
     "managedSimulatorValidated": false,
     "phoneUISimilarityValidated": false,
     "homeOpening": {
-      "golden": "HOME-opening-v3",
-      "goldenHash": "ac7a3c7f57e3224d986d746549b881dc92be0ed5a75b1c01ff8aeb095a7437c0",
-      "scope": "Explicit development preview of W01 home only; no title/new-game journey implemented",
+      "golden": "HOME-cleanplate-v1",
+      "goldenHash": "4339cb82cfb26c0f471ccddd710234797c3cc77ac841fa713cca4243797132a2",
+      "scope": "Bounded W01 narration, fictional recruitment ad, inner response, application and wait; explicit finite demo end. Not offer, packing, travel, arrival or whole prologue.",
       "preview": "play.html?preview=home-opening-v3",
+      "legacyPreviewAliasPreserved": true,
       "separateNativeUI": true,
+      "narrativeScript": "W01-narrative-supplement-r3",
+      "implementedBeatIds": [
+        "W01-N01",
+        "W01-N02",
+        "W01-N03",
+        "W01-A01",
+        "W01-N04",
+        "W01-N05",
+        "W01-N05a"
+      ],
+      "systemEnd": "W01-bounded-end-r1",
       "sourceCommits": 0,
       "storageWrites": 0,
-      "adClick": "source intent only; follow-on pending approved source and golden",
-      "withdrawnEntryAssetsNotUsed": true,
-      "firstLaunchEntryComplete": false,
-      "newGameComplete": false
+      "gameTimeAdvanced": 0,
+      "rewardsIssued": 0,
+      "adClick": "Read fictional recruitment ad, then inner response and application; no advertising SDK",
+      "readOnlyReplay": true,
+      "returnToExistingEntry": true,
+      "preservedExistingSliceSave": true,
+      "firstLaunchBoundedOpeningComplete": true,
+      "newGameComplete": false,
+      "wholePrologueComplete": false,
+      "unimplemented": [
+        "HOME_OFFER_READ",
+        "HOME_PACK",
+        "W02_TRAVEL",
+        "W03-ARRIVAL-JOIN"
+      ]
     },
     "entryOpening": {
       "background": "player-assets/ENTRY-ensemble-base-v1-candidate.png",
-      "home": "player-assets/HOME-opening-v3.png",
-      "noSaveDefault": "Start opens the limited W01 HOME scene without creating world progress",
+      "home": "player-assets/HOME-cleanplate-v1.png",
+      "noSaveDefault": "Start reads the bounded W01 opening through application and wait, with finite end/return/read-only replay and no world progress writes",
       "existingSaveDefault": "Validate and explicitly continue the existing world and P02 snapshot",
       "settingsConnected": true,
       "overwriteConnected": true,

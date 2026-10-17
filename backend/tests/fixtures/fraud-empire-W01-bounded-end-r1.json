@@ -1,0 +1,14 @@
+{
+  "id": "W01-bounded-end-r1",
+  "kind": "system-ui-not-narration",
+  "title": "本段試玩到此",
+  "text": "你已讀完目前開放的開場片段。",
+  "actions": [
+    {
+      "label": "返回入口"
+    },
+    {
+      "label": "重新閱讀"
+    }
+  ]
+}
