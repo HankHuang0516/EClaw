@@ -1,0 +1,22 @@
+{
+  "id": "W01-development-boundary-r1",
+  "kind": "system-ui-not-narration",
+  "trigger": "W01-N06 acknowledged; stop before unmade W01-N07 packing",
+  "title": "開發中",
+  "text": "後續內容開發中。",
+  "actions": [
+    {
+      "label": "返回入口",
+      "behavior": "return to existing entry; no game/world/clock/reward/storage commit"
+    },
+    {
+      "label": "重新閱讀",
+      "behavior": "read-only replay from N01; do not award, advance time or overwrite saves"
+    }
+  ],
+  "scope": "W01 incremental connection only; packing/travel/prologue/full game not completed",
+  "layout": "reuse existing narration panel and approved black/cream native button style; clearly system status not narrator dialogue",
+  "reviewRequired": "existing reviewer focus preservation and bounded endpoint; actual 320/390 touch and keyboard Enter/Space; no new art scene",
+  "authority": "direct-human request complete bounded core and review, preserve saves",
+  "approval": "system-status-only-not-narrator-prose"
+}
