@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.16-private-job-r9-20261017-r2-thailand",
-  "date": "2026-10-17",
+  "version": "v4.17-job-layout-20261018-r1",
+  "date": "2026-10-18",
   "status": "bounded-opening-and-preserved-player-slice-demo",
-  "contentHash": "6f258a0e8566104e182235786ef6df0f2af332740851fa97122075bc57547a48",
+  "contentHash": "3f2dcc05164c40edc30ac9a88b18eb3d2d80710f9c272087589eae9b808a20a6",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -42,8 +42,8 @@
     },
     {
       "path": "camp-interaction.js",
-      "bytes": 8090,
-      "sha256": "1c953f0fc8e5e611c7e24b1b20238ee6b316e2a217b74d8e8fc669df9293e532"
+      "bytes": 9367,
+      "sha256": "35fe430ac34492f99a6b8ec99cded4ad02f2437f3535dedcc74d5e4d63448593"
     },
     {
       "path": "demo-data.json",
@@ -1697,8 +1697,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 12500,
-      "sha256": "c959d39af30f5d4fe267606dfcbe539e15dc4480f8539ea56dd2e099502839ad"
+      "bytes": 12662,
+      "sha256": "858dfbc20c8eff2c7b133ec0dff5d085950faf19638e1fdbac50d8be2826c62b"
     },
     {
       "path": "interaction-coverage.json",
@@ -1762,8 +1762,8 @@
     },
     {
       "path": "plan-interaction.js",
-      "bytes": 11561,
-      "sha256": "acf237cea453756fd30d385612dc0c1e9ad3ac053987f3707a3bd86a170cb07d"
+      "bytes": 12722,
+      "sha256": "fa003d6b2ea0fa8df0a1ffa1e6d1c5d7764fb78d8028763b65bdefb8add27b9c"
     },
     {
       "path": "plan.json",
@@ -1772,8 +1772,8 @@
     },
     {
       "path": "play.html",
-      "bytes": 3343,
-      "sha256": "a1c4e0cad61dd7810de58ee2311b0a9febda10bae787a542b42647bcbf68a579"
+      "bytes": 3761,
+      "sha256": "566b5dccde940317656abebcc7620c34bbf6f8659ef2eaaa6cb3ed5c07c4cef0"
     },
     {
       "path": "player-assets-registry.js",
@@ -1872,18 +1872,18 @@
     },
     {
       "path": "player-bootstrap.js",
-      "bytes": 15403,
-      "sha256": "ccc100d9c2d4df95cf8a717d037ae35412833344b1823df16e3b4aea6d41a547"
+      "bytes": 15844,
+      "sha256": "2bf8983cc1e38332a0c79b08cc0e4cad49d2d964632d1b84c451a8aedc51edec"
     },
     {
       "path": "player-cache-manifest.js",
-      "bytes": 11103,
-      "sha256": "7c96468ec25e5dcbe49e023a442a5eba84cc22ae61ee93ed0fd8aeb0b2efe101"
+      "bytes": 15842,
+      "sha256": "7ffd875e0a5c5f4b8d8b6dc50ad74d8876f6c04b97540c2d71d7cb3539cc6e56"
     },
     {
       "path": "player-entry-link.js",
-      "bytes": 6342,
-      "sha256": "247e07a3b594a818d7494c980f409c1e2a8a19e5cf5ddd132ff2a3150b14cb79"
+      "bytes": 6329,
+      "sha256": "e947de0e8a2dd9dad578adf7aa2e4b323d306419a7b0fa7665bb03d2298d5f3f"
     },
     {
       "path": "player-entry-opening.css",
@@ -1907,13 +1907,13 @@
     },
     {
       "path": "player-home-opening.css",
-      "bytes": 16289,
-      "sha256": "35b2c0dd35af1bf190697b42c4b3181da68683e457e1f5bade0d46977f76ae5b"
+      "bytes": 17956,
+      "sha256": "4b6456fcd60d600cf85d23c0823892978219d7adb3b4a67e715f77dd3789a09a"
     },
     {
       "path": "player-home-opening.js",
-      "bytes": 34805,
-      "sha256": "0fdec17ba32899b92cda7732dc07947be7b2352c9c67f0d4c640ee17876d1248"
+      "bytes": 38557,
+      "sha256": "48d5847814bc4c355caa4becc8970e53f260e87d2945cc79f5c73e7716764940"
     },
     {
       "path": "player-icon-180.png",
@@ -1947,8 +1947,8 @@
     },
     {
       "path": "player-release-context.json",
-      "bytes": 10994,
-      "sha256": "e791b1448178527a7657e212e222604c31a1e34f405596736a8e6289108f83e9"
+      "bytes": 15762,
+      "sha256": "d9c7741ddcab77c5c041e94a91c5b454c3e1c830d6cefc674089f77ace135d6b"
     },
     {
       "path": "player-report.js",
@@ -3599,6 +3599,21 @@
       "path": "player-assets/job-call-r9.png",
       "bytes": 1468008,
       "sha256": "50875f9f96995c4d9df1aca83dc108d365ff6b967dbc3ab78ab94f69e187e6f9"
+    },
+    {
+      "path": "player-route-preview.js",
+      "bytes": 26865,
+      "sha256": "932a0528f7f7312b2e638645d1feaaf2ced520f91f12743f32a44912c29bc161"
+    },
+    {
+      "path": "player-route-preview.css",
+      "bytes": 5275,
+      "sha256": "535f525cc141a44377d3e4576d784b1f170f279272e105032c249bb3488e8046"
+    },
+    {
+      "path": "player-route-preview-data.json",
+      "bytes": 72800,
+      "sha256": "709dbab6d1561b398562962f2356f3f8ab67adc8758795e5ba7a8bd8ca88755f"
     }
   ],
   "correction": {
@@ -3759,7 +3774,7 @@
   "playerSlice": {
     "entry": "play.html",
     "runtimeContext": "player-release-context.json",
-    "runtimeContentHash": "3e6467297932f3359fe454d2c25e0dd56c74e07804d19f57bd14d6e2a8068196",
+    "runtimeContentHash": "1f4a7c90e819ea06a88046cdb150b8ba91b2180fbd76df7e3bc4b8de5a0af7b5",
     "saveContract": "slice-v1-008a59aaddafa283713309e170077d18f6acefc93949826365f11e31928df96d",
     "approvedArt": "UX02-layer-art-v3-20261016",
     "scene": "M02",
@@ -3912,7 +3927,13 @@
         "Day1Changed": false,
         "sourceAdaptation": "composite fictional adaptation, not reconstruction of CNA2023"
       },
-      "historySourceLabels": "Archived job revision and narration source revision are separate. Original r3/r4 rows stay historical; newly read r9.2 narration is labeled current r9.2. Archived r9.1 narration stays frozen/historical."
+      "historySourceLabels": "Archived job revision and narration source revision are separate. Original r3/r4 rows stay historical; newly read r9.2 narration is labeled current r9.2. Archived r9.1 narration stays frozen/historical.",
+      "jobLayout": {
+        "contentDriven": true,
+        "fixedOriginalArtworkCrops": true,
+        "pay": "fictional recruitment claim in TWD; original report concerns Cambodia, not verified Thai terms",
+        "storySourceChanged": false
+      }
     },
     "entryOpening": {
       "background": "player-assets/ENTRY-ensemble-base-v1-candidate.png",
@@ -3928,6 +3949,117 @@
       "minimumGap": 12,
       "fullArtLayerSeparation": false,
       "scope": "finite entry, compatible local save, confirmation and general settings; no full mainline claim"
+    },
+    "additionalRuntimeAssets": [
+      "player-route-preview.js",
+      "player-route-preview.css",
+      "player-route-preview-data.json",
+      "plan-interaction-model.js",
+      "plan-interaction.js",
+      "plan-interaction.css",
+      "plan-interaction-data.json",
+      "interaction-coverage.json",
+      "camp-interaction-model.js",
+      "camp-interaction.js",
+      "camp-interaction.css",
+      "camp-interaction-data.json",
+      "images/fefb120b25503cf1d186.webp",
+      "images/7ad9d71e56f2e0004cf6.webp",
+      "images/f935f50cb8e3b1595d58.webp",
+      "images/8d4460dff997252f0b3d.webp",
+      "images/c60168b562b78f7ad6f4.webp",
+      "images/2bd7ac7539dcbb878d2e.webp",
+      "images/57d656c55f6367400666.webp",
+      "images/154ac2dd157f62d0838d.webp",
+      "images/040ecf99aa7947111333.webp",
+      "images/4a698d54e9add67e5dff.webp",
+      "images/37692f0ef900715406e5.webp",
+      "images/602807b875ac2b26dd49.webp",
+      "images/6b8020692b77bd8220fc.webp",
+      "images/28ad804d4a1a0399304c.webp",
+      "images/73aec26d1f75a6dccb5e.webp",
+      "images/c9fd754b1aaac6a93ab2.webp",
+      "images/b2b5b66d49400e4c5c8d.webp"
+    ],
+    "additionalPublicAssets": [
+      "player-route-preview.js",
+      "player-route-preview.css",
+      "player-route-preview-data.json"
+    ],
+    "routePreview": {
+      "entry": "play.html?preview=full-route",
+      "source": "route-preview-r1-20261018",
+      "isolatedStorageKey": "aihank.fraud-empire.route-preview.v1",
+      "manualStorageKey": "aihank.fraud-empire.route-preview.v1.manual",
+      "steps": [
+        {
+          "id": "packing",
+          "kind": "gap",
+          "status": "物件操作／HOME_PACK 圖層未完成"
+        },
+        {
+          "id": "airport",
+          "kind": "gap",
+          "status": "機場接線示意"
+        },
+        {
+          "id": "travel",
+          "kind": "gap",
+          "status": "旅程演出待完成"
+        },
+        {
+          "id": "arrival",
+          "kind": "prologue",
+          "status": "既有 T02 七段獨立互動"
+        },
+        {
+          "id": "first-task",
+          "kind": "p02",
+          "status": "既有 MG-P02 不計分原型"
+        },
+        {
+          "id": "free",
+          "kind": "camp",
+          "status": "九場景來源連線試走／宿舍布局待確認"
+        },
+        {
+          "id": "games",
+          "kind": "games",
+          "status": "逐款模組接入中"
+        },
+        {
+          "id": "day-end",
+          "kind": "summary",
+          "status": "預覽紀錄整理；不推進日期"
+        },
+        {
+          "id": "mainline",
+          "kind": "mainline",
+          "status": "既有主線設計內容，非正式觸發"
+        },
+        {
+          "id": "escape",
+          "kind": "escape",
+          "status": "既有逃離設計；操作模組未完成"
+        },
+        {
+          "id": "endings",
+          "kind": "endings",
+          "status": "可查看各結局設計，非正式通關"
+        }
+      ],
+      "formalGameComplete": false,
+      "sourceClockApplied": false,
+      "formalRewards": 0,
+      "legacyModuleIntegration": "old16 separate from new17; workers not yet accepted",
+      "gapScreens": "honest enterable status screens, not airport/travel art or completed gameplay"
     }
+  },
+  "buildPolicy": {
+    "versionSource": "release.json#version",
+    "generator": "backend/scripts/build-fraud-player-release.cjs",
+    "runningVersion": "generated into the actual bootstrap bytes; never fetched from latest network metadata",
+    "workerVersion": "player-cache-manifest.js#release",
+    "settingsVersion": "actual document.dataset.playerBuild"
   }
 }
