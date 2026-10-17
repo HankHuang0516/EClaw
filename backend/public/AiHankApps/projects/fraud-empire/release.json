@@ -3,7 +3,7 @@
   "version": "v4.12-phone-voice-candidates-20261017-r1",
   "date": "2026-10-17",
   "status": "phone-ui-and-user-selectable-candidate-voice-demo",
-  "contentHash": "eed71a5293a1d4c285e1cbc29a6947f040fcaa87151b7e480e939034e6268130",
+  "contentHash": "b7606b0108779c62c49ec636cc892dea4e5ca567576b535f698f520ae299e8fa",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1863,7 +1863,7 @@
     {
       "path": "player-cache-manifest.js",
       "bytes": 8624,
-      "sha256": "3fba29a4992f76cf1b7e95e1fb3baa9b99b2ca77c20a1c29b5f848fc0a5e602b"
+      "sha256": "4ec440625765e22af0dd557cb918d9035045aa075b18006ee52d5e673652462a"
     },
     {
       "path": "player-entry-link.js",
@@ -1892,13 +1892,13 @@
     },
     {
       "path": "player-layout.js",
-      "bytes": 6418,
-      "sha256": "f50edaefb953cd5ac462417b7a41110196e1365eccebf0ffede257fa7aef44ed"
+      "bytes": 9471,
+      "sha256": "880deb43d4d45d0a3cca197ae8bc42dbad986da962ee7fa784e0dc7ee28a079e"
     },
     {
       "path": "player-release-context.json",
       "bytes": 8501,
-      "sha256": "39b8b685e15e1781b2a607362be18f01dbe210d80311f7543e0325488222e3af"
+      "sha256": "c9b4c8b8f54667bbfc05f174eb4909da754f60ac7e15aef434d790abc998f4ca"
     },
     {
       "path": "player-report.js",
@@ -1922,8 +1922,8 @@
     },
     {
       "path": "player-scene-view.css",
-      "bytes": 23297,
-      "sha256": "5f50de16d5a4ac9b6a67e5730e0efc283486f7ab5ae426bdf4cebbab5e1bda07"
+      "bytes": 26433,
+      "sha256": "2b703e6cd269890e79dac168fe94a6cc295877e64464be5d32301c1bfde084c3"
     },
     {
       "path": "player-scene-view.js",
@@ -3680,7 +3680,7 @@
   "playerSlice": {
     "entry": "play.html",
     "runtimeContext": "player-release-context.json",
-    "runtimeContentHash": "2d3282f570c719860cd246b5fd1f7457717eb46e7c6631018d48d2c4b2ec12b1",
+    "runtimeContentHash": "4171cbc069d31d3177fdfaaebe244fbadc7a6682cc0c473fe52b8ac07c8a4ed7",
     "saveContract": "slice-v1-008a59aaddafa283713309e170077d18f6acefc93949826365f11e31928df96d",
     "approvedArt": "UX02-layer-art-v3-20261016",
     "scene": "M02",
