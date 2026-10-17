@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "version": "v4.16-private-job-r9-20261017-r2-thailand",
-  "contentHash": "3e6467297932f3359fe454d2c25e0dd56c74e07804d19f57bd14d6e2a8068196",
+  "version": "v4.17-job-core-20261018-r1",
+  "contentHash": "f94e7b6857e62eac3c9b4a5cde8e4d09176f3aebf21ad06287182b7d355b086d",
   "hashScope": "exact-player-runtime-assets-excluding-this-context-and-worker-bootstrap",
   "assets": [
     {
@@ -137,7 +137,7 @@
     {
       "path": "player-bootstrap.js",
       "bytes": 15403,
-      "sha256": "ccc100d9c2d4df95cf8a717d037ae35412833344b1823df16e3b4aea6d41a547"
+      "sha256": "43536660d4626ea9fbf8ba299e9ae8c255d8f58104d25775657c36eecc056cb8"
     },
     {
       "path": "player-entry-opening.css",
@@ -161,13 +161,13 @@
     },
     {
       "path": "player-home-opening.css",
-      "bytes": 16289,
-      "sha256": "35b2c0dd35af1bf190697b42c4b3181da68683e457e1f5bade0d46977f76ae5b"
+      "bytes": 17777,
+      "sha256": "1c614fd1b019e0cffb39a1657032027656b140cf27936a08682d9a2cea84a2e2"
     },
     {
       "path": "player-home-opening.js",
-      "bytes": 34805,
-      "sha256": "0fdec17ba32899b92cda7732dc07947be7b2352c9c67f0d4c640ee17876d1248"
+      "bytes": 38264,
+      "sha256": "c2be3cd4906e7b9a52d319d5dbdafac78b0252cbcbeb50f6ee95b150e4fb562e"
     },
     {
       "path": "player-icon-180.png",

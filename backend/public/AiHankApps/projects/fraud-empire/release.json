@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.16-private-job-r9-20261017-r2-thailand",
+  "version": "v4.17-job-core-20261018-r1",
   "date": "2026-10-17",
   "status": "bounded-opening-and-preserved-player-slice-demo",
-  "contentHash": "6f258a0e8566104e182235786ef6df0f2af332740851fa97122075bc57547a48",
+  "contentHash": "10bcde8a1a9fb456faf67a37780fdd1403751fec9220f19e54f0841dc7858c18",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1697,8 +1697,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 12500,
-      "sha256": "c959d39af30f5d4fe267606dfcbe539e15dc4480f8539ea56dd2e099502839ad"
+      "bytes": 12485,
+      "sha256": "63d69685c93971a2f2d4031ad48911e8c8ab2d5d295915cd3e4bdf35d6d911fa"
     },
     {
       "path": "interaction-coverage.json",
@@ -1873,17 +1873,17 @@
     {
       "path": "player-bootstrap.js",
       "bytes": 15403,
-      "sha256": "ccc100d9c2d4df95cf8a717d037ae35412833344b1823df16e3b4aea6d41a547"
+      "sha256": "43536660d4626ea9fbf8ba299e9ae8c255d8f58104d25775657c36eecc056cb8"
     },
     {
       "path": "player-cache-manifest.js",
-      "bytes": 11103,
-      "sha256": "7c96468ec25e5dcbe49e023a442a5eba84cc22ae61ee93ed0fd8aeb0b2efe101"
+      "bytes": 11088,
+      "sha256": "63babbbc7471aabceefcfffb78ad39ca5fe4db04125236d74aa891bd4b31d79d"
     },
     {
       "path": "player-entry-link.js",
-      "bytes": 6342,
-      "sha256": "247e07a3b594a818d7494c980f409c1e2a8a19e5cf5ddd132ff2a3150b14cb79"
+      "bytes": 6327,
+      "sha256": "61498300b8c7c1b23b28dd03ed8168c5dfab306af4edad524e292fdfb59da40e"
     },
     {
       "path": "player-entry-opening.css",
@@ -1907,13 +1907,13 @@
     },
     {
       "path": "player-home-opening.css",
-      "bytes": 16289,
-      "sha256": "35b2c0dd35af1bf190697b42c4b3181da68683e457e1f5bade0d46977f76ae5b"
+      "bytes": 17777,
+      "sha256": "1c614fd1b019e0cffb39a1657032027656b140cf27936a08682d9a2cea84a2e2"
     },
     {
       "path": "player-home-opening.js",
-      "bytes": 34805,
-      "sha256": "0fdec17ba32899b92cda7732dc07947be7b2352c9c67f0d4c640ee17876d1248"
+      "bytes": 38264,
+      "sha256": "c2be3cd4906e7b9a52d319d5dbdafac78b0252cbcbeb50f6ee95b150e4fb562e"
     },
     {
       "path": "player-icon-180.png",
@@ -1947,8 +1947,8 @@
     },
     {
       "path": "player-release-context.json",
-      "bytes": 10994,
-      "sha256": "e791b1448178527a7657e212e222604c31a1e34f405596736a8e6289108f83e9"
+      "bytes": 10979,
+      "sha256": "31abfdd8779192b090793be8b3a0b6b9d09161d7765a4aa3224b8673f052907f"
     },
     {
       "path": "player-report.js",
@@ -3759,7 +3759,7 @@
   "playerSlice": {
     "entry": "play.html",
     "runtimeContext": "player-release-context.json",
-    "runtimeContentHash": "3e6467297932f3359fe454d2c25e0dd56c74e07804d19f57bd14d6e2a8068196",
+    "runtimeContentHash": "f94e7b6857e62eac3c9b4a5cde8e4d09176f3aebf21ad06287182b7d355b086d",
     "saveContract": "slice-v1-008a59aaddafa283713309e170077d18f6acefc93949826365f11e31928df96d",
     "approvedArt": "UX02-layer-art-v3-20261016",
     "scene": "M02",
@@ -3929,5 +3929,30 @@
       "fullArtLayerSeparation": false,
       "scope": "finite entry, compatible local save, confirmation and general settings; no full mainline claim"
     }
+  },
+  "publicationScope": {
+    "id": "completed-job-ui-core-20261018-r1",
+    "kind": "completed-ui-core",
+    "changes": [
+      "advertised-salary-disclosure",
+      "content-sized-job-cards",
+      "single-canonical-loaded-version"
+    ],
+    "newFullRouteEntry": false,
+    "newUnfinishedPreviewPublished": false,
+    "excludedRuntimeAssets": [
+      "player-route-preview.js",
+      "player-route-preview.css",
+      "player-route-preview-data.json"
+    ],
+    "baselinePublicContentPreserved": true,
+    "newIdentityCredentialsOrSecurityPermissions": false
+  },
+  "buildPolicy": {
+    "versionSource": "release.json#version",
+    "generator": "backend/scripts/build-fraud-player-release.cjs",
+    "runningVersion": "generated into the actual bootstrap bytes; never fetched from latest network metadata",
+    "workerVersion": "player-cache-manifest.js#release",
+    "settingsVersion": "actual document.dataset.playerBuild"
   }
 }
