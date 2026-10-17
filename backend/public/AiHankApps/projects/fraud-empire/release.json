@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.12-phone-voice-candidates-20261017-r1",
+  "version": "v4.13-player-reopen-20261017-r1",
   "date": "2026-10-17",
   "status": "phone-ui-and-user-selectable-candidate-voice-demo",
-  "contentHash": "939a34a992224f399db7a5b91abb80af6e1cbe94f5062eae372bf07727957d60",
+  "contentHash": "03b80bbe22ac8d1ee70f26ab125d1e6d26a166154c97f45cbb0eaf62d1d1e5ec",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1697,8 +1697,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 12362,
-      "sha256": "10f24d3038b1d18464a1afda5ff890f2e41bb86cdcc1bd8aae76da529fe77c4f"
+      "bytes": 12375,
+      "sha256": "7141660c160a163aec0263bc5b27b24e10365bd8ab5a871dfbfc9f842e0d1d8b"
     },
     {
       "path": "interaction-coverage.json",
@@ -1867,18 +1867,18 @@
     },
     {
       "path": "player-bootstrap.js",
-      "bytes": 15157,
-      "sha256": "7c728cdfba46cab5610d18a6a70d2c804069e18201894e462c7596e952618a5a"
+      "bytes": 15227,
+      "sha256": "7cad1a8e0fc3ac948183b527346a1b5403e5d6b1a7c881381910585379cc68b7"
     },
     {
       "path": "player-cache-manifest.js",
-      "bytes": 10085,
-      "sha256": "5b3f7e8d2e57c96e1a6c8b89afbb009ad999fd884d3d57362b8f9619ccccd1a1"
+      "bytes": 10076,
+      "sha256": "721559533be4a3258e863703f18a55758cf4734abe7d24a80ece44bd566eb87b"
     },
     {
       "path": "player-entry-link.js",
-      "bytes": 849,
-      "sha256": "6ea8bd5533135d7651d07aeaef77bbf5db3a8505230be4cb5a649bf558aabf7d"
+      "bytes": 5622,
+      "sha256": "722763520cb3ab599699d8dc5908d28b990afd8584b89c44981eec8d989ddf97"
     },
     {
       "path": "player-entry-opening.css",
@@ -1892,13 +1892,13 @@
     },
     {
       "path": "player-entry-settings.css",
-      "bytes": 3721,
-      "sha256": "ae9cadf74df0043254a1fe644f82ff3ce89f546af9dd35da0341e3e9142fe425"
+      "bytes": 3934,
+      "sha256": "45e29fd8bbdb72ba66ca7e98400a456d640b81e2e2f086d94fcf2d9f3806159c"
     },
     {
       "path": "player-entry-settings.js",
-      "bytes": 9012,
-      "sha256": "1a0dad61b34b8af15f964cca7188093bf48b0fbdacbb802c91807eeeff67ed17"
+      "bytes": 9426,
+      "sha256": "5de12ea1daa414e7f9e523b8f3e16ba823780fecc48b9fe75ea3f757ed258e1d"
     },
     {
       "path": "player-home-opening.css",
@@ -1937,13 +1937,13 @@
     },
     {
       "path": "player-release-context.json",
-      "bytes": 9971,
-      "sha256": "c1ee1532aedd42d505a51b9d8afa2a6d622862da795110b467b38aa35b0b5844"
+      "bytes": 9962,
+      "sha256": "e861647ea6dabb5c530d84b2b52bc3de58647ccc896866ffaac96c245cea41bb"
     },
     {
       "path": "player-report.js",
-      "bytes": 13714,
-      "sha256": "bdb6218b4c1572e2fb183168c4e7e28f0d9c03a8a2dddedf1c5979f51e204034"
+      "bytes": 14010,
+      "sha256": "33239361342dad07912cbe8c0761f7d893dd54c95aab61d9fb7ccce95503eacc"
     },
     {
       "path": "player-save-readiness.js",
@@ -1967,23 +1967,23 @@
     },
     {
       "path": "player-scene-view.css",
-      "bytes": 28093,
-      "sha256": "61811bd23665d7aaa7471895b559d59646510ac61438141d2583a63b16371ccc"
+      "bytes": 28287,
+      "sha256": "2e11a4839fa8a35c7d40f6c5245ab806a9827a3a114d72947133c88066ef13db"
     },
     {
       "path": "player-scene-view.js",
-      "bytes": 43555,
-      "sha256": "73d75d9a00264b75202fb5d7c6438f96f0e1e618f5a1fef3f7640553e592fa65"
+      "bytes": 44090,
+      "sha256": "18e5e2b895ae6970c515ddd11089e430ed6182e1a4c77996c0ecca35b3ca05a0"
     },
     {
       "path": "player-service-worker.js",
-      "bytes": 5084,
-      "sha256": "682048cdd4626419b0b44d856eb63a33bc8f611237e7178b23dd5c35ccc2d58c"
+      "bytes": 6231,
+      "sha256": "2f34cbff272e0136980357bda32d4639162f096e333d2c68317b2ae87839af51"
     },
     {
       "path": "player-updates.js",
-      "bytes": 2691,
-      "sha256": "4a2ef11c57b0caf82c1955054a3c006316634c6eae0eaea7a2dc0385c36643ac"
+      "bytes": 4385,
+      "sha256": "c775abe5f93e1edf80dfa40968408b93da70f204b88e66fc1bda84dcc9a37241"
     },
     {
       "path": "player-voice-packs.js",
@@ -3726,7 +3726,7 @@
   "playerSlice": {
     "entry": "play.html",
     "runtimeContext": "player-release-context.json",
-    "runtimeContentHash": "95eb799197f6b8d9817e8bddb60a948c7bf074a125b0fde77f3b28b8f77d8841",
+    "runtimeContentHash": "b5a3634ed7727f69e776833877a30c80da3b5062837b19677a28622d3ab826d3",
     "saveContract": "slice-v1-008a59aaddafa283713309e170077d18f6acefc93949826365f11e31928df96d",
     "approvedArt": "UX02-layer-art-v3-20261016",
     "scene": "M02",

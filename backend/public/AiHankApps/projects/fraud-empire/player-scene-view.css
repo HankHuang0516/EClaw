@@ -58,3 +58,5 @@ body[data-player-voices-open=true] .player-dialog:not(.player-voices),body[data-
 .player-app #interactivePrototype[data-player-layout-view="result"] .player-result-return{width:calc(50% - 12px);max-width:calc(50% - 12px);min-height:48px!important}
 
 .player-app #interactivePrototype[data-player-layout-view="result"] .proto-live-board>.player-layout-details:first-of-type[open]{left:auto;right:3%;width:calc(50% - 12px);max-width:calc(50% - 12px)}
+
+.player-running-version{display:flex;flex-wrap:wrap;gap:2px 8px;font-size:14px;font-weight:600;line-height:1.6;color:#403329}.player-running-version code{font-size:12px;overflow-wrap:anywhere}
