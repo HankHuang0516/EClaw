@@ -3,7 +3,7 @@
   "version": "v4.13-player-reopen-20261017-r2",
   "date": "2026-10-17",
   "status": "phone-ui-and-user-selectable-candidate-voice-demo",
-  "contentHash": "6f7612914bb3947b56d0e7a7d83ec92d47e35b1a8d25137df32777a6bbb61d33",
+  "contentHash": "82a78d810e79a7c8f7cd3d2230a26a62eac00adec5612b94ba51edc1b879150d",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1877,8 +1877,8 @@
     },
     {
       "path": "player-entry-link.js",
-      "bytes": 6208,
-      "sha256": "3abf79f23b61d85f7d29cfb14d436348f6a006dde0aab5f830cad1f0b8b5be8a"
+      "bytes": 6200,
+      "sha256": "878f554af573afbcc3461d994e4e735fb683cf0444633deacadf0273603b8833"
     },
     {
       "path": "player-entry-opening.css",
