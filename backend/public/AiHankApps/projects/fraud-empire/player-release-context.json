@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "version": "v4.12-phone-voice-candidates-20261017-r1",
-  "contentHash": "4171cbc069d31d3177fdfaaebe244fbadc7a6682cc0c473fe52b8ac07c8a4ed7",
+  "contentHash": "95eb799197f6b8d9817e8bddb60a948c7bf074a125b0fde77f3b28b8f77d8841",
   "hashScope": "exact-player-runtime-assets-excluding-this-context-and-worker-bootstrap",
   "assets": [
     {
@@ -36,13 +36,23 @@
     },
     {
       "path": "play.html",
-      "bytes": 2867,
-      "sha256": "52376fedaed445f78f83bc7a64edfa6f632824365778dc1d306de1343892eacc"
+      "bytes": 3286,
+      "sha256": "2419660b2c3c143a7a94fdc6fb559cf956c249379366db6d55264591a74d11ed"
     },
     {
       "path": "player-assets-registry.js",
       "bytes": 3074,
       "sha256": "c7cd58a48c5a9ac0aa311d488acaa72faadcb708dfdb7f1ed038ff4c1b7fa5cd"
+    },
+    {
+      "path": "player-assets/ENTRY-ensemble-base-v1-candidate.png",
+      "bytes": 2497466,
+      "sha256": "b9493cdaf4fba59509bb4d181e76fe90a148c5d4f642ecaade767563f4bf214a"
+    },
+    {
+      "path": "player-assets/HOME-opening-v3.png",
+      "bytes": 2225492,
+      "sha256": "ac7a3c7f57e3224d986d746549b881dc92be0ed5a75b1c01ff8aeb095a7437c0"
     },
     {
       "path": "player-assets/player-back-native.png",
@@ -121,8 +131,38 @@
     },
     {
       "path": "player-bootstrap.js",
-      "bytes": 11716,
-      "sha256": "cb113b6027f94fb203bd962feaa9c591d6ba8a0475558b369494c7d13da96f43"
+      "bytes": 15157,
+      "sha256": "7c728cdfba46cab5610d18a6a70d2c804069e18201894e462c7596e952618a5a"
+    },
+    {
+      "path": "player-entry-opening.css",
+      "bytes": 6610,
+      "sha256": "479ca371e76899744bdfe0c67470b2cf4f9e2e8c8ef0cedcefc70b4644cf614c"
+    },
+    {
+      "path": "player-entry-opening.js",
+      "bytes": 14789,
+      "sha256": "116483337b129ecab4e6bb8fa69238a2d6324b0a75ebfd54cb3f544e5794a3d5"
+    },
+    {
+      "path": "player-entry-settings.css",
+      "bytes": 3721,
+      "sha256": "ae9cadf74df0043254a1fe644f82ff3ce89f546af9dd35da0341e3e9142fe425"
+    },
+    {
+      "path": "player-entry-settings.js",
+      "bytes": 9012,
+      "sha256": "1a0dad61b34b8af15f964cca7188093bf48b0fbdacbb802c91807eeeff67ed17"
+    },
+    {
+      "path": "player-home-opening.css",
+      "bytes": 2934,
+      "sha256": "d465beecdccb6a591f288c142699893c83b0540928ab443b5fd8c5b8e560419e"
+    },
+    {
+      "path": "player-home-opening.js",
+      "bytes": 4398,
+      "sha256": "0a538beee7261c982d4c49e433ab9843593c8781f6f72eb2a7d6be7b372ce0bc"
     },
     {
       "path": "player-icon-180.png",
@@ -146,13 +186,18 @@
     },
     {
       "path": "player-layout.js",
-      "bytes": 9471,
-      "sha256": "880deb43d4d45d0a3cca197ae8bc42dbad986da962ee7fa784e0dc7ee28a079e"
+      "bytes": 9545,
+      "sha256": "c387b8f60e8ec5141e38a54d4ffeb6a3a8a1899b93e868475cf94915774d0d0b"
     },
     {
       "path": "player-report.js",
       "bytes": 13714,
       "sha256": "bdb6218b4c1572e2fb183168c4e7e28f0d9c03a8a2dddedf1c5979f51e204034"
+    },
+    {
+      "path": "player-save-readiness.js",
+      "bytes": 1531,
+      "sha256": "d343085778cdaf989aa025229a42c18db4bf0b5239fb9a9afd4c713515c4571c"
     },
     {
       "path": "player-save.js",
@@ -171,13 +216,13 @@
     },
     {
       "path": "player-scene-view.css",
-      "bytes": 26433,
-      "sha256": "2b703e6cd269890e79dac168fe94a6cc295877e64464be5d32301c1bfde084c3"
+      "bytes": 28093,
+      "sha256": "61811bd23665d7aaa7471895b559d59646510ac61438141d2583a63b16371ccc"
     },
     {
       "path": "player-scene-view.js",
-      "bytes": 43281,
-      "sha256": "7ecc2df7504881484d75a1587918d51bd94ff8e622f3ebe747c1652352c916ac"
+      "bytes": 43555,
+      "sha256": "73d75d9a00264b75202fb5d7c6438f96f0e1e618f5a1fef3f7640553e592fa65"
     },
     {
       "path": "player-updates.js",

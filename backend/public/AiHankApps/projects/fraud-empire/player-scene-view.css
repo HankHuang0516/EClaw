@@ -46,3 +46,15 @@ body[data-player-voices-open=true] .player-dialog:not(.player-voices),body[data-
 
 /* The source ID selector must not turn the tray back into a single-column grid. */
 .player-app #interactivePrototype .proto-ticket-tray:not([data-empty=true]){display:flex!important;flex-flow:row nowrap!important;justify-content:center;align-items:center;gap:3%!important;position:relative;padding:22px 5px 5px!important}.player-app #interactivePrototype .proto-ticket-tray:not([data-empty=true])>h5{position:absolute;top:3px;left:5px;right:5px;width:auto;margin:0!important;font-size:clamp(10px,calc(var(--game-width)*.024),16px)}.player-app #interactivePrototype .proto-ticket-tray>.proto-ticket{flex:0 0 22%;width:22%!important;min-width:44px;max-width:110px}.player-app #interactivePrototype .proto-stack[data-empty=true]{height:64px!important;min-height:44px!important}.player-app .player-layout-details .proto-controls{display:flex;gap:5px;flex-wrap:wrap;padding:5px}.player-app .player-layout-details .proto-controls button{flex:1;min-width:90px;min-height:44px!important}
+
+
+/* Expanded secondary notes scroll inside their own drawer, never the whole board. */
+.player-app #interactivePrototype .player-layout-details.player-ticket-drawer[open]{position:absolute;left:3%;right:3%;bottom:4px;top:auto;width:auto;max-width:none;max-height:58dvh;display:block;overflow:auto;overscroll-behavior:contain;z-index:40;background:#17201c;border:2px solid #a38a5f;padding:0 7px 7px;box-shadow:0 4px 12px #0008}.player-app #interactivePrototype .player-ticket-drawer[open]>summary{position:sticky;top:0;z-index:2;background:#17201c;border-bottom:1px solid #8d7954;min-height:44px!important}.player-app #interactivePrototype .player-ticket-drawer .proto-controls{margin:4px 0!important;padding:4px!important}
+
+/* SC-02: status occupies its own row; never paints over task actions. */
+.player-app{grid-template-rows:calc(var(--game-width)*163/941) minmax(0,1fr) auto calc(var(--game-width)*146/941)}.player-nav{grid-row:4}.player-status{grid-row:3;grid-column:1;position:relative;inset:auto;z-index:auto;margin:0 4% 5px;padding:5px 9px;background:#111916;font-size:clamp(11px,calc(var(--game-width)*.024),18px);line-height:1.4;max-height:5.6em;overflow:auto;pointer-events:auto;white-space:normal}
+
+/* Result state: reserve the right-side page drawer without covering Return. */
+.player-app #interactivePrototype[data-player-layout-view="result"] .player-result-return{width:calc(50% - 12px);max-width:calc(50% - 12px);min-height:48px!important}
+
+.player-app #interactivePrototype[data-player-layout-view="result"] .proto-live-board>.player-layout-details:first-of-type[open]{left:auto;right:3%;width:calc(50% - 12px);max-width:calc(50% - 12px)}

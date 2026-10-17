@@ -3,7 +3,7 @@
   "version": "v4.12-phone-voice-candidates-20261017-r1",
   "date": "2026-10-17",
   "status": "phone-ui-and-user-selectable-candidate-voice-demo",
-  "contentHash": "b7606b0108779c62c49ec636cc892dea4e5ca567576b535f698f520ae299e8fa",
+  "contentHash": "939a34a992224f399db7a5b91abb80af6e1cbe94f5062eae372bf07727957d60",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1772,13 +1772,23 @@
     },
     {
       "path": "play.html",
-      "bytes": 2867,
-      "sha256": "52376fedaed445f78f83bc7a64edfa6f632824365778dc1d306de1343892eacc"
+      "bytes": 3286,
+      "sha256": "2419660b2c3c143a7a94fdc6fb559cf956c249379366db6d55264591a74d11ed"
     },
     {
       "path": "player-assets-registry.js",
       "bytes": 3074,
       "sha256": "c7cd58a48c5a9ac0aa311d488acaa72faadcb708dfdb7f1ed038ff4c1b7fa5cd"
+    },
+    {
+      "path": "player-assets/ENTRY-ensemble-base-v1-candidate.png",
+      "bytes": 2497466,
+      "sha256": "b9493cdaf4fba59509bb4d181e76fe90a148c5d4f642ecaade767563f4bf214a"
+    },
+    {
+      "path": "player-assets/HOME-opening-v3.png",
+      "bytes": 2225492,
+      "sha256": "ac7a3c7f57e3224d986d746549b881dc92be0ed5a75b1c01ff8aeb095a7437c0"
     },
     {
       "path": "player-assets/player-back-native.png",
@@ -1857,18 +1867,48 @@
     },
     {
       "path": "player-bootstrap.js",
-      "bytes": 11716,
-      "sha256": "cb113b6027f94fb203bd962feaa9c591d6ba8a0475558b369494c7d13da96f43"
+      "bytes": 15157,
+      "sha256": "7c728cdfba46cab5610d18a6a70d2c804069e18201894e462c7596e952618a5a"
     },
     {
       "path": "player-cache-manifest.js",
-      "bytes": 8624,
-      "sha256": "4ec440625765e22af0dd557cb918d9035045aa075b18006ee52d5e673652462a"
+      "bytes": 10085,
+      "sha256": "5b3f7e8d2e57c96e1a6c8b89afbb009ad999fd884d3d57362b8f9619ccccd1a1"
     },
     {
       "path": "player-entry-link.js",
       "bytes": 849,
       "sha256": "6ea8bd5533135d7651d07aeaef77bbf5db3a8505230be4cb5a649bf558aabf7d"
+    },
+    {
+      "path": "player-entry-opening.css",
+      "bytes": 6610,
+      "sha256": "479ca371e76899744bdfe0c67470b2cf4f9e2e8c8ef0cedcefc70b4644cf614c"
+    },
+    {
+      "path": "player-entry-opening.js",
+      "bytes": 14789,
+      "sha256": "116483337b129ecab4e6bb8fa69238a2d6324b0a75ebfd54cb3f544e5794a3d5"
+    },
+    {
+      "path": "player-entry-settings.css",
+      "bytes": 3721,
+      "sha256": "ae9cadf74df0043254a1fe644f82ff3ce89f546af9dd35da0341e3e9142fe425"
+    },
+    {
+      "path": "player-entry-settings.js",
+      "bytes": 9012,
+      "sha256": "1a0dad61b34b8af15f964cca7188093bf48b0fbdacbb802c91807eeeff67ed17"
+    },
+    {
+      "path": "player-home-opening.css",
+      "bytes": 2934,
+      "sha256": "d465beecdccb6a591f288c142699893c83b0540928ab443b5fd8c5b8e560419e"
+    },
+    {
+      "path": "player-home-opening.js",
+      "bytes": 4398,
+      "sha256": "0a538beee7261c982d4c49e433ab9843593c8781f6f72eb2a7d6be7b372ce0bc"
     },
     {
       "path": "player-icon-180.png",
@@ -1892,18 +1932,23 @@
     },
     {
       "path": "player-layout.js",
-      "bytes": 9471,
-      "sha256": "880deb43d4d45d0a3cca197ae8bc42dbad986da962ee7fa784e0dc7ee28a079e"
+      "bytes": 9545,
+      "sha256": "c387b8f60e8ec5141e38a54d4ffeb6a3a8a1899b93e868475cf94915774d0d0b"
     },
     {
       "path": "player-release-context.json",
-      "bytes": 8501,
-      "sha256": "c9b4c8b8f54667bbfc05f174eb4909da754f60ac7e15aef434d790abc998f4ca"
+      "bytes": 9971,
+      "sha256": "c1ee1532aedd42d505a51b9d8afa2a6d622862da795110b467b38aa35b0b5844"
     },
     {
       "path": "player-report.js",
       "bytes": 13714,
       "sha256": "bdb6218b4c1572e2fb183168c4e7e28f0d9c03a8a2dddedf1c5979f51e204034"
+    },
+    {
+      "path": "player-save-readiness.js",
+      "bytes": 1531,
+      "sha256": "d343085778cdaf989aa025229a42c18db4bf0b5239fb9a9afd4c713515c4571c"
     },
     {
       "path": "player-save.js",
@@ -1922,13 +1967,13 @@
     },
     {
       "path": "player-scene-view.css",
-      "bytes": 26433,
-      "sha256": "2b703e6cd269890e79dac168fe94a6cc295877e64464be5d32301c1bfde084c3"
+      "bytes": 28093,
+      "sha256": "61811bd23665d7aaa7471895b559d59646510ac61438141d2583a63b16371ccc"
     },
     {
       "path": "player-scene-view.js",
-      "bytes": 43281,
-      "sha256": "7ecc2df7504881484d75a1587918d51bd94ff8e622f3ebe747c1652352c916ac"
+      "bytes": 43555,
+      "sha256": "73d75d9a00264b75202fb5d7c6438f96f0e1e618f5a1fef3f7640553e592fa65"
     },
     {
       "path": "player-service-worker.js",
@@ -3591,7 +3636,8 @@
     "已核准美術及四段技術檢查通過的阿猴候選WAV已接入。三個語音包可於設定試聽、儲存及本機確認；全域主觀聲音驗收仍未完成。",
     "桌機與觸控視窗及隔離Chrome實際安裝／離線重開已驗收，未冒稱實體iOS／Android裝機。",
     "設定回報只在明確送出時傳送；後端PR5222及正式儲存同ID讀回尚待完成，不冒稱已可供研究使用。",
-    "更新改用使用者確認、完整存檔後關閉作品的全部視窗再開啟；不再熱切換或強制重新載入。"
+    "更新改用使用者確認、完整存檔後關閉作品的全部視窗再開啟；不再熱切換或強制重新載入。",
+    "完整劇情節點尚未全部接成可玩流程；T17線索影片未完成、等價替代未定，不可略過即通關。"
   ],
   "b03Voice": {
     "changedLineCount": 112,
@@ -3680,7 +3726,7 @@
   "playerSlice": {
     "entry": "play.html",
     "runtimeContext": "player-release-context.json",
-    "runtimeContentHash": "4171cbc069d31d3177fdfaaebe244fbadc7a6682cc0c473fe52b8ac07c8a4ed7",
+    "runtimeContentHash": "95eb799197f6b8d9817e8bddb60a948c7bf074a125b0fde77f3b28b8f77d8841",
     "saveContract": "slice-v1-008a59aaddafa283713309e170077d18f6acefc93949826365f11e31928df96d",
     "approvedArt": "UX02-layer-art-v3-20261016",
     "scene": "M02",
@@ -3750,6 +3796,34 @@
     "voiceSelectionLocalConfirmation": true,
     "voicePreferenceKey": "aihank.fraud-empire.voice-prefs.v1",
     "managedSimulatorValidated": false,
-    "phoneUISimilarityValidated": false
+    "phoneUISimilarityValidated": false,
+    "homeOpening": {
+      "golden": "HOME-opening-v3",
+      "goldenHash": "ac7a3c7f57e3224d986d746549b881dc92be0ed5a75b1c01ff8aeb095a7437c0",
+      "scope": "Explicit development preview of W01 home only; no title/new-game journey implemented",
+      "preview": "play.html?preview=home-opening-v3",
+      "separateNativeUI": true,
+      "sourceCommits": 0,
+      "storageWrites": 0,
+      "adClick": "source intent only; follow-on pending approved source and golden",
+      "withdrawnEntryAssetsNotUsed": true,
+      "firstLaunchEntryComplete": false,
+      "newGameComplete": false
+    },
+    "entryOpening": {
+      "background": "player-assets/ENTRY-ensemble-base-v1-candidate.png",
+      "home": "player-assets/HOME-opening-v3.png",
+      "noSaveDefault": "Start opens the limited W01 HOME scene without creating world progress",
+      "existingSaveDefault": "Validate and explicitly continue the existing world and P02 snapshot",
+      "settingsConnected": true,
+      "overwriteConnected": true,
+      "overwritePolicy": "Prepare HOME, recheck unchanged raw save, replace only the legacy slice key after explicit confirmation",
+      "sourceCommits": 0,
+      "newGameComplete": false,
+      "minimumControlHeight": 48,
+      "minimumGap": 12,
+      "fullArtLayerSeparation": false,
+      "scope": "finite entry, compatible local save, confirmation and general settings; no full mainline claim"
+    }
   }
 }
