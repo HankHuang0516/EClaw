@@ -3,7 +3,7 @@
   "version": "v4.12-phone-voice-candidates-20261017-r1",
   "date": "2026-10-17",
   "status": "phone-ui-and-user-selectable-candidate-voice-demo",
-  "contentHash": "3d3082c61e53dcf6a3dd4cab75cd4ac5add681f0c4618131f490dc0024bf7b64",
+  "contentHash": "db62762b4210b66800d44a227384e4edab98501762c772880a593571bba1a581",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1863,7 +1863,7 @@
     {
       "path": "player-cache-manifest.js",
       "bytes": 8624,
-      "sha256": "e07e6cad481adbeb53ae037c55f76eb9da759be20f041a1539b2936ba5b31d66"
+      "sha256": "edcd71119c124ed2bafcf5ec19f3e81217dc3898220c9c61d1726b6dd20faed7"
     },
     {
       "path": "player-entry-link.js",
@@ -1898,7 +1898,7 @@
     {
       "path": "player-release-context.json",
       "bytes": 8501,
-      "sha256": "adc3537c2041302553e5e59bb13379d3c9ddb5c940bd14909464a062bd7f504b"
+      "sha256": "5adde8adabf3dd07ad107f2fb1241fb31be800361d1c849f0107bbd5e50559d6"
     },
     {
       "path": "player-report.js",
@@ -1922,8 +1922,8 @@
     },
     {
       "path": "player-scene-view.css",
-      "bytes": 21782,
-      "sha256": "40fcc12e9ec338553da4dad97791c3e90923df276c40bc0b9af19ce35618de73"
+      "bytes": 22729,
+      "sha256": "ed22bee29fa3d58084194b5b1ee993a5d718c1af2b1423d196cc6085fddfb8e5"
     },
     {
       "path": "player-scene-view.js",
@@ -1942,8 +1942,8 @@
     },
     {
       "path": "player-voice-packs.js",
-      "bytes": 10731,
-      "sha256": "d6ec018d254dbc46b2f6ae7f7bbae4556e01ce396444174afa54e81627ad14f5"
+      "bytes": 10869,
+      "sha256": "0fe4f365da8f5d654d3ac32bbf6b05a1ea266bdbd9a94f680e3cb86343b97b74"
     },
     {
       "path": "player.webmanifest",
@@ -3680,7 +3680,7 @@
   "playerSlice": {
     "entry": "play.html",
     "runtimeContext": "player-release-context.json",
-    "runtimeContentHash": "4f5c9a0d4d52e6d8607d2bf5e81db56d0370137a11b949c26d8cb43c88d37d41",
+    "runtimeContentHash": "85595408b2854b78a37ab7c824ebc79503fb6b16ad2412bd860f86cd1b8c7415",
     "saveContract": "slice-v1-008a59aaddafa283713309e170077d18f6acefc93949826365f11e31928df96d",
     "approvedArt": "UX02-layer-art-v3-20261016",
     "scene": "M02",
