@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "version": "v4.13-player-reopen-20261017-r1",
-  "contentHash": "b5a3634ed7727f69e776833877a30c80da3b5062837b19677a28622d3ab826d3",
+  "version": "v4.13-player-reopen-20261017-r2",
+  "contentHash": "ce6f5abaa2718527f095fa764d8b740ec4251e3075d89801b63ae12388af6e73",
   "hashScope": "exact-player-runtime-assets-excluding-this-context-and-worker-bootstrap",
   "assets": [
     {
@@ -132,7 +132,7 @@
     {
       "path": "player-bootstrap.js",
       "bytes": 15227,
-      "sha256": "7cad1a8e0fc3ac948183b527346a1b5403e5d6b1a7c881381910585379cc68b7"
+      "sha256": "e3328e97adbdd3fbd07f569118bbf5fb8dc523fcf8e4b2bb4ee1b1daeee417eb"
     },
     {
       "path": "player-entry-opening.css",

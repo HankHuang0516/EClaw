@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.13-player-reopen-20261017-r1",
+  "version": "v4.13-player-reopen-20261017-r2",
   "date": "2026-10-17",
   "status": "phone-ui-and-user-selectable-candidate-voice-demo",
-  "contentHash": "03b80bbe22ac8d1ee70f26ab125d1e6d26a166154c97f45cbb0eaf62d1d1e5ec",
+  "contentHash": "6f7612914bb3947b56d0e7a7d83ec92d47e35b1a8d25137df32777a6bbb61d33",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1698,7 +1698,7 @@
     {
       "path": "index.html",
       "bytes": 12375,
-      "sha256": "7141660c160a163aec0263bc5b27b24e10365bd8ab5a871dfbfc9f842e0d1d8b"
+      "sha256": "77cc437e39603be70a3f155a30a35d084fdb8eccbe19ce70f9df2c09e2802676"
     },
     {
       "path": "interaction-coverage.json",
@@ -1868,17 +1868,17 @@
     {
       "path": "player-bootstrap.js",
       "bytes": 15227,
-      "sha256": "7cad1a8e0fc3ac948183b527346a1b5403e5d6b1a7c881381910585379cc68b7"
+      "sha256": "e3328e97adbdd3fbd07f569118bbf5fb8dc523fcf8e4b2bb4ee1b1daeee417eb"
     },
     {
       "path": "player-cache-manifest.js",
       "bytes": 10076,
-      "sha256": "721559533be4a3258e863703f18a55758cf4734abe7d24a80ece44bd566eb87b"
+      "sha256": "3f5a7ff323836392c50168949a114a7baf941d1eaf08c33888e6e6ddfaf7410a"
     },
     {
       "path": "player-entry-link.js",
-      "bytes": 5622,
-      "sha256": "722763520cb3ab599699d8dc5908d28b990afd8584b89c44981eec8d989ddf97"
+      "bytes": 6208,
+      "sha256": "3abf79f23b61d85f7d29cfb14d436348f6a006dde0aab5f830cad1f0b8b5be8a"
     },
     {
       "path": "player-entry-opening.css",
@@ -1938,7 +1938,7 @@
     {
       "path": "player-release-context.json",
       "bytes": 9962,
-      "sha256": "e861647ea6dabb5c530d84b2b52bc3de58647ccc896866ffaac96c245cea41bb"
+      "sha256": "8a8945d6062a8b481e9e81298e253fcbb9389259faa64c017994b00d2b2e446c"
     },
     {
       "path": "player-report.js",
@@ -3726,7 +3726,7 @@
   "playerSlice": {
     "entry": "play.html",
     "runtimeContext": "player-release-context.json",
-    "runtimeContentHash": "b5a3634ed7727f69e776833877a30c80da3b5062837b19677a28622d3ab826d3",
+    "runtimeContentHash": "ce6f5abaa2718527f095fa764d8b740ec4251e3075d89801b63ae12388af6e73",
     "saveContract": "slice-v1-008a59aaddafa283713309e170077d18f6acefc93949826365f11e31928df96d",
     "approvedArt": "UX02-layer-art-v3-20261016",
     "scene": "M02",
