@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.15-job-site-20261017-r1",
+  "version": "v4.16-private-job-r9-20261017-r2-thailand",
   "date": "2026-10-17",
   "status": "bounded-opening-and-preserved-player-slice-demo",
-  "contentHash": "2aec9d23bbed975d504939bd79b31843ba3f36403fc0a9f950379b371512d2fe",
+  "contentHash": "6f258a0e8566104e182235786ef6df0f2af332740851fa97122075bc57547a48",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1697,8 +1697,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 12412,
-      "sha256": "06f7a020162771cac1c05916e8d7631bc8ab0d9559668058511c075369a3558d"
+      "bytes": 12500,
+      "sha256": "c959d39af30f5d4fe267606dfcbe539e15dc4480f8539ea56dd2e099502839ad"
     },
     {
       "path": "interaction-coverage.json",
@@ -1877,13 +1877,13 @@
     },
     {
       "path": "player-cache-manifest.js",
-      "bytes": 10410,
-      "sha256": "12e6cf00180f0fc770f4c26072ad34ea8ca06bdff0984443d0d1dbb80896def8"
+      "bytes": 11103,
+      "sha256": "7c96468ec25e5dcbe49e023a442a5eba84cc22ae61ee93ed0fd8aeb0b2efe101"
     },
     {
       "path": "player-entry-link.js",
-      "bytes": 6327,
-      "sha256": "4b99900b84f65c654eb61c917a8b2ddf7680150bec450bdcf56e43e511c98716"
+      "bytes": 6342,
+      "sha256": "247e07a3b594a818d7494c980f409c1e2a8a19e5cf5ddd132ff2a3150b14cb79"
     },
     {
       "path": "player-entry-opening.css",
@@ -1907,13 +1907,13 @@
     },
     {
       "path": "player-home-opening.css",
-      "bytes": 12969,
-      "sha256": "23c6eb9ec9b9135131770dbc9ff606af82fac0d75687a503c2cc57721616920e"
+      "bytes": 16289,
+      "sha256": "35b2c0dd35af1bf190697b42c4b3181da68683e457e1f5bade0d46977f76ae5b"
     },
     {
       "path": "player-home-opening.js",
-      "bytes": 25485,
-      "sha256": "095391b07fca3e772543fadc04fa0a24b9ec7e47dfc58390c59d73f9a0d3a9ae"
+      "bytes": 34805,
+      "sha256": "0fdec17ba32899b92cda7732dc07947be7b2352c9c67f0d4c640ee17876d1248"
     },
     {
       "path": "player-icon-180.png",
@@ -1942,13 +1942,13 @@
     },
     {
       "path": "player-opening-narrative.js",
-      "bytes": 24957,
-      "sha256": "f12fd894a66f7bc55494a315650351e8261076abbf60c89852a965d4421251ed"
+      "bytes": 63261,
+      "sha256": "6bb7bc21534ede0890ef0273cd2f07ce3dc9a6d6cc0cab6b9f95eb2270a3f212"
     },
     {
       "path": "player-release-context.json",
-      "bytes": 10297,
-      "sha256": "75517f4d5aace3f3449289ea70a65bbe7b3f9884597e7b835e7bbe534a02e64c"
+      "bytes": 10994,
+      "sha256": "e791b1448178527a7657e212e222604c31a1e34f405596736a8e6289108f83e9"
     },
     {
       "path": "player-report.js",
@@ -1962,8 +1962,8 @@
     },
     {
       "path": "player-save.js",
-      "bytes": 11911,
-      "sha256": "fb9c9bb1c07a023e36b4e4cb8d272ccf20d925d58ffcc1149a7d79b6064005fd"
+      "bytes": 11965,
+      "sha256": "543cf070ab8781a8c558aa497eb113f14111d84dc1d333e54c5881e6082a60d1"
     },
     {
       "path": "player-scene-bridge.js",
@@ -3579,6 +3579,26 @@
       "path": "workflows.js",
       "bytes": 11936,
       "sha256": "860317c21f643ced2950aa9ba6d15b924b9ff1acfdea93ded781601cd2a361c4"
+    },
+    {
+      "path": "player-assets/job-list-r6.png",
+      "bytes": 1455054,
+      "sha256": "c8ca49a86eb3d2c65cbf89441f24cb19b42248cfb6a759a43e58ce319f6effd1"
+    },
+    {
+      "path": "player-assets/job-workplace-r7.png",
+      "bytes": 1751578,
+      "sha256": "1de5d1dbfe3f541aa37b0406b238a79f3cb0006d0dc7ac1a006146ba1a244b25"
+    },
+    {
+      "path": "player-assets/job-accommodation-r8.png",
+      "bytes": 1936931,
+      "sha256": "10149b4974f004554d7f577a185328d128bf7617cd43055aa469264b366112c8"
+    },
+    {
+      "path": "player-assets/job-call-r9.png",
+      "bytes": 1468008,
+      "sha256": "50875f9f96995c4d9df1aca83dc108d365ff6b967dbc3ab78ab94f69e187e6f9"
     }
   ],
   "correction": {
@@ -3739,7 +3759,7 @@
   "playerSlice": {
     "entry": "play.html",
     "runtimeContext": "player-release-context.json",
-    "runtimeContentHash": "108a58f2ffebdd1118c385ce0f0e4a66620b5df4fc6780ed892c248efea2ff4d",
+    "runtimeContentHash": "3e6467297932f3359fe454d2c25e0dd56c74e07804d19f57bd14d6e2a8068196",
     "saveContract": "slice-v1-008a59aaddafa283713309e170077d18f6acefc93949826365f11e31928df96d",
     "approvedArt": "UX02-layer-art-v3-20261016",
     "scene": "M02",
@@ -3813,20 +3833,27 @@
     "homeOpening": {
       "golden": "HOME-cleanplate-v1",
       "goldenHash": "4339cb82cfb26c0f471ccddd710234797c3cc77ac841fa713cca4243797132a2",
-      "scope": "Native fictional job portal increment through N06 and explicit development boundary; no packing/travel/Day1/full-game completion",
+      "scope": "PRIVATE r6 list, r7/r8 photos, r9 interview and r10 states; no submission/publication approval",
       "preview": "play.html?preview=home-opening-v3",
       "legacyPreviewAliasPreserved": true,
       "separateNativeUI": true,
-      "narrativeScript": "W01-narrative-supplement-r4-job-site",
+      "narrativeScript": "W01-job-interview-r9-thailand-private-r2",
       "implementedBeatIds": [
         "W01-N01",
         "W01-N02",
-        "W01-N03",
-        "W01-WEB-LIST",
-        "W01-N04",
-        "W01-N05",
-        "W01-N05a",
-        "W01-N05b",
+        "W01-R9-DETAIL-READ",
+        "W01-R9-APPLIED",
+        "W01-R9-INVITE-WAIT",
+        "W01-R9-INTERVIEW-INTRO",
+        "W01-R9-Q-WORK",
+        "W01-R9-A-WORK",
+        "W01-R9-Q-ROOM",
+        "W01-R9-A-ROOM",
+        "W01-R9-Q-PAY",
+        "W01-R9-A-PAY",
+        "W01-R9-HOPE",
+        "W01-R9-INTERVIEW-END",
+        "W01-R9-RESULT-WAIT",
         "W01-N06"
       ],
       "systemEnd": "W01-development-boundary-r1",
@@ -3860,16 +3887,32 @@
       "incrementalOpening": true,
       "storyCheckpointImplemented": true,
       "r4InteractiveWebsiteImplemented": true,
-      "persistenceScope": "r4 full logical opening checkpoints, explicit manual replacement and known-r3 migration with original backup; shared Web Locks; future/unknown raw preserved",
-      "siteCopy": "JOB-WEBSITE-v4-copy",
+      "persistenceScope": "r9.2 Thai current copy plus frozen r9.1/r4/r3 copy-aware historical readers; original raw backups and independent progress preserved",
+      "siteCopy": "r9-screen-contract+r10-state-matrix",
       "websiteVisualApproval": false,
       "implementedWebsiteStates": [
         "W01-WEB-LIST",
         "W01-WEB-DETAIL",
-        "W01-WEB-WAIT",
-        "W01-WEB-REPLY"
+        "W01-APPLY-CONFIRM",
+        "W01-WAIT-INVITE",
+        "W01-INVITE",
+        "W01-INTERVIEW",
+        "W01-WAIT-RESULT",
+        "W01-OFFER"
       ],
-      "websiteDirectionApproval": "Root finite v4/copy4 list/detail hierarchy direction; original reviewer finite native four-state acceptance; not full-game or all-Golden approval"
+      "websiteDirectionApproval": "Root finite v4/copy4 list/detail hierarchy direction; original reviewer finite native four-state acceptance; not full-game or all-Golden approval",
+      "privateImplementationAuthorized": true,
+      "publicationHold": true,
+      "countryCorrection": {
+        "advertisedCountry": "泰國",
+        "historicalCopyPreserved": true,
+        "truthReveal": "existing recognizable arrival information only",
+        "actualTrappedCountry": "unchanged original plan",
+        "travelImplemented": false,
+        "Day1Changed": false,
+        "sourceAdaptation": "composite fictional adaptation, not reconstruction of CNA2023"
+      },
+      "historySourceLabels": "Archived job revision and narration source revision are separate. Original r3/r4 rows stay historical; newly read r9.2 narration is labeled current r9.2. Archived r9.1 narration stays frozen/historical."
     },
     "entryOpening": {
       "background": "player-assets/ENTRY-ensemble-base-v1-candidate.png",

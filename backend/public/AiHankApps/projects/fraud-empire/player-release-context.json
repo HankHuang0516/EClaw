@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "version": "v4.15-job-site-20261017-r1",
-  "contentHash": "108a58f2ffebdd1118c385ce0f0e4a66620b5df4fc6780ed892c248efea2ff4d",
+  "version": "v4.16-private-job-r9-20261017-r2-thailand",
+  "contentHash": "3e6467297932f3359fe454d2c25e0dd56c74e07804d19f57bd14d6e2a8068196",
   "hashScope": "exact-player-runtime-assets-excluding-this-context-and-worker-bootstrap",
   "assets": [
     {
@@ -161,13 +161,13 @@
     },
     {
       "path": "player-home-opening.css",
-      "bytes": 12969,
-      "sha256": "23c6eb9ec9b9135131770dbc9ff606af82fac0d75687a503c2cc57721616920e"
+      "bytes": 16289,
+      "sha256": "35b2c0dd35af1bf190697b42c4b3181da68683e457e1f5bade0d46977f76ae5b"
     },
     {
       "path": "player-home-opening.js",
-      "bytes": 25485,
-      "sha256": "095391b07fca3e772543fadc04fa0a24b9ec7e47dfc58390c59d73f9a0d3a9ae"
+      "bytes": 34805,
+      "sha256": "0fdec17ba32899b92cda7732dc07947be7b2352c9c67f0d4c640ee17876d1248"
     },
     {
       "path": "player-icon-180.png",
@@ -196,8 +196,8 @@
     },
     {
       "path": "player-opening-narrative.js",
-      "bytes": 24957,
-      "sha256": "f12fd894a66f7bc55494a315650351e8261076abbf60c89852a965d4421251ed"
+      "bytes": 63261,
+      "sha256": "6bb7bc21534ede0890ef0273cd2f07ce3dc9a6d6cc0cab6b9f95eb2270a3f212"
     },
     {
       "path": "player-report.js",
@@ -211,8 +211,8 @@
     },
     {
       "path": "player-save.js",
-      "bytes": 11911,
-      "sha256": "fb9c9bb1c07a023e36b4e4cb8d272ccf20d925d58ffcc1149a7d79b6064005fd"
+      "bytes": 11965,
+      "sha256": "543cf070ab8781a8c558aa497eb113f14111d84dc1d333e54c5881e6082a60d1"
     },
     {
       "path": "player-scene-bridge.js",
@@ -308,6 +308,26 @@
       "path": "workflows-model.js",
       "bytes": 5496,
       "sha256": "abe5f869a33976d40e4c526c0a1960b140c576d200678770e561d87cfe07fdf9"
+    },
+    {
+      "path": "player-assets/job-list-r6.png",
+      "bytes": 1455054,
+      "sha256": "c8ca49a86eb3d2c65cbf89441f24cb19b42248cfb6a759a43e58ce319f6effd1"
+    },
+    {
+      "path": "player-assets/job-workplace-r7.png",
+      "bytes": 1751578,
+      "sha256": "1de5d1dbfe3f541aa37b0406b238a79f3cb0006d0dc7ac1a006146ba1a244b25"
+    },
+    {
+      "path": "player-assets/job-accommodation-r8.png",
+      "bytes": 1936931,
+      "sha256": "10149b4974f004554d7f577a185328d128bf7617cd43055aa469264b366112c8"
+    },
+    {
+      "path": "player-assets/job-call-r9.png",
+      "bytes": 1468008,
+      "sha256": "50875f9f96995c4d9df1aca83dc108d365ff6b967dbc3ab78ab94f69e187e6f9"
     }
   ]
 }
