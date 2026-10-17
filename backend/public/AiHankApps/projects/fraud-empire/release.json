@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.14-bounded-opening-20261017-r1",
+  "version": "v4.15-job-site-20261017-r1",
   "date": "2026-10-17",
   "status": "bounded-opening-and-preserved-player-slice-demo",
-  "contentHash": "ac7cf83ef971039bd9135ff9b8983f338e76ac3c71e99bda0117b85b0b016ea1",
+  "contentHash": "2aec9d23bbed975d504939bd79b31843ba3f36403fc0a9f950379b371512d2fe",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1697,8 +1697,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 12419,
-      "sha256": "25ebe0fe4090df6a3ee3f5fafb1c0ff0b6f4f26827af856e13abd9ce6225c2d9"
+      "bytes": 12412,
+      "sha256": "06f7a020162771cac1c05916e8d7631bc8ab0d9559668058511c075369a3558d"
     },
     {
       "path": "interaction-coverage.json",
@@ -1872,18 +1872,18 @@
     },
     {
       "path": "player-bootstrap.js",
-      "bytes": 15181,
-      "sha256": "cae133d1fd08e8af0245e6e8ebcc2c5715a97e63a6e71948a5c25c419d7648d8"
+      "bytes": 15403,
+      "sha256": "ccc100d9c2d4df95cf8a717d037ae35412833344b1823df16e3b4aea6d41a547"
     },
     {
       "path": "player-cache-manifest.js",
-      "bytes": 10414,
-      "sha256": "230f59162ee49b27ccff35a9d341727cf58ded25edc666b09f594e612fdcd5be"
+      "bytes": 10410,
+      "sha256": "12e6cf00180f0fc770f4c26072ad34ea8ca06bdff0984443d0d1dbb80896def8"
     },
     {
       "path": "player-entry-link.js",
-      "bytes": 6334,
-      "sha256": "26a82d3747f2f1726fabbb9f9c2bb0901de96cf375019d8017f8e77c2f2cadee"
+      "bytes": 6327,
+      "sha256": "4b99900b84f65c654eb61c917a8b2ddf7680150bec450bdcf56e43e511c98716"
     },
     {
       "path": "player-entry-opening.css",
@@ -1892,8 +1892,8 @@
     },
     {
       "path": "player-entry-opening.js",
-      "bytes": 14795,
-      "sha256": "abdbda948de8848d81d9ed0cb12d3fb28a05d995993e15610d3edbcb95289b79"
+      "bytes": 15885,
+      "sha256": "57baf054adc7bde4f5182b4af9207edb34ac92532271254c744f3559bec3425c"
     },
     {
       "path": "player-entry-settings.css",
@@ -1907,13 +1907,13 @@
     },
     {
       "path": "player-home-opening.css",
-      "bytes": 6168,
-      "sha256": "32237344923f163f8c666c1100379f6c4e598fb9da809ec0e971f0e62baee958"
+      "bytes": 12969,
+      "sha256": "23c6eb9ec9b9135131770dbc9ff606af82fac0d75687a503c2cc57721616920e"
     },
     {
       "path": "player-home-opening.js",
-      "bytes": 8138,
-      "sha256": "14a4456d28010b6aa7c414ac744a8777c0fc5cde5bd5b8eb1ad51926012c6586"
+      "bytes": 25485,
+      "sha256": "095391b07fca3e772543fadc04fa0a24b9ec7e47dfc58390c59d73f9a0d3a9ae"
     },
     {
       "path": "player-icon-180.png",
@@ -1942,13 +1942,13 @@
     },
     {
       "path": "player-opening-narrative.js",
-      "bytes": 10224,
-      "sha256": "51ad1b61cda50a29aa6790c6ed999ba6582fe2526fb0bc71cc912cc496048cff"
+      "bytes": 24957,
+      "sha256": "f12fd894a66f7bc55494a315650351e8261076abbf60c89852a965d4421251ed"
     },
     {
       "path": "player-release-context.json",
-      "bytes": 10301,
-      "sha256": "f2acbfa2603eb342048b6c3a288a501fec08e644627fb2168d5a8eb20532e140"
+      "bytes": 10297,
+      "sha256": "75517f4d5aace3f3449289ea70a65bbe7b3f9884597e7b835e7bbe534a02e64c"
     },
     {
       "path": "player-report.js",
@@ -1957,13 +1957,13 @@
     },
     {
       "path": "player-save-readiness.js",
-      "bytes": 1531,
-      "sha256": "d343085778cdaf989aa025229a42c18db4bf0b5239fb9a9afd4c713515c4571c"
+      "bytes": 1680,
+      "sha256": "cae03766a80c7de989f4f2aa651bf8e8d076c20a4f82380c6a13685d824f13c1"
     },
     {
       "path": "player-save.js",
-      "bytes": 4031,
-      "sha256": "32da39a38d2da93ac0e03925978480b1b134be392b71cc133300fdae8482735b"
+      "bytes": 11911,
+      "sha256": "fb9c9bb1c07a023e36b4e4cb8d272ccf20d925d58ffcc1149a7d79b6064005fd"
     },
     {
       "path": "player-scene-bridge.js",
@@ -1992,8 +1992,8 @@
     },
     {
       "path": "player-updates.js",
-      "bytes": 4385,
-      "sha256": "c775abe5f93e1edf80dfa40968408b93da70f204b88e66fc1bda84dcc9a37241"
+      "bytes": 4468,
+      "sha256": "8037e5fcef86e9a13a4deef4e7e6ecab18bfa955dc044b6a078ef456759f0f94"
     },
     {
       "path": "player-voice-packs.js",
@@ -3649,7 +3649,8 @@
     "桌機與觸控視窗及隔離Chrome實際安裝／離線重開已驗收，未冒稱實體iOS／Android裝機。",
     "設定回報只在明確送出時傳送；後端PR5222及正式儲存同ID讀回尚待完成，不冒稱已可供研究使用。",
     "更新改用使用者確認、完整存檔後關閉作品的全部視窗再開啟；不再熱切換或強制重新載入。",
-    "完整劇情節點尚未全部接成可玩流程；T17線索影片未完成、等價替代未定，不可略過即通關。"
+    "完整劇情節點尚未全部接成可玩流程；T17線索影片未完成、等價替代未定，不可略過即通關。",
+    "中央旁白逐字動畫與錄取通知已接為增量；開場邏輯節點尚未持久化，打包、旅程、到場日序、完整Day1循環及全故事存讀檔仍未完成。"
   ],
   "b03Voice": {
     "changedLineCount": 112,
@@ -3738,7 +3739,7 @@
   "playerSlice": {
     "entry": "play.html",
     "runtimeContext": "player-release-context.json",
-    "runtimeContentHash": "7b213e66e83c7b330b8da82f3ae025d9af8bae312f871f51307be4e6cd2bad30",
+    "runtimeContentHash": "108a58f2ffebdd1118c385ce0f0e4a66620b5df4fc6780ed892c248efea2ff4d",
     "saveContract": "slice-v1-008a59aaddafa283713309e170077d18f6acefc93949826365f11e31928df96d",
     "approvedArt": "UX02-layer-art-v3-20261016",
     "scene": "M02",
@@ -3812,43 +3813,68 @@
     "homeOpening": {
       "golden": "HOME-cleanplate-v1",
       "goldenHash": "4339cb82cfb26c0f471ccddd710234797c3cc77ac841fa713cca4243797132a2",
-      "scope": "Bounded W01 narration, fictional recruitment ad, inner response, application and wait; explicit finite demo end. Not offer, packing, travel, arrival or whole prologue.",
+      "scope": "Native fictional job portal increment through N06 and explicit development boundary; no packing/travel/Day1/full-game completion",
       "preview": "play.html?preview=home-opening-v3",
       "legacyPreviewAliasPreserved": true,
       "separateNativeUI": true,
-      "narrativeScript": "W01-narrative-supplement-r3",
+      "narrativeScript": "W01-narrative-supplement-r4-job-site",
       "implementedBeatIds": [
         "W01-N01",
         "W01-N02",
         "W01-N03",
-        "W01-A01",
+        "W01-WEB-LIST",
         "W01-N04",
         "W01-N05",
-        "W01-N05a"
+        "W01-N05a",
+        "W01-N05b",
+        "W01-N06"
       ],
-      "systemEnd": "W01-bounded-end-r1",
+      "systemEnd": "W01-development-boundary-r1",
       "sourceCommits": 0,
       "storageWrites": 0,
       "gameTimeAdvanced": 0,
       "rewardsIssued": 0,
-      "adClick": "Read fictional recruitment ad, then inner response and application; no advertising SDK",
+      "adClick": "opens native fictional job portal; no external submission or advertising SDK",
       "readOnlyReplay": true,
       "returnToExistingEntry": true,
       "preservedExistingSliceSave": true,
-      "firstLaunchBoundedOpeningComplete": true,
+      "firstLaunchBoundedOpeningComplete": false,
       "newGameComplete": false,
       "wholePrologueComplete": false,
       "unimplemented": [
-        "HOME_OFFER_READ",
         "HOME_PACK",
-        "W02_TRAVEL",
-        "W03-ARRIVAL-JOIN"
-      ]
+        "W02_WAITING",
+        "W02_WINDOW",
+        "W02_ARRIVAL",
+        "W03-ARRIVAL-JOIN",
+        "full-world-story-save"
+      ],
+      "centralNarrator": {
+        "nativeText": true,
+        "noSpeakerLabel": true,
+        "noDialogueBox": true,
+        "partialTap": "reveal-current-only",
+        "nextTap": "advance-one-after-input-guard",
+        "reducedMotion": true
+      },
+      "incrementalOpening": true,
+      "storyCheckpointImplemented": true,
+      "r4InteractiveWebsiteImplemented": true,
+      "persistenceScope": "r4 full logical opening checkpoints, explicit manual replacement and known-r3 migration with original backup; shared Web Locks; future/unknown raw preserved",
+      "siteCopy": "JOB-WEBSITE-v4-copy",
+      "websiteVisualApproval": false,
+      "implementedWebsiteStates": [
+        "W01-WEB-LIST",
+        "W01-WEB-DETAIL",
+        "W01-WEB-WAIT",
+        "W01-WEB-REPLY"
+      ],
+      "websiteDirectionApproval": "Root finite v4/copy4 list/detail hierarchy direction; original reviewer finite native four-state acceptance; not full-game or all-Golden approval"
     },
     "entryOpening": {
       "background": "player-assets/ENTRY-ensemble-base-v1-candidate.png",
       "home": "player-assets/HOME-cleanplate-v1.png",
-      "noSaveDefault": "Start reads the bounded W01 opening through application and wait, with finite end/return/read-only replay and no world progress writes",
+      "noSaveDefault": "Start bounded W01 native job-site increment with logical opening-only local save; no world/clock/reward commits",
       "existingSaveDefault": "Validate and explicitly continue the existing world and P02 snapshot",
       "settingsConnected": true,
       "overwriteConnected": true,
