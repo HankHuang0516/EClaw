@@ -16,6 +16,9 @@ put('index.html',read('index.html').toString('utf8').replace(/player-entry-link\
 const extras=release.playerSlice?.additionalRuntimeAssets||[];
 if(!Array.isArray(extras)||extras.some(p=>typeof p!=='string'||p.startsWith('/')||p.includes('..')))throw Error('Unsafe runtime asset path');
 const paths=[...new Set([...context.assets.map(a=>a.path),...extras])];
+const privatePreview=['player-route-preview.js','player-route-preview.css','player-route-preview-data.json'];
+const coreOnly=release.publicationScope?.kind==='completed-ui-core';
+if(coreOnly&&paths.some(p=>privatePreview.includes(p)))throw Error('Private full-route preview excluded from completed UI core runtime');
 for(const name of paths)if(['release.json','player-release-context.json','player-cache-manifest.js','player-service-worker.js'].includes(name))throw Error('Circular runtime asset');
 const bytes=name=>outputs.get(name)||read(name);
 context.version=version;context.assets=paths.map(name=>{const b=bytes(name);return{path:name,bytes:b.length,sha256:sha(b)};});context.contentHash=sha(JSON.stringify(context.assets));
@@ -24,6 +27,7 @@ cache.release=version;cache.assets=[...context.assets,{path:'player-release-cont
 if(cache.assets.reduce((s,a)=>s+a.bytes,0)>50*1024*1024)throw Error('Runtime cache exceeds reviewed 50 MiB cap');
 put('player-cache-manifest.js','self.FraudPlayerCacheManifest='+JSON.stringify(cache)+';\n');
 const names=[...new Set([...release.assets.map(a=>a.path),...(release.playerSlice?.additionalPublicAssets||[])])];
+if(coreOnly&&names.some(p=>privatePreview.includes(p)))throw Error('Private full-route preview excluded from completed UI core public assets');
 release.assets=names.map(name=>{const b=bytes(name);return{path:name,bytes:b.length,sha256:sha(b)};});release.contentHash=sha(JSON.stringify(release.assets));release.playerSlice.runtimeContentHash=context.contentHash;
 release.buildPolicy={versionSource:'release.json#version',generator:'backend/scripts/build-fraud-player-release.cjs',runningVersion:'generated into the actual bootstrap bytes; never fetched from latest network metadata',workerVersion:'player-cache-manifest.js#release',settingsVersion:'actual document.dataset.playerBuild'};
 put('release.json',JSON.stringify(release,null,2)+'\n');
