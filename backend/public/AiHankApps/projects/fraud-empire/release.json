@@ -3,7 +3,7 @@
   "version": "v4.12-phone-voice-candidates-20261017-r1",
   "date": "2026-10-17",
   "status": "phone-ui-and-user-selectable-candidate-voice-demo",
-  "contentHash": "db62762b4210b66800d44a227384e4edab98501762c772880a593571bba1a581",
+  "contentHash": "eed71a5293a1d4c285e1cbc29a6947f040fcaa87151b7e480e939034e6268130",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1863,7 +1863,7 @@
     {
       "path": "player-cache-manifest.js",
       "bytes": 8624,
-      "sha256": "edcd71119c124ed2bafcf5ec19f3e81217dc3898220c9c61d1726b6dd20faed7"
+      "sha256": "3fba29a4992f76cf1b7e95e1fb3baa9b99b2ca77c20a1c29b5f848fc0a5e602b"
     },
     {
       "path": "player-entry-link.js",
@@ -1898,7 +1898,7 @@
     {
       "path": "player-release-context.json",
       "bytes": 8501,
-      "sha256": "5adde8adabf3dd07ad107f2fb1241fb31be800361d1c849f0107bbd5e50559d6"
+      "sha256": "39b8b685e15e1781b2a607362be18f01dbe210d80311f7543e0325488222e3af"
     },
     {
       "path": "player-report.js",
@@ -1922,8 +1922,8 @@
     },
     {
       "path": "player-scene-view.css",
-      "bytes": 22729,
-      "sha256": "ed22bee29fa3d58084194b5b1ee993a5d718c1af2b1423d196cc6085fddfb8e5"
+      "bytes": 23297,
+      "sha256": "5f50de16d5a4ac9b6a67e5730e0efc283486f7ab5ae426bdf4cebbab5e1bda07"
     },
     {
       "path": "player-scene-view.js",
@@ -3680,7 +3680,7 @@
   "playerSlice": {
     "entry": "play.html",
     "runtimeContext": "player-release-context.json",
-    "runtimeContentHash": "85595408b2854b78a37ab7c824ebc79503fb6b16ad2412bd860f86cd1b8c7415",
+    "runtimeContentHash": "2d3282f570c719860cd246b5fd1f7457717eb46e7c6631018d48d2c4b2ec12b1",
     "saveContract": "slice-v1-008a59aaddafa283713309e170077d18f6acefc93949826365f11e31928df96d",
     "approvedArt": "UX02-layer-art-v3-20261016",
     "scene": "M02",
