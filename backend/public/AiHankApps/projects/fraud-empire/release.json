@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.11-player-demo-20261017-r3",
+  "version": "v4.12-phone-voice-candidates-20261017-r1",
   "date": "2026-10-17",
-  "status": "playable-P02-PWA-demo-candidate-not-full-game",
-  "contentHash": "0ced4312ab4cd4afeff93ded06a7ddfcfec4e8f35115f6bed9bb2c7d3fd92aec",
+  "status": "phone-ui-and-user-selectable-candidate-voice-demo",
+  "contentHash": "939a34a992224f399db7a5b91abb80af6e1cbe94f5062eae372bf07727957d60",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1772,13 +1772,23 @@
     },
     {
       "path": "play.html",
-      "bytes": 2770,
-      "sha256": "3a50dd01084d31a91b57449ad31f75b245aa2c64d927da8d298e9e0a02e226aa"
+      "bytes": 3286,
+      "sha256": "2419660b2c3c143a7a94fdc6fb559cf956c249379366db6d55264591a74d11ed"
     },
     {
       "path": "player-assets-registry.js",
       "bytes": 3074,
       "sha256": "c7cd58a48c5a9ac0aa311d488acaa72faadcb708dfdb7f1ed038ff4c1b7fa5cd"
+    },
+    {
+      "path": "player-assets/ENTRY-ensemble-base-v1-candidate.png",
+      "bytes": 2497466,
+      "sha256": "b9493cdaf4fba59509bb4d181e76fe90a148c5d4f642ecaade767563f4bf214a"
+    },
+    {
+      "path": "player-assets/HOME-opening-v3.png",
+      "bytes": 2225492,
+      "sha256": "ac7a3c7f57e3224d986d746549b881dc92be0ed5a75b1c01ff8aeb095a7437c0"
     },
     {
       "path": "player-assets/player-back-native.png",
@@ -1832,23 +1842,73 @@
     },
     {
       "path": "player-audio.js",
-      "bytes": 3904,
-      "sha256": "e5bd2fffa5882e2b69e0dfbf2ca75801daabe4cf7e98d2088b1776aef66653ce"
+      "bytes": 4603,
+      "sha256": "16d8a8d9a24ec68763332b86289582e84519ff7536755469ef1c43f23508e3e3"
+    },
+    {
+      "path": "player-audio/ahou-demo-check-01-979a4b171c13.wav",
+      "bytes": 33164,
+      "sha256": "979a4b171c13267cd505d834af6ff343eb5de8c0b40d5d8054a7527d8623ac79"
+    },
+    {
+      "path": "player-audio/ahou-demo-turn-01-96f02d070322.wav",
+      "bytes": 27404,
+      "sha256": "96f02d070322b1b010a8cf2a9cd29c678c05f29885537c88ca7b139613231a2a"
+    },
+    {
+      "path": "player-audio/ahou-eh-two-A-aa1f0ca47221.wav",
+      "bytes": 34124,
+      "sha256": "aa1f0ca472219de2ffe1a605081e56f2dbb023eabdd65a5fddbecd172e3f02b8"
+    },
+    {
+      "path": "player-audio/ahou-eh-two-B-trimmed-404d1da5f474.wav",
+      "bytes": 45644,
+      "sha256": "404d1da5f47456afda651df515d47ddf35ce2458a7c6f4d81b2a9b06b310d6be"
     },
     {
       "path": "player-bootstrap.js",
-      "bytes": 10427,
-      "sha256": "75ce4ebf63efbc938e02849b646fd878f41ea69aa37c3ecfef057cfc21c86816"
+      "bytes": 15157,
+      "sha256": "7c728cdfba46cab5610d18a6a70d2c804069e18201894e462c7596e952618a5a"
     },
     {
       "path": "player-cache-manifest.js",
-      "bytes": 7577,
-      "sha256": "c338bc7756eb1892c95bb990b686454aeda8b8656de07a91cdb854e8a6181f38"
+      "bytes": 10085,
+      "sha256": "5b3f7e8d2e57c96e1a6c8b89afbb009ad999fd884d3d57362b8f9619ccccd1a1"
     },
     {
       "path": "player-entry-link.js",
       "bytes": 849,
       "sha256": "6ea8bd5533135d7651d07aeaef77bbf5db3a8505230be4cb5a649bf558aabf7d"
+    },
+    {
+      "path": "player-entry-opening.css",
+      "bytes": 6610,
+      "sha256": "479ca371e76899744bdfe0c67470b2cf4f9e2e8c8ef0cedcefc70b4644cf614c"
+    },
+    {
+      "path": "player-entry-opening.js",
+      "bytes": 14789,
+      "sha256": "116483337b129ecab4e6bb8fa69238a2d6324b0a75ebfd54cb3f544e5794a3d5"
+    },
+    {
+      "path": "player-entry-settings.css",
+      "bytes": 3721,
+      "sha256": "ae9cadf74df0043254a1fe644f82ff3ce89f546af9dd35da0341e3e9142fe425"
+    },
+    {
+      "path": "player-entry-settings.js",
+      "bytes": 9012,
+      "sha256": "1a0dad61b34b8af15f964cca7188093bf48b0fbdacbb802c91807eeeff67ed17"
+    },
+    {
+      "path": "player-home-opening.css",
+      "bytes": 2934,
+      "sha256": "d465beecdccb6a591f288c142699893c83b0540928ab443b5fd8c5b8e560419e"
+    },
+    {
+      "path": "player-home-opening.js",
+      "bytes": 4398,
+      "sha256": "0a538beee7261c982d4c49e433ab9843593c8781f6f72eb2a7d6be7b372ce0bc"
     },
     {
       "path": "player-icon-180.png",
@@ -1871,14 +1931,24 @@
       "sha256": "7340bda01d969b7c09da94a78f4f73e019021f8fc501468f80a2aef0b98aef0d"
     },
     {
+      "path": "player-layout.js",
+      "bytes": 9545,
+      "sha256": "c387b8f60e8ec5141e38a54d4ffeb6a3a8a1899b93e868475cf94915774d0d0b"
+    },
+    {
       "path": "player-release-context.json",
-      "bytes": 7447,
-      "sha256": "3b5871ca87a7b998a52a759cdeb11f34ffef992491c2e8f866d6dbdd452523ba"
+      "bytes": 9971,
+      "sha256": "c1ee1532aedd42d505a51b9d8afa2a6d622862da795110b467b38aa35b0b5844"
     },
     {
       "path": "player-report.js",
       "bytes": 13714,
       "sha256": "bdb6218b4c1572e2fb183168c4e7e28f0d9c03a8a2dddedf1c5979f51e204034"
+    },
+    {
+      "path": "player-save-readiness.js",
+      "bytes": 1531,
+      "sha256": "d343085778cdaf989aa025229a42c18db4bf0b5239fb9a9afd4c713515c4571c"
     },
     {
       "path": "player-save.js",
@@ -1897,13 +1967,13 @@
     },
     {
       "path": "player-scene-view.css",
-      "bytes": 4198,
-      "sha256": "d9def212abc670db230f5343709085db8f132b0cc50405fd9023b945bac36d62"
+      "bytes": 28093,
+      "sha256": "61811bd23665d7aaa7471895b559d59646510ac61438141d2583a63b16371ccc"
     },
     {
       "path": "player-scene-view.js",
-      "bytes": 35583,
-      "sha256": "3b04819912726950080a6105b01b3635ff9e01b64b25c473c778b71696d2382a"
+      "bytes": 43555,
+      "sha256": "73d75d9a00264b75202fb5d7c6438f96f0e1e618f5a1fef3f7640553e592fa65"
     },
     {
       "path": "player-service-worker.js",
@@ -1916,9 +1986,14 @@
       "sha256": "4a2ef11c57b0caf82c1955054a3c006316634c6eae0eaea7a2dc0385c36643ac"
     },
     {
+      "path": "player-voice-packs.js",
+      "bytes": 10869,
+      "sha256": "0fe4f365da8f5d654d3ac32bbf6b05a1ea266bdbd9a94f680e3cb86343b97b74"
+    },
+    {
       "path": "player.webmanifest",
-      "bytes": 694,
-      "sha256": "5cad409459c56d93fd911ac7d5a97ee5942d42392ba6b7e8b5a260f20228f06d"
+      "bytes": 723,
+      "sha256": "e29c06b995e44483cd0da61818a5224aad6aaec0963daa976416abe872f5ef83"
     },
     {
       "path": "portraits/00ea02ee2c04135de57a.webp",
@@ -3558,10 +3633,11 @@
     "T02首次合計20分鐘、跨日、初值與耗損啟動未定；本批不套全局時鐘或睡眠效果。短片未提供，只提供來源明列的主動略過。",
     "既有制式系統文案／角色口吻待B03精修，互動驗收不等同文案品質通過。",
     "本版新增獨立可安裝PWA短段試玩，不等於完整遊戲、原生APK／IPA或正式資源平衡。",
-    "核准美術已整合；聲音尚未主觀驗收，正式資產清單不含未核准音檔，介面使用文字提示。",
+    "已核准美術及四段技術檢查通過的阿猴候選WAV已接入。三個語音包可於設定試聽、儲存及本機確認；全域主觀聲音驗收仍未完成。",
     "桌機與觸控視窗及隔離Chrome實際安裝／離線重開已驗收，未冒稱實體iOS／Android裝機。",
     "設定回報只在明確送出時傳送；後端PR5222及正式儲存同ID讀回尚待完成，不冒稱已可供研究使用。",
-    "更新改用使用者確認、完整存檔後關閉作品的全部視窗再開啟；不再熱切換或強制重新載入。"
+    "更新改用使用者確認、完整存檔後關閉作品的全部視窗再開啟；不再熱切換或強制重新載入。",
+    "完整劇情節點尚未全部接成可玩流程；T17線索影片未完成、等價替代未定，不可略過即通關。"
   ],
   "b03Voice": {
     "changedLineCount": 112,
@@ -3635,7 +3711,7 @@
     ],
     "voiceRanks": "R1 Hou; R2-R5 Lin",
     "relationshipState": "not-connected-no-inferred-affinity",
-    "audioAvailable": false,
+    "audioAvailable": true,
     "playerSceneIntegrated": true,
     "configurationStatus": "adjustable-interface-proposal-not-game-balance",
     "formalStateMutation": false,
@@ -3644,12 +3720,13 @@
       "MG-P05",
       "MG-P06"
     ],
-    "extensionPoint": "FraudCoachModel.createController; source-specific read/describe/surface bindings required"
+    "extensionPoint": "FraudCoachModel.createController; source-specific read/describe/surface bindings required",
+    "audioStatus": "candidate-user-selectable-not-global-subjective-approval"
   },
   "playerSlice": {
     "entry": "play.html",
     "runtimeContext": "player-release-context.json",
-    "runtimeContentHash": "50a12fdba5f00e6d3231e1779abfc84ce364866ac0e81f70b4392a40c159486a",
+    "runtimeContentHash": "95eb799197f6b8d9817e8bddb60a948c7bf074a125b0fde77f3b28b8f77d8841",
     "saveContract": "slice-v1-008a59aaddafa283713309e170077d18f6acefc93949826365f11e31928df96d",
     "approvedArt": "UX02-layer-art-v3-20261016",
     "scene": "M02",
@@ -3663,8 +3740,8 @@
     "sourceClockPaused": true,
     "exactSourceResultCount": 1,
     "awardedReward": 0,
-    "standaloneChromeInstallValidated": true,
-    "offlineCoreValidated": true,
+    "standaloneChromeInstallValidated": false,
+    "offlineCoreValidated": false,
     "updatePolicy": "explicit-prepare-save-close-all-work-windows-and-reopen;no-forced-activation-or-live-reload",
     "physicalMobileValidated": false,
     "acceptedAudioCount": 0,
@@ -3712,6 +3789,41 @@
       "loading",
       "savedScope"
     ],
-    "preservedP02StoryLanguage": "zh-TW"
+    "preservedP02StoryLanguage": "zh-TW",
+    "candidateAudioCount": 4,
+    "voicePackCount": 3,
+    "defaultVoicePack": "hou-reminders",
+    "voiceSelectionLocalConfirmation": true,
+    "voicePreferenceKey": "aihank.fraud-empire.voice-prefs.v1",
+    "managedSimulatorValidated": false,
+    "phoneUISimilarityValidated": false,
+    "homeOpening": {
+      "golden": "HOME-opening-v3",
+      "goldenHash": "ac7a3c7f57e3224d986d746549b881dc92be0ed5a75b1c01ff8aeb095a7437c0",
+      "scope": "Explicit development preview of W01 home only; no title/new-game journey implemented",
+      "preview": "play.html?preview=home-opening-v3",
+      "separateNativeUI": true,
+      "sourceCommits": 0,
+      "storageWrites": 0,
+      "adClick": "source intent only; follow-on pending approved source and golden",
+      "withdrawnEntryAssetsNotUsed": true,
+      "firstLaunchEntryComplete": false,
+      "newGameComplete": false
+    },
+    "entryOpening": {
+      "background": "player-assets/ENTRY-ensemble-base-v1-candidate.png",
+      "home": "player-assets/HOME-opening-v3.png",
+      "noSaveDefault": "Start opens the limited W01 HOME scene without creating world progress",
+      "existingSaveDefault": "Validate and explicitly continue the existing world and P02 snapshot",
+      "settingsConnected": true,
+      "overwriteConnected": true,
+      "overwritePolicy": "Prepare HOME, recheck unchanged raw save, replace only the legacy slice key after explicit confirmation",
+      "sourceCommits": 0,
+      "newGameComplete": false,
+      "minimumControlHeight": 48,
+      "minimumGap": 12,
+      "fullArtLayerSeparation": false,
+      "scope": "finite entry, compatible local save, confirmation and general settings; no full mainline claim"
+    }
   }
 }

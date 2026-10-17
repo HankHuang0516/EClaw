@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "version": "v4.11-player-demo-20261017-r3",
-  "contentHash": "50a12fdba5f00e6d3231e1779abfc84ce364866ac0e81f70b4392a40c159486a",
+  "version": "v4.12-phone-voice-candidates-20261017-r1",
+  "contentHash": "95eb799197f6b8d9817e8bddb60a948c7bf074a125b0fde77f3b28b8f77d8841",
   "hashScope": "exact-player-runtime-assets-excluding-this-context-and-worker-bootstrap",
   "assets": [
     {
@@ -36,13 +36,23 @@
     },
     {
       "path": "play.html",
-      "bytes": 2770,
-      "sha256": "3a50dd01084d31a91b57449ad31f75b245aa2c64d927da8d298e9e0a02e226aa"
+      "bytes": 3286,
+      "sha256": "2419660b2c3c143a7a94fdc6fb559cf956c249379366db6d55264591a74d11ed"
     },
     {
       "path": "player-assets-registry.js",
       "bytes": 3074,
       "sha256": "c7cd58a48c5a9ac0aa311d488acaa72faadcb708dfdb7f1ed038ff4c1b7fa5cd"
+    },
+    {
+      "path": "player-assets/ENTRY-ensemble-base-v1-candidate.png",
+      "bytes": 2497466,
+      "sha256": "b9493cdaf4fba59509bb4d181e76fe90a148c5d4f642ecaade767563f4bf214a"
+    },
+    {
+      "path": "player-assets/HOME-opening-v3.png",
+      "bytes": 2225492,
+      "sha256": "ac7a3c7f57e3224d986d746549b881dc92be0ed5a75b1c01ff8aeb095a7437c0"
     },
     {
       "path": "player-assets/player-back-native.png",
@@ -96,13 +106,63 @@
     },
     {
       "path": "player-audio.js",
-      "bytes": 3904,
-      "sha256": "e5bd2fffa5882e2b69e0dfbf2ca75801daabe4cf7e98d2088b1776aef66653ce"
+      "bytes": 4603,
+      "sha256": "16d8a8d9a24ec68763332b86289582e84519ff7536755469ef1c43f23508e3e3"
+    },
+    {
+      "path": "player-audio/ahou-demo-check-01-979a4b171c13.wav",
+      "bytes": 33164,
+      "sha256": "979a4b171c13267cd505d834af6ff343eb5de8c0b40d5d8054a7527d8623ac79"
+    },
+    {
+      "path": "player-audio/ahou-demo-turn-01-96f02d070322.wav",
+      "bytes": 27404,
+      "sha256": "96f02d070322b1b010a8cf2a9cd29c678c05f29885537c88ca7b139613231a2a"
+    },
+    {
+      "path": "player-audio/ahou-eh-two-A-aa1f0ca47221.wav",
+      "bytes": 34124,
+      "sha256": "aa1f0ca472219de2ffe1a605081e56f2dbb023eabdd65a5fddbecd172e3f02b8"
+    },
+    {
+      "path": "player-audio/ahou-eh-two-B-trimmed-404d1da5f474.wav",
+      "bytes": 45644,
+      "sha256": "404d1da5f47456afda651df515d47ddf35ce2458a7c6f4d81b2a9b06b310d6be"
     },
     {
       "path": "player-bootstrap.js",
-      "bytes": 10427,
-      "sha256": "75ce4ebf63efbc938e02849b646fd878f41ea69aa37c3ecfef057cfc21c86816"
+      "bytes": 15157,
+      "sha256": "7c728cdfba46cab5610d18a6a70d2c804069e18201894e462c7596e952618a5a"
+    },
+    {
+      "path": "player-entry-opening.css",
+      "bytes": 6610,
+      "sha256": "479ca371e76899744bdfe0c67470b2cf4f9e2e8c8ef0cedcefc70b4644cf614c"
+    },
+    {
+      "path": "player-entry-opening.js",
+      "bytes": 14789,
+      "sha256": "116483337b129ecab4e6bb8fa69238a2d6324b0a75ebfd54cb3f544e5794a3d5"
+    },
+    {
+      "path": "player-entry-settings.css",
+      "bytes": 3721,
+      "sha256": "ae9cadf74df0043254a1fe644f82ff3ce89f546af9dd35da0341e3e9142fe425"
+    },
+    {
+      "path": "player-entry-settings.js",
+      "bytes": 9012,
+      "sha256": "1a0dad61b34b8af15f964cca7188093bf48b0fbdacbb802c91807eeeff67ed17"
+    },
+    {
+      "path": "player-home-opening.css",
+      "bytes": 2934,
+      "sha256": "d465beecdccb6a591f288c142699893c83b0540928ab443b5fd8c5b8e560419e"
+    },
+    {
+      "path": "player-home-opening.js",
+      "bytes": 4398,
+      "sha256": "0a538beee7261c982d4c49e433ab9843593c8781f6f72eb2a7d6be7b372ce0bc"
     },
     {
       "path": "player-icon-180.png",
@@ -125,9 +185,19 @@
       "sha256": "7340bda01d969b7c09da94a78f4f73e019021f8fc501468f80a2aef0b98aef0d"
     },
     {
+      "path": "player-layout.js",
+      "bytes": 9545,
+      "sha256": "c387b8f60e8ec5141e38a54d4ffeb6a3a8a1899b93e868475cf94915774d0d0b"
+    },
+    {
       "path": "player-report.js",
       "bytes": 13714,
       "sha256": "bdb6218b4c1572e2fb183168c4e7e28f0d9c03a8a2dddedf1c5979f51e204034"
+    },
+    {
+      "path": "player-save-readiness.js",
+      "bytes": 1531,
+      "sha256": "d343085778cdaf989aa025229a42c18db4bf0b5239fb9a9afd4c713515c4571c"
     },
     {
       "path": "player-save.js",
@@ -146,13 +216,13 @@
     },
     {
       "path": "player-scene-view.css",
-      "bytes": 4198,
-      "sha256": "d9def212abc670db230f5343709085db8f132b0cc50405fd9023b945bac36d62"
+      "bytes": 28093,
+      "sha256": "61811bd23665d7aaa7471895b559d59646510ac61438141d2583a63b16371ccc"
     },
     {
       "path": "player-scene-view.js",
-      "bytes": 35583,
-      "sha256": "3b04819912726950080a6105b01b3635ff9e01b64b25c473c778b71696d2382a"
+      "bytes": 43555,
+      "sha256": "73d75d9a00264b75202fb5d7c6438f96f0e1e618f5a1fef3f7640553e592fa65"
     },
     {
       "path": "player-updates.js",
@@ -160,9 +230,14 @@
       "sha256": "4a2ef11c57b0caf82c1955054a3c006316634c6eae0eaea7a2dc0385c36643ac"
     },
     {
+      "path": "player-voice-packs.js",
+      "bytes": 10869,
+      "sha256": "0fe4f365da8f5d654d3ac32bbf6b05a1ea266bdbd9a94f680e3cb86343b97b74"
+    },
+    {
       "path": "player.webmanifest",
-      "bytes": 694,
-      "sha256": "5cad409459c56d93fd911ac7d5a97ee5942d42392ba6b7e8b5a260f20228f06d"
+      "bytes": 723,
+      "sha256": "e29c06b995e44483cd0da61818a5224aad6aaec0963daa976416abe872f5ef83"
     },
     {
       "path": "proposal-demos/17727e3739a457a26aa6.png",
