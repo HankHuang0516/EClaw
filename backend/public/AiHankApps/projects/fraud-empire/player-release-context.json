@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "version": "v4.12-phone-voice-candidates-20261017-r1",
-  "contentHash": "95eb799197f6b8d9817e8bddb60a948c7bf074a125b0fde77f3b28b8f77d8841",
+  "version": "v4.13-player-reopen-20261017-r1",
+  "contentHash": "b5a3634ed7727f69e776833877a30c80da3b5062837b19677a28622d3ab826d3",
   "hashScope": "exact-player-runtime-assets-excluding-this-context-and-worker-bootstrap",
   "assets": [
     {
@@ -131,8 +131,8 @@
     },
     {
       "path": "player-bootstrap.js",
-      "bytes": 15157,
-      "sha256": "7c728cdfba46cab5610d18a6a70d2c804069e18201894e462c7596e952618a5a"
+      "bytes": 15227,
+      "sha256": "7cad1a8e0fc3ac948183b527346a1b5403e5d6b1a7c881381910585379cc68b7"
     },
     {
       "path": "player-entry-opening.css",
@@ -146,13 +146,13 @@
     },
     {
       "path": "player-entry-settings.css",
-      "bytes": 3721,
-      "sha256": "ae9cadf74df0043254a1fe644f82ff3ce89f546af9dd35da0341e3e9142fe425"
+      "bytes": 3934,
+      "sha256": "45e29fd8bbdb72ba66ca7e98400a456d640b81e2e2f086d94fcf2d9f3806159c"
     },
     {
       "path": "player-entry-settings.js",
-      "bytes": 9012,
-      "sha256": "1a0dad61b34b8af15f964cca7188093bf48b0fbdacbb802c91807eeeff67ed17"
+      "bytes": 9426,
+      "sha256": "5de12ea1daa414e7f9e523b8f3e16ba823780fecc48b9fe75ea3f757ed258e1d"
     },
     {
       "path": "player-home-opening.css",
@@ -191,8 +191,8 @@
     },
     {
       "path": "player-report.js",
-      "bytes": 13714,
-      "sha256": "bdb6218b4c1572e2fb183168c4e7e28f0d9c03a8a2dddedf1c5979f51e204034"
+      "bytes": 14010,
+      "sha256": "33239361342dad07912cbe8c0761f7d893dd54c95aab61d9fb7ccce95503eacc"
     },
     {
       "path": "player-save-readiness.js",
@@ -216,18 +216,18 @@
     },
     {
       "path": "player-scene-view.css",
-      "bytes": 28093,
-      "sha256": "61811bd23665d7aaa7471895b559d59646510ac61438141d2583a63b16371ccc"
+      "bytes": 28287,
+      "sha256": "2e11a4839fa8a35c7d40f6c5245ab806a9827a3a114d72947133c88066ef13db"
     },
     {
       "path": "player-scene-view.js",
-      "bytes": 43555,
-      "sha256": "73d75d9a00264b75202fb5d7c6438f96f0e1e618f5a1fef3f7640553e592fa65"
+      "bytes": 44090,
+      "sha256": "18e5e2b895ae6970c515ddd11089e430ed6182e1a4c77996c0ecca35b3ca05a0"
     },
     {
       "path": "player-updates.js",
-      "bytes": 2691,
-      "sha256": "4a2ef11c57b0caf82c1955054a3c006316634c6eae0eaea7a2dc0385c36643ac"
+      "bytes": 4385,
+      "sha256": "c775abe5f93e1edf80dfa40968408b93da70f204b88e66fc1bda84dcc9a37241"
     },
     {
       "path": "player-voice-packs.js",
