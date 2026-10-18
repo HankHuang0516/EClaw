@@ -1,5 +1,24 @@
 /* Same-build private world. Existing scene/P02 contracts; no formal save service. */
 (function(root){'use strict';const clone=v=>JSON.parse(JSON.stringify(v)),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b),own=(v,keys)=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).sort().join('|')===[...keys].sort().join('|');
+async function waitForWorldParticipant({window,frame,url,version,contentHash}){
+ const expected=new window.URL(url,window.location.href).href;
+ await new Promise((resolve,reject)=>{
+  let finished=false;
+  const finish=error=>{if(finished)return;finished=true;window.clearTimeout(timer);frame.removeEventListener('load',loaded);frame.removeEventListener('error',failed);if(error)reject(error);else resolve();};
+  const loaded=()=>{try{if(frame.contentWindow?.location.href!==expected)return;finish();}catch{finish(Error('private-world-participant-origin'));}};
+  const failed=()=>finish(Error('private-world-participant-document-load'));
+  const timer=window.setTimeout(()=>finish(Error('private-world-participant-document-timeout')),60000);
+  frame.addEventListener('load',loaded);frame.addEventListener('error',failed);frame.src=expected;
+ });
+ for(let attempt=0;attempt<240;attempt++){
+  const child=frame.contentWindow,failure=child?.document?.getElementById('playerLoading')?.dataset.failure;
+  if(failure)throw Error('private-world-participant-startup:'+String(failure).slice(0,120));
+  const participant=child?.FraudWorldParticipant;
+  if(participant){if(participant.identity?.version!==version||participant.identity?.contentHash!==contentHash)throw Error('private-world-participant-identity');return participant;}
+  await new Promise(resolve=>window.setTimeout(resolve,50));
+ }
+ throw Error('private-world-participant-not-ready');
+}
 async function create({window,document,fault=()=>{}}){
 const freezeDeep=v=>{if(v&&typeof v==='object'&&!Object.isFrozen(v)){Object.freeze(v);for(const x of Object.values(v))freezeDeep(x);}return v;};
 const root=document.getElementById('worldMount'),note=document.getElementById('playerLoading'),cfg=window.FraudPlayerAssets,images=new Map(),blobs=[];let surface='world',service=null,bridge=null,view=null,layout=null,disposed=false,suppress=true,autoTimer=null;
@@ -16,7 +35,7 @@ alpha(assets.foreground.image);for(const s of cfg.sprites){const direction=s.fil
 await window.FraudPlayerSaveReadiness.waitForSource({window,document});
 const scene=window.FraudPlayerScene.create({geometry:cfg.geometry,context:{rank:1,wisdom:10,mode:'靜態',day:3,time:'10:00',availableActors:['hou'],source:'approved-R1-player-slice-v1'},plan,eligibility:window.FraudWorkflowsModel.eligible,session:window.crypto.randomUUID()}),prototype=window.FraudPlayerSceneBridge.legacyPrototype({document,window}),game=window.FraudInteractiveDemo,tokens=new WeakSet();
 view=window.FraudPlayerSceneView.create({document,root,geometry:cfg.geometry,assets,gameHost:document.getElementById('gameHost'),language:'zh-TW',initialAudio:{muted:true,volume:0}});
-frame.src=new window.URL('play.html?private-participant=1',window.location.href).href;for(let i=0;i<240&&!frame.contentWindow?.FraudWorldParticipant;i++)await new Promise(r=>window.setTimeout(r,50));const participant=frame.contentWindow?.FraudWorldParticipant;if(!participant||participant.identity.version!==context.version||participant.identity.contentHash!==context.contentHash)throw Error('private-world-participant-identity');
+const participant=await waitForWorldParticipant({window,frame,url:'play.html?private-participant=1',version:context.version,contentHash:context.contentHash});
 const identity={outerVersion:context.version,outerRuntimeHash:context.contentHash,innerVersion:participant.identity.version,innerRuntimeHash:participant.identity.contentHash,planHash:await sha(planBytes),geometryKey:scene.getSnapshot().geometryKey,sliceContract:'slice-v1-008a59aaddafa283713309e170077d18f6acefc93949826365f11e31928df96d'};
 function dirty(){if(suppress||disposed||service?.getStatus().busy||service?.getStatus().held)return;window.clearTimeout(autoTimer);autoTimer=window.setTimeout(()=>{autoTimer=null;void service.saveCanonical();},220);}
 function display(){const privateView=surface!=='world';root.hidden=privateView;root.inert=privateView||Boolean(service?.getStatus().held);frame.hidden=!privateView;bridge?.pause('menu',privateView);buttons.world.disabled=Boolean(service?.getStatus().busy||service?.getStatus().held);if(!privateView)bridge?.refresh();}

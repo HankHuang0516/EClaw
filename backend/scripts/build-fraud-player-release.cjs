@@ -13,6 +13,9 @@ const entry=read('player-entry-link.js').toString('utf8'),releasePattern=/\brele
 if((entry.match(releasePattern)||[]).length!==1)throw Error('One entry release identity required');
 put('player-entry-link.js',entry.replace(releasePattern,"release='"+version+"'"));
 put('index.html',read('index.html').toString('utf8').replace(/player-entry-link\.js\?v=[^"']+/g,'player-entry-link.js?v='+version));
+let startupSources=0;
+put('play.html',read('play.html').toString('utf8').replace(/\bsrc=(["'])(player-bootstrap\.js|player-private-world-session\.js)(?:\?v=[^"']*)?\1/g,(_,quote,name)=>{startupSources++;return 'src='+quote+name+'?v='+version+quote;}));
+if(startupSources!==2)throw Error('Two version-bound startup scripts required');
 const extras=release.playerSlice?.additionalRuntimeAssets||[];
 if(!Array.isArray(extras)||extras.some(p=>typeof p!=='string'||p.startsWith('/')||p.includes('..')))throw Error('Unsafe runtime asset path');
 const paths=[...new Set([...context.assets.map(a=>a.path),...extras])];
