@@ -1,0 +1,8 @@
+.t01-module { color:#f3e7cf; background:#252820; font:16px/1.6 system-ui,sans-serif; padding:16px; max-width:700px; margin:auto; }
+.t01-module button { font:inherit; min-height:44px; padding:8px 12px; margin:4px; border:1px solid #b8a87f; border-radius:6px; background:#414738; color:#fff5df; cursor:pointer; }
+.t01-module button:disabled { opacity:.5; cursor:default; }
+.t01-module button:focus-visible { outline:3px solid #f7cc6a; outline-offset:2px; }
+.t01-module button[aria-pressed="true"] { background:#765d27; }
+.t01-module .t01-job { border-bottom:1px solid #847c62; padding:8px 0; }
+.t01-module img { display:block; width:100%; height:auto; }
+.t01-module [role="status"] { min-height:3em; color:#ffe1a4; }

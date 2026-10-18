@@ -1,0 +1,25 @@
+#camp-interaction{scroll-margin-top:145px;margin-top:70px;border-top:1px solid #bbc5ad;padding-top:42px}
+.camp-toolbar{display:flex;align-items:end;gap:18px;flex-wrap:wrap;margin:20px 0}
+.camp-toolbar label{display:grid;gap:8px;flex:1 1 260px}
+.camp-toolbar select{min-height:48px;width:100%;font:inherit;color:#243d31;background:#fffcf3;border:1px solid #a5af94;border-radius:9px;padding:10px}
+.camp-toolbar select:focus-visible{outline:3px solid #5c7051;outline-offset:3px}
+.camp-position{background:#e7eddf;border:1px solid #a3b393;border-radius:12px;padding:16px;line-height:1.8}
+.camp-position strong{display:block}
+.camp-nodes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:18px 0}
+.camp-nodes button{min-height:54px!important;text-align:center!important;overflow-wrap:anywhere}
+.camp-nodes button[aria-current=location]{background:#dce6d1!important;border-color:#516e46!important;font-weight:700}
+.camp-path{padding:14px;background:#f0f0e4;border-radius:9px;line-height:1.8;overflow-wrap:anywhere}
+.camp-hotspots{list-style:none;padding:0;display:grid;gap:12px}
+.camp-hotspots>li{border-top:1px solid #d3d5c4;padding-top:12px}
+.camp-hotspots .pi-controls{margin:10px 0}
+.camp-detail{border:1px solid #a3b393;background:#f2f4e9;border-radius:12px;padding:18px;margin-top:16px;scroll-margin-top:150px}
+.camp-detail h4{margin-top:0}
+.camp-detail details{margin:12px 0}
+.camp-detail summary{cursor:pointer;line-height:1.8}
+.camp-detail pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.8}
+.camp-journal{max-height:310px;overflow:auto;line-height:1.8;padding-left:24px}
+.camp-warning{color:#805e36;border-left:3px solid #ac956a;padding:10px 15px;line-height:1.8}
+@media(max-width:760px){.camp-nodes{grid-template-columns:repeat(2,minmax(0,1fr))}.camp-toolbar{display:block}.camp-detail{padding:14px}}
+
+.camp-shortcuts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:14px 0 24px}
+@media(max-width:760px){.camp-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}}

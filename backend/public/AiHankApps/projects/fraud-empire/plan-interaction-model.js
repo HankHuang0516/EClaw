@@ -115,7 +115,39 @@
     }
     return hold('這個操作不屬於目前段落，狀態未變。');
   }
-  const api = { validateData, createState, canContinue, transition, snapshot: copy };
+
+  const checkpointKeys = ['schemaVersion','kind','moduleId','owner','sourceVersion','sourceHash','commands','pending','snapshot'];
+  const checkpointActions = new Set(['walk-inside','room-view','room-response','bag-pick','bag-place','npc-approach','npc-response','exit-open','exit-return','exit-skip','memory-toggle','memory-save','continue','settle','review-start','review-previous','review-next','review-exit','reset']);
+  const exactKeys = (value, keys) => value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).sort().join('|') === [...keys].sort().join('|');
+  const stable = value => Array.isArray(value) ? value.map(stable) : value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map(key => [key,stable(value[key])])) : value;
+  const equal = (a,b) => JSON.stringify(stable(a)) === JSON.stringify(stable(b));
+  function freezeCheckpoint(value) {
+    if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+      Object.freeze(value); for (const child of Object.values(value)) freezeCheckpoint(child);
+    }
+    return value;
+  }
+  function createCheckpoint(commands, pending, data, owner) {
+    if (!validateData(data) || typeof data.version !== 'string' || !/^[a-f0-9]{64}$/.test(data.source?.contentHash || '') || typeof owner !== 'string' || !owner || owner.length > 200 || !Array.isArray(commands) || commands.length > 500 || JSON.stringify(commands).length > 150000) throw Error('invalid-private-prologue-input');
+    let replayed = createState();
+    for (const command of commands) {
+      if (!exactKeys(command,['type','value','step']) || !checkpointActions.has(command.type) || typeof command.value !== 'string' || command.value.length > 80 || !Number.isSafeInteger(command.step) || command.step < 0 || command.step > 7) throw Error('invalid-private-prologue-command');
+      const out = transition(replayed,command,data);
+      if (!out.changed) throw Error('incompatible-private-prologue-command');
+      replayed = out.state;
+    }
+    if (pending !== null && !['T02-S01','T02-S05'].includes(pending)) throw Error('invalid-private-prologue-pending');
+    if (pending !== null && (replayed.complete || replayed.mode !== 'play' || pending === 'T02-S01' && (replayed.step !== 0 || replayed.location !== 'outside') || pending === 'T02-S05' && replayed.step !== 4)) throw Error('private-prologue-pending-owner');
+    return freezeCheckpoint({schemaVersion:1,kind:'private-prologue-checkpoint',moduleId:'T02',owner,sourceVersion:data.version,sourceHash:data.source.contentHash,commands:copy(commands),pending,snapshot:copy(replayed)});
+  }
+  function prepareCheckpoint(value,data,owner) {
+    if (!exactKeys(value,checkpointKeys) || value.schemaVersion !== 1 || value.kind !== 'private-prologue-checkpoint' || value.moduleId !== 'T02' || value.owner !== owner || value.sourceVersion !== data.version || value.sourceHash !== data.source?.contentHash) throw Error('private-prologue-checkpoint-identity');
+    const checked = createCheckpoint(value.commands,value.pending,data,owner);
+    if (!equal(value.snapshot,checked.snapshot)) throw Error('private-prologue-checkpoint-state');
+    return checked;
+  }
+
+  const api = { validateData, createState, canContinue, transition, snapshot: copy, createCheckpoint, prepareCheckpoint };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) root.FraudPlanInteractionModel = Object.freeze(api);
 })(typeof window !== 'undefined' ? window : null);

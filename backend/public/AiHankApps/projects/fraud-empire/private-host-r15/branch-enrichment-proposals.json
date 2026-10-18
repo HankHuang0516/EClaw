@@ -1,0 +1,1725 @@
+{
+  "schema_version": "public_branch_enrichment.proposal.1.0",
+  "title": "人物支線故事增補提案",
+  "status": "待確認的故事文字提案，尚未成為正式劇情或可玩功能",
+  "scope": {
+    "existing_branches": 36,
+    "existing_romance_events": 8,
+    "character_arcs": 10,
+    "dialogue_lines": 111,
+    "optional_branch_proposals": 3
+  },
+  "classification_scope_note": "T02的16玩法＋1序章僅指舊版立即分類；新案17個真小遊戲另案規劃。本稿不替新案定遊戲數、機制或門檻。",
+  "introduction": "在既有支線中補上動機、鋪陳、選擇後反應與後續回扣。原觸發條件、時間、數值、道具、結局與排他規則維持不變。",
+  "reading_notes": [
+    "以下新增台詞、日常口味與往事細節都是待確認提案。",
+    "同一支線內的增補對話不額外收取時間或重複發獎；閱讀對話仍停表。",
+    "呈現條件只依已存在的故事狀態選擇台詞，不增加新解鎖門檻。",
+    "PBR三件新支線尚未加入正式事件；時間、獎勵、數值門檻均未定。",
+    "角色均為成年人，情境全屬虛構；不呈現可實際套用的犯罪步驟、露骨性行為或性化暴力。"
+  ],
+  "arcs": [
+    {
+      "id": "ARC-KAI",
+      "title": "阿凱的日常被記住",
+      "character_ids": [
+        "protagonist",
+        "kai",
+        "xiaoyu"
+      ],
+      "event_ids": [
+        "BR01",
+        "BR02",
+        "BR21",
+        "BR22"
+      ],
+      "motivation": "讓玩家先認識阿凱對普通生活的期待，再面對他的缺席；避免只把他寫成推動主角逃離的工具。",
+      "buildup": [
+        "BR01由歪奶油蛋糕講到願望，保留不必說生日日期的空間。",
+        "BR21仍在時是尊重物主；缺席後是保留未完成的句子。兩版不重複發獎。",
+        "BR02承接空床；是否做過BR01只改一句回憶，不改kai_remembered或小雨好感。"
+      ],
+      "existing_choices": [
+        "BR01聽完／先休息沿原分支；先休息仍pending直到MS06關窗。",
+        "BR22收下或不想談合照沿原選項；拒絕不被寫成忘記阿凱。"
+      ],
+      "follow_through": [
+        "BR22不宣告阿凱死亡，不新增葬禮或救援保證。",
+        "原E_ESCAPE小雨有IT08版保留阿凱中間原位；沒有IT08仍原兩張普通車票。"
+      ],
+      "preserved_boundaries": [
+        "不確認死亡或新增去向。",
+        "不讓BR01成為BR02/22或逃離必備。",
+        "照片人物與左右位置沿既有一致性提案，不新增獎勵。"
+      ],
+      "status": "文字增補提案，待確認",
+      "scene_extensions": [
+        {
+          "event_id": "BR01",
+          "insertion_point": "buildup",
+          "presentation_condition": "原BR01條件成立，聽完分支；不先顯示kai_absent後內容",
+          "lines": [
+            {
+              "stable_id": "ENR-BR01-buildup-01",
+              "speaker_id": "kai",
+              "text": "以前家裡那個蛋糕，奶油總往一邊倒。每年都有人說明年一定抹平。"
+            },
+            {
+              "stable_id": "ENR-BR01-buildup-02",
+              "speaker_id": "protagonist",
+              "text": "後來有抹平嗎？"
+            },
+            {
+              "stable_id": "ENR-BR01-buildup-03",
+              "speaker_id": "kai",
+              "text": "沒有。我也沒真的在等那個。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR02",
+          "insertion_point": "remembered",
+          "presentation_condition": "kai_birthday_known已存在時，替代一般紀念句",
+          "lines": [
+            {
+              "stable_id": "ENR-BR02-remembered-01",
+              "speaker_id": "protagonist",
+              "text": "他說想再吃一次奶油歪掉的蛋糕。"
+            },
+            {
+              "stable_id": "ENR-BR02-remembered-02",
+              "speaker_id": "xiaoyu",
+              "text": "那就把這句也記住。別替他把話說完。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR02",
+          "insertion_point": "unknown",
+          "presentation_condition": "kai_birthday_known不存在時；與remembered二選一",
+          "lines": [
+            {
+              "stable_id": "ENR-BR02-unknown-01",
+              "speaker_id": "protagonist",
+              "text": "我還有好多事沒來得及問他。"
+            },
+            {
+              "stable_id": "ENR-BR02-unknown-02",
+              "speaker_id": "xiaoyu",
+              "text": "不知道的先留著。記得他的名字，也已經是一件事。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR22",
+          "insertion_point": "follow",
+          "presentation_condition": "原BR22合照互動，不增加照片內容",
+          "lines": [
+            {
+              "stable_id": "ENR-BR22-follow-01",
+              "speaker_id": "xiaoyu",
+              "text": "以前看這張，我只嫌大家擠得太近。"
+            },
+            {
+              "stable_id": "ENR-BR22-follow-02",
+              "speaker_id": "protagonist",
+              "text": "現在不用把空的地方補上。"
+            },
+            {
+              "stable_id": "ENR-BR22-follow-03",
+              "speaker_id": "xiaoyu",
+              "text": "嗯。也不用今天就想好，看著它該有什麼感覺。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ARC-TANG",
+      "title": "唐澄從代號到自主幫助者",
+      "character_ids": [
+        "protagonist",
+        "tang",
+        "zhou"
+      ],
+      "event_ids": [
+        "BR03",
+        "BR04",
+        "BR05",
+        "BR06",
+        "BR29"
+      ],
+      "motivation": "唐澄觀察到主角能承認不知道、尊重沉默；援助源自具體相處，不是消費會員等級換來的獎品。",
+      "buildup": [
+        "BR03在同場重顯已引用的鐘塔照片與原敘述，避免沒有可讀線索就要求玩家記憶。這是補足既有重讀，不造照片來源新章。",
+        "BR04讓主角承認資料矛盾；BR05用等待停頓建立她可拒答的空間。",
+        "BR06自願署名只完成身分片段；BR29可逐日維持已做主題的關心，不自動補成其他主題完成。"
+      ],
+      "existing_choices": [
+        "錯答可重讀，不以討好語句換數值。",
+        "BR06保留不公開更多私事；未定獎勵不擅配。",
+        "MS09稍後決定保持可回來；老周借電話不新增F_zhou門檻。"
+      ],
+      "follow_through": [
+        "BR29依已存在member_seen/member_honesty/member_boundaries顯示一段回應；多個旗標只選一段，不三次加好感。",
+        "MS09清楚承認幫助的範圍與不確定性，不承諾每人一定安全、不說現實聯絡方式。"
+      ],
+      "preserved_boundaries": [
+        "唐澄非戀愛、非收益角色。",
+        "MS09仍只要原條件，不新增I01或四主題全完成要求。",
+        "不新增援助管道、詐騙話術或現實可用資訊。"
+      ],
+      "status": "文字增補提案，待確認",
+      "scene_extensions": [
+        {
+          "event_id": "BR03",
+          "insertion_point": "photo",
+          "presentation_condition": "玩家選重讀時；同段原照片說明停表",
+          "lines": [
+            {
+              "stable_id": "ENR-BR03-photo-01",
+              "speaker_id": "tang",
+              "text": "我說的是鐘塔旁那片海。不是要你猜我的答案，照片和原話都還在。"
+            },
+            {
+              "stable_id": "ENR-BR03-photo-02",
+              "speaker_id": "protagonist",
+              "text": "我重新看一次。想不起來，就先說想不起來。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR04",
+          "insertion_point": "honesty",
+          "presentation_condition": "原誠實選項",
+          "lines": [
+            {
+              "stable_id": "ENR-BR04-honesty-01",
+              "speaker_id": "protagonist",
+              "text": "我剛才差點想替這個矛盾找個順耳的解釋。"
+            },
+            {
+              "stable_id": "ENR-BR04-honesty-02",
+              "speaker_id": "tang",
+              "text": "不用。讓它留在那裡，我們才知道還有什麼沒弄清楚。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR29",
+          "insertion_point": "seen",
+          "presentation_condition": "member_seen既有旗標存在，選作本次唯一回應",
+          "lines": [
+            {
+              "stable_id": "ENR-BR29-seen-01",
+              "speaker_id": "protagonist",
+              "text": "上次那張海邊照片，我還記得。今天不想談，也可以只打個招呼。"
+            },
+            {
+              "stable_id": "ENR-BR29-seen-02",
+              "speaker_id": "tang",
+              "text": "那今天就打個招呼。你那邊還好嗎？"
+            }
+          ]
+        },
+        {
+          "event_id": "BR29",
+          "insertion_point": "honest",
+          "presentation_condition": "member_honesty既有旗標存在，與其他本次回應擇一",
+          "lines": [
+            {
+              "stable_id": "ENR-BR29-honest-01",
+              "speaker_id": "tang",
+              "text": "那個不確定的地方，後來有弄清楚嗎？"
+            },
+            {
+              "stable_id": "ENR-BR29-honest-02",
+              "speaker_id": "protagonist",
+              "text": "還沒有。我先不把空白寫成答案。"
+            },
+            {
+              "stable_id": "ENR-BR29-honest-03",
+              "speaker_id": "tang",
+              "text": "好。等真的知道了，再說。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR29",
+          "insertion_point": "boundary",
+          "presentation_condition": "member_boundaries既有旗標存在，與其他本次回應擇一",
+          "lines": [
+            {
+              "stable_id": "ENR-BR29-boundary-01",
+              "speaker_id": "protagonist",
+              "text": "今天不用補上次沒回完的話。"
+            },
+            {
+              "stable_id": "ENR-BR29-boundary-02",
+              "speaker_id": "tang",
+              "text": "謝謝。被允許停一下，我反而比較知道想說什麼。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ARC-LIN",
+      "title": "若晴的信任與責任同時增加",
+      "character_ids": [
+        "protagonist",
+        "lin"
+      ],
+      "event_ids": [
+        "BR07",
+        "BR16",
+        "BR23",
+        "BR27",
+        "ROM05",
+        "ROM06",
+        "ROM07",
+        "ROM08"
+      ],
+      "motivation": "從冷淡的交班標準，到願意讓主角質疑自己的主管；她的親近建立在看見彼此判斷，仍不免除管理責任。",
+      "buildup": [
+        "MS04仍採R2冷淡挑剔；不把初期休息規則寫成突然體貼。",
+        "BR23以資料相合及缺口呈現R3能力信任；BR07交物不是暗示戀愛交換。",
+        "BR27於R4讓她說清楚哪些決定由自己做過，但不新增具體犯罪事實。"
+      ],
+      "existing_choices": [
+        "BR27聽完／指出仍須負責都是認真對話；未定收益映射仍待決。",
+        "ROM05可留在友情；ROM06僅權力關係結束後才重問的未來約定。",
+        "ROM07主角可坦承想留下，若晴的反對不被高好感抹掉。"
+      ],
+      "follow_through": [
+        "BR16在MS10前只談資料符號，避免預知已約定日期。",
+        "R5朋友式日常可互虧，但MS07、BR27、老闆告別保持嚴肅。",
+        "ROM08安全後自述責任，主角不替她清白背書。"
+      ],
+      "preserved_boundaries": [
+        "R1阿猴、R2+若晴不變；不以F_lin門檻替代職階語氣。",
+        "友情、諒解、原諒、戀愛、同行分開。",
+        "BR34若晴親密不可播放，不藉此補寫解禁。"
+      ],
+      "status": "文字增補提案，待確認",
+      "scene_extensions": [
+        {
+          "event_id": "BR23",
+          "insertion_point": "trust",
+          "presentation_condition": "原BR23核對選項完成對照時",
+          "lines": [
+            {
+              "stable_id": "ENR-BR23-trust-01",
+              "speaker_id": "lin",
+              "text": "這一行先空著。你剛才沒有替它補答案，我看見了。"
+            },
+            {
+              "stable_id": "ENR-BR23-trust-02",
+              "speaker_id": "protagonist",
+              "text": "不是不知道就可以假裝沒看到。"
+            },
+            {
+              "stable_id": "ENR-BR23-trust-03",
+              "speaker_id": "lin",
+              "text": "對。這次讓你先說，你覺得哪裡還對不上？"
+            }
+          ]
+        },
+        {
+          "event_id": "BR07",
+          "insertion_point": "handoff",
+          "presentation_condition": "原BR07取得結果；不新增情感條件",
+          "lines": [
+            {
+              "stable_id": "ENR-BR07-handoff-01",
+              "speaker_id": "protagonist",
+              "text": "交給我之前，還有什麼是我該知道的？"
+            },
+            {
+              "stable_id": "ENR-BR07-handoff-02",
+              "speaker_id": "lin",
+              "text": "它只開那道藍門。別因為拿到了，就以為後面的事都有人替你處理。"
+            },
+            {
+              "stable_id": "ENR-BR07-handoff-03",
+              "speaker_id": "protagonist",
+              "text": "我知道。謝謝你把能做的和不能做的都說清楚。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR27",
+          "insertion_point": "responsibility",
+          "presentation_condition": "原聽完或指出責任兩分支前共用，沿原門檻",
+          "lines": [
+            {
+              "stable_id": "ENR-BR27-responsibility-01",
+              "speaker_id": "lin",
+              "text": "一開始，我把每一次沒改成的事，都算在位置不夠高上。"
+            },
+            {
+              "stable_id": "ENR-BR27-responsibility-02",
+              "speaker_id": "protagonist",
+              "text": "那已經由你決定的部分呢？"
+            },
+            {
+              "stable_id": "ENR-BR27-responsibility-03",
+              "speaker_id": "lin",
+              "text": "那部分不能再用位置解釋。我會把自己做過的也留下。"
+            }
+          ]
+        },
+        {
+          "event_id": "ROM05",
+          "insertion_point": "friendship",
+          "presentation_condition": "只在既有友情結果顯示",
+          "lines": [
+            {
+              "stable_id": "ENR-ROM05-friendship-01",
+              "speaker_id": "protagonist",
+              "text": "我希望有一天，我反對你時不用先猜明天會接到什麼工作。"
+            },
+            {
+              "stable_id": "ENR-ROM05-friendship-02",
+              "speaker_id": "lin",
+              "text": "你現在就可以反對。至於我有沒有做到讓你安心，要看我後面怎麼做。"
+            }
+          ]
+        },
+        {
+          "event_id": "ROM07",
+          "insertion_point": "boundary",
+          "presentation_condition": "原接受提醒分支",
+          "lines": [
+            {
+              "stable_id": "ENR-ROM07-boundary-01",
+              "speaker_id": "protagonist",
+              "text": "你像朋友一樣跟我說話，也不會替我把這個選擇說得輕一點。"
+            },
+            {
+              "stable_id": "ENR-ROM07-boundary-02",
+              "speaker_id": "lin",
+              "text": "朋友才要把這句說完整。你接下去，我不會陪你經營。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ARC-ZHOU",
+      "title": "老周從書店往事走到具體陪伴",
+      "character_ids": [
+        "protagonist",
+        "zhou",
+        "biao"
+      ],
+      "event_ids": [
+        "BR09",
+        "BR15",
+        "BR19",
+        "BR35",
+        "BR36"
+      ],
+      "motivation": "老周不只說道理；他會把資料留在手邊、承認沒把握，並在對方不願解釋時仍陪著。",
+      "buildup": [
+        "BR15先說書店一件普通小事，讓角色不只承擔安慰功能。",
+        "BR19區分檢視經歷與自責，不提供假徵才方法。",
+        "BR09讓主角先說圖板哪裡看不懂，老周只回應眼前抽象規則。"
+      ],
+      "existing_choices": [
+        "BR35安靜、說明、請陪同沿原三選項；沒有老周在場的額外硬門檻。",
+        "BR36先承認、退實際可退、記餘額是同一流程，不能變三次好感獎。"
+      ],
+      "follow_through": [
+        "MS09借手機沿原無條件援助資格，沒有「先聽書店故事」前置。",
+        "BR36償清後老周可說帳目結束不代表所有人已原諒，避免還款換免責。"
+      ],
+      "preserved_boundaries": [
+        "書店屬已知背景；本稿新增細節為待確認文學提案，非新玩法。",
+        "不新增療效、診斷或真實金融建議。",
+        "求助不需高好感，不取消既有債務。"
+      ],
+      "status": "文字增補提案，待確認",
+      "scene_extensions": [
+        {
+          "event_id": "BR15",
+          "insertion_point": "shop",
+          "presentation_condition": "原書店對話",
+          "lines": [
+            {
+              "stable_id": "ENR-BR15-shop-01",
+              "speaker_id": "protagonist",
+              "text": "店裡最常發生什麼事？"
+            },
+            {
+              "stable_id": "ENR-BR15-shop-02",
+              "speaker_id": "zhou",
+              "text": "有人進來說只躲一下雨，最後坐到雨停很久。"
+            },
+            {
+              "stable_id": "ENR-BR15-shop-03",
+              "speaker_id": "protagonist",
+              "text": "你會催嗎？"
+            },
+            {
+              "stable_id": "ENR-BR15-shop-04",
+              "speaker_id": "zhou",
+              "text": "有時候想關店，會。沒有每次都那麼好脾氣。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR19",
+          "insertion_point": "blame",
+          "presentation_condition": "原理解受困經歷分支",
+          "lines": [
+            {
+              "stable_id": "ENR-BR19-blame-01",
+              "speaker_id": "protagonist",
+              "text": "我一直把那封信倒回去看，好像多看一次，就能把那天改掉。"
+            },
+            {
+              "stable_id": "ENR-BR19-blame-02",
+              "speaker_id": "zhou",
+              "text": "看清經過可以。別把重看變成又審自己一次。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR35",
+          "insertion_point": "quiet",
+          "presentation_condition": "原先安靜休息選項，不增加回復",
+          "lines": [
+            {
+              "stable_id": "ENR-BR35-quiet-01",
+              "speaker_id": "protagonist",
+              "text": "先不要問我怎麼弄成這樣，好嗎？"
+            },
+            {
+              "stable_id": "ENR-BR35-quiet-02",
+              "speaker_id": "zhou",
+              "text": "好。我坐旁邊。你要我離遠一點，也可以說。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR36",
+          "insertion_point": "settled",
+          "presentation_condition": "只在原remaining_commission_debt實際歸零時",
+          "lines": [
+            {
+              "stable_id": "ENR-BR36-settled-01",
+              "speaker_id": "protagonist",
+              "text": "數字清了。我知道事情不是只剩這個數字。"
+            },
+            {
+              "stable_id": "ENR-BR36-settled-02",
+              "speaker_id": "zhou",
+              "text": "嗯。後面的事慢慢做。這一筆不用再還第二遍。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ARC-BIAO",
+      "title": "阿標學會幫忙也能停下",
+      "character_ids": [
+        "protagonist",
+        "biao",
+        "bin"
+      ],
+      "event_ids": [
+        "BR08",
+        "BR10",
+        "BR25",
+        "BR26"
+      ],
+      "motivation": "阿標重視把事做完，卻也會不自覺要求別人多撐一下；BR26讓他接受界線，BR10再以實際照顧回應。",
+      "buildup": [
+        "BR25先被冤枉，反應可以有氣，不必立刻和解。",
+        "BR26承認自己開口要得太多，避免一句「我接受界線」就結束角色變化。",
+        "BR08談抽象圖板保留務實短句，不介紹現實保全。"
+      ],
+      "existing_choices": [
+        "BR26只幫十分鐘或拒絕均保留尊重；收益待定部分不補數字。",
+        "BR25不站隊時，不能讓收束旁白假裝已找到餐券。"
+      ],
+      "follow_through": [
+        "BR10若已有boundary_practiced可呼應那次十分鐘；沒旗標用一般照顧版，不新增BR26前置。",
+        "BR36阿標可提出清楚核對，不變成羞辱或逼迫。"
+      ],
+      "preserved_boundaries": [
+        "所有回扣只看已有旗標，不把BR25/26加入BR10硬前置。",
+        "護具效果仍只原局部失誤規則。"
+      ],
+      "status": "文字增補提案，待確認",
+      "scene_extensions": [
+        {
+          "event_id": "BR26",
+          "insertion_point": "accept",
+          "presentation_condition": "原只幫十分鐘分支",
+          "lines": [
+            {
+              "stable_id": "ENR-BR26-accept-01",
+              "speaker_id": "biao",
+              "text": "我剛才一開口，就把你的整段休息算進去了。"
+            },
+            {
+              "stable_id": "ENR-BR26-accept-02",
+              "speaker_id": "protagonist",
+              "text": "你可以問。但我要能說只幫到這裡。"
+            },
+            {
+              "stable_id": "ENR-BR26-accept-03",
+              "speaker_id": "biao",
+              "text": "知道了。到點你走，剩下的我再想辦法。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR26",
+          "insertion_point": "refuse",
+          "presentation_condition": "原拒絕分支",
+          "lines": [
+            {
+              "stable_id": "ENR-BR26-refuse-01",
+              "speaker_id": "biao",
+              "text": "好，你休息。我剛才問得太滿了。"
+            },
+            {
+              "stable_id": "ENR-BR26-refuse-02",
+              "speaker_id": "protagonist",
+              "text": "我不是不把你當朋友。"
+            },
+            {
+              "stable_id": "ENR-BR26-refuse-03",
+              "speaker_id": "biao",
+              "text": "我知道。不用再多說一句來換我點頭。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR10",
+          "insertion_point": "callback",
+          "presentation_condition": "boundary_practiced已存在；取代同段一般回應",
+          "lines": [
+            {
+              "stable_id": "ENR-BR10-callback-01",
+              "speaker_id": "biao",
+              "text": "這次不用把你的休息時間一起交過來。拿著就好。"
+            },
+            {
+              "stable_id": "ENR-BR10-callback-02",
+              "speaker_id": "protagonist",
+              "text": "你記得那次十分鐘。"
+            },
+            {
+              "stable_id": "ENR-BR10-callback-03",
+              "speaker_id": "biao",
+              "text": "記得。你也不用每次重新解釋。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR10",
+          "insertion_point": "base",
+          "presentation_condition": "boundary_practiced不存在；不暗示做過BR26",
+          "lines": [
+            {
+              "stable_id": "ENR-BR10-base-01",
+              "speaker_id": "biao",
+              "text": "合不合用先看清楚，不用為了客氣就收。"
+            },
+            {
+              "stable_id": "ENR-BR10-base-02",
+              "speaker_id": "protagonist",
+              "text": "這件可以。我收好。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ARC-BIN",
+      "title": "斌哥的玩笑留下真話",
+      "character_ids": [
+        "protagonist",
+        "bin",
+        "biao"
+      ],
+      "event_ids": [
+        "BR11",
+        "BR13",
+        "BR18",
+        "BR25",
+        "BR31"
+      ],
+      "motivation": "斌哥用玩笑讓人喘氣，也必須知道何時停止玩笑、何時當面認錯。",
+      "buildup": [
+        "BR13讓錯拿紀念票的尷尬有一拍停頓；紀念票仍非通行證。",
+        "BR18笑彩帶與空洞慶功，不笑受傷的人。",
+        "BR25餐券找到後明確向阿標承認推斷錯了，不由主角替他道歉。"
+      ],
+      "existing_choices": [
+        "BR18可謝互助的人或不演講；不演講不被補成暗中上台。",
+        "BR31拒借後不再用翻身笑話鼓動；借籌後仍完整顯後果，不變成勝利短片。"
+      ],
+      "follow_through": [
+        "BR11斌哥會放慢抽象節奏教學，讓平常愛鬧的人有耐心的一面。",
+        "BR25若rumor_corrected已有，可在之後BR28短句提醒先找東西，不能重新發和解獎。"
+      ],
+      "preserved_boundaries": [
+        "T17媒體待決，BR11與BR31不藉新增台詞自動完成。",
+        "不新增實際賭博機制、賠率或獲利策略。"
+      ],
+      "status": "文字增補提案，待確認",
+      "scene_extensions": [
+        {
+          "event_id": "BR13",
+          "insertion_point": "ticket",
+          "presentation_condition": "原辨識票面分支",
+          "lines": [
+            {
+              "stable_id": "ENR-BR13-ticket-01",
+              "speaker_id": "bin",
+              "text": "剛才那一下，我是真的以為上面會寫目的地。"
+            },
+            {
+              "stable_id": "ENR-BR13-ticket-02",
+              "speaker_id": "protagonist",
+              "text": "現在看清楚了。"
+            },
+            {
+              "stable_id": "ENR-BR13-ticket-03",
+              "speaker_id": "bin",
+              "text": "嗯。這張留著提醒我先看完再高興。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR18",
+          "insertion_point": "thanks",
+          "presentation_condition": "原謝謝互助選項",
+          "lines": [
+            {
+              "stable_id": "ENR-BR18-thanks-01",
+              "speaker_id": "bin",
+              "text": "我本來準備了一長串。現在看來，短一點也挺好。"
+            },
+            {
+              "stable_id": "ENR-BR18-thanks-02",
+              "speaker_id": "protagonist",
+              "text": "你想謝誰，就說誰。"
+            },
+            {
+              "stable_id": "ENR-BR18-thanks-03",
+              "speaker_id": "bin",
+              "text": "今天有人幫我把掉的東西撿回來。這句不用主持人替我念。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR25",
+          "insertion_point": "apology",
+          "presentation_condition": "只在原餐券找到且誤會澄清的分支",
+          "lines": [
+            {
+              "stable_id": "ENR-BR25-apology-01",
+              "speaker_id": "bin",
+              "text": "阿標，我剛才說得像已經看見你拿了。其實我沒有。"
+            },
+            {
+              "stable_id": "ENR-BR25-apology-02",
+              "speaker_id": "biao",
+              "text": "我聽到了。下次先問，別先替我判完。"
+            },
+            {
+              "stable_id": "ENR-BR25-apology-03",
+              "speaker_id": "bin",
+              "text": "好。這句不是玩笑。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR11",
+          "insertion_point": "pace",
+          "presentation_condition": "原抽象節奏練習",
+          "lines": [
+            {
+              "stable_id": "ENR-BR11-pace-01",
+              "speaker_id": "bin",
+              "text": "我剛才拍太快。再來一次，跟著亮點就好。"
+            },
+            {
+              "stable_id": "ENR-BR11-pace-02",
+              "speaker_id": "protagonist",
+              "text": "你也會等人啊。"
+            },
+            {
+              "stable_id": "ENR-BR11-pace-03",
+              "speaker_id": "bin",
+              "text": "會。這次不搶著當第一個。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ARC-HOU",
+      "title": "阿猴卸下主管姿態的一小步",
+      "character_ids": [
+        "protagonist",
+        "hou"
+      ],
+      "event_ids": [
+        "BR14",
+        "BR28"
+      ],
+      "motivation": "阿猴早期把新人看得低；交班後仍難以停止命令口吻。BR14呈現他承認自己也累，不讓一次休息談話洗白之前的態度。",
+      "buildup": [
+        "R1依最新主管漸進稿保持輕蔑；不要在第一次普通聊天就像老朋友。",
+        "BR14在MS04後，派工已交若晴；主角可指出他仍像在下命令。"
+      ],
+      "existing_choices": [
+        "保留原暫停通知動作與唯一F_hou+6結果；沒有新增原諒選項或懲罰。"
+      ],
+      "follow_through": [
+        "高階日常若再遇阿猴，可收斂成承認主角已有自己判斷；仍不搶回主管席。",
+        "此弧不自動讓阿猴成同行、伴侶或新終局人物。"
+      ],
+      "preserved_boundaries": [
+        "阿猴R2後只以原可互動身分出場，不重新派工。",
+        "不增加好友數值門檻；早期輕蔑不強迫玩家原諒。"
+      ],
+      "status": "文字增補提案，待確認",
+      "scene_extensions": [
+        {
+          "event_id": "BR14",
+          "insertion_point": "step",
+          "presentation_condition": "原BR14段落中，通知靜音後",
+          "lines": [
+            {
+              "stable_id": "ENR-BR14-step-01",
+              "speaker_id": "hou",
+              "text": "都交班了，耳朵還在等下一聲。"
+            },
+            {
+              "stable_id": "ENR-BR14-step-02",
+              "speaker_id": "protagonist",
+              "text": "你剛才叫我過來，還是像要派工。"
+            },
+            {
+              "stable_id": "ENR-BR14-step-03",
+              "speaker_id": "hou",
+              "text": "……習慣。這次沒有工作，坐一下就好。"
+            },
+            {
+              "stable_id": "ENR-BR14-step-04",
+              "speaker_id": "protagonist",
+              "text": "那就坐一下。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR28",
+          "insertion_point": "hou_early",
+          "presentation_condition": "原場景阿猴在場且已選中、當前R1；替代泛用話題回應",
+          "lines": [
+            {
+              "stable_id": "ENR-BR28-hou_early-01",
+              "speaker_id": "protagonist",
+              "text": "如果能選，你今天想吃什麼？"
+            },
+            {
+              "stable_id": "ENR-BR28-hou_early-02",
+              "speaker_id": "hou",
+              "text": "你自己的事先看明白。……有熱湯就行。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR28",
+          "insertion_point": "hou_late",
+          "presentation_condition": "原場景阿猴在場且已選中、當前R4或R5；展示口吻提案，不改出場表",
+          "lines": [
+            {
+              "stable_id": "ENR-BR28-hou_late-01",
+              "speaker_id": "hou",
+              "text": "現在看你做決定，比我當時催得還快。"
+            },
+            {
+              "stable_id": "ENR-BR28-hou_late-02",
+              "speaker_id": "protagonist",
+              "text": "也比較敢說先等等。"
+            },
+            {
+              "stable_id": "ENR-BR28-hou_late-03",
+              "speaker_id": "hou",
+              "text": "聽出來了。今天先不催你。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ARC-XIAOYU",
+      "title": "小雨的照顧帶著自己的願望",
+      "character_ids": [
+        "protagonist",
+        "xiaoyu"
+      ],
+      "event_ids": [
+        "BR12",
+        "BR17",
+        "BR20",
+        "BR22",
+        "BR24",
+        "ROM01",
+        "ROM02",
+        "ROM03",
+        "ROM04"
+      ],
+      "motivation": "小雨會照顧別人，也有想保留的私事、未完成的朋友牽掛與自己的節奏，避免只作主角的獎勵或情緒支援。",
+      "buildup": [
+        "BR12餐券把接受與轉送都當作正常選擇，不做欠人情戲。",
+        "BR17停在家庭稱呼邊界；主角尊重之後，允許聊一件完全普通的事。",
+        "BR20支援成年同事時，她以當事人意願為主，不讓主角扮演救贖者。"
+      ],
+      "existing_choices": [
+        "ROM01友情回答應有完整溫度，不是失敗短句。",
+        "ROM03三種既有回應分清分工、說擔心、控制；界線後不自動和好。",
+        "BR24她可需要時間或拒絕，不能被拍成背叛主角。"
+      ],
+      "follow_through": [
+        "ROM03修復補寫只是一個提案場景：雙方明確同意才依既有規則恢復；可繼續暫停。",
+        "ROM04安全後再確認，與E_ESCAPE小雨中段同場擇一展開，不重演兩次約會。"
+      ],
+      "preserved_boundaries": [
+        "ROM03修復成功不補發teamwork、不刷好感、不改友情資源。",
+        "不新造拒絕代價、同意概率或對方必須答應的台詞。",
+        "影像威脅不顯私密內容，不新增性化暴力。"
+      ],
+      "status": "文字增補提案，待確認",
+      "scene_extensions": [
+        {
+          "event_id": "BR17",
+          "insertion_point": "space",
+          "presentation_condition": "原尊重不追問後，不要求新增私密資訊",
+          "lines": [
+            {
+              "stable_id": "ENR-BR17-space-01",
+              "speaker_id": "protagonist",
+              "text": "好，留著。那我們聊點別的。"
+            },
+            {
+              "stable_id": "ENR-BR17-space-02",
+              "speaker_id": "xiaoyu",
+              "text": "你不用趕著把安靜填滿。我現在這樣坐著，也很好。"
+            }
+          ]
+        },
+        {
+          "event_id": "ROM01",
+          "insertion_point": "friendship",
+          "presentation_condition": "原友情選項結果",
+          "lines": [
+            {
+              "stable_id": "ENR-ROM01-friendship-01",
+              "speaker_id": "xiaoyu",
+              "text": "那以後有話想說，我還是會來找你。"
+            },
+            {
+              "stable_id": "ENR-ROM01-friendship-02",
+              "speaker_id": "protagonist",
+              "text": "我也會。不需要把每次靠近都解釋成別的意思。"
+            }
+          ]
+        },
+        {
+          "event_id": "ROM03",
+          "insertion_point": "repair_reconfirm",
+          "presentation_condition": "romance_pause=true且雙方自願重談；重新同意流程文字提案，未批准前不得自動執行",
+          "lines": [
+            {
+              "stable_id": "ENR-ROM03-repair_reconfirm-01",
+              "speaker_id": "protagonist",
+              "text": "我想問一次：你願意重新開始我們那個關於未來的約定嗎？你可以繼續暫停。"
+            },
+            {
+              "stable_id": "ENR-ROM03-repair_reconfirm-02",
+              "speaker_id": "xiaoyu",
+              "text": "我願意再試一次。我要保留自己的安排，也希望你有擔心就說，不要替我決定。"
+            },
+            {
+              "stable_id": "ENR-ROM03-repair_reconfirm-03",
+              "speaker_id": "protagonist",
+              "text": "我願意，也接受你隨時說停。"
+            }
+          ]
+        },
+        {
+          "event_id": "ROM03",
+          "insertion_point": "repair_keep_pause",
+          "presentation_condition": "同一既有修復場景中，小雨尚未重新明確同意；不自動代選",
+          "lines": [
+            {
+              "stable_id": "ENR-ROM03-repair_keep_pause-01",
+              "speaker_id": "xiaoyu",
+              "text": "我聽見你的意思了，但現在還不想恢復那個約定。"
+            },
+            {
+              "stable_id": "ENR-ROM03-repair_keep_pause-02",
+              "speaker_id": "protagonist",
+              "text": "好。我不把道歉當成你必須答應的理由。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR24",
+          "insertion_point": "needs_time",
+          "presentation_condition": "原小雨需要時間回答",
+          "lines": [
+            {
+              "stable_id": "ENR-BR24-needs_time-01",
+              "speaker_id": "xiaoyu",
+              "text": "我還有自己的事要想清楚。你可以繼續準備，不用把等待說成我欠你的。"
+            },
+            {
+              "stable_id": "ENR-BR24-needs_time-02",
+              "speaker_id": "protagonist",
+              "text": "好，現在先不把你記成同意。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ARC-CHOICE",
+      "title": "誘惑後面有可見的人際後續",
+      "character_ids": [
+        "protagonist",
+        "zhou",
+        "biao",
+        "lin",
+        "xiaoyu"
+      ],
+      "event_ids": [
+        "BR30",
+        "BR31",
+        "BR32",
+        "BR33",
+        "BR34",
+        "BR35",
+        "BR36"
+      ],
+      "motivation": "風險事件不只一張數值卡。主角看見自己選擇的後果，仍能主動求助、承認、修復；不用靠受苦賺取故事資格。",
+      "buildup": [
+        "BR31把一次贏款與借籌分開；拒借仍有完整收束。",
+        "BR32拒絕與求助都有可站穩的台詞，不把危險選項拍得比較有內容。",
+        "BR33不展開交易物流，只讓主角承認自己曾默許。"
+      ],
+      "existing_choices": [
+        "BR34普通休息、高消費、既有自願親密、提前離開不混為一個獎勵包。",
+        "BR35每來源照護一次，沒有「選了比較痛的就補更多」的新獎。",
+        "BR36已有餘額才還款；沒錢也可承認。"
+      ],
+      "follow_through": [
+        "日開後果卡可配一段短反應，但閱讀停表、不加數值。",
+        "ROM07與老闆告別承接責任，不能因完成BR36就把全部傷害洗清。",
+        "BR30未就緒逃離只顯準備缺口，兩正式終局仍由原主線二次確認。"
+      ],
+      "preserved_boundaries": [
+        "BR34若晴親密維持deferred；不新寫可播放親密台詞。",
+        "既有數值、剩餘日數與債務分帳完全不變。",
+        "不呈現實際藥物、賭博提款、違法交易步驟。"
+      ],
+      "status": "文字增補提案，待確認",
+      "scene_extensions": [
+        {
+          "event_id": "BR31",
+          "insertion_point": "decline",
+          "presentation_condition": "原拒絕借籌分支",
+          "lines": [
+            {
+              "stable_id": "ENR-BR31-decline-01",
+              "speaker_id": "protagonist",
+              "text": "剛才贏那一下，不等於後面都會照我想的走。我到這裡。"
+            },
+            {
+              "stable_id": "ENR-BR31-decline-02",
+              "speaker_id": "zhou",
+              "text": "好。回去坐吧，不用留下來證明自己不怕輸。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR32",
+          "insertion_point": "seek",
+          "presentation_condition": "原請求安全協助分支",
+          "lines": [
+            {
+              "stable_id": "ENR-BR32-seek-01",
+              "speaker_id": "protagonist",
+              "text": "我不想碰那個盒子。現在想去有人能陪我坐一下的地方。"
+            },
+            {
+              "stable_id": "ENR-BR32-seek-02",
+              "speaker_id": "zhou",
+              "text": "可以。你不必先把事情講得很嚴重，才可以求助。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR33",
+          "insertion_point": "acknowledge",
+          "presentation_condition": "接受原違法佣金故事後；不加入交易細節",
+          "lines": [
+            {
+              "stable_id": "ENR-BR33-acknowledge-01",
+              "speaker_id": "protagonist",
+              "text": "我剛才用沉默把自己藏起來。錢還在這裡，選擇也還在。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR35",
+          "insertion_point": "after",
+          "presentation_condition": "原照護已確認後；只文字回應",
+          "lines": [
+            {
+              "stable_id": "ENR-BR35-after-01",
+              "speaker_id": "protagonist",
+              "text": "我知道明天還要慢慢處理。今天先不一個人扛。"
+            },
+            {
+              "stable_id": "ENR-BR35-after-02",
+              "speaker_id": "zhou",
+              "text": "嗯。剩下多少，就照實記多少。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR34",
+          "insertion_point": "ordinary",
+          "presentation_condition": "原普通休息選項；無親吻或轉暗",
+          "lines": [
+            {
+              "stable_id": "ENR-BR34-ordinary-01",
+              "speaker_id": "protagonist",
+              "text": "我今天就想坐一會兒。"
+            },
+            {
+              "stable_id": "ENR-BR34-ordinary-02",
+              "speaker_id": "narrator",
+              "text": "附近的說話聲慢慢遠了。主角沒有再替這段休息加上別的承諾。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ARC-DAILY",
+      "title": "閒聊真的回到日常",
+      "character_ids": [
+        "protagonist",
+        "kai",
+        "xiaoyu",
+        "lin",
+        "zhou",
+        "biao",
+        "bin",
+        "hou",
+        "tang"
+      ],
+      "event_ids": [
+        "BR28",
+        "BR29"
+      ],
+      "motivation": "減少每個人都講報表、欠條與大道理的同聲感。讓小事有具體答案，角色之間才有呼吸。",
+      "buildup": [
+        "沿BR28三個既有話題與原在場名單，不新建每日任務。",
+        "日常口味等新細節全部標成文學提案，不當既有canon履歷。",
+        "主管回應仍按相等職階分段；以下若晴句只放R4/R5，不覆蓋R2。"
+      ],
+      "existing_choices": [
+        "一天仍最多兩次BR28、每人一次；換題、重看不再加5。",
+        "唐澄不放進BR28；她用BR29原路徑，不混成普通聊天。"
+      ],
+      "follow_through": [
+        "已有branch旗標可呼應過往，但無旗標就選獨立句，不能偽稱做過支線。",
+        "完整回應包含說一件事與留一拍停頓，不必每段升華制度。"
+      ],
+      "preserved_boundaries": [
+        "新口味只屬提案，不影響好感選項正確答案。",
+        "保持七位同事出場來源，不新增到場保證。",
+        "不另設每日好感cap或跨活動共享次數。"
+      ],
+      "status": "文字增補提案，待確認",
+      "scene_extensions": [
+        {
+          "event_id": "BR28",
+          "insertion_point": "xiaoyu_food",
+          "presentation_condition": "小雨在場、既有菜話題選中；人物口味提案",
+          "lines": [
+            {
+              "stable_id": "ENR-BR28-xiaoyu_food-01",
+              "speaker_id": "xiaoyu",
+              "text": "想吃番茄蛋。不是精緻的那種，熱熱的就好。"
+            },
+            {
+              "stable_id": "ENR-BR28-xiaoyu_food-02",
+              "speaker_id": "protagonist",
+              "text": "那飯要多盛一點。"
+            },
+            {
+              "stable_id": "ENR-BR28-xiaoyu_food-03",
+              "speaker_id": "xiaoyu",
+              "text": "你終於問到一個容易回答的問題了。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR28",
+          "insertion_point": "zhou_book",
+          "presentation_condition": "老周在場、既有書話題選中；不新發書本道具",
+          "lines": [
+            {
+              "stable_id": "ENR-BR28-zhou_book-01",
+              "speaker_id": "zhou",
+              "text": "一本可以翻到一半放下的散文。書籤夾著，明天還認得那一頁。"
+            },
+            {
+              "stable_id": "ENR-BR28-zhou_book-02",
+              "speaker_id": "protagonist",
+              "text": "不用今天看完？"
+            },
+            {
+              "stable_id": "ENR-BR28-zhou_book-03",
+              "speaker_id": "zhou",
+              "text": "我以前開書店，也不是每本都看完。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR28",
+          "insertion_point": "biao_food",
+          "presentation_condition": "阿標在場、既有菜話題選中；口味提案",
+          "lines": [
+            {
+              "stable_id": "ENR-BR28-biao_food-01",
+              "speaker_id": "biao",
+              "text": "熱湯麵。先吃麵，話等一下再說。"
+            },
+            {
+              "stable_id": "ENR-BR28-biao_food-02",
+              "speaker_id": "protagonist",
+              "text": "怕麵糊掉？"
+            },
+            {
+              "stable_id": "ENR-BR28-biao_food-03",
+              "speaker_id": "biao",
+              "text": "對，這次是真的怕。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR28",
+          "insertion_point": "bin_wind",
+          "presentation_condition": "斌哥在場、既有風話題選中",
+          "lines": [
+            {
+              "stable_id": "ENR-BR28-bin_wind-01",
+              "speaker_id": "bin",
+              "text": "剛才那陣風把我的紙吹走，我第一個反應竟然是叫它回來。"
+            },
+            {
+              "stable_id": "ENR-BR28-bin_wind-02",
+              "speaker_id": "protagonist",
+              "text": "它聽嗎？"
+            },
+            {
+              "stable_id": "ENR-BR28-bin_wind-03",
+              "speaker_id": "bin",
+              "text": "比我還會裝沒聽見。"
+            }
+          ]
+        },
+        {
+          "event_id": "BR28",
+          "insertion_point": "lin_friend",
+          "presentation_condition": "若晴原在場名單成立且當前R4或R5、既有書話題選中；不增解鎖",
+          "lines": [
+            {
+              "stable_id": "ENR-BR28-lin_friend-01",
+              "speaker_id": "lin",
+              "text": "想看一本不用猜結尾誰要負責的書。"
+            },
+            {
+              "stable_id": "ENR-BR28-lin_friend-02",
+              "speaker_id": "protagonist",
+              "text": "那你先別翻最後一頁。"
+            },
+            {
+              "stable_id": "ENR-BR28-lin_friend-03",
+              "speaker_id": "lin",
+              "text": "被你發現了。今天試試照順序。"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "new_optional_branches": [
+    {
+      "id": "PBR-01",
+      "title": "梁澄的兩份行程",
+      "characters": [
+        "protagonist",
+        "SPK-LIANG-CHENG"
+      ],
+      "story": "梁澄回看兩份行程，主角承認有一件事當時無法兼顧。讓他說明自己希望保留什麼，承接原唯一歸屬與可拒遷移。",
+      "choices": [
+        "說明當時做出的取捨",
+        "先聽他指出哪一部分被忽略",
+        "暫時停談"
+      ],
+      "follow_through": "只更新本次文學呈現；不把人物今日不談變成帳戶休會。若日後批准任何持久旗標另列，不自動創建。",
+      "rewards": null,
+      "duration_minutes": null,
+      "systems_added": [],
+      "sample_dialogue": [
+        {
+          "speaker": "梁澄",
+          "text": "你把兩份行程都留下來了。那當時沒做完的那件呢？"
+        },
+        {
+          "speaker": "主角",
+          "text": "我沒有做到。我想先聽你怎麼看，不把剩下的話也替你填完。"
+        }
+      ],
+      "status": "新可選支線提案，尚未納入正式劇情",
+      "canonical": false,
+      "existing_event_anchors": [
+        "T13",
+        "T14"
+      ],
+      "proposed_conditions": {
+        "all": [
+          "已保存T13梁澄第一章",
+          "T14既有行程衝突已處理",
+          "當前仍可閱覽該人物故事"
+        ],
+        "numerical_thresholds": null,
+        "note": "以上只是非canonical提案條件；不借用BR編號、不自動接入正式事件。"
+      }
+    },
+    {
+      "id": "PBR-02",
+      "title": "徐禾保留的座位",
+      "characters": [
+        "protagonist",
+        "SPK-XU-HE"
+      ],
+      "story": "徐禾確認休會後不會被日結收據追著問。主角可以保留他未說完的話，承認這個空位不是馬上補上新人就算結束。",
+      "choices": [
+        "確認目前意願仍被保留",
+        "不追問回來日期",
+        "先結束對話"
+      ],
+      "follow_through": "不自動復會、不新增收益、不重置每章三次額度，不改原槽位選擇。",
+      "rewards": null,
+      "duration_minutes": null,
+      "systems_added": [],
+      "sample_dialogue": [
+        {
+          "speaker": "徐禾",
+          "text": "我還沒決定什麼時候回來。"
+        },
+        {
+          "speaker": "主角",
+          "text": "那就先不寫日期。你上次的意思，我沒有改掉。"
+        }
+      ],
+      "status": "新可選支線提案，尚未納入正式劇情",
+      "canonical": false,
+      "existing_event_anchors": [
+        "T12成熟期休會變體"
+      ],
+      "proposed_conditions": {
+        "all": [
+          "T12既有徐禾休會事件確實發生",
+          "玩家主動閱覽既有人物故事"
+        ],
+        "numerical_thresholds": null,
+        "note": "非canonical提案，是否需要另日尚待決；不得臆造好感或智慧門檻。"
+      }
+    },
+    {
+      "id": "PBR-03",
+      "title": "阿岑不用重述的一天",
+      "characters": [
+        "protagonist",
+        "SPK-A-CEN"
+      ],
+      "story": "只問今天想談或想安靜，對方不必重新交代受害經歷才可獲陪伴。延續原略過與閱讀摘要同等支援，不顯示任何私密影像。",
+      "choices": [
+        "聊普通近況",
+        "安靜待一下",
+        "尊重今天不談"
+      ],
+      "follow_through": "不將阿岑與BR20匿名同事合併、不新建戀愛、不增加收益或援助硬前置。",
+      "rewards": null,
+      "duration_minutes": null,
+      "systems_added": [],
+      "sample_dialogue": [
+        {
+          "speaker": "阿岑",
+          "text": "今天能不能不再從那件事開始？"
+        },
+        {
+          "speaker": "主角",
+          "text": "可以。今天想聊別的，或什麼都不聊，都可以。"
+        }
+      ],
+      "status": "新可選支線提案，尚未納入正式劇情",
+      "canonical": false,
+      "existing_event_anchors": [
+        "T16"
+      ],
+      "proposed_conditions": {
+        "all": [
+          "T16既有故事已處理旗標成立",
+          "阿岑願意接受本次普通問候"
+        ],
+        "numerical_thresholds": null,
+        "note": "非canonical提案；NPC本次意願判定與出場時間待確認，不從好感自動推得。"
+      }
+    }
+  ],
+  "event_index": [
+    {
+      "event_id": "BR01",
+      "title": "生日還有幾天",
+      "arc_ids": [
+        "ARC-KAI"
+      ]
+    },
+    {
+      "event_id": "BR02",
+      "title": "留下名字",
+      "arc_ids": [
+        "ARC-KAI"
+      ]
+    },
+    {
+      "event_id": "BR03",
+      "title": "不是表格裡的人",
+      "arc_ids": [
+        "ARC-TANG"
+      ]
+    },
+    {
+      "event_id": "BR04",
+      "title": "願意說不知道",
+      "arc_ids": [
+        "ARC-TANG"
+      ]
+    },
+    {
+      "event_id": "BR05",
+      "title": "回覆不是催促",
+      "arc_ids": [
+        "ARC-TANG"
+      ]
+    },
+    {
+      "event_id": "BR06",
+      "title": "從代號到姓名",
+      "arc_ids": [
+        "ARC-TANG"
+      ]
+    },
+    {
+      "event_id": "BR07",
+      "title": "一張不必急著用的鑰匙",
+      "arc_ids": [
+        "ARC-LIN"
+      ]
+    },
+    {
+      "event_id": "BR08",
+      "title": "換班是光圈的顏色",
+      "arc_ids": [
+        "ARC-BIAO"
+      ]
+    },
+    {
+      "event_id": "BR09",
+      "title": "看懂遊戲板",
+      "arc_ids": [
+        "ARC-ZHOU"
+      ]
+    },
+    {
+      "event_id": "BR10",
+      "title": "不是工具的護具",
+      "arc_ids": [
+        "ARC-BIAO"
+      ]
+    },
+    {
+      "event_id": "BR11",
+      "title": "牆上的節拍",
+      "arc_ids": [
+        "ARC-BIN"
+      ]
+    },
+    {
+      "event_id": "BR12",
+      "title": "餐券不是人情債",
+      "arc_ids": [
+        "ARC-XIAOYU"
+      ]
+    },
+    {
+      "event_id": "BR13",
+      "title": "票面沒有目的地",
+      "arc_ids": [
+        "ARC-BIN"
+      ]
+    },
+    {
+      "event_id": "BR14",
+      "title": "客服也想下班",
+      "arc_ids": [
+        "ARC-HOU"
+      ]
+    },
+    {
+      "event_id": "BR15",
+      "title": "剩餘點數不是剩餘人生",
+      "arc_ids": [
+        "ARC-ZHOU"
+      ]
+    },
+    {
+      "event_id": "BR16",
+      "title": "那個看不懂的戳章",
+      "arc_ids": [
+        "ARC-LIN"
+      ]
+    },
+    {
+      "event_id": "BR17",
+      "title": "熟悉的稱呼",
+      "arc_ids": [
+        "ARC-XIAOYU"
+      ]
+    },
+    {
+      "event_id": "BR18",
+      "title": "沒有獎品的掌聲",
+      "arc_ids": [
+        "ARC-BIN"
+      ]
+    },
+    {
+      "event_id": "BR19",
+      "title": "廣告上的大字",
+      "arc_ids": [
+        "ARC-ZHOU"
+      ]
+    },
+    {
+      "event_id": "BR20",
+      "title": "把螢幕轉過去",
+      "arc_ids": [
+        "ARC-XIAOYU"
+      ]
+    },
+    {
+      "event_id": "BR21",
+      "title": "未寄出的明信片",
+      "arc_ids": [
+        "ARC-KAI"
+      ]
+    },
+    {
+      "event_id": "BR22",
+      "title": "合照裡的空位",
+      "arc_ids": [
+        "ARC-KAI",
+        "ARC-XIAOYU"
+      ]
+    },
+    {
+      "event_id": "BR23",
+      "title": "一份名冊兩種字跡",
+      "arc_ids": [
+        "ARC-LIN"
+      ]
+    },
+    {
+      "event_id": "BR24",
+      "title": "同行不是默認",
+      "arc_ids": [
+        "ARC-XIAOYU"
+      ]
+    },
+    {
+      "event_id": "BR25",
+      "title": "把誤會說完",
+      "arc_ids": [
+        "ARC-BIAO",
+        "ARC-BIN"
+      ]
+    },
+    {
+      "event_id": "BR26",
+      "title": "幫忙也有界線",
+      "arc_ids": [
+        "ARC-BIAO"
+      ]
+    },
+    {
+      "event_id": "BR27",
+      "title": "留下來的理由",
+      "arc_ids": [
+        "ARC-LIN"
+      ]
+    },
+    {
+      "event_id": "BR28",
+      "title": "今天也有小事",
+      "arc_ids": [
+        "ARC-HOU",
+        "ARC-DAILY"
+      ]
+    },
+    {
+      "event_id": "BR29",
+      "title": "明天再回覆",
+      "arc_ids": [
+        "ARC-TANG",
+        "ARC-DAILY"
+      ]
+    },
+    {
+      "event_id": "BR30",
+      "title": "同一扇門兩個問題",
+      "arc_ids": [
+        "ARC-CHOICE"
+      ]
+    },
+    {
+      "event_id": "BR31",
+      "title": "紅燈桌的第一筆贏款",
+      "arc_ids": [
+        "ARC-BIN",
+        "ARC-CHOICE"
+      ]
+    },
+    {
+      "event_id": "BR32",
+      "title": "沒有名字的提神物",
+      "arc_ids": [
+        "ARC-CHOICE"
+      ]
+    },
+    {
+      "event_id": "BR33",
+      "title": "不該拿的介紹費",
+      "arc_ids": [
+        "ARC-CHOICE"
+      ]
+    },
+    {
+      "event_id": "BR34",
+      "title": "熱鬧散場後",
+      "arc_ids": [
+        "ARC-CHOICE"
+      ]
+    },
+    {
+      "event_id": "BR35",
+      "title": "先把今天過完",
+      "arc_ids": [
+        "ARC-ZHOU",
+        "ARC-CHOICE"
+      ]
+    },
+    {
+      "event_id": "BR36",
+      "title": "把賺來的事說清楚",
+      "arc_ids": [
+        "ARC-ZHOU",
+        "ARC-CHOICE"
+      ]
+    },
+    {
+      "event_id": "ROM01",
+      "title": "小雨：不急著回答",
+      "arc_ids": [
+        "ARC-XIAOYU"
+      ]
+    },
+    {
+      "event_id": "ROM02",
+      "title": "小雨：兩個人的明天",
+      "arc_ids": [
+        "ARC-XIAOYU"
+      ]
+    },
+    {
+      "event_id": "ROM03",
+      "title": "小雨：不同的步調",
+      "arc_ids": [
+        "ARC-XIAOYU"
+      ]
+    },
+    {
+      "event_id": "ROM04",
+      "title": "小雨：安全後的第一個約會",
+      "arc_ids": [
+        "ARC-XIAOYU"
+      ]
+    },
+    {
+      "event_id": "ROM05",
+      "title": "若晴：把評語留在門外",
+      "arc_ids": [
+        "ARC-LIN"
+      ]
+    },
+    {
+      "event_id": "ROM06",
+      "title": "若晴：不是交換條件",
+      "arc_ids": [
+        "ARC-LIN"
+      ]
+    },
+    {
+      "event_id": "ROM07",
+      "title": "若晴：同意也包括反對",
+      "arc_ids": [
+        "ARC-LIN"
+      ]
+    },
+    {
+      "event_id": "ROM08",
+      "title": "若晴：不用交報告的明天",
+      "arc_ids": [
+        "ARC-LIN"
+      ]
+    }
+  ],
+  "decisions_pending": [
+    "若要採用ROM03重新同意文字，需確認完整自願回應與呈現流程；未完成前維持暫停。",
+    "BR24逐人可談資格、NPC意願與多人友情同行呈現仍未定；本稿不代選。",
+    "拒絕分支未明獎勵、普通聊天cap、單身BR34數值仍待確認。",
+    "若晴局內親密維持deferred；排他與正式結局不在本稿改動。",
+    "T17媒體等價證據fallback待確認，BR11/BR31不得藉文學稿跳過。",
+    "PBR-01至03僅可選提案，不接入事件清單或自動增加任何報酬。"
+  ]
+}

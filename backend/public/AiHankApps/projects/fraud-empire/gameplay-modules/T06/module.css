@@ -1,0 +1,8 @@
+.fraud-t06 { color:#eee4d5;background:#231f20;font:1rem/1.65 system-ui,sans-serif;padding:1.2rem;max-width:52rem;margin:auto;border-radius:12px; }
+.fraud-t06 .t06-controls { display:flex;flex-wrap:wrap;gap:.6rem;margin:1rem 0; }
+.fraud-t06 button { min-height:48px;padding:.6rem .9rem;margin:.25rem;border:1px solid #bc9562;border-radius:8px;background:#392f29;color:#fff;font:inherit;cursor:pointer; }
+.fraud-t06 button[aria-pressed=true] { background:#70522b;outline:2px solid #ffe0a1; }
+.fraud-t06 button:focus-visible { outline:3px solid #ffe0a1;outline-offset:3px; }
+.fraud-t06 [role=status] { min-height:3.3em;border-left:3px solid #d2aa70;padding-left:.8rem; }
+.fraud-t06 img { display:block;max-width:100%;height:auto; }
+.fraud-t06 details { margin-top:1rem; }

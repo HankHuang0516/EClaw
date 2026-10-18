@@ -1,0 +1,7 @@
+/* Scoped diagnostic controls. No replacement artwork or global HUD styling. */
+.fraud-t12 { max-width: 42rem; margin: auto; padding: 1rem; font: 1rem/1.6 system-ui, sans-serif; color: #241f19; background: #faf6ee; overflow-wrap: anywhere; }
+.fraud-t12 button { min-height: 48px; padding: .6rem; margin: .25rem; font: inherit; cursor: pointer; }
+.fraud-t12 button:disabled { cursor: default; }
+.fraud-t12 button:focus-visible { outline: 3px solid #534aaa; outline-offset: 2px; }
+.fraud-t12 > div { padding: .6rem 0; border-bottom: 1px solid #b9ae9d; }
+.fraud-t12 [role=status] { min-height: 1.6em; font-weight: bold; }

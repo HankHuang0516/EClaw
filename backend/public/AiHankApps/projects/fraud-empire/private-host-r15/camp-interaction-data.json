@@ -1,0 +1,2491 @@
+{
+  "schemaVersion": 1,
+  "version": "v4.6-plan-interaction-b02-routes-20261016",
+  "status": "B02部分原型：來源路徑／走近；取物與正式場景條件未串接",
+  "sourceCanvasNotice": "歷史點位／adjacency只作邏輯連線試走，不當作v4 AI遊戲畫面的像素定位，不新增SVG遊戲畫面。",
+  "formalSceneAccess": false,
+  "acquisitionImplemented": false,
+  "scenes": [
+    {
+      "scene_id": "M01",
+      "name": "園區總覽",
+      "canvas": [
+        390,
+        844
+      ],
+      "visual": "images/154ac2dd157f62d0838d.webp",
+      "unlock_rule": "總覽於首次自由活動開放；行政入口按工作授權接待與自由探索分區判定，不整區鎖死。生活門選M03/M04，後勤門選M06/M10。",
+      "default_exit": "M01",
+      "routeHold": false,
+      "nodes": [
+        {
+          "id": "M01-N01",
+          "x": 195,
+          "y": 628
+        },
+        {
+          "id": "M01-N02",
+          "x": 195,
+          "y": 495
+        },
+        {
+          "id": "M01-N03",
+          "x": 195,
+          "y": 315
+        },
+        {
+          "id": "M01-N04",
+          "x": 100,
+          "y": 290
+        },
+        {
+          "id": "M01-N05",
+          "x": 290,
+          "y": 290
+        },
+        {
+          "id": "M01-N06",
+          "x": 100,
+          "y": 478
+        },
+        {
+          "id": "M01-N07",
+          "x": 290,
+          "y": 478
+        }
+      ],
+      "adjacency": [
+        [
+          "M01-N01",
+          "M01-N02"
+        ],
+        [
+          "M01-N02",
+          "M01-N03"
+        ],
+        [
+          "M01-N03",
+          "M01-N04"
+        ],
+        [
+          "M01-N03",
+          "M01-N05"
+        ],
+        [
+          "M01-N02",
+          "M01-N06"
+        ],
+        [
+          "M01-N02",
+          "M01-N07"
+        ]
+      ],
+      "hotspots": [
+        {
+          "id": "M01-H01",
+          "label": "辦公入口",
+          "node_id": "M01-N04",
+          "position": [
+            100,
+            290
+          ],
+          "tap_target": [
+            76,
+            266,
+            48,
+            48
+          ],
+          "kind": "出口",
+          "registry_ids": [],
+          "target_scene": "M02",
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": []
+        },
+        {
+          "id": "M01-H02",
+          "label": "行政分區",
+          "node_id": "M01-N05",
+          "position": [
+            290,
+            290
+          ],
+          "tap_target": [
+            266,
+            266,
+            48,
+            48
+          ],
+          "kind": "鎖定",
+          "registry_ids": [],
+          "target_scene": "M05",
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": []
+        },
+        {
+          "id": "M01-H03",
+          "label": "生活入口",
+          "node_id": "M01-N06",
+          "position": [
+            100,
+            478
+          ],
+          "tap_target": [
+            76,
+            454,
+            48,
+            48
+          ],
+          "kind": "出口",
+          "registry_ids": [],
+          "target_scene": "M03/M04",
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": []
+        },
+        {
+          "id": "M01-H04",
+          "label": "後勤入口",
+          "node_id": "M01-N07",
+          "position": [
+            290,
+            478
+          ],
+          "tap_target": [
+            266,
+            454,
+            48,
+            48
+          ],
+          "kind": "出口",
+          "registry_ids": [],
+          "target_scene": "M06/M10",
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": []
+        },
+        {
+          "id": "M01-H05",
+          "label": "庭院入口",
+          "node_id": "M01-N02",
+          "position": [
+            195,
+            495
+          ],
+          "tap_target": [
+            171,
+            471,
+            48,
+            48
+          ],
+          "kind": "出口",
+          "registry_ids": [],
+          "target_scene": "M07",
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": []
+        }
+      ]
+    },
+    {
+      "scene_id": "M02",
+      "name": "辦公區",
+      "canvas": [
+        390,
+        844
+      ],
+      "visual": "images/040ecf99aa7947111333.webp",
+      "unlock_rule": "初次派工教學開放；R1主管阿猴，R2起林若晴；主管先選一種模式，玩家再從智慧決定的3–5項任務選一項，最大5項。MS08在D10、R3開啟隱藏會員H001匿名回聲／唐澄。 MS04接班最早D4。",
+      "default_exit": "M01",
+      "routeHold": false,
+      "nodes": [
+        {
+          "id": "M02-N01",
+          "x": 195,
+          "y": 628
+        },
+        {
+          "id": "M02-N02",
+          "x": 195,
+          "y": 463
+        },
+        {
+          "id": "M02-N03",
+          "x": 195,
+          "y": 267
+        },
+        {
+          "id": "M02-N04",
+          "x": 91,
+          "y": 463
+        },
+        {
+          "id": "M02-N05",
+          "x": 299,
+          "y": 463
+        },
+        {
+          "id": "M02-N06",
+          "x": 195,
+          "y": 572
+        }
+      ],
+      "adjacency": [
+        [
+          "M02-N01",
+          "M02-N06"
+        ],
+        [
+          "M02-N06",
+          "M02-N02"
+        ],
+        [
+          "M02-N02",
+          "M02-N03"
+        ],
+        [
+          "M02-N02",
+          "M02-N04"
+        ],
+        [
+          "M02-N02",
+          "M02-N05"
+        ]
+      ],
+      "hotspots": [
+        {
+          "id": "M02-H01",
+          "label": "接收主管派工",
+          "node_id": "M02-N03",
+          "position": [
+            195,
+            267
+          ],
+          "tap_target": [
+            171,
+            243,
+            48,
+            48
+          ],
+          "kind": "對話",
+          "registry_ids": [],
+          "target_scene": null,
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": []
+        },
+        {
+          "id": "M02-H02",
+          "label": "主角工位",
+          "node_id": "M02-N04",
+          "position": [
+            91,
+            463
+          ],
+          "tap_target": [
+            67,
+            439,
+            48,
+            48
+          ],
+          "kind": "道具",
+          "registry_ids": [
+            "IT01"
+          ],
+          "target_scene": null,
+          "states": [
+            "hidden",
+            "available",
+            "reading",
+            "claimed",
+            "reread"
+          ],
+          "acquisition": [
+            {
+              "registry_id": "IT01",
+              "registry_name": "未寄明信片",
+              "source_event_ids": [
+                "BR21"
+              ],
+              "prerequisite": "僅當下列來源事件的完整條件成立且玩家選擇其發放結果時取得；站位本身不發物品。",
+              "source_events": [
+                {
+                  "id": "BR21",
+                  "conditions": {
+                    "all": [
+                      "alive",
+                      "day>=3",
+                      "rank>=2",
+                      "MS03"
+                    ],
+                    "any": [
+                      "F_kai>=15",
+                      "wisdom>=20"
+                    ],
+                    "not": [
+                      "finale_committed"
+                    ]
+                  },
+                  "choices_or_actions": "玩家點桌縫明信片。背面只有一句「今天風很大」。選詢問主人，不偷讀更多。",
+                  "outcome": "IT01；F_kai+5（阿凱仍在）；阿凱離開後改kai_memory_note"
+                }
+              ],
+              "screen_flow": "點地走近→點熱點→進入來源事件→依完整選項確認→僅在對應outcome提交後存入背包/筆記",
+              "repeat": "每局一份；紀念物不消耗",
+              "lasting_result": "紀念；非逃離必要",
+              "latestUse": "紀念；非逃離必要",
+              "sourceDifference": null
+            }
+          ]
+        },
+        {
+          "id": "M02-H03",
+          "label": "阿凱",
+          "node_id": "M02-N05",
+          "position": [
+            299,
+            463
+          ],
+          "tap_target": [
+            275,
+            439,
+            48,
+            48
+          ],
+          "kind": "對話",
+          "registry_ids": [],
+          "target_scene": null,
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": []
+        },
+        {
+          "id": "M02-H04",
+          "label": "會員名冊",
+          "node_id": "M02-N06",
+          "position": [
+            195,
+            572
+          ],
+          "tap_target": [
+            171,
+            548,
+            48,
+            48
+          ],
+          "kind": "情報",
+          "registry_ids": [
+            "I01"
+          ],
+          "target_scene": null,
+          "states": [
+            "hidden",
+            "available",
+            "reading",
+            "claimed",
+            "reread"
+          ],
+          "acquisition": [
+            {
+              "registry_id": "I01",
+              "registry_name": "唐澄的自願署名",
+              "source_event_ids": [
+                "BR06"
+              ],
+              "prerequisite": "僅當下列來源事件的完整條件成立且玩家選擇其發放結果時取得；站位本身不發物品。",
+              "source_events": [
+                {
+                  "id": "BR06",
+                  "conditions": {
+                    "all": [
+                      "alive",
+                      "day>=11",
+                      "rank>=3",
+                      "member_honesty",
+                      "member_boundaries"
+                    ],
+                    "any": [
+                      "wisdom>=30",
+                      "F_zhou>=25"
+                    ],
+                    "not": [
+                      "finale_committed"
+                    ]
+                  },
+                  "choices_or_actions": "唐澄自願告知名字：「叫我唐澄就好。」主角也介紹自己；拒絕公開更多私事不扣分。",
+                  "outcome": "F_member+15；I01"
+                }
+              ],
+              "screen_flow": "點地走近→點熱點→進入來源事件→依完整選項確認→僅在對應outcome提交後存入背包/筆記",
+              "repeat": "唯一資訊，回顧不重發",
+              "lasting_result": "記錄BR06自願署名；不作MS09硬門檻，不是真實聯絡資料",
+              "latestUse": "記錄唐澄在BR06自願署名的身分資訊；非MS09援助硬門檻。MS09仍依MS08、F_member>=60及原日期／職階／存活條件開放，不是真實聯絡資料。",
+              "sourceDifference": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scene_id": "M03",
+      "name": "宿舍",
+      "canvas": [
+        390,
+        844
+      ],
+      "visual": "images/4a698d54e9add67e5dff.webp",
+      "unlock_rule": "首次宿舍介紹後開放；電話角、工牌及援助訊息依故事條件分別鎖定。床位可選日結後入睡，不自動跳過待確認結局。",
+      "default_exit": "M01",
+      "routeHold": true,
+      "nodes": [
+        {
+          "id": "M03-N01"
+        },
+        {
+          "id": "M03-N02"
+        },
+        {
+          "id": "M03-N03"
+        },
+        {
+          "id": "M03-N04"
+        },
+        {
+          "id": "M03-N05"
+        },
+        {
+          "id": "M03-N06"
+        },
+        {
+          "id": "M03-N07"
+        }
+      ],
+      "adjacency": [
+        [
+          "M03-N01",
+          "M03-N02"
+        ],
+        [
+          "M03-N02",
+          "M03-N03"
+        ],
+        [
+          "M03-N03",
+          "M03-N04"
+        ],
+        [
+          "M03-N03",
+          "M03-N05"
+        ],
+        [
+          "M03-N02",
+          "M03-N06"
+        ],
+        [
+          "M03-N02",
+          "M03-N07"
+        ]
+      ],
+      "hotspots": [
+        {
+          "id": "M03-H01",
+          "label": "工牌回憶",
+          "node_id": "M03-N04",
+          "position": [
+            91,
+            310
+          ],
+          "tap_target": [
+            67,
+            286,
+            48,
+            48
+          ],
+          "kind": "道具",
+          "registry_ids": [
+            "IT02"
+          ],
+          "target_scene": null,
+          "states": [
+            "hidden",
+            "available",
+            "reading",
+            "claimed",
+            "reread"
+          ],
+          "acquisition": [
+            {
+              "registry_id": "IT02",
+              "registry_name": "阿凱工牌",
+              "source_event_ids": [
+                "MS06",
+                "BR02"
+              ],
+              "prerequisite": "僅當下列來源事件的完整條件成立且玩家選擇其發放結果時取得；站位本身不發物品。",
+              "source_events": [
+                {
+                  "id": "MS06",
+                  "conditions": {
+                    "all": [
+                      "day>=6",
+                      "rank>=2",
+                      "alive",
+                      "MS05 resolved"
+                    ]
+                  },
+                  "choices_or_actions": [
+                    "保留工牌",
+                    "暫時不碰，日後仍可領"
+                  ],
+                  "outcome": [
+                    "kai_absent",
+                    "kai_aftermath",
+                    "close_BR01",
+                    "IT02 available"
+                  ]
+                },
+                {
+                  "id": "BR02",
+                  "conditions": {
+                    "all": [
+                      "alive",
+                      "day>=6",
+                      "rank>=2",
+                      "kai_absent"
+                    ],
+                    "any": [
+                      "owns IT02",
+                      "MS06"
+                    ],
+                    "not": [
+                      "finale_committed"
+                    ]
+                  },
+                  "choices_or_actions": "主角把阿凱工牌翻到有名字那面。小雨：「謝謝你沒有把他當空位。」",
+                  "outcome": "F_xiaoyu+6；kai_remembered；IT02"
+                }
+              ],
+              "screen_flow": "點地走近→點熱點→進入來源事件→依完整選項確認→僅在對應outcome提交後存入背包/筆記",
+              "repeat": "每局一份；紀念物不消耗",
+              "lasting_result": "紀念；主線後仍可領",
+              "latestUse": "紀念；主線後仍可領",
+              "sourceDifference": null
+            }
+          ]
+        },
+        {
+          "id": "M03-H02",
+          "label": "床位／入睡",
+          "node_id": "M03-N05",
+          "position": [
+            299,
+            310
+          ],
+          "tap_target": [
+            275,
+            286,
+            48,
+            48
+          ],
+          "kind": "互動",
+          "registry_ids": [],
+          "target_scene": null,
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": [],
+          "adult_branch_ids": [
+            "BR34"
+          ]
+        },
+        {
+          "id": "M03-H03",
+          "label": "援助約定",
+          "node_id": "M03-N06",
+          "position": [
+            91,
+            502
+          ],
+          "tap_target": [
+            67,
+            478,
+            48,
+            48
+          ],
+          "kind": "情報",
+          "registry_ids": [
+            "I02"
+          ],
+          "target_scene": null,
+          "states": [
+            "hidden",
+            "available",
+            "reading",
+            "claimed",
+            "reread"
+          ],
+          "acquisition": [
+            {
+              "registry_id": "I02",
+              "registry_name": "無交換條件的援助約定",
+              "source_event_ids": [
+                "MS09"
+              ],
+              "prerequisite": "僅當下列來源事件的完整條件成立且玩家選擇其發放結果時取得；站位本身不發物品。",
+              "source_events": [
+                {
+                  "id": "MS09",
+                  "conditions": {
+                    "all": [
+                      "day>=12",
+                      "rank>=3",
+                      "alive",
+                      "MS08",
+                      "F_member>=60"
+                    ]
+                  },
+                  "choices_or_actions": [
+                    "接受援助",
+                    "稍後決定"
+                  ],
+                  "outcome": [
+                    "help_accepted",
+                    "I02",
+                    "IT03"
+                  ]
+                }
+              ],
+              "screen_flow": "點地走近→點熱點→進入來源事件→依完整選項確認→僅在對應outcome提交後存入背包/筆記",
+              "repeat": "唯一資訊，回顧不重發",
+              "lasting_result": "與電話同時取得，必要主線資訊",
+              "latestUse": "與電話同時取得，必要主線資訊",
+              "sourceDifference": null
+            }
+          ]
+        },
+        {
+          "id": "M03-H04",
+          "label": "電話／接應情報",
+          "node_id": "M03-N07",
+          "position": [
+            299,
+            502
+          ],
+          "tap_target": [
+            275,
+            478,
+            48,
+            48
+          ],
+          "kind": "道具",
+          "registry_ids": [
+            "IT03",
+            "I08"
+          ],
+          "target_scene": null,
+          "states": [
+            "hidden",
+            "available",
+            "reading",
+            "claimed",
+            "reread"
+          ],
+          "acquisition": [
+            {
+              "registry_id": "IT03",
+              "registry_name": "私人電話",
+              "source_event_ids": [
+                "MS09"
+              ],
+              "prerequisite": "僅當下列來源事件的完整條件成立且玩家選擇其發放結果時取得；站位本身不發物品。",
+              "source_events": [
+                {
+                  "id": "MS09",
+                  "conditions": {
+                    "all": [
+                      "day>=12",
+                      "rank>=3",
+                      "alive",
+                      "MS08",
+                      "F_member>=60"
+                    ]
+                  },
+                  "choices_or_actions": [
+                    "接受援助",
+                    "稍後決定"
+                  ],
+                  "outcome": [
+                    "help_accepted",
+                    "I02",
+                    "IT03"
+                  ]
+                }
+              ],
+              "screen_flow": "點地走近→點熱點→進入來源事件→依完整選項確認→僅在對應outcome提交後存入背包/筆記",
+              "repeat": "每局一份；紀念物不消耗",
+              "lasting_result": "安排逃離日期；必要但有固定可達援助途徑",
+              "latestUse": "安排逃離日期；必要但有固定可達援助途徑",
+              "sourceDifference": null
+            },
+            {
+              "registry_id": "I08",
+              "registry_name": "警車接應標誌",
+              "source_event_ids": [
+                "MS10"
+              ],
+              "prerequisite": "僅當下列來源事件的完整條件成立且玩家選擇其發放結果時取得；站位本身不發物品。",
+              "source_events": [
+                {
+                  "id": "MS10",
+                  "conditions": {
+                    "all": [
+                      "day>=14",
+                      "rank>=3",
+                      "alive",
+                      "MS09",
+                      "owns IT03"
+                    ]
+                  },
+                  "choices_or_actions": [
+                    "選局內日期 max(今天+2, D16)",
+                    "稍後安排"
+                  ],
+                  "outcome": [
+                    "escape_date_selected",
+                    "I08",
+                    "escape_route_ready"
+                  ]
+                }
+              ],
+              "screen_flow": "點地走近→點熱點→進入來源事件→依完整選項確認→僅在對應outcome提交後存入背包/筆記",
+              "repeat": "唯一資訊，回顧不重發",
+              "lasting_result": "電話後必得；不需任何可選情報即可辨認終點",
+              "latestUse": "電話後必得；不需任何可選情報即可辨認終點",
+              "sourceDifference": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scene_id": "M04",
+      "name": "餐廳與休息區",
+      "canvas": [
+        390,
+        844
+      ],
+      "visual": "images/37692f0ef900715406e5.webp",
+      "unlock_rule": "首次自由活動開放；同伴邀約需角色在場、事件未忙碌、雙方意願成立。",
+      "default_exit": "M01",
+      "routeHold": false,
+      "nodes": [
+        {
+          "id": "M04-N01",
+          "x": 195,
+          "y": 628
+        },
+        {
+          "id": "M04-N02",
+          "x": 195,
+          "y": 492
+        },
+        {
+          "id": "M04-N03",
+          "x": 195,
+          "y": 267
+        },
+        {
+          "id": "M04-N04",
+          "x": 97,
+          "y": 421
+        },
+        {
+          "id": "M04-N05",
+          "x": 293,
+          "y": 347
+        },
+        {
+          "id": "M04-N06",
+          "x": 97,
+          "y": 640
+        }
+      ],
+      "adjacency": [
+        [
+          "M04-N01",
+          "M04-N02"
+        ],
+        [
+          "M04-N02",
+          "M04-N03"
+        ],
+        [
+          "M04-N02",
+          "M04-N04"
+        ],
+        [
+          "M04-N03",
+          "M04-N05"
+        ],
+        [
+          "M04-N01",
+          "M04-N06"
+        ]
+      ],
+      "hotspots": [
+        {
+          "id": "M04-H01",
+          "label": "用餐",
+          "node_id": "M04-N03",
+          "position": [
+            195,
+            267
+          ],
+          "tap_target": [
+            171,
+            243,
+            48,
+            48
+          ],
+          "kind": "互動",
+          "registry_ids": [
+            "IT04"
+          ],
+          "target_scene": null,
+          "states": [
+            "hidden",
+            "available",
+            "reading",
+            "claimed",
+            "reread"
+          ],
+          "acquisition": [
+            {
+              "registry_id": "IT04",
+              "registry_name": "共享餐券",
+              "source_event_ids": [
+                "BR12"
+              ],
+              "prerequisite": "僅當下列來源事件的完整條件成立且玩家選擇其發放結果時取得；站位本身不發物品。",
+              "source_events": [
+                {
+                  "id": "BR12",
+                  "conditions": {
+                    "all": [
+                      "alive",
+                      "day>=3",
+                      "rank>=2",
+                      "MS03",
+                      "S01>=10"
+                    ],
+                    "any": [
+                      "F_xiaoyu>=15",
+                      "mood>=35"
+                    ],
+                    "not": [
+                      "finale_committed"
+                    ]
+                  },
+                  "choices_or_actions": "小雨多出一張共享餐券。玩家選接受或留給需要的人；兩者都是尊重。",
+                  "outcome": "接受得IT04；轉送得F_xiaoyu+5"
+                }
+              ],
+              "screen_flow": "點地走近→點熱點→進入來源事件→依完整選項確認→僅在對應outcome提交後存入背包/筆記",
+              "repeat": "每局一份；確認兌換後消耗，不可重複使用或重領",
+              "lasting_result": "用一次飽食+25，不補已歸零狀態",
+              "latestUse": "用一次飽食+25，不補已歸零狀態",
+              "sourceDifference": null
+            }
+          ]
+        },
+        {
+          "id": "M04-H02",
+          "label": "逐人同行意願",
+          "node_id": "M04-N04",
+          "position": [
+            97,
+            421
+          ],
+          "tap_target": [
+            73,
+            397,
+            48,
+            48
+          ],
+          "kind": "對話",
+          "registry_ids": [
+            "I03"
+          ],
+          "target_scene": null,
+          "states": [
+            "hidden",
+            "available",
+            "reading",
+            "claimed",
+            "reread"
+          ],
+          "acquisition": [
+            {
+              "registry_id": "I03",
+              "registry_name": "同行者的明確意願",
+              "source_event_ids": [
+                "BR24"
+              ],
+              "prerequisite": "僅當下列來源事件的完整條件成立且玩家選擇其發放結果時取得；站位本身不發物品。",
+              "source_events": [
+                {
+                  "id": "BR24",
+                  "conditions": {
+                    "all": [
+                      "alive",
+                      "day>=15",
+                      "rank>=3",
+                      "MS10"
+                    ],
+                    "any": [
+                      "F_xiaoyu>=40",
+                      "F_lin>=40"
+                    ],
+                    "not": [
+                      "finale_committed"
+                    ]
+                  },
+                  "choices_or_actions": "主角分別問是否願意同行。每個人能答願意、需要時間、不願意；不替對方作決定。",
+                  "outcome": "I03；companion_consent_xiaoyu 或 companion_consent_lin"
+                }
+              ],
+              "screen_flow": "點地走近→點熱點→進入來源事件→依完整選項確認→僅在對應outcome提交後存入背包/筆記",
+              "repeat": "唯一資訊，回顧不重發",
+              "lasting_result": "逐人記錄，不等於戀愛同意",
+              "latestUse": "逐人記錄，不等於戀愛同意",
+              "sourceDifference": null
+            }
+          ],
+          "character_picker": {
+            "event_id": "BR24",
+            "people": [
+              "小雨",
+              "林若晴"
+            ],
+            "flow": "點角色→分別顯示願意/需要時間/不願意→記錄該人當前意願",
+            "repeat": "每日每人最多更新一次；首次I03建立一次，其後不加重複獎",
+            "relationship": "同行可為朋友；戀愛仍獨佔且需另有明確同意"
+          }
+        },
+        {
+          "id": "M04-H03",
+          "label": "夜間賭桌／還款",
+          "node_id": "M04-N05",
+          "position": [
+            293,
+            347
+          ],
+          "tap_target": [
+            269,
+            323,
+            48,
+            48
+          ],
+          "kind": "對話",
+          "registry_ids": [],
+          "target_scene": null,
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": [],
+          "adult_branch_ids": [
+            "BR31",
+            "BR34"
+          ],
+          "debt_panel": {
+            "account": "gambling_debt_only",
+            "entry": "查看借籌帳→預覽本次支付→確認償還",
+            "payment": "min(remaining_gambling_debt,可用生活零用錢)",
+            "zero_rule": "餘債=0顯示已清償且支付停用；無餘額仍可查看",
+            "separate_from": "BR36 commission debt at M05-H01",
+            "authorization": "只處理BR31既有故事借籌帳；不重新發放BR31收入"
+          }
+        },
+        {
+          "id": "M04-H04",
+          "label": "獨處休息",
+          "node_id": "M04-N06",
+          "position": [
+            97,
+            640
+          ],
+          "tap_target": [
+            73,
+            616,
+            48,
+            48
+          ],
+          "kind": "互動",
+          "registry_ids": [],
+          "target_scene": null,
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": []
+        }
+      ]
+    },
+    {
+      "scene_id": "M05",
+      "name": "行政與檔案室",
+      "canvas": [
+        390,
+        844
+      ],
+      "visual": "images/602807b875ac2b26dd49.webp",
+      "unlock_rule": "接待與陪同工作區：持有當次任務授權即可進，允許R1/R2的T10/T11/T17指定流程；任務結束返回。自由探索檔案區：MS07 D9且R3才開；各物品仍須來源事件完整條件。BR19及BR36各自合法支線授權可到接待，不需要自由探索權。",
+      "default_exit": "M01",
+      "routeHold": false,
+      "nodes": [
+        {
+          "id": "M05-N01",
+          "x": 195,
+          "y": 628
+        },
+        {
+          "id": "M05-N02",
+          "x": 195,
+          "y": 483
+        },
+        {
+          "id": "M05-N03",
+          "x": 195,
+          "y": 267
+        },
+        {
+          "id": "M05-N04",
+          "x": 82,
+          "y": 483
+        },
+        {
+          "id": "M05-N05",
+          "x": 308,
+          "y": 483
+        },
+        {
+          "id": "M05-N06",
+          "x": 195,
+          "y": 660
+        }
+      ],
+      "adjacency": [
+        [
+          "M05-N01",
+          "M05-N02"
+        ],
+        [
+          "M05-N02",
+          "M05-N03"
+        ],
+        [
+          "M05-N02",
+          "M05-N04"
+        ],
+        [
+          "M05-N02",
+          "M05-N05"
+        ],
+        [
+          "M05-N01",
+          "M05-N06"
+        ]
+      ],
+      "hotspots": [
+        {
+          "id": "M05-H01",
+          "label": "接待／佣金返還",
+          "node_id": "M05-N03",
+          "position": [
+            195,
+            267
+          ],
+          "tap_target": [
+            171,
+            243,
+            48,
+            48
+          ],
+          "kind": "對話",
+          "registry_ids": [],
+          "target_scene": null,
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": [],
+          "adult_branch_ids": [
+            "BR36"
+          ],
+          "debt_panel": {
+            "event_id": "BR36",
+            "account": "commission_debt_only",
+            "payment": "min(remaining_commission_debt,可用生活零用錢)",
+            "zero_rule": "餘債=0不再扣款；首次承認和清償各自獎一次",
+            "separate_from": "M04-H03 gambling debt"
+          }
+        },
+        {
+          "id": "M05-H02",
+          "label": "核對名冊",
+          "node_id": "M05-N04",
+          "position": [
+            82,
+            483
+          ],
+          "tap_target": [
+            58,
+            459,
+            48,
+            48
+          ],
+          "kind": "道具",
+          "registry_ids": [
+            "IT06"
+          ],
+          "target_scene": null,
+          "states": [
+            "hidden",
+            "available",
+            "reading",
+            "claimed",
+            "reread"
+          ],
+          "acquisition": [
+            {
+              "registry_id": "IT06",
+              "registry_name": "雙版名冊",
+              "source_event_ids": [
+                "MS07",
+                "BR23"
+              ],
+              "prerequisite": "僅當下列來源事件的完整條件成立且玩家選擇其發放結果時取得；站位本身不發物品。",
+              "source_events": [
+                {
+                  "id": "MS07",
+                  "conditions": {
+                    "all": [
+                      "day>=9",
+                      "rank>=3",
+                      "alive",
+                      "MS06"
+                    ]
+                  },
+                  "choices_or_actions": [
+                    "保留待核實副本",
+                    "稍後整理"
+                  ],
+                  "outcome": [
+                    "records_open",
+                    "IT06 available",
+                    "boss_route_visible"
+                  ]
+                },
+                {
+                  "id": "BR23",
+                  "conditions": {
+                    "all": [
+                      "alive",
+                      "day>=9",
+                      "rank>=3",
+                      "MS07"
+                    ],
+                    "any": [
+                      "owns IT06",
+                      "S05>=20"
+                    ],
+                    "not": [
+                      "finale_committed"
+                    ]
+                  },
+                  "choices_or_actions": "玩家點兩份同名記錄，讓共同日期亮起。若晴：「核對，是為了不要再漏掉誰。」",
+                  "outcome": "records_checked；F_lin+8"
+                }
+              ],
+              "screen_flow": "點地走近→點熱點→進入來源事件→依完整選項確認→僅在對應outcome提交後存入背包/筆記",
+              "repeat": "每局一份；紀念物不消耗",
+              "lasting_result": "故事核對；不是真實資料",
+              "latestUse": "故事核對；不是真實資料",
+              "sourceDifference": null
+            }
+          ]
+        },
+        {
+          "id": "M05-H03",
+          "label": "圖示規則",
+          "node_id": "M05-N05",
+          "position": [
+            308,
+            483
+          ],
+          "tap_target": [
+            284,
+            459,
+            48,
+            48
+          ],
+          "kind": "情報",
+          "registry_ids": [
+            "I04"
+          ],
+          "target_scene": null,
+          "states": [
+            "hidden",
+            "available",
+            "reading",
+            "claimed",
+            "reread"
+          ],
+          "acquisition": [
+            {
+              "registry_id": "I04",
+              "registry_name": "巡邏圖示規則",
+              "source_event_ids": [
+                "BR09"
+              ],
+              "prerequisite": "僅當下列來源事件的完整條件成立且玩家選擇其發放結果時取得；站位本身不發物品。",
+              "source_events": [
+                {
+                  "id": "BR09",
+                  "conditions": {
+                    "all": [
+                      "alive",
+                      "day>=11",
+                      "rank>=3",
+                      "MS07",
+                      "S07>=15"
+                    ],
+                    "any": [
+                      "F_zhou>=25",
+                      "wisdom>=35"
+                    ],
+                    "not": [
+                      "finale_committed"
+                    ]
+                  },
+                  "choices_or_actions": "老周把圖示卡排成「停、看、走」。主角按卡片逐張預覽純遊戲安全格。",
+                  "outcome": "I04"
+                }
+              ],
+              "screen_flow": "點地走近→點熱點→進入來源事件→依完整選項確認→僅在對應outcome提交後存入背包/筆記",
+              "repeat": "唯一資訊，回顧不重發",
+              "lasting_result": "可選：追逐前多一次完整預覽",
+              "latestUse": "可選：追逐前多一次完整預覽",
+              "sourceDifference": null
+            }
+          ]
+        },
+        {
+          "id": "M05-H04",
+          "label": "封存櫃",
+          "node_id": "M05-N01",
+          "position": [
+            195,
+            628
+          ],
+          "tap_target": [
+            171,
+            604,
+            48,
+            48
+          ],
+          "kind": "鎖定",
+          "registry_ids": [
+            "IT05"
+          ],
+          "target_scene": null,
+          "states": [
+            "hidden",
+            "available",
+            "reading",
+            "claimed",
+            "reread"
+          ],
+          "acquisition": [
+            {
+              "registry_id": "IT05",
+              "registry_name": "劇情備用鑰匙",
+              "source_event_ids": [
+                "BR07"
+              ],
+              "prerequisite": "僅當下列來源事件的完整條件成立且玩家選擇其發放結果時取得；站位本身不發物品。",
+              "source_events": [
+                {
+                  "id": "BR07",
+                  "conditions": {
+                    "all": [
+                      "alive",
+                      "day>=12",
+                      "rank>=3",
+                      "MS07",
+                      "S05>=15"
+                    ],
+                    "any": [
+                      "F_lin>=35",
+                      "wisdom>=45"
+                    ],
+                    "not": [
+                      "finale_committed"
+                    ]
+                  },
+                  "choices_or_actions": "若晴交出劇情備用鑰匙：「它只能打開故事裡那道藍門，別把希望全放上去。」",
+                  "outcome": "IT05；F_lin+3"
+                }
+              ],
+              "screen_flow": "點地走近→點熱點→進入來源事件→依完整選項確認→僅在對應outcome提交後存入背包/筆記",
+              "repeat": "每局一份；紀念物不消耗",
+              "lasting_result": "可選：跳過藍門圖案操作，不跳追逐及牆面",
+              "latestUse": "可選：開啟大門路線，保留追逐段，跳過ESC-S06攀牆挑戰；無鑰匙仍可走較難牆側路線",
+              "sourceDifference": "舊熱點摘要與較新道具規則不同：沿新規則開大門、保留追逐、跳過ESC-S06攀牆；本處不發放鑰匙。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scene_id": "M06",
+      "name": "倉庫",
+      "canvas": [
+        390,
+        844
+      ],
+      "visual": "images/6b8020692b77bd8220fc.webp",
+      "unlock_rule": "後勤自由活動開放；圖案與護具各自依支線條件，未解鎖不阻擋主要逃離。",
+      "default_exit": "M01",
+      "routeHold": false,
+      "nodes": [
+        {
+          "id": "M06-N01",
+          "x": 195,
+          "y": 660
+        },
+        {
+          "id": "M06-N02",
+          "x": 78,
+          "y": 492
+        },
+        {
+          "id": "M06-N03",
+          "x": 78,
+          "y": 270
+        },
+        {
+          "id": "M06-N04",
+          "x": 312,
+          "y": 270
+        },
+        {
+          "id": "M06-N05",
+          "x": 312,
+          "y": 492
+        },
+        {
+          "id": "M06-N06",
+          "x": 195,
+          "y": 270
+        }
+      ],
+      "adjacency": [
+        [
+          "M06-N01",
+          "M06-N02"
+        ],
+        [
+          "M06-N02",
+          "M06-N03"
+        ],
+        [
+          "M06-N03",
+          "M06-N06"
+        ],
+        [
+          "M06-N06",
+          "M06-N04"
+        ],
+        [
+          "M06-N04",
+          "M06-N05"
+        ],
+        [
+          "M06-N05",
+          "M06-N01"
+        ]
+      ],
+      "hotspots": [
+        {
+          "id": "M06-H01",
+          "label": "後勤／風險提議",
+          "node_id": "M06-N06",
+          "position": [
+            195,
+            270
+          ],
+          "tap_target": [
+            171,
+            246,
+            48,
+            48
+          ],
+          "kind": "對話",
+          "registry_ids": [],
+          "target_scene": null,
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": [],
+          "adult_branch_ids": [
+            "BR32",
+            "BR33"
+          ]
+        },
+        {
+          "id": "M06-H02",
+          "label": "護具籃",
+          "node_id": "M06-N02",
+          "position": [
+            78,
+            492
+          ],
+          "tap_target": [
+            54,
+            468,
+            48,
+            48
+          ],
+          "kind": "道具",
+          "registry_ids": [
+            "IT07"
+          ],
+          "target_scene": null,
+          "states": [
+            "hidden",
+            "available",
+            "reading",
+            "claimed",
+            "reread"
+          ],
+          "acquisition": [
+            {
+              "registry_id": "IT07",
+              "registry_name": "布面護具",
+              "source_event_ids": [
+                "BR10"
+              ],
+              "prerequisite": "僅當下列來源事件的完整條件成立且玩家選擇其發放結果時取得；站位本身不發物品。",
+              "source_events": [
+                {
+                  "id": "BR10",
+                  "conditions": {
+                    "all": [
+                      "alive",
+                      "day>=13",
+                      "rank>=3",
+                      "MS07",
+                      "S15>=15"
+                    ],
+                    "any": [
+                      "F_biao>=25",
+                      "satiety>=40"
+                    ],
+                    "not": [
+                      "finale_committed"
+                    ]
+                  },
+                  "choices_or_actions": "玩家點選布面護具拿取。阿標：「擦傷也值得被照顧。」",
+                  "outcome": "IT07"
+                }
+              ],
+              "screen_flow": "點地走近→點熱點→進入來源事件→依完整選項確認→僅在對應outcome提交後存入背包/筆記",
+              "repeat": "每局一份；紀念物不消耗",
+              "lasting_result": "可選：牆面每次挑戰首個局部失誤不退格",
+              "latestUse": "可選：牆面每次挑戰首個局部失誤不退格",
+              "sourceDifference": null
+            }
+          ]
+        },
+        {
+          "id": "M06-H03",
+          "label": "圖案觀察",
+          "node_id": "M06-N05",
+          "position": [
+            312,
+            492
+          ],
+          "tap_target": [
+            288,
+            468,
+            48,
+            48
+          ],
+          "kind": "情報",
+          "registry_ids": [
+            "I05"
+          ],
+          "target_scene": null,
+          "states": [
+            "hidden",
+            "available",
+            "reading",
+            "claimed",
+            "reread"
+          ],
+          "acquisition": [
+            {
+              "registry_id": "I05",
+              "registry_name": "換班光環圖案",
+              "source_event_ids": [
+                "BR08"
+              ],
+              "prerequisite": "僅當下列來源事件的完整條件成立且玩家選擇其發放結果時取得；站位本身不發物品。",
+              "source_events": [
+                {
+                  "id": "BR08",
+                  "conditions": {
+                    "all": [
+                      "alive",
+                      "day>=12",
+                      "rank>=3",
+                      "MS07",
+                      "S08>=15"
+                    ],
+                    "any": [
+                      "F_biao>=30",
+                      "wisdom>=40"
+                    ],
+                    "not": [
+                      "finale_committed"
+                    ]
+                  },
+                  "choices_or_actions": "阿標指著舞台巡邏板：「藍、白、藍。這只是這張板上的規則。」玩家點三個光圈預覽。",
+                  "outcome": "I05"
+                }
+              ],
+              "screen_flow": "點地走近→點熱點→進入來源事件→依完整選項確認→僅在對應outcome提交後存入背包/筆記",
+              "repeat": "唯一資訊，回顧不重發",
+              "lasting_result": "可選：三色虛構模式預先顯示，非真實時刻表",
+              "latestUse": "可選：三色虛構模式預先顯示，非真實時刻表",
+              "sourceDifference": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scene_id": "M07",
+      "name": "庭院與大門",
+      "canvas": [
+        390,
+        844
+      ],
+      "visual": "images/28ad804d4a1a0399304c.webp",
+      "unlock_rule": "庭院首次自由活動開放；集合出口只在已接出差任務時開；逃離入口只在電話與確認日期皆成立時開。",
+      "default_exit": "M01",
+      "routeHold": false,
+      "nodes": [
+        {
+          "id": "M07-N01",
+          "x": 195,
+          "y": 657
+        },
+        {
+          "id": "M07-N02",
+          "x": 62,
+          "y": 487
+        },
+        {
+          "id": "M07-N03",
+          "x": 62,
+          "y": 275
+        },
+        {
+          "id": "M07-N04",
+          "x": 328,
+          "y": 275
+        },
+        {
+          "id": "M07-N05",
+          "x": 328,
+          "y": 487
+        },
+        {
+          "id": "M07-N06",
+          "x": 195,
+          "y": 275
+        }
+      ],
+      "adjacency": [
+        [
+          "M07-N01",
+          "M07-N02"
+        ],
+        [
+          "M07-N02",
+          "M07-N03"
+        ],
+        [
+          "M07-N03",
+          "M07-N06"
+        ],
+        [
+          "M07-N06",
+          "M07-N04"
+        ],
+        [
+          "M07-N04",
+          "M07-N05"
+        ],
+        [
+          "M07-N05",
+          "M07-N01"
+        ]
+      ],
+      "hotspots": [
+        {
+          "id": "M07-H01",
+          "label": "集合出口",
+          "node_id": "M07-N06",
+          "position": [
+            195,
+            275
+          ],
+          "tap_target": [
+            171,
+            251,
+            48,
+            48
+          ],
+          "kind": "鎖定",
+          "registry_ids": [],
+          "target_scene": "M08",
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": []
+        },
+        {
+          "id": "M07-H02",
+          "label": "舊合照",
+          "node_id": "M07-N02",
+          "position": [
+            62,
+            487
+          ],
+          "tap_target": [
+            38,
+            463,
+            48,
+            48
+          ],
+          "kind": "道具",
+          "registry_ids": [
+            "IT08"
+          ],
+          "target_scene": null,
+          "states": [
+            "hidden",
+            "available",
+            "reading",
+            "claimed",
+            "reread"
+          ],
+          "acquisition": [
+            {
+              "registry_id": "IT08",
+              "registry_name": "舊合照",
+              "source_event_ids": [
+                "BR22"
+              ],
+              "prerequisite": "僅當下列來源事件的完整條件成立且玩家選擇其發放結果時取得；站位本身不發物品。",
+              "source_events": [
+                {
+                  "id": "BR22",
+                  "conditions": {
+                    "all": [
+                      "alive",
+                      "day>=8",
+                      "rank>=3",
+                      "MS06"
+                    ],
+                    "any": [
+                      "owns IT01",
+                      "F_xiaoyu>=30"
+                    ],
+                    "not": [
+                      "finale_committed"
+                    ]
+                  },
+                  "choices_or_actions": "小雨把舊合照拿出，留下阿凱原本的位置。「這樣就夠了。」",
+                  "outcome": "IT08；F_xiaoyu+6"
+                }
+              ],
+              "screen_flow": "點地走近→點熱點→進入來源事件→依完整選項確認→僅在對應outcome提交後存入背包/筆記",
+              "repeat": "每局一份；紀念物不消耗",
+              "lasting_result": "小雨或友情尾聲可見紀念物",
+              "latestUse": "小雨或友情尾聲可見紀念物",
+              "sourceDifference": null
+            }
+          ]
+        },
+        {
+          "id": "M07-H03",
+          "label": "節奏提示",
+          "node_id": "M07-N05",
+          "position": [
+            328,
+            487
+          ],
+          "tap_target": [
+            304,
+            463,
+            48,
+            48
+          ],
+          "kind": "情報",
+          "registry_ids": [
+            "I06"
+          ],
+          "target_scene": null,
+          "states": [
+            "hidden",
+            "available",
+            "reading",
+            "claimed",
+            "reread"
+          ],
+          "acquisition": [
+            {
+              "registry_id": "I06",
+              "registry_name": "牆面節奏提示",
+              "source_event_ids": [
+                "BR11"
+              ],
+              "prerequisite": "僅當下列來源事件的完整條件成立且玩家選擇其發放結果時取得；站位本身不發物品。",
+              "source_events": [
+                {
+                  "id": "BR11",
+                  "conditions": {
+                    "all": [
+                      "alive",
+                      "day>=13",
+                      "rank>=3",
+                      "MS07",
+                      "S17>=15"
+                    ],
+                    "any": [
+                      "wisdom>=40",
+                      "F_bin>=25"
+                    ],
+                    "not": [
+                      "finale_committed"
+                    ]
+                  },
+                  "choices_or_actions": "斌哥拍兩下手，牆面亮起三個虛構圓點。主角依高亮點按，不學攀爬姿勢。",
+                  "outcome": "I06"
+                }
+              ],
+              "screen_flow": "點地走近→點熱點→進入來源事件→依完整選項確認→僅在對應outcome提交後存入背包/筆記",
+              "repeat": "唯一資訊，回顧不重發",
+              "lasting_result": "可選：牆面多一次無懲罰練習",
+              "latestUse": "可選：牆面多一次無懲罰練習",
+              "sourceDifference": null
+            }
+          ]
+        },
+        {
+          "id": "M07-H04",
+          "label": "逃離路線",
+          "node_id": "M07-N01",
+          "position": [
+            195,
+            657
+          ],
+          "tap_target": [
+            171,
+            633,
+            48,
+            48
+          ],
+          "kind": "鎖定",
+          "registry_ids": [],
+          "target_scene": "M09",
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": []
+        }
+      ]
+    },
+    {
+      "scene_id": "M08",
+      "name": "出差場館",
+      "canvas": [
+        390,
+        844
+      ],
+      "visual": "images/73aec26d1f75a6dccb5e.webp",
+      "unlock_rule": "由已接出差任務授權從M07進入；完成行程經M07返抵M02，結算僅一次。IT09另須BR13完整條件，不能任意出差自動給。",
+      "default_exit": "M07",
+      "routeHold": false,
+      "nodes": [
+        {
+          "id": "M08-N01",
+          "x": 195,
+          "y": 267
+        },
+        {
+          "id": "M08-N02",
+          "x": 195,
+          "y": 482
+        },
+        {
+          "id": "M08-N03",
+          "x": 91,
+          "y": 482
+        },
+        {
+          "id": "M08-N04",
+          "x": 299,
+          "y": 482
+        },
+        {
+          "id": "M08-N05",
+          "x": 195,
+          "y": 648
+        }
+      ],
+      "adjacency": [
+        [
+          "M08-N01",
+          "M08-N02"
+        ],
+        [
+          "M08-N02",
+          "M08-N03"
+        ],
+        [
+          "M08-N02",
+          "M08-N04"
+        ],
+        [
+          "M08-N02",
+          "M08-N05"
+        ]
+      ],
+      "hotspots": [
+        {
+          "id": "M08-H01",
+          "label": "抵達登記",
+          "node_id": "M08-N01",
+          "position": [
+            195,
+            267
+          ],
+          "tap_target": [
+            171,
+            243,
+            48,
+            48
+          ],
+          "kind": "互動",
+          "registry_ids": [],
+          "target_scene": null,
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": []
+        },
+        {
+          "id": "M08-H02",
+          "label": "符號觀察",
+          "node_id": "M08-N03",
+          "position": [
+            91,
+            482
+          ],
+          "tap_target": [
+            67,
+            458,
+            48,
+            48
+          ],
+          "kind": "情報",
+          "registry_ids": [
+            "I07"
+          ],
+          "target_scene": null,
+          "states": [
+            "hidden",
+            "available",
+            "reading",
+            "claimed",
+            "reread"
+          ],
+          "acquisition": [
+            {
+              "registry_id": "I07",
+              "registry_name": "外部援助符號",
+              "source_event_ids": [
+                "BR16"
+              ],
+              "prerequisite": "僅當下列來源事件的完整條件成立且玩家選擇其發放結果時取得；站位本身不發物品。",
+              "source_events": [
+                {
+                  "id": "BR16",
+                  "conditions": {
+                    "all": [
+                      "alive",
+                      "day>=9",
+                      "rank>=3",
+                      "MS07",
+                      "S09>=15"
+                    ],
+                    "any": [
+                      "wisdom>=30",
+                      "F_lin>=20"
+                    ],
+                    "not": [
+                      "finale_committed"
+                    ]
+                  },
+                  "choices_or_actions": "若晴看著虛構旅行申請稿：「連地名都不存在。」玩家點兩個矛盾圖示。",
+                  "outcome": "I07；F_lin+6"
+                }
+              ],
+              "screen_flow": "點地走近→點熱點→進入來源事件→依完整選項確認→僅在對應outcome提交後存入背包/筆記",
+              "repeat": "唯一資訊，回顧不重發",
+              "lasting_result": "可選：警車確認畫面直接標亮故事符號",
+              "latestUse": "可選：警車確認畫面直接標亮故事符號",
+              "sourceDifference": null
+            }
+          ]
+        },
+        {
+          "id": "M08-H03",
+          "label": "場館任務",
+          "node_id": "M08-N04",
+          "position": [
+            299,
+            482
+          ],
+          "tap_target": [
+            275,
+            458,
+            48,
+            48
+          ],
+          "kind": "對話",
+          "registry_ids": [],
+          "target_scene": null,
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": []
+        },
+        {
+          "id": "M08-H04",
+          "label": "回程紀念",
+          "node_id": "M08-N05",
+          "position": [
+            195,
+            648
+          ],
+          "tap_target": [
+            171,
+            624,
+            48,
+            48
+          ],
+          "kind": "道具",
+          "registry_ids": [
+            "IT09"
+          ],
+          "target_scene": "M07",
+          "states": [
+            "hidden",
+            "available",
+            "reading",
+            "claimed",
+            "reread"
+          ],
+          "acquisition": [
+            {
+              "registry_id": "IT09",
+              "registry_name": "回程紀念票",
+              "source_event_ids": [
+                "BR13"
+              ],
+              "prerequisite": "僅當下列來源事件的完整條件成立且玩家選擇其發放結果時取得；站位本身不發物品。",
+              "source_events": [
+                {
+                  "id": "BR13",
+                  "conditions": {
+                    "all": [
+                      "alive",
+                      "day>=7",
+                      "rank>=2",
+                      "MS06",
+                      "S03>=15"
+                    ],
+                    "any": [
+                      "F_bin>=20",
+                      "wisdom>=25"
+                    ],
+                    "not": [
+                      "finale_committed"
+                    ]
+                  },
+                  "choices_or_actions": "斌哥拿錯紀念票。玩家點票面故事標記，發現它只記日期、不承諾離開。",
+                  "outcome": "IT09；F_bin+6"
+                }
+              ],
+              "screen_flow": "點地走近→點熱點→進入來源事件→依完整選項確認→僅在對應outcome提交後存入背包/筆記",
+              "repeat": "每局一份；紀念物不消耗",
+              "lasting_result": "出差故事紀念，非通行證",
+              "latestUse": "出差故事紀念，非通行證",
+              "sourceDifference": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scene_id": "M09",
+      "name": "虛構逃離舞台",
+      "canvas": [
+        390,
+        844
+      ],
+      "visual": "images/c9fd754b1aaac6a93ab2.webp",
+      "unlock_rule": "必需條件僅援助→電話→約定日期與進入確認；鑰匙IT05、情報I04/I05/I06、護具IT07均為可選協助。",
+      "default_exit": "ending",
+      "routeHold": false,
+      "nodes": [
+        {
+          "id": "M09-N01",
+          "x": 195,
+          "y": 658
+        },
+        {
+          "id": "M09-N02",
+          "x": 195,
+          "y": 492
+        },
+        {
+          "id": "M09-N03",
+          "x": 83,
+          "y": 462
+        },
+        {
+          "id": "M09-N04",
+          "x": 307,
+          "y": 462
+        },
+        {
+          "id": "M09-N05",
+          "x": 195,
+          "y": 278
+        }
+      ],
+      "adjacency": [
+        [
+          "M09-N01",
+          "M09-N02"
+        ],
+        [
+          "M09-N02",
+          "M09-N03"
+        ],
+        [
+          "M09-N02",
+          "M09-N04"
+        ],
+        [
+          "M09-N03",
+          "M09-N05"
+        ],
+        [
+          "M09-N04",
+          "M09-N05"
+        ]
+      ],
+      "hotspots": [
+        {
+          "id": "M09-H01",
+          "label": "進入挑戰",
+          "node_id": "M09-N01",
+          "position": [
+            195,
+            658
+          ],
+          "tap_target": [
+            171,
+            634,
+            48,
+            48
+          ],
+          "kind": "互動",
+          "registry_ids": [],
+          "target_scene": null,
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": []
+        },
+        {
+          "id": "M09-H02",
+          "label": "節奏區",
+          "node_id": "M09-N02",
+          "position": [
+            195,
+            492
+          ],
+          "tap_target": [
+            171,
+            468,
+            48,
+            48
+          ],
+          "kind": "互動",
+          "registry_ids": [],
+          "target_scene": null,
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": []
+        },
+        {
+          "id": "M09-H03",
+          "label": "接應核對",
+          "node_id": "M09-N05",
+          "position": [
+            195,
+            278
+          ],
+          "tap_target": [
+            171,
+            254,
+            48,
+            48
+          ],
+          "kind": "情報",
+          "registry_ids": [
+            "IT10"
+          ],
+          "target_scene": null,
+          "states": [
+            "hidden",
+            "available",
+            "reading",
+            "claimed",
+            "reread"
+          ],
+          "acquisition": [
+            {
+              "registry_id": "IT10",
+              "registry_name": "安全抵達回條",
+              "source_event_ids": [
+                "MS14"
+              ],
+              "prerequisite": "僅當下列來源事件的完整條件成立且玩家選擇其發放結果時取得；站位本身不發物品。",
+              "source_events": [
+                {
+                  "id": "MS14",
+                  "conditions": {
+                    "all": [
+                      "day>=16",
+                      "rank>=3",
+                      "alive",
+                      "final_choice=escape",
+                      "escape_sequence_complete"
+                    ]
+                  },
+                  "choices_or_actions": [
+                    "上車"
+                  ],
+                  "outcome": [
+                    "E_ESCAPE",
+                    "IT10",
+                    "ending_variant"
+                  ]
+                }
+              ],
+              "screen_flow": "點地走近→點熱點→進入來源事件→依完整選項確認→僅在對應outcome提交後存入背包/筆記",
+              "repeat": "每局一份；紀念物不消耗",
+              "lasting_result": "逃離結局圖鑑，不能在局內交易",
+              "latestUse": "逃離結局圖鑑，不能在局內交易",
+              "sourceDifference": "終局同次結算的安全抵達回條，不在這裡拾取或重領。"
+            }
+          ],
+          "uses_intel": [
+            "I08"
+          ],
+          "use_rule": "I08已在M03 MS10通話選日取得；此處只核對，絕不重發。"
+        }
+      ]
+    },
+    {
+      "scene_id": "M10",
+      "name": "醫務室",
+      "canvas": [
+        390,
+        844
+      ],
+      "visual": "images/b2b5b66d49400e4c5c8d.webp",
+      "unlock_rule": "一般照護與BR35在alive且對應風險或support_offered成立時可獨立開門，不要求BR20、熟練、最低心情、日期、階級或角色好感；已全局0不能復活。",
+      "default_exit": "M01",
+      "routeHold": false,
+      "nodes": [
+        {
+          "id": "M10-N01",
+          "x": 195,
+          "y": 650
+        },
+        {
+          "id": "M10-N02",
+          "x": 195,
+          "y": 492
+        },
+        {
+          "id": "M10-N03",
+          "x": 195,
+          "y": 275
+        },
+        {
+          "id": "M10-N04",
+          "x": 91,
+          "y": 492
+        },
+        {
+          "id": "M10-N05",
+          "x": 299,
+          "y": 492
+        }
+      ],
+      "adjacency": [
+        [
+          "M10-N01",
+          "M10-N02"
+        ],
+        [
+          "M10-N02",
+          "M10-N03"
+        ],
+        [
+          "M10-N02",
+          "M10-N04"
+        ],
+        [
+          "M10-N02",
+          "M10-N05"
+        ]
+      ],
+      "hotspots": [
+        {
+          "id": "M10-H01",
+          "label": "照護對話",
+          "node_id": "M10-N03",
+          "position": [
+            195,
+            275
+          ],
+          "tap_target": [
+            171,
+            251,
+            48,
+            48
+          ],
+          "kind": "對話",
+          "registry_ids": [],
+          "target_scene": null,
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": [],
+          "adult_branch_ids": [
+            "BR35"
+          ]
+        },
+        {
+          "id": "M10-H02",
+          "label": "短暫休息",
+          "node_id": "M10-N04",
+          "position": [
+            91,
+            492
+          ],
+          "tap_target": [
+            67,
+            468,
+            48,
+            48
+          ],
+          "kind": "互動",
+          "registry_ids": [],
+          "target_scene": null,
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": []
+        },
+        {
+          "id": "M10-H03",
+          "label": "支線留言",
+          "node_id": "M10-N05",
+          "position": [
+            299,
+            492
+          ],
+          "tap_target": [
+            275,
+            468,
+            48,
+            48
+          ],
+          "kind": "互動",
+          "registry_ids": [],
+          "target_scene": null,
+          "states": [
+            "locked",
+            "available",
+            "interacting",
+            "completed_or_return"
+          ],
+          "acquisition": []
+        }
+      ]
+    }
+  ],
+  "pending": [
+    "M03宿舍布局未定，保留原AI參照，不開放路徑試走。",
+    "歷史邏輯點位不是v4 AI畫面的像素對齊，不能冒稱正式遊戲尋路／碰撞完成。",
+    "正式場景進入條件、事件選擇提交與物品／情報發放仍待後續串接；走到或看過不算取得。",
+    "人物口吻與文案待B03審稿，不以本批功能驗收代替。"
+  ],
+  "source": {
+    "release": "v4.5-plan-interaction-b01-20261016",
+    "contentHash": "c8cfec4467ca29067d741e26536ac4c51d27e2e5c08677ccc4d76e977389d7a8",
+    "files": [
+      "plan.json:/maps",
+      "plan.json:/narrative/items",
+      "plan.json:/narrative/intel"
+    ]
+  },
+  "acquisitionClassification": {
+    "sourceEntries": 18,
+    "knownOutcomesAwaitingEngineering": [
+      "IT01",
+      "I01",
+      "IT02",
+      "I02",
+      "IT03",
+      "I08",
+      "IT04",
+      "I03",
+      "IT06",
+      "I04",
+      "IT05",
+      "IT07",
+      "I05",
+      "IT08",
+      "I06",
+      "I07",
+      "IT09",
+      "IT10"
+    ],
+    "specificAuthorVariantHolds": [
+      {
+        "id": "I03",
+        "sourceEvent": "BR24",
+        "question": "逐人NPC願意／需要時間／不願意的選取機制未定，不能由好感OR代替。"
+      }
+    ],
+    "newerSourceResolved": [
+      "IT05",
+      "IT10"
+    ],
+    "note": "不能把工程尚未串接一概寫成作者待決；本批仍不以站位／閱讀冒充發放。",
+    "sourceAuditBacklog": [
+      {
+        "id": "I01",
+        "engineeringAudit": "先逐choice ID核對dialogue-proposals、branch-logic-corrections與最新敘事原來源；尚未定為作者待決，不提泛稱問題。",
+        "askAuthorNow": false
+      },
+      {
+        "id": "IT08",
+        "engineeringAudit": "先逐choice ID核對dialogue-proposals、branch-logic-corrections與最新敘事原來源；尚未定為作者待決，不提泛稱問題。",
+        "askAuthorNow": false
+      }
+    ]
+  }
+}

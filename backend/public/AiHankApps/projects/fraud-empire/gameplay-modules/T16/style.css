@@ -1,0 +1,6 @@
+.fraud-t16 { max-width: 42rem; margin: 1rem auto; padding: 1rem; color: #f3eee2; background: #192522; border-radius: 1rem; font: 1rem/1.65 system-ui, sans-serif; }
+.fraud-t16 button { min-height: 48px; padding: .65rem 1rem; margin: .3rem; border: 1px solid #b9c8bd; border-radius: .5rem; background: #e4ebdb; color: #17201b; font: inherit; cursor: pointer; }
+.fraud-t16 button:disabled { opacity: .5; cursor: default; }
+.fraud-t16 button:focus-visible { outline: 3px solid #ffd677; outline-offset: 3px; }
+.fraud-t16 [role="status"] { border-left: 3px solid #e3c57d; padding-left: .8rem; }
+@media (max-width: 480px) { .fraud-t16 { margin: 0; } .fraud-t16 button { width: calc(100% - .6rem); } }
