@@ -1,0 +1,26 @@
+{
+  "id": "/AiHankApps/projects/fraud-empire/play.html",
+  "name": "詐騙帝國 Demo",
+  "short_name": "詐騙帝國",
+  "description": "獨立不計分試玩：辦公室移動、主管任務、票券互動與本機進度。",
+  "start_url": "/AiHankApps/projects/fraud-empire/play.html",
+  "scope": "/AiHankApps/projects/fraud-empire/",
+  "display": "standalone",
+  "background_color": "#10181a",
+  "theme_color": "#202b2e",
+  "icons": [
+    {
+      "src": "player-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "player-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "orientation": "portrait"
+}

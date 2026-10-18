@@ -1,0 +1,7 @@
+.t09-module { max-width: 48rem; margin: auto; padding: 1rem; font: 1rem/1.6 system-ui; color: #eee; background: #18212a; }
+.t09-module button { min-height: 48px; margin: .3rem; padding: .65rem 1rem; border: 1px solid #b5a47c; border-radius: .4rem; background: #293a46; color: #fff; font: inherit; cursor: pointer; }
+.t09-module button[aria-pressed="true"] { outline: 3px solid #efcb7e; }
+.t09-module button:disabled { opacity: .5; cursor: default; }
+.t09-module :focus-visible { outline: 3px solid #efcb7e; outline-offset: 3px; }
+.t09-module output { display: block; padding: .8rem; border-left: 3px solid #efcb7e; }
+.t09-module img { display: block; max-width: 100%; height: auto; }

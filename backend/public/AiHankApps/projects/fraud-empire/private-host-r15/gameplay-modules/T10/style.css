@@ -1,0 +1,6 @@
+.fe-t10 { max-width: 42rem; margin: auto; padding: 1rem; font: 1rem/1.6 system-ui, sans-serif; color: #f0e9dc; background: #242b30; }
+.fe-t10 button { min-height: 48px; margin: .35rem; padding: .6rem .9rem; border: 2px solid #aaa18e; border-radius: .4rem; background: #343f46; color: #fff; font: inherit; cursor: pointer; }
+.fe-t10 button[aria-pressed="true"] { background: #725225; border-color: #ffdb8a; }
+.fe-t10 button:focus-visible { outline: 3px solid #ffdb8a; outline-offset: 3px; }
+.fe-t10 button:disabled { opacity: .65; cursor: default; }
+.fe-t10 [role="status"] { min-height: 2em; color: #ffdb8a; }

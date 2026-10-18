@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "id": "T05-M08",
+  "version": "t05-connected-source-wire-20261018-r1",
+  "source": {
+    "version": "v4.1-connected-proposals-20261015",
+    "planHash": "a4abd19dadb43bb2e81f019406bbe601fc78e876793d0385b81df4811e892388",
+    "catalogHash": "a95f81b8e34792c34b7ee9925ffa5355eddd177bd93b7cff433d19c688c45662",
+    "topic": "/topics/4",
+    "scene": "M08"
+  },
+  "steps": [
+    {
+      "id": "T05-S01",
+      "title": "抵達鐘塔會場",
+      "instruction": "點會場入口。",
+      "success": "開始一宗鐘塔事件",
+      "actionText": null
+    },
+    {
+      "id": "T05-S02",
+      "title": "選第一個場景視角",
+      "instruction": "點鐘門，再點孟柏。",
+      "success": "取得當事人視角",
+      "actionText": "走到鐘門後點孟柏播放固定片段；得到當事人所見「唯一鐘聲」。"
+    },
+    {
+      "id": "T05-S03",
+      "title": "第二個權威露出破綻",
+      "instruction": "點月門，再點銅面。",
+      "success": "兩個視角並存、不覆蓋",
+      "actionText": "觀看銅面預製表演；點比較兩幕使不同鐘聲同屏，沒有玩家扮演問訊。"
+    },
+    {
+      "id": "T05-S04",
+      "title": "第三幕推翻共同前提",
+      "instruction": "點星門；觀察燈光三段循環，在共同舞台亮起時點定格。",
+      "success": "在共同中央階段取得跨兩門影子；不能用單門影子代替",
+      "actionText": "舞台依鐘門→共同中央→月門三個明示階段循環。玩家只有兩次定格機會；共同中央階段點定格，抓到同一演員影子跨兩門，揭露共同舞台。點錯只得到單門影子並用掉一次機會。可用無倒數逐格模式，每次點下一格再決定定格，機會相同。"
+    },
+    {
+      "id": "T05-S05",
+      "title": "讓事件停在哪裡",
+      "instruction": "點孟柏，再選叫停表演。",
+      "success": "明確選定分支",
+      "actionText": "叫停直接進離場動畫；不介入只播放非互動後果，不能調整壓力或金額。"
+    },
+    {
+      "id": "T05-S06",
+      "title": "會場事件結算",
+      "instruction": "點三幕摘要，再點結算。",
+      "success": "視角齊全、分支已存",
+      "actionText": null
+    },
+    {
+      "id": "T05-S07",
+      "title": "回程的沉默",
+      "instruction": "點回辦公室，再點孟柏紀錄。",
+      "success": "回到循環且有紀錄",
+      "actionText": "返回M02；保留叫停或不介入的關係後果。此事件不解鎖假機關等級或持續受害名單。"
+    }
+  ],
+  "media": {
+    "arrival": {
+      "approved": false,
+      "available": false,
+      "reason": "M08獨立場景／走入素材未交付"
+    },
+    "bell": {
+      "approved": false,
+      "available": false,
+      "reason": "當事人固定一次鐘聲片段未交付"
+    },
+    "moon": {
+      "approved": false,
+      "available": false,
+      "reason": "銅面固定二次鐘聲片段未交付"
+    },
+    "shadow": {
+      "approved": false,
+      "available": false,
+      "reason": "核准跨門同一演員影子素材未交付"
+    }
+  },
+  "ruleCheck": {
+    "phaseOrder": [
+      "bell",
+      "common",
+      "moon"
+    ],
+    "initialPhase": "common",
+    "attempts": 2,
+    "automaticCycleMilliseconds": null,
+    "scope": "engineering-rule-wire-only-not-event-evidence"
+  },
+  "referenceFigures": [
+    {
+      "id": "T05-S01",
+      "title": "抵達鐘塔會場",
+      "volume": 4,
+      "page": 35,
+      "status": "AI 遊戲介面／劇情示意；設計提案",
+      "src": "images/265f137035ce63958ab6.webp",
+      "width": 941,
+      "height": 1672
+    },
+    {
+      "id": "T05-S02",
+      "title": "選第一個場景視角",
+      "volume": 4,
+      "page": 36,
+      "status": "AI 遊戲介面／劇情示意；設計提案",
+      "src": "images/4ef51cf25f04958276e7.webp",
+      "width": 941,
+      "height": 1672
+    },
+    {
+      "id": "T05-S03",
+      "title": "第二個權威露出破綻",
+      "volume": 4,
+      "page": 37,
+      "status": "AI 遊戲介面／劇情示意；設計提案",
+      "src": "images/662e700db1caf446f69a.webp",
+      "width": 941,
+      "height": 1672
+    },
+    {
+      "id": "T05-S04",
+      "title": "第三幕推翻共同前提",
+      "volume": 4,
+      "page": 38,
+      "status": "AI 遊戲介面／劇情示意；設計提案",
+      "src": "images/cb74ae1eca756dcfc2a2.webp",
+      "width": 941,
+      "height": 1672
+    }
+  ],
+  "choices": [
+    {
+      "id": "stop",
+      "label": "叫停表演",
+      "consequence": "孟柏離場",
+      "reservation": "孟柏離場",
+      "description": "叫停直接進離場動畫。此處只預留原稿的離場片段。"
+    },
+    {
+      "id": "nonintervention",
+      "label": "不介入",
+      "consequence": "既定非互動傷害後果",
+      "reservation": "既定非互動後果",
+      "description": "不介入只播放非互動後果，不能調整壓力或金額。此處不補寫具體傷害內容。"
+    }
+  ],
+  "approvedSpokenLines": [],
+  "variationsAdopted": false
+}

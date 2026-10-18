@@ -1,0 +1,11 @@
+.t03-module { color: #f1e6cb; background: #241f19; padding: 1rem; font: 1rem/1.6 system-ui, sans-serif; border-radius: 12px; max-width: 60rem; margin: auto; }
+.t03-module * { box-sizing: border-box; }
+.t03-module button { min-height: 48px; padding: .65rem .9rem; margin: .25rem; border: 1px solid #cda765; border-radius: 7px; background: #40372c; color: #fff4da; font: inherit; cursor: pointer; max-width: 100%; }
+.t03-module button[aria-pressed="true"] { background: #785627; outline: 2px solid #ffd58b; }
+.t03-module button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.t03-module [role="status"] { border-left: 4px solid #e4bc74; padding: .65rem; background: #352e25; }
+.t03-module h3 { border-top: 1px solid #746047; padding-top: 1rem; }
+.t03-module p { overflow-wrap: anywhere; }
+
+.t03-reference { max-width: 60rem; margin: 1rem auto; font: 1rem/1.6 system-ui, sans-serif; }
+.t03-reference img { display: block; max-width: 100%; width: 28rem; height: auto; margin: 1rem auto; }

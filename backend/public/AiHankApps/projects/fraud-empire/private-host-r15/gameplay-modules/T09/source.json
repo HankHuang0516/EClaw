@@ -1,0 +1,1127 @@
+{
+  "sourceCommit": "9a5ed2af3a4bc9e6b1a7f474ac8f460b772c6883",
+  "status": "v4 提案；未批准數值／golden 未交付",
+  "topic": {
+    "id": "T09",
+    "name": "假旅遊申請",
+    "mode": "出差",
+    "available_modes": [
+      "動態",
+      "出差"
+    ],
+    "wisdom_min": 30,
+    "rank_min": 2,
+    "duration_game_minutes": 100,
+    "base_score": 600,
+    "growth_type": "oneoff",
+    "objective": "在虛構逆月旅行會場核對一份根本不能成立的行程：日期、夜數、房間承諾互相衝突；選擇取消或保留爭議，留下旅人後果。",
+    "setup": "成年NPC梁葵與周舟原定同遊。只有架空季曆「霧日1至3」、月海渡船及浮島旅舍，沒有真實國家、簽證、申請表或身分資料。",
+    "steps": [
+      {
+        "id": "T09-S01",
+        "title": "抵達逆月旅行展",
+        "screen_type": "map",
+        "instruction": "點出發（30分鐘）。",
+        "action": "在辦公室查看林若晴指派的旅行爭議，確認出發後推進30分鐘抵達M08；往返含在100分鐘內。",
+        "visible_before": [
+          "辦公室出發前",
+          "約定2人、2晚，霧日1至3",
+          "出差100分鐘含往返"
+        ],
+        "visible_after": [
+          "抵達M08逆月旅行展",
+          "開始核對行程"
+        ],
+        "ui_controls": [
+          "旅行展入口",
+          "梁葵桌位"
+        ],
+        "feedback": "梁葵／周舟；行程霧日1–3；承諾兩夜住宿",
+        "success_check": "事件已開啟",
+        "failure_recovery": "開始前可返回",
+        "scene_id": "M02",
+        "action_minutes": 30,
+        "timed_action": "前往旅行桌位",
+        "action_class": "實際工作或移動",
+        "illustration_state": "before-action",
+        "illustration_clock": "09:00"
+      },
+      {
+        "id": "T09-S02",
+        "title": "展開三日行程",
+        "screen_type": "desk",
+        "instruction": "點霧日1，再點渡船；點霧日3，再點回船。",
+        "action": "選日期再點固定交通項目，去回兩端落位；不讓玩家編造船班。",
+        "visible_before": [
+          "三日軸空格",
+          "去船：霧日1",
+          "回船：霧日3"
+        ],
+        "visible_after": [
+          "霧日1去程",
+          "霧日3回程",
+          "需住2夜"
+        ],
+        "ui_controls": [
+          "霧日1",
+          "霧日2",
+          "霧日3",
+          "渡船",
+          "回船",
+          "撤回"
+        ],
+        "feedback": "霧日1去程；霧日3回程；需住2夜",
+        "success_check": "固定去回日期正確",
+        "failure_recovery": "錯日可撤回，標籤直接顯示原定日期",
+        "scene_id": "M08",
+        "action_minutes": 10,
+        "timed_action": "提交去回行程",
+        "action_class": "實際工作或移動",
+        "illustration_state": "before-action",
+        "illustration_clock": "09:30"
+      },
+      {
+        "id": "T09-S03",
+        "title": "住宿少了一夜",
+        "screen_type": "desk",
+        "instruction": "點旅舍，再點夜1、夜2。",
+        "action": "點夜格展開可見確認；夜1實心、夜2空心，同屏列承諾2與實有1。",
+        "visible_before": [
+          "旅舍只確認夜1",
+          "承諾2夜",
+          "夜2空白"
+        ],
+        "visible_after": [
+          "已確認1／承諾2",
+          "缺少夜2",
+          "不能新增假確認"
+        ],
+        "ui_controls": [
+          "旅舍",
+          "夜1",
+          "夜2",
+          "查看原承諾"
+        ],
+        "feedback": "已確認1／承諾2；缺少夜2；不能新增假確認",
+        "success_check": "兩夜狀態清楚",
+        "failure_recovery": "點空夜不能憑空訂房，只顯示尚無安排",
+        "scene_id": "M08",
+        "action_minutes": 10,
+        "timed_action": "核對夜數",
+        "action_class": "實際工作或移動",
+        "illustration_state": "before-action",
+        "illustration_clock": "09:40"
+      },
+      {
+        "id": "T09-S04",
+        "title": "同行者其實不在名單",
+        "screen_type": "social",
+        "instruction": "點周舟，再點同行名單。",
+        "action": "點名單與封面切換；固定劇情揭露雙人承諾只有單人紀錄，無需輸入個資。",
+        "visible_before": [
+          "梁葵名單有名",
+          "周舟名單空白",
+          "雙人房封面"
+        ],
+        "visible_after": [
+          "同行2／名單1",
+          "周舟被漏列",
+          "第二個缺口已知"
+        ],
+        "ui_controls": [
+          "周舟",
+          "同行名單",
+          "雙人承諾"
+        ],
+        "feedback": "同行2／名單1；周舟被漏列；第二個缺口已知",
+        "success_check": "同行與名單矛盾保存",
+        "failure_recovery": "不提供偽造名單或假身分欄位",
+        "scene_id": "M08",
+        "action_minutes": 10,
+        "timed_action": "核對名單",
+        "action_class": "實際工作或移動",
+        "illustration_state": "before-action",
+        "illustration_clock": "09:50"
+      },
+      {
+        "id": "T09-S05",
+        "title": "選擇這趟旅程的結局",
+        "screen_type": "dialogue",
+        "instruction": "點兩項缺口，再選取消旅程。",
+        "action": "取消：二人不登船、故事入帳全沖回；保留爭議：不出發、待解決，並非付費補辦。",
+        "visible_before": [
+          "缺住宿1夜",
+          "漏同行1人",
+          "取消／保留爭議"
+        ],
+        "visible_after": [
+          "代表分支：取消",
+          "兩人留在會場",
+          "信任受損"
+        ],
+        "ui_controls": [
+          "缺住宿",
+          "漏同行",
+          "取消旅程",
+          "保留爭議"
+        ],
+        "feedback": "代表分支：取消；兩人留在會場；信任受損",
+        "success_check": "兩缺口可見且終態已選",
+        "failure_recovery": "沒有強迫補費、登入或提交真實申請",
+        "scene_id": "M08",
+        "action_minutes": 10,
+        "timed_action": "處理取消或保留",
+        "action_class": "實際工作或移動",
+        "illustration_state": "before-action",
+        "illustration_clock": "10:00"
+      },
+      {
+        "id": "T09-S06",
+        "title": "旅行帳與旅人分開記",
+        "screen_type": "ledger",
+        "instruction": "點事件摘要，再點保存結算。",
+        "action": "保存前兩段已結算400基礎業績積分；第三段200須在回程完成後才領取，不按旅人支付額加分。閱讀保存不推進時間。",
+        "visible_before": [
+          "原故事入帳30",
+          "取消沖回30",
+          "旅人2／出發0"
+        ],
+        "visible_after": [
+          "模擬淨入帳0",
+          "前兩段400已入帳",
+          "第三段200待回程完成"
+        ],
+        "ui_controls": [
+          "事件摘要",
+          "保存結算"
+        ],
+        "feedback": "故事淨額0；已入帳基分400，回程後再領200。",
+        "success_check": "去回日期、兩缺口、終態齊全",
+        "failure_recovery": "缺項可回看，不加第二次旅程時間",
+        "scene_id": "M08",
+        "action_minutes": 0,
+        "timed_action": "閱讀結算",
+        "action_class": "閱讀或選單",
+        "illustration_state": "before-action",
+        "illustration_clock": "10:10"
+      },
+      {
+        "id": "T09-S07",
+        "title": "沒成行的照片",
+        "screen_type": "result",
+        "instruction": "點兩人空白相簿，再點回程。",
+        "action": "閱讀兩人取消行程的相簿；點回程推進30分鐘，10:40回M02後完成第三段並領最後200，總基分600只結算一次。",
+        "visible_before": [
+          "相簿：此旅未成行",
+          "梁葵與周舟各有後續",
+          "旅行案封存",
+          "已入帳400，回程完成再領200"
+        ],
+        "visible_after": [
+          "旅人紀錄保留",
+          "M02回到工位",
+          "10:40完成100分鐘",
+          "第三段200入帳，總基分600"
+        ],
+        "ui_controls": [
+          "空白相簿",
+          "回程"
+        ],
+        "feedback": "回M02後才完成第三段，總基分600。",
+        "success_check": "相簿與旅程終態一致",
+        "failure_recovery": "重播只讀，不重新取消或沖回",
+        "scene_id": "M08",
+        "action_minutes": 30,
+        "timed_action": "回辦公室",
+        "action_class": "實際工作或移動",
+        "illustration_state": "before-action",
+        "illustration_clock": "10:10",
+        "scene_after": "M02"
+      }
+    ],
+    "win_condition": "固定去回日期落位、兩項缺口已揭露、明確終態與一次結算。",
+    "fail_condition": "可恢復操作錯誤；主動退出按完成段落給分，未成行不等於玩家失敗。",
+    "persistence": "原創旅人關係、未成行相簿與單次事件熟練；不儲存任何真實旅遊個資。",
+    "rewards": {
+      "performance": "三段各200基礎業績積分：S01–S03、S04–S05、S06–S07。只計完整段落，未完成段0；主動中止保留完成段，Q依完成段數／3。",
+      "score_formula": "Q＝已完整完成出差段數／3（0、1/3、2/3、1）；業績積分＝round(600×Q×(1+0.005×智慧)×飽食修正)。不套一般0.8品質係數。",
+      "cultivation": "培養點round(125×Q)、職階經驗XP round(60×Q)，Q為完整段數／3；本次只給一次，不乘智慧或一般0.8係數。",
+      "fictional_receipts": "故事內模擬入帳不等於可花費分數，也不連接任何金融服務。"
+    },
+    "variations": [
+      "住宿足夠但回船早於去船，明示日期衝突",
+      "兩人名單齊全但房間容量1，改為容量矛盾",
+      "周舟主動退出，需保留退出與取消而非悄悄減人數"
+    ],
+    "source_urls": [],
+    "notes": "v4提案，尚非使用者既有批准數值。僅原創封閉犯罪故事；人物、帳號、機關、貨幣皆虛構，不提供可輸入腳本、真實收款地址或外部連結。 出差中止可保留已完成段落基礎業績積分；全局GameOver優先。 其他可用模式的時間與基礎業績積分必須依主稿20/100、40/220、100/600換成該卡最終值；本JSON數字為代表模式。 四種資源名稱統一為業績積分、培養點、職階經驗XP、零用錢；虛構入帳僅為故事表現，不自動換成任何資源。",
+    "step_action_minutes": [
+      30,
+      10,
+      10,
+      10,
+      10,
+      0,
+      30
+    ],
+    "timing_note": "平衡提案：首次確認實際工作／移動／處理才推進遊戲時間；閱讀、選項預覽、短片觀看及重播均0，不重扣。",
+    "hud_note": "T09-S06與S07同為10:10，體力／心情／飽食保留同一色條狀態；不在示意圖造出未定義絕對值或100體力上限。",
+    "designAssessment": {
+      "status": "設計稿評估；未實機或真人試玩",
+      "immersion": {
+        "問題": "假旅遊變成現實簽證或招攬操作教學。",
+        "設計說明": "用不具現實效用的季曆、固定承諾與旅人後果；不設申請表及付款介面。",
+        "已調整內容": "本版設計稿已明列上述處理方式，不代表遊戲程式已實作。",
+        "待確認": "敘事節奏、畫面表達與操作感仍待企劃／美術確認及實際試玩。"
+      },
+      "logic": {
+        "問題": "重看故事、返回工位或跨日容易重領分數、重扣時間。",
+        "設計說明": "每次任務只有一份完成紀錄；七步共用總時間；模擬入帳與業績積分各保留獨立編號；重看舊紀錄不再次領取。",
+        "已調整內容": "本版設計稿已明列邏輯邊界，不代表程式或實機已驗證。",
+        "待確認": "仍需檢查實作後的成功、失敗、恢復及不重領情況。"
+      },
+      "feedback": {
+        "即時回饋": "每次有效點按改變可見狀態；誤按顯示原因而非吞掉輸入。",
+        "單局回饋": "完成本關得基礎600分與劇情結果，智慧只加算一次。",
+        "長期回饋": "原創旅人關係、未成行相簿與單次事件熟練；不儲存任何真實旅遊個資。",
+        "限制與避免": "不以新增受害者、損失或逼迫程度加成；不販售機率、不用離線懲罰。",
+        "待確認": "回饋強度、閱讀負擔與實際樂趣尚待試玩，不宣稱留存效果。"
+      }
+    }
+  },
+  "art": [
+    {
+      "id": "T09-S01",
+      "title": "抵達逆月旅行展",
+      "volume": 4,
+      "page": 67,
+      "status": "AI 遊戲介面／劇情示意；設計提案",
+      "src": "images/9903339ba6bede4e6e24.webp",
+      "width": 941,
+      "height": 1672,
+      "type": "context"
+    },
+    {
+      "id": "T09-S02",
+      "title": "展開三日行程",
+      "volume": 4,
+      "page": 68,
+      "status": "AI 遊戲介面／劇情示意；設計提案",
+      "src": "images/902e7bfe564ce8d1859f.webp",
+      "width": 941,
+      "height": 1672,
+      "type": "context"
+    },
+    {
+      "id": "T09-S03",
+      "title": "住宿少了一夜",
+      "volume": 4,
+      "page": 69,
+      "status": "AI 遊戲介面／劇情示意；設計提案",
+      "src": "images/1ed21ba6798dff41802a.webp",
+      "width": 941,
+      "height": 1672,
+      "type": "context"
+    },
+    {
+      "id": "T09-S04",
+      "title": "同行者其實不在名單",
+      "volume": 4,
+      "page": 70,
+      "status": "AI 遊戲介面／劇情示意；設計提案",
+      "src": "images/5f0b2826e3990815c53d.webp",
+      "width": 941,
+      "height": 1672,
+      "type": "context"
+    },
+    {
+      "id": "T09-S05",
+      "title": "選擇這趟旅程的結局",
+      "volume": 4,
+      "page": 71,
+      "status": "AI 遊戲介面／劇情示意；設計提案",
+      "src": "images/9cb85d33458aad448c29.webp",
+      "width": 941,
+      "height": 1672,
+      "type": "context"
+    },
+    {
+      "id": "T09-S06",
+      "title": "旅行帳與旅人分開記",
+      "volume": 4,
+      "page": 72,
+      "status": "AI 遊戲介面／劇情示意；設計提案",
+      "src": "images/e6bc82cb6046d23af380.webp",
+      "width": 941,
+      "height": 1671,
+      "type": "context"
+    },
+    {
+      "id": "T09-S07",
+      "title": "沒成行的照片",
+      "volume": 4,
+      "page": 73,
+      "status": "AI 遊戲介面／劇情示意；設計提案",
+      "src": "images/8e0580c8bfe7161d9c90.webp",
+      "width": 941,
+      "height": 1672,
+      "type": "context"
+    }
+  ],
+  "dialogue": [
+    {
+      "stable_id": "GP-T09-S01-opening-01",
+      "source_theme": "T09",
+      "source_step": "T09-S01",
+      "source_event": "T09-S01",
+      "stage": "opening",
+      "choice": null,
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "林若晴派來的旅行爭議，封面上還是兩個人的笑臉。",
+      "trigger": {
+        "source_field": "instruction",
+        "quote": "點出發（30分鐘）。",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-S01-feedback-01",
+      "source_theme": "T09",
+      "source_step": "T09-S01",
+      "source_event": "T09-S01",
+      "stage": "feedback",
+      "choice": null,
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "先看行程；這趟出差的回程也算在同一段時間裡。",
+      "trigger": {
+        "source_field": "feedback",
+        "quote": "梁葵／周舟；行程霧日1–3；承諾兩夜住宿",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-S01-SYS-instruction-01",
+      "source_theme": "T09",
+      "source_step": "T09-S01",
+      "source_event": "T09-S01",
+      "stage": "instruction",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "點出發（30分鐘）。",
+      "trigger": {
+        "source_field": "instruction",
+        "quote": "點出發（30分鐘）。",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S01-SYS-success_check-01",
+      "source_theme": "T09",
+      "source_step": "T09-S01",
+      "source_event": "T09-S01",
+      "stage": "success_check",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "事件已開啟",
+      "trigger": {
+        "source_field": "success_check",
+        "quote": "事件已開啟",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S01-SYS-recovery_or_return-01",
+      "source_theme": "T09",
+      "source_step": "T09-S01",
+      "source_event": "T09-S01",
+      "stage": "recovery_or_return",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "開始前可返回",
+      "trigger": {
+        "source_field": "failure_recovery",
+        "quote": "開始前可返回",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S02-opening-01",
+      "source_theme": "T09",
+      "source_step": "T09-S02",
+      "source_event": "T09-S02",
+      "stage": "opening",
+      "choice": null,
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "去程和回程都寫了日期，不能挪一天就當問題解決。",
+      "trigger": {
+        "source_field": "instruction",
+        "quote": "點霧日1，再點渡船；點霧日3，再點回船。",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-S02-feedback-01",
+      "source_theme": "T09",
+      "source_step": "T09-S02",
+      "source_event": "T09-S02",
+      "stage": "feedback",
+      "choice": null,
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "兩端固定了，中間空著的地方更明顯。",
+      "trigger": {
+        "source_field": "feedback",
+        "quote": "霧日1去程；霧日3回程；需住2夜",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-S02-SYS-instruction-01",
+      "source_theme": "T09",
+      "source_step": "T09-S02",
+      "source_event": "T09-S02",
+      "stage": "instruction",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "點霧日1，再點渡船；點霧日3，再點回船。",
+      "trigger": {
+        "source_field": "instruction",
+        "quote": "點霧日1，再點渡船；點霧日3，再點回船。",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S02-SYS-success_check-01",
+      "source_theme": "T09",
+      "source_step": "T09-S02",
+      "source_event": "T09-S02",
+      "stage": "success_check",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "固定去回日期正確",
+      "trigger": {
+        "source_field": "success_check",
+        "quote": "固定去回日期正確",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S02-SYS-recovery_or_return-01",
+      "source_theme": "T09",
+      "source_step": "T09-S02",
+      "source_event": "T09-S02",
+      "stage": "recovery_or_return",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "錯日可撤回，標籤直接顯示原定日期",
+      "trigger": {
+        "source_field": "failure_recovery",
+        "quote": "錯日可撤回，標籤直接顯示原定日期",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S03-opening-01",
+      "source_theme": "T09",
+      "source_step": "T09-S03",
+      "source_event": "T09-S03",
+      "stage": "opening",
+      "choice": null,
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "兩夜的承諾，只找到一夜的確認。",
+      "trigger": {
+        "source_field": "instruction",
+        "quote": "點旅舍，再點夜1、夜2。",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-S03-feedback-01",
+      "source_theme": "T09",
+      "source_step": "T09-S03",
+      "source_event": "T09-S03",
+      "stage": "feedback",
+      "choice": null,
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "空心那格沒有房間，點亮它也不是訂到房。",
+      "trigger": {
+        "source_field": "feedback",
+        "quote": "已確認1／承諾2；缺少夜2；不能新增假確認",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-S03-SYS-instruction-01",
+      "source_theme": "T09",
+      "source_step": "T09-S03",
+      "source_event": "T09-S03",
+      "stage": "instruction",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "點旅舍，再點夜1、夜2。",
+      "trigger": {
+        "source_field": "instruction",
+        "quote": "點旅舍，再點夜1、夜2。",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S03-SYS-success_check-01",
+      "source_theme": "T09",
+      "source_step": "T09-S03",
+      "source_event": "T09-S03",
+      "stage": "success_check",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "兩夜狀態清楚",
+      "trigger": {
+        "source_field": "success_check",
+        "quote": "兩夜狀態清楚",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S03-SYS-recovery_or_return-01",
+      "source_theme": "T09",
+      "source_step": "T09-S03",
+      "source_event": "T09-S03",
+      "stage": "recovery_or_return",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "點空夜不能憑空訂房，只顯示尚無安排",
+      "trigger": {
+        "source_field": "failure_recovery",
+        "quote": "點空夜不能憑空訂房，只顯示尚無安排",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S04-opening-01",
+      "source_theme": "T09",
+      "source_step": "T09-S04",
+      "source_event": "T09-S04",
+      "stage": "opening",
+      "choice": null,
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "周舟在封面上，卻不在同行紀錄裡。",
+      "trigger": {
+        "source_field": "instruction",
+        "quote": "點周舟，再點同行名單。",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-S04-feedback-01",
+      "source_theme": "T09",
+      "source_step": "T09-S04",
+      "source_event": "T09-S04",
+      "stage": "feedback",
+      "choice": null,
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "照片上的兩個人，名單不能只算一個。",
+      "trigger": {
+        "source_field": "feedback",
+        "quote": "同行2／名單1；周舟被漏列；第二個缺口已知",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-S04-SYS-instruction-01",
+      "source_theme": "T09",
+      "source_step": "T09-S04",
+      "source_event": "T09-S04",
+      "stage": "instruction",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "點周舟，再點同行名單。",
+      "trigger": {
+        "source_field": "instruction",
+        "quote": "點周舟，再點同行名單。",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S04-SYS-success_check-01",
+      "source_theme": "T09",
+      "source_step": "T09-S04",
+      "source_event": "T09-S04",
+      "stage": "success_check",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "同行與名單矛盾保存",
+      "trigger": {
+        "source_field": "success_check",
+        "quote": "同行與名單矛盾保存",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S04-SYS-recovery_or_return-01",
+      "source_theme": "T09",
+      "source_step": "T09-S04",
+      "source_event": "T09-S04",
+      "stage": "recovery_or_return",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "不提供偽造名單或假身分欄位",
+      "trigger": {
+        "source_field": "failure_recovery",
+        "quote": "不提供偽造名單或假身分欄位",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S05-opening-01",
+      "source_theme": "T09",
+      "source_step": "T09-S05",
+      "source_event": "T09-S05",
+      "stage": "opening",
+      "choice": null,
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "缺住宿，也漏了同行者。現在不能假裝這趟已能出發。",
+      "trigger": {
+        "source_field": "instruction",
+        "quote": "點兩項缺口，再選取消旅程。",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-S05-feedback-01",
+      "source_theme": "T09",
+      "source_step": "T09-S05",
+      "source_event": "T09-S05",
+      "stage": "feedback",
+      "choice": null,
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "取消或保留爭議，都得讓終態說清楚。",
+      "trigger": {
+        "source_field": "feedback",
+        "quote": "代表分支：取消；兩人留在會場；信任受損",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-S05-action-03",
+      "source_theme": "T09",
+      "source_step": "T09-S05",
+      "source_event": "T09-S05",
+      "stage": "action",
+      "choice": "取消旅程",
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "把取消留下，別再把相簿寫成已成行。",
+      "trigger": {
+        "source_field": "action",
+        "quote": "取消：二人不登船、故事入帳全沖回；保留爭議：不出發、待解決，並非付費補辦。",
+        "condition": "僅在玩家選此既有選項且原確認條件成立時播放；預覽不算已提交"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-S05-action-04",
+      "source_theme": "T09",
+      "source_step": "T09-S05",
+      "source_event": "T09-S05",
+      "stage": "action",
+      "choice": "保留爭議",
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "先不出發，兩個缺口都還在。",
+      "trigger": {
+        "source_field": "action",
+        "quote": "取消：二人不登船、故事入帳全沖回；保留爭議：不出發、待解決，並非付費補辦。",
+        "condition": "僅在玩家選此既有選項且原確認條件成立時播放；預覽不算已提交"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-S05-SYS-instruction-01",
+      "source_theme": "T09",
+      "source_step": "T09-S05",
+      "source_event": "T09-S05",
+      "stage": "instruction",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "點兩項缺口，再選取消旅程。",
+      "trigger": {
+        "source_field": "instruction",
+        "quote": "點兩項缺口，再選取消旅程。",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S05-SYS-success_check-01",
+      "source_theme": "T09",
+      "source_step": "T09-S05",
+      "source_event": "T09-S05",
+      "stage": "success_check",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "兩缺口可見且終態已選",
+      "trigger": {
+        "source_field": "success_check",
+        "quote": "兩缺口可見且終態已選",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S05-SYS-recovery_or_return-01",
+      "source_theme": "T09",
+      "source_step": "T09-S05",
+      "source_event": "T09-S05",
+      "stage": "recovery_or_return",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "沒有強迫補費、登入或提交真實申請",
+      "trigger": {
+        "source_field": "failure_recovery",
+        "quote": "沒有強迫補費、登入或提交真實申請",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S06-opening-01",
+      "source_theme": "T09",
+      "source_step": "T09-S06",
+      "source_event": "T09-S06",
+      "stage": "opening",
+      "choice": null,
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "先保存已做完的段落，回程還在後面。",
+      "trigger": {
+        "source_field": "instruction",
+        "quote": "點事件摘要，再點保存結算。",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-S06-feedback-01",
+      "source_theme": "T09",
+      "source_step": "T09-S06",
+      "source_event": "T09-S06",
+      "stage": "feedback",
+      "choice": null,
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "旅人的故事帳與這趟工作的結算，分開放。",
+      "trigger": {
+        "source_field": "feedback",
+        "quote": "故事淨額0；已入帳基分400，回程後再領200。",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-S06-SYS-instruction-01",
+      "source_theme": "T09",
+      "source_step": "T09-S06",
+      "source_event": "T09-S06",
+      "stage": "instruction",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "點事件摘要，再點保存結算。",
+      "trigger": {
+        "source_field": "instruction",
+        "quote": "點事件摘要，再點保存結算。",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S06-SYS-success_check-01",
+      "source_theme": "T09",
+      "source_step": "T09-S06",
+      "source_event": "T09-S06",
+      "stage": "success_check",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "去回日期、兩缺口、終態齊全",
+      "trigger": {
+        "source_field": "success_check",
+        "quote": "去回日期、兩缺口、終態齊全",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S06-SYS-recovery_or_return-01",
+      "source_theme": "T09",
+      "source_step": "T09-S06",
+      "source_event": "T09-S06",
+      "stage": "recovery_or_return",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "缺項可回看，不加第二次旅程時間",
+      "trigger": {
+        "source_field": "failure_recovery",
+        "quote": "缺項可回看，不加第二次旅程時間",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S07-opening-01",
+      "source_theme": "T09",
+      "source_step": "T09-S07",
+      "source_event": "T09-S07",
+      "stage": "opening",
+      "choice": null,
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "相簿留著空白。他們原本想拍的，不是這些格子。",
+      "trigger": {
+        "source_field": "instruction",
+        "quote": "點兩人空白相簿，再點回程。",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-S07-feedback-01",
+      "source_theme": "T09",
+      "source_step": "T09-S07",
+      "source_event": "T09-S07",
+      "stage": "feedback",
+      "choice": null,
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "回到辦公室後，這趟才真正走完。",
+      "trigger": {
+        "source_field": "feedback",
+        "quote": "回M02後才完成第三段，總基分600。",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-S07-SYS-instruction-01",
+      "source_theme": "T09",
+      "source_step": "T09-S07",
+      "source_event": "T09-S07",
+      "stage": "instruction",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "點兩人空白相簿，再點回程。",
+      "trigger": {
+        "source_field": "instruction",
+        "quote": "點兩人空白相簿，再點回程。",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S07-SYS-success_check-01",
+      "source_theme": "T09",
+      "source_step": "T09-S07",
+      "source_event": "T09-S07",
+      "stage": "success_check",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "相簿與旅程終態一致",
+      "trigger": {
+        "source_field": "success_check",
+        "quote": "相簿與旅程終態一致",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-S07-SYS-recovery_or_return-01",
+      "source_theme": "T09",
+      "source_step": "T09-S07",
+      "source_event": "T09-S07",
+      "stage": "recovery_or_return",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "重播只讀，不重新取消或沖回",
+      "trigger": {
+        "source_field": "failure_recovery",
+        "quote": "重播只讀，不重新取消或沖回",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-success-01",
+      "source_theme": "T09",
+      "source_step": null,
+      "source_event": "T09",
+      "stage": "success",
+      "choice": null,
+      "speaker_id": "protagonist",
+      "expression": "determined",
+      "text": "缺口與終態都清楚，這趟工作按完成段落結算。",
+      "trigger": {
+        "source_field": "win_condition",
+        "quote": "固定去回日期落位、兩項缺口已揭露、明確終態與一次結算。",
+        "condition": "題材層結果或返回/回顧入口成立；只旁述來源狀態，不自行轉移流程"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-failure_or_partial-01",
+      "source_theme": "T09",
+      "source_step": null,
+      "source_event": "T09",
+      "stage": "failure_or_partial",
+      "choice": null,
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "提前退出就照完成段落記，不把未成行寫成操作失敗。",
+      "trigger": {
+        "source_field": "fail_condition",
+        "quote": "可恢復操作錯誤；主動退出按完成段落給分，未成行不等於玩家失敗。",
+        "condition": "題材層結果或返回/回顧入口成立；只旁述來源狀態，不自行轉移流程"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-return-01",
+      "source_theme": "T09",
+      "source_step": null,
+      "source_event": "T09",
+      "stage": "return",
+      "choice": null,
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "該保留的段落先保留，回程依原行程處理。",
+      "trigger": {
+        "source_field": "fail_condition",
+        "quote": "可恢復操作錯誤；主動退出按完成段落給分，未成行不等於玩家失敗。",
+        "condition": "題材層結果或返回/回顧入口成立；只旁述來源狀態，不自行轉移流程"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-review-01",
+      "source_theme": "T09",
+      "source_step": null,
+      "source_event": "T09",
+      "stage": "review",
+      "choice": null,
+      "speaker_id": "protagonist",
+      "expression": "neutral",
+      "text": "相簿仍是那次未成行的相簿，不再取消第二次。",
+      "trigger": {
+        "source_field": "persistence",
+        "quote": "原創旅人關係、未成行相簿與單次事件熟練；不儲存任何真實旅遊個資。",
+        "condition": "題材層結果或返回/回顧入口成立；只旁述來源狀態，不自行轉移流程"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-success-03",
+      "source_theme": "T09",
+      "source_step": null,
+      "source_event": "T09",
+      "stage": "success",
+      "choice": null,
+      "speaker_id": "lin",
+      "expression": "determined",
+      "text": "這輪照實記。缺口與終態都清楚，這趟工作按完成段落結算。",
+      "trigger": {
+        "source_field": "win_condition",
+        "quote": "固定去回日期落位、兩項缺口已揭露、明確終態與一次結算。",
+        "condition": "本題依原條件可出現、當時職階R2以上；只在交班時由林若晴回應，不與阿猴同播"
+      },
+      "proposal_status": "待確認"
+    },
+    {
+      "stable_id": "GP-T09-SYS-success-01",
+      "source_theme": "T09",
+      "source_step": null,
+      "source_event": "T09",
+      "stage": "success",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "固定去回日期落位、兩項缺口已揭露、明確終態與一次結算。",
+      "trigger": {
+        "source_field": "win_condition",
+        "quote": "固定去回日期落位、兩項缺口已揭露、明確終態與一次結算。",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    },
+    {
+      "stable_id": "GP-T09-SYS-failure-01",
+      "source_theme": "T09",
+      "source_step": null,
+      "source_event": "T09",
+      "stage": "failure",
+      "choice": null,
+      "speaker_id": "system",
+      "expression": "neutral",
+      "text": "可恢復操作錯誤；主動退出按完成段落給分，未成行不等於玩家失敗。",
+      "trigger": {
+        "source_field": "fail_condition",
+        "quote": "可恢復操作錯誤；主動退出按完成段落給分，未成行不等於玩家失敗。",
+        "condition": "僅在來源步驟及相應既有狀態成立時播放；不新增條件"
+      },
+      "proposal_status": "原文引用，不改規則"
+    }
+  ],
+  "hashes": {
+    "plan.json": "a4abd19dadb43bb2e81f019406bbe601fc78e876793d0385b81df4811e892388",
+    "dialogue-proposals.json": "cc2efc74b4a6e29801a99d196e18973f9a7141999720a5ecdd59a7b89fb28ebe",
+    "art-catalog.json": "a95f81b8e34792c34b7ee9925ffa5355eddd177bd93b7cff433d19c688c45662",
+    "new-gameplay-proposals.json": "67ba13c122de79e85dae52d5ef6983f5151f28e0febd809259bbdb21132ee3f1"
+  }
+}

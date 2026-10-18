@@ -1,0 +1,43 @@
+#plan-interaction{--pi-ink:#243d31;--pi-green:#dce6d1;--pi-paper:#fffcf3;--pi-line:#a5af94;scroll-margin-top:145px}
+#plan-interaction button,#plan-interaction summary{min-height:44px;touch-action:manipulation}
+#plan-interaction button{font:inherit;color:var(--pi-ink);border:1px solid var(--pi-line);border-radius:10px;padding:11px 15px;background:var(--pi-paper);text-align:left;cursor:pointer}
+#plan-interaction button:disabled{opacity:.5;cursor:not-allowed}
+#plan-interaction button[aria-pressed=true],#plan-interaction .pi-primary{background:var(--pi-green);border-color:#5b7855}
+#plan-interaction button:focus-visible,#plan-interaction summary:focus-visible,#plan-interaction h3:focus-visible{outline:3px solid #5c7051;outline-offset:4px}
+.pi-notice{border-left:3px solid #71845d;padding:12px 16px;background:#eceee1;line-height:1.9}
+.pi-hud{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:20px 0}
+.pi-hud span{border:1px solid #c8cbb9;border-radius:12px;padding:12px;background:#f8f5eb;overflow-wrap:anywhere}
+.pi-hud b{display:block;font-weight:600;color:var(--pi-ink)}
+.pi-steps{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;padding:0;list-style:none}
+.pi-steps li{padding:8px;border-bottom:3px solid #d6d7c8;font-size:.82rem;overflow-wrap:anywhere}
+.pi-steps li[aria-current=step]{border-color:#566d49;color:#244030;font-weight:700}
+.pi-steps li[data-done=true]{background:#e8edde}
+.pi-workspace{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(230px,.7fr);gap:22px;align-items:start;margin:24px 0}
+.pi-stage,.pi-journal{border:1px solid #c9cdb9;border-radius:16px;background:var(--pi-paper);padding:24px;min-width:0}
+.pi-stage h3{margin:0 0 12px;scroll-margin-top:150px}
+.pi-stage p{line-height:1.9;overflow-wrap:anywhere}
+.pi-controls{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+.pi-objects{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0}
+.pi-object{display:flex;gap:12px;align-items:center;min-height:88px!important}
+.pi-bag{display:inline-block;width:29px;height:36px;border:2px solid #294b5c;border-radius:5px;background:#688ca4;flex:none;position:relative}
+.pi-bag:before{content:"";position:absolute;width:14px;height:9px;border:2px solid currentColor;border-bottom:0;left:5px;top:-10px;border-radius:4px 4px 0 0}
+.pi-bag-red{background:#c58877;border-color:#674b43}
+.pi-rail{height:96px;border-bottom:2px solid #a7b59b;position:relative;margin:20px 8px 12px}
+.pi-rail .pi-actor{position:absolute;bottom:15px;left:5%;transition:left .5s ease;width:46px;height:46px;background:#526d60;color:white;display:grid;place-items:center;border-radius:50%;font-size:.75rem}
+.pi-rail[data-location=inside] .pi-actor{left:75%}
+.pi-rail .pi-outside{position:absolute;left:2%;bottom:-28px;font-size:.8rem}
+.pi-rail .pi-inside{position:absolute;right:2%;bottom:-28px;font-size:.8rem}
+.pi-caption{font-size:.85rem;color:#64715a;margin-top:38px}
+.pi-state{background:#f0f0e4;padding:12px 15px;border-radius:9px;line-height:1.8}
+.pi-status{display:block;border-top:1px dashed #b4baa7;padding-top:14px;min-height:3em;line-height:1.8}
+.pi-art summary{cursor:pointer;padding:8px 0}
+.pi-art img{display:block;width:100%;max-height:460px;object-fit:contain;background:#eeece1;margin-top:10px}
+.pi-art figcaption,.pi-journal small{font-size:.8rem;line-height:1.8;color:#657057}
+.pi-journal ol{padding-left:22px;line-height:1.9}
+.pi-coverage{margin:24px 0;border-top:1px solid #bdc5b0;padding-top:14px}
+.pi-coverage summary{cursor:pointer;padding:10px 0;font-weight:600}
+.pi-coverage li{line-height:1.9;margin:10px 0}
+.pi-coverage a{overflow-wrap:anywhere}
+.pi-complete{border:1px solid #759168;background:#e7efdf;border-radius:12px;padding:16px;line-height:1.9}
+@media(max-width:760px){.pi-workspace{grid-template-columns:1fr}.pi-stage,.pi-journal{padding:18px}.pi-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.pi-hud{grid-template-columns:1fr}.pi-objects{grid-template-columns:1fr}.pi-controls button{flex:1 1 140px}.pi-art img{max-height:430px}}
+@media(prefers-reduced-motion:reduce){.pi-rail .pi-actor{transition:none}}

@@ -1,0 +1,8 @@
+:host { display:block; color:#eee7da; font-family:system-ui,sans-serif; background:#151c1e; }
+.t08 { max-width:760px; margin:auto; padding:20px; line-height:1.65; }
+h1 { color:#edc779; font-size:1.7rem; } h2 { font-size:1.1rem; margin-top:28px; border-top:1px solid #65716f; padding-top:16px; }
+button { min-height:48px; padding:10px 16px; margin:4px; color:#f4eee1; background:#283638; border:1px solid #b5a078; border-radius:5px; font:inherit; cursor:pointer; max-width:100%; }
+button:hover, button[aria-pressed=true] { background:#4b4333; } button:focus-visible, summary:focus-visible { outline:3px solid #ffce68; outline-offset:3px; }
+[role=status] { min-height:2em; color:#ffdb91; } details { border:1px solid #65716f; padding:12px; } summary { cursor:pointer; }
+img { display:block; max-width:100%; height:auto; margin-top:12px; }
+@media(max-width:480px) { .t08 { padding:12px; } button { display:block; width:100%; margin:8px 0; } }

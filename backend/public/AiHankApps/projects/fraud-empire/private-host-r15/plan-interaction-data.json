@@ -1,0 +1,241 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "T02",
+  "version": "v4.5-plan-interaction-b01-20261016",
+  "status": "第一批前端提案互動，非正式遊戲",
+  "supervisorPool": false,
+  "rewards": {
+    "score": 0,
+    "xp": 0,
+    "cultivation": 0
+  },
+  "clock": {
+    "appliedToGlobalClock": false,
+    "note": "首次20分鐘、跨日、初值與自然耗損啟動仍待確認；僅顯示來源動作時間提案，不套全局時間。"
+  },
+  "steps": [
+    {
+      "id": "T02-S01",
+      "title": "抵達陌生門口",
+      "action": "點站位自動走到門內；不可操作車或保全設備。",
+      "actionMinutes": 3,
+      "visibleBefore": [
+        "主角在車旁",
+        "阿猴在門內",
+        "小行李在主角腳邊"
+      ],
+      "visibleAfter": [
+        "主角站在門內",
+        "大門關閉的故事動畫",
+        "行李仍在身邊"
+      ],
+      "art": {
+        "id": "T02-S01",
+        "title": "抵達陌生門口",
+        "volume": 4,
+        "page": 11,
+        "status": "AI 遊戲介面／劇情示意；設計提案",
+        "src": "images/fefb120b25503cf1d186.webp",
+        "width": 941,
+        "height": 1672
+      },
+      "successCheck": "抵達標記站位",
+      "failureRecovery": "再次點地面改目的地；不需要搖桿"
+    },
+    {
+      "id": "T02-S02",
+      "title": "承諾與眼前現實",
+      "action": "兩個可點熱點切換視角；詢問住處觸發固定劇情，沉默同樣可繼續但少一段回應。",
+      "actionMinutes": 0,
+      "visibleBefore": [
+        "記憶：單人房",
+        "眼前：多人床位",
+        "阿猴等回應"
+      ],
+      "visibleAfter": [
+        "承諾落空記憶1/2",
+        "主角：先看清楚",
+        "阿猴催促入住"
+      ],
+      "art": {
+        "id": "T02-S02",
+        "title": "承諾與眼前現實",
+        "volume": 4,
+        "page": 12,
+        "status": "AI 遊戲介面／劇情示意；設計提案",
+        "src": "images/7ad9d71e56f2e0004cf6.webp",
+        "width": 941,
+        "height": 1672
+      },
+      "successCheck": "兩個熱點至少看過一次",
+      "failureRecovery": "不設猜對答案；可回看"
+    },
+    {
+      "id": "T02-S03",
+      "title": "拿回自己的行李",
+      "action": "點藍行李加入「自己的行李」故事物品；點床邊放置。",
+      "actionMinutes": 5,
+      "visibleBefore": [
+        "藍行李：主角",
+        "紅行李：他人",
+        "床邊空位"
+      ],
+      "visibleAfter": [
+        "藍行李在床邊",
+        "物品欄：到場車票記憶",
+        "不顯示真實路線"
+      ],
+      "art": {
+        "id": "T02-S03",
+        "title": "拿回自己的行李",
+        "volume": 4,
+        "page": 13,
+        "status": "AI 遊戲介面／劇情示意；設計提案",
+        "src": "images/f935f50cb8e3b1595d58.webp",
+        "width": 941,
+        "height": 1672
+      },
+      "successCheck": "自有物品在床邊",
+      "failureRecovery": "紅行李只顯示「別人的」；沒有偷取選項"
+    },
+    {
+      "id": "T02-S04",
+      "title": "遇見成年室友小雨",
+      "action": "點人物走近並對話；小雨說明生活區規矩，玩家可保留個人細節。",
+      "actionMinutes": 3,
+      "visibleBefore": [
+        "小雨整理床鋪",
+        "主角對話未開啟",
+        "信任：初識"
+      ],
+      "visibleAfter": [
+        "小雨已認識",
+        "生活區導覽可用",
+        "信任：初識＋一次真誠回應"
+      ],
+      "art": {
+        "id": "T02-S04",
+        "title": "遇見成年室友小雨",
+        "volume": 4,
+        "page": 14,
+        "status": "AI 遊戲介面／劇情示意；設計提案",
+        "src": "images/8d4460dff997252f0b3d.webp",
+        "width": 941,
+        "height": 1671
+      },
+      "successCheck": "完成任一尊重界線的回應",
+      "failureRecovery": "暫不多談不鎖死後續互助"
+    },
+    {
+      "id": "T02-S05",
+      "title": "第一次發現不能自由離開",
+      "action": "點出口播放短篇受困場景，沒有躲避或對抗操作；返回恢復自由活動介面。",
+      "actionMinutes": 5,
+      "visibleBefore": [
+        "宿舍出口可點",
+        "門外阻擋以劇情陰影呈現",
+        "主角仍有退回路徑"
+      ],
+      "visibleAfter": [
+        "受困事實已知",
+        "承諾落空記憶2/2",
+        "主角回床邊"
+      ],
+      "art": {
+        "id": "T02-S05",
+        "title": "第一次發現不能自由離開",
+        "volume": 4,
+        "page": 15,
+        "status": "AI 遊戲介面／劇情示意；設計提案",
+        "src": "images/c60168b562b78f7ad6f4.webp",
+        "width": 941,
+        "height": 1672
+      },
+      "successCheck": "知道受困並完成返回",
+      "failureRecovery": "略過動畫仍取得相同旗標，不懲罰玩家"
+    },
+    {
+      "id": "T02-S06",
+      "title": "為自己留下到場記憶",
+      "action": "點選兩個已親歷記憶保存到主角私有故事簿；不要求搜查他人或偷取證件。",
+      "actionMinutes": 0,
+      "visibleBefore": [
+        "到場：門口",
+        "住宿：多人房",
+        "空白記憶頁2格"
+      ],
+      "visibleAfter": [
+        "到場記憶已保存",
+        "此關收入0",
+        "下一步：完成安置"
+      ],
+      "art": {
+        "id": "T02-S06",
+        "title": "為自己留下到場記憶",
+        "volume": 4,
+        "page": 16,
+        "status": "AI 遊戲介面／劇情示意；設計提案",
+        "src": "images/2bd7ac7539dcbb878d2e.webp",
+        "width": 941,
+        "height": 1671
+      },
+      "successCheck": "兩個記憶旗標已存",
+      "failureRecovery": "漏看可回到相應場景；不逼迫重看壓迫動畫"
+    },
+    {
+      "id": "T02-S07",
+      "title": "完成安置",
+      "action": "整理安置自己的行李與個人物品4遊戲分鐘後回自由活動；不是小睡，不套睡眠效果。",
+      "actionMinutes": 4,
+      "visibleBefore": [
+        "小雨留下空位",
+        "收入0",
+        "日後可尋求協助"
+      ],
+      "visibleAfter": [
+        "T02完成",
+        "小雨：初識",
+        "主角有下一天"
+      ],
+      "art": {
+        "id": "T02-S07",
+        "title": "完成安置",
+        "volume": 4,
+        "page": 17,
+        "status": "AI 遊戲介面／劇情示意；設計提案",
+        "src": "images/57d656c55f6367400666.webp",
+        "width": 941,
+        "height": 1672
+      },
+      "successCheck": "完成故事只記一次",
+      "failureRecovery": "重播不改時間、親密度或全局資源"
+    }
+  ],
+  "pending": [
+    "首次實際行動合計20分鐘是舊平衡提案，不因分類修正而定案。",
+    "前日晚間抵達、翌日Day1報到是既有日期提案，仍須與主線整體核對。",
+    "序章資源初值、自然耗損與全局生存規則的啟動時點需統一確認。",
+    "T02與MS01抵達情境去重、MS03小雨初識銜接及末段安置用字待整合。",
+    "舊T02.win_condition仍含完成休息用字；本批沿較新S07完成安置，不觸發睡眠效果。"
+  ],
+  "sourceDifferences": {
+    "olderWinCondition": "知道受困、保存到場記憶並完成休息；沒有招募業績積分。",
+    "appliedLatestAction": "整理安置自己的行李與個人物品4遊戲分鐘後回自由活動；不是小睡，不套睡眠效果。"
+  },
+  "scope": {
+    "formalGame": false,
+    "formalSaveService": false,
+    "globalResources": false,
+    "mediaPlayedAssumed": false,
+    "prologueReplayReward": false
+  },
+  "source": {
+    "baseline": "v4.4.1-proposal-boundaries-20261016",
+    "contentHash": "5bcbdcd3778726e6720dfc6960f5dd843a14a7d42bd86d88fb755a544f88cc7a",
+    "files": [
+      "plan.json:/prologue",
+      "plan.json:/topics/T02",
+      "plan.json:/figures/T02-S01..T02-S07"
+    ]
+  }
+}

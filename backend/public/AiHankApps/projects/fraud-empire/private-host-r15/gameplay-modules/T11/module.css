@@ -1,0 +1,6 @@
+.fraud-t11 { max-width: 44rem; margin: auto; padding: 1rem; color: #eee; background: #182332; font: 1rem/1.6 system-ui, sans-serif; }
+.fraud-t11 button { min-height: 48px; margin: .3rem; padding: .6rem; border: 1px solid #c5ad79; border-radius: .4rem; background: #283b50; color: #fff; cursor: pointer; }
+.fraud-t11 button:focus-visible { outline: 3px solid #ffe29c; outline-offset: 2px; }
+.fraud-t11 img { width: 100%; max-width: 24rem; height: auto; }
+.fraud-t11 h1 { font-size: 1.4rem; }
+.fraud-t11 h2 { font-size: 1.1rem; }

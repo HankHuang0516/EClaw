@@ -1,0 +1,65 @@
+#relationshipArchive{margin:24px 0 42px;padding:24px;border:1px solid #a8ae98;border-radius:16px;background:linear-gradient(130deg,#e5eadb99,transparent 48%),repeating-linear-gradient(0deg,#f7f1e6 0,#f7f1e6 4px,#f4eedf 4px,#f4eedf 5px);scroll-margin-top:110px;color:#2c3d2d}
+#relationshipArchive .rel-head{display:flex;justify-content:space-between;align-items:start;gap:24px;margin-bottom:18px}
+#relationshipArchive .rel-head h3{margin:4px 0 10px;font-size:clamp(1.35rem,3vw,1.9rem)}
+#relationshipArchive .rel-kicker{font-family:'Courier New',monospace;font-size:.74rem;letter-spacing:.1em;color:#627055}
+#relationshipArchive .rel-notice{padding:14px 17px;border-left:4px solid #8b9a72;background:#e6eadb;line-height:1.9;font-size:.89rem}
+#relationshipArchive .rel-counts{display:flex;flex-wrap:wrap;gap:9px 20px;padding:14px 0;margin:10px 0;border-bottom:1px solid #c6c8b7;font-size:.86rem}
+#relationshipArchive .rel-counts strong{font-family:'Courier New',monospace;font-size:1.1rem;margin-right:5px}
+#relationshipArchive button,#relationshipArchive input,#relationshipArchive select,#relationshipModeDialog button{font:inherit;min-width:44px;min-height:44px;white-space:normal;line-height:1.65;border:1px solid #a8b19a;border-radius:8px;background:#fffdf6;color:#2e4735;padding:10px 13px;cursor:pointer;max-width:100%;touch-action:pan-y}
+#relationshipArchive button:hover,#relationshipArchive button[aria-pressed=true]{background:#d9e4d2;border-color:#788d6b}
+#relationshipArchive button:focus-visible,#relationshipArchive summary:focus-visible,#relationshipArchive input:focus-visible,#relationshipArchive select:focus-visible,#relationshipModeDialog button:focus-visible{outline:3px solid #9c713c;outline-offset:3px}
+#relationshipArchive .rel-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin:18px 0}
+#relationshipArchive label{display:grid;gap:7px;min-width:0;font-size:.88rem}
+#relationshipArchive .rel-controls>label{flex:1 1 220px}
+#relationshipArchive .rel-controls input{width:100%;cursor:text}
+#relationshipArchive input[type=checkbox]{accent-color:#71865f;cursor:pointer}
+#relationshipArchive .rel-layout{display:grid;grid-template-columns:minmax(220px,.8fr) minmax(0,2fr);gap:25px;align-items:start}
+#relationshipArchive .rel-tree{padding:14px;background:#eff0e3;border:1px solid #c4c9b6;border-radius:10px}
+#relationshipArchive .rel-group{border-bottom:1px solid #c9cebc;padding:8px 0}
+#relationshipArchive summary{cursor:pointer;min-height:44px;padding:11px 7px;line-height:1.7;font-weight:700;overflow-wrap:anywhere;scroll-margin-top:100px}
+#relationshipArchive .rel-leaves{margin-left:10px;border-left:1px solid #a2b18f;padding:5px 0 8px 14px;display:grid;gap:8px}
+#relationshipArchive .rel-node{display:flex;align-items:center;gap:10px;text-align:left;width:100%;padding:8px 10px;background:#fffdf4}
+#relationshipArchive .rel-node.is-selected{background:#d8e4cd;border-color:#637d57;box-shadow:inset 3px 0 #637d57}
+#relationshipArchive .rel-node-image{width:36px;height:48px;object-fit:contain;flex:none;background:#ddd9c9;border-radius:4px}
+#relationshipArchive .rel-symbol{display:grid;place-items:center;width:38px;height:44px;flex:none;background:#d6decb;color:#405b45;border:1px solid #b2bca5;border-radius:6px;font-family:'Courier New',monospace;font-weight:700;font-size:.8rem}
+#relationshipArchive .rel-detail{min-width:0;padding:23px;background:#fffcf3;border:1px solid #d3cfbd;border-radius:10px;box-shadow:0 9px 24px #38492e0b}
+#relationshipArchive .rel-person{display:flex;align-items:start;gap:20px;margin-bottom:20px}
+#relationshipArchive .rel-person img{width:100px;height:134px;object-fit:contain;background:#e3dfd2;border:1px solid #c9c4b0;border-radius:8px}
+#relationshipArchive .rel-person .rel-symbol{width:88px;height:112px;font-size:1rem}
+#relationshipArchive h4{font-size:1.35rem;margin:6px 0 12px;scroll-margin-top:110px}
+#relationshipArchive h5{font-size:1.02rem;margin:14px 0 10px}
+#relationshipArchive p{line-height:1.95;overflow-wrap:anywhere}
+#relationshipArchive .rel-muted{font-size:.84rem;color:#66725a}
+#relationshipArchive .rel-status{padding:8px 12px;border:1px solid #b6c0a5;background:#e6ecdd;font-size:.82rem;border-radius:7px;line-height:1.8}
+#relationshipArchive .rel-warning{background:#eee1c9;border-color:#c5ad80;color:#76572e}
+#relationshipArchive .rel-accordion{margin:12px 0;border:1px solid #d3cfbd;border-radius:8px;background:#f8f4e8;padding:0 12px}
+#relationshipArchive .rel-accordion>div{padding:0 6px 13px}
+#relationshipArchive .rel-edge,#relationshipArchive .rel-choice,#relationshipArchive .rel-scene{padding:15px;margin:10px 0;border:1px solid #d8d3c3;background:#fffdf7;border-radius:8px}
+#relationshipArchive .rel-edge>button{display:block;margin:9px 0}
+#relationshipArchive .rel-buttons{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+#relationshipArchive .rel-buttons button{flex:0 1 auto}
+#relationshipArchive .rel-events{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}
+#relationshipArchive .rel-event{display:block;width:100%;text-align:left}
+#relationshipArchive .rel-event small{display:block;font:12px 'Courier New',monospace;margin-bottom:5px;color:#617056}
+#relationshipArchive .rel-field{padding:10px 0;border-bottom:1px solid #e2decf;min-width:0}
+#relationshipArchive .rel-field>strong{display:block;font-size:.86rem;color:#526347;margin-bottom:5px}
+#relationshipArchive .rel-field p{margin:5px 0}
+#relationshipArchive .rel-clause{padding:8px 10px;margin:7px 0;border:1px solid #cfccb9;background:#efeee2;font-family:'Courier New',monospace;font-size:.86rem;overflow-wrap:anywhere}
+#relationshipArchive .rel-line{margin:10px 0;padding:12px 15px;border-left:3px solid #94a67b;background:#edf0e4}
+#relationshipArchive .rel-line>strong{font-size:.86rem;color:#506645}
+#relationshipArchive .rel-line p{margin:5px 0}
+#relationshipArchive .rel-line small{font:11px 'Courier New',monospace;color:#6e765f;overflow-wrap:anywhere}
+#relationshipArchive .rel-empty{padding:18px;background:#eeeee3;color:#626e58;border-radius:8px}
+#relationshipArchive .rel-timeline{padding:16px;border:1px solid #b1bea0;background:#e9efde;border-radius:8px;margin:14px 0}
+#relationshipArchive .rel-footer{margin-top:24px;border-top:1px solid #c2c9b4;padding-top:20px}
+#relationshipArchive [hidden]{display:none!important}
+#relationshipModeDialog{max-width:min(90vw,570px);max-height:85dvh;overflow:auto;padding:27px;border:1px solid #9da98f;border-radius:14px;background:#f4eddd;color:#2f422e;line-height:1.95}
+#relationshipModeDialog::backdrop{background:#243023bc}
+#relationshipModeDialog button{margin:8px 8px 0 0}
+#dialogues .proposal-conditional-preview,#demoDialogue .proposal-conditional-preview{display:grid;gap:8px;margin:13px 0;padding:13px;border:1px solid #aebc9d;background:#ecf0e2;font-size:.86rem}
+#dialogues .proposal-conditional-preview select,#demoDialogue .proposal-conditional-preview select{min-height:44px;width:100%;max-width:100%;font:inherit;padding:10px;white-space:normal}
+#dialogues .proposal-conditional-preview button,#demoDialogue .proposal-conditional-preview button{min-height:44px;max-width:100%;white-space:normal;line-height:1.7;font:inherit;padding:10px 13px}
+#dialogues .proposal-conditional-preview button[aria-pressed=true],#demoDialogue .proposal-conditional-preview button[aria-pressed=true]{background:#d7e3c9;border-color:#6b8058}
+.relationship-return{display:inline-flex;align-items:center;min-height:44px;margin:10px 0;padding:10px 13px;border:1px solid #aeb99e;border-radius:8px;background:#eef1e5;color:#3b563c;line-height:1.7}
+@media(max-width:760px){#relationshipArchive{padding:17px 13px;scroll-margin-top:70px}#relationshipArchive .rel-head{display:block}#relationshipArchive .rel-layout{grid-template-columns:minmax(0,1fr)}#relationshipArchive .rel-tree{padding:11px}#relationshipArchive .rel-detail{padding:17px 13px}#relationshipArchive .rel-events{grid-template-columns:minmax(0,1fr)}#relationshipArchive .rel-person{gap:13px}#relationshipArchive .rel-person img{width:76px;height:102px}#relationshipArchive .rel-person .rel-symbol{width:70px;height:94px}#relationshipArchive .rel-controls>button{flex:1 1 135px}#relationshipArchive .rel-counts{gap:9px 15px}#relationshipArchive .rel-buttons button{flex:1 1 130px}#relationshipArchive .rel-leaves{margin-left:4px;padding-left:11px}#relationshipArchive .rel-choice,#relationshipArchive .rel-scene,#relationshipArchive .rel-edge{padding:12px}}
+@media(prefers-reduced-motion:reduce){#relationshipArchive *,#relationshipModeDialog *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

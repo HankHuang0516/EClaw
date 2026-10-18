@@ -1,0 +1,7 @@
+.fraud-t17 { color: #eadbc1; background: #292620; padding: 1rem; font-family: system-ui, sans-serif; max-width: 38rem; line-height: 1.6; }
+.fraud-t17 button { min-height: 48px; padding: .6rem; margin: .25rem; border: 1px solid #bfa575; border-radius: .35rem; background: #443c30; color: #fff0d6; font: inherit; cursor: pointer; }
+.fraud-t17 button[aria-pressed="true"] { outline: 3px solid #edc36e; }
+.fraud-t17 button:focus-visible { outline: 3px solid white; }
+.fraud-t17 img { display: block; width: 100%; max-width: 360px; height: auto; }
+.fraud-t17 nav { display: flex; flex-wrap: wrap; }
+.fraud-t17 [role="status"] { border-left: 3px solid #edc36e; padding-left: .7rem; }

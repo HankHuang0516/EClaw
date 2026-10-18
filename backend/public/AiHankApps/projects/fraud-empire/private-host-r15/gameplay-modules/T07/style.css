@@ -1,0 +1,9 @@
+.fraud-t07 { max-width: 52rem; margin: auto; padding: 1rem; color: #eee5d5; background: #302e29; font: 1rem/1.6 system-ui, sans-serif; overflow-wrap: anywhere; }
+.fraud-t07 button { font: inherit; min-height: 48px; margin: .3rem; padding: .5rem .8rem; color: #fff0cb; background: #494437; border: 2px solid #aaa087; border-radius: .35rem; cursor: pointer; }
+.fraud-t07 button:focus-visible { outline: 3px solid #ffd273; outline-offset: 2px; }
+.fraud-t07 button[aria-pressed=true] { border-color: #ffd273; background: #695229; }
+.fraud-t07 button:disabled { opacity: .55; cursor: default; }
+.fraud-t07 .t07-windows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
+.fraud-t07 h1 { font-size: 1.5rem; }
+.fraud-t07 h2 { font-size: 1.2rem; }
+@media (max-width: 420px) { .fraud-t07 .t07-windows { grid-template-columns: 1fr; } }

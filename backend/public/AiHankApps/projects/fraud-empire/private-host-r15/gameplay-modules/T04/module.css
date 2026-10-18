@@ -1,0 +1,8 @@
+/* Local controls only; no HUD, global selectors, or replacement illustration. */
+.fraud-t04 { max-width: 48rem; margin: auto; padding: 1rem; color: #f1e5ca; background: #1d251b; font-family: "Noto Sans TC", sans-serif; line-height: 1.8; overflow-wrap: anywhere; }
+.fraud-t04 section { margin-block: 1rem; padding: .75rem; border: 1px solid #8e7a51; }
+.fraud-t04 button { min-height: 44px; max-width: 100%; margin: .25rem; padding: .6rem .8rem; border: 2px solid #8e7a51; background: #303723; color: #f8e7bb; font: inherit; cursor: pointer; touch-action: manipulation; }
+.fraud-t04 button[aria-pressed="true"] { border-color: #efc965; background: #79511d; }
+.fraud-t04 button:focus-visible { outline: 3px solid #c2f2d4; outline-offset: 2px; }
+.fraud-t04 [role="status"] { padding: .75rem; border-left: 4px solid #d4ae5a; }
+.fraud-t04 nav, .fraud-t04 .t04-controls { display: flex; flex-wrap: wrap; gap: .25rem; }

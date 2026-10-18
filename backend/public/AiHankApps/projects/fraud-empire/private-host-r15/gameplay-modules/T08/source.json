@@ -1,0 +1,357 @@
+{
+  "sourceCommit": "9a5ed2af3a4bc9e6b1a7f474ac8f460b772c6883",
+  "sourceSha256": "a4abd19dadb43bb2e81f019406bbe601fc78e876793d0385b81df4811e892388",
+  "source": "plan.json topics/T08 (v4 proposal)",
+  "approval": "proposal-only",
+  "topic": {
+    "id": "T08",
+    "name": "假物流",
+    "mode": "動態",
+    "available_modes": [
+      "動態",
+      "出差"
+    ],
+    "wisdom_min": 15,
+    "rank_min": 1,
+    "duration_game_minutes": 40,
+    "base_score": 220,
+    "growth_type": "oneoff",
+    "objective": "在園區倉庫的虛構配送模型追蹤單一包裹，讓封面路線與實際箱子分離，找到假物流事件中的空白目的地。",
+    "setup": "成年NPC丁禾等待包裹H8。倉庫M06只有原創圖形站點，不是現實物流路線；不掃碼、不生成簡訊、不收取實際費用。",
+    "steps": [
+      {
+        "id": "T08-S01",
+        "title": "走進模型倉庫",
+        "screen_type": "map",
+        "instruction": "點倉庫入口，再點H8箱位。",
+        "action": "點箱位走近；只開啟指定H8事件，不可操作其他包裹。",
+        "visible_before": [
+          "主角在M06門口",
+          "H8箱位亮起",
+          "模型站點：月／星／霧"
+        ],
+        "visible_after": [
+          "H8箱子在月站",
+          "封面：已到霧站"
+        ],
+        "ui_controls": [
+          "倉庫入口",
+          "H8箱位"
+        ],
+        "feedback": "H8箱子在月站；封面：已到霧站",
+        "success_check": "已選H8且可對照",
+        "failure_recovery": "隔牆點擊顯示需走到通道",
+        "scene_id": "M06",
+        "action_minutes": 10,
+        "timed_action": "走近箱位",
+        "action_class": "實際工作或移動",
+        "illustration_state": "before-action",
+        "illustration_clock": "10:00"
+      },
+      {
+        "id": "T08-S02",
+        "title": "標記真正的位置",
+        "screen_type": "desk",
+        "instruction": "點H8箱，再點月站。",
+        "action": "先點箱再點其所在站，位置標記落月站；箱子本身不移動。",
+        "visible_before": [
+          "箱子在月站",
+          "地圖標記尚空",
+          "封面位置：霧"
+        ],
+        "visible_after": [
+          "實際：月",
+          "聲稱：霧",
+          "位置差異可見"
+        ],
+        "ui_controls": [
+          "H8箱",
+          "月站",
+          "星站",
+          "霧站"
+        ],
+        "feedback": "實際：月；聲稱：霧；位置差異可見",
+        "success_check": "標記對應可見箱位",
+        "failure_recovery": "錯站可重選，不把箱子瞬移",
+        "scene_id": "M06",
+        "action_minutes": 5,
+        "timed_action": "標記實際位置",
+        "action_class": "實際工作或移動",
+        "illustration_state": "before-action",
+        "illustration_clock": "10:10"
+      },
+      {
+        "id": "T08-S03",
+        "title": "追查空白的一段",
+        "screen_type": "map",
+        "instruction": "點月→星連線，再點星→霧連線。",
+        "action": "點連線展開場景縮圖；月星段只見一般痕跡，沒有H8專屬交接，不能證明此箱移動；星霧段完全空白，該邊變虛線。",
+        "visible_before": [
+          "月→星：一般交接痕跡",
+          "星→霧：空白",
+          "H8仍在月"
+        ],
+        "visible_after": [
+          "星→霧缺事件",
+          "月站有實物",
+          "不能宣稱送達"
+        ],
+        "ui_controls": [
+          "月→星",
+          "星→霧",
+          "比較交接"
+        ],
+        "feedback": "星→霧缺事件；月站有實物；不能宣稱送達",
+        "success_check": "兩段都看過且空白邊標出",
+        "failure_recovery": "不允許補造交接紀錄",
+        "scene_id": "M06",
+        "action_minutes": 5,
+        "timed_action": "核對交接痕跡",
+        "action_class": "實際工作或移動",
+        "illustration_state": "before-action",
+        "illustration_clock": "10:15"
+      },
+      {
+        "id": "T08-S04",
+        "title": "封面與箱內不同",
+        "screen_type": "desk",
+        "instruction": "點查看箱內，再點關閉箱蓋。",
+        "action": "播放固定開箱視角：箱內只有配重塊；玩家不能替換物品或學習包裝騙術。",
+        "visible_before": [
+          "外箱：精美月燈",
+          "H8封條可查看",
+          "丁禾預期月燈"
+        ],
+        "visible_after": [
+          "內容不符：配重塊",
+          "丁禾預期未滿足",
+          "箱蓋可關閉"
+        ],
+        "ui_controls": [
+          "查看箱內",
+          "關閉箱蓋"
+        ],
+        "feedback": "內容不符：配重塊；丁禾預期未滿足；箱蓋可關閉",
+        "success_check": "內容差異保存",
+        "failure_recovery": "略過動畫仍顯示文字與圖示資訊",
+        "scene_id": "M06",
+        "action_minutes": 5,
+        "timed_action": "完成開箱查驗",
+        "action_class": "實際工作或移動",
+        "illustration_state": "after-inspection",
+        "illustration_clock": "10:25"
+      },
+      {
+        "id": "T08-S05",
+        "title": "決定包裹終態",
+        "screen_type": "dialogue",
+        "instruction": "點丁禾，再選退回並保留爭議。",
+        "action": "退回：箱子轉入退回區、故事入帳沖回；留倉：掛待處理無入帳，兩者都保留對方失望。",
+        "visible_before": [
+          "丁禾詢問月燈",
+          "可退回／留倉爭議",
+          "無送達選項"
+        ],
+        "visible_after": [
+          "代表分支：退回",
+          "H8在退回區",
+          "爭議保留"
+        ],
+        "ui_controls": [
+          "丁禾",
+          "退回並保留爭議",
+          "留倉等待"
+        ],
+        "feedback": "代表分支：退回；H8在退回區；爭議保留",
+        "success_check": "有可追溯終態，不虛報送達",
+        "failure_recovery": "留倉同樣可結案，但日結需看到等待提示",
+        "scene_id": "M06",
+        "action_minutes": 5,
+        "timed_action": "處理退回或留倉",
+        "action_class": "實際工作或移動",
+        "illustration_state": "before-action",
+        "illustration_clock": "10:25"
+      },
+      {
+        "id": "T08-S06",
+        "title": "模型路線結案",
+        "screen_type": "ledger",
+        "instruction": "點箱位摘要，再點結算。",
+        "action": "顯示故事入帳14、沖回14、淨0；完成追蹤得220基礎業績積分。",
+        "visible_before": [
+          "實物位置已知",
+          "缺交接已標",
+          "內容不符已知",
+          "退回"
+        ],
+        "visible_after": [
+          "模擬淨入帳0",
+          "業績積分220×智慧倍率",
+          "H8事件封存"
+        ],
+        "ui_controls": [
+          "箱位摘要",
+          "結算"
+        ],
+        "feedback": "模擬淨入帳0；業績積分220×智慧倍率；H8事件封存",
+        "success_check": "三種差異皆存在且有終態",
+        "failure_recovery": "缺項返回對應視圖不重算交通",
+        "scene_id": "M06",
+        "action_minutes": 0,
+        "timed_action": "閱讀結算",
+        "action_class": "閱讀或選單",
+        "illustration_state": "before-action",
+        "illustration_clock": "10:30"
+      },
+      {
+        "id": "T08-S07",
+        "title": "倉庫不會忘記箱子",
+        "screen_type": "result",
+        "instruction": "點丁禾紀錄，再點回辦公室。",
+        "action": "退回箱在本日日結前仍能看到；留倉分支跨日只保留展示，不自動產生收入或扣費。",
+        "visible_before": [
+          "退回區：H8",
+          "丁禾：失望",
+          "本案已封存"
+        ],
+        "visible_after": [
+          "人物簿更新",
+          "返回M02"
+        ],
+        "ui_controls": [
+          "丁禾紀錄",
+          "回辦公室"
+        ],
+        "feedback": "人物簿更新；返回M02",
+        "success_check": "地圖與人物紀錄一致",
+        "failure_recovery": "重播不重新移動箱子",
+        "scene_id": "M02",
+        "action_minutes": 10,
+        "timed_action": "回辦公室",
+        "action_class": "實際工作或移動",
+        "illustration_state": "before-action",
+        "illustration_clock": "10:30"
+      }
+    ],
+    "win_condition": "實物、聲稱、交接缺口及內容差異都明示；選定退回或留倉。",
+    "fail_condition": "無法虛報送達；漏項可補。主動放棄Q0，保留已發現線索。",
+    "persistence": "H8最終位置與丁禾失望；單次案件不長成無限物流收入。",
+    "rewards": {
+      "performance": "通關品質Q：完整1.0、帶可恢復錯誤0.8、失敗0；不按受害金額計分。",
+      "score_formula": "round(220 × Q × (1 + 0.005 × 智慧) × 飽食修正)；智慧只加一次；飽食修正依總則。",
+      "cultivation": "代表模式完整完成給培養點45、職階經驗XP22，各按完成比例縮放且本次只給一次；換模式時改用靜態20/10、動態45/22、出差125/60。",
+      "fictional_receipts": "故事內模擬入帳不等於可花費分數，也不連接任何金融服務。"
+    },
+    "variations": [
+      "實物在星站但最後一段仍空白",
+      "箱內商品正確、地址站點不存在，不能混為內容不符",
+      "兩箱同封面但不同徽記，僅追蹤指定H8"
+    ],
+    "source_urls": [],
+    "notes": "v4提案，尚非使用者既有批准數值。僅原創封閉犯罪故事；人物、帳號、機關、貨幣皆虛構，不提供可輸入腳本、真實收款地址或外部連結。 其他可用模式的時間與基礎業績積分必須依主稿20/100、40/220、100/600換成該卡最終值；本JSON數字為代表模式。 四種資源名稱統一為業績積分、培養點、職階經驗XP、零用錢；虛構入帳僅為故事表現，不自動換成任何資源。",
+    "step_action_minutes": [
+      10,
+      5,
+      5,
+      5,
+      5,
+      0,
+      10
+    ],
+    "timing_note": "平衡提案：首次確認實際工作／移動／處理才推進遊戲時間；閱讀、選項預覽、短片觀看及重播均0，不重扣。",
+    "designAssessment": {
+      "status": "設計稿評估；未實機或真人試玩",
+      "immersion": {
+        "問題": "物流玩法變成任意搬箱子。",
+        "設計說明": "位置、路線證據與實際內容三層各自可點可見，終態影響留倉畫面。",
+        "已調整內容": "本版設計稿已明列上述處理方式，不代表遊戲程式已實作。",
+        "待確認": "敘事節奏、畫面表達與操作感仍待企劃／美術確認及實際試玩。"
+      },
+      "logic": {
+        "問題": "重看故事、返回工位或跨日容易重領分數、重扣時間。",
+        "設計說明": "每次任務只有一份完成紀錄；七步共用總時間；模擬入帳與業績積分各保留獨立編號；重看舊紀錄不再次領取。",
+        "已調整內容": "本版設計稿已明列邏輯邊界，不代表程式或實機已驗證。",
+        "待確認": "仍需檢查實作後的成功、失敗、恢復及不重領情況。"
+      },
+      "feedback": {
+        "即時回饋": "每次有效點按改變可見狀態；誤按顯示原因而非吞掉輸入。",
+        "單局回饋": "完成本關得基礎220分與劇情結果，智慧只加算一次。",
+        "長期回饋": "H8最終位置與丁禾失望；單次案件不長成無限物流收入。",
+        "限制與避免": "不以新增受害者、損失或逼迫程度加成；不販售機率、不用離線懲罰。",
+        "待確認": "回饋強度、閱讀負擔與實際樂趣尚待試玩，不宣稱留存效果。"
+      }
+    }
+  },
+  "figures": [
+    {
+      "id": "T08-S01",
+      "title": "走進模型倉庫",
+      "volume": 4,
+      "page": 59,
+      "status": "AI 遊戲介面／劇情示意；設計提案",
+      "src": "images/eab4d9f90ab141ab870c.webp",
+      "width": 941,
+      "height": 1672
+    },
+    {
+      "id": "T08-S02",
+      "title": "標記真正的位置",
+      "volume": 4,
+      "page": 60,
+      "status": "AI 遊戲介面／劇情示意；設計提案",
+      "src": "images/8c617c7f097fea482027.webp",
+      "width": 941,
+      "height": 1672
+    },
+    {
+      "id": "T08-S03",
+      "title": "追查空白的一段",
+      "volume": 4,
+      "page": 61,
+      "status": "AI 遊戲介面／劇情示意；設計提案",
+      "src": "images/b4ee284484a5e2452fe4.webp",
+      "width": 941,
+      "height": 1672
+    },
+    {
+      "id": "T08-S04",
+      "title": "封面與箱內不同",
+      "volume": 4,
+      "page": 62,
+      "status": "AI 遊戲介面／劇情示意；設計提案",
+      "src": "images/44ce0cd9fa27017c7486.webp",
+      "width": 941,
+      "height": 1672
+    },
+    {
+      "id": "T08-S05",
+      "title": "決定包裹終態",
+      "volume": 4,
+      "page": 63,
+      "status": "AI 遊戲介面／劇情示意；設計提案",
+      "src": "images/36d98b913f3316c55452.webp",
+      "width": 941,
+      "height": 1672
+    },
+    {
+      "id": "T08-S06",
+      "title": "模型路線結案",
+      "volume": 4,
+      "page": 64,
+      "status": "AI 遊戲介面／劇情示意；設計提案",
+      "src": "images/e1c51425eb37f1539926.webp",
+      "width": 941,
+      "height": 1671
+    },
+    {
+      "id": "T08-S07",
+      "title": "倉庫不會忘記箱子",
+      "volume": 4,
+      "page": 65,
+      "status": "AI 遊戲介面／劇情示意；設計提案",
+      "src": "images/df80ac46c9dc302a2879.webp",
+      "width": 941,
+      "height": 1672
+    }
+  ]
+}
