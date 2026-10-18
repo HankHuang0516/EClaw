@@ -3,7 +3,7 @@
   "version": "v4.18-startup-load-r22-20261018-r2",
   "date": "2026-10-18",
   "status": "公開手動試玩：求職開場、既有玩法、T02與獨立存讀；非完整主線或正式資源機制",
-  "contentHash": "25b1030be82bcb8928c4d90c54008d0b86aaaaefdfb13689b0c18905406d830d",
+  "contentHash": "ac6fad294bfad68a87566c50b382c8dfada773deba78d19f62cf585b46eb1123",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1987,8 +1987,8 @@
     },
     {
       "path": "player-service-worker.js",
-      "bytes": 6231,
-      "sha256": "2f34cbff272e0136980357bda32d4639162f096e333d2c68317b2ae87839af51"
+      "bytes": 7728,
+      "sha256": "efe9338992a2d9806c3677a354ba1a83b4b71d815b250afd684b190c0b4c922a"
     },
     {
       "path": "player-updates.js",
