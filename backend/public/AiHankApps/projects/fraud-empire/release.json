@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "version": "v4.18-manual-playtest-r22-20261018-r1",
+  "version": "v4.18-startup-load-r22-20261018-r2",
   "date": "2026-10-18",
   "status": "公開手動試玩：求職開場、既有玩法、T02與獨立存讀；非完整主線或正式資源機制",
-  "contentHash": "12c87608c10a9c5de66b3c1fe4fbe28051a8afea4bfa8eeab748eee40bf94209",
+  "contentHash": "25b1030be82bcb8928c4d90c54008d0b86aaaaefdfb13689b0c18905406d830d",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1697,8 +1697,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 12671,
-      "sha256": "a55f73493265a011e433aa57f42accd4e9d7c25b22311508cafd924a02378985"
+      "bytes": 12668,
+      "sha256": "24a5ae25ca155950546892b08d178dec782a5f96f7fa5c35631a9d23f716e6bf"
     },
     {
       "path": "interaction-coverage.json",
@@ -1772,8 +1772,8 @@
     },
     {
       "path": "play.html",
-      "bytes": 8885,
-      "sha256": "eebe364ab0d76aa6279717a2c737e3acf4f2270e39669def463663f0fdbfac56"
+      "bytes": 8959,
+      "sha256": "50385337de2bb4f65c103899c2edafadce638f2c43cdb1c9164b765ecaac9ed7"
     },
     {
       "path": "player-assets-registry.js",
@@ -1872,18 +1872,18 @@
     },
     {
       "path": "player-bootstrap.js",
-      "bytes": 18277,
-      "sha256": "b04f2deb3d6dec8474393965340fdd45b4083b5d18c176edac011308d167c93c"
+      "bytes": 18274,
+      "sha256": "c1c91b49b9b888bee1374faa2b2eeab8daa54ff6b4bf4a0d0830885ca709ee0c"
     },
     {
       "path": "player-cache-manifest.js",
-      "bytes": 27441,
-      "sha256": "b3e0baa9ca1fb5bdaf4b39a7413bfdd4bf05156d626f2a334c29b9037e4fad99"
+      "bytes": 27438,
+      "sha256": "d429116a61d01c22c50a3cef76377084af11335eff149c88e53103e62d8768a8"
     },
     {
       "path": "player-entry-link.js",
-      "bytes": 6338,
-      "sha256": "4ced6163ac28ab72bad5124ec0d25cb48f417c52cf84b19bd2bdb78049564fc0"
+      "bytes": 6335,
+      "sha256": "cf3f657d058cad18f947cba270beeebe5538a41b1a1350f801e1dfd85b9348d7"
     },
     {
       "path": "player-entry-opening.css",
@@ -1947,8 +1947,8 @@
     },
     {
       "path": "player-release-context.json",
-      "bytes": 27432,
-      "sha256": "2f1596e900dca061497e51e2c7d727b8f479348c627ff45420d99ae6295ad0e2"
+      "bytes": 27429,
+      "sha256": "9456b2bc6c78e443830b98f43884b3d6c160ecb2e22ae5914120b3336299c674"
     },
     {
       "path": "player-report.js",
@@ -7832,8 +7832,8 @@
     },
     {
       "path": "player-private-world-session.js",
-      "bytes": 16443,
-      "sha256": "0baad2f2f700196e1efbfa935459c7665fc8ca519ec77a18867adebb73885682"
+      "bytes": 17612,
+      "sha256": "9356a1db8f236161a8fa194230aa2a735e43c6e9a2b0cb760a015e81cb593039"
     },
     {
       "path": "player-private-world.css",
@@ -8025,7 +8025,7 @@
   "playerSlice": {
     "entry": "play.html",
     "runtimeContext": "player-release-context.json",
-    "runtimeContentHash": "b9af00af58668f535bd60040739382fe73bd3c420a3a4e624db0765b58eb8bf8",
+    "runtimeContentHash": "145023324ebc307a71dcbead25f26189b1612cdf5cf148b6eb42b960ca010a53",
     "saveContract": "slice-v1-008a59aaddafa283713309e170077d18f6acefc93949826365f11e31928df96d",
     "approvedArt": "UX02-layer-art-v3-20261016",
     "scene": "M02",

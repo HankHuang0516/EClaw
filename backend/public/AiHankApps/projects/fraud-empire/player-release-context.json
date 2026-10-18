@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "version": "v4.18-manual-playtest-r22-20261018-r1",
-  "contentHash": "b9af00af58668f535bd60040739382fe73bd3c420a3a4e624db0765b58eb8bf8",
+  "version": "v4.18-startup-load-r22-20261018-r2",
+  "contentHash": "145023324ebc307a71dcbead25f26189b1612cdf5cf148b6eb42b960ca010a53",
   "hashScope": "exact-player-runtime-assets-excluding-this-context-and-worker-bootstrap",
   "assets": [
     {
@@ -36,8 +36,8 @@
     },
     {
       "path": "play.html",
-      "bytes": 8885,
-      "sha256": "eebe364ab0d76aa6279717a2c737e3acf4f2270e39669def463663f0fdbfac56"
+      "bytes": 8959,
+      "sha256": "50385337de2bb4f65c103899c2edafadce638f2c43cdb1c9164b765ecaac9ed7"
     },
     {
       "path": "player-assets-registry.js",
@@ -136,8 +136,8 @@
     },
     {
       "path": "player-bootstrap.js",
-      "bytes": 18277,
-      "sha256": "b04f2deb3d6dec8474393965340fdd45b4083b5d18c176edac011308d167c93c"
+      "bytes": 18274,
+      "sha256": "c1c91b49b9b888bee1374faa2b2eeab8daa54ff6b4bf4a0d0830885ca709ee0c"
     },
     {
       "path": "player-entry-opening.css",
@@ -776,8 +776,8 @@
     },
     {
       "path": "player-private-world-session.js",
-      "bytes": 16443,
-      "sha256": "0baad2f2f700196e1efbfa935459c7665fc8ca519ec77a18867adebb73885682"
+      "bytes": 17612,
+      "sha256": "9356a1db8f236161a8fa194230aa2a735e43c6e9a2b0cb760a015e81cb593039"
     },
     {
       "path": "player-private-world.css",
