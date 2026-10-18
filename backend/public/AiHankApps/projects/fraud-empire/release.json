@@ -3,7 +3,7 @@
   "version": "v4.18-manual-playtest-r22-20261018-r1",
   "date": "2026-10-18",
   "status": "公開手動試玩：求職開場、既有玩法、T02與獨立存讀；非完整主線或正式資源機制",
-  "contentHash": "fefe930d2bcd469430bfe85058c19b43bd0b54069c86fb824bf38930fdd51890",
+  "contentHash": "12c87608c10a9c5de66b3c1fe4fbe28051a8afea4bfa8eeab748eee40bf94209",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1772,8 +1772,8 @@
     },
     {
       "path": "play.html",
-      "bytes": 8852,
-      "sha256": "567734dcd6213a85a364b0073d37c7f55602daad6cb71d469441e5e5a0209c43"
+      "bytes": 8885,
+      "sha256": "eebe364ab0d76aa6279717a2c737e3acf4f2270e39669def463663f0fdbfac56"
     },
     {
       "path": "player-assets-registry.js",
@@ -1878,7 +1878,7 @@
     {
       "path": "player-cache-manifest.js",
       "bytes": 27441,
-      "sha256": "e514243bac32aab8370a3542aa2e0f6b6699485191462adde940ad0ca4a085b5"
+      "sha256": "b3e0baa9ca1fb5bdaf4b39a7413bfdd4bf05156d626f2a334c29b9037e4fad99"
     },
     {
       "path": "player-entry-link.js",
@@ -1948,7 +1948,7 @@
     {
       "path": "player-release-context.json",
       "bytes": 27432,
-      "sha256": "ecb0893ebc157906fc11cb24180eac425ff6628d40e8c788b1b16cd0797a106b"
+      "sha256": "2f1596e900dca061497e51e2c7d727b8f479348c627ff45420d99ae6295ad0e2"
     },
     {
       "path": "player-report.js",
@@ -7832,8 +7832,8 @@
     },
     {
       "path": "player-private-world-session.js",
-      "bytes": 16314,
-      "sha256": "9cded4a37eebba24c00294e1779be5cff41d55558ce0aad6d8a7145d54415e44"
+      "bytes": 16443,
+      "sha256": "0baad2f2f700196e1efbfa935459c7665fc8ca519ec77a18867adebb73885682"
     },
     {
       "path": "player-private-world.css",
@@ -8025,7 +8025,7 @@
   "playerSlice": {
     "entry": "play.html",
     "runtimeContext": "player-release-context.json",
-    "runtimeContentHash": "28ec095d5f80baf34c32aa71cbdc513723dfc3c27d7d45ffb5b5149a597947fe",
+    "runtimeContentHash": "b9af00af58668f535bd60040739382fe73bd3c420a3a4e624db0765b58eb8bf8",
     "saveContract": "slice-v1-008a59aaddafa283713309e170077d18f6acefc93949826365f11e31928df96d",
     "approvedArt": "UX02-layer-art-v3-20261016",
     "scene": "M02",
