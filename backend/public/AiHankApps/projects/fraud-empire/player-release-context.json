@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "version": "v4.18-manual-playtest-r22-20261018-r1",
-  "contentHash": "842ae0d8a83b3f6e7262383da782ed28da97881d860e0eeb836ed8c13e0ae367",
+  "contentHash": "28ec095d5f80baf34c32aa71cbdc513723dfc3c27d7d45ffb5b5149a597947fe",
   "hashScope": "exact-player-runtime-assets-excluding-this-context-and-worker-bootstrap",
   "assets": [
     {
@@ -136,8 +136,8 @@
     },
     {
       "path": "player-bootstrap.js",
-      "bytes": 18276,
-      "sha256": "ec09735c59e1908408af731a139f326de59c647e588f8148d39fa906e4ee0c20"
+      "bytes": 18277,
+      "sha256": "b04f2deb3d6dec8474393965340fdd45b4083b5d18c176edac011308d167c93c"
     },
     {
       "path": "player-entry-opening.css",
@@ -671,8 +671,8 @@
     },
     {
       "path": "gameplay-modules/T10/module.js",
-      "bytes": 5647,
-      "sha256": "e04b768329ce00621187b5af82e992bd01c359ef682886ad8599e1c3cddaf8eb"
+      "bytes": 5954,
+      "sha256": "a4313a9cae7854aecfb653d83581463bd87e5da3ba997599b6c1aaaea9053111"
     },
     {
       "path": "gameplay-modules/T10/style.css",

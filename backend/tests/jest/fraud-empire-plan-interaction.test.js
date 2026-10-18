@@ -112,6 +112,6 @@ describe('Whole-plan interaction batch B01 — independent T02', () => {
     expect(coverage.legacySteps).toBe(119); expect(coverage.batches).toHaveLength(7);
     const script = fs.readFileSync(path.join(root, 'plan-interaction.js'), 'utf8');
     expect(script).not.toMatch(/localStorage|sessionStorage|indexedDB|sendBeacon|method\s*:\s*['"]POST|<iframe|eval\(/);
-    expect(script).toContain('fullPlanComplete: false');
+    expect(script).toMatch(/fullPlanComplete:\s*false/);
   });
 });

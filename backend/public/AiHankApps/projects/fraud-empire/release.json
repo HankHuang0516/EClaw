@@ -3,7 +3,7 @@
   "version": "v4.18-manual-playtest-r22-20261018-r1",
   "date": "2026-10-18",
   "status": "公開手動試玩：求職開場、既有玩法、T02與獨立存讀；非完整主線或正式資源機制",
-  "contentHash": "d96dd40d9d346fb762744d3f3a41dca423bcf3d7ea6c4a04b7112b4cefb615d0",
+  "contentHash": "fefe930d2bcd469430bfe85058c19b43bd0b54069c86fb824bf38930fdd51890",
   "assets": [
     {
       "path": "art-catalog.json",
@@ -1872,13 +1872,13 @@
     },
     {
       "path": "player-bootstrap.js",
-      "bytes": 18276,
-      "sha256": "ec09735c59e1908408af731a139f326de59c647e588f8148d39fa906e4ee0c20"
+      "bytes": 18277,
+      "sha256": "b04f2deb3d6dec8474393965340fdd45b4083b5d18c176edac011308d167c93c"
     },
     {
       "path": "player-cache-manifest.js",
       "bytes": 27441,
-      "sha256": "c476ad5f3fef31adc76a88e49a18cf223d6f51e576038e05417345293c97413a"
+      "sha256": "e514243bac32aab8370a3542aa2e0f6b6699485191462adde940ad0ca4a085b5"
     },
     {
       "path": "player-entry-link.js",
@@ -1948,7 +1948,7 @@
     {
       "path": "player-release-context.json",
       "bytes": 27432,
-      "sha256": "e28f32f3748d7342def5fb29a44898dd40ff94d586d78232c7b1b2df8d0b41c8"
+      "sha256": "ecb0893ebc157906fc11cb24180eac425ff6628d40e8c788b1b16cd0797a106b"
     },
     {
       "path": "player-report.js",
@@ -3822,8 +3822,8 @@
     },
     {
       "path": "gameplay-modules/T10/module.js",
-      "bytes": 5647,
-      "sha256": "e04b768329ce00621187b5af82e992bd01c359ef682886ad8599e1c3cddaf8eb"
+      "bytes": 5954,
+      "sha256": "a4313a9cae7854aecfb653d83581463bd87e5da3ba997599b6c1aaaea9053111"
     },
     {
       "path": "gameplay-modules/T10/style.css",
@@ -4052,8 +4052,8 @@
     },
     {
       "path": "private-host-r15/player-bootstrap.js",
-      "bytes": 15850,
-      "sha256": "7d2316494e239b01206ab492e878886f6b371382e60732ea440dbc0f97acd696"
+      "bytes": 15851,
+      "sha256": "a34e33af286e4a4da27a953b0950d5e6e2e2abe59d46a2acd6eaef4f59c2b1df"
     },
     {
       "path": "private-host-r15/player-entry-opening.css",
@@ -4587,8 +4587,8 @@
     },
     {
       "path": "private-host-r15/gameplay-modules/T10/module.js",
-      "bytes": 5647,
-      "sha256": "e04b768329ce00621187b5af82e992bd01c359ef682886ad8599e1c3cddaf8eb"
+      "bytes": 5954,
+      "sha256": "a4313a9cae7854aecfb653d83581463bd87e5da3ba997599b6c1aaaea9053111"
     },
     {
       "path": "private-host-r15/gameplay-modules/T10/style.css",
@@ -4677,8 +4677,8 @@
     },
     {
       "path": "private-host-r15/player-release-context.json",
-      "bytes": 25147,
-      "sha256": "49331d7d4ae351b995cb683dac00ba2e627e6e47728c20ccae95b55fe014cf14"
+      "bytes": 25148,
+      "sha256": "7ace07d873d00fdd5ef9948be629a740467e5e9951b9d41e156dd7cc3927bd41"
     },
     {
       "path": "private-host-r15/art-catalog.json",
@@ -6262,8 +6262,8 @@
     },
     {
       "path": "private-host-r15/index.html",
-      "bytes": 12668,
-      "sha256": "86316074aed3a7e53fbb71414d0ee94527ce19cabe97d09fdd4ced02e007de79"
+      "bytes": 12669,
+      "sha256": "27e6a0da5b46b3543fdf8f3dfb372e30ddcf9bcfb7f33dd4294630331bfb9519"
     },
     {
       "path": "private-host-r15/interactive-prototype.js",
@@ -6287,13 +6287,13 @@
     },
     {
       "path": "private-host-r15/player-cache-manifest.js",
-      "bytes": 25170,
-      "sha256": "9ea4e78963f7263d276a4508d5973442412cb3b25bfd9aeab4e2349017b2648e"
+      "bytes": 25171,
+      "sha256": "b14871fec10f671d51011ef6d0b64f1b7690c4be888bbf9c450611f17061861b"
     },
     {
       "path": "private-host-r15/player-entry-link.js",
-      "bytes": 6335,
-      "sha256": "0a6e555c2176858dedee081b1e3022121b08a2868fe5c915e3e73e1230c20e3b"
+      "bytes": 6336,
+      "sha256": "95823e4c9417dda548156243b43dbfe0633e50aef712c11ddbccfc6d64a77631"
     },
     {
       "path": "private-host-r15/player-service-worker.js",
@@ -8025,7 +8025,7 @@
   "playerSlice": {
     "entry": "play.html",
     "runtimeContext": "player-release-context.json",
-    "runtimeContentHash": "842ae0d8a83b3f6e7262383da782ed28da97881d860e0eeb836ed8c13e0ae367",
+    "runtimeContentHash": "28ec095d5f80baf34c32aa71cbdc513723dfc3c27d7d45ffb5b5149a597947fe",
     "saveContract": "slice-v1-008a59aaddafa283713309e170077d18f6acefc93949826365f11e31928df96d",
     "approvedArt": "UX02-layer-art-v3-20261016",
     "scene": "M02",
@@ -9232,13 +9232,14 @@
     },
     "privateHostPackaging": {
       "directory": "private-host-r15",
-      "version": "private-local-save-r15-20261018-r3",
-      "runtimeHash": "4d1cea3adaaca51adc6ae57df9423031a448d0503c03a8e39c0b4eff096e9b8f",
+      "version": "v4.18-legacy-compat-r15-20261018-r2",
+      "runtimeHash": "1cbc2f99168cc1b72040df0de5fb99bd8515645d668684f08c3d660356b9080e",
       "runtimeFiles": 151,
-      "scope": "frozen private runtime, not the ordinary/formal world",
+      "scope": "Compatibility snapshot rebuilt for module-local text-provider naming only; gameplay/art preserved; not the formal save service",
       "offline": "separate public asset bundle, not included in outer worker cache; no full offline acceptance",
       "publicFiles": 781,
-      "publicAssetsAuthority": "accepted r15-r3 complete release.assets; exact original bytes; runtime identity unchanged"
+      "publicAssetsAuthority": "Original r15-r3 snapshot; only local text lookup binding and deterministic identity metadata updated; original frozen snapshot preserved privately",
+      "runtimeIdentityUnchanged": false
     },
     "privateWorldSession": {
       "entry": "play.html",
