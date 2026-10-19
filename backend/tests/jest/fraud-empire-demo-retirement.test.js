@@ -1,0 +1,62 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const express = require('express');
+const request = require('supertest');
+const retirement = require('../../fraud-empire-demo-retirement');
+const retirementPath = require.resolve('../../fraud-empire-demo-retirement');
+// Istanbul's private accessor travels with Function#toString. The VM must share
+// the real module counters; never strip instrumentation or invent counter data.
+function serializedCoverageBindings(source, coverage = global.__coverage__) {
+    const names = [...new Set(source.match(/\bcov_[A-Za-z0-9_]+(?=\s*\()/g) || [])];
+    if (!names.length) return {};
+    const actual = coverage && coverage[retirementPath];
+    if (!actual) throw new Error('serialized-worker-real-coverage-missing');
+    return Object.fromEntries(names.map(name => [name, () => actual]));
+}
+
+function app() { const a = express(); a.use(retirement.retireFraudEmpireDemo); a.use((_req, res) => res.json({ success: true, untouched: true })); return a; }
+const base = retirement.ROOTS[0];
+test.each(['', '/', '/index.html'])('general introduction remains available at %s', async suffix => {
+    const r = await request(app()).get(base.slice(0, -1) + suffix).set('Accept-Language', 'en');
+    expect(r.status).toBe(200); expect(r.text).toContain('Web demo retired'); expect(r.text).toContain('Android and iOS apps in development');
+    expect(r.text).not.toMatch(/<iframe|<canvas|<script[^>]+src=|player\.webmanifest/);
+});
+test.each(['play.html', 'play.html?preview=home-opening-v3', 'play.html?trial=world', 'private-host-r15/play.html?preview=full-route', 'private-host-r15/index.html', 'player-bootstrap.js?v=old', 'player-private-world-session.js', 'plan.json', 'gameplay-modules/T16/view.js', 'interactive-prototype-model.js', 'player-cache-manifest.js', 'player.webmanifest', 'old-release.zip'])('retired direct and alternate asset %s is never served', async relative => {
+    for (const root of retirement.ROOTS) { const r = await request(app()).get(root + relative); expect(r.status).toBe(410); expect(r.headers['cache-control']).toBe('no-store'); expect(r.headers['cloudflare-cdn-cache-control']).toBe('no-store'); expect(r.text).toContain('data-demo-retired='); }
+});
+test.each(['/mission/AiHankApps/projects/%66raud-empire/play.html', '/AiHankApps/projects/fraud-empire/%70lay.html', '/mission/AiHankApps/projects/x/../fraud-empire/play.html'])('encoded or normalized alias is retired: %s', async url => { expect((await request(app()).get(url)).status).toBe(410); });
+test.each(['en', 'zh-TW', 'zh-CN', 'ja', 'ko'])('notice is complete in %s', async code => { const r = await request(app()).get(base).set('Accept-Language', code); expect(r.text).toContain(retirement.COPY[code].title); expect(r.text).toContain(retirement.COPY[code].save); });
+test.each(['GET', 'HEAD'])('existing icon continues through the original static handler: %s', async method => { const r = await request(app())[method.toLowerCase()](base + 'player-icon-192.png'); expect(r.status).toBe(200); expect(r.headers['x-fraud-empire-demo']).toBeUndefined(); });
+test('HEAD and unsupported methods cannot expose an old game body', async () => { expect((await request(app()).head(base + 'play.html')).status).toBe(410); expect((await request(app()).post(base + 'play.html').send({ anything: true })).status).toBe(410); });
+test.each(['/AiHankApps/guides/timehut/', '/portal/', '/mission/index.html', '/AiHankApps/projects/fraud-empire-other/play.html', '/api/health'])('unrelated surface remains untouched: %s', async url => { const r = await request(app()).get(url); expect(r.body).toEqual({ success: true, untouched: true }); });
+test('retirement is mounted before both public static entry points', () => { const s = fs.readFileSync(path.join(__dirname, '../../index.js'), 'utf8'); const i = s.indexOf('app.use(retireFraudEmpireDemo)'); expect(i).toBeGreaterThan(0); expect(i).toBeLessThan(s.indexOf("app.use('/AiHankApps', express.static")); expect(i).toBeLessThan(s.indexOf("app.use('/mission', express.static")); });
+function harness(scope = retirement.SCOPES[0], options = {}) {
+    const handlers = new Map(), owned = 'fraud-player-static:' + scope + ':old', meta = 'fraud-player-meta:' + scope + ':old', unrelated = 'another-app-cache', foreign = 'fraud-player-static:/other-app/:old';
+    const clients = [{ url: 'https://example.test' + base + 'play.html', postMessage: jest.fn(), navigate: jest.fn().mockResolvedValue(null) }, { url: 'https://example.test/AiHankApps/guides/timehut/', postMessage: jest.fn(), navigate: jest.fn() }, { url: 'https://other.test' + base + 'play.html', postMessage: jest.fn(), navigate: jest.fn() }];
+    const sw = { URL, Response, registration: { scope: 'https://example.test' + scope, unregister: jest.fn().mockResolvedValue(true) }, navigator: { language: 'en' }, addEventListener: (name, fn) => handlers.set(name, fn), skipWaiting: jest.fn().mockResolvedValue(), clients: { claim: jest.fn().mockResolvedValue(), matchAll: jest.fn().mockResolvedValue(clients) }, caches: { keys: jest.fn().mockResolvedValue([owned, meta, unrelated, foreign]), delete: options.deleteRejects ? jest.fn().mockRejectedValue(Error('cache unavailable')) : jest.fn().mockResolvedValue(true) }, fetch: jest.fn().mockResolvedValue(new Response('icon')) };
+    vm.runInNewContext(retirement.workerSource, { self: sw, URL, Response, ...serializedCoverageBindings(retirement.workerSource) });
+    async function event(name) { let p; handlers.get(name)({ waitUntil(value) { p = value; } }); await p; }
+    async function fetch(url) { let p; handlers.get('fetch')({ request: new Request(url), respondWith(value) { p = value; } }); return p ? await p : null; }
+    return { sw, handlers, clients, event, fetch, owned, meta, unrelated, foreign };
+}
+test.each(retirement.SCOPES)('existing worker at %s retires only this project', async scope => { const h = harness(scope); await h.event('install'); await h.event('activate'); expect(h.sw.skipWaiting).toHaveBeenCalledTimes(1); expect(h.sw.caches.delete.mock.calls.map(x => x[0])).toEqual([h.owned, h.meta]); expect(h.sw.clients.claim).toHaveBeenCalledTimes(1); expect(h.clients[0].navigate).toHaveBeenCalledTimes(1); expect(h.clients[1].navigate).not.toHaveBeenCalled(); expect(h.clients[2].navigate).not.toHaveBeenCalled(); expect(h.sw.registration.unregister).toHaveBeenCalledTimes(1); });
+test('failed cache deletion is reported but never deletes saves or prevents unregistration', async () => { const h = harness(undefined, { deleteRejects: true }); await h.event('activate'); expect(h.sw.registration.unregister).toHaveBeenCalled(); expect(h.clients[0].postMessage).toHaveBeenCalledWith(expect.objectContaining({ cacheCleanupComplete: false })); expect(retirement.workerSource).not.toMatch(/localStorage|sessionStorage|indexedDB|Clear-Site-Data/); });
+test('retired worker serves notices instead of cached gameplay and leaves other apps alone', async () => { const h = harness(); const r = await h.fetch('https://example.test' + base + 'play.html?preview=full-route'); expect(r.status).toBe(410); expect(await r.text()).toContain('Web demo retired'); expect(await h.fetch('https://example.test/AiHankApps/guides/timehut/')).toBeNull(); expect((await h.fetch('https://example.test' + base + 'player-icon-192.png')).status).toBe(200); });
+test('worker is offered at the two existing script paths with exact existing scope', async () => { for (const root of retirement.ROOTS) for (const sub of ['', 'private-host-r15/']) { const r = await request(app()).get(root + sub + 'player-service-worker.js?v=old'); expect(r.status).toBe(200); expect(r.type).toBe('application/javascript'); expect(r.headers['service-worker-allowed']).toBe(root + sub); expect(r.text).toContain(retirement.RETIREMENT_ID); } });
+test('a worker cannot activate outside the explicitly retired project scopes', () => { expect(() => harness('/')).toThrow('unexpected-demo-retirement-scope'); });
+test('notice only updates existing exact project registrations; it never installs a worker or clears storage', () => { const html = retirement.noticeHtml('en'); expect(html).toContain('getRegistrations'); expect(html).toContain('registration.update()'); expect(html).not.toMatch(/serviceWorker\.register\(|localStorage|sessionStorage|indexedDB|Clear-Site-Data/); });
+
+test('serialized worker VM shares real coverage counters without changing emitted production source', () => {
+    const source = retirement.workerSource;
+    const bindings = serializedCoverageBindings(source);
+    const names = [...new Set(source.match(/\bcov_[A-Za-z0-9_]+(?=\s*\()/g) || [])];
+    if (names.length) {
+        for (const name of names) expect(bindings[name]()).toBe(global.__coverage__[retirementPath]);
+    } else expect(bindings).toEqual({});
+    expect(retirement.workerSource).toBe(source);
+});
+test('instrumented VM source without its real coverage record fails instead of fabricating counters', () => {
+    expect(() => serializedCoverageBindings('cov_probe().s[0]++;', {})).toThrow('serialized-worker-real-coverage-missing');
+});

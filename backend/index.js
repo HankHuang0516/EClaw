@@ -17,6 +17,7 @@ const telemetry = require('./device-telemetry');
 const sitePageviews = require('./site-pageviews');
 const appPortfolioCommunity = require('./app-portfolio-community');
 const { setAiHankAppsCacheHeaders } = require('./aihankapps-cache-policy');
+const { retireFraudEmpireDemo } = require('./fraud-empire-demo-retirement');
 const feedbackModule = require('./device-feedback');
 const chatIntegrity = require('./chat-integrity');
 const communitySsr = require('./community-ssr');
@@ -369,6 +370,8 @@ app.use('/js', express.static(path.join(__dirname, 'public/js'), {
 app.get(/^\/AiHankApps$/, (_req, res) => {
     res.redirect(308, '/AiHankApps/');
 });
+// Retire this project's public demo and its /mission static alias before either static mount.
+app.use(retireFraudEmpireDemo);
 app.use('/AiHankApps', express.static(path.join(__dirname, 'public/AiHankApps'), {
     etag: true,
     lastModified: true,
