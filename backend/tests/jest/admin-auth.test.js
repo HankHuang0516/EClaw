@@ -661,3 +661,233 @@ describe('Private admin demo runtime', () => {
         expect(source).toContain("const adminCheck = authModule.adminMiddleware;");
     });
 });
+
+
+describe('Ordinary Fraud App feedback contract', () => {
+    const express = require('express');
+    const http = require('supertest');
+    const { newDb } = require('pg-mem');
+    const crypto = require('crypto');
+    const localFs = require('fs');
+    const localPath = require('path');
+    const service = require('../../fraud-app-feedback');
+    const intake = '/api/fraud-app-feedback';
+    const admin = '/api/admin/fraud-app-feedback';
+    const fixture = () => ({ schemaVersion: 1, id: crypto.randomUUID(), category: 'operation',
+        description: 'Synthetic contract test only', version: 'native-build20-test', screen: 'feedback' });
+    function mount(pool, ready = true) {
+        const app = express();
+        const stats = { fallback: 0 };
+        const routers = service.createRouters({ getPool: () => pool, isReady: () => ready,
+            authMiddleware: (req, res, next) => {
+                if (!req.get('x-test-user')) return res.status(401).json({ success: false });
+                req.user = { isAdmin: req.get('x-test-user') === 'admin' }; next();
+            },
+            adminMiddleware: (req, res, next) => req.user.isAdmin ? next() : res.status(403).json({ success: false }),
+        });
+        app.use(intake, routers.intake);
+        app.use(admin, routers.admin);
+        app.use((_req, res) => { stats.fallback += 1; res.status(200).send('unrelated route'); });
+        return { app, stats };
+    }
+    let pool, app, stats, Pool;
+    beforeEach(async () => {
+        const memory = newDb({ noAstCoverageCheck: true });
+        const MemoryPool = memory.adapters.createPg().Pool;
+        // pg-mem returns the existing row for ON CONFLICT DO NOTHING RETURNING.
+        // Normalize that adapter discrepancy to independently checked PostgreSQL
+        // semantics. This sequential fixture is not a concurrency/deploy proof.
+        Pool = function TestPool() {
+            const value = new MemoryPool();
+            const query = value.query.bind(value);
+            value.query = async (sql, values) => {
+                const doNothing = sql.startsWith('INSERT INTO fraud_app_feedback_reports ')
+                    && sql.includes('ON CONFLICT (id) DO NOTHING RETURNING');
+                const prior = doNothing ? await query('SELECT id FROM fraud_app_feedback_reports WHERE id = $1', [values[0]]) : null;
+                const result = await query(sql, values);
+                return prior && prior.rows.length ? { ...result, rows: [], rowCount: 0 } : result;
+            };
+            return value;
+        };
+        pool = new Pool();
+        await service.migrateSchema(pool);
+        ({ app, stats } = mount(pool));
+    });
+    afterEach(async () => { await pool.end(); });
+    test('ordinary no-login write returns a durable UUID receipt; only admin can read it', async () => {
+        const body = fixture();
+        const posted = await http(app).post(intake).send(body);
+        expect(posted.status).toBe(201);
+        expect(posted.body).toMatchObject({ success: true, saved: true, id: body.id, duplicate: false });
+        expect(Number.isFinite(Date.parse(posted.body.createdAt))).toBe(true);
+        expect(Object.keys(posted.body).sort()).toEqual(['createdAt', 'duplicate', 'id', 'saved', 'success']);
+        expect((await http(app).get(admin + '/' + body.id)).status).toBe(401);
+        expect((await http(app).get(admin + '/' + body.id).set('x-test-user', 'member')).status).toBe(403);
+        const detail = await http(app).get(admin + '/' + body.id).set('x-test-user', 'admin');
+        expect(detail.status).toBe(200);
+        expect(detail.body.report).toMatchObject(body);
+        expect(detail.body.report.createdAt).toBe(posted.body.createdAt);
+        expect(detail.headers['cache-control']).toContain('no-store');
+        expect(detail.headers.vary).toContain('Cookie');
+        expect(detail.body.report).not.toHaveProperty('payload_hash');
+        expect(stats.fallback).toBe(0);
+    });
+    test('same UUID/content is idempotent with key reordering and original timestamp', async () => {
+        const body = fixture();
+        const first = await http(app).post(intake).send(body);
+        const reordered = Object.fromEntries(Object.entries(body).reverse());
+        const second = await http(app).post(intake).send(reordered);
+        expect(first.status).toBe(201);
+        expect(second.status).toBe(200);
+        expect(second.body).toEqual({ ...first.body, duplicate: true });
+        const rows = await pool.query('SELECT id FROM fraud_app_feedback_reports');
+        expect(rows.rows).toHaveLength(1);
+    });
+    test('receipt preserves exact submitted UUID spelling', async () => {
+        const body = { ...fixture(), id: crypto.randomUUID().toUpperCase() };
+        const response = await http(app).post(intake).send(body);
+        expect(response.status).toBe(201);
+        expect(response.body.id).toBe(body.id);
+    });
+    test.each(['description', 'version', 'category'])('same UUID with changed %s conflicts without replacing data', async key => {
+        const body = fixture();
+        expect((await http(app).post(intake).send(body)).status).toBe(201);
+        const changed = { ...body, [key]: key === 'category' ? 'rules' : 'changed' };
+        const response = await http(app).post(intake).send(changed);
+        expect(response.status).toBe(409);
+        expect(response.body).toEqual({ success: false, saved: false, error: 'report_id_conflict' });
+        const detail = await http(app).get(admin + '/' + body.id).set('x-test-user', 'admin');
+        expect(detail.body.report[key]).toBe(body[key]);
+    });
+    test('stored feedback survives a fresh server and pool, not an in-process receipt cache', async () => {
+        const body = fixture();
+        const receipt = await http(app).post(intake).send(body);
+        const other = new Pool();
+        try {
+            const independent = mount(other).app;
+            const read = await http(independent).get(admin + '/' + body.id).set('x-test-user', 'admin');
+            expect(read.status).toBe(200);
+            expect(read.body.report.description).toBe(body.description);
+            expect(read.body.report.createdAt).toBe(receipt.body.createdAt);
+        } finally { await other.end(); }
+    });
+    test('lost database acknowledgement returns unsaved; same-ID retry discovers saved data', async () => {
+        let loseAck = true;
+        const uncertain = { query: async (...args) => {
+            const result = await pool.query(...args);
+            if (args[0].startsWith('INSERT') && loseAck) { loseAck = false; throw new Error('synthetic lost acknowledgement'); }
+            return result;
+        } };
+        const server = mount(uncertain).app;
+        const body = fixture();
+        const first = await http(server).post(intake).send(body);
+        expect(first.status).toBe(503);
+        expect(first.body.saved).toBe(false);
+        const retry = await http(server).post(intake).send(body);
+        expect(retry.status).toBe(200);
+        expect(retry.body).toMatchObject({ success: true, saved: true, duplicate: true, id: body.id });
+    });
+    test('DB failure, missing pool, not-ready and missing schema are never success', async () => {
+        const failing = { query: async () => { throw new Error('private synthetic backend diagnostic'); } };
+        for (const server of [mount(failing).app, mount(null).app, mount(pool, false).app]) {
+            const response = await http(server).post(intake).send(fixture());
+            expect(response.status).toBe(503);
+            expect(response.body).toEqual({ success: false, saved: false, error: 'storage_unavailable' });
+            expect(JSON.stringify(response.body)).not.toContain('diagnostic');
+        }
+        const empty = newDb();
+        const EmptyPool = empty.adapters.createPg().Pool;
+        const emptyPool = new EmptyPool();
+        try {
+            const response = await http(mount(emptyPool).app).post(intake).send(fixture());
+            expect(response.status).toBe(503);
+            expect(() => empty.public.getTable('fraud_app_feedback_reports')).toThrow();
+        } finally { await emptyPool.end(); }
+    });
+    test('a missing conflict row is unconfirmed, not a fabricated duplicate', async () => {
+        const server = mount({ query: async () => ({ rows: [] }) }).app;
+        const response = await http(server).post(intake).send(fixture());
+        expect(response.status).toBe(503);
+        expect(response.body.saved).toBe(false);
+    });
+    test.each([
+        ['schema', body => { body.schemaVersion = 2; }],
+        ['id', body => { body.id = 'not-a-uuid'; }],
+        ['v1 UUID', body => { body.id = '00000000-0000-1000-8000-000000000000'; }],
+        ['category', body => { body.category = 'unknown'; }],
+        ['empty', body => { body.description = '  \n'; }],
+        ['too long', body => { body.description = 'a'.repeat(2001); }],
+        ['invalid Unicode', body => { body.description = '\ud800'; }],
+        ['control', body => { body.description = 'bad\0text'; }],
+        ['version', body => { body.version = ''; }],
+        ['screen', body => { body.screen = { snapshot: true }; }],
+        ['snapshot', body => { body.snapshot = {}; }],
+        ['device identifier', body => { body.deviceId = 'synthetic-device'; }],
+        ['credential', body => { body.deviceSecret = 'synthetic-not-a-secret'; }],
+        ['local delivery marker', body => { body.delivery = 'local-only'; }],
+    ])('rejects invalid/extra %s without a stored report', async (_name, mutate) => {
+        const body = fixture(); mutate(body);
+        const response = await http(app).post(intake).send(body);
+        expect(response.status).toBe(400);
+        expect(response.body.saved).toBe(false);
+        expect((await pool.query('SELECT id FROM fraud_app_feedback_reports')).rows).toHaveLength(0);
+    });
+    test('accepts 2000 four-byte Unicode characters without truncating', async () => {
+        const body = { ...fixture(), description: '\ud83d\ude42'.repeat(2000) };
+        expect(service.validate(body)).toBe(true);
+        expect((await http(app).post(intake).send(body)).status).toBe(201);
+        const detail = await http(app).get(admin + '/' + body.id).set('x-test-user', 'admin');
+        expect(detail.body.report.description).toBe(body.description);
+    });
+    test('malformed, non-JSON and over-limit wire bodies return 400 unsaved', async () => {
+        for (const text of ['{', ' '.repeat(service.MAX_BYTES) + JSON.stringify(fixture())]) {
+            const response = await http(app).post(intake).set('Content-Type', 'application/json').send(text);
+            expect(response.status).toBe(400);
+            expect(response.body.saved).toBe(false);
+        }
+        expect((await http(app).post(intake).type('form').send({ anything: 'invalid' })).status).toBe(400);
+    });
+    test('limits ordinary submissions without creating an account/key', async () => {
+        const body = fixture();
+        for (let count = 0; count < 8; count += 1) expect([200, 201]).toContain((await http(app).post(intake).send(body)).status);
+        const limited = await http(app).post(intake).send(body);
+        expect(limited.status).toBe(429);
+        expect(limited.body.saved).toBe(false);
+        expect(limited.headers['retry-after']).toBeDefined();
+    });
+    test('public GET, unknown write paths and untrusted browser origins disclose no report', async () => {
+        expect((await http(app).get(intake)).status).toBe(404);
+        expect((await http(app).get(intake + '/' + crypto.randomUUID())).status).toBe(404);
+        expect((await http(app).post(intake + '/other').send(fixture())).status).toBe(404);
+        expect((await http(app).post(intake).set('Origin', 'https://example.test').send(fixture())).status).toBe(403);
+        expect(stats.fallback).toBe(0);
+    });
+    test('private admin lists validate limits and missing IDs', async () => {
+        expect((await http(app).get(admin)).status).toBe(401);
+        expect((await http(app).get(admin).set('x-test-user', 'member')).status).toBe(403);
+        expect((await http(app).get(admin).set('x-test-user', 'admin')).body.reports).toEqual([]);
+        expect((await http(app).get(admin + '?limit=101').set('x-test-user', 'admin')).status).toBe(400);
+        expect((await http(app).get(admin + '/bad').set('x-test-user', 'admin')).status).toBe(400);
+        expect((await http(app).get(admin + '/' + crypto.randomUUID()).set('x-test-user', 'admin')).status).toBe(404);
+        const unavailable = mount({ query: async () => { throw new Error('synthetic'); } }).app;
+        expect((await http(unavailable).get(admin).set('x-test-user', 'admin')).status).toBe(503);
+    });
+    test('schema migration is operator-only and repeatable', async () => {
+        expect(await service.migrateSchema(pool)).toEqual({ schemaVersion: 1, table: 'fraud_app_feedback_reports' });
+        const queries = [];
+        mount({ query: async sql => { queries.push(sql); return { rows: [] }; } });
+        expect(queries).toHaveLength(0);
+    });
+    test('production mount is before global JSON parsing and reuses existing admin guards', () => {
+        const index = localFs.readFileSync(localPath.join(__dirname, '../../index.js'), 'utf8');
+        const at = index.indexOf("app.use('/api/fraud-app-feedback'");
+        expect(at).toBeGreaterThan(0);
+        expect(at).toBeLessThan(index.indexOf('app.use(express.json({'));
+        expect(index).toContain("app.use('/api/admin/fraud-app-feedback', cookieParser(), dispatchFraudAppFeedback('admin'))");
+        expect(index).toContain('authMiddleware: adminAuth, adminMiddleware: adminCheck,');
+        const source = localFs.readFileSync(localPath.join(__dirname, '../../fraud-app-feedback.js'), 'utf8');
+        expect(source).not.toMatch(/captureLogSnapshot|captureDeviceState|createGithubIssue|console\.(log|error)|fetch\(/);
+        expect(source).not.toContain("require('./feedback')");
+        expect(source).not.toContain('fraud-demo');
+    });
+});
