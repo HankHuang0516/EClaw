@@ -292,6 +292,16 @@ app.use(express.json({
 }));
 app.use(cookieParser());
 
+// Private runtimes must never reach public static serving or anonymous traffic tracking.
+const privateDemoRuntime = require('./admin-demo-runtime');
+const adminDemoRuntimeSlot = { router: null };
+app.use('/AiHankApps/admin-demos', privateDemoRuntime.privateHeaders, (req, res) => {
+    if (!adminDemoRuntimeSlot.router) return res.status(503).json({ success: false, error: 'Private runtime unavailable' });
+    return adminDemoRuntimeSlot.router(req, res, error => {
+        if (!res.headersSent) res.status(error ? 503 : 404).json({ success: false, error: 'Private runtime unavailable' });
+    });
+});
+
 // Site pageview tracker — anonymous GETs on marketing / public HTML pages.
 // Pool is wired lazily via setPool() once chatPool exists; tracking is
 // fire-and-forget and silently no-ops when the pool isn't ready.
@@ -5787,6 +5797,10 @@ app.post('/api/free-bot-tos/agree', async (req, res) => {
 // ============================================
 const adminAuth = authModule.authMiddleware;
 const adminCheck = authModule.adminMiddleware;
+adminDemoRuntimeSlot.router = privateDemoRuntime.createRouter({
+    authMiddleware: adminAuth, adminMiddleware: adminCheck,
+    getPool: () => chatPool, isReady: () => persistenceReady,
+});
 app.use('/api/admin/paper-beta-feedback', require('./paper-beta-admin').createRouter(
     () => chatPool, adminAuth, adminCheck
 ));
