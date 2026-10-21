@@ -5206,9 +5206,12 @@ Steps:
    - ECLAW_API_KEY to: ${channelApiKey}
    - ECLAW_ENTITY_ID to: ${entityId}
 3. ./patch-fakechat.sh
-4. Start a public tunnel in a separate pane:
-   npx cloudflared tunnel --url http://localhost:18800
-   (wait for the HTTPS URL, e.g. https://xxxx.trycloudflare.com)
+4. Start a public tunnel in a separate tmux pane — pick whichever works for you:
+   Option A (recommended, no account):  npx cloudflared tunnel --url http://localhost:18800
+   Option B (no install, SSH only):     ssh -R 80:localhost:18800 serveo.net
+   Option C (no account):               npx lt --port 18800
+   Option D (free account required):    ngrok http 18800
+   Wait for the HTTPS URL (e.g. https://xxxx.trycloudflare.com) before continuing.
 5. Register callback (replace <TUNNEL_URL>):
    curl -s -X POST ${registerUrl} \\
      -H "Content-Type: application/json" \\
