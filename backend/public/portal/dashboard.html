@@ -691,6 +691,46 @@
             opacity: 1;
         }
 
+        .channel-agent-copy-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            padding: 8px 12px;
+            margin: 8px 0 4px;
+            background: linear-gradient(135deg, rgba(108,99,255,0.15), rgba(139,92,246,0.1));
+            border: 1px solid rgba(108,99,255,0.35);
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary, #a78bfa);
+            cursor: pointer;
+            transition: background 0.18s, border-color 0.18s, transform 0.1s;
+        }
+        .channel-agent-copy-btn:hover {
+            background: linear-gradient(135deg, rgba(108,99,255,0.28), rgba(139,92,246,0.2));
+            border-color: rgba(108,99,255,0.6);
+            transform: translateY(-1px);
+        }
+        .channel-agent-copy-btn:active {
+            transform: translateY(0);
+        }
+        .channel-agent-copy-btn.loading {
+            opacity: 0.6;
+            cursor: wait;
+        }
+        .channel-agent-note {
+            font-size: 10.5px;
+            color: #f59e0b;
+            background: rgba(245,158,11,0.08);
+            border: 1px solid rgba(245,158,11,0.25);
+            border-radius: 6px;
+            padding: 5px 8px;
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+
         .code-countdown.expired {
             color: var(--danger);
         }
@@ -2326,21 +2366,9 @@
                                     <span class="channel-guide-badge" data-i18n="dash_channel_card_openclaw_badge">Stable</span>
                                 </div>
                                 <div class="channel-guide-desc" data-i18n="dash_channel_card_openclaw_desc">Official OpenClaw plugin path — best for hosted OpenClaw bots and production API-key setups.</div>
-                                <div class="channel-step" data-i18n="dash_channel_step_intro">In OpenClaw terminal:</div>
-                                <div class="channel-step-code" onclick="copyText('openclaw plugins install @eclaw/openclaw-channel', this)">
-                                    <span class="channel-step-num">1</span>
-                                    <code>openclaw plugins install @eclaw/openclaw-channel</code>
-                                    <span class="channel-step-copy">⧉</span>
-                                </div>
-                                <div class="channel-step-code" onclick="copyText('openclaw configure', this)">
-                                    <span class="channel-step-num">2</span>
-                                    <code>openclaw configure</code>
-                                    <span class="channel-step-copy">⧉</span>
-                                </div>
-                                <div class="channel-step-code">
-                                    <span class="channel-step-num">3</span>
-                                    <code data-i18n="dash_channel_step3">Select "EClaw"</code>
-                                </div>
+                                <button class="channel-agent-copy-btn" onclick="copyChannelAgentPrompt('openclaw', this)">
+                                    🤖 <span data-i18n="dash_channel_copy_agent_prompt">複製給 AI Agent</span>
+                                </button>
                                 <div class="channel-guide-actions">
                                     <a class="channel-promo-link" href="info.html#channel-plugins/openclaw-channel">
                                         <span data-i18n="dash_channel_learn_more">Learn more</span> →
@@ -2355,21 +2383,9 @@
                                     <span class="channel-guide-badge" data-i18n="dash_channel_card_codex_badge">CLI bridge</span>
                                 </div>
                                 <div class="channel-guide-desc" data-i18n="dash_channel_card_codex_desc">Connect an EClaw entity to OpenAI Codex CLI via codex app-server. Good for remote repo work from EClaw chat.</div>
-                                <div class="channel-step-code" onclick="copyText('git clone https://github.com/HankHuang0516/codex-eclaw-bridge.git && cd codex-eclaw-bridge && npm install && cp .env.example .env', this)">
-                                    <span class="channel-step-num">1</span>
-                                    <code>git clone .../codex-eclaw-bridge && npm install</code>
-                                    <span class="channel-step-copy">⧉</span>
-                                </div>
-                                <div class="channel-step-code" onclick="copyText('ECLAW_API_KEY=eck_your_key\nECLAW_WEBHOOK_URL=https://your-public-url.example.com\nCODEX_WORKSPACE=/absolute/path/to/your/repo', this)">
-                                    <span class="channel-step-num">2</span>
-                                    <code data-i18n="dash_channel_card_codex_step2">fill .env: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE</code>
-                                    <span class="channel-step-copy">⧉</span>
-                                </div>
-                                <div class="channel-step-code" onclick="copyText('npm run build && npm start', this)">
-                                    <span class="channel-step-num">3</span>
-                                    <code>npm run build && npm start</code>
-                                    <span class="channel-step-copy">⧉</span>
-                                </div>
+                                <button class="channel-agent-copy-btn" onclick="copyChannelAgentPrompt('codex', this)">
+                                    🤖 <span data-i18n="dash_channel_copy_agent_prompt">複製給 AI Agent</span>
+                                </button>
                                 <div class="channel-guide-actions">
                                     <a class="channel-promo-link" href="info.html#channel-plugins/codex-channel"><span data-i18n="dash_channel_card_codex_guide_link">Codex guide →</span></a>
                                     <a class="channel-promo-link" href="https://github.com/HankHuang0516/codex-eclaw-bridge" target="_blank" rel="noopener">GitHub →</a>
@@ -2382,21 +2398,10 @@
                                     <span class="channel-guide-badge" data-i18n="dash_channel_card_clauded_badge">Experimental</span>
                                 </div>
                                 <div class="channel-guide-desc" data-i18n="dash_channel_card_clauded_desc">Run Claude Code in a local tmux session as your EClaw bot — uses your claude.ai Max subscription quota, no Anthropic API tokens billed.</div>
-                                <div class="channel-step-code" onclick="copyText('git clone https://github.com/HankHuang0516/claude-code-eclaw-channel.git && cd claude-code-eclaw-channel && bun install', this)">
-                                    <span class="channel-step-num">1</span>
-                                    <code>git clone .../claude-code-eclaw-channel && bun install</code>
-                                    <span class="channel-step-copy">⧉</span>
-                                </div>
-                                <div class="channel-step-code" onclick="copyText('cp .mcp.json.example .mcp.json\n# then edit .mcp.json:\n#   ECLAW_API_KEY=eck_your_key\n#   ECLAW_WEBHOOK_URL=https://your-public-url.example.com', this)">
-                                    <span class="channel-step-num">2</span>
-                                    <code data-i18n="dash_channel_card_clauded_step2">fill .mcp.json: ECLAW_API_KEY, ECLAW_WEBHOOK_URL</code>
-                                    <span class="channel-step-copy">⧉</span>
-                                </div>
-                                <div class="channel-step-code" onclick="copyText('./patch-fakechat.sh && bun run bridge.ts', this)">
-                                    <span class="channel-step-num">3</span>
-                                    <code>./patch-fakechat.sh && bun run bridge.ts</code>
-                                    <span class="channel-step-copy">⧉</span>
-                                </div>
+                                <div class="channel-agent-note" data-i18n="dash_channel_claude_code_hint">⚠️ 貼到 Claude Code（CLI 或 claude.ai/code），不是 Claude.ai 對話視窗</div>
+                                <button class="channel-agent-copy-btn" onclick="copyChannelAgentPrompt('claude_code', this)">
+                                    🤖 <span data-i18n="dash_channel_copy_agent_prompt">複製給 AI Agent</span>
+                                </button>
                                 <div class="channel-guide-actions">
                                     <a class="channel-promo-link" href="info.html#channel-plugins/claude-code-channel"><span data-i18n="dash_channel_card_clauded_guide_link">Claude Code guide →</span></a>
                                     <a class="channel-promo-link" href="https://github.com/HankHuang0516/claude-code-eclaw-channel" target="_blank" rel="noopener">GitHub →</a>
@@ -2409,21 +2414,9 @@
                                     <span class="channel-guide-badge" data-i18n="dash_channel_card_hermes_badge">Live Showcase</span>
                                 </div>
                                 <div class="channel-guide-desc" data-i18n="dash_channel_card_hermes_desc">Bind a Hermes Agent (NousResearch self-evolving agent, Python) as your EClaw bot via webhook. Supports MiniMax / OpenAI / Anthropic / local Ollama.</div>
-                                <div class="channel-step-code" onclick="copyText('git clone https://github.com/HankHuang0516/hermes-eclaw-channel.git && cd hermes-eclaw-channel', this)">
-                                    <span class="channel-step-num">1</span>
-                                    <code data-i18n="dash_channel_card_hermes_step1">git clone .../hermes-eclaw-channel</code>
-                                    <span class="channel-step-copy">⧉</span>
-                                </div>
-                                <div class="channel-step-code" onclick="copyText('./scripts/setup-tunnel.sh hermes-b openclaw-project-b 8644', this)">
-                                    <span class="channel-step-num">2</span>
-                                    <code data-i18n="dash_channel_card_hermes_step2">./scripts/setup-tunnel.sh hermes-b ...</code>
-                                    <span class="channel-step-copy">⧉</span>
-                                </div>
-                                <div class="channel-step-code" onclick="copyText('./scripts/bind-entity.sh eck_yourKey 5 &quot;Hermes&quot; && python3 daemon/hermes_daemon.py', this)">
-                                    <span class="channel-step-num">3</span>
-                                    <code data-i18n="dash_channel_card_hermes_step3">bind-entity + start daemon</code>
-                                    <span class="channel-step-copy">⧉</span>
-                                </div>
+                                <button class="channel-agent-copy-btn" onclick="copyChannelAgentPrompt('hermes', this)">
+                                    🤖 <span data-i18n="dash_channel_copy_agent_prompt">複製給 AI Agent</span>
+                                </button>
                                 <div class="channel-guide-actions">
                                     <a class="channel-promo-link" href="info.html#channel-plugins/hermes-channel"><span data-i18n="dash_channel_card_hermes_guide_link">Hermes guide →</span></a>
                                     <a class="channel-promo-link" href="https://github.com/HankHuang0516/hermes-eclaw-channel" target="_blank" rel="noopener">GitHub →</a>
@@ -5097,6 +5090,186 @@
             const visible = steps.style.display !== 'none';
             steps.style.display = visible ? 'none' : 'block';
             arrow.classList.toggle('expanded', !visible);
+        }
+
+        async function copyChannelAgentPrompt(channelType, btn) {
+            if (selectedSlot === null) {
+                showToast(i18n.t('toast_no_slot_selected') || '請先選擇 Entity Slot', 'error');
+                return;
+            }
+
+            if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+            try {
+                // Fetch or auto-provision channel API key
+                let channelApiKey = null;
+                try {
+                    const listData = await apiCall('GET', '/api/channel/provision');
+                    const accounts = listData.accounts || [];
+                    if (accounts.length > 0) {
+                        channelApiKey = accounts[0].channel_api_key;
+                    } else {
+                        const provData = await apiCall('POST', '/api/channel/provision');
+                        channelApiKey = provData.channel_api_key;
+                    }
+                } catch (e) {
+                    showToast('無法取得 Channel API Key: ' + e.message, 'error');
+                    return;
+                }
+
+                const deviceId = currentUser.deviceId;
+                const entityId = selectedSlot;
+                const registerUrl = 'https://eclawbot.com/api/channel/register';
+                const bindUrl = 'https://eclawbot.com/api/channel/bind';
+
+                let prompt = '';
+
+                if (channelType === 'openclaw') {
+                    prompt =
+`# EClaw × OpenClaw Channel — AI Agent Binding Setup
+
+## Credentials (pre-filled — do not share)
+ECLAW_DEVICE_ID=${deviceId}
+ECLAW_ENTITY_ID=${entityId}
+ECLAW_API_KEY=${channelApiKey}
+
+## Task
+Install and configure the OpenClaw Channel plugin to bind EClaw entity #${entityId}.
+
+Steps:
+1. In your OpenClaw terminal:
+   openclaw plugins install @eclaw/openclaw-channel
+2. openclaw configure  →  select "EClaw" when prompted
+3. Enter the API key when prompted: ${channelApiKey}
+4. Set entity ID to: ${entityId}
+5. The plugin handles tunnel setup and webhook registration automatically.
+6. Verify: entity #${entityId} should appear as "bound" in the EClaw portal (https://eclawbot.com).
+
+Reference docs: https://www.npmjs.com/package/@eclaw/openclaw-channel`;
+
+                } else if (channelType === 'codex') {
+                    prompt =
+`# EClaw × Codex Channel — AI Agent Binding Setup
+
+## Credentials (pre-filled — do not share)
+ECLAW_DEVICE_ID=${deviceId}
+ECLAW_ENTITY_ID=${entityId}
+ECLAW_API_KEY=${channelApiKey}
+ECLAW_REGISTER_URL=${registerUrl}
+ECLAW_BIND_URL=${bindUrl}
+
+## Task
+Clone and configure the Codex EClaw bridge to bind entity #${entityId} on device ${deviceId}.
+
+Steps:
+1. git clone https://github.com/HankHuang0516/codex-eclaw-bridge.git && cd codex-eclaw-bridge && npm install && cp .env.example .env
+2. Edit .env — fill in:
+   ECLAW_API_KEY=${channelApiKey}
+   ECLAW_ENTITY_ID=${entityId}
+   CODEX_WORKSPACE=/absolute/path/to/your/repo
+3. Start a public tunnel (pick one):
+   npx cloudflared tunnel --url http://localhost:3001
+   (wait for the HTTPS URL, e.g. https://xxxx.trycloudflare.com)
+4. Register callback (replace <TUNNEL_URL>):
+   curl -s -X POST ${registerUrl} \\
+     -H "Content-Type: application/json" \\
+     -d '{"channel_api_key":"${channelApiKey}","callback_url":"<TUNNEL_URL>/eclaw-webhook"}'
+5. Bind entity:
+   curl -s -X POST ${bindUrl} \\
+     -H "Content-Type: application/json" \\
+     -d '{"channel_api_key":"${channelApiKey}","entityId":${entityId}}'
+6. npm run build && npm start
+
+Reference docs: https://github.com/HankHuang0516/codex-eclaw-bridge`;
+
+                } else if (channelType === 'claude_code') {
+                    prompt =
+`⚠️  IMPORTANT: Paste this prompt into Claude Code (CLI: \`claude\` command, or https://claude.ai/code).
+    Do NOT paste into Claude.ai chat — the bridge requires local shell access.
+
+# EClaw × Claude Code Channel — AI Agent Binding Setup
+
+## Credentials (pre-filled — do not share)
+ECLAW_DEVICE_ID=${deviceId}
+ECLAW_ENTITY_ID=${entityId}
+ECLAW_API_KEY=${channelApiKey}
+ECLAW_REGISTER_URL=${registerUrl}
+ECLAW_BIND_URL=${bindUrl}
+
+## Task
+Clone and configure the Claude Code EClaw channel bridge to bind entity #${entityId} on device ${deviceId}.
+Use claude-fable-5 (or claude-sonnet-4-6 as fallback) as the model.
+
+Steps:
+1. git clone https://github.com/HankHuang0516/claude-code-eclaw-channel.git && cd claude-code-eclaw-channel && bun install
+2. cp .mcp.json.example .mcp.json
+   Edit .mcp.json — set:
+   - ECLAW_API_KEY to: ${channelApiKey}
+   - ECLAW_ENTITY_ID to: ${entityId}
+3. ./patch-fakechat.sh
+4. Start a public tunnel in a separate pane:
+   npx cloudflared tunnel --url http://localhost:18800
+   (wait for the HTTPS URL, e.g. https://xxxx.trycloudflare.com)
+5. Register callback (replace <TUNNEL_URL>):
+   curl -s -X POST ${registerUrl} \\
+     -H "Content-Type: application/json" \\
+     -d '{"channel_api_key":"${channelApiKey}","callback_url":"<TUNNEL_URL>/eclaw-webhook"}'
+6. Bind entity:
+   curl -s -X POST ${bindUrl} \\
+     -H "Content-Type: application/json" \\
+     -d '{"channel_api_key":"${channelApiKey}","entityId":${entityId}}'
+7. Start bridge in tmux:
+   tmux new -s eclaw-${entityId}
+   bun run bridge.ts
+
+Reference docs: https://github.com/HankHuang0516/claude-code-eclaw-channel`;
+
+                } else if (channelType === 'hermes') {
+                    prompt =
+`# EClaw × Hermes Channel — AI Agent Binding Setup
+
+## Credentials (pre-filled — do not share)
+ECLAW_DEVICE_ID=${deviceId}
+ECLAW_ENTITY_ID=${entityId}
+ECLAW_API_KEY=${channelApiKey}
+ECLAW_REGISTER_URL=${registerUrl}
+ECLAW_BIND_URL=${bindUrl}
+
+## Task
+Clone and configure the Hermes EClaw channel to bind entity #${entityId} on device ${deviceId}.
+Choose your AI provider from: MiniMax / OpenAI / Anthropic / OpenRouter / local Ollama — refer to README for provider-specific env vars.
+
+Steps:
+1. git clone https://github.com/HankHuang0516/hermes-eclaw-channel.git && cd hermes-eclaw-channel
+2. Set up config (follow README for your chosen provider):
+   - ECLAW_API_KEY=${channelApiKey}
+   - ECLAW_ENTITY_ID=${entityId}
+   - Add your AI provider API key (MiniMax sk-cp-... / OpenAI sk-... / etc.)
+3. Start a public tunnel (pick one):
+   ./scripts/setup-tunnel.sh hermes-${entityId} your-project-name 864${entityId}
+   OR: npx cloudflared tunnel --url http://localhost:864${entityId}
+   (wait for the HTTPS URL, e.g. https://xxxx.trycloudflare.com)
+4. Register callback (replace <TUNNEL_URL>):
+   curl -s -X POST ${registerUrl} \\
+     -H "Content-Type: application/json" \\
+     -d '{"channel_api_key":"${channelApiKey}","callback_url":"<TUNNEL_URL>/eclaw-webhook"}'
+5. Bind entity:
+   curl -s -X POST ${bindUrl} \\
+     -H "Content-Type: application/json" \\
+     -d '{"channel_api_key":"${channelApiKey}","entityId":${entityId}}'
+6. python3 daemon/hermes_daemon.py
+
+Reference docs: https://github.com/HankHuang0516/hermes-eclaw-channel`;
+                }
+
+                if (navigator.clipboard) {
+                    await navigator.clipboard.writeText(prompt);
+                } else {
+                    fallbackCopy(prompt);
+                }
+                showToast(i18n.t('toast_copied_clipboard') || '已複製！貼到 AI Agent 執行', 'success');
+            } finally {
+                if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+            }
         }
 
         function copyText(text, el) {
