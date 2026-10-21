@@ -783,6 +783,16 @@ const dreamBuddyAds = require('./app-bot-ads')({
 });
 app.use('/api/app-bot/ads', dreamBuddyAds);
 
+// Dream Buddy can use an outbound-only Mac worker. This queue never dispatches
+// to the install's official bot; the other app personas keep their own routing.
+const dreamBuddyInference = require('./dream-buddy-inference')({
+    getDevices: () => devices,
+    getPool: () => db._getPool(),
+    isReady: () => persistenceReady,
+    getPersona,
+});
+app.use('/api/app-bot/inference', dreamBuddyInference.router);
+
 app.post('/api/app-bot/chat', appBotChatRateLimit, async (req, res) => {
     const { appId, personaId, deviceId, deviceSecret, message, entityId } = req.body || {};
 
@@ -809,6 +819,14 @@ app.post('/api/app-bot/chat', appBotChatRateLimit, async (req, res) => {
     const maxMessageLength = appCfg.maxMessageLength || 2000;
     if (message.length > maxMessageLength) {
         return res.status(400).json({ success: false, error: `message too long (max ${maxMessageLength} chars)` });
+    }
+
+    if (appId === 'dream-buddy' && process.env.DREAM_BUDDY_AI_PROVIDER === 'local-minimax') {
+        return dreamBuddyInference.submit(req, res, resolved);
+    }
+    if (appId === 'dream-buddy' && process.env.DREAM_BUDDY_AI_PROVIDER &&
+        process.env.DREAM_BUDDY_AI_PROVIDER !== 'official-bot') {
+        return res.status(503).json({ success: false, error: 'inference_configuration_invalid' });
     }
 
     // Most app-shell installs use slot 1. Legacy apps may declare a different
@@ -1878,6 +1896,7 @@ app.get('/api/help', (req, res) => {
 
     // Intent category matching — zh/en + ja/ko/th/vi/id/fr/es/ms (by @Mac_F)
     const INTENT_MAP = {
+        dream_buddy_inference: ['dream buddy inference', 'dream-buddy local', '夢話夥伴本地', '梦话伙伴本地'],
         dream_buddy_ads: ['dream buddy ads', 'dream-buddy reward', '夢話夥伴廣告', '梦话伙伴广告'],
         paper_beta_feedback: ['paper beta feedback', 'paper-beta-feedback', '紙上彈兵回饋', '纸上弹兵反馈'],
         taaze_demo_share: ['taaze demo', 'taaze-demo', 'demo share', 'demo 分享', '示範分享'],
@@ -1903,6 +1922,16 @@ app.get('/api/help', (req, res) => {
     const d = `'{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${eId}`; // shared body prefix
 
     const APIS = {
+        dream_buddy_inference: [
+            { title: 'Dream Buddy: owner-authenticated inference provider/readiness', curl: `curl -s '${apiBase}/api/app-bot/inference/connection?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET'` },
+            { title: 'Dream Buddy: job status (owner only)', curl: `curl -s '${apiBase}/api/app-bot/inference/jobs/JOB_UUID?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET'` },
+            { title: 'Dream Buddy: recover a send by operation UUID (owner only)', curl: `curl -s '${apiBase}/api/app-bot/inference/operations/OPERATION_UUID?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET'` },
+            { title: 'Dream Buddy: submit a message with an idempotent operation UUID', curl: `curl -s -X POST '${apiBase}/api/app-bot/chat' -H 'Content-Type: application/json' -d '{"appId":"dream-buddy","personaId":"dream-buddy","deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","operationId":"OPERATION_UUID","message":"A dream"}'` },
+            { title: 'Dream Buddy dedicated worker: readiness heartbeat', curl: `curl -s -X POST '${apiBase}/api/app-bot/inference/worker/heartbeat' -H 'Authorization: Bearer WORKER_TOKEN' -H 'Content-Type: application/json' -d '{}'` },
+            { title: 'Dream Buddy dedicated worker: claim next job', curl: `curl -s '${apiBase}/api/app-bot/inference/worker/next' -H 'Authorization: Bearer WORKER_TOKEN'` },
+            { title: 'Dream Buddy dedicated worker: return the same leased result', curl: `curl -s -X POST '${apiBase}/api/app-bot/inference/worker/jobs/JOB_UUID/result' -H 'Authorization: Bearer WORKER_TOKEN' -H 'Content-Type: application/json' -d '{"leaseToken":"LEASE_TOKEN","status":"completed","reply":"A dream reply"}'` },
+            { title: 'Dream Buddy: local/debug-only owner diagnostics (disabled in production)', curl: `curl -s '${apiBase}/api/debug/dream-buddy-inference?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET'` },
+        ],
         dream_buddy_ads: [
             { title: 'Dream Buddy: privately flag an owned AI reply', curl: `curl -s -X POST '${apiBase}/api/app-bot/ads/reports?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET' -H 'Content-Type: application/json' -d '{"messageId":"SERVER_MESSAGE_UUID","reason":"offensive"}'` },
             { title: 'Dream Buddy: owner-authenticated message quota', curl: `curl -s '${apiBase}/api/app-bot/ads/quota?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET'` },
@@ -13411,6 +13440,25 @@ app.post('/api/client/speak', idempotencyMiddleware, clientSpeakDedupeMiddleware
         return res.status(403).json({ success: false, message: "Invalid deviceSecret for this device" });
     }
 
+    // Older Dream Buddy clients send to /client/speak and poll chat history.
+    // Preserve that wire contract while routing only their marked slot-0 text
+    // requests to the same local queue. Other devices/entities keep this route.
+    const legacyDreamBuddy = (entityId === 0 || entityId === '0') && source === 'client' &&
+        /^dream-buddy-/.test(device.entities?.[0]?.appVersion || '');
+    if (legacyDreamBuddy && process.env.DREAM_BUDDY_AI_PROVIDER === 'local-minimax') {
+        if (typeof text !== 'string' || !text.trim() || text.length > 2000 ||
+            mediaType || mediaUrl || validatedAttachments) {
+            return res.status(400).json({ success: false, error: 'invalid_dream_buddy_message' });
+        }
+        req.body = { ...req.body, appId: 'dream-buddy', personaId: 'dream-buddy', message: text };
+        return appBotChatRateLimit(req, res, () => dreamBuddyInference.submit(req, res,
+            getPersona('dream-buddy', 'dream-buddy')));
+    }
+    if (legacyDreamBuddy && process.env.DREAM_BUDDY_AI_PROVIDER &&
+        !['local-minimax', 'official-bot'].includes(process.env.DREAM_BUDDY_AI_PROVIDER)) {
+        return res.status(503).json({ success: false, error: 'inference_configuration_invalid' });
+    }
+
     // Developer exemption: admin-owned devices with valid deviceSecret skip Gatekeeper First Lock
     const isDeveloper = deviceSecret && safeEqual(device.deviceSecret, deviceSecret) && developerDeviceIds.has(deviceId);
     if (deviceSecret) {
@@ -17534,6 +17582,7 @@ app.use('/api/debug/taaze-demo-share', taazeDemoRouters.debugRouter);
  * Requires admin auth — never expose unauthenticated.
  */
 app.use('/api/debug/dream-buddy-ads', dreamBuddyAds.diagnostics);
+app.use('/api/debug/dream-buddy-inference', dreamBuddyInference.diagnostics);
 
 app.get('/api/debug/devices', (req, res) => {
     if (!verifyAdmin(req)) {
