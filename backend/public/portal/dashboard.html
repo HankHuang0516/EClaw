@@ -5208,6 +5208,10 @@ Steps:
 7. Start bridge in tmux:
    tmux new -s eclaw-${entityId}
    bun run bridge.ts
+8. (Optional) Enable usage sync — token stats appear in the EClaw portal:
+   Set env var before starting: ECLAW_USAGE_SYNC=true bun run bridge.ts
+   The bridge reads ~/.claude/projects/**/*.jsonl and pushes snapshots every 60s.
+   Ask me: "Do you want to enable usage sync?" and I will set it up for you.
 
 Reference docs: https://github.com/HankHuang0516/claude-code-eclaw-channel`;
 
