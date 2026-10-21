@@ -52,9 +52,6 @@ Disallow: /portal/telemetry.html
 Disallow: /portal/stories/
 Disallow: /portal/bot/
 
-# Supplementary promo/demo pages
-Disallow: /promo-chat-avatar.html
-
 # API endpoints
 Disallow: /api/
 
