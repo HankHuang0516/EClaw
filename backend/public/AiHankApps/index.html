@@ -352,6 +352,9 @@
       .app-icon--game::after { background-image: url('brand/h-watermark-game-italic.png'); }
       .app-icon--watermarked::after { content: none; }
       .app-icon--fraud-empire::after { width: 14px; height: 14px; right: 8px; bottom: 8px; }
+      .card.has-project-link::after { display: none; }
+      .card.has-project-link .card-head { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 16px; min-height: 0; padding-right: 0; }
+      .card.has-intro-link.has-project-link .guide-actions { position: static; grid-column: 1 / -1; justify-self: end; }
 
       h3 {
         margin: 0;
@@ -582,7 +585,7 @@
         { name: 'Vibe帝國', iconText: 'Vibe', icon: 'icons/vibe-empire-zh-81b4f4938045.png', aliases: 'Vibe帝國 · 共治軍令', category: '遊戲', desc: '30 秒同步回合的網頁策略遊戲，結合文明英雄、卡牌部署與即時戰場。', source: 'Web', communityId: 'vibe-empire', webStatus: '開發中', publicWeb: false, checkedAt: '2026-10-04T01:02:59.370Z' },
         { name: '錢錢長大了', iconText: '錢錢', icon: 'https://hank-app01-save-money.netlify.app/icons/icon-512.png', aliases: 'Piggy Growth 爸媽銀行 複利存錢筒', category: '金融', desc: '給孩子使用的爸媽銀行與複利存錢筒，用存款、任務、利息和願望目標培養儲蓄習慣。', source: 'Web', communityId: 'piggy-growth', webUrl: 'https://hank-app01-save-money.netlify.app/', webStatus: '正式版', publicWeb: true, guide: 'https://eclawbot.com/AiHankApps/guides/piggy-growth/', guideLabel: '查看 APP 介紹', checkedAt: '2026-10-04T01:02:59.370Z' },
         { name: 'Simulator Manager｜模擬器分配器', iconText: 'SIM', icon: 'icons/simulator-manager.png', aliases: 'sim-manager Codex Skill Plugin', category: '工具', desc: '在 Mac 上公平分配 iOS 與 Android 模擬器，支援 Codex 工作階段排隊、共用裝置及多人測試。', source: 'macOS / CLI', communityId: 'simulator-manager', guide: 'https://eclawbot.com/AiHankApps/tools/simulator-manager/', guideLabel: '查看工具介紹', releaseUrl: 'https://github.com/HankHuang0516/simulator-manager/releases/tag/v4.0.0', checkedAt: '2026-10-04T01:02:59.370Z' },
-        {"name":"詐騙帝國","iconText":"詐騙","icon":"projects/fraud-empire/player-icon-180.png","aliases":"Fraud Empire 設計確認稿 v4","category":"遊戲","desc":"直接閱讀完整企劃，逐步看 17 題材、人物關係、地圖與結局。設計確認稿／開發中，非可玩遊戲。","source":"Web / 企劃","communityId":"fraud-empire","webStatus":"開發中","publicWeb":false,"projectUrl":"https://eclawbot.com/aihankapps/projects/fraud-empire/","projectLabel":"完整互動企劃"},
+        {"name":"詐騙帝國","iconText":"詐騙","icon":"projects/fraud-empire/player-icon-180.png","aliases":"Fraud Empire 設計確認稿 v4","category":"遊戲","desc":"直接閱讀完整企劃，逐步看 17 題材、人物關係、地圖與結局。設計確認稿／開發中，非可玩遊戲。","source":"Web / 企劃","webStatus":"開發中","publicWeb":false,"projectUrl":"https://eclawbot.com/aihankapps/projects/fraud-empire/","projectLabel":"完整互動企劃","projectId":"fraud-empire"},
       ];
 
       const grid = document.getElementById('appGrid');
@@ -674,7 +677,7 @@
         iconWrap.className = hasBakedGameH
           ? 'app-icon app-icon--watermarked'
           : `app-icon app-icon--${app.category === '遊戲' ? 'game' : 'general'}`;
-        if (app.communityId === 'fraud-empire') iconWrap.classList.add('app-icon--fraud-empire');
+        if (app.projectId === 'fraud-empire') iconWrap.classList.add('app-icon--fraud-empire');
         iconWrap.setAttribute('aria-label', `${app.name} 文字圖示`);
 
         if (!app.icon) {
@@ -739,7 +742,7 @@
           link.setAttribute('aria-label', `${app.name}：${app.projectLabel}`);
           actions.appendChild(link);
           head.appendChild(actions);
-          card.classList.add('has-intro-link');
+          card.classList.add('has-intro-link', 'has-project-link');
         }
 
         const desc = document.createElement('p');

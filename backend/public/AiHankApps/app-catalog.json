@@ -326,20 +326,6 @@
       "guideLabel": "查看工具介紹",
       "releaseUrl": "https://github.com/HankHuang0516/simulator-manager/releases/tag/v4.0.0",
       "checkedAt": "2026-10-04T01:02:59.370Z"
-    },
-    {
-      "name": "詐騙帝國",
-      "iconText": "詐騙",
-      "icon": "projects/fraud-empire/player-icon-180.png",
-      "aliases": "Fraud Empire 設計確認稿 v4",
-      "category": "遊戲",
-      "desc": "直接閱讀完整企劃，逐步看 17 題材、人物關係、地圖與結局。設計確認稿／開發中，非可玩遊戲。",
-      "source": "Web / 企劃",
-      "communityId": "fraud-empire",
-      "webStatus": "開發中",
-      "publicWeb": false,
-      "projectUrl": "https://eclawbot.com/aihankapps/projects/fraud-empire/",
-      "projectLabel": "完整互動企劃"
     }
   ]
 }
