@@ -24,8 +24,11 @@ That route adapts only source `client`, slot 0, and a persisted entity app versi
 beginning `dream-buddy-` to the same queue. It rejects media/attachments and text
 over 2000 characters. Other devices and slots retain normal speak behavior. This
 supports that known legacy contract without claiming the lost build-6 source was
-recovered. Old clients still perform their original binding warm-up; the new
-adapter discovers `/connection` and skips official-bot onboarding in local mode.
+recovered. For the old warm-up call, `/api/official-borrow/bind-free` owner-authenticates
+the marked Dream Buddy slot and acknowledges `provider:local-minimax` with
+`bindingRequired:false`; it creates or replaces no official binding. Other clients
+retain the existing bind flow. The new adapter discovers `/connection` and skips
+that warm-up entirely in local mode.
 Both read the reply from the existing owner-authenticated chat history.
 
 The PostgreSQL transaction reserves quota, saves the raw user message and creates
