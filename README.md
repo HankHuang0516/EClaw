@@ -381,6 +381,8 @@ The canonical `/AiHankApps/guides/paper-flick-soldiers/` page includes support, 
 
 ## Dream Buddy rewarded messages
 
+Dream Buddy can route text to the Mac's existing MiniMax Code sign-in using an outbound worker and durable quota-safe queue. Provider discovery and operation status let the updated app avoid official-bot binding and recover a lost response without another inference. A narrow adapter supports older marked Dream Buddy `/api/client/speak` requests. Setup, privacy boundaries and rollback are documented in [the local MiniMax integration](backend/docs/dream-buddy-local-minimax.md).
+
 The owner-authenticated quota/ad-session API and signed AdMob callback are implemented in `backend/app-bot-ads.js`; integration, replay-safe credit and debugging contracts are documented in `backend/docs/dream-buddy-rewarded-ads.md`. Test and debug environments can inspect owner-only summaries through `/api/debug/dream-buddy-ads`; production and Railway disable this route.
 
 Dream Buddy AI replies can be flagged inside the app through owner-authenticated `POST /api/app-bot/ads/reports`. The private report stores an existing owned AI-message reference and a reason, never a public issue or automatic notification. Reports appear only in the development-only owner diagnostics; production inspection uses authorized database access. See the integration document for triage.
