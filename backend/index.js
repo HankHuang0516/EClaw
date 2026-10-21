@@ -282,6 +282,21 @@ app.use('/AiHankApps/taaze-demo', taazeDemoRouters.publicRouter);
 // Continue to the normal startup/rate gates and late admin router afterward.
 app.post('/api/taaze-demo-share/bundle', cookieParser(), taazeDemoAuth.authMiddleware,
     taazeDemoAuth.adminMiddleware, taazeDemoModule.adminWriteOrigin, express.json({ limit: '6mb' }));
+// Dedicated app feedback terminates before the global body parser and logging.
+const fraudAppFeedbackModule = require('./fraud-app-feedback');
+const fraudAppFeedbackSlot = { intake: null, admin: null };
+function dispatchFraudAppFeedback(kind) {
+    return (req, res) => {
+        res.set('Cache-Control', 'private, no-store, max-age=0');
+        const router = fraudAppFeedbackSlot[kind];
+        if (!router) return res.status(503).json({ success: false, saved: false, error: 'storage_unavailable' });
+        return router(req, res, error => {
+            if (!res.headersSent) res.status(error ? 503 : 404).json({ success: false, saved: false, error: 'feedback_unavailable' });
+        });
+    };
+}
+app.use('/api/fraud-app-feedback', dispatchFraudAppFeedback('intake'));
+app.use('/api/admin/fraud-app-feedback', cookieParser(), dispatchFraudAppFeedback('admin'));
 app.use(express.json({
     verify: (req, _res, buf) => {
         // Capture raw body for Discord signature verification
@@ -5827,6 +5842,12 @@ app.post('/api/free-bot-tos/agree', async (req, res) => {
 // ============================================
 const adminAuth = authModule.authMiddleware;
 const adminCheck = authModule.adminMiddleware;
+const fraudAppFeedbackRouters = fraudAppFeedbackModule.createRouters({
+    getPool: () => chatPool, isReady: () => persistenceReady,
+    authMiddleware: adminAuth, adminMiddleware: adminCheck,
+});
+fraudAppFeedbackSlot.intake = fraudAppFeedbackRouters.intake;
+fraudAppFeedbackSlot.admin = fraudAppFeedbackRouters.admin;
 adminDemoRuntimeSlot.router = privateDemoRuntime.createRouter({
     authMiddleware: adminAuth, adminMiddleware: adminCheck,
     getPool: () => chatPool, isReady: () => persistenceReady,
