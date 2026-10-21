@@ -226710,6 +226710,8 @@ const TRANSLATIONS = {
         "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
         "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
         "dash_channel_card_hermes_step3": "bind-entity + start daemon",
+        "dash_channel_copy_agent_prompt": "Copy for AI Agent",
+        "dash_channel_claude_code_hint": "⚠️ Paste into Claude Code (CLI or claude.ai/code), NOT Claude.ai chat",
         "dash_channel_card_hermes_guide_link": "Hermes guide →",
 
 
