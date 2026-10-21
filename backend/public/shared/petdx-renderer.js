@@ -92,6 +92,63 @@
         return entry;
     }
 
+    // ── Pre-scaled frame strips ─────────────────────────────────
+    // A Petdex sheet is 8×9 frames of 192×208 = 1536×1872 px, ~11.5 MB once
+    // decoded. Calling drawImage() on the full sheet every frame from dozens of
+    // canvases (the browser grid is one canvas per card) overflows the
+    // browser's decoded-image budget, so sheets get evicted and re-decoded on
+    // the main thread — the grid drops below 1 fps in an Android WebView.
+    // Instead we cut the one animation row we need out of the sheet ONCE,
+    // already scaled to the canvas size, into a small offscreen canvas, and
+    // blit frames from that. Pixel output is identical (nearest-neighbour
+    // scaling, same as the direct path). Bounded LRU keeps memory flat.
+    const FRAME_STRIP_CACHE_MAX = 64;
+    const frameStripCache = new Map(); // key → canvas (Map order = LRU)
+
+    function createStripCanvas(width, height) {
+        if (typeof document === 'undefined' || !document.createElement) return null;
+        const c = document.createElement('canvas');
+        c.width = width;
+        c.height = height;
+        return c;
+    }
+
+    // Returns a canvas holding `frameCount` frames of `anim.row`, each scaled
+    // to dw×dh and laid out left→right, or null when strips are unavailable
+    // (no DOM, zero size, or the copy threw) — callers then draw directly.
+    function getFrameStrip(url, img, row, frameCount, fw, fh, dw, dh) {
+        if (!(frameCount > 0) || !(dw > 0) || !(dh > 0)) return null;
+        const key = url + '|' + row + '|' + frameCount + '|' + fw + 'x' + fh + '|' + dw + 'x' + dh;
+        const hit = frameStripCache.get(key);
+        if (hit) {
+            frameStripCache.delete(key);
+            frameStripCache.set(key, hit);
+            return hit;
+        }
+        const strip = createStripCanvas(dw * frameCount, dh);
+        if (!strip) return null;
+        try {
+            const sctx = strip.getContext('2d');
+            sctx.imageSmoothingEnabled = false;
+            for (let i = 0; i < frameCount; i++) {
+                sctx.drawImage(img, i * fw, row * fh, fw, fh, i * dw, 0, dw, dh);
+            }
+        } catch (e) {
+            return null;
+        }
+        frameStripCache.set(key, strip);
+        while (frameStripCache.size > FRAME_STRIP_CACHE_MAX) {
+            frameStripCache.delete(frameStripCache.keys().next().value);
+        }
+        return strip;
+    }
+
+    function animFrameCount(anim) {
+        if (Array.isArray(anim.frames)) return anim.frames.length;
+        if (typeof anim.count === 'number' && anim.count > 0) return anim.count;
+        return 1;
+    }
+
     // ── Drawer registry ──────────────────────────────────────────
     const drawers = new Map();
 
@@ -211,6 +268,10 @@
         let rafId = 0;
         let running = false;
         let lastFrameTime = 0;
+        // Spritesheet canvases only repaint when what they show changes (a
+        // new frame index, sheet becoming ready/failing). Petdex frames last
+        // 110–320 ms, so this drops repaints from ~60/s to ~7/s per canvas.
+        let lastSpriteDrawKey = null;
 
         function tick(now) {
             if (!running) return;
@@ -231,7 +292,7 @@
             const t = (now - stateClockStart) / 1000;
 
             try {
-                ctx.clearRect(0, 0, w, h);
+                if (currentDescriptor.assetType !== 'spritesheet') ctx.clearRect(0, 0, w, h);
                 if (currentDescriptor.assetType === 'procedural') {
                     const rendererKey = currentDescriptor.asset && currentDescriptor.asset.renderer;
                     const drawer = getProceduralDrawer(rendererKey) || getProceduralDrawer('fallback-blob');
@@ -257,6 +318,11 @@
                 // Spec §3.4: per-kind emoji + name-initial badge when sprite load fails or url is missing.
                 // The original "⚠︎ sheet load failed" / "no sprite url" diagnostic is kept in console
                 // via spriteImageCache (see loadSpritesheet) so debuggability is preserved.
+                // Static image — paint it once, not every frame (emoji text is costly).
+                const key = 'fallback|' + w + 'x' + h;
+                if (lastSpriteDrawKey === key) return;
+                lastSpriteDrawKey = key;
+                ctx.clearRect(0, 0, w, h);
                 drawSpritesheetFallback(ctx, w, h, descriptor);
                 return;
             }
@@ -264,6 +330,10 @@
                 // Hold the canvas transparent until the sprite decodes.
                 // Painting a dark-grey "…" placeholder here is what users
                 // see as the avatar "flicker" on cold-cache loads.
+                if (lastSpriteDrawKey !== 'pending') {
+                    lastSpriteDrawKey = 'pending';
+                    ctx.clearRect(0, 0, w, h);
+                }
                 return;
             }
 
@@ -271,6 +341,10 @@
             const animations = asset.animations || {};
             const anim = animations[animName] || animations.idle;
             if (!anim) {
+                const key = 'missing|' + animName + '|' + state;
+                if (lastSpriteDrawKey === key) return;
+                lastSpriteDrawKey = key;
+                ctx.clearRect(0, 0, w, h);
                 drawSpritesheetMessage(ctx, w, h, state, animName + '?');
                 return;
             }
@@ -278,16 +352,26 @@
             const frameIndex = computeFrameIndex(anim, elapsedMs, descriptor.stateAssets && descriptor.stateAssets[state] && descriptor.stateAssets[state].loop !== false);
             const fw = asset.frameWidth || 192;
             const fh = asset.frameHeight || 208;
-            const sx = frameIndex * fw;
-            const sy = (anim.row || 0) * fh;
+            const row = anim.row || 0;
+            const key = 'frame|' + asset.url + '|' + row + '|' + frameIndex + '|' + w + 'x' + h;
+            if (lastSpriteDrawKey === key) return;
+            lastSpriteDrawKey = key;
 
             const scale = Math.min(w / fw, h / fh);
+            ctx.clearRect(0, 0, w, h);
+            ctx.imageSmoothingEnabled = false;
+            // Integer strip cell so blits stay pixel-aligned; centred like before.
+            const cw = Math.max(1, Math.round(fw * scale));
+            const ch = Math.max(1, Math.round(fh * scale));
+            const strip = getFrameStrip(asset.url, sheet.img, row, animFrameCount(anim), fw, fh, cw, ch);
+            if (strip) {
+                ctx.drawImage(strip, frameIndex * cw, 0, cw, ch,
+                    Math.round((w - cw) / 2), Math.round((h - ch) / 2), cw, ch);
+                return;
+            }
             const dw = fw * scale;
             const dh = fh * scale;
-            const dx = (w - dw) / 2;
-            const dy = (h - dh) / 2;
-            ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(sheet.img, sx, sy, fw, fh, dx, dy, dw, dh);
+            ctx.drawImage(sheet.img, frameIndex * fw, row * fh, fw, fh, (w - dw) / 2, (h - dh) / 2, dw, dh);
         }
 
         function drawSpritesheetMessage(ctx, w, h, state, msg) {
@@ -345,6 +429,7 @@
                 running = true;
                 stateClockStart = performance.now();
                 lastFrameTime = 0;
+                lastSpriteDrawKey = null;
                 rafId = requestAnimationFrame(tick);
             },
             stop() {
@@ -356,6 +441,7 @@
                 const { resolved, didFallback } = resolveState(currentDescriptor, name);
                 currentState = resolved;
                 stateClockStart = performance.now();
+                lastSpriteDrawKey = null;
                 return { resolved, didFallback };
             },
             setDescriptor(d) {
@@ -365,6 +451,7 @@
                 const { resolved } = resolveState(d, currentState);
                 currentState = resolved;
                 stateClockStart = performance.now();
+                lastSpriteDrawKey = null;
             },
             getState() { return currentState; },
             getDescriptor() { return currentDescriptor; },

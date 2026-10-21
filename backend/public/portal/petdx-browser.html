@@ -341,9 +341,56 @@
     // re-render to keep rAF count bounded.
     const activeRenderers = [];
     function tearDownRenderers() {
+        if (cardObserver) cardObserver.disconnect();
         while (activeRenderers.length) {
             try { activeRenderers.pop().stop(); } catch (e) { /* swallow */ }
         }
+    }
+
+    // ── Viewport-gated animation ──────────────────────────────────
+    // A page holds 60 cards, each a full Petdex spritesheet (~2 MB download,
+    // ~11.5 MB decoded). Starting all 60 at once saturated the main thread in
+    // the Android WebView (<1 fps). Cards now download + animate only while
+    // within ~1 screen of the viewport and pause when scrolled away; the
+    // load-failure probe rides the same trigger so off-screen sprites are
+    // never fetched. No IntersectionObserver → start immediately (old path).
+    const cardObserver = ('IntersectionObserver' in window)
+        ? new IntersectionObserver(onCardVisibility, { rootMargin: '300px 0px' })
+        : null;
+
+    function onCardVisibility(entries) {
+        entries.forEach(entry => {
+            const node = entry.target;
+            if (entry.isIntersecting) activateCard(node);
+            else if (node._petdxRenderer) node._petdxRenderer.stop();
+        });
+    }
+
+    function activateCard(node) {
+        if (node._petdxRenderer) { node._petdxRenderer.start(); return; }
+        const pending = node._petdxPending;
+        if (!pending) return;
+        node._petdxPending = null;
+        try {
+            const r = PetdxRenderer.createRenderer({
+                canvas: pending.canvas, descriptor: pending.descriptor, state: 'IDLE',
+                onError: () => {}, // keep grid alive on bad frame
+            });
+            r.start();
+            node._petdxRenderer = r;
+            activeRenderers.push(r);
+        } catch (e) {
+            // descriptor invalid — leave canvas blank
+        }
+        if (pending.onFirstVisible) pending.onFirstVisible();
+    }
+
+    function scheduleCard(node, canvas, descriptor, onFirstVisible) {
+        node._petdxPending = { canvas, descriptor, onFirstVisible };
+        if (cardObserver) cardObserver.observe(node);
+        // Deferred so the caller has finished wiring the node (the failure
+        // probe closure references it) before the card activates.
+        else Promise.resolve().then(() => activateCard(node));
     }
 
     // ── Load-failure sort demotion ────────────────────────────────
@@ -504,10 +551,10 @@
         // 熱門/最新 demote sprites that fail to load below ones that render.
         const demoteOnLoadFail = filterState.sort === 'popular' || filterState.sort === 'recent';
         items.forEach((card, idx) => {
-            const node = renderCardNode(card);
+            const node = renderCardNode(card,
+                demoteOnLoadFail ? () => setupLoadDemotion(node, card, grid) : null);
             node.dataset.idx = String(idx);
             grid.appendChild(node);
-            if (demoteOnLoadFail) setupLoadDemotion(node, card, grid);
         });
         renderPagination();
         syncUrlPage();
@@ -565,7 +612,7 @@
     }
 
     // ── Card node ─────────────────────────────────────────────────
-    function renderCardNode(card) {
+    function renderCardNode(card, onFirstVisible) {
         const div = document.createElement('div');
         div.className = 'card';
         div.tabIndex = 0;
@@ -637,16 +684,7 @@
             };
         }
 
-        try {
-            const r = PetdxRenderer.createRenderer({
-                canvas, descriptor, state: 'IDLE',
-                onError: () => {}, // keep grid alive on bad frame
-            });
-            r.start();
-            activeRenderers.push(r);
-        } catch (e) {
-            // descriptor invalid — leave canvas blank
-        }
+        scheduleCard(div, canvas, descriptor, onFirstVisible);
 
         const open = () => openDetail(card);
         div.addEventListener('click', open);
