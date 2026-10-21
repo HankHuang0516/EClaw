@@ -5100,13 +5100,20 @@
 
             if (btn) { btn.classList.add('loading'); btn.disabled = true; }
             try {
-                // Fetch or auto-provision channel API key
+                // Provision a FRESH channel API key for this entity slot.
+                // Re-using accounts[0] would share one key across multiple entities,
+                // causing all bound entities to receive each other's messages.
                 let channelApiKey = null;
                 try {
                     const listData = await apiCall('GET', '/api/channel/provision');
                     const accounts = listData.accounts || [];
-                    if (accounts.length > 0) {
-                        channelApiKey = accounts[0].channel_api_key;
+                    // Look for an existing key already bound to this exact entity slot.
+                    // If found, reuse it (idempotent re-run). If not, always provision new.
+                    const existing = accounts.find(a =>
+                        a.entityId === selectedSlot || a.bound_entity_id === selectedSlot
+                    );
+                    if (existing) {
+                        channelApiKey = existing.channel_api_key;
                     } else {
                         const provData = await apiCall('POST', '/api/channel/provision');
                         channelApiKey = provData.channel_api_key;
