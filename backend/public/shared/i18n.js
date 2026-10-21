@@ -651057,6 +651057,9 @@ const TRANSLATIONS = {
         "dot_progress_history_seed": "Record created",
         "dot_progress_session_changed": "Session changed. Private content has been cleared.",
         "dot_progress_expires": "Your session expired. Please sign in again.",
+
+        "dash_avatar_petdx": "Pick a Petdx companion",
+        "dash_avatar_petdx_hint": "Browse animated companions in the Petdx Companion Browser",
 },
 
 
@@ -1236577,6 +1236580,9 @@ const TRANSLATIONS = {
         "dot_progress_history_seed": "建立記錄",
         "dot_progress_session_changed": "登入狀態已更新，私有內容已清除。",
         "dot_progress_expires": "登入已失效，請重新登入。",
+
+        "dash_avatar_petdx": "選擇 Petdx 伙伴",
+        "dash_avatar_petdx_hint": "到 Petdx 伙伴瀏覽器挑選會動的伙伴",
 },
 
 
@@ -1851231,6 +1851237,9 @@ const TRANSLATIONS = {
         "dot_progress_history_seed": "创建记录",
         "dot_progress_session_changed": "登录状态已更新，私有内容已清除。",
         "dot_progress_expires": "登录已失效，请重新登录。",
+
+        "dash_avatar_petdx": "选择 Petdx 伙伴",
+        "dash_avatar_petdx_hint": "到 Petdx 伙伴浏览器挑选会动的伙伴",
 },
 
 
@@ -2414939,6 +2414948,9 @@ const TRANSLATIONS = {
         "dot_progress_history_seed": "記録を作成",
         "dot_progress_session_changed": "ログイン状態が変わりました。非公開情報を消去しました。",
         "dot_progress_expires": "セッションが切れました。再度ログインしてください。",
+
+        "dash_avatar_petdx": "Petdx パートナーを選ぶ",
+        "dash_avatar_petdx_hint": "Petdx パートナーブラウザで動くパートナーを探す",
 },
 
 
@@ -2945752,6 +2945764,9 @@ const TRANSLATIONS = {
         "dot_progress_history_seed": "기록 생성",
         "dot_progress_session_changed": "로그인 상태가 변경되어 비공개 내용을 지웠습니다.",
         "dot_progress_expires": "로그인이 만료되었습니다. 다시 로그인하세요.",
+
+        "dash_avatar_petdx": "Petdx 동반자 선택",
+        "dash_avatar_petdx_hint": "Petdx 동반자 브라우저에서 움직이는 동반자를 찾아보세요",
 },
 
 
@@ -3474718,6 +3474733,9 @@ const TRANSLATIONS = {
         "dot_progress_history_seed": "สร้างบันทึกแล้ว",
         "dot_progress_session_changed": "สถานะการเข้าสู่ระบบเปลี่ยนแล้ว ล้างข้อมูลส่วนตัวแล้ว",
         "dot_progress_expires": "การเข้าสู่ระบบหมดอายุ กรุณาเข้าสู่ระบบใหม่",
+
+        "dash_avatar_petdx": "เลือกเพื่อน Petdx",
+        "dash_avatar_petdx_hint": "เลือกเพื่อนที่เคลื่อนไหวได้ในเบราว์เซอร์เพื่อน Petdx",
 },
 
 
@@ -4002091,6 +4002109,9 @@ const TRANSLATIONS = {
         "dot_progress_history_seed": "Bản ghi được tạo",
         "dot_progress_session_changed": "Phiên đã thay đổi. Nội dung riêng đã được xóa.",
         "dot_progress_expires": "Phiên đã hết hạn. Vui lòng đăng nhập lại.",
+
+        "dash_avatar_petdx": "Chọn bạn đồng hành Petdx",
+        "dash_avatar_petdx_hint": "Duyệt bạn đồng hành hoạt hình trong Trình duyệt bạn đồng hành Petdx",
 },
 
 
@@ -4529080,6 +4529101,9 @@ const TRANSLATIONS = {
         "dot_progress_history_seed": "Catatan dibuat",
         "dot_progress_session_changed": "Sesi berubah. Data pribadi telah dihapus.",
         "dot_progress_expires": "Sesi kedaluwarsa. Silakan masuk lagi.",
+
+        "dash_avatar_petdx": "Pilih pendamping Petdx",
+        "dash_avatar_petdx_hint": "Jelajahi pendamping animasi di Peramban Pendamping Petdx",
 },
 
 
@@ -5054694,6 +5054718,9 @@ const TRANSLATIONS = {
         "dot_progress_history_seed": "Archive créée",
         "dot_progress_session_changed": "La session a changé. Les données privées ont été effacées.",
         "dot_progress_expires": "La session a expiré. Reconnectez-vous.",
+
+        "dash_avatar_petdx": "Choisir un compagnon Petdx",
+        "dash_avatar_petdx_hint": "Parcourez les compagnons animés dans le navigateur de compagnons Petdx",
 },
 
 
@@ -5572851,6 +5572878,9 @@ const TRANSLATIONS = {
         "dot_progress_history_seed": "Registro creado",
         "dot_progress_session_changed": "La sesión cambió. Se borraron los datos privados.",
         "dot_progress_expires": "La sesión caducó. Inicia sesión de nuevo.",
+
+        "dash_avatar_petdx": "Elegir un compañero Petdx",
+        "dash_avatar_petdx_hint": "Explora compañeros animados en el navegador de compañeros Petdx",
 },
 
 
@@ -6110259,6 +6110289,9 @@ const TRANSLATIONS = {
         "dot_progress_history_seed": "Eintrag erstellt",
         "dot_progress_session_changed": "Die Sitzung wurde geändert. Private Inhalte wurden gelöscht.",
         "dot_progress_expires": "Die Sitzung ist abgelaufen. Bitte erneut anmelden.",
+
+        "dash_avatar_petdx": "Petdx-Begleiter wählen",
+        "dash_avatar_petdx_hint": "Animierte Begleiter im Petdx-Begleiter-Browser entdecken",
 },
     pt: {
         pfs_support_title: "Suporte oficial e privacidade",
@@ -6115872,6 +6115905,9 @@ const TRANSLATIONS = {
         "settings_rental_empty_state_help": "O mercado de aluguel (anúncios, contratos, histórico) é vinculado à conta. Faça login com uma conta de e-mail ou abra o Plaza para começar a alugar ou anunciar um bot.",
         "settings_rental_setup_cta": "Configurar aluguel",
         "rental_needs_account": "Faça login com uma conta de e-mail para gerenciar aluguéis.",
+
+        "dash_avatar_petdx": "Escolher um companheiro Petdx",
+        "dash_avatar_petdx_hint": "Explore companheiros animados no navegador de companheiros Petdx",
 },
 
 
@@ -6645149,6 +6645185,9 @@ const TRANSLATIONS = {
         "dot_progress_history_seed": "Rekod dicipta",
         "dot_progress_session_changed": "Sesi berubah. Data peribadi telah dipadam.",
         "dot_progress_expires": "Sesi tamat. Sila log masuk semula.",
+
+        "dash_avatar_petdx": "Pilih teman Petdx",
+        "dash_avatar_petdx_hint": "Layari teman beranimasi dalam Pelayar Teman Petdx",
 },
 
 
@@ -7204883,6 +7204922,9 @@ const TRANSLATIONS = {
         "dot_progress_history_seed": "रिकॉर्ड बनाया गया",
         "dot_progress_session_changed": "सत्र बदल गया है। निजी सामग्री हटा दी गई है।",
         "dot_progress_expires": "सत्र समाप्त हो गया है। फिर साइन इन करें।",
+
+        "dash_avatar_petdx": "Petdx साथी चुनें",
+        "dash_avatar_petdx_hint": "Petdx साथी ब्राउज़र में एनिमेटेड साथी देखें",
 },
 
 
@@ -7753743,6 +7753785,9 @@ const TRANSLATIONS = {
         "dot_progress_history_seed": "تم إنشاء السجل",
         "dot_progress_session_changed": "تغيرت الجلسة. تم مسح المحتوى الخاص.",
         "dot_progress_expires": "انتهت الجلسة. يُرجى تسجيل الدخول مجددًا.",
+
+        "dash_avatar_petdx": "اختر رفيق Petdx",
+        "dash_avatar_petdx_hint": "تصفح الرفقاء المتحركين في متصفح رفقاء Petdx",
 }
 
 

@@ -795,6 +795,35 @@
             margin-bottom: 20px;
         }
 
+        /* Entry into the Petdx Companion Browser (scoped to this entity) */
+        .avatar-petdx-entry {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            margin: 12px 0 16px;
+            padding: 12px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--card-border);
+            background: var(--input-bg);
+            color: inherit;
+            font: inherit;
+            text-align: left;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .avatar-petdx-entry:hover,
+        .avatar-petdx-entry:focus-visible {
+            border-color: var(--primary);
+            background: rgba(108, 99, 255, 0.12);
+            outline: none;
+        }
+        .avatar-petdx-entry .petdx-entry-icon { font-size: 26px; line-height: 1; flex: 0 0 auto; }
+        .avatar-petdx-entry .petdx-entry-text { flex: 1 1 auto; min-width: 0; }
+        .avatar-petdx-entry .petdx-entry-title { font-size: 14px; font-weight: 600; }
+        .avatar-petdx-entry .petdx-entry-hint { font-size: 12px; color: var(--text-secondary); }
+        .avatar-petdx-entry .petdx-entry-chevron { font-size: 20px; color: var(--text-secondary); flex: 0 0 auto; }
+
         .avatar-grid {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
@@ -4104,6 +4133,14 @@
                 '</div>' +
                 '<input type="file" id="avatarFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none">' +
                 removeLink +
+                '<button type="button" class="avatar-petdx-entry" id="avatarPetdxEntry">' +
+                    '<span class="petdx-entry-icon" aria-hidden="true">&#x1F43E;</span>' +
+                    '<span class="petdx-entry-text">' +
+                        '<span class="petdx-entry-title" data-i18n="dash_avatar_petdx">' + escapeHtml(i18n.t('dash_avatar_petdx')) + '</span><br>' +
+                        '<span class="petdx-entry-hint" data-i18n="dash_avatar_petdx_hint">' + escapeHtml(i18n.t('dash_avatar_petdx_hint')) + '</span>' +
+                    '</span>' +
+                    '<span class="petdx-entry-chevron" aria-hidden="true">&#x203A;</span>' +
+                '</button>' +
                 '<div class="avatar-grid">' + gridHtml + '</div>' +
                 '<div class="avatar-picker-actions">' +
                 '<button class="btn btn-outline btn-sm" data-i18n="mc_dlg_cancel">' + i18n.t('mc_dlg_cancel') + '</button>' +
@@ -4231,6 +4268,12 @@
                     fileInput.value = '';
                 }
             }
+
+            // Petdx Companion Browser, pre-scoped to this entity (?entityId=)
+            overlay.querySelector('#avatarPetdxEntry').addEventListener('click', function() {
+                overlay.remove();
+                window.location.href = 'petdx-browser.html?entityId=' + encodeURIComponent(entityId);
+            });
 
             // Remove photo avatar → revert to default emoji
             var removeBtn = overlay.querySelector('#avatarRemoveLink');
