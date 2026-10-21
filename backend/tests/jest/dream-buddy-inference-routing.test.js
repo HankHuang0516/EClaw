@@ -8,6 +8,7 @@ const app = require('../../index');
 const createInference = require('../../dream-buddy-inference');
 const inference = createInference.mock.results[0].value;
 const db = require('../../db');
+const gatekeeper = require('../../gatekeeper');
 const originalProvider = process.env.DREAM_BUDDY_AI_PROVIDER;
 const body = { appId: 'dream-buddy', personaId: 'dream-buddy', deviceId: 'local-routing-test',
     deviceSecret: 'test-routing-secret', message: '夢境', operationId: 'd5c2f8ea-264d-44b5-9ae2-2a313bcd8035' };
@@ -77,4 +78,41 @@ test('legacy requests from unmarked devices cannot accidentally enter Dream Budd
     await request(app).post('/api/client/speak').send({ deviceId: body.deviceId, deviceSecret: body.deviceSecret,
         entityId: 0, text: 'unrelated device test', source: 'client' });
     expect(inference.submit).not.toHaveBeenCalled();
+});
+test('legacy first connection selects local text without creating or replacing an official bot', async () => {
+    const entity = { appVersion: 'dream-buddy-1.0.0', isBound: false };
+    app.devices[body.deviceId].entities[0] = entity;
+    db.getOfficialBinding.mockClear();
+    const response = await request(app).post('/api/official-borrow/bind-free').send({
+        deviceId: body.deviceId, deviceSecret: body.deviceSecret, entityId: 0,
+    });
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ success: true, entityId: 0, provider: 'local-minimax', bindingRequired: false });
+    expect(app.devices[body.deviceId].entities[0]).toBe(entity);
+    expect(entity.isBound).toBe(false);
+    expect(db.getOfficialBinding).not.toHaveBeenCalled();
+    expect((await request(app).post('/api/client/speak').send({ deviceId: body.deviceId,
+        deviceSecret: body.deviceSecret, entityId: 0, text: 'first legacy dream', source: 'client' })).status).toBe(200);
+    expect(inference.submit).toHaveBeenCalledTimes(1);
+});
+test('legacy local-provider connection validates the owner before acknowledgement', async () => {
+    app.devices[body.deviceId].entities[0] = { appVersion: 'dream-buddy-1.0.0' };
+    const response = await request(app).post('/api/official-borrow/bind-free').send({
+        deviceId: body.deviceId, deviceSecret: 'wrong-secret', entityId: 0,
+    });
+    expect(response.status).toBe(403);
+});
+test('unmarked clients and explicit official mode retain the existing binding flow', async () => {
+    gatekeeper.hasAgreedToTOS.mockReturnValue(false);
+    gatekeeper.getFreeBotTOS.mockReturnValue('test terms');
+    try {
+        app.devices[body.deviceId].entities[0] = { appVersion: '1.2.0' };
+        const send = () => request(app).post('/api/official-borrow/bind-free').send({
+            deviceId: body.deviceId, deviceSecret: body.deviceSecret, entityId: 0,
+        });
+        expect((await send()).status).toBe(451);
+        process.env.DREAM_BUDDY_AI_PROVIDER = 'official-bot';
+        app.devices[body.deviceId].entities[0].appVersion = 'dream-buddy-1.0.0';
+        expect((await send()).status).toBe(451);
+    } finally { gatekeeper.hasAgreedToTOS.mockReturnValue(true); }
 });

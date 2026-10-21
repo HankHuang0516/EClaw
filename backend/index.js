@@ -1927,6 +1927,7 @@ app.get('/api/help', (req, res) => {
             { title: 'Dream Buddy: job status (owner only)', curl: `curl -s '${apiBase}/api/app-bot/inference/jobs/JOB_UUID?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET'` },
             { title: 'Dream Buddy: recover a send by operation UUID (owner only)', curl: `curl -s '${apiBase}/api/app-bot/inference/operations/OPERATION_UUID?deviceId=DEVICE_ID' -H 'X-Device-Secret: DEVICE_SECRET'` },
             { title: 'Dream Buddy: submit a message with an idempotent operation UUID', curl: `curl -s -X POST '${apiBase}/api/app-bot/chat' -H 'Content-Type: application/json' -d '{"appId":"dream-buddy","personaId":"dream-buddy","deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","operationId":"OPERATION_UUID","message":"A dream"}'` },
+            { title: 'Dream Buddy legacy connection: local mode needs no official binding (registered app marker required)', curl: `curl -s -X POST '${apiBase}/api/official-borrow/bind-free' -H 'Content-Type: application/json' -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","entityId":0}'` },
             { title: 'Dream Buddy dedicated worker: readiness heartbeat', curl: `curl -s -X POST '${apiBase}/api/app-bot/inference/worker/heartbeat' -H 'Authorization: Bearer WORKER_TOKEN' -H 'Content-Type: application/json' -d '{}'` },
             { title: 'Dream Buddy dedicated worker: claim next job', curl: `curl -s '${apiBase}/api/app-bot/inference/worker/next' -H 'Authorization: Bearer WORKER_TOKEN'` },
             { title: 'Dream Buddy dedicated worker: return the same leased result', curl: `curl -s -X POST '${apiBase}/api/app-bot/inference/worker/jobs/JOB_UUID/result' -H 'Authorization: Bearer WORKER_TOKEN' -H 'Content-Type: application/json' -d '{"leaseToken":"LEASE_TOKEN","status":"completed","reply":"A dream reply"}'` },
@@ -18344,6 +18345,19 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
     const eId = parseInt(entityId);
     if (isNaN(eId) || eId < 0) {
         return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+
+    // Legacy Dream Buddy clients always call bind-free during connection.
+    // In local mode acknowledge their actual text provider without creating,
+    // replacing or claiming an official-bot binding. This also preserves the
+    // appVersion marker which the legacy speak adapter uses after registration.
+    const localDreamDevice = devices[deviceId];
+    if (process.env.DREAM_BUDDY_AI_PROVIDER === 'local-minimax' && eId === 0 &&
+        /^dream-buddy-/.test(localDreamDevice?.entities?.[0]?.appVersion || '')) {
+        if (!safeEqual(localDreamDevice.deviceSecret, deviceSecret)) {
+            return res.status(403).json({ success: false, error: 'invalid_device' });
+        }
+        return res.json({ success: true, entityId: 0, provider: 'local-minimax', bindingRequired: false });
     }
 
     try {
