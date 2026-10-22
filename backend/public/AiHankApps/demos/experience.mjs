@@ -1,0 +1,14 @@
+export function installWalk({host,pace,exit,rehearsal}) {
+ host.innerHTML=`<div class="walk-room"><h3>親自走過兩段體驗</h3><p>第一段：空傘 → 紙聲；第二段：留白 → 出口。預覽不耗時段、不結算收入。</p><div class="walk-stations" aria-label="候船室動線"><span>① 空傘</span><span>② 紙聲</span><span>③ 留白</span><span>④ 出口</span></div><div class="walk-track" aria-label="三位訪客所在站點">${[1,2,3].map(i=>`<div class="walk-lane"><span data-actor="${i}">●${i}</span></div>`).join('')}</div><div class="visitors" aria-label="三位測試者">${[1,2,3].map(i=>`<div>訪客${i}<span data-visitor="${i}">入口待命</span></div>`).join('')}</div><p id="walkCaption" role="status" aria-live="polite">從入口開始，可隨時重走；字幕與聲音分開控制。</p><audio id="paperSound" preload="auto" src="../audio/paper.wav"></audio><label><input id="walkSound" type="checkbox">播放原創紙張聲（可關閉）</label><div class="actions"><button id="walkNext">走到空傘</button><button id="walkReset">回到入口</button></div><p id="soundState" role="status">聲音關閉；字幕仍會顯示。</p></div>`;
+ const q=x=>host.querySelector(x),audio=q('audio'),sound=q('#walkSound'),next=q('#walkNext'),caption=q('#walkCaption'),stations=[...host.querySelectorAll('.walk-stations span')],visitors=[...host.querySelectorAll('[data-visitor]')];let step=-1;
+ const actors=[...host.querySelectorAll('[data-actor]')];const names=['空傘','紙聲','留白','出口'];
+ function reset(){step=-1;actors.forEach(x=>{x.style.left='0%';x.style.opacity='1';});audio.pause();audio.currentTime=0;stations.forEach(x=>x.classList.remove('current'));visitors.forEach(x=>x.textContent='入口待命');next.disabled=false;next.textContent='走到空傘';caption.textContent='入口已重設；依目前編排重新預覽，不保留舊結果。';}
+ sound.onchange=()=>{if(!sound.checked)audio.pause();q('#soundState').textContent=sound.checked?'已開啟；走到紙聲時播放。':'聲音關閉；字幕仍會顯示。';};
+ next.onclick=()=>{if(step>=3)return;step++;const r=rehearsal({pace:pace.value,clearExit:exit.checked});stations.forEach((x,i)=>x.classList.toggle('current',i===step));
+  caption.textContent=['梁穗：先看看沒有人的空傘。','［字幕：紙條落下，短促的沙沙聲］',pace.value==='long'?'留白較長：兩位測試者在這裡離開。':pace.value==='short'?'留白縮短：兩位繼續，一位因等待離開。':'均衡節拍：三位繼續前進。',exit.checked?`${r.finished}/3位完成；${pace.value==='short'?'仍有排隊。':'出口暢通。'}`:'出口被阻擋；三位都不能完成離場。'][step];
+  visitors.forEach((x,i)=>{const departed=step>=2&&i>=r.finished;actors[i].style.left=((departed?2:step)*28)+'%';actors[i].style.opacity=departed?'0.4':'1';actors[i].setAttribute('aria-label',`訪客${i+1}：${departed?'已離開':names[step]}`);x.textContent=departed?'已於留白段離開':step===3?(exit.checked?'完成離場':'出口受阻'):names[step];});
+  if(step===1&&sound.checked){audio.currentTime=0;audio.play().then(()=>q('#soundState').textContent='紙張聲播放中；可隨時關閉。').catch(()=>q('#soundState').textContent='瀏覽器未能播放聲音；字幕保留，可關閉後重新開啟再走一次。');}
+  next.textContent=step===3?'本次試走完成':'走到'+names[step+1];next.disabled=step===3;
+ };
+ audio.onended=()=>q('#soundState').textContent='紙張聲已播放完畢。';q('#walkReset').onclick=reset;pace.addEventListener('change',reset);exit.addEventListener('change',reset);return {reset};
+}
