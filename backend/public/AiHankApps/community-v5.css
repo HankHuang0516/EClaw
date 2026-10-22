@@ -274,6 +274,33 @@ a[href*="itunes.apple.com"]::after {
   content: "App Store";
 }
 
+/* itch.io showcase pages use the same mark treatment; scoped to card store links so other itch.io links keep their text. */
+a.store-link.itch {
+  gap: 8px;
+  font-size: 0 !important;
+}
+
+a.store-link.itch::before {
+  content: "";
+  display: inline-block;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  background-image: url("./itch-icon.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+a.store-link.itch::after {
+  content: "itch.io";
+  font-family: "Noto Sans TC", "PingFang TC", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
 /* APP introduction policy: dedicated-site links replace the decorative corner circle. */
 .card.has-intro-link::after {
   display: none !important;
