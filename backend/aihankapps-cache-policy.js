@@ -13,8 +13,9 @@ function setAiHankAppsCacheHeaders(res, filePath) {
         return;
     }
 
-    // Shared scripts and styles also change in place, but a short browser cache is safe.
-    if (extension === '.js' || extension === '.css') {
+    // Shared scripts (including ES module .mjs) and styles also change in place,
+    // but a short browser cache is safe.
+    if (extension === '.js' || extension === '.mjs' || extension === '.css') {
         res.set('Cache-Control', 'public, max-age=600, must-revalidate');
         return;
     }
