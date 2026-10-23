@@ -1592,6 +1592,115 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
     // ============================================
     // FORM SUBMISSIONS (public, no auth)
     // ============================================
+    // GA / analytics-only event types: stored for reporting, but never push a
+    // notification to the owner (they would wake the bot on every play).
+    const ANALYTICS_ONLY_FORM_EVENTS = new Set(['play', 'rating', 'start', 'session', 'heartbeat']);
+
+    // Guard rails for untrusted (public, no-auth) form payloads
+    const FORM_NOTIFY_MAX_VALUE_LEN = 300;
+    const FORM_NOTIFY_MAX_FIELDS = 20;
+    const FORM_NOTIFY_MAX_TOTAL_LEN = 2000;
+
+    function sanitizeFormValue(value) {
+        let str;
+        if (value === null || value === undefined) str = '';
+        else if (typeof value === 'object') {
+            try { str = JSON.stringify(value); } catch (_) { str = '[unserializable]'; }
+        } else str = String(value);
+        // Strip control characters that could break out of the single-line field format
+        str = str.replace(/[\u0000-\u001f\u007f]/g, ' ').trim();
+        if (str.length > FORM_NOTIFY_MAX_VALUE_LEN) str = str.slice(0, FORM_NOTIFY_MAX_VALUE_LEN) + '…';
+        return str;
+    }
+
+    function buildFormSummary(formData) {
+        const entries = Object.entries(formData || {}).slice(0, FORM_NOTIFY_MAX_FIELDS);
+        const lines = entries.map(([k, v]) => `${String(k).slice(0, 60)}: ${sanitizeFormValue(v)}`);
+        let summary = lines.join('\n');
+        if (summary.length > FORM_NOTIFY_MAX_TOTAL_LEN) summary = summary.slice(0, FORM_NOTIFY_MAX_TOTAL_LEN) + '…';
+        return summary;
+    }
+
+    /**
+     * Deliver a public form submission to the entity that owns the Note Page.
+     *
+     * Delivery path mirrors POST /api/mission/notify:
+     *   1. persist a chat_messages row (visible in the owner's chat history)
+     *   2. push to the entity — channel-bound entities go through the channel
+     *      callback, everything else through the bot webhook push.
+     *
+     * Never throws for delivery problems: callers treat this as fire-and-forget.
+     */
+    async function notifyFormSubmissionOwner({ deviceId, entityId, entity, publicCode, noteId, formData }) {
+        const formSummary = buildFormSummary(formData);
+        const notifyText = `📝 新表單提交 (${publicCode}/${noteId})\n${formSummary}`;
+
+        let chatMsgId = null;
+        try {
+            const insertResult = await pool.query(
+                `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot)
+                 VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+                [deviceId, entityId, notifyText, 'form_submission', false, false]
+            );
+            chatMsgId = insertResult.rows[0]?.id || null;
+        } catch (dbErr) {
+            console.warn('[Mission] Failed to save form submission chat message:', dbErr.message);
+        }
+
+        if (!entity) {
+            console.warn(`[Mission] Form submission: entity ${entityId} on ${deviceId} not found, skipped push`);
+            return { pushed: false, reason: 'entity_not_found', chatMsgId };
+        }
+        if (!entity.isBound) {
+            console.warn(`[Mission] Form submission: entity ${entityId} on ${deviceId} is not bound, skipped push`);
+            return { pushed: false, reason: 'not_bound', chatMsgId };
+        }
+
+        // Channel-bound entity: deliver through the channel (Bot Push Parity Rule)
+        if (entity.bindingType === 'channel' && _pushToChannelCallback) {
+            const result = await _pushToChannelCallback(deviceId, entityId, {
+                event: 'message',
+                from: 'form_submission',
+                text: notifyText,
+                eclaw_context: {
+                    expectsReply: true,
+                    silentToken: '[SILENT]',
+                    missionHints: ''
+                }
+            }, entity.channelAccountId);
+            if (chatMsgId && result?.pushed) {
+                try {
+                    await pool.query(
+                        `UPDATE chat_messages SET is_delivered = true, delivered_to = $2 WHERE id = $1`,
+                        [chatMsgId, String(entityId)]
+                    );
+                } catch (e) {
+                    console.warn('[Mission] Failed to mark form submission chat message delivered:', e.message);
+                }
+            }
+            return { pushed: !!result?.pushed, reason: result?.reason, chatMsgId };
+        }
+
+        if (_pushToBot) {
+            const fullMessage = `[表單提交通知]\n${notifyText}\n注意: 請回覆此訊息說明處理方式`;
+            const result = await _pushToBot(entity, deviceId, 'form_submission', { message: fullMessage });
+            if (chatMsgId && result?.pushed) {
+                try {
+                    await pool.query(
+                        `UPDATE chat_messages SET is_delivered = true, delivered_to = $2 WHERE id = $1`,
+                        [chatMsgId, String(entityId)]
+                    );
+                } catch (e) {
+                    console.warn('[Mission] Failed to mark form submission chat message delivered:', e.message);
+                }
+            }
+            return { pushed: !!result?.pushed, reason: result?.reason, chatMsgId };
+        }
+
+        console.warn('[Mission] _pushToBot not set, form submission notification not delivered');
+        return { pushed: false, reason: 'pushToBot_not_configured', chatMsgId };
+    }
+
     // sendBeacon with Blob(json, 'application/json') sometimes arrives as text/plain in some browsers
     const textParser = require('express').text({ type: 'text/plain' });
     router.post('/note/page/form-submit', textParser, async (req, res) => {
@@ -1623,12 +1732,14 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
             // Look up device from publicCode (use internal index via devices)
             let deviceId = null;
             let entityId = null;
+            let targetEntity = null;
             for (const [dId, dev] of Object.entries(devices)) {
                 if (dev.entities) {
                     for (const [eId, ent] of Object.entries(dev.entities)) {
                         if (ent.publicCode === publicCode) {
                             deviceId = dId;
                             entityId = parseInt(eId);
+                            targetEntity = ent;
                             break;
                         }
                     }
@@ -1645,25 +1756,27 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
                 [deviceId, noteId, publicCode, JSON.stringify(formData), ip]
             );
 
-            // Notify entity via cross-speak (fire and forget)
-            const formSummary = Object.entries(formData).map(([k, v]) => `${k}: ${v}`).join('\n');
-            const notifyText = `📝 新表單提交 (${publicCode}/${noteId})\n${formSummary}`;
-            try {
-                // Use the cross-speak endpoint to notify
-                const { default: fetch } = await import('node-fetch');
-                await fetch(`http://localhost:${process.env.PORT || 3000}/api/transform`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        deviceId,
-                        entityId,
-                        botSecret: null, // internal call needs different auth
-                        targetDeviceId: deviceId,
-                        message: notifyText,
-                        source: 'form_submission'
-                    })
-                }).catch(() => {});
-            } catch (_) {}
+            // ── Notify the owning entity (in-process, no HTTP self-call) ──────
+            // NOTE: the previous implementation POSTed to http://localhost/api/transform
+            // with `botSecret: null`, which /api/transform rejects with HTTP 400
+            // ("botSecret required"). The rejection was swallowed by `.catch(() => {})`,
+            // so form submissions have never reached the owner since the feature
+            // shipped (feat: add interactive forms for Note Pages). We now deliver
+            // through the same in-process push callbacks used by POST /api/mission/notify.
+            const eventType = String(formData.e || formData.event || '').toLowerCase();
+            if (!ANALYTICS_ONLY_FORM_EVENTS.has(eventType)) {
+                // Fire and forget: notification failure must never fail the submission.
+                notifyFormSubmissionOwner({
+                    deviceId,
+                    entityId,
+                    entity: targetEntity,
+                    publicCode,
+                    noteId,
+                    formData
+                }).catch((notifyErr) => {
+                    console.error('[Mission] Form submission notification failed:', notifyErr && notifyErr.message);
+                });
+            }
 
             res.json({
                 success: true,
