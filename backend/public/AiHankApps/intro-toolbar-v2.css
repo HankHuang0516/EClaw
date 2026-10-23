@@ -37,6 +37,7 @@ body.has-portfolio-intro-toolbar section[id], body.has-portfolio-intro-toolbar h
   .portfolio-intro-toolbar__nav { justify-content: flex-end; }
   .portfolio-intro-toolbar__stores { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .portfolio-intro-toolbar__stores a { justify-content: center; }
+  .portfolio-intro-toolbar__stores > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 @media (max-width: 560px) {
   .portfolio-intro-toolbar { grid-template-columns: 1fr; padding: 9px 13px; }

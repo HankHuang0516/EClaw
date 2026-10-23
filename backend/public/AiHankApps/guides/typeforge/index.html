@@ -10,14 +10,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../../intro-toolbar-v2.css?v=55d03f4">
-  <script src="../../app-catalog.js?v=catalog-sync-20260905"></script><script defer src="../../intro-toolbar-v2.js?v=traffic-20260907"
+  <link rel="stylesheet" href="../../intro-toolbar-v2.css?v=itch-links-20261022">
+  <script src="../../app-catalog.js?v=itch-links-20261022"></script><script defer src="../../intro-toolbar-v2.js?v=itch-links-20261022"
     data-intro-toolbar
     data-app="活字戰紀：雙城烽火"
     data-google="https://play.google.com/store/apps/details?id=com.hankhuang.wordcivilization"
     data-google-status="正式版"
     data-apple="https://apps.apple.com/tw/app/id6792162295"
     data-apple-status="已上架"
+    data-itch="https://lolwarden0516.itch.io/typeforge-twin-cities"
     data-shortcuts="遊戲特色:#features|宣傳圖鑑:#gallery|完整攻略:#guide|立即下載:#download"></script>
   <style>
     :root {
@@ -72,6 +73,9 @@
     .hero-copy { position: relative; z-index: 2; max-width: 780px; }
     .app-lockup { display: flex; align-items: center; gap: 16px; }
     .app-lockup img { width: 76px; height: 76px; border: 1px solid rgba(255,255,255,.7); border-radius: 20px; box-shadow: 0 12px 30px rgba(45,32,20,.2); }
+    .app-lockup .app-icon-h { position: relative; flex: 0 0 76px; width: 76px; height: 76px; border-radius: 20px; overflow: hidden; box-shadow: 0 12px 30px rgba(45,32,20,.2); }
+    .app-lockup .app-icon-h img { display: block; box-sizing: border-box; box-shadow: none; }
+    .app-lockup .app-icon-h::after { content: ""; position: absolute; right: 6%; bottom: 5%; width: 11%; height: 11%; background: url("../../brand/h-watermark-game-italic.png") center / contain no-repeat; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .4)); pointer-events: none; }
     .eyebrow { color: var(--vermillion); font-size: 11px; font-weight: 700; letter-spacing: .2em; }
     .app-lockup strong { display: block; margin-top: 4px; font-family: "Noto Serif TC", serif; font-size: 20px; }
     h1, h2, h3 { font-family: "Noto Serif TC", serif; }
@@ -279,7 +283,7 @@
   <header class="hero" id="top">
     <div class="hero-copy">
       <div class="app-lockup">
-        <img src="./assets/app-icon.png" alt="活字戰紀：雙城烽火 App icon">
+        <span class="app-icon-h"><img src="./assets/app-icon.png" alt="活字戰紀：雙城烽火 App icon"></span>
         <div><span class="eyebrow">TYPEFORGE · TWIN CITIES</span><strong>活字戰紀：雙城烽火</strong></div>
       </div>
       <h1>以活字，<br><span>鑄文明。</span></h1>
@@ -371,7 +375,7 @@
     </section>
 
     <section class="download" id="download">
-      <div><h2>準備好，鑄出你的文明。</h2><p>上方常駐列提供 Google Play 與 App Store 雙平台下載入口。</p></div>
+      <div><h2>準備好，鑄出你的文明。</h2><p>上方常駐列提供 Google Play 與 App Store 雙平台下載入口，以及 itch.io 作品頁連結。</p></div>
       <a href="#top">回到頁首查看下載連結 ↑</a>
     </section>
   </main>
