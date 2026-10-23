@@ -73,6 +73,9 @@
     .hero-copy { position: relative; z-index: 2; max-width: 780px; }
     .app-lockup { display: flex; align-items: center; gap: 16px; }
     .app-lockup img { width: 76px; height: 76px; border: 1px solid rgba(255,255,255,.7); border-radius: 20px; box-shadow: 0 12px 30px rgba(45,32,20,.2); }
+    .app-lockup .app-icon-h { position: relative; flex: 0 0 76px; width: 76px; height: 76px; border-radius: 20px; overflow: hidden; box-shadow: 0 12px 30px rgba(45,32,20,.2); }
+    .app-lockup .app-icon-h img { display: block; box-sizing: border-box; box-shadow: none; }
+    .app-lockup .app-icon-h::after { content: ""; position: absolute; right: 6%; bottom: 5%; width: 11%; height: 11%; background: url("../../brand/h-watermark-game-italic.png") center / contain no-repeat; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .4)); pointer-events: none; }
     .eyebrow { color: var(--vermillion); font-size: 11px; font-weight: 700; letter-spacing: .2em; }
     .app-lockup strong { display: block; margin-top: 4px; font-family: "Noto Serif TC", serif; font-size: 20px; }
     h1, h2, h3 { font-family: "Noto Serif TC", serif; }
@@ -280,7 +283,7 @@
   <header class="hero" id="top">
     <div class="hero-copy">
       <div class="app-lockup">
-        <img src="./assets/app-icon.png" alt="活字戰紀：雙城烽火 App icon">
+        <span class="app-icon-h"><img src="./assets/app-icon.png" alt="活字戰紀：雙城烽火 App icon"></span>
         <div><span class="eyebrow">TYPEFORGE · TWIN CITIES</span><strong>活字戰紀：雙城烽火</strong></div>
       </div>
       <h1>以活字，<br><span>鑄文明。</span></h1>

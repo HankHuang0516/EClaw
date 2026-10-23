@@ -337,14 +337,14 @@
       .app-icon::after {
         content: '';
         position: absolute;
-        right: 2px;
-        bottom: 2px;
-        width: 44px;
-        height: 44px;
+        right: var(--h-right, 8%);
+        bottom: var(--h-bottom, 8%);
+        width: var(--h-size, 16%);
+        height: var(--h-size, 16%);
         background-position: center;
         background-repeat: no-repeat;
         background-size: contain;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .72));
+        filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .4));
         pointer-events: none;
       }
 
@@ -680,6 +680,20 @@
         return iconWrap;
       }
 
+      // The H stays in the lower right (16% wide, 8% inset). Where that would still touch a title or a
+      // figure it is shrunk and nudged further into the corner instead of moving elsewhere: [size, right, bottom].
+      const H_WATERMARK_TIGHT = {
+        weesh: ['13%', '5%', '4%'],
+        'stray-map': ['13%', '5%', '4%'],
+        'property-roi': ['13%', '5%', '4%'],
+        chumen: ['11%', '4%', '3%'],
+        'paper-flick-soldiers': ['11%', '4%', '3%'],
+        rebound: ['9%', '5%', '2.5%'],
+        'typeforge-twin-cities': ['11%', '4%', '3%'],
+        'summit-battle': ['11%', '4%', '3%'],
+        'vibe-empire': ['11%', '4%', '3%'],
+      };
+
       function createIcon(app) {
         const iconWrap = document.createElement('span');
         const hasBakedGameH = app.communityId === 'anthill' && app.icon === 'icons/anthill.png';
@@ -687,6 +701,12 @@
           ? 'app-icon app-icon--watermarked'
           : `app-icon app-icon--${app.category === '遊戲' ? 'game' : 'general'}`;
         if (app.projectId === 'fraud-empire') iconWrap.classList.add('app-icon--fraud-empire');
+        const tight = H_WATERMARK_TIGHT[app.communityId];
+        if (tight) {
+          iconWrap.style.setProperty('--h-size', tight[0]);
+          iconWrap.style.setProperty('--h-right', tight[1]);
+          iconWrap.style.setProperty('--h-bottom', tight[2]);
+        }
         iconWrap.setAttribute('aria-label', `${app.name} 文字圖示`);
 
         if (!app.icon) {
