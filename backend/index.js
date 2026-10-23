@@ -2855,6 +2855,44 @@ app.get('/api/debug/message-lifecycle/:messageId', async (req, res) => {
     }
 });
 
+// Note Page form submission diagnostics (B5 for the form-submit notify fix).
+// GET /api/debug/form-submissions?deviceId=...&limit=20
+// Dumps the raw form_submissions rows plus the chat_messages rows written
+// with source='form_submission' so an incident can be inspected without SSH.
+app.get('/api/debug/form-submissions', async (req, res) => {
+    const { deviceId } = req.query || {};
+    const limit = Math.min(parseInt(req.query.limit, 10) || 20, 100);
+    try {
+        const missionPool = missionModule._pool;
+        if (!missionPool) {
+            return res.status(503).json({ success: false, error: 'mission pool unavailable' });
+        }
+        const params = deviceId ? [deviceId] : [];
+        const submissions = await missionPool.query(
+            `SELECT id, device_id, note_id, public_code, form_data, visitor_ip, status, created_at
+             FROM form_submissions
+             ${deviceId ? 'WHERE device_id = $1' : ''}
+             ORDER BY created_at DESC LIMIT $${deviceId ? 2 : 1}`,
+            deviceId ? [...params, limit] : [limit]
+        );
+        const chatRows = await missionPool.query(
+            `SELECT id, device_id, entity_id, text, source, is_delivered, delivered_to, created_at
+             FROM chat_messages
+             WHERE source = 'form_submission'
+             ORDER BY created_at DESC LIMIT $1`,
+            [limit]
+        );
+        return res.json({
+            success: true,
+            deviceId: deviceId || null,
+            submissions: submissions.rows,
+            chatMessages: chatRows.rows,
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 // ENTITY GH-STATS — merged-PR count + smart-link widget on entity cards
 // (card_8a25cadcc9fc88f153fa1316). Endpoint is registered later (~line 8067)
 // next to /api/entities so it sits alongside its peers; the module itself is
