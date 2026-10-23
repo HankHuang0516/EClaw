@@ -1651,7 +1651,7 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
             console.warn(`[Mission] Form submission: entity ${entityId} on ${deviceId} not found, skipped push`);
             return { pushed: false, reason: 'entity_not_found', chatMsgId };
         }
-        if (entity.isBound === false) {
+        if (!entity.isBound) {
             console.warn(`[Mission] Form submission: entity ${entityId} on ${deviceId} is not bound, skipped push`);
             return { pushed: false, reason: 'not_bound', chatMsgId };
         }
