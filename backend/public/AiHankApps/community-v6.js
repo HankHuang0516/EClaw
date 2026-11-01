@@ -97,9 +97,14 @@
   }
 
   function addGuideLink(card, heading, config) {
-    if (!config.guide || card.querySelector('.guide-link')) return;
-    const actions = document.createElement('div');
-    actions.className = 'guide-actions';
+    if (!config.guide || card.querySelector('.guide-link:not(.web-link)')) return;
+    const head = card.querySelector('.card-head');
+    let actions = (head || card).querySelector('.guide-actions');
+    if (!actions) {
+      actions = document.createElement('div');
+      actions.className = 'guide-actions';
+      (head || card).appendChild(actions);
+    }
     const link = document.createElement('a');
     link.className = 'guide-link';
     link.href = new URL(config.guide, 'https://eclawbot.com/AiHankApps/').href;
@@ -110,8 +115,6 @@
     link.textContent = label;
     actions.appendChild(link);
     card.classList.add('has-intro-link');
-    const head = card.querySelector('.card-head');
-    (head || card).appendChild(actions);
   }
 
   function addCommunity(card, config) {
@@ -264,7 +267,7 @@
   const source = document.currentScript;
   if (!source) return;
   const tracker = document.createElement('script');
-  tracker.src = new URL('portfolio-analytics.js?v=anthill-card-fix-20261016', source.src).href;
+  tracker.src = new URL('portfolio-analytics.js?v=portfolio-web-links-20261101', source.src).href;
   tracker.dataset.portfolioTrafficLoader = 'true';
   document.head.appendChild(tracker);
 })();

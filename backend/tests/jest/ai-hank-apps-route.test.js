@@ -40,7 +40,7 @@ describe('AiHankApps portfolio route', () => {
         expect(fs.existsSync(path.join(portfolioDir, 'promo', 'eclawbot.jpg'))).toBe(true);
     });
 
-    test('REBOUND card, campaign and report use the public store name', () => {
+    test('REBOUND card and report use the public store name and expired promotion is absent', () => {
         const catalog = JSON.parse(fs.readFileSync(path.join(portfolioDir, 'app-catalog.json'), 'utf8'));
         const rebound = catalog.apps.find(app => app.communityId === 'rebound');
         expect(rebound).toBeDefined();
@@ -49,7 +49,8 @@ describe('AiHankApps portfolio route', () => {
 
         const html = fs.readFileSync(path.join(portfolioDir, 'index.html'), 'utf8');
         const report = fs.readFileSync(path.join(portfolioDir, 'reports', 'data.js'), 'utf8');
-        expect(html).toContain(`${rebound.name}｜中秋新人大禮包`);
+        expect(html).not.toContain('id="rebound-autumn-welcome-2026"');
+        expect(html).toContain('id="elemental-fighter350-paper-celebration-20261007"');
         expect(report).toContain(`"id":"rebound","name":"${rebound.name}"`);
     });
 

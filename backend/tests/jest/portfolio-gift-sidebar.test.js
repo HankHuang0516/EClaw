@@ -18,7 +18,6 @@ function start({ desktop = false, hash = '', lang = 'zh-Hant', now = '2026-10-08
   }));
   const title = labels.find(label => label.dataset.giftI18n === 'celebrationTitle');
   elements.celebrationGiftTitle = title;
-  elements.reboundGiftTitle.textContent = 'REBOUND：元素戰機｜中秋新人大禮包';
   const disclosure = elements['game-gifts'];
   disclosure.open = false;
   disclosure.querySelectorAll = () => labels;
@@ -56,7 +55,7 @@ describe('portfolio gift sidebar', () => {
     expect(mobile.disclosure.open).toBe(false);
     expect(html).toContain('class="portfolio-apps"');
   });
-  test.each(['#game-gifts', '#reboundGiftTitle', '#celebrationGiftTitle', '#' + campaignId])('opens direct mobile anchor %s', hash => {
+  test.each(['#game-gifts', '#celebrationGiftTitle', '#' + campaignId])('opens direct mobile anchor %s', hash => {
     expect(start({ hash }).disclosure.open).toBe(true);
   });
   test('hash history reveals a campaign after the user collapses it', () => {
@@ -73,21 +72,23 @@ describe('portfolio gift sidebar', () => {
   });
   test('lists newest first and each detail link targets one real campaign', () => {
     const page = start();
-    expect(page.list.children).toHaveLength(2);
+    expect(page.list.children).toHaveLength(1);
     expect(page.list.children[0].href).toBe('#' + campaignId);
     for (const link of page.list.children) expect(page.elements[link.href.slice(1)]).toBeDefined();
-    expect(html.indexOf('id="' + campaignId + '"')).toBeLessThan(html.indexOf('id="rebound-autumn-welcome-2026"'));
+    expect(html).not.toContain('id="rebound-autumn-welcome-2026"');
+    // Old bookmarks may open the disclosure, but only the current campaign is listed.
+    expect(start({ hash: '#reboundGiftTitle' }).disclosure.open).toBe(true);
   });
   test('does not expose draft or missing campaign records', () => {
     const page = start({ extra: [{ id: 'game-gifts', publication: 'draft' }, { id: 'not-published-to-dom', publication: 'published' }] });
-    expect(page.list.children).toHaveLength(2);
+    expect(page.list.children).toHaveLength(1);
   });
   test('missing disclosure exits safely', () => {
     expect(() => start({ missing: ['game-gifts'] })).not.toThrow();
   });
   test('missing list, countdown or title does not break other cards', () => {
     expect(() => start({ missing: ['giftCampaignList', 'celebrationCountdown'] })).not.toThrow();
-    expect(start({ missing: ['celebrationGiftTitle'] }).list.children).toHaveLength(1);
+    expect(start({ missing: ['celebrationGiftTitle'] }).list.children).toHaveLength(0);
   });
   test('immutable published receipt holds the approved issue count and deadline, not player details', () => {
     const campaigns = start().window.AIHANK_GIFT_CAMPAIGNS;
@@ -100,7 +101,13 @@ describe('portfolio gift sidebar', () => {
     expect(celebration.statusSource).toBe('verified-production-mailbox-receipt');
     expect(celebration).not.toHaveProperty('statusUrl');
     expect(new Set(campaigns.map(campaign => campaign.id)).size).toBe(2);
-    for (const campaign of campaigns) expect(html.split('data-campaign-id="' + campaign.id + '"')).toHaveLength(2);
+    for (const campaign of campaigns) {
+      if (campaign.id === campaignId) expect(html.split('data-campaign-id="' + campaign.id + '"')).toHaveLength(2);
+      else {
+        expect(Date.parse(campaign.endsAt)).toBeLessThan(Date.parse('2026-11-01T00:00:00+08:00'));
+        expect(html).not.toContain('id="' + campaign.id + '"');
+      }
+    }
     expect(records + source).not.toMatch(/recipientIds|x-admin-secret|botSecret|deviceSecret|all_players/);
   });
   test('new copy has all approved items, value and delivery/claim distinction', () => {
@@ -125,7 +132,7 @@ describe('portfolio gift sidebar', () => {
     const page = start();
     page.document.documentElement.lang = 'fr';
     page.changeLanguage(); page.changeLanguage();
-    expect(page.list.children).toHaveLength(2);
+    expect(page.list.children).toHaveLength(1);
     expect(page.labels.find(label => label.dataset.giftI18n === 'entry').textContent).toBe('Gift announcements');
   });
   test.each(['2026-11-07T10:53:52.797Z', '2026-11-08T10:00:00Z'])('stops countdown at or after deadline %s', now => {

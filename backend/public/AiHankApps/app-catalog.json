@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-04T01:02:59.370Z",
+  "checkedAt": "2026-11-01T05:33:24.510Z",
   "country": "TW",
   "apps": [
     {
@@ -8,7 +8,7 @@
       "iconText": "浪浪",
       "icon": "icons/store-stray-map-1b4433d42006.jpg",
       "promo": "promo/straymap.jpg",
-      "aliases": "Stray Map",
+      "aliases": "Stray Map 浪浪地圖 Stray Map",
       "category": "公益",
       "desc": "看見、記錄並持續更新世界各地的流浪動物目擊資訊",
       "source": "Android / iOS",
@@ -24,7 +24,7 @@
       "googleStoreName": "浪浪地圖",
       "iosStoreName": "浪浪地圖 Stray Map",
       "iosVersion": "1.2.6",
-      "checkedAt": "2026-10-04T01:02:59.370Z"
+      "checkedAt": "2026-11-01T05:33:24.510Z"
     },
     {
       "name": "EClawbot",
@@ -33,7 +33,7 @@
       "promo": "promo/eclawbot.jpg",
       "category": "工具",
       "desc": "AI agent 手機工作台，整合對話、桌布、任務與記憶",
-      "source": "Android / iOS",
+      "source": "Web / Android / iOS",
       "googlePackage": "com.hank.clawlive",
       "googleUrl": "https://play.google.com/store/apps/details?id=com.hank.clawlive",
       "googleStatus": "正式版",
@@ -46,7 +46,12 @@
       "googleStoreName": "EClawbot (OpenClaw)",
       "iosStoreName": "Eclawbot",
       "iosVersion": "1.0.1",
-      "checkedAt": "2026-10-04T01:02:59.370Z"
+      "checkedAt": "2026-11-01T05:33:24.510Z",
+      "webUrl": "https://eclawbot.com/",
+      "publicWeb": true,
+      "webStatus": "已公開",
+      "webCheckedAt": "2026-11-01T05:39:47.452590Z",
+      "aliases": "EClawbot (OpenClaw) Eclawbot"
     },
     {
       "name": "Weesh",
@@ -56,7 +61,7 @@
       "aliases": "WeeshGifts Wishlist.ai",
       "category": "社交",
       "desc": "拍照建立願望清單，探索附近二手商品，透過願望比對與聊天安排面交。",
-      "source": "Android / iOS",
+      "source": "Web / Android / iOS",
       "googlePackage": "com.hank_huang0516.snack425e646aa6a74ad8a964aadeb4741fc1",
       "googleUrl": "https://play.google.com/store/apps/details?id=com.hank_huang0516.snack425e646aa6a74ad8a964aadeb4741fc1",
       "googleStatus": "正式版",
@@ -67,9 +72,13 @@
       "publicGoogle": true,
       "publicApple": true,
       "googleStoreName": "Wishlist.ai",
-      "iosStoreName": "WeeshGifts",
-      "iosVersion": "1.14",
-      "checkedAt": "2026-10-04T01:02:59.370Z"
+      "iosStoreName": "Wishlist.ai",
+      "iosVersion": "2.0.19",
+      "checkedAt": "2026-11-01T05:33:24.510Z",
+      "webUrl": "https://wishlist-app-production.up.railway.app/",
+      "publicWeb": true,
+      "webStatus": "已公開",
+      "webCheckedAt": "2026-11-01T05:39:47.452590Z"
     },
     {
       "name": "房東投報快算",
@@ -87,7 +96,7 @@
       "publicGoogle": true,
       "publicApple": false,
       "googleStoreName": "房東投報快算",
-      "checkedAt": "2026-10-04T01:02:59.370Z"
+      "checkedAt": "2026-11-01T05:33:24.510Z"
     },
     {
       "name": "Anthill：螞蟻群體模擬",
@@ -96,15 +105,19 @@
       "communityId": "anthill",
       "iconText": "An",
       "icon": "icons/anthill.png",
-      "source": "Android",
+      "source": "Android / iOS",
       "googlePackage": "com.hankhuang.anthill",
       "googleUrl": "https://play.google.com/store/apps/details?id=com.hankhuang.anthill",
-      "googleStatus": "開發中",
+      "googleStatus": "正式版",
       "iosStatus": "開發中",
-      "publicGoogle": false,
+      "publicGoogle": true,
       "publicApple": false,
-      "googleStoreName": "Anthill：螞蟻群體模擬",
-      "checkedAt": "2026-10-04T01:02:59.370Z"
+      "googleStoreName": "螞蟻王國：築巢拓境",
+      "checkedAt": "2026-11-01T05:33:24.510Z",
+      "iosId": "6819995979",
+      "iosUrl": "https://apps.apple.com/tw/app/id6819995979",
+      "iosStoreName": "螞蟻王國：築巢拓境",
+      "aliases": "螞蟻王國：築巢拓境"
     },
     {
       "name": "這樣出門",
@@ -125,7 +138,7 @@
       "publicApple": true,
       "googleStoreName": "這樣出門",
       "iosStoreName": "這樣出門",
-      "checkedAt": "2026-10-04T01:02:59.370Z",
+      "checkedAt": "2026-11-01T05:33:24.510Z",
       "iosVersion": "1.4.2"
     },
     {
@@ -148,29 +161,30 @@
       "googleStoreName": "世界末日了沒",
       "iosStoreName": "世界末日了沒",
       "iosVersion": "1.0.8",
-      "checkedAt": "2026-10-04T01:02:59.370Z"
+      "checkedAt": "2026-11-01T05:33:24.510Z"
     },
     {
       "name": "夢話夥伴",
       "iconText": "夢話",
       "icon": "icons/store-dreambuddy-0033e7afc693.png",
       "promo": "promo/dreambuddy.jpg",
-      "aliases": "陪你入眠的 AI 夥伴",
+      "aliases": "陪你入眠的 AI 夥伴 夢話夥伴 — 陪你入眠的 AI 夥伴",
       "category": "AI",
       "desc": "一個溫柔、半睡半醒的 AI 夥伴，陪你把夢的片段慢慢說完。",
       "source": "Android / iOS",
       "googlePackage": "com.hankhuang.dreambuddy",
       "googleUrl": "https://play.google.com/store/apps/details?id=com.hankhuang.dreambuddy",
       "googleStatus": "正式版",
-      "iosStatus": "開發中",
+      "iosStatus": "已上架",
       "communityId": "dreambuddy",
       "iosId": "6804389322",
       "iosUrl": "https://apps.apple.com/tw/app/id6804389322",
       "publicGoogle": true,
-      "publicApple": false,
+      "publicApple": true,
       "googleStoreName": "夢話夥伴 — 陪你入眠的 AI 夥伴",
       "iosStoreName": "夢話夥伴 — 陪你入眠的 AI 夥伴",
-      "checkedAt": "2026-10-04T01:02:59.370Z"
+      "checkedAt": "2026-11-01T05:33:24.510Z",
+      "iosVersion": "1.2.0"
     },
     {
       "name": "紙上彈兵",
@@ -189,7 +203,7 @@
       "publicGoogle": true,
       "publicApple": true,
       "googleStoreName": "紙上彈兵",
-      "checkedAt": "2026-10-04T01:02:59.370Z",
+      "checkedAt": "2026-11-01T05:33:24.510Z",
       "iosId": "6814515567",
       "iosUrl": "https://apps.apple.com/tw/app/id6814515567",
       "itchUrl": "https://lolwarden0516.itch.io/paper-flick-soldiers",
@@ -197,7 +211,7 @@
       "iosVersion": "1.0.6"
     },
     {
-      "name": "元素戰機350",
+      "name": "REBOUND：元素戰機",
       "category": "遊戲",
       "desc": "彈射、融合七元素，突破 100 波的賽博龐克球體戰鬥。",
       "communityId": "rebound",
@@ -213,13 +227,13 @@
       "iosStatus": "已上架",
       "publicGoogle": true,
       "publicApple": true,
-      "googleStoreName": "元素戰機350",
-      "iosStoreName": "元素戰機350",
-      "checkedAt": "2026-10-04T01:02:59.370Z",
+      "googleStoreName": "REBOUND：元素戰機",
+      "iosStoreName": "REBOUND：元素戰機",
+      "checkedAt": "2026-11-01T05:33:24.510Z",
       "guide": "https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site/",
       "guideLabel": "完整攻略",
       "iosVersion": "1.1.1",
-      "aliases": "Elemental Fighter 350"
+      "aliases": "Elemental Fighter 350 REBOUND：元素戰機 元素戰機350"
     },
     {
       "name": "睡公園：免費生存地圖",
@@ -241,7 +255,8 @@
       "googleStoreName": "睡公園：免費生存地圖",
       "iosStoreName": "睡公園",
       "iosVersion": "1.3",
-      "checkedAt": "2026-10-04T01:02:59.370Z"
+      "checkedAt": "2026-11-01T05:33:24.510Z",
+      "aliases": "睡公園"
     },
     {
       "name": "活字戰紀：雙城烽火",
@@ -264,8 +279,8 @@
       "publicApple": true,
       "googleStoreName": "活字戰紀：雙城烽火",
       "iosStoreName": "活字戰紀：雙城烽火",
-      "iosVersion": "1.2.13",
-      "checkedAt": "2026-10-04T01:02:59.370Z"
+      "iosVersion": "1.2.34",
+      "checkedAt": "2026-11-01T05:33:24.510Z"
     },
     {
       "name": "活字戰記：巔峰之戰",
@@ -281,8 +296,8 @@
       "communityId": "summit-battle",
       "publicGoogle": false,
       "publicApple": false,
-      "googleStoreName": "活字戰記：巔峰之戰",
-      "checkedAt": "2026-10-04T01:02:59.370Z",
+      "googleStoreName": "活字戰紀：巔峰之戰",
+      "checkedAt": "2026-11-01T05:33:24.510Z",
       "iosId": "6814728151",
       "iosUrl": "https://apps.apple.com/tw/app/id6814728151",
       "iosStoreName": "活字戰紀：巔峰之戰"
@@ -298,23 +313,35 @@
       "communityId": "vibe-empire",
       "webStatus": "開發中",
       "publicWeb": false,
-      "checkedAt": "2026-10-04T01:02:59.370Z"
+      "checkedAt": "2026-11-01T05:33:24.510Z"
     },
     {
       "name": "錢錢長大了",
       "iconText": "錢錢",
-      "icon": "https://hank-app01-save-money.netlify.app/icons/icon-512.png",
+      "icon": "https://hank-app01-save-money.netlify.app/icons/icon-512.png?v=e56e4183042d6ce0368956a6ab4c5368b4b09e8b7dab56f5c8bb6845a55e4faa",
       "aliases": "Piggy Growth 爸媽銀行 複利存錢筒",
       "category": "金融",
       "desc": "給孩子使用的爸媽銀行與複利存錢筒，用存款、任務、利息和願望目標培養儲蓄習慣。",
-      "source": "Web",
+      "source": "Web / Android / iOS",
       "communityId": "piggy-growth",
       "webUrl": "https://hank-app01-save-money.netlify.app/",
       "webStatus": "正式版",
       "publicWeb": true,
       "guide": "https://eclawbot.com/AiHankApps/guides/piggy-growth/",
       "guideLabel": "查看 APP 介紹",
-      "checkedAt": "2026-10-04T01:02:59.370Z"
+      "checkedAt": "2026-11-01T05:33:24.510Z",
+      "googlePackage": "com.hankhuang.piggygrowth",
+      "googleUrl": "https://play.google.com/store/apps/details?id=com.hankhuang.piggygrowth",
+      "googleStatus": "正式版",
+      "publicGoogle": true,
+      "googleStoreName": "錢錢長大了",
+      "iosId": "6824565163",
+      "iosUrl": "https://apps.apple.com/tw/app/id6824565163",
+      "iosStatus": "開發中",
+      "publicApple": false,
+      "iosStoreName": "錢錢長大了",
+      "iconHasWatermark": true,
+      "iconCheckedAt": "2026-11-01T08:43:56.957280+00:00"
     },
     {
       "name": "Simulator Manager｜模擬器分配器",
@@ -328,7 +355,59 @@
       "guide": "https://eclawbot.com/AiHankApps/tools/simulator-manager/",
       "guideLabel": "查看工具介紹",
       "releaseUrl": "https://github.com/HankHuang0516/simulator-manager/releases/tag/v4.0.0",
-      "checkedAt": "2026-10-04T01:02:59.370Z"
+      "checkedAt": "2026-11-01T05:33:24.510Z"
+    },
+    {
+      "name": "時光相簿",
+      "iconText": "時光",
+      "icon": "https://just-healing-production.up.railway.app/app/assets/app-icon-512.png",
+      "iconHasWatermark": true,
+      "aliases": "小時候時光相簿 Timehut",
+      "category": "生活",
+      "desc": "把照片變成可搜尋、可回顧的成長記錄。",
+      "source": "Web / Android / iOS",
+      "communityId": "timehut",
+      "webUrl": "https://just-healing-production.up.railway.app/app/index.html",
+      "webStatus": "已公開",
+      "publicWeb": true,
+      "googlePackage": "tw.aihankapps.timehut",
+      "googleUrl": "https://play.google.com/store/apps/details?id=tw.aihankapps.timehut",
+      "googleStatus": "正式版",
+      "googleStoreName": "時光相簿",
+      "publicGoogle": true,
+      "publicApple": false,
+      "iosStatus": "開發中",
+      "checkedAt": "2026-11-01T05:33:24.510Z",
+      "webCheckedAt": "2026-11-01T05:39:47.452590Z",
+      "iosId": "6824124146",
+      "iosUrl": "https://apps.apple.com/tw/app/id6824124146",
+      "iosStoreName": "小時候時光相簿"
+    },
+    {
+      "name": "詐騙帝國",
+      "iconText": "詐騙",
+      "icon": "projects/fraud-empire/player-icon-180.png",
+      "aliases": "Fraud Empire",
+      "category": "遊戲",
+      "desc": "Android 與 iOS APP 開發中；目前沒有公開下載或試玩版本。",
+      "source": "Android / iOS",
+      "webStatus": "開發中",
+      "publicWeb": false,
+      "projectUrl": "https://eclawbot.com/aihankapps/projects/fraud-empire/",
+      "projectLabel": "查看開發狀態",
+      "projectId": "fraud-empire",
+      "communityId": "com.hankhuang.fraudempire",
+      "googlePackage": "com.hankhuang.fraudempire",
+      "googleUrl": "https://play.google.com/store/apps/details?id=com.hankhuang.fraudempire",
+      "googleStatus": "開發中",
+      "publicGoogle": false,
+      "googleStoreName": "詐騙帝國",
+      "iosId": "6824370147",
+      "iosUrl": "https://apps.apple.com/tw/app/id6824370147",
+      "iosStatus": "開發中",
+      "publicApple": false,
+      "iosStoreName": "詐騙帝國",
+      "checkedAt": "2026-11-01T05:33:24.510Z"
     }
   ]
 }
