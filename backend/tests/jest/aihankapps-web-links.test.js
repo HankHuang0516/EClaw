@@ -115,6 +115,9 @@ describe('public portfolio web-version actions', () => {
     expect(icon.className).toBe('app-icon app-icon--watermarked');
     expect(icon.children[0].src).toBe(record.icon);
     expect(record).toMatchObject({ publicGoogle: true, publicApple: false });
-    expect(record.iosUrl).toBeUndefined();
+    const createStoreLink = loadFunction(html, 'createStoreLink', { document });
+    const apple = createStoreLink(record.iosUrl, 'apple', record.iosStatus);
+    expect(apple.tagName).toBe('SPAN');
+    expect(apple.href).toBeUndefined();
   });
 });
