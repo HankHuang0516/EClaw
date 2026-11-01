@@ -41,9 +41,9 @@ describe('Anthill portfolio icon and card regression', () => {
     expect(script).not.toContain('padding-right:172px');
   });
 
-  test('the hotfix does not change event collection or traffic data behavior', () => {
+  test('existing traffic behavior is retained outside the verified web-action exclusion', () => {
     const withoutStyles = read('portfolio-analytics.js').replace(/ {2}style\.textContent = `[\s\S]*?`;/, '');
-    expect(crypto.createHash('sha256').update(withoutStyles).digest('hex'))
+    expect(crypto.createHash('sha256').update(withoutStyles.replace(" && !link.classList.contains('web-link')", '')).digest('hex'))
       .toBe('54f415bce42aa24f59ebafb06ee640a983568c61ed2cc5a13309aef6fe40b3c7');
   });
 });
