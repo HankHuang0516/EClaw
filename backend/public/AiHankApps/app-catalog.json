@@ -33,7 +33,7 @@
       "promo": "promo/eclawbot.jpg",
       "category": "工具",
       "desc": "AI agent 手機工作台，整合對話、桌布、任務與記憶",
-      "source": "Android / iOS",
+      "source": "Web / Android / iOS",
       "googlePackage": "com.hank.clawlive",
       "googleUrl": "https://play.google.com/store/apps/details?id=com.hank.clawlive",
       "googleStatus": "正式版",
@@ -46,7 +46,11 @@
       "googleStoreName": "EClawbot (OpenClaw)",
       "iosStoreName": "Eclawbot",
       "iosVersion": "1.0.1",
-      "checkedAt": "2026-10-04T01:02:59.370Z"
+      "checkedAt": "2026-10-04T01:02:59.370Z",
+      "webUrl": "https://eclawbot.com/",
+      "publicWeb": true,
+      "webStatus": "已公開",
+      "webCheckedAt": "2026-11-01T05:39:47.452590Z"
     },
     {
       "name": "Weesh",
@@ -56,7 +60,7 @@
       "aliases": "WeeshGifts Wishlist.ai",
       "category": "社交",
       "desc": "拍照建立願望清單，探索附近二手商品，透過願望比對與聊天安排面交。",
-      "source": "Android / iOS",
+      "source": "Web / Android / iOS",
       "googlePackage": "com.hank_huang0516.snack425e646aa6a74ad8a964aadeb4741fc1",
       "googleUrl": "https://play.google.com/store/apps/details?id=com.hank_huang0516.snack425e646aa6a74ad8a964aadeb4741fc1",
       "googleStatus": "正式版",
@@ -69,7 +73,11 @@
       "googleStoreName": "Wishlist.ai",
       "iosStoreName": "WeeshGifts",
       "iosVersion": "1.14",
-      "checkedAt": "2026-10-04T01:02:59.370Z"
+      "checkedAt": "2026-10-04T01:02:59.370Z",
+      "webUrl": "https://wishlist-app-production.up.railway.app/",
+      "publicWeb": true,
+      "webStatus": "已公開",
+      "webCheckedAt": "2026-11-01T05:39:47.452590Z"
     },
     {
       "name": "房東投報快算",
@@ -329,6 +337,29 @@
       "guideLabel": "查看工具介紹",
       "releaseUrl": "https://github.com/HankHuang0516/simulator-manager/releases/tag/v4.0.0",
       "checkedAt": "2026-10-04T01:02:59.370Z"
+    },
+    {
+      "name": "時光相簿",
+      "iconText": "時光",
+      "icon": "https://just-healing-production.up.railway.app/app/assets/app-icon-512.png",
+      "iconHasWatermark": true,
+      "aliases": "小時候時光相簿 Timehut",
+      "category": "生活",
+      "desc": "把照片變成可搜尋、可回顧的成長記錄。",
+      "source": "Web / Android",
+      "communityId": "timehut",
+      "webUrl": "https://just-healing-production.up.railway.app/app/index.html",
+      "webStatus": "已公開",
+      "publicWeb": true,
+      "googlePackage": "tw.aihankapps.timehut",
+      "googleUrl": "https://play.google.com/store/apps/details?id=tw.aihankapps.timehut",
+      "googleStatus": "已上架",
+      "googleStoreName": "時光相簿",
+      "publicGoogle": true,
+      "publicApple": false,
+      "iosStatus": "開發中",
+      "checkedAt": "2026-11-01T05:39:47.452590Z",
+      "webCheckedAt": "2026-11-01T05:39:47.452590Z"
     }
   ]
 }

@@ -171,7 +171,7 @@
     if (!record?.communityId) return;
     const url = new URL(link.href, location.href);
     let action = null;
-    if (card && link.classList.contains('guide-link')) action = 'intro';
+    if (card && link.classList.contains('guide-link') && !link.classList.contains('web-link')) action = 'intro';
     else if (url.hostname === 'play.google.com' && url.searchParams.get('id') === record.googlePackage && record.publicGoogle) action = 'google';
     else if (url.hostname === 'apps.apple.com' && url.pathname.split('/').includes(`id${record.iosId}`) && record.publicApple) action = 'apple';
     if (action) track(record.communityId, action);

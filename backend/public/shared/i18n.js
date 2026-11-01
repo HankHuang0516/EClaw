@@ -127,6 +127,7 @@ const TRANSLATIONS = {
 
 
     en: {
+        portfolio_web_version: "Open web app",
         pfs_support_title: "Official support and privacy",
         pfs_support_contact: "Support and troubleshooting",
         pfs_support_faq: "Frequently asked questions",
@@ -651317,6 +651318,7 @@ const TRANSLATIONS = {
 
 
     zh: {
+        portfolio_web_version: "開啟網頁版",
         pfs_support_title: "官方支援與隱私說明",
         pfs_support_contact: "客服與故障回報",
         pfs_support_faq: "常見問題",
@@ -1851497,6 +1851499,7 @@ const TRANSLATIONS = {
 
 
     ja: {
+        portfolio_web_version: "Web版を開く",
         pfs_support_title: "公式サポートとプライバシー",
         pfs_support_contact: "サポートとトラブルシューティング",
         pfs_support_faq: "よくある質問",
@@ -2415208,6 +2415211,7 @@ const TRANSLATIONS = {
 
 
     ko: {
+        portfolio_web_version: "웹 버전 열기",
         pfs_support_title: "공식 지원 및 개인정보 보호",
         pfs_support_contact: "고객 지원 및 문제 해결",
         pfs_support_faq: "자주 묻는 질문",
@@ -2947687,6 +2947691,7 @@ const TRANSLATIONS = {
 
 
     th: {
+        portfolio_web_version: "เปิดเว็บแอป",
         pfs_support_title: "การสนับสนุนอย่างเป็นทางการและความเป็นส่วนตัว",
         pfs_support_contact: "การสนับสนุนและการแก้ไขปัญหา",
         pfs_support_faq: "คำถามที่พบบ่อย",
@@ -3474993,6 +3474998,7 @@ const TRANSLATIONS = {
 
 
     vi: {
+        portfolio_web_version: "Mở ứng dụng web",
         pfs_support_title: "Hỗ trợ chính thức và quyền riêng tư",
         pfs_support_contact: "Hỗ trợ và khắc phục sự cố",
         pfs_support_faq: "Câu hỏi thường gặp",
@@ -4002369,6 +4002375,7 @@ const TRANSLATIONS = {
 
 
     id: {
+        portfolio_web_version: "Buka versi web",
         pfs_support_title: "Dukungan resmi dan privasi",
         pfs_support_contact: "Dukungan dan pemecahan masalah",
         pfs_support_faq: "Pertanyaan yang sering diajukan",
@@ -4529361,6 +4529368,7 @@ const TRANSLATIONS = {
 
 
     fr: {
+        portfolio_web_version: "Ouvrir la version web",
         pfs_support_title: "Assistance officielle et confidentialité",
         pfs_support_contact: "Assistance et dépannage",
         pfs_support_faq: "Questions fréquentes",
@@ -5054978,6 +5054986,7 @@ const TRANSLATIONS = {
 
 
     es: {
+        portfolio_web_version: "Abrir versión web",
         pfs_support_title: "Soporte oficial y privacidad",
         pfs_support_contact: "Soporte y solución de problemas",
         pfs_support_faq: "Preguntas frecuentes",
@@ -5573138,6 +5573147,7 @@ const TRANSLATIONS = {
 
 
     de: {
+        portfolio_web_version: "Webversion öffnen",
         pfs_support_title: "Offizieller Support und Datenschutz",
         pfs_support_contact: "Support und Fehlerbehebung",
         pfs_support_faq: "Häufig gestellte Fragen",
@@ -6110294,6 +6110304,7 @@ const TRANSLATIONS = {
         "dash_avatar_petdx_hint": "Animierte Begleiter im Petdx-Begleiter-Browser entdecken",
 },
     pt: {
+        portfolio_web_version: "Abrir versão web",
         pfs_support_title: "Suporte oficial e privacidade",
         pfs_support_contact: "Suporte e resolução de problemas",
         pfs_support_faq: "Perguntas frequentes",
@@ -6116165,6 +6116176,7 @@ const TRANSLATIONS = {
 
 
     ms: {
+        portfolio_web_version: "Buka versi web",
         pfs_support_title: "Sokongan rasmi dan privasi",
         pfs_support_contact: "Sokongan dan penyelesaian masalah",
         pfs_support_faq: "Soalan lazim",
@@ -6645445,6 +6645457,7 @@ const TRANSLATIONS = {
 
 
     hi: {
+        portfolio_web_version: "वेब ऐप खोलें",
         pfs_support_title: "आधिकारिक सहायता और गोपनीयता",
         pfs_support_contact: "सहायता और समस्या निवारण",
         pfs_support_faq: "अक्सर पूछे जाने वाले प्रश्न",
@@ -7205182,6 +7205195,7 @@ const TRANSLATIONS = {
 
 
     ar: {
+        portfolio_web_version: "فتح تطبيق الويب",
         pfs_support_title: "الدعم الرسمي والخصوصية",
         pfs_support_contact: "الدعم وحل المشكلات",
         pfs_support_faq: "الأسئلة الشائعة",
