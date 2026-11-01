@@ -78,5 +78,14 @@
       "name": "紙上彈兵",
       "renderedHash": "b12755336c095a02b1e51284499ed36084820af916693f61fc38bd1166698972"
     }
-  ]
+  ],
+  "publicationException": {
+    "authorizedBy": "Hank",
+    "authorizedAt": "2026-11-01T07:59:17.623336+00:00",
+    "scope": "2026-11-01 portfolio web links, verified store availability and authentic report only",
+    "upstreamSynchronized": false,
+    "freshSync": false,
+    "preservedCurrentGuideBodiesAndUrls": true,
+    "reason": "REBOUND original upstream unavailable; current introductions preserved under explicit one-time authorization"
+  }
 }
