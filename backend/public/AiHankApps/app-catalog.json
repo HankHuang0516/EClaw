@@ -318,7 +318,7 @@
     {
       "name": "錢錢長大了",
       "iconText": "錢錢",
-      "icon": "https://hank-app01-save-money.netlify.app/icons/icon-512.png",
+      "icon": "https://hank-app01-save-money.netlify.app/icons/icon-512.png?v=e56e4183042d6ce0368956a6ab4c5368b4b09e8b7dab56f5c8bb6845a55e4faa",
       "aliases": "Piggy Growth 爸媽銀行 複利存錢筒",
       "category": "金融",
       "desc": "給孩子使用的爸媽銀行與複利存錢筒，用存款、任務、利息和願望目標培養儲蓄習慣。",
@@ -339,7 +339,9 @@
       "iosUrl": "https://apps.apple.com/tw/app/id6824565163",
       "iosStatus": "開發中",
       "publicApple": false,
-      "iosStoreName": "錢錢長大了"
+      "iosStoreName": "錢錢長大了",
+      "iconHasWatermark": true,
+      "iconCheckedAt": "2026-11-01T08:43:56.957280+00:00"
     },
     {
       "name": "Simulator Manager｜模擬器分配器",

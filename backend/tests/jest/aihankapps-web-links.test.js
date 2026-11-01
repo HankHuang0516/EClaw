@@ -108,8 +108,8 @@ describe('public portfolio web-version actions', () => {
     expect(tracked).toEqual([['eclawbot', 'intro']]);
   });
 
-  test('Timehut reuses its accepted baked-watermark asset without a second H overlay', () => {
-    const record = catalog.apps.find(app => app.communityId === 'timehut');
+  test.each(['timehut', 'piggy-growth'])('%s reuses its accepted baked-watermark asset without a second H overlay', id => {
+    const record = catalog.apps.find(app => app.communityId === id);
     const createIcon = loadFunction(html, 'createIcon', { document, H_WATERMARK_TIGHT: {} });
     const icon = createIcon(record);
     expect(icon.className).toBe('app-icon app-icon--watermarked');
