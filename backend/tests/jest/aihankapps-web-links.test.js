@@ -26,7 +26,8 @@ function loadFunction(source, name, context = {}) {
 function element(tag) {
   const node = {
     tagName: tag.toUpperCase(), children: [], attributes: {}, className: '',
-    style: { setProperty() {} }, addEventListener() {},
+    style: { setProperty() {} }, listeners: {},
+    addEventListener(name, listener) { this.listeners[name] = listener; },
     setAttribute(name, value) { this.attributes[name] = value; },
     appendChild(child) { this.children.push(child); return child; },
     querySelector(selector) {
@@ -38,7 +39,11 @@ function element(tag) {
       return null;
     },
   };
-  node.classList = { add() {}, contains(name) { return node.className.split(' ').includes(name); } };
+  node.classList = {
+    add(name) { if (!this.contains(name)) node.className += ` ${name}`; },
+    remove(name) { node.className = node.className.split(' ').filter(value => value !== name).join(' '); },
+    contains(name) { return node.className.split(' ').includes(name); },
+  };
   return node;
 }
 
@@ -106,6 +111,16 @@ describe('public portfolio web-version actions', () => {
     click(event); expect(tracked).toEqual([]);
     link.className = 'guide-link'; click(event);
     expect(tracked).toEqual([['eclawbot', 'intro']]);
+  });
+
+  test.each(['一般', '遊戲'])('a baked-H %s icon restores the selected H on image failure or missing image', category => {
+    const createIcon = loadFunction(html, 'createIcon', { document, H_WATERMARK_TIGHT: {} });
+    const record = { name: 'Fallback', iconText: 'FB', category, iconHasWatermark: true, icon: 'https://example.com/icon.png' };
+    for (const icon of [createIcon(record), createIcon({ ...record, icon: null })]) {
+      if (icon.children[0]) icon.children[0].listeners.error();
+      expect(icon.className).toBe(`app-icon app-icon--${category === '遊戲' ? 'game' : 'general'}`);
+      expect(icon.textContent).toBe('FB');
+    }
   });
 
   test.each(['timehut', 'piggy-growth'])('%s reuses its accepted baked-watermark asset without a second H overlay', id => {

@@ -663,9 +663,7 @@
         img.src = app.icon;
         img.loading = 'lazy';
         img.alt = `${app.name} icon`;
-        img.addEventListener('error', () => {
-          iconWrap.textContent = app.iconText || app.name.slice(0, 2);
-        });
+        img.addEventListener('error', showFallback);
         iconWrap.appendChild(img);
 
         return iconWrap;
@@ -701,8 +699,13 @@
         }
         iconWrap.setAttribute('aria-label', `${app.name} 文字圖示`);
 
-        if (!app.icon) {
+        function showFallback() {
+          iconWrap.classList.remove('app-icon--watermarked');
+          iconWrap.classList.add(`app-icon--${app.category === '遊戲' ? 'game' : 'general'}`);
           iconWrap.textContent = app.iconText || app.name.slice(0, 2);
+        }
+        if (!app.icon) {
+          showFallback();
           return iconWrap;
         }
 
@@ -710,9 +713,7 @@
         img.src = hasBakedGameH ? 'anthill/icon-180-game-h-90e14cf7d5ac.png' : app.icon;
         img.loading = 'lazy';
         img.alt = `${app.name} icon`;
-        img.addEventListener('error', () => {
-          iconWrap.textContent = app.iconText || app.name.slice(0, 2);
-        });
+        img.addEventListener('error', showFallback);
         iconWrap.appendChild(img);
 
         return iconWrap;
