@@ -127,6 +127,7 @@ const TRANSLATIONS = {
 
 
     en: {
+        portfolio_official_website: "Official website",
         portfolio_web_version: "Open web app",
         pfs_support_title: "Official support and privacy",
         pfs_support_contact: "Support and troubleshooting",
@@ -651318,6 +651319,7 @@ const TRANSLATIONS = {
 
 
     zh: {
+        portfolio_official_website: "官方網站",
         portfolio_web_version: "開啟網頁版",
         pfs_support_title: "官方支援與隱私說明",
         pfs_support_contact: "客服與故障回報",
@@ -1851499,6 +1851501,7 @@ const TRANSLATIONS = {
 
 
     ja: {
+        portfolio_official_website: "公式サイト",
         portfolio_web_version: "Web版を開く",
         pfs_support_title: "公式サポートとプライバシー",
         pfs_support_contact: "サポートとトラブルシューティング",
@@ -2415211,6 +2415214,7 @@ const TRANSLATIONS = {
 
 
     ko: {
+        portfolio_official_website: "공식 웹사이트",
         portfolio_web_version: "웹 버전 열기",
         pfs_support_title: "공식 지원 및 개인정보 보호",
         pfs_support_contact: "고객 지원 및 문제 해결",
@@ -2947691,6 +2947695,7 @@ const TRANSLATIONS = {
 
 
     th: {
+        portfolio_official_website: "เว็บไซต์ทางการ",
         portfolio_web_version: "เปิดเว็บแอป",
         pfs_support_title: "การสนับสนุนอย่างเป็นทางการและความเป็นส่วนตัว",
         pfs_support_contact: "การสนับสนุนและการแก้ไขปัญหา",
@@ -3474998,6 +3475003,7 @@ const TRANSLATIONS = {
 
 
     vi: {
+        portfolio_official_website: "Trang web chính thức",
         portfolio_web_version: "Mở ứng dụng web",
         pfs_support_title: "Hỗ trợ chính thức và quyền riêng tư",
         pfs_support_contact: "Hỗ trợ và khắc phục sự cố",
@@ -4002375,6 +4002381,7 @@ const TRANSLATIONS = {
 
 
     id: {
+        portfolio_official_website: "Situs resmi",
         portfolio_web_version: "Buka versi web",
         pfs_support_title: "Dukungan resmi dan privasi",
         pfs_support_contact: "Dukungan dan pemecahan masalah",
@@ -4529368,6 +4529375,7 @@ const TRANSLATIONS = {
 
 
     fr: {
+        portfolio_official_website: "Site officiel",
         portfolio_web_version: "Ouvrir la version web",
         pfs_support_title: "Assistance officielle et confidentialité",
         pfs_support_contact: "Assistance et dépannage",
@@ -5054986,6 +5054994,7 @@ const TRANSLATIONS = {
 
 
     es: {
+        portfolio_official_website: "Sitio web oficial",
         portfolio_web_version: "Abrir versión web",
         pfs_support_title: "Soporte oficial y privacidad",
         pfs_support_contact: "Soporte y solución de problemas",
@@ -5573147,6 +5573156,7 @@ const TRANSLATIONS = {
 
 
     de: {
+        portfolio_official_website: "Offizielle Website",
         portfolio_web_version: "Webversion öffnen",
         pfs_support_title: "Offizieller Support und Datenschutz",
         pfs_support_contact: "Support und Fehlerbehebung",
@@ -6110304,6 +6110314,7 @@ const TRANSLATIONS = {
         "dash_avatar_petdx_hint": "Animierte Begleiter im Petdx-Begleiter-Browser entdecken",
 },
     pt: {
+        portfolio_official_website: "Site oficial",
         portfolio_web_version: "Abrir versão web",
         pfs_support_title: "Suporte oficial e privacidade",
         pfs_support_contact: "Suporte e resolução de problemas",
@@ -6116176,6 +6116187,7 @@ const TRANSLATIONS = {
 
 
     ms: {
+        portfolio_official_website: "Laman web rasmi",
         portfolio_web_version: "Buka versi web",
         pfs_support_title: "Sokongan rasmi dan privasi",
         pfs_support_contact: "Sokongan dan penyelesaian masalah",
@@ -6645457,6 +6645469,7 @@ const TRANSLATIONS = {
 
 
     hi: {
+        portfolio_official_website: "आधिकारिक वेबसाइट",
         portfolio_web_version: "वेब ऐप खोलें",
         pfs_support_title: "आधिकारिक सहायता और गोपनीयता",
         pfs_support_contact: "सहायता और समस्या निवारण",
@@ -7205195,6 +7205208,7 @@ const TRANSLATIONS = {
 
 
     ar: {
+        portfolio_official_website: "الموقع الرسمي",
         portfolio_web_version: "فتح تطبيق الويب",
         pfs_support_title: "الدعم الرسمي والخصوصية",
         pfs_support_contact: "الدعم وحل المشكلات",

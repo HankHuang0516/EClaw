@@ -4,7 +4,8 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'backend/public/AiHankApps/reports/**'
+      - 'backend/public/AiHankApps/**'
+      - 'tools/portfolio/**'
       - 'backend/public/AiHankApps/app-catalog.json'
       - 'tools/aihankapps-reporting/**'
       - '.github/workflows/aihankapps-report-ci.yml'
@@ -12,7 +13,8 @@ on:
   push:
     branches: ['**']
     paths:
-      - 'backend/public/AiHankApps/reports/**'
+      - 'backend/public/AiHankApps/**'
+      - 'tools/portfolio/**'
       - 'backend/public/AiHankApps/app-catalog.json'
       - 'tools/aihankapps-reporting/**'
       - '.github/workflows/aihankapps-report-ci.yml'
@@ -31,6 +33,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify every public APP has a complete introduction and assets
+        run: node tools/portfolio/preflight.mjs
       - name: Historical ingestion and failed-publication regression tests
         run: node --test tools/aihankapps-reporting/scripts/*.test.mjs
       - name: Verify public artifact hashes, catalog parity and renderer source
