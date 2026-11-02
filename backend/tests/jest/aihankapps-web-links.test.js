@@ -6,7 +6,7 @@ const root = path.join(__dirname, '../../public/AiHankApps');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 const expected = {
   eclawbot: 'https://eclawbot.com/',
-  weesh: 'https://wishlist-app-production.up.railway.app/',
+  weesh: 'https://wishlist-app-production.up.railway.app/explore',
   timehut: 'https://just-healing-production.up.railway.app/app/index.html',
   'piggy-growth': 'https://hank-app01-save-money.netlify.app/',
 };
@@ -63,7 +63,7 @@ describe('public portfolio web-version actions', () => {
       }
     }
     expect(inline.filter(app => app.publicWeb).map(app => app.communityId).sort()).toEqual(Object.keys(expected).sort());
-    expect(catalog.apps.find(app => app.communityId === 'weesh').name).toBe('Weesh');
+    expect(catalog.apps.find(app => app.communityId === 'weesh').name).toBe('Wishlist.ai');
   });
 
   test('launch links are named, localized, HTTPS, and isolated from the opener', () => {
@@ -81,6 +81,33 @@ describe('public portfolio web-version actions', () => {
     { publicWeb: true, webUrl: 'http://example.com/' },
   ])('never exposes a draft, absent, or unsafe URL: %j', record => {
     expect(createWebLink(record)).toBeNull();
+  });
+
+  test('Wishlist official root and web Explore remain distinct from its current introduction', () => {
+    const record = catalog.apps.find(app => app.communityId === 'weesh');
+    const createOfficialLink = loadFunction(html, 'createOfficialLink', { createWebLink });
+    const official = createOfficialLink(record);
+    expect(official.href).toBe('https://wishlist-app-production.up.railway.app/');
+    expect(official.textContent).toBe('官方網站');
+    expect(official.classList.contains('web-link')).toBe(true);
+    expect(official.attributes['aria-label']).toBe('Wishlist.ai：官方網站');
+    expect(createWebLink(record).href).toBe('https://wishlist-app-production.up.railway.app/explore');
+    expect(record.guide).toBe('https://eclawbot.com/AiHankApps/guides/weesh/');
+    expect(createOfficialLink({ ...record, publicWebsite: false })).toBeNull();
+    expect(createOfficialLink({ ...record, officialUrl: record.webUrl })).toBeNull();
+    expect(createOfficialLink({ ...record, officialUrl: 'javascript:alert(1)' })).toBeNull();
+  });
+
+  test.each(['timehut', 'anthill'])('%s has an introduction as a public Android app and keeps unreleased iOS disabled', id => {
+    const record = catalog.apps.find(app => app.communityId === id);
+    expect(record.publicGoogle).toBe(true);
+    expect(record.publicApple).toBe(false);
+    const url = new URL(record.guide);
+    const guide = read(url.pathname.replace('/AiHankApps/', '') + 'index.html');
+    expect(guide).toContain('data-intro-toolbar');
+    expect(guide).toContain('data-apple-status="開發中"');
+    expect(guide).toContain(record.googleUrl);
+    expect(guide).toContain('data-shortcuts=');
   });
 
   test('a web action does not suppress the original introduction or create a second action row', () => {

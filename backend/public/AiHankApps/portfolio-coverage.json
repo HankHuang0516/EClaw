@@ -1,0 +1,194 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-11-02",
+  "storeSnapshotCheckedAt": "2026-11-02T01:06:15.225Z",
+  "scope": "APP identity, introduction and public entry coverage; not a claim of native-binary or complete gameplay QA.",
+  "apps": [
+    {
+      "id": "stray-map",
+      "name": "浪浪地圖",
+      "publicGoogle": true,
+      "publicApple": true,
+      "introUrl": "https://eclawbot.com/AiHankApps/guides/stray-map/",
+      "officialUrl": null,
+      "webUrl": null,
+      "status": "entry-and-platform-reviewed"
+    },
+    {
+      "id": "eclawbot",
+      "name": "EClawbot",
+      "publicGoogle": true,
+      "publicApple": true,
+      "introUrl": "https://eclawbot.com/AiHankApps/guides/eclawbot/",
+      "officialUrl": null,
+      "webUrl": "https://eclawbot.com/",
+      "status": "entry-and-platform-reviewed"
+    },
+    {
+      "id": "weesh",
+      "name": "Wishlist.ai",
+      "publicGoogle": true,
+      "publicApple": true,
+      "introUrl": "https://eclawbot.com/AiHankApps/guides/weesh/",
+      "officialUrl": "https://wishlist-app-production.up.railway.app/",
+      "webUrl": "https://wishlist-app-production.up.railway.app/explore",
+      "status": "entry-and-platform-reviewed"
+    },
+    {
+      "id": "property-roi",
+      "name": "房東投報快算",
+      "publicGoogle": true,
+      "publicApple": false,
+      "introUrl": "https://eclawbot.com/AiHankApps/guides/property/",
+      "officialUrl": null,
+      "webUrl": null,
+      "status": "entry-and-platform-reviewed",
+      "sourceLimit": "Official store metadata and preserved introduction reviewed; original application source unavailable."
+    },
+    {
+      "id": "anthill",
+      "name": "螞蟻王國：築巢拓境",
+      "publicGoogle": true,
+      "publicApple": false,
+      "introUrl": "https://eclawbot.com/AiHankApps/guides/anthill/",
+      "officialUrl": null,
+      "webUrl": null,
+      "status": "entry-and-platform-reviewed",
+      "sourceLimit": "Current public-store identity and published support documents; original game source unavailable."
+    },
+    {
+      "id": "chumen",
+      "name": "這樣出門",
+      "publicGoogle": true,
+      "publicApple": true,
+      "introUrl": "https://eclawbot.com/AiHankApps/guides/chumen/",
+      "officialUrl": null,
+      "webUrl": null,
+      "status": "entry-and-platform-reviewed"
+    },
+    {
+      "id": "doomsday-index",
+      "name": "世界末日了沒",
+      "publicGoogle": true,
+      "publicApple": true,
+      "introUrl": "https://eclawbot.com/AiHankApps/guides/doomsday/",
+      "officialUrl": null,
+      "webUrl": null,
+      "status": "entry-and-platform-reviewed",
+      "sourceLimit": "Official store metadata and preserved introduction reviewed; original application source unavailable."
+    },
+    {
+      "id": "dreambuddy",
+      "name": "夢話夥伴",
+      "publicGoogle": true,
+      "publicApple": true,
+      "introUrl": "https://eclawbot.com/AiHankApps/guides/dreambuddy/",
+      "officialUrl": null,
+      "webUrl": null,
+      "status": "entry-and-platform-reviewed",
+      "sourceLimit": "Official store metadata and preserved introduction reviewed; original application source unavailable."
+    },
+    {
+      "id": "paper-flick-soldiers",
+      "name": "紙上彈兵",
+      "publicGoogle": true,
+      "publicApple": true,
+      "introUrl": "https://eclawbot.com/AiHankApps/guides/paper-flick-soldiers/",
+      "officialUrl": null,
+      "webUrl": null,
+      "status": "entry-and-platform-reviewed"
+    },
+    {
+      "id": "rebound",
+      "name": "REBOUND：元素戰機",
+      "publicGoogle": true,
+      "publicApple": true,
+      "introUrl": "https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site/",
+      "officialUrl": null,
+      "webUrl": null,
+      "status": "entry-and-platform-reviewed",
+      "sourceLimit": "Existing complete archive URL preserved; original upstream unavailable, fresh source sync incomplete."
+    },
+    {
+      "id": "sleep-park",
+      "name": "睡公園：免費生存地圖",
+      "publicGoogle": true,
+      "publicApple": true,
+      "introUrl": "https://eclawbot.com/AiHankApps/guides/sleep-park/",
+      "officialUrl": null,
+      "webUrl": null,
+      "status": "entry-and-platform-reviewed"
+    },
+    {
+      "id": "typeforge-twin-cities",
+      "name": "活字戰紀：雙城烽火",
+      "publicGoogle": true,
+      "publicApple": true,
+      "introUrl": "https://eclawbot.com/AiHankApps/guides/typeforge/",
+      "officialUrl": null,
+      "webUrl": null,
+      "status": "entry-and-platform-reviewed"
+    },
+    {
+      "id": "summit-battle",
+      "name": "活字戰記：巔峰之戰",
+      "publicGoogle": false,
+      "publicApple": false,
+      "introUrl": null,
+      "officialUrl": null,
+      "webUrl": null,
+      "status": "development-status-only"
+    },
+    {
+      "id": "vibe-empire",
+      "name": "Vibe帝國",
+      "publicGoogle": null,
+      "publicApple": null,
+      "introUrl": null,
+      "officialUrl": null,
+      "webUrl": null,
+      "status": "development-status-only",
+      "sourceLimit": "No verified public Web URL; do not invent a launch link."
+    },
+    {
+      "id": "piggy-growth",
+      "name": "錢錢長大了",
+      "publicGoogle": true,
+      "publicApple": false,
+      "introUrl": "https://eclawbot.com/AiHankApps/guides/piggy-growth/",
+      "officialUrl": null,
+      "webUrl": "https://hank-app01-save-money.netlify.app/",
+      "status": "entry-and-platform-reviewed"
+    },
+    {
+      "id": "simulator-manager",
+      "name": "Simulator Manager｜模擬器分配器",
+      "publicGoogle": null,
+      "publicApple": null,
+      "introUrl": "https://eclawbot.com/AiHankApps/tools/simulator-manager/",
+      "officialUrl": null,
+      "webUrl": null,
+      "status": "entry-and-platform-reviewed"
+    },
+    {
+      "id": "timehut",
+      "name": "時光相簿",
+      "publicGoogle": true,
+      "publicApple": false,
+      "introUrl": "https://eclawbot.com/AiHankApps/guides/timehut/",
+      "officialUrl": null,
+      "webUrl": "https://just-healing-production.up.railway.app/app/index.html",
+      "status": "entry-and-platform-reviewed"
+    },
+    {
+      "id": "com.hankhuang.fraudempire",
+      "name": "詐騙帝國",
+      "publicGoogle": false,
+      "publicApple": false,
+      "introUrl": "https://eclawbot.com/aihankapps/projects/fraud-empire/",
+      "officialUrl": null,
+      "webUrl": null,
+      "status": "development-status-only"
+    }
+  ]
+}

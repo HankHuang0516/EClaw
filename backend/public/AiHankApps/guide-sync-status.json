@@ -1,91 +1,146 @@
 {
-  "schemaVersion": 1,
-  "checkedAt": "2026-10-07T07:10:17.093Z",
-  "catalogCheckedAt": "2026-10-04T01:02:59.370Z",
+  "schemaVersion": 3,
+  "checkedAt": "2026-11-02T12:05:22.073Z",
+  "catalogCheckedAt": "2026-11-02T01:06:15.225Z",
   "guides": [
     {
       "id": "eclawbot",
       "name": "EClawbot",
-      "renderedHash": "dbca49166775ec74a3650815e1ad961ae6002c1db5caad6f429fbe68ad751385"
+      "renderedHash": "f3b063dd3ad7e48f90a52a55de70f3eca02abe39c0a14f11c0fd6aae2f12ed54",
+      "upstreamSynchronized": false,
+      "freshSync": false,
+      "reviewScope": "Authoritative public-store metadata plus bounded readable product sources",
+      "externalArchivePreserved": false
     },
     {
       "id": "typeforge-twin-cities",
       "name": "活字戰紀：雙城烽火",
-      "renderedHash": "82478e04ebe11107e7d1ec27ee7d18ab1f9ce3c85f75a5914d86e9314e214595"
+      "renderedHash": "b3b5a98482859e0efd47be32bd18651673625462efc410d3863dcb0e9c1ffb56",
+      "upstreamSynchronized": false,
+      "freshSync": false,
+      "reviewScope": "Existing rendered introduction retained; no fresh original-source synchronization claimed",
+      "externalArchivePreserved": false
     },
     {
       "id": "weesh",
-      "name": "Weesh",
-      "renderedHash": "c0197cb23f946034e1b449a058352f7d2b5a3a49815da3acc5be440eabee9ea0"
+      "name": "Wishlist.ai",
+      "renderedHash": "e8e78c6da197ec431a8436e4a28a2f6b7e482d2871b5fc1bc9f2180f2ec1ab27",
+      "upstreamSynchronized": false,
+      "freshSync": false,
+      "reviewScope": "Authoritative public-store metadata plus bounded readable product sources",
+      "externalArchivePreserved": false
     },
     {
       "id": "doomsday-index",
       "name": "世界末日了沒",
-      "renderedHash": "7472afb5c5291be20f39903692d950b9e0f6b5449477aa8bb093739bcdb01903"
+      "renderedHash": "efb2b44d448f3be6cc1ca2af8dd5ca834e208da7a88aa680c3301b35d74f31bf",
+      "upstreamSynchronized": false,
+      "freshSync": false,
+      "reviewScope": "Authoritative public-store metadata; original application code remains unavailable",
+      "externalArchivePreserved": false
     },
     {
       "id": "dreambuddy",
       "name": "夢話夥伴",
-      "renderedHash": "c903b9de8dd81214053a4e0baf55ef5e2b25e7e0578c7c162d7484e105b3b686"
+      "renderedHash": "0b5060dbbccefa9f57ac0d9303fc36a6fddf7055bcc4b5df462b5585a4d4ab15",
+      "upstreamSynchronized": false,
+      "freshSync": false,
+      "reviewScope": "Authoritative public-store metadata; original application code remains unavailable",
+      "externalArchivePreserved": false
     },
     {
       "id": "property-roi",
       "name": "房東投報快算",
-      "renderedHash": "05f32dea740900e3a191436bf5b48660c4de1930aaebb11c7a2bcb519447e1ed"
+      "renderedHash": "8a8ce4510391da3a2b5cb4dab53a1669d9e3efbbdf97660fe1fdcbe833c2ffb1",
+      "upstreamSynchronized": false,
+      "freshSync": false,
+      "reviewScope": "Authoritative public-store metadata; original application code remains unavailable",
+      "externalArchivePreserved": false
     },
     {
       "id": "stray-map",
       "name": "浪浪地圖",
-      "renderedHash": "57118c3f540e7b3a4aeb1ab142eb8df015cb3e3ae3759008e858750bdb0bd510",
-      "sourceCheckException": {
-        "reason": "Registered source unavailable on unmounted Hank-2TB; original rendered content and prior upstream hash retained",
-        "approvedAt": "2026-10-07T05:57:00Z",
-        "priorReviewedAt": "2026-09-10T11:59:26.525Z"
-      }
+      "renderedHash": "8a2fd6bbd9fa2fe1e939be3125bd6f6e5fa5d842595f9b1e593d2e8987bf82d1",
+      "upstreamSynchronized": false,
+      "freshSync": false,
+      "reviewScope": "Existing rendered introduction retained; no fresh original-source synchronization claimed",
+      "externalArchivePreserved": false
     },
     {
       "id": "sleep-park",
       "name": "睡公園：免費生存地圖",
-      "renderedHash": "69d97ff31c20c809b1c0cf8e7ebf8dffb1ae8d34817096f485c3fac71a905883",
-      "sourceCheckException": {
-        "reason": "Registered source unavailable on unmounted Hank-2TB; original rendered content and prior upstream hash retained",
-        "approvedAt": "2026-10-07T05:57:00Z",
-        "priorReviewedAt": "2026-09-07T02:41:14.407Z"
-      }
+      "renderedHash": "384c1bbf89faa899cd1789e515edbb2085472e9e32d0e148f983acafc66d2170",
+      "upstreamSynchronized": false,
+      "freshSync": false,
+      "reviewScope": "Existing rendered introduction retained; no fresh original-source synchronization claimed",
+      "externalArchivePreserved": false
     },
     {
       "id": "chumen",
       "name": "這樣出門",
-      "renderedHash": "dae6f2eb41c070e83086847056157bc77468d29f2dc02b6daa1bf92996e3528a"
+      "renderedHash": "57630b4f629556efa03daf1030eff566eb0a8cdb261f05216dfe16cbd7cf5529",
+      "upstreamSynchronized": false,
+      "freshSync": false,
+      "reviewScope": "Existing rendered introduction retained; no fresh original-source synchronization claimed",
+      "externalArchivePreserved": false
     },
     {
       "id": "piggy-growth",
       "name": "錢錢長大了",
-      "renderedHash": "24de74c32fada051e0db0fd30858fbdf266cb99e3edac5ca7ce011cc74b6764a"
+      "renderedHash": "20beac80d1df2d8842e10e600cf4683acb92bb3da007326d946f0afbab3de03f",
+      "upstreamSynchronized": false,
+      "freshSync": false,
+      "reviewScope": "Authoritative public-store metadata plus bounded readable product sources",
+      "externalArchivePreserved": false
     },
     {
       "id": "rebound",
-      "name": "元素戰機350",
-      "renderedHash": "6c3c25b38a5679541bf1639e7b87cd85f09dfdbcb903f0332603d22dae1f9bbe",
-      "externalProof": {
-        "url": "https://rebound-tactical-archive.twopiggyhavefun.chatgpt.site",
-        "gameVersion": "0.59.0",
-        "dataHash": "de3d662b47d06f4a953cf4ca335095af24acc351b182153de21398ab0f71b114"
-      }
+      "name": "REBOUND：元素戰機",
+      "renderedHash": null,
+      "upstreamSynchronized": false,
+      "freshSync": false,
+      "reviewScope": "Existing rendered introduction retained; no fresh original-source synchronization claimed",
+      "externalArchivePreserved": true
     },
     {
       "id": "paper-flick-soldiers",
       "name": "紙上彈兵",
-      "renderedHash": "b12755336c095a02b1e51284499ed36084820af916693f61fc38bd1166698972"
+      "renderedHash": "b0f227b48b64550c47689522ae0ffc2f6ebc93b0d6944233378487a93209d798",
+      "upstreamSynchronized": false,
+      "freshSync": false,
+      "reviewScope": "Existing rendered introduction retained; no fresh original-source synchronization claimed",
+      "externalArchivePreserved": false
+    },
+    {
+      "id": "timehut",
+      "name": "時光相簿",
+      "renderedHash": "3ab46743dbf5e0906637c434ba772147de2e0cfe5dcbbd823a36c534e4d0c529",
+      "upstreamSynchronized": false,
+      "freshSync": false,
+      "reviewScope": "Published Android/Web entry, public metadata and current source documents; no claim of pending iOS or LINE release",
+      "externalArchivePreserved": false
+    },
+    {
+      "id": "anthill",
+      "name": "螞蟻王國：築巢拓境",
+      "renderedHash": "7468e72fc8e18f95a6f24b817a112e7e2d640067181b5412f961231a5d30efef",
+      "upstreamSynchronized": false,
+      "freshSync": false,
+      "reviewScope": "Official store metadata and published support documents; original game code unavailable",
+      "externalArchivePreserved": false
     }
   ],
   "publicationException": {
     "authorizedBy": "Hank",
-    "authorizedAt": "2026-11-01T07:59:17.623336+00:00",
-    "scope": "2026-11-01 portfolio web links, verified store availability and authentic report only",
+    "authorizedAt": "2026-11-02T12:01:33.892834+00:00",
+    "scope": "2026-11-02 full 18-app correction candidate, current Wishlist.ai/Timehut/Anthill introductions, reviewed platform/copy/entry fixes and authentic report",
     "upstreamSynchronized": false,
     "freshSync": false,
-    "preservedCurrentGuideBodiesAndUrls": true,
-    "reason": "REBOUND original upstream unavailable; current introductions preserved under explicit one-time authorization"
+    "originalAuthoringProjectRestored": false,
+    "ordinaryGuideGatePassed": false,
+    "ordinaryGoldenGatePassed": false,
+    "acceptedUnchangedUiReuse": true,
+    "currentFailedGoldenScore": 0.8878947132986015,
+    "thresholdUnchanged": 0.9
   }
 }
