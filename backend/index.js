@@ -16,6 +16,7 @@ const pushContext = require('./push-context');
 const telemetry = require('./device-telemetry');
 const sitePageviews = require('./site-pageviews');
 const appPortfolioCommunity = require('./app-portfolio-community');
+const aihankappsOps = require('./aihankapps-ops');
 const { setAiHankAppsCacheHeaders } = require('./aihankapps-cache-policy');
 const { retireFraudEmpireDemo } = require('./fraud-empire-demo-retirement');
 const feedbackModule = require('./device-feedback');
@@ -25982,6 +25983,10 @@ function authenticateDeviceOrBot({ deviceId, deviceSecret, botSecret, entityId }
 }
 
 app.use('/api/app-portfolio', appPortfolioCommunity.createRouter(() => chatPool));
+// AiHankApps 營運數據 page (/AiHankApps/ops/): read API plus the collector that keeps a copy of the public
+// worker-monitor and Wishlist listing-report numbers. AIHANKAPPS_OPS_COLLECTOR=0 serves the API without collecting.
+app.use('/api/aihankapps/ops', aihankappsOps.createRouter(() => chatPool));
+if (process.env.AIHANKAPPS_OPS_COLLECTOR !== '0' && process.env.NODE_ENV !== 'test') aihankappsOps.startCollector(() => chatPool);
 app.use('/api/dot-progress', require('./dot-progress').createRouter(() => chatPool, authModule));
 app.use('/api/taaze-demo-share', taazeDemoRouters.adminRouter);
 
