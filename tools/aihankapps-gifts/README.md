@@ -85,7 +85,9 @@ node tools/aihankapps-gifts/cli.js status  <id> <game>
 node tools/aihankapps-gifts/cli.js deliver <id> <game> --commit --record first
 ```
 
-先跑 `status`：`issues` 必須是空的，`audience`（會收到的帳號數）要合理。再跑 `deliver`。輸出的 `issues` 只要不是空的就停下來，不重試、不記錄回條，把輸出回報給 Hank。
+先跑 `status`：`issues` 必須是空的，`audience`（會收到的帳號數）要合理。再跑 `deliver`。
+
+兩款遊戲分開處理。某一款的 `status` 或 `deliver` 輸出 `issues` 不是空的，那一款就到此為止：不重試，工具也不會寫它的回條。另一款照常做完、照常送出回條 PR，最後把沒過的那一款的輸出原文回報給 Hank。隔天 `tick` 還會列出沒寄成的那一款。
 
 `--record first` 或 `--record final` 成功時會把回條（寄出封數、核對時間）寫進活動檔。接著：
 
@@ -94,7 +96,7 @@ node tools/aihankapps-gifts/cli.js build
 node tools/aihankapps-gifts/cli.js validate
 ```
 
-然後開「回條」PR，流程同上。同一天兩款遊戲的回條放在同一個 PR。
+然後開「回條」PR，流程同上。同一天兩款遊戲的回條放在同一個 PR；只有一款寄成就只放那一款。
 
 ## 發放怎麼進到遊戲
 
