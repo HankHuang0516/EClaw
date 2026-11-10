@@ -121,7 +121,9 @@ function publicCopy(locale, holidayName, gameEntries, times) {
         gameId: game.id,
         name: game.names[locale],
         line: text.game(game.names[locale], rewardContents(game, reward, locale)),
-        ...(twd === null ? {} : { value: text.value(number(twd)) })
+        ...(twd === null ? {} : { value: text.value(number(twd)) }),
+        // What a player of this game has to do to receive mail, when it is not automatic.
+        ...(game.receiveNotes ? { note: game.receiveNotes[locale] } : {})
       };
     }),
     eligibility: text.eligibility(formatTaipei(times.startsAt), formatTaipei(times.deliveryEndsAt)),

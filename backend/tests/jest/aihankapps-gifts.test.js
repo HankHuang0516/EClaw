@@ -157,6 +157,24 @@ describe('drafting a campaign from the calendar', () => {
     expect(draft.copy.ja.games[1].name).toBe('タイプフォージ：双城戦記');
     expect(draft.copy.ko.games[1].name).toBe('타입포지: 두 도시의 전쟁');
   });
+  test('Twin Cities tells players to open the mailbox once, because that is what creates their receiving account', () => {
+    for (const locale of copy.LOCALES) {
+      expect(draft.copy[locale].games[0]).not.toHaveProperty('note');
+      expect(draft.copy[locale].games[1].note).toBe(games.games[1].receiveNotes[locale]);
+      expect(draft.copy[locale].games[1].note.length).toBeGreaterThan(20);
+    }
+    expect(draft.copy['zh-TW'].games[1].note).toContain('請先打開一次信箱');
+    expect(draft.copy.en.games[1].note).toContain('open it once');
+    const [data] = build.buildPublicData([decide(draft).campaign]);
+    for (const state of ['upcoming', 'active']) {
+      expect(data.copy.en[state][2]).toBe('Typeforge: Twin Cities: 100 gold. ' + games.games[1].receiveNotes.en);
+      expect(data.copy.ja[state][2]).toBe('「タイプフォージ：双城戦記」：ゴールド100。' + games.games[1].receiveNotes.ja);
+    }
+    expect(build.socialPost(decide(draft).campaign, 'zh-TW')).toContain(games.games[1].receiveNotes['zh-TW']);
+    const blank = clone(draft);
+    blank.copy.ko.games[1].note = ' ';
+    expect(validateCampaign(blank, { games })).toEqual(['invalid_copy:ko:typeforge-twin-cities:note']);
+  });
   test('a major holiday uses the major tier', () => {
     const newYear = draftCampaign(calendar.occurrences.find(item => item.holiday === 'lunar-new-year'), { calendar, games });
     expect(newYear.id).toBe('lunar-new-year-2027');
@@ -274,7 +292,7 @@ describe('published portfolio data', () => {
     expect(data.copy['zh-TW'].upcoming).toEqual([
       '聖誕節禮包會寄進遊戲內信箱，打開信箱就能領取。',
       '《REBOUND：元素戰機》：火花 3,000 點、戰機復活卡 1 張、1H 戰利品加倍卡 1 張。商品標價換算約 NT$150，非現金價值。',
-      '《活字戰紀：雙城烽火》：金幣 100。',
+      '《活字戰紀：雙城烽火》：金幣 100。還沒開過遊戲內信箱的玩家，請先打開一次信箱建立收件帳號；活動期間才打開的，禮包通常隔天寄到。',
       '2026/12/25 10:00 至 2027/01/01 10:00（台北時間）之間已有帳號或新加入的玩家，每帳號一封；新帳號通常在加入後一天內收到。',
       '開始寄送：2026/12/25 10:00（台北時間）。',
       '領取截止：2027/01/25 10:00（台北時間），到期後無法領取。'

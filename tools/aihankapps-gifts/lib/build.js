@@ -27,7 +27,7 @@ function latestReceipts(campaign) {
 }
 
 function gameLines(campaign, locale) {
-  return campaign.copy[locale].games.map(game => (game.value ? `${game.line}${TEXT[locale].gap}${game.value}` : game.line));
+  return campaign.copy[locale].games.map(game => [game.line, game.value, game.note].filter(Boolean).join(TEXT[locale].gap));
 }
 
 function publicHoliday(campaign) {
