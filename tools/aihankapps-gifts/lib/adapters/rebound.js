@@ -7,6 +7,8 @@
 //   - every mail expires one Asia/Taipei calendar month after campaign_starts_at, and the
 //     server refuses claims after that;
 //   - only Sparks and the four consumable cards are accepted, never a permanent entitlement.
+// The script first compares the deployed dispatch code with the hashes recorded in games.json
+// and stops if they differ: a changed server means this contract has to be re-read first.
 const { shellFor } = require('./transport');
 const { taipeiCalendarMonthLater } = require('../time');
 
@@ -43,17 +45,24 @@ function problems(campaign, entry) {
 }
 
 // mode: "status" only reads; "commit" delivers, then reads back.
-function script(mode, campaign, entry) {
+function script(mode, campaign, entry, game) {
   const encoded = Buffer.from(JSON.stringify(payload(campaign, entry)), 'utf8').toString('base64');
   return shellFor(`
+const crypto = require('crypto');
+const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
-const { Pool } = require('pg');
 const mode = ${JSON.stringify(mode)};
+const expected = ${JSON.stringify(game.delivery.toolSha256)};
 const payload = JSON.parse(Buffer.from('${encoded}', 'base64').toString('utf8'));
 const out = { mode, key: payload.idempotency_key };
 const print = () => console.log('GIFT_RESULT ' + JSON.stringify(out));
 (async () => {
+  out.tool = {};
+  for (const file of Object.keys(expected)) out.tool[file] = crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+  out.toolMatches = Object.keys(expected).every(file => out.tool[file] === expected[file]);
+  if (!out.toolMatches) { print(); process.exitCode = 1; return; }
+  const { Pool } = require('pg');
   const pool = new Pool({ connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined });
   try {
@@ -85,8 +94,9 @@ function interpret(result, campaign) {
     ...(value.dispatch ? { targeted: value.dispatch.targeted ?? null, delivered: value.dispatch.delivered ?? null } : {})
   };
   const issues = [];
+  if (value.toolMatches === false) issues.push('deployed_mail_tool_changed');
   if (value.error) issues.push(`error:${value.error}`);
-  if (value.mode === 'commit' && !(value.dispatch && value.dispatch.ok)) {
+  if (value.mode === 'commit' && value.toolMatches !== false && !(value.dispatch && value.dispatch.ok)) {
     issues.push(`dispatch_rejected:${((value.dispatch && value.dispatch.errors) || ['no_response']).join(',')}`);
   }
   if (mailbox.mails !== undefined && mailbox.mails !== mailbox.recipients) issues.push('duplicate_mail_for_a_player');

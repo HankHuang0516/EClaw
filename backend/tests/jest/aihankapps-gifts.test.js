@@ -97,6 +97,9 @@ describe('calendar and game registry', () => {
         for (const [key, amount] of Object.entries(reward)) expect(amount).toBeLessThanOrEqual(game.rewardItems[key].max);
       }
       expect(game.delivery.railway).toEqual(expect.objectContaining({ projectId: expect.any(String), environment: 'production', service: expect.any(String) }));
+      // Both games pin the deployed mail code the delivery was verified against.
+      expect(Object.keys(game.delivery.toolSha256).length).toBeGreaterThan(0);
+      for (const hash of Object.values(game.delivery.toolSha256)) expect(hash).toMatch(/^[0-9a-f]{64}$/);
     }
     const [reboundGame, typeforgeGame] = games.games;
     // The largest REBOUND gift is the one Hank approved on 2026-10-07.
@@ -446,7 +449,7 @@ describe('delivery to the games', () => {
     expect(typeforge.problems(campaign, typeforgeEntry, typeforgeGame, at(campaign.claimEndsAt))).toEqual(['expiry_must_be_in_the_future']);
   });
   test('the scripts run the game code in place and carry no secret', () => {
-    const reboundScript = rebound.script('commit', campaign, reboundEntry);
+    const reboundScript = rebound.script('commit', campaign, reboundEntry, reboundGame);
     const typeforgeScript = typeforge.script('commit', campaign, typeforgeEntry, typeforgeGame);
     expect(reboundScript).toContain("'src', 'admin.mjs'");
     expect(reboundScript).toContain('dispatchOperationalMail(pool, payload)');
@@ -454,12 +457,14 @@ describe('delivery to the games', () => {
     expect(typeforgeScript).toContain("require(process.cwd() + '/mailbox.js')");
     expect(typeforgeScript).toContain('new PostgresMailbox(pool).deliver(delivery)');
     expect(typeforgeScript).toContain(typeforgeGame.delivery.toolSha256['mailbox.js']);
-    for (const script of [reboundScript, typeforgeScript, rebound.script('status', campaign, reboundEntry)]) {
+    expect(reboundScript).toContain(reboundGame.delivery.toolSha256['src/admin.mjs']);
+    expect(reboundScript).toContain(reboundGame.delivery.toolSha256['src/campaign-deadline.mjs']);
+    for (const script of [reboundScript, typeforgeScript, rebound.script('status', campaign, reboundEntry, reboundGame)]) {
       expect(script).not.toMatch(/ADMIN_SECRET|x-admin-secret|postgres:\/\/|password/i);
       expect(script.split('\n')[0]).toBe('set -e');
     }
     // Status scripts never call the delivery function.
-    expect(rebound.script('status', campaign, reboundEntry)).toContain('const mode = "status"');
+    expect(rebound.script('status', campaign, reboundEntry, reboundGame)).toContain('const mode = "status"');
     expect(typeforge.script('status', campaign, typeforgeEntry, typeforgeGame)).toContain('const mode = "status"');
   });
   test('REBOUND results are accepted only when every targeted player has exactly one mail with the published deadline', () => {
@@ -472,7 +477,8 @@ describe('delivery to the games', () => {
     expect(rebound.interpret({ ...ok, mailbox: { ...mailbox, mails: 148, recipients: 148 } }, campaign).issues).toEqual(['players_without_mail:2']);
     expect(rebound.interpret({ ...ok, mailbox: { ...mailbox, mails: 151 } }, campaign).issues).toEqual(['duplicate_mail_for_a_player']);
     expect(rebound.interpret({ ...ok, mailbox: { ...mailbox, last_expiry: '2027-01-26T02:00:00.000Z' } }, campaign).issues).toEqual(['expiry_differs_from_published_deadline']);
-    expect(rebound.interpret({ mode: 'commit', error: 'connect ECONNREFUSED' }, campaign).issues).toEqual(['error:connect ECONNREFUSED', 'dispatch_rejected:no_response']);
+    expect(rebound.interpret({ mode: 'commit', toolMatches: true, error: 'connect ECONNREFUSED' }, campaign).issues).toEqual(['error:connect ECONNREFUSED', 'dispatch_rejected:no_response']);
+    expect(rebound.interpret({ mode: 'commit', toolMatches: false }, campaign).issues).toEqual(['deployed_mail_tool_changed']);
   });
   test('Typeforge results are refused when the deployed mail tool changed or nothing came back', () => {
     const mailbox = { mails: 1234, recipients: 1234, claimed: 0, first_expiry: campaign.claimEndsAt, last_expiry: campaign.claimEndsAt };
@@ -481,6 +487,19 @@ describe('delivery to the games', () => {
     expect(typeforge.interpret({ mode: 'commit', toolMatches: false }, campaign).issues).toEqual(['deployed_mail_tool_changed']);
     expect(typeforge.interpret({ mode: 'commit', toolMatches: true, error: 'mail_key_conflict' }, campaign).issues).toEqual(['error:mail_key_conflict']);
     expect(typeforge.interpret({ mode: 'commit', toolMatches: true }, campaign).issues).toEqual(['no_delivery_result']);
+  });
+  test('changed dispatch code stops the REBOUND script before it opens the database or sends anything', () => {
+    const appDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gift-rebound-'));
+    fs.mkdirSync(path.join(appDir, 'src'));
+    fs.writeFileSync(path.join(appDir, 'src', 'admin.mjs'), 'export async function dispatchOperationalMail() { throw new Error("must not be called"); }\n');
+    fs.writeFileSync(path.join(appDir, 'src', 'campaign-deadline.mjs'), '// a newer deadline rule\n');
+    for (const mode of ['status', 'commit']) {
+      const result = transport.runLocal(rebound.script(mode, campaign, reboundEntry, reboundGame),
+        { env: { GIFT_APP_DIR: appDir, DATABASE_URL: 'postgres://127.0.0.1:9/never-opened' } });
+      expect(result.value).toEqual(expect.objectContaining({ mode, toolMatches: false }));
+      expect(result.value).not.toHaveProperty('dispatch');
+      expect(rebound.interpret(result.value, campaign).issues).toEqual(['deployed_mail_tool_changed']);
+    }
   });
   test('a changed mail tool stops the Typeforge script before it opens the database', () => {
     const appDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gift-typeforge-'));

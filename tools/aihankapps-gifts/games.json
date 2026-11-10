@@ -55,8 +55,12 @@
       "delivery": {
         "adapter": "rebound",
         "railway": { "project": "rebound-live", "projectId": "642452f8-405c-4d07-8565-bd409a136fe8", "environment": "production", "service": "rebound-api" },
+        "toolSha256": {
+          "src/admin.mjs": "50e8164c08189807cccfb5dbffe53351aa356f24c3bcced9d239cc1de657b659",
+          "src/campaign-deadline.mjs": "59e360ffd49e39b497a5329e0bcdb625aef98977f76b3f6efb110a5628793624"
+        },
         "mailLimits": { "subject": 120, "body": 2000 },
-        "contractSource": "rebound-api 2026-10-07 部署的 server/src/admin.mjs：POST /internal/mail/dispatch，kind=limited_campaign，以 (player_id, dedupe_key) 防重。"
+        "contractSource": "rebound-api 2026-10-07 部署的 server/src/admin.mjs（dispatchOperationalMail，kind=limited_campaign，以 (player_id, dedupe_key) 防重）與 campaign-deadline.mjs（一個台北日曆月的期限）。2026-11-10 在正式容器內比對過，兩個檔案與演練用的原始碼雜湊相同。"
       }
     },
     {
