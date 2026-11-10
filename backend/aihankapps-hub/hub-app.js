@@ -19,10 +19,10 @@
 
   const RANGES = [['7d', 7, '過去 7 天', '7 天'], ['30d', 30, '過去 30 天', '30 天'], ['90d', 90, '過去 90 天', '90 天'], ['1y', 364, '過去 1 年', '1 年']];
   const VIEWS = [['overview', '總覽'], ['live', '即時監控'], ['kpi', '績效指標'], ['apps', 'APP'], ['alerts', '警示'], ['sources', '資料來源']];
-  const TILE_KEYS = ['installs', 'revenue', 'intro', 'clicks', 'listed', 'active'];
+  const TILE_KEYS = ['installs', 'active', 'newUsers', 'revenue', 'intro', 'listed'];
   // 單一 APP 頁的指標磚：有資料的前六項，照這個順序
-  const APP_TILE_ORDER = ['installs', 'revenue', 'intro', 'clicks', 'listed', 'aiwork', 'active', 'messages', 'signups', 'ctr', 'crashes'];
-  const KPI_KEYS = ['installs', 'revenue', 'intro', 'clicks', 'ctr', 'active', 'messages', 'signups', 'listed', 'aiwork', 'crashes'];
+  const APP_TILE_ORDER = ['installs', 'active', 'newUsers', 'plays', 'revenue', 'iap', 'purchases', 'intro', 'clicks', 'listed', 'aiwork', 'messages', 'mailClaimed', 'mailSent', 'ctr', 'crashes'];
+  const KPI_KEYS = ['installs', 'newUsers', 'active', 'plays', 'messages', 'revenue', 'iap', 'purchases', 'intro', 'clicks', 'ctr', 'listed', 'aiwork', 'mailSent', 'mailClaimed', 'crashes'];
   const STATE = { ok: ['正常', 'ok'], warn: ['警告', 'warn'], crit: ['異常', 'crit'], dev: ['開發中', 'dev'], live: ['上架中', 'dot'], info: ['資訊', 'info'], none: ['還沒接', 'dot'] };
   const ATT = { ok: ['達標', 'ok'], near: ['接近', 'warn'], behind: ['落後', 'crit'] };
   const SEV = { crit: '嚴重', warn: '警告', info: '提醒' };
@@ -46,7 +46,7 @@
     kpi: 'installs', kpiView: 'chart', revView: 'chart',
     live: true, win: store.get('win', '24h'),
     sort: { key: 'installs', dir: -1 }, q: '', cat: 'all', stage: 'all', cols: store.get('cols', {}) || {}, density: store.get('density', 'cozy'),
-    alertFilter: 'all', acks: store.get('acks', {}) || {}, theme: store.get('theme', 'auto')
+    alertFilter: 'all', acks: store.get('acks', {}) || {}, theme: store.get('theme', 'auto'), retApp: null
   };
   if (!RANGES.some(r => r[0] === S.range)) S.range = '30d';
   if (!LIVE_WIN[S.win]) S.win = '24h';
@@ -214,19 +214,22 @@
       work: rec ? sumKnown(rec.work) : null,
       cpu: cpu.length ? cpu.reduce((s, w) => s + w.cpuCorePercent, 0) : rec ? lastKnown(rec.cpu) : null,
       msgs: D.todayValue('eclawMessages', 'eclawbot'), msgsPrev: D.RAW.eclawMessages ? D.total('messages', [D.BYKEY.eclawbot].filter(Boolean), D.today - 1, D.today) : null,
-      okN: okN, total: ws.length
+      okN: okN, total: ws.length,
+      svcOk: D.services.filter(x => x.now && x.now.ok === true).length, svcKnown: D.services.filter(x => x.now && x.now.ok != null).length
     };
   }
+  const svcState = x => (!x.now || x.now.ok == null ? ['live', '還沒檢查'] : x.now.ok ? ['ok', '正常・' + x.now.ms + ' ms'] : ['crit', x.now.status ? '回了 ' + x.now.status : '沒有回應']);
   function nowStripHtml() {
     const cell = (k, label, unit) => '<div class="now-c"><span class="now-l">' + label + '</span><span class="now-v"><b id="now-' + k + '">—</b>' + (unit ? '<em>' + unit + '</em>' : '') + '</span><span class="tc now-s" data-now="' + k + '" aria-hidden="true"></span></div>';
     return '<section class="now" aria-label="現在的狀況"><div class="now-h"><span class="now-t"><i class="pulse"></i>現在</span><span class="muted" id="now-clock"></span></div><div class="now-g">' +
-      cell('listed', 'Wishlist 今日上架', '件') + cell('work', 'AI 完成工作・24 小時', '件') + cell('cpu', 'AI worker CPU', '核心') +
+      cell('listed', 'Wishlist 今日上架', '件') + cell('work', 'AI 完成工作・24 小時', '件') +
       '<div class="now-c"><span class="now-l">EClaw 今日訊息</span><span class="now-v"><b id="now-msgs">—</b><em>則</em></span><span class="now-x muted" id="now-msgs-x"></span></div>' +
+      '<a class="now-c is-link" href="#live"><span class="now-l">後台服務</span><span class="now-v"><b id="now-svc">—</b><em id="now-svc-x"></em></span><span class="svc-dots" id="now-svc-dots"></span></a>' +
       '<a class="now-c is-link" href="#live"><span class="now-l">AI worker</span><span class="now-v"><b id="now-ok">—</b><em id="now-ok-x"></em></span><span class="svc-dots" id="now-dots"></span></a>' +
       '<a class="now-c is-link" href="#alerts"><span class="now-l">觸發中的警示</span><span class="now-v"><b id="now-al">—</b><em>件</em></span><span class="now-x" id="now-al-x"></span></a></div></section>';
   }
   function mountNow(el) {
-    const charts = {}, SER = { listed: 'listed', work: 'work', cpu: 'cpu' };
+    const charts = {}, SER = { listed: 'listed', work: 'work' };
     const paint = () => {
       const clock = $('#now-clock');
       if (!clock) return;
@@ -234,7 +237,9 @@
       clock.textContent = o.ok ? '營運數據更新於 ' + (seen ? V.fAgo(Date.now() - seen) : '—') : '營運數據讀不到';
       $('#now-listed').textContent = num(n.listed);
       $('#now-work').textContent = num(n.work);
-      $('#now-cpu').textContent = n.cpu == null ? '—' : (n.cpu / 100).toFixed(2);
+      $('#now-svc').textContent = n.svcKnown ? n.svcOk : '—';
+      $('#now-svc-x').textContent = n.svcKnown ? '／' + n.svcKnown + ' 正常' : '';
+      $('#now-svc-dots').innerHTML = D.services.map(x => { const st = svcState(x); return '<i class="sd sd-' + st[0] + '" data-tip="' + esc(x.name + '\n' + st[1]) + '"></i>'; }).join('');
       $('#now-msgs').textContent = num(n.msgs);
       $('#now-msgs-x').textContent = n.msgsPrev == null ? '' : '昨天 ' + V.fmtInt(n.msgsPrev) + ' 則';
       $('#now-ok').textContent = n.total ? n.okN : '—';
@@ -383,7 +388,7 @@
   function freshCardHtml(cls) {
     const rows = D.sourceRows().filter(r => r.state !== 'none');
     return '<section class="card ' + (cls || 'c-6') + '">' + cardHead('資料新鮮度', '每一個來源最後一次更新的時間', '<a class="btn-ghost" href="#sources">全部來源' + ico('next') + '</a>') + '<ol class="feed">' +
-      rows.map(r => '<li><span class="feed-k' + (r.state === 'crit' ? ' fk-incident' : '') + '">' + (r.state === 'ok' ? '正常' : '讀不到') + '</span><span class="feed-t"><b>' + esc(r.name) + '</b>　' + esc(r.note) + '</span><time class="muted"' + (r.last ? ' data-ago="' + r.last + '"' : '') + '>' + (r.last ? '' : '—') + '</time></li>').join('') + '</ol></section>';
+      rows.map(r => '<li><span class="feed-k' + (r.state === 'crit' ? ' fk-incident' : '') + '">' + (r.state === 'ok' ? '正常' : r.state === 'warn' ? '沒更新' : '讀不到') + '</span><span class="feed-t"><b>' + esc(r.name) + '</b>　' + esc(r.note) + '</span><time class="muted"' + (r.last ? ' data-ago="' + r.last + '"' : '') + '>' + (r.last ? '' : '—') + '</time></li>').join('') + '</ol></section>';
   }
   function viewOverview(el) {
     const apps = selApps(), keys = Object.keys(M).filter(D.anyData);
@@ -391,6 +396,54 @@
     el.innerHTML = head('總覽', '所有 APP 現在的狀況，以及這段期間的表現。') + nowStripHtml() + tilesHtml(TILE_KEYS, apps) +
       '<div class="grid">' + explorerHtml('c-8', keys) + rankHtml(S.metric, 'c-4') + '</div>' + multiplesHtml(apps) + '<div class="grid">' + alertsCardHtml() + freshCardHtml() + '</div>';
     mountNow(el); mountTiles(el, apps); mountExplorer(el, apps); mountMultiples(el);
+  }
+
+  // ---- 後台服務：有沒有回應、多快、可用率 --------------------------------------
+  const pct = v => (v == null ? '—' : (v >= 99.995 || v === 0 ? v.toFixed(0) : v.toFixed(2)) + '%');
+  function serviceRowsHtml(list) {
+    return list.map(x => {
+      const st = svcState(x), apps = x.apps.map(k => D.BYKEY[k]).filter(Boolean), n = Math.min(30, x.daily.up.length), off = x.daily.up.length - n, first = D.idxOfIso(x.daily.start) + off;
+      const strip = x.daily.up.slice(off).map((v, i) => '<i class="' + (v == null ? 'up-na' : v >= 99.5 ? 'up-ok' : v >= 95 ? 'up-warn' : 'up-crit') + '" data-tip="' +
+        esc(V.fDateDow(D.dayT(first + i)) + '\n' + (v == null ? '那天沒有檢查紀錄' : '可用率 ' + pct(v) + (x.daily.ms[off + i] != null ? '\n平均回應 ' + x.daily.ms[off + i] + ' ms' : ''))) + '"></i>').join('');
+      return '<tr><td>' + pill(st[0] === 'live' ? 'info' : st[0], st[0] === 'ok' ? '正常' : st[0] === 'crit' ? '沒有回應' : '還沒檢查') + '</td><td><b>' + esc(x.name) + '</b><span class="sub-link">' +
+        (apps.length ? apps.map(a => '<a href="#app-' + a.id + '">' + esc(a.short) + '</a>').join('、') : '共用') + '</span></td><td class="num">' + (x.now && x.now.ok ? V.fmtInt(x.now.ms) + ' ms' : '—') + '</td><td>' + V.spark(x.recent.ms, { w: 96, h: 24 }) + '</td>' +
+        '<td class="num">' + pct(x.uptime24h) + '</td><td><span class="up">' + strip + '</span><span class="up-n">' + pct(x.uptime30d) + '</span></td><td class="muted">' + esc((x.now && x.now.info) || '—') + '</td></tr>';
+    }).join('');
+  }
+  function serviceTableHtml(list, title, sub) {
+    return '<section class="card">' + cardHead(title, sub) + (list.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>狀態</th><th>服務</th><th class="num">回應時間</th><th>近 24 小時的回應時間</th><th class="num">24 小時可用率</th><th>近 30 天可用率</th><th>版本</th></tr></thead><tbody data-services="' + esc(list.map(x => x.id).join(',')) + '">' + serviceRowsHtml(list) + '</tbody></table></div>' +
+      '<p class="hint">' + ico('info') + '<span>近 30 天那一排每一格是一天，灰色是那天還沒有檢查紀錄。可用率從開始檢查那天算起，不是從服務上線那天。</span></p>' : '<p class="empty">還沒有服務檢查的紀錄；伺服器啟動後一分鐘內會有第一筆。</p>') + '</section>';
+  }
+  function drawResponse(el) {
+    const host = $('#lv-resp', el), list = D.services;
+    if (!host) return;
+    let x, step, pick;
+    if (S.win === '24h') {
+      const r = (list[0] || {}).recent;
+      if (r) { x = Array.from({ length: r.up.length }, (_, i) => r.from + i * r.step); step = r.step; pick = svc => svc.recent.ms; }
+    } else {
+      const d = (list[0] || {}).daily, n = S.win === '7d' ? 7 : 30;
+      if (d) { const first = D.idxOfIso(d.start) + d.up.length - n; x = Array.from({ length: n }, (_, i) => D.dayT(first + i)); step = DAY; pick = svc => svc.daily.ms.slice(-n); }
+    }
+    const series = x ? list.map((svc, i) => ({ key: svc.id, name: svc.name, color: 'var(--s' + (i % 8 + 1) + ')', style: 'line', values: pick(svc) })).filter(q => anyKnown(q.values)) : [];
+    if (!series.length) { host.innerHTML = '<p class="empty">這段時間還沒有檢查紀錄。</p>'; $('#lv-lg-resp', el).hidden = true; return; }
+    V.legend($('#lv-lg-resp', el), V.timeChart(host, { group: 'live', pin: false, x: x, step: step, series: series, direct: false, fmt: v => V.fmtInt(v) + ' ms', axisFmt: V.axisFmt('int'), zero: true, integer: true, label: '後台回應時間' }));
+  }
+  // 留存：每一列是同一週加入的人，之後第 N 天還有多少比例回來
+  function retentionHtml(a, cls, tools) {
+    const r = D.retention(a), N = [1, 3, 7, 14, 30];
+    if (!r) return '';
+    const rows = r.cohorts.map(c => ({ c: c, cells: N.map(n => (c['d' + n] == null || !c.size ? null : c['d' + n] / c.size * 100)) }));
+    let max = 0;
+    rows.forEach(x => x.cells.forEach(v => { if (v != null && v > max) max = v; }));
+    const wk = c => V.fDate(D.dayT(D.idxOfIso(c.start)));
+    return '<section class="card ' + cls + '">' + cardHead(esc(a.short) + '的留存', '每一列是同一週加入的人，往右看之後第幾天還有多少比例回來・' + esc(r.basis || ''), tools) +
+      '<div class="tbl-wrap"><table class="hm"><thead><tr><th>加入的那一週</th><th class="num">人數</th>' + N.map(n => '<th>第 ' + n + ' 天</th>').join('') + '</tr></thead><tbody>' +
+      rows.map(x => '<tr><th scope="row">' + wk(x.c) + ' 起</th><td class="num">' + V.fmtInt(x.c.size) + '</td>' + x.cells.map((v, i) => (v == null
+        ? '<td class="hm-c is-na" data-tip="' + esc(wk(x.c) + ' 那一週\n' + (x.c.size ? '還沒全部到第 ' + N[i] + ' 天' : '沒有人加入')) + '">·</td>'
+        : '<td class="hm-c hm-' + (max ? Math.min(6, Math.floor(v / max * 7)) : 0) + '" tabindex="0" data-tip="' + esc(wk(x.c) + ' 那一週加入的 ' + V.fmtInt(x.c.size) + ' 人\n第 ' + N[i] + ' 天有 ' + V.fmtInt(x.c['d' + N[i]]) + ' 人回來（' + v.toFixed(1) + '%）') + '">' + v.toFixed(0) + '%</td>')).join('') + '</tr>').join('') +
+      '</tbody></table></div><div class="scale"><span>低</span>' + [0, 1, 2, 3, 4, 5, 6].map(k => '<i class="hm-' + k + '"></i>').join('') + '<span>高</span><em>灰色的點是還沒到那一天</em></div>' +
+      '<p class="hint">' + ico('info') + '<span>人數少的那幾週，一兩個人就會讓比例差很多，看趨勢就好。</span></p></section>';
   }
 
   // ---- 即時監控 ----------------------------------------------------------------
@@ -468,20 +521,24 @@
     set('#lv-n-work', n.work == null ? '—' : '24 小時 ' + V.fmtInt(n.work) + ' 件');
     set('#lv-n-listed', l && l.today ? '今日 ' + num(l.today.count) + ' 件' : '—');
     set('#lv-n-visible', l && l.publiclyVisible != null ? V.fmtInt(l.publiclyVisible) + ' 件' : '—');
+    set('#lv-n-resp', n.svcKnown ? n.svcOk + '／' + n.svcKnown + ' 正常' : '—');
+    $$('[data-services]').forEach(tb => { const ids = tb.dataset.services.split(','); tb.innerHTML = serviceRowsHtml(D.services.filter(x => ids.indexOf(x.id) >= 0)); });
     $$('[data-workers]').forEach(tb => { const ids = tb.dataset.workers.split(','); tb.innerHTML = workerRowsHtml(D.ops.workers.filter(w => ids.indexOf(w.id) >= 0)); });
     const dm = $('#lv-listing');
     if (dm) dm.innerHTML = listingCells();
   }
   function viewLive(el) {
     const o = D.ops, w = LIVE_WIN[S.win];
-    el.innerHTML = head('即時監控', 'AI worker 與 Wishlist 的營運數據。監控每 5 分鐘送來一批讀數，這一頁每分鐘檢查一次。', seg('win', S.win, Object.keys(LIVE_WIN).map(k => [k, LIVE_WIN[k].name])) + '<button type="button" class="btn" data-act="live-toggle" id="live-btn"></button>') +
+    el.innerHTML = head('即時監控', '後台服務每分鐘檢查一次；AI worker 與 Wishlist 的讀數每 5 分鐘送來一批。這一頁每分鐘更新。', seg('win', S.win, Object.keys(LIVE_WIN).map(k => [k, LIVE_WIN[k].name])) + '<button type="button" class="btn" data-act="live-toggle" id="live-btn"></button>') +
       (o.ok ? '' : '<p class="note">' + ico('warn') + '營運數據目前讀不到，下面的圖表與表格會是空的。其他頁面不受影響。</p>') +
-      '<div class="grid">' + liveCard('cpu', 'AI worker CPU', '每個 worker 用了幾顆核心・' + (w.cpuBucket >= DAY ? '每日平均' : w.cpuBucket >= HOUR ? '每小時平均' : '每 10 分鐘平均')) + liveCard('work', 'AI 完成工作', (w.cntBucket >= DAY ? '每天' : '每小時') + '完成的件數，依 worker 疊在一起') +
+      serviceTableHtml(D.services, '後台服務', 'EClaw 主站每分鐘問一次各後台的健康檢查網址，記下有沒有回應、花了多久') +
+      '<div class="grid">' + liveCard('resp', '後台回應時間', (S.win === '24h' ? '每 5 分鐘' : '每天') + '的平均回應時間，一個服務一條線') + liveCard('cpu', 'AI worker CPU', '每個 worker 用了幾顆核心・' + (w.cpuBucket >= DAY ? '每日平均' : w.cpuBucket >= HOUR ? '每小時平均' : '每 10 分鐘平均')) + liveCard('work', 'AI 完成工作', (w.cntBucket >= DAY ? '每天' : '每小時') + '完成的件數，依 worker 疊在一起') +
       liveCard('listed', 'Wishlist 上架', (w.cntBucket >= DAY ? '每天' : '每小時') + '第一次公開的紀錄數・虛線是目標') + liveCard('visible', '公開可見商品', 'Wishlist.ai 上現在看得到的商品數') + '</div>' +
       workerTableHtml(o.workers, 'AI worker', '每個 worker 現在的狀態與最近完成的工作') +
       '<section class="card">' + cardHead('Wishlist.ai 現況', '上架與公開的最新數字') + (o.listing ? '<div class="dm" id="lv-listing">' + listingCells() + '</div>' : '<p class="empty">目前讀不到 Wishlist 的上架報表。</p>') + '</section>';
     syncLiveUi();
     paintLiveNumbers();
+    drawResponse(el);
     loadLive(el);
     liveHooks.push(paintLiveNumbers);
   }
@@ -518,6 +575,13 @@
     if (rest.length) series.push({ key: 'other', name: '其他 ' + rest.length + ' 款', color: 'var(--deemph)', style: 'bar', values: Array.from({ length: n }, (_, i) => { let s = null; rest.forEach(r => { if (r.v[i] != null) s = (s || 0) + r.v[i]; }); return s; }) });
     return { series: series, x: Array.from({ length: n }, (_, i) => D.dayT(from + i * step)), step: step };
   }
+  // 績效頁的留存：有留存數據的 APP 選一款看
+  function retentionPickHtml(apps) {
+    const have = apps.filter(a => D.retention(a));
+    if (!have.length) return '<section class="card c-7">' + cardHead('留存', '每週加入的人之後還有多少比例回來') + '<p class="empty">選取的 APP 沒有留存數據。目前有的是 REBOUND、雙城烽火與 Wishlist.ai，由收集工具從各自的後台算出來。</p></section>';
+    const cur = have.find(a => a.id === S.retApp) || have[0];
+    return retentionHtml(cur, 'c-7', have.length > 1 ? '<label class="sr-only" for="ret-app">看哪一款 APP 的留存</label><select class="sel" id="ret-app" data-bind="ret-app">' + have.map(a => '<option value="' + a.id + '"' + (a === cur ? ' selected' : '') + '>' + esc(a.short) + '</option>').join('') + '</select>' : '');
+  }
   function viewKpi(el) {
     const apps = selApps(), keys = KPI_KEYS.filter(D.anyData);
     if (keys.indexOf(S.kpi) < 0) S.kpi = keys[0] || 'installs';
@@ -525,7 +589,7 @@
     el.innerHTML = head('績效指標', '每一項都和前一期比。點計分卡的一列，下面的圖會換成那一項。') + scorecardHtml(rows, apps) +
       '<div class="grid"><section class="card c-7">' + cardHead(esc(def.name) + '的走勢', spanText(R) + '・' + stepName(R) + '・' + endNote(key), seg('kpi-view', S.kpiView, [['chart', '圖表'], ['table', '表格']])) + '<div class="legend" id="kpi-legend" hidden></div><div class="tc ex-chart" id="kpi-chart"></div><div id="kpi-table" hidden></div></section>' + rankHtml(key, 'c-5') + '</div>' +
       '<div class="grid">' + funnelHtml(apps) + '<section class="card c-7">' + cardHead('廣告收入組成', '', seg('rev-view', S.revView, [['chart', '圖表'], ['table', '表格']]), 'rev-sub') + '<div class="legend" id="rev-legend" hidden></div><div class="tc ex-chart" id="rev-chart"></div><div id="rev-table" hidden></div></section></div>' +
-      '<div class="grid">' + moversHtml(apps) + feedbackCardHtml(apps, 'c-7') + '</div>';
+      '<div class="grid">' + moversHtml(apps) + retentionPickHtml(apps) + '</div>' + feedbackCardHtml(apps, '');
     // 走勢＋目標線
     const cnt = def.type === 'count', series = [{ key: 'cur', name: '本期', color: 'var(--s1)', style: cnt ? 'bar' : 'line', values: D.series(key, apps, R.from, R.step, R.n) }];
     if (S.compare && canCompare(key, P)) series.push({ key: 'prev', name: '前一期', color: 'var(--deemph)', style: 'dash', values: D.series(key, apps, P.from, R.step, R.n) });
@@ -653,7 +717,14 @@
       sub = 'APP 內送出的問題回饋';
       cells = dmCell('累計回饋', num(f.count) + ' 件') + dmCell('近 30 天', num(f.recent) + ' 件') + dmCell('最近一件', f.latestAt ? V.fAgo(Date.now() - f.latestAt) : '—');
     }
-    if (workers.length) extra = workerTableHtml(workers, '這款 APP 的 AI worker', '每分鐘檢查一次');
+    const facts = D.facts(a);
+    if (facts.length) {
+      if (!sub) sub = '後台自己記錄的目前數字';
+      cells += facts.map(f => dmCell(f.label, (typeof f.value === 'number' ? V.fmtInt(f.value) : String(f.value)) + (f.unit ? ' ' + f.unit : ''), f.observedAt ? '收集於 ' + V.fStamp(f.observedAt) : '')).join('');
+    }
+    const svcs = D.serviceFor(a);
+    if (svcs.length) extra += serviceTableHtml(svcs, '這款 APP 的後台服務', '每分鐘檢查一次');
+    if (workers.length) extra += workerTableHtml(workers, '這款 APP 的 AI worker', '每分鐘檢查一次');
     if (!cells && !extra) return '<section class="card">' + cardHead('後台數據') + '<p class="empty">' + (a.stage === 'dev' ? '這款還沒有接上後台數據。' : '這款 APP 的後台還沒有接進管理中樞，目前只有商店與作品集的數據。可以到「資料來源」看還缺哪些。') + '</p></section>';
     return (cells ? '<section class="card">' + cardHead('後台數據', sub) + '<div class="dm"' + (a.key === D.WISHLIST ? ' id="lv-listing"' : '') + '>' + cells + '</div></section>' : '') + extra;
   }
@@ -672,14 +743,14 @@
       }).join('') + links + '</div></div>' + pill(D.appState(a)) + '</header>' +
       (a.stage === 'dev' ? '<p class="note">' + ico('info') + '這款還沒有公開上架，商店相關的指標會是空的。</p>' : '') +
       (keys.length ? tilesHtml(APP_TILE_ORDER.filter(k => keys.indexOf(k) >= 0).slice(0, 6), list) + '<div class="grid">' + explorerHtml('c-8', keys, true) + platCardHtml(a) + '</div>' : '<p class="note">' + ico('info') + '這款 APP 目前沒有任何數據來源。</p>') +
-      backendHtml(a) + '<div class="grid">' + feedbackCardHtml(list, 'c-7') + appFreshHtml(a, keys) + '</div>';
+      backendHtml(a) + retentionHtml(a, '') + '<div class="grid">' + feedbackCardHtml(list, 'c-7') + appFreshHtml(a, keys) + '</div>';
     if (keys.length) { mountTiles(el, list); mountExplorer(el, list); }
     liveHooks.push(paintLiveNumbers);
   }
 
   // ---- 警示 ----------------------------------------------------------------------
   function alertHtml(a) {
-    const app = a.app ? D.BYKEY[a.app] : null, acked = isAcked(a);
+    const app = D.BYKEY[a.app || (a.apps || [])[0]] || null, acked = isAcked(a);
     return '<article class="al al-' + (acked ? 'acked' : 'firing') + '"><div class="al-m">' + pill(a.sev, SEV[a.sev]) + '<div class="al-t"><h3>' + esc(a.title) + '</h3><p>' + esc(a.detail) + '</p></div></div>' +
       '<div class="al-w"><span class="al-s as-' + (acked ? 'acked' : 'firing') + '">' + (acked ? '已確認' : '觸發中') + '</span><span class="muted">規則：' + esc(a.rule) + '</span>' + (a.since ? '<span class="muted">開始於 <span data-ago="' + a.since + '"></span></span>' : '') + '</div><div class="al-a">' +
       (acked ? '<button type="button" class="btn" data-act="al-unack" data-v="' + esc(a.id) + '">取消確認</button>' : '<button type="button" class="btn is-primary" data-act="al-ack" data-v="' + esc(a.id) + '">確認，我知道了</button>') +
@@ -697,7 +768,7 @@
 
   // ---- 資料來源 ------------------------------------------------------------------
   function viewSources(el) {
-    const READY = { ok: ['ok', '已接上'], crit: ['crit', '讀不到'], none: ['none', '還沒接'] }, st = D.sources.store || {};
+    const READY = { ok: ['ok', '已接上'], warn: ['warn', '沒更新'], crit: ['crit', '讀不到'], none: ['none', '還沒接'] }, st = D.sources.store || {};
     el.innerHTML = head('資料來源', '畫面上每一個數字的來處。標「還沒接」的是這一版沒有的數據，畫面上不會出現猜測或補上的數字。') +
       '<section class="card"><div class="tbl-wrap"><table class="tbl is-wrap"><thead><tr><th>來源</th><th>提供的數據</th><th>涵蓋的 APP</th><th>更新頻率</th><th>最後更新</th><th>狀態</th><th>說明</th></tr></thead><tbody>' +
       D.sourceRows().map(s => '<tr><td><b>' + esc(s.name) + '</b></td><td>' + esc(s.gives) + '</td><td>' + esc(s.cover) + '</td><td>' + esc(s.freq) + '</td><td class="muted">' + (s.last ? '<span data-ago="' + s.last + '"></span>' : '—') + '</td><td>' + pill(READY[s.state][0], READY[s.state][1]) + '</td><td class="muted">' + esc(s.note) + '</td></tr>').join('') + '</tbody></table></div>' +
@@ -905,6 +976,7 @@
   });
   const BIND = {
     'metric': el => { S.metric = el.value; render(true); },
+    'ret-app': el => { S.retApp = el.value; render(true); },
     'compare': el => setCompare(el.checked),
     'q': el => { S.q = el.value; renderAppsTable(); },
     'cat': el => { S.cat = el.value; renderAppsTable(); },

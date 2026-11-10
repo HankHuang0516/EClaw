@@ -18,7 +18,10 @@
  *   - app_portfolio_traffic_daily (portfolio views, introduction views, store clicks per app and day);
  *   - app_portfolio_likes / _comments / _beta_feedback, fraud_app_feedback_reports (counts);
  *   - user_accounts and chat_messages (EClawbot sign-ups, messages and active devices per Taipei day);
- *   - dream_buddy_inference_jobs / dream_buddy_ad_transactions (夢話夥伴 conversations, devices, rewarded ads).
+ *   - dream_buddy_inference_jobs / dream_buddy_ad_transactions (夢話夥伴 conversations, devices, rewarded ads);
+ *   - tappay_transactions and topup_orders (EClawbot payments: count and amount per Taipei day);
+ *   - the hub's own tables, see aihankapps-hub-store.js: service probes (is each back-end answering, how fast) and
+ *     daily counts an operator's collector imports from the game servers and other back-ends.
  * Worker and Wishlist operations data are read by the page from the public /api/aihankapps/ops API.
  *
  * A source that cannot be read is reported as { ok: false } and the rest of the answer still arrives. A day the
@@ -31,6 +34,7 @@ const crypto = require('crypto');
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const hubStore = require('./aihankapps-hub-store');
 
 const PAGE_DIR = path.join(__dirname, 'aihankapps-hub');
 const PORTFOLIO_DIR = path.join(__dirname, 'public', 'AiHankApps');
@@ -170,7 +174,8 @@ function createData({ getPool, getAuthPool, getDeviceStats, now = Date.now, port
         const generatedAt = now();
         const today = taipeiDay(generatedAt), startIndex = dayIndex(today) - HISTORY_DAYS + 1, start = isoDay(startIndex);
         const daily = createDaily(startIndex, HISTORY_DAYS);
-        const sources = {}, latest = { rating: {}, reviews: {}, likes: {}, comments: {}, betaFeedback: {}, feedback: {} };
+        const sources = {}, latest = { rating: {}, reviews: {}, likes: {}, comments: {}, betaFeedback: {}, feedback: {}, facts: {} };
+        let services = [];
         const eclaw = { users: null, devices: null };
         let apps = [];
         const section = async (id, run) => {
@@ -278,6 +283,37 @@ function createData({ getPool, getAuthPool, getDeviceStats, now = Date.now, port
             return { startedAt: first || null };
         }));
 
+        // EClawbot payments: card payments that succeeded and wallet top-ups that were paid and not refunded.
+        await section('eclawPayments', () => readOnly(getAuthPool(), async query => {
+            const since = [taipeiMidnight(start)];
+            const paid = (await query("SELECT (created_at AT TIME ZONE 'Asia/Taipei')::date::text AS day, COUNT(*)::int AS n, COALESCE(SUM(amount), 0)::float8 AS twd FROM tappay_transactions WHERE status = 'success' AND currency = 'TWD' AND created_at >= $1 GROUP BY 1", since)).rows
+                .concat((await query("SELECT (paid_at AT TIME ZONE 'Asia/Taipei')::date::text AS day, COUNT(*)::int AS n, COALESCE(SUM(amount_twd), 0)::float8 AS twd FROM topup_orders WHERE status = 'paid' AND refunded_at IS NULL AND amount_twd > 0 AND paid_at >= $1 GROUP BY 1", since)).rows);
+            for (const row of paid) {
+                daily.add('eclawPurchases', ECLAW_APP, row.day, row.n);
+                daily.add('eclawPaidTwd', ECLAW_APP, row.day, row.twd);
+            }
+            daily.fill('eclawPurchases', ECLAW_APP, start, today);
+            daily.fill('eclawPaidTwd', ECLAW_APP, start, today);
+            return {};
+        }));
+
+        // The hub's own tables are created on first use, so a server that has not recorded a probe yet still answers.
+        const ownTables = hubStore.prepare(getPool()).catch(() => null);
+
+        // Daily counts and current totals handed over by the operator's collector (game servers, Wishlist…).
+        await section('imports', () => ownTables.then(() => readOnly(getPool(), async query => {
+            const known = new Set(apps.map(app => app.id)), imported = await hubStore.readImports(query, start);
+            for (const row of imported.rows) if (known.has(row.app_id) && hubStore.IMPORT_METRICS.includes(row.metric)) daily.add('x.' + row.metric, row.app_id, row.day, Number(row.value));
+            for (const row of imported.facts) {
+                if (!known.has(row.app_id)) continue;
+                (latest.facts[row.app_id] || (latest.facts[row.app_id] = {}))[row.key] = { ...row.value, source: row.source, observedAt: new Date(row.observed_at).getTime() };
+            }
+            return { collectors: Object.fromEntries(imported.sources.map(row => [row.id, { collectedAt: new Date(row.collected_at).getTime(), importedAt: new Date(row.imported_at).getTime(),
+                values: row.detail && row.detail.values, notes: (row.detail && row.detail.notes) || [] }])) };
+        })));
+
+        await section('services', () => ownTables.then(() => readOnly(getPool(), async query => { services = await hubStore.readProbes(query, generatedAt); return {}; })));
+
         try {
             const stats = typeof getDeviceStats === 'function' ? getDeviceStats() : null;
             if (stats) eclaw.devices = { total: count(stats.devices), entities: count(stats.entities), boundEntities: count(stats.boundEntities) };
@@ -286,7 +322,7 @@ function createData({ getPool, getAuthPool, getDeviceStats, now = Date.now, port
         }
 
         return { success: true, schemaVersion: 1, generatedAt, timeZone: TIME_ZONE, today, apps,
-            daily: { start, days: HISTORY_DAYS, series: daily.toJSON() }, latest, eclaw, sources };
+            daily: { start, days: HISTORY_DAYS, series: daily.toJSON() }, latest, eclaw, services, sources };
     }
 
     return {
@@ -304,7 +340,7 @@ function createData({ getPool, getAuthPool, getDeviceStats, now = Date.now, port
 // ---- access -----------------------------------------------------------------------------------------------------------
 function privateHeaders(_req, res, next) {
     res.set({
-        'Cache-Control': 'private, no-store, max-age=0',
+        'Cache-Control': 'private, no-store, no-transform, max-age=0',
         'CDN-Cache-Control': 'no-store',
         'Cloudflare-CDN-Cache-Control': 'no-store',
         Pragma: 'no-cache',
@@ -366,6 +402,7 @@ function createRouters(options) {
     const { authMiddleware, adminMiddleware, getPool, getAuthPool, isReady, pageDir = PAGE_DIR } = options || {};
     if ([authMiddleware, adminMiddleware, getPool, getAuthPool, isReady].some(fn => typeof fn !== 'function')) throw new Error('Admin hub requires existing auth, admin and readiness middleware');
     const data = createData(options);
+    const probes = hubStore.createProbes({ getPool, fetchImpl: options.fetchImpl, now: options.now });
     const unavailable = res => res.status(503).json({ success: false, error: 'Admin hub unavailable' });
 
     // 'admin' | 'member' (signed in, not an administrator) | 'anonymous' | 'error'
@@ -432,6 +469,8 @@ function createRouters(options) {
         res.json({ success: true, admin });
     });
     api.use(ready, authMiddleware, adminMiddleware);
+    // The last answer of each back-end's health check, from memory: cheap enough to ask every minute.
+    api.get('/services', (_req, res) => res.json({ success: true, checkedAt: (options.now || Date.now)(), services: probes.latest() }));
     api.get('/data', async (req, res) => {
         try {
             res.json(await data.load({ fresh: req.query.fresh === '1' }));
@@ -442,7 +481,7 @@ function createRouters(options) {
     });
     api.use((_req, res) => res.status(404).json({ success: false, error: 'Admin hub resource not found' }));
 
-    return { page, api, data };
+    return { page, api, data, probes };
 }
 
 module.exports = { createRouters, createData, privateHeaders, appsFromCatalog, parseReport, createDaily, readOnly, decide,
