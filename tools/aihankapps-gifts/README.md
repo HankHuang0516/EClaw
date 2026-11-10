@@ -105,7 +105,7 @@ node tools/aihankapps-gifts/cli.js validate
 | REBOUND：元素戰機 | `server/src/admin.mjs` 的 `dispatchOperationalMail`，`kind: limited_campaign`、`all_players` | 每位玩家每把鍵一封（`ops:<鍵>`） | 伺服器依開始時刻算一個台北日曆月，過期拒領 |
 | 活字戰紀：雙城烽火 | `/app/mailbox.js` 的 `PostgresMailbox.deliver`，`product: dual-city`、`allAccounts` | 每個帳號每把鍵一封；同鍵內容不同會被拒絕 | `expiresAt` 等於活動檔的領取截止，過期拒領 |
 
-雙城烽火的腳本會先比對容器裡 `mailbox.js`、`send-mail.js` 的雜湊與 `games.json` 記錄的是否相同。不同就停（`deployed_mail_tool_changed`）：代表遊戲的發信程式改過，要先重讀它的規則、更新 `lib/adapters/typeforge.js` 與雜湊，再發放。
+兩款遊戲的腳本都會先比對容器裡發信程式的雜湊與 `games.json` 的 `toolSha256` 是否相同（REBOUND 是 `src/admin.mjs`、`src/campaign-deadline.mjs`，雙城烽火是 `mailbox.js`、`send-mail.js`），`status` 與 `deliver` 都會檢查。不同就停（`deployed_mail_tool_changed`），不連資料庫也不寄送：代表遊戲的發信程式改過，要先重讀它的規則、對本機副本重新演練、更新 `lib/adapters/` 裡對應的介面與雜湊，再發放。
 
 寄送後的核對由工具自己做：每個帳號恰好一封、信上的期限等於公告的期限、REBOUND 當下所有玩家都有信。任何一項不符就列在 `issues`。
 
