@@ -405,13 +405,15 @@
       const st = svcState(x), apps = x.apps.map(k => D.BYKEY[k]).filter(Boolean), n = Math.min(30, x.daily.up.length), off = x.daily.up.length - n, first = D.idxOfIso(x.daily.start) + off;
       const strip = x.daily.up.slice(off).map((v, i) => '<i class="' + (v == null ? 'up-na' : v >= 99.5 ? 'up-ok' : v >= 95 ? 'up-warn' : 'up-crit') + '" data-tip="' +
         esc(V.fDateDow(D.dayT(first + i)) + '\n' + (v == null ? '那天沒有檢查紀錄' : '可用率 ' + pct(v) + (x.daily.ms[off + i] != null ? '\n平均回應 ' + x.daily.ms[off + i] + ' ms' : ''))) + '"></i>').join('');
+      // 版本放在服務名稱下面那一行，表格才放得進 1024 寬的畫面
+      const version = x.now && x.now.info ? '<span class="muted"> · ' + esc(x.now.info) + '</span>' : '';
       return '<tr><td>' + pill(st[0] === 'live' ? 'info' : st[0], st[0] === 'ok' ? '正常' : st[0] === 'crit' ? '沒有回應' : '還沒檢查') + '</td><td><b>' + esc(x.name) + '</b><span class="sub-link">' +
-        (apps.length ? apps.map(a => '<a href="#app-' + a.id + '">' + esc(a.short) + '</a>').join('、') : '共用') + '</span></td><td class="num">' + (x.now && x.now.ok ? V.fmtInt(x.now.ms) + ' ms' : '—') + '</td><td>' + V.spark(x.recent.ms, { w: 96, h: 24 }) + '</td>' +
-        '<td class="num">' + pct(x.uptime24h) + '</td><td><span class="up">' + strip + '</span><span class="up-n">' + pct(x.uptime30d) + '</span></td><td class="muted">' + esc((x.now && x.now.info) || '—') + '</td></tr>';
+        (apps.length ? apps.map(a => '<a href="#app-' + a.id + '">' + esc(a.short) + '</a>').join('、') : '共用') + version + '</span></td><td class="num">' + (x.now && x.now.ok ? V.fmtInt(x.now.ms) + ' ms' : '—') + '</td><td>' + V.spark(x.recent.ms, { w: 96, h: 24 }) + '</td>' +
+        '<td class="num">' + pct(x.uptime24h) + '</td><td><span class="up">' + strip + '</span><span class="up-n">' + pct(x.uptime30d) + '</span></td></tr>';
     }).join('');
   }
   function serviceTableHtml(list, title, sub) {
-    return '<section class="card">' + cardHead(title, sub) + (list.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>狀態</th><th>服務</th><th class="num">回應時間</th><th>近 24 小時的回應時間</th><th class="num">24 小時可用率</th><th>近 30 天可用率</th><th>版本</th></tr></thead><tbody data-services="' + esc(list.map(x => x.id).join(',')) + '">' + serviceRowsHtml(list) + '</tbody></table></div>' +
+    return '<section class="card">' + cardHead(title, sub) + (list.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>狀態</th><th>服務</th><th class="num">回應時間</th><th>近 24 小時回應</th><th class="num">24 小時可用率</th><th>近 30 天可用率</th></tr></thead><tbody data-services="' + esc(list.map(x => x.id).join(',')) + '">' + serviceRowsHtml(list) + '</tbody></table></div>' +
       '<p class="hint">' + ico('info') + '<span>近 30 天那一排每一格是一天，灰色是那天還沒有檢查紀錄。可用率從開始檢查那天算起，不是從服務上線那天。</span></p>' : '<p class="empty">還沒有服務檢查的紀錄；伺服器啟動後一分鐘內會有第一筆。</p>') + '</section>';
   }
   function drawResponse(el) {

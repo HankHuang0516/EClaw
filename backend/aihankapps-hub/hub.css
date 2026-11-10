@@ -306,12 +306,12 @@ th[aria-sort="ascending"] .ico{transform:rotate(180deg)}
 .tbl.is-wrap td:nth-child(2),.tbl.is-wrap td:nth-child(7){min-width:190px}
 :root[data-density="compact"] .tbl td{padding-top:4px;padding-bottom:4px}
 :root[data-density="compact"] .tbl .sub-link{display:none}
-.up{display:inline-flex;gap:1.5px;vertical-align:middle}
+.up{display:inline-flex;gap:1px;vertical-align:middle}
 .up i{width:4px;height:18px;border-radius:1.5px;background:var(--ok)}
 .up i.up-warn{background:var(--warn)}
 .up i.up-crit{background:var(--crit)}
 .up i:hover{outline:2px solid var(--ink);outline-offset:1px}
-.up-n{margin-left:8px;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.up-n{margin-left:6px;font-variant-numeric:tabular-nums;color:var(--ink-2)}
 .lm-n{font-variant-numeric:tabular-nums}
 td.att{min-width:160px}
 td.att .meter{display:inline-block;width:96px;margin-right:8px;vertical-align:middle}
