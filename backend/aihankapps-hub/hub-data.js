@@ -347,6 +347,8 @@
   ];
   const COLLECTORS = { rebound: ['REBOUND 遊戲伺服器', 'REBOUND'], summit: ['活字戰紀伺服器', '雙城烽火、巔峰之戰'], wishlist: ['Wishlist.ai 後台', 'Wishlist.ai'] };
   const SOURCE_LABEL = { catalog: 'APP 目錄', store: '商店報表', traffic: '作品集流量', community: '作品集互動', feedback: '問題回饋', eclaw: 'EClaw 帳號', eclawChat: 'EClaw 對話', dreambuddy: '夢話夥伴後台', eclawPayments: 'EClaw 付款', imports: '匯入的後台數據', services: '後台服務檢查' };
+  // 排程型 worker（例如每小時跑一輪）兩輪之間本來就沒有程式在跑；監控會把它標成 scheduled_between_rounds
+  D.betweenRounds = w => w.processOnline === false && w.coverage === 'scheduled_between_rounds';
   function computeAlerts(now) {
     const out = [], o = D.ops;
     const add = (id, sev, title, detail, more) => out.push(Object.assign({ id: id, sev: sev, title: title, detail: detail, app: null, apps: null, since: null }, more));
@@ -355,7 +357,7 @@
     });
     if (!o.ok) add('ops-down', 'crit', '營運數據讀不到', 'AI worker 與 Wishlist 的即時數字目前是空的。', { rule: RULES[0][0], go: 'sources' });
     o.workers.forEach(w => {
-      if (w.processOnline === false) add('worker-off-' + w.id, 'crit', w.name + ' 沒有在執行', '監控回報這個 worker 的程序不在線上。', { rule: RULES[1][0], app: w.app, go: 'live' });
+      if (w.processOnline === false && !D.betweenRounds(w)) add('worker-off-' + w.id, 'crit', w.name + ' 沒有在執行', '監控回報這個 worker 的程序不在線上。', { rule: RULES[1][0], app: w.app, go: 'live' });
       else if (w.health === 'unhealthy' || w.health === 'degraded') add('worker-bad-' + w.id, 'warn', w.name + (w.health === 'unhealthy' ? ' 狀態異常' : ' 部分異常'), '程序還在，但監控的健康檢查沒有通過。', { rule: RULES[2][0], app: w.app, go: 'live' });
     });
     const seen = Date.parse(o.updatedAt.latestStatus || '') || 0;

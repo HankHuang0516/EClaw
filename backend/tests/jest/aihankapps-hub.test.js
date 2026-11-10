@@ -556,6 +556,24 @@ describe('admin hub: the page reads the answer correctly', () => {
         expect(noisy.D.RULES).toHaveLength(10);
     });
 
+    test('a scheduled worker between its rounds is not called stopped, but a problem it reports still is', async () => {
+        const between = { id: 'wishlist-retail', name: 'Wishlist 查價', health: 'unknown', processOnline: false, coverage: 'scheduled_between_rounds' };
+        const { D } = await loadPage({ latest: { success: true, status: { workers: [between] }, updatedAt: { latestStatus: new Date(NOW - 60000).toISOString() } } });
+        const before = Date.parse('2026-11-05T00:00:00Z');
+        expect(D.betweenRounds(D.ops.workers[0])).toBe(true);
+        D.computeAlerts(before);
+        expect(D.ALERTS.filter(a => a.id.startsWith('worker-'))).toEqual([]);
+        expect(D.appState(D.APP.weesh)).toBe('live');
+        D.ops.workers[0].health = 'unhealthy';
+        D.computeAlerts(before);
+        expect(D.ALERTS.map(a => [a.id, a.sev])).toEqual([['worker-bad-wishlist-retail', 'warn']]);
+        // a long-running worker whose process is gone is still stopped
+        Object.assign(D.ops.workers[0], { health: 'unknown', coverage: 'process_only' });
+        expect(D.betweenRounds(D.ops.workers[0])).toBe(false);
+        D.computeAlerts(before);
+        expect(D.ALERTS.map(a => [a.id, a.sev])).toEqual([['worker-off-wishlist-retail', 'crit']]);
+    });
+
     test('service checks, imported numbers and retention reach the page, and raise alerts when they fail or go quiet', async () => {
         const live = { services: [{ id: 'eclaw', ok: true, status: 200, ms: 120, at: NOW - 30000 }, { id: 'rebound', ok: false, status: 0, ms: 10000, at: NOW - 30000 }] };
         const { D } = await loadPage({ live });
