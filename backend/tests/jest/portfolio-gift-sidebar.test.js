@@ -20,8 +20,10 @@ const policy = require(path.join(tool, 'lib/policy'));
 const build = require(path.join(tool, 'lib/build'));
 
 const games = store.loadGames();
-const calendar = store.loadCalendar();
-const legacy = store.loadCampaigns();
+// A fixed occurrence and the two historical records only: real campaigns come and go, and
+// must not change what these tests see.
+const calendar = { ...store.loadCalendar(), occurrences: [{ holiday: 'christmas', date: '2026-12-25' }] };
+const legacy = store.loadCampaigns().filter(campaign => campaign.kind === 'legacy');
 const christmasId = 'christmas-2026';
 const celebrationId = 'elemental-fighter350-paper-celebration-20261007';
 
@@ -33,8 +35,7 @@ function publishedData() {
 
 // The Christmas campaign exactly as the generator would publish it, next to the past records.
 function sampleData({ receipts = [] } = {}) {
-  const occurrence = calendar.occurrences.find(item => item.holiday === 'christmas' && item.date === '2026-12-25');
-  const { approved, campaign } = policy.decide(draftCampaign(occurrence, { calendar, games }),
+  const { approved, campaign } = policy.decide(draftCampaign(calendar.occurrences[0], { calendar, games }),
     { calendar, games, campaigns: legacy, now: Date.parse('2026-12-11T02:30:00Z'), hold: null });
   expect(approved).toBe(true);
   return build.buildPublicData([...legacy, { ...campaign, receipts }]);
@@ -139,7 +140,7 @@ describe('portfolio page markup', () => {
   });
 });
 
-describe('today: every published campaign has ended', () => {
+describe('published records and a page with nothing current', () => {
   test('the published records are frozen and hold the approved receipt, not player details', () => {
     const campaigns = publishedData();
     expect(Object.isFrozen(campaigns)).toBe(true);
@@ -152,12 +153,20 @@ describe('today: every published campaign has ended', () => {
     expect(records + source).not.toMatch(/recipientIds|x-admin-secret|botSecret|deviceSecret|all_players/);
   });
   test('with nothing current the controller stays inert and the catalogue keeps the full width', () => {
-    const view = page({ data: publishedData(), now: '2026-11-10T02:00:00Z', desktop: true, hash: '#' + celebrationId });
+    const view = page({ data: build.buildPublicData(legacy), now: '2026-11-10T02:00:00Z', desktop: true, hash: '#' + celebrationId });
     expect(view.aside).toBeNull();
     expect(view.layout.children).toEqual([view.apps]);
     expect(view.window.setInterval).not.toHaveBeenCalled();
     expect(view.events).toEqual({});
     expect(view.media.listeners).toHaveLength(0);
+  });
+  test('the data file that is actually published renders at any moment without errors', () => {
+    for (const now of ['2026-10-01T00:00:00Z', '2026-11-10T02:00:00Z', '2026-12-25T02:00:00Z', '2030-01-01T00:00:00Z']) {
+      for (const lang of ['zh-Hant', 'en']) {
+        const view = page({ data: publishedData(), now, lang, desktop: true });
+        if (view.aside) expect(view.aside.text).not.toMatch(/undefined|\{[dhms]\}/);
+      }
+    }
   });
   test('a missing layout or missing data exits safely', () => {
     expect(() => page({ data: sampleData(), now: '2026-12-26T02:00:00Z', withLayout: false })).not.toThrow();

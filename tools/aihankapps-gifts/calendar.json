@@ -26,9 +26,14 @@
     "halloween": {
       "tier": "standard",
       "names": { "zh-TW": "萬聖節", "zh-CN": "万圣节", "en": "Halloween", "ja": "ハロウィン", "ko": "핼러윈" }
+    },
+    "singles-day": {
+      "tier": "standard",
+      "names": { "zh-TW": "光棍節", "zh-CN": "光棍节", "en": "Singles' Day", "ja": "独身の日", "ko": "광군제" }
     }
   },
   "occurrences": [
+    { "holiday": "singles-day", "date": "2026-11-11", "dateSource": "Hank 2026-11-10 指定加開：「不然就先發一個光棍節的吧」" },
     { "holiday": "christmas", "date": "2026-12-25" },
     { "holiday": "lunar-new-year", "date": "2027-02-06", "dateSource": "農曆正月初一；行政院人事行政總處 116 年行事曆" },
     { "holiday": "dragon-boat", "date": "2027-06-09", "dateSource": "農曆五月初五" },

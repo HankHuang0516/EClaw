@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "id": "singles-day-2026",
+  "kind": "holiday",
+  "holiday": "singles-day",
+  "tier": "standard",
+  "status": "approved",
+  "announceAt": "2026-10-28T02:00:00.000Z",
+  "startsAt": "2026-11-11T02:00:00.000Z",
+  "deliveryEndsAt": "2026-11-18T02:00:00.000Z",
+  "claimEndsAt": "2026-12-11T02:00:00.000Z",
+  "games": [
+    {
+      "gameId": "rebound",
+      "reward": {
+        "sparks": 3000,
+        "revive_card": 1,
+        "loot_boost_1h": 1
+      },
+      "deliveryKey": "gift-singles-day-2026-rebound",
+      "mail": {
+        "subject": "光棍節禮包｜Singles' Day gift",
+        "body": "光棍節禮包已送達：火花 3,000 點、戰機復活卡 1 張、1H 戰利品加倍卡 1 張。請在 2026/12/11 10:00（台北時間）前領取，到期後無法領取。\n\nYour Singles' Day gift has arrived: 3,000 Sparks, fighter revive ×1, 1-hour double loot card ×1. Claim it by 2026/12/11 10:00 (Taipei time, UTC+8). Unclaimed gifts expire after that."
+      }
+    },
+    {
+      "gameId": "typeforge-twin-cities",
+      "reward": {
+        "gold": 100
+      },
+      "deliveryKey": "gift-singles-day-2026-typeforge-twin-cities",
+      "mail": {
+        "subject": "光棍節禮包｜Singles' Day gift",
+        "body": "光棍節禮包已送達：金幣 100。請在 2026/12/11 10:00（台北時間）前領取，到期後無法領取。\n\nYour Singles' Day gift has arrived: 100 gold. Claim it by 2026/12/11 10:00 (Taipei time, UTC+8). Unclaimed gifts expire after that."
+      }
+    }
+  ],
+  "copy": {
+    "zh-TW": {
+      "title": "光棍節禮包",
+      "intro": "光棍節禮包會寄進遊戲內信箱，打開信箱就能領取。",
+      "games": [
+        {
+          "gameId": "rebound",
+          "name": "REBOUND：元素戰機",
+          "line": "《REBOUND：元素戰機》：火花 3,000 點、戰機復活卡 1 張、1H 戰利品加倍卡 1 張。",
+          "value": "商品標價換算約 NT$150，非現金價值。"
+        },
+        {
+          "gameId": "typeforge-twin-cities",
+          "name": "活字戰紀：雙城烽火",
+          "line": "《活字戰紀：雙城烽火》：金幣 100。",
+          "note": "還沒開過遊戲內信箱的玩家，請先打開一次信箱建立收件帳號；活動期間才打開的，禮包通常隔天寄到。"
+        }
+      ],
+      "eligibility": "2026/11/11 10:00 至 2026/11/18 10:00（台北時間）之間已有帳號或新加入的玩家，每帳號一封；新帳號通常在加入後一天內收到。",
+      "starts": "開始寄送：2026/11/11 10:00（台北時間）。",
+      "deadline": "領取截止：2026/12/11 10:00（台北時間），到期後無法領取。"
+    },
+    "zh-CN": {
+      "title": "光棍节礼包",
+      "intro": "光棍节礼包会寄进游戏内信箱，打开信箱就能领取。",
+      "games": [
+        {
+          "gameId": "rebound",
+          "name": "REBOUND：元素戰機",
+          "line": "《REBOUND：元素戰機》：火花 3,000 点、战机复活卡 1 张、1H 战利品加倍卡 1 张。",
+          "value": "商品标价换算约 NT$150，非现金价值。"
+        },
+        {
+          "gameId": "typeforge-twin-cities",
+          "name": "活字战纪：双城烽火",
+          "line": "《活字战纪：双城烽火》：金币 100。",
+          "note": "还没开过游戏内信箱的玩家，请先打开一次信箱建立收件账号；活动期间才打开的，礼包通常隔天寄到。"
+        }
+      ],
+      "eligibility": "2026/11/11 10:00 至 2026/11/18 10:00（台北时间）之间已有账号或新加入的玩家，每账号一封；新账号通常在加入后一天内收到。",
+      "starts": "开始寄送：2026/11/11 10:00（台北时间）。",
+      "deadline": "领取截止：2026/12/11 10:00（台北时间），到期后无法领取。"
+    },
+    "en": {
+      "title": "Singles' Day gift",
+      "intro": "The Singles' Day gift is delivered to your in-game mailbox. Open the mailbox to claim it.",
+      "games": [
+        {
+          "gameId": "rebound",
+          "name": "REBOUND：元素戰機",
+          "line": "REBOUND：元素戰機: 3,000 Sparks, fighter revive ×1, 1-hour double loot card ×1.",
+          "value": "Approximate listed item value: NT$150. No cash value."
+        },
+        {
+          "gameId": "typeforge-twin-cities",
+          "name": "Typeforge: Twin Cities",
+          "line": "Typeforge: Twin Cities: 100 gold.",
+          "note": "If you have never opened the in-game mailbox, open it once to set up your account. If you first open it during the event, the gift usually arrives the next day."
+        }
+      ],
+      "eligibility": "Every account that exists or joins between 2026/11/11 10:00 and 2026/11/18 10:00 (Taipei time) receives one mail. New accounts usually receive it within a day of joining.",
+      "starts": "Delivery starts 2026/11/11 10:00 (Taipei time).",
+      "deadline": "Claim by 2026/12/11 10:00 (Taipei time). Unclaimed gifts expire after that."
+    },
+    "ja": {
+      "title": "独身の日ギフト",
+      "intro": "独身の日ギフトをゲーム内メールにお届けします。メールを開いて受け取ってください。",
+      "games": [
+        {
+          "gameId": "rebound",
+          "name": "REBOUND：元素戰機",
+          "line": "「REBOUND：元素戰機」：スパーク3,000、戦闘機復活カード1枚、1時間戦利品2倍カード1枚。",
+          "value": "商品表示価格換算で約NT$150。現金価値はありません。"
+        },
+        {
+          "gameId": "typeforge-twin-cities",
+          "name": "タイプフォージ：双城戦記",
+          "line": "「タイプフォージ：双城戦記」：ゴールド100。",
+          "note": "ゲーム内メールを一度も開いたことがない場合は、先に一度開いて受取用アカウントを作成してください。期間中に初めて開いた場合、ギフトは通常翌日に届きます。"
+        }
+      ],
+      "eligibility": "2026/11/11 10:00から2026/11/18 10:00（台北時間）までに存在する、または新しく参加したアカウントに1通ずつ配布します。新規アカウントには通常、参加から1日以内に届きます。",
+      "starts": "配布開始：2026/11/11 10:00（台北時間）。",
+      "deadline": "受取期限：2026/12/11 10:00（台北時間）。期限後は受け取れません。"
+    },
+    "ko": {
+      "title": "광군제 선물",
+      "intro": "광군제 선물이 게임 내 우편함으로 발송됩니다. 우편함을 열어 받으세요.",
+      "games": [
+        {
+          "gameId": "rebound",
+          "name": "REBOUND：元素戰機",
+          "line": "「REBOUND：元素戰機」: 스파크 3,000개, 전투기 부활 카드 1장, 1시간 전리품 2배 카드 1장.",
+          "value": "표시 상품 가격 기준 약 NT$150. 현금 가치가 아닙니다."
+        },
+        {
+          "gameId": "typeforge-twin-cities",
+          "name": "타입포지: 두 도시의 전쟁",
+          "line": "「타입포지: 두 도시의 전쟁」: 골드 100.",
+          "note": "게임 내 우편함을 한 번도 연 적이 없다면 먼저 한 번 열어 수령 계정을 만들어 주세요. 이벤트 기간 중 처음 연 경우 선물은 보통 다음 날 도착합니다."
+        }
+      ],
+      "eligibility": "2026/11/11 10:00부터 2026/11/18 10:00(타이베이 시간)까지 이미 있거나 새로 가입한 계정에 우편 1통씩 발송됩니다. 신규 계정은 보통 가입 후 하루 안에 받습니다.",
+      "starts": "발송 시작: 2026/11/11 10:00(타이베이 시간).",
+      "deadline": "수령 마감: 2026/12/11 10:00(타이베이 시간). 마감 후에는 받을 수 없습니다."
+    }
+  },
+  "receipts": [],
+  "approval": {
+    "by": "auto-policy",
+    "policyVersion": 1,
+    "authority": "Hank 2026-11-10：「你自動判斷核准 不需要由我同意」",
+    "at": "2026-11-10T08:10:37.144Z",
+    "frozenSha256": "01710228ff0f856e3949a1b90c6ebef47f4b2ab6197192a4ed9256a68f1f4a2e",
+    "checks": [
+      "not_on_hold",
+      "structure",
+      "calendar_occurrence",
+      "starts_in_future",
+      "delivery_window",
+      "game_enabled:rebound",
+      "reward_matches_tier:rebound",
+      "reward_within_caps:rebound",
+      "game_enabled:typeforge-twin-cities",
+      "reward_matches_tier:typeforge-twin-cities",
+      "reward_within_caps:typeforge-twin-cities",
+      "cooldown"
+    ]
+  }
+}
