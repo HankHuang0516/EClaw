@@ -56,3 +56,16 @@
 .portfolio-apps .card.has-intro-link .card-head { display:grid; grid-template-columns:104px minmax(0,1fr); gap:16px; padding-right:0; min-height:0; }
 .portfolio-apps .card.has-intro-link .guide-actions { position:static; grid-column:1/-1; justify-self:start; display:flex; flex-wrap:wrap; gap:8px; max-width:100%; }
 .portfolio-apps .guide-actions > a { min-height:44px; display:inline-flex; align-items:center; }
+
+/* A catalogue without a current campaign uses the full available width. */
+.portfolio-layout > .portfolio-apps:only-child { grid-column: 1 / -1; }
+
+/* Campaign cards are rendered from gift-campaigns.js by gift-sidebar.js. */
+.rebound-gift .gift-badge { display: inline-block; margin: 0 0 4px; padding: 2px 10px; border: 1px solid #a6e5db; border-radius: 999px; color: #bfffee; font-size: .78rem; font-weight: 700; line-height: 1.4; }
+.rebound-gift[data-state="upcoming"] .gift-badge { border-color: #ffe3a7; color: #ffe3a7; }
+.gift-history { margin: 0 16px 16px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,.15); font-size: .82rem; color: #c4d9d9; }
+.gift-history > summary { padding: 12px 0; cursor: pointer; font-weight: 700; }
+.gift-history > summary:focus-visible { outline: 3px solid #bfffee; outline-offset: 2px; }
+.gift-history ul { display: grid; gap: 10px; margin: 0 0 4px; padding: 0; list-style: none; }
+.gift-history li { overflow-wrap: anywhere; }
+.gift-history li strong { display: block; color: #f1fbf8; font-weight: 600; }
