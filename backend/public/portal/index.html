@@ -460,7 +460,7 @@
             const returnTo = new URLSearchParams(window.location.search).get('return_to');
             if (returnTo && !returnTo.startsWith('//')
                 && (/^\/(r\/|portal\/(dashboard|chat|kanban|mission|settings)\.html)/.test(returnTo)
-                    || returnTo === '/AiHankApps/dot-progress/')) {
+                    || returnTo === '/AiHankApps/dot-progress/' || returnTo === '/AiHankApps/hub/')) {
                 window.location.href = returnTo;
                 return;
             }

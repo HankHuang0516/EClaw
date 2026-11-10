@@ -409,6 +409,53 @@ describe('Admin endpoints — non-admin access blocked', () => {
 });
 
 // ════════════════════════════════════════════════════════════════
+// AiHankApps 管理中樞 — on the real server, neither the page nor its
+// data reaches anyone who is not a signed-in administrator
+// (module behaviour is covered in aihankapps-hub.test.js)
+// ════════════════════════════════════════════════════════════════
+describe('AiHankApps admin hub — real server wiring', () => {
+    const cookie = 'eclaw_session=fake-non-admin-token';
+    const pageMarkers = ['hub-app.js', 'hub-data.js', 'id="view"'];
+
+    it('gives an anonymous visitor no page, no script and no data', async () => {
+        for (const url of ['/AiHankApps/hub', '/AiHankApps/hub/', '/AiHankApps/hub/index.html']) {
+            const res = await get(url).set('Accept', 'text/html');
+            // 302 to the sign-in page once the server is ready; 503 while it is still starting. Never the page.
+            expect([302, 503]).toContain(res.status);
+            if (res.status === 302) expect(res.headers.location).toBe('/portal/?return_to=%2FAiHankApps%2Fhub%2F');
+            expect(res.headers['cache-control']).toBe('private, no-store, max-age=0');
+            for (const marker of pageMarkers) expect(res.text || '').not.toContain(marker);
+        }
+        for (const url of ['/AiHankApps/hub/hub-app.js', '/AiHankApps/hub/hub-data.js', '/AiHankApps/hub/hub.css', '/api/aihankapps/hub/data']) {
+            const res = await get(url);
+            expect([401, 503]).toContain(res.status);
+            expect(res.body.success).toBe(false);
+        }
+        const access = await get('/api/aihankapps/hub/access');
+        expect([access.status, access.body]).toEqual([200, { success: true, admin: false }]);
+    });
+
+    it('gives a signed-in account that is not an administrator no page, no script and no data', async () => {
+        const page = await get('/AiHankApps/hub/').set('Accept', 'text/html').set('Cookie', cookie);
+        expect([403, 503]).toContain(page.status);
+        for (const marker of pageMarkers) expect(page.text || '').not.toContain(marker);
+        for (const url of ['/AiHankApps/hub/hub-app.js', '/api/aihankapps/hub/data']) {
+            const res = await get(url).set('Cookie', cookie);
+            expect([403, 503]).toContain(res.status);
+            expect(res.body.success).toBe(false);
+        }
+        const access = await get('/api/aihankapps/hub/access').set('Cookie', cookie);
+        expect([access.status, access.body]).toEqual([200, { success: true, admin: false }]);
+    });
+
+    it('never falls through to the public portfolio files', async () => {
+        const res = await get('/AiHankApps/hub/does-not-exist.html');
+        expect([401, 503]).toContain(res.status);
+        expect(res.headers['content-type']).toMatch(/application\/json/);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
 // Audit logs — auth required
 // ════════════════════════════════════════════════════════════════
 describe('GET /api/audit-logs — auth required', () => {

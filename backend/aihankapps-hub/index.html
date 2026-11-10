@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>管理中樞 · AiHankApps</title>
+<link rel="icon" type="image/png" href="/AiHankApps/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
+<link rel="stylesheet" href="hub.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-overview" viewBox="0 0 16 16"><path d="M2.5 2.5h4.5v4.5H2.5zM9 2.5h4.5v4.5H9zM2.5 9h4.5v4.5H2.5zM9 9h4.5v4.5H9z"/></symbol>
+    <symbol id="i-live" viewBox="0 0 16 16"><path d="M1.5 8h3l2-5 3 10 2-5h3"/></symbol>
+    <symbol id="i-kpi" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.5"/></symbol>
+    <symbol id="i-apps" viewBox="0 0 16 16"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"/></symbol>
+    <symbol id="i-alerts" viewBox="0 0 16 16"><path d="M4 11V7a4 4 0 0 1 8 0v4l1.2 1.5H2.8zM6.5 13.8a1.6 1.6 0 0 0 3 0"/></symbol>
+    <symbol id="i-sources" viewBox="0 0 16 16"><ellipse cx="8" cy="4" rx="5" ry="2"/><path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/></symbol>
+    <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 16 16"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3 5.5 5.5 0 1 0 13 9.5z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 16 16"><circle cx="8" cy="8" r="3"/><path d="M8 1.5V3M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></symbol>
+    <symbol id="i-key" viewBox="0 0 16 16"><rect x="1.5" y="4" width="13" height="8" rx="1.5"/><path d="M4 7h.01M6.7 7h.01M9.3 7h.01M12 7h.01M5 9.8h6"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 16 16"><rect x="3.5" y="7" width="9" height="6.5" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></symbol>
+    <symbol id="i-ok" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.2"/><path d="M5.2 8.2 7.2 10.2 10.9 6.2"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 16 16"><path d="M8 2.2 14.3 13H1.7z"/><path d="M8 6.5v3.2M8 11.4v.01"/></symbol>
+    <symbol id="i-crit" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.2"/><path d="M8 4.8v3.8M8 10.9v.01"/></symbol>
+    <symbol id="i-info" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.2"/><path d="M8 7.3v3.6M8 5.2v.01"/></symbol>
+    <symbol id="i-dev" viewBox="0 0 16 16"><path d="M6.2 2.5h3.6M6.8 2.5v3.6L3.4 12a1 1 0 0 0 .9 1.5h7.4a1 1 0 0 0 .9-1.5L9.2 6.1V2.5"/></symbol>
+    <symbol id="i-dot" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.2"/><circle cx="8" cy="8" r="1.6"/></symbol>
+    <symbol id="i-up" viewBox="0 0 16 16"><path d="M8 12.5v-9M4 7.2l4-4 4 4"/></symbol>
+    <symbol id="i-down" viewBox="0 0 16 16"><path d="M8 3.5v9M4 8.8l4 4 4-4"/></symbol>
+    <symbol id="i-flat" viewBox="0 0 16 16"><path d="M3 8h10"/></symbol>
+    <symbol id="i-x" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 16 16"><path d="M4.5 6.5 8 10l3.5-3.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 16 16"><path d="M3.2 8.4l3.3 3.2 6.3-6.8"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 16 16"><path d="M5.5 3.5v9M10.5 3.5v9"/></symbol>
+    <symbol id="i-play" viewBox="0 0 16 16"><path d="M5 3.2v9.6L12.5 8z"/></symbol>
+    <symbol id="i-ext" viewBox="0 0 16 16"><path d="M9 3h4v4M13 3 7.5 8.5M11.5 9.5v3a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 16 16"><path d="M2 3.5h12L9.5 8.8v4L6.5 11.5V8.8z"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 5.5V4A1.5 1.5 0 0 0 9 2.5H4A1.5 1.5 0 0 0 2.5 4v5A1.5 1.5 0 0 0 4 10.5h1.5"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 16 16"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"/></symbol>
+    <symbol id="i-cols" viewBox="0 0 16 16"><rect x="2.5" y="3" width="11" height="10" rx="1.5"/><path d="M6.2 3v10M9.8 3v10"/></symbol>
+    <symbol id="i-back" viewBox="0 0 16 16"><path d="M9.5 3.5 5 8l4.5 4.5"/></symbol>
+    <symbol id="i-next" viewBox="0 0 16 16"><path d="M6.5 3.5 11 8l-4.5 4.5"/></symbol>
+  </defs>
+</svg>
+
+<header class="top">
+  <a class="brand" href="#overview" aria-label="AiHankApps 管理中樞，回到總覽"><span class="brand-mark">H</span><span class="brand-name">AiHankApps</span><span class="brand-sub">管理中樞</span></a>
+  <button type="button" class="search-btn" id="open-palette" data-act="palette" aria-label="搜尋 APP、指標、功能">
+    <svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><span>搜尋 APP、指標、功能</span><kbd id="kbd-hint">⌘K</kbd>
+  </button>
+  <div class="top-r">
+    <button type="button" class="live-pill" id="live-pill" data-act="live-toggle" aria-pressed="true" title="暫停或繼續自動更新（快速鍵 p）"><i class="pulse"></i><span id="live-text">自動更新</span></button>
+    <button type="button" class="icon-btn" id="theme-btn" data-act="theme" aria-label="切換深色或淺色" title="切換深色或淺色（快速鍵 t）"><svg class="ico" aria-hidden="true"><use href="#i-moon" id="theme-ico"/></svg></button>
+    <button type="button" class="icon-btn" id="help-btn" data-act="help" aria-label="鍵盤快速鍵" title="鍵盤快速鍵（?）"><svg class="ico" aria-hidden="true"><use href="#i-key"/></svg></button>
+    <button type="button" class="admin" id="admin-chip" data-act="admin-info" data-pop aria-haspopup="dialog"><svg class="ico" aria-hidden="true"><use href="#i-lock"/></svg><span>管理者</span></button>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="side" id="side" aria-label="主要導覽">
+    <div class="nav" id="nav"></div>
+    <div class="side-apps" id="side-apps"></div>
+  </nav>
+  <main class="main" id="main">
+    <div class="filters" id="filters" role="group" aria-label="篩選條件" hidden></div>
+    <div class="view" id="view"></div>
+    <footer class="foot">數字來自各個後台的實際紀錄。來源不知道的日子留空，不補零，也不估算。時間一律是台北時間。</footer>
+  </main>
+</div>
+
+<div class="tip" id="tip" role="tooltip" hidden></div>
+<div class="pop" id="pop" hidden></div>
+<div class="overlay" id="overlay" hidden></div>
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+<script src="hub-data.js"></script>
+<script src="hub-charts.js"></script>
+<script src="hub-app.js"></script>
+</body>
+</html>
