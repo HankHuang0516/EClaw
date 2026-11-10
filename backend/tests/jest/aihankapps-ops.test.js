@@ -178,6 +178,13 @@ describe('aihankapps-ops read API', () => {
         expect(store.meta.workTotals.totals['work.wishlist-retail.retail_cp_evaluated'].knownTotalLowerBound).toBe(25);
         expect(c.state.errors.chat.message).toBe('HTTP_503');
         expect(c.state.errors.cpu).toBeUndefined();
+        // A day of CPU history that times out through the tunnel falls back to six hours, then to the usual window.
+        const tried = [], slow = async (url, init) => { if (url.includes('cpu-history')) { tried.push(url.replace(/.*minutes=/, 'minutes=')); if (!url.includes('minutes=20&')) throw new Error('The operation was aborted due to timeout'); return { status: 200, json: async () => cpuHistory }; } return fetchImpl(url, init); };
+        const empty = { query: async (sql, params) => (/GROUP BY step/.test(sql) ? { rows: [], rowCount: 0 } : pool.query(sql, params)) };
+        const c2 = ops.createCollector(() => empty, { fetchImpl: slow, log: { error() {} }, now: () => 1794270000000 });
+        await c2.bootstrap();
+        expect(tried).toEqual(['minutes=1440&stepMinutes=2', 'minutes=360&stepMinutes=1', 'minutes=20&stepMinutes=1']);
+        expect(c2.state.errors.cpu).toBeUndefined();
     });
 });
 
