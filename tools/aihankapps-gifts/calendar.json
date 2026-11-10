@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "timezone": "Asia/Taipei",
+  "startTime": "10:00",
+  "leadDays": 14,
+  "deliveryDays": 7,
+  "minDaysBetweenCampaigns": 21,
+  "sourceNote": "農曆節日的國曆日期每年事先查好再寫進 occurrences，不在程式裡推算：Node／ICU 的農曆把 2027 年初一算成 2/7，與行政院人事行政總處公布的 2/6 不符。補下一年度時請以官方行事曆為準。",
+  "holidays": {
+    "christmas": {
+      "tier": "standard",
+      "names": { "zh-TW": "聖誕節", "zh-CN": "圣诞节", "en": "Christmas", "ja": "クリスマス", "ko": "크리스마스" }
+    },
+    "lunar-new-year": {
+      "tier": "major",
+      "names": { "zh-TW": "農曆新年", "zh-CN": "农历新年", "en": "Lunar New Year", "ja": "旧正月", "ko": "설날" }
+    },
+    "dragon-boat": {
+      "tier": "standard",
+      "names": { "zh-TW": "端午節", "zh-CN": "端午节", "en": "Dragon Boat Festival", "ja": "端午節", "ko": "단오절" }
+    },
+    "mid-autumn": {
+      "tier": "standard",
+      "names": { "zh-TW": "中秋節", "zh-CN": "中秋节", "en": "Mid-Autumn Festival", "ja": "中秋節", "ko": "추석" }
+    },
+    "halloween": {
+      "tier": "standard",
+      "names": { "zh-TW": "萬聖節", "zh-CN": "万圣节", "en": "Halloween", "ja": "ハロウィン", "ko": "핼러윈" }
+    }
+  },
+  "occurrences": [
+    { "holiday": "christmas", "date": "2026-12-25" },
+    { "holiday": "lunar-new-year", "date": "2027-02-06", "dateSource": "農曆正月初一；行政院人事行政總處 116 年行事曆" },
+    { "holiday": "dragon-boat", "date": "2027-06-09", "dateSource": "農曆五月初五" },
+    { "holiday": "mid-autumn", "date": "2027-09-15", "dateSource": "農曆八月十五" },
+    { "holiday": "halloween", "date": "2027-10-31" },
+    { "holiday": "christmas", "date": "2027-12-25" }
+  ]
+}

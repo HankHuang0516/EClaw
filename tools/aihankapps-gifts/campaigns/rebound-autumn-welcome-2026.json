@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "rebound-autumn-welcome-2026",
+  "kind": "legacy",
+  "status": "approved",
+  "appId": "rebound",
+  "claimEndsAt": "2026-10-25T16:00:00.000Z",
+  "note": "中秋新人大禮包：新帳號註冊時由遊戲伺服器自動寄出，名額 100。只保留紀錄，沒有可顯示的文案，作品集不列出。",
+  "record": {
+    "statusUrl": "https://rebound-api-production-801c.up.railway.app/v1/campaigns/public-gift"
+  }
+}

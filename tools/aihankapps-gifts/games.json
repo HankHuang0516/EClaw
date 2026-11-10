@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-11-10",
+  "scope": "只列已公開上架、而且伺服器有信箱可以遠端發禮的遊戲。未發佈或沒有收禮管道的遊戲不列入（Hank 2026-11-10：「還沒發佈的遊戲先忽略」）。",
+  "games": [
+    {
+      "id": "rebound",
+      "enabled": true,
+      "names": {
+        "zh-TW": "REBOUND：元素戰機",
+        "zh-CN": "REBOUND：元素戰機",
+        "en": "REBOUND：元素戰機",
+        "ja": "REBOUND：元素戰機",
+        "ko": "REBOUND：元素戰機"
+      },
+      "namesSource": "Google Play 商品頁在五種語言都顯示同一個名稱（2026-11-10 讀取）。",
+      "links": {
+        "googlePlay": "https://play.google.com/store/apps/details?id=com.hankhuang.reboundprototype",
+        "appStore": "https://apps.apple.com/tw/app/id6808690018",
+        "itch": "https://lolwarden0516.itch.io/rebound"
+      },
+      "rewardItems": {
+        "sparks": {
+          "max": 6000,
+          "listedTwdPerUnit": 0.03,
+          "labels": { "zh-TW": "火花 {n} 點", "zh-CN": "火花 {n} 点", "en": "{n} Sparks", "ja": "スパーク{n}", "ko": "스파크 {n}개" }
+        },
+        "revive_card": {
+          "max": 1,
+          "listedTwdPerUnit": 30,
+          "labels": { "zh-TW": "戰機復活卡 {n} 張", "zh-CN": "战机复活卡 {n} 张", "en": "fighter revive ×{n}", "ja": "戦闘機復活カード{n}枚", "ko": "전투기 부활 카드 {n}장" }
+        },
+        "loot_boost_1h": {
+          "max": 1,
+          "listedTwdPerUnit": 30,
+          "labels": { "zh-TW": "1H 戰利品加倍卡 {n} 張", "zh-CN": "1H 战利品加倍卡 {n} 张", "en": "1-hour double loot card ×{n}", "ja": "1時間戦利品2倍カード{n}枚", "ko": "1시간 전리품 2배 카드 {n}장" }
+        },
+        "spark_boost_1h": {
+          "max": 1,
+          "listedTwdPerUnit": 30,
+          "labels": { "zh-TW": "1H 火花加倍卡 {n} 張", "zh-CN": "1H 火花加倍卡 {n} 张", "en": "1-hour double Sparks card ×{n}", "ja": "1時間スパーク2倍カード{n}枚", "ko": "1시간 스파크 2배 카드 {n}장" }
+        },
+        "skill_tree_reset": {
+          "max": 1,
+          "listedTwdPerUnit": 30,
+          "labels": { "zh-TW": "技能樹重置卡 {n} 張", "zh-CN": "技能树重置卡 {n} 张", "en": "skill reset card ×{n}", "ja": "スキルリセットカード{n}枚", "ko": "스킬 초기화 카드 {n}장" }
+        }
+      },
+      "maxListedTwd": 300,
+      "tiers": {
+        "standard": { "sparks": 3000, "revive_card": 1, "loot_boost_1h": 1 },
+        "major": { "sparks": 6000, "revive_card": 1, "loot_boost_1h": 1, "spark_boost_1h": 1, "skill_tree_reset": 1 }
+      },
+      "rationale": "major 等級與上限採 Hank 核准過的 2026-10-07 普天同慶禮包（火花 6,000 點＋四種消耗卡各 1 張，約 NT$300）。標價換算沿用當時的算法：火花按 1,000 點 NT$30 的比例、消耗卡每張 NT$30。伺服器的 limited_campaign 只收這四種消耗卡，永久權益會被拒絕。",
+      "delivery": {
+        "adapter": "rebound",
+        "railway": { "project": "rebound-live", "projectId": "642452f8-405c-4d07-8565-bd409a136fe8", "environment": "production", "service": "rebound-api" },
+        "mailLimits": { "subject": 120, "body": 2000 },
+        "contractSource": "rebound-api 2026-10-07 部署的 server/src/admin.mjs：POST /internal/mail/dispatch，kind=limited_campaign，以 (player_id, dedupe_key) 防重。"
+      }
+    },
+    {
+      "id": "typeforge-twin-cities",
+      "enabled": true,
+      "names": {
+        "zh-TW": "活字戰紀：雙城烽火",
+        "zh-CN": "活字战纪：双城烽火",
+        "en": "Typeforge: Twin Cities",
+        "ja": "タイプフォージ：双城戦記",
+        "ko": "타입포지: 두 도시의 전쟁"
+      },
+      "namesSource": "Google Play 商品頁各語言的名稱（2026-11-10 讀取）。",
+      "links": {
+        "googlePlay": "https://play.google.com/store/apps/details?id=com.hankhuang.wordcivilization",
+        "appStore": "https://apps.apple.com/tw/app/id6792162295",
+        "itch": "https://lolwarden0516.itch.io/typeforge-twin-cities"
+      },
+      "rewardItems": {
+        "gold": {
+          "max": 300,
+          "labels": { "zh-TW": "金幣 {n}", "zh-CN": "金币 {n}", "en": "{n} gold", "ja": "ゴールド{n}", "ko": "골드 {n}" }
+        }
+      },
+      "tiers": {
+        "standard": { "gold": 100 },
+        "major": { "gold": 200 }
+      },
+      "rationale": "一局的金幣收入約數十枚（前 36 輪合計 72 金）；道具基礎價 5–30 金，稀有 2.25 倍、傳說 5 倍，神秘至少 12,000 金。100 金約等於一到兩局收入，買得到幾件普通或稀有道具，不會動到神秘道具的稀有度。伺服器允許到 10,000，這裡自行把上限壓在 300。金幣沒有對台幣的售價，所以文案不寫金額。共用造型是付費商品，不放進自動核准的獎勵。",
+      "delivery": {
+        "adapter": "typeforge",
+        "railway": { "project": "noble-fascination", "projectId": "68db2b85-9ead-420e-abec-587eb84b41b1", "environment": "production", "service": "summit-battle-api" },
+        "testRailway": { "project": "noble-fascination", "projectId": "68db2b85-9ead-420e-abec-587eb84b41b1", "environment": "cosmetics-test", "service": "summit-battle-api-test" },
+        "product": "dual-city",
+        "appDir": "/app",
+        "toolSha256": {
+          "mailbox.js": "99c506572224da5c450abdabd327160cc99590670666addff27ee8c211ce2728",
+          "send-mail.js": "98abfdbfa85dbd33acee8887a3e1dba13f3051690e11d3ff5e941970c53592d6"
+        },
+        "mailLimits": { "subject": 120, "body": 4000 },
+        "contractSource": "summit-battle-api 映像內的 /app/send-mail.js 與 /app/mailbox.js；2026-11-10 比對測試環境與本機原始碼的雜湊一致。product=dual-city 只寄給綁定過雙城烽火的帳號。"
+      }
+    }
+  ]
+}

@@ -50,7 +50,8 @@ describe('AiHankApps portfolio route', () => {
         const html = fs.readFileSync(path.join(portfolioDir, 'index.html'), 'utf8');
         const report = fs.readFileSync(path.join(portfolioDir, 'reports', 'data.js'), 'utf8');
         expect(html).not.toContain('id="rebound-autumn-welcome-2026"');
-        expect(html).toContain('id="elemental-fighter350-paper-celebration-20261007"');
+        // Campaign cards are rendered from gift-campaigns.js only while a campaign is current.
+        expect(html).not.toContain('id="elemental-fighter350-paper-celebration-20261007"');
         expect(report).toContain(`"id":"rebound","name":"${rebound.name}"`);
     });
 
