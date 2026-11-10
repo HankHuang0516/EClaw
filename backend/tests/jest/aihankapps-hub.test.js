@@ -9,6 +9,7 @@ const vm = require('vm');
 const express = require('express');
 const request = require('supertest');
 const hub = require('../../aihankapps-hub');
+const hubStore = require('../../aihankapps-hub-store');
 
 const backendDir = path.resolve(__dirname, '../..');
 const pageDir = path.join(backendDir, 'aihankapps-hub');
@@ -53,9 +54,19 @@ function fakePool(overrides = {}) {
         users: [{ total: 12, verified: 9, premium: 1 }], signups: [{ day: '2026-11-09', n: 2 }],
         chat: [{ day: '2026-11-10', messages: 7, devices: 3 }],
         dreamFirst: [{ first: '2026-11-01' }], dreamJobs: [{ day: '2026-11-09', jobs: 5, completed: 4, failed: 1, devices: 2 }], dreamAds: [{ day: '2026-11-09', n: 3 }],
+        tappay: [{ day: '2026-11-09', n: 1, twd: 150 }], topups: [{ day: '2026-11-09', n: 2, twd: 180 }],
+        hubDaily: [{ app_id: 'alpha', metric: 'activeUsers', day: '2026-11-08', value: 4 }, { app_id: 'alpha', metric: 'activeUsers', day: '2026-11-09', value: 6 },
+            { app_id: 'alpha', metric: 'bogus', day: '2026-11-09', value: 9 }, { app_id: 'ghost', metric: 'plays', day: '2026-11-09', value: 9 }],
+        hubFacts: [{ app_id: 'alpha', key: 'playersTotal', value: { label: '玩家總數', value: 12, unit: '人', order: 10 }, source: 'rebound', observed_at: new Date(NOW - 3600000) },
+            { app_id: 'alpha', key: 'retention', value: { label: '留存', basis: '有玩一局', cohorts: [{ start: '2026-10-05', size: 4, d1: 2, d3: 1, d7: null, d14: null, d30: null }] }, source: 'rebound', observed_at: new Date(NOW - 3600000) },
+            { app_id: 'ghost', key: 'playersTotal', value: { label: 'x', value: 1 }, source: 'rebound', observed_at: new Date(NOW) }],
+        hubSources: [{ id: 'rebound', collected_at: new Date(NOW - 3600000), imported_at: new Date(NOW - 3500000), detail: { values: 2, notes: ['一則說明'] } }],
+        probesRecent: [{ service: 'eclaw', at: new Date(Math.floor(NOW / 300000) * 300000), checks: 5, failures: 1, ms_total: 400 }],
+        probesDaily: [{ service: 'eclaw', day: '2026-11-10', checks: 100, failures: 5, ms_total: 9500 }, { service: 'eclaw', day: '2026-10-01', checks: 10, failures: 10, ms_total: 0 }],
         ...overrides,
     };
-    const pool = { log: [], params: {}, released: 0, connected: 0 };
+    const pool = { log: [], params: {}, released: 0, connected: 0, direct: [] };
+    pool.query = async sql => { pool.direct.push(sql); return { rows: [] }; };
     const pick = key => { if (tables[key] instanceof Error) throw tables[key]; return { rows: tables[key] }; };
     const answer = (sql, values) => {
         if (['BEGIN READ ONLY', 'COMMIT', 'ROLLBACK'].includes(sql) || sql.startsWith('SET LOCAL statement_timeout = ')) return { rows: [] };
@@ -63,7 +74,9 @@ function fakePool(overrides = {}) {
             : sql.includes('FROM app_portfolio_likes') ? 'likes' : sql.includes('FROM app_portfolio_comments') ? 'comments' : sql.includes('FROM app_portfolio_beta_feedback') ? 'beta'
                 : sql.includes('FROM fraud_app_feedback_reports') ? 'feedback' : sql.includes('FROM user_accounts') && sql.includes('GROUP BY') ? 'signups' : sql.includes('FROM user_accounts') ? 'users'
                     : sql.includes('FROM chat_messages') ? 'chat' : sql.includes('MIN(quota_date)') ? 'dreamFirst' : sql.includes('FROM dream_buddy_inference_jobs') ? 'dreamJobs'
-                        : sql.includes('FROM dream_buddy_ad_transactions') ? 'dreamAds' : null;
+                        : sql.includes('FROM dream_buddy_ad_transactions') ? 'dreamAds' : sql.includes('FROM tappay_transactions') ? 'tappay' : sql.includes('FROM topup_orders') ? 'topups'
+                            : sql.includes('FROM aihankapps_hub_daily') ? 'hubDaily' : sql.includes('FROM aihankapps_hub_facts') ? 'hubFacts' : sql.includes('FROM aihankapps_hub_sources') ? 'hubSources'
+                                : sql.includes("step = 'q'") ? 'probesRecent' : sql.includes("step = 'h'") ? 'probesDaily' : null;
         if (!key) throw new Error('Unexpected synthetic SQL: ' + sql);
         pool.params[key] = values;
         return pick(key);
@@ -93,7 +106,7 @@ function mount(options = {}) {
     });
     const pool = options.pool || fakePool();
     const routers = hub.createRouters({ authMiddleware, adminMiddleware, getPool: () => pool, getAuthPool: () => options.authPool || pool, isReady: () => state.ready,
-        getDeviceStats: options.getDeviceStats || (() => ({ devices: 4, entities: 9, boundEntities: 6 })), now: () => state.clock,
+        getDeviceStats: options.getDeviceStats || (() => ({ devices: 4, entities: 9, boundEntities: 6 })), now: () => state.clock, fetchImpl: options.fetchImpl,
         portfolioDir: options.portfolioDir || portfolioFixture(), ...(options.pageDir ? { pageDir: options.pageDir } : {}) });
     const slot = { page: routers.page };
     app.use('/AiHankApps/hub', hub.privateHeaders, (req, res) => slot.page(req, res, error => {
@@ -113,7 +126,7 @@ describe('admin hub: who gets in', () => {
             const res = await browser(request(app).get(url));
             expect(res.status).toBe(302);
             expect(res.headers.location).toBe('/portal/?return_to=%2FAiHankApps%2Fhub%2F');
-            expect(res.headers['cache-control']).toBe('private, no-store, max-age=0');
+            expect(res.headers['cache-control']).toBe('private, no-store, no-transform, max-age=0');
             expect(res.text).not.toContain('管理中樞');
         }
         for (const file of Object.keys(hub.PAGE_FILES).filter(name => name !== 'index.html')) {
@@ -147,7 +160,7 @@ describe('admin hub: who gets in', () => {
         expect(page.status).toBe(200);
         expect(page.headers['content-type']).toBe('text/html; charset=utf-8');
         expect(page.text).toBe(fs.readFileSync(path.join(pageDir, 'index.html'), 'utf8'));
-        expect(page.headers['cache-control']).toBe('private, no-store, max-age=0');
+        expect(page.headers['cache-control']).toBe('private, no-store, no-transform, max-age=0');
         expect(page.headers['cdn-cache-control']).toBe('no-store');
         expect(page.headers['x-robots-tag']).toBe('noindex, nofollow');
         expect(page.headers['x-content-type-options']).toBe('nosniff');
@@ -202,7 +215,7 @@ describe('admin hub: who gets in', () => {
             const req = request(app).get('/api/aihankapps/hub/access');
             const res = await (who ? as(req, who) : req);
             expect([who, res.status, res.body]).toEqual([who, 200, { success: true, admin }]);
-            expect(res.headers['cache-control']).toBe('private, no-store, max-age=0');
+            expect(res.headers['cache-control']).toBe('private, no-store, no-transform, max-age=0');
         }
         expect((await as(request(app).get('/api/aihankapps/hub/access'), 'admin').set('x-test-admin-db', 'down')).body.admin).toBe(false);
         expect(pool.connected).toBe(0);                      // answering does not read any data
@@ -228,16 +241,35 @@ describe('admin hub: who gets in', () => {
     });
 });
 
+describe('admin hub: service checks', () => {
+    test('the latest check of each back-end is for administrators only, and comes from memory', async () => {
+        const fetchImpl = async url => ({ status: url.includes('wishlist-app') ? 503 : 200, body: null, json: async () => ({ status: 'ok', ok: true, workers: [], version: 'v9' }) });
+        const { app, routers, state } = mount({ fetchImpl });
+        const ask = who => as(request(app).get('/api/aihankapps/hub/services'), who);
+        expect([(await request(app).get('/api/aihankapps/hub/services')).status, (await ask('member')).status]).toEqual([401, 403]);
+        const before = await ask('admin');
+        expect([before.status, before.headers['cache-control']]).toEqual([200, 'private, no-store, no-transform, max-age=0']);
+        expect(before.body).toEqual({ success: true, checkedAt: NOW, services: hubStore.SERVICES.map(x => ({ id: x.id, name: x.name, apps: x.apps, ok: null, status: null, ms: null, at: null, info: null })) });
+        await routers.probes.run();
+        const after = await ask('admin');
+        expect(after.body.services.map(x => [x.id, x.ok, x.status, x.info])).toEqual([['eclaw', true, 200, null], ['wishlist', false, 503, null], ['rebound', true, 200, null],
+            ['summit', true, 200, 'v9'], ['leaderboard', true, 200, null], ['timehut', true, 200, 'v9'], ['monitor', true, 200, 'v9']]);
+        expect((await as(request(app).post('/api/aihankapps/hub/services'), 'admin')).status).toBe(405);
+        state.ready = false;
+        expect((await ask('admin')).status).toBe(503);
+    });
+});
+
 describe('admin hub: the data answer', () => {
     test('turns the catalog, the store report and the database rows into daily series', async () => {
         const { app } = mount();
         const res = await as(request(app).get('/api/aihankapps/hub/data'), 'admin');
         expect(res.status).toBe(200);
-        expect(res.headers['cache-control']).toBe('private, no-store, max-age=0');
+        expect(res.headers['cache-control']).toBe('private, no-store, no-transform, max-age=0');
         const body = res.body, s = body.daily.series;
         expect([body.success, body.schemaVersion, body.generatedAt, body.timeZone, body.today]).toEqual([true, 1, NOW, 'Asia/Taipei', TODAY]);
         expect(body.daily).toMatchObject({ start: START, days: hub.HISTORY_DAYS });
-        expect(Object.values(body.sources).map(x => x.ok)).toEqual(new Array(8).fill(true));
+        expect(Object.values(body.sources).map(x => x.ok)).toEqual(new Array(11).fill(true));
 
         // catalog: only what the portfolio already shows, with unsafe values dropped
         expect(body.apps.map(a => a.id)).toEqual(['alpha', 'com.example.beta', 'gamma']);
@@ -284,17 +316,39 @@ describe('admin hub: the data answer', () => {
         expect([s.dreamTurns.dreambuddy.v[0], s.dreamTurns.dreambuddy.v.at(-2), s.dreamCompleted.dreambuddy.v.at(-2), s.dreamFailed.dreambuddy.v.at(-2),
             s.dreamActiveDevices.dreambuddy.v.at(-2), s.dreamAds.dreambuddy.v.at(-2)]).toEqual([0, 5, 4, 1, 2, 3]);
         expect(body.sources.dreambuddy.startedAt).toBe('2026-11-01');
+
+        // EClawbot payments: successful card payments plus paid, unrefunded top-ups, zero from the window's start
+        expect(s.eclawPurchases.eclawbot.v).toHaveLength(hub.HISTORY_DAYS);
+        expect([s.eclawPurchases.eclawbot.v.slice(-3), s.eclawPaidTwd.eclawbot.v.slice(-3)]).toEqual([[0, 3, 0], [0, 330, 0]]);
+
+        // imported back-end counts: catalog apps and known metrics only, under an x. prefix; facts carry where they came from
+        expect(s['x.activeUsers']).toEqual({ alpha: { o: at('2026-11-08'), v: [4, 6] } });
+        expect([s['x.bogus'], s['x.plays']]).toEqual([undefined, undefined]);
+        expect(body.latest.facts).toEqual({ alpha: {
+            playersTotal: { label: '玩家總數', value: 12, unit: '人', order: 10, source: 'rebound', observedAt: NOW - 3600000 },
+            retention: { label: '留存', basis: '有玩一局', cohorts: [{ start: '2026-10-05', size: 4, d1: 2, d3: 1, d7: null, d14: null, d30: null }], source: 'rebound', observedAt: NOW - 3600000 } } });
+        expect(body.sources.imports).toEqual({ ok: true, collectors: { rebound: { collectedAt: NOW - 3600000, importedAt: NOW - 3500000, values: 2, notes: ['一則說明'] } } });
+
+        // service checks: every watched back-end, with 24 hours of buckets and 90 days
+        expect(body.services.map(x => x.id)).toEqual(hubStore.SERVICES.map(x => x.id));
+        const main = body.services[0];
+        expect([main.recent.up.at(-1), main.recent.ms.at(-1), main.uptime24h, main.daily.up.at(-1), main.daily.ms.at(-1), main.uptime7d, main.uptime90d]).toEqual([80, 100, 80, 95, 100, 95, 86.36]);
+        expect([body.services[1].uptime24h, body.services[1].daily.up.every(v => v === null)]).toEqual([null, true]);
     });
 
     test('every database read is read-only, time-limited, and gives its connection back', async () => {
         const { app, pool } = mount();
         await as(request(app).get('/api/aihankapps/hub/data'), 'admin');
-        expect(pool.connected).toBe(6);
-        expect(pool.released).toBe(6);
-        expect(pool.log.filter(sql => sql === 'BEGIN READ ONLY')).toHaveLength(6);
-        expect(pool.log.filter(sql => sql === 'SET LOCAL statement_timeout = 8000')).toHaveLength(6);
-        expect(pool.log.filter(sql => sql === 'COMMIT')).toHaveLength(6);
+        expect(pool.connected).toBe(9);
+        expect(pool.released).toBe(9);
+        expect(pool.log.filter(sql => sql === 'BEGIN READ ONLY')).toHaveLength(9);
+        expect(pool.log.filter(sql => sql === 'SET LOCAL statement_timeout = 8000')).toHaveLength(9);
+        expect(pool.log.filter(sql => sql === 'COMMIT')).toHaveLength(9);
         expect(pool.log.join('\n')).not.toMatch(/\b(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)\b/);
+        // outside those transactions only the hub's own tables are prepared, once
+        expect(pool.direct.map(sql => sql.split('(')[0].trim())).toEqual(['aihankapps_hub_probes', 'aihankapps_hub_daily', 'aihankapps_hub_facts', 'aihankapps_hub_sources'].map(t => 'CREATE TABLE IF NOT EXISTS ' + t));
+        expect(pool.log.join('\n')).toMatch(/FROM tappay_transactions WHERE status = 'success' AND currency = 'TWD'/);
+        expect(pool.log.join('\n')).toMatch(/FROM topup_orders WHERE status = 'paid' AND refunded_at IS NULL AND amount_twd > 0/);
         // nothing personal is selected: counts and days only
         expect(pool.log.join('\n')).not.toMatch(/SELECT \*|\b(email|device_secret|password_hash|nickname|content|description|prompt|visitor_hash|ua|referer|ip)\b|(?<!::)\btext\b/);
         expect(pool.params.trafficRows).toEqual([START]);
@@ -309,7 +363,7 @@ describe('admin hub: the data answer', () => {
         const res = await as(request(app).get('/api/aihankapps/hub/data'), 'admin');
         expect(res.status).toBe(200);
         const ok = Object.fromEntries(Object.entries(res.body.sources).map(([id, value]) => [id, value.ok]));
-        expect(ok).toEqual({ catalog: true, store: false, traffic: true, community: true, feedback: true, eclaw: true, eclawChat: false, dreambuddy: false });
+        expect(ok).toEqual({ catalog: true, store: false, traffic: true, community: true, feedback: true, eclaw: true, eclawChat: false, dreambuddy: false, eclawPayments: true, imports: true, services: true });
         expect(res.body.sources.eclawChat).toEqual({ ok: false });            // no error text leaves the server
         expect(res.body.daily.series.googleInstalls).toBeUndefined();
         expect(res.body.daily.series.eclawMessages).toBeUndefined();
@@ -338,17 +392,17 @@ describe('admin hub: the data answer', () => {
         const chatScans = () => pool.log.filter(sql => sql.includes('FROM chat_messages')).length;
         const [a, b] = await Promise.all([routers.data.load(), routers.data.load()]);
         expect(a).toBe(b);
-        expect([pool.connected, chatScans()]).toEqual([6, 1]);
+        expect([pool.connected, chatScans()]).toEqual([9, 1]);
         state.clock = NOW + 119000;
         expect(await routers.data.load()).toBe(a);
-        expect(pool.connected).toBe(6);
+        expect(pool.connected).toBe(9);
         const forced = await routers.data.load({ fresh: true });               // rebuilt, but the chat rows are still fresh enough
         expect(forced).not.toBe(a);
-        expect([pool.connected, chatScans()]).toEqual([11, 1]);
+        expect([pool.connected, chatScans()]).toEqual([17, 1]);
         expect(forced.daily.series.eclawMessages.eclawbot.v.at(-1)).toBe(7);
         state.clock = NOW + 10 * 60000 + 1000;
         await routers.data.load();
-        expect([pool.connected, chatScans()]).toEqual([17, 2]);
+        expect([pool.connected, chatScans()]).toEqual([26, 2]);
     });
 
     test('the small pieces: days, daily slots, report and catalog parsing', () => {
@@ -379,7 +433,7 @@ describe('admin hub: the data answer', () => {
 describe('admin hub: the page reads the answer correctly', () => {
     const DAY = 86400000, TZ = 8 * 3600000;
     const dayT = iso => hub.dayIndex(iso) * DAY - TZ;
-    async function loadPage({ pool, latest, opsDown } = {}) {
+    async function loadPage({ pool, latest, opsDown, live } = {}) {
         const { routers } = mount({ pool });
         const payload = JSON.parse(JSON.stringify(await routers.data.load()));
         payload.apps.push({ id: 'weesh', slug: 'weesh', name: 'Wishlist.ai', category: '社交', platforms: [{ key: 'web', label: 'Web', public: true }], links: {} },
@@ -399,6 +453,7 @@ describe('admin hub: the page reads the answer correctly', () => {
             calls.push(url);
             const json = body => ({ ok: true, status: 200, json: async () => body });
             if (url === '/api/aihankapps/hub/data') return json(payload);
+            if (url === '/api/aihankapps/hub/services' && live) return json({ success: true, checkedAt: NOW, services: live.services });
             if (opsDown) return { ok: false, status: 503, json: async () => ({}) };
             if (url === '/api/aihankapps/ops/catalog') return json(ops.catalog);
             if (url === '/api/aihankapps/ops/latest') return json(ops.latest);
@@ -444,13 +499,13 @@ describe('admin hub: the page reads the answer correctly', () => {
         // weekly buckets
         expect(Array.from(D.series('intro', all, day('2026-10-27'), 7, 2))).toEqual([null, 4]);
         // level: each source is averaged over the days it has, then added — EClawbot's later start does not dilute it
-        expect(D.total('active', all, day('2026-11-09'), day('2026-11-11'))).toBe(1.5 + 1);
+        expect(D.total('active', all, day('2026-11-09'), day('2026-11-11'))).toBe(1.5 + 1 + 6);      // plus the imported count for alpha, known for one of the two days
         expect(D.todayValue('eclawMessages', 'eclawbot')).toBe(7);
         expect(D.siteViews(day('2026-11-01'), day('2026-11-10'))).toBe(5);
         expect(D.rawSum('dreamTurns', 'dreambuddy', day('2026-11-01'), day('2026-11-10'))).toBe(5);
         expect(D.hasData('installs', D.APP.alpha)).toBe(true);
         expect(D.hasData('installs', D.APP.gamma)).toBe(false);
-        expect(D.metricsFor(D.APP.alpha)).toEqual(['installs', 'revenue', 'intro', 'clicks', 'ctr']);
+        expect(D.metricsFor(D.APP.alpha)).toEqual(['installs', 'revenue', 'intro', 'clicks', 'ctr', 'active']);
         expect(D.anyData('crashes')).toBe(false);
     });
 
@@ -498,7 +553,35 @@ describe('admin hub: the page reads the answer correctly', () => {
             ['ops-stale', 'warn', null], ['listing-rate', 'warn', 'weesh'], ['chat-pending', 'info', 'weesh'], ['rating-alpha', 'warn', 'alpha']]);
         expect(noisy.D.appState(noisy.D.APP.weesh)).toBe('crit');
         expect(noisy.D.appState(noisy.D.APP.alpha)).toBe('warn');
-        expect(noisy.D.RULES).toHaveLength(8);
+        expect(noisy.D.RULES).toHaveLength(10);
+    });
+
+    test('service checks, imported numbers and retention reach the page, and raise alerts when they fail or go quiet', async () => {
+        const live = { services: [{ id: 'eclaw', ok: true, status: 200, ms: 120, at: NOW - 30000 }, { id: 'rebound', ok: false, status: 0, ms: 10000, at: NOW - 30000 }] };
+        const { D } = await loadPage({ live });
+        expect(D.services.map(x => x.id)).toEqual(hubStore.SERVICES.map(x => x.id));
+        expect([D.services[0].now.ok, D.services[0].now.ms, D.services[0].uptime24h, D.services[1].now]).toEqual([true, 120, 80, null]);
+        expect(D.serviceFor(D.APP.eclawbot).map(x => x.id)).toEqual(['eclaw']);
+        expect(D.serviceFor(D.APP['typeforge-twin-cities']).map(x => x.id)).toEqual(['summit', 'leaderboard']);
+        expect(D.serviceFor(D.APP.alpha)).toEqual([]);
+        expect(D.facts(D.APP.alpha)).toEqual([{ key: 'playersTotal', label: '玩家總數', value: 12, unit: '人', order: 10, source: 'rebound', observedAt: NOW - 3600000 }]);
+        expect(D.retention(D.APP.alpha).cohorts).toEqual([{ start: '2026-10-05', size: 4, d1: 2, d3: 1, d7: null, d14: null, d30: null }]);
+        expect([D.retention(D.APP.gamma), D.facts(D.APP.gamma)]).toEqual([null, []]);
+
+        D.computeAlerts(Date.parse('2026-11-05T00:00:00Z'));
+        expect(D.ALERTS.map(a => [a.id, a.sev, a.apps])).toEqual([['svc-down-rebound', 'crit', ['rebound']]]);
+        expect(D.ALERTS[0].detail).toBe('最近一次健康檢查連不上或逾時。');
+        // a day and a half after the last import the collector's numbers are called stale
+        D.computeAlerts(NOW - 3600000 + 37 * 3600000);
+        expect(D.ALERTS.map(a => a.id)).toEqual(['ops-stale', 'store-stale', 'svc-down-rebound', 'collector-stale-rebound']);
+        expect(D.ALERTS.at(-1)).toMatchObject({ sev: 'warn', title: 'REBOUND 遊戲伺服器的數據超過一天沒更新', since: NOW - 3600000 });
+
+        // the next refresh brings the service back, and its alert goes
+        live.services = [{ id: 'rebound', ok: true, status: 200, ms: 90, at: NOW }];
+        await D.refreshLive();
+        D.computeAlerts(Date.parse('2026-11-05T00:00:00Z'));
+        expect(D.ALERTS).toEqual([]);
+        expect(D.services.find(x => x.id === 'rebound').now.ms).toBe(90);
     });
 
     test('when the operations API is down the rest still loads, and the sources list says what is missing', async () => {
@@ -509,8 +592,8 @@ describe('admin hub: the page reads the answer correctly', () => {
         expect(D.ALERTS.map(a => a.id)).toContain('ops-down');
         const rows = D.sourceRows();
         expect(rows.find(r => r.name === '營運數據').state).toBe('crit');
-        expect(rows.filter(r => r.state === 'ok').map(r => r.name)).toEqual(['商店報表', '作品集流量', '作品集互動', 'EClaw 帳號', 'EClaw 對話', '夢話夥伴後台', '問題回饋']);
-        expect(rows.filter(r => r.state === 'none').map(r => r.name)).toEqual(['遊戲伺服器', '時光相簿伺服器', '服務狀態', 'APP 內事件', '內購與訂閱']);
+        expect(rows.filter(r => r.state === 'ok').map(r => r.name)).toEqual(['商店報表', '作品集流量', '作品集互動', 'EClaw 帳號', 'EClaw 對話', '夢話夥伴後台', '問題回饋', 'EClaw 付款', '後台服務檢查', 'REBOUND 遊戲伺服器']);
+        expect(rows.filter(r => r.state === 'none').map(r => r.name)).toEqual(['活字戰紀伺服器', 'Wishlist.ai 後台', '時光相簿伺服器', '其他 APP 的使用紀錄', '商店的內購金額']);
         expect(rows.find(r => r.name === '商店報表').note).toBe('Google 到 10/27、Apple 到 10/29、AdMob 到 11/1');
     });
 });
@@ -526,6 +609,8 @@ describe('admin hub: how it is wired in', () => {
         expect(source).toContain("if (!aihankappsHubSlot.page) return res.status(503).json({ success: false, error: 'Admin hub unavailable' });");
         expect(source).toContain('const aihankappsHubRouters = aihankappsHub.createRouters({\n    authMiddleware: adminAuth, adminMiddleware: adminCheck,\n    getPool: () => chatPool, getAuthPool: () => authModule.pool, isReady: () => persistenceReady,');
         expect(source).toContain('aihankappsHubSlot.page = aihankappsHubRouters.page;');
+        // the service checks run in the server, never under tests, and can be switched off
+        expect(source).toContain("if (process.env.AIHANKAPPS_HUB_COLLECTOR !== '0' && process.env.NODE_ENV !== 'test') aihankappsHubRouters.probes.start();");
         expect(source).toContain("app.use('/api/aihankapps/hub', aihankappsHubRouters.api);");
         expect(source).toContain('const adminAuth = authModule.authMiddleware;');
     });

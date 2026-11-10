@@ -567,3 +567,5 @@ td.att em{font-variant-numeric:tabular-nums}
 th[data-tip]{cursor:help}
 /* 表格裡的說明小字可以換行，整張表才不會比卡片寬 */
 .tbl td .sub-link{white-space:normal}
+/* 可用率那一排：沒有檢查紀錄的日子是灰色 */
+.up i.up-na{background:var(--line-2)}

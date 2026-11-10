@@ -423,7 +423,7 @@ describe('AiHankApps admin hub — real server wiring', () => {
             // 302 to the sign-in page once the server is ready; 503 while it is still starting. Never the page.
             expect([302, 503]).toContain(res.status);
             if (res.status === 302) expect(res.headers.location).toBe('/portal/?return_to=%2FAiHankApps%2Fhub%2F');
-            expect(res.headers['cache-control']).toBe('private, no-store, max-age=0');
+            expect(res.headers['cache-control']).toBe('private, no-store, no-transform, max-age=0');
             for (const marker of pageMarkers) expect(res.text || '').not.toContain(marker);
         }
         for (const url of ['/AiHankApps/hub/hub-app.js', '/AiHankApps/hub/hub-data.js', '/AiHankApps/hub/hub.css', '/api/aihankapps/hub/data']) {

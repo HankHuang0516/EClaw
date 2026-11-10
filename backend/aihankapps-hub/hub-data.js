@@ -34,18 +34,29 @@
       note: '從作品集點去 Google Play 或 App Store 的次數' },
     ctr: { name: '商店點擊率', group: '作品集', type: 'ratio', fmt: 'pct1', pct: true, good: 1, src: 'traffic',
       num: 'clicks', den: 'intro', note: '商店點擊次數除以介紹頁瀏覽次數' },
-    active: { name: '活躍裝置', group: '使用', type: 'level', fmt: 'num', good: 1, src: 'usage',
-      parts: ['eclawActiveDevices', 'dreamActiveDevices'], note: '當天有對話的裝置數，目前有 EClawbot 與夢話夥伴' },
+    active: { name: '活躍用戶', group: '使用', type: 'level', fmt: 'num', good: 1, src: 'usage',
+      parts: ['eclawActiveDevices', 'dreamActiveDevices', 'x.activeUsers'],
+      note: '當天有實際使用的人數：EClawbot 與夢話夥伴算有對話的裝置，遊戲算有玩的玩家，Wishlist 算有傳訊息或刊登的帳號' },
+    newUsers: { name: '新用戶', group: '使用', type: 'count', fmt: 'full', good: 1, src: 'usage',
+      parts: ['eclawSignups', 'x.newUsers'], note: '各後台新建立的帳號或玩家；和商店的安裝數是兩回事' },
+    plays: { name: '對局與成績', group: '使用', type: 'count', fmt: 'full', good: 1, src: 'usage',
+      parts: ['x.plays'], note: 'REBOUND 完成的對局、雙城烽火送出的成績、巔峰之戰的對戰場數' },
     messages: { name: '對話則數', group: '使用', type: 'count', fmt: 'full', good: 1, src: 'usage',
-      parts: ['eclawMessages', 'dreamTurns'], note: 'EClawbot 的訊息數，加上夢話夥伴的對話回合' },
-    signups: { name: 'EClaw 新註冊', group: '使用', type: 'count', fmt: 'full', good: 1, src: 'usage',
-      parts: ['eclawSignups'], note: 'EClaw 新建立的帳號數' },
+      parts: ['eclawMessages', 'dreamTurns', 'x.messages'], note: 'EClawbot 的訊息、夢話夥伴的對話回合、Wishlist 的買賣訊息' },
+    iap: { name: '內購與訂閱收入', group: '收入', type: 'count', fmt: 'money', good: 1, src: 'usage', frac: true,
+      parts: ['eclawPaidTwd', 'x.purchaseTwd'], note: '後台有記錄金額的部分：EClawbot 的刷卡與儲值、Wishlist 的付費。遊戲的內購後台只記筆數，金額在商店後台' },
+    purchases: { name: '內購筆數', group: '收入', type: 'count', fmt: 'full', good: 1, src: 'usage',
+      parts: ['eclawPurchases', 'x.purchases'], note: '各後台驗證成功的購買筆數，不含測試與沙盒' },
+    mailSent: { name: '寄出的信', group: '產出', type: 'count', fmt: 'full', good: 0, src: 'usage',
+      parts: ['x.mailSent'], note: '遊戲內信箱寄出的信，節日禮包也算在裡面' },
+    mailClaimed: { name: '領取的信', group: '產出', type: 'count', fmt: 'full', good: 1, src: 'usage',
+      parts: ['x.mailClaimed'], note: '玩家在遊戲內信箱按下領取的次數' },
     listed: { name: 'Wishlist 上架', group: '產出', type: 'count', fmt: 'full', good: 1, src: 'ops',
       parts: ['opsListed'], note: 'Wishlist.ai 每筆紀錄第一次公開的次數' },
     aiwork: { name: 'AI 完成工作', group: '產出', type: 'count', fmt: 'full', good: 1, src: 'ops',
       parts: ['opsWork'], note: '各個 AI worker 完成的件數：照片、商品、對話回合' }
   };
-  const GROUPS = ['商店', '作品集', '使用', '產出'];
+  const GROUPS = ['商店', '作品集', '使用', '收入', '產出'];
 
   const idxOfIso = iso => Math.floor(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / DAY);
   const idxOf = t => Math.floor((t + TZ) / DAY);
@@ -53,9 +64,9 @@
   const workerApp = id => (/^dream-buddy/.test(id) ? 'dreambuddy' : /^timehut-/.test(id) ? 'timehut' : /^wishlist-/.test(id) ? WISHLIST : null);
 
   const D = {
-    MIN: MIN, HOUR: HOUR, DAY: DAY, TZ: TZ, METRICS: METRICS, GROUPS: GROUPS, PLATS: PLATS, WISHLIST: WISHLIST, idxOf: idxOf, dayT: dayT,
+    MIN: MIN, HOUR: HOUR, DAY: DAY, TZ: TZ, METRICS: METRICS, GROUPS: GROUPS, PLATS: PLATS, WISHLIST: WISHLIST, idxOf: idxOf, idxOfIso: idxOfIso, dayT: dayT,
     T0: 0, today: 0, APPS: [], APP: {}, BYKEY: {}, CATS: [], sources: {}, latest: {}, eclaw: {},
-    RAW: {}, opsDaily: {}, ALERTS: [],
+    RAW: {}, opsDaily: {}, ALERTS: [], services: [],
     ops: { ok: false, at: 0, series: [], workers: [], status: null, listing: null, chat: null, workTotals: {}, cpuFreshness: null, updatedAt: {}, recent: null }
   };
   let ends = {};
@@ -82,6 +93,7 @@
     D.sources = hub.sources || {};
     D.latest = hub.latest || {};
     D.eclaw = hub.eclaw || {};
+    D.services = (hub.services || []).map(svc => Object.assign({ now: (D.services.find(old => old.id === svc.id) || {}).now || null }, svc));
     const start = idxOfIso(hub.daily.start);
     Object.keys(D.RAW).forEach(part => { if (!OPS_PARTS[part]) delete D.RAW[part]; });
     Object.keys(hub.daily.series || {}).forEach(part => {
@@ -177,16 +189,26 @@
     };
   }
 
+  // 每個後台服務最近一次健康檢查的結果
+  function applyServices(answer) {
+    if (!answer || !answer.success) return;
+    const byId = {};
+    (answer.services || []).forEach(svc => { byId[svc.id] = svc; });
+    D.services.forEach(svc => { if (byId[svc.id]) svc.now = byId[svc.id]; });
+  }
   D.load = async function () {
-    const got = await Promise.all([getJson(API + '/data'), getJson(OPS + '/catalog').catch(() => null), getJson(OPS + '/latest').catch(() => null)]);
+    const got = await Promise.all([getJson(API + '/data'), getJson(OPS + '/catalog').catch(() => null), getJson(OPS + '/latest').catch(() => null), getJson(API + '/services').catch(() => null)]);
     applyHub(got[0]);
     applyOps(got[1], got[2]);
+    applyServices(got[3]);
     await Promise.all([loadOpsDaily().catch(() => {}), loadOpsRecent().catch(() => {})]);
     computeAlerts(Date.now());
   };
   // 每分鐘：worker 狀態與 Wishlist 現況
   D.refreshLive = async function () {
-    applyOps(null, await getJson(OPS + '/latest').catch(() => null));
+    const got = await Promise.all([getJson(OPS + '/latest').catch(() => null), getJson(API + '/services').catch(() => null)]);
+    applyOps(null, got[0]);
+    applyServices(got[1]);
     computeAlerts(Date.now());
   };
   // 每五分鐘：每日數列、最近 24 小時的小圖。fresh：使用者按了「重新讀取」，請伺服器不要拿兩分鐘內的舊答案
@@ -319,12 +341,15 @@
     ['Wishlist 上架低於目標', 'Wishlist.ai', '近 24 小時平均每小時上架數低於目標', 'warn'],
     ['買家詢問等待處理', 'Wishlist.ai', '聊聊待問大於 0', 'info'],
     ['商店報表超過一週沒更新', '商店報表', '報表產生時間距今超過 8 天', 'warn'],
-    ['評分低於 4.0', '每一款 APP', 'Google Play 評分低於 4.0', 'warn']
+    ['評分低於 4.0', '每一款 APP', 'Google Play 評分低於 4.0', 'warn'],
+    ['後台服務沒有回應', '每一個後台服務', '最近一次健康檢查失敗', 'crit'],
+    ['後台數據超過一天沒更新', '遊戲伺服器、Wishlist 後台', '上一次匯入距今超過 36 小時', 'warn']
   ];
-  const SOURCE_LABEL = { catalog: 'APP 目錄', store: '商店報表', traffic: '作品集流量', community: '作品集互動', feedback: '問題回饋', eclaw: 'EClaw 帳號', eclawChat: 'EClaw 對話', dreambuddy: '夢話夥伴後台' };
+  const COLLECTORS = { rebound: ['REBOUND 遊戲伺服器', 'REBOUND'], summit: ['活字戰紀伺服器', '雙城烽火、巔峰之戰'], wishlist: ['Wishlist.ai 後台', 'Wishlist.ai'] };
+  const SOURCE_LABEL = { catalog: 'APP 目錄', store: '商店報表', traffic: '作品集流量', community: '作品集互動', feedback: '問題回饋', eclaw: 'EClaw 帳號', eclawChat: 'EClaw 對話', dreambuddy: '夢話夥伴後台', eclawPayments: 'EClaw 付款', imports: '匯入的後台數據', services: '後台服務檢查' };
   function computeAlerts(now) {
     const out = [], o = D.ops;
-    const add = (id, sev, title, detail, more) => out.push(Object.assign({ id: id, sev: sev, title: title, detail: detail, app: null, since: null }, more));
+    const add = (id, sev, title, detail, more) => out.push(Object.assign({ id: id, sev: sev, title: title, detail: detail, app: null, apps: null, since: null }, more));
     Object.keys(D.sources).forEach(id => {
       if (!D.sources[id].ok) add('src-' + id, 'crit', (SOURCE_LABEL[id] || id) + '讀不到', '這個來源的數字目前是空的；其他來源不受影響。', { rule: RULES[0][0], go: 'sources' });
     });
@@ -348,6 +373,14 @@
       const r = D.latest.rating[k], a = D.BYKEY[k];
       if (a && r && r.value < 4) add('rating-' + a.id, 'warn', a.short + ' 的評分是 ' + r.value.toFixed(1), 'Google Play 評分低於 4.0。', { rule: RULES[7][0], app: k });
     });
+    D.services.forEach(svc => {
+      if (svc.now && svc.now.ok === false) add('svc-down-' + svc.id, 'crit', svc.name + ' 沒有回應', '最近一次健康檢查' + (svc.now.status ? '回了 ' + svc.now.status : '連不上或逾時') + '。', { rule: RULES[8][0], apps: svc.apps, since: svc.now.at, go: 'live' });
+    });
+    const collectors = (D.sources.imports && D.sources.imports.collectors) || {};
+    Object.keys(collectors).forEach(id => {
+      const c = collectors[id], name = (COLLECTORS[id] || [id])[0];
+      if (c.collectedAt && now - c.collectedAt > 36 * HOUR) add('collector-stale-' + id, 'warn', name + '的數據超過一天沒更新', '上一次匯入是 ' + Math.floor((now - c.collectedAt) / HOUR) + ' 小時前；收集工具在這台 Mac 上執行。', { rule: RULES[9][0], since: c.collectedAt, go: 'sources' });
+    });
     D.ALERTS = out;
   }
   D.RULES = RULES;
@@ -355,16 +388,28 @@
   // 側欄與列表上的狀態：有警示就顯示警示的等級，否則看有沒有公開上架
   D.appState = function (a) {
     let st = a.stage === 'dev' ? 'dev' : 'live';
-    D.ALERTS.forEach(x => { if (x.app === a.key && (x.sev === 'crit' || (x.sev === 'warn' && st !== 'crit'))) st = x.sev; });
+    D.ALERTS.forEach(x => { if ((x.app === a.key || (x.apps && x.apps.indexOf(a.key) >= 0)) && (x.sev === 'crit' || (x.sev === 'warn' && st !== 'crit'))) st = x.sev; });
     return st;
   };
+
+  // 收集工具匯入的「目前數字」（玩家總數、近 7 天活躍…），依它給的順序
+  D.facts = function (a) {
+    const f = (D.latest.facts || {})[a.key] || {};
+    return Object.keys(f).filter(k => k !== 'retention' && f[k] && typeof f[k].label === 'string').map(k => Object.assign({ key: k }, f[k])).sort((x, y) => (x.order || 50) - (y.order || 50));
+  };
+  // 每週註冊的那一批人，之後第 N 天還有多少比例回來
+  D.retention = function (a) {
+    const r = ((D.latest.facts || {})[a.key] || {}).retention;
+    return r && Array.isArray(r.cohorts) && r.cohorts.length ? r : null;
+  };
+  D.serviceFor = a => D.services.filter(svc => svc.apps.indexOf(a.key) >= 0);
 
   // ---- 資料來源一覽 --------------------------------------------------------------
   D.sourceRows = function () {
     const s = D.sources, o = D.ops, iso = i => { const d = new Date(dayT(i) + TZ); return (d.getUTCMonth() + 1) + '/' + d.getUTCDate(); };
     const state = id => (s[id] ? (s[id].ok ? 'ok' : 'crit') : 'crit');
     const st = s.store || {}, storeEnds = st.ends ? [['Google', st.ends.googleInstalls], ['Apple', st.ends.appleDownloads], ['AdMob', st.ends.admobRevenue]].filter(e => e[1]).map(e => e[0] + ' 到 ' + iso(idxOfIso(e[1]))).join('、') : '';
-    const opsSeen = Date.parse(o.updatedAt.latestStatus || '') || null;
+    const opsSeen = Date.parse(o.updatedAt.latestStatus || '') || null, collectors = (s.imports && s.imports.collectors) || {};
     return [
       { name: '商店報表', gives: 'Google Play 安裝、App Store 首次下載、AdMob 收入、當機事件、評分', cover: '有上架的 APP', freq: '每週產生一次', last: Date.parse(st.generatedAt || '') || null, state: state('store'), note: storeEnds || '—' },
       { name: '作品集流量', gives: '作品集瀏覽、介紹頁瀏覽、商店點擊', cover: '全部 APP', freq: '即時累計', last: s.traffic && s.traffic.ok ? D.T0 : null, state: state('traffic'), note: s.traffic && s.traffic.startedAt ? '自 ' + iso(idxOfIso(s.traffic.startedAt)) + ' 起' : '—' },
@@ -374,12 +419,17 @@
       { name: '夢話夥伴後台', gives: '對話回合、活躍裝置、廣告獎勵次數', cover: '夢話夥伴', freq: '即時', last: s.dreambuddy && s.dreambuddy.ok ? D.T0 : null, state: state('dreambuddy'), note: s.dreambuddy && s.dreambuddy.startedAt ? '自 ' + iso(idxOfIso(s.dreambuddy.startedAt)) + ' 起' : '還沒有紀錄' },
       { name: '問題回饋', gives: 'APP 內送出的問題回饋件數', cover: '詐騙帝國', freq: '即時', last: s.feedback && s.feedback.ok ? D.T0 : null, state: state('feedback'), note: '只統計數量，不含內容' },
       { name: '營運數據', gives: 'AI worker 的 CPU、記憶體、完成件數；Wishlist 上架數、公開可見數、聊聊待問', cover: 'Wishlist.ai、時光相簿、夢話夥伴', freq: '每 5 到 30 分鐘', last: opsSeen, state: o.ok ? 'ok' : 'crit', note: '與公開的「營運數據」頁同一份資料' },
-      { name: '遊戲伺服器', gives: '玩家數、信箱、排行榜', cover: 'REBOUND、雙城烽火、巔峰之戰', freq: '—', last: null, state: 'none', note: '各自在別的專案上，還沒有彙總的讀取方式' },
-      { name: '時光相簿伺服器', gives: '帳號、照片、排隊狀況', cover: '時光相簿', freq: '—', last: null, state: 'none', note: '還沒有彙總的讀取方式' },
-      { name: '服務狀態', gives: '部署紀錄、可用率、回應時間', cover: '每一個後台服務', freq: '—', last: null, state: 'none', note: '需要新增定時檢查' },
-      { name: 'APP 內事件', gives: '活躍用戶、留存、轉換漏斗', cover: '大多數 APP', freq: '—', last: null, state: 'none', note: '多數 APP 沒有記錄使用事件，要先在 APP 裡加' },
-      { name: '內購與訂閱', gives: 'Google Play 與 App Store 的銷售金額', cover: '有內購的 APP', freq: '—', last: null, state: 'none', note: '商店報表目前只收廣告收入' }
-    ];
+      { name: 'EClaw 付款', gives: '刷卡成功與儲值付款的筆數與金額', cover: 'EClawbot', freq: '即時', last: s.eclawPayments && s.eclawPayments.ok ? D.T0 : null, state: state('eclawPayments'), note: '不含失敗與已退款' },
+      { name: '後台服務檢查', gives: '每個後台有沒有回應、回應時間、可用率', cover: D.services.length + ' 個後台服務', freq: '每分鐘', last: D.services.reduce((m, svc) => Math.max(m, (svc.now && svc.now.at) || 0), 0) || null, state: state('services'), note: '由 EClaw 主站去問各後台公開的健康檢查網址' }
+    ].concat(Object.keys(COLLECTORS).map(id => {
+      const c = collectors[id], stale = c && D.T0 - c.collectedAt > 36 * HOUR;
+      return { name: COLLECTORS[id][0], gives: '新用戶、每日活躍、對局、內購筆數、信箱、留存', cover: COLLECTORS[id][1], freq: '收集工具每次執行', last: c ? c.collectedAt : null,
+        state: !s.imports || !s.imports.ok ? 'crit' : !c ? 'none' : stale ? 'warn' : 'ok', note: !c ? '還沒有匯入過' : stale ? '超過一天沒更新；收集工具在這台 Mac 上執行' : ((c.notes || [])[0] || '只匯入彙總數字，不含任何帳號或內容') };
+    })).concat([
+      { name: '時光相簿伺服器', gives: '帳號、照片、排隊狀況', cover: '時光相簿', freq: '—', last: null, state: 'none', note: '資料存在伺服器自己的檔案裡，還沒有彙總的讀取方式；目前只有服務檢查與 AI worker 的數字' },
+      { name: '其他 APP 的使用紀錄', gives: '活躍用戶、留存', cover: '沒有自己伺服器的 APP', freq: '—', last: null, state: 'none', note: '這些 APP 不會回報使用情況，要在 APP 裡加上回報再發新版才會有' },
+      { name: '商店的內購金額', gives: 'Google Play 與 App Store 的實際銷售金額', cover: '有內購的 APP', freq: '—', last: null, state: 'none', note: '商店報表目前只收廣告收入；遊戲後台只記內購筆數' }
+    ]);
   };
 
   global.HubData = D;
