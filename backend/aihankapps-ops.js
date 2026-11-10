@@ -29,7 +29,9 @@ const MONITOR_BASE = 'https://minimax-monitor.eclawbot.com/api/monitor/public/';
 const WISHLIST_BASE = 'https://wishlist-app-production.up.railway.app/api/public/';
 // A descriptive UA: the Cloudflare edge in front of eclawbot.com refuses empty or default client UAs (error 1010).
 const OUTBOUND_UA = 'aihankapps-ops-collector/1.0 (+https://eclawbot.com/AiHankApps/ops/)';
-const FETCH_TIMEOUT_MS = 20000;
+// The monitor answers through a Cloudflare tunnel to a Mac; a day of CPU history (550 KB) took more than 20 s from
+// Railway on 2026-11-10, so big requests get a longer limit and the bootstrap falls back to a shorter window.
+const FETCH_TIMEOUT_MS = 30000, BIG_FETCH_TIMEOUT_MS = 90000;
 const RAW_KEEP_DAYS = 14;
 const TIME_ZONE = 'Asia/Taipei';
 const MAX_IDS = 24, MAX_POINTS = 3000, ID_PATTERN = /^[a-z][a-zA-Z0-9_.-]{0,80}$/;
@@ -266,8 +268,8 @@ async function countPoints(pool) {
 }
 
 // ---- collecting --------------------------------------------------------------------------------------------------------
-async function getJson(url, fetchImpl) {
-    const res = await fetchImpl(url, { headers: { 'User-Agent': OUTBOUND_UA, Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+async function getJson(url, fetchImpl, timeoutMs = FETCH_TIMEOUT_MS) {
+    const res = await fetchImpl(url, { headers: { 'User-Agent': OUTBOUND_UA, Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(timeoutMs) });
     if (res.status !== 200) throw new Error('HTTP_' + res.status);
     return res.json();
 }
@@ -291,7 +293,7 @@ function createCollector(getPool, { fetchImpl = (...a) => globalThis.fetch(...a)
 
     // CPU: minute points for the requested window (the monitor serves 720 points at most), then hourly averages.
     const collectCpu = (minutes = 20, stepMinutes = 1) => guard('cpu', async pool => {
-        const json = await getJson(MONITOR_BASE + 'cpu-history?minutes=' + minutes + '&stepMinutes=' + stepMinutes, fetchImpl);
+        const json = await getJson(MONITOR_BASE + 'cpu-history?minutes=' + minutes + '&stepMinutes=' + stepMinutes, fetchImpl, minutes > 60 ? BIG_FETCH_TIMEOUT_MS : FETCH_TIMEOUT_MS);
         const { points, workers } = cpuPoints(json);
         if (Object.keys(workers).length) await setMeta(pool, 'workers', workers);
         if (!points.length) return { points: 0 };
@@ -315,7 +317,7 @@ function createCollector(getPool, { fetchImpl = (...a) => globalThis.fetch(...a)
     // Work: exact hourly counts (complete hours only) plus the monitor's own catalog and running totals.
     const collectWork = (hours = 48) => guard('work', async pool => {
         const summary = workSummary(await getJson(MONITOR_BASE + 'work-summary', fetchImpl));
-        const history = workPoints(await getJson(MONITOR_BASE + 'work-history?hours=' + hours, fetchImpl));
+        const history = workPoints(await getJson(MONITOR_BASE + 'work-history?hours=' + hours, fetchImpl, hours > 48 ? BIG_FETCH_TIMEOUT_MS : FETCH_TIMEOUT_MS));
         const catalog = summary.catalog.length ? summary.catalog : history.catalog;
         if (catalog.length) await setMeta(pool, 'workCatalog', catalog);
         await setMeta(pool, 'workTotals', { at: now(), totals: summary.totals });
@@ -324,7 +326,7 @@ function createCollector(getPool, { fetchImpl = (...a) => globalThis.fetch(...a)
     });
 
     const collectListing = (hours = 72) => guard('listing', async pool => {
-        const { hourly, gauges, summary } = listingPoints(await getJson(WISHLIST_BASE + 'listing-report?hours=' + hours, fetchImpl));
+        const { hourly, gauges, summary } = listingPoints(await getJson(WISHLIST_BASE + 'listing-report?hours=' + hours, fetchImpl, hours > 168 ? BIG_FETCH_TIMEOUT_MS : FETCH_TIMEOUT_MS));
         if (hourly.length) await upsertPoints(pool, 'h', hourly);
         if (gauges.length) { await upsertPoints(pool, 'm', gauges); await rollupHours(pool, gauges.map(p => p.series), gauges[0].at); }
         await setMeta(pool, 'listingSummary', { ...summary, fetchedAt: now() });
@@ -345,7 +347,9 @@ function createCollector(getPool, { fetchImpl = (...a) => globalThis.fetch(...a)
     const bootstrap = () => guard('bootstrap', async pool => {
         const counts = await countPoints(pool);
         const empty = !counts.m && !counts.h;
-        await collectCpu(empty ? 1440 : 20, empty ? 2 : 1);
+        // A day of CPU first; when that is too slow for the tunnel, six hours, then the usual 20 minutes.
+        if (empty) { for (const [m, step] of [[1440, 2], [360, 1], [20, 1]]) if (await collectCpu(m, step)) break; }
+        else await collectCpu(20, 1);
         await collectStatus();
         await collectWork(empty ? 168 : 48);
         await collectListing(empty ? 2160 : 72);
