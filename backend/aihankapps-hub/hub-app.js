@@ -27,6 +27,8 @@
   const ATT = { ok: ['達標', 'ok'], near: ['接近', 'warn'], behind: ['落後', 'crit'] };
   const SEV = { crit: '嚴重', warn: '警告', info: '提醒' };
   const HEALTH = { healthy: ['ok', '正常'], degraded: ['warn', '部分異常'], unhealthy: ['crit', '異常'], unknown: ['info', '未知'], '': ['info', '未知'] };
+  // 排程型 worker 在兩輪之間沒有程式在跑是正常的，不算停擺
+  const workerState = w => (D.betweenRounds(w) ? ['info', '排程中，兩輪之間'] : w.processOnline === false ? ['crit', '沒有在執行'] : HEALTH[w.health] || HEALTH['']);
   const LIVE_WIN = {
     '24h': { name: '24 小時', span: 24 * HOUR, cpuStep: 'minute', cpuBucket: 10 * MIN, cntStep: 'hour', cntBucket: HOUR },
     '7d': { name: '7 天', span: 7 * DAY, cpuStep: 'hour', cpuBucket: HOUR, cntStep: 'hour', cntBucket: HOUR },
@@ -208,7 +210,7 @@
   function nowValues() {
     const o = D.ops, l = o.listing, rec = o.recent, ws = o.workers;
     const cpu = ws.filter(w => w.cpuCorePercent != null);
-    const okN = ws.filter(w => w.processOnline !== false && w.health !== 'unhealthy' && w.health !== 'degraded').length;
+    const okN = ws.filter(w => (w.processOnline !== false || D.betweenRounds(w)) && w.health !== 'unhealthy' && w.health !== 'degraded').length;
     return {
       listed: l && l.today ? l.today.count : null,
       work: rec ? sumKnown(rec.work) : null,
@@ -244,7 +246,7 @@
       $('#now-msgs-x').textContent = n.msgsPrev == null ? '' : '昨天 ' + V.fmtInt(n.msgsPrev) + ' 則';
       $('#now-ok').textContent = n.total ? n.okN : '—';
       $('#now-ok-x').textContent = n.total ? '／' + n.total + ' 正常' : '';
-      $('#now-dots').innerHTML = o.workers.map(w => { const h = w.processOnline === false ? ['crit', '沒有在執行'] : HEALTH[w.health] || HEALTH['']; return '<i class="sd sd-' + (h[0] === 'info' ? 'live' : h[0]) + '" data-tip="' + esc(w.name + '\n' + h[1]) + '"></i>'; }).join('');
+      $('#now-dots').innerHTML = o.workers.map(w => { const h = workerState(w); return '<i class="sd sd-' + (h[0] === 'info' ? 'live' : h[0]) + '" data-tip="' + esc(w.name + '\n' + h[1]) + '"></i>'; }).join('');
       const f = firing(), crit = f.filter(a => a.sev === 'crit').length, warn = f.filter(a => a.sev === 'warn').length;
       $('#now-al').textContent = f.length;
       $('#now-al-x').innerHTML = f.length ? (crit ? pill('crit', '嚴重 ' + crit) : '') + (warn ? pill('warn', '警告 ' + warn) : '') + (f.length - crit - warn ? pill('info', '提醒 ' + (f.length - crit - warn)) : '') : pill('ok', '沒有異常');
@@ -449,7 +451,6 @@
   }
 
   // ---- 即時監控 ----------------------------------------------------------------
-  const workerState = w => (w.processOnline === false ? ['crit', '沒有在執行'] : HEALTH[w.health] || HEALTH['']);
   function workerRowsHtml(workers) {
     const rec = D.ops.recent, cpuMax = Math.max(100, Math.max.apply(null, workers.map(w => w.cpuCorePercent || 0)));
     return workers.map(w => {
