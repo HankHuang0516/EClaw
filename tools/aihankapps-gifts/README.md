@@ -57,23 +57,26 @@ node tools/aihankapps-gifts/cli.js tick
 
 ### 公告
 
+公告一旦上線就是對玩家的承諾，所以先確認兩週後寄得出去。在暫存資料夾起草一份，對活動裡的每款遊戲跑一次只讀的連線檢查；這一步不會動到工作副本：
+
+```bash
+node tools/aihankapps-gifts/cli.js draft --campaign-dir /tmp/gift-check/campaigns
+node tools/aihankapps-gifts/cli.js status <id> <game> --campaign-dir /tmp/gift-check/campaigns
+```
+
+每款遊戲的 `issues` 都是空的、`audience` 有數字、`mails` 是 0 才算通過。任何一款沒過就到此為止，把輸出回報給 Hank；隔天排程會再檢查一次。
+
+通過後才正式起草：
+
 ```bash
 node tools/aihankapps-gifts/cli.js draft
 node tools/aihankapps-gifts/cli.js build
 node tools/aihankapps-gifts/cli.js validate
 ```
 
-`draft` 的輸出裡 `approved: true` 才往下做。`approved: false` 時活動檔會以 `draft` 狀態留著，`failed` 列出沒過的檢查；不要為了讓它通過去改 `games.json`、`calendar.json` 或核准規則，把 `failed` 回報給 Hank。
+`draft` 的輸出裡 `approved: true` 才往下做。`approved: false` 時 `failed` 會列出沒過的檢查：不要為了讓它通過去改 `games.json`、`calendar.json` 或核准規則。把剛寫出、還沒進版控的 `campaigns/<id>.json` 刪掉讓工作副本保持乾淨，然後把 `failed` 回報給 Hank；隔天排程會重新起草、重新判斷。
 
-公告之前先確認兩週後寄得出去。對活動裡的每款遊戲跑一次只讀的連線檢查：
-
-```bash
-node tools/aihankapps-gifts/cli.js status <id> <game>
-```
-
-`issues` 是空的、`audience` 有數字、`mails` 是 0 才算通過。任何一款沒過就不要開公告 PR（已經寫出的活動檔與產生檔不要提交），把輸出回報給 Hank：公告一旦上線就是對玩家的承諾。
-
-通過後開 PR（活動檔、`gift-campaigns.js`、`index.html` 的版本參數、`promo/<id>.md`），照 EClaw 的規定走：PR CI 全綠 → 貼 `docs/code-review-checklist.md` 的自我審查留言 → squash merge → 確認 main 的 CI → 等 Railway 部署 → 開 <https://eclawbot.com/AiHankApps/> 確認公告出現。最後把 `promo/<id>.md` 交給 Hank。
+核准後開 PR（活動檔、`gift-campaigns.js`、`index.html` 的版本參數、`promo/<id>.md`），照 EClaw 的規定走：PR CI 全綠 → 貼 `docs/code-review-checklist.md` 的自我審查留言 → squash merge → 確認 main 的 CI → 等 Railway 部署 → 開 <https://eclawbot.com/AiHankApps/> 確認公告出現。最後把 `promo/<id>.md` 交給 Hank。
 
 ### 寄送
 
