@@ -318,6 +318,17 @@ app.use('/AiHankApps/admin-demos', privateDemoRuntime.privateHeaders, (req, res)
     });
 });
 
+// AiHankApps 管理中樞 (/AiHankApps/hub/): the page itself is admin-only, so it is reserved here too, before anonymous
+// pageview tracking and public static serving. Its files live outside public/ (backend/aihankapps-hub/).
+const aihankappsHub = require('./aihankapps-hub');
+const aihankappsHubSlot = { page: null };
+app.use('/AiHankApps/hub', aihankappsHub.privateHeaders, (req, res) => {
+    if (!aihankappsHubSlot.page) return res.status(503).json({ success: false, error: 'Admin hub unavailable' });
+    return aihankappsHubSlot.page(req, res, error => {
+        if (!res.headersSent) res.status(error ? 503 : 404).json({ success: false, error: 'Admin hub unavailable' });
+    });
+});
+
 // Site pageview tracker — anonymous GETs on marketing / public HTML pages.
 // Pool is wired lazily via setPool() once chatPool exists; tracking is
 // fire-and-forget and silently no-ops when the pool isn't ready.
@@ -1916,6 +1927,7 @@ app.get('/api/help', (req, res) => {
         dream_buddy_ads: ['dream buddy ads', 'dream-buddy reward', '夢話夥伴廣告', '梦话伙伴广告'],
         paper_beta_feedback: ['paper beta feedback', 'paper-beta-feedback', '紙上彈兵回饋', '纸上弹兵反馈'],
         taaze_demo_share: ['taaze demo', 'taaze-demo', 'demo share', 'demo 分享', '示範分享'],
+        aihankapps_hub: ['admin hub', 'aihankapps hub', 'aihankapps/hub', '管理中樞', '管理中枢', 'portfolio admin', 'aihankapps ops', '營運數據', '营运数据'],
         dot_progress: ['dot progress', 'dot-progress', 'dot 專案進度', '專案進度', '待決策', 'pending decision', '催進度', 'push progress', 'work timeline', 'work interval', '歷史時程表', '历史时程表', '工作時程', 'gantt', 'schedule', 'planned schedule', '甘特圖', '甘特图', '預計排程', '预计排程'],
         messaging:  ['speakto','broadcast','發訊','reply','transform','message','send','私訊','廣播','メッセージ','送信','메시지','전송','ส่งข้อความ','ข้อความ','ส่ง','gửi tin nhắn','tin nhắn','gửi','phát sóng','kirım pesan','pesan','mengirim','envoyer message','diffusion','enviar mensaje','transmitir','hantar mesej','mesej','menghantar'],
         kanban:     ['card','看板','任務','move','派任','assign','kanban','卡片','create task','建立任務','カード','タスク','칸반','카드','작업','กระดาน','บัตร','จัดการงาน','bảng','thẻ','quản lý công việc','papan','kartu','manajemen tugas','tableau','carte','gestion tâches','tablero','tarjeta','gestión tareas','kad','pengurusan tugas','history','archived','archive','restore','封存','歷史','還原','漏斗','過濾','filter','funnel'],
@@ -1997,6 +2009,13 @@ app.get('/api/help', (req, res) => {
             { title: 'Read retained private planned-schedule revisions; Undo saves a prior board with the current version and a fresh requestId', curl: `curl -s "${apiBase}/api/dot-progress/schedule/2040-07-19/history?offset=0" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
             { title: 'Preview an explicitly selected historical schedule revision: exact added IDs, protected later edits and current version; no write', curl: `curl -s "${apiBase}/api/dot-progress/schedule/2040-07-19/recovery-preview?revision=SOURCE_VERSION" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
             { title: 'Recover only owner-selected eligible derived rows as a new retained revision; preserve every other row and display order', curl: `curl -s -X POST "${apiBase}/api/dot-progress/schedule/2040-07-19/recovery" --cookie /LOCAL/PORTAL_COOKIE_FILE -H "Content-Type: application/json" --data-binary @/LOCAL/SAFE_SCHEDULE_RECOVERY.json\n# Fields: requestId, current version, sourceRevision (the reviewed historical version), removeIds (nonempty unique eligible IDs selected by the owner). The server rechecks complete later history and source-time actual snapshots. Any later row or actual change is protected; stale, incomplete or excessive history fails closed. No automatic cleanup, timeline/push changes or history deletion. Undo uses a fresh ordinary versioned PUT with the retained before rows and rowOrder.` }
+        ],
+        aihankapps_hub: [
+            { title: 'AiHankApps 管理中樞 page (existing admin portal session only; an anonymous browser is sent to sign in, a non-admin account gets 403)', curl: `curl -s "${apiBase}/AiHankApps/hub/" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Daily aggregates behind the hub: store report, portfolio traffic, EClawbot and 夢話夥伴 usage (admin session; read-only, counts only)', curl: `curl -s "${apiBase}/api/aihankapps/hub/data" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Whether the current session may see the hub entry (answers everyone with { admin: true|false } and nothing else)', curl: `curl -s "${apiBase}/api/aihankapps/hub/access" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Public operations data the hub also reads: worker status and the Wishlist listing summary', curl: `curl -s "${apiBase}/api/aihankapps/ops/latest"` },
+            { title: 'Public operations series (ids from /api/aihankapps/ops/catalog; step minute|hour|day|month)', curl: `curl -s "${apiBase}/api/aihankapps/ops/series?ids=wishlist.listed,cpu.total.core&step=hour"` }
         ],
         messaging: [
             { title: 'Send private message (speakTo)', curl: `curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${botSecret}","message":"TEXT","state":"IDLE","speakTo":["TARGET_PUBLIC_CODE"]}'` },
@@ -5853,6 +5872,25 @@ adminDemoRuntimeSlot.router = privateDemoRuntime.createRouter({
     authMiddleware: adminAuth, adminMiddleware: adminCheck,
     getPool: () => chatPool, isReady: () => persistenceReady,
 });
+const aihankappsHubRouters = aihankappsHub.createRouters({
+    authMiddleware: adminAuth, adminMiddleware: adminCheck,
+    getPool: () => chatPool, getAuthPool: () => authModule.pool, isReady: () => persistenceReady,
+    // Same counting rule as /api/admin/stats: test devices are left out.
+    getDeviceStats: () => {
+        const stats = { devices: 0, entities: 0, boundEntities: 0 };
+        for (const [deviceId, device] of Object.entries(devices)) {
+            if (isTestDeviceCheck(deviceId, device)) continue;
+            stats.devices++;
+            for (const entity of Object.values(device.entities || {})) {
+                stats.entities++;
+                if (entity.isBound) stats.boundEntities++;
+            }
+        }
+        return stats;
+    },
+});
+aihankappsHubSlot.page = aihankappsHubRouters.page;
+app.use('/api/aihankapps/hub', aihankappsHubRouters.api);
 app.use('/api/admin/paper-beta-feedback', require('./paper-beta-admin').createRouter(
     () => chatPool, adminAuth, adminCheck
 ));
