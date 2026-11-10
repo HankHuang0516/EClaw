@@ -20,15 +20,24 @@ const rebound = require(path.join(tool, 'lib/adapters/rebound'));
 const typeforge = require(path.join(tool, 'lib/adapters/typeforge'));
 
 const games = store.loadGames();
-const calendar = store.loadCalendar();
+const liveCalendar = store.loadCalendar();
 const published = store.loadCampaigns();
-const christmas = calendar.occurrences.find(item => item.holiday === 'christmas' && item.date === '2026-12-25');
+// Behaviour is tested on a fixed calendar and on the two historical records only, so adding,
+// delivering or finishing a real campaign never changes what these tests assert. The live
+// calendar and campaign files are checked on their own below.
+const legacy = published.filter(campaign => campaign.kind === 'legacy');
+const calendar = { ...liveCalendar, occurrences: [
+  { holiday: 'christmas', date: '2026-12-25' }, { holiday: 'lunar-new-year', date: '2027-02-06' },
+  { holiday: 'dragon-boat', date: '2027-06-09' }, { holiday: 'mid-autumn', date: '2027-09-15' },
+  { holiday: 'halloween', date: '2027-10-31' }, { holiday: 'christmas', date: '2027-12-25' }
+] };
+const christmas = calendar.occurrences[0];
 const at = iso => Date.parse(iso);
 const BEFORE_START = at('2026-12-11T02:30:00Z');
 const clone = value => JSON.parse(JSON.stringify(value));
 
 function decide(campaign, overrides = {}) {
-  return policy.decide(campaign, { calendar, games, campaigns: published, now: BEFORE_START, hold: null, ...overrides });
+  return policy.decide(campaign, { calendar, games, campaigns: legacy, now: BEFORE_START, hold: null, ...overrides });
 }
 
 function approvedChristmas() {
@@ -67,26 +76,37 @@ describe('time rules', () => {
 
 describe('calendar and game registry', () => {
   test('every occurrence is a known holiday with five-language names and a unique campaign id', () => {
-    const ids = calendar.occurrences.map(campaignIdFor);
+    const ids = liveCalendar.occurrences.map(campaignIdFor);
     expect(new Set(ids).size).toBe(ids.length);
-    for (const occurrence of calendar.occurrences) {
-      const holiday = calendar.holidays[occurrence.holiday];
+    for (const occurrence of liveCalendar.occurrences) {
+      const holiday = liveCalendar.holidays[occurrence.holiday];
       expect(holiday).toBeDefined();
       for (const locale of copy.LOCALES) expect(holiday.names[locale]).toEqual(expect.any(String));
       expect(['standard', 'major']).toContain(occurrence.tier || holiday.tier);
     }
   });
   test('lunar holidays use the looked-up dates, not a computed calendar', () => {
-    const date = holiday => calendar.occurrences.find(item => item.holiday === holiday).date;
+    const date = holiday => liveCalendar.occurrences.find(item => item.holiday === holiday).date;
     expect(date('lunar-new-year')).toBe('2027-02-06');
     expect(date('dragon-boat')).toBe('2027-06-09');
     expect(date('mid-autumn')).toBe('2027-09-15');
   });
   test('occurrences are in order and never closer than the minimum gap', () => {
-    const starts = calendar.occurrences.map(item => at(timesFor(item, calendar).startsAt));
+    const starts = liveCalendar.occurrences.map(item => at(timesFor(item, liveCalendar).startsAt));
     for (let index = 1; index < starts.length; index++) {
-      expect(starts[index] - starts[index - 1]).toBeGreaterThanOrEqual(calendar.minDaysBetweenCampaigns * time.DAY_MS);
+      expect(starts[index] - starts[index - 1]).toBeGreaterThanOrEqual(liveCalendar.minDaysBetweenCampaigns * time.DAY_MS);
     }
+  });
+  test('every occurrence on the live calendar drafts into a campaign the policy approves on its announcement day', () => {
+    for (const occurrence of liveCalendar.occurrences) {
+      const draft = draftCampaign(occurrence, { calendar: liveCalendar, games });
+      const verdict = policy.decide(draft, { calendar: liveCalendar, games, campaigns: legacy, now: at(draft.announceAt), hold: null });
+      expect([draft.id, verdict.checks.filter(item => !item.ok).map(item => item.id)]).toEqual([draft.id, []]);
+    }
+  });
+  test('every real campaign file belongs to an occurrence on the live calendar', () => {
+    const ids = liveCalendar.occurrences.map(campaignIdFor);
+    for (const campaign of published.filter(item => item.kind === 'holiday')) expect(ids).toContain(campaign.id);
   });
   test('only the two published, deliverable games are enabled and their tiers stay inside the caps', () => {
     expect(games.games.filter(game => game.enabled).map(game => game.id)).toEqual(['rebound', 'typeforge-twin-cities']);
@@ -237,8 +257,8 @@ describe('automatic approval', () => {
   });
   test('two campaigns for the same game inside the minimum gap are refused', () => {
     const neighbour = { ...decide(draft).campaign, id: 'neighbour-2026', startsAt: time.addDays(draft.startsAt, -10) };
-    expect(failed(decide(draft, { campaigns: [...published, neighbour] }))).toEqual(['cooldown']);
-    const legacyNeighbour = { ...published.find(item => item.id.startsWith('elemental')), startsAt: time.addDays(draft.startsAt, 5) };
+    expect(failed(decide(draft, { campaigns: [...legacy, neighbour] }))).toEqual(['cooldown']);
+    const legacyNeighbour = { ...legacy.find(item => item.id.startsWith('elemental')), startsAt: time.addDays(draft.startsAt, 5) };
     expect(failed(decide(draft, { campaigns: [legacyNeighbour] }))).toEqual(['cooldown']);
   });
   test('a disabled game is refused', () => {
@@ -386,15 +406,15 @@ describe('daily plan', () => {
   const types = result => result.actions.map(action => [action.type, action.id, action.gameId, action.record].filter(Boolean).join(' '));
 
   test('nothing is due before the announcement date', () => {
-    expect(run(published, '2026-11-10T02:00:00Z').actions).toEqual([]);
-    expect(run(published, '2026-12-11T01:59:59Z').actions).toEqual([]);
+    expect(run(legacy, '2026-11-10T02:00:00Z').actions).toEqual([]);
+    expect(run(legacy, '2026-12-11T01:59:59Z').actions).toEqual([]);
   });
   test('the campaign is drafted from its announcement date until it starts', () => {
-    expect(types(run(published, '2026-12-11T02:00:00Z'))).toEqual(['draft christmas-2026']);
-    expect(types(run(published, '2026-12-25T01:59:59Z'))).toEqual(['draft christmas-2026']);
+    expect(types(run(legacy, '2026-12-11T02:00:00Z'))).toEqual(['draft christmas-2026']);
+    expect(types(run(legacy, '2026-12-25T01:59:59Z'))).toEqual(['draft christmas-2026']);
   });
   test('an occurrence that was never drafted is reported, not delivered late', () => {
-    const result = run(published, '2026-12-25T02:00:00Z');
+    const result = run(legacy, '2026-12-25T02:00:00Z');
     expect(result.actions).toEqual([]);
     expect(result.warnings).toContainEqual({ type: 'missed_occurrence', id: 'christmas-2026', startsAt: '2026-12-25T02:00:00.000Z' });
   });
@@ -426,8 +446,8 @@ describe('daily plan', () => {
     expect(types(run([draft], '2026-12-26T02:00:00Z'))).toEqual(['review_draft christmas-2026']);
   });
   test('the plan warns when the calendar is about to run out', () => {
-    expect(run(published, '2026-11-10T02:00:00Z').warnings).toEqual([]);
-    expect(run(published, '2027-09-01T02:00:00Z').warnings).toContainEqual(expect.objectContaining({ type: 'calendar_needs_extension' }));
+    expect(run(legacy, '2026-11-10T02:00:00Z').warnings).toEqual([]);
+    expect(run(legacy, '2027-09-01T02:00:00Z').warnings).toContainEqual(expect.objectContaining({ type: 'calendar_needs_extension' }));
   });
 });
 
@@ -549,9 +569,17 @@ describe('command line', () => {
   const run = (...args) => spawnSync(process.execPath, [cli, ...args], { encoding: 'utf8' });
 
   test('tick reports what is due for a given moment', () => {
-    expect(run('tick', '--now', '2026-11-10T02:00:00Z').stdout).toContain('nothing due');
-    const due = JSON.parse(run('tick', '--now', '2026-12-11T02:30:00Z', '--json').stdout);
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gift-tick-'));
+    const calendarFile = path.join(dir, 'calendar.json');
+    fs.writeFileSync(calendarFile, JSON.stringify(calendar));
+    const scratch = ['--calendar', calendarFile, '--campaign-dir', path.join(dir, 'campaigns')];
+    expect(run('tick', '--now', '2026-11-10T02:00:00Z', ...scratch).stdout).toContain('nothing due');
+    const due = JSON.parse(run('tick', '--now', '2026-12-11T02:30:00Z', '--json', ...scratch).stdout);
     expect(due.actions).toEqual([{ type: 'draft', id: 'christmas-2026', holiday: 'christmas', startsAt: '2026-12-25T02:00:00.000Z' }]);
+    // Whatever the real calendar and campaign files hold today, the plan can be read.
+    const live = run('tick', '--json');
+    expect(live.status).toBe(0);
+    expect(JSON.parse(live.stdout)).toEqual(expect.objectContaining({ actions: expect.any(Array), warnings: expect.any(Array) }));
   });
   test('validate passes on the committed campaigns and generated files', () => {
     const result = run('validate');
