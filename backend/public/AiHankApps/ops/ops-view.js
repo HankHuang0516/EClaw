@@ -121,7 +121,7 @@
       this.svg = $('[data-role=svg]', section); this.tooltip = $('[data-role=tooltip]', section); this.detail = $('[data-role=detail]', section);
       this.legend = $('[data-role=legend]', section); this.rangeText = $('[data-role=range]', section); this.help = $('[data-role=help]', section); this.emptyNote = $('[data-role=empty]', section);
       this.stepsBox = $('[data-role=steps]', section); this.modeBox = $('[data-role=mode]', section);
-      this.series = []; this.hidden = new Set(); this.manualStep = null; this.mode = 'rate'; this.cursor = null; this.pinned = null;
+      this.series = []; this.hidden = new Set(); this.manualStep = null; this.mode = cfg.mode || 'rate'; this.cursor = null; this.pinned = null;
       this.cache = new Map(); this.pointers = new Map(); this.fetching = 0; this.generation = 0; this.error = null;
       const now = Date.now();
       this.to = now; this.from = now - cfg.defaultSpan; this.step = pickStep(cfg.defaultSpan, cfg.minStep);
@@ -143,9 +143,9 @@
         b.addEventListener('click', () => { this.manualStep = step; const to = this.to; this.setRange(to - PRESET_SPAN[step], to); });
         this.stepsBox.appendChild(b);
       }
-      if (this.modeBox) for (const b of this.modeBox.querySelectorAll('[data-mode]')) b.addEventListener('click', () => {
+      if (this.modeBox) for (const b of this.modeBox.querySelectorAll('[data-mode]')) { b.classList.toggle('is-active', b.dataset.mode === this.mode); b.addEventListener('click', () => {
         this.mode = b.dataset.mode; for (const x of this.modeBox.querySelectorAll('[data-mode]')) x.classList.toggle('is-active', x === b); this.render();
-      });
+      }); }
     }
     buildLegend() {
       this.legend.textContent = '';
@@ -351,43 +351,71 @@
 
   // ---- page --------------------------------------------------------------------------------------------------------
   const HEALTH = { healthy: '正常', degraded: '部分異常', unhealthy: '異常', unknown: '未知', '': '未知' };
+  // What each worker does, in plain words, for visitors who do not know the products (names come from the monitor).
+  const WORKER_DESC = {
+    'minimax-runtime': '跑在 Mac 上的 MiniMax 模型執行環境，其他 worker 的推論都經過它',
+    'timehut-mcode': '時光相簿：比對照片與影片裡的人物',
+    'timehut-shiguang': '時光相簿：替照片打上場景標籤',
+    'wishlist-vision': 'Wishlist.AI：辨識商品圖片',
+    'wishlist-marketing': 'Wishlist.AI：產生商品行銷素材',
+    'wishlist-retail': 'Wishlist.AI：查商品原價、評估 CP 值',
+    'dream-buddy': '夢話夥伴：生成對話回覆',
+  };
+  const WORK_SHORT = { photos_tagged: '照片場景標籤', photos_matched: '照片人物比對', videos_matched: '影片人物比對', retail_cp_evaluated: 'CP 評估', retail_lookups_completed: '原價查價', retail_prices_verified: '原價寫入', retail_prices_proposed: '原價提案', retail_proposals_rejected: '原價退回', images_recognized: '商品圖片辨識', marketing_sets_generated: '行銷素材組', chat_turns_inferred: '對話回合' };
+  const n = v => (v === null || v === undefined ? '—' : Number(v).toLocaleString('en-US'));
   function text(id, value, note, pending) { const v = $('#' + id); v.textContent = value; v.classList.toggle('is-pending', !!pending); if (note !== undefined) $('#' + id + '-note').textContent = note; }
-  function ago(ms) { if (!ms) return ''; const s = Math.max(0, Math.round((Date.now() - ms) / 1000)); return s < 90 ? s + ' 秒前' : s < 5400 ? Math.round(s / 60) + ' 分鐘前' : Math.round(s / 3600) + ' 小時前'; }
+  function ago(ms) { if (!ms) return ''; const s = Math.max(0, Math.round((Date.now() - ms) / 1000)); return s < 90 ? s + ' 秒前' : s < 5400 ? Math.round(s / 60) + ' 分鐘前' : s < 172800 ? Math.round(s / 3600) + ' 小時前' : Math.round(s / 86400) + ' 天前'; }
+  function renderWorkers(catalog) {
+    const list = $('#worker-list'); list.textContent = '';
+    const workers = []; for (const s of catalog.series) if (s.worker && !workers.some(w => w.id === s.worker)) workers.push({ id: s.worker, name: s.workerName || s.label });
+    const order = ['wishlist-retail', 'wishlist-vision', 'wishlist-marketing', 'timehut-shiguang', 'timehut-mcode', 'dream-buddy', 'minimax-runtime'];
+    workers.sort((a, b) => (order.indexOf(a.id) + 1 || 99) - (order.indexOf(b.id) + 1 || 99));
+    for (const w of workers) { const li = el('li'); li.appendChild(el('b', {}, w.name)); li.appendChild(el('span', {}, WORKER_DESC[w.id] || '')); list.appendChild(li); }
+    list.hidden = !workers.length;
+    // On a phone the legend would push the numbers below the fold, so it starts folded there.
+    const details = $('#worker-details'); if (details && window.innerWidth <= 640) details.open = false;
+  }
   function renderLatest(latest) {
-    const st = latest.status, ls = latest.listing, cp = latest.workTotals && latest.workTotals.totals && latest.workTotals.totals['work.wishlist-retail.retail_cp_evaluated'];
-    const verified = latest.workTotals && latest.workTotals.totals && latest.workTotals.totals['work.wishlist-retail.retail_prices_verified'];
-    const badge = $('#data-mode');
+    const st = latest.status, ls = latest.listing, totals = (latest.workTotals && latest.workTotals.totals) || {}, badge = $('#data-mode');
+    if (ls) {
+      const cum = ls.cumulative && ls.cumulative.count !== null ? ls.cumulative.count : null;
+      text('m-total', cum !== null ? n(cum) : '—', (ls.cumulative && ls.cumulative.from ? '自 ' + formatTime(ls.cumulative.from, 'day') + ' 起' : '') + (ls.latestFirstPublishAt ? ' · 最近一件 ' + ago(ls.latestFirstPublishAt) : ''), cum === null);
+      const today = ls.today && ls.today.count !== null ? ls.today.count : null;
+      text('m-listed', today !== null ? n(today) : '—', (ls.yesterday && ls.yesterday.count !== null ? '昨日 ' + n(ls.yesterday.count) + ' 件' : '') + (ls.perHour24h !== null ? ' · 近 24 小時每小時 ' + ls.perHour24h + ' 件' : '') + (ls.targetPerHour ? '（目標 ' + ls.targetPerHour + '）' : ''), today === null);
+      text('m-visible', ls.publiclyVisible !== null ? n(ls.publiclyVisible) : '—', (ls.records && ls.records.published !== null ? '已公開紀錄 ' + n(ls.records.published) : '') + (ls.waitingToPublish !== null ? ' · 等待公開 ' + n(ls.waitingToPublish) : ''), ls.publiclyVisible === null);
+    } else { text('m-total', '尚無資料', '', true); text('m-listed', '尚無資料', '', true); text('m-visible', '尚無資料', '', true); }
+    // The AI work card: the biggest known total leads, the next ones follow in the note.
+    const work = Object.entries(totals).map(([id, t]) => ({ id, metric: id.split('.')[2], total: t.knownTotalLowerBound, complete: t.isCompleteHistory, last: t.lastCompletedAt })).filter(w => w.total !== null && w.total !== undefined).sort((a, b) => b.total - a.total);
+    if (work.length) {
+      // After the biggest total, the ones a visitor cares about: CP evaluations, people matched, price lookups, chat.
+      const WANT = ['retail_cp_evaluated', 'photos_matched', 'retail_lookups_completed', 'chat_turns_inferred', 'images_recognized'];
+      const lead = work[0], rest = work.slice(1).filter(w => w.total > 0 && WANT.includes(w.metric)).sort((a, b) => WANT.indexOf(a.metric) - WANT.indexOf(b.metric)).slice(0, 3);
+      text('m-work', (lead.complete ? '' : '≥ ') + n(lead.total), (WORK_SHORT[lead.metric] || lead.metric) + (rest.length ? ' · ' + rest.map(w => (WORK_SHORT[w.metric] || w.metric) + ' ' + (w.complete ? '' : '≥') + n(w.total)).join(' · ') : '') + (lead.last ? ' · 最近完成 ' + ago(lead.last) : ''));
+    } else text('m-work', '尚無資料', '監控尚未回報工作量', true);
     if (st) {
-      const measured = st.workers.filter(w => w.cpuCorePercent !== null), core = measured.reduce((n, w) => n + w.cpuCorePercent, 0), host = measured.reduce((n, w) => n + (w.cpuHostPercent || 0), 0);
+      const measured = st.workers.filter(w => w.cpuCorePercent !== null), core = measured.reduce((x, w) => x + w.cpuCorePercent, 0), host = measured.reduce((x, w) => x + (w.cpuHostPercent || 0), 0);
       text('m-cpu', measured.length ? core.toFixed(1) + '%' : '未量到', measured.length ? '整機 ' + host.toFixed(2) + '% · ' + measured.length + '/' + st.workers.length + ' 個 worker 有量到 · ' + ago(st.observedAt) : '監控沒有量到任何 worker', !measured.length);
-      const online = st.workers.filter(w => w.processOnline).length;
-      text('m-health', HEALTH[st.health] || st.health, online + '/' + st.workers.length + ' 個 worker 程序在線 · 監控' + (st.monitorStatus === 'healthy' ? '正常' : st.monitorStatus || '狀態未知'));
+      const online = st.workers.filter(w => w.processOnline).length, ob = latest.observation7d;
+      text('m-health', ob ? Math.round(ob.rate * 100) + '%' : HEALTH[st.health] || st.health, (ob ? '近 ' + (ob.windowHours >= 168 ? '7 天' : Math.max(1, Math.round(ob.windowHours / 24)) + ' 天') + '監控完整量到的時間 · ' : '') + online + '/' + st.workers.length + ' 個 worker 程序在線 · 目前' + (HEALTH[st.health] || st.health));
       $('#observed-at').textContent = st.observedAt ? '觀測 ' + formatTime(st.observedAt, 'minute') : '';
       const fresh = latest.cpuFreshness && latest.cpuFreshness.dataFresh;
-      badge.textContent = fresh ? '監控資料即時' : '監控資料延遲'; badge.className = 'data-badge' + (fresh ? '' : ' is-warn');
+      badge.textContent = fresh ? '即時資料' : '監控資料延遲'; badge.className = 'data-badge' + (fresh ? '' : ' is-warn');
     } else { text('m-cpu', '尚無資料', '', true); text('m-health', '尚無資料', '', true); badge.textContent = '尚未收到監控資料'; badge.className = 'data-badge is-bad'; }
-    if (ls) {
-      text('m-listed', ls.today && ls.today.count !== null ? ls.today.count.toLocaleString('en-US') : '—', (ls.yesterday && ls.yesterday.count !== null ? '昨日 ' + ls.yesterday.count.toLocaleString('en-US') + ' 件 · ' : '') + (ls.perHour24h !== null ? '近 24 小時每小時 ' + ls.perHour24h + ' 件' : '') + (ls.targetPerHour ? '（目標 ' + ls.targetPerHour + '）' : ''), !(ls.today && ls.today.count !== null));
-      text('m-visible', ls.publiclyVisible !== null ? ls.publiclyVisible.toLocaleString('en-US') : '—', (ls.records && ls.records.published !== null ? '已公開紀錄 ' + ls.records.published.toLocaleString('en-US') : '') + (ls.waitingToPublish !== null ? ' · 待公開 ' + ls.waitingToPublish : '') + (ls.cumulative && ls.cumulative.count !== null ? ' · 累計上架 ' + ls.cumulative.count.toLocaleString('en-US') : ''), ls.publiclyVisible === null);
-    } else { text('m-listed', '尚無資料', '', true); text('m-visible', '尚無資料', '', true); }
-    if (cp && cp.knownTotalLowerBound !== null) text('m-cp', (cp.isCompleteHistory ? '' : '≥ ') + cp.knownTotalLowerBound.toLocaleString('en-US'), (cp.collectionStartedAt ? '自 ' + formatTime(cp.collectionStartedAt, 'day') + ' 起統計' : '') + (verified && verified.knownTotalLowerBound !== null ? ' · 原價寫入 ≥ ' + verified.knownTotalLowerBound : '') + (cp.lastCompletedAt ? ' · 最近完成 ' + ago(cp.lastCompletedAt) : ''));
-    else text('m-cp', '尚無資料', '監控尚未回報 wishlist-retail 指標', true);
-    const ch = latest.chatPending;
-    if (ch && ch.pendingCount !== null) text('m-chat', String(ch.pendingCount), (ch.needApproval !== null ? '待核准 ' + ch.needApproval + ' · ' : '') + (ch.approvedWaitingSend !== null ? '待轉達 ' + ch.approvedWaitingSend + ' · ' : '') + '觀測 ' + ago(ch.observedAt));
-    else text('m-chat', '未知', '監控尚未回報聊聊待問數', true);
   }
 
   async function main() {
+    const HELP = '點一下圖表後用滾輪縮放、拖曳平移；長按或點一下某一格看那段時間的數值。';
     const charts = {
-      cpu: new WaveChart($('[data-chart=cpu]'), { minStep: 'minute', defaultSpan: 6 * 3600e3, zeroBased: true, help: '滾輪／雙指縮放、拖曳平移；長按或點一下固定某一分鐘看每個 worker 的數值。' }),
-      work: new WaveChart($('[data-chart=work]'), { minStep: 'hour', defaultSpan: 7 * 86400e3, zeroBased: true, help: '只有監控整小時都在看的時段才有數字，其他留空；區間累計從可見範圍的第一格起算。' }),
-      wishlist: new WaveChart($('[data-chart=wishlist]'), { minStep: 'hour', defaultSpan: 7 * 86400e3, zeroBased: true, dualAxis: true, help: '件數畫在左軸、存量（公開可見、待公開、聊聊待問）畫在右軸；長按看該時段所有數值。' }),
+      wishlist: new WaveChart($('[data-chart=wishlist]'), { minStep: 'hour', defaultSpan: 30 * 86400e3, zeroBased: true, dualAxis: true, mode: 'cumulative', help: HELP + ' 件數在左軸、存量（公開可見、等待公開、聊聊待問）在右軸。' }),
+      work: new WaveChart($('[data-chart=work]'), { minStep: 'hour', defaultSpan: 30 * 86400e3, zeroBased: true, help: HELP + ' 只有監控整小時都在看的時段有數字，其他留空。' }),
+      cpu: new WaveChart($('[data-chart=cpu]'), { minStep: 'minute', defaultSpan: 6 * 3600e3, zeroBased: true, help: HELP }),
     };
     let catalog;
     try { catalog = await getJson(API + '/catalog'); } catch (e) { for (const c of Object.values(charts)) { c.error = e; c.render(); } $('#data-mode').textContent = '資料服務暫時無法連線'; $('#data-mode').className = 'data-badge is-bad'; return; }
     const series = catalog.series, byId = Object.fromEntries(series.map(s => [s.id, s]));
     const firstHour = catalog.coverage && catalog.coverage.hour && catalog.coverage.hour.first ? Date.parse(catalog.coverage.hour.first) : NaN;
     if (Number.isFinite(firstHour)) for (const c of Object.values(charts)) c.floor = firstHour - 86400e3;
+    renderWorkers(catalog);
     const cpuSeries = [byId['cpu.total.core'], ...series.filter(s => s.group === 'cpu' && s.worker && s.id.endsWith('.core'))].filter(Boolean).map((s, i) => ({ ...s, label: s.worker ? s.label : '全部 worker', hiddenByDefault: i > 0 && !/wishlist|timehut|dream/.test(s.id) }));
     charts.cpu.setSeries(cpuSeries);
     // Work chart: one worker at a time (units differ between workers), chosen in the select.
@@ -395,7 +423,7 @@
     for (const s of workSeries) if (!workers.some(w => w.id === s.worker)) workers.push({ id: s.worker, name: s.workerName || s.worker });
     const sel = $('#work-metric'); sel.textContent = '';
     for (const w of workers) sel.appendChild(el('option', { value: w.id }, w.name));
-    const pickWorker = id => charts.work.setSeries(workSeries.filter(s => s.worker === id).map(s => ({ ...s, label: s.label })));
+    const pickWorker = id => charts.work.setSeries(workSeries.filter(s => s.worker === id).map(s => ({ ...s, label: WORK_SHORT[s.metric] || s.label })));
     if (workers.length) { const preferred = workers.find(w => w.id === 'timehut-shiguang') || workers[0]; sel.value = preferred.id; pickWorker(preferred.id); }
     else { sel.appendChild(el('option', { value: '' }, '監控尚未回報工作量')); charts.work.render(); }
     sel.addEventListener('change', () => pickWorker(sel.value));
@@ -407,7 +435,7 @@
       wl('work.wishlist-retail.retail_prices_verified') && { ...wl('work.wishlist-retail.retail_prices_verified'), label: '原價寫入', hiddenByDefault: true },
       wl('wishlist.republished') && { ...wl('wishlist.republished'), label: '重新公開', hiddenByDefault: true },
       wl('wishlist.visible') && { ...wl('wishlist.visible'), label: '公開可見商品', hiddenByDefault: true },
-      wl('wishlist.waiting') && { ...wl('wishlist.waiting'), label: '待公開', hiddenByDefault: true },
+      wl('wishlist.waiting') && { ...wl('wishlist.waiting'), label: '等待公開', hiddenByDefault: true },
       wl('wishlist.chatPending') && { ...wl('wishlist.chatPending'), label: '聊聊待問', hiddenByDefault: true },
     ].filter(Boolean);
     charts.wishlist.setSeries(wishlistSeries);

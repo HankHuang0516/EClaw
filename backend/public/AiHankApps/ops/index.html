@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light"><title>營運數據｜我的 APP 作品集</title>
-  <meta name="description" content="MiniMax worker 的 CPU 與完成工作量，以及 Wishlist.AI 公開的上架數、CP 評估數，以可縮放的波形圖呈現；長按看詳細數據。">
+  <meta name="description" content="我的產品每天真實運轉的數據：Wishlist.AI 由 AI 自動上架的二手商品數與 CP 評估數、AI worker 完成的工作量、worker CPU。可縮放的波形圖，長按看詳細數據。">
   <link rel="icon" href="../favicon.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Serif+TC:wght@500;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -22,53 +22,60 @@
     .tooltip{position:absolute;z-index:5;min-width:170px;max-width:260px;padding:9px 11px;border-radius:9px;background:#132a30f0;color:#fff;font-size:11px;line-height:1.6;pointer-events:none;box-shadow:0 10px 28px #1b2a2f40}.tooltip b{font-weight:600}.tooltip .t{color:#cfe3dc;font-size:10px;margin-bottom:3px}.tooltip .row{display:flex;justify-content:space-between;gap:12px}.tooltip .row i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:middle;background:var(--c)}
     .chart-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--muted);font-size:10px;flex-wrap:wrap}.chart-foot .help{white-space:normal}
     .detail{border-top:1px dashed var(--line);padding-top:10px;font-size:12px}.detail[hidden]{display:none}.detail h3{margin:0 0 6px;font-size:13px;font-weight:600;color:var(--leaf)}.detail table{border-collapse:collapse;width:100%}.detail td{padding:4px 6px;border-bottom:1px solid #f0ece5;font-variant-numeric:tabular-nums}.detail td:first-child{color:var(--muted)}.detail td.num{text-align:right;font-weight:600}.detail .close{float:right}
-    .sources{margin:28px 0 56px;padding:16px 20px;font-size:12px;line-height:1.9;color:var(--muted)}.sources h2{margin:0 0 6px;font-size:15px;color:var(--ink);font-family:"Noto Serif TC",serif}.sources code{font-size:11px;background:#f1efe9;padding:1px 5px;border-radius:4px}.footer{padding:12px 4px 24px;font-size:11px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}.footer a{text-decoration:underline;text-underline-offset:3px}
+    .intro{margin:0 0 16px;padding:18px 22px;font-size:14px;line-height:1.9}.intro p{margin:0}.intro a{color:var(--leaf);font-weight:600;text-decoration:underline;text-underline-offset:3px}.worker-details{margin-top:12px}.worker-details summary{cursor:pointer;font-size:12px;color:var(--leaf);font-weight:600;list-style:none}.worker-details summary::-webkit-details-marker{display:none}.worker-details summary::before{content:"▸";display:inline-block;margin-right:6px;transition:transform .15s}.worker-details[open] summary::before{transform:rotate(90deg)}.worker-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px 14px;margin:10px 0 0;padding:0;list-style:none;font-size:12px;color:var(--muted)}.worker-list li{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#faf8f3}.worker-list b{color:var(--ink);font-weight:600;font-size:12px}.worker-list span{line-height:1.5}
+    .sources{margin:28px 0 56px;padding:0 20px;font-size:12px;line-height:1.9;color:var(--muted)}.sources summary{cursor:pointer;padding:14px 0;font-size:15px;color:var(--ink);font-family:"Noto Serif TC",serif;font-weight:700;list-style:none}.sources summary::-webkit-details-marker{display:none}.sources summary::after{content:"展開";float:right;font-family:"Noto Sans TC",sans-serif;font-size:11px;color:var(--leaf);font-weight:500}.sources[open] summary::after{content:"收合"}.sources>div{padding-bottom:12px}.sources code{font-size:11px;background:#f1efe9;padding:1px 5px;border-radius:4px}.footer{padding:12px 4px 24px;font-size:11px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}.footer a{text-decoration:underline;text-underline-offset:3px}
     @media(max-width:1050px){.topbar{padding:0 24px;gap:20px}.topnav{gap:8px}.shell{width:calc(100% - 40px)}.metric-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.title-copy h1{font-size:34px}}
-    @media(max-width:640px){.topbar{padding:0 14px;gap:12px;height:50px;overflow-x:auto;scrollbar-width:none}.topbar::-webkit-scrollbar{display:none}.brand{gap:9px;font-size:12px}.brand-mark{font-size:26px}.topnav a{font-size:11px;padding:0 5px}.topnav .active{font-size:12px}.back-link{font-size:0}.back-link::before{font-size:19px;margin:0}.shell{width:calc(100% - 24px)}.page-heading{display:block;padding:22px 2px 12px}.title-copy h1{font-size:30px}.sync-meta{margin-top:10px;white-space:normal;font-size:11px}.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.metric{padding:12px 11px;min-height:104px}.metric-value{font-size:22px}.chart-card{padding:13px 12px 12px}.chart-toolbar h2{font-size:21px}.chart-wrap{height:240px}.control{max-width:100%}.chart-foot{font-size:9px}}
+    @media(max-width:640px){.intro{padding:14px 14px;font-size:13px}.worker-list{grid-template-columns:1fr}.topbar{padding:0 14px;gap:12px;height:50px;overflow-x:auto;scrollbar-width:none}.topbar::-webkit-scrollbar{display:none}.brand{gap:9px;font-size:12px}.brand-mark{font-size:26px}.topnav a{font-size:11px;padding:0 5px}.topnav .active{font-size:12px}.back-link{font-size:0}.back-link::before{font-size:19px;margin:0}.shell{width:calc(100% - 24px)}.page-heading{display:block;padding:22px 2px 12px}.title-copy h1{font-size:30px}.sync-meta{margin-top:10px;white-space:normal;font-size:11px}.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.metric{padding:12px 11px;min-height:104px}.metric-value{font-size:22px}.chart-card{padding:13px 12px 12px}.chart-toolbar h2{font-size:21px}.chart-wrap{height:240px}.control{max-width:100%}.chart-foot{font-size:9px}}
   </style>
 </head>
 <body>
-  <header class="topbar"><a href="../" class="brand"><span class="brand-mark">H</span>AiHankApps</a><nav class="topnav" aria-label="營運數據導覽"><a href="#summary" class="active">營運數據</a><a href="#cpu">Worker CPU</a><a href="#work">工作量</a><a href="#wishlist">Wishlist.AI</a><a href="../reports/">APP 趨勢</a></nav><a class="back-link" href="../">返回作品集</a></header>
+  <header class="topbar"><a href="../" class="brand"><span class="brand-mark">H</span>AiHankApps</a><nav class="topnav" aria-label="營運數據導覽"><a href="#summary" class="active">營運數據</a><a href="#wishlist">Wishlist.AI</a><a href="#work">AI 工作量</a><a href="#cpu">Worker CPU</a><a href="../reports/">APP 趨勢</a></nav><a class="back-link" href="../">返回作品集</a></header>
   <main class="shell">
-    <section class="page-heading"><div class="title-copy"><h1>營運數據</h1><p>MiniMax worker 的 CPU 與完成工作量，以及 Wishlist.AI 公開的上架與 CP 數據。點一下圖表後用滾輪（或按住 Ctrl／⌘）縮放、雙指縮放，拖曳平移；長按任一點看詳細數據。</p></div><div class="sync-meta"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 8a8 8 0 1 0 0 8M20 3v5h-5"/></svg><span>每 5 分鐘更新</span><time id="observed-at"></time><span class="data-badge" id="data-mode">正在讀取資料</span></div></section>
-    <section id="summary" aria-label="目前狀態摘要"><div class="metric-grid" id="metric-grid">
-      <div class="panel metric"><div class="metric-header">Worker CPU 合計</div><div class="metric-value is-pending" id="m-cpu">—</div><div class="metric-note" id="m-cpu-note">一顆核心 = 100%</div></div>
-      <div class="panel metric"><div class="metric-header">監控狀態</div><div class="metric-value is-pending" id="m-health">—</div><div class="metric-note" id="m-health-note"></div></div>
+    <section class="page-heading"><div class="title-copy"><h1>營運數據</h1><p>我做的產品正在真實運轉的數字：AI 自動上架了多少二手商品、AI worker 做了多少事、機器忙不忙。</p></div><div class="sync-meta"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 8a8 8 0 1 0 0 8M20 3v5h-5"/></svg><span>每 5 分鐘更新</span><time id="observed-at"></time><span class="data-badge" id="data-mode">正在讀取資料</span></div></section>
+    <section class="panel intro" aria-label="這是什麼">
+      <p>這一頁不是模擬，是我自己的幾個產品每天在跑的實際數據。<a href="../guides/weesh/">Wishlist.AI</a> 是二手商品的願望比對平台，由 AI 代理從各平台找出在售的二手商品、自動整理上架，再替商品查原價、算 CP 值；<a href="../guides/timehut/">時光相簿</a> 用 AI 替照片辨識人物、打上場景標籤；<a href="../guides/dreambuddy/">夢話夥伴</a> 用本機模型陪你把夢說完。這些 AI 工作都跑在同一台 Mac 上的幾個「worker」，由監控程式每 5 秒量一次。下面的數字只在真的量到時才出現，沒量到就留空，不補零。</p>
+      <details class="worker-details" id="worker-details" open><summary>這些 worker 各自在做什麼</summary><ul class="worker-list" id="worker-list" aria-label="worker 是什麼"></ul></details>
+    </section>
+    <section id="summary" aria-label="成果摘要"><div class="metric-grid" id="metric-grid">
+      <div class="panel metric"><div class="metric-header">累計成功上架</div><div class="metric-value is-pending" id="m-total">—</div><div class="metric-note" id="m-total-note"></div></div>
       <div class="panel metric"><div class="metric-header">今日成功上架</div><div class="metric-value is-pending" id="m-listed">—</div><div class="metric-note" id="m-listed-note"></div></div>
       <div class="panel metric"><div class="metric-header">公開可見商品</div><div class="metric-value is-pending" id="m-visible">—</div><div class="metric-note" id="m-visible-note"></div></div>
-      <div class="panel metric"><div class="metric-header">CP 評估完成</div><div class="metric-value is-pending" id="m-cp">—</div><div class="metric-note" id="m-cp-note"></div></div>
-      <div class="panel metric"><div class="metric-header">聊聊待問</div><div class="metric-value is-pending" id="m-chat">—</div><div class="metric-note" id="m-chat-note"></div></div>
+      <div class="panel metric"><div class="metric-header">AI 完成的工作</div><div class="metric-value is-pending" id="m-work">—</div><div class="metric-note" id="m-work-note"></div></div>
+      <div class="panel metric"><div class="metric-header">系統穩定度</div><div class="metric-value is-pending" id="m-health">—</div><div class="metric-note" id="m-health-note"></div></div>
+      <div class="panel metric"><div class="metric-header">目前 Worker CPU</div><div class="metric-value is-pending" id="m-cpu">—</div><div class="metric-note" id="m-cpu-note">一顆核心全忙 = 100%</div></div>
     </div></section>
 
-    <section class="panel chart-card" id="cpu" data-chart="cpu" aria-label="Worker CPU 波形">
-      <div class="chart-toolbar"><h2>Worker CPU</h2><span class="sub">每 5 秒取樣、每分鐘一點；一顆核心全忙 = 100%，沒量到就留空。</span><div class="segmented" data-role="steps" aria-label="時間刻度"></div><button type="button" class="ghost" data-role="reset">回到最近 6 小時</button></div>
-      <div class="legend" data-role="legend" aria-label="顯示哪些 worker"></div>
-      <div class="chart-wrap"><svg data-role="svg" role="img" tabindex="0" aria-label="Worker CPU 波形。滾輪或雙指縮放，拖曳平移，長按看詳細數據；方向鍵移動游標，加減號縮放，Escape 取消。"></svg><div class="tooltip" data-role="tooltip" hidden></div><div class="empty-note" data-role="empty" hidden></div></div>
-      <div class="chart-foot"><span data-role="range"></span><span class="help" data-role="help"></span></div>
-      <div class="detail" data-role="detail" hidden></div>
-    </section>
-
-    <section class="panel chart-card" id="work" data-chart="work" aria-label="Worker 完成工作量">
-      <div class="chart-toolbar"><h2>Worker 工作量</h2><span class="sub">每小時完成的工作件數，只畫監控整小時都在看的時段；單位依 worker 不同，不互相加總。</span><label class="sr-only" for="work-metric">工作量指標</label><select class="control" id="work-metric" data-role="metric"></select><div class="segmented" data-role="mode" aria-label="顯示方式"><button type="button" class="seg is-active" data-mode="rate">每段件數</button><button type="button" class="seg" data-mode="cumulative">區間累計</button></div><div class="segmented" data-role="steps" aria-label="時間刻度"></div><button type="button" class="ghost" data-role="reset">回到最近 7 天</button></div>
-      <div class="legend" data-role="legend" aria-label="顯示哪些指標"></div>
-      <div class="chart-wrap"><svg data-role="svg" role="img" tabindex="0" aria-label="Worker 工作量波形。滾輪或雙指縮放，拖曳平移，長按看詳細數據。"></svg><div class="tooltip" data-role="tooltip" hidden></div><div class="empty-note" data-role="empty" hidden></div></div>
-      <div class="chart-foot"><span data-role="range"></span><span class="help" data-role="help"></span></div>
-      <div class="detail" data-role="detail" hidden></div>
-    </section>
-
-    <section class="panel chart-card" id="wishlist" data-chart="wishlist" aria-label="Wishlist.AI 開放數據">
-      <div class="chart-toolbar"><h2>Wishlist.AI</h2><span class="sub">上架數來自公開上架報表（每筆最早的公開事件）；CP 與原價數來自 worker 監控；存量數每 30 分鐘取樣。</span><div class="segmented" data-role="mode" aria-label="顯示方式"><button type="button" class="seg is-active" data-mode="rate">每段件數</button><button type="button" class="seg" data-mode="cumulative">區間累計</button></div><div class="segmented" data-role="steps" aria-label="時間刻度"></div><button type="button" class="ghost" data-role="reset">回到最近 7 天</button></div>
+    <section class="panel chart-card" id="wishlist" data-chart="wishlist" aria-label="Wishlist.AI 上架與 CP">
+      <div class="chart-toolbar"><h2>Wishlist.AI</h2><span class="sub">AI 每天自動上架到 Wishlist.AI 的二手商品數，以及完成 CP 值評估的商品數；預設看最近 30 天的累計成長。</span><div class="segmented" data-role="mode" aria-label="顯示方式"><button type="button" class="seg" data-mode="rate">每段件數</button><button type="button" class="seg is-active" data-mode="cumulative">區間累計</button></div><div class="segmented" data-role="steps" aria-label="時間刻度"></div><button type="button" class="ghost" data-role="reset">回到最近 30 天</button></div>
       <div class="legend" data-role="legend" aria-label="顯示哪些數據"></div>
       <div class="chart-wrap"><svg data-role="svg" role="img" tabindex="0" aria-label="Wishlist.AI 上架與 CP 波形。滾輪或雙指縮放，拖曳平移，長按看詳細數據。"></svg><div class="tooltip" data-role="tooltip" hidden></div><div class="empty-note" data-role="empty" hidden></div></div>
       <div class="chart-foot"><span data-role="range"></span><span class="help" data-role="help"></span></div>
       <div class="detail" data-role="detail" hidden></div>
     </section>
 
-    <section class="panel sources" aria-label="資料來源與定義"><h2>資料來源與定義</h2>
-      <div>Worker CPU 與工作量：<code>minimax-monitor.eclawbot.com/api/monitor/public/*</code>（不需金鑰；CPU 為 worker 程序樹兩次 5 秒取樣間的 CPU 時間，是下限；工作量只在監控整小時都在看時才有確切數字）。</div>
-      <div>Wishlist.AI 上架數：<code>wishlist-app-production.up.railway.app/api/public/listing-report</code>（成功上架 = 每筆紀錄最早的公開事件；重新公開另計；日界為台北 00:00）。CP 評估、原價查找：監控的 <code>wishlist-retail</code> 指標。</div>
-      <div>時間刻度隨縮放自動切換：約 6 小時內看「分」、7 天內看「時」、120 天內看「日」、更長看「月」；也可直接點選刻度。分級資料保留 14 天，小時級長期保留；日與月由小時資料在台北時區彙總（量值取平均並記峰值，件數加總）。沒有觀測的時段留空，不補零、不內插。</div>
+    <section class="panel chart-card" id="work" data-chart="work" aria-label="AI worker 完成工作量">
+      <div class="chart-toolbar"><h2>AI 工作量</h2><span class="sub">每個 AI worker 完成的工作件數：照片張數、商品件數、對話回合。一次看一個 worker，因為單位不同。</span><label class="sr-only" for="work-metric">看哪個 worker</label><select class="control" id="work-metric" data-role="metric"></select><div class="segmented" data-role="mode" aria-label="顯示方式"><button type="button" class="seg is-active" data-mode="rate">每段件數</button><button type="button" class="seg" data-mode="cumulative">區間累計</button></div><div class="segmented" data-role="steps" aria-label="時間刻度"></div><button type="button" class="ghost" data-role="reset">回到最近 30 天</button></div>
+      <div class="legend" data-role="legend" aria-label="顯示哪些指標"></div>
+      <div class="chart-wrap"><svg data-role="svg" role="img" tabindex="0" aria-label="AI worker 工作量波形。滾輪或雙指縮放，拖曳平移，長按看詳細數據。"></svg><div class="tooltip" data-role="tooltip" hidden></div><div class="empty-note" data-role="empty" hidden></div></div>
+      <div class="chart-foot"><span data-role="range"></span><span class="help" data-role="help"></span></div>
+      <div class="detail" data-role="detail" hidden></div>
     </section>
+
+    <section class="panel chart-card" id="cpu" data-chart="cpu" aria-label="Worker CPU 波形">
+      <div class="chart-toolbar"><h2>Worker CPU</h2><span class="sub">每個 worker 用掉多少 CPU，每分鐘一點；一顆核心全忙 = 100%，多執行緒可以超過。</span><div class="segmented" data-role="steps" aria-label="時間刻度"></div><button type="button" class="ghost" data-role="reset">回到最近 6 小時</button></div>
+      <div class="legend" data-role="legend" aria-label="顯示哪些 worker"></div>
+      <div class="chart-wrap"><svg data-role="svg" role="img" tabindex="0" aria-label="Worker CPU 波形。滾輪或雙指縮放，拖曳平移，長按看詳細數據；方向鍵移動游標，加減號縮放，Escape 取消。"></svg><div class="tooltip" data-role="tooltip" hidden></div><div class="empty-note" data-role="empty" hidden></div></div>
+      <div class="chart-foot"><span data-role="range"></span><span class="help" data-role="help"></span></div>
+      <div class="detail" data-role="detail" hidden></div>
+    </section>
+
+    <details class="panel sources" id="definitions"><summary>技術細節與資料定義</summary>
+      <div><b>成功上架</b>：一件商品第一次被公開到 Wishlist.AI 就算一件；之後重新公開（例如重查後再上架）另計，不重複算。日界為台北時間 00:00。來源：<code>wishlist-app-production.up.railway.app/api/public/listing-report</code>（公開、不需金鑰）。</div>
+      <div><b>CP 評估、原價查價</b>：worker <code>wishlist-retail</code> 回報的完成件數。<b>AI 工作量</b>只在監控整小時都在看的時段才有確切數字，其他時段留空，不估計。</div>
+      <div><b>Worker CPU</b>：worker 程序樹在兩次 5 秒取樣之間用掉的 CPU 時間換算成百分比，是下限（兩次取樣間開始又結束的子程序量不到）。「整機」版本是除以核心數。來源：<code>minimax-monitor.eclawbot.com/api/monitor/public/*</code>。</div>
+      <div><b>時間刻度</b>隨縮放自動切換：約 6 小時內看「分」、7 天內看「時」、120 天內看「日」、更長看「月」，也可直接點選。分級資料保留 14 天，小時級長期保留；日與月由小時資料在台北時區彙總：量值取平均並記峰值，件數加總。沒有觀測的時段留空，不補零、不內插。</div>
+      <div><b>穩定度</b>：近 7 天裡監控完整量到所有 worker 的小時數佔比。<b>≥</b> 表示已知下限：統計從 11 月初才開始，之前完成的工作只能算出最少有多少。</div>
+    </details>
     <footer class="footer"><span>AiHankApps · 營運數據</span><span><a href="../reports/">APP 趨勢</a> · <a href="../privacy/">隱私權說明</a> · <a href="../">返回作品集</a></span></footer>
   </main>
   <script src="ops-view.js?v=20261110"></script>

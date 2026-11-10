@@ -247,6 +247,19 @@ async function pruneRaw(pool) {
     const r = await pool.query(`DELETE FROM aihankapps_ops_points WHERE step = 'm' AND at < NOW() - ($1 || ' days')::interval`, [String(RAW_KEEP_DAYS)]);
     return r.rowCount || 0;
 }
+// How much of the last seven days the monitor actually observed (hours with a complete CPU total), measured from the
+// first stored hour when the table is younger than a week, so a fresh deployment is not reported as downtime.
+async function observation7d(pool, now = Date.now()) {
+    const first = await pool.query(`SELECT MIN(at) AS first FROM aihankapps_ops_points WHERE step = 'h' AND series = 'cpu.total.core'`);
+    const firstAt = first.rows[0] && first.rows[0].first ? new Date(first.rows[0].first).getTime() : null;
+    if (!firstAt) return null;
+    const windowStart = Math.max(now - 7 * 86400000, Math.floor(firstAt / 3600000) * 3600000);
+    const windowHours = Math.max(1, Math.floor((now - windowStart) / 3600000));
+    const r = await pool.query(`SELECT COUNT(DISTINCT at)::int AS hours FROM aihankapps_ops_points WHERE step = 'h' AND series = 'cpu.total.core' AND at >= $1 AND at < $2`,
+        [new Date(windowStart), new Date(Math.floor(now / 3600000) * 3600000)]);
+    const observedHours = Math.min(windowHours, r.rows[0] ? r.rows[0].hours : 0);
+    return { observedHours, windowHours, rate: Math.round(observedHours / windowHours * 1000) / 1000, since: new Date(windowStart).toISOString() };
+}
 async function countPoints(pool) {
     const r = await pool.query(`SELECT step, COUNT(*)::int AS n, MIN(at) AS first, MAX(at) AS last FROM aihankapps_ops_points GROUP BY step`);
     return Object.fromEntries(r.rows.map(row => [row.step, { n: row.n, first: row.first, last: row.last }]));
@@ -433,9 +446,9 @@ function createRouter(getPool) {
             coverage: { minute: counts.m || null, hour: counts.h || null }, updatedAt: meta.__updatedAt || {} });
     }));
     router.get('/latest', withPool(async (pool, _req, res) => {
-        const meta = await getMeta(pool);
+        const meta = await getMeta(pool), observation = await observation7d(pool);
         res.json({ success: true, schemaVersion: 1, timeZone: TIME_ZONE, status: meta.latestStatus || null, cpuFreshness: meta.cpuFreshness || null,
-            listing: meta.listingSummary || null, chatPending: meta.chatPending || null, workTotals: meta.workTotals || null, updatedAt: meta.__updatedAt || {} });
+            listing: meta.listingSummary || null, chatPending: meta.chatPending || null, workTotals: meta.workTotals || null, observation7d: observation, updatedAt: meta.__updatedAt || {} });
     }));
     router.get('/series', withPool(async (pool, req, res) => {
         const parsed = parseSeriesQuery(req.query);
@@ -447,4 +460,4 @@ function createRouter(getPool) {
     return router;
 }
 
-module.exports = { createRouter, startCollector, createCollector, prepare, cpuPoints, workPoints, workSummary, listingPoints, chatPendingPoint, statusSnapshot, catalogFrom, parseSeriesQuery, readSeries, upsertPoints, rollupHours, STATIC_SERIES, RAW_KEEP_DAYS, OUTBOUND_UA };
+module.exports = { createRouter, startCollector, createCollector, prepare, observation7d, cpuPoints, workPoints, workSummary, listingPoints, chatPendingPoint, statusSnapshot, catalogFrom, parseSeriesQuery, readSeries, upsertPoints, rollupHours, STATIC_SERIES, RAW_KEEP_DAYS, OUTBOUND_UA };

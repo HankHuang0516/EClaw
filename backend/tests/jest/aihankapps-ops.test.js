@@ -117,6 +117,14 @@ describe('aihankapps-ops read API', () => {
         const dflt = ops.parseSeriesQuery({ ids: 'cpu.total.core' });
         expect(dflt.step).toBe('hour'); expect(dflt.to - dflt.from).toBe(24 * 3600000);
     });
+    test('observation rate: measured from the first stored hour when the table is younger than a week', async () => {
+        const now = Date.parse('2026-11-10T01:30:00Z'), first = Date.parse('2026-11-09T00:16:00Z');
+        const pool = { query: async sql => (/MIN\(at\)/.test(sql) ? { rows: [{ first: new Date(first) }] } : { rows: [{ hours: 23 }] }) };
+        expect(await ops.observation7d(pool, now)).toEqual({ observedHours: 23, windowHours: 25, rate: 0.92, since: '2026-11-09T00:00:00.000Z' });
+        const week = { query: async sql => (/MIN\(at\)/.test(sql) ? { rows: [{ first: new Date(now - 30 * 86400000) }] } : { rows: [{ hours: 170 }] }) };
+        expect(await ops.observation7d(week, now)).toMatchObject({ observedHours: 168, windowHours: 168, rate: 1 });
+        expect(await ops.observation7d({ query: async () => ({ rows: [{ first: null }] }) }, now)).toBeNull();
+    });
     test('router: 400 on bad queries, 503 when the database is down, catalog without a database row', async () => {
         const calls = [];
         const pool = { query: async (sql, params) => { calls.push({ sql, params }); if (/FROM aihankapps_ops_meta/.test(sql) || /FROM aihankapps_ops_points GROUP BY step/.test(sql)) return { rows: [], rowCount: 0 }; return { rows: [], rowCount: 0 }; } };
