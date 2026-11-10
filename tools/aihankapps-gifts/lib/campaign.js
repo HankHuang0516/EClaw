@@ -110,6 +110,9 @@ function validateHoliday(campaign, { games }, errors) {
     if (copyGames.map(game => game.gameId).join(',') !== campaign.games.map(game => game.gameId).join(',')) errors.push(`copy_games_mismatch:${locale}`);
     for (const game of copyGames) {
       if (typeof game.name !== 'string' || !game.name || typeof game.line !== 'string' || !game.line) errors.push(`missing_copy:${locale}:${game.gameId}`);
+      for (const field of ['value', 'note']) {
+        if (game[field] !== undefined && (typeof game[field] !== 'string' || !game[field].trim())) errors.push(`invalid_copy:${locale}:${game.gameId}:${field}`);
+      }
     }
   }
   if (!Array.isArray(campaign.receipts)) errors.push('receipts_not_array');

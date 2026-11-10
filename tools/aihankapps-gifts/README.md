@@ -107,6 +107,8 @@ node tools/aihankapps-gifts/cli.js validate
 
 兩款遊戲的腳本都會先比對容器裡發信程式的雜湊與 `games.json` 的 `toolSha256` 是否相同（REBOUND 是 `src/admin.mjs`、`src/campaign-deadline.mjs`，雙城烽火是 `mailbox.js`、`send-mail.js`），`status` 與 `deliver` 都會檢查。不同就停（`deployed_mail_tool_changed`），不連資料庫也不寄送：代表遊戲的發信程式改過，要先重讀它的規則、對本機副本重新演練、更新 `lib/adapters/` 裡對應的介面與雜湊，再發放。
 
+雙城烽火的收件帳號是玩家第一次打開遊戲內信箱（或外觀頁）時才建立的，沒開過的玩家寄送當下不在名單裡。所以公告會提醒雙城的玩家先打開一次信箱（`games.json` 的 `receiveNotes`）；活動期間才打開的，由每天的補寄送到。REBOUND 的帳號在第一次進遊戲時就建立，不需要這個提醒。
+
 寄送後的核對由工具自己做：每個帳號恰好一封、信上的期限等於公告的期限、REBOUND 當下所有玩家都有信。任何一項不符就列在 `issues`。
 
 ## 停止、取消
@@ -139,6 +141,6 @@ GIFT_APP_DIR=<遊戲伺服器原始碼資料夾> DATABASE_URL=postgres://localho
 
 ## 新增遊戲、節日或下一年度
 
-- **遊戲**：在 `games.json` 加一筆（名稱、獎勵項目與上限、兩個等級、發放介面），並在 `lib/adapters/` 寫一個介面（`payload`／`problems`／`script`／`interpret`）。先對本機副本演練過再啟用。
+- **遊戲**：在 `games.json` 加一筆（名稱、獎勵項目與上限、兩個等級、發放介面；玩家要先做什麼才收得到信，寫在 `receiveNotes`），並在 `lib/adapters/` 寫一個介面（`payload`／`problems`／`script`／`interpret`）。先對本機副本演練過再啟用。
 - **節日**：在 `calendar.json` 的 `holidays` 加名稱與等級，在 `occurrences` 加日期。同一款遊戲的兩檔活動至少隔 21 天。
 - **下一年度**：每年補 `occurrences`。農曆節日以行政院人事行政總處公布的行事曆為準。
