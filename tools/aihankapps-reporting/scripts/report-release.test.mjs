@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { fingerprint } from './report-core.mjs';
 import { atomicWrite } from './report-storage.mjs';
-import { requireFresh, validateRelease, applyRelease, requirePreservedHistory, versionReportIndex } from './report-release.mjs';
+import { requireFresh, requireCollections, validateRelease, applyRelease, requirePreservedHistory, versionReportIndex } from './report-release.mjs';
 
 const catalog = { apps: [{ communityId: 'one', name: 'One', category: 'Life' }] };
 async function fixture(fn) {
@@ -63,4 +63,19 @@ test('report index cache-busts immutable data with the validated content hash', 
     '<script src="./data.js?v=new456"></script>',
   );
   assert.throws(() => versionReportIndex('<script src="./other.js"></script>', 'abc123'), /missing/);
+});
+test('published catalog mode needs current collections but not a same-day store catalog sync', () => {
+  const day = '2026-11-11', now = '2026-11-11T02:00:00Z';
+  const inventory = { status: 'succeeded', day, collectedAt: '2026-11-11T01:00:00Z', checks: [{ source: 'google-play', operation: 'apps', result: 'OK' }] };
+  const coverage = ['installs', 'ratings', 'crashes'].map(kind => ({ source: 'google', id: 'one', kind, status: 'available' }));
+  const history = { status: 'succeeded', day, collectedAt: '2026-11-11T01:30:00Z', checks: [{ source: 'admob', status: 'available' }, ...coverage] };
+  const curated = { checkedAt: '2026-10-02T00:00:00Z', apps: [{ communityId: 'one', googlePackage: 'tw.example.one' }] };
+  requireCollections({ inventory, history, catalog: curated, day, now, catalogMode: 'published' });
+  assert.throws(() => requireCollections({ inventory, history, catalog: curated, day, now, catalogMode: 'synced' }), /Full store inventory/);
+  const synced = { ...inventory, checks: [...inventory.checks, { source: 'portfolio', operation: 'full-store-catalog', result: 'OK' }] };
+  assert.throws(() => requireCollections({ inventory: synced, history, catalog: curated, day, now, catalogMode: 'synced' }), /Catalog is stale/);
+  assert.throws(() => requireCollections({ inventory: { ...inventory, day: '2026-11-10' }, history, catalog: curated, day, now, catalogMode: 'published' }), /Inventory/);
+  assert.throws(() => requireCollections({ inventory, history: { ...history, checks: coverage }, catalog: curated, day, now, catalogMode: 'published' }), /AdMob/);
+  const added = { ...curated, apps: [...curated.apps, { communityId: 'two', googlePackage: 'tw.example.two' }] };
+  assert.throws(() => requireCollections({ inventory, history, catalog: added, day, now, catalogMode: 'published' }), /coverage/);
 });

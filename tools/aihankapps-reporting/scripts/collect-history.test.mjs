@@ -70,3 +70,17 @@ test('Google vitals null response is preserved as sample-insufficient rather tha
   const result = await collectHistory(options, deps);
   assert.ok(result.checks.filter(check => check.source === 'google-vitals').every(check => check.status === 'sample-insufficient' && check.rows === 0));
 }));
+
+test('Google vitals rows printed as a paginated array are kept as rows (gplay 2026-11)', () => fixture(async (options, deps) => {
+  const original = deps.command;
+  const row = { aggregationPeriod: 'DAILY', metrics: [{ metric: 'crashRate', decimalValue: { value: '0.0000' } }], startTime: { year: 2026, month: 9, day: 1 } };
+  deps.command = async (program, args) => program === 'gplay' && args[0] === 'vitals' ? JSON.stringify([row, row]) : original(program, args);
+  const result = await collectHistory(options, deps);
+  const vitals = result.checks.filter(check => check.source === 'google-vitals');
+  assert.ok(vitals.length > 0 && vitals.every(check => check.status === 'available' && check.rows === 2));
+}));
+test('Google vitals still refuse a bare string or number', () => fixture(async (options, deps) => {
+  const original = deps.command;
+  deps.command = async (program, args) => program === 'gplay' && args[0] === 'vitals' ? '"oops"' : original(program, args);
+  await assert.rejects(collectHistory(options, deps), /Google vitals response is invalid/);
+}));

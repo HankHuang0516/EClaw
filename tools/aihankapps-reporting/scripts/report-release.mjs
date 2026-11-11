@@ -2,16 +2,15 @@ import { readFile, mkdir, unlink } from 'node:fs/promises';
 import { createHash, randomUUID } from 'node:crypto';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { realpathSync } from 'node:fs';
 import { buildReport } from './build-report.mjs';
 import { atomicWrite } from './report-storage.mjs';
 import { fingerprint, isoDate } from './report-core.mjs';
 import { requireGoldenScore } from './golden-release-gate.mjs';
+import { ROOT, SOURCE, CATALOG, VIEW, INDEX, TARGETS, CATALOG_MODE } from './report-paths.mjs';
 
 const FILES = ['index.html', 'data.js', 'report-view.js'];
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
-const SOURCE = '/Users/hank/Desktop/Project/app-showcase-site';
-const ROOT = '/Users/hank/.local/share/AiHankApps/analytics';
-const TARGETS = [join(SOURCE, 'reports'), join(SOURCE, 'public/reports'), '/Users/hank/Desktop/Project/EClaw-ai-hank-apps-route/backend/public/AiHankApps/reports'];
 
 export function versionReportIndex(index, contentHash) {
   const pattern = /src=(['"])\.\/data\.js(?:\?v=[^'"]+)?\1/;
@@ -34,20 +33,28 @@ export function requireFresh(receipt, day, now, label) {
   if (!Array.isArray(receipt.checks) || !receipt.checks.length || receipt.checks.some(check => check.result === 'FAILED' || check.status === 'failed')) throw new Error(`${label} has failed or missing checks`);
 }
 
-export async function prepareRelease({ root = ROOT, source = SOURCE, now = new Date().toISOString(), day } = {}) {
+// catalogMode 'synced' (the original daily path) needs a same-day store catalog sync; 'published' builds against the
+// portfolio's published catalog as it is (see report-paths.mjs) and leaves the catalog to people. Both modes still
+// need today's successful store and history collections, AdMob, and collection coverage for every catalog app.
+export function requireCollections({ inventory, history, catalog, day, now, catalogMode = CATALOG_MODE }) {
+  requireFresh(inventory, day, now, 'Inventory'); requireFresh(history, day, now, 'History');
+  if (catalogMode !== 'published' && !inventory.checks.some(check => check.source === 'portfolio' && check.operation === 'full-store-catalog' && check.result === 'OK')) throw new Error('Full store inventory was not synchronized');
+  if (!history.checks.some(check => check.source === 'admob' && check.status === 'available')) throw new Error('Missing current AdMob collection');
+  if (catalogMode !== 'published') requireFresh({ status: 'succeeded', day, collectedAt: catalog.checkedAt, checks: [{ result: 'OK' }] }, day, now, 'Catalog');
+  for (const app of catalog.apps) {
+    if (!app.googlePackage) continue;
+    for (const kind of ['installs', 'ratings', 'crashes']) if (!history.checks.some(check => check.source === 'google' && check.id === app.communityId && check.kind === kind && ['available', 'not-yet-available'].includes(check.status))) throw new Error('New catalog app lacks report collection coverage');
+  }
+}
+
+export async function prepareRelease({ root = ROOT, source = SOURCE, catalogPath = source === SOURCE ? CATALOG : join(source, 'app-catalog.json'),
+  viewPath = source === SOURCE ? VIEW : join(source, 'reports/report-view.mjs'), indexPath = source === SOURCE ? INDEX : join(source, 'reports/index.html'),
+  catalogMode = CATALOG_MODE, now = new Date().toISOString(), day } = {}) {
   day = isoDate(day || new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(now)));
   const inventoryReceipt = JSON.parse(await readFile(join(root, 'collection-latest.json'), 'utf8'));
   const historyReceipt = JSON.parse(await readFile(join(root, 'history-collection-latest.json'), 'utf8'));
-  requireFresh(inventoryReceipt, day, now, 'Inventory'); requireFresh(historyReceipt, day, now, 'History');
-  if (!inventoryReceipt.checks.some(check => check.source === 'portfolio' && check.operation === 'full-store-catalog' && check.result === 'OK')) throw new Error('Full store inventory was not synchronized');
-  if (!historyReceipt.checks.some(check => check.source === 'admob' && check.status === 'available')) throw new Error('Missing current AdMob collection');
-  const catalogPath = join(source, 'app-catalog.json');
   const catalog = JSON.parse(await readFile(catalogPath, 'utf8'));
-  requireFresh({ status: 'succeeded', day, collectedAt: catalog.checkedAt, checks: [{ result: 'OK' }] }, day, now, 'Catalog');
-  for (const app of catalog.apps) {
-    if (!app.googlePackage) continue;
-    for (const kind of ['installs', 'ratings', 'crashes']) if (!historyReceipt.checks.some(check => check.source === 'google' && check.id === app.communityId && check.kind === kind && ['available', 'not-yet-available'].includes(check.status))) throw new Error('New catalog app lacks report collection coverage');
-  }
+  requireCollections({ inventory: inventoryReceipt, history: historyReceipt, catalog, day, now, catalogMode });
   const directory = join(root, 'report-releases', `${now.replaceAll(':', '-')}_${randomUUID()}`);
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const end = new Date(Date.parse(day) - 86400000).toISOString().slice(0, 10);
@@ -57,9 +64,9 @@ export async function prepareRelease({ root = ROOT, source = SOURCE, now = new D
   let previous = { files: [] };
   try { previous = JSON.parse(await readFile(ledgerPath, 'utf8')); } catch (error) { if (error.code !== 'ENOENT') throw error; }
   requirePreservedHistory(previous, audit);
-  const view = await readFile(join(source, 'reports/report-view.mjs'), 'utf8');
+  const view = await readFile(viewPath, 'utf8');
   await atomicWrite(join(directory, 'report-view.js'), '// Generated from report-view.mjs; do not edit directly.\n(function () {\n' + view.replace(/^export /gm, '') + '\n})();\n');
-  const index = versionReportIndex(await readFile(join(source, 'reports/index.html'), 'utf8'), result.contentHash);
+  const index = versionReportIndex(await readFile(indexPath, 'utf8'), result.contentHash);
   await atomicWrite(join(directory, 'index.html'), index);
   const hashes = {};
   for (const file of FILES) hashes[file] = sha(await readFile(join(directory, file)));
@@ -116,10 +123,10 @@ export async function applyRelease(directory, targets, catalog, { write = atomic
   return release;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
   try {
     const [mode, directory] = process.argv.slice(2);
-    const catalog = JSON.parse(await readFile(join(SOURCE, 'app-catalog.json'), 'utf8'));
+    const catalog = JSON.parse(await readFile(CATALOG, 'utf8'));
     if (mode === '--prepare') console.log(JSON.stringify(await prepareRelease()));
     else if (mode === '--apply' && directory) {
       await requireGoldenScore(directory);
