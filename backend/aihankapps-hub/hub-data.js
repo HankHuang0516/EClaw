@@ -354,7 +354,8 @@
     ['後台部署失敗', '每一個後台服務', '最新一次部署失敗或執行中當掉', 'crit']
   ];
   const COLLECTORS = { rebound: ['REBOUND 遊戲伺服器', 'REBOUND'], summit: ['活字戰紀伺服器', '雙城烽火、巔峰之戰'], wishlist: ['Wishlist.ai 後台', 'Wishlist.ai'],
-    railway: ['Railway 後台資源', '所有放在 Railway 的後台服務', '每個服務的上傳／下載流量、CPU、記憶體、空間、部署狀態'] };
+    railway: ['Railway 後台資源', '所有放在 Railway 的後台服務', '每個服務的上傳／下載流量、CPU、記憶體、空間、部署狀態'],
+    timehut: ['時光相簿伺服器', '時光相簿', '帳號總數、近 7／30 天新註冊、已刪除帳號（只有數量）'] };
   const mbText = v => (v >= 1024 ? (v / 1024).toFixed(v >= 10240 ? 1 : 2) + ' GB' : Math.round(v) + ' MB');
   const SOURCE_LABEL = { catalog: 'APP 目錄', store: '商店報表', traffic: '作品集流量', community: '作品集互動', feedback: '問題回饋', eclaw: 'EClaw 帳號', eclawChat: 'EClaw 對話', dreambuddy: '夢話夥伴後台', eclawPayments: 'EClaw 付款', imports: '匯入的後台數據', services: '後台服務檢查' };
   // 排程型 worker（例如每小時跑一輪）兩輪之間本來就沒有程式在跑；監控會把它標成 scheduled_between_rounds
@@ -505,7 +506,6 @@
       return { name: COLLECTORS[id][0], gives: COLLECTORS[id][2] || '新用戶、每日活躍、對局、內購筆數、信箱、留存', cover: COLLECTORS[id][1], freq: id === 'railway' ? '每小時' : '每天 06:20', last: c ? c.collectedAt : null,
         state: !s.imports || !s.imports.ok ? 'crit' : !c ? 'none' : stale ? 'warn' : 'ok', note: !c ? '還沒有匯入過' : stale ? '超過一天沒更新；收集工具在這台 Mac 上執行' : ((c.notes || [])[0] || '只匯入彙總數字，不含任何帳號或內容') };
     })).concat([
-      { name: '時光相簿伺服器', gives: '帳號、照片、排隊狀況', cover: '時光相簿', freq: '—', last: null, state: 'none', note: '資料存在伺服器自己的檔案裡，還沒有彙總的讀取方式；目前只有服務檢查與 AI worker 的數字' },
       { name: '其他 APP 的使用紀錄', gives: '活躍用戶、留存', cover: '沒有自己伺服器的 APP', freq: '—', last: null, state: 'none', note: '這些 APP 不會回報使用情況，要在 APP 裡加上回報再發新版才會有' },
       { name: '商店的內購金額', gives: 'Google Play 與 App Store 的實際銷售金額', cover: '有內購的 APP', freq: '—', last: null, state: 'none', note: '商店報表目前只收廣告收入；遊戲後台只記內購筆數' }
     ]);

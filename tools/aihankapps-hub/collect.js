@@ -5,15 +5,21 @@
 //
 //   node tools/aihankapps-hub/collect.js                 read every back-end, show what would be sent, send nothing
 //   node tools/aihankapps-hub/collect.js --commit        read, then import into the hub
-//   node tools/aihankapps-hub/collect.js --only rebound  one back-end (ids: rebound, summit, wishlist, railway)
+//   node tools/aihankapps-hub/collect.js --only rebound  one back-end (ids: rebound, summit, wishlist, railway, timehut)
 //
 // `railway` is different: it runs on this Mac and reads every service's traffic, CPU, memory, space and deployment
 // status from Railway's metrics API with this Mac's Railway CLI login (railway-metrics.js), read-only.
+//
+// `timehut` also runs on this Mac: 時光相簿 keeps its accounts in its own server's files, so the server answers the
+// counts itself (GET /api/internal/account-stats, counts only) to one shared key. On this Mac the key lives only in
+// ~/.config/aihankapps-hub/timehut-stats-key (mode 600, never in git, never printed); on the server it is the Railway
+// variable TIMEHUT_STATS_KEY.
 //
 // Reading runs inside each back-end's own container and is read-only. Importing runs the deployed
 // backend/scripts/aihankapps-hub-import.js inside the EClaw container. Both go through `railway ssh`, so the
 // operator's Railway login is the only credential involved and no secret passes through this tool.
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { runRailway, shellFor } = require('../aihankapps-gifts/lib/adapters/transport');
 const { BACKENDS, remoteScript } = require('./backends');
@@ -26,13 +32,47 @@ const HUB_APP_DIRS = ['/app/backend', '/app'];
 const MAX_SHELL_ENVELOPE_BYTES = 60 * 1024;
 const taipeiToday = (now = Date.now()) => new Date(now + 8 * 3600000).toISOString().slice(0, 10);
 
+// 時光相簿 account counts (Hank 2026-11-11). The answer is { total, last7d, last30d, deleted, asOf }: counts only.
+// total leaves out deleted accounts; last7d / last30d are null when the server cannot tell (then they are not sent).
+const TIMEHUT_STATS_URL = 'https://just-healing-production.up.railway.app/api/internal/account-stats';
+const TIMEHUT_KEY_FILE = path.join(os.homedir(), '.config', 'aihankapps-hub', 'timehut-stats-key');
+function readTimehutKey(file = TIMEHUT_KEY_FILE) {
+  let stat;
+  try { stat = fs.lstatSync(file); } catch (_error) { return { error: 'key file missing (' + file + ')' }; }
+  if (!stat.isFile() || (stat.mode & 0o077) !== 0) return { error: 'key file must be a regular file only its owner can read (chmod 600)' };
+  const key = fs.readFileSync(file, 'utf8').trim();
+  return /^[A-Za-z0-9_-]{32,256}$/.test(key) ? { key } : { error: 'key file content is not a key' };
+}
+async function collectTimehut({ fetchImpl = fetch, readKey = readTimehutKey } = {}) {
+  const found = readKey();
+  if (found.error) return { value: null, detail: found.error };
+  let res;
+  try {
+    res = await fetchImpl(TIMEHUT_STATS_URL, { headers: { Authorization: 'Bearer ' + found.key, Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(20000) });
+  } catch (error) { return { value: null, detail: 'request failed (' + ((error && error.name) || 'error') + ')' }; }
+  if (res.status !== 200) return { value: null, detail: 'HTTP ' + res.status };
+  let body;
+  try { body = await res.json(); } catch (_error) { return { value: null, detail: 'answer is not JSON' }; }
+  const n = v => (Number.isSafeInteger(v) && v >= 0 ? v : null);
+  if (!body || n(body.total) === null) return { value: null, detail: 'unexpected answer' };
+  const facts = [], A = 'timehut';
+  const fact = (key, label, value, order) => { if (value !== null) facts.push({ app: A, key, value: { label, value, unit: '個', order } }); };
+  fact('accountsTotal', '註冊帳號總數（不含已刪除）', n(body.total), 10);
+  fact('accountsNew7d', '近 7 天新註冊的帳號', n(body.last7d), 11);
+  fact('accountsNew30d', '近 30 天新註冊的帳號', n(body.last30d), 12);
+  fact('accountsDeleted', '已刪除的帳號（不計入總數）', n(body.deleted), 13);
+  const notes = n(body.last7d) === null || n(body.last30d) === null ? ['時光相簿沒有回近 7／30 天的數字（帳號缺建立時間）'] : [];
+  return { value: { series: [], facts, notes } };
+}
+
 // Sources read on this Mac rather than inside a back-end's container.
 const LOCAL = [{ id: 'railway', name: 'Railway 後台資源', apps: railway.RAILWAY_APPS,
   async collect(now) {
     const token = railway.readToken();
     if (!token) return { value: null, detail: 'Railway CLI login missing (run railway login)' };
     try { return { value: await railway.collectRailway({ now, gql: railway.client(token) }) }; } catch (error) { return { value: null, detail: String(error.message || error) }; }
-  } }];
+  } },
+  { id: 'timehut', name: '時光相簿伺服器', apps: ['timehut'], collect: () => collectTimehut() }];
 const SOURCES = BACKENDS.concat(LOCAL);
 
 function catalogAppIds() {
@@ -100,4 +140,4 @@ async function main(argv, { run = runRailway, log = console.log, now = Date.now,
 
 if (require.main === module) main(process.argv.slice(2)).then(code => { process.exitCode = code; });
 
-module.exports = { HUB, MAX_SHELL_ENVELOPE_BYTES, LOCAL, SOURCES, toEnvelope, importShell, describe, main, taipeiToday };
+module.exports = { HUB, MAX_SHELL_ENVELOPE_BYTES, LOCAL, SOURCES, TIMEHUT_STATS_URL, TIMEHUT_KEY_FILE, readTimehutKey, collectTimehut, toEnvelope, importShell, describe, main, taipeiToday };
