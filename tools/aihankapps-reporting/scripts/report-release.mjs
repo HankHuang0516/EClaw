@@ -6,7 +6,7 @@ import { realpathSync } from 'node:fs';
 import { buildReport } from './build-report.mjs';
 import { atomicWrite } from './report-storage.mjs';
 import { fingerprint, isoDate } from './report-core.mjs';
-import { requireGoldenScore } from './golden-release-gate.mjs';
+import { requireBrowserChecks } from './browser-release-gate.mjs';
 import { ROOT, SOURCE, CATALOG, VIEW, INDEX, TARGETS, CATALOG_MODE } from './report-paths.mjs';
 
 const FILES = ['index.html', 'data.js', 'report-view.js'];
@@ -129,7 +129,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.ar
     const catalog = JSON.parse(await readFile(CATALOG, 'utf8'));
     if (mode === '--prepare') console.log(JSON.stringify(await prepareRelease()));
     else if (mode === '--apply' && directory) {
-      await requireGoldenScore(directory);
+      await requireBrowserChecks(directory);
       console.log(JSON.stringify(await applyRelease(directory, TARGETS, catalog)));
     }
     else if (mode === '--check') {
