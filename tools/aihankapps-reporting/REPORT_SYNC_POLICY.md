@@ -28,9 +28,14 @@ node tools/aihankapps-reporting/scripts/daily-report.mjs [--day YYYY-MM-DD]
   against `backend/public/AiHankApps/app-catalog.json` exactly as people left it.
   Today's store and history collections, AdMob and per-APP collection coverage
   are still required; only the same-day catalog sync is not.
-- The Golden capture and comparison still gate publication, and the release is
-  applied only to `backend/public/AiHankApps/reports/`. Any other tracked change
-  in the checkout stops the run.
+- The browser checks of the real page (`capture-trends-golden.mjs`: no page
+  errors, no mobile overflow, every APP selectable and plotted, tooltips, zoom,
+  sorting, reviews, mobile layouts) gate publication, bound to the exact release
+  artifacts (`scripts/browser-release-gate.mjs`). The Golden screenshot-similarity
+  comparison was removed from the gate on 2026-11-11 (Hank: 「移除截圖比對」; see
+  GOLDEN_UI_POLICY.md). The release is applied only to
+  `backend/public/AiHankApps/reports/`; any other tracked change in the checkout
+  stops the run.
 - The Mac watchdog commits the four report files (`index.html`, `data.js`,
   `report-view.js`, `release.json`) through a pull request; required CI and this
   workflow's `validateRelease` must pass before it merges. Catalog, icon and
@@ -118,9 +123,11 @@ These are collected-history totals, not a claim of complete lifetime coverage.
 2. Follow GUIDE_SYNC_POLICY.md and merge current registered guide sources.
    Preserve all recovered original introduction/guide content. Publish changed
    standalone guides first and perform the existing real guide freshness checks.
-3. Complete the Golden comparison in GOLDEN_UI_POLICY.md and retain a passing
-   `golden-score.json` inside the exact private release directory. A missing,
-   failing, stale or artifact-mismatched result must stop publication.
+3. Run the browser checks (`node scripts/capture-trends-golden.mjs --release
+   RELEASE_DIRECTORY --output RELEASE_DIRECTORY/verification`) and keep the passing
+   `verification/capture.json` inside the exact private release directory. A
+   missing, failing or artifact-mismatched capture stops publication. (Until
+   2026-11-11 this step was the Golden similarity comparison; it no longer gates.)
    Run `node scripts/report-release.mjs --apply RELEASE_DIRECTORY`. It validates
    the catalog and every artifact hash, then applies the identical report bundle
    to root reports, public/reports and the EClaw deployment route. A copy error

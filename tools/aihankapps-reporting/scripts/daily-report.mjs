@@ -6,15 +6,15 @@
 //   2. collect-history      Google / Apple / AdMob history (private, append-only)
 //   3. report regression tests
 //   4. report-release --prepare against the checkout's published catalog (catalog mode 'published')
-//   5. Golden capture + comparison; a missing or failing score stops publication
+//   5. browser checks of the real page (capture-trends-golden.mjs); any failed check stops publication. The Golden
+//      screenshot-similarity comparison was removed from the gate (Hank 2026-11-11: 「移除截圖比對」)
 //   6. report-release --apply into the checkout's backend/public/AiHankApps/reports, then --check
 //   7. the checkout's tracked changes must be the four report files and nothing else
 // The caller (the report watchdog on Hank's Mac) commits those four files through a pull request; this script never
 // pushes, deploys or edits the catalog. A failure keeps the previously published report.
 //
 // Usage: node tools/aihankapps-reporting/scripts/daily-report.mjs [--day YYYY-MM-DD] [--skip-collect]
-// Environment: AIHANKAPPS_REPORT_PYTHON (Python with Pillow and NumPy, default python3),
-//              AIHANKAPPS_PLAYWRIGHT_FROM (a package.json whose node_modules has playwright),
+// Environment: AIHANKAPPS_PLAYWRIGHT_FROM (a package.json whose node_modules has playwright),
 //              AIHANKAPPS_ANALYTICS_ROOT (private store, default ~/.local/share/AiHankApps/analytics).
 import { spawn } from 'node:child_process';
 import { readdir } from 'node:fs/promises';
@@ -62,7 +62,7 @@ function run(label, program, args, { env, cwd = CHECKOUT, capture = false, timeo
   });
 }
 
-export async function dailyReport({ day, skipCollect = false, env = reportEnvironment(), python = env.AIHANKAPPS_REPORT_PYTHON || 'python3' } = {}) {
+export async function dailyReport({ day, skipCollect = false, env = reportEnvironment() } = {}) {
   const scripts = join(TOOL, 'scripts');
   if (!skipCollect) {
     await run('collect store data', process.execPath, [join(scripts, 'collect-store-data.mjs'), day], { env });
@@ -72,8 +72,7 @@ export async function dailyReport({ day, skipCollect = false, env = reportEnviro
   await run('report regression tests', process.execPath, ['--test', ...tests], { env });
   const prepared = JSON.parse((await run('prepare release', process.execPath, [join(scripts, 'report-release.mjs'), '--prepare'], { env, capture: true })).trim().split('\n').pop());
   const directory = prepared.directory, verification = join(directory, 'verification');
-  await run('golden capture', process.execPath, [join(scripts, 'capture-trends-golden.mjs'), '--release', directory, '--output', verification], { env });
-  await run('golden comparison', python, ['-I', join(scripts, 'compare-trends-golden.py'), '--actual', join(verification, 'app-trends-desktop.png'), '--capture', join(verification, 'capture.json'), '--output', join(directory, 'golden-score.json')], { env });
+  await run('browser checks', process.execPath, [join(scripts, 'capture-trends-golden.mjs'), '--release', directory, '--output', verification], { env });
   await run('apply release', process.execPath, [join(scripts, 'report-release.mjs'), '--apply', directory], { env });
   await run('check release', process.execPath, [join(scripts, 'report-release.mjs'), '--check'], { env });
   const extra = unexpectedChanges(await run('tracked changes', 'git', ['status', '--porcelain', '--untracked-files=no'], { env, capture: true }));
