@@ -676,7 +676,10 @@ describe('admin hub: account sign-ups per app', () => {
     }
     test('apps with accounts get counts only; an app without a reader says so; the rest have no account feature', async () => {
         const pool = fakePool({ hubFacts: [{ app_id: 'weesh', key: 'usersTotal', value: { label: '註冊帳號總數', value: 40, unit: '個' }, source: 'wishlist', observed_at: new Date(NOW - 7200000) },
-            { app_id: 'weesh', key: 'accountsNew7d', value: { label: '近 7 天', value: 2, unit: '個' }, source: 'wishlist', observed_at: new Date(NOW - 7200000) }] });
+            { app_id: 'weesh', key: 'accountsNew7d', value: { label: '近 7 天', value: 2, unit: '個' }, source: 'wishlist', observed_at: new Date(NOW - 7200000) },
+            { app_id: 'timehut', key: 'accountsTotal', value: { label: '註冊帳號總數', value: 9, unit: '個' }, source: 'timehut', observed_at: new Date(NOW - 3600000) },
+            { app_id: 'timehut', key: 'accountsNew7d', value: { label: '近 7 天', value: 1, unit: '個' }, source: 'timehut', observed_at: new Date(NOW - 3600000) },
+            { app_id: 'timehut', key: 'accountsNew30d', value: { label: '近 30 天', value: 4, unit: '個' }, source: 'timehut', observed_at: new Date(NOW - 3600000) }] });
         const { app } = mount({ pool, portfolioDir: portfolioWithAccounts() });
         expect((await request(app).get('/api/aihankapps/hub/accounts')).status).toBe(401);
         expect((await as(request(app).get('/api/aihankapps/hub/accounts'), 'member')).status).toBe(403);
@@ -685,8 +688,9 @@ describe('admin hub: account sign-ups per app', () => {
         const by = Object.fromEntries(res.body.accounts.map(r => [r.app, r]));
         expect([by.eclawbot.status, by.eclawbot.total, by.eclawbot.new7d, by.eclawbot.new30d, by.eclawbot.observedAt]).toEqual(['connected', 12, 1, 3, NOW]);
         expect([by.weesh.status, by.weesh.total, by.weesh.new7d, by.weesh.new30d, by.weesh.observedAt]).toEqual(['connected', 40, 2, null, NOW - 7200000]);
-        expect([by.timehut.status, by.timehut.total]).toEqual(['not_connected', null]);
-        expect(by.timehut.note).toMatch(/尚未進行/);
+        expect([by.timehut.status, by.timehut.total, by.timehut.new7d, by.timehut.new30d, by.timehut.observedAt]).toEqual(['connected', 9, 1, 4, NOW - 3600000]);
+        expect(by.timehut.source).toMatch(/只回數字/);
+        expect(hub.ACCOUNT_APPS.filter(r => r.status === 'not_connected')).toEqual([]);
         expect([by.alpha.status, by.alpha.total, by.alpha.note]).toEqual(['none', null, '這款 APP 沒有帳號註冊功能。']);
         expect(hub.ACCOUNT_APPS.find(r => r.app === 'vibe-empire').status).toBe('unknown');
         expect(hub.ACCOUNT_APPS.find(r => r.app === 'rebound').note).toMatch(/訪客帳號/);

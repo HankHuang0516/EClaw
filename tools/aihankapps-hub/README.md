@@ -6,7 +6,7 @@ into the admin hub at `https://eclawbot.com/AiHankApps/hub/`. See `backend/AIHAN
 ```
 node tools/aihankapps-hub/collect.js                   # read every back-end, show what would be sent, send nothing
 node tools/aihankapps-hub/collect.js --commit          # read, then import into the hub
-node tools/aihankapps-hub/collect.js --only rebound    # one back-end: rebound, summit, wishlist, railway
+node tools/aihankapps-hub/collect.js --only rebound    # one back-end: rebound, summit, wishlist, railway, timehut
 ```
 
 ## How it works
@@ -34,6 +34,13 @@ and the latest deployment status. The envelope carries them as `infra` rows plus
 | `summit` | noble-fascination / summit-battle-api | 雙城烽火, 巔峰之戰 | leaderboard players and scores, battles, accounts and recent sign-ins, cosmetic purchases (not tests), mailbox, retention |
 | `wishlist` | thorough-presence / wishlist-app | Wishlist.ai | accounts, messages, listings, completed TWD purchases, conversations, retention |
 | `railway` | every project above, plus EClaw and 時光相簿 (metrics API, no ssh) | every app with a Railway service | traffic in/out, CPU, memory, volume space, latest deployment |
+| `timehut` | Timehut / Timehunt (HTTPS, no ssh) | 時光相簿 | account counts only: total (not deleted), new in 7 / 30 days, deleted |
+
+The `timehut` source also runs on this Mac. 時光相簿 keeps its accounts in its server's own files, so the server answers
+the counts itself at `GET /api/internal/account-stats` (backend 1.0.114+), only to `Authorization: Bearer <key>`. The
+key is the Railway variable `TIMEHUT_STATS_KEY` on the Timehut service and, on this Mac, the file
+`~/.config/aihankapps-hub/timehut-stats-key` (mode 600; the collector refuses a file others can read). It is never in
+git, never printed and never sent to the EClaw server; only the four counts are imported.
 
 ## Running it on a schedule
 
