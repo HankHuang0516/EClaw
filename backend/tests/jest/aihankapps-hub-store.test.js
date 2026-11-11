@@ -3,6 +3,8 @@
  * the import script and the collector tool (tools/aihankapps-hub). Everything here is synthetic: no network, no
  * database, no Railway.
  */
+const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const vm = require('vm');
 const { spawnSync } = require('child_process');
@@ -14,6 +16,7 @@ const hub = require('../../aihankapps-hub');
 const toolDir = path.resolve(__dirname, '../../../tools/aihankapps-hub');
 const collect = require(path.join(toolDir, 'collect.js'));
 const { BACKENDS, remoteScript } = require(path.join(toolDir, 'backends.js'));
+const railway = require(path.join(toolDir, 'railway-metrics.js'));
 
 const backendDir = path.resolve(__dirname, '../..');
 const NOW = Date.UTC(2026, 10, 10, 13, 0);           // 2026-11-10 21:00 in Taipei
@@ -102,14 +105,14 @@ describe('admin hub store: service probes', () => {
             { id: 'b', name: 'B', apps: [], ok: false, status: 500, ms: 0, at: T + 80, info: null }]);
         const created = pool.statements.filter(s => s.sql.includes('CREATE TABLE'));
         expect(created.map(s => first(s.sql))).toEqual(['CREATE TABLE IF NOT EXISTS aihankapps_hub_probes (', 'CREATE TABLE IF NOT EXISTS aihankapps_hub_daily (',
-            'CREATE TABLE IF NOT EXISTS aihankapps_hub_facts (', 'CREATE TABLE IF NOT EXISTS aihankapps_hub_sources (']);
+            'CREATE TABLE IF NOT EXISTS aihankapps_hub_facts (', 'CREATE TABLE IF NOT EXISTS aihankapps_hub_sources (', 'CREATE TABLE IF NOT EXISTS aihankapps_hub_infra (']);
         const insert = pool.statements.find(s => s.sql.startsWith('INSERT INTO aihankapps_hub_probes'));
         expect(insert.sql).toContain('ON CONFLICT (service, step, at) DO UPDATE SET checks = aihankapps_hub_probes.checks + EXCLUDED.checks');
         expect(insert.values).toEqual([['a', 'a', 'b', 'b'], ['q', 'h', 'q', 'h'],
             [new Date(NOW + 5 * 60000), new Date(NOW), new Date(NOW + 5 * 60000), new Date(NOW)], [1, 1, 1, 1], [0, 0, 1, 1], [80, 80, 0, 0], [80, 80, 0, 0]]);
 
         await probes.run();
-        expect(pool.statements.filter(s => s.sql.includes('CREATE TABLE'))).toHaveLength(4);      // the tables are prepared once per pool
+        expect(pool.statements.filter(s => s.sql.includes('CREATE TABLE'))).toHaveLength(5);      // the tables are prepared once per pool
         expect(pool.statements.filter(s => s.sql.startsWith('INSERT INTO aihankapps_hub_probes'))).toHaveLength(2);
     });
 
@@ -185,7 +188,7 @@ describe('admin hub store: imported back-end numbers', () => {
             rows: [{ app: 'rebound', metric: 'plays', day: '2026-11-08', value: 3 }, { app: 'rebound', metric: 'plays', day: '2026-11-10', value: 0 }],
             facts: [{ app: 'rebound', key: 'playersTotal', value: { label: '玩家總數', value: 12, unit: '人', order: 10 } }], notes: ['一則說明'] });
         expect(store.validateEnvelope({ schemaVersion: 1, source: 'summit', collectedAt: NOW }, ['weesh'])).toEqual({ source: 'summit', collectedAt: NOW, rows: [], facts: [], notes: [] });
-        expect(store.IMPORT_METRICS).toEqual(['newUsers', 'activeUsers', 'plays', 'purchases', 'purchaseTwd', 'messages', 'listings', 'mailSent', 'mailClaimed', 'aiUses']);
+        expect(store.IMPORT_METRICS).toEqual(['newUsers', 'activeUsers', 'plays', 'purchases', 'purchaseTwd', 'messages', 'listings', 'mailSent', 'mailClaimed', 'aiUses', 'netInMb', 'netOutMb']);
     });
 
     test('anything unexpected refuses the whole envelope', () => {
@@ -229,7 +232,7 @@ describe('admin hub store: imported back-end numbers', () => {
         expect(steps[4].values).toEqual(['rebound', new Date(NOW), JSON.stringify({ values: 2, facts: 1, notes: ['一則說明'] })]);
         expect([pool.connected, pool.released]).toEqual([1, 1]);
         // only the hub's own tables are ever written
-        expect(pool.statements.every(s => /^(BEGIN|COMMIT|ROLLBACK)$|aihankapps_hub_(probes|daily|facts|sources)\b/.test(s.sql))).toBe(true);
+        expect(pool.statements.every(s => /^(BEGIN|COMMIT|ROLLBACK)$|aihankapps_hub_(probes|daily|facts|sources|infra)\b/.test(s.sql))).toBe(true);
     });
 
     test('a failure part-way rolls everything back, and a bad envelope never reaches the database', async () => {
@@ -254,13 +257,108 @@ describe('admin hub store: imported back-end numbers', () => {
         await expect(store.prepare(null)).rejects.toThrow('POOL_UNAVAILABLE');
     });
 
-    test('the data answer reads the imported rows, facts and receipts with three plain selects', async () => {
+    test('the data answer reads the imported rows, facts, receipts and service resources with four plain selects', async () => {
         const asked = [];
         const answer = await store.readImports(async (sql, values) => { asked.push({ sql, values }); return { rows: [{ n: asked.length }] }; }, '2025-10-07');
-        expect(answer).toEqual({ rows: [{ n: 1 }], facts: [{ n: 2 }], sources: [{ n: 3 }] });
+        expect(answer).toEqual({ rows: [{ n: 1 }], facts: [{ n: 2 }], sources: [{ n: 3 }], infra: [{ n: 4 }] });
         expect(asked.map(q => q.sql)).toEqual(['SELECT app_id, metric, day::text AS day, value FROM aihankapps_hub_daily WHERE day >= $1::date',
-            'SELECT app_id, key, value, source, observed_at FROM aihankapps_hub_facts', 'SELECT id, collected_at, imported_at, detail FROM aihankapps_hub_sources']);
+            'SELECT app_id, key, value, source, observed_at FROM aihankapps_hub_facts', 'SELECT id, collected_at, imported_at, detail FROM aihankapps_hub_sources',
+            'SELECT id, source, value, observed_at FROM aihankapps_hub_infra']);
         expect(asked[0].values).toEqual(['2025-10-07']);
+    });
+});
+
+describe('admin hub store: Railway service resources', () => {
+    const SID = '11111111-2222-3333-4444-555555555555';
+    const row = (patch = {}) => ({ id: SID, name: 'wishlist-app', project: 'Wishlist.ai', apps: ['weesh'], deploy: { status: 'SUCCESS', at: NOW - 3600000 },
+        volume: { usedMb: 83.1, sizeMb: 500 }, hourly: { start: NOW - 24 * HOUR, step: HOUR, netInMb: [1, null], netOutMb: [2, 3], cpu: [0.01, 0.02], memMb: [900, 950] },
+        daily: { start: '2026-11-08', netInMb: [700, 650, 600], netOutMb: [2800, 2700, 2600], cpu: [0.03, 0.03, 0.04], memMb: [1000, 1010, 990] }, ...patch });
+
+    test('rows are checked whole: service ids, catalog apps, known deployment states, numbers only, nothing after the collection day', () => {
+        const clean = store.validateEnvelope(envelope({ infra: [row()] }), APPS);
+        expect(clean.infra).toEqual([row()]);
+        expect(store.validateEnvelope(envelope(), APPS).infra).toBeUndefined();            // collectors without resources leave them alone
+        const refused = [{ id: 'not-a-uuid' }, { apps: ['ghost'] }, { apps: ['weesh', 'weesh', 'weesh', 'weesh', 'weesh'] }, { deploy: { status: 'HACKED', at: 1 } },
+            { volume: { usedMb: 1, sizeMb: 0 } }, { name: '' }, { project: 'x'.repeat(81) }, { hourly: { ...row().hourly, step: 60000 } },
+            { hourly: { ...row().hourly, cpu: [0.1] } }, { daily: { ...row().daily, netOutMb: [1, -1, 2] } }, { daily: { ...row().daily, start: '2026-11-09' } },
+            { daily: { ...row().daily, memMb: ['900', 1, 2] } }];
+        for (const patch of refused) {
+            let code = null;
+            try { store.validateEnvelope(envelope({ infra: [row(patch)] }), APPS); } catch (error) { code = error.code; }
+            expect([JSON.stringify(patch).slice(0, 60), code]).toEqual([JSON.stringify(patch).slice(0, 60), 'IMPORT_INFRA']);
+        }
+        expect(() => store.validateEnvelope(envelope({ infra: [row(), row()] }), APPS)).toThrow('IMPORT_INFRA');      // one row per service
+        expect(() => store.validateEnvelope(envelope({ infra: new Array(81).fill(0).map(() => row()) }), APPS)).toThrow('IMPORT_INFRA');
+    });
+
+    test('an import replaces that collector\'s service rows in the same transaction', async () => {
+        const pool = writePool();
+        expect(await store.importEnvelope(pool, envelope({ source: 'railway', series: [], facts: [], infra: [row()] }), { appIds: APPS })).toEqual({ source: 'railway', values: 0, facts: 0, services: 1 });
+        const steps = pool.statements.filter(s => !s.sql.includes('CREATE TABLE')).map(s => first(s.sql));
+        expect(steps).toEqual(['BEGIN', 'DELETE FROM aihankapps_hub_facts WHERE source = $1', 'DELETE FROM aihankapps_hub_infra WHERE source = $1',
+            'INSERT INTO aihankapps_hub_infra (id, source, value, observed_at) VALUES ($1, $2, $3::jsonb, $4)', 'INSERT INTO aihankapps_hub_sources (id, collected_at, detail) VALUES ($1, $2, $3::jsonb)', 'COMMIT']);
+        const insert = pool.statements.find(s => s.sql.startsWith('INSERT INTO aihankapps_hub_infra'));
+        expect(insert.values).toEqual([SID, 'railway', JSON.stringify(row()), new Date(NOW)]);
+    });
+
+    test('the Railway collector sums traffic per Taipei day, keeps the last 24 hours, and attributes each service to its first app', async () => {
+        const now = Date.UTC(2026, 10, 10, 13, 30);                // 2026-11-10 21:30 in Taipei
+        const hour = Date.UTC(2026, 10, 10, 13) / 1000;            // the hour that is still running
+        const asked = [];
+        const gql = async (query, variables) => {
+            asked.push(variables);
+            if (query.includes('project(id:')) {
+                if (variables.id === 'p-down') throw new Error('railway_api_error');
+                return { project: { environments: { edges: [{ node: { id: 'env-test', name: 'staging', serviceInstances: { edges: [] } } }, { node: { id: 'env-prod', name: 'production', serviceInstances: { edges: [
+                    { node: { serviceId: SID, serviceName: 'wishlist-app', latestDeployment: { status: 'SUCCESS', createdAt: '2026-11-10T01:00:00Z' } } },
+                    { node: { serviceId: '99999999-2222-3333-4444-555555555555', serviceName: 'mystery', latestDeployment: null } }] } } }] },
+                volumes: { edges: [{ node: { volumeInstances: { edges: [{ node: { serviceId: SID, environmentId: 'env-prod', sizeMB: 500, currentSizeMB: 83.14 } },
+                    { node: { serviceId: SID, environmentId: 'env-test', sizeMB: 500, currentSizeMB: 400 } }] } } }] } } };
+            }
+            return { metrics: [
+                { measurement: 'NETWORK_TX_GB', tags: { serviceId: SID }, values: [
+                    { ts: Date.UTC(2026, 10, 8, 16) / 1000, value: 1 },            // 11/9 00:00 Taipei
+                    { ts: Date.UTC(2026, 10, 9, 15) / 1000, value: 0.5 },          // 11/9 23:00 Taipei
+                    { ts: Date.UTC(2026, 10, 9, 16) / 1000, value: 0.25 },         // 11/10 00:00 Taipei: today, not a complete day
+                    { ts: hour - 3600, value: 0.125 }, { ts: hour, value: 9 }] },   // the last complete hour, and the running one (ignored)
+                { measurement: 'CPU_USAGE', tags: { serviceId: SID }, values: [{ ts: Date.UTC(2026, 10, 8, 16) / 1000, value: 0.02 }, { ts: Date.UTC(2026, 10, 8, 17) / 1000, value: 0.04 }] },
+                { measurement: 'NETWORK_RX_GB', tags: { serviceId: SID }, values: [{ ts: Date.UTC(2026, 10, 9, 0) / 1000, value: -1 }] }] };
+        };
+        const out = await railway.collectRailway({ now, gql, projects: [{ projectId: 'p1', project: 'Wishlist.ai', apps: { 'wishlist-app': ['weesh'] } }, { projectId: 'p-down', project: 'Down', apps: {} }] });
+        expect(out.notes).toEqual(['Down：讀不到服務清單']);
+        expect(asked[1]).toMatchObject({ projectId: 'p1', environmentId: 'env-prod', startDate: '2026-10-10T16:00:00.000Z', endDate: '2026-11-10T13:00:00.000Z' });
+        const [app, mystery] = out.infra;
+        expect(app).toMatchObject({ id: SID, name: 'wishlist-app', project: 'Wishlist.ai', apps: ['weesh'], deploy: { status: 'SUCCESS', at: Date.parse('2026-11-10T01:00:00Z') }, volume: { usedMb: 83.1, sizeMb: 500 } });
+        expect(app.daily.start).toBe('2026-10-11');
+        expect(app.daily.netOutMb).toHaveLength(30);
+        expect(app.daily.netOutMb[29]).toBe(1536);                         // 11/9 = (1 + 0.5) GB; 11/10 is still running, so the list ends at 11/9
+        expect(app.daily.netOutMb.slice(0, 29).every(v => v === null)).toBe(true);
+        expect(app.daily.cpu[29]).toBe(0.03);                              // CPU is an average of the hours
+        expect(app.daily.netInMb.every(v => v === null)).toBe(true);       // a negative reading is not data
+        expect(app.hourly).toMatchObject({ start: now - now % HOUR - 24 * HOUR, step: HOUR });
+        expect(app.hourly.netOutMb.at(-1)).toBe(128);
+        expect(app.hourly.netOutMb.filter(v => v !== null)).toEqual([512, 256, 128]);   // 11/9 23:00 and 11/10 00:00 Taipei are within the last 24 hours
+        expect(mystery).toMatchObject({ name: 'mystery', apps: [], deploy: null, volume: null });
+        expect(out.series).toEqual([{ app: 'weesh', metric: 'netOutMb', start: '2026-10-11', values: app.daily.netOutMb }]);
+        const built = collect.toEnvelope({ id: 'railway', apps: ['weesh'] }, { value: out }, { now: Date.now() });
+        expect(built.error).toBeUndefined();
+    });
+
+    test('the Railway login is read from the CLI after refreshing it, and missing logins stop that source only', async () => {
+        const home = fs.mkdtempSync(path.join(os.tmpdir(), 'railway-home-'));
+        const calls = [];
+        const spawn = (cmd, args) => { calls.push([cmd, args]); return { status: 0 }; };
+        expect(railway.readToken({ spawn, home })).toBeNull();
+        fs.mkdirSync(path.join(home, '.railway'));
+        fs.writeFileSync(path.join(home, '.railway', 'config.json'), JSON.stringify({ user: { accessToken: 'x'.repeat(40) } }));
+        expect(railway.readToken({ spawn, home })).toBe('x'.repeat(40));
+        expect(calls).toEqual([['railway', ['whoami']], ['railway', ['whoami']]]);
+        const logs = [];
+        const source = { id: 'railway', name: 'Railway 後台資源', apps: ['weesh'], collect: async () => ({ value: null, detail: 'Railway CLI login missing (run railway login)' }) };
+        expect(await collect.main(['--only', 'railway'], { log: line => logs.push(line), now: () => Date.now(), sources: [source] })).toBe(1);
+        expect(logs[0]).toBe('✗ Railway 後台資源：讀取失敗（no_result：Railway CLI login missing (run railway login)）');
+        expect(collect.SOURCES.map(b => b.id)).toEqual(['rebound', 'summit', 'wishlist', 'railway']);
+        expect(railway.RAILWAY_APPS.every(id => importScript.catalogAppIds().has(id))).toBe(true);
     });
 });
 
@@ -375,7 +473,7 @@ describe('admin hub collector (tools/aihankapps-hub)', () => {
         expect(Math.ceil(Math.ceil(collect.MAX_SHELL_ENVELOPE_BYTES * 4 / 3 + 2000) * 4 / 3)).toBeLessThan(128 * 1024);
     });
 
-    test('without --commit it only reads; with --commit each envelope goes to the import script in the EClaw container', () => {
+    test('without --commit it only reads; with --commit each envelope goes to the import script in the EClaw container', async () => {
         const calls = [], logs = [];
         const log = line => logs.push(line);
         const run = (target, shell) => {
@@ -384,14 +482,14 @@ describe('admin hub collector (tools/aihankapps-hub)', () => {
             const backend = BACKENDS.find(b => b.railway === target);
             return { value: { series: [{ app: backend.apps[0], metric: 'plays', start: yesterday, values: [4] }], facts: [], notes: ['說明'] } };
         };
-        expect(collect.main([], { run, log, now: () => REAL_NOW })).toBe(0);
+        expect(await collect.main([], { run, log, now: () => REAL_NOW, sources: BACKENDS })).toBe(0);
         expect(calls.map(c => c.target.service)).toEqual(['rebound-api', 'summit-battle-api', 'wishlist-app']);
         expect(calls.every(c => c.shell.includes("node --input-type=commonjs - <<'GIFT_NODE_SCRIPT'"))).toBe(true);
         expect(logs.at(-1)).toContain('這次只讀取、沒有匯入');
         expect(logs.join('\n')).not.toMatch(/\b4\b/);          // the log says what would be sent, not the numbers
 
         calls.length = 0;
-        expect(collect.main(['--commit', '--only', 'summit'], { run, log, now: () => REAL_NOW })).toBe(0);
+        expect(await collect.main(['--commit', '--only', 'summit'], { run, log, now: () => REAL_NOW })).toBe(0);
         expect(calls.map(c => c.target)).toEqual([BACKENDS.find(b => b.id === 'summit').railway, collect.HUB]);
         expect(collect.HUB).toMatchObject({ projectId: '844a6139-9b8f-43d6-a698-f97db1fa05c0', environment: 'production', service: 'eclaw' });
         const encoded = calls[1].shell.match(/scripts\/aihankapps-hub-import\.js', '([A-Za-z0-9+/=]+)'/)[1];
@@ -399,11 +497,11 @@ describe('admin hub collector (tools/aihankapps-hub)', () => {
             series: [{ app: 'typeforge-twin-cities', metric: 'plays', start: yesterday, values: [4] }], facts: [], notes: ['說明'] });
         expect(calls[1].shell).not.toMatch(/DATABASE_URL|postgres:\/\//);
 
-        expect(collect.main(['--only', 'nope'], { run, log, now: () => REAL_NOW })).toBe(2);
+        expect(await collect.main(['--only', 'nope'], { run, log, now: () => REAL_NOW })).toBe(2);
         const failing = target => (target === collect.HUB ? { value: { success: false, error: 'IMPORT_SERIES' } } : run(target, ''));
-        expect(collect.main(['--commit', '--only', 'rebound'], { run: failing, log, now: () => REAL_NOW })).toBe(1);
+        expect(await collect.main(['--commit', '--only', 'rebound'], { run: failing, log, now: () => REAL_NOW })).toBe(1);
         expect(logs.at(-1)).toContain('匯入失敗（IMPORT_SERIES');
-        expect(collect.main(['--only', 'wishlist'], { run: () => ({ value: null, detail: 'timed out' }), log, now: () => REAL_NOW })).toBe(1);
+        expect(await collect.main(['--only', 'wishlist'], { run: () => ({ value: null, detail: 'timed out' }), log, now: () => REAL_NOW })).toBe(1);
     });
 
     test('the summary line counts series and facts per app', () => {

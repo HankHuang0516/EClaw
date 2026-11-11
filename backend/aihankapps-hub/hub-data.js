@@ -54,9 +54,13 @@
     listed: { name: 'Wishlist 上架', group: '產出', type: 'count', fmt: 'full', good: 1, src: 'ops',
       parts: ['opsListed'], note: 'Wishlist.ai 每筆紀錄第一次公開的次數' },
     aiwork: { name: 'AI 完成工作', group: '產出', type: 'count', fmt: 'full', good: 1, src: 'ops',
-      parts: ['opsWork'], note: '各個 AI worker 完成的件數：照片、商品、對話回合' }
+      parts: ['opsWork'], note: '各個 AI worker 完成的件數：照片、商品、對話回合' },
+    netIn: { name: '後台傳入（上傳）', group: '後台', type: 'count', fmt: 'mb', good: 0, src: 'usage', frac: true,
+      parts: ['x.netInMb'], note: '各後台伺服器每天收到的資料量：使用者上傳照片、刊登圖片、送出資料；Railway 量測' },
+    netOut: { name: '後台傳出（下載）', group: '後台', type: 'count', fmt: 'mb', good: 0, src: 'usage', frac: true,
+      parts: ['x.netOutMb'], note: '各後台伺服器每天送出的資料量：使用者下載照片、看刊登圖片、載入頁面；Railway 量測' }
   };
-  const GROUPS = ['商店', '作品集', '使用', '收入', '產出'];
+  const GROUPS = ['商店', '作品集', '使用', '收入', '產出', '後台'];
 
   const idxOfIso = iso => Math.floor(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / DAY);
   const idxOf = t => Math.floor((t + TZ) / DAY);
@@ -66,7 +70,7 @@
   const D = {
     MIN: MIN, HOUR: HOUR, DAY: DAY, TZ: TZ, METRICS: METRICS, GROUPS: GROUPS, PLATS: PLATS, WISHLIST: WISHLIST, idxOf: idxOf, idxOfIso: idxOfIso, dayT: dayT,
     T0: 0, today: 0, APPS: [], APP: {}, BYKEY: {}, CATS: [], sources: {}, latest: {}, eclaw: {},
-    RAW: {}, opsDaily: {}, ALERTS: [], services: [],
+    RAW: {}, opsDaily: {}, ALERTS: [], services: [], infra: [],
     ops: { ok: false, at: 0, series: [], workers: [], status: null, listing: null, chat: null, workTotals: {}, cpuFreshness: null, updatedAt: {}, recent: null }
   };
   let ends = {};
@@ -94,6 +98,7 @@
     D.latest = hub.latest || {};
     D.eclaw = hub.eclaw || {};
     D.services = (hub.services || []).map(svc => Object.assign({ now: (D.services.find(old => old.id === svc.id) || {}).now || null }, svc));
+    D.infra = Array.isArray(hub.infra) ? hub.infra : [];
     const start = idxOfIso(hub.daily.start);
     Object.keys(D.RAW).forEach(part => { if (!OPS_PARTS[part]) delete D.RAW[part]; });
     Object.keys(hub.daily.series || {}).forEach(part => {
@@ -343,9 +348,13 @@
     ['商店報表超過一週沒更新', '商店報表', '報表產生時間距今超過 8 天', 'warn'],
     ['評分低於 4.0', '每一款 APP', 'Google Play 評分低於 4.0', 'warn'],
     ['後台服務沒有回應', '每一個後台服務', '最近一次健康檢查失敗', 'crit'],
-    ['後台數據超過一天沒更新', '遊戲伺服器、Wishlist 後台', '上一次匯入距今超過 36 小時', 'warn']
+    ['後台數據超過一天沒更新', '遊戲伺服器、Wishlist 後台、Railway 後台資源', '上一次匯入距今超過 36 小時', 'warn'],
+    ['後台空間快滿', '每一個有空間的後台服務', '用量超過 80%（95% 以上算嚴重）', 'warn'],
+    ['後台部署失敗', '每一個後台服務', '最新一次部署失敗或執行中當掉', 'crit']
   ];
-  const COLLECTORS = { rebound: ['REBOUND 遊戲伺服器', 'REBOUND'], summit: ['活字戰紀伺服器', '雙城烽火、巔峰之戰'], wishlist: ['Wishlist.ai 後台', 'Wishlist.ai'] };
+  const COLLECTORS = { rebound: ['REBOUND 遊戲伺服器', 'REBOUND'], summit: ['活字戰紀伺服器', '雙城烽火、巔峰之戰'], wishlist: ['Wishlist.ai 後台', 'Wishlist.ai'],
+    railway: ['Railway 後台資源', '所有放在 Railway 的後台服務', '每個服務的上傳／下載流量、CPU、記憶體、空間、部署狀態'] };
+  const mbText = v => (v >= 1024 ? (v / 1024).toFixed(v >= 10240 ? 1 : 2) + ' GB' : Math.round(v) + ' MB');
   const SOURCE_LABEL = { catalog: 'APP 目錄', store: '商店報表', traffic: '作品集流量', community: '作品集互動', feedback: '問題回饋', eclaw: 'EClaw 帳號', eclawChat: 'EClaw 對話', dreambuddy: '夢話夥伴後台', eclawPayments: 'EClaw 付款', imports: '匯入的後台數據', services: '後台服務檢查' };
   // 排程型 worker（例如每小時跑一輪）兩輪之間本來就沒有程式在跑；監控會把它標成 scheduled_between_rounds
   D.betweenRounds = w => w.processOnline === false && w.coverage === 'scheduled_between_rounds';
@@ -408,6 +417,16 @@
     D.services.forEach(svc => {
       if (svc.now && svc.now.ok === false) add('svc-down-' + svc.id, 'crit', svc.name + ' 沒有回應', '最近一次健康檢查' + (svc.now.status ? '回了 ' + svc.now.status : '連不上或逾時') + '。', { rule: RULES[8][0], apps: svc.apps, since: svc.now.at, go: 'live' });
     });
+    D.infra.forEach(row => {
+      const v = row.volume, label = row.project + ' ' + row.name, st = row.deploy && row.deploy.status;
+      if (v && v.sizeMb > 0 && v.usedMb / v.sizeMb >= 0.8) {
+        const pct = v.usedMb / v.sizeMb * 100;
+        add('space-' + row.id, pct >= 95 ? 'crit' : 'warn', label + ' 的空間用了 ' + Math.round(pct) + '%', '已用 ' + mbText(v.usedMb) + '，上限 ' + mbText(v.sizeMb) + '；滿了之後這個服務會寫不進去，要清理資料或在 Railway 加大空間。',
+          { rule: RULES[10][0], apps: row.apps, go: 'live' });
+      }
+      if (st === 'FAILED' || st === 'CRASHED') add('deploy-' + row.id, 'crit', label + (st === 'CRASHED' ? ' 執行中當掉' : ' 部署失敗'),
+        '這個服務最新一次部署的狀態是 ' + st + '，可能沒有在提供服務；到 Railway 看部署紀錄。', { rule: RULES[11][0], apps: row.apps, since: row.deploy.at, go: 'live' });
+    });
     const collectors = (D.sources.imports && D.sources.imports.collectors) || {};
     Object.keys(collectors).forEach(id => {
       const c = collectors[id], name = (COLLECTORS[id] || [id])[0];
@@ -435,6 +454,7 @@
     return r && Array.isArray(r.cohorts) && r.cohorts.length ? r : null;
   };
   D.serviceFor = a => D.services.filter(svc => svc.apps.indexOf(a.key) >= 0);
+  D.infraFor = a => D.infra.filter(row => (row.apps || []).indexOf(a.key) >= 0);
 
   // ---- 資料來源一覽 --------------------------------------------------------------
   D.sourceRows = function () {
@@ -455,7 +475,7 @@
       { name: '後台服務檢查', gives: '每個後台有沒有回應、回應時間、可用率', cover: D.services.length + ' 個後台服務', freq: '每分鐘', last: D.services.reduce((m, svc) => Math.max(m, (svc.now && svc.now.at) || 0), 0) || null, state: state('services'), note: '由 EClaw 主站去問各後台公開的健康檢查網址' }
     ].concat(Object.keys(COLLECTORS).map(id => {
       const c = collectors[id], stale = c && D.T0 - c.collectedAt > 36 * HOUR;
-      return { name: COLLECTORS[id][0], gives: '新用戶、每日活躍、對局、內購筆數、信箱、留存', cover: COLLECTORS[id][1], freq: '收集工具每次執行', last: c ? c.collectedAt : null,
+      return { name: COLLECTORS[id][0], gives: COLLECTORS[id][2] || '新用戶、每日活躍、對局、內購筆數、信箱、留存', cover: COLLECTORS[id][1], freq: id === 'railway' ? '每小時' : '每天 06:20', last: c ? c.collectedAt : null,
         state: !s.imports || !s.imports.ok ? 'crit' : !c ? 'none' : stale ? 'warn' : 'ok', note: !c ? '還沒有匯入過' : stale ? '超過一天沒更新；收集工具在這台 Mac 上執行' : ((c.notes || [])[0] || '只匯入彙總數字，不含任何帳號或內容') };
     })).concat([
       { name: '時光相簿伺服器', gives: '帳號、照片、排隊狀況', cover: '時光相簿', freq: '—', last: null, state: 'none', note: '資料存在伺服器自己的檔案裡，還沒有彙總的讀取方式；目前只有服務檢查與 AI worker 的數字' },

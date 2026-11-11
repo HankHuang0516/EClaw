@@ -61,6 +61,10 @@ function fakePool(overrides = {}) {
             { app_id: 'alpha', key: 'retention', value: { label: '留存', basis: '有玩一局', cohorts: [{ start: '2026-10-05', size: 4, d1: 2, d3: 1, d7: null, d14: null, d30: null }] }, source: 'rebound', observed_at: new Date(NOW - 3600000) },
             { app_id: 'ghost', key: 'playersTotal', value: { label: 'x', value: 1 }, source: 'rebound', observed_at: new Date(NOW) }],
         hubSources: [{ id: 'rebound', collected_at: new Date(NOW - 3600000), imported_at: new Date(NOW - 3500000), detail: { values: 2, notes: ['一則說明'] } }],
+        hubInfra: [{ id: '11111111-2222-3333-4444-555555555555', source: 'railway', observed_at: new Date(NOW - 600000), value: { id: '11111111-2222-3333-4444-555555555555', name: 'api', project: 'Alpha',
+            apps: ['alpha', 'ghost'], deploy: { status: 'SUCCESS', at: NOW - 86400000 }, volume: { usedMb: 300, sizeMb: 500 },
+            hourly: { start: NOW - 24 * 3600000, step: 3600000, netInMb: [1.5, null], netOutMb: [4, 2], cpu: [0.01, 0.02], memMb: [100, 120] },
+            daily: { start: '2026-11-08', netInMb: [10, 12], netOutMb: [40, 44], cpu: [0.01, 0.02], memMb: [100, 110] } } }],
         probesRecent: [{ service: 'eclaw', at: new Date(Math.floor(NOW / 300000) * 300000), checks: 5, failures: 1, ms_total: 400 }],
         probesDaily: [{ service: 'eclaw', day: '2026-11-10', checks: 100, failures: 5, ms_total: 9500 }, { service: 'eclaw', day: '2026-10-01', checks: 10, failures: 10, ms_total: 0 }],
         ...overrides,
@@ -75,7 +79,7 @@ function fakePool(overrides = {}) {
                 : sql.includes('FROM fraud_app_feedback_reports') ? 'feedback' : sql.includes('FROM user_accounts') && sql.includes('GROUP BY') ? 'signups' : sql.includes('FROM user_accounts') ? 'users'
                     : sql.includes('FROM chat_messages') ? 'chat' : sql.includes('MIN(quota_date)') ? 'dreamFirst' : sql.includes('FROM dream_buddy_inference_jobs') ? 'dreamJobs'
                         : sql.includes('FROM dream_buddy_ad_transactions') ? 'dreamAds' : sql.includes('FROM tappay_transactions') ? 'tappay' : sql.includes('FROM topup_orders') ? 'topups'
-                            : sql.includes('FROM aihankapps_hub_daily') ? 'hubDaily' : sql.includes('FROM aihankapps_hub_facts') ? 'hubFacts' : sql.includes('FROM aihankapps_hub_sources') ? 'hubSources'
+                            : sql.includes('FROM aihankapps_hub_daily') ? 'hubDaily' : sql.includes('FROM aihankapps_hub_facts') ? 'hubFacts' : sql.includes('FROM aihankapps_hub_sources') ? 'hubSources' : sql.includes('FROM aihankapps_hub_infra') ? 'hubInfra'
                                 : sql.includes("step = 'q'") ? 'probesRecent' : sql.includes("step = 'h'") ? 'probesDaily' : null;
         if (!key) throw new Error('Unexpected synthetic SQL: ' + sql);
         pool.params[key] = values;
@@ -334,6 +338,10 @@ describe('admin hub: the data answer', () => {
         const main = body.services[0];
         expect([main.recent.up.at(-1), main.recent.ms.at(-1), main.uptime24h, main.daily.up.at(-1), main.daily.ms.at(-1), main.uptime7d, main.uptime90d]).toEqual([80, 100, 80, 95, 100, 95, 86.36]);
         expect([body.services[1].uptime24h, body.services[1].daily.up.every(v => v === null)]).toEqual([null, true]);
+
+        // Railway resources: one row per service, apps outside the catalog dropped, where it came from and when
+        expect(body.infra).toHaveLength(1);
+        expect(body.infra[0]).toMatchObject({ name: 'api', project: 'Alpha', apps: ['alpha'], source: 'railway', observedAt: NOW - 600000, volume: { usedMb: 300, sizeMb: 500 } });
     });
 
     test('every database read is read-only, time-limited, and gives its connection back', async () => {
@@ -346,7 +354,7 @@ describe('admin hub: the data answer', () => {
         expect(pool.log.filter(sql => sql === 'COMMIT')).toHaveLength(9);
         expect(pool.log.join('\n')).not.toMatch(/\b(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)\b/);
         // outside those transactions only the hub's own tables are prepared, once
-        expect(pool.direct.map(sql => sql.split('(')[0].trim())).toEqual(['aihankapps_hub_probes', 'aihankapps_hub_daily', 'aihankapps_hub_facts', 'aihankapps_hub_sources'].map(t => 'CREATE TABLE IF NOT EXISTS ' + t));
+        expect(pool.direct.map(sql => sql.split('(')[0].trim())).toEqual(['aihankapps_hub_probes', 'aihankapps_hub_daily', 'aihankapps_hub_facts', 'aihankapps_hub_sources', 'aihankapps_hub_infra'].map(t => 'CREATE TABLE IF NOT EXISTS ' + t));
         expect(pool.log.join('\n')).toMatch(/FROM tappay_transactions WHERE status = 'success' AND currency = 'TWD'/);
         expect(pool.log.join('\n')).toMatch(/FROM topup_orders WHERE status = 'paid' AND refunded_at IS NULL AND amount_twd > 0/);
         // nothing personal is selected: counts and days only
@@ -553,7 +561,7 @@ describe('admin hub: the page reads the answer correctly', () => {
             ['ops-stale', 'warn', null], ['listing-rate', 'warn', 'weesh'], ['chat-pending', 'info', 'weesh'], ['rating-alpha', 'warn', 'alpha']]);
         expect(noisy.D.appState(noisy.D.APP.weesh)).toBe('crit');
         expect(noisy.D.appState(noisy.D.APP.alpha)).toBe('warn');
-        expect(noisy.D.RULES).toHaveLength(10);
+        expect(noisy.D.RULES).toHaveLength(12);
     });
 
     test('the monitor\'s issue codes become a plain reason with its times', async () => {
@@ -574,6 +582,28 @@ describe('admin hub: the page reads the answer correctly', () => {
             ['worker-bad-timehut-mcode', 'warn', '人物辨識：MiniMax 額度用完'], ['worker-bad-wishlist-vision', 'warn', '圖片辨識：伺服器回錯誤'], ['worker-bad-dream-buddy', 'warn', 'Dream 部分異常']]);
         expect(D.ALERTS.find(a => a.id === 'worker-bad-timehut-mcode').since).toBe(Date.UTC(2026, 10, 10, 23, 23));
         expect(D.ALERTS.find(a => a.id === 'worker-bad-dream-buddy').detail).toBe('程序還在，但監控的健康檢查沒有通過。');
+    });
+
+    test('Railway resources reach the page: traffic joins the metrics, and full space or a failed deployment raises an alert', async () => {
+        const { D, day } = await loadPage();
+        expect(D.infra.map(r => [r.name, r.apps])).toEqual([['api', ['alpha']]]);
+        expect(D.infraFor(D.APP.alpha).length).toBe(1);
+        expect(D.infraFor(D.APP.gamma)).toEqual([]);
+        expect(D.METRICS.netOut).toMatchObject({ group: '後台', fmt: 'mb', parts: ['x.netOutMb'] });
+        expect(D.GROUPS).toContain('後台');
+        const before = Date.parse('2026-11-05T00:00:00Z');
+        D.computeAlerts(before);
+        expect(D.ALERTS.filter(a => /^(space|deploy)-/.test(a.id))).toEqual([]);           // 60% used, last deployment fine
+        Object.assign(D.infra[0], { volume: { usedMb: 430, sizeMb: 500 }, deploy: { status: 'FAILED', at: NOW - 600000 } });
+        D.computeAlerts(before);
+        const raised = D.ALERTS.filter(a => /^(space|deploy)-/.test(a.id));
+        expect(raised.map(a => [a.id.split('-')[0], a.sev, a.title, a.apps])).toEqual([['space', 'warn', 'Alpha api 的空間用了 86%', ['alpha']], ['deploy', 'crit', 'Alpha api 部署失敗', ['alpha']]]);
+        expect(raised[0].detail).toBe('已用 430 MB，上限 500 MB；滿了之後這個服務會寫不進去，要清理資料或在 Railway 加大空間。');
+        D.infra[0].volume = { usedMb: 4900, sizeMb: 5000 };
+        D.computeAlerts(before);
+        expect(D.ALERTS.find(a => a.id.startsWith('space-'))).toMatchObject({ sev: 'crit', title: 'Alpha api 的空間用了 98%' });
+        expect(D.appState(D.APP.alpha)).toBe('crit');
+        void day;
     });
 
     test('a scheduled worker between its rounds is not called stopped, but a problem it reports still is', async () => {
@@ -631,7 +661,7 @@ describe('admin hub: the page reads the answer correctly', () => {
         const rows = D.sourceRows();
         expect(rows.find(r => r.name === '營運數據').state).toBe('crit');
         expect(rows.filter(r => r.state === 'ok').map(r => r.name)).toEqual(['商店報表', '作品集流量', '作品集互動', 'EClaw 帳號', 'EClaw 對話', '夢話夥伴後台', '問題回饋', 'EClaw 付款', '後台服務檢查', 'REBOUND 遊戲伺服器']);
-        expect(rows.filter(r => r.state === 'none').map(r => r.name)).toEqual(['活字戰紀伺服器', 'Wishlist.ai 後台', '時光相簿伺服器', '其他 APP 的使用紀錄', '商店的內購金額']);
+        expect(rows.filter(r => r.state === 'none').map(r => r.name)).toEqual(['活字戰紀伺服器', 'Wishlist.ai 後台', 'Railway 後台資源', '時光相簿伺服器', '其他 APP 的使用紀錄', '商店的內購金額']);
         expect(rows.find(r => r.name === '商店報表').note).toBe('Google 到 10/27、Apple 到 10/29、AdMob 到 11/1');
     });
 });

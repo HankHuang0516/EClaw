@@ -28,6 +28,7 @@ Read-only, aggregates only. Each database read runs in its own `BEGIN READ ONLY`
 | `eclawPayments` | `tappay_transactions` (`status = 'success'`, TWD), `topup_orders` (`paid`, not refunded) | EClawbot payments and amounts per day |
 | `imports` | `aihankapps_hub_daily`, `_facts`, `_sources` (see below) | the game servers' and Wishlist's daily counts, current totals and weekly retention, as last imported |
 | `services` | `aihankapps_hub_probes` (see below) | each back-end's availability and response time: 24 hours in five-minute buckets, 90 days |
+| `imports` (`infra`) | `aihankapps_hub_infra`, written by the `railway` collector source | every Railway production service: data received (uploads) and sent (downloads), CPU, memory, volume space, latest deployment status; 24 hourly and 30 daily values |
 
 The page also reads the public `/api/aihankapps/ops/*` API (worker CPU and finished work, Wishlist listings) directly, and `GET /api/aihankapps/hub/services` (admin only) for the latest health check of each back-end.
 
@@ -41,6 +42,10 @@ Not connected, and shown as such on the page's 資料來源 view:
 
 `aihankapps-hub-store.js` lists the watched back-ends (`SERVICES`) with fixed public health URLs; nothing in a request can choose a host or path. Once a minute (`node-cron`, started from `index.js` unless `NODE_ENV=test` or `AIHANKAPPS_HUB_COLLECTOR=0`) this server asks each one, with a 10 s timeout and no redirects, and judges the answer by the service's own health body where it has one. Results are added to `aihankapps_hub_probes`: five-minute buckets kept 14 days, hourly buckets kept 400 days, pruned daily at 04:23. A bucket without a check is unknown (this server was not running), never "down".
 
+### Railway service resources
+
+Hank asked for the back-ends' upload/download traffic and more monitoring (2026-11-11). The collector's `railway` source (`tools/aihankapps-hub/railway-metrics.js`) runs on the operator's Mac, refreshes the Railway CLI login with `railway whoami` and reads Railway's metrics API with that session, read-only: per production service, NETWORK_RX/TX (shown as 上傳／下載), CPU, memory, volume use and size, and the latest deployment. Values are stored per service in `aihankapps_hub_infra` (one row per service, replaced on each import) and as the daily `netInMb` / `netOutMb` series of each service's first app (the 後台傳入／傳出 metrics). The page shows them in a 後台資源 table on the live view and on each app page, and raises 後台空間快滿 (≥ 80 %, ≥ 95 % critical) and 後台部署失敗 (latest deployment FAILED or CRASHED). The session token is used in memory for those requests only.
+
 ### Imported back-end numbers
 
 The game servers (REBOUND; 活字戰紀's 雙城烽火 and 巔峰之戰) and Wishlist keep their own databases in other Railway projects, which this server cannot reach. The operator's collector, `tools/aihankapps-hub/collect.js`, reads them inside each back-end's own container over `railway ssh`, then runs `backend/scripts/aihankapps-hub-import.js` inside this server's container to store the result. There is no HTTP write API, and no connection string or secret passes through the tool.
@@ -48,7 +53,7 @@ The game servers (REBOUND; 活字戰紀's 雙城烽火 and 巔峰之戰) and Wis
 - Every back-end question is a `SELECT` in its own read-only transaction with a 20 s limit, returns counts and dates only, and a failing question is noted while the rest continue.
 - An import is one envelope (`schemaVersion: 1`, `source`, `collectedAt`, daily `series`, current `facts`, `notes`), checked whole by `validateEnvelope()`: catalog apps, known metrics (`IMPORT_METRICS`), real dates, nothing after the collection day, finite non-negative values, bounded sizes. It is stored in one transaction: values upserted, that source's facts replaced, its receipt updated.
 - Imported series reach the page as `x.<metric>` (for example `x.activeUsers`) and join the matching hub metrics. The page warns when a source has not been imported for 36 hours.
-- The collector runs when the operator runs it. It is not scheduled by this repository.
+- The collector runs from the operator's Mac (a LaunchAgent there runs it daily and the `railway` source hourly). Nothing in this repository schedules it; the page warns when a source has not been imported for 36 hours.
 
 ## Rules the numbers follow
 

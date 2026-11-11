@@ -175,7 +175,7 @@ function createData({ getPool, getAuthPool, getDeviceStats, now = Date.now, port
         const today = taipeiDay(generatedAt), startIndex = dayIndex(today) - HISTORY_DAYS + 1, start = isoDay(startIndex);
         const daily = createDaily(startIndex, HISTORY_DAYS);
         const sources = {}, latest = { rating: {}, reviews: {}, likes: {}, comments: {}, betaFeedback: {}, feedback: {}, facts: {} };
-        let services = [];
+        let services = [], infra = [];
         const eclaw = { users: null, devices: null };
         let apps = [];
         const section = async (id, run) => {
@@ -308,6 +308,10 @@ function createData({ getPool, getAuthPool, getDeviceStats, now = Date.now, port
                 if (!known.has(row.app_id)) continue;
                 (latest.facts[row.app_id] || (latest.facts[row.app_id] = {}))[row.key] = { ...row.value, source: row.source, observedAt: new Date(row.observed_at).getTime() };
             }
+            // Per-service resources (Railway): traffic, CPU, memory, space and the latest deployment.
+            infra = (imported.infra || []).filter(row => row.value && typeof row.value === 'object').map(row => ({ ...row.value,
+                apps: (row.value.apps || []).filter(app => known.has(app)), source: row.source, observedAt: new Date(row.observed_at).getTime() }))
+                .sort((a, b) => String(a.project).localeCompare(String(b.project)) || String(a.name).localeCompare(String(b.name)));
             return { collectors: Object.fromEntries(imported.sources.map(row => [row.id, { collectedAt: new Date(row.collected_at).getTime(), importedAt: new Date(row.imported_at).getTime(),
                 values: row.detail && row.detail.values, notes: (row.detail && row.detail.notes) || [] }])) };
         })));
@@ -322,7 +326,7 @@ function createData({ getPool, getAuthPool, getDeviceStats, now = Date.now, port
         }
 
         return { success: true, schemaVersion: 1, generatedAt, timeZone: TIME_ZONE, today, apps,
-            daily: { start, days: HISTORY_DAYS, series: daily.toJSON() }, latest, eclaw, services, sources };
+            daily: { start, days: HISTORY_DAYS, series: daily.toJSON() }, latest, eclaw, services, infra, sources };
     }
 
     return {

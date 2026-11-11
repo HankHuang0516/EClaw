@@ -38,6 +38,8 @@
     money: v => 'NT$' + (Math.abs(v) < 100 ? trimNum(v) : big(v)),   // 金額很小的時候保留到分
     cpu: v => v.toFixed(1) + '%',
     mem: v => (v >= 1073741824 ? (v / 1073741824).toFixed(2) + ' GB' : fmtInt(v / 1048576) + ' MB'),
+    // 資料量，單位 MB：1 GB 以上寫 GB
+    mb: v => (Math.abs(v) >= 1024 ? (v / 1024).toFixed(Math.abs(v) >= 10240 ? 1 : 2) + ' GB' : (Math.abs(v) < 10 ? trimNum(Math.round(v * 100) / 100) : fmtInt(v)) + ' MB'),
     fix1: v => v.toFixed(1),
     num: v => (Math.abs(v) < 100 && v % 1 ? v.toFixed(1) : big(v)),   // 日均這類可能有小數的數字
     pct1: v => v.toFixed(1) + '%',
@@ -52,6 +54,7 @@
     return function (hi, step) {
       if (kind === 'pct1' || kind === 'pct2' || kind === 'cpu') { const d = step >= 1 ? 0 : step >= 0.1 ? 1 : 2; return v => v.toFixed(d) + '%'; }
       if (kind === 'fix2') { const d = step >= 1 ? 0 : step >= 0.1 ? 1 : 2; return v => v.toFixed(d); }
+      if (kind === 'mb') { if (hi >= 1024) { const d = step >= 1024 ? 0 : 1; return v => (v === 0 ? '0' : (v / 1024).toFixed(d) + ' GB'); } return v => (v === 0 ? '0' : trimNum(Math.round(v * 10) / 10) + ' MB'); }
       // 刻度間距到萬才用「萬」，否則寫完整數字：一條軸只用一種寫法
       if (step >= 1e8) return v => (v === 0 ? '0' : trimNum(v / 1e8) + ' 億');
       if (step >= 1e4) return v => (v === 0 ? '0' : trimNum(v / 1e4) + ' 萬');

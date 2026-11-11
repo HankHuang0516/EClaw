@@ -569,3 +569,5 @@ th[data-tip]{cursor:help}
 .tbl td .sub-link{white-space:normal}
 /* 可用率那一排：沒有檢查紀錄的日子是灰色 */
 .up i.up-na{background:var(--line-2)}
+/* 後台資源表：上傳／下載兩行不折斷 */
+.nowrap{white-space:nowrap}
