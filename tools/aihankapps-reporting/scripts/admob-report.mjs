@@ -5,9 +5,9 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { EXPECTED_PUBLISHER, isoDate, daysBetween, normalizeAdmob } from './report-core.mjs';
 import { atomicWrite, appendSnapshot } from './report-storage.mjs';
+import { ROOT as PRIVATE } from './report-paths.mjs';
 
 const ACCOUNT = `accounts/${EXPECTED_PUBLISHER}`;
-const PRIVATE = '/Users/hank/.local/share/AiHankApps/analytics';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 export function keychainValue(name) {
   try {

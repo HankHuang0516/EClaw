@@ -11,6 +11,36 @@ verification. If GitHub reports `REVIEW_REQUIRED`, obtain the required approval;
 do not use an admin bypass or claim that the EClaw domain has been deployed.
 Changes outside `/AiHankApps/` follow the normal EClaw review process.
 
+## Report-only daily path (2026-11-11)
+
+The canonical portfolio checkout (`app-showcase-site`) was lost with its external
+drive (Hank, 2026-11-11), and its daily catalog sync overwrote curated names,
+guides and H-watermarked icons. Hank asked for the store report to be refreshed
+automatically by a watchdog, so the daily path now runs from an EClaw checkout:
+
+```bash
+node tools/aihankapps-reporting/scripts/daily-report.mjs [--day YYYY-MM-DD]
+```
+
+- `collect-store-data.mjs` replaces the store part of `collect-app-data.zsh`
+  (same snapshot files and receipt) and never syncs the catalog, icons or guides.
+- `report-release.mjs` runs in catalog mode `published`: the report is built
+  against `backend/public/AiHankApps/app-catalog.json` exactly as people left it.
+  Today's store and history collections, AdMob and per-APP collection coverage
+  are still required; only the same-day catalog sync is not.
+- The Golden capture and comparison still gate publication, and the release is
+  applied only to `backend/public/AiHankApps/reports/`. Any other tracked change
+  in the checkout stops the run.
+- The Mac watchdog commits the four report files (`index.html`, `data.js`,
+  `report-view.js`, `release.json`) through a pull request; required CI and this
+  workflow's `validateRelease` must pass before it merges. Catalog, icon and
+  guide changes stay manual and reviewed.
+- Paths are set through `AIHANKAPPS_*` environment variables
+  (`scripts/report-paths.mjs`); the defaults are the original showcase layout.
+
+The sections below describe the original showcase path and still apply wherever
+they concern collection, history, presentation and review data.
+
 ## Required daily path
 
 Run `zsh scripts/run-daily-report.zsh` from the canonical portfolio. It collects

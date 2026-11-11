@@ -3,14 +3,28 @@ import { promisify } from 'node:util';
 import { mkdir, readFile } from 'node:fs/promises';
 import { join, resolve, basename } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { realpathSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { collectAdmob } from './admob-report.mjs';
 import { appendSnapshot, atomicWrite } from './report-storage.mjs';
 import { daysBetween, isoDate, decodeReport, parseDelimited } from './report-core.mjs';
+import { ROOT } from './report-paths.mjs';
 
 const execute = promisify(execFile);
 export function expectedApplePending(program, args, error) {
   return program === 'asc' && args[0] === 'analytics' && args[1] === 'sales' && args.includes('--allow-missing') && error.code === 4 && /Report is not available yet\./.test(String(error.stderr || ''));
+}
+export function googleVitalsPending(program, args, error) {
+  if (program !== 'gplay' || args[0] !== 'vitals' || args[1] !== 'crashes' || args[2] !== 'query') return null;
+  const endIndex = args.indexOf('--to');
+  if (endIndex < 0 || !args[endIndex + 1]) return null;
+  const detail = String(error.stderr || error.message || '');
+  const match = detail.match(/googleapi: Error 400: 'timeline_spec\.end_date' field should be at most the current freshness (\d{4}-\d{2}-\d{2}) 00:00\b/);
+  if (!match) return null;
+  let requestedTo, freshnessEndExclusive;
+  try { requestedTo = isoDate(args[endIndex + 1]); freshnessEndExclusive = isoDate(match[1]); } catch { return null; }
+  if (freshnessEndExclusive > requestedTo) return null;
+  return { status: 'not-yet-available', reason: 'official-freshness-boundary', requestedTo, freshnessEndExclusive, diagnostic: match[0] };
 }
 async function command(program, args) {
   const attempts = program === 'gplay' ? 3 : 1;
@@ -23,6 +37,10 @@ async function command(program, args) {
       // asc's --allow-missing handles absent past reports but currently still exits
       // 4 for Apple's explicit not-yet-published response. This is not a zero day.
       if (expectedApplePending(program, args, error)) return JSON.stringify({ available: false, reason: 'report-not-published' });
+      // The CLI end date is inclusive; Google's freshness boundary is not.
+      // Preserve this specific official pending result without retrying a
+      // deterministic 400 or masking unrelated API/authentication failures.
+      if (googleVitalsPending(program, args, error)) throw error;
       if (attempt < attempts) {
         await new Promise(resolveDelay => setTimeout(resolveDelay, attempt * 1500));
         continue;
@@ -74,17 +92,29 @@ export async function collectHistory({ day, root, catalogPath, output, weekly = 
         }
         checks.push({ source: 'google', id: app.communityId, kind, status: overviewFiles ? 'available' : 'not-yet-available', overviewFiles });
       }
-      // Google rejects an inclusive end date equal to its freshness boundary.
-      // At the 09:00 Taipei run that boundary is normally D-2, so query through D-3.
+      // D-3 remains the requested cutoff even when Google is further behind.
+      // A confirmed freshness rejection is missing data, never a zero rate
+      // or permission to silently substitute an earlier requested cutoff.
       const vitalsEnd = new Date(Date.parse(day) - 3 * 86400000).toISOString().slice(0, 10);
       const vitalsStart = new Date(Date.parse(vitalsEnd) - 34 * 86400000).toISOString().slice(0, 10);
       for (const type of ['crash', 'anr']) {
-        const raw = await run('gplay', ['vitals', 'crashes', 'query', '--package', app.googlePackage, '--type', type, '--from', vitalsStart, '--to', vitalsEnd, '--paginate']);
-        const response = JSON.parse(raw || '{}') || {};
-        if (response.rows !== undefined && !Array.isArray(response.rows)) throw new Error('Google vitals response rows are invalid');
-        const envelope = { schemaVersion: 1, collectedAt, package: app.googlePackage, id: app.communityId, type, from: vitalsStart, to: vitalsEnd, response };
+        const args = ['vitals', 'crashes', 'query', '--package', app.googlePackage, '--type', type, '--from', vitalsStart, '--to', vitalsEnd, '--paginate'];
+        let response = null, availability = null;
+        try {
+          const raw = await run('gplay', args);
+          response = JSON.parse(raw);
+          // 2026-11-11: gplay's --paginate now prints the collected rows themselves as an array (it used to print
+          // { rows }). Same rows, so keep them as rows and record that shape; anything else is still invalid.
+          if (Array.isArray(response)) response = { rows: response, cliShape: 'paginated-array' };
+          if (response !== null && typeof response !== 'object') throw new Error('Google vitals response is invalid');
+          if (response?.rows !== undefined && !Array.isArray(response.rows)) throw new Error('Google vitals response rows are invalid');
+        } catch (error) {
+          availability = googleVitalsPending('gplay', args, error);
+          if (!availability) throw error;
+        }
+        const envelope = { schemaVersion: 1, collectedAt, package: app.googlePackage, id: app.communityId, type, from: vitalsStart, to: vitalsEnd, response, ...(availability ? { availability } : {}) };
         await appendSnapshot(join(root, 'history/google-play-vitals/snapshots', day, runId, type, `${app.googlePackage}.json`), JSON.stringify(envelope));
-        checks.push({ source: 'google-vitals', id: app.communityId, kind: `${type}Rate`, status: response.rows?.length ? 'available' : 'sample-insufficient', rows: response.rows?.length || 0 });
+        checks.push({ source: 'google-vitals', id: app.communityId, kind: `${type}Rate`, status: availability ? 'not-yet-available' : response?.rows?.length ? 'available' : 'sample-insufficient', rows: availability ? null : response?.rows?.length || 0, ...(availability ? { requestedTo: vitalsEnd, freshnessEndExclusive: availability.freshnessEndExclusive, reason: availability.reason } : {}) });
       }
     }
     const windowStart = new Date(Date.parse(day) - 35 * 86400000).toISOString().slice(0, 10);
@@ -110,11 +140,11 @@ export async function collectHistory({ day, root, catalogPath, output, weekly = 
   }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
   const day = process.argv[2] || new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-  const root = '/Users/hank/.local/share/AiHankApps/analytics';
+  const root = ROOT;
   try {
-    const result = await collectHistory({ day, root, catalogPath: new URL('../app-catalog.json', import.meta.url), output: join(root, 'history-collection-latest.json'), weekly: new Date(`${day}T00:00:00Z`).getUTCDay() === 1 });
+    const result = await collectHistory({ day, root, catalogPath: process.env.AIHANKAPPS_REPORT_CATALOG || new URL('../app-catalog.json', import.meta.url), output: join(root, 'history-collection-latest.json'), weekly: new Date(`${day}T00:00:00Z`).getUTCDay() === 1 });
     console.log(JSON.stringify({ status: result.status, day: result.day, checks: result.checks.length, stage: result.stage }));
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }

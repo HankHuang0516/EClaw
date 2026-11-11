@@ -7,14 +7,15 @@ const root = resolve(import.meta.dirname, '..');
 const args = process.argv.slice(2);
 const release = resolve(args[args.indexOf('--release') + 1] || join(root, 'reports'));
 const out = resolve(args.includes('--output') ? args[args.indexOf('--output') + 1] : join(root, 'design/verification'));
-const { chromium } = createRequire('/Users/hank/Desktop/Project/EClaw-ai-hank-apps-route/backend/package.json')('playwright');
+const { PLAYWRIGHT_FROM, PUBLIC } = await import('./report-paths.mjs');
+const { chromium } = createRequire(PLAYWRIGHT_FROM)('playwright');
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.png': 'image/png', '.json': 'application/json' };
 const server = createServer(async (req, res) => {
   if (req.method !== 'GET') { res.writeHead(405).end(); return; }
   try {
     const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
     const isReport = pathname.startsWith('/reports/');
-    const base = isReport ? release : join(root, 'public');
+    const base = isReport ? release : (process.env.AIHANKAPPS_REPORT_PUBLIC ? PUBLIC : join(root, 'public'));
     const file = resolve(base, '.' + (isReport ? pathname.slice('/reports'.length) : pathname) + (pathname.endsWith('/') ? 'index.html' : ''));
     if (!file.startsWith(base + sep)) throw new Error('Invalid path');
     const data = await readFile(file);
