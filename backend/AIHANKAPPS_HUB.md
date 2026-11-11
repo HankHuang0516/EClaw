@@ -7,7 +7,7 @@
 - The page (HTML, scripts, styles) and `GET /api/aihankapps/hub/data` pass through the existing `authModule.authMiddleware` and `authModule.adminMiddleware` (`user_accounts.is_admin`), unchanged. No account, role or credential is added.
 - `/AiHankApps/hub` is reserved in `index.js` before anonymous pageview tracking and the public static mount, like `/AiHankApps/admin-demos`. The page files live in `backend/aihankapps-hub/`, outside `public/`, and only the names in `PAGE_FILES` are served. Nothing falls through to a public file.
 - An anonymous browser opening the page is redirected to `/portal/?return_to=%2FAiHankApps%2Fhub%2F` (the login page honours exactly that path). A signed-in account that is not an administrator gets a plain 403 page. Scripts, styles and the API get 401/403 JSON. While the server is starting everything answers 503.
-- `GET /api/aihankapps/hub/access` answers everyone with `{ success, admin }` and nothing else. The public portfolio (`public/AiHankApps/hub-entry.js`) uses it to add the "管理中樞" shortcut for administrators; for everyone else nothing is added to the page.
+- The public portfolio shows a "管理中樞" shortcut to everyone (Hank, 2026-11-11). Following it without a session leads to the login page and back; a non-administrator gets the 403 page. `GET /api/aihankapps/hub/access` still answers everyone with `{ success, admin }` and nothing else, for scripts; the portfolio no longer asks it.
 - Responses are `private, no-store, no-transform` (so Cloudflare injects nothing the policy would block), same-origin, `noindex`, with a content security policy that allows only this path's own scripts and styles (plus the Google Fonts stylesheet the portfolio already uses) and same-origin requests.
 - This repository is public, so the page's code is readable there. Its numbers are not: nothing read from the database is written to a file or committed, and tests use synthetic rows only.
 
@@ -65,7 +65,7 @@ The game servers (REBOUND; 活字戰紀's 雙城烽火 and 巔峰之戰) and Wis
 - `backend/aihankapps-hub-store.js` — the hub's own tables: service checks and imported numbers.
 - `backend/scripts/aihankapps-hub-import.js` — the import step, run by the collector inside this server's container.
 - `backend/aihankapps-hub/` — `index.html`, `hub.css`, `hub-data.js` (data layer), `hub-charts.js` (SVG charts, no library), `hub-app.js` (views and interaction).
-- `backend/public/AiHankApps/hub-entry.js` — the administrators-only shortcut on the public portfolio.
+- `backend/public/AiHankApps/index.html` — the portfolio's shortcut row carries the "管理中樞" link.
 - `tools/aihankapps-hub/` — the operator's collector and the back-end read scripts; see its README.
 - `backend/tests/jest/aihankapps-hub.test.js`, `aihankapps-hub-store.test.js`, plus a real-server block in `admin-auth.test.js`.
 

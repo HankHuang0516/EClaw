@@ -687,34 +687,18 @@ describe('admin hub: how it is wired in', () => {
         expect(hub.LOGIN_URL).toBe('/portal/?return_to=' + encodeURIComponent('/AiHankApps/hub/'));
     });
 
-    test('the portfolio shows the entry to administrators only, and adds nothing for anyone else', async () => {
+    test('the portfolio shows the entry to everyone; the page itself decides who gets in', async () => {
         const portfolio = path.join(backendDir, 'public', 'AiHankApps');
         const html = fs.readFileSync(path.join(portfolio, 'index.html'), 'utf8');
-        expect(html).toContain('<script src="hub-entry.js?v=admin-hub-20261110" defer></script>');
-        expect(html).not.toContain('管理中樞');
-        expect(html).not.toContain('href="hub/"');
-        const code = fs.readFileSync(path.join(portfolio, 'hub-entry.js'), 'utf8');
-        async function run(answer) {
-            const added = [], asked = [];
-            const element = tag => ({ tag, attrs: {}, style: {}, children: [], setAttribute(k, v) { this.attrs[k] = v; }, appendChild(child) { this.children.push(child); } });
-            const row = { querySelector: selector => (selector === 'a' ? { style: { cssText: 'color:green' } } : added.find(a => selector === '[data-hub-entry]' && 'data-hub-entry' in a.attrs) || null),
-                appendChild: node => added.push(node) };
-            const sandbox = { document: { querySelector: selector => (selector === '.portfolio-shortcuts' ? row : null), createElement: element, createTextNode: text => ({ text }) },
-                window: { fetch: async (url, init) => { asked.push([url, init]); if (answer instanceof Error) throw answer; return answer; } } };
-            vm.runInNewContext(code, sandbox);
-            await new Promise(resolve => setImmediate(resolve));
-            await new Promise(resolve => setImmediate(resolve));
-            return { added, asked };
-        }
-        const yes = await run({ ok: true, json: async () => ({ success: true, admin: true }) });
-        expect(yes.asked).toEqual([['/api/aihankapps/hub/access', { credentials: 'same-origin', cache: 'no-store' }]]);
-        expect(yes.added).toHaveLength(1);
-        expect(yes.added[0]).toMatchObject({ tag: 'a', href: 'hub/', title: '只有管理者看得到', style: { cssText: 'color:green' } });
-        expect(yes.added[0].children[0]).toEqual({ text: '管理中樞 ' });
-        for (const answer of [{ ok: true, json: async () => ({ success: true, admin: false }) }, { ok: true, json: async () => ({ admin: 'true' }) }, { ok: false, json: async () => ({ admin: true }) },
-            { ok: true, json: async () => null }, new Error('offline')]) {
-            expect((await run(answer)).added).toEqual([]);
-        }
+        const shortcuts = html.slice(html.indexOf('<div class="portfolio-shortcuts"'), html.indexOf('</div>', html.indexOf('<div class="portfolio-shortcuts"')));
+        expect(shortcuts).toMatch(/<a\s+href="hub\/"[^>]*aria-label="開啟管理中樞（需要管理者帳號）"[^>]*>管理中樞 <span aria-hidden="true">↗<\/span><\/a>/);
+        expect(html).not.toContain('hub-entry.js');
+        expect(fs.existsSync(path.join(portfolio, 'hub-entry.js'))).toBe(false);
+        // following it without signing in leads to the sign-in page, which comes back here
+        const { app } = mount();
+        const res = await browser(request(app).get('/AiHankApps/hub/'));
+        expect([res.status, res.headers.location]).toEqual([302, hub.LOGIN_URL]);
+        expect(hub.LOGIN_URL).toBe('/portal/?return_to=%2FAiHankApps%2Fhub%2F');
     });
 });
 
