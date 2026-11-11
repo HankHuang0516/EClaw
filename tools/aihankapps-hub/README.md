@@ -6,7 +6,7 @@ into the admin hub at `https://eclawbot.com/AiHankApps/hub/`. See `backend/AIHAN
 ```
 node tools/aihankapps-hub/collect.js                   # read every back-end, show what would be sent, send nothing
 node tools/aihankapps-hub/collect.js --commit          # read, then import into the hub
-node tools/aihankapps-hub/collect.js --only rebound    # one back-end: rebound, summit, wishlist
+node tools/aihankapps-hub/collect.js --only rebound    # one back-end: rebound, summit, wishlist, railway
 ```
 
 ## How it works
@@ -20,19 +20,26 @@ node tools/aihankapps-hub/collect.js --only rebound    # one back-end: rebound, 
 3. With `--commit`, it runs `backend/scripts/aihankapps-hub-import.js` inside the EClaw container, which stores the
    envelope in the hub's own `aihankapps_hub_*` tables in one transaction.
 
-The operator's Railway login is the only credential involved. The tool never reads a connection string or a secret,
-and the numbers are printed only as counts of series ("plays(2026-10-20…21 天)"), not values.
+The operator's Railway login is the only credential involved. The tool never reads a connection string or a database
+secret, and the numbers are printed only as counts of series ("plays(2026-10-20…21 天)"), not values.
+
+The `railway` source is the exception to "inside each container": it runs on this Mac (`railway-metrics.js`). It runs
+`railway whoami` to refresh the CLI login, then uses that session token, in memory only, for read-only queries to
+Railway's metrics API: per production service, data received and sent (uploads/downloads), CPU, memory, volume space
+and the latest deployment status. The envelope carries them as `infra` rows plus daily `netInMb` / `netOutMb` series.
 
 | id | Railway project / service | Apps | Reads |
 |---|---|---|---|
 | `rebound` | rebound-live / rebound-api | REBOUND | players, runs, purchases (Google purchased, Apple non-sandbox), mailbox, weekly retention |
 | `summit` | noble-fascination / summit-battle-api | 雙城烽火, 巔峰之戰 | leaderboard players and scores, battles, accounts and recent sign-ins, cosmetic purchases (not tests), mailbox, retention |
 | `wishlist` | thorough-presence / wishlist-app | Wishlist.ai | accounts, messages, listings, completed TWD purchases, conversations, retention |
+| `railway` | every project above, plus EClaw and 時光相簿 (metrics API, no ssh) | every app with a Railway service | traffic in/out, CPU, memory, volume space, latest deployment |
 
 ## Running it on a schedule
 
-Nothing here schedules it. The hub warns when a source has not been imported for 36 hours. A daily run needs the
-operator's Railway login on the machine that runs it.
+Nothing here schedules it. On Hank's Mac a LaunchAgent runs the whole collector daily and the `railway` source hourly
+(see the hub memory notes). The hub warns when a source has not been imported for 36 hours. Runs need the operator's
+Railway login on the machine that runs them.
 
 ## Tests
 

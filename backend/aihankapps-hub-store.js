@@ -24,7 +24,11 @@ const PROBE_UA = 'aihankapps-hub-probe/1.0 (+https://eclawbot.com/AiHankApps/)';
 const MAX_IMPORT_BYTES = 512 * 1024, MAX_SERIES = 200, MAX_VALUES = 800, MAX_FACTS = 200, MAX_FACT_BYTES = 8192;
 const IMPORT_SOURCE = /^[a-z][a-z0-9-]{1,30}$/, FACT_KEY = /^[a-z][a-zA-Z0-9]{1,40}$/, ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 // Daily series a collector may hand over. The page knows each of these by name.
-const IMPORT_METRICS = ['newUsers', 'activeUsers', 'plays', 'purchases', 'purchaseTwd', 'messages', 'listings', 'mailSent', 'mailClaimed', 'aiUses'];
+const IMPORT_METRICS = ['newUsers', 'activeUsers', 'plays', 'purchases', 'purchaseTwd', 'messages', 'listings', 'mailSent', 'mailClaimed', 'aiUses', 'netInMb', 'netOutMb'];
+// Per-service resources from the Railway collector (2026-11-11): traffic, CPU, memory, space, latest deployment.
+const MAX_INFRA = 80, INFRA_FIELDS = ['netInMb', 'netOutMb', 'cpu', 'memMb'];
+const DEPLOY_STATES = ['SUCCESS', 'FAILED', 'CRASHED', 'BUILDING', 'DEPLOYING', 'INITIALIZING', 'QUEUED', 'WAITING', 'REMOVED', 'REMOVING', 'SLEEPING', 'SKIPPED'];
+const SERVICE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 const isOk = body => !!body && body.ok === true;
 const text = (value, max) => (typeof value === 'string' && value ? value.slice(0, max) : null);
@@ -52,6 +56,8 @@ const SCHEMA = [
         PRIMARY KEY (app_id, key))`,
     `CREATE TABLE IF NOT EXISTS aihankapps_hub_sources (
         id TEXT PRIMARY KEY, collected_at TIMESTAMPTZ NOT NULL, imported_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), detail JSONB NOT NULL)`,
+    `CREATE TABLE IF NOT EXISTS aihankapps_hub_infra (
+        id TEXT PRIMARY KEY, source TEXT NOT NULL, value JSONB NOT NULL, observed_at TIMESTAMPTZ NOT NULL)`,
 ];
 const preparations = new WeakMap();
 function prepare(pool) {
@@ -187,7 +193,7 @@ function fail(code) { const error = new Error(code); error.code = code; throw er
 function validateEnvelope(envelope, appIds) {
     const known = appIds instanceof Set ? appIds : new Set(appIds || []);
     if (!envelope || typeof envelope !== 'object' || Array.isArray(envelope)) fail('IMPORT_SHAPE');
-    if (Object.keys(envelope).some(key => !['schemaVersion', 'source', 'collectedAt', 'series', 'facts', 'notes'].includes(key))) fail('IMPORT_SHAPE');
+    if (Object.keys(envelope).some(key => !['schemaVersion', 'source', 'collectedAt', 'series', 'facts', 'notes', 'infra'].includes(key))) fail('IMPORT_SHAPE');
     if (envelope.schemaVersion !== 1 || typeof envelope.source !== 'string' || !IMPORT_SOURCE.test(envelope.source)) fail('IMPORT_SOURCE');
     const collectedAt = envelope.collectedAt;
     if (!Number.isSafeInteger(collectedAt) || collectedAt < Date.UTC(2026, 0, 1) || collectedAt > Date.now() + HOUR_MS) fail('IMPORT_TIME');
@@ -215,7 +221,49 @@ function validateEnvelope(envelope, appIds) {
     if (new Set(cleanFacts.map(f => f.app + '\n' + f.key)).size !== cleanFacts.length) fail('IMPORT_FACT');
     const notes = envelope.notes === undefined ? [] : envelope.notes;
     if (!Array.isArray(notes) || notes.length > 20 || notes.some(note => typeof note !== 'string' || note.length > 200)) fail('IMPORT_SHAPE');
-    return { source: envelope.source, collectedAt, rows, facts: cleanFacts, notes };
+    const infra = envelope.infra === undefined ? undefined : validateInfra(envelope.infra, known, lastDay);
+    return { source: envelope.source, collectedAt, rows, facts: cleanFacts, notes, infra };
+}
+
+// One row per service: { id, name, project, apps, deploy, volume, hourly, daily } with numbers only.
+function validateInfra(list, known, lastDay) {
+    if (!Array.isArray(list) || list.length > MAX_INFRA) fail('IMPORT_INFRA');
+    const numbers = (values, max) => {
+        if (!Array.isArray(values) || values.length < 1 || values.length > max) fail('IMPORT_INFRA');
+        return values.map(v => {
+            if (v === null) return null;
+            if (typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > 1e9) fail('IMPORT_INFRA');
+            return v;
+        });
+    };
+    const text = (v, max) => { if (typeof v !== 'string' || !v || v.length > max) fail('IMPORT_INFRA'); return v; };
+    const ids = new Set();
+    return list.map(row => {
+        if (!row || typeof row !== 'object' || typeof row.id !== 'string' || !SERVICE_ID.test(row.id) || ids.has(row.id)) fail('IMPORT_INFRA');
+        ids.add(row.id);
+        if (!Array.isArray(row.apps) || row.apps.length > 4 || row.apps.some(app => !known.has(app))) fail('IMPORT_INFRA');
+        let deploy = null;
+        if (row.deploy !== null && row.deploy !== undefined) {
+            if (typeof row.deploy !== 'object' || !DEPLOY_STATES.includes(row.deploy.status)) fail('IMPORT_INFRA');
+            const at = row.deploy.at;
+            if (at !== null && (!Number.isSafeInteger(at) || at < 0)) fail('IMPORT_INFRA');
+            deploy = { status: row.deploy.status, at };
+        }
+        let volume = null;
+        if (row.volume !== null && row.volume !== undefined) {
+            const { usedMb, sizeMb } = row.volume || {};
+            if (![usedMb, sizeMb].every(v => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v < 1e9) || sizeMb <= 0) fail('IMPORT_INFRA');
+            volume = { usedMb, sizeMb };
+        }
+        const h = row.hourly || {}, d = row.daily || {};
+        if (!Number.isSafeInteger(h.start) || h.start <= 0 || h.step !== HOUR_MS) fail('IMPORT_INFRA');
+        if (typeof d.start !== 'string' || !ISO_DAY.test(d.start) || isoDay(dayIndex(d.start)) !== d.start) fail('IMPORT_INFRA');
+        const hourly = { start: h.start, step: HOUR_MS }, daily = { start: d.start };
+        for (const key of INFRA_FIELDS) { hourly[key] = numbers(h[key], 48); daily[key] = numbers(d[key], 62); }
+        if (new Set(INFRA_FIELDS.map(k => hourly[k].length)).size !== 1 || new Set(INFRA_FIELDS.map(k => daily[k].length)).size !== 1) fail('IMPORT_INFRA');
+        if (dayIndex(d.start) + daily.netInMb.length - 1 > lastDay) fail('IMPORT_INFRA');      // nothing after the collection day
+        return { id: row.id, name: text(row.name, 80), project: text(row.project, 80), apps: row.apps.slice(), deploy, volume, hourly, daily };
+    });
 }
 
 // All or nothing: the daily values are upserted, this source's current facts are replaced, and the source's
@@ -238,11 +286,19 @@ async function importEnvelope(pool, envelope, { appIds } = {}) {
                 ON CONFLICT (app_id, key) DO UPDATE SET value = EXCLUDED.value, source = EXCLUDED.source, observed_at = EXCLUDED.observed_at`,
             [fact.app, fact.key, JSON.stringify(fact.value), clean.source, new Date(clean.collectedAt)]);
         }
+        if (clean.infra) {
+            await client.query('DELETE FROM aihankapps_hub_infra WHERE source = $1', [clean.source]);
+            for (const row of clean.infra) {
+                await client.query(`INSERT INTO aihankapps_hub_infra (id, source, value, observed_at) VALUES ($1, $2, $3::jsonb, $4)
+                    ON CONFLICT (id) DO UPDATE SET source = EXCLUDED.source, value = EXCLUDED.value, observed_at = EXCLUDED.observed_at`,
+                [row.id, clean.source, JSON.stringify(row), new Date(clean.collectedAt)]);
+            }
+        }
         await client.query(`INSERT INTO aihankapps_hub_sources (id, collected_at, detail) VALUES ($1, $2, $3::jsonb)
             ON CONFLICT (id) DO UPDATE SET collected_at = EXCLUDED.collected_at, imported_at = NOW(), detail = EXCLUDED.detail`,
-        [clean.source, new Date(clean.collectedAt), JSON.stringify({ values: clean.rows.length, facts: clean.facts.length, notes: clean.notes })]);
+        [clean.source, new Date(clean.collectedAt), JSON.stringify({ values: clean.rows.length, facts: clean.facts.length, services: clean.infra ? clean.infra.length : undefined, notes: clean.notes })]);
         await client.query('COMMIT');
-        return { source: clean.source, values: clean.rows.length, facts: clean.facts.length };
+        return { source: clean.source, values: clean.rows.length, facts: clean.facts.length, ...(clean.infra ? { services: clean.infra.length } : {}) };
     } catch (error) {
         await client.query('ROLLBACK').catch(() => {});
         throw error;
@@ -256,7 +312,8 @@ async function readImports(query, startIso) {
     const rows = (await query('SELECT app_id, metric, day::text AS day, value FROM aihankapps_hub_daily WHERE day >= $1::date', [startIso])).rows;
     const facts = (await query('SELECT app_id, key, value, source, observed_at FROM aihankapps_hub_facts')).rows;
     const sources = (await query('SELECT id, collected_at, imported_at, detail FROM aihankapps_hub_sources')).rows;
-    return { rows, facts, sources };
+    const infra = (await query('SELECT id, source, value, observed_at FROM aihankapps_hub_infra')).rows;
+    return { rows, facts, sources, infra };
 }
 
-module.exports = { SERVICES, IMPORT_METRICS, MAX_IMPORT_BYTES, PROBE_UA, prepare, probeOne, createProbes, readProbes, validateEnvelope, importEnvelope, readImports };
+module.exports = { SERVICES, IMPORT_METRICS, DEPLOY_STATES, MAX_IMPORT_BYTES, PROBE_UA, prepare, probeOne, createProbes, readProbes, validateEnvelope, importEnvelope, readImports };

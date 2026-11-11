@@ -21,8 +21,8 @@
   const VIEWS = [['overview', '總覽'], ['live', '即時監控'], ['kpi', '績效指標'], ['apps', 'APP'], ['alerts', '警示'], ['sources', '資料來源']];
   const TILE_KEYS = ['installs', 'active', 'newUsers', 'revenue', 'intro', 'listed'];
   // 單一 APP 頁的指標磚：有資料的前六項，照這個順序
-  const APP_TILE_ORDER = ['installs', 'active', 'newUsers', 'plays', 'revenue', 'iap', 'purchases', 'intro', 'clicks', 'listed', 'aiwork', 'messages', 'mailClaimed', 'mailSent', 'ctr', 'crashes'];
-  const KPI_KEYS = ['installs', 'newUsers', 'active', 'plays', 'messages', 'revenue', 'iap', 'purchases', 'intro', 'clicks', 'ctr', 'listed', 'aiwork', 'mailSent', 'mailClaimed', 'crashes'];
+  const APP_TILE_ORDER = ['installs', 'active', 'newUsers', 'plays', 'revenue', 'iap', 'purchases', 'intro', 'clicks', 'listed', 'aiwork', 'messages', 'mailClaimed', 'mailSent', 'netIn', 'netOut', 'ctr', 'crashes'];
+  const KPI_KEYS = ['installs', 'newUsers', 'active', 'plays', 'messages', 'revenue', 'iap', 'purchases', 'intro', 'clicks', 'ctr', 'listed', 'aiwork', 'mailSent', 'mailClaimed', 'netIn', 'netOut', 'crashes'];
   const STATE = { ok: ['正常', 'ok'], warn: ['警告', 'warn'], crit: ['異常', 'crit'], dev: ['開發中', 'dev'], live: ['上架中', 'dot'], info: ['資訊', 'info'], none: ['還沒接', 'dot'] };
   const ATT = { ok: ['達標', 'ok'], near: ['接近', 'warn'], behind: ['落後', 'crit'] };
   const SEV = { crit: '嚴重', warn: '警告', info: '提醒' };
@@ -423,6 +423,31 @@
     return '<section class="card">' + cardHead(title, sub) + (list.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>狀態</th><th>服務</th><th class="num">回應時間</th><th>近 24 小時回應</th><th class="num">24 小時可用率</th><th>近 30 天可用率</th></tr></thead><tbody data-services="' + esc(list.map(x => x.id).join(',')) + '">' + serviceRowsHtml(list) + '</tbody></table></div>' +
       '<p class="hint">' + ico('info') + '<span>近 30 天那一排每一格是一天，灰色是那天還沒有檢查紀錄。可用率從開始檢查那天算起，不是從服務上線那天。</span></p>' : '<p class="empty">還沒有服務檢查的紀錄；伺服器啟動後一分鐘內會有第一筆。</p>') + '</section>';
   }
+  // ---- 後台資源（Railway）：每個服務的上傳／下載、CPU、記憶體、空間、部署 ----------------
+  const DEPLOY = { SUCCESS: ['ok', '運作中'], SLEEPING: ['info', '休眠中'], FAILED: ['crit', '部署失敗'], CRASHED: ['crit', '當掉了'], REMOVED: ['info', '已移除'] };
+  const infraSum = arr => (arr || []).reduce((t, v) => t + (v || 0), 0);
+  const lastOf = arr => { for (let i = (arr || []).length - 1; i >= 0; i--) if (arr[i] != null) return arr[i]; return null; };
+  function infraRowsHtml(rows) {
+    return rows.map(r => {
+      const h = r.hourly || {}, st = r.deploy ? (DEPLOY[r.deploy.status] || ['info', '部署中']) : ['info', '—'];
+      const apps = (r.apps || []).map(k => D.BYKEY[k]).filter(Boolean);
+      const cpu = lastOf(h.cpu), mem = lastOf(h.memMb), v = r.volume, pctUsed = v && v.sizeMb > 0 ? v.usedMb / v.sizeMb * 100 : null;
+      const space = v ? '<span class="meter sm" style="--mc:var(--' + (pctUsed >= 95 ? 'crit' : pctUsed >= 80 ? 'warn' : 'accent') + ')"><i style="width:' + Math.min(100, pctUsed).toFixed(0) + '%"></i></span><span class="lm-n" data-tip="' +
+        esc('已用 ' + V.fmt('mb', v.usedMb) + '，上限 ' + V.fmt('mb', v.sizeMb)) + '">' + pctUsed.toFixed(0) + '%</span>' : '<span class="muted">—</span>';
+      return '<tr><td' + (r.deploy && r.deploy.at ? ' data-tip="' + esc('最新部署 ' + V.fStamp(r.deploy.at)) + '"' : '') + '>' + pill(st[0], st[1]) + '</td><td><b>' + esc(r.name) + '</b><span class="sub-link">' + esc(r.project) +
+        (apps.length ? '・' + apps.map(a => '<a href="#app-' + a.id + '">' + esc(a.short) + '</a>').join('、') : '') + '</span></td>' +
+        '<td class="num"><span class="nowrap">↑ ' + V.fmt('mb', infraSum(h.netInMb)) + '</span><br><span class="nowrap">↓ ' + V.fmt('mb', infraSum(h.netOutMb)) + '</span></td><td>' + V.spark(h.netOutMb || [], { w: 80, h: 24 }) + '</td>' +
+        '<td class="num">' + (cpu == null ? '—' : cpu.toFixed(2) + ' 核') + '</td><td class="num">' + (mem == null ? '—' : V.fmt('mb', mem)) + '</td><td>' + space + '</td></tr>';
+    }).join('');
+  }
+  function infraTableHtml(rows, title, sub) {
+    if (!rows.length) return '';
+    const sorted = rows.slice().sort((a, b) => (infraSum(b.hourly && b.hourly.netInMb) + infraSum(b.hourly && b.hourly.netOutMb)) - (infraSum(a.hourly && a.hourly.netInMb) + infraSum(a.hourly && a.hourly.netOutMb)));
+    const up = rows.reduce((t, r) => t + infraSum(r.hourly && r.hourly.netInMb), 0), down = rows.reduce((t, r) => t + infraSum(r.hourly && r.hourly.netOutMb), 0);
+    return '<section class="card">' + cardHead(title, sub + '・近 24 小時上傳 ' + V.fmt('mb', up) + '、下載 ' + V.fmt('mb', down)) +
+      '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>狀態</th><th>服務</th><th class="num">近 24 小時<br>上傳／下載</th><th>下載走勢</th><th class="num">CPU</th><th class="num">記憶體</th><th>空間</th></tr></thead><tbody>' +
+      infraRowsHtml(sorted) + '</tbody></table></div><p class="hint">' + ico('info') + '<span>上傳是服務收到的資料（使用者上傳照片、刊登圖片），下載是服務送出的資料（看照片、載入頁面）。CPU 與記憶體是最近一小時的平均；空間用到 80% 會出警示。</span></p></section>';
+  }
   function drawResponse(el) {
     const host = $('#lv-resp', el), list = D.services;
     if (!host) return;
@@ -543,6 +568,7 @@
       '<div class="grid">' + liveCard('resp', '後台回應時間', (S.win === '24h' ? '每 5 分鐘' : '每天') + '的平均回應時間，一個服務一條線') + liveCard('cpu', 'AI worker CPU', '每個 worker 用了幾顆核心・' + (w.cpuBucket >= DAY ? '每日平均' : w.cpuBucket >= HOUR ? '每小時平均' : '每 10 分鐘平均')) + liveCard('work', 'AI 完成工作', (w.cntBucket >= DAY ? '每天' : '每小時') + '完成的件數，依 worker 疊在一起') +
       liveCard('listed', 'Wishlist 上架', (w.cntBucket >= DAY ? '每天' : '每小時') + '第一次公開的紀錄數・虛線是目標') + liveCard('visible', '公開可見商品', 'Wishlist.ai 上現在看得到的商品數') + '</div>' +
       workerTableHtml(o.workers, 'AI worker', '每個 worker 現在的狀態與最近完成的工作') +
+      infraTableHtml(D.infra, '後台資源', 'Railway 上每個服務的流量、CPU、記憶體、空間與部署狀態，每小時更新') +
       '<section class="card">' + cardHead('Wishlist.ai 現況', '上架與公開的最新數字') + (o.listing ? '<div class="dm" id="lv-listing">' + listingCells() + '</div>' : '<p class="empty">目前讀不到 Wishlist 的上架報表。</p>') + '</section>';
     syncLiveUi();
     paintLiveNumbers();
@@ -732,6 +758,7 @@
     }
     const svcs = D.serviceFor(a);
     if (svcs.length) extra += serviceTableHtml(svcs, '這款 APP 的後台服務', '每分鐘檢查一次');
+    extra += infraTableHtml(D.infraFor(a), '這款 APP 的後台資源', 'Railway 量測，每小時更新');
     if (workers.length) extra += workerTableHtml(workers, '這款 APP 的 AI worker', '每分鐘檢查一次');
     if (!cells && !extra) return '<section class="card">' + cardHead('後台數據') + '<p class="empty">' + (a.stage === 'dev' ? '這款還沒有接上後台數據。' : '這款 APP 的後台還沒有接進管理中樞，目前只有商店與作品集的數據。可以到「資料來源」看還缺哪些。') + '</p></section>';
     return (cells ? '<section class="card">' + cardHead('後台數據', sub) + '<div class="dm"' + (a.key === D.WISHLIST ? ' id="lv-listing"' : '') + '>' + cells + '</div></section>' : '') + extra;
