@@ -349,6 +349,32 @@
   const SOURCE_LABEL = { catalog: 'APP 目錄', store: '商店報表', traffic: '作品集流量', community: '作品集互動', feedback: '問題回饋', eclaw: 'EClaw 帳號', eclawChat: 'EClaw 對話', dreambuddy: '夢話夥伴後台', eclawPayments: 'EClaw 付款', imports: '匯入的後台數據', services: '後台服務檢查' };
   // 排程型 worker（例如每小時跑一輪）兩輪之間本來就沒有程式在跑；監控會把它標成 scheduled_between_rounds
   D.betweenRounds = w => w.processOnline === false && w.coverage === 'scheduled_between_rounds';
+  // 監控回報的問題代碼（監控 1.7.0 起有時間）→ 白話。越前面越具體；監控只給代碼和時間，不給錯誤原文
+  const at = t => { const d = new Date(t + TZ); return (d.getUTCMonth() + 1) + '/' + d.getUTCDate() + ' ' + String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0'); };
+  const since = d => (d.since ? '（' + at(d.since) + ' 起）' : '');
+  const ISSUES = [
+    ['minimax_quota_exhausted', 'MiniMax 額度用完', d => 'MiniMax 回覆方案額度已用完' + since(d) + '。排隊的工作留在伺服器上，' + (d.nextAttemptAt ? 'worker 會在 ' + at(d.nextAttemptAt) + ' 自己再試，' : '') + '額度恢復後會自動補跑，不用重啟。'],
+    ['worker_auth_problem', '金鑰或登入被拒', d => 'worker 的金鑰或登入被拒' + since(d) + '，要重新設定才會恢復。'],
+    ['server_poll_failed', '伺服器回錯誤', d => '向工作伺服器取件時回了 ' + (d.httpStatus || '錯誤') + since(d) + '；伺服器恢復後會自動繼續。'],
+    ['model_timeout', '模型逾時', d => '最近一次呼叫模型逾時' + since(d) + '，下一輪會自動重試。'],
+    ['media_download_failed', '下載照片失敗', d => '從工作伺服器下載照片或影片失敗' + since(d) + '，下一輪會自動重試。'],
+    ['model_bad_answer', '模型回應看不懂', d => '模型或上傳工具回了看不懂的內容' + since(d) + '，下一輪會自動重試。'],
+    ['item_processing_failed', '處理失敗', d => '最近一次處理工作失敗' + since(d) + '，之後還沒有成功的結果；下一輪會自動重試。'],
+    ['heartbeat_unavailable', '讀不到心跳', () => '監控讀不到這個 worker 的心跳檔。'],
+    ['heartbeat_or_poll_not_current', '心跳沒有更新', d => '超過時限沒有新的心跳' + (d.since ? '，上一次取件是 ' + at(d.since) : '') + '；看門狗會在卡住 10 分鐘後自動重啟。'],
+    ['recorded_error_without_later_result', '處理失敗後還沒成功', d => '記錄到錯誤' + since(d) + '，之後還沒有成功的結果。']
+  ];
+  // 一個 worker 最具體的那個問題：{ code, label, detail, since }，沒有就是 null
+  D.workerIssue = function (w) {
+    const details = Array.isArray(w.issueDetails) ? w.issueDetails : [], codes = Array.isArray(w.issues) ? w.issues : [];
+    for (let i = 0; i < ISSUES.length; i++) {
+      const code = ISSUES[i][0];
+      if (codes.indexOf(code) < 0) continue;
+      const d = details.find(x => x && x.code === code) || { code: code };
+      return { code: code, label: ISSUES[i][1], detail: ISSUES[i][2](d), since: d.since || null };
+    }
+    return null;
+  };
   function computeAlerts(now) {
     const out = [], o = D.ops;
     const add = (id, sev, title, detail, more) => out.push(Object.assign({ id: id, sev: sev, title: title, detail: detail, app: null, apps: null, since: null }, more));
@@ -358,7 +384,11 @@
     if (!o.ok) add('ops-down', 'crit', '營運數據讀不到', 'AI worker 與 Wishlist 的即時數字目前是空的。', { rule: RULES[0][0], go: 'sources' });
     o.workers.forEach(w => {
       if (w.processOnline === false && !D.betweenRounds(w)) add('worker-off-' + w.id, 'crit', w.name + ' 沒有在執行', '監控回報這個 worker 的程序不在線上。', { rule: RULES[1][0], app: w.app, go: 'live' });
-      else if (w.health === 'unhealthy' || w.health === 'degraded') add('worker-bad-' + w.id, 'warn', w.name + (w.health === 'unhealthy' ? ' 狀態異常' : ' 部分異常'), '程序還在，但監控的健康檢查沒有通過。', { rule: RULES[2][0], app: w.app, go: 'live' });
+      else if (w.health === 'unhealthy' || w.health === 'degraded') {
+        const issue = D.workerIssue(w);
+        add('worker-bad-' + w.id, 'warn', w.name + (issue ? '：' + issue.label : w.health === 'unhealthy' ? ' 狀態異常' : ' 部分異常'), issue ? issue.detail : '程序還在，但監控的健康檢查沒有通過。',
+          { rule: RULES[2][0], app: w.app, go: 'live', since: issue ? issue.since : null });
+      }
     });
     const seen = Date.parse(o.updatedAt.latestStatus || '') || 0;
     if (o.ok && ((seen && now - seen > 20 * MIN) || (o.cpuFreshness && o.cpuFreshness.dataFresh === false))) {

@@ -92,7 +92,16 @@ describe('aihankapps-ops parsers', () => {
         expect(ops.chatPendingPoint({ status: 'ok', observedAt: 1794263531309, pendingCount: 0, needApproval: 0, approvedWaitingSend: 0 }).points).toEqual([{ series: 'wishlist.chatPending', at: 1794263531309, value: 0 }]);
         expect(ops.chatPendingPoint({ status: 'stale', observedAt: 1794263531309, pendingCount: null }).points).toEqual([]);
         const snap = ops.statusSnapshot({ checkedAt: 1, observedAt: 2, dataFresh: true, health: 'degraded', monitor: { status: 'healthy' }, workers: [{ id: 'a', name: 'A', health: 'unknown', processOnline: true, cpuCorePercent: 2.5, cpuHostPercent: 0.25, memoryBytes: 10, coverage: 'process_only', secret: 'no' }], recordedCounts: { completed: 3 } });
-        expect(snap.workers[0]).toEqual({ id: 'a', name: 'A', health: 'unknown', processOnline: true, cpuCorePercent: 2.5, cpuHostPercent: 0.25, memoryBytes: 10, coverage: 'process_only' });
+        expect(snap.workers[0]).toEqual({ id: 'a', name: 'A', health: 'unknown', processOnline: true, cpuCorePercent: 2.5, cpuHostPercent: 0.25, memoryBytes: 10, coverage: 'process_only', issues: [], issueDetails: [] });
+        // monitor 1.7.0 issue codes pass through as codes and times only; anything else is dropped
+        const quota = ops.statusSnapshot({ workers: [{ id: 'm', name: 'M', health: 'degraded', processOnline: true,
+            issues: ['recorded_error_without_later_result', 'minimax_quota_exhausted', 'Bad Code', 7, 'x'.repeat(80)],
+            issueDetails: [{ code: 'minimax_quota_exhausted', since: 1794353011000, nextAttemptAt: '2026-11-11T00:10:00Z', httpStatus: 402.5, text: 'SECRET' },
+                { code: 'server_poll_failed', since: -1, nextAttemptAt: null, httpStatus: 503 }, { code: '<b>', since: 1 }, null] }] }).workers[0];
+        expect(quota.issues).toEqual(['recorded_error_without_later_result', 'minimax_quota_exhausted']);
+        expect(quota.issueDetails).toEqual([{ code: 'minimax_quota_exhausted', since: 1794353011000, nextAttemptAt: Date.parse('2026-11-11T00:10:00Z'), httpStatus: null },
+            { code: 'server_poll_failed', since: null, nextAttemptAt: null, httpStatus: 503 }]);
+        expect(JSON.stringify(quota)).not.toContain('SECRET');
         expect(snap.recordedCounts).toEqual({ completed: 3 });
         expect(ops.statusSnapshot({})).toBeNull();
     });

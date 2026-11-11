@@ -159,12 +159,19 @@ function chatPendingPoint(json) {
     return { points: [{ series: 'wishlist.chatPending', at, value }], summary: { observedAt: at, pendingCount: value, needApproval: num(json.needApproval), approvedWaitingSend: num(json.approvedWaitingSend) } };
 }
 
+// The monitor's issue codes (monitor 1.7.0+): fixed codes and times only, never error text.
+const ISSUE_CODE = /^[a-z][a-z0-9_]{0,63}$/;
+const issueCodes = list => (Array.isArray(list) ? list.filter(c => typeof c === 'string' && ISSUE_CODE.test(c)).slice(0, 12) : []);
+const issueDetails = list => (Array.isArray(list) ? list.filter(d => d && typeof d.code === 'string' && ISSUE_CODE.test(d.code)).slice(0, 12)
+    .map(d => ({ code: d.code, since: ms(d.since), nextAttemptAt: ms(d.nextAttemptAt), httpStatus: Number.isInteger(d.httpStatus) && d.httpStatus >= 100 && d.httpStatus <= 599 ? d.httpStatus : null })) : []);
+
 function statusSnapshot(json) {
     if (!json || !Array.isArray(json.workers)) return null;
     return {
         checkedAt: ms(json.checkedAt), observedAt: ms(json.observedAt), dataFresh: json.dataFresh === true, health: String(json.health || ''), monitorStatus: json.monitor ? String(json.monitor.status || '') : '',
         workers: json.workers.filter(w => w && typeof w.id === 'string').map(w => ({ id: w.id, name: String(w.name || w.id).slice(0, 80), health: String(w.health || ''), processOnline: w.processOnline === true,
-            cpuCorePercent: num(w.cpuCorePercent), cpuHostPercent: num(w.cpuHostPercent), memoryBytes: num(w.memoryBytes), coverage: String(w.coverage || '') })),
+            cpuCorePercent: num(w.cpuCorePercent), cpuHostPercent: num(w.cpuHostPercent), memoryBytes: num(w.memoryBytes), coverage: String(w.coverage || ''),
+            issues: issueCodes(w.issues), issueDetails: issueDetails(w.issueDetails) })),
         recordedCounts: json.recordedCounts && typeof json.recordedCounts === 'object' ? Object.fromEntries(Object.entries(json.recordedCounts).map(([k, v]) => [k, num(v)])) : null,
     };
 }

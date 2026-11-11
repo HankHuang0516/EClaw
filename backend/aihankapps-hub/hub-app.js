@@ -28,7 +28,12 @@
   const SEV = { crit: '嚴重', warn: '警告', info: '提醒' };
   const HEALTH = { healthy: ['ok', '正常'], degraded: ['warn', '部分異常'], unhealthy: ['crit', '異常'], unknown: ['info', '未知'], '': ['info', '未知'] };
   // 排程型 worker 在兩輪之間沒有程式在跑是正常的，不算停擺
-  const workerState = w => (D.betweenRounds(w) ? ['info', '排程中，兩輪之間'] : w.processOnline === false ? ['crit', '沒有在執行'] : HEALTH[w.health] || HEALTH['']);
+  const workerState = w => {
+    if (D.betweenRounds(w)) return ['info', '排程中，兩輪之間'];
+    if (w.processOnline === false) return ['crit', '沒有在執行'];
+    const issue = (w.health === 'degraded' || w.health === 'unhealthy') ? D.workerIssue(w) : null;
+    return issue ? [w.health === 'unhealthy' ? 'crit' : 'warn', issue.label, issue.detail] : HEALTH[w.health] || HEALTH[''];
+  };
   const LIVE_WIN = {
     '24h': { name: '24 小時', span: 24 * HOUR, cpuStep: 'minute', cpuBucket: 10 * MIN, cntStep: 'hour', cntBucket: HOUR },
     '7d': { name: '7 天', span: 7 * DAY, cpuStep: 'hour', cpuBucket: HOUR, cntStep: 'hour', cntBucket: HOUR },
@@ -246,7 +251,7 @@
       $('#now-msgs-x').textContent = n.msgsPrev == null ? '' : '昨天 ' + V.fmtInt(n.msgsPrev) + ' 則';
       $('#now-ok').textContent = n.total ? n.okN : '—';
       $('#now-ok-x').textContent = n.total ? '／' + n.total + ' 正常' : '';
-      $('#now-dots').innerHTML = o.workers.map(w => { const h = workerState(w); return '<i class="sd sd-' + (h[0] === 'info' ? 'live' : h[0]) + '" data-tip="' + esc(w.name + '\n' + h[1]) + '"></i>'; }).join('');
+      $('#now-dots').innerHTML = o.workers.map(w => { const h = workerState(w); return '<i class="sd sd-' + (h[0] === 'info' ? 'live' : h[0]) + '" data-tip="' + esc(w.name + '\n' + h[1] + (h[2] ? '\n' + h[2] : '')) + '"></i>'; }).join('');
       const f = firing(), crit = f.filter(a => a.sev === 'crit').length, warn = f.filter(a => a.sev === 'warn').length;
       $('#now-al').textContent = f.length;
       $('#now-al-x').innerHTML = f.length ? (crit ? pill('crit', '嚴重 ' + crit) : '') + (warn ? pill('warn', '警告 ' + warn) : '') + (f.length - crit - warn ? pill('info', '提醒 ' + (f.length - crit - warn)) : '') : pill('ok', '沒有異常');
@@ -465,7 +470,7 @@
         if (t && t.lastCompletedAt && (!last || t.lastCompletedAt > last)) last = t.lastCompletedAt;
       });
       const off = w.processOnline === false, cpu = off ? null : w.cpuCorePercent;
-      return '<tr><td>' + pill(st[0], st[1]) + '</td><td><b>' + esc(w.name) + '</b>' + (app ? '<a class="sub-link" href="#app-' + app.id + '">' + esc(app.short) + '</a>' : '<span class="sub-link">共用</span>') + '</td>' +
+      return '<tr><td' + (st[2] ? ' tabindex="0" data-tip="' + esc(st[2]) + '"' : '') + '>' + pill(st[0], st[1]) + '</td><td><b>' + esc(w.name) + '</b>' + (app ? '<a class="sub-link" href="#app-' + app.id + '">' + esc(app.short) + '</a>' : '<span class="sub-link">共用</span>') + '</td>' +
         '<td>' + (cpu == null ? '<span class="muted">—</span>' : '<span class="meter sm" style="--mc:var(--' + (cpu >= 300 ? 'crit' : cpu >= 150 ? 'warn' : 'accent') + ')"><i style="width:' + Math.min(100, cpu / cpuMax * 100).toFixed(0) + '%"></i></span><span class="lm-n">' + (cpu / 100).toFixed(2) + ' 核心</span>') + '</td>' +
         '<td class="num">' + (off || w.memoryBytes == null ? '—' : V.fmt('mem', w.memoryBytes)) + '</td>' +
         '<td class="num"' + (defs.length ? ' tabindex="0" data-tip="' + esc(lines.join('\n')) + '"' : '') + '>' + (defs.length ? (done == null ? '—' : V.fmtInt(done) + ' 件') : '<span class="muted">不計件</span>') + '</td>' +

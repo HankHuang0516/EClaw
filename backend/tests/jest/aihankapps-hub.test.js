@@ -556,6 +556,26 @@ describe('admin hub: the page reads the answer correctly', () => {
         expect(noisy.D.RULES).toHaveLength(10);
     });
 
+    test('the monitor\'s issue codes become a plain reason with its times', async () => {
+        const quota = { id: 'timehut-mcode', name: '人物辨識', health: 'degraded', processOnline: true, coverage: 'between_job_heartbeat',
+            issues: ['recorded_error_without_later_result', 'minimax_quota_exhausted'],
+            issueDetails: [{ code: 'recorded_error_without_later_result', since: Date.UTC(2026, 10, 10, 23, 57), nextAttemptAt: null, httpStatus: null },
+                { code: 'minimax_quota_exhausted', since: Date.UTC(2026, 10, 10, 23, 23), nextAttemptAt: Date.UTC(2026, 10, 11, 0, 10), httpStatus: null }] };
+        const down = { id: 'wishlist-vision', name: '圖片辨識', health: 'degraded', processOnline: true, issues: ['heartbeat_or_poll_not_current', 'server_poll_failed'],
+            issueDetails: [{ code: 'server_poll_failed', since: null, nextAttemptAt: null, httpStatus: 503 }] };
+        const odd = { id: 'dream-buddy', name: 'Dream', health: 'degraded', processOnline: true, issues: ['something_new'] };
+        const { D } = await loadPage({ latest: { success: true, status: { workers: [quota, down, odd] }, updatedAt: { latestStatus: new Date(NOW - 60000).toISOString() } } });
+        expect(D.workerIssue(D.ops.workers[0])).toEqual({ code: 'minimax_quota_exhausted', label: 'MiniMax 額度用完', since: Date.UTC(2026, 10, 10, 23, 23),
+            detail: 'MiniMax 回覆方案額度已用完（11/11 07:23 起）。排隊的工作留在伺服器上，worker 會在 11/11 08:10 自己再試，額度恢復後會自動補跑，不用重啟。' });
+        expect(D.workerIssue(D.ops.workers[1]).detail).toBe('向工作伺服器取件時回了 503；伺服器恢復後會自動繼續。');
+        expect(D.workerIssue(D.ops.workers[2])).toBeNull();
+        D.computeAlerts(Date.parse('2026-11-05T00:00:00Z'));
+        expect(D.ALERTS.filter(a => a.id.startsWith('worker-')).map(a => [a.id, a.sev, a.title])).toEqual([
+            ['worker-bad-timehut-mcode', 'warn', '人物辨識：MiniMax 額度用完'], ['worker-bad-wishlist-vision', 'warn', '圖片辨識：伺服器回錯誤'], ['worker-bad-dream-buddy', 'warn', 'Dream 部分異常']]);
+        expect(D.ALERTS.find(a => a.id === 'worker-bad-timehut-mcode').since).toBe(Date.UTC(2026, 10, 10, 23, 23));
+        expect(D.ALERTS.find(a => a.id === 'worker-bad-dream-buddy').detail).toBe('程序還在，但監控的健康檢查沒有通過。');
+    });
+
     test('a scheduled worker between its rounds is not called stopped, but a problem it reports still is', async () => {
         const between = { id: 'wishlist-retail', name: 'Wishlist 查價', health: 'unknown', processOnline: false, coverage: 'scheduled_between_rounds' };
         const { D } = await loadPage({ latest: { success: true, status: { workers: [between] }, updatedAt: { latestStatus: new Date(NOW - 60000).toISOString() } } });
