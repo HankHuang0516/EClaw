@@ -463,7 +463,7 @@
     const st = s.store || {}, storeEnds = st.ends ? [['Google', st.ends.googleInstalls], ['Apple', st.ends.appleDownloads], ['AdMob', st.ends.admobRevenue]].filter(e => e[1]).map(e => e[0] + ' 到 ' + iso(idxOfIso(e[1]))).join('、') : '';
     const opsSeen = Date.parse(o.updatedAt.latestStatus || '') || null, collectors = (s.imports && s.imports.collectors) || {};
     return [
-      { name: '商店報表', gives: 'Google Play 安裝、App Store 首次下載、AdMob 收入、當機事件、評分', cover: '有上架的 APP', freq: '每週產生一次', last: Date.parse(st.generatedAt || '') || null, state: state('store'), note: storeEnds || '—' },
+      { name: '商店報表', gives: 'Google Play 安裝、App Store 首次下載、AdMob 收入、當機事件、評分', cover: '有上架的 APP', freq: '每天產生一次', last: Date.parse(st.generatedAt || '') || null, state: state('store'), note: storeEnds || '—' },
       { name: '作品集流量', gives: '作品集瀏覽、介紹頁瀏覽、商店點擊', cover: '全部 APP', freq: '即時累計', last: s.traffic && s.traffic.ok ? D.T0 : null, state: state('traffic'), note: s.traffic && s.traffic.startedAt ? '自 ' + iso(idxOfIso(s.traffic.startedAt)) + ' 起' : '—' },
       { name: '作品集互動', gives: '按讚、留言、內測回饋', cover: '全部 APP', freq: '即時累計', last: s.community && s.community.ok ? D.T0 : null, state: state('community'), note: '只統計數量，不含內容' },
       { name: 'EClaw 帳號', gives: '帳號數、每日新註冊、裝置與實體數', cover: 'EClawbot', freq: '即時', last: s.eclaw && s.eclaw.ok ? D.T0 : null, state: state('eclaw'), note: '裝置與實體數不含測試裝置' },
