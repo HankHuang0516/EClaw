@@ -357,8 +357,53 @@ describe('admin hub store: Railway service resources', () => {
         const source = { id: 'railway', name: 'Railway 後台資源', apps: ['weesh'], collect: async () => ({ value: null, detail: 'Railway CLI login missing (run railway login)' }) };
         expect(await collect.main(['--only', 'railway'], { log: line => logs.push(line), now: () => Date.now(), sources: [source] })).toBe(1);
         expect(logs[0]).toBe('✗ Railway 後台資源：讀取失敗（no_result：Railway CLI login missing (run railway login)）');
-        expect(collect.SOURCES.map(b => b.id)).toEqual(['rebound', 'summit', 'wishlist', 'railway']);
+        expect(collect.SOURCES.map(b => b.id)).toEqual(['rebound', 'summit', 'wishlist', 'railway', 'timehut']);
         expect(railway.RAILWAY_APPS.every(id => importScript.catalogAppIds().has(id))).toBe(true);
+    });
+
+    test('時光相簿 account counts: key from a 600 file, Bearer to the counts-only endpoint, counts become facts; the key is never logged', async () => {
+        const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'timehut-key-')), file = path.join(dir, 'timehut-stats-key'), KEY = 'k'.repeat(48);
+        expect(collect.readTimehutKey(file).error).toMatch(/missing/);
+        fs.writeFileSync(file, KEY + '\n', { mode: 0o644 });
+        fs.chmodSync(file, 0o644);
+        expect(collect.readTimehutKey(file).error).toMatch(/chmod 600/);              // readable by others: refused
+        fs.chmodSync(file, 0o600);
+        expect(collect.readTimehutKey(file)).toEqual({ key: KEY });
+        fs.writeFileSync(file, 'short');
+        expect(collect.readTimehutKey(file).error).toMatch(/not a key/);
+        expect(collect.TIMEHUT_KEY_FILE).toBe(path.join(os.homedir(), '.config', 'aihankapps-hub', 'timehut-stats-key'));
+
+        const calls = [];
+        const answer = (status, body) => async (url, init) => { calls.push({ url, init }); return { status, json: async () => body }; };
+        const readKey = () => ({ key: KEY });
+        const ok = await collect.collectTimehut({ readKey, fetchImpl: answer(200, { total: 7, last7d: 1, last30d: 3, deleted: 2, asOf: '2026-11-11T07:00:00.000Z' }) });
+        expect(calls[0].url).toBe('https://just-healing-production.up.railway.app/api/internal/account-stats');
+        expect(calls[0].init.headers.Authorization).toBe('Bearer ' + KEY);
+        expect(calls[0].init.redirect).toBe('error');
+        expect(ok.value.facts.map(f => [f.app, f.key, f.value.value])).toEqual([['timehut', 'accountsTotal', 7], ['timehut', 'accountsNew7d', 1], ['timehut', 'accountsNew30d', 3], ['timehut', 'accountsDeleted', 2]]);
+        expect(ok.value.notes).toEqual([]);
+        const timehut = collect.SOURCES.find(b => b.id === 'timehut');
+        const built = collect.toEnvelope(timehut, ok, { now: Date.now() });
+        expect(built.error).toBeUndefined();
+        expect(built.envelope).toMatchObject({ source: 'timehut', series: [] });
+        expect(JSON.stringify(built.envelope)).not.toContain(KEY);
+        // no creation time on the server: the windows are left out, not guessed
+        const partial = await collect.collectTimehut({ readKey, fetchImpl: answer(200, { total: 7, last7d: null, last30d: null, deleted: 0 }) });
+        expect(partial.value.facts.map(f => f.key)).toEqual(['accountsTotal', 'accountsDeleted']);
+        expect(partial.value.notes[0]).toMatch(/近 7／30 天/);
+        // refusals and odd answers stop this source only, with a reason that carries no key
+        for (const [fetchImpl, detail] of [[answer(401, { error: 'Unauthorized' }), 'HTTP 401'], [answer(200, { total: -1 }), 'unexpected answer'],
+            [async () => { throw Object.assign(new Error('x ' + KEY), { name: 'TimeoutError' }); }, 'request failed (TimeoutError)']]) {
+            const r = await collect.collectTimehut({ readKey, fetchImpl });
+            expect(r).toEqual({ value: null, detail });
+        }
+        expect(await collect.collectTimehut({ readKey: () => ({ error: 'key file missing (x)' }), fetchImpl: answer(200, {}) })).toEqual({ value: null, detail: 'key file missing (x)' });
+        const logs = [];
+        const failing = { ...timehut, collect: () => collect.collectTimehut({ readKey, fetchImpl: answer(401, {}) }) };
+        expect(await collect.main(['--only', 'timehut'], { log: line => logs.push(line), now: () => Date.now(), sources: [failing] })).toBe(1);
+        expect(logs[0]).toBe('✗ 時光相簿伺服器：讀取失敗（no_result：HTTP 401）');
+        expect(logs.join('\n')).not.toContain(KEY);
+        expect(importScript.catalogAppIds().has('timehut')).toBe(true);
     });
 });
 
