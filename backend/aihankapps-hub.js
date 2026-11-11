@@ -34,6 +34,7 @@ const crypto = require('crypto');
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 const hubStore = require('./aihankapps-hub-store');
 
 const PAGE_DIR = path.join(__dirname, 'aihankapps-hub');
@@ -65,6 +66,25 @@ const CONTENT_SECURITY_POLICY = [
 const FORBIDDEN_PAGE = '<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
     + '<meta name="robots" content="noindex"><title>管理中樞 · AiHankApps</title></head><body><main><h1>這個帳號沒有管理者權限</h1>'
     + '<p>管理中樞只開放給 EClaw 管理者。</p><p><a href="/AiHankApps/">回到 APP 作品集</a></p></main></body></html>';
+
+// ---- account sign-ups per app ---------------------------------------------------------------------------------------
+// Hank, 2026-11-11: "所有 App 的帳號註冊人數" — only apps that have accounts; counts only, never who.
+//   connected:     numbers are read (this server's database, or facts the collector imports read-only)
+//   not_connected: the app has accounts, but there is no read-only count for the hub yet (note says what is missing)
+//   none:          the app has no account sign-up (note says what it uses instead)
+//   unknown:       not confirmed yet (note says why); shown separately, never counted as "no accounts"
+// Inventory 2026-11-11 (read-only: source code, privacy pages, store privacy labels).
+// facts: [total, new in 7 days, new in 30 days] keys imported by tools/aihankapps-hub/backends.js.
+const ACCOUNT_APPS = [
+    { app: ECLAW_APP, status: 'connected', from: 'eclaw', source: 'EClaw 主站 user_accounts（唯讀 COUNT）' },
+    { app: 'weesh', status: 'connected', facts: ['usersTotal', 'accountsNew7d', 'accountsNew30d'], source: 'Wishlist.ai 後台 User 表（收集工具唯讀匯入，每天 06:20）' },
+    { app: 'typeforge-twin-cities', status: 'connected', facts: ['accountsTotal', 'accountsNew7d', 'accountsNew30d'], source: '活字戰紀伺服器 summit_accounts＋summit_device_bindings（綁定雙城烽火的帳號；收集工具唯讀匯入，每天 06:20）' },
+    { app: 'summit-battle', status: 'connected', facts: ['accountsTotal', 'accountsNew7d', 'accountsNew30d'], source: '活字戰紀伺服器 summit_accounts＋summit_device_bindings（綁定巔峰之戰的帳號；收集工具唯讀匯入，每天 06:20）' },
+    { app: 'timehut', status: 'not_connected', source: '時光相簿伺服器', note: '時光相簿有帳號系統，但帳號存在伺服器自己的檔案裡，還沒有只回統計數字的唯讀端點；需要在時光後端新增並部署，尚未進行。' },
+    { app: 'rebound', status: 'none', note: '沒有註冊或登入；伺服器只為每份安裝建立訪客帳號（玩家總數見 APP 頁）。' },
+    { app: DREAM_APP, status: 'none', note: '沒有帳號註冊；以 EClaw 裝置識別。' },
+    { app: 'vibe-empire', status: 'unknown', note: '尚未確認：遊戲原始碼所在的資料區沒有掛載，只知道它用 EClaw 裝置綁定。' },
+];
 
 // ---- days -------------------------------------------------------------------------------------------------------------
 const dayIndex = iso => Math.floor(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / DAY_MS);
@@ -167,6 +187,26 @@ async function readOnly(pool, run) {
     }
 }
 
+// One row per catalog app: { app, name, status, total, new7d, new30d, source, observedAt, note }. Unknown numbers stay null.
+function accountRows(apps, eclaw, facts, sources) {
+    const byApp = new Map(ACCOUNT_APPS.map(row => [row.app, row]));
+    return apps.map(app => {
+        const def = byApp.get(app.id) || { status: 'none', note: '這款 APP 沒有帳號註冊功能。' };
+        if (def.status === 'none' && !def.note) def.note = '這款 APP 沒有帳號註冊功能。';
+        const row = { app: app.id, name: app.name, status: def.status, total: null, new7d: null, new30d: null, source: def.source || null, observedAt: null, note: def.note || null };
+        if (def.from === 'eclaw') {
+            const u = eclaw.users;
+            if (u && sources.eclaw && sources.eclaw.ok) Object.assign(row, { total: count(u.total), new7d: count(u.new7d), new30d: count(u.new30d), observedAt: u.readAt || null });
+        } else if (def.facts) {
+            const f = facts[app.id] || {}, value = key => (f[key] && typeof f[key].value === 'number' ? count(f[key].value) : null);
+            [row.total, row.new7d, row.new30d] = def.facts.map(value);
+            const seen = def.facts.map(key => f[key] && f[key].observedAt).filter(Boolean);
+            row.observedAt = seen.length ? Math.min(...seen) : null;
+        }
+        return row;
+    });
+}
+
 function createData({ getPool, getAuthPool, getDeviceStats, now = Date.now, portfolioDir = PORTFOLIO_DIR }) {
     let cache = null, pending = null, chatCache = null;
 
@@ -241,8 +281,8 @@ function createData({ getPool, getAuthPool, getDeviceStats, now = Date.now, port
         }));
 
         await section('eclaw', () => readOnly(getAuthPool(), async query => {
-            const users = (await query("SELECT COUNT(*)::int AS total, (COUNT(*) FILTER (WHERE email_verified))::int AS verified, (COUNT(*) FILTER (WHERE subscription_status = 'premium'))::int AS premium FROM user_accounts")).rows[0];
-            eclaw.users = { total: users.total, verified: users.verified, premium: users.premium };
+            const users = (await query("SELECT COUNT(*)::int AS total, (COUNT(*) FILTER (WHERE email_verified))::int AS verified, (COUNT(*) FILTER (WHERE subscription_status = 'premium'))::int AS premium, (COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '7 days'))::int AS new7d, (COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days'))::int AS new30d FROM user_accounts")).rows[0];
+            eclaw.users = { total: users.total, verified: users.verified, premium: users.premium, new7d: count(users.new7d), new30d: count(users.new30d), readAt: generatedAt };
             const rows = (await query("SELECT (created_at AT TIME ZONE 'Asia/Taipei')::date::text AS day, COUNT(*)::int AS n FROM user_accounts WHERE created_at >= $1 GROUP BY 1", [taipeiMidnight(start)])).rows;
             for (const row of rows) daily.add('eclawSignups', ECLAW_APP, row.day, row.n);
             daily.fill('eclawSignups', ECLAW_APP, start, today);
@@ -325,8 +365,9 @@ function createData({ getPool, getAuthPool, getDeviceStats, now = Date.now, port
             console.error('[AiHankAppsHub] device stats unavailable:', error.message);
         }
 
+        const accounts = accountRows(apps, eclaw, latest.facts, sources);
         return { success: true, schemaVersion: 1, generatedAt, timeZone: TIME_ZONE, today, apps,
-            daily: { start, days: HISTORY_DAYS, series: daily.toJSON() }, latest, eclaw, services, infra, sources };
+            daily: { start, days: HISTORY_DAYS, series: daily.toJSON() }, latest, eclaw, services, infra, accounts, sources };
     }
 
     return {
@@ -337,6 +378,63 @@ function createData({ getPool, getAuthPool, getDeviceStats, now = Date.now, port
                 pending = build().then(payload => { cache = { at: now(), payload }; return payload; }).finally(() => { pending = null; });
             }
             return pending;
+        },
+    };
+}
+
+// ---- alerts by notification ID ---------------------------------------------------------------------------------------
+// Hank, 2026-11-11: every alert on the page carries a notification ID an AI can use to look the problem up. The alerts
+// are computed by the page's own data layer (hub-data.js) from the hub answer and the public operations API; to give
+// exactly the same alerts, IDs and reasons, the server runs that same file in a sandbox with a stand-in fetch.
+// Only the hub answer, the latest service checks and the two public ops reads (catalog, latest) are reachable from it.
+const OPS_READS = new Set(['/api/aihankapps/ops/catalog', '/api/aihankapps/ops/latest']);
+const ALERTS_CACHE_MS = 20 * 1000;
+const taipeiTime = ms => (Number.isFinite(ms) && ms > 0 ? new Date(ms + TAIPEI_OFFSET_MS).toISOString().slice(0, 16).replace('T', ' ') + ' (Asia/Taipei)' : null);
+function defaultFetchOps(url) {
+    return fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + url, { headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(8000) });
+}
+function createAlerts({ loadHub, latestServices, fetchOps = defaultFetchOps, now = Date.now, pageDir = PAGE_DIR }) {
+    let cache = null, pending = null;
+    async function compute() {
+        const at = now(), code = await fs.promises.readFile(path.join(pageDir, 'hub-data.js'), 'utf8');
+        const reply = body => ({ ok: true, status: 200, json: async () => JSON.parse(JSON.stringify(body)) });
+        const stub = async url => {
+            if (url === '/api/aihankapps/hub/data') return reply(await loadHub());
+            if (url === '/api/aihankapps/hub/services') return reply(latestServices());
+            if (OPS_READS.has(url)) {
+                const res = await fetchOps(url);
+                return { ok: res.ok, status: res.status, json: () => res.json() };
+            }
+            return { ok: false, status: 404, json: async () => ({}) };     // series etc. are not needed for alerts
+        };
+        const sandbox = { window: {}, fetch: stub, encodeURIComponent, Date: class extends Date { static now() { return at; } } };
+        vm.runInNewContext(code, sandbox, { timeout: 2000, filename: 'hub-data.js' });
+        const D = sandbox.window.HubData;
+        await D.load();
+        const rules = {};
+        D.RULES.forEach(r => { rules[r[0]] = { scope: r[1], condition: r[2] }; });
+        const alerts = JSON.parse(JSON.stringify(D.ALERTS)).map(a => {
+            const basisTaipei = {};
+            Object.keys(a.basis || {}).forEach(k => { if (/At$/.test(k) && typeof a.basis[k] === 'number') basisTaipei[k] = taipeiTime(a.basis[k]); });
+            return { id: a.ref, type: a.id, severity: a.sev, title: a.title, detail: a.detail, rule: a.rule, condition: (rules[a.rule] || {}).condition || null,
+                scope: (rules[a.rule] || {}).scope || null, source: a.source, app: a.app, apps: a.apps, since: a.since, sinceTaipei: taipeiTime(a.since),
+                basis: a.basis, basisTaipei, view: a.go ? '/AiHankApps/hub/#' + a.go : '/AiHankApps/hub/#alerts' };
+        });
+        return { computedAt: at, computedAtTaipei: taipeiTime(at), alerts };
+    }
+    return {
+        load({ fresh = false } = {}) {
+            if (!fresh && cache && now() - cache.at < ALERTS_CACHE_MS) return Promise.resolve(cache.answer);
+            if (!pending) pending = compute().then(answer => { cache = { at: now(), answer }; return answer; }).finally(() => { pending = null; });
+            return pending;
+        },
+        // Exact notification ID first; otherwise the same alert type (the ID changes when the problem or its start changes).
+        find(answer, id) {
+            const exact = answer.alerts.find(a => a.id === id);
+            if (exact) return { alert: exact, matchedBy: 'id' };
+            const type = String(id).split(/[.@]/)[0];
+            const same = answer.alerts.find(a => a.type === type);
+            return same ? { alert: same, matchedBy: 'type' } : null;
         },
     };
 }
@@ -408,6 +506,9 @@ function createRouters(options) {
     const data = createData(options);
     const probes = hubStore.createProbes({ getPool, fetchImpl: options.fetchImpl, now: options.now });
     const unavailable = res => res.status(503).json({ success: false, error: 'Admin hub unavailable' });
+    const clock = options.now || Date.now;
+    const alerts = createAlerts({ loadHub: () => data.load(), latestServices: () => ({ success: true, checkedAt: clock(), services: probes.latest() }),
+        fetchOps: options.fetchOps, now: clock, pageDir });
 
     // 'admin' | 'member' (signed in, not an administrator) | 'anonymous' | 'error'
     async function who(req) {
@@ -483,10 +584,46 @@ function createRouters(options) {
             unavailable(res);
         }
     });
+    // Account sign-ups per app (counts only): the same rows the page shows.
+    api.get('/accounts', async (req, res) => {
+        try {
+            const payload = await data.load({ fresh: req.query.fresh === '1' });
+            res.json({ success: true, generatedAt: payload.generatedAt, generatedAtTaipei: taipeiTime(payload.generatedAt), timeZone: TIME_ZONE,
+                note: 'status: connected = counted; not_connected = the app has accounts but no read-only count is wired yet; none = the app has no account sign-up; unknown = not confirmed yet. new7d/new30d count accounts created in the last 7/30 days.',
+                accounts: payload.accounts || [] });
+        } catch (error) {
+            console.error('[AiHankAppsHub] accounts failed:', error.message);
+            unavailable(res);
+        }
+    });
+    // Alerts as the page shows them, each with its notification ID, source, rule, raw values and times.
+    const ALERTS_NOTE = 'Alerts are computed from the current numbers and disappear when the condition clears; an ID that is no longer listed has cleared.';
+    api.get('/alerts', async (req, res) => {
+        try {
+            const answer = await alerts.load({ fresh: req.query.fresh === '1' });
+            res.json({ success: true, ...answer, count: answer.alerts.length, note: ALERTS_NOTE });
+        } catch (error) {
+            console.error('[AiHankAppsHub] alerts failed:', error.message);
+            unavailable(res);
+        }
+    });
+    api.get('/alerts/:id', async (req, res) => {
+        const id = String(req.params.id || '');
+        if (!/^[A-Za-z0-9._@-]{1,200}$/.test(id)) return res.status(400).json({ success: false, error: 'Invalid notification ID' });
+        let answer;
+        try { answer = await alerts.load({ fresh: req.query.fresh === '1' }); } catch (error) {
+            console.error('[AiHankAppsHub] alerts failed:', error.message);
+            return unavailable(res);
+        }
+        const hit = alerts.find(answer, id);
+        if (!hit) return res.status(404).json({ success: false, error: 'No active alert with this notification ID (it may have cleared)', id,
+            computedAt: answer.computedAt, computedAtTaipei: answer.computedAtTaipei, activeIds: answer.alerts.map(a => a.id) });
+        res.json({ success: true, id, matchedBy: hit.matchedBy, computedAt: answer.computedAt, computedAtTaipei: answer.computedAtTaipei, alert: hit.alert, note: ALERTS_NOTE });
+    });
     api.use((_req, res) => res.status(404).json({ success: false, error: 'Admin hub resource not found' }));
 
-    return { page, api, data, probes };
+    return { page, api, data, probes, alerts };
 }
 
-module.exports = { createRouters, createData, privateHeaders, appsFromCatalog, parseReport, createDaily, readOnly, decide,
+module.exports = { createRouters, createData, createAlerts, ACCOUNT_APPS, privateHeaders, appsFromCatalog, parseReport, createDaily, readOnly, decide,
     dayIndex, isoDay, taipeiDay, PAGE_FILES, LOGIN_URL, HISTORY_DAYS, CHAT_DAYS, CONTENT_SECURITY_POLICY };

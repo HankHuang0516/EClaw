@@ -70,7 +70,7 @@
   const D = {
     MIN: MIN, HOUR: HOUR, DAY: DAY, TZ: TZ, METRICS: METRICS, GROUPS: GROUPS, PLATS: PLATS, WISHLIST: WISHLIST, idxOf: idxOf, idxOfIso: idxOfIso, dayT: dayT,
     T0: 0, today: 0, APPS: [], APP: {}, BYKEY: {}, CATS: [], sources: {}, latest: {}, eclaw: {},
-    RAW: {}, opsDaily: {}, ALERTS: [], services: [], infra: [],
+    RAW: {}, opsDaily: {}, ALERTS: [], services: [], infra: [], accounts: [],
     ops: { ok: false, at: 0, series: [], workers: [], status: null, listing: null, chat: null, workTotals: {}, cpuFreshness: null, updatedAt: {}, recent: null }
   };
   let ends = {};
@@ -99,6 +99,7 @@
     D.eclaw = hub.eclaw || {};
     D.services = (hub.services || []).map(svc => Object.assign({ now: (D.services.find(old => old.id === svc.id) || {}).now || null }, svc));
     D.infra = Array.isArray(hub.infra) ? hub.infra : [];
+    D.accounts = Array.isArray(hub.accounts) ? hub.accounts : [];
     const start = idxOfIso(hub.daily.start);
     Object.keys(D.RAW).forEach(part => { if (!OPS_PARTS[part]) delete D.RAW[part]; });
     Object.keys(hub.daily.series || {}).forEach(part => {
@@ -384,53 +385,79 @@
     }
     return null;
   };
+  // 通知 ID（Hank 2026-11-11「每則通知加上複製通知 ID，讓 AI 能用這個 ID 快速查到問題」）：
+  // 類型與對象（例如 worker-bad-timehut-mcode），worker 問題再加問題代碼，有固定開始時間的再加「@台北時間」。
+  // 同一件事每次重新整理、換瀏覽器都是同一個 ID；同一個對象換了問題或重新發生（開始時間不同）就是新的 ID。
+  // 管理者可用 GET /api/aihankapps/hub/alerts/<ID> 查這則通知的來源、判斷依據與原始數值。
+  const refStamp = t => { const d = new Date(t + TZ), p = n => String(n).padStart(2, '0'); return d.getUTCFullYear() + p(d.getUTCMonth() + 1) + p(d.getUTCDate()) + '-' + p(d.getUTCHours()) + p(d.getUTCMinutes()); };
+  D.alertRef = (id, code, start) => (id + (code ? '.' + code : '') + (start ? '@' + refStamp(start) : '')).replace(/[^A-Za-z0-9._@-]/g, '_');
+  // 判斷依據裡的時間一律是 epoch 毫秒；workerBasis 只挑監控回報的欄位（監控不回錯誤原文）
+  const WORKER_FIELDS = ['health', 'processOnline', 'coverage', 'issues', 'issueDetails', 'lastPollAt', 'lastPollStatus', 'lastErrorAt', 'lastResultAt', 'hasRecordedError', 'recordedErrorKind', 'heartbeatFresh', 'observedAt'];
+  const workerBasis = w => { const b = { workerId: w.id }; WORKER_FIELDS.forEach(k => { if (w[k] !== undefined) b[k] = w[k]; }); return b; };
   function computeAlerts(now) {
     const out = [], o = D.ops;
-    const add = (id, sev, title, detail, more) => out.push(Object.assign({ id: id, sev: sev, title: title, detail: detail, app: null, apps: null, since: null }, more));
+    // more：rule、app／apps、since、go，以及 ref 用的 code／start、來源 source、原始數值 basis
+    const add = (id, sev, title, detail, more) => {
+      const m = more || {}, a = Object.assign({ id: id, sev: sev, title: title, detail: detail, app: null, apps: null, since: null, source: null, basis: null }, m);
+      a.ref = D.alertRef(id, m.code, m.start);
+      delete a.code; delete a.start;
+      out.push(a);
+    };
     Object.keys(D.sources).forEach(id => {
-      if (!D.sources[id].ok) add('src-' + id, 'crit', (SOURCE_LABEL[id] || id) + '讀不到', '這個來源的數字目前是空的；其他來源不受影響。', { rule: RULES[0][0], go: 'sources' });
+      if (!D.sources[id].ok) add('src-' + id, 'crit', (SOURCE_LABEL[id] || id) + '讀不到', '這個來源的數字目前是空的；其他來源不受影響。', { rule: RULES[0][0], go: 'sources',
+        source: '管理中樞資料 /api/aihankapps/hub/data（' + id + '）', basis: { sourceId: id, ok: false } });
     });
-    if (!o.ok) add('ops-down', 'crit', '營運數據讀不到', 'AI worker 與 Wishlist 的即時數字目前是空的。', { rule: RULES[0][0], go: 'sources' });
+    if (!o.ok) add('ops-down', 'crit', '營運數據讀不到', 'AI worker 與 Wishlist 的即時數字目前是空的。', { rule: RULES[0][0], go: 'sources', source: '營運數據 /api/aihankapps/ops/latest', basis: { opsOk: false } });
     o.workers.forEach(w => {
-      if (w.processOnline === false && !D.betweenRounds(w)) add('worker-off-' + w.id, 'crit', w.name + ' 沒有在執行', '監控回報這個 worker 的程序不在線上。', { rule: RULES[1][0], app: w.app, go: 'live' });
+      if (w.processOnline === false && !D.betweenRounds(w)) add('worker-off-' + w.id, 'crit', w.name + ' 沒有在執行', '監控回報這個 worker 的程序不在線上。', { rule: RULES[1][0], app: w.app, go: 'live',
+        source: 'MiniMax worker 監控（營運數據 /api/aihankapps/ops/latest）', basis: workerBasis(w) });
       else if (w.health === 'unhealthy' || w.health === 'degraded') {
         const issue = D.workerIssue(w);
         add('worker-bad-' + w.id, 'warn', w.name + (issue ? '：' + issue.label : w.health === 'unhealthy' ? ' 狀態異常' : ' 部分異常'), issue ? issue.detail : '程序還在，但監控的健康檢查沒有通過。',
-          { rule: RULES[2][0], app: w.app, go: 'live', since: issue ? issue.since : null });
+          { rule: RULES[2][0], app: w.app, go: 'live', since: issue ? issue.since : null, code: issue ? issue.code : w.health,
+            source: 'MiniMax worker 監控（營運數據 /api/aihankapps/ops/latest）', basis: workerBasis(w) });
       }
     });
     const seen = Date.parse(o.updatedAt.latestStatus || '') || 0;
     if (o.ok && ((seen && now - seen > 20 * MIN) || (o.cpuFreshness && o.cpuFreshness.dataFresh === false))) {
-      add('ops-stale', 'warn', '監控資料沒有更新', '上一次收到 worker 讀數是 ' + (seen ? Math.round((now - seen) / MIN) + ' 分鐘前' : '很久以前') + '。', { rule: RULES[3][0], since: seen || null, go: 'live' });
+      add('ops-stale', 'warn', '監控資料沒有更新', '上一次收到 worker 讀數是 ' + (seen ? Math.round((now - seen) / MIN) + ' 分鐘前' : '很久以前') + '。', { rule: RULES[3][0], since: seen || null, go: 'live', start: seen || null,
+        source: '營運數據 /api/aihankapps/ops/latest', basis: { latestStatusAt: seen || null, minutesAgo: seen ? Math.round((now - seen) / MIN) : null, cpuDataFresh: o.cpuFreshness ? o.cpuFreshness.dataFresh : null } });
     }
     const l = o.listing;
     if (l && l.targetPerHour != null && l.perHour24h != null && l.perHour24h < l.targetPerHour) {
-      add('listing-rate', 'warn', 'Wishlist 上架低於目標', '近 24 小時平均每小時 ' + Math.round(l.perHour24h) + ' 件，目標是每小時 ' + l.targetPerHour + ' 件。', { rule: RULES[4][0], app: WISHLIST, go: 'live' });
+      add('listing-rate', 'warn', 'Wishlist 上架低於目標', '近 24 小時平均每小時 ' + Math.round(l.perHour24h) + ' 件，目標是每小時 ' + l.targetPerHour + ' 件。', { rule: RULES[4][0], app: WISHLIST, go: 'live',
+        source: '營運數據 /api/aihankapps/ops/latest（listing）', basis: { perHour24h: l.perHour24h, targetPerHour: l.targetPerHour } });
     }
-    if (o.chat && o.chat.pendingCount > 0) add('chat-pending', 'info', '有 ' + o.chat.pendingCount + ' 則買家詢問等待處理', 'Wishlist.ai 的聊聊待問；這個數字最多延遲約 2 小時。', { rule: RULES[5][0], app: WISHLIST, since: o.chat.observedAt || null });
+    if (o.chat && o.chat.pendingCount > 0) add('chat-pending', 'info', '有 ' + o.chat.pendingCount + ' 則買家詢問等待處理', 'Wishlist.ai 的聊聊待問；這個數字最多延遲約 2 小時。', { rule: RULES[5][0], app: WISHLIST, since: o.chat.observedAt || null,
+      source: '營運數據 /api/aihankapps/ops/latest（chatPending）', basis: { pendingCount: o.chat.pendingCount, observedAt: o.chat.observedAt || null } });
     const st = D.sources.store, gen = st && st.ok ? Date.parse(st.generatedAt || '') : 0;
-    if (gen && now - gen > 8 * DAY) add('store-stale', 'warn', '商店報表超過一週沒更新', '安裝、下載、收入這幾項停在上一次產生報表的時候（' + Math.floor((now - gen) / DAY) + ' 天前）。', { rule: RULES[6][0], since: gen, go: 'sources' });
+    if (gen && now - gen > 8 * DAY) add('store-stale', 'warn', '商店報表超過一週沒更新', '安裝、下載、收入這幾項停在上一次產生報表的時候（' + Math.floor((now - gen) / DAY) + ' 天前）。', { rule: RULES[6][0], since: gen, go: 'sources', start: gen,
+      source: '商店報表 reports/data.js', basis: { generatedAt: gen, daysAgo: Math.floor((now - gen) / DAY) } });
     Object.keys(D.latest.rating || {}).forEach(k => {
       const r = D.latest.rating[k], a = D.BYKEY[k];
-      if (a && r && r.value < 4) add('rating-' + a.id, 'warn', a.short + ' 的評分是 ' + r.value.toFixed(1), 'Google Play 評分低於 4.0。', { rule: RULES[7][0], app: k });
+      if (a && r && r.value < 4) add('rating-' + a.id, 'warn', a.short + ' 的評分是 ' + r.value.toFixed(1), 'Google Play 評分低於 4.0。', { rule: RULES[7][0], app: k,
+        source: '商店報表 reports/data.js（googleRating）', basis: { appKey: k, rating: r.value, date: r.date || null } });
     });
     D.services.forEach(svc => {
-      if (svc.now && svc.now.ok === false) add('svc-down-' + svc.id, 'crit', svc.name + ' 沒有回應', '最近一次健康檢查' + (svc.now.status ? '回了 ' + svc.now.status : '連不上或逾時') + '。', { rule: RULES[8][0], apps: svc.apps, since: svc.now.at, go: 'live' });
+      if (svc.now && svc.now.ok === false) add('svc-down-' + svc.id, 'crit', svc.name + ' 沒有回應', '最近一次健康檢查' + (svc.now.status ? '回了 ' + svc.now.status : '連不上或逾時') + '。', { rule: RULES[8][0], apps: svc.apps, since: svc.now.at, go: 'live',
+        source: '後台服務檢查 /api/aihankapps/hub/services', basis: { serviceId: svc.id, ok: false, status: svc.now.status == null ? null : svc.now.status, ms: svc.now.ms == null ? null : svc.now.ms, checkedAt: svc.now.at || null } });
     });
     D.infra.forEach(row => {
       const v = row.volume, label = row.project + ' ' + row.name, st = row.deploy && row.deploy.status;
       if (v && v.sizeMb > 0 && v.usedMb / v.sizeMb >= 0.8) {
         const pct = v.usedMb / v.sizeMb * 100;
         add('space-' + row.id, pct >= 95 ? 'crit' : 'warn', label + ' 的空間用了 ' + Math.round(pct) + '%', '已用 ' + mbText(v.usedMb) + '，上限 ' + mbText(v.sizeMb) + '；滿了之後這個服務會寫不進去，要清理資料或在 Railway 加大空間。',
-          { rule: RULES[10][0], apps: row.apps, go: 'live' });
+          { rule: RULES[10][0], apps: row.apps, go: 'live', source: 'Railway 後台資源（railway 收集來源）', basis: { serviceId: row.id, service: label, usedMb: v.usedMb, sizeMb: v.sizeMb, percent: Math.round(pct * 10) / 10 } });
       }
       if (st === 'FAILED' || st === 'CRASHED') add('deploy-' + row.id, 'crit', label + (st === 'CRASHED' ? ' 執行中當掉' : ' 部署失敗'),
-        '這個服務最新一次部署的狀態是 ' + st + '，可能沒有在提供服務；到 Railway 看部署紀錄。', { rule: RULES[11][0], apps: row.apps, since: row.deploy.at, go: 'live' });
+        '這個服務最新一次部署的狀態是 ' + st + '，可能沒有在提供服務；到 Railway 看部署紀錄。', { rule: RULES[11][0], apps: row.apps, since: row.deploy.at, go: 'live', start: row.deploy.at || null,
+          source: 'Railway 後台資源（railway 收集來源）', basis: { serviceId: row.id, service: label, deployStatus: st, deployAt: row.deploy.at || null } });
     });
     const collectors = (D.sources.imports && D.sources.imports.collectors) || {};
     Object.keys(collectors).forEach(id => {
       const c = collectors[id], name = (COLLECTORS[id] || [id])[0];
-      if (c.collectedAt && now - c.collectedAt > 36 * HOUR) add('collector-stale-' + id, 'warn', name + '的數據超過一天沒更新', '上一次匯入是 ' + Math.floor((now - c.collectedAt) / HOUR) + ' 小時前；收集工具在這台 Mac 上執行。', { rule: RULES[9][0], since: c.collectedAt, go: 'sources' });
+      if (c.collectedAt && now - c.collectedAt > 36 * HOUR) add('collector-stale-' + id, 'warn', name + '的數據超過一天沒更新', '上一次匯入是 ' + Math.floor((now - c.collectedAt) / HOUR) + ' 小時前；收集工具在這台 Mac 上執行。', { rule: RULES[9][0], since: c.collectedAt, go: 'sources', start: c.collectedAt,
+        source: '匯入的後台數據（' + id + '）', basis: { collector: id, collectedAt: c.collectedAt, hoursAgo: Math.floor((now - c.collectedAt) / HOUR) } });
     });
     D.ALERTS = out;
   }
