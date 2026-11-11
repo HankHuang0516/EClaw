@@ -142,7 +142,22 @@
       "deadline": "수령 마감: 2026/12/11 10:00(타이베이 시간). 마감 후에는 받을 수 없습니다."
     }
   },
-  "receipts": [],
+  "receipts": [
+    {
+      "gameId": "rebound",
+      "verifiedAt": "2026-11-11T03:52:56.224Z",
+      "mails": 158,
+      "claimed": 0,
+      "final": false
+    },
+    {
+      "gameId": "typeforge-twin-cities",
+      "verifiedAt": "2026-11-11T03:52:57.897Z",
+      "mails": 44,
+      "claimed": 0,
+      "final": false
+    }
+  ],
   "approval": {
     "by": "auto-policy",
     "policyVersion": 1,
