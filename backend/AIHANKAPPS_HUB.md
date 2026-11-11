@@ -55,6 +55,16 @@ The game servers (REBOUND; 活字戰紀's 雙城烽火 and 巔峰之戰) and Wis
 - Imported series reach the page as `x.<metric>` (for example `x.activeUsers`) and join the matching hub metrics. The page warns when a source has not been imported for 36 hours.
 - The collector runs from the operator's Mac (a LaunchAgent there runs it daily and the `railway` source hourly). Nothing in this repository schedules it; the page warns when a source has not been imported for 36 hours.
 
+### Notification IDs and the alert lookup
+
+Hank asked on 2026-11-11 for a 複製通知 ID button on every alert so an AI can look the problem up. Each alert carries `ref`: its type and subject (`worker-bad-timehut-mcode`), for a worker the monitor's issue code (`.server_poll_failed`), and for alerts with a fixed start the Taipei start time (`store-stale@20261102-1639`). The same problem keeps the same ID across reloads and browsers; a different problem or a new start gives a new ID. The page shows it under each alert with a copy button.
+
+`GET /api/aihankapps/hub/alerts` (admin) answers the active alerts as the page computes them: the server runs the page's own `hub-data.js` in a `vm` sandbox whose fetch reaches only the hub answer, the latest service checks and the public `ops/catalog` and `ops/latest` (over loopback), cached 20 s. Each alert has `id` (the notification ID), `type`, `severity`, `title`, `detail`, `rule`, `condition`, `source`, `since`, `basis` (the raw values the rule looked at; times in epoch ms, also in `basisTaipei`). `GET /api/aihankapps/hub/alerts/<ID>` answers one: exact ID first, otherwise the same alert type (`matchedBy: "type"`); a cleared alert is 404 with `activeIds`.
+
+### Account sign-ups
+
+`ACCOUNT_APPS` in `aihankapps-hub.js` lists the apps that have accounts (Hank, 2026-11-11). `accounts` in the data answer and `GET /api/aihankapps/hub/accounts` give one row per catalog app: `status` `connected` (total, new in 7 / 30 days), `not_connected` (the app has accounts but no read-only count is wired; `note` says what is missing), `none` (no account sign-up) or `unknown` (not confirmed; currently Vibe帝國, whose game source was not mounted during the 2026-11-11 inventory). REBOUND only creates a guest record per install, so it is `none`. Counts only. EClawbot is counted from `user_accounts`; Wishlist and 雙城烽火／巔峰之戰 from facts the collector imports (`usersTotal` / `accountsTotal`, `accountsNew7d`, `accountsNew30d`). Timehut keeps accounts in its own server's files and has no count endpoint yet. The overview shows them in the 帳號註冊人數 card.
+
 ## Rules the numbers follow
 
 - A day the source does not know is `null` and is drawn as a gap. Only live counters are zero-filled, and only from the day they started counting.

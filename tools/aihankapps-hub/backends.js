@@ -152,6 +152,13 @@ const summit = today => wrap(today, PG, `
       fact(app, 'signedIn7d', '近 7 天登入過的帳號', signedIn ? (s ? s.d7 : 0) : null, '個', 24);
       fact(app, 'signedIn30d', '近 30 天登入過的帳號', signedIn ? (s ? s.d30 : 0) : null, '個', 25);
     }
+    // 帳號註冊人數（Hank 2026-11-11）：綁定到這款遊戲的帳號，依帳號建立時間算近 7／30 天新增；只有數量
+    const fresh = await ask('新帳號', "SELECT b.product, (COUNT(DISTINCT a.account_id) FILTER (WHERE a.created_at >= NOW() - INTERVAL '7 days'))::int AS d7, (COUNT(DISTINCT a.account_id) FILTER (WHERE a.created_at >= NOW() - INTERVAL '30 days'))::int AS d30 FROM summit_accounts a JOIN summit_device_bindings b ON b.account_id = a.account_id GROUP BY 1");
+    for (const [app, product] of [[D, 'dual-city'], [S, 'summit-battle']]) {
+      const f = (fresh || []).find(row => row.product === product);
+      fact(app, 'accountsNew7d', '近 7 天新註冊的帳號', fresh ? (f ? f.d7 : 0) : null, '個', 13);
+      fact(app, 'accountsNew30d', '近 30 天新註冊的帳號', fresh ? (f ? f.d30 : 0) : null, '個', 14);
+    }
     const at = "to_timestamp(received_at_ms / 1000.0)";
     const battleFirst = await ask('巔峰對戰', "SELECT " + day('MIN(' + at + ')') + " AS first FROM summit_battle_history WHERE product = 'summit-battle'");
     const battles = await ask('巔峰對戰', "SELECT " + day(at) + " AS day, COUNT(DISTINCT match_id)::int AS n, COUNT(DISTINCT account_id)::int AS players FROM summit_battle_history WHERE product = 'summit-battle' AND received_at_ms >= $1 GROUP BY 1", [SINCE.getTime()]);
@@ -185,6 +192,9 @@ const wishlist = today => wrap(today, PRISMA, `
     const born = await ask('帳號', 'SELECT ' + day('MIN("createdAt")') + ' AS first, COUNT(*)::int AS total FROM "User"');
     const first = born && born[0].first;
     fact(A, 'usersTotal', '註冊帳號總數', born && born[0].total, '個', 10);
+    const fresh = await ask('新帳號', 'SELECT (COUNT(*) FILTER (WHERE "createdAt" >= NOW() - INTERVAL \\'7 days\\'))::int AS d7, (COUNT(*) FILTER (WHERE "createdAt" >= NOW() - INTERVAL \\'30 days\\'))::int AS d30 FROM "User"');
+    fact(A, 'accountsNew7d', '近 7 天新註冊的帳號', fresh && fresh[0].d7, '個', 11);
+    fact(A, 'accountsNew30d', '近 30 天新註冊的帳號', fresh && fresh[0].d30, '個', 12);
     series(A, 'newUsers', await ask('新帳號', 'SELECT ' + day('"createdAt"') + ' AS day, COUNT(*)::int AS n FROM "User" WHERE "createdAt" >= $1 GROUP BY 1', [SINCE]), first);
     series(A, 'messages', await ask('訊息', 'SELECT ' + day('"createdAt"') + ' AS day, COUNT(*)::int AS n FROM "Message" WHERE "createdAt" >= $1 GROUP BY 1', [SINCE]), first);
     const doing = '(SELECT "senderUserId" AS uid, "createdAt" AS t FROM "Message" WHERE "createdAt" >= $1 UNION ALL SELECT "ownerUserId", "createdAt" FROM "Listing" WHERE "createdAt" >= $1) AS doing';

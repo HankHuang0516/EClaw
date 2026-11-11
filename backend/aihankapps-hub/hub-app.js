@@ -140,8 +140,8 @@
     setTimeout(() => t.classList.add('is-out'), 2600);
     setTimeout(() => t.remove(), 3000);
   }
-  function copyText(text, okMsg) {
-    const fail = () => toast('這裡沒辦法自動複製，請切到「表格」再選取');
+  function copyText(text, okMsg, failMsg) {
+    const fail = () => toast(failMsg || '這裡沒辦法自動複製，請切到「表格」再選取');
     const fallback = () => {
       try {
         const ta = document.createElement('textarea');
@@ -397,11 +397,26 @@
     return '<section class="card ' + (cls || 'c-6') + '">' + cardHead('資料新鮮度', '每一個來源最後一次更新的時間', '<a class="btn-ghost" href="#sources">全部來源' + ico('next') + '</a>') + '<ol class="feed">' +
       rows.map(r => '<li><span class="feed-k' + (r.state === 'crit' ? ' fk-incident' : '') + '">' + (r.state === 'ok' ? '正常' : r.state === 'warn' ? '沒更新' : '讀不到') + '</span><span class="feed-t"><b>' + esc(r.name) + '</b>　' + esc(r.note) + '</span><time class="muted"' + (r.last ? ' data-ago="' + r.last + '"' : '') + '>' + (r.last ? '' : '—') + '</time></li>').join('') + '</ol></section>';
   }
+  // 帳號註冊人數（只有數量）：有帳號的 APP 排前面；沒有帳號功能的收在最後一行，不湊數字
+  function accountsCardHtml(cls) {
+    const rows = D.accounts || [], has = rows.filter(r => r.status === 'connected' || r.status === 'not_connected'), none = rows.filter(r => r.status === 'none'), unknown = rows.filter(r => r.status === 'unknown');
+    const short = r => { const a = D.BYKEY[r.app]; return a ? a.short : r.name; };
+    const cell = (label, v, wired) => '<div><dt>' + label + '</dt><dd>' + (wired && v != null ? V.fmtInt(v) : '<span class="muted">資料來源未接</span>') + '</dd></div>';
+    const body = has.length ? '<div class="acc-list">' + has.map(r => {
+      const a = D.BYKEY[r.app], wired = r.status === 'connected';
+      return '<div class="acc-r"><div class="acc-n">' + (a ? '<a href="#app-' + a.id + '">' + esc(short(r)) + '</a>' : esc(short(r))) + '</div><dl class="acc-v">' +
+        cell('總註冊人數', r.total, wired) + cell('近 7 天新增', r.new7d, wired) + cell('近 30 天新增', r.new30d, wired) + '</dl>' +
+        '<p class="acc-s">' + esc(r.source || '—') + (r.observedAt ? '・讀取於 <span data-ago="' + r.observedAt + '"></span>' : '') + (r.note ? '<br>' + esc(r.note) : '') + '</p></div>';
+    }).join('') + '</div>' : '<p class="empty">還沒有帳號資料。</p>';
+    const tail = (none.length ? '<p class="muted acc-none">無帳號功能：' + none.map(r => esc(short(r))).join('、') + '</p>' : '') +
+      (unknown.length ? '<p class="muted acc-none">還沒確認有沒有帳號：' + unknown.map(r => esc(short(r)) + '（' + esc(r.note || '') + '）').join('、') + '</p>' : '');
+    return '<section class="card ' + (cls || 'c-12') + '">' + cardHead('帳號註冊人數', '只計有帳號註冊功能的 APP；只有數量，不含任何帳號資料') + body + tail + '</section>';
+  }
   function viewOverview(el) {
     const apps = selApps(), keys = Object.keys(M).filter(D.anyData);
     if (keys.indexOf(S.metric) < 0) S.metric = keys[0] || 'installs';
     el.innerHTML = head('總覽', '所有 APP 現在的狀況，以及這段期間的表現。') + nowStripHtml() + tilesHtml(TILE_KEYS, apps) +
-      '<div class="grid">' + explorerHtml('c-8', keys) + rankHtml(S.metric, 'c-4') + '</div>' + multiplesHtml(apps) + '<div class="grid">' + alertsCardHtml() + freshCardHtml() + '</div>';
+      '<div class="grid">' + explorerHtml('c-8', keys) + rankHtml(S.metric, 'c-4') + '</div>' + multiplesHtml(apps) + '<div class="grid">' + alertsCardHtml() + freshCardHtml() + '</div><div class="grid">' + accountsCardHtml('c-12') + '</div>';
     mountNow(el); mountTiles(el, apps); mountExplorer(el, apps); mountMultiples(el);
   }
 
@@ -787,7 +802,8 @@
   function alertHtml(a) {
     const app = D.BYKEY[a.app || (a.apps || [])[0]] || null, acked = isAcked(a);
     return '<article class="al al-' + (acked ? 'acked' : 'firing') + '"><div class="al-m">' + pill(a.sev, SEV[a.sev]) + '<div class="al-t"><h3>' + esc(a.title) + '</h3><p>' + esc(a.detail) + '</p></div></div>' +
-      '<div class="al-w"><span class="al-s as-' + (acked ? 'acked' : 'firing') + '">' + (acked ? '已確認' : '觸發中') + '</span><span class="muted">規則：' + esc(a.rule) + '</span>' + (a.since ? '<span class="muted">開始於 <span data-ago="' + a.since + '"></span></span>' : '') + '</div><div class="al-a">' +
+      '<div class="al-w"><span class="al-s as-' + (acked ? 'acked' : 'firing') + '">' + (acked ? '已確認' : '觸發中') + '</span><span class="muted">規則：' + esc(a.rule) + '</span>' + (a.since ? '<span class="muted">開始於 <span data-ago="' + a.since + '"></span></span>' : '') + '</div>' +
+      '<div class="al-id"><span class="al-id-l">通知 ID</span><code class="al-id-v">' + esc(a.ref) + '</code><button type="button" class="btn-ghost al-id-b" data-act="al-copy" data-v="' + esc(a.ref) + '" aria-label="複製通知 ID ' + esc(a.ref) + '" title="複製通知 ID，貼給 AI 就能查這則通知">' + ico('copy') + '複製</button></div><div class="al-a">' +
       (acked ? '<button type="button" class="btn" data-act="al-unack" data-v="' + esc(a.id) + '">取消確認</button>' : '<button type="button" class="btn is-primary" data-act="al-ack" data-v="' + esc(a.id) + '">確認，我知道了</button>') +
       (a.go ? '<a class="btn" href="#' + a.go + '">' + (a.go === 'live' ? '看即時監控' : '看資料來源') + '</a>' : '') + (app ? '<a class="btn" href="#app-' + app.id + '">開啟 ' + esc(app.short) + '</a>' : '') + '</div></article>';
   }
@@ -997,6 +1013,7 @@
     'al-filter': v => { S.alertFilter = v; render(); },
     'al-ack': v => { S.acks[v] = Date.now(); store.set('acks', S.acks); render(); },
     'al-unack': v => { delete S.acks[v]; store.set('acks', S.acks); render(); },
+    'al-copy': v => copyText(v, '已複製通知 ID：' + v, '沒辦法自動複製，請直接選取通知 ID'),
     'pal-run': v => palRun(+v)
   };
   document.addEventListener('click', e => {

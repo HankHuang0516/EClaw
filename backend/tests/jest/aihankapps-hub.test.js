@@ -51,7 +51,7 @@ function fakePool(overrides = {}) {
             { day: '2026-11-09', app_id: 'alpha', action: 'google', count: '1' }, { day: '2026-11-09', app_id: 'alpha', action: 'bogus', count: '9' }],
         likes: [{ app_id: 'alpha', n: 3 }], comments: [{ app_id: 'alpha', n: 1 }], beta: [{ app_id: 'alpha', n: 2, rating: 4.3333 }],
         feedback: [{ n: 4, recent: 1, latest: new Date('2026-11-09T00:00:00Z') }],
-        users: [{ total: 12, verified: 9, premium: 1 }], signups: [{ day: '2026-11-09', n: 2 }],
+        users: [{ total: 12, verified: 9, premium: 1, new7d: 1, new30d: 3 }], signups: [{ day: '2026-11-09', n: 2 }],
         chat: [{ day: '2026-11-10', messages: 7, devices: 3 }],
         dreamFirst: [{ first: '2026-11-01' }], dreamJobs: [{ day: '2026-11-09', jobs: 5, completed: 4, failed: 1, devices: 2 }], dreamAds: [{ day: '2026-11-09', n: 3 }],
         tappay: [{ day: '2026-11-09', n: 1, twd: 150 }], topups: [{ day: '2026-11-09', n: 2, twd: 180 }],
@@ -110,7 +110,7 @@ function mount(options = {}) {
     });
     const pool = options.pool || fakePool();
     const routers = hub.createRouters({ authMiddleware, adminMiddleware, getPool: () => pool, getAuthPool: () => options.authPool || pool, isReady: () => state.ready,
-        getDeviceStats: options.getDeviceStats || (() => ({ devices: 4, entities: 9, boundEntities: 6 })), now: () => state.clock, fetchImpl: options.fetchImpl,
+        getDeviceStats: options.getDeviceStats || (() => ({ devices: 4, entities: 9, boundEntities: 6 })), now: () => state.clock, fetchImpl: options.fetchImpl, fetchOps: options.fetchOps,
         portfolioDir: options.portfolioDir || portfolioFixture(), ...(options.pageDir ? { pageDir: options.pageDir } : {}) });
     const slot = { page: routers.page };
     app.use('/AiHankApps/hub', hub.privateHeaders, (req, res) => slot.page(req, res, error => {
@@ -306,7 +306,7 @@ describe('admin hub: the data answer', () => {
             feedback: { [FRAUD]: { count: 4, recent: 1, latestAt: Date.parse('2026-11-09T00:00:00Z') } } });
 
         // EClawbot: accounts cover the whole window; chat only the days that were scanned
-        expect(body.eclaw).toEqual({ users: { total: 12, verified: 9, premium: 1 }, devices: { total: 4, entities: 9, boundEntities: 6 } });
+        expect(body.eclaw).toEqual({ users: { total: 12, verified: 9, premium: 1, new7d: 1, new30d: 3, readAt: NOW }, devices: { total: 4, entities: 9, boundEntities: 6 } });
         expect(s.eclawSignups.eclawbot.o).toBe(0);
         expect(s.eclawSignups.eclawbot.v).toHaveLength(hub.HISTORY_DAYS);
         expect(s.eclawSignups.eclawbot.v.slice(-3)).toEqual([0, 2, 0]);
@@ -377,7 +377,7 @@ describe('admin hub: the data answer', () => {
         expect(res.body.daily.series.eclawMessages).toBeUndefined();
         expect(res.body.daily.series.dreamTurns).toBeUndefined();
         expect(res.body.daily.series.introViews.alpha.v).toEqual([0, 4, 0]);
-        expect(res.body.eclaw).toEqual({ users: { total: 12, verified: 9, premium: 1 }, devices: null });
+        expect(res.body.eclaw).toEqual({ users: { total: 12, verified: 9, premium: 1, new7d: 1, new30d: 3, readAt: NOW }, devices: null });
         expect(pool.log.filter(sql => sql === 'ROLLBACK')).toHaveLength(2);
         expect(pool.released).toBe(pool.connected);
         expect(JSON.stringify(res.body)).not.toMatch(/statement timeout|does not exist|devices not loaded/);
@@ -663,6 +663,84 @@ describe('admin hub: the page reads the answer correctly', () => {
         expect(rows.filter(r => r.state === 'ok').map(r => r.name)).toEqual(['商店報表', '作品集流量', '作品集互動', 'EClaw 帳號', 'EClaw 對話', '夢話夥伴後台', '問題回饋', 'EClaw 付款', '後台服務檢查', 'REBOUND 遊戲伺服器']);
         expect(rows.filter(r => r.state === 'none').map(r => r.name)).toEqual(['活字戰紀伺服器', 'Wishlist.ai 後台', 'Railway 後台資源', '時光相簿伺服器', '其他 APP 的使用紀錄', '商店的內購金額']);
         expect(rows.find(r => r.name === '商店報表').note).toBe('Google 到 10/27、Apple 到 10/29、AdMob 到 11/1');
+    });
+});
+
+describe('admin hub: account sign-ups per app', () => {
+    function portfolioWithAccounts() {
+        const dir = portfolioFixture(), file = path.join(dir, 'app-catalog.json'), catalog = JSON.parse(fs.readFileSync(file, 'utf8'));
+        catalog.apps.push({ name: 'EClawbot', communityId: 'eclawbot', webUrl: 'https://eclawbot.com/' }, { name: 'Wishlist.ai', communityId: 'weesh', webUrl: 'https://example.com/' },
+            { name: '時光相簿', communityId: 'timehut', webUrl: 'https://example.com/t' });
+        fs.writeFileSync(file, JSON.stringify(catalog));
+        return dir;
+    }
+    test('apps with accounts get counts only; an app without a reader says so; the rest have no account feature', async () => {
+        const pool = fakePool({ hubFacts: [{ app_id: 'weesh', key: 'usersTotal', value: { label: '註冊帳號總數', value: 40, unit: '個' }, source: 'wishlist', observed_at: new Date(NOW - 7200000) },
+            { app_id: 'weesh', key: 'accountsNew7d', value: { label: '近 7 天', value: 2, unit: '個' }, source: 'wishlist', observed_at: new Date(NOW - 7200000) }] });
+        const { app } = mount({ pool, portfolioDir: portfolioWithAccounts() });
+        expect((await request(app).get('/api/aihankapps/hub/accounts')).status).toBe(401);
+        expect((await as(request(app).get('/api/aihankapps/hub/accounts'), 'member')).status).toBe(403);
+        const res = await as(request(app).get('/api/aihankapps/hub/accounts'), 'admin');
+        expect(res.status).toBe(200);
+        const by = Object.fromEntries(res.body.accounts.map(r => [r.app, r]));
+        expect([by.eclawbot.status, by.eclawbot.total, by.eclawbot.new7d, by.eclawbot.new30d, by.eclawbot.observedAt]).toEqual(['connected', 12, 1, 3, NOW]);
+        expect([by.weesh.status, by.weesh.total, by.weesh.new7d, by.weesh.new30d, by.weesh.observedAt]).toEqual(['connected', 40, 2, null, NOW - 7200000]);
+        expect([by.timehut.status, by.timehut.total]).toEqual(['not_connected', null]);
+        expect(by.timehut.note).toMatch(/尚未進行/);
+        expect([by.alpha.status, by.alpha.total, by.alpha.note]).toEqual(['none', null, '這款 APP 沒有帳號註冊功能。']);
+        expect(hub.ACCOUNT_APPS.find(r => r.app === 'vibe-empire').status).toBe('unknown');
+        expect(hub.ACCOUNT_APPS.find(r => r.app === 'rebound').note).toMatch(/訪客帳號/);
+        // the same rows travel with the page's data answer; nothing but counts
+        const data = await as(request(app).get('/api/aihankapps/hub/data'), 'admin');
+        expect(data.body.accounts).toEqual(res.body.accounts);
+        expect(Object.keys(by.eclawbot).sort()).toEqual(['app', 'name', 'new30d', 'new7d', 'note', 'observedAt', 'source', 'status', 'total']);
+    });
+});
+
+describe('admin hub: notification IDs and the alert lookup', () => {
+    const worker = (id, extra) => ({ id, name: id === 'timehut-mcode' ? '時光相簿人物／影片辨識' : id, processOnline: true, coverage: 'between_job_heartbeat', ...extra });
+    const opsWith = workers => async url => ({ ok: true, status: 200, json: async () => (url.endsWith('/latest')
+        ? { success: true, status: { workers }, listing: null, chatPending: { pendingCount: 0 }, workTotals: { totals: {} }, cpuFreshness: { dataFresh: true }, updatedAt: { latestStatus: new Date(NOW - 60000).toISOString() } }
+        : { success: true, series: [] }) });
+    test('every alert has a stable ID, and an administrator can look it up with its source, rule and raw values', async () => {
+        const down = worker('timehut-mcode', { health: 'degraded', lastPollAt: NOW - 30000, lastPollStatus: 503, lastErrorAt: NOW - 30000, recordedErrorKind: 'poll',
+            issues: ['heartbeat_or_poll_not_current', 'server_poll_failed', 'recorded_error_without_later_result'],
+            issueDetails: [{ code: 'heartbeat_or_poll_not_current', since: NOW - 30000 }, { code: 'server_poll_failed', since: NOW - 30000, httpStatus: 503 }, { code: 'recorded_error_without_later_result', since: NOW - 30000 }] });
+        const asked = [];
+        const fetchOps = async url => { asked.push(url); return opsWith([down])(url); };
+        const { app } = mount({ fetchOps });
+        expect((await request(app).get('/api/aihankapps/hub/alerts')).status).toBe(401);
+        expect((await as(request(app).get('/api/aihankapps/hub/alerts/store-stale'), 'member')).status).toBe(403);
+        const list = await as(request(app).get('/api/aihankapps/hub/alerts'), 'admin');
+        expect(list.status).toBe(200);
+        expect(list.body.alerts.map(a => a.id)).toEqual(['worker-bad-timehut-mcode.server_poll_failed', 'store-stale@20261102-1639']);
+        expect(asked.sort()).toEqual(['/api/aihankapps/ops/catalog', '/api/aihankapps/ops/latest']);   // nothing else is fetched
+        const one = await as(request(app).get('/api/aihankapps/hub/alerts/worker-bad-timehut-mcode.server_poll_failed'), 'admin');
+        expect(one.status).toBe(200);
+        expect(one.body.matchedBy).toBe('id');
+        expect(one.body.alert).toMatchObject({ type: 'worker-bad-timehut-mcode', severity: 'warn', title: '時光相簿人物／影片辨識：伺服器回錯誤', rule: 'worker 狀態異常',
+            condition: '監控回報「異常」或「部分異常」', app: 'timehut', since: NOW - 30000, sinceTaipei: '2026-11-10 20:59 (Asia/Taipei)' });
+        expect(one.body.alert.source).toMatch(/MiniMax worker 監控/);
+        expect(one.body.alert.basis).toMatchObject({ workerId: 'timehut-mcode', lastPollStatus: 503, lastErrorAt: NOW - 30000, recordedErrorKind: 'poll' });
+        expect(one.body.alert.basisTaipei.lastPollAt).toBe('2026-11-10 20:59 (Asia/Taipei)');
+        // an older ID of the same alert type still finds it, and says so; an unknown one lists what is active
+        const older = await as(request(app).get('/api/aihankapps/hub/alerts/worker-bad-timehut-mcode.item_processing_failed'), 'admin');
+        expect([older.status, older.body.matchedBy, older.body.alert.id]).toEqual([200, 'type', 'worker-bad-timehut-mcode.server_poll_failed']);
+        const gone = await as(request(app).get('/api/aihankapps/hub/alerts/ops-stale'), 'admin');
+        expect([gone.status, gone.body.activeIds]).toEqual([404, ['worker-bad-timehut-mcode.server_poll_failed', 'store-stale@20261102-1639']]);
+        expect((await as(request(app).get('/api/aihankapps/hub/alerts/' + encodeURIComponent('a b<')), 'admin')).status).toBe(400);
+    });
+    test('a worker the monitor reports healthy again raises no alert', async () => {
+        const healed = worker('timehut-mcode', { health: 'healthy', lastPollAt: NOW - 30000, lastPollStatus: 200, lastErrorAt: NOW - 26 * 60000, recordedErrorKind: 'poll', issues: [], issueDetails: [] });
+        const { app } = mount({ fetchOps: opsWith([healed]) });
+        const list = await as(request(app).get('/api/aihankapps/hub/alerts'), 'admin');
+        expect(list.body.alerts.map(a => a.id)).toEqual(['store-stale@20261102-1639']);
+    });
+    test('the page shows each ID with a copy button', () => {
+        const app = fs.readFileSync(path.join(pageDir, 'hub-app.js'), 'utf8');
+        expect(app).toMatch(/通知 ID/);
+        expect(app).toMatch(/data-act="al-copy"/);
+        expect(app).toMatch(/'al-copy': v => copyText\(v, '已複製通知 ID：' \+ v/);
     });
 });
 
