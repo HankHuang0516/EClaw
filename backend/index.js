@@ -2014,7 +2014,7 @@ app.get('/api/help', (req, res) => {
             { title: 'AiHankApps 管理中樞 page (existing admin portal session only; an anonymous browser is sent to sign in, a non-admin account gets 403)', curl: `curl -s "${apiBase}/AiHankApps/hub/" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
             { title: 'Daily aggregates behind the hub: store report, portfolio traffic, EClawbot and 夢話夥伴 usage, EClaw payments, back-end uptime, and the game-server/Wishlist counts an operator imported (admin session; read-only, counts only)', curl: `curl -s "${apiBase}/api/aihankapps/hub/data" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
             { title: 'Latest health check of each back-end the hub watches (checked by this server once a minute; admin session)', curl: `curl -s "${apiBase}/api/aihankapps/hub/services" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
-            { title: 'Whether the current session may see the hub entry (answers everyone with { admin: true|false } and nothing else)', curl: `curl -s "${apiBase}/api/aihankapps/hub/access" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Whether the current session is an administrator who can open the hub (answers everyone with { admin: true|false } and nothing else)', curl: `curl -s "${apiBase}/api/aihankapps/hub/access" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
             { title: 'Public operations data the hub also reads: worker status and the Wishlist listing summary', curl: `curl -s "${apiBase}/api/aihankapps/ops/latest"` },
             { title: 'Public operations series (ids from /api/aihankapps/ops/catalog; step minute|hour|day|month)', curl: `curl -s "${apiBase}/api/aihankapps/ops/series?ids=wishlist.listed,cpu.total.core&step=hour"` }
         ],
