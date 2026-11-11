@@ -89,7 +89,7 @@
   function endNote(key, brief) {
     const end = D.metricEnd(key), lag = D.today - 1 - end;
     if (lag <= 0) return '到昨天';
-    return '資料到 ' + V.fDate(D.dayT(end)) + (!brief && M[key].src === 'store' ? '・商店報表每週更新' : '');
+    return '資料到 ' + V.fDate(D.dayT(end)) + (!brief && M[key].src === 'store' ? '・商店報表每天更新' : '');
   }
 
   function delta(key, cur, prev) {

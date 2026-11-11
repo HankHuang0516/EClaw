@@ -18,7 +18,7 @@ Read-only, aggregates only. Each database read runs in its own `BEGIN READ ONLY`
 | Source id | From | Gives |
 |---|---|---|
 | `catalog` | `public/AiHankApps/app-catalog.json` | apps, categories, store status, links |
-| `store` | `public/AiHankApps/reports/data.js` (the public APP 趨勢 report, regenerated weekly) | Google Play installs, App Store first downloads, AdMob revenue, crash/ANR events, rating, review counts |
+| `store` | `public/AiHankApps/reports/data.js` (the public APP 趨勢 report, regenerated daily after 09:00 Taipei by the report watchdog) | Google Play installs, App Store first downloads, AdMob revenue, crash/ANR events, rating, review counts |
 | `traffic` | `app_portfolio_traffic_daily` | portfolio views, introduction views, store clicks per app and day |
 | `community` | `app_portfolio_likes`, `_comments`, `_beta_feedback` | counts, average beta rating |
 | `feedback` | `fraud_app_feedback_reports` | counts |
