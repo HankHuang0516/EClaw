@@ -5,7 +5,7 @@
 //
 //   node tools/aihankapps-hub/collect.js                 read every back-end, show what would be sent, send nothing
 //   node tools/aihankapps-hub/collect.js --commit        read, then import into the hub
-//   node tools/aihankapps-hub/collect.js --only rebound  one back-end (ids: rebound, summit, wishlist, railway, timehut)
+//   node tools/aihankapps-hub/collect.js --only rebound  one back-end (ids: rebound, summit, wishlist, railway, timehut, attention)
 //
 // `railway` is different: it runs on this Mac and reads every service's traffic, CPU, memory, space and deployment
 // status from Railway's metrics API with this Mac's Railway CLI login (railway-metrics.js), read-only.
@@ -65,6 +65,28 @@ async function collectTimehut({ fetchImpl = fetch, readKey = readTimehutKey } = 
   return { value: { series: [], facts, notes } };
 }
 
+// 上架警示板 (Hank 2026-11-12: "如果真的有任何上架需要我來介入處理 你可以直接打嚴重需要人為介入的警示"). The listing
+// schedules on this Mac keep a board of what they cannot fix by themselves; their own tool writes a summary of it to
+// ATTENTION_FILE. This source only carries that summary to the hub, where every entry that needs a person becomes a
+// severe alert. Titles and details are written for Hank by the schedules (their tool refuses anything that looks
+// like a key or a phone number); nothing else from the Mac is read.
+const ATTENTION_FILE = process.env.AIHANKAPPS_HUB_ATTENTION_FILE || path.join(os.homedir(), '.local', 'share', 'aihankapps-hub', 'attention-summary.json');
+const ATTENTION_MAX_ITEMS = 12;
+function collectAttention({ file = ATTENTION_FILE, now = Date.now(), read = fs.readFileSync } = {}) {
+  let body;
+  try { body = JSON.parse(read(file, 'utf8')); } catch (_error) { return { value: null, detail: 'no readable summary (' + file + ')' }; }
+  const at = body && Date.parse(body.observedAt);
+  if (!body || body.schemaVersion !== 1 || !Array.isArray(body.items) || !Number.isFinite(at) || at > now + 5 * 60000) return { value: null, detail: 'unexpected summary' };
+  const text = (v, max) => String(v === null || v === undefined ? '' : v).replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, max);
+  const valid = body.items.filter(x => x && typeof x.id === 'string' && /^[a-z0-9][a-z0-9-]{2,59}$/.test(x.id) && (x.kind === 'human' || x.kind === 'healing') && Number.isFinite(Date.parse(x.since)) && text(x.title, 80));
+  // People first, oldest first: when the board is longer than the hub keeps, nothing that needs Hank is dropped for a healing entry.
+  const items = valid.sort((a, b) => (a.kind === b.kind ? Date.parse(a.since) - Date.parse(b.since) : a.kind === 'human' ? -1 : 1)).slice(0, ATTENTION_MAX_ITEMS)
+    .map(x => ({ id: x.id, kind: x.kind, platform: text(x.platform, 20), title: text(x.title, 80), detail: text(x.detail, 200), since: Date.parse(x.since), count: Number.isSafeInteger(x.count) && x.count > 0 ? x.count : 1 }));
+  const human = valid.filter(x => x.kind === 'human').length;
+  const notes = valid.length > items.length ? [`警示板有 ${valid.length} 項，只送前 ${items.length} 項`] : [];
+  return { value: { series: [], facts: [{ app: 'weesh', key: 'attention', value: { label: '需要人為介入', value: human, unit: '件', order: 5, boardAt: at, healing: valid.length - human, items } }], notes } };
+}
+
 // Sources read on this Mac rather than inside a back-end's container.
 const LOCAL = [{ id: 'railway', name: 'Railway 後台資源', apps: railway.RAILWAY_APPS,
   async collect(now) {
@@ -72,7 +94,8 @@ const LOCAL = [{ id: 'railway', name: 'Railway 後台資源', apps: railway.RAIL
     if (!token) return { value: null, detail: 'Railway CLI login missing (run railway login)' };
     try { return { value: await railway.collectRailway({ now, gql: railway.client(token) }) }; } catch (error) { return { value: null, detail: String(error.message || error) }; }
   } },
-  { id: 'timehut', name: '時光相簿伺服器', apps: ['timehut'], collect: () => collectTimehut() }];
+  { id: 'timehut', name: '時光相簿伺服器', apps: ['timehut'], collect: () => collectTimehut() },
+  { id: 'attention', name: '上架警示板', apps: ['weesh'], collect: now => collectAttention({ now }) }];
 const SOURCES = BACKENDS.concat(LOCAL);
 
 function catalogAppIds() {
@@ -140,4 +163,4 @@ async function main(argv, { run = runRailway, log = console.log, now = Date.now,
 
 if (require.main === module) main(process.argv.slice(2)).then(code => { process.exitCode = code; });
 
-module.exports = { HUB, MAX_SHELL_ENVELOPE_BYTES, LOCAL, SOURCES, TIMEHUT_STATS_URL, TIMEHUT_KEY_FILE, readTimehutKey, collectTimehut, toEnvelope, importShell, describe, main, taipeiToday };
+module.exports = { HUB, MAX_SHELL_ENVELOPE_BYTES, LOCAL, SOURCES, TIMEHUT_STATS_URL, TIMEHUT_KEY_FILE, readTimehutKey, collectTimehut, toEnvelope, importShell, describe, main, taipeiToday, collectAttention, ATTENTION_FILE };
