@@ -804,14 +804,14 @@ describe('admin hub: how it is wired in', () => {
         const html = fs.readFileSync(path.join(pageDir, 'index.html'), 'utf8');
         expect(html).toContain('<meta name="robots" content="noindex,nofollow">');
         const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
-        expect(scripts.map(m => /src="([^"]+)"/.exec(m[1])[1])).toEqual(['hub-data.js', 'hub-charts.js', 'hub-app.js']);
+        expect(scripts.map(m => /src="([^"]+)"/.exec(m[1])[1])).toEqual(['hub-data.js', 'hub-charts.js', 'hub-timehut.js', 'hub-app.js']);
         expect(scripts.every(m => m[2] === '')).toBe(true);                               // no inline script: the policy would block it
         expect(html).not.toMatch(/\son[a-z]+\s*=/i);
         expect(html).not.toContain('<style');
         expect([...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(m => m[1])).toEqual([
             'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap', 'hub.css']);
         // the page asks only its own API and the public operations API, on this origin
-        const pageJs = ['hub-data.js', 'hub-app.js', 'hub-charts.js'].map(f => fs.readFileSync(path.join(pageDir, f), 'utf8')).join('\n');
+        const pageJs = ['hub-data.js', 'hub-app.js', 'hub-charts.js', 'hub-timehut.js'].map(f => fs.readFileSync(path.join(pageDir, f), 'utf8')).join('\n');
         expect(pageJs).not.toMatch(/https?:\/\/(?!www\.w3\.org\/2000\/svg)/);
         expect(pageJs).not.toMatch(/\beval\(|new Function\(|document\.write\(/);
         expect(hub.CONTENT_SECURITY_POLICY).toContain("script-src 'self'");
@@ -855,5 +855,49 @@ describe('admin hub: the access question is rate limited', () => {
         for (let i = 0; i < 130; i++) { last = await request(app).get('/api/aihankapps/hub/access'); statuses.add(last.status); }
         expect([...statuses].sort()).toEqual([200, 429]);
         expect([last.status, last.headers['retry-after'], last.body]).toEqual([429, '60', { success: false, admin: false }]);
+    });
+});
+
+describe('admin hub: 拾光 user detail (hub-timehut.js)', () => {
+    const load = () => { const sandbox = { window: {}, localStorage: { getItem: () => null, setItem: () => {} }, Intl, Date, Math, JSON, Object, Array, Number, String, Set }; vm.runInNewContext(fs.readFileSync(path.join(pageDir, 'hub-timehut.js'), 'utf8'), sandbox); return sandbox.window.HubTimehut; };
+    const HOUR = 3600000, DAY = 24 * HOUR;
+    const user = (ref, name, extra = {}) => Object.assign({ ref, v: 1, name, login: 'ab…c', owner: false, lastLoginAt: Date.now() - HOUR, albums: [], media: { albums: 1, photos: 3, videos: 1 }, history: { appUploadBytes: 10, lineReceivedBytes: 20 },
+        line: { received: 0, stages: {}, reasons: {}, days: [] }, uploads: null, ai: null, traffic: null }, extra);
+    test('facts become users; only thUser + 10 hex keys with v 1 count, the meta fact is kept apart', () => {
+        const T = load();
+        const d = T.fromFacts({ accountsTotal: { label: 'x', value: 3 }, thUsersMeta: { v: 1, users: 2 }, thUserabcdef0123: { v: 1, name: 'A' }, thUserXYZ: { v: 1, name: 'bad' }, thUser0123456789: { v: 2, name: 'old' } });
+        expect(d.users.map(u => [u.ref, u.name])).toEqual([['abcdef0123', 'A']]);
+        expect(d.meta).toEqual({ v: 1, users: 2 });
+    });
+    test('insights: long waits and failures first, with plain reasons and hints; traffic share; quiet when nothing is wrong', () => {
+        const T = load();
+        const a = user('aaaaaaaaaa', '小屋', { owner: true, line: { received: 20, recognized: 15, stages: { uploaded: 10, excluded: 3, recognition_queued: 3, failed: 2, blocked: 2 }, reasons: { IMPORT_FAILED: 2, MATCH_NOT_CONFIGURED: 2 }, oldestWaitingAt: Date.now() - 2 * DAY, days: [] },
+            traffic: { days: [['2026-11-12', 1, 900, 800]] } });
+        const b = user('bbbbbbbbbb', '阿嬤', { line: { received: 10, stages: { excluded: 8, uploaded: 2 }, reasons: { MATCH_NO_PERSON: 8 }, days: [] }, traffic: { days: [['2026-11-12', 1, 100, 50]] }, lastLoginAt: Date.now() - 40 * DAY });
+        const list = T.insights([a, b], { trafficSince: new Date(Date.now() - 2 * DAY).toISOString(), dropped: 1 });
+        const text = list.map(x => x.sev + ' ' + x.text);
+        expect(list[0]).toMatchObject({ sev: 'crit', user: 'aaaaaaaaaa' });
+        expect(text.some(x => /^crit 小屋 有 2 張處理失敗，主要是「匯入相簿失敗」/.test(x))).toBe(true);
+        expect(text.some(x => /^warn 小屋 有 2 張卡住：照片所在的相簿沒開人物辨識/.test(x))).toBe(true);
+        expect(text.some(x => /^info 阿嬤 有 80% 的 LINE 照片被判定不是參考對象/.test(x))).toBe(true);
+        expect(text.some(x => /最多的是 小屋（900 B，占 90%）/.test(x))).toBe(true);
+        expect(text.some(x => /流量從 .* 開始記錄/.test(x))).toBe(true);
+        expect(text.some(x => /^info 阿嬤 已經 40 天沒有登入/.test(x))).toBe(true);
+        expect(text.some(x => /略過了 1 位/.test(x))).toBe(true);
+        const calm = T.insights([user('cccccccccc', '王', { line: { received: 4, stages: { uploaded: 4 }, reasons: { UPLOAD_COMPLETED: 4 }, days: [] } })], {});
+        expect(calm.map(x => x.sev)).toEqual(['ok']);
+    });
+    test('names and album titles are escaped; an empty detail explains where it comes from', () => {
+        const T = load();
+        const el = { innerHTML: '', querySelector: () => null, contains: () => true };
+        T.mount(el, { meta: { asOf: new Date().toISOString(), notes: [] }, users: [user('dddddddddd', '<img src=x onerror=alert(1)>', { albums: [['<b>相簿</b>', 'a', 1, 0, 0]] })] });
+        expect(el.innerHTML).toContain('&lt;img src=x onerror=alert(1)&gt;');
+        expect(el.innerHTML).not.toContain('<img src=x');
+        expect(el.innerHTML).toContain('用戶明細');
+        const empty = { innerHTML: '' };
+        T.mount(empty, { meta: null, users: [] });
+        expect(empty.innerHTML).toMatch(/1\.0\.118 起提供/);
+        expect(T.bytes(1536)).toBe('1.50 KB');
+        expect(T.bytes(null)).toBe('—');
     });
 });

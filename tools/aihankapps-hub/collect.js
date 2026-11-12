@@ -35,6 +35,10 @@ const taipeiToday = (now = Date.now()) => new Date(now + 8 * 3600000).toISOStrin
 // 時光相簿 account counts (Hank 2026-11-11). The answer is { total, last7d, last30d, deleted, asOf }: counts only.
 // total leaves out deleted accounts; last7d / last30d are null when the server cannot tell (then they are not sent).
 const TIMEHUT_STATS_URL = 'https://just-healing-production.up.railway.app/api/internal/account-stats';
+// 每個帳戶的明細（Hank 2026-11-13「每個用戶的辨識的詳細數據…相簿照片影片總數量／上傳or下載使用了多少流量」「要用成智慧互動UX」）：
+// 時光相簿 1.0.118 起同一把金鑰可讀 /api/internal/admin-stats。舊版伺服器回 401／404 時只少了明細，帳號總數照常匯入。
+const TIMEHUT_ADMIN_URL = 'https://just-healing-production.up.railway.app/api/internal/admin-stats';
+const TIMEHUT_DETAIL_BUDGET = 45 * 1024; // 整包信封上限 60 KB，明細最多用這麼多，超過就先略過最不活躍的人
 const TIMEHUT_KEY_FILE = path.join(os.homedir(), '.config', 'aihankapps-hub', 'timehut-stats-key');
 function readTimehutKey(file = TIMEHUT_KEY_FILE) {
   let stat;
@@ -62,7 +66,58 @@ async function collectTimehut({ fetchImpl = fetch, readKey = readTimehutKey } = 
   fact('accountsNew30d', '近 30 天新註冊的帳號', n(body.last30d), 12);
   fact('accountsDeleted', '已刪除的帳號（不計入總數）', n(body.deleted), 13);
   const notes = n(body.last7d) === null || n(body.last30d) === null ? ['時光相簿沒有回近 7／30 天的數字（帳號缺建立時間）'] : [];
+  const detail = await collectTimehutDetail({ fetchImpl, key: found.key });
+  facts.push(...detail.facts);
+  notes.push(...detail.notes);
   return { value: { series: [], facts, notes } };
+}
+// 一位用戶一個事實（每個事實上限 8 KB）：thUser＋伺服器給的 10 碼代號；另有一個 thUsersMeta 放共同的資訊。
+// 這些事實沒有 label，所以不會出現在一般的數字格裡，只給拾光頁的用戶明細用。不帶帳號 ID、照片編號、LINE 帳號或檔名。
+function timehutUserFact(u) {
+  const n = v => (Number.isSafeInteger(v) && v >= 0 ? v : null), t = (v, max) => String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, max);
+  const at = v => (Number.isSafeInteger(v) && v > 0 ? v : null), obj = v => (v && typeof v === 'object' && !Array.isArray(v) ? v : null);
+  const counts = (o, keys, max) => Object.fromEntries(Object.entries(obj(o) || {}).filter(([k, v]) => /^[A-Za-z_]{2,40}$/.test(k) && n(v) && (!keys || keys.includes(k))).sort((a, b) => b[1] - a[1]).slice(0, max));
+  const line = obj(u.line), media = obj(u.media) || {}, up = obj(u.uploads), ai = obj(u.ai), tr = obj(u.traffic), hist = obj(u.history) || {};
+  return {
+    v: 1, name: t(u.name, 40), login: t(u.login, 12), owner: u.owner === true, createdAt: at(u.createdAt), lastLoginAt: at(u.lastLoginAt),
+    albums: (Array.isArray(u.albums) ? u.albums : []).slice(0, 30).map(a => [t(a && a.title, 24), a && a.kind === 'family' ? 'f' : 'a', n(a && a.photos), n(a && a.videos), a && a.archived ? 1 : 0]),
+    media: { albums: n(media.albums), archived: n(media.archivedAlbums), photos: n(media.photos), videos: n(media.videos), familyPhotos: n(media.familyPhotos), familyVideos: n(media.familyVideos),
+      accountPhotos: n(media.accountPhotos), accountVideos: n(media.accountVideos), storedBytes: n(media.storedBytes), deleted: n(media.deleted) },
+    line: line ? { received: n(line.received), videos: n(line.videos), bytes: n(line.bytes), recognized: n(line.recognized), stages: counts(line.stages, null, 13), reasons: counts(line.reasons, null, 12),
+      oldestWaitingAt: at(line.oldestWaitingAt), lastReceivedAt: at(line.lastReceivedAt),
+      days: (Array.isArray(line.days) ? line.days : []).filter(d => d && /^\d{4}-\d{2}-\d{2}$/.test(d.day)).slice(-30).map(d => [d.day, n(d.received) || 0, n(d.uploaded) || 0, n(d.excluded) || 0, n(d.failed) || 0, n(d.waiting) || 0]) } : null,
+    uploads: up ? { total: n(up.total), completed: n(up.completed), failed: n(up.failed), waiting: n(up.waiting), cancelled: n(up.cancelled), bytes: n(up.bytes) } : null,
+    ai: ai ? { analyzed: n(ai.analyzed), pending: n(ai.pending), failed: n(ai.failed), unconfirmed: n(ai.unconfirmed), retrying: n(ai.retrying), enabled: ai.enabled === true } : null,
+    history: { appUploadBytes: n(hist.appUploadBytes), lineReceivedBytes: n(hist.lineReceivedBytes) },
+    traffic: tr ? { since: typeof tr.since === 'string' ? tr.since.slice(0, 30) : null, inBytes: n(tr.inBytes), outBytes: n(tr.outBytes), mediaOutBytes: n(tr.mediaOutBytes), uploadInBytes: n(tr.uploadInBytes), requests: n(tr.requests),
+      days: (Array.isArray(tr.days) ? tr.days : []).filter(d => d && /^\d{4}-\d{2}-\d{2}$/.test(d.day)).slice(-30).map(d => [d.day, n(d.in) || 0, n(d.out) || 0, n(d.mediaOut) || 0]) } : null
+  };
+}
+async function collectTimehutDetail({ fetchImpl, key }) {
+  let res;
+  try { res = await fetchImpl(TIMEHUT_ADMIN_URL, { headers: { Authorization: 'Bearer ' + key, Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(30000) }); } catch (error) { return { facts: [], notes: ['用戶明細讀取失敗（' + ((error && error.name) || 'error') + '）'] }; }
+  if (res.status === 401 || res.status === 404) return { facts: [], notes: ['時光相簿伺服器還沒有用戶明細（後端 1.0.118 起才有）'] };
+  if (res.status !== 200) return { facts: [], notes: ['用戶明細讀取失敗（HTTP ' + res.status + '）'] };
+  let body;
+  try { body = await res.json(); } catch (_error) { return { facts: [], notes: ['用戶明細不是 JSON'] }; }
+  if (!body || body.schemaVersion !== 1 || !Array.isArray(body.users)) return { facts: [], notes: ['用戶明細格式不認得'] };
+  const valid = body.users.filter(u => u && typeof u.ref === 'string' && /^[a-f0-9]{10}$/.test(u.ref));
+  // 最活躍的人先放：最近收到 LINE、最近登入、流量多的排前面；超過預算的人只少了明細，畫面會標出來
+  const score = u => Math.max((u.line && u.line.lastReceivedAt) || 0, u.lastLoginAt || 0) + ((u.traffic && u.traffic.outBytes) || 0) / 1e3;
+  const facts = [], notes = [];let used = 0, dropped = 0;
+  for (const u of valid.slice().sort((a, b) => score(b) - score(a))) {
+    // 每個事實的上限是用字元數算的（8 KB），整包信封是用 UTF-8 位元組算的：中文一個字三個位元組，預算要用位元組
+    const value = timehutUserFact(u), text = JSON.stringify(value), size = Buffer.byteLength(text);
+    if (text.length > 8000 || used + size > TIMEHUT_DETAIL_BUDGET) { dropped += 1; continue; }
+    used += size;facts.push({ app: 'timehut', key: 'thUser' + u.ref, value });
+  }
+  if (dropped) notes.push(`用戶明細太多，這次略過 ${dropped} 位最不活躍的人`);
+  const n = v => (Number.isSafeInteger(v) && v >= 0 ? v : null), un = body.unattributed && typeof body.unattributed === 'object' ? body.unattributed : null;
+  facts.push({ app: 'timehut', key: 'thUsersMeta', value: { v: 1, asOf: typeof body.asOf === 'string' ? body.asOf.slice(0, 30) : null, version: typeof body.version === 'string' ? body.version.slice(0, 16) : null,
+    trafficSince: typeof body.trafficSince === 'string' ? body.trafficSince.slice(0, 30) : null, users: valid.length, shown: facts.length, dropped,
+    unattributed: un ? { inBytes: n(un.inBytes), outBytes: n(un.outBytes), requests: n(un.requests) } : null,
+    notes: (Array.isArray(body.notes) ? body.notes : []).filter(x => typeof x === 'string').slice(0, 6).map(x => x.slice(0, 120)) } });
+  return { facts, notes };
 }
 
 // 上架警示板 (Hank 2026-11-12: "如果真的有任何上架需要我來介入處理 你可以直接打嚴重需要人為介入的警示"). The listing
@@ -163,4 +218,4 @@ async function main(argv, { run = runRailway, log = console.log, now = Date.now,
 
 if (require.main === module) main(process.argv.slice(2)).then(code => { process.exitCode = code; });
 
-module.exports = { HUB, MAX_SHELL_ENVELOPE_BYTES, LOCAL, SOURCES, TIMEHUT_STATS_URL, TIMEHUT_KEY_FILE, readTimehutKey, collectTimehut, toEnvelope, importShell, describe, main, taipeiToday, collectAttention, ATTENTION_FILE };
+module.exports = { HUB, MAX_SHELL_ENVELOPE_BYTES, LOCAL, SOURCES, TIMEHUT_STATS_URL, TIMEHUT_ADMIN_URL, TIMEHUT_KEY_FILE, readTimehutKey, collectTimehut, collectTimehutDetail, timehutUserFact, toEnvelope, importShell, describe, main, taipeiToday, collectAttention, ATTENTION_FILE };

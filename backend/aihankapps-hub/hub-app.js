@@ -771,6 +771,8 @@
       if (!sub) sub = '後台自己記錄的目前數字';
       cells += facts.map(f => dmCell(f.label, (typeof f.value === 'number' ? V.fmtInt(f.value) : String(f.value)) + (f.unit ? ' ' + f.unit : ''), f.observedAt ? '收集於 ' + V.fStamp(f.observedAt) : '')).join('');
     }
+    // 拾光AI雲端相簿：每位用戶的辨識、相簿與流量明細（hub-timehut.js 自己畫、自己處理互動）
+    if (a.key === 'timehut' && window.HubTimehut) extra += '<div id="th-users"></div>';
     const svcs = D.serviceFor(a);
     if (svcs.length) extra += serviceTableHtml(svcs, '這款 APP 的後台服務', '每分鐘檢查一次');
     extra += infraTableHtml(D.infraFor(a), '這款 APP 的後台資源', 'Railway 量測，每小時更新');
@@ -795,6 +797,8 @@
       (keys.length ? tilesHtml(APP_TILE_ORDER.filter(k => keys.indexOf(k) >= 0).slice(0, 6), list) + '<div class="grid">' + explorerHtml('c-8', keys, true) + platCardHtml(a) + '</div>' : '<p class="note">' + ico('info') + '這款 APP 目前沒有任何數據來源。</p>') +
       backendHtml(a) + retentionHtml(a, '') + '<div class="grid">' + feedbackCardHtml(list, 'c-7') + appFreshHtml(a, keys) + '</div>';
     if (keys.length) { mountTiles(el, list); mountExplorer(el, list); }
+    const th = $('#th-users', el);
+    if (th) window.HubTimehut.mount(th, window.HubTimehut.fromFacts((D.latest.facts || {})[a.key]));
     liveHooks.push(paintLiveNumbers);
   }
 
