@@ -354,8 +354,8 @@
   // What each worker does, in plain words, for visitors who do not know the products (names come from the monitor).
   const WORKER_DESC = {
     'minimax-runtime': '跑在 Mac 上的 MiniMax 模型執行環境，其他 worker 的推論都經過它',
-    'timehut-mcode': '時光相簿：比對照片與影片裡的人物',
-    'timehut-shiguang': '時光相簿：替照片打上場景標籤',
+    'timehut-mcode': '拾光AI雲端相簿：比對照片與影片裡的人物',
+    'timehut-shiguang': '拾光AI雲端相簿：替照片打上場景標籤',
     'wishlist-vision': 'Wishlist.AI：辨識商品圖片',
     'wishlist-marketing': 'Wishlist.AI：產生商品行銷素材',
     'wishlist-retail': 'Wishlist.AI：查商品原價、評估 CP 值',

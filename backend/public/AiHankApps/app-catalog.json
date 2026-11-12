@@ -367,11 +367,11 @@
       "checkedAt": "2026-11-02T01:06:15.225Z"
     },
     {
-      "name": "時光相簿",
-      "iconText": "時光",
+      "name": "拾光AI雲端相簿",
+      "iconText": "拾光",
       "icon": "https://just-healing-production.up.railway.app/app/assets/app-icon-512.png",
       "iconHasWatermark": true,
-      "aliases": "小時候時光相簿 Timehut",
+      "aliases": "時光相簿 小時候時光相簿 Timehut",
       "category": "生活",
       "desc": "把照片變成可搜尋、可回顧的成長記錄。",
       "source": "Web / Android / iOS",
