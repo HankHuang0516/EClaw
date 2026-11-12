@@ -52,3 +52,10 @@ Railway login on the machine that runs them.
 
 `backend/tests/jest/aihankapps-hub-store.test.js` runs each back-end script against a stand-in database and checks
 that every question is a read-only `SELECT` and that only counts come back.
+
+## 上架警示板（`attention`，2026-11-12）
+
+Wishlist 的上架排程在這台 Mac 上維護一份「自己解不了的問題」清單，它們的工具把摘要寫到 `~/.local/share/aihankapps-hub/attention-summary.json`。`--only attention` 只把這份摘要送進中樞：需要人處理的每一項在警示頁變成一則嚴重警示（需要人為介入），排程還在自己處理的不顯示。摘要檔不存在時這個來源回報讀取失敗，其他來源不受影響。
+
+要看中樞目前有哪些警示（給排程自動處理用），在 EClaw 容器裡跑 `node backend/scripts/aihankapps-hub-alerts.js --brief`（經 `railway ssh`，唯讀）。
+

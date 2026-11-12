@@ -357,7 +357,7 @@ describe('admin hub store: Railway service resources', () => {
         const source = { id: 'railway', name: 'Railway 後台資源', apps: ['weesh'], collect: async () => ({ value: null, detail: 'Railway CLI login missing (run railway login)' }) };
         expect(await collect.main(['--only', 'railway'], { log: line => logs.push(line), now: () => Date.now(), sources: [source] })).toBe(1);
         expect(logs[0]).toBe('✗ Railway 後台資源：讀取失敗（no_result：Railway CLI login missing (run railway login)）');
-        expect(collect.SOURCES.map(b => b.id)).toEqual(['rebound', 'summit', 'wishlist', 'railway', 'timehut']);
+        expect(collect.SOURCES.map(b => b.id)).toEqual(['rebound', 'summit', 'wishlist', 'railway', 'timehut', 'attention']);
         expect(railway.RAILWAY_APPS.every(id => importScript.catalogAppIds().has(id))).toBe(true);
     });
 
@@ -555,3 +555,42 @@ describe('admin hub collector (tools/aihankapps-hub)', () => {
         expect(collect.taipeiToday(Date.UTC(2026, 10, 10, 16, 0))).toBe('2026-11-11');
     });
 });
+
+describe('collector: the listing schedules\' attention board', () => {
+    const collect = require('../../../tools/aihankapps-hub/collect');
+    const NOW_MS = Date.parse('2026-11-12T03:00:00Z');
+    const item = (id, kind, extra) => ({ id, kind, platform: 'shopee', title: '蝦皮需要手動通過驗證', detail: '請在 Chrome 開 shopee.tw', since: '2026-11-12T01:00:00Z', count: 2, ...extra });
+    const read = body => () => (typeof body === 'string' ? body : JSON.stringify(body));
+    test('carries the board as one fact for Wishlist: people first, text cleaned, nothing else read', () => {
+        const r = collect.collectAttention({ now: NOW_MS, read: read({ schemaVersion: 1, observedAt: '2026-11-12T02:59:00Z', items: [
+            item('fb-hard-posts', 'healing', { since: '2026-11-11T01:00:00Z' }), item('shopee-verification', 'human', { title: ' 蝦皮需要\n手動通過驗證 ', count: 3 }),
+            item('Bad Id', 'human'), item('no-title', 'human', { title: '' }), item('odd-kind', 'other'), item('no-time', 'human', { since: 'soon' })] }) });
+        const fact = r.value.facts[0];
+        expect([fact.app, fact.key, fact.value.value, fact.value.healing, fact.value.boardAt]).toEqual(['weesh', 'attention', 1, 1, Date.parse('2026-11-12T02:59:00Z')]);
+        expect(fact.value.items).toEqual([
+            { id: 'shopee-verification', kind: 'human', platform: 'shopee', title: '蝦皮需要 手動通過驗證', detail: '請在 Chrome 開 shopee.tw', since: Date.parse('2026-11-12T01:00:00Z'), count: 3 },
+            { id: 'fb-hard-posts', kind: 'healing', platform: 'shopee', title: '蝦皮需要手動通過驗證', detail: '請在 Chrome 開 shopee.tw', since: Date.parse('2026-11-11T01:00:00Z'), count: 2 }]);
+        const source = collect.LOCAL.find(s => s.id === 'attention');
+        expect(source.apps).toEqual(['weesh']);
+        const built = collect.toEnvelope(source, r, NOW_MS, new Set(['weesh']));
+        expect(built.envelope.source).toBe('attention');
+        expect(built.envelope.facts).toHaveLength(1);
+    });
+    test('a long board keeps every entry that needs a person before any healing one, and says what was left out', () => {
+        const items = Array.from({ length: 10 }, (_, i) => item('healing-' + i, 'healing')).concat(Array.from({ length: 5 }, (_, i) => item('human-' + i, 'human')));
+        const r = collect.collectAttention({ now: NOW_MS, read: read({ schemaVersion: 1, observedAt: '2026-11-12T02:59:00Z', items }) });
+        const sent = r.value.facts[0].value;
+        expect([sent.value, sent.healing, sent.items.length, sent.items.filter(x => x.kind === 'human').length]).toEqual([5, 10, 12, 5]);
+        expect(r.value.notes).toEqual(['警示板有 15 項，只送前 12 項']);
+        expect(JSON.stringify(sent).length).toBeLessThan(8192);
+    });
+    test('no file, another shape or a time in the future sends nothing', () => {
+        expect(collect.collectAttention({ now: NOW_MS, read: () => { throw new Error('ENOENT'); } }).value).toBeNull();
+        expect(collect.collectAttention({ now: NOW_MS, read: read('not json') }).value).toBeNull();
+        expect(collect.collectAttention({ now: NOW_MS, read: read({ schemaVersion: 2, observedAt: '2026-11-12T02:59:00Z', items: [] }) }).value).toBeNull();
+        expect(collect.collectAttention({ now: NOW_MS, read: read({ schemaVersion: 1, observedAt: '2026-11-12T04:00:00Z', items: [] }) }).value).toBeNull();
+        expect(collect.collectAttention({ now: NOW_MS, read: read({ schemaVersion: 1, observedAt: '2026-11-12T02:59:00Z', items: [] }) }).value.facts[0].value).toMatchObject({ value: 0, healing: 0, items: [] });
+        expect(collect.ATTENTION_FILE).toMatch(/aihankapps-hub[\\/]attention-summary\.json$/);
+    });
+});
+

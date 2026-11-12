@@ -561,7 +561,7 @@ describe('admin hub: the page reads the answer correctly', () => {
             ['ops-stale', 'warn', null], ['listing-rate', 'warn', 'weesh'], ['chat-pending', 'info', 'weesh'], ['rating-alpha', 'warn', 'alpha']]);
         expect(noisy.D.appState(noisy.D.APP.weesh)).toBe('crit');
         expect(noisy.D.appState(noisy.D.APP.alpha)).toBe('warn');
-        expect(noisy.D.RULES).toHaveLength(12);
+        expect(noisy.D.RULES).toHaveLength(13);
     });
 
     test('the monitor\'s issue codes become a plain reason with its times', async () => {
@@ -652,6 +652,26 @@ describe('admin hub: the page reads the answer correctly', () => {
         expect(D.services.find(x => x.id === 'rebound').now.ms).toBe(90);
     });
 
+    // 需要人為介入 (Hank, 2026-11-12): what the listing schedules cannot fix themselves.
+    const board = items => ({ label: '需要人為介入', value: items.filter(x => x.kind === 'human').length, unit: '件', order: 5, boardAt: NOW - 60000, healing: items.filter(x => x.kind === 'healing').length, items });
+    test('one severe alert per problem that needs a person; what a schedule is still healing raises nothing; a cleared board clears the alert', async () => {
+        const page = await loadPage();
+        const at = Date.parse('2026-11-05T00:00:00Z');
+        page.D.latest.facts.weesh = { ...(page.D.latest.facts.weesh || {}), attention: board([
+            { id: 'shopee-verification', kind: 'human', platform: 'shopee', title: '蝦皮需要手動通過驗證', detail: '請在 Chrome 開 shopee.tw 通過一次。', since: Date.parse('2026-11-04T16:00:00Z'), count: 3 },
+            { id: 'fb-hard-posts', kind: 'healing', platform: 'fb', title: 'FB 多件清單待處理', detail: '', since: Date.parse('2026-11-04T18:00:00Z'), count: 1 }]) };
+        page.D.computeAlerts(at);
+        expect(page.D.ALERTS.map(a => [a.id, a.sev, a.app, a.ref, a.rule])).toEqual([['attention-shopee-verification', 'crit', 'weesh', 'attention-shopee-verification@20261105-0000', '需要人為介入']]);
+        expect(page.D.ALERTS[0].title).toBe('需要人為介入：蝦皮需要手動通過驗證');
+        expect(page.D.ALERTS[0].detail).toBe('請在 Chrome 開 shopee.tw 通過一次。（已回報 3 次）');
+        expect(page.D.ALERTS[0].basis).toMatchObject({ id: 'shopee-verification', platform: 'shopee', count: 3 });
+        expect(page.D.appState(page.D.APP.weesh)).toBe('crit');
+        expect(page.D.RULES[12]).toEqual(['需要人為介入', 'Wishlist.ai 上架排程', expect.stringMatching(/自己解不了/), 'crit']);
+        page.D.latest.facts.weesh.attention = board([]);
+        page.D.computeAlerts(at);
+        expect(page.D.ALERTS).toEqual([]);
+    });
+
     test('when the operations API is down the rest still loads, and the sources list says what is missing', async () => {
         const { D, day } = await loadPage({ opsDown: true });
         expect(D.ops.ok).toBe(false);
@@ -661,7 +681,7 @@ describe('admin hub: the page reads the answer correctly', () => {
         const rows = D.sourceRows();
         expect(rows.find(r => r.name === '營運數據').state).toBe('crit');
         expect(rows.filter(r => r.state === 'ok').map(r => r.name)).toEqual(['商店報表', '作品集流量', '作品集互動', 'EClaw 帳號', 'EClaw 對話', '夢話夥伴後台', '問題回饋', 'EClaw 付款', '後台服務檢查', 'REBOUND 遊戲伺服器']);
-        expect(rows.filter(r => r.state === 'none').map(r => r.name)).toEqual(['活字戰紀伺服器', 'Wishlist.ai 後台', 'Railway 後台資源', '時光相簿伺服器', '其他 APP 的使用紀錄', '商店的內購金額']);
+        expect(rows.filter(r => r.state === 'none').map(r => r.name)).toEqual(['活字戰紀伺服器', 'Wishlist.ai 後台', 'Railway 後台資源', '時光相簿伺服器', '上架警示板', '其他 APP 的使用紀錄', '商店的內購金額']);
         expect(rows.find(r => r.name === '商店報表').note).toBe('Google 到 10/27、Apple 到 10/29、AdMob 到 11/1');
     });
 });
@@ -739,6 +759,18 @@ describe('admin hub: notification IDs and the alert lookup', () => {
         const { app } = mount({ fetchOps: opsWith([healed]) });
         const list = await as(request(app).get('/api/aihankapps/hub/alerts'), 'admin');
         expect(list.body.alerts.map(a => a.id)).toEqual(['store-stale@20261102-1639']);
+    });
+    test('the operator script computes the same alerts from inside the container, with one fresh check per service', async () => {
+        const script = require('../../scripts/aihankapps-hub-alerts');
+        const probed = [];
+        const answer = await script.compute({ pool: fakePool(), now: () => NOW, fetchOps: opsWith([]), portfolioDir: portfolioFixture(),
+            services: [{ id: 'rebound', name: 'REBOUND 遊戲伺服器', apps: [], url: 'https://example.invalid/health' }],
+            probe: async service => { probed.push(service.id); return { ok: false, status: 503, ms: 12, at: NOW }; } });
+        expect(probed).toEqual(['rebound']);
+        const ids = answer.alerts.map(a => a.id);
+        expect(ids).toContain('store-stale@20261102-1639');                 // the same alert, with the same ID, as the admin API gives
+        expect(answer.alerts.find(a => a.type === 'svc-down-rebound')).toMatchObject({ severity: 'crit', rule: '後台服務沒有回應' });
+        expect(answer.computedAt).toBe(NOW);
     });
     test('the page shows each ID with a copy button', () => {
         const app = fs.readFileSync(path.join(pageDir, 'hub-app.js'), 'utf8');

@@ -351,11 +351,13 @@
     ['後台服務沒有回應', '每一個後台服務', '最近一次健康檢查失敗', 'crit'],
     ['後台數據超過一天沒更新', '遊戲伺服器、Wishlist 後台、Railway 後台資源', '上一次匯入距今超過 36 小時', 'warn'],
     ['後台空間快滿', '每一個有空間的後台服務', '用量超過 80%（95% 以上算嚴重）', 'warn'],
-    ['後台部署失敗', '每一個後台服務', '最新一次部署失敗或執行中當掉', 'crit']
+    ['後台部署失敗', '每一個後台服務', '最新一次部署失敗或執行中當掉', 'crit'],
+    ['需要人為介入', 'Wishlist.ai 上架排程', '排程回報它自己解不了的問題（要重新登入、手動通過驗證、金鑰失效、需要決定）', 'crit']
   ];
   const COLLECTORS = { rebound: ['REBOUND 遊戲伺服器', 'REBOUND'], summit: ['活字戰紀伺服器', '雙城烽火、巔峰之戰'], wishlist: ['Wishlist.ai 後台', 'Wishlist.ai'],
     railway: ['Railway 後台資源', '所有放在 Railway 的後台服務', '每個服務的上傳／下載流量、CPU、記憶體、空間、部署狀態'],
-    timehut: ['時光相簿伺服器', '時光相簿', '帳號總數、近 7／30 天新註冊、已刪除帳號（只有數量）'] };
+    timehut: ['時光相簿伺服器', '時光相簿', '帳號總數、近 7／30 天新註冊、已刪除帳號（只有數量）'],
+    attention: ['上架警示板', 'Wishlist.ai', '上架排程回報的問題：需要人為介入的、自動處理中的'] };
   const mbText = v => (v >= 1024 ? (v / 1024).toFixed(v >= 10240 ? 1 : 2) + ' GB' : Math.round(v) + ' MB');
   const SOURCE_LABEL = { catalog: 'APP 目錄', store: '商店報表', traffic: '作品集流量', community: '作品集互動', feedback: '問題回饋', eclaw: 'EClaw 帳號', eclawChat: 'EClaw 對話', dreambuddy: '夢話夥伴後台', eclawPayments: 'EClaw 付款', imports: '匯入的後台數據', services: '後台服務檢查' };
   // 排程型 worker（例如每小時跑一輪）兩輪之間本來就沒有程式在跑；監控會把它標成 scheduled_between_rounds
@@ -429,6 +431,14 @@
       add('listing-rate', 'warn', 'Wishlist 上架低於目標', '近 24 小時平均每小時 ' + Math.round(l.perHour24h) + ' 件，目標是每小時 ' + l.targetPerHour + ' 件。', { rule: RULES[4][0], app: WISHLIST, go: 'live',
         source: '營運數據 /api/aihankapps/ops/latest（listing）', basis: { perHour24h: l.perHour24h, targetPerHour: l.targetPerHour } });
     }
+    // 需要人為介入 (Hank, 2026-11-12): the listing schedules report what only a person can clear, one alert per problem.
+    // What a schedule is still expected to clear by itself (kind "healing") raises nothing here.
+    const board = ((D.latest.facts || {})[WISHLIST] || {}).attention || null;
+    ((board && board.items) || []).forEach(x => {
+      if (!x || x.kind !== 'human') return;
+      add('attention-' + x.id, 'crit', '需要人為介入：' + x.title, (x.detail || '上架排程回報這個問題它自己解不了。') + (x.count > 1 ? '（已回報 ' + x.count + ' 次）' : ''), { rule: RULES[12][0], app: WISHLIST, since: x.since || null, start: x.since || null,
+        source: '上架警示板（這台 Mac 的上架排程回報，經收集工具匯入）', basis: { id: x.id, platform: x.platform || null, since: x.since || null, count: x.count || 1, boardAt: board.boardAt || null } });
+    });
     if (o.chat && o.chat.pendingCount > 0) add('chat-pending', 'info', '有 ' + o.chat.pendingCount + ' 則買家詢問等待處理', 'Wishlist.ai 的聊聊待問；這個數字最多延遲約 2 小時。', { rule: RULES[5][0], app: WISHLIST, since: o.chat.observedAt || null,
       source: '營運數據 /api/aihankapps/ops/latest（chatPending）', basis: { pendingCount: o.chat.pendingCount, observedAt: o.chat.observedAt || null } });
     const st = D.sources.store, gen = st && st.ok ? Date.parse(st.generatedAt || '') : 0;
