@@ -669,4 +669,5 @@ th[data-tip]{cursor:help}
   .th-top{grid-template-columns:1fr}
   .th-drill{grid-template-columns:1fr}
   .th-q{min-width:0;flex:1}
+  .th-tools .seg{max-width:100%;overflow-x:auto}
 }

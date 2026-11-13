@@ -62,6 +62,7 @@ const PAGE_FILES = {
     'hub-data.js': 'text/javascript; charset=utf-8',
     'hub-app.js': 'text/javascript; charset=utf-8',
     'hub-timehut.js': 'text/javascript; charset=utf-8',
+    'hub-weesh.js': 'text/javascript; charset=utf-8',
 };
 // Scripts and styles only from this path; inline style attributes are needed for bar widths the page computes.
 const CONTENT_SECURITY_POLICY = [

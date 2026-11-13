@@ -774,6 +774,8 @@
     }
     // 拾光AI雲端相簿：每位用戶的辨識、相簿與流量明細（hub-timehut.js 自己畫、自己處理互動）
     if (a.key === 'timehut' && window.HubTimehut) extra += '<div id="th-users"></div>';
+    // Weesh：帳戶智慧數據庫，每個帳戶的願望、刊登、對話與面交（hub-weesh.js 自己畫、自己處理互動）
+    if (a.key === D.WISHLIST && window.HubWeesh) extra += '<div id="ws-users"></div>';
     const svcs = D.serviceFor(a);
     if (svcs.length) extra += serviceTableHtml(svcs, '這款 APP 的後台服務', '每分鐘檢查一次');
     extra += infraTableHtml(D.infraFor(a), '這款 APP 的後台資源', 'Railway 量測，每小時更新');
@@ -801,6 +803,8 @@
     if (keys.length) { mountTiles(el, list); mountExplorer(el, list); }
     const th = $('#th-users', el);
     if (th) window.HubTimehut.mount(th, window.HubTimehut.fromFacts((D.latest.facts || {})[a.key]));
+    const ws = $('#ws-users', el);
+    if (ws) window.HubWeesh.mount(ws, window.HubWeesh.fromFacts((D.latest.facts || {})[a.key]));
     liveHooks.push(paintLiveNumbers);
   }
 

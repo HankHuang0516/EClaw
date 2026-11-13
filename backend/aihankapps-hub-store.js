@@ -9,7 +9,8 @@
  *    databases, which this server cannot reach. An operator's collector (tools/aihankapps-hub) reads daily counts
  *    inside each back-end's own container and hands them over through the existing deployment channel
  *    (scripts/aihankapps-hub-import.js). There is no HTTP write API, and only counts cross over: no account,
- *    device or message content.
+ *    device or message content. The two per-account details (拾光's thUser… and Weesh's wlUser… facts) add a
+ *    display name and a masked sign-in address to their counts; AIHANKAPPS_HUB.md says exactly what.
  *
  * Everything lives in four tables of the hub's own (aihankapps_hub_*); no existing table is written.
  */

@@ -15,7 +15,7 @@ const hub = require('../../aihankapps-hub');
 
 const toolDir = path.resolve(__dirname, '../../../tools/aihankapps-hub');
 const collect = require(path.join(toolDir, 'collect.js'));
-const { BACKENDS, remoteScript } = require(path.join(toolDir, 'backends.js'));
+const { BACKENDS, DETAIL, remoteScript } = require(path.join(toolDir, 'backends.js'));
 const railway = require(path.join(toolDir, 'railway-metrics.js'));
 
 const backendDir = path.resolve(__dirname, '../..');
@@ -357,7 +357,7 @@ describe('admin hub store: Railway service resources', () => {
         const source = { id: 'railway', name: 'Railway 後台資源', apps: ['weesh'], collect: async () => ({ value: null, detail: 'Railway CLI login missing (run railway login)' }) };
         expect(await collect.main(['--only', 'railway'], { log: line => logs.push(line), now: () => Date.now(), sources: [source] })).toBe(1);
         expect(logs[0]).toBe('✗ Railway 後台資源：讀取失敗（no_result：Railway CLI login missing (run railway login)）');
-        expect(collect.SOURCES.map(b => b.id)).toEqual(['rebound', 'summit', 'wishlist', 'railway', 'timehut', 'attention']);
+        expect(collect.SOURCES.map(b => b.id)).toEqual(['rebound', 'summit', 'wishlist', 'wishlist-users', 'railway', 'timehut', 'attention']);
         expect(railway.RAILWAY_APPS.every(id => importScript.catalogAppIds().has(id))).toBe(true);
     });
 
@@ -544,6 +544,128 @@ describe('admin hub collector (tools/aihankapps-hub)', () => {
         expect(built.envelope.series.every(s => backend.apps.includes(s.app) && s.start <= yesterday && hub.dayIndex(s.start) + s.values.length - 1 === hub.dayIndex(yesterday))).toBe(true);
         expect(built.envelope.facts.find(f => f.key === 'retention')).toBeTruthy();
         expect(remoteScript(backend, today)).toContain(backend.script(today));
+    });
+
+    // The per-account detail (Weesh 帳戶智慧數據庫). Its guarantee is its own: besides counts and times it brings back the
+    // account's display name and a sign-in address masked inside the database; nothing else personal is ever asked for.
+    describe('wishlist-users: one fact per account', () => {
+        const detail = DETAIL[0], T0 = Date.UTC(2026, 10, 1);
+        const SECRET = { email: 'SENTINEL@example.invalid', password: 'SENTINEL', phoneNumber: 'SENTINEL', realName: 'SENTINEL', address: 'SENTINEL', otp: 'SENTINEL', apiKey: 'SENTINEL', text: 'SENTINEL' };
+        const account = (uid, ref, patch = {}) => ({ uid, ref, shown: '帳戶' + uid, login: 'ab***@example.invalid', ev: true, pv: false, premium: false, sub: null, subUntil: null, api: false, ai: 2, created: T0, ...SECRET, ...patch });
+        function runDetail(tables, { failOn } = {}) {
+            const log = [], printed = [];
+            const answer = sql => {
+                log.push(sql.trim());
+                if (CONTROL.test(sql.trim())) return [];
+                if (failOn && sql.includes(failOn)) throw new Error('relation does not exist');
+                const table = Object.keys(tables).find(name => sql.includes(name));
+                return table ? tables[table].map(row => ({ ...row })) : [];
+            };
+            return new Promise((resolve, reject) => {
+                const timer = setTimeout(() => reject(new Error('the script printed nothing')), 5000);
+                const fake = { PrismaClient: class {
+                    async $transaction(run) { return run({ $executeRawUnsafe: async sql => { answer(sql); return 0; }, $queryRawUnsafe: async sql => answer(sql) }); }
+                    async $disconnect() {}
+                } };
+                const sandbox = {
+                    require: name => { if (name !== '@prisma/client') throw new Error('unexpected require ' + name); return fake; },
+                    process: { env: { DATABASE_URL: 'postgres://synthetic' }, exitCode: 0 },
+                    console: { log: line => { printed.push(line); if (String(line).startsWith('GIFT_RESULT ')) { clearTimeout(timer); resolve({ value: JSON.parse(line.slice(12)), log, printed }); } } },
+                };
+                vm.runInNewContext(detail.script(today), sandbox);
+            });
+        }
+        // the order matters: the first name found in the question picks the stand-in rows
+        const tables = {
+            'FROM "User"': [account(1, 'aaaaaaaaaa'), account(2, 'bbbbbbbbbb', { shown: null, login: null, ev: false }), account(3, 'not-a-ref')],
+            'FROM "Item" i JOIN "Wishlist" w ON w.id = i."wishlistId" GROUP BY 1': [{ uid: 1, n: 5, bought: 1, hidden: 1, aiFailed: 2, d30: 3, last: T0 + 5000 }],
+            'FROM "Wishlist" GROUP BY 1': [{ uid: 1, n: 2, pub: 1 }],
+            'FROM "ProductWishLink"': [{ uid: 1, n: 4, last: T0 + 1000 }],
+            'FROM "ItemWatch"': [{ uid: 1, n: 3 }],
+            'FROM "Listing" GROUP BY 1, 2': [{ uid: 1, status: 'ACTIVE', n: 2, d30: 1, last: T0 + 9000 }, { uid: 1, status: 'PENDING_CONFIRMATION', n: 1, d30: 0, last: T0 }, { uid: 1, status: 'EXPIRED', n: 3, d30: 0, last: T0 }],
+            'FROM "ConversationParticipant"': [{ uid: 1, n: 1, oldest: T0 + 2000 }],
+            'FROM (SELECT "buyerUserId" AS uid, \'b\' AS side': [{ uid: 1, buy: 2, sell: 1, last: T0 + 20000 }],
+            'FROM "Message" GROUP BY 1': [{ uid: 1, n: 12, d30: 4, last: T0 + 7000 }],
+            'FROM "SourceLeadInquiry"': [{ uid: 1, n: 6, last: T0 + 3000 }],
+            'FROM "MeetupAppointment"': [{ uid: 1, n: 2, open: 1, done: 1 }],
+            'FROM "Purchase"': [{ uid: 1, n: 2, twd: 598, last: T0 + 100 }],
+            'FROM "Follow"': [{ uid: 1, following: 3, followers: 7 }],
+            'FROM "PushDevice"': [{ uid: 1, platform: 'ios', n: 1, last: T0 + 50 }, { uid: 1, platform: 'android', n: 2, last: T0 + 60 }],
+            'FROM "Feedback"': [{ uid: 1, n: 1 }],
+            'AS act GROUP BY 1, 2': [{ uid: 1, day: '2026-10-30', w: 2, l: 0, m: 1 }, { uid: 1, day: '2026-10-29', w: 0, l: 1, m: 0 }, { uid: 1, day: 'bad', w: 9, l: 9, m: 9 }],
+        };
+
+        test('read-only questions in read-only transactions; no personal column is asked for beyond the name and the masked sign-in', async () => {
+            const { value, log, printed } = await runDetail(tables);
+            expect(value.error).toBeUndefined();
+            expect(printed).toHaveLength(1);
+            const questions = log.filter(sql => !CONTROL.test(sql));
+            expect(questions).toHaveLength(Object.keys(tables).length);
+            for (const sql of questions) {
+                expect(sql).toMatch(/^SELECT\b/);
+                expect(sql).not.toMatch(/\b(INSERT|UPDATE|DELETE|MERGE|CREATE|ALTER|DROP|TRUNCATE|GRANT|COPY|CALL)\b|SELECT \*/i);
+                const at = log.indexOf(sql);
+                expect(log.slice(at - 2, at)).toEqual(['SET TRANSACTION READ ONLY', 'SET LOCAL statement_timeout = 20000']);
+                // the two places a sensitive column is named are a test for "is there one", never its value
+                const rest = sql.replace('("apiKey" IS NOT NULL)', '').replace('"expoPushToken" IS NOT NULL', '');
+                expect(rest).not.toMatch(/password|otp|token|apiKey|realName|address|birthday|nicknames|avatarUrl|billing|"text"|\.text\b|photoBytes|"notes"|description|"title"|details|content|"name" AS|placeName|latitude|longitude/i);
+            }
+            // the sign-in address is only ever read through the mask, the phone number through its last three digits
+            const who = questions.find(sql => sql.includes('FROM "User"'));
+            expect(who).toContain("left(split_part(email, '@', 1), 2) || '***@' || split_part(email, '@', 2)");
+            expect(who).toContain('\'***\' || right("phoneNumber", 3)');
+            expect(who.replace(/CASE WHEN[\s\S]*? END AS login/, '')).not.toMatch(/\bemail\b|phoneNumber/);
+            expect(questions.filter(sql => /\bemail\b|phoneNumber/.test(sql))).toEqual([who]);
+            expect(who).toContain("substr(md5('weesh-user:' || id::text), 1, 10) AS ref");   // the account number itself never leaves
+            expect(printed[0]).not.toContain('SENTINEL');
+            expect(printed[0]).not.toMatch(/"uid"/);
+        });
+
+        test('each account becomes one fact with its counts; an account with nothing is still listed; the envelope is accepted', async () => {
+            const { value } = await runDetail(tables);
+            expect(value.facts.map(f => f.key)).toEqual(['wlUseraaaaaaaaaa', 'wlUserbbbbbbbbbb', 'wlUsersMeta']);       // 'not-a-ref' is not a ref
+            const a = value.facts[0].value;
+            expect(a).toMatchObject({ v: 1, name: '帳戶1', login: 'ab***@example.invalid', ev: true, ai: 2, createdAt: T0, lastAt: T0 + 9000, talkAt: T0 + 20000,
+                wish: { n: 5, lists: 2, pub: 1, bought: 1, hidden: 1, aiFailed: 2, d30: 3, linked: 4, watches: 3 },
+                sell: { n: 6, active: 2, expired: 3, draft: 1, d30: 1 },
+                chat: { buy: 2, sell: 1, sent: 12, d30: 4, unread: 1, oldestUnreadAt: T0 + 2000, inquiries: 6 },
+                meet: { n: 2, open: 1, done: 1 }, pay: { n: 2, twd: 598 }, social: { following: 3, followers: 7 }, dev: { ios: 1, android: 2 }, feedback: 1,
+                days: [['2026-10-29', 0, 1, 0], ['2026-10-30', 2, 0, 1]] });
+            const b = value.facts[1].value;
+            // zeros, false and empty values are not sent: the page reads a missing part as zero
+            expect(a.sell.reserved).toBeUndefined();
+            expect(a.premium).toBeUndefined();
+            expect(b).toEqual({ v: 1, ai: 2, createdAt: T0 });
+            expect(value.facts[2].value).toMatchObject({ v: 1, users: 2, shown: 2, dropped: 0, totals: { users: 2, withWish: 1, withListing: 1, withChat: 1, withMeetDone: 1, active30: 1, wishes: 5, listings: 6, listingsActive: 2, sent: 12, paidUsers: 1, paidTwd: 598, appUsers: 1 } });
+            const built = collect.toEnvelope(detail, { value }, { now: REAL_NOW });
+            expect(built.error).toBeUndefined();
+            expect(built.envelope).toMatchObject({ schemaVersion: 1, source: 'wishlist-users', series: [] });
+            expect(remoteScript(detail, today)).toContain(detail.script(today));
+            // these facts carry no label, so the page's plain number grid never shows them
+            expect(built.envelope.facts.every(f => f.app === 'weesh' && f.value.label === undefined)).toBe(true);
+        });
+
+        test('more accounts than one envelope can carry: the most recently active keep their detail, the rest are counted', async () => {
+            const many = Array.from({ length: 260 }, (_, i) => account(i + 1, (i + 1).toString(16).padStart(10, '0'), { created: T0 + i * 1000 }));
+            const { value } = await runDetail({ ...tables, 'FROM "User"': many, 'FROM "Item" i JOIN "Wishlist" w ON w.id = i."wishlistId" GROUP BY 1': [{ uid: 5, n: 1, bought: 0, hidden: 0, aiFailed: 0, d30: 1, last: T0 + 9e9 }] });
+            const meta = value.facts.find(f => f.key === 'wlUsersMeta').value, shownKeys = value.facts.filter(f => f.key !== 'wlUsersMeta').map(f => f.key);
+            expect(meta).toMatchObject({ users: 260, shown: 190, dropped: 70, totals: { users: 260, withWish: 1 } });
+            expect(shownKeys).toHaveLength(190);
+            expect(shownKeys[0]).toBe('wlUser0000000005');                              // the one with the latest action comes first
+            expect(shownKeys).not.toContain('wlUser0000000002');                        // among the idle ones, the oldest sign-ups are the ones left out
+            expect(value.notes).toEqual(['帳戶明細太多，這次略過 70 個最久沒有動作的帳戶']);
+            expect(collect.toEnvelope(detail, { value }, { now: REAL_NOW }).error).toBeUndefined();
+        });
+
+        test('a table that cannot be read is noted and the accounts still arrive; without the accounts nothing is sent', async () => {
+            const partial = await runDetail(tables, { failOn: 'FROM "MeetupAppointment"' });
+            expect(partial.value.notes).toEqual(['面交：讀不到']);
+            expect(partial.value.facts.find(f => f.key === 'wlUseraaaaaaaaaa').value.meet).toBeUndefined();
+            expect(partial.value.facts.find(f => f.key === 'wlUsersMeta').value.notes).toEqual(['面交：讀不到']);
+            const none = await runDetail(tables, { failOn: 'FROM "User"' });
+            expect(none.value.facts).toEqual([]);
+            expect(none.value.notes).toEqual(['帳戶：讀不到']);
+        });
     });
 
     test('a question that fails is noted, rolled back, and the rest still arrive', async () => {
