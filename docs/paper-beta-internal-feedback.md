@@ -18,7 +18,11 @@ private. Public portfolio comments use a different table and endpoint.
 
 ## Internal display
 
-Existing account administrators see a Paper Beta section in `/portal/admin.html`.
+Existing account administrators see Paper Beta feedback in
+`/AiHankApps/hub/#app-eclawbot` (the “紙上彈兵內測回饋” section). The old
+`/portal/admin.html` entry redirects to that Hub view; the explicit
+`?operations=1` legacy entry retains its original display and mutation dialogs.
+See [the Hub administration specification](specs/aihankapps-hub-eclaw-admin.md).
 `GET /api/admin/paper-beta-feedback` uses the existing session middleware and
 checks the current `user_accounts.is_admin` flag on every request. It returns
 401/403 before reading feedback for anonymous/nonadmin callers; failure to verify

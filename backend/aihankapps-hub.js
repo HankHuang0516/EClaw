@@ -63,6 +63,10 @@ const PAGE_FILES = {
     'hub-app.js': 'text/javascript; charset=utf-8',
     'hub-timehut.js': 'text/javascript; charset=utf-8',
     'hub-weesh.js': 'text/javascript; charset=utf-8',
+    'hub-eclaw.js': 'text/javascript; charset=utf-8',
+    'hub-eclaw-i18n.js': 'text/javascript; charset=utf-8',
+    'hub-eclaw.css': 'text/css; charset=utf-8',
+    'eclaw-icon.png': 'image/png',
 };
 // Scripts and styles only from this path; inline style attributes are needed for bar widths the page computes.
 const CONTENT_SECURITY_POLICY = [

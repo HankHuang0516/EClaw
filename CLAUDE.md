@@ -1836,3 +1836,31 @@ Signed challenge-free AdMob URL probes are acknowledged before checking reward-u
 - An approved campaign file is frozen by hash; only delivery receipts may be appended. Do not change `games.json` tiers or caps, `calendar.json` or `lib/policy.js` to make a draft pass: report the failed checks to Hank instead.
 - Delivery runs inside each game's Railway container (`railway ssh`) with the game's own mail code; the tool never reads a game's secrets or database URL. Only published games with a server mailbox are listed in `games.json`.
 - Tests: `cd backend && npx jest --testPathPattern='tests/jest/(aihankapps-gifts|portfolio-gift-sidebar)\.test\.js$'` (match the file name: a bare `aihankapps-gifts` also matches every test inside a worktree folder with that name; under `.worktrees/` add `--testPathIgnorePatterns='/node_modules/'`).
+
+<!-- HANK_REMOVE_SSD_TEST_SIMULATOR_REQUIREMENT_20261028_BEGIN -->
+## 取消測試與模擬器必須留在 SSD（Hank，2026-10-28）
+
+Hank 直接指示移除「模擬器與測試執行資料必須留在 SSD」的規定。本節覆蓋本文件及其他較舊規則中要求測試執行目錄、測試工作副本、快取、暫存、建置中間檔、DerivedData、模擬器或裝置資料必須留在本機 SSD 的條款。這些資料的存放位置可依工具支援、效能及資料安全逐項選擇；取消限制不表示已有路徑或設定已變更，也不自動授權中斷其他工作、搬移正在寫入的資料或刪除原件。
+
+既有 project-storage 實際 mode 及設定保持原狀，除非另行安全配置；仍須按實際工作估算空間並保留至少 20 GiB 本機系統空間。外接資料須先核對實體碟及適用的 APFS 資料區，保留權限、連結、資料庫及工作資料；模擬器和 GUI 仍由 simulator-manager 協調，不得干擾其他工作。各專案的新舊指示如有衝突，以本節為準。
+<!-- HANK_REMOVE_SSD_TEST_SIMULATOR_REQUIREMENT_20261028_END -->
+
+<!-- HANK_AUTONOMOUS_OLD_QA_CLEANUP_20261029_BEGIN -->
+## 舊 QA 清理由代理自行判斷（Hank，2026-10-29）
+
+Hank 直接指示：「以後你自行判斷是否清理舊QA的決策」。此授權適用目前與後續工作，覆蓋舊 QA 需要逐批另問，以及未登記舊 QA 一律只能 preview 的限制；任意其他舊檔／個人資料的範圍不因此擴張。
+
+- 可自行判斷並清理已確認不用的舊 QA 產物或重複副本，包含受管理裝置上的舊 QA 輸出；不按資料夾名稱或年齡猜測用途。
+- 先留精確檔案清單、大小／mtime、用途與依賴審查，執行限定路徑與來源未變守門，保存刪除收據。仍有目前工作、驗收、發布、調查或復原依賴的檔案保留；保護原始碼／Git、固定素材與fixtures、憑證／簽章、資料庫、個人檔與復原原件。
+- 清理裝置端重複 QA 時，保留仍有用的原始驗收主檔，核對對應關係與內容／metadata，使用精確受管理裝置租約，只刪已列檔案，不清 App 資料或其他工作。此授權不表示可以刪永久檔、目前唯一且仍有用的證據。
+- 已登記 pCloud 批次沿用官方完成紀錄與既有 guarded purge，不下載、不重新 hash／讀回備份。未登記 QA 可由代理做同等用途／依賴／限定來源審查，無須再逐批向 Hank 取得核准；不可冒稱是人類逐檔目視批准。
+- 保留20GiB本機系統餘量與工作估算；不因此擴張專案搬移、資料庫搬動、發布或 rollout 授權。
+<!-- HANK_AUTONOMOUS_OLD_QA_CLEANUP_20261029_END -->
+
+## EClaw administration in the Hub (2026-11-13)
+
+- Account-admin data lives at `/AiHankApps/hub/#app-eclawbot`; `/portal/admin.html` redirects there after authentication. The explicit `?operations=1` entry retains existing mutation dialogs and the AI support tester. See `docs/specs/aihankapps-hub-eclaw-admin.md`.
+- `backend/aihankapps-hub/hub-eclaw.js` reads the original APIs in memory. Its page assets remain outside public/ behind the Hub allowlist. Never copy account/feedback records into public report imports, telemetry or browser storage.
+- Use `/api/admin/bots?readOnly=1` for snapshots: ordinary GET retains legacy assignment cleanup and credential fields. The read-only mode has neither. Do not infer zero from an unavailable source or equate active bindings with all historical bindings.
+- Tests: `cd backend && npx jest --runInBand --testPathIgnorePatterns=/node_modules/ --runTestsByPath tests/jest/aihankapps-hub-eclaw.test.js tests/jest/admin-bots-readonly.test.js tests/jest/aihankapps-hub.test.js`. The override is needed only because Jest normally ignores paths containing `.worktrees`.
+- This worktree uses verified APFS ProjectsData backed by `/Volumes/codex_2T/codex_project/ProjectsData.sparsebundle`; no original project, database or common Git directory was moved. Simplify remains optional; normal PR/CI/production approval rules still apply.
