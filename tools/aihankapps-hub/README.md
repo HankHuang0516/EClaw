@@ -59,3 +59,12 @@ Wishlist 的上架排程在這台 Mac 上維護一份「自己解不了的問題
 
 要看中樞目前有哪些警示（給排程自動處理用），在 EClaw 容器裡跑 `node backend/scripts/aihankapps-hub-alerts.js --brief`（經 `railway ssh`，唯讀）。
 
+## 警示處理排程（`triage.js`，2026-11-13）
+
+Hank：「確保排程可以自主處理判斷所有的警示問題 如果需要人為介入就讓排程發一個警示把詳情打上去 讓我看到需要我怎麼幫忙」。
+
+- `triage.js`：排程唯一能用的工具（`pending`、`show`、`note`、`raise`、`resolve`、`notes`、`kick`、`pull`），每個子命令都經由 `railway ssh` 呼叫 EClaw 容器裡的 `backend/scripts/aihankapps-hub-alerts.js`／`aihankapps-hub-note.js`／`aihankapps-hub-import.js`。`pull` 用中樞金鑰檔（同 `timehut` 來源）讀拾光的 `GET /api/internal/feedback`（後端 1.0.119 起），App 與 LINE 的回報各自匯入。
+- `TRIAGE.md`：排程的判斷規則（每一類警示怎麼判斷、怎麼寫 note／ask）。要調整排程的行為就改這份，合併到 main 後下一輪自動生效。
+- `triage-runner.zsh`：裝成 `~/.local/bin/aihankapps-hub-triage`，由 `~/Library/LaunchAgents/tw.aihankapps.hub-triage.plist` 每 15 分鐘執行一次。沒有待處理的警示就不叫模型（不耗 token）。日誌在 `~/Library/Logs/aihankapps-hub-triage/`。
+- 停用：`launchctl bootout gui/$(id -u)/tw.aihankapps.hub-triage`。立刻跑一次：`launchctl kickstart gui/$(id -u)/tw.aihankapps.hub-triage`。
+

@@ -387,7 +387,7 @@
     });
   }
   function alertsCardHtml() {
-    const list = D.ALERTS;
+    const list = D.byUrgency(D.ALERTS);
     return '<section class="card c-6">' + cardHead('需要注意', '由目前的數字算出來，條件解除就會消失', '<a class="btn-ghost" href="#alerts">全部警示' + ico('next') + '</a>') + '<div class="al-mini">' +
       (list.length ? list.slice(0, 6).map(a => '<a class="alm" href="#alerts">' + pill(a.sev, SEV[a.sev]) + '<span class="alm-t"><b>' + esc(a.title) + '</b><em>' + (isAcked(a) ? '已確認・' : '') + esc(a.detail) + '</em></span></a>').join('') : '<p class="empty">目前沒有需要處理的警示。</p>') + '</div></section>';
   }
@@ -805,14 +805,19 @@
   // ---- 警示 ----------------------------------------------------------------------
   function alertHtml(a) {
     const app = D.BYKEY[a.app || (a.apps || [])[0]] || null, acked = isAcked(a);
-    return '<article class="al al-' + (acked ? 'acked' : 'firing') + '"><div class="al-m">' + pill(a.sev, SEV[a.sev]) + '<div class="al-t"><h3>' + esc(a.title) + '</h3><p>' + esc(a.detail) + '</p></div></div>' +
+    // 問題回饋的原文、排程的判斷、要 Hank 做的事（Hank 2026-11-13「讓我看到需要我怎麼幫忙」）
+    const tr = a.triage, quote = a.quote && a.quote !== a.detail ? '<blockquote class="al-q">' + esc(a.quote) + '</blockquote>' : '';
+    const ask = a.ask ? '<p class="al-ask"><b>要你做的事</b>' + esc(a.ask) + '</p>' : '';
+    const triage = tr ? '<p class="al-tr al-tr-' + esc(tr.state) + '"><b>' + esc(tr.label) + '</b><span>' + esc(tr.note) + '</span>' + (tr.at ? '<span class="muted">排程更新於 <span data-ago="' + tr.at + '"></span></span>' : '') + '</p>'
+      : (a.rule === '新的問題回饋' ? '<p class="al-tr al-tr-new"><b>排程還沒看過</b><span>警示處理排程每 15 分鐘看一次新的警示。</span></p>' : '');
+    return '<article class="al al-' + (acked ? 'acked' : 'firing') + '"><div class="al-m">' + pill(a.sev, SEV[a.sev]) + '<div class="al-t"><h3>' + esc(a.title) + '</h3>' + (a.ask && a.detail === a.ask ? '' : '<p>' + esc(a.detail) + '</p>') + ask + quote + triage + '</div></div>' +
       '<div class="al-w"><span class="al-s as-' + (acked ? 'acked' : 'firing') + '">' + (acked ? '已確認' : '觸發中') + '</span><span class="muted">規則：' + esc(a.rule) + '</span>' + (a.since ? '<span class="muted">開始於 <span data-ago="' + a.since + '"></span></span>' : '') + '</div>' +
       '<div class="al-id"><span class="al-id-l">通知 ID</span><code class="al-id-v">' + esc(a.ref) + '</code><button type="button" class="btn-ghost al-id-b" data-act="al-copy" data-v="' + esc(a.ref) + '" aria-label="複製通知 ID ' + esc(a.ref) + '" title="複製通知 ID，貼給 AI 就能查這則通知">' + ico('copy') + '複製</button></div><div class="al-a">' +
       (acked ? '<button type="button" class="btn" data-act="al-unack" data-v="' + esc(a.id) + '">取消確認</button>' : '<button type="button" class="btn is-primary" data-act="al-ack" data-v="' + esc(a.id) + '">確認，我知道了</button>') +
       (a.go ? '<a class="btn" href="#' + a.go + '">' + (a.go === 'live' ? '看即時監控' : '看資料來源') + '</a>' : '') + (app ? '<a class="btn" href="#app-' + app.id + '">開啟 ' + esc(app.short) + '</a>' : '') + '</div></article>';
   }
   function viewAlerts(el) {
-    const all = D.ALERTS, cnt = { all: all.length, firing: all.filter(a => !isAcked(a)).length };
+    const all = D.byUrgency(D.ALERTS), cnt = { all: all.length, firing: all.filter(a => !isAcked(a)).length };
     cnt.acked = cnt.all - cnt.firing;
     const list = all.filter(a => S.alertFilter === 'all' || (S.alertFilter === 'acked') === isAcked(a));
     el.innerHTML = head('警示', '由目前的數字算出來：條件成立就出現，解除就消失。「確認」只記在這個瀏覽器，代表我看過了。', seg('al-filter', S.alertFilter, [['all', '全部 ' + cnt.all], ['firing', '觸發中 ' + cnt.firing], ['acked', '已確認 ' + cnt.acked]])) +

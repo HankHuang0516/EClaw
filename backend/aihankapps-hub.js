@@ -21,7 +21,11 @@
  *   - dream_buddy_inference_jobs / dream_buddy_ad_transactions (夢話夥伴 conversations, devices, rewarded ads);
  *   - tappay_transactions and topup_orders (EClawbot payments: count and amount per Taipei day);
  *   - the hub's own tables, see aihankapps-hub-store.js: service probes (is each back-end answering, how fast) and
- *     daily counts an operator's collector imports from the game servers and other back-ends.
+ *     daily counts an operator's collector imports from the game servers and other back-ends;
+ *   - problem reports and the alert schedule's notes, see aihankapps-hub-inbox.js: the text of each recent report
+ *     (EClawbot feedback, 詐騙帝國 feedback, portfolio beta feedback, 拾光AI雲端相簿 reports imported by the collector)
+ *     and what the schedule decided about each alert. This is the one place where message text is read: Hank asked to
+ *     see every report as an alert (2026-11-13); the answer stays admin-only and private/no-store.
  * Worker and Wishlist operations data are read by the page from the public /api/aihankapps/ops API.
  *
  * A source that cannot be read is reported as { ok: false } and the rest of the answer still arrives. A day the
@@ -36,6 +40,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const hubStore = require('./aihankapps-hub-store');
+const hubInbox = require('./aihankapps-hub-inbox');
 
 const PAGE_DIR = path.join(__dirname, 'aihankapps-hub');
 const PORTFOLIO_DIR = path.join(__dirname, 'public', 'AiHankApps');
@@ -359,6 +364,15 @@ function createData({ getPool, getAuthPool, getDeviceStats, now = Date.now, port
 
         await section('services', () => ownTables.then(() => readOnly(getPool(), async query => { services = await hubStore.readProbes(query, generatedAt); return {}; })));
 
+        // Problem reports from every app, and the alert schedule's notes (Hank, 2026-11-13).
+        let inbox = { feedback: [], notes: [], days: hubInbox.FEEDBACK_DAYS };
+        await section('inbox', async () => {
+            await hubInbox.prepare(getPool());
+            const read = await readOnly(getPool(), query => hubInbox.readInbox(query, { now: generatedAt, appIds: new Set(apps.map(app => app.id)) }));
+            inbox = { feedback: read.feedback, notes: read.notes, days: read.days };
+            return { partial: read.partial };
+        });
+
         try {
             const stats = typeof getDeviceStats === 'function' ? getDeviceStats() : null;
             if (stats) eclaw.devices = { total: count(stats.devices), entities: count(stats.entities), boundEntities: count(stats.boundEntities) };
@@ -368,7 +382,7 @@ function createData({ getPool, getAuthPool, getDeviceStats, now = Date.now, port
 
         const accounts = accountRows(apps, eclaw, latest.facts, sources);
         return { success: true, schemaVersion: 1, generatedAt, timeZone: TIME_ZONE, today, apps,
-            daily: { start, days: HISTORY_DAYS, series: daily.toJSON() }, latest, eclaw, services, infra, accounts, sources };
+            daily: { start, days: HISTORY_DAYS, series: daily.toJSON() }, latest, eclaw, services, infra, accounts, inbox, sources };
     }
 
     return {
@@ -419,7 +433,9 @@ function createAlerts({ loadHub, latestServices, fetchOps = defaultFetchOps, now
             Object.keys(a.basis || {}).forEach(k => { if (/At$/.test(k) && typeof a.basis[k] === 'number') basisTaipei[k] = taipeiTime(a.basis[k]); });
             return { id: a.ref, type: a.id, severity: a.sev, title: a.title, detail: a.detail, rule: a.rule, condition: (rules[a.rule] || {}).condition || null,
                 scope: (rules[a.rule] || {}).scope || null, source: a.source, app: a.app, apps: a.apps, since: a.since, sinceTaipei: taipeiTime(a.since),
-                basis: a.basis, basisTaipei, view: a.go ? '/AiHankApps/hub/#' + a.go : '/AiHankApps/hub/#alerts' };
+                basis: a.basis, basisTaipei, view: a.go ? '/AiHankApps/hub/#' + a.go : '/AiHankApps/hub/#alerts',
+                // What the alert schedule decided (null = not looked at yet); a problem report's own words; what Hank is asked to do.
+                triage: a.triage || null, quote: a.quote || null, ask: a.ask || null };
         });
         return { computedAt: at, computedAtTaipei: taipeiTime(at), alerts };
     }
