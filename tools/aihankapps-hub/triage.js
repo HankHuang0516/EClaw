@@ -15,6 +15,7 @@
 //   node triage.js raise <slug> --title "…" --ask "…" --note "…" [--app <id>]   a problem no rule shows (ID human-<slug>)
 //   node triage.js resolve <ID> --note "…"                               close a note (e.g. the problem is gone)
 //   node triage.js notes [--all]       the schedule's notes
+//   node triage.js acks               what Hank confirmed on the page, and the countermeasures (對策) he wrote
 //   node triage.js kick <job>          restart one of this Mac's own hub jobs (collector, collector-hourly, report-watchdog)
 //   node triage.js pull                read 拾光AI雲端相簿's App and LINE problem reports and import them (no model needed)
 //
@@ -35,6 +36,10 @@ const RECHECK = { auto: 6 * HOUR, human: 12 * HOUR };
 // The Wishlist listing schedules' own board already says what Hank must do; it is managed by those schedules.
 // A fold of alerts Hank chose to stop being reminded of (以後略過類似警告) needs no judgement either.
 const SKIP_TYPES = [/^attention-/, /^muted$/];
+// Hank 2026-11-13: 「排程可以讀取我是否按了該狀態以及讀取對策」. A countermeasure he wrote beside 確認 is an instruction: it is
+// pending, whatever the alert's type, until the schedule has written a note on that ID after it. One that nobody answered
+// in two weeks is left alone.
+const PLAN_DAYS = 14;
 const TIMEHUT_FEEDBACK_URL = 'https://just-healing-production.up.railway.app/api/internal/feedback';
 const TIMEHUT_KEY_FILE = path.join(os.homedir(), '.config', 'aihankapps-hub', 'timehut-stats-key');
 // Worker restarts and image mounts stay with hub-heal.cjs (the Wishlist tools' hourly job), which already does them safely.
@@ -68,7 +73,9 @@ function remote(script, request, { run = runRailway } = {}) {
 // The alerts as the hub shows them. Report text is cut so the answer stays small; `show` gives the whole alert.
 function alerts(options) { return remote('aihankapps-hub-alerts.js', undefined, options); }
 
+const planDue = (ack, triage) => !!(ack && ack.plan && !(triage && triage.at && ack.planAt && triage.at >= ack.planAt));
 function due(alert, now) {
+    if (planDue(alert.ack, alert.triage)) return 'plan';
     if (SKIP_TYPES.some(re => re.test(alert.type))) return null;
     const t = alert.triage;
     if (!t) return 'new';
@@ -80,11 +87,20 @@ function brief(alert, reason) {
     const cut = (s, n) => (typeof s === 'string' && s.length > n ? s.slice(0, n) + '…' : s || null);
     return { id: alert.id, reason, type: alert.type, severity: alert.severity, title: alert.title, detail: cut(alert.detail, 400), quote: cut(alert.quote, 800),
         app: alert.app || (alert.apps || [])[0] || null, since: alert.sinceTaipei || null, rule: alert.rule, condition: alert.condition, source: alert.source,
-        basis: alert.basis, triage: alert.triage || null };
+        basis: alert.basis, triage: alert.triage || null,
+        // null = Hank has not pressed 確認; otherwise when he did, and the countermeasure he wrote with it (plan), if any
+        ack: alert.ack ? { at: alert.ack.atTaipei || null, plan: alert.ack.plan || null } : null };
 }
 function pending(answer, now = Date.now()) {
     const list = [];
     for (const a of answer.alerts) { const reason = due(a, now); if (reason) list.push(brief(a, reason)); }
+    // A countermeasure whose alert has cleared since is still an instruction waiting for an answer.
+    for (const k of answer.acks || []) {
+        if (!k.plan || k.active || k.answered || !(now - (k.planAt || 0) < PLAN_DAYS * 24 * HOUR)) continue;
+        list.push({ id: k.id, reason: 'plan', cleared: true, type: String(k.id).split(/[.@]/)[0], title: k.title || null, detail: '這則警示已經解除，但 Hank 留了對策。',
+            triage: k.triage || null, ack: { at: k.atTaipei || null, plan: k.plan } });
+    }
+    list.sort((a, b) => (b.reason === 'plan') - (a.reason === 'plan'));   // his instructions first
     return { computedAt: answer.computedAtTaipei, total: answer.alerts.length, pending: list.length, alerts: list };
 }
 
@@ -153,10 +169,11 @@ async function main(argv = process.argv.slice(2), options = {}) {
             if (!target) fail('ID_REQUIRED');
             return remote('aihankapps-hub-note.js', noteRequest(target, argv, 'done'), options);
         }
+        case 'acks': return { acks: alerts(options).acks || [] };
         case 'notes': return remote('aihankapps-hub-note.js', { action: 'list', ...(argv.includes('--all') ? { all: true } : {}) }, options);
         case 'kick': return kick(target, options);
         case 'pull': return pull(options);
-        default: fail('USAGE', 'pending | show <ID> | note <ID> --state … --note … [--ask …] | raise <slug> … | resolve <ID> --note … | notes | kick <job> | pull');
+        default: fail('USAGE', 'pending | show <ID> | note <ID> --state … --note … [--ask …] | raise <slug> … | resolve <ID> --note … | notes | acks | kick <job> | pull');
     }
 }
 
@@ -167,4 +184,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { HUB, JOBS, RECHECK, TIMEHUT_FEEDBACK_URL, containerScript, due, brief, pending, noteRequest, pull, kick, main };
+module.exports = { HUB, JOBS, RECHECK, PLAN_DAYS, TIMEHUT_FEEDBACK_URL, containerScript, due, brief, pending, noteRequest, pull, kick, main };

@@ -6,7 +6,7 @@ into the admin hub at `https://eclawbot.com/AiHankApps/hub/`. See `backend/AIHAN
 ```
 node tools/aihankapps-hub/collect.js                   # read every back-end, show what would be sent, send nothing
 node tools/aihankapps-hub/collect.js --commit          # read, then import into the hub
-node tools/aihankapps-hub/collect.js --only rebound    # one back-end: rebound, summit, wishlist, wishlist-users, railway, timehut
+node tools/aihankapps-hub/collect.js --only rebound    # one back-end: rebound, summit, wishlist, wishlist-users, railway, timehut, attention, claude-usage
 ```
 
 ## How it works
@@ -60,11 +60,16 @@ Wishlist 的上架排程在這台 Mac 上維護一份「自己解不了的問題
 
 要看中樞目前有哪些警示（給排程自動處理用），在 EClaw 容器裡跑 `node backend/scripts/aihankapps-hub-alerts.js --brief`（經 `railway ssh`，唯讀）。
 
+## Claude 用量（`--only claude-usage`，2026-11-13）
+
+中樞右上角的電池是 Claude 訂閱方案的每週用量還剩多少。這個來源在這台 Mac 上執行 `claude -p "/usage" --output-format json`：那是 CLI 的本機指令，不呼叫模型（回答裡 `num_turns` 是 0、token 是 0；只要不是，這次讀數就不採用），所以不耗 token。只匯入百分比與重置時間。每小時那個 LaunchAgent 的 `--only` 清單要包含 `claude-usage`；找不到 `claude` 時可用環境變數 `CLAUDE_BIN` 指定路徑。
+
 ## 警示處理排程（`triage.js`，2026-11-13）
 
 Hank：「確保排程可以自主處理判斷所有的警示問題 如果需要人為介入就讓排程發一個警示把詳情打上去 讓我看到需要我怎麼幫忙」。
 
-- `triage.js`：排程唯一能用的工具（`pending`、`show`、`note`、`raise`、`resolve`、`notes`、`kick`、`pull`），每個子命令都經由 `railway ssh` 呼叫 EClaw 容器裡的 `backend/scripts/aihankapps-hub-alerts.js`／`aihankapps-hub-note.js`／`aihankapps-hub-import.js`。`pull` 用中樞金鑰檔（同 `timehut` 來源）讀拾光的 `GET /api/internal/feedback`（後端 1.0.119 起），App 與 LINE 的回報各自匯入。
+- `triage.js`：排程唯一能用的工具（`pending`、`show`、`note`、`raise`、`resolve`、`notes`、`acks`、`kick`、`pull`），每個子命令都經由 `railway ssh` 呼叫 EClaw 容器裡的 `backend/scripts/aihankapps-hub-alerts.js`／`aihankapps-hub-note.js`／`aihankapps-hub-import.js`。`pull` 用中樞金鑰檔（同 `timehut` 來源）讀拾光的 `GET /api/internal/feedback`（後端 1.0.119 起），App 與 LINE 的回報各自匯入。
+- 確認與對策（2026-11-13）：Hank 在中樞按「確認」、在旁邊寫的對策，排程都讀得到。每則待處理警示帶 `ack`（有沒有確認、對策文字）；還沒回覆的對策以 `reason: "plan"` 排在 `pending` 最前面，警示已解除的也一樣；`acks` 列出近期全部。排程寫了 note 之後才算回覆過。
 - `TRIAGE.md`：排程的判斷規則（每一類警示怎麼判斷、怎麼寫 note／ask）。要調整排程的行為就改這份，合併到 main 後下一輪自動生效。
 - `triage-runner.zsh`：裝成 `~/.local/bin/aihankapps-hub-triage`，由 `~/Library/LaunchAgents/tw.aihankapps.hub-triage.plist` 每 15 分鐘執行一次。沒有待處理的警示就不叫模型（不耗 token）。日誌在 `~/Library/Logs/aihankapps-hub-triage/`。
 - 停用：`launchctl bootout gui/$(id -u)/tw.aihankapps.hub-triage`。立刻跑一次：`launchctl kickstart gui/$(id -u)/tw.aihankapps.hub-triage`。

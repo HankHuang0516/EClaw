@@ -357,7 +357,7 @@ describe('admin hub store: Railway service resources', () => {
         const source = { id: 'railway', name: 'Railway 後台資源', apps: ['weesh'], collect: async () => ({ value: null, detail: 'Railway CLI login missing (run railway login)' }) };
         expect(await collect.main(['--only', 'railway'], { log: line => logs.push(line), now: () => Date.now(), sources: [source] })).toBe(1);
         expect(logs[0]).toBe('✗ Railway 後台資源：讀取失敗（no_result：Railway CLI login missing (run railway login)）');
-        expect(collect.SOURCES.map(b => b.id)).toEqual(['rebound', 'summit', 'wishlist', 'wishlist-users', 'railway', 'timehut', 'attention']);
+        expect(collect.SOURCES.map(b => b.id)).toEqual(['rebound', 'summit', 'wishlist', 'wishlist-users', 'railway', 'timehut', 'attention', 'claude-usage']);
         expect(railway.RAILWAY_APPS.every(id => importScript.catalogAppIds().has(id))).toBe(true);
     });
 
@@ -765,3 +765,60 @@ describe('collector: the listing schedules\' attention board', () => {
     });
 });
 
+
+// Hank 2026-11-13: 「右上角用類似電池量來顯示claude剩餘周用量 用不消耗token的更新方式」
+describe('admin hub store: the Claude usage meter', () => {
+    const TEXT = 'You are currently using your subscription to power your Claude Code usage\n\nCurrent session: 12% used · resets 10:30pm (Asia/Taipei)\n' +
+        'Current week (all models): 44% used · resets Nov 18 at 10pm (Asia/Taipei)\nCurrent week (Fable): 37.5% used · resets Nov 18 at 10pm (Asia/Taipei)\n\nWhat\'s contributing to your limits usage?\n  84%  Start fresh when you switch tasks\n';
+    const answer = more => JSON.stringify({ type: 'result', is_error: false, num_turns: 0, local_command: 'usage', result: TEXT,
+        usage: { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 }, ...more });
+    const spawnOf = (stdout, more = {}) => { const calls = []; const spawn = (bin, args, options) => { calls.push({ bin, args, options }); return { status: 0, stdout, stderr: '', ...more }; }; return { spawn, calls }; };
+
+    test('the words of /usage become windows with a percentage and a reset time; the advice below them is ignored', () => {
+        const q = collect.parseClaudeUsage(TEXT, NOW);
+        expect(q.windows).toEqual([
+            { id: 'session', label: '目前 5 小時', usedPct: 12, resetsAt: Date.UTC(2026, 10, 10, 14, 30), resetsText: '10:30pm (Asia/Taipei)' },
+            { id: 'week', label: '本週・所有模型', usedPct: 44, resetsAt: Date.UTC(2026, 10, 18, 14, 0), resetsText: 'Nov 18 at 10pm (Asia/Taipei)' },
+            { id: 'week-fable', label: '本週・Fable', usedPct: 37.5, resetsAt: Date.UTC(2026, 10, 18, 14, 0), resetsText: 'Nov 18 at 10pm (Asia/Taipei)' }]);
+        expect(collect.parseClaudeUsage('You are using an API key.\n', NOW)).toBeNull();
+        expect(collect.parseClaudeUsage('Current week (all models): 144% used\n', NOW)).toBeNull();
+        // reset times: another zone, across new year, a time already past today is tomorrow's, nonsense is null
+        expect(collect.parseReset('Jan 2 at 9am (America/Los_Angeles)', Date.UTC(2026, 11, 30))).toBe(Date.UTC(2027, 0, 2, 17));
+        expect(collect.parseReset('8pm (Asia/Taipei)', NOW)).toBe(Date.UTC(2026, 10, 11, 12));          // NOW is 21:00 in Taipei
+        expect(collect.parseReset('12am (Asia/Taipei)', NOW)).toBe(Date.UTC(2026, 10, 10, 16));
+        expect(collect.parseReset('soon', NOW)).toBeNull();
+        expect(collect.parseReset('10pm (Mars/Olympus)', NOW)).toBeNull();
+    });
+
+    test('the reading is taken with the CLI\'s local command, outside any session, and is refused if the model was called', () => {
+        const ok = spawnOf(answer());
+        const got = collect.collectClaudeUsage({ spawn: ok.spawn, now: NOW, bins: ['/nope/claude', '/bin/claude'], exists: b => b === '/bin/claude', cwd: '/tmp' });
+        expect(got.value.quota.windows.map(w => [w.id, w.usedPct])).toEqual([['session', 12], ['week', 44], ['week-fable', 37.5]]);
+        expect(got.value).toMatchObject({ series: [], facts: [] });
+        expect(ok.calls[0].bin).toBe('/bin/claude');
+        expect(ok.calls[0].args).toEqual(['-p', '/usage', '--output-format', 'json', '--max-turns', '1', '--no-session-persistence']);
+        expect(Object.keys(ok.calls[0].options.env).some(k => /^CLAUDE_?CODE/.test(k))).toBe(false);
+        // a turn or a token means it was not the local command: nothing is imported
+        expect(collect.collectClaudeUsage({ spawn: spawnOf(answer({ num_turns: 1 })).spawn, bins: ['/bin/claude'], exists: () => true }).value).toBeNull();
+        expect(collect.collectClaudeUsage({ spawn: spawnOf(answer({ usage: { input_tokens: 9, output_tokens: 3 } })).spawn, bins: ['/bin/claude'], exists: () => true }).detail).toMatch(/reached the model/);
+        expect(collect.collectClaudeUsage({ spawn: spawnOf('not json').spawn, bins: ['/bin/claude'], exists: () => true }).detail).toMatch(/JSON/);
+        expect(collect.collectClaudeUsage({ spawn: spawnOf('', { status: 1 }).spawn, bins: ['/bin/claude'], exists: () => true }).detail).toMatch(/exit 1/);
+        expect(collect.collectClaudeUsage({ spawn: ok.spawn, bins: ['/nope/claude'], exists: () => false }).detail).toMatch(/not found/);
+    });
+
+    test('the meter travels in the envelope, is validated, and is kept on the source\'s receipt', async () => {
+        const quota = collect.parseClaudeUsage(TEXT, NOW);
+        const built = collect.toEnvelope({ id: 'claude-usage', apps: [] }, { value: { series: [], facts: [], notes: [], quota } }, { now: NOW, appIds: APPS });
+        expect(built.error).toBeUndefined();
+        expect(built.envelope).toMatchObject({ source: 'claude-usage', series: [], facts: [], quota });
+        const pool = writePool();
+        expect(await store.importEnvelope(pool, built.envelope, { appIds: APPS })).toEqual({ source: 'claude-usage', values: 0, facts: 0, meters: 3 });
+        const receipt = pool.statements.find(q => q.sql.includes('INSERT INTO aihankapps_hub_sources'));
+        expect(JSON.parse(receipt.values[2]).quota).toEqual(quota);
+        const code = q => { try { store.validateEnvelope({ schemaVersion: 1, source: 'claude-usage', collectedAt: NOW, quota: q }, APPS); return 'accepted'; } catch (error) { return error.code; } };
+        const w = { id: 'week', label: '本週', usedPct: 44, resetsAt: null };
+        expect(code({ windows: [w] })).toBe('accepted');
+        for (const bad of [{ windows: [] }, { windows: [{ ...w, usedPct: 101 }] }, { windows: [{ ...w, usedPct: '44' }] }, { windows: [w, w] }, { windows: [{ ...w, id: 'Week' }] },
+            { windows: [{ ...w, resetsAt: 12 }] }, { windows: [{ ...w, token: 'x' }] }, { windows: [w], account: 'me' }, { plan: '', windows: [w] }, 'x']) expect(code(bad)).toBe('IMPORT_QUOTA');
+    });
+});

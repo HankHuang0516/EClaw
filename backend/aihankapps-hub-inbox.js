@@ -23,7 +23,12 @@
  * 3. Muted alert kinds (aihankapps_hub_mutes; Hank, 2026-11-13: 「新增一個以後略過類似警告 按下之後類似警告會被合併成同一件並以
  *    info方式留存在頁面上」): one row per alert type Hank chose to stop being reminded of. The page folds every alert of that type
  *    into one information item (and keeps it, with zero members, so the mute can be undone). Written by the hub page's own
- *    admin-only POST/DELETE /api/aihankapps/hub/mutes, the hub's only HTTP write.
+ *    admin-only POST/DELETE /api/aihankapps/hub/mutes.
+ * 4. Confirmations (aihankapps_hub_acks; Hank, 2026-11-13: 「"確認，我知道了" 旁邊加 對話框讓我可以輸入對策…排程可以讀取我是否
+ *    按了該狀態以及讀取對策」): one row per notification ID he confirmed on the page, with the countermeasure he typed, if any.
+ *    It used to live in his browser only, so no schedule could see it and the sidebar kept its dot. Written by the page's
+ *    own admin-only POST/DELETE /api/aihankapps/hub/acks; read by the page (the alert stops counting as firing) and by the
+ *    alert schedule (a countermeasure is an instruction to it). Mutes and confirmations are the hub's only HTTP writes.
  *
  * Everything written lives in the hub's own three tables here; no existing table is written.
  */
@@ -41,6 +46,8 @@ const ECLAW_APP = 'eclawbot', FRAUD_APP = 'com.hankhuang.fraudempire', TIMEHUT_A
 // Imported report sources and the one app each may report for.
 const IMPORT_SOURCES = { 'timehut-app': TIMEHUT_APP, 'timehut-line': TIMEHUT_APP };
 const MAX_IMPORT_ITEMS = 200, MAX_HISTORY = 20;
+const ACK_DAYS = 60;                   // how long a confirmation is kept in the data answer
+const PLAN_MAX = 1000;                 // characters of a countermeasure
 
 const SCHEMA = [
     `CREATE TABLE IF NOT EXISTS aihankapps_hub_feedback (
@@ -54,6 +61,8 @@ const SCHEMA = [
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), history JSONB NOT NULL DEFAULT '[]'::jsonb)`,
     `CREATE TABLE IF NOT EXISTS aihankapps_hub_mutes (
         type TEXT PRIMARY KEY, label TEXT NOT NULL, sample_ref TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`,
+    `CREATE TABLE IF NOT EXISTS aihankapps_hub_acks (
+        ref TEXT PRIMARY KEY, title TEXT, plan TEXT, acked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), plan_at TIMESTAMPTZ)`,
 ];
 const preparations = new WeakMap();
 function prepare(pool) {
@@ -148,7 +157,38 @@ async function readInbox(query, { now = Date.now(), appIds = null } = {}) {
             by: r.by_who, createdAt: ms(r.created_at), updatedAt: ms(r.updated_at) }));
     const mutes = (await query('SELECT type, label, sample_ref, created_at FROM aihankapps_hub_mutes ORDER BY created_at LIMIT 200')).rows
         .map(r => ({ type: r.type, label: r.label, sampleRef: r.sample_ref || null, at: ms(r.created_at) }));
-    return { feedback, notes, mutes, partial, days: FEEDBACK_DAYS };
+    // What the operator confirmed on the page, and the countermeasure he wrote with it.
+    const acks = (await query('SELECT ref, title, plan, acked_at, plan_at FROM aihankapps_hub_acks WHERE acked_at >= $1 ORDER BY acked_at DESC LIMIT 500', [new Date(now - ACK_DAYS * DAY_MS)])).rows
+        .map(r => ({ ref: r.ref, title: r.title || null, plan: r.plan || null, at: ms(r.acked_at), planAt: ms(r.plan_at) }));
+    return { feedback, notes, mutes, acks, partial, days: FEEDBACK_DAYS };
+}
+
+// ---- confirmations and countermeasures (the page's own admin-only write) ---------------------------------------------
+// Keyed by the notification ID, which changes when the problem or its start changes: a confirmation covers this
+// occurrence only, and the next one fires again.
+function validateAck(input) {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) fail('ACK_SHAPE');
+    if (Object.keys(input).some(k => !['ref', 'title', 'plan'].includes(k))) fail('ACK_SHAPE');
+    if (typeof input.ref !== 'string' || !REF.test(input.ref)) fail('ACK_REF');
+    if (input.title !== undefined && input.title !== null && typeof input.title !== 'string') fail('ACK_SHAPE');
+    if (input.plan !== undefined && input.plan !== null && (typeof input.plan !== 'string' || input.plan.length > PLAN_MAX)) fail('ACK_PLAN');
+    return { ref: input.ref, title: clean(input.title, 200) || null, plan: clean(input.plan, PLAN_MAX) || null };
+}
+async function setAck(pool, input) {
+    const a = validateAck(input);
+    await prepare(pool);
+    // Confirming again keeps the first confirmation's time; plan_at moves only when the countermeasure's words change.
+    const row = (await pool.query(`INSERT INTO aihankapps_hub_acks (ref, title, plan, plan_at) VALUES ($1, $2, $3, CASE WHEN $3::text IS NULL THEN NULL ELSE NOW() END)
+        ON CONFLICT (ref) DO UPDATE SET title = COALESCE(EXCLUDED.title, aihankapps_hub_acks.title), plan = EXCLUDED.plan,
+            plan_at = CASE WHEN EXCLUDED.plan IS NULL THEN NULL WHEN EXCLUDED.plan IS DISTINCT FROM aihankapps_hub_acks.plan THEN NOW() ELSE aihankapps_hub_acks.plan_at END
+        RETURNING acked_at, plan_at`, [a.ref, a.title, a.plan])).rows[0];
+    return { ref: a.ref, title: a.title, plan: a.plan, at: row ? ms(row.acked_at) : null, planAt: row ? ms(row.plan_at) : null };
+}
+async function removeAck(pool, ref) {
+    if (typeof ref !== 'string' || !REF.test(ref)) fail('ACK_REF');
+    await prepare(pool);
+    const r = await pool.query('DELETE FROM aihankapps_hub_acks WHERE ref = $1', [ref]);
+    return { ref, removed: (r && r.rowCount) || 0 };
 }
 
 // ---- muted alert kinds (the page's own admin-only write) --------------------------------------------------------------
@@ -282,4 +322,4 @@ async function importFeedback(pool, envelope, { appIds } = {}) {
 }
 
 module.exports = { SCHEMA, FEEDBACK_DAYS, NOTE_STATES, IMPORT_SOURCES, prepare, readInbox, validateNote, setNote, listNotes, validateFeedbackEnvelope, importFeedback, sensitive,
-    validateMute, setMute, removeMute, UNMUTABLE };
+    validateMute, setMute, removeMute, UNMUTABLE, validateAck, setAck, removeAck, ACK_DAYS, PLAN_MAX };

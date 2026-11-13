@@ -68,7 +68,7 @@ function fakePool(overrides = {}) {
         probesRecent: [{ service: 'eclaw', at: new Date(Math.floor(NOW / 300000) * 300000), checks: 5, failures: 1, ms_total: 400 }],
         probesDaily: [{ service: 'eclaw', day: '2026-11-10', checks: 100, failures: 5, ms_total: 9500 }, { service: 'eclaw', day: '2026-10-01', checks: 10, failures: 10, ms_total: 0 }],
         // problem reports and the alert schedule's notes (aihankapps-hub-inbox.js)
-        regclass: [{ t: 'present' }], eclawFeedback: [], fraudItems: [], betaItems: [], hubFeedback: [], hubNotes: [], hubMutes: [],
+        regclass: [{ t: 'present' }], eclawFeedback: [], fraudItems: [], betaItems: [], hubFeedback: [], hubNotes: [], hubMutes: [], hubAcks: [],
         ...overrides,
     };
     const pool = { log: [], params: {}, released: 0, connected: 0, direct: [] };
@@ -76,7 +76,7 @@ function fakePool(overrides = {}) {
     const pick = key => { if (tables[key] instanceof Error) throw tables[key]; return { rows: tables[key] }; };
     const answer = (sql, values) => {
         if (['BEGIN READ ONLY', 'COMMIT', 'ROLLBACK'].includes(sql) || sql.startsWith('SET LOCAL statement_timeout = ')) return { rows: [] };
-        const key = sql.includes('to_regclass') ? 'regclass' : sql.includes('FROM aihankapps_hub_mutes') ? 'hubMutes' : sql.includes('FROM aihankapps_hub_notes') ? 'hubNotes' : sql.includes('FROM aihankapps_hub_feedback') ? 'hubFeedback'
+        const key = sql.includes('to_regclass') ? 'regclass' : sql.includes('FROM aihankapps_hub_mutes') ? 'hubMutes' : sql.includes('FROM aihankapps_hub_acks') ? 'hubAcks' : sql.includes('FROM aihankapps_hub_notes') ? 'hubNotes' : sql.includes('FROM aihankapps_hub_feedback') ? 'hubFeedback'
             : sql.includes('FROM feedback') ? 'eclawFeedback' : sql.includes("comment <> ''") ? 'betaItems' : sql.includes('description, app_version') ? 'fraudItems'
             : sql.includes('MIN(day)') ? 'trafficFirst' : sql.includes('FROM app_portfolio_traffic_daily') ? 'trafficRows'
             : sql.includes('FROM app_portfolio_likes') ? 'likes' : sql.includes('FROM app_portfolio_comments') ? 'comments' : sql.includes('FROM app_portfolio_beta_feedback') ? 'beta'
@@ -359,14 +359,14 @@ describe('admin hub: the data answer', () => {
         expect(pool.log.join('\n')).not.toMatch(/\b(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)\b/);
         // outside those transactions only the hub's own tables are prepared, once
         expect(pool.direct.map(sql => sql.split('(')[0].trim())).toEqual(['aihankapps_hub_probes', 'aihankapps_hub_daily', 'aihankapps_hub_facts', 'aihankapps_hub_sources', 'aihankapps_hub_infra'].map(t => 'CREATE TABLE IF NOT EXISTS ' + t)
-            .concat(['CREATE TABLE IF NOT EXISTS aihankapps_hub_feedback', 'CREATE INDEX IF NOT EXISTS idx_aihankapps_hub_feedback_created ON aihankapps_hub_feedback', 'CREATE TABLE IF NOT EXISTS aihankapps_hub_notes', 'CREATE TABLE IF NOT EXISTS aihankapps_hub_mutes']));
+            .concat(['CREATE TABLE IF NOT EXISTS aihankapps_hub_feedback', 'CREATE INDEX IF NOT EXISTS idx_aihankapps_hub_feedback_created ON aihankapps_hub_feedback', 'CREATE TABLE IF NOT EXISTS aihankapps_hub_notes', 'CREATE TABLE IF NOT EXISTS aihankapps_hub_mutes', 'CREATE TABLE IF NOT EXISTS aihankapps_hub_acks']));
         expect(pool.log.join('\n')).toMatch(/FROM tappay_transactions WHERE status = 'success' AND currency = 'TWD'/);
         expect(pool.log.join('\n')).toMatch(/FROM topup_orders WHERE status = 'paid' AND refunded_at IS NULL AND amount_twd > 0/);
         // nothing personal is selected: counts and days only — except the problem reports Hank asked to read as alerts
         // (2026-11-13), whose text is read by the inbox queries alone, and never with device secrets, logs, e-mail or addresses
-        const isInbox = sql => /FROM (feedback|fraud_app_feedback_reports|app_portfolio_beta_feedback|aihankapps_hub_feedback|aihankapps_hub_notes)\b/.test(sql) && /ORDER BY/.test(sql);
+        const isInbox = sql => /FROM (feedback|fraud_app_feedback_reports|app_portfolio_beta_feedback|aihankapps_hub_feedback|aihankapps_hub_notes|aihankapps_hub_acks)\b/.test(sql) && /ORDER BY/.test(sql);
         const inboxSql = pool.log.filter(isInbox), rest = pool.log.filter(sql => !isInbox(sql));
-        expect(inboxSql).toHaveLength(6);
+        expect(inboxSql).toHaveLength(7);
         expect(rest.join('\n')).not.toMatch(/SELECT \*|\b(email|device_secret|password_hash|nickname|content|description|prompt|visitor_hash|ua|referer|ip)\b|(?<!::)\btext\b/);
         expect(inboxSql.join('\n')).not.toMatch(/SELECT \*|\b(email|device_id|device_secret|password_hash|log_snapshot|device_state|debug_result|ai_diagnosis|submission_id|payload_hash|visitor_hash|ua|referer|ip)\b/);
         expect(pool.params.trafficRows).toEqual([START]);
@@ -772,6 +772,54 @@ describe('admin hub: the page reads the answer correctly', () => {
         expect(page.D.ALERTS.map(a => a.ref)).toContain('rating-alpha');
     });
 
+    // 確認與對策 (Hank, 2026-11-13): 「"確認，我知道了" 旁邊加 對話框讓我可以輸入對策…按下後 側邊欄位的APP的警告或嚴重的icon也要
+    // 一起關閉 並且排程可以讀取我是否按了該狀態以及讀取對策」. The confirmation lives on the server, by notification ID.
+    test('a confirmed alert stops colouring the sidebar, carries the countermeasure, and the schedule can read both', async () => {
+        const at = new Date('2026-11-09T08:00:00Z'), note = { app_id: 'alpha', state: 'human', title: 'LINE 推播額度快用完', note: '已用 70%', ask: '請決定是否升級方案', standalone: true, by_who: 'schedule' };
+        const pool = fakePool({
+            hubNotes: [{ ref: 'human-line-quota', ...note, created_at: new Date('2026-11-09T07:00:00Z'), updated_at: new Date('2026-11-09T07:00:00Z') },
+                { ref: 'gone-alert@20261108', ...note, state: 'done', standalone: false, note: '已讀到對策：照做了', created_at: new Date('2026-11-09T09:00:00Z'), updated_at: new Date('2026-11-09T09:00:00Z') }],
+            hubAcks: [{ ref: 'human-line-quota', title: '需要你處理：LINE 推播額度快用完', plan: '先不升級，月底再看', acked_at: at, plan_at: at },
+                { ref: 'gone-alert@20261108', title: '已經解除的警示', plan: '以後這類不用管', acked_at: at, plan_at: at },
+                { ref: 'other-gone@20261108', title: '只按了確認', plan: null, acked_at: at, plan_at: null }] });
+        const page = await loadPage({ pool });
+        page.D.computeAlerts(Date.parse('2026-11-05T00:00:00Z'));
+        const quota = page.D.ALERTS.find(a => a.ref === 'human-line-quota');
+        expect(quota).toMatchObject({ sev: 'crit', ack: { at: at.getTime(), plan: '先不升級，月底再看', planAt: at.getTime() } });
+        expect(page.D.isAcked(quota)).toBe(true);
+        // still listed on the app's page, but the dot in the sidebar is gone
+        expect(page.D.alertsFor(page.D.APP.alpha).map(a => a.ref)).toEqual(['human-line-quota']);
+        expect(page.D.appState(page.D.APP.alpha)).toBe('live');
+        // taking the confirmation back brings the dot back; a confirmation of another occurrence does not cover this one
+        page.D.inbox.acks = [{ ref: 'human-line-quota@older', at: 1, plan: null, planAt: null }];
+        page.D.computeAlerts(Date.parse('2026-11-05T00:00:00Z'));
+        expect(page.D.ALERTS.find(a => a.ref === 'human-line-quota').ack).toBeNull();
+        expect(page.D.appState(page.D.APP.alpha)).toBe('crit');
+
+        // what the alert schedule reads (scripts/aihankapps-hub-alerts.js prints this answer)
+        const { routers } = mount({ pool });
+        const answer = await routers.alerts.load({ fresh: true });
+        expect(answer.alerts.find(a => a.id === 'human-line-quota').ack).toEqual({ at: at.getTime(), atTaipei: expect.stringContaining('2026-11-09 16:00'), plan: '先不升級，月底再看', planAt: at.getTime() });
+        expect(answer.alerts.filter(a => a.id !== 'human-line-quota').every(a => a.ack === null)).toBe(true);
+        expect(answer.acks.map(k => [k.id, k.active, k.answered, k.plan])).toEqual([
+            ['human-line-quota', true, false, '先不升級，月底再看'],        // the schedule's note is older than the countermeasure
+            ['gone-alert@20261108', false, true, '以後這類不用管'],          // cleared, and answered by a later note
+            ['other-gone@20261108', false, false, null]]);
+        expect(answer.acks[1].triage).toMatchObject({ state: 'done', note: '已讀到對策：照做了' });
+    });
+
+    // Claude 的週用量 (Hank, 2026-11-13「右上角用類似電池量來顯示claude剩餘周用量」): a meter the collector imports, belonging to no app.
+    test('the Claude usage meter reaches the page from its own source', async () => {
+        const quota = { windows: [{ id: 'week', label: '本週・所有模型', usedPct: 44, resetsAt: Date.UTC(2026, 10, 18, 14), resetsText: 'Nov 18 at 10pm (Asia/Taipei)' }, { id: 'week-fable', label: '本週・Fable', usedPct: 37, resetsAt: null }] };
+        const collected = new Date('2026-11-10T12:00:00Z');
+        const page = await loadPage({ pool: fakePool({ hubSources: [{ id: 'claude-usage', collected_at: collected, imported_at: collected, detail: { values: 0, facts: 0, notes: [], quota } },
+            { id: 'summit', collected_at: collected, imported_at: collected, detail: { values: 3, facts: 1, notes: [] } }] }) });
+        expect(page.D.quota()).toEqual({ plan: null, windows: quota.windows, at: collected.getTime() });
+        expect(page.D.sources.imports.collectors.summit.quota).toBeUndefined();
+        expect(page.D.sourceRows().find(r => r.name === 'Claude 用量')).toMatchObject({ freq: '每小時', state: 'ok', note: '由這台 Mac 的 Claude CLI 本機指令讀出，不呼叫模型、不耗 token' });
+        expect((await loadPage()).D.quota()).toBeNull();           // never imported: no battery
+    });
+
     test('when the operations API is down the rest still loads, and the sources list says what is missing', async () => {
         const { D, day } = await loadPage({ opsDown: true });
         expect(D.ops.ok).toBe(false);
@@ -781,7 +829,7 @@ describe('admin hub: the page reads the answer correctly', () => {
         const rows = D.sourceRows();
         expect(rows.find(r => r.name === '營運數據').state).toBe('crit');
         expect(rows.filter(r => r.state === 'ok').map(r => r.name)).toEqual(['商店報表', '作品集流量', '作品集互動', 'EClaw 帳號', 'EClaw 對話', '夢話夥伴後台', '問題回饋', '問題回饋與排程判斷', 'EClaw 付款', '後台服務檢查', 'REBOUND 遊戲伺服器']);
-        expect(rows.filter(r => r.state === 'none').map(r => r.name)).toEqual(['活字戰紀伺服器', 'Wishlist.ai 後台', 'Wishlist.ai 帳戶明細', 'Railway 後台資源', '時光相簿伺服器', '上架警示板', '拾光 APP 內問題回饋', '拾光 LINE 問題回饋', '其他 APP 的使用紀錄', '商店的內購金額']);
+        expect(rows.filter(r => r.state === 'none').map(r => r.name)).toEqual(['活字戰紀伺服器', 'Wishlist.ai 後台', 'Wishlist.ai 帳戶明細', 'Railway 後台資源', '時光相簿伺服器', '上架警示板', 'Claude 用量', '拾光 APP 內問題回饋', '拾光 LINE 問題回饋', '其他 APP 的使用紀錄', '商店的內購金額']);
         // the per-account source says how often it runs and, once imported, exactly what it carries (not "counts only")
         expect(rows.find(r => r.name === 'Wishlist.ai 帳戶明細')).toMatchObject({ freq: '每小時', cover: 'Wishlist.ai', note: '還沒有匯入過' });
         expect(rows.find(r => r.name === '商店報表').note).toBe('Google 到 10/27、Apple 到 10/29、AdMob 到 11/1');
@@ -1209,7 +1257,7 @@ describe('admin hub: Weesh 帳戶智慧數據庫 (hub-weesh.js)', () => {
     });
 });
 
-describe('admin hub: 以後略過類似警告 (the API\'s only write)', () => {
+describe('admin hub: the API\'s only writes (以後略過類似警告, 確認與對策)', () => {
     const ORIGIN = 'https://eclawbot.com';
     test('an administrator on the hub page can mute and unmute a kind; nothing else can write', async () => {
         const { app, pool, routers } = mount();
@@ -1237,6 +1285,52 @@ describe('admin hub: 以後略過類似警告 (the API\'s only write)', () => {
         expect((await as(request(app).delete('/api/aihankapps/hub/mutes'), 'admin').set('Origin', ORIGIN)).status).toBe(405);
         expect((await as(request(app).put('/api/aihankapps/hub/mutes'), 'admin').set('Origin', ORIGIN).send({})).status).toBe(405);
         expect(pool.direct.filter(sql => sql.includes('INSERT INTO aihankapps_hub_mutes'))).toHaveLength(1);
+    });
+
+    test('an administrator on the hub page can confirm an alert, with or without a countermeasure, and take it back', async () => {
+        const { app, pool, routers } = mount();
+        const first = await routers.data.load(), firstAlerts = await routers.alerts.load();
+        const post = (body, who = 'admin', origin = ORIGIN) => { const r = as(request(app).post('/api/aihankapps/hub/acks'), who); return (origin ? r.set('Origin', origin) : r).send(body); };
+        const ok = await post({ ref: 'worker-bad-x@20261110-0900', title: 'worker 出錯', plan: '先觀察兩天' });
+        expect(ok.status).toBe(200);
+        expect(ok.body).toMatchObject({ success: true, ack: { ref: 'worker-bad-x@20261110-0900', title: 'worker 出錯', plan: '先觀察兩天' } });
+        expect(pool.direct.find(sql => sql.includes('INSERT INTO aihankapps_hub_acks'))).toMatch(/ON CONFLICT \(ref\) DO UPDATE/);
+        // both the page's answer and the schedule's are built fresh, so the dot clears and the schedule sees it at once
+        expect(await routers.data.load()).not.toBe(first);
+        expect(await routers.alerts.load()).not.toBe(firstAlerts);
+        expect((await post({ ref: 'human-x' })).body).toMatchObject({ success: true, ack: { ref: 'human-x', plan: null } });
+        // the notification ID travels in the path, with its @ and dots
+        const del = await as(request(app).delete('/api/aihankapps/hub/acks/' + encodeURIComponent('worker-bad-x@20261110-0900')), 'admin').set('Origin', ORIGIN);
+        expect(del.status).toBe(200);
+        expect(del.body).toMatchObject({ success: true, ref: 'worker-bad-x@20261110-0900' });
+        expect(pool.direct.some(sql => sql.includes('DELETE FROM aihankapps_hub_acks'))).toBe(true);
+        // refused: no or a foreign Origin, not an administrator, not signed in, a bad ID, an over-long countermeasure, unknown fields
+        expect((await post({ ref: 'a' }, 'admin', null)).status).toBe(403);
+        expect((await post({ ref: 'a' }, 'admin', 'https://evil.example')).status).toBe(403);
+        expect((await post({ ref: 'a' }, 'member')).status).toBe(403);
+        expect((await post({ ref: 'a' }, 'nobody')).status).toBe(401);
+        expect((await post({ ref: 'bad ref' })).body).toEqual({ success: false, error: 'ACK_REF' });
+        expect((await post({ ref: 'a', plan: 'x'.repeat(1001) })).body).toEqual({ success: false, error: 'ACK_PLAN' });
+        expect((await post({ ref: 'a', state: 'done' })).body).toEqual({ success: false, error: 'ACK_SHAPE' });
+        expect((await as(request(app).delete('/api/aihankapps/hub/acks'), 'admin').set('Origin', ORIGIN)).status).toBe(405);
+        expect((await as(request(app).delete('/api/aihankapps/hub/acks/a'), 'admin')).status).toBe(403);
+        expect((await as(request(app).put('/api/aihankapps/hub/acks/a'), 'admin').set('Origin', ORIGIN).send({})).status).toBe(405);
+        expect(pool.direct.filter(sql => sql.includes('INSERT INTO aihankapps_hub_acks'))).toHaveLength(2);
+    });
+
+    // The page itself: the countermeasure box beside 確認, the usage battery, and the menu that a phone keyboard used to close.
+    test('the page offers the countermeasure box, the usage battery, and keeps a menu open when only the height changes', () => {
+        const app = fs.readFileSync(path.join(__dirname, '../../aihankapps-hub/hub-app.js'), 'utf8'), html = fs.readFileSync(path.join(__dirname, '../../aihankapps-hub/index.html'), 'utf8');
+        expect(app).toContain("String(text || '').trim() ? '確認，送出對策' : '確認，我知道了'");
+        expect(app).toMatch(/data-bind="al-plan" data-v="' \+ esc\(a\.ref\)/);
+        expect(app).toMatch(/D\.ack\(v, el\.dataset\.title \|\| '', plan\)/);
+        expect(app).not.toMatch(/S\.acks|store\.set\('acks'/);                      // no longer a per-browser note
+        expect(app).toMatch(/e\.isComposing \|\| e\.keyCode === 229/);               // Enter while choosing a Chinese character does not send
+        expect(app).toMatch(/if \(focus && !coarse\(\)\)/);                             // no keyboard on a touch screen just for opening a menu
+        expect(app).toMatch(/if \(window\.innerWidth === lastWidth\) \{[^}]*maxHeight/);  // a keyboard changes the height only: the menu stays
+        expect(app).not.toMatch(/addEventListener\('resize', closePop\)/);
+        expect(html).toMatch(/id="quota" data-act="pop-quota" data-pop aria-haspopup="dialog" hidden/);
+        expect(html).toContain('id="quota-fill"');
     });
 });
 

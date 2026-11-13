@@ -194,7 +194,7 @@ function fail(code) { const error = new Error(code); error.code = code; throw er
 function validateEnvelope(envelope, appIds) {
     const known = appIds instanceof Set ? appIds : new Set(appIds || []);
     if (!envelope || typeof envelope !== 'object' || Array.isArray(envelope)) fail('IMPORT_SHAPE');
-    if (Object.keys(envelope).some(key => !['schemaVersion', 'source', 'collectedAt', 'series', 'facts', 'notes', 'infra'].includes(key))) fail('IMPORT_SHAPE');
+    if (Object.keys(envelope).some(key => !['schemaVersion', 'source', 'collectedAt', 'series', 'facts', 'notes', 'infra', 'quota'].includes(key))) fail('IMPORT_SHAPE');
     if (envelope.schemaVersion !== 1 || typeof envelope.source !== 'string' || !IMPORT_SOURCE.test(envelope.source)) fail('IMPORT_SOURCE');
     const collectedAt = envelope.collectedAt;
     if (!Number.isSafeInteger(collectedAt) || collectedAt < Date.UTC(2026, 0, 1) || collectedAt > Date.now() + HOUR_MS) fail('IMPORT_TIME');
@@ -223,7 +223,28 @@ function validateEnvelope(envelope, appIds) {
     const notes = envelope.notes === undefined ? [] : envelope.notes;
     if (!Array.isArray(notes) || notes.length > 20 || notes.some(note => typeof note !== 'string' || note.length > 200)) fail('IMPORT_SHAPE');
     const infra = envelope.infra === undefined ? undefined : validateInfra(envelope.infra, known, lastDay);
-    return { source: envelope.source, collectedAt, rows, facts: cleanFacts, notes, infra };
+    const quota = envelope.quota === undefined ? undefined : validateQuota(envelope.quota);
+    return { source: envelope.source, collectedAt, rows, facts: cleanFacts, notes, infra, quota };
+}
+
+// A usage meter that belongs to no app (Claude's plan limits, read on the operator's Mac without a model call):
+// { plan?, windows: [{ id, label, usedPct, resetsAt, resetsText? }] }. Percentages and times only.
+function validateQuota(quota) {
+    if (!quota || typeof quota !== 'object' || Array.isArray(quota) || Object.keys(quota).some(k => !['plan', 'windows'].includes(k))) fail('IMPORT_QUOTA');
+    if (quota.plan !== undefined && (typeof quota.plan !== 'string' || !quota.plan || quota.plan.length > 40)) fail('IMPORT_QUOTA');
+    if (!Array.isArray(quota.windows) || quota.windows.length < 1 || quota.windows.length > 8) fail('IMPORT_QUOTA');
+    const ids = new Set();
+    const windows = quota.windows.map(w => {
+        if (!w || typeof w !== 'object' || Object.keys(w).some(k => !['id', 'label', 'usedPct', 'resetsAt', 'resetsText'].includes(k))) fail('IMPORT_QUOTA');
+        if (typeof w.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,39}$/.test(w.id) || ids.has(w.id)) fail('IMPORT_QUOTA');
+        ids.add(w.id);
+        if (typeof w.label !== 'string' || !w.label || w.label.length > 80) fail('IMPORT_QUOTA');
+        if (typeof w.usedPct !== 'number' || !Number.isFinite(w.usedPct) || w.usedPct < 0 || w.usedPct > 100) fail('IMPORT_QUOTA');
+        if (w.resetsAt !== null && w.resetsAt !== undefined && (!Number.isSafeInteger(w.resetsAt) || w.resetsAt < Date.UTC(2026, 0, 1))) fail('IMPORT_QUOTA');
+        if (w.resetsText !== undefined && (typeof w.resetsText !== 'string' || w.resetsText.length > 80)) fail('IMPORT_QUOTA');
+        return { id: w.id, label: w.label, usedPct: w.usedPct, resetsAt: w.resetsAt === undefined ? null : w.resetsAt, ...(w.resetsText ? { resetsText: w.resetsText } : {}) };
+    });
+    return { ...(quota.plan ? { plan: quota.plan } : {}), windows };
 }
 
 // One row per service: { id, name, project, apps, deploy, volume, hourly, daily } with numbers only.
@@ -297,9 +318,10 @@ async function importEnvelope(pool, envelope, { appIds } = {}) {
         }
         await client.query(`INSERT INTO aihankapps_hub_sources (id, collected_at, detail) VALUES ($1, $2, $3::jsonb)
             ON CONFLICT (id) DO UPDATE SET collected_at = EXCLUDED.collected_at, imported_at = NOW(), detail = EXCLUDED.detail`,
-        [clean.source, new Date(clean.collectedAt), JSON.stringify({ values: clean.rows.length, facts: clean.facts.length, services: clean.infra ? clean.infra.length : undefined, notes: clean.notes })]);
+        [clean.source, new Date(clean.collectedAt), JSON.stringify({ values: clean.rows.length, facts: clean.facts.length, services: clean.infra ? clean.infra.length : undefined, notes: clean.notes, quota: clean.quota })]);
         await client.query('COMMIT');
-        return { source: clean.source, values: clean.rows.length, facts: clean.facts.length, ...(clean.infra ? { services: clean.infra.length } : {}) };
+        return { source: clean.source, values: clean.rows.length, facts: clean.facts.length, ...(clean.infra ? { services: clean.infra.length } : {}),
+            ...(clean.quota ? { meters: clean.quota.windows.length } : {}) };
     } catch (error) {
         await client.query('ROLLBACK').catch(() => {});
         throw error;
