@@ -158,6 +158,11 @@
     received: u => u.received, merged: u => u.g.merged, excluded: u => u.g.excluded, waiting: u => u.waiting, problems: u => u.problems, up: u => u.uploadedBytes, down: u => u.traffic30 == null ? -1 : u.traffic30,
     attention: u => (u.problems ? 1e9 : 0) + u.waitAge / 1000 + (u.attention ? 1e6 : 0)
   };
+  // 我們自己的 QA／驗收／商店審查用帳戶（Hank 2026-11-13「把我們自己的QA帳戶加上QA測試用標籤 並且可隱藏」）。
+  // 先用暱稱與帳號名稱的樣子自動認（擁有者不算），認錯或漏掉的可以在詳細裡手動改；手動的標記只記在這個瀏覽器。
+  const QA_NAME = /(^|[^a-z])(qa|e2e|test|demo)([^a-z]|$)|驗收|示範|測試|審查/i, QA_LOGIN = /^qa/i;
+  const autoQa = u => !u.owner && (QA_NAME.test(u.name || '') || QA_LOGIN.test(u.login || ''));
+  const QA_TAG = '<span class="th-tag th-tag-qa">QA 測試用</span>';
   const FILTERS = [['all', '全部'], ['attention', '需要注意'], ['line', '有 LINE 收件'], ['traffic', '有流量']];
   const keep = (u, f) => f === 'attention' ? u.attention : f === 'line' ? u.received > 0 : f === 'traffic' ? (u.traffic30 || 0) > 0 : true;
 
@@ -167,8 +172,17 @@
       el.innerHTML = '<section class="card">' + head('用戶明細', '每位用戶的辨識、相簿與流量') + '<p class="empty">' + (detail && detail.meta && detail.meta.notes && detail.meta.notes.length ? esc(detail.meta.notes.join('；')) : '還沒有用戶明細：拾光伺服器 1.0.118 起提供，收集工具下一次匯入後就會出現。') + '</p></section>';
       return;
     }
-    const meta = detail.meta || {}, users = detail.users.map(enrich);
-    const S = { q: '', filter: store.get('filter', 'all'), sort: store.get('sort', { k: 'attention', dir: -1 }), open: store.get('open', null), group: null };
+    const meta = detail.meta || {}, all = detail.users.map(enrich);
+    const S = { q: '', filter: store.get('filter', 'all'), sort: store.get('sort', { k: 'attention', dir: -1 }), open: store.get('open', null), group: null, hideQa: store.get('hideQa', false) === true };
+    let marks = store.get('qa', {}), users = all, qaCount = 0;
+    if (!marks || typeof marks !== 'object' || Array.isArray(marks)) marks = {};
+    // 每次重畫前算一次：誰是 QA、現在要不要把它們拿掉（拿掉後上面的數字、流程條、洞察也都不含它們）
+    const recompute = () => {
+      all.forEach(u => { u.qa = typeof marks[u.ref] === 'boolean' ? marks[u.ref] : autoQa(u); });
+      qaCount = all.filter(u => u.qa).length;
+      users = S.hideQa ? all.filter(u => !u.qa) : all;
+      if (S.open && !users.some(u => u.ref === S.open)) S.open = null;
+    };
     if (!FILTERS.some(f => f[0] === S.filter)) S.filter = 'all';
     const tiles = () => {
       const sum = k => users.reduce((a, u) => a + (u[k] || 0), 0), n = sum('received'), merged = users.reduce((a, u) => a + u.g.merged, 0);
@@ -176,7 +190,7 @@
       const videos = users.every(u => u.media.videos != null) ? users.reduce((a, u) => a + u.media.videos, 0) : null;
       const out30 = users.some(u => u.traffic30 != null) ? users.reduce((a, u) => a + (u.traffic30 || 0), 0) : null;
       const t = (label, value, tip, cls) => '<div class="dm-c' + (cls ? ' ' + cls : '') + '"' + (tip ? ' data-tip="' + esc(tip) + '"' : '') + '><span>' + esc(label) + '</span><b>' + esc(value) + '</b></div>';
-      return '<div class="dm">' + t('用戶', int(users.length) + ' 位', meta.users > users.length ? '另有 ' + (meta.users - users.length) + ' 位沒有明細' : '') + t('照片／影片', (photos == null ? '—' : int(photos)) + '／' + (videos == null ? '—' : int(videos)), photos == null ? '有家庭相簿的數量讀不到（Flickr）' : '家庭相簿用 Flickr 的數量；同一張在多本家庭相簿會各算一次') +
+      return '<div class="dm">' + t('用戶', int(users.length) + ' 位', [meta.users > all.length ? '另有 ' + (meta.users - all.length) + ' 位沒有明細' : '', all.length > users.length ? '已隱藏 ' + (all.length - users.length) + ' 個 QA 測試用帳戶' : ''].filter(Boolean).join('；')) + t('照片／影片', (photos == null ? '—' : int(photos)) + '／' + (videos == null ? '—' : int(videos)), photos == null ? '有家庭相簿的數量讀不到（Flickr）' : '家庭相簿用 Flickr 的數量；同一張在多本家庭相簿會各算一次') +
         t('LINE 收到', int(n) + ' 張') + t('併入率', n ? pct(merged, n) + '%' : '—', '併入相簿 ÷ LINE 收到') + t('處理中', int(sum('waiting')) + ' 張', '', sum('waiting') ? '' : '') +
         t('失敗／卡住', int(sum('problems')) + ' 張', '', sum('problems') ? 'is-bad' : '') + t('下載量 30 天', bytes(out30), meta.trafficSince ? '從 ' + meta.trafficSince.slice(0, 10) + ' 開始記錄' : '') + '</div>';
     };
@@ -197,7 +211,7 @@
         const open = S.open === u.ref;
         const cell = (v, bad) => '<td class="num' + (bad ? ' is-bad' : '') + '">' + v + '</td>';
         return '<tr class="is-click' + (open ? ' is-sel' : '') + '" tabindex="0" data-th="open" data-v="' + u.ref + '" aria-expanded="' + open + '">' +
-          '<td><div class="th-who"><b>' + esc(u.name) + '</b>' + (u.owner ? '<span class="th-tag">擁有者</span>' : '') + (u.attention ? '<i class="sd sd-warn" data-tip="需要注意"></i>' : '') + '<span class="muted">' + esc(u.login) + (seenText(u) ? '・' + seenText(u) : '') + '</span></div></td>' +
+          '<td><div class="th-who"><b>' + esc(u.name) + '</b>' + (u.owner ? '<span class="th-tag">擁有者</span>' : '') + (u.qa ? QA_TAG : '') + (u.attention ? '<i class="sd sd-warn" data-tip="需要注意"></i>' : '') + '<span class="muted">' + esc(u.login) + (seenText(u) ? '・' + seenText(u) : '') + '</span></div></td>' +
           cell(int(u.media.albums)) + cell(int(u.media.photos)) + cell(int(u.media.videos)) + cell(int(u.received)) + '<td>' + stackBar(u.g, u.received) + '</td>' +
           cell(int(u.g.merged)) + cell(int(u.g.excluded)) + cell(int(u.waiting) + (u.waitAge > 6 * HOUR ? '<small class="th-age"> 最久 ' + ago(u.line.oldestWaitingAt).replace('前', '') + '</small>' : ''), u.waitAge > DAY) +
           cell(int(u.problems), u.problems > 0) + cell(bytes(u.uploadedBytes)) + cell(u.traffic30 == null ? '<span class="muted" data-tip="這位用戶還沒有流量紀錄">—</span>' : bytes(u.traffic30)) +
@@ -210,18 +224,21 @@
     }).join('') + '</tr></thead><tbody>' + rows() + '</tbody></table></div>';
     const tools = () => '<div class="th-tools"><input type="search" class="field th-q" placeholder="找用戶（暱稱或帳號）" aria-label="找用戶" value="' + esc(S.q) + '" data-th-in="q">' +
       '<div class="seg" role="group" aria-label="篩選">' + FILTERS.map(f => '<button type="button" data-th="filter" data-v="' + f[0] + '" aria-pressed="' + (S.filter === f[0]) + '">' + esc(f[1]) + ' ' + users.filter(u => keep(u, f[0])).length + '</button>').join('') + '</div>' +
+      (qaCount ? '<div class="seg" role="group" aria-label="QA 測試用帳戶"><button type="button" data-th="hideqa" data-v="1" aria-pressed="' + S.hideQa + '" data-tip="' + (S.hideQa ? '現在不顯示 QA 測試用帳戶，上面的數字也不含它們；再按一次顯示' : '按下後不顯示 QA 測試用帳戶，上面的數字也不含它們') + '">隱藏 QA 測試用 ' + qaCount + '</button></div>' : '') +
       (S.group ? '<span class="chip">只看「' + esc(GROUP[S.group][1]) + '」<button type="button" data-th="group" data-v="' + S.group + '" aria-label="取消">×</button></span>' : '') + '</div>';
     // 詳細面板放在表格下面（不放進表格列，免得跟著很寬的表格被裁掉）
     const panel = () => {
       const u = users.find(x => x.ref === S.open);
       if (!u) return '';
-      return '<section class="th-panel" id="th-panel" aria-label="' + esc(u.name) + ' 的詳細"><header class="th-panel-h"><div><h3>' + esc(u.name) + (u.owner ? '<span class="th-tag">擁有者</span>' : '') + '</h3><p class="muted">' + esc(u.login) + '・' +
+      return '<section class="th-panel" id="th-panel" aria-label="' + esc(u.name) + ' 的詳細"><header class="th-panel-h"><div><h3>' + esc(u.name) + (u.owner ? '<span class="th-tag">擁有者</span>' : '') + (u.qa ? QA_TAG : '') + '</h3><p class="muted">' + esc(u.login) + '・' +
         (u.createdAt ? '註冊於 ' + new Date(u.createdAt).toLocaleDateString('zh-TW') : '註冊時間不明') + (seenText(u) ? '・' + seenText(u) : '') + '</p></div>' +
-        '<button type="button" class="btn-ghost" data-th="open" data-v="' + u.ref + '" aria-label="關閉詳細">關閉</button></header>' + drill(u, meta) + '</section>';
+        '<div class="th-panel-acts"><button type="button" class="btn-ghost" data-th="qa" data-v="' + u.ref + '" data-tip="只記在這個瀏覽器">' + (u.qa ? '取消 QA 標籤' : '標成 QA 測試用') + '</button>' +
+        '<button type="button" class="btn-ghost" data-th="open" data-v="' + u.ref + '" aria-label="關閉詳細">關閉</button></div></header>' + drill(u, meta) + '</section>';
     };
     const stamp = () => '<p class="hint">' + '資料時間 ' + esc(meta.asOf ? new Date(meta.asOf).toLocaleString('zh-TW', { hour12: false }) : '—') + (meta.version ? '・伺服器 ' + esc(meta.version) : '') +
-      (meta.notes && meta.notes.length ? '・' + esc(meta.notes.join('；')) : '') + '。每小時更新；階段用 LINE 收件頁同一套判定；家庭相簿的照片數來自 Flickr。</p>';
+      (meta.notes && meta.notes.length ? '・' + esc(meta.notes.join('；')) : '') + (all.length > users.length ? '・已隱藏 ' + (all.length - users.length) + ' 個 QA 測試用帳戶，數字不含它們' : '') + '。每小時更新；階段用 LINE 收件頁同一套判定；家庭相簿的照片數來自 Flickr。</p>';
     function paint(focusSel) {
+      recompute();
       el.innerHTML = '<section class="card th-card">' + head('用戶明細', '每位用戶的辨識、相簿與流量・點一列看詳細') + tiles() + '<div class="th-top"><div class="th-top-l">' + overallBar() + '</div><div class="th-top-r"><b class="th-ins-h">智慧洞察</b>' + insightHtml() + '</div></div>' +
         tools() + table() + panel() + stamp() + '</section>';
       if (focusSel) { const f = el.querySelector(focusSel); if (f) { f.focus({ preventScroll: true }); if (f.setSelectionRange && typeof f.value === 'string') f.setSelectionRange(f.value.length, f.value.length); } }
@@ -235,6 +252,12 @@
       if (name === 'sort') { S.sort = S.sort.k === v ? { k: v, dir: -S.sort.dir } : { k: v, dir: v === 'name' ? 1 : -1 }; store.set('sort', S.sort); paint('[data-th="sort"][data-v="' + v + '"]'); return; }
       if (name === 'filter') { S.filter = v; store.set('filter', v); paint('[data-th="filter"][data-v="' + v + '"]'); return; }
       if (name === 'group') { S.group = S.group === v ? null : v; paint(); return; }
+      if (name === 'hideqa') { S.hideQa = !S.hideQa; store.set('hideQa', S.hideQa); paint('[data-th="hideqa"]'); store.set('open', S.open); return; }
+      if (name === 'qa') {
+        const u = all.find(x => x.ref === v); if (!u) return;
+        marks[v] = !u.qa; if (marks[v] === autoQa(u)) delete marks[v];
+        store.set('qa', marks); paint(S.hideQa && !u.qa ? '[data-th="hideqa"]' : '[data-th="qa"]'); store.set('open', S.open); return;
+      }
       if (name === 'focus') {
         S.open = v; S.filter = 'all'; S.group = null; S.q = ''; store.set('open', v); store.set('filter', 'all'); paint('tr[data-th="open"][data-v="' + v + '"]');
         const p = el.querySelector('#th-panel'); if (p && p.scrollIntoView) p.scrollIntoView({ block: 'start', behavior: 'smooth' });
@@ -283,5 +306,5 @@
     users.forEach(u => { u.media = u.media || {}; u.history = u.history || {}; u.albums = Array.isArray(u.albums) ? u.albums : []; });
     return { meta: f.thUsersMeta || null, users };
   }
-  window.HubTimehut = { mount, fromFacts, insights: (users, meta) => insights(users.map(enrich), meta), enrich, bytes };
+  window.HubTimehut = { mount, fromFacts, insights: (users, meta) => insights(users.map(enrich), meta), enrich, bytes, autoQa };
 })();

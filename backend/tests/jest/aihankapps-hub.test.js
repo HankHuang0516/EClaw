@@ -1019,6 +1019,44 @@ describe('admin hub: 拾光 user detail (hub-timehut.js)', () => {
         expect(load().enrich(u).activeDay).toBe(today);
         expect(load().enrich(quiet).activeDay).toBe(null);
     });
+    test('QA accounts: recognised by name or login (never the owner), tagged, hidden on request with the numbers, and markable by hand', () => {
+        const saved = {};
+        const sandbox = { window: {}, localStorage: { getItem: k => (k in saved ? saved[k] : null), setItem: (k, v) => { saved[k] = v; } }, Intl, Date, Math, JSON, Object, Array, Number, String, Set };
+        vm.runInNewContext(fs.readFileSync(path.join(pageDir, 'hub-timehut.js'), 'utf8'), sandbox);
+        const T = sandbox.window.HubTimehut;
+        expect([{ name: '人工驗收 a', login: 'ab…c' }, { name: '商店審查示範帳戶', login: 're…6' }, { name: 'Tom', login: 'qa…b' }, { name: 'E2E run', login: 'ab…c' }, { name: 'QA', login: 'x' }].map(T.autoQa)).toEqual([true, true, true, true, true]);
+        expect([{ name: '小屋', login: 'ab…c' }, { name: 'Quality', login: 'aq…a' }, { name: 'latest', login: 'te…t' }, { name: '人工驗收', login: 'qa…a', owner: true }].map(T.autoQa)).toEqual([false, false, false, false]);
+        const line = n => ({ received: n, stages: { uploaded: n }, reasons: {}, days: [] });
+        const el = { innerHTML: '', querySelector: () => null, contains: () => true };
+        const click = (th, v) => el.onclick({ target: { closest: () => ({ dataset: { th, v } }) }, preventDefault() {} });
+        T.mount(el, { meta: { asOf: new Date().toISOString(), notes: [] }, users: [user('aaaaaaaaaa', '小屋', { owner: true, line: line(10) }), user('bbbbbbbbbb', '人工驗收 a', { line: line(5) }), user('cccccccccc', '阿嬤', { line: line(1) })] });
+        const count = html => (html.match(/class="th-tag th-tag-qa"/g) || []).length;
+        expect(count(el.innerHTML)).toBe(1);
+        expect(el.innerHTML).toMatch(/<span>用戶<\/span><b>3 位<\/b>/);
+        expect(el.innerHTML).toMatch(/<span>LINE 收到<\/span><b>16 張<\/b>/);
+        expect(el.innerHTML).toMatch(/data-th="hideqa" data-v="1" aria-pressed="false"[^>]*>隱藏 QA 測試用 1</);
+        click('hideqa', '1');                       // hidden: gone from the table and from every number, and it says so
+        expect(el.innerHTML).not.toContain('人工驗收 a');
+        expect(el.innerHTML).toMatch(/<span>用戶<\/span><b>2 位<\/b>/);
+        expect(el.innerHTML).toMatch(/<span>LINE 收到<\/span><b>11 張<\/b>/);
+        expect(el.innerHTML).toContain('已隱藏 1 個 QA 測試用帳戶，數字不含它們');
+        expect(el.innerHTML).toMatch(/data-th="hideqa" data-v="1" aria-pressed="true"/);
+        expect(JSON.parse(saved['hub.th.hideQa'])).toBe(true);
+        click('qa', 'cccccccccc');                  // marked by hand while hidden: it leaves too
+        expect(el.innerHTML).not.toContain('阿嬤');
+        expect(JSON.parse(saved['hub.th.qa'])).toEqual({ cccccccccc: true });
+        click('hideqa', '1');                       // shown again: two tags now
+        expect(count(el.innerHTML)).toBe(2);
+        click('qa', 'bbbbbbbbbb');                  // the automatic one can be unmarked; back to automatic removes the stored mark
+        expect(count(el.innerHTML)).toBe(1);
+        expect(JSON.parse(saved['hub.th.qa'])).toEqual({ cccccccccc: true, bbbbbbbbbb: false });
+        click('qa', 'bbbbbbbbbb');
+        expect(JSON.parse(saved['hub.th.qa'])).toEqual({ cccccccccc: true });
+        click('open', 'bbbbbbbbbb');                // the detail offers the opposite action
+        expect(el.innerHTML).toMatch(/data-th="qa" data-v="bbbbbbbbbb"[^>]*>取消 QA 標籤</);
+        click('hideqa', '1');                       // hiding closes a QA account's open detail
+        expect(el.innerHTML).not.toContain('id="th-panel"');
+    });
 });
 
 describe('admin hub: Weesh 帳戶智慧數據庫 (hub-weesh.js)', () => {
