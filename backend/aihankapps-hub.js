@@ -86,7 +86,7 @@ const ACCOUNT_APPS = [
     { app: 'weesh', status: 'connected', facts: ['usersTotal', 'accountsNew7d', 'accountsNew30d'], source: 'Wishlist.ai 後台 User 表（收集工具唯讀匯入，每天 06:20）' },
     { app: 'typeforge-twin-cities', status: 'connected', facts: ['accountsTotal', 'accountsNew7d', 'accountsNew30d'], source: '活字戰紀伺服器 summit_accounts＋summit_device_bindings（綁定雙城烽火的帳號；收集工具唯讀匯入，每天 06:20）' },
     { app: 'summit-battle', status: 'connected', facts: ['accountsTotal', 'accountsNew7d', 'accountsNew30d'], source: '活字戰紀伺服器 summit_accounts＋summit_device_bindings（綁定巔峰之戰的帳號；收集工具唯讀匯入，每天 06:20）' },
-    { app: 'timehut', status: 'connected', facts: ['accountsTotal', 'accountsNew7d', 'accountsNew30d'], source: '時光相簿伺服器帳號資料（伺服器只回數字的統計端點，收集工具用金鑰唯讀匯入，每天 06:20；不含已刪除帳號）' },
+    { app: 'timehut', status: 'connected', facts: ['accountsTotal', 'accountsNew7d', 'accountsNew30d'], source: '時光相簿伺服器帳號資料（伺服器只回數字的統計端點，收集工具用金鑰唯讀匯入，每小時一次；不含已刪除帳號）' },
     { app: 'rebound', status: 'none', note: '沒有註冊或登入；伺服器只為每份安裝建立訪客帳號（玩家總數見 APP 頁）。' },
     { app: DREAM_APP, status: 'none', note: '沒有帳號註冊；以 EClaw 裝置識別。' },
     { app: 'vibe-empire', status: 'unknown', note: '尚未確認：遊戲原始碼所在的資料區沒有掛載，只知道它用 EClaw 裝置綁定。' },
