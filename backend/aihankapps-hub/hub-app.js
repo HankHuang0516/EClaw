@@ -59,6 +59,7 @@
   if (!LIVE_WIN[S.win]) S.win = '24h';
   const CH = {};          // 有名字的圖表（複製 CSV 用）
   const liveHooks = [];   // 每分鐘讀到新的營運數據之後要更新的東西
+  let disposeEclaw = () => {};
   let lastInput = 0, liveSeq = 0;
 
   // ---- 小工具 ---------------------------------------------------------------
@@ -123,7 +124,7 @@
     const s = STATE[state] || STATE.live;
     return '<span class="st st-' + state + '">' + ico(s[1]) + esc(text || s[0]) + '</span>';
   }
-  const appIco = (a, cls) => '<span class="app-ico' + (cls ? ' ' + cls : '') + '">' + (a.icon ? '<img src="' + esc(a.icon) + '" alt="" width="72" height="72" loading="lazy">' : '<span>' + esc(a.mono) + '</span>') + '</span>';
+  const appIco = (a, cls) => '<span class="app-ico' + (cls ? ' ' + cls : '') + '">' + (a.icon ? '<img src="' + esc(a.key === 'eclawbot' ? 'eclaw-icon.png' : a.icon) + '" alt="" width="72" height="72" loading="lazy">' : '<span>' + esc(a.mono) + '</span>') + '</span>';
   function seg(act, cur, items, off) {
     return '<div class="seg" role="group">' + items.map(it => '<button type="button" data-act="' + act + '" data-v="' + it[0] + '" aria-pressed="' + (cur === it[0]) + '"' + (off && off.indexOf(it[0]) >= 0 ? ' disabled' : '') + '>' + it[1] + '</button>').join('') + '</div>';
   }
@@ -788,6 +789,7 @@
       cells = (u ? dmCell('帳號', num(u.total) + ' 個') + dmCell('已驗證信箱', num(u.verified) + ' 個') + dmCell('付費訂閱', num(u.premium) + ' 個') : '') +
         (dv ? dmCell('裝置', num(dv.total) + ' 台', '不含測試裝置') + dmCell('實體', num(dv.entities) + ' 個') + dmCell('已綁定的實體', num(dv.boundEntities) + ' 個') : '') +
         dmCell('今日訊息', num(D.todayValue('eclawMessages', a.key)) + ' 則', '今天還沒過完') + dmCell('今日活躍裝置', num(D.todayValue('eclawActiveDevices', a.key)) + ' 台', '今天還沒過完') + dmCell('今日新註冊', num(D.todayValue('eclawSignups', a.key)) + ' 個', '今天還沒過完');
+      if (window.HubEclaw) cells = dmCell('今日活躍裝置', num(D.todayValue('eclawActiveDevices', a.key)) + ' 台', '今天還沒過完') + dmCell('今日新註冊', num(D.todayValue('eclawSignups', a.key)) + ' 個', '今天還沒過完');
     } else if (a.key === D.WISHLIST) {
       sub = '上架與公開的最新數字';
       cells = listingCells();
@@ -807,6 +809,7 @@
     }
     // 拾光AI雲端相簿：每位用戶的辨識、相簿與流量明細（hub-timehut.js 自己畫、自己處理互動）
     if (a.key === 'timehut' && window.HubTimehut) extra += '<div id="th-users"></div>';
+    if (a.key === 'eclawbot' && window.HubEclaw) extra += '<div id="ec-admin"></div>';
     // Weesh：帳戶智慧數據庫，每個帳戶的願望、刊登、對話與面交（hub-weesh.js 自己畫、自己處理互動）
     if (a.key === D.WISHLIST && window.HubWeesh) extra += '<div id="ws-users"></div>';
     const svcs = D.serviceFor(a);
@@ -838,6 +841,8 @@
     if (th) window.HubTimehut.mount(th, window.HubTimehut.fromFacts((D.latest.facts || {})[a.key]));
     const ws = $('#ws-users', el);
     if (ws) window.HubWeesh.mount(ws, window.HubWeesh.fromFacts((D.latest.facts || {})[a.key]));
+    const ec = $('#ec-admin', el);
+    if (ec) disposeEclaw = window.HubEclaw.mount(ec, { live: () => S.live });
     liveHooks.push(paintLiveNumbers);
   }
 
@@ -906,6 +911,8 @@
   function render(soft) {
     const el = $('#view'), fk = focusKey();
     const go = () => {
+      disposeEclaw();
+      disposeEclaw = () => {};
       V.destroyAll();
       liveHooks.length = 0;
       liveSeq++;

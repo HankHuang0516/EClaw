@@ -897,6 +897,12 @@
                 return;
             }
 
+            // Management data now lives with the other apps in the private Hub.
+            // Keep the existing mutation dialogs behind an explicit operations entry.
+            if (new URLSearchParams(window.location.search).get('operations') !== '1') {
+                window.location.replace('/AiHankApps/hub/#app-eclawbot');
+                return;
+            }
             await loadAll();
         }
 

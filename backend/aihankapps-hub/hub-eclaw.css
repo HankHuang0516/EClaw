@@ -1,0 +1,27 @@
+/* Reuse the Hub / Timehut tables, summary cells, insight list and detail surface. */
+.ec-admin{min-width:0}
+.ec-status,.ec-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:12px 0;color:var(--ink-3);font-size:12px}
+.ec-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:16px 0}
+.ec-tabs .btn[aria-pressed=true],.ec-body .btn[aria-pressed=true]{color:var(--accent);background:var(--accent-soft);border-color:var(--accent)}
+.ec-tabs .btn span{font-variant-numeric:tabular-nums;color:var(--ink-3);padding-left:5px}
+.ec-search{display:grid;gap:5px;min-width:200px;flex:1;max-width:440px;color:var(--ink-3);font-size:12px}
+.ec-search input{width:100%;min-height:44px;padding:9px 12px;border:1px solid var(--line-2);border-radius:8px;background:var(--panel);color:var(--ink)}
+.ec-table{font-size:12px;min-width:700px}
+.ec-table th .btn{padding:6px 0;border:0;background:transparent;white-space:nowrap;color:inherit}
+.ec-table th[aria-sort=ascending] .btn:after{content:' ↑'}
+.ec-table th[aria-sort=descending] .btn:after{content:' ↓'}
+.ec-table td{max-width:280px;overflow-wrap:anywhere;white-space:normal;vertical-align:top}
+.ec-table tr.is-open{background:var(--accent-soft)}
+.ec-table td:last-child{min-width:90px}
+.ec-detail-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin:8px 0}
+.ec-detail-fields div{min-width:0}
+.ec-detail-fields dt{font-size:12px;color:var(--ink-3);margin-bottom:4px}
+.ec-detail-fields dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}
+.ec-stats{border-top:1px solid var(--line);padding:12px 0}
+.ec-stats summary{cursor:pointer;color:var(--accent);font-size:13px;padding:8px 0;line-height:1.7}
+.ec-stats h3,.ec-body h3{font-size:14px;margin:16px 0 12px}
+.ec-body .th-tools{flex-wrap:wrap;align-items:end;margin:16px 0}
+.ec-body .seg{flex-wrap:wrap;max-width:100%}
+.ec-admin .btn{min-height:36px}
+.ec-admin .btn:focus-visible,.ec-admin summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(max-width:700px){.ec-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.ec-tabs .btn{justify-content:flex-start;min-height:44px;font-size:12px}.ec-admin .btn{min-height:44px}.ec-search{max-width:none;min-width:0;width:100%}.ec-detail-fields{grid-template-columns:1fr}.ec-body .th-tools{align-items:start}.ec-admin .th-panel-h{flex-wrap:wrap}}

@@ -6450,40 +6450,53 @@ app.get('/api/admin/users', adminAuth, adminCheck, async (req, res) => {
 // GET /api/admin/bots - Official bot list (with auto-cleanup of stale assignments)
 app.get('/api/admin/bots', adminAuth, adminCheck, async (req, res) => {
     try {
+        // readOnly=1 preserves stored assignments and excludes credentials from SQL and JSON.
+        // /api/help NO-OP: optional mode on this existing admin endpoint; no new REST endpoint.
+        const readOnly = req.query.readOnly === '1';
+        if (readOnly) {
+            // Private snapshots must never be cached, including implicit HEAD and error responses.
+            // Append auth-related variants so upstream Vary fields remain intact.
+            res.set('Cache-Control', 'private, no-store');
+            res.vary('Cookie');
+            res.vary('Authorization');
+        }
+        const credentialColumns = readOnly ? '' : ', o.webhook_url, o.token';
         const pg = authModule.pool;
         const result = await pg.query(`
-            SELECT o.bot_id, o.bot_type, o.status, o.assigned_device_id, o.assigned_entity_id, o.assigned_at, o.created_at, o.display_name, o.webhook_url, o.token,
+            SELECT o.bot_id, o.bot_type, o.status, o.assigned_device_id, o.assigned_entity_id, o.assigned_at, o.created_at, o.display_name${credentialColumns},
                    u.email as assigned_user_email
             FROM official_bots o
             LEFT JOIN user_accounts u ON o.assigned_device_id = u.device_id
             ORDER BY o.bot_type, o.created_at ASC
         `);
 
-        // Auto-cleanup: detect stale "assigned" bots where entity is no longer bound
-        for (const r of result.rows) {
-            if (r.status === 'assigned' && r.assigned_device_id) {
-                const device = devices[r.assigned_device_id];
-                const eId = r.assigned_entity_id != null ? parseInt(r.assigned_entity_id) : null;
-                const entity = device?.entities?.[eId];
-                if (!entity || !entity.isBound) {
-                    console.log(`[Admin] Auto-cleanup stale bot ${r.bot_id}: device ${r.assigned_device_id} E${eId} no longer bound`);
-                    const bot = officialBots[r.bot_id];
-                    if (bot) {
-                        bot.status = 'available';
-                        bot.assigned_device_id = null;
-                        bot.assigned_entity_id = null;
-                        bot.assigned_at = null;
-                        if (usePostgreSQL) await db.saveOfficialBot(bot);
+        // Auto-cleanup is retained only for legacy callers, never for read-only snapshots.
+        if (!readOnly) {
+            for (const r of result.rows) {
+                if (r.status === 'assigned' && r.assigned_device_id) {
+                    const device = devices[r.assigned_device_id];
+                    const eId = r.assigned_entity_id != null ? parseInt(r.assigned_entity_id) : null;
+                    const entity = device?.entities?.[eId];
+                    if (!entity || !entity.isBound) {
+                        console.log(`[Admin] Auto-cleanup stale bot ${r.bot_id}: device ${r.assigned_device_id} E${eId} no longer bound`);
+                        const bot = officialBots[r.bot_id];
+                        if (bot) {
+                            bot.status = 'available';
+                            bot.assigned_device_id = null;
+                            bot.assigned_entity_id = null;
+                            bot.assigned_at = null;
+                            if (usePostgreSQL) await db.saveOfficialBot(bot);
+                        }
+                        const bindCacheKey = getBindingCacheKey(r.assigned_device_id, eId);
+                        delete officialBindingsCache[bindCacheKey];
+                        if (usePostgreSQL) await db.removeOfficialBinding(r.assigned_device_id, eId);
+                        // Update row for response
+                        r.status = 'available';
+                        r.assigned_device_id = null;
+                        r.assigned_entity_id = null;
+                        r.assigned_at = null;
+                        r.assigned_user_email = null;
                     }
-                    const bindCacheKey = getBindingCacheKey(r.assigned_device_id, eId);
-                    delete officialBindingsCache[bindCacheKey];
-                    if (usePostgreSQL) await db.removeOfficialBinding(r.assigned_device_id, eId);
-                    // Update row for response
-                    r.status = 'available';
-                    r.assigned_device_id = null;
-                    r.assigned_entity_id = null;
-                    r.assigned_at = null;
-                    r.assigned_user_email = null;
                 }
             }
         }
@@ -6533,8 +6546,7 @@ app.get('/api/admin/bots', adminAuth, adminCheck, async (req, res) => {
                 return {
                     botId: r.bot_id,
                     displayName: r.display_name || null,
-                    webhookUrl: r.webhook_url || null,
-                    token: r.token || null,
+                    ...(!readOnly ? { webhookUrl: r.webhook_url || null, token: r.token || null } : {}),
                     botType: r.bot_type,
                     status: r.status,
                     assignedDeviceId: r.assigned_device_id,
