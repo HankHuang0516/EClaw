@@ -68,7 +68,7 @@ function fakePool(overrides = {}) {
         probesRecent: [{ service: 'eclaw', at: new Date(Math.floor(NOW / 300000) * 300000), checks: 5, failures: 1, ms_total: 400 }],
         probesDaily: [{ service: 'eclaw', day: '2026-11-10', checks: 100, failures: 5, ms_total: 9500 }, { service: 'eclaw', day: '2026-10-01', checks: 10, failures: 10, ms_total: 0 }],
         // problem reports and the alert schedule's notes (aihankapps-hub-inbox.js)
-        regclass: [{ t: 'present' }], eclawFeedback: [], fraudItems: [], betaItems: [], hubFeedback: [], hubNotes: [],
+        regclass: [{ t: 'present' }], eclawFeedback: [], fraudItems: [], betaItems: [], hubFeedback: [], hubNotes: [], hubMutes: [],
         ...overrides,
     };
     const pool = { log: [], params: {}, released: 0, connected: 0, direct: [] };
@@ -76,7 +76,7 @@ function fakePool(overrides = {}) {
     const pick = key => { if (tables[key] instanceof Error) throw tables[key]; return { rows: tables[key] }; };
     const answer = (sql, values) => {
         if (['BEGIN READ ONLY', 'COMMIT', 'ROLLBACK'].includes(sql) || sql.startsWith('SET LOCAL statement_timeout = ')) return { rows: [] };
-        const key = sql.includes('to_regclass') ? 'regclass' : sql.includes('FROM aihankapps_hub_notes') ? 'hubNotes' : sql.includes('FROM aihankapps_hub_feedback') ? 'hubFeedback'
+        const key = sql.includes('to_regclass') ? 'regclass' : sql.includes('FROM aihankapps_hub_mutes') ? 'hubMutes' : sql.includes('FROM aihankapps_hub_notes') ? 'hubNotes' : sql.includes('FROM aihankapps_hub_feedback') ? 'hubFeedback'
             : sql.includes('FROM feedback') ? 'eclawFeedback' : sql.includes("comment <> ''") ? 'betaItems' : sql.includes('description, app_version') ? 'fraudItems'
             : sql.includes('MIN(day)') ? 'trafficFirst' : sql.includes('FROM app_portfolio_traffic_daily') ? 'trafficRows'
             : sql.includes('FROM app_portfolio_likes') ? 'likes' : sql.includes('FROM app_portfolio_comments') ? 'comments' : sql.includes('FROM app_portfolio_beta_feedback') ? 'beta'
@@ -359,7 +359,7 @@ describe('admin hub: the data answer', () => {
         expect(pool.log.join('\n')).not.toMatch(/\b(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)\b/);
         // outside those transactions only the hub's own tables are prepared, once
         expect(pool.direct.map(sql => sql.split('(')[0].trim())).toEqual(['aihankapps_hub_probes', 'aihankapps_hub_daily', 'aihankapps_hub_facts', 'aihankapps_hub_sources', 'aihankapps_hub_infra'].map(t => 'CREATE TABLE IF NOT EXISTS ' + t)
-            .concat(['CREATE TABLE IF NOT EXISTS aihankapps_hub_feedback', 'CREATE INDEX IF NOT EXISTS idx_aihankapps_hub_feedback_created ON aihankapps_hub_feedback', 'CREATE TABLE IF NOT EXISTS aihankapps_hub_notes']));
+            .concat(['CREATE TABLE IF NOT EXISTS aihankapps_hub_feedback', 'CREATE INDEX IF NOT EXISTS idx_aihankapps_hub_feedback_created ON aihankapps_hub_feedback', 'CREATE TABLE IF NOT EXISTS aihankapps_hub_notes', 'CREATE TABLE IF NOT EXISTS aihankapps_hub_mutes']));
         expect(pool.log.join('\n')).toMatch(/FROM tappay_transactions WHERE status = 'success' AND currency = 'TWD'/);
         expect(pool.log.join('\n')).toMatch(/FROM topup_orders WHERE status = 'paid' AND refunded_at IS NULL AND amount_twd > 0/);
         // nothing personal is selected: counts and days only — except the problem reports Hank asked to read as alerts
@@ -571,7 +571,7 @@ describe('admin hub: the page reads the answer correctly', () => {
             ['ops-stale', 'warn', null], ['listing-rate', 'warn', 'weesh'], ['chat-pending', 'info', 'weesh'], ['rating-alpha', 'warn', 'alpha']]);
         expect(noisy.D.appState(noisy.D.APP.weesh)).toBe('crit');
         expect(noisy.D.appState(noisy.D.APP.alpha)).toBe('warn');
-        expect(noisy.D.RULES).toHaveLength(15);
+        expect(noisy.D.RULES).toHaveLength(16);
     });
 
     test('the monitor\'s issue codes become a plain reason with its times', async () => {
@@ -721,7 +721,7 @@ describe('admin hub: the page reads the answer correctly', () => {
         expect(page.D.ALERTS.filter(a => a.ref === 'rating-alpha')).toHaveLength(1);
         // a problem the schedule found that no rule shows
         expect(by['human-line-quota']).toMatchObject({ id: 'human', sev: 'crit', title: '需要你處理：LINE 推播額度快用完', ask: '請決定是否升級 LINE 方案', rule: '排程請你處理', app: 'alpha' });
-        expect(page.D.RULES.slice(13).map(r => [r[0], r[3]])).toEqual([['新的問題回饋', 'warn'], ['排程請你處理', 'crit']]);
+        expect(page.D.RULES.slice(13).map(r => [r[0], r[3]])).toEqual([['新的問題回饋', 'warn'], ['排程請你處理', 'crit'], ['已略過的類似警告', 'info']]);
         // once the schedule closes the escalation, it is gone
         // the page lists what needs Hank first, then severe, warning, information
         expect(page.D.byUrgency(page.D.ALERTS).slice(0, 3).map(a => a.ref)).toEqual(['rating-alpha', 'fb-timehut-line-L1', 'human-line-quota']);
@@ -739,6 +739,37 @@ describe('admin hub: the page reads the answer correctly', () => {
         const a = answer.alerts.find(x => x.id === 'fb-timehut-app-A1');
         expect(a).toMatchObject({ type: 'feedback-timehut-app', severity: 'info', quote: '閃退', ask: null, triage: { state: 'auto', note: '已確認是 1.0.17 的已知問題，1.0.18 修好' } });
         expect(a.basis).toMatchObject({ hasImage: true, version: '1.0.18', channel: 'android-play' });
+    });
+
+    // 以後略過類似警告 (Hank, 2026-11-13): a muted kind folds into one information item that stays, even with no members.
+    test('a muted kind folds into one information item; the app page lists the alerts behind the sidebar dot', async () => {
+        const pool = fakePool({ hubMutes: [{ type: 'rating-alpha', label: 'Alpha 的評分偏低', sample_ref: 'rating-alpha', created_at: new Date('2026-11-09T00:00:00Z') },
+            { type: 'collector-stale-summit', label: '活字戰紀伺服器的數據超過一天沒更新', sample_ref: null, created_at: new Date('2026-11-09T01:00:00Z') }],
+        hubNotes: [{ ref: 'human-line-quota', app_id: 'alpha', state: 'human', title: 'LINE 推播額度快用完', note: '已用 70%', ask: '請決定是否升級方案', standalone: true, by_who: 'schedule', created_at: new Date('2026-11-09T07:00:00Z'), updated_at: new Date('2026-11-09T07:00:00Z') }] });
+        const page = await loadPage({ pool });
+        page.D.latest.rating.alpha.value = 3.2;
+        page.D.computeAlerts(Date.parse('2026-11-05T00:00:00Z'));
+        const by = Object.fromEntries(page.D.ALERTS.map(a => [a.ref, a]));
+        expect(by['rating-alpha']).toBeUndefined();
+        expect(by['muted-rating-alpha']).toMatchObject({ id: 'muted', sev: 'info', title: '已略過：Alpha 的評分偏低（目前 1 件）', rule: '已略過的類似警告', app: 'alpha' });
+        expect(by['muted-rating-alpha'].muted.members.map(m => m.ref)).toEqual(['rating-alpha']);
+        // a mute with nothing in it right now stays, so it can be undone
+        expect(by['muted-collector-stale-summit']).toMatchObject({ sev: 'info', title: '已略過：活字戰紀伺服器的數據超過一天沒更新（目前 0 件）', basis: { count: 0, members: [] } });
+        // the schedule's own asks and people's reports are never folded
+        expect(page.D.mutable({ id: 'human' })).toBe(false);
+        expect(['feedback-eclaw', 'feedback-fraud', 'feedback-beta', 'feedback-timehut-app', 'feedback-timehut-line'].map(id => page.D.mutable({ id }))).toEqual([false, false, false, false, false]);
+        expect(page.D.mutable({ id: 'feedback-eclaw-health' })).toBe(true);
+        expect(by['human-line-quota']).toMatchObject({ sev: 'crit' });
+        // what colours Alpha in the sidebar is what its page lists; an information fold alone does not colour it
+        expect(page.D.alertsFor(page.D.APP.alpha).map(a => a.ref).sort()).toEqual(['human-line-quota', 'muted-rating-alpha']);
+        expect(page.D.appState(page.D.APP.alpha)).toBe('crit');
+        page.D.inbox.notes = [];
+        page.D.computeAlerts(Date.parse('2026-11-05T00:00:00Z'));
+        expect(page.D.appState(page.D.APP.alpha)).toBe('live');
+        // undoing the mute brings the alert back on its own
+        page.D.inbox.mutes = [];
+        page.D.computeAlerts(Date.parse('2026-11-05T00:00:00Z'));
+        expect(page.D.ALERTS.map(a => a.ref)).toContain('rating-alpha');
     });
 
     test('when the operations API is down the rest still loads, and the sources list says what is missing', async () => {
@@ -987,3 +1018,35 @@ describe('admin hub: 拾光 user detail (hub-timehut.js)', () => {
         expect(load().enrich(quiet).activeDay).toBe(null);
     });
 });
+
+describe('admin hub: 以後略過類似警告 (the API\'s only write)', () => {
+    const ORIGIN = 'https://eclawbot.com';
+    test('an administrator on the hub page can mute and unmute a kind; nothing else can write', async () => {
+        const { app, pool, routers } = mount();
+        const first = await routers.data.load();
+        const post = (body, who = 'admin', origin = ORIGIN) => { const r = as(request(app).post('/api/aihankapps/hub/mutes'), who); return (origin ? r.set('Origin', origin) : r).send(body); };
+        const ok = await post({ type: 'rating-alpha', label: 'Alpha 的評分偏低', sampleRef: 'rating-alpha' });
+        expect(ok.status).toBe(200);
+        expect(ok.body).toMatchObject({ success: true, mute: { type: 'rating-alpha', label: 'Alpha 的評分偏低' } });
+        const insert = pool.direct.find(sql => sql.includes('INSERT INTO aihankapps_hub_mutes'));
+        expect(insert).toMatch(/ON CONFLICT \(type\) DO UPDATE/);
+        // the next answer is built fresh, so the page sees the mute at once
+        expect(await routers.data.load()).not.toBe(first);
+        const del = await as(request(app).delete('/api/aihankapps/hub/mutes/rating-alpha'), 'admin').set('Origin', ORIGIN);
+        expect(del.status).toBe(200);
+        expect(pool.direct.some(sql => sql.includes('DELETE FROM aihankapps_hub_mutes'))).toBe(true);
+        // refused: no or a foreign Origin, not an administrator, not signed in, a kind that may not be muted, any other write
+        expect((await post({ type: 'rating-alpha', label: 'x' }, 'admin', null)).status).toBe(403);
+        expect((await post({ type: 'rating-alpha', label: 'x' }, 'admin', 'https://evil.example')).status).toBe(403);
+        expect((await post({ type: 'rating-alpha', label: 'x' }, 'member')).status).toBe(403);
+        expect((await post({ type: 'rating-alpha', label: 'x' }, 'nobody')).status).toBe(401);
+        expect((await post({ type: 'human', label: 'x' })).body).toEqual({ success: false, error: 'MUTE_TYPE' });
+        expect((await post({ type: 'feedback-eclaw', label: 'x' })).body).toEqual({ success: false, error: 'MUTE_TYPE' });
+        expect((await post({ type: 'rating-alpha', label: '', extra: 1 })).body).toEqual({ success: false, error: 'MUTE_SHAPE' });
+        expect((await as(request(app).post('/api/aihankapps/hub/data'), 'admin').set('Origin', ORIGIN).send({})).status).toBe(405);
+        expect((await as(request(app).delete('/api/aihankapps/hub/mutes'), 'admin').set('Origin', ORIGIN)).status).toBe(405);
+        expect((await as(request(app).put('/api/aihankapps/hub/mutes'), 'admin').set('Origin', ORIGIN).send({})).status).toBe(405);
+        expect(pool.direct.filter(sql => sql.includes('INSERT INTO aihankapps_hub_mutes'))).toHaveLength(1);
+    });
+});
+

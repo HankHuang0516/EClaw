@@ -365,11 +365,11 @@ function createData({ getPool, getAuthPool, getDeviceStats, now = Date.now, port
         await section('services', () => ownTables.then(() => readOnly(getPool(), async query => { services = await hubStore.readProbes(query, generatedAt); return {}; })));
 
         // Problem reports from every app, and the alert schedule's notes (Hank, 2026-11-13).
-        let inbox = { feedback: [], notes: [], days: hubInbox.FEEDBACK_DAYS };
+        let inbox = { feedback: [], notes: [], mutes: [], days: hubInbox.FEEDBACK_DAYS };
         await section('inbox', async () => {
             await hubInbox.prepare(getPool());
             const read = await readOnly(getPool(), query => hubInbox.readInbox(query, { now: generatedAt, appIds: new Set(apps.map(app => app.id)) }));
-            inbox = { feedback: read.feedback, notes: read.notes, days: read.days };
+            inbox = { feedback: read.feedback, notes: read.notes, mutes: read.mutes, days: read.days };
             return { partial: read.partial };
         });
 
@@ -394,6 +394,8 @@ function createData({ getPool, getAuthPool, getDeviceStats, now = Date.now, port
             }
             return pending;
         },
+        // After the page's own write (a mute), the next answer is built fresh.
+        invalidate() { cache = null; },
     };
 }
 
@@ -445,6 +447,7 @@ function createAlerts({ loadHub, latestServices, fetchOps = defaultFetchOps, now
             if (!pending) pending = compute().then(answer => { cache = { at: now(), answer }; return answer; }).finally(() => { pending = null; });
             return pending;
         },
+        invalidate() { cache = null; },
         // Exact notification ID first; otherwise the same alert type (the ID changes when the problem or its start changes).
         find(answer, id) {
             const exact = answer.alerts.find(a => a.id === id);
@@ -541,6 +544,16 @@ function createRouters(options) {
         next();
     }
     const ready = (_req, res, next) => (isReady() ? next() : unavailable(res));
+    // The API's one write (Hank 2026-11-13「以後略過類似警告」): POST /mutes and DELETE /mutes/<type>, only from the hub page
+    // itself (the browser always sends Origin on these; a missing or foreign Origin is refused), and only for an administrator.
+    const MUTES = /^\/mutes(\/[A-Za-z0-9._:-]{1,120})?$/;
+    function sameOriginApi(req, res, next) {
+        if (['GET', 'HEAD'].includes(req.method)) return readOnlySameOrigin(req, res, next);
+        const write = (req.method === 'POST' && req.path === '/mutes') || (req.method === 'DELETE' && MUTES.test(req.path) && req.path !== '/mutes');
+        if (!write) return res.status(405).set('Allow', 'GET, HEAD').json({ success: false, error: 'Read-only resource' });
+        if (!['https://eclawbot.com', 'https://www.eclawbot.com'].includes(req.get('origin') || '')) return res.status(403).json({ success: false, error: 'Same-origin access required' });
+        next();
+    }
 
     // ---- the page: /AiHankApps/hub/ ----
     const files = new Map();
@@ -583,7 +596,7 @@ function createRouters(options) {
 
     // ---- the API: /api/aihankapps/hub/ ----
     const api = express.Router();
-    api.use(privateHeaders, readOnlySameOrigin);
+    api.use(privateHeaders, sameOriginApi);
     // The public portfolio asks this to decide whether to show the entry. It answers everyone, and says nothing else.
     api.get('/access', async (req, res) => {
         if (limited(req)) return res.status(429).set('Retry-After', '60').json({ success: false, admin: false });
@@ -636,6 +649,26 @@ function createRouters(options) {
         if (!hit) return res.status(404).json({ success: false, error: 'No active alert with this notification ID (it may have cleared)', id,
             computedAt: answer.computedAt, computedAtTaipei: answer.computedAtTaipei, activeIds: answer.alerts.map(a => a.id) });
         res.json({ success: true, id, matchedBy: hit.matchedBy, computedAt: answer.computedAt, computedAtTaipei: answer.computedAtTaipei, alert: hit.alert, note: ALERTS_NOTE });
+    });
+    // 以後略過類似警告 (Hank, 2026-11-13): fold every alert of this kind into one information item; DELETE undoes it.
+    const muteFailed = (res, error) => {
+        if (/^MUTE_/.test(error.code || '')) return res.status(400).json({ success: false, error: error.code });
+        console.error('[AiHankAppsHub] mute failed:', error.message);
+        return unavailable(res);
+    };
+    api.post('/mutes', express.json({ limit: '2kb' }), async (req, res) => {
+        try {
+            const mute = await hubInbox.setMute(getPool(), req.body);
+            data.invalidate(); alerts.invalidate();
+            res.json({ success: true, mute });
+        } catch (error) { muteFailed(res, error); }
+    });
+    api.delete('/mutes/:type', async (req, res) => {
+        try {
+            const result = await hubInbox.removeMute(getPool(), String(req.params.type || ''));
+            data.invalidate(); alerts.invalidate();
+            res.json({ success: true, ...result });
+        } catch (error) { muteFailed(res, error); }
     });
     api.use((_req, res) => res.status(404).json({ success: false, error: 'Admin hub resource not found' }));
 

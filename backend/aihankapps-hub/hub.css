@@ -450,6 +450,13 @@ td.att em{font-variant-numeric:tabular-nums}
 .al-tr-human b{background:var(--crit);color:var(--on-crit)}
 .al-tr-auto b{color:var(--ok-ink)}
 .al-tr-new b{color:var(--warn-ink)}
+.al-mu{margin:6px 0 0;padding:0;list-style:none;display:grid;gap:6px;font-size:12px;color:var(--ink-2)}
+.al-mu li{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);overflow-wrap:anywhere}
+.al-mu b{font-weight:600;color:var(--ink)}
+.al-mu span{min-width:0}
+.al-mu code{font:11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink-3);word-break:break-all}
+.al-app.is-crit{border-left:3px solid var(--crit)}
+.al-app.is-warn{border-left:3px solid var(--warn)}
 .al-resolved .al-t h3{font-weight:500}
 .al-w{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;font-size:12px;white-space:nowrap}
 .al-s{padding:1px 8px;border-radius:99px;background:var(--panel-2);font-weight:700}
