@@ -157,3 +157,26 @@ describe('reading the inbox', () => {
         expect(pool.tx.map(q => q.sql).join('\n')).not.toMatch(/\b(INSERT|UPDATE|DELETE|CREATE)\b/);
     });
 });
+
+describe('muted alert kinds (以後略過類似警告)', () => {
+    test('only real alert kinds; never the schedule\'s asks, a fold, or people\'s reports', () => {
+        const code = input => { try { inbox.validateMute(input); return 'accepted'; } catch (error) { return error.code; } };
+        expect(inbox.validateMute({ type: 'feedback-eclaw-health', label: ' EClawbot 被動健康檢查 ', sampleRef: 'fb-eclaw-health-e18@20261113' }))
+            .toEqual({ type: 'feedback-eclaw-health', label: 'EClawbot 被動健康檢查', sampleRef: 'fb-eclaw-health-e18@20261113' });
+        expect(code({ type: 'worker-bad-timehut-mcode', label: 'x' })).toBe('accepted');
+        for (const type of ['human', 'muted', 'feedback-eclaw', 'feedback-fraud', 'feedback-beta', 'feedback-timehut-app', 'feedback-timehut-line']) expect(code({ type, label: 'x' })).toBe('MUTE_TYPE');
+        expect(code({ type: 'has space', label: 'x' })).toBe('MUTE_TYPE');
+        expect(code({ type: 'rating-alpha', label: '  ' })).toBe('MUTE_LABEL');
+        expect(code({ type: 'rating-alpha', label: 'x', other: 1 })).toBe('MUTE_SHAPE');
+        expect(code({ type: 'rating-alpha', label: 'x', sampleRef: 'bad ref' })).toBe('MUTE_REF');
+    });
+    test('mute upserts one row per kind; unmute deletes it; both only touch the hub\'s own table', async () => {
+        const pool = recordingPool({ 'RETURNING type, label, created_at': [{ type: 'rating-alpha', label: 'L', created_at: new Date(NOW) }] });
+        expect(await inbox.setMute(pool, { type: 'rating-alpha', label: 'L' })).toEqual({ type: 'rating-alpha', label: 'L', at: NOW });
+        expect(await inbox.removeMute(pool, 'rating-alpha')).toEqual({ type: 'rating-alpha', removed: 0 });
+        await expect(inbox.removeMute(pool, 'a b')).rejects.toMatchObject({ code: 'MUTE_TYPE' });
+        const writes = pool.direct.map(q => q.sql).filter(sql => /INSERT|DELETE|UPDATE/.test(sql));
+        expect(writes.every(sql => /aihankapps_hub_mutes/.test(sql))).toBe(true);
+    });
+});
+

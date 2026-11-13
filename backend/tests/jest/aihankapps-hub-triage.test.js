@@ -25,6 +25,7 @@ describe('alert schedule tool: what is due', () => {
     test('new alerts, and judgements whose time has come again; closed ones and the listing board never', () => {
         expect(triage.due(alert('worker-bad-x'), NOW)).toBe('new');
         expect(triage.due(alert('attention-shopee'), NOW)).toBeNull();
+        expect(triage.due(alert('muted-rating-alpha', { type: 'muted' }), NOW)).toBeNull();      // a fold Hank chose to stop being reminded of
         expect(triage.due(alert('a', { triage: { state: 'done', at: NOW - 100 * HOUR } }), NOW)).toBeNull();
         expect(triage.due(alert('a', { triage: { state: 'auto', at: NOW - 5 * HOUR } }), NOW)).toBeNull();
         expect(triage.due(alert('a', { triage: { state: 'auto', at: NOW - 7 * HOUR } }), NOW)).toBe('recheck-auto');

@@ -100,7 +100,7 @@
     D.services = (hub.services || []).map(svc => Object.assign({ now: (D.services.find(old => old.id === svc.id) || {}).now || null }, svc));
     D.infra = Array.isArray(hub.infra) ? hub.infra : [];
     D.accounts = Array.isArray(hub.accounts) ? hub.accounts : [];
-    D.inbox = hub.inbox && Array.isArray(hub.inbox.feedback) ? hub.inbox : { feedback: [], notes: [], days: 30 };
+    D.inbox = hub.inbox && Array.isArray(hub.inbox.feedback) ? hub.inbox : { feedback: [], notes: [], mutes: [], days: 30 };
     const start = idxOfIso(hub.daily.start);
     Object.keys(D.RAW).forEach(part => { if (!OPS_PARTS[part]) delete D.RAW[part]; });
     Object.keys(hub.daily.series || {}).forEach(part => {
@@ -355,7 +355,8 @@
     ['後台部署失敗', '每一個後台服務', '最新一次部署失敗或執行中當掉', 'crit'],
     ['需要人為介入', 'Wishlist.ai 上架排程', '排程回報它自己解不了的問題（要重新登入、手動通過驗證、金鑰失效、需要決定）', 'crit'],
     ['新的問題回饋', '每一款 APP 的問題回饋（APP 內、LINE、作品集內測回饋）', '近 30 天收到、排程還沒結案的回報；排程看過後會寫下判斷', 'warn'],
-    ['排程請你處理', '警示處理排程（每 15 分鐘看一次所有警示）', '排程判斷這件事只有你能處理，會寫明要你做什麼', 'crit']
+    ['排程請你處理', '警示處理排程（每 15 分鐘看一次所有警示）', '排程判斷這件事只有你能處理，會寫明要你做什麼', 'crit'],
+    ['已略過的類似警告', '你按過「以後略過類似警告」的那一類警示', '同一類的警示合併成這一則、等級是資訊，不再個別提醒；可以取消略過', 'info']
   ];
   const COLLECTORS = { rebound: ['REBOUND 遊戲伺服器', 'REBOUND'], summit: ['活字戰紀伺服器', '雙城烽火、巔峰之戰'], wishlist: ['Wishlist.ai 後台', 'Wishlist.ai'],
     railway: ['Railway 後台資源', '所有放在 Railway 的後台服務', '每個服務的上傳／下載流量、CPU、記憶體、空間、部署狀態'],
@@ -476,8 +477,40 @@
         source: '匯入的後台數據（' + id + '）', basis: { collector: id, collectedAt: c.collectedAt, hoursAgo: Math.floor((now - c.collectedAt) / HOUR) } });
     });
     applyInbox(out);
-    D.ALERTS = out;
+    D.ALERTS = foldMuted(out);
   }
+  // 以後略過類似警告（Hank 2026-11-13）：同一類（同一個 id）的警示合併成一則資訊；沒有成員時也留著，才能取消略過
+  D.muteKey = a => a.id;
+  D.mutable = a => !!a && !/^(human|muted|feedback-(eclaw|fraud|beta|timehut-app|timehut-line))$/.test(a.id);
+  function foldMuted(list) {
+    const mutes = (D.inbox && D.inbox.mutes) || [];
+    if (!mutes.length) return list;
+    const byType = {};
+    mutes.forEach(m => { byType[m.type] = m; });
+    const kept = [], groups = {};
+    list.forEach(a => { if (byType[D.muteKey(a)] && D.mutable(a)) (groups[D.muteKey(a)] = groups[D.muteKey(a)] || []).push(a); else kept.push(a); });
+    mutes.forEach(m => {
+      const members = groups[m.type] || [], apps = [];
+      members.forEach(a => [a.app].concat(a.apps || []).forEach(k => { if (k && apps.indexOf(k) < 0) apps.push(k); }));
+      const first = members.reduce((t, a) => (a.since && (!t || a.since < t) ? a.since : t), null);
+      kept.push({ id: 'muted', sev: 'info', title: '已略過：' + m.label + '（目前 ' + members.length + ' 件）',
+        detail: members.length ? '這一類不再個別提醒，合併在這裡。' : '目前沒有這一類的警示；之後出現也會收在這裡。',
+        rule: RULES[15][0], app: apps.length === 1 ? apps[0] : null, apps: apps.length > 1 ? apps : null, since: first || m.at || null, go: null,
+        ref: 'muted-' + String(m.type).replace(/[^A-Za-z0-9._-]/g, '_'), source: '你按的「以後略過類似警告」', triage: null, quote: null, ask: null,
+        muted: { type: m.type, label: m.label, at: m.at || null, members: members.map(a => ({ ref: a.ref, title: a.title, detail: a.detail, since: a.since || null, triage: a.triage || null })) },
+        basis: { type: m.type, count: members.length, members: members.map(a => a.ref), mutedAt: m.at || null } });
+    });
+    return kept;
+  }
+  // 這款 APP 的警示（側邊欄的紅點／黃點就是它們）
+  D.alertsFor = a => D.ALERTS.filter(x => x.app === a.key || (x.apps && x.apps.indexOf(a.key) >= 0));
+  async function send(method, url, body) {
+    const res = await fetch(url, { method: method, credentials: 'same-origin', cache: 'no-store', headers: Object.assign({ Accept: 'application/json' }, body ? { 'Content-Type': 'application/json' } : {}), body: body ? JSON.stringify(body) : undefined });
+    if (!res.ok) { const e = new Error('HTTP ' + res.status); e.status = res.status; throw e; }
+    return res.json();
+  }
+  D.mute = (type, label, sampleRef) => send('POST', API + '/mutes', { type: type, label: label, sampleRef: sampleRef });
+  D.unmute = type => send('DELETE', API + '/mutes/' + encodeURIComponent(type));
   // 畫面上的順序：要 Hank 處理的排最前面，接著是嚴重、警告、資訊；同一級維持算出來的順序
   D.byUrgency = list => {
     const rank = a => (a.triage && a.triage.state === 'human' ? 0 : a.sev === 'crit' ? 1 : a.sev === 'warn' ? 2 : 3);

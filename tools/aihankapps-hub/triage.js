@@ -33,7 +33,8 @@ const HOUR = 3600000;
 // (did Hank fix it? then the schedule closes it).
 const RECHECK = { auto: 6 * HOUR, human: 12 * HOUR };
 // The Wishlist listing schedules' own board already says what Hank must do; it is managed by those schedules.
-const SKIP_TYPES = [/^attention-/];
+// A fold of alerts Hank chose to stop being reminded of (以後略過類似警告) needs no judgement either.
+const SKIP_TYPES = [/^attention-/, /^muted$/];
 const TIMEHUT_FEEDBACK_URL = 'https://just-healing-production.up.railway.app/api/internal/feedback';
 const TIMEHUT_KEY_FILE = path.join(os.homedir(), '.config', 'aihankapps-hub', 'timehut-stats-key');
 // Worker restarts and image mounts stay with hub-heal.cjs (the Wishlist tools' hourly job), which already does them safely.

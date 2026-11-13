@@ -20,7 +20,12 @@
  *      done  — the schedule closed it (a report that needed nothing, a duplicate, a fixed problem…).
  *    A note may also stand alone (a problem the schedule found that no rule shows): ref "human-<slug>".
  *
- * Everything written lives in the hub's own two tables here; no existing table is written.
+ * 3. Muted alert kinds (aihankapps_hub_mutes; Hank, 2026-11-13: 「新增一個以後略過類似警告 按下之後類似警告會被合併成同一件並以
+ *    info方式留存在頁面上」): one row per alert type Hank chose to stop being reminded of. The page folds every alert of that type
+ *    into one information item (and keeps it, with zero members, so the mute can be undone). Written by the hub page's own
+ *    admin-only POST/DELETE /api/aihankapps/hub/mutes, the hub's only HTTP write.
+ *
+ * Everything written lives in the hub's own three tables here; no existing table is written.
  */
 
 'use strict';
@@ -47,6 +52,8 @@ const SCHEMA = [
         ref TEXT PRIMARY KEY, app_id TEXT, state TEXT NOT NULL CHECK (state IN ('auto', 'human', 'done')), title TEXT,
         note TEXT NOT NULL, ask TEXT, standalone BOOLEAN NOT NULL DEFAULT FALSE, by_who TEXT NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), history JSONB NOT NULL DEFAULT '[]'::jsonb)`,
+    `CREATE TABLE IF NOT EXISTS aihankapps_hub_mutes (
+        type TEXT PRIMARY KEY, label TEXT NOT NULL, sample_ref TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`,
 ];
 const preparations = new WeakMap();
 function prepare(pool) {
@@ -139,7 +146,38 @@ async function readInbox(query, { now = Date.now(), appIds = null } = {}) {
         WHERE state <> 'done' OR updated_at >= $1 ORDER BY updated_at DESC LIMIT 500`, [new Date(since)])).rows
         .map(r => ({ ref: r.ref, app: r.app_id || null, state: r.state, title: r.title || null, note: r.note, ask: r.ask || null, standalone: r.standalone === true,
             by: r.by_who, createdAt: ms(r.created_at), updatedAt: ms(r.updated_at) }));
-    return { feedback, notes, partial, days: FEEDBACK_DAYS };
+    const mutes = (await query('SELECT type, label, sample_ref, created_at FROM aihankapps_hub_mutes ORDER BY created_at LIMIT 200')).rows
+        .map(r => ({ type: r.type, label: r.label, sampleRef: r.sample_ref || null, at: ms(r.created_at) }));
+    return { feedback, notes, mutes, partial, days: FEEDBACK_DAYS };
+}
+
+// ---- muted alert kinds (the page's own admin-only write) --------------------------------------------------------------
+// The type is the alert's kind as the page computes it (worker-bad-timehut-mcode, feedback-eclaw-health, rating-alpha…).
+// Never muted: the schedule's own "needs you" items, a fold, and individual people's reports (muting one would silence a
+// whole app's users); those keep being shown one by one.
+const UNMUTABLE = /^(human|muted|feedback-(eclaw|fraud|beta|timehut-app|timehut-line))$/;
+const MUTE_TYPE = /^[A-Za-z0-9._:-]{1,120}$/;
+function validateMute(input) {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) fail('MUTE_SHAPE');
+    if (Object.keys(input).some(k => !['type', 'label', 'sampleRef'].includes(k))) fail('MUTE_SHAPE');
+    if (typeof input.type !== 'string' || !MUTE_TYPE.test(input.type) || UNMUTABLE.test(input.type)) fail('MUTE_TYPE');
+    const label = clean(input.label, 120);
+    if (!label) fail('MUTE_LABEL');
+    if (input.sampleRef !== undefined && input.sampleRef !== null && (typeof input.sampleRef !== 'string' || !REF.test(input.sampleRef))) fail('MUTE_REF');
+    return { type: input.type, label, sampleRef: input.sampleRef || null };
+}
+async function setMute(pool, input) {
+    const m = validateMute(input);
+    await prepare(pool);
+    const row = (await pool.query(`INSERT INTO aihankapps_hub_mutes (type, label, sample_ref) VALUES ($1, $2, $3)
+        ON CONFLICT (type) DO UPDATE SET label = EXCLUDED.label, sample_ref = EXCLUDED.sample_ref RETURNING type, label, created_at`, [m.type, m.label, m.sampleRef])).rows[0];
+    return { type: m.type, label: m.label, at: row ? ms(row.created_at) : null };
+}
+async function removeMute(pool, type) {
+    if (typeof type !== 'string' || !MUTE_TYPE.test(type)) fail('MUTE_TYPE');
+    await prepare(pool);
+    const r = await pool.query('DELETE FROM aihankapps_hub_mutes WHERE type = $1', [type]);
+    return { type, removed: (r && r.rowCount) || 0 };
 }
 
 // ---- writing (operator scripts only) ---------------------------------------------------------------------------------
@@ -243,4 +281,5 @@ async function importFeedback(pool, envelope, { appIds } = {}) {
     return { source: clean.source, received: clean.items.length, added };
 }
 
-module.exports = { SCHEMA, FEEDBACK_DAYS, NOTE_STATES, IMPORT_SOURCES, prepare, readInbox, validateNote, setNote, listNotes, validateFeedbackEnvelope, importFeedback, sensitive };
+module.exports = { SCHEMA, FEEDBACK_DAYS, NOTE_STATES, IMPORT_SOURCES, prepare, readInbox, validateNote, setNote, listNotes, validateFeedbackEnvelope, importFeedback, sensitive,
+    validateMute, setMute, removeMute, UNMUTABLE };

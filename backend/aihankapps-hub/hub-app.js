@@ -177,7 +177,8 @@
   function sideAppsHtml() {
     return '<h2>APP</h2>' + D.APPS.map(a => {
       const st = D.appState(a), on = S.view === 'app' && S.app === a.id;
-      return '<a class="sa' + (on ? ' is-on' : '') + '" href="#app-' + a.id + '" title="' + esc(a.name + '・' + STATE[st][0]) + '"><i class="sd sd-' + st + '"></i><span>' + esc(a.short) + '</span>' + (st === 'crit' || st === 'warn' ? ico(st, 'sa-i st-' + st) : '') + '</a>';
+      const why = st === 'crit' || st === 'warn' ? D.byUrgency(D.alertsFor(a)).filter(x => x.sev === 'crit' || x.sev === 'warn').map(x => x.title) : [];
+      return '<a class="sa' + (on ? ' is-on' : '') + '" href="#app-' + a.id + '" title="' + esc(a.name + '・' + STATE[st][0] + (why.length ? '：' + why.slice(0, 3).join('；') + (why.length > 3 ? '…等 ' + why.length + ' 件' : '') : '')) + '"><i class="sd sd-' + st + '"></i><span>' + esc(a.short) + '</span>' + (st === 'crit' || st === 'warn' ? ico(st, 'sa-i st-' + st) : '') + '</a>';
     }).join('');
   }
   function filtersHtml() {
@@ -794,6 +795,7 @@
         return p.url && p.public ? '<a class="pl" href="' + esc(p.url) + '" target="_blank" rel="noopener">' + label + ico('ext') + '</a>' : '<span class="pl' + (p.public ? '' : ' is-off') + '">' + label + '</span>';
       }).join('') + links + '</div></div>' + pill(D.appState(a)) + '</header>' +
       (a.stage === 'dev' ? '<p class="note">' + ico('info') + '這款還沒有公開上架，商店相關的指標會是空的。</p>' : '') +
+      appAlertsHtml(a) +
       (keys.length ? tilesHtml(APP_TILE_ORDER.filter(k => keys.indexOf(k) >= 0).slice(0, 6), list) + '<div class="grid">' + explorerHtml('c-8', keys, true) + platCardHtml(a) + '</div>' : '<p class="note">' + ico('info') + '這款 APP 目前沒有任何數據來源。</p>') +
       backendHtml(a) + retentionHtml(a, '') + '<div class="grid">' + feedbackCardHtml(list, 'c-7') + appFreshHtml(a, keys) + '</div>';
     if (keys.length) { mountTiles(el, list); mountExplorer(el, list); }
@@ -803,6 +805,14 @@
   }
 
   // ---- 警示 ----------------------------------------------------------------------
+  // Hank 2026-11-13「管理中樞側邊欄位有異常icon 但我點入之後 該APP頁面沒有出現任何異常的數據」：APP 頁最上面列出這款 APP 的警示
+  function appAlertsHtml(a) {
+    const list = D.byUrgency(D.alertsFor(a));
+    if (!list.length) return '';
+    const crit = list.filter(x => x.sev === 'crit').length, warn = list.filter(x => x.sev === 'warn').length, human = list.filter(x => x.triage && x.triage.state === 'human').length;
+    const sub = [crit ? crit + ' 件嚴重' : '', warn ? warn + ' 件警告' : '', list.length - crit - warn ? (list.length - crit - warn) + ' 件資訊' : ''].filter(Boolean).join('、') + (human ? '；其中 ' + human + ' 件要你處理' : '') + '。側邊欄的紅點／黃點就是它們';
+    return '<section class="card al-app is-' + (crit ? 'crit' : warn ? 'warn' : 'info') + '" id="app-alerts">' + cardHead('這款 APP 的警示', sub) + '<div class="al-list">' + list.map(alertHtml).join('') + '</div></section>';
+  }
   function alertHtml(a) {
     const app = D.BYKEY[a.app || (a.apps || [])[0]] || null, acked = isAcked(a);
     // 問題回饋的原文、排程的判斷、要 Hank 做的事（Hank 2026-11-13「讓我看到需要我怎麼幫忙」）
@@ -810,11 +820,14 @@
     const ask = a.ask ? '<p class="al-ask"><b>要你做的事</b>' + esc(a.ask) + '</p>' : '';
     const triage = tr ? '<p class="al-tr al-tr-' + esc(tr.state) + '"><b>' + esc(tr.label) + '</b><span>' + esc(tr.note) + '</span>' + (tr.at ? '<span class="muted">排程更新於 <span data-ago="' + tr.at + '"></span></span>' : '') + '</p>'
       : (a.rule === '新的問題回饋' ? '<p class="al-tr al-tr-new"><b>排程還沒看過</b><span>警示處理排程每 15 分鐘看一次新的警示。</span></p>' : '');
-    return '<article class="al al-' + (acked ? 'acked' : 'firing') + '"><div class="al-m">' + pill(a.sev, SEV[a.sev]) + '<div class="al-t"><h3>' + esc(a.title) + '</h3>' + (a.ask && a.detail === a.ask ? '' : '<p>' + esc(a.detail) + '</p>') + ask + quote + triage + '</div></div>' +
+    const mu = a.muted, members = mu ? '<ul class="al-mu">' + mu.members.map(m => '<li><b>' + esc(m.title) + '</b><span>' + esc(m.detail || '') + '</span>' + (m.since ? '<span class="muted">開始於 <span data-ago="' + m.since + '"></span></span>' : '') + '<code>' + esc(m.ref) + '</code></li>').join('') + '</ul>' : '';
+    const muteBtn = mu ? '<button type="button" class="btn" data-act="al-unmute" data-v="' + esc(mu.type) + '" title="這一類警示恢復個別提醒">取消略過</button>'
+      : D.mutable(a) ? '<button type="button" class="btn-ghost" data-act="al-mute" data-v="' + esc(D.muteKey(a)) + '" data-label="' + esc(String(a.title).replace(/^需要你處理：/, '').replace(/[（(]已回報 \d+ 次[）)]$/, '')) + '" data-ref="' + esc(a.ref) + '" title="以後這一類警示合併成一則資訊，不再個別提醒">以後略過類似警告</button>' : '';
+    return '<article class="al al-' + (acked ? 'acked' : 'firing') + '"><div class="al-m">' + pill(a.sev, SEV[a.sev]) + '<div class="al-t"><h3>' + esc(a.title) + '</h3>' + (a.ask && a.detail === a.ask ? '' : '<p>' + esc(a.detail) + '</p>') + ask + quote + triage + members + '</div></div>' +
       '<div class="al-w"><span class="al-s as-' + (acked ? 'acked' : 'firing') + '">' + (acked ? '已確認' : '觸發中') + '</span><span class="muted">規則：' + esc(a.rule) + '</span>' + (a.since ? '<span class="muted">開始於 <span data-ago="' + a.since + '"></span></span>' : '') + '</div>' +
       '<div class="al-id"><span class="al-id-l">通知 ID</span><code class="al-id-v">' + esc(a.ref) + '</code><button type="button" class="btn-ghost al-id-b" data-act="al-copy" data-v="' + esc(a.ref) + '" aria-label="複製通知 ID ' + esc(a.ref) + '" title="複製通知 ID，貼給 AI 就能查這則通知">' + ico('copy') + '複製</button></div><div class="al-a">' +
       (acked ? '<button type="button" class="btn" data-act="al-unack" data-v="' + esc(a.id) + '">取消確認</button>' : '<button type="button" class="btn is-primary" data-act="al-ack" data-v="' + esc(a.id) + '">確認，我知道了</button>') +
-      (a.go ? '<a class="btn" href="#' + a.go + '">' + (a.go === 'live' ? '看即時監控' : '看資料來源') + '</a>' : '') + (app ? '<a class="btn" href="#app-' + app.id + '">開啟 ' + esc(app.short) + '</a>' : '') + '</div></article>';
+      (a.go ? '<a class="btn" href="#' + a.go + '">' + (a.go === 'live' ? '看即時監控' : '看資料來源') + '</a>' : '') + (app && !(S.view === 'app' && S.app === app.id) ? '<a class="btn" href="#app-' + app.id + '">開啟 ' + esc(app.short) + '</a>' : '') + muteBtn + '</div></article>';
   }
   function viewAlerts(el) {
     const all = D.byUrgency(D.ALERTS), cnt = { all: all.length, firing: all.filter(a => !isAcked(a)).length };
@@ -1023,6 +1036,16 @@
     'al-ack': v => { S.acks[v] = Date.now(); store.set('acks', S.acks); render(); },
     'al-unack': v => { delete S.acks[v]; store.set('acks', S.acks); render(); },
     'al-copy': v => copyText(v, '已複製通知 ID：' + v, '沒辦法自動複製，請直接選取通知 ID'),
+    'al-mute': (v, el) => {
+      const label = el.dataset.label || v;
+      if (!window.confirm('以後「' + label + '」這一類的警示會合併成一則資訊，不再個別提醒。\n之後可以在那一則按「取消略過」恢復。確定嗎？')) return;
+      el.disabled = true;
+      D.mute(v, label, el.dataset.ref).then(() => { toast('已略過這一類警示，合併成一則資訊'); return refreshData(true); }).catch(() => { el.disabled = false; toast('沒有存起來，請再試一次'); });
+    },
+    'al-unmute': (v, el) => {
+      el.disabled = true;
+      D.unmute(v).then(() => { toast('這一類警示恢復個別提醒'); return refreshData(true); }).catch(() => { el.disabled = false; toast('沒有存起來，請再試一次'); });
+    },
     'pal-run': v => palRun(+v)
   };
   document.addEventListener('click', e => {
