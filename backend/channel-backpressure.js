@@ -18,7 +18,8 @@ function getState(key) {
             timestamps: [],
             consecutiveFailures: 0,
             backoffUntil: 0,
-            lastReason: null
+            lastReason: null,
+            lastSuccessAt: 0 // when the callback last accepted a push (passive-health reads it)
         });
     }
     return channelBackpressureState.get(key);
@@ -86,6 +87,7 @@ function recordChannelPushResult(target, result = {}, opts = {}) {
     const state = getState(key);
 
     if (result.success) {
+        state.lastSuccessAt = now;
         state.consecutiveFailures = 0;
         state.backoffUntil = 0;
         state.lastReason = null;
@@ -120,7 +122,8 @@ function getChannelBackpressureSnapshot(target) {
         timestamps: [...state.timestamps],
         consecutiveFailures: state.consecutiveFailures,
         backoffUntil: state.backoffUntil,
-        lastReason: state.lastReason
+        lastReason: state.lastReason,
+        lastSuccessAt: state.lastSuccessAt || 0
     };
 }
 

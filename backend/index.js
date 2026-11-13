@@ -22386,6 +22386,8 @@ passiveHealth.init({
     getChannelAccountById: db.getChannelAccountById,
     isReady: () => persistenceReady,
     selfBaseUrl: `http://localhost:${port}`,
+    // A push the callback accepted recently outweighs a failed /health probe.
+    getPushSnapshot: target => require('./channel-backpressure').getChannelBackpressureSnapshot(target),
     // Live-push the transient healthChecking flag so portal clients flip the
     // 健檢中 (health-checking) animation on/off in real time. Reuses the same
     // 'entity:update' Socket.IO room-per-device pattern as Discord/bot register.
