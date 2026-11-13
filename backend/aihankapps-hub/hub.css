@@ -670,3 +670,5 @@ th[data-tip]{cursor:help}
   .th-drill{grid-template-columns:1fr}
   .th-q{min-width:0;flex:1}
 }
+.th-tag-qa{background:var(--panel-2);color:var(--ink-2);box-shadow:inset 0 0 0 1px var(--line-2)}
+.th-panel-acts{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px}
