@@ -26,6 +26,13 @@
     return Math.round(d / (30 * DAY)) + ' 個月前';
   };
   const dayLabel = d => d.slice(5).replace('-', '/');
+  // 台北日期（流量是按台北日期記的）→「今天／昨天／N 天前」
+  const dayAgo = d => {
+    const today = new Date(Date.now() + 8 * HOUR).toISOString().slice(0, 10), n = Math.round((Date.parse(today) - Date.parse(d)) / DAY);
+    return n <= 0 ? '今天' : n === 1 ? '昨天' : n + ' 天前';
+  };
+  // 伺服器沒有記登入時間（1.0.118 讀到的都是空值），就用流量紀錄裡最後有請求的那天；兩者都沒有就不寫，不說「沒有登入紀錄」
+  const seenText = u => (u.lastLoginAt ? '最近登入 ' + ago(u.lastLoginAt) : u.activeDay ? '最近使用 ' + dayAgo(u.activeDay) : '');
   const store = {
     get(k, d) { try { const v = localStorage.getItem('hub.th.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
     set(k, v) { try { localStorage.setItem('hub.th.' + k, JSON.stringify(v)); } catch (e) { /* 存不了就不存 */ } }
@@ -40,7 +47,7 @@
   };
   const GROUPS = [
     ['recv', '收到本地', 'var(--s1)'], ['queue', '排隊／辨識中', 'var(--s4)'], ['importing', '匯入中', 'var(--s7)'], ['merged', '併入相簿', 'var(--s3)'],
-    ['excluded', '排除', 'var(--deemph)'], ['blocked', '卡住', 'var(--serious)'], ['failed', '失敗', 'var(--crit)'], ['other', '其他', 'var(--line-2)']
+    ['excluded', '排除', 'var(--deemph)'], ['blocked', '卡住', 'var(--serious)'], ['failed', '失敗', 'var(--crit)'], ['other', '不明／已停止', 'var(--line-2)']
   ];
   const GROUP = Object.fromEntries(GROUPS.map(g => [g[0], g]));
   const WAITING = ['recv', 'queue', 'importing'];
@@ -70,9 +77,10 @@
     const waiting = WAITING.reduce((a, k) => a + g[k], 0), problems = g.failed + g.blocked;
     const oldest = u.line && u.line.oldestWaitingAt, waitAge = oldest ? Date.now() - oldest : 0;
     const traffic30 = u.traffic && u.traffic.days ? u.traffic.days.reduce((a, d) => a + d[2], 0) : null;
+    const activeDay = u.traffic && u.traffic.days ? u.traffic.days.filter(d => (d[1] || 0) + (d[2] || 0) > 0).map(d => d[0]).sort().pop() || null : null;
     const uploaded = (u.history && (u.history.appUploadBytes || 0) + (u.history.lineReceivedBytes || 0)) || 0;
     const attention = problems > 0 || waitAge > 6 * HOUR || (u.ai && u.ai.failed > 0) || (u.uploads && u.uploads.failed > 0);
-    return Object.assign({}, u, { g, received, waiting, problems, waitAge, traffic30, uploadedBytes: uploaded, attention });
+    return Object.assign({}, u, { g, received, waiting, problems, waitAge, traffic30, activeDay, uploadedBytes: uploaded, attention });
   }
   function insights(users, meta) {
     const out = [], all = users.reduce((a, u) => { GROUPS.forEach(g => { a[g[0]] += u.g[g[0]]; }); a.n += u.received; return a; }, Object.assign({ n: 0 }, Object.fromEntries(GROUPS.map(g => [g[0], 0]))));
@@ -189,7 +197,7 @@
         const open = S.open === u.ref;
         const cell = (v, bad) => '<td class="num' + (bad ? ' is-bad' : '') + '">' + v + '</td>';
         return '<tr class="is-click' + (open ? ' is-sel' : '') + '" tabindex="0" data-th="open" data-v="' + u.ref + '" aria-expanded="' + open + '">' +
-          '<td><div class="th-who"><b>' + esc(u.name) + '</b>' + (u.owner ? '<span class="th-tag">擁有者</span>' : '') + (u.attention ? '<i class="sd sd-warn" data-tip="需要注意"></i>' : '') + '<span class="muted">' + esc(u.login) + '・' + (u.lastLoginAt ? '最近登入 ' + ago(u.lastLoginAt) : '沒有登入紀錄') + '</span></div></td>' +
+          '<td><div class="th-who"><b>' + esc(u.name) + '</b>' + (u.owner ? '<span class="th-tag">擁有者</span>' : '') + (u.attention ? '<i class="sd sd-warn" data-tip="需要注意"></i>' : '') + '<span class="muted">' + esc(u.login) + (seenText(u) ? '・' + seenText(u) : '') + '</span></div></td>' +
           cell(int(u.media.albums)) + cell(int(u.media.photos)) + cell(int(u.media.videos)) + cell(int(u.received)) + '<td>' + stackBar(u.g, u.received) + '</td>' +
           cell(int(u.g.merged)) + cell(int(u.g.excluded)) + cell(int(u.waiting) + (u.waitAge > 6 * HOUR ? '<small class="th-age"> 最久 ' + ago(u.line.oldestWaitingAt).replace('前', '') + '</small>' : ''), u.waitAge > DAY) +
           cell(int(u.problems), u.problems > 0) + cell(bytes(u.uploadedBytes)) + cell(u.traffic30 == null ? '<span class="muted" data-tip="這位用戶還沒有流量紀錄">—</span>' : bytes(u.traffic30)) +
@@ -208,7 +216,7 @@
       const u = users.find(x => x.ref === S.open);
       if (!u) return '';
       return '<section class="th-panel" id="th-panel" aria-label="' + esc(u.name) + ' 的詳細"><header class="th-panel-h"><div><h3>' + esc(u.name) + (u.owner ? '<span class="th-tag">擁有者</span>' : '') + '</h3><p class="muted">' + esc(u.login) + '・' +
-        (u.createdAt ? '註冊於 ' + new Date(u.createdAt).toLocaleDateString('zh-TW') : '註冊時間不明') + '・' + (u.lastLoginAt ? '最近登入 ' + ago(u.lastLoginAt) : '沒有登入紀錄') + '</p></div>' +
+        (u.createdAt ? '註冊於 ' + new Date(u.createdAt).toLocaleDateString('zh-TW') : '註冊時間不明') + (seenText(u) ? '・' + seenText(u) : '') + '</p></div>' +
         '<button type="button" class="btn-ghost" data-th="open" data-v="' + u.ref + '" aria-label="關閉詳細">關閉</button></header>' + drill(u, meta) + '</section>';
     };
     const stamp = () => '<p class="hint">' + '資料時間 ' + esc(meta.asOf ? new Date(meta.asOf).toLocaleString('zh-TW', { hour12: false }) : '—') + (meta.version ? '・伺服器 ' + esc(meta.version) : '') +
@@ -241,8 +249,10 @@
 
   // ---- 單一用戶的詳細 ------------------------------------------------------------
   function drill(u, meta) {
-    const l = u.line, n = u.received, recognized = l ? l.recognized || 0 : 0;
-    const funnel = n ? [['LINE 收到', n, 'var(--s1)'], ['完成辨識', recognized, 'var(--s4)'], ['併入相簿', u.g.merged, 'var(--s3)'], ['排除', u.g.excluded, 'var(--deemph)']] : [];
+    // 「辨識有結果」用階段算（已辨識待匯入＋匯入中＋併入＋排除），所以一定不少於下面的併入＋排除；
+    // 伺服器的 recognized 只數有「辨識完成」標記的照片，較早的照片沒有這個標記，會比併入＋排除還少。
+    const l = u.line, n = u.received, st = (l && l.stages) || {}, decided = (st.recognized || 0) + (st.uploading || 0) + (st.uploaded || 0) + (st.excluded || 0);
+    const funnel = n ? [['LINE 收到', n, 'var(--s1)'], ['辨識有結果', decided, 'var(--s4)'], ['併入相簿', u.g.merged, 'var(--s3)'], ['排除', u.g.excluded, 'var(--deemph)']] : [];
     const funnelHtml = funnel.length ? '<div class="th-fn">' + funnel.map(f => '<div class="th-fn-r"><span>' + esc(f[0]) + '</span><span class="th-fn-b"><i style="width:' + Math.max(2, pct(f[1], n)) + '%;background:' + f[2] + '"></i></span><b>' + int(f[1]) + '</b><em>' + pct(f[1], n) + '%</em></div>').join('') + '</div>' : '<p class="empty">這位用戶還沒有透過 LINE 傳照片。</p>';
     const stages = l ? Object.keys(STAGE).filter(k => l.stages[k]).map(k => '<tr><td><i class="th-dot" style="background:' + GROUP[STAGE[k][1]][2] + '"></i>' + esc(STAGE[k][0]) + '</td><td class="num">' + int(l.stages[k]) + '</td><td class="num muted">' + pct(l.stages[k], n) + '%</td></tr>').join('') : '';
     const reasons = l ? Object.entries(l.reasons || {}).sort((a, b) => b[1] - a[1]).map(([k, v]) => '<tr><td>' + esc(reasonText(k)) + '</td><td class="num">' + int(v) + '</td></tr>').join('') : '';
