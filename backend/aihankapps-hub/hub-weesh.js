@@ -199,7 +199,8 @@
       }
       if (name === 'sort') { S.sort = S.sort.k === v ? { k: v, dir: -S.sort.dir } : { k: v, dir: v === 'name' ? 1 : -1 }; store.set('sort', S.sort); paint('[data-ws="sort"][data-v="' + v + '"]'); return; }
       if (name === 'filter') { S.filter = v; S.group = null; if (FILTERS.some(f => f[0] === v)) store.set('filter', v); paint('[data-ws="filter"][data-v="' + v + '"]'); return; }
-      if (name === 'group') { S.group = S.group === v ? null : v; paint(); return; }
+      // 「只有註冊」本身就是一個階段：再點階段長條時先放掉它，免得兩個條件互斥、整張表變空
+      if (name === 'group') { S.group = S.group === v ? null : v; if (S.group && S.filter === 'idle') { S.filter = 'all'; store.set('filter', 'all'); } paint(); return; }
       if (name === 'focus') {
         S.open = v; S.filter = 'all'; S.group = null; S.q = ''; store.set('open', v); store.set('filter', 'all'); paint('tr[data-ws="open"][data-v="' + v + '"]');
         const p = el.querySelector('#ws-panel'); if (p && p.scrollIntoView) p.scrollIntoView({ block: 'start', behavior: 'smooth' });

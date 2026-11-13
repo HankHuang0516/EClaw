@@ -1100,6 +1100,15 @@ describe('admin hub: Weesh 帳戶智慧數據庫 (hub-weesh.js)', () => {
         expect(el.innerHTML).toMatch(/刊登中<\/td><td class="num">2<\/td><td class="num muted">40%/);
         expect(el.innerHTML).toContain('近 30 天活動');
         expect(el.innerHTML).not.toMatch(/https?:\/\//);
+        // the stage bar and the "只有註冊" filter are the same question: picking a stage lets go of that filter instead of emptying the table
+        const idleFirst = { innerHTML: '', querySelector: () => null, contains: () => true };
+        const W2 = boot({ 'hub.ws.filter': 'idle' });
+        W2.mount(idleFirst, W2.fromFacts(facts));
+        expect(idleFirst.innerHTML).toMatch(/data-ws="filter" data-v="idle" aria-pressed="true"/);
+        idleFirst.onclick({ target: { closest: () => ({ dataset: { ws: 'group', v: 'done' } }) }, preventDefault() {} });
+        expect(idleFirst.innerHTML).toMatch(/data-ws="filter" data-v="all" aria-pressed="true"/);
+        expect(idleFirst.innerHTML).toContain('只看「完成面交」');
+        expect(idleFirst.innerHTML).not.toContain('沒有符合條件的帳戶');
         const empty = { innerHTML: '' };
         boot().mount(empty, { meta: null, users: [] });
         expect(empty.innerHTML).toMatch(/還沒有帳戶明細/);
