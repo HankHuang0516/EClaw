@@ -21,6 +21,17 @@
  * cooldown. If still unhealthy → file a bug via the device-feedback module.
  * Every step is logged to the entity status log (entity_operation_log).
  *
+ * One outage is one incident, not one per sweep (2026-11-13). An entity that
+ * stays unhealthy used to get 3 repair attempts, a feedback row and a GitHub
+ * issue on EVERY sweep, forever, so entities that never recovered kept opening
+ * duplicate issues. Now, counted from the entity's last healthy check:
+ *   - repairs back off: the first failed cycle is retried after a day, twice,
+ *     then once a week (REPAIR_RETRY_MS / REPAIR_RETRY_SLOW_MS);
+ *   - the same failure is reported once, then at most once a week while it lasts
+ *     (REPORT_REPEAT_MS). A recovery in between starts a new incident.
+ * And the callback probe no longer calls a host down because it has no /health
+ * route: see probeCallback().
+ *
  * Endpoints (auth = deviceId + deviceSecret, mirrors /api/logs):
  *   GET /api/channel/passive-health/:entityId  — compute one entity (no repair)
  *   GET /api/passive-health/settings           — read per-device settings block
@@ -48,6 +59,10 @@ let selfBaseUrl = 'http://localhost:3000'; // base URL for internal self-repair 
 // live Socket.IO entity-update to portal clients so the 健檢中 (health-checking)
 // animation flips on/off in real time. No-op if not wired.
 let emitEntityUpdate = null;
+// Optional (injected): getPushSnapshot({ deviceId, entityId, channelAccountId }) →
+// channel-backpressure's view of recent pushes to this callback, or null.
+let getPushSnapshot = null;
+let repairSpacingMs = null; // tests shorten the wait between repair attempts
 
 // ── Settings defaults (stored under prefs.passiveHealth) ──────────────────────
 const SETTINGS_DEFAULTS = {
@@ -73,6 +88,18 @@ const OPEN_FAIL_THRESHOLD = 3;
 const STUCK_PENDING_THRESHOLD = 3;
 const HEARTBEAT_STALE_MS = 300_000; // 5 min — matches index.js ENTITY_HEARTBEAT_STALE_MS default
 const HEALTH_PROBE_TIMEOUT_MS = 4_000;
+// Gateway answers that mean "nothing is listening behind this address" (a tunnel or
+// proxy speaking for a dead origin). Any other answer — 404, 405, 501, even 500 —
+// came from the host itself: it is up, it just has no health route there.
+const PROBE_DOWN_STATUSES = new Set([502, 503, 504, 520, 521, 522, 523, 524, 525, 526, 527, 530]);
+// A push the callback accepted this recently (with no failure since) outweighs a
+// failed probe: the entity demonstrably receives messages.
+const PUSH_EVIDENCE_MS = 6 * 60 * 60 * 1000;
+// While one incident lasts (no healthy check in between):
+const REPAIR_RETRY_MS = 24 * 60 * 60 * 1000;          // after the 1st and 2nd failed repair cycle
+const REPAIR_RETRY_SLOW_MS = 7 * 24 * 60 * 60 * 1000; // from the 3rd failed cycle on
+const REPAIR_FAST_CYCLES = 3;
+const REPORT_REPEAT_MS = 7 * 24 * 60 * 60 * 1000;     // the same failure is re-reported at most weekly
 const USAGE_WARNING_ENGINES = new Set(['claude', 'codex']);
 
 function init(opts) {
@@ -85,6 +112,8 @@ function init(opts) {
     if (typeof opts.isReady === 'function') isReady = opts.isReady;
     if (opts.selfBaseUrl) selfBaseUrl = opts.selfBaseUrl;
     if (typeof opts.emitEntityUpdate === 'function') emitEntityUpdate = opts.emitEntityUpdate;
+    getPushSnapshot = typeof opts.getPushSnapshot === 'function' ? opts.getPushSnapshot : null;
+    repairSpacingMs = Number.isFinite(opts.repairSpacingMs) ? opts.repairSpacingMs : null;
 }
 
 // Best-effort live push of the in-memory healthChecking flag. Never throws —
@@ -307,14 +336,63 @@ function collectHeartbeatSignal(entity, nowMs) {
     };
 }
 
-async function resolveChannel(entity) {
+// One GET, three possible readings. 'ok' = 2xx. 'down' = no answer, or a gateway
+// answering for a dead origin. 'answered' = the host itself replied with something
+// else, which says it is alive and says nothing about its health.
+async function probeHealthUrl(url) {
+    try {
+        const resp = await fetch(url, { method: 'GET', signal: AbortSignal.timeout(HEALTH_PROBE_TIMEOUT_MS) });
+        if (resp.ok) return 'ok';
+        return PROBE_DOWN_STATUSES.has(resp.status) ? 'down' : 'answered';
+    } catch {
+        return 'down';
+    }
+}
+
+/**
+ * Is the callback's host alive? Looks for /health beside the webhook first
+ * (https://host/codex12/eclaw-webhook → https://host/codex12/health), because a
+ * tunnel that routes by path sends the host's root somewhere else entirely, then
+ * at the host's root. Returns { healthy: true | false | null, beside, root }:
+ * null = the host answers but offers no health route, so the probe has no opinion.
+ * (Before 2026-11-13 only the root was asked and anything but 2xx meant unhealthy:
+ * a Python bridge answering 501 to GET, and a bridge living under a path prefix,
+ * were "repaired" three times every sweep while delivering messages normally.)
+ */
+async function probeCallback(callbackUrl) {
+    const u = new URL(callbackUrl);
+    const origin = `${u.protocol}//${u.host}`;
+    const rootUrl = `${origin}/health`;
+    const besideUrl = `${origin}${u.pathname.replace(/\/[^/]*\/?$/, '')}/health`;
+    const beside = besideUrl === rootUrl ? null : await probeHealthUrl(besideUrl);
+    if (beside === 'ok') return { healthy: true, beside, root: null };
+    const root = await probeHealthUrl(rootUrl);
+    if (beside === 'down') return { healthy: false, beside, root };       // the webhook's own address is dead
+    if (root === 'ok') return { healthy: true, beside, root };
+    if (beside === 'answered') return { healthy: null, beside, root };    // alive; the root belongs to something else
+    return { healthy: root === 'down' ? false : null, beside, root };
+}
+
+// True when the callback accepted a push recently and none has failed since.
+function recentPushOk(deviceId, entityId, channelAccountId, nowMs) {
+    if (!getPushSnapshot) return false;
+    try {
+        const snap = getPushSnapshot({ deviceId, entityId, channelAccountId });
+        return !!snap && snap.consecutiveFailures === 0 && Number.isFinite(snap.lastSuccessAt)
+            && nowMs - snap.lastSuccessAt >= 0 && nowMs - snap.lastSuccessAt <= PUSH_EVIDENCE_MS;
+    } catch {
+        return false;
+    }
+}
+
+async function resolveChannel(entity, deviceId, entityId) {
     // callbackActive distinguishes "this entity literally cannot be reached/reply"
     // (no callback_url registered on its channel account) from "callback is set but
     // unhealthy" (callbackHealthy:false). A live daemon with no callback registered
     // is the #6-Codex failure mode: the process is up so liveness looks green, yet
     // EClaw has nowhere to push a message, so the entity can never receive/reply.
     // null = unknown (no account record / lookup failed); we don't assert either way.
-    const out = { provider: null, callbackHealthy: null, callbackActive: null };
+    const out = { provider: null, callbackHealthy: null, callbackActive: null, callbackProbe: null };
     if (!entity || !entity.channelAccountId || !getChannelAccount) return out;
     let account = null;
     try {
@@ -325,18 +403,19 @@ async function resolveChannel(entity) {
     out.callbackActive = !!account.callback_url;
     if (!account.callback_url) return out; // registered=false; no provider, no probe
     out.provider = deriveProvider ? deriveProvider(account.callback_url) : null;
-    // Optional cheap GET to the callback host's /health. Best-effort: a failure
-    // here is one signal among several, never the sole verdict.
+    // Cheap GETs to the callback host's /health (see probeCallback). A failed probe
+    // is overruled by a push the callback accepted recently: that is the thing the
+    // probe is trying to predict.
     try {
-        const u = new URL(account.callback_url);
-        const healthUrl = `${u.protocol}//${u.host}/health`;
-        const resp = await fetch(healthUrl, {
-            method: 'GET',
-            signal: AbortSignal.timeout(HEALTH_PROBE_TIMEOUT_MS),
-        });
-        out.callbackHealthy = resp.ok;
+        const probe = await probeCallback(account.callback_url);
+        out.callbackProbe = { beside: probe.beside, root: probe.root };
+        out.callbackHealthy = probe.healthy;
+        if (probe.healthy === false && recentPushOk(deviceId, entityId, account.id, Date.now())) {
+            out.callbackHealthy = null;
+            out.callbackProbe.overruledByPush = true;
+        }
     } catch {
-        out.callbackHealthy = false;
+        out.callbackHealthy = false; // callback_url is not a URL at all
     }
     return out;
 }
@@ -355,7 +434,7 @@ async function computePassiveHealth(deviceId, entityId) {
     const nowMs = Date.now();
     const errorSignals = await collectErrorSignals(deviceId, entityId);
     const heartbeat = collectHeartbeatSignal(entity, nowMs);
-    const channel = await resolveChannel(entity);
+    const channel = await resolveChannel(entity, deviceId, entityId);
 
     const failing = [];
     const maxOpen = Object.values(errorSignals.openByAxis).reduce((m, v) => Math.max(m, v), 0);
@@ -413,6 +492,7 @@ async function computePassiveHealth(deviceId, entityId) {
             heartbeatStale: heartbeat.heartbeatStale,
             callbackHealthy: channel.callbackHealthy,
             callbackActive: channel.callbackActive,
+            callbackProbe: channel.callbackProbe,
         },
         checkedAt: new Date(nowMs).toISOString(),
     };
@@ -499,9 +579,92 @@ async function fileBugIssue(deviceId, deviceSecret, entityId, provider, failingS
 }
 
 /**
+ * Where an unhealthy entity stands in its current incident, read from its own
+ * status log: an incident runs from the entity's last healthy check to now.
+ * failedCycles counts the repair cycles that ended without a recovery since then
+ * (every such cycle logs one self_repair event carrying `filed`; the no-callback
+ * shortcut is not a repair cycle). Repairs are due at once on a new incident,
+ * a day after the 1st and 2nd failed cycle, a week after every later one.
+ * A read error answers "due": better one needless repair than a silent outage.
+ */
+async function incidentState(deviceId, entityId, nowMs) {
+    const state = { healthyAt: 0, failedCycles: 0, lastCycleAt: 0, repairDue: true, nextRepairAt: nowMs };
+    if (!pool) return state;
+    try {
+        const healthy = await pool.query(
+            `SELECT occurred_at
+               FROM entity_operation_log
+              WHERE device_id = $1 AND entity_id = $2 AND event_type = 'passive_health'
+                AND event_payload->>'healthy' = 'true'
+              ORDER BY occurred_at DESC LIMIT 1`,
+            [deviceId, entityId]
+        );
+        if (healthy.rows[0]) state.healthyAt = new Date(healthy.rows[0].occurred_at).getTime() || 0;
+        const cycles = await pool.query(
+            `SELECT COUNT(*)::int AS failed_cycles, MAX(occurred_at) AS last_cycle_at
+               FROM entity_operation_log
+              WHERE device_id = $1 AND entity_id = $2 AND event_type = 'self_repair'
+                AND event_payload ? 'filed'
+                AND COALESCE(event_payload->>'reason', '') <> 'no_callback'
+                AND occurred_at > $3`,
+            [deviceId, entityId, new Date(state.healthyAt)]
+        );
+        const row = cycles.rows[0] || {};
+        state.failedCycles = Number(row.failed_cycles) || 0;
+        state.lastCycleAt = row.last_cycle_at ? (new Date(row.last_cycle_at).getTime() || 0) : 0;
+    } catch (err) {
+        console.error('[PassiveHealth] incidentState query failed:', err.message);
+        return state;
+    }
+    if (state.failedCycles > 0) {
+        const wait = state.failedCycles < REPAIR_FAST_CYCLES ? REPAIR_RETRY_MS : REPAIR_RETRY_SLOW_MS;
+        state.nextRepairAt = state.lastCycleAt + wait;
+        state.repairDue = nowMs >= state.nextRepairAt;
+    }
+    return state;
+}
+
+// "open_errors:5" and "open_errors:7" are the same failure; compare signal names only.
+function signalKinds(list) {
+    return [...new Set((Array.isArray(list) ? list : []).map(x => String(x).split(':')[0]))].sort().join(',');
+}
+
+/**
+ * File the bug unless this incident's failure is already on record: a passive-health
+ * report for the same entity, with the same failing signals, made since the entity
+ * was last healthy and within the last week. Then nothing new is written — no
+ * feedback row, no GitHub issue — and the earlier report is returned instead.
+ */
+async function reportOnce(deviceId, deviceSecret, entityId, provider, failingSignals, incident, nowMs) {
+    const since = Math.max((incident && incident.healthyAt) || 0, nowMs - REPORT_REPEAT_MS);
+    if (pool) {
+        try {
+            const r = await pool.query(
+                `SELECT id, created_at, github_issue_url, log_snapshot->'failingSignals' AS signals
+                   FROM feedback
+                  WHERE device_id = $1 AND app_version = 'passive-health'
+                    AND log_snapshot->>'entityId' = $2 AND created_at > $3
+                  ORDER BY created_at DESC LIMIT 1`,
+                [deviceId, String(entityId), since]
+            );
+            const prior = r.rows[0];
+            if (prior && signalKinds(prior.signals) === signalKinds(failingSignals)) {
+                return { filed: false, reason: 'already_reported', feedbackId: prior.id, issueUrl: prior.github_issue_url || null,
+                    nextReportAt: Number(prior.created_at) + REPORT_REPEAT_MS };
+            }
+        } catch (err) {
+            console.error('[PassiveHealth] reportOnce lookup failed:', err.message);
+        }
+    }
+    return fileBugIssue(deviceId, deviceSecret, entityId, provider, failingSignals);
+}
+
+/**
  * Run passive health for one entity AND act on the verdict: log the result,
  * and on unhealthy+autoRepair attempt repair up to 3 times (spaced past the
- * 60s cooldown), then file a bug if still unhealthy. Returns a summary.
+ * 60s cooldown), then file a bug if still unhealthy. While the same incident
+ * lasts, repairs back off and the bug is not filed again (see incidentState,
+ * reportOnce). Returns a summary.
  */
 async function runEntity(deviceId, deviceSecret, entityId, settings) {
     // Mark the entity as "health-checking" for the whole check+repair span so
@@ -522,11 +685,17 @@ async function runEntity(deviceId, deviceSecret, entityId, settings) {
         }
 
         const noCallback = health.callbackActive === false;
+        // Only an unhealthy entity that would be repaired has an incident to look up.
+        const incident = (!health.healthy && settings.autoRepair) ? await incidentState(deviceId, entityId, Date.now()) : null;
+        const held = !!incident && !noCallback && !incident.repairDue;
+        const heldUntil = held ? new Date(incident.nextRepairAt).toISOString() : null;
         await logEvent(deviceId, entityId, 'passive_health',
             health.healthy ? 'Passive health: healthy'
                 : noCallback ? 'Passive health: no callback registered — entity cannot reply (re-bind required)'
-                : `Passive health: unhealthy (${health.failingSignals.join(', ')})`,
-            { healthy: health.healthy, readiness: health.readiness, canReply: health.canReply, callbackActive: health.callbackActive, failingSignals: health.failingSignals, provider: health.provider, signals: health.signals });
+                : `Passive health: unhealthy (${health.failingSignals.join(', ')})`
+                    + (held ? ` — repair on hold until ${heldUntil} after ${incident.failedCycles} failed repair cycle(s)` : ''),
+            { healthy: health.healthy, readiness: health.readiness, canReply: health.canReply, callbackActive: health.callbackActive, failingSignals: health.failingSignals, provider: health.provider, signals: health.signals,
+                ...(held ? { repairHeldUntil: heldUntil, failedCycles: incident.failedCycles } : {}) });
 
         const usageDisplayRepair = await repairUsageWarningEngine(deviceId, entityId, health.provider);
         if (usageDisplayRepair.changed) {
@@ -543,11 +712,19 @@ async function runEntity(deviceId, deviceSecret, entityId, settings) {
         // re-bound at the container/channel-account level. Skip the (futile) repair
         // attempts and file a bug directly so a human gets the re-bind signal.
         if (noCallback) {
-            const bug = await fileBugIssue(deviceId, deviceSecret, entityId, health.provider, health.failingSignals);
+            const bug = await reportOnce(deviceId, deviceSecret, entityId, health.provider, health.failingSignals, incident, Date.now());
+            const known = bug.reason === 'already_reported';
             await logEvent(deviceId, entityId, 'self_repair',
-                bug.filed ? `No-callback bug filed (feedback #${bug.feedbackId}) — re-bind required, not self-repairable` : `No-callback bug filing failed: ${bug.reason}`,
-                { filed: bug.filed, feedbackId: bug.feedbackId, issueUrl: bug.issueUrl, reason: 'no_callback', failingSignals: health.failingSignals });
-            return { entityId, eligible: true, healthy: false, readiness: health.readiness, canReply: false, callbackActive: false, repaired: false, bugFiled: bug.filed, feedbackId: bug.feedbackId, usageDisplayRepair, failingSignals: health.failingSignals };
+                bug.filed ? `No-callback bug filed (feedback #${bug.feedbackId}) — re-bind required, not self-repairable`
+                    : known ? `No callback registered — already reported (feedback #${bug.feedbackId}), not filed again; re-bind required`
+                    : `No-callback bug filing failed: ${bug.reason}`,
+                { filed: bug.filed, feedbackId: bug.feedbackId, issueUrl: bug.issueUrl, reason: 'no_callback', report: bug.filed ? 'filed' : known ? 'already_reported' : 'failed', failingSignals: health.failingSignals });
+            return { entityId, eligible: true, healthy: false, readiness: health.readiness, canReply: false, callbackActive: false, repaired: false, bugFiled: bug.filed, alreadyReported: known, feedbackId: bug.feedbackId, usageDisplayRepair, failingSignals: health.failingSignals };
+        }
+
+        // Same incident, repaired not long ago without success: leave it until the retry is due.
+        if (held) {
+            return { entityId, eligible: true, healthy: false, readiness: health.readiness, canReply: health.canReply, callbackActive: health.callbackActive, repaired: false, repairHeld: true, nextRepairAt: heldUntil, failedCycles: incident.failedCycles, usageDisplayRepair, failingSignals: health.failingSignals };
         }
 
         // Unhealthy + autoRepair → up to 3 repair attempts, spaced past the cooldown.
@@ -568,7 +745,7 @@ async function runEntity(deviceId, deviceSecret, entityId, settings) {
                 break;
             }
             if (attempt < MAX_REPAIR_ATTEMPTS) {
-                await sleep(REPAIR_SPACING_MS); // respect the 60s self-repair cooldown
+                await sleep(repairSpacingMs === null ? REPAIR_SPACING_MS : repairSpacingMs); // respect the 60s self-repair cooldown
             }
         }
 
@@ -576,13 +753,17 @@ async function runEntity(deviceId, deviceSecret, entityId, settings) {
             return { entityId, eligible: true, healthy: false, repaired: true, usageDisplayRepair, failingSignals: health.failingSignals };
         }
 
-        // Still unhealthy after all attempts → file a bug.
-        const bug = await fileBugIssue(deviceId, deviceSecret, entityId, health.provider, health.failingSignals);
+        // Still unhealthy after all attempts → file a bug, once per incident and week.
+        // This event (it carries `filed`) is what incidentState counts as a failed cycle.
+        const bug = await reportOnce(deviceId, deviceSecret, entityId, health.provider, health.failingSignals, incident, Date.now());
+        const known = bug.reason === 'already_reported';
         await logEvent(deviceId, entityId, 'self_repair',
-            bug.filed ? `Bug filed after ${MAX_REPAIR_ATTEMPTS} failed repairs (feedback #${bug.feedbackId})` : `Bug filing failed: ${bug.reason}`,
-            { filed: bug.filed, feedbackId: bug.feedbackId, issueUrl: bug.issueUrl, failingSignals: health.failingSignals });
+            bug.filed ? `Bug filed after ${MAX_REPAIR_ATTEMPTS} failed repairs (feedback #${bug.feedbackId})`
+                : known ? `Still unhealthy after ${MAX_REPAIR_ATTEMPTS} failed repairs — already reported (feedback #${bug.feedbackId}), not filed again`
+                : `Bug filing failed: ${bug.reason}`,
+            { filed: bug.filed, feedbackId: bug.feedbackId, issueUrl: bug.issueUrl, report: bug.filed ? 'filed' : known ? 'already_reported' : 'failed', failingSignals: health.failingSignals });
 
-        return { entityId, eligible: true, healthy: false, repaired: false, bugFiled: bug.filed, feedbackId: bug.feedbackId, usageDisplayRepair, failingSignals: health.failingSignals };
+        return { entityId, eligible: true, healthy: false, repaired: false, bugFiled: bug.filed, alreadyReported: known, feedbackId: bug.feedbackId, usageDisplayRepair, failingSignals: health.failingSignals };
     } finally {
         // Clear the transient flag + push the cleared state, but hold it visible for a
         // minimum duration so the 健檢中 animation is perceptible even on a fast healthy
@@ -779,5 +960,9 @@ module.exports = {
     repairUsageWarningEngine,
     SETTINGS_DEFAULTS,
     MAX_REPAIR_ATTEMPTS,
-    _internal: { collectHeartbeatSignal, authDevice, normalizeUsageWarningEngine, normalizeEntityEngines },
+    _internal: { collectHeartbeatSignal, authDevice, normalizeUsageWarningEngine, normalizeEntityEngines, probeCallback, incidentState, reportOnce, signalKinds },
+    REPAIR_RETRY_MS,
+    REPAIR_RETRY_SLOW_MS,
+    REPORT_REPEAT_MS,
+    PUSH_EVIDENCE_MS,
 };

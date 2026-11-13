@@ -412,3 +412,215 @@ describe('exports surface', () => {
         expect(passiveHealth.SETTINGS_DEFAULTS.enabled).toBe(false);
     });
 });
+
+// ── 2026-11-13: one outage is one incident ───────────────────────────────────
+// An entity that stayed "unhealthy" got 3 repair attempts, a feedback row and a
+// GitHub issue on every sweep, without end. Some of those entities were delivering
+// messages normally (their bridges just had no /health at the host root); the
+// others were really down and stayed down.
+describe('callback probe: a host without a /health route is not a dead host', () => {
+    const { probeCallback } = passiveHealth._internal;
+    let origFetch, asked;
+    // answers: { '<url>': status | 'ERR' }
+    function answer(map) {
+        asked = [];
+        global.fetch = jest.fn(async (url) => {
+            asked.push(String(url));
+            const status = map[String(url)];
+            if (status === undefined || status === 'ERR') throw new Error('connect ECONNREFUSED');
+            return { ok: status >= 200 && status < 300, status };
+        });
+    }
+    beforeEach(() => { origFetch = global.fetch; });
+    afterEach(() => { global.fetch = origFetch; });
+
+    it('webhook at the host root: 2xx is healthy, a gateway error or no answer is down, anything else is no opinion', async () => {
+        const root = 'https://bot.example.com/health';
+        const verdict = async status => { answer({ [root]: status }); return (await probeCallback('https://bot.example.com/eclaw-webhook')).healthy; };
+        expect(await verdict(200)).toBe(true);
+        expect(await verdict(502)).toBe(false);
+        expect(await verdict(530)).toBe(false);
+        expect(await verdict('ERR')).toBe(false);
+        expect(await verdict(501)).toBeNull();   // a Python bridge with only do_POST answers 501 to GET
+        expect(await verdict(404)).toBeNull();
+        expect(await verdict(401)).toBeNull();
+        expect(asked).toEqual([root]);
+    });
+
+    it('webhook under a path prefix: asks beside the webhook first, and the root only speaks when that has no route', async () => {
+        const cb = 'https://tunnel.example.com/codex12/eclaw-webhook';
+        const beside = 'https://tunnel.example.com/codex12/health', root = 'https://tunnel.example.com/health';
+
+        answer({ [beside]: 200, [root]: 502 });
+        expect((await probeCallback(cb)).healthy).toBe(true);
+        expect(asked).toEqual([beside]);
+
+        // the bridge answers under its prefix (no health route); the tunnel's root goes nowhere — the old false alarm
+        answer({ [beside]: 404, [root]: 502 });
+        expect(await probeCallback(cb)).toEqual({ healthy: null, beside: 'answered', root: 'down' });
+
+        answer({ [beside]: 404, [root]: 200 });
+        expect((await probeCallback(cb)).healthy).toBe(true);
+
+        // nothing behind the prefix: down, whatever the root says
+        answer({ [beside]: 502, [root]: 200 });
+        expect((await probeCallback(cb)).healthy).toBe(false);
+        answer({});
+        expect((await probeCallback(cb)).healthy).toBe(false);
+    });
+});
+
+describe('repairs back off and the same failure is reported once', () => {
+    const HOUR = 3600e3, DAY = 24 * HOUR;
+    const T0 = Date.UTC(2026, 10, 13, 5, 0, 0);
+    let clock, opLog, feedbackRows, saveFeedback, repairCalls, healthStatus, pushSnapshot, origFetch, nowSpy;
+
+    function build(account) {
+        const pool = {
+            query: jest.fn(async (sql, params) => {
+                if (/FROM entity_operation_log/.test(sql) && /event_type = 'passive_health'/.test(sql)) {
+                    const rows = opLog.filter(e => e.type === 'passive_health' && e.payload.healthy === true).sort((a, b) => b.at - a.at);
+                    return { rows: rows.slice(0, 1).map(e => ({ occurred_at: new Date(e.at) })) };
+                }
+                if (/FROM entity_operation_log/.test(sql) && /event_type = 'self_repair'/.test(sql)) {
+                    expect(sql).toMatch(/event_payload \? 'filed'/);
+                    const since = params[2].getTime();
+                    const rows = opLog.filter(e => e.type === 'self_repair' && 'filed' in e.payload && e.payload.reason !== 'no_callback' && e.at > since);
+                    return { rows: [{ failed_cycles: rows.length, last_cycle_at: rows.length ? new Date(Math.max(...rows.map(e => e.at))) : null }] };
+                }
+                if (/FROM feedback/.test(sql)) {
+                    expect(sql).toMatch(/app_version = 'passive-health'/);
+                    const rows = feedbackRows.filter(f => f.entityId === params[1] && f.created_at > params[2]).sort((a, b) => b.created_at - a.created_at);
+                    return { rows: rows.slice(0, 1).map(f => ({ id: f.id, created_at: String(f.created_at), github_issue_url: null, signals: f.signals })) };
+                }
+                return { rows: [] };
+            }),
+        };
+        saveFeedback = jest.fn(async (_pool, fb) => {
+            const id = 100 + feedbackRows.length;
+            feedbackRows.push({ id, entityId: String(fb.logSnapshot.entityId), created_at: clock, signals: fb.logSnapshot.failingSignals });
+            return { id };
+        });
+        passiveHealth.init({
+            pool,
+            devices: { [DEVICE_ID]: { deviceSecret: DEVICE_SECRET, entities: { 2: { isBound: true, bindingType: 'channel', channelAccountId: 10 } } } },
+            entityStatus: { logOperation: async (_d, _e, type, summary, payload) => { opLog.push({ at: clock, type, summary, payload }); } },
+            feedbackModule: { saveFeedback },
+            deriveChannelProvider: () => 'custom',
+            getChannelAccountById: jest.fn().mockResolvedValue(account === undefined ? { id: 10, callback_url: 'https://bot.example.com/eclaw-webhook' } : account),
+            isReady: () => true,
+            selfBaseUrl: 'http://localhost:3999',
+            repairSpacingMs: 0,
+            getPushSnapshot: () => pushSnapshot,
+        });
+    }
+    const sweep = () => passiveHealth.runEntity(DEVICE_ID, DEVICE_SECRET, 2, { autoRepair: true });
+
+    beforeEach(() => {
+        clock = T0; opLog = []; feedbackRows = []; repairCalls = 0; healthStatus = 502; pushSnapshot = null;
+        nowSpy = jest.spyOn(Date, 'now').mockImplementation(() => clock);
+        origFetch = global.fetch;
+        global.fetch = jest.fn(async (url) => {
+            if (String(url).includes('/api/channel/self-repair')) { repairCalls += 1; return { ok: true, status: 200, json: async () => ({ success: false }) }; }
+            return { ok: healthStatus === 200, status: healthStatus };
+        });
+        build();
+    });
+    afterEach(() => { global.fetch = origFetch; nowSpy.mockRestore(); });
+
+    it('a lasting outage: 3 attempts now, again after a day (twice), then weekly — and one report a week, not one a sweep', async () => {
+        let r = await sweep();                                   // first failure of the incident
+        expect(repairCalls).toBe(3);
+        expect(saveFeedback).toHaveBeenCalledTimes(1);
+        expect(r).toMatchObject({ healthy: false, repaired: false, bugFiled: true });
+
+        clock = T0 + 6 * HOUR; r = await sweep();                // next sweep: left alone
+        expect(repairCalls).toBe(3);
+        expect(saveFeedback).toHaveBeenCalledTimes(1);
+        expect(r).toMatchObject({ repairHeld: true, failedCycles: 1, nextRepairAt: new Date(T0 + DAY).toISOString() });
+        expect(opLog[opLog.length - 1].summary).toMatch(/unhealthy \(callback_unhealthy\) — repair on hold until .* after 1 failed repair cycle/);
+        expect(opLog.filter(e => e.type === 'self_repair').length).toBe(4); // 3 attempts + the cycle's end, nothing new
+
+        clock = T0 + DAY; r = await sweep();                     // a day later: one more cycle, no second report
+        expect(repairCalls).toBe(6);
+        expect(saveFeedback).toHaveBeenCalledTimes(1);
+        expect(r).toMatchObject({ bugFiled: false, alreadyReported: true, feedbackId: 100 });
+        expect(opLog[opLog.length - 1]).toMatchObject({ type: 'self_repair', payload: { filed: false, report: 'already_reported' } });
+
+        clock = T0 + 2 * DAY; await sweep();                     // third failed cycle
+        expect(repairCalls).toBe(9);
+        clock = T0 + 3 * DAY; r = await sweep();                 // from here on: weekly
+        expect(repairCalls).toBe(9);
+        expect(r).toMatchObject({ repairHeld: true, failedCycles: 3, nextRepairAt: new Date(T0 + 9 * DAY).toISOString() });
+        clock = T0 + 8 * DAY; await sweep();
+        expect(repairCalls).toBe(9);
+
+        clock = T0 + 9 * DAY; r = await sweep();                 // the weekly cycle; the report is a week old, so it is repeated once
+        expect(repairCalls).toBe(12);
+        expect(saveFeedback).toHaveBeenCalledTimes(2);
+        expect(r).toMatchObject({ bugFiled: true });
+    });
+
+    it('a recovery ends the incident: the next failure is repaired and reported at once', async () => {
+        await sweep();
+        expect([repairCalls, saveFeedback.mock.calls.length]).toEqual([3, 1]);
+
+        clock = T0 + 6 * HOUR; healthStatus = 200;
+        expect(await sweep()).toMatchObject({ healthy: true, repaired: false });
+
+        clock = T0 + 12 * HOUR; healthStatus = 502;
+        const r = await sweep();
+        expect(repairCalls).toBe(6);
+        expect(saveFeedback).toHaveBeenCalledTimes(2);            // the first report belongs to the incident that ended
+        expect(r).toMatchObject({ bugFiled: true });
+    });
+
+    it('a different failure in the same incident is a new report; a different count of the same one is not', async () => {
+        const { reportOnce } = passiveHealth._internal;
+        feedbackRows.push({ id: 7, entityId: '2', created_at: T0 - HOUR, signals: ['callback_unhealthy', 'open_errors:5'] });
+        const incident = { healthyAt: T0 - DAY };
+        expect(await reportOnce(DEVICE_ID, DEVICE_SECRET, 2, 'custom', ['open_errors:9', 'callback_unhealthy'], incident, T0))
+            .toMatchObject({ filed: false, reason: 'already_reported', feedbackId: 7, nextReportAt: T0 - HOUR + 7 * DAY });
+        expect(saveFeedback).not.toHaveBeenCalled();
+        expect(await reportOnce(DEVICE_ID, DEVICE_SECRET, 2, 'custom', ['callback_unhealthy', 'heartbeat_stale'], incident, T0)).toMatchObject({ filed: true });
+        expect(await reportOnce(DEVICE_ID, DEVICE_SECRET, 3, 'custom', ['callback_unhealthy', 'open_errors:5'], incident, T0)).toMatchObject({ filed: true }); // another entity
+    });
+
+    it('no callback registered: reported once, never "repaired"', async () => {
+        build({ id: 10, callback_url: null });
+        expect(await sweep()).toMatchObject({ readiness: 'no_callback', bugFiled: true });
+        clock = T0 + 6 * HOUR;
+        expect(await sweep()).toMatchObject({ readiness: 'no_callback', bugFiled: false, alreadyReported: true });
+        expect(saveFeedback).toHaveBeenCalledTimes(1);
+        expect(repairCalls).toBe(0);
+        // and it does not count as a failed repair cycle if a callback is registered later
+        build();
+        clock = T0 + 7 * HOUR;
+        await sweep();
+        expect(repairCalls).toBe(3);
+    });
+
+    it('a push the callback accepted in the last 6 hours outweighs a failed probe', async () => {
+        const verdict = async () => passiveHealth.computePassiveHealth(DEVICE_ID, 2);
+        expect((await verdict()).failingSignals).toEqual(['callback_unhealthy']);
+
+        pushSnapshot = { consecutiveFailures: 0, lastSuccessAt: T0 - HOUR };
+        const ok = await verdict();
+        expect(ok.healthy).toBe(true);
+        expect(ok.signals.callbackProbe).toEqual({ beside: null, root: 'down', overruledByPush: true });
+
+        pushSnapshot = { consecutiveFailures: 0, lastSuccessAt: T0 - 7 * HOUR };   // too long ago
+        expect((await verdict()).healthy).toBe(false);
+        pushSnapshot = { consecutiveFailures: 2, lastSuccessAt: T0 - HOUR };       // pushes have failed since
+        expect((await verdict()).healthy).toBe(false);
+    });
+
+    it('channel-backpressure remembers when a push last succeeded', () => {
+        const bp = require('../../channel-backpressure');
+        const target = { deviceId: 'dev-bp', entityId: 9, channelAccountId: 1 };
+        bp.recordChannelPushResult(target, { success: true }, { now: 5000 });
+        expect(bp.getChannelBackpressureSnapshot(target)).toMatchObject({ consecutiveFailures: 0, lastSuccessAt: 5000 });
+        bp.recordChannelPushResult(target, { success: false, status: 502 }, { now: 6000 });
+        expect(bp.getChannelBackpressureSnapshot(target)).toMatchObject({ consecutiveFailures: 1, lastSuccessAt: 5000 });
+    });
+});
