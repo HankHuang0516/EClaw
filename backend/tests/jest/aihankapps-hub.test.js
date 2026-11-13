@@ -781,7 +781,9 @@ describe('admin hub: the page reads the answer correctly', () => {
         const rows = D.sourceRows();
         expect(rows.find(r => r.name === '營運數據').state).toBe('crit');
         expect(rows.filter(r => r.state === 'ok').map(r => r.name)).toEqual(['商店報表', '作品集流量', '作品集互動', 'EClaw 帳號', 'EClaw 對話', '夢話夥伴後台', '問題回饋', '問題回饋與排程判斷', 'EClaw 付款', '後台服務檢查', 'REBOUND 遊戲伺服器']);
-        expect(rows.filter(r => r.state === 'none').map(r => r.name)).toEqual(['活字戰紀伺服器', 'Wishlist.ai 後台', 'Railway 後台資源', '時光相簿伺服器', '上架警示板', '拾光 APP 內問題回饋', '拾光 LINE 問題回饋', '其他 APP 的使用紀錄', '商店的內購金額']);
+        expect(rows.filter(r => r.state === 'none').map(r => r.name)).toEqual(['活字戰紀伺服器', 'Wishlist.ai 後台', 'Wishlist.ai 帳戶明細', 'Railway 後台資源', '時光相簿伺服器', '上架警示板', '拾光 APP 內問題回饋', '拾光 LINE 問題回饋', '其他 APP 的使用紀錄', '商店的內購金額']);
+        // the per-account source says how often it runs and, once imported, exactly what it carries (not "counts only")
+        expect(rows.find(r => r.name === 'Wishlist.ai 帳戶明細')).toMatchObject({ freq: '每小時', cover: 'Wishlist.ai', note: '還沒有匯入過' });
         expect(rows.find(r => r.name === '商店報表').note).toBe('Google 到 10/27、Apple 到 10/29、AdMob 到 11/1');
     });
 });
@@ -904,14 +906,14 @@ describe('admin hub: how it is wired in', () => {
         const html = fs.readFileSync(path.join(pageDir, 'index.html'), 'utf8');
         expect(html).toContain('<meta name="robots" content="noindex,nofollow">');
         const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
-        expect(scripts.map(m => /src="([^"]+)"/.exec(m[1])[1])).toEqual(['hub-data.js', 'hub-charts.js', 'hub-timehut.js', 'hub-app.js']);
+        expect(scripts.map(m => /src="([^"]+)"/.exec(m[1])[1])).toEqual(['hub-data.js', 'hub-charts.js', 'hub-timehut.js', 'hub-weesh.js', 'hub-app.js']);
         expect(scripts.every(m => m[2] === '')).toBe(true);                               // no inline script: the policy would block it
         expect(html).not.toMatch(/\son[a-z]+\s*=/i);
         expect(html).not.toContain('<style');
         expect([...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(m => m[1])).toEqual([
             'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap', 'hub.css']);
         // the page asks only its own API and the public operations API, on this origin
-        const pageJs = ['hub-data.js', 'hub-app.js', 'hub-charts.js', 'hub-timehut.js'].map(f => fs.readFileSync(path.join(pageDir, f), 'utf8')).join('\n');
+        const pageJs = ['hub-data.js', 'hub-app.js', 'hub-charts.js', 'hub-timehut.js', 'hub-weesh.js'].map(f => fs.readFileSync(path.join(pageDir, f), 'utf8')).join('\n');
         expect(pageJs).not.toMatch(/https?:\/\/(?!www\.w3\.org\/2000\/svg)/);
         expect(pageJs).not.toMatch(/\beval\(|new Function\(|document\.write\(/);
         expect(hub.CONTENT_SECURITY_POLICY).toContain("script-src 'self'");
@@ -1054,6 +1056,156 @@ describe('admin hub: 拾光 user detail (hub-timehut.js)', () => {
         expect(el.innerHTML).toMatch(/data-th="qa" data-v="bbbbbbbbbb"[^>]*>取消 QA 標籤</);
         click('hideqa', '1');                       // hiding closes a QA account's open detail
         expect(el.innerHTML).not.toContain('id="th-panel"');
+    });
+});
+
+describe('admin hub: Weesh 帳戶智慧數據庫 (hub-weesh.js)', () => {
+    const boot = (stored = {}) => { const sandbox = { window: {}, localStorage: { getItem: k => (k in stored ? JSON.stringify(stored[k]) : null), setItem: () => {} }, Intl, Date, Math, JSON, Object, Array, Number, String, Set }; vm.runInNewContext(fs.readFileSync(path.join(pageDir, 'hub-weesh.js'), 'utf8'), sandbox); return sandbox.window.HubWeesh; };
+    const HOUR = 3600000, DAY = 24 * HOUR;
+    const today = new Date(Date.now() + 8 * HOUR).toISOString().slice(0, 10);
+    // what the collector stores for one account (synthetic)
+    const fact = (name, extra = {}) => Object.assign({ v: 1, name, login: 'ab***@example.invalid', ev: true, pv: false, premium: false, api: false, sub: null, subUntil: null, createdAt: Date.now() - 40 * DAY, lastAt: null, talkAt: null,
+        wish: { n: 0, lists: 0, pub: 0, bought: 0, hidden: 0, aiFailed: 0, d30: 0, linked: 0, watches: 0 }, sell: { n: 0, active: 0, reserved: 0, sold: 0, expired: 0, removed: 0, draft: 0, d30: 0 },
+        chat: { buy: 0, sell: 0, sent: 0, d30: 0, unread: 0, oldestUnreadAt: null, inquiries: 0 }, meet: { n: 0, open: 0, done: 0 }, pay: { n: 0, twd: 0 }, social: { following: 0, followers: 0 },
+        dev: { ios: 0, android: 0, other: 0 }, ai: 0, feedback: 0, days: [] }, extra);
+    const users = (W, facts) => W.fromFacts(facts).users;
+
+    test('facts become accounts; only wlUser + 10 hex keys with v 1 count, missing parts read as zero, the meta fact is kept apart', () => {
+        const W = boot();
+        const d = W.fromFacts({ usersTotal: { label: 'x', value: 3 }, wlUsersMeta: { v: 1, users: 2, shown: 1, dropped: 1 }, wlUseraaaaaaaaaa: { v: 1, name: 'A', wish: { n: 2 } }, wlUserXYZ: { v: 1, name: 'bad' }, wlUserbbbbbbbbbb: { v: 2, name: 'old' } });
+        expect(d.users.map(u => [u.ref, u.name, u.wish.n, u.wish.aiFailed, u.sell.active, u.days.length])).toEqual([['aaaaaaaaaa', 'A', 2, 0, 0, 0]]);
+        expect(d.meta).toEqual({ v: 1, users: 2, shown: 1, dropped: 1 });
+        expect(W.fromFacts({}).meta).toBe(null);
+    });
+
+    test('every account is placed at the furthest step it has reached', () => {
+        const W = boot(), f = extra => W.fromFacts({ wlUseraaaaaaaaaa: fact('A', extra) }).users[0];
+        expect(W.stageOf(f({}))).toBe('idle');
+        expect(W.stageOf(f({ wish: { n: 1 } }))).toBe('content');
+        expect(W.stageOf(f({ sell: { n: 1, draft: 1 } }))).toBe('content');
+        expect(W.stageOf(f({ wish: { n: 1 }, chat: { inquiries: 1 } }))).toBe('talk');
+        expect(W.stageOf(f({ chat: { sell: 1 }, meet: { n: 1, open: 1 } }))).toBe('meet');
+        expect(W.stageOf(f({ meet: { n: 2, done: 1 } }))).toBe('done');
+    });
+
+    test('insights: unread replies and failed wishes first, then who is idle, stuck in drafts or most active; the summary uses the collector totals when accounts were left out', () => {
+        const W = boot();
+        const list = users(W, {
+            wlUseraaaaaaaaaa: fact('小明', { wish: { n: 6, aiFailed: 2, d30: 3 }, chat: { buy: 2, sent: 5, unread: 1, oldestUnreadAt: Date.now() - 4 * DAY }, lastAt: Date.now() - HOUR, days: [[today, 3, 0, 2]] }),
+            wlUserbbbbbbbbbb: fact('阿華', { sell: { n: 4, draft: 4 }, lastAt: Date.now() - 2 * DAY, days: [[today, 0, 1, 0]] }),
+            wlUsercccccccccc: fact('', { ev: false }),
+            wlUserdddddddddd: fact('新人', { createdAt: Date.now() - DAY, dev: { ios: 1 }, meet: { n: 1, open: 1 }, chat: { sell: 1 } }),
+        });
+        const text = W.insights(list, { v: 1, dropped: 0 }).map(x => x.sev + ' ' + x.text);
+        expect(text[0]).toMatch(/^crit 小明 有 1 個對話對方已回覆但還沒讀，最久的已經 4 天/);
+        expect(text[1]).toBe('warn 小明 有 2 個願望的 AI 整理失敗。');
+        expect(text).toContain('info 有 1 個帳戶註冊超過 7 天，還沒有任何願望、刊登或對話。');
+        expect(text).toContain('info 阿華 有 4 件刊登停在草稿，沒有任何一件刊出。');
+        expect(text).toContain('info 近 30 天最活躍的是 小明：新增 3 個願望、0 件刊登、2 則訊息。');
+        expect(text).toContain('info 近 7 天有 1 個新帳戶，其中 1 個已經開始使用。');
+        expect(text).toContain('info 有 1 個帳戶的信箱和手機都還沒驗證。');
+        expect(text).toContain('info 1 個帳戶裝了 App 並開啟通知（iOS 1、Android 0）。');
+        expect(text.some(x => /^info 有 1 個帳戶約了面交還沒完成（共 1 筆/.test(x))).toBe(true);
+        expect(text.at(-1)).toBe('ok 共 4 個帳戶：1 個建立過願望（25%）、1 個刊登過商品（25%）、1 個傳過訊息、0 個完成過面交。');
+        // accounts left out for size: the totals come from the collector, and the page says so
+        const cut = W.insights(list.slice(0, 1), { v: 1, dropped: 9, totals: { users: 10, withWish: 5, withListing: 2, withChat: 3, withMeetDone: 1, active30: 4, wishes: 30, listings: 8, listingsActive: 3, sent: 40, paidUsers: 1, paidTwd: 300, appUsers: 2 } }).map(x => x.text);
+        expect(cut).toContain('共 10 個帳戶：5 個建立過願望（50%）、2 個刊登過商品（20%）、3 個傳過訊息、1 個完成過面交。');
+        expect(cut).toContain('付費帳戶 1 個，累計 NT$ 300。');
+        expect(cut.some(x => /略過了 9 個最久沒有動作的帳戶的明細/.test(x))).toBe(true);
+        expect(W.insights([], { v: 1 }).map(x => x.text)).toEqual(['目前還沒有任何帳戶。']);
+    });
+
+    test('the page: names are escaped, an unnamed account is still listed, the open account shows its detail, and no detail explains itself', () => {
+        const facts = {
+            wlUsersMeta: { v: 1, asOf: Date.now(), users: 2, shown: 2, dropped: 0, notes: [] },
+            wlUseraaaaaaaaaa: fact('<img src=x onerror=alert(1)>', { premium: true, wish: { n: 3, lists: 2, pub: 1 }, sell: { n: 5, active: 2, expired: 1, draft: 2, d30: 1 }, chat: { buy: 1, sell: 2, sent: 7 }, meet: { n: 1, done: 1 }, pay: { n: 2, twd: 598 }, sub: 'ACTIVE', lastAt: Date.now() - HOUR, days: [[today, 1, 1, 4]] }),
+            wlUserbbbbbbbbbb: fact('', { login: '' }),
+        };
+        const el = { innerHTML: '', querySelector: () => null, contains: () => true };
+        const W = boot({ 'hub.ws.open': 'aaaaaaaaaa' });
+        W.mount(el, W.fromFacts(facts));
+        expect(el.innerHTML).toContain('帳戶智慧數據庫');
+        expect(el.innerHTML).toContain('智慧洞察');
+        expect(el.innerHTML).toContain('&lt;img src=x onerror=alert(1)&gt;');
+        expect(el.innerHTML).not.toContain('<img src=x');
+        expect(el.innerHTML).toContain('（未命名）');
+        expect(el.innerHTML).toContain('沒有登入信箱');
+        expect(el.innerHTML).toContain('所有帳戶走到哪一步');
+        expect(el.innerHTML).toMatch(/完成面交 <b>1<\/b>/);                 // the stage legend
+        expect(el.innerHTML).toContain('id="ws-panel"');
+        expect(el.innerHTML).toContain('2 筆・NT$ 598');
+        expect(el.innerHTML).toContain('訂閱中');
+        expect(el.innerHTML).toMatch(/刊登中<\/td><td class="num">2<\/td><td class="num muted">40%/);
+        expect(el.innerHTML).toContain('近 30 天活動');
+        expect(el.innerHTML).not.toMatch(/https?:\/\//);
+        // the stage bar and the "只有註冊" filter are the same question: picking a stage lets go of that filter instead of emptying the table
+        const idleFirst = { innerHTML: '', querySelector: () => null, contains: () => true };
+        const W2 = boot({ 'hub.ws.filter': 'idle' });
+        W2.mount(idleFirst, W2.fromFacts(facts));
+        expect(idleFirst.innerHTML).toMatch(/data-ws="filter" data-v="idle" aria-pressed="true"/);
+        idleFirst.onclick({ target: { closest: () => ({ dataset: { ws: 'group', v: 'done' } }) }, preventDefault() {} });
+        expect(idleFirst.innerHTML).toMatch(/data-ws="filter" data-v="all" aria-pressed="true"/);
+        expect(idleFirst.innerHTML).toContain('只看「完成面交」');
+        expect(idleFirst.innerHTML).not.toContain('沒有符合條件的帳戶');
+        const empty = { innerHTML: '' };
+        boot().mount(empty, { meta: null, users: [] });
+        expect(empty.innerHTML).toMatch(/還沒有帳戶明細/);
+    });
+
+    test('QA accounts: recognised by name or a reserved test domain, tagged, hidden on request with the numbers, and markable by hand', () => {
+        const saved = {};
+        const sandbox = { window: {}, localStorage: { getItem: k => (k in saved ? saved[k] : null), setItem: (k, v) => { saved[k] = v; } }, Intl, Date, Math, JSON, Object, Array, Number, String, Set };
+        vm.runInNewContext(fs.readFileSync(path.join(pageDir, 'hub-weesh.js'), 'utf8'), sandbox);
+        const W = sandbox.window.HubWeesh;
+        expect([{ name: 'QA 測試賣家 A（非真實交易）', login: 'ab***@mail.example' }, { name: '小明', login: 'qa***@gmail.com' }, { name: '小明', login: 'ab***@example.com' }, { name: '小明', login: 'ab***@seed.example.org' },
+            { name: '小明', login: 'ab***@x.invalid' }, { name: 'Test', login: '' }, { name: '商店審查示範帳戶' }].map(W.autoQa)).toEqual([true, true, true, true, true, true, true]);
+        expect([{ name: '小明', login: 'ab***@gmail.com' }, { name: 'Quality', login: 'aq***@examples.com' }, { name: 'latest', login: 'te***@myexample.com' }, { name: '', login: '***123' }].map(W.autoQa)).toEqual([false, false, false, false]);
+        const facts = {
+            wlUsersMeta: { v: 1, asOf: Date.now(), users: 3, shown: 3, dropped: 0, notes: [] },
+            wlUseraaaaaaaaaa: fact('小明', { login: 'ab***@gmail.com', wish: { n: 10 } }),
+            wlUserbbbbbbbbbb: fact('QA 測試買家', { wish: { n: 5 }, chat: { buy: 1, sent: 2, unread: 1, oldestUnreadAt: Date.now() - 5 * DAY } }),
+            wlUsercccccccccc: fact('阿華', { login: 'cd***@gmail.com', wish: { n: 1 } }),
+        };
+        const el = { innerHTML: '', querySelector: () => null, contains: () => true };
+        const click = (ws, v) => el.onclick({ target: { closest: () => ({ dataset: { ws, v } }) }, preventDefault() {} });
+        W.mount(el, W.fromFacts(facts));
+        const count = html => (html.match(/class="th-tag th-tag-qa"/g) || []).length;
+        expect(count(el.innerHTML)).toBe(1);
+        expect(el.innerHTML).toMatch(/<span>帳戶<\/span><b>3 個<\/b>/);
+        expect(el.innerHTML).toMatch(/<span>願望<\/span><b>16 個<\/b>/);
+        expect(el.innerHTML).toMatch(/data-ws="hideqa" data-v="1" aria-pressed="false"[^>]*>隱藏 QA 測試用 1</);
+        expect(el.innerHTML).toContain('QA 測試買家 有 1 個對話對方已回覆但還沒讀');
+        click('hideqa', '1');                       // hidden: gone from the table, the numbers, the stage bar and the insights, and it says so
+        expect(el.innerHTML).not.toContain('QA 測試買家');
+        expect(el.innerHTML).toMatch(/<span>帳戶<\/span><b>2 個<\/b>/);
+        expect(el.innerHTML).toMatch(/<span>願望<\/span><b>11 個<\/b>/);
+        expect(el.innerHTML).toContain('共 2 個帳戶：2 個建立過願望（100%）');
+        expect(el.innerHTML).toContain('已隱藏 1 個 QA 測試用帳戶，數字不含它們');
+        expect(el.innerHTML).toMatch(/data-ws="hideqa" data-v="1" aria-pressed="true"/);
+        expect(JSON.parse(saved['hub.ws.hideQa'])).toBe(true);
+        click('qa', 'cccccccccc');                  // marked by hand while hidden: it leaves too
+        expect(el.innerHTML).not.toContain('阿華');
+        expect(JSON.parse(saved['hub.ws.qa'])).toEqual({ cccccccccc: true });
+        click('hideqa', '1');                       // shown again: two tags now
+        expect(count(el.innerHTML)).toBe(2);
+        click('qa', 'bbbbbbbbbb');                  // the automatic one can be unmarked; going back to automatic removes the stored mark
+        expect(count(el.innerHTML)).toBe(1);
+        expect(JSON.parse(saved['hub.ws.qa'])).toEqual({ cccccccccc: true, bbbbbbbbbb: false });
+        click('qa', 'bbbbbbbbbb');
+        expect(JSON.parse(saved['hub.ws.qa'])).toEqual({ cccccccccc: true });
+        click('open', 'bbbbbbbbbb');                // the detail offers the opposite action
+        expect(el.innerHTML).toMatch(/data-ws="qa" data-v="bbbbbbbbbb"[^>]*>取消 QA 標籤</);
+        click('hideqa', '1');                       // hiding closes a QA account's open detail
+        expect(el.innerHTML).not.toContain('id="ws-panel"');
+        click('focus', 'bbbbbbbbbb');               // an insight that points at a hidden account shows the QA accounts again instead of doing nothing
+        expect(el.innerHTML).toContain('id="ws-panel"');
+        expect(JSON.parse(saved['hub.ws.hideQa'])).toBe(false);
+        // accounts left out for size plus hidden QA accounts: the totals are counted from what is shown
+        const cut = { innerHTML: '', querySelector: () => null, contains: () => true };
+        saved['hub.ws.hideQa'] = 'true';
+        W.mount(cut, W.fromFacts(Object.assign({}, facts, { wlUsersMeta: { v: 1, asOf: Date.now(), users: 9, shown: 3, dropped: 6, totals: { users: 9, withWish: 9, wishes: 99 }, notes: [] } })));
+        expect(cut.innerHTML).toMatch(/<span>願望<\/span><b>10 個<\/b>/);         // only 小明 is left: one is QA by name, one was marked by hand
+        expect(cut.innerHTML).toMatch(/data-tip="另有 6 個沒有明細；已隱藏 2 個 QA 測試用帳戶"><span>帳戶<\/span><b>1 個<\/b>/);
     });
 });
 

@@ -214,6 +214,117 @@ const wishlist = today => wrap(today, PRISMA, `
     retention(A, await ask('留存', cohortSql('"User"', 'id', '"createdAt"', doing.replace(' AS doing', ' AS did'), 'uid', 't'), [COHORT_SINCE, COHORT_UNTIL]), '註冊後第 N 天當天有傳訊息或刊登');
 `);
 
+// ---- Wishlist.ai：每個帳戶的明細 --------------------------------------------------------------------------------------------
+// Hank 2026-11-13：管理中樞的 Weesh 頁「缺少帳戶智慧數據庫（可參考拾光）」。拾光的明細由它的伺服器自己回答；Wishlist 的資料都在
+// 資料庫裡，所以在它自己的容器裡用同一條唯讀通道問，一個帳戶一筆事實（wlUser＋10 碼代號）加一筆 wlUsersMeta。
+//
+// 這支和上面三支不同：它會帶回「帳戶顯示名稱」與「遮蔽過的登入信箱」，好讓管理者認得是哪個帳戶。遮蔽在資料庫的查詢裡做
+// （信箱只留 @ 前兩個字與網域、電話只留末三碼），完整的信箱與電話不會離開資料庫；代號是帳戶編號的雜湊前 10 碼，不帶編號本身。
+// 不讀密碼、驗證碼、各種 token、API 金鑰本身、真實姓名、地址、生日，也不讀任何願望、刊登、訊息的文字或照片：只有數量與時間。
+// 這個函式的原始碼會原封不動送進容器執行（下面用 toString 取出），所以裡面用到的 ask／out／day／DAY 是容器裡那份前置程式的。
+/* global ask, out, day, DAY */
+async function wishlistUsersBody() {
+  const A = 'weesh', MAX_USERS = 190, BUDGET = 44 * 1024;
+  const ms = column => '(EXTRACT(EPOCH FROM ' + column + ') * 1000)::float8';
+  const since30 = new Date(Date.now() - 30 * DAY);
+  const users = await ask('帳戶', `SELECT id AS uid, substr(md5('weesh-user:' || id::text), 1, 10) AS ref, left(btrim(name), 40) AS shown,
+      CASE WHEN email IS NOT NULL THEN left(split_part(email, '@', 1), 2) || '***@' || split_part(email, '@', 2)
+           WHEN "phoneNumber" IS NOT NULL THEN '***' || right("phoneNumber", 3) END AS login,
+      "isEmailVerified" AS ev, "isPhoneVerified" AS pv, "isPremium" AS premium, "subscriptionStatus" AS sub, ${ms('"subscriptionExpiresAt"')} AS "subUntil",
+      ("apiKey" IS NOT NULL) AS api, "aiUsageCount"::int AS ai, ${ms('"createdAt"')} AS created FROM "User"`);
+  if (!users) return;
+  const wishes = await ask('願望', `SELECT w."userId" AS uid, COUNT(*)::int AS n, (COUNT(*) FILTER (WHERE i."isPurchased"))::int AS bought,
+      (COUNT(*) FILTER (WHERE i."isHidden"))::int AS hidden, (COUNT(*) FILTER (WHERE i."aiStatus" = 'FAILED'))::int AS "aiFailed",
+      (COUNT(*) FILTER (WHERE i."createdAt" >= $1))::int AS d30, ${ms('MAX(i."createdAt")')} AS last
+      FROM "Item" i JOIN "Wishlist" w ON w.id = i."wishlistId" GROUP BY 1`, [since30]);
+  const lists = await ask('清單', 'SELECT "userId" AS uid, COUNT(*)::int AS n, (COUNT(*) FILTER (WHERE "isPublic"))::int AS pub FROM "Wishlist" GROUP BY 1');
+  const linked = await ask('探索加入', 'SELECT "userId" AS uid, COUNT(*)::int AS n, ' + ms('MAX("createdAt")') + ' AS last FROM "ProductWishLink" GROUP BY 1');
+  const watches = await ask('關注', 'SELECT "userId" AS uid, COUNT(*)::int AS n FROM "ItemWatch" GROUP BY 1');
+  const listings = await ask('刊登', `SELECT "ownerUserId" AS uid, status::text AS status, COUNT(*)::int AS n, (COUNT(*) FILTER (WHERE "createdAt" >= $1))::int AS d30,
+      ${ms('MAX("createdAt")')} AS last FROM "Listing" GROUP BY 1, 2`, [since30]);
+  const talks = await ask('對話', `SELECT uid, (COUNT(*) FILTER (WHERE side = 'b'))::int AS buy, (COUNT(*) FILTER (WHERE side = 's'))::int AS sell, ${ms('MAX(t)')} AS last
+      FROM (SELECT "buyerUserId" AS uid, 'b' AS side, "lastMessageAt" AS t FROM "Conversation" WHERE "buyerUserId" IS NOT NULL
+            UNION ALL SELECT "sellerUserId", 's', "lastMessageAt" FROM "Conversation" WHERE "sellerUserId" IS NOT NULL) AS c GROUP BY 1`);
+  // 未讀：對話裡最新一則不是自己傳的，而且還沒讀到那一則
+  const unread = await ask('未讀', `SELECT p."userId" AS uid, COUNT(*)::int AS n, ${ms('MIN(c."lastMessageAt")')} AS oldest
+      FROM "ConversationParticipant" p JOIN "Conversation" c ON c.id = p."conversationId"
+      JOIN "Message" m ON m."conversationId" = c.id AND m.sequence = c."lastMessageSequence"
+      WHERE c."archivedAt" IS NULL AND c."lastMessageSequence" > p."lastReadSequence" AND m."senderUserId" <> p."userId" GROUP BY 1`);
+  const sent = await ask('訊息', `SELECT "senderUserId" AS uid, COUNT(*)::int AS n, (COUNT(*) FILTER (WHERE "createdAt" >= $1))::int AS d30, ${ms('MAX("createdAt")')} AS last
+      FROM "Message" GROUP BY 1`, [since30]);
+  const inquiries = await ask('來源詢問', 'SELECT "buyerUserId" AS uid, COUNT(*)::int AS n, ' + ms('MAX("updatedAt")') + ' AS last FROM "SourceLeadInquiry" GROUP BY 1');
+  const meets = await ask('面交', `SELECT uid, COUNT(*)::int AS n, (COUNT(*) FILTER (WHERE status IN ('PROPOSED', 'CONFIRMED')))::int AS open, (COUNT(*) FILTER (WHERE status = 'COMPLETED'))::int AS done
+      FROM (SELECT c."buyerUserId" AS uid, a.status::text AS status FROM "MeetupAppointment" a JOIN "Conversation" c ON c.id = a."conversationId" WHERE c."buyerUserId" IS NOT NULL
+            UNION ALL SELECT c."sellerUserId", a.status::text FROM "MeetupAppointment" a JOIN "Conversation" c ON c.id = a."conversationId" WHERE c."sellerUserId" IS NOT NULL) AS x GROUP BY 1`);
+  const paid = await ask('付費', `SELECT "userId" AS uid, COUNT(*)::int AS n, SUM(amount)::float8 AS twd, ${ms('MAX("createdAt")')} AS last
+      FROM "Purchase" WHERE status = 'COMPLETED' AND currency = 'TWD' AND amount > 0 AND "userId" IS NOT NULL GROUP BY 1`);
+  const follows = await ask('追蹤', `SELECT uid, SUM(a)::int AS following, SUM(b)::int AS followers
+      FROM (SELECT "followerId" AS uid, 1 AS a, 0 AS b FROM "Follow" UNION ALL SELECT "followingId", 0, 1 FROM "Follow") AS f GROUP BY 1`);
+  const devices = await ask('裝置', 'SELECT "userId" AS uid, lower(platform) AS platform, COUNT(*)::int AS n, ' + ms('MAX("registeredAt")') + ' AS last FROM "PushDevice" WHERE "expoPushToken" IS NOT NULL GROUP BY 1, 2');
+  const feedback = await ask('回饋', 'SELECT "userId" AS uid, COUNT(*)::int AS n FROM "Feedback" WHERE "userId" IS NOT NULL GROUP BY 1');
+  const days = await ask('每日活動', `SELECT uid, d AS day, SUM(w)::int AS w, SUM(l)::int AS l, SUM(m)::int AS m
+      FROM (SELECT w."userId" AS uid, ${day('i."createdAt"')} AS d, 1 AS w, 0 AS l, 0 AS m FROM "Item" i JOIN "Wishlist" w ON w.id = i."wishlistId" WHERE i."createdAt" >= $1
+            UNION ALL SELECT "ownerUserId", ${day('"createdAt"')}, 0, 1, 0 FROM "Listing" WHERE "createdAt" >= $1
+            UNION ALL SELECT "senderUserId", ${day('"createdAt"')}, 0, 0, 1 FROM "Message" WHERE "createdAt" >= $1) AS act GROUP BY 1, 2`, [since30]);
+
+  const one = rows => new Map((rows || []).map(r => [r.uid, r])), many = rows => { const m = new Map(); for (const r of rows || []) { if (!m.has(r.uid)) m.set(r.uid, []); m.get(r.uid).push(r); } return m; };
+  const W = one(wishes), L = one(lists), K = one(linked), WA = one(watches), LS = many(listings), T = one(talks), U = one(unread), S = one(sent), Q = one(inquiries),
+    ME = one(meets), P = one(paid), F = one(follows), D = many(devices), FB = one(feedback), DY = many(days);
+  const n = v => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.round(Number(v)) : 0), at = v => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.round(Number(v)) : null);
+  const text = (v, max) => String(v === null || v === undefined ? '' : v).replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, max);
+  const utf8 = s => { let b = 0; for (const ch of s) { const c = ch.codePointAt(0); b += c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4; } return b; };
+  // 送出前把 0、false、空值拿掉（頁面把缺的欄位當 0）：沒有動作的帳戶只剩幾十個位元組，一包才放得下夠多帳戶
+  const slim = v => {
+    if (!v || typeof v !== 'object' || Array.isArray(v)) return v;
+    const o = {};
+    for (const k of Object.keys(v)) {
+      const x = slim(v[k]);
+      if (x === 0 || x === false || x === null || x === undefined || x === '' || (Array.isArray(x) && !x.length) || (typeof x === 'object' && !Array.isArray(x) && !Object.keys(x).length)) continue;
+      o[k] = x;
+    }
+    return o;
+  };
+  const STATUS = { ACTIVE: 'active', RESERVED: 'reserved', SOLD: 'sold', EXPIRED: 'expired', REMOVED: 'removed', DRAFT: 'draft', PENDING_CONFIRMATION: 'draft' };
+  const built = users.map(u => {
+    const w = W.get(u.uid) || {}, ls = LS.get(u.uid) || [], t = T.get(u.uid) || {}, s = S.get(u.uid) || {}, un = U.get(u.uid) || {}, dv = D.get(u.uid) || [];
+    const sell = { n: 0, active: 0, reserved: 0, sold: 0, expired: 0, removed: 0, draft: 0, d30: 0 };
+    for (const r of ls) { sell.n += n(r.n); sell[STATUS[r.status] || 'draft'] += n(r.n); sell.d30 += n(r.d30); }
+    const dev = { ios: 0, android: 0, other: 0 };
+    for (const r of dv) dev[r.platform === 'ios' || r.platform === 'android' ? r.platform : 'other'] += n(r.n);
+    const lastAt = Math.max(0, at(w.last) || 0, ...ls.map(r => at(r.last) || 0), at(s.last) || 0, at((K.get(u.uid) || {}).last) || 0, at((Q.get(u.uid) || {}).last) || 0,
+      at((P.get(u.uid) || {}).last) || 0, ...dv.map(r => at(r.last) || 0)) || null;
+    const value = {
+      v: 1, name: text(u.shown, 40), login: text(u.login, 40), ev: u.ev === true, pv: u.pv === true, premium: u.premium === true, api: u.api === true,
+      sub: text(u.sub, 12) || null, subUntil: at(u.subUntil), createdAt: at(u.created), lastAt, talkAt: at(t.last),
+      wish: { n: n(w.n), lists: n((L.get(u.uid) || {}).n), pub: n((L.get(u.uid) || {}).pub), bought: n(w.bought), hidden: n(w.hidden), aiFailed: n(w.aiFailed), d30: n(w.d30),
+        linked: n((K.get(u.uid) || {}).n), watches: n((WA.get(u.uid) || {}).n) },
+      sell,
+      chat: { buy: n(t.buy), sell: n(t.sell), sent: n(s.n), d30: n(s.d30), unread: n(un.n), oldestUnreadAt: at(un.oldest), inquiries: n((Q.get(u.uid) || {}).n) },
+      meet: { n: n((ME.get(u.uid) || {}).n), open: n((ME.get(u.uid) || {}).open), done: n((ME.get(u.uid) || {}).done) },
+      pay: { n: n((P.get(u.uid) || {}).n), twd: n((P.get(u.uid) || {}).twd) },
+      social: { following: n((F.get(u.uid) || {}).following), followers: n((F.get(u.uid) || {}).followers) },
+      dev, ai: n(u.ai), feedback: n((FB.get(u.uid) || {}).n),
+      days: (DY.get(u.uid) || []).filter(r => /^\d{4}-\d{2}-\d{2}$/.test(String(r.day))).sort((a, b) => (a.day < b.day ? -1 : 1)).slice(-31).map(r => [r.day, n(r.w), n(r.l), n(r.m)])
+    };
+    return { ref: String(u.ref || ''), value, score: Math.max(lastAt || 0, value.talkAt || 0, value.createdAt || 0) };
+  }).filter(x => /^[a-f0-9]{10}$/.test(x.ref));
+  // 整包信封有大小上限：最近有動作的帳戶先放，放不下的帳戶只少了明細，總數仍算在 totals 裡
+  const sum = pick => built.reduce((a, x) => a + pick(x.value), 0), count = test => built.filter(x => test(x.value)).length;
+  const totals = { users: built.length, withWish: count(v => v.wish.n > 0), withListing: count(v => v.sell.n > 0), withChat: count(v => v.chat.sent > 0), withMeetDone: count(v => v.meet.done > 0),
+    active30: count(v => v.days.length > 0), wishes: sum(v => v.wish.n), listings: sum(v => v.sell.n), listingsActive: sum(v => v.sell.active), sent: sum(v => v.chat.sent),
+    paidUsers: count(v => v.pay.n > 0), paidTwd: sum(v => v.pay.twd), appUsers: count(v => v.dev.ios + v.dev.android + v.dev.other > 0) };
+  let used = 0, shown = 0, dropped = 0;
+  for (const x of built.sort((a, b) => b.score - a.score)) {
+    const value = slim(x.value), size = utf8(JSON.stringify(value));
+    if (shown >= MAX_USERS || used + size > BUDGET) { dropped += 1; continue; }
+    used += size; shown += 1;
+    out.facts.push({ app: A, key: 'wlUser' + x.ref, value });
+  }
+  if (dropped) out.notes.push('帳戶明細太多，這次略過 ' + dropped + ' 個最久沒有動作的帳戶');
+  out.facts.push({ app: A, key: 'wlUsersMeta', value: { v: 1, asOf: Date.now(), users: built.length, shown, dropped, totals, notes: out.notes.slice(0, 6) } });
+}
+const wishlistUsers = today => wrap(today, PRISMA, '    await (' + wishlistUsersBody.toString() + ')();');
+
 const BACKENDS = [
   { id: 'rebound', name: 'REBOUND 遊戲伺服器', apps: ['rebound'], appDirs: ['/app/server', '/app'], script: rebound,
     railway: { project: 'rebound-live', projectId: '642452f8-405c-4d07-8565-bd409a136fe8', environment: 'production', service: 'rebound-api' } },
@@ -222,8 +333,13 @@ const BACKENDS = [
   { id: 'wishlist', name: 'Wishlist.ai', apps: ['weesh'], appDirs: ['/app/server', '/app'], script: wishlist,
     railway: { project: 'thorough-presence', projectId: 'c4bb972e-46b8-4e54-a9d1-5d38f619879a', environment: 'production', service: 'wishlist-app' } },
 ];
+// 帳戶明細：和 BACKENDS 分開列，因為它的保證不同（會帶回遮蔽過的帳戶名稱；見上面的說明與它自己的測試）。
+const DETAIL = [
+  { id: 'wishlist-users', name: 'Wishlist.ai 帳戶明細', apps: ['weesh'], appDirs: ['/app/server', '/app'], script: wishlistUsers,
+    railway: { project: 'thorough-presence', projectId: 'c4bb972e-46b8-4e54-a9d1-5d38f619879a', environment: 'production', service: 'wishlist-app' } },
+];
 
 // The shell text that runs inside the back-end's container.
 const remoteScript = (backend, today) => shellFor(backend.script(today), backend.appDirs);
 
-module.exports = { BACKENDS, remoteScript };
+module.exports = { BACKENDS, DETAIL, remoteScript };

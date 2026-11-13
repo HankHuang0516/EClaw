@@ -6,7 +6,7 @@ into the admin hub at `https://eclawbot.com/AiHankApps/hub/`. See `backend/AIHAN
 ```
 node tools/aihankapps-hub/collect.js                   # read every back-end, show what would be sent, send nothing
 node tools/aihankapps-hub/collect.js --commit          # read, then import into the hub
-node tools/aihankapps-hub/collect.js --only rebound    # one back-end: rebound, summit, wishlist, railway, timehut
+node tools/aihankapps-hub/collect.js --only rebound    # one back-end: rebound, summit, wishlist, wishlist-users, railway, timehut
 ```
 
 ## How it works
@@ -33,6 +33,7 @@ and the latest deployment status. The envelope carries them as `infra` rows plus
 | `rebound` | rebound-live / rebound-api | REBOUND | players, runs, purchases (Google purchased, Apple non-sandbox), mailbox, weekly retention |
 | `summit` | noble-fascination / summit-battle-api | 雙城烽火, 巔峰之戰 | leaderboard players and scores, battles, accounts and recent sign-ins, cosmetic purchases (not tests), mailbox, retention |
 | `wishlist` | thorough-presence / wishlist-app | Wishlist.ai | accounts, messages, listings, completed TWD purchases, conversations, retention |
+| `wishlist-users` | thorough-presence / wishlist-app | Wishlist.ai | one fact per account for the Weesh page's 帳戶智慧數據庫: counts and times, the display name and a masked sign-in address (see `backend/AIHANKAPPS_HUB.md`) |
 | `railway` | every project above, plus EClaw and 時光相簿 (metrics API, no ssh) | every app with a Railway service | traffic in/out, CPU, memory, volume space, latest deployment |
 | `timehut` | Timehut / Timehunt (HTTPS, no ssh) | 時光相簿 | account counts only: total (not deleted), new in 7 / 30 days, deleted |
 

@@ -5,7 +5,7 @@
 //
 //   node tools/aihankapps-hub/collect.js                 read every back-end, show what would be sent, send nothing
 //   node tools/aihankapps-hub/collect.js --commit        read, then import into the hub
-//   node tools/aihankapps-hub/collect.js --only rebound  one back-end (ids: rebound, summit, wishlist, railway, timehut, attention)
+//   node tools/aihankapps-hub/collect.js --only rebound  one back-end (ids: rebound, summit, wishlist, wishlist-users, railway, timehut, attention)
 //
 // `railway` is different: it runs on this Mac and reads every service's traffic, CPU, memory, space and deployment
 // status from Railway's metrics API with this Mac's Railway CLI login (railway-metrics.js), read-only.
@@ -15,6 +15,11 @@
 // ~/.config/aihankapps-hub/timehut-stats-key (mode 600, never in git, never printed); on the server it is the Railway
 // variable TIMEHUT_STATS_KEY.
 //
+// `wishlist-users` is the per-account detail behind the Weesh page's 帳戶智慧數據庫 (Hank 2026-11-13). It runs in the
+// Wishlist container like `wishlist`, read-only, and brings back one fact per account: counts and times, plus the
+// account's display name and a masked sign-in address so the admin can tell accounts apart (backends.js says what
+// it never reads).
+//
 // Reading runs inside each back-end's own container and is read-only. Importing runs the deployed
 // backend/scripts/aihankapps-hub-import.js inside the EClaw container. Both go through `railway ssh`, so the
 // operator's Railway login is the only credential involved and no secret passes through this tool.
@@ -22,7 +27,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { runRailway, shellFor } = require('../aihankapps-gifts/lib/adapters/transport');
-const { BACKENDS, remoteScript } = require('./backends');
+const { BACKENDS, DETAIL, remoteScript } = require('./backends');
 const railway = require('./railway-metrics');
 const { validateEnvelope, MAX_IMPORT_BYTES } = require('../../backend/aihankapps-hub-store');
 
@@ -151,7 +156,7 @@ const LOCAL = [{ id: 'railway', name: 'Railway 後台資源', apps: railway.RAIL
   } },
   { id: 'timehut', name: '時光相簿伺服器', apps: ['timehut'], collect: () => collectTimehut() },
   { id: 'attention', name: '上架警示板', apps: ['weesh'], collect: now => collectAttention({ now }) }];
-const SOURCES = BACKENDS.concat(LOCAL);
+const SOURCES = BACKENDS.concat(DETAIL, LOCAL);
 
 function catalogAppIds() {
   const catalog = JSON.parse(fs.readFileSync(path.join(__dirname, '../../backend/public/AiHankApps/app-catalog.json'), 'utf8'));
