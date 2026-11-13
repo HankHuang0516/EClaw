@@ -900,4 +900,21 @@ describe('admin hub: 拾光 user detail (hub-timehut.js)', () => {
         expect(T.bytes(1536)).toBe('1.50 KB');
         expect(T.bytes(null)).toBe('—');
     });
+    test('no login time: falls back to the last day with traffic, never claims "no login"; the funnel is counted from stages', () => {
+        const today = new Date(Date.now() + 8 * HOUR).toISOString().slice(0, 10);
+        const open = ref => { const sandbox = { window: {}, localStorage: { getItem: k => (k === 'hub.th.open' ? JSON.stringify(ref) : null), setItem: () => {} }, Intl, Date, Math, JSON, Object, Array, Number, String, Set }; vm.runInNewContext(fs.readFileSync(path.join(pageDir, 'hub-timehut.js'), 'utf8'), sandbox); return sandbox.window.HubTimehut; };
+        // 較早的照片沒有「辨識完成」標記：recognized 3，但併入 5＋排除 4
+        const u = user('eeeeeeeeee', '小屋', { lastLoginAt: null, line: { received: 12, recognized: 3, stages: { uploaded: 5, excluded: 4, recognized: 1, unknown: 2 }, reasons: {}, days: [] },
+            traffic: { inBytes: 1, outBytes: 2, mediaOutBytes: 0, uploadInBytes: 0, requests: 3, days: [[today, 1, 2, 0]] } });
+        const quiet = user('ffffffffff', '阿嬤', { lastLoginAt: null });
+        const el = { innerHTML: '', querySelector: () => null, contains: () => true };
+        open('eeeeeeeeee').mount(el, { meta: { asOf: new Date().toISOString(), notes: [] }, users: [u, quiet] });
+        expect(el.innerHTML).not.toContain('沒有登入紀錄');
+        expect(el.innerHTML).toContain('最近使用 今天');
+        expect(el.innerHTML).toMatch(/辨識有結果<\/span>.*?<b>10<\/b><em>83%<\/em>/);
+        expect(el.innerHTML).not.toContain('完成辨識');
+        expect(el.innerHTML).toContain('不明／已停止');
+        expect(load().enrich(u).activeDay).toBe(today);
+        expect(load().enrich(quiet).activeDay).toBe(null);
+    });
 });
