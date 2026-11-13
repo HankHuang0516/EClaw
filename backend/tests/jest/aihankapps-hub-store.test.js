@@ -374,14 +374,17 @@ describe('admin hub store: Railway service resources', () => {
         expect(collect.TIMEHUT_KEY_FILE).toBe(path.join(os.homedir(), '.config', 'aihankapps-hub', 'timehut-stats-key'));
 
         const calls = [];
-        const answer = (status, body) => async (url, init) => { calls.push({ url, init }); return { status, json: async () => body }; };
+        // account-stats answers as given; the per-user detail (admin-stats) is missing on this older server
+        const answer = (status, body) => async (url, init) => { calls.push({ url, init }); return /admin-stats$/.test(url) ? { status: 404, json: async () => ({}) } : { status, json: async () => body }; };
         const readKey = () => ({ key: KEY });
         const ok = await collect.collectTimehut({ readKey, fetchImpl: answer(200, { total: 7, last7d: 1, last30d: 3, deleted: 2, asOf: '2026-11-11T07:00:00.000Z' }) });
         expect(calls[0].url).toBe('https://just-healing-production.up.railway.app/api/internal/account-stats');
         expect(calls[0].init.headers.Authorization).toBe('Bearer ' + KEY);
         expect(calls[0].init.redirect).toBe('error');
         expect(ok.value.facts.map(f => [f.app, f.key, f.value.value])).toEqual([['timehut', 'accountsTotal', 7], ['timehut', 'accountsNew7d', 1], ['timehut', 'accountsNew30d', 3], ['timehut', 'accountsDeleted', 2]]);
-        expect(ok.value.notes).toEqual([]);
+        expect(ok.value.notes).toEqual(['時光相簿伺服器還沒有用戶明細（後端 1.0.118 起才有）']);
+        expect(calls[1].url).toBe('https://just-healing-production.up.railway.app/api/internal/admin-stats');
+        expect(calls[1].init.headers.Authorization).toBe('Bearer ' + KEY);
         const timehut = collect.SOURCES.find(b => b.id === 'timehut');
         const built = collect.toEnvelope(timehut, ok, { now: Date.now() });
         expect(built.error).toBeUndefined();
@@ -391,6 +394,7 @@ describe('admin hub store: Railway service resources', () => {
         const partial = await collect.collectTimehut({ readKey, fetchImpl: answer(200, { total: 7, last7d: null, last30d: null, deleted: 0 }) });
         expect(partial.value.facts.map(f => f.key)).toEqual(['accountsTotal', 'accountsDeleted']);
         expect(partial.value.notes[0]).toMatch(/近 7／30 天/);
+        expect(partial.value.notes[1]).toMatch(/還沒有用戶明細/);
         // refusals and odd answers stop this source only, with a reason that carries no key
         for (const [fetchImpl, detail] of [[answer(401, { error: 'Unauthorized' }), 'HTTP 401'], [answer(200, { total: -1 }), 'unexpected answer'],
             [async () => { throw Object.assign(new Error('x ' + KEY), { name: 'TimeoutError' }); }, 'request failed (TimeoutError)']]) {
@@ -404,6 +408,51 @@ describe('admin hub store: Railway service resources', () => {
         expect(logs[0]).toBe('✗ 時光相簿伺服器：讀取失敗（no_result：HTTP 401）');
         expect(logs.join('\n')).not.toContain(KEY);
         expect(importScript.catalogAppIds().has('timehut')).toBe(true);
+    });
+
+    test('時光相簿 per-user detail: one fact per user, nothing identifying beyond name and short login, budget kept, envelope valid', async () => {
+        const KEY = 'k'.repeat(48), readKey = () => ({ key: KEY });
+        const big = i => ({ ref: (i.toString(16).padStart(2, '0') + 'abcdef01').slice(0, 10), name: '用戶' + i + '\u0007', login: 'ab…c', owner: i === 0, createdAt: 1, lastLoginAt: 1000 + i, userId: 'secret-user-id-' + i, password: 'pw',
+            albums: Array.from({ length: 40 }, (_, k) => ({ title: '相簿'.repeat(20) + k, kind: k ? 'account' : 'family', photos: k, videos: 1, archived: false, photoIds: ['123'] })),
+            media: { albums: 40, photos: 9, videos: 1, storedBytes: 5, extra: 'x' },
+            line: { received: 3, stages: { uploaded: 2, excluded: 1, bogus: -1 }, reasons: { UPLOAD_COMPLETED: 2, MATCH_NO_PERSON: 1 }, lastReceivedAt: 5, days: [{ day: '2026-11-12', received: 3, uploaded: 2, excluded: 1, failed: 0, waiting: 0, itemIds: ['x'] }] },
+            uploads: { total: 1, completed: 1, failed: 0, waiting: 0, cancelled: 0, bytes: 9 }, ai: { analyzed: 1, pending: 0, failed: 0, unconfirmed: 0, retrying: 0, enabled: true },
+            history: { appUploadBytes: 1, lineReceivedBytes: 2 }, traffic: { since: '2026-11-13T00:00:00.000Z', inBytes: 1, outBytes: 2, mediaOutBytes: 1, uploadInBytes: 0, requests: 3, days: [{ day: '2026-11-13', in: 1, out: 2, mediaOut: 1 }] } });
+        const body = { schemaVersion: 1, asOf: '2026-11-13T00:00:00.000Z', version: '1.0.118', trafficSince: '2026-11-13T00:00:00.000Z', users: [big(0), big(1), { ref: 'NOT-HEX', name: 'x' }], unattributed: { inBytes: 1, outBytes: 2, requests: 3 }, notes: ['note'] };
+        const fetchImpl = async url => (/admin-stats$/.test(url) ? { status: 200, json: async () => body } : { status: 200, json: async () => ({ total: 2, last7d: 0, last30d: 0, deleted: 0 }) });
+        const r = await collect.collectTimehut({ readKey, fetchImpl });
+        const users = r.value.facts.filter(f => /^thUser[a-f0-9]{10}$/.test(f.key)), meta = r.value.facts.find(f => f.key === 'thUsersMeta');
+        expect(users).toHaveLength(2);
+        expect(meta.value).toMatchObject({ v: 1, users: 2, shown: 2, dropped: 0, version: '1.0.118', unattributed: { inBytes: 1, outBytes: 2, requests: 3 }, notes: ['note'] });
+        const u = users.find(f => f.value.owner).value;
+        expect(u.name).toBe('用戶0');                                 // control characters dropped
+        expect(u.albums).toHaveLength(30);                             // capped
+        expect(u.albums[0]).toEqual([('相簿'.repeat(20) + '0').slice(0, 24), 'f', 0, 1, 0]);
+        expect(u.line.stages).toEqual({ uploaded: 2, excluded: 1 });   // negative / odd counts left out
+        expect(u.line.days).toEqual([['2026-11-12', 3, 2, 1, 0, 0]]);
+        expect(u.traffic.days).toEqual([['2026-11-13', 1, 2, 1]]);
+        expect(u.media).not.toHaveProperty('extra');
+        const json = JSON.stringify(r.value);
+        for (const leak of ['secret-user-id', '"pw"', 'photoIds', 'itemIds', KEY]) expect(json).not.toContain(leak);
+        for (const f of users) expect(f.value).not.toHaveProperty('label');   // never shown as plain number cells
+        const built = collect.toEnvelope(collect.SOURCES.find(b => b.id === 'timehut'), r, { now: Date.now() });
+        expect(built.error).toBeUndefined();
+        // too many users for the envelope: the least active ones lose their detail, the rest still go in
+        const many = { ...body, users: Array.from({ length: 30 }, (_, i) => big(i)) };
+        const crowded = await collect.collectTimehut({ readKey, fetchImpl: async url => (/admin-stats$/.test(url) ? { status: 200, json: async () => many } : { status: 200, json: async () => ({ total: 30, last7d: 0, last30d: 0, deleted: 0 }) }) });
+        const cm = crowded.value.facts.find(f => f.key === 'thUsersMeta').value;
+        expect(cm.dropped).toBeGreaterThan(0);
+        expect(cm.shown + cm.dropped).toBe(30);
+        expect(crowded.value.notes.some(n => /略過/.test(n))).toBe(true);
+        const kept = crowded.value.facts.filter(f => /^thUser/.test(f.key) && f.key !== 'thUsersMeta').map(f => f.value.lastLoginAt);
+        expect(Math.min(...kept)).toBeGreaterThan(1000 + cm.dropped - 1);   // the most recently active are the ones kept
+        expect(collect.toEnvelope(collect.SOURCES.find(b => b.id === 'timehut'), crowded, { now: Date.now() }).error).toBeUndefined();
+        // a broken detail never stops the account totals
+        for (const [status, note] of [[500, 'HTTP 500'], [200, '格式不認得']]) {
+            const x = await collect.collectTimehut({ readKey, fetchImpl: async url => (/admin-stats$/.test(url) ? { status, json: async () => ({ users: 'no' }) } : { status: 200, json: async () => ({ total: 2, last7d: 0, last30d: 0, deleted: 0 }) }) });
+            expect(x.value.facts.map(f => f.key)).toEqual(['accountsTotal', 'accountsNew7d', 'accountsNew30d', 'accountsDeleted']);
+            expect(x.value.notes.join()).toContain(note);
+        }
     });
 });
 

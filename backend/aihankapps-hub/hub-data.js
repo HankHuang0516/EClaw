@@ -356,7 +356,7 @@
   ];
   const COLLECTORS = { rebound: ['REBOUND 遊戲伺服器', 'REBOUND'], summit: ['活字戰紀伺服器', '雙城烽火、巔峰之戰'], wishlist: ['Wishlist.ai 後台', 'Wishlist.ai'],
     railway: ['Railway 後台資源', '所有放在 Railway 的後台服務', '每個服務的上傳／下載流量、CPU、記憶體、空間、部署狀態'],
-    timehut: ['時光相簿伺服器', '時光相簿', '帳號總數、近 7／30 天新註冊、已刪除帳號（只有數量）'],
+    timehut: ['時光相簿伺服器', '時光相簿', '帳號總數、近 7／30 天新註冊、已刪除帳號；每位用戶的 LINE 辨識各階段、相簿與照片／影片數、上傳與下載流量（伺服器 1.0.118 起）'],
     attention: ['上架警示板', 'Wishlist.ai', '上架排程回報的問題：需要人為介入的、自動處理中的'] };
   const mbText = v => (v >= 1024 ? (v / 1024).toFixed(v >= 10240 ? 1 : 2) + ' GB' : Math.round(v) + ' MB');
   const SOURCE_LABEL = { catalog: 'APP 目錄', store: '商店報表', traffic: '作品集流量', community: '作品集互動', feedback: '問題回饋', eclaw: 'EClaw 帳號', eclawChat: 'EClaw 對話', dreambuddy: '夢話夥伴後台', eclawPayments: 'EClaw 付款', imports: '匯入的後台數據', services: '後台服務檢查' };
