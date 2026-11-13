@@ -180,3 +180,43 @@ describe('muted alert kinds (以後略過類似警告)', () => {
     });
 });
 
+
+describe('confirmations and countermeasures (確認，我知道了／確認，送出對策)', () => {
+    test('a notification ID, an optional title and an optional countermeasure; nothing else', () => {
+        const code = input => { try { inbox.validateAck(input); return 'accepted'; } catch (error) { return error.code; } };
+        expect(inbox.validateAck({ ref: 'worker-bad-x@20261113-0900', title: ' worker 出錯 ', plan: ' 先觀察兩天\n還在再說 ' }))
+            .toEqual({ ref: 'worker-bad-x@20261113-0900', title: 'worker 出錯', plan: '先觀察兩天\n還在再說' });
+        expect(inbox.validateAck({ ref: 'human-x' })).toEqual({ ref: 'human-x', title: null, plan: null });
+        expect(inbox.validateAck({ ref: 'human-x', plan: '   ' }).plan).toBeNull();                 // only spaces is no countermeasure
+        expect(inbox.validateAck({ ref: 'a', plan: 'x'.repeat(inbox.PLAN_MAX) }).plan).toHaveLength(inbox.PLAN_MAX);
+        expect(code({ ref: 'bad ref' })).toBe('ACK_REF');
+        expect(code({})).toBe('ACK_REF');
+        expect(code({ ref: 'a', plan: 5 })).toBe('ACK_PLAN');
+        expect(code({ ref: 'a', plan: 'x'.repeat(inbox.PLAN_MAX + 1) })).toBe('ACK_PLAN');           // refused, never silently cut
+        expect(code({ ref: 'a', title: 5 })).toBe('ACK_SHAPE');
+        expect(code({ ref: 'a', other: 1 })).toBe('ACK_SHAPE');
+        expect(code([])).toBe('ACK_SHAPE');
+    });
+    test('confirming upserts one row per notification ID; taking it back deletes it; both only touch the hub\'s own table', async () => {
+        const pool = recordingPool({ 'RETURNING acked_at, plan_at': [{ acked_at: new Date(NOW - 5000), plan_at: new Date(NOW) }] });
+        expect(await inbox.setAck(pool, { ref: 'r@1', title: 'T', plan: '先觀察' })).toEqual({ ref: 'r@1', title: 'T', plan: '先觀察', at: NOW - 5000, planAt: NOW });
+        const insert = pool.direct.find(q => q.sql.includes('INSERT INTO aihankapps_hub_acks'));
+        expect(insert.values).toEqual(['r@1', 'T', '先觀察']);
+        expect(insert.sql).toMatch(/ON CONFLICT \(ref\) DO UPDATE/);
+        // the countermeasure's time moves only when its words change: that is what tells the schedule there is something new to answer
+        expect(insert.sql).toMatch(/EXCLUDED\.plan IS DISTINCT FROM aihankapps_hub_acks\.plan THEN NOW\(\) ELSE aihankapps_hub_acks\.plan_at/);
+        expect(await inbox.removeAck(pool, 'r@1')).toEqual({ ref: 'r@1', removed: 0 });
+        await expect(inbox.removeAck(pool, 'a b')).rejects.toMatchObject({ code: 'ACK_REF' });
+        const writes = pool.direct.map(q => q.sql).filter(sql => /INSERT|DELETE|UPDATE/.test(sql));
+        expect(writes).toHaveLength(2);
+        expect(writes.every(sql => /aihankapps_hub_acks/.test(sql))).toBe(true);
+    });
+    test('the inbox answer lists the confirmations of the last 60 days', async () => {
+        const pool = recordingPool({ 'to_regclass': [{ t: null }],
+            'FROM aihankapps_hub_acks': [{ ref: 'r@1', title: 'T', plan: '先觀察', acked_at: new Date(NOW - 1000), plan_at: new Date(NOW - 500) }, { ref: 'r@2', title: null, plan: null, acked_at: new Date(NOW - 2000), plan_at: null }] });
+        const client = await pool.connect();
+        const read = await inbox.readInbox((sql, values) => client.query(sql, values), { now: NOW, appIds: APPS });
+        expect(read.acks).toEqual([{ ref: 'r@1', title: 'T', plan: '先觀察', at: NOW - 1000, planAt: NOW - 500 }, { ref: 'r@2', title: null, plan: null, at: NOW - 2000, planAt: null }]);
+        expect(pool.tx.find(q => q.sql.includes('FROM aihankapps_hub_acks')).values).toEqual([new Date(NOW - inbox.ACK_DAYS * 86400000)]);
+    });
+});

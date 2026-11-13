@@ -35,7 +35,9 @@ async function main(argv = process.argv.slice(2)) {
         const answer = await compute({ pool });
         const brief = argv.includes('--brief');
         const alerts = brief ? answer.alerts.map(a => ({ id: a.id, type: a.type, severity: a.severity, title: a.title, since: a.since })) : answer.alerts;
-        process.stdout.write(JSON.stringify({ success: true, computedAt: answer.computedAt, computedAtTaipei: answer.computedAtTaipei, count: alerts.length, alerts }) + '\n');
+        process.stdout.write(JSON.stringify({ success: true, computedAt: answer.computedAt, computedAtTaipei: answer.computedAtTaipei, count: alerts.length, alerts,
+            // What Hank confirmed on the page and the countermeasures he wrote (see createAlerts).
+            ...(brief ? {} : { acks: answer.acks || [] }) }) + '\n');
     } finally {
         await pool.end();
     }

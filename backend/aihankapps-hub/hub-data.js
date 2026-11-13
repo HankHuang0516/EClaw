@@ -100,7 +100,7 @@
     D.services = (hub.services || []).map(svc => Object.assign({ now: (D.services.find(old => old.id === svc.id) || {}).now || null }, svc));
     D.infra = Array.isArray(hub.infra) ? hub.infra : [];
     D.accounts = Array.isArray(hub.accounts) ? hub.accounts : [];
-    D.inbox = hub.inbox && Array.isArray(hub.inbox.feedback) ? hub.inbox : { feedback: [], notes: [], mutes: [], days: 30 };
+    D.inbox = hub.inbox && Array.isArray(hub.inbox.feedback) ? hub.inbox : { feedback: [], notes: [], mutes: [], acks: [], days: 30 };
     const start = idxOfIso(hub.daily.start);
     Object.keys(D.RAW).forEach(part => { if (!OPS_PARTS[part]) delete D.RAW[part]; });
     Object.keys(hub.daily.series || {}).forEach(part => {
@@ -364,6 +364,7 @@
     railway: ['Railway 後台資源', '所有放在 Railway 的後台服務', '每個服務的上傳／下載流量、CPU、記憶體、空間、部署狀態'],
     timehut: ['時光相簿伺服器', '時光相簿', '帳號總數、近 7／30 天新註冊、已刪除帳號；每位用戶的 LINE 辨識各階段、相簿與照片／影片數、上傳與下載流量（伺服器 1.0.118 起）；每小時更新'],
     attention: ['上架警示板', 'Wishlist.ai', '上架排程回報的問題：需要人為介入的、自動處理中的'],
+    'claude-usage': ['Claude 用量', '所有 Claude 排程與工作階段', 'Claude 訂閱方案的每週用量百分比與重置時間（右上角的電池）', '由這台 Mac 的 Claude CLI 本機指令讀出，不呼叫模型、不耗 token'],
     'feedback-timehut-app': ['拾光 APP 內問題回饋', '拾光AI雲端相簿', 'APP 內送出的問題回報（文字、版本、有沒有附圖），由警示處理排程每 15 分鐘讀一次'],
     'feedback-timehut-line': ['拾光 LINE 問題回饋', '拾光AI雲端相簿', 'LINE 官方帳號選單「問題回饋」收到的回報，由警示處理排程每 15 分鐘讀一次'] };
   const mbText = v => (v >= 1024 ? (v / 1024).toFixed(v >= 10240 ? 1 : 2) + ' GB' : Math.round(v) + ' MB');
@@ -480,7 +481,12 @@
     });
     applyInbox(out);
     D.ALERTS = foldMuted(out);
+    // 確認（Hank 2026-11-13）：存在伺服器，依通知 ID；附上他寫的對策。確認過的不再算觸發中，側邊欄的點也跟著消失
+    const acks = {};
+    ((D.inbox && D.inbox.acks) || []).forEach(k => { if (k && k.ref) acks[k.ref] = k; });
+    D.ALERTS.forEach(a => { const k = acks[a.ref]; a.ack = k ? { at: k.at || null, plan: k.plan || null, planAt: k.planAt || null } : null; });
   }
+  D.isAcked = a => !!(a && a.ack);
   // 以後略過類似警告（Hank 2026-11-13）：同一類（同一個 id）的警示合併成一則資訊；沒有成員時也留著，才能取消略過
   D.muteKey = a => a.id;
   D.mutable = a => !!a && !/^(human|muted|feedback-(eclaw|fraud|beta|timehut-app|timehut-line))$/.test(a.id);
@@ -511,6 +517,8 @@
     if (!res.ok) { const e = new Error('HTTP ' + res.status); e.status = res.status; throw e; }
     return res.json();
   }
+  D.ack = (ref, title, plan) => send('POST', API + '/acks', Object.assign({ ref: ref, title: title }, plan ? { plan: plan } : {}));
+  D.unack = ref => send('DELETE', API + '/acks/' + encodeURIComponent(ref));
   D.mute = (type, label, sampleRef) => send('POST', API + '/mutes', { type: type, label: label, sampleRef: sampleRef });
   D.unmute = type => send('DELETE', API + '/mutes/' + encodeURIComponent(type));
   // 畫面上的順序：要 Hank 處理的排最前面，接著是嚴重、警告、資訊；同一級維持算出來的順序
@@ -564,11 +572,17 @@
   }
   D.RULES = RULES;
   D.computeAlerts = computeAlerts;
-  // 側欄與列表上的狀態：有警示就顯示警示的等級，否則看有沒有公開上架
+  // 側欄與列表上的狀態：有還沒確認的警示就顯示警示的等級，否則看有沒有公開上架
   D.appState = function (a) {
     let st = a.stage === 'dev' ? 'dev' : 'live';
-    D.ALERTS.forEach(x => { if ((x.app === a.key || (x.apps && x.apps.indexOf(a.key) >= 0)) && (x.sev === 'crit' || (x.sev === 'warn' && st !== 'crit'))) st = x.sev; });
+    D.ALERTS.forEach(x => { if (!x.ack && (x.app === a.key || (x.apps && x.apps.indexOf(a.key) >= 0)) && (x.sev === 'crit' || (x.sev === 'warn' && st !== 'crit'))) st = x.sev; });
     return st;
+  };
+  // Claude 訂閱方案的用量（右上角的電池）：收集工具在 Mac 上用 CLI 的本機指令讀，不呼叫模型
+  D.quota = function () {
+    const c = ((D.sources.imports && D.sources.imports.collectors) || {})['claude-usage'];
+    if (!c || !c.quota || !Array.isArray(c.quota.windows) || !c.quota.windows.length) return null;
+    return { plan: c.quota.plan || null, windows: c.quota.windows, at: c.collectedAt || null };
   };
 
   // 收集工具匯入的「目前數字」（玩家總數、近 7 天活躍…），依它給的順序
@@ -606,7 +620,7 @@
       { name: '後台服務檢查', gives: '每個後台有沒有回應、回應時間、可用率', cover: D.services.length + ' 個後台服務', freq: '每分鐘', last: D.services.reduce((m, svc) => Math.max(m, (svc.now && svc.now.at) || 0), 0) || null, state: state('services'), note: '由 EClaw 主站去問各後台公開的健康檢查網址' }
     ].concat(Object.keys(COLLECTORS).map(id => {
       const c = collectors[id], stale = c && D.T0 - c.collectedAt > 36 * HOUR;
-      return { name: COLLECTORS[id][0], gives: COLLECTORS[id][2] || '新用戶、每日活躍、對局、內購筆數、信箱、留存', cover: COLLECTORS[id][1], freq: id === 'railway' || id === 'wishlist-users' ? '每小時' : id.indexOf('feedback-') === 0 ? '每 15 分鐘' : '每天 06:20', last: c ? c.collectedAt : null,
+      return { name: COLLECTORS[id][0], gives: COLLECTORS[id][2] || '新用戶、每日活躍、對局、內購筆數、信箱、留存', cover: COLLECTORS[id][1], freq: id === 'railway' || id === 'wishlist-users' || id === 'claude-usage' ? '每小時' : id.indexOf('feedback-') === 0 ? '每 15 分鐘' : '每天 06:20', last: c ? c.collectedAt : null,
         state: !s.imports || !s.imports.ok ? 'crit' : !c ? 'none' : stale ? 'warn' : 'ok', note: !c ? '還沒有匯入過' : stale ? '超過一天沒更新；收集工具在這台 Mac 上執行' : ((c.notes || [])[0] || COLLECTORS[id][3] || '只匯入彙總數字，不含任何帳號或內容') };
     })).concat([
       { name: '其他 APP 的使用紀錄', gives: '活躍用戶、留存', cover: '沒有自己伺服器的 APP', freq: '—', last: null, state: 'none', note: '這些 APP 不會回報使用情況，要在 APP 裡加上回報再發新版才會有' },

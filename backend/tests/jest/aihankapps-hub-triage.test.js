@@ -50,6 +50,47 @@ describe('alert schedule tool: what is due', () => {
     });
 });
 
+// Hank 2026-11-13: 「排程可以讀取我是否按了該狀態以及讀取對策」
+describe('alert schedule tool: what Hank confirmed, and his countermeasures', () => {
+    const ack = (plan, planAt) => ({ at: NOW - 2 * HOUR, atTaipei: '2026-11-13 08:00 (Asia/Taipei)', plan, planAt });
+    test('a countermeasure is due until the schedule answers it, whatever the alert is; a bare confirmation changes nothing', () => {
+        expect(triage.due(alert('worker-bad-x', { ack: ack('先觀察', NOW - HOUR) }), NOW)).toBe('plan');
+        expect(triage.due(alert('attention-shopee', { ack: ack('已經重新登入了', NOW - HOUR) }), NOW)).toBe('plan');           // even the board the schedule otherwise leaves alone
+        expect(triage.due(alert('a', { triage: { state: 'done', at: NOW - 3 * HOUR }, ack: ack('不對，這個要處理', NOW - HOUR) }), NOW)).toBe('plan');   // written after the schedule closed it
+        expect(triage.due(alert('a', { triage: { state: 'auto', at: NOW - HOUR / 2 }, ack: ack('先觀察', NOW - HOUR) }), NOW)).toBeNull();           // answered: the note is newer
+        expect(triage.due(alert('a', { triage: { state: 'auto', at: NOW - HOUR }, ack: ack(null, null) }), NOW)).toBeNull();
+        expect(triage.due(alert('worker-bad-x', { ack: ack(null, null) }), NOW)).toBe('new');
+    });
+    test('pending puts his instructions first, shows the confirmation on every alert, and keeps a countermeasure whose alert has cleared', async () => {
+        const answer = { success: true, computedAtTaipei: '2026-11-13 10:00 (Asia/Taipei)', alerts: [
+            alert('worker-bad-x'),
+            alert('rating-alpha', { triage: { state: 'auto', at: NOW - HOUR }, ack: ack('這個評分先不管', NOW - HOUR / 2) }),
+            alert('store-stale', { triage: { state: 'auto', at: NOW - HOUR }, ack: ack(null, null) }) ],
+        acks: [{ id: 'rating-alpha', title: 'Alpha 評分偏低', plan: '這個評分先不管', planAt: NOW - HOUR / 2, active: true, answered: false },
+            { id: 'gone@20261112', title: '已解除的警示', atTaipei: '2026-11-12 20:00 (Asia/Taipei)', plan: '下次直接重啟', planAt: NOW - 14 * HOUR, active: false, answered: false, triage: null },
+            { id: 'done@20261112', title: 'x', plan: '照做', planAt: NOW - 14 * HOUR, active: false, answered: true },
+            { id: 'old@20261020', title: 'x', plan: '很久以前', planAt: NOW - 15 * 24 * HOUR, active: false, answered: false },
+            { id: 'bare@20261112', title: 'x', plan: null, planAt: null, active: false, answered: false }] };
+        const { run } = fakeRailway({ 'scripts/aihankapps-hub-alerts.js': () => answer });
+        const realNow = Date.now;
+        Date.now = () => NOW;
+        try {
+            const result = await triage.main(['pending'], { run });
+            expect(result.alerts.map(a => [a.id, a.reason])).toEqual([['rating-alpha', 'plan'], ['gone@20261112', 'plan'], ['worker-bad-x', 'new']]);
+            expect(result.alerts[0].ack).toEqual({ at: '2026-11-13 08:00 (Asia/Taipei)', plan: '這個評分先不管' });
+            expect(result.alerts[1]).toMatchObject({ cleared: true, type: 'gone', title: '已解除的警示', ack: { at: '2026-11-12 20:00 (Asia/Taipei)', plan: '下次直接重啟' } });
+            expect(result.alerts[2].ack).toBeNull();
+            expect((await triage.main(['acks'], { run })).acks).toHaveLength(5);
+        } finally { Date.now = realNow; }
+    });
+    test('the rule file tells the schedule what a countermeasure is and how to answer it', () => {
+        const rules = require('fs').readFileSync(path.resolve(__dirname, '../../../tools/aihankapps-hub/TRIAGE.md'), 'utf8');
+        expect(rules).toContain('## Hank 的確認與對策');
+        expect(rules).toContain('已讀到對策：');
+        expect(rules).toContain('不要因為做不到就改成 `human`');
+    });
+});
+
 describe('alert schedule tool: writing a judgement', () => {
     const saved = request => ({ success: true, saved: { ref: request.ref, state: request.state, updatedAt: NOW } });
     test('note, raise and resolve each send one request to the hub\'s note script, signed by the schedule', async () => {

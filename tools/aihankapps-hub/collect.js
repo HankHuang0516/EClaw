@@ -5,7 +5,7 @@
 //
 //   node tools/aihankapps-hub/collect.js                 read every back-end, show what would be sent, send nothing
 //   node tools/aihankapps-hub/collect.js --commit        read, then import into the hub
-//   node tools/aihankapps-hub/collect.js --only rebound  one back-end (ids: rebound, summit, wishlist, wishlist-users, railway, timehut, attention)
+//   node tools/aihankapps-hub/collect.js --only rebound  one back-end (ids: rebound, summit, wishlist, wishlist-users, railway, timehut, attention, claude-usage)
 //
 // `railway` is different: it runs on this Mac and reads every service's traffic, CPU, memory, space and deployment
 // status from Railway's metrics API with this Mac's Railway CLI login (railway-metrics.js), read-only.
@@ -26,6 +26,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { spawnSync } = require('child_process');
 const { runRailway, shellFor } = require('../aihankapps-gifts/lib/adapters/transport');
 const { BACKENDS, DETAIL, remoteScript } = require('./backends');
 const railway = require('./railway-metrics');
@@ -147,6 +148,72 @@ function collectAttention({ file = ATTENTION_FILE, now = Date.now(), read = fs.r
   return { value: { series: [], facts: [{ app: 'weesh', key: 'attention', value: { label: '需要人為介入', value: human, unit: '件', order: 5, boardAt: at, healing: valid.length - human, items } }], notes } };
 }
 
+// Claude 訂閱方案的用量（Hank 2026-11-13「右上角用類似電池量來顯示claude剩餘周用量 用不消耗token的更新方式」）。
+// `claude -p "/usage"` is one of the CLI's local commands: it prints the plan's limits without calling the model
+// (the answer says num_turns 0 and no tokens). Should a CLI version ever send it to the model instead, the answer is
+// refused, not parsed: this source must stay free.
+const CLAUDE_BINS = [process.env.CLAUDE_BIN, path.join(os.homedir(), '.local', 'bin', 'claude'), '/opt/homebrew/bin/claude', '/usr/local/bin/claude'].filter(Boolean);
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+// How far a time zone is from UTC at one moment, in milliseconds (Asia/Taipei → +8 h); null for a zone Node does not know.
+function zoneOffsetMs(zone, at) {
+  try {
+    const name = (new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'longOffset' }).formatToParts(new Date(at)).find(p => p.type === 'timeZoneName') || {}).value || '';
+    const m = /GMT(?:([+-])(\d{1,2})(?::?(\d{2}))?)?/.exec(name);
+    return m ? (m[1] === '-' ? -1 : 1) * ((Number(m[2]) || 0) * 60 + (Number(m[3]) || 0)) * 60000 : null;
+  } catch (_error) { return null; }
+}
+// "Nov 18 at 10pm (Asia/Taipei)", "10:30pm (Asia/Taipei)" → epoch ms of the next such moment; null when not understood.
+function parseReset(text, now, zone = 'Asia/Taipei') {
+  const m = /^(?:([A-Za-z]{3})[a-z]*\.? (\d{1,2})(?:,| at)? )?(\d{1,2})(?::(\d{2}))?\s*(am|pm)(?:\s*\(([^)]+)\))?$/i.exec(String(text || '').trim());
+  if (!m) return null;
+  const tz = m[6] || zone, off0 = zoneOffsetMs(tz, now);
+  if (off0 === null) return null;
+  const hour = Number(m[3]) % 12 + (/pm/i.test(m[5]) ? 12 : 0), minute = Number(m[4] || 0);
+  if (Number(m[3]) < 1 || Number(m[3]) > 12 || minute > 59) return null;
+  const local = new Date(now + off0);
+  const at = (y, mo, d) => { const guess = Date.UTC(y, mo, d, hour, minute); const off = zoneOffsetMs(tz, guess - off0); return guess - (off === null ? off0 : off); };
+  if (m[1]) {
+    const mo = MONTHS.indexOf(m[1].toLowerCase()), d = Number(m[2]);
+    if (mo < 0 || d < 1 || d > 31) return null;
+    const t = at(local.getUTCFullYear(), mo, d);
+    return t < now - 86400000 ? at(local.getUTCFullYear() + 1, mo, d) : t;   // "Jan 2" read on Dec 30 is next year
+  }
+  const t = at(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate());
+  return t < now ? t + 86400000 : t;
+}
+// The words of `/usage` → { windows: [{ id, label, usedPct, resetsAt, resetsText }] }, or null when no limit line is there.
+function parseClaudeUsage(text, now = Date.now()) {
+  const windows = [], seen = new Set();
+  for (const line of String(text || '').split('\n')) {
+    const m = /^\s*Current (week|session)(?: \(([^)]{1,40})\))?: (\d{1,3}(?:\.\d+)?)% used(?: · resets (.{1,70}))?\s*$/.exec(line);
+    if (!m) continue;
+    const scope = (m[2] || '').trim(), all = !scope || /^all models$/i.test(scope);
+    const id = m[1] === 'session' ? 'session' : all ? 'week' : 'week-' + scope.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30);
+    const usedPct = Number(m[3]);
+    if (seen.has(id) || !/^[a-z0-9][a-z0-9-]*$/.test(id) || !(usedPct >= 0 && usedPct <= 100)) continue;
+    seen.add(id);
+    const resetsText = (m[4] || '').trim();
+    windows.push({ id, label: m[1] === 'session' ? '目前 5 小時' : all ? '本週・所有模型' : '本週・' + scope, usedPct, resetsAt: resetsText ? parseReset(resetsText, now) : null,
+      ...(resetsText ? { resetsText: resetsText.slice(0, 80) } : {}) });
+  }
+  return windows.length ? { windows } : null;
+}
+function collectClaudeUsage({ spawn = spawnSync, now = Date.now(), bins = CLAUDE_BINS, exists = fs.existsSync, cwd = os.homedir() } = {}) {
+  const bin = bins.find(b => exists(b));
+  if (!bin) return { value: null, detail: 'Claude CLI not found (looked in ' + bins.join(', ') + ')' };
+  // Not inside another Claude session's environment, and nothing saved: this is a reading, not a conversation.
+  const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !/^CLAUDE_?CODE/.test(k)));
+  const run = spawn(bin, ['-p', '/usage', '--output-format', 'json', '--max-turns', '1', '--no-session-persistence'], { encoding: 'utf8', timeout: 120000, cwd, env, stdio: ['ignore', 'pipe', 'pipe'] });
+  if (run.error || run.status !== 0) return { value: null, detail: 'claude -p /usage failed (' + ((run.error && run.error.code) || 'exit ' + run.status) + ')' };
+  let answer;
+  try { answer = JSON.parse(String(run.stdout || '').trim().split('\n').pop()); } catch (_error) { return { value: null, detail: 'claude -p /usage did not answer in JSON' }; }
+  const u = (answer && answer.usage) || {}, tokens = ['input_tokens', 'output_tokens', 'cache_creation_input_tokens', 'cache_read_input_tokens'].reduce((n, k) => n + (Number(u[k]) || 0), 0);
+  if (!answer || answer.is_error || answer.num_turns !== 0 || tokens !== 0) return { value: null, detail: '/usage was not answered locally (it reached the model); reading refused' };
+  const quota = parseClaudeUsage(answer.result, now);
+  if (!quota) return { value: null, detail: 'no plan limit in the answer (an API key or gateway has none)' };
+  return { value: { series: [], facts: [], notes: [], quota } };
+}
+
 // Sources read on this Mac rather than inside a back-end's container.
 const LOCAL = [{ id: 'railway', name: 'Railway 後台資源', apps: railway.RAILWAY_APPS,
   async collect(now) {
@@ -155,7 +222,8 @@ const LOCAL = [{ id: 'railway', name: 'Railway 後台資源', apps: railway.RAIL
     try { return { value: await railway.collectRailway({ now, gql: railway.client(token) }) }; } catch (error) { return { value: null, detail: String(error.message || error) }; }
   } },
   { id: 'timehut', name: '時光相簿伺服器', apps: ['timehut'], collect: () => collectTimehut() },
-  { id: 'attention', name: '上架警示板', apps: ['weesh'], collect: now => collectAttention({ now }) }];
+  { id: 'attention', name: '上架警示板', apps: ['weesh'], collect: now => collectAttention({ now }) },
+  { id: 'claude-usage', name: 'Claude 用量', apps: [], collect: now => collectClaudeUsage({ now }) }];
 const SOURCES = BACKENDS.concat(DETAIL, LOCAL);
 
 function catalogAppIds() {
@@ -170,6 +238,7 @@ function toEnvelope(backend, result, { now = Date.now(), appIds = catalogAppIds(
   if (value.error) return { error: 'script_failed', detail: value.error };
   const envelope = { schemaVersion: 1, source: backend.id, collectedAt: now, series: value.series || [], facts: value.facts || [], notes: value.notes || [] };
   if (Array.isArray(value.infra)) envelope.infra = value.infra;
+  if (value.quota) envelope.quota = value.quota;
   const stray = envelope.series.map(s => s.app).concat(envelope.facts.map(f => f.app)).filter(app => !backend.apps.includes(app));
   if (stray.length) return { error: 'unexpected_app', detail: [...new Set(stray)].join(',') };
   try { validateEnvelope(envelope, appIds); } catch (error) { return { error: error.code || 'invalid_envelope', detail: error.message }; }
@@ -211,6 +280,7 @@ async function main(argv, { run = runRailway, log = console.log, now = Date.now,
     if (built.error) { failures += 1; log(`✗ ${backend.name}：讀取失敗（${built.error}${built.detail ? '：' + String(built.detail).slice(-300) : ''}）`); continue; }
     log(`✓ ${backend.name}：讀到 ${built.envelope.series.length} 條每日數列、${built.envelope.facts.length} 個目前數字` + (built.envelope.infra ? `、${built.envelope.infra.length} 個服務的資源數字` : ''));
     log(describe(built.envelope));
+    if (built.envelope.quota) log('  用量讀數：' + built.envelope.quota.windows.map(w => `${w.label} 已用 ${w.usedPct}%`).join('、'));
     for (const note of built.envelope.notes) log(`  註：${note}`);
     if (!commit) continue;
     const sent = run(HUB, importShell(built.envelope), { timeoutMs: 120000 });
@@ -223,4 +293,4 @@ async function main(argv, { run = runRailway, log = console.log, now = Date.now,
 
 if (require.main === module) main(process.argv.slice(2)).then(code => { process.exitCode = code; });
 
-module.exports = { HUB, MAX_SHELL_ENVELOPE_BYTES, LOCAL, SOURCES, TIMEHUT_STATS_URL, TIMEHUT_ADMIN_URL, TIMEHUT_KEY_FILE, readTimehutKey, collectTimehut, collectTimehutDetail, timehutUserFact, toEnvelope, importShell, describe, main, taipeiToday, collectAttention, ATTENTION_FILE };
+module.exports = { HUB, MAX_SHELL_ENVELOPE_BYTES, LOCAL, SOURCES, TIMEHUT_STATS_URL, TIMEHUT_ADMIN_URL, TIMEHUT_KEY_FILE, readTimehutKey, collectClaudeUsage, parseClaudeUsage, parseReset, collectTimehut, collectTimehutDetail, timehutUserFact, toEnvelope, importShell, describe, main, taipeiToday, collectAttention, ATTENTION_FILE };

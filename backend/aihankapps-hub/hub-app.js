@@ -53,7 +53,7 @@
     kpi: 'installs', kpiView: 'chart', revView: 'chart',
     live: true, win: store.get('win', '24h'),
     sort: { key: 'installs', dir: -1 }, q: '', cat: 'all', stage: 'all', cols: store.get('cols', {}) || {}, density: store.get('density', 'cozy'),
-    alertFilter: 'all', acks: store.get('acks', {}) || {}, theme: store.get('theme', 'auto'), retApp: null
+    alertFilter: 'all', plans: {}, theme: store.get('theme', 'auto'), retApp: null
   };
   if (!RANGES.some(r => r[0] === S.range)) S.range = '30d';
   if (!LIVE_WIN[S.win]) S.win = '24h';
@@ -155,15 +155,12 @@
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => toast(okMsg), fallback); else fallback();
   }
 
-  // ---- 警示（由資料層算出來；「確認」只記在這個瀏覽器）--------------------------
-  const isAcked = a => S.acks[a.id] != null;
+  // ---- 警示（由資料層算出來；「確認」存在伺服器，依通知 ID，排程讀得到）--------------
+  // Hank 2026-11-13：確認旁邊可以寫對策；按下後側邊欄的點一起消失，排程讀得到有沒有確認與對策。
+  // S.plans 是還沒送出的草稿（通知 ID → 文字），重畫時填回去
+  const isAcked = D.isAcked;
   const firing = () => D.ALERTS.filter(a => !isAcked(a));
-  function pruneAcks() {
-    const ids = new Set(D.ALERTS.map(a => a.id));
-    let changed = false;
-    Object.keys(S.acks).forEach(id => { if (!ids.has(id)) { delete S.acks[id]; changed = true; } });
-    if (changed) store.set('acks', S.acks);
-  }
+  const ACK_LABEL = text => (String(text || '').trim() ? '確認，送出對策' : '確認，我知道了');
 
   // ---- 外框：導覽、篩選列 -----------------------------------------------------
   function navHtml() {
@@ -177,7 +174,7 @@
   function sideAppsHtml() {
     return '<h2>APP</h2>' + D.APPS.map(a => {
       const st = D.appState(a), on = S.view === 'app' && S.app === a.id;
-      const why = st === 'crit' || st === 'warn' ? D.byUrgency(D.alertsFor(a)).filter(x => x.sev === 'crit' || x.sev === 'warn').map(x => x.title) : [];
+      const why = st === 'crit' || st === 'warn' ? D.byUrgency(D.alertsFor(a)).filter(x => !isAcked(x) && (x.sev === 'crit' || x.sev === 'warn')).map(x => x.title) : [];
       return '<a class="sa' + (on ? ' is-on' : '') + '" href="#app-' + a.id + '" title="' + esc(a.name + '・' + STATE[st][0] + (why.length ? '：' + why.slice(0, 3).join('；') + (why.length > 3 ? '…等 ' + why.length + ' 件' : '') : '')) + '"><i class="sd sd-' + st + '"></i><span>' + esc(a.short) + '</span>' + (st === 'crit' || st === 'warn' ? ico(st, 'sa-i st-' + st) : '') + '</a>';
     }).join('');
   }
@@ -200,6 +197,42 @@
     f.hidden = !show;
     if (show) f.innerHTML = filtersHtml();
     syncLiveUi();
+    syncQuota();
+  }
+  // ---- Claude 週用量（右上角的電池）---------------------------------------------
+  // Hank 2026-11-13「右上角用類似電池量來顯示claude剩餘周用量 用不消耗token的更新方式」：
+  // 收集工具每小時在 Mac 上用 Claude CLI 的本機指令讀一次（不呼叫模型），匯入後這裡畫成電池：滿＝還沒用
+  const QUOTA_STALE = 3 * 3600000;
+  function quotaView() {
+    const q = D.quota();
+    if (!q) return null;
+    const w = q.windows.find(x => x.id === 'week') || q.windows[0];
+    const left = Math.max(0, Math.min(100, Math.round(100 - w.usedPct)));
+    return { q: q, w: w, left: left, lvl: left <= 15 ? 'crit' : left <= 35 ? 'warn' : 'ok', stale: !q.at || Date.now() - q.at > QUOTA_STALE };
+  }
+  function syncQuota() {
+    const b = $('#quota'), v = quotaView();
+    if (!b) return;
+    b.hidden = !v;
+    if (!v) return;
+    b.className = 'quota is-' + v.lvl + (v.stale ? ' is-stale' : '');
+    b.setAttribute('aria-label', 'Claude 本週用量還剩 ' + v.left + '%，已用 ' + Math.round(v.w.usedPct) + '%');
+    b.title = 'Claude 本週用量：還剩 ' + v.left + '%';
+    $('#quota-fill').setAttribute('width', (v.left / 100 * 19).toFixed(1));
+    $('#quota-text').textContent = v.left + '%';
+  }
+  function quotaPopHtml() {
+    const v = quotaView();
+    if (!v) return '<div class="menu"><h3>Claude 用量</h3><p>還沒有讀數。</p></div>';
+    const when = w => {
+      if (!w.resetsAt) return w.resetsText ? esc(w.resetsText) + ' 重置' : '';
+      const d = new Date(w.resetsAt + 8 * 3600000), ms = w.resetsAt - Date.now(), days = Math.floor(ms / 86400000), hours = Math.floor(ms % 86400000 / 3600000);
+      return (d.getUTCMonth() + 1) + '/' + d.getUTCDate() + ' ' + String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0') + ' 重置' +
+        (ms > 0 ? '（還有 ' + (days ? days + ' 天 ' : '') + hours + ' 小時）' : '');
+    };
+    return '<div class="menu q-menu"><h3>Claude 用量' + (v.q.plan ? '・' + esc(v.q.plan) + ' 方案' : '') + '</h3><p>本週還剩 <b>' + v.left + '%</b>，已用 ' + Math.round(v.w.usedPct) + '%。用完之後所有 Claude 排程會停到重置為止。</p><ul class="q-list">' +
+      v.q.windows.map(w => '<li><span>' + esc(w.label) + '</span><b>已用 ' + Math.round(w.usedPct) + '%</b><em>' + when(w) + '</em></li>').join('') + '</ul><p class="muted">' +
+      (v.q.at ? '讀數更新於 <span data-ago="' + v.q.at + '"></span>' + (v.stale ? '，已經超過 3 小時沒更新' : '') + '。' : '') + '每小時由這台 Mac 的 Claude CLI 本機指令讀一次，不呼叫模型、不耗 token。</p></div>';
   }
   function syncLiveUi() {
     const p = $('#live-pill');
@@ -813,8 +846,10 @@
   function appAlertsHtml(a) {
     const list = D.byUrgency(D.alertsFor(a));
     if (!list.length) return '';
-    const crit = list.filter(x => x.sev === 'crit').length, warn = list.filter(x => x.sev === 'warn').length, human = list.filter(x => x.triage && x.triage.state === 'human').length;
-    const sub = [crit ? crit + ' 件嚴重' : '', warn ? warn + ' 件警告' : '', list.length - crit - warn ? (list.length - crit - warn) + ' 件資訊' : ''].filter(Boolean).join('、') + (human ? '；其中 ' + human + ' 件要你處理' : '') + '。側邊欄的紅點／黃點就是它們';
+    // 邊框顏色跟側邊欄的點一致：只看還沒確認的
+    const open = list.filter(x => !isAcked(x)), acked = list.length - open.length;
+    const crit = open.filter(x => x.sev === 'crit').length, warn = open.filter(x => x.sev === 'warn').length, human = open.filter(x => x.triage && x.triage.state === 'human').length;
+    const sub = [crit ? crit + ' 件嚴重' : '', warn ? warn + ' 件警告' : '', list.length - crit - warn ? (list.length - crit - warn) + ' 件資訊' : ''].filter(Boolean).join('、') + (human ? '；其中 ' + human + ' 件要你處理' : '') + (acked ? (open.length ? '；另有 ' : '') + acked + ' 件已確認' : '') + '。側邊欄的紅點／黃點是還沒確認的那些';
     return '<section class="card al-app is-' + (crit ? 'crit' : warn ? 'warn' : 'info') + '" id="app-alerts">' + cardHead('這款 APP 的警示', sub) + '<div class="al-list">' + list.map(alertHtml).join('') + '</div></section>';
   }
   function alertHtml(a) {
@@ -827,17 +862,24 @@
     const mu = a.muted, members = mu ? '<ul class="al-mu">' + mu.members.map(m => '<li><b>' + esc(m.title) + '</b><span>' + esc(m.detail || '') + '</span>' + (m.since ? '<span class="muted">開始於 <span data-ago="' + m.since + '"></span></span>' : '') + '<code>' + esc(m.ref) + '</code></li>').join('') + '</ul>' : '';
     const muteBtn = mu ? '<button type="button" class="btn" data-act="al-unmute" data-v="' + esc(mu.type) + '" title="這一類警示恢復個別提醒">取消略過</button>'
       : D.mutable(a) ? '<button type="button" class="btn-ghost" data-act="al-mute" data-v="' + esc(D.muteKey(a)) + '" data-label="' + esc(String(a.title).replace(/^需要你處理：/, '').replace(/[（(]已回報 \d+ 次[）)]$/, '')) + '" data-ref="' + esc(a.ref) + '" title="以後這一類警示合併成一則資訊，不再個別提醒">以後略過類似警告</button>' : '';
-    return '<article class="al al-' + (acked ? 'acked' : 'firing') + '"><div class="al-m">' + pill(a.sev, SEV[a.sev]) + '<div class="al-t"><h3>' + esc(a.title) + '</h3>' + (a.ask && a.detail === a.ask ? '' : '<p>' + esc(a.detail) + '</p>') + ask + quote + triage + members + '</div></div>' +
-      '<div class="al-w"><span class="al-s as-' + (acked ? 'acked' : 'firing') + '">' + (acked ? '已確認' : '觸發中') + '</span><span class="muted">規則：' + esc(a.rule) + '</span>' + (a.since ? '<span class="muted">開始於 <span data-ago="' + a.since + '"></span></span>' : '') + '</div>' +
+    // 確認與對策：還沒確認時是一個輸入框加按鈕（有寫字，按鈕就變成「確認，送出對策」）；確認後顯示對策與排程有沒有讀到
+    const draft = S.plans[a.ref] || '', answered = acked && a.ack.plan && tr && tr.at && a.ack.planAt && tr.at >= a.ack.planAt;
+    const plan = acked && a.ack.plan ? '<p class="al-pv"><b>你的對策</b><span>' + esc(a.ack.plan) + '</span><span class="muted">' + (answered ? '排程已讀取，回覆在上面' : '排程還沒讀到；警示處理排程每 15 分鐘看一次') + '</span></p>' : '';
+    const ackUi = acked ? '<button type="button" class="btn" data-act="al-unack" data-v="' + esc(a.ref) + '">取消確認</button>'
+      : '<span class="al-ack"><label class="al-plan"><span class="sr-only">對策（選填）</span><input type="text" id="al-plan-' + esc(String(a.ref).replace(/[^A-Za-z0-9_-]/g, '_')) + '" data-bind="al-plan" data-v="' + esc(a.ref) + '" maxlength="1000" placeholder="對策（選填）：要怎麼處理，排程會讀到" autocomplete="off" enterkeyhint="send" value="' + esc(draft) + '"></label>' +
+        '<button type="button" class="btn is-primary" data-act="al-ack" data-v="' + esc(a.ref) + '" data-title="' + esc(a.title) + '">' + ACK_LABEL(draft) + '</button></span>';
+    return '<article class="al al-' + (acked ? 'acked' : 'firing') + '"><div class="al-m">' + pill(a.sev, SEV[a.sev]) + '<div class="al-t"><h3>' + esc(a.title) + '</h3>' + (a.ask && a.detail === a.ask ? '' : '<p>' + esc(a.detail) + '</p>') + ask + quote + triage + plan + members + '</div></div>' +
+      '<div class="al-w"><span class="al-s as-' + (acked ? 'acked' : 'firing') + '">' + (acked ? '已確認' : '觸發中') + '</span><span class="muted">規則：' + esc(a.rule) + '</span>' + (a.since ? '<span class="muted">開始於 <span data-ago="' + a.since + '"></span></span>' : '') +
+      (acked && a.ack.at ? '<span class="muted">確認於 <span data-ago="' + a.ack.at + '"></span></span>' : '') + '</div>' +
       '<div class="al-id"><span class="al-id-l">通知 ID</span><code class="al-id-v">' + esc(a.ref) + '</code><button type="button" class="btn-ghost al-id-b" data-act="al-copy" data-v="' + esc(a.ref) + '" aria-label="複製通知 ID ' + esc(a.ref) + '" title="複製通知 ID，貼給 AI 就能查這則通知">' + ico('copy') + '複製</button></div><div class="al-a">' +
-      (acked ? '<button type="button" class="btn" data-act="al-unack" data-v="' + esc(a.id) + '">取消確認</button>' : '<button type="button" class="btn is-primary" data-act="al-ack" data-v="' + esc(a.id) + '">確認，我知道了</button>') +
+      ackUi +
       (a.go ? '<a class="btn" href="#' + a.go + '">' + (a.go === 'live' ? '看即時監控' : '看資料來源') + '</a>' : '') + (app && !(S.view === 'app' && S.app === app.id) ? '<a class="btn" href="#app-' + app.id + '">開啟 ' + esc(app.short) + '</a>' : '') + muteBtn + '</div></article>';
   }
   function viewAlerts(el) {
     const all = D.byUrgency(D.ALERTS), cnt = { all: all.length, firing: all.filter(a => !isAcked(a)).length };
     cnt.acked = cnt.all - cnt.firing;
     const list = all.filter(a => S.alertFilter === 'all' || (S.alertFilter === 'acked') === isAcked(a));
-    el.innerHTML = head('警示', '由目前的數字算出來：條件成立就出現，解除就消失。「確認」只記在這個瀏覽器，代表我看過了。', seg('al-filter', S.alertFilter, [['all', '全部 ' + cnt.all], ['firing', '觸發中 ' + cnt.firing], ['acked', '已確認 ' + cnt.acked]])) +
+    el.innerHTML = head('警示', '由目前的數字算出來：條件成立就出現，解除就消失。按「確認」代表你看過了：側邊欄的點會消失，排程也讀得到；旁邊可以寫對策，排程會照著處理。', seg('al-filter', S.alertFilter, [['all', '全部 ' + cnt.all], ['firing', '觸發中 ' + cnt.firing], ['acked', '已確認 ' + cnt.acked]])) +
       '<section class="card"><div class="al-list">' + (list.length ? list.map(alertHtml).join('') : '<p class="empty">' + (all.length ? '這個分類目前沒有警示。' : '目前沒有任何警示，所有檢查都通過。') + '</p>') + '</div></section>' +
       '<section class="card">' + cardHead('檢查的規則', '這一版的規則是固定的，還不能在這裡調整') + '<div class="tbl-wrap"><table class="tbl is-wrap"><thead><tr><th>規則</th><th>範圍</th><th>條件</th><th>等級</th></tr></thead><tbody>' +
       D.RULES.map(r => '<tr><td><b>' + esc(r[0]) + '</b></td><td>' + esc(r[1]) + '</td><td>' + esc(r[2]) + '</td><td>' + pill(r[3], SEV[r[3]]) + '</td></tr>').join('') + '</tbody></table></div></section>';
@@ -883,9 +925,9 @@
   }
   // 讀到新的營運數據：只更新會變的數字，不重畫整頁
   function liveTick() {
-    pruneAcks();
     $('#nav').innerHTML = navHtml();
     $('#side-apps').innerHTML = sideAppsHtml();
+    syncQuota();
     liveHooks.forEach(fn => fn());
     tickAgo();
   }
@@ -930,8 +972,10 @@
     p.style.maxHeight = Math.max(180, window.innerHeight - r.bottom - 16) + 'px';
     p.style.left = Math.max(8, Math.min(r.left, vw - p.offsetWidth - 8)) + 'px';
     p.style.top = r.bottom + 6 + 'px';
-    if (focus) { const f = p.querySelector('input'); if (f) f.focus(); }
+    // 觸控裝置不自動聚焦：一聚焦鍵盤就彈出來，蓋住剛打開的選單（Hank 2026-11-13 手機上選單一開就收起來）
+    if (focus && !coarse()) { const f = p.querySelector('input'); if (f) f.focus(); }
   }
+  const coarse = () => !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
   function closePop() { const p = $('#pop'); if (p.hidden) return false; p.hidden = true; p.innerHTML = ''; p.dataset.owner = ''; return true; }
   let lastFocus = null;
   function openOverlay(html) {
@@ -1037,8 +1081,16 @@
     'density': v => { S.density = v; store.set('density', v); document.documentElement.setAttribute('data-density', v); $$('[data-act="density"]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v))); },
     'open-app': v => go('app-' + v),
     'al-filter': v => { S.alertFilter = v; render(); },
-    'al-ack': v => { S.acks[v] = Date.now(); store.set('acks', S.acks); render(); },
-    'al-unack': v => { delete S.acks[v]; store.set('acks', S.acks); render(); },
+    'al-ack': (v, el) => {
+      const plan = String(S.plans[v] || '').trim();
+      el.disabled = true;
+      D.ack(v, el.dataset.title || '', plan).then(() => { delete S.plans[v]; toast(plan ? '已確認，對策已送出；排程會讀到' : '已確認'); return refreshData(true); }).catch(() => { el.disabled = false; toast('沒有存起來，請再試一次'); });
+    },
+    'al-unack': (v, el) => {
+      el.disabled = true;
+      D.unack(v).then(() => { toast('已取消確認'); return refreshData(true); }).catch(() => { el.disabled = false; toast('沒有存起來，請再試一次'); });
+    },
+    'pop-quota': (v, el) => { openPop(el, quotaPopHtml()); tickAgo(); },
     'al-copy': v => copyText(v, '已複製通知 ID：' + v, '沒辦法自動複製，請直接選取通知 ID'),
     'al-mute': (v, el) => {
       const label = el.dataset.label || v;
@@ -1071,6 +1123,7 @@
     'stage': el => { S.stage = el.value; renderAppsTable(); },
     'col': el => { S.cols[el.value] = el.checked; store.set('cols', S.cols); renderAppsTable(); },
     'app-check': el => { if (el.checked) S.apps.add(el.value); else S.apps.delete(el.value); render(true); },
+    'al-plan': el => { S.plans[el.dataset.v] = el.value; const b = el.closest('.al-ack') && el.closest('.al-ack').querySelector('[data-act="al-ack"]'); if (b) b.textContent = ACK_LABEL(el.value); },
     'apps-q': el => { const q = el.value.trim().toLowerCase(); $$('#pop .menu-row[data-k]').forEach(r => { r.hidden = !!q && r.dataset.k.indexOf(q) < 0; }); },
     'pal-q': el => palRender(el.value)
   };
@@ -1091,6 +1144,8 @@
     if (!started) return;
     const t = e.target, tag = (t.tagName || '').toLowerCase(), typing = tag === 'input' || tag === 'select' || tag === 'textarea';
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); if (!closeOverlay()) openPalette(); return; }
+    // 對策輸入框按 Enter 就送出；注音／拼音選字時的 Enter 不算
+    if (e.key === 'Enter' && t.dataset && t.dataset.bind === 'al-plan') { if (e.isComposing || e.keyCode === 229) return; e.preventDefault(); const b = t.closest('.al-ack') && t.closest('.al-ack').querySelector('[data-act="al-ack"]'); if (b && !b.disabled) b.click(); return; }
     if (e.key === 'Escape') { if (closeOverlay() || closePop()) return; V.unpinAll(); return; }
     if (t.id === 'pal-q') {
       if (e.key === 'ArrowDown') { e.preventDefault(); palMove(1); } else if (e.key === 'ArrowUp') { e.preventDefault(); palMove(-1); } else if (e.key === 'Enter') { e.preventDefault(); palRun(PAL.idx); }
@@ -1119,7 +1174,13 @@
     }
   });
   window.addEventListener('hashchange', () => { if (!started) return; parseHash(); closePop(); closeOverlay(); render(); window.scrollTo(0, 0); });
-  window.addEventListener('resize', closePop);
+  // 只有寬度變了才關選單：手機鍵盤彈出只改高度，以前會把剛打開的選單關掉（選單裡有搜尋框時變成開了就關）
+  let lastWidth = window.innerWidth;
+  window.addEventListener('resize', () => {
+    if (window.innerWidth === lastWidth) { const p = $('#pop'); if (!p.hidden) p.style.maxHeight = Math.max(180, window.innerHeight - p.getBoundingClientRect().top - 16) + 'px'; return; }
+    lastWidth = window.innerWidth;
+    closePop();
+  });
   window.addEventListener('scroll', () => { lastInput = Date.now(); }, { passive: true });
   if (window.matchMedia) { const mq = window.matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', applyTheme); }
   if (window.MutationObserver) new MutationObserver(() => { $('#theme-ico').setAttribute('href', isDark() ? '#i-sun' : '#i-moon'); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
@@ -1165,7 +1226,6 @@
       await D.load();
     } catch (error) { stop(error); return; }
     started = true;
-    pruneAcks();
     parseHash();
     render();
   }

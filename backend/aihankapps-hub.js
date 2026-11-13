@@ -360,17 +360,19 @@ function createData({ getPool, getAuthPool, getDeviceStats, now = Date.now, port
                 apps: (row.value.apps || []).filter(app => known.has(app)), source: row.source, observedAt: new Date(row.observed_at).getTime() }))
                 .sort((a, b) => String(a.project).localeCompare(String(b.project)) || String(a.name).localeCompare(String(b.name)));
             return { collectors: Object.fromEntries(imported.sources.map(row => [row.id, { collectedAt: new Date(row.collected_at).getTime(), importedAt: new Date(row.imported_at).getTime(),
-                values: row.detail && row.detail.values, notes: (row.detail && row.detail.notes) || [] }])) };
+                values: row.detail && row.detail.values, notes: (row.detail && row.detail.notes) || [],
+                // A usage meter the source carries instead of app numbers (Claude's weekly limit).
+                ...(row.detail && row.detail.quota ? { quota: row.detail.quota } : {}) }])) };
         })));
 
         await section('services', () => ownTables.then(() => readOnly(getPool(), async query => { services = await hubStore.readProbes(query, generatedAt); return {}; })));
 
         // Problem reports from every app, and the alert schedule's notes (Hank, 2026-11-13).
-        let inbox = { feedback: [], notes: [], mutes: [], days: hubInbox.FEEDBACK_DAYS };
+        let inbox = { feedback: [], notes: [], mutes: [], acks: [], days: hubInbox.FEEDBACK_DAYS };
         await section('inbox', async () => {
             await hubInbox.prepare(getPool());
             const read = await readOnly(getPool(), query => hubInbox.readInbox(query, { now: generatedAt, appIds: new Set(apps.map(app => app.id)) }));
-            inbox = { feedback: read.feedback, notes: read.notes, mutes: read.mutes, days: read.days };
+            inbox = { feedback: read.feedback, notes: read.notes, mutes: read.mutes, acks: read.acks || [], days: read.days };
             return { partial: read.partial };
         });
 
@@ -395,7 +397,7 @@ function createData({ getPool, getAuthPool, getDeviceStats, now = Date.now, port
             }
             return pending;
         },
-        // After the page's own write (a mute), the next answer is built fresh.
+        // After the page's own write (a mute, a confirmation), the next answer is built fresh.
         invalidate() { cache = null; },
     };
 }
@@ -438,9 +440,20 @@ function createAlerts({ loadHub, latestServices, fetchOps = defaultFetchOps, now
                 scope: (rules[a.rule] || {}).scope || null, source: a.source, app: a.app, apps: a.apps, since: a.since, sinceTaipei: taipeiTime(a.since),
                 basis: a.basis, basisTaipei, view: a.go ? '/AiHankApps/hub/#' + a.go : '/AiHankApps/hub/#alerts',
                 // What the alert schedule decided (null = not looked at yet); a problem report's own words; what Hank is asked to do.
-                triage: a.triage || null, quote: a.quote || null, ask: a.ask || null };
+                triage: a.triage || null, quote: a.quote || null, ask: a.ask || null,
+                // Hank pressed 確認 on the page (null = he has not): when, and the countermeasure he wrote with it, if any.
+                ack: a.ack ? { at: a.ack.at, atTaipei: taipeiTime(a.ack.at), plan: a.ack.plan || null, planAt: a.ack.planAt || null } : null };
         });
-        return { computedAt: at, computedAtTaipei: taipeiTime(at), alerts };
+        // Every recent confirmation, including those whose alert has cleared since: a countermeasure is an instruction to
+        // the schedule, and it is `answered` once the schedule has written a note on that ID after it.
+        const inbox = JSON.parse(JSON.stringify(D.inbox || {})), noteOf = {}, active = new Set(alerts.map(a => a.id));
+        (inbox.notes || []).forEach(n => { if (n && n.ref) noteOf[n.ref] = n; });
+        const acks = (inbox.acks || []).map(k => {
+            const n = noteOf[k.ref];
+            return { id: k.ref, title: k.title || null, at: k.at, atTaipei: taipeiTime(k.at), plan: k.plan || null, planAt: k.planAt || null, active: active.has(k.ref),
+                answered: !!(k.plan && n && n.updatedAt >= k.planAt), triage: n ? { state: n.state, note: n.note, at: n.updatedAt } : null };
+        });
+        return { computedAt: at, computedAtTaipei: taipeiTime(at), alerts, acks };
     }
     return {
         load({ fresh = false } = {}) {
@@ -545,12 +558,15 @@ function createRouters(options) {
         next();
     }
     const ready = (_req, res, next) => (isReady() ? next() : unavailable(res));
-    // The API's one write (Hank 2026-11-13「以後略過類似警告」): POST /mutes and DELETE /mutes/<type>, only from the hub page
-    // itself (the browser always sends Origin on these; a missing or foreign Origin is refused), and only for an administrator.
+    // The API's only writes (Hank 2026-11-13): 「以後略過類似警告」 POST /mutes and DELETE /mutes/<type>, and 「確認」with an
+    // optional countermeasure, POST /acks and DELETE /acks/<notification ID>. Only from the hub page itself (the browser
+    // always sends Origin on these; a missing or foreign Origin is refused), and only for an administrator.
     const MUTES = /^\/mutes(\/[A-Za-z0-9._:-]{1,120})?$/;
+    const ACKS = /^\/acks\/[^/]{1,600}$/;
     function sameOriginApi(req, res, next) {
         if (['GET', 'HEAD'].includes(req.method)) return readOnlySameOrigin(req, res, next);
-        const write = (req.method === 'POST' && req.path === '/mutes') || (req.method === 'DELETE' && MUTES.test(req.path) && req.path !== '/mutes');
+        const write = (req.method === 'POST' && (req.path === '/mutes' || req.path === '/acks'))
+            || (req.method === 'DELETE' && ((MUTES.test(req.path) && req.path !== '/mutes') || ACKS.test(req.path)));
         if (!write) return res.status(405).set('Allow', 'GET, HEAD').json({ success: false, error: 'Read-only resource' });
         if (!['https://eclawbot.com', 'https://www.eclawbot.com'].includes(req.get('origin') || '')) return res.status(403).json({ success: false, error: 'Same-origin access required' });
         next();
@@ -670,6 +686,27 @@ function createRouters(options) {
             data.invalidate(); alerts.invalidate();
             res.json({ success: true, ...result });
         } catch (error) { muteFailed(res, error); }
+    });
+    // 確認，我知道了／確認，送出對策 (Hank, 2026-11-13): stored here so the sidebar dot clears on every device and the alert
+    // schedule can read that he confirmed and what he wants done; DELETE takes the confirmation back.
+    const ackFailed = (res, error) => {
+        if (/^ACK_/.test(error.code || '')) return res.status(400).json({ success: false, error: error.code });
+        console.error('[AiHankAppsHub] confirmation failed:', error.message);
+        return unavailable(res);
+    };
+    api.post('/acks', express.json({ limit: '8kb' }), async (req, res) => {
+        try {
+            const ack = await hubInbox.setAck(getPool(), req.body);
+            data.invalidate(); alerts.invalidate();
+            res.json({ success: true, ack });
+        } catch (error) { ackFailed(res, error); }
+    });
+    api.delete('/acks/:ref', async (req, res) => {
+        try {
+            const result = await hubInbox.removeAck(getPool(), String(req.params.ref || ''));
+            data.invalidate(); alerts.invalidate();
+            res.json({ success: true, ...result });
+        } catch (error) { ackFailed(res, error); }
     });
     api.use((_req, res) => res.status(404).json({ success: false, error: 'Admin hub resource not found' }));
 
