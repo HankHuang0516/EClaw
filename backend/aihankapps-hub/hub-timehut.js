@@ -220,7 +220,7 @@
         '<button type="button" class="btn-ghost" data-th="open" data-v="' + u.ref + '" aria-label="關閉詳細">關閉</button></header>' + drill(u, meta) + '</section>';
     };
     const stamp = () => '<p class="hint">' + '資料時間 ' + esc(meta.asOf ? new Date(meta.asOf).toLocaleString('zh-TW', { hour12: false }) : '—') + (meta.version ? '・伺服器 ' + esc(meta.version) : '') +
-      (meta.notes && meta.notes.length ? '・' + esc(meta.notes.join('；')) : '') + '。階段用 LINE 收件頁同一套判定；家庭相簿的照片數來自 Flickr。</p>';
+      (meta.notes && meta.notes.length ? '・' + esc(meta.notes.join('；')) : '') + '。每小時更新；階段用 LINE 收件頁同一套判定；家庭相簿的照片數來自 Flickr。</p>';
     function paint(focusSel) {
       el.innerHTML = '<section class="card th-card">' + head('用戶明細', '每位用戶的辨識、相簿與流量・點一列看詳細') + tiles() + '<div class="th-top"><div class="th-top-l">' + overallBar() + '</div><div class="th-top-r"><b class="th-ins-h">智慧洞察</b>' + insightHtml() + '</div></div>' +
         tools() + table() + panel() + stamp() + '</section>';
