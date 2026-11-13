@@ -441,6 +441,15 @@ td.att em{font-variant-numeric:tabular-nums}
 .al-t{min-width:0;display:grid;gap:2px}
 .al-t h3{font:700 14px/1.4 var(--font)}
 .al-t p{font-size:12px;color:var(--ink-3)}
+.al-q{margin:4px 0 0;padding:6px 10px;border-left:3px solid var(--line);background:var(--panel-2);border-radius:0 6px 6px 0;font-size:12px;line-height:1.55;color:var(--ink-2);white-space:pre-wrap;overflow-wrap:anywhere;max-height:12em;overflow:auto}
+.al-ask{margin-top:4px;font-size:13px;line-height:1.55;color:var(--ink);overflow-wrap:anywhere}
+.al-ask b{display:block;font-size:11px;color:var(--crit-ink);letter-spacing:.02em}
+.al-tr{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;margin-top:4px;font-size:12px;line-height:1.5;color:var(--ink-2);overflow-wrap:anywhere}
+.al-tr b{flex:none;font-size:11px;padding:1px 7px;border-radius:999px;background:var(--panel-2);color:var(--ink-2)}
+.al-tr span{min-width:0}
+.al-tr-human b{background:var(--crit);color:var(--on-crit)}
+.al-tr-auto b{color:var(--ok-ink)}
+.al-tr-new b{color:var(--warn-ink)}
 .al-resolved .al-t h3{font-weight:500}
 .al-w{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;font-size:12px;white-space:nowrap}
 .al-s{padding:1px 8px;border-radius:99px;background:var(--panel-2);font-weight:700}

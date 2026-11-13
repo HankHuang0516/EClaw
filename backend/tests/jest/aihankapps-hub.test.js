@@ -67,6 +67,8 @@ function fakePool(overrides = {}) {
             daily: { start: '2026-11-08', netInMb: [10, 12], netOutMb: [40, 44], cpu: [0.01, 0.02], memMb: [100, 110] } } }],
         probesRecent: [{ service: 'eclaw', at: new Date(Math.floor(NOW / 300000) * 300000), checks: 5, failures: 1, ms_total: 400 }],
         probesDaily: [{ service: 'eclaw', day: '2026-11-10', checks: 100, failures: 5, ms_total: 9500 }, { service: 'eclaw', day: '2026-10-01', checks: 10, failures: 10, ms_total: 0 }],
+        // problem reports and the alert schedule's notes (aihankapps-hub-inbox.js)
+        regclass: [{ t: 'present' }], eclawFeedback: [], fraudItems: [], betaItems: [], hubFeedback: [], hubNotes: [],
         ...overrides,
     };
     const pool = { log: [], params: {}, released: 0, connected: 0, direct: [] };
@@ -74,7 +76,9 @@ function fakePool(overrides = {}) {
     const pick = key => { if (tables[key] instanceof Error) throw tables[key]; return { rows: tables[key] }; };
     const answer = (sql, values) => {
         if (['BEGIN READ ONLY', 'COMMIT', 'ROLLBACK'].includes(sql) || sql.startsWith('SET LOCAL statement_timeout = ')) return { rows: [] };
-        const key = sql.includes('MIN(day)') ? 'trafficFirst' : sql.includes('FROM app_portfolio_traffic_daily') ? 'trafficRows'
+        const key = sql.includes('to_regclass') ? 'regclass' : sql.includes('FROM aihankapps_hub_notes') ? 'hubNotes' : sql.includes('FROM aihankapps_hub_feedback') ? 'hubFeedback'
+            : sql.includes('FROM feedback') ? 'eclawFeedback' : sql.includes("comment <> ''") ? 'betaItems' : sql.includes('description, app_version') ? 'fraudItems'
+            : sql.includes('MIN(day)') ? 'trafficFirst' : sql.includes('FROM app_portfolio_traffic_daily') ? 'trafficRows'
             : sql.includes('FROM app_portfolio_likes') ? 'likes' : sql.includes('FROM app_portfolio_comments') ? 'comments' : sql.includes('FROM app_portfolio_beta_feedback') ? 'beta'
                 : sql.includes('FROM fraud_app_feedback_reports') ? 'feedback' : sql.includes('FROM user_accounts') && sql.includes('GROUP BY') ? 'signups' : sql.includes('FROM user_accounts') ? 'users'
                     : sql.includes('FROM chat_messages') ? 'chat' : sql.includes('MIN(quota_date)') ? 'dreamFirst' : sql.includes('FROM dream_buddy_inference_jobs') ? 'dreamJobs'
@@ -273,7 +277,7 @@ describe('admin hub: the data answer', () => {
         const body = res.body, s = body.daily.series;
         expect([body.success, body.schemaVersion, body.generatedAt, body.timeZone, body.today]).toEqual([true, 1, NOW, 'Asia/Taipei', TODAY]);
         expect(body.daily).toMatchObject({ start: START, days: hub.HISTORY_DAYS });
-        expect(Object.values(body.sources).map(x => x.ok)).toEqual(new Array(11).fill(true));
+        expect(Object.values(body.sources).map(x => x.ok)).toEqual(new Array(12).fill(true));
 
         // catalog: only what the portfolio already shows, with unsafe values dropped
         expect(body.apps.map(a => a.id)).toEqual(['alpha', 'com.example.beta', 'gamma']);
@@ -347,18 +351,24 @@ describe('admin hub: the data answer', () => {
     test('every database read is read-only, time-limited, and gives its connection back', async () => {
         const { app, pool } = mount();
         await as(request(app).get('/api/aihankapps/hub/data'), 'admin');
-        expect(pool.connected).toBe(9);
-        expect(pool.released).toBe(9);
-        expect(pool.log.filter(sql => sql === 'BEGIN READ ONLY')).toHaveLength(9);
-        expect(pool.log.filter(sql => sql === 'SET LOCAL statement_timeout = 8000')).toHaveLength(9);
-        expect(pool.log.filter(sql => sql === 'COMMIT')).toHaveLength(9);
+        expect(pool.connected).toBe(10);
+        expect(pool.released).toBe(10);
+        expect(pool.log.filter(sql => sql === 'BEGIN READ ONLY')).toHaveLength(10);
+        expect(pool.log.filter(sql => sql === 'SET LOCAL statement_timeout = 8000')).toHaveLength(10);
+        expect(pool.log.filter(sql => sql === 'COMMIT')).toHaveLength(10);
         expect(pool.log.join('\n')).not.toMatch(/\b(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)\b/);
         // outside those transactions only the hub's own tables are prepared, once
-        expect(pool.direct.map(sql => sql.split('(')[0].trim())).toEqual(['aihankapps_hub_probes', 'aihankapps_hub_daily', 'aihankapps_hub_facts', 'aihankapps_hub_sources', 'aihankapps_hub_infra'].map(t => 'CREATE TABLE IF NOT EXISTS ' + t));
+        expect(pool.direct.map(sql => sql.split('(')[0].trim())).toEqual(['aihankapps_hub_probes', 'aihankapps_hub_daily', 'aihankapps_hub_facts', 'aihankapps_hub_sources', 'aihankapps_hub_infra'].map(t => 'CREATE TABLE IF NOT EXISTS ' + t)
+            .concat(['CREATE TABLE IF NOT EXISTS aihankapps_hub_feedback', 'CREATE INDEX IF NOT EXISTS idx_aihankapps_hub_feedback_created ON aihankapps_hub_feedback', 'CREATE TABLE IF NOT EXISTS aihankapps_hub_notes']));
         expect(pool.log.join('\n')).toMatch(/FROM tappay_transactions WHERE status = 'success' AND currency = 'TWD'/);
         expect(pool.log.join('\n')).toMatch(/FROM topup_orders WHERE status = 'paid' AND refunded_at IS NULL AND amount_twd > 0/);
-        // nothing personal is selected: counts and days only
-        expect(pool.log.join('\n')).not.toMatch(/SELECT \*|\b(email|device_secret|password_hash|nickname|content|description|prompt|visitor_hash|ua|referer|ip)\b|(?<!::)\btext\b/);
+        // nothing personal is selected: counts and days only — except the problem reports Hank asked to read as alerts
+        // (2026-11-13), whose text is read by the inbox queries alone, and never with device secrets, logs, e-mail or addresses
+        const isInbox = sql => /FROM (feedback|fraud_app_feedback_reports|app_portfolio_beta_feedback|aihankapps_hub_feedback|aihankapps_hub_notes)\b/.test(sql) && /ORDER BY/.test(sql);
+        const inboxSql = pool.log.filter(isInbox), rest = pool.log.filter(sql => !isInbox(sql));
+        expect(inboxSql).toHaveLength(6);
+        expect(rest.join('\n')).not.toMatch(/SELECT \*|\b(email|device_secret|password_hash|nickname|content|description|prompt|visitor_hash|ua|referer|ip)\b|(?<!::)\btext\b/);
+        expect(inboxSql.join('\n')).not.toMatch(/SELECT \*|\b(email|device_id|device_secret|password_hash|log_snapshot|device_state|debug_result|ai_diagnosis|submission_id|payload_hash|visitor_hash|ua|referer|ip)\b/);
         expect(pool.params.trafficRows).toEqual([START]);
         expect(pool.params.signups[0].toISOString()).toBe(new Date(hub.dayIndex(START) * 86400000 - 8 * 3600000).toISOString());
         expect(pool.params.chat[0].toISOString()).toBe(new Date((hub.dayIndex(TODAY) - hub.CHAT_DAYS + 1) * 86400000 - 8 * 3600000).toISOString());
@@ -371,7 +381,7 @@ describe('admin hub: the data answer', () => {
         const res = await as(request(app).get('/api/aihankapps/hub/data'), 'admin');
         expect(res.status).toBe(200);
         const ok = Object.fromEntries(Object.entries(res.body.sources).map(([id, value]) => [id, value.ok]));
-        expect(ok).toEqual({ catalog: true, store: false, traffic: true, community: true, feedback: true, eclaw: true, eclawChat: false, dreambuddy: false, eclawPayments: true, imports: true, services: true });
+        expect(ok).toEqual({ catalog: true, store: false, traffic: true, community: true, feedback: true, eclaw: true, eclawChat: false, dreambuddy: false, eclawPayments: true, imports: true, services: true, inbox: true });
         expect(res.body.sources.eclawChat).toEqual({ ok: false });            // no error text leaves the server
         expect(res.body.daily.series.googleInstalls).toBeUndefined();
         expect(res.body.daily.series.eclawMessages).toBeUndefined();
@@ -400,17 +410,17 @@ describe('admin hub: the data answer', () => {
         const chatScans = () => pool.log.filter(sql => sql.includes('FROM chat_messages')).length;
         const [a, b] = await Promise.all([routers.data.load(), routers.data.load()]);
         expect(a).toBe(b);
-        expect([pool.connected, chatScans()]).toEqual([9, 1]);
+        expect([pool.connected, chatScans()]).toEqual([10, 1]);
         state.clock = NOW + 119000;
         expect(await routers.data.load()).toBe(a);
-        expect(pool.connected).toBe(9);
+        expect(pool.connected).toBe(10);
         const forced = await routers.data.load({ fresh: true });               // rebuilt, but the chat rows are still fresh enough
         expect(forced).not.toBe(a);
-        expect([pool.connected, chatScans()]).toEqual([17, 1]);
+        expect([pool.connected, chatScans()]).toEqual([19, 1]);
         expect(forced.daily.series.eclawMessages.eclawbot.v.at(-1)).toBe(7);
         state.clock = NOW + 10 * 60000 + 1000;
         await routers.data.load();
-        expect([pool.connected, chatScans()]).toEqual([26, 2]);
+        expect([pool.connected, chatScans()]).toEqual([29, 2]);
     });
 
     test('the small pieces: days, daily slots, report and catalog parsing', () => {
@@ -441,8 +451,8 @@ describe('admin hub: the data answer', () => {
 describe('admin hub: the page reads the answer correctly', () => {
     const DAY = 86400000, TZ = 8 * 3600000;
     const dayT = iso => hub.dayIndex(iso) * DAY - TZ;
-    async function loadPage({ pool, latest, opsDown, live } = {}) {
-        const { routers } = mount({ pool });
+    async function loadPage({ pool, latest, opsDown, live, portfolioDir } = {}) {
+        const { routers } = mount({ pool, portfolioDir });
         const payload = JSON.parse(JSON.stringify(await routers.data.load()));
         payload.apps.push({ id: 'weesh', slug: 'weesh', name: 'Wishlist.ai', category: '社交', platforms: [{ key: 'web', label: 'Web', public: true }], links: {} },
             { id: 'typeforge-twin-cities', slug: 'typeforge-twin-cities', name: '活字戰紀：雙城烽火', category: '遊戲', platforms: [{ key: 'android', label: 'Android', public: false }], links: {} },
@@ -561,7 +571,7 @@ describe('admin hub: the page reads the answer correctly', () => {
             ['ops-stale', 'warn', null], ['listing-rate', 'warn', 'weesh'], ['chat-pending', 'info', 'weesh'], ['rating-alpha', 'warn', 'alpha']]);
         expect(noisy.D.appState(noisy.D.APP.weesh)).toBe('crit');
         expect(noisy.D.appState(noisy.D.APP.alpha)).toBe('warn');
-        expect(noisy.D.RULES).toHaveLength(13);
+        expect(noisy.D.RULES).toHaveLength(15);
     });
 
     test('the monitor\'s issue codes become a plain reason with its times', async () => {
@@ -672,6 +682,65 @@ describe('admin hub: the page reads the answer correctly', () => {
         expect(page.D.ALERTS).toEqual([]);
     });
 
+    // 問題回饋與排程判斷 (Hank, 2026-11-13): every recent report is an alert until the alert schedule closes it; the
+    // schedule's note rides on each alert, and what only Hank can do becomes a severe alert that says what to do.
+    test('reports become alerts, the schedule\'s notes ride on them, and what needs Hank is severe and says what to do', async () => {
+        const t = iso => new Date(iso);
+        const pool = fakePool({
+            eclawFeedback: [{ id: 41, message: 'App 開不起來\n一直轉圈', category: 'bug', app_version: '1.2.3', source: 'android', created_at: String(Date.parse('2026-11-09T01:00:00Z')) }],
+            fraudItems: [{ id: '11111111-1111-4111-8111-111111111111', category: 'balance', description: '第三關太難', app_version: '0.9 (21)', screen: 'stage3', created_at: t('2026-11-09T02:00:00Z') }],
+            betaItems: [{ id: '7', app_id: 'alpha', rating: 2, continuation: 'maybe', comment: '', app_version: '1.0', platform: 'android', created_at: t('2026-11-09T03:00:00Z') },
+                { id: '8', app_id: 'ghost', rating: 1, continuation: 'no', comment: 'not in the catalog', app_version: '1.0', platform: 'web', created_at: t('2026-11-09T03:30:00Z') }],
+            hubFeedback: [{ source: 'timehut-line', ext_id: 'L1', app_id: 'alpha', channel: 'line', category: 'upload', message: '照片傳不上去', version: null, reporter: null, has_image: false, created_at: t('2026-11-09T04:00:00Z') }],
+            hubNotes: [
+                { ref: 'fb-fraud-11111111-1111-4111-8111-111111111111', app_id: null, state: 'done', title: null, note: '已記錄平衡調整', ask: null, standalone: false, by_who: 'schedule', created_at: t('2026-11-09T05:00:00Z'), updated_at: t('2026-11-09T05:00:00Z') },
+                { ref: 'fb-beta-7', app_id: 'alpha', state: 'auto', title: null, note: '沒有文字的低分評價，已記下', ask: null, standalone: false, by_who: 'schedule', created_at: t('2026-11-09T05:00:00Z'), updated_at: t('2026-11-09T05:00:00Z') },
+                { ref: 'fb-timehut-line-L1', app_id: 'alpha', state: 'human', title: '拾光上傳失敗要修', note: '看起來是伺服器擋下大檔', ask: '請決定要不要開 session 修上傳上限', standalone: false, by_who: 'schedule', created_at: t('2026-11-09T05:00:00Z'), updated_at: t('2026-11-09T06:00:00Z') },
+                { ref: 'human-line-quota', app_id: 'alpha', state: 'human', title: 'LINE 推播額度快用完', note: '本月已用 70%', ask: '請決定是否升級 LINE 方案', standalone: true, by_who: 'schedule', created_at: t('2026-11-09T07:00:00Z'), updated_at: t('2026-11-09T07:00:00Z') },
+                { ref: 'rating-alpha', app_id: 'alpha', state: 'human', title: 'Alpha 評分偏低', note: '最近兩則一星評論都在說同一個錯誤', ask: '請看評論決定要不要回覆', standalone: false, by_who: 'schedule', created_at: t('2026-11-09T07:00:00Z'), updated_at: t('2026-11-09T07:00:00Z') }],
+        });
+        const dir = portfolioFixture(), file = path.join(dir, 'app-catalog.json'), catalog = JSON.parse(fs.readFileSync(file, 'utf8'));
+        catalog.apps.push({ name: 'EClawbot', communityId: 'eclawbot', webUrl: 'https://eclawbot.com/' });
+        fs.writeFileSync(file, JSON.stringify(catalog));
+        const page = await loadPage({ pool, portfolioDir: dir });
+        page.D.latest.rating.alpha.value = 3.2;
+        page.D.computeAlerts(Date.parse('2026-11-10T00:00:00Z'));
+        const by = Object.fromEntries(page.D.ALERTS.map(a => [a.ref, a]));
+        // the closed report is gone; the one from an app outside the catalog never arrives
+        expect(by['fb-fraud-11111111-1111-4111-8111-111111111111']).toBeUndefined();
+        expect(Object.keys(by).filter(r => r.startsWith('fb-'))).toEqual(['fb-timehut-line-L1', 'fb-beta-7', 'fb-eclaw-41']);
+        // not looked at yet: a warning with the report's own words
+        expect(by['fb-eclaw-41']).toMatchObject({ id: 'feedback-eclaw', sev: 'warn', app: 'eclawbot', title: 'EClawbot 問題回饋：APP 內回報・錯誤', detail: 'App 開不起來 一直轉圈', quote: 'App 開不起來\n一直轉圈', triage: null, rule: '新的問題回饋' });
+        expect(by['fb-eclaw-41'].basis).toMatchObject({ source: 'eclaw', version: '1.2.3', channel: 'android' });
+        // being handled: information, with the schedule's note
+        expect(by['fb-beta-7']).toMatchObject({ sev: 'info', title: 'Alpha 問題回饋：作品集內測回饋・2 星', detail: '（沒有文字）', triage: { state: 'auto', label: '排程處理中', note: '沒有文字的低分評價，已記下' } });
+        // needs Hank: severe, says what to do, keeps the report
+        expect(by['fb-timehut-line-L1']).toMatchObject({ sev: 'crit', title: '需要你處理：拾光上傳失敗要修', detail: '請決定要不要開 session 修上傳上限', ask: '請決定要不要開 session 修上傳上限', quote: '照片傳不上去', triage: { state: 'human' } });
+        // a computed alert the schedule says only Hank can clear is escalated in place, not duplicated
+        expect(by['rating-alpha']).toMatchObject({ id: 'rating-alpha', sev: 'crit', title: '需要你處理：Alpha 評分偏低', ask: '請看評論決定要不要回覆', triage: { state: 'human', note: '最近兩則一星評論都在說同一個錯誤' } });
+        expect(page.D.ALERTS.filter(a => a.ref === 'rating-alpha')).toHaveLength(1);
+        // a problem the schedule found that no rule shows
+        expect(by['human-line-quota']).toMatchObject({ id: 'human', sev: 'crit', title: '需要你處理：LINE 推播額度快用完', ask: '請決定是否升級 LINE 方案', rule: '排程請你處理', app: 'alpha' });
+        expect(page.D.RULES.slice(13).map(r => [r[0], r[3]])).toEqual([['新的問題回饋', 'warn'], ['排程請你處理', 'crit']]);
+        // once the schedule closes the escalation, it is gone
+        // the page lists what needs Hank first, then severe, warning, information
+        expect(page.D.byUrgency(page.D.ALERTS).slice(0, 3).map(a => a.ref)).toEqual(['rating-alpha', 'fb-timehut-line-L1', 'human-line-quota']);
+        expect(page.D.byUrgency(page.D.ALERTS).at(-1).sev).toBe('info');
+        page.D.inbox.notes = page.D.inbox.notes.filter(n => n.ref !== 'human-line-quota');
+        page.D.computeAlerts(Date.parse('2026-11-10T00:00:00Z'));
+        expect(page.D.ALERTS.map(a => a.ref)).not.toContain('human-line-quota');
+    });
+
+    test('the alerts answer carries the schedule\'s decision, the report\'s words and what Hank is asked to do', async () => {
+        const pool = fakePool({ hubFeedback: [{ source: 'timehut-app', ext_id: 'A1', app_id: 'alpha', channel: 'android-play', category: null, message: '閃退', version: '1.0.18', reporter: '小…明', has_image: true, created_at: new Date('2026-11-09T04:00:00Z') }],
+            hubNotes: [{ ref: 'fb-timehut-app-A1', app_id: 'alpha', state: 'auto', title: null, note: '已確認是 1.0.17 的已知問題，1.0.18 修好', ask: null, standalone: false, by_who: 'schedule', created_at: new Date('2026-11-09T05:00:00Z'), updated_at: new Date('2026-11-09T05:00:00Z') }] });
+        const { routers } = mount({ pool });
+        const answer = await routers.alerts.load({ fresh: true });
+        const a = answer.alerts.find(x => x.id === 'fb-timehut-app-A1');
+        expect(a).toMatchObject({ type: 'feedback-timehut-app', severity: 'info', quote: '閃退', ask: null, triage: { state: 'auto', note: '已確認是 1.0.17 的已知問題，1.0.18 修好' } });
+        expect(a.basis).toMatchObject({ hasImage: true, version: '1.0.18', channel: 'android-play' });
+    });
+
     test('when the operations API is down the rest still loads, and the sources list says what is missing', async () => {
         const { D, day } = await loadPage({ opsDown: true });
         expect(D.ops.ok).toBe(false);
@@ -680,8 +749,8 @@ describe('admin hub: the page reads the answer correctly', () => {
         expect(D.ALERTS.map(a => a.id)).toContain('ops-down');
         const rows = D.sourceRows();
         expect(rows.find(r => r.name === '營運數據').state).toBe('crit');
-        expect(rows.filter(r => r.state === 'ok').map(r => r.name)).toEqual(['商店報表', '作品集流量', '作品集互動', 'EClaw 帳號', 'EClaw 對話', '夢話夥伴後台', '問題回饋', 'EClaw 付款', '後台服務檢查', 'REBOUND 遊戲伺服器']);
-        expect(rows.filter(r => r.state === 'none').map(r => r.name)).toEqual(['活字戰紀伺服器', 'Wishlist.ai 後台', 'Railway 後台資源', '時光相簿伺服器', '上架警示板', '其他 APP 的使用紀錄', '商店的內購金額']);
+        expect(rows.filter(r => r.state === 'ok').map(r => r.name)).toEqual(['商店報表', '作品集流量', '作品集互動', 'EClaw 帳號', 'EClaw 對話', '夢話夥伴後台', '問題回饋', '問題回饋與排程判斷', 'EClaw 付款', '後台服務檢查', 'REBOUND 遊戲伺服器']);
+        expect(rows.filter(r => r.state === 'none').map(r => r.name)).toEqual(['活字戰紀伺服器', 'Wishlist.ai 後台', 'Railway 後台資源', '時光相簿伺服器', '上架警示板', '拾光 APP 內問題回饋', '拾光 LINE 問題回饋', '其他 APP 的使用紀錄', '商店的內購金額']);
         expect(rows.find(r => r.name === '商店報表').note).toBe('Google 到 10/27、Apple 到 10/29、AdMob 到 11/1');
     });
 });

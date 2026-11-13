@@ -100,6 +100,7 @@
     D.services = (hub.services || []).map(svc => Object.assign({ now: (D.services.find(old => old.id === svc.id) || {}).now || null }, svc));
     D.infra = Array.isArray(hub.infra) ? hub.infra : [];
     D.accounts = Array.isArray(hub.accounts) ? hub.accounts : [];
+    D.inbox = hub.inbox && Array.isArray(hub.inbox.feedback) ? hub.inbox : { feedback: [], notes: [], days: 30 };
     const start = idxOfIso(hub.daily.start);
     Object.keys(D.RAW).forEach(part => { if (!OPS_PARTS[part]) delete D.RAW[part]; });
     Object.keys(hub.daily.series || {}).forEach(part => {
@@ -352,14 +353,18 @@
     ['後台數據超過一天沒更新', '遊戲伺服器、Wishlist 後台、Railway 後台資源', '上一次匯入距今超過 36 小時', 'warn'],
     ['後台空間快滿', '每一個有空間的後台服務', '用量超過 80%（95% 以上算嚴重）', 'warn'],
     ['後台部署失敗', '每一個後台服務', '最新一次部署失敗或執行中當掉', 'crit'],
-    ['需要人為介入', 'Wishlist.ai 上架排程', '排程回報它自己解不了的問題（要重新登入、手動通過驗證、金鑰失效、需要決定）', 'crit']
+    ['需要人為介入', 'Wishlist.ai 上架排程', '排程回報它自己解不了的問題（要重新登入、手動通過驗證、金鑰失效、需要決定）', 'crit'],
+    ['新的問題回饋', '每一款 APP 的問題回饋（APP 內、LINE、作品集內測回饋）', '近 30 天收到、排程還沒結案的回報；排程看過後會寫下判斷', 'warn'],
+    ['排程請你處理', '警示處理排程（每 15 分鐘看一次所有警示）', '排程判斷這件事只有你能處理，會寫明要你做什麼', 'crit']
   ];
   const COLLECTORS = { rebound: ['REBOUND 遊戲伺服器', 'REBOUND'], summit: ['活字戰紀伺服器', '雙城烽火、巔峰之戰'], wishlist: ['Wishlist.ai 後台', 'Wishlist.ai'],
     railway: ['Railway 後台資源', '所有放在 Railway 的後台服務', '每個服務的上傳／下載流量、CPU、記憶體、空間、部署狀態'],
     timehut: ['時光相簿伺服器', '時光相簿', '帳號總數、近 7／30 天新註冊、已刪除帳號；每位用戶的 LINE 辨識各階段、相簿與照片／影片數、上傳與下載流量（伺服器 1.0.118 起）'],
-    attention: ['上架警示板', 'Wishlist.ai', '上架排程回報的問題：需要人為介入的、自動處理中的'] };
+    attention: ['上架警示板', 'Wishlist.ai', '上架排程回報的問題：需要人為介入的、自動處理中的'],
+    'feedback-timehut-app': ['拾光 APP 內問題回饋', '拾光AI雲端相簿', 'APP 內送出的問題回報（文字、版本、有沒有附圖），由警示處理排程每 15 分鐘讀一次'],
+    'feedback-timehut-line': ['拾光 LINE 問題回饋', '拾光AI雲端相簿', 'LINE 官方帳號選單「問題回饋」收到的回報，由警示處理排程每 15 分鐘讀一次'] };
   const mbText = v => (v >= 1024 ? (v / 1024).toFixed(v >= 10240 ? 1 : 2) + ' GB' : Math.round(v) + ' MB');
-  const SOURCE_LABEL = { catalog: 'APP 目錄', store: '商店報表', traffic: '作品集流量', community: '作品集互動', feedback: '問題回饋', eclaw: 'EClaw 帳號', eclawChat: 'EClaw 對話', dreambuddy: '夢話夥伴後台', eclawPayments: 'EClaw 付款', imports: '匯入的後台數據', services: '後台服務檢查' };
+  const SOURCE_LABEL = { catalog: 'APP 目錄', store: '商店報表', traffic: '作品集流量', community: '作品集互動', feedback: '問題回饋', eclaw: 'EClaw 帳號', eclawChat: 'EClaw 對話', dreambuddy: '夢話夥伴後台', eclawPayments: 'EClaw 付款', imports: '匯入的後台數據', services: '後台服務檢查', inbox: '問題回饋與排程判斷' };
   // 排程型 worker（例如每小時跑一輪）兩輪之間本來就沒有程式在跑；監控會把它標成 scheduled_between_rounds
   D.betweenRounds = w => w.processOnline === false && w.coverage === 'scheduled_between_rounds';
   // 監控回報的問題代碼（監控 1.7.0 起有時間）→ 白話。越前面越具體；監控只給代碼和時間，不給錯誤原文
@@ -470,7 +475,57 @@
       if (c.collectedAt && now - c.collectedAt > 36 * HOUR) add('collector-stale-' + id, 'warn', name + '的數據超過一天沒更新', '上一次匯入是 ' + Math.floor((now - c.collectedAt) / HOUR) + ' 小時前；收集工具在這台 Mac 上執行。', { rule: RULES[9][0], since: c.collectedAt, go: 'sources', start: c.collectedAt,
         source: '匯入的後台數據（' + id + '）', basis: { collector: id, collectedAt: c.collectedAt, hoursAgo: Math.floor((now - c.collectedAt) / HOUR) } });
     });
+    applyInbox(out);
     D.ALERTS = out;
+  }
+  // 畫面上的順序：要 Hank 處理的排最前面，接著是嚴重、警告、資訊；同一級維持算出來的順序
+  D.byUrgency = list => {
+    const rank = a => (a.triage && a.triage.state === 'human' ? 0 : a.sev === 'crit' ? 1 : a.sev === 'warn' ? 2 : 3);
+    return list.map((a, i) => [a, i]).sort((x, y) => rank(x[0]) - rank(y[0]) || x[1] - y[1]).map(x => x[0]);
+  };
+  // ---- 問題回饋與排程判斷（Hank 2026-11-13）-------------------------------------
+  // 每則近 30 天的回報都是一則警示，直到警示處理排程把它結案；排程對任何一則警示的判斷都附在那則警示上：
+  // auto＝排程處理中或會自己恢復；human＝只有 Hank 能處理（升成嚴重，寫明要他做什麼）；done＝排程已結案。
+  const FB_SOURCE = { eclaw: 'APP 內回報', 'eclaw-health': '被動健康檢查', fraud: 'APP 內回報', beta: '作品集內測回饋', 'timehut-app': 'APP 內回報', 'timehut-line': 'LINE 問題回饋' };
+  const FB_CATEGORY = { bug: '錯誤', feature: '建議', question: '問題', operation: '操作', rules: '規則', dialogue: '對話', art: '美術', balance: '平衡', other: '其他',
+    upload: '照片／影片上傳', line: 'LINE 自動收件', person: '人物辨識', app: 'APP 操作或畫面', account: '帳號與登入', health: '實體自我修復失敗' };
+  D.TRIAGE = { auto: '排程處理中', human: '需要你處理', done: '排程已結案' };
+  const excerpt = (t, n) => { const s = String(t || '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n) + '…' : s; };
+  const triageOf = n => (n ? { state: n.state, label: D.TRIAGE[n.state], note: n.note, ask: n.ask || null, by: n.by || null, at: n.updatedAt || null } : null);
+  function applyInbox(out) {
+    const inbox = D.inbox || { feedback: [], notes: [] }, notes = {};
+    (inbox.notes || []).forEach(n => { if (n && n.ref) notes[n.ref] = n; });
+    const used = {};
+    // 1. 排程的判斷附在已經算出來的警示上；需要 Hank 的那則升成嚴重，標題寫明
+    out.forEach(a => {
+      const n = notes[a.ref];
+      if (!n) return;
+      used[a.ref] = true;
+      a.triage = triageOf(n);
+      if (n.state === 'human') { a.sev = 'crit'; a.title = '需要你處理：' + (n.title || a.title); a.ask = n.ask; }
+    });
+    // 2. 每則回報一則警示；排程結案的不再顯示
+    (inbox.feedback || []).forEach(f => {
+      const n = notes[f.ref];
+      if (n) used[f.ref] = true;
+      if (n && n.state === 'done') return;
+      const app = D.BYKEY[f.app], name = app ? app.short : f.app, cat = FB_CATEGORY[f.category] || (f.category && f.source !== 'beta' ? f.category : '');
+      const what = (FB_SOURCE[f.source] || '問題回饋') + (cat ? '・' + cat : '') + (f.rating ? '・' + f.rating + ' 星' : '');
+      const human = n && n.state === 'human';
+      out.push({ id: 'feedback-' + f.source, sev: human ? 'crit' : n ? 'info' : 'warn', title: (human ? '需要你處理：' + (n.title || name + ' 的問題回饋') : name + ' 問題回饋：' + what),
+        detail: human ? n.ask : excerpt(f.text, 140) || '（沒有文字）', quote: f.text || null, ask: human ? n.ask : null, triage: triageOf(n), rule: RULES[13][0], app: f.app, apps: null,
+        since: f.at || null, go: null, ref: f.ref, source: '問題回饋（' + (FB_SOURCE[f.source] || f.source) + '）',
+        basis: Object.assign({ source: f.source, category: f.category || null, version: f.version || null, channel: f.channel || null, rating: f.rating || null, hasImage: f.hasImage === true, receivedAt: f.at || null },
+          f.entity ? { entity: f.entity, reports24h: f.count } : {}) });
+    });
+    // 3. 排程自己發的「需要你處理」，以及對應的警示已經消失但還沒結案的
+    Object.keys(notes).forEach(ref => {
+      const n = notes[ref];
+      if (used[ref] || n.state !== 'human') return;
+      out.push({ id: 'human', sev: 'crit', title: '需要你處理：' + (n.title || ref), detail: n.ask, ask: n.ask, quote: null, triage: triageOf(n), rule: RULES[14][0],
+        app: n.app || null, apps: null, since: n.createdAt || null, go: null, ref: ref, source: '警示處理排程',
+        basis: { ref: ref, standalone: n.standalone === true, raisedAt: n.createdAt || null, updatedAt: n.updatedAt || null } });
+    });
   }
   D.RULES = RULES;
   D.computeAlerts = computeAlerts;
@@ -508,12 +563,15 @@
       { name: 'EClaw 對話', gives: '每日訊息數、活躍裝置', cover: 'EClawbot', freq: '每 10 分鐘重新統計', last: s.eclawChat && s.eclawChat.ok ? s.eclawChat.readAt : null, state: state('eclawChat'), note: s.eclawChat && s.eclawChat.since ? '自 ' + iso(idxOfIso(s.eclawChat.since)) + ' 起' : '—' },
       { name: '夢話夥伴後台', gives: '對話回合、活躍裝置、廣告獎勵次數', cover: '夢話夥伴', freq: '即時', last: s.dreambuddy && s.dreambuddy.ok ? D.T0 : null, state: state('dreambuddy'), note: s.dreambuddy && s.dreambuddy.startedAt ? '自 ' + iso(idxOfIso(s.dreambuddy.startedAt)) + ' 起' : '還沒有紀錄' },
       { name: '問題回饋', gives: 'APP 內送出的問題回饋件數', cover: '詐騙帝國', freq: '即時', last: s.feedback && s.feedback.ok ? D.T0 : null, state: state('feedback'), note: '只統計數量，不含內容' },
+      { name: '問題回饋與排程判斷', gives: '近 30 天每一則問題回饋的內容（每則一個警示），以及警示處理排程對每則警示的判斷', cover: 'EClawbot、詐騙帝國、作品集內測回饋（全部 APP）、拾光AI雲端相簿（APP 內與 LINE，由排程匯入）',
+        freq: '即時；拾光的回報每 15 分鐘匯入', last: s.inbox && s.inbox.ok ? D.T0 : null, state: state('inbox'),
+        note: s.inbox && s.inbox.partial && s.inbox.partial.length ? '讀不到：' + s.inbox.partial.join('、') : '只有管理者看得到回報內容' },
       { name: '營運數據', gives: 'AI worker 的 CPU、記憶體、完成件數；Wishlist 上架數、公開可見數、聊聊待問', cover: 'Wishlist.ai、時光相簿、夢話夥伴', freq: '每 5 到 30 分鐘', last: opsSeen, state: o.ok ? 'ok' : 'crit', note: '與公開的「營運數據」頁同一份資料' },
       { name: 'EClaw 付款', gives: '刷卡成功與儲值付款的筆數與金額', cover: 'EClawbot', freq: '即時', last: s.eclawPayments && s.eclawPayments.ok ? D.T0 : null, state: state('eclawPayments'), note: '不含失敗與已退款' },
       { name: '後台服務檢查', gives: '每個後台有沒有回應、回應時間、可用率', cover: D.services.length + ' 個後台服務', freq: '每分鐘', last: D.services.reduce((m, svc) => Math.max(m, (svc.now && svc.now.at) || 0), 0) || null, state: state('services'), note: '由 EClaw 主站去問各後台公開的健康檢查網址' }
     ].concat(Object.keys(COLLECTORS).map(id => {
       const c = collectors[id], stale = c && D.T0 - c.collectedAt > 36 * HOUR;
-      return { name: COLLECTORS[id][0], gives: COLLECTORS[id][2] || '新用戶、每日活躍、對局、內購筆數、信箱、留存', cover: COLLECTORS[id][1], freq: id === 'railway' ? '每小時' : '每天 06:20', last: c ? c.collectedAt : null,
+      return { name: COLLECTORS[id][0], gives: COLLECTORS[id][2] || '新用戶、每日活躍、對局、內購筆數、信箱、留存', cover: COLLECTORS[id][1], freq: id === 'railway' ? '每小時' : id.indexOf('feedback-') === 0 ? '每 15 分鐘' : '每天 06:20', last: c ? c.collectedAt : null,
         state: !s.imports || !s.imports.ok ? 'crit' : !c ? 'none' : stale ? 'warn' : 'ok', note: !c ? '還沒有匯入過' : stale ? '超過一天沒更新；收集工具在這台 Mac 上執行' : ((c.notes || [])[0] || '只匯入彙總數字，不含任何帳號或內容') };
     })).concat([
       { name: '其他 APP 的使用紀錄', gives: '活躍用戶、留存', cover: '沒有自己伺服器的 APP', freq: '—', last: null, state: 'none', note: '這些 APP 不會回報使用情況，要在 APP 裡加上回報再發新版才會有' },

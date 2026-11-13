@@ -3,9 +3,13 @@
 // Operator-only import for the AiHankApps admin hub, over the existing deployment channel (`railway ssh`).
 // The collector (tools/aihankapps-hub/collect.js) passes one envelope of daily counts as a base64 argument, or as
 // JSON on stdin. There is no HTTP write API. Only the hub's own tables are written; see aihankapps-hub-store.js.
+// An envelope with a `feedback` list is a batch of problem reports (拾光AI雲端相簿's App and LINE reports, read with the
+// hub's key by the alert schedule on the operator's Mac); see aihankapps-hub-inbox.js.
 const fs = require('fs');
 const path = require('path');
-const { MAX_IMPORT_BYTES, importEnvelope } = require('../aihankapps-hub-store');
+const hubStore = require('../aihankapps-hub-store');
+const { importFeedback } = require('../aihankapps-hub-inbox');
+const { MAX_IMPORT_BYTES, importEnvelope } = hubStore;
 
 function fault(code) { const error = new Error(code); error.code = code; return error; }
 
@@ -42,7 +46,14 @@ async function main() {
     // The service's own URL and TLS parameters; never printed or exported.
     const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 1, connectionTimeoutMillis: 15000, query_timeout: 30000 });
     try {
-        const receipt = await importEnvelope(pool, envelope, { appIds: catalogAppIds() });
+        const appIds = catalogAppIds();
+        let receipt;
+        if (envelope && typeof envelope === 'object' && Array.isArray(envelope.feedback)) {
+            await hubStore.prepare(pool);          // the receipt goes to aihankapps_hub_sources like every other import
+            receipt = await importFeedback(pool, envelope, { appIds });
+        } else {
+            receipt = await importEnvelope(pool, envelope, { appIds });
+        }
         process.stdout.write(JSON.stringify({ success: true, ...receipt }) + '\n');
     } finally {
         await pool.end();
