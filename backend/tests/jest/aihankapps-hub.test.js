@@ -781,7 +781,9 @@ describe('admin hub: the page reads the answer correctly', () => {
         const rows = D.sourceRows();
         expect(rows.find(r => r.name === '營運數據').state).toBe('crit');
         expect(rows.filter(r => r.state === 'ok').map(r => r.name)).toEqual(['商店報表', '作品集流量', '作品集互動', 'EClaw 帳號', 'EClaw 對話', '夢話夥伴後台', '問題回饋', '問題回饋與排程判斷', 'EClaw 付款', '後台服務檢查', 'REBOUND 遊戲伺服器']);
-        expect(rows.filter(r => r.state === 'none').map(r => r.name)).toEqual(['活字戰紀伺服器', 'Wishlist.ai 後台', 'Railway 後台資源', '時光相簿伺服器', '上架警示板', '拾光 APP 內問題回饋', '拾光 LINE 問題回饋', '其他 APP 的使用紀錄', '商店的內購金額']);
+        expect(rows.filter(r => r.state === 'none').map(r => r.name)).toEqual(['活字戰紀伺服器', 'Wishlist.ai 後台', 'Wishlist.ai 帳戶明細', 'Railway 後台資源', '時光相簿伺服器', '上架警示板', '拾光 APP 內問題回饋', '拾光 LINE 問題回饋', '其他 APP 的使用紀錄', '商店的內購金額']);
+        // the per-account source says how often it runs and, once imported, exactly what it carries (not "counts only")
+        expect(rows.find(r => r.name === 'Wishlist.ai 帳戶明細')).toMatchObject({ freq: '每小時', cover: 'Wishlist.ai', note: '還沒有匯入過' });
         expect(rows.find(r => r.name === '商店報表').note).toBe('Google 到 10/27、Apple 到 10/29、AdMob 到 11/1');
     });
 });

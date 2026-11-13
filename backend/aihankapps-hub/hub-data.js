@@ -359,6 +359,8 @@
     ['已略過的類似警告', '你按過「以後略過類似警告」的那一類警示', '同一類的警示合併成這一則、等級是資訊，不再個別提醒；可以取消略過', 'info']
   ];
   const COLLECTORS = { rebound: ['REBOUND 遊戲伺服器', 'REBOUND'], summit: ['活字戰紀伺服器', '雙城烽火、巔峰之戰'], wishlist: ['Wishlist.ai 後台', 'Wishlist.ai'],
+    // 第四項是「沒有其他備註時」顯示的說明；帳戶明細不是只有彙總數字，要照實寫
+    'wishlist-users': ['Wishlist.ai 帳戶明細', 'Wishlist.ai', '帳戶智慧數據庫：每個帳戶的願望、刊登、對話、面交、付費與近 30 天活動', '每個帳戶的數量與時間，加上顯示名稱與遮蔽過的登入信箱；不含密碼、訊息或任何內容'],
     railway: ['Railway 後台資源', '所有放在 Railway 的後台服務', '每個服務的上傳／下載流量、CPU、記憶體、空間、部署狀態'],
     timehut: ['時光相簿伺服器', '時光相簿', '帳號總數、近 7／30 天新註冊、已刪除帳號；每位用戶的 LINE 辨識各階段、相簿與照片／影片數、上傳與下載流量（伺服器 1.0.118 起）；每小時更新'],
     attention: ['上架警示板', 'Wishlist.ai', '上架排程回報的問題：需要人為介入的、自動處理中的'],
@@ -604,8 +606,8 @@
       { name: '後台服務檢查', gives: '每個後台有沒有回應、回應時間、可用率', cover: D.services.length + ' 個後台服務', freq: '每分鐘', last: D.services.reduce((m, svc) => Math.max(m, (svc.now && svc.now.at) || 0), 0) || null, state: state('services'), note: '由 EClaw 主站去問各後台公開的健康檢查網址' }
     ].concat(Object.keys(COLLECTORS).map(id => {
       const c = collectors[id], stale = c && D.T0 - c.collectedAt > 36 * HOUR;
-      return { name: COLLECTORS[id][0], gives: COLLECTORS[id][2] || '新用戶、每日活躍、對局、內購筆數、信箱、留存', cover: COLLECTORS[id][1], freq: id === 'railway' ? '每小時' : id.indexOf('feedback-') === 0 ? '每 15 分鐘' : '每天 06:20', last: c ? c.collectedAt : null,
-        state: !s.imports || !s.imports.ok ? 'crit' : !c ? 'none' : stale ? 'warn' : 'ok', note: !c ? '還沒有匯入過' : stale ? '超過一天沒更新；收集工具在這台 Mac 上執行' : ((c.notes || [])[0] || '只匯入彙總數字，不含任何帳號或內容') };
+      return { name: COLLECTORS[id][0], gives: COLLECTORS[id][2] || '新用戶、每日活躍、對局、內購筆數、信箱、留存', cover: COLLECTORS[id][1], freq: id === 'railway' || id === 'wishlist-users' ? '每小時' : id.indexOf('feedback-') === 0 ? '每 15 分鐘' : '每天 06:20', last: c ? c.collectedAt : null,
+        state: !s.imports || !s.imports.ok ? 'crit' : !c ? 'none' : stale ? 'warn' : 'ok', note: !c ? '還沒有匯入過' : stale ? '超過一天沒更新；收集工具在這台 Mac 上執行' : ((c.notes || [])[0] || COLLECTORS[id][3] || '只匯入彙總數字，不含任何帳號或內容') };
     })).concat([
       { name: '其他 APP 的使用紀錄', gives: '活躍用戶、留存', cover: '沒有自己伺服器的 APP', freq: '—', last: null, state: 'none', note: '這些 APP 不會回報使用情況，要在 APP 裡加上回報再發新版才會有' },
       { name: '商店的內購金額', gives: 'Google Play 與 App Store 的實際銷售金額', cover: '有內購的 APP', freq: '—', last: null, state: 'none', note: '商店報表目前只收廣告收入；遊戲後台只記內購筆數' }
