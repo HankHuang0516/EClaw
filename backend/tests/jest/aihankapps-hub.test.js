@@ -1151,6 +1151,62 @@ describe('admin hub: Weesh 帳戶智慧數據庫 (hub-weesh.js)', () => {
         boot().mount(empty, { meta: null, users: [] });
         expect(empty.innerHTML).toMatch(/還沒有帳戶明細/);
     });
+
+    test('QA accounts: recognised by name or a reserved test domain, tagged, hidden on request with the numbers, and markable by hand', () => {
+        const saved = {};
+        const sandbox = { window: {}, localStorage: { getItem: k => (k in saved ? saved[k] : null), setItem: (k, v) => { saved[k] = v; } }, Intl, Date, Math, JSON, Object, Array, Number, String, Set };
+        vm.runInNewContext(fs.readFileSync(path.join(pageDir, 'hub-weesh.js'), 'utf8'), sandbox);
+        const W = sandbox.window.HubWeesh;
+        expect([{ name: 'QA 測試賣家 A（非真實交易）', login: 'ab***@mail.example' }, { name: '小明', login: 'qa***@gmail.com' }, { name: '小明', login: 'ab***@example.com' }, { name: '小明', login: 'ab***@seed.example.org' },
+            { name: '小明', login: 'ab***@x.invalid' }, { name: 'Test', login: '' }, { name: '商店審查示範帳戶' }].map(W.autoQa)).toEqual([true, true, true, true, true, true, true]);
+        expect([{ name: '小明', login: 'ab***@gmail.com' }, { name: 'Quality', login: 'aq***@examples.com' }, { name: 'latest', login: 'te***@myexample.com' }, { name: '', login: '***123' }].map(W.autoQa)).toEqual([false, false, false, false]);
+        const facts = {
+            wlUsersMeta: { v: 1, asOf: Date.now(), users: 3, shown: 3, dropped: 0, notes: [] },
+            wlUseraaaaaaaaaa: fact('小明', { login: 'ab***@gmail.com', wish: { n: 10 } }),
+            wlUserbbbbbbbbbb: fact('QA 測試買家', { wish: { n: 5 }, chat: { buy: 1, sent: 2, unread: 1, oldestUnreadAt: Date.now() - 5 * DAY } }),
+            wlUsercccccccccc: fact('阿華', { login: 'cd***@gmail.com', wish: { n: 1 } }),
+        };
+        const el = { innerHTML: '', querySelector: () => null, contains: () => true };
+        const click = (ws, v) => el.onclick({ target: { closest: () => ({ dataset: { ws, v } }) }, preventDefault() {} });
+        W.mount(el, W.fromFacts(facts));
+        const count = html => (html.match(/class="th-tag th-tag-qa"/g) || []).length;
+        expect(count(el.innerHTML)).toBe(1);
+        expect(el.innerHTML).toMatch(/<span>帳戶<\/span><b>3 個<\/b>/);
+        expect(el.innerHTML).toMatch(/<span>願望<\/span><b>16 個<\/b>/);
+        expect(el.innerHTML).toMatch(/data-ws="hideqa" data-v="1" aria-pressed="false"[^>]*>隱藏 QA 測試用 1</);
+        expect(el.innerHTML).toContain('QA 測試買家 有 1 個對話對方已回覆但還沒讀');
+        click('hideqa', '1');                       // hidden: gone from the table, the numbers, the stage bar and the insights, and it says so
+        expect(el.innerHTML).not.toContain('QA 測試買家');
+        expect(el.innerHTML).toMatch(/<span>帳戶<\/span><b>2 個<\/b>/);
+        expect(el.innerHTML).toMatch(/<span>願望<\/span><b>11 個<\/b>/);
+        expect(el.innerHTML).toContain('共 2 個帳戶：2 個建立過願望（100%）');
+        expect(el.innerHTML).toContain('已隱藏 1 個 QA 測試用帳戶，數字不含它們');
+        expect(el.innerHTML).toMatch(/data-ws="hideqa" data-v="1" aria-pressed="true"/);
+        expect(JSON.parse(saved['hub.ws.hideQa'])).toBe(true);
+        click('qa', 'cccccccccc');                  // marked by hand while hidden: it leaves too
+        expect(el.innerHTML).not.toContain('阿華');
+        expect(JSON.parse(saved['hub.ws.qa'])).toEqual({ cccccccccc: true });
+        click('hideqa', '1');                       // shown again: two tags now
+        expect(count(el.innerHTML)).toBe(2);
+        click('qa', 'bbbbbbbbbb');                  // the automatic one can be unmarked; going back to automatic removes the stored mark
+        expect(count(el.innerHTML)).toBe(1);
+        expect(JSON.parse(saved['hub.ws.qa'])).toEqual({ cccccccccc: true, bbbbbbbbbb: false });
+        click('qa', 'bbbbbbbbbb');
+        expect(JSON.parse(saved['hub.ws.qa'])).toEqual({ cccccccccc: true });
+        click('open', 'bbbbbbbbbb');                // the detail offers the opposite action
+        expect(el.innerHTML).toMatch(/data-ws="qa" data-v="bbbbbbbbbb"[^>]*>取消 QA 標籤</);
+        click('hideqa', '1');                       // hiding closes a QA account's open detail
+        expect(el.innerHTML).not.toContain('id="ws-panel"');
+        click('focus', 'bbbbbbbbbb');               // an insight that points at a hidden account shows the QA accounts again instead of doing nothing
+        expect(el.innerHTML).toContain('id="ws-panel"');
+        expect(JSON.parse(saved['hub.ws.hideQa'])).toBe(false);
+        // accounts left out for size plus hidden QA accounts: the totals are counted from what is shown
+        const cut = { innerHTML: '', querySelector: () => null, contains: () => true };
+        saved['hub.ws.hideQa'] = 'true';
+        W.mount(cut, W.fromFacts(Object.assign({}, facts, { wlUsersMeta: { v: 1, asOf: Date.now(), users: 9, shown: 3, dropped: 6, totals: { users: 9, withWish: 9, wishes: 99 }, notes: [] } })));
+        expect(cut.innerHTML).toMatch(/<span>願望<\/span><b>10 個<\/b>/);         // only 小明 is left: one is QA by name, one was marked by hand
+        expect(cut.innerHTML).toMatch(/data-tip="另有 6 個沒有明細；已隱藏 2 個 QA 測試用帳戶"><span>帳戶<\/span><b>1 個<\/b>/);
+    });
 });
 
 describe('admin hub: 以後略過類似警告 (the API\'s only write)', () => {

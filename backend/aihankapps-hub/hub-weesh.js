@@ -126,7 +126,14 @@
   const HIDDEN_FILTERS = { new: '近 7 天註冊', unverified: '尚未驗證', app: '裝了 App', meet: '面交進行中' };
   const keep = (u, f) => f === 'attention' ? u.attention : f === 'active30' ? u.act30 > 0 : f === 'sellers' ? u.sell.n > 0 : f === 'idle' ? u.stage === 'idle'
     : f === 'new' ? !!u.createdAt && Date.now() - u.createdAt < 7 * DAY : f === 'unverified' ? !u.ev && !u.pv : f === 'app' ? u.devices > 0 : f === 'meet' ? u.meet.open > 0 : true;
-  const tags = u => (u.premium ? '<span class="th-tag">Premium</span>' : '') + (u.api ? '<span class="th-tag">API</span>' : '');
+  // 我們自己的 QA／驗收／商店審查用帳戶（Hank 2026-11-13「把我們自己的QA帳戶加上QA測試用標籤 並且可隱藏」，和拾光頁同一套）。
+  // 先用名稱與登入信箱的樣子自動認：保留給測試用的網域（example.com、.invalid、.test…）一定不是真用戶。
+  // 認錯或漏掉的可以在詳細裡手動改；手動的標記只記在這個瀏覽器。
+  const QA_NAME = /(^|[^a-z])(qa|e2e|test|demo)([^a-z]|$)|驗收|示範|測試|審查/i;
+  const QA_LOGIN = /^qa|@(?:[\w.-]+\.)?example\.(?:com|org|net)$|\.(?:invalid|test|example|localhost)$/i;
+  const autoQa = u => QA_NAME.test(u.name || '') || QA_LOGIN.test(u.login || '');
+  const QA_TAG = '<span class="th-tag th-tag-qa">QA 測試用</span>';
+  const tags = u => (u.premium ? '<span class="th-tag">Premium</span>' : '') + (u.api ? '<span class="th-tag">API</span>' : '') + (u.qa ? QA_TAG : '');
 
   function mount(el, detail) {
     if (!el) return;
@@ -134,13 +141,25 @@
       el.innerHTML = '<section class="card">' + head('帳戶智慧數據庫', '每個帳戶的願望、刊登、對話與面交') + '<p class="empty">還沒有帳戶明細：收集工具下一次執行後就會出現。</p></section>';
       return;
     }
-    const meta = detail.meta, users = detail.users.map(enrich);
-    const S = { q: '', filter: store.get('filter', 'all'), sort: store.get('sort', { k: 'attention', dir: -1 }), open: store.get('open', null), group: null };
+    const meta = detail.meta, all = detail.users.map(enrich);
+    const S = { q: '', filter: store.get('filter', 'all'), sort: store.get('sort', { k: 'attention', dir: -1 }), open: store.get('open', null), group: null, hideQa: store.get('hideQa', false) === true };
+    let marks = store.get('qa', {}), users = all, qaCount = 0;
+    if (!marks || typeof marks !== 'object' || Array.isArray(marks)) marks = {};
+    // 每次重畫前算一次：誰是 QA、現在要不要把它們拿掉（拿掉後上面的數字、階段長條、洞察也都不含它們）
+    const recompute = () => {
+      all.forEach(u => { u.qa = typeof marks[u.ref] === 'boolean' ? marks[u.ref] : autoQa(u); });
+      qaCount = all.filter(u => u.qa).length;
+      users = S.hideQa ? all.filter(u => !u.qa) : all;
+      if (S.open && !users.some(u => u.ref === S.open)) S.open = null;
+    };
+    const hidden = () => all.length - users.length;
+    // 收集工具算好的總數含 QA 帳戶：有帳戶被隱藏時只能從看得到的明細加總
+    const metaNow = () => (hidden() ? Object.assign({}, meta, { totals: null }) : meta);
     if (!FILTERS.some(f => f[0] === S.filter)) S.filter = 'all';
     const tiles = () => {
-      const t = totalsOf(users, meta);
+      const t = totalsOf(users, metaNow());
       const c = (label, value, tip, cls) => '<div class="dm-c' + (cls ? ' ' + cls : '') + '"' + (tip ? ' data-tip="' + esc(tip) + '"' : '') + '><span>' + esc(label) + '</span><b>' + esc(value) + '</b></div>';
-      return '<div class="dm">' + c('帳戶', int(t.users) + ' 個', meta.dropped ? '其中 ' + int(meta.dropped) + ' 個沒有明細' : '') + c('近 30 天有動作', int(t.active30) + ' 個', '近 30 天新增過願望、刊登或傳過訊息的帳戶') +
+      return '<div class="dm">' + c('帳戶', int(t.users) + ' 個', [meta.dropped ? (hidden() ? '另有 ' : '其中 ') + int(meta.dropped) + ' 個沒有明細' : '', hidden() ? '已隱藏 ' + int(hidden()) + ' 個 QA 測試用帳戶' : ''].filter(Boolean).join('；')) + c('近 30 天有動作', int(t.active30) + ' 個', '近 30 天新增過願望、刊登或傳過訊息的帳戶') +
         c('願望', int(t.wishes) + ' 個', int(t.withWish) + ' 個帳戶建立過願望') + c('刊登中／全部', int(t.listingsActive) + '／' + int(t.listings), int(t.withListing) + ' 個帳戶刊登過商品') +
         c('傳出訊息', int(t.sent) + ' 則', int(t.withChat) + ' 個帳戶傳過訊息') + c('完成面交', int(t.withMeetDone) + ' 個帳戶') + c('付費帳戶', int(t.paidUsers) + ' 個', t.paidUsers ? '累計 NT$ ' + int(t.paidTwd) : '') + '</div>';
     };
@@ -150,7 +169,7 @@
       return '<div class="th-flow"><div class="th-flow-h"><b>所有帳戶走到哪一步</b><span class="muted">點一段只看停在那一步的帳戶</span></div>' + stackBar(parts, users.length, 'lg') +
         '<div class="th-legend">' + parts.filter(p => p[1]).map(p => '<button type="button" class="th-lg' + (S.group === p[3] ? ' is-on' : '') + '" data-ws="group" data-v="' + p[3] + '" aria-pressed="' + (S.group === p[3]) + '"><i style="background:' + p[2] + '"></i>' + esc(p[0]) + ' <b>' + int(p[1]) + '</b></button>').join('') + '</div></div>';
     };
-    const insightHtml = () => '<ul class="th-ins">' + insights(users, meta).map(x => '<li class="th-in th-' + x.sev + '"><i class="sd sd-' + (x.sev === 'ok' ? 'ok' : x.sev === 'info' ? 'live' : x.sev) + '"></i>' +
+    const insightHtml = () => '<ul class="th-ins">' + insights(users, metaNow()).map(x => '<li class="th-in th-' + x.sev + '"><i class="sd sd-' + (x.sev === 'ok' ? 'ok' : x.sev === 'info' ? 'live' : x.sev) + '"></i>' +
       (x.user || x.filter ? '<button type="button" class="th-in-b" data-ws="' + (x.user ? 'focus' : 'filter') + '" data-v="' + esc(x.user || x.filter) + '">' + esc(x.text) + '</button>' : '<span>' + esc(x.text) + '</span>') + '</li>').join('') + '</ul>';
     const rows = () => {
       const q = S.q.trim().toLowerCase(), key = SORT[S.sort.k] || SORT.attention;
@@ -174,6 +193,7 @@
     }).join('') + '</tr></thead><tbody>' + rows() + '</tbody></table></div>';
     const tools = () => '<div class="th-tools"><input type="search" class="field th-q" placeholder="找帳戶（名稱或信箱）" aria-label="找帳戶" value="' + esc(S.q) + '" data-ws-in="q">' +
       '<div class="seg" role="group" aria-label="篩選">' + FILTERS.map(f => '<button type="button" data-ws="filter" data-v="' + f[0] + '" aria-pressed="' + (S.filter === f[0]) + '">' + esc(f[1]) + ' ' + users.filter(u => keep(u, f[0])).length + '</button>').join('') + '</div>' +
+      (qaCount ? '<div class="seg" role="group" aria-label="QA 測試用帳戶"><button type="button" data-ws="hideqa" data-v="1" aria-pressed="' + S.hideQa + '" data-tip="' + (S.hideQa ? '現在不顯示 QA 測試用帳戶，上面的數字也不含它們；再按一次顯示' : '按下後不顯示 QA 測試用帳戶，上面的數字也不含它們') + '">隱藏 QA 測試用 ' + qaCount + '</button></div>' : '') +
       (HIDDEN_FILTERS[S.filter] ? '<span class="chip">只看「' + esc(HIDDEN_FILTERS[S.filter]) + '」<button type="button" data-ws="filter" data-v="all" aria-label="取消">×</button></span>' : '') +
       (S.group ? '<span class="chip">只看「' + esc(STAGE[S.group][1]) + '」<button type="button" data-ws="group" data-v="' + S.group + '" aria-label="取消">×</button></span>' : '') + '</div>';
     // 詳細面板放在表格下面（不放進表格列，免得跟著很寬的表格被裁掉）
@@ -182,11 +202,13 @@
       if (!u) return '';
       return '<section class="th-panel" id="ws-panel" aria-label="' + esc(u.shown) + ' 的詳細"><header class="th-panel-h"><div><h3>' + esc(u.shown) + tags(u) + '</h3><p class="muted">' + esc(u.login || '沒有登入信箱') + '・' +
         (u.createdAt ? '註冊於 ' + new Date(u.createdAt).toLocaleDateString('zh-TW') : '註冊時間不明') + '・' + (u.seenAt ? '最近動作 ' + ago(u.seenAt) : '註冊後沒有任何動作') + '</p></div>' +
-        '<button type="button" class="btn-ghost" data-ws="open" data-v="' + u.ref + '" aria-label="關閉詳細">關閉</button></header>' + drill(u) + '</section>';
+        '<div class="th-panel-acts"><button type="button" class="btn-ghost" data-ws="qa" data-v="' + u.ref + '" data-tip="只記在這個瀏覽器">' + (u.qa ? '取消 QA 標籤' : '標成 QA 測試用') + '</button>' +
+        '<button type="button" class="btn-ghost" data-ws="open" data-v="' + u.ref + '" aria-label="關閉詳細">關閉</button></div></header>' + drill(u) + '</section>';
     };
-    const stamp = () => '<p class="hint">資料時間 ' + esc(meta.asOf ? new Date(meta.asOf).toLocaleString('zh-TW', { hour12: false }) : '—') + (meta.notes && meta.notes.length ? '・' + esc(meta.notes.join('；')) : '') +
+    const stamp = () => '<p class="hint">資料時間 ' + esc(meta.asOf ? new Date(meta.asOf).toLocaleString('zh-TW', { hour12: false }) : '—') + (meta.notes && meta.notes.length ? '・' + esc(meta.notes.join('；')) : '') + (hidden() ? '・已隱藏 ' + int(hidden()) + ' 個 QA 測試用帳戶，數字不含它們' : '') +
       '。每小時更新；在 Wishlist 自己的資料庫裡唯讀統計，只帶回數量與時間，信箱只顯示遮蔽後的樣子。「最近動作」是最後一次新增願望、刊登、傳訊息、詢問來源、付費或註冊裝置的時間（沒有記錄登入時間）。</p>';
     function paint(focusSel) {
+      recompute();
       el.innerHTML = '<section class="card th-card">' + head('帳戶智慧數據庫', '每個帳戶的願望、刊登、對話與面交・點一列看詳細') + tiles() + '<div class="th-top"><div class="th-top-l">' + overallBar() + '</div><div class="th-top-r"><b class="th-ins-h">智慧洞察</b>' + insightHtml() + '</div></div>' +
         tools() + table() + panel() + stamp() + '</section>';
       if (focusSel) { const f = el.querySelector(focusSel); if (f) { f.focus({ preventScroll: true }); if (f.setSelectionRange && typeof f.value === 'string') f.setSelectionRange(f.value.length, f.value.length); } }
@@ -201,7 +223,15 @@
       if (name === 'filter') { S.filter = v; S.group = null; if (FILTERS.some(f => f[0] === v)) store.set('filter', v); paint('[data-ws="filter"][data-v="' + v + '"]'); return; }
       // 「只有註冊」本身就是一個階段：再點階段長條時先放掉它，免得兩個條件互斥、整張表變空
       if (name === 'group') { S.group = S.group === v ? null : v; if (S.group && S.filter === 'idle') { S.filter = 'all'; store.set('filter', 'all'); } paint(); return; }
+      if (name === 'hideqa') { S.hideQa = !S.hideQa; store.set('hideQa', S.hideQa); paint('[data-ws="hideqa"]'); store.set('open', S.open); return; }
+      if (name === 'qa') {
+        const u = all.find(x => x.ref === v); if (!u) return;
+        marks[v] = !u.qa; if (marks[v] === autoQa(u)) delete marks[v];
+        store.set('qa', marks); paint(S.hideQa && !u.qa ? '[data-ws="hideqa"]' : '[data-ws="qa"]'); store.set('open', S.open); return;
+      }
       if (name === 'focus') {
+        // 洞察點到的帳戶如果正被隱藏（QA），先把隱藏打開，不然點了沒反應
+        if (S.hideQa && !users.some(x => x.ref === v)) { S.hideQa = false; store.set('hideQa', false); }
         S.open = v; S.filter = 'all'; S.group = null; S.q = ''; store.set('open', v); store.set('filter', 'all'); paint('tr[data-ws="open"][data-v="' + v + '"]');
         const p = el.querySelector('#ws-panel'); if (p && p.scrollIntoView) p.scrollIntoView({ block: 'start', behavior: 'smooth' });
       }
@@ -252,5 +282,5 @@
     });
     return { meta: f.wlUsersMeta && f.wlUsersMeta.v === 1 ? f.wlUsersMeta : null, users };
   }
-  window.HubWeesh = { mount, fromFacts, insights: (users, meta) => insights(users.map(enrich), meta), enrich, stageOf };
+  window.HubWeesh = { mount, fromFacts, insights: (users, meta) => insights(users.map(enrich), meta), enrich, stageOf, autoQa };
 })();
