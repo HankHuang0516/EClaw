@@ -103,7 +103,7 @@
   root.OpsChartMath = OpsChartMath;
 
   // ---- data ------------------------------------------------------------------------------------------------------
-  const API = '../../api/aihankapps/ops';
+  const API = '/api/aihankapps/ops';
   const PALETTE = ['#23634f', '#bb791d', '#2f6f9f', '#b2503f', '#6b5b95', '#3f8f6f', '#8a7a2a', '#c2667d', '#4e7d8c', '#9a6b3c', '#557a2f', '#7a5f9a'];
   async function getJson(url) {
     const res = await fetch(url, { headers: { Accept: 'application/json' } });
@@ -126,13 +126,22 @@
       const now = Date.now();
       this.to = now; this.from = now - cfg.defaultSpan; this.step = pickStep(cfg.defaultSpan, cfg.minStep);
       this.buildSteps(); this.bindEvents();
-      new ResizeObserver(() => this.render()).observe(this.svg.parentElement);
+      this.observer = new ResizeObserver(() => this.render());
+      this.observer.observe(this.svg.parentElement);
       $('[data-role=reset]', section).addEventListener('click', () => this.reset());
     }
     setSeries(series) {
       this.series = series.map((s, i) => ({ color: PALETTE[i % PALETTE.length], ...s }));
       this.hidden = new Set(series.filter(s => s.hiddenByDefault).map(s => s.id));
       this.cache.clear(); this.buildLegend(); this.load();
+    }
+    destroy() {
+      this.destroyed = true;
+      this.generation++;
+      clearTimeout(this.loadTimer);
+      if (this.cancelGesture) this.cancelGesture();
+      this.observer.disconnect();
+      this.cache.clear();
     }
     reset() { const now = Date.now(); this.manualStep = null; this.pinned = null; this.setRange(now - this.cfg.defaultSpan, now); }
     buildSteps() {
@@ -172,6 +181,7 @@
     }
     // Keep a window three times the visible span per unit; refetch when the view leaves it.
     load() {
+      if (this.destroyed) return;
       const ids = this.series.map(s => s.id); if (!ids.length) return;
       const span = this.to - this.from, want = { from: bucketStart(this.from - span, this.step), to: bucketNext(this.to + span, this.step) };
       const have = this.cache.get(this.step);
@@ -185,7 +195,7 @@
           let from = want.from, to = Math.min(want.to, Date.now() + spanMs);
           if ((to - from) / spanMs > maxPoints) from = to - maxPoints * spanMs;
           const json = await getJson(API + '/series?ids=' + encodeURIComponent(ids.join(',')) + '&from=' + from + '&to=' + to + '&step=' + step);
-          if (gen !== this.generation && this.step !== step) return;
+          if (this.destroyed || (gen !== this.generation && this.step !== step)) return;
           const bySeries = {};
           for (const id of ids) bySeries[id] = ((json.series[id] && json.series[id].points) || []).slice().sort((a, b) => a[0] - b[0]);
           this.cache.set(step, { from, to, bySeries, kind: Object.fromEntries(ids.map(id => [id, json.series[id] ? json.series[id].kind : 'gauge'])) });
@@ -209,6 +219,7 @@
     xOf(ms, g) { return g.L + (ms - this.from) / (this.to - this.from) * (g.W - g.L - g.R); }
     msOf(x, g) { return this.from + (x - g.L) / (g.W - g.L - g.R) * (this.to - this.from); }
     render() {
+      if (this.destroyed) return;
       const g = this.geometry(), svg = this.svg, step = this.step;
       svg.setAttribute('viewBox', '0 0 ' + g.W + ' ' + g.H); svg.textContent = '';
       for (const b of this.stepsBox.querySelectorAll('[data-step]')) { b.classList.toggle('is-active', b.dataset.step === step); b.classList.toggle('is-auto', b.dataset.step === step && !this.manualStep); }
@@ -305,6 +316,7 @@
     bindEvents() {
       const svg = this.svg, pointX = e => { const r = svg.getBoundingClientRect(), g = this.geometry(); return (e.clientX - r.left) / r.width * g.W; };
       let drag = null, longPress = null, pinch = null;
+      this.cancelGesture = () => { clearTimeout(longPress); drag = null; pinch = null; this.pointers.clear(); };
       svg.addEventListener('pointerdown', e => {
         svg.setPointerCapture(e.pointerId); this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { svg.focus({ preventScroll: true }); } catch (x) { /* focus is optional */ }
         if (this.pointers.size === 2) { const [a, b] = [...this.pointers.values()]; pinch = { dist: Math.hypot(a.x - b.x, a.y - b.y), from: this.from, to: this.to, mid: (a.x + b.x) / 2 }; clearTimeout(longPress); longPress = null; drag = null; return; }
@@ -348,6 +360,9 @@
       });
     }
   }
+
+  // One chart implementation for the public ops page and the authenticated hub.
+  root.AiHankOpsCharts = { WaveChart };
 
   // ---- page --------------------------------------------------------------------------------------------------------
   const HEALTH = { healthy: '正常', degraded: '部分異常', unhealthy: '異常', unknown: '未知', '': '未知' };
@@ -443,5 +458,7 @@
     await refreshLatest();
     setInterval(() => { if (!document.hidden) { refreshLatest(); for (const c of Object.values(charts)) { c.cache.clear(); c.load(); } } }, 5 * 60e3);
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', main); else main();
+  if (document.body.hasAttribute('data-ops-page')) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', main); else main();
+  }
 })(typeof window !== 'undefined' ? window : null);

@@ -59,7 +59,19 @@
   if (!LIVE_WIN[S.win]) S.win = '24h';
   const CH = {};          // 有名字的圖表（複製 CSV 用）
   const liveHooks = [];   // 每分鐘讀到新的營運數據之後要更新的東西
-  let disposeEclaw = () => {};
+  let disposeEclaw = () => {}, disposeOperations = () => {};
+  const openFolds = new Set();
+  document.addEventListener('toggle', event => {
+    const target = event.target;
+    if (target.matches && target.matches('details[data-hub-fold]')) {
+      if (target.open) openFolds.add(target.dataset.hubFold); else openFolds.delete(target.dataset.hubFold);
+    }
+  }, true);
+  function foldHtml(key, title, sub, body, attrs = '') {
+    title = window.HubWishlistText.t(title); sub = window.HubWishlistText.t(sub);
+    const labels = ' data-expand="' + esc(window.HubWishlistText.t('展開')) + '" data-collapse="' + esc(window.HubWishlistText.t('收合')) + '"';
+    return '<details class="card hub-fold" data-hub-fold="' + esc(key) + '"' + (openFolds.has(key) ? ' open' : '') + attrs + '><summary' + labels + '><span><b>' + esc(title) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span></summary><div class="fold-body">' + body + '</div></details>';
+  }
   let lastInput = 0, liveSeq = 0;
 
   // ---- 小工具 ---------------------------------------------------------------
@@ -195,8 +207,9 @@
     $('#nav').innerHTML = navHtml();
     $('#side-apps').innerHTML = sideAppsHtml();
     const f = $('#filters'), show = S.view === 'overview' || S.view === 'kpi' || S.view === 'apps' || S.view === 'app';
-    f.hidden = !show;
-    if (show) f.innerHTML = filtersHtml();
+    const wishlist = S.view === 'app' && D.APP[S.app] && D.APP[S.app].key === D.WISHLIST;
+    f.hidden = !show || wishlist;
+    f.innerHTML = show && !wishlist ? filtersHtml() : '';
     syncLiveUi();
     syncQuota();
   }
@@ -555,8 +568,14 @@
   function workerTableHtml(workers, title, sub) {
     return '<section class="card">' + cardHead(title, sub) + (workers.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>狀態</th><th>Worker</th><th>CPU</th><th class="num">記憶體</th><th class="num">近 24 小時完成</th><th>最後一次完成</th></tr></thead><tbody data-workers="' + esc(workers.map(w => w.id).join(',')) + '">' + workerRowsHtml(workers) + '</tbody></table></div><p class="hint">' + ico('info') + '<span>游標移到「近 24 小時完成」的數字上，可以看每一種工作各完成幾件。</span></p>' : '<p class="empty">監控目前沒有回報任何 worker。</p>') + '</section>';
   }
-  function listingCells() {
+  function listingCells(compact) {
     const l = D.ops.listing, c = D.ops.chat;
+    if (compact) {
+      const current = l || {};
+      return dmCell('今日上架', num(current.today && current.today.count) + ' 件', '今天還沒過完') + dmCell(window.HubWishlistText.t('上架 · 60 分鐘'), num(current.last60Minutes) + ' 件') +
+        window.HubWishlistOps.recentCells(D.ops) + dmCell('公開可見', num(current.publiclyVisible) + ' 件') + dmCell('待公開', num(current.waitingToPublish) + ' 件') +
+        dmCell('聊聊待問', c && c.pendingCount != null ? c.pendingCount + ' 則' : '—', '買家詢問等待核准或轉達；最多延遲約 2 小時');
+    }
     if (!l) return '';
     return dmCell('今日上架', num(l.today && l.today.count) + ' 件', '今天還沒過完') + dmCell('昨日上架', num(l.yesterday && l.yesterday.count) + ' 件') + dmCell('近 60 分鐘', num(l.last60Minutes) + ' 件') +
       dmCell('近 24 小時平均', l.perHour24h == null ? '—' : Math.round(l.perHour24h) + ' 件／小時', l.targetPerHour == null ? '' : '目標是每小時 ' + l.targetPerHour + ' 件') +
@@ -608,7 +627,7 @@
     $$('[data-services]').forEach(tb => { const ids = tb.dataset.services.split(','); tb.innerHTML = serviceRowsHtml(D.services.filter(x => ids.indexOf(x.id) >= 0)); });
     $$('[data-workers]').forEach(tb => { const ids = tb.dataset.workers.split(','); tb.innerHTML = workerRowsHtml(D.ops.workers.filter(w => ids.indexOf(w.id) >= 0)); });
     const dm = $('#lv-listing');
-    if (dm) dm.innerHTML = listingCells();
+    if (dm) dm.innerHTML = listingCells(dm.dataset.compact === 'true');
   }
   function viewLive(el) {
     const o = D.ops, w = LIVE_WIN[S.win];
@@ -780,7 +799,7 @@
     return '<section class="card c-4">' + cardHead('平台分布', esc(def.name) + '・' + spanText(R)) + body + '</section>';
   }
   // 每款 APP 自己的後台回報的數字：有接上的才有
-  function backendHtml(a) {
+  function backendHtml(a, split) {
     const e = D.eclaw, workers = D.ops.workers.filter(w => w.app === a.key);
     let cells = '', sub = '', extra = '';
     if (a.key === 'eclawbot') {
@@ -791,8 +810,8 @@
         dmCell('今日訊息', num(D.todayValue('eclawMessages', a.key)) + ' 則', '今天還沒過完') + dmCell('今日活躍裝置', num(D.todayValue('eclawActiveDevices', a.key)) + ' 台', '今天還沒過完') + dmCell('今日新註冊', num(D.todayValue('eclawSignups', a.key)) + ' 個', '今天還沒過完');
       if (window.HubEclaw) cells = dmCell('今日活躍裝置', num(D.todayValue('eclawActiveDevices', a.key)) + ' 台', '今天還沒過完') + dmCell('今日新註冊', num(D.todayValue('eclawSignups', a.key)) + ' 個', '今天還沒過完');
     } else if (a.key === D.WISHLIST) {
-      sub = '上架與公開的最新數字';
-      cells = listingCells();
+      sub = window.HubWishlistText.t('上架與原價／CP 查找；查找和評估分別計件，不相加成商品總數');
+      cells = listingCells(true);
     } else if (a.key === 'dreambuddy' && D.RAW.dreamTurns) {
       const R = win('messages'), t = p => D.rawSum(p, a.key, R.from, R.to);
       sub = spanText(R) + ' 的對話與廣告';
@@ -805,19 +824,41 @@
     const facts = D.facts(a);
     if (facts.length) {
       if (!sub) sub = '後台自己記錄的目前數字';
-      cells += facts.map(f => dmCell(f.label, (typeof f.value === 'number' ? V.fmtInt(f.value) : String(f.value)) + (f.unit ? ' ' + f.unit : ''), f.observedAt ? '收集於 ' + V.fStamp(f.observedAt) : '')).join('');
+      const factCells = facts.map(f => dmCell(f.label, (typeof f.value === 'number' ? V.fmtInt(f.value) : String(f.value)) + (f.unit ? ' ' + f.unit : ''), f.observedAt ? '收集於 ' + V.fStamp(f.observedAt) : '')).join('');
+      if (a.key === D.WISHLIST) extra += foldHtml('ws-facts', '後台完整彙總', '帳戶、願望、刊登與訊息的收集快照', '<div class="dm">' + factCells + '</div>');
+      else cells += factCells;
     }
     // 拾光AI雲端相簿：每位用戶的辨識、相簿與流量明細（hub-timehut.js 自己畫、自己處理互動）
     if (a.key === 'timehut' && window.HubTimehut) extra += '<div id="th-users"></div>';
     if (a.key === 'eclawbot' && window.HubEclaw) extra += '<div id="ec-admin"></div>';
     // Weesh：帳戶智慧數據庫，每個帳戶的願望、刊登、對話與面交（hub-weesh.js 自己畫、自己處理互動）
-    if (a.key === D.WISHLIST && window.HubWeesh) extra += '<div id="ws-users"></div>';
+    if (a.key === D.WISHLIST && window.HubWeesh) extra += foldHtml('ws-users', '帳戶智慧數據庫', '搜尋帳戶、QA 篩選與個別使用歷程', '<div id="ws-users"></div>');
     const svcs = D.serviceFor(a);
-    if (svcs.length) extra += serviceTableHtml(svcs, '這款 APP 的後台服務', '每分鐘檢查一次');
-    extra += infraTableHtml(D.infraFor(a), '這款 APP 的後台資源', 'Railway 量測，每小時更新');
-    if (workers.length) extra += workerTableHtml(workers, '這款 APP 的 AI worker', '每分鐘檢查一次');
+    let resources = svcs.length ? serviceTableHtml(svcs, '這款 APP 的後台服務', '每分鐘檢查一次') : '';
+    resources += infraTableHtml(D.infraFor(a), '這款 APP 的後台資源', 'Railway 量測，每小時更新');
+    if (workers.length) resources += workerTableHtml(workers, '這款 APP 的 AI worker', '每分鐘檢查一次');
+    extra += a.key === D.WISHLIST ? foldHtml('ws-resources', '服務與資源', '健康狀態、部署、流量與 worker 明細', resources) : resources;
     if (!cells && !extra) return '<section class="card">' + cardHead('後台數據') + '<p class="empty">' + (a.stage === 'dev' ? '這款還沒有接上後台數據。' : '這款 APP 的後台還沒有接進管理中樞，目前只有商店與作品集的數據。可以到「資料來源」看還缺哪些。') + '</p></section>';
-    return (cells ? '<section class="card">' + cardHead('後台數據', sub) + '<div class="dm"' + (a.key === D.WISHLIST ? ' id="lv-listing"' : '') + '>' + cells + '</div></section>' : '') + extra;
+    const summary = cells ? '<section class="card">' + cardHead('後台數據', sub) + '<div class="dm"' + (a.key === D.WISHLIST ? ' id="lv-listing" data-compact="true"' : '') + '>' + cells + '</div></section>' : '';
+    return split ? { summary, extra } : summary + extra;
+  }
+  function wishlistAppBody(a, keys, list) {
+    const storeKeys = keys.filter(key => M[key].src !== 'ops');
+    if (!storeKeys.includes(S.metric)) S.metric = storeKeys[0] || 'installs';
+    const charts = window.HubWishlistOps;
+    const operations = '<div class="hub-ops" id="ws-operations">' +
+      charts.chartHtml('wishlist', '上架與原價／CP 趨勢', '成功上架、原價查找與 CP 評估；可切換每段件數或區間累計。') +
+      foldHtml('ws-work', '其他 AI 工作量', '依工作來源查看，避免不同單位混加', charts.chartHtml('work', 'AI 工作量', '一次看一個工作來源，各種工作分開計件。'), ' data-wave-fold="work"') +
+      foldHtml('ws-cpu', 'Worker CPU 波形', '近 6 小時的真實負載，可選擇各個 worker', charts.chartHtml('cpu', 'Worker CPU', '一顆核心全忙 = 100%；可用圖例切換來源。', true), ' data-wave-fold="cpu"') + '</div>';
+    const l = D.ops.listing;
+    const extra = l ? '<div class="dm">' + dmCell('昨日上架', num(l.yesterday && l.yesterday.count) + ' 件') + dmCell('近 24 小時平均', l.perHour24h == null ? '—' : Math.round(l.perHour24h) + ' 件／小時') +
+      dmCell('近 7 天平均', l.perHour168h == null ? '—' : Math.round(l.perHour168h) + ' 件／小時') + dmCell('累計上架', num(l.cumulative && l.cumulative.count) + ' 件') + dmCell('已下架', num(l.records && l.records.withdrawn) + ' 筆') + '</div>' : '<p class="empty">上架報表暫時讀不到。</p>';
+    // Keep current operations first; the historical/store tools are still available on demand.
+    const backend = backendHtml(a, true);
+    return backend.summary + operations + foldHtml('ws-listing', '更多上架統計', '昨日、平均速度與歷史累計', extra) + backend.extra +
+      foldHtml('ws-store', '商店與作品集趨勢', '安裝、廣告收入、介紹頁瀏覽與平台分布', storeKeys.length ? '<div class="ws-store-filters">' + filtersHtml() + '</div>' + tilesHtml(APP_TILE_ORDER.filter(k => storeKeys.indexOf(k) >= 0).slice(0, 6), list) + '<div class="grid">' + explorerHtml('c-8', storeKeys, true) + platCardHtml(a) + '</div>' : '<p class="empty">' + window.HubWishlistText.t('尚無數據。') + '</p>') +
+      foldHtml('ws-retention', '留存', '帳戶在註冊後是否持續回來使用', retentionHtml(a, '')) +
+      foldHtml('ws-feedback', '回饋與資料來源', '問題回饋、各項數據定義與更新時間', '<div class="grid">' + feedbackCardHtml(list, 'c-7') + appFreshHtml(a, keys) + '</div>');
   }
   function appFreshHtml(a, keys) {
     return '<section class="card c-5">' + cardHead('這款 APP 有哪些數據', '每一項資料到哪一天') + '<ol class="feed">' + keys.map(k => '<li><span class="feed-k">' + esc(M[k].group) + '</span><span class="feed-t"><b>' + esc(M[k].name) + '</b>　' + esc(M[k].note) + '</span><time class="muted">' + esc(endNote(k, true)) + '</time></li>').join('') + (keys.length ? '' : '<li class="empty">這款 APP 目前沒有任何數據來源。</li>') + '</ol></section>';
@@ -834,9 +875,16 @@
       }).join('') + links + '</div></div>' + pill(D.appState(a)) + '</header>' +
       (a.stage === 'dev' ? '<p class="note">' + ico('info') + '這款還沒有公開上架，商店相關的指標會是空的。</p>' : '') +
       appAlertsHtml(a) +
-      (keys.length ? tilesHtml(APP_TILE_ORDER.filter(k => keys.indexOf(k) >= 0).slice(0, 6), list) + '<div class="grid">' + explorerHtml('c-8', keys, true) + platCardHtml(a) + '</div>' : '<p class="note">' + ico('info') + '這款 APP 目前沒有任何數據來源。</p>') +
-      backendHtml(a) + retentionHtml(a, '') + '<div class="grid">' + feedbackCardHtml(list, 'c-7') + appFreshHtml(a, keys) + '</div>';
+      (a.key === D.WISHLIST ? wishlistAppBody(a, keys, list) :
+        (keys.length ? tilesHtml(APP_TILE_ORDER.filter(k => keys.indexOf(k) >= 0).slice(0, 6), list) + '<div class="grid">' + explorerHtml('c-8', keys, true) + platCardHtml(a) + '</div>' : '<p class="note">' + ico('info') + '這款 APP 目前沒有任何數據來源。</p>') +
+        backendHtml(a) + retentionHtml(a, '') + '<div class="grid">' + feedbackCardHtml(list, 'c-7') + appFreshHtml(a, keys) + '</div>');
     if (keys.length) { mountTiles(el, list); mountExplorer(el, list); }
+    const opsHost = $('#ws-operations', el);
+    if (opsHost) {
+      const operations = window.HubWishlistOps.mount(opsHost, D);
+      disposeOperations = () => operations.destroy();
+      liveHooks.push(() => operations.refresh());
+    }
     const th = $('#th-users', el);
     if (th) window.HubTimehut.mount(th, window.HubTimehut.fromFacts((D.latest.facts || {})[a.key]));
     const ws = $('#ws-users', el);
@@ -913,6 +961,8 @@
     const go = () => {
       disposeEclaw();
       disposeEclaw = () => {};
+      disposeOperations();
+      disposeOperations = () => {};
       V.destroyAll();
       liveHooks.length = 0;
       liveSeq++;

@@ -1,0 +1,57 @@
+/* Keep the existing ops chart controls scoped to the hub; use the hub's theme. */
+.hub-fold{display:block}
+.hub-fold>summary{display:flex;align-items:center;justify-content:space-between;gap:16px;list-style:none;cursor:pointer;min-height:44px;color:var(--ink)}
+.hub-fold>summary::-webkit-details-marker{display:none}
+.hub-fold>summary b{font-size:15px}
+.hub-fold>summary small{display:block;color:var(--ink-3);font-size:12px;font-weight:400;margin-top:3px}
+.hub-fold>summary::after{content:attr(data-expand);font-size:12px;color:var(--accent);flex-shrink:0}
+.hub-fold[open]>summary::after{content:attr(data-collapse)}
+.hub-fold[open]>.fold-body{display:grid;gap:16px;margin-top:16px}
+.fold-body>.card{border:0;padding:0;background:transparent}
+.fold-body>#ws-users>.card{border:0;padding:0;background:transparent}
+.fold-body>.grid{margin:0}
+.ws-recent small{font-size:11px;line-height:1.6;color:var(--ink-3);overflow-wrap:anywhere}
+.ws-recent b{white-space:normal}
+.hub-ops{display:grid;gap:16px;--muted:var(--ink-3);--leaf:var(--accent)}
+.hub-ops .chart-toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.hub-ops h2{font-size:17px;margin:0}
+.hub-ops .sub{margin:4px 0 0;max-width:65ch}
+.hub-ops .ws-wave-controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hub-ops .segmented{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;max-width:100%}
+.hub-ops .seg,.hub-ops .ghost{min-height:44px;padding:8px 12px;background:var(--panel);color:var(--ink-2);border:0;font:inherit;cursor:pointer}
+.hub-ops .seg.is-active{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.hub-ops .ghost{border:1px solid var(--line);border-radius:8px}
+.hub-ops .chip{min-height:40px;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line);border-radius:20px;background:var(--panel);font:inherit;color:var(--ink);cursor:pointer;white-space:normal;text-align:left}
+.hub-ops .chip i{width:9px;height:9px;border-radius:50%;background:var(--c);flex-shrink:0}
+.hub-ops .chip.is-off{opacity:.55}
+.hub-ops .legend{display:flex;flex-wrap:wrap;gap:6px}
+.hub-ops .chart-wrap{position:relative;height:280px;min-width:0}
+.hub-ops .chart-wrap svg{display:block;width:100%;height:100%;touch-action:none;user-select:none;cursor:crosshair}
+.hub-ops .axis text{font:11px var(--font);fill:var(--ink-3)}
+.hub-ops .axis line{stroke:var(--axis)}
+.hub-ops .grid line{stroke:var(--grid);stroke-width:1}
+.hub-ops svg .grid{display:inline}
+.hub-ops .series-line{fill:none;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.hub-ops .series-peak{fill:none;stroke-width:1;stroke-dasharray:3 3;opacity:.6}
+.hub-ops .series-area{opacity:.12}
+.hub-ops .series-bar{opacity:.8}
+.hub-ops .cursor-line{stroke:var(--ink-3);stroke-width:1;stroke-dasharray:2 3}
+.hub-ops .cursor-dot{stroke:var(--panel);stroke-width:1.5}
+.hub-ops .empty-note{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink-3);pointer-events:none;text-align:center;padding:20px}
+.hub-ops [hidden]{display:none!important}
+.hub-ops .tooltip{position:absolute;z-index:4;max-width:calc(100% - 8px);background:var(--tip-bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px;box-shadow:0 4px 18px var(--shade);font-size:12px;pointer-events:none}
+.hub-ops .tooltip .row{display:flex;gap:10px;justify-content:space-between}
+.hub-ops .tooltip i{display:inline-block;width:8px;height:8px;background:var(--c);border-radius:50%;margin-right:5px}
+.hub-ops .detail{padding:12px;background:var(--panel-2);border-radius:8px;overflow-x:auto}
+.hub-ops .detail table{width:100%;font-size:12px}
+.hub-ops .detail td{padding:6px}
+.hub-ops .detail h3{font-size:14px}
+.hub-ops .detail .close{float:right}
+.hub-ops .chart-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;font-size:11px;color:var(--ink-3)}
+.hub-ops .control{max-width:100%;min-height:44px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit}
+.ws-worker-label{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;min-width:0}
+.ws-more-series>summary{cursor:pointer;min-height:40px;display:flex;align-items:center;padding:6px 10px;color:var(--ink-3);font-size:12px}
+.ws-more-series[open]{flex-basis:100%}
+.ws-more-series[open]>.legend{padding-top:6px}
+.ws-store-filters{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+@media(max-width:640px){.hub-ops .chart-wrap{height:240px}.hub-ops .ws-wave-controls{width:100%}.hub-fold>summary small{max-width:32ch}.hub-ops .seg,.hub-ops .ghost{padding:8px 10px}}
