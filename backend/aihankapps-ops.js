@@ -119,6 +119,12 @@ function workSummary(json) {
             const c = m.cumulative || {};
             totals[id] = { sinceCollectionStart: num(c.sinceCollectionStart), knownTotalLowerBound: num(c.knownTotalLowerBound), isCompleteHistory: c.isCompleteHistory === true,
                 collectionStartedAt: ms(m.collectionStartedAt), lastCompletedAt: ms(m.lastCompletedAt) };
+            const window60 = m.last60Minutes;
+            if (window60 && ms(window60.from) && ms(window60.to) && window60.to - window60.from === 3600000 && ['complete', 'partial', 'in_progress', 'not_observed', 'not_measured'].includes(window60.coverage)) {
+                const count = n => Number.isSafeInteger(n) && n >= 0 ? n : null;
+                totals[id].last60Minutes = { from: window60.from, to: window60.to, coverage: window60.coverage,
+                    count: window60.coverage === 'complete' ? count(window60.count) : null, lowerBound: count(window60.lowerBound), fresh: window60.fresh === true };
+            }
         }
     }
     return { catalog, totals };
