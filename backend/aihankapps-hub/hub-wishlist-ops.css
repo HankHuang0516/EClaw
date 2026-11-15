@@ -11,6 +11,7 @@
 .fold-body>#ws-users>.card{border:0;padding:0;background:transparent}
 .fold-body>.grid{margin:0}
 .ws-recent small{font-size:11px;line-height:1.6;color:var(--ink-3);overflow-wrap:anywhere}
+.ws-recent{align-content:start}
 .ws-recent b{white-space:normal}
 .hub-ops{display:grid;gap:16px;--muted:var(--ink-3);--leaf:var(--accent)}
 .hub-ops .chart-toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
