@@ -69,7 +69,8 @@ describe('catalogue lookup observations stay separate from completed work', () =
         expect(html).toContain('搜尋不可用：7 件');
         expect(html.match(/<b>0 件<\/b>/g)).toHaveLength(2);
         expect(html).not.toContain('13 件');
-        expect(html).toContain('<details class="ws-catalogue">');
+        expect(html).toContain('<details class="ws-catalogue" data-hub-fold="ws-catalogue">');
+        expect(load().recentCells({ ok: true, workTotals: totals() }, NOW, true)).toContain('data-hub-fold="ws-catalogue" open');
         expect(html).not.toContain('<details class="ws-catalogue" open');
     });
     test('partial attempts show a positive lower bound and never invent missing outcomes', () => {

@@ -573,7 +573,7 @@
     if (compact) {
       const current = l || {};
       return dmCell('今日上架', num(current.today && current.today.count) + ' 件', '今天還沒過完') + dmCell(window.HubWishlistText.t('上架 · 60 分鐘'), num(current.last60Minutes) + ' 件') +
-        window.HubWishlistOps.recentCells(D.ops) + dmCell('公開可見', num(current.publiclyVisible) + ' 件') + dmCell('待公開', num(current.waitingToPublish) + ' 件') +
+        window.HubWishlistOps.recentCells(D.ops, Date.now(), openFolds.has('ws-catalogue')) + dmCell('公開可見', num(current.publiclyVisible) + ' 件') + dmCell('待公開', num(current.waitingToPublish) + ' 件') +
         dmCell('聊聊待問', c && c.pendingCount != null ? c.pendingCount + ' 則' : '—', '買家詢問等待核准或轉達；最多延遲約 2 小時');
     }
     if (!l) return '';

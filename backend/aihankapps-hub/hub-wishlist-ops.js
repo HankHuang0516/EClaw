@@ -18,7 +18,7 @@
     if (w.coverage !== 'complete' && finiteCount(w.lowerBound) && w.lowerBound > 0) return { value: w.lowerBound, note: t('截至 {time}，部分時段尚未完成觀測', { time }), exact: false };
     return { value: null, note: t('觀測不足，尚無可確認件數') };
   }
-  function recentCells(ops, now = Date.now()) {
+  function recentCells(ops, now = Date.now(), catalogueOpen = false) {
     return [['retail_lookups_completed', '原價查找 · 60 分鐘'], ['retail_cp_evaluated', 'CP 評估 · 60 分鐘']].map(([metric, label]) => {
       const result = recentValue(ops.ok ? ops.workTotals['work.wishlist-retail.' + metric] : null, now);
       const text = result.value == null ? '—' : t(result.exact ? '{n} 件' : '至少 {n} 件', { n: result.value.toLocaleString(window.HubWishlistText.locale) });
@@ -29,7 +29,7 @@
         if (attempted.value != null) {
           const format = entry => entry.value == null ? '—' : t(entry.exact ? '{n} 件' : '至少 {n} 件', { n: entry.value.toLocaleString(window.HubWishlistText.locale) });
           const outcome = value('catalog_lookups_with_outcome'), unavailable = value('catalog_search_unavailable');
-          catalogue = '<details class="ws-catalogue"><summary>' + esc(t('目錄查找：已嘗試 {count}', { count: format(attempted) })) + '</summary><small>' +
+          catalogue = '<details class="ws-catalogue" data-hub-fold="ws-catalogue"' + (catalogueOpen ? ' open' : '') + '><summary>' + esc(t('目錄查找：已嘗試 {count}', { count: format(attempted) })) + '</summary><small>' +
             esc(t('有處理結果：{count}', { count: format(outcome) })) + '<br>' + esc(t('搜尋不可用：{count}', { count: format(unavailable) })) +
             '<br>' + esc(t('有處理結果可能是查無同款或資料不完整，不代表找到原價。')) + '<br>' + esc(t('嘗試數不等於完成查價，不與上方完成件數相加。')) + '<br>' + esc(attempted.note) + '</small></details>';
         }
