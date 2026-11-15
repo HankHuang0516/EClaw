@@ -309,7 +309,8 @@
       "checkedAt": "2026-11-15T01:10:27.154070Z",
       "iosId": "6814728151",
       "iosUrl": "https://apps.apple.com/tw/app/id6814728151",
-      "iosStoreName": "活字戰紀：巔峰之戰"
+      "iosStoreName": "活字戰紀：巔峰之戰",
+      "guide": "guides/summit-battle/"
     },
     {
       "name": "Vibe帝國",

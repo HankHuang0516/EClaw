@@ -138,6 +138,28 @@ describe('AiHankApps itch.io links', () => {
     expect(sleepPark.map(action => action.className)).toEqual(['toolbar-google', 'toolbar-apple']);
   });
 
+  test('catalog public flags override released-looking statuses and pending labels remain text', () => {
+    const dataset = toolbarDataset('summit-battle');
+    for (const status of ['等待審查', '已上架', '<img src=x onerror=alert(1)>']) {
+      const record = { ...catalog.apps.find(app => app.communityId === 'summit-battle'), publicGoogle: false, publicApple: false, googleStatus: '正式版', iosStatus: status };
+      const [google, apple] = renderToolbar(dataset, [record]);
+      for (const action of [google, apple]) {
+        expect(action.tagName).toBe('SPAN');
+        expect(action.href).toBeUndefined();
+        expect(action.attributes['aria-disabled']).toBe('true');
+      }
+      expect(apple.children[0].children[0].textContent).toBe(status.replace(/</g, '&lt;'));
+      expect(apple.innerHTML).not.toContain(status);
+    }
+    const [google, apple] = renderToolbar(dataset, catalog.apps);
+    expect(google.tagName).toBe('A');
+    expect(apple.tagName).toBe('SPAN');
+    expect(apple.children[0].children[0].textContent).toBe('等待審查');
+    const fallback = renderToolbar(dataset, null);
+    expect(fallback[0].tagName).toBe('A');
+    expect(fallback[1].tagName).toBe('SPAN');
+  });
+
   test('guide download rows link the public itch.io pages and no draft page is linked', () => {
     expect(read('guides/paper-flick-soldiers/index.html')).toContain(
       `<a class="paper-action" href="${PUBLIC_ITCH_PAGES['paper-flick-soldiers']}" target="_blank" rel="noopener noreferrer">itch.io</a>`

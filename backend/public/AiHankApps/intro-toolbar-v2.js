@@ -8,8 +8,8 @@
   const record = catalog.find(item => item.name === app || (item.googleUrl && item.googleUrl === script.dataset.google));
   const google = record ? record.googleUrl : script.dataset.google;
   const apple = record ? record.iosUrl : script.dataset.apple;
-  const googleStatus = record ? (record.publicGoogle ? '正式版' : '開發中') : (script.dataset.googleStatus || '開發中');
-  const appleStatus = record ? (record.publicApple ? '已上架' : '開發中') : (script.dataset.appleStatus || '開發中');
+  const googleStatus = record ? (record.publicGoogle ? '正式版' : (record.googleStatus || '開發中')) : (script.dataset.googleStatus || '開發中');
+  const appleStatus = record ? (record.publicApple ? '已上架' : (record.iosStatus || '開發中')) : (script.dataset.appleStatus || '開發中');
   const itch = record ? record.itchUrl : script.dataset.itch;
   const shortcuts = (script.dataset.shortcuts || '').split('|').map((entry) => {
     const splitAt = entry.lastIndexOf(':');
@@ -45,10 +45,19 @@
   stores.className = 'portfolio-intro-toolbar__stores';
   const isReleased = (status, url) => Boolean(url && ['正式版', '已上架', '已可發佈', '已可發布', '已發佈', '已發布'].includes(status));
   const storeAction = (platform, url, status, mark, caption, label, verb = '下載') => {
-    const available = isReleased(status, url);
+    const publicFlag = record && (platform === 'google' ? record.publicGoogle : platform === 'apple' ? record.publicApple : true);
+    const available = Boolean(url) && (record ? publicFlag === true : isReleased(status, url));
     const action = document.createElement(available ? 'a' : 'span');
     action.className = 'toolbar-' + platform + (available ? '' : ' is-disabled');
-    action.innerHTML = mark + '<span><small>' + (available ? caption : status) + '</small>' + label + '</span>';
+    action.innerHTML = mark;
+    const words = document.createElement('span');
+    const state = document.createElement('small');
+    state.textContent = available ? caption : status;
+    const name = document.createElement('span');
+    name.textContent = label;
+    words.appendChild(state);
+    words.appendChild(name);
+    action.appendChild(words);
     if (available) {
       action.href = url;
       action.target = '_blank';

@@ -9,7 +9,7 @@
     '世界末日了沒': { id: 'doomsday-index', guide: 'guides/doomsday/', shots: ['doomsday/01.jpg','doomsday/02.jpg','doomsday/03.jpg','doomsday/04.jpg'] },
     '夢話夥伴': { id: 'dreambuddy', guide: 'guides/dreambuddy/', shots: ['dreambuddy/01.jpg','dreambuddy/02.jpg','dreambuddy/03.jpg'] },
     '房東投報快算': { id: 'property-roi', guide: 'guides/property/', shots: ['property/01.jpg','property/02.jpg','property/03.jpg','property/04.jpg'] },
-    '活字戰記：巔峰之戰': { id: 'summit-battle', shots: [] },
+    '活字戰記：巔峰之戰': { id: 'summit-battle', guide: 'guides/summit-battle/', shots: [] },
     '浪浪地圖': { id: 'stray-map', guide: 'guides/stray-map/', guideLabel: '查看 APP 介紹', shots: ['straymap/01.jpg','straymap/02.jpg','straymap/03.jpg','straymap/04.jpg','straymap/05.jpg','straymap/06.jpg','straymap/07.jpg','straymap/08.jpg','straymap/09.jpg','straymap/10.jpg','straymap/11.jpg','straymap/12.jpg','straymap/13.jpg'] },
     '睡公園：免費生存地圖': { id: 'sleep-park', guide: 'https://eclawbot.com/AiHankApps/guides/sleep-park/', guideLabel: '查看 APP 介紹', shots: ['sleeppark/01.jpg','sleeppark/02.jpg','sleeppark/03.jpg','sleeppark/04.jpg'] },
     '這樣出門': { id: 'chumen', guide: 'guides/chumen/', guideLabel: '查看 APP 介紹', shots: ['chumen/01.jpg','chumen/02.jpg','chumen/03.jpg','chumen/04.jpg','chumen/05.jpg'] }
