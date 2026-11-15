@@ -327,15 +327,31 @@ function createCollector(getPool, { fetchImpl = (...a) => globalThis.fetch(...a)
         return { workers: snap.workers.length };
     });
 
-    // Work: exact hourly counts (complete hours only) plus the monitor's own catalog and running totals.
+    // The rolling-hour cards need a small fresh summary every minute, independently
+    // of the slower history import. Share in-flight reads so bootstrap/history
+    // collection cannot race a scheduled refresh and replace a newer snapshot.
+    let summaryRun = null;
+    const collectWorkSummary = () => {
+        if (summaryRun) return summaryRun;
+        summaryRun = guard('workSummary', async pool => {
+            const json = await getJson(MONITOR_BASE + 'work-summary', fetchImpl);
+            if (!json || !Array.isArray(json.workers)) throw new Error('INVALID_WORK_SUMMARY');
+            const summary = workSummary(json);
+            if (summary.catalog.length) await setMeta(pool, 'workCatalog', summary.catalog);
+            await setMeta(pool, 'workTotals', { at: now(), totals: summary.totals });
+            return { series: summary.catalog.length };
+        }).finally(() => { summaryRun = null; });
+        return summaryRun;
+    };
+
+    // History stays on its existing cadence. A slow or failed history request
+    // must not prevent the already-observed rolling counts from being saved.
     const collectWork = (hours = 48) => guard('work', async pool => {
-        const summary = workSummary(await getJson(MONITOR_BASE + 'work-summary', fetchImpl));
+        const summary = await collectWorkSummary();
         const history = workPoints(await getJson(MONITOR_BASE + 'work-history?hours=' + hours, fetchImpl, hours > 48 ? BIG_FETCH_TIMEOUT_MS : FETCH_TIMEOUT_MS));
-        const catalog = summary.catalog.length ? summary.catalog : history.catalog;
-        if (catalog.length) await setMeta(pool, 'workCatalog', catalog);
-        await setMeta(pool, 'workTotals', { at: now(), totals: summary.totals });
+        if (!summary?.series && history.catalog.length) await setMeta(pool, 'workCatalog', history.catalog);
         if (history.points.length) await upsertPoints(pool, 'h', history.points);
-        return { points: history.points.length, series: catalog.length };
+        return { points: history.points.length, series: summary?.series || history.catalog.length };
     });
 
     const collectListing = (hours = 72) => guard('listing', async pool => {
@@ -370,7 +386,7 @@ function createCollector(getPool, { fetchImpl = (...a) => globalThis.fetch(...a)
         return { empty };
     });
 
-    return { collectCpu, collectStatus, collectWork, collectListing, collectChat, prune, bootstrap, state };
+    return { collectCpu, collectStatus, collectWorkSummary, collectWork, collectListing, collectChat, prune, bootstrap, state };
 }
 
 let scheduled = null;
@@ -381,6 +397,7 @@ function startCollector(getPool, options = {}) {
     const jobs = [
         cron.schedule('*/5 * * * *', () => collector.collectCpu(20, 1)),
         cron.schedule('2-59/5 * * * *', () => collector.collectStatus()),
+        cron.schedule('* * * * *', () => collector.collectWorkSummary()),
         cron.schedule('7,37 * * * *', () => collector.collectWork(48)),
         cron.schedule('9,39 * * * *', () => collector.collectListing(72)),
         cron.schedule('4,34 * * * *', () => collector.collectChat()),
