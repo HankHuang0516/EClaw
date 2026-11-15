@@ -268,7 +268,7 @@
     {
       "name": "活字戰紀：雙城烽火",
       "iconText": "活字",
-      "icon": "icons/store-typeforge-twin-cities-e3ea9f13bf97.jpg",
+      "icon": "icons/store-typeforge-twin-cities-64a5a76696da.png",
       "promo": "promo/typeforge.jpg",
       "aliases": "Typeforge: Twin Cities",
       "category": "遊戲",
@@ -289,7 +289,7 @@
       "iosVersion": "1.2.35",
       "checkedAt": "2026-11-02T01:06:15.225Z",
       "iconHasWatermark": true,
-      "iconCheckedAt": "2026-11-02T01:06:15.225Z"
+      "iconCheckedAt": "2026-11-15T01:10:27.154070Z"
     },
     {
       "name": "活字戰記：巔峰之戰",
@@ -300,16 +300,17 @@
       "source": "Android / iOS",
       "googlePackage": "com.hankhuang.wordcivilization.summitbattle",
       "googleUrl": "https://play.google.com/store/apps/details?id=com.hankhuang.wordcivilization.summitbattle",
-      "googleStatus": "開發中",
-      "iosStatus": "開發中",
+      "googleStatus": "正式版",
+      "iosStatus": "等待審查",
       "communityId": "summit-battle",
-      "publicGoogle": false,
+      "publicGoogle": true,
       "publicApple": false,
       "googleStoreName": "活字戰紀：巔峰之戰",
-      "checkedAt": "2026-11-02T01:06:15.225Z",
+      "checkedAt": "2026-11-15T01:10:27.154070Z",
       "iosId": "6814728151",
       "iosUrl": "https://apps.apple.com/tw/app/id6814728151",
-      "iosStoreName": "活字戰紀：巔峰之戰"
+      "iosStoreName": "活字戰紀：巔峰之戰",
+      "guide": "guides/summit-battle/"
     },
     {
       "name": "Vibe帝國",

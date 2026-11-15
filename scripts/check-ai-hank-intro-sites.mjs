@@ -46,7 +46,7 @@ for (const entry of fs.readdirSync(guidesRoot, { withFileTypes: true })) {
 
   for (const match of html.matchAll(/(?:src|href)=["']([^"']+)["']/g)) {
     const reference = match[1].split(/[?#]/, 1)[0];
-    if (!reference || reference.startsWith('#') || reference.startsWith('data:') || /^https?:\/\//.test(reference)) continue;
+    if (!reference || reference.startsWith('#') || reference.startsWith('data:') || /^(?:mailto:|tel:)/i.test(reference) || /^https?:\/\//.test(reference)) continue;
     const target = reference.startsWith('/')
       ? path.join(publicRoot, reference.replace(/^\//, ''))
       : path.resolve(path.dirname(indexPath), reference);

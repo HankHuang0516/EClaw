@@ -54,6 +54,19 @@ describe('public portfolio web-version actions', () => {
   const document = { createElement: element };
   const createWebLink = loadFunction(html, 'createWebLink', { document, URL });
 
+  test('published downloads stay links while review-pending labels stay disabled and render as text', () => {
+    const storeLink = loadFunction(html, 'createStoreLink', { document });
+    const google = storeLink('https://play.google.com/store/apps/details?id=example', 'google', '正式版');
+    expect(google).toMatchObject({ tagName: 'A', target: '_blank', textContent: '▶ Google Play' });
+    const pending = storeLink('https://apps.apple.com/tw/app/id123', 'apple', '等待審查');
+    expect(pending.tagName).toBe('SPAN');
+    expect(pending.href).toBeUndefined();
+    expect(pending.children[0]).toMatchObject({ tagName: 'SMALL', textContent: '等待審查' });
+    const untrusted = storeLink('https://apps.apple.com/tw/app/id123', 'apple', '<img src=x onerror=alert(1)>');
+    expect(untrusted.children[0].textContent).toBe('<img src=x onerror=alert(1)>');
+    expect(untrusted.children[0].innerHTML).toBeUndefined();
+  });
+
   test('the inline cards and both catalog formats agree on all public web versions', () => {
     const script = read('app-catalog.js');
     expect(JSON.parse(script.slice(script.indexOf('=') + 1).trim().replace(/;$/, ''))).toEqual(catalog);

@@ -132,12 +132,12 @@
     {
       "id": "summit-battle",
       "name": "活字戰記：巔峰之戰",
-      "publicGoogle": false,
+      "publicGoogle": true,
       "publicApple": false,
-      "introUrl": null,
+      "introUrl": "https://eclawbot.com/AiHankApps/guides/summit-battle/",
       "officialUrl": null,
       "webUrl": null,
-      "status": "development-status-only"
+      "status": "entry-and-platform-reviewed"
     },
     {
       "id": "vibe-empire",

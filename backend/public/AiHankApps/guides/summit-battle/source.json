@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "summit-battle",
+  "kind": "app-introduction",
+  "scope": "Published store description and verified platform availability; not a full gameplay guide or restoration of lost authoring sources.",
+  "reviewedAt": "2026-11-15",
+  "sources": [
+    {
+      "kind": "current-public-google-play-description",
+      "url": "https://play.google.com/store/apps/details?id=com.hankhuang.wordcivilization.summitbattle&hl=zh_TW&gl=TW",
+      "checkedAt": "2026-11-15",
+      "storeUpdatedOn": "2026-11-14",
+      "extraction": "About this game body only; developer contact information excluded.",
+      "sha256": "05c6cb73b679600101b094a857c5a1b2215e6f009d5dd79444c27d3b7630a9c0",
+      "commit": null,
+      "commitStatus": "Fetched public store text; no repository commit attribution."
+    }
+  ],
+  "platforms": {
+    "google": {
+      "public": true,
+      "productionVersion": "0.3.65",
+      "productionCode": 82
+    },
+    "apple": {
+      "public": false,
+      "version": "1.0",
+      "status": "WAITING_FOR_REVIEW"
+    }
+  },
+  "preservedDescriptionParagraphs": [
+    "《活字戰紀：巔峰之戰》把守城、活字合成與即時玩家對戰放進同一場戰役。每五波守城後，號角吹響；你必須在有限準備時間內重整陣線，迎戰天梯對手。",
+    "・1v1、四人混戰與 2v2 共同守城",
+    "・三張具有不同兵線與部署節奏的戰場",
+    "・每三波首領、每五波玩家交鋒",
+    "・可搜尋、篩選、建立公開或私人房間，並逐席設定 AI",
+    "・大廳、房間與對局聊天，具檢舉、封鎖與防洗頻機制",
+    "・臨時裝備可拖放、合成並強化單位，但不會在戰後掉落永久裝備",
+    "・四人混戰同步波數、淘汰名次、輪空與重新連線",
+    "・同一驗證帳號可讀取《雙城烽火》的英雄、裝備、道具與金幣資料",
+    "本版本不提供新的 App 內購買，無須購買即可遊玩。外觀內容包含戰旗與貼圖、主城主題、完整主題套組，以及鬼谷子史詩造型。外觀不增加數值、不解鎖英雄，也不影響配對與天梯結果。可在背包中預覽外觀、裝備已持有項目及恢復預設。",
+    "即時多人守城與天梯競技"
+  ],
+  "historicalSourceNote": "Original repository staging description differs from the current public listing; retained privately as historical comparison only, not used as current source."
+}
