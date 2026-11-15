@@ -13,3 +13,7 @@ Validation covers source window shape, genuine zero versus unknown, lower bounds
 ## Refresh cadence
 
 The operations collector refreshes the lightweight `work-summary` once a minute, preserving exact zero and positive counts from the source. Concurrent summary requests share one in-flight read. The 48-hour `work-history` import retains its twice-hourly schedule; a history failure cannot discard a successfully refreshed summary. Invalid/unavailable summaries keep the last recorded snapshot, which the page marks stale after ten minutes rather than inventing zero.
+
+## Catalogue search coverage
+
+The retail card also shows independently observed catalogue attempts from `work.wishlist-retail.catalog_lookups_attempted`, with `catalog_lookups_with_outcome` and `catalog_search_unavailable` in a default-collapsed breakdown. These are lower bounds from completed log batches fully enclosed in the displayed 60-minute interval. They are attempts, not unique products or completed retail receipts; they must not be added to the original completion count or CP count. Outcomes include no matching product and incomplete results, not necessarily a found/verified retail price. A missing/stale catalogue source cannot overwrite either primary metric, and no observed attempts cannot be manufactured into an exact zero.

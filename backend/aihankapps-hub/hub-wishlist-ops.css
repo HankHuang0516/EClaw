@@ -55,3 +55,5 @@
 .ws-more-series[open]>.legend{padding-top:6px}
 .ws-store-filters{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px}
 @media(max-width:640px){.hub-ops .chart-wrap{height:240px}.hub-ops .ws-wave-controls{width:100%}.hub-fold>summary small{max-width:32ch}.hub-ops .seg,.hub-ops .ghost{padding:8px 10px}}
+
+.ws-catalogue{margin-top:8px;max-width:220px;font-size:12px;line-height:1.6}.ws-catalogue summary{cursor:pointer;min-height:44px;display:list-item;list-style-position:inside;overflow-wrap:anywhere}.ws-catalogue summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.ws-catalogue small{display:block;padding-top:6px}

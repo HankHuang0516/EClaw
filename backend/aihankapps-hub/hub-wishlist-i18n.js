@@ -4,6 +4,11 @@
   // Source copy is also the stable key. Keep every supported locale complete.
   const locales = ['zh-TW', 'en', 'zh-CN', 'ja', 'ko'];
   const rows = [
+    ['有處理結果可能是查無同款或資料不完整，不代表找到原價。', 'An outcome may be no match or incomplete data; it does not mean a retail price was found.', '有处理结果可能是查无同款或资料不完整，不代表找到原价。', '結果には該当なしや情報不足も含み、新品価格が見つかったことを意味しません。', '처리 결과에는 일치 상품 없음이나 정보 부족도 포함되며 정가를 찾았다는 뜻이 아닙니다.'],
+    ['目錄查找：已嘗試 {count}', 'Catalogue lookups: {count} attempted', '目录查找：已尝试 {count}', 'カタログ検索：{count}試行', '카탈로그 검색: {count} 시도'],
+    ['有處理結果：{count}', 'Processed outcomes: {count}', '有处理结果：{count}', '処理結果あり：{count}', '처리 결과: {count}'],
+    ['搜尋不可用：{count}', 'Search unavailable: {count}', '搜索不可用：{count}', '検索不可：{count}', '검색 불가: {count}'],
+    ['嘗試數不等於完成查價，不與上方完成件數相加。', 'Attempts are not completed price checks and are not added to the completed count above.', '尝试数不等于完成查价，不与上方完成件数相加。', '試行数は価格確認の完了数ではなく、上の完了件数に加算しません。', '시도 건수는 가격 확인 완료 건수가 아니며 위 완료 건수에 합산하지 않습니다.'],
     ['展開', 'Expand', '展开', '展開', '펼치기'],
     ['收合', 'Collapse', '收起', '折りたたむ', '접기'],
     ['上架 · 60 分鐘', 'Listings · 60 min', '上架 · 60 分钟', '掲載 · 60分', '게시 · 60분'],
