@@ -57,6 +57,39 @@ describe('Wishlist rolling-hour workload', () => {
     });
 });
 
+describe('catalogue lookup observations stay separate from completed work', () => {
+    const totals = () => Object.fromEntries([
+        ['retail_lookups_completed', 0], ['retail_cp_evaluated', 0],
+        ['catalog_lookups_attempted', 10], ['catalog_lookups_with_outcome', 3], ['catalog_search_unavailable', 7],
+    ].map(([id, count]) => ['work.wishlist-retail.' + id, parsed(windowOf({ count, lowerBound: count }))]));
+    test('shows attempts and outcomes separately without adding them to completed lookups or CP', () => {
+        const html = load().recentCells({ ok: true, workTotals: totals() }, NOW);
+        expect(html).toContain('目錄查找：已嘗試 10 件');
+        expect(html).toContain('有處理結果：3 件');
+        expect(html).toContain('搜尋不可用：7 件');
+        expect(html.match(/<b>0 件<\/b>/g)).toHaveLength(2);
+        expect(html).not.toContain('13 件');
+        expect(html).toContain('<details class="ws-catalogue" data-hub-fold="ws-catalogue">');
+        expect(load().recentCells({ ok: true, workTotals: totals() }, NOW, true)).toContain('data-hub-fold="ws-catalogue" open');
+        expect(html).not.toContain('<details class="ws-catalogue" open');
+    });
+    test('partial attempts show a positive lower bound and never invent missing outcomes', () => {
+        const rows = totals();
+        rows['work.wishlist-retail.catalog_lookups_attempted'] = parsed(windowOf({ coverage: 'partial', count: null, lowerBound: 10 }));
+        delete rows['work.wishlist-retail.catalog_lookups_with_outcome'];
+        const html = load().recentCells({ ok: true, workTotals: rows }, NOW);
+        expect(html).toContain('目錄查找：已嘗試 至少 10 件');
+        expect(html).toContain('有處理結果：—');
+    });
+    test('a stale catalogue source cannot replace either primary count', () => {
+        const rows = totals();
+        rows['work.wishlist-retail.catalog_lookups_attempted'] = parsed(windowOf({ fresh: false, count: 10 }));
+        const html = load().recentCells({ ok: true, workTotals: rows }, NOW);
+        expect(html).not.toContain('ws-catalogue');
+        expect(html.match(/<b>0 件<\/b>/g)).toHaveLength(2);
+    });
+});
+
 describe('Wishlist operations copy', () => {
     test.each(['en', 'zh-TW', 'zh-CN', 'ja', 'ko'])('rolling count and chart labels render in %s', lang => {
         const ui = load(lang);

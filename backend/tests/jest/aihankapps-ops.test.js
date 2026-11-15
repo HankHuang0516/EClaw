@@ -235,3 +235,81 @@ describe('ops chart maths', () => {
         expect(math.cumulative([[1, 2], [2, 3], [3, 0]])).toEqual([[1, 2], [2, 5], [3, 5]]);
     });
 });
+
+describe('fresh rolling work summaries', () => {
+    const now = Date.UTC(2026, 10, 15, 4, 20);
+    const snapshot = () => ({ workers: [{ id: 'wishlist-retail', metrics: [
+        { id: 'retail_lookups_completed', last60Minutes: { from: now - 3660000, to: now - 60000, count: 0, lowerBound: 0, coverage: 'complete', fresh: true } },
+        { id: 'retail_cp_evaluated', last60Minutes: { from: now - 3660000, to: now - 60000, count: 7, lowerBound: 7, coverage: 'complete', fresh: true } },
+    ] }] });
+    function setup(fetchImpl) {
+        const meta = {};
+        const pool = { query: async (sql, params) => {
+            if (/INSERT INTO aihankapps_ops_meta/.test(sql)) meta[params[0]] = JSON.parse(params[1]);
+            return { rows: [], rowCount: 0 };
+        } };
+        return { meta, pool, collector: ops.createCollector(() => pool, { fetchImpl, now: () => now, log: { error() {} } }) };
+    }
+    test('a lightweight refresh stores actual zero and CP counts without importing history', async () => {
+        const fetchImpl = jest.fn(async () => ({ status: 200, json: async () => snapshot() }));
+        const { meta, collector } = setup(fetchImpl);
+        await collector.collectWorkSummary();
+        expect(fetchImpl).toHaveBeenCalledTimes(1);
+        expect(fetchImpl.mock.calls[0][0]).toMatch(/\/work-summary$/);
+        expect(meta.workTotals.totals['work.wishlist-retail.retail_lookups_completed'].last60Minutes.count).toBe(0);
+        expect(meta.workTotals.totals['work.wishlist-retail.retail_cp_evaluated'].last60Minutes.count).toBe(7);
+    });
+    test('a history failure cannot discard a successfully collected summary', async () => {
+        const { meta, collector } = setup(async url => url.endsWith('work-summary')
+            ? { status: 200, json: async () => snapshot() } : { status: 503 });
+        await collector.collectWork();
+        expect(meta.workTotals.totals['work.wishlist-retail.retail_cp_evaluated'].last60Minutes.count).toBe(7);
+        expect(collector.state.errors.work.message).toBe('HTTP_503');
+        expect(collector.state.errors.workSummary).toBeUndefined();
+    });
+    test('malformed and failed responses preserve the prior observed snapshot', async () => {
+        const fetchImpl = jest.fn()
+            .mockResolvedValueOnce({ status: 200, json: async () => snapshot() })
+            .mockResolvedValueOnce({ status: 200, json: async () => ({ error: 'unavailable' }) })
+            .mockResolvedValueOnce({ status: 503 });
+        const { meta, collector } = setup(fetchImpl);
+        await collector.collectWorkSummary();
+        const before = JSON.stringify(meta);
+        await collector.collectWorkSummary();
+        expect(collector.state.errors.workSummary.message).toBe('INVALID_WORK_SUMMARY');
+        expect(JSON.stringify(meta)).toBe(before);
+        await collector.collectWorkSummary();
+        expect(collector.state.errors.workSummary.message).toBe('HTTP_503');
+        expect(JSON.stringify(meta)).toBe(before);
+    });
+    test('overlapping refreshes share one request and a later refresh can run again', async () => {
+        let release, started;
+        const ready = new Promise(resolve => { started = resolve; });
+        const wait = new Promise(resolve => { release = resolve; });
+        const fetchImpl = jest.fn(async () => { started(); await wait; return { status: 200, json: async () => snapshot() }; });
+        const { collector } = setup(fetchImpl);
+        const first = collector.collectWorkSummary();
+        await ready;
+        const second = collector.collectWorkSummary();
+        expect(second).toBe(first);
+        release();
+        await Promise.all([first, second]);
+        expect(fetchImpl).toHaveBeenCalledTimes(1);
+        await collector.collectWorkSummary();
+        expect(fetchImpl).toHaveBeenCalledTimes(2);
+    });
+    test('summary runs every minute while history retains its half-hour schedule', async () => {
+        const jobs = new Map();
+        const cron = { schedule: jest.fn((expression, run) => { jobs.set(expression, run); return { stop() {} }; }) };
+        const fetchImpl = jest.fn(async () => ({ status: 200, json: async () => snapshot() }));
+        const { pool } = setup(fetchImpl);
+        const scheduled = ops.startCollector(() => pool, { cron, fetchImpl, now: () => now, bootstrapDelayMs: 600000, log: { error() {} } });
+        try {
+            expect(jobs.has('* * * * *')).toBe(true);
+            expect(jobs.has('7,37 * * * *')).toBe(true);
+            await jobs.get('* * * * *')();
+            expect(fetchImpl).toHaveBeenCalledTimes(1);
+            expect(fetchImpl.mock.calls[0][0]).toMatch(/\/work-summary$/);
+        } finally { scheduled.stop(); }
+    });
+});
