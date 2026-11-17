@@ -154,10 +154,13 @@ describe('AiHankApps itch.io links', () => {
     const [google, apple] = renderToolbar(dataset, catalog.apps);
     expect(google.tagName).toBe('A');
     expect(apple.tagName).toBe('SPAN');
-    expect(apple.children[0].children[0].textContent).toBe('等待審查');
+    expect(apple.children[0].children[0].textContent).toBe('審查通過・待發布');
     const fallback = renderToolbar(dataset, null);
     expect(fallback[0].tagName).toBe('A');
     expect(fallback[1].tagName).toBe('SPAN');
+    expect(fallback[1].href).toBeUndefined();
+    expect(fallback[1].attributes['aria-disabled']).toBe('true');
+    expect(fallback[1].children[0].children[0].textContent).toBe('審查通過・待發布');
   });
 
   test('guide download rows link the public itch.io pages and no draft page is linked', () => {
