@@ -7,15 +7,15 @@
 
   // Interface strings only. Every sentence about a campaign comes from the data file.
   const UI = {
-    'zh-TW': { entry: '禮包公告', details: '查看禮包詳情', upcoming: '即將開始', active: '進行中',
+    'zh-TW': { entry: '禮包公告', details: '查看禮包詳情', upcoming: '即將開始', active: '進行中', eligibilityEnded: '資格期已截止・仍可領取',
       toStart: '距離開始 {d} 天 {h} 時 {m} 分 {s} 秒', toEnd: '領取倒數 {d} 天 {h} 時 {m} 分 {s} 秒', history: '過去的活動' },
-    'zh-CN': { entry: '礼包公告', details: '查看礼包详情', upcoming: '即将开始', active: '进行中',
+    'zh-CN': { entry: '礼包公告', details: '查看礼包详情', upcoming: '即将开始', active: '进行中', eligibilityEnded: '资格期已截止・仍可领取',
       toStart: '距离开始 {d} 天 {h} 时 {m} 分 {s} 秒', toEnd: '领取倒计时 {d} 天 {h} 时 {m} 分 {s} 秒', history: '过去的活动' },
-    en: { entry: 'Gift announcements', details: 'View gift details', upcoming: 'Coming soon', active: 'Live now',
+    en: { entry: 'Gift announcements', details: 'View gift details', upcoming: 'Coming soon', active: 'Live now', eligibilityEnded: 'Eligibility closed · Claims open',
       toStart: 'Starts in {d}d {h}h {m}m {s}s', toEnd: 'Time left to claim: {d}d {h}h {m}m {s}s', history: 'Past gifts' },
-    ja: { entry: 'ギフトのお知らせ', details: 'ギフトの詳細を見る', upcoming: 'まもなく開始', active: '開催中',
+    ja: { entry: 'ギフトのお知らせ', details: 'ギフトの詳細を見る', upcoming: 'まもなく開始', active: '開催中', eligibilityEnded: '対象期間終了・受取可能',
       toStart: '開始まで {d}日 {h}時間 {m}分 {s}秒', toEnd: '受取期限まで {d}日 {h}時間 {m}分 {s}秒', history: '過去のギフト' },
-    ko: { entry: '선물 공지', details: '선물 자세히 보기', upcoming: '곧 시작', active: '진행 중',
+    ko: { entry: '선물 공지', details: '선물 자세히 보기', upcoming: '곧 시작', active: '진행 중', eligibilityEnded: '자격 기간 종료 · 수령 가능',
       toStart: '시작까지 {d}일 {h}시간 {m}분 {s}초', toEnd: '수령 마감까지 {d}일 {h}시간 {m}분 {s}초', history: '지난 선물' }
   };
 
@@ -32,7 +32,10 @@
     if (!campaign || !campaign.copy || !campaign.startsAt) return 'hidden';
     if (now < Date.parse(campaign.announceAt)) return 'hidden';
     if (now < Date.parse(campaign.startsAt)) return 'upcoming';
-    if (now < Date.parse(campaign.claimEndsAt)) return 'active';
+    if (now < Date.parse(campaign.claimEndsAt)) {
+      if (now >= Date.parse(campaign.deliveryEndsAt)) return 'eligibilityEnded';
+      return 'active';
+    }
     return 'ended';
   }
 
@@ -61,7 +64,8 @@
       current.push({ id: campaign.id, state, title: copy.title, badge: ui[state], lines: copy[state],
         countdown: countdown(state === 'upcoming' ? ui.toStart : ui.toEnd, target - now) });
     }
-    current.sort((a, b) => (a.state === b.state ? 0 : a.state === 'active' ? -1 : 1));
+    const priority = { active: 0, eligibilityEnded: 1, upcoming: 2 };
+    current.sort((a, b) => priority[a.state] - priority[b.state]);
     return { locale, ui, current, past, visible: current.length > 0 };
   }
 

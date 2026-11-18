@@ -118,7 +118,7 @@ describe('public portfolio web-version actions', () => {
     const url = new URL(record.guide);
     const guide = read(url.pathname.replace('/AiHankApps/', '') + 'index.html');
     expect(guide).toContain('data-intro-toolbar');
-    expect(guide).toContain('data-apple-status="開發中"');
+    expect(guide).toContain('data-apple-status="' + (id === 'timehut' ? '審查未通過' : '開發中') + '"');
     expect(guide).toContain(record.googleUrl);
     expect(guide).toContain('data-shortcuts=');
   });
@@ -163,16 +163,16 @@ describe('public portfolio web-version actions', () => {
     }
   });
 
-  test.each(['timehut', 'piggy-growth'])('%s reuses its accepted baked-watermark asset without a second H overlay', id => {
+  test.each([['timehut', false], ['piggy-growth', true]])('%s reuses its accepted baked-watermark asset without a second H overlay', (id, publicApple) => {
     const record = catalog.apps.find(app => app.communityId === id);
     const createIcon = loadFunction(html, 'createIcon', { document, H_WATERMARK_TIGHT: {} });
     const icon = createIcon(record);
     expect(icon.className).toBe('app-icon app-icon--watermarked');
     expect(icon.children[0].src).toBe(record.icon);
-    expect(record).toMatchObject({ publicGoogle: true, publicApple: false });
+    expect(record).toMatchObject({ publicGoogle: true, publicApple });
     const createStoreLink = loadFunction(html, 'createStoreLink', { document });
     const apple = createStoreLink(record.iosUrl, 'apple', record.iosStatus);
-    expect(apple.tagName).toBe('SPAN');
-    expect(apple.href).toBeUndefined();
+    expect(apple.tagName).toBe(publicApple ? 'A' : 'SPAN');
+    expect(apple.href).toBe(publicApple ? record.iosUrl : undefined);
   });
 });

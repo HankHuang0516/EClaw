@@ -302,7 +302,7 @@ describe('published portfolio data', () => {
   });
   test('an approved campaign publishes complete upcoming and active copy without internal fields', () => {
     const [data] = build.buildPublicData([approvedChristmas()]);
-    expect(Object.keys(data)).toEqual(['id', 'kind', 'apps', 'announceAt', 'startsAt', 'claimEndsAt', 'copy']);
+    expect(Object.keys(data)).toEqual(['id', 'kind', 'apps', 'announceAt', 'startsAt', 'deliveryEndsAt', 'claimEndsAt', 'copy']);
     expect(data.apps).toEqual(['rebound', 'typeforge-twin-cities']);
     for (const locale of copy.LOCALES) {
       expect(data.copy[locale].upcoming).toHaveLength(6);
@@ -322,6 +322,25 @@ describe('published portfolio data', () => {
     expect(data.copy['zh-TW'].ended).toBe('2026/12/25 – 2027/01/25');
     expect(data.copy.en.upcoming[1]).toBe('REBOUND：元素戰機: 3,000 Sparks, fighter revive ×1, 1-hour double loot card ×1. Approximate listed item value: NT$150. No cash value.');
     expect(JSON.stringify(data)).not.toMatch(/deliveryKey|gift-christmas|projectId|railway|approval|frozenSha256/);
+  });
+  test('post-eligibility copy preserves frozen promises and removes onboarding', () => {
+    const campaign = withReceipts(approvedChristmas());
+    const before = JSON.stringify(campaign);
+    const [data] = build.buildPublicData([campaign]);
+    expect(data.deliveryEndsAt).toBe(campaign.deliveryEndsAt);
+    expect(JSON.stringify(campaign)).toBe(before);
+    expect(validateCampaign(campaign, { games })).toEqual([]);
+    for (const locale of copy.LOCALES) {
+      const lines = data.copy[locale].eligibilityEnded;
+      expect(lines).toHaveLength(7);
+      expect(lines[0]).toContain('2027/01/01 10:00');
+      expect(lines).toContain(campaign.copy[locale].deadline);
+      for (const game of campaign.copy[locale].games) {
+        expect(lines.join('\n')).toContain(game.line);
+        if (game.note) expect(lines.join('\n')).not.toContain(game.note);
+      }
+      expect(lines.slice(-2)).toEqual(data.copy[locale].active.slice(-2));
+    }
   });
   test('verified receipts appear as delivery counts, never as claim counts', () => {
     const [data] = build.buildPublicData([withReceipts(approvedChristmas())]);

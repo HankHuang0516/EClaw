@@ -154,7 +154,7 @@
       "id": "piggy-growth",
       "name": "錢錢長大了",
       "publicGoogle": true,
-      "publicApple": false,
+      "publicApple": true,
       "introUrl": "https://eclawbot.com/AiHankApps/guides/piggy-growth/",
       "officialUrl": null,
       "webUrl": "https://hank-app01-save-money.netlify.app/",

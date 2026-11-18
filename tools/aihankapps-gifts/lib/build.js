@@ -43,6 +43,11 @@ function publicHoliday(campaign) {
       title: source.title,
       upcoming: [source.intro, ...lines, source.eligibility, source.starts, source.deadline],
       active: [source.intro, ...lines, source.eligibility, source.deadline, ...(verified.length ? verified : [pendingLine(locale)])],
+      // Presentation after the published eligibility cutoff. Never edit the approved,
+      // frozen campaign/mail, or imply that the backend's final delivery pass has stopped.
+      eligibilityEnded: [TEXT[locale].eligibilityEnded(formatTaipei(campaign.deliveryEndsAt)),
+        ...source.games.map(game => [game.line, game.value].filter(Boolean).join(TEXT[locale].gap)),
+        TEXT[locale].stillClaimable, source.deadline, ...(verified.length ? verified : [pendingLine(locale)])],
       ended: endedLine(locale, campaign, total)
     };
   }
@@ -52,6 +57,7 @@ function publicHoliday(campaign) {
     apps: campaign.games.map(entry => entry.gameId),
     announceAt: campaign.announceAt,
     startsAt: campaign.startsAt,
+    deliveryEndsAt: campaign.deliveryEndsAt,
     claimEndsAt: campaign.claimEndsAt,
     copy
   };

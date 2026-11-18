@@ -347,11 +347,12 @@
       "googleStoreName": "錢錢長大了",
       "iosId": "6824565163",
       "iosUrl": "https://apps.apple.com/tw/app/id6824565163",
-      "iosStatus": "開發中",
-      "publicApple": false,
+      "iosStatus": "已上架",
+      "publicApple": true,
       "iosStoreName": "錢錢長大了",
       "iconHasWatermark": true,
-      "iconCheckedAt": "2026-11-01T08:43:56.957280+00:00"
+      "iconCheckedAt": "2026-11-01T08:43:56.957280+00:00",
+      "iosVersion": "5.3.0"
     },
     {
       "name": "Simulator Manager｜模擬器分配器",
@@ -386,14 +387,15 @@
       "googleStoreName": "拾光AI雲端相簿",
       "publicGoogle": true,
       "publicApple": false,
-      "iosStatus": "開發中",
+      "iosStatus": "審查未通過",
       "checkedAt": "2026-11-02T01:06:15.225Z",
       "webCheckedAt": "2026-11-01T05:39:47.452590Z",
       "iosId": "6824124146",
       "iosUrl": "https://apps.apple.com/tw/app/id6824124146",
       "iosStoreName": "拾光AI雲端相簿",
       "guide": "https://eclawbot.com/AiHankApps/guides/timehut/",
-      "guideLabel": "查看 APP 介紹"
+      "guideLabel": "查看 APP 介紹",
+      "iosVersion": "1.0.19"
     },
     {
       "name": "詐騙帝國",

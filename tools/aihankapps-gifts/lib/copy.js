@@ -1,9 +1,8 @@
 'use strict';
 
-// Every sentence the public sees about a campaign is composed here, once, when the campaign is
-// drafted. The result is stored in the campaign file and frozen at approval, so later template
-// edits never change an approved campaign (the Typeforge mailbox rejects a re-delivery whose
-// text differs from the first one).
+// Initial announcement and mail copy are composed when drafted and frozen at approval.
+// Later display-only lifecycle copy uses the approved dates without editing that campaign
+// or its mail (the Typeforge mailbox rejects re-delivery with different mail text).
 const { formatTaipei, formatTaipeiDate } = require('./time');
 
 const LOCALES = ['zh-TW', 'zh-CN', 'en', 'ja', 'ko'];
@@ -18,6 +17,8 @@ const TEXT = {
     starts: at => `開始寄送：${at}（台北時間）。`,
     deadline: at => `領取截止：${at}（台北時間），到期後無法領取。`,
     pending: '寄送數量核對後會更新在這裡。',
+    eligibilityEnded: at => `公告收件帳號資格期已於 ${at}（台北時間）截止，之後新加入或首次建立收件帳號不在本次公告資格期內。`,
+    stillClaimable: '截止前已符合資格者的權益與已寄出的信件不變；已收到的禮包仍可在領取期限前於遊戲內信箱領取。',
     receipt: (name, count, at) => `《${name}》已寄出 ${count} 封（${at} 核對）；這是寄送數，不代表領取數。`,
     period: (from, to) => `${from} – ${to}`,
     total: count => `共寄出 ${count} 封`,
@@ -33,6 +34,8 @@ const TEXT = {
     starts: at => `开始寄送：${at}（台北时间）。`,
     deadline: at => `领取截止：${at}（台北时间），到期后无法领取。`,
     pending: '寄送数量核对后会更新在这里。',
+    eligibilityEnded: at => `公告收件账号资格期已于 ${at}（台北时间）截止，之后新加入或首次建立收件账号不在本次公告资格期内。`,
+    stillClaimable: '截止前已符合资格者的权益与已寄出的信件不变；已收到的礼包仍可在领取期限前于游戏内信箱领取。',
     receipt: (name, count, at) => `《${name}》已寄出 ${count} 封（${at} 核对）；这是寄送数，不代表领取数。`,
     period: (from, to) => `${from} – ${to}`,
     total: count => `共寄出 ${count} 封`,
@@ -48,6 +51,8 @@ const TEXT = {
     starts: at => `Delivery starts ${at} (Taipei time).`,
     deadline: at => `Claim by ${at} (Taipei time). Unclaimed gifts expire after that.`,
     pending: 'The delivery count will appear here once it has been verified.',
+    eligibilityEnded: at => `The announced recipient eligibility window closed at ${at} (Taipei time). Accounts joining or first setting up a mailbox after this cutoff are outside that window.`,
+    stillClaimable: 'Eligibility established before the cutoff and mail already sent remain unchanged. Gifts already received can still be claimed from the in-game mailbox before the claim deadline.',
     receipt: (name, count, at) => `${name}: ${count} mails delivered (verified ${at}). This is a delivery count, not a claim count.`,
     period: (from, to) => `${from} – ${to}`,
     total: count => `${count} mails delivered`,
@@ -63,6 +68,8 @@ const TEXT = {
     starts: at => `配布開始：${at}（台北時間）。`,
     deadline: at => `受取期限：${at}（台北時間）。期限後は受け取れません。`,
     pending: '配布数は確認後にここへ掲載します。',
+    eligibilityEnded: at => `告知された受取アカウントの対象期間は${at}（台北時間）に終了しました。それ以降に参加、または初めて受取用アカウントを作成した場合は対象期間外です。`,
+    stillClaimable: '期限前に成立した対象資格と配布済みメールは変わりません。届いているギフトは、受取期限までゲーム内メールから受け取れます。',
     receipt: (name, count, at) => `「${name}」：${count}通を配布済み（${at}確認）。受取数ではなく配布数です。`,
     period: (from, to) => `${from} – ${to}`,
     total: count => `配布数 ${count}通`,
@@ -78,6 +85,8 @@ const TEXT = {
     starts: at => `발송 시작: ${at}(타이베이 시간).`,
     deadline: at => `수령 마감: ${at}(타이베이 시간). 마감 후에는 받을 수 없습니다.`,
     pending: '발송 수는 확인 후 여기에 표시됩니다.',
+    eligibilityEnded: at => `공지된 수령 계정 자격 기간은 ${at}(타이베이 시간)에 종료되었습니다. 이후 가입하거나 수령 계정을 처음 만든 경우는 해당 기간에 포함되지 않습니다.`,
+    stillClaimable: '마감 전에 충족한 자격과 이미 발송된 우편은 그대로 유지됩니다. 이미 받은 선물은 수령 기한 전까지 게임 내 우편함에서 받을 수 있습니다.',
     receipt: (name, count, at) => `「${name}」: 우편 ${count}통 발송 완료(${at} 확인). 수령 수가 아닌 발송 수입니다.`,
     period: (from, to) => `${from} – ${to}`,
     total: count => `우편 ${count}통 발송`,
