@@ -156,6 +156,20 @@
       "mails": 44,
       "claimed": 0,
       "final": false
+    },
+    {
+      "gameId": "rebound",
+      "verifiedAt": "2026-11-18T02:10:52.580Z",
+      "mails": 158,
+      "claimed": 0,
+      "final": true
+    },
+    {
+      "gameId": "typeforge-twin-cities",
+      "verifiedAt": "2026-11-18T02:10:54.697Z",
+      "mails": 51,
+      "claimed": 1,
+      "final": true
     }
   ],
   "approval": {
