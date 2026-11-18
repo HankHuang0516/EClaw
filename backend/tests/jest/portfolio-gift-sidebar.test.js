@@ -176,6 +176,38 @@ describe('published records and a page with nothing current', () => {
 });
 
 describe('a campaign through its life', () => {
+  test('the exact eligibility boundary switches five locales, retains claims and disclosure choice', () => {
+    const data = publishedData(), campaign = data.find(item => item.id === 'singles-day-2026');
+    for (const lang of ['zh-TW', 'zh-CN', 'en', 'ja', 'ko']) {
+      const view = page({ data, now: '2026-11-18T01:59:59.999Z', lang, desktop: true });
+      expect(view.card(campaign.id).attributes['data-state']).toBe('active');
+      view.disclosure.open = false;
+      view.tick('2026-11-18T02:00:00.000Z');
+      const card = view.card(campaign.id);
+      expect(card.attributes['data-state']).toBe('eligibilityEnded');
+      expect(view.disclosure.open).toBe(false);
+      expect(card.text).toContain(sidebar.UI[lang].eligibilityEnded);
+      for (const line of campaign.copy[lang].eligibilityEnded) expect(card.text).toContain(line);
+      expect(card.text).not.toContain(campaign.copy[lang].active[3]);
+      expect(card.text).toContain('2026/12/11 10:00');
+      expect(card.text).not.toMatch(/undefined|\{[dhms]\}/);
+      const beforeTick = view.aside;
+      view.tick('2026-11-18T02:00:01.000Z');
+      expect(view.aside).toBe(beforeTick);
+      view.tick('2026-12-11T01:59:59.999Z');
+      expect(view.card(campaign.id).attributes['data-state']).toBe('eligibilityEnded');
+      view.tick('2026-12-11T02:00:00.000Z');
+      expect(view.aside).toBeNull();
+    }
+  });
+  test('language changes after the eligibility cutoff preserve the disclosure choice', () => {
+    const view = page({ data: publishedData(), now: '2026-11-18T02:00:00.000Z', lang: 'en' });
+    view.disclosure.open = true;
+    view.relang('2026-11-18T02:00:00.000Z', 'ja');
+    expect(view.card('singles-day-2026').text).toContain(sidebar.UI.ja.eligibilityEnded);
+    expect(view.disclosure.open).toBe(true);
+  });
+
   test('hidden until the announcement date, then shown as upcoming with a countdown to the start', () => {
     const view = page({ data: sampleData(), now: '2026-12-11T01:59:58Z' });
     expect(view.aside).toBeNull();
