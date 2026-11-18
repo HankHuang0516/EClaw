@@ -177,7 +177,9 @@ describe('published records and a page with nothing current', () => {
 
 describe('a campaign through its life', () => {
   test('the exact eligibility boundary switches five locales, retains claims and disclosure choice', () => {
-    const data = publishedData(), campaign = data.find(item => item.id === 'singles-day-2026');
+    const campaign = publishedData().find(item => item.id === 'singles-day-2026');
+    // Later approved holidays must not change this campaign's exact claim-boundary case.
+    const data = [campaign];
     for (const lang of ['zh-TW', 'zh-CN', 'en', 'ja', 'ko']) {
       const view = page({ data, now: '2026-11-18T01:59:59.999Z', lang, desktop: true });
       expect(view.card(campaign.id).attributes['data-state']).toBe('active');
