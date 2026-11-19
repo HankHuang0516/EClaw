@@ -356,18 +356,36 @@
     ['需要人為介入', 'Wishlist.ai 上架排程', '排程回報它自己解不了的問題（要重新登入、手動通過驗證、金鑰失效、需要決定）', 'crit'],
     ['新的問題回饋', '每一款 APP 的問題回饋（APP 內、LINE、作品集內測回饋）', '近 30 天收到、排程還沒結案的回報；排程看過後會寫下判斷', 'warn'],
     ['排程請你處理', '警示處理排程（每 15 分鐘看一次所有警示）', '排程判斷這件事只有你能處理，會寫明要你做什麼', 'crit'],
-    ['已略過的類似警告', '你按過「以後略過類似警告」的那一類警示', '同一類的警示合併成這一則、等級是資訊，不再個別提醒；可以取消略過', 'info']
+    ['已略過的類似警告', '你按過「以後略過類似警告」的那一類警示', '同一類的警示合併成這一則、等級是資訊，不再個別提醒；可以取消略過', 'info'],
+    ['拾光帳號空間快滿', '拾光AI雲端相簿的每個帳號', '已存原檔加等待中的照片超過每帳號上限的 90%（滿了算嚴重）', 'warn'],
+    ['拾光上傳被伺服器拒收', '拾光AI雲端相簿的每個帳號', '近 2 小時有上傳被拒收：帳號滿了算嚴重；重送也不會過的原因算警告；伺服器忙這類暫時原因今天超過 20 次才算警告；只有手機傳到一半斷線的不發警示', 'warn']
   ];
   const COLLECTORS = { rebound: ['REBOUND 遊戲伺服器', 'REBOUND'], summit: ['活字戰紀伺服器', '雙城烽火、巔峰之戰'], wishlist: ['Wishlist.ai 後台', 'Wishlist.ai'],
     // 第四項是「沒有其他備註時」顯示的說明；帳戶明細不是只有彙總數字，要照實寫
     'wishlist-users': ['Wishlist.ai 帳戶明細', 'Wishlist.ai', '帳戶智慧數據庫：每個帳戶的願望、刊登、對話、面交、付費與近 30 天活動', '每個帳戶的數量與時間，加上顯示名稱與遮蔽過的登入信箱；不含密碼、訊息或任何內容'],
     railway: ['Railway 後台資源', '所有放在 Railway 的後台服務', '每個服務的上傳／下載流量、CPU、記憶體、空間、部署狀態'],
-    timehut: ['時光相簿伺服器', '時光相簿', '帳號總數、近 7／30 天新註冊、已刪除帳號；每位用戶的 LINE 辨識各階段、相簿與照片／影片數、上傳與下載流量（伺服器 1.0.118 起）；每小時更新'],
+    timehut: ['時光相簿伺服器', '時光相簿', '帳號總數、近 7／30 天新註冊、已刪除帳號；每位用戶的 LINE 辨識各階段、相簿與照片／影片數、上傳與下載流量（伺服器 1.0.118 起）；上傳額度與被伺服器拒收的次數和原因（1.0.126 起）；每小時更新'],
     attention: ['上架警示板', 'Wishlist.ai', '上架排程回報的問題：需要人為介入的、自動處理中的'],
     'claude-usage': ['Claude 用量', '所有 Claude 排程與工作階段', 'Claude 訂閱方案的每週用量百分比與重置時間（右上角的電池）', '由這台 Mac 的 Claude CLI 本機指令讀出，不呼叫模型、不耗 token'],
     'feedback-timehut-app': ['拾光 APP 內問題回饋', '拾光AI雲端相簿', 'APP 內送出的問題回報（文字、版本、有沒有附圖），由警示處理排程每 15 分鐘讀一次'],
     'feedback-timehut-line': ['拾光 LINE 問題回饋', '拾光AI雲端相簿', 'LINE 官方帳號選單「問題回饋」收到的回報，由警示處理排程每 15 分鐘讀一次'] };
   const mbText = v => (v >= 1024 ? (v / 1024).toFixed(v >= 10240 ? 1 : 2) + ' GB' : Math.round(v) + ' MB');
+  // 拾光上傳被伺服器拒收的原因（伺服器 1.0.126 起的固定代碼）→［白話, 類別］。類別：full 帳號滿了（等待也不會解除）、
+  // stuck 這一筆要人看（同一筆重送也不會過）、wait 伺服器忙或暫時性（稍後再傳就會過）、net 手機傳到一半斷線、done 本來就不該再傳（照片已刪、收據已取消）
+  D.UPLOAD_REFUSAL = {
+    ACCOUNT_STORAGE_FULL: ['帳號雲端空間已滿', 'full'], ACCOUNT_ITEM_LIMIT: ['帳號照片數量已達上限', 'full'],
+    ACCOUNT_PENDING_ITEMS: ['等 Flickr 的照片太多（每帳號上限）', 'wait'], ACCOUNT_PENDING_BYTES: ['等 Flickr 的檔案太大（每帳號上限）', 'wait'],
+    SERVER_PENDING_BYTES: ['伺服器整體等待中的檔案太多', 'wait'], SERVER_DISK_LOW: ['伺服器硬碟剩餘空間不足', 'wait'], SERVER_RECONCILIATION_PENDING: ['伺服器在確認先前的收件', 'wait'],
+    PROVIDER_DISCONNECTED: ['相簿服務（Flickr）沒有連線', 'wait'], RECEIPT_UNCONFIRMED: ['既有收據尚未確認', 'wait'], RECEIVE_FAILED: ['收件失敗，可以重送', 'wait'], CONTENT_MISMATCH: ['收到的內容與宣告不符，可以重送', 'wait'],
+    CLIENT_ABORTED: ['手機傳到一半斷線', 'net'], PHOTO_DELETED: ['原照片已刪除', 'done'], RECEIPT_CANCELLED: ['收據已取消', 'done'],
+    FILE_TOO_LARGE: ['檔案超過 500 MB', 'stuck'], FILE_SIZE_INVALID: ['檔案大小無法確認', 'stuck'], FORMAT_UNSUPPORTED: ['不支援的檔案格式', 'stuck'], ALBUM_UNAVAILABLE: ['相簿不存在或無法使用', 'stuck'],
+    UPLOAD_IDENTITY_CHANGED: ['同一筆上傳換了內容', 'stuck'], UPLOAD_IDENTITY_REQUIRED: ['缺少原檔識別', 'stuck'], PREVIOUS_UPLOAD_UNCONFIRMED: ['同一筆的先前收件仍待確認', 'stuck'],
+    RECEIPT_RECONCILIATION_PENDING: ['既有收據待核對', 'stuck'], RECEIVE_UNCONFIRMED: ['收件結果尚未確認', 'stuck'], STORED_SIZE_UNCONFIRMED: ['已存照片的大小待確認', 'stuck'],
+    REQUEST_INVALID: ['上傳請求格式不對', 'stuck'], UPLOAD_NOT_ADMITTED: ['上傳未被受理（其他原因）', 'stuck']
+  };
+  D.refusalText = c => (D.UPLOAD_REFUSAL[c] || [c])[0];
+  D.refusalKind = c => (D.UPLOAD_REFUSAL[c] || [c, 'stuck'])[1];
+  const TIMEHUT = 'timehut', gbText = v => (v >= 1024 ** 4 ? (v / 1024 ** 4).toFixed(2) + ' TB' : v >= 1024 ** 3 ? (v / 1024 ** 3).toFixed(2) + ' GB' : Math.round(v / 1024 ** 2) + ' MB');
   const SOURCE_LABEL = { catalog: 'APP 目錄', store: '商店報表', traffic: '作品集流量', community: '作品集互動', feedback: '問題回饋', eclaw: 'EClaw 帳號', eclawChat: 'EClaw 對話', dreambuddy: '夢話夥伴後台', eclawPayments: 'EClaw 付款', imports: '匯入的後台數據', services: '後台服務檢查', inbox: '問題回饋與排程判斷' };
   // 排程型 worker（例如每小時跑一輪）兩輪之間本來就沒有程式在跑；監控會把它標成 scheduled_between_rounds
   D.betweenRounds = w => w.processOnline === false && w.coverage === 'scheduled_between_rounds';
@@ -478,6 +496,30 @@
       const c = collectors[id], name = (COLLECTORS[id] || [id])[0];
       if (c.collectedAt && now - c.collectedAt > 36 * HOUR) add('collector-stale-' + id, 'warn', name + '的數據超過一天沒更新', '上一次匯入是 ' + Math.floor((now - c.collectedAt) / HOUR) + ' 小時前；收集工具在這台 Mac 上執行。', { rule: RULES[9][0], since: c.collectedAt, go: 'sources', start: c.collectedAt,
         source: '匯入的後台數據（' + id + '）', basis: { collector: id, collectedAt: c.collectedAt, hoursAgo: Math.floor((now - c.collectedAt) / HOUR) } });
+    });
+    // 拾光每個帳號的上傳額度與被拒收（伺服器 1.0.126 起；收集工具每小時匯入一次）
+    const th = (D.latest.facts || {})[TIMEHUT] || {};
+    Object.keys(th).filter(k => /^thUser[a-f0-9]{10}$/.test(k) && th[k] && th[k].v === 1).sort().forEach(k => {
+      const u = th[k], ref = k.slice(6), name = u.name || '（沒有暱稱）', q = u.quota, rf = u.refusals;
+      const codes = ((rf && rf.codes) || []).filter(c => Array.isArray(c) && typeof c[0] === 'string'), recent = codes.filter(c => c[3] && now - c[3] < 2 * HOUR);
+      const full = recent.filter(c => D.refusalKind(c[0]) === 'full');
+      if (q && q.limit) {
+        const used = (q.stored || 0) + (q.pendingBytes || 0), ratio = Math.max(used / q.limit, q.limitItems ? ((q.items || 0) + (q.pending || 0)) / q.limitItems : 0);
+        if (ratio >= 0.9 || full.length) add('th-full-' + ref, ratio >= 1 || full.length ? 'crit' : 'warn', full.length ? name + ' 的拾光帳號已滿，上傳被拒收' : name + ' 的拾光雲端空間用了 ' + Math.floor(ratio * 100) + '%',
+          '已用 ' + gbText(used) + '，上限 ' + gbText(q.limit) + '；照片 ' + ((q.items || 0) + (q.pending || 0)) + '／' + (q.limitItems || '—') + ' 張。滿了之後這個帳號的新照片一律不收，要放寬每帳號上限（後端 account-upload-admissions.js）或請用戶清理。',
+          { rule: RULES[16][0], app: TIMEHUT, since: full.length ? Math.max(...full.map(c => c[3])) : null, source: '時光相簿伺服器 /api/internal/admin-stats（uploadQuota，收集工具每小時匯入）',
+            basis: { user: ref, usedBytes: used, limitBytes: q.limit, items: (q.items || 0) + (q.pending || 0), limitItems: q.limitItems || null, ratio: Math.round(ratio * 1000) / 1000, refusedFull: full.map(c => c[0]) } });
+      } else if (full.length) add('th-full-' + ref, 'crit', name + ' 的拾光帳號已滿，上傳被拒收', '伺服器拒收的原因是「' + D.refusalText(full[0][0]) + '」。', { rule: RULES[16][0], app: TIMEHUT, since: Math.max(...full.map(c => c[3])),
+        source: '時光相簿伺服器 /api/internal/admin-stats（uploadRefusals）', basis: { user: ref, refusedFull: full.map(c => c[0]) } });
+      const stuck = recent.filter(c => D.refusalKind(c[0]) === 'stuck'), wait = codes.filter(c => D.refusalKind(c[0]) === 'wait'), today = (rf && rf.today && rf.today.count) || 0;
+      const waitRecent = recent.some(c => D.refusalKind(c[0]) === 'wait');
+      if (stuck.length || (waitRecent && today > 20)) {
+        const top = (stuck.length ? stuck : wait).slice().sort((a, b) => b[1] - a[1])[0];
+        add('th-refused-' + ref, 'warn', name + ' 的上傳被伺服器拒收：' + D.refusalText(top[0]),
+          (stuck.length ? '這類原因同一筆重送也不會過，要看是哪一筆、為什麼；' : '伺服器忙這類暫時原因，稍後再傳就會過，但現行 App 不會自己重試、會顯示「上傳沒完成」；') + '近 7 天被拒 ' + ((rf.week && rf.week.count) || 0) + ' 次，今天 ' + today + ' 次。伺服器日誌搜尋 [upload-refusal] ' + top[0] + ' account=' + ref + '。',
+          { rule: RULES[17][0], app: TIMEHUT, since: top[3] || null, code: top[0], source: '時光相簿伺服器 /api/internal/admin-stats（uploadRefusals，收集工具每小時匯入）',
+            basis: { user: ref, today, week: (rf.week && rf.week.count) || 0, recentCodes: recent.map(c => ({ code: c[0], kind: D.refusalKind(c[0]), count7d: c[1], lastAt: c[3] })) } });
+      }
     });
     applyInbox(out);
     D.ALERTS = foldMuted(out);

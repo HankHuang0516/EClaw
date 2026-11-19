@@ -35,7 +35,7 @@ and the latest deployment status. The envelope carries them as `infra` rows plus
 | `wishlist` | thorough-presence / wishlist-app | Wishlist.ai | accounts, messages, listings, completed TWD purchases, conversations, retention |
 | `wishlist-users` | thorough-presence / wishlist-app | Wishlist.ai | one fact per account for the Weesh page's 帳戶智慧數據庫: counts and times, the display name and a masked sign-in address (see `backend/AIHANKAPPS_HUB.md`) |
 | `railway` | every project above, plus EClaw and 時光相簿 (metrics API, no ssh) | every app with a Railway service | traffic in/out, CPU, memory, volume space, latest deployment |
-| `timehut` | Timehut / Timehunt (HTTPS, no ssh) | 時光相簿 | account counts only: total (not deleted), new in 7 / 30 days, deleted |
+| `timehut` | Timehut / Timehunt (HTTPS, no ssh) | 時光相簿 | account counts: total (not deleted), new in 7 / 30 days, deleted; per-user detail from `/api/internal/admin-stats` (server 1.0.118+: LINE stages, albums, traffic; 1.0.126+: upload quota and refusals by reason) |
 
 The `timehut` source also runs on this Mac. 時光相簿 keeps its accounts in its server's own files, so the server answers
 the counts itself at `GET /api/internal/account-stats` (backend 1.0.114+), only to `Authorization: Bearer <key>`. The

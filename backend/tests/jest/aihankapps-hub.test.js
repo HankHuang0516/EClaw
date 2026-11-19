@@ -571,7 +571,42 @@ describe('admin hub: the page reads the answer correctly', () => {
             ['ops-stale', 'warn', null], ['listing-rate', 'warn', 'weesh'], ['chat-pending', 'info', 'weesh'], ['rating-alpha', 'warn', 'alpha']]);
         expect(noisy.D.appState(noisy.D.APP.weesh)).toBe('crit');
         expect(noisy.D.appState(noisy.D.APP.alpha)).toBe('warn');
-        expect(noisy.D.RULES).toHaveLength(16);
+        expect(noisy.D.RULES).toHaveLength(18);
+    });
+
+    test('拾光 upload quota and refusals (server 1.0.126): full or nearly full accounts and refusals that need a look raise alerts; transient or old ones do not', async () => {
+        const page = await loadPage();
+        const M = 60000, H = 60 * M, GB = 1024 ** 3, TB = 1024 ** 4;
+        const u = (name, quota, refusals) => ({ v: 1, name, quota, refusals });
+        const q = stored => ({ stored, items: 10, pending: 0, pendingBytes: 0, limit: TB, limitItems: 1000000, limitPending: 50 });
+        const rf = (today, codes) => ({ today: { count: today, bytes: 0 }, week: { count: codes.reduce((a, c) => a + c[1], 0), bytes: 0 }, month: { count: 0, bytes: 0 }, lastAt: Math.max(0, ...codes.map(c => c[3])), lastCode: codes[0] ? codes[0][0] : null, codes, days: [] });
+        page.D.latest.facts.timehut = {
+            thUsersMeta: { v: 1, users: 7 },
+            thUseraaaaaaaaaa: u('將滿', q(0.92 * TB), rf(0, [])),
+            thUserbbbbbbbbbb: u('已滿', q(2 * GB), rf(40, [['ACCOUNT_STORAGE_FULL', 40, 9000, NOW - 30 * M]])),
+            thUsercccccccccc: u('換內容', q(GB), rf(2, [['UPLOAD_IDENTITY_CHANGED', 2, 10, NOW - 10 * M]])),
+            thUserdddddddddd: u('三小時前', q(GB), rf(0, [['UPLOAD_IDENTITY_CHANGED', 3, 10, NOW - 3 * H]])),
+            thUsereeeeeeeeee: u('斷線', q(GB), rf(100, [['CLIENT_ABORTED', 100, 0, NOW - 5 * M]])),
+            thUserffffffffff: u('伺服器忙', q(GB), rf(25, [['ACCOUNT_PENDING_ITEMS', 25, 50, NOW - 20 * M]])),
+            thUser0000000000: u('偶爾忙', q(GB), rf(5, [['ACCOUNT_PENDING_ITEMS', 5, 50, NOW - 20 * M]])),
+            thUserXYZ: u('壞的', q(TB), rf(9, [['ACCOUNT_STORAGE_FULL', 9, 0, NOW]]))
+        };
+        page.D.computeAlerts(NOW);
+        const th = page.D.ALERTS.filter(a => /^th-/.test(a.id));
+        expect(th.map(a => [a.id, a.sev, a.app])).toEqual([['th-full-aaaaaaaaaa', 'warn', 'timehut'], ['th-full-bbbbbbbbbb', 'crit', 'timehut'],
+            ['th-refused-cccccccccc', 'warn', 'timehut'], ['th-refused-ffffffffff', 'warn', 'timehut']]);
+        expect(th[0].title).toBe('將滿 的拾光雲端空間用了 92%');
+        expect(th[1]).toMatchObject({ title: '已滿 的拾光帳號已滿，上傳被拒收', rule: '拾光帳號空間快滿', since: NOW - 30 * M });
+        expect(th[2]).toMatchObject({ title: '換內容 的上傳被伺服器拒收：同一筆上傳換了內容', rule: '拾光上傳被伺服器拒收', since: NOW - 10 * M });
+        expect(th[2].detail).toContain('[upload-refusal] UPLOAD_IDENTITY_CHANGED account=cccccccccc');
+        expect(th[2].ref).toMatch(/^th-refused-cccccccccc\.UPLOAD_IDENTITY_CHANGED/);
+        expect(th[3].detail).toContain('現行 App 不會自己重試');
+        expect(th[2].basis.recentCodes).toEqual([{ code: 'UPLOAD_IDENTITY_CHANGED', kind: 'stuck', count7d: 2, lastAt: NOW - 10 * M }]);
+        expect(page.D.mutable(th[2])).toBe(true);
+        expect([page.D.refusalText('SERVER_DISK_LOW'), page.D.refusalKind('CLIENT_ABORTED'), page.D.refusalKind('SOMETHING_NEW'), page.D.refusalText('SOMETHING_NEW')]).toEqual(['伺服器硬碟剩餘空間不足', 'net', 'stuck', 'SOMETHING_NEW']);
+        delete page.D.latest.facts.timehut;
+        page.D.computeAlerts(NOW);
+        expect(page.D.ALERTS.filter(a => /^th-/.test(a.id))).toEqual([]);   // an older server (no quota / refusals) raises nothing
     });
 
     test('the monitor\'s issue codes become a plain reason with its times', async () => {
@@ -721,7 +756,7 @@ describe('admin hub: the page reads the answer correctly', () => {
         expect(page.D.ALERTS.filter(a => a.ref === 'rating-alpha')).toHaveLength(1);
         // a problem the schedule found that no rule shows
         expect(by['human-line-quota']).toMatchObject({ id: 'human', sev: 'crit', title: '需要你處理：LINE 推播額度快用完', ask: '請決定是否升級 LINE 方案', rule: '排程請你處理', app: 'alpha' });
-        expect(page.D.RULES.slice(13).map(r => [r[0], r[3]])).toEqual([['新的問題回饋', 'warn'], ['排程請你處理', 'crit'], ['已略過的類似警告', 'info']]);
+        expect(page.D.RULES.slice(13).map(r => [r[0], r[3]])).toEqual([['新的問題回饋', 'warn'], ['排程請你處理', 'crit'], ['已略過的類似警告', 'info'], ['拾光帳號空間快滿', 'warn'], ['拾光上傳被伺服器拒收', 'warn']]);
         // once the schedule closes the escalation, it is gone
         // the page lists what needs Hank first, then severe, warning, information
         expect(page.D.byUrgency(page.D.ALERTS).slice(0, 3).map(a => a.ref)).toEqual(['rating-alpha', 'fb-timehut-line-L1', 'human-line-quota']);
@@ -1066,6 +1101,42 @@ describe('admin hub: 拾光 user detail (hub-timehut.js)', () => {
         expect(el.innerHTML).toContain('不明／已停止');
         expect(load().enrich(u).activeDay).toBe(today);
         expect(load().enrich(quiet).activeDay).toBe(null);
+    });
+    test('upload quota and refusals (server 1.0.126): a column, a filter, a tile, insights and a detail section; older servers show a dash', () => {
+        const sandbox = { window: {}, localStorage: { getItem: () => null, setItem: () => {} }, Intl, Date, Math, JSON, Object, Array, Number, String, Set };
+        vm.runInNewContext(fs.readFileSync(path.join(pageDir, 'hub-data.js'), 'utf8'), sandbox);      // the reason texts and kinds come from the data layer
+        vm.runInNewContext(fs.readFileSync(path.join(pageDir, 'hub-timehut.js'), 'utf8'), sandbox);
+        const T = sandbox.window.HubTimehut, TB = 1024 ** 4, GB = 1024 ** 3;
+        const quota = stored => ({ stored, items: 300, pending: 2, pendingBytes: 0, limit: TB, limitItems: 1000000, limitPending: 50 });
+        const refusals = codes => ({ since: '2026-11-19T02:00:00.000Z', today: { count: 3, bytes: 0 }, week: { count: codes.reduce((a, c) => a + c[1], 0), bytes: 0 }, month: { count: 9, bytes: 0 }, lastAt: Date.now() - HOUR, lastCode: codes[0][0], codes, days: [] });
+        const full = user('aaaaaaaaaa', '已滿', { quota: quota(TB), refusals: refusals([['ACCOUNT_STORAGE_FULL', 40, 9000, Date.now() - HOUR]]) });
+        const stuck = user('bbbbbbbbbb', '換內容', { quota: quota(2 * GB), refusals: refusals([['UPLOAD_IDENTITY_CHANGED', 2, 10, Date.now() - HOUR], ['CLIENT_ABORTED', 5, 0, Date.now() - HOUR]]) });
+        const net = user('cccccccccc', '斷線', { quota: quota(GB), refusals: refusals([['CLIENT_ABORTED', 4, 0, Date.now() - HOUR]]) });
+        const old = user('dddddddddd', '舊伺服器');
+        expect([full, stuck, net, old].map(x => { const e = T.enrich(x); return [e.refused7, e.refusedStuck, e.attention, e.quotaUse == null ? null : Math.round(e.quotaUse * 100)]; }))
+            .toEqual([[40, 40, true, 100], [7, 2, true, 0], [4, 0, false, 0], [null, 0, false, null]]);
+        const text = T.insights([full, stuck, net, old], {}).map(x => x.sev + ' ' + x.text);
+        expect(text.some(x => /^crit 已滿 的雲端空間用了 100%（已用 1\.00 TB，上限 1\.00 TB），新照片一律不收。/.test(x))).toBe(true);
+        expect(text.some(x => /^crit 已滿 近 7 天有 40 次上傳被伺服器拒收，最需要看的是「帳號雲端空間已滿」/.test(x))).toBe(true);
+        expect(text.some(x => /^warn 換內容 近 7 天有 7 次上傳被伺服器拒收，最需要看的是「同一筆上傳換了內容」/.test(x))).toBe(true);
+        expect(text.some(x => /^info 斷線 近 7 天有 4 次/.test(x))).toBe(true);
+        const sandboxOpen = { ...sandbox, localStorage: { getItem: k => (k === 'hub.th.open' ? JSON.stringify('bbbbbbbbbb') : null), setItem: () => {} } };
+        vm.runInNewContext(fs.readFileSync(path.join(pageDir, 'hub-timehut.js'), 'utf8'), sandboxOpen);
+        const el = { innerHTML: '', querySelector: () => null, contains: () => true };
+        sandboxOpen.window.HubTimehut.mount(el, { meta: { asOf: new Date().toISOString(), notes: [] }, users: [full, stuck, net, old] });
+        expect(el.innerHTML).toContain('>被拒 7 天');
+        expect(el.innerHTML).toMatch(/data-v="refused" aria-pressed="false">上傳被拒 3</);
+        expect(el.innerHTML).toMatch(/<span>上傳被拒 7 天<\/span><b>51 次<\/b>/);
+        expect(el.innerHTML).toContain('伺服器 1.0.126 起才記錄');
+        expect(el.innerHTML).toContain('上傳額度與被拒收');
+        expect(el.innerHTML).toMatch(/同一筆上傳換了內容 <span class="muted">UPLOAD_IDENTITY_CHANGED<\/span><\/td><td class="is-bad">要人看<\/td><td class="num">2<\/td>/);
+        expect(el.innerHTML).toContain('從 2026-11-19 開始記錄');
+        const blank = { innerHTML: '', querySelector: () => null, contains: () => true };
+        const sandboxOld = { ...sandbox, localStorage: { getItem: k => (k === 'hub.th.open' ? JSON.stringify('dddddddddd') : null), setItem: () => {} } };
+        vm.runInNewContext(fs.readFileSync(path.join(pageDir, 'hub-timehut.js'), 'utf8'), sandboxOld);
+        sandboxOld.window.HubTimehut.mount(blank, { meta: { asOf: new Date().toISOString(), notes: [] }, users: [old] });
+        expect(blank.innerHTML).toContain('伺服器 1.0.126 起才有上傳額度與拒收紀錄。');
+        expect(blank.innerHTML).not.toContain('上傳被拒 7 天</span>');
     });
     test('QA accounts: recognised by name or login (never the owner), tagged, hidden on request with the numbers, and markable by hand', () => {
         const saved = {};

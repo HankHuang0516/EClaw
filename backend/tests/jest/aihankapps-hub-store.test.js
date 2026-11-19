@@ -454,6 +454,37 @@ describe('admin hub store: Railway service resources', () => {
             expect(x.value.notes.join()).toContain(note);
         }
     });
+
+    test('時光相簿 upload quota and refusals (server 1.0.126): compact, codes only in the fixed upper-case form, recent refusals keep a user in the detail', async () => {
+        const KEY = 'k'.repeat(48), readKey = () => ({ key: KEY }), TB = 1024 ** 4;
+        const byCode = Object.fromEntries(Array.from({ length: 14 }, (_, i) => ['CODE_' + String.fromCharCode(65 + i), { count: 20 - i, bytes: i, lastAt: 1000 + i }]));
+        byCode['lower case'] = { count: 99, bytes: 1, lastAt: 1 };
+        const refusals = { since: '2026-11-19T02:00:00.000Z', today: { count: 3, bytes: 30, byCode: {} }, last7d: { count: 9, bytes: 90, byCode }, last30d: { count: 12, bytes: 120, byCode: {} }, lastAt: 5000, lastCode: 'ACCOUNT_STORAGE_FULL',
+            days: [{ day: '2026-11-19', count: 3, bytes: 30, clientIds: ['x'] }, { day: 'bad', count: 1 }] };
+        const user = (ref, extra) => ({ ref, name: 'u' + ref, login: 'ab…c', owner: false, createdAt: 1, lastLoginAt: 10, media: {}, history: {}, ...extra });
+        const body = { schemaVersion: 1, asOf: '2026-11-19T02:00:00.000Z', version: '1.0.126', refusalsSince: '2026-11-19T02:00:00.000Z',
+            uploadLimits: { maxUserStoredBytes: TB, maxUserItems: 1000000, maxPendingUserItems: 50, maxPendingUserBytes: 1, maxSingleBytes: 2 },
+            users: [user('aaaaaaaaaa', { uploadQuota: { storedBytes: 7, items: 2, pendingItems: 1, pendingBytes: 3, unconfirmedSizes: 0, limitBytes: TB, limitItems: 1000000, limitPendingItems: 50, bytesRatio: 0, itemsRatio: 0, receiptIds: ['r'] }, uploadRefusals: refusals }),
+                user('bbbbbbbbbb', {})] };
+        const fetchImpl = async url => (/admin-stats$/.test(url) ? { status: 200, json: async () => body } : { status: 200, json: async () => ({ total: 2, last7d: 0, last30d: 0, deleted: 0 }) });
+        const r = await collect.collectTimehut({ readKey, fetchImpl });
+        const fact = k => r.value.facts.find(f => f.key === k).value;
+        const a = fact('thUseraaaaaaaaaa'), b = fact('thUserbbbbbbbbbb');
+        expect(a.quota).toEqual({ stored: 7, items: 2, pending: 1, pendingBytes: 3, limit: TB, limitItems: 1000000, limitPending: 50 });
+        expect(a.refusals).toMatchObject({ since: '2026-11-19T02:00:00.000Z', today: { count: 3, bytes: 30 }, week: { count: 9, bytes: 90 }, month: { count: 12, bytes: 120 }, lastAt: 5000, lastCode: 'ACCOUNT_STORAGE_FULL', days: [['2026-11-19', 3, 30]] });
+        expect(a.refusals.codes).toHaveLength(12);                                   // capped, most frequent first, odd keys dropped
+        expect(a.refusals.codes[0]).toEqual(['CODE_A', 20, 0, 1000]);
+        expect(a.refusals.codes.map(c => c[0])).not.toContain('lower case');
+        expect([b.quota, b.refusals]).toEqual([null, null]);                          // an older server: no quota, no refusals
+        expect(fact('thUsersMeta')).toMatchObject({ refusalsSince: '2026-11-19T02:00:00.000Z', uploadLimits: { stored: TB, items: 1000000, pending: 50 } });
+        expect(JSON.stringify(r.value)).not.toMatch(/receiptIds|clientIds/);
+        // over the budget, someone refused recently outranks someone who only logged in long ago
+        const many = { ...body, users: Array.from({ length: 30 }, (_, i) => user((i.toString(16).padStart(2, '0') + 'abcdef01').slice(0, 10), { lastLoginAt: 10 + i, albums: Array.from({ length: 30 }, (_, k) => ({ title: '相簿'.repeat(20) + k, kind: 'account', photos: k, videos: 1 })),
+            uploadRefusals: i === 0 ? { ...refusals, lastAt: 10 ** 12 } : null })) };
+        const crowded = await collect.collectTimehut({ readKey, fetchImpl: async url => (/admin-stats$/.test(url) ? { status: 200, json: async () => many } : { status: 200, json: async () => ({ total: 30, last7d: 0, last30d: 0, deleted: 0 }) }) });
+        expect(crowded.value.facts.find(f => f.key === 'thUsersMeta').value.dropped).toBeGreaterThan(0);
+        expect(crowded.value.facts.some(f => f.key === 'thUser00abcdef01')).toBe(true);
+    });
 });
 
 describe('admin hub import script (runs inside the EClaw container)', () => {

@@ -65,6 +65,10 @@
     REFERENCES_NOT_READY: '參考照片還沒設定好', COLLECTION_NOT_CONFIGURED: '收件相簿沒設定', STATUS_UNAVAILABLE: '狀態讀不到'
   };
   const reasonText = code => REASON[code] || code;
+  // 上傳被伺服器拒收（伺服器 1.0.126 起）：代碼的白話與類別跟警示用同一份（hub-data.js 的 D.UPLOAD_REFUSAL）
+  const HD = () => window.HubData || {};
+  const refusalText = c => (HD().refusalText ? HD().refusalText(c) : c), refusalKind = c => (HD().refusalKind ? HD().refusalKind(c) : 'stuck');
+  const KIND = { full: ['帳號滿了', 'is-bad'], stuck: ['要人看', 'is-bad'], wait: ['暫時性', ''], net: ['手機斷線', ''], done: ['不用再傳', ''] };
 
   // ---- 資料整理 ----------------------------------------------------------------
   function groupsOf(u) {
@@ -79,8 +83,12 @@
     const traffic30 = u.traffic && u.traffic.days ? u.traffic.days.reduce((a, d) => a + d[2], 0) : null;
     const activeDay = u.traffic && u.traffic.days ? u.traffic.days.filter(d => (d[1] || 0) + (d[2] || 0) > 0).map(d => d[0]).sort().pop() || null : null;
     const uploaded = (u.history && (u.history.appUploadBytes || 0) + (u.history.lineReceivedBytes || 0)) || 0;
-    const attention = problems > 0 || waitAge > 6 * HOUR || (u.ai && u.ai.failed > 0) || (u.uploads && u.uploads.failed > 0);
-    return Object.assign({}, u, { g, received, waiting, problems, waitAge, traffic30, activeDay, uploadedBytes: uploaded, attention });
+    const q = u.quota, used = q ? (q.stored || 0) + (q.pendingBytes || 0) : null;
+    const quotaUse = q && (q.limit || q.limitItems) ? Math.max(q.limit ? used / q.limit : 0, q.limitItems ? ((q.items || 0) + (q.pending || 0)) / q.limitItems : 0) : null;
+    const rf = u.refusals, codes = (rf && Array.isArray(rf.codes) ? rf.codes : []).filter(c => Array.isArray(c) && typeof c[0] === 'string');
+    const refused7 = rf ? (rf.week && rf.week.count) || 0 : null, refusedStuck = codes.filter(c => ['full', 'stuck'].indexOf(refusalKind(c[0])) >= 0).reduce((a, c) => a + c[1], 0);
+    const attention = problems > 0 || waitAge > 6 * HOUR || (u.ai && u.ai.failed > 0) || (u.uploads && u.uploads.failed > 0) || quotaUse >= 0.9 || refusedStuck > 0;
+    return Object.assign({}, u, { g, received, waiting, problems, waitAge, traffic30, activeDay, uploadedBytes: uploaded, attention, usedBytes: used, quotaUse, refused7, refusedStuck, refusalCodes: codes });
   }
   function insights(users, meta) {
     const out = [], all = users.reduce((a, u) => { GROUPS.forEach(g => { a[g[0]] += u.g[g[0]]; }); a.n += u.received; return a; }, Object.assign({ n: 0 }, Object.fromEntries(GROUPS.map(g => [g[0], 0]))));
@@ -102,6 +110,15 @@
     });
     users.filter(u => u.received >= 10 && pct(u.g.excluded, u.received) >= 60).forEach(u => {
       out.push({ sev: 'info', user: u.ref, text: `${u.name} 有 ${pct(u.g.excluded, u.received)}% 的 LINE 照片被判定不是參考對象，可以看看參考照片是否需要更新。` });
+    });
+    users.filter(u => u.quotaUse != null && u.quotaUse >= 0.8).sort((a, b) => b.quotaUse - a.quotaUse).forEach(u => out.push({ sev: u.quotaUse >= 1 ? 'crit' : u.quotaUse >= 0.9 ? 'warn' : 'info', user: u.ref,
+      text: `${u.name} 的雲端空間用了 ${Math.floor(u.quotaUse * 100)}%（已用 ${bytes(u.usedBytes)}，上限 ${bytes(u.quota.limit)}）${u.quotaUse >= 1 ? '，新照片一律不收' : ''}。` }));
+    users.filter(u => u.refused7).sort((a, b) => b.refusedStuck - a.refusedStuck || b.refused7 - a.refused7).forEach(u => {
+      // 先挑最需要處理的類別（帳號滿了 → 要人看 → 暫時性 → 斷線），同類再比次數
+      const rank = c => ['full', 'stuck', 'wait', 'net', 'done'].indexOf(refusalKind(c[0]));
+      const top = u.refusalCodes.slice().sort((a, b) => rank(a) - rank(b) || b[1] - a[1])[0], kind = top ? refusalKind(top[0]) : 'stuck';
+      out.push({ sev: kind === 'full' ? 'crit' : kind === 'stuck' || (kind === 'wait' && u.refused7 > 20) ? 'warn' : 'info', user: u.ref,
+        text: `${u.name} 近 7 天有 ${int(u.refused7)} 次上傳被伺服器拒收${top ? '，最需要看的是「' + refusalText(top[0]) + '」' : ''}${u.refusals.lastAt ? '（最後一次 ' + ago(u.refusals.lastAt) + '）' : ''}。` });
     });
     users.filter(u => u.ai && u.ai.failed).forEach(u => out.push({ sev: 'warn', user: u.ref, text: `${u.name} 的拾光分析有 ${int(u.ai.failed)} 張失敗。` }));
     users.filter(u => u.uploads && u.uploads.failed).forEach(u => out.push({ sev: 'warn', user: u.ref, text: `${u.name} 從 App／網頁上傳有 ${int(u.uploads.failed)} 個檔案失敗。` }));
@@ -151,20 +168,20 @@
   // ---- 畫面 --------------------------------------------------------------------
   const COLS = [
     ['name', '用戶', false], ['albums', '相簿', true], ['photos', '照片', true], ['videos', '影片', true], ['received', 'LINE 收到', true], ['flow', '辨識流程', false],
-    ['merged', '併入', true], ['excluded', '排除', true], ['waiting', '處理中', true], ['problems', '失敗／卡住', true], ['up', '上傳量', true], ['down', '下載量 30 天', true], ['trend', '近 30 天 LINE', false]
+    ['merged', '併入', true], ['excluded', '排除', true], ['waiting', '處理中', true], ['problems', '失敗／卡住', true], ['refused', '被拒 7 天', true], ['up', '上傳量', true], ['down', '下載量 30 天', true], ['trend', '近 30 天 LINE', false]
   ];
   const SORT = {
     name: u => u.name, albums: u => u.media.albums || 0, photos: u => u.media.photos == null ? -1 : u.media.photos, videos: u => u.media.videos == null ? -1 : u.media.videos,
-    received: u => u.received, merged: u => u.g.merged, excluded: u => u.g.excluded, waiting: u => u.waiting, problems: u => u.problems, up: u => u.uploadedBytes, down: u => u.traffic30 == null ? -1 : u.traffic30,
-    attention: u => (u.problems ? 1e9 : 0) + u.waitAge / 1000 + (u.attention ? 1e6 : 0)
+    received: u => u.received, merged: u => u.g.merged, excluded: u => u.g.excluded, waiting: u => u.waiting, problems: u => u.problems, refused: u => (u.refused7 == null ? -1 : u.refusedStuck * 1e6 + u.refused7), up: u => u.uploadedBytes, down: u => u.traffic30 == null ? -1 : u.traffic30,
+    attention: u => (u.problems || u.refusedStuck ? 1e9 : 0) + u.waitAge / 1000 + (u.attention ? 1e6 : 0)
   };
   // 我們自己的 QA／驗收／商店審查用帳戶（Hank 2026-11-13「把我們自己的QA帳戶加上QA測試用標籤 並且可隱藏」）。
   // 先用暱稱與帳號名稱的樣子自動認（擁有者不算），認錯或漏掉的可以在詳細裡手動改；手動的標記只記在這個瀏覽器。
   const QA_NAME = /(^|[^a-z])(qa|e2e|test|demo)([^a-z]|$)|驗收|示範|測試|審查/i, QA_LOGIN = /^qa/i;
   const autoQa = u => !u.owner && (QA_NAME.test(u.name || '') || QA_LOGIN.test(u.login || ''));
   const QA_TAG = '<span class="th-tag th-tag-qa">QA 測試用</span>';
-  const FILTERS = [['all', '全部'], ['attention', '需要注意'], ['line', '有 LINE 收件'], ['traffic', '有流量']];
-  const keep = (u, f) => f === 'attention' ? u.attention : f === 'line' ? u.received > 0 : f === 'traffic' ? (u.traffic30 || 0) > 0 : true;
+  const FILTERS = [['all', '全部'], ['attention', '需要注意'], ['line', '有 LINE 收件'], ['traffic', '有流量'], ['refused', '上傳被拒']];
+  const keep = (u, f) => f === 'attention' ? u.attention : f === 'line' ? u.received > 0 : f === 'traffic' ? (u.traffic30 || 0) > 0 : f === 'refused' ? (u.refused7 || 0) > 0 : true;
 
   function mount(el, detail) {
     if (!el) return;
@@ -192,7 +209,8 @@
       const t = (label, value, tip, cls) => '<div class="dm-c' + (cls ? ' ' + cls : '') + '"' + (tip ? ' data-tip="' + esc(tip) + '"' : '') + '><span>' + esc(label) + '</span><b>' + esc(value) + '</b></div>';
       return '<div class="dm">' + t('用戶', int(users.length) + ' 位', [meta.users > all.length ? '另有 ' + (meta.users - all.length) + ' 位沒有明細' : '', all.length > users.length ? '已隱藏 ' + (all.length - users.length) + ' 個 QA 測試用帳戶' : ''].filter(Boolean).join('；')) + t('照片／影片', (photos == null ? '—' : int(photos)) + '／' + (videos == null ? '—' : int(videos)), photos == null ? '有家庭相簿的數量讀不到（Flickr）' : '家庭相簿用 Flickr 的數量；同一張在多本家庭相簿會各算一次') +
         t('LINE 收到', int(n) + ' 張') + t('併入率', n ? pct(merged, n) + '%' : '—', '併入相簿 ÷ LINE 收到') + t('處理中', int(sum('waiting')) + ' 張', '', sum('waiting') ? '' : '') +
-        t('失敗／卡住', int(sum('problems')) + ' 張', '', sum('problems') ? 'is-bad' : '') + t('下載量 30 天', bytes(out30), meta.trafficSince ? '從 ' + meta.trafficSince.slice(0, 10) + ' 開始記錄' : '') + '</div>';
+        t('失敗／卡住', int(sum('problems')) + ' 張', '', sum('problems') ? 'is-bad' : '') +
+        (users.some(u => u.refused7 != null) ? t('上傳被拒 7 天', int(sum('refused7')) + ' 次', '伺服器拒收的上傳（App／網頁）；重送也不會過的有 ' + int(sum('refusedStuck')) + ' 次', sum('refusedStuck') ? 'is-bad' : '') : '') + t('下載量 30 天', bytes(out30), meta.trafficSince ? '從 ' + meta.trafficSince.slice(0, 10) + ' 開始記錄' : '') + '</div>';
     };
     const overallBar = () => {
       const g = Object.fromEntries(GROUPS.map(x => [x[0], users.reduce((a, u) => a + u.g[x[0]], 0)])), n = users.reduce((a, u) => a + u.received, 0);
@@ -214,7 +232,7 @@
           '<td><div class="th-who"><b>' + esc(u.name) + '</b>' + (u.owner ? '<span class="th-tag">擁有者</span>' : '') + (u.qa ? QA_TAG : '') + (u.attention ? '<i class="sd sd-warn" data-tip="需要注意"></i>' : '') + '<span class="muted">' + esc(u.login) + (seenText(u) ? '・' + seenText(u) : '') + '</span></div></td>' +
           cell(int(u.media.albums)) + cell(int(u.media.photos)) + cell(int(u.media.videos)) + cell(int(u.received)) + '<td>' + stackBar(u.g, u.received) + '</td>' +
           cell(int(u.g.merged)) + cell(int(u.g.excluded)) + cell(int(u.waiting) + (u.waitAge > 6 * HOUR ? '<small class="th-age"> 最久 ' + ago(u.line.oldestWaitingAt).replace('前', '') + '</small>' : ''), u.waitAge > DAY) +
-          cell(int(u.problems), u.problems > 0) + cell(bytes(u.uploadedBytes)) + cell(u.traffic30 == null ? '<span class="muted" data-tip="這位用戶還沒有流量紀錄">—</span>' : bytes(u.traffic30)) +
+          cell(int(u.problems), u.problems > 0) + cell(u.refused7 == null ? '<span class="muted" data-tip="伺服器 1.0.126 起才記錄">—</span>' : int(u.refused7), u.refusedStuck > 0) + cell(bytes(u.uploadedBytes)) + cell(u.traffic30 == null ? '<span class="muted" data-tip="這位用戶還沒有流量紀錄">—</span>' : bytes(u.traffic30)) +
           '<td>' + spark(u.line && u.line.days, 1) + '</td></tr>';
       }).join('');
     };
@@ -292,11 +310,30 @@
       '<div class="th-d"><h3>原因</h3>' + (reasons ? '<table class="tbl th-mini"><tbody>' + reasons + '</tbody></table>' : '<p class="empty">—</p>') + '</div>' +
       '<div class="th-d th-wide"><h3>近 30 天 LINE 照片</h3>' + dailyChart(l && l.days, [[2, '併入相簿', 'var(--s3)'], [3, '排除', 'var(--deemph)'], [4, '失敗', 'var(--crit)'], [5, '處理中', 'var(--s4)']], int) + '</div>' +
       '<div class="th-d th-wide"><h3>流量</h3>' + trafficHtml + '</div>' +
+      '<div class="th-d th-wide"><h3>上傳額度與被拒收</h3>' + quotaHtml(u) + '</div>' +
       '<div class="th-d th-wide"><h3>相簿（' + int(u.media.albums) + ' 本' + (u.media.archived ? '，另有 ' + int(u.media.archived) + ' 本封存' : '') + '）</h3>' + (albums ? '<div class="tbl-wrap"><table class="tbl th-mini"><thead><tr><th>相簿</th><th>類型</th><th class="num">照片</th><th class="num">影片</th></tr></thead><tbody>' + albums + '</tbody></table></div>' : '<p class="empty">沒有相簿。</p>') +
         '<p class="hint">存在伺服器的帳戶照片 ' + bytes(u.media.storedBytes) + (u.media.deleted ? '・已刪除 ' + int(u.media.deleted) + ' 張' : '') + '；歷史上傳量 ' + bytes(u.uploadedBytes) + '（App／網頁 ' + bytes(u.history.appUploadBytes) + '、LINE ' + bytes(u.history.lineReceivedBytes) + '）。</p></div>' +
       '<div class="th-d"><h3>App／網頁上傳</h3>' + (up ? '<div class="dm th-dm">' + cellK('完成', int(up.completed)) + cellK('處理中', int(up.waiting)) + cellK('失敗', int(up.failed), up.failed) + cellK('取消', int(up.cancelled)) + '</div><p class="hint">佇列裡目前 ' + int(up.total) + ' 筆・' + bytes(up.bytes) + '</p>' : '<p class="empty">—</p>') + '</div>' +
       '<div class="th-d"><h3>拾光分析</h3>' + (ai ? '<div class="dm th-dm">' + cellK('已分析', int(ai.analyzed)) + cellK('排隊中', int(ai.pending)) + cellK('失敗', int(ai.failed), ai.failed) + cellK('待確認', int(ai.unconfirmed)) + '</div><p class="hint">' + (ai.enabled ? '已開啟' : '沒有開啟') + (ai.retrying ? '・重試中 ' + int(ai.retrying) : '') + '</p>' : '<p class="empty">—</p>') + '</div>' +
       '</div>';
+  }
+  // 上傳額度（已用量包含刪除中的照片，跟伺服器預約時的算法相同）與被伺服器拒收的原因
+  function quotaHtml(u) {
+    const q = u.quota, rf = u.refusals;
+    if (!q && !rf) return '<p class="empty">伺服器 1.0.126 起才有上傳額度與拒收紀錄。</p>';
+    let html = '';
+    if (q) {
+      const p = u.quotaUse == null ? 0 : u.quotaUse;
+      html += '<div class="dm th-dm">' + cellK('已用', bytes(u.usedBytes) + '／' + bytes(q.limit), p >= 0.9) + cellK('照片', int((q.items || 0) + (q.pending || 0)) + '／' + int(q.limitItems)) + cellK('等 Flickr 處理', int(q.pending) + '／' + int(q.limitPending), q.limitPending && q.pending >= q.limitPending) + '</div>' +
+        '<div class="th-fn"><div class="th-fn-r"><span>額度用量</span><span class="th-fn-b"><i style="width:' + Math.min(100, Math.max(1, p * 100)).toFixed(1) + '%;background:' + (p >= 0.9 ? 'var(--crit)' : 'var(--s2)') + '"></i></span><b>' + (p < 0.01 ? '<1' : Math.floor(p * 100)) + '%</b><em></em></div></div>';
+    }
+    if (rf) {
+      const rows = u.refusalCodes.map(c => { const k = KIND[refusalKind(c[0])] || KIND.stuck; return '<tr><td>' + esc(refusalText(c[0])) + ' <span class="muted">' + esc(c[0]) + '</span></td><td' + (k[1] ? ' class="' + k[1] + '"' : '') + '>' + esc(k[0]) + '</td><td class="num">' + int(c[1]) + '</td><td class="num">' + bytes(c[2]) + '</td><td class="num muted">' + ago(c[3]) + '</td></tr>'; }).join('');
+      html += rows ? '<div class="tbl-wrap"><table class="tbl th-mini"><thead><tr><th>近 7 天被拒的原因</th><th>類別</th><th class="num">次數</th><th class="num">手機送出</th><th class="num">最後一次</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+        dailyChart((rf.days || []).map(d => [d[0], d[1]]), [[1, '被拒次數', 'var(--crit)']], int) : '<p class="empty">近 7 天沒有上傳被伺服器拒收。</p>';
+      html += '<p class="hint">今天 ' + int(rf.today && rf.today.count) + ' 次・近 30 天 ' + int(rf.month && rf.month.count) + ' 次' + (rf.since ? '・從 ' + esc(rf.since.slice(0, 10)) + ' 開始記錄' : '') + '。「手機送出」是被拒的請求宣告的大小，伺服器多半在讀完之前就拒收。</p>';
+    }
+    return html;
   }
   function cellK(label, value, bad) { return '<div class="dm-c' + (bad ? ' is-bad' : '') + '"><span>' + esc(label) + '</span><b>' + esc(value) + '</b></div>'; }
 
