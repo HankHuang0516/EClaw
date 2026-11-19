@@ -84,6 +84,9 @@ function timehutUserFact(u) {
   const at = v => (Number.isSafeInteger(v) && v > 0 ? v : null), obj = v => (v && typeof v === 'object' && !Array.isArray(v) ? v : null);
   const counts = (o, keys, max) => Object.fromEntries(Object.entries(obj(o) || {}).filter(([k, v]) => /^[A-Za-z_]{2,40}$/.test(k) && n(v) && (!keys || keys.includes(k))).sort((a, b) => b[1] - a[1]).slice(0, max));
   const line = obj(u.line), media = obj(u.media) || {}, up = obj(u.uploads), ai = obj(u.ai), tr = obj(u.traffic), hist = obj(u.history) || {};
+  // 上傳額度與被伺服器拒收（伺服器 1.0.126 起）：原因只收固定的大寫代碼，次數、位元組與時間；不帶任何檔案資訊
+  const q = obj(u.uploadQuota), rf = obj(u.uploadRefusals), code = v => (typeof v === 'string' && /^[A-Z_]{3,40}$/.test(v) ? v : null);
+  const bucket = b => (obj(b) ? { count: n(b.count), bytes: n(b.bytes) } : { count: null, bytes: null });
   return {
     v: 1, name: t(u.name, 40), login: t(u.login, 12), owner: u.owner === true, createdAt: at(u.createdAt), lastLoginAt: at(u.lastLoginAt),
     albums: (Array.isArray(u.albums) ? u.albums : []).slice(0, 30).map(a => [t(a && a.title, 24), a && a.kind === 'family' ? 'f' : 'a', n(a && a.photos), n(a && a.videos), a && a.archived ? 1 : 0]),
@@ -96,7 +99,12 @@ function timehutUserFact(u) {
     ai: ai ? { analyzed: n(ai.analyzed), pending: n(ai.pending), failed: n(ai.failed), unconfirmed: n(ai.unconfirmed), retrying: n(ai.retrying), enabled: ai.enabled === true } : null,
     history: { appUploadBytes: n(hist.appUploadBytes), lineReceivedBytes: n(hist.lineReceivedBytes) },
     traffic: tr ? { since: typeof tr.since === 'string' ? tr.since.slice(0, 30) : null, inBytes: n(tr.inBytes), outBytes: n(tr.outBytes), mediaOutBytes: n(tr.mediaOutBytes), uploadInBytes: n(tr.uploadInBytes), requests: n(tr.requests),
-      days: (Array.isArray(tr.days) ? tr.days : []).filter(d => d && /^\d{4}-\d{2}-\d{2}$/.test(d.day)).slice(-30).map(d => [d.day, n(d.in) || 0, n(d.out) || 0, n(d.mediaOut) || 0]) } : null
+      days: (Array.isArray(tr.days) ? tr.days : []).filter(d => d && /^\d{4}-\d{2}-\d{2}$/.test(d.day)).slice(-30).map(d => [d.day, n(d.in) || 0, n(d.out) || 0, n(d.mediaOut) || 0]) } : null,
+    quota: q ? { stored: n(q.storedBytes), items: n(q.items), pending: n(q.pendingItems), pendingBytes: n(q.pendingBytes), limit: n(q.limitBytes), limitItems: n(q.limitItems), limitPending: n(q.limitPendingItems) } : null,
+    refusals: rf ? { since: typeof rf.since === 'string' ? rf.since.slice(0, 30) : null, today: bucket(rf.today), week: bucket(rf.last7d), month: bucket(rf.last30d), lastAt: at(rf.lastAt), lastCode: code(rf.lastCode),
+      // 近 7 天每個原因一列：[代碼, 次數, 位元組, 最後時間]，最多 12 種
+      codes: Object.entries(obj(rf.last7d && rf.last7d.byCode) || {}).filter(([k, v]) => code(k) && obj(v) && n(v.count)).sort((a, b) => b[1].count - a[1].count).slice(0, 12).map(([k, v]) => [k, v.count, n(v.bytes) || 0, at(v.lastAt)]),
+      days: (Array.isArray(rf.days) ? rf.days : []).filter(d => d && /^\d{4}-\d{2}-\d{2}$/.test(d.day)).slice(-30).map(d => [d.day, n(d.count) || 0, n(d.bytes) || 0]) } : null
   };
 }
 async function collectTimehutDetail({ fetchImpl, key }) {
@@ -108,8 +116,8 @@ async function collectTimehutDetail({ fetchImpl, key }) {
   try { body = await res.json(); } catch (_error) { return { facts: [], notes: ['用戶明細不是 JSON'] }; }
   if (!body || body.schemaVersion !== 1 || !Array.isArray(body.users)) return { facts: [], notes: ['用戶明細格式不認得'] };
   const valid = body.users.filter(u => u && typeof u.ref === 'string' && /^[a-f0-9]{10}$/.test(u.ref));
-  // 最活躍的人先放：最近收到 LINE、最近登入、流量多的排前面；超過預算的人只少了明細，畫面會標出來
-  const score = u => Math.max((u.line && u.line.lastReceivedAt) || 0, u.lastLoginAt || 0) + ((u.traffic && u.traffic.outBytes) || 0) / 1e3;
+  // 最活躍的人先放：最近收到 LINE、最近登入、最近上傳被拒、流量多的排前面；超過預算的人只少了明細，畫面會標出來
+  const score = u => Math.max((u.line && u.line.lastReceivedAt) || 0, u.lastLoginAt || 0, (u.uploadRefusals && u.uploadRefusals.lastAt) || 0) + ((u.traffic && u.traffic.outBytes) || 0) / 1e3;
   const facts = [], notes = [];let used = 0, dropped = 0;
   for (const u of valid.slice().sort((a, b) => score(b) - score(a))) {
     // 每個事實的上限是用字元數算的（8 KB），整包信封是用 UTF-8 位元組算的：中文一個字三個位元組，預算要用位元組
@@ -121,6 +129,8 @@ async function collectTimehutDetail({ fetchImpl, key }) {
   const n = v => (Number.isSafeInteger(v) && v >= 0 ? v : null), un = body.unattributed && typeof body.unattributed === 'object' ? body.unattributed : null;
   facts.push({ app: 'timehut', key: 'thUsersMeta', value: { v: 1, asOf: typeof body.asOf === 'string' ? body.asOf.slice(0, 30) : null, version: typeof body.version === 'string' ? body.version.slice(0, 16) : null,
     trafficSince: typeof body.trafficSince === 'string' ? body.trafficSince.slice(0, 30) : null, users: valid.length, shown: facts.length, dropped,
+    refusalsSince: typeof body.refusalsSince === 'string' ? body.refusalsSince.slice(0, 30) : null,
+    uploadLimits: body.uploadLimits && typeof body.uploadLimits === 'object' ? { stored: n(body.uploadLimits.maxUserStoredBytes), items: n(body.uploadLimits.maxUserItems), pending: n(body.uploadLimits.maxPendingUserItems) } : null,
     unattributed: un ? { inBytes: n(un.inBytes), outBytes: n(un.outBytes), requests: n(un.requests) } : null,
     notes: (Array.isArray(body.notes) ? body.notes : []).filter(x => typeof x === 'string').slice(0, 6).map(x => x.slice(0, 120)) } });
   return { facts, notes };
