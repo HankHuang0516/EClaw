@@ -39,5 +39,5 @@ jobs:
         working-directory: claude-cli-proxy
 
       - name: Run unittest suite
-        run: python -m unittest tests.test_repo_auth tests.test_multi_tenant tests.test_db_freshness -v
+        run: python -m unittest tests.test_repo_auth tests.test_multi_tenant tests.test_db_freshness tests.test_assistant_ro_sql -v
         working-directory: claude-cli-proxy

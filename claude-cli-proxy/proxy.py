@@ -495,22 +495,23 @@ def build_chat_prompt(message: str, history: list, context: dict, image_paths: l
 DATABASE ACCESS (read-only):
   python {db_query_path} "SELECT ..."
 - Only SELECT/WITH allowed. Returns JSON array.
+- You read sanitized views (claude-cli-proxy/sql/assistant_ro.sql). Secrets are not in them: no device or bot secrets, no webhook tokens, no request bodies, and API keys are masked. A "column does not exist" or "permission denied" error means the data is withheld on purpose — do not look for it elsewhere.
 - KEY TABLES:
-  * entities (device_id, entity_id, is_bound, name, character, state, message, webhook JSONB, xp, level, avatar, public_code, binding_type, channel_account_id)
+  * entities (device_id, entity_id, is_bound, name, character, state, message, has_webhook, webhook_url, webhook_type, message_queue_len, xp, level, avatar, public_code, binding_type, channel_account_id, app_version, last_updated)
     binding_type: NULL=normal webhook bot, 'channel'=OpenClaw channel plugin
     channel_account_id: FK to channel_accounts.id (which plugin owns this entity)
-  * channel_accounts (id, device_id, channel_api_key, channel_api_secret, callback_url, callback_token, status, created_at)
+  * channel_accounts (id, device_id, channel_api_key [masked: first 12 + last 6 chars], callback_url, has_callback, status, created_at, updated_at)
     multiple rows per device allowed — one per OpenClaw channel plugin
-  * devices (device_id, device_secret, created_at, paid_borrow_slots)
+  * devices (device_id, created_at, updated_at, paid_borrow_slots, user_display_name, has_fcm_token, has_apns_token)
   * server_logs (id, level, category, message, device_id, entity_id, metadata JSONB, created_at)
     categories: bind, unbind, transform, broadcast, broadcast_push, speakto_push, client_push, entity_poll, push_error, handshake, system
   * handshake_failures (device_id, entity_id, webhook_url, error_type, http_status, error_message, source, created_at)
-  * device_telemetry (device_id, ts, type, action, page, input JSONB, output JSONB, duration, meta JSONB)
+  * device_telemetry (device_id, ts, type, action, page, output JSONB, duration, meta JSONB)
   * scheduled_messages (device_id, entity_id, message, scheduled_at, repeat_type, status, label)
   * official_bots (bot_id, bot_type, webhook_url, status, assigned_device_id, assigned_entity_id)
-  * official_bot_bindings (bot_id, device_id, entity_id, session_key, bound_at)
+  * official_bot_bindings (bot_id, device_id, entity_id, bound_at)
 - COMMON QUERIES:
-  Entity status: SELECT entity_id, name, character, is_bound, state, binding_type, channel_account_id, webhook, last_updated FROM entities WHERE device_id='...'
+  Entity status: SELECT entity_id, name, character, is_bound, state, binding_type, channel_account_id, has_webhook, webhook_url, last_updated FROM entities WHERE device_id='...'
   Channel accounts: SELECT id, channel_api_key, callback_url, status, created_at FROM channel_accounts WHERE device_id='...'
   Recent logs:   SELECT level, category, message, created_at FROM server_logs WHERE device_id='...' ORDER BY created_at DESC LIMIT 30
   Binding hist:  SELECT category, message, created_at FROM server_logs WHERE device_id='...' AND category IN ('bind','unbind') ORDER BY created_at DESC LIMIT 20
