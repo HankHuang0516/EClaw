@@ -901,7 +901,7 @@
                 <span>🔗 Channel API</span>
                 <button class="btn btn-sm btn-primary" id="btnGenChannel" onclick="generateChannelKey()" data-i18n="common_new_key">+ New Key</button>
             </div>
-            <p class="section-desc" style="margin-bottom:12px;">Each OpenClaw plugin gets its own key pair. Paste the key into your OpenClaw channel config.</p>
+            <p class="section-desc" style="margin-bottom:12px;" data-i18n="settings_channel_api_desc">Each OpenClaw plugin gets its own API key. Paste it into your OpenClaw channel config. The key is the only credential you need — there is no separate Secret.</p>
 
             <!-- Account list -->
             <div id="channelAccountList"></div>
@@ -911,11 +911,12 @@
 
             <!-- New key reveal (shown once after generation) -->
             <div id="newKeyReveal" style="display:none;margin-top:12px;padding:12px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--accent);">
-                <div style="font-weight:600;color:var(--accent);margin-bottom:8px;">🔑 Copy your API Key</div>
+                <div style="font-weight:600;color:var(--accent);margin-bottom:8px;" data-i18n="settings_channel_new_key_title">🔑 Copy your API Key</div>
                 <div class="info-row">
                     <span class="info-label">API Key</span>
                     <span class="info-value mono" id="newKeyValue" style="word-break:break-all;">--</span>
                 </div>
+                <p class="section-desc" style="margin:8px 0 0;" data-i18n="settings_channel_key_only_hint">This key is all you need. No Secret is shown and none is required.</p>
                 <div class="channel-actions" style="margin-top:10px;">
                     <button class="btn btn-primary btn-sm" onclick="copyNewKeyBoth()" data-i18n="common_copy_key">📋 Copy Key</button>
                     <button class="btn btn-sm btn-outline" onclick="dismissNewKey()" data-i18n="common_done">Done</button>
@@ -2558,7 +2559,7 @@
                 showToast(i18n.t('toast_generate_key_failed') + ': ' + e.message, 'error');
             } finally {
                 btn.disabled = false;
-                btn.textContent = '+ New Key';
+                btn.textContent = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t('common_new_key') : '+ New Key';
             }
         }
 

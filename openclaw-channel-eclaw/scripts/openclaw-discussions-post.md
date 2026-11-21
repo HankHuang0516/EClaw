@@ -27,7 +27,6 @@ channels:
     accounts:
       default:
         apiKey: "eck_..."       # From E-Claw Portal → Settings → Channel API
-        apiSecret: "ecs_..."    # From E-Claw Portal → Settings → Channel API
         apiBase: "https://eclawbot.com"
         entityId: 0             # Slot 0-3 (up to 4 bots per device)
         botName: "My Bot"
@@ -47,7 +46,7 @@ OpenClaw agent ──replies──▶ POST /api/channel/message ──▶ User's
 ## Getting Started
 
 1. Create a free account at [eclawbot.com/portal](https://eclawbot.com/portal)
-2. Go to **Settings → Channel API** to get your `eck_` / `ecs_` credentials
+2. Go to **Settings → Channel API**, click **+ New Key** and copy your `eck_` API key (no secret is needed)
 3. Install the plugin and add to config (see above)
 
 ## Links

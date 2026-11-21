@@ -39,6 +39,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
+from db_freshness import STALE, FreshnessCheck, stale_prompt_block
 from repo_auth import (
     DEFAULT_REPO_HOST_PATH,
     LEGACY_TOKEN_KEYS,
@@ -61,6 +62,9 @@ SUPPORT_API_KEY = os.getenv("SUPPORT_API_KEY", "")
 PORT = int(os.getenv("PORT", "4000"))
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
 DATABASE_URL = os.getenv("DATABASE_URL", "")
+# Whether DATABASE_URL is the database the backend writes to, or a copy it left
+# behind. A stale copy answers every lookup for a recent device with "no rows".
+DB_FRESHNESS = FreshnessCheck(DATABASE_URL)
 
 # Vault-backed GitHub token (preferred over GITHUB_TOKEN env). Lets us rotate
 # the PAT centrally without redeploying Railway, and avoids permanent PAT
@@ -480,10 +484,12 @@ def build_chat_prompt(message: str, history: list, context: dict, image_paths: l
 
     page_context = f'The user is currently on the "{context.get("page")}" page of the portal.' if context.get("page") else ""
 
-    # Database query block
-    has_db = bool(DATABASE_URL)
+    # Database query block: withdrawn when the readable database is a stale copy
+    db_status = DB_FRESHNESS.cached()
+    db_is_stale = bool(DATABASE_URL) and db_status["state"] == STALE
+    has_db = bool(DATABASE_URL) and not db_is_stale
     db_query_path = str(Path(__file__).parent / "db_query.py")
-    db_query_block = ""
+    db_query_block = stale_prompt_block(db_status) if db_is_stale else ""
     if has_db:
         db_query_block = f"""
 DATABASE ACCESS (read-only):
@@ -551,6 +557,8 @@ RULES:
 - Respond in the SAME LANGUAGE as the user (Chinese -> Chinese, English -> English).
 - Concise (1-4 paragraphs). Use markdown. Never reveal secrets/tokens/device IDs.
 - IMPORTANT: After using tools to gather data, ALWAYS produce a text response summarizing your findings. Never end a turn with only tool calls and no text output.
+- Report only what a tool actually returned. An empty result is not proof that something does not exist: say you could not confirm it, and never describe an unverified guess as "backend verification".
+- Channel API auth uses the API key only (eck_...). Settings → Channel API shows the key and nothing else: no Secret is shown and none is needed, so a missing Secret field is expected, not a bug.
 
 {image_block}{f"CONVERSATION HISTORY:\n{history_text}\n" if history_text else ""}User: {message}
 
@@ -916,6 +924,14 @@ async def lifespan(app: FastAPI):
         db_config_path = Path(__file__).parent / ".db-config"
         db_config_path.write_text(DATABASE_URL)
         log.info(f"[Startup] DATABASE_URL written to {db_config_path}")
+        db_status = await asyncio.get_event_loop().run_in_executor(None, DB_FRESHNESS.status)
+        if db_status["state"] == STALE:
+            log.warning(
+                f"[Startup] DATABASE_URL is a stale copy (newest server log: {db_status['ageHours']} h old); "
+                "chat will not offer database lookups until it points at the live database"
+            )
+        else:
+            log.info(f"[Startup] Database freshness: {db_status['state']}")
 
     # Per-tenant clones are now done lazily on first request, so the proxy
     # boots stateless — different device-owners get their own clone dirs
@@ -999,6 +1015,7 @@ async def health():
         "status": "ok",
         "service": "eclaw-claude-cli-proxy",
         "claude_cli": "unknown",
+        "database": {"configured": bool(DATABASE_URL), **DB_FRESHNESS.cached()},
         "repo": {
             "mode": "multi-tenant" if not EVAULT_LEGACY_BOOT_CLONE else "legacy-single-tenant",
             "defaultHostPath": REPO_SCOPE.host_path if REPO_SCOPE else REPO_GIT_HOST_PATH,
@@ -1172,6 +1189,8 @@ async def chat(req: ChatRequest, request: Request):
                 except Exception as e:
                     log.error(f"[Chat] Failed to write temp image: {e}")
 
+    if DATABASE_URL:
+        await asyncio.get_event_loop().run_in_executor(None, DB_FRESHNESS.status)
     prompt = build_chat_prompt(req.message, req.history, req.device_context, image_paths)
     role = req.device_context.get("role", "user")
     page = req.device_context.get("page", "?")
