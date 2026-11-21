@@ -1626,6 +1626,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | E2E Matrix Sweep | `tests/jest/e2e-matrix-sweep-leftovers.test.js` | Regression #3985: pre-run sweep archives leftover E2E-MATRIX marker cards from previous runs, skips current run + real cards, never throws |
 | Telemetry Prune Stale-Cache | `tests/jest/device-telemetry-prune-stale-cache.test.js` | Regression: full telemetry buffer must prune (with incoming headroom) and accept new entries — was permanently dropping everything once ~full |
 | Entity Poll Warn Throttle | `tests/jest/entity-poll-warn-throttle.test.js` | Regression: "0 bound entities" entity_poll warn is throttled per device (30 min) so it can't drown the warn channel |
+| Channel API key-only wording | `tests/jest/channel-api-key-only-docs.test.js` | Regression (feedback #1547 / issue #5505): Settings → Channel API panel, the OpenClaw channel guide, all locales and the plugin README must say the `eck_` key is the only credential — none may promise a Secret the portal never shows. Proxy side: `cd claude-cli-proxy && python -m unittest tests.test_db_freshness` (assistant withdraws DB lookups when its database is a stale copy) |
 
 ### Running All Tests
 ```bash

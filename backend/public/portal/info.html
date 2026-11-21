@@ -4476,7 +4476,7 @@ done</code></pre></div>
                         <h2 data-i18n="guide_channel_h2_3">步驟教學</h2>
 
                         <h3 class="step-heading" data-i18n="guide_channel_h3_1">第 1 步：在 Portal 產生 API Key</h3>
-                        <p data-i18n="guide_channel_p_3">前往 <strong>設定 → Channel API</strong>，點「新增 API Key」。系統會產生一組 Key + Secret，請立刻複製妥當——Secret 只顯示一次。</p>
+                        <p data-i18n="guide_channel_p_3">前往 <strong>設定 → Channel API</strong>，點「+ 新增金鑰」。系統會產生一把 API Key（<code>eck_</code> 開頭），複製它即可。只需要這把 Key：畫面不會顯示 Secret，也不需要 Secret。</p>
                         <div class="note" data-i18n="guide_channel_note_2">一個 API Key 可以同時綁定多個 entity slots（讓同一台 OpenClaw 管理多個角色）。如果你有多台獨立的 OpenClaw 伺服器，才需要分別產生不同的 Key。</div>
 
                         <h3 class="step-heading" data-i18n="guide_channel_h3_2">第 2 步：在 OpenClaw 安裝並設定 EClawbot Channel</h3>
@@ -4485,7 +4485,6 @@ done</code></pre></div>
   - type: eclaw
     config:
       channel_api_key: "eck_你的Key貼這裡"
-      channel_api_secret: "ecs_你的Secret貼這裡"
       entity_id: 0          # 要綁定哪個角色（0–7）
       entity_name: "我的AI"  # 角色顯示名稱（可選）
       eclaw_webhook_url: "https://你的OpenClaw網址"</div>
@@ -4517,7 +4516,7 @@ done</code></pre></div>
                         <h2 data-i18n="guide_channel_h2_4">常見問題</h2>
 
                         <h3 data-i18n="guide_channel_h3_6">Q: 角色綁定後沒出現在 App？</h3>
-                        <p data-i18n="guide_channel_p_faq1_a">先確認 OpenClaw log 有出現 <code>Bound entity</code> 成功訊息。如果沒有，通常是 API Key/Secret 貼錯、或 <code>entity_id</code> 超出範圍（免費方案 0–3，付費方案 0–7）。</p>
+                        <p data-i18n="guide_channel_p_faq1_a">先確認 OpenClaw log 有出現 <code>Bound entity</code> 成功訊息。如果沒有，通常是 API Key 貼錯、或 <code>entity_id</code> 超出範圍（免費方案 0–3，付費方案 0–7）。</p>
 
                         <h3 data-i18n="guide_channel_h3_7">Q: 傳訊息後 AI 沒有回應？</h3>
                         <p data-i18n="guide_channel_p_faq2_a">最常見原因是 <code>ECLAW_WEBHOOK_URL</code> 外網連不到。確認你的 OpenClaw 伺服器有公開的 HTTPS 端點，或透過 ngrok 等工具暴露出來。</p>
@@ -4534,11 +4533,11 @@ done</code></pre></div>
                         <p data-i18n="guide_channel_p_8">Channel API 端點一覽（開發者用）：</p>
                         <div class="code-block"># 登記 Callback URL
 POST /api/channel/register
-  { channel_api_key, channel_api_secret, callback_url, callback_token }
+  { channel_api_key, callback_url, callback_token }
 
 # 綁定角色
 POST /api/channel/bind
-  { channel_api_key, channel_api_secret, entityId, name }
+  { channel_api_key, entityId, name }
 
 # Bot 回覆用戶（更新角色狀態）
 POST /api/channel/message
@@ -4546,7 +4545,7 @@ POST /api/channel/message
 
 # 取消登記
 DELETE /api/channel/register
-  { channel_api_key, channel_api_secret }</div>
+  { channel_api_key }</div>
                         <p data-i18n="guide_channel_p_source">完整 API 文件與 plugin 原始碼：<a href="https://github.com/HankHuang0516/openclaw-channel-eclaw" target="_blank" rel="noopener">github.com/HankHuang0516/openclaw-channel-eclaw</a></p>
                     </div>
 
@@ -4846,7 +4845,7 @@ curl http://localhost:8787/   # fakechat plugin（應回傳 HTML）</div>
                         <h2>快速設定</h2>
 
                         <h3 class="step-heading">第 1 步：產生 EClaw Channel API Key</h3>
-                        <p>到 <strong>Portal → Settings → Channel API</strong> 建立 API Key。Key 會是 <code>eck_...</code> 格式；如果有 Secret，請一起保存。這些值只放在你的 <code>.env</code>，不要貼到公開 repo。</p>
+                        <p>到 <strong>Portal → Settings → Channel API</strong> 建立 API Key。Key 會是 <code>eck_...</code> 格式，只需要這把 Key，沒有另外的 Secret。這些值只放在你的 <code>.env</code>，不要貼到公開 repo。</p>
 
                         <h3 class="step-heading">第 2 步：Clone bridge repo</h3>
                         <div class="code-block">git clone https://github.com/HankHuang0516/codex-eclaw-bridge.git

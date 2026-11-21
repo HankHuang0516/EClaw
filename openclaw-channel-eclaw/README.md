@@ -32,8 +32,7 @@ channels:
   eclaw:
     accounts:
       default:
-        apiKey: "eck_..."       # From E-Claw Portal → Settings → Channel API
-        apiSecret: "ecs_..."    # From E-Claw Portal → Settings → Channel API
+        apiKey: "eck_..."       # From E-Claw Portal → Settings → Channel API (the only credential you need)
         apiBase: "https://eclawbot.com"
         webhookUrl: "https://your-openclaw-domain.com"  # Base URL only; plugin appends /eclaw-webhook
         entityId: 0             # Entity slot (0-3 free tier, 0-7 premium). Omit to auto-assign.
@@ -54,7 +53,13 @@ plugins:
 
 1. Log in to [E-Claw Portal](https://eclawbot.com/portal)
 2. Go to **Settings → Channel API**
-3. Copy your `API Key` (`eck_...`) and `API Secret` (`ecs_...`)
+3. Click **+ New Key** and copy the `API Key` (`eck_...`)
+
+The API key is the only credential. The portal does not show a secret and the
+plugin does not need one. `apiSecret` is still accepted in the config for
+accounts that were set up before channel auth became key-only; if it is set,
+the server checks it, so a wrong value fails with `Invalid channel credentials`.
+Leave it out for new setups.
 
 ## How It Works
 
@@ -65,7 +70,7 @@ OpenClaw Agent ──replies──▶ POST /api/channel/message ──▶ User (
 
 - **Inbound**: E-Claw POSTs structured JSON to a webhook URL registered by this plugin
 - **Outbound**: Plugin calls `POST /api/channel/message` with the bot reply
-- **Auth**: `eck_`/`ecs_` channel credentials for API auth, per-entity `botSecret` for message auth
+- **Auth**: the `eck_` channel API key for API auth, per-entity `botSecret` for message auth
 
 ## Inbound Message Structure
 

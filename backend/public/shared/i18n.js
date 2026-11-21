@@ -62925,7 +62925,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_3": "Go to <strong>Settings → Channel API</strong> and click \"Add API Key\". The system will generate a Key + Secret pair — copy them immediately, as the Secret is only shown once.",
+        "guide_channel_p_3": "Go to <strong>Settings → Channel API</strong> and click \"+ New Key\". The system generates an API Key (it starts with <code>eck_</code>) — copy it. That key is all you need: no Secret is shown and none is required.",
 
 
 
@@ -63821,7 +63821,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_faq1_a": "First check that the OpenClaw log shows a successful <code>Bound entity</code> message. If not, it's usually because the API Key/Secret was entered incorrectly, or the <code>entity_id</code> is out of range (free plan: 0–3, paid plan: 0–7).",
+        "guide_channel_p_faq1_a": "First check that the OpenClaw log shows a successful <code>Bound entity</code> message. If not, it's usually because the API Key was entered incorrectly, or the <code>entity_id</code> is out of range (free plan: 0–3, paid plan: 0–7).",
 
 
 
@@ -428701,6 +428701,9 @@ const TRANSLATIONS = {
 
 
         "common_copy_key": "📋 Copy Key",
+        "settings_channel_api_desc": "Each OpenClaw plugin gets its own API key. Paste it into your OpenClaw channel config. The key is the only credential you need — there is no separate Secret.",
+        "settings_channel_new_key_title": "🔑 Copy your API Key",
+        "settings_channel_key_only_hint": "This key is all you need. No Secret is shown and none is required.",
 
 
 
@@ -710829,7 +710832,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_3": "前往 <strong>設定 → Channel API</strong>，點「新增 API Key」。系統會產生一組 Key + Secret，請立刻複製妥當——Secret 只顯示一次。",
+        "guide_channel_p_3": "前往 <strong>設定 → Channel API</strong>，點「+ 新增金鑰」。系統會產生一把 API Key（<code>eck_</code> 開頭），複製它即可。只需要這把 Key：畫面不會顯示 Secret，也不需要 Secret。",
 
 
 
@@ -711725,7 +711728,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_faq1_a": "先確認 OpenClaw log 有出現 <code>Bound entity</code> 成功訊息。如果沒有，通常是 API Key/Secret 貼錯、或 <code>entity_id</code> 超出範圍（免費方案 0–3，付費方案 0–7）。",
+        "guide_channel_p_faq1_a": "先確認 OpenClaw log 有出現 <code>Bound entity</code> 成功訊息。如果沒有，通常是 API Key 貼錯、或 <code>entity_id</code> 超出範圍（免費方案 0–3，付費方案 0–7）。",
 
 
 
@@ -1051907,6 +1051910,9 @@ const TRANSLATIONS = {
 
 
         "common_copy_key": "📋 複製金鑰",
+        "settings_channel_api_desc": "每個 OpenClaw plugin 各用一把 API Key，貼到 OpenClaw 的 channel 設定即可。只需要這把 Key，沒有另外的 Secret。",
+        "settings_channel_new_key_title": "🔑 複製你的 API Key",
+        "settings_channel_key_only_hint": "只需要這把 Key。畫面不會顯示 Secret，也不需要 Secret。",
 
 
 
@@ -1315617,6 +1315623,9 @@ const TRANSLATIONS = {
 
 
         "common_copy_key": "📋 複製金鑰",
+        "settings_channel_api_desc": "每个 OpenClaw plugin 各用一个 API Key，粘贴到 OpenClaw 的 channel 配置即可。只需要这个 Key，没有另外的 Secret。",
+        "settings_channel_new_key_title": "🔑 复制你的 API Key",
+        "settings_channel_key_only_hint": "只需要这个 Key。页面不会显示 Secret，也不需要 Secret。",
 
 
 
@@ -1413190,7 +1413199,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_3": "前往 <strong>设定 → Channel API</strong>，点「新增 API Key」。系統会產生一組 Key + Secret，請立刻複製妥當——Secret 只显示一次。",
+        "guide_channel_p_3": "前往 <strong>设置 → Channel API</strong>，点击「+ 新增金钥」。系统会生成一个 API Key（以 <code>eck_</code> 开头），复制它即可。只需要这个 Key：页面不会显示 Secret，也不需要 Secret。",
 
 
 
@@ -1414086,7 +1414095,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_faq1_a": "先確认 OpenClaw log 有出现 <code>Bound entity</code> 成功訊息。如果沒有，通常是 API Key/Secret 貼错、或 <code>entity_id</code> 超出範圍（免费方案 0–3，付费方案 0–7）。",
+        "guide_channel_p_faq1_a": "先確认 OpenClaw log 有出现 <code>Bound entity</code> 成功訊息。如果沒有，通常是 API Key 貼错、或 <code>entity_id</code> 超出範圍（免费方案 0–3，付费方案 0–7）。",
 
 
 
@@ -1904080,7 +1904089,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_3": "<strong>設定 → Channel API</strong>に移動し、「API Key を追加」をクリックします。Key + Secretのペアが生成されますので、すぐにコピーしてください。Secretは一度しか表示されません。",
+        "guide_channel_p_3": "<strong>設定 → Channel API</strong>に移動し、「+ 新規鍵」をクリックします。API Key（<code>eck_</code> で始まります）が生成されるので、コピーしてください。必要なのはこの Key だけです。Secret は表示されず、必要もありません。",
 
 
 
@@ -1904976,7 +1904985,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_faq1_a": "まず、OpenClawのログに<code>Bound entity</code>の成功メッセージが表示されているか確認してください。表示されていない場合、通常はAPI Key/Secretの入力ミス、または<code>entity_id</code>が範囲外（無料プラン0-3、有料プラン0-7）です。",
+        "guide_channel_p_faq1_a": "まず、OpenClawのログに<code>Bound entity</code>の成功メッセージが表示されているか確認してください。表示されていない場合、通常はAPI Keyの入力ミス、または<code>entity_id</code>が範囲外（無料プラン0-3、有料プラン0-7）です。",
 
 
 
@@ -2222089,6 +2222098,9 @@ const TRANSLATIONS = {
 
 
         "common_copy_key": "📋 キーをコピー",
+        "settings_channel_api_desc": "OpenClaw プラグインごとに専用の API Key を発行します。OpenClaw の channel 設定に貼り付けてください。必要なのはこの Key だけで、別の Secret はありません。",
+        "settings_channel_new_key_title": "🔑 API Key をコピー",
+        "settings_channel_key_only_hint": "必要なのはこの Key だけです。Secret は表示されず、必要もありません。",
 
 
 
@@ -2467835,7 +2467847,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_3": "<strong>설정 → Channel API</strong>로 이동하여 'API Key 추가'를 클릭합니다. Key + Secret 쌍이 생성되므로 즉시 복사하세요. Secret은 한 번만 표시됩니다.",
+        "guide_channel_p_3": "<strong>설정 → Channel API</strong>로 이동하여 '+ 새 키'를 클릭합니다. API Key(<code>eck_</code>로 시작)가 생성되므로 복사하세요. 이 Key만 있으면 됩니다. Secret은 표시되지 않으며 필요하지 않습니다.",
 
 
 
@@ -2468731,7 +2468743,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_faq1_a": "먼저 OpenClaw 로그에 <code>Bound entity</code> 성공 메시지가 표시되었는지 확인하세요. 표시되지 않았다면 보통 API Key/Secret 입력 오류이거나 <code>entity_id</code>가 범위를 벗어난 것입니다(무료 플랜 0-3, 유료 플랜 0-7).",
+        "guide_channel_p_faq1_a": "먼저 OpenClaw 로그에 <code>Bound entity</code> 성공 메시지가 표시되었는지 확인하세요. 표시되지 않았다면 보통 API Key 입력 오류이거나 <code>entity_id</code>가 범위를 벗어난 것입니다(무료 플랜 0-3, 유료 플랜 0-7).",
 
 
 
@@ -2785674,6 +2785686,9 @@ const TRANSLATIONS = {
 
 
         "common_copy_key": "📋 키 복사",
+        "settings_channel_api_desc": "OpenClaw 플러그인마다 전용 API Key가 발급됩니다. OpenClaw channel 설정에 붙여넣으세요. 이 Key만 있으면 되며 별도의 Secret은 없습니다.",
+        "settings_channel_new_key_title": "🔑 API Key 복사",
+        "settings_channel_key_only_hint": "이 Key만 있으면 됩니다. Secret은 표시되지 않으며 필요하지 않습니다.",
 
 
 
@@ -3001212,7 +3001227,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_3": "Go to <strong>Settings → Channel API</strong> and click \"Add API Key\". The system will generate a Key + Secret pair — copy them immediately, as the Secret is only shown once.",
+        "guide_channel_p_3": "Go to <strong>Settings → Channel API</strong> and click \"+ New Key\". The system generates an API Key (it starts with <code>eck_</code>) — copy it. That key is all you need: no Secret is shown and none is required.",
 
 
 
@@ -3002108,7 +3002123,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_faq1_a": "First check that the OpenClaw log shows a successful <code>Bound entity</code> message. If not, it's usually because the API Key/Secret was entered incorrectly, or the <code>entity_id</code> is out of range (free plan: 0–3, paid plan: 0–7).",
+        "guide_channel_p_faq1_a": "First check that the OpenClaw log shows a successful <code>Bound entity</code> message. If not, it's usually because the API Key was entered incorrectly, or the <code>entity_id</code> is out of range (free plan: 0–3, paid plan: 0–7).",
 
 
 
@@ -3309312,6 +3309327,9 @@ const TRANSLATIONS = {
 
 
         "common_copy_key": "📋 คัดลอก Key",
+        "settings_channel_api_desc": "ปลั๊กอิน OpenClaw แต่ละตัวมี API Key ของตัวเอง นำไปวางในการตั้งค่า channel ของ OpenClaw ใช้เพียง Key นี้เท่านั้น ไม่มี Secret แยกต่างหาก",
+        "settings_channel_new_key_title": "🔑 คัดลอก API Key ของคุณ",
+        "settings_channel_key_only_hint": "ใช้เพียง Key นี้เท่านั้น ระบบไม่แสดง Secret และไม่จำเป็นต้องใช้",
 
 
 
@@ -3530953,7 +3530971,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_3": "Go to <strong>Settings → Channel API</strong> and click \"Add API Key\". The system will generate a Key + Secret pair — copy them immediately, as the Secret is only shown once.",
+        "guide_channel_p_3": "Go to <strong>Settings → Channel API</strong> and click \"+ New Key\". The system generates an API Key (it starts with <code>eck_</code>) — copy it. That key is all you need: no Secret is shown and none is required.",
 
 
 
@@ -3531849,7 +3531867,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_faq1_a": "First check that the OpenClaw log shows a successful <code>Bound entity</code> message. If not, it's usually because the API Key/Secret was entered incorrectly, or the <code>entity_id</code> is out of range (free plan: 0–3, paid plan: 0–7).",
+        "guide_channel_p_faq1_a": "First check that the OpenClaw log shows a successful <code>Bound entity</code> message. If not, it's usually because the API Key was entered incorrectly, or the <code>entity_id</code> is out of range (free plan: 0–3, paid plan: 0–7).",
 
 
 
@@ -3839053,6 +3839071,9 @@ const TRANSLATIONS = {
 
 
         "common_copy_key": "📋 Sao chép Key",
+        "settings_channel_api_desc": "Mỗi plugin OpenClaw có một API Key riêng. Dán vào cấu hình channel của OpenClaw. Chỉ cần Key này, không có Secret riêng.",
+        "settings_channel_new_key_title": "🔑 Sao chép API Key của bạn",
+        "settings_channel_key_only_hint": "Chỉ cần Key này. Không có Secret nào được hiển thị và cũng không cần Secret.",
 
 
 
@@ -4058331,7 +4058352,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_3": "Buka <strong>Pengaturan → Channel API</strong> dan klik \"Tambah API Key\". Sistem akan menghasilkan pasangan Key + Secret — salin segera, karena Secret hanya ditampilkan sekali.",
+        "guide_channel_p_3": "Buka <strong>Pengaturan → Channel API</strong> dan klik \"+ Kunci Baru\". Sistem akan menghasilkan satu API Key (diawali <code>eck_</code>) — salin Key tersebut. Hanya Key itu yang Anda perlukan: tidak ada Secret yang ditampilkan dan tidak diperlukan.",
 
 
 
@@ -4059227,7 +4059248,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_faq1_a": "Pertama periksa apakah log OpenClaw menampilkan pesan <code>Bound entity</code> yang berhasil. Jika tidak, biasanya karena API Key/Secret dimasukkan dengan salah, atau <code>entity_id</code> di luar jangkauan (paket gratis: 0–3, paket berbayar: 0–7).",
+        "guide_channel_p_faq1_a": "Pertama periksa apakah log OpenClaw menampilkan pesan <code>Bound entity</code> yang berhasil. Jika tidak, biasanya karena API Key dimasukkan dengan salah, atau <code>entity_id</code> di luar jangkauan (paket gratis: 0–3, paket berbayar: 0–7).",
 
 
 
@@ -4366303,6 +4366324,9 @@ const TRANSLATIONS = {
 
 
         "common_copy_key": "📋 Salin Key",
+        "settings_channel_api_desc": "Setiap plugin OpenClaw memiliki API Key sendiri. Tempelkan ke konfigurasi channel OpenClaw Anda. Hanya Key ini yang diperlukan — tidak ada Secret terpisah.",
+        "settings_channel_new_key_title": "🔑 Salin API Key Anda",
+        "settings_channel_key_only_hint": "Hanya Key ini yang Anda perlukan. Tidak ada Secret yang ditampilkan dan tidak diperlukan.",
 
 
 
@@ -4585325,7 +4585349,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_3": "Allez dans <strong>Paramètres → API de Canal</strong> et cliquez sur \"Ajouter une Clé API\". Le système générera une paire Clé + Secret — copiez-les immédiatement, car le Secret n'est affiché qu'une seule fois.",
+        "guide_channel_p_3": "Allez dans <strong>Paramètres → API de Canal</strong> et cliquez sur \"+ Nouvelle clé\". Le système génère une clé API (elle commence par <code>eck_</code>) — copiez-la. Cette clé suffit : aucun Secret n'est affiché et aucun n'est requis.",
 
 
 
@@ -4586221,7 +4586245,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_faq1_a": "Vérifiez d'abord que le journal OpenClaw affiche un message <code>Bound entity</code> réussi. Sinon, c'est généralement parce que la Clé API/Secret a été saisi incorrectement, ou que l'<code>entity_id</code> est hors plage (plan gratuit : 0–3, plan payant : 0–7).",
+        "guide_channel_p_faq1_a": "Vérifiez d'abord que le journal OpenClaw affiche un message <code>Bound entity</code> réussi. Sinon, c'est généralement parce que la Clé API a été saisie incorrectement, ou que l'<code>entity_id</code> est hors plage (plan gratuit : 0–3, plan payant : 0–7).",
 
 
 
@@ -4904927,6 +4904951,9 @@ const TRANSLATIONS = {
 
 
         "common_copy_key": "📋 Copy Key",
+        "settings_channel_api_desc": "Chaque plugin OpenClaw reçoit sa propre clé API. Collez-la dans la configuration channel d'OpenClaw. Cette clé est le seul identifiant nécessaire : il n'y a pas de Secret séparé.",
+        "settings_channel_new_key_title": "🔑 Copiez votre clé API",
+        "settings_channel_key_only_hint": "Cette clé suffit. Aucun Secret n'est affiché et aucun n'est requis.",
 
 
 
@@ -5110515,7 +5110542,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_3": "Ve a <strong>Configuración → API de Canal</strong> y haz clic en \"Ad...",
+        "guide_channel_p_3": "Ve a <strong>Configuración → API de Canal</strong> y haz clic en \"+ Nueva clave\". El sistema genera una clave API (empieza por <code>eck_</code>): cópiala. Solo necesitas esa clave; no se muestra ningún Secret y no hace falta.",
 
 
 
@@ -5426591,6 +5426618,9 @@ const TRANSLATIONS = {
 
 
         "common_copy_key": "📋 Copiar Clave...",
+        "settings_channel_api_desc": "Cada plugin de OpenClaw tiene su propia clave API. Pégala en la configuración de channel de OpenClaw. Solo necesitas esta clave: no hay un Secret aparte.",
+        "settings_channel_new_key_title": "🔑 Copia tu clave API",
+        "settings_channel_key_only_hint": "Solo necesitas esta clave. No se muestra ningún Secret y no hace falta.",
 
 
 
@@ -5628913,7 +5628943,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_3": "Gehe zu <strong>Einstellungen → Channel API</strong> und klicke \"API-Schlüssel hinzufügen\". Das System generiert ein Schlüsselpaar — kopiere sie sofort, da der Secret nur einmal angezeigt wird.",
+        "guide_channel_p_3": "Gehe zu <strong>Einstellungen → Channel API</strong> und klicke auf \"+ Neuer Schlüssel\". Das System erzeugt einen API-Schlüssel (beginnt mit <code>eck_</code>) – kopiere ihn. Dieser Schlüssel genügt: Es wird kein Secret angezeigt und keines benötigt.",
 
 
 
@@ -5629809,7 +5629839,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_faq1_a": "Prüfe zuerst, ob im OpenClaw-Log eine erfolgreiche <code>Bound entity</code>-Nachricht erscheint. Wenn nicht, liegt es meist daran, dass der API-Schlüssel/Secret falsch eingegeben wurde oder die <code>entity_id</code> außerhalb des gültigen Bereichs liegt (Free-Plan: 0–3, Paid-Plan: 0–7).",
+        "guide_channel_p_faq1_a": "Prüfe zuerst, ob im OpenClaw-Log eine erfolgreiche <code>Bound entity</code>-Nachricht erscheint. Wenn nicht, liegt es meist daran, dass der API-Schlüssel falsch eingegeben wurde oder die <code>entity_id</code> außerhalb des gültigen Bereichs liegt (Free-Plan: 0–3, Paid-Plan: 0–7).",
 
 
 
@@ -5945579,6 +5945609,9 @@ const TRANSLATIONS = {
 
 
         "common_copy_key": "📋 Schlüssel kopieren",
+        "settings_channel_api_desc": "Jedes OpenClaw-Plugin erhält einen eigenen API-Schlüssel. Füge ihn in deine OpenClaw-Channel-Konfiguration ein. Dieser Schlüssel genügt – es gibt kein separates Secret.",
+        "settings_channel_new_key_title": "🔑 API-Schlüssel kopieren",
+        "settings_channel_key_only_hint": "Dieser Schlüssel genügt. Es wird kein Secret angezeigt und keines benötigt.",
 
 
 
@@ -6110905,14 +6110938,14 @@ const TRANSLATIONS = {
         "guide_channel_note_3": "If the entity has a <strong>[C]</strong> marker next to it, it indicates a Channel binding (Channel binding type).",
         "guide_channel_p_1": "EClawbot's default \"Official Bot\" is a shared AI provided by the platform. If you have your own OpenClaw server (self-hosted or deployed on Zeabur), you can use <strong>Channel Binding</strong> to connect your AI directly to an E-Claw entity.",
         "guide_channel_p_2": "Once bound, messages you send to that entity in the App or Portal will be pushed directly to your OpenClaw AI; after the AI replies, the entity's status updates in real time.",
-        "guide_channel_p_3": "Go to <strong>Settings → Channel API</strong> and click \"Add API Key\". The system will generate a Key + Secret pair — copy them immediately, as the Secret is only shown once.",
+        "guide_channel_p_3": "Go to <strong>Settings → Channel API</strong> and click \"+ New Key\". The system generates an API Key (it starts with <code>eck_</code>) — copy it. That key is all you need: no Secret is shown and none is required.",
         "guide_channel_p_4": "After saving the configuration, restart OpenClaw. The plugin will automatically:",
         "guide_channel_p_5": "In the App, open the chat screen for that entity and type any message. The flow is as follows:",
         "guide_channel_p_6": "If the AI responds, it means the Channel two-way communication is working properly.",
         "guide_channel_p_7": "Go to the Settings page, delete that Key, and generate a new one. The old Key becomes invalid immediately upon deletion, and the corresponding entities will be automatically unbound.",
         "guide_channel_p_8": "Channel API endpoint reference (for developers):",
         "guide_channel_p_config": "Add the following channel configuration to your OpenClaw settings (<code>openclaw.config.yaml</code>):",
-        "guide_channel_p_faq1_a": "First check that the OpenClaw log shows a successful <code>Bound entity</code> message. If not, it's usually because the API Key/Secret was entered incorrectly, or the <code>entity_id</code> is out of range (free plan: 0–3, paid plan: 0–7).",
+        "guide_channel_p_faq1_a": "First check that the OpenClaw log shows a successful <code>Bound entity</code> message. If not, it's usually because the API Key was entered incorrectly, or the <code>entity_id</code> is out of range (free plan: 0–3, paid plan: 0–7).",
         "guide_channel_p_faq2_a": "The most common cause is that <code>ECLAW_WEBHOOK_URL</code> is not publicly accessible. Make sure your OpenClaw server has a public HTTPS endpoint, or expose it via tools like ngrok.",
         "guide_channel_p_faq3_a": "Yes. Generate a separate API Key for each OpenClaw session and configure different <code>entity_id</code> values. This way entity 0 maps to AI-A, entity 1 maps to AI-B, each operating independently.",
         "guide_channel_p_source": "Full API documentation and plugin source code: <a href=\"https://github.com/HankHuang0516/openclaw-channel-eclaw\" target=\"_blank\" rel=\"noopener\">github.com/HankHuang0516/openclaw-channel-eclaw</a>",
@@ -6113943,6 +6113976,9 @@ const TRANSLATIONS = {
         "common_attach": "Attach",
         "common_voice_msg": "Voice message",
         "common_copy_key": "📋 Copy Key",
+        "settings_channel_api_desc": "Cada plugin do OpenClaw recebe sua própria chave de API. Cole-a na configuração de channel do OpenClaw. Só esta chave é necessária — não há Secret separado.",
+        "settings_channel_new_key_title": "🔑 Copie sua chave de API",
+        "settings_channel_key_only_hint": "Só esta chave é necessária. Nenhum Secret é exibido nem exigido.",
         "common_add": "Add",
         "common_save": "Save",
         "common_saved": "Saved",
@@ -6170983,7 +6171019,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_3": "Pergi ke <strong>Tetapan → API Saluran</strong> dan klik \"Tambah Kunci API\". Sistem akan menjana pasangan Kunci + Rahsia — salinnya dengan segera, kerana Rahsia hanya ditunjukkan sekali.",
+        "guide_channel_p_3": "Pergi ke <strong>Tetapan → API Saluran</strong> dan klik \"+ Kunci Baharu\". Sistem akan menjana satu kunci API (bermula dengan <code>eck_</code>) — salin kunci itu. Hanya kunci itu yang diperlukan: tiada Secret dipaparkan dan tiada yang diperlukan.",
 
 
 
@@ -6171879,7 +6171915,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_faq1_a": "Periksa terlebih dahulu sama ada log OpenClaw menunjukkan mesej <code>entiti Terikat</code> yang berjaya. Jika tidak, ia biasanya kerana Kunci/Rahsia api dimasukkan dengan salah, atau <code>entity_id</code> berada di luar julat (pelan percuma: 0–3, pelan berbayar: 0–7).",
+        "guide_channel_p_faq1_a": "Periksa terlebih dahulu sama ada log OpenClaw menunjukkan mesej <code>entiti Terikat</code> yang berjaya. Jika tidak, ia biasanya kerana Kunci API dimasukkan dengan salah, atau <code>entity_id</code> berada di luar julat (pelan percuma: 0–3, pelan berbayar: 0–7).",
 
 
 
@@ -6425160,6 +6425196,9 @@ const TRANSLATIONS = {
 
 
         "common_copy_key": "📋 Salin Kunci",
+        "settings_channel_api_desc": "Setiap plugin OpenClaw mempunyai kunci API sendiri. Tampalkannya ke dalam konfigurasi channel OpenClaw anda. Hanya kunci ini diperlukan — tiada Secret berasingan.",
+        "settings_channel_new_key_title": "🔑 Salin kunci API anda",
+        "settings_channel_key_only_hint": "Hanya kunci ini diperlukan. Tiada Secret dipaparkan dan tiada yang diperlukan.",
 
 
 
@@ -6770659,6 +6770698,9 @@ const TRANSLATIONS = {
 
 
         "common_copy_key": "📋 कुंजी कॉपी करें",
+        "settings_channel_api_desc": "हर OpenClaw प्लगइन को अपनी API Key मिलती है। इसे अपने OpenClaw channel कॉन्फ़िग में पेस्ट करें। केवल यही Key चाहिए — कोई अलग Secret नहीं है।",
+        "settings_channel_new_key_title": "🔑 अपनी API Key कॉपी करें",
+        "settings_channel_key_only_hint": "केवल यही Key चाहिए। कोई Secret नहीं दिखाया जाता और उसकी ज़रूरत भी नहीं है।",
 
 
 
@@ -6947323,7 +6947365,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_3": "Go to <strong>Settings → Channel API</strong> and click \"Add API Key\". The system will generate a Key + Secret pair — copy them immediately, as the Secret is only shown once.",
+        "guide_channel_p_3": "Go to <strong>Settings → Channel API</strong> and click \"+ New Key\". The system generates an API Key (it starts with <code>eck_</code>) — copy it. That key is all you need: no Secret is shown and none is required.",
 
 
 
@@ -6948091,7 +6948133,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_faq1_a": "First check that the OpenClaw log shows a successful <code>Bound entity</code> message. If not, it's usually because the API Key/Secret was entered incorrectly, or the <code>entity_id</code> is out of range (free plan: 0–3, paid plan: 0–7).",
+        "guide_channel_p_faq1_a": "First check that the OpenClaw log shows a successful <code>Bound entity</code> message. If not, it's usually because the API Key was entered incorrectly, or the <code>entity_id</code> is out of range (free plan: 0–3, paid plan: 0–7).",
 
 
 
@@ -7260008,7 +7260050,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_3": "Go to <strong>Settings → Channel API</strong> and click \\\"Add API Key\\\". The system will generate a Key + Secret pair — copy them immediately, as the Secret is only shown once.",
+        "guide_channel_p_3": "Go to <strong>Settings → Channel API</strong> and click \"+ New Key\". The system generates an API Key (it starts with <code>eck_</code>) — copy it. That key is all you need: no Secret is shown and none is required.",
 
 
 
@@ -7260904,7 +7260946,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_faq1_a": "First check that the OpenClaw log shows a successful <code>Bound entity</code> message. If not, it's usually because the API Key/Secret was entered incorrectly, or the <code>entity_id</code> is out of range (free plan: 0–3, paid plan: 0–7).",
+        "guide_channel_p_faq1_a": "First check that the OpenClaw log shows a successful <code>Bound entity</code> message. If not, it's usually because the API Key was entered incorrectly, or the <code>entity_id</code> is out of range (free plan: 0–3, paid plan: 0–7).",
 
 
 
@@ -7513295,6 +7513337,9 @@ const TRANSLATIONS = {
 
 
         "common_copy_key": "📋 نسخ المفتاح",
+        "settings_channel_api_desc": "تحصل كل إضافة OpenClaw على مفتاح API خاص بها. الصقه في إعدادات channel في OpenClaw. هذا المفتاح هو كل ما تحتاجه — لا يوجد Secret منفصل.",
+        "settings_channel_new_key_title": "🔑 انسخ مفتاح API الخاص بك",
+        "settings_channel_key_only_hint": "هذا المفتاح هو كل ما تحتاجه. لا يُعرض أي Secret ولا حاجة إليه.",
 
 
 
