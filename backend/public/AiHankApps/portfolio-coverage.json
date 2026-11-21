@@ -174,7 +174,7 @@
       "id": "timehut",
       "name": "拾光AI雲端相簿",
       "publicGoogle": true,
-      "publicApple": false,
+      "publicApple": true,
       "introUrl": "https://eclawbot.com/AiHankApps/guides/timehut/",
       "officialUrl": null,
       "webUrl": "https://just-healing-production.up.railway.app/app/index.html",
