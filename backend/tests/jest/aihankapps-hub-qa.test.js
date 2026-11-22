@@ -90,3 +90,36 @@ test('diagnostic is admin-only in debug and 404 before DB access in production',
         expect((await supertest(a).get('/api/debug/aihankapps-hub-qa').set('x-admin','1')).status).toBe(200);
     } finally { process.env.NODE_ENV = before; if (railway === undefined) delete process.env.RAILWAY_ENVIRONMENT; else process.env.RAILWAY_ENVIRONMENT = railway; }
 });
+
+describe('private R2 publication', () => {
+    const { Readable } = require('stream');
+    const bytes = Buffer.concat([Buffer.from('GIF89a'), Buffer.alloc(8)]);
+    const sha = require('crypto').createHash('sha256').update(bytes).digest('hex');
+    let client, previous;
+    beforeEach(() => {
+        previous = { ...process.env };
+        for (const key of ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY']) process.env[key] = 'SYNTHETIC';
+        client = { send: jest.fn(async () => ({ ContentType: 'image/gif', ContentLength: bytes.length, Body: Readable.from([bytes]) })), destroy: jest.fn() };
+        jest.doMock('@aws-sdk/client-s3', () => ({ S3Client: jest.fn(() => client), PutObjectCommand: jest.fn(v => v), GetObjectCommand: jest.fn(v => v) }));
+        jest.doMock('@aws-sdk/s3-request-presigner', () => ({ getSignedUrl: jest.fn(async () => 'https://synthetic.r2.cloudflarestorage.com/private-capability') }));
+    });
+    afterEach(() => { process.env = previous; jest.dontMock('@aws-sdk/client-s3'); jest.dontMock('@aws-sdk/s3-request-presigner'); });
+    const ready = () => { const b = batch(); for (const i of b.items) { i.sha256 = sha; i.mediaKey = qa.mediaKey(i.id, sha); } return b; };
+    test('upload capability is bounded; publication streams and verifies all ten original GIFs', async () => {
+        const signed = await qa.prepareMedia({ item: '01', sha256: sha, size: bytes.length }); expect(signed.key).toContain(sha); expect(signed.url).toMatch(/^https:/);
+        await qa.publish(pool(), ready()); expect(client.send).toHaveBeenCalledTimes(10); expect(client.destroy).toHaveBeenCalledTimes(11);
+        await expect(qa.prepareMedia({ item: '01', sha256: sha, size: 100000000 })).rejects.toHaveProperty('code', 'QA_MEDIA_SIZE');
+        delete process.env.R2_SECRET_ACCESS_KEY;
+        await expect(qa.prepareMedia({ item: '01', sha256: sha, size: bytes.length })).rejects.toHaveProperty('code', 'QA_MEDIA_UNAVAILABLE');
+    });
+    test.each(['type', 'length', 'magic', 'digest'])('a mismatched cloud GIF blocks publication before DB writes: %s', async kind => {
+        const data = kind === 'magic' ? Buffer.alloc(14) : kind === 'digest' ? Buffer.concat([Buffer.from('GIF89a'), Buffer.alloc(8, 1)]) : bytes;
+        client.send.mockImplementation(async () => ({ ContentType: kind === 'type' ? 'text/html' : 'image/gif', ContentLength: kind === 'length' ? 15 : 14, Body: Readable.from([data]) }));
+        const p = pool(); await expect(qa.publish(p, ready())).rejects.toHaveProperty('code'); expect(p.calls).toEqual([]); expect(client.destroy).toHaveBeenCalled();
+    });
+    test('administrator media is proxied as private GIF bytes, not a signed URL', async () => {
+        const p = pool(); p.b.items = ready().items;
+        const r = await app(p).get('/api/aihankapps/hub/qa/timehut/media/01').set('x-test-auth', 'admin');
+        expect(r.status).toBe(200); expect(r.headers['content-type']).toContain('image/gif'); expect(r.body).toEqual(bytes); expect(r.headers.location).toBeUndefined(); expect(r.headers['cache-control']).toContain('private, no-store');
+    });
+});
