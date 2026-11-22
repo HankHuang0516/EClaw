@@ -3,6 +3,12 @@
   'use strict';
   const strings = {
   "zh-TW": {
+    "activeIntro": "請逐項檢視目前批次的 GIF 並留下評論；核准僅適用該項修訂。",
+    "historyIntro": "歷史批次已移出待審區，完整差異、GIF、評論及處理結果仍保留。",
+    "archivedBatch": "歷史批次（唯讀）",
+    "noFeedback": "此修訂尚無評論；沒有評論不代表核准。",
+    "before": "修改前",
+    "after": "修改後",
     "title": "操作 GIF 與逐項評論",
     "intro": "01–10 原修正已批准並套用 QA。請逐項留下補充意見，處理結果會回到原項。",
     "loading": "讀取中…",
@@ -35,6 +41,12 @@
     "replyToAlert": "請直接回覆對應警示；每小時都會檢查確認狀態與對策文字。"
   },
   "en": {
+    "activeIntro": "Review each GIF in the active batch and leave feedback. Approval applies only to that item revision.",
+    "historyIntro": "Historical batches are outside pending review. Full changes, GIFs, feedback and results are retained.",
+    "archivedBatch": "Batch history (read only)",
+    "noFeedback": "No feedback on this revision; missing feedback is not approval.",
+    "before": "Before",
+    "after": "After",
     "title": "Operation GIFs and feedback",
     "intro": "The original fixes 01–10 are approved and applied in QA. Add feedback per item; results appear here.",
     "loading": "Loading…",
@@ -67,6 +79,12 @@
     "replyToAlert": "Reply directly to the relevant alert. We track confirmations and response text hourly."
   },
   "zh-CN": {
+    "activeIntro": "请逐项查看当前批次的 GIF 并留下评论；批准仅适用该项修订。",
+    "historyIntro": "历史批次已移出待审区，完整差异、GIF、评论及处理结果仍保留。",
+    "archivedBatch": "历史批次（只读）",
+    "noFeedback": "此修订尚无评论；没有评论不代表批准。",
+    "before": "修改前",
+    "after": "修改后",
     "title": "操作 GIF 与逐项评论",
     "intro": "01–10 原修正已批准并应用于 QA。请逐项留下补充意见，处理结果会回到原项。",
     "loading": "读取中…",
@@ -99,6 +117,12 @@
     "replyToAlert": "请直接回复对应警示；每小时都会检查确认状态与对策文字。"
   },
   "ja": {
+    "activeIntro": "現在のバッチの各 GIF を確認し、コメントしてください。承認はその項目のリビジョンのみに適用されます。",
+    "historyIntro": "過去のバッチは確認待ちから除外されています。変更内容、GIF、コメント、処理結果はすべて保持されます。",
+    "archivedBatch": "バッチ履歴（読み取り専用）",
+    "noFeedback": "このリビジョンにはコメントがありません。コメントがないことは承認を意味しません。",
+    "before": "変更前",
+    "after": "変更後",
     "title": "操作 GIF と項目別コメント",
     "intro": "01–10 の修正は承認済みで QA に適用されています。各項目へのコメントと対応結果をここで確認できます。",
     "loading": "読み込み中…",
@@ -131,6 +155,12 @@
     "replyToAlert": "該当する通知に直接返信してください。毎時、確認状態と対策文を確認します。"
   },
   "ko": {
+    "activeIntro": "현재 묶음의 각 GIF를 검토하고 의견을 남겨 주세요. 승인은 해당 항목의 버전에만 적용됩니다.",
+    "historyIntro": "이전 묶음은 검토 대기에서 제외되었습니다. 전체 변경 사항, GIF, 의견 및 처리 결과는 유지됩니다.",
+    "archivedBatch": "묶음 기록 (읽기 전용)",
+    "noFeedback": "이 버전에는 의견이 없습니다. 의견이 없다고 승인된 것은 아닙니다.",
+    "before": "변경 전",
+    "after": "변경 후",
     "title": "조작 GIF 및 항목별 의견",
     "intro": "01–10 수정은 승인되어 QA에 적용되었습니다. 항목별 의견과 처리 결과를 확인하세요.",
     "loading": "불러오는 중…",

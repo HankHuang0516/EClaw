@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const express = require('express');
-const request = require('supertest');
+const request = require('./helpers/local-supertest');
 const hub = require('../../aihankapps-hub');
 
 const PAGE_DIR = path.resolve(__dirname, '../../aihankapps-hub');
@@ -668,9 +668,9 @@ describe('EClaw Hub assets retain the existing private allowlist and admin gate'
     }
     test.each(['hub-eclaw.js', 'hub-eclaw-i18n.js', 'hub-eclaw.css'])('%s is inaccessible to anonymous and member sessions, and served privately to an admin', async file => {
         const { server, pool } = app(), url = '/AiHankApps/hub/' + file;
-        expect((await request(server).get(url)).status).toBe(401);
-        expect((await request(server).get(url).set('x-test-role', 'member')).status).toBe(403);
-        const allowed = await request(server).get(url).set('x-test-role', 'admin');
+        expect((await (await request(server)).get(url)).status).toBe(401);
+        expect((await (await request(server)).get(url).set('x-test-role', 'member')).status).toBe(403);
+        const allowed = await (await request(server)).get(url).set('x-test-role', 'admin');
         expect(allowed.status).toBe(200);
         expect(allowed.headers['cache-control']).toContain('private, no-store');
         expect(allowed.headers['cdn-cache-control']).toBe('no-store');
@@ -680,9 +680,9 @@ describe('EClaw Hub assets retain the existing private allowlist and admin gate'
     test('source maps, traversal, writes and foreign origins do not bypass asset protection', async () => {
         const { server } = app();
         for (const name of ['hub-eclaw.js.map', 'hub-eclaw-secret.js', '..%2Faihankapps-hub.js']) {
-            expect((await request(server).get('/AiHankApps/hub/' + name).set('x-test-role', 'admin')).status).toBe(404);
+            expect((await (await request(server)).get('/AiHankApps/hub/' + name).set('x-test-role', 'admin')).status).toBe(404);
         }
-        expect((await request(server).post('/AiHankApps/hub/hub-eclaw.js').set('x-test-role', 'admin')).status).toBe(405);
-        expect((await request(server).get('/AiHankApps/hub/hub-eclaw.js').set('x-test-role', 'admin').set('origin', 'https://evil.invalid')).status).toBe(403);
+        expect((await (await request(server)).post('/AiHankApps/hub/hub-eclaw.js').set('x-test-role', 'admin')).status).toBe(405);
+        expect((await (await request(server)).get('/AiHankApps/hub/hub-eclaw.js').set('x-test-role', 'admin').set('origin', 'https://evil.invalid')).status).toBe(403);
     });
 });
