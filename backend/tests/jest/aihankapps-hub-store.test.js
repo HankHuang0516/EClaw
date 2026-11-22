@@ -822,6 +822,7 @@ describe('admin hub store: the Claude usage meter', () => {
     });
 
     test('the reading is taken with the CLI\'s local command, outside any session, and is refused if the model was called', () => {
+        process.env.AIHANKAPPS_HUB_USAGE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'hub-usage-'));
         const ok = spawnOf(answer());
         const got = collect.collectClaudeUsage({ spawn: ok.spawn, now: NOW, bins: ['/nope/claude', '/bin/claude'], exists: b => b === '/bin/claude', cwd: '/tmp' });
         expect(got.value.quota.windows.map(w => [w.id, w.usedPct])).toEqual([['session', 12], ['week', 44], ['week-fable', 37.5]]);
@@ -835,6 +836,67 @@ describe('admin hub store: the Claude usage meter', () => {
         expect(collect.collectClaudeUsage({ spawn: spawnOf('not json').spawn, bins: ['/bin/claude'], exists: () => true }).detail).toMatch(/JSON/);
         expect(collect.collectClaudeUsage({ spawn: spawnOf('', { status: 1 }).spawn, bins: ['/bin/claude'], exists: () => true }).detail).toMatch(/exit 1/);
         expect(collect.collectClaudeUsage({ spawn: ok.spawn, bins: ['/nope/claude'], exists: () => false }).detail).toMatch(/not found/);
+    });
+
+    // The CLI's own sign-in can expire; only its owner can renew it. Until then a session inside the desktop app
+    // leaves the plan's numbers in a small file, and the collector imports that instead of going stale.
+    describe('when the CLI is signed out', () => {
+        const SIGNED_OUT = JSON.stringify({ type: 'result', is_error: false, num_turns: 0, local_command: 'usage', result: 'Total cost: $0.0000\nUsage: 0 input, 0 output\n', usage: {} });
+        const signedOut = () => spawnOf(SIGNED_OUT).spawn;
+        const reading = (dir, value) => fs.writeFileSync(path.join(dir, 'claude-usage-reading.json'), typeof value === 'string' ? value : JSON.stringify(value));
+        const WINDOWS = [{ id: 'week', label: '本週・所有模型', usedPct: 42, resetsAt: Date.UTC(2026, 10, 25, 14) }, { id: 'week-fable', label: '本週・Fable', usedPct: 30, resetsAt: Date.UTC(2026, 10, 25, 14) }];
+        let dir;
+        beforeEach(() => { dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hub-usage-')); process.env.AIHANKAPPS_HUB_USAGE_DIR = dir; });
+
+        test('a fresh reading left by an app session is imported in place of the CLI\'s', async () => {
+            reading(dir, { v: 1, at: NOW - 40 * 60000, source: 'app-session', windows: WINDOWS });
+            const got = collect.collectClaudeUsage({ spawn: signedOut(), now: NOW, bins: ['/bin/claude'], exists: () => true });
+            expect(got.via).toBe('app-session');
+            expect(got.value.quota).toEqual({ windows: WINDOWS });
+            expect(got.value.notes[0]).toMatch(/App 工作階段/);
+            const built = collect.toEnvelope({ id: 'claude-usage', apps: [] }, got, { now: NOW, appIds: APPS });
+            expect(built.error).toBeUndefined();
+            expect(await store.importEnvelope(writePool(), built.envelope, { appIds: APPS })).toMatchObject({ source: 'claude-usage', meters: 2 });
+        });
+
+        test('a reading that is old, from the future, malformed or missing is not imported, and the failure says so', () => {
+            const read = () => collect.collectClaudeUsage({ spawn: signedOut(), now: NOW, bins: ['/bin/claude'], exists: () => true });
+            expect(read().detail).toMatch(/no plan limit.*no fresh reading from an app session/);
+            for (const bad of [{ v: 1, at: NOW - collect.USAGE_READING_MAX_AGE_MS - 1, windows: WINDOWS }, { v: 1, at: NOW + 3600000, windows: WINDOWS }, { v: 2, at: NOW, windows: WINDOWS },
+                { v: 1, at: NOW, windows: [] }, { v: 1, at: NOW, windows: [{ id: 'week', label: '本週', usedPct: 140, resetsAt: null }] }, { v: 1, at: NOW, windows: [{ id: 'Week!', label: 'x', usedPct: 4, resetsAt: null }] },
+                { v: 1, at: NOW, windows: [{ id: 'week', label: 'x', usedPct: '42', resetsAt: null }] }, 'not json']) {
+                reading(dir, bad);
+                expect(read().value).toBeNull();
+            }
+            // only the numbers: anything else a file carries is left behind
+            reading(dir, { v: 1, at: NOW, windows: [{ ...WINDOWS[0], email: 'someone@example.com', note: 'x' }] });
+            expect(read().value.quota.windows).toEqual([WINDOWS[0]]);
+        });
+
+        test('a working CLI is always preferred, and a reading that reached the model is refused, not replaced', () => {
+            reading(dir, { v: 1, at: NOW, source: 'app-session', windows: WINDOWS });
+            const ok = collect.collectClaudeUsage({ spawn: spawnOf(answer()).spawn, now: NOW, bins: ['/bin/claude'], exists: () => true });
+            expect(ok.via).toBeUndefined();
+            expect(ok.value.quota.windows.map(w => w.id)).toEqual(['session', 'week', 'week-fable']);
+            expect(collect.collectClaudeUsage({ spawn: spawnOf(answer({ num_turns: 1 })).spawn, now: NOW, bins: ['/bin/claude'], exists: () => true }).value).toBeNull();
+            // no CLI on the machine at all: the app's reading still serves
+            expect(collect.collectClaudeUsage({ spawn: signedOut(), now: NOW, bins: ['/nope/claude'], exists: () => false }).via).toBe('app-session');
+        });
+
+        test('the state file tells the app-side session whether a reading is wanted, and since when', () => {
+            const state = () => JSON.parse(fs.readFileSync(path.join(dir, 'claude-usage-state.json'), 'utf8'));
+            collect.collectClaudeUsage({ spawn: signedOut(), now: NOW, bins: ['/bin/claude'], exists: () => true });
+            expect(state()).toEqual({ at: new Date(NOW).toISOString(), cli: 'no_plan', since: new Date(NOW).toISOString() });
+            collect.collectClaudeUsage({ spawn: signedOut(), now: NOW + HOUR, bins: ['/bin/claude'], exists: () => true });
+            expect(state()).toEqual({ at: new Date(NOW + HOUR).toISOString(), cli: 'no_plan', since: new Date(NOW).toISOString() });
+            collect.collectClaudeUsage({ spawn: spawnOf(answer()).spawn, now: NOW + 2 * HOUR, bins: ['/bin/claude'], exists: () => true });
+            expect(state()).toEqual({ at: new Date(NOW + 2 * HOUR).toISOString(), cli: 'ok' });
+            collect.collectClaudeUsage({ spawn: spawnOf('', { status: 1 }).spawn, now: NOW + 3 * HOUR, bins: ['/bin/claude'], exists: () => true });
+            expect(state().cli).toBe('failed');
+            // a directory that cannot be written is not an error of the reading
+            process.env.AIHANKAPPS_HUB_USAGE_DIR = '/dev/null/nowhere';
+            expect(collect.collectClaudeUsage({ spawn: spawnOf(answer()).spawn, now: NOW, bins: ['/bin/claude'], exists: () => true }).value.quota.windows.length).toBe(3);
+        });
     });
 
     test('the meter travels in the envelope, is validated, and is kept on the source\'s receipt', async () => {
