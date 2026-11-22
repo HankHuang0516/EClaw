@@ -140,3 +140,8 @@ One import carries at most 190 accounts and 44 KB: the most recently active keep
 ## Checking a deployment
 
 Anonymous: `curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' -H 'Accept: text/html' https://eclawbot.com/AiHankApps/hub/` should print `302` and the login URL; `/api/aihankapps/hub/data` should print `401`; `/api/aihankapps/hub/access` should answer `{"success":true,"admin":false}`; `/api/aihankapps/hub/services` should print `401`. The signed-in view needs an administrator's existing browser session; do not collect credentials to test it.
+
+
+## Timehut operation GIF feedback (2026-11-22)
+
+The Timehut APP page includes ten privately stored operation GIFs with per-item comments, immutable response history and current C1–C7 coverage. See [AIHANKAPPS_HUB_QA.md](AIHANKAPPS_HUB_QA.md) for the admin/same-origin API, operator bridge, hourly feedback workflow and release-integration boundary. These add one narrow append-only HTTP write; the earlier descriptions of mutes/acks as the only writes are historical.
