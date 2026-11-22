@@ -72,5 +72,7 @@ Hank：「確保排程可以自主處理判斷所有的警示問題 如果需要
 - 確認與對策（2026-11-13）：Hank 在中樞按「確認」、在旁邊寫的對策，排程都讀得到。每則待處理警示帶 `ack`（有沒有確認、對策文字）；還沒回覆的對策以 `reason: "plan"` 排在 `pending` 最前面，警示已解除的也一樣；`acks` 列出近期全部。排程寫了 note 之後才算回覆過。
 - `TRIAGE.md`：排程的判斷規則（每一類警示怎麼判斷、怎麼寫 note／ask）。要調整排程的行為就改這份，合併到 main 後下一輪自動生效。
 - `triage-runner.zsh`：裝成 `~/.local/bin/aihankapps-hub-triage`，由 `~/Library/LaunchAgents/tw.aihankapps.hub-triage.plist` 每 15 分鐘執行一次。沒有待處理的警示就不叫模型（不耗 token）。日誌在 `~/Library/Logs/aihankapps-hub-triage/`。
+- **CLI 登入失效時**（2026-11-22）：模型那一步若回「Failed to authenticate／OAuth session expired」，這不算「排程卡住」。腳本會把待判斷的清單交接出去（`~/.local/share/aihankapps-hub-triage/handoff.json`：`reason`、`since`、`at`、`pending`、`fp`），由在桌面 App 內執行、使用 App 自己登入的排程照同一份 `TRIAGE.md` 與 `triage.js` 代為判斷；失效超過一天才發一則 `human-claude-cli-login`，只請擁有者做一件事：在終端機執行 `claude`、輸入 `/login`。下一次模型跑成功就自動收回交接與那一則警示。
+- **Claude 用量讀數的備援**：`collect.js` 的 `claude-usage` 來源在 CLI 沒有方案資訊時，改讀 App 工作階段留下的 `~/.local/share/aihankapps-hub/claude-usage-reading.json`（`{ v: 1, at, windows: [{ id, label, usedPct, resetsAt }] }`，三小時內有效，只有百分比與重置時間）；同資料夾的 `claude-usage-state.json` 記 CLI 這次讀得到（`ok`）或讀不到（`no_plan`／`not_found`／`failed`）與起始時間。
 - 停用：`launchctl bootout gui/$(id -u)/tw.aihankapps.hub-triage`。立刻跑一次：`launchctl kickstart gui/$(id -u)/tw.aihankapps.hub-triage`。
 

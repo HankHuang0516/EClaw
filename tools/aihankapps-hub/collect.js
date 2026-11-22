@@ -208,7 +208,47 @@ function parseClaudeUsage(text, now = Date.now()) {
   }
   return windows.length ? { windows } : null;
 }
-function collectClaudeUsage({ spawn = spawnSync, now = Date.now(), bins = CLAUDE_BINS, exists = fs.existsSync, cwd = os.homedir() } = {}) {
+// The CLI's sign-in can expire ("OAuth session expired and could not be refreshed"); `/usage` then answers without a
+// plan line, and only the owner can sign in again. A session that runs inside the desktop app still sees the plan
+// (its own usage tool) and leaves what it read in a small file on this machine; when the CLI has nothing, a reading
+// no older than three hours is imported instead. The file holds percentages and reset times only. The state file
+// next to it tells that session whether a reading is wanted.
+const USAGE_READING_MAX_AGE_MS = 3 * 3600000;
+const usageDir = () => process.env.AIHANKAPPS_HUB_USAGE_DIR || path.join(os.homedir(), '.local', 'share', 'aihankapps-hub');
+function readUsageReading({ dir = usageDir(), now = Date.now(), read = fs.readFileSync } = {}) {
+  let r;
+  try { r = JSON.parse(read(path.join(dir, 'claude-usage-reading.json'), 'utf8')); } catch (_error) { return null; }
+  if (!r || r.v !== 1 || !Number.isFinite(r.at) || r.at > now + 300000 || now - r.at > USAGE_READING_MAX_AGE_MS || !Array.isArray(r.windows) || r.windows.length < 1 || r.windows.length > 8) return null;
+  const windows = [];
+  for (const w of r.windows) {
+    if (!w || typeof w !== 'object' || !/^[a-z0-9][a-z0-9-]{0,39}$/.test(String(w.id)) || typeof w.label !== 'string' || !w.label || w.label.length > 40) return null;
+    if (typeof w.usedPct !== 'number' || !(w.usedPct >= 0 && w.usedPct <= 100) || (w.resetsAt !== null && !Number.isSafeInteger(w.resetsAt))) return null;
+    windows.push({ id: w.id, label: w.label, usedPct: w.usedPct, resetsAt: w.resetsAt });
+  }
+  return { windows };
+}
+// { at, cli: 'ok' | 'no_plan' | 'not_found' | 'failed', since }. `since` is when the CLI last stopped answering. Never throws.
+function noteUsageState(cli, { dir = usageDir(), now = Date.now() } = {}) {
+  try {
+    const file = path.join(dir, 'claude-usage-state.json');
+    let before = null; try { before = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (_error) { before = null; }
+    const at = new Date(now).toISOString();
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(file, JSON.stringify({ at, cli, ...(cli === 'ok' ? {} : { since: before && before.cli && before.cli !== 'ok' && before.since ? before.since : at }) }));
+  } catch (_error) { /* a note for another tool, not a condition */ }
+}
+function collectClaudeUsage(options = {}) {
+  const { now = Date.now(), reading = readUsageReading, note = noteUsageState } = options;
+  const cli = readClaudeCli(options);
+  if (cli.value) { note('ok', { now }); return cli; }
+  note(/no plan limit/.test(cli.detail) ? 'no_plan' : /not found/.test(cli.detail) ? 'not_found' : 'failed', { now });
+  // A reading that reached the model is refused, not replaced: that one is a fault in this tool, not a signed-out CLI.
+  if (/reached the model/.test(cli.detail)) return cli;
+  const quota = reading({ now });
+  if (quota) return { value: { series: [], facts: [], notes: ['Claude CLI 讀不到方案用量（' + String(cli.detail).slice(0, 60) + '）：這次用 App 工作階段留下的讀數'], quota }, via: 'app-session' };
+  return { value: null, detail: cli.detail + '; no fresh reading from an app session either' };
+}
+function readClaudeCli({ spawn = spawnSync, now = Date.now(), bins = CLAUDE_BINS, exists = fs.existsSync, cwd = os.homedir() } = {}) {
   const bin = bins.find(b => exists(b));
   if (!bin) return { value: null, detail: 'Claude CLI not found (looked in ' + bins.join(', ') + ')' };
   // Not inside another Claude session's environment, and nothing saved: this is a reading, not a conversation.
@@ -303,4 +343,4 @@ async function main(argv, { run = runRailway, log = console.log, now = Date.now,
 
 if (require.main === module) main(process.argv.slice(2)).then(code => { process.exitCode = code; });
 
-module.exports = { HUB, MAX_SHELL_ENVELOPE_BYTES, LOCAL, SOURCES, TIMEHUT_STATS_URL, TIMEHUT_ADMIN_URL, TIMEHUT_KEY_FILE, readTimehutKey, collectClaudeUsage, parseClaudeUsage, parseReset, collectTimehut, collectTimehutDetail, timehutUserFact, toEnvelope, importShell, describe, main, taipeiToday, collectAttention, ATTENTION_FILE };
+module.exports = { HUB, MAX_SHELL_ENVELOPE_BYTES, LOCAL, SOURCES, TIMEHUT_STATS_URL, TIMEHUT_ADMIN_URL, TIMEHUT_KEY_FILE, readTimehutKey, collectClaudeUsage, readClaudeCli, readUsageReading, noteUsageState, USAGE_READING_MAX_AGE_MS, parseClaudeUsage, parseReset, collectTimehut, collectTimehutDetail, timehutUserFact, toEnvelope, importShell, describe, main, taipeiToday, collectAttention, ATTENTION_FILE };

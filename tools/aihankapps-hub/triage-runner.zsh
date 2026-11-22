@@ -11,6 +11,10 @@
 #      files: no other shell command, no file writes, no web, no MCP servers, no user settings (--setting-sources project).
 #   5. If the model cannot finish three runs in a row, this script itself raises a "needs you" alert in the hub, so a stuck
 #      schedule is seen where Hank looks, never only in this log.
+#   6. A model run that fails because this Mac's Claude CLI is signed out ("OAuth session expired…", 2026-11-20: two
+#      days without a judgement) is not "stuck": the run leaves handoff.json for a schedule that runs inside the desktop
+#      app (it uses the app's own sign-in and judges with the same triage.js), and after a day asks for the one thing
+#      only the owner can do: sign the CLI in. Both are taken back as soon as a model run works again.
 # Logs: ~/Library/Logs/aihankapps-hub-triage/triage-YYYYMMDD.log (two weeks kept).
 # Stop: launchctl bootout gui/$(id -u)/tw.aihankapps.hub-triage     Run now: launchctl kickstart gui/$(id -u)/tw.aihankapps.hub-triage
 set -u
@@ -61,7 +65,7 @@ if [[ -z "$count" ]]; then
   exit 1
 fi
 echo 0 > "$STATE/hub-failures"
-if [[ "$count" = 0 ]]; then log "nothing pending"; echo 0 > "$STATE/model-failures"; exit 0; fi
+if [[ "$count" = 0 ]]; then log "nothing pending"; echo 0 > "$STATE/model-failures"; rm -f "$WORK/handoff.json"; exit 0; fi
 
 # The same list as last time, within the hour: the last run is still being retried on the next tick, not every 15 minutes.
 fp="$(print -r -- "$PENDING" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const v=JSON.parse(s);console.log(require("crypto").createHash("sha256").update(v.alerts.map(a=>a.id+" "+a.reason).sort().join("\n")).digest("hex"))})')"
@@ -86,13 +90,39 @@ ALLOWED=("Bash(node $TOOL:*)"
   "Read(/$HOME/Library/Logs/aihankapps-hub-collector/**)" "Read(/$HOME/Library/Logs/aihankapps-report-watchdog/**)" "Read(/$HOME/Library/Logs/aihankapps-hub-triage/**)"
   "Read(/$HOME/.local/share/AiHankApps/analytics/daily-report-latest.json)" "Read(//Volumes/codex_2T/codex_project/Wishlist/fb-manual-pipeline-20261021/runs/claude/**)")
 perl -e 'alarm shift; exec @ARGV' "$CLAUDE_SECONDS" claude -p "$PROMPT" --model "$MODEL" --setting-sources project --strict-mcp-config --permission-mode default \
-  --allowedTools "${ALLOWED[@]}" --disallowedTools Write Edit NotebookEdit WebFetch WebSearch Task Agent --no-session-persistence < /dev/null | tail -5
+  --allowedTools "${ALLOWED[@]}" --disallowedTools Write Edit NotebookEdit WebFetch WebSearch Task Agent --no-session-persistence < /dev/null 2>&1 | tail -5 > "$WORK/run/last-output.txt"
 code=${pipestatus[1]}
+cat "$WORK/run/last-output.txt"
 log "model run exit $code"
+# Signed out is its own case: nothing here can fix it, and retrying every hour is not "stuck".
+signed_out=0
+if [[ $code -ne 0 ]] && grep -q -i -E 'Failed to authenticate|OAuth session expired|OAuth token has expired|authentication_error|Invalid API key|Please run /login|Not logged in' "$WORK/run/last-output.txt"; then signed_out=1; fi
 
 # --- 5. did it finish?
 AFTER="$(node "$TOOL" pending)"
 left="$(print -r -- "$AFTER" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const v=JSON.parse(s);console.log(v.success?v.alerts.filter(a=>a.reason==="new").length:"")}catch{console.log("")}})')"
+if [[ $signed_out = 0 && $code -eq 0 ]]; then
+  # The CLI works again: the stand-in schedule is released and the request to sign in is taken back.
+  rm -f "$WORK/handoff.json" "$STATE/signed-out-since"
+  if [[ -f "$STATE/raised-login" ]]; then node "$TOOL" resolve human-claude-cli-login --note "Claude CLI 已恢復登入：$(TZ=Asia/Taipei date '+%m/%d %H:%M') 警示排程自己跑完一輪判斷。" >/dev/null && rm -f "$STATE/raised-login"; fi
+fi
+if [[ $signed_out = 1 ]]; then
+  [[ -f "$STATE/signed-out-since" ]] || date -u '+%Y-%m-%dT%H:%M:%SZ' > "$STATE/signed-out-since"
+  since="$(cat "$STATE/signed-out-since")"
+  total="$(print -r -- "$AFTER" | num pending)"
+  SINCE="$since" FP="$fp" LEFT="${total:-$count}" node -e 'const fs=require("fs");const f=process.argv[1];fs.writeFileSync(f+".tmp",JSON.stringify({reason:"CLI_SIGNED_OUT",since:process.env.SINCE,at:new Date().toISOString().replace(/\.\d+Z$/,"Z"),pending:Number(process.env.LEFT)||0,fp:process.env.FP}));fs.renameSync(f+".tmp",f)' "$WORK/handoff.json"
+  echo 0 > "$STATE/model-failures"
+  log "the Claude CLI is signed out (since $since): ${total:-$count} alerts handed to the app-side schedule (handoff.json)"
+  # The vague "stuck" notice, if this very cause raised it earlier, is replaced by the precise one below.
+  if [[ -f "$STATE/raised-stuck" ]]; then node "$TOOL" resolve human-alert-schedule-stuck --note "原因查明：這台 Mac 的 Claude CLI 登入失效，不是排程卡住。警示判斷已改由 App 內的排程代做。" >/dev/null && rm -f "$STATE/raised-stuck"; fi
+  # Asked once, and only after a day: a short lapse that the CLI recovers from by itself never reaches the hub.
+  if [[ ! -f "$STATE/raised-login" && -n "$(find "$STATE/signed-out-since" -mmin +1440 2>/dev/null)" ]]; then
+    node "$TOOL" raise claude-cli-login --title "這台 Mac 的 Claude CLI 需要重新登入" \
+      --ask "在這台 Mac 的終端機執行 claude，輸入 /login 並在瀏覽器完成登入（約一分鐘）。登入後不用通知：警示排程下一輪跑成功就會自己關掉這一則。" \
+      --note "從 $since 起 CLI 登入失效。這段期間警示判斷由 App 內的聊聊排程每 2 小時代做、Claude 用量電池也由它代讀，功能沒有停；登入後會恢復成每 15 分鐘判斷一次。" && touch "$STATE/raised-login"
+  fi
+  exit 0
+fi
 if [[ "$left" = 0 ]]; then
   echo 0 > "$STATE/model-failures"
   if [[ -f "$STATE/raised-stuck" ]]; then node "$TOOL" resolve human-alert-schedule-stuck --note "排程恢復了：$(TZ=Asia/Taipei date '+%m/%d %H:%M') 這一輪把所有新警示都判斷完。" >/dev/null && rm -f "$STATE/raised-stuck"; fi
