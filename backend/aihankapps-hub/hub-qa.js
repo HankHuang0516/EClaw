@@ -29,6 +29,10 @@
       if (!batch) { host.innerHTML = '<section class="card qa-review"><h2>' + t('title') + '</h2><p>' + t('empty') + '</p></section>'; return; }
       const coverage = batch.coverage || {};
       const table = '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>' + t('dimension') + '</th><th>Android</th><th>iOS</th></tr></thead><tbody>' + Object.entries(coverage).map(([k, v]) => '<tr><th>' + esc(k) + '</th>' + ['android', 'ios'].map(p => '<td>' + (v[p] ? esc(v[p].passed + ' / ' + v[p].denominator + ' · ' + v[p].percent.toFixed(4) + '%') : '—') + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
+      if (batch.reviewState === 'archived') {
+        host.innerHTML = '<section class="card qa-review qa-next-stage"><header class="card-h"><div><h2>' + t('nextTitle') + '</h2><p>' + t('completedIntro') + '</p></div></header><p class="note">' + t('noNewReview') + '</p><p>' + esc(batch.phaseSummary || '') + '</p><details><summary>' + t('coverage') + '</summary>' + table + '<p>' + esc(batch.coverageNote) + '</p></details><p class="hint">' + t('updated') + ' ' + esc(stamp(batch.updatedAt)) + ' · ' + t('hourly') + '</p><p>' + t('replyToAlert') + '</p><details class="qa-completed"><summary>' + t('completedBatch') + ' (10)</summary>' + batch.items.map(archivedItem).join('') + '</details></section>';
+        return;
+      }
       host.innerHTML = '<section class="card qa-review"><header class="card-h"><div><h2>' + t('title') + '</h2><p>' + t('intro') + '</p></div></header><p class="note">' + t('pending') + '</p><details><summary>' + t('coverage') + '</summary>' + table + '<p>' + esc(batch.coverageNote) + '</p></details><p class="hint">' + t('updated') + ' ' + esc(stamp(batch.updatedAt)) + ' · ' + t('hourly') + '</p><p>' + esc(batch.releasePolicy) + '</p><div class="qa-items">' + batch.items.map(item).join('') + '</div></section>';
       host.querySelectorAll('form[data-qa-item]').forEach(form => {
         const id = form.dataset.qaItem, revision = form.dataset.qaRevision, key = id + ':' + revision;
@@ -63,6 +67,11 @@
           button.hidden = true; box.appendChild(image);
         };
       });
+    }
+    function archivedItem(i) {
+      const cs = comments.filter(c => c.item === i.id), rs = results.filter(r => r.item === i.id);
+      const entries = cs.map(c => ({ at: c.created_at, title: t('comment') + ' #' + c.id, body: c.body })).concat(rs.map(r => ({ at: r.created_at, title: t('result'), body: r.body }))).sort((a, b) => new Date(a.at) - new Date(b.at));
+      return '<article class="qa-archived"><h3>' + esc(i.id + ' · ' + i.title) + '</h3><p>' + esc(i.status) + '</p><details><summary>' + t('history') + ' (' + entries.length + ')</summary><ol class="qa-history">' + entries.map(c => '<li><b>' + esc(c.title) + '</b><time>' + esc(stamp(c.at)) + '</time><p>' + esc(c.body) + '</p></li>').join('') + '</ol></details></article>';
     }
     function item(i) {
       const cs = comments.filter(c => c.item === i.id), rs = results.filter(r => r.item === i.id);

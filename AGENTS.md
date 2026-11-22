@@ -1515,3 +1515,5 @@ Hank 直接指示：「以後你自行判斷是否清理舊QA的決策」。此�
 ## Timehut private GIF feedback (2026-11-22)
 
 The Timehut admin Hub page has operator-published ten-item QA reviews, private R2 GIF proxying and append-only per-revision feedback/results. See `backend/AIHANKAPPS_HUB_QA.md`. Keep original approved status separate from full E2E coverage and formal native-release inclusion. The hourly Codex feedback heartbeat belongs to the original Timehut E2E chat; never treat a missing comment as approval, remove historical comments, publish GIFs in public Git, or widen administrator access.
+
+Hank normally responds directly on review alerts (2026-11-22). Hourly Timehut follow-up must inspect active/cleared warning state and updated acknowledgement/plan text as the primary channel, plus per-item comments. Completed batch01 is archived out of pending review at his explicit direction; never re-open it merely because full E2E remains incomplete.

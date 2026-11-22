@@ -14,7 +14,7 @@ function pool() {
         if (sql.includes('FROM aihankapps_hub_qa_comments WHERE request_id')) return { rows: rows.filter(r => r.request_id === v[0]) };
         if (sql.includes('INSERT INTO aihankapps_hub_qa_comments')) {
             const i = b.items.find(x => x.id === v[2] && x.revision === v[3]);
-            if (!i || rows.some(r => r.request_id === v[0])) return { rows: [] };
+            if (!i || b.reviewState === 'archived' || rows.some(r => r.request_id === v[0])) return { rows: [] };
             const r = { id: String(rows.length + 1), request_id: v[0], item: v[2], revision: v[3], decision: v[4], body: v[5], created_at: new Date() }; rows.push(r); return { rows: [r] };
         }
         if (sql.includes('WHERE batch=$1 AND id>')) return { rows: rows.filter(r => BigInt(r.id) > BigInt(v[1])).slice(0, v[2]) };
@@ -122,4 +122,16 @@ describe('private R2 publication', () => {
         const r = await app(p).get('/api/aihankapps/hub/qa/timehut/media/01').set('x-test-auth', 'admin');
         expect(r.status).toBe(200); expect(r.headers['content-type']).toContain('image/gif'); expect(r.body).toEqual(bytes); expect(r.headers.location).toBeUndefined(); expect(r.headers['cache-control']).toContain('private, no-store');
     });
+});
+
+
+test('archived batches reject stale open-page submissions without deleting history', async () => {
+    const p = pool(); await qa.comment(p,input); p.b.reviewState='archived';
+    expect((await qa.comment(p,input)).duplicate).toBe(true);
+    const next={...input,requestId:'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'};
+    await expect(qa.comment(p,next)).rejects.toHaveProperty('code','QA_BATCH_ARCHIVED');
+    expect(p.rows).toHaveLength(1); expect((await qa.read(p)).batch.reviewState).toBe('archived');
+    const r=await app(p).post('/api/aihankapps/hub/qa/timehut/comments').set('x-test-auth','admin').set('Origin','https://eclawbot.com').send(next);
+    expect(r.status).toBe(409); expect(r.body.error).toBe('QA_BATCH_ARCHIVED');
+    expect(()=>qa.validateBatch({...batch(),reviewState:'deleted'})).toThrow('QA_BATCH_STATE');
 });

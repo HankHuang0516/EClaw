@@ -48,12 +48,13 @@ async function comment(pool, input) {
     }
     const b = await snapshot(pool), i = b && b.items.find(x => x.id === v.item);
     if (!i) fail('QA_ITEM_MISSING');
+    if (b.reviewState === 'archived') fail('QA_BATCH_ARCHIVED');
     if (i.revision !== v.revision) fail('QA_REVISION_CONFLICT');
     // Bind the comment to the CURRENT snapshot in one SQL statement, including
     // a concurrent operator revision. A stale approval cannot approve new GIFs.
     const r = await pool.query(`INSERT INTO aihankapps_hub_qa_comments (request_id,batch,item,revision,decision,body)
         SELECT $1,$2,$3,$4,$5,$6 FROM aihankapps_hub_qa_batches b
-        WHERE b.id=$2 AND EXISTS (SELECT 1 FROM jsonb_array_elements(b.payload->'items') i WHERE i->>'id'=$3 AND i->>'revision'=$4)
+        WHERE b.id=$2 AND COALESCE(b.payload->>'reviewState','active') <> 'archived' AND EXISTS (SELECT 1 FROM jsonb_array_elements(b.payload->'items') i WHERE i->>'id'=$3 AND i->>'revision'=$4)
         ON CONFLICT(request_id) DO NOTHING RETURNING id::text,item,revision,decision,body,created_at`, [v.requestId, BATCH, v.item, v.revision, v.decision, v.body]);
     if (!r.rows[0]) {
         const concurrent = await pool.query('SELECT id::text,item,revision,decision,body,created_at FROM aihankapps_hub_qa_comments WHERE request_id=$1', [v.requestId]);
@@ -91,6 +92,8 @@ async function verifyMedia(item) {
     } finally { client.destroy(); }
 }
 function validateBatch(b) {
+    if (b && b.reviewState !== undefined && !['active','archived'].includes(b.reviewState)) fail('QA_BATCH_STATE');
+    if (b && b.phaseSummary !== undefined && (typeof b.phaseSummary !== 'string' || b.phaseSummary.length > 3000)) fail('QA_BATCH_TEXT');
     if (!b || b.id !== BATCH || b.app !== APP || !Array.isArray(b.items) || b.items.length !== 10 || new Set(b.items.map(i => i.id)).size !== 10) fail('QA_BATCH');
     for (const i of b.items) {
         if (!ITEM.test(i.id) || !REV.test(i.revision) || !SHA.test(i.sha256) || i.mediaKey !== mediaKey(i.id, i.sha256) || !Number.isInteger(i.bytes) || i.bytes < 14 || i.bytes > 20 * 1024 * 1024) fail('QA_BATCH_ITEM');
@@ -125,7 +128,7 @@ function mount(api, { getPool, limited }) {
     const express = require('express');
     const error = (res, e) => {
         const code = /^QA_[A-Z_]+$/.test(e.code || '') ? e.code : 'QA_UNAVAILABLE';
-        return res.status(code.includes('CONFLICT') ? 409 : code === 'QA_ITEM_MISSING' ? 404 : code === 'QA_UNAVAILABLE' || code === 'QA_MEDIA_UNAVAILABLE' ? 503 : 400).json({ success: false, error: code });
+        return res.status(code.includes('CONFLICT') || code === 'QA_BATCH_ARCHIVED' ? 409 : code === 'QA_ITEM_MISSING' ? 404 : code === 'QA_UNAVAILABLE' || code === 'QA_MEDIA_UNAVAILABLE' ? 503 : 400).json({ success: false, error: code });
     };
     api.get('/qa/timehut', async (req, res) => { try { res.json(await read(getPool(), { after: req.query.after || '0' })); } catch (e) { error(res, e); } });
     api.post('/qa/timehut/comments', express.json({ limit: '20kb' }), async (req, res) => {

@@ -81,3 +81,5 @@ Hank：「確保排程可以自主處理判斷所有的警示問題 如果需要
 ## 拾光逐項GIF評論追蹤（2026-11-22）
 
 `qa.js` uploads the ten original GIFs privately, publishes a verified review snapshot, reads paginated comments and appends processing results over the existing Railway operator channel. See `backend/AIHANKAPPS_HUB_QA.md`. The Codex hourly heartbeat `gif-e2e` handles this E2E review workflow; the existing general 15-minute alert triage is unchanged.
+
+`qa.js updates CHECKPOINT.json` reads direct review-alert responses/state (including cleared alerts), then item comments. It deduplicates observed responses and resumes interrupted processing without advancing handled cursors; direct alerts are Hank’s primary response channel. See the QA contract for `reviewState=archived` and the next-stage view.
