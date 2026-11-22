@@ -27,7 +27,12 @@
     "write": "你的評論",
     "submit": "送出評論",
     "changes": "需要修改",
-    "approve": "確認本項目前版本"
+    "approve": "確認本項目前版本",
+    "nextTitle": "下一階段 E2E",
+    "completedIntro": "第1批01–10已處理完成並移出待審區，原紀錄保留。",
+    "noNewReview": "目前沒有新的一批GIF待審，繼續完整E2E。",
+    "completedBatch": "已完成的第1批",
+    "replyToAlert": "請直接回覆對應警示；每小時都會檢查確認狀態與對策文字。"
   },
   "en": {
     "title": "Operation GIFs and feedback",
@@ -54,7 +59,12 @@
     "write": "Your feedback",
     "submit": "Submit feedback",
     "changes": "Changes requested",
-    "approve": "Confirm this current revision"
+    "approve": "Confirm this current revision",
+    "nextTitle": "Next E2E stage",
+    "completedIntro": "Batch 01–10 is complete and removed from pending review. Its records are retained.",
+    "noNewReview": "No new GIF batch awaits review. Full E2E continues.",
+    "completedBatch": "Completed batch 1",
+    "replyToAlert": "Reply directly to the relevant alert. We track confirmations and response text hourly."
   },
   "zh-CN": {
     "title": "操作 GIF 与逐项评论",
@@ -81,7 +91,12 @@
     "write": "你的评论",
     "submit": "提交评论",
     "changes": "需要修改",
-    "approve": "确认本项当前版本"
+    "approve": "确认本项当前版本",
+    "nextTitle": "下一阶段 E2E",
+    "completedIntro": "第1批01–10已处理完成并移出待审区，原记录保留。",
+    "noNewReview": "目前没有新的一批GIF待审，继续完整E2E。",
+    "completedBatch": "已完成的第1批",
+    "replyToAlert": "请直接回复对应警示；每小时都会检查确认状态与对策文字。"
   },
   "ja": {
     "title": "操作 GIF と項目別コメント",
@@ -108,7 +123,12 @@
     "write": "コメント内容",
     "submit": "コメントを送信",
     "changes": "修正が必要",
-    "approve": "現在の版を確認"
+    "approve": "現在の版を確認",
+    "nextTitle": "次の E2E 段階",
+    "completedIntro": "第1組01–10は対応済みで、審査待ちから外しました。記録は保持しています。",
+    "noNewReview": "新しい GIF の審査待ちはありません。全体の E2E を続行します。",
+    "completedBatch": "完了した第1組",
+    "replyToAlert": "該当する通知に直接返信してください。毎時、確認状態と対策文を確認します。"
   },
   "ko": {
     "title": "조작 GIF 및 항목별 의견",
@@ -135,7 +155,12 @@
     "write": "의견 내용",
     "submit": "의견 보내기",
     "changes": "수정 필요",
-    "approve": "현재 버전 확인"
+    "approve": "현재 버전 확인",
+    "nextTitle": "다음 E2E 단계",
+    "completedIntro": "첫 번째 01–10 항목은 처리되어 검토 대기에서 제외되었습니다. 기록은 유지됩니다.",
+    "noNewReview": "새 GIF 검토 대기는 없습니다. 전체 E2E를 계속합니다.",
+    "completedBatch": "완료한 첫 번째 묶음",
+    "replyToAlert": "해당 알림에 직접 답변하세요. 매시간 확인 상태와 답변 내용을 확인합니다."
   }
 };
   window.HubQaText = { t: key => { const raw = document.documentElement.lang || 'zh-TW'; const lang = raw === 'zh-Hant' ? 'zh-TW' : raw === 'zh-Hans' ? 'zh-CN' : raw; return (strings[lang] || strings.en)[key] || strings.en[key] || key; } };
