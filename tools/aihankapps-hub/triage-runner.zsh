@@ -56,6 +56,14 @@ num() { node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{con
 # --- 2. 拾光 reports
 log "pull: $(node "$TOOL" pull | tr -d '\n' | cut -c1-300)"
 
+# --- 2b. signed out earlier? `claude auth status` is local and free: once the owner has signed in again, the handoff
+#         and the request are taken back on this very tick, whether or not an alert is waiting for a model run.
+if [[ -f "$STATE/signed-out-since" ]] && claude auth status 2>/dev/null | grep -q '"loggedIn": *true'; then
+  rm -f "$WORK/handoff.json" "$STATE/signed-out-since" "$STATE/last-fp"
+  if [[ -f "$STATE/raised-login" ]]; then node "$TOOL" resolve human-claude-cli-login --note "Claude CLI 已重新登入（$(TZ=Asia/Taipei date '+%m/%d %H:%M') 確認）。警示判斷恢復為每 15 分鐘由排程自己做。" >/dev/null && rm -f "$STATE/raised-login"; fi
+  log "the Claude CLI is signed in again: handoff released"
+fi
+
 # --- 3. what is due
 PENDING="$(node "$TOOL" pending)"
 count="$(print -r -- "$PENDING" | num pending)"
