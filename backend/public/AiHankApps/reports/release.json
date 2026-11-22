@@ -1,12 +1,12 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-21T01:10:02.808Z",
-  "day": "2026-11-21",
+  "generatedAt": "2026-11-22T01:07:38.317Z",
+  "day": "2026-11-22",
   "catalogHash": "856cf221aade843669e077349802412de47d7d10dea6060a399284656377f309",
-  "contentHash": "4adb4ffea5504f6e75b8e11a5a25ddf151e392a5f331762b830f237ce5f005b0",
+  "contentHash": "15e04a88d23ccce03910260dac1c4cd510a31005fb2ef140eecd788bbe0c7ef2",
   "files": {
-    "index.html": "0adb5d7ef3d9e7883b55315bd882de7df9c6c473f70c064ad64e8353e6042d63",
-    "data.js": "2035c7eaaba93f3d5b9aa8c0567af6d1620447945fa5fcc85c6fddbd737cdf5c",
+    "index.html": "5e4d76495c6c582abac97e0a2fb1321ef5d171c6cec7c37dc53755501fc7f168",
+    "data.js": "e6b5cc7dd5e65fac9835785bf515c57795c81582d1566a4b8fe0a525bceb4845",
     "report-view.js": "15fc3705ec1b9a54287fe5e49b0697b53ff6ee251b321ce7489dd1f3a85b3d73"
   }
 }
