@@ -132,6 +132,36 @@ Hank 在中樞每則警示上可以按「確認」，旁邊可以寫一段**對�
   - `--note`：寫出原因代碼與次數。
   - `--ask`：「<用戶> 的上傳被伺服器以『<原因>』拒收，同一筆重送也不會過。要查的話，把這則的通知 ID 貼給 Claude（detail 裡有伺服器日誌要搜尋的那一行）。」
 
+**拾光 LINE 收件（`th-line-stuck-*`、`th-line-blocked-*`，拾光伺服器 1.0.118 起的欄位）**：`basis.user` 是那位用戶在中樞的代號，`basis.reasons` 是這個帳號每個原因代碼的照片張數，`basis.readAt` 是這次讀數的時間（收集工具每小時讀一次）。
+
+為什麼有這兩條：2026-11-22 拾光後端 1.0.128 的 LINE 辨識／直接上傳流程只處理一個帳號，其他帳號的 LINE 照片永遠停在 `MATCH_NOT_CONFIGURED`（收件頁顯示「有收件相簿尚未設定參考對象或打開辨識開關」），即使用戶已經設定好；是用戶回報才發現。所以這兩種警示要當成「用戶的照片沒有進相簿」來看，不要當成雜訊。
+
+`th-line-stuck-*`（照片還在下載、辨識或匯入，最久的一張超過 1 小時沒往下走）：
+
+- 先用 `show worker-off-timehut-mcode`、`show worker-bad-timehut-mcode` 看拾光人物比對 worker 有沒有警示。
+  - 有，而且那則是會自己恢復的原因（例如 `minimax_quota_exhausted`）→ `auto`：「辨識 worker <原因>，恢復後這些照片會自己往下走；worker 的警示另外處理。」
+  - 有，而且是要人處理的（`worker_auth_problem`、重看還在的 `worker-off-*`）→ `human`，跟那則 worker 警示寫同一件事，`--ask` 指到 worker。
+- 沒有 worker 警示可以解釋，代表 worker 看起來正常但照片沒有流動，就是流程本身壞了 → `human`，不要寫 `auto` 等它自己好。
+  - `--title`：「拾光 LINE 收件卡住」。
+  - `--ask`：「<用戶> 有 N 張 LINE 照片卡在『<階段>』超過 X 小時，人物比對 worker 看起來正常。請把通知 ID 貼給 Claude 查伺服器的 LINE 收件流程有沒有把這些照片交給 worker。」
+  - `basis.accountsStuck` 是 2 以上（好幾個帳號同時卡住）→ 在 `--note` 寫明「好幾個帳號同時卡住，是整個流程停了，不是單一用戶的問題」。
+- 例外：`basis.waiting` 很多（100 張以上）、worker 也沒有警示，可能只是一次收到很多張、排隊比較久 → `auto`：「一次收到很多張，可能只是排隊；重看時還在就請你處理。」
+- 重看時（`recheck-auto`）還在 → `human`，同上。
+
+`th-line-blocked-*`（照片停在「卡住」階段，不會自己往下走）：先看 `basis.kind`。
+
+- `setup`（`MATCH_NOT_CONFIGURED`、`COLLECTION_NOT_CONFIGURED`、`REFERENCES_NOT_READY`）→ 一律 `human`。這類有兩種可能，排程看不到帳號的設定，分不出來，所以要寫清楚讓 Hank 或 Claude 工作階段去查：
+  - 用戶還沒設定完（沒選參考對象、也沒開直接上傳）→ 用戶可能需要幫忙。
+  - 用戶已經設定好，照片還是卡著 → 系統錯誤，要修後端。
+  - 排程看得到、比較像系統錯誤的跡象：`basis.accountsSameReason` 是 2 以上（好幾個帳號同時同一個原因）、`basis.processedBefore` 大於 0（這個帳號以前有 LINE 照片處理完，表示設定過）。有其中一個，`--title` 寫「拾光 LINE 收件流程可能壞了」；都沒有，寫「拾光用戶 LINE 收件還沒設定完？」。
+  - `--ask`：「<用戶> 有 N 張 LINE 照片因為『<原因>』不會進相簿。請把通知 ID 貼給 Claude 唯讀查這個帳號收件相簿的設定：有存『直接上傳』或已存並啟用參考照片，照片卻還卡著＝系統錯誤，要修後端；兩個都沒有＝用戶還沒設定完，要不要聯絡用戶教他設定由你決定。」
+- `review`（`RECOGNITION_UNCERTAIN`，舊流程辨識不確定、等人確認）→ `human`：「<用戶> 有 N 張辨識不確定的照片停著，現行流程沒有確認的地方，不會自己進相簿；要不要讓它們重新跑辨識由你決定。」
+- `media`（`UNSUPPORTED_MEDIA`）→ `human`：「<用戶> 傳了 N 個伺服器不處理的檔案，不會進相簿；要不要支援這種檔案由你決定。」
+- `system`（伺服器的自動辨識、辨識連線或相簿連線沒準備好）→ `human`：「拾光伺服器的 <原因>，LINE 照片都停著；請把通知 ID 貼給 Claude 查伺服器。」
+- `unknown`（原因代碼中樞還不認得）→ `human`，`--note` 寫出 `basis.reasons` 裡的代碼。
+
+**給接手查的 Claude 工作階段**：判斷「用戶還沒設定」還是「系統錯誤」，要在拾光伺服器上唯讀查那個帳號的收件相簿：直接上傳的開關有存（值 2），或參考照片有存而且啟用，照片卻還是 `MATCH_NOT_CONFIGURED` → 系統錯誤，升級處理；兩個都沒有 → 用戶還沒設定完。用 railway ssh 在拾光容器裡唯讀查，不要從這台 Mac 直接呼叫拾光正式站。
+
 **評分（`rating-*`）** → `auto`：「評分是累積結果，排程沒辦法改變；有新的一星評論時會再提出。」
 
 **排程自己發的（`human`、`human-*`），重看時** → 確認問題是否已經消失：

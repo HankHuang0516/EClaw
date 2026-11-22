@@ -485,6 +485,15 @@ describe('admin hub store: Railway service resources', () => {
         expect(crowded.value.facts.find(f => f.key === 'thUsersMeta').value.dropped).toBeGreaterThan(0);
         expect(crowded.value.facts.some(f => f.key === 'thUser00abcdef01')).toBe(true);
     });
+
+    test('時光相簿 LINE inbox (server 1.0.118): stages, reason codes and the oldest waiting time reach the hub, which the stuck / blocked alerts read', () => {
+        const fact = collect.timehutUserFact({ ref: 'aaaaaaaaaa', name: 'u', line: { received: 6, stages: { recognition_queued: 2, blocked: 3, uploaded: 1, excluded: 0 },
+            reasons: { MATCH_NOT_CONFIGURED: 3, RECOGNITION_QUEUED: 2, UPLOAD_COMPLETED: 1, 'not a code': 4 }, oldestWaitingAt: 1700000000000, lastReceivedAt: 1700000100000, days: [] } });
+        expect(fact.line.stages).toEqual({ blocked: 3, recognition_queued: 2, uploaded: 1 });
+        expect(fact.line.reasons).toEqual({ MATCH_NOT_CONFIGURED: 3, RECOGNITION_QUEUED: 2, UPLOAD_COMPLETED: 1 });
+        expect([fact.line.oldestWaitingAt, fact.line.lastReceivedAt]).toEqual([1700000000000, 1700000100000]);
+        expect(collect.timehutUserFact({ ref: 'bbbbbbbbbb', name: 'v' }).line).toBeNull();   // an older server: no LINE facts, so no LINE alerts
+    });
 });
 
 describe('admin hub import script (runs inside the EClaw container)', () => {
