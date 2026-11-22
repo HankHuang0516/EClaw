@@ -67,6 +67,7 @@ else console.log(JSON.stringify({ success: true, pulled: true }));
 `);
         const claude = path.join(home, '.local', 'bin', 'claude');
         fs.writeFileSync(claude, `#!/bin/sh
+if [ "$1" = auth ]; then if [ "$(cat "${home}/claude-mode" 2>/dev/null)" = ok ]; then echo '{ "loggedIn": true }'; else echo '{ "loggedIn": false }'; fi; exit 0; fi
 if [ "$(cat "${home}/claude-mode" 2>/dev/null)" = ok ]; then echo '[]' > "${home}/pending.json"; echo judged; exit 0; fi
 echo "Failed to authenticate: OAuth session expired and could not be refreshed"; exit 1
 `);
@@ -125,6 +126,23 @@ echo "Failed to authenticate: OAuth session expired and could not be refreshed";
         expect(fs.existsSync(w.state('signed-out-since'))).toBe(false);
         expect(fs.existsSync(w.state('raised-login'))).toBe(false);
         expect(w.calls().filter(c => /^resolve human-claude-cli-login /.test(c)).length).toBe(1);
+    });
+
+    onMac('a sign-in is noticed on the next tick even when no alert is waiting for a model run', () => {
+        const w = world(); w.pending(NEW);
+        w.run();
+        const dayAgo = new Date(Date.now() - 25 * 3600000); fs.utimesSync(w.state('signed-out-since'), dayAgo, dayAgo);
+        w.nextHour(); w.run();
+        expect(fs.existsSync(w.state('raised-login'))).toBe(true);
+        w.pending([]);                                      // the stand-in schedule judged everything meanwhile
+        w.run();
+        expect(fs.existsSync(w.state('raised-login'))).toBe(true);   // still signed out: the request stays
+        w.mode('ok');
+        expect(w.run().status).toBe(0);
+        expect(fs.existsSync(w.state('raised-login'))).toBe(false);
+        expect(fs.existsSync(w.state('signed-out-since'))).toBe(false);
+        expect(w.calls().filter(c => /^resolve human-claude-cli-login /.test(c)).length).toBe(1);
+        expect(w.log()).toMatch(/signed in again: handoff released/);
     });
 
     onMac('a model run that fails for another reason still counts toward "stuck" as before', () => {
