@@ -571,7 +571,7 @@ describe('admin hub: the page reads the answer correctly', () => {
             ['ops-stale', 'warn', null], ['listing-rate', 'warn', 'weesh'], ['chat-pending', 'info', 'weesh'], ['rating-alpha', 'warn', 'alpha']]);
         expect(noisy.D.appState(noisy.D.APP.weesh)).toBe('crit');
         expect(noisy.D.appState(noisy.D.APP.alpha)).toBe('warn');
-        expect(noisy.D.RULES).toHaveLength(18);
+        expect(noisy.D.RULES).toHaveLength(20);
     });
 
     test('拾光 upload quota and refusals (server 1.0.126): full or nearly full accounts and refusals that need a look raise alerts; transient or old ones do not', async () => {
@@ -607,6 +607,75 @@ describe('admin hub: the page reads the answer correctly', () => {
         delete page.D.latest.facts.timehut;
         page.D.computeAlerts(NOW);
         expect(page.D.ALERTS.filter(a => /^th-/.test(a.id))).toEqual([]);   // an older server (no quota / refusals) raises nothing
+    });
+
+    test('拾光 LINE inbox (server 1.0.118 fields): photos waiting over an hour and photos the flow cannot move raise alerts; fresh, missing or older data does not', async () => {
+        const page = await loadPage();
+        const M = 60000, H = 60 * M, READ = NOW - 5 * M;
+        const u = (name, line) => ({ v: 1, name, line });
+        const l = (stages, reasons, oldestWaitingAt) => ({ received: Object.values(stages).reduce((a, n) => a + n, 0), stages, reasons, oldestWaitingAt, lastReceivedAt: READ - 30 * M, days: [] });
+        page.D.latest.facts.timehut = {
+            thUsersMeta: { v: 1, users: 12, asOf: new Date(READ).toISOString() },
+            thUseraaaaaaaaaa: u('等很久', l({ recognition_queued: 4, downloading: 1, uploaded: 10 }, { RECOGNITION_QUEUED: 4, RECEIVER_LEASED: 1, UPLOAD_COMPLETED: 10 }, READ - (2 * H + 10 * M))),
+            thUserbbbbbbbbbb: u('等半天', l({ recognition_queued: 2 }, { RECOGNITION_QUEUED: 2 }, READ - 7 * H)),
+            thUsercccccccccc: u('剛收到', l({ recognition_queued: 3 }, { RECOGNITION_QUEUED: 3 }, READ - 20 * M)),
+            thUserdddddddddd: u('沒設定', l({ blocked: 3 }, { MATCH_NOT_CONFIGURED: 3 }, null)),
+            thUsereeeeeeeeee: u('設定過', l({ blocked: 2, uploaded: 5, excluded: 1, recognition_queued: 1 }, { MATCH_NOT_CONFIGURED: 2, UPLOAD_COMPLETED: 5, MATCH_NO_PERSON: 1, RECOGNITION_QUEUED: 1 }, READ - 10 * M)),
+            thUserffffffffff: u('兩種原因', l({ blocked: 3 }, { UNSUPPORTED_MEDIA: 1, RECOGNITION_UNCERTAIN: 2 }, null)),
+            thUser1111111111: u('新原因', l({ blocked: 1 }, { SOMETHING_NEW: 1 }, null)),
+            thUser2222222222: u('舊伺服器', null),
+            thUser3333333333: u('沒有時間', l({ recognition_queued: 5 }, { RECOGNITION_QUEUED: 5 }, null)),
+            thUser4444444444: u('沒有階段', { received: 3 }),
+            thUser5555555555: u('沒卡住', l({ uploaded: 2 }, { MATCH_NOT_CONFIGURED: 1, UPLOAD_COMPLETED: 2 }, null)),
+            thUser6666666666: u('處理完', l({ uploaded: 4, excluded: 2 }, { UPLOAD_COMPLETED: 4, MATCH_NO_PERSON: 2 }, null))
+        };
+        page.D.computeAlerts(NOW);
+        const th = page.D.ALERTS.filter(a => /^th-line-/.test(a.id)), by = Object.fromEntries(th.map(a => [a.ref, a]));
+        expect(th.map(a => [a.ref, a.sev, a.app, a.rule])).toEqual([
+            ['th-line-blocked-1111111111.BLOCKED', 'warn', 'timehut', '拾光 LINE 收件無法處理'],
+            ['th-line-stuck-aaaaaaaaaa', 'warn', 'timehut', '拾光 LINE 收件卡住'],
+            ['th-line-stuck-bbbbbbbbbb', 'crit', 'timehut', '拾光 LINE 收件卡住'],                    // six hours or more is severe
+            ['th-line-blocked-dddddddddd.MATCH_NOT_CONFIGURED', 'warn', 'timehut', '拾光 LINE 收件無法處理'],
+            ['th-line-blocked-eeeeeeeeee.MATCH_NOT_CONFIGURED', 'warn', 'timehut', '拾光 LINE 收件無法處理'],
+            ['th-line-blocked-ffffffffff.RECOGNITION_UNCERTAIN', 'warn', 'timehut', '拾光 LINE 收件無法處理'], // one alert per reason, most photos first
+            ['th-line-blocked-ffffffffff.UNSUPPORTED_MEDIA', 'warn', 'timehut', '拾光 LINE 收件無法處理']]);
+        // stuck: how many, since when, at which steps; measured at the reading's time; other stuck accounts point at the whole flow
+        const stuck = by['th-line-stuck-aaaaaaaaaa'];
+        expect(stuck).toMatchObject({ id: 'th-line-stuck-aaaaaaaaaa', title: '等很久 的 LINE 收件卡住：5 張等了 2 小時 10 分', since: READ - (2 * H + 10 * M), go: 'live' });
+        expect(stuck.detail).toContain('有 5 張 LINE 照片還在收件流程裡（排隊辨識 4、從 LINE 下載中 1），最久的一張從 11/10 18:45 等到讀數時間 11/10 20:55');
+        expect(stuck.detail).toContain('辨識 worker 或伺服器的收件流程停了；另有 1 個帳號也卡住');
+        expect(stuck.basis).toEqual({ user: 'aaaaaaaaaa', waiting: 5, waitingStages: { downloading: 1, recognition_queued: 4 }, oldestWaitingAt: READ - (2 * H + 10 * M), readAt: READ, waitedMinutes: 130,
+            accountsStuck: 2, reasons: { RECOGNITION_QUEUED: 4, RECEIVER_LEASED: 1, UPLOAD_COMPLETED: 10 } });
+        expect(by['th-line-stuck-bbbbbbbbbb'].title).toBe('等半天 的 LINE 收件卡住：2 張等了 7 小時');
+        // blocked: the photos will not move; setup or a broken flow; the same reason on another account says "broken flow"
+        const unset = by['th-line-blocked-dddddddddd.MATCH_NOT_CONFIGURED'];
+        expect(unset).toMatchObject({ id: 'th-line-blocked-dddddddddd', title: '沒設定 的 LINE 照片無法處理：收件相簿沒有參考對象，也沒開直接上傳', since: null });
+        expect(unset.detail).toBe('有 3 張 LINE 照片停在這裡，不會自己往下走、也不會進相簿。可能是用戶還沒設定完（要幫他設定），也可能是流程壞了（用戶其實設定好了）：請查這個帳號收件相簿的參考對象與直接上傳設定。另有 1 個帳號也是同樣原因，比較像是流程壞了。');
+        expect(unset.basis).toMatchObject({ user: 'dddddddddd', reason: 'MATCH_NOT_CONFIGURED', kind: 'setup', count: 3, blocked: 3, received: 3, processedBefore: 0, accountsSameReason: 2, readAt: READ });
+        expect(by['th-line-blocked-eeeeeeeeee.MATCH_NOT_CONFIGURED'].detail).toContain('這個帳號之前有 6 張 LINE 照片處理完。');
+        expect(by['th-line-blocked-ffffffffff.RECOGNITION_UNCERTAIN']).toMatchObject({ title: '兩種原因 的 LINE 照片無法處理：辨識結果不確定，等人確認', basis: { kind: 'review', count: 2, blocked: 3 } });
+        expect(by['th-line-blocked-ffffffffff.UNSUPPORTED_MEDIA'].basis.kind).toBe('media');
+        expect(by['th-line-blocked-1111111111.BLOCKED']).toMatchObject({ title: '新原因 的 LINE 照片無法處理：原因中樞還不認得', basis: { kind: 'unknown', count: 1, reasons: { SOMETHING_NEW: 1 } } });
+        expect(page.D.mutable(unset)).toBe(true);
+        expect([page.D.lineBlockedKind('PROVIDER_NOT_CONNECTED'), page.D.lineBlockedKind('REFERENCES_NOT_READY'), page.D.lineBlockedText('COLLECTION_NOT_CONFIGURED')]).toEqual(['system', 'setup', '收件相簿沒有設定']);
+        // a stale reading does not age by itself: 30 minutes at reading time stays 30 minutes even three hours later ...
+        const t = page.D.latest.facts.timehut;
+        page.D.latest.facts.timehut = { thUsersMeta: { v: 1, users: 1, asOf: new Date(NOW - 3 * H).toISOString() }, thUseraaaaaaaaaa: u('舊讀數', l({ recognition_queued: 2 }, { RECOGNITION_QUEUED: 2 }, NOW - 3 * H - 30 * M)) };
+        page.D.computeAlerts(NOW);
+        expect(page.D.ALERTS.filter(a => /^th-line-/.test(a.id))).toEqual([]);
+        // ... and a reading without its time is measured against now
+        delete page.D.latest.facts.timehut.thUsersMeta.asOf;
+        page.D.computeAlerts(NOW);
+        expect(page.D.ALERTS.filter(a => /^th-line-/.test(a.id)).map(a => [a.ref, a.basis.waitedMinutes])).toEqual([['th-line-stuck-aaaaaaaaaa', 210]]);
+        // once the photos move on, the alerts are gone
+        t.thUseraaaaaaaaaa.line.stages = { uploaded: 15 };
+        t.thUserbbbbbbbbbb.line = null;
+        t.thUserdddddddddd.line.stages = { recognition_queued: 3 };
+        page.D.latest.facts.timehut = t;
+        page.D.computeAlerts(NOW);
+        expect(page.D.ALERTS.filter(a => /^th-line-/.test(a.id)).map(a => a.ref)).toEqual(['th-line-blocked-1111111111.BLOCKED', 'th-line-blocked-eeeeeeeeee.MATCH_NOT_CONFIGURED',
+            'th-line-blocked-ffffffffff.RECOGNITION_UNCERTAIN', 'th-line-blocked-ffffffffff.UNSUPPORTED_MEDIA']);
+        expect(page.D.ALERTS.find(a => a.ref === 'th-line-blocked-eeeeeeeeee.MATCH_NOT_CONFIGURED').detail).not.toContain('另有');
     });
 
     test('the monitor\'s issue codes become a plain reason with its times', async () => {
@@ -756,7 +825,8 @@ describe('admin hub: the page reads the answer correctly', () => {
         expect(page.D.ALERTS.filter(a => a.ref === 'rating-alpha')).toHaveLength(1);
         // a problem the schedule found that no rule shows
         expect(by['human-line-quota']).toMatchObject({ id: 'human', sev: 'crit', title: '需要你處理：LINE 推播額度快用完', ask: '請決定是否升級 LINE 方案', rule: '排程請你處理', app: 'alpha' });
-        expect(page.D.RULES.slice(13).map(r => [r[0], r[3]])).toEqual([['新的問題回饋', 'warn'], ['排程請你處理', 'crit'], ['已略過的類似警告', 'info'], ['拾光帳號空間快滿', 'warn'], ['拾光上傳被伺服器拒收', 'warn']]);
+        expect(page.D.RULES.slice(13).map(r => [r[0], r[3]])).toEqual([['新的問題回饋', 'warn'], ['排程請你處理', 'crit'], ['已略過的類似警告', 'info'], ['拾光帳號空間快滿', 'warn'], ['拾光上傳被伺服器拒收', 'warn'],
+            ['拾光 LINE 收件卡住', 'warn'], ['拾光 LINE 收件無法處理', 'warn']]);
         // once the schedule closes the escalation, it is gone
         // the page lists what needs Hank first, then severe, warning, information
         expect(page.D.byUrgency(page.D.ALERTS).slice(0, 3).map(a => a.ref)).toEqual(['rating-alpha', 'fb-timehut-line-L1', 'human-line-quota']);

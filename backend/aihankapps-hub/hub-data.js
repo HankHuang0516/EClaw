@@ -358,7 +358,9 @@
     ['排程請你處理', '警示處理排程（每 15 分鐘看一次所有警示）', '排程判斷這件事只有你能處理，會寫明要你做什麼', 'crit'],
     ['已略過的類似警告', '你按過「以後略過類似警告」的那一類警示', '同一類的警示合併成這一則、等級是資訊，不再個別提醒；可以取消略過', 'info'],
     ['拾光帳號空間快滿', '拾光AI雲端相簿的每個帳號', '已存原檔加等待中的照片超過每帳號上限的 90%（滿了算嚴重）', 'warn'],
-    ['拾光上傳被伺服器拒收', '拾光AI雲端相簿的每個帳號', '近 2 小時有上傳被拒收：帳號滿了算嚴重；重送也不會過的原因算警告；伺服器忙這類暫時原因今天超過 20 次才算警告；只有手機傳到一半斷線的不發警示', 'warn']
+    ['拾光上傳被伺服器拒收', '拾光AI雲端相簿的每個帳號', '近 2 小時有上傳被拒收：帳號滿了算嚴重；重送也不會過的原因算警告；伺服器忙這類暫時原因今天超過 20 次才算警告；只有手機傳到一半斷線的不發警示', 'warn'],
+    ['拾光 LINE 收件卡住', '拾光AI雲端相簿每個帳號的 LINE 收件', '有照片還在下載、辨識或匯入，最久的一張超過 1 小時沒往下走（6 小時以上算嚴重）；以收集工具最後一次讀數的時間算', 'warn'],
+    ['拾光 LINE 收件無法處理', '拾光AI雲端相簿每個帳號的 LINE 收件', '有照片停在「卡住」階段，不會自己往下走，例如收件相簿沒有參考對象也沒開直接上傳；每個原因一則', 'warn']
   ];
   const COLLECTORS = { rebound: ['REBOUND 遊戲伺服器', 'REBOUND'], summit: ['活字戰紀伺服器', '雙城烽火、巔峰之戰'], wishlist: ['Wishlist.ai 後台', 'Wishlist.ai'],
     // 第四項是「沒有其他備註時」顯示的說明；帳戶明細不是只有彙總數字，要照實寫
@@ -385,6 +387,43 @@
   };
   D.refusalText = c => (D.UPLOAD_REFUSAL[c] || [c])[0];
   D.refusalKind = c => (D.UPLOAD_REFUSAL[c] || [c, 'stuck'])[1];
+  // 拾光 LINE 收件（伺服器 1.0.118 起每帳號的 line.stages／reasons／oldestWaitingAt）。等待中的階段跟伺服器 admin-stats 的 WAITING 相同；
+  // blocked 不算等待：那些照片不會自己往下走，原因看 reasons。一張照片只有一個原因，所以 blocked 的照片用「只會跟 blocked 一起出現的原因」認。
+  const LINE_WAITING = { download_queued: '等待從 LINE 下載', downloading: '從 LINE 下載中', downloaded: '已收到、等待處理', recognition_queued: '排隊辨識',
+    recognizing: '辨識中', recognized: '已辨識、等待匯入', uploading: '匯入相簿中' };
+  // 卡住的原因 →［白話, 類別］。類別：setup 用戶可能還沒設定完（也可能是流程壞了）、review 要有人確認、media 檔案本身不處理、system 伺服器或流程沒準備好
+  D.LINE_BLOCKED = {
+    MATCH_NOT_CONFIGURED: ['收件相簿沒有參考對象，也沒開直接上傳', 'setup'], COLLECTION_NOT_CONFIGURED: ['收件相簿沒有設定', 'setup'], REFERENCES_NOT_READY: ['參考照片還沒設定好', 'setup'],
+    RECOGNITION_UNCERTAIN: ['辨識結果不確定，等人確認', 'review'], UNSUPPORTED_MEDIA: ['不支援的檔案類型', 'media'], ITEM_NOT_ENGAGED: ['照片資訊不完整', 'system'],
+    AUTOMATION_DISABLED: ['伺服器的自動辨識已關閉', 'system'], AUTOMATION_NOT_READY: ['自動辨識還沒準備好', 'system'], RELEVANCE_SOURCE_NOT_READY: ['辨識來源還沒準備好', 'system'],
+    TRANSPORT_NOT_READY: ['辨識連線還沒準備好', 'system'], PROVIDER_NOT_CONNECTED: ['相簿服務（Flickr）沒有連線', 'system'], UPLOAD_ADMISSION_CLOSED: ['伺服器暫停收件', 'system'],
+    PROCESSING_STATUS_UNAVAILABLE: ['處理狀態讀不到', 'system']
+  };
+  D.lineBlockedText = c => (D.LINE_BLOCKED[c] || ['原因中樞還不認得'])[0];
+  D.lineBlockedKind = c => (D.LINE_BLOCKED[c] || [c, 'unknown'])[1];
+  const LINE_BLOCKED_WHY = {
+    setup: '可能是用戶還沒設定完（要幫他設定），也可能是流程壞了（用戶其實設定好了）：請查這個帳號收件相簿的參考對象與直接上傳設定。',
+    review: '要有人確認才會往下走；現行流程沒有確認的地方，不會自己進相簿。',
+    media: '這種檔案伺服器不處理，不會進相簿。',
+    system: '是伺服器的辨識或相簿連線沒準備好，跟用戶的設定無關，多半每個帳號都受影響。',
+    unknown: '伺服器標成卡住，但沒有中樞認得的原因；這個帳號的原因代碼在判斷依據的 reasons。'
+  };
+  // 一個帳號的 LINE 收件狀態；伺服器沒有給階段（舊版）就是 null，不判斷。asOf 是這次讀數的時間
+  const lineState = (u, asOf) => {
+    const l = u && u.line, s = l && l.stages;
+    if (!s || typeof s !== 'object') return null;
+    const num = v => (Number.isFinite(v) && v > 0 ? v : 0), r = l.reasons && typeof l.reasons === 'object' ? l.reasons : {};
+    const waitingStages = Object.keys(LINE_WAITING).filter(k => num(s[k])).map(k => [k, s[k]]), waiting = waitingStages.reduce((a, x) => a + x[1], 0);
+    const oldest = num(l.oldestWaitingAt) || null, age = waiting && oldest ? asOf - oldest : null;
+    let blocked = [];
+    if (num(s.blocked)) {
+      blocked = Object.keys(r).filter(c => D.LINE_BLOCKED[c] && num(r[c])).map(c => [c, r[c]]).sort((a, b) => b[1] - a[1]);
+      if (!blocked.length) blocked = [['BLOCKED', s.blocked]];
+    }
+    return { waiting, waitingStages, oldest, age, stuck: age !== null && age >= HOUR, blocked, blockedTotal: num(s.blocked), reasons: r,
+      received: num(l.received), processed: num(s.uploaded) + num(s.excluded), lastReceivedAt: num(l.lastReceivedAt) || null };
+  };
+  const durText = ms => (ms >= HOUR ? Math.floor(ms / HOUR) + ' 小時' + (ms % HOUR >= MIN ? ' ' + Math.floor(ms % HOUR / MIN) + ' 分' : '') : Math.floor(ms / MIN) + ' 分鐘');
   const TIMEHUT = 'timehut', gbText = v => (v >= 1024 ** 4 ? (v / 1024 ** 4).toFixed(2) + ' TB' : v >= 1024 ** 3 ? (v / 1024 ** 3).toFixed(2) + ' GB' : Math.round(v / 1024 ** 2) + ' MB');
   const SOURCE_LABEL = { catalog: 'APP 目錄', store: '商店報表', traffic: '作品集流量', community: '作品集互動', feedback: '問題回饋', eclaw: 'EClaw 帳號', eclawChat: 'EClaw 對話', dreambuddy: '夢話夥伴後台', eclawPayments: 'EClaw 付款', imports: '匯入的後台數據', services: '後台服務檢查', inbox: '問題回饋與排程判斷' };
   // 排程型 worker（例如每小時跑一輪）兩輪之間本來就沒有程式在跑；監控會把它標成 scheduled_between_rounds
@@ -498,8 +537,13 @@
         source: '匯入的後台數據（' + id + '）', basis: { collector: id, collectedAt: c.collectedAt, hoursAgo: Math.floor((now - c.collectedAt) / HOUR) } });
     });
     // 拾光每個帳號的上傳額度與被拒收（伺服器 1.0.126 起；收集工具每小時匯入一次）
-    const th = (D.latest.facts || {})[TIMEHUT] || {};
-    Object.keys(th).filter(k => /^thUser[a-f0-9]{10}$/.test(k) && th[k] && th[k].v === 1).sort().forEach(k => {
+    const th = (D.latest.facts || {})[TIMEHUT] || {}, thKeys = Object.keys(th).filter(k => /^thUser[a-f0-9]{10}$/.test(k) && th[k] && th[k].v === 1).sort();
+    // LINE 收件的等待時間用這次讀數的時間（thUsersMeta.asOf）算，不用現在：收集停了，等待時間不會一直往上加而誤報
+    const thAsOf = Math.min(now, Date.parse((th.thUsersMeta && th.thUsersMeta.asOf) || '') || now), lines = {}, blockedAccounts = {};
+    thKeys.forEach(k => { const l = lineState(th[k], thAsOf); if (l) lines[k] = l; });
+    const stuckAccounts = Object.keys(lines).filter(k => lines[k].stuck).length;
+    Object.keys(lines).forEach(k => lines[k].blocked.forEach(b => { blockedAccounts[b[0]] = (blockedAccounts[b[0]] || 0) + 1; }));
+    thKeys.forEach(k => {
       const u = th[k], ref = k.slice(6), name = u.name || '（沒有暱稱）', q = u.quota, rf = u.refusals;
       const codes = ((rf && rf.codes) || []).filter(c => Array.isArray(c) && typeof c[0] === 'string'), recent = codes.filter(c => c[3] && now - c[3] < 2 * HOUR);
       const full = recent.filter(c => D.refusalKind(c[0]) === 'full');
@@ -520,6 +564,28 @@
           { rule: RULES[17][0], app: TIMEHUT, since: top[3] || null, code: top[0], source: '時光相簿伺服器 /api/internal/admin-stats（uploadRefusals，收集工具每小時匯入）',
             basis: { user: ref, today, week: (rf.week && rf.week.count) || 0, recentCodes: recent.map(c => ({ code: c[0], kind: D.refusalKind(c[0]), count7d: c[1], lastAt: c[3] })) } });
       }
+      // LINE 收件卡住（還在等，但超過 1 小時沒往下走）與無法處理（停在 blocked，不會自己往下走）
+      const l = lines[k];
+      if (!l) return;
+      const lineSource = '時光相簿伺服器 /api/internal/admin-stats（line.stages／reasons／oldestWaitingAt，收集工具每小時匯入）';
+      if (l.stuck) {
+        const others = stuckAccounts - 1, stages = l.waitingStages.slice().sort((a, b) => b[1] - a[1]);
+        add('th-line-stuck-' + ref, l.age >= 6 * HOUR ? 'crit' : 'warn', name + ' 的 LINE 收件卡住：' + l.waiting + ' 張等了 ' + durText(l.age),
+          '有 ' + l.waiting + ' 張 LINE 照片還在收件流程裡（' + stages.map(x => LINE_WAITING[x[0]] + ' ' + x[1]).join('、') + '），最久的一張從 ' + at(l.oldest) + ' 等到讀數時間 ' + at(thAsOf) +
+          '。超過 1 小時沒往下走，多半是辨識 worker 或伺服器的收件流程停了' + (others > 0 ? '；另有 ' + others + ' 個帳號也卡住，比較像是整個流程停了' : '') + '。先看即時監控的拾光人物比對 worker，再看伺服器日誌。',
+          { rule: RULES[18][0], app: TIMEHUT, since: l.oldest, go: 'live', source: lineSource,
+            basis: { user: ref, waiting: l.waiting, waitingStages: Object.fromEntries(l.waitingStages), oldestWaitingAt: l.oldest, readAt: thAsOf, waitedMinutes: Math.floor(l.age / MIN),
+              accountsStuck: stuckAccounts, reasons: l.reasons } });
+      }
+      l.blocked.forEach(b => {
+        const code = b[0], kind = code === 'BLOCKED' ? 'unknown' : D.lineBlockedKind(code), others = blockedAccounts[code] - 1;
+        add('th-line-blocked-' + ref, 'warn', name + ' 的 LINE 照片無法處理：' + D.lineBlockedText(code),
+          '有 ' + b[1] + ' 張 LINE 照片停在這裡，不會自己往下走、也不會進相簿。' + LINE_BLOCKED_WHY[kind] +
+          (others > 0 ? '另有 ' + others + ' 個帳號也是同樣原因，比較像是流程壞了。' : '') + (l.processed ? '這個帳號之前有 ' + l.processed + ' 張 LINE 照片處理完。' : ''),
+          { rule: RULES[19][0], app: TIMEHUT, code, source: lineSource,
+            basis: { user: ref, reason: code, kind, count: b[1], blocked: l.blockedTotal, received: l.received, processedBefore: l.processed, accountsSameReason: blockedAccounts[code],
+              lastReceivedAt: l.lastReceivedAt, readAt: thAsOf, reasons: l.reasons } });
+      });
     });
     applyInbox(out);
     D.ALERTS = foldMuted(out);
