@@ -7,7 +7,7 @@ const os = require('os');
 const path = require('path');
 const vm = require('vm');
 const express = require('express');
-const request = require('supertest');
+const request = require('./helpers/local-supertest');
 const hub = require('../../aihankapps-hub');
 const hubStore = require('../../aihankapps-hub-store');
 
@@ -131,31 +131,31 @@ describe('admin hub: who gets in', () => {
     test('someone who is not signed in is sent to sign in, and gets nothing of the page', async () => {
         const { app, stats } = mount();
         for (const url of ['/AiHankApps/hub/', '/AiHankApps/hub', '/AiHankApps/hub/index.html']) {
-            const res = await browser(request(app).get(url));
+            const res = await browser((await request(app)).get(url));
             expect(res.status).toBe(302);
             expect(res.headers.location).toBe('/portal/?return_to=%2FAiHankApps%2Fhub%2F');
             expect(res.headers['cache-control']).toBe('private, no-store, no-transform, max-age=0');
             expect(res.text).not.toContain('管理中樞');
         }
         for (const file of Object.keys(hub.PAGE_FILES).filter(name => name !== 'index.html')) {
-            const res = await request(app).get('/AiHankApps/hub/' + file);
+            const res = await (await request(app)).get('/AiHankApps/hub/' + file);
             expect(res.status).toBe(401);
             expect(res.body).toEqual({ success: false, error: 'Not authenticated' });
         }
-        expect((await request(app).get('/AiHankApps/hub/')).status).toBe(401);       // not a browser navigation: plain status
-        expect((await request(app).get('/api/aihankapps/hub/data')).status).toBe(401);
+        expect((await (await request(app)).get('/AiHankApps/hub/')).status).toBe(401);       // not a browser navigation: plain status
+        expect((await (await request(app)).get('/api/aihankapps/hub/data')).status).toBe(401);
         expect(stats.publicRequests).toBe(0);
     });
 
     test('a signed-in account that is not an administrator is told so, and gets no page file or data', async () => {
         const { app, stats, pool } = mount();
-        const page = await browser(as(request(app).get('/AiHankApps/hub/'), 'member'));
+        const page = await browser(as((await request(app)).get('/AiHankApps/hub/'), 'member'));
         expect(page.status).toBe(403);
         expect(page.headers['content-type']).toMatch(/text\/html/);
         expect(page.text).toContain('這個帳號沒有管理者權限');
         expect(page.text).not.toContain('hub-app.js');
-        expect((await as(request(app).get('/AiHankApps/hub/hub-app.js'), 'member')).status).toBe(403);
-        const data = await as(request(app).get('/api/aihankapps/hub/data'), 'member');
+        expect((await as((await request(app)).get('/AiHankApps/hub/hub-app.js'), 'member')).status).toBe(403);
+        const data = await as((await request(app)).get('/api/aihankapps/hub/data'), 'member');
         expect(data.status).toBe(403);
         expect(data.body).toEqual({ success: false, error: 'Admin access required' });
         expect(pool.connected).toBe(0);
@@ -164,7 +164,7 @@ describe('admin hub: who gets in', () => {
 
     test('an administrator gets the page and every file it needs, privately', async () => {
         const { app } = mount();
-        const page = await browser(as(request(app).get('/AiHankApps/hub/'), 'admin'));
+        const page = await browser(as((await request(app)).get('/AiHankApps/hub/'), 'admin'));
         expect(page.status).toBe(200);
         expect(page.headers['content-type']).toBe('text/html; charset=utf-8');
         expect(page.text).toBe(fs.readFileSync(path.join(pageDir, 'index.html'), 'utf8'));
@@ -176,56 +176,56 @@ describe('admin hub: who gets in', () => {
         expect(page.headers['content-security-policy']).toBe(hub.CONTENT_SECURITY_POLICY);
         expect(page.headers.vary).toMatch(/Cookie/);
         for (const [file, type] of Object.entries(hub.PAGE_FILES)) {
-            const res = await as(request(app).get('/AiHankApps/hub/' + file), 'admin');
+            const res = await as((await request(app)).get('/AiHankApps/hub/' + file), 'admin');
             expect([file, res.status, res.headers['content-type']]).toEqual([file, 200, type]);
             expect(Number(res.headers['content-length'])).toBe(fs.statSync(path.join(pageDir, file)).size);
         }
-        const head = await as(request(app).head('/AiHankApps/hub/hub.css'), 'admin');
+        const head = await as((await request(app)).head('/AiHankApps/hub/hub.css'), 'admin');
         expect(head.status).toBe(200);
         expect(head.text).toBeUndefined();
-        const bare = await as(request(app).get('/AiHankApps/hub?x=1'), 'admin');
+        const bare = await as((await request(app)).get('/AiHankApps/hub?x=1'), 'admin');
         expect([bare.status, bare.headers.location]).toEqual([308, '/AiHankApps/hub/']);
     });
 
     test('only the listed files exist: unknown names, traversal, writes and other origins are refused', async () => {
         const { app, stats } = mount();
         for (const name of ['secret.js', 'README.md', 'constructor', '__proto__', 'hub-app.js.map', '..%2Faihankapps-hub.js', 'a/b.js']) {
-            const res = await as(request(app).get('/AiHankApps/hub/' + name), 'admin');
+            const res = await as((await request(app)).get('/AiHankApps/hub/' + name), 'admin');
             expect([name, res.status]).toEqual([name, 404]);
         }
-        const post = await as(request(app).post('/AiHankApps/hub/'), 'admin');
+        const post = await as((await request(app)).post('/AiHankApps/hub/'), 'admin');
         expect([post.status, post.headers.allow]).toEqual([405, 'GET, HEAD']);
-        expect((await as(request(app).delete('/api/aihankapps/hub/data'), 'admin')).status).toBe(405);
-        expect((await as(request(app).get('/AiHankApps/hub/'), 'admin').set('origin', 'https://evil.test')).status).toBe(403);
-        expect((await as(request(app).get('/api/aihankapps/hub/data'), 'admin').set('origin', 'https://evil.test')).status).toBe(403);
-        expect((await as(request(app).get('/api/aihankapps/hub/data'), 'admin').set('origin', 'https://eclawbot.com')).status).toBe(200);
-        expect((await as(request(app).get('/api/aihankapps/hub/nope'), 'admin')).status).toBe(404);
+        expect((await as((await request(app)).delete('/api/aihankapps/hub/data'), 'admin')).status).toBe(405);
+        expect((await as((await request(app)).get('/AiHankApps/hub/'), 'admin').set('origin', 'https://evil.test')).status).toBe(403);
+        expect((await as((await request(app)).get('/api/aihankapps/hub/data'), 'admin').set('origin', 'https://evil.test')).status).toBe(403);
+        expect((await as((await request(app)).get('/api/aihankapps/hub/data'), 'admin').set('origin', 'https://eclawbot.com')).status).toBe(200);
+        expect((await as((await request(app)).get('/api/aihankapps/hub/nope'), 'admin')).status).toBe(404);
         expect(stats.publicRequests).toBe(0);
     });
 
     test('fails closed while the server is starting or when the admin check itself cannot answer', async () => {
         const starting = mount({ ready: false });
-        expect((await browser(as(request(starting.app).get('/AiHankApps/hub/'), 'admin'))).status).toBe(503);
-        expect((await as(request(starting.app).get('/api/aihankapps/hub/data'), 'admin')).status).toBe(503);
-        expect((await as(request(starting.app).get('/api/aihankapps/hub/access'), 'admin')).body).toEqual({ success: true, admin: false });
+        expect((await browser(as((await request(starting.app)).get('/AiHankApps/hub/'), 'admin'))).status).toBe(503);
+        expect((await as((await request(starting.app)).get('/api/aihankapps/hub/data'), 'admin')).status).toBe(503);
+        expect((await as((await request(starting.app)).get('/api/aihankapps/hub/access'), 'admin')).body).toEqual({ success: true, admin: false });
         const { app, stats } = mount();
-        expect((await browser(as(request(app).get('/AiHankApps/hub/'), 'admin').set('x-test-admin-db', 'down'))).status).toBe(503);
-        expect((await browser(as(request(app).get('/AiHankApps/hub/'), 'boom'))).status).toBe(503);
+        expect((await browser(as((await request(app)).get('/AiHankApps/hub/'), 'admin').set('x-test-admin-db', 'down'))).status).toBe(503);
+        expect((await browser(as((await request(app)).get('/AiHankApps/hub/'), 'boom'))).status).toBe(503);
         const missing = mount({ pageDir: fs.mkdtempSync(path.join(os.tmpdir(), 'hub-empty-')) });
         jest.spyOn(console, 'error').mockImplementation(() => {});
-        expect((await as(request(missing.app).get('/AiHankApps/hub/hub.css'), 'admin')).status).toBe(503);
+        expect((await as((await request(missing.app)).get('/AiHankApps/hub/hub.css'), 'admin')).status).toBe(503);
         expect(stats.publicRequests + starting.stats.publicRequests + missing.stats.publicRequests).toBe(0);
     });
 
     test('the portfolio can ask whether to show the entry: only an administrator gets yes, and nothing else is said', async () => {
         const { app, pool } = mount();
         for (const [who, admin] of [[null, false], ['member', false], ['admin', true], ['boom', false]]) {
-            const req = request(app).get('/api/aihankapps/hub/access');
+            const req = (await request(app)).get('/api/aihankapps/hub/access');
             const res = await (who ? as(req, who) : req);
             expect([who, res.status, res.body]).toEqual([who, 200, { success: true, admin }]);
             expect(res.headers['cache-control']).toBe('private, no-store, no-transform, max-age=0');
         }
-        expect((await as(request(app).get('/api/aihankapps/hub/access'), 'admin').set('x-test-admin-db', 'down')).body.admin).toBe(false);
+        expect((await as((await request(app)).get('/api/aihankapps/hub/access'), 'admin').set('x-test-admin-db', 'down')).body.admin).toBe(false);
         expect(pool.connected).toBe(0);                      // answering does not read any data
     });
 
@@ -253,8 +253,8 @@ describe('admin hub: service checks', () => {
     test('the latest check of each back-end is for administrators only, and comes from memory', async () => {
         const fetchImpl = async url => ({ status: url.includes('wishlist-app') ? 503 : 200, body: null, json: async () => ({ status: 'ok', ok: true, workers: [], version: 'v9' }) });
         const { app, routers, state } = mount({ fetchImpl });
-        const ask = who => as(request(app).get('/api/aihankapps/hub/services'), who);
-        expect([(await request(app).get('/api/aihankapps/hub/services')).status, (await ask('member')).status]).toEqual([401, 403]);
+        const ask = async who => as((await request(app)).get('/api/aihankapps/hub/services'), who);
+        expect([(await (await request(app)).get('/api/aihankapps/hub/services')).status, (await ask('member')).status]).toEqual([401, 403]);
         const before = await ask('admin');
         expect([before.status, before.headers['cache-control']]).toEqual([200, 'private, no-store, no-transform, max-age=0']);
         expect(before.body).toEqual({ success: true, checkedAt: NOW, services: hubStore.SERVICES.map(x => ({ id: x.id, name: x.name, apps: x.apps, ok: null, status: null, ms: null, at: null, info: null })) });
@@ -262,7 +262,7 @@ describe('admin hub: service checks', () => {
         const after = await ask('admin');
         expect(after.body.services.map(x => [x.id, x.ok, x.status, x.info])).toEqual([['eclaw', true, 200, null], ['wishlist', false, 503, null], ['rebound', true, 200, null],
             ['summit', true, 200, 'v9'], ['leaderboard', true, 200, null], ['timehut', true, 200, 'v9'], ['monitor', true, 200, 'v9']]);
-        expect((await as(request(app).post('/api/aihankapps/hub/services'), 'admin')).status).toBe(405);
+        expect((await as((await request(app)).post('/api/aihankapps/hub/services'), 'admin')).status).toBe(405);
         state.ready = false;
         expect((await ask('admin')).status).toBe(503);
     });
@@ -271,7 +271,7 @@ describe('admin hub: service checks', () => {
 describe('admin hub: the data answer', () => {
     test('turns the catalog, the store report and the database rows into daily series', async () => {
         const { app } = mount();
-        const res = await as(request(app).get('/api/aihankapps/hub/data'), 'admin');
+        const res = await as((await request(app)).get('/api/aihankapps/hub/data'), 'admin');
         expect(res.status).toBe(200);
         expect(res.headers['cache-control']).toBe('private, no-store, no-transform, max-age=0');
         const body = res.body, s = body.daily.series;
@@ -350,7 +350,7 @@ describe('admin hub: the data answer', () => {
 
     test('every database read is read-only, time-limited, and gives its connection back', async () => {
         const { app, pool } = mount();
-        await as(request(app).get('/api/aihankapps/hub/data'), 'admin');
+        await as((await request(app)).get('/api/aihankapps/hub/data'), 'admin');
         expect(pool.connected).toBe(10);
         expect(pool.released).toBe(10);
         expect(pool.log.filter(sql => sql === 'BEGIN READ ONLY')).toHaveLength(10);
@@ -378,7 +378,7 @@ describe('admin hub: the data answer', () => {
         jest.spyOn(console, 'error').mockImplementation(() => {});
         const pool = fakePool({ chat: new Error('statement timeout'), dreamFirst: new Error('relation "dream_buddy_inference_jobs" does not exist') });
         const { app } = mount({ pool, portfolioDir: portfolioFixture({ report: 'window.AIHANK_REPORT = oops;' }), getDeviceStats: () => { throw new Error('devices not loaded'); } });
-        const res = await as(request(app).get('/api/aihankapps/hub/data'), 'admin');
+        const res = await as((await request(app)).get('/api/aihankapps/hub/data'), 'admin');
         expect(res.status).toBe(200);
         const ok = Object.fromEntries(Object.entries(res.body.sources).map(([id, value]) => [id, value.ok]));
         expect(ok).toEqual({ catalog: true, store: false, traffic: true, community: true, feedback: true, eclaw: true, eclawChat: false, dreambuddy: false, eclawPayments: true, imports: true, services: true, inbox: true });
@@ -956,9 +956,9 @@ describe('admin hub: account sign-ups per app', () => {
             { app_id: 'timehut', key: 'accountsNew7d', value: { label: '近 7 天', value: 1, unit: '個' }, source: 'timehut', observed_at: new Date(NOW - 3600000) },
             { app_id: 'timehut', key: 'accountsNew30d', value: { label: '近 30 天', value: 4, unit: '個' }, source: 'timehut', observed_at: new Date(NOW - 3600000) }] });
         const { app } = mount({ pool, portfolioDir: portfolioWithAccounts() });
-        expect((await request(app).get('/api/aihankapps/hub/accounts')).status).toBe(401);
-        expect((await as(request(app).get('/api/aihankapps/hub/accounts'), 'member')).status).toBe(403);
-        const res = await as(request(app).get('/api/aihankapps/hub/accounts'), 'admin');
+        expect((await (await request(app)).get('/api/aihankapps/hub/accounts')).status).toBe(401);
+        expect((await as((await request(app)).get('/api/aihankapps/hub/accounts'), 'member')).status).toBe(403);
+        const res = await as((await request(app)).get('/api/aihankapps/hub/accounts'), 'admin');
         expect(res.status).toBe(200);
         const by = Object.fromEntries(res.body.accounts.map(r => [r.app, r]));
         expect([by.eclawbot.status, by.eclawbot.total, by.eclawbot.new7d, by.eclawbot.new30d, by.eclawbot.observedAt]).toEqual(['connected', 12, 1, 3, NOW]);
@@ -970,7 +970,7 @@ describe('admin hub: account sign-ups per app', () => {
         expect(hub.ACCOUNT_APPS.find(r => r.app === 'vibe-empire').status).toBe('unknown');
         expect(hub.ACCOUNT_APPS.find(r => r.app === 'rebound').note).toMatch(/訪客帳號/);
         // the same rows travel with the page's data answer; nothing but counts
-        const data = await as(request(app).get('/api/aihankapps/hub/data'), 'admin');
+        const data = await as((await request(app)).get('/api/aihankapps/hub/data'), 'admin');
         expect(data.body.accounts).toEqual(res.body.accounts);
         expect(Object.keys(by.eclawbot).sort()).toEqual(['app', 'name', 'new30d', 'new7d', 'note', 'observedAt', 'source', 'status', 'total']);
     });
@@ -988,13 +988,13 @@ describe('admin hub: notification IDs and the alert lookup', () => {
         const asked = [];
         const fetchOps = async url => { asked.push(url); return opsWith([down])(url); };
         const { app } = mount({ fetchOps });
-        expect((await request(app).get('/api/aihankapps/hub/alerts')).status).toBe(401);
-        expect((await as(request(app).get('/api/aihankapps/hub/alerts/store-stale'), 'member')).status).toBe(403);
-        const list = await as(request(app).get('/api/aihankapps/hub/alerts'), 'admin');
+        expect((await (await request(app)).get('/api/aihankapps/hub/alerts')).status).toBe(401);
+        expect((await as((await request(app)).get('/api/aihankapps/hub/alerts/store-stale'), 'member')).status).toBe(403);
+        const list = await as((await request(app)).get('/api/aihankapps/hub/alerts'), 'admin');
         expect(list.status).toBe(200);
         expect(list.body.alerts.map(a => a.id)).toEqual(['worker-bad-timehut-mcode.server_poll_failed', 'store-stale@20261102-1639']);
         expect(asked.sort()).toEqual(['/api/aihankapps/ops/catalog', '/api/aihankapps/ops/latest']);   // nothing else is fetched
-        const one = await as(request(app).get('/api/aihankapps/hub/alerts/worker-bad-timehut-mcode.server_poll_failed'), 'admin');
+        const one = await as((await request(app)).get('/api/aihankapps/hub/alerts/worker-bad-timehut-mcode.server_poll_failed'), 'admin');
         expect(one.status).toBe(200);
         expect(one.body.matchedBy).toBe('id');
         expect(one.body.alert).toMatchObject({ type: 'worker-bad-timehut-mcode', severity: 'warn', title: '時光相簿人物／影片辨識：伺服器回錯誤', rule: 'worker 狀態異常',
@@ -1003,16 +1003,16 @@ describe('admin hub: notification IDs and the alert lookup', () => {
         expect(one.body.alert.basis).toMatchObject({ workerId: 'timehut-mcode', lastPollStatus: 503, lastErrorAt: NOW - 30000, recordedErrorKind: 'poll' });
         expect(one.body.alert.basisTaipei.lastPollAt).toBe('2026-11-10 20:59 (Asia/Taipei)');
         // an older ID of the same alert type still finds it, and says so; an unknown one lists what is active
-        const older = await as(request(app).get('/api/aihankapps/hub/alerts/worker-bad-timehut-mcode.item_processing_failed'), 'admin');
+        const older = await as((await request(app)).get('/api/aihankapps/hub/alerts/worker-bad-timehut-mcode.item_processing_failed'), 'admin');
         expect([older.status, older.body.matchedBy, older.body.alert.id]).toEqual([200, 'type', 'worker-bad-timehut-mcode.server_poll_failed']);
-        const gone = await as(request(app).get('/api/aihankapps/hub/alerts/ops-stale'), 'admin');
+        const gone = await as((await request(app)).get('/api/aihankapps/hub/alerts/ops-stale'), 'admin');
         expect([gone.status, gone.body.activeIds]).toEqual([404, ['worker-bad-timehut-mcode.server_poll_failed', 'store-stale@20261102-1639']]);
-        expect((await as(request(app).get('/api/aihankapps/hub/alerts/' + encodeURIComponent('a b<')), 'admin')).status).toBe(400);
+        expect((await as((await request(app)).get('/api/aihankapps/hub/alerts/' + encodeURIComponent('a b<')), 'admin')).status).toBe(400);
     });
     test('a worker the monitor reports healthy again raises no alert', async () => {
         const healed = worker('timehut-mcode', { health: 'healthy', lastPollAt: NOW - 30000, lastPollStatus: 200, lastErrorAt: NOW - 26 * 60000, recordedErrorKind: 'poll', issues: [], issueDetails: [] });
         const { app } = mount({ fetchOps: opsWith([healed]) });
-        const list = await as(request(app).get('/api/aihankapps/hub/alerts'), 'admin');
+        const list = await as((await request(app)).get('/api/aihankapps/hub/alerts'), 'admin');
         expect(list.body.alerts.map(a => a.id)).toEqual(['store-stale@20261102-1639']);
     });
     test('the operator script computes the same alerts from inside the container, with one fresh check per service', async () => {
@@ -1095,7 +1095,7 @@ describe('admin hub: how it is wired in', () => {
         expect(fs.existsSync(path.join(portfolio, 'hub-entry.js'))).toBe(false);
         // following it without signing in leads to the sign-in page, which comes back here
         const { app } = mount();
-        const res = await browser(request(app).get('/AiHankApps/hub/'));
+        const res = await browser((await request(app)).get('/AiHankApps/hub/'));
         expect([res.status, res.headers.location]).toEqual([302, hub.LOGIN_URL]);
         expect(hub.LOGIN_URL).toBe('/portal/?return_to=%2FAiHankApps%2Fhub%2F');
     });
@@ -1107,7 +1107,7 @@ describe('admin hub: the access question is rate limited', () => {
         const { app } = mount();
         const statuses = new Set();
         let last;
-        for (let i = 0; i < 130; i++) { last = await request(app).get('/api/aihankapps/hub/access'); statuses.add(last.status); }
+        for (let i = 0; i < 130; i++) { last = await (await request(app)).get('/api/aihankapps/hub/access'); statuses.add(last.status); }
         expect([...statuses].sort()).toEqual([200, 429]);
         expect([last.status, last.headers['retry-after'], last.body]).toEqual([429, '60', { success: false, admin: false }]);
     });
@@ -1403,7 +1403,7 @@ describe('admin hub: the API\'s only writes (以後略過類似警告, 確認與
     test('an administrator on the hub page can mute and unmute a kind; nothing else can write', async () => {
         const { app, pool, routers } = mount();
         const first = await routers.data.load();
-        const post = (body, who = 'admin', origin = ORIGIN) => { const r = as(request(app).post('/api/aihankapps/hub/mutes'), who); return (origin ? r.set('Origin', origin) : r).send(body); };
+        const post = async (body, who = 'admin', origin = ORIGIN) => { const r = as((await request(app)).post('/api/aihankapps/hub/mutes'), who); return (origin ? r.set('Origin', origin) : r).send(body); };
         const ok = await post({ type: 'rating-alpha', label: 'Alpha 的評分偏低', sampleRef: 'rating-alpha' });
         expect(ok.status).toBe(200);
         expect(ok.body).toMatchObject({ success: true, mute: { type: 'rating-alpha', label: 'Alpha 的評分偏低' } });
@@ -1411,7 +1411,7 @@ describe('admin hub: the API\'s only writes (以後略過類似警告, 確認與
         expect(insert).toMatch(/ON CONFLICT \(type\) DO UPDATE/);
         // the next answer is built fresh, so the page sees the mute at once
         expect(await routers.data.load()).not.toBe(first);
-        const del = await as(request(app).delete('/api/aihankapps/hub/mutes/rating-alpha'), 'admin').set('Origin', ORIGIN);
+        const del = await as((await request(app)).delete('/api/aihankapps/hub/mutes/rating-alpha'), 'admin').set('Origin', ORIGIN);
         expect(del.status).toBe(200);
         expect(pool.direct.some(sql => sql.includes('DELETE FROM aihankapps_hub_mutes'))).toBe(true);
         // refused: no or a foreign Origin, not an administrator, not signed in, a kind that may not be muted, any other write
@@ -1422,16 +1422,16 @@ describe('admin hub: the API\'s only writes (以後略過類似警告, 確認與
         expect((await post({ type: 'human', label: 'x' })).body).toEqual({ success: false, error: 'MUTE_TYPE' });
         expect((await post({ type: 'feedback-eclaw', label: 'x' })).body).toEqual({ success: false, error: 'MUTE_TYPE' });
         expect((await post({ type: 'rating-alpha', label: '', extra: 1 })).body).toEqual({ success: false, error: 'MUTE_SHAPE' });
-        expect((await as(request(app).post('/api/aihankapps/hub/data'), 'admin').set('Origin', ORIGIN).send({})).status).toBe(405);
-        expect((await as(request(app).delete('/api/aihankapps/hub/mutes'), 'admin').set('Origin', ORIGIN)).status).toBe(405);
-        expect((await as(request(app).put('/api/aihankapps/hub/mutes'), 'admin').set('Origin', ORIGIN).send({})).status).toBe(405);
+        expect((await as((await request(app)).post('/api/aihankapps/hub/data'), 'admin').set('Origin', ORIGIN).send({})).status).toBe(405);
+        expect((await as((await request(app)).delete('/api/aihankapps/hub/mutes'), 'admin').set('Origin', ORIGIN)).status).toBe(405);
+        expect((await as((await request(app)).put('/api/aihankapps/hub/mutes'), 'admin').set('Origin', ORIGIN).send({})).status).toBe(405);
         expect(pool.direct.filter(sql => sql.includes('INSERT INTO aihankapps_hub_mutes'))).toHaveLength(1);
     });
 
     test('an administrator on the hub page can confirm an alert, with or without a countermeasure, and take it back', async () => {
         const { app, pool, routers } = mount();
         const first = await routers.data.load(), firstAlerts = await routers.alerts.load();
-        const post = (body, who = 'admin', origin = ORIGIN) => { const r = as(request(app).post('/api/aihankapps/hub/acks'), who); return (origin ? r.set('Origin', origin) : r).send(body); };
+        const post = async (body, who = 'admin', origin = ORIGIN) => { const r = as((await request(app)).post('/api/aihankapps/hub/acks'), who); return (origin ? r.set('Origin', origin) : r).send(body); };
         const ok = await post({ ref: 'worker-bad-x@20261110-0900', title: 'worker 出錯', plan: '先觀察兩天' });
         expect(ok.status).toBe(200);
         expect(ok.body).toMatchObject({ success: true, ack: { ref: 'worker-bad-x@20261110-0900', title: 'worker 出錯', plan: '先觀察兩天' } });
@@ -1441,7 +1441,7 @@ describe('admin hub: the API\'s only writes (以後略過類似警告, 確認與
         expect(await routers.alerts.load()).not.toBe(firstAlerts);
         expect((await post({ ref: 'human-x' })).body).toMatchObject({ success: true, ack: { ref: 'human-x', plan: null } });
         // the notification ID travels in the path, with its @ and dots
-        const del = await as(request(app).delete('/api/aihankapps/hub/acks/' + encodeURIComponent('worker-bad-x@20261110-0900')), 'admin').set('Origin', ORIGIN);
+        const del = await as((await request(app)).delete('/api/aihankapps/hub/acks/' + encodeURIComponent('worker-bad-x@20261110-0900')), 'admin').set('Origin', ORIGIN);
         expect(del.status).toBe(200);
         expect(del.body).toMatchObject({ success: true, ref: 'worker-bad-x@20261110-0900' });
         expect(pool.direct.some(sql => sql.includes('DELETE FROM aihankapps_hub_acks'))).toBe(true);
@@ -1453,9 +1453,9 @@ describe('admin hub: the API\'s only writes (以後略過類似警告, 確認與
         expect((await post({ ref: 'bad ref' })).body).toEqual({ success: false, error: 'ACK_REF' });
         expect((await post({ ref: 'a', plan: 'x'.repeat(1001) })).body).toEqual({ success: false, error: 'ACK_PLAN' });
         expect((await post({ ref: 'a', state: 'done' })).body).toEqual({ success: false, error: 'ACK_SHAPE' });
-        expect((await as(request(app).delete('/api/aihankapps/hub/acks'), 'admin').set('Origin', ORIGIN)).status).toBe(405);
-        expect((await as(request(app).delete('/api/aihankapps/hub/acks/a'), 'admin')).status).toBe(403);
-        expect((await as(request(app).put('/api/aihankapps/hub/acks/a'), 'admin').set('Origin', ORIGIN).send({})).status).toBe(405);
+        expect((await as((await request(app)).delete('/api/aihankapps/hub/acks'), 'admin').set('Origin', ORIGIN)).status).toBe(405);
+        expect((await as((await request(app)).delete('/api/aihankapps/hub/acks/a'), 'admin')).status).toBe(403);
+        expect((await as((await request(app)).put('/api/aihankapps/hub/acks/a'), 'admin').set('Origin', ORIGIN).send({})).status).toBe(405);
         expect(pool.direct.filter(sql => sql.includes('INSERT INTO aihankapps_hub_acks'))).toHaveLength(2);
     });
 

@@ -21,3 +21,9 @@
 .qa-history time { display: block; font-size: 12px; margin-top: 6px; }
 .qa-history p { white-space: pre-wrap; }
 @media(max-width:800px) { .qa-items { grid-template-columns: 1fr; } }
+.qa-active > h3 { overflow-wrap: anywhere; }
+.qa-completed { border-top: 1px solid var(--line); padding-top: 16px; }
+.qa-completed > summary { gap: 8px; overflow-wrap: anywhere; font-weight: 600; }
+.qa-completed > .qa-items { margin-bottom: 24px; }
+.qa-feedback-note { color: var(--ink-2); }
+.qa-media [role="status"] { display: block; overflow-wrap: anywhere; }

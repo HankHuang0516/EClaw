@@ -7,7 +7,9 @@ async function run(pool, v) {
     if (!v || typeof v !== 'object') throw new Error('QA_ACTION');
     if (v.action === 'prepare-media') return { success: true, media: await qa.prepareMedia(v) };
     if (v.action === 'publish') return qa.publish(pool, v.batch);
-    if (v.action === 'read') return qa.read(pool, { after: v.after || '0', limit: v.limit || 500 });
+    // Omission keeps the global comment feed (and the legacy read envelope).
+    if (v.action === 'read') return qa.read(pool, { after: v.after || '0', limit: v.limit || 500, ...(v.batch === undefined ? {} : { batch: v.batch }) });
+    if (v.action === 'alert-replies') return qa.alertReplies(pool, { after: v.after === undefined ? '' : v.after, limit: v.limit === undefined ? 500 : v.limit });
     if (v.action === 'result') return qa.result(pool, v);
     throw new Error('QA_ACTION');
 }
