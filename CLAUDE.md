@@ -1865,3 +1865,8 @@ Hank 直接指示：「以後你自行判斷是否清理舊QA的決策」。此�
 - Use `/api/admin/bots?readOnly=1` for snapshots: ordinary GET retains legacy assignment cleanup and credential fields. The read-only mode has neither. Do not infer zero from an unavailable source or equate active bindings with all historical bindings.
 - Tests: `cd backend && npx jest --runInBand --testPathIgnorePatterns=/node_modules/ --runTestsByPath tests/jest/aihankapps-hub-eclaw.test.js tests/jest/admin-bots-readonly.test.js tests/jest/aihankapps-hub.test.js`. The override is needed only because Jest normally ignores paths containing `.worktrees`.
 - This worktree uses verified APFS ProjectsData backed by `/Volumes/codex_2T/codex_project/ProjectsData.sparsebundle`; no original project, database or common Git directory was moved. Simplify remains optional; normal PR/CI/production approval rules still apply.
+
+
+## Timehut private GIF feedback (2026-11-22)
+
+The Timehut admin Hub page has operator-published ten-item QA reviews, private R2 GIF proxying and append-only per-revision feedback/results. See `backend/AIHANKAPPS_HUB_QA.md`. Keep original approved status separate from full E2E coverage and formal native-release inclusion. The hourly Codex feedback heartbeat belongs to the original Timehut E2E chat; never treat a missing comment as approval, remove historical comments, publish GIFs in public Git, or widen administrator access.

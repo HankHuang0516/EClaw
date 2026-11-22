@@ -41,6 +41,7 @@ const path = require('path');
 const vm = require('vm');
 const hubStore = require('./aihankapps-hub-store');
 const hubInbox = require('./aihankapps-hub-inbox');
+const hubQa = require('./aihankapps-hub-qa');
 
 const PAGE_DIR = path.join(__dirname, 'aihankapps-hub');
 const PORTFOLIO_DIR = path.join(__dirname, 'public', 'AiHankApps');
@@ -61,6 +62,9 @@ const PAGE_FILES = {
     'hub-charts.js': 'text/javascript; charset=utf-8',
     'hub-data.js': 'text/javascript; charset=utf-8',
     'hub-app.js': 'text/javascript; charset=utf-8',
+    'hub-qa.js': 'text/javascript; charset=utf-8',
+    'hub-qa-i18n.js': 'text/javascript; charset=utf-8',
+    'hub-qa.css': 'text/css; charset=utf-8',
     'hub-timehut.js': 'text/javascript; charset=utf-8',
     'hub-weesh.js': 'text/javascript; charset=utf-8',
     'hub-wishlist-i18n.js': 'text/javascript; charset=utf-8',
@@ -572,7 +576,7 @@ function createRouters(options) {
     const ACKS = /^\/acks\/[^/]{1,600}$/;
     function sameOriginApi(req, res, next) {
         if (['GET', 'HEAD'].includes(req.method)) return readOnlySameOrigin(req, res, next);
-        const write = (req.method === 'POST' && (req.path === '/mutes' || req.path === '/acks'))
+        const write = (req.method === 'POST' && (req.path === '/mutes' || req.path === '/acks' || req.path === '/qa/timehut/comments'))
             || (req.method === 'DELETE' && ((MUTES.test(req.path) && req.path !== '/mutes') || ACKS.test(req.path)));
         if (!write) return res.status(405).set('Allow', 'GET, HEAD').json({ success: false, error: 'Read-only resource' });
         if (!['https://eclawbot.com', 'https://www.eclawbot.com'].includes(req.get('origin') || '')) return res.status(403).json({ success: false, error: 'Same-origin access required' });
@@ -628,6 +632,7 @@ function createRouters(options) {
         res.json({ success: true, admin });
     });
     api.use(ready, authMiddleware, adminMiddleware);
+    hubQa.mount(api, { getPool, limited });
     // The last answer of each back-end's health check, from memory: cheap enough to ask every minute.
     api.get('/services', (_req, res) => res.json({ success: true, checkedAt: (options.now || Date.now)(), services: probes.latest() }));
     api.get('/data', async (req, res) => {

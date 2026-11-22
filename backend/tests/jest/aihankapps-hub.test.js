@@ -989,14 +989,14 @@ describe('admin hub: how it is wired in', () => {
         const html = fs.readFileSync(path.join(pageDir, 'index.html'), 'utf8');
         expect(html).toContain('<meta name="robots" content="noindex,nofollow">');
         const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
-        expect(scripts.map(m => /src="([^"]+)"/.exec(m[1])[1])).toEqual(['/AiHankApps/ops/ops-view.js?v=hub-wishlist-20261114', 'hub-wishlist-i18n.js', 'hub-wishlist-ops.js', 'hub-data.js', 'hub-charts.js', 'hub-timehut.js', 'hub-weesh.js', 'hub-eclaw-i18n.js', 'hub-eclaw.js', 'hub-app.js']);
+        expect(scripts.map(m => /src="([^"]+)"/.exec(m[1])[1])).toEqual(['/AiHankApps/ops/ops-view.js?v=hub-wishlist-20261114', 'hub-wishlist-i18n.js', 'hub-wishlist-ops.js', 'hub-data.js', 'hub-charts.js', 'hub-timehut.js', 'hub-weesh.js', 'hub-eclaw-i18n.js', 'hub-eclaw.js', 'hub-qa-i18n.js', 'hub-qa.js', 'hub-app.js']);
         expect(scripts.every(m => m[2] === '')).toBe(true);                               // no inline script: the policy would block it
         expect(html).not.toMatch(/\son[a-z]+\s*=/i);
         expect(html).not.toContain('<style');
         expect([...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(m => m[1])).toEqual([
-            'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap', 'hub.css', 'hub-eclaw.css', 'hub-wishlist-ops.css']);
+            'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap', 'hub.css', 'hub-qa.css', 'hub-eclaw.css', 'hub-wishlist-ops.css']);
         // the page asks only its own API and the public operations API, on this origin
-        const pageJs = ['hub-data.js', 'hub-app.js', 'hub-charts.js', 'hub-timehut.js', 'hub-weesh.js', 'hub-eclaw.js', 'hub-eclaw-i18n.js'].map(f => fs.readFileSync(path.join(pageDir, f), 'utf8')).join('\n');
+        const pageJs = ['hub-data.js', 'hub-app.js', 'hub-charts.js', 'hub-timehut.js', 'hub-weesh.js', 'hub-eclaw.js', 'hub-eclaw-i18n.js', 'hub-qa.js', 'hub-qa-i18n.js'].map(f => fs.readFileSync(path.join(pageDir, f), 'utf8')).join('\n');
         expect(pageJs).not.toMatch(/https?:\/\/(?!www\.w3\.org\/2000\/svg)/);
         expect(pageJs).not.toMatch(/\beval\(|new Function\(|document\.write\(/);
         expect(hub.CONTENT_SECURITY_POLICY).toContain("script-src 'self'");

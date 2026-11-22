@@ -148,3 +148,6 @@ Hank 在中樞每則警示上可以按「確認」，旁邊可以寫一段**對�
 - 再跑一次 `node TRIAGE_TOOL pending`，確認清單是空的，或只剩你剛寫成 `human` 的那幾則。
 - 工具失敗（例如 railway 連不上）就重試一次。還是不行，就照常結束：下一輪會再叫你起來；連續失敗時，執行腳本會自己在中樞發警示。
 - 最後的訊息只寫一行摘要（處理了幾則、各是什麼判斷）。這行只會留在日誌裡，沒有人會回覆你。
+
+
+Timehut numbered GIF reviews (`human-timehut-qa-review-*`) belong to the hourly Codex E2E feedback owner. General health triage must not resolve/rewrite them or treat their acknowledgement as approval/full coverage. The dedicated owner reads per-item append-only comments and updates the original review/result records.

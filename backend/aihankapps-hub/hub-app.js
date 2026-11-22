@@ -874,7 +874,7 @@
         return p.url && p.public ? '<a class="pl" href="' + esc(p.url) + '" target="_blank" rel="noopener">' + label + ico('ext') + '</a>' : '<span class="pl' + (p.public ? '' : ' is-off') + '">' + label + '</span>';
       }).join('') + links + '</div></div>' + pill(D.appState(a)) + '</header>' +
       (a.stage === 'dev' ? '<p class="note">' + ico('info') + '這款還沒有公開上架，商店相關的指標會是空的。</p>' : '') +
-      appAlertsHtml(a) +
+      appAlertsHtml(a) + (a.key === 'timehut' ? '<div id="th-qa"></div>' : '') +
       (a.key === D.WISHLIST ? wishlistAppBody(a, keys, list) :
         (keys.length ? tilesHtml(APP_TILE_ORDER.filter(k => keys.indexOf(k) >= 0).slice(0, 6), list) + '<div class="grid">' + explorerHtml('c-8', keys, true) + platCardHtml(a) + '</div>' : '<p class="note">' + ico('info') + '這款 APP 目前沒有任何數據來源。</p>') +
         backendHtml(a) + retentionHtml(a, '') + '<div class="grid">' + feedbackCardHtml(list, 'c-7') + appFreshHtml(a, keys) + '</div>');
@@ -885,6 +885,8 @@
       disposeOperations = () => operations.destroy();
       liveHooks.push(() => operations.refresh());
     }
+    const qa = $('#th-qa', el);
+    if (qa && window.HubQa) window.HubQa.mount(qa);
     const th = $('#th-users', el);
     if (th) window.HubTimehut.mount(th, window.HubTimehut.fromFacts((D.latest.facts || {})[a.key]));
     const ws = $('#ws-users', el);

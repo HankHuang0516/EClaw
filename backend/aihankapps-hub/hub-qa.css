@@ -1,0 +1,23 @@
+.qa-review { margin: 24px 0; }
+.qa-review > p, .qa-review details { margin: 16px 0; }
+.qa-review summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.qa-items { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 28px; margin-top: 24px; }
+.qa-item { border-top: 1px solid var(--line); padding-top: 24px; min-width: 0; scroll-margin-top: 100px; }
+.qa-item h3 { font-size: 18px; line-height: 1.5; }
+.qa-state { font-weight: 600; margin: 12px 0; }
+.qa-item dl { display: grid; grid-template-columns: 54px 1fr; gap: 8px 12px; margin: 16px 0; }
+.qa-item dt { font-weight: 600; }
+.qa-item dd { margin: 0; }
+.qa-item p, .qa-item dd { overflow-wrap: anywhere; line-height: 1.7; }
+.qa-media { background: var(--bg); padding: 12px; border-radius: 12px; text-align: center; }
+.qa-media img { width: 100%; height: auto; max-height: 680px; object-fit: contain; display: block; }
+.qa-item label { display: block; margin: 12px 0 8px; font-weight: 600; }
+.qa-item textarea, .qa-item select { display: block; width: 100%; box-sizing: border-box; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: inherit; font: inherit; }
+.qa-item textarea { resize: vertical; }
+.qa-submit { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+.qa-submit button, .qa-media button { min-height: 44px; }
+.qa-history { padding-left: 20px; }
+.qa-history li { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.qa-history time { display: block; font-size: 12px; margin-top: 6px; }
+.qa-history p { white-space: pre-wrap; }
+@media(max-width:800px) { .qa-items { grid-template-columns: 1fr; } }

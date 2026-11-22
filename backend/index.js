@@ -2018,6 +2018,10 @@ app.get('/api/help', (req, res) => {
             { title: 'Look up one alert by its notification ID, e.g. worker-bad-timehut-mcode.server_poll_failed; an older ID of the same alert type answers matchedBy:"type", a cleared one 404 with activeIds (admin session)', curl: `curl -s "${apiBase}/api/aihankapps/hub/alerts/NOTIFICATION_ID" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
             { title: 'Mute an alert kind (以後略過類似警告): every alert of that type folds into one information item that stays on the page; the hub page\'s own write, admin session and same-origin only (not for the schedule\'s own asks or people\'s reports)', curl: `curl -s -X POST "${apiBase}/api/aihankapps/hub/mutes" -H "Origin: ${apiBase}" -H "Content-Type: application/json" -d '{"type":"feedback-eclaw-health","label":"EClaw 被動健康檢查"}' --cookie /LOCAL/PORTAL_COOKIE_FILE` },
             { title: 'Undo a mute: that alert kind is shown one by one again (admin session, same-origin only)', curl: `curl -s -X DELETE "${apiBase}/api/aihankapps/hub/mutes/feedback-eclaw-health" -H "Origin: ${apiBase}" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Timehut QA diagnostic state (administrator session; disabled in production)', curl: `curl -s "${apiBase}/api/debug/aihankapps-hub-qa" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Private Timehut numbered GIF reviews, coverage and append-only comments (administrator session only)', curl: `curl -s "${apiBase}/api/aihankapps/hub/qa/timehut" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            { title: 'Append feedback to one current GIF revision (admin session, same-origin, idempotent UUID requestId)', curl: `curl -s -X POST "${apiBase}/api/aihankapps/hub/qa/timehut/comments" -H "Origin: ${apiBase}" -H "Content-Type: application/json" --cookie /LOCAL/PORTAL_COOKIE_FILE -d '{"item":"01","revision":"FROM_REVIEW","requestId":"NEW_UUID","decision":"comment","body":"Your feedback"}'` },
+            { title: 'Private original operation GIF (admin session only, no storage credentials)', curl: `curl -s "${apiBase}/api/aihankapps/hub/qa/timehut/media/01" --cookie /LOCAL/PORTAL_COOKIE_FILE --output review.gif` },
             { title: 'Account sign-ups per app: total, new in 7 and 30 days; status connected | not_connected | none (counts only, admin session)', curl: `curl -s "${apiBase}/api/aihankapps/hub/accounts" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
             { title: 'Whether the current session is an administrator who can open the hub (answers everyone with { admin: true|false } and nothing else)', curl: `curl -s "${apiBase}/api/aihankapps/hub/access" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
             { title: 'Public operations data the hub also reads: worker status and the Wishlist listing summary', curl: `curl -s "${apiBase}/api/aihankapps/ops/latest"` },
@@ -5897,6 +5901,7 @@ const aihankappsHubRouters = aihankappsHub.createRouters({
 });
 aihankappsHubSlot.page = aihankappsHubRouters.page;
 app.use('/api/aihankapps/hub', aihankappsHubRouters.api);
+require('./aihankapps-hub-qa').mountDebug(app, { auth: adminAuth, admin: adminCheck, headers: aihankappsHub.privateHeaders, getPool: () => chatPool });
 // The hub checks every back-end's public health URL once a minute. AIHANKAPPS_HUB_COLLECTOR=0 serves the page without checking.
 if (process.env.AIHANKAPPS_HUB_COLLECTOR !== '0' && process.env.NODE_ENV !== 'test') aihankappsHubRouters.probes.start();
 app.use('/api/admin/paper-beta-feedback', require('./paper-beta-admin').createRouter(

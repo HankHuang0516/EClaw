@@ -394,3 +394,6 @@ Dream Buddy AI replies can be flagged inside the app through owner-authenticated
 Dream Buddy SSV failures log only bounded rejection reason codes; callback URLs, signatures, identifiers and arbitrary provider errors stay excluded. Reward verification/credit gates are unchanged.
 
 Signed challenge-free AdMob URL probes are acknowledged before checking reward-unit fields, with credited=false and no database access. Any app-shaped challenge still requires the configured production unit, 6 messages, a valid timestamp and exact-once redemption. Unsigned callbacks remain rejected.
+
+
+Private administrator-only Timehut GIF reviews and feedback follow-up: see `backend/AIHANKAPPS_HUB_QA.md`.

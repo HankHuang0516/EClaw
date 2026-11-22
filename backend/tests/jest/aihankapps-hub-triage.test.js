@@ -148,3 +148,14 @@ describe('alert schedule tool: 拾光AI雲端相簿 reports', () => {
         expect(calls).toHaveLength(0);
     });
 });
+
+
+describe('Timehut E2E review ownership', () => {
+    test('general triage never overwrites review-owner alerts or their plans', () => {
+        const id = 'human-timehut-qa-review-batch01';
+        expect(triage.due(alert(id), NOW)).toBeNull();
+        expect(triage.due(alert(id, { ack: { plan: '請改08', planAt: NOW }, triage: { state: 'human', at: NOW - 100 * HOUR } }), NOW)).toBeNull();
+        const r = triage.pending({ alerts: [], acks: [{ id, plan: '請改08', planAt: NOW, active: false, answered: false }] }, NOW);
+        expect(r.pending).toBe(0);
+    });
+});

@@ -74,3 +74,8 @@ Hank：「確保排程可以自主處理判斷所有的警示問題 如果需要
 - `triage-runner.zsh`：裝成 `~/.local/bin/aihankapps-hub-triage`，由 `~/Library/LaunchAgents/tw.aihankapps.hub-triage.plist` 每 15 分鐘執行一次。沒有待處理的警示就不叫模型（不耗 token）。日誌在 `~/Library/Logs/aihankapps-hub-triage/`。
 - 停用：`launchctl bootout gui/$(id -u)/tw.aihankapps.hub-triage`。立刻跑一次：`launchctl kickstart gui/$(id -u)/tw.aihankapps.hub-triage`。
 
+
+
+## 拾光逐項GIF評論追蹤（2026-11-22）
+
+`qa.js` uploads the ten original GIFs privately, publishes a verified review snapshot, reads paginated comments and appends processing results over the existing Railway operator channel. See `backend/AIHANKAPPS_HUB_QA.md`. The Codex hourly heartbeat `gif-e2e` handles this E2E review workflow; the existing general 15-minute alert triage is unchanged.

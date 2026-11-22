@@ -75,6 +75,9 @@ function alerts(options) { return remote('aihankapps-hub-alerts.js', undefined, 
 
 const planDue = (ack, triage) => !!(ack && ack.plan && !(triage && triage.at && ack.planAt && triage.at >= ack.planAt));
 function due(alert, now) {
+    // The hourly Timehut E2E owner handles these reviews and their comments.
+    // General health triage must not close or overwrite that owner's ask.
+    if (/^human-timehut-qa-review-/.test(alert.id || '')) return null;
     if (planDue(alert.ack, alert.triage)) return 'plan';
     if (SKIP_TYPES.some(re => re.test(alert.type))) return null;
     const t = alert.triage;
@@ -96,6 +99,7 @@ function pending(answer, now = Date.now()) {
     for (const a of answer.alerts) { const reason = due(a, now); if (reason) list.push(brief(a, reason)); }
     // A countermeasure whose alert has cleared since is still an instruction waiting for an answer.
     for (const k of answer.acks || []) {
+        if (/^human-timehut-qa-review-/.test(k.id || '')) continue;
         if (!k.plan || k.active || k.answered || !(now - (k.planAt || 0) < PLAN_DAYS * 24 * HOUR)) continue;
         list.push({ id: k.id, reason: 'plan', cleared: true, type: String(k.id).split(/[.@]/)[0], title: k.title || null, detail: '這則警示已經解除，但 Hank 留了對策。',
             triage: k.triage || null, ack: { at: k.atTaipei || null, plan: k.plan } });
