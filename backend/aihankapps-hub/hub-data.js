@@ -370,7 +370,8 @@
     attention: ['上架警示板', 'Wishlist.ai', '上架排程回報的問題：需要人為介入的、自動處理中的'],
     'claude-usage': ['Claude 用量', '所有 Claude 排程與工作階段', 'Claude 訂閱方案的每週用量百分比與重置時間（右上角的電池）', '由這台 Mac 的 Claude CLI 本機指令讀出，不呼叫模型、不耗 token'],
     'feedback-timehut-app': ['拾光 APP 內問題回饋', '拾光AI雲端相簿', 'APP 內送出的問題回報（文字、版本、有沒有附圖），由警示處理排程每 15 分鐘讀一次'],
-    'feedback-timehut-line': ['拾光 LINE 問題回饋', '拾光AI雲端相簿', 'LINE 官方帳號選單「問題回饋」收到的回報，由警示處理排程每 15 分鐘讀一次'] };
+    'feedback-timehut-line': ['拾光 LINE 問題回饋', '拾光AI雲端相簿', 'LINE 官方帳號選單「問題回饋」收到的回報，由警示處理排程每 15 分鐘讀一次'],
+    'feedback-discord': ['Discord 問題回報', '每一款 APP', 'AiHank 作品集 Discord 伺服器「問題回報」論壇的新貼文，由機器人每 2 分鐘讀一次'] };
   const mbText = v => (v >= 1024 ? (v / 1024).toFixed(v >= 10240 ? 1 : 2) + ' GB' : Math.round(v) + ' MB');
   // 拾光上傳被伺服器拒收的原因（伺服器 1.0.126 起的固定代碼）→［白話, 類別］。類別：full 帳號滿了（等待也不會解除）、
   // stuck 這一筆要人看（同一筆重送也不會過）、wait 伺服器忙或暫時性（稍後再傳就會過）、net 手機傳到一半斷線、done 本來就不該再傳（照片已刪、收據已取消）
@@ -597,7 +598,7 @@
   D.isAcked = a => !!(a && a.ack);
   // 以後略過類似警告（Hank 2026-11-13）：同一類（同一個 id）的警示合併成一則資訊；沒有成員時也留著，才能取消略過
   D.muteKey = a => a.id;
-  D.mutable = a => !!a && !/^(human|muted|feedback-(eclaw|fraud|beta|timehut-app|timehut-line))$/.test(a.id);
+  D.mutable = a => !!a && !/^(human|muted|feedback-(eclaw|fraud|beta|timehut-app|timehut-line|discord))$/.test(a.id);
   function foldMuted(list) {
     const mutes = (D.inbox && D.inbox.mutes) || [];
     if (!mutes.length) return list;
@@ -637,7 +638,7 @@
   // ---- 問題回饋與排程判斷（Hank 2026-11-13）-------------------------------------
   // 每則近 30 天的回報都是一則警示，直到警示處理排程把它結案；排程對任何一則警示的判斷都附在那則警示上：
   // auto＝排程處理中或會自己恢復；human＝只有 Hank 能處理（升成嚴重，寫明要他做什麼）；done＝排程已結案。
-  const FB_SOURCE = { eclaw: 'APP 內回報', 'eclaw-health': '被動健康檢查', fraud: 'APP 內回報', beta: '作品集內測回饋', 'timehut-app': 'APP 內回報', 'timehut-line': 'LINE 問題回饋' };
+  const FB_SOURCE = { eclaw: 'APP 內回報', 'eclaw-health': '被動健康檢查', fraud: 'APP 內回報', beta: '作品集內測回饋', 'timehut-app': 'APP 內回報', 'timehut-line': 'LINE 問題回饋', discord: 'Discord 問題回報' };
   const FB_CATEGORY = { bug: '錯誤', feature: '建議', question: '問題', operation: '操作', rules: '規則', dialogue: '對話', art: '美術', balance: '平衡', other: '其他',
     upload: '照片／影片上傳', line: 'LINE 自動收件', person: '人物辨識', app: 'APP 操作或畫面', account: '帳號與登入', health: '實體自我修復失敗' };
   D.TRIAGE = { auto: '排程處理中', human: '需要你處理', done: '排程已結案' };
@@ -728,7 +729,7 @@
       { name: '後台服務檢查', gives: '每個後台有沒有回應、回應時間、可用率', cover: D.services.length + ' 個後台服務', freq: '每分鐘', last: D.services.reduce((m, svc) => Math.max(m, (svc.now && svc.now.at) || 0), 0) || null, state: state('services'), note: '由 EClaw 主站去問各後台公開的健康檢查網址' }
     ].concat(Object.keys(COLLECTORS).map(id => {
       const c = collectors[id], stale = c && D.T0 - c.collectedAt > 36 * HOUR;
-      return { name: COLLECTORS[id][0], gives: COLLECTORS[id][2] || '新用戶、每日活躍、對局、內購筆數、信箱、留存', cover: COLLECTORS[id][1], freq: id === 'railway' || id === 'wishlist-users' || id === 'claude-usage' ? '每小時' : id.indexOf('feedback-') === 0 ? '每 15 分鐘' : '每天 06:20', last: c ? c.collectedAt : null,
+      return { name: COLLECTORS[id][0], gives: COLLECTORS[id][2] || '新用戶、每日活躍、對局、內購筆數、信箱、留存', cover: COLLECTORS[id][1], freq: id === 'railway' || id === 'wishlist-users' || id === 'claude-usage' ? '每小時' : id === 'feedback-discord' ? '每 2 分鐘' : id.indexOf('feedback-') === 0 ? '每 15 分鐘' : '每天 06:20', last: c ? c.collectedAt : null,
         state: !s.imports || !s.imports.ok ? 'crit' : !c ? 'none' : stale ? 'warn' : 'ok', note: !c ? '還沒有匯入過' : stale ? '超過一天沒更新；收集工具在這台 Mac 上執行' : ((c.notes || [])[0] || COLLECTORS[id][3] || '只匯入彙總數字，不含任何帳號或內容') };
     })).concat([
       { name: '其他 APP 的使用紀錄', gives: '活躍用戶、留存', cover: '沒有自己伺服器的 APP', freq: '—', last: null, state: 'none', note: '這些 APP 不會回報使用情況，要在 APP 裡加上回報再發新版才會有' },
