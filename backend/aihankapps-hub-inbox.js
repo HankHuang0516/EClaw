@@ -195,7 +195,7 @@ async function removeAck(pool, ref) {
 // The type is the alert's kind as the page computes it (worker-bad-timehut-mcode, feedback-eclaw-health, rating-alpha…).
 // Never muted: the schedule's own "needs you" items, a fold, and individual people's reports (muting one would silence a
 // whole app's users); those keep being shown one by one.
-const UNMUTABLE = /^(human|muted|feedback-(eclaw|fraud|beta|timehut-app|timehut-line))$/;
+const UNMUTABLE = /^(human|muted|feedback-(eclaw|fraud|beta|timehut-app|timehut-line|discord))$/;
 const MUTE_TYPE = /^[A-Za-z0-9._:-]{1,120}$/;
 function validateMute(input) {
     if (!input || typeof input !== 'object' || Array.isArray(input)) fail('MUTE_SHAPE');

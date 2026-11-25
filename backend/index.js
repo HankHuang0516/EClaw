@@ -5904,6 +5904,18 @@ app.use('/api/aihankapps/hub', aihankappsHubRouters.api);
 require('./aihankapps-hub-qa').mountDebug(app, { auth: adminAuth, admin: adminCheck, headers: aihankappsHub.privateHeaders, getPool: () => chatPool });
 // The hub checks every back-end's public health URL once a minute. AIHANKAPPS_HUB_COLLECTOR=0 serves the page without checking.
 if (process.env.AIHANKAPPS_HUB_COLLECTOR !== '0' && process.env.NODE_ENV !== 'test') aihankappsHubRouters.probes.start();
+// AiHankApps 作品集 Discord community bot (aihankapps-discord.js): off without the AIHANKAPPS_DISCORD_BOT_TOKEN variable,
+// AIHANKAPPS_DISCORD=0 turns it off. The status answer is admin-only and carries no token or message text.
+const aihankappsDiscord = require('./aihankapps-discord').createBot({
+    token: process.env.AIHANKAPPS_DISCORD === '0' ? '' : (process.env.AIHANKAPPS_DISCORD_BOT_TOKEN || ''),
+    guildId: process.env.AIHANKAPPS_DISCORD_GUILD_ID || undefined,
+    getPool: () => chatPool, isReady: () => persistenceReady,
+});
+if (process.env.NODE_ENV !== 'test') aihankappsDiscord.start();
+app.get('/api/aihankapps/discord/status', adminAuth, adminCheck, (req, res) => {
+    res.set('Cache-Control', 'private, no-store');
+    res.json({ success: true, ...aihankappsDiscord.status() });
+});
 app.use('/api/admin/paper-beta-feedback', require('./paper-beta-admin').createRouter(
     () => chatPool, adminAuth, adminCheck
 ));
