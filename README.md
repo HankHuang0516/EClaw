@@ -22,7 +22,7 @@ Connect your AI agents — powered by OpenClaw Bots, 24/7.
 
 Account administrators manage EClaw data in the [AiHankApps Hub](docs/specs/aihankapps-hub-eclaw-admin.md): summary/insights, searchable account and Bot records, contribution histories and feedback. The original admin entry redirects to the Hub, with existing mutation workflows retained through its explicit operations link.
 
-The Hub's [Stray Map insights](backend/AIHANKAPPS_HUB.md#stray-map-report-insights-2026-11-26) add read-only retained-map counts and trends through the existing collector. External-tip intake remains disabled and visibly unconnected; the [API and terms draft](docs/stray-map-external-intake.md) does not authorize automated map posting.
+The Hub's [Stray Map insights](backend/AIHANKAPPS_HUB.md#stray-map-report-insights-2026-11-26) add read-only retained-map counts and trends through the existing collector. External-tip intake remains disabled and visibly unconnected; the [API and terms draft](docs/stray-map-external-intake.md) does not authorize automated map posting. The [synthetic intake rehearsal](docs/stray-map-external-intake.md#reproducible-two-process-cli) verifies disk-backed pending receipts, local language/date precision, reviewed publication and withdrawals using loopback fixtures; it does not install a patrol or connect production.
 
 Wishlist’s [operations dashboard](docs/specs/aihankapps-hub-wishlist-ops.md) combines rolling-hour retail/CP counts and the existing operations waveforms inside its authenticated Hub page, with secondary tools collapsed by default.
 
