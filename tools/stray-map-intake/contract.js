@@ -10,7 +10,9 @@ const DRAFT = Object.freeze({
 const LIMITS = Object.freeze({ jsonBytes: 16384, photos: 2, imageBytes: 5242880,
     totalImageBytes: 8388608, imagePixels: 16000000, imageDimension: 8192 });
 const KINDS = Object.freeze(['DOG', 'CAT', 'OTHER_STRAY', 'WILDLIFE']);
-const CONDITIONS = Object.freeze(['UNKNOWN', 'ROAMING', 'INJURED', 'DECEASED']);
+const CONDITIONS = Object.freeze(['UNKNOWN', 'ROAMING', 'INJURED', 'DECEASED']); // v2 legacy
+const HEALTH_CONDITIONS = Object.freeze(['UNKNOWN', 'HEALTHY', 'INJURED', 'SICK', 'DECEASED']);
+const REPORT_TYPES = Object.freeze(['LOST', 'FOUND', 'SIGHTING']);
 const SENSITIVITIES = Object.freeze(['NONE', 'UNKNOWN', 'PROTECTED_SPECIES', 'NEST', 'HABITAT']);
 const LICENSES = Object.freeze(['EXPLICIT_PERMISSION', 'CC_BY_4_0', 'CC0_1_0']);
 const MIME_TYPES = Object.freeze(['image/jpeg', 'image/png', 'image/webp']);
@@ -183,10 +185,12 @@ function temporal(value) {
     return Number.isFinite(+d) && localParts(d, value.timeZone) === value.value.slice(0, 19) ? { ...value } : null;
 }
 // Compare only what the supplied precision proves. A date never becomes a guessed midnight instant.
+function temporalBounds(value) {
+    if (value.precision === 'UNKNOWN') return null;
+    return value.precision === 'INSTANT' ? [Date.parse(value.value), Date.parse(value.value)] : dateBounds(value.value, value.timeZone);
+}
 function definitelyAfter(a, b) {
-    if (a.precision === 'UNKNOWN' || b.precision === 'UNKNOWN') return false;
-    const range = t => t.precision === 'INSTANT' ? [Date.parse(t.value), Date.parse(t.value)] : dateBounds(t.value, t.timeZone);
-    const left = range(a), right = range(b);
+    const left = temporalBounds(a), right = temporalBounds(b);
     return left !== null && right !== null && left[0] > right[1];
 }
 function validateSource(source, policy) {
@@ -238,14 +242,29 @@ function validatePhotos(photos, source, verifiedUploads) {
     return totalBytes > LIMITS.totalImageBytes ? fail('PHOTO_LIMIT_EXCEEDED') : { success: true };
 }
 
+function reportSemantics(tip) {
+    return tip.schemaVersion === 3 ? tip.report : { type: 'UNSPECIFIED_LEGACY', locationMeaning: 'UNSPECIFIED_LEGACY',
+        custody: { status: 'UNKNOWN', asOf: { precision: 'UNKNOWN', value: null, timeZone: null } } };
+}
+function validateReport(report, published, observed, now) {
+    if (!exact(report, ['type', 'locationMeaning', 'custody']) || !REPORT_TYPES.includes(report.type)
+        || report.locationMeaning !== { LOST: 'LAST_KNOWN', FOUND: 'FOUND_AT', SIGHTING: 'OBSERVED_AT' }[report.type]
+        || !exact(report.custody, ['status', 'asOf']) || !['UNKNOWN', 'IN_CARE', 'NOT_IN_CARE'].includes(report.custody.status)) return false;
+    const asOf = temporal(report.custody.asOf);
+    if (!asOf || definitelyAfter(asOf, published) || definitelyAfter(asOf, now)) return false;
+    if (report.custody.status === 'UNKNOWN') return asOf.precision === 'UNKNOWN';
+    return report.type === 'FOUND' && asOf.precision !== 'UNKNOWN' && !definitelyAfter(observed, asOf);
+}
+
 /** All review context is server-owned. Text stays private until explicit operator review. */
 function validateTip(raw, { submittedAt, sourcePolicy, verifiedUploads = [],
     contentType = 'application/json', contentEncoding = 'identity' } = {}) {
     const parsed = parseBody(raw, contentType, contentEncoding);
     if (!parsed.success) return parsed;
     const tip = parsed.value;
-    if (!exact(tip, ['schemaVersion', 'thirdParty', 'selfWitness', 'source', 'observation', 'animal', 'location', 'display', 'photos'])
-        || tip.schemaVersion !== 2 || tip.thirdParty !== true || tip.selfWitness !== false) return fail('INVALID_TIP');
+    const keys = ['schemaVersion', 'thirdParty', 'selfWitness', 'source', 'observation', 'animal', 'location', 'display', 'photos'];
+    if (record(tip) && tip.schemaVersion === 3) keys.push('report');
+    if (!exact(tip, keys) || ![2, 3].includes(tip.schemaVersion) || tip.thirdParty !== true || tip.selfWitness !== false) return fail('INVALID_TIP');
     const source = validateSource(tip.source, sourcePolicy);
     if (!source.success) return source;
     const submitted = canonicalTime(submittedAt);
@@ -255,8 +274,9 @@ function validateTip(raw, { submittedAt, sourcePolicy, verifiedUploads = [],
     const now = { precision: 'INSTANT', value: submitted, timeZone: 'UTC' };
     if (!published || !observed || definitelyAfter(published, now) || definitelyAfter(observed, now)
         || definitelyAfter(observed, published)) return fail('INVALID_TIMELINE');
+    if (tip.schemaVersion === 3 && !validateReport(tip.report, published, observed, now)) return fail('INVALID_REPORT');
     if (!exact(tip.animal, ['kind', 'count', 'condition']) || !KINDS.includes(tip.animal.kind)
-        || !CONDITIONS.includes(tip.animal.condition) || (tip.animal.count !== null
+        || !(tip.schemaVersion === 3 ? HEALTH_CONDITIONS : CONDITIONS).includes(tip.animal.condition) || (tip.animal.count !== null
             && (!Number.isSafeInteger(tip.animal.count) || tip.animal.count < 1 || tip.animal.count > 100))) return fail('INVALID_ANIMAL');
     if (!exact(tip.location, ['countryCode', 'regionCode', 'sensitivity']) || !SENSITIVITIES.includes(tip.location.sensitivity)
         || !matches(tip.location.countryCode, /^[A-Z]{2}$/)
@@ -275,7 +295,8 @@ function validateTip(raw, { submittedAt, sourcePolicy, verifiedUploads = [],
     const localDate = observed.precision === 'DATE' ? observed.value
         : observed.precision === 'INSTANT' ? localParts(new Date(observed.value), observed.timeZone).slice(0, 10) : null;
     const candidateFingerprint = mapPolicy === 'NEVER' || localDate === null ? null
-        : hash(['stray-case-v2', tip.animal.kind, tip.location.countryCode, tip.location.regionCode, localDate]);
+        : tip.schemaVersion === 2 ? hash(['stray-case-v2', tip.animal.kind, tip.location.countryCode, tip.location.regionCode, localDate])
+            : hash(['stray-case-v3', tip.animal.kind, tip.report.type, tip.location.countryCode, tip.location.regionCode, localDate]);
     return { success: true, canonicalPayload, payloadHash: hash(canonicalPayload), candidateFingerprint,
         review: { status: 'PENDING', publicVisible: false, mapPolicy } };
 }
@@ -303,5 +324,5 @@ function countOrUnknown(value, { sourceAvailable = false } = {}) {
     return sourceAvailable === true && Number.isSafeInteger(value) && value >= 0 ? value : null;
 }
 
-module.exports = { DRAFT, LIMITS, KINDS, CONDITIONS, SENSITIVITIES, LICENSES, MIME_TYPES,
-    canonicalSourceURL, validateTip, decideIdempotency, countOrUnknown, temporal, definitelyAfter };
+module.exports = { DRAFT, LIMITS, KINDS, CONDITIONS, HEALTH_CONDITIONS, REPORT_TYPES, SENSITIVITIES, LICENSES, MIME_TYPES,
+    canonicalSourceURL, validateTip, decideIdempotency, countOrUnknown, temporal, definitelyAfter, reportSemantics, temporalBounds };

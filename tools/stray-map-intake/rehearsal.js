@@ -5,11 +5,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
 const { randomUUID, createHash } = require('node:crypto');
-const { validateTip, decideIdempotency, LIMITS } = require('./contract');
+const { validateTip, decideIdempotency, LIMITS, definitelyAfter, temporal } = require('./contract');
+const cases = require('./case-semantics');
 const digest = value => createHash('sha256').update(value).digest('hex');
 const copy = value => JSON.parse(JSON.stringify(value));
 const fail = (error, status = 400) => ({ success: false, error, status });
 const activeOrigins = new Set();
+const SOURCE_EVENT_LIMIT = 2000;
 const CHECKS = ['contentReviewed', 'localLanguageReviewed', 'privacyReviewed', 'sourceVerified', 'rightsReviewed', 'locationSafe'];
 
 function loopbackURL(value) {
@@ -111,9 +113,13 @@ class RehearsalStore {
         this.commit(next);
         return { success: true, receipt, replay: false, status: 202 };
     }
+    publicationBlockReason() {
+        if (this.poisoned) return 'STORE_UNAVAILABLE';
+        return Object.keys(this.state.sourceEvents || {}).length >= SOURCE_EVENT_LIMIT ? 'SOURCE_EVENT_CAPACITY' : null;
+    }
     receipt(tipId) {
         const row = this.state.receipts[tipId];
-        return row ? { success: true, receipt: copy(row.receipt), review: copy(row.review) } : fail('NOT_FOUND', 404);
+        return row ? { success: true, receipt: copy(row.receipt), review: copy(row.review), sourceState: copy(cases.sourceState(row)), effectivePublicVisible: this.publicationBlockReason() === null && cases.publiclyVisible(row), publicationBlockedReason: this.publicationBlockReason() } : fail('NOT_FOUND', 404);
     }
     // No HTTP review mutation. Called only by the synthetic supervisor, never source input.
     review(tipId, action, checks = {}, duplicateOf = null) {
@@ -132,18 +138,71 @@ class RehearsalStore {
             changed.review = { status: row.mapPolicy === 'NEVER' ? 'APPROVED_PRIVATE' : 'APPROVED', publicVisible: row.mapPolicy !== 'NEVER' };
         } else if (action === 'DUPLICATE') {
             if (duplicateOf === tipId || !next.receipts[duplicateOf]) return fail('INVALID_DUPLICATE_TARGET');
+            if (cases.reportSemantics(row.payload).type !== cases.reportSemantics(next.receipts[duplicateOf].payload).type) return fail('DISTINCT_REPORT_TYPES');
             changed.review = { status: 'DUPLICATE', publicVisible: false, duplicateOf };
         } else changed.review = { status: action === 'REJECT' ? 'REJECTED' : 'WITHDRAWN', publicVisible: false };
         changed.audit.push({ action, at: this.now() }); this.commit(next);
-        return { success: true, review: copy(changed.review) };
+        return { success: true, review: copy(changed.review), effectivePublicVisible: this.publicationBlockReason() === null && cases.publiclyVisible(changed), publicationBlockedReason: this.publicationBlockReason() };
     }
     publicList() {
-        if (this.poisoned) return fail('REHEARSAL_STORE_UNAVAILABLE', 503);
+        if (this.publicationBlockReason()) return fail('REHEARSAL_PUBLICATION_BLOCKED', 503);
         return { success: true, simulation: true, items: Object.entries(this.state.receipts)
-            .filter(([, row]) => row.review.status === 'APPROVED' && row.review.publicVisible === true && row.mapPolicy !== 'NEVER')
+            .filter(([, row]) => cases.publiclyVisible(row))
             .map(([id, row]) => ({ id, thirdParty: true, selfWitness: false, provenanceLabel: 'THIRD_PARTY_PUBLIC_LEAD',
-                animal: copy(row.payload.animal), location: copy(row.payload.location), observation: copy(row.payload.observation),
+                ...copy(cases.publicSemantics(row.payload)), animal: copy(row.payload.animal), location: copy(row.payload.location), observation: copy(row.payload.observation),
                 display: copy(row.payload.display), photos: row.payload.photos.map(photo => ({ caption: photo.caption, simulatedMedia: true })) })) };
+    }
+    matchingSuggestions() { return copy(cases.matchingSuggestions(this.state.receipts)); }
+    sourceEvent(event, { completeSnapshot = false } = {}) {
+        if (this.lockFd === null || this.poisoned) return fail('REHEARSAL_STORE_CLOSED', 503);
+        const now = this.now();
+        if (!temporal({ precision: 'INSTANT', value: now, timeZone: 'UTC' })) return fail('SERVER_CONTEXT_REQUIRED', 500);
+        const policy = this.policies.find(item => item.publisherId === event?.publisherId && item.datasetId === event?.datasetId);
+        if (!cases.validateSourceEvent(event, policy, now)) return fail('INVALID_SOURCE_EVENT');
+        const recordScope = digest(JSON.stringify([event.publisherId, event.datasetId, event.recordKey]));
+        const id = this.state.records[recordScope];
+        if (!id) return fail('NOT_FOUND', 404);
+        const scope = digest(JSON.stringify([event.publisherId, event.datasetId, event.eventKey]));
+        const canonical = Object.fromEntries(Object.keys(event).sort().map(key => [key, event[key]]));
+        canonical.sourceChangedAt = Object.fromEntries(Object.keys(event.sourceChangedAt).sort().map(key => [key, event.sourceChangedAt[key]]));
+        const payloadHash = digest(JSON.stringify(canonical));
+        const existing = this.state.sourceEvents?.[scope];
+        if (existing) return existing.payloadHash === payloadHash ? { success: true, replay: true, eventReceipt: copy(existing.receipt) }
+            : fail('SOURCE_EVENT_CONFLICT', 409);
+        if (event.type === 'ABSENT' && completeSnapshot !== true) return fail('INCOMPLETE_SNAPSHOT', 409);
+        if (Object.keys(this.state.sourceEvents || {}).length >= SOURCE_EVENT_LIMIT) return fail('REHEARSAL_STORE_FULL', 503);
+        const row = this.state.receipts[id], state = cases.sourceState(row);
+        if (definitelyAfter(state.sourceChangedAt, event.sourceChangedAt)) return fail('STALE_SOURCE_EVENT', 409);
+        const next = copy(this.state); next.sourceEvents ||= {};
+        const changed = next.receipts[id];
+        changed.sourceState = { ...state, lastCheckedAt: now };
+        if (event.sourceChangedAt.precision !== 'UNKNOWN') changed.sourceState.sourceChangedAt = copy(event.sourceChangedAt);
+        if (event.type === 'EXPLICIT_CLOSED') {
+            changed.sourceState.caseStatus = 'CLOSED_BY_SOURCE'; changed.sourceState.availability = 'PRESENT';
+            changed.sourceState.closureEvidence ||= { sourceChangedAt: copy(event.sourceChangedAt), receivedAt: now, reunionVerified: false };
+        } else changed.sourceState.availability = { PRESENT: 'PRESENT', ABSENT: 'ABSENT', TEMPORARY_FAILURE: 'UNAVAILABLE' }[event.type];
+        const receipt = { eventId: `sourceevt_${randomUUID().replace(/-/g, '')}`, receivedAt: now,
+            tipId: id, type: event.type, reunionVerified: false };
+        next.sourceEvents[scope] = { payloadHash, receipt };
+        changed.audit.push({ action: `SOURCE_${event.type}`, at: now }); this.commit(next);
+        return { success: true, replay: false, eventReceipt: copy(receipt) };
+    }
+    sourceAvailability(scope, { seenKeys = [], acceptedKeys = [], completeSnapshot = false, unavailable = false, jobId }) {
+        const policy = this.policies.find(item => item.publisherId === scope?.publisherId && item.datasetId === scope?.datasetId && item.verified);
+        if (!policy) return fail('INVALID_SOURCE_SCOPE');
+        const seen = new Set(seenKeys), accepted = new Set(acceptedKeys), at = this.now(), results = [];
+        for (const row of Object.values(this.state.receipts)) {
+            const source = row.payload.source;
+            if (source.publisherId !== scope.publisherId || source.datasetId !== scope.datasetId) continue;
+            const type = unavailable || (seen.has(source.recordKey) && !accepted.has(source.recordKey)) ? 'TEMPORARY_FAILURE'
+                : accepted.has(source.recordKey) ? 'PRESENT' : completeSnapshot ? 'ABSENT' : null;
+            if (type === null) continue;
+            const event = { publisherId: source.publisherId, datasetId: source.datasetId, recordKey: source.recordKey,
+                eventKey: digest(JSON.stringify(['source-check-v1', jobId, at, source.recordKey, type])), type,
+                sourceChangedAt: { precision: 'UNKNOWN', value: null, timeZone: null } };
+            results.push(this.sourceEvent(event, { completeSnapshot }));
+        }
+        return { success: results.every(item => item.success), results };
     }
     reservePoll(jobId, minimumIntervalMs) {
         if (!/^[a-z0-9-]{3,64}$/.test(jobId) || !Number.isSafeInteger(minimumIntervalMs) || minimumIntervalMs < 60000) throw new Error('INVALID_REHEARSAL_SCHEDULE');
@@ -166,7 +225,9 @@ async function startReceiver(store) {
         const send = (status, body) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(body)); };
         try {
             const u = new URL(req.url, 'http://127.0.0.1');
-            if (req.method === 'GET' && u.pathname === '/public/tips') return send(200, store.publicList());
+            if (req.method === 'GET' && u.pathname === '/public/tips') {
+                const result = store.publicList(); return send(result.status || 200, result);
+            }
             if (req.method === 'GET' && /^\/receipts\/tip_[a-f0-9]{32}$/.test(u.pathname)) {
                 const result = store.receipt(u.pathname.split('/').pop()); return send(result.status || 200, result);
             }
@@ -208,11 +269,22 @@ async function readJSON(url, options = {}) {
         throw error;
     }
 }
-async function scheduledPass({ store, sourceURL, receiverURL, jobId = 'synthetic-patrol', minimumIntervalMs = 900000 }) {
+async function scheduledPass({ store, sourceURL, receiverURL, jobId = 'synthetic-patrol', minimumIntervalMs = 900000, sourceScope = null }) {
     loopbackURL(sourceURL); loopbackURL(receiverURL);
+    if (sourceScope && !store.policies.some(policy => policy.verified && policy.publisherId === sourceScope.publisherId
+        && policy.datasetId === sourceScope.datasetId)) throw new Error('INVALID_SOURCE_SCOPE');
     if (!store.reservePoll(jobId, minimumIntervalMs)) return { success: true, skipped: true, requests: 0, results: [] };
-    const source = await readJSON(sourceURL); // Anonymous JSON fixture API only; no web page or real patrol access.
-    if (source.status !== 200 || source.body.synthetic !== true || !Array.isArray(source.body.records) || source.body.records.length > 20) throw new Error('INVALID_SYNTHETIC_DATASET');
+    let source;
+    try {
+        source = await readJSON(sourceURL); // Anonymous fixture JSON only; no web page or real patrol.
+        if (source.status !== 200 || source.body.synthetic !== true || !Array.isArray(source.body.records) || source.body.records.length > 20
+            || (source.body.events !== undefined && (!Array.isArray(source.body.events) || source.body.events.length > 20))
+            || (sourceScope && [...source.body.records.map(item => item.source), ...(source.body.events || [])]
+                .some(item => item?.publisherId !== sourceScope.publisherId || item?.datasetId !== sourceScope.datasetId))) throw new Error('INVALID_SYNTHETIC_DATASET');
+    } catch (error) {
+        if (sourceScope) store.sourceAvailability(sourceScope, { unavailable: true, jobId });
+        throw error;
+    }
     const results = [];
     for (const record of source.body.records) {
         const key = digest(JSON.stringify([record.source?.publisherId, record.source?.datasetId, record.source?.recordKey]));
@@ -224,6 +296,11 @@ async function scheduledPass({ store, sourceURL, receiverURL, jobId = 'synthetic
             results.push(await readJSON(`${receiverURL}/synthetic/tips`, options));
         }
     }
-    return { success: true, skipped: false, requests: 1, results };
+    const availability = sourceScope ? store.sourceAvailability(sourceScope, { jobId, completeSnapshot: source.body.completeSnapshot === true,
+        seenKeys: source.body.records.map(record => record.source?.recordKey),
+        acceptedKeys: source.body.records.filter((_record, index) => results[index].status === 202 && results[index].body.success === true)
+            .map(record => record.source.recordKey) }) : null;
+    const events = (source.body.events || []).map(event => store.sourceEvent(event, { completeSnapshot: source.body.completeSnapshot === true }));
+    return { success: results.every(item => item.status === 202 && item.body.success === true) && events.every(item => item.success) && (availability === null || availability.success), skipped: false, requests: 1, results, events, availability };
 }
-module.exports = { RehearsalStore, startReceiver, startLoopback, scheduledPass, readJSON, CHECKS };
+module.exports = { RehearsalStore, startReceiver, startLoopback, scheduledPass, readJSON, CHECKS, SOURCE_EVENT_LIMIT };
