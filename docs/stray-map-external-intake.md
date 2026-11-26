@@ -194,3 +194,7 @@ The source audit identified legal version `v2026-09-14.1`, `/terms?lang=zh-Hant`
 
 Only explicit approval of this narrow exception and the proven pipeline can authorize later production automated intake. This document grants no general bot permission, source-content license, new credential/role or production write. Synthetic localhost rehearsal does not amend the current terms or enable the official path.
 The official activation gate remains closed. This draft does not authorize production intake, new credentials/permissions, actual patrol writes, deployment or terms publication.
+
+## Isolated runtime reconstruction (separate evidence)
+
+The latest authorized [private runtime-subset reconstruction](stray-map-isolated-rebuild.md) freshly builds the individually hash-checked source subset and tests a separate PostgreSQL-backed synthetic adapter. This exception permits local reconstruction only; original-source restoration, native-map integration and production equivalence remain unverified. Railway's source-export path is closed; the former support draft and transmission-approval question are superseded. No external contact, live DB/write, credential, role, terms, patrol or deployment change is authorized by this acceptance. File-backed lifecycle/matching evidence and reconstructed SQL intake evidence must be reported separately.

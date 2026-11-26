@@ -1,0 +1,59 @@
+# Private Stray Map runtime-subset reconstruction
+
+This is executable isolated verification under Draft PR5527, **not original-source restoration, production equivalence, deployment, or a working official ingestion API**. It uses no live DB, source secrets, new credentials, Keychain, App device header, production pin or installed schedule. Native App login behavior and the existing 15-minute public-API-only/no-Codex patrol remain unchanged.
+
+## Source and recovery result
+
+The observed Railway deployment is `d6ded36e-daec-4f66-aa65-f33e3bed9f1a` (2026-09-26 04:02:02.820 UTC). The original CLI upload working directory was `/Users/hank/Documents/Codex/2026-08-15/referenced-chatgpt-conversation-this-is-an`. Existing metadata records historical ignore/config hashes but does not recover their contents or prove archive membership. There is no configured Time Machine destination, local Data snapshot, or readable historical candidate in the bounded search. The sole OS-update System snapshot was not mounted or treated as source. No excluded tree was rescanned, backup configured, archive extracted, or original link changed.
+
+The [Railway official forum reply](https://station.railway.com/questions/how-can-i-recover-or-verify-source-uploa-b12bfe7b) says original CLI-upload source/build-context packages are not supplied. The former export-request draft is superseded, its approval question withdrawn; nothing should be sent. Reading the running container's files is distinct from recovering the original upload.
+
+All 47 previously checked runtime files were reread and matched their historical SHA256 references; seven additional API config/legal-content files also matched. The private 54-file baseline manifest is **UNSIGNED**, with no existing signature reference. Hash agreement is not a signature, Git provenance or complete source recovery. Original root lock, root compiler configuration, exact development-tool resolution, Dockerfile/build flags, ignore contents and complete source remain unknown.
+
+Preparation is documented in [prepare.md](../tools/stray-map-rebuild/prepare.md). It pins observed Node 22.23.3/npm 10.9.9 and installed production package versions. The new root/API/contracts manifests, root compiler config and reconstruction lock are explicit rewrites; missing mobile source is omitted. Chosen development-tool versions are not asserted to be the original resolutions. Darwin arm64 native dependencies differ from the observed Linux x64 runtime. Official HTTPS Node SHASUM matching is recorded separately from absent signature verification. Public npm registry only; install lifecycle scripts disabled; no inherited npm credentials/config.
+
+## Run the actual synthetic backend check
+
+First complete preparation through fresh `npm ci`, emitted-output comparison, dependency comparison and host codec verification. Retain the external-storage and additional-space checks described by the preparer. From the existing EClaw worktree, using the pinned Node executable:
+
+```sh
+/Volumes/ProjectsData/portfolio-private-staging/20261126-stray-map-isolated-rebuild/toolchain/node-v22.23.3-darwin-arm64/bin/node \
+  tools/stray-map-rebuild/integration.cjs \
+  /Volumes/ProjectsData/portfolio-private-staging/20261126-stray-map-isolated-rebuild
+```
+
+The runner uses only the existing local Docker Desktop engine and already-present `postgis/postgis:17-3.5` image, by inspected image ID with `--pull=never`. It creates a unique labelled bridge/container, disabled outbound IP masquerading/inter-container communication, and ephemeral loopback PostgreSQL binding. Trust authentication is limited to this synthetic DB; no password/token/role is created. It applies the 12 captured migrations and seeds one clearly synthetic native animal plus its mandatory synthetic device FK directly in the synthetic DB. That SQL fixture is not an App user identity or an external ingestion path.
+
+The freshly compiled native server starts with an allowlisted environment and loopback DB. A new process preload normalizes file URLs, denies synchronous/callback/promise dotenv reads and non-approved TCP/fetch destinations, rejects custom DNS lookup and forces localhost/listening to literal loopback. Native and receipt-reader processes receive per-run empty HOME/TMP paths. This is a reconstruction isolation boundary, not a recovered production configuration or an OS sandbox. No original source files are patched for this boundary.
+
+A **new local adapter** persists external tips/receipts/photos in separate `rebuild_external` tables. Only registered synthetic `.example.invalid` policies are accepted. It uses the existing v2/v3 validator, transactional advisory locking, source-record uniqueness, immutable retry receipts, body/MIME limits and per-source capacity/rate refusal. Approval revalidates the current source policy, payload hash and registered photo evidence inside the row-locked transaction, taking shared photo-row locks; revoked proof refuses approval. Manual review travels through an owner-only Unix socket, with no TCP admin route or credential. The loopback HTTP gateway forwards only native GETs; external writes never enter native animals/devices.
+
+The actual captured `LocalStorageProvider` decodes/re-encodes self-made pixels through the reconstructed Sharp version. Only the runner's registered generated-image SHA is eligible; merely declaring `synthetic:true` and computing a hash is insufficient. Missing grant/wrong MIME fail before storage. EXIF/GPS/ICC/orientation are checked after codec work. Originals and intermediate files stay in an unserved private folder; anonymous photo reads query the approved external record. Safety flags in the validator stand only for these known QA pixels. **No real image moderation, author-rights acceptance, identity redaction or wildlife-location review is verified.**
+
+The runner checks native health, synthetic native share, native legal version/device gate, accepted pending receipts, hidden tip/photo/native-share/upload routes, concurrent retries, fresh-process receipt reads, checklist refusal, local approval, original language/time precision, no private source keys, zero external native writes, withdrawal and conflict refusal. Success is written only after every assertion. The runner stops only its own labelled DB container and native process; its stopped synthetic DB and private evidence remain for review. Do not delete them while current acceptance depends on them.
+
+## Meaning and remaining gates
+
+Approval makes the **new isolated external read route** readable. Native `/a/:uuid` remains 404 for that external tip even after approval: the native device-bound model has not been bypassed, and this does not prove native map integration. The live public health/share/terms contracts supply comparison targets; no synthetic record is written to production. Rehearsal counts never enter the Hub's actual-data statistics.
+
+Existing file-backed scheduled-source/case lifecycle and actual image-byte suites remain separate evidence. Their source absence/outage/closure, cross-source matching and v2 compatibility checks do not establish equivalent behavior in this new PostgreSQL adapter. Production still needs a reviewed/adopted reconstructable backend, native external-origin/map integration with matching/lifecycle persistence, genuine moderation/storage/rights controls, operator authorization, and an explicitly approved narrow terms exception if external automation remains prohibited. No complete-origin or deployability-equivalence claim is made.
+
+Required production decisions are adoption/review of the labelled reconstructed source and release process, then the precise official intake/terms/reviewer authority. These are approval gates after private acceptance; test success does not authorize them. Original recovery may reopen only on a concrete new readable backup/source lead, not another scan of already-excluded paths.
+
+Private evidence root: `/Volumes/ProjectsData/portfolio-private-staging/20261126-stray-map-isolated-rebuild/`. It holds baseline/source manifests, snapshot-search report, toolchain/dependency/lock/build comparisons, `PREPARE_RESULT.private.json`, per-run `RESULT.private.json`, native logs and resource ownership. Runtime source, generated packages, photos and DB bytes are deliberately absent from public Git.
+
+## Review scope
+
+A1: native read path and separate pending/review/withdraw transaction path are traced. A2: actual fresh install/build/DB/HTTP evidence plus shared-mock Jest rollback, review, privacy and real child-process network guards. A3: adapter errors use success/error envelopes; native responses preserve their original contracts. A4: limitations above remain open. A5: synthetic-only policies/image allowlist; no remote image fetching, device impersonation, production writes or public pending photos.
+
+B1 `/api/help`: NO-OP, no deployed application endpoint. B2: root README, AGENTS, CLAUDE, external-intake draft and these build/run docs identify the scope. B3 i18n NO-OP: development-only tools and JSON, while fixture locales are preserved. B4 info page NO-OP: no end-user feature released. B5 debug endpoint NO-OP: private JSON/log evidence only, no product debug surface. H/icon self-check: not applicable, no product build, icon or publication artifact changed. PR remains draft; simplify is optional.
+
+## Recorded private acceptance (2026-11-27 Asia/Taipei)
+
+- Fresh pinned toolchain install/build and a separate `workspace-ci` fresh install/build pass: 31 emitted file SHA256s identical, reconstruction lock unchanged. Of 54 checked baseline files, 51 remain byte-identical in the generated workspace; three manifests are documented rewrites. Root compiler config and lock are newly generated.
+- Runtime dependency comparison: 192 installed entries match, 3 Linux-native entries are omitted for Darwin, 3 optional entries are absent, and 1 development-tool selection differs. There are zero unexplained production-version mismatches/missing entries. The comparison separately records 56 added development/host entries and 195 retained integrity values. This is not Linux production equivalence. `nsfwjs`'s exact Node 22.13.0 engine declaration differs from observed/rebuilt Node 22.23.3; model execution remains unverified.
+- Actual synthetic Node/PostGIS/HTTP acceptance: 20 named checks pass, including eight concurrent retries and a separate fresh receipt-reader process. The first acknowledgement now uses PostgreSQL's returned JSONB receipt, preserving the same serialized key order on retries. New external public reads work only after Unix-socket review; native external share remains 404.
+- Jest: 288/288 across six suites (contract 103, case lifecycle 57, file-backed scheduler/receipt 20, image bytes 52, Hub 27, reconstruction isolation 29); no forced exit. These are separate from the actual SQL/HTTP checks and 10 preparer boundary checks. All 8 reconstruction JS/CJS files lint with zero errors/warnings. Independent review found HOME inheritance, encoded/asynchronous env reads, custom DNS lookup and review-time evidence validity gaps; fixes and negative regressions pass. Current actual run: `integration-c60639a1/RESULT.private.json`.
+- Initial synthetic runs found and fixed internal-Docker-network port suppression, temporary init-server readiness, and JSONB first/replay key ordering. Failed evidence is retained and is not a passed acceptance. Final per-run results and append-only `INTEGRATION_RESULTS.private.jsonl` identify successful runs; the singular `INTEGRATION_RESULT.private.json` preserves the first successful receipt.
+
+Nothing is deployed. Native map integration, real photo moderation/rights, persistent cross-source/source-event handling in this SQL adapter, full original-source provenance and the explicit production/terms decisions remain open. No external contact was sent.
