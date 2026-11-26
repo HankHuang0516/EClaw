@@ -269,38 +269,58 @@ async function readJSON(url, options = {}) {
         throw error;
     }
 }
-async function scheduledPass({ store, sourceURL, receiverURL, jobId = 'synthetic-patrol', minimumIntervalMs = 900000, sourceScope = null }) {
-    loopbackURL(sourceURL); loopbackURL(receiverURL);
+async function scheduledPass({ store, sourceURL, receiverURL, jobId = 'synthetic-patrol', minimumIntervalMs = 900000, sourceScope = null,
+    receiverPath = '/synthetic/tips', receiverRegistration = null }) {
+    if (!['/synthetic/tips', '/external-rebuild/v1/tips'].includes(receiverPath)) throw new Error('INVALID_RECEIVER_PATH');
+    // An out-of-band isolated runner may attest its own native child server. Never read this from fixture JSON.
+    if (receiverRegistration !== null) {
+        const target = new URL(receiverURL);
+        if (receiverPath !== '/external-rebuild/v1/tips' || !receiverRegistration || receiverRegistration.synthetic !== true
+            || receiverRegistration.purpose !== 'STRAY_MAP_ISOLATED_NATIVE' || receiverRegistration.origin !== target.origin
+            || Object.keys(receiverRegistration).length !== 3 || target.protocol !== 'http:' || target.hostname !== '127.0.0.1'
+            || !target.port || target.username || target.password || target.search || target.hash || target.pathname !== '/') throw new Error('INVALID_RECEIVER_REGISTRATION');
+        receiverURL = target.origin;
+    }
+    const receiverCall = callback => {
+        if (receiverRegistration === null) return callback();
+        const origin = receiverRegistration.origin, alreadyRegistered = activeOrigins.has(origin);
+        activeOrigins.add(origin);
+        // readJSON checks the origin synchronously before its first await. Do not retain a global registration while fetching.
+        try { return callback(); } finally { if (!alreadyRegistered) activeOrigins.delete(origin); }
+    };
+    loopbackURL(sourceURL); receiverCall(() => loopbackURL(receiverURL));
     if (sourceScope && !store.policies.some(policy => policy.verified && policy.publisherId === sourceScope.publisherId
         && policy.datasetId === sourceScope.datasetId)) throw new Error('INVALID_SOURCE_SCOPE');
-    if (!store.reservePoll(jobId, minimumIntervalMs)) return { success: true, skipped: true, requests: 0, results: [] };
+    if (!await store.reservePoll(jobId, minimumIntervalMs)) return { success: true, skipped: true, requests: 0, results: [] };
     let source;
     try {
         source = await readJSON(sourceURL); // Anonymous fixture JSON only; no web page or real patrol.
         if (source.status !== 200 || source.body.synthetic !== true || !Array.isArray(source.body.records) || source.body.records.length > 20
             || (source.body.events !== undefined && (!Array.isArray(source.body.events) || source.body.events.length > 20))
+            || (store.supportsSourceEvents === false && source.body.events?.length > 0)
             || (sourceScope && [...source.body.records.map(item => item.source), ...(source.body.events || [])]
                 .some(item => item?.publisherId !== sourceScope.publisherId || item?.datasetId !== sourceScope.datasetId))) throw new Error('INVALID_SYNTHETIC_DATASET');
     } catch (error) {
-        if (sourceScope) store.sourceAvailability(sourceScope, { unavailable: true, jobId });
+        if (sourceScope) await store.sourceAvailability(sourceScope, { unavailable: true, jobId });
         throw error;
     }
     const results = [];
     for (const record of source.body.records) {
         const key = digest(JSON.stringify([record.source?.publisherId, record.source?.datasetId, record.source?.recordKey]));
         const options = { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key }, body: JSON.stringify(record) };
-        try { results.push(await readJSON(`${receiverURL}/synthetic/tips`, options)); }
+        try { results.push(await receiverCall(() => readJSON(`${receiverURL}${receiverPath}`, options))); }
         catch (error) {
             if (!error.rehearsalTransportFailure && !error.rehearsalAcknowledgementFailure) throw error;
             // The first response may have been lost after commit. One bounded retry uses exactly the same key/body.
-            results.push(await readJSON(`${receiverURL}/synthetic/tips`, options));
+            results.push(await receiverCall(() => readJSON(`${receiverURL}${receiverPath}`, options)));
         }
     }
-    const availability = sourceScope ? store.sourceAvailability(sourceScope, { jobId, completeSnapshot: source.body.completeSnapshot === true,
+    const availability = sourceScope ? await store.sourceAvailability(sourceScope, { jobId, completeSnapshot: source.body.completeSnapshot === true,
         seenKeys: source.body.records.map(record => record.source?.recordKey),
         acceptedKeys: source.body.records.filter((_record, index) => results[index].status === 202 && results[index].body.success === true)
             .map(record => record.source.recordKey) }) : null;
-    const events = (source.body.events || []).map(event => store.sourceEvent(event, { completeSnapshot: source.body.completeSnapshot === true }));
+    const events = [];
+    for (const event of source.body.events || []) events.push(await store.sourceEvent(event, { completeSnapshot: source.body.completeSnapshot === true }));
     return { success: results.every(item => item.status === 202 && item.body.success === true) && events.every(item => item.success) && (availability === null || availability.success), skipped: false, requests: 1, results, events, availability };
 }
 module.exports = { RehearsalStore, startReceiver, startLoopback, scheduledPass, readJSON, CHECKS, SOURCE_EVENT_LIMIT };

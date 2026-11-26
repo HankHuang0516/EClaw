@@ -1,5 +1,7 @@
 # Private Stray Map runtime-subset reconstruction
 
+**Latest isolated milestone (2026-11-27):** [single scheduled-source/native path](stray-map-single-path.md) now verifies a generated native list/share projection and withdrawal with zero native/device rows. The first adapter described below and its old 20-check runner remain historical separate evidence; their native-map limitation is superseded only by the new isolated extension, not by any production/App verification.
+
 This is executable isolated verification under Draft PR5527, **not original-source restoration, production equivalence, deployment, or a working official ingestion API**. It uses no live DB, source secrets, new credentials, Keychain, App device header, production pin or installed schedule. Native App login behavior and the existing 15-minute public-API-only/no-Codex patrol remain unchanged.
 
 ## Source and recovery result

@@ -198,3 +198,7 @@ The official activation gate remains closed. This draft does not authorize produ
 ## Isolated runtime reconstruction (separate evidence)
 
 The latest authorized [private runtime-subset reconstruction](stray-map-isolated-rebuild.md) freshly builds the individually hash-checked source subset and tests a separate PostgreSQL-backed synthetic adapter. This exception permits local reconstruction only; original-source restoration, native-map integration and production equivalence remain unverified. Railway's source-export path is closed; the former support draft and transmission-approval question are superseded. No external contact, live DB/write, credential, role, terms, patrol or deployment change is authorized by this acceptance. File-backed lifecycle/matching evidence and reconstructed SQL intake evidence must be reported separately.
+
+## Single isolated native path (2026-11-27)
+
+The [single-path acceptance](stray-map-single-path.md) now reuses the actual 15-minute scheduler with PG poll slots and native Fastify HTTP acceptance, then projects reviewed external data through an explicitly versioned native list view and the existing share path. Default legacy App DTO/auth behavior is unchanged. Its private `/external-rebuild/v1/tips` test endpoint does not enable the formal `/v1/public/tips` draft. All coarse external coordinates remain null and no external pin is fabricated. App source/UI, production adoption/terms/authority and genuine source/photo acceptance remain open; no field patrol or formal service is changed.

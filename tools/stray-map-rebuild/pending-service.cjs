@@ -3,6 +3,7 @@
 const { createHash, randomUUID } = require('node:crypto');
 const { validateTip } = require('../stray-map-intake/contract');
 const { publicSemantics } = require('../stray-map-intake/case-semantics');
+const { validatePublicContent } = require('./projection-contract.cjs');
 const digest = value => createHash('sha256').update(value).digest('hex');
 const fail = (error, status = 400) => ({ success: false, error, status });
 const checks = ['contentReviewed', 'localLanguageReviewed', 'privacyReviewed', 'sourceVerified', 'rightsReviewed', 'locationSafe'];
@@ -27,7 +28,10 @@ class PendingService {
               id text PRIMARY KEY,publisher text NOT NULL,dataset text NOT NULL,record_key text NOT NULL,
               original_hash text NOT NULL,sanitized_hash text NOT NULL,rights jsonb NOT NULL,
               bytes bytea NOT NULL,width integer NOT NULL,height integer NOT NULL,
-              verification text NOT NULL CHECK(verification='KNOWN_SYNTHETIC_PIXELS_ONLY'))`);
+              verification text NOT NULL CHECK(verification='KNOWN_SYNTHETIC_PIXELS_ONLY'));
+            ALTER TABLE rebuild_external.tips ADD COLUMN IF NOT EXISTS public_id uuid NOT NULL DEFAULT gen_random_uuid();
+            ALTER TABLE rebuild_external.tips ADD COLUMN IF NOT EXISTS public_content jsonb;
+            CREATE UNIQUE INDEX IF NOT EXISTS external_public_id ON rebuild_external.tips(public_id)`);
     }
     async uploads(client = this.pool) {
         const rows = (await client.query('SELECT * FROM rebuild_external.photos FOR SHARE')).rows;
@@ -93,7 +97,7 @@ class PendingService {
             await client.query('COMMIT'); return { success: true, receipt, replay: !!prior, status: 202 };
         } catch (error) { await client.query('ROLLBACK'); throw error; } finally { client.release(); }
     }
-    async decide(id, action, reviewChecks) {
+    async decide(id, action, reviewChecks, publicContent = null) {
         if (!['APPROVE','REJECT','WITHDRAW'].includes(action)) return fail('INVALID_DECISION');
         const client = await this.pool.connect();
         try {
@@ -103,10 +107,16 @@ class PendingService {
             if (action === 'APPROVE' && !checks.every(key => reviewChecks?.[key] === true)) { await client.query('ROLLBACK'); return fail('REVIEW_CHECKS_REQUIRED',403); }
             if (action === 'APPROVE') {
                 const policy = this.policies.find(item => item.publisherId === row.publisher && item.datasetId === row.dataset);
+                const uploads = await this.uploads(client);
                 const valid = validateTip(Buffer.from(JSON.stringify(row.payload)), { submittedAt: this.now(), sourcePolicy: policy,
-                    verifiedUploads: await this.uploads(client) });
+                    verifiedUploads: uploads });
                 if (!valid.success || valid.payloadHash !== row.payload_hash || valid.review.mapPolicy !== row.map_policy) {
                     await client.query('ROLLBACK'); return fail('REVIEW_EVIDENCE_INVALID',403);
+                }
+                if(publicContent!==null) {
+                    const reviewed=validatePublicContent(publicContent,row.payload,{submittedAt:this.now(),sourcePolicy:policy,verifiedUploads:uploads});
+                    if(!reviewed.success){await client.query('ROLLBACK');return reviewed;}
+                    await client.query('UPDATE rebuild_external.tips SET public_content=$2 WHERE id=$1',[id,reviewed.content]);
                 }
             }
             const state = action === 'APPROVE' ? row.map_policy === 'NEVER' ? 'APPROVED_PRIVATE' : 'APPROVED' : action === 'REJECT' ? 'REJECTED' : 'WITHDRAWN';
