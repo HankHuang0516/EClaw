@@ -85,3 +85,8 @@ describe('native route hooks preserve authentication boundaries',()=>{
         const result=await options.handler({params:{animalId:'00000000-0000-4000-8000-000000000012'},query:{}},reply());expect(result).toBe('native-original');expect(original).toHaveBeenCalled();expect(pool.query).toHaveBeenLastCalledWith('SELECT 1 FROM animals WHERE id=$1',['00000000-0000-4000-8000-000000000012']);
     });
 });
+
+test('zero independent source checks is UNKNOWN even if the public list is empty',async()=>{
+    const {projection,pool}=setup();pool.query.mockImplementation(async sql=>({rows:sql.includes('SELECT t.*')?[]:sql.includes('source_checks')?[{total:0,current:0,usable:0,checked_at:null}]:[]}));
+    const result=await projection.list();expect(result.externalLeads).toEqual([]);expect(result.dataQuality.sourceAvailability).toBe('UNKNOWN');expect(result.dataQuality.lastCheckedAt).toBeNull();
+});

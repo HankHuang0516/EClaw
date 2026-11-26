@@ -1,9 +1,12 @@
 'use strict';
 // NEW isolated native Fastify extension. No native row/device mutations; legacy defaults remain untouched.
 const fs=require('node:fs');
+const path=require('node:path');
 const {validateTip}=require('../stray-map-intake/contract');
 const {reportSemantics}=require('../stray-map-intake/case-semantics');
 const {PendingService}=require('./pending-service.cjs');
+const sourceState=require('./sql-source-state.cjs');
+const dedup=require('./sql-dedup.cjs');
 const {VIEW,validatePublicContent,isUuid,photoUuid}=require('./projection-contract.cjs');
 const LABELS={
  en:{thirdParty:'Third-party public lead',LOST:'Lost',FOUND:'Found',SIGHTING:'Sighting',LAST_KNOWN:'Last known region',FOUND_AT:'Found region',OBSERVED_AT:'Observed region',time:'Source observation time',care:'Source-reported care status',careTime:'Care report time',unknown:'Unknown',coarse:'Only the country and coarse region are available. No map pin or present care location is inferred.',IN_CARE:'In care',NOT_IN_CARE:'Not in care',UNKNOWN:'Unknown'},
@@ -26,7 +29,7 @@ class NativeProjection {
     constructor(service,baseURL){const url=new URL(baseURL);if(url.protocol!=='http:'||url.hostname!=='127.0.0.1'||url.username||url.password)throw Error('LOOPBACK_PROJECTION_ONLY');this.service=service;this.base=url.origin;}
     async rows(id=null) {
         const rows=(await this.service.pool.query(`SELECT t.* FROM rebuild_external.tips t WHERE t.review='APPROVED' AND t.map_policy!='NEVER'
-            AND t.public_content IS NOT NULL AND ($1::uuid IS NULL OR t.public_id=$1)
+            AND t.public_content IS NOT NULL AND ($1::uuid IS NULL OR t.public_id=$1) AND ${sourceState.visibleSQL('t')} AND ${dedup.visibleSQL('t')}
             AND NOT EXISTS(SELECT 1 FROM animals a WHERE a.id=t.public_id) ORDER BY t.public_id LIMIT 1000`,[id])).rows;
         const uploads=await this.service.uploads();
         return rows.filter(row=>{
@@ -46,7 +49,18 @@ class NativeProjection {
             photos:p.photos.map((photo,index)=>({id:photoUuid(photo.uploadId),url:`${this.base}/external-media/${row.public_id}/${photoUuid(photo.uploadId)}`,
                 caption:content.photoCaptions[index].caption}))};
     }
-    async list(){return {success:true,schemaVersion:1,view:VIEW,externalLeads:(await this.rows()).map(row=>this.project(row)),mapMarkers:[],nativeIncluded:false};}
+    async list(){
+        const rows=await this.rows();
+        const scopes=this.service.policies.map(p=>`${p.publisherId}:${p.datasetId}`);
+        const quality=(await this.service.pool.query(`SELECT count(*)::int total,
+            count(*) FILTER(WHERE sc.availability='AVAILABLE' AND NOT EXISTS(SELECT 1 FROM rebuild_external.source_gates sg WHERE sg.publisher=sc.publisher AND sg.dataset=sc.dataset AND sg.blocked=true))::int current,
+            count(*) FILTER(WHERE sc.availability IN ('AVAILABLE','PARTIAL') AND NOT EXISTS(SELECT 1 FROM rebuild_external.source_gates sg WHERE sg.publisher=sc.publisher AND sg.dataset=sc.dataset AND sg.blocked=true))::int usable,
+            max(sc.checked_at) checked_at FROM rebuild_external.source_checks sc WHERE sc.publisher||':'||sc.dataset=ANY($1::text[])`,[scopes])).rows[0];
+        const sourceAvailability=!quality||quality.total===0||quality.total<scopes.length?'UNKNOWN':quality.total===quality.current?'AVAILABLE':quality.usable===0?'UNAVAILABLE':'PARTIAL';
+        const checked=quality?.checked_at;
+        return {success:true,schemaVersion:1,view:VIEW,externalLeads:rows.map(row=>this.project(row)),mapMarkers:[],nativeIncluded:false,
+            dataQuality:{sourceAvailability,lastCheckedAt:checked instanceof Date&&Number.isFinite(checked.getTime())?checked.toISOString():null}};
+    }
     async one(id){if(!isUuid(id))return null;const row=(await this.rows(id))[0];return row?this.project(row):null;}
     async photo(id,photoId){const lead=await this.one(id);if(!lead||!lead.photos.some(photo=>photo.id===photoId))return null;
         const uploadId=`up_${photoId.replaceAll('-','')}`;return this.service.publicPhoto(uploadId);}
@@ -55,20 +69,28 @@ async function install(app,{pool,config,fixtureConfigPath}) {
     if(process.env.STRAY_REBUILD_SYNTHETIC!=='1')throw Error('SYNTHETIC_NATIVE_EXTENSION_ONLY');
     const fixture=JSON.parse(fs.readFileSync(fixtureConfigPath,'utf8'));
     if(fixture.kind!=='SYNTHETIC_NATIVE_PROJECTION')throw Error('INVALID_NATIVE_FIXTURE_CONTEXT');
-    const service=new PendingService({pool,sourcePolicies:fixture.sourcePolicies,knownSyntheticPixelHashes:fixture.pixelHashes,now:()=>fixture.submittedAt});
+    const service=new PendingService({pool,sourcePolicies:fixture.sourcePolicies,knownSyntheticPixelHashes:fixture.pixelHashes,now:()=>fixture.submittedAt,
+        requirePersistentPhotoRights:fixture.requirePersistentPhotoRights===true,enablePersistentDedup:fixture.enablePersistentDedup===true});
     await service.init();const projection=new NativeProjection(service,config.API_PUBLIC_URL);
     // Dedicated path is outside the native /v1 device hook. No old route/auth exception is added.
     await app.register(async scope=>{
         scope.removeContentTypeParser('application/json');scope.addContentTypeParser('application/json',{parseAs:'buffer'},(_req,body,done)=>done(null,body));
         scope.post('/external-rebuild/v1/tips',{bodyLimit:16384},async(req,reply)=>{
             if(!/^application\/json(?:;\s*charset=utf-8)?$/i.test(req.headers['content-type']||''))return reply.code(415).send({success:false,error:'JSON_CONTENT_TYPE_REQUIRED'});
-            const result=await service.accept(req.body,req.headers['idempotency-key']);return reply.code(result.status||202).send(result);
+            try{const result=await service.accept(req.body,req.headers['idempotency-key']);return reply.code(result.status||202).send(result);}
+            catch{return reply.code(503).send({success:false,error:'PENDING_STORE_UNAVAILABLE'});}
         });
         scope.get('/external-rebuild/v1/receipts/:tipId',async(req,reply)=>{const result=await service.getReceipt(req.params.tipId);return reply.code(result.status||200).header('Cache-Control','no-store').send(result);});
         scope.get('/external-media/:publicId/:photoId',async(req,reply)=>{
             const bytes=await projection.photo(req.params.publicId,req.params.photoId);if(!bytes)return reply.code(404).header('Cache-Control','no-store').send({success:false,error:'NOT_FOUND'});
             return headers(reply,'image/jpeg').send(bytes);
         });
+        if(fixture.clientSpec===true)for(const [route,file,type]of [
+            ['/prototype-client/','index.html','text/html; charset=utf-8'],
+            ['/prototype-client/client.js','client.js','text/javascript; charset=utf-8'],
+            ['/prototype-client/client.css','client.css','text/css; charset=utf-8']])scope.get(route,async(_req,reply)=>
+                headers(reply,type).header('Content-Security-Policy',"default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'")
+                    .send(fs.readFileSync(path.join(__dirname,'client-specimen',file))));
     });
     app.addHook('onRoute',options=>{
         const methods=Array.isArray(options.method)?options.method:[options.method];if(!methods.some(method=>['GET','HEAD'].includes(method)))return;

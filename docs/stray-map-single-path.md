@@ -1,5 +1,7 @@
 # Single isolated scheduled-source → native projection acceptance
 
+**Historical 22-check milestone:** the later [SQL lifecycle/client acceptance](stray-map-release-readiness.md) adds persistent source state, deduplication and photo permissions plus a non-formal browser specimen. The older runner below was not rerun. Its unimplemented SQL lifecycle limitation is superseded only in the new explicitly enabled private runner; production and actual App UI remain unverified.
+
 The private backend path now exercises registered synthetic API GETs through the **existing** 15-minute `scheduledPass` function, PostgreSQL pending receipts, manual review, a native Fastify list projection, the existing `/a/:UUID` sharing route and withdrawal. This is an unsigned reconstruction extension under Draft5527. It is not deployed, does not verify an official intake, and changes no production data, credentials, roles, terms or on-machine patrol. No timer or Mac task is installed; fixture clocks invoke the actual scheduling function.
 
 ## Native integration and compatibility
@@ -25,7 +27,7 @@ This public external-only view completes in a route `onRequest` hook, including 
 
 ## Projection and review boundaries
 
-Each tip receives an independent persisted opaque public UUID, separate from its private source key and immutable pending receipt. The native projection queries only APPROVED, location-safe rows with an explicit reviewed public-content artifact. It revalidates the original payload hash, current registered policy, sanitized self-made pixel proof and reviewed text before list/share/photo reads. DB/query errors fail as errors, not fake empty-source counts. Source closure/outage/matching state is not implemented by this SQL scheduler bridge and is not claimed by this acceptance.
+Each tip receives an independent persisted opaque public UUID, separate from its private source key and immutable pending receipt. The native projection queries only APPROVED, location-safe rows with an explicit reviewed public-content artifact. It revalidates the original payload hash, current registered policy, sanitized self-made pixel proof and reviewed text before list/share/photo reads. DB/query errors fail as errors, not fake empty-source counts. At this historical milestone the SQL scheduler did not implement source closure/outage/matching; the newer release-readiness runner enables those private SQL extensions explicitly.
 
 Private operator review uses an owner-only Unix socket. Mandatory content/language/privacy/source/rights/location checks and current proof validation occur inside the row-locked PG transaction. A separate bounded public-content artifact preserves the reviewed source locale and removes private input from titles/descriptions/captions. Conservative contact/URL/coordinate text checks supplement manual review; they are not universal PII detection. Raw input, publisher/dataset/stable source keys, rights references and unreviewed captions are never used by the native renderer.
 
@@ -65,7 +67,7 @@ Final local regression: **370/370 tests, nine suites**, forceExit=false/detectOp
 
 ## Review and formal decision
 
-A1 state/auth/visibility paths traced; A2 shared-mock PG/contract/hook tests plus actual native Fastify/PostGIS/fresh-process flow; A3 bounded success/error envelopes (legacy shapes unchanged); A4 original-source/full-equivalence, real source/photo safety, SQL source lifecycle/matching, client adoption/UI and formal authority remain open; A5 no native identity/write impersonation, exact external-only view, private review and shared read suppression. B1 product help and B5 product debug are NO-OP: isolated generated extension only. B2 README/AGENTS/CLAUDE/intake/rebuild docs are updated. B3 five label locales plus original locale retention; B4 no product promotion claim or deployment. H/icon: no applicable product icon/release artifact; no publish occurred. Simplify is optional.
+A1 state/auth/visibility paths traced; A2 shared-mock PG/contract/hook tests plus actual native Fastify/PostGIS/fresh-process flow; A3 bounded success/error envelopes (legacy shapes unchanged); A4 original-source/full-equivalence, real source/photo safety, client adoption/UI and formal authority remain open; A5 no native identity/write impersonation, exact external-only view, private review and shared read suppression. B1 product help and B5 product debug are NO-OP: isolated generated extension only. B2 README/AGENTS/CLAUDE/intake/rebuild docs are updated. B3 five label locales plus original locale retention; B4 no product promotion claim or deployment. H/icon: no applicable product icon/release artifact; no publish occurred. Simplify is optional.
 
 The minimum formal decisions are whether to adopt/review this labelled reconstructable backend plus explicit external-view contract, and authorize the dedicated official intake/reviewer/limited terms exception through the existing release process. This private result does not grant those permissions. Real source/photo/operator acceptance and App integration still need concrete production validation; it is not safe to call the formal scheduled submission complete.
 

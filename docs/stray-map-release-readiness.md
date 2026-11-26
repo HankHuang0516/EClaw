@@ -1,0 +1,54 @@
+# Isolated SQL lifecycle and non-formal client acceptance
+
+Draft5527 now connects the existing test-clock 15-minute scheduler to SQL source lifecycle, durable manual deduplication, a synthetic photo-permission ledger and a **non-formal client specimen** reading the actual isolated native API. It is not the mobile App, an official intake deployment, original-source restoration or production acceptance. No on-machine timer, terms, access, credential or production data is changed. The earlier 22-check sharing milestone was retained without rerunning it.
+
+## Actual scope and source audit
+
+The bounded audit checked known project/storage/cloud indexes, the original linked path, indexed Expo/EAS/mobile paths and four recorded Android/iOS build paths. The original mobile source link remains unavailable; none of the four build paths has a readable, independently authorized test artifact. The checked 54-file backend subset contains no mobile source. This is a conclusion within those known locations, not a claim that the entire Mac was searched. No excluded tree, archive payload, installed App, signing service, private key or Keychain was inspected.
+
+The default native DTO/auth/write behavior remains unchanged. Its mandatory numeric coordinates and instant timestamp cannot truthfully represent the external coarse-region/DATE data. The explicit `external-origin-v1` contract remains separate. No anonymous device is synthesized and no device, native animal or sighting is written.
+
+## SQL and image changes
+
+- `sql-source-state.cjs` stores immutable event receipts, current per-case closure/availability, independent per-source check coverage and fail-closed capacity gates in `rebuild_external`. Explicit source closure preserves its original DATE/zone/evidence and stays closed after PRESENT. Complete-snapshot ABSENT and TEMPORARY_FAILURE hide current public projections without declaring closure or reunion; partial snapshots do not infer disappearance. Publisher-locked transactions serialize checks/events. The last permitted event also blocks visibility when the configured capacity is reached; failures do not become fake successful empty checks.
+- `sql-dedup.cjs` persists private hashed source scopes, bounded candidate links and explicit manual duplicate decisions in the acceptance transaction. Retries retain the original receipt. Distinct cases keep distinct receipts; lost/found suggestions never auto-merge or imply reunion. Only a checked same-type duplicate decision hides its subject. The final fresh process reads all eight original tips, the decision and source event receipts from PostgreSQL.
+- `photo-rights.cjs` requires a persisted ACTIVE permission record bound to the source case and original byte hash. Every read rechecks its proof hash, allowed synthetic policy, rights fields, grant/photo/case linkage and sanitized byte hash. A missing/altered/revoked grant cannot project. Revocation is sticky. Only repo-generated synthetic pixels are admitted by this implementation; it does **not** authenticate a real author's permission. An unlicensed remote URL is omitted without fetching it, retaining the otherwise valid text lead. Actual bytes pass through the captured storage provider and pinned Sharp metadata-removal path; output remains private and semantic safety still requires real review.
+
+Common visibility applies these states to native external list, existing share and image reads. The optional `dataQuality` field reports AVAILABLE/PARTIAL/UNAVAILABLE/UNKNOWN plus the last independent source check; zero tips alone cannot prove available coverage. Existing callers may omit this additive field. The old file-backed case rehearsal and legacy synthetic photo mode remain supported; persistent rights/dedup and SQL source polling are explicit options enabled in this new runner.
+
+## Non-formal client and evidence
+
+`client-specimen/` is served only when the private synthetic fixture enables it. Its permanent banner says it is not the Stray Map App or production. It uses same-origin GET only, reviewed source text through `textContent`, no browser identity/mutation, no geocoder or map library. Five complete UI dictionaries (`en`, `zh-TW`, `zh-CN`, `ja`, `ko`) preserve the approved original source locale/title/description/caption. A newer response wins over stale success/failure. An outage clears cards and shows an unknown count; partial/unknown coverage is labelled.
+
+Only country/coarse-region cards are supported. Location semantics distinguish last-known LOST, FOUND_AT and OBSERVED_AT; care/asOf does not imply a current care location. No trusted approved point was available, so the separate point layer is inactive. A positive point-layer test is **NOT RUN**; unsupported coordinates/markers fail closed. There are no centroids, `(0,0)` placeholders, inferred instants or public sensitive wildlife points.
+
+Actual run `readiness-f2c0593b` passed **17 end-to-end checks** and saved six screenshots. It exercised eight independently receipted synthetic cases, pending/rejected/habitat/unknown-location invisibility, real reviewed API reads, explicit manual duplicate exclusion, original English DATE/care and Traditional Chinese instant, actual admitted PNG load, no fetch of an unlicensed image URL, complete missing snapshot, peer/all-source outage, recovery, sticky explicit closure, permission revocation, withdrawal and a fresh SQL-reading child process. Browser requests stayed same-origin GET/HEAD; native device/animal/sighting counts remained zero. Mobile 390 px and desktop 1280 px screenshots were visually checked; no horizontal overflow was observed.
+
+Private evidence root: `/Volumes/ProjectsData/portfolio-private-staging/20261127-stray-map-release-readiness/`. It contains `app-source-audit/`, `readiness-f2c0593b/client-evidence/RESULT.private.json`, numbered host stages, source/dedup/grant state, fresh-process probe and `CLEANUP.private.json`. Own native process/container stopped; evidence is retained. The earlier `readiness-584d51fd` failed because its expected cards incorrectly omitted a different recovered source; its failure is retained, corrected in the final run and not counted as a pass. `readiness-a1eb8821` was setup smoke only.
+
+Local regression: **479 tests / 13 suites pass**, `--forceExit=false --detectOpenHandles`; no open handles. This comprises the prior 370 tests plus persistent dedup 68, source state 14, photo rights 19, specimen 7 and one additional native coverage test. Static review covered reuse, quality and efficiency; independent review found/fixed the event-capacity boundary, full photo-proof linkage, empty-source coverage and stale-refresh race. The actual browser check uses the shared GUI lease and closes its own browser. No native App UI/build acceptance is claimed. H/icon review is not applicable to private test tooling with no published product artifact; future releases still need it. Simplify was optional and was not run.
+
+## Reproduce without a field timer
+
+First finish the existing [preparation](../tools/stray-map-rebuild/prepare.md), verify ProjectsData identity and reserve 20 GiB system space. The additional budget for this incremental run is 1 GiB. It uses an existing PostGIS image, with no image pull or production connection.
+
+```sh
+python3 /Volumes/ProjectsData/check_storage.py
+/Users/hank/.local/bin/project-storage check --required-gib 1
+/Volumes/ProjectsData/portfolio-private-staging/20261126-stray-map-isolated-rebuild/toolchain/node-v22.23.3-darwin-arm64/bin/node \
+  tools/stray-map-rebuild/run-readiness-host.cjs \
+  /Volumes/ProjectsData/portfolio-private-staging/20261126-stray-map-isolated-rebuild \
+  /Volumes/ProjectsData/portfolio-private-staging/20261127-stray-map-release-readiness
+```
+
+The host prints the newly created `READY.private.json` path. After unit checks, run pinned Node with `tools/stray-map-rebuild/verify-readiness-client.cjs /absolute/new-run/READY.private.json` **under simulator-manager's managed `gui` lease**, `boot:false`, `foreground:false`, budget 120 seconds, command timeout 110 seconds. The browser runner stops the owner-only fixture socket and host in `finally`; the host stops only its own labelled resources. It never installs a scheduler. Regressions use the existing Jest config and all 13 `*stray-map*.test.js` files.
+
+## Optional first formal stage and rollback boundary
+
+An optional first stage is a narrowly approved official **text/coarse-region pending queue**, followed by human review and explicit external cards/share. Keep photo publication and every point layer disabled initially. It needs no invented coordinates and does not require treating a missing App source as tested. Genuine mobile integration remains a separate acceptance gate; the specimen must not be shipped or labelled as that App.
+
+Before any formal write, the owner must explicitly adopt the labelled reconstruction/versioned contract or provide a verified deployable backend, approve the official dedicated pending endpoint and permitted source/operator identities using legitimate existing access, and approve any necessary API-only exception to section 4's bot/batch prohibition. The current native animal POST immediately publishes and is not a substitute. No applicable authorized production intake identity/review workflow has been verified here; the Unix socket is a private fixture, not production authorization. These are concrete adoption/authority gates, not a request to re-search the missing source. No credential or permission is created by this draft.
+
+That stage must then pass the existing publication process: reconstructable Linux artifact/dependency/model/storage review; exact new official API receipt/retry/limits; human review/withdrawal; explicit closure vs outage; protected source privacy; real approved client visibility; source/operator acceptance; CI and actual-artifact H checks. Real photo rights/safety/storage and an actual approved point need separate positive acceptance before those features can be enabled. A synthetic test must never be used as a production map pin.
+
+Accept only when pending/rejected/unsafe records are absent, repeated source keys retain receipts, different cases stay independent, outage does not imply closure/reunion, approved coarse cards preserve language/precision, and withdrawal invalidates current list/share/media. Roll back by stopping the newly approved intake and hiding the external view/share/media, preserving immutable receipts/decisions/audit evidence and existing native behavior. A prepared release must document how its own feature gates and previously reviewed native artifact are restored; do not perform destructive database rollback or discard pending cases. Until this decision and real acceptance, Draft5527 stays draft and the live 15-minute patrol remains public-API-only/read-only/no Codex.

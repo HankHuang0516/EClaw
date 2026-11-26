@@ -9,18 +9,20 @@
 // The caller verifies the injected pool is its disposable synthetic PG; this module never reads a DSN or environment.
 const { createHash } = require('node:crypto');
 const { scheduledPass } = require('../stray-map-intake/rehearsal');
+const sourceState = require('./sql-source-state.cjs');
 const INTERVAL_MS = 900000;
 const identifier = value => typeof value === 'string' && /^synthetic-[a-z0-9-]{1,53}$/.test(value);
 const canonicalNow = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)
     && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
 
 class PgSchedulerBridge {
-    constructor({ pool, sourcePolicies, now, syntheticDatabase } = {}) {
+    constructor({ pool, sourcePolicies, now, syntheticDatabase, enableSourceLifecycle = false } = {}) {
         if (syntheticDatabase !== true || !pool || typeof pool.query !== 'function' || typeof pool.connect !== 'function') throw new Error('VERIFIED_SYNTHETIC_POOL_REQUIRED');
         if (typeof now !== 'function' || !Array.isArray(sourcePolicies) || !sourcePolicies.length
             || sourcePolicies.some(p => !p || p.verified !== true || !identifier(p.publisherId) || !identifier(p.datasetId)
                 || typeof p.origin !== 'string' || !/^https:\/\/[a-z0-9.-]+\.example\.invalid$/.test(p.origin))) throw new Error('SYNTHETIC_SCHEDULER_CONTEXT_REQUIRED');
         this.pool = pool; this.now = now; this.policies = JSON.parse(JSON.stringify(sourcePolicies)); this.initialized = false;
+        this.sourceLifecycle=enableSourceLifecycle?new sourceState.SqlSourceState({pool,sourcePolicies:this.policies,now}):null;
     }
     async init() {
         await this.pool.query(`CREATE SCHEMA IF NOT EXISTS rebuild_external;
@@ -29,6 +31,7 @@ class PgSchedulerBridge {
               next_poll_at timestamptz NOT NULL, job_id text NOT NULL,
               PRIMARY KEY(publisher,dataset,slot_start),
               CHECK(next_poll_at = slot_start + interval '15 minutes'))`);
+        if(this.sourceLifecycle)await sourceState.init(this.pool);
         this.initialized = true;
     }
     policy(scope) {
@@ -68,13 +71,15 @@ async function withPgScheduledPass({ bridge, sourceURL, receiverURL, sourceScope
     const target = new URL(receiverURL);
     if (target.protocol !== 'http:' || target.hostname !== '127.0.0.1' || !target.port || target.username || target.password
         || target.search || target.hash || target.pathname !== '/') throw new Error('SYNTHETIC_NATIVE_LOOPBACK_ONLY');
-    const store = { policies: bridge.policies, supportsSourceEvents: false,
+    const store = { policies: bridge.policies, supportsSourceEvents: !!bridge.sourceLifecycle,
         reservePoll: (id, interval) => bridge.reservePoll(policy, id, interval),
         // This bridge only persists scheduling slots. Do not pretend to implement source-close/outage publication state.
-        sourceAvailability: async () => ({ success: true, applied: false, reason: 'SOURCE_LIFECYCLE_NOT_IMPLEMENTED_BY_SCHEDULER' }) };
+        sourceAvailability: bridge.sourceLifecycle?bridge.sourceLifecycle.availability.bind(bridge.sourceLifecycle)
+            :async () => ({ success: true, applied: false, reason: 'SOURCE_LIFECYCLE_NOT_IMPLEMENTED_BY_SCHEDULER' }),
+        sourceEvent: bridge.sourceLifecycle?bridge.sourceLifecycle.event.bind(bridge.sourceLifecycle):undefined };
     const result = await scheduledPass({ store, sourceURL, receiverURL: target.origin, sourceScope: policy, jobId,
         minimumIntervalMs: INTERVAL_MS, receiverPath: '/external-rebuild/v1/tips',
         receiverRegistration: { origin: target.origin, synthetic: true, purpose: 'STRAY_MAP_ISOLATED_NATIVE' } });
-    return { ...result, simulation: true, scheduler: 'EXISTING_REHEARSAL_SCHEDULED_PASS', pollState: 'PG_APPEND_ONLY_SLOTS', sourceLifecycleImplemented: false };
+    return { ...result, simulation: true, scheduler: 'EXISTING_REHEARSAL_SCHEDULED_PASS', pollState: 'PG_APPEND_ONLY_SLOTS', sourceLifecycleImplemented: !!bridge.sourceLifecycle };
 }
 module.exports = { PgSchedulerBridge, withPgScheduledPass, INTERVAL_MS };

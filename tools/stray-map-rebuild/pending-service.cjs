@@ -4,16 +4,24 @@ const { createHash, randomUUID } = require('node:crypto');
 const { validateTip } = require('../stray-map-intake/contract');
 const { publicSemantics } = require('../stray-map-intake/case-semantics');
 const { validatePublicContent } = require('./projection-contract.cjs');
+const sourceState = require('./sql-source-state.cjs');
+const photoRights = require('./photo-rights.cjs');
+const dedup = require('./sql-dedup.cjs');
 const digest = value => createHash('sha256').update(value).digest('hex');
+const sameRights=(a,b)=>a&&b&&['license','evidenceRef','attributionRef','permitsRedaction'].every(key=>a[key]===b[key]);
 const fail = (error, status = 400) => ({ success: false, error, status });
 const checks = ['contentReviewed', 'localLanguageReviewed', 'privacyReviewed', 'sourceVerified', 'rightsReviewed', 'locationSafe'];
 class PendingService {
-    constructor({ pool, sourcePolicies, now, knownSyntheticPixelHashes = [] }) {
+    constructor({ pool, sourcePolicies, now, knownSyntheticPixelHashes = [], requirePersistentPhotoRights = false, enablePersistentDedup = false }) {
         if (!Array.isArray(sourcePolicies) || !sourcePolicies.length || sourcePolicies.some(policy => !policy?.verified
             || typeof policy.publisherId !== 'string' || !policy.publisherId.startsWith('synthetic-')
             || !/^https:\/\/[^/]+\.example\.invalid\/?$/.test(policy.origin))) throw new Error('SYNTHETIC_POLICIES_ONLY');
         this.pool = pool; this.policies = sourcePolicies; this.now = now;
         this.syntheticHashes = new Set(knownSyntheticPixelHashes.filter(hash => /^[a-f0-9]{64}$/.test(hash)));
+        if(typeof requirePersistentPhotoRights!=='boolean')throw Error('INVALID_PHOTO_ADMISSION_MODE');
+        this.requirePersistentPhotoRights=requirePersistentPhotoRights;
+        if(typeof enablePersistentDedup!=='boolean')throw Error('INVALID_DEDUP_MODE');this.enablePersistentDedup=enablePersistentDedup;
+        this.photoRights=new photoRights.PhotoRights({pool,sourcePolicies,knownSyntheticPixelHashes,now});
     }
     async init() {
         await this.pool.query(`CREATE SCHEMA IF NOT EXISTS rebuild_external;
@@ -32,10 +40,17 @@ class PendingService {
             ALTER TABLE rebuild_external.tips ADD COLUMN IF NOT EXISTS public_id uuid NOT NULL DEFAULT gen_random_uuid();
             ALTER TABLE rebuild_external.tips ADD COLUMN IF NOT EXISTS public_content jsonb;
             CREATE UNIQUE INDEX IF NOT EXISTS external_public_id ON rebuild_external.tips(public_id)`);
+        await sourceState.init(this.pool);await photoRights.init(this.pool);
+        await dedup.init(this.pool);
     }
     async uploads(client = this.pool) {
-        const rows = (await client.query('SELECT * FROM rebuild_external.photos FOR SHARE')).rows;
-        return rows.filter(row => row.verification === 'KNOWN_SYNTHETIC_PIXELS_ONLY' && this.syntheticHashes.has(row.original_hash)
+        const rows = (await client.query(this.requirePersistentPhotoRights
+            ? `SELECT p.*,row_to_json(g) grant_record FROM rebuild_external.photos p JOIN rebuild_external.photo_rights_grants g ON g.id=p.grant_id
+                AND g.publisher=p.publisher AND g.dataset=p.dataset AND g.record_key=p.record_key AND g.original_hash=p.original_hash AND g.rights=p.rights
+                WHERE g.state='ACTIVE' FOR SHARE OF p,g`
+            : 'SELECT * FROM rebuild_external.photos FOR SHARE')).rows;
+        return rows.filter(row => (!this.requirePersistentPhotoRights||this.photoRights.validRecord(row.grant_record))
+            &&row.verification === 'KNOWN_SYNTHETIC_PIXELS_ONLY' && this.syntheticHashes.has(row.original_hash)
             && digest(row.bytes) === row.sanitized_hash).map(row => ({ uploadId: row.id, publisherId: row.publisher, datasetId: row.dataset, recordKey: row.record_key,
             sourceUrl: null, status: 'VERIFIED_SAFE', sha256: row.sanitized_hash, byteLength: row.bytes.length,
             mimeType: 'image/jpeg', width: row.width, height: row.height, rights: row.rights,
@@ -50,14 +65,17 @@ class PendingService {
             || !this.syntheticHashes.has(grant.originalHash)) return fail('PHOTO_RIGHTS_OR_BINDING_REQUIRED', 403);
         if (declaredMime !== 'image/png' || !bytes.subarray(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex'))) return fail('IMAGE_MIME_MISMATCH', 415);
         if (bytes.length > 5242880) return fail('IMAGE_BYTE_LIMIT', 413);
+        const evidence=this.requirePersistentPhotoRights?await this.photoRights.find(grant.grantId,grant.context,grant.originalHash):null;
+        if(this.requirePersistentPhotoRights&&!evidence)return fail('PERSISTENT_PHOTO_PERMISSION_REQUIRED',403);
         const stored = await storage.putImage({ bytes, mimeType: declaredMime });
         const sanitized = await storage.getImage(stored.storageKey); const metadata = await sharp(sanitized).metadata();
         if (metadata.exif || metadata.xmp || metadata.icc || metadata.orientation || metadata.width * metadata.height > 16000000) return fail('PHOTO_NOT_SANITIZED');
         const uploadId = `up_${randomUUID().replace(/-/g, '')}`;
-        const rights = { license: grant.license, evidenceRef: 'ev_synthetic001', attributionRef: 'credit_synthetic001', permitsRedaction: true };
-        await this.pool.query(`INSERT INTO rebuild_external.photos VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'KNOWN_SYNTHETIC_PIXELS_ONLY')`,
+        const rights = evidence?.rights||{ license: grant.license, evidenceRef: 'ev_synthetic001', attributionRef: 'credit_synthetic001', permitsRedaction: true };
+        await this.pool.query(`INSERT INTO rebuild_external.photos(id,publisher,dataset,record_key,original_hash,sanitized_hash,rights,bytes,width,height,verification,grant_id)
+            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'KNOWN_SYNTHETIC_PIXELS_ONLY',$11)`,
             [uploadId, grant.context.publisherId, grant.context.datasetId, grant.context.recordKey, grant.originalHash,
-                digest(sanitized), rights, sanitized, metadata.width, metadata.height]);
+                digest(sanitized), rights, sanitized, metadata.width, metadata.height,evidence?.id||null]);
         return { success: true, uploadId, rights, state: 'SANITIZED_PRIVATE', semanticSafetyVerifiedForRealPhotos: false,
             sourceStorageUrlNotPublished: true, sanitizedHash: digest(sanitized), beforeMime: declaredMime, afterMime: metadata.format };
     }
@@ -92,6 +110,9 @@ class PendingService {
                     [id,p.source.publisherId,p.source.datasetId,p.source.recordKey,result.payloadHash,p,receipt,result.review.mapPolicy]);
                 // Send the committed JSONB representation from the first response onward, including stable key order.
                 receipt = stored.rows[0].receipt;
+                await sourceState.noteAccepted(client,id,this.now());
+                if(this.enablePersistentDedup)await dedup.noteAccepted(client,{id,publisher:p.source.publisherId,dataset:p.source.datasetId,recordKey:p.source.recordKey,
+                    payloadHash:result.payloadHash,candidateFingerprint:result.candidateFingerprint,payload:p,now:this.now()});
             }
             await client.query('INSERT INTO rebuild_external.requests VALUES($1,$2,$3,$4)', [p.source.publisherId,requestKey,result.payloadHash,id]);
             await client.query('COMMIT'); return { success: true, receipt, replay: !!prior, status: 202 };
@@ -129,7 +150,7 @@ class PendingService {
         return row ? { success: true, receipt: row.receipt, review: row.review } : fail('NOT_FOUND',404);
     }
     async publicTip(id) {
-        const row = (await this.pool.query("SELECT * FROM rebuild_external.tips WHERE id=$1 AND review='APPROVED' AND map_policy!='NEVER'",[id])).rows[0];
+        const row = (await this.pool.query(`SELECT t.* FROM rebuild_external.tips t WHERE t.id=$1 AND t.review='APPROVED' AND t.map_policy!='NEVER' AND ${sourceState.visibleSQL('t')} AND ${dedup.visibleSQL('t')}`,[id])).rows[0];
         if (!row) return fail('NOT_FOUND',404);
         const p = row.payload;
         return { success: true, simulation: true, tip: { id,thirdParty:true,selfWitness:false,animal:p.animal,
@@ -137,9 +158,18 @@ class PendingService {
             photos:p.photos.map(photo=>({id:photo.uploadId,caption:photo.caption})) } };
     }
     async publicPhoto(id) {
-        const row = (await this.pool.query(`SELECT p.bytes FROM rebuild_external.photos p JOIN rebuild_external.tips t
+        const row = (await this.pool.query(`SELECT p.bytes,p.original_hash,p.sanitized_hash,p.publisher,p.dataset,p.record_key,p.rights,
+            ${this.requirePersistentPhotoRights?'(SELECT row_to_json(g) FROM rebuild_external.photo_rights_grants g WHERE g.id=p.grant_id) grant_record':'NULL grant_record'}
+            FROM rebuild_external.photos p JOIN rebuild_external.tips t
             ON t.payload->'photos' @> jsonb_build_array(jsonb_build_object('uploadId',p.id))
-            WHERE p.id=$1 AND t.review='APPROVED' AND t.map_policy!='NEVER' LIMIT 1`,[id])).rows[0];
+            WHERE p.id=$1 AND t.review='APPROVED' AND t.map_policy!='NEVER' AND ${sourceState.visibleSQL('t')}
+            AND ${dedup.visibleSQL('t')}
+            AND t.publisher=p.publisher AND t.dataset=p.dataset AND t.record_key=p.record_key
+            ${this.requirePersistentPhotoRights?"AND EXISTS(SELECT 1 FROM rebuild_external.photo_rights_grants g WHERE g.id=p.grant_id AND g.state='ACTIVE')":''} LIMIT 1`,[id])).rows[0];
+        if(this.requirePersistentPhotoRights&&row){const grant=row.grant_record;
+            if(!this.photoRights.validRecord(grant)||grant.publisher!==row.publisher||grant.dataset!==row.dataset||grant.record_key!==row.record_key
+                ||grant.original_hash!==row.original_hash||!sameRights(grant.rights,row.rights)
+                ||digest(row.bytes)!==row.sanitized_hash)return null;}
         return row?.bytes || null;
     }
 }

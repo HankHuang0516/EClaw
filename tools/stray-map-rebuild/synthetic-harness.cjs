@@ -15,7 +15,7 @@ async function request(url,options={}){
     const bytes=Buffer.from(await response.arrayBuffer());return {status:response.status,type:response.headers.get('content-type'),headers:Object.fromEntries(response.headers),bytes,
         json:response.headers.get('content-type')?.includes('json')&&bytes.length?JSON.parse(bytes):null};
 }
-async function create(root){
+async function create(root,{evidenceRoot=root,kind='single-path'}={}){
     assert.equal(process.versions.node,'22.23.3');assert.ok(path.isAbsolute(root)&&fs.realpathSync(root)===root);
     const prep=JSON.parse(fs.readFileSync(path.join(root,'PREPARE_RESULT.private.json')));assert.equal(prep.readyForSyntheticIntegration,true);
     const workspace=prep.paths.workspace;assert.equal(workspace,path.join(root,'workspace'));
@@ -25,7 +25,8 @@ async function create(root){
     assert.ok(JSON.parse(docker(['context','inspect','--format','{{json .Endpoints.docker.Host}}'])).startsWith('unix://'));
     assert.match(JSON.parse(docker(['info','--format','{{json .OperatingSystem}}'])),/Docker Desktop/i);
     const image=JSON.parse(docker(['image','inspect','postgis/postgis:17-3.5','--format','{{json .}}']));
-    const runId=randomUUID().slice(0,8),name=`stray-single-${runId}`,network=`stray-single-net-${runId}`,runRoot=path.join(root,`single-path-${runId}`);
+    assert.ok(['single-path','readiness'].includes(kind)&&path.isAbsolute(evidenceRoot)&&fs.realpathSync(evidenceRoot)===evidenceRoot);
+    const runId=randomUUID().slice(0,8),name=`stray-single-${runId}`,network=`stray-single-net-${runId}`,runRoot=path.join(evidenceRoot,`${kind}-${runId}`);
     fs.mkdirSync(runRoot,{mode:0o700});const directories={};for(const key of ['empty-home','tmp','native-uploads','private-photos']){directories[key]=path.join(runRoot,key);fs.mkdirSync(directories[key],{mode:0o700});}
     docker(['network','create','--driver','bridge','--opt','com.docker.network.bridge.enable_ip_masquerade=false','--opt','com.docker.network.bridge.enable_icc=false','--label',`stray-single=${runId}`,network]);
     const id=docker(['run','-d','--pull=never','--platform',`linux/${image.Architecture}`,'--name',name,'--network',network,'--label',`stray-single=${runId}`,

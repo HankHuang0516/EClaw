@@ -161,6 +161,31 @@
     },
     "nativeIncluded": {
       "const": false
+    },
+    "dataQuality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceAvailability",
+        "lastCheckedAt"
+      ],
+      "properties": {
+        "sourceAvailability": {
+          "enum": [
+            "AVAILABLE",
+            "PARTIAL",
+            "UNAVAILABLE",
+            "UNKNOWN"
+          ]
+        },
+        "lastCheckedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        }
+      }
     }
   }
 }
