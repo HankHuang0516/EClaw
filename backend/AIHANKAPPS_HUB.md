@@ -112,6 +112,43 @@ What crosses over, per account: counts and times (wishes, lists, listings by sta
 
 One import carries at most 190 accounts and 44 KB: the most recently active keep their detail, the rest are left out and counted (`dropped`), and the totals still include them. Zeros and empty values are not sent; the page reads a missing part as zero. There is no sign-in time in Wishlist's database, so 最近動作 is the last wish, listing, message, source inquiry, purchase or device registration.
 
+## Stray Map report insights (2026-11-26)
+
+`#app-stray-map` includes the private `hub-stray-map.js` / `.css` view. The existing operator collector adds source
+`stray-map` (`node tools/aihankapps-hub/collect.js --only stray-map`, or append `--commit` to import). It uses the
+already-authorized Railway operator channel and the Stray Map container's own `pg` connection; it creates no
+credentials, device IDs, HTTP intake endpoint, pins, source database rows or tables. The normal daily collector
+includes this source automatically after its merged code refresh. This change does not modify the hourly LaunchAgent.
+
+One 20-second-bounded `SELECT` inside `BEGIN READ ONLY` returns one consistent fact, `smMapStats`: retained total,
+undeleted/deleted counts, candidates for the default global public map, rolling 7/30-day creation counts, fixed
+animal/status enums, and 30 complete Taipei days of current undeleted records grouped by their creation dates.
+Candidate counts include adopted records; they precede viewport, viewer blocks/hidden records, optional filters and
+the API's 1,000-row request limit. Daily counts reconstruct retained records, not the population on past map dates.
+The imported snapshot has its own source observation time; a Hub refresh does not make it fresh. After 36 hours the
+view marks it stale. A source read failure does not replace a good snapshot with zeros. The Hub import/data failure
+state and a last retained reading are displayed separately.
+
+The source has no native/external provenance or QA classification, so the view calls them **existing map records**;
+it never claims distinct animals, rescue cases, verified human sightings or a QA-filtered population. There is no
+verified normalized broad-region field: city/district are free text. No descriptions, devices, names, addresses,
+coordinates, posts, photos, URLs or sensitive habitat details cross into this fact. The import boundary validates an
+exact field/enum/count/day allowlist and rejects private extra fields, inconsistent totals or fabricated external zeros.
+
+External tips received, suspected duplicate, pending, declined and published-on-map are separately displayed as
+**not connected**, backed by `external: null`. Photo moderation counts are not tip-review counts. The formal intake
+API is not implemented or verified; Dot patrols remain read-only. The live Stray Map runtime inspected on this date
+is incomplete as a reproducible source checkout (no Git/commit provenance, Dockerfile, lockfile or required base
+tsconfig). Never deploy a substitute from it or overwrite the damaged original. The independent proposed API and
+narrow draft terms exception are in [the intake draft](../docs/stray-map-external-intake.md); they do not change live terms.
+
+The view reuses the existing fresh administrator-session gates, allowlisted private files, CSP and `no-store` rules.
+It adds no REST endpoints or roles. Catalog `iconHasWatermark` now reaches the view, so unwatermarked icons reuse the public portfolio's original general/game H PNG layers and exact corner placements; already-baked icons receive no duplicate overlay. Original art and H files are unchanged. Tests in `tests/jest/aihankapps-hub-stray-map.test.js` cover real zero versus unknown,
+source interruption/staleness, privacy, five languages and readonly collector validation. The existing Hub suite tests
+all new assets for anonymous/member refusal and administrator access. `node tools/aihankapps-hub/verify-stray-map-ui.js
+/PRIVATE/EVIDENCE/DIR` rehearses the real Hub at 320/390/1440px, with local synthetic responses only, no external or
+non-GET browser requests. Use a Simulator Manager GUI lease for that browser check.
+
 ## Rules the numbers follow
 
 - A day the source does not know is `null` and is drawn as a gap. Only live counters are zero-filled, and only from the day they started counting.

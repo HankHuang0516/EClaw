@@ -67,6 +67,8 @@ const PAGE_FILES = {
     'hub-qa.css': 'text/css; charset=utf-8',
     'hub-timehut.js': 'text/javascript; charset=utf-8',
     'hub-weesh.js': 'text/javascript; charset=utf-8',
+    'hub-stray-map.js': 'text/javascript; charset=utf-8',
+    'hub-stray-map.css': 'text/css; charset=utf-8',
     'hub-wishlist-i18n.js': 'text/javascript; charset=utf-8',
     'hub-wishlist-ops.js': 'text/javascript; charset=utf-8',
     'hub-wishlist-ops.css': 'text/css; charset=utf-8',
@@ -178,6 +180,7 @@ function appsFromCatalog(catalog) {
             aliases: Array.isArray(app.aliases) ? app.aliases.filter(a => typeof a === 'string').join(' ').slice(0, 200) : text(app.aliases, 200),
             // Local icons are files of the public portfolio; remote ones are the same URLs the portfolio page loads.
             icon: /^https:\/\//.test(icon) ? icon : /^[a-zA-Z0-9][a-zA-Z0-9/_.-]*$/.test(icon) && !icon.includes('..') ? '/AiHankApps/' + icon : null,
+            iconHasWatermark: app.iconHasWatermark === true || (app.communityId === 'anthill' && icon === 'icons/anthill.png'),
             platforms,
             links: { guide: link(app.guide), official: link(app.officialUrl), itch: link(app.itchUrl), release: link(app.releaseUrl), project: link(app.projectUrl) },
             checkedAt: text(app.checkedAt, 32) || null,

@@ -86,7 +86,7 @@
     const name = a.name || a.id, pub = (a.platforms || []).some(p => p.public);
     return {
       id: a.slug || a.id, key: a.id, name: name, short: SHORT[a.id] || name.split(/[：｜]/)[0].trim() || name, mono: a.mono || name.slice(0, 2),
-      cat: a.category || '其他', desc: a.desc || '', aliases: a.aliases || '', icon: a.icon || null,
+      cat: a.category || '其他', desc: a.desc || '', aliases: a.aliases || '', icon: a.icon || null, iconHasWatermark: a.iconHasWatermark === true,
       platforms: a.platforms || [], links: a.links || {}, stage: pub ? 'live' : 'dev'
     };
   }
@@ -363,6 +363,7 @@
     ['拾光 LINE 收件無法處理', '拾光AI雲端相簿每個帳號的 LINE 收件', '有照片停在「卡住」階段，不會自己往下走，例如收件相簿沒有參考對象也沒開直接上傳；每個原因一則', 'warn']
   ];
   const COLLECTORS = { rebound: ['REBOUND 遊戲伺服器', 'REBOUND'], summit: ['活字戰紀伺服器', '雙城烽火、巔峰之戰'], wishlist: ['Wishlist.ai 後台', 'Wishlist.ai'],
+    'stray-map': ['浪浪地圖通報統計', '浪浪地圖', '既有地圖通報、類型、狀態與建立趨勢；外部匯入尚未接通', '只讀彙總；不含個資或位置，也不回推原生／外部或 QA 來源'],
     // 第四項是「沒有其他備註時」顯示的說明；帳戶明細不是只有彙總數字，要照實寫
     'wishlist-users': ['Wishlist.ai 帳戶明細', 'Wishlist.ai', '帳戶智慧數據庫：每個帳戶的願望、刊登、對話、面交、付費與近 30 天活動', '每個帳戶的數量與時間，加上顯示名稱與遮蔽過的登入信箱；不含密碼、訊息或任何內容'],
     railway: ['Railway 後台資源', '所有放在 Railway 的後台服務', '每個服務的上傳／下載流量、CPU、記憶體、空間、部署狀態'],

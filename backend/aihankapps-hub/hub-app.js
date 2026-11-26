@@ -136,7 +136,15 @@
     const s = STATE[state] || STATE.live;
     return '<span class="st st-' + state + '">' + ico(s[1]) + esc(text || s[0]) + '</span>';
   }
-  const appIco = (a, cls) => '<span class="app-ico' + (cls ? ' ' + cls : '') + '">' + (a.icon ? '<img src="' + esc(a.key === 'eclawbot' ? 'eclaw-icon.png' : a.icon) + '" alt="" width="72" height="72" loading="lazy">' : '<span>' + esc(a.mono) + '</span>') + '</span>';
+  // Same original H layers/placement as the public portfolio. Already-baked icons must not receive a second H.
+  const H_TIGHT = { weesh: ['13%', '5%', '4%'], 'stray-map': ['13%', '5%', '4%'], 'property-roi': ['13%', '5%', '4%'],
+    chumen: ['11%', '4%', '3%'], 'paper-flick-soldiers': ['11%', '4%', '3%'], rebound: ['9%', '5%', '2.5%'],
+    'typeforge-twin-cities': ['11%', '4%', '3%'], 'summit-battle': ['11%', '4%', '3%'], 'vibe-empire': ['11%', '4%', '3%'] };
+  const appIco = (a, cls) => {
+    const mark = a.icon && !a.iconHasWatermark && a.key !== 'eclawbot' ? ' app-ico-h-' + (a.cat === '遊戲' ? 'game' : 'general') : '';
+    const position = H_TIGHT[a.key], style = mark && position ? ' style="--h-size:' + position[0] + ';--h-right:' + position[1] + ';--h-bottom:' + position[2] + '"' : '';
+    return '<span class="app-ico' + mark + (cls ? ' ' + cls : '') + '"' + style + '>' + (a.icon ? '<img src="' + esc(a.key === 'eclawbot' ? 'eclaw-icon.png' : a.icon) + '" alt="" width="72" height="72" loading="lazy">' : '<span>' + esc(a.mono) + '</span>') + '</span>';
+  };
   function seg(act, cur, items, off) {
     return '<div class="seg" role="group">' + items.map(it => '<button type="button" data-act="' + act + '" data-v="' + it[0] + '" aria-pressed="' + (cur === it[0]) + '"' + (off && off.indexOf(it[0]) >= 0 ? ' disabled' : '') + '>' + it[1] + '</button>').join('') + '</div>';
   }
@@ -830,6 +838,7 @@
     }
     // 拾光AI雲端相簿：每位用戶的辨識、相簿與流量明細（hub-timehut.js 自己畫、自己處理互動）
     if (a.key === 'timehut' && window.HubTimehut) extra += '<div id="th-users"></div>';
+    if (a.key === 'stray-map' && window.HubStrayMap) extra += '<div id="sm-insights"></div>';
     if (a.key === 'eclawbot' && window.HubEclaw) extra += '<div id="ec-admin"></div>';
     // Weesh：帳戶智慧數據庫，每個帳戶的願望、刊登、對話與面交（hub-weesh.js 自己畫、自己處理互動）
     if (a.key === D.WISHLIST && window.HubWeesh) extra += foldHtml('ws-users', '帳戶智慧數據庫', '搜尋帳戶、QA 篩選與個別使用歷程', '<div id="ws-users"></div>');
@@ -861,7 +870,8 @@
       foldHtml('ws-feedback', '回饋與資料來源', '問題回饋、各項數據定義與更新時間', '<div class="grid">' + feedbackCardHtml(list, 'c-7') + appFreshHtml(a, keys) + '</div>');
   }
   function appFreshHtml(a, keys) {
-    return '<section class="card c-5">' + cardHead('這款 APP 有哪些數據', '每一項資料到哪一天') + '<ol class="feed">' + keys.map(k => '<li><span class="feed-k">' + esc(M[k].group) + '</span><span class="feed-t"><b>' + esc(M[k].name) + '</b>　' + esc(M[k].note) + '</span><time class="muted">' + esc(endNote(k, true)) + '</time></li>').join('') + (keys.length ? '' : '<li class="empty">這款 APP 目前沒有任何數據來源。</li>') + '</ol></section>';
+    const aggregate = a.key === 'stray-map' && window.HubStrayMap ? window.HubStrayMap.sourceRow((D.latest.facts || {})[a.key], D.sources.imports) : '';
+    return '<section class="card c-5">' + cardHead('這款 APP 有哪些數據', '每一項資料到哪一天') + '<ol class="feed">' + keys.map(k => '<li><span class="feed-k">' + esc(M[k].group) + '</span><span class="feed-t"><b>' + esc(M[k].name) + '</b>　' + esc(M[k].note) + '</span><time class="muted">' + esc(endNote(k, true)) + '</time></li>').join('') + aggregate + (keys.length || aggregate ? '' : '<li class="empty">這款 APP 目前沒有任何數據來源。</li>') + '</ol></section>';
   }
   function viewApp(el) {
     const a = D.APP[S.app], list = [a], idx = D.APPS.indexOf(a), n = D.APPS.length, keys = D.metricsFor(a);
@@ -876,7 +886,7 @@
       (a.stage === 'dev' ? '<p class="note">' + ico('info') + '這款還沒有公開上架，商店相關的指標會是空的。</p>' : '') +
       appAlertsHtml(a) + (a.key === 'timehut' ? '<div id="th-qa"></div>' : '') +
       (a.key === D.WISHLIST ? wishlistAppBody(a, keys, list) :
-        (keys.length ? tilesHtml(APP_TILE_ORDER.filter(k => keys.indexOf(k) >= 0).slice(0, 6), list) + '<div class="grid">' + explorerHtml('c-8', keys, true) + platCardHtml(a) + '</div>' : '<p class="note">' + ico('info') + '這款 APP 目前沒有任何數據來源。</p>') +
+        (keys.length ? tilesHtml(APP_TILE_ORDER.filter(k => keys.indexOf(k) >= 0).slice(0, 6), list) + '<div class="grid">' + explorerHtml('c-8', keys, true) + platCardHtml(a) + '</div>' : a.key === 'stray-map' && window.HubStrayMap ? '' : '<p class="note">' + ico('info') + '這款 APP 目前沒有任何數據來源。</p>') +
         backendHtml(a) + retentionHtml(a, '') + '<div class="grid">' + feedbackCardHtml(list, 'c-7') + appFreshHtml(a, keys) + '</div>');
     if (keys.length) { mountTiles(el, list); mountExplorer(el, list); }
     const opsHost = $('#ws-operations', el);
@@ -889,6 +899,8 @@
     if (qa && window.HubQa) window.HubQa.mount(qa);
     const th = $('#th-users', el);
     if (th) window.HubTimehut.mount(th, window.HubTimehut.fromFacts((D.latest.facts || {})[a.key]));
+    const sm = $('#sm-insights', el);
+    if (sm) window.HubStrayMap.mount(sm, window.HubStrayMap.fromFacts((D.latest.facts || {})[a.key], D.sources.imports));
     const ws = $('#ws-users', el);
     if (ws) window.HubWeesh.mount(ws, window.HubWeesh.fromFacts((D.latest.facts || {})[a.key]));
     const ec = $('#ec-admin', el);

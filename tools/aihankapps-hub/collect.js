@@ -28,7 +28,7 @@ const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { runRailway, shellFor } = require('../aihankapps-gifts/lib/adapters/transport');
-const { BACKENDS, DETAIL, remoteScript } = require('./backends');
+const { BACKENDS, AGGREGATES, DETAIL, remoteScript } = require('./backends');
 const railway = require('./railway-metrics');
 const { validateEnvelope, MAX_IMPORT_BYTES } = require('../../backend/aihankapps-hub-store');
 
@@ -274,7 +274,7 @@ const LOCAL = [{ id: 'railway', name: 'Railway 後台資源', apps: railway.RAIL
   { id: 'timehut', name: '時光相簿伺服器', apps: ['timehut'], collect: () => collectTimehut() },
   { id: 'attention', name: '上架警示板', apps: ['weesh'], collect: now => collectAttention({ now }) },
   { id: 'claude-usage', name: 'Claude 用量', apps: [], collect: now => collectClaudeUsage({ now }) }];
-const SOURCES = BACKENDS.concat(DETAIL, LOCAL);
+const SOURCES = BACKENDS.concat(AGGREGATES, DETAIL, LOCAL);
 
 function catalogAppIds() {
   const catalog = JSON.parse(fs.readFileSync(path.join(__dirname, '../../backend/public/AiHankApps/app-catalog.json'), 'utf8'));

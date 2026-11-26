@@ -325,6 +325,53 @@ async function wishlistUsersBody() {
 }
 const wishlistUsers = today => wrap(today, PRISMA, '    await (' + wishlistUsersBody.toString() + ')();');
 
+// Stray Map: verified against the active 2026-09-26 API deployment's query and schema.
+// One SELECT produces a consistent snapshot. Never select text, a device ID, source URL or coordinates.
+// mapVisible is a global candidate count BEFORE viewport/viewer filters/LIMIT 1000, not a device's map count.
+const strayMap = today => {
+  if (!ISO_DAY.test(today)) throw new Error('invalid_today');
+  return `
+const { Client } = require('pg');
+const client = new Client({ connectionString: process.env.DATABASE_URL, connectionTimeoutMillis: 10000 });
+(async () => {
+  await client.connect();
+  try {
+    await client.query('BEGIN READ ONLY');
+    await client.query('SET LOCAL statement_timeout = 20000');
+    const result = await client.query(\`
+      WITH kept AS (SELECT id, type, status, created_at FROM animals WHERE deleted_at IS NULL),
+        daily AS (SELECT (created_at AT TIME ZONE 'Asia/Taipei')::date AS d, COUNT(*)::int AS n
+          FROM kept WHERE created_at >= ($1::date - 30)::timestamp AT TIME ZONE 'Asia/Taipei'
+            AND created_at < $1::date::timestamp AT TIME ZONE 'Asia/Taipei' GROUP BY 1)
+      SELECT json_build_object(
+        'v', 1, 'asOf', FLOOR(EXTRACT(EPOCH FROM statement_timestamp()) * 1000)::bigint,
+        'native', json_build_object(
+          'total', (SELECT COUNT(*)::int FROM animals), 'notDeleted', (SELECT COUNT(*)::int FROM kept),
+          'deleted', (SELECT COUNT(*)::int FROM animals WHERE deleted_at IS NOT NULL),
+          'mapVisible', (SELECT COUNT(*)::int FROM kept a WHERE type::text <> 'other'
+            AND EXISTS (SELECT 1 FROM sightings s WHERE s.animal_id = a.id)),
+          'new7d', (SELECT COUNT(*)::int FROM kept WHERE created_at >= NOW() - INTERVAL '7 days'),
+          'new30d', (SELECT COUNT(*)::int FROM kept WHERE created_at >= NOW() - INTERVAL '30 days')),
+        'types', COALESCE((SELECT json_agg(json_build_array(type, n) ORDER BY type)
+          FROM (SELECT type::text, COUNT(*)::int AS n FROM kept GROUP BY type) x), '[]'::json),
+        'statuses', COALESCE((SELECT json_agg(json_build_array(status, n) ORDER BY status)
+          FROM (SELECT status::text, COUNT(*)::int AS n FROM kept GROUP BY status) x), '[]'::json),
+        'days', (SELECT json_agg(json_build_array(to_char(d, 'YYYY-MM-DD'), n) ORDER BY d)
+          FROM (SELECT g.d::date AS d, COALESCE(daily.n, 0) AS n
+            FROM generate_series(($1::date - 30)::timestamp, ($1::date - 1)::timestamp, INTERVAL '1 day') g(d)
+            LEFT JOIN daily ON daily.d = g.d::date) x),
+        'external', NULL) AS snapshot
+    \`, [${JSON.stringify(today)}]);
+    if (!result.rows[0] || !result.rows[0].snapshot) throw new Error('snapshot_missing');
+    console.log('GIFT_RESULT ' + JSON.stringify({ series: [], facts: [{ app: 'stray-map', key: 'smMapStats', value: result.rows[0].snapshot }], notes: [] }));
+  } finally {
+    await client.query('ROLLBACK').catch(() => {});
+    await client.end();
+  }
+})().catch(() => { console.log('GIFT_RESULT ' + JSON.stringify({ error: 'stray_map_read_failed' })); process.exitCode = 1; });
+`.trim();
+};
+
 const BACKENDS = [
   { id: 'rebound', name: 'REBOUND 遊戲伺服器', apps: ['rebound'], appDirs: ['/app/server', '/app'], script: rebound,
     railway: { project: 'rebound-live', projectId: '642452f8-405c-4d07-8565-bd409a136fe8', environment: 'production', service: 'rebound-api' } },
@@ -332,6 +379,12 @@ const BACKENDS = [
     railway: { project: 'noble-fascination', projectId: '68db2b85-9ead-420e-abec-587eb84b41b1', environment: 'production', service: 'summit-battle-api' } },
   { id: 'wishlist', name: 'Wishlist.ai', apps: ['weesh'], appDirs: ['/app/server', '/app'], script: wishlist,
     railway: { project: 'thorough-presence', projectId: 'c4bb972e-46b8-4e54-a9d1-5d38f619879a', environment: 'production', service: 'wishlist-app' } },
+];
+// A snapshot has a different contract from the daily game/account series above.
+const AGGREGATES = [
+  { id: 'stray-map', name: '浪浪地圖通報統計', apps: ['stray-map'], appDirs: ['/app'], script: strayMap,
+    railway: { project: 'global-stray-map-mvp', projectId: '49ba58d4-291d-4203-bba8-deac8d1c3529',
+      environment: '7f4b78c8-e894-4414-9f93-a296132374b2', service: 'fb890371-5405-44cf-817b-262899346b7e' } },
 ];
 // 帳戶明細：和 BACKENDS 分開列，因為它的保證不同（會帶回遮蔽過的帳戶名稱；見上面的說明與它自己的測試）。
 const DETAIL = [
@@ -342,4 +395,4 @@ const DETAIL = [
 // The shell text that runs inside the back-end's container.
 const remoteScript = (backend, today) => shellFor(backend.script(today), backend.appDirs);
 
-module.exports = { BACKENDS, DETAIL, remoteScript };
+module.exports = { BACKENDS, AGGREGATES, DETAIL, remoteScript };
