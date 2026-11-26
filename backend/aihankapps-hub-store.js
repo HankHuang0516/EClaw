@@ -26,6 +26,9 @@ const MAX_IMPORT_BYTES = 512 * 1024, MAX_SERIES = 200, MAX_VALUES = 800, MAX_FAC
 const IMPORT_SOURCE = /^[a-z][a-z0-9-]{1,30}$/, FACT_KEY = /^[a-z][a-zA-Z0-9]{1,40}$/, ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 // Daily series a collector may hand over. The page knows each of these by name.
 const IMPORT_METRICS = ['newUsers', 'activeUsers', 'plays', 'purchases', 'purchaseTwd', 'messages', 'listings', 'mailSent', 'mailClaimed', 'aiUses', 'netInMb', 'netOutMb'];
+// Fixed enum values in the inspected Stray Map contracts, not free text from source posts.
+const STRAY_TYPES = new Set(('cat dog bird rabbit hamster guinea_pig mouse rat ferret fox raccoon squirrel hedgehog bat turtle snake lizard frog deer boar goat sheep pig horse donkey cow monkey otter skunk badger bear kangaroo camel alpaca fish tropical_fish blowfish shark dolphin whale seal sea_lion octopus squid jellyfish crab lobster shrimp seahorse starfish crocodile other').split(' '));
+const STRAY_STATUSES = new Set(['recently_seen', 'not_seen_recently', 'cared_for', 'adopted', 'hospitalized', 'deceased', 'unknown']);
 // Per-service resources from the Railway collector (2026-11-11): traffic, CPU, memory, space, latest deployment.
 const MAX_INFRA = 80, INFRA_FIELDS = ['netInMb', 'netOutMb', 'cpu', 'memMb'];
 const DEPLOY_STATES = ['SUCCESS', 'FAILED', 'CRASHED', 'BUILDING', 'DEPLOYING', 'INITIALIZING', 'QUEUED', 'WAITING', 'REMOVED', 'REMOVING', 'SLEEPING', 'SKIPPED'];
@@ -191,6 +194,25 @@ function fail(code) { const error = new Error(code); error.code = code; throw er
 
 // { schemaVersion: 1, source, collectedAt, series: [{ app, metric, start: 'YYYY-MM-DD', values: [n | null, …] }],
 //   facts: [{ app, key, value: {…} }], notes: [short strings] } → rows ready to store. Anything unexpected is refused whole.
+function validateStrayMap(value, collectedAt) {
+    const exact = (obj, keys) => obj && typeof obj === 'object' && !Array.isArray(obj)
+        && Object.keys(obj).length === keys.length && keys.every(k => Object.hasOwn(obj, k));
+    const isCount = n => Number.isSafeInteger(n) && n >= 0 && n <= 1e12;
+    if (!exact(value, ['v', 'asOf', 'native', 'types', 'statuses', 'days', 'external']) || value.v !== 1 || value.external !== null
+        || !Number.isSafeInteger(value.asOf) || value.asOf < Date.UTC(2026, 0, 1) || value.asOf > collectedAt + HOUR_MS) fail('IMPORT_STRAY_MAP');
+    const keys = ['total', 'notDeleted', 'deleted', 'mapVisible', 'new7d', 'new30d'], n = value.native;
+    if (!exact(n, keys) || !keys.every(k => isCount(n[k])) || n.total !== n.notDeleted + n.deleted || n.mapVisible > n.notDeleted
+        || n.new7d > n.new30d || n.new30d > n.notDeleted) fail('IMPORT_STRAY_MAP');
+    for (const [rows, codes] of [[value.types, STRAY_TYPES], [value.statuses, STRAY_STATUSES]]) {
+        if (!Array.isArray(rows) || rows.length > codes.size || rows.some(r => !Array.isArray(r) || r.length !== 2 || !codes.has(r[0]) || !isCount(r[1]))
+            || new Set(rows.map(r => r[0])).size !== rows.length || rows.reduce((sum, r) => sum + r[1], 0) !== n.notDeleted) fail('IMPORT_STRAY_MAP');
+    }
+    const today = Math.floor((value.asOf + TAIPEI_OFFSET_MS) / DAY_MS);
+    if (!Array.isArray(value.days) || value.days.length !== 30 || value.days.some((r, i) => !Array.isArray(r) || r.length !== 2
+        || r[0] !== isoDay(today - 30 + i) || !isCount(r[1])) || value.days.reduce((sum, r) => sum + r[1], 0) > n.notDeleted) fail('IMPORT_STRAY_MAP');
+    return value;
+}
+
 function validateEnvelope(envelope, appIds) {
     const known = appIds instanceof Set ? appIds : new Set(appIds || []);
     if (!envelope || typeof envelope !== 'object' || Array.isArray(envelope)) fail('IMPORT_SHAPE');
@@ -217,8 +239,14 @@ function validateEnvelope(envelope, appIds) {
     const cleanFacts = facts.map(item => {
         if (!item || typeof item !== 'object' || !known.has(item.app) || typeof item.key !== 'string' || !FACT_KEY.test(item.key)) fail('IMPORT_FACT');
         if (!item.value || typeof item.value !== 'object' || Array.isArray(item.value) || JSON.stringify(item.value).length > MAX_FACT_BYTES) fail('IMPORT_FACT');
+        if (item.key === 'smMapStats') {
+            if (envelope.source !== 'stray-map' || item.app !== 'stray-map') fail('IMPORT_STRAY_MAP');
+            validateStrayMap(item.value, collectedAt);
+        }
         return { app: item.app, key: item.key, value: item.value };
     });
+    if (envelope.source === 'stray-map' && (series.length || cleanFacts.length !== 1 || cleanFacts[0].key !== 'smMapStats'
+        || Object.hasOwn(envelope, 'infra') || Object.hasOwn(envelope, 'quota'))) fail('IMPORT_STRAY_MAP');
     if (new Set(cleanFacts.map(f => f.app + '\n' + f.key)).size !== cleanFacts.length) fail('IMPORT_FACT');
     const notes = envelope.notes === undefined ? [] : envelope.notes;
     if (!Array.isArray(notes) || notes.length > 20 || notes.some(note => typeof note !== 'string' || note.length > 200)) fail('IMPORT_SHAPE');

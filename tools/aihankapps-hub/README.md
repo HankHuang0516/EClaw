@@ -33,6 +33,7 @@ and the latest deployment status. The envelope carries them as `infra` rows plus
 | `rebound` | rebound-live / rebound-api | REBOUND | players, runs, purchases (Google purchased, Apple non-sandbox), mailbox, weekly retention |
 | `summit` | noble-fascination / summit-battle-api | 雙城烽火, 巔峰之戰 | leaderboard players and scores, battles, accounts and recent sign-ins, cosmetic purchases (not tests), mailbox, retention |
 | `wishlist` | thorough-presence / wishlist-app | Wishlist.ai | accounts, messages, listings, completed TWD purchases, conversations, retention |
+| `stray-map` | global-stray-map-mvp / api | 浪浪地圖 | retained/undeleted/deleted map records, global default map candidates, fixed type/status counts and creation-date trend; external intake remains unconnected |
 | `wishlist-users` | thorough-presence / wishlist-app | Wishlist.ai | one fact per account for the Weesh page's 帳戶智慧數據庫: counts and times, the display name and a masked sign-in address (see `backend/AIHANKAPPS_HUB.md`) |
 | `railway` | every project above, plus EClaw and 時光相簿 (metrics API, no ssh) | every app with a Railway service | traffic in/out, CPU, memory, volume space, latest deployment |
 | `timehut` | Timehut / Timehunt (HTTPS, no ssh) | 時光相簿 | account counts: total (not deleted), new in 7 / 30 days, deleted; per-user detail from `/api/internal/admin-stats` (server 1.0.118+: LINE stages, albums, traffic; 1.0.126+: upload quota and refusals by reason) |
@@ -53,6 +54,12 @@ Railway login on the machine that runs them.
 
 `backend/tests/jest/aihankapps-hub-store.test.js` runs each back-end script against a stand-in database and checks
 that every question is a read-only `SELECT` and that only counts come back.
+
+`stray-map` returns one schema-validated `smMapStats` snapshot, not game/account series. Its own test is
+`backend/tests/jest/aihankapps-hub-stray-map.test.js`. It reads no personal/location/source content, invents no App
+device ID, never POSTs to the live map and does not implement the proposed external intake API. Default daily runs
+include it; the existing hourly LaunchAgent is unchanged. See `backend/AIHANKAPPS_HUB.md` for scope, freshness and
+missing native/external/QA/region classification, and `docs/stray-map-external-intake.md` for the blocked API draft.
 
 ## 上架警示板（`attention`，2026-11-12）
 

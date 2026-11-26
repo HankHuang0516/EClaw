@@ -934,7 +934,7 @@ describe('admin hub: the page reads the answer correctly', () => {
         const rows = D.sourceRows();
         expect(rows.find(r => r.name === '營運數據').state).toBe('crit');
         expect(rows.filter(r => r.state === 'ok').map(r => r.name)).toEqual(['商店報表', '作品集流量', '作品集互動', 'EClaw 帳號', 'EClaw 對話', '夢話夥伴後台', '問題回饋', '問題回饋與排程判斷', 'EClaw 付款', '後台服務檢查', 'REBOUND 遊戲伺服器']);
-        expect(rows.filter(r => r.state === 'none').map(r => r.name)).toEqual(['活字戰紀伺服器', 'Wishlist.ai 後台', 'Wishlist.ai 帳戶明細', 'Railway 後台資源', '時光相簿伺服器', '上架警示板', 'Claude 用量', '拾光 APP 內問題回饋', '拾光 LINE 問題回饋', 'Discord 問題回報', '其他 APP 的使用紀錄', '商店的內購金額']);
+        expect(rows.filter(r => r.state === 'none').map(r => r.name)).toEqual(['活字戰紀伺服器', 'Wishlist.ai 後台', '浪浪地圖通報統計', 'Wishlist.ai 帳戶明細', 'Railway 後台資源', '時光相簿伺服器', '上架警示板', 'Claude 用量', '拾光 APP 內問題回饋', '拾光 LINE 問題回饋', 'Discord 問題回報', '其他 APP 的使用紀錄', '商店的內購金額']);
         // the per-account source says how often it runs and, once imported, exactly what it carries (not "counts only")
         expect(rows.find(r => r.name === 'Wishlist.ai 帳戶明細')).toMatchObject({ freq: '每小時', cover: 'Wishlist.ai', note: '還沒有匯入過' });
         expect(rows.find(r => r.name === '商店報表').note).toBe('Google 到 10/27、Apple 到 10/29、AdMob 到 11/1');
@@ -1059,14 +1059,14 @@ describe('admin hub: how it is wired in', () => {
         const html = fs.readFileSync(path.join(pageDir, 'index.html'), 'utf8');
         expect(html).toContain('<meta name="robots" content="noindex,nofollow">');
         const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
-        expect(scripts.map(m => /src="([^"]+)"/.exec(m[1])[1])).toEqual(['/AiHankApps/ops/ops-view.js?v=hub-wishlist-20261114', 'hub-wishlist-i18n.js', 'hub-wishlist-ops.js', 'hub-data.js', 'hub-charts.js', 'hub-timehut.js', 'hub-weesh.js', 'hub-eclaw-i18n.js', 'hub-eclaw.js', 'hub-qa-i18n.js', 'hub-qa.js', 'hub-app.js']);
+        expect(scripts.map(m => /src="([^"]+)"/.exec(m[1])[1])).toEqual(['/AiHankApps/ops/ops-view.js?v=hub-wishlist-20261114', 'hub-wishlist-i18n.js', 'hub-wishlist-ops.js', 'hub-data.js', 'hub-charts.js', 'hub-timehut.js', 'hub-stray-map.js', 'hub-weesh.js', 'hub-eclaw-i18n.js', 'hub-eclaw.js', 'hub-qa-i18n.js', 'hub-qa.js', 'hub-app.js']);
         expect(scripts.every(m => m[2] === '')).toBe(true);                               // no inline script: the policy would block it
         expect(html).not.toMatch(/\son[a-z]+\s*=/i);
         expect(html).not.toContain('<style');
         expect([...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(m => m[1])).toEqual([
-            'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap', 'hub.css', 'hub-qa.css', 'hub-eclaw.css', 'hub-wishlist-ops.css']);
+            'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap', 'hub.css', 'hub-qa.css', 'hub-eclaw.css', 'hub-wishlist-ops.css', 'hub-stray-map.css']);
         // the page asks only its own API and the public operations API, on this origin
-        const pageJs = ['hub-data.js', 'hub-app.js', 'hub-charts.js', 'hub-timehut.js', 'hub-weesh.js', 'hub-eclaw.js', 'hub-eclaw-i18n.js', 'hub-qa.js', 'hub-qa-i18n.js'].map(f => fs.readFileSync(path.join(pageDir, f), 'utf8')).join('\n');
+        const pageJs = ['hub-data.js', 'hub-app.js', 'hub-charts.js', 'hub-timehut.js', 'hub-weesh.js', 'hub-stray-map.js', 'hub-eclaw.js', 'hub-eclaw-i18n.js', 'hub-qa.js', 'hub-qa-i18n.js'].map(f => fs.readFileSync(path.join(pageDir, f), 'utf8')).join('\n');
         expect(pageJs).not.toMatch(/https?:\/\/(?!www\.w3\.org\/2000\/svg)/);
         expect(pageJs).not.toMatch(/\beval\(|new Function\(|document\.write\(/);
         expect(hub.CONTENT_SECURITY_POLICY).toContain("script-src 'self'");

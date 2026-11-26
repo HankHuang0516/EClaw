@@ -1,0 +1,17 @@
+.sm-card{margin-top:20px;min-width:0}
+.sm-card .dm{padding:0 20px}
+.sm-card>.hint,.sm-card>.note{margin:12px 20px}
+.sm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding:0 20px}
+.sm-section{min-width:0;padding-top:16px;border-top:1px solid var(--line)}
+.sm-section h3{font-size:15px;margin:0 0 10px}
+.sm-card>.sm-section{margin:16px 20px 0}
+.sm-heading{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.sm-heading label{display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:var(--ink-2)}
+.sm-heading .field{min-height:44px;max-width:100%;width:auto}
+.sm-trend>.sm-section{border:0;padding-top:4px}
+.sm-trend>.sm-section>h3{display:none}
+.sm-table{width:100%;min-width:0}
+.sm-table th[scope=row]{font-weight:400;white-space:normal;overflow-wrap:anywhere}
+.sm-scope{padding:12px 20px 16px;margin-top:16px;border-top:1px solid var(--line);color:var(--ink-2)}
+.sm-scope p{margin:6px 0;overflow-wrap:anywhere}
+@media(max-width:700px){.sm-grid{grid-template-columns:minmax(0,1fr);gap:16px}.sm-card .dm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.sm-heading{align-items:flex-start}.sm-heading label{width:100%}.sm-heading .field{flex:1;min-width:0}.sm-card .dm-c{min-width:0}}
