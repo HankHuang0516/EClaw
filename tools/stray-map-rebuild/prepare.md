@@ -78,3 +78,8 @@ The boundary checker contains 10 assertions covering credential/non-registry URL
 A1: trace input hash validation, exclusive workspace creation, safe public downloads, install/build/ci and failure persistence. A2: use actual fresh-install/compiler/ci evidence, not a mocked successful build. A3: CLI stage JSON intentionally differs from application REST responses. A4: full original source/root lock/base configuration, signed provenance, Linux runtime equivalence, source runtime safety and official third-party intake integration remain outside this preparer. A5: no production start/write, credentials, Keychain, arbitrary remote fetch, migrations, seed scripts or deployment.
 
 B1 `/api/help`: NO-OP, no application endpoint. B2: this document defines the preparer and provenance boundaries. B3 i18n: NO-OP, development-only tooling/JSON. B4 info page: NO-OP, no product feature published. B5 debug endpoint: NO-OP, isolated build tool, private result files only. H/icon: not applicable; no product assets or release changed.
+
+
+## Later Linux/amd64 candidate
+
+See [Linux text candidate](../../docs/stray-map-linux-text-pilot.md). `linux-build.cjs` uses the same checked baseline/pure lock helpers in official pinned Node x64 Linux userspace, creates a separate Linux lock/clean repeat build and production-only candidate. It does not modify these Darwin workspaces. Only the separate generic text plugin/pure validator are packaged; synthetic adapters, test entries/identities, receipts, Unix controllers and on-machine timers are excluded. The Linux bootstrap defaults closed and has no production verifier. Build success and formal-write/public-read authority are separate decisions.

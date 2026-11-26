@@ -4,7 +4,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { createHash } = require('node:crypto');
-const { shellFor, runRailway } = require('../aihankapps-gifts/lib/adapters/transport');
 const TARGET = Object.freeze({ projectId: '49ba58d4-291d-4203-bba8-deac8d1c3529',
     environment: '7f4b78c8-e894-4414-9f93-a296132374b2', service: 'fb890371-5405-44cf-817b-262899346b7e' });
 
@@ -34,6 +33,8 @@ function acquire(root) {
     if (!root.startsWith('/Volumes/ProjectsData/portfolio-private-staging/') || fs.realpathSync(root) !== root) throw new Error('PRIVATE_EXISTING_ROOT_REQUIRED');
     const output = path.join(root, 'runtime-hidden-lock.sanitized.private.json');
     if (fs.existsSync(output)) throw new Error('EVIDENCE_EXISTS');
+    // Pure lock helpers are also used in offline Linux builds; load transport only for explicit acquisition.
+    const { shellFor, runRailway } = require('../aihankapps-gifts/lib/adapters/transport');
     const script = `
 const fs = require('node:fs'), crypto = require('node:crypto');
 const safeURLs = ${safeURLs.toString()};

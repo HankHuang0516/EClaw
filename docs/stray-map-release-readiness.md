@@ -1,5 +1,7 @@
 # Isolated SQL lifecycle and non-formal client acceptance
 
+**Later candidate stage:** [Linux/amd64 text-only pilot](stray-map-linux-text-pilot.md) independently builds and tests a default-closed candidate without packaging these synthetic services or this client. Its build-review gate and formal-write/public-read gate are separate; production remains disabled.
+
 Draft5527 now connects the existing test-clock 15-minute scheduler to SQL source lifecycle, durable manual deduplication, a synthetic photo-permission ledger and a **non-formal client specimen** reading the actual isolated native API. It is not the mobile App, an official intake deployment, original-source restoration or production acceptance. No on-machine timer, terms, access, credential or production data is changed. The earlier 22-check sharing milestone was retained without rerunning it.
 
 ## Actual scope and source audit
