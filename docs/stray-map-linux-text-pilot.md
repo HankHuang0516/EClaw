@@ -1,5 +1,7 @@
 # Linux/amd64 text/coarse-region candidate — two separate decisions
 
+The later [joint patrol test](stray-map-patrol-joint-test.md) gives Hank and dot a rerunnable anonymous-source → pending receipt workflow against this exact candidate. It records the deployment authorization and the still-unverified existing official intake binding separately.
+
 Draft5527 now has an unsigned, privately built **Linux x64 backend candidate**, an independent text-only pending plugin and actual isolated PostgreSQL acceptance. The candidate is closed by default and has **no production source/reviewer binding**. Its enabled behavior was exercised through an external test entry and test identities that are not packaged. It is not a deployed official API, original source restoration, mobile App, map layer or photo feature.
 
 | Level | Evidence and decision boundary |

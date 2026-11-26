@@ -32,7 +32,7 @@ if (process.env.STRAY_REBUILD_SYNTHETIC !== '1' || !allowedPorts.size) throw new
 const connect = net.Socket.prototype.connect;
 net.Socket.prototype.connect = function (...args) {
     let options = Array.isArray(args[0]) ? args[0][0] : args[0];
-    if (typeof options === 'number' || /^\d+$/.test(String(options))) options = { port: options, host: typeof args[1] === 'string' ? args[1] : 'localhost' };
+    if (typeof options === 'number' || (typeof options === 'string' && /^\d+$/.test(options))) options = { port: options, host: typeof args[1] === 'string' ? args[1] : 'localhost' };
     if (!options || typeof options !== 'object' || options.path || options.lookup !== undefined
         || !['localhost', '127.0.0.1', '::1'].includes(options.host || 'localhost')
         || !allowedPorts.has(String(options.port))) throw new Error('ISOLATED_EGRESS_BLOCKED');
