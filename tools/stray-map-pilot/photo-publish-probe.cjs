@@ -67,7 +67,9 @@ async function main() {
             const staged = await transaction.stage();
             return staged.statusCode === 202 ? transaction.commit() : staged;
         }
-        async function fixture(id, color) {
+        const caseBase = 'https://data.kingcounty.gov/resource/azpa-gwmk/';
+        const systemRowID = 'row-abcd-efgh.ijkl.json';
+        async function fixture(id, color, caseId = id) {
             const lead = prepare({ impound_no: id, data_source: 'Regional Animal Services of King County', state: 'WA',
                 record_type: 'FOUND', animal_type: 'Dog', date_type: 'Date Found', date: '2026-11-25T00:00:00.000' });
             const original = await sharp({ create: { width: 128, height: 128, channels: 3, background: color } })
@@ -75,7 +77,7 @@ async function main() {
                     GPSLongitudeRef:'E', GPSLongitude:'0/1 0/1 0/1' } }).png().toBuffer();
             assert.ok((await sharp(original).metadata()).exif);
             return { tip: lead.payload, sourceEvidence: { status: 'ACTIVE', checkedAt: now(), recordKey: lead.key,
-                caseUrl: 'https://data.kingcounty.gov/resource/azpa-gwmk/' + id }, photo: {
+                caseUrl: caseBase + caseId }, photo: {
                 content: original.toString('base64'), mime: 'image/png', sha256: sha(original),
                 verification: { recordKey: lead.key, originalSha256: sha(original), originalCapture: true,
                     sameAnimalConfirmed: true, animalRecognizable: true, noFacesOrPlates: true, noPersonalData: true, noSensitiveVisualLocation: true },
@@ -83,7 +85,7 @@ async function main() {
                     creditUrl: 'https://example.invalid/qa-credit', permitsRedaction: true, creditApprovedForPublic: true },
             }};
         }
-        const a = await fixture('qa-local-a', '#2C6E4A'), b = await fixture('qa-local-b', '#4970A5');
+        const a = await fixture('qa-local-a', '#2C6E4A', systemRowID), b = await fixture('qa-local-b', '#4970A5');
         const invalid = makeHandoff(Buffer.from('{}'));
         const reserved = '/photo-handoffs/' + invalid.id + '/open';
         assert.equal((await get('/photo-status')).statusCode, 403);
@@ -104,6 +106,26 @@ async function main() {
                 photo: plus(a.photo, 'rights', plus(a.photo.rights, 'permitsRedaction', false)) }), 'PHOTO_REPUBLICATION_RIGHTS_REQUIRED'],
         ]) {
             assert.equal((await post(override(now()))).json().error, reason);
+            clock += 240001;
+        }
+        const invalidCaseURLs = [
+            a.sourceEvidence.caseUrl.replace('https:', 'http:'),
+            a.sourceEvidence.caseUrl.replace('data.kingcounty.gov', 'other.example.org'),
+            a.sourceEvidence.caseUrl.replace('data.kingcounty.gov', 'data.kingcounty.gov:8443'),
+            a.sourceEvidence.caseUrl.replace('azpa-gwmk', 'other-data'),
+            a.sourceEvidence.caseUrl.replace('/resource/', '/RESOURCE/'),
+            `${caseBase}nested/${systemRowID}`,
+            `${caseBase}row-abcd-efgh.ijk.json`,
+            `${caseBase}row-abcd-efgh.ijkl`,
+            `${caseBase}row-abcd-efgh%2eijkl.json`,
+            `${a.sourceEvidence.caseUrl}?utm_source=qa`,
+            `${a.sourceEvidence.caseUrl}?select=id`,
+            `${a.sourceEvidence.caseUrl}#qa`,
+        ];
+        for (const caseUrl of invalidCaseURLs) {
+            const rejected = await post({ ...a, sourceEvidence: { ...a.sourceEvidence, caseUrl, checkedAt: now() } });
+            assert.equal(rejected.statusCode, 403, caseUrl);
+            assert.equal(rejected.json().error, 'SOURCE_ACTIVE_PROOF_REQUIRED', caseUrl);
             clock += 240001;
         }
         assert.deepEqual((await get('/photo-cards')).json().cards, []);
@@ -177,7 +199,8 @@ async function main() {
         console.log(JSON.stringify({ synthetic: true, receipts: [receipt, other].map(row => 'masked-' + sha(row.id).slice(0, 12)),
             cases: 2, autoPublished: true, noHumanReview: true, sameReceipt: true, expiryHidden: true,
             withdrawnHidden: true, unauthorizedDenied: true, metadataRemoved: true, bundledSafetyModelRan: true,
-            readCannotWrite: true, restartedJobDenied: true, privateStagingBeforeCommit: true, exactBodyBinding: true }));
+            readCannotWrite: true, restartedJobDenied: true, privateStagingBeforeCommit: true, exactBodyBinding: true,
+            socrataSystemRowIdAccepted: true, legacyCaseUrlAccepted: true, invalidCaseURLsRejected: invalidCaseURLs.length }));
     } finally { await app.close(); await pool.end(); }
 }
 main().catch(error => { console.error(error.message); process.exitCode = 1; });

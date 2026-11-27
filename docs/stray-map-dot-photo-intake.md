@@ -36,6 +36,7 @@ node tools/stray-map-pilot/dot-photo-client.cjs --submit-verified /private/MANIF
 
 - `tip` 是既有 v3 文字案格式，`photos: []`。此入口把照片放在獨立的 `photo` 欄位。
 - `sourceEvidence` 含 `status: ACTIVE`、`checkedAt`（UTC ISO 毫秒）、`caseUrl`（核准資料集的個案 API）和同一 `recordKey`。簽章工作承諾已向可信來源核實在案；伺服器核對來源、範圍與時效，證據超過十五分鐘或來自未啟用來源即拒收。
+  - `caseUrl` 可使用官方個案 API 的 Socrata `:id`，例如合成網址 `https://data.kingcounty.gov/resource/azpa-gwmk/row-abcd-efgh.ijkl.json`。Dot 應核對個案 API 回傳同一筆紀錄，再填入查核結果。`recordKey` 照既有規則從 `impound_no` 產生。網址只接受指定 HTTPS 網域及該資料集的單筆路徑，省略查詢參數及 fragment。
 - `photo` 含 `content`（原始影像的標準 base64，原始 bytes 至多 5 MiB）、`mime`、`sha256`、`rights` 和 `verification`。權利記錄需有 `license`、公開署名 `credit`、私有 `permissionUrl`、允許公開的 `creditUrl`、`permitsRedaction: true` 和 `creditApprovedForPublic: true`。允許 `EXPLICIT_PERMISSION`、`CC_BY_4_0`、`CC0_1_0`。驗證記錄需有 `recordKey`、`originalSha256`，並確認 `originalCapture`、`sameAnimalConfirmed`、`animalRecognizable`、`noFacesOrPlates`、`noPersonalData`、`noSensitiveVisualLocation`。證據連結不由伺服器代抓。
 
 簽章驗證後才進入資料與照片檢查。通過即以同一交易保存案件、照片、回執與期限，無人工審查步驟。伺服器沿用既有影像安全檢查並重新編碼，公開欄位只含粗區域和必要署名。來源與授權憑據留在私有儲存。有效時間最長十五分鐘。同案具重新核對的有效證據可延長期限並保留原 ID。撤回後需由新的權限規則另行處理，重送無法復刊。歷史文字件各自保留原回執。

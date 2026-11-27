@@ -15,7 +15,12 @@ const denied = (error, status = 422) => ({ status, error });
 function isSourceCaseURL(url) {
     if (typeof url !== 'string' || canonicalSourceURL(url) !== url) return false;
     const parsed = new URL(url);
-    return parsed.origin === SOURCE.origin && /^\/resource\/azpa-gwmk\/[-_a-z\d]+(?:\.json)?$/i.test(parsed.pathname);
+    const prefix = '/resource/azpa-gwmk/';
+    if (parsed.origin !== SOURCE.origin || !parsed.pathname.startsWith(prefix)) return false;
+    const caseId = parsed.pathname.slice(prefix.length);
+    // Socrata's system :id can include a dot before the last four characters.
+    return /^[-_a-z\d]+(?:\.json)?$/i.test(caseId)
+        || /^row-[a-z\d]{4}-[a-z\d]{4}\.[a-z\d]{4}\.json$/.test(caseId);
 }
 
 function readableAttribution(value) {
