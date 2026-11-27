@@ -1862,6 +1862,7 @@ Hank 直接指示：「以後你自行判斷是否清理舊QA的決策」。此�
 ## EClaw administration in the Hub (2026-11-13)
 
 - Account-admin data lives at `/AiHankApps/hub/#app-eclawbot`; `/portal/admin.html` redirects there after authentication. The explicit `?operations=1` entry retains existing mutation dialogs and the AI support tester. See `docs/specs/aihankapps-hub-eclaw-admin.md`.
+- Stray Map manual review lives at `/AiHankApps/hub/#app-stray-map` under the existing admin role and Stray Map review token. See `docs/specs/aihankapps-hub-stray-map-review.md`.
 - `backend/aihankapps-hub/hub-eclaw.js` reads the original APIs in memory. Its page assets remain outside public/ behind the Hub allowlist. Never copy account/feedback records into public report imports, telemetry or browser storage.
 - Use `/api/admin/bots?readOnly=1` for snapshots: ordinary GET retains legacy assignment cleanup and credential fields. The read-only mode has neither. Do not infer zero from an unavailable source or equate active bindings with all historical bindings.
 - Tests: `cd backend && npx jest --runInBand --testPathIgnorePatterns=/node_modules/ --runTestsByPath tests/jest/aihankapps-hub-eclaw.test.js tests/jest/admin-bots-readonly.test.js tests/jest/aihankapps-hub.test.js`. The override is needed only because Jest normally ignores paths containing `.worktrees`.

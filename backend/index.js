@@ -2012,6 +2012,14 @@ app.get('/api/help', (req, res) => {
         ],
         aihankapps_hub: [
             { title: 'AiHankApps 管理中樞 page (existing admin portal session only; an anonymous browser is sent to sign in, a non-admin account gets 403)', curl: `curl -s "${apiBase}/AiHankApps/hub/" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
+            ...['reports', 'photos'].map(kind => ({
+                title: 'Stray Map manual review ' + kind + ' (administrator session and existing Stray Map review token)',
+                curl: `curl -s "${apiBase}/api/aihankapps/hub/stray-map/review/${kind}" --cookie /LOCAL/PORTAL_COOKIE_FILE --header @/LOCAL/STRAY_MAP_REVIEW_HEADER_FILE`,
+            })),
+            ...[['reports', 'mark_reviewing'], ['photos', 'reject'], ['appeals', 'reject']].map(([kind, action]) => ({
+                title: 'Record an operator decision on Stray Map ' + kind + ' (administrator session, existing review token and same-origin)',
+                curl: `curl -s -X POST "${apiBase}/api/aihankapps/hub/stray-map/review/${kind}/CASE_UUID/decision" -H "Origin: ${apiBase}" -H "Content-Type: application/json" --cookie /LOCAL/PORTAL_COOKIE_FILE --header @/LOCAL/STRAY_MAP_REVIEW_HEADER_FILE -d '{"action":"${action}","note":"OPERATOR_REASON"}'`,
+            })),
             { title: 'Daily aggregates behind the hub: store report, portfolio traffic, EClawbot and 夢話夥伴 usage, EClaw payments, back-end uptime, the game-server/Wishlist counts and Stray Map retained-map snapshot an operator imported (external tips remain unconnected), and Railway service resources: traffic in/out, CPU, memory, space, deployments (admin session; read-only, counts only), plus inbox: the last 30 days of problem reports from every app (EClawbot, 詐騙帝國, portfolio beta feedback, 拾光AI雲端相簿 App/LINE) with their text, and the alert schedule\'s notes', curl: `curl -s "${apiBase}/api/aihankapps/hub/data" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
             { title: 'Latest health check of each back-end the hub watches (checked by this server once a minute; admin session)', curl: `curl -s "${apiBase}/api/aihankapps/hub/services" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
             { title: 'Active hub alerts, each with its notification ID (the ID shown under every alert with a 複製 button), source, rule, raw values (basis) and times; every recent problem report is an alert (quote = the report\'s own words), triage = what the alert schedule decided (auto | human | done, note), ask = what Hank is asked to do (admin session)', curl: `curl -s "${apiBase}/api/aihankapps/hub/alerts" --cookie /LOCAL/PORTAL_COOKIE_FILE` },
