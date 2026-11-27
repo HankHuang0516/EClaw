@@ -1,0 +1,31 @@
+name: Stray Map Dot photo read
+
+on: create
+
+permissions: {}
+
+jobs:
+  read:
+    name: Check the photo service without write access
+    if: github.event.ref_type == 'branch' && startsWith(github.ref_name, 'dot-photo-read/v1/') && github.actor_id == '96640428' && github.triggering_actor == 'HankHuang0516' && github.run_attempt == '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      id-token: write
+    steps:
+      - run: |
+          node --input-type=module <<'NODE'
+          const base = 'https://api-production-8bc1.up.railway.app/external-intake/v1';
+          const url = new URL(process.env.ACTIONS_ID_TOKEN_REQUEST_URL);
+          url.searchParams.set('audience', base + '/photo-status');
+          const issued = await fetch(url, { headers: { authorization: 'Bearer ' + process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN } });
+          if (!issued.ok) throw Error('OIDC_ISSUE_FAILED');
+          const { value } = await issued.json();
+          const payload = JSON.parse(Buffer.from(value.split('.')[1], 'base64url').toString('utf8'));
+          if (payload.event_name !== 'create' || payload.ref !== process.env.GITHUB_REF || payload.workflow_sha !== process.env.GITHUB_SHA) {
+              throw Error('OIDC_CREATE_EVENT_MISMATCH');
+          }
+          const result = await fetch(base + '/photo-status', { headers: { authorization: 'Bearer ' + value }, redirect: 'error' });
+          console.log('PHOTO_READ_FRESH_EXECUTION http=' + result.status);
+          if (![200, 403].includes(result.status)) throw Error('PHOTO_STATUS_UNAVAILABLE');
+          NODE
