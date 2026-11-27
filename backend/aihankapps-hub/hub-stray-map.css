@@ -15,3 +15,31 @@
 .sm-scope{padding:12px 20px 16px;margin-top:16px;border-top:1px solid var(--line);color:var(--ink-2)}
 .sm-scope p{margin:6px 0;overflow-wrap:anywhere}
 @media(max-width:700px){.sm-grid{grid-template-columns:minmax(0,1fr);gap:16px}.sm-card .dm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.sm-heading{align-items:flex-start}.sm-heading label{width:100%}.sm-heading .field{flex:1;min-width:0}.sm-card .dm-c{min-width:0}}
+.smr { margin-bottom: 16px; }
+.smr > summary { cursor: pointer; font-size: 16px; font-weight: 650; min-height: 28px; }
+.smr-body { margin-top: 14px; }
+.smr-status { margin: 12px 0 0; }
+.smr-status:empty, .smr-body:empty { display: none; }
+.smr-tools, .smr-unlock { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; margin-bottom: 12px; }
+.smr label { display: grid; gap: 5px; font-size: 13px; }
+.smr input, .smr select, .smr textarea {
+  color: inherit; font: inherit; background: transparent; border: 1px solid currentColor;
+  border-radius: 8px; padding: 8px 10px; min-width: 0; min-height: 36px;
+}
+.smr textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+.smr .btn[aria-pressed="true"], .smr-item[aria-pressed="true"] { font-weight: 700; outline: 1px solid currentColor; }
+.smr-grid { display: grid; grid-template-columns: minmax(170px, 1fr) minmax(0, 2fr); gap: 16px; }
+.smr-list { display: grid; align-content: start; gap: 6px; max-height: 420px; overflow: auto; padding: 2px; }
+.smr-item { color: inherit; font: inherit; cursor: pointer; background: transparent; border: 1px solid var(--line, #d6d8dc);
+  text-align: start; border-radius: 8px; display: grid; gap: 2px; padding: 8px; overflow-wrap: anywhere; min-width: 0; }
+.smr-case { min-width: 0; overflow-wrap: anywhere; }
+.smr-case h3, .smr-case h4 { margin: 0 0 8px; }
+.smr-case p { white-space: pre-wrap; }
+.smr-case img { display: block; max-width: 100%; max-height: 330px; object-fit: contain; border-radius: 8px; margin-bottom: 10px; }
+.smr-case .smr-tools { margin-top: 10px; }
+@media (max-width: 640px) {
+  .smr-grid { grid-template-columns: minmax(0, 1fr); }
+  .smr-list { max-height: 210px; }
+  .smr .btn, .smr-item, .smr > summary, .smr input, .smr select { min-height: 44px; }
+  .smr input, .smr textarea { font-size: 16px; max-width: 100%; }
+}

@@ -24,8 +24,9 @@
  *     daily counts an operator's collector imports from the game servers and other back-ends;
  *   - problem reports and the alert schedule's notes, see aihankapps-hub-inbox.js: the text of each recent report
  *     (EClawbot feedback, 詐騙帝國 feedback, portfolio beta feedback, 拾光AI雲端相簿 reports imported by the collector)
- *     and what the schedule decided about each alert. This is the one place where message text is read: Hank asked to
+ *     and what the schedule decided about each alert. For the inbox Hank asked to
  *     see every report as an alert (2026-11-13); the answer stays admin-only and private/no-store.
+ *   - Stray Map moderation has its own review routes and requires the operator's existing Stray Map token per request.
  * Worker and Wishlist operations data are read by the page from the public /api/aihankapps/ops API.
  *
  * A source that cannot be read is reported as { ok: false } and the rest of the answer still arrives. A day the
@@ -42,6 +43,7 @@ const vm = require('vm');
 const hubStore = require('./aihankapps-hub-store');
 const hubInbox = require('./aihankapps-hub-inbox');
 const hubQa = require('./aihankapps-hub-qa');
+const strayMapReview = require('./aihankapps-hub-stray-map-review');
 
 const PAGE_DIR = path.join(__dirname, 'aihankapps-hub');
 const PORTFOLIO_DIR = path.join(__dirname, 'public', 'AiHankApps');
@@ -69,6 +71,7 @@ const PAGE_FILES = {
     'hub-weesh.js': 'text/javascript; charset=utf-8',
     'hub-stray-map.js': 'text/javascript; charset=utf-8',
     'hub-stray-map.css': 'text/css; charset=utf-8',
+    'hub-stray-map-review.js': 'text/javascript; charset=utf-8',
     'hub-wishlist-i18n.js': 'text/javascript; charset=utf-8',
     'hub-wishlist-ops.js': 'text/javascript; charset=utf-8',
     'hub-wishlist-ops.css': 'text/css; charset=utf-8',
@@ -572,14 +575,12 @@ function createRouters(options) {
         next();
     }
     const ready = (_req, res, next) => (isReady() ? next() : unavailable(res));
-    // The API's only writes (Hank 2026-11-13): 「以後略過類似警告」 POST /mutes and DELETE /mutes/<type>, and 「確認」with an
-    // optional countermeasure, POST /acks and DELETE /acks/<notification ID>. Only from the hub page itself (the browser
-    // always sends Origin on these; a missing or foreign Origin is refused), and only for an administrator.
+    // Explicit operator write paths. The browser supplies Origin and every route still requires an administrator.
     const MUTES = /^\/mutes(\/[A-Za-z0-9._:-]{1,120})?$/;
     const ACKS = /^\/acks\/[^/]{1,600}$/;
     function sameOriginApi(req, res, next) {
         if (['GET', 'HEAD'].includes(req.method)) return readOnlySameOrigin(req, res, next);
-        const write = (req.method === 'POST' && (req.path === '/mutes' || req.path === '/acks' || req.path === '/qa/timehut/comments'))
+        const write = (req.method === 'POST' && (req.path === '/mutes' || req.path === '/acks' || req.path === '/qa/timehut/comments' || strayMapReview.canWrite(req.path)))
             || (req.method === 'DELETE' && ((MUTES.test(req.path) && req.path !== '/mutes') || ACKS.test(req.path)));
         if (!write) return res.status(405).set('Allow', 'GET, HEAD').json({ success: false, error: 'Read-only resource' });
         if (!['https://eclawbot.com', 'https://www.eclawbot.com'].includes(req.get('origin') || '')) return res.status(403).json({ success: false, error: 'Same-origin access required' });
@@ -636,6 +637,7 @@ function createRouters(options) {
     });
     api.use(ready, authMiddleware, adminMiddleware);
     hubQa.mount(api, { getPool, limited });
+    strayMapReview.mount(api, { limited, fetchImpl: options.fetchStrayMapReview });
     // The last answer of each back-end's health check, from memory: cheap enough to ask every minute.
     api.get('/services', (_req, res) => res.json({ success: true, checkedAt: (options.now || Date.now)(), services: probes.latest() }));
     api.get('/data', async (req, res) => {

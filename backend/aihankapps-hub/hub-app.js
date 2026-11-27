@@ -59,7 +59,7 @@
   if (!LIVE_WIN[S.win]) S.win = '24h';
   const CH = {};          // 有名字的圖表（複製 CSV 用）
   const liveHooks = [];   // 每分鐘讀到新的營運數據之後要更新的東西
-  let disposeEclaw = () => {}, disposeOperations = () => {};
+  let disposeEclaw = () => {}, disposeOperations = () => {}, disposeStrayReview = () => {};
   const openFolds = new Set();
   document.addEventListener('toggle', event => {
     const target = event.target;
@@ -873,7 +873,7 @@
     const aggregate = a.key === 'stray-map' && window.HubStrayMap ? window.HubStrayMap.sourceRow((D.latest.facts || {})[a.key], D.sources.imports) : '';
     return '<section class="card c-5">' + cardHead('這款 APP 有哪些數據', '每一項資料到哪一天') + '<ol class="feed">' + keys.map(k => '<li><span class="feed-k">' + esc(M[k].group) + '</span><span class="feed-t"><b>' + esc(M[k].name) + '</b>　' + esc(M[k].note) + '</span><time class="muted">' + esc(endNote(k, true)) + '</time></li>').join('') + aggregate + (keys.length || aggregate ? '' : '<li class="empty">這款 APP 目前沒有任何數據來源。</li>') + '</ol></section>';
   }
-  function viewApp(el) {
+  function viewApp(el, retainedReview) {
     const a = D.APP[S.app], list = [a], idx = D.APPS.indexOf(a), n = D.APPS.length, keys = D.metricsFor(a);
     const prev = D.APPS[(idx + n - 1) % n], next = D.APPS[(idx + 1) % n], L = a.links;
     if (keys.indexOf(S.metric) < 0) S.metric = keys[0] || 'installs';
@@ -885,6 +885,7 @@
       }).join('') + links + '</div></div>' + pill(D.appState(a)) + '</header>' +
       (a.stage === 'dev' ? '<p class="note">' + ico('info') + '這款還沒有公開上架，商店相關的指標會是空的。</p>' : '') +
       appAlertsHtml(a) + (a.key === 'timehut' ? '<div id="th-qa"></div>' : '') +
+      (a.key === 'stray-map' ? '<div id="sm-review"></div>' : '') +
       (a.key === D.WISHLIST ? wishlistAppBody(a, keys, list) :
         (keys.length ? tilesHtml(APP_TILE_ORDER.filter(k => keys.indexOf(k) >= 0).slice(0, 6), list) + '<div class="grid">' + explorerHtml('c-8', keys, true) + platCardHtml(a) + '</div>' : a.key === 'stray-map' && window.HubStrayMap ? '' : '<p class="note">' + ico('info') + '這款 APP 目前沒有任何數據來源。</p>') +
         backendHtml(a) + retentionHtml(a, '') + '<div class="grid">' + feedbackCardHtml(list, 'c-7') + appFreshHtml(a, keys) + '</div>');
@@ -901,6 +902,9 @@
     if (th) window.HubTimehut.mount(th, window.HubTimehut.fromFacts((D.latest.facts || {})[a.key]));
     const sm = $('#sm-insights', el);
     if (sm) window.HubStrayMap.mount(sm, window.HubStrayMap.fromFacts((D.latest.facts || {})[a.key], D.sources.imports));
+    const review = $('#sm-review', el);
+    if (review && retainedReview) review.replaceWith(retainedReview);
+    else if (review && window.HubStrayMapReview) disposeStrayReview = window.HubStrayMapReview.mount(review);
     const ws = $('#ws-users', el);
     if (ws) window.HubWeesh.mount(ws, window.HubWeesh.fromFacts((D.latest.facts || {})[a.key]));
     const ec = $('#ec-admin', el);
@@ -977,15 +981,22 @@
       disposeEclaw = () => {};
       disposeOperations();
       disposeOperations = () => {};
+      const retainingReview = soft && S.view === 'app' && D.APP[S.app]?.key === 'stray-map' && $('#sm-review', el);
+      const reviewFocus = retainingReview && retainingReview.contains(document.activeElement) ? document.activeElement : null;
+      if (!retainingReview) {
+        disposeStrayReview();
+        disposeStrayReview = () => {};
+      }
       V.destroyAll();
       liveHooks.length = 0;
       liveSeq++;
       Object.keys(CH).forEach(k => delete CH[k]);
       syncChrome();
       el.classList.remove('is-stale');
-      VIEW[S.view](el);
+      VIEW[S.view](el, retainingReview);
       tickAgo();
       if (fk) { const f = $(fk); if (f) f.focus({ preventScroll: true }); }
+      if (reviewFocus?.isConnected) reviewFocus.focus({ preventScroll: true });
     };
     clearTimeout(render.t);
     if (soft) { el.classList.add('is-stale'); render.t = setTimeout(go, 130); } else go();
@@ -1260,6 +1271,8 @@
   // 登入過期或權限被收回：不留著舊數字，直接說明並給登入的連結
   function stop(error) {
     started = false;
+    disposeStrayReview();
+    disposeStrayReview = () => {};
     V.destroyAll();
     $('#filters').hidden = true;
     $('#nav').innerHTML = '';
