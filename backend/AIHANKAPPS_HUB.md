@@ -157,6 +157,9 @@ non-GET browser requests. Use a Simulator Manager GUI lease for that browser che
 - A previous period is compared only when every source of that metric was already recording through all of it. Otherwise the comparison is left blank rather than computed against missing days.
 - The only target shown is the one the Wishlist listing report publishes (listings per hour). No other target exists yet.
 - Alerts are computed from the current numbers and disappear when the condition clears. "確認" is remembered in that browser only.
+- How long a source has gone without an update is judged at the moment the page read that source's answer (`D.ops.at` for the live numbers, `D.hubAt` for everything else), never against the running clock. A page left in a background tab, on a sleeping laptop or without a connection holds an old copy; comparing it with the present reported the page's own idleness as a stopped source (the false 監控資料沒有更新 of 2026-11-27). Inside `computeAlerts` the clock is read once, to bound those two times; a test checks it.
+- A re-read of the live numbers that gets no answer at all keeps the copy on screen, raises no alert and turns the 自動更新 pill into 連不上，稍後重讀. Only an error answered by the server counts as the source being unreadable.
+- Coming back to the page (visible again, restored from the back-forward cache, focused, online again, or a timer noticing an old copy) reads the answers again before anything is redrawn; when the set of alerts changed, the view is redrawn so a cleared alert does not stay on screen.
 
 ## Files
 

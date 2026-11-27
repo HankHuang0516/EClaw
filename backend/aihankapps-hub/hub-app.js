@@ -230,7 +230,7 @@
     if (!q) return null;
     const w = q.windows.find(x => x.id === 'week') || q.windows[0];
     const left = Math.max(0, Math.min(100, Math.round(100 - w.usedPct)));
-    return { q: q, w: w, left: left, lvl: left <= 15 ? 'crit' : left <= 35 ? 'warn' : 'ok', stale: !q.at || Date.now() - q.at > QUOTA_STALE };
+    return { q: q, w: w, left: left, lvl: left <= 15 ? 'crit' : left <= 35 ? 'warn' : 'ok', stale: !q.at || (D.hubAt || Date.now()) - q.at > QUOTA_STALE };
   }
   function syncQuota() {
     const b = $('#quota'), v = quotaView();
@@ -258,9 +258,12 @@
   }
   function syncLiveUi() {
     const p = $('#live-pill');
-    p.classList.toggle('is-paused', !S.live);
+    // 最近一次重讀沒連上伺服器：畫面是上一次讀到的數字。這是這個頁面的連線狀況，不算成來源的警示
+    const lost = S.live && D.ops.missedAt > 0;
+    p.classList.toggle('is-paused', !S.live || lost);
+    p.classList.toggle('is-lost', lost);
     p.setAttribute('aria-pressed', String(S.live));
-    $('#live-text').textContent = S.live ? '自動更新' : '已暫停';
+    $('#live-text').textContent = !S.live ? '已暫停' : lost ? '連不上，稍後重讀' : '自動更新';
     const b = $('#live-btn');
     if (b) b.innerHTML = S.live ? ico('pause') + '暫停' : ico('play') + '繼續';
   }
@@ -1269,27 +1272,51 @@
       : st === 403 ? '<h1>這個帳號沒有管理者權限</h1><p>管理中樞只開放給 EClaw 管理者。</p><p><a class="btn" href="/AiHankApps/">回到 APP 作品集</a></p>'
         : '<h1>資料暫時讀不到</h1><p>後台沒有回應，可能正在重新啟動。稍等一下再試。</p><p><button type="button" class="btn is-primary" data-act="retry">再試一次</button></p>') + '</section>';
   }
-  async function refreshLive() {
-    if (!started) return;
-    await D.refreshLive();
-    liveTick();
+  // 警示清單畫在各頁的內容裡，liveTick 只更新數字。警示有增減時要整頁重畫，不然已經解除的警示會留在畫面上等人去確認。
+  // 使用者正在操作時先記著（redrawOwed），等他停下來再畫；now：剛回到這一頁，當下就畫。
+  const alertSig = () => D.ALERTS.map(a => a.ref).join('\n');
+  let liveRun = null, redrawOwed = false;
+  function settle(now) {
+    syncLiveUi();
+    if (redrawOwed && (now || idle())) { redrawOwed = false; render(true); } else liveTick();
+  }
+  function refreshLive(now) {
+    if (!started) return Promise.resolve();
+    if (!liveRun) {
+      const before = alertSig();
+      liveRun = D.refreshLive().then(() => { if (alertSig() !== before) redrawOwed = true; }).finally(() => { liveRun = null; });
+    }
+    return liveRun.then(() => settle(now));
   }
   let refreshing = false;
-  async function refreshData(force) {
+  async function refreshData(force, now) {
     if (!started || refreshing) return;
     refreshing = true;
     try {
       await D.refreshData(!!force);
-      if (force || idle()) render(true); else liveTick();
+      syncLiveUi();
+      if (force || now || idle()) { redrawOwed = false; render(true); } else { redrawOwed = true; liveTick(); }
     } catch (error) {
       if (error.status === 401 || error.status === 403) stop(error); else if (force) toast('重新讀取失敗，畫面上是上一次的數字');
     } finally { refreshing = false; }
   }
   function refreshAll() { toast('重新讀取資料…'); refreshData(true); }
+  // 回到這一頁（切回分頁、電腦睡醒、網路恢復）：手上的資料如果已經放了一陣子，先重讀再畫。背景分頁與睡眠會停掉計時器，
+  // 有些情況不會有 visibilitychange，所以每 30 秒的計時也檢查一次。
+  const COPY_MAX = { ops: 90000, hub: 6 * 60000 };
+  function catchUp() {
+    if (document.hidden || !started || !S.live) return;
+    const t = Date.now();
+    if (t - D.hubAt > COPY_MAX.hub) refreshData(false, true);
+    else if (t - D.ops.at > COPY_MAX.ops) refreshLive(true).catch(() => {});
+  }
   setInterval(() => { if (S.live && !document.hidden) refreshLive().catch(() => {}); }, 60000);
   setInterval(() => { if (S.live && !document.hidden) refreshData(false); }, 5 * 60000);
-  setInterval(tickAgo, 30000);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && started && S.live && Date.now() - D.ops.at > 90000) refreshLive().catch(() => {}); });
+  setInterval(() => { tickAgo(); catchUp(); if (redrawOwed && started && idle()) { redrawOwed = false; render(true); } }, 30000);
+  document.addEventListener('visibilitychange', catchUp);
+  window.addEventListener('pageshow', catchUp);
+  window.addEventListener('online', catchUp);
+  window.addEventListener('focus', catchUp);
 
   async function boot() {
     $('#view').innerHTML = '<section class="card boot" aria-busy="true"><h1>正在讀取各個後台的數字…</h1><p>商店報表、作品集流量、EClaw 主站與營運數據。</p></section>';

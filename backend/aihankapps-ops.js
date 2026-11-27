@@ -32,6 +32,7 @@ const OUTBOUND_UA = 'aihankapps-ops-collector/1.0 (+https://eclawbot.com/AiHankA
 // The monitor answers through a Cloudflare tunnel to a Mac; a day of CPU history (550 KB) took more than 20 s from
 // Railway on 2026-11-10, so big requests get a longer limit and the bootstrap falls back to a shorter window.
 const FETCH_TIMEOUT_MS = 30000, BIG_FETCH_TIMEOUT_MS = 90000;
+const STATUS_MINUTES = '2,7,12,17,22,27,32,37,42,47,52,57';     // every five minutes, two minutes after the CPU read
 const RAW_KEEP_DAYS = 14;
 const TIME_ZONE = 'Asia/Taipei';
 const MAX_IDS = 24, MAX_POINTS = 3000, ID_PATTERN = /^[a-z][a-zA-Z0-9_.-]{0,80}$/;
@@ -394,9 +395,12 @@ function startCollector(getPool, options = {}) {
     if (scheduled) return scheduled;
     const collector = createCollector(getPool, options);
     const cron = options.cron || require('node-cron');
+    // Minutes are written out. node-cron 3 reads a range with a step (`2-59/5`) as "the multiples of 5 inside 2..59":
+    // 5,10,…,55. The status read then ran together with the CPU read and never at minute 0, so every hour had a
+    // ten-minute hole in it, half of the 20 minutes after which the hub calls the monitor's numbers stale (2026-11-27).
     const jobs = [
         cron.schedule('*/5 * * * *', () => collector.collectCpu(20, 1)),
-        cron.schedule('2-59/5 * * * *', () => collector.collectStatus()),
+        cron.schedule(STATUS_MINUTES + ' * * * *', () => collector.collectStatus()),
         cron.schedule('* * * * *', () => collector.collectWorkSummary()),
         cron.schedule('7,37 * * * *', () => collector.collectWork(48)),
         cron.schedule('9,39 * * * *', () => collector.collectListing(72)),
