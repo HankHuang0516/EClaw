@@ -5,21 +5,22 @@ const { createHash } = require('node:crypto');
 const { INTERVAL_MS } = require('../stray-map-rebuild/pg-scheduler.cjs');
 const { SOURCE } = require('./dot-identity.cjs');
 const { prepare, sourceRecordKey } = require('./dot-submit.cjs');
+const { validateScheduledPhotoTip } = require('../stray-map-intake/scheduled-photo-contract.cjs');
 
 const MAX_SNAPSHOT = 1000;
 const MAX_LEDGER = 4000;
 const digest = value => createHash('sha256').update(value).digest('hex');
 const status = reason => ({ submitted: false, reason });
 
-function snapshotEntries(snapshot, now) {
-    if (snapshot?.synthetic !== true || snapshot.publisherId !== SOURCE.publisherId || snapshot.datasetId !== SOURCE.datasetId
+function snapshotEntries(snapshot, now, scope) {
+    if (snapshot?.synthetic !== true || snapshot.publisherId !== scope.publisherId || snapshot.datasetId !== scope.datasetId
         || snapshot.complete !== true || !Array.isArray(snapshot.records) || snapshot.records.length > MAX_SNAPSHOT) return null;
     const checkedAt = Date.parse(snapshot.checkedAt);
     if (!Number.isFinite(checkedAt) || new Date(checkedAt).toISOString() !== snapshot.checkedAt
         || checkedAt > now || now - checkedAt >= INTERVAL_MS) return null;
     const entries = new Map();
     for (const record of snapshot.records) {
-        const key = sourceRecordKey(record?.row);
+        const key = sourceRecordKey(record?.row, scope);
         if (!key || entries.has(key) || !['ACTIVE', 'EXPLICIT_CLOSED', 'UNKNOWN'].includes(record.evidence)) return null;
         entries.set(key, record);
     }
@@ -33,8 +34,14 @@ function pendingReceipt(response) {
         ? receipt : null;
 }
 
-async function scheduledIntakeTick({ isolated, enabled, reserve, readSource, loadLedger, saveLedger, send, now = Date.now }) {
+async function scheduledIntakeTick({ isolated, enabled, reserve, readSource, loadLedger, saveLedger, send, loadPhotoAdmission,
+    scope = SOURCE, now = Date.now }) {
     if (isolated !== true) throw Error('ISOLATED_INTAKE_ONLY');
+    if (scope !== SOURCE && (!scope.verified || !/^synthetic-[a-z0-9-]+$/.test(scope.publisherId)
+        || !/^synthetic-[a-z0-9-]+$/.test(scope.datasetId) || !/^https:\/\/[a-z0-9-]+\.example\.invalid$/.test(scope.origin))) {
+        throw Error('ISOLATED_SOURCE_REGISTRATION_REQUIRED');
+    }
+    if (typeof loadPhotoAdmission !== 'function') throw Error('SCHEDULED_PHOTO_ADMISSION_REQUIRED');
     if (!enabled()) return status('DISABLED');
     const time = now();
     if (!Number.isSafeInteger(time) || time < 0) throw Error('INVALID_SCHEDULE_CLOCK');
@@ -46,7 +53,7 @@ async function scheduledIntakeTick({ isolated, enabled, reserve, readSource, loa
     catch { return status('SOURCE_UNAVAILABLE'); }
     if (!enabled()) return status('DISABLED');
     if (snapshot?.sourceMayBeReused !== true) return status('SOURCE_PERMISSION_UNVERIFIED');
-    const checked = snapshotEntries(snapshot, now());
+    const checked = snapshotEntries(snapshot, now(), scope);
     if (!checked) return status('SOURCE_CHECK_INCOMPLETE');
 
     const ledger = await loadLedger();
@@ -64,17 +71,31 @@ async function scheduledIntakeTick({ isolated, enabled, reserve, readSource, loa
         }
         if (record.evidence === 'EXPLICIT_CLOSED') entry.closed = true;
         if (entry.baseline || entry.closed || entry.receipt) continue;
-        const candidate = record.evidence === 'ACTIVE' ? prepare(record.row) : null;
+        const candidate = record.evidence === 'ACTIVE' ? prepare(record.row, scope) : null;
         if (!candidate) {
             held++;
             continue;
         }
-        const payloadDigest = digest(JSON.stringify(candidate.payload));
+        if (next) continue;
+        let admission;
+        try { admission = await loadPhotoAdmission(candidate.payload.source); }
+        catch { held++; continue; }
+        if (!enabled()) return status('DISABLED');
+        const submittedAt = new Date(now()).toISOString();
+        const photos = admission?.photos;
+        if (!Array.isArray(photos) || photos.length < 1 || photos.length > 2) { held++; continue; }
+        const valid = validateScheduledPhotoTip(Buffer.from(JSON.stringify({ ...candidate.payload, photos })), {
+            submittedAt, sourcePolicy: scope, verifiedUploads: admission.verifiedUploads,
+            caseEvidence: { ...candidate.payload.source, status: record.evidence, sourceMayBeReused: true, checkedAt: snapshot.checkedAt },
+        });
+        if (!valid.success) { held++; continue; }
+        candidate.payload = valid.canonicalPayload;
+        const payloadDigest = valid.payloadHash;
         if (entry.payloadDigest && entry.payloadDigest !== payloadDigest) {
             held++;
             continue;
         }
-        if (!next) next = { candidate, entry, payloadDigest };
+        next = { candidate, entry, payloadDigest };
     }
     if (Object.keys(ledger.records).length > MAX_LEDGER) return status('LEDGER_CAPACITY');
     ledger.lastCheckedAt = checked.checkedAt;
@@ -83,6 +104,7 @@ async function scheduledIntakeTick({ isolated, enabled, reserve, readSource, loa
     if (initializing) return { ...status('BASELINE_RECORDED'), observed: newCount };
     if (!next) return { ...status('NO_ELIGIBLE_NEW_CASE'), held };
     if (!enabled()) return status('DISABLED');
+    if (now() - checked.checkedAt >= INTERVAL_MS) return status('SOURCE_CHECK_STALE');
     let response;
     try { response = await send(next.candidate.payload, next.candidate.key); }
     catch { return status('ACKNOWLEDGEMENT_UNAVAILABLE'); }

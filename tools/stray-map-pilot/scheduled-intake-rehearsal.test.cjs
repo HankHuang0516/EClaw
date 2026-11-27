@@ -9,6 +9,7 @@ const http = require('node:http');
 const os = require('node:os');
 const path = require('node:path');
 const { SOURCE } = require('./dot-identity.cjs');
+const { sourceRecordKey } = require('./dot-submit.cjs');
 const { scheduledIntakeTick, INTERVAL_MS } = require('./scheduled-intake-rehearsal.cjs');
 
 const start = Date.parse('2026-11-27T00:00:00.000Z');
@@ -17,6 +18,21 @@ const record = (key, evidence = 'ACTIVE', fields = {}) => ({
     evidence, row: { impound_no: key, data_source: 'Regional Animal Services of King County', record_type: 'FOUND',
         animal_type: 'Dog', date: '2026-11-25T00:00:00.000', date_type: 'Date Found', state: 'WA', ...fields },
 });
+
+function admittedPhoto(source) {
+    const uploadId = 'up_' + source.recordKey.slice(0, 32);
+    const rights = { license: 'EXPLICIT_PERMISSION', evidenceRef: 'ev_synthetic_photo001',
+        attributionRef: 'credit_synthetic_photo001', permitsRedaction: true };
+    const flags = Object.fromEntries(['reuseConsentVerified', 'exifRemoved', 'geoRemoved', 'manualRedactionConfirmed',
+        'noFacesOrPlates', 'noPersonalData', 'noSensitiveVisualLocation', 'caseMatchConfirmed', 'originalCaptureConfirmed',
+        'sameAnimalIdentifiable', 'authorAttributionPreserved'].map(key => [key, true]));
+    return {
+        photos: [{ uploadId, rights, caption: 'Self-made synthetic fixture' }],
+        verifiedUploads: [{ uploadId, rights, publisherId: source.publisherId, datasetId: source.datasetId,
+            recordKey: source.recordKey, sourceUrl: source.url, status: 'VERIFIED_SAFE', sha256: source.recordKey,
+            byteLength: 2048, mimeType: 'image/jpeg', width: 128, height: 96, ...flags }],
+    };
+}
 
 async function harness(t) {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'stray-map-scheduled-test-'));
@@ -29,7 +45,7 @@ async function harness(t) {
         await fs.rename(temp, ledgerPath);
     };
     let current = start, lastSlot = -Infinity, enabled = true, feed, outage = false, drop = false, rejection = null;
-    const receipts = new Map(), observed = { gets: 0, attempts: [], anonymous: true };
+    const receipts = new Map(), override = new Map(), observed = { gets: 0, attempts: [], anonymous: true };
     const server = http.createServer(async (request, response) => {
         if (request.url === '/feed' && request.method === 'GET') {
             observed.gets++;
@@ -64,6 +80,7 @@ async function harness(t) {
     const origin = `http://127.0.0.1:${server.address().port}`;
     const params = {
         isolated: true, now: () => current, enabled: () => enabled, loadLedger, saveLedger,
+        loadPhotoAdmission: async source => override.has(source.recordKey) ? override.get(source.recordKey) : admittedPhoto(source),
         reserve(at, interval) {
             assert.equal(interval, 15 * 60 * 1000);
             if (at - lastSlot < interval) return false;
@@ -91,7 +108,7 @@ async function harness(t) {
             complete: true, checkedAt: new Date(current).toISOString(), records, ...overrides };
         return scheduledIntakeTick({ ...params });
     }
-    return { tick, disable: () => { enabled = false; }, params, receipts, observed, loadLedger,
+    return { tick, disable: () => { enabled = false; }, params, receipts, observed, loadLedger, override,
         cards: () => fetch(origin + '/external-intake/v1/cards') };
 }
 
@@ -112,7 +129,7 @@ test('baseline and already receipted cases never submit on later 15-minute ticks
     const { payload } = h.observed.attempts[0];
     assert.equal(payload.display.locale, 'en-US');
     assert.equal(payload.location.regionCode, 'US-WA');
-    assert.deepEqual(payload.photos, []);
+    assert.equal(payload.photos.length, 1);
     assert.doesNotMatch(JSON.stringify(payload), /synthetic-new|invalid-example-private/);
     assert.equal((await h.cards()).status, 503);
     const state = await h.loadLedger();
@@ -175,4 +192,20 @@ test('disabling while the public API read is outstanding prevents the write', as
     assert.equal(stopped.reason, 'DISABLED');
     assert.equal(h.observed.attempts.length, 0);
     assert.deepEqual(await h.loadLedger(), before);
+});
+
+test('a text-only or unbound photo candidate is held before any POST', async t => {
+    const h = await harness(t);
+    const none = record('synthetic-missing-photo'), wrong = record('synthetic-wrong-photo'), generated = record('synthetic-generated-photo');
+    const fakeSource = { ...SOURCE, url: null, recordKey: sourceRecordKey(none.row) };
+    h.override.set(fakeSource.recordKey, null);
+    h.override.set(sourceRecordKey(wrong.row), admittedPhoto(fakeSource));
+    const generatedKey = sourceRecordKey(generated.row);
+    const generatedAdmission = admittedPhoto({ ...fakeSource, recordKey: generatedKey });
+    generatedAdmission.verifiedUploads[0].originalCaptureConfirmed = false;
+    h.override.set(generatedKey, generatedAdmission);
+    await h.tick(0, []);
+    const blocked = await h.tick(1, [none, wrong, generated]);
+    assert.equal(blocked.held, 3);
+    assert.equal(h.observed.attempts.length, 0);
 });

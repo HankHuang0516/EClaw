@@ -13,20 +13,20 @@ SOURCE_API.search = new URLSearchParams({
 const UNKNOWN = Object.freeze({ precision: 'UNKNOWN', value: null, timeZone: null });
 const sha = text => createHash('sha256').update(text).digest('hex');
 
-function sourceRecordKey(row) {
+function sourceRecordKey(row, scope = SOURCE) {
     if (row?.data_source !== 'Regional Animal Services of King County' || row.record_type !== 'FOUND'
         || typeof row.impound_no !== 'string' || !/^[a-zA-Z0-9-]{1,32}$/.test(row.impound_no)) return null;
-    return sha(JSON.stringify([SOURCE.publisherId, SOURCE.datasetId, row.impound_no]));
+    return sha(JSON.stringify([scope.publisherId, scope.datasetId, row.impound_no]));
 }
 
-function prepare(row) {
-    const key = sourceRecordKey(row);
+function prepare(row, scope = SOURCE) {
+    const key = sourceRecordKey(row, scope);
     if (!key || row.state !== 'WA' || row.date_type !== 'Date Found' || !['Cat', 'Dog'].includes(row.animal_type)) return null;
     const date = typeof row.date === 'string' && /^(\d{4}-\d{2}-\d{2})T00:00:00\.000$/.exec(row.date)?.[1];
     if (!date) return null;
     const midnight = new Date(`${date}T00:00:00Z`);
     if (!Number.isFinite(+midnight) || midnight.toISOString().slice(0, 10) !== date) return null;
-    const { publisherId, datasetId } = SOURCE;
+    const { publisherId, datasetId } = scope;
     return {
         key, payload: {
             schemaVersion: 3, thirdParty: true, selfWitness: false,

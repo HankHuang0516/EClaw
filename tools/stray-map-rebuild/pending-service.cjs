@@ -2,6 +2,7 @@
 // NEW LOCAL RECONSTRUCTION ADAPTER. It does not write native animals/devices or run in production.
 const { createHash, randomUUID } = require('node:crypto');
 const { validateTip } = require('../stray-map-intake/contract');
+const { validateScheduledPhotoTip } = require('../stray-map-intake/scheduled-photo-contract.cjs');
 const { publicSemantics } = require('../stray-map-intake/case-semantics');
 const { validatePublicContent } = require('./projection-contract.cjs');
 const sourceState = require('./sql-source-state.cjs');
@@ -12,7 +13,8 @@ const sameRights=(a,b)=>a&&b&&['license','evidenceRef','attributionRef','permits
 const fail = (error, status = 400) => ({ success: false, error, status });
 const checks = ['contentReviewed', 'localLanguageReviewed', 'privacyReviewed', 'sourceVerified', 'rightsReviewed', 'locationSafe'];
 class PendingService {
-    constructor({ pool, sourcePolicies, now, knownSyntheticPixelHashes = [], requirePersistentPhotoRights = false, enablePersistentDedup = false }) {
+    constructor({ pool, sourcePolicies, now, knownSyntheticPixelHashes = [], requirePersistentPhotoRights = false, enablePersistentDedup = false,
+        verifyScheduledCase = null }) {
         if (!Array.isArray(sourcePolicies) || !sourcePolicies.length || sourcePolicies.some(policy => !policy?.verified
             || typeof policy.publisherId !== 'string' || !policy.publisherId.startsWith('synthetic-')
             || !/^https:\/\/[^/]+\.example\.invalid\/?$/.test(policy.origin))) throw new Error('SYNTHETIC_POLICIES_ONLY');
@@ -20,6 +22,10 @@ class PendingService {
         this.syntheticHashes = new Set(knownSyntheticPixelHashes.filter(hash => /^[a-f0-9]{64}$/.test(hash)));
         if(typeof requirePersistentPhotoRights!=='boolean')throw Error('INVALID_PHOTO_ADMISSION_MODE');
         this.requirePersistentPhotoRights=requirePersistentPhotoRights;
+        if (verifyScheduledCase !== null && (!requirePersistentPhotoRights || typeof verifyScheduledCase !== 'function')) {
+            throw Error('SCHEDULED_PHOTO_EVIDENCE_REGISTRY_REQUIRED');
+        }
+        this.verifyScheduledCase = verifyScheduledCase;
         if(typeof enablePersistentDedup!=='boolean')throw Error('INVALID_DEDUP_MODE');this.enablePersistentDedup=enablePersistentDedup;
         this.photoRights=new photoRights.PhotoRights({pool,sourcePolicies,knownSyntheticPixelHashes,now});
     }
@@ -55,7 +61,9 @@ class PendingService {
             sourceUrl: null, status: 'VERIFIED_SAFE', sha256: row.sanitized_hash, byteLength: row.bytes.length,
             mimeType: 'image/jpeg', width: row.width, height: row.height, rights: row.rights,
             reuseConsentVerified: true, exifRemoved: true, geoRemoved: true, manualRedactionConfirmed: true,
-            noFacesOrPlates: true, noPersonalData: true, noSensitiveVisualLocation: true, caseMatchConfirmed: true }));
+            noFacesOrPlates: true, noPersonalData: true, noSensitiveVisualLocation: true, caseMatchConfirmed: true,
+            ...(this.verifyScheduledCase && { originalCaptureConfirmed: true, sameAnimalIdentifiable: true,
+                authorAttributionPreserved: true }) }));
         // These flags apply only to hash-allowlisted self-made QA pixels, never real photo moderation.
     }
     async addSyntheticPhoto(bytes, declaredMime, grant, storage, sharp) {
@@ -82,17 +90,29 @@ class PendingService {
     async accept(raw, requestKey) {
         if (typeof requestKey !== 'string' || !/^[A-Za-z0-9_-]{16,128}$/.test(requestKey)) return fail('INVALID_IDEMPOTENCY_KEY');
         if (!Buffer.isBuffer(raw) || raw.length > 16384) return fail('PAYLOAD_TOO_LARGE', 413);
-        let policy;
-        try { const source = JSON.parse(raw.toString()).source;
+        let policy, source;
+        try { source = JSON.parse(raw.toString()).source;
             policy = this.policies.find(item => item.publisherId === source?.publisherId && item.datasetId === source?.datasetId);
         } catch { /* canonical validator returns the bounded parse failure */ }
-        const result = validateTip(raw, { submittedAt: this.now(), sourcePolicy: policy, verifiedUploads: await this.uploads() });
-        if (!result.success) return result;
-        const p = result.canonicalPayload, client = await this.pool.connect();
+        let result;
+        if (this.verifyScheduledCase) {
+            if (!policy) return fail('SOURCE_NOT_VERIFIED', 403);
+        } else {
+            result = validateTip(raw, { submittedAt: this.now(), sourcePolicy: policy, verifiedUploads: await this.uploads() });
+            if (!result.success) return result;
+        }
+        const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
             // One publisher's keys/record identity are reserved transactionally, not a cooldown approximation.
-            await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [p.source.publisherId]);
+            await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [policy.publisherId]);
+            if (this.verifyScheduledCase) {
+                const caseEvidence = await this.verifyScheduledCase(source, client);
+                result = validateScheduledPhotoTip(raw, { submittedAt: this.now(), sourcePolicy: policy,
+                    caseEvidence, verifiedUploads: await this.uploads(client) });
+                if (!result.success) { await client.query('ROLLBACK'); return result; }
+            }
+            const p = result.canonicalPayload;
             const replay = (await client.query(`SELECT r.payload_hash,t.receipt FROM rebuild_external.requests r JOIN rebuild_external.tips t ON t.id=r.tip_id
                 WHERE r.publisher=$1 AND r.request_key=$2`, [p.source.publisherId, requestKey])).rows[0];
             if (replay) { await client.query('COMMIT'); return replay.payload_hash === result.payloadHash
@@ -105,7 +125,12 @@ class PendingService {
             if (!prior) {
                 const count = (await client.query(`SELECT count(*)::int n FROM rebuild_external.tips WHERE publisher=$1
                     AND (receipt->>'submittedAt')::timestamptz > $2::timestamptz-interval '1 hour'`, [p.source.publisherId, this.now()])).rows[0].n;
-                if (count >= 10) { await client.query('ROLLBACK'); return fail('SOURCE_RATE_LIMIT', 429); }
+                if (count >= (this.verifyScheduledCase ? 1 : 10)) { await client.query('ROLLBACK'); return fail('SOURCE_RATE_LIMIT', 429); }
+                if (this.verifyScheduledCase) {
+                    const total = (await client.query('SELECT count(*)::int n FROM rebuild_external.tips WHERE publisher=$1 AND dataset=$2',
+                        [p.source.publisherId, p.source.datasetId])).rows[0].n;
+                    if (total >= 10) { await client.query('ROLLBACK'); return fail('PILOT_CAPACITY', 503); }
+                }
                 const stored = await client.query('INSERT INTO rebuild_external.tips(id,publisher,dataset,record_key,payload_hash,payload,receipt,map_policy) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING receipt',
                     [id,p.source.publisherId,p.source.datasetId,p.source.recordKey,result.payloadHash,p,receipt,result.review.mapPolicy]);
                 // Send the committed JSONB representation from the first response onward, including stable key order.
@@ -120,6 +145,7 @@ class PendingService {
     }
     async decide(id, action, reviewChecks, publicContent = null) {
         if (!['APPROVE','REJECT','WITHDRAW'].includes(action)) return fail('INVALID_DECISION');
+        if (action === 'APPROVE' && this.verifyScheduledCase) return fail('SCHEDULED_PHOTO_PUBLICATION_CLOSED', 403);
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN'); const row = (await client.query('SELECT * FROM rebuild_external.tips WHERE id=$1 FOR UPDATE',[id])).rows[0];
