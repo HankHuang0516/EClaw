@@ -1,5 +1,7 @@
 # 浪浪地圖 dot 官方送件
 
+照片專用入口與回退規格見 [dot 照片 API](stray-map-dot-photo-intake.md)。下文保留原文字試點的操作紀錄，避免將舊送件工作當成照片入口。
+
 dot 以現有 GitHub 連線操作指定的 [GitHub Actions 工作流程](https://github.com/HankHuang0516/EClaw/actions/workflows/stray-map-dot-intake.yml)。工作流程向 GitHub 取得短效 OIDC 身分。浪浪地圖核對發行者、用途、專案及帳號 ID、分支、執行環境、工作流程檔案與發布時鎖定的提交。觸發及重跑均限定專案擁有者帳號。授權對象是這個受限工作流程，dot 不需取得或保管 API 金鑰。[GitHub OIDC](https://docs.github.com/en/actions/concepts/security/openid-connect)
 
 ## dot 操作

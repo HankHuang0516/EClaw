@@ -7,6 +7,7 @@ const REF = 'refs/heads/codex/stray-map-intake-rehearsal-20261126';
 const WORKFLOW = `${REPOSITORY}/.github/workflows/stray-map-dot-intake.yml@${REF}`;
 const ISSUER = 'https://token.actions.githubusercontent.com';
 const AUDIENCE = 'https://api-production-8bc1.up.railway.app/external-intake/v1';
+const PHOTO_AUDIENCE = `${AUDIENCE}/photo-tips`;
 const SOURCE = Object.freeze({
     publisherId: 'king-county-ras',
     datasetId: 'found-animals-azpa-gwmk',
@@ -55,8 +56,9 @@ async function githubKeys() {
     return JSON.parse(Buffer.concat(chunks).toString('utf8')).keys;
 }
 
-function createSourceVerifier({ workflowSha, loadKeys = githubKeys, now = Date.now }) {
+function createSourceVerifier({ workflowSha, audience = AUDIENCE, loadKeys = githubKeys, now = Date.now }) {
     if (!/^[a-f0-9]{40}$/.test(workflowSha || '')) throw Error('PINNED_WORKFLOW_REQUIRED');
+    if (![AUDIENCE, PHOTO_AUDIENCE].includes(audience)) throw Error('PINNED_AUDIENCE_REQUIRED');
     let keys = new Map();
     let refreshedAt = -Infinity;
     let refreshing;
@@ -92,7 +94,7 @@ function createSourceVerifier({ workflowSha, loadKeys = githubKeys, now = Date.n
             const time = Math.floor(now() / 1000);
             if (header.alg !== 'RS256' || !/^[\w-]{1,128}$/.test(header.kid || '')
                 || Object.keys(header).some(key => !['alg', 'kid', 'typ', 'x5t'].includes(key))
-                || claim.iss !== ISSUER || claim.aud !== AUDIENCE || claim.sub !== `repo:${REPOSITORY}:ref:${REF}`
+                || claim.iss !== ISSUER || claim.aud !== audience || claim.sub !== `repo:${REPOSITORY}:ref:${REF}`
                 || claim.repository_id !== '1150444936' || claim.repository_owner_id !== '96640428'
                 || claim.repository !== REPOSITORY || claim.ref !== REF || claim.event_name !== 'push'
                 || claim.actor_id !== '96640428' || claim.workflow_ref !== WORKFLOW
@@ -112,4 +114,4 @@ function createSourceVerifier({ workflowSha, loadKeys = githubKeys, now = Date.n
     };
 }
 
-module.exports = { AUDIENCE, ISSUER, SOURCE, REPOSITORY, REF, WORKFLOW, createSourceVerifier, foundDisplay, allowPayload };
+module.exports = { AUDIENCE, PHOTO_AUDIENCE, ISSUER, SOURCE, REPOSITORY, REF, WORKFLOW, createSourceVerifier, foundDisplay, allowPayload };

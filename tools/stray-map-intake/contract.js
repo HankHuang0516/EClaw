@@ -76,11 +76,11 @@ function hasDuplicateKeys(text) {
     return false;
 }
 
-function parseBody(raw, contentType, contentEncoding) {
+function parseBody(raw, contentType, contentEncoding, maxBytes = LIMITS.jsonBytes) {
     if (!/^application\/json(?:\s*;\s*charset=utf-8)?$/i.test(contentType)
         || contentEncoding !== 'identity') return fail('UNSUPPORTED_MEDIA_TYPE', 415);
     if (typeof raw !== 'string' && !Buffer.isBuffer(raw)) return fail('RAW_JSON_REQUIRED');
-    if (Buffer.byteLength(raw) > LIMITS.jsonBytes) return fail('PAYLOAD_TOO_LARGE', 413);
+    if (Buffer.byteLength(raw) > maxBytes) return fail('PAYLOAD_TOO_LARGE', 413);
     const bytes = Buffer.isBuffer(raw) ? raw : Buffer.from(raw, 'utf8');
     const text = bytes.toString('utf8');
     if (!Buffer.from(text, 'utf8').equals(bytes)) return fail('INVALID_UTF8');
@@ -325,4 +325,4 @@ function countOrUnknown(value, { sourceAvailable = false } = {}) {
 }
 
 module.exports = { DRAFT, LIMITS, KINDS, CONDITIONS, HEALTH_CONDITIONS, REPORT_TYPES, SENSITIVITIES, LICENSES, MIME_TYPES,
-    canonicalSourceURL, validateTip, decideIdempotency, countOrUnknown, temporal, definitelyAfter, reportSemantics, temporalBounds };
+    canonicalSourceURL, validateTip, decideIdempotency, countOrUnknown, temporal, definitelyAfter, reportSemantics, temporalBounds, parseBody };

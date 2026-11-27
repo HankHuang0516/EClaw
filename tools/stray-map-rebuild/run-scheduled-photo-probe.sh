@@ -4,7 +4,11 @@ set -euo pipefail
 project_root="$(cd "$(dirname "$0")/../.." && pwd)"
 node_image=stray-map-release-preflight:3ec76d896
 postgres_image=postgis/postgis:17-3.5
-fixture_db=stray_photo_schedule_fixture
+case "${1:-scheduled}" in
+    scheduled) fixture_db=stray_photo_schedule_fixture; probe=tools/stray-map-rebuild/scheduled-photo-probe.cjs ;;
+    publish) fixture_db=stray_photo_publish_fixture; probe=tools/stray-map-pilot/photo-publish-probe.cjs ;;
+    *) echo 'Expected scheduled or publish' >&2; exit 2 ;;
+esac
 fixture_host=fixture.railway.internal
 fixture_password=fixture-local-only
 
@@ -33,4 +37,4 @@ for attempt in {1..36}; do
 done
 docker run --pull never --rm --platform linux/amd64 --network "$private_network" -v "$project_root/tools:/repo/tools:ro" -w /repo \
     -e DATABASE_URL="postgresql://postgres:$fixture_password@$fixture_host:5432/$fixture_db" \
-    "$node_image" node tools/stray-map-rebuild/scheduled-photo-probe.cjs
+    "$node_image" node "$probe"

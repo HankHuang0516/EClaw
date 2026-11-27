@@ -1,15 +1,8 @@
 'use strict';
 
 const { createHash } = require('node:crypto');
-const { AUDIENCE, SOURCE, createSourceVerifier, foundDisplay } = require('./dot-identity.cjs');
+const { AUDIENCE, PHOTO_AUDIENCE, SOURCE, createSourceVerifier, foundDisplay } = require('./dot-identity.cjs');
 
-const SOURCE_API = new URL('/resource/azpa-gwmk.json', SOURCE.origin);
-SOURCE_API.search = new URLSearchParams({
-    $select: 'impound_no,data_source,record_type,animal_type,date,date_type,state',
-    $where: "data_source='Regional Animal Services of King County' AND record_type='FOUND' AND state='WA' AND animal_type IN ('Cat','Dog') AND date_type='Date Found'",
-    $order: 'date DESC,impound_no ASC',
-    $limit: '1',
-});
 const UNKNOWN = Object.freeze({ precision: 'UNKNOWN', value: null, timeZone: null });
 const sha = text => createHash('sha256').update(text).digest('hex');
 
@@ -45,10 +38,10 @@ async function request(url, options = {}) {
     return fetch(url, { ...options, redirect: 'error', signal: AbortSignal.timeout(12000) });
 }
 
-async function authorization() {
+async function authorization(audience) {
     const url = new URL(process.env.ACTIONS_ID_TOKEN_REQUEST_URL);
     if (url.protocol !== 'https:' || !url.hostname.endsWith('.actions.githubusercontent.com')) throw Error('OIDC_RUNTIME_REQUIRED');
-    url.searchParams.set('audience', AUDIENCE);
+    url.searchParams.set('audience', audience);
     const response = await request(url, {
         headers: { authorization: `Bearer ${process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN}` },
     });
@@ -59,55 +52,33 @@ async function authorization() {
 }
 
 async function main(mode) {
-    if (!['verify', 'probe', 'submit'].includes(mode) || process.env.GITHUB_ACTIONS !== 'true'
-        || process.env.GITHUB_TRIGGERING_ACTOR !== 'HankHuang0516'
-        || (mode === 'submit' && !(Number(process.env.GITHUB_RUN_ATTEMPT) >= 2))) throw Error('AUTHORIZED_MANUAL_JOB_REQUIRED');
-    const auth = await authorization();
-    const verifySource = createSourceVerifier({ workflowSha: process.env.GITHUB_SHA });
-    if (!await verifySource({ method: mode === 'submit' ? 'POST' : 'GET', headers: { authorization: auth } })) {
+    if (!['verify-photo', 'probe-photo', 'check-photo-source'].includes(mode) || process.env.GITHUB_ACTIONS !== 'true'
+        || process.env.GITHUB_TRIGGERING_ACTOR !== 'HankHuang0516') throw Error('AUTHORIZED_MANUAL_JOB_REQUIRED');
+    if (mode === 'check-photo-source') {
+        // This dataset publishes discoverable reports, but its schema does not supply the verified per-photo permission or an active-case decision.
+        const source = await request(new URL('/api/views/azpa-gwmk', SOURCE.origin));
+        if (!source.ok || (await source.json()).id !== 'azpa-gwmk') throw Error('SOURCE_UNAVAILABLE');
+        console.log('SOURCE_ON_HOLD active-case and photo-republication proof not established');
+        return;
+    }
+    const auth = await authorization(PHOTO_AUDIENCE);
+    const verifySource = createSourceVerifier({ workflowSha: process.env.GITHUB_SHA, audience: PHOTO_AUDIENCE });
+    if (!await verifySource({ method: 'GET', headers: { authorization: auth } })) {
         throw Error('SIGNED_WORKFLOW_IDENTITY_REJECTED');
     }
-    if (mode === 'verify') {
+    if (mode === 'verify-photo') {
         console.log('OIDC_WORKFLOW_IDENTITY_VERIFIED');
         return;
     }
-    if (mode === 'probe') {
-        // A UUID v4 case ID cannot be all zeros. This exercises receipt storage without inserting a case.
-        const url = `${AUDIENCE}/receipts/tip_${'0'.repeat(32)}`;
-        const signed = await request(url, { headers: { authorization: auth } });
-        const anonymous = await request(url);
-        const cards = await request(`${AUDIENCE}/cards`);
-        if (signed.status !== 404 || (await signed.json()).error !== 'NOT_FOUND'
-            || signed.headers.get('X-Stray-Map-Intake-Mode') !== 'private-auto-accept'
-            || anonymous.status !== 403 || (await anonymous.json()).error !== 'SOURCE_NOT_AUTHORIZED'
-            || cards.status !== 503 || (await cards.json()).error !== 'PILOT_CLOSED') throw Error('PRODUCTION_IDENTITY_BOUNDARY_MISMATCH');
-        console.log('OFFICIAL_PRIVATE_INTAKE_VERIFIED signed=404 anonymous=403 public=503');
-        return;
+    const url = `${AUDIENCE}/photo-status`;
+    const signed = await request(url, { headers: { authorization: auth } });
+    const anonymous = await request(url);
+    const cards = await request(`${AUDIENCE}/photo-cards`);
+    if (signed.status !== 200 || (await signed.json()).publication !== 'AUTOMATIC_IF_VERIFIED'
+        || anonymous.status !== 403 || cards.status !== 200 || !Array.isArray((await cards.json()).cards)) {
+        throw Error('PRODUCTION_PHOTO_IDENTITY_BOUNDARY_MISMATCH');
     }
-
-    const response = await request(SOURCE_API);
-    if (!response.ok) throw Error('SOURCE_UNAVAILABLE');
-    const rows = await response.json();
-    if (!Array.isArray(rows) || rows.length > 1) throw Error('INVALID_SOURCE_RESPONSE');
-    const candidate = prepare(rows[0]);
-    if (!candidate) {
-        console.log('MANUAL_CONFIRMATION_REQUIRED no case submitted');
-        return;
-    }
-    const result = await request(`${AUDIENCE}/tips`, {
-        method: 'POST',
-        headers: { authorization: auth, 'content-type': 'application/json', 'idempotency-key': candidate.key },
-        body: JSON.stringify(candidate.payload),
-    });
-    if (result.status !== 202) throw Error(`INTAKE_HTTP_${result.status}`);
-    const { success, receipt, replay } = await result.json();
-    if (success !== true || !['PENDING', 'ACCEPTED_PRIVATE'].includes(receipt?.status) || receipt.publicVisible !== false
-        || !/^tip_[a-f0-9]{32}$/.test(receipt.tipId) || typeof replay !== 'boolean') throw Error('PRIVATE_RECEIPT_REQUIRED');
-    const read = await request(`${AUDIENCE}/receipts/${receipt.tipId}`, { headers: { authorization: auth } });
-    const checked = read.ok && await read.json();
-    if (checked?.success !== true || checked.receipt?.tipId !== receipt.tipId || checked.review !== receipt.status
-        || checked.receipt.publicVisible !== false) throw Error('RECEIPT_READBACK_FAILED');
-    console.log(JSON.stringify({ status: receipt.status, publicVisible: false, replay, receipt: `masked-${sha(receipt.tipId).slice(0, 12)}` }));
+    console.log('OFFICIAL_PHOTO_INTAKE_VERIFIED signed=200 anonymous=403 cards=200');
 }
 
 if (require.main === module) {
