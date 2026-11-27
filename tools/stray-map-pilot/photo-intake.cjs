@@ -3,7 +3,7 @@
 const { randomUUID } = require('node:crypto');
 const { LIMITS, parseBody } = require('../stray-map-intake/contract');
 const { SOURCE } = require('./dot-identity.cjs');
-const { BODY_LIMIT, validatePhotoSubmission, sha } = require('./photo-contract.cjs');
+const { BODY_LIMIT, IDENTIFYING_FEATURES, OFFICIAL_CLAIM_METHOD, validPublicDetails, validatePhotoSubmission, sha } = require('./photo-contract.cjs');
 const { PilotError } = require('./store.cjs');
 const { HANDOFF_ID, SECRET, proofMatches, contentMatches, matchesWorker, createHandoffs } = require('./photo-handoff.cjs');
 
@@ -13,6 +13,8 @@ const LICENSE_URLS = {
     CC_BY_4_0: 'https://creativecommons.org/licenses/by/4.0/',
     CC0_1_0: 'https://creativecommons.org/publicdomain/zero/1.0/',
 };
+const PUBLIC_CASE_CREDIT = 'data provided by permission of King County';
+const CLAIM_URL = 'https://kingcounty.gov/LostAPet';
 
 function createPhotos(pool) {
     let initialization;
@@ -82,7 +84,10 @@ function createPhotos(pool) {
     }
     async function cards(at) {
         await ready();
-        return (await pool.query(`SELECT id, payload, evidence->'rights' AS rights, visible_until FROM stray_dot_photo_v1.tips
+        return (await pool.query(`SELECT id, payload, evidence->'rights' AS rights,
+            evidence->'publicDetails' AS public_details, evidence#>>'{sourceEvidence,caseUrl}' AS case_url,
+            evidence#>>'{sourceEvidence,status}' AS case_status, evidence#>>'{sourceEvidence,checkedAt}' AS case_checked_at,
+            visible_until FROM stray_dot_photo_v1.tips
             WHERE withdrawn_at IS NULL AND visible_until>$1 ORDER BY submitted_at DESC LIMIT 10`, [at])).rows;
     }
     async function media(id, at) {
@@ -104,8 +109,17 @@ function formatReceipt(row, at) {
 
 function publicCard(row) {
     const { payload, rights } = row;
+    const details = validPublicDetails(row.public_details, row.case_url) ? row.public_details : null;
+    const checkedAt = Date.parse(row.case_checked_at);
+    const active = row.case_status === 'ACTIVE' && Number.isFinite(checkedAt);
     return { id: row.id, origin: 'EXTERNAL_PUBLIC_LEAD', type: 'FOUND', animalKind: payload.animal.kind,
-        title: payload.display.title, observation: payload.observation, location: { countryCode: 'US', regionCode: 'US-WA', coordinates: null },
+        title: payload.display.title, description: 'A public King County record reports this animal found in Washington.',
+        observation: payload.observation, location: { countryCode: 'US', regionCode: 'US-WA', coordinates: null },
+        identifyingFeatures: details?.features.map(code => ({ code, label: IDENTIFYING_FEATURES[code] })) ?? [],
+        caseStatus: active ? { status: 'ACTIVE', checkedAt: new Date(checkedAt).toISOString() } : null,
+        source: { label: 'Regional Animal Services of King County', credit: PUBLIC_CASE_CREDIT,
+            url: details?.publishCaseLink ? row.case_url : null },
+        claim: details?.claimMethod === OFFICIAL_CLAIM_METHOD ? { label: 'How to reclaim a lost pet', url: CLAIM_URL } : null,
         mapMarkerEligible: false, photo: { url: `${PREFIX}/photo-media/${row.id}`, credit: rights.credit,
             creditUrl: rights.creditUrl, license: rights.license, licenseUrl: LICENSE_URLS[rights.license] || null, changes: 'Metadata removed' },
         visibleUntil: new Date(row.visible_until).toISOString() };

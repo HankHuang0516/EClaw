@@ -11,16 +11,33 @@ const exact = (value, keys) => value && Object.getPrototypeOf(value) === Object.
     && Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key));
 const captureChecks = ['originalCapture', 'sameAnimalConfirmed', 'animalRecognizable', 'noFacesOrPlates', 'noPersonalData', 'noSensitiveVisualLocation'];
 const denied = (error, status = 422) => ({ status, error });
+const CASE_URL_PREFIX = `${SOURCE.origin}/resource/azpa-gwmk/`;
+const SYSTEM_CASE_ID = /^row-[a-z\d]{4}-[a-z\d]{4}\.[a-z\d]{4}\.json$/;
+const IDENTIFYING_FEATURES = Object.freeze({
+    BLACK_COAT: 'Black coat', WHITE_COAT: 'White coat', BROWN_COAT: 'Brown coat', TAN_COAT: 'Tan coat',
+    GRAY_COAT: 'Gray coat', ORANGE_COAT: 'Orange coat', BRINDLE_COAT: 'Brindle coat', TABBY_COAT: 'Tabby coat',
+    WHITE_CHEST: 'White chest', WHITE_PAWS: 'White paws', WHITE_MUZZLE: 'White muzzle',
+    DARK_MASK: 'Dark facial markings', MISMATCHED_EYES: 'Different eye colors',
+});
+const OFFICIAL_CLAIM_METHOD = 'KING_COUNTY_LOST_PET';
+
+function isPublicCaseURL(url) {
+    return typeof url === 'string' && url.startsWith(CASE_URL_PREFIX)
+        && SYSTEM_CASE_ID.test(url.slice(CASE_URL_PREFIX.length)) && canonicalSourceURL(url) === url;
+}
 
 function isSourceCaseURL(url) {
-    if (typeof url !== 'string' || canonicalSourceURL(url) !== url) return false;
-    const parsed = new URL(url);
-    const prefix = '/resource/azpa-gwmk/';
-    if (parsed.origin !== SOURCE.origin || !parsed.pathname.startsWith(prefix)) return false;
-    const caseId = parsed.pathname.slice(prefix.length);
-    // Socrata's system :id can include a dot before the last four characters.
-    return /^[-_a-z\d]+(?:\.json)?$/i.test(caseId)
-        || /^row-[a-z\d]{4}-[a-z\d]{4}\.[a-z\d]{4}\.json$/.test(caseId);
+    return isPublicCaseURL(url) || (typeof url === 'string' && url.startsWith(CASE_URL_PREFIX)
+        && /^[-_a-z\d]+(?:\.json)?$/i.test(url.slice(CASE_URL_PREFIX.length)) && canonicalSourceURL(url) === url);
+}
+
+function validPublicDetails(details, caseUrl) {
+    return exact(details, ['features', 'publishCaseLink', 'claimMethod'])
+        && Array.isArray(details.features) && details.features.length <= 5
+        && details.features.every(code => typeof code === 'string' && Object.hasOwn(IDENTIFYING_FEATURES, code))
+        && new Set(details.features).size === details.features.length
+        && (details.publishCaseLink === false || (details.publishCaseLink === true && isPublicCaseURL(caseUrl)))
+        && (details.claimMethod === null || details.claimMethod === OFFICIAL_CLAIM_METHOD);
 }
 
 function readableAttribution(value) {
@@ -31,8 +48,11 @@ function readableAttribution(value) {
 function validatePhotoSubmission(raw, { type = 'application/json', encoding = 'identity', now, key } = {}) {
     const parsed = parseBody(raw, type, encoding, BODY_LIMIT);
     if (!parsed.success) return denied(parsed.error, parsed.status);
-    if (!exact(parsed.value, ['tip', 'sourceEvidence', 'photo'])) return denied('INVALID_PHOTO_SUBMISSION');
-    const { tip, sourceEvidence, photo } = parsed.value;
+    const hasPublicDetails = Object.hasOwn(parsed.value ?? {}, 'publicDetails');
+    const envelope = ['tip', 'sourceEvidence', 'photo'];
+    if (hasPublicDetails) envelope.push('publicDetails');
+    if (!exact(parsed.value, envelope)) return denied('INVALID_PHOTO_SUBMISSION');
+    const { tip, sourceEvidence, photo, publicDetails } = parsed.value;
     const checked = validateTip(Buffer.from(JSON.stringify(tip)), { submittedAt: now, sourcePolicy: SOURCE, verifiedUploads: [] });
     if (!checked.success) return denied(checked.error, checked.status);
     if (tip.schemaVersion !== 3 || tip.source.url !== null || tip.location.regionCode !== 'US-WA'
@@ -44,6 +64,7 @@ function validatePhotoSubmission(raw, { type = 'application/json', encoding = 'i
     const checkedAt = Date.parse(sourceEvidence.checkedAt), time = Date.parse(now);
     if (!Number.isFinite(checkedAt) || new Date(checkedAt).toISOString() !== sourceEvidence.checkedAt
         || checkedAt > time || time - checkedAt >= MAX_CASE_EVIDENCE_AGE_MS) return denied('SOURCE_ACTIVE_PROOF_EXPIRED', 403);
+    if (hasPublicDetails && !validPublicDetails(publicDetails, sourceEvidence.caseUrl)) return denied('INVALID_PHOTO_PUBLIC_DETAILS');
 
     if (!exact(photo, ['content', 'mime', 'sha256', 'rights', 'verification']) || typeof photo.content !== 'string'
         || !MIME_TYPES.includes(photo.mime) || typeof photo.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(photo.sha256)) return denied('ORIGINAL_IMAGE_BYTES_REQUIRED');
@@ -61,12 +82,13 @@ function validatePhotoSubmission(raw, { type = 'application/json', encoding = 'i
     if (!original.length || original.length > LIMITS.imageBytes || original.toString('base64') !== photo.content
         || sha(original) !== photo.sha256) return denied('ORIGINAL_IMAGE_HASH_MISMATCH');
 
-    // Rechecking the same original can extend its public lifetime without creating another case.
+    // Public details can change with newer source evidence without creating another case.
     const fingerprint = sha(JSON.stringify([checked.payloadHash, sourceEvidence.caseUrl, photo.sha256,
         rights.license, rights.credit, rights.permissionUrl, rights.creditUrl]));
     return { success: true, original, mime: photo.mime, fingerprint, picture: {
         originalSha256: photo.sha256, verification: photo.verification, rights, sourceEvidence,
+        ...(hasPublicDetails && { publicDetails }),
     }, tip: checked.canonicalPayload, visibleUntil: new Date(checkedAt + MAX_CASE_EVIDENCE_AGE_MS).toISOString() };
 }
 
-module.exports = { BODY_LIMIT, validatePhotoSubmission, sha };
+module.exports = { BODY_LIMIT, IDENTIFYING_FEATURES, OFFICIAL_CLAIM_METHOD, validPublicDetails, validatePhotoSubmission, sha };

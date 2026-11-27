@@ -39,7 +39,13 @@ node tools/stray-map-pilot/dot-photo-client.cjs --submit-verified /private/MANIF
   - `caseUrl` 可使用官方個案 API 的 Socrata `:id`，例如合成網址 `https://data.kingcounty.gov/resource/azpa-gwmk/row-abcd-efgh.ijkl.json`。Dot 應核對個案 API 回傳同一筆紀錄，再填入查核結果。`recordKey` 照既有規則從 `impound_no` 產生。網址只接受指定 HTTPS 網域及該資料集的單筆路徑，省略查詢參數及 fragment。
 - `photo` 含 `content`（原始影像的標準 base64，原始 bytes 至多 5 MiB）、`mime`、`sha256`、`rights` 和 `verification`。權利記錄需有 `license`、公開署名 `credit`、私有 `permissionUrl`、允許公開的 `creditUrl`、`permitsRedaction: true` 和 `creditApprovedForPublic: true`。允許 `EXPLICIT_PERMISSION`、`CC_BY_4_0`、`CC0_1_0`。驗證記錄需有 `recordKey`、`originalSha256`，並確認 `originalCapture`、`sameAnimalConfirmed`、`animalRecognizable`、`noFacesOrPlates`、`noPersonalData`、`noSensitiveVisualLocation`。證據連結不由伺服器代抓。
 
-簽章驗證後才進入資料與照片檢查。通過即以同一交易保存案件、照片、回執與期限，無人工審查步驟。伺服器沿用既有影像安全檢查並重新編碼，公開欄位只含粗區域和必要署名。來源與授權憑據留在私有儲存。有效時間最長十五分鐘。同案具重新核對的有效證據可延長期限並保留原 ID。撤回後需由新的權限規則另行處理，重送無法復刊。歷史文字件各自保留原回執。
+## 同一則照片卡的案情欄位（隔離候選）
+
+照片封套可另帶 `publicDetails`。`features` 使用程式列出的[辨識特徵代碼](../tools/stray-map-pilot/photo-contract.cjs)，例如 `BLACK_COAT` 和 `WHITE_CHEST`，最多五項。Dot 只填已核實可公開的特徵。`publishCaseLink: true` 表示 Dot 已核實指定的 Socrata 單筆原案可安全連出。若原案連結會曝露私人資料或敏感位置，填 `false`。`claimMethod` 使用 `KING_COUNTY_LOST_PET` 顯示官方認領說明，無可核對的指引時填 `null`。來源連結和認領連結取自既有來源政策及程式固定路徑。這些欄位使用固定選項。
+
+既有匿名 `/photo-cards` 會用同一回執 ID 傳回 `description`、`identifyingFeatures`、`caseStatus`、`source`、`claim`，與原有照片、署名、拾獲日期和概略區域並列。案況與查核時間取自受理的在案證據。來源資料署名與照片署名分開。舊封套仍可送件，欠缺的辨識特徵、原案連結與認領指引留空。相同案件經最新來源查核可更新公開欄位並沿用原回執。這是同一 API 的欄位增補，正式 SHA 與既有手機 App 顯示須分別驗收。
+
+簽章驗證後才進入資料與照片檢查。通過即以同一交易保存案件、照片、回執與期限，無人工審查步驟。伺服器沿用既有影像安全檢查並重新編碼，公開位置只顯示概略區域。完整來源證據、授權憑據與穩定鍵留在私有儲存。有效時間最長十五分鐘。同案具重新核對的有效證據可延長期限並保留原 ID。撤回後需由新的權限規則另行處理，重送無法復刊。歷史文字件各自保留原回執。
 
 ## 合成驗證及正式來源
 
