@@ -451,7 +451,9 @@ describe('admin hub: the data answer', () => {
 describe('admin hub: the page reads the answer correctly', () => {
     const DAY = 86400000, TZ = 8 * 3600000;
     const dayT = iso => hub.dayIndex(iso) * DAY - TZ;
-    async function loadPage({ pool, latest, opsDown, live, portfolioDir } = {}) {
+    // clock.t: what the page's Date.now() says. net.latest: 'ok', 'offline' (the request never gets an answer) or 'error' (the server answers 503).
+    async function loadPage({ pool, latest, opsDown, live, portfolioDir, at = NOW } = {}) {
+        const clock = { t: at }, net = { latest: 'ok' };
         const { routers } = mount({ pool, portfolioDir });
         const payload = JSON.parse(JSON.stringify(await routers.data.load()));
         payload.apps.push({ id: 'weesh', slug: 'weesh', name: 'Wishlist.ai', category: '社交', platforms: [{ key: 'web', label: 'Web', public: true }], links: {} },
@@ -464,7 +466,7 @@ describe('admin hub: the page reads the answer correctly', () => {
             latest: latest || { success: true, status: { workers: [{ id: 'wishlist-retail', name: 'Wishlist 查價', health: 'healthy', processOnline: true, cpuCorePercent: 40, memoryBytes: 1 },
                 { id: 'minimax-runtime', name: 'runtime', health: 'unknown', processOnline: true, cpuCorePercent: null }] },
             listing: { today: { count: 10 }, perHour24h: 120, targetPerHour: 100 }, chatPending: { pendingCount: 0 }, workTotals: { totals: {} },
-            cpuFreshness: { dataFresh: true }, updatedAt: { latestStatus: new Date(NOW - 60000).toISOString() } },
+            cpuFreshness: { dataFresh: true }, updatedAt: { latestStatus: new Date(at - 60000).toISOString() } },
         };
         const calls = [];
         const fetch = async url => {
@@ -474,6 +476,8 @@ describe('admin hub: the page reads the answer correctly', () => {
             if (url === '/api/aihankapps/hub/services' && live) return json({ success: true, checkedAt: NOW, services: live.services });
             if (opsDown) return { ok: false, status: 503, json: async () => ({}) };
             if (url === '/api/aihankapps/ops/catalog') return json(ops.catalog);
+            if (url === '/api/aihankapps/ops/latest' && net.latest === 'offline') throw new TypeError('Failed to fetch');
+            if (url === '/api/aihankapps/ops/latest' && net.latest === 'error') return { ok: false, status: 503, json: async () => ({}) };
             if (url === '/api/aihankapps/ops/latest') return json(ops.latest);
             if (url.includes('step=day')) return json({ success: true, series: {
                 'wishlist.listed': { kind: 'count', points: [[dayT('2026-11-08'), 30], [dayT('2026-11-09'), 50], [dayT(TODAY), 4]] },
@@ -481,11 +485,11 @@ describe('admin hub: the page reads the answer correctly', () => {
             if (url.includes('step=hour')) return json({ success: true, series: { 'wishlist.listed': { kind: 'count', points: [[NOW - 3600000, 6]] }, 'cpu.total.core': { kind: 'gauge', points: [[NOW - 3600000, 80, 90], [NOW - 3500000, 40, 50]] } } });
             throw new Error('unexpected request ' + url);
         };
-        const sandbox = { window: {}, fetch, encodeURIComponent, Date: class extends Date { static now() { return NOW; } } };
+        const sandbox = { window: {}, fetch, encodeURIComponent, Date: class extends Date { static now() { return clock.t; } } };
         vm.runInNewContext(fs.readFileSync(path.join(pageDir, 'hub-data.js'), 'utf8'), sandbox);
         const D = sandbox.window.HubData;
         await D.load();
-        return { D, calls, day: iso => hub.dayIndex(iso) };
+        return { D, calls, clock, net, day: iso => hub.dayIndex(iso) };
     }
 
     test('apps, metric windows and totals', async () => {
@@ -740,7 +744,7 @@ describe('admin hub: the page reads the answer correctly', () => {
 
     test('service checks, imported numbers and retention reach the page, and raise alerts when they fail or go quiet', async () => {
         const live = { services: [{ id: 'eclaw', ok: true, status: 200, ms: 120, at: NOW - 30000 }, { id: 'rebound', ok: false, status: 0, ms: 10000, at: NOW - 30000 }] };
-        const { D } = await loadPage({ live });
+        const { D, clock } = await loadPage({ live });
         expect(D.services.map(x => x.id)).toEqual(hubStore.SERVICES.map(x => x.id));
         expect([D.services[0].now.ok, D.services[0].now.ms, D.services[0].uptime24h, D.services[1].now]).toEqual([true, 120, 80, null]);
         expect(D.serviceFor(D.APP.eclawbot).map(x => x.id)).toEqual(['eclaw']);
@@ -753,8 +757,9 @@ describe('admin hub: the page reads the answer correctly', () => {
         D.computeAlerts(Date.parse('2026-11-05T00:00:00Z'));
         expect(D.ALERTS.map(a => [a.id, a.sev, a.apps])).toEqual([['svc-down-rebound', 'crit', ['rebound']]]);
         expect(D.ALERTS[0].detail).toBe('最近一次健康檢查連不上或逾時。');
-        // a day and a half after the last import the collector's numbers are called stale
-        D.computeAlerts(NOW - 3600000 + 37 * 3600000);
+        // a day and a half after the last import, a page that reads the answer again calls the collector's numbers stale
+        clock.t = NOW - 3600000 + 37 * 3600000;
+        await D.refreshData(false);
         expect(D.ALERTS.map(a => a.id)).toEqual(['ops-stale', 'store-stale', 'svc-down-rebound', 'collector-stale-rebound']);
         expect(D.ALERTS.at(-1)).toMatchObject({ sev: 'warn', title: 'REBOUND 遊戲伺服器的數據超過一天沒更新', since: NOW - 3600000 });
 
@@ -764,6 +769,75 @@ describe('admin hub: the page reads the answer correctly', () => {
         D.computeAlerts(Date.parse('2026-11-05T00:00:00Z'));
         expect(D.ALERTS).toEqual([]);
         expect(D.services.find(x => x.id === 'rebound').now.ms).toBe(90);
+    });
+
+    // 2026-11-27: Hank confirmed 「監控資料沒有更新」 while the server had a reading every five minutes. The page had been in
+    // the background for 25 minutes; back in front it compared the clock of that moment with the copy it had read before.
+    // How old a source is has to be judged at the moment its answer was read.
+    describe('a page that sat in the background does not report its own idleness as a stopped source', () => {
+        const T0 = NOW - 6 * 3600000;                                   // the fixture report is 7.9 days old here, the import is newer
+        const ids = D => D.ALERTS.map(a => a.id);
+        test('the clock moves on, nothing is read again: no source is called stale', async () => {
+            const { D, clock } = await loadPage({ at: T0 });
+            expect(ids(D)).toEqual([]);
+            expect([D.ops.at, D.hubAt, D.ops.missedAt]).toEqual([T0, T0, 0]);
+            clock.t = T0 + 25 * 60000;                                  // the five-minute timer fires first after the tab comes back
+            D.computeAlerts(clock.t);
+            expect(ids(D)).toEqual([]);
+            clock.t = T0 + 3 * 86400000;                                // a laptop asleep over a long weekend
+            D.computeAlerts(clock.t);
+            expect(ids(D)).toEqual([]);
+        });
+        test('the re-read gets no answer (waking up, no network yet): the copy stays, the page notes it, no alert', async () => {
+            const { D, clock, net } = await loadPage({ at: T0 });
+            clock.t = T0 + 3 * 86400000; net.latest = 'offline';
+            await D.refreshLive();
+            expect(ids(D)).toEqual([]);
+            expect([D.ops.ok, D.ops.at, D.ops.missedAt]).toEqual([true, T0, clock.t]);
+            expect(D.ops.workers.length).toBe(2);                       // the numbers on screen are still the ones read before
+            // the server answering with an error is a different matter: that is the source
+            net.latest = 'error';
+            await D.refreshLive();
+            expect(ids(D)).toEqual(['ops-down']);
+        });
+        test('once the answers are read again, what is old at that moment is reported, with its real age', async () => {
+            const { D, clock, net, calls } = await loadPage({ at: T0 });
+            clock.t = T0 + 3 * 86400000; net.latest = 'offline';
+            await D.refreshLive();
+            net.latest = 'ok'; calls.length = 0;
+            await D.refreshData(false);                                 // the five-minute refresh reads the live numbers too when its copy has aged
+            expect(calls).toContain('/api/aihankapps/ops/latest');
+            expect([D.ops.at, D.hubAt, D.ops.missedAt]).toEqual([clock.t, clock.t, 0]);
+            expect(ids(D)).toEqual(['ops-stale', 'store-stale', 'collector-stale-rebound']);
+            expect(D.ALERTS[0].basis).toMatchObject({ latestStatusAt: T0 - 60000, minutesAgo: 3 * 1440 + 1 });
+            expect(D.ALERTS[0].ref).toBe(D.alertRef('ops-stale', null, T0 - 60000));
+            // with a copy a minute old the five-minute refresh leaves the live numbers to the one-minute refresh
+            clock.t += 60000; calls.length = 0;
+            await D.refreshData(false);
+            expect(calls).not.toContain('/api/aihankapps/ops/latest');
+        });
+        test('a first load that cannot read the live numbers still says so', async () => {
+            const fetchless = await loadPage({ opsDown: true });
+            fetchless.D.computeAlerts(Date.parse('2026-11-05T00:00:00Z'));
+            expect(ids(fetchless.D)).toEqual(['ops-down']);
+        });
+        // The gate for the next rule somebody adds: inside computeAlerts the clock is read once, to bound the two read times.
+        test('computeAlerts judges every age against the time its copy was read', () => {
+            const code = fs.readFileSync(path.join(pageDir, 'hub-data.js'), 'utf8');
+            const body = code.slice(code.indexOf('function computeAlerts(now) {'), code.indexOf('D.computeAlerts = computeAlerts'));
+            expect(body.length).toBeGreaterThan(2000);
+            const uses = body.split('\n').slice(1).filter(line => !/^\s*\/\//.test(line) && /(?<![.\w$])now\b/.test(line)).map(line => line.trim());
+            expect(uses).toEqual(['const opsAsOf = Math.min(now, o.at || now), hubAsOf = Math.min(now, D.hubAt || now);']);
+            expect(body).not.toMatch(/Date\.now\(\)/);
+        });
+        test('the page reads again when it comes back, redraws when the alerts changed, and says when it cannot connect', () => {
+            const app = fs.readFileSync(path.join(pageDir, 'hub-app.js'), 'utf8');
+            for (const hook of ["document.addEventListener('visibilitychange', catchUp)", "window.addEventListener('pageshow', catchUp)", "window.addEventListener('online', catchUp)", "window.addEventListener('focus', catchUp)"]) expect(app).toContain(hook);
+            expect(app).toMatch(/setInterval\(\(\) => \{ tickAgo\(\); catchUp\(\);/);
+            expect(app).toContain('if (alertSig() !== before) redrawOwed = true;');
+            expect(app).toContain("lost ? '連不上，稍後重讀'");
+            expect(app).toContain('(D.hubAt || Date.now()) - q.at > QUOTA_STALE');
+        });
     });
 
     // 需要人為介入 (Hank, 2026-11-12): what the listing schedules cannot fix themselves.
