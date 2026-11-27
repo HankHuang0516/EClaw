@@ -32,19 +32,22 @@ function validPolicies(policies) {
 function settings(configuration, bindings) {
     try {
         const c = typeof configuration === 'function' ? configuration() : {};
-        if (!subset(c, ['profile','intake','review','publicRead','limits']) || (c.profile !== undefined && c.profile !== PROFILE)
-            || ['intake','review','publicRead'].some(k => c[k] !== undefined && typeof c[k] !== 'boolean')
+        if (!subset(c, ['profile','intake','review','publicRead','autoAcceptPrivate','limits']) || (c.profile !== undefined && c.profile !== PROFILE)
+            || ['intake','review','publicRead','autoAcceptPrivate'].some(k => c[k] !== undefined && typeof c[k] !== 'boolean')
             || (['intake','review','publicRead'].some(k => c[k] === true) && c.profile !== PROFILE)
             || !bindings || typeof bindings.verifySource !== 'function' || typeof bindings.verifyReviewer !== 'function'
             || (bindings.allowPayload !== undefined && typeof bindings.allowPayload !== 'function')
             || !validPolicies(bindings.sourcePolicies)) return null;
+        const autoAcceptPrivate = c.autoAcceptPrivate === true;
+        if (autoAcceptPrivate && (!c.intake || c.review || c.publicRead || bindings.sourcePolicies.length !== 1
+            || typeof bindings.allowPayload !== 'function')) return null;
         if (c.limits !== undefined && !subset(c.limits, Object.keys(DEFAULT_LIMITS))) return null;
         const limits = { ...DEFAULT_LIMITS, ...c.limits };
         if (!Object.keys(limits).every(k => Number.isSafeInteger(limits[k]) && limits[k] > 0 && limits[k] <= HARD_LIMITS[k])) return null;
         const policies = JSON.parse(JSON.stringify(bindings.sourcePolicies));
-        const result = { profile: PROFILE, intake: c.intake === true, review: c.review === true, publicRead: c.publicRead === true, limits, policies,
+        const result = { profile: PROFILE, intake: c.intake === true, review: c.review === true, publicRead: c.publicRead === true, autoAcceptPrivate, limits, policies,
             verifySource: bindings.verifySource, verifyReviewer: bindings.verifyReviewer, allowPayload: bindings.allowPayload };
-        result.signature = JSON.stringify({ intake: result.intake, review: result.review, publicRead: result.publicRead, limits, policies }); return result;
+        result.signature = JSON.stringify({ intake: result.intake, review: result.review, publicRead: result.publicRead, autoAcceptPrivate, limits, policies }); return result;
     } catch { return null; }
 }
 function rawJSON(body) {
@@ -142,11 +145,14 @@ async function install(app, { pool, configuration, bindings, now = () => new Dat
             if (parsed?.source?.publisherId !== actor.publisherId || parsed?.source?.datasetId !== actor.datasetId) throw new PilotError('SOURCE_NOT_AUTHORIZED', 403);
             const at = clock(now), valid = validateText(req.body, policyFor(cfg, actor), at, req.headers['content-type'], req.headers['content-encoding'] || 'identity');
             if (cfg.allowPayload && !cfg.allowPayload(valid.canonicalPayload)) throw new PilotError('SOURCE_PAYLOAD_NOT_AUTHORIZED', 403);
-            const result = await store.accept({ payload: valid.canonicalPayload, payloadHash: valid.payloadHash, key: req.headers['idempotency-key'], source: actor, submittedAt: at, limits: cfg.limits, assertOpen });
+            const result = await store.accept({ payload: valid.canonicalPayload, payloadHash: valid.payloadHash,
+                key: req.headers['idempotency-key'], source: actor, submittedAt: at, limits: cfg.limits,
+                autoAcceptPrivate: cfg.autoAcceptPrivate, assertOpen });
             assertOpen(); return reply.code(202).send(result);
         });
         route('GET', `${PREFIX}/receipts/:id`, 'intake', async (req, reply) => {
             const { cfg, assertOpen } = context('intake'), actor = await source(req, cfg); assertOpen();
+            if (cfg.autoAcceptPrivate) reply.header('X-Stray-Map-Intake-Mode', 'private-auto-accept');
             if (!tipID(req.params.id)) throw new PilotError('NOT_FOUND', 404);
             return reply.send(await store.receipt({ id: req.params.id, source: actor, assertOpen }));
         });

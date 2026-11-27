@@ -28,14 +28,22 @@ function database(shared = { tips: [], keys: [] }) {
             if (sql === 'BEGIN') snapshot = copy({ tips: shared.tips, keys: shared.keys });
             if (sql === 'ROLLBACK' && snapshot) { shared.tips = snapshot.tips; shared.keys = snapshot.keys; }
             let rows = [];
-            if (sql.includes('pilot:replay')) { const k = shared.keys.find(k => k.publisher === p[0] && k.key === p[1]); if (k) rows = [{ ...k, receipt: shared.tips.find(t => t.id === k.id).receipt }]; }
+            if (sql.includes('pilot:replay')) {
+                const k = shared.keys.find(k => k.publisher === p[0] && k.key === p[1]);
+                if (k) {
+                    const tip = shared.tips.find(t => t.id === k.id);
+                    rows = [{ ...k, receipt: tip.receipt, first_decision: tip.first_decision }];
+                }
+            }
             else if (sql.includes('pilot:prior')) rows = shared.tips.filter(t => t.publisher === p[0] && t.dataset === p[1] && t.record_key === p[2]);
             else if (sql.includes('pilot:counts')) rows = [{ cases: shared.tips.length, pending: shared.tips.filter(t => t.review === 'PENDING').length, requests: shared.keys.length,
                 recent: shared.tips.filter(t => t.publisher === p[0] && t.dataset === p[1] && Date.parse(t.created_at) > Date.parse(p[2]) - 3600000).length }];
             else if (sql.includes('pilot:insert')) {
                 // Simulate JSONB's persisted key order from the first acknowledgement onward.
                 const receipt = Object.fromEntries(Object.entries(p[6]).sort(([a], [b]) => a.localeCompare(b)));
-                shared.tips.push({ id: p[0], publisher: p[1], dataset: p[2], record_key: p[3], payload_hash: p[4], payload: copy(p[5]), receipt, review: 'PENDING', public_content: null, created_at: p[7] }); rows = [{ receipt }];
+                const first_decision = JSON.parse(p[9])[0]?.decision;
+                shared.tips.push({ id: p[0], publisher: p[1], dataset: p[2], record_key: p[3], payload_hash: p[4], payload: copy(p[5]),
+                    receipt, review: p[8], public_content: null, created_at: p[7], first_decision }); rows = [{ receipt, first_decision }];
             } else if (sql.includes('pilot:key')) shared.keys.push({ publisher: p[0], dataset: p[1], key: p[2], payload_hash: p[3], id: p[4] });
             else if (sql.includes('pilot:receipt')) rows = shared.tips.filter(t => t.id === p[0] && t.publisher === p[1] && t.dataset === p[2]);
             else if (sql.includes('pilot:review-row')) rows = shared.tips.filter(t => t.id === p[0]);
@@ -112,6 +120,33 @@ describe('closed-by-default independent text candidate', () => {
     });
 });
 describe('actual SQL-shaped immutable pending queue and private review', () => {
+    test('automatic private intake preserves legacy receipts and cannot produce public cards', async () => {
+        const s = await setup({ flags: { profile: PROFILE, intake: true } });
+        s.bindings.allowPayload = value => value.animal.kind === 'DOG';
+        const legacy = await post(s);
+        s.setConfig({ profile: PROFILE, intake: true, autoAcceptPrivate: true });
+        const second = payload('private_record_key_0002');
+        const accepted = await post(s, second, 'request_key_00000002');
+        expect(accepted.status).toBe(202);
+        expect(accepted.body.receipt).toMatchObject({ status: 'ACCEPTED_PRIVATE', publicVisible: false });
+        const url = `${PREFIX}/receipts/${accepted.body.receipt.tipId}`;
+        expect((await s.server.inject({ url })).body).toEqual({ success: true, review: 'ACCEPTED_PRIVATE', receipt: accepted.body.receipt });
+        for (const key of ['request_key_00000002', 'request_key_00000003']) {
+            expect((await post(s, second, key)).body).toEqual({ ...accepted.body, replay: true });
+        }
+        expect((await post(s)).body.receipt).toEqual(legacy.body.receipt);
+        expect(s.shared.tips).toHaveLength(2);
+        const invalid = payload('private_record_key_0003');
+        invalid.animal.kind = 'CAT';
+        expect((await post(s, invalid, 'request_key_00000004')).body.error).toBe('SOURCE_PAYLOAD_NOT_AUTHORIZED');
+        expect((await approve(s, accepted.body.receipt.tipId)).status).toBe(503);
+        expect((await s.server.inject({ url: `${PREFIX}/cards` })).status).toBe(503);
+        s.setConfig({ profile: PROFILE, intake: true, autoAcceptPrivate: true, publicRead: true });
+        expect((await s.server.inject({ url })).status).toBe(503);
+        s.setConfig({ profile: PROFILE, intake: false, review: true, publicRead: true });
+        expect((await s.server.inject({ url: `${PREFIX}/cards` })).body.cards).toEqual([]);
+        expect((await approve(s, accepted.body.receipt.tipId)).body.error).toBe('REVIEW_TERMINAL');
+    });
     test('pending hidden, scoped receipt, manual artifact, withdrawal and immutable replay survive fresh install', async () => {
         const s = await setup(), first = await post(s), id = first.body.receipt.tipId;
         expect(first.status).toBe(202); expect(first.body.receipt).toMatchObject({ status: 'PENDING', publicVisible: false });

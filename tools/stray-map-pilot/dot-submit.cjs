@@ -78,9 +78,10 @@ async function main(mode) {
         const anonymous = await request(url);
         const cards = await request(`${AUDIENCE}/cards`);
         if (signed.status !== 404 || (await signed.json()).error !== 'NOT_FOUND'
+            || signed.headers.get('X-Stray-Map-Intake-Mode') !== 'private-auto-accept'
             || anonymous.status !== 403 || (await anonymous.json()).error !== 'SOURCE_NOT_AUTHORIZED'
             || cards.status !== 503 || (await cards.json()).error !== 'PILOT_CLOSED') throw Error('PRODUCTION_IDENTITY_BOUNDARY_MISMATCH');
-        console.log('OFFICIAL_IDENTITY_VERIFIED signed=404 anonymous=403 public=503');
+        console.log('OFFICIAL_PRIVATE_INTAKE_VERIFIED signed=404 anonymous=403 public=503');
         return;
     }
 
@@ -100,13 +101,13 @@ async function main(mode) {
     });
     if (result.status !== 202) throw Error(`INTAKE_HTTP_${result.status}`);
     const { success, receipt, replay } = await result.json();
-    if (success !== true || receipt?.status !== 'PENDING' || receipt.publicVisible !== false
-        || !/^tip_[a-f0-9]{32}$/.test(receipt.tipId) || typeof replay !== 'boolean') throw Error('PENDING_RECEIPT_REQUIRED');
+    if (success !== true || !['PENDING', 'ACCEPTED_PRIVATE'].includes(receipt?.status) || receipt.publicVisible !== false
+        || !/^tip_[a-f0-9]{32}$/.test(receipt.tipId) || typeof replay !== 'boolean') throw Error('PRIVATE_RECEIPT_REQUIRED');
     const read = await request(`${AUDIENCE}/receipts/${receipt.tipId}`, { headers: { authorization: auth } });
     const checked = read.ok && await read.json();
-    if (checked?.success !== true || checked.receipt?.tipId !== receipt.tipId || checked.review !== 'PENDING'
+    if (checked?.success !== true || checked.receipt?.tipId !== receipt.tipId || checked.review !== receipt.status
         || checked.receipt.publicVisible !== false) throw Error('RECEIPT_READBACK_FAILED');
-    console.log(JSON.stringify({ status: 'PENDING', publicVisible: false, replay, receipt: `masked-${sha(receipt.tipId).slice(0, 12)}` }));
+    console.log(JSON.stringify({ status: receipt.status, publicVisible: false, replay, receipt: `masked-${sha(receipt.tipId).slice(0, 12)}` }));
 }
 
 if (require.main === module) {

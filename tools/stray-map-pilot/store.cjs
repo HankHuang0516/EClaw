@@ -13,6 +13,11 @@ function receiptOK(receipt, id) {
         || new Date(receipt.submittedAt).toISOString() !== receipt.submittedAt) throw new PilotError('PILOT_STORE_UNAVAILABLE');
     return receipt;
 }
+function privateReceipt(row, id) {
+    const receipt = receiptOK(row?.receipt, id);
+    // Persist the original receipt shape for rollback. The first audit event distinguishes private intake from publication approval.
+    return row.first_decision === 'ACCEPT_PRIVATE' ? { ...receipt, status: 'ACCEPTED_PRIVATE' } : receipt;
+}
 function createStore({ pool }) {
     let initialized;
     const queryable = () => {
@@ -53,17 +58,17 @@ function createStore({ pool }) {
     async function transaction(assertOpen, work) {
         await init(assertOpen); return withClient(assertOpen, work);
     }
-    async function accept({ payload, payloadHash, key, source, submittedAt, limits, assertOpen }) {
+    async function accept({ payload, payloadHash, key, source, submittedAt, limits, autoAcceptPrivate = false, assertOpen }) {
         return transaction(assertOpen, async client => {
             await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', ['TEXT_COARSE_PENDING_V1:queue']);
             const scope = [source.publisherId, source.datasetId];
-            const replay = (await client.query(`/* pilot:replay */ SELECT r.dataset,r.payload_hash,t.receipt FROM stray_text_pilot.requests r
+            const replay = (await client.query(`/* pilot:replay */ SELECT r.dataset,r.payload_hash,t.receipt,t.review_events->0->>'decision' AS first_decision FROM stray_text_pilot.requests r
                 JOIN stray_text_pilot.tips t ON t.id=r.tip_id WHERE r.publisher=$1 AND r.request_key=$2`, [source.publisherId, key])).rows[0];
             if (replay) {
                 if (replay.dataset !== source.datasetId || replay.payload_hash !== payloadHash) throw new PilotError('IDEMPOTENCY_CONFLICT', 409);
-                return { success: true, receipt: receiptOK(replay.receipt), replay: true };
+                return { success: true, receipt: privateReceipt(replay), replay: true };
             }
-            const prior = (await client.query(`/* pilot:prior */ SELECT id,payload_hash,receipt FROM stray_text_pilot.tips
+            const prior = (await client.query(`/* pilot:prior */ SELECT id,payload_hash,receipt,review_events->0->>'decision' AS first_decision FROM stray_text_pilot.tips
                 WHERE publisher=$1 AND dataset=$2 AND record_key=$3`, [...scope, payload.source.recordKey])).rows[0];
             if (prior && prior.payload_hash !== payloadHash) throw new PilotError('SOURCE_RECORD_CONFLICT', 409);
             const counts = (await client.query(`/* pilot:counts */ SELECT
@@ -76,27 +81,31 @@ function createStore({ pool }) {
             if (counts.requests >= limits.maxRequests || (!prior && (counts.cases >= limits.maxCases || counts.pending >= limits.maxPending))) throw new PilotError('PILOT_CAPACITY', 503);
             if (!prior && counts.recent >= limits.perSourceHour) throw new PilotError('SOURCE_RATE_LIMIT', 429);
             const id = prior?.id || `tip_${randomUUID().replaceAll('-', '')}`;
-            let receipt = prior?.receipt;
-            if (!prior) {
+            let row = prior;
+            if (!row) {
                 const proposed = { success: true, tipId: id, status: 'PENDING', publicVisible: false, submittedAt };
-                receipt = (await client.query(`/* pilot:insert */ INSERT INTO stray_text_pilot.tips
-                    (id,publisher,dataset,record_key,payload_hash,payload,receipt,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING receipt`,
-                [id, ...scope, payload.source.recordKey, payloadHash, payload, proposed, submittedAt])).rows[0]?.receipt;
-                receiptOK(receipt, id);
+                const events = autoAcceptPrivate ? [{ decision: 'ACCEPT_PRIVATE', at: submittedAt }] : [];
+                row = (await client.query(`/* pilot:insert */ INSERT INTO stray_text_pilot.tips
+                    (id,publisher,dataset,record_key,payload_hash,payload,receipt,created_at,review,review_events)
+                    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+                    RETURNING receipt,review_events->0->>'decision' AS first_decision`,
+                [id, ...scope, payload.source.recordKey, payloadHash, payload, proposed, submittedAt,
+                    autoAcceptPrivate ? 'APPROVED' : 'PENDING', JSON.stringify(events)])).rows[0];
             }
-            receiptOK(receipt, id);
+            const receipt = privateReceipt(row, id);
             await client.query('/* pilot:key */ INSERT INTO stray_text_pilot.requests VALUES($1,$2,$3,$4,$5)', [...scope, key, payloadHash, id]);
             return { success: true, receipt, replay: !!prior };
         });
     }
     async function receipt({ id, source, assertOpen }) {
         await init(assertOpen);
-        const row = (await pool.query(`/* pilot:receipt */ SELECT receipt,review FROM stray_text_pilot.tips
+        const row = (await pool.query(`/* pilot:receipt */ SELECT receipt,review,review_events->0->>'decision' AS first_decision FROM stray_text_pilot.tips
             WHERE id=$1 AND publisher=$2 AND dataset=$3`, [id, source.publisherId, source.datasetId])).rows[0];
         if (!row) throw new PilotError('NOT_FOUND', 404);
-        receiptOK(row.receipt);
+        const receipt = privateReceipt(row);
         if (!['PENDING','APPROVED','REJECTED','WITHDRAWN'].includes(row.review)) throw new PilotError('PILOT_STORE_UNAVAILABLE');
-        assertOpen(); return { success: true, receipt: row.receipt, review: row.review };
+        assertOpen();
+        return { success: true, receipt, review: row.review === 'APPROVED' && receipt.status === 'ACCEPTED_PRIVATE' ? receipt.status : row.review };
     }
     async function review({ id, decision, reviewer, at, validate, assertOpen }) {
         return transaction(assertOpen, async client => {
