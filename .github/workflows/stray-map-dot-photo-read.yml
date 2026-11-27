@@ -26,6 +26,10 @@ jobs:
               throw Error('OIDC_CREATE_EVENT_MISMATCH');
           }
           const result = await fetch(base + '/photo-status', { headers: { authorization: 'Bearer ' + value }, redirect: 'error' });
-          console.log('PHOTO_READ_FRESH_EXECUTION http=' + result.status);
-          if (![200, 403].includes(result.status)) throw Error('PHOTO_STATUS_UNAVAILABLE');
+          if (result.status !== 200) throw Error('PHOTO_STATUS_UNAVAILABLE');
+          const denied = await fetch(base + '/photo-handoffs/' + '0'.repeat(32) + '/open', {
+              method: 'POST', headers: { authorization: 'Bearer ' + value }, redirect: 'error'
+          });
+          if (denied.status !== 403) throw Error('PHOTO_READ_WRITE_BOUNDARY');
+          console.log('PHOTO_READ_FRESH_EXECUTION read=200 write=403');
           NODE

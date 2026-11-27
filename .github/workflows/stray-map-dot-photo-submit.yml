@@ -1,0 +1,54 @@
+name: Stray Map Dot photo submission
+
+on: create
+
+permissions: {}
+
+jobs:
+  submit:
+    name: Confirm the private photo handoff
+    if: github.event.ref_type == 'branch' && startsWith(github.ref_name, 'dot-photo-submit/v1/') && github.actor_id == '96640428' && github.triggering_actor == 'HankHuang0516' && github.run_attempt == '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      id-token: write
+    steps:
+      - run: |
+          node --input-type=module <<'NODE'
+          const base = 'https://api-production-8bc1.up.railway.app/external-intake/v1';
+          const ref = /^refs\/heads\/dot-photo-submit\/v1\/([a-f0-9]{32})\.[a-f0-9]{64}\.[a-f0-9]{64}$/.exec(process.env.GITHUB_REF);
+          if (!ref) throw Error('INVALID_HANDOFF_REF');
+          const url = new URL(process.env.ACTIONS_ID_TOKEN_REQUEST_URL);
+          url.searchParams.set('audience', base + '/photo-tips');
+          const issued = await fetch(url, { headers: { authorization: 'Bearer ' + process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN } });
+          if (!issued.ok) throw Error('OIDC_ISSUE_FAILED');
+          const { value } = await issued.json();
+          const handoffPath = base + '/photo-handoffs/' + ref[1];
+          const call = (path, method = 'POST') => fetch(path, { method, headers: { authorization: 'Bearer ' + value },
+              redirect: 'error', signal: AbortSignal.timeout(10000) });
+          const open = await call(handoffPath + '/open');
+          if (ref[1] === '0'.repeat(32)) {
+              const read = await call(base + '/photo-status', 'GET');
+              if (open.status !== 400 || (await open.json()).error !== 'RESERVED_HANDOFF_ID' || read.status !== 403) {
+                  throw Error('PHOTO_WRITE_READ_BOUNDARY');
+              }
+              console.log('PHOTO_WRITE_FRESH_EXECUTION reserved=400 read=403');
+          } else {
+              if (open.status !== 201) throw Error('PHOTO_HANDOFF_OPEN_' + open.status);
+              const expires = Date.parse((await open.json()).expiresAt);
+              if (!Number.isFinite(expires)) throw Error('PHOTO_HANDOFF_INVALID_EXPIRY');
+              while (Date.now() < expires) {
+                  const result = await call(handoffPath + '/commit');
+                  if (result.ok) {
+                      const receipt = (await result.json()).receipt;
+                      if (!['PUBLISHED', 'WITHDRAWN', 'EXPIRED'].includes(receipt?.status)) throw Error('PHOTO_RECEIPT_INVALID');
+                      console.log('PHOTO_HANDOFF_COMPLETED status=' + receipt.status);
+                      process.exit(0);
+                  }
+                  const detail = await result.json().catch(() => null);
+                  if (result.status !== 409 || detail?.error !== 'PHOTO_HANDOFF_NOT_READY') throw Error('PHOTO_HANDOFF_COMMIT_' + result.status);
+                  await new Promise(resolve => setTimeout(resolve, 2500));
+              }
+              console.log('PHOTO_HANDOFF_NO_PAYLOAD');
+          }
+          NODE

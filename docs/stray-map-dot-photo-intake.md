@@ -1,19 +1,36 @@
 # 浪浪地圖 dot 照片 API
 
-範圍限 King County Found animals 資料集的拾獲犬貓，以英文和華盛頓州概略區域呈現。dot 用既有 GitHub OIDC 工作負載身分。此版本核對新的照片專用 audience、工作流程、提交與既有擁有者身分。舊文字回執可讀，舊文字新增入口關閉。
+範圍限 King County Found animals 資料集的拾獲犬貓，以英文和華盛頓州概略區域呈現。dot 用既有 GitHub OIDC 工作負載身分。唯讀和送件各有自己的工作流程、受眾及簽章用途。每次從正式鎖定的提交建立新的執行，GitHub 自動簽發權杖，舊執行的重跑無法開通交接。舊文字回執可讀，舊文字新增入口關閉。
 
 基礎路徑 `https://api-production-8bc1.up.railway.app/external-intake/v1`。
 
 | 操作 | 路徑 | 回應 |
 | --- | --- | --- |
-| 簽章身分探測 | `GET /photo-status` | `200`、`DOT_PHOTO_V1` 和照片限制 |
-| 送一案 | `POST /photo-tips` | `201` 自動公開，`200` 原案重送 |
-| 讀回執 | `GET /photo-receipts/:id` | `PUBLISHED`、`EXPIRED` 或 `WITHDRAWN` |
-| 撤回 | `POST /photo-tips/:id/withdraw` | `200`，保留回執 |
+| 唯讀探測 | `GET /photo-status` | `200`、`DOT_PHOTO_V1` 和 `PRIVATE_UPLOAD_V1` |
+| 開通交接 | `POST /photo-handoffs/:id/open` | 送件工作簽章，`201` 開通一次交接 |
+| 傳送照片和證據 | `PUT /photo-handoffs/:id/content` | 使用一次性交接證明，`202 CHECKED_PRIVATE` |
+| 完成送件 | `POST /photo-handoffs/:id/commit` | 同一送件工作簽章，`201` 自動公開，`200` 原案重送 |
+| 讀交接結果 | `GET /photo-handoffs/:id` | 使用一次性交接證明，傳回本次回執及結果 |
+| 讀歷史回執 | `GET /photo-receipts/:id` | 唯讀工作簽章，`PUBLISHED`、`EXPIRED` 或 `WITHDRAWN` |
 | 公開卡片 | `GET /photo-cards` | 僅列目前有有效在案證據的卡片 |
 | 公開圖片 | `GET /photo-media/:id` | 已清除 metadata 的 JPEG。到期或撤回回 `404` |
 
-前四種操作需要 `Authorization: Bearer ...`，只由已鎖定的 GitHub 工作取得。OIDC audience 是完整 `/external-intake/v1/photo-tips` URL。送件用 `Content-Type: application/json`，`Idempotency-Key` 必須等於私有的穩定 `recordKey`。每小時新增一件，試點總量十件。
+唯讀工作的 audience 是完整 `/external-intake/v1/photo-status` URL，送件工作的 audience 是完整 `/external-intake/v1/photo-tips` URL。伺服器再核對各自的工作流程檔案、GitHub 擁有者身分、執行事件及鎖定的提交。每小時新增一件，試點總量十件。
+
+## dot 傳送合格案件
+
+已核實的 manifest 本機模式：
+
+```sh
+node tools/stray-map-pilot/dot-photo-client.cjs --submit-verified /private/MANIFEST.json ACTUAL_DEPLOYED_WORKFLOW_SHA
+```
+
+使用已登入的 GitHub CLI，manifest 為僅本機帳號可讀的普通檔案。程式先檢查資料、選擇新交接，再觸發新的送件工作。GitHub 不接收照片或案情。Dot 有原始資料時，也可用既有 GitHub 連線和 HTTP 等價操作。
+
+1. 生成隨機 16-byte 交接 ID 和 32-byte 交接證明，各以小寫 hex 表示。以正式部署所指定的完整 commit SHA 建立分支 `dot-photo-submit/v1/ID.SECRET_HASH.CONTENT_HASH`。其中 `SECRET_HASH` 是交接證明的 hex 字串之 SHA-256，`CONTENT_HASH` 是交接證明的原始 32 bytes 串接完整 JSON 請求 bytes 後的 SHA-256。分支上只有交接 ID 與校驗值。
+2. 送件工作憑簽章開通交接。以 `X-Photo-Handoff-Proof` 帶交接證明，等待交接查詢顯示 `OPEN`。交接開通後四分鐘內可用。傳送同一份 JSON bytes，使用 `Content-Type: application/json`，`Idempotency-Key` 等於私有穩定 `recordKey`。
+3. 收到 `CHECKED_PRIVATE` 代表格式、來源與照片通過，仍在私有交接區。送件工作隨即完成獨立簽章確認。保留回執 ID 供讀回與撤回。若透過同一份資料重送，正式案件沿用原 ID。結果未確認時，先讀這次交接結果。
+4. 撤回以同一方式形成新的交接，JSON 僅含 `{"withdrawId":"PHOTO_RECEIPT_ID"}`。完成後回執仍可讀，公開圖片停止提供。
 
 送件封套包含三部分：
 
@@ -31,4 +48,4 @@ bash tools/stray-map-rebuild/run-scheduled-photo-probe.sh publish
 
 使用既有 Linux／amd64 Node 發布測試映像、隔離 PostGIS、合成簽章與本機自製圖。驗證同案重送、同日雙案件、來源證據過期、跨用途拒收、照片授權、去 EXIF、既有影像安全檢查、粗區域卡片及照片失效。正式線上驗證只用 `GET`。
 
-King County 的資料集缺明確可核對的個案在案狀態與逐張照片再發布憑據，指定工作目前只讀取來源中繼資料並回報保留。dot 日常海巡的 API 查詢照既有方式執行。真實照片送件需先有符合上述契約的可信來源資料與一條核實結果能進入鎖定工作的傳輸路徑。公開 API、正式 App 畫面及 Hub 的驗收各自獨立。 [來源資料集](https://data.kingcounty.gov/api/views/azpa-gwmk)
+King County 的資料集仍需從可信資料核對每案在案狀態與逐張照片再發布憑據。Dot 日常海巡的 API 查詢照既有方式執行，只有合格資料進入上述寫入路徑。公開 API、正式 App 畫面及 Hub 的驗收各自獨立。 [來源資料集](https://data.kingcounty.gov/api/views/azpa-gwmk)

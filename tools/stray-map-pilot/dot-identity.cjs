@@ -8,6 +8,15 @@ const WORKFLOW = `${REPOSITORY}/.github/workflows/stray-map-dot-intake.yml@${REF
 const ISSUER = 'https://token.actions.githubusercontent.com';
 const AUDIENCE = 'https://api-production-8bc1.up.railway.app/external-intake/v1';
 const PHOTO_AUDIENCE = `${AUDIENCE}/photo-tips`;
+const PHOTO_READ_AUDIENCE = `${AUDIENCE}/photo-status`;
+const PHOTO_BRANCH = {
+    read: /^refs\/heads\/dot-photo-read\/v1\/[a-f0-9]{32}$/,
+    write: /^refs\/heads\/dot-photo-submit\/v1\/([a-f0-9]{32})\.([a-f0-9]{64})\.([a-f0-9]{64})$/,
+};
+const PHOTO_WORKFLOW = {
+    read: '.github/workflows/stray-map-dot-photo-read.yml',
+    write: '.github/workflows/stray-map-dot-photo-submit.yml',
+};
 const SOURCE = Object.freeze({
     publisherId: 'king-county-ras',
     datasetId: 'found-animals-azpa-gwmk',
@@ -56,9 +65,10 @@ async function githubKeys() {
     return JSON.parse(Buffer.concat(chunks).toString('utf8')).keys;
 }
 
-function createSourceVerifier({ workflowSha, audience = AUDIENCE, loadKeys = githubKeys, now = Date.now }) {
+function createSourceVerifier({ workflowSha, audience = AUDIENCE, photoRole = null, loadKeys = githubKeys, now = Date.now }) {
     if (!/^[a-f0-9]{40}$/.test(workflowSha || '')) throw Error('PINNED_WORKFLOW_REQUIRED');
-    if (![AUDIENCE, PHOTO_AUDIENCE].includes(audience)) throw Error('PINNED_AUDIENCE_REQUIRED');
+    if (photoRole === 'read' ? audience !== PHOTO_READ_AUDIENCE : photoRole === 'write' ? audience !== PHOTO_AUDIENCE
+        : photoRole !== null || ![AUDIENCE, PHOTO_AUDIENCE].includes(audience)) throw Error('PINNED_AUDIENCE_REQUIRED');
     let keys = new Map();
     let refreshedAt = -Infinity;
     let refreshing;
@@ -92,26 +102,37 @@ function createSourceVerifier({ workflowSha, audience = AUDIENCE, loadKeys = git
             const header = parsePart(encodedHeader);
             const claim = parsePart(encodedClaims);
             const time = Math.floor(now() / 1000);
+            const branch = photoRole && typeof claim.ref === 'string' ? PHOTO_BRANCH[photoRole].exec(claim.ref) : null;
+            const sourceRef = photoRole ? claim.ref : REF;
+            const sourceWorkflow = photoRole ? `${REPOSITORY}/${PHOTO_WORKFLOW[photoRole]}@${sourceRef}` : WORKFLOW;
+            const authorizedRun = photoRole
+                ? branch && claim.event_name === 'create' && claim.run_attempt === '1' && /^[1-9]\d{0,19}$/.test(claim.run_id || '')
+                : claim.event_name === 'push' && /^[1-9]\d?$/.test(claim.run_attempt || '')
+                    && (request.method !== 'POST' || Number(claim.run_attempt) >= 2);
             if (header.alg !== 'RS256' || !/^[\w-]{1,128}$/.test(header.kid || '')
                 || Object.keys(header).some(key => !['alg', 'kid', 'typ', 'x5t'].includes(key))
-                || claim.iss !== ISSUER || claim.aud !== audience || claim.sub !== `repo:${REPOSITORY}:ref:${REF}`
+                || claim.iss !== ISSUER || claim.aud !== audience || claim.sub !== `repo:${REPOSITORY}:ref:${sourceRef}`
                 || claim.repository_id !== '1150444936' || claim.repository_owner_id !== '96640428'
-                || claim.repository !== REPOSITORY || claim.ref !== REF || claim.event_name !== 'push'
-                || claim.actor_id !== '96640428' || claim.workflow_ref !== WORKFLOW
+                || claim.repository !== REPOSITORY || claim.ref !== sourceRef || !authorizedRun
+                || claim.actor_id !== '96640428' || claim.workflow_ref !== sourceWorkflow
                 || claim.workflow_sha !== workflowSha || claim.runner_environment !== 'github-hosted'
-                || !/^[1-9]\d?$/.test(claim.run_attempt || '')
-                || (request.method === 'POST' && Number(claim.run_attempt) < 2)
+                || (photoRole === 'read' && !['GET', 'HEAD'].includes(request.method))
                 || ![claim.iat, claim.nbf, claim.exp].every(Number.isSafeInteger)
                 || claim.iat > time + 30 || claim.nbf > time + 30 || claim.exp <= time
                 || claim.exp <= claim.iat || claim.exp - claim.iat > DEADLINE_SECONDS) return null;
             const jwk = await findKey(header.kid);
             if (!jwk || !verify('RSA-SHA256', Buffer.from(`${encodedHeader}.${encodedClaims}`),
                 createPublicKey({ key: jwk, format: 'jwk' }), Buffer.from(signature, 'base64url'))) return null;
-            return { publisherId: SOURCE.publisherId, datasetId: SOURCE.datasetId };
+            return {
+                publisherId: SOURCE.publisherId, datasetId: SOURCE.datasetId,
+                ...(photoRole && { photoRole }),
+                ...(photoRole === 'write' && { handoff: { id: branch[1], secretHash: branch[2], contentHash: branch[3], runId: String(claim.run_id) } }),
+            };
         } catch {
             return null;
         }
     };
 }
 
-module.exports = { AUDIENCE, PHOTO_AUDIENCE, ISSUER, SOURCE, REPOSITORY, REF, WORKFLOW, createSourceVerifier, foundDisplay, allowPayload };
+module.exports = { AUDIENCE, PHOTO_AUDIENCE, PHOTO_READ_AUDIENCE, ISSUER, SOURCE, REPOSITORY, REF, WORKFLOW,
+    createSourceVerifier, foundDisplay, allowPayload };

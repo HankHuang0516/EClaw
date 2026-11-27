@@ -6,7 +6,8 @@ const { generateKeyPairSync, sign } = require('node:crypto');
 const { install } = require('./photo-intake.cjs');
 const { sha } = require('./photo-contract.cjs');
 const { prepare } = require('./dot-submit.cjs');
-const { AUDIENCE, PHOTO_AUDIENCE, ISSUER, REPOSITORY, REF, WORKFLOW, createSourceVerifier } = require('./dot-identity.cjs');
+const { makeHandoff, deliver } = require('./dot-photo-client.cjs');
+const { PHOTO_AUDIENCE, PHOTO_READ_AUDIENCE, ISSUER, REPOSITORY, createSourceVerifier } = require('./dot-identity.cjs');
 
 const DSN = 'postgresql://postgres:fixture-local-only@fixture.railway.internal:5432/stray_photo_publish_fixture';
 const PIN = 'a'.repeat(40), BASE = '/external-intake/v1';
@@ -27,26 +28,45 @@ async function main() {
     const now = () => new Date(clock).toISOString();
     const pool = new Pool({ connectionString: DSN, max: 2, connectionTimeoutMillis: 2000, query_timeout: 4000, statement_timeout: 3000 });
     const app = dependencies('fastify')();
-    const authenticate = createSourceVerifier({ workflowSha: PIN, audience: PHOTO_AUDIENCE, now: () => clock, loadKeys: keys });
-    function auth(audience = PHOTO_AUDIENCE) {
+    const settings = { workflowSha: PIN, now: () => clock, loadKeys: keys };
+    const verifyRead = createSourceVerifier({ ...settings, audience: PHOTO_READ_AUDIENCE, photoRole: 'read' });
+    const verifyWrite = createSourceVerifier({ ...settings, audience: PHOTO_AUDIENCE, photoRole: 'write' });
+    let runCount = 1000;
+    function auth(role, branch = 'dot-photo-read/v1/' + 'a'.repeat(32), attempt = '1', audience = role === 'read' ? PHOTO_READ_AUDIENCE : PHOTO_AUDIENCE) {
         const seconds = Math.floor(clock / 1000);
+        const ref = 'refs/heads/' + branch;
+        const workflow = role === 'read' ? 'stray-map-dot-photo-read.yml' : 'stray-map-dot-photo-submit.yml';
         const value = encode({ alg: 'RS256', kid: 'test-only' }) + '.' + encode({
-            iss: ISSUER, aud: audience, sub: `repo:${REPOSITORY}:ref:${REF}`, repository: REPOSITORY,
-            repository_id: '1150444936', repository_owner_id: '96640428', actor_id: '96640428', ref: REF,
-            event_name: 'push', runner_environment: 'github-hosted', workflow_ref: WORKFLOW, workflow_sha: PIN,
-            run_attempt: '2', iat: seconds - 5, nbf: seconds - 5, exp: seconds + 295,
+            iss: ISSUER, aud: audience, sub: `repo:${REPOSITORY}:ref:${ref}`, repository: REPOSITORY,
+            repository_id: '1150444936', repository_owner_id: '96640428', actor_id: '96640428', ref,
+            event_name: 'create', runner_environment: 'github-hosted', workflow_ref: `${REPOSITORY}/.github/workflows/${workflow}@${ref}`, workflow_sha: PIN,
+            run_id: String(runCount), run_attempt: attempt, iat: seconds - 5, nbf: seconds - 5, exp: seconds + 295,
         });
         return 'Bearer ' + value + '.' + sign('RSA-SHA256', Buffer.from(value), privateKey).toString('base64url');
     }
     try {
-        await install(app, { pool, verifySource: authenticate, sharp, inspectImage: inspectImageUpload,
+        await install(app, { pool, verifyRead, verifyWrite, sharp, inspectImage: inspectImageUpload,
             inspectSafety: inspectPhotoSafety, enabled: () => enabled, now });
         await app.ready();
         const hit = (method, path, headers, payload) => app.inject({ method, url: BASE + path, headers, payload });
         const get = (path, authorization) => hit('GET', path, authorization ? { authorization } : {});
-        const post = (value, authorization = auth()) => hit('POST', '/photo-tips', {
-            authorization, 'content-type': 'application/json', 'idempotency-key': value.tip.source.recordKey,
-        }, JSON.stringify(value));
+        async function begin(value) {
+            const raw = Buffer.from(JSON.stringify(value)), handoff = makeHandoff(raw);
+            const path = '/photo-handoffs/' + handoff.id;
+            runCount++;
+            const authorization = auth('write', handoff.branch);
+            const opened = await hit('POST', path + '/open', { authorization });
+            assert.equal(opened.statusCode, 201, opened.body);
+            const headers = { 'x-photo-handoff-proof': handoff.proof, 'content-type': 'application/json',
+                ...(value.tip && { 'idempotency-key': value.tip.source.recordKey }) };
+            return { path, raw, headers, commit: () => hit('POST', path + '/commit', { authorization }),
+                stage: () => hit('PUT', path + '/content', headers, raw) };
+        }
+        async function post(value) {
+            const transaction = await begin(value);
+            const staged = await transaction.stage();
+            return staged.statusCode === 202 ? transaction.commit() : staged;
+        }
         async function fixture(id, color) {
             const lead = prepare({ impound_no: id, data_source: 'Regional Animal Services of King County', state: 'WA',
                 record_type: 'FOUND', animal_type: 'Dog', date_type: 'Date Found', date: '2026-11-25T00:00:00.000' });
@@ -64,26 +84,64 @@ async function main() {
             }};
         }
         const a = await fixture('qa-local-a', '#2C6E4A'), b = await fixture('qa-local-b', '#4970A5');
+        const invalid = makeHandoff(Buffer.from('{}'));
+        const reserved = '/photo-handoffs/' + invalid.id + '/open';
         assert.equal((await get('/photo-status')).statusCode, 403);
-        assert.equal((await get('/photo-status', auth(AUDIENCE))).statusCode, 403);
-        assert.equal((await get('/photo-status', auth())).json().publication, 'AUTOMATIC_IF_VERIFIED');
-        assert.equal((await post(a, 'Bearer invalid')).statusCode, 403);
-        assert.equal((await post(plus(a, 'photo', null))).statusCode, 422);
-        assert.equal((await post(plus(a, 'sourceEvidence', plus(a.sourceEvidence, 'status', 'UNKNOWN')))).json().error, 'SOURCE_ACTIVE_PROOF_REQUIRED');
-        assert.equal((await post(plus(a, 'sourceEvidence', plus(a.sourceEvidence, 'checkedAt', new Date(clock - 900000).toISOString())))).json().error,
-            'SOURCE_ACTIVE_PROOF_EXPIRED');
-        assert.equal((await post(plus(a, 'photo', plus(a.photo, 'verification', plus(a.photo.verification, 'sameAnimalConfirmed', false))))).json().error,
-            'PHOTO_VERIFICATION_REQUIRED');
-        assert.equal((await post(plus(a, 'photo', plus(a.photo, 'rights', plus(a.photo.rights, 'permitsRedaction', false))))).json().error,
-            'PHOTO_REPUBLICATION_RIGHTS_REQUIRED');
-        assert.equal((await post(plus(a, 'photo', plus(a.photo, 'mime', 'image/jpeg')))).json().error, 'PHOTO_IMAGE_REJECTED');
+        assert.equal((await get('/photo-status', auth('write', invalid.branch))).statusCode, 403);
+        assert.equal((await get('/photo-status', auth('read'))).json().publication, 'AUTOMATIC_IF_VERIFIED');
+        assert.equal((await hit('POST', reserved, { authorization: auth('read', undefined, '1', PHOTO_AUDIENCE) })).statusCode, 403);
+        assert.equal((await hit('POST', reserved, { authorization: auth('write', invalid.branch, '2') })).statusCode, 403);
+        assert.equal((await hit('PUT', '/photo-handoffs/' + invalid.id + '/content', {
+            'x-photo-handoff-proof': invalid.proof, 'content-type': 'application/json',
+        }, '{}')).statusCode, 404);
+        for (const [override, reason] of [
+            [nowValue => ({ ...a, sourceEvidence: { ...a.sourceEvidence, checkedAt: nowValue }, photo: null }), 'ORIGINAL_IMAGE_BYTES_REQUIRED'],
+            [nowValue => ({ ...a, sourceEvidence: { ...a.sourceEvidence, checkedAt: nowValue, status: 'UNKNOWN' } }), 'SOURCE_ACTIVE_PROOF_REQUIRED'],
+            [() => plus(a, 'sourceEvidence', plus(a.sourceEvidence, 'checkedAt', new Date(clock - 900000).toISOString())), 'SOURCE_ACTIVE_PROOF_EXPIRED'],
+            [nowValue => ({ ...a, sourceEvidence: { ...a.sourceEvidence, checkedAt: nowValue },
+                photo: plus(a.photo, 'verification', plus(a.photo.verification, 'sameAnimalConfirmed', false)) }), 'PHOTO_VERIFICATION_REQUIRED'],
+            [nowValue => ({ ...a, sourceEvidence: { ...a.sourceEvidence, checkedAt: nowValue },
+                photo: plus(a.photo, 'rights', plus(a.photo.rights, 'permitsRedaction', false)) }), 'PHOTO_REPUBLICATION_RIGHTS_REQUIRED'],
+        ]) {
+            assert.equal((await post(override(now()))).json().error, reason);
+            clock += 240001;
+        }
         assert.deepEqual((await get('/photo-cards')).json().cards, []);
-        const first = await post(a);
-        assert.equal(first.statusCode, 201, first.body);
-        const receipt = first.json().receipt;
+        a.sourceEvidence.checkedAt = now();
+        const aStart = clock;
+        let worker;
+        const first = await deliver(Buffer.from(JSON.stringify(a)), PIN, {
+            clock: () => clock, wait: async () => {},
+            createBranch: async (branch, shaToRun) => {
+                assert.equal(shaToRun, PIN);
+                assert.match(branch, /^dot-photo-submit\/v1\/[a-f0-9]{32}\.[a-f0-9]{64}\.[a-f0-9]{64}$/);
+                const id = branch.split('/').at(-1).split('.')[0];
+                runCount++;
+                const authorization = auth('write', branch);
+                worker = { path: '/photo-handoffs/' + id, authorization };
+                assert.equal((await hit('POST', worker.path + '/open', { authorization })).statusCode, 201);
+                assert.equal((await hit('POST', worker.path + '/commit', { authorization })).statusCode, 409);
+            },
+            request: async (url, options) => {
+                const relative = new URL(url).pathname.slice(BASE.length);
+                if (options.method === 'PUT') {
+                    const rejected = await hit('PUT', relative, options.headers, Buffer.from('{}'));
+                    assert.equal(rejected.json().error, 'PHOTO_HANDOFF_CONTENT_MISMATCH');
+                }
+                const response = await hit(options.method || 'GET', relative, options.headers, options.body);
+                if (options.method === 'PUT' && response.statusCode === 202) {
+                    assert.deepEqual((await get('/photo-cards')).json().cards, []);
+                    assert.equal(response.json().status, 'CHECKED_PRIVATE');
+                    const committed = await hit('POST', worker.path + '/commit', { authorization: worker.authorization });
+                    assert.equal(committed.statusCode, 201, committed.body);
+                }
+                return new Response(response.body, { status: response.statusCode });
+            },
+        });
+        const receipt = first.receipt;
         assert.match(receipt.id, /^photo_[a-f0-9]{32}$/);
         assert.equal(receipt.status, 'PUBLISHED');
-        assert.equal((await get('/photo-receipts/' + receipt.id, auth())).json().receipt.id, receipt.id);
+        assert.equal((await get('/photo-receipts/' + receipt.id, auth('read'))).json().receipt.id, receipt.id);
         const same = await post(a);
         assert.equal(same.statusCode, 200);
         assert.deepEqual(same.json().receipt, receipt);
@@ -98,15 +156,17 @@ async function main() {
         assert.equal(media.headers['cache-control'], 'no-store');
         const stored = await sharp(media.rawPayload).metadata();
         assert.ok(stored.format === 'jpeg' && !stored.exif && !stored.xmp && !stored.icc && !stored.orientation);
+        clock += 240001;
+        b.sourceEvidence.checkedAt = now();
         assert.equal((await post(b)).statusCode, 429);
-        clock += 3600000;
+        clock = aStart + 3600000;
         assert.equal((await get('/photo-media/' + receipt.id)).statusCode, 404);
         b.sourceEvidence.checkedAt = now();
         const second = await post(b);
         assert.equal(second.statusCode, 201, second.body);
         const other = second.json().receipt;
         assert.notEqual(receipt.id, other.id);
-        const withdrawn = await hit('POST', '/photo-tips/' + other.id + '/withdraw', { authorization: auth() });
+        const withdrawn = await post({ withdrawId: other.id });
         assert.equal(withdrawn.json().receipt.status, 'WITHDRAWN');
         assert.equal((await get('/photo-media/' + other.id)).statusCode, 404);
         assert.equal((await post(b)).statusCode, 409);
@@ -116,7 +176,8 @@ async function main() {
         assert.equal((await get('/photo-cards')).statusCode, 503);
         console.log(JSON.stringify({ synthetic: true, receipts: [receipt, other].map(row => 'masked-' + sha(row.id).slice(0, 12)),
             cases: 2, autoPublished: true, noHumanReview: true, sameReceipt: true, expiryHidden: true,
-            withdrawnHidden: true, unauthorizedDenied: true, metadataRemoved: true, bundledSafetyModelRan: true }));
+            withdrawnHidden: true, unauthorizedDenied: true, metadataRemoved: true, bundledSafetyModelRan: true,
+            readCannotWrite: true, restartedJobDenied: true, privateStagingBeforeCommit: true, exactBodyBinding: true }));
     } finally { await app.close(); await pool.end(); }
 }
 main().catch(error => { console.error(error.message); process.exitCode = 1; });
