@@ -36,13 +36,14 @@ function settings(configuration, bindings) {
             || ['intake','review','publicRead'].some(k => c[k] !== undefined && typeof c[k] !== 'boolean')
             || (['intake','review','publicRead'].some(k => c[k] === true) && c.profile !== PROFILE)
             || !bindings || typeof bindings.verifySource !== 'function' || typeof bindings.verifyReviewer !== 'function'
+            || (bindings.allowPayload !== undefined && typeof bindings.allowPayload !== 'function')
             || !validPolicies(bindings.sourcePolicies)) return null;
         if (c.limits !== undefined && !subset(c.limits, Object.keys(DEFAULT_LIMITS))) return null;
         const limits = { ...DEFAULT_LIMITS, ...c.limits };
         if (!Object.keys(limits).every(k => Number.isSafeInteger(limits[k]) && limits[k] > 0 && limits[k] <= HARD_LIMITS[k])) return null;
         const policies = JSON.parse(JSON.stringify(bindings.sourcePolicies));
         const result = { profile: PROFILE, intake: c.intake === true, review: c.review === true, publicRead: c.publicRead === true, limits, policies,
-            verifySource: bindings.verifySource, verifyReviewer: bindings.verifyReviewer };
+            verifySource: bindings.verifySource, verifyReviewer: bindings.verifyReviewer, allowPayload: bindings.allowPayload };
         result.signature = JSON.stringify({ intake: result.intake, review: result.review, publicRead: result.publicRead, limits, policies }); return result;
     } catch { return null; }
 }
@@ -97,7 +98,7 @@ async function install(app, { pool, configuration, bindings, now = () => new Dat
         const assertOpen = () => {
             const current = settings(configuration, bindings);
             if (!current || !current[mode] || current.signature !== cfg.signature || current.verifySource !== cfg.verifySource
-                || current.verifyReviewer !== cfg.verifyReviewer) throw new PilotError('PILOT_CLOSED');
+                || current.verifyReviewer !== cfg.verifyReviewer || current.allowPayload !== cfg.allowPayload) throw new PilotError('PILOT_CLOSED');
         };
         return { cfg, assertOpen };
     }
@@ -140,6 +141,7 @@ async function install(app, { pool, configuration, bindings, now = () => new Dat
             const parsed = rawJSON(req.body);
             if (parsed?.source?.publisherId !== actor.publisherId || parsed?.source?.datasetId !== actor.datasetId) throw new PilotError('SOURCE_NOT_AUTHORIZED', 403);
             const at = clock(now), valid = validateText(req.body, policyFor(cfg, actor), at, req.headers['content-type'], req.headers['content-encoding'] || 'identity');
+            if (cfg.allowPayload && !cfg.allowPayload(valid.canonicalPayload)) throw new PilotError('SOURCE_PAYLOAD_NOT_AUTHORIZED', 403);
             const result = await store.accept({ payload: valid.canonicalPayload, payloadHash: valid.payloadHash, key: req.headers['idempotency-key'], source: actor, submittedAt: at, limits: cfg.limits, assertOpen });
             assertOpen(); return reply.code(202).send(result);
         });
