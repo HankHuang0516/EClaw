@@ -87,6 +87,8 @@ kbd{font:11px/1.4 var(--mono);padding:1px 5px;border:1px solid var(--line-2);bor
 .live-pill:hover{border-color:var(--line-2)}
 .pulse{flex:none;width:8px;height:8px;border-radius:50%;background:var(--ok);animation:pulse 2s infinite}
 .is-paused .pulse{background:var(--ink-3);animation:none}
+.is-lost .pulse{background:var(--warn)}
+.live-pill.is-lost{border-color:var(--warn);color:var(--warn-ink)}
 @keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 55%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
 .icon-btn{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;color:var(--ink-2)}
 .icon-btn:hover{background:var(--hover);color:var(--ink)}

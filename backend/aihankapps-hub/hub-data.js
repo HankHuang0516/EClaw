@@ -71,7 +71,9 @@
     MIN: MIN, HOUR: HOUR, DAY: DAY, TZ: TZ, METRICS: METRICS, GROUPS: GROUPS, PLATS: PLATS, WISHLIST: WISHLIST, idxOf: idxOf, idxOfIso: idxOfIso, dayT: dayT,
     T0: 0, today: 0, APPS: [], APP: {}, BYKEY: {}, CATS: [], sources: {}, latest: {}, eclaw: {},
     RAW: {}, opsDaily: {}, ALERTS: [], services: [], infra: [], accounts: [],
-    ops: { ok: false, at: 0, series: [], workers: [], status: null, listing: null, chat: null, workTotals: {}, cpuFreshness: null, updatedAt: {}, recent: null }
+    // hubAt、ops.at：這個頁面讀到那一份資料的時刻。ops.missedAt：最近一次重讀沒連上伺服器的時刻（讀到了就歸零）
+    hubAt: 0,
+    ops: { ok: false, at: 0, missedAt: 0, series: [], workers: [], status: null, listing: null, chat: null, workTotals: {}, cpuFreshness: null, updatedAt: {}, recent: null }
   };
   let ends = {};
 
@@ -80,6 +82,11 @@
     if (!res.ok) { const e = new Error('HTTP ' + res.status); e.status = res.status; throw e; }
     return res.json();
   }
+  // 營運數據的即時讀數。伺服器回了錯誤 → null：來源讀不到。根本沒連上（頁面剛從背景或睡眠回來、網路還沒好）→ NO_ANSWER：
+  // 那是這個頁面自己的狀況，不是來源停了，所以沿用手上那一份、記下沒連上，等下一次再讀（2026-11-27）。
+  const NO_ANSWER = { noAnswer: true };
+  const OPS_COPY_MAX = 90 * 1000;
+  const readOpsLatest = () => getJson(OPS + '/latest').catch(e => (e && e.status ? null : NO_ANSWER));
 
   // ---- 套用伺服器的回答 -------------------------------------------------------
   function normApp(a) {
@@ -93,6 +100,7 @@
   function applyHub(hub) {
     if (!hub || !hub.success || !hub.daily) throw new Error('HUB_SHAPE');
     D.T0 = hub.generatedAt;
+    D.hubAt = Date.now();
     D.today = idxOfIso(hub.today);
     D.sources = hub.sources || {};
     D.latest = hub.latest || {};
@@ -118,8 +126,9 @@
   function applyOps(catalog, latest) {
     const o = D.ops;
     if (catalog && catalog.success) o.series = catalog.series || [];
+    if (latest === NO_ANSWER) { o.missedAt = Date.now(); return; }
     if (latest && latest.success) {
-      o.ok = true; o.at = Date.now();
+      o.ok = true; o.at = Date.now(); o.missedAt = 0;
       o.status = latest.status || null;
       o.listing = latest.listing || null;
       o.chat = latest.chatPending || null;
@@ -204,7 +213,7 @@
     D.services.forEach(svc => { if (byId[svc.id]) svc.now = byId[svc.id]; });
   }
   D.load = async function () {
-    const got = await Promise.all([getJson(API + '/data'), getJson(OPS + '/catalog').catch(() => null), getJson(OPS + '/latest').catch(() => null), getJson(API + '/services').catch(() => null)]);
+    const got = await Promise.all([getJson(API + '/data'), getJson(OPS + '/catalog').catch(() => null), readOpsLatest(), getJson(API + '/services').catch(() => null)]);
     applyHub(got[0]);
     applyOps(got[1], got[2]);
     applyServices(got[3]);
@@ -213,16 +222,18 @@
   };
   // 每分鐘：worker 狀態與 Wishlist 現況
   D.refreshLive = async function () {
-    const got = await Promise.all([getJson(OPS + '/latest').catch(() => null), getJson(API + '/services').catch(() => null)]);
+    const got = await Promise.all([readOpsLatest(), getJson(API + '/services').catch(() => null)]);
     applyOps(null, got[0]);
     applyServices(got[1]);
     computeAlerts(Date.now());
   };
-  // 每五分鐘：每日數列、最近 24 小時的小圖。fresh：使用者按了「重新讀取」，請伺服器不要拿兩分鐘內的舊答案
+  // 每五分鐘：每日數列、最近 24 小時的小圖。fresh：使用者按了「重新讀取」，請伺服器不要拿兩分鐘內的舊答案。
+  // 手上的即時讀數如果已經放了一陣子（頁面剛從背景回來），這裡一起重讀，整頁重畫時才不會新舊混在一起。
   D.refreshData = async function (fresh) {
-    const got = await Promise.all([getJson(API + '/data' + (fresh ? '?fresh=1' : '')), fresh ? getJson(OPS + '/latest').catch(() => null) : undefined]);
+    const ops = fresh || Date.now() - D.ops.at > OPS_COPY_MAX;
+    const got = await Promise.all([getJson(API + '/data' + (fresh ? '?fresh=1' : '')), ops ? readOpsLatest() : undefined]);
     applyHub(got[0]);
-    if (fresh) applyOps(null, got[1]);
+    if (ops) applyOps(null, got[1]);
     await Promise.all([loadOpsDaily().catch(() => {}), loadOpsRecent().catch(() => {})]);
     computeAlerts(Date.now());
   };
@@ -467,6 +478,10 @@
   const workerBasis = w => { const b = { workerId: w.id }; WORKER_FIELDS.forEach(k => { if (w[k] !== undefined) b[k] = w[k]; }); return b; };
   function computeAlerts(now) {
     const out = [], o = D.ops;
+    // 「多久沒更新」一律用讀到那份資料的時刻來算，不用現在的時鐘。頁面放在背景、電腦睡眠或暫時連不上的時候，手上的資料會變舊；
+    // 拿現在去比，會把頁面自己的閒置算成來源停擺（2026-11-27「監控資料沒有更新」誤報：伺服器的讀數每五分鐘都有進來）。
+    // 這一行以下不可以再用 now；新的時效規則用 opsAsOf（營運數據）或 hubAsOf（其他來源）。測試會檢查。
+    const opsAsOf = Math.min(now, o.at || now), hubAsOf = Math.min(now, D.hubAt || now);
     // more：rule、app／apps、since、go，以及 ref 用的 code／start、來源 source、原始數值 basis
     const add = (id, sev, title, detail, more) => {
       const m = more || {}, a = Object.assign({ id: id, sev: sev, title: title, detail: detail, app: null, apps: null, since: null, source: null, basis: null }, m);
@@ -490,9 +505,9 @@
       }
     });
     const seen = Date.parse(o.updatedAt.latestStatus || '') || 0;
-    if (o.ok && ((seen && now - seen > 20 * MIN) || (o.cpuFreshness && o.cpuFreshness.dataFresh === false))) {
-      add('ops-stale', 'warn', '監控資料沒有更新', '上一次收到 worker 讀數是 ' + (seen ? Math.round((now - seen) / MIN) + ' 分鐘前' : '很久以前') + '。', { rule: RULES[3][0], since: seen || null, go: 'live', start: seen || null,
-        source: '營運數據 /api/aihankapps/ops/latest', basis: { latestStatusAt: seen || null, minutesAgo: seen ? Math.round((now - seen) / MIN) : null, cpuDataFresh: o.cpuFreshness ? o.cpuFreshness.dataFresh : null } });
+    if (o.ok && ((seen && opsAsOf - seen > 20 * MIN) || (o.cpuFreshness && o.cpuFreshness.dataFresh === false))) {
+      add('ops-stale', 'warn', '監控資料沒有更新', '上一次收到 worker 讀數是 ' + (seen ? Math.round((opsAsOf - seen) / MIN) + ' 分鐘前' : '很久以前') + '。', { rule: RULES[3][0], since: seen || null, go: 'live', start: seen || null,
+        source: '營運數據 /api/aihankapps/ops/latest', basis: { latestStatusAt: seen || null, minutesAgo: seen ? Math.round((opsAsOf - seen) / MIN) : null, cpuDataFresh: o.cpuFreshness ? o.cpuFreshness.dataFresh : null } });
     }
     const l = o.listing;
     if (l && l.targetPerHour != null && l.perHour24h != null && l.perHour24h < l.targetPerHour) {
@@ -510,8 +525,8 @@
     if (o.chat && o.chat.pendingCount > 0) add('chat-pending', 'info', '有 ' + o.chat.pendingCount + ' 則買家詢問等待處理', 'Wishlist.ai 的聊聊待問；這個數字最多延遲約 2 小時。', { rule: RULES[5][0], app: WISHLIST, since: o.chat.observedAt || null,
       source: '營運數據 /api/aihankapps/ops/latest（chatPending）', basis: { pendingCount: o.chat.pendingCount, observedAt: o.chat.observedAt || null } });
     const st = D.sources.store, gen = st && st.ok ? Date.parse(st.generatedAt || '') : 0;
-    if (gen && now - gen > 8 * DAY) add('store-stale', 'warn', '商店報表超過一週沒更新', '安裝、下載、收入這幾項停在上一次產生報表的時候（' + Math.floor((now - gen) / DAY) + ' 天前）。', { rule: RULES[6][0], since: gen, go: 'sources', start: gen,
-      source: '商店報表 reports/data.js', basis: { generatedAt: gen, daysAgo: Math.floor((now - gen) / DAY) } });
+    if (gen && hubAsOf - gen > 8 * DAY) add('store-stale', 'warn', '商店報表超過一週沒更新', '安裝、下載、收入這幾項停在上一次產生報表的時候（' + Math.floor((hubAsOf - gen) / DAY) + ' 天前）。', { rule: RULES[6][0], since: gen, go: 'sources', start: gen,
+      source: '商店報表 reports/data.js', basis: { generatedAt: gen, daysAgo: Math.floor((hubAsOf - gen) / DAY) } });
     Object.keys(D.latest.rating || {}).forEach(k => {
       const r = D.latest.rating[k], a = D.BYKEY[k];
       if (a && r && r.value < 4) add('rating-' + a.id, 'warn', a.short + ' 的評分是 ' + r.value.toFixed(1), 'Google Play 評分低於 4.0。', { rule: RULES[7][0], app: k,
@@ -535,19 +550,19 @@
     const collectors = (D.sources.imports && D.sources.imports.collectors) || {};
     Object.keys(collectors).forEach(id => {
       const c = collectors[id], name = (COLLECTORS[id] || [id])[0];
-      if (c.collectedAt && now - c.collectedAt > 36 * HOUR) add('collector-stale-' + id, 'warn', name + '的數據超過一天沒更新', '上一次匯入是 ' + Math.floor((now - c.collectedAt) / HOUR) + ' 小時前；收集工具在這台 Mac 上執行。', { rule: RULES[9][0], since: c.collectedAt, go: 'sources', start: c.collectedAt,
-        source: '匯入的後台數據（' + id + '）', basis: { collector: id, collectedAt: c.collectedAt, hoursAgo: Math.floor((now - c.collectedAt) / HOUR) } });
+      if (c.collectedAt && hubAsOf - c.collectedAt > 36 * HOUR) add('collector-stale-' + id, 'warn', name + '的數據超過一天沒更新', '上一次匯入是 ' + Math.floor((hubAsOf - c.collectedAt) / HOUR) + ' 小時前；收集工具在這台 Mac 上執行。', { rule: RULES[9][0], since: c.collectedAt, go: 'sources', start: c.collectedAt,
+        source: '匯入的後台數據（' + id + '）', basis: { collector: id, collectedAt: c.collectedAt, hoursAgo: Math.floor((hubAsOf - c.collectedAt) / HOUR) } });
     });
     // 拾光每個帳號的上傳額度與被拒收（伺服器 1.0.126 起；收集工具每小時匯入一次）
     const th = (D.latest.facts || {})[TIMEHUT] || {}, thKeys = Object.keys(th).filter(k => /^thUser[a-f0-9]{10}$/.test(k) && th[k] && th[k].v === 1).sort();
     // LINE 收件的等待時間用這次讀數的時間（thUsersMeta.asOf）算，不用現在：收集停了，等待時間不會一直往上加而誤報
-    const thAsOf = Math.min(now, Date.parse((th.thUsersMeta && th.thUsersMeta.asOf) || '') || now), lines = {}, blockedAccounts = {};
+    const thAsOf = Math.min(hubAsOf, Date.parse((th.thUsersMeta && th.thUsersMeta.asOf) || '') || hubAsOf), lines = {}, blockedAccounts = {};
     thKeys.forEach(k => { const l = lineState(th[k], thAsOf); if (l) lines[k] = l; });
     const stuckAccounts = Object.keys(lines).filter(k => lines[k].stuck).length;
     Object.keys(lines).forEach(k => lines[k].blocked.forEach(b => { blockedAccounts[b[0]] = (blockedAccounts[b[0]] || 0) + 1; }));
     thKeys.forEach(k => {
       const u = th[k], ref = k.slice(6), name = u.name || '（沒有暱稱）', q = u.quota, rf = u.refusals;
-      const codes = ((rf && rf.codes) || []).filter(c => Array.isArray(c) && typeof c[0] === 'string'), recent = codes.filter(c => c[3] && now - c[3] < 2 * HOUR);
+      const codes = ((rf && rf.codes) || []).filter(c => Array.isArray(c) && typeof c[0] === 'string'), recent = codes.filter(c => c[3] && hubAsOf - c[3] < 2 * HOUR);
       const full = recent.filter(c => D.refusalKind(c[0]) === 'full');
       if (q && q.limit) {
         const used = (q.stored || 0) + (q.pendingBytes || 0), ratio = Math.max(used / q.limit, q.limitItems ? ((q.items || 0) + (q.pending || 0)) / q.limitItems : 0);

@@ -312,4 +312,23 @@ describe('fresh rolling work summaries', () => {
             expect(fetchImpl.mock.calls[0][0]).toMatch(/\/work-summary$/);
         } finally { scheduled.stop(); }
     });
+    // 2026-11-27: `2-59/5` meant 5,10,…,55 to node-cron 3, so the status read skipped minute 0 of every hour.
+    test('the status read runs twelve times an hour, and no schedule uses a range with a step', () => {
+        const expressions = [];
+        const cron = { schedule: jest.fn(expression => { expressions.push(expression); return { stop() {} }; }) };
+        const { pool } = setup(jest.fn());
+        const scheduled = ops.startCollector(() => pool, { cron, now: () => now, bootstrapDelayMs: 600000, log: { error() {} } });
+        try {
+            for (const e of expressions) {
+                expect(require('node-cron').validate(e)).toBe(true);
+                expect(e).not.toMatch(/\d-\d+\/\d/);          // the form the installed node-cron expands to something else
+            }
+            const minutes = expressions.map(e => e.split(' ')[0]).filter(m => /^\d+(,\d+)+$/.test(m)).map(m => m.split(',').map(Number));
+            const status = minutes.find(m => m.length === 12);
+            expect(status).toBeDefined();
+            const gaps = status.map((m, i) => (status[(i + 1) % 12] - m + 60) % 60);
+            expect(new Set(gaps)).toEqual(new Set([5]));       // no hole anywhere in the hour, the top of the hour included
+            expect(status.every(m => m % 5 !== 0)).toBe(true);  // not on top of the CPU read
+        } finally { scheduled.stop(); }
+    });
 });
