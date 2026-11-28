@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Stray Map External Intake — CONTRACT DRAFT",
-    "version": "0.1.0-draft",
-    "description": "BLOCKED, not deployed: runtime TS/dist+migrations are insufficient release provenance; Git, Dockerfile, lockfile, tsconfig.base and repository/commit metadata remain missing per separate audit. No production route to wire: existing /v1/animals immediately publishes and /v1/* device preHandler writes are unsuitable. Current terms v2026-09-14.1 clause 4 remain unchanged; Hank approval of a narrow exception is pending. No credentials or terms changes are authorized. External tips remain private PENDING; human app remains unauthenticated. Pure tests are not HTTP, storage, uploader, moderation or Hub acceptance."
+    "version": "0.3.0-draft",
+    "description": "Disabled draft v3 with unchanged v2 acceptance/hash compatibility. No official intake API verified, complete production rebuild source or approved terms exception. V3 distinguishes LOST/FOUND/SIGHTING, health and custody. Source events and bounded manual matching are private synthetic supervisor interfaces, not HTTP/public APIs. No production writes, credentials or patrol/schedule changes."
   },
   "servers": [
     {
@@ -27,8 +27,8 @@
     "/v1/public/tips": {
       "post": {
         "operationId": "draftSubmitExternalTip",
-        "summary": "DISABLED PROPOSAL: submit a third-party clue for private review",
-        "description": "No implemented route. All sources remain PENDING and publicVisible=false; never simulate app device IDs. No remote fetch. Client has no publication controls. SubmittedAt is server-owned. Future atomic storage/review/rate limits and rights verification are required. This is not emergency rescue or government dispatch.",
+        "summary": "DISABLED PROPOSAL: private external tip intake, v3 and compatible v2",
+        "description": "No implemented official route. V2 remains accepted without payload/hash/fingerprint changes; v3 adds exact report semantics and health-only condition enum. Every tip enters private PENDING review. Only approved safe source-visible v3 SIGHTING is eligible as a map marker; LOST/FOUND/legacy are lead records, never inferred new sightings. Private source events and matching add no HTTP path.",
         "security": [],
         "x-default-enabled": false,
         "parameters": [
@@ -59,32 +59,60 @@
         ],
         "requestBody": {
           "required": true,
-          "description": "At most 16,384 actual UTF-8 bytes, including whitespace; streaming cap required. Duplicate JSON keys and unknown/missing fields rejected. No URLs or bytes for photos.",
+          "description": "16,384-byte JSON UTF-8 cap; strict TipV2 or TipV3. Shared source/time/region/language/privacy/photo rules remain. Runtime enforces IANA/chronology/custody policy. No client publication/device controls, remote image fetch or production mutation.",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/Tip"
               },
               "example": {
-                "schemaVersion": 1,
+                "schemaVersion": 3,
                 "thirdParty": true,
                 "selfWitness": false,
                 "source": {
                   "publisherId": "synthetic-a",
+                  "datasetId": "synthetic-tw",
+                  "recordKey": "synthetic_tw_sighting_0001",
                   "url": "https://news.example.invalid/public-tips/synthetic001",
-                  "publishedAt": "2026-11-26T02:00:00Z"
+                  "publishedAt": {
+                    "precision": "INSTANT",
+                    "value": "2026-11-26T10:00:00+08:00",
+                    "timeZone": "Asia/Taipei"
+                  }
                 },
-                "observedAt": "2026-11-26T01:00:00Z",
+                "observation": {
+                  "precision": "INSTANT",
+                  "value": "2026-11-26T09:00:00+08:00",
+                  "timeZone": "Asia/Taipei"
+                },
                 "animal": {
                   "kind": "DOG",
                   "count": null,
-                  "condition": "ROAMING"
+                  "condition": "UNKNOWN"
                 },
                 "location": {
+                  "countryCode": "TW",
                   "regionCode": "TW-TPE",
                   "sensitivity": "NONE"
                 },
-                "photos": []
+                "display": {
+                  "locale": "zh-TW",
+                  "title": "合成演練：犬隻公開線索",
+                  "description": "僅供隔離演練的虛構第三方線索，非本人目擊。沒有真實動物、個資或精確位置；照片留空。"
+                },
+                "photos": [],
+                "report": {
+                  "type": "SIGHTING",
+                  "locationMeaning": "OBSERVED_AT",
+                  "custody": {
+                    "status": "UNKNOWN",
+                    "asOf": {
+                      "precision": "UNKNOWN",
+                      "value": null,
+                      "timeZone": null
+                    }
+                  }
+                }
               }
             }
           }
@@ -108,7 +136,7 @@
             }
           },
           "400": {
-            "description": "Invalid request or unverified photo metadata; no publication or mutation.",
+            "description": "Invalid exact v2 structure, temporal/zone/chronology, locale/text, coarse country/region, JSON, photo metadata or idempotency input. No production mutation.",
             "content": {
               "application/json": {
                 "schema": {
@@ -136,11 +164,13 @@
               "PHOTO_RIGHTS_REQUIRED",
               "PHOTO_NOT_VERIFIED",
               "PHOTO_LIMIT_EXCEEDED",
-              "INVALID_IDEMPOTENCY_INPUT"
+              "INVALID_IDEMPOTENCY_INPUT",
+              "INVALID_DISPLAY",
+              "INVALID_REPORT"
             ]
           },
           "403": {
-            "description": "Source not in the server-owned verified registry; body publisher claims are not authorization.",
+            "description": "Publisher/dataset not matched to trusted verified server policy. Body claims and optional URL are not authorization.",
             "content": {
               "application/json": {
                 "schema": {
@@ -157,7 +187,7 @@
             ]
           },
           "409": {
-            "description": "Same scoped Idempotency-Key with a different canonical payload; original preserved.",
+            "description": "Same publisher-scoped idempotency key with changed canonical payload, or conflicting content for a separately unique publisher/dataset/recordKey. Never overwrite or automatically merge independent cases.",
             "content": {
               "application/json": {
                 "schema": {
@@ -170,7 +200,8 @@
               }
             },
             "x-error-codes": [
-              "IDEMPOTENCY_CONFLICT"
+              "IDEMPOTENCY_CONFLICT",
+              "SOURCE_RECORD_CONFLICT"
             ]
           },
           "413": {
@@ -277,64 +308,23 @@
   "components": {
     "schemas": {
       "Tip": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "schemaVersion",
-          "thirdParty",
-          "selfWitness",
-          "source",
-          "observedAt",
-          "animal",
-          "location",
-          "photos"
-        ],
-        "properties": {
-          "schemaVersion": {
-            "type": "integer",
-            "const": 1
+        "description": "Accept unchanged v2 or v3. V2 has its original nine exact keys, legacy condition enum and unchanged canonical payload/hash/fingerprint; v3 adds only the required report object and separates health from report semantics.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/TipV2"
           },
-          "thirdParty": {
-            "type": "boolean",
-            "const": true
-          },
-          "selfWitness": {
-            "type": "boolean",
-            "const": false
-          },
-          "source": {
-            "$ref": "#/components/schemas/Source"
-          },
-          "observedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time",
-            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$",
-            "description": "Actual observation time or null; never infer from publication. observedAt <= publishedAt <= server submittedAt."
-          },
-          "animal": {
-            "$ref": "#/components/schemas/Animal"
-          },
-          "location": {
-            "$ref": "#/components/schemas/Location"
-          },
-          "photos": {
-            "type": "array",
-            "maxItems": 2,
-            "items": {
-              "$ref": "#/components/schemas/Photo"
-            },
-            "description": "Ordered opaque references only, unique uploadId; empty means no photo. Verified uploader must bind actual sanitized bytes, source/case, reuse evidence and safe credit. No image URLs/base64/bytes."
+          {
+            "$ref": "#/components/schemas/TipV3"
           }
-        }
+        ]
       },
       "Source": {
         "type": "object",
         "additionalProperties": false,
         "required": [
           "publisherId",
+          "datasetId",
+          "recordKey",
           "url",
           "publishedAt"
         ],
@@ -345,17 +335,32 @@
             "minLength": 3,
             "maxLength": 64
           },
-          "url": {
+          "datasetId": {
             "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{2,63}$",
+            "minLength": 3,
+            "maxLength": 64,
+            "description": "Reviewed dataset slug, 3–64 lower-case letters/digits/hyphens starting with a letter; must match trusted sourcePolicy."
+          },
+          "recordKey": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{16,128}$",
+            "minLength": 16,
+            "maxLength": 128,
+            "description": "Private opaque stable identifier within publisherId/datasetId. Separately unique source-record identity; never a public case ID, URL or automatic merge instruction."
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uri",
             "pattern": "^[Hh][Tt][Tt][Pp][Ss]://",
             "maxLength": 1024,
-            "description": "Private evidence only. Executable validator additionally enforces HTTPS URL syntax, no userinfo/IP/non-default-port/local suffix, registered exact origin/path prefix, ASCII unreserved paths, only tracking query keys, and no network I/O. Canonicalize host/default port/tracking/fragment/unreserved escapes."
+            "description": "Optional private evidence: HTTPS canonical URL or null. When present, enforce existing safe syntactic URL/origin/path rules, discard only approved tracking/fragment data, and never fetch. A null URL does not bypass verified publisher/dataset/provenance checks and is not a unique key."
           },
           "publishedAt": {
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$"
+            "$ref": "#/components/schemas/Temporal"
           }
         }
       },
@@ -401,41 +406,23 @@
         "type": "object",
         "additionalProperties": false,
         "required": [
+          "countryCode",
           "regionCode",
           "sensitivity"
         ],
         "properties": {
+          "countryCode": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$",
+            "description": "Upper-case ISO 3166-1 alpha-2 country code; schema checks shape, not a full country registry. Known region must share this prefix and be permitted by trusted sourcePolicy. Even if regionCode is null, at least one allowedRegions entry must have this country prefix."
+          },
           "regionCode": {
             "type": [
               "string",
               "null"
             ],
-            "enum": [
-              "TW-CHA",
-              "TW-CYI",
-              "TW-CYQ",
-              "TW-HSQ",
-              "TW-HSZ",
-              "TW-HUA",
-              "TW-ILA",
-              "TW-KEE",
-              "TW-KHH",
-              "TW-KIN",
-              "TW-LIE",
-              "TW-MIA",
-              "TW-NAN",
-              "TW-NWT",
-              "TW-PEN",
-              "TW-PIF",
-              "TW-TAO",
-              "TW-TNN",
-              "TW-TPE",
-              "TW-TTT",
-              "TW-TXG",
-              "TW-YUN",
-              null
-            ],
-            "description": "County/city only, or unknown. No coordinates, district, address, geohash, free text or wildlife localization."
+            "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+            "description": "ISO 3166-2 shaped coarse region code. Must match countryCode and the trusted server allowedRegions list. This pattern is not a complete global subdivision registry. Null means unknown."
           },
           "sensitivity": {
             "type": "string",
@@ -454,7 +441,8 @@
         "additionalProperties": false,
         "required": [
           "uploadId",
-          "rights"
+          "rights",
+          "caption"
         ],
         "properties": {
           "uploadId": {
@@ -463,6 +451,14 @@
           },
           "rights": {
             "$ref": "#/components/schemas/Rights"
+          },
+          "caption": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240,
+            "description": "Original-language caption in the tip display locale; private/untrusted before review. No personal or sensitive location data. A caption never proves image rights or same-case accuracy. Trimmed, no C0/DEL controls; length is 1–240 Unicode code points in both executable contract and JSON Schema.",
+            "pattern": "^(?!\\s)(?![\\s\\S]*\\s$)[^\\u0000-\\u001f\\u007f]+$",
+            "x-runtime-length-unit": "Unicode code points; matches JSON Schema maxLength."
           }
         }
       },
@@ -548,34 +544,8 @@
           },
           "error": {
             "type": "string",
-            "enum": [
-              "INVALID_TIP",
-              "INVALID_SOURCE",
-              "INVALID_SOURCE_URL",
-              "INVALID_JSON",
-              "DUPLICATE_JSON_KEY",
-              "INVALID_UTF8",
-              "RAW_JSON_REQUIRED",
-              "INVALID_TIMELINE",
-              "INVALID_ANIMAL",
-              "INVALID_LOCATION",
-              "INVALID_PHOTOS",
-              "INVALID_PHOTO",
-              "PHOTO_RIGHTS_REQUIRED",
-              "PHOTO_NOT_VERIFIED",
-              "PHOTO_LIMIT_EXCEEDED",
-              "INVALID_IDEMPOTENCY_INPUT",
-              "SOURCE_NOT_VERIFIED",
-              "IDEMPOTENCY_CONFLICT",
-              "PAYLOAD_TOO_LARGE",
-              "UNSUPPORTED_MEDIA_TYPE",
-              "RATE_LIMITED",
-              "INTERNAL_ERROR",
-              "SERVER_CONTEXT_REQUIRED",
-              "IDEMPOTENCY_STATE_INVALID",
-              "EXTERNAL_INTAKE_DISABLED",
-              "DEPENDENCY_UNAVAILABLE"
-            ]
+            "pattern": "^[A-Z][A-Z0-9_]{2,63}$",
+            "description": "Bounded machine-readable code. Existing response x-error-codes are illustrative, not an exhaustive v2 code registry; semantic validator/rehearsal errors must not echo submitted values."
           }
         }
       },
@@ -586,6 +556,1091 @@
         ],
         "minimum": 0,
         "description": "Illustrative aggregate component only, no statistics endpoint. Zero requires an available verified source. Unknown, missing, invalid or unavailable = null. Replays/candidate hashes are not new tips/confirmed deduplicated cases."
+      },
+      "Temporal": {
+        "description": "Exactly precision/value/timeZone. Disjoint tagged variants; runtime verifies real dates, recognized IANA zones, INSTANT offset-zone agreement (including DST), and precision-aware chronology against server submittedAt. Preserve uncertainty; DATE is not UTC midnight. UNKNOWN requires two nulls. JSON Schema does not perform zone lookup or chronology checks.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/InstantTemporal"
+          },
+          {
+            "$ref": "#/components/schemas/DateTemporal"
+          },
+          {
+            "$ref": "#/components/schemas/UnknownTemporal"
+          }
+        ]
+      },
+      "InstantTemporal": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "precision",
+          "value",
+          "timeZone"
+        ],
+        "properties": {
+          "precision": {
+            "type": "string",
+            "const": "INSTANT"
+          },
+          "value": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?(?:Z|[+-]\\d{2}:\\d{2})$",
+            "description": "Implemented RFC3339 subset: seconds with optional exactly three fractional digits, uppercase T/Z or numeric offset. Runtime checks that IANA-zone local wallclock at the parsed instant equals the supplied wallclock; invalid dates, zone/offset mismatches and DST gaps are rejected. Other fractional widths/leap-second forms are not supported."
+          },
+          "timeZone": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Valid IANA zone recognized by runtime Intl, maximum 80 UTF-16 code units. Examples: Asia/Taipei, America/Los_Angeles, UTC. Runtime lookup required; no complete zone registry is embedded here.",
+            "maxLength": 80
+          }
+        }
+      },
+      "DateTemporal": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "precision",
+          "value",
+          "timeZone"
+        ],
+        "properties": {
+          "precision": {
+            "type": "string",
+            "const": "DATE"
+          },
+          "value": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "description": "Real local calendar date. Retain the original date plus IANA zone; never synthesize a clock time or convert it to UTC midnight."
+          },
+          "timeZone": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Valid IANA zone recognized by runtime Intl, maximum 80 UTF-16 code units. Examples: Asia/Taipei, America/Los_Angeles, UTC. Runtime lookup required; no complete zone registry is embedded here.",
+            "maxLength": 80
+          }
+        }
+      },
+      "UnknownTemporal": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "precision",
+          "value",
+          "timeZone"
+        ],
+        "properties": {
+          "precision": {
+            "type": "string",
+            "const": "UNKNOWN"
+          },
+          "value": {
+            "type": "null"
+          },
+          "timeZone": {
+            "type": "null"
+          }
+        }
+      },
+      "Display": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "locale",
+          "title",
+          "description"
+        ],
+        "properties": {
+          "locale": {
+            "type": "string",
+            "minLength": 2,
+            "pattern": "^[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-[A-Z]{2})?$",
+            "description": "Current supported canonical BCP47 subset: lower-case 2/3-letter language, optional Titlecase four-letter script, optional upper-case two-letter region. Must equal Intl.getCanonicalLocales output. Examples zh-TW, en-US, zh-Hant-TW. Variants, extensions, private-use and numeric-region tags are outside this implementation; no forced translation."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Original-language title, private/untrusted until review. Length is not privacy, copyright or HTML-safety approval. Must be trimmed, single-line and free of C0/DEL controls. Runtime and JSON Schema both count Unicode code points without altering original text.",
+            "pattern": "^(?!\\s)(?![\\s\\S]*\\s$)[^\\u0000-\\u001f\\u007f]+$",
+            "x-runtime-length-unit": "Unicode code points; matches JSON Schema maxLength."
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000,
+            "description": "Original-language clue description, private/untrusted until review. No automatic pass-through to map, Hub, logs or public output. Must be trimmed, single-line and free of C0/DEL controls. Runtime and JSON Schema both count Unicode code points without altering original text.",
+            "pattern": "^(?!\\s)(?![\\s\\S]*\\s$)[^\\u0000-\\u001f\\u007f]+$",
+            "x-runtime-length-unit": "Unicode code points; matches JSON Schema maxLength."
+          }
+        }
+      },
+      "SourcePolicy": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "verified",
+          "publisherId",
+          "datasetId",
+          "origin",
+          "pathPrefix",
+          "allowedRegions"
+        ],
+        "properties": {
+          "verified": {
+            "type": "boolean",
+            "const": true
+          },
+          "publisherId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{2,63}$",
+            "minLength": 3,
+            "maxLength": 64
+          },
+          "datasetId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{2,63}$",
+            "minLength": 3,
+            "maxLength": 64
+          },
+          "origin": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^[Hh][Tt][Tt][Pp][Ss]://",
+            "description": "Trusted exact canonical HTTPS origin, no userinfo/path/query/fragment or non-default port; checked at runtime. Required even for a source record with null URL."
+          },
+          "pathPrefix": {
+            "type": "string",
+            "pattern": "^/[A-Za-z0-9/_~-]+/$",
+            "description": "Trusted reviewed post-path prefix, used only when source URL is present."
+          },
+          "allowedRegions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "description": "ISO 3166-2 shaped coarse region code. Must match countryCode and the trusted server allowedRegions list. This pattern is not a complete global subdivision registry."
+            },
+            "description": "Explicit reviewed source/dataset allowlist, e.g. TW-TPE and US-WA. Not a complete global region table.",
+            "minItems": 1
+          }
+        },
+        "description": "SERVER-OWNED CONTEXT ONLY, never an accepted Tip field or public authorization claim. No new credential is created. Publisher/dataset must match; source-record stable identity is publisherId+datasetId+recordKey, independent of URL.",
+        "examples": [
+          {
+            "verified": true,
+            "publisherId": "synthetic-a",
+            "datasetId": "synthetic-tw",
+            "origin": "https://news.example.invalid",
+            "pathPrefix": "/public-tips/",
+            "allowedRegions": [
+              "TW-TPE",
+              "US-WA"
+            ]
+          },
+          {
+            "verified": true,
+            "publisherId": "synthetic-b",
+            "datasetId": "synthetic-us",
+            "origin": "https://us.example.invalid",
+            "pathPrefix": "/public-tips/",
+            "allowedRegions": [
+              "US-WA"
+            ]
+          }
+        ]
+      },
+      "TipV2": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schemaVersion",
+          "thirdParty",
+          "selfWitness",
+          "source",
+          "observation",
+          "animal",
+          "location",
+          "display",
+          "photos"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "type": "integer",
+            "const": 2
+          },
+          "thirdParty": {
+            "type": "boolean",
+            "const": true
+          },
+          "selfWitness": {
+            "type": "boolean",
+            "const": false
+          },
+          "source": {
+            "$ref": "#/components/schemas/Source"
+          },
+          "observation": {
+            "$ref": "#/components/schemas/Temporal"
+          },
+          "animal": {
+            "$ref": "#/components/schemas/Animal"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "display": {
+            "$ref": "#/components/schemas/Display"
+          },
+          "photos": {
+            "type": "array",
+            "maxItems": 2,
+            "items": {
+              "$ref": "#/components/schemas/Photo"
+            },
+            "description": "Ordered unique uploadId references only; empty is valid. Each caption stays in the display locale/original language and private before review. No image URL, bytes or base64. Real safety/rights checks require the verified uploader."
+          }
+        }
+      },
+      "AnimalV3": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "count",
+          "condition"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "DOG",
+              "CAT",
+              "OTHER_STRAY",
+              "WILDLIFE"
+            ]
+          },
+          "count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Unknown is null, not zero."
+          },
+          "condition": {
+            "type": "string",
+            "enum": [
+              "UNKNOWN",
+              "HEALTHY",
+              "INJURED",
+              "SICK",
+              "DECEASED"
+            ],
+            "description": "Health only; independent of animal kind and report type. ROAMING remains v2-only and is not translated into a health state."
+          }
+        }
+      },
+      "UnknownCustody": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "asOf"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "UNKNOWN"
+          },
+          "asOf": {
+            "$ref": "#/components/schemas/UnknownTemporal"
+          }
+        }
+      },
+      "KnownCustody": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "asOf"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "IN_CARE",
+              "NOT_IN_CARE"
+            ]
+          },
+          "asOf": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InstantTemporal"
+              },
+              {
+                "$ref": "#/components/schemas/DateTemporal"
+              }
+            ],
+            "description": "Known Temporal; not definitely after publication/server now and not definitely before the FOUND observation. Precision-aware comparisons are runtime rules; no custody location is inferred."
+          }
+        }
+      },
+      "FoundCustody": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/UnknownCustody"
+          },
+          {
+            "$ref": "#/components/schemas/KnownCustody"
+          }
+        ]
+      },
+      "LostReport": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "locationMeaning",
+          "custody"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "LOST"
+          },
+          "locationMeaning": {
+            "type": "string",
+            "const": "LAST_KNOWN"
+          },
+          "custody": {
+            "$ref": "#/components/schemas/UnknownCustody"
+          }
+        }
+      },
+      "FoundReport": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "locationMeaning",
+          "custody"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "FOUND"
+          },
+          "locationMeaning": {
+            "type": "string",
+            "const": "FOUND_AT"
+          },
+          "custody": {
+            "$ref": "#/components/schemas/FoundCustody"
+          }
+        }
+      },
+      "SightingReport": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "locationMeaning",
+          "custody"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "SIGHTING"
+          },
+          "locationMeaning": {
+            "type": "string",
+            "const": "OBSERVED_AT"
+          },
+          "custody": {
+            "$ref": "#/components/schemas/UnknownCustody"
+          }
+        }
+      },
+      "ReportV3": {
+        "description": "Disjoint report semantics. LOST→LAST_KNOWN, FOUND→FOUND_AT, SIGHTING→OBSERVED_AT. Only FOUND permits known custody status/time; runtime enforces chronology.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/LostReport"
+          },
+          {
+            "$ref": "#/components/schemas/FoundReport"
+          },
+          {
+            "$ref": "#/components/schemas/SightingReport"
+          }
+        ]
+      },
+      "LegacyReportProjection": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "locationMeaning",
+          "custody"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "UNSPECIFIED_LEGACY"
+          },
+          "locationMeaning": {
+            "type": "string",
+            "const": "UNSPECIFIED_LEGACY"
+          },
+          "custody": {
+            "$ref": "#/components/schemas/UnknownCustody"
+          }
+        },
+        "description": "Derived v2 public/private projection only. Never added to the accepted v2 payload/hash, never guessed from old condition/text, never treated as a new sighting."
+      },
+      "TipV3": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schemaVersion",
+          "thirdParty",
+          "selfWitness",
+          "source",
+          "observation",
+          "animal",
+          "location",
+          "display",
+          "photos",
+          "report"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "type": "integer",
+            "const": 3
+          },
+          "thirdParty": {
+            "type": "boolean",
+            "const": true
+          },
+          "selfWitness": {
+            "type": "boolean",
+            "const": false
+          },
+          "source": {
+            "$ref": "#/components/schemas/Source"
+          },
+          "observation": {
+            "$ref": "#/components/schemas/Temporal"
+          },
+          "animal": {
+            "$ref": "#/components/schemas/AnimalV3"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "display": {
+            "$ref": "#/components/schemas/Display"
+          },
+          "photos": {
+            "type": "array",
+            "maxItems": 2,
+            "items": {
+              "$ref": "#/components/schemas/Photo"
+            },
+            "description": "Ordered unique uploadId references only; empty is valid. Each caption stays in the display locale/original language and private before review. No image URL, bytes or base64. Real safety/rights checks require the verified uploader."
+          },
+          "report": {
+            "$ref": "#/components/schemas/ReportV3"
+          }
+        }
+      },
+      "PublicCaseSemantics": {
+        "description": "Semantics included in the synthetic public-list item, not the complete item schema. Visibility additionally requires APPROVED + publicVisible + safe mapPolicy + PRESENT and not CLOSED_BY_SOURCE. Eligibility is not approval. No care location is inferred.",
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "report",
+              "mapMarkerEligible",
+              "careLocationInferred"
+            ],
+            "properties": {
+              "report": {
+                "$ref": "#/components/schemas/LostReport"
+              },
+              "mapMarkerEligible": {
+                "type": "boolean",
+                "const": false
+              },
+              "careLocationInferred": {
+                "type": "boolean",
+                "const": false
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "report",
+              "mapMarkerEligible",
+              "careLocationInferred"
+            ],
+            "properties": {
+              "report": {
+                "$ref": "#/components/schemas/FoundReport"
+              },
+              "mapMarkerEligible": {
+                "type": "boolean",
+                "const": false
+              },
+              "careLocationInferred": {
+                "type": "boolean",
+                "const": false
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "report",
+              "mapMarkerEligible",
+              "careLocationInferred"
+            ],
+            "properties": {
+              "report": {
+                "$ref": "#/components/schemas/SightingReport"
+              },
+              "mapMarkerEligible": {
+                "type": "boolean",
+                "const": true
+              },
+              "careLocationInferred": {
+                "type": "boolean",
+                "const": false
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "report",
+              "mapMarkerEligible",
+              "careLocationInferred"
+            ],
+            "properties": {
+              "report": {
+                "$ref": "#/components/schemas/LegacyReportProjection"
+              },
+              "mapMarkerEligible": {
+                "type": "boolean",
+                "const": false
+              },
+              "careLocationInferred": {
+                "type": "boolean",
+                "const": false
+              }
+            }
+          }
+        ]
+      },
+      "SourceEvent": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "eventKey",
+          "publisherId",
+          "datasetId",
+          "recordKey",
+          "type",
+          "sourceChangedAt"
+        ],
+        "properties": {
+          "eventKey": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{16,128}$",
+            "minLength": 16,
+            "maxLength": 128
+          },
+          "publisherId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{2,63}$",
+            "minLength": 3,
+            "maxLength": 64
+          },
+          "datasetId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{2,63}$",
+            "minLength": 3,
+            "maxLength": 64,
+            "description": "Reviewed dataset slug, 3–64 lower-case letters/digits/hyphens starting with a letter; must match trusted sourcePolicy."
+          },
+          "recordKey": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{16,128}$",
+            "minLength": 16,
+            "maxLength": 128,
+            "description": "Private opaque stable identifier within publisherId/datasetId. Separately unique source-record identity; never a public case ID, URL or automatic merge instruction."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "EXPLICIT_CLOSED",
+              "PRESENT",
+              "ABSENT",
+              "TEMPORARY_FAILURE"
+            ]
+          },
+          "sourceChangedAt": {
+            "$ref": "#/components/schemas/Temporal"
+          }
+        },
+        "description": "Private synthetic supervisor/fixture interface only; no HTTP endpoint. Publisher/dataset must match trusted policy and target an existing source record. Source time may be UNKNOWN and must not be guessed/future. ABSENT requires out-of-band trusted completeSnapshot=true when applying a new ABSENT event. Event identity is publisherId+datasetId+eventKey; same payload replays the durable original event receipt, changed payload conflicts.",
+        "examples": [
+          {
+            "eventKey": "synthetic_closed_event_0001",
+            "publisherId": "synthetic-b",
+            "datasetId": "synthetic-us",
+            "recordKey": "synthetic_us_found_0001",
+            "type": "EXPLICIT_CLOSED",
+            "sourceChangedAt": {
+              "precision": "UNKNOWN",
+              "value": null,
+              "timeZone": null
+            }
+          }
+        ]
+      },
+      "SourceEventReceipt": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "eventId",
+          "receivedAt",
+          "tipId",
+          "type",
+          "reunionVerified"
+        ],
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "pattern": "^sourceevt_[a-f0-9]{32}$"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$"
+          },
+          "tipId": {
+            "type": "string",
+            "pattern": "^tip_[A-Za-z0-9_-]{8,64}$"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "EXPLICIT_CLOSED",
+              "PRESENT",
+              "ABSENT",
+              "TEMPORARY_FAILURE"
+            ]
+          },
+          "reunionVerified": {
+            "type": "boolean",
+            "const": false
+          }
+        },
+        "description": "Server-generated immutable private event acknowledgement. receivedAt is server receipt time, never substituted for sourceChangedAt; the original tip receipt is unchanged."
+      },
+      "SourceState": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "caseStatus",
+          "availability",
+          "sourceChangedAt",
+          "lastCheckedAt",
+          "reunionStatus"
+        ],
+        "properties": {
+          "caseStatus": {
+            "type": "string",
+            "enum": [
+              "NOT_CONFIRMED_CLOSED",
+              "CLOSED_BY_SOURCE"
+            ]
+          },
+          "availability": {
+            "type": "string",
+            "enum": [
+              "PRESENT",
+              "ABSENT",
+              "UNAVAILABLE"
+            ]
+          },
+          "sourceChangedAt": {
+            "$ref": "#/components/schemas/Temporal",
+            "description": "Latest KNOWN source update, not the closure timestamp. An UNKNOWN closure event may leave an older known value here; use closureEvidence for closure precision."
+          },
+          "lastCheckedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$"
+          },
+          "reunionStatus": {
+            "type": "string",
+            "const": "UNVERIFIED"
+          },
+          "closureEvidence": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "sourceChangedAt",
+              "receivedAt",
+              "reunionVerified"
+            ],
+            "properties": {
+              "sourceChangedAt": {
+                "$ref": "#/components/schemas/Temporal"
+              },
+              "receivedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$"
+              },
+              "reunionVerified": {
+                "type": "boolean",
+                "const": false
+              }
+            },
+            "description": "Optional private evidence captured on the first EXPLICIT_CLOSED event when absent. Preserve that event's exact original Temporal, including UNKNOWN; never inherit sourceState.sourceChangedAt or substitute server receivedAt as closure time. receivedAt is the separate server receipt timestamp. Later events do not overwrite this first evidence; no reunion is inferred. Older snapshots without this field remain valid and are not backfilled with guessed values."
+          }
+        },
+        "description": "Private state, lazily defaulted for old version-1 snapshots. NOT_CONFIRMED_CLOSED does not assert OPEN. sourceChangedAt is the latest KNOWN source update, never a derived closure timestamp. Optional closureEvidence preserves the first captured explicit closure event's original time precision independently, including UNKNOWN, with separate server receivedAt. EXPLICIT_CLOSED is source closure only, not reunion; counterpart receipts remain independent."
+      },
+      "MatchingSuggestion": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "lostTipId",
+          "foundTipId",
+          "manualOnly",
+          "confidence",
+          "reunionVerified",
+          "reasons"
+        ],
+        "properties": {
+          "lostTipId": {
+            "type": "string",
+            "pattern": "^tip_[A-Za-z0-9_-]{8,64}$"
+          },
+          "foundTipId": {
+            "type": "string",
+            "pattern": "^tip_[A-Za-z0-9_-]{8,64}$"
+          },
+          "manualOnly": {
+            "type": "boolean",
+            "const": true
+          },
+          "confidence": {
+            "type": "string",
+            "const": "UNSCORED"
+          },
+          "reunionVerified": {
+            "type": "boolean",
+            "const": false
+          },
+          "reasons": {
+            "type": "array",
+            "const": [
+              "SAME_KIND",
+              "SAME_COARSE_REGION",
+              "TIME_NOT_CONTRADICTED"
+            ]
+          }
+        }
+      },
+      "MatchingSuggestions": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "manualOnly",
+          "suggestionLimit",
+          "comparisonLimit",
+          "truncated"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/MatchingSuggestion"
+            }
+          },
+          "manualOnly": {
+            "type": "boolean",
+            "const": true
+          },
+          "suggestionLimit": {
+            "type": "integer",
+            "const": 100
+          },
+          "comparisonLimit": {
+            "type": "integer",
+            "const": 2000
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "description": "Bounded private supervisor result; no public HTTP route. Only v3 LOST/FOUND with same kind/country/region, safe mapPolicy, visible source and PENDING/APPROVED review status; reject definitely contradictory observation ordering. Limits are explicit; truncated means incomplete. No automated match, merge, duplicate decision, identity confidence or reunion."
+      }
+    },
+    "examples": {
+      "TaiwanInstantZhTW": {
+        "summary": "Synthetic Taiwan exact instant, original Traditional Chinese, no photo",
+        "value": {
+          "schemaVersion": 2,
+          "thirdParty": true,
+          "selfWitness": false,
+          "source": {
+            "publisherId": "synthetic-a",
+            "datasetId": "synthetic-tw",
+            "recordKey": "synthetic_tw_record_0001",
+            "url": "https://news.example.invalid/public-tips/synthetic001",
+            "publishedAt": {
+              "precision": "INSTANT",
+              "value": "2026-11-26T10:00:00+08:00",
+              "timeZone": "Asia/Taipei"
+            }
+          },
+          "observation": {
+            "precision": "INSTANT",
+            "value": "2026-11-26T09:00:00+08:00",
+            "timeZone": "Asia/Taipei"
+          },
+          "animal": {
+            "kind": "DOG",
+            "count": null,
+            "condition": "ROAMING"
+          },
+          "location": {
+            "countryCode": "TW",
+            "regionCode": "TW-TPE",
+            "sensitivity": "NONE"
+          },
+          "display": {
+            "locale": "zh-TW",
+            "title": "合成演練：犬隻公開線索",
+            "description": "僅供隔離演練的虛構第三方線索，非本人目擊。沒有真實動物、個資或精確位置；照片留空。"
+          },
+          "photos": []
+        }
+      },
+      "USDateOnlyEnUS": {
+        "summary": "Synthetic US-WA date-only clue, original English, null source URL, no photo",
+        "value": {
+          "schemaVersion": 2,
+          "thirdParty": true,
+          "selfWitness": false,
+          "source": {
+            "publisherId": "synthetic-b",
+            "datasetId": "synthetic-us",
+            "recordKey": "synthetic_us_record_0001",
+            "url": null,
+            "publishedAt": {
+              "precision": "DATE",
+              "value": "2026-11-25",
+              "timeZone": "America/Los_Angeles"
+            }
+          },
+          "observation": {
+            "precision": "DATE",
+            "value": "2026-11-25",
+            "timeZone": "America/Los_Angeles"
+          },
+          "animal": {
+            "kind": "CAT",
+            "count": null,
+            "condition": "UNKNOWN"
+          },
+          "location": {
+            "countryCode": "US",
+            "regionCode": "US-WA",
+            "sensitivity": "NONE"
+          },
+          "display": {
+            "locale": "en-US",
+            "title": "Rehearsal: synthetic cat tip",
+            "description": "A fictional third-party clue for an isolated rehearsal, not a personal sighting. The source provides only a calendar date. No real animal, person, precise location or photograph is included."
+          },
+          "photos": []
+        }
+      },
+      "TaiwanSightingV3ZhTW": {
+        "summary": "Synthetic v3 sighting, unknown custody, private until review",
+        "value": {
+          "schemaVersion": 3,
+          "thirdParty": true,
+          "selfWitness": false,
+          "source": {
+            "publisherId": "synthetic-a",
+            "datasetId": "synthetic-tw",
+            "recordKey": "synthetic_tw_sighting_0001",
+            "url": "https://news.example.invalid/public-tips/synthetic001",
+            "publishedAt": {
+              "precision": "INSTANT",
+              "value": "2026-11-26T10:00:00+08:00",
+              "timeZone": "Asia/Taipei"
+            }
+          },
+          "observation": {
+            "precision": "INSTANT",
+            "value": "2026-11-26T09:00:00+08:00",
+            "timeZone": "Asia/Taipei"
+          },
+          "animal": {
+            "kind": "DOG",
+            "count": null,
+            "condition": "UNKNOWN"
+          },
+          "location": {
+            "countryCode": "TW",
+            "regionCode": "TW-TPE",
+            "sensitivity": "NONE"
+          },
+          "display": {
+            "locale": "zh-TW",
+            "title": "合成演練：犬隻公開線索",
+            "description": "僅供隔離演練的虛構第三方線索，非本人目擊。沒有真實動物、個資或精確位置；照片留空。"
+          },
+          "photos": [],
+          "report": {
+            "type": "SIGHTING",
+            "locationMeaning": "OBSERVED_AT",
+            "custody": {
+              "status": "UNKNOWN",
+              "asOf": {
+                "precision": "UNKNOWN",
+                "value": null,
+                "timeZone": null
+              }
+            }
+          }
+        }
+      },
+      "USFoundV3EnUS": {
+        "summary": "Synthetic date-only found lead; found location is not care location",
+        "value": {
+          "schemaVersion": 3,
+          "thirdParty": true,
+          "selfWitness": false,
+          "source": {
+            "publisherId": "synthetic-b",
+            "datasetId": "synthetic-us",
+            "recordKey": "synthetic_us_found_0001",
+            "url": null,
+            "publishedAt": {
+              "precision": "DATE",
+              "value": "2026-11-25",
+              "timeZone": "America/Los_Angeles"
+            }
+          },
+          "observation": {
+            "precision": "DATE",
+            "value": "2026-11-25",
+            "timeZone": "America/Los_Angeles"
+          },
+          "animal": {
+            "kind": "CAT",
+            "count": null,
+            "condition": "HEALTHY"
+          },
+          "location": {
+            "countryCode": "US",
+            "regionCode": "US-WA",
+            "sensitivity": "NONE"
+          },
+          "display": {
+            "locale": "en-US",
+            "title": "Synthetic found-animal lead",
+            "description": "Fictional found-animal lead. Found location does not identify the current care location. No real person, animal, precise location or photo is included."
+          },
+          "photos": [],
+          "report": {
+            "type": "FOUND",
+            "locationMeaning": "FOUND_AT",
+            "custody": {
+              "status": "IN_CARE",
+              "asOf": {
+                "precision": "DATE",
+                "value": "2026-11-25",
+                "timeZone": "America/Los_Angeles"
+              }
+            }
+          }
+        }
+      },
+      "USLostV3EnUS": {
+        "summary": "Synthetic last-known-location lost lead; not a new sighting",
+        "value": {
+          "schemaVersion": 3,
+          "thirdParty": true,
+          "selfWitness": false,
+          "source": {
+            "publisherId": "synthetic-b",
+            "datasetId": "synthetic-us",
+            "recordKey": "synthetic_us_lost_0001",
+            "url": null,
+            "publishedAt": {
+              "precision": "DATE",
+              "value": "2026-11-25",
+              "timeZone": "America/Los_Angeles"
+            }
+          },
+          "observation": {
+            "precision": "DATE",
+            "value": "2026-11-24",
+            "timeZone": "America/Los_Angeles"
+          },
+          "animal": {
+            "kind": "CAT",
+            "count": null,
+            "condition": "UNKNOWN"
+          },
+          "location": {
+            "countryCode": "US",
+            "regionCode": "US-WA",
+            "sensitivity": "NONE"
+          },
+          "display": {
+            "locale": "en-US",
+            "title": "Synthetic lost-animal lead",
+            "description": "Fictional last-known-location lead, not a new sighting, care-location report or confirmed reunion."
+          },
+          "photos": [],
+          "report": {
+            "type": "LOST",
+            "locationMeaning": "LAST_KNOWN",
+            "custody": {
+              "status": "UNKNOWN",
+              "asOf": {
+                "precision": "UNKNOWN",
+                "value": null,
+                "timeZone": null
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -607,7 +1662,7 @@
       "Separately supplied bounded bytes, never arbitrary remote fetch",
       "Per-image rights/attribution/redaction permission evidence",
       "Actual byte/MIME/signature/decode/EXIF/location/visual safety checks",
-      "Publisher + canonical source + case binding",
+      "Publisher + dataset + recordKey + same-case binding, plus canonical source URL when present",
       "All pending photos/evidence private; no public pins for wildlife/sensitivity"
     ]
   },
@@ -619,5 +1674,302 @@
       "Unknown region"
     ],
     "otherwise": "REVIEW_REQUIRED, not publication authorization"
+  },
+  "x-schema-version": 3,
+  "x-source-identity": {
+    "serverPolicySchema": "#/components/schemas/SourcePolicy",
+    "stableKeyFields": [
+      "source.publisherId",
+      "source.datasetId",
+      "source.recordKey"
+    ],
+    "idempotencyScope": [
+      "source.publisherId",
+      "Idempotency-Key"
+    ],
+    "sourceUrlIsUniqueKey": false,
+    "independentCasesAutoMerged": false,
+    "candidateFingerprintIsConfirmedDuplicate": false,
+    "storeGuarantees": "Separate source-record uniqueness and atomic retry receipts must be implemented/tested by the rehearsal and eventually proven production store; this OpenAPI creates neither."
+  },
+  "x-rehearsal": {
+    "implementation": "tools/stray-map-intake/rehearsal.js + case-semantics.js",
+    "scope": "Synthetic publishers and example.invalid identities only; HTTP origins must be registered by this rehearsal module, never existing local tunnels or production hosts.",
+    "scheduleDriver": "fake clock; no wall-clock standing schedule",
+    "productionWrites": false,
+    "modifiesMacPatrol": false,
+    "modifiesCodexDaily": false,
+    "officialApiAcceptance": false,
+    "receiverPaths": [
+      "POST /synthetic/tips",
+      "GET /receipts/{tipId}",
+      "GET /public/tips"
+    ],
+    "officialDraftPathImplemented": false,
+    "reviewHTTPRoute": false,
+    "supervisorReviewChecks": [
+      "contentReviewed",
+      "localLanguageReviewed",
+      "privacyReviewed",
+      "sourceVerified",
+      "rightsReviewed",
+      "locationSafe"
+    ],
+    "storageDesign": [
+      "private synthetic state",
+      "fsync file and parent directory",
+      "atomic rename",
+      "exclusive single-writer lock; stale lock fails closed"
+    ],
+    "publicList": "No global publication block, then publiclyVisible(row): APPROVED historical review permission, safe mapPolicy and source-visible state. Private effectivePublicVisible combines the same guards; immutable receipt.publicVisible remains false. Includes report/mapMarkerEligible/careLocationInferred=false; only v3 SIGHTING eligible. No private source keys or real media URLs.",
+    "acceptance": "Local synthetic contract, loopback HTTP, filesystem receipt/review and two-process milestones only. Image safety/rights are mocked metadata; no official API acceptance, production authority or exhaustive crash/multi-worker guarantee.",
+    "cli": {
+      "entrypoint": "tools/stray-map-intake/run-rehearsal.js",
+      "usage": "node tools/stray-map-intake/run-rehearsal.js /absolute/new-evidence-directory",
+      "destination": "New unused absolute directory, existing parent; refuse existing destination, preserve partial evidence on failure.",
+      "phaseIsolation": "Separate first and restart child processes, bounded timeout; restart asserts different PID and receipt persistence.",
+      "milestones": [
+        "milestone-1-pending.private.json",
+        "milestone-2-restart-review.private.json"
+      ],
+      "summary": "RESULT.private.json; simulation=true, officialApiVerified=false, productionWrites=0, no deployment/patrol change."
+    },
+    "milestoneScenarios": {
+      "first": {
+        "initialRecords": 5,
+        "records": [
+          "US date-only",
+          "Taiwan instant + caption metadata",
+          "Independent US record",
+          "Peer-source candidate duplicate",
+          "Wildlife/habitat"
+        ],
+        "pendingPublicCount": 0,
+        "repeatFakeTick": "skip with no additional fixture-source request"
+      },
+      "restart": {
+        "originalReceiptsReplayed": 5,
+        "missingReviewChecks": "reject approval",
+        "ordinaryApprovedPublicCount": 3,
+        "TaiwanWithdrawalFinalPublicCount": 2,
+        "independentCase": "preserved despite candidate equality",
+        "peerDuplicate": "explicit supervisor action only",
+        "wildlife": "APPROVED_PRIVATE, never public",
+        "newRejectedRecord": "sixth stored tip, not public",
+        "unlicensedPhoto": "rejected",
+        "outage": "Legacy noScope outage creates no new tip/immutable tip receipt; poll slot persists. Scoped mode additionally persists source-availability/event bookkeeping."
+      }
+    },
+    "imageValidation": {
+      "mode": "mocked trusted metadata only",
+      "realPhotoBytesProcessed": false,
+      "realRightsVerified": false,
+      "exifOrRedactionProved": false,
+      "publicPhotoProjection": "caption + simulatedMedia=true, no real media URL"
+    },
+    "transport": {
+      "connectionHeader": "close",
+      "scheduledPostTransportRetries": 1,
+      "sameBodyAndKey": true,
+      "retryTrigger": "Fetch failure, interrupted receipt stream or unusable successful JSON acknowledgement; one same-body/key POST retry only.",
+      "noRetryFor": [
+        "Application JSON refusal",
+        "Wrong media",
+        "Size or UTF-8 failure",
+        "Invalid JSON on non-success response",
+        "Source GET within the same poll slot"
+      ],
+      "secondAttemptFailure": "propagates"
+    },
+    "sourceEvents": {
+      "interface": "RehearsalStore.sourceEvent(event, { completeSnapshot = false } = {})",
+      "httpPath": false,
+      "eventSchema": "#/components/schemas/SourceEvent",
+      "eventReceiptSchema": "#/components/schemas/SourceEventReceipt",
+      "stateSchema": "#/components/schemas/SourceState",
+      "eventKeyScope": [
+        "publisherId",
+        "datasetId",
+        "eventKey"
+      ],
+      "maximumEvents": 2000,
+      "completeSnapshot": "Trusted out-of-band context required for a new ABSENT transition. A committed identical event replays its receipt without reapplying the transition.",
+      "explicitClosed": "Only EXPLICIT_CLOSED sets CLOSED_BY_SOURCE. Reunion remains UNVERIFIED; independent counterpart receipts unchanged.",
+      "presence": "PRESENT restores availability only; cannot reopen CLOSED_BY_SOURCE or rejected/withdrawn review state.",
+      "absenceOrFailure": "ABSENT/UNAVAILABLE suppress public visibility; do not infer closure or reunion.",
+      "sourceTime": "Real original precision or UNKNOWN; reject definitely stale/future known times. Unknown never becomes server receipt time.",
+      "snapshotCompatibility": "Version remains 1; sourceEvents initialized lazily; sourceState defaults NOT_CONFIRMED_CLOSED/PRESENT with UNVERIFIED reunion. V2 payload/hash/fingerprint and original tip receipt unchanged."
+    },
+    "matchingSuggestions": {
+      "interface": "RehearsalStore.matchingSuggestions()",
+      "httpPath": false,
+      "responseSchema": "#/components/schemas/MatchingSuggestions",
+      "manualOnly": true,
+      "suggestionLimit": 100,
+      "comparisonLimit": 2000,
+      "truncationExplicit": true,
+      "automatedMatchMergeReunion": false,
+      "crossReportTypeDuplicateAllowed": false
+    },
+    "scopedPolling": {
+      "configuration": "Optional server caller sourceScope={publisherId,datasetId}; must match verified policy.",
+      "maximumFeedRecords": 20,
+      "maximumFeedEvents": 20,
+      "scopeMismatchOrGETFailure": "Reject feed and mark existing scoped rows UNAVAILABLE; no closure or new tips.",
+      "completeSnapshot": "Only true trusted complete fixture snapshots derive ABSENT for unseen stored keys. Partial feeds do not infer absence.",
+      "seenRefusal": "Seen keys with refused POST become UNAVAILABLE, not ABSENT.",
+      "successfulSeenKey": "PRESENT availability; never reopen closed/rejected cases.",
+      "noScopeCompatibility": "No inferred source availability/status; explicitly supplied validated fixture events may still be processed.",
+      "writesDuringOutage": "Poll/source-availability/event bookkeeping only, no new tips or immutable tip receipts.",
+      "transportExhaustionBoundary": "Inspected loop exits on thrown second POST before final availability update; all-attempts-threw handling requires its dedicated regression."
+    },
+    "caseCli": {
+      "entrypoint": "tools/stray-map-intake/run-case-rehearsal.js",
+      "usage": "node tools/stray-map-intake/run-case-rehearsal.js /absolute/new-evidence-directory",
+      "phaseIsolation": [
+        "receive",
+        "lifecycle",
+        "verify"
+      ],
+      "initialReceipts": 4,
+      "records": {
+        "primary": [
+          "LOST",
+          "SIGHTING"
+        ],
+        "peer": [
+          "FOUND",
+          "independent FOUND"
+        ]
+      },
+      "pendingPublicCount": 0,
+      "privateManualSuggestions": 2,
+      "approvedLeadCount": 4,
+      "initialSightingEligible": 1,
+      "closure": "Only LOST becomes CLOSED_BY_SOURCE; counterparts independent.",
+      "completeSnapshotMissingRecord": "Independent FOUND becomes ABSENT, never source-closed.",
+      "peer503": "Peer rows UNAVAILABLE, never source-closed.",
+      "presenceRecovery": "Restore already-approved FOUND visibility only; preserve observation/custody times and CLOSED_BY_SOURCE state.",
+      "finalPublicLeadCount": 3,
+      "finalSightingEligible": 1,
+      "milestones": [
+        "receive.private.json",
+        "lifecycle.private.json",
+        "verify.private.json"
+      ],
+      "summary": "RESULT.private.json after all phases; simulation, no production writes/terms/patrol change, reunionConfirmed=false, officialApiVerified=false.",
+      "media": "No real photo bytes or real rights acceptance; fixtures use mocked metadata. Separate byte-worker verification is not folded into an assumed test total."
+    },
+    "visibility": {
+      "rowHelper": "case-semantics.publiclyVisible(row)",
+      "rowRequirements": [
+        "review.status=APPROVED",
+        "stored review.publicVisible=true",
+        "mapPolicy!=NEVER",
+        "source availability=PRESENT",
+        "caseStatus!=CLOSED_BY_SOURCE"
+      ],
+      "globalRequirement": "publicationBlockReason() must be null",
+      "receiptPublicVisible": "Immutable original PENDING receipt field remains false forever, including replays.",
+      "reviewPublicVisible": "Historical/stored review permission only; may remain true after source status or global publication block hides the record.",
+      "effectivePublicVisible": "Computed for private receipt lookup and successful review results: no global block AND publiclyVisible(row).",
+      "publicList": "First enforces store-level publication block, then filters with publiclyVisible(row); list membership is current publication, not an old review permission.",
+      "mapMarkerEligible": "Report semantics only, never overrides review/source/global visibility gates.",
+      "matchingSuggestions": "Private only; no new public route."
+    },
+    "privateReceiptLookup": {
+      "interface": "RehearsalStore.receipt(tipId)",
+      "successfulFields": [
+        "success",
+        "receipt",
+        "review",
+        "sourceState",
+        "effectivePublicVisible",
+        "publicationBlockedReason"
+      ],
+      "effectivePublicVisible": {
+        "type": "boolean",
+        "description": "Current combined visibility, false whenever publicationBlockedReason is non-null."
+      },
+      "publicationBlockedReason": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          null,
+          "SOURCE_EVENT_CAPACITY",
+          "STORE_UNAVAILABLE"
+        ]
+      },
+      "officialHttpContractShapeChanged": false
+    },
+    "privateReviewResult": {
+      "interface": "RehearsalStore.review(...)",
+      "httpReviewRoute": false,
+      "successfulFields": [
+        "success",
+        "review",
+        "effectivePublicVisible",
+        "publicationBlockedReason"
+      ],
+      "visibilityMeaning": "Same combined visibility and block reason as private lookup; stored review permission is not current publication.",
+      "originalTipReceiptChanged": false
+    },
+    "publicationCapacity": {
+      "maximumPersistedSourceEvents": 2000,
+      "blockingPredicate": "persisted sourceEvents count >= 2000",
+      "blockReason": "SOURCE_EVENT_CAPACITY",
+      "scope": "whole store publication",
+      "survivesRestart": true,
+      "publicProjectionFailure": {
+        "success": false,
+        "error": "REHEARSAL_PUBLICATION_BLOCKED",
+        "status": 503
+      },
+      "itemsFieldOnFailure": false,
+      "privateLookupAndSuccessfulReview": {
+        "effectivePublicVisible": false,
+        "publicationBlockedReason": "SOURCE_EVENT_CAPACITY"
+      },
+      "originalTipReceiptReplayPreserved": true,
+      "caseClosureOrReunionFabricated": false,
+      "historyDeletionProvided": false,
+      "automaticUnblockProvided": false,
+      "otherBlockReason": "STORE_UNAVAILABLE for a poisoned store",
+      "unknownVsZero": "A blocked projection is unavailable, not a successful zero-count dataset."
+    }
+  },
+  "x-supported-schema-versions": [
+    2,
+    3
+  ],
+  "x-legacy-v2-compatibility": {
+    "acceptedSchema": "#/components/schemas/TipV2",
+    "payloadAndHashUnchanged": true,
+    "fingerprintUnchanged": true,
+    "originalReceiptUnchanged": true,
+    "conditionEnumRetained": [
+      "UNKNOWN",
+      "ROAMING",
+      "INJURED",
+      "DECEASED"
+    ],
+    "derivedReport": "UNSPECIFIED_LEGACY",
+    "mapMarkerEligible": false,
+    "snapshotVersion": 1,
+    "referenceFixture": "tools/stray-map-intake/compat-v2-fixtures.json",
+    "baselineCommit": "2a722afd3f7bd12520231d6a4246e2a15e4ab34c",
+    "fixedReferenceInputs": 2,
+    "expectedValues": "Original payloadHash and candidateFingerprint obtained from the pinned pure-contract revision; never regenerate expectations from current code."
+  },
+  "x-deployment-boundary": {
+    "productDeployment": false,
+    "keepPullRequestDraft": true,
+    "branchWorkflow": ".github/workflows/backend-ci.yml",
+    "previewJobCondition": "pull_request && draft == false",
+    "lintI18nJest": "unchanged gates remain enabled",
+    "mainOrLiveScheduleChangedByGuard": false,
+    "officialActivationAuthorized": false
   }
 }

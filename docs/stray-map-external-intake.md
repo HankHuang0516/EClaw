@@ -1,119 +1,214 @@
-# Stray Map external intake — CONTRACT DRAFT, disabled
+# Stray Map intake — draft v3 with v2 compatibility
 
-Status: **BLOCKED: not deployed, official Stray Map API/source not verified, Hank terms approval pending** (2026-11-26). This is a source-independent proposal and executable pure contract, inside the existing EClaw worktree. It neither recovers the lost Stray Map source nor substitutes EClaw for its production backend. No credentials, permissions, scheduler, production terms or map records are changed here. Dot's hourly patrol remains read-only.
+**Production disabled; official intake API unverified; terms exception PENDING HANK APPROVAL.** `/v1/public/tips` is a contract proposal, not an implemented production endpoint. The isolated synthetic rehearsal creates no production write, credential, role, terms amendment or patrol/schedule change. Human App use stays unauthenticated; external clues never impersonate an anonymous App device.
 
-The separate source audit reports runtime TypeScript/dist and migrations but missing Git provenance, Dockerfile, lockfile and `tsconfig.base`; there is no proven repository/commit release lineage. Its private report remains outside this public repository. The reported existing `POST /v1/animals` publishes immediately; its photo queue is not a tip-review queue. The reported `/v1/*` pre-handler UPSERTs devices even on valid-device GETs. Therefore do not adapt either route, perform device probes, invent UUIDs or issue live POSTs from this draft. There is **no production route to wire**. Read-only PostgreSQL collection through the existing Railway channel and the admin Hub are separate work; external metrics remain unknown/null until a real approved intake exists.
+The existing animal POST publishes immediately, and its photo queue is not a pending-tip queue. Its device-writing pre-handler is unsuitable for this draft. A historical/runtime file match does not establish the complete rebuild/release provenance needed to activate production intake. No live test pins, real source collection or production HTTP calls are authorized here.
 
-The proposed `POST /v1/public/tips` is **disabled by default**. `tools/stray-map-intake/contract.js` exports frozen draft metadata with `enabled: false` and `officialApiVerified: false`; it contains no route, networking, persistence or activation mechanism. Its successful validation means only “this synthetic/private input satisfies the draft checks,” never “accepted by the official API.” The companion OpenAPI is a proposal with an `example.invalid` server, not a discoverable live service.
+## Versions and stable identity
 
-## Experience and trust boundary
+| Version | Exact request keys | Condition meaning | Derived/public semantics |
+| --- | --- | --- | --- |
+| v2 | `schemaVersion`, `thirdParty`, `selfWitness`, `source`, `observation`, `animal`, `location`, `display`, `photos`; version exactly 2 | Original `UNKNOWN / ROAMING / INJURED / DECEASED` enum unchanged | `report.type` and `locationMeaning` are `UNSPECIFIED_LEGACY`; custody is UNKNOWN with UNKNOWN Temporal; `mapMarkerEligible: false`. No new sighting is inferred from old text or ROAMING. |
+| v3 | The same nine keys plus required `report`; version exactly 3 | Health only: `UNKNOWN / HEALTHY / INJURED / SICK / DECEASED` | Explicit LOST, FOUND or SIGHTING semantics below. Health, report type and animal kind are independent. |
 
-Keep the existing human app experience unauthenticated. The proposed external intake is independent: no app login, anonymous-device impersonation, `deviceId`, `deviceSecret` or client publication controls. All external submissions are labelled **third-party public clues, not self-witnessed**. They enter private `PENDING` review with `publicVisible: false`; there is no anonymous publication path. A client cannot choose `APPROVED`, `PUBLISHED`, a map ID, moderation outcome or precise location. This is neither emergency rescue nor government dispatch.
+OpenAPI `Tip` is `oneOf: TipV2 / TipV3`. Every request object rejects unknown/missing fields. The v2 accepted payload, canonical payload/hash, `stray-case-v2` fingerprint and original immutable receipt remain unchanged. Legacy report semantics are a projection, never inserted into the old payload/hash. Existing filesystem snapshots stay version 1; absent `sourceState` is derived conservatively and `sourceEvents` is initialized lazily. No bulk rewrite or implicit schema upgrade is required. Compatibility regression inputs and their original payloadHash/candidateFingerprint are pinned in `tools/stray-map-intake/compat-v2-fixtures.json`, extracted with the pure contract at commit `2a722afd3f7bd12520231d6a4246e2a15e4ab34c`. Compare against those fixed values; do not regenerate expected hashes with current code or rewrite existing payloads/receipts to make a test pass.
 
-The publisher registry is trusted server context, provisioned only after source audit and approval. `publisherId`, public URL and client assertions do not authenticate a person or prove a post's truth. The registry restricts exact HTTPS origin and reviewed path prefix; reviewers must independently check provenance, original publication/observation dates, rights and location sensitivity. Nothing here authorizes scraping a site's terms or obtaining a new credential. Do not reproduce source text, names, social handles, phones, addresses or private attribution in public output.
+Three identities remain separate:
 
-## Wire proposal and executable boundary
+- `(publisherId, Idempotency-Key)` controls retries. Same canonical hash replays the original PENDING receipt/time; different content conflicts. A pure RESERVE decision does not write storage.
+- `(publisherId, datasetId, recordKey)` uniquely identifies a private source record, independent of URL. An identical record under another retry key reuses its receipt; changed content conflicts rather than overwrites. Independent records/counterparts retain independent receipts.
+- Private candidate fingerprints are not confirmed duplicates or animal identities. V2 hashing is retained. V3 uses `stray-case-v3`, kind, **report type**, country, coarse region and observation local calendar date. Unknown time/region, sensitive cases and wildlife have no such fingerprint. Equal hashes never merge cases or verify reunion. DUPLICATE review across different report types, including legacy versus typed reports, is rejected.
 
-Use JSON UTF-8 only, maximum **16,384 actual bytes**, including whitespace; `Content-Length` alone is insufficient. Reject compressed bodies (identity only), malformed UTF-8, invalid JSON, duplicate keys including escaped duplicates, unknown/missing properties and non-JSON media types. The future HTTP adapter must enforce the cap while streaming, before full allocation or JSON parsing, plus header/body/time limits and content-encoding guards. The pure function can check only bytes already supplied to it.
+## Shared input, policy and privacy
 
-Require `Idempotency-Key: [A-Za-z0-9_-]{16,128}`; production keys should be randomly generated, retained by the sender and never used as authorization. Request fields, all required:
+Use JSON UTF-8 with identity encoding and a **16,384-byte actual body limit**, including whitespace. Reject invalid UTF-8/JSON, duplicate keys including escaped duplicates, unknown properties and compressed bodies. The HTTP receiver caps streaming bytes; a pure validator sees only supplied bytes. `thirdParty: true` and `selfWitness: false` are mandatory. Clients cannot submit review/publication controls, device IDs/secrets, precise coordinates, addresses, geohashes or trusted upload/policy records.
 
-| Field | Draft rule |
+| Object | Unchanged v2/v3 rules |
 | --- | --- |
-| `schemaVersion`, `thirdParty`, `selfWitness` | Exactly `1`, `true`, `false`. |
-| `source` | Only `publisherId`, `url`, `publishedAt`. Registry publisher matches exactly; lower-case ID, 3–64 characters. |
-| `source.url` | HTTPS, ≤1,024 characters, no user info, IP literals, non-default port, whitespace/backslash, local host suffix or encoded reserved path characters. Exact approved origin and path prefix, with a post path following the prefix. |
-| `source.publishedAt` | A real UTC date, `YYYY-MM-DDTHH:mm:ss[.SSS]Z`. |
-| `observedAt` | Same date format or `null` when observation time is unknown. Never substitute publication time as an observation. |
-| `animal` | Only `kind`, `count`, `condition`. Kind: `DOG`, `CAT`, `OTHER_STRAY`, `WILDLIFE`; condition: `UNKNOWN`, `ROAMING`, `INJURED`, `DECEASED`; count: integer 1–100 or `null` for unknown, never a fabricated zero. |
-| `location` | Only `regionCode`, `sensitivity`. Region: one of 22 county/city codes enumerated in OpenAPI, or `null`. No district, coordinates, address, geohash, landmark, nest/species name or free text. Sensitivity: `NONE`, `UNKNOWN`, `PROTECTED_SPECIES`, `NEST`, `HABITAT`. |
-| `photos` | Array, 0–2 opaque verified-upload references with rights metadata below. Empty is valid; never invent or substitute a photo. |
+| `source` | Exact `publisherId`, `datasetId`, `recordKey`, `url`, `publishedAt`. Publisher/dataset slugs are `[a-z][a-z0-9-]{2,63}`; private record key is `[A-Za-z0-9_-]{16,128}`. Source URL is safe canonical HTTPS or null, never the unique key. Publication uses Temporal. |
+| `animal` | Exact `kind`, `count`, `condition`. Kind remains DOG/CAT/OTHER_STRAY/WILDLIFE; count is integer 1–100 or null, never fabricated zero. Condition enum depends on version above. |
+| `location` | Exact `countryCode`, nullable `regionCode`, `sensitivity`. Upper-case ISO2 country shape and coarse ISO3166-2 subdivision shape; trusted policy authorizes country/region. Sensitivity remains NONE/UNKNOWN/PROTECTED_SPECIES/NEST/HABITAT. |
+| `display` | Exact `locale`, `title`, `description`. Preserve original language; title 1–120 and description 1–1,000 Unicode code points, trimmed and without C0/DEL controls. All text is private/untrusted before review. |
+| `photos` | 0–2 exact `uploadId`, `rights`, `caption` objects; original-language caption 1–240 Unicode code points, trimmed and without C0/DEL controls. Empty photos is valid. Existing rights/bytes/safety rules below apply. |
 
-`submittedAt` is injected by the server, never accepted from a client. Require `observedAt ≤ publishedAt ≤ submittedAt` when observation time is known; unknown observation time remains null. No future clock allowance, inferred dates or age-based automatic rejection in this draft. Stale historical tips require review and must not appear as current sightings. Reviewers verify dates against private source evidence; chronology alone is not proof.
+Server-owned `sourcePolicy` is `verified: true`, publisherId, datasetId, canonical origin, reviewed pathPrefix and nonempty `allowedRegions`. It is not a tip field or client authorization. Publisher/dataset must match; a supplied URL must match origin/prefix. A null URL still needs policy and stable record identity. Country must have at least one allowed-region prefix even when region is null; known region must appear in the allowlist and share the country prefix. `TW-TPE` and `US-WA` are examples of reviewed entries, **not a complete global country/subdivision table**.
 
-Canonicalization lowercases the HTTPS host via the URL parser, removes default port, removes fragments and only `utm_*`/`fbclid`/`gclid` tracking parameters, decodes unreserved path escapes, and normalizes UTC timestamps to milliseconds. Any other query parameter is rejected, rather than risking personal data or silently discarding a source's identity. Path case/trailing slash remain significant. Sources requiring semantic query IDs or Unicode paths need a separately reviewed contract revision. URL normalization is syntactic only; **no DNS, redirects or fetching**, including images, is performed. It does not verify a URL is public, truthful or free of personal information. The source URL is private review evidence and is never automatically relayed to public clients.
+Locale support remains the canonical BCP47 subset accepted by runtime Intl: two/three-letter lower-case language, optional Titlecase four-letter script, optional upper-case two-letter region. Examples en-US, zh-TW, zh-Hant-TW; no claim of full variant/extension/private-use support. JSON Schema/runtime text lengths both count Unicode code points. Structural/length checks do not prove truth, rights, privacy or language correctness. Keep identifying names/accounts/phones/addresses/faces/plates and sensitive locations out of submissions and synthetic fixtures; never relay unreviewed text or private source keys to logs, Hub or public output. Escape text in any private preview. This service is not emergency rescue or government dispatch.
 
-Every `WILDLIFE` tip, any sensitivity other than `NONE`, or unknown region yields `mapPolicy: NEVER`, even if the client calls it harmless. Such records must never produce a public pin, exact timestamp/location projection or revealing photo through this contract. Ordinary stray tips with a known coarse region yield `REVIEW_REQUIRED`, which still grants no map visibility. A reviewer may reject or retain privately; this draft has no approval implementation. Later publication requires a separately authorized server-side projection and existing moderation, with sensitive wildlife excluded. Suppress small identifying aggregate cells rather than exposing sensitive regions through Hub statistics.
+## Temporal precision, timezone and chronology
 
-## Photographs: private references, explicit reuse evidence
+Every Temporal has exactly `precision`, `value`, `timeZone`:
 
-The request accepts **no image URL, data URL, base64, file path, image bytes or remote-fetch instruction**. Each photo has only:
+| Precision | Value | timeZone |
+| --- | --- | --- |
+| `INSTANT` | RFC3339 subset with seconds, optional **exactly three** fractional digits, uppercase `T` and `Z` or explicit `±HH:mm` offset. | Valid IANA identifier recognized by runtime Intl, at most 80 UTF-16 code units. The supplied local wallclock must equal that zone's wallclock at the parsed instant; the offset must therefore match, including DST. |
+| `DATE` | Real `YYYY-MM-DD` calendar date. Preserve that date; do not invent a clock time or convert it to UTC midnight. | Valid IANA zone, same runtime lookup/length rule. |
+| `UNKNOWN` | Exactly `null`. | Exactly `null`. |
 
-```json
-{
-  "uploadId": "up_synthetic001",
-  "rights": {
-    "license": "EXPLICIT_PERMISSION",
-    "evidenceRef": "ev_synthetic001",
-    "attributionRef": "credit_synthetic001",
-    "permitsRedaction": true
-  }
-}
+Examples: `{ "precision": "INSTANT", "value": "2026-11-26T09:00:00+08:00", "timeZone": "Asia/Taipei" }`; `{ "precision": "DATE", "value": "2026-11-25", "timeZone": "America/Los_Angeles" }`; `{ "precision": "UNKNOWN", "value": null, "timeZone": null }`.
+
+`submittedAt` is server-owned, never a client key. The executable contract compares only what the supplied precision proves: known publication/observation definitely after server time, or observation definitely after publication, is rejected. Instant/instant compares actual instants. For a DATE, the runtime derives its actual interval in the supplied IANA zone for chronology checks only, including DST; an observation is definitely later only when its earliest possible instant exceeds publication's latest possible instant. Nonexistent local calendar days are rejected. The submitted DATE payload remains unchanged. Overlap/UNKNOWN cannot manufacture an exact order or observation time. The canonical admitted Temporal retains its supplied precision, value and timezone. Stale/historical or uncertain times stay subject to review, not automatically promoted to current sightings.
+
+The OpenAPI `Temporal` component is a disjoint oneOf for these three exact objects. Schema format/pattern checks do not look up IANA zones, compare offsets/wallclocks, detect all calendar problems or enforce chronology; the executable contract must do those checks. Extra fractional widths and leap-second forms are outside the current INSTANT implementation.
+
+URL normalization is unchanged: syntactic HTTPS only, no user info, IP literal, non-default port, whitespace/backslash, local hostname suffix or encoded reserved path characters. Lowercase the host via the URL parser, remove default port, fragment and only `utm_*`/`fbclid`/`gclid` tracking parameters; decode unreserved path escapes. Reject other query keys; preserve path case and trailing slash. No DNS lookup, redirect or remote fetch is performed. A normalized URL is not proof of publicness, provenance or privacy. Source adapters requiring semantic query IDs/Unicode paths need an explicit reviewed revision. Null is not normalized to an invented URL.
+## V3 report, location meaning and custody
+
+`report` has exactly `type`, `locationMeaning`, `custody`. The type/location pairing is mandatory:
+
+| type | locationMeaning | Custody | Map semantics after all visibility gates |
+| --- | --- | --- | --- |
+| LOST | LAST_KNOWN | UNKNOWN with UNKNOWN Temporal only | Public lead may describe last-known coarse location; never a new sighting or eligible marker. |
+| FOUND | FOUND_AT | UNKNOWN/UNKNOWN, or IN_CARE / NOT_IN_CARE with known Temporal | Public found lead; never a new sighting or eligible marker. Found location is **not** current care location. |
+| SIGHTING | OBSERVED_AT | UNKNOWN with UNKNOWN Temporal only | The only report type eligible as a map marker; eligibility alone grants no publication. |
+
+`custody` has exactly `status`, `asOf`. UNKNOWN status requires `{ "precision": "UNKNOWN", "value": null, "timeZone": null }`. Known custody is allowed only for FOUND; asOf must be known DATE/INSTANT, not definitely after publication or server time, and not definitely earlier than the found observation. The existing precision-aware comparator is used: overlapping/unknown bounds do not invent exact ordering or UTC midnight. No custody status proves a person's identity, reunion or care address, and `careLocationInferred` remains false.
+
+Examples are in OpenAPI components: `TaiwanSightingV3ZhTW` (zh-TW exact instant), `USFoundV3EnUS` (en-US date-only, null URL, known care state), `USLostV3EnUS` (last-known date, unknown custody). `TaiwanInstantZhTW` and `USDateOnlyEnUS` retain v2 payloads unchanged. The request example defaults to v3. All examples are fictional and photo-less; no placeholder photo is presented as evidence.
+
+`publicList()` requires no global publication block, APPROVED review, stored `review.publicVisible: true`, safe `mapPolicy`, availability PRESENT and caseStatus other than CLOSED_BY_SOURCE. It includes `report`, `mapMarkerEligible` and `careLocationInferred: false`. Only v3 SIGHTING can have `mapMarkerEligible: true`. V2 legacy, LOST and FOUND may be readable lead records, never inferred new sightings. Wildlife, non-NONE sensitivity and unknown region remain `mapPolicy: NEVER`; even approval can only yield APPROVED_PRIVATE. Rejected, withdrawn, duplicate, pending, unavailable, absent or source-closed rows stay out of the public list.
+
+### Visibility fields in private lookup and review
+
+| Field | Meaning |
+| --- | --- |
+| Original `receipt.publicVisible` | Always false in the immutable PENDING acceptance receipt, including every replay. It is not current visibility. |
+| `review.publicVisible` | The stored review permission. It may remain true after source closure/absence/outage or a global publication block; it must not be read as proof that a record is currently public. |
+| `effectivePublicVisible` | Current computed visibility in private `receipt(tipId)` lookup and successful `review()` results. It is true only when the store has no publication block and `publiclyVisible(row)` passes review, mapPolicy and source-state gates. |
+| `publicationBlockedReason` | Null normally; SOURCE_EVENT_CAPACITY at the durable event limit, or STORE_UNAVAILABLE for a poisoned/unavailable store. A non-null value makes effectivePublicVisible false. This is a store-level guard, not a case closure. |
+
+The private lookup returns receipt, review, sourceState, effectivePublicVisible and publicationBlockedReason beside its success flag. A successful supervisor review returns review plus the two computed visibility/block fields. `case-semantics.publiclyVisible(row)` also supplies the row filter used by `publicList()` after its global store guard. For example, a source-closed row can retain `review.publicVisible: true` while effectivePublicVisible is false and the row is absent from publicList. Source status changes never rewrite the original receipt or replay value. `mapMarkerEligible` is report semantics, not another approval/visibility override.
+
+These fields describe the private rehearsal lookup/supervisor results only. They are not added to the official PendingReceipt schema or proposed HTTP acceptance response. matchingSuggestions remains private and gains no public route.
+
+Public projection retains coarse country/region, reviewed original-language display, observation and a third-party provenance label. It omits source URL, publisher/dataset/record keys, upload IDs, rights evidence and raw state. Photos are only caption + `simulatedMedia: true` in rehearsal, never real media URLs.
+
+## Private source events and lifecycle
+
+`RehearsalStore.sourceEvent(event, context)` is a synthetic supervisor/fixture method with **no HTTP route**. Its exact event keys are `eventKey`, `publisherId`, `datasetId`, `recordKey`, `type`, `sourceChangedAt`. Event key and record key are opaque strings `[A-Za-z0-9_-]{16,128}`; publisher/dataset must match verified policy and target an existing source record. Types are EXPLICIT_CLOSED, PRESENT, ABSENT, TEMPORARY_FAILURE. Source time is original Temporal or UNKNOWN, never guessed from collection/server time; known definitely future/stale changes are rejected.
+
+Persist event identity `(publisherId, datasetId, eventKey)`: the same event payload replays its immutable receipt, changed content conflicts. Store at most **2,000 events**. A new ABSENT event requires trusted out-of-band `completeSnapshot: true`; partial/missing context cannot establish absence. An already committed identical event can replay without reapplying the transition. The event body itself cannot assert this context. The immutable private event receipt contains `eventId`, server `receivedAt`, `tipId`, `type`, `reunionVerified: false`. Original tip receipts never change.
+
+Private source state defaults to `caseStatus: NOT_CONFIRMED_CLOSED`, `availability: PRESENT`, UNKNOWN sourceChangedAt, receipt-time lastCheckedAt and `reunionStatus: UNVERIFIED`. NOT_CONFIRMED_CLOSED deliberately does not assert that a case is confirmed OPEN. `sourceState.sourceChangedAt` tracks the **latest KNOWN source update**, not closure time. An UNKNOWN event may preserve an older known value in this field; that older point must never be interpreted as the closing timestamp.
+
+Optional private `closureEvidence` is captured on the first EXPLICIT_CLOSED event when absent, with exactly `{ sourceChangedAt, receivedAt, reunionVerified: false }`. Its sourceChangedAt preserves that event's original Temporal and precision, including UNKNOWN, independently of the latest-known source update. Its receivedAt is the separate server receipt time, never a substitute for missing source closure time. Later source events do not overwrite the first evidence or infer reunion. Older snapshots without closureEvidence remain valid; do not manufacture or backfill closure evidence from old sourceChangedAt/lastCheckedAt/server receipt values.
+
+| Event | State effect and limits |
+| --- | --- |
+| EXPLICIT_CLOSED | Set caseStatus CLOSED_BY_SOURCE and availability PRESENT; preserve the first closureEvidence and its original precision independently of latest-known source time. This is the source's explicit case closure, **not confirmed reunion**. Hide only the targeted source record; independent counterpart receipts are untouched. |
+| PRESENT | Set availability PRESENT. Restore readability only if the case is not CLOSED_BY_SOURCE and its existing review/safety gates permit it; never reopen closed/rejected/withdrawn records or reapprove them. |
+| ABSENT | With trusted complete snapshot, set availability ABSENT and hide temporarily. Absence is not closure, deletion or reunion. |
+| TEMPORARY_FAILURE | Set availability UNAVAILABLE and hide temporarily. Preserve NOT_CONFIRMED_CLOSED/CLOSED_BY_SOURCE and original receipts; outage never proves closure. |
+
+At **2,000 or more persisted sourceEvents**, `publicationBlockReason()` returns SOURCE_EVENT_CAPACITY for the whole store. The block is derived from durable event count and survives restart. `publicList()` and its loopback projection return `{ success: false, error: "REHEARSAL_PUBLICATION_BLOCKED", status: 503 }` with **no items field**, rather than stale records or an apparently successful empty list. A poisoned store is also blocked. Private lookup/successful review reports effectivePublicVisible:false and its publicationBlockedReason; stored review permission may still be true.
+
+Capacity does not fabricate CLOSED_BY_SOURCE or verified reunion, close independent counterparts, alter original tip receipts, or prevent replay of an already committed original tip receipt. No history-deletion or automatic-unblock operation is provided. The capacity guard is independent of private manual matching, which still has no public HTTP route. Treat publication 503 as unavailable, not a measured zero-count dataset.
+
+## Scoped fixture polling
+
+`scheduledPass()` accepts optional **server caller configuration** `sourceScope: { publisherId, datasetId }`, which must match a verified registered policy. It is not supplied by a public tip or an untrusted completeness assertion. Fixture JSON requires `synthetic: true`, records array ≤20 and optional events array ≤20. With sourceScope, every record/event publisher and dataset must match that scope; a mismatched or failed/malformed GET rejects the feed and marks existing rows in that scope UNAVAILABLE, without closing cases or creating tips.
+
+After a valid scoped feed, successfully accepted/replayed source keys become PRESENT. Seen keys whose POST returns refusal become UNAVAILABLE, never mistaken for disappearance. Only trusted `completeSnapshot === true` permits previously stored **unseen** keys to become ABSENT; a partial feed does not infer absence. Explicit fixture events pass through the supervisor method, not an HTTP event endpoint. Date bounds are used only for comparison, never written back as guessed source precision.
+
+Without sourceScope, legacy scheduledPass keeps its prior behavior and does not infer presence/absence/outage status. Explicit validated events supplied by a fixture are still processed; absence inference itself remains scope-bound. Poll slots are persisted before requests. Scoped failure handling intentionally writes availability/event bookkeeping but no new tip or immutable tip receipt; it is not a claim of zero filesystem writes.
+
+The inspected POST-loop transport exhaustion path still propagates before the final availability update. Thus received POST refusals are covered by the UNAVAILABLE rule; the all-attempts-threw path requires its regression/fail-closed handling before that broader guarantee is claimed.
+
+## Private manual matching
+
+`matchingSuggestions()` has no public HTTP route. Only safe, source-visible v3 LOST/FOUND rows with PENDING or APPROVED review status participate. Kind, country and coarse region must match, and the last-known observation must not be definitely later than the found observation. UNKNOWN/overlapping dates remain uncertain, not a scored identity match. Rejected/withdrawn/duplicate, source-closed/unavailable/absent, wildlife and other NEVER rows are excluded.
+
+Return exactly `{ items, manualOnly: true, suggestionLimit: 100, comparisonLimit: 2000, truncated }`. Each item has lostTipId, foundTipId, manualOnly:true, confidence:UNSCORED, reunionVerified:false and reasons `[SAME_KIND, SAME_COARSE_REGION, TIME_NOT_CONTRADICTED]`. At most 100 suggestions and 2,000 pair comparisons are considered; `truncated: true` explicitly marks an incomplete result. Temporal intervals may be cached internally without changing original DATE/INSTANT/UNKNOWN values. Suggestions trigger no automatic pairing, merge, duplicate decision, publication or reunion. LOST/FOUND cannot be merged through cross-report-type DUPLICATE review.
+
+## Photos: existing strict rights, byte and safety requirements
+
+No arbitrary remote image URL, data URL, base64, filesystem path or image bytes are accepted by this tip schema. A photo contains only an opaque `uploadId`, exact `rights` (`license`, `evidenceRef`, `attributionRef`, `permitsRedaction: true`) and the required original-language caption. Preserve the existing candidate licenses `EXPLICIT_PERMISSION`, `CC_BY_4_0`, `CC0_1_0`; they require per-image verification, not automatic approval. Other/unknown/NC/ND/SA variants remain outside this narrow draft policy, which is a product restriction rather than a general legal conclusion.
+
+A future verified uploader receives bounded image bytes separately using existing authorized operator access; it never fetches an arbitrary client URL. Its private safe-upload record must match publisher, dataset, recordKey, canonical sourceUrl **including null**, exact rights metadata and actual sanitized image SHA-256. Same-case matching prevents attributing unrelated photography to a clue. The actual permission/license evidence and non-identifying approved credit are private records behind `evidenceRef`/`attributionRef`. A reference alone proves neither reuse nor consent. Preserve edit/redaction permission, attribution, license link and modification notices; if privacy and required credit cannot both be satisfied, omit the image. No new credential or actual uploader is authorized by this document.
+
+Required trusted flags remain `reuseConsentVerified`, `exifRemoved`, `geoRemoved`, `manualRedactionConfirmed`, `noFacesOrPlates`, `noPersonalData`, `noSensitiveVisualLocation`, `caseMatchConfirmed`, all true. Require human redaction/location confirmation, matching clue and explicit reuse evidence. EXIF removal alone does not remove XMP/IPTC location, visible landmarks, embedded identifying text, faces or plates. A recognizable sensitive location must never become a public pin or photo; omit the unsafe photo and retain the clue privately. Photos are private while pending.
+
+Unchanged limits: 0–2 images; actual sanitized size **1 byte through 5 MiB each**, at most **8 MiB combined**; MIME JPEG/PNG/WebP only; each dimension 1–8,192 and at most **16,000,000 decoded pixels**. Safe decode/re-encode, MIME/signature checks, metadata stripping, animation/polyglot/decompression-bomb rejection and content/privacy scanning belong to the uploader. Pure contract/rehearsal upload metadata is not a real-byte scan, actual consent check, license determination, EXIF/redaction proof or real photography acceptance.
+
+Public visibility alone is not reuse permission. CC BY 4.0 permits sharing/adaptation subject to conditions including appropriate credit, a license link and indicating modifications; other rights can require additional permission. CC0 does not eliminate privacy/publicity concerns. Official sources retained from the draft: [CC BY 4.0 deed](https://creativecommons.org/licenses/by/4.0/), [CC0 1.0 deed](https://creativecommons.org/publicdomain/zero/1.0/) (read 2026-11-26). No new licensing exception is introduced here.
+## Isolated rehearsal operation
+
+`rehearsal.js`, `case-semantics.js`, `run-rehearsal.js` and `run-case-rehearsal.js` operate on synthetic sources/state only. Registered publishers use `synthetic-` IDs and `.example.invalid` policy origins. HTTP source/receiver origins must be created and registered by this rehearsal module on 127.0.0.1; existing local tunnels and production hosts are not fixtures. A fake clock drives polling; no Mac patrol, LaunchAgent, cron, Codex daily schedule or production integration is installed.
+
+Local paths remain POST `/synthetic/tips`, GET `/receipts/{tipId}`, GET `/public/tips`. Review, sourceEvent and matchingSuggestions have no HTTP mutation/query routes. Only the supervisor calls review with contentReviewed, localLanguageReviewed, privacyReviewed, sourceVerified, rightsReviewed, locationSafe; synthetic booleans do not constitute real human approval or production authority.
+
+The filesystem design uses private JSON snapshots, exclusive single-writer lock, file fsync, atomic rename and directory fsync. Closed/poisoned writers fail closed. Stale locks require investigation, not automatic breaking. Snapshot version stays 1, old payload/hash/fingerprint/receipt remains intact, and source-event storage is lazy. No exhaustive power-loss or multi-worker guarantee is claimed. Existing test limits are 10 new tips/publisher/hour, 1,000 tips, 2,000 retry keys, 2,000 source events and 16 MiB state; the default fake-clock interval is 15 minutes, minimum one minute.
+
+From this worktree after the storage guard, run with a new absolute evidence directory whose parent exists:
+
+```sh
+node tools/stray-map-intake/run-rehearsal.js \
+  "/Volumes/ProjectsData/portfolio-private-staging/stray-map-rehearsal-UNUSED-RUN-ID"
 ```
 
-An opaque reference is not evidence by itself. The future uploader must receive bounded bytes separately through a verified operator workflow using existing authorized access, never fetch arbitrary submitted URLs. Its private safe-upload record must bind the ID, publisher, canonical source URL, same-case confirmation and exact rights metadata to the actual sanitized image digest. It must verify explicit permission or the exact applicable reuse terms, preserve original permission/license evidence privately, and prepare a non-identifying approved credit. `attributionRef` points to that reviewed credit, not a name/social handle supplied in the tip. Never erase attribution obligations to avoid a privacy conflict: omit the photo if both cannot be satisfied. No uploader or new credential is implemented or authorized here.
+Replace UNUSED-RUN-ID with an unused run ID. Existing destinations are refused, not overwritten. The CLI dispatches distinct `first` and `restart` child processes and retains `milestone-1-pending.private.json`, `milestone-2-restart-review.private.json`, then `RESULT.private.json` after success. Preserve partial evidence on failure. These are synthetic receipt/review/restart milestones, not proof of a deployed API, real image bytes or real author permissions.
 
-Draft policy accepts only `EXPLICIT_PERMISSION`, `CC_BY_4_0`, `CC0_1_0` as **candidates for human rights verification**, not legal proof or automatic permission. Others, including unknown, NC, ND and SA variants, are outside this narrow draft policy; that is a product restriction, not a claim about their general legality. CC BY 4.0 permits sharing/adaptation subject to conditions including appropriate credit, a license link and indicating modifications. Its deed also warns other rights may require permissions. CC0 does not eliminate privacy/publicity concerns. Consult the official [CC BY 4.0 deed](https://creativecommons.org/licenses/by/4.0/) and [CC0 1.0 deed](https://creativecommons.org/publicdomain/zero/1.0/) (read 2026-11-26). A publicly viewable post is not a reuse grant. Store evidence of the license applying to **this specific image**, permission for required edits, and the reviewed attribution/modification record.
+### V3 lifecycle CLI
 
-The trusted safe-upload record must have all of these true: `reuseConsentVerified`, `exifRemoved`, `geoRemoved`, `manualRedactionConfirmed`, `noFacesOrPlates`, `noPersonalData`, `noSensitiveVisualLocation`, `caseMatchConfirmed`. `permitsRedaction` is required even when no edit is ultimately needed; any edits/credit changes must remain recorded in the evidence. EXIF removal alone does not remove visible landmarks, embedded text, XMP/IPTC location or faces. A human must confirm redaction, matching case and non-identifying visual context after safe decode/re-encode. If a sensitive location remains recognizable, omit the image and retain the clue privately with `mapPolicy: NEVER`.
+Use a separate new destination for the v3 lifecycle runner:
 
-The sanitized records also require a SHA-256 digest, actual byte size 1–5 MiB each, at most 8 MiB combined, MIME `image/jpeg`, `image/png` or `image/webp`, dimensions 1–8,192 each and ≤16,000,000 decoded pixels. The uploader must enforce these limits on bytes and decoded output, reject polyglots/animation/unsupported types/decompression bombs, scan safety, strip all identifying metadata, validate file signatures and private ownership, and keep originals/evidence out of public storage. **The pure validator checks supplied trusted metadata, not actual image bytes, licenses, consent, redaction, EXIF or content.** The absence of that future verified record rejects the photo. A photo-less tip can still proceed to pending review.
+```sh
+node tools/stray-map-intake/run-case-rehearsal.js \
+  "/Volumes/ProjectsData/portfolio-private-staging/stray-map-cases-UNUSED-RUN-ID"
+```
 
-## Idempotency and suspected duplicates
+It dispatches three distinct child processes, `receive`, `lifecycle`, `verify`, reopening the same private store. Existing destinations and evidence files are not overwritten. Its four v3 records are primary LOST + SIGHTING and peer FOUND + independent FOUND. This is a scoped synthetic controller rehearsal, with no real photo-byte processing or official API connection.
 
-Hash the canonical payload with sorted object keys, ordered photo arrays, canonical source URL and UTC dates. All admitted semantic fields, including photo evidence/attribution references, are included. Server receipt/time, review outcome and candidate signal are excluded. Scope the idempotency key by publisher: `(publisherId, key)`.
+| Phase/evidence | Contract checked by the runner |
+| --- | --- |
+| `receive` → `receive.private.json` | Four distinct original receipts; all pending/publicly hidden; two private manual-only LOST/FOUND suggestions, never confirmed matches or reunions. |
+| `lifecycle` → `lifecycle.private.json` | Persisted poll-skip and same-receipt replay; cross-type DUPLICATE refusal; explicit approval of four readable leads but only one v3 SIGHTING eligible as a marker. Source closure hides only LOST. A complete snapshot missing the independent FOUND yields ABSENT, not closure. Peer HTTP 503 yields UNAVAILABLE, not closure. PRESENT restores already-approved FOUND visibility without refreshing observation/custody time or reopening the source-closed LOST. |
+| `verify` → `verify.private.json` | A further process reopens four original unchanged receipts; LOST remains CLOSED_BY_SOURCE, reunion remains unverified; final public projection has three leads and one sighting-eligible record, with no remaining private suggestions after LOST closure. |
+| `RESULT.private.json` | Written after all three phases succeed; records simulation, three phases, zero production writes, unchanged terms/patrol, no confirmed reunion and officialApiVerified:false. |
 
-`decideIdempotency` returns `RESERVE` for no stored row; it **does not persist a reservation**. Same scoped key and payload hash replays an exact copy of the original private acceptance receipt, with the original `tipId`, `submittedAt`, `PENDING` and `publicVisible: false`. That immutable receipt is not current moderation status. Same key with another canonical payload returns `409 IDEMPOTENCY_CONFLICT`; never overwrite. Different publishers use independent scopes. The future store must atomically commit tip + receipt + key under a unique constraint, handle concurrent reservations/in-progress retries, never acknowledge failed writes, and maintain a documented retention window (proposal: at least 90 days, with explicit expiry behavior before activation). Do not turn storage failure into an empty/new key. Lookup/replay must not expose whether another publisher's key exists. These durability, concurrency and expiry guarantees are **unimplemented**, not demonstrated by pure decisions.
+The lifecycle CLI proves only its asserted synthetic fixture path. Do not combine it with the two-process receipt CLI into a single unstated coverage claim. Image bytes use a separate verification suite; mocked fixture metadata, actual byte-processing tests and real author/rights acceptance must be reported separately. No aggregate test total is implied by these examples.
 
-Private `candidateFingerprint` hashes version `stray-case-v1`, kind, county/city and the UTC **observation day**; it deliberately excludes publisher and source URL, so different sources can produce a review candidate. It is null for unknown observation time/region, sensitive records or wildlife. It is coarse and fallible: distinct animals can collide and the same case can cross a day/region boundary. Candidate equality is **not a merge, rejection, unique constraint or deduplicated-case count**. Keep every source and receipt; only a separately audited human review may link cases. Treat the fingerprint as private location-derived data, not anonymization or public identity.
+Loopback requests use `Connection: close`. A scheduled record POST has at most one transport/uncertain-success-acknowledgement retry with exactly the same body/key; application refusals, wrong media, size/UTF-8 failures and invalid non-success JSON do not trigger it. Source GET is not retried within the same poll slot. A second failed POST propagates. Receipt replay, not another case insertion, handles acknowledgement loss after durable commit.
 
-## Future HTTP/review controls — required before activation
+## Statistics and release checks
 
-Activation requires proven production source/revision + Hank's terms approval + review/storage/uploader/rate-limit/security acceptance. Keep disabled when any prerequisite or dependency is absent. No source audit result is asserted here. Before parsing, impose per-IP and global rate limits; after a verified source match, add publisher and review-queue budgets. A proposed starting ceiling is 5 requests/minute and 30/hour per IP, 30/hour per publisher, plus a bounded global/private queue. These numbers require operational approval/load testing and must use the proven service's existing abuse controls, trusted proxy configuration and moderation process. Return `429` with `Retry-After`; request limits do not replace source validation. No limiter is installed by these files.
+Keep native reports, v2 legacy leads, typed LOST/FOUND/SIGHTING leads, eligible map markers, candidate hashes, manual suggestions, confirmed duplicate decisions, review state and source closure/availability distinct. Candidate equality, source closure and manual suggestions do not establish a reunion. Rehearsal counts never become real external/Hub statistics. `countOrUnknown` keeps zero only for an available measured source; unknown/invalid/unavailable stays null. Include scope/window/timezone, latest successful update, missing stages and sensitive/small-cell suppression. No private source identifiers, match pairs or sensitive locations enter public aggregates.
 
-Proposed response convention is `{ success: true, tipId, status: "PENDING", publicVisible: false, submittedAt }` on durable `202`, including replay; errors are `{ success: false, error: "SHORT_CODE" }`. The pure functions additionally carry `status` to propose HTTP mapping and return private evaluation data; **do not send a whole validator result as a response**. Use `400` invalid input/timeline, `403` unverified source, `409` payload conflict, `413` size, `415` media/encoding, `429` quota, `503` disabled/dependency unavailable and `500` unexpected internal context/state errors. Do not echo rejected values, URLs, identities, keys or photos in errors/logs. Reviewer/admin access stays under existing roles; pending photos, source/rights evidence, case candidates and raw records stay private. Build an authorized status/appeal and retention/removal process before real ingestion; this draft adds no public GET, debug route, auth path or broadened access.
+Run the contract, local HTTP/store/scheduler and Hub regression suites with installed dependencies:
 
-Required integration tests after the source is proven: streaming caps, actual media sanitization/content review and uploader ownership; moderation visibility via every public list/map/photo/cache route; trusted time and abuse limits; atomic duplicate races and crash/restart retries; role isolation; downstream aggregate privacy; disabled/unavailable source behavior. Use isolated synthetic data only, never production pins or live POSTs.
+```sh
+node backend/node_modules/jest/bin/jest.js --config backend/jest.config.js --runInBand --forceExit=false --detectOpenHandles --coverage=false --runTestsByPath backend/tests/jest/stray-map-intake-contract.test.js backend/tests/jest/stray-map-intake-rehearsal.test.js backend/tests/jest/stray-map-intake-cases.test.js backend/tests/jest/aihankapps-hub-stray-map.test.js
+```
 
-## Aggregate semantics for the separately implemented Hub
+Verify both versions against OpenAPI, unchanged v2 hashes/receipts/snapshots, v3 type/custody/time boundaries, source-event replay/conflict/closure/presence/complete-versus-partial/outage isolation and bounded manual matching. Test current source/receiver restart, same-body/key response-loss retry, privacy-safe public projection, role gates and every unsafe NEVER path. Assert that source-hidden rows keep historical review permission but have effectivePublicVisible:false; event-capacity blocks survive restart, return 503 without items, preserve original receipt replay and expose the private block reason. No older green count substitutes for the current revision's results. The lifecycle CLIs use mocked image/rights metadata. Separate image-byte worker results must be verified before reporting their count or combining any totals; actual third-party photo licenses and real moderation remain separate acceptance gates.
 
-This module collects no statistics. `countOrUnknown(value, { sourceAvailable })` preserves a real non-negative integer zero **only for an available source**; missing, malformed or unavailable values remain `null`. Never substitute zero for missing tables, unavailable API, unknown observation/count or an unimplemented dedup/review stage. Cached historical data may be shown only as explicitly stale with its original observation/update time.
+The branch workflow `.github/workflows/backend-ci.yml` excludes Railway preview for draft PRs: its preview job requires `pull_request` and `draft == false`. Keep this PR draft while product deployment is prohibited. Lint, i18n and Jest gates remain enabled; this workflow edit is not a deployment, main-branch change or live-schedule update. Official activation/terms approval remains separate from CI results.
 
-For each authenticated Hub aggregate, keep native map reports and external tips separate. Report input clues, suspected candidate groups, human-confirmed deduplicated cases, pending, rejected and actually published records as distinct measures with their own backend lineage and availability. Replays are not new inputs, candidate hashes are not confirmed cases, and pending is never “on map.” Scope/window/timezone, latest successful update, coverage/missing stages, available trend/type/coarse-region data and small-cell/sensitive suppression must accompany values. Preserve existing Hub roles/mobile style; expose no private source identities or wildlife locations. The OpenAPI `NullableCount` is an illustrative reusable component, not a deployed statistics endpoint. Hub HTTP/UI/empty/outage checks belong to the separate collector/UI change.
+Apply `docs/code-review-checklist.md`: A1 guards/state transitions above; A2 current schema/contract/rehearsal/Hub checks; A3 bounded success/machine-code envelopes; A4 unverified complete release source, actual media/rights and production persistence/authorization/abuse controls; A5 synthetic registered origins, private source/event/matching data and no pre-review/sensitive publication. B1 `/api/help`, B3 product i18n, B4 product information and B5 production debug routes are NO-OP because no product endpoint/UI is installed; B2 this draft and OpenAPI stay synchronized. Icon/H review is not applicable to a document-only change.
 
-## Terms section 4 — proposed narrow exception, PENDING HANK APPROVAL
+## Terms clause 4 — narrow exception still PENDING HANK APPROVAL
 
-The separate audit identifies current legal version `v2026-09-14.1`, `/terms?lang=zh-Hant`, clause 4: 「**自動化行為**：使用 bot、爬蟲、模擬器大量張貼、灌票、規避速率限制」. This provenance is the supplied audit result, not an independent legal/source verification by this pure-contract change. The proposed exception below leaves that general restriction intact.
-
-**Draft wording only; do not publish or use as authorization:**
+The source audit identified legal version `v2026-09-14.1`, `/terms?lang=zh-Hant`, clause 4: 「**自動化行為**：使用 bot、爬蟲、模擬器大量張貼、灌票、規避速率限制」. The general prohibition remains unchanged. The following is **proposed wording only**, neither a published amendment nor authorization:
 
 > 第 4 條對一般機器人、模擬使用者與批次發文的禁止維持不變。僅經營運方書面核准，且依另行公告之正式外部線索 API、已核准來源與使用範圍提交之第三方公開線索，得作為例外送入非公開待審佇列；不得模擬 App 匿名裝置識別、規避限流、直接發布或自動取得審核通過。通報須如實標示第三方來源及非本人目擊，提供必要來源／時間與合法影像再利用證據，排除個資與敏感野生動物位置；營運方得拒收、停用來源或要求補正。未經審核之線索及照片不得對外公開；此機制不構成緊急救援或政府派案。
 
-This exception requires Hank's explicit approval of the wording and approved pipeline before any production auto-write. It grants no general bot/bulk permission, new credentials, additional roles or implicit license to any source content. Current terms are unchanged.
+Only explicit approval of this narrow exception and the proven pipeline can authorize later production automated intake. This document grants no general bot permission, source-content license, new credential/role or production write. Synthetic localhost rehearsal does not amend the current terms or enable the official path.
+The official activation gate remains closed. This draft does not authorize production intake, new credentials/permissions, actual patrol writes, deployment or terms publication.
 
-## Synthetic verification and checklist
+## Isolated runtime reconstruction (separate evidence)
 
-Run from the existing worktree, using the already installed dependencies; no installation, database or network is required:
+The latest authorized [private runtime-subset reconstruction](stray-map-isolated-rebuild.md) freshly builds the individually hash-checked source subset and tests a separate PostgreSQL-backed synthetic adapter. This exception permits local reconstruction only; original-source restoration, native-map integration and production equivalence remain unverified. Railway's source-export path is closed; the former support draft and transmission-approval question are superseded. No external contact, live DB/write, credential, role, terms, patrol or deployment change is authorized by this acceptance. File-backed lifecycle/matching evidence and reconstructed SQL intake evidence must be reported separately.
 
-```sh
-node backend/node_modules/jest/bin/jest.js --config backend/jest.config.js --runInBand --runTestsByPath backend/tests/jest/stray-map-intake-contract.test.js --no-cache --coverage=false
-```
+## Single isolated native path (2026-11-27)
 
-Tests compare the executable structural rules with the draft OpenAPI, and exercise source/time/field limits, default-disabled metadata, pending-only output, sensitive handling, photo metadata rejection, deterministic replays/conflicts, different-source candidates and unknown/zero counts. Fixtures and URLs are synthetic `example.invalid`. Tests do not make HTTP requests, create pins, collect sources, prove rights, sanitize image bytes, connect to the official API, test review/storage or validate Hub rendering.
+The [single-path acceptance](stray-map-single-path.md) now reuses the actual 15-minute scheduler with PG poll slots and native Fastify HTTP acceptance, then projects reviewed external data through an explicitly versioned native list view and the existing share path. Default legacy App DTO/auth behavior is unchanged. Its private `/external-rebuild/v1/tips` test endpoint does not enable the formal `/v1/public/tips` draft. All coarse external coordinates remain null and no external pin is fabricated. App source/UI, production adoption/terms/authority and genuine source/photo acceptance remain open; no field patrol or formal service is changed.
 
-Local verification on 2026-11-26: **139/139 Jest tests passed**; targeted ESLint on `tools/stray-map-intake/contract.js` passed with `--max-warnings=0`; `node --check` passed for the contract and test file; all four files passed whitespace/final-newline checks. The existing Jest config uses `forceExit`; its standard force-exit advisory is not evidence of HTTP/storage integration testing. No dependency installation was needed. Lightweight test space budget was 0.1 GiB including margin; project-storage reported more than 37 GiB local free with the separate 20 GiB reserve intact.
 
-Self-review against `docs/code-review-checklist.md` (contract component; production activation remains blocked):
+## Later SQL lifecycle and non-formal client acceptance
 
-- A1 ✅ Logic trace: bounded decode → exact structure/source/time/animal/location → trusted photo references → private pending result; idempotency decisions never mutate storage. Failures return only bounded codes.
-- A2 ✅ Test coverage: `backend/tests/jest/stray-map-intake-contract.test.js`, 139/139 passed. No DB calls/mocks are needed for this pure module; the existing shared `helpers/mock-setup.js` is used, no alternate mock infrastructure.
-- A3 ✅ Return shape: `success` convention, machine-readable errors; private validator/decision data is intentionally distinct from the proposed HTTP receipt. `413/415/429/503` are explicit protocol-specific additions.
-- A4 ⚠️ Gaps: official source, HTTP/stream/rate limits, uploader/content/rights checks, moderation/storage/concurrency, role isolation, public projections, Hub UI, production terms and all integration acceptance remain separate work.
-- A5 ✅ Security: strict fields/no client publication or device impersonation; exact registered source; no I/O or remote fetch; photos require trusted evidence and bounded metadata; pending/sensitive invariants and no value echo covered by tests. No mutating endpoint exists to receive device/bot secrets.
-- B1 ⚠️ `/api/help` NO-OP — no new endpoint, only a disabled contract proposal.
-- B2 ✅ Related docs: this draft plus companion OpenAPI. The integrated Hub references are in README, AGENTS.md, CLAUDE.md and backend/AIHANKAPPS_HUB.md. Current Stray Map endpoints, terms and patrol behavior are unchanged.
-- B3 ⚠️ i18n NO-OP — pure contract/docs/tests, no user-facing UI strings.
-- B4 ⚠️ Info page NO-OP — feature not surfaced to end users.
-- B5 ⚠️ Debug endpoint NO-OP — no deployed endpoint or persisted state; do not expose private evidence through a new route.
+The [release-readiness extension](stray-map-release-readiness.md) now exercises source closure/absence/outage, durable manual deduplication and a case/byte-bound synthetic permission ledger in actual private PostgreSQL, then reads the native external view through an explicitly non-formal client specimen. An unlicensed URL is omitted without fetching it and its valid text is retained. Eight independent receipts and decisions survive a new process. This supersedes the earlier file-only/SQL separation limitation for this explicitly enabled private runner, not for production. The bounded mobile source/build audit found no usable artifact in known locations; no App UI was tested. Region cards retain original language/date precision, source gaps are explicit, and the point layer remains off because no approved trustworthy point was supplied. The formal API/terms/adoption gates and 15-minute public-API-only patrol remain unchanged.
 
-Result: reviewable contract draft; **needs follow-up before implementation/activation**, not production-ready. H icon review not applicable: no icon, UI or release artifact changed or published.
+
+## Default-closed Linux text candidate
+
+The [Linux/amd64 candidate](stray-map-linux-text-pilot.md) implements a separate narrow `TEXT_COARSE_PENDING_V1` plugin under `/external-intake/v1/`, outside native `/v1` identity middleware. The formal `/v1/public/tips` draft above is still disabled and not silently redirected. The candidate packages only generic text validation/persistence plus the reconstructed native backend; synthetic receipts/services/test verifiers/Unix sockets are excluded. It requires legitimate server-owned source/reviewer bindings and a bounded pool; absent bindings or explicit profile/flags stay closed with no pilot DDL. Its first formal option is pending text intake, with publication independently off. Adopting the backend/path and approving scoped identities/API-only terms authority remain explicit decisions; local test identities prove no formal authorization and no patrol behavior changes.

@@ -1,0 +1,191 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "stray-map-native-external-view",
+  "title": "Private native external-origin opt-in response; not a legacy AnimalSummary array",
+  "description": "UNSIGNED isolated draft. No trusted point is supplied, so markers remain empty and coordinates null. Formal activation remains disabled.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "success",
+    "schemaVersion",
+    "view",
+    "externalLeads",
+    "mapMarkers",
+    "nativeIncluded"
+  ],
+  "properties": {
+    "success": {
+      "const": true
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "view": {
+      "const": "external-origin-v1"
+    },
+    "externalLeads": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "origin",
+          "thirdParty",
+          "selfWitness",
+          "animal",
+          "display",
+          "report",
+          "observation",
+          "location",
+          "mapMarkerEligible",
+          "mapExclusionReason",
+          "careLocationInferred",
+          "photos"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+          },
+          "origin": {
+            "const": "EXTERNAL_PUBLIC_LEAD"
+          },
+          "thirdParty": {
+            "const": true
+          },
+          "selfWitness": {
+            "const": false
+          },
+          "animal": {
+            "anyOf": [
+              {
+                "$ref": "stray-map-external-intake.openapi.json#/components/schemas/Animal"
+              },
+              {
+                "$ref": "stray-map-external-intake.openapi.json#/components/schemas/AnimalV3"
+              }
+            ]
+          },
+          "display": {
+            "$ref": "stray-map-external-intake.openapi.json#/components/schemas/Display"
+          },
+          "report": {
+            "anyOf": [
+              {
+                "$ref": "stray-map-external-intake.openapi.json#/components/schemas/ReportV3"
+              },
+              {
+                "$ref": "stray-map-external-intake.openapi.json#/components/schemas/LegacyReportProjection"
+              }
+            ]
+          },
+          "observation": {
+            "$ref": "stray-map-external-intake.openapi.json#/components/schemas/Temporal"
+          },
+          "location": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "countryCode",
+              "regionCode",
+              "precision",
+              "coordinates"
+            ],
+            "properties": {
+              "countryCode": {
+                "type": "string",
+                "pattern": "^[A-Z]{2}$"
+              },
+              "regionCode": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "precision": {
+                "const": "REGION"
+              },
+              "coordinates": {
+                "type": "null"
+              }
+            }
+          },
+          "mapMarkerEligible": {
+            "const": false
+          },
+          "mapExclusionReason": {
+            "enum": [
+              "NO_TRUSTED_POINT",
+              "NOT_A_NEW_SIGHTING"
+            ]
+          },
+          "careLocationInferred": {
+            "const": false
+          },
+          "photos": {
+            "type": "array",
+            "maxItems": 2,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "url",
+                "caption"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "caption": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 240
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "mapMarkers": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "nativeIncluded": {
+      "const": false
+    },
+    "dataQuality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceAvailability",
+        "lastCheckedAt"
+      ],
+      "properties": {
+        "sourceAvailability": {
+          "enum": [
+            "AVAILABLE",
+            "PARTIAL",
+            "UNAVAILABLE",
+            "UNKNOWN"
+          ]
+        },
+        "lastCheckedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

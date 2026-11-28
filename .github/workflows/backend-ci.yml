@@ -160,7 +160,8 @@ jobs:
     name: Deploy preview to Railway
     runs-on: ubuntu-latest
     needs: [lint, i18n, jest]
-    if: github.event_name == 'pull_request'
+    # Draft work stays review-only; keep the existing publication window closed.
+    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
     permissions:
       pull-requests: write
     steps:

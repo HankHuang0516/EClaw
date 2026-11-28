@@ -1,0 +1,87 @@
+{
+  "baselineCommit": "2a722afd3f7bd12520231d6a4246e2a15e4ab34c",
+  "cases": [
+    {
+      "body": {
+        "schemaVersion": 2,
+        "thirdParty": true,
+        "selfWitness": false,
+        "source": {
+          "publisherId": "synthetic-a",
+          "datasetId": "synthetic-dataset-a",
+          "recordKey": "private_synthetic_tw_001",
+          "url": null,
+          "publishedAt": {
+            "precision": "INSTANT",
+            "value": "2026-11-26T18:00:00+08:00",
+            "timeZone": "Asia/Taipei"
+          }
+        },
+        "observation": {
+          "precision": "INSTANT",
+          "value": "2026-11-26T17:00:00+08:00",
+          "timeZone": "Asia/Taipei"
+        },
+        "animal": {
+          "kind": "DOG",
+          "count": null,
+          "condition": "ROAMING"
+        },
+        "location": {
+          "countryCode": "TW",
+          "regionCode": "TW-TPE",
+          "sensitivity": "NONE"
+        },
+        "display": {
+          "locale": "zh-TW",
+          "title": "合成案例：台北市犬隻線索",
+          "description": "純測試資料，僅保留城市層級，不對應真實動物。"
+        },
+        "photos": []
+      },
+      "payloadHash": "d5052d21c01cb9be26004bd76e5552b0401fd369bc78133b79f621d716cbb7c4",
+      "candidateFingerprint": "99058f49724d624dbe09bc76848ba62f16b3b0cd68eada7aacf1f3adfc26bd91"
+    },
+    {
+      "body": {
+        "schemaVersion": 2,
+        "thirdParty": true,
+        "selfWitness": false,
+        "source": {
+          "publisherId": "synthetic-a",
+          "datasetId": "synthetic-dataset-a",
+          "recordKey": "private_synthetic_wa_001",
+          "url": null,
+          "publishedAt": {
+            "precision": "DATE",
+            "value": "2026-11-25",
+            "timeZone": "America/Los_Angeles"
+          }
+        },
+        "observation": {
+          "precision": "DATE",
+          "value": "2026-11-25",
+          "timeZone": "America/Los_Angeles"
+        },
+        "animal": {
+          "kind": "DOG",
+          "count": null,
+          "condition": "ROAMING"
+        },
+        "location": {
+          "countryCode": "US",
+          "regionCode": "US-WA",
+          "sensitivity": "NONE"
+        },
+        "display": {
+          "locale": "en-US",
+          "title": "Synthetic Washington dog lead",
+          "description": "Invented test case. Location is limited to Washington state."
+        },
+        "photos": []
+      },
+      "payloadHash": "65be92163e28778acb479aee6731c9e8fdc25870c8dc8d80f4f560cf252e3112",
+      "candidateFingerprint": "a52c8990967ed5ff7d3b0192745d62e067fba506e51bb33783635783a90e807a"
+    }
+  ]
+}

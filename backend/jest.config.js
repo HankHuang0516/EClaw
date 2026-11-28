@@ -12,6 +12,9 @@ module.exports = {
     // Found 2026-06-10 02:57 TW via Run 9 of the perpetual E2E card (gap J1).
     testPathIgnorePatterns: ['/node_modules/', '/.claude/', '/.git/', '/.worktrees/'],
     testTimeout: 15000,
+    // CI workers accumulated ~2 GiB heaps across suites and were terminated.
+    // Keep all tests/coverage; recycle idle workers before that limit.
+    ...(process.env.CI ? { maxWorkers: 2, workerIdleMemoryLimit: '512MiB' } : {}),
     // Prevent open handles from keeping Jest alive
     forceExit: true,
     // Clear mocks between tests
