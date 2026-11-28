@@ -88,6 +88,21 @@ echo "Failed to authenticate: OAuth session expired and could not be refreshed";
     }
     const NEW = [{ id: 'fb-example-1', reason: 'new' }, { id: 'fb-example-2', reason: 'new' }];
 
+    onMac('a route pin on this Mac is loaded for pull and for no other call; without one the runner behaves as before', () => {
+        const w = world(); w.pending([]);
+        expect(w.run().status).toBe(0);
+        expect(w.calls()).toEqual(['pull', 'pending']);
+        // the pin records which call loaded it
+        const pin = path.join(w.home, '.local', 'share', 'timehut-route', 'pin.cjs'), loaded = path.join(w.home, 'pin-loaded.log');
+        fs.mkdirSync(path.dirname(pin), { recursive: true });
+        fs.writeFileSync(pin, `require('fs').appendFileSync(${JSON.stringify(loaded)}, process.argv.slice(2).join(' ') + '\\n');`);
+        w.pending(NEW);
+        expect(w.run().status).toBe(0);
+        expect(fs.readFileSync(loaded, 'utf8')).toBe('pull\n');
+        expect(w.calls().slice(2, 4)).toEqual(['pull', 'pending']);
+        expect(w.log()).toMatch(/pull: \{"success":true,"pulled":true\}/);
+    });
+
     onMac('leaves a handoff for the app-side schedule, exits cleanly, and does not count toward "stuck"', () => {
         const w = world(); w.pending(NEW);
         for (let i = 0; i < 4; i++) { expect(w.run().status).toBe(0); w.nextHour(); }

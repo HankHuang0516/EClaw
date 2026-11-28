@@ -147,6 +147,32 @@ describe('alert schedule tool: 拾光AI雲端相簿 reports', () => {
         expect(await triage.pull({ key, fetchImpl: json(200, { schema: 2 }), options: { run } })).toEqual({ pulled: false, reason: 'unexpected answer' });
         expect(calls).toHaveLength(0);
     });
+    test('a request that never got an answer says which server and how it failed, and nothing else', async () => {
+        const { run, calls } = fakeRailway({});
+        const cut = async () => { throw Object.assign(new TypeError('fetch failed ' + key), { cause: Object.assign(new Error('read ECONNRESET ' + key), { code: 'ECONNRESET' }) }); };
+        const result = await triage.pull({ key, fetchImpl: cut, options: { run } });
+        // the schedule's model reads this line: it must not be able to take it for a hub outage (2026-11-27)
+        expect(result).toEqual({ pulled: false, reason: 'request failed (TypeError, ECONNRESET)', unreachable: 'timehut-server' });
+        expect(JSON.stringify(result)).not.toContain(key);
+        const slow = async () => { throw Object.assign(new Error('x'), { name: 'TimeoutError' }); };
+        expect(await triage.pull({ key, fetchImpl: slow, options: { run } })).toEqual({ pulled: false, reason: 'request failed (TimeoutError)', unreachable: 'timehut-server' });
+        // a code that is not a plain socket code is left out
+        for (const code of [key, 'x y', 12, '<b>', 'E'.repeat(60)]) expect(triage.wireFailure({ name: 'TypeError', cause: { code } })).toBe('request failed (TypeError)');
+        expect(triage.wireFailure(null)).toBe('request failed (error)');
+        expect(calls).toHaveLength(0);
+    });
+    test('the runner loads the local route pin for pull when the Mac has one, and only for pull', () => {
+        const runner = require('fs').readFileSync(require('path').join(__dirname, '../../../tools/aihankapps-hub/triage-runner.zsh'), 'utf8');
+        expect(runner).toContain('ROUTE=(); [[ -r "$ROUTE_PIN" ]] && ROUTE=(--require "$ROUTE_PIN")');
+        expect(runner).toContain('log "pull: $(node "${ROUTE[@]}" "$TOOL" pull |');
+        expect(runner.match(/"\$\{ROUTE\[@\]\}"/g)).toHaveLength(1);
+        // a flag on that one command, never the environment: the model run and everything else start without it
+        expect(runner).not.toMatch(/NODE_OPTIONS/);
+        // the schedule's rules name the right server for a failing pull
+        const rules = require('fs').readFileSync(require('path').join(__dirname, '../../../tools/aihankapps-hub/TRIAGE.md'), 'utf8');
+        expect(rules).toMatch(/`pull:` 那一行連的是\*\*拾光伺服器\*\*，不是中樞/);
+        expect(rules).toContain('"unreachable":"timehut-server"');
+    });
 });
 
 

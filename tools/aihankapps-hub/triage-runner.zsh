@@ -54,7 +54,14 @@ if [[ ! -f "$TOOL" || ! -f "$CODE/tools/aihankapps-hub/TRIAGE.md" ]]; then log "
 num() { node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const v=JSON.parse(s);console.log(v.success?(v[process.argv[1]]??""):"")}catch{console.log("")}})' "$1"; }
 
 # --- 2. 拾光 reports
-log "pull: $(node "$TOOL" pull | tr -d '\n' | cut -c1-300)"
+# `pull` is the one call here that talks to 拾光's server directly instead of going through the deployment channel. The
+# operator's line has reset connections to single addresses of the hosting network (2026-11-27: that server could not be
+# reached from this Mac for a day while it answered everywhere else). When the Mac has a route pin installed, node
+# loads it for this call (as a flag, not through the environment, so nothing else inherits it); it only changes which
+# address the server's name resolves to. Without it: plain DNS.
+ROUTE_PIN="$HOME/.local/share/timehut-route/pin.cjs"
+ROUTE=(); [[ -r "$ROUTE_PIN" ]] && ROUTE=(--require "$ROUTE_PIN")
+log "pull: $(node "${ROUTE[@]}" "$TOOL" pull | tr -d '\n' | cut -c1-300)"
 
 # --- 2b. signed out earlier? `claude auth status` is local and free: once the owner has signed in again, the handoff
 #         and the request are taken back on this very tick, whether or not an alert is waiting for a model run.
@@ -95,7 +102,7 @@ $PENDING
 \`\`\`"
 cd "$WORK/run"
 ALLOWED=("Bash(node $TOOL:*)"
-  "Read(/$HOME/Library/Logs/aihankapps-hub-collector/**)" "Read(/$HOME/Library/Logs/aihankapps-report-watchdog/**)" "Read(/$HOME/Library/Logs/aihankapps-hub-triage/**)"
+  "Read(/$HOME/Library/Logs/aihankapps-hub-collector/**)" "Read(/$HOME/Library/Logs/aihankapps-report-watchdog/**)" "Read(/$HOME/Library/Logs/aihankapps-hub-triage/**)" "Read(/$HOME/Library/Logs/timehut-route/**)"
   "Read(/$HOME/.local/share/AiHankApps/analytics/daily-report-latest.json)" "Read(//Volumes/codex_2T/codex_project/Wishlist/fb-manual-pipeline-20261021/runs/claude/**)")
 perl -e 'alarm shift; exec @ARGV' "$CLAUDE_SECONDS" claude -p "$PROMPT" --model "$MODEL" --setting-sources project --strict-mcp-config --permission-mode default \
   --allowedTools "${ALLOWED[@]}" --disallowedTools Write Edit NotebookEdit WebFetch WebSearch Task Agent --no-session-persistence < /dev/null 2>&1 | tail -5 > "$WORK/run/last-output.txt"
