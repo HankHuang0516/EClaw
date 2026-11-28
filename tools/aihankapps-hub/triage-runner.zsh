@@ -57,10 +57,11 @@ num() { node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{con
 # `pull` is the one call here that talks to 拾光's server directly instead of going through the deployment channel. The
 # operator's line has reset connections to single addresses of the hosting network (2026-11-27: that server could not be
 # reached from this Mac for a day while it answered everywhere else). When the Mac has a route pin installed, node
-# loads it for this call; it only changes which address the server's name resolves to. Without it: plain DNS.
+# loads it for this call (as a flag, not through the environment, so nothing else inherits it); it only changes which
+# address the server's name resolves to. Without it: plain DNS.
 ROUTE_PIN="$HOME/.local/share/timehut-route/pin.cjs"
-routed() { if [[ -r "$ROUTE_PIN" ]]; then NODE_OPTIONS="--require=$ROUTE_PIN" "$@"; else "$@"; fi }
-log "pull: $(routed node "$TOOL" pull | tr -d '\n' | cut -c1-300)"
+ROUTE=(); [[ -r "$ROUTE_PIN" ]] && ROUTE=(--require "$ROUTE_PIN")
+log "pull: $(node "${ROUTE[@]}" "$TOOL" pull | tr -d '\n' | cut -c1-300)"
 
 # --- 2b. signed out earlier? `claude auth status` is local and free: once the owner has signed in again, the handoff
 #         and the request are taken back on this very tick, whether or not an alert is waiting for a model run.
