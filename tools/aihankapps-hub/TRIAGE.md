@@ -101,6 +101,13 @@ Hank 在中樞每則警示上可以按「確認」，旁邊可以寫一段**對�
 
 如果是 `collector-stale-feedback-*`（拾光回饋收集），代表這個排程自己的匯入停了：讀 `~/Library/Logs/aihankapps-hub-triage/` 找原因，寫 `human`。
 
+排程日誌裡 `pull:` 那一行連的是**拾光伺服器**，不是中樞。中樞通不通看 `pending` 有沒有成功：`pending` 成功就代表中樞是通的。`pull` 回 `"pulled":false` 而且帶 `"unreachable":"timehut-server"`，意思是這台 Mac 連不到拾光伺服器（`ECONNRESET` 是連線在半路被切斷），同一台 Mac 上的拾光 worker 也會一起取不到件：
+
+- 這台 Mac 有路線檢查（每分鐘，被擋時自己換一條路），`~/Library/Logs/timehut-route/keeper.log` 只在路線改變時寫一行，可以讀。
+- 連續失敗不到 30 分鐘 → 不用寫任何判斷。
+- 超過 30 分鐘 → `raise timehut-server-unreachable`，`--app timehut`，`--title`「這台 Mac 連不到拾光伺服器」，`--ask`「請把這則 ID 貼給 Claude：查這台 Mac 到拾光伺服器的路線（說明在 ~/.local/share/timehut-route/README.md）。」，`--note` 寫從幾點開始、錯誤代碼是什麼。不要寫成「連不上中樞」。
+- 之後 `pull` 恢復成 `"pulled":true` → `resolve human-timehut-server-unreachable`。
+
 **營運數據（`ops-stale`、`ops-down`、`src-*`）**：第一次看到 → `auto`：「多半是暫時性的，下次檢查再確認。」重看時還在 → `human`，寫出是哪個來源、從什麼時候開始。
 
 **後台服務（`svc-down-*`）**：

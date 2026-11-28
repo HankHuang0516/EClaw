@@ -59,7 +59,11 @@ async function collectTimehut({ fetchImpl = fetch, readKey = readTimehutKey } = 
   let res;
   try {
     res = await fetchImpl(TIMEHUT_STATS_URL, { headers: { Authorization: 'Bearer ' + found.key, Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(20000) });
-  } catch (error) { return { value: null, detail: 'request failed (' + ((error && error.name) || 'error') + ')' }; }
+  } catch (error) {
+    // the socket's code, when there is one, tells a cut connection (ECONNRESET) from a slow server (TimeoutError)
+    const code = error && error.cause && error.cause.code;
+    return { value: null, detail: 'request failed (' + ((error && error.name) || 'error') + (typeof code === 'string' && /^[A-Z][A-Z0-9_]{2,40}$/.test(code) ? ', ' + code : '') + ')' };
+  }
   if (res.status !== 200) return { value: null, detail: 'HTTP ' + res.status };
   let body;
   try { body = await res.json(); } catch (_error) { return { value: null, detail: 'answer is not JSON' }; }

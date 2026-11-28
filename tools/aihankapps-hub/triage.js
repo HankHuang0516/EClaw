@@ -121,6 +121,13 @@ function readKey(file = TIMEHUT_KEY_FILE) {
     const key = fs.readFileSync(file, 'utf8').trim();
     return /^[A-Za-z0-9_-]{32,256}$/.test(key) ? key : null;
 }
+// A request that never got an answer: the error's class and, when the runtime gives one, the socket's code (ECONNRESET:
+// the connection was cut on the way; ENOTFOUND: the name did not resolve). Nothing the server or the key could have
+// written ends up in it. Read by the schedule's model, which once took "request failed (TypeError)" for a hub outage.
+function wireFailure(error) {
+    const code = error && error.cause && error.cause.code;
+    return 'request failed (' + ((error && error.name) || 'error') + (typeof code === 'string' && /^[A-Z][A-Z0-9_]{2,40}$/.test(code) ? ', ' + code : '') + ')';
+}
 // 拾光AI雲端相簿 1.0.119+: GET /api/internal/feedback (Bearer, the hub's key) → { schema: 1, app: [...], line: [...] }.
 // An older server (404) simply has nothing to give yet.
 async function pull({ fetchImpl = fetch, key = readKey(), now = Date.now(), options } = {}) {
@@ -128,7 +135,7 @@ async function pull({ fetchImpl = fetch, key = readKey(), now = Date.now(), opti
     let res;
     try {
         res = await fetchImpl(TIMEHUT_FEEDBACK_URL + '?days=30', { headers: { Authorization: 'Bearer ' + key, Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(20000) });
-    } catch (error) { return { pulled: false, reason: 'request failed (' + ((error && error.name) || 'error') + ')' }; }
+    } catch (error) { return { pulled: false, reason: wireFailure(error), unreachable: 'timehut-server' }; }
     if (res.status === 404) return { pulled: false, reason: 'server has no feedback endpoint yet' };
     if (res.status !== 200) return { pulled: false, reason: 'HTTP ' + res.status };
     let body;
@@ -188,4 +195,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { HUB, JOBS, RECHECK, PLAN_DAYS, TIMEHUT_FEEDBACK_URL, containerScript, due, brief, pending, noteRequest, pull, kick, main };
+module.exports = { HUB, JOBS, RECHECK, PLAN_DAYS, TIMEHUT_FEEDBACK_URL, containerScript, due, brief, pending, noteRequest, wireFailure, pull, kick, main };

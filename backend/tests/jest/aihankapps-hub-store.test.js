@@ -397,7 +397,9 @@ describe('admin hub store: Railway service resources', () => {
         expect(partial.value.notes[1]).toMatch(/還沒有用戶明細/);
         // refusals and odd answers stop this source only, with a reason that carries no key
         for (const [fetchImpl, detail] of [[answer(401, { error: 'Unauthorized' }), 'HTTP 401'], [answer(200, { total: -1 }), 'unexpected answer'],
-            [async () => { throw Object.assign(new Error('x ' + KEY), { name: 'TimeoutError' }); }, 'request failed (TimeoutError)']]) {
+            [async () => { throw Object.assign(new Error('x ' + KEY), { name: 'TimeoutError' }); }, 'request failed (TimeoutError)'],
+            [async () => { throw Object.assign(new TypeError('fetch failed'), { cause: { code: 'ECONNRESET', message: KEY } }); }, 'request failed (TypeError, ECONNRESET)'],
+            [async () => { throw Object.assign(new TypeError('fetch failed'), { cause: { code: KEY + ' x' } }); }, 'request failed (TypeError)']]) {
             const r = await collect.collectTimehut({ readKey, fetchImpl });
             expect(r).toEqual({ value: null, detail });
         }
